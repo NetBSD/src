@@ -1,3 +1,5 @@
+/*	$Id: gvarargs.h,v 1.2 1993/08/02 17:34:44 mycroft Exp $ */
+
 #ifndef __GNUC__
 /* Use the system's macros with the system's compiler.  */
 #include <varargs.h>

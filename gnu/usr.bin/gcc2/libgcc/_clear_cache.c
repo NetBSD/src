@@ -1,3 +1,5 @@
+/*	$Id: _clear_cache.c,v 1.2 1993/08/02 17:37:43 mycroft Exp $ */
+
 extern int target_flags;
   
 enum reg_class

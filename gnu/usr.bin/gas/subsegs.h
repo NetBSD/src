@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: subsegs.h,v 1.2 1993/08/02 17:28:44 mycroft Exp $
+*/
 
 /*
  * For every sub-segment the user mentions in the ASsembler program,

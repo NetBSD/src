@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.4 1993/08/02 17:37:32 mycroft Exp $
+
 LIB=	gcc
 CC=	cc
 CFLAGS=		-I../common -I$(.CURDIR)/../$(MACHINE)

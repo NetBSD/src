@@ -104,6 +104,10 @@ software.
 In other words, you are welcome to use, share and improve this program.
 You are forbidden to forbid anyone else to use, share and improve
 what you give them.   Help stamp out software-hoarding!  */
+
+#ifndef lint
+static char rcsid[] = "$Id: dfa.c,v 1.2 1993/08/02 17:29:33 mycroft Exp $";
+#endif /* not lint */
 
 #include "awk.h"
 #include <assert.h>

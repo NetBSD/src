@@ -1,3 +1,5 @@
+/*	$Id: gstddef.h,v 1.2 1993/08/02 17:34:43 mycroft Exp $ */
+
 #ifndef _STDDEF_H
 #ifndef _STDDEF_H_
 #ifndef _ANSI_STDDEF_H

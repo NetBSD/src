@@ -15,6 +15,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: regex.c,v 1.2 1993/08/02 17:30:07 mycroft Exp $";
+#endif /* not lint */
 
 /* To test, compile with -Dtest.  This Dtestable feature turns this into
    a self-contained program which reads a pattern, describes how it

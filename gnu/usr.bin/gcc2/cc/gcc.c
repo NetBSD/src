@@ -20,6 +20,10 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 This paragraph is here to try to keep Sun CC from dying.
 The number of chars here seems crucial!!!!  */
 
+#ifndef lint
+static char rcsid[] = "$Id: gcc.c,v 1.3 1993/08/02 17:32:36 mycroft Exp $";
+#endif /* not lint */
+
 /* This program is the user interface to the C compiler and possibly to
 other compilers.  It is used because compilation is a complicated procedure
 which involves running several programs and passing temporary files between

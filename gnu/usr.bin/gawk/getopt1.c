@@ -16,6 +16,10 @@ You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
+
+#ifndef lint
+static char rcsid[] = "$Id: getopt1.c,v 1.2 1993/08/02 17:29:49 mycroft Exp $";
+#endif /* not lint */
 
 #ifdef	LIBC
 /* For when compiled as part of the GNU C library.  */

@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: version.c,v 1.2 1993/08/02 17:28:50 mycroft Exp $";
+#endif /* not lint */
+
 #if defined(__STDC__) || defined(const)
 const
 #endif

@@ -14,8 +14,10 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+	$Id: regex.h,v 1.2 1993/08/02 17:30:13 mycroft Exp $
+*/
 
 #ifndef __REGEXP_LIBRARY
 #define __REGEXP_LIBRARY

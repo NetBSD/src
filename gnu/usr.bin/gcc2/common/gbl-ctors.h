@@ -21,7 +21,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+	$Id: gbl-ctors.h,v 1.2 1993/08/02 17:34:38 mycroft Exp $
+*/
 
 /*	This file contains definitions and declarations of things
 	relating to the normal start-up-time invocation of C++

@@ -1,5 +1,8 @@
 /* Generated automatically by the program `gencodes'
-from the machine description file `md'.  */
+from the machine description file `md'. 
+
+	$Id: insn-codes.h,v 1.2 1993/08/02 17:36:57 mycroft Exp $
+*/
 
 #ifndef MAX_INSN_CODE
 

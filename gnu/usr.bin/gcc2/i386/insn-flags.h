@@ -1,5 +1,8 @@
 /* Generated automatically by the program `genflags'
-from the machine description file `md'.  */
+from the machine description file `md'. 
+
+	$Id: insn-flags.h,v 1.2 1993/08/02 17:37:02 mycroft Exp $
+*/
 
 #define HAVE_tstsi_1 1
 #define HAVE_tstsi 1

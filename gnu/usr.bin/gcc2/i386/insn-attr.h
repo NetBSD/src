@@ -1,5 +1,8 @@
 /* Generated automatically by the program `genattr'
-from the machine description file `md'.  */
+from the machine description file `md'. 
+
+	$Id: insn-attr.h,v 1.2 1993/08/02 17:36:56 mycroft Exp $
+*/
 
 #ifndef PROTO
 #if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
