@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: rd.MAKEDEV,v 1.2 1997/12/18 22:22:32 gwr Exp $
+#	$NetBSD: rd.MAKEDEV,v 1.3 2000/06/10 04:04:45 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,19 +45,19 @@
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	raid*	RAIDframe disk driver
+#	md*	memory pseudo-disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
-# Printers:
-# Call units:
 # Special purpose devices:
-#	bwtwo*
-#	cgtwo*
-#	cgfour*
+#	bwtwo*	monochromatic frame buffer
+#	cgtwo*	8-bit VME bus color frame buffer
+#	cgfour*	8-bit color frame buffer
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	md*	memory pseudo-disk
 #	random	Random number generator
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -86,13 +86,15 @@ case $arg in
 all)
 	sh $0 std fd pty0
 	sh $0 bwtwo0 cgtwo0 cgfour0
+	sh $0 raid0 raid1 raid2 raid3
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
-	sh $0 cd0 cd1 st0 st1 st2
+	sh $0 cd0 cd1 st0 st1 st2 fd0
 	sh $0 xd0 xd1 xd2 xd3
 	sh $0 xy0 xy1 xy2 xy3
-	sh $0 bpf0 bpf1 bpf2 bpf3
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1
 	sh $0 lkm random
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 local
 	;;
 
@@ -182,14 +184,16 @@ pty*)
         chmod 666 tty$name? pty$name?
 	;;
 
-cd*|sd*|xd*|xy*|vnd*|ccd*)
+ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
 	case $arg in
+	  ccd*) name=ccd; blk=9; chr=33;;
 	  cd*) name=cd; blk=18; chr=58;;
+	  fd*) name=fd; blk=16; chr=54;;
+	  raid*) name=raid; blk=25; chr=82;;
 	  sd*) name=sd; blk=7; chr=17;;
 	  xd*) name=xd; blk=10; chr=42;;
 	  xy*) name=xy; blk=3; chr=9 ;;
 	  vnd*) name=vnd; blk=5; chr=19;;
-	  ccd*) name=ccd; blk=9; chr=33;;
 	esac
 	case $unit in
 	  [0-7]) offset=$(($unit * 8));;
@@ -230,9 +234,10 @@ cgfour*)
 
 md*)
 	name=md; blk=13; chr=52;
-	mk  md${unit}  b $blk $((($unit +  0) * 8)) 640 operator
-	mk  md${unit}c b $blk $((($unit + 16) * 8)) 640 operator
-#	mk rmd${unit}  c $chr $((($unit + 16) * 8)) 640 operator
+	mk  md${unit}a b $blk $(($unit * 8 + 0)) 640 operator
+	mk  md${unit}c b $blk $(($unit * 8 + 2)) 640 operator
+#	mk rmd${unit}a c $chr $(($unit * 8 + 0)) 640 operator
+#	mk rmd${unit}c c $chr $(($unit * 8 + 2)) 640 operator
 	;;
 
 lkm)
@@ -242,6 +247,10 @@ lkm)
 random)
 	mk  random c 80 0 444
 	mk urandom c 80 1
+	;;
+
+scsibus*)
+	mk scsibus${unit} c 81 $unit 644 wheel
 	;;
 
 local)
