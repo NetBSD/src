@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.21 2000/06/24 04:21:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,9 +127,9 @@ extern int nbpg, pgofset, pgshift;
 
 #ifdef __arch64__
 /* We get stack overflows w/8K stacks in 64-bit mode */
-#define	SSIZE		1		/* initial stack size in pages */
+#define	SSIZE		2		/* initial stack size in pages */
 #else
-#define	SSIZE		1
+#define	SSIZE		2
 #endif
 #define	USPACE		(SSIZE*8192)
 
@@ -175,25 +175,19 @@ extern int nbpg, pgofset, pgshift;
 #define	KERNEND		0x0fe000000	/* end of kernel virtual space */
 #define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
-#if 0
+#define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
+
 #define	AUXREG_VA	(      KERNEND + _MAXNBPG) /* 1 page REDZONE */
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
-#define	CPUINFO_VA	(      KERNEND + 8*_MAXBPG) /* 64K after kernel end */
-#define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
-#define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
-#endif
-
 /*
  * Here's the location of the interrupt stack and CPU structure.
  */
-#if 1
-#define	INTSTACK	(KERNEND+(64*1024))
-#define	EINTSTACK	(INTSTACK+2*USPACE)
-#else
-#define	INTSTACK	intstack
-#define	EINTSTACK	eintstack
-#endif
+#define INTSTACK	(      KERNEND + 8*_MAXNBPG)/* 64K after kernel end */
+#define	EINTSTACK	(     INTSTACK + 2*USPACE)
+#define	CPUINFO_VA	(    EINTSTACK)
+#define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
+#define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
 
 /*
  * Constants related to network buffer management.
