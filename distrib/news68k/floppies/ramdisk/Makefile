@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/09 14:59:01 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2000/03/13 13:16:54 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,8 +20,8 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		2048k
-GEOM=		512/16/2/128
+SIZE=		1440k
+GEOM=		512/18/2/80
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
@@ -47,11 +47,14 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c #libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
-#HACKSRC=${TOP}/../../utils/libhack
-#.include "${HACKSRC}/Makefile.inc"
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+
+# turn off small gethostby* temporarily
+HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
