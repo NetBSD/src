@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 2002/03/24 22:02:58 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31 2002/03/26 19:29:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2002/03/24 22:02:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2002/03/26 19:29:45 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -198,7 +198,7 @@ static const char *sa1110_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *i80200_steppings[16] = {
+static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
@@ -270,8 +270,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
 	  sa1110_steppings },
 
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
-	  i80200_steppings },
+	{ CPU_ID_XSCALE,	CPU_CLASS_XSCALE,	"XScale",
+	  xscale_steppings },
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },
@@ -296,7 +296,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
 	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
@@ -446,7 +446,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_SA110
 	case CPU_CLASS_SA1:
 #endif
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;
