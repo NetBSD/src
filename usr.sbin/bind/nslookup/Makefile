@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/19 04:20:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1999/11/20 19:48:00 veego Exp $
 
-.PATH:	${.CURDIR}/../man
+.include "../Makefile.inc"
+.PATH:	${BIND_DIST_DIR}/bin/nslookup \
+	${BIND_DIST_DIR}/man
 
-WARNS=	0
 BINDIR=	/usr/bin
 PROG=	nslookup
 SRCS=	main.c getinfo.c debug.c send.c skip.c list.c subr.c commands.l

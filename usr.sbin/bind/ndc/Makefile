@@ -1,24 +1,15 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $
+#	$NetBSD: Makefile,v 1.2 1999/11/20 19:47:59 veego Exp $
 
-.PATH:	${.CURDIR}/../man
+.include "../Makefile.inc"
+.PATH:	${BIND_DIST_DIR}/bin/ndc \
+	${BIND_DIST_DIR}/man
 
-all:	ndc
-CLEANFILES+= ndc
-MAN=	ndc.8
+PROG=	ndc
+SRCS=	${PROG}.c
 
-.include <bsd.own.mk>
+CPPFLAGS+= ${INCLUDE} -I${.OBJDIR}/../named
+LDADD=	${LIBRARY}
+MAN=	${PROG}.8
+
 .include "../../Makefile.inc"
-
-FILES=ndc
-FILESMODE=${BINMODE}
-
-ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
-	rm -f $@
-	sed -e "s|%NAMED%|${NAMED}|" \
-	    -e "s|%PIDFILE%|${PIDFILE}|" \
-	    -e "s|%PS%|${PS}|" \
-	    -e "s|:/usr/ucb||" \
-	    < ${.CURDIR}/ndc.sh > $@
-	chmod +x $@
-
 .include <bsd.prog.mk>
