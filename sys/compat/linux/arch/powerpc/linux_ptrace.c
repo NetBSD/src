@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.6 2001/05/28 10:51:20 manu Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.7 2001/06/02 13:49:44 manu Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		memcpy(fpregs, linux_fpreg,
 		    min(32*sizeof(double), sizeof(struct fpreg)));
 
-		error = process_write_regs(t, regs);
+		error = process_write_fpregs(t, fpregs);
 		goto out;
 
 	case  LINUX_PTRACE_PEEKUSR:
