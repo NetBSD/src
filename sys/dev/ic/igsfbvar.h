@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.8 2003/05/31 23:22:26 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.9 2004/11/26 22:29:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -35,9 +35,9 @@
 
 #define	IGS_CMAP_SIZE	256	/* 256 R/G/B entries */
 struct igs_hwcmap {
-	u_int8_t r[IGS_CMAP_SIZE];
-	u_int8_t g[IGS_CMAP_SIZE];
-	u_int8_t b[IGS_CMAP_SIZE];
+	uint8_t r[IGS_CMAP_SIZE];
+	uint8_t g[IGS_CMAP_SIZE];
+	uint8_t b[IGS_CMAP_SIZE];
 };
 
 
@@ -46,10 +46,10 @@ struct igs_hwcursor {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
-	u_int8_t cc_image[512];		/* save copy of image for GCURSOR */
-	u_int8_t cc_mask[512];		/* save copy of mask for GCURSOR */
-	u_int16_t cc_sprite[512];	/* sprite in device 2bpp format */
-	u_int8_t cc_color[6];		/* 2 colors, 3 rgb components */
+	uint8_t cc_image[512];		/* save copy of image for GCURSOR */
+	uint8_t cc_mask[512];		/* save copy of mask for GCURSOR */
+	uint16_t cc_sprite[512];	/* sprite in device 2bpp format */
+	uint8_t cc_color[6];		/* 2 colors, 3 rgb components */
 };
 
 
@@ -113,7 +113,7 @@ struct igsfb_devconfig {
 	struct igs_hwcursor dc_cursor;	/* software copy of cursor sprite */
 
 	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
-	u_int16_t dc_bexpand[256];
+	uint16_t dc_bexpand[256];
 };
 
 
@@ -128,17 +128,17 @@ struct igsfb_softc {
  * Access sugar for indexed registers
  */
 
-static __inline__ u_int8_t
-igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t);
+static __inline__ uint8_t
+igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t);
 static __inline__ void
-igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t, u_int8_t);
+igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t, uint8_t);
 
-static __inline__ u_int8_t
+static __inline__ uint8_t
 igs_idx_read(t, h, idxport, idx)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	u_int idxport;
-	u_int8_t idx;
+	uint8_t idx;
 {
 	bus_space_write_1(t, h, idxport, idx);
 	return (bus_space_read_1(t, h, idxport + 1));
@@ -149,7 +149,7 @@ igs_idx_write(t, h, idxport, idx, val)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	u_int idxport;
-	u_int8_t idx, val;
+	uint8_t idx, val;
 {
 	bus_space_write_1(t, h, idxport, idx);
 	bus_space_write_1(t, h, idxport + 1, val);
@@ -177,13 +177,13 @@ igs_idx_write(t, h, idxport, idx, val)
 	(igs_idx_read((t),(h),IGS_ATTR_IDX,(x)))
 
 static __inline__ void
-igs_attr_write(bus_space_tag_t, bus_space_handle_t, u_int8_t, u_int8_t);
+igs_attr_write(bus_space_tag_t, bus_space_handle_t, uint8_t, uint8_t);
 
 static __inline__ void
 igs_attr_write(t, h, idx, val)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
-	u_int8_t idx, val;
+	uint8_t idx, val;
 {
 	bus_space_write_1(t, h, IGS_ATTR_IDX, idx);
 	bus_space_write_1(t, h, IGS_ATTR_IDX, val); /* sic, same register */
