@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.36 2000/08/26 03:27:47 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
+#define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
