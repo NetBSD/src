@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1.1.1 1997/01/14 20:57:04 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1997/01/27 22:12:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct confargs {
 int bus_scan __P((struct device *, struct cfdata *, void *));
 int bus_print __P((void *, const char *));
 int bus_peek __P((int, int, int));
-char * bus_mapin __P((int, int, int));
+void * bus_mapin __P((int, int, int));
 
 /* These are how drivers connect interrupt handlers. */
 typedef int (*isr_func_t) __P((void *));
