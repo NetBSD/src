@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2002/10/07 15:02:07 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2002/10/08 16:01:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -296,7 +296,7 @@ struct pvo_entry {
 	ptel_t pvo_ptel;			/* PTEL for this mapping */
 };
 
-#define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & SH5_PTEH_EPN_MASK)
+#define	PVO_VADDR(pvo)		(sh5_trunc_page((pvo)->pvo_vaddr))
 #define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_ptel & SH5_PTEL_PR_X)
 #define	PVO_ISWIRED(pvo)	((pvo)->pvo_vaddr & PVO_WIRED)
 #define	PVO_ISMANAGED(pvo)	((pvo)->pvo_vaddr & PVO_MANAGED)
@@ -737,7 +737,7 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 {
 	ptel_t ptel;
 
-	__cpu_tlbinv(PVO_VADDR(pvo) | SH5_PTEH_SH,
+	__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
 	    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 
 	ptel = pmap_kernel_ipt[idx];
@@ -1040,7 +1040,6 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	 */
 	size = sh5_round_page(MSGBUFSIZE);
 	initmsgbuf((caddr_t)avail, size);
-	*((vaddr_t *)0xc0000000) = avail;
 
 	avail = sh5_round_page(avail + size);
 	mr[0].mr_start += size;
@@ -1512,7 +1511,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *ptegidx_p)
 	struct pvo_entry *pvo;
 	int idx;
 
-	va &= SH5_PTEH_EPN_MASK;
+	va = sh5_trunc_page(va);
 
 	if (va < SH5_KSEG0_BASE) {
 		idx = va_to_pteg(pm->pm_vsid, va);
@@ -1580,7 +1579,7 @@ pmap_pa_unmap_kva(vaddr_t kva, ptel_t *ptel)
 	oldptel = *ptel;
 	*ptel = 0;
 
-	__cpu_tlbinv((kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+	__cpu_tlbinv(((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
 	    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 
 	pmap_cache_sync_unmap(kva, oldptel);
@@ -1650,7 +1649,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int i, s;
 	int poolflags = PR_NOWAIT;
 
-	va &= SH5_PTEH_EPN_MASK;
+	va = sh5_trunc_page(va);
 
 #ifdef PMAP_DIAG
 	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
@@ -2202,7 +2201,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
 		*pap = (pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
-		    (va & ~SH5_PTEH_EPN_MASK);
+		    sh5_page_offset(va);
 		found = TRUE;
 		PMPRINTF(("%smanaged pvo. pa 0x%lx\n",
 		    PVO_ISMANAGED(pvo) ? "" : "un", *pap));
@@ -2211,7 +2210,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		idx = kva_to_iptidx(va);
 		if (idx >= 0 && pmap_kernel_ipt[idx]) {
 			*pap = (pmap_kernel_ipt[idx] & SH5_PTEL_PPN_MASK) |
-			    (va & ~SH5_PTEH_EPN_MASK);
+			    sh5_page_offset(va);
 			found = TRUE;
 			PMPRINTF(("no pvo, but kipt pa 0x%lx\n", *pap));
 		}
@@ -2700,7 +2699,7 @@ pmap_write_trap(int usermode, vaddr_t va)
 	} else {
 		KDASSERT(idx >= 0);
 
-		__cpu_tlbinv(PVO_VADDR(pvo) | SH5_PTEH_SH,
+		__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
 		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 
 		/*
