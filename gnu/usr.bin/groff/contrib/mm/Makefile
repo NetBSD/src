@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/07/01 13:45:45 agc Exp $
+# $NetBSD: Makefile,v 1.5 2003/07/03 07:10:45 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/contrib/mm/Makefile,v 1.6 2002/10/11 08:58:13 ru Exp $
 
@@ -12,14 +12,14 @@ DIST_SUBDIR=	contrib/mm
 # sync with ../../src/include/config.h
 TMACDIR?=	/usr/share/tmac
 
-FILES=		m.tmac mm.tmac mse.tmac mmse.tmac
-FILESNAME_m.tmac=../m.tmac
-FILESNAME_mse.tmac=../mse.tmac
-FILESNAME_mm.tmac=../mm.tmac
-FILESNAME_mmse.tmac=../mmse.tmac
-FILES+=		0.MT 5.MT 4.MT ms.cov se_ms.cov
-FILESDIR=	${TMACDIR}/mm
-LOCALE=		locale se_locale
+FILESDIR=		${TMACDIR}/mm
+FILES=			m.tmac mm.tmac mse.tmac mmse.tmac
+FILESDIR_m.tmac=	${TMACDIR}
+FILESDIR_mse.tmac=	${TMACDIR}
+FILESDIR_mm.tmac=	${TMACDIR}
+FILESDIR_mmse.tmac=	${TMACDIR}
+FILES+=			0.MT 5.MT 4.MT ms.cov se_ms.cov
+LOCALE=			locale se_locale
 
 MAN+=		groff_mm.7 groff_mmse.7
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
