@@ -1,12 +1,13 @@
-/*	$NetBSD: mca_machdep.c,v 1.11 2001/11/23 22:24:36 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.12 2001/12/02 17:02:33 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * Copyright (c) 1996-1999 Scott D. Telford.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Scott Telford <s.telford@ed.ac.uk>.
+ * by Scott Telford <s.telford@ed.ac.uk> and Jaromir Dolecek
+ * <jdolecek@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.11 2001/11/23 22:24:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.12 2001/12/02 17:02:33 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,15 +144,6 @@ struct i386_bus_dma_tag mca_bus_dma_tag = {
 
 /* Updated in mca_busprobe() if appropriate. */
 int MCA_system = 0;
-
-/*
- * Some devices drive DMA themselves, and don't need the MCA DMA
- * controller. To distinguish the two, add a flag for dmamaps
- * which use the DMA controller. Avoid BUS_DMA_BUS1, we share
- * dmamap routines with ISA and that flag is used for different
- * purpose within _isa_dmamap_*().
- */
-#define	MCABUS_DMA_USEDMACTRL		BUS_DMA_BUS4
 
 /* Used to kick MCA DMA controller */
 #define DMA_CMD		0x18		/* command the controller */
@@ -463,7 +455,7 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	/*
 	 * Don't do anything if not using the DMA controller.
 	 */
-	if ((map->_dm_flags & MCABUS_DMA_USEDMACTRL) == 0)
+	if ((map->_dm_flags & _MCABUS_DMA_USEDMACTRL) == 0)
 		return;
 
 	/*
@@ -482,9 +474,17 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	mode = DMACMD_MODE_XFER;
 	mode |= (ops == BUS_DMASYNC_PREREAD)
 			? DMACMD_MODE_READ : DMACMD_MODE_WRITE;
+	if (map->_dm_flags & MCABUS_DMA_IOPORT)
+		mode |= DMACMD_MODE_IOPORT;
 
 	/* If transfer size can be divided by two, use 16bit DMA */
-	if ((cnt % 2) == 0) {
+	if (map->_dm_flags & MCABUS_DMA_16BIT) {
+#ifdef DIAGNOSTIC
+		if ((cnt % 2) != 0) {
+			panic("_mca_bus_dmamap_sync: 16bit DMA and cnt %lu odd",
+				cnt);
+		}
+#endif 
 		mode |= DMACMD_MODE_16BIT;
 		cnt /= 2;
 	}
@@ -495,10 +495,14 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	 */
 
 	/* Disable access to dma channel. */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK + dmach);
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dmach);
+
+	/* Set the transfer mode. */
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_MODE | dmach);
+	bus_space_write_1(dmaiot, dmaexech, 0, mode);
 
 	/* Set the address byte pointer. */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_ADDR + dmach);
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_ADDR | dmach);
 	/* address bits 0..7   */
 	bus_space_write_1(dmaiot, dmaexech, 0, (phys >> 0) & 0xff);
 	/* address bits 8..15  */
@@ -507,18 +511,14 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_space_write_1(dmaiot, dmaexech, 0, (phys >> 16) & 0xff);
 
 	/* Set the count byte pointer */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_CNT + dmach);
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_CNT | dmach);
 	/* count bits 0..7     */
 	bus_space_write_1(dmaiot, dmaexech, 0, ((cnt - 1) >> 0) & 0xff);        
 	/* count bits 8..15    */
 	bus_space_write_1(dmaiot, dmaexech, 0, ((cnt - 1) >> 8) & 0xff);        
 
-	/* Set the transfer mode. */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_MODE + dmach);
-	bus_space_write_1(dmaiot, dmaexech, 0, mode);
-
 	/* Enable access to dma channel. */
-	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK + dmach);
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK | dmach);
 }
 
 /*
@@ -561,8 +561,33 @@ mca_dmamap_create(t, size, flags, dmamp, dmach)
 	cookie->id_flags &= 0x0f;
 	cookie->id_flags |= dmach << 4;
 
-	/* Mark the dmamap as using DMA controller */
-	(*dmamp)->_dm_flags |= MCABUS_DMA_USEDMACTRL;
+	/* Mark the dmamap as using DMA controller. Some devices
+	 * drive DMA themselves, and don't need the MCA DMA controller.
+	 * To distinguish the two, use a flag for dmamaps which use the DMA
+	 * controller.
+ 	 */
+	(*dmamp)->_dm_flags |= _MCABUS_DMA_USEDMACTRL;
 
 	return (0);
+}
+
+/*
+ * Set I/O port for DMA. Implemented separately from _mca_bus_dmamap_sync()
+ * so that it's available for one-shot setup.
+ */
+void
+mca_dma_set_ioport(dma, port)
+	int dma;
+	u_int16_t port;
+{
+	/* Disable access to dma channel. */
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dma);
+
+	/* Set I/O port to use for DMA */
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_SET_IO);
+	bus_space_write_1(dmaiot, dmaexech, 0, port & 0xff);
+	bus_space_write_1(dmaiot, dmaexech, 0, (port & 0xff) >> 8);
+
+	/* Enable access to dma channel. */
+	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK | dma);
 }
