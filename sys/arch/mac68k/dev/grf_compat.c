@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.4 2000/06/26 04:55:46 simonb Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.5 2000/06/29 08:15:11 mrg Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -54,7 +54,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 

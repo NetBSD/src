@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.9 2000/05/23 13:20:58 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.10 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2000/06/26 14:20:43 mrg Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6 2000/06/29 08:17:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.5 2000/06/26 14:20:43 mrg Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6 2000/06/29 08:17:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,8 +69,6 @@
 #include <sys/malloc.h>
 #include <sys/map.h>
 #include <sys/extent.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
