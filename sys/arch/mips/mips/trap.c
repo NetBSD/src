@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.183 2003/10/21 15:05:56 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.184 2003/10/29 23:39:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.183 2003/10/21 15:05:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2003/10/29 23:39:45 christos Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -212,14 +212,15 @@ trap(status, cause, vaddr, opc, frame)
 	unsigned opc;
 	struct trapframe *frame;
 {
-	int type, sig;
-	int ucode = 0;
+	int type;
 	struct lwp *l = curlwp;
-	struct proc *p;
+	struct proc *p = curproc;
 	vm_prot_t ftype;
+	ksiginfo_t ksi;
+	struct frame *fp = (struct frame *)l->l_md.md_regs;
 	extern void fswintrberr(void);
+	KSI_INIT_TRAP(&ksi);
 
-	p = l ? l->l_proc : NULL; 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status))
@@ -246,8 +247,7 @@ trap(status, cause, vaddr, opc, frame)
 			status, cause, opc, vaddr);
 		if (curlwp != NULL)
 			printf("pid=%d cmd=%s usp=0x%x ",
-			    p->p_pid, p->p_comm,
-			    (int)((struct frame *)l->l_md.md_regs)->f_regs[SP]);
+			    p->p_pid, p->p_comm, (int)fp->f_regs[SP]);
 		else
 			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
@@ -424,11 +424,19 @@ trap(status, cause, vaddr, opc, frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : (uid_t) -1);
-			sig = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
 		} else {
-			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
+			if (rv == EACCES) {
+				ksi.ksi_signo = SIGBUS;
+				ksi.ksi_code = BUS_OBJERR;
+			} else {
+				ksi.ksi_signo = SIGSEGV;
+				ksi.ksi_code = SEGV_MAPERR;
+			}
 		}
-		ucode = vaddr;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)vaddr;
 		break; /* SIGNAL */
 	    }
 	kernelfault: ;
@@ -455,8 +463,10 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
-		sig = SIGSEGV;
-		ucode = vaddr;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGSEGV; /* XXX */
+		ksi.ksi_addr = (void *)vaddr;
+		ksi.ksi_code = SEGV_MAPERR; /* XXX */
 		break; /* SIGNAL */
 
 	case T_BREAK:
@@ -501,7 +511,10 @@ trap(status, cause, vaddr, opc, frame)
 		instr = fuiword((void *)va);
 
 		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
-			sig = SIGTRAP;
+			ksi.ksi_trap = type & ~T_USER;
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_addr = (void *)va;
+			ksi.ksi_code = TRAP_TRACE;
 			break;
 		}
 		/*
@@ -527,7 +540,10 @@ trap(status, cause, vaddr, opc, frame)
 			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
 				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
 		l->l_md.md_ss_addr = 0;
-		sig = SIGTRAP;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_addr = (void *)va;
+		ksi.ksi_code = TRAP_BRKPT;
 		break; /* SIGNAL */
 	    }
 	case T_RES_INST+T_USER:
@@ -559,12 +575,19 @@ trap(status, cause, vaddr, opc, frame)
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
 	case T_TRAP+T_USER:
-		sig = SIGFPE;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)fp->f_regs[PC];
+		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
-	((struct frame *)l->l_md.md_regs)->f_regs[CAUSE] = cause;
-	((struct frame *)l->l_md.md_regs)->f_regs[BADVADDR] = vaddr;
-	trapsignal(l, sig, ucode);
+	fp->f_regs[CAUSE] = cause;
+	fp->f_regs[BADVADDR] = vaddr;
+#ifdef __HAVE_SIGINFO
+	(*p->p_emul->e_trapsignal)(l, &ksi);
+#else
+	(*p->p_emul->e_trapsignal)(l, ksi.ksi_signo, ksi.ksi_trap);
+#endif
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
 	userret(l);
