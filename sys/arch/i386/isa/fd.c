@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.49 1994/07/26 19:36:06 mycroft Exp $
+ *	$Id: fd.c,v 1.50 1994/07/31 00:47:52 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1151,7 +1151,6 @@ fdioctl(dev, cmd, addr, flag)
 		/* XXX do something */
 		return 0;
 
-	case DIOCSDINFO:
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1164,8 +1163,9 @@ fdioctl(dev, cmd, addr, flag)
 		return error;
 
 	default:
-		return EINVAL;
+		return ENOTTY;
 	}
+
 #ifdef DIAGNOSTIC
 	panic("fdioctl: impossible");
 #endif
