@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.13 2004/03/20 16:48:10 bjh21 Exp $
+.\" $NetBSD: pckbd.4,v 1.13.2.1 2004/07/10 12:49:53 tron Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -75,11 +75,16 @@ The builtin mappings are at this time:
 .It Ta Ta interface (e.g., LK461)
 .It Li "KB_US|KB_DVORAK" Ta us.dvorak Ta English/US keyboard with
 .It Ta Ta Do Dvorak Dc layout
+.It Li KB_NO Ta no Ta Norwegian with
+.Dq dead accents
+.It Li KB_PT Ta pt Ta Portuguese
+.It Li KB_ES Ta es Ta Spanish
 .El
 .Pp
 The
 .Li KB_DE ,
-.Li KB_DK
+.Li KB_DK ,
+.Li KB_NO
 and
 .Li KB_SV
 mappings can be used in the
