@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 1998/09/13 09:15:52 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 09:15:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,34 +30,54 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_SIGNAL_H_
-#define	_MACHINE_SIGNAL_H_
 
-typedef int sig_atomic_t;
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/mount.h>  
+#include <sys/syscallargs.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
-#include <machine/frame.h>
+int
+compat_13_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_sys_sigreturn_args /* {
+		syscallarg(struct sigcontext13 *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext13 sc;
+	struct trapframe *tf;
+	int error;
+	sigset_t mask;
 
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct sigcontext13 {
-	int sc_onstack;			/* saved onstack flag */
-	sigset13_t sc_mask;		/* saved signal mask (old style) */
-	struct trapframe sc_frame;	/* saved registers */
-};
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+	/*
+	 * The trampoline hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal hander.
+	 */
+	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
+		return (error);
 
-struct sigcontext {
-	int sc_onstack;			/* saved onstack flag */
-	sigset13_t __sc_mask13;		/* saved signal mask (old style) */
-	struct trapframe sc_frame;	/* saved registers */
-	sigset_t sc_mask;		/* saved signal mask (new style) */
-};
+	/* Restore the register context. */
+	tf = trapframe(p);
+	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+		return (EINVAL);
+	bcopy(&sc.sc_frame, tf, sizeof *tf);
 
-struct sigframe {
-	int sf_signum;
-	int sf_code;
-	struct sigcontext sf_sc;
-};
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif	/* !_MACHINE_SIGNAL_H_ */
+	/* Restore signal stack. */
+	if (sc.sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	native_sigset13_to_sigset(&sc.sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	return (EJUSTRETURN);
+}

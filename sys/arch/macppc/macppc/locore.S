@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 1998/09/09 00:07:53 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 1998/09/13 09:15:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1392,7 +1392,7 @@ _C_LABEL(sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
 	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS_sigreturn
+	li	0,SYS___sigreturn14
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit
 	sc				/* exit(errno) */

@@ -1,4 +1,4 @@
-#	$Id: files.powerpc,v 1.8 1998/05/28 08:19:49 sakamoto Exp $
+#	$Id: files.powerpc,v 1.9 1998/09/13 09:15:52 thorpej Exp $
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/bcopy.c
@@ -24,3 +24,6 @@ file    arch/powerpc/powerpc/db_memrw.c                 ddb
 file    arch/powerpc/powerpc/db_disasm.c                ddb
 file    arch/powerpc/powerpc/db_interface.c             ddb
 file    arch/powerpc/powerpc/db_trace.c                 ddb
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/powerpc/powerpc/compat_13_machdep.c      compat_13
