@@ -1,4 +1,4 @@
-/*	$NetBSD: convfp.c,v 1.1 2003/05/03 19:33:52 martin Exp $	*/
+/*	$NetBSD: convfp.c,v 1.2 2003/06/15 23:38:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ main()
 	ul = (unsigned long)d;
 
 	if (ul != ULONG_TESTVALUE) {
-		printf("FAILED: unsigned long %lu (0x%lx) != %lu (0x%lu)\n",
+		printf("FAILED: unsigned long %lu (0x%lx) != %lu (0x%lx)\n",
 		    ul, ul, ULONG_TESTVALUE, ULONG_TESTVALUE);
 		exit(1);
 	}
