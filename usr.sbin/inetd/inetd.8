@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.15 1998/05/01 01:57:26 thorpej Exp $
+.\"	$NetBSD: inetd.8,v 1.16 1998/06/08 12:41:44 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,13 +261,13 @@ on a socket and eventually time out, the server is said to be
 and should use a
 .Dq wait
 entry.
-.Xr Comsat 8
+.Xr comsat 8
 .Pq Xr biff 1
 and
 .Xr talkd 8
 are both examples of the latter type of
 datagram server.
-.Xr Tftpd 8
+.Xr tftpd 8
 is an exception; it is a datagram server that establishes pseudo-connections.
 It must be listed as
 .Dq wait
@@ -391,3 +391,12 @@ based services is modeled after that
 provided by SunOS 4.1.
 Support for specifying the socket buffer sizes was added in
 .Nx 1.4 .
+.Sh SECURITY CONSIDERATIONS
+Enabling the
+.Dq echo ,
+.Dq discard ,
+and 
+.Dq chargen
+built-in trivial services is not recommended because remote
+users may abuse these to cause a denial of network service to 
+or from the local host.

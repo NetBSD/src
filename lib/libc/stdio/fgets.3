@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgets.3,v 1.8 1998/04/28 20:58:01 fair Exp $
+.\"	$NetBSD: fgets.3,v 1.9 1998/06/08 12:41:42 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ and
 .Fn gets
 conform to
 .St -ansiC .
-.Sh BUGS
+.Sh SECURITY CONSIDERATIONS
 Since it is usually impossible to ensure that the next input line
 is less than some arbitrary length, and because overflowing the
 input buffer is almost invariably a security violation, programs
