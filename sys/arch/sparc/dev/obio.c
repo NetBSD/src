@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.33 1997/05/18 21:26:22 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.34 1997/05/24 20:08:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -82,7 +82,6 @@ static void	vmeattach __P((struct device *, struct device *, void *));
 int		busprint __P((void *, const char *));
 int		vmeprint __P((void *, const char *));
 static int	busattach __P((struct device *, struct cfdata *, void *, int));
-void *		bus_map __P((struct rom_reg *, int, int));
 int		obio_scan __P((struct device *, struct cfdata *, void *));
 int 		vmes_scan __P((struct device *, struct cfdata *, void *));
 int 		vmel_scan __P((struct device *, struct cfdata *, void *));
@@ -347,11 +346,9 @@ vmeattach(parent, self, aux)
 	node = ra->ra_node;
 
 	sc->sc_reg = (struct vmebusreg *)
-		mapdev(&ra->ra_reg[0], 0, 0, ra->ra_reg[0].rr_len,
-			ra->ra_reg[0].rr_iospace);
+		mapdev(&ra->ra_reg[0], 0, 0, ra->ra_reg[0].rr_len);
 	sc->sc_vec = (struct vmebusvec *)
-		mapdev(&ra->ra_reg[1], 0, 0, ra->ra_reg[1].rr_len,
-			ra->ra_reg[1].rr_iospace);
+		mapdev(&ra->ra_reg[1], 0, 0, ra->ra_reg[1].rr_len);
 
 	/*
 	 * Get "range" property, though we don't do anything with it yet.
@@ -383,6 +380,14 @@ vmeattach(parent, self, aux)
 	oca.ca_bustype = BUS_MAIN;
 	(void)config_found(self, (void *)&oca, vmeprint);
 }
+
+int bt2pmt[] = {
+	PMAP_OBIO,
+	PMAP_OBIO,
+	PMAP_VME16,
+	PMAP_VME32,
+	PMAP_OBIO 
+}; 
 
 int
 busattach(parent, cf, args, bustype)
@@ -419,16 +424,14 @@ busattach(parent, cf, args, bustype)
 			return 0;
 	}
 
-	/* XXX - streamline bustype stuff */
 	oca.ca_ra.ra_iospace = CPU_ISSUN4
-		? -1
+		? bt2pmt[bustype]
 		: ((bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16);
 	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
 	if (oca.ca_ra.ra_paddr)
-		tmp = (caddr_t)mapdev(oca.ca_ra.ra_reg,
-				      TMPMAP_VA, 0, NBPG, bustype);
+		tmp = (caddr_t)mapdev(oca.ca_ra.ra_reg, TMPMAP_VA, 0, NBPG);
 	else
 		tmp = NULL;
 	oca.ca_ra.ra_vaddr = tmp;
@@ -466,7 +469,7 @@ busattach(parent, cf, args, bustype)
 	 */
 	if (oca.ca_ra.ra_len)
 		oca.ca_ra.ra_vaddr =
-		    bus_map(oca.ca_ra.ra_reg, oca.ca_ra.ra_len, oca.ca_bustype);
+		    bus_map(oca.ca_ra.ra_reg, oca.ca_ra.ra_len);
 
 	config_attach(parent, cf, &oca, busprint);
 	return 1;
@@ -594,28 +597,15 @@ vmeintr_establish(vec, level, ih)
  * Else, create a new mapping.
  */
 void *
-bus_map(pa, len, bustype)
+bus_map(pa, len)
 	struct rom_reg *pa;
 	int len;
-	int bustype;
 {
 
 	if (CPU_ISSUN4 && len <= NBPG) {
 		u_long	pf = (u_long)(pa->rr_paddr) >> PGSHIFT;
+		int pgtype = PMAP_T2PTE_4(pa->rr_iospace);
 		u_long	va, pte;
-		int pgtype = -1;
-
-		switch (bt2pmt[bustype]) {
-		case PMAP_OBIO:
-			pgtype = PG_OBIO;
-			break;
-		case PMAP_VME32:
-			pgtype = PG_VME32;
-			break;
-		case PMAP_VME16:
-			pgtype = PG_VME16;
-			break;
-		}
 
 		for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
 			pte = getpte(va);
@@ -627,10 +617,7 @@ bus_map(pa, len, bustype)
 		}
 	}
 
-	if (CPU_ISSUN4M)
-		pa->rr_iospace =
-		     (bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16;
-	return mapiodev(pa, 0, len, bustype);
+	return mapiodev(pa, 0, len);
 }
 
 void
