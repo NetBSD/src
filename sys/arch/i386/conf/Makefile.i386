@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.112 2001/01/20 07:18:06 lukem Exp $
+#	$NetBSD: Makefile.i386,v 1.113 2001/05/15 22:34:36 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -152,9 +152,18 @@ clean: __CLEANKERNEL
 
 cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
-lint:
+ALLSFILES=	${I386}/i386/locore.s ${SFILES}
+LINTSTUBS=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
+
+.for _sfile in ${ALLSFILES}
+LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
+	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
+	      awk -f $S/kern/genlintstub.awk >${.TARGET}
+.endfor
+
+lint: ${LINTSTUBS} ${CFILES} ioconf.c param.c
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${I386}/i386/Locore.c ${CFILES} \
+	    ${LINTSTUBS} ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
