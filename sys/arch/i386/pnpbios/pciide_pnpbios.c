@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.10 2003/10/08 11:10:18 bouyer Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.11 2003/12/05 19:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.10 2003/10/08 11:10:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.11 2003/12/05 19:00:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.10 2003/10/08 11:10:18 bouyer E
 
 #include <machine/bus.h>
 
+#include <dev/ic/wdcreg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
@@ -88,7 +89,8 @@ pciide_pnpbios_attach(parent, self, aux)
 	struct pciide_channel *cp;
 	struct channel_softc *wdc_cp;
 	bus_space_tag_t compat_iot;
-	bus_space_handle_t cmd_ioh, ctl_ioh;
+	bus_space_handle_t cmd_baseioh, ctl_ioh;
+	int i;
 
 	printf("\n");
 	pnpbios_print_devres(self, aa);
@@ -101,7 +103,7 @@ pciide_pnpbios_attach(parent, self, aux)
 		return;
 	}
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &compat_iot,
-	    &cmd_ioh) != 0) {
+	    &cmd_baseioh) != 0) {
 		printf("%s: unable to map command registers\n", self->dv_xname);
 		return;
 	}
@@ -144,7 +146,17 @@ pciide_pnpbios_attach(parent, self, aux)
 
 	wdc_cp = &cp->wdc_channel;
 	wdc_cp->cmd_iot = compat_iot;
-	wdc_cp->cmd_ioh = cmd_ioh;
+	wdc_cp->cmd_baseioh = cmd_baseioh;
+
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(wdc_cp->cmd_iot, wdc_cp->cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &wdc_cp->cmd_iohs[i]) != 0) {
+			    printf("%s: unable to subregion control register\n",
+				self->dv_xname);
+			    return;
+		}
+	}
+
 	wdc_cp->ctl_iot = wdc_cp->data32iot = compat_iot;
 	wdc_cp->ctl_ioh = wdc_cp->data32ioh = ctl_ioh;
 
