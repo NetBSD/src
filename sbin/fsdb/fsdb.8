@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.15 2003/04/26 08:42:49 bouyer Exp $
+.\"	$NetBSD: fsdb.8,v 1.16 2003/05/09 23:05:53 jmc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,7 +132,7 @@ List the current inode's blocks numbers.
 .It Cm findblk Ar disk block number ...
 Find the inode(s) owning the specifed disk block(s) number(s).
 Note that these are not absolute disk blocks numbers, but offsets from the
-start or the partition.
+start of the partition.
 .Pp
 .It Cm rm Ar name
 .It Cm del Ar name
