@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.13 2004/04/07 17:46:47 ross Exp $	*/
+/*	$NetBSD: setup.c,v 1.14 2004/12/09 05:15:59 jmc Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -109,21 +109,10 @@ main(argc, argv)
 	++filename;			/* process next file */
 	}
 
-    /* put holy grail info into energy void file */
-    Enrgyvoid.ev_active = 1;
-    Enrgyvoid.ev_x = ROLL(-1.0e6, 2.0e6);
-    Enrgyvoid.ev_y = ROLL(-1.0e6, 2.0e6);
-    path = strrchr(_PATH_VOID, '/') + 1;
+    /* Initialize an empty file placeholder for the grail location. */
     if ((fp = fopen(path, "w")) == NULL)
-	Error("Cannot update %s.\n", path);
-    else
-	{
-	fwrite(&Enrgyvoid, SZ_VOIDSTRUCT, 1, fp);
-	fflush(fp);
-	if (ferror(fp))
-	    Error("Writing %s.\n", path);
-	fclose(fp);
-	}
+	Error("Cannot create %s.\n", path);
+    fclose(fp);
 
     /* create binary monster data base */
     path = strrchr(_PATH_MONST, '/') + 1;
