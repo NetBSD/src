@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.10 1998/02/09 17:43:50 perry Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.11 1999/03/22 22:29:27 bad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -107,6 +107,7 @@ struct frmrinfo {
 #define	llc_frmr_control	llc_un.type_frmr.frmr_control
 #define	llc_frmr_control_ext	llc_un.type_frmr.frmr_control_ext
 #define	llc_frmr_cause		llc_un.type_frmr.frmr_cause
+#define	llc_snap		llc_un.type_snap
 
 /*
  * Don't use sizeof(struct llc_un) for LLC header sizes
@@ -114,6 +115,7 @@ struct frmrinfo {
 #define LLC_ISFRAMELEN 4
 #define LLC_UFRAMELEN  3
 #define LLC_FRMRLEN    7
+#define LLC_SNAPFRAMELEN 8
 
 /*
  * Unnumbered LLC format commands
