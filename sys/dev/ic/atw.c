@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.54 2004/07/15 07:00:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.54 2004/07/15 07:00:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2060,21 +2060,18 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 
 	sc = (struct atw_softc*)ic->ic_if.if_softc;
 
-	if (ic->ic_if.if_flags & IFF_DEBUG)
-		do_print = (ic->ic_if.if_flags & IFF_LINK0)
+	if (ic->ic_if.if_flags & IFF_LINK0) {
+		do_print = (ic->ic_if.if_flags & IFF_DEBUG)
 		    ? 1 : ratecheck(&sc->sc_last_beacon,
 		    &atw_beacon_mininterval);
+	}
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
 
-	if (ic->ic_state != IEEE80211_S_RUN) {
-		if (do_print)
-			printf("%s: atw_recv_beacon: not running\n",
-			    sc->sc_dev.dv_xname);
+	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
-	}
 
 	if ((ni = ieee80211_lookup_node(ic, wh->i_addr2,
 	    ic->ic_bss->ni_chan)) == NULL) {
@@ -2084,12 +2081,8 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
-	if (ieee80211_match_bss(ic, ni) != 0) {
-		if (do_print)
-			printf("%s: atw_recv_beacon: ssid mismatch %s\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
+	if (ieee80211_match_bss(ic, ni) != 0)
 		return;
-	}
 
 	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN) == 0)
 		return;
