@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.26 2002/12/09 21:29:27 manu Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.27 2003/07/17 09:05:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.26 2002/12/09 21:29:27 manu Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.27 2003/07/17 09:05:12 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ main(argc, argv)
 	char **argv;
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
-	int append, ch, fd, inherit, ops, pid, pidset, synclog, trpoints;
+	int append, ch, fd, trset, ops, pid, pidset, synclog, trpoints;
 	const char *outfile;
 #ifdef KTRUSS
 	const char *infile;
@@ -93,8 +93,8 @@ main(argc, argv)
 #endif
 
 	clear = NOTSET;
-	append = ops = pidset = inherit = synclog = 0;
-	trpoints = DEF_POINTS;
+	append = ops = pidset = trset = synclog = 0;
+	trpoints = 0;
 	pid = 0;	/* Appease GCC */
 
 #ifdef KTRUSS
@@ -138,7 +138,7 @@ main(argc, argv)
 			pidset = 1;
 			break;
 		case 'i':
-			inherit = 1;
+			trpoints |= KTRFAC_INHERIT;
 			break;
 #ifdef KTRUSS
 		case 'l':
@@ -170,7 +170,8 @@ main(argc, argv)
 			break;
 #endif
 		case 't':
-			trpoints = getpoints(optarg);
+			trset = 1;
+			trpoints = getpoints(trpoints, optarg);
 			if (trpoints < 0) {
 				warnx("unknown facility in %s", optarg);
 				usage();
@@ -182,9 +183,12 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 
+	if (!trset)
+		trpoints |= clear == NOTSET ? DEF_POINTS : ALL_POINTS;
+
 	if ((pidset && *argv) || (!pidset && !*argv)) {
 #ifdef KTRUSS
-	    if(!infile)
+	    if (!infile)
 #endif
 		usage();
 	}
@@ -204,9 +208,6 @@ main(argc, argv)
 	 */
 	free(malloc(1));
 	
-	if (inherit)
-		trpoints |= KTRFAC_INHERIT;
-
 	(void)signal(SIGSYS, no_ktrace);
 	if (clear != NOTSET) {
 		if (clear == CLEARALL) {
@@ -235,7 +236,7 @@ main(argc, argv)
 			err(1, "exec of '%s' failed", argv[0]);
 		}
 #else
-		(void) do_ktrace(outfile, ops, trpoints, getpid());
+		(void)do_ktrace(outfile, ops, trpoints, getpid());
 		execvp(argv[0], &argv[0]);
 		err(1, "exec of '%s' failed", argv[0]);
 #endif

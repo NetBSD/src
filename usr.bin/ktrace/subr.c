@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.9 2002/12/09 21:29:27 manu Exp $	*/
+/*	$NetBSD: subr.c,v 1.10 2003/07/17 09:05:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: subr.c,v 1.9 2002/12/09 21:29:27 manu Exp $");
+__RCSID("$NetBSD: subr.c,v 1.10 2003/07/17 09:05:12 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,44 +54,68 @@ __RCSID("$NetBSD: subr.c,v 1.9 2002/12/09 21:29:27 manu Exp $");
 #include "ktrace.h"
 
 int
-getpoints(s)
-	char *s;
+getpoints(int facs, char *s)
 {
-	int facs = 0;
+	int fac;
+	int add = 1;
 
-	while (*s) {
-		switch(*s) {
+	/* Make -t-x equivalent to -t+-x since that is rather more useful */
+	if (*s == '-' && (facs & ALL_POINTS) == 0)
+		facs |= DEF_POINTS;
+
+	for (;;) {
+		switch (*s++) {
+		case 0:
+			return facs;
+		case 'A':
+			fac = ALL_POINTS;
+			break;
+		case 'a':
+			fac = KTRFAC_EXEC_ARG;
+			break;
 		case 'c':
-			facs |= KTRFAC_SYSCALL | KTRFAC_SYSRET;
+			fac = KTRFAC_SYSCALL | KTRFAC_SYSRET;
 			break;
 		case 'e':
-			facs |= KTRFAC_EMUL;
-			break;
-		case 'n':
-			facs |= KTRFAC_NAMEI;
+			fac = KTRFAC_EMUL;
 			break;
 		case 'i':
-			facs |= KTRFAC_GENIO;
+			fac = KTRFAC_GENIO;
 			break;
-		case 's':
-			facs |= KTRFAC_PSIG;
-			break;
-		case 'u':
-			facs |= KTRFAC_USER;
+		case 'n':
+			fac = KTRFAC_NAMEI;
 			break;
 		case 'm':
-			facs |= KTRFAC_MMSG;
+			fac = KTRFAC_MMSG;
+			break;
+		case 's':
+			fac = KTRFAC_PSIG;
+			break;
+		case 'u':
+			fac = KTRFAC_USER;
+			break;
+		case 'v':
+			fac = KTRFAC_EXEC_ENV;
 			break;
 		case 'w':
-			facs |= KTRFAC_CSW;
+			fac = KTRFAC_CSW;
 			break;
 		case '+':
-			facs |= DEF_POINTS;
+			if (!add) {
+				add = 1;
+				continue;
+			}
+			fac = DEF_POINTS;
 			break;
+		case '-':
+			add = 0;
+			continue;
 		default:
 			return (-1);
 		}
-		s++;
+		if (add)
+			facs |= fac;
+		else
+			facs &= ~fac;
 	}
-	return (facs);
 }

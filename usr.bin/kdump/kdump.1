@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.20 2003/07/11 13:05:26 wiz Exp $
+.\"	$NetBSD: kdump.1,v 1.21 2003/07/17 09:05:13 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 11, 2003
+.Dd July 17, 2003
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -101,6 +101,8 @@ Display relative timestamps (time since previous entry).
 .It Fl T
 Display absolute timestamps for each entry (seconds since epoch).
 .It Fl t Ar trstr
+Restrict display to the specified set of kernel trace points.
+The default is to display everything in the file.
 See the
 .Fl t
 option of

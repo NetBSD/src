@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.11 2002/12/09 21:29:27 manu Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.12 2003/07/17 09:05:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,12 +39,12 @@
 		  KTRFAC_GENIO | KTRFAC_PSIG | KTRFAC_EMUL | KTRFAC_USER | \
 		  KTRFAC_MMSG)
 
-#define ALL_POINTS (DEF_POINTS | KTRFAC_CSW)
+#define ALL_POINTS KTRFAC_MASK
 
 #define DEF_TRACEFILE	"ktrace.out"
 
 #include <sys/cdefs.h>
 
-int	 getpoints __P((char *));
-char	*ioctlname __P((long));
-void	dumpfile __P((const char *, int, int));
+int	getpoints(int, char *);
+char	*ioctlname(long);
+void	dumpfile(const char *, int, int);
