@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1995/05/01 17:22:20 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 1995/05/01 17:35:45 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -225,6 +225,13 @@ mach_init(argc, argv, code, cv)
 	v = (caddr_t)pmax_round_page(end);
 	bzero(edata, v - edata);
 
+	/* Initialize callv so we can do PROM output... */
+	if (code == DEC_PROM_MAGIC) {
+		callv = cv;
+	} else {
+		callv = &callvec;
+	}
+
 	/* check for direct boot from DS5000 PROM */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
 		argc--;
@@ -336,11 +343,9 @@ mach_init(argc, argv, code, cv)
 	 * Determine what model of computer we are running on.
 	 */
 	if (code == DEC_PROM_MAGIC) {
-		callv = cv;
 		i = (*cv->_getsysid)();
 		cp = "";
 	} else {
-		callv = &callvec;
 		if (cp = (*callv->_getenv)("systype"))
 			i = atoi(cp);
 		else {
