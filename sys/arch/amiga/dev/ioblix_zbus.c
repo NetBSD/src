@@ -1,3 +1,5 @@
+/* $NetBSD: ioblix_zbus.c,v 1.2 2001/03/08 19:21:53 is Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
