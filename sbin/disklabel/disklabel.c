@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.31 1996/06/29 15:50:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.31 1996/06/29 15:50:16 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,12 +119,13 @@ enum	{
 } op = UNSPEC;
 
 int	rflag;
+int	Cflag;
 
 #ifdef DEBUG
 int	debug;
-#define OPTIONS	"BNRWb:ders:w"
+#define OPTIONS	"BCNRWb:ders:w"
 #else
-#define OPTIONS	"BNRWb:ers:w"
+#define OPTIONS	"BCNRWb:ers:w"
 #endif
 
 #ifdef i386
@@ -173,6 +174,9 @@ main(argc, argv)
 			break;
 #endif
 #endif
+		case 'C':
+			++Cflag;
+			break;
 		case 'N':
 			if (op != UNSPEC)
 				usage();
@@ -475,6 +479,7 @@ writelabel(f, boot, lp)
 			return(1);
 		}
 #endif
+
 		writeable = 0;
 		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 			perror("ioctl DIOCWLABEL");
@@ -803,8 +808,24 @@ display(f, lp)
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
-			fprintf(f, "  %c: %8d %8d  ", 'a' + i,
-			   pp->p_size, pp->p_offset);
+			if (Cflag) {
+				char sbuf[32], obuf[32];
+				sprintf(sbuf, "%d/%d/%d",
+				   pp->p_size/lp->d_secpercyl,
+				   (pp->p_size%lp->d_secpercyl) /
+					   lp->d_nsectors,
+				   pp->p_size%lp->d_nsectors);
+
+				sprintf(obuf, "%d/%d/%d",
+				   pp->p_offset/lp->d_secpercyl,
+				   (pp->p_offset%lp->d_secpercyl) /
+					   lp->d_nsectors,
+				   pp->p_offset%lp->d_nsectors);
+				fprintf(f, "  %c: %8s %8s ",
+				   'a' + i, sbuf, obuf);
+			} else
+				fprintf(f, "  %c: %8d %8d  ", 'a' + i,
+				   pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
 				fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
 			else
@@ -1168,22 +1189,50 @@ getasciilabel(f, lp)
 				continue;
 			}
 			pp = &lp->d_partitions[part];
-#define NXTNUM(n) { \
+#define _CHECKLINE \
 	if (tp == NULL) {					\
 		warnx("line %d: too few fields", lineno);	\
 		errors++;					\
 		break;						\
-	} else							\
-		cp = tp, tp = word(cp), (n) = atoi(cp);		\
+	}
+#define NXTNUM(n) { \
+	_CHECKLINE						\
+	cp = tp, tp = word(cp), (n) = atoi(cp);			\
 }
-			NXTNUM(v);
+#define NXTXNUM(n) { \
+	char *ptr;							\
+	int m;								\
+	_CHECKLINE							\
+	cp = tp, tp = word(cp);						\
+	m = strtol(cp, &ptr, 10);					\
+	if (*ptr == '\0')						\
+		(n) = m;						\
+	else {								\
+		if (*ptr++ != '/') {					\
+			warnx("line %d: invalid format", lineno);	\
+			errors++;					\
+			break;						\
+		}							\
+		(n) = m * lp->d_secpercyl;				\
+		m = strtol(ptr, &ptr, 10);				\
+		if (*ptr++ != '/') {					\
+			warnx("line %d: invalid format", lineno);	\
+			errors++;					\
+			break;						\
+		}							\
+		(n) += m * lp->d_nsectors;				\
+		m = strtol(ptr, &ptr, 10);				\
+		(n) += m;						\
+	}								\
+}
+			NXTXNUM(v);
 			if (v < 0) {
 				warnx("line %d: bad partition size: %s",
 				    lineno, cp);
 				errors++;
 			} else
 				pp->p_size = v;
-			NXTNUM(v);
+			NXTXNUM(v);
 			if (v < 0) {
 				warnx("line %d: bad partition offset: %s",
 				    lineno, cp);
@@ -1382,11 +1431,11 @@ usage()
 #if NUMBOOT > 0
 	fprintf(stderr,
 "%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n",
-"usage: disklabel [-r] disk",
+"usage: disklabel [-r] [-C] disk",
 		"(to read label)",
 "or disklabel -w [-r] disk type [ packid ]",
 		"(to write label with existing boot program)",
-"or disklabel -e [-r] disk",
+"or disklabel -e [-r] [-C] disk",
 		"(to edit label)",
 "or disklabel -R [-r] disk protofile",
 		"(to restore label with existing boot program)",
