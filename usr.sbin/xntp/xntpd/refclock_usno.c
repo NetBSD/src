@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_usno.c,v 1.2 1998/01/09 06:07:13 perry Exp $	*/
+/*	$NetBSD: refclock_usno.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * refclock_usno - clock driver for the Naval Observatory dialup
@@ -238,17 +238,17 @@ usno_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct usnounit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX,
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX,
 	    &pp->lastrec);
 	if (pp->lencode == 0) {
-		if (strcmp(pp->lastcode, "OK") == 0)
+		if (strcmp(pp->a_lastcode, "OK") == 0)
 			pp->lencode = 2;
 		return;
 	}
 #ifdef DEBUG
 	if (debug)
         	printf("usno: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	switch (up->state) {
@@ -280,14 +280,14 @@ usno_receive(rbufp)
 		 * okay, start the connect timeout and slide into state
 		 * 3.
 		 */
-		(void)strncpy(str, strtok(pp->lastcode, " "), SMAX);
+		(void)strncpy(str, strtok(pp->a_lastcode, " "), SMAX);
 		if (strcmp(str, "BUSY") == 0 || strcmp(str, "ERROR") ==
 		     0 || strcmp(str, "NO") == 0) {
 			TIMER_DEQUEUE(&up->timer);
 			NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 			  msyslog(LOG_NOTICE,
 			    "clock %s USNO modem status %s",
-			    ntoa(&peer->srcadr), pp->lastcode);
+			    ntoa(&peer->srcadr), pp->a_lastcode);
 			usno_disc(peer);
 		} else if (strcmp(str, "CONNECT") == 0) {
 			TIMER_DEQUEUE(&up->timer);
@@ -299,7 +299,7 @@ usno_receive(rbufp)
 			NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 			  msyslog(LOG_WARNING,
 			    "clock %s USNO unknown modem status %s",
-			    ntoa(&peer->srcadr), pp->lastcode);
+			    ntoa(&peer->srcadr), pp->a_lastcode);
 		}
 		return;
 
@@ -327,7 +327,7 @@ usno_receive(rbufp)
 		 * jjjjj nnn hhmmss UTC
 		 */
 		if (pp->lencode == LENCODE) {
-			if (sscanf(pp->lastcode, "%5ld %3d %2d%2d%2d UTC",
+			if (sscanf(pp->a_lastcode, "%5ld %3d %2d%2d%2d UTC",
 			    &mjd, &day, &hour, &minute, &second) != 5) {
 #ifdef DEBUG
 				if (debug)
@@ -374,7 +374,7 @@ usno_receive(rbufp)
 	 * timeout, arm for the next call, fold the tent and go home.
 	 */
 	disp = LFPTOFP(&pp->fudgetime2);
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer, &pp->offset, 0, pp->dispersion +
 	    (u_fp)disp, &pp->lastrec, &pp->lastrec, pp->leap);
 	pp->sloppyclockflag &= ~CLK_FLAG1;
@@ -451,7 +451,7 @@ usno_timeout(peer)
 		 * and for the OK to be received.  State machines are
 		 * contorted.
 		 */
-		if (strcmp(pp->lastcode, "OK") != 0)
+		if (strcmp(pp->a_lastcode, "OK") != 0)
 			NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 			  msyslog(LOG_NOTICE, "clock %s USNO no modem status",
 			    ntoa(&peer->srcadr));

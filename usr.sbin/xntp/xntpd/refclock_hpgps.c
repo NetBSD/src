@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hpgps.c,v 1.2 1998/01/09 06:06:58 perry Exp $	*/
+/*	$NetBSD: refclock_hpgps.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
 
 /*
  * refclock_hpgps - clock driver for HP 58503A GPS receiver
@@ -268,13 +268,13 @@ hpgps_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct hpgpsunit *)pp->unitptr;
-        *pp->lastcode = '\0';
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+        *pp->a_lastcode = '\0';
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 
 #ifdef DEBUG
 	if (debug)
             printf("hpgps: lencode: %d timecode:%s\n",
-                   pp->lencode, pp->lastcode);
+                   pp->lencode, pp->a_lastcode);
 #endif
 
         /*
@@ -300,7 +300,7 @@ hpgps_receive(rbufp)
         if (up->linecnt-- > 0) {
             if ((int)(pp->lencode + 2) <= (SMAX - (up->lastptr - up->statscrn))) {
                 *up->lastptr++ = '\n';
-                (void)strcpy(up->lastptr, pp->lastcode);
+                (void)strcpy(up->lastptr, pp->a_lastcode);
                 up->lastptr += pp->lencode;
             }
             if (up->linecnt == 0) 
@@ -309,7 +309,7 @@ hpgps_receive(rbufp)
             return;
         }
 
-        record_clock_stats(&peer->srcadr, pp->lastcode);
+        record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	pp->lastrec = trtmp;
             
 	up->lastptr = up->statscrn;
@@ -333,13 +333,13 @@ hpgps_receive(rbufp)
          *
 	 */
 
-        (void)strcpy(prompt,pp->lastcode);
-        tcp = strrchr(pp->lastcode,'>');
+        (void)strcpy(prompt,pp->a_lastcode);
+        tcp = strrchr(pp->a_lastcode,'>');
         if (tcp == NULL)
-            tcp = pp->lastcode; 
+            tcp = pp->a_lastcode; 
         else
             tcp++;
-        prompt[tcp - pp->lastcode] = '\0';
+        prompt[tcp - pp->a_lastcode] = '\0';
         while ((*tcp == ' ') || (*tcp == '\t')) tcp++;
 
         /*

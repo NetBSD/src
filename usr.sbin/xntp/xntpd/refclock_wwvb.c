@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwvb.c,v 1.2 1998/01/09 06:07:14 perry Exp $	*/
+/*	$NetBSD: refclock_wwvb.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * refclock_wwvb - clock driver for Spectracom WWVB receivers
@@ -13,11 +13,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
+#include "ntp_calendar.h"
 
 /*
  * This driver supports the Spectracom Model 8170 and Netclock/2 WWVB
@@ -103,6 +105,7 @@
 #define	NSAMPLES	3	/* stages of median filter */
 #define	LENWWVB0	22	/* format 0 timecode length */
 #define	LENWWVB2	24	/* format 2 timecode length */
+#define LENWWVB3        29      /* format 3 timecode length */
 #define MONLIN		15	/* number of monitoring lines */
 
 /*
@@ -162,6 +165,10 @@ wwvb_start(unit, peer)
 	int fd;
 	char device[20];
 
+#ifdef DEBUG
+	if (debug)
+	    printf("inside wwvb_start\n");
+#endif
 	/*
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
@@ -171,7 +178,13 @@ wwvb_start(unit, peer)
 #else
 	if (!(fd = refclock_open(device, SPEED232, 0)))
 #endif /* TTYCLK */
-		return (0);
+	{
+#ifdef DEBUG
+	    if (debug)
+		printf ("refclock_open barfed\n");
+#endif
+	    return (0);
+	}
 
 	/*
 	 * Allocate and initialize unit structure
@@ -236,17 +249,22 @@ wwvb_receive(rbufp)
 	l_fp trtmp;
 	u_long ltemp;
 	int temp;
+	int tz = 0;
 	char	syncchar;	/* synchronization indicator */
 	char	qualchar;	/* quality indicator */
 	char	leapchar;	/* leap indicator */
 
+#ifdef DEBUG
+	if (debug)
+	    printf ("in wwvb_receive\n");
+#endif
 	/*
 	 * Initialize pointers and read the timecode and timestamp
 	 */
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct wwvbunit *)pp->unitptr;
-	temp = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+	temp = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 
 	/*
 	 * Note we get a buffer and timestamp for both a <cr> and <lf>,
@@ -271,11 +289,11 @@ wwvb_receive(rbufp)
 	up->laststamp = trtmp;
 	up->tcswitch = 1;
 	up->pollcnt = 2;
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 #ifdef DEBUG
 	if (debug)
         	printf("wwvb: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -286,29 +304,65 @@ wwvb_receive(rbufp)
 	 * exit.
 	 */
 	switch (pp->lencode) {
-
 		case LENWWVB0:
 
 		/*
 	 	 * Timecode format 0: "I  ddd hh:mm:ss  TZ=nn"
 	 	 */
 		qualchar = leapchar = ' ';
-		if (sscanf(pp->lastcode, "%c %3d %2d:%2d:%2d",
+		if (sscanf(pp->a_lastcode, "%c %3d %2d:%2d:%2d TZ=%2d",
 		    &syncchar, &pp->day, &pp->hour, &pp->minute,
-		    &pp->second) == 5)
-			break;
+		    &pp->second, &tz) == 6)
+		  {
+		    int hr;
+
+		    hr = pp->hour + tz;
+		    pp->day += hr / 24;
+		    pp->hour = hr % 24;
+		    break;
+		  }
 
 		case LENWWVB2:
 
 		/*
 	 	 * Timecode format 2: "IQyy ddd hh:mm:ss.mmm LD"
 	 	 */
-		if (sscanf(pp->lastcode, "%c%c %2d %3d %2d:%2d:%2d.%3d %c",
+		if (sscanf(pp->a_lastcode, "%c%c %2d %3d %2d:%2d:%2d.%3d %c",
 		    &syncchar, &qualchar, &pp->year, &pp->day,
 		    &pp->hour, &pp->minute, &pp->second, &pp->msec,
 		    &leapchar) == 9)
 			break;
 
+		case LENWWVB3:
+		    /*
+		     * Timecode format 3: "0003I yyyymmdd hhmmss+0000SL#"
+		     */
+		    {
+			int             month,day;
+			int             matched;
+	
+			qualchar = ' ';
+			matched =
+			    sscanf(pp->a_lastcode,"0003%c %4d%2d%2d %2d%2d%2d%*c%c",
+				   &syncchar,&pp->year,&month,&day,
+				   &pp->hour,&pp->minute,&pp->second,&leapchar);
+			if (matched==8)
+			{
+			    pp->msec = 0;
+			    pp->day = 31*(month - 1) + day;
+			    if (month > 2)
+			    {
+				pp->day = pp->day - (4*month + 23)/10;
+				if (is_leapyear(pp->year))
+				    pp->day++;
+			    }
+			    break;
+			}
+#ifdef DEBUG
+			if (debug)
+			    printf ("wwvb_receive: Surrender, Dorothy!\n");
+#endif
+		    }
 		default:
 
 		if (up->linect > 0)

@@ -1,10 +1,10 @@
-/*	$NetBSD: humandate.c,v 1.3 1998/01/09 03:16:15 perry Exp $	*/
+/*	$NetBSD: humandate.c,v 1.4 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
  */
 #include <stdio.h>
-
+#include "time.h"
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"	/* includes <sys/time.h> */
 #include "lib_strbuf.h"
@@ -14,13 +14,11 @@
 #include <time.h>
 #endif
 
-char *humanlogtime __P((void));
-
-static char *months[] = {
+static const char *months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
-static char *days[] = {
+static const char *days[] = {
         "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 

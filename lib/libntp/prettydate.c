@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.2 1998/01/09 03:16:29 perry Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * prettydate - convert a time stamp to something readable
@@ -22,11 +22,11 @@ prettydate(ts)
 	struct tm *tm;
 	time_t sec;
 	u_long msec;
-	static char *months[] = {
+	static const char *months[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-	static char *days[] = {
+	static const char *days[] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 	};
 
