@@ -35,7 +35,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    version. (pk) */
 
 /*
- *	$Id: ld.c,v 1.7 1993/10/21 00:52:56 pk Exp $
+ *	$Id: ld.c,v 1.8 1993/10/22 21:00:08 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -409,7 +409,7 @@ decode_command(argc, argv)
 		fatal("-T argument not multiple of page size, with sharable output");
 
 	/* Append the standard search directories to the user-specified ones. */
-	std_search_dirs();
+	std_search_dirs(getenv("LD_LIBRARY_PATH"));
 }
 
 void
@@ -2168,6 +2168,7 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					r->r_address += dataseg?
 						entry->data_start_address:
 						entry->text_start_address;
+					relocation = addend;
 					if (claim_rrs_reloc(r, sp, &relocation))
 						continue;
 					break;
