@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.25 1996/09/02 06:43:45 mycroft Exp $	*/
+/*	$NetBSD: dca.c,v 1.26 1996/10/06 01:42:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -871,8 +871,9 @@ dcainit(dca, rate)
 	dca->dca_ier = rate >> 8;
 	dca->dca_cfcr = CFCR_8BITS;
 	dca->dca_ier = IER_ERXRDY | IER_ETXRDY;
-	dca->dca_fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_14;
-	dca->dca_mcr |= MCR_IEN;
+	dca->dca_fifo =
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1;
+	dca->dca_mcr = MCR_DTR | MCR_RTS;
 	DELAY(100);
 	stat = dca->dca_iir;
 	splx(s);
