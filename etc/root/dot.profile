@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.9 1999/03/30 02:36:05 hubertf Exp $
+#	$NetBSD: dot.profile,v 1.10 1999/04/04 09:58:57 mycroft Exp $
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
@@ -20,10 +20,6 @@ hup(){ kill -HUP `cat /var/run/$1.pid` ; }
 ll(){ ls -l $* ; }
 x(){ exit ; }
 
-if [ `/usr/bin/id -u` = 0 ]; then 
-	PS1="`hostname -s`# "
-else
-	PS1="`hostname -s`$ "
-fi
+PS1="`hostname -s`$PS1"
 
 echo "Don't login as root, use the su command."
