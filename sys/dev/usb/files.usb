@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
+#	$NetBSD: files.usb,v 1.17 2000/03/30 16:56:19 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -72,6 +72,11 @@ file	dev/usb/umodem.c		umodem
 device	ums: wsmousedev
 attach	ums at uhub
 file	dev/usb/ums.c			ums
+
+# Handspring Visor
+device	uvisor: ucombus
+attach	uvisor at uhub
+file	dev/usb/uvisor.c		uvisor
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
