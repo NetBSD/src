@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.4 1999/08/04 18:46:59 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.5 1999/08/04 18:56:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -293,15 +293,15 @@ MALLOC_DECLARE(M_NTFSNTHASH);
 
 #ifdef __NetBSD__
 #define MALLOC_DEFINE(a, b, c)
-#define M_NTFSNTHASH	M_TEMP
-#define M_NTFSNTVATTR	M_TEMP
-#define M_NTFSRDATA	M_TEMP
-#define M_NTFSRUN	M_TEMP
-#define M_NTFSDECOMP	M_TEMP
-#define M_NTFSMNT	M_TEMP
-#define M_NTFSNTNODE	M_TEMP
-#define M_NTFSFNODE	M_TEMP
-#define M_NTFSDIR	M_TEMP
+#define M_NTFSNTHASH	M_NTFS
+#define M_NTFSNTVATTR	M_NTFS
+#define M_NTFSRDATA	M_NTFS
+#define M_NTFSRUN	M_NTFS
+#define M_NTFSDECOMP	M_NTFS
+#define M_NTFSMNT	M_NTFS
+#define M_NTFSNTNODE	M_NTFS
+#define M_NTFSFNODE	M_NTFS
+#define M_NTFSDIR	M_NTFS
 typedef int (vop_t) __P((void *));
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
