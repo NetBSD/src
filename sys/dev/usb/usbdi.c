@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.1 1998/07/12 19:52:01 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.2 1998/07/22 12:22:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -388,7 +388,7 @@ usbd_status usbd_set_configuration(dev, conf)
 	usbd_device_handle dev;
 	u_int16_t conf;
 {
-	return usbd_set_config_no(dev, conf, 0);
+	return usbd_set_config_no(dev, conf);
 }
 
 usbd_status 
