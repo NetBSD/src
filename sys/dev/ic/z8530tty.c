@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.4.4 2001/10/11 00:02:06 fvdl Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.5 2001/10/11 12:33:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -230,6 +230,7 @@ cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
+static int	cold_zsparam __P((struct tty *, struct termios *, dev_t));
 static void zs_modem __P((struct zstty_softc *, int));
 static void tiocm_to_zs __P((struct zstty_softc *, u_long, int));
 static int  zs_to_tiocm __P((struct zstty_softc *));
@@ -239,7 +240,7 @@ static void zs_maskintr __P((struct zstty_softc *));
 
 /* Low-level routines. */
 static void zstty_rxint   __P((struct zs_chanstate *));
-static void zstty_stint   __P((struct zs_chanstate *, int));
+static void zstty_stint   __P((struct zs_chanstate *, int, dev_t));
 static void zstty_txint   __P((struct zs_chanstate *));
 static void zstty_softint __P((struct zs_chanstate *));
 
@@ -394,7 +395,7 @@ zstty_attach(parent, self, aux)
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-		(void) zsparam(tp, &t);
+		(void) cold_zsparam(tp, &t, dev);
 
 		s = splzs();
 
@@ -1039,10 +1040,20 @@ zsstop(tp, flag)
  * XXX - Should just copy the whole termios after
  * making sure all the changes could be done.
  */
+
 static int
 zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
+{
+	return cold_zsparam(tp, t, vdev_rdev(tp->t_devvp));
+}
+
+static int
+cold_zsparam(tp, t, dev)
+	struct tty *tp;
+	struct termios *t;
+	dev_t dev;
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -1050,7 +1061,7 @@ zsparam(tp, t)
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
 
-	zst = vdev_privdata(tp->t_devvp);
+	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 
 	cs = zst->zst_cs;
 
@@ -1197,7 +1208,7 @@ zsparam(tp, t)
 	 * Force a recheck of the hardware carrier and flow control status,
 	 * since we may have changed which bits we're looking at.
 	 */
-	zstty_stint(cs, 1);
+	zstty_stint(cs, 1, dev);
 
 	splx(s);
 
@@ -1544,26 +1555,32 @@ zstty_txint(cs)
  * status change interrupt.  (splzs)
  */
 static void
-zstty_stint(cs, force)
+zstty_stint(cs, force, dev)
 	struct zs_chanstate *cs;
 	int force;
+	dev_t dev;
 {
 	struct zstty_softc *zst = cs->cs_private;
 	u_char rr0, delta;
+	dev_t rdev;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
-	if (zst->zst_tty->t_devvp->v_type == VBAD)
-		return;
+	if (force)
+		rdev = dev;
+	else {
+		if (zst->zst_tty->t_devvp->v_type == VBAD)
+			return;
+		rdev = vdev_rdev(zst->zst_tty->t_devvp);
+	}
 
 	/*
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
 	if (ISSET(rr0, ZSRR0_BREAK))
-		cn_check_magic(zst->zst_tty->t_devvp->v_rdev, CNC_BREAK,
-		    zstty_cnm_state);
+		cn_check_magic(rdev, CNC_BREAK, zstty_cnm_state);
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;
