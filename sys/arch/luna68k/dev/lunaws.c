@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: lunaws.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $");
 
 #include "wsmouse.h"
 
@@ -115,6 +115,10 @@ static void wsintr __P((int));
 
 static int  wsmatch __P((struct device *, struct cfdata *, void *));
 static void wsattach __P((struct device *, struct device *, void *));
+static int  ws_submatch_kbd __P((struct device *, struct cfdata *, void *));
+#if NWSMOUSE > 0
+static int  ws_submatch_mouse __P((struct device *, struct cfdata *, void *));
+#endif
 
 const struct cfattach ws_ca = {
 	sizeof(struct ws_softc), wsmatch, wsattach
@@ -167,17 +171,47 @@ wsattach(parent, self, aux)
 	a.keymap = &omkbd_keymapdata;
 	a.accessops = &omkbd_accessops;
 	a.accesscookie = (void *)sc;
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found_sm(self, &a, wskbddevprint,
+					ws_submatch_kbd);
 
 #if NWSMOUSE > 0
 	{
 	struct wsmousedev_attach_args b;
 	b.accessops = &omms_accessops;
 	b.accesscookie = (void *)sc;	
-	sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint);
+	sc->sc_wsmousedev = config_found_sm(self, &b, wsmousedevprint,
+					ws_submatch_mouse);
 	}
 #endif
 }
+
+static int
+ws_submatch_kbd(parent, cf, aux)
+        struct device *parent;
+        struct cfdata *cf;
+        void *aux;
+{
+
+        if (strcmp(cf->cf_driver->cd_name, "wskbd"))
+                return (0);
+        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+#if NWSMOUSE > 0
+
+static int
+ws_submatch_mouse(parent, cf, aux)
+        struct device *parent;
+        struct cfdata *cf;
+        void *aux;
+{
+
+        if (strcmp(cf->cf_driver->cd_name, "wsmouse"))
+                return (0);
+        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+#endif
 
 /*ARGSUSED*/
 static void
@@ -188,7 +222,6 @@ wsintr(chan)
 	struct sioreg *sio = sc->sc_ctl;
 	u_int code;
 	int rr;
-	extern int getsiocsr __P((struct sioreg *));
 
 	rr = getsiocsr(sio);
 	if (rr & RR_RXRDY) {
@@ -405,7 +438,7 @@ omkbd_set_leds(v, leds)
 #if 0
 	syscnputc((dev_t)1, 0x10); /* kana LED on */
 	syscnputc((dev_t)1, 0x00); /* kana LED off */
-	syscnputc((dev_t)1, 0x11); /* caps LED off */
+	syscnputc((dev_t)1, 0x11); /* caps LED on */
 	syscnputc((dev_t)1, 0x01); /* caps LED off */
 #endif
 }
