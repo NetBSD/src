@@ -1,4 +1,4 @@
-/*	$NetBSD: swabcheck.c,v 1.4 2005/02/06 06:05:19 perry Exp $	*/
+/*	$NetBSD: swabcheck.c,v 1.1 2005/03/13 15:33:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
