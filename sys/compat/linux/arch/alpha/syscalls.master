@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1998/10/19 22:23:32 tron Exp $
+	$NetBSD: syscalls.master,v 1.5 1998/12/08 21:02:19 erh Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -67,6 +67,7 @@
 #include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_shm.h>
+#include <compat/linux/common/linux_mmap.h>
 ;#include <compat/linux/common/linux_machdep.h>
 
 #include <compat/linux/linux_syscallargs.h>
