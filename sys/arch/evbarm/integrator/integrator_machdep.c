@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.45 2003/09/06 10:21:19 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.46 2003/09/06 10:28:26 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.45 2003/09/06 10:21:19 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.46 2003/09/06 10:28:26 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -864,9 +864,15 @@ integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 {
 	volatile unsigned long *cm_sdram 
 	    = (volatile unsigned long *)0x10000020;
+	volatile unsigned long *cm_stat
+	    = (volatile unsigned long *)0x10000010;
 
-	*memstart = 0;
+	*memstart = *cm_stat & 0x00ff0000;
 
+	/*
+	 * Although the SSRAM overlaps the SDRAM, we can use the wrap-around
+	 * to access the entire bank.
+	 */
 	switch ((*cm_sdram >> 2) & 0x7)
 	{
 	case 0:
@@ -882,7 +888,8 @@ integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 		*memsize = 128 * 1024 * 1024;
 		break;
 	case 4:
-		*memsize = 256 * 1024 * 1024;
+		/* With 256M of memory there is no wrap-around.  */
+		*memsize = 256 * 1024 * 1024 - *memstart;
 		break;
 	default:
 		printf("CM_SDRAM retuns unknown value, using 16M\n");
