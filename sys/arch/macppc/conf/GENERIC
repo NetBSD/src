@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.28 1999/05/06 19:28:20 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.29 1999/05/07 20:10:54 wrstuden Exp $
 #
 # POWERMAC config file
 #
@@ -114,6 +114,7 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
@@ -140,6 +141,7 @@ wsmouse0 at ams?
 
 scsibus* at adv?
 scsibus* at ahc?
+scsibus* at bha?
 scsibus* at esp?
 scsibus* at mesh?
 scsibus* at pcscp?
