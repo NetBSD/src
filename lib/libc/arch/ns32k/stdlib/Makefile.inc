@@ -1,3 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/11/05 23:00:04 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/12/07 00:19:36 matthias Exp $
 
-SRCS+=	abs.S div.c labs.c ldiv.c
+# objects built from assembler sources (need lint stubs)
+ASSRCS+=abs.S
+
+# objects built from C sources
+SRCS+=	div.c labs.c ldiv.c
