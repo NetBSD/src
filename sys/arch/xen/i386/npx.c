@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.2 2004/04/06 16:23:33 cl Exp $	*/
+/*	$NetBSD: npx.c,v 1.3 2004/05/07 13:48:32 cl Exp $	*/
 /*	NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.2 2004/04/06 16:23:33 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.3 2004/05/07 13:48:32 cl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -611,10 +611,13 @@ npxdna_s87(struct cpu_info *ci)
 
 	KDASSERT(i386_use_fxsave == 0);
 
-	if (ci->ci_fpsaving) {
-		printf("recursive npx trap; cr0=%x\n", rcr0());
-		return (0);
-	}
+	/*
+	 * Because we don't have clts() we will trap on the fnsave in
+	 * fpu_save, if we're saving the FPU state not from interrupt
+	 * context (f.i. during fork()).  Just return in this case.
+	 */
+	if (ci->ci_fpsaving)
+		return (1);
 
 	s = splipi();		/* lock out IPI's while we clean house.. */
 #ifdef MULTIPROCESSOR
@@ -653,6 +656,7 @@ npxdna_s87(struct cpu_info *ci)
 	s = splipi();
 	ci->ci_fpcurlwp = l;
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
+	ci->ci_fpused = 1;
 	splx(s);
 
 
@@ -727,6 +731,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 	s = splipi();
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurlwp = NULL;
+	ci->ci_fpused = 1;
 	splx(s);
 }
 
