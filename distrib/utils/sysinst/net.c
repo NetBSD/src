@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.3 1997/11/02 20:44:00 mellon Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.4 1997/11/06 00:40:26 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -160,7 +160,9 @@ int config_network (void)
 		exit(1);
 	}
 	time(&now);
-	(void)fprintf (f, ";\n; BIND data file\n; Created by NetBSD sysinst on %s\n;\n", ctime(&now));
+	/* NB: ctime() returns a string ending in  '\n' */
+	(void)fprintf (f, ";\n; BIND data file\n; %s %s;\n", 
+		       "Created by NetBSD sysinst on", ctime(&now)); 
 	(void)fprintf (f, "nameserver %s\nlookup file bind\nsearch %s\n",
 		       net_namesvr, net_domain);
 	fclose (f);
@@ -194,6 +196,10 @@ get_via_ftp (void)
 
 	cd_dist_dir ("ftp");
 
+	/* Fill in final values for ftp_dir. */
+	strncat (ftp_dir, rels, STRSIZE-strlen(ftp_dir));
+	strcat  (ftp_dir, "/");
+	strncat (ftp_dir, machine, STRSIZE-strlen(ftp_dir));
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
 	process_menu (MENU_ftpsource);
 	
@@ -263,28 +269,57 @@ get_via_nfs(void)
 	return 1;
 }
 
+/*
+ * Write the network config info the user entered via menus into the
+ * config files in the target disk.  Be careful not to lose any
+ * information we don't immediately add back, in case the install
+ * target is the currently-active root. 
+ */
 void
 mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
+	FILE *f;
 
 	if (network_up) {
 		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
-			if (!target_already_root()) {
-				run_prog ("/bin/cp /etc/resolv.conf /mnt/etc");
+
+			/* If not running in target, copy resolv.conf there. */
+			dup_file_into_target("/etc/resolv.conf");
+			/* 
+			 * Add IPaddr/hostname to  /etc/hosts.
+			 * Be careful not to clobber any existing contents.
+			 * Relies on ordered seach of /etc/hosts. XXX YP?
+			 */
+			f = target_fopen("/etc/hosts", "a");
+			if (f != 0) {
+				fprintf(f, "#\n");
+				fprintf(f, "#Added by NetBSD sysinst\n");
+				fprintf(f, "#\n");
+				fprintf(f, "%s %s\n", net_ip, net_host);
+				fprintf(f, "%s %s.%s\n", 
+					net_ip, net_host, net_domain);
+				fprintf(f, "127.0.0.1 localhost\n");
+				  fclose(f);
 			}
 
-			sprintf_to_target_file (
-			    "/etc/hosts", "%s %s", net_ip, net_host);
+			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
+			snprintf (ifconfig_fn, STRSIZE,
+				  "/etc/ifconfig.%s", net_dev);
+			f = target_fopen(ifconfig_fn, "w");
+			if (f != 0) {
+				fprintf(f, "%s netmask %s\n",
+					net_ip, net_mask);
+				fclose(f);
+			}
 
-			snprintf (ifconfig_fn, STRSIZE, 
-			    "/etc/ifconfig.%s", net_dev);
-			sprintf_to_target_file (
-			    ifconfig_fn, "%s netmask %s", net_ip, net_mask);
-
-			echo_to_target_file ("/etc/mygate", net_defroute);
+			f = target_fopen("/etc/mygate", "w");
+			if (f != 0) {
+				fprintf(f, "%s\n", net_defroute);
+				fclose(f);
+			}
 		}
 	}
 }
