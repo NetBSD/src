@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.2.1 2002/06/05 09:41:28 lukem Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.2 2002/06/05 10:00:47 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,8 +152,8 @@ md_post_newfs(void)
 	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/bootsd", "/.bootsd");
 	run_prog(RUN_DISPLAY, "Warning: disk is probably not bootable",
-		"/usr/mdec/installboot /.bootsd /usr/mdec/%sboot /dev/r%sa",
-		diskdev, diskdev);
+		"/usr/mdec/installboot %s /usr/mdec/bootxx /dev/r%sa",
+		target_expand("/.bootsd"), diskdev);
 	return (0);
 }
 
