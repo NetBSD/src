@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.17 2001/04/12 20:13:27 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,6 +41,9 @@
 /*
  * MSCP generic driver routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

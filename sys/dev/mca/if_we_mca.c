@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.4 2001/04/23 06:10:09 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.5 2001/11/13 07:46:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -57,6 +57,9 @@
  * Currently only tested with WD8003W/A. Other WD8003-based cards
  * should work without problems, the SMC Elite based ones hopefully too.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.5 2001/11/13 07:46:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

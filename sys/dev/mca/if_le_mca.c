@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.2 2001/08/18 00:41:39 chs Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@
  * SKNET personal Technisches Manual, version 1.2, April 14 1988
  * SKNET junior Technisches Manual, version 1.0, July 14 1987
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

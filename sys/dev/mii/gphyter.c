@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.5 2001/08/25 18:04:01 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.6 2001/11/13 07:41:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  *
  * Data Sheet available from www.national.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.6 2001/11/13 07:41:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

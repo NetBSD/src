@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.8 2001/09/03 18:13:13 sommerfeld Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.9 2001/11/13 07:46:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 /*
  * Disk goo for MCA ESDI controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.9 2001/11/13 07:46:25 lukem Exp $");
 
 #include "rnd.h"
 

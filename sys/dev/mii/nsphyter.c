@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.12 2001/08/25 18:04:02 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.13 2001/11/13 07:41:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  * We also support the DP83815 MacPHYER internal PHY since, for our
  * purposes, they are compatible.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.13 2001/11/13 07:41:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.15 2000/03/30 12:45:34 augustss Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,6 +39,9 @@
  * TODO
  *	Write status handling code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
