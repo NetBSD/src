@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.24 2004/04/25 22:18:08 kleink Exp $	*/
+/*	$NetBSD: resource.h,v 1.25 2004/04/26 10:10:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,18 +119,18 @@ struct loadavg {
 #ifdef _KERNEL
 extern struct loadavg averunnable;
 struct pcred;
-int	dosetrlimit __P((struct proc *, struct pcred *, int, struct rlimit *));
-int	donice __P((struct proc *, struct proc *, int));
+int	dosetrlimit(struct proc *, struct pcred *, int, struct rlimit *);
+int	donice(struct proc *, struct proc *, int);
 
 #else
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getpriority __P((int, id_t));
-int	getrlimit __P((int, struct rlimit *));
-int	getrusage __P((int, struct rusage *));
-int	setpriority __P((int, id_t, int));
-int	setrlimit __P((int, const struct rlimit *));
+int	getpriority(int, id_t);
+int	getrlimit(int, struct rlimit *);
+int	getrusage(int, struct rusage *);
+int	setpriority(int, id_t, int);
+int	setrlimit(int, const struct rlimit *);
 __END_DECLS
 
 #endif	/* _KERNEL */
