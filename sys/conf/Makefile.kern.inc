@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.40 2003/10/28 17:58:57 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.41 2003/10/29 21:29:27 mycroft Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -58,11 +58,6 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
-.if (${MACHINE_ARCH} == "m68k")
-# GCC 3.3.x for m68k apparently does not correctly handle -Wuninitialized
-# for 64-bit quantities
-CWARNFLAGS+=	-Wno-uninitialized
-.endif
 .endif
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
