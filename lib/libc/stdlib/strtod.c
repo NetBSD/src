@@ -86,7 +86,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.11 1993/12/21 19:24:09 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.12 1993/12/28 19:42:49 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
@@ -122,7 +122,9 @@ static char *rcsid = "$Id: strtod.c,v 1.11 1993/12/21 19:24:09 jtc Exp $";
 #endif
 #endif
 
+#include "ctype.h"
 #include "errno.h"
+
 #ifdef Bad_float_h
 #undef __STDC__
 #ifdef IEEE_MC68k
