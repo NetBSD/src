@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.39 2003/07/06 08:27:04 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.40 2003/07/06 08:40:00 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.39 2003/07/06 08:27:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.40 2003/07/06 08:40:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -977,18 +977,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211CHANNEL:
 		chan = (struct ieee80211_channel *)data;
-		switch (ic->ic_state) {
-		case IEEE80211_S_INIT:
-		case IEEE80211_S_SCAN:
-			if (ic->ic_opmode == IEEE80211_M_STA)
-				chan->i_channel = ic->ic_des_chan;
-			else
-				chan->i_channel = ic->ic_ibss_chan;
-			break;
-		default:
-			chan->i_channel = ic->ic_bss.ni_chan;
-			break;
-		}
+		chan->i_channel = ieee80211_get_channel(ic);
 		break;
 	case SIOCGIFGENERIC:
 		error = ieee80211_cfgget(ifp, cmd, data);
@@ -1318,6 +1307,24 @@ ieee80211_get_rate(struct ieee80211com *ic)
 		rate = ic->ic_sup_rates[ic->ic_fixed_rate];
 	return rate & IEEE80211_RATE_VAL;
 }
+
+int
+ieee80211_get_channel(struct ieee80211com *ic)
+{
+	switch (ic->ic_state) {
+	case IEEE80211_S_INIT:
+		if (ic->ic_opmode == IEEE80211_M_STA)
+			return ic->ic_des_chan;
+		else
+			return ic->ic_ibss_chan;
+	case IEEE80211_S_SCAN:	/* XXX could be confusing if ic_des_chan is
+				 * set
+				 */
+	default:
+		return ic->ic_bss.ni_chan;
+	}
+}
+
 
 struct ieee80211_node *
 ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.34 2003/07/06 08:06:20 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.35 2003/07/06 08:39:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -608,6 +608,7 @@ void	ieee80211_watchdog(struct ifnet *);
 void	ieee80211_next_scan(struct ifnet *);
 void	ieee80211_end_scan(struct ifnet *);
 int	ieee80211_get_rate(struct ieee80211com *);
+int	ieee80211_get_channel(struct ieee80211com *);
 struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *, u_int8_t *,
     int);
 struct ieee80211_node *ieee80211_find_node(struct ieee80211com *, u_int8_t *);
