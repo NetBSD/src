@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.38 2002/05/10 13:17:57 agc Exp $ */
+/* $NetBSD: lib.h,v 1.39 2002/06/09 03:50:13 yamt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -93,6 +93,9 @@
 
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
+
+#define	PKG_PATTERN_MAX	FILENAME_MAX	/* max length of pattern, including nul */
+#define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
 
 /* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
 #ifndef TAILQ_FIRST
