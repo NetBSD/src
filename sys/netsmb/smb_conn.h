@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.3 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.4 2003/03/23 10:01:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -449,7 +449,9 @@ struct smbiod {
 	struct smb_cred		iod_scred;
 	struct smb_slock	iod_evlock;	/* iod_evlist */
 	SIMPLEQ_HEAD(,smbiod_event) iod_evlist;
+#if 0
 	struct timeval	 	iod_lastrqsent;
+#endif
 	struct timeval	 	iod_pingtimo;
 };
 

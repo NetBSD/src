@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.3 2003/02/24 21:13:13 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.4 2003/03/23 10:01:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -95,7 +95,7 @@ struct smb_rq {
 	int			sr_timo;
 	int			sr_rexmit;
 	int			sr_sendcnt;
-	struct timeval	 	sr_timesent;
+	struct timeval		sr_sendtimo;	/* timeout expiration time */
 	int			sr_lerror;
 	u_int8_t *		sr_rqtid;
 	u_int8_t *		sr_rquid;
