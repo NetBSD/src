@@ -1,4 +1,4 @@
-.\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
+.\"	$NetBSD: cut.1,v 1.7 1997/10/18 13:21:28 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,21 +43,21 @@
 .Nm cut
 .Nd select portions of each line of a file
 .Sh SYNOPSIS
-.Nm cut
+.Nm
 .Fl b Ar list
 .Op Fl n
 .Op Ar
-.Nm cut
+.Nm "'
 .Fl c Ar list
 .Op Ar
-.Nm cut
+.Nm ""
 .Fl f Ar list
 .Op Fl d Ar delim
 .Op Fl s
 .Op Ar
 .Sh DESCRIPTION
 The
-.Nm cut
+.Nm
 utility selects portions of each line (as specified by
 .Ar list  )
 from each
@@ -111,12 +111,12 @@ Suppresses lines with no field delimiter characters.
 Unless specified, lines with no delimiters are passed through unmodified.
 .El
 .Pp
-.Nm Cut
+.Nm
 exits 0 on success, 1 if an error occurred.
 .Sh SEE ALSO
 .Xr paste 1
 .Sh STANDARDS
 The
-.Nm cut
+.Nm
 utility conforms to
 .St -p1003.2-92 .
