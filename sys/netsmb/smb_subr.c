@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.15 2003/03/24 08:39:17 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.16 2003/03/24 10:05:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.15 2003/03/24 08:39:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.16 2003/03/24 10:05:43 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,8 @@ smb_maperror(int eclass, int eno)
 			return EEXIST;
 		    case ERRquota:
 			return EDQUOT;
+		    case ERRnotlocked:
+			return EBUSY;
 		}
 		break;
 	    case ERRSRV:
