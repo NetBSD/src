@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.52 2004/01/07 09:17:47 jdolecek Exp $	*/
+/*	$NetBSD: ehci.c,v 1.53 2004/01/09 09:19:33 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ umass0: using SCSI over Bulk-Only
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.52 2004/01/07 09:17:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.53 2004/01/09 09:19:33 chs Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -619,7 +619,7 @@ void
 ehci_softintr(void *v)
 {
 	ehci_softc_t *sc = v;
-	struct ehci_xfer *ex;
+	struct ehci_xfer *ex, *nextex;
 
 	DPRINTFN(10,("%s: ehci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
 		     sc->sc_bus.intr_context));
@@ -632,8 +632,10 @@ ehci_softintr(void *v)
 	 * An interrupt just tells us that something is done, we have no
 	 * clue what, so we need to scan through all active transfers. :-(
 	 */
-	for (ex = LIST_FIRST(&sc->sc_intrhead); ex; ex = LIST_NEXT(ex, inext))
+	for (ex = LIST_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
+		nextex = LIST_NEXT(ex, inext);
 		ehci_check_intr(sc, ex);
+	}
 
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
