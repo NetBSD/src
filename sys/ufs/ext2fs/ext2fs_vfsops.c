@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.7 1998/02/18 07:05:49 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.8 1998/02/18 17:02:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -101,6 +101,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_vptofh,
 	ext2fs_init,
 	ext2fs_mountroot,
+	ext2fs_vnodeopv_descs,
 };
 
 extern u_long ext2gennumber;
