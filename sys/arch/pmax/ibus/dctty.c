@@ -1,4 +1,4 @@
-/* $NetBSD: dctty.c,v 1.1.2.4 1999/11/20 06:28:21 nisimura Exp $ */
+/* $NetBSD: dctty.c,v 1.1.2.5 1999/11/25 08:57:47 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.4 1999/11/20 06:28:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.5 1999/11/25 08:57:47 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ void dctty_attach __P((struct device *, struct device *, void *));
 struct cfattach dctty_ca = {
 	sizeof(struct device), dctty_match, dctty_attach
 };
+extern struct cfdriver dc_cd;
 
 extern struct cfdriver dc_cd;			/* IMPORT */
 extern struct speedtab dcspeedtab[];		/* IMPORT */
@@ -79,9 +80,6 @@ dctty_match(parent, cf, aux)
 	void *aux;
 {
 	struct dc_attach_args *args = aux;
-
-	if (parent->dv_cfdata->cf_driver != &dc_cd)
-		return 0;
 
 	/* Exact match is better than wildcard. */
 	if (cf->cf_loc[DCCF_LINE] == args->line)

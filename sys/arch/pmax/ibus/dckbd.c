@@ -1,4 +1,4 @@
-/* $NetBSD: dckbd.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $ */
+/* $NetBSD: dckbd.c,v 1.1.2.4 1999/11/25 08:57:49 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dckbd.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dckbd.c,v 1.1.2.4 1999/11/25 08:57:49 nisimura Exp $");
 
 /*
  * WSCONS attachments for LK201 and DC7085 combo
@@ -70,7 +70,6 @@ const struct cfattach dckbd_ca = {
 	sizeof(struct lkkbd_softc), dckbd_match, dckbd_attach,
 };
 extern struct cfdriver lkkbd_cd;
-extern struct cfdriver dc_cd;
 
 
 int dckbd_cnattach __P((paddr_t));		/* EXPORT */
@@ -99,14 +98,17 @@ dckbd_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (parent->dv_cfdata->cf_driver != &dc_cd)
-		return 0;
-	if (((struct dc_softc *)parent)->sc_unit != 0)
-		return 0;
-	if (cf->cf_loc[DCCF_LINE] != DCCF_LINE_DEFAULT)
-		return 0;
+	struct dc_attach_args *args = aux;
 
-	return 1;
+	/* Exact match is better than wildcard. */
+	if (cf->cf_loc[DCCF_LINE] == args->line)
+		return 2;
+
+	/* This driver accepts wildcard. */
+	if (cf->cf_loc[DCCF_LINE] == DCCF_LINE_DEFAULT)
+		return 1;
+
+	return 0;
 }
 
 static void
