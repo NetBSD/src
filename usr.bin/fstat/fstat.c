@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.40 2000/02/04 10:35:46 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.41 2000/02/04 11:02:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.40 2000/02/04 10:35:46 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.41 2000/02/04 11:02:00 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,20 @@ __RCSID("$NetBSD: fstat.c,v 1.40 2000/02/04 10:35:46 jdolecek Exp $");
 #include <ufs/ufs/inode.h>
 #undef _LKM
 #undef _KERNEL
-#define NFS
+#define _KERNEL
 #include <sys/mount.h>
+#undef _KERNEL
+#define NFS
 #include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #undef NFS
+#include <msdosfs/denode.h>
+#include <msdosfs/bpb.h>
+#define	_KERNEL
+#include <msdosfs/msdosfsmount.h>
+#undef _KERNEL
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -146,6 +153,7 @@ int	getfname __P((char *));
 void	getinetproto __P((int));
 char   *getmnton __P((struct mount *));
 int	main __P((int, char **));
+int	msdosfs_filestat __P((struct vnode *, struct filestat *));
 int	nfs_filestat __P((struct vnode *, struct filestat *));
 #ifdef INET6
 static const char *inet6_addrstr __P((struct in6_addr *));
@@ -407,6 +415,10 @@ vtrans(vp, i, flag)
 			if (!ufs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
+		case VT_MSDOSFS:
+			if (!msdosfs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
 		case VT_NFS:
 			if (!nfs_filestat(&vn, &fst))
 				badtype = "error";
@@ -553,6 +565,32 @@ nfs_filestat(vp, fsp)
 	return 1;
 }
 
+int
+msdosfs_filestat(vp, fsp)
+	struct vnode *vp;
+	struct filestat *fsp;
+{
+	struct denode de;
+	struct msdosfsmount mp;
+
+	if (!KVM_READ(VTONFS(vp), &de, sizeof(de))) {
+		dprintf("can't read denode at %p for pid %d", VTONFS(vp),
+		    Pid);
+		return 0;
+	}
+	if (!KVM_READ(de.de_pmp, &mp, sizeof(mp))) {
+		dprintf("can't read mount struct at %p for pid %d", de.de_pmp,
+		    Pid);
+		return 0;
+	}
+
+	fsp->fsid = de.de_dev & 0xffff;
+	fsp->fileid = 0; /* XXX see msdosfs_vptofh() for more info */
+	fsp->size = de.de_FileSize;
+	fsp->rdev = 0;	/* msdosfs doesn't support device files */
+	fsp->mode = (0777 & mp.pm_mask) | getftype(vp->v_type);
+	return 1;
+}
 
 char *
 getmnton(m)
