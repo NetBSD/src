@@ -35,7 +35,6 @@ extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_kernel_u_addr;
 extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
-extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_m68knbsd_nat;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
@@ -121,7 +120,6 @@ initialize_all_files (void)
   _initialize_kernel_u_addr ();
   _initialize_infptrace ();
   _initialize_inftarg ();
-  _initialize_corelow ();
   _initialize_m68knbsd_nat ();
   _initialize_remote ();
   _initialize_dcache ();
