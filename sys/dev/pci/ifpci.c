@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.3 2002/03/29 20:29:54 martin Exp $
+ *	$Id: ifpci.c,v 1.4 2002/03/30 11:15:42 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.3 2002/03/29 20:29:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.4 2002/03/30 11:15:42 martin Exp $");
 
 
 #include <sys/param.h>
@@ -84,11 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.3 2002/03/29 20:29:54 martin Exp $");
 static isdn_link_t *avma1pp_ret_linktab(void *token, int channel);
 static void avma1pp_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 
-void n_connect_request(u_int cdid);
-void n_connect_response(u_int cdid, int response, int cause);
-void n_disconnect_request(u_int cdid, int cause);
-void n_alert_request(u_int cdid);
-void n_mgmt_command(int bri, int cmd, void *parm);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
