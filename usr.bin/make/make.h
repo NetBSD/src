@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.45 2003/03/14 05:19:43 thorpej Exp $	*/
+/*	$NetBSD: make.h,v 1.46 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -265,8 +265,7 @@ typedef struct GNode {
  * Str_Concat returns.
  */
 #define STR_ADDSPACE	0x01	/* add a space when Str_Concat'ing */
-#define STR_DOFREE	0x02	/* free source strings after concatenation */
-#define STR_ADDSLASH	0x04	/* add a slash when Str_Concat'ing */
+#define STR_ADDSLASH	0x02	/* add a slash when Str_Concat'ing */
 
 /*
  * Error levels for parsing. PARSE_FATAL means the process cannot continue
@@ -400,10 +399,21 @@ void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
 void Make_DoAllVar(GNode *);
 Boolean Make_Run(Lst);
-char * Check_Cwd_Cmd(char *);
-void Check_Cwd(char **);
-void PrintOnError(char *);
+char * Check_Cwd_Cmd(const char *);
+void Check_Cwd(const char **);
+void PrintOnError(const char *);
 void Main_ExportMAKEFLAGS(Boolean);
 Boolean Main_SetObjdir(const char *);
+
+#ifdef __GNUC__
+#define UNCONST(ptr)	({ 		\
+    union __unconst {			\
+	const void *__cp;		\
+	void *__p;			\
+    } __d;				\
+    __d.__cp = ptr, __d.__p; })
+#else
+#define UNCONST(ptr)	(void *)(ptr)
+#endif
 
 #endif /* _MAKE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2003/05/10 19:21:40 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.88 2003/05/10 19:21:40 jmmv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2003/05/10 19:21:40 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -522,7 +522,7 @@ main(int argc, char **argv)
 	char *p1, *path, *pwd;
 	char mdpath[MAXPATHLEN];
     	char *machine = getenv("MACHINE");
-	char *machine_arch = getenv("MACHINE_ARCH");
+	const char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
 	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
@@ -809,10 +809,10 @@ main(int argc, char **argv)
 		if (ln != NILLNODE)
 			Fatal("%s: cannot open %s.", progname, 
 			    (char *)Lst_Datum(ln));
-	} else if (!ReadMakefile("makefile", NULL))
-		(void)ReadMakefile("Makefile", NULL);
+	} else if (!ReadMakefile(UNCONST("makefile"), NULL))
+		(void)ReadMakefile(UNCONST("Makefile"), NULL);
 
-	(void)ReadMakefile(".depend", NULL);
+	(void)ReadMakefile(UNCONST(".depend"), NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	if (p1)
@@ -1044,7 +1044,8 @@ Check_Cwd_av(int ac, char **av, int copy)
 {
     static char *make[4];
     static char *cur_dir = NULL;
-    char *cp, **mp;
+    char **mp;
+    char *cp;
     int is_cmd, next_cmd;
     int i;
     int n;
@@ -1146,9 +1147,10 @@ Check_Cwd_av(int ac, char **av, int copy)
 }
 
 char *
-Check_Cwd_Cmd(char *cmd)
+Check_Cwd_Cmd(const char *cmd)
 {
-    char *cp, *bp, **av;
+    char *cp, *bp;
+    char **av;
     int ac;
 
     if (Check_Cwd_Off)
@@ -1174,7 +1176,7 @@ Check_Cwd_Cmd(char *cmd)
 }
 
 void
-Check_Cwd(char **argv)
+Check_Cwd(const char **argv)
 {
     char *cp;
     int ac;
@@ -1187,7 +1189,7 @@ Check_Cwd(char **argv)
     if (ac == 3 && *argv[1] == '-') {
 	cp =  Check_Cwd_Cmd(argv[2]);
     } else {
-	cp = Check_Cwd_av(ac, argv, 0);
+	cp = Check_Cwd_av(ac, UNCONST(argv), 0);
     }
     if (cp) {
 	chdir(cp);
@@ -1207,9 +1209,9 @@ Check_Cwd(char **argv)
  *	The string must be freed by the caller.
  */
 char *
-Cmd_Exec(char *cmd, char **err)
+Cmd_Exec(const char *cmd, const char **err)
 {
-    char	*args[4];   	/* Args for invoking the shell */
+    const char	*args[4];   	/* Args for invoking the shell */
     int 	fds[2];	    	/* Pipe streams */
     int 	cpid;	    	/* Child PID */
     int 	pid;	    	/* PID from wait() */
@@ -1256,7 +1258,7 @@ Cmd_Exec(char *cmd, char **err)
 	(void) dup2(fds[1], 1);
 	(void) close(fds[1]);
 
-	(void) execv(_PATH_BSHELL, args);
+	(void) execv(_PATH_BSHELL, UNCONST(args));
 	_exit(1);
 	/*NOTREACHED*/
 
@@ -1340,7 +1342,7 @@ bad:
  */
 /* VARARGS */
 void
-Error(char *fmt, ...)
+Error(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1365,7 +1367,7 @@ Error(char *fmt, ...)
  */
 /* VARARGS */
 void
-Fatal(char *fmt, ...)
+Fatal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1400,7 +1402,7 @@ Fatal(char *fmt, ...)
  */
 /* VARARGS */
 void
-Punt(char *fmt, ...)
+Punt(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1536,7 +1538,7 @@ execError(const char *af, const char *av)
 	int i = 0;
 	struct iovec iov[8];
 #define IOADD(s) \
-	(void)(iov[i].iov_base = (s), \
+	(void)(iov[i].iov_base = UNCONST(s), \
 	    iov[i].iov_len = strlen(iov[i].iov_base), \
 	    i++)
 #else
@@ -1545,9 +1547,9 @@ execError(const char *af, const char *av)
 
 	IOADD(progname);
 	IOADD(": ");
-	IOADD((char *)af);
+	IOADD(af);
 	IOADD("(");
-	IOADD((char *)av);
+	IOADD(av);
 	IOADD(") failed (");
 	IOADD(strerror(errno));
 	IOADD(")\n");
@@ -1582,7 +1584,7 @@ PrintAddr(ClientData a, ClientData b)
 
 
 void
-PrintOnError(char *s)
+PrintOnError(const char *s)
 {
     char tmp[64];
 	

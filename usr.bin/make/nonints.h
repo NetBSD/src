@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.27 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: nonints.h,v 1.28 2003/07/14 18:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -72,11 +72,11 @@ void For_Run(void);
 /* main.c */
 void Main_ParseArgLine(char *);
 int main(int, char **);
-char *Cmd_Exec(char *, char **);
-void Error(char *, ...) __attribute__((__format__(__printf__, 1, 2)));
-void Fatal(char *, ...)
+char *Cmd_Exec(const char *, const char **);
+void Error(const char *, ...) __attribute__((__format__(__printf__, 1, 2)));
+void Fatal(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
-void Punt(char *, ...)
+void Punt(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
 void DieHorribly(void) __attribute__((__noreturn__));
 int PrintAddr(ClientData, ClientData);
@@ -89,24 +89,24 @@ int eunlink(const char *);
 void execError(const char *, const char *);
 
 /* parse.c */
-void Parse_Error(int, char *, ...)
+void Parse_Error(int, const char *, ...)
      __attribute__((__format__(__printf__, 2, 3)));
 Boolean Parse_AnyExport(void);
 Boolean Parse_IsVar(char *);
 void Parse_DoVar(char *, GNode *);
 void Parse_AddIncludeDir(char *);
-void Parse_File(char *, FILE *);
+void Parse_File(const char *, FILE *);
 void Parse_Init(void);
 void Parse_End(void);
 void Parse_FromString(char *);
 Lst Parse_MainName(void);
 
 /* str.c */
-char *str_concat(char *, char *, int);
-char **brk_string(char *, int *, Boolean, char **);
-char *Str_FindSubstring(char *, char *);
-int Str_Match(char *, char *);
-char *Str_SYSVMatch(char *, char *, int *len);
+char *str_concat(const char *, const char *, int);
+char **brk_string(const char *, int *, Boolean, char **);
+char *Str_FindSubstring(const char *, const char *);
+int Str_Match(const char *, const char *);
+char *Str_SYSVMatch(const char *, const char *, int *len);
 void Str_SYSVSubst(Buffer, char *, char *, int);
 
 /* suff.c */
@@ -129,8 +129,8 @@ void Suff_PrintAll(void);
 void Targ_Init(void);
 void Targ_End(void);
 Lst Targ_List(void);
-GNode *Targ_NewGN(char *);
-GNode *Targ_FindNode(char *, int);
+GNode *Targ_NewGN(const char *);
+GNode *Targ_FindNode(const char *, int);
 Lst Targ_FindList(Lst, int);
 Boolean Targ_Ignore(GNode *);
 Boolean Targ_Silent(GNode *);
@@ -143,15 +143,15 @@ void Targ_PrintGraph(int);
 void Targ_Propagate(void);
 
 /* var.c */
-void Var_Delete(char *, GNode *);
-void Var_Set(char *, char *, GNode *, int);
-void Var_Append(char *, char *, GNode *);
-Boolean Var_Exists(char *, GNode *);
-char *Var_Value(char *, GNode *, char **);
-char *Var_Parse(char *, GNode *, Boolean, int *, Boolean *);
-char *Var_Subst(char *, char *, GNode *, Boolean);
-char *Var_GetTail(char *);
-char *Var_GetHead(char *);
+void Var_Delete(const char *, GNode *);
+void Var_Set(const char *, const char *, GNode *, int);
+void Var_Append(const char *, const char *, GNode *);
+Boolean Var_Exists(const char *, GNode *);
+char *Var_Value(const char *, GNode *, char **);
+char *Var_Parse(const char *, GNode *, Boolean, int *, Boolean *);
+char *Var_Subst(const char *, const char *, GNode *, Boolean);
+char *Var_GetTail(const char *);
+char *Var_GetHead(const char *);
 void Var_Init(void);
 void Var_End(void);
 void Var_Dump(GNode *);

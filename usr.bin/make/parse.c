@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.93 2003/07/14 18:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.93 2003/07/14 18:19:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.93 2003/07/14 18:19:13 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -206,7 +206,7 @@ static GNode	*predecessor;
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
 static struct {
-    char    	  *name;    	/* Name of keyword */
+    const char   *name;    	/* Name of keyword */
     ParseSpecial  spec;	    	/* Type when used as a target */
     int	    	  op;	    	/* Operator when used as a source */
 } parseKeywords[] = {
@@ -260,9 +260,9 @@ typedef struct {
 } SpecialSrc;
 
 static int ParseIsEscaped(const char *, const char *);
-static void ParseErrorInternal(char *, size_t, int, char *, ...)
+static void ParseErrorInternal(char *, size_t, int, const char *, ...)
      __attribute__((__format__(__printf__, 4, 5)));
-static void ParseVErrorInternal(char *, size_t, int, char *, va_list)
+static void ParseVErrorInternal(char *, size_t, int, const char *, va_list)
      __attribute__((__format__(__printf__, 4, 0)));
 static int ParseFindKeyword(char *);
 static int ParseLinkSrc(ClientData, ClientData);
@@ -370,7 +370,7 @@ ParseFindKeyword(char *str)
  */
 /* VARARGS */
 static void
-ParseVErrorInternal(char *cfname, size_t clineno, int type, char *fmt,
+ParseVErrorInternal(char *cfname, size_t clineno, int type, const char *fmt,
     va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
@@ -378,7 +378,8 @@ ParseVErrorInternal(char *cfname, size_t clineno, int type, char *fmt,
 	(void)fprintf(stderr, "%s: \"", progname);
 
 	if (*cfname != '/') {
-		char *cp, *dir;
+		char *cp;
+		const char *dir;
 
 		/*
 		 * Nothing is more anoying than not knowing which Makefile
@@ -421,7 +422,7 @@ ParseVErrorInternal(char *cfname, size_t clineno, int type, char *fmt,
  */
 /* VARARGS */
 static void
-ParseErrorInternal(char *cfname, size_t clineno, int type, char *fmt, ...)
+ParseErrorInternal(char *cfname, size_t clineno, int type, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -443,7 +444,7 @@ ParseErrorInternal(char *cfname, size_t clineno, int type, char *fmt, ...)
  */
 /* VARARGS */
 void
-Parse_Error(int type, char *fmt, ...)
+Parse_Error(int type, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1674,7 +1675,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 
 	Var_Set(line, cp, ctxt, 0);
     } else if (type == VAR_SHELL) {
-	char *res, *err;
+	char *res;
+	const char *err;
 
 	if (strchr(cp, '$') != NULL) {
 	    /*
@@ -2672,7 +2674,7 @@ ParseFinishLine(void)
  *---------------------------------------------------------------------
  */
 void
-Parse_File(char *name, FILE *stream)
+Parse_File(const char *name, FILE *stream)
 {
     char	  *cp,		/* pointer into the line */
                   *line;	/* the line we're working on */
@@ -2680,7 +2682,7 @@ Parse_File(char *name, FILE *stream)
     inLine = FALSE;
     fatals = 0;
 
-    curFile.fname = name;
+    curFile.fname = UNCONST(name);
     curFile.F = stream;
     curFile.lineno = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.10 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: hash.c,v 1.11 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: hash.c,v 1.10 2002/06/15 18:24:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.11 2003/07/14 18:19:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.10 2002/06/15 18:24:56 wiz Exp $");
+__RCSID("$NetBSD: hash.c,v 1.11 2003/07/14 18:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -184,11 +184,11 @@ Hash_DeleteTable(Hash_Table *t)
  */
 
 Hash_Entry *
-Hash_FindEntry(Hash_Table *t, char *key)
+Hash_FindEntry(Hash_Table *t, const char *key)
 {
 	Hash_Entry *e;
 	unsigned h;
-	char *p;
+	const char *p;
 
 	for (h = 0, p = key; *p;)
 		h = (h << 5) - h + *p++;
@@ -225,11 +225,11 @@ Hash_FindEntry(Hash_Table *t, char *key)
  */
 
 Hash_Entry *
-Hash_CreateEntry(Hash_Table *t, char *key, Boolean *newPtr)
+Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 {
 	Hash_Entry *e;
 	unsigned h;
-	char *p;
+	const char *p;
 	int keylen;
 	struct Hash_Entry **hp;
 
