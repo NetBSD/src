@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.47 1996/11/06 19:33:39 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.48 1997/04/28 02:51:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -227,7 +227,6 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 
 /* XXX Not sure what to do with these, yet. */
-#define	P_FSTRACE	0x10000	/* tracing via file system (elsewhere?) */
 #define	P_SSTEP		0x20000	/* process needs single-step fixup ??? */
 
 /*
