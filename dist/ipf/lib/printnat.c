@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.2 2004/07/23 05:34:37 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.3 2005/02/08 06:53:17 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.4 2004/05/11 01:41:16 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.6 2004/10/17 06:45:22 darrenr Exp";
 #endif
 
 
@@ -89,20 +89,24 @@ int opts;
 			printf("%s", inet_ntoa(np->in_out[0].in4));
 			bits = count4bits(np->in_outmsk);
 			if (bits != -1)
-				printf("/%d ", bits);
+				printf("/%d", bits);
 			else
-				printf("/%s ", inet_ntoa(np->in_out[1].in4));
-			printf("port %d", ntohs(np->in_pmin));
-			if (np->in_pmax != np->in_pmin)
-				printf("-%d", ntohs(np->in_pmax));
+				printf("/%s", inet_ntoa(np->in_out[1].in4));
+			if (np->in_flags & IPN_TCPUDP) {
+				printf(" port %d", ntohs(np->in_pmin));
+				if (np->in_pmax != np->in_pmin)
+					printf("-%d", ntohs(np->in_pmax));
+			}
 		}
 		printf(" -> %s", inet_ntoa(np->in_in[0].in4));
 		if (np->in_flags & IPN_SPLIT)
 			printf(",%s", inet_ntoa(np->in_in[1].in4));
-		if ((np->in_flags & IPN_FIXEDDPORT) != 0)
-			printf(" port = %d", ntohs(np->in_pnext));
-		else
-			printf(" port %d", ntohs(np->in_pnext));
+		if (np->in_flags & IPN_TCPUDP) {
+			if ((np->in_flags & IPN_FIXEDDPORT) != 0)
+				printf(" port = %d", ntohs(np->in_pnext));
+			else
+				printf(" port %d", ntohs(np->in_pnext));
+		}
 		if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
 			printf(" tcp/udp");
 		else if ((np->in_flags & IPN_TCP) == IPN_TCP)
@@ -129,6 +133,8 @@ int opts;
 		if (*np->in_plabel != '\0')
 			printf(" proxy %.*s", (int)sizeof(np->in_plabel),
 				np->in_plabel);
+		if (np->in_tag.ipt_tag[0] != '\0')
+			printf(" tag %-.*s", IPFTAG_LEN, np->in_tag.ipt_tag);
 		printf("\n");
 		if (opts & OPT_DEBUG)
 			printf("\tpmax %u\n", np->in_pmax);

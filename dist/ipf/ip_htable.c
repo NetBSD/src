@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.1.1.1 2004/03/28 08:55:38 martti Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.1.1.2 2005/02/08 06:52:59 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -53,7 +53,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_htable.c,v 2.34.2.1 2004/03/06 14:32:58 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_htable.c,v 2.34.2.2 2004/10/17 15:49:15 darrenr Exp";
 #endif
 
 #ifdef	IPFILTER_LOOKUP
@@ -377,6 +377,15 @@ void *tptr, *aptr;
 }
 
 
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_iphmfindip                                               */
+/* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve/no match    */
+/* Parameters:  tptr(I)    - pointer to the pool to search                  */
+/*              version(I) - IP protocol version (4 or 6)                   */
+/*              aptr(I)    - pointer to address information                 */
+/*                                                                          */
+/* Search the hash table for a given address and return a search result.    */
+/* ------------------------------------------------------------------------ */
 int fr_iphmfindip(tptr, version, aptr)
 void *tptr, *aptr;
 int version;
@@ -387,10 +396,10 @@ int version;
 	int rval;
 
 	if (version != 4)
-		return 1;
+		return -1;
 
 	if (tptr == NULL || aptr == NULL)
-		return 1;
+		return -1;
 
 	iph = tptr;
 	addr = aptr;

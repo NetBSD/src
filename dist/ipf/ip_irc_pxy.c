@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.2 2004/07/23 05:33:55 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.3 2005/02/08 06:52:59 martti Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.2 2004/05/24 14:01:48 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.3 2004/12/09 19:40:59 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY
@@ -95,10 +95,10 @@ size_t len;
 		s++;
 		c = *s;
 		ircp->irc_snick = s;
-		if (!isalpha(c))
+		if (!ISALPHA(c))
 			return 0;
 		i--;
-		for (c = *s; !isspace(c) && (i > 0); i--)
+		for (c = *s; !ISSPACE(c) && (i > 0); i--)
 			c = *s++;
 		if (i < 31)
 			return 0;
@@ -120,9 +120,9 @@ size_t len;
 	/*
 	 * Loosely check that the destination is a nickname of some sort
 	 */
-	if (!isalpha(c))
+	if (!ISALPHA(c))
 		return 0;
-	for (; !isspace(c) && (i > 0); i--)
+	for (; !ISSPACE(c) && (i > 0); i--)
 		c = *s++;
 	if (i < 20)
 		return 0;
@@ -166,7 +166,7 @@ size_t len;
 	 * Check for the arg
 	 */
 	c = *s;
-	if (isspace(c))
+	if (ISSPACE(c))
 		return 0;
 	ircp->irc_arg = s;
 	for (; (c != ' ') && (c != '\001') && (i > 0); i--)
@@ -181,13 +181,13 @@ size_t len;
 	s++;
 	i--;
 	c = *s;
-	if (!isdigit(c))
+	if (!ISDIGIT(c))
 		return 0;
 	ircp->irc_addr = s;
 	/*
 	 * Get the IP#
 	 */
-	for (l = 0; isdigit(c) && (i > 0); i--) {
+	for (l = 0; ISDIGIT(c) && (i > 0); i--) {
 		l *= 10;
 		l += c - '0';
 		c = *s++;
@@ -203,12 +203,12 @@ size_t len;
 	s++;
 	i--;
 	c = *s;
-	if (!isdigit(c))
+	if (!ISDIGIT(c))
 		return 0;
 	/*
 	 * Get the port#
 	 */
-	for (l = 0; isdigit(c) && (i > 0); i--) {
+	for (l = 0; ISDIGIT(c) && (i > 0); i--) {
 		l *= 10;
 		l += c - '0';
 		c = *s++;
