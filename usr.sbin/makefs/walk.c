@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.3 2001/10/29 05:38:09 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.4 2001/10/29 07:30:07 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.3 2001/10/29 05:38:09 lukem Exp $");
+__RCSID("$NetBSD: walk.c,v 1.4 2001/10/29 07:30:07 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -396,7 +396,7 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	}
 	if (specnode->flags & F_TIME) {
 		ASEPRINT("time", "%ld",
-		    dirnode->statbuf.st_mtime, specnode->st_mtime);
+		    (long)dirnode->statbuf.st_mtime, (long)specnode->st_mtime);
 		dirnode->statbuf.st_mtime =	specnode->st_mtime;
 		dirnode->statbuf.st_mtimensec =	specnode->st_mtimensec;
 		dirnode->statbuf.st_atime =	specnode->st_mtime;
