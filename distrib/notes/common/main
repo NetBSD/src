@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.20 2001/05/01 13:36:06 he Exp $
+.\"	$NetBSD: main,v 1.61.2.21 2001/05/01 14:42:56 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,11 +246,15 @@ has been updated to deal with a security issue (SA2000-017).
 .It
 A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
 .It
-The Linux emulation has been enhanced to prepare for the future
+The Linux emulation has been enhanced to prepare for the
 support of using the Linux version of VMware.
 .It
 IP checksumming speed has been improved on i386 compared to 1.5 by
 about 10%.
+.It
+Support for the Socket Communications LP-E Type II PCMCIA NE2000
+clone card has been added to
+.Xr ne 4 .
 .It
 The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
 to fix among many other things core dumps in
@@ -272,8 +276,8 @@ to the
 .Xr tlp 4
 driver.
 .It
-Several country-specific optional keyboard mappings have been
-added for USB keyboards.
+Several country-specific keyboard mappings have been added for USB
+keyboards.
 .It
 A driver for Yamaha YMF724/740/744/745-based sound cards has
 been added, see
@@ -282,7 +286,8 @@ been added, see
 The maximum number of BSD disklabel partitions on the i386 port
 has been increased from 8 to 16.
 .El
-In addition, many bugs have been fixed -- more than 75 problems
+.Pp
+In addition, many bugs have been fixed -- more than 95 problems
 reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
 See the CHANGES-1.5.1 file for the complete list.
