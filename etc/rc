@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.108 1999/01/06 03:41:44 abs Exp $
+#	$NetBSD: rc,v 1.109 1999/01/11 21:04:38 jwise Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -206,7 +206,7 @@ echo -n 'starting rpc daemons:'
 
 # note that portmap is generally required for all other rpc services.
 if checkyesno portmap; then
-	echo -n ' portmap';             portmap
+	echo -n ' portmap';             portmap $portmap_flags
 fi
 
 if checkyesno ypserv; then
