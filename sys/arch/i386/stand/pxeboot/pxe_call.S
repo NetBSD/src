@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe_call.S,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -87,6 +87,7 @@ ENTRY(pxecall_pxenv)
 	pushl	%ebx
 	pushl	%ecx
 	pushl	%edx
+	pushl	%edi
 
 	/* For simplicity, just move all 32 bits. */
 	movl	8(%ebp), %ebx
@@ -109,6 +110,7 @@ _C_LABEL(pxenv_seg):
 	data32
 	call	_C_LABEL(real_to_prot)		# leave real mode
 
+	popl	%edi
 	popl	%edx
 	popl	%ecx
 	popl	%ebx
