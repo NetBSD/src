@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.28 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.28 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.29 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,18 +95,18 @@ __KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.28 2005/01/22 07:35:33 tsutsui Exp $"
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 
-int arc_hardware_intr(uint32_t, uint32_t, uint32_t, uint32_t);
+uint32_t arc_hardware_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 
 #define	MIPS_INT_LEVELS	8
 
 struct {
-	int int_mask;
-	int (*int_hand)(u_int, struct clockframe *);
+	uint32_t int_mask;
+	uint32_t (*int_hand)(uint32_t, struct clockframe *);
 } cpu_int_tab[MIPS_INT_LEVELS];
 
-int cpu_int_mask;	/* External cpu interrupt mask */
+uint32_t cpu_int_mask;	/* External cpu interrupt mask */
 
-int
+uint32_t
 arc_hardware_intr(uint32_t status, uint32_t cause, uint32_t pc,
     uint32_t ipending)
 {
@@ -137,7 +137,8 @@ arc_hardware_intr(uint32_t status, uint32_t cause, uint32_t pc,
  *	Events are checked in priority order.
  */
 void
-arc_set_intr(int mask, int (*int_hand)(u_int, struct clockframe *), int prio)
+arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
+    int prio)
 {
 
 	if (prio > MIPS_INT_LEVELS)

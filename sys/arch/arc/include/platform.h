@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.4 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: platform.h,v 1.5 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*
@@ -51,7 +51,8 @@ struct platform {
 	void	(*init)(void);
 	void	(*cons_init)(void);
 	void	(*reset)(void);
-	void	(*set_intr)(int, int (*)(u_int, struct clockframe *), int);
+	void	(*set_intr)(uint32_t,
+		 uint32_t (*)(uint32_t, struct clockframe *), int);
 };
 
 int ident_platform(void);
@@ -86,13 +87,15 @@ extern char *c_jazz_eisa_mainbusdevs[];
 void c_jazz_eisa_init(void);
 void c_jazz_eisa_cons_init(void);
 
-void c_magnum_set_intr(int, int (*)(u_int, struct clockframe *), int);
+void c_magnum_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *),
+    int);
 void c_magnum_init(void);
 
 void c_nec_eisa_init(void);
 void c_nec_eisa_cons_init(void);
 
-void c_nec_jazz_set_intr(int, int (*)(u_int, struct clockframe *), int);
+void c_nec_jazz_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *),
+    int);
 void c_nec_jazz_init(void);
 
 extern char *c_nec_pci_mainbusdevs[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2005/01/22 08:43:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,8 @@ extern void _clrsoftintr(int);
 #include <mips/softintr.h>
 
 struct clockframe;
-void arc_set_intr(int, int(*)(u_int, struct clockframe *), int);
+void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);
+extern uint32_t cpu_int_mask;
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.19 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.20 2005/01/22 08:43:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.19 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,7 @@ void *		necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
 void		necpb_intr_disestablish(pci_chipset_tag_t, void *);
 
-int		necpb_intr(unsigned, struct clockframe *);
+uint32_t	necpb_intr(uint32_t, struct clockframe *);
 
 
 CFATTACH_DECL(necpb, sizeof(struct necpb_softc),
@@ -433,8 +433,8 @@ necpb_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 /*
  *   Handle PCI/EISA interrupt.
  */
-int
-necpb_intr(unsigned mask, struct clockframe *cf)
+uint32_t
+necpb_intr(uint32_t mask, struct clockframe *cf)
 {
 	uint32_t vector, stat;
 	struct necpb_intrhand *p;
