@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.4 1998/02/18 07:18:22 thorpej Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5 2000/03/21 11:45:59 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+int nullfs_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * This is the vfsops table for the file system in question

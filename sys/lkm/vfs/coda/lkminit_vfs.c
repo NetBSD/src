@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.1.1.1 1998/09/25 15:01:56 rvb Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.2 2000/03/21 11:45:58 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 
 #include <coda/coda_psdev.h>
 
+int coda_lkmentry __P((struct lkm_table *, int, int));
+
 /*
  * This is the vfsops table for the file system in question
  */
@@ -83,7 +85,9 @@ struct cdevsw codadevsw = {
 MOD_DEV("codadev", LM_DT_CHAR, 60, &codadevsw);
 */
 struct lkm_dev coda_lkm_dev = {
-	LM_DEV, LKM_VERSION, "codadev", 60, LM_DT_CHAR, (void *) &codadevsw};
+	LM_DEV, LKM_VERSION, "codadev", 60, LM_DT_CHAR,
+	{ (void *) &codadevsw }
+};
 
 
 /*
