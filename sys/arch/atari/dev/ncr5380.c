@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.5 1995/08/12 20:31:01 mycroft Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.6 1995/08/19 12:36:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -56,6 +56,10 @@
 #	define	PID(a)
 #endif
 
+/*
+ * Bit mask of targets you want debugging to be shown
+ */
+u_char	dbg_target_mask = 0x7f;
 
 /*
  * Set bit for target when parity checking must be disabled.
@@ -68,7 +72,7 @@ u_char	ncr5380_no_parchk = 0xff;
  * This is the default sense-command we send.
  */
 static	u_char	sense_cmd[] = {
-		REQUEST_SENSE, 0, 0, 0, sizeof(struct scsi_sense), 0
+		REQUEST_SENSE, 0, 0, 0, sizeof(struct scsi_sense_data), 0
 };
 
 /*
@@ -168,6 +172,14 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 	if (reqp->dr_flag & DRIVER_BOUNCING) 
 		free_bounceb(reqp->bounceb);
 #endif /* REAL_DMA */
+#ifdef DBG_REQ
+	if (dbg_target_mask & (1 << reqp->targ_id))
+		show_request(reqp, "DONE");
+#endif
+#ifdef DBG_ERR_RET
+	if (reqp->xs->error != 0)
+		show_request(reqp, "ERR_RET");
+#endif
 
 	/*
 	 * Return request to free-q
@@ -370,7 +382,9 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	splx(sps);
 
 #ifdef DBG_REQ
-	show_request(reqp,(reqp->xcmd.opcode == REQUEST_SENSE) ? "HEAD":"TAIL");
+	if (dbg_target_mask & (1 << reqp->targ_id))
+		show_request(reqp, (reqp->xcmd.opcode == REQUEST_SENSE) ?
+								"HEAD":"TAIL");
 #endif
 
 	run_main(xs->sc_link->adapter_softc);
@@ -384,10 +398,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 static void
 ncr5380_minphys(struct buf *bp)
 {
-    if (bp->b_bcount > MIN_PHYS) {
-	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount=%x.\n",MIN_PHYS);
+    if (bp->b_bcount > MIN_PHYS)
 	bp->b_bcount = MIN_PHYS;
-    }
     minphys(bp);
 }
 #undef MIN_PHYS
@@ -499,7 +511,8 @@ struct ncr_softc *sc;
 		splx(sps);
 
 #ifdef DBG_REQ
-		show_request(req, "TARGET");
+		if (dbg_target_mask & (1 << req->targ_id))
+			show_request(req, "TARGET");
 #endif
 		/*
 		 * We found a request. Try to connect to the target. If the
@@ -508,11 +521,12 @@ struct ncr_softc *sc;
 		 */
 		if (scsi_select(req, 0)) {
 			sps = splbio();
-			req->next = issue_q;
+			req->next = issue_q; 
 			issue_q = req;
 			splx(sps);
 #ifdef DBG_REQ
-			ncr_tprint(reqp, "Select failed\n");
+			if (dbg_target_mask & (1 << req->targ_id))
+				ncr_tprint(req, "Select failed\n");
 #endif
 		}
 	    }
@@ -1028,7 +1042,8 @@ u_int	msg;
 #endif /* AUTO_SENSE */
 
 #ifdef DBG_REQ
-			show_request(reqp->link, "LINK");
+			if (dbg_target_mask & (1 << reqp->targ_id))
+				show_request(reqp->link, "LINK");
 #endif
 			connected = reqp->link;
 			finish_req(reqp);
@@ -1036,14 +1051,12 @@ u_int	msg;
 			return (-1);
 		case MSG_ABORT:
 		case MSG_CMDCOMPLETE:
-#ifdef DBG_REQ
-			show_request(reqp, "DONE");
-#endif
-			connected = NULL;
+			connected = NULL;	
 			busy     &= ~(1 << reqp->targ_id);
-			if (!(reqp->dr_flag & DRIVER_AUTOSEN))
+			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
 				reqp->xs->resid = reqp->xdata_len;
 				reqp->xs->error = 0;
+			}
 
 #ifdef AUTO_SENSE
 			if (check_autosense(reqp, 0) == -1) {
@@ -1060,7 +1073,8 @@ u_int	msg;
 			return (-1);
 		case MSG_DISCONNECT:
 #ifdef DBG_REQ
-			show_request(reqp, "DISCON");
+			if (dbg_target_mask & (1 << reqp->targ_id))
+				show_request(reqp, "DISCON");
 #endif
 			sps = splbio();
 			connected  = NULL;
@@ -1157,7 +1171,8 @@ struct ncr_softc *sc;
 	else {
 		connected = tmp;
 #ifdef DBG_REQ
-		show_request(tmp, "RECON");
+		if (dbg_target_mask & (1 << tmp->targ_id))
+			show_request(tmp, "RECON");
 #endif
 	}
 	PID("reselect2");
@@ -1428,7 +1443,9 @@ int	linked;
 			else reqp->xcmd.bytes[4] |= 1;
 
 #ifdef DBG_REQ
-			show_request(reqp, "AUTO-SENSE");
+			bzero(reqp->xdata_ptr, reqp->xdata_len);
+			if (dbg_target_mask & (1 << reqp->targ_id))
+				show_request(reqp, "AUTO-SENSE");
 #endif
 			PID("cautos2");
 			return (-1);
@@ -1722,18 +1739,20 @@ static void
 show_data_sense(xs)
 struct scsi_xfer	*xs;
 {
-	u_char	*b;
+	u_char	*p1, *p2;
 	int	i;
 	int	sz;
 
-	b = (u_char *) xs->cmd;
-	printf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*b));
+	p1 = (u_char *) xs->cmd;
+	p2 = (u_char *)&xs->sense;
+	if(*p2 == 0)
+		return;	/* No(n)sense */
+	printf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*p1));
 	for (i = 0; i < sz; i++)
-		printf("%x ", b[i]);
+		printf("%x ", p1[i]);
 	printf("\nsense: ");
-	b = (u_char *)&xs->sense;
 	for (i = 0; i < sizeof(xs->sense); i++)
-		printf("%x ", b[i]);
+		printf("%x ", p2[i]);
 	printf("\n");
 }
 
@@ -1742,10 +1761,10 @@ show_request(reqp, qtxt)
 SC_REQ	*reqp;
 char	*qtxt;
 {
-	printf("REQ-%s: %d %x[%d] cmd[0]=%x S=%x M=%x R=%x %s\n", qtxt,
-			reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
+	printf("REQ-%s: %d %x[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d %s\n",
+			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
-			reqp->xs->error, reqp->link ? "L" : "");
+			reqp->xs->error, reqp->xs->resid, reqp->link ? "L":"");
 	if (reqp->status == SCSCHKC)
 		show_data_sense(reqp->xs);
 }
