@@ -1075,7 +1075,7 @@ copytobuf_gap2(from, lebuf, boff, len)
 		bptr = ((volatile u_short *)lebuf) + boff;
 	if ((unsigned)from & 0x1) {
 		while (len > 1) {
-			*bptr = (from[1] << 8) | from[0];
+			*bptr = (from[1] << 8) | (from[0] & 0xff);
 			bptr += 2;
 			from += 2;
 			len -= 2;
