@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.17 1999/01/10 13:20:41 augustss Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.18 1999/01/10 16:56:35 augustss Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -289,8 +289,8 @@
 #define KS_Cmd			0xf10d
 #define KS_Cmd1			0xf10e
 #define KS_Cmd2			0xf10f
-#define KS_GUI_L		0xf110
-#define KS_GUI_R		0xf111
+#define KS_Meta_L		0xf110
+#define KS_Meta_R		0xf111
 
 /*
  * Group 2 (keypad) character in low byte
