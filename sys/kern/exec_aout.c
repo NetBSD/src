@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.2 1993/10/15 14:53:22 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.1.2.3 1993/10/15 15:20:49 mycroft Exp $
  */
 
 #include "param.h"
@@ -65,8 +65,6 @@
  * This function, in the former case, or the hook, in the latter, is
  * responsible for creating a set of vmcmds which can be used to build
  * the process's vm space and inserting them into the exec package.
- *
- * XXX: NMAGIC and OMAGIC are currently not supported.
  */
 
 int
@@ -97,7 +95,8 @@ exec_aout_makecmds(p, epp)
 		error = exec_aout_prep_nmagic(p, epp);
 		break;
 	case (MID_MACHINE << 16) | OMAGIC:
-		printf("exec_aout_makecmds: OMAGIC not supported (yet)\n");
+		error = exec_aout_prep_omagic(p, epp);
+		break;
 	default:
 		error = cpu_exec_aout_makecmds(p, epp);
 	}
@@ -117,10 +116,6 @@ bad:
  * exec_aout_prep_zmagic(): Prepare a 'native' ZMAGIC binary's exec package
  *
  * First, set of the various offsets/lengths in the exec package.
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
  *
  * Then, mark the text image busy (so it can be demand paged) or error
  * out if this is not possible.  Finally, set up vmcmds for the
@@ -139,9 +134,6 @@ exec_aout_prep_zmagic(p, epp)
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 	epp->ep_entry = execp->a_entry;
 
 	/*
@@ -187,42 +179,11 @@ exec_aout_prep_zmagic(p, epp)
 	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 	ccmdp = ccmdp->ev_next;
 
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr,
-	    0,
-	    0,
-	    VM_PROT_NONE);
-	ccmdp = ccmdp->ev_next;
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize),
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-
-	return 0;
+	return exec_aout_setup_stack(p, epp, ccmdp);
 }
 
 /*
  * exec_aout_prep_nmagic(): Prepare a 'native' NMAGIC binary's exec package
- *
- * First, set of the various offsets/lengths in the exec package.
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
  */
 
 int
@@ -232,15 +193,12 @@ exec_aout_prep_nmagic(p, epp)
 {
 	struct exec *execp = epp->ep_execp;
 	struct exec_vmcmd *ccmdp;
-	long bsssize;
+	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text segment */
@@ -262,14 +220,77 @@ exec_aout_prep_nmagic(p, epp)
 	ccmdp = ccmdp->ev_next;
 
 	/* set up command for bss segment */
-	bsssize = epp->ep_daddr + execp->a_data + execp->a_bss -
-		roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
-	if(bsssize > 0) {
-		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-		    bsssize, roundup(epp->ep_daddr + execp->a_data, __LDPGSZ),
+	baddr = roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0) {
+		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
 		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 		ccmdp = ccmdp->ev_next;
 	}
+
+	return exec_aout_setup_stack(p, epp, ccmdp);
+}
+
+/*
+ * exec_aout_prep_omagic(): Prepare a 'native' OMAGIC binary's exec package
+ */
+
+int
+exec_aout_prep_omagic(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
+	long bsize, baddr;
+
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+
+	/* set up command for text and data segments */
+	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_text + execp->a_data,
+	    epp->ep_taddr,
+	    epp->ep_vp,
+	    sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = epp->ep_vcp;
+
+	/* set up command for bss segment */
+	baddr = roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0) {
+		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
+		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+		ccmdp = ccmdp->ev_next;
+	}
+
+	return exec_aout_setup_stack(p, epp, ccmdp);
+}
+
+/*
+ * exec_aout_setup_stack(): Set up the stack segment for an a.out
+ * executable.
+ *
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ */
+
+int
+exec_aout_setup_stack(p, epp, ccmdp)
+	struct proc *p;
+	struct exec_package *epp;
+	struct exec_vmcmd *ccmdp;
+{
+
+	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+	epp->ep_minsaddr = USRSTACK;
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
