@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.71 2002/09/24 08:56:30 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.72 2002/09/24 12:18:32 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -852,7 +852,7 @@ _rtld_linkmap_add(obj)
 	obj->linkmap.l_addr = obj->relocbase;
 	obj->linkmap.l_ld = obj->dynamic;
 #ifdef __mips__
-	/* GDB needs load offset on MIPS to use the symbols */
+	/* XXX This field is not standard and will be removed eventually. */
 	obj->linkmap.l_offs = obj->relocbase;
 #endif
 
