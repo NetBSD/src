@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $	*/
+/*	$NetBSD: update.c,v 1.9 1999/07/24 23:58:15 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $");
+__RCSID("$NetBSD: update.c,v 1.9 1999/07/24 23:58:15 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -365,6 +365,8 @@ addplane()
 	p.plane_no = pnum;
 
 	pp = newplane();
+	if (pp == NULL)
+		loser(NULL, "Out of memory!");
 	memcpy(pp, &p, sizeof (p));
 
 	if (pp->orig_type == T_AIRPORT)
