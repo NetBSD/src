@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.45 2002/04/07 02:56:46 shin Exp $
+.\"	$NetBSD: contents,v 1.46 2002/04/10 19:01:59 scw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1089,8 +1089,8 @@ This file contains a bootstrap program which knows how to load the
 \*M
 ramdisk image from tape. This must be the second file written to the tape.
 .	tag)
-.	(tag netbsd-rd.gz
-.	It Pa netbsd-rd.gz
+.	(tag netbsd.RAMDISK.gz
+.	It Pa netbsd.RAMDISK.gz
 This is the
 .Nx
 \*M
