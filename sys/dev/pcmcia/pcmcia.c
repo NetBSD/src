@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.42 2004/08/08 23:19:59 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.43 2004/08/09 01:32:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.42 2004/08/08 23:19:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.43 2004/08/09 01:32:04 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -103,7 +103,7 @@ pcmcia_ccr_read(pf, ccr)
 {
 
 	return (bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh,
-	    pf->pf_ccr_offset + ccr));
+	    pf->pf_ccr_offset + ccr * 2));
 }
 
 void
@@ -113,9 +113,9 @@ pcmcia_ccr_write(pf, ccr, val)
 	int val;
 {
 
-	if ((pf->ccr_mask) & (1 << (ccr / 2))) {
+	if (pf->ccr_mask & (1 << ccr)) {
 		bus_space_write_1(pf->pf_ccrt, pf->pf_ccrh,
-		    pf->pf_ccr_offset + ccr, val);
+		    pf->pf_ccr_offset + ccr * 2, val);
 	}
 }
 
@@ -542,17 +542,17 @@ pcmcia_function_enable(pf)
 			       tmp->sc->dev.dv_xname, tmp->number,
 			       tmp->pf_ccr_window,
 			       (unsigned long) tmp->pf_ccr_offset,
-			       pcmcia_ccr_read(tmp, 0x00),
-			       pcmcia_ccr_read(tmp, 0x02),
-			       pcmcia_ccr_read(tmp, 0x04),
-			       pcmcia_ccr_read(tmp, 0x06),
+			       pcmcia_ccr_read(tmp, 0),
+			       pcmcia_ccr_read(tmp, 1),
+			       pcmcia_ccr_read(tmp, 2),
+			       pcmcia_ccr_read(tmp, 3),
 
-			       pcmcia_ccr_read(tmp, 0x0A),
-			       pcmcia_ccr_read(tmp, 0x0C), 
-			       pcmcia_ccr_read(tmp, 0x0E),
-			       pcmcia_ccr_read(tmp, 0x10),
+			       pcmcia_ccr_read(tmp, 5),
+			       pcmcia_ccr_read(tmp, 6), 
+			       pcmcia_ccr_read(tmp, 7),
+			       pcmcia_ccr_read(tmp, 8),
 
-			       pcmcia_ccr_read(tmp, 0x12));
+			       pcmcia_ccr_read(tmp, 9));
 		}
 	}
 #endif
@@ -911,23 +911,23 @@ pcmcia_card_intr(arg)
 {
 	struct pcmcia_softc *sc = arg;
 	struct pcmcia_function *pf;
-	int reg, ret, ret2;
+	int reg, ret;
 
 	ret = 0;
 
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
-		if (pf->ih_fct != NULL &&
-		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
+		if ((pf->pf_flags & PFF_ENABLED) == 0 ||
+		    pf->ih_fct == NULL)
+			continue;
+		if (pf->ccr_mask & (1 << PCMCIA_CCR_STATUS)) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
 			if (reg & PCMCIA_CCR_STATUS_INTR) {
-				ret2 = (*pf->ih_fct)(pf->ih_arg);
-				if (ret2 != 0 && ret == 0)
-					ret = ret2;
-				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+				ret |= (*pf->ih_fct)(pf->ih_arg);
 				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
-				    reg & ~PCMCIA_CCR_STATUS_INTR);
+				    reg | PCMCIA_CCR_STATUS_INTRACK);
 			}
-		}
+		} else
+			ret |= (*pf->ih_fct)(pf->ih_arg);
 	}
 
 	return (ret);
@@ -940,7 +940,7 @@ pcmcia_card_intrdebug(arg)
 {
 	struct pcmcia_softc *sc = arg;
 	struct pcmcia_function *pf;
-	int reg, ret, ret2;
+	int reg, ret;
 
 	ret = 0;
 
@@ -950,20 +950,20 @@ pcmcia_card_intrdebug(arg)
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
-		if (pf->ih_fct != NULL &&
-		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
+		if ((pf->pf_flags & PFF_ENABLED) == 0 ||
+		    pf->ih_fct == NULL)
+			continue;
+		if (pf->ccr_mask & (1 << PCMCIA_CCR_STATUS)) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
 			if (reg & PCMCIA_CCR_STATUS_INTR) {
-				ret2 = (*pf->ih_fct)(pf->ih_arg);
-				if (ret2 != 0 && ret == 0)
-					ret = ret2;
-				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+				ret |= (*pf->ih_fct)(pf->ih_arg);
 				printf("; csr %02x->%02x",
 				    reg, reg & ~PCMCIA_CCR_STATUS_INTR);
 				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
-				    reg & ~PCMCIA_CCR_STATUS_INTR);
+				    reg | PCMCIA_CCR_STATUS_INTRACK);
 			}
-		}
+		} else
+			ret |= (*pf->ih_fct)(pf->ih_arg);
 		printf("\n");
 	}
 
