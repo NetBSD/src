@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.4.1 1999/06/21 01:01:45 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.18.4.2 1999/07/04 01:27:58 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,3 +145,11 @@
 struct pmap_physseg {
 	/* NULL */
 };
+
+
+/*
+ * Parameters for unified buffer cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 256
