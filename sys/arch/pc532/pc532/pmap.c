@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1996/01/31 21:34:00 phil Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1996/02/12 21:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -442,7 +442,7 @@ pmap_collect_pv()
 	}
 }
 
-__inline u_int
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
