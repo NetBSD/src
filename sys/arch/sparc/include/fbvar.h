@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.11 1999/04/13 18:45:41 ad Exp $ */
+/*	$NetBSD: fbvar.h,v 1.12 2000/03/19 13:48:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,6 +100,7 @@ struct fbdevice {
 void	fb_attach __P((struct fbdevice *, int));
 void	fb_setsize_obp __P((struct fbdevice *, int, int, int, int));
 void	fb_setsize_eeprom __P((struct fbdevice *, int, int, int));
+int	fb_is_console __P((int));
 #ifdef RASTERCONSOLE
 void	fbrcons_init __P((struct fbdevice *));
 int	fbrcons_rows __P((void));
