@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.6 2000/07/24 15:24:55 mycroft Exp $	*/
+/*	$NetBSD: bzero.S,v 1.7 2000/07/24 15:36:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.6 2000/07/24 15:24:55 mycroft Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.7 2000/07/24 15:36:49 mycroft Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -218,9 +218,9 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
-	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
+	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
 	membar	#StoreLoad
-	ldd	[%fp + BIAS + 0x50], %f0
+	ldd	[%sp + BIAS + 0x50], %f0
 
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
