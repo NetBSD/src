@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.6 1997/10/12 18:06:23 oki Exp $	*/
+/*	$NetBSD: grf.c,v 1.6.2.1 1998/10/13 21:50:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,10 +109,12 @@ grfopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp = grf_cd.cd_devs[unit];
+	register struct grf_softc *gp;
 	int error = 0;
 
-	if (unit >= grf_cd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
+	if (unit >= grf_cd.cd_ndevs ||
+	    (gp = grf_cd.cd_devs[unit]) == NULL ||
+	    (gp->g_flags & GF_ALIVE) == 0)
 		return(ENXIO);
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
