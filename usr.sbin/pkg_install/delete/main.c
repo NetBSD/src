@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.30 2004/01/14 01:50:06 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2004/03/29 21:41:40 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2004/01/14 01:50:06 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2004/03/29 21:41:40 tv Exp $");
 #endif
 #endif
 
@@ -176,9 +176,11 @@ main(int argc, char **argv)
 		warnx("missing package name(s)");
 		usage();
 	}
+#ifndef __INTERIX
 	if (!Fake && getuid() != 0) {
 		warnx("not running as root - trying to delete anyways");
 	}
+#endif
 	if (OnlyDeleteFromPkgDB) {
 		/* Only delete the given packages' files from pkgdb, do not
 		 * touch the pkg itself. Used by "make reinstall" in
