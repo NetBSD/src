@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.4 1997/03/14 01:02:45 cgd Exp $
+.\"	$NetBSD: dlfcn.3,v 1.5 1998/02/07 19:54:45 kleink Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -41,11 +41,11 @@
 .Sh SYNOPSIS
 .Fd #include <dlfcn.h>
 .Ft "void *"
-.Fn dlopen "char *path" "int mode"
+.Fn dlopen "const char *path" "int mode"
 .Ft "int"
 .Fn dlclose "void *handle"
 .Ft "void *"
-.Fn dlsym "void *handle" "char *symbol"
+.Fn dlsym "void *handle" "const char *symbol"
 .Ft "int"
 .Fn dlctl "void *handle" "int cmd" "void *data"
 .Ft "char *"
