@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/06 13:25:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/12 14:28:27 reinoud Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -9,7 +9,7 @@ TOP=		${.CURDIR}/..
 KERNELS=	INSTALL 
 
 RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
-RAMDISK=	${RAMDISKDIR}/ramdisk-${DISTRIBREV}.fs
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 CLEANFILES+=	netbsd.tmp ${KERNELS:C/^.*$/netbsd.&.gz/g}
 
