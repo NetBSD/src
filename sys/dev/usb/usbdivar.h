@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.38 1999/10/25 10:51:46 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.39 1999/11/10 04:19:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -230,6 +230,7 @@ void		usb_needs_explore __P((usbd_bus_handle));
 	     extern int cold; \
              if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
+	     splx(_s); \
         } while (0)
 #else
 #define SPLUSBCHECK
