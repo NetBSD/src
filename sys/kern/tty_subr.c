@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.15 1996/10/13 02:32:46 christos Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.16 1996/10/25 21:20:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -65,13 +65,9 @@
 #endif
 
 void	cinit __P((void));
-int	ndqb __P((struct clist *, int));
-int	putc __P((int, struct clist *));
 #ifdef QBITS
 void	clrbits __P((u_char *, int, int));
 #endif
-int	b_to_q __P((u_char *, int, struct clist *));
-u_char *firstc __P((struct clist *, int *));
 
 /*
  * Initialize clists.
@@ -374,12 +370,12 @@ clrbits(cp, off, len)
  */
 int
 b_to_q(cp, count, clp)
-	u_char *cp;
+	const u_char *cp;
 	int count;
 	struct clist *clp;
 {
 	register int cc;
-	register u_char *p = cp;
+	register const u_char *p = cp;
 	int s;
 
 	if (count <= 0)
