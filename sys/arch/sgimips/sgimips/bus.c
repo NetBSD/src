@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.24 2004/01/12 12:12:24 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.25 2004/01/13 05:47:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.24 2004/01/12 12:12:24 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25 2004/01/13 05:47:09 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.24 2004/01/12 12:12:24 sekiya Exp $");
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/machtype.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,13 +74,41 @@ struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	NULL,	
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+void
+sgimips_bus_dma_init(void)
+{
+	switch (mach_type) {
+#ifdef MIPS1
+	/* R2000/R3000 */
+	case MACH_SGI_IP12:
+		sgimips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_mips1;
+		break;
+#endif
+
+#ifdef MIPS3
+	/* >=R4000*/
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
+	case MACH_SGI_IP32:
+		sgimips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_mips3;
+		break;
+#endif
+
+	default:
+		panic("sgimips_bus_dma_init: unsupported mach type IP%d\n",
+		    mach_type);
+	}
+}
 
 u_int8_t
 bus_space_read_1(t, h, o)
@@ -704,12 +733,122 @@ _bus_dmamap_unload(t, map)
 	map->_dm_flags &= ~SGIMIPS_DMAMAP_COHERENT;
 }
 
+#ifdef MIPS1
+/* Common function from DMA map synchronization. May be called
+ * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R3000 version.
+ */
+void
+_bus_dmamap_sync_mips1(t, map, offset, len, ops)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
+	int ops;
+{
+	bus_size_t minlen;
+	bus_addr_t addr;
+	int i;
+
+	/*
+	 * Mixing PRE and POST operations is not allowed.
+	 */
+	 if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	     (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		 panic("_bus_dmamap_sync_mips1: mix PRE and POST");
+
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("_bus_dmamap_sync_mips1: bad offset %lu (map size is %lu)"
+		    , offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("_bus_dmamap_sync_mips1: bad length");
+#endif
+
+	/*
+	 * The R3000 cache is write-through. Therefore, we only need
+	 * to drain the write buffer on PREWRITE. The cache is not
+	 * coherent, however, so we need to invalidate the data cache
+	 * on PREREAD (should we do it POSTREAD instead?).
+	 *
+	 * POSTWRITE (and POSTREAD, currently) are noops.
+	 */
+
+	if (ops & BUS_DMASYNC_PREWRITE) {
+		/*
+		 * Flush the write buffer.
+		 */
+		 wbflush();
+	 }
+
+	/*
+	 * If we're not doing PREREAD, nothing more to do.
+	 */
+	if ((ops & BUS_DMASYNC_PREREAD) == 0)
+		return;
+
+	/*
+	 * No cache invalidation is necessary if the DMA map covers
+	 * COHERENT DMA-safe memory (which is mapped un-cached).
+	 */
+	if (map->_dm_flags & SGIMIPS_DMAMAP_COHERENT)
+		return;
+
+	/*
+	 * If we are going to hit something as large or larger
+	 * than the entire data cache, just nail the whole thing.
+	 *
+	 * NOTE: Even though this is `wbinv_all', since the cache is
+	 * write-through, it just invalidates it.
+	 */
+	if (len >= mips_pdcache_size) {
+		mips_dcache_wbinv_all();
+		return;
+	}
+
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find the beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i].ds_addr;
+
+#ifdef BUS_DMA_DEBUG
+		printf("bus_dmamap_sync_mips1: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
+#endif
+		mips_dcache_inv_range(
+		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
+#ifdef BUS_DMA_DEBUG
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
+	}
+}	
+#endif /* MIPS1 */
+
+#ifdef MIPS3
 /*
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R4x00/R5k version.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
+_bus_dmamap_sync_mips3(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_addr_t offset;
@@ -857,6 +996,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		len -= minlen;
 	}
 }
+#endif /* MIPS3 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called
