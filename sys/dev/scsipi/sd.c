@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.123 1998/01/12 09:49:16 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.124 1998/01/15 02:21:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -68,17 +68,18 @@
 #include <sys/rnd.h>
 #endif
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsipi_disk.h>
+#include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/sdvar.h>
+
+#include "sd.h"		/* NSD_SCSIBUS and NSD_ATAPIBUS come from here */
 
 #ifndef	SDOUTSTANDING
 #define	SDOUTSTANDING	4
 #endif
-#define	SDRETRIES	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
@@ -86,43 +87,6 @@
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
-struct sd_softc {
-	struct device sc_dev;
-	struct disk sc_dk;
-
-	int flags;
-#define	SDF_LOCKED	0x01
-#define	SDF_WANTED	0x02
-#define	SDF_WLABEL	0x04		/* label is writable */
-#define	SDF_LABELLING	0x08		/* writing label */
-#define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
-	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
-	struct disk_parms {
-		u_char heads;		/* number of heads */
-		u_short cyls;		/* number of cylinders */
-		u_char sectors;		/* number of sectors/track */
-		int blksize;		/* number of bytes/sector */
-		u_long disksize;	/* total number sectors */
-	} params;
-	struct buf buf_queue;
-	u_int8_t type;
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
-};
-
-struct scsi_mode_sense_data {
-	struct scsi_mode_header header;
-	struct scsi_blk_desc blk_desc;
-	union scsi_disk_pages pages;
-};
-
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	sdmatch __P((struct device *, void *, void *));
-#else
-int	sdmatch __P((struct device *, struct cfdata *, void *));
-#endif
-void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
@@ -131,14 +95,6 @@ void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 void	sddone __P((struct scsipi_xfer *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
-int	sd_get_optparms __P((struct sd_softc *, int, struct disk_parms *));
-int	sd_get_parms __P((struct sd_softc *, int));
-static int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
-    int, int));
-
-struct cfattach sd_ca = {
-	sizeof(struct sd_softc), sdmatch, sdattach
-};
 
 extern struct cfdriver sd_cd;
 
@@ -151,50 +107,19 @@ struct scsipi_device sd_switch = {
 	sddone,			/* deal with stats at interrupt time */
 };
 
-struct scsipi_inquiry_pattern sd_patterns[] = {
-	{T_DIRECT, T_FIXED,
-	 "",         "",                 ""},
-	{T_DIRECT, T_REMOV,
-	 "",         "",                 ""},
-	{T_OPTICAL, T_FIXED,
-	 "",         "",                 ""},
-	{T_OPTICAL, T_REMOV,
-	 "",         "",                 ""},
-};
-
-int
-sdmatch(parent, match, aux)
-	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
-	void *aux;
-{
-	struct scsipibus_attach_args *sa = aux;
-	int priority;
-
-	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
-	    sizeof(sd_patterns[0]), &priority);
-	return (priority);
-}
-
 /*
  * The routine called by the low level scsi routine when it discovers
  * a device suitable for this driver.
  */
 void
-sdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sdattach(parent, sd, sc_link, ops)
+	struct device *parent;
+	struct sd_softc *sd;
+	struct scsipi_link *sc_link;
+	const struct sd_ops *ops;
 {
-	int error;
-	struct sd_softc *sd = (void *)self;
+	int error, result;
 	struct disk_parms *dp = &sd->params;
-	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach: "));
 
@@ -202,7 +127,7 @@ sdattach(parent, self, aux)
 	 * Store information needed to contact our base driver
 	 */
 	sd->sc_link = sc_link;
-	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
+	sd->sc_ops = ops;
 	sc_link->device = &sd_switch;
 	sc_link->device_softc = sd;
 	if (sc_link->openings > SDOUTSTANDING)
@@ -220,18 +145,30 @@ sdattach(parent, self, aux)
 #endif
 
 	/*
-	 * Note if this device is ancient.  This is used in sdminphys().
-	 */
-	if ((sa->scsipi_info.scsi_version & SID_ANSII) == 0)
-		sd->flags |= SDF_ANCIENT;
-
-	/*
 	 * Use the subdriver to request information regarding
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
 	printf("\n");
-	printf("%s: ", sd->sc_dev.dv_xname);
+
+	/* XXX BEGIN HACK ALERT!!! */
+	if (sc_link->type == BUS_ATAPI) {
+		/*
+		 * The ATAPI sense data handling is _TOTALLY_ broken.
+		 * In particular, it _never_ does a REQUEST_SENSE to get
+		 * sense data!  This causes UNIT ATTENTION to be not
+		 * cleared properly for some ATAPI devices (e.g. Zip),
+		 * which messes up the probe.
+		 *
+		 * This is the easiest way to get around the problem.
+		 *
+		 * YUCK!
+		 */
+		(void)scsipi_test_unit_ready(sc_link,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_IGNORE_NOT_READY);
+	}
+	/* XXX END HACK ALERT!!! */
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsipi_start(sd->sc_link, SSS_START,
@@ -240,12 +177,34 @@ sdattach(parent, self, aux)
 	} else
 		error = 0;
 
-	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
-		printf("drive offline\n");
+	if (error)
+		result = SDGP_RESULT_OFFLINE;
 	else
-	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
+		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
+		    SCSI_AUTOCONF);
+	printf("%s: ", sd->sc_dev.dv_xname);
+	switch (result) {
+	case SDGP_RESULT_OK:
+	        printf("%ldMB, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %ld sectors",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+		break;
+
+	case SDGP_RESULT_OFFLINE:
+		printf("drive offline");
+		break;
+
+	case SDGP_RESULT_UNFORMATTED:
+		printf("unformatted media");
+		break;
+
+#ifdef DIAGNOSTIC
+	default:
+		panic("sdattach: unknown result from get_parms");
+		break;
+#endif
+	}
+	printf("\n");
 
 #if NRND > 0
 	/*
@@ -358,8 +317,16 @@ sdopen(dev, flag, fmt, p)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			sc_link->flags |= SDEV_MEDIA_LOADED;
 
-			/* Load the physical device parameters. */
-			if (sd_get_parms(sd, 0) != 0) {
+			/*
+			 * Load the physical device parameters.
+			 *
+			 * Note that if media is present but unformatted,
+			 * we allow the open (so that it can be formatted!).
+			 * The drive should refuse real I/O, if the media is
+			 * unformatted.
+			 */
+			if ((*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
+			    0) == SDGP_RESULT_OFFLINE) {
 				error = ENXIO;
 				goto bad2;
 			}
@@ -548,7 +515,9 @@ sdstart(v)
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsipi_rw_big cmd_big;
+#if NSD_SCSIBUS > 0
 	struct scsi_rw cmd_small;
+#endif
 	struct scsipi_generic *cmdp;
 	int blkno, nblks, cmdlen, error;
 	struct partition *p;
@@ -603,12 +572,13 @@ sdstart(v)
 		}
 		nblks = howmany(bp->b_bcount, lp->d_secsize);
 
+#if NSD_SCSIBUS > 0
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (((blkno & 0x1fffff) == blkno) &&
-		    ((nblks & 0xff) == nblks)) {
+		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI) {
 			/*
 			 * We can fit in a small cdb.
 			 */
@@ -619,7 +589,9 @@ sdstart(v)
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else {
+		} else
+#endif
+		{
 			/*
 			 * Need a large cdb.
 			 */
@@ -821,7 +793,7 @@ sdgetdefaultlabel(sd, lp)
 	lp->d_type = DTYPE_SCSI;
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
-	lp->d_rpm = 3600;
+	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
@@ -889,182 +861,6 @@ sd_reassign_blocks(sd, blkno)
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
-}
-
-
-
-static int
-sd_mode_sense(sd, scsipi_sense, page, flags)
-	struct sd_softc *sd;
-	struct scsi_mode_sense_data *scsipi_sense;
-	int page, flags;
-{
-	struct scsi_mode_sense scsipi_cmd;
-
-	/*
-	 * Make sure the sense buffer is clean before we do
-	 * the mode sense, so that checks for bogus values of
-	 * 0 will work in case the mode sense fails.
-	 */
-	bzero(scsipi_sense, sizeof(*scsipi_sense));
-
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = page;
-	scsipi_cmd.length = 0x20;
-	/*
-	 * If the command worked, use the results to fill out
-	 * the parameter structure
-	 */
-	return (scsipi_command(sd->sc_link,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
-}
-
-int
-sd_get_optparms(sd, flags, dp)
-	struct sd_softc *sd;
-	int flags;
-	struct disk_parms *dp;
-{
-	struct scsi_mode_sense scsipi_cmd;
-	struct scsi_mode_sense_data {
-		struct scsi_mode_header header;
-		struct scsi_blk_desc blk_desc;
-		union scsi_disk_pages pages;
-	} scsipi_sense;
-	u_long sectors;
-	int error;
-
-	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_link, flags)) == 0)
-		return (1);
-
-	/* XXX
-	 * It is better to get the following params from the
-	 * mode sense page 6 only (optical device parameter page).
-	 * However, there are stupid optical devices which does NOT
-	 * support the page 6. Ghaa....
-	 */
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = 0x3f;	/* all pages */
-	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
-	    sizeof(struct scsi_blk_desc);
-
-	if ((error = scsipi_command(sd->sc_link,  
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
-	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
-	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
-		return (error);
-
-	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
-	if (dp->blksize == 0) 
-		dp->blksize = 512;
-
-	/*
-	 * Create a pseudo-geometry.
-	 */
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (dp->heads * dp->sectors);
-	dp->disksize = sectors;
-
-	return (0);
-}
-
-/*
- * Get the scsi driver to send a full inquiry to the * device and use the
- * results to fill out the disk parameter structure.
- */
-int
-sd_get_parms(sd, flags)
-	struct sd_softc *sd;
-	int flags;
-{
-	struct disk_parms *dp = &sd->params;
-	struct scsi_mode_sense_data scsipi_sense;
-	u_long sectors;
-	int page;
-	int error;
-
-	if (sd->type == T_OPTICAL) {
-		if ((error = sd_get_optparms(sd, flags, dp)) != 0)
-			sd->sc_link->flags &= ~SDEV_MEDIA_LOADED;
-		return (error);
-	}
-
-	if ((error = sd_mode_sense(sd, &scsipi_sense, page = 4, flags)) == 0) {
-		SC_DEBUG(sd->sc_link, SDEV_DB3,
-		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
-		    scsipi_sense.pages.rigid_geometry.nheads,
-		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_wp),
-		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    _2btol(scsipi_sense.pages.rigid_geometry.land_zone)));
-
-		/*
-		 * KLUDGE!! (for zone recorded disks)
-		 * give a number of sectors so that sec * trks * cyls
-		 * is <= disk_size
-		 * can lead to wasted space! THINK ABOUT THIS !
-		 */
-		dp->heads = scsipi_sense.pages.rigid_geometry.nheads;
-		dp->cyls = _3btol(scsipi_sense.pages.rigid_geometry.ncyl);
-		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
-
-		if (dp->heads == 0 || dp->cyls == 0)
-			goto fake_it;
-
-		if (dp->blksize == 0)
-			dp->blksize = 512;
-
-		sectors = scsipi_size(sd->sc_link, flags);
-		dp->disksize = sectors;
-		sectors /= (dp->heads * dp->cyls);
-		dp->sectors = sectors;	/* XXX dubious on SCSI */
-
-		return (0);
-	}
-
-	if ((error = sd_mode_sense(sd, &scsipi_sense, page = 5, flags)) == 0) {
-		dp->heads = scsipi_sense.pages.flex_geometry.nheads;
-		dp->cyls = _2btol(scsipi_sense.pages.flex_geometry.ncyl);
-		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
-		dp->sectors = scsipi_sense.pages.flex_geometry.ph_sec_tr;
-		dp->disksize = dp->heads * dp->cyls * dp->sectors;
-		if (dp->disksize == 0)
-			goto fake_it;
-
-		if (dp->blksize == 0)
-			dp->blksize = 512;
-
-		return (0);
-	}
-
-fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
-		if (error == 0)
-			printf("%s: mode sense (%d) returned nonsense",
-			    sd->sc_dev.dv_xname, page);
-		else
-			printf("%s: could not mode sense (4/5)",
-			    sd->sc_dev.dv_xname);
-		printf("; using fictitious geometry\n");
-	}
-	/*
-	 * use adaptec standard fictitious geometry
-	 * this depends on which controller (e.g. 1542C is
-	 * different. but we have to put SOMETHING here..)
-	 */
-	sectors = scsipi_size(sd->sc_link, flags);
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (64 * 32);
-	dp->blksize = 512;
-	dp->disksize = sectors;
-	return (0);
 }
 
 int

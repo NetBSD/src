@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.8 1997/10/18 19:50:55 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.9 1998/01/15 02:21:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -68,7 +68,7 @@
 #include <dev/scsipi/scsipi_cd.h>
 #include <dev/scsipi/scsi_cd.h>
 #include <dev/scsipi/scsiconf.h>
-#include <dev/scsipi/cd_link.h>
+#include <dev/scsipi/cdvar.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	cd_scsibus_match __P((struct device *, void *, void *));
@@ -77,9 +77,9 @@ int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
 #endif
 void	cd_scsibus_attach __P((struct device *, struct device *, void *));
 int	cd_scsibus_get_mode __P((struct cd_softc *,
-	    struct scsi_cd_mode_data *, int, int));
+	    struct scsi_cd_mode_data *, int, int, int));
 int	cd_scsibus_set_mode __P((struct cd_softc *,
-	    struct scsi_cd_mode_data *, int));
+	    struct scsi_cd_mode_data *, int, int));
 
 struct cfattach cd_scsibus_ca = {
 	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach
@@ -95,10 +95,11 @@ struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 #endif
 };
 
-int	cd_scsibus_setchan __P((struct cd_softc *, int, int, int, int));
-int	cd_scsibus_getvol __P((struct cd_softc *, struct ioc_vol *));
-int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *));
-int	cd_scsibus_set_pa_immed __P((struct cd_softc *));
+int	cd_scsibus_setchan __P((struct cd_softc *, int, int, int, int, int));
+int	cd_scsibus_getvol __P((struct cd_softc *, struct ioc_vol *, int));
+int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
+	    int));
+int	cd_scsibus_set_pa_immed __P((struct cd_softc *, int));
 
 const struct cd_ops cd_scsibus_ops = {
 	cd_scsibus_setchan,
@@ -161,10 +162,10 @@ cd_scsibus_attach(parent, self, aux)
  * Get the requested page into the buffer given
  */
 int
-cd_scsibus_get_mode(cd, data, page, len)
+cd_scsibus_get_mode(cd, data, page, len, flags)
 	struct cd_softc *cd;
 	struct scsi_cd_mode_data *data;
-	int page, len;
+	int page, len, flags;
 {
 	struct scsi_mode_sense scsipi_cmd;
 
@@ -183,10 +184,10 @@ cd_scsibus_get_mode(cd, data, page, len)
  * Get the requested page into the buffer given
  */
 int
-cd_scsibus_set_mode(cd, data, len)
+cd_scsibus_set_mode(cd, data, len, flags)
 	struct cd_softc *cd;
 	struct scsi_cd_mode_data *data;
-	int len;
+	int len, flags;
 {
 	struct scsi_mode_select scsipi_cmd;
 
@@ -202,49 +203,52 @@ cd_scsibus_set_mode(cd, data, len)
 }
 
 int
-cd_scsibus_set_pa_immed(cd)
+cd_scsibus_set_pa_immed(cd, flags)
 	struct cd_softc *cd;
+	int flags;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE)) != 0)
+	    AUDIOPAGESIZE, flags)) != 0)
 		return (error);
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
 }
 
 int
-cd_scsibus_setchan(cd, p0, p1, p2, p3)
+cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct cd_softc *cd;
 	int p0, p1, p2, p3;
+	int flags;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE)) != 0)
+	    AUDIOPAGESIZE, flags)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
 }
 
 int
-cd_scsibus_getvol(cd, arg)
+cd_scsibus_getvol(cd, arg, flags)
 	struct cd_softc *cd;
 	struct ioc_vol *arg;
+	int flags;
 {
 
 	struct scsi_cd_mode_data data;
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE)) != 0)
+	    AUDIOPAGESIZE, flags)) != 0)
 		return (error);
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
@@ -254,15 +258,16 @@ cd_scsibus_getvol(cd, arg)
 }
 
 int
-cd_scsibus_setvol(cd, arg)
+cd_scsibus_setvol(cd, arg, flags)
 	struct cd_softc *cd;
 	const struct ioc_vol *arg;
+	int flags;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE)) != 0)
+	    AUDIOPAGESIZE, flags)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
@@ -270,5 +275,5 @@ cd_scsibus_setvol(cd, arg)
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE));
+	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
 }

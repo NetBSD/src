@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.3 1997/10/01 01:18:42 enami Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.4 1998/01/15 02:21:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -33,11 +33,6 @@
 #define SCSI_ATAPICONF_H
 
 #include <dev/scsipi/scsipiconf.h>
-
-#undef ATAPI_DEBUG
-#undef ATAPI_DEBUG2
-#undef ATAPI_DEBUG_PROBE
-#undef ATAPI_DEBUG_WDC
 
 struct atapi_identify {
 	struct config_s {
@@ -141,4 +136,9 @@ void	atapi_print_addr __P((struct scsipi_link *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
 int	atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
 	    int, u_char *, int, int, int, struct buf *, int));
+int	atapi_mode_select __P((struct scsipi_link *,
+	    struct atapi_mode_header *, int, int, int, int));
+int	atapi_mode_sense __P((struct scsipi_link *, int,
+	    struct atapi_mode_header *, int, int, int, int));
+
 #endif /* SCSI_ATAPICONF_H */
