@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.65 2002/07/19 13:22:41 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.66 2002/08/04 16:43:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -488,6 +488,7 @@ __END_DECLS
 
 /* Public function prototypes. */
 __BEGIN_DECLS
+int	 assume_default_colors(short, short);
 int	 baudrate(void);
 int	 beep(void);
 int	 box(WINDOW *, chtype, chtype);
@@ -595,6 +596,7 @@ int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
 int	 ungetch(int);
 int	 untouchwin(WINDOW *);
+int	 use_default_colors(void);
 int	 vline(chtype, int);
 int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__printf__, 2, 0)));

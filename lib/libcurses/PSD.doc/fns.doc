@@ -74,6 +74,13 @@ on the window at the current \*y.
 \*(Es
 In this case, it will put on as much as it can.
 .Ds
+.Fn assume_default_colors "short fore" "short back"
+.De
+Set the curses default foreground and background colors to
+.Vn fore
+and
+.Vn back .
+.Ds
 .Fn attroff "int attribute" \(dg
 .De
 Remove character attributes set by
@@ -1239,6 +1246,12 @@ and
 .De
 Initialize the color routines. 
 This must be called before any of the color routines are used.
+The terminal is setup to use the curses default colors of white foreground
+on black background, unless
+.Fn assume_default_colors
+or
+.Fn use_default_colors
+are called.
 .Ds
 .Ft "WINDOW *"
 .Fn subwin "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
@@ -1380,6 +1393,11 @@ than one character of push back is undefined.
 .Fn untouchwin "WINDOW *win"
 .De
 Make the window appear to have not been updated even if it has been.
+.Ds
+.Fn use_default_colors ""
+.De
+Use the terminal foreground and background colors as the curses default
+foreground and background colors.
 .Ds
 .Fn vline "chtype ch" "int count"
 .De

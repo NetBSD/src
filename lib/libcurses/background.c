@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.6 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.7 2002/08/04 16:43:05 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.6 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.7 2002/08/04 16:43:05 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -71,13 +71,19 @@ bkgd(chtype ch)
 void
 wbkgdset(WINDOW *win, chtype ch)
 {
-	if (ch & __CHARTEXT)
-		win->bch = (wchar_t) ch & __CHARTEXT;
-	win->battr = (attr_t) ch & __ATTRIBUTES;
 #ifdef DEBUG
 	__CTRACE("wbkgdset: (%0.2o), '%s', %08x\n",
-	    win, unctrl(win->bch), win->battr);
+	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
 #endif
+
+	/* Background character. */
+	if (ch & __CHARTEXT)
+		win->bch = (wchar_t) ch & __CHARTEXT;
+
+	/* Background attributes (check colour). */
+	if (__using_color && !(ch & __COLOR))
+		ch |= __default_color;
+	win->battr = (attr_t) ch & __ATTRIBUTES;
 }
 
 /*
@@ -89,12 +95,23 @@ wbkgd(WINDOW *win, chtype ch)
 {
 	int	y, x;
 
+#ifdef DEBUG
+	__CTRACE("wbkgd: (%0.2o), '%s', %08x\n",
+	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
+#endif
+
+	/* Background attributes (check colour). */
+	if (__using_color && !(ch & __COLOR))
+		ch |= __default_color;
+
+	win->battr = (attr_t) ch & __ATTRIBUTES;
 	wbkgdset(win, ch);
 	for (y = 0; y < win->maxy; y++)
 		for (x = 0; x < win->maxx; x++) {
 			if (ch & A_CHARTEXT)
 				win->lines[y]->line[x].bch = ch & __CHARTEXT;
-			win->lines[y]->line[x].battr = ch & __ATTRIBUTES;
+			win->lines[y]->line[x].battr =
+			    (attr_t) ch & __ATTRIBUTES;
 		}
 	__touchwin(win);
 	return(OK);
@@ -107,6 +124,12 @@ wbkgd(WINDOW *win, chtype ch)
 chtype
 getbkgd(WINDOW *win)
 {
-	return ((chtype) ((win->bch & A_CHARTEXT) |
-	    (win->battr & A_ATTRIBUTES)));
+	attr_t	battr;
+
+	/* Background attributes (check colour). */
+	battr = win->battr & A_ATTRIBUTES;
+	if (__using_color && ((battr & __COLOR) == __default_color))
+		battr &= ~__default_color;
+
+	return ((chtype) ((win->bch & A_CHARTEXT) | battr));
 }

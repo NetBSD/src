@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.38 2002/07/19 13:36:48 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.39 2002/08/04 16:43:07 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,7 @@ must be called before any of the other routines that deal with color are used.
 .Em stdscr
 .It addnstr(str,len)	add no more than len chars of string to
 .Em stdscr
+.It assume_default_colors(f, b)	set default foreground and background colors
 .It attron(attribute)	turn on attribute modes
 .It attroff(attribute)	turn off attribute modes
 .It attrset(attribute)	set attribute modes
@@ -347,6 +348,7 @@ as changed
 .It underscore()	start underscore mode
 .It ungetch(ch)		Put character back onto input queue.
 .It untouchwin(win)	Make window appear not to have been modified.
+.It use_default_colors	use terminal's default foreground and background colors
 .It vline(ch, count)	Draw a vertical line of character
 .Em ch .
 .It waddch(win,ch)	add char to
