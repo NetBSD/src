@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.20 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.21 2004/03/20 05:21:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.20 2004/03/20 04:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.21 2004/03/20 05:21:53 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -176,7 +176,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	RF_StripeNum_t parityStripeID;
 	RF_PhysDiskAddr_t *failedPDA;
 	RF_RaidLayout_t *layoutPtr;
-	RF_VoidPointerListElem_t *vple;
 
 	layoutPtr = &(raidPtr->Layout);
 	parityStripeID = rf_RaidAddressToParityStripeID(layoutPtr, asmap->raidAddress,
@@ -369,11 +368,8 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	parityPDA->numSector = failedPDA->numSector;
 
 	if (!xorTargetBuf) {
-		xorTargetBuf = rf_AllocIOBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
-		vple = rf_AllocVPListElem();
-		vple->p = xorTargetBuf;
-		vple->next = dag_h->iobufs;
-		dag_h->iobufs = vple;
+		xorTargetBuf = rf_AllocBuffer(raidPtr, dag_h,
+					      rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	}
 	/* init the Wnp node */
 	rf_InitNode(wnpNode, rf_wait, RF_FALSE, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,

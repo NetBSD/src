@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.23 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.24 2004/03/20 05:21:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.23 2004/03/20 04:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.24 2004/03/20 05:21:53 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -175,7 +175,6 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_ReconUnitNum_t which_ru;
 	RF_RaidLayout_t *layoutPtr;
 	RF_PhysDiskAddr_t *pda;
-	RF_VoidPointerListElem_t *vple;
 
 	layoutPtr = &(raidPtr->Layout);
 	parityStripeID = rf_RaidAddressToParityStripeID(layoutPtr, 
@@ -352,12 +351,8 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 	if ((!allowBufferRecycle) || (i == nRodNodes)) {
-		xorNode->results[0] = rf_AllocIOBuffer(raidPtr, 
+		xorNode->results[0] = rf_AllocBuffer(raidPtr, dag_h,
 						       rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit));
-		vple = rf_AllocVPListElem();
-		vple->p = xorNode->results[0];
-		vple->next = dag_h->iobufs;
-		dag_h->iobufs = vple;
 	} else {
 		/* this works because the only way we get here is if
 		   allowBufferRecycle is true and we went through the
@@ -699,7 +694,8 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* physical disk addr desc */
 		tmpreadDataNode->params[0].p = pda;
 		/* buffer to hold old data */
-		tmpreadDataNode->params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
+		tmpreadDataNode->params[1].p = rf_AllocBuffer(raidPtr, dag_h, 
+							      pda->numSector << raidPtr->logBytesPerSector);
 		tmpreadDataNode->params[2].v = parityStripeID;
 		tmpreadDataNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
@@ -722,7 +718,8 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			    dag_h, "Rop", allocList);
 		tmpreadParityNode->params[0].p = pda;
 		/* buffer to hold old parity */
-		tmpreadParityNode->params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
+		tmpreadParityNode->params[1].p = rf_AllocBuffer(raidPtr, dag_h,
+								pda->numSector << raidPtr->logBytesPerSector);
 		tmpreadParityNode->params[2].v = parityStripeID;
 		tmpreadParityNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
@@ -746,7 +743,8 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				    1, 4, 0, dag_h, "Roq", allocList);
 			tmpreadQNode->params[0].p = pda;
 			/* buffer to hold old Q */
-			tmpreadQNode->params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
+			tmpreadQNode->params[1].p = rf_AllocBuffer(raidPtr, dag_h,
+								   pda->numSector << raidPtr->logBytesPerSector);
 			tmpreadQNode->params[2].v = parityStripeID;
 			tmpreadQNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 			    which_ru);
