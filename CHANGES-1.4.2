@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.113 2000/02/04 23:22:25 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.114 2000/02/06 20:02:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3160,3 +3160,76 @@ sys/arch/amiga/conf/GENERIC			1.129
 sys/arch/amiga/conf/AMIGA			regenerate
 
   Add reboot code for Phase5 68040+PPC boards.
+
+sys/arch/m68k/fpe/fpu_add.c			patch
+sys/arch/m68k/fpe/fpu_arith.h			patch
+sys/arch/m68k/fpe/fpu_calcea.c			patch
+sys/arch/m68k/fpe/fpu_div.c			patch
+sys/arch/m68k/fpe/fpu_emulate.c			patch
+sys/arch/m68k/fpe/fpu_emulate.h			patch
+sys/arch/m68k/fpe/fpu_explode.c			patch
+sys/arch/m68k/fpe/fpu_fmovecr.c			patch
+sys/arch/m68k/fpe/fpu_fscale.c			patch
+sys/arch/m68k/fpe/fpu_fstore.c			patch
+sys/arch/m68k/fpe/fpu_implode.c			patch
+sys/arch/m68k/fpe/fpu_int.c			patch
+sys/arch/m68k/fpe/fpu_log.c			patch
+sys/arch/m68k/fpe/fpu_mul.c			patch
+sys/arch/m68k/fpe/fpu_rem.c			patch
+sys/arch/m68k/fpe/fpu_sqrt.c			patch
+sys/arch/m68k/fpe/fpu_subr.c			patch
+
+  Revert floating point emulation software to the version released
+  as NetBSD 1.4.  The upgrade done in 1.4.1 had problems.
+
+sys/coda/coda_vnops.c				patch
+
+  Fix a compilation problem caused by the widening of v_usecount.
+
+sys/arch/alpha/alpha/dec_eb164.c		1.32
+sys/arch/alpha/alpha/dec_550.c			1.5
+sys/arch/alpha/alpha/dec_6600.c			1.3
+
+  Fix detection of booted device for IDE drives, such that automatic
+  booting from a slave drive or a drive on the second channel works.
+
+sys/arch/alpha/common/bus_dma.c			1.36
+sys/arch/alpha/include/bus.h			1.32
+sys/arch/alpha/pci/cia.c			1.51
+sys/arch/alpha/pci/cia_dma.c			1.15
+
+  Fix host->device DMA data corruption problem on DEC Miata
+  workstations.
+
+sys/dev/ic/elink3.c				1.59-1.63,1.65
+sys/dev/ic/elink3reg.h				1.21
+sys/dev/pcmcia/if_ep_pcmcia.c			1.22
+
+  Add support for the 3Com 3c574.  Partially based on PR#8331.
+
+distrib/notes/i386/hardware			patch
+
+  The rl(4) device driver is now on the install floppy.
+  Remove the '[*] [+]' designation.
+
+distrib/notes/common/main			patch
+
+  Add several new sections:
+   o Upgrade path to NetBSD 1.4.2
+   o Major Changes Between 1.4.1 and 1.4.2
+   o Known caveats with 1.4.2
+   o Major Changes Between 1.4 and 1.4.1
+  Also, document that we no longer plan to provide AnonCVS, but that
+  we have indeed done so.
+
+distrib/notes/common/main			patch
+distrib/notes/common/donations			patch
+distrib/notes/common/legal.common		patch
+
+  Update people lists.
+
+distrib/utils/Makefile.inc			1.7-1.8
+
+  Do not compile with -msoft-float on m68k, because stubs are
+  missing from libgcc.  Instead, rely on FP emulator in the kernel.
+  Fixes PR#9294.
