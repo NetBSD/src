@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.2 2003/03/19 03:05:43 simonb Exp $ */
+/* $NetBSD: disksubr.c,v 1.3 2003/04/16 15:01:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -271,5 +271,5 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 	return (1);
 bad:
 	bp->b_flags |= B_ERROR;
-	return (0);
+	return (-1);
 }
