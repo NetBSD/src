@@ -1,0 +1,7 @@
+#	$NetBSD: disktab,v 1.1 2003/01/29 04:56:17 perseant Exp $
+
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.4LFS:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:
