@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.47 2003/09/23 21:36:07 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.48 2003/09/25 01:05:06 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2003/09/23 21:36:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2003/09/25 01:05:06 mycroft Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -281,9 +281,10 @@ fdprint(aux, fdc)
 }
 
 void
-fdcattach(fdc)
-	struct fdc_softc *fdc;
+fdcattach(self)
+	struct device *self;
 {
+	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -344,6 +345,7 @@ fdcattach(fdc)
 #endif /* i386 */
 
 	/* physical limit: four drives per controller. */
+	fdc->sc_state = PROBING;
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		if (fdc->sc_known) {
 			if (fdc->sc_present & (1 << fa.fa_drive)) {
@@ -373,6 +375,7 @@ fdcattach(fdc)
 			(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
 		}
 	}
+	fdc->sc_state = DEVIDLE;
 }
 
 int
@@ -404,18 +407,20 @@ fdprobe(parent, match, aux)
 	if (fdc->sc_known)
 		return 1;
 
+	/* toss any interrupt status */
+	for (n = 0; n < 4; n++) {
+		out_fdc(iot, ioh, NE7CMD_SENSEI);
+		(void) fdcresult(fdc);
+	}
 	/* select drive and turn on motor */
 	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
-	delay(250000);
+	(void) tsleep(fdc, PWAIT, "fdprobe1", hz / 4);
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
 	/* wait for recalibrate, up to 2s */
-	for (n = 20000; n; n--) {
-		delay(100);
-		if ((bus_space_read_1(iot, ioh, fdsts) & FDS_DRVBUSY(drive)) == 0)
-			break;
-	}
+	if (tsleep(fdc, PWAIT, "fdprobe2", 2 * hz) != EWOULDBLOCK)
+/*XXX*/		printf("fdprobe: got intr\n");
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -945,6 +950,12 @@ fdcintr(arg)
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 	struct ne7_fd_formb *finfo = NULL;
+
+	if (fdc->sc_state == PROBING) {
+/*XXX*/		printf("got probe interrupt\n");
+		wakeup(fdc);
+		return 1;
+	}
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
