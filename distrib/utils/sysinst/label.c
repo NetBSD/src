@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.46 2005/01/20 21:59:36 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.47 2005/03/14 21:37:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.46 2005/01/20 21:59:36 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.47 2005/03/14 21:37:43 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ edit_fs_size(menudesc *m, void *arg)
 void
 set_ptype(partinfo *p, int fstype, int flag)
 {
-	p->pi_flags = p->pi_flags & ~PIF_FFSv2;
+	p->pi_flags = (p->pi_flags & ~PIF_FFSv2) | flag;
 
 	if (p->pi_fstype == fstype)
 		return;
@@ -208,7 +208,6 @@ set_ptype(partinfo *p, int fstype, int flag)
 		p->pi_frag = 8;
 		/* match newfs defaults for fragments size (2k if >= 1024MB) */
 		p->pi_fsize = p->pi_size > 1024*1024*1024 / 512 ? 2048 : 1024;
-		p->pi_flags |= flag;
 	} else {
 		/* zero - fields not used */
 		p->pi_frag = 0;
