@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.180 2002/05/30 23:39:52 augustss Exp $
+.\"	$NetBSD: main,v 1.181 2002/06/08 02:06:49 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,7 +139,7 @@ and the installation kernel
 Alternatively, you can fetch the CD image,
 .Pa macppc_bootable.iso 
 or the boot floppy image
-.Pa installation/boot.fs
+.Pa installation/floppy/boot.fs
 which include the bootloader and installation kernel.
 .\}
 .if r_sparc \{\
