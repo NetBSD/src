@@ -1,0 +1,27 @@
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl
+AC_INIT(CDKDemo)
+
+dnl
+dnl Checks for programs.
+dnl
+AC_PROG_CC
+
+dnl
+dnl Put -Wall on compile line if we are using gcc or g++
+dnl
+if test "$ac_cv_prog_CC" = "gcc"; then
+   CFLAGS="$CFLAGS -Wall"
+fi
+if test "$ac_cv_prog_CC" = "g++"; then
+   CFLAGS="$CFLAGS -Wall"
+fi
+
+dnl
+dnl Checks for libraries.
+dnl
+dnl  -lncurses -lm -lcdk -L..
+AC_CHECK_LIB(ncurses, start_color)
+
+AC_OUTPUT(Makefile)

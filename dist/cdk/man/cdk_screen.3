@@ -1,0 +1,136 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_screen 3X "05 Dec 1995"
+.SH NAME
+initCDKScreen, initCDKColor, registerCDKObject, unregisterCDKObject,
+raiseCDKObject, lowerCDKObject, refreshCDKScreen, eraseCDKScreen,
+destroyCDKScreen, endCDK - Cdk Screen and Widget Manipulation Functions
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKSCREEN *initCDKScreen (WINDOW *" "cursesWindow ");
+.LP
+.BI "void initCDKColor ()";
+.LP
+.BI "void registerCDKObject (CDKSCREEN *" "screen ",
+.BI "EObjectType " "widgetType ",
+.BI "void *" "object");
+.LP
+.BI "void unregisterCDKObject(EObjectType " "widgetType ",
+.BI "void *" "object");
+.LP
+.BI "void raiseCDKObject(EObjectType " "widgetType ",
+.BI "void *" "object");
+.LP
+.BI "void lowerCDKObject(EObjectType " "widgetType ",
+.BI "void *" "object");
+.LP
+.BI "void refreshCDKScreen(CDKSCREEN *" "screen");
+.LP
+.BI "void eraseCDKScreen(CDKSCREEN *" "screen");
+.LP
+.BI "void destroyCDKScreen(CDKSCREEN *" "screen");
+.LP
+.BI "void endCDK()";
+.LP
+.SH DESCRIPTION
+One of the features of Cdk is that it will manage all of the widgets for you.
+These functions perform some of the management of the widgets in a screen. The
+following outline each function and it's purpose.
+
+.SH AVAILABLE FUNCTIONS
+CDKSCREEN *initCDKScreen (WINDOW *\f2cursesWindow\f1);
+.RS 3
+This function takes a \f4WINDOW *\f1 (\f2cursesWindow\f1) and returns a 
+pointer to a \f4CDKSCREEN *\f1. Since all of the widgets take a 
+\f4CDKSCREEN\f1 pointer as a first argument, this is also one of the first 
+calls made. This also starts curses, so no curses initialization calls have 
+to be made when using Cdk.
+.RE
+
+void initCDKColor ();
+.RS 3
+This call starts the Cdk color capabilities. It defines 64 color pairs each
+of which is accessible using the COLOR_PAIR macro. If you do not have color
+support, this function call makes no difference.
+.RE
+
+void registerCDKObject (CDKSCREEN *\f2screen\f1, EObjectType \f2widgetType\f1, void *\f2object\f1);
+.RS 3
+This function is called automatically when a widget is created. If for some
+reason an object does get unregistered, by calling \f4unregisterCDKObject\f1, 
+the widget can be registered again by calling this function. The 
+\f2widgetType\f1 parameter states what Cdk widget type this object is. The 
+\f2object\f1 parameter is a void pointer to the object.
+.RE
+
+void unregisterCDKObject (EObjectType \f2cdktype\f1, void *\f2object\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy 
+the object, it removes the widget from any further refreshes by the function
+\f4refreshCDKScreen\f1. The \f2widgetType\f1 parameter states what Cdk widget
+type this object is. The \f2object\f1 parameter is a void pointer to the 
+object.
+.RE
+
+void raiseCDKObject (EObjectType \f2cdktype\f1, void *\f2object\f1);
+.RS 3
+This function raises the widget to the top of the screen. If there are any 
+widgets which overlap the given object when a refresh is done, calling this
+function has the effect of raiding the object so no other widgets obstruct 
+it. The \f2widgetType\f1 parameter states what Cdk widget type this object is.
+The \f2object\f1 parameter is a void pointer to the object.
+.RE
+
+void lowerCDKObject (EObjectType \f2cdktype\f1, void *\f2object\f1);
+.RS
+This function has the opposite effect of the \f4raiseCDKObject\f1 function
+call.
+.RE
+
+void refreshCDKScreen (CDKSCREEN *\f2screen\f1);
+.RS 3
+This function redraws all of the widgets which are currently associated to the
+given screen.
+.RE
+
+void eraseCDKScreen (CDKSCREEN *\f2screen\f1);
+.RS 3
+This function erases all of the widgets which are currently associated to the
+given screen. This does \f4NOT\f1 destroy the widgets.
+.RE
+
+void destroyCDKScreen (CDKSCREEN *\f2screen\f1);
+.RS 3
+This function destroys any memory allocated by the Cdk screen pointer.
+.RE
+
+void endCDK();
+.RS 3
+This function cleans up any memory created by starting Cdk and shuts down 
+curses.
+.RE
+.SH SEE ALSO
+.BR cdk (3X),
+.BR cdk_binding (3X),
+.BR cdk_display (3X)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

@@ -1,0 +1,330 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_display 3X "05 Dec 1995"
+.SH NAME
+   Cdk - \f2Curses Development Kit\f1 Display Capabilities.
+.LP
+.SH SYNOPSIS
+Cdk has a number of pre-defined display types which need explaining. This
+manual page will explain all of the display types and how to use them. The
+following lists which display types will be outlined in this manual page.
+.It "\(bu How To Use Colors" 5
+.It "\(bu How To Use Different Character Attributes" 5
+.It "\(bu How To Justify Strings" 5
+.It "\(bu How To Use Special Drawing Characters" 5
+.SH DESCRIPTION
+Cdk has special formatting commands which can be included in any string which
+add highlights, justification, or even colors to a basic string. This manual
+page outlines and demonstrates how they work. 
+.PP
+\f2How To Use Colors\f1
+.RS 3
+Cdk has the capability to display colors in almost every string type displayed
+in a Cdk widget. To turn on colors, the function \f4initCDKColor\f1 has to be
+called. When this function is called 64 color pairs are created. Normally the
+color pairs are accessed via the COLOR_PAIR macro. You can still do this, but
+creating a string with multiple colors gets terribly difficult. That is why
+the color commands were created. The color setting are stored directly in the
+string and when the widget is created or activated, the string is converted
+to take advantage of any color commands in the string. To turn on a color pair
+insert </XX> into the string; where \f4XX\f1 is a numeric value from 0 to 64.
+Color pair 0 is the standard default color pair for the screen. To turn off a
+color pair use the format command <!XX> where \f4XX\f1 is a numeric value from
+0 to 64. The following code segment demonstrates the use of the color commands.
+.LP
+.nf
+.ce
+\f4----------------------------------------\f1
+#include <cdk.h>
+
+void main()
+{
+   CDKSCREEN	*cdkscreen;
+   CDKLABEL	*demo;
+   WINDOW 	*screen;
+   char		*mesg[4];
+
+   /* Initialize the Cdk screen.	*/
+   screen = initscr();
+   cdkscreen = initCDKScreen (screen);
+
+   /* Set the labels up.		*/
+   mesg[0] = "</1>This line should have a yellow foreground and a blue background.<!1>";
+   mesg[1] = "</2>This line should have a white  foreground and a blue background.<!2>";
+   mesg[2] = "</3>This line should have a yellow foreground and a red  background.<!3>";
+   mesg[3] = "<C>This line should be set to whatever the screen default is.";
+
+   /* Declare the labels.	*/
+   demo	= newCDKLabel (cdkscreen, CENTER, CENTER, mesg, 4, TRUE, TRUE);
+
+   /* Draw the label		*/
+   drawCDKLabel (demo, TRUE);
+   waitCDKLabel (demo, ' ');
+
+   /* Clean up			*/
+   destroyCDKLabel (demo);
+   destroyCDKScreen (cdkscreen);
+   endCDK();
+   exit (0);
+}
+.fi
+.ce
+\f4----------------------------------------\f1
+This example uses the color pair 5 (which is white on blue) for the label to
+the entry widget.
+.RE
+.PP
+\f2How To Use Different Character Attributes\f1
+.RS 3
+Cdk also provides attribute commands which allow different character attributes
+to be displayed in a Cdk widget. To use a character attribute the format command
+is </X> where \f4X\f1 is one of several command characters. To turn a attribute 
+off use the command <!X>. The following table outlines the command characters
+and what they mean.
+.LP
+.nf 
+.RS 3
+\f2Command_Character      Character_Attribute\f1
+B                      Bold 
+U                      Underline
+K                      Blink
+R                      Reverse
+S                      Standout
+D                      Dim
+N                      Normal
+.fi
+.RE
+
+The following code segment demonstrates the use of character display attributes.
+.nf
+.ce 
+\f4----------------------------------------\f1
+#include <cdk.h>
+
+void main()
+{
+   CDKSCREEN	*cdkscreen;
+   CDKLABEL	*demo;
+   WINDOW	*screen;
+   char		*mesg[4];
+
+   /* Initialize the Cdk screen.	*/
+   screen = initscr();
+   cdkscreen = initCDKScreen (screen);
+
+   /* Set the labels up.		*/
+   mesg[0] = "</B/1>This line should have a yellow foreground and a blue background.<!1>";
+   mesg[1] = "</U/2>This line should have a white  foreground and a blue background.<!2>";
+   mesg[2] = "</K/3>This line should have a yellow foreground and a red  background.<!3>";
+   mesg[3] = "<C>This line should be set to whatever the screen default is.";
+
+   /* Declare the labels.	*/
+   demo	= newCDKLabel (cdkscreen, CENTER, CENTER, mesg, 4, TRUE, TRUE);
+
+   /* Draw the label		*/
+   drawCDKLabel (demo, TRUE);
+   waitCDKLabel (demo, ' ');
+
+   /* Clean up			*/
+   destroyCDKLabel (demo);
+   destroyCDKScreen (cdkscreen);
+   endCDK();
+   exit (0);
+}
+.ce
+\f4----------------------------------------\f1
+.fi
+Notice that color commands and format commands can be mixed inside the same
+format marker. The above example underlines the label marker, which also sets
+color pair number 5.
+.RE
+.PP
+\f2How To Justify Strings\f1
+.RS 3
+Justification commands can left justify, right justify, or center a string of 
+text. To use a justification format in a string the command <X> is used. The 
+following table lists all of the format commands available.
+.LP
+.nf
+.RS 3
+\f2Justification_Command    Action.\f1
+<L>                      Left Justified. Default if not stated.
+<C>                      Centered text.
+<R>                      Right justified.
+<I=X>                    Indent the line X characters.
+<B=X>                    Bullet. X is the bullet string to use.
+<F=X>                    Links in a file where X is the filename. 
+                         Currently only works with the viewer 
+                         widget.
+.fi
+.RE
+.fi
+
+The following code segment demonstrates how to use the justification commands
+in a Cdk widget.
+.ce
+\f4----------------------------------------\f1
+.nf
+#include <cdk.h>
+
+void main()
+{
+   CDKSCREEN	*cdkscreen;
+   CDKLABEL	*demo;
+   WINDOW	*screen;
+   char		*mesg[4];
+
+   /* Initialize the Cdk screen.	*/
+   screen = initscr();
+   cdkscreen = initCDKScreen (screen);
+
+   /* Set the labels up.		*/
+   mesg[0] = "<R></B/1>This line should have a yellow foreground and a blue background.<!1>";
+   mesg[1] = "</U/2>This line should have a white  foreground and a blue background.<!2>";
+   mesg[2] = "<B=+>This is a bullet.";
+   mesg[3] = "<I=10>This is indented 10 characters.";
+   mesg[4] = "<C>This line should be set to whatever the screen default is.";
+
+   /* Declare the labels.	*/
+   demo	= newCDKLabel (cdkscreen, CENTER, CENTER, mesg, 5, TRUE, TRUE);
+
+   /* Draw the label		*/
+   drawCDKLabel (demo, TRUE);
+   waitCDKLabel (demo, ' ');
+
+   /* Clean up			*/
+   destroyCDKLabel (demo);
+   destroyCDKScreen (cdkscreen);
+   endCDK();
+   exit (0);
+}
+.fi
+.ce
+\f4----------------------------------------\f1
+The bullet format command can take either a single character or a string.
+The bullet in the the above example would look like
+.RS 3
+\f4+\f1 This is a bullet.
+.RE
+but if we were to use the following command instead
+.ce
+<B=***>This is a bullet.
+it would look like
+.RS 3
+\f4***\f1 This is a bullet.
+.RE
+
+The only restriction that a format command has is that it must be at the
+beginning of the string.
+.RE
+.PP
+\f2How To Use Special Drawing Characters\f1
+.RS 3
+Cdk has a set of special drawing characters which can be inserted into any
+ASCII file. In order to use a special character the format command <#XXX>
+is used. The following table lists all of the special character commands
+available.
+.LP
+.RS 3
+.nf 
+\f2Special_Character   Character\f1
+<#UL>               Upper Left Corner
+<#UR>               Upper Right Corner
+<#LL>               Lower Left Corner
+<#LR>               Lower Right Corner
+<#LT>               Left Tee
+<#RT>               Right Tee
+<#TT>               Top Tee
+<#BT>               Bottom Tee
+<#HL>               Horizontal Line
+<#VL>               Vertical Line
+<#PL>               Plus Sign
+<#PM>               Plus/Minus Sign
+<#DG>               Degree Sign
+<#CB>               Checker Board
+<#DI>               Diamond
+<#BU>               Bullet
+.RE
+.fi
+.LP
+The character formats can be repeated using an optional numeric repeat value.
+To repeat a character add (XXX) to the end of the character format. The 
+following example, draws 10 horizontal lines.
+.LP
+<#HL(10)>
+.LP
+The following code segment draws a box within a label window.
+.ce
+\f4----------------------------------------\f1
+.nf
+#include "cdk.h"
+
+void main()
+{
+   /* Declare variables.	*/
+   CDKSCREEN	*cdkscreen;
+   CDKLABEL	*demo;
+   WINDOW 	*cursesWin;
+   char		*mesg[4];
+
+   /* Set up CDK 		*/ 
+   cursesWin = initscr();
+   cdkscreen = initCDKScreen (cursesWin);
+
+   /* Start CDK Colors		*/
+   initCDKColor();
+
+   /* Set the labels up.	*/
+   mesg[0] = "<C><#UL><#HL(25)><#UR>";
+   mesg[1] = "<C><#VL></R>This text should be boxed.<!R><#VL>";
+   mesg[2] = "<C><#LL><#HL(25)><#LR>";
+   mesg[3] = "<C>While this is not.";
+
+   /* Declare the labels.	*/
+   demo	= newCDKLabel (cdkscreen, CENTER, CENTER, mesg, 4, TRUE, TRUE);
+
+   /* Is the label NULL???	*/
+   if (demo == (CDKLABEL *)NULL)
+   {
+      /* Clean up the memory.	*/
+      destroyCDKScreen (cdkscreen);
+
+      /* End curses...		*/
+      endCDK();
+
+      /* Spit out a message.	*/
+      printf ("Oops. Can't seem to create the label. Is the window too small?\n");
+      exit (1);
+   }
+
+   /* Draw the CDK screen.	*/
+   refreshCDKScreen (cdkscreen);
+   waitCDKLabel (demo, ' ');
+
+   /* Clean up			*/
+   destroyCDKLabel (demo);
+   destroyCDKScreen (cdkscreen);
+   delwin (cursesWin);
+   endCDK();
+   exit (0);
+}
+.fi
+.ce
+\f4----------------------------------------\f1
+.LP
+Notice that drawn text can also be justified.
+.LP
+.SH SEE ALSO
+.BR cdk (3X),
+.BR cdk_binding (3X),
+.BR cdk_screen (3X)
+.SH NOTES
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.

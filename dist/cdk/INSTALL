@@ -1,0 +1,48 @@
+Cdk Installation Guide
+Copyright Mike Glover, 1995, 1996, 1997, 1998, 1999
+-------------------------------------------------------------------------------
+
+General
+-------
+This document details how to build and install the Cdk library. The first thing
+you should know is what compile options you may require. I have had the 
+fortunate luck of being able to compile this library on the following
+platforms:
+	* Sun/OS 4.1.*
+	* Solaris 2.3/2.4/2.5/2.5.1/2.6
+	* AIX 3.2.* (and even AIX 4.1 but there is no mention of this in the
+                    makefile. Sorry.)
+	* HPUX 9.* (and even HPUX 10.* but there is no mention of this in the
+                    makefile. Sorry.)
+	* Linux (all sorts Slakware, BSD, and Redhat)
+
+Building
+--------
+To build the library cd into the Cdk distribution directory and follow 
+the following steps:
+
+1) Run configure. This will create a Makefile with a default 
+	install directory root of /usr/local. If you want to 
+	change the default install directory use the --prefix 
+	command line argument on configure. For example, if you
+	want to install under /export/local instead, run the command:
+	./confugure --prefix="/export/local"
+
+2) Type make. This will make the library, the example binaries
+	and the demonstration binaries.
+
+3) Type make install. This will install the CDK distribution. Look
+	at step 1 if you want to install other than /usr/local.
+
+4) Start to play. :)
+
+If you want to get a hold of me mail me at one of the following:
+        glover@credit.erin.utoronto.ca
+	mike@vexus.ca
+
+The CDK Web page has several homes. They are:
+        http://www.vexus.ca/CDK.html (official)
+        http://www.datasoft.on.ca/~cdk (Sponsered by the nice folks at Datasoft)
+
+ttfn,
+	Mike

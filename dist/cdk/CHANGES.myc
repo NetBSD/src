@@ -1,0 +1,56 @@
+High-level changes:
+* Create subwindows to contain titles, input data, etc.  This helps contain
+  items within their alotted space, and makes some calculations (e.g. for
+  justification) much easier.
+* Avoid touchwin() and wrefresh().  All redraws are done with wnoutrefresh()
+  and pushed to the screen only on demand (or on input).  This avoids
+  gratuitous redraws and silly updates just to move the cursor multiple
+  times.  Redraw is MUCH faster.
+* Take advantage of modern Curses functions: mvhline(), mvwline(), mvwin().
+  Also, we do not need to explicitly delwin() or werase() subwindows.
+* Fix dozens of off-by-one errors in window placement calculations, window
+  size calculations, etc.
+
+scroll.c:
+* Modify setCDKScrollPosition to do a minimal scroll and put the required
+  line at the top or bottom of the window, as appropriate.
+
+alphalist.c:
+* Take advantage of the previous by always calling setCDKScrollPosition
+  after a search.
+
+calendar.c:
+* Fix bogus calculations and conditionals that caused it to jump to the
+  wrong day of month or wrong month.
+* Don't exit the widget after calling a binding function.
+
+cdk.c:
+* Strip newlines when reading a file.  (It appears the code was changed
+  from using gets(), but this was never added.)
+
+config.hin:
+* Fix config.hin to work with a modern autoconf.
+
+demos/command.c:
+* Add bindings for page-up and page-down in the entry window, which are
+  simply injected in the scrolling window.
+* Fix null pointer dereference when ESC is pressed in the entry window.
+
+demos/fileview.c, examples/fselect_ex.c, examples/viewer_ex.c:
+* Merge these files.
+* Use MAX_LINES to bound the number of lines read, as this is what the
+  CDK internals use.  (Previously it used a larger value, and caused
+  memory corruption.)
+* After viewing a file, go back to the file selector box to pick another
+  one.
+
+demos/stopSign.c:
+* Clean up the display.
+
+demos/vinstall.c, examples/vinstall.c:
+* Merge these files.
+* Clean up the display (make the histogram and swindow meet, etc.).
+* Use remove(), not system("rm -f ...").
+
+XXX SEARCH FOR //, #IF 0, AND XXX
+XXX RESTART AN ENTRY.C

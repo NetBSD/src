@@ -1,0 +1,382 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_graph 3 "18 March 1997"
+.SH NAME
+newCDKGraph, setCDKGraph, 
+setCDKGraphValues, getCDKGraphValues,
+setCDKGraphValue, getCDKGraphValue,
+setCDKGraphValues, getCDKGraphValues,
+setCDKGraphCharacters, getCDKGraphCharacters,
+setCDKGraphCharacter, getCDKGraphCharacter,
+setCDKGraphDisplayType, getCDKGraphDisplayType,
+setCDKGraphBox, getCDKGraphBox,
+setCDKGraphULChar, setCDKGraphURChar,
+setCDKGraphLLChar, setCDKGraphLRChar,
+setCDKGraphVerticalChar, setCDKGraphHorizontalChar,
+setCDKGraphBoxAttribute,
+setCDKGraphBackgroundColor,
+drawCDKGraph, eraseCDKGraph, 
+destroyCDKGraph \- Creates a managed curses graph widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKGRAPH *newCDKGraph (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "int " "height",
+.BI "int " "width",
+.BI "char *" "title",
+.BI "char *" "xtitle",
+.BI "char *" "ytitle");
+.LP
+.BI "void setCDKGraph (CDKGRAPH *" "graph",
+.BI "int *" "values",
+.BI "int " "valueCount",
+.BI "char *" "graphCharacters",
+.BI "boolean " "startAtZero",
+.BI "EGraphDisplayType " "displayType");
+.LP
+.BI "void setCDKGraphValues (CDKGRAPH *" "graph",
+.BI "int *" "values",
+.BI "int " "valueCount",
+.BI "boolean " "startAtZero");
+.LP
+.BI "int *getCDKGraphValues (CDKGRAPH *" "graph");
+.LP
+.BI "void setCDKGraphValue (CDKGRAPH *" "graph",
+.BI "int " "index",
+.BI "int " "value",
+.BI "boolean " "startAtZero");
+.LP
+.BI "int getCDKGraphValue (CDKGRAPH *" "graph",
+.BI "int " "index");
+.LP
+.BI "void setCDKGraphCharacters (CDKGRAPH *" "graph",
+.BI "char *" "graphCharacters");
+.LP
+.BI "char *getCDKGraphCharacters (CDKGRAPH *" "graph");
+.LP
+.BI "void setCDKGraphCharacter (CDKGRAPH *" "graph",
+.BI "int " "index",
+.BI "char *" "graphCharacter");
+.LP
+.BI "char *getCDKGraphCharacter (CDKGRAPH *" "graph",
+.BI "int " "index");
+.LP
+.BI "void setCDKGraphDisplayType (CDKGRAPH *" "graph",
+.BI "EGraphDisplayType " "type");
+.LP
+.BI "EGraphDIsplayType setCDKGraphDisplayType (CDKGRAPH *" "graph");
+.LP
+.BI "void setCDKGraphBox (CDKGRAPH *" "graph",
+.BI "boolean " "box");
+.LP
+.BI "boolean setCDKGraphBox (CDKGRAPH *" "graph");
+.LP
+.BI "void setCDKGraphULChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphURChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphLLChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphLRChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphVerticalChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphHorizontalChar (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphBoxAttribute (CDKGRAPH *", "graph",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKGraphBackgroundColor (CDKGRAPH *", "graph",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKGraph (CDKGRAPH *" "graph",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKGraph (CDKGRAPH *" "graph");
+.LP
+.BI "void drawCDKGraph (CDKGRAPH *" "graph",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKGraph (CDKGRAPH *" "graph");
+.LP
+.BI "void destroyCDKGraph (CDKGRAPH *" "graph");
+.LP
+.SH DESCRIPTION
+The Cdk graph widget creates a graph widget. This widget can draw a graph in
+both plot mode and line mode. The following are functions which create or 
+manipulate the Cdk graph box widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKGRAPH *newCDKGraph (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, int \f2height\f1, int \f2width\f1, char *\f2title\f1, char *\f2xtitle\f1, char *\f2ytitle\f1);
+.RS 3
+This function creates a pointer to a graph widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The parameters \f2height\f1 and \f2width\f1 control the height and width of the
+widget. If you provide a value of zero for either of the height or the width, 
+the widget will be created with the full width and height of the screen. If 
+you provide a negative value, the widget will be created the full height or 
+width minus the value provided. The three parameters: \f2title\f1, \f2xtitle\f1,
+and \f2ytitle\f1, are the graph title, the X axis title, and the Y axis title 
+respectively. The graph title can be more than one line; just provide a 
+carriage return character at the line break. If the widget could not be 
+created then a \f4NULL\f1 pointer is returned.
+.RE
+
+void setCDKGraph (CDKGRAPH *\f2graph\f1, int *\f2values\f1, int \f2valueCount\f1, chtype *\f2graphCharacters\f1, boolean \f2startAtZero\f1, EGraphDisplayType \f2displayType\f1);
+.RS 3
+This function lets the programmer set the specific values of the graph widget.
+The parameter \f2values\f1 is an integer array of the values to display in the
+widget; \f2valueCount\f1 is the number of values in the array. The parameter
+\f2graphCharacters\f1 is an array of the characters to use for each graph point.
+The parameter \f2startAtZero\f1 states whether you want the graph to start at
+zero or the lowest values of the X and Y axis'. The parameter \f2displayType\f1
+accepts either \f4vPLOT\f1, to make the graph draw the values as a plot graph,
+or \f4vLINE\f1 to draw the values as a line graph.
+.RE
+
+void setCDKGraphValues (CDKGRAPH *\f2graph\f1, int *\f2values\f1, int \f2valueCount\f1, boolean \f2startAtZero\f1);
+.RS 3
+This function lets the programmer set the specific values of the graph widget.
+The parameter \f2values\f1 is an integer array of the values to display in the
+widget; where \f2valueCount\f1 is the number of values in the array. The 
+parameter \f2startAtZero\f1 states whether you want the graph to start at
+zero or the lowest values of the X and Y axis'.
+.RE
+
+char *getCDKGraphValues (CDKGRAPH *\f2graph\f1);
+.RS 3
+This returns all the values currently in the graph widget.
+.RE
+
+void setCDKGraphValue (CDKGRAPH *\f2graph\f1, int \f2value\f1, boolean \f2startAtZero\f1);
+.RS 3
+This function lets the programmer set a specific value of the graph widget.
+The parameter \f2value\f1 is the new value, while \f2index\f1 is the 
+index where the new value will be stored. The parameter \f2startAtZero\f1 
+states whether you want the graph to start at zero or the lowest values of 
+the X and Y axis'.
+.RE
+
+char getCDKGraphValue (CDKGRAPH *\f2graph\f1, int \f2index\f1);
+.RS 3
+This returns the value in the graph at the given index.
+.RE
+
+void setCDKGraphCharacters (CDKGRAPH *\f2graph\f1, char *\f2characters\f1);
+.RS 3
+This function lets the programmer set the specific characters of the graph widget.
+The parameter \f2characters\f1 is a char pointer array of the characters to display 
+in the widget.
+.RE
+
+chtype *getCDKGraphCharacters (CDKGRAPH *\f2graph\f1);
+.RS 3
+This returns all the characters currently in the graph widget.
+.RE
+
+void setCDKGraphCharacter (CDKGRAPH *\f2graph\f1, int \f2character\f1);
+.RS 3
+This function lets the programmer set a specific character of the graph widget.
+The parameter \f2character\f1 is the new character, while \f2index\f1 is the 
+index where the new character will be stored.
+.RE
+
+chtype getCDKGraphCharacter (CDKGRAPH *\f2graph\f1, int \f2index\f1);
+.RS 3
+This returns the character in the graph at the given index.
+.RE
+
+void setCDKGraphDisplayType (CDKGRAPH *\f2graph\f1, EGraphDisplayType \f2type\f1);
+.RS 3
+This function allows the programmer tochange the way the graph draws itself.
+The parameter \f2displayType\f1 accepts either \f4vPLOT\f1, to make the graph 
+draw the values as a plot graph, or \f4vLINE\f1 to draw the values as a line 
+graph.
+.RE 
+
+EGraphDisplayType getCDKGraphDisplayType (CDKGRAPH *\f2graph\f1);
+.RS 3
+This returns the current display type of the widget.
+.RE 
+
+void setCDKGraphBox (CDKGRAPH *\f2graph\f1, boolean \f2boxWidget\f1);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+ 
+boolean getCDKGraphBox (CDKGRAPH *\f2graph\f1);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKGraphULChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKGraphURChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKGraphLLChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKGraphLRChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKGraphVerticalChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKGraphHorizontalChar (CDKGRAPH *\f2graph\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKGraphBoxAttribute (CDKGRAPH *\f2graph\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKGraphBackgroundColor (CDKGRAPH *\f2graph\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void moveCDKGraph (CDKGRAPH *\f2graph\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1, 
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things 
+may happen). The final parameter \f2refresh\f1 is a boolean value which states
+whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKGraph (CDKGRAPH *\f2graph\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKGraph (CDKGRAPH *\f2graph\f1, boolean \f2box\f1);
+.RS 3
+This function draws the graph widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKGraph (CDKGRAPH *\f2graph\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE 
+
+void destroyCDKGraph (CDKGRAPH *\f2graph\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

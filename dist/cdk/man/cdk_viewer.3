@@ -1,0 +1,449 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_viewer 3X "24 April 1997"
+.SH NAME
+newCDKViewer, activateCDKViewer, setCDKViewer, 
+setCDKViewerInfo, getCDKViewerInfo,
+setCDKViewerTitle, getCDKViewerTitle,
+setCDKViewerHighlight, getCDKViewerHighlight,
+setCDKViewerInfoLine, getCDKViewerInfoLine,
+setCDKViewerBox, getCDKViewerBox,
+setCDKViewerULChar, setCDKViewerURChar,
+setCDKViewerLLChar, setCDKViewerLRChar,
+setCDKViewerVerticalChar, setCDKViewerHorizontalChar,
+setCDKViewerBoxAttribute,
+setCDKViewerBackgroundColor,
+drawCDKViewer, eraseCDKViewer,
+destroyCDKViewer \- Creates a managed curses viewer list widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKVIEWER *newCDKViewer (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "int " "height",
+.BI "int " "width",
+.BI "char **" "buttonList",
+.BI "int " "buttonCount",
+.BI "chtype " "buttonHighlight",
+.BI "boolean " "box",
+.BI "boolean " "shadow");
+.LP
+.BI "int activateCDKViewer (CDKVIEWER *" "viewer");
+.LP
+.BI "void setCDKViewer (CDKVIEWER *" "viewer",
+.BI "char *" "title",
+.BI "char **" "info",
+.BI "int " "infoSize",
+.BI "chtype " "buttonAttribute",
+.BI "boolean " "interpret",
+.BI "boolean " "showLineInfo",
+.BI "boolean " "box");
+.LP
+.BI "void setCDKViewerInfo (CDKVIEWER *" "viewer",
+.BI "char **" "itemList",
+.BI "int " "listSize",
+.BI "boolean " "numbers");
+.LP
+.BI "int getCDKViewerInfo (CDKVIEWER *" "viewer",
+.BI "char **" "itemList");
+.LP
+.BI "void setCDKViewerTitle (CDKVIEWER *" "viewer",
+.BI "char *" "title");
+.LP
+.BI "int getCDKViewerTitle (CDKVIEWER *" "viewer");
+.LP
+.BI "void setCDKViewerHighlight (CDKVIEWER *" "viewer",
+.BI "chtype " "highlight");
+.LP
+.BI "chtype getCDKViewerHighlight (CDKVIEWER *" "viewer");
+.LP
+.BI "void setCDKViewerInfoLine (CDKVIEWER *" "viewer",
+.BI "boolean " "showInfoLine");
+.LP
+.BI "boolean getCDKViewerInfoLine (CDKVIEWER *" "viewer");
+.LP
+.BI "void setCDKViewerULChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerURChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerLLChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerLRChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerVerticalChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerHorizontalChar (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerBoxAttribute (CDKVIEWER *", "viewer",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKViewerBackgroundColor (CDKVIEWER *", "viewer",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKViewer (CDKVIEWEE *" "viewer",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKViewer (CDKVIEWEE *" "viewer");
+.LP
+.BI "void drawCDKViewer (CDKVIEWER *" "viewer",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKViewer (CDKVIEWER *" "viewer");
+.LP
+.BI "void destroyCDKViewer (CDKVIEWER *" "viewer");
+.LP
+.BI "void bindCDKObject (EObjectType " "widgetType",
+.BI "void *" "object",
+.BI "chtype " "key",
+.BI "BINDFN " "function",
+.BI "void *" "data");
+.SH DESCRIPTION
+The Cdk viewer widget creates a file viewer widget. This widget allows a user 
+to interact with a file. It does \f4NOT\f1 allow editing, this is view only. 
+The following are functions which create or manipulate the Cdk viewer list 
+widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKVIEWER *newCDKViewer (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, int \f2height\f1, int \f2width\f1, char **\f2buttons\f1, int \f2buttonCount\f1, chtype \f2buttonHighlight\f1, boolean \f2box\f1, boolean \f2shadow\f1);
+.RS 3
+This function creates a pointer to a viewer widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The parameters \f2height\f1 and \f2width\f1 state how tall and wide the viewer
+window is to be.  The \f2buttons\f1 is an array of the button labels which are
+to be attached to the viewer on the bottom; \f2buttonCount\f1 tells the viewer
+how many buttons there are. The parameter \f2buttonHighlight\f1 is the highlight
+attribute of the currently selected button. The \f2box\f1 parameter states
+whether the widget will be drawn with a box around it or not. The \f2shadow\f1
+parameter accepts a boolean value to turn the shadow on or off around this widget.
+If the widget could not be created then a \f4NULL\f1 pointer is returned.
+.RE
+
+int activateCDKViewer (CDKVIEWER *\f2viewer\f1);
+.RS 3
+This function activates the viewer widget and lets the user interact with the
+widget. The parameter \f2viewer\f1 is a pointer to a non-NULL viewer widget.
+If the \f2actions\f1 parameter is passed with a non-NULL value, the characters
+in the array will be injected into the widget. To activate the widget
+interactively pass in a \f4NULL\f1 pointer for \f2actions\f1. If the character entered
+into this widget is \f4RETURN\f1 then this function will return a value from
+0 to the number of buttons -1, representing the button selected. It will also
+set the structure member \f4exitType\f1 to \f4vNORMAL\f1. If the character
+entered into this widget was \f4ESCAPE\f1 then the widget will return
+a value of -1 and the structure member \f4exitType\f1 will be set to
+\f4vESCAPE_HIT\f1.
+.RE
+
+void setCDKViewer (CDKVIEWER *\f2viewer\f1, char *\f2title\f1, char **\f2info\f1, int \f2infoSize\f1, chtype \f2buttonAttribute\f1, boolean \f2interpret\f1, boolean \f2showLineInfo\f1, boolean \f2box\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+viewer widget. The parameter \f2title\f1 is the title to be displayed on
+the top of the viewer. The parameter \f2info\f1 is the information to display,
+while \f2infoSize\f1 states how many rows there are in the \f2info\f1 array.
+The parameter \f2buttonAttribute\f1 states the attribute of the current
+highlighted button. The boolean parameter \f2interpret\f1 tells the viewer to 
+interpret the contents of \f2info\f1 for Cdk display command, or not. The
+\f2showLineInfo\f1 boolean flag tells the viewer to show or not to show the
+line number and percentage in the top left corner of the viewer window. The
+parameters \f2box\f1 and \f2shadow\f1 are the same as in the function
+description of \f4newCDKViewer\f1.
+.RE
+
+int setCDKViewerInfo (CDKVIEWER *\f2viewer\f1, char **\f2info\f1, int \f2infoSize\f1, boolean \f2interpret\f1);
+.RS 3
+This sets the contents of the viewer widget.
+.RE
+
+chtype **getCDKViewerInfo (CDKVIEWER *\f2viewer\f1, int *\f2size\f1);
+.RS 3
+This returns the contents of the viewer widget.
+.RE
+
+void setCDKViewerTitle (CDKVIEWER *\f2viewer\f1, char *\f2title\f1);
+.RS 3
+This sets the title of the widget.
+.RE
+
+chtype **getCDKViewerTitle (CDKVIEWER *\f2viewer\f1);
+.RS 3
+This returns the title of the widget.
+.RE
+
+void setCDKViewerHighlight (CDKVIEWER *\f2viewer\f1, chtype \f2buttonHighlight\f1);
+.RS 3
+This sets the highlight attribute of the buttons on the widget.
+.RE
+
+chtype getCDKViewerHighlight (CDKVIEWER *\f2viewer\f1);
+.RS 3
+This returns the attribute of the buttons.
+.RE
+
+void setCDKViewerInfoLine (CDKVIEWER *viewer, boolean showLineInfo);
+.RS 3
+This turns on/off the information line in the top left hand corner of
+the widget. If the value of \f2showInfoLine\f1 is \f4TRUE\f1, the information
+line will be displayed. If it is \f4FALSE\f1 it won't.
+.RE
+
+boolean getCDKViewerInfoLine (CDKVIEWER *viewer);
+.RS 3
+This returns a boolena value stating if the information line is on or off.
+.RE
+
+void setCDKViewerBox (CDKVIEWER *viewer, boolean Box);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+
+boolean getCDKViewerBox (CDKVIEWER *viewer);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKViewerULChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKViewerURChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKViewerLLChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKViewerLRChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKViewerVerticalChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKViewerHorizontalChar (CDKVIEWER *\f2viewer\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKViewerBoxAttribute (CDKVIEWER *\f2viewer\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKViewerBackgroundColor (CDKVIEWER *\f2viewer\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void moveCDKViewer (CDKVIEWEE *\f2viewer\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1,
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things 
+may happen). The final parameter \f2refresh\f1 is a boolean value which 
+states whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKViewer (CDKVIEWEE *\f2viewer\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKViewer (CDKVIEWER *\f2viewer\f1, boolean \f2box\f1);
+.RS 3
+This function draws the viewer widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKViewer (CDKVIEWER *\f2viewer\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE
+
+void destroyCDKViewer (CDKVIEWER *\f2viewer\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+
+void bindCDKObject (EObjectType \f2widgetType\f1, void *\f2object\f1, char \f2key\f1, BINDFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to create special key bindings. The 
+\f2widgetType\f1 parameter is a defined type which states what Cdk object 
+type is being used.  To learn more about the type \f4EObjectType\f1 read 
+the \f4cdk_binding\f1 manual page. The \f2object\f1 parameter is the pointer 
+to the widget object. The \f2key\f1 is the character to bind. The 
+\f2function\f1 is the function type. To learn more about the key binding 
+call-back function types read the \f4cdk_binding\f1 manual page. The last 
+parameter \f2data\f1 is a pointer to any data that needs to get passed to 
+the call-back function.
+.RE
+.SH KEY BINDINGS
+When the widget is activated there are several default key bindings which will
+help the user enter or manipulate the information quickly. The following table
+outlines the keys and their actions for this widget.
+.LP
+.nf
+.RS 3
+\f2Key          Action\f1
+Left Arrow  Shifts the contents of the
+            viewer one character left.
+Right Arrow Shifts the contents of the
+            viewer one character left
+Up Arrow    Scrolls the contents of the
+            viewer one line up.
+Down Arrow  Scrolls the contents of the
+            viewer one line up.
+Prev Page   Moves one page backwards.
+Ctrl-B      Moves one page backwards.
+B           Moves one page backwards.
+b           Moves one page backwards.
+Next Page   Moves one page forwards.
+Ctrl-F      Moves one page forwards.
+Space       Moves one page forwards.
+F           Moves one page forwards.
+f           Moves one page forwards.
+Home        Shifts the whole list to
+            the far left.
+|           Shifts the whole list to
+            the far left.
+End         Shifts the whole list to
+            the far right
+$           Shifts the whole list to
+            the far right.
+g           Moves to the first line
+            in the viewer.
+1           Moves to the first line
+            in the viewer.
+G           Moves to the last line
+            in the viewer.
+L           Moves half the distance
+            to the end of the viewer.
+l           Moves half the distance
+            to the top of the viewer.
+?           Searches up for a pattern.
+/           Searches down for a pattern.
+n           Repeats last search.
+:           Jumps to a given line.
+i           Displays file statistics.
+s           Displays file statistics.
+Tab         Switches buttons.
+Return      Exits the widget and returns
+            an integer value representing
+            which button was selected. This
+            also sets the structure member
+            \f4exitType\f1 in the widget pointer
+            to the value of \f4vNORMAL\f1.
+Escape      Exits the widget and returns -1.
+            This also sets the structure
+            member \f4exitType\f1 in the
+            widget pointer to the value of 
+            \f4vESCAPE_HIT\f1.
+Ctrl-L      Refreshes the screen.
+.RE
+.fi
+.SH SEE ALSO
+.BR cdk (3X),
+.BR cdk_binding (3X),
+.BR cdk_display (3X),
+.BR cdk_screen (3X)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.
