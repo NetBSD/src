@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2003/07/10 10:34:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.47 2003/09/17 00:41:17 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DQUICK -DBUILTIN_ELF \
 		-DELFCORE
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libmagic -I${DIST}
 LDADD+=		-lmagic -lz
+DPADD+=		${LIBMAGIC} ${LIBZ}
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic magic.mgc magic.mime magic.mime.mgc
