@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 2000/02/02 15:26:27 minoura Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.1 2000/02/20 18:20:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -168,7 +168,7 @@ mc146818_write(sc, reg, datum)
 	outb(IO_RTC+1, datum);
 }
 
-static u_long rtclock_tval;
+u_long rtclock_tval;
 static int clock_broken_latch = 0;
 
 #ifdef CLOCK_PARANOIA
@@ -434,7 +434,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-delay(n)
+i8254_delay(n)
 	int n;
 {
 	int tick, otick;
@@ -549,7 +549,7 @@ sysbeep(pitch, period)
 }
 
 void
-cpu_initclocks()
+i8254_initclocks()
 {
 
 	/*
