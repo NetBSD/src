@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.33 2002/08/08 16:50:38 abs Exp $
+#	$NetBSD: Makefile,v 1.34 2002/08/19 09:41:34 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
+
+.include <bsd.own.mk>
 
 LIB=	util
 USE_SHLIBDIR=	yes
@@ -14,7 +16,7 @@ MAN=	fparseln.3 getbootfile.3 getmaxpartitions.3 getrawpartition.3 \
 	openpty.3 pidfile.3 pidlock.3 pw_getconf.3 pw_init.3 pw_lock.3 \
 	secure_path.3 ttyaction.3 ttymsg.3 util.3
 
-.PATH:	${.CURDIR}/../libc/gen
+.PATH:	${NETBSDSRCDIR}/lib/libc/gen
 
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3

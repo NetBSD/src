@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.25 2000/02/19 18:51:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.26 2002/08/19 09:41:29 lukem Exp $
+
+.include <bsd.own.mk>
 
 LIB=	compat
 CPPFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS -D__LIBCOMPAT_SOURCE__
-AINC=	-I${.CURDIR}/../libc/arch/${MACHINE_ARCH}
+AINC=	-I${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .endif

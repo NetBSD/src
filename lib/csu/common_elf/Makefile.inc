@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2002/06/06 19:17:01 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2002/08/19 09:41:27 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ ELFSIZE=32
 .include "../../Makefile.inc"
 
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=${ELFSIZE}
-CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
+CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
 CPPFLAGS+=	-I${.CURDIR}/../common_elf
-CPPFLAGS+=	-I${.CURDIR}/../../libc/dlfcn
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/dlfcn
 CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE

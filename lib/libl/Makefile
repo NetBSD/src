@@ -1,12 +1,16 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/27 11:39:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/08/19 09:41:32 lukem Exp $
+
+NOPIC=		# defined
+
+.include <bsd.own.mk>
 
 LIB=		l
 SRCS=		libmain.c libyywrap.c
-NOPIC=		# defined
 
 LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 
-.PATH:		${.CURDIR}/../../usr.bin/lex
+.PATH:		${NETBSDSRCDIR}/usr.bin/lex
+
 .include <bsd.lib.mk>
 
 .if ${MKPROFILE} != "no"

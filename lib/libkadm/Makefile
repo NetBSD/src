@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.10 2001/12/12 03:18:17 tv Exp $
+# $NetBSD: Makefile,v 1.11 2002/08/19 09:41:31 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/krb4/lib/kadm
 
 WARNS?=		1
@@ -41,8 +41,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/openssl/crypto/des		\
 	-I${DIST}/heimdal/lib/com_err		\
 	-I${LIBKRBINC}				\
-	-I${.CURDIR}/../../include/heimdal	\
-	-I${.CURDIR}/../libroken		\
+	-I${NETBSDSRCDIR}/include/heimdal	\
+	-I${NETBSDSRCDIR}/lib/libroken		\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
