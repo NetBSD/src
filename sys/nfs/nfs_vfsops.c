@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.27 1994/07/03 09:24:01 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.28 1994/08/11 22:25:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -303,6 +303,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	args.sotype   = SOCK_DGRAM;
 	args.fh       = (nfsv2fh_t *)ndmntp->ndm_fh;
 	args.hostname = ndmntp->ndm_host;
+	args.flags    = NFSMNT_RESVPORT;
 
 	/* Get mbuf for server sockaddr. */
 	MGET(m, MT_SONAME, M_DONTWAIT);
