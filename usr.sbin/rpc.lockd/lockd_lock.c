@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.7 2001/06/12 15:17:31 wiz Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.8 2001/10/23 19:54:53 oster Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -638,6 +638,7 @@ do_unlock(rfl)
 		}
 		break;
 	}
+	lfree(rfl);
 	return error;
 }
 
