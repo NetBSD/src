@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_bus_io.c,v 1.1 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_bus_io.c,v 1.2 2003/07/14 22:57:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific PCI bus I/O support for the Algorithmics P-6032.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.2 2003/07/14 22:57:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

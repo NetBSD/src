@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_bus_io.c,v 1.2 2001/06/14 18:52:26 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_bus_io.c,v 1.3 2003/07/14 22:57:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific PCI bus I/O support for the Algorithmics P-4032.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_bus_io.c,v 1.3 2003/07/14 22:57:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

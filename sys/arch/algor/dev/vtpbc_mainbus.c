@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.11 2003/06/15 23:08:54 fvdl Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.12 2003/07/14 22:57:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vtpbc_mainbus.c,v 1.12 2003/07/14 22:57:47 lukem Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.7 2002/09/27 15:35:32 provos Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.8 2003/07/14 22:57:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * flexible -- it can take an interrupt source and route it to an
  * arbitrary MIPS CPU hardware interrupt pin.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.8 2003/07/14 22:57:46 lukem Exp $");
 
 #include "opt_ddb.h"
 
