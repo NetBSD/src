@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.15 2000/06/04 02:19:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.15 2000/06/04 02:19:28 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $");
 
 struct asc_vsbus_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* Must be first */
+	struct evcnt sc_intrcnt;		/* count interrupts */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_bsh;		/* bus space handle */
 	bus_space_handle_t sc_dirh;		/* scsi direction handle */
@@ -273,7 +274,8 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freq /= 1000000;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
-	    &asc->sc_ncr53c9x, SCB_ISTACK);
+	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
+	evcnt_attach(self, "intr", &asc->sc_intrcnt);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.3 2000/04/23 16:38:54 matt Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.4 2000/06/04 02:19:29 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -115,7 +115,8 @@ zeattach(parent, self, aux)
 	sc->sc_dmat = &vax_bus_dma_tag;
 
 	sc->sc_intvec = SGECVEC;
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr,
+		sc, SCB_ISTACK, &sc->sc_intrcnt);
 
 	/*
 	 * Map in, read and release ethernet rom address.

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2000/06/02 21:51:16 matt Exp $
+#	$NetBSD: genassym.cf,v 1.20 2000/06/04 02:19:26 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -36,6 +36,7 @@ include	<sys/proc.h>
 include	<sys/errno.h>
 include	<sys/syscall.h>
 include	<sys/sched.h>
+include	<sys/device.h>
 
 include	<net/netisr.h>
 
@@ -117,18 +118,22 @@ define	T_KDBTRAP	T_KDBTRAP
 
 # software net interrupts
 define	NETISR_IP	NETISR_IP
-define	NETISR_ARP	NETISR_ARP
-define	NETISR_NS	NETISR_NS
-define	NETISR_ATALK	NETISR_ATALK
 define	NETISR_ISO	NETISR_ISO
 define	NETISR_CCITT	NETISR_CCITT
-define	NETISR_PPP	NETISR_PPP
+define	NETISR_ATALK	NETISR_ATALK
+define	NETISR_IPX	NETISR_IPX
 define	NETISR_IPV6	NETISR_IPV6
+define	NETISR_NS	NETISR_NS
+define	NETISR_ISDN	NETISR_ISDN
+define	NETISR_ARP	NETISR_ARP
+define	NETISR_PPP	NETISR_PPP
 
 define	USPACE		USPACE
 
 define	ENAMETOOLONG	ENAMETOOLONG
 define	EFAULT		EFAULT
+
+define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
 define	SYS___sigreturn14	SYS___sigreturn14
 define	SYS_exit	SYS_exit
