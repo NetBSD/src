@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_pci.h,v 1.8 1997/11/17 05:07:02 mjacob Exp $	*/
+/*	$NetBSD: asm_pci.h,v 1.9 1997/12/03 00:45:05 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob 
@@ -3801,7 +3801,7 @@ static const u_int16_t ISP2100_RISC_CODE[] = {
 #endif	/* 0 */
 
 /*
- *	Version 1.05 Initiator Firmware (09:21 Oct 17, 1997)
+ *	Version 1.07 Initiator Firmware
  */
 
 #define	ISP2100_CODE_ORG	0x1000
