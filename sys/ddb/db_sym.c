@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.14 1997/06/26 01:19:07 thorpej Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.15 1998/12/04 20:18:05 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -51,7 +52,71 @@ db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
 
 db_symtab_t	*db_last_symtab;
 
-static char *db_qualify __P((db_sym_t, char *));
+static char *db_qualify __P((db_sym_t, const char *));
+
+/*
+ * Put the most picky symbol table formats at the top!
+ */
+const db_symformat_t *db_symformats[] = {
+#ifdef DB_ELF_SYMBOLS
+	&db_symformat_elf,
+#endif
+#ifdef DB_AOUT_SYMBOLS
+	&db_symformat_aout,
+#endif
+	NULL,
+};
+
+const db_symformat_t *db_symformat;
+
+boolean_t	X_db_sym_init __P((int, void *, void *, const char *));
+db_sym_t	X_db_lookup __P((db_symtab_t *, char *));
+db_sym_t	X_db_search_symbol __P((db_symtab_t *, db_addr_t,
+		    db_strategy_t, db_expr_t *));
+void		X_db_symbol_values __P((db_symtab_t *, db_sym_t, char **,
+		    db_expr_t *));
+boolean_t	X_db_line_at_pc __P((db_symtab_t *, db_sym_t, char **,
+		    int *, db_expr_t));
+int		X_db_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
+		    char **));
+
+/*
+ * Initialize the kernel debugger by initializing the master symbol
+ * table.  Note that if initializing the master symbol table fails,
+ * no other symbol tables can be loaded.
+ */
+void
+ddb_init(symsize, vss, vse)
+	int symsize;
+	void *vss, *vse;
+{
+	const db_symformat_t **symf;
+	const char *name = "netbsd";
+
+	if (symsize <= 0) {
+		printf(" [ no symbols available ]\n");
+		return;
+	}
+
+	/*
+	 * Do this check now for the master symbol table to avoid printing
+	 * the message N times.
+	 */
+	if (ALIGNED_POINTER(vss, long) == 0) {
+		printf("[ %s symbol table nas bad start address %p ]\n",
+		    name, vss);
+		return;
+	}
+
+	for (symf = db_symformats; *symf != NULL; symf++) {
+		db_symformat = *symf;
+		if (X_db_sym_init(symsize, vss, vse, name) == TRUE)
+			return;
+	}
+
+	db_symformat = NULL;
+	printf("[ no symbol table formats found ]\n");
+}
 
 /*
  * Add symbol table, with given name, to list of symbol tables.
@@ -60,7 +125,7 @@ int
 db_add_symbol_table(start, end, name, ref)
 	char *start;
 	char *end;
-	char *name;
+	const char *name;
 	char *ref;
 {
 	int slot;
@@ -116,7 +181,7 @@ db_del_symbol_table(name)
 static char *
 db_qualify(sym, symtabname)
 	db_sym_t	sym;
-	register char	*symtabname;
+	const char	*symtabname;
 {
 	char		*symname;
 	static char     tmp[256];
@@ -372,4 +437,82 @@ db_sym_numargs(sym, nargp, argnames)
 	char		**argnames;
 {
 	return X_db_sym_numargs(db_last_symtab, sym, nargp, argnames);
+}
+
+boolean_t
+X_db_sym_init(symsize, vss, vse, name)
+	int symsize;
+	void *vss, *vse;
+	const char *name;
+{
+
+	if (db_symformat != NULL)
+		return ((*db_symformat->sym_init)(symsize, vss, vse, name));
+	return (FALSE);
+}
+
+db_sym_t
+X_db_lookup(stab, symstr)
+	db_symtab_t *stab;
+	char *symstr;
+{
+
+	if (db_symformat != NULL)
+		return ((*db_symformat->sym_lookup)(stab, symstr));
+	return ((db_sym_t)0);
+}
+
+db_sym_t
+X_db_search_symbol(stab, off, strategy, diffp)
+	db_symtab_t *stab;
+	db_addr_t off;
+	db_strategy_t strategy;
+	db_expr_t *diffp;
+{
+
+	if (db_symformat != NULL)
+		return ((*db_symformat->sym_search)(stab, off, strategy,
+		    diffp));
+	return ((db_sym_t)0);
+}
+
+void
+X_db_symbol_values(stab, sym, namep, valuep)
+	db_symtab_t *stab;
+	db_sym_t sym;
+	char **namep;
+	db_expr_t *valuep;
+{
+
+	if (db_symformat != NULL) 
+		(*db_symformat->sym_value)(stab, sym, namep, valuep);
+}
+
+boolean_t
+X_db_line_at_pc(stab, cursym, filename, linenum, off)
+	db_symtab_t *stab;
+	db_sym_t cursym;
+	char **filename;
+	int *linenum;
+	db_expr_t off;
+{
+
+	if (db_symformat != NULL)
+		return ((*db_symformat->sym_line_at_pc)(stab, cursym,
+		    filename, linenum, off));
+	return (FALSE);
+}
+
+boolean_t
+X_db_sym_numargs(stab, cursym, nargp, argnamep)
+	db_symtab_t *stab;
+	db_sym_t cursym;
+	int *nargp;
+	char **argnamep;
+{
+
+	if (db_symformat != NULL)
+		return ((*db_symformat->sym_numargs)(stab, cursym, nargp,
+		    argnamep));
+	return (FALSE);
 }
