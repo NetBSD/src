@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.3 2001/01/21 11:43:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -103,6 +103,11 @@ _formi_update_field(FORM *form, int old_field);
 int
 _formi_validate_field(FORM *form);
 
+#ifdef DEBUG
+int
+_formi_create_dbg_file(void);
+#endif /* DEBUG */
+	
 #endif
 
 
