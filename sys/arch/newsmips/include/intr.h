@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2005/02/06 02:58:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -143,12 +143,12 @@ extern u_int intrcnt[];
 
 /* handle i/o device interrupts */
 #ifdef news3400
-void news3400_intr(u_int, u_int, u_int, u_int);
+void news3400_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 #endif
 #ifdef news5000
-void news5000_intr(u_int, u_int, u_int, u_int);
+void news5000_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 #endif
-extern void (*hardware_intr)(u_int, u_int, u_int, u_int);
+extern void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 extern void (*enable_intr)(void);
 extern void (*disable_intr)(void);
