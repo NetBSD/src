@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.84 2004/11/10 02:39:48 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.85 2004/11/12 16:57:46 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -35,9 +35,10 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.84 2004/11/10 02:39:48 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.85 2004/11/12 16:57:46 christos Exp $");
 #endif /* not lint */
 
+#define MBRPTYPENAMES
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
@@ -165,131 +166,7 @@ struct disklist *dl;
 #endif
 
 
-static char reserved[] = "reserved";
-
-struct part_type {
-	int		 type;
-	const char	*name;
-} part_types[] = {
-	{0x00, "<UNUSED>"},
-	{0x01, "Primary DOS with 12 bit FAT"},
-	{0x02, "XENIX / filesystem"},
-	{0x03, "XENIX /usr filesystem"},
-	{0x04, "Primary DOS with 16 bit FAT <32M"},
-	{0x05, "Extended partition"},
-	{0x06, "Primary 'big' DOS, 16-bit FAT (> 32MB)"},
-	{0x07, "OS/2 HPFS or NTFS or QNX2 or Advanced UNIX"},
-	{0x08, "AIX filesystem or OS/2 (thru v1.3) or DELL multiple drives"
-	       "or Commodore DOS or SplitDrive"},
-	{0x09, "AIX boot partition or Coherent"},
-	{0x0A, "OS/2 Boot Manager or Coherent swap or OPUS"},
-	{0x0b, "Primary DOS with 32 bit FAT"},
-	{0x0c, "Primary DOS with 32 bit FAT - LBA"},
-	{0x0d, "Type 7??? - LBA"},
-	{0x0E, "DOS (16-bit FAT) - LBA"},
-	{0x0F, "Ext. partition - LBA"},
-	{0x10, "OPUS"},
-	{0x11, "OS/2 BM: hidden DOS 12-bit FAT"},
-	{0x12, "Compaq diagnostics"},
-	{0x14, "OS/2 BM: hidden DOS 16-bit FAT <32M or Novell DOS 7.0 bug"},
-	{0x16, "OS/2 BM: hidden DOS 16-bit FAT >=32M"},
-	{0x17, "OS/2 BM: hidden IFS"},
-	{0x18, "AST Windows swapfile"},
-	{0x19, "Willowtech Photon coS"},
-	{0x1e, "hidden FAT95"},
-	{0x20, "Willowsoft OFS1"},
-	{0x21, reserved},
-	{0x23, reserved},
-	{0x24, "NEC DOS"},
-	{0x26, reserved},
-	{0x31, reserved},
-	{0x33, reserved},
-	{0x34, reserved},
-	{0x36, reserved},
-	{0x38, "Theos"},
-	{0x3C, "PartitionMagic recovery"},
-	{0x40, "VENIX 286 or LynxOS"},
-	{0x41, "Linux/MINIX (sharing disk with DRDOS) or Personal RISC boot"},
-	{0x42, "SFS or Linux swap (sharing disk with DRDOS)"},
-	{0x43, "Linux native (sharing disk with DRDOS)"},
-	{0x4D, "QNX4.x"},
-	{0x4E, "QNX4.x 2nd part"},
-	{0x4F, "QNX4.x 3rd part"},
-	{0x50, "DM (disk manager)"},
-	{0x51, "DM6 Aux1 (or Novell)"},
-	{0x52, "CP/M or Microport SysV/AT"},
-	{0x53, "DM6 Aux3"},
-	{0x54, "DM6 DDO"},
-	{0x55, "EZ-Drive (disk manager)"},
-	{0x56, "Golden Bow (disk manager)"},
-	{0x5C, "Priam Edisk (disk manager)"},
-	{0x61, "SpeedStor"},
-	{0x63, "GNU HURD or Mach or Sys V/386 (such as ISC UNIX) or MtXinu"},
-	{0x64, "Novell Netware 2.xx or Speedstore"},
-	{0x65, "Novell Netware 3.xx"},
-	{0x66, "Novell 386 Netware"},
-	{0x67, "Novell"},
-	{0x68, "Novell"},
-	{0x69, "Novell"},
-	{0x70, "DiskSecure Multi-Boot"},
-	{0x71, reserved},
-	{0x73, reserved},
-	{0x74, reserved},
-	{0x75, "PC/IX"},
-	{0x76, reserved},
-	{0x80, "MINIX until 1.4a"},
-	{0x81, "MINIX since 1.4b, early Linux, Mitac dmgr"},
-	{0x82, "Linux swap or Prime or Solaris"},
-	{0x83, "Linux native"},
-	{0x84, "OS/2 hidden C: drive"},
-	{0x85, "Linux extended"},
-	{0x86, "NT FAT volume set"},
-	{0x87, "NTFS volume set or HPFS mirrored"},
-	{0x93, "Amoeba filesystem"},
-	{0x94, "Amoeba bad block table"},
-	{0x99, "Mylex EISA SCSI"},
-	{0x9f, "BSDI?"},
-	{0xA0, "IBM Thinkpad hibernation"},
-	{0xa1, reserved},
-	{0xa3, reserved},
-	{0xa4, reserved},
-	{0xA5, "FreeBSD or 386BSD or old NetBSD"},
-	{0xA6, "OpenBSD"},
-	{0xA7, "NeXTSTEP 486"},
-	{0xa8, "Apple UFS"},
-	{0xa9, "NetBSD"},
-	{0xab, "Apple Boot"},
-	{0xaf, "Apple HFS"},
-	{0xb1, reserved},
-	{0xb3, reserved},
-	{0xb4, reserved},
-	{0xb6, reserved},
-	{0xB7, "BSDI BSD/386 filesystem"},
-	{0xB8, "BSDI BSD/386 swap"},
-	{0xBF, "Solaris"},
-	{0xc0, "CTOS"},
-	{0xC1, "DRDOS/sec (FAT-12)"},
-	{0xC4, "DRDOS/sec (FAT-16, < 32M)"},
-	{0xC6, "DRDOS/sec (FAT-16, >= 32M)"},
-	{0xC7, "Syrinx (Cyrnix?) or HPFS disabled"},
-	{0xd8, "CP/M 86"},
-	{0xDB, "CP/M or Concurrent CP/M or Concurrent DOS or CTOS"},
-	{0xE1, "DOS access or SpeedStor 12-bit FAT extended partition"},
-	{0xE3, "DOS R/O or SpeedStor or Storage Dimensions"},
-	{0xE4, "SpeedStor 16-bit FAT extended partition < 1024 cyl."},
-	{0xe5, reserved},
-	{0xe6, reserved},
-	{0xeb, "BeOS"},
-	{0xF1, "SpeedStor or Storage Dimensions"},
-	{0xF2, "DOS 3.3+ Secondary"},
-	{0xf3, reserved},
-	{0xF4, "SpeedStor large partition or Storage Dimensions"},
-	{0xf6, reserved},
-	{0xFE, "SpeedStor >1024 cyl. or LANstep or IBM PS/2 IML"},
-	{0xFF, "Xenix Bad Block Table"},
-};
-
-#define KNOWN_SYSIDS	(sizeof(part_types)/sizeof(part_types[0]))
+#define KNOWN_SYSIDS	(sizeof(mbr_ptypes)/sizeof(mbr_ptypes[0]))
 
 void	usage(void);
 void	print_s0(int);
@@ -403,8 +280,8 @@ main(int argc, char *argv[])
 			break;
 		case 'l':	/* List known partition types */
 			for (len = 0; len < KNOWN_SYSIDS; len++)
-				printf("%03d %s\n", part_types[len].type,
-				    part_types[len].name);
+				printf("%03d %s\n", mbr_ptypes[len].id,
+				    mbr_ptypes[len].name);
 			return 0;
 		case 'u':	/* Update partition details */
 			u_flag = 1;
@@ -2593,12 +2470,12 @@ string(const char *prompt, int length, char *buf)
 int
 type_match(const void *key, const void *item)
 {
-	const int *typep = key;
-	const struct part_type *ptr = item;
+	const int *idp = key;
+	const struct mbr_ptype *ptr = item;
 
-	if (*typep < ptr->type)
+	if (*idp < ptr->id)
 		return (-1);
-	if (*typep > ptr->type)
+	if (*idp > ptr->id)
 		return (1);
 	return (0);
 }
@@ -2606,11 +2483,10 @@ type_match(const void *key, const void *item)
 const char *
 get_type(int type)
 {
-	struct part_type *ptr;
+	struct mbr_ptype *ptr;
 
-	ptr = bsearch(&type, part_types,
-	    sizeof(part_types) / sizeof(struct part_type),
-	    sizeof(struct part_type), type_match);
+	ptr = bsearch(&type, mbr_ptypes, KNOWN_SYSIDS,
+	    sizeof(struct mbr_ptypes[0]), type_match);
 	if (ptr == 0)
 		return ("unknown");
 	return (ptr->name);
