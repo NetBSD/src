@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.5 2004/03/23 08:31:42 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.6 2004/09/16 13:43:44 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -80,9 +80,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.92 2004/03/22 21:34:39 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.93 2004/04/07 14:23:55 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.5 2004/03/23 08:31:42 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.6 2004/09/16 13:43:44 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -459,7 +459,7 @@ byteconv2(int from, int same, int big_endian)
 size_t
 file_mbswidth(const char *s)
 {
-#ifdef HAVE_WCHAR_H
+#if defined(HAVE_WCHAR_H) && defined(HAVE_MBRTOWC) && defined(HAVE_WCWIDTH)
 	size_t bytesconsumed, old_n, n, width = 0;
 	mbstate_t state;
 	wchar_t nextchar;
