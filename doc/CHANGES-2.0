@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.502 2004/11/12 04:47:24 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.503 2004/11/12 04:58:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7843,3 +7843,8 @@ sys/compat/ibcs2/ibcs2_signal.c			1.20
 
 	Bounds check signal number.
 	[christos, ticket #918]
+
+etc/MAKEDEV.tmpl				1.30
+
+	MAKEDEV regression because of printf -> zeropad change. PR#27235
+	[christos, ticket #919]
