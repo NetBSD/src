@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.136 2003/09/05 21:49:10 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.137 2003/09/07 07:40:42 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1474,4 +1474,11 @@ sys/netinet6/esp_input.c			1.33
 	m_cat may free mbuf on 2nd arg, so m_pkthdr manipulation has to happen
 	before m_cat call.  from Julian Coleman via kame.
 	[itojun, ticket #1401]
+
+usr.sbin/cron/crontab.c				1.19
+
+	In "crontab -l", suppress the header lines, just as "crontab -e" does.
+	OK'd by Christos Zoulas and Paul Vixie.
+	Fixes PR 21705.
+	[hubertf, ticket #1450]
 
