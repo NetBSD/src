@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.69 2002/03/16 17:21:19 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.70 2002/03/28 22:01:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.69 2002/03/16 17:21:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.70 2002/03/28 22:01:22 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1598,9 +1598,10 @@ scsipi_complete(xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
-
-	if (periph->periph_switch->psw_done)
-		periph->periph_switch->psw_done(xs);
+	/*
+	 * Set buffer fields in case the periph
+	 * switch done func uses them
+	 */
 	if ((bp = xs->bp) != NULL) {
 		if (error) {
 			bp->b_error = error;
@@ -1610,8 +1611,13 @@ scsipi_complete(xs)
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
 		}
-		biodone(bp);
 	}
+
+	if (periph->periph_switch->psw_done)
+		periph->periph_switch->psw_done(xs);
+
+	if (bp)
+		biodone(bp);
 
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);
