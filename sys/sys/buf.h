@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.39 2000/02/07 20:16:59 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.40 2000/02/14 20:12:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #ifndef _SYS_BUF_H_
 #define	_SYS_BUF_H_
 
+#include <sys/pool.h>
 #include <sys/queue.h>
 
 #define NOLIST ((struct buf *)0x87654321)
@@ -271,6 +272,8 @@ char	*buffers;		/* The buffer contents. */
 int	bufpages;		/* Number of memory pages in the buffer pool. */
 extern int nswbuf;		/* Number of swap I/O buffer headers. */
 
+extern struct pool bufpool;	/* I/O buf pool */
+
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
@@ -301,6 +304,7 @@ struct buf *incore __P((struct vnode *, daddr_t));
 void	minphys __P((struct buf *bp));
 int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
 		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
 void  bgetvp __P((struct vnode *, struct buf *));
