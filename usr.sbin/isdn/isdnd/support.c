@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.2 2002/03/16 17:03:43 martin Exp $ 
+ *	$Id: support.c,v 1.3 2002/03/17 20:57:24 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -589,27 +589,6 @@ get_cep_by_cdid(int cdid)
 			return(&cfg_entry_tab[i]);
 	}
 	return(NULL);
-}
-
-/*---------------------------------------------------------------------------*
- *	return b channel driver type name string
- *---------------------------------------------------------------------------*/
-char *
-bdrivername(int drivertype)
-{
-	static char *bdtab[] = {
-		"bchan",
-		"tel",
-		"irip",
-		"ippp",
-		"ibc",
-		"ing"
-	};
-
-	if(drivertype >= BDRV_RBCH && drivertype <= BDRV_ING)
-		return(bdtab[drivertype]);
-	else
-		return("unknown");
 }
 
 /*---------------------------------------------------------------------------*
