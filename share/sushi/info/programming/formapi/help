@@ -43,8 +43,16 @@ noedit		An uneditable field.  The argument is the value of the field.
 invis		An invisible and uneditable field.  The argument is the
 		value of the field.
 integer		An integer field.  The arguments are the number of digits,
-		the minimum number, and the maximum number allowed.
+		the minimum number, and the maximum number allowed.  You may
+		also supply an optional default for the field.
 req-integer	A required integer field.
+iscript		An integer field, whose default is set by the invocation 
+		of a script.  The arguments are the number of digits,
+		the minimum number, the maximum number, and the name of the
+		script to invoke, followed by any number of arguments to pass
+		to the script.
+req-iscript	A required iscript field.
+
 
 If a description consists of the keyword BLANK, no description will be
 displayed to the user.
@@ -68,4 +76,4 @@ $1 = "fooshi-1.3"
 $2 = "audio"
 $3 = "yes"
 
-$NetBSD: help,v 1.1 2001/01/05 02:06:55 garbled Exp $
+$NetBSD: help,v 1.2 2001/01/31 09:39:52 garbled Exp $
