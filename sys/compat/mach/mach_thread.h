@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.8 2003/01/26 12:39:32 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.9 2003/04/05 21:18:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ struct mach_create_thread_child_args {
 #define MACH_SWITCH_OPTION_IDLE	3
 
 /* thread_policy */
-typedef int mach_policy_t;
 
 typedef struct {
 	mach_msg_header_t req_msgh;
