@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.6 1994/10/26 00:56:13 cgd Exp $	*/
+/*	$NetBSD: pwd.h,v 1.7 1995/04/29 05:30:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -85,6 +85,7 @@ struct passwd	*getpwnam __P((const char *));
 struct passwd	*getpwent __P((void));
 #ifndef _XOPEN_SOURCE
 int		 setpassent __P((int));
+char		*user_from_uid __P((uid_t, int));
 #endif
 void		 setpwent __P((void));
 void		 endpwent __P((void));
