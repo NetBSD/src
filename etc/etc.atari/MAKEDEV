@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 1996/10/04 06:52:52 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.10 1996/11/06 13:32:21 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -184,14 +184,16 @@ fd*)
 	rm -f fd$unit? rfd$unit?
 	case $unit in
 	0|1|2|3)
-		mknod fd${unit}a  b  2 $(($unit * 16 + 0))
-		mknod fd${unit}b  b  2 $(($unit * 16 + 1))
-		mknod fd${unit}c  b  2 $(($unit * 16 + 2))
-		mknod rfd${unit}a c 16 $(($unit * 16 + 0))
-		mknod rfd${unit}b c 16 $(($unit * 16 + 1))
-		mknod rfd${unit}c c 16 $(($unit * 16 + 2))
-		chgrp operator fd$unit? rfd$unit?
-		chmod 640 fd$unit? rfd$unit?
+		mknod fd${unit}   b  2 $(($unit * 16 + 0))
+		mknod fd${unit}a  b  2 $(($unit * 16 + 1))
+		mknod fd${unit}b  b  2 $(($unit * 16 + 2))
+		mknod fd${unit}c  b  2 $(($unit * 16 + 3))
+		mknod rfd${unit}  c 16 $(($unit * 16 + 0))
+		mknod rfd${unit}a c 16 $(($unit * 16 + 1))
+		mknod rfd${unit}b c 16 $(($unit * 16 + 2))
+		mknod rfd${unit}c c 16 $(($unit * 16 + 3))
+		chgrp operator fd$unit fd$unit? rfd$unit?
+		chmod 640 fd$unit fd$unit? rfd$unit?
 		;;
 	*)
 		echo bad unit for floppy disk in: $i
