@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.4 1995/03/18 14:58:50 cgd Exp $	*/
+/*	$NetBSD: lfs.c,v 1.5 1995/04/24 13:23:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: lfs.c,v 1.4 1995/03/18 14:58:50 cgd Exp $";
+static char rcsid[] = "$NetBSD: lfs.c,v 1.5 1995/04/24 13:23:52 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,7 @@ static struct lfs lfs_default =  {
 	/* lfs_fmod */		0,
 	/* lfs_clean */		0,
 	/* lfs_ronly */		0,
+	/* lfs_flags */		0,
 	/* lfs_fsmnt */		{ 0 },
 };
 
