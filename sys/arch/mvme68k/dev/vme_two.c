@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.3.2.1 2000/06/27 20:09:33 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.3.2.2 2000/10/17 19:50:57 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,7 +116,8 @@ vmetwo_match(parent, cf, aux)
 	if (vmetwo_sc)
 		return (0);
 
-	if (machineid != MVME_167 && machineid != MVME_177)
+	if (machineid != MVME_167 && machineid != MVME_177 &&
+	    machineid != MVME_162)
 		return (0);
 
 	return (1);
@@ -309,8 +310,13 @@ vmetwo_attach(parent, self, aux)
 	vaa.va_bdt = sc->sc_dmat;
 	vaa.va_slaveconfig = NULL;
 
-	/* Let the NMI handler deal with level 7 ABORT switch interrupts */
-	vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, nmihand, NULL);
+	if (machineid != MVME_162) {
+		/*
+		 * Let the NMI handler deal with level 7 ABORT switch
+		 * interrupts
+		 */
+		vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, nmihand, NULL);
+	}
 
 	/* Attach the MI VMEbus glue. */
 	config_found(self, &vaa, 0);
