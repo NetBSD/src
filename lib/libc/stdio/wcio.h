@@ -1,4 +1,4 @@
-/* $NetBSD: wcio.h,v 1.1 2001/12/07 12:02:07 yamt Exp $ */
+/* $NetBSD: wcio.h,v 1.2 2001/12/07 12:18:53 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -46,14 +46,6 @@ struct wchar_io_data {
 	int wcio_mode; /* orientation */
 };
 
-#if 0
-/*
- * XXX we use dynamically allocated storage
- * instead of changing sizeof(FILE) for now.
- */
-/* #define _FP_WCIO_HACK */
-#endif
-
 #define _SET_ORIENTATION(fp, mode) \
 do {\
 	struct wchar_io_data *_wcio = WCIO_GET(fp);\
@@ -64,7 +56,6 @@ do {\
 /*
  * WCIO_FREE should be called by fclose
  */
-#ifndef _FP_WCIO_HACK
 #define WCIO_GET(fp) (&(_EXT(fp)->_wcio))
 #define WCIO_FREE(fp) \
 do {\
@@ -75,17 +66,5 @@ do {\
 do {\
 	_EXT(fp)->_wcio.wcio_ungetwc_inbuf = 0;\
 } while (/*CONSTCOND*/0)
-#else /* _FP_WCIO_HACK */
-#define WCIO_GET(fp) _wcio_get(fp)
-#define WCIO_FREE(fp) _wcio_free(fp)
-#if 0 /* unused */
-#define WCIO_FREEUB(fp) _wcio_clear_ungetwc(fp)
-#endif
-struct wchar_io_data *_wcio_get(FILE *);
-void _wcio_free(FILE *fp);
-#if 0 /* unused */
-void _wcio_clear_ungetwc(FILE *fp)
-#endif
-#endif /* _FP_WCIO_HACK */
 
 #endif /*_WCIO_H_*/
