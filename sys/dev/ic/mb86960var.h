@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.24 1999/03/25 23:19:16 thorpej Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.25 2000/02/02 09:34:52 enami Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -203,3 +203,4 @@ int	mb86960_intr	__P((void *));
 int	mb86960_enable	__P((struct mb86960_softc *));
 void	mb86960_disable	__P((struct mb86960_softc *));
 int	mb86960_activate __P((struct device *, enum devact));
+int	mb86960_detach	__P((struct mb86960_softc *));
