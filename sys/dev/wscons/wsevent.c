@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.2 1998/08/18 18:25:36 thorpej Exp $ */
+/* $NetBSD: wsevent.c,v 1.3 1999/01/10 00:28:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsevent.c,v 1.2 1998/08/18 18:25:36 thorpej Exp $";
+    "$NetBSD: wsevent.c,v 1.3 1999/01/10 00:28:21 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,7 @@ wsevent_init(ev)
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)ev->q, WSEVENT_QSIZE * sizeof(struct wscons_event));
+	memset((caddr_t)ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
 }
 
 /*

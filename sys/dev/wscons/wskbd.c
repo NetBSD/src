@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.14 1998/12/28 13:48:24 hannken Exp $ */
+/* $NetBSD: wskbd.c,v 1.15 1999/01/10 00:28:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.14 1998/12/28 13:48:24 hannken Exp $";
+    "$NetBSD: wskbd.c,v 1.15 1999/01/10 00:28:21 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -723,7 +723,7 @@ getkeyrepeat:
 		if (error == 0) {
 			wskbd_init_keymap(umdp->maplen,
 					  &sc->sc_map, &sc->sc_maplen);
-			bcopy(buf, sc->sc_map, len);
+			memcpy(sc->sc_map, buf, len);
 			sc->sc_layout = KB_USER;
 		}
 		free(buf, M_TEMP);
