@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.6 1995/09/16 11:45:20 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.7 1995/09/16 15:06:55 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -846,7 +846,7 @@ SC_REQ	*reqp;
 		 * When BSY is asserted, we assume the selection succeeded,
 		 * otherwise we release the bus.
 		 */
-		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | atn_flag);
+		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_ATN);
 		delay(201);
 		if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
 			SET_5380_REG(NCR5380_ICOM, 0);
@@ -883,6 +883,7 @@ SC_REQ	*reqp;
 			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
 	cnt    = 1;
 	phase  = PH_MSGOUT;
+
 	/*
 	 * Since we followed the SCSI-spec and raised ATN while SEL was true
 	 * but before BSY was false during the selection, a 'MESSAGE OUT'
@@ -905,7 +906,6 @@ SC_REQ	*reqp;
 
 		DBG_SELPRINT ("Target %d: failed to send identify\n",
 							reqp->targ_id);
-
 		/*
 		 * Try to disconnect from the target.  We cannot leave
 		 * it just hanging here.
@@ -946,7 +946,7 @@ identify_failed:
 /*
  * Return codes:
  *	-1: quit main, trigger on interrupt
- *   0: keep on running main.
+ *	 0: keep on running main.
  */
 static int
 information_transfer()
@@ -1018,7 +1018,7 @@ information_transfer()
 			len = reqp->xdata_len;
 #ifdef USE_PDMA
 			if (transfer_pdma(&phase, reqp->xdata_ptr, &len) == 0)
-				return 0;
+				return (0);
 #else
 			transfer_pio(&phase, reqp->xdata_ptr, &len, 0);
 #endif
@@ -1207,7 +1207,7 @@ struct ncr_softc *sc;
 		scsi_reset(sc);
 		return;
 	}
-	
+
 	SET_5380_REG(NCR5380_ICOM, 0);
 	
 	/*
