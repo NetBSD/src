@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.93 2000/03/27 09:44:46 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.94 2000/03/27 17:40:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1274,7 +1274,7 @@ msdosfs_mkdir(v)
 	/*
 	 * Allocate a cluster to hold the about to be created directory.
 	 */
-	error = clusteralloc(pmp, 0, 1, CLUST_EOFE, &newcluster, NULL);
+	error = clusteralloc(pmp, 0, 1, &newcluster, NULL);
 	if (error)
 		goto bad2;
 

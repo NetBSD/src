@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.40 2000/03/16 18:08:28 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.41 2000/03/27 17:40:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -313,7 +313,7 @@ deget(pmp, dirclust, diroffset, depp)
 
 		nvp->v_type = VDIR;
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
-			error = pcbmap(ldep, 0xffff, 0, &size, 0);
+			error = pcbmap(ldep, CLUST_END, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;

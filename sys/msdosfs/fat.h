@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.14 2000/03/22 14:33:25 jdolecek Exp $	*/
+/*	$NetBSD: fat.h,v 1.15 2000/03/27 17:40:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
 #define	CLUST_EOFS	0xfffffff8	/* start of eof cluster range */
 #define	CLUST_EOFE	0xffffffff	/* end of eof cluster range */
+#define	CLUST_END	CLUST_EOFE	/* bigger than any valid cluster */
 
 #define	FAT12_MASK	0x00000fff	/* mask for 12 bit cluster numbers */
 #define	FAT16_MASK	0x0000ffff	/* mask for 16 bit cluster numbers */
@@ -105,7 +106,7 @@
 
 int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *, int *));
 int clusterfree __P((struct msdosfsmount *, u_long, u_long *));
-int clusteralloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *, u_long *));
+int clusteralloc __P((struct msdosfsmount *, u_long, u_long,u_long *,u_long *));
 int extendfile __P((struct denode *, u_long, struct buf **, u_long *, int));
 int fatentry __P((int, struct msdosfsmount *, u_long, u_long *, u_long));
 void fc_purge __P((struct denode *, u_int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.31 1999/07/27 05:38:03 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.32 2000/03/27 17:40:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -750,17 +750,17 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
  * got	      - how many clusters were actually allocated.
  */
 int
-clusteralloc(pmp, start, count, fillwith, retcluster, got)
+clusteralloc(pmp, start, count, retcluster, got)
 	struct msdosfsmount *pmp;
 	u_long start;
 	u_long count;
-	u_long fillwith;
 	u_long *retcluster;
 	u_long *got;
 {
 	u_long idx;
 	u_long len, newst, foundl, cn, l;
 	u_long foundcn = 0; /* XXX: foundcn could be used unititialized */
+	u_long fillwith = CLUST_EOFE;
 	u_int map;
 
 #ifdef MSDOSFS_DEBUG
@@ -996,7 +996,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	if (dep->de_fc[FC_LASTFC].fc_frcn == FCE_EMPTY &&
 	    dep->de_StartCluster != 0) {
 		fc_lfcempty++;
-		error = pcbmap(dep, 0xffff, 0, &cn, 0);
+		error = pcbmap(dep, CLUST_END, 0, &cn, 0);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
 			return (error);
@@ -1016,7 +1016,7 @@ extendfile(dep, count, bpp, ncp, flags)
 			cn = 0;
 		else
 			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
-		error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got);
+		error = clusteralloc(pmp, cn, count, &cn, &got);
 		if (error)
 			return (error);
 
