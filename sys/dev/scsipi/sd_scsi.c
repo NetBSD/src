@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.7 1998/08/31 22:28:07 cgd Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -346,9 +346,13 @@ sd_scsibus_flush(sd, flags)
 	 * the device, and poll for completion so that we know
 	 * that the cache has actually been flushed.
 	 *
+	 * Unless, that is, the device can't handle the SYNCHRONIZE CACHE
+	 * command, as indicated by our quirks flags.
+	 *
 	 * XXX What about older devices?
 	 */
-	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2) {
+	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2 &&
+	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
