@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.8 2004/08/30 15:05:16 drochner Exp $ */
+/* $NetBSD: ttwoga.c,v 1.9 2004/09/14 19:57:37 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.8 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.9 2004/09/14 19:57:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.8 2004/08/30 15:05:16 drochner Exp $");
 #if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
 #include <alpha/pci/pci_2100_a500.h>
 #endif
+
+#include "locators.h"
 
 int	ttwogamatch(struct device *, struct cfdata *, void *);
 void	ttwogaattach(struct device *, struct device *, void *);
