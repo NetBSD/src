@@ -6,19 +6,19 @@
 #include <sys/cdefs.h>
 
 #ifdef __weak_reference
-__weak_reference(__catopen,catopen);
+__weak_reference(_catopen,catopen);
 #else
 
 #include <nl_types.h>
 
-extern nl_catd __catopen __P((char *, int));
+extern nl_catd _catopen __P((char *, int));
 
 nl_catd
 catopen(name, oflag)
 	char *name;
 	int oflag;
 {
-	return __catopen(name, oflag);
+	return _catopen(name, oflag);
 }
 
 #endif
