@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.21 2002/12/19 23:31:57 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.22 2003/01/19 19:41:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,7 +85,16 @@
 #define	_POSIX_MEMORY_PROTECTION 1
 				/* monotonic clock */
 #define	_POSIX_MONOTONIC_CLOCK	200112L
-
+				/* threads */
+#define	_POSIX_THREADS		200112L
+				/* barriers */
+#define	_POSIX_BARRIERS		200112L
+				/* timers */
+#define	_POSIX_TIMERS		200112L
+				/* spin locks */
+#define	_POSIX_SPIN_LOCKS	200112L
+				/* reader/writer locks */
+#define	_POSIX_READER_WRITER_LOCKS	200112L
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
