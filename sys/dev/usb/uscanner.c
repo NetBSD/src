@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.24 2001/12/30 05:12:36 gehenna Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.25 2001/12/30 11:13:22 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.24 2001/12/30 05:12:36 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.25 2001/12/30 11:13:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,22 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_C310U }, 0 },
 
   /* AGFA */
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1236U }, 0 },
  {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U }, 0 },
  {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U2 }, 0 },
  {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANTOUCH }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE40 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE50 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE20 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE25 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE26 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANE52 }, 0 },
+
+  /* Avision */
+ {{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U }, 0 },
+
+  /* Canon */
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U }, 0 },
 
   /* Kye */
  {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
@@ -114,9 +127,6 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_6300C }, 0 },
 
-  /* Avision */
- {{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U }, 0 },
-
 #if 0
   /* XXX Should be handled by usscanner */
   /* Microtek */
@@ -132,10 +142,14 @@ static const struct uscan_info uscanner_devs[] = {
 
   /* Mustek */
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_BEARPAW1200F }, 0 },
  {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW1200 }, 0 },
+ {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW2400 }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600USB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600CU }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200UB }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USBPLUS }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CUPLUS }, 0 },
 
   /* Primax */
@@ -178,8 +192,8 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8100 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8600 }, 0 },
 
-  /* Canon */
- {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U }, 0 },
+  /* Ultima */
+ {{ USB_VENDOR_ULTIMA, USB_PRODUCT_ULTIMA_1200UBPLUS }, 0 },
 
 };
 #define uscanner_lookup(v, p) ((struct uscan_info *)usb_lookup(uscanner_devs, v, p))
