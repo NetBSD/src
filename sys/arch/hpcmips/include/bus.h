@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.3 2000/03/05 05:22:13 takemura Exp $   */
+/*     $NetBSD: bus.h,v 1.4 2000/03/05 10:03:16 shin Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define __PMAX_bus_space_read_multi(BYTES,BITS)				\
+#define __HPCMIPS_bus_space_read_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t));				\
@@ -207,15 +207,15 @@ __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 		*a++ = __CONCAT(bus_space_read_,BYTES)(t, h, o);	\
 }
 
-__PMAX_bus_space_read_multi(1,8)
-__PMAX_bus_space_read_multi(2,16)
-__PMAX_bus_space_read_multi(4,32)
+__HPCMIPS_bus_space_read_multi(1,8)
+__HPCMIPS_bus_space_read_multi(2,16)
+__HPCMIPS_bus_space_read_multi(4,32)
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
 #endif
 
-#undef __PMAX_bus_space_read_multi
+#undef __HPCMIPS_bus_space_read_multi
 
 /*
  *	void bus_space_read_region_N __P((bus_space_tag_t tag,
@@ -227,7 +227,7 @@ __PMAX_bus_space_read_multi(4,32)
  * buffer provided.
  */
 
-#define __PMAX_bus_space_read_region(BYTES,BITS)			\
+#define __HPCMIPS_bus_space_read_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t));				\
@@ -247,15 +247,15 @@ __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	}								\
 }
 
-__PMAX_bus_space_read_region(1,8)
-__PMAX_bus_space_read_region(2,16)
-__PMAX_bus_space_read_region(4,32)
+__HPCMIPS_bus_space_read_region(1,8)
+__HPCMIPS_bus_space_read_region(2,16)
+__HPCMIPS_bus_space_read_region(4,32)
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
 #endif
 
-#undef __PMAX_bus_space_read_region
+#undef __HPCMIPS_bus_space_read_region
 
 /*
  *	void bus_space_write_N __P((bus_space_tag_t tag,
@@ -300,7 +300,7 @@ do {									\
  * provided to bus space described by tag/handle/offset.
  */
 
-#define __PMAX_bus_space_write_multi(BYTES,BITS)			\
+#define __HPCMIPS_bus_space_write_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t));				\
@@ -318,16 +318,16 @@ __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 		__CONCAT(bus_space_write_,BYTES)(t, h, o, *a++);	\
 }
 
-__PMAX_bus_space_write_multi(1,8)
-__PMAX_bus_space_write_multi(2,16)
-__PMAX_bus_space_write_multi(4,32)
+__HPCMIPS_bus_space_write_multi(1,8)
+__HPCMIPS_bus_space_write_multi(2,16)
+__HPCMIPS_bus_space_write_multi(4,32)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 			!!! bus_space_write_multi_8 unimplimented !!!
 #endif
 
-#undef __PMAX_bus_space_write_multi
+#undef __HPCMIPS_bus_space_write_multi
 
 /*
  *	void bus_space_write_region_N __P((bus_space_tag_t tag,
@@ -338,7 +338,7 @@ __PMAX_bus_space_write_multi(4,32)
  * to bus space described by tag/handle starting at `offset'.
  */
 
-#define __PMAX_bus_space_write_region(BYTES,BITS)			\
+#define __HPCMIPS_bus_space_write_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t));				\
@@ -358,16 +358,16 @@ __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	}								\
 }
 
-__PMAX_bus_space_write_region(1,8)
-__PMAX_bus_space_write_region(2,16)
-__PMAX_bus_space_write_region(4,32)
+__HPCMIPS_bus_space_write_region(1,8)
+__HPCMIPS_bus_space_write_region(2,16)
+__HPCMIPS_bus_space_write_region(4,32)
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
 			!!! bus_space_write_region_8 unimplemented !!!
 #endif
 
-#undef __PMAX_bus_space_write_region
+#undef __HPCMIPS_bus_space_write_region
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
@@ -378,7 +378,7 @@ __PMAX_bus_space_write_region(4,32)
  * by tag/handle/offset `count' times.
  */
 
-#define __PMAX_bus_space_set_multi(BYTES,BITS)				\
+#define __HPCMIPS_bus_space_set_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t));					\
@@ -396,16 +396,16 @@ __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 		__CONCAT(bus_space_write_,BYTES)(t, h, o, v);		\
 }
 
-__PMAX_bus_space_set_multi(1,8)
-__PMAX_bus_space_set_multi(2,16)
-__PMAX_bus_space_set_multi(4,32)
+__HPCMIPS_bus_space_set_multi(1,8)
+__HPCMIPS_bus_space_set_multi(2,16)
+__HPCMIPS_bus_space_set_multi(4,32)
 
 #if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8						\
 			!!! bus_space_set_multi_8 unimplemented !!!
 #endif
 
-#undef __PMAX_bus_space_set_multi
+#undef __HPCMIPS_bus_space_set_multi
 
 /*
  *	void bus_space_set_region_N __P((bus_space_tag_t tag,
@@ -416,7 +416,7 @@ __PMAX_bus_space_set_multi(4,32)
  * by tag/handle starting at `offset'.
  */
 
-#define __PMAX_bus_space_set_region(BYTES,BITS)				\
+#define __HPCMIPS_bus_space_set_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t));					\
@@ -436,16 +436,16 @@ __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	}								\
 }
 
-__PMAX_bus_space_set_region(1,8)
-__PMAX_bus_space_set_region(2,16)
-__PMAX_bus_space_set_region(4,32)
+__HPCMIPS_bus_space_set_region(1,8)
+__HPCMIPS_bus_space_set_region(2,16)
+__HPCMIPS_bus_space_set_region(4,32)
 
 #if 0	/* Cause a link error for bus_space_set_region_8 */
 #define	bus_space_set_region_8						\
 			!!! bus_space_set_region_8 unimplemented !!!
 #endif
 
-#undef __PMAX_bus_space_set_region
+#undef __HPCMIPS_bus_space_set_region
 
 /*
  *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
@@ -457,7 +457,7 @@ __PMAX_bus_space_set_region(4,32)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-#define	__PMAX_copy_region(BYTES)					\
+#define	__HPCMIPS_copy_region(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	__P((bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
@@ -485,16 +485,16 @@ __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	}								\
 }
 
-__PMAX_copy_region(1)
-__PMAX_copy_region(2)
-__PMAX_copy_region(4)
+__HPCMIPS_copy_region(1)
+__HPCMIPS_copy_region(2)
+__HPCMIPS_copy_region(4)
 
 #if 0	/* Cause a link error for bus_space_copy_region_8 */
 #define	bus_space_copy_region_8						\
 			!!! bus_space_copy_region_8 unimplemented !!!
 #endif
 
-#undef __PMAX_copy_region
+#undef __HPCMIPS_copy_region
 
 /*
  * Bus read/write barrier methods.
@@ -526,7 +526,7 @@ __PMAX_copy_region(4)
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
-#define	PMAX_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define	HPCMIPS_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -540,8 +540,8 @@ struct uio;
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-typedef struct pmax_bus_dma_tag		*bus_dma_tag_t;
-typedef struct pmax_bus_dmamap		*bus_dmamap_t;
+typedef struct hpcmips_bus_dma_tag	*bus_dma_tag_t;
+typedef struct hpcmips_bus_dmamap	*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -549,12 +549,12 @@ typedef struct pmax_bus_dmamap		*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct pmax_bus_dma_segment {
+struct hpcmips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
 };
-typedef struct pmax_bus_dma_segment	bus_dma_segment_t;
+typedef struct hpcmips_bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -563,7 +563,7 @@ typedef struct pmax_bus_dma_segment	bus_dma_segment_t;
  *	DMA for a given bus.
  */
 
-struct pmax_bus_dma_tag {
+struct hpcmips_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
@@ -629,7 +629,7 @@ struct pmax_bus_dma_tag {
  *
  *	Describes a DMA mapping.
  */
-struct pmax_bus_dmamap {
+struct hpcmips_bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use my machine-independent code.
 	 */
@@ -647,7 +647,7 @@ struct pmax_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _PMAX_BUS_DMA_PRIVATE
+#ifdef _HPCMIPS_BUS_DMA_PRIVATE
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
@@ -680,7 +680,7 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high));
 
-extern struct pmax_bus_dma_tag pmax_default_bus_dma_tag;
-#endif /* _PMAX_BUS_DMA_PRIVATE */
+extern struct hpcmips_bus_dma_tag hpcmips_default_bus_dma_tag;
+#endif /* _HPCMIPS_BUS_DMA_PRIVATE */
 
 #endif /* _HPCMIPS_BUS_H_ */
