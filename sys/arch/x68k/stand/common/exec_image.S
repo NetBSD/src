@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.S,v 1.1 2001/09/27 10:14:50 minoura Exp $	*/
+/*	$NetBSD: exec_image.S,v 1.2 2001/09/27 14:08:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -48,13 +48,13 @@ ENTRY_NOPROFILE(exec_image)
 
 /* copy the trampoline to the last physical page. */
 	moval		LASTADDR,%sp		| tmpstack from end of physmem
-	leal		%sp@(-4096),%a3		| use last phys page as tramp
+	lea		%sp@(-4096),%a3		| use last phys page as tramp
 
 	movl		#(end_trampoline-trampoline),%sp@-
-	peal		%pc@(trampoline)
-	peal		%a3@
+	pea		%pc@(trampoline)
+	pea		%a3@
 	jbsr		_C_LABEL(memcpy)	| memcpy() is still alive
-	leal		%sp@(12),%sp
+	lea		%sp@(12),%sp
 
 	jmp		%a3@			| jump to tramp
 
@@ -67,7 +67,7 @@ ASENTRY_NOPROFILE(trampoline)
 ||	%d7:	boothowto
 	movl		%d5,%sp@-		| push last arg (esym)
 	movel		LASTADDR,%sp@-		| second arg (physsize)
-	peal		%a5@			| first arg (firstpa)
+	pea		%a5@			| first arg (firstpa)
 
 	cmpl		%a4,%a5			| if (l == x)
 	beq		L1			|	copy not required

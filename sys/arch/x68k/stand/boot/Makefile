@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/27 10:14:49 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2001/09/27 14:08:27 minoura Exp $
+
+.include <bsd.own.mk>
 
 BOOT=		boot
 VERSION=	1.0
@@ -27,8 +29,11 @@ CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CFLAGS=		-Wno-main -Os -m68020-60
-
+.if ${OBJECT_FMT} == "ELF"
 LDFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
+.else
+LDFLAGS=	-N -static -Ttext ${TEXT}
+.endif
 LIBIOCS!=	cd $M/stand/libiocs && ${MAKE} print-objdir
 LIBSA!=		cd $M/stand/libsa && ${MAKE} print-objdir
 LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs

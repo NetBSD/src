@@ -2,7 +2,7 @@
 | author: chapuni(GBA02750@niftyserve.or.jp)
 |         Yasha
 |
-| $NetBSD: boot.S,v 1.1 2001/09/27 10:14:49 minoura Exp $
+| $NetBSD: boot.S,v 1.2 2001/09/27 14:08:27 minoura Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -38,7 +38,7 @@ ASENTRY_NOPROFILE(entry0)
 #define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
 #define RELOC(var)	_RELOC(_C_LABEL(var))
 
-		lea	RELOC(__bss_start),%a1
+		lea	RELOC(edata),%a1
 		bra	_ASM_LABEL(entry)
 
 |	Disklabel= 404bytes
