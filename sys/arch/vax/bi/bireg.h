@@ -1,4 +1,4 @@
-/*	$NetBSD: bireg.h,v 1.1 1996/07/19 14:26:53 ragge Exp $	*/
+/*	$NetBSD: bireg.h,v 1.2 1998/04/13 12:18:20 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -217,7 +217,7 @@ struct bi_cpu {
 #define	BIW_GPR1	0x20000000	/* gpr 1 was written */
 #define	BIW_GPR0	0x10000000	/* gpr 0 was written */
 
-/* bits in force-bit ipintr/stop command register 8/
+/* bits in force-bit ipintr/stop command register */
 #define	BIFIPSC_CMDMASK	0x0000f000	/* command */
 #define	BIFIPSC_MIDEN	0x00000800	/* master ID enable */
 
