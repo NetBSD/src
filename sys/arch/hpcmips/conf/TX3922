@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.6 2000/02/12 03:21:07 shin Exp $
+#	$NetBSD: TX3922,v 1.7 2000/03/04 11:41:48 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -42,10 +42,13 @@ options		PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 file-system	FFS		# fast filesystem with user and group quotas
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
 file-system	MFS		# memory-based filesystem
 file-system	KERNFS		# /kern (kernel informational filesystem)
 file-system	PROCFS		# /proc
 file-system	UNION
+
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 config		netbsd		root on ? type ?
 
@@ -76,21 +79,20 @@ options USE_POLL	# m38813,tc5165 requires this
 
 # PHILIPS UCB1200 / TOSHIBA TC35413F modem/audio analog front-end
 ucb*		at	tx39sib? slot 0
+ucbtp*		at	ucb?
 ucbsnd*		at	ucb?
 
-#
-# SHARP Telios keyboard driver 
+# PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
 # chip select: CS1, IRQ: 3:12/4:12
 tc5165buf*	at	txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 skbd*		at	tc5165buf?
+wsmouse*	at	ucbtp? mux 0
 
-#
 # VICTOR InterLink keyboard driver
 # chip select: CARD1 IRQ ???
 m38813c*	at	txcsbus2 iocs 8 iocswidth 16 iocsbase 0 iocssize 8
 skbd*		at	m38813c?
 
-#
 # TC6358TB(Plum2) 
 #  register space: CS3,	 
 #  I/O space: MCS0 & MCS1,  IRQ: 8:21 (IO[5] positive)
@@ -100,38 +102,10 @@ plumicu*	at	plum?
 plumpower*	at	plum?
 plumvideo*	at	plum?
 plumpcmcia*	at	plum?
-plumiobus*	at	plum?
-#ohci*		at	plum?
+#plumiobus*	at	plum?
 #plumisab0	at	plumiobus? platform ? slot 0
-
 #
-# fake ISA-bridge directly connected TX3922 chip select.
-#
-# CS1 connect
-# IRQ MFIO 3:7
-#txisab*		at	txcsbus? iocs 1 iocswidth 16 irq1 103
-# CS2 connect
-#txisab*		at	txcsbus? iocs 2 iocswidth 16 irq1 103
-# CARD1 io/attr connect
-#txisab*		at	txcsbus? iocs 8 iocswidth 16 irq1 103
-# ISA bus support
-#isa*		at	plumisab?
-#isa*		at	txisab?
-
-
-# USB bus support
-#usb*		at ohci?
-# USB Hubs
-#uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
-
-# USB Mice
-#ums*	at uhub? port ? configuration ? interface ?
-#wsmouse*	at ums? mux 0
-
-# USB Keyboards
-#ukbd*	at uhub? port ? configuration ? interface ?
-#wskbd*	at ukbd? console ? mux 1
+#include	"arch/hpcmips/conf/usb.plum2"
 
 # WS console uses SUN or VT100 terminal emulation
 fb*		at	plumvideo?
