@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.86 2001/01/08 21:40:29 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.87 2001/01/08 22:12:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2832,10 +2832,19 @@ tlp_al981_filter_setup(sc)
 	struct ether_multistep step;
 	u_int32_t hash, mchash[2];
 
+	/*
+	 * If the chip is running, we need to reset the interface,
+	 * and will revisit here (with IFF_RUNNING) clear.  The
+	 * chip seems to really not like to have its multicast
+	 * filter programmed without a reset.
+	 */
+	if (ifp->if_flags & IFF_RUNNING) {
+		(void) tlp_init(ifp);
+		return;
+	}
+
 	DPRINTF(sc, ("%s: tlp_al981_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
-
-	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
 	sc->sc_opmode &= ~(OPMODE_PR|OPMODE_PM);
 
