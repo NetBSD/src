@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)a.out.5	6.3 (Berkeley) 4/29/91
-.\"	$Id: a.out.5,v 1.5 1994/06/09 16:08:39 pk Exp $
+.\"	$Id: a.out.5,v 1.6 1994/08/13 08:37:33 pk Exp $
 .\"
 .Dd April 29, 1991
 .Dt A.OUT 5
@@ -115,8 +115,21 @@ The macro
 returns a few flags:
 .Bl -tag -width EX_DYNAMIC
 .It Dv EX_DYNAMIC
-indicates that the executable utilizes shared libraries objects.
+indicates that the executable requires the services of the run-time link editor.
+.It Dv EX_PIC
+indicates that the object contains position independent code. This flag is
+set by
+.Xr as(1)
+when given the
+.Sq -k
+flag and is preserved by
+.Xr ld(1)
+if necessary.
 .El
+.Pp
+If both EX_DYNAMIC and EX_PIC are set, the object file is a position indendent
+executable image (eg. a shared library), which is to be loaded into the
+process address space by the run-time link editor.
 .Pp
 The macro
 .Dv N_GETMID()
