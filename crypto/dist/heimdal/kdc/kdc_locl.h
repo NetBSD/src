@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.1.1.1.2.3 2001/04/05 23:31:14 he Exp $ 
+ * $Id: kdc_locl.h,v 1.1.1.1.2.4 2003/03/31 23:45:35 itojun Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -68,6 +68,7 @@ extern krb5_boolean allow_anonymous;
 extern char *v4_realm;
 extern int enable_v4;
 extern int enable_524;
+extern int enable_v4_cross_realm;
 #endif
 #ifdef KASERVER
 extern krb5_boolean enable_kaserver;

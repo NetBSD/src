@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos4.c,v 1.1.1.1.2.1 2001/04/05 23:23:01 he Exp $");
+RCSID("$Id: kerberos4.c,v 1.1.1.1.2.2 2003/03/31 23:45:35 itojun Exp $");
 
 #ifdef KRB4
 
@@ -419,6 +419,13 @@ do_version4(unsigned char *buf,
 	
 	if(strcmp(ad.prealm, realm)){
 	    kdc_log(0, "Can't hop realms %s -> %s", realm, ad.prealm);
+	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+			   "Can't hop realms");
+	    goto out2;
+	}
+
+	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
+	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
 			   "Can't hop realms");
 	    goto out2;
