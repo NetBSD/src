@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.152.2.3 2000/07/06 16:54:37 he Exp $
+#	$NetBSD: bsd.lib.mk,v 1.152.2.4 2000/08/14 14:04:12 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -19,11 +19,6 @@ clean cleandir distclean: cleanlib
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
 SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 SHLIB_TEENY != . ${.CURDIR}/shlib_version ; echo $$teeny
-.if !empty(SHLIB_TEENY)
-SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
-.else
-SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-.endif
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
@@ -31,11 +26,23 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
 checkver:
 	@(cd ${.CURDIR} && \
 		${BSDSRCDIR}/lib/checkver -d ${DESTDIR}${LIBDIR} ${LIB})
-.else
+.endif
+.endif
+
+.if !target(checkver)
 checkver:
 .endif
+
+.if defined(SHLIB_MAJOR) && !empty(SHLIB_MAJOR)
+.if defined(SHLIB_MINOR) && !empty(SHLIB_MINOR)
+.if defined(SHLIB_TEENY) && !empty(SHLIB_TEENY)
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 .else
-checkver:
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
+.endif
+.else
+SHLIB_FULLVERSION=${SHLIB_MAJOR}
+.endif
 .endif
 
 # add additional suffixes not exported.
