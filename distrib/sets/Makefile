@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/01/30 12:16:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2003/05/10 06:08:12 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -10,7 +10,7 @@ all:
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-		MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
+		CKSUM=${CKSUM:Q} MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
 
 print_machine: .PHONY
 	@echo ${MACHINE}
@@ -36,7 +36,7 @@ print_x11_version: .PHONY
 
 # This target has debugging value only, really.
 makeflist: .PHONY check_DESTDIR
-	${SETSENV} sh ${.CURDIR}/makeflist
+	${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist
 
 #
 # SET BUILDING TARGETS
@@ -44,11 +44,11 @@ makeflist: .PHONY check_DESTDIR
 
 .PRECIOUS: checkflist
 checkflist: check_DESTDIR
-	${SETSENV} sh ${.CURDIR}/checkflist ${UNPRIVED:D-M ${METALOG}}
+	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist ${UNPRIVED:D-M ${METALOG}}
 
 .PRECIOUS: checkflist-x11
 checkflist-x11: check_DESTDIR
-	${SETSENV} sh ${.CURDIR}/checkflist -x11
+	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist -x11
 
 .PRECIOUS: maketars
 maketars: check_DESTDIR check_RELEASEDIR
@@ -56,9 +56,15 @@ maketars: check_DESTDIR check_RELEASEDIR
 	${MAKE} checkflist
 .endif
 	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/sets
-	${SETSENV} sh ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
+	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
 	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
 	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${MAKETARSETS}
+
+.PRECIOUS: makesrctars
+makesrctars: check_RELEASEDIR
+	mkdir -p ${RELEASEDIR}/source/sets
+	${SETSENV} ${HOST_SH} ${.CURDIR}/makesrctars \
+	    ${NETBSDSRCDIR} ${RELEASEDIR}/source/sets
 
 .PRECIOUS: makesums
 makesums: check_RELEASEDIR
@@ -70,7 +76,7 @@ installsets: check_DESTDIR
 	@echo "setenv INSTALLDIR before doing that!"
 	@false
 .endif
-	${SETSENV} sh ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
+	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
 	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
 	    -i ${INSTALLDIR} ${INSTALLSETS}
 
@@ -79,6 +85,9 @@ installsets: check_DESTDIR
 #
 
 sets: maketars .WAIT makesums
+	@true
+
+sourcesets: makesrctars
 	@true
 
 .include <bsd.sys.mk>
