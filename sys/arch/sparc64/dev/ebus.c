@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.11.2.1 2000/07/18 16:23:19 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.11.2.2 2001/05/15 22:07:48 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -562,7 +562,7 @@ ebus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	return (iommu_dvmamap_load(t, &sc->sc_parent->sc_is, map, buf, buflen,
+	return (iommu_dvmamap_load(t, sc->sc_parent->sc_is, map, buf, buflen,
 	    p, flags));
 }
 
@@ -573,7 +573,7 @@ ebus_dmamap_unload(t, map)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	iommu_dvmamap_unload(t, &sc->sc_parent->sc_is, map);
+	iommu_dvmamap_unload(t, sc->sc_parent->sc_is, map);
 }
 
 void
@@ -586,7 +586,7 @@ ebus_dmamap_sync(t, map, offset, len, ops)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	iommu_dvmamap_sync(t, &sc->sc_parent->sc_is, map, offset, len, ops);
+	iommu_dvmamap_sync(t, sc->sc_parent->sc_is, map, offset, len, ops);
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
 }
 
@@ -603,7 +603,7 @@ ebus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	return (iommu_dvmamem_alloc(t, &sc->sc_parent->sc_is, size, alignment,
+	return (iommu_dvmamem_alloc(t, sc->sc_parent->sc_is, size, alignment,
 	    boundary, segs, nsegs, rsegs, flags));
 }
 
@@ -615,7 +615,7 @@ ebus_dmamem_free(t, segs, nsegs)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	iommu_dvmamem_free(t, &sc->sc_parent->sc_is, segs, nsegs);
+	iommu_dvmamem_free(t, sc->sc_parent->sc_is, segs, nsegs);
 }
 
 int
@@ -629,7 +629,7 @@ ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	return (iommu_dvmamem_map(t, &sc->sc_parent->sc_is, segs, nsegs,
+	return (iommu_dvmamem_map(t, sc->sc_parent->sc_is, segs, nsegs,
 	    size, kvap, flags));
 }
 
@@ -641,5 +641,5 @@ ebus_dmamem_unmap(t, kva, size)
 {
 	struct ebus_softc *sc = t->_cookie;
 
-	iommu_dvmamem_unmap(t, &sc->sc_parent->sc_is, kva, size);
+	iommu_dvmamem_unmap(t, sc->sc_parent->sc_is, kva, size);
 }
