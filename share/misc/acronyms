@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.107 2002/06/15 10:31:18 wiz Exp $
+$NetBSD: acronyms,v 1.108 2002/06/30 03:05:53 gendalia Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -71,6 +71,7 @@ IMNSHO	in my not so humble opinion
 IMO	in my opinion
 IOW	in other words
 IRL	in real life
+ISAGN	I see a great need
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
