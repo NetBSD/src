@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.440.2.5 2003/01/06 04:55:18 jmc Exp $
+#	$NetBSD: mi,v 1.440.2.6 2003/02/14 02:35:06 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2926,7 +2926,6 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman
 ./usr/share/man/cat9/VREF.0		comp-sys-catman
-./usr/share/man/cat9/access.0		comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
 ./usr/share/man/cat9/arp.0		comp-sys-catman
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman
@@ -3148,7 +3147,6 @@
 ./usr/share/man/cat9/isapnp_devmatch.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman
-./usr/share/man/cat9/kernacc.0		comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
 ./usr/share/man/cat9/kthread.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman
@@ -3375,7 +3373,6 @@
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman
 ./usr/share/man/cat9/uprintf.0		comp-sys-catman
 ./usr/share/man/cat9/usbdi.0		comp-sys-catman
-./usr/share/man/cat9/useracc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_chgkprot.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_coredump.0		comp-sys-catman
@@ -5427,7 +5424,6 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man
 ./usr/share/man/man9/VREF.9		comp-sys-man
-./usr/share/man/man9/access.9		comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
 ./usr/share/man/man9/arp.9		comp-sys-man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man
@@ -5649,7 +5645,6 @@
 ./usr/share/man/man9/isapnp_devmatch.9		comp-sys-man
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man
-./usr/share/man/man9/kernacc.9		comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
 ./usr/share/man/man9/kthread.9		comp-sys-man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man
@@ -5876,7 +5871,6 @@
 ./usr/share/man/man9/untimeout.9		comp-sys-man
 ./usr/share/man/man9/uprintf.9		comp-sys-man
 ./usr/share/man/man9/usbdi.9		comp-sys-man
-./usr/share/man/man9/useracc.9		comp-sys-man
 ./usr/share/man/man9/uvm.9		comp-sys-man
 ./usr/share/man/man9/uvm_chgkprot.9		comp-sys-man
 ./usr/share/man/man9/uvm_coredump.9		comp-sys-man
