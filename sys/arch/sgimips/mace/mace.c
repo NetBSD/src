@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.2 2004/07/10 07:39:13 tsutsui Exp $	*/
+/*	$NetBSD: mace.c,v 1.3 2004/07/10 08:44:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.2 2004/07/10 07:39:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.3 2004/07/10 08:44:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,9 +298,6 @@ mace_intr(int irqs)
 		for (i = 0; i < MACE_NINTR; i++) {
 			if ((maceintrtab[i].irq == (1 << 4)) &&
 			    (isa_irq & maceintrtab[i].intrmask)) {
-				if (isa_irq & 0xfc000000)
-					printf("dispatching\n");
-
 		  		(maceintrtab[i].func)(maceintrtab[i].arg);
 	        	}
 		}
