@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.29 1995/03/27 16:04:07 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.30 1995/03/27 16:48:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -100,9 +100,8 @@ struct mcd_mbx {
 	int		state;
 #define	MCD_S_IDLE	0
 #define MCD_S_BEGIN	1
-#define MCD_S_WAITSTAT	2
-#define MCD_S_WAITMODE	3
-#define MCD_S_WAITREAD	4
+#define MCD_S_WAITMODE	2
+#define MCD_S_WAITREAD	3
 	int		mode;
 };
 
@@ -193,7 +192,6 @@ struct dkdriver mcddkdriver = { mcdstrategy };
 #define MCD_RDRETRIES	3
 
 /* several delays */
-#define RDELAY_WAITSTAT	300
 #define RDELAY_WAITMODE	300
 #define RDELAY_WAITREAD	800
 
@@ -980,8 +978,7 @@ mcd_pseudointr(sc)
 
 /*
  * State machine to process read requests.
- * Initialize with MCD_S_BEGIN: calculate sizes, and read status
- * MCD_S_WAITSTAT: wait for status reply, set mode
+ * Initialize with MCD_S_BEGIN: calculate sizes, and set mode
  * MCD_S_WAITMODE: waits for status reply from set mode, set read command
  * MCD_S_WAITREAD: wait for read ready, read data.
  */
@@ -1004,36 +1001,6 @@ mcdintr(arg)
 
 	case MCD_S_BEGIN:
 	tryagain:
-		/* Get status. */
-		outb(iobase + MCD_COMMAND, MCD_CMDGETSTAT);
-
-		mbx->count = RDELAY_WAITSTAT;
-		mbx->state = MCD_S_WAITSTAT;
-
-	case MCD_S_WAITSTAT:
-		untimeout(mcd_pseudointr, sc);
-		for (i = 20; i; i--) {
-			x = inb(iobase + MCD_XFER);
-			if ((x & MCD_XF_STATUSUNAVAIL) == 0)
-				break;
-			delay(50);
-		}
-		if (i == 0)
-			goto hold;
-		sc->status = inb(iobase + MCD_STATUS);
-		mcd_setflags(sc);
-		if ((sc->flags & MCDF_LOADED) == 0)
-			goto changed;
-		MCD_TRACE("doread: got WAITSTAT delay=%d\n",
-		    RDELAY_WAITSTAT - mbx->count, 0, 0, 0);
-
-		/* Reject, if audio active. */
-		if ((sc->status & MCD_ST_AUDIOBSY) != 0) {
-			printf("%s: audio is active\n",
-			    sc->sc_dev.dv_xname);
-			goto harderr;
-		}
-
 		if (mbx->mode == sc->lastmode)
 			goto firstblock;
 
