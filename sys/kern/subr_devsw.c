@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.3 2002/09/11 16:33:03 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -172,9 +172,9 @@ bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
 			}
 			if (i != max_devsw_convs)
 				continue;
-			*devmajor = bmajor;
 			break;
 		}
+		*devmajor = bmajor;
 	}
 	if (*devmajor >= MAXDEVSW) {
 #ifdef DEVSW_DEBUG
@@ -226,9 +226,9 @@ cdevsw_attach(const char *devname, const struct cdevsw *devsw, int *devmajor)
 			}
 			if (i != max_devsw_convs)
 				continue;
-			*devmajor = cmajor;
 			break;
 		}
+		*devmajor = cmajor;
 	}
 	if (*devmajor >= MAXDEVSW) {
 #ifdef DEVSW_DEBUG
