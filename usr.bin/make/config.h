@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 1997/09/26 13:29:09 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.10 1999/05/03 12:01:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -110,6 +110,13 @@
  *				# of ${VAR}
  */
 #define SUNSHCMD
+
+/*
+ * USE_PGRP
+ *	Kill the process group of the job so that all the progeny of the
+ *	current job dies, instead of just the one forked.
+ */
+#define USE_PGRP
 
 #if !defined(__svr4__) && !defined(__SVR4) && !defined(__ELF__)
 # ifndef RANLIBMAG
