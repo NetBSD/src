@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ctime.c	5.26 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: ctime.c,v 1.4 1994/01/28 20:40:07 jtc Exp $";
+static char *rcsid = "$Id: ctime.c,v 1.5 1994/11/17 08:47:21 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -198,7 +198,6 @@ static struct state	gmtmem;
 #define gmtptr		(&gmtmem)
 #endif /* State Farm */
 
-static int		lcl_is_set;
 static int		gmt_is_set;
 
 char *			tzname[2] = {
@@ -887,7 +886,6 @@ tzset()
 		tzsetwall();
 		return;
 	}
-	lcl_is_set = TRUE;
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
 		lclptr = (struct state *) malloc(sizeof *lclptr);
@@ -915,7 +913,6 @@ tzset()
 void
 tzsetwall()
 {
-	lcl_is_set = TRUE;
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
 		lclptr = (struct state *) malloc(sizeof *lclptr);
@@ -951,8 +948,7 @@ struct tm * const	tmp;
 	register int			i;
 	const time_t			t = *timep;
 
-	if (!lcl_is_set)
-		tzset();
+	tzset();
 	sp = lclptr;
 #ifdef ALL_STATE
 	if (sp == NULL) {
