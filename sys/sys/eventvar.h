@@ -1,3 +1,4 @@
+/*	$NetBSD: eventvar.h,v 1.1.1.1.2.1 2001/07/10 13:20:22 lukem Exp $	*/
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -27,20 +28,22 @@
  */
 
 #ifndef _SYS_EVENTVAR_H_
-#define _SYS_EVENTVAR_H_
+#define	_SYS_EVENTVAR_H_
 
-#define KQ_NEVENTS	8		/* minimize copy{in,out} calls */
-#define KQEXTENT	256		/* linear growth by this amount */
+#define	KQ_NEVENTS	8		/* minimize copy{in,out} calls */
+#define	KQ_EXTENT	256		/* linear growth by this amount */
+#define	KFILTER_MAXNAME	256		/* maximum size of a filter name */
+#define	KFILTER_EXTENT	8		/* grow user_kfilters by this amt */
 
 struct kqueue {
 	TAILQ_HEAD(kqlist, knote) kq_head;	/* list of pending event */
 	int		kq_count;		/* number of pending events */
-	struct		selinfo kq_sel;	
-	struct		filedesc *kq_fdp;
+	struct selinfo	kq_sel;	
+	struct filedesc *kq_fdp;
 	int		kq_state;
-#define KQ_SEL		0x01
-#define KQ_SLEEP	0x02
-	struct		kevent kq_kev[KQ_NEVENTS];
+#define	KQ_SEL		0x01
+#define	KQ_SLEEP	0x02
+	struct kevent	kq_kev[KQ_NEVENTS];
 };
 
 #endif /* !_SYS_EVENTVAR_H_ */
