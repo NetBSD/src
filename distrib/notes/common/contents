@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.41 2002/02/10 20:43:34 is Exp $
+.\"	$NetBSD: contents,v 1.42 2002/03/24 22:14:29 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ using loadbsd for installation on memory-tight systems. This is the
 same kernel as present on the miniroot.
 .\}
 .
-.if r_arm26 \{\
+.if r_acorn26 \{\
 .			It Pa netbsd.FOURMEG.gz
 A somewhat smaller kernel, intended to be usable on systems with
 four megabytes of RAM.
@@ -339,7 +339,7 @@ everything described below.
 .if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
 .if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
 .if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_acorn26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 19.2 MB gzipped, 47.4 MB uncompressed
 .if r_atari .Em 15.3 MB gzipped, 40.7 MB uncompressed
 .if r_hp300 .Em 15.7 MB gzipped, 41.5 MB uncompressed
@@ -373,7 +373,7 @@ system call and library manual pages.
 .if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
 .if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_acorn26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 13.8 MB gzipped, 45.4 MB uncompressed
 .if r_atari .Em 11.6 MB gzipped, 38.9 MB uncompressed
 .if r_hp300 .Em 11.8 MB gzipped, 39.5 MB uncompressed
@@ -411,7 +411,7 @@ This set includes the games and their manual pages.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 3.1 MB gzipped, 7.6 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 3.0 MB gzipped, 7.5 MB uncompressed
 .if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
 .if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
@@ -479,7 +479,7 @@ all related programs, and their manual pages.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 1.4 MB gzipped, 5.1 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 1.4 MB gzipped, 4.8 MB uncompressed
 .if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
 .if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
@@ -513,7 +513,7 @@ the X servers.
 .br
 .\" Shareable within MACHINE_ARCH, except atari
 .if r_alpha .Em 3.6 MB gzipped, 13.7 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 3.2 MB gzipped, 9.5 MB uncompressed
 .if r_i386 .Em 2.7 MB gzipped, 7.9 MB uncompressed
 .if r_atari .Em 2.6 MB gzipped, 8.4 MB uncompressed
@@ -531,7 +531,7 @@ The extra libraries and include files needed to compile X source code.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 2.6 MB gzipped, 13.9 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 2.1 MB gzipped, 8.2 MB uncompressed
 .if r_i386 .Em 1.8 MB gzipped, 7.9 MB uncompressed
 .if r_m68k .Em 1.7 MB gzipped, 7.2 MB uncompressed
@@ -548,7 +548,7 @@ Programs that were contributed to X.
 .br
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 0.2 MB gzipped, 0.8 MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 0.2 MB gzipped, 0.7 MB uncompressed
 .if r_i386 .Em 0.2 MB gzipped, 0.5 MB uncompressed
 .if r_m68k .Em 0.2 MB gzipped, 0.7 MB uncompressed
@@ -572,7 +572,7 @@ Miscellaneous X programs.
 .\" MI
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em ? MB gzipped, ? MB uncompressed
-.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em ? MB gzipped, ? MB uncompressed
 .if r_i386 .Em ? MB gzipped, ? MB uncompressed
 .if r_m68k .Em ? MB gzipped, ? MB uncompressed

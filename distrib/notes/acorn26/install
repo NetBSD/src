@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2 2000/10/10 12:55:16 lukem Exp $
+.\"	$NetBSD: install,v 1.1 2002/03/24 22:14:24 bjh21 Exp $
 .
 .Nx*M
 doesn't currently have a nice GUI installer.
