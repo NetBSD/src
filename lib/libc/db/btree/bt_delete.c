@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_delete.c,v 1.7 1996/05/03 21:50:44 cgd Exp $	*/
+/*	$NetBSD: bt_delete.c,v 1.8 1997/07/13 18:51:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)bt_delete.c	8.13 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$NetBSD: bt_delete.c,v 1.7 1996/05/03 21:50:44 cgd Exp $";
+__RCSID("$NetBSD: bt_delete.c,v 1.8 1997/07/13 18:51:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -156,7 +157,7 @@ __bt_stkacq(t, hp, c)
 	EPG *e;
 	EPGNO *parent;
 	PAGE *h;
-	indx_t index;
+	indx_t index = 0;	/* Pacify gcc */
 	pgno_t pgno;
 	recno_t nextpg, prevpg;
 	int exact, level;

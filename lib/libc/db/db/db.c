@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.7 1995/02/27 13:21:27 cgd Exp $	*/
+/*	$NetBSD: db.c,v 1.8 1997/07/13 18:52:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: db.c,v 1.7 1995/02/27 13:21:27 cgd Exp $";
+__RCSID("$NetBSD: db.c,v 1.8 1997/07/13 18:52:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +50,7 @@ static char rcsid[] = "$NetBSD: db.c,v 1.7 1995/02/27 13:21:27 cgd Exp $";
 #include <stdio.h>
 
 #include <db.h>
+static int __dberr __P((void));
 
 DB *
 dbopen(fname, flags, mode, type, openinfo)
@@ -96,10 +98,10 @@ __dbpanic(dbp)
 	DB *dbp;
 {
 	/* The only thing that can succeed is a close. */
-	dbp->del = (int (*)())__dberr;
-	dbp->fd = (int (*)())__dberr;
-	dbp->get = (int (*)())__dberr;
-	dbp->put = (int (*)())__dberr;
-	dbp->seq = (int (*)())__dberr;
-	dbp->sync = (int (*)())__dberr;
+	dbp->del = (int (*)(const struct __db *, const DBT*, u_int))__dberr;
+	dbp->fd = (int (*)(const struct __db *))__dberr;
+	dbp->get = (int (*)(const struct __db *, const DBT*, DBT *, u_int))__dberr;
+	dbp->put = (int (*)(const struct __db *, DBT *, const DBT *, u_int))__dberr;
+	dbp->seq = (int (*)(const struct __db *, DBT *, DBT *, u_int))__dberr;
+	dbp->sync = (int (*)(const struct __db *, u_int))__dberr;
 }
