@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.103 1999/09/01 03:10:04 sommerfeld Exp $
+# $NetBSD: ALPHA,v 1.104 1999/09/09 12:33:43 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -338,6 +338,10 @@ umodem*	at uhub? port ? configuration ?
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass? channel ?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+audio*	at uaudio?
 
 # USB Generic driver
 ugen*	at uhub? port ?
