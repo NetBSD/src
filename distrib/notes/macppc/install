@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.14 2001/05/25 08:04:14 mbw Exp $
+.\"	$NetBSD: install,v 1.15 2001/07/05 05:03:02 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -467,7 +467,36 @@ key first.
 .It
 Hang after configuring devices, but before doing anything else
 .Pp
-Plug the USB keyboard directly into the computer (i.e. not through a hub)
+Actually, this can have many causes.  The most likely is a keyboard
+problem.  First, try 
+plugging the USB keyboard directly into the computer (i.e. not through a
+hub).  
+.Pp
+This is also a known problem on some PowerMacintosh G3 (Blue and
+White) and iMac (Bondi Blue) machines.  If you have a
+PowerMacintosh G3 (Blue and White) with this problem, then you can try the
+following procedure:
+.(enum
+Unplug the USB keyboard and plug in an ADB keyboard
+.It
+Boot 
+.Nx
+with the ADB keyboard 
+.It
+Enter root, swap and filesystem responses on the ADB keyboard 
+.It
+When the system gets to the shell prompt (or login if you went
+multi-user), unplug the ADB and plug in the USB keyboard 
+.enum)
+.Pp
+The USB will be usable at this point and you can use the system. You'll
+notice that the ADB is dead even before you unplugged it. Also you MUST
+boot without the USB installed or this won't work. 
+.Pp
+Alternatively, much as it pains us to say this, 
+.Nx
+1.4.3 works fine on both the iMac (Bondi Blue) and the PowerMacintosh G3
+(Blue and White) models and does not have this USB keyboard problem. 
 .bullet)
 .
 .Ss2 Milestone
