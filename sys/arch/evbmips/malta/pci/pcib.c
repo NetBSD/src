@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2002/09/27 20:31:36 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5 2002/10/01 03:02:07 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -132,9 +132,8 @@ static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
 		pcib_isa_intr_string(void *, int);
 
-const struct cfattach pcib_ca = {
-	sizeof(struct pcib_softc), pcib_match, pcib_attach
-};
+CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
+    pcib_match, pcib_attach, NULL, NULL)
 
 static int
 pcib_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.2 2002/09/27 03:17:59 thorpej Exp $ */
+/* $NetBSD: sbgbus.c,v 1.3 2002/10/01 02:54:11 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -48,9 +48,8 @@ extern struct cfdriver sbgbus_cd;
 static int	sbgbus_match(struct device *, struct cfdata *, void *);
 static void	sbgbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach sbgbus_ca = {
-	sizeof(struct device), sbgbus_match, sbgbus_attach,
-};
+CFATTACH_DECL(sbgbus, sizeof(struct device),
+    sbgbus_match, sbgbus_attach, NULL, NULL)
 
 static int	sbgbussearch(struct device *, struct cfdata *, void *);
 static int	sbgbusprint(void *, const char *);

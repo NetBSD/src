@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.4 2002/09/27 15:36:24 provos Exp $ */
+/* $NetBSD: sbmac.c,v 1.5 2002/10/01 02:54:11 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -252,10 +252,8 @@ static void sbmac_tick(void *arg);
 
 /* Globals */
 
-const struct cfattach sbmac_ca = {
-	sizeof(struct sbmac_softc), sbmac_match, sbmac_attach,
-};
-
+CFATTACH_DECL(sbmac, sizeof(struct sbmac_softc),
+    sbmac_match, sbmac_attach, NULL, NULL)
 
 static uint32_t sbmac_mii_bitbang_read(struct device *self);
 static void sbmac_mii_bitbang_write(struct device *self, uint32_t val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.9 2002/09/27 20:32:18 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.10 2002/10/01 03:00:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -145,9 +145,8 @@ static const char *apm_strerror(int);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
 
-const struct cfattach apmdev_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apmdev, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL)
 
 extern struct cfdriver apmdev_cd;
 

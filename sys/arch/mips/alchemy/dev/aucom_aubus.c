@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.3 2002/09/27 20:33:43 thorpej Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.4 2002/10/01 02:56:45 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -56,9 +56,8 @@ struct aucom_aubus_softc {
 static int	aucom_aubus_probe(struct device *, struct cfdata *, void *);
 static void	aucom_aubus_attach(struct device *, struct device *, void *);
 
-const struct cfattach aucom_aubus_ca = {
-	sizeof(struct aucom_aubus_softc), aucom_aubus_probe, aucom_aubus_attach
-};
+CFATTACH_DECL(aucom_aubus, sizeof(struct aucom_aubus_softc),
+    aucom_aubus_probe, aucom_aubus_attach, NULL, NULL)
 
 int
 aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
