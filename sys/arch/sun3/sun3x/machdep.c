@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2003/10/26 09:23:06 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2003/12/04 19:38:22 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2003/10/26 09:23:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2003/12/04 19:38:22 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -451,47 +451,50 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+#if 0   /* XXX - Not yet... */
+static int
+sysctl_machdep_root_device(SYSCTLFN_ARGS)
 {
-	int error;
-	dev_t consdev;
+	struct sysctlnode node = *rnode;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	node.sysctl_data = some permutation on root_device;
+	node.sysctl_size = strlen(root_device) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		error = sysctl_rdstruct(oldp, oldlenp, newp,
-		    &consdev, sizeof consdev);
-		break;
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
 
-#if 0	/* XXX - Not yet... */
-	case CPU_ROOT_DEVICE:
-		error = sysctl_rdstring(oldp, oldlenp, newp, root_device);
-		break;
-
-	case CPU_BOOTED_KERNEL:
-		error = sysctl_rdstring(oldp, oldlenp, newp, booted_kernel);
-		break;
+	node.sysctl_data = some permutation on booted_kernel;
+	node.sysctl_size = strlen(booted_kernel) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 #endif
 
-	default:
-		error = EOPNOTSUPP;
-	}
-	return (error);
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+#if 0 /* XXX - Not yet... */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "root_device", NULL,
+		       sysctl_machdep_root_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+#endif
 }
 
 /* See: sig_machdep.c */

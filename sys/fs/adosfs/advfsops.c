@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8 2003/06/29 22:31:07 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.9 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8 2003/06/29 22:31:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.9 2003/12/04 19:38:23 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8 2003/06/29 22:31:07 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -75,8 +76,6 @@ int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
-int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct proc *));
 
 struct simplelock adosfs_hashlock;
 
@@ -825,17 +824,22 @@ adosfs_done()
 	pool_destroy(&adosfs_node_pool);
 }
 
-int
-adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "adosfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 16, CTL_EOL);
+	/*
+	 * XXX the "16" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "16" is the order as taken from sys/mount.h
+	 */
 }
 
 /*
@@ -864,7 +868,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_init,                    
 	NULL,
 	adosfs_done,
-	adosfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	adosfs_checkexp,
 	adosfs_vnodeopv_descs,

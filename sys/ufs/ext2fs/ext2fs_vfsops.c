@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.63 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.64 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.63 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.64 2003/12/04 19:38:25 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.63 2003/10/14 14:02:56 dbj Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -134,7 +135,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_init,
 	ext2fs_reinit,
 	ext2fs_done,
-	ext2fs_sysctl,
+	NULL,
 	ext2fs_mountroot,
 	ufs_check_export,
 	ext2fs_vnodeopv_descs,
@@ -1060,17 +1061,22 @@ ext2fs_vptofh(vp, fhp)
 	return (0);
 }
 
-int
-ext2fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_ext2fs_setup, "sysctl vfs.ext2fs subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "ext2fs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 17, CTL_EOL);
+	/*
+	 * XXX the "17" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "17" is the order as taken from sys/mount.h
+	 */
 }
 
 /*

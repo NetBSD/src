@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.24 2003/12/04 19:23:00 drochner Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.25 2003/12/04 19:38:23 atatat Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.24 2003/12/04 19:23:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.25 2003/12/04 19:38:23 atatat Exp $");
 
 #include "opt_ntp.h"
 
@@ -309,11 +309,10 @@ ntp_adjtime1(ntv, v, retval)
 /*
  * return information about kernel precision timekeeping
  */
-int
-sysctl_ntptime(where, sizep)
-	void *where;
-	size_t *sizep;
+static int
+sysctl_kern_ntptime(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	struct timeval atv;
 	struct ntptimeval ntv;
 	int s;
@@ -383,7 +382,26 @@ sysctl_ntptime(where, sizep)
 	else
 		ntv.time_state = time_state;
 #endif /* notyet */
-	return (sysctl_rdstruct(where, sizep, NULL, &ntv, sizeof(ntv)));
+
+	node = *rnode;
+	node.sysctl_data = &ntv;
+	node.sysctl_size = sizeof(ntv);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "ntptime", NULL,
+		       sysctl_kern_ntptime, 0, NULL,
+		       sizeof(struct ntptimeval),
+		       CTL_KERN, KERN_NTPTIME, CTL_EOL);
 }
 #else /* !NTP */
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/12/04 13:05:15 keihan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/12/04 13:05:15 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/04 19:38:21 atatat Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -443,47 +443,57 @@ x86_64_bufinit()
 /*  
  * machine dependent system variables.
  */ 
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 {
-	dev_t consdev;
 	struct btinfo_bootpath *bibp;
+	struct sysctlnode node;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return(ENOENT); /* ??? */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if(!bibp)
-			return(ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	case CPU_DISKINFO:
-		if (x86_64_alldisks == NULL)
-			return (ENOENT);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, x86_64_alldisks,
-		    sizeof (struct disklist) +
-			(x86_64_ndisks - 1) * sizeof (struct nativedisk_info)));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+static int
+sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
+{
+        struct sysctlnode node;
+
+	if (x86_64_alldisks == NULL)
+		return (ENOENT);
+
+        node = *rnode;
+        node.sysctl_data = x86_64_alldisks;
+        node.sysctl_size = sizeof(struct disklist) +
+	    (x86_64_ndisks - 1) * sizeof(struct nativedisk_info);
+        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "diskinfo", NULL,
+		       sysctl_machdep_diskinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.10 2003/08/07 16:32:36 agc Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.11 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,9 +73,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.10 2003/08/07 16:32:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.11 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/proc.h>
@@ -264,15 +265,20 @@ layerfs_vptofh(vp, fhp)
 	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp));
 }
 
-int
-layerfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_overlay_setup, "sysctl vfs.overlay subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "layerfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE);
+	/*
+	 * other subtrees should really be aliases to this, but since
+	 * they can't tell if layerfs has been instantiated yet, they
+	 * can't do that...not easily.  not yet.  :-)
+	 */
 }

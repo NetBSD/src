@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.80 2003/11/13 01:48:13 jonathan Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.81 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.80 2003/11/13 01:48:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.81 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_ipsec.h"
 
@@ -889,65 +889,115 @@ iptime()
 	return (htonl(t));
 }
 
-int
-icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+/*
+ * sysctl helper routine for net.inet.icmp.returndatabytes.  ensures
+ * that the new value is in the correct range.
+ */
+static int
+sysctl_net_inet_icmp_returndatabytes(SYSCTLFN_ARGS)
 {
-	int arg, error;
+	int error, t;
+	struct sysctlnode node;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0])
-	{
-	case ICMPCTL_MASKREPL:
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl);
-		break;
-	case ICMPCTL_RETURNDATABYTES:
-		arg = icmpreturndatabytes;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &arg);
-		if (error)
-			break;
-		if ((arg >= 8) || (arg <= 512))
-			icmpreturndatabytes = arg;
-		else
-			error = EINVAL;
-		break;
-	case ICMPCTL_ERRPPSLIMIT:
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmperrppslim);
-		break;
-	case ICMPCTL_REDIRACCEPT:
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-				   &icmp_rediraccept);
-		break;
-	case ICMPCTL_REDIRTIMEOUT:
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-				   &icmp_redirtimeout);
-		if (icmp_redirect_timeout_q != NULL) {
-			if (icmp_redirtimeout == 0) {
-				rt_timer_queue_destroy(icmp_redirect_timeout_q,
-						       TRUE);
-				icmp_redirect_timeout_q = NULL;
-			} else {
-				rt_timer_queue_change(icmp_redirect_timeout_q,
-						      icmp_redirtimeout);
-			}
-		} else if (icmp_redirtimeout > 0) {
-			icmp_redirect_timeout_q =
-				rt_timer_queue_create(icmp_redirtimeout);
-		}
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = icmpreturndatabytes;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
 		return (error);
-	default:
-		error = ENOPROTOOPT;
-		break;
+
+	if (t < 8 || t > 512)
+		return (EINVAL);
+	icmpreturndatabytes = t;
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for net.inet.icmp.redirtimeout.  ensures that
+ * the given value is not less than zero and then resets the timeout
+ * queue.
+ */
+static int
+sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &tmp;
+	tmp = icmp_redirtimeout;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+	if (tmp < 0)
+		return (EINVAL);
+	icmp_redirtimeout = tmp;
+
+	/*
+	 * was it a *defined* side-effect that anyone even *reading*
+	 * this value causes these things to happen?
+	 */
+	if (icmp_redirect_timeout_q != NULL) {
+		if (icmp_redirtimeout == 0) {
+			rt_timer_queue_destroy(icmp_redirect_timeout_q,
+			    TRUE);
+			icmp_redirect_timeout_q = NULL;
+		} else {
+			rt_timer_queue_change(icmp_redirect_timeout_q,
+			    icmp_redirtimeout);
+		}
+	} else if (icmp_redirtimeout > 0) {
+		icmp_redirect_timeout_q =
+		    rt_timer_queue_create(icmp_redirtimeout);
 	}
-	return error;
+	
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "inet", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "icmp", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maskrepl", NULL,
+		       NULL, 0, &icmpmaskrepl, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP,
+		       ICMPCTL_MASKREPL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "returndatabytes", NULL,
+		       sysctl_net_inet_icmp_returndatabytes, 0,
+		       &icmpreturndatabytes, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP,
+		       ICMPCTL_RETURNDATABYTES, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "errppslimit", NULL,
+		       NULL, 0, &icmperrppslim, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP,
+		       ICMPCTL_ERRPPSLIMIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "rediraccept", NULL,
+		       NULL, 0, &icmp_rediraccept, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP,
+		       ICMPCTL_REDIRACCEPT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "redirtimeout", NULL,
+		       sysctl_net_inet_icmp_redirtimeout, 0,
+		       &icmp_redirtimeout, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP,
+		       ICMPCTL_REDIRTIMEOUT, CTL_EOL);
 }
 
 /* Table of common MTUs: */

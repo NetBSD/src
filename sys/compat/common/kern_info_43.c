@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.18 2003/11/19 15:48:21 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.19 2003/12/04 19:38:22 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.18 2003/11/19 15:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.19 2003/12/04 19:38:22 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,13 @@ compat_43_sys_gethostname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) hostname;
 		syscallarg(u_int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
+	int name[2];
 	size_t sz;
 
-	name = KERN_HOSTNAME;
+	name[0] = CTL_KERN;
+	name[1] = KERN_HOSTNAME;
 	sz = SCARG(uap, len);
-	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &sz, 0, 0, p));
+	return (old_sysctl(&name[0], 2, SCARG(uap, hostname), &sz, 0, 0, l));
 }
 
 #define	KINFO_PROC		(0<<8)
@@ -145,8 +145,7 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int *) size;
 		syscallarg(int) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, name[5];
+	int error, name[6];
 	size_t size;
 
 	if (SCARG(uap, size) && (error = copyin((caddr_t)SCARG(uap, size),
@@ -156,51 +155,58 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 	switch (SCARG(uap, op) & 0xff00) {
 
 	case KINFO_RT:
-		name[0] = PF_ROUTE;
-		name[1] = 0;
-		name[2] = (SCARG(uap, op) & 0xff0000) >> 16;
-		name[3] = SCARG(uap, op) & 0xff;
-		name[4] = SCARG(uap, arg);
-		error =
-		    net_sysctl(name, 5, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_NET;
+		name[1] = PF_ROUTE;
+		name[2] = 0;
+		name[3] = (SCARG(uap, op) & 0xff0000) >> 16;
+		name[4] = SCARG(uap, op) & 0xff;
+		name[5] = SCARG(uap, arg);
+		error = old_sysctl(&name[0], 6, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_VNODE:
-		name[0] = KERN_VNODE;
-		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_KERN;
+		name[1] = KERN_VNODE;
+		error = old_sysctl(&name[0], 2, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_PROC:
-		name[0] = KERN_PROC;
-		name[1] = SCARG(uap, op) & 0xff;
-		name[2] = SCARG(uap, arg);
-		error =
-		    kern_sysctl(name, 3, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_KERN;
+		name[1] = KERN_PROC;
+		name[2] = SCARG(uap, op) & 0xff;
+		name[3] = SCARG(uap, arg);
+		error = old_sysctl(&name[0], 4, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_FILE:
-		name[0] = KERN_FILE;
-		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_KERN;
+		name[1] = KERN_FILE;
+		error = old_sysctl(&name[0], 2, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_METER:
-		name[0] = VM_METER;
-		error =
-		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_VM;
+		name[1] = VM_METER;
+		error = old_sysctl(&name[0], 2, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_LOADAVG:
-		name[0] = VM_LOADAVG;
-		error =
-		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_VM;
+		name[1] = VM_LOADAVG;
+		error = old_sysctl(&name[0], 2, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 	case KINFO_CLOCKRATE:
-		name[0] = KERN_CLOCKRATE;
-		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		name[0] = CTL_KERN;
+		name[1] = KERN_CLOCKRATE;
+		error = old_sysctl(&name[0], 2, SCARG(uap, where), &size,
+				   NULL, 0, l);
 		break;
 
 
@@ -294,13 +300,10 @@ int
 compat_43_sys_sethostname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_sethostname_args *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
-	int error;
+	int name[2];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	name = KERN_HOSTNAME;
-	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),
-			    SCARG(uap, len), p));
+	name[0] = CTL_KERN;
+	name[1] = KERN_HOSTNAME;
+	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, hostname),
+			   SCARG(uap, len), l));
 }
