@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.8 1996/06/18 12:50:59 pk Exp $
+#	$NetBSD: install.sub,v 1.9 1996/06/19 14:16:25 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -970,7 +970,7 @@ get_timezone() {
 	# If the zoneinfo is not on the installation medium or on the
 	# installed filesystem, set TZ to GMT and return immediatly.
 	#
-	if [ ! -e /etc/timezone -a ! -e /mnt/usr/share/zoneinfo ]; then
+	if [ ! -e /usr/share/zoneinfo -a ! -e /mnt/usr/share/zoneinfo ]; then
 		TZ=GMT
 		return
 	fi
@@ -993,7 +993,7 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/timezone 2>/dev/null | cutlast`
+		TZ=`ls -l /etc/localtime 2>/dev/null | cutlast`
 		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
