@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.9 2002/06/15 21:38:33 leo Exp $
+#	$NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
 #
 # Milan
 #
@@ -64,8 +64,8 @@ fdisa0 		at fdcisa0 drive 0
 # during the partioning with HDDRIVER and TOS supports booting from it!
 # Ok, now you have to choose:
 #   - If _none_ of your disks are marked byteswapped by HDDRIVER, choose
-#     the MILAN_ISAIDE version.
-#   - If _all_ of your disks are byteswapped, use the  MILAN_PCIIDE version
+#     the MILAN-ISAIDE version.
+#   - If _all_ of your disks are byteswapped, use the  MILAN-PCIIDE version
 # The is no way to mix things!
 #
 
