@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.28 2003/09/02 05:43:39 mbw Exp $
+.\"	$NetBSD: install,v 1.29 2003/10/11 00:03:08 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -120,7 +120,6 @@ Typical aliases are:
 .It Ta Dl fd Ta No "floppy drive"
 .It Ta Dl scsi Ta No "SCSI bus"
 .It Ta Dl scsi-int Ta No "internal SCSI bus (on systems with multiple SCSI busses)"
-.It Ta Dl scsi-ext Ta No "external SCSI bus (on systems with multiple SCSI busses)"
 .It Ta Dl ata Ta No "ATA/IDE bus"
 .It Ta Dl ideN Ta No "ATA/IDE bus number N"
 .It Ta Dl ultraN Ta No "Ultra/66 or Ultra/100 IDE bus number N"
@@ -284,8 +283,21 @@ shortened
 .Pa netbsd-GENERIC_MD.gz No to Pa NETBSD~1.GZ
 since MS-DOS file systems can only natively hold 8 characters for the
 filename.
+.(Note
 Keep in mind that Open Firmware is often case-sensitive when it
 comes to filenames.
+.Note)
+.(Note
+You may need to append a 
+.Pa ;1
+to the filename when using a ISO 9660 file system.  This
+.Dq "version number"
+is part of the ISO 9660 specification and will show up in the directory 
+listing if it is present on the disk.  For example:
+.(disp
+.No 0 \*> Ic "boot cd:,\eOFWBOOT.XCF;1 NETBSD.MACPPC;1"
+.disp)
+.Note)
 .Pp
 If the
 .Ic dir
@@ -325,7 +337,6 @@ usually sets their CD-ROM drives to SCSI ID 3):
 .No 0 \*> Ic "boot cd:0 NETBSD.MACPPC"
 .No 0 \*> Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
 .No 0 \*> Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi-ext/sd@3:0 NETBSD.MACPPC"
 .No 0 \*> Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
 .No 0 \*> Ic "boot ide1/disk@0:0 NETBSD.MACPPC"
 .disp)
@@ -430,10 +441,7 @@ you would need to open
 .Pa NETBSD-G.ENE
 The
 .Ic mkisofs
-and
-.Ic mkhybrid
-programs have a similar problem.
-For them,
+program has a similar problem,
 .Pa netbsd-GENERIC_MD.gz
 becomes
 .Pa NETBSD-GENERIC_MD.GZ .
@@ -455,7 +463,6 @@ Here are some examples of what you might use to boot from CD-ROM
 .No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.gz"
 .No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
-.No 0 \*> Ic "boot scsi-ext/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.GZ"
 .No 0 \*> Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.GZ"
 .disp)
@@ -558,7 +565,6 @@ Here are some examples of what you might use to boot from such a drive:
 .No 0 \*> Ic "boot zip:0"
 .No 0 \*> Ic "boot scsi-int/sd@0:0"
 .No 0 \*> Ic "boot scsi/sd@0:0"
-.No 0 \*> Ic "boot scsi-ext/sd@0:0"
 .No 0 \*> Ic "boot ata/ata-disk@0:0"
 .No 0 \*> Ic "boot ata/ATA-Disk@0:0"
 .No 0 \*> Ic "boot ide0/disk@0:0"
