@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.4 1994/12/21 08:20:36 jtc Exp $	*/
+/*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)split.c	8.2 (Berkeley) 4/16/94";
+static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-static char rcsid[] = "$NetBSD: split.c,v 1.4 1994/12/21 08:20:36 jtc Exp $";
+static char rcsid[] = "$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ main(argc, argv)
 		case 'l':		/* Line count. */
 			if (numlines != 0)
 				usage();
-			if ((numlines = strtol(optarg, &ep, 10)) <= 0 || *p)
+			if ((numlines = strtol(optarg, &ep, 10)) <= 0 || *ep)
 				errx(1, "%s: illegal line count.", optarg);
 			break;
 		default:
