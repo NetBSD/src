@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.38 2002/02/11 09:21:47 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.39 2002/02/11 11:44:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -258,6 +258,43 @@ static struct vr_com_platdep {
 };
 #endif /* NCOM > 0 */
 
+#if NVRKIU > 0
+/*
+ * machine dependent keyboard info
+ */
+static struct vr_kiu_platdep {
+	platid_mask_t *platidmask;
+	int addr;
+} platdep_kiu_table[] = {
+#ifdef VR4102
+	{
+		&platid_mask_CPU_MIPS_VR_4102,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4102 */
+#ifdef VR4111
+	{
+		&platid_mask_CPU_MIPS_VR_4111,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4111 */
+#ifdef VR4121
+	{
+		&platid_mask_CPU_MIPS_VR_4121,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4121 */
+	{
+		&platid_wild,
+#ifdef SINGLE_VRIP_BASE
+		VRIP_KIU_ADDR,		/* base address */
+#else
+		VRIP_NO_ADDR,		/* base address */
+#endif /* SINGLE_VRIP_BASE */
+	},
+};
+#endif /* NVRKIU > 0 */
+
 void
 vr_init()
 {
@@ -381,6 +418,9 @@ vr_cons_init()
 #if NCOM > 0
 	static struct vr_com_platdep *com_info;
 #endif
+#if NVRKIU > 0
+	static struct vr_kiu_platdep *kiu_info;
+#endif
 
 #if NCOM > 0
 	com_info = platid_search(&platid, platdep_com_table,
@@ -419,14 +459,19 @@ vr_cons_init()
  find_keyboard:
 #endif /* NHPCFB > 0 */
 
-#if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
-	if (vrkiu_cnattach(iot, VRIP_KIU_ADDR)) {
-		printf("%s(%d): can't init vrkiu as console",
-		       __FILE__, __LINE__);
-	} else {
-		return;
+#if NVRKIU > 0
+	kiu_info = platid_search(&platid, platdep_kiu_table,
+	    sizeof(platdep_kiu_table)/sizeof(*platdep_kiu_table),
+	    sizeof(*platdep_kiu_table));
+	if (kiu_info->addr != VRIP_NO_ADDR) {
+		if (vrkiu_cnattach(iot, kiu_info->addr)) {
+			printf("%s(%d): can't init vrkiu as console",
+			    __FILE__, __LINE__);
+		} else {
+			return;
+		}
 	}
-#endif /* NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR */
+#endif /* NVRKIU > 0 */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: icureg.h,v 1.6 2002/02/09 14:54:05 sato Exp $	*/
+/*	$NetBSD: icureg.h,v 1.7 2002/02/11 11:44:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -42,10 +42,6 @@
  */
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
-
-#if !defined SINGLE_VRIP_BASE
-#error currently missconfiguraton.
-#endif
 
 #define ICU_NO_REG_W		0xffffffff	/* no register */
 
