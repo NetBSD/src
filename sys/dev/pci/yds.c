@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.23 2004/11/08 12:10:22 kent Exp $	*/
+/*	$NetBSD: yds.c,v 1.24 2004/11/09 11:12:54 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.23 2004/11/08 12:10:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.24 2004/11/09 11:12:54 kent Exp $");
 
 #include "mpu.h"
 
@@ -687,7 +687,6 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	struct yds_codec_softc *codec;
 	char devinfo[256];
-	mixer_ctrl_t ctl;
 	int i, r, to;
 	int revision;
 	int ac97_id2;
@@ -854,38 +853,6 @@ detected:
 			return;
 		}
 	}
-
-	/* Just enable the DAC and master volumes by default */
-	ctl.type = AUDIO_MIXER_ENUM;
-	ctl.un.ord = 0;  /* off */
-	ctl.dev = yds_get_portnum_by_name(sc, AudioCoutputs,
-					  AudioNmaster, AudioNmute);
-	yds_mixer_set_port(sc, &ctl);
-	ctl.dev = yds_get_portnum_by_name(sc, AudioCinputs,
-					  AudioNdac, AudioNmute);
-	yds_mixer_set_port(sc, &ctl);
-	ctl.dev = yds_get_portnum_by_name(sc, AudioCinputs,
-					  AudioNcd, AudioNmute);
-	yds_mixer_set_port(sc, &ctl);
-	ctl.dev = yds_get_portnum_by_name(sc, AudioCrecord,
-					  AudioNvolume, AudioNmute);
-	yds_mixer_set_port(sc, &ctl);
-
-	ctl.dev = yds_get_portnum_by_name(sc, AudioCrecord,
-					  AudioNsource, NULL);
-	ctl.type = AUDIO_MIXER_ENUM;
-	ctl.un.ord = 0;
-	yds_mixer_set_port(sc, &ctl);
-
-	/* Set a reasonable default volume */
-	ctl.type = AUDIO_MIXER_VALUE;
-	ctl.un.value.num_channels = 2;
-	ctl.un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-	ctl.un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 127;
-
-	ctl.dev = sc->sc_codec[0].codec_if->vtbl->get_portnum_by_name(
-	    sc->sc_codec[0].codec_if, AudioCoutputs, AudioNmaster, NULL);
-	yds_mixer_set_port(sc, &ctl);
 
 	audio_attach_mi(&yds_hw_if, sc, &sc->sc_dev);
 
