@@ -1,6 +1,6 @@
-.\"	$NetBSD: prep,v 1.1 2000/06/14 10:34:31 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.2 2002/06/30 11:53:35 lukem Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
-of any data on your hard disk that you wish to keep. Mistakes in
-partitioning your hard disk may lead to data loss.
+of any data on your hard disk that you wish to keep.
+Mistakes in partitioning your hard disk may lead to data loss.
