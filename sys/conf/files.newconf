@@ -55,6 +55,7 @@ file ddb/db_write_cmd.c	 	ddb
 file isofs/isofs_bmap.c	 	isofs
 file isofs/isofs_lookup.c	isofs
 file isofs/isofs_node.c	 	isofs
+file isofs/isofs_rrip.c		isofs
 file isofs/isofs_util.c	 	isofs
 file isofs/isofs_vfsops.c	isofs
 file isofs/isofs_vnops.c	isofs
