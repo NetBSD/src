@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1996/06/03 18:32:37 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1996/06/12 01:36:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -589,25 +589,19 @@ alpha_init(pfn, ptb, argc, argv, envp)
 #endif
 	for (p = boot_flags; p && *p != '\0'; p++) {
 		switch (*p) {
-		case 'a': /* autoboot */
+		case 'a': /* askname */
+			boothowto |= RB_ASKNAME;
+			break;
+
 		case 'A': /* DEC's notion of autoboot */
 			boothowto &= ~RB_SINGLE;
 			break;
 
-		case 'd': /* use compiled in default root */
-			boothowto |= RB_DFLTROOT;
-			break;
-
+#if 0
 		case 'm': /* mini root present in memory */
 			boothowto |= RB_MINIROOT;
 			break;
-
-		case 'n': /* ask for names */
-			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'N': /* don't ask for names */
-			boothowto &= ~RB_ASKNAME;
+#endif
 		}
 	}
 
