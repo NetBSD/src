@@ -1,19 +1,23 @@
-#	$NetBSD: MARINE,v 1.2 1996/08/26 23:41:31 mrg Exp $
+#	$NetBSD: MARINE,v 1.3 1996/10/27 09:07:50 oki Exp $
 
 #
 #	MARINE
 #
 
 # architecture type and name of kernel; REQUIRED
-machine		"x68k"
+machine		x68k m68k
 ident		MARINE
 
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
+
 # different CPU types; you must have at least the correct one; REQUIRED
-#cpu		"M68030"
-cpu		"M68040"
+#cpu		M68030
+cpu		M68040
 
 # time zone RTC is expected to be set in; REQUIRED
-timezone	-9
+options 	TIMEZONE=-540	# Set the timezone that the kernel will use
+options 	DST=0		# Set the timezone that the kernel will use
 
 # estimated number of users
 maxusers	8
@@ -36,9 +40,11 @@ options 	FIFO			# FIFOs; RECOMMENDED
 
 # compatibility options
 #options 	COMPAT_NOMID		# old zmagic executables
-options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
-#options 	"COMPAT_44"		# compatibility with 4.4BSD binaries
-#options 	"COMPAT_09"		# compatibility with NetBSD 0.9
+options 	COMPAT_43		# compatibility with 4.3BSD binaries
+#options 	COMPAT_44		# compatibility with 4.4BSD binaries
+#options 	COMPAT_09		# compatibility with NetBSD 0.9
+options 	COMPAT_10		# compatibility with NetBSD 1.0
+options 	COMPAT_11		# compatibility with NetBSD 1.1
 options		COMPAT_12
 #options 	"TCP_COMPAT_42"		# compatibility with 4.2BSD TCP/IP
 
@@ -89,62 +95,40 @@ options 	NODISCONNECT		# do not use disconnect for SCSI
 #config		netbsd root on sd6a swap on sd6b
 config		netbsd swap generic
 
+mainbus0	at root
+
 # manufacturer 1 is a pseudo and stands for `builtin'
-master		scsi0	at nexus0	# internal SCSI port
-master		scsi1	at nexus0	# external SCSI board
-master		fdc0	at nexus0
+spc0		at mainbus0		# builtin scsi
+spc1		at mainbus0		# external scsi
+scsibus*	at spc?
+fdc0		at mainbus0		# floppy controller
+fd*		at fdc0 unit ?		# builtin floppy drive
 
 # further builtin devices
-device		zs0	at nexus0
-device		zs1	at nexus0
-#device		par0	at nexus0
-device		fd0	at fdc0 slave 0
-device		fd1	at fdc0 slave 1
-device		fd2	at fdc0 slave 2
-#device		fd3	at fdc0 slave 3
+zs0		at mainbus0		# Zilog serial
+zs1		at mainbus0		# Zilog serial
+par0		at mainbus0		# builtin parallel port
 
-# SCSI disks
-disk		sd0	at scsi0 slave 0
-disk		sd1	at scsi0 slave 1
-disk		sd2	at scsi0 slave 2
-disk		sd3	at scsi0 slave 3
-#disk		sd4	at scsi0 slave 4
-disk		sd5	at scsi0 slave 5
-#disk		sd6	at scsi0 slave 6
-#disk		sd7	at scsi0 slave 7
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disks
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+st*	at scsibus? target ? lun 0	# SCSI tapes
 
-# SCSI CD-ROMs
-disk		cd0	at scsi0 slave 6
-
-# SCSI tapes
-tape		st0	at scsi0 slave 4
-tape		st1	at scsi1 slave 0
-tape		st1	at scsi1 slave 1
-tape		st1	at scsi1 slave 2
-tape		st1	at scsi1 slave 3
-tape		st1	at scsi1 slave 4
-tape		st1	at scsi1 slave 5
-tape		st1	at scsi1 slave 6
-
-device		grf0	at nexus0
-
-# builtin clock (should all identify as "rtclock")
-device		rtclock0 at nexus0
+grfbus0 	at mainbus0		# bitmapped display's
+grf0		at grfbus0		# multiplane graphics
+ite0		at grf0			# console
 
 # ethernet board
-#device		se0	at scsi0 slave 2
-
-device	 	bsdaudio0	at nexus0 # /dev/audio
-device		kbd0		at nexus0
-#device		sram0		at nexus0 # battery backuped memory
+#se0	at scsibus? target ? lun ?
 
 #pseudo-device	sl		4	# compressed SLIP
 pseudo-device	ppp		1	# point-to-point protocol
 #pseudo-device	bpfilter	16	# packet filter
 #pseudo-device	tun		4	# tunnel
-pseudo-device	ite			# internal terminal emulator
+pseudo-device	kbd			# kbd
 pseudo-device	pty		32	# pseudo-terminals
 pseudo-device 	mouse			# mouse
+#pseudo-device	sram			# battery-backuped static RAM
 pseudo-device	loop			# loopback; recommended
 pseudo-device	ether			# ethernet
 pseudo-device	vnd		1	# vn virtual filesystem device
