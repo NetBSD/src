@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.45 2002/04/10 18:19:07 christos Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.45.4.1 2003/10/22 04:03:00 jmc Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.45 2002/04/10 18:19:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.45.4.1 2003/10/22 04:03:00 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -221,7 +221,7 @@ const char *const linux_syscallnames[] = {
 	"#189 (unimplemented putpmsg)",		/* 189 = unimplemented putpmsg */
 	"__vfork14",			/* 190 = __vfork14 */
 	"ugetrlimit",			/* 191 = ugetrlimit */
-	"mmap",			/* 192 = mmap */
+	"mmap2",			/* 192 = mmap2 */
 	"truncate64",			/* 193 = truncate64 */
 	"linux_ftruncate64",			/* 194 = linux_ftruncate64 */
 	"stat64",			/* 195 = stat64 */

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.17 2002/05/19 17:56:34 jdolecek Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.17.2.1 2003/10/22 04:03:01 jmc Exp $ */
 
 /*
  * System call argument lists.
@@ -702,6 +702,7 @@ int	sys___getcwd(struct proc *, void *, register_t *);
 int	linux_sys_sigaltstack(struct proc *, void *, register_t *);
 int	sys___vfork14(struct proc *, void *, register_t *);
 int	linux_sys_ugetrlimit(struct proc *, void *, register_t *);
+int	linux_sys_mmap2(struct proc *, void *, register_t *);
 int	linux_sys_truncate64(struct proc *, void *, register_t *);
 int	sys_ftruncate(struct proc *, void *, register_t *);
 int	linux_sys_stat64(struct proc *, void *, register_t *);
