@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1994/12/05 13:54:11 deraadt Exp $ */
+/*	$NetBSD: conf.c,v 1.18 1994/12/06 00:18:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,7 +140,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVN,vn), /*  8: vnode */
 	bdev_notdef(),		/*  9: */
 	bdev_notdef(),		/* 10: */
-	bdev_notdef(),		/* 12: scsi tape */
+	bdev_tape_init(NST,st),	/* 11: SCSI tape */
 	bdev_notdef(),		/* 13: */
 	bdev_notdef(),		/* 14: */
 	bdev_notdef(),		/* 15: */
