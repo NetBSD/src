@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.33 2003/09/15 13:17:24 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.34 2005/02/16 03:45:41 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd September 12, 2003
+.Dd February 16, 2005
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -63,7 +63,11 @@ By default
 .Nm
 displays the processes getting the largest percentage of the processor
 in the lower window.
-Other displays show more detailed process information, swap space usage, disk
+Other displays show more detailed process information,
+swap space usage,
+disk usage statistics (a la
+.Xr df 1 ) ,
+disk
 .Tn I/O
 statistics (a la
 .Xr iostat  8  ) ,
@@ -110,6 +114,7 @@ The
 argument expects to be one of:
 .Ic all ,
 .Ic bufcache ,
+.Ic df ,
 .Ic inet.icmp ,
 .Ic inet.ip ,
 .Ic inet.tcp ,
@@ -208,6 +213,22 @@ Display, in the lower window, statistics about the file system buffers.
 Statistics for each file system that has active buffers include the number
 of buffers for that file system, the number of active kilobytes in those
 buffers and the total size of the buffers for that file system.
+.It Ic df
+Lists disk usage statistics for all filesystems,
+including the available free space as well as a bar
+graph indicating the used capacity.
+.Pp
+The following commands are specific to the
+.Ic df
+display:
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm all
+Displays information for all filesystems, including
+kernfs, procfs and null-mounts. 
+.It Cm some
+Suppress information about procfs, kernfs and null-mounts (default). 
+.El
 .It Ic inet.icmp
 Display ICMP statistics.
 .It Ic inet.ip
@@ -517,12 +538,13 @@ Much of the information that
 uses is obtained from
 .Cm struct vmmeter cnt .
 .Sh SEE ALSO
+.Xr df 1 ,
+.Xr iostat 8 ,
 .Xr netstat 1 ,
 .Xr ps 1 ,
+.Xr pstat 8 ,
 .Xr top 1 ,
-.Xr vmstat 1 ,
-.Xr iostat 8 ,
-.Xr pstat 8
+.Xr vmstat 1 
 .Sh HISTORY
 The
 .Nm
