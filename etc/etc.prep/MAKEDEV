@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2001/01/08 22:26:27 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2001/09/10 21:23:56 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	cfs*	Coda file system device
+#	wsmux*	wscons event multiplexor
 #
 
 dialin=0
@@ -172,6 +173,16 @@ wsmux|wsmouse|wskbd)
 	mknod wskbd c $chr 1
 	chown root.wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	wsmux=wsmux$unit
+	major=65
+	rm -f $wsmux
+	mknod $wsmux c $major $unit
+	chown root.wheel $wsmux
+	chmod 600 $wsmux
 	;;
 
 ttyEcfg)
