@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.42 1999/09/05 14:26:33 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.43 1999/11/05 16:49:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -303,7 +303,7 @@ msdosfs_lookup(v)
 				 * this lookup.
 				 */
 				dp->de_fndoffset = diroff;
-				dp->de_fndcnt = 0;	/* unused anyway */
+				dp->de_fndcnt = wincnt - 1;
 
 				goto found;
 			}
