@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtio.4,v 1.8 1998/09/30 02:39:01 jonathan Exp $
+.\"	$NetBSD: mtio.4,v 1.9 1999/01/14 08:31:08 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,197 +33,141 @@
 .\"
 .\"     from: @(#)mtio.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 7, 1996
-.Dt MTIO 4 vax
+.Dd Jaunary 14, 1999
+.Dt MTIO 4
 .Os
 .Sh NAME
 .Nm mtio
-.Nd
-.Nx
-magtape interface
+.Nd generic magnetic tape I/O interface
+.Sh SYNOPSIS
+.Cd "#include <sys/mtio.h>"
 .Sh DESCRIPTION
-Each tape subsystem has a couple of special devices associated with it.
-The magtape devices may be on the
-.Tn MASSBUS
-using the
-.Tn TM03
-formatter,
-.Xr ht 4 ,
-or
-.Tn TM78
-formatter,
-.Xr mt 4 ,
-or on the
-.Tn UNIBUS/QBUS
-using either the
-.Tn TM11
-or
-.Tn TE10
-formatters,
-.Xr tm 4 ,
-.Tn TU45
-compatible formatters,
-.Xr ut 4 ,
-or
-.Tn TS11/TSV05
-tape formatters,
-.Xr ts 4 .
-These devices are typical tape block devices,
-see
-.Xr physio 4 .
+Magnetic tape has been the computer system backup and data transfer
+medium of choice for decades, because it has historically been
+cheaper in cost per bit stored, and the formats have been designed
+for portability and storage.
+However, tape drives have generally been the slowest mass
+storage devices attached to any computer system.
 .Pp
-The conventional device letters/numbers
-is applicable to any of the transport/controller pairs.
-(But note that only 1600
-.Tn BPI
-is available with the
-.Tn TS11 ,
-and that 800
-.Tn BPI
-is not applicable to
-.Tn TM78 . )
-.Pp
-When the device last number is between
-.Em 0-7
-the device will operate at 800
-.Tn BPI
-(or its lowest density), between 
-.Em 8-15
-it will operate at 1600
-.Tn BPI
-(or its second density), and between
-.Em 16-23
-it will operate at 6250
-.Tn BPI .
-.Pp
-The rewind devices automatically rewind
-when the last requested read, write or seek has finished, or the end of the tape
-has been reached. The letter
-.Ql n
-is usually prepended to
-the name of the no-rewind devices.
-.Pp
+Magnetic tape comes in a wide variety of formats, from classic 9-track,
+through various Quarter Inch Cartridge
+.Pq Tn QIC
+variants, to more modern systems using 8mm video tape, and
+Digital Audio Tape
+.Pq Tn DAT .
+There have also been a variety of proprietary tape systems, including
+.Tn DECtape ,
+and
+.Tn "IBM 3480" .
+.Ss UNIX TAPE I/O
+Regardless of the specific characteristics of the particular tape
+transport mechanism (tape drive),
 .Ux
-tapes are written in multiples of 1024 byte block
-records. Two end-of-file markers mark the end of a tape, and
+tape I/O has two interfaces:
+.Qq block
+and
+.Qq raw .
+I/O through the block interface of a tape device is similar to I/O
+through the block special device for a disk driver: the individual
+.Xr read 2
+and
+.Xr write 2
+calls can be done in any amount of bytes, but all data is buffered
+through the system buffer cache, and I/O to the device is done in
+1024 byte sized blocks.
+This limitation is sufficiently restrictive that the block interface
+to tape devices is rarely used.
+.Pp
+The
+.Qq raw
+interface differs in that all I/O can be done in arbitrary sized blocks,
+within the limitations for the specific device and device driver,
+and all I/O is synchronous.
+This is the most flexible interface, but since there is very little
+that is handled automatically by the kernel, user programs must
+implement specific magnetic tape handling routines, which puts the onus
+of correctness on the application programmer.
+.Ss DEVICE NAME CONVENTIONS
+Each magnetic tape subsystem has a couple of special devices
+associated with it.
+.Pp
+The block device is usually named for the driver, e.g.
+.Pa /dev/st0
+for unit zero of a
+.Xr st 4
+.Tn SCSI
+tape drive.
+.Pp
+The raw device name is the block device name with an
+.Qq r
+prepended, e.g.
+.Pa /dev/rst0 .
+.Pp
+By default, the tape driver will rewind the tape drive when the
+device is closed.
+To make it possible for multiple program invocations to
+sequentially write multiple files on the same tape, a
+.Qq no rewind on close
+device is provided, denoted by the letter
+.Qq n
+prepended to the name of the device, e.g.
+.Pa /dev/nst0 ,
+.Pa /dev/nrst0 .
+.Pp
+The
+.Xr mt 1
+command can be used to explicitly rewind, or otherwise position a
+tape at a particular point with the no-rewind device.
+.Ss FILE MARK HANDLING
+Two end-of-file (EOF) markers mark the end of a tape (EOT), and
 one end-of-file marker marks the end of a tape file.
+.Pp
+By default, the tape driver will write two End Of File (EOF) marks
+and rewind the tape when the device is closed after the last write.
+.Pp
 If the tape is not to be rewound it is positioned with the
 head in between the two tape marks, where the next write
 will over write the second end-of-file marker.
 .Pp
-All of the magtape devices may be manipulated with the
+All of the magnetic tape devices may be manipulated with the
 .Xr mt 1
 command.
 .Pp
 A number of
 .Xr ioctl 2
-operations are available
-on raw magnetic tape.
-The following definitions are from
-.Aq Pa sys/mtio.h :
-.Bd  -literal
-/*
- * Structures and definitions for mag tape io control commands
- */
-
-/* structure for MTIOCTOP - mag tape op command */
-struct	mtop	{
-	short	mt_op;		/* operations defined below */
-	daddr_t	mt_count;	/* how many of them */
-};
-
-/* operations */
-#define MTWEOF	0	/* write an end-of-file record */
-#define MTFSF	1	/* forward space file */
-#define MTBSF	2	/* backward space file */
-#define MTFSR	3	/* forward space record */
-#define MTBSR	4	/* backward space record */
-#define MTREW	5	/* rewind */
-#define MTOFFL	6	/* rewind and put the drive offline */
-#define MTNOP	7	/* no operation, sets status only */
-#define MTCACHE 8	/* enable controller cache */
-#define MTNOCACHE 9	/* disable controller cache */
-
-/* structure for MTIOCGET - mag tape get status command */
-
-struct	mtget	{
-	short	mt_type;	/* type of magtape device */
-/* the following two registers are grossly device dependent */
-	short	mt_dsreg;	/* ``drive status'' register */
-	short	mt_erreg;	/* ``error'' register */
-/* end device-dependent registers */
-	short	mt_resid;	/* residual count */
-/* the following two are not yet implemented */
-	daddr_t	mt_fileno;	/* file number of current position */
-	daddr_t	mt_blkno;	/* block number of current position */
-/* end not yet implemented */
-};
-
-/*
- * Constants for mt_type byte.  These are the same
- * for controllers compatible with the types listed.
- */
-#define	MT_ISTS		0x01		/* TS-11 */
-#define	MT_ISHT		0x02		/* TM03 Massbus: TE16, TU45, TU77 */
-#define	MT_ISTM		0x03		/* TM11/TE10 Unibus */
-#define	MT_ISMT		0x04		/* TM78/TU78 Massbus */
-#define	MT_ISUT		0x05		/* SI TU-45 emulation on Unibus */
-#define	MT_ISCPC	0x06		/* SUN */
-#define	MT_ISAR		0x07		/* SUN */
-#define	MT_ISTMSCP	0x08		/* DEC TMSCP protocol (TU81, TK50) */
-#define MT_ISCY 	0x09		/* CCI Cipher */
-#define MT_ISCT 	0x0a		/* HP 1/4 tape */
-#define MT_ISFHP	0x0b		/* HP 7980 1/2 tape */
-#define MT_ISEXABYTE	0x0c		/* Exabyte */
-#define MT_ISEXA8200	0x0c		/* Exabyte EXB-8200 */
-#define MT_ISEXA8500	0x0d		/* Exabyte EXB-8500 */
-#define MT_ISVIPER1	0x0e		/* Archive Viper-150 */
-#define MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
-#define MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
-
-/* mag tape io control commands */
-#define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
-#define	MTIOCGET	_IOR('m', 2, struct mtget)	/* get tape status */
-#define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
-#define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
-
-#ifndef KERNEL
-#define	DEFTAPE	"/dev/rmt12"
-#endif
-
-#ifdef	KERNEL
-/*
- * minor device number
- */
-
-#define	T_UNIT		003		/* unit selection */
-#define	T_NOREWIND	004		/* no rewind on close */
-#define	T_DENSEL	030		/* density select */
-#define	T_800BPI	000		/* select  800 bpi */
-#define	T_1600BPI	010		/* select 1600 bpi */
-#define	T_6250BPI	020		/* select 6250 bpi */
-#define	T_BADBPI	030		/* undefined selection */
-#endif
-.Ed
+operations are available on raw magnetic tape.
+Please see
+.Aq Pa sys/mtio.h
+for their definitions.
+.\" The following definitions are from
+.\" .Aq Pa sys/mtio.h :
+.\" .Bd  -literal
+.\" there was a copy of sys/mtio.h here. silly.
+.\" .Ed
 .Pp
-.Sh FILES
-.Bl -tag -width /dev/rmt? -compact
-.It Pa /dev/mt?
-.It Pa /dev/rmt?
-.El
+The manual pages for specific tape device drivers should list their
+particular capabilities and limitations.
 .Sh SEE ALSO
+.Xr dd 1 ,
 .Xr mt 1 ,
 .Xr tar 1 ,
-.Xr tp 1 ,
+.Xr pax 1 ,
 .Xr ht 4 ,
+.Xr st 4 ,
 .Xr tm 4 ,
 .Xr ts 4 ,
 .Xr mt 4 ,
 .Xr ut 4
 .Sh HISTORY
 The
-.Nm mtio
+.Nm
 manual appeared in
 .Bx 4.2 .
 .Sh BUGS
 The status should be returned in a device independent format.
+.Pp
+If and when
+.Nx
+is updated to deal with non-512 byte per sector disk media through the
+system buffer cache, perhaps a more sane tape interface can be
+implemented.
