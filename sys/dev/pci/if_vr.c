@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.18 1999/02/12 00:36:48 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.19 1999/03/24 01:07:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -145,8 +145,6 @@
 #include <dev/pci/if_vrreg.h>
 
 #define	VR_USEIOSPACE
-
-#define	ETHER_CRC_LEN	4	/* XXX Should be in a common header. */
 
 /*
  * Various supported device vendors/types and their names.
@@ -1573,16 +1571,14 @@ vr_attach(parent, self, aux)
 		}
 	}
 
+	/* Make sure bus mastering is enabled. */
+	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_MASTER_ENABLE;
+	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
+
 	/*
 	 * Map control/status registers.
 	 */
-	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
-	command |= (PCI_COMMAND_IO_ENABLE |
-		    PCI_COMMAND_MEM_ENABLE |
-		    PCI_COMMAND_MASTER_ENABLE);
-	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
-	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
-
 	{
 		bus_space_tag_t iot, memt;
 		bus_space_handle_t ioh, memh;
