@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.2 2001/09/07 16:20:35 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.3 2001/09/07 19:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1079,7 +1079,7 @@ ttykqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)dev;
+	kn->kn_hook = (void *) tp;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
@@ -1094,7 +1094,7 @@ filt_ttyrdetach(struct knote *kn)
 	struct tty	*tp;
 	int		s;
 
-	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	tp = (void *) kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&tp->t_rsel.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -1105,7 +1105,7 @@ filt_ttyread(struct knote *kn, long hint)
 {
 	struct tty	*tp;
 
-	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	tp = (void *) kn->kn_hook;
 	kn->kn_data = ttnread(tp);
 	return (kn->kn_data > 0);
 }
@@ -1116,7 +1116,7 @@ filt_ttywdetach(struct knote *kn)
 	struct tty	*tp;
 	int		s;
 
-	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	tp = (void *) kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&tp->t_wsel.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -1129,7 +1129,7 @@ filt_ttywrite(kn, hint)
 {
 	struct tty	*tp;
 
-	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	tp = (void *) kn->kn_hook;
 	kn->kn_data = tp->t_outq.c_cc;
 	return (kn->kn_data <= tp->t_lowat && CONNECTED(tp));
 }
