@@ -1,6 +1,7 @@
-#	$NetBSD: MACALLAN,v 1.7 1995/12/20 00:14:17 cgd Exp $
+#	$NetBSD: NOSY,v 1.1 1996/04/12 01:21:44 cgd Exp $
 #
-# Kernel for macallan.dssc.cs.cmu.edu.
+# Jason's DEC 3000/400 in the lab...
+#
 
 include	"std.alpha"
 
@@ -10,7 +11,7 @@ maxusers 8
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 
 # needs to be set per system
-options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		TIMEZONE="8*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
@@ -22,6 +23,7 @@ options		KTRACE			# System call tracing support
 options		FIFO		# POSIX fifo support (in all file systems)
 options		FFS		# Fast file system
 options		MFS		# Memory-based file system
+options		NFSSERVER	# Sun NFS-compatible file system server
 options		NFSCLIENT	# Sun NFS-compatible file system client
 
 # Networking options
@@ -30,13 +32,13 @@ options		INET		# Internet protocol suite
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
-# Binary compatibility with previous versions of NetBSD.
-options		COMPAT_10
-
 # Loadable Kernel Modules
 options		LKM
 
-config		netbsd	root on sd0 swap on sd0 and sd1
+# Disable kernel security.
+options		INSECURE
+
+config		netbsd	root on sd0 swap on sd0
 
 mainbus0 at	root
 cpu*	at	mainbus0
@@ -59,17 +61,13 @@ esp1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
 
 # SCSI bus support
-scsibus0 at	esp0
 scsibus* at	esp?
 
 # SCSI devices
-sd0	at	scsibus0 target 0 lun 0
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
 
-pseudo-device	bpfilter
+pseudo-device	bpfilter	16
 pseudo-device	loop
-pseudo-device	pty
-pseudo-device	sl
-pseudo-device	vnd
+pseudo-device	pty		64
