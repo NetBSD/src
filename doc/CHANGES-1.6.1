@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.59 2002/12/01 22:51:40 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.60 2002/12/03 22:40:30 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1996,3 +1996,15 @@ sys/arch/vax/vax/trap.c				1.73
 	Record stack growth, done inline to avoid another function
 	call on every user page fault.
 	[thorpej, ticket #878]
+
+sys/lib/libkern/libkern.h			1.42-1.43
+
+	Don't use __builtin_ffs() on vax, ffs is an instruction
+	there already.  Also, always provide an ffs() prototype.
+	[thorpej, ticket #1024]
+
+gnu/dist/toolchain/gcc/f/fini.c			1.2
+
+	Fix a bug with list handling which causes this to abort
+	with an ``extraneous <string>'' message when it should not.
+	[he, ticket #1025]
