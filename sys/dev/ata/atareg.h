@@ -1,4 +1,36 @@
-/*	$NetBSD: atareg.h,v 1.14 2003/11/30 14:05:47 yamt Exp $	*/
+/*	$NetBSD: atareg.h,v 1.15 2003/12/30 19:12:24 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 1998, 2001 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _DEV_ATA_ATAREG_H_
+#define	_DEV_ATA_ATAREG_H_
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -190,3 +222,76 @@ struct ataparams {
 #define WDC_SEC_EN	0x0002
 #define WDC_SEC_SUPP	0x0001
 };
+
+/*
+ * If WDSM_ATTR_ADVISORY, device exceeded intended design life period.
+ * If not WDSM_ATTR_ADVISORY, imminent data loss predicted.
+ */
+#define WDSM_ATTR_ADVISORY	1
+
+/*
+ * If WDSM_ATTR_COLLECTIVE, attribute only updated in off-line testing.
+ * If not WDSM_ATTR_COLLECTIVE, attribute updated also in on-line testing.
+ */
+#define WDSM_ATTR_COLLECTIVE	2
+
+struct ata_smart_attr {
+	u_int8_t		id;		/* attribute id number */
+	u_int16_t		flags;
+	u_int8_t		value;		/* attribute value */
+	u_int8_t		worst;
+	u_int8_t		raw[6];
+	u_int8_t		reserved;
+} __attribute__((packed));
+
+struct ata_smart_attributes {
+	u_int16_t		data_structure_revision;
+	struct ata_smart_attr	attributes[30];
+	u_int8_t		offline_data_collection_status;
+	u_int8_t		self_test_exec_status;
+	u_int16_t		total_time_to_complete_off_line;
+	u_int8_t		vendor_specific_366;
+	u_int8_t		offline_data_collection_capability;
+	u_int16_t		smart_capability;
+	u_int8_t		errorlog_capability;
+	u_int8_t		vendor_specific_371;
+	u_int8_t		short_test_completion_time;
+	u_int8_t		extend_test_completion_time;
+	u_int8_t		reserved_374_385[12];
+	u_int8_t		vendor_specific_386_509[125];
+	int8_t			checksum;
+} __attribute__((packed));
+
+struct ata_smart_thresh {
+	u_int8_t		id;
+	u_int8_t		value;
+	u_int8_t		reserved[10];
+} __attribute__((packed));
+
+struct ata_smart_thresholds {
+	u_int16_t		data_structure_revision;
+	struct ata_smart_thresh	thresholds[30];
+	u_int8_t		reserved[18];
+	u_int8_t		vendor_specific[131];
+	int8_t			checksum;
+} __attribute__((packed));
+
+struct ata_smart_selftest {
+	u_int8_t		number;
+	u_int8_t		status;
+	uint16_t		time_stamp;
+	u_int8_t		failure_check_point;
+	u_int32_t		lba_first_error;
+	u_int8_t		vendor_specific[15];
+} __attribute__((packed));
+
+struct ata_smart_selftestlog {
+	u_int16_t		data_structure_revision;
+	struct ata_smart_selftest log_entries[21];
+	u_int8_t		vendorspecific[2];
+	u_int8_t		mostrecenttest;
+	u_int8_t		reserved[2];
+	u_int8_t		checksum;
+} __attribute__((packed));
+
+#endif /* _DEV_ATA_ATAREG_H_ */
