@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.107 2003/11/07 15:58:57 hamajima Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.108 2004/02/01 12:41:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.107 2003/11/07 15:58:57 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.108 2004/02/01 12:41:25 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,12 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
       PCMCIA_CIS_EPSON_EEN10B,
       0, 0xff0, { 0x00, 0x00, 0x48 } },
+
+    { PCMCIA_STR_TAMARACK_ETHERNET,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_TAMARACK_ETHERNET,
+      0, -1, { 0x00, 0x00, 0x00 } },
+
 
     { PCMCIA_STR_CNET_NE2000,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
