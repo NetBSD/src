@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.32 2000/04/01 17:52:14 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.32.4.1 2000/07/21 19:27:42 abs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,6 +120,12 @@ struct wdc_pcmcia_product {
 	{ -1, -1, 0,
 	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
 	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
+	},
+
+	/* Toshiba Portege 3110 CD, with neither vendor ID nor product ID */
+	{ -1, -1, 0,
+	  { "FREECOM", "PCCARD-IDE", NULL, NULL},
+	  "FREECOM PCCARD-IDE"
 	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
