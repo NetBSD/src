@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.17 1995/05/20 01:52:52 mycroft Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.18 1995/05/23 00:14:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -143,10 +143,16 @@ nfs_boot_init(nd, procp)
 
 	/*
 	 * Bring up the interface.
+	 *
+	 * Get the old interface flags and or IFF_UP into them; if
+	 * IFF_UP set blindly, interface selection can be clobbered.
 	 */
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0)) != 0)
 		panic("nfs_boot: socreate, error=%d", error);
-	ireq.ifr_flags = IFF_UP;
+	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
+	if (error)
+		panic("nfs_boot: GIFFLAGS, error=%d", error);
+	ireq.ifr_flags |= IFF_UP;
 	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
 	if (error)
 		panic("nfs_boot: SIFFLAGS, error=%d", error);
