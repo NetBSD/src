@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.11.4.2 1997/02/08 16:17:45 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.11.4.3 1997/02/11 16:28:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -101,7 +101,7 @@ arc_output(ifp, m0, dst, rt0)
 	struct arccom		*ac;
 	register struct arc_header *ah;
 	int			s, error, newencoding;
-	u_int8_t		atype, adst;
+	u_int8_t		atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
@@ -111,6 +111,8 @@ arc_output(ifp, m0, dst, rt0)
 	ac = (struct arccom *)ifp;
 	m = m0;
 	mcopy = m1 = NULL;
+
+	myself = *LLADDR(ifp->if_sadl);
 
 	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
@@ -206,7 +208,7 @@ arc_output(ifp, m0, dst, rt0)
 			ah = mtod(m, struct arc_header *);
 			ah->arc_type = atype;
 			ah->arc_dhost = adst;
-			ah->arc_shost = ac->ac_anaddr;
+			ah->arc_shost = myself;
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
@@ -257,7 +259,7 @@ arc_output(ifp, m0, dst, rt0)
 		}
 
 		ah->arc_dhost = adst;
-		ah->arc_shost = ac->ac_anaddr;
+		ah->arc_shost = myself;
 	} else {
 		M_PREPEND(m, ARC_HDRLEN, M_DONTWAIT);
 		if (m == 0)
@@ -265,7 +267,7 @@ arc_output(ifp, m0, dst, rt0)
 		ah = mtod(m, struct arc_header *);
 		ah->arc_type = atype;
 		ah->arc_dhost = adst;
-		ah->arc_shost = ac->ac_anaddr;
+		ah->arc_shost = myself;
 	}
 
 	s = splimp();
