@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.47 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.48 2004/04/13 12:25:03 lukem Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -12,18 +12,7 @@ __REALSUBDIR+=${dir}
 .endfor
 
 __recurse: .USE
-	@targ=${.TARGET:C/-.*$//};dir=${.TARGET:C/^[^-]*-//};		\
-	case "$$dir" in /*)						\
-		echo "$$targ ===> $$dir";				\
-		cd "$$dir";						\
-		${MAKE} "_THISDIR_=$$dir/" $$targ;			\
-		;;							\
-	*)								\
-		echo "$$targ ===> ${_THISDIR_}$$dir";			\
-		cd "${.CURDIR}/$$dir";					\
-		${MAKE} "_THISDIR_=${_THISDIR_}$$dir/" $$targ;		\
-		;;							\
-	esac
+	@${MAKEDIRTARGET} ${.TARGET:C/^[^-]*-//} ${.TARGET:C/-.*$//}
 
 .if make(cleandir)
 __RECURSETARG=	${TARGETS:Nclean}
