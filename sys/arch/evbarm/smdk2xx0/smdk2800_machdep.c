@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.13 2003/06/14 17:01:11 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.14 2003/06/15 17:33:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -700,27 +700,6 @@ initarm(void *arg)
 #else
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
-#endif
-
-#if 0
-	/* Map the core memory needed before autoconfig */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
-
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
 #endif
 
 #ifdef MEMORY_DISK_DYNAMIC
