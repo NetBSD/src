@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_types.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
+/*	$NetBSD: if_lmc_types.h,v 1.2 1999/03/25 04:09:33 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -38,6 +38,23 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef LMC_TYPES_H
+#define LMC_TYPES_H
+
+/*
+ * NetBSD uses _KERNEL, FreeBSD uses KERNEL.
+ */
+#if defined(_KERNEL) && defined(__NetBSD__)
+#define LMC_IS_KERNEL
+#endif
+#if defined(KERNEL) && defined(__FreeBSD__)
+#define LMC_IS_KERNEL
+#endif
+#if defined(__KERNEL__) && defined(linux)
+#define LMC_IS_KERNEL
+#endif
+
+#if defined(LMC_IS_KERNEL)
 #if defined(__NetBSD__)
 typedef bus_addr_t lmc_csrptr_t;
 #else
@@ -62,5 +79,10 @@ typedef volatile u_int32_t *lmc_csrptr_t;
 
 typedef struct lmc___softc lmc_softc_t;
 typedef struct lmc___media lmc_media_t;
-typedef struct lmc___ctl lmc_ctl_t;
 typedef struct lmc_ringinfo lmc_ringinfo_t;
+
+#endif /* LMC_IS_KERNEL */
+
+typedef struct lmc___ctl lmc_ctl_t;
+
+#endif /* LMC_TYPES_H */

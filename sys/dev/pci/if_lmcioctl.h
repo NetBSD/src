@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcioctl.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
+/*	$NetBSD: if_lmcioctl.h,v 1.2 1999/03/25 04:09:34 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -203,20 +203,7 @@ struct lmc___ctl {
 #define LMC_CARDTYPE_DS3	 2	/* probed card is a DS3 card */
 #define LMC_CARDTYPE_T1		 3	/* probed card is a T1 card */
 
-/*
- * NetBSD uses _KERNEL, FreeBSD uses KERNEL.
- */
-#if defined(_KERNEL) && defined(__NetBSD__)
-#define LMC_IS_KERNEL
-#endif
-#if defined(KERNEL) && defined(__FreeBSD__)
-#define LMC_IS_KERNEL
-#endif
-#if defined(__KERNEL__) && defined(linux)
-#define LMC_IS_KERNEL
-#endif
-
-#if defined(LMC_IS_KERNEL)
+#if defined(LMC_IS_KERNEL) /* defined in if_lmc_types.h */
 
 /*
  * media independent methods to check on media status, link, light LEDs,
