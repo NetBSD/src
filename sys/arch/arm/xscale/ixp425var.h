@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.7 2003/11/02 21:24:39 scw Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.8 2003/12/08 14:41:11 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -148,5 +148,6 @@ void	ixp425_intr_init(void);
 void	*ixp425_intr_establish(int, int, int (*)(void *), void *);
 void    ixp425_intr_disestablish(void *);
 
+uint32_t ixp425_sdram_size(void);
 
 #endif /* _IXP425VAR_H_ */
