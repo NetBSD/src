@@ -1,20 +1,19 @@
-#	$NetBSD: Makefile.inc,v 1.10 2001/11/29 22:46:02 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/03/29 04:45:38 matt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
 
 KERNEL_SETS=	GENERIC
-
 BUILD_KERNELS=	INSTALL
+
+UUDECODE?=      uudecode
 
 distribution: pcs750.bin
 
-pcs750.bin: etc.vax/pcs750.bin.uu
-	rm -f ${DESTDIR}/pcs750.bin
-	uudecode -p etc.vax/pcs750.bin.uu > ${DESTDIR}/pcs750.bin
-	chown ${BINOWN}.${BINGRP} ${DESTDIR}/pcs750.bin
-	chmod 444 ${DESTDIR}/pcs750.bin
+pcs750.bin: ${.CURDIR}/etc.vax/pcs750.bin.uu
+	${UUDECODE} ${.ALLSRC}
 
+CLEANFILES+=	pcs750.bin
 INSTALLATION_DIRS+=	installation \
 			installation/bootfs \
 			installation/netboot
