@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17.2.2 1998/11/10 18:48:49 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.17.2.3 1998/11/23 03:56:15 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -37,6 +37,7 @@
 
 struct fd_set;
 struct sockaddr;
+struct tm;
 
 void    abort_remote __P((FILE *));
 void    abortpt __P((int));
@@ -93,6 +94,7 @@ void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
+time_t	mkgmtime __P((struct tm *));
 void	mls __P((int, char **));
 void	modtime __P((int, char **));
 void	mput __P((int, char **));
