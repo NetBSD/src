@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.12 1997/06/04 04:38:37 mikel Exp $	*/
+/*	$NetBSD: stty.c,v 1.13 1997/07/20 21:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: stty.c,v 1.12 1997/06/04 04:38:37 mikel Exp $";
+__RCSID("$NetBSD: stty.c,v 1.13 1997/07/20 21:31:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ static char rcsid[] = "$NetBSD: stty.c,v 1.12 1997/06/04 04:38:37 mikel Exp $";
 
 #include "stty.h"
 #include "extern.h"
+
+int main __P((int, char *[]));
 
 int
 main(argc, argv) 
