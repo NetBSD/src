@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1996/05/16 15:57:26 abrown Exp $ */
+/*	$NetBSD: trap.c,v 1.42.4.1 1996/06/12 20:34:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -557,12 +557,12 @@ rwindow_save(p)
 	if (i == 0)
 		return (0);
 #ifdef DEBUG
-	if(rwindow_debug)
+	if (rwindow_debug)
 		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
 #endif
 	do {
 #ifdef DEBUG
-		if(rwindow_debug)
+		if (rwindow_debug)
 			printf(" %x", rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
@@ -571,7 +571,7 @@ rwindow_save(p)
 		rw++;
 	} while (--i > 0);
 #ifdef DEBUG
-	if(rwindow_debug)
+	if (rwindow_debug)
 		printf("\n");
 #endif
 	pcb->pcb_nsaved = 0;
@@ -947,18 +947,22 @@ static int lastdouble;
 	} else
 		p->p_md.md_tf = tf;
 
+	vm = p->p_vmspace;
+#ifdef DEBUG
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
-	 * case we have a hard fault; it returns 1 if it loads a segment
-	 * that got bumped out via LRU replacement.
+	 * case we have a hard fault.. now why would *that* happen?
+	 * But it happens sporadically, and vm_fault() seems to clear it..
 	 */
-	vm = p->p_vmspace;
-	rv = mmu_pagein(&vm->vm_pmap, va,
+	rv = mmu_pagein4m(&vm->vm_pmap, va,
 			sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
-		goto fault;
+		printf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
+		       sfsr, (sfsr >> 2) & 7, (sfsr >> 5) & 7, (sfsr >> 8) & 3,
+		       sfva, pc, psr);
 	if (rv > 0)
-		goto out;
+		panic("mmu_pagein4m returns %d", rv);
+#endif
 
 	/* alas! must call the horrible vm code */
 	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
