@@ -1,4 +1,40 @@
-/*	$NetBSD: pmap.c,v 1.33 1999/05/26 19:16:32 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.34 1999/06/15 22:18:09 thorpej Exp $        */
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -276,6 +312,8 @@ void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
 void	pmap_changebit	__P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
+void	pmap_ptpage_addref __P((vaddr_t));
+int	pmap_ptpage_delref __P((vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
@@ -286,8 +324,9 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #endif
 
 /* pmap_remove_mapping flags */
-#define	PRM_TFLUSH	1
-#define	PRM_CFLUSH	2
+#define	PRM_TFLUSH	0x01
+#define	PRM_CFLUSH	0x02
+#define	PRM_KEEPPTPAGE	0x04
 
 /*
  * pmap_virtual_space:		[ INTERFACE ]
@@ -1122,7 +1161,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (opa) {
 		PMAP_DPRINTF(PDB_ENTER,
 		    ("enter: removing old mapping %lx\n", va));
-		pmap_remove_mapping(pmap, va, pte, PRM_TFLUSH|PRM_CFLUSH);
+		pmap_remove_mapping(pmap, va, pte,
+		    PRM_TFLUSH|PRM_CFLUSH|PRM_KEEPPTPAGE);
 	}
 
 	/*
@@ -1131,8 +1171,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		(void) uvm_map_pageable(pt_map, trunc_page(pte),
-					round_page(pte+1), FALSE);
+		pmap_ptpage_addref(trunc_page(pte));
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1245,7 +1284,7 @@ validate:
 		TBIS(va);
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter", trunc_page(pte));
 #endif
 }
 
@@ -1651,51 +1690,6 @@ pmap_pageable(pmap, sva, eva, pageable)
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_pageable(%p, %lx, %lx, %x)\n",
 	    pmap, sva, eva, pageable));
-
-	/*
-	 * If we are making a PT page pageable then all valid
-	 * mappings must be gone from that page.  Hence it should
-	 * be all zeros and there is no need to clean it.
-	 * Assumptions:
-	 *	- we are called with only one page at a time
-	 *	- PT pages have only one pv_table entry
-	 */
-	if (pmap == pmap_kernel() && pageable && sva + NBPG == eva) {
-		struct pv_entry *pv;
-		paddr_t pa;
-
-#ifdef DEBUG
-		if ((pmapdebug & (PDB_FOLLOW|PDB_PTPAGE)) == PDB_PTPAGE)
-			printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-			       pmap, sva, eva, pageable);
-#endif
-		if (!pmap_ste_v(pmap, sva))
-			return;
-		pa = pmap_pte_pa(pmap_pte(pmap, sva));
-		if (PAGE_IS_MANAGED(pa) == 0)
-			return;
-		pv = pa_to_pvh(pa);
-		if (pv->pv_ptste == NULL)
-			return;
-#ifdef DEBUG
-		if (pv->pv_va != sva || pv->pv_next) {
-			printf("pmap_pageable: bad PT page va %lx next %p\n",
-			       pv->pv_va, pv->pv_next);
-			return;
-		}
-#endif
-		/*
-		 * page is unused, free it now!
-		 */
-		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-				    NULL, PRM_TFLUSH|PRM_CFLUSH);
-		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
-#ifdef DEBUG
-		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %lx(%x) freed\n",
-			       sva, *pmap_pte(pmap, sva));
-#endif
-	}
 }
 
 /*
@@ -1837,6 +1831,9 @@ pmap_mapmulti(pmap, va)
  *
  *	If (flags & PRM_CFLUSH), we must flush/invalidate any cache
  *	information.
+ *
+ *	If (flags & PRM_KEEPPTPAGE), we don't free the page table page
+ *	if the reference drops to zero.
  */
 /* static */
 void
@@ -1889,18 +1886,51 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		TBIS(va);
 	/*
 	 * For user mappings decrement the wiring count on
-	 * the PT page.  We do this after the PTE has been
-	 * invalidated because vm_map_pageable winds up in
-	 * pmap_pageable which clears the modify bit for the
-	 * PT page.
+	 * the PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		(void) uvm_map_pageable(pt_map, trunc_page(pte),
-					round_page(pte+1), TRUE);
+		vaddr_t ptpva = trunc_page(pte);
+		int refs = pmap_ptpage_delref(ptpva);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
-			pmap_check_wiring("remove", trunc_page(pte));
+			pmap_check_wiring("remove", ptpva);
 #endif
+		/*
+		 * If reference count drops to 1, and we're not instructed
+		 * to keep it around, free the PT page.
+		 *
+		 * Note: refcnt == 1 comes from the fact that we allocate
+		 * the page with uvm_fault_wire(), which initially wires
+		 * the page.  The first reference we actually add causes
+		 * the refcnt to be 2.
+		 */
+		if (refs == 1 && (flags & PRM_KEEPPTPAGE) == 0) {
+			struct pv_entry *pv;
+			paddr_t pa;
+
+			pa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
+#ifdef DIAGNOSTIC
+			if (PAGE_IS_MANAGED(pa) == 0)
+				panic("pmap_remove_mapping: unmanaged PT page");
+#endif
+			pv = pa_to_pvh(pa);
+#ifdef DIAGNOSTIC
+			if (pv->pv_ptste == NULL)
+				panic("pmap_remove_mapping: ptste == NULL");
+			if (pv->pv_pmap != pmap_kernel() ||
+			    pv->pv_va != ptpva ||
+			    pv->pv_next != NULL)
+				panic("pmap_remove_mapping: "
+				    "bad PT page pmap %p, va 0x%lx, next %p",
+				    pv->pv_pmap, pv->pv_va, pv->pv_next);
+#endif
+			pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
+			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
+			    ("remove: PT page 0x%lx (0x%lx) freed\n",
+			    ptpva, pa));
+		}
 	}
 	/*
 	 * If this isn't a managed page, we are all done.
@@ -2286,6 +2316,11 @@ pmap_enter_ptpage(pmap, va)
 	/*
 	 * For user processes we just simulate a fault on that location
 	 * letting the VM system allocate a zero-filled page.
+	 *
+	 * Note we use a wire-fault to keep the page off the paging
+	 * queues.  This sets our PT page's reference (wire) count to
+	 * 1, which is what we use to check if the page can be freed.
+	 * See pmap_remove_mapping().
 	 */
 	else {
 		/*
@@ -2295,19 +2330,14 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to fault UPT pg at %lx\n", va));
-		s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE);
+		s = uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 		if (s != KERN_SUCCESS) {
-			printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
-			    va, s);
-			panic("pmap_enter: uvm_fault failed");
+			printf("uvm_fault_wire(pt_map, 0x%lx, 0x%lx, RW) "
+			    "-> %d\n", va, va + PAGE_SIZE, s);
+			panic("pmap_enter: uvm_fault_wire failed");
 		}
-		ptpa = pmap_extract(pmap_kernel(), va);
-		/*
-		 * Mark the page clean now to avoid its pageout (and
-		 * hence creation of a pager) between now and when it
-		 * is wired; i.e. while it is on a paging queue.
-		 */
-		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
+		ptpa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	}
 #if defined(M68040)
 	/*
@@ -2390,6 +2420,42 @@ pmap_enter_ptpage(pmap, va)
 }
 
 /*
+ * pmap_ptpage_addref:
+ *
+ *	Add a reference to the specified PT page.
+ */
+void
+pmap_ptpage_addref(ptpva)
+	vaddr_t ptpva;
+{
+	vm_page_t m;
+
+	simple_lock(&uvm.kernel_object->vmobjlock);
+	m = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+	m->wire_count++;
+	simple_unlock(&uvm.kernel_object->vmobjlock);
+}
+
+/*
+ * pmap_ptpage_delref:
+ *
+ *	Delete a reference to the specified PT page.
+ */
+int
+pmap_ptpage_delref(ptpva)
+	vaddr_t ptpva;
+{
+	vm_page_t m;
+	int rv;
+
+	simple_lock(&uvm.kernel_object->vmobjlock);
+	m = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+	rv = --m->wire_count;
+	simple_unlock(&uvm.kernel_object->vmobjlock);
+	return (rv);
+}
+
+/*
  *	Routine:        pmap_procwr
  * 
  *	Function:
@@ -2439,25 +2505,28 @@ pmap_check_wiring(str, va)
 	char *str;
 	vaddr_t va;
 {
-	vm_map_entry_t entry;
-	int count;
 	pt_entry_t *pte;
+	paddr_t pa;
+	vm_page_t m;
+	int count;
 
-	va = trunc_page(va);
 	if (!pmap_ste_v(pmap_kernel(), va) ||
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
-	if (!uvm_map_lookup_entry(pt_map, va, &entry)) {
-		printf("wired_check: entry for %lx not found\n", va);
+	pa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
+	m = PHYS_TO_VM_PAGE(pa);
+	if (m->wire_count < 1) {
+		printf("*%s*: 0x%lx: wire count %d\n", str, va, m->wire_count);
 		return;
 	}
+
 	count = 0;
 	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
 		if (*pte)
 			count++;
-	if (entry->wired_count != count)
-		printf("*%s*: %lx: w%d/a%d\n",
-		       str, va, entry->wired_count, count);
+	if ((m->wire_count - 1) != count)
+		printf("*%s*: 0x%lx: w%d/a%d\n",
+			str, va, (m->wire_count - 1), count);
 }
 #endif /* DEBUG */
