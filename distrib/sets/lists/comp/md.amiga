@@ -67,6 +67,7 @@
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
+./usr/lib/c++rt0.o
 ./usr/lib/libamu_pic.a
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libc_pic.a

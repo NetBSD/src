@@ -52,6 +52,7 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vm86.h
 ./usr/include/machine/vmparam.h
+./usr/lib/c++rt0.o
 ./usr/lib/libamu_pic.a
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libc_pic.a
