@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.3 1998/08/26 12:10:22 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.4 1998/08/26 13:08:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,28 +81,28 @@ struct real_voice {
 struct opl_voice voicetab[] = {
 /*       No    I/O offs		OP1	OP2	OP3   OP4	*/
 /*	---------------------------------------------------	*/
-	{ 0,   OPL_LO,	{0x00,	0x03,	0x08, 0x0b}},
-	{ 1,   OPL_LO,	{0x01,	0x04,	0x09, 0x0c}},
-	{ 2,   OPL_LO,	{0x02,	0x05,	0x0a, 0x0d}},
+	{ 0,   OPL_L,	{0x00,	0x03,	0x08, 0x0b}},
+	{ 1,   OPL_L,	{0x01,	0x04,	0x09, 0x0c}},
+	{ 2,   OPL_L,	{0x02,	0x05,	0x0a, 0x0d}},
 
-	{ 3,   OPL_LO,	{0x08,	0x0b,	0x00, 0x00}},
-	{ 4,   OPL_LO,	{0x09,	0x0c,	0x00, 0x00}},
-	{ 5,   OPL_LO,	{0x0a,	0x0d,	0x00, 0x00}},
+	{ 3,   OPL_L,	{0x08,	0x0b,	0x00, 0x00}},
+	{ 4,   OPL_L,	{0x09,	0x0c,	0x00, 0x00}},
+	{ 5,   OPL_L,	{0x0a,	0x0d,	0x00, 0x00}},
 
-	{ 6,   OPL_LO,	{0x10,	0x13,	0x00, 0x00}},
-	{ 7,   OPL_LO,	{0x11,	0x14,	0x00, 0x00}},
-	{ 8,   OPL_LO,	{0x12,	0x15,	0x00, 0x00}},
+	{ 6,   OPL_L,	{0x10,	0x13,	0x00, 0x00}},
+	{ 7,   OPL_L,	{0x11,	0x14,	0x00, 0x00}},
+	{ 8,   OPL_L,	{0x12,	0x15,	0x00, 0x00}},
 
-	{ 0,   OPL_HI,	{0x00,	0x03,	0x08, 0x0b}},
-	{ 1,   OPL_HI,	{0x01,	0x04,	0x09, 0x0c}},
-	{ 2,   OPL_HI,	{0x02,	0x05,	0x0a, 0x0d}},
-	{ 3,   OPL_HI,	{0x08,	0x0b,	0x00, 0x00}},
-	{ 4,   OPL_HI,	{0x09,	0x0c,	0x00, 0x00}},
-	{ 5,   OPL_HI,	{0x0a,	0x0d,	0x00, 0x00}},
+	{ 0,   OPL_R,	{0x00,	0x03,	0x08, 0x0b}},
+	{ 1,   OPL_R,	{0x01,	0x04,	0x09, 0x0c}},
+	{ 2,   OPL_R,	{0x02,	0x05,	0x0a, 0x0d}},
+	{ 3,   OPL_R,	{0x08,	0x0b,	0x00, 0x00}},
+	{ 4,   OPL_R,	{0x09,	0x0c,	0x00, 0x00}},
+	{ 5,   OPL_R,	{0x0a,	0x0d,	0x00, 0x00}},
 
-	{ 6,   OPL_HI,	{0x10,	0x13,	0x00, 0x00}},
-	{ 7,   OPL_HI,	{0x11,	0x14,	0x00, 0x00}},
-	{ 8,   OPL_HI,	{0x12,	0x15,	0x00, 0x00}}
+	{ 6,   OPL_R,	{0x10,	0x13,	0x00, 0x00}},
+	{ 7,   OPL_R,	{0x11,	0x14,	0x00, 0x00}},
+	{ 8,   OPL_R,	{0x12,	0x15,	0x00, 0x00}}
 };
 
 static void opl_command(struct opl_softc *, int, int, int);
@@ -201,25 +201,25 @@ opl_find(sc)
 	sc->model = OPL_2;	/* worst case assumtion */
 
 	/* Reset timers 1 and 2 */
-	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, 
+	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, 
 		    OPL_TIMER1_MASK | OPL_TIMER2_MASK);
 	/* Reset the IRQ of the FM chip */
-	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
+	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
 
 	/* get status bits */
-	status1 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_LO+sc->offs);
+	status1 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_L+sc->offs);
 
-	opl_command(sc, OPL_LO, OPL_TIMER1, -2); /* wait 2 ticks */
-	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, /* start timer1 */
+	opl_command(sc, OPL_L, OPL_TIMER1, -2); /* wait 2 ticks */
+	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, /* start timer1 */
 		    OPL_TIMER1_START | OPL_TIMER2_MASK);
 	delay(1000);		/* wait for timer to expire */
 
 	/* get status bits again */
-	status2 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_LO+sc->offs);
+	status2 = bus_space_read_1(sc->iot,sc->ioh,OPL_STATUS+OPL_L+sc->offs);
 
-	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, 
+	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, 
 		    OPL_TIMER1_MASK | OPL_TIMER2_MASK);
-	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
+	opl_command(sc, OPL_L, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
 
 	DPRINTFN(2,("opl_find: %02x %02x\n", status1, status2));
 
@@ -315,13 +315,13 @@ opl_reset(sc)
 	int i;
 
 	for (i = 1; i <= OPL_MAXREG; i++)
-		opl_command(sc, OPL_LO, OPL_KEYON_BLOCK + i, 0);
+		opl_command(sc, OPL_L, OPL_KEYON_BLOCK + i, 0);
 
-	opl_command(sc, OPL_LO, OPL_TEST, OPL_ENABLE_WAVE_SELECT);
-	opl_command(sc, OPL_LO, OPL_PERCUSSION, 0);
+	opl_command(sc, OPL_L, OPL_TEST, OPL_ENABLE_WAVE_SELECT);
+	opl_command(sc, OPL_L, OPL_PERCUSSION, 0);
 	if (sc->model == OPL_3) {
-		opl_command(sc, OPL_HI, OPL_MODE, OPL3_ENABLE);
-		opl_command(sc, OPL_HI,OPL_CONNECTION_SELECT,OPL_NOCONNECTION);
+		opl_command(sc, OPL_R, OPL_MODE, OPL3_ENABLE);
+		opl_command(sc, OPL_R,OPL_CONNECTION_SELECT,OPL_NOCONNECTION);
 	}
 
 	sc->volume = 64;
@@ -436,7 +436,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	u_int32_t block_fnum;
 	int mult;
 	int c_mult, m_mult;
-	u_int8_t chars0, chars1, ksl0, ksl1;
+	u_int8_t chars0, chars1, ksl0, ksl1, fbc;
 	u_int8_t r20m, r20c, r40m, r40c, rA0, rB0;
 	u_int8_t vol0, vol1;
 
@@ -499,6 +499,14 @@ oplsyn_noteon(ms, voice, freq, vel)
 	rB0  = (block_fnum >> 8) | OPL_KEYON_BIT;
 
 	v->rB0 = rB0;
+
+	fbc = p->ops[OO_FB_CONN];
+	if (sc->model == OPL_3) {
+		fbc &= ~OPL_STEREO_BITS;
+		/* XXX use pan */
+		fbc |= OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
+	}
+	opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, voice, fbc);
 
 	opl_set_op_reg(sc, OPL_AM_VIB,      voice, 0, r20m);
 	opl_set_op_reg(sc, OPL_AM_VIB,      voice, 1, r20c);
