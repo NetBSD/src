@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 2002/05/14 19:44:57 chris Exp $
+#	$NetBSD: INSTALL,v 1.21 2002/07/05 13:40:11 abs Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -54,7 +54,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP		# FFS soft updates support
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 
@@ -119,7 +119,8 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation

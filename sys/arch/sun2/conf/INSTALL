@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.12 2002/04/25 15:06:38 atatat Exp $
+# $NetBSD: INSTALL,v 1.13 2002/07/05 13:40:17 abs Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.12 $"
+#ident 		"INSTALL-$Revision: 1.13 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -23,7 +23,8 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB
@@ -66,7 +67,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# IP prototol stack support
