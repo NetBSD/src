@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.55 2002/03/09 20:10:38 he Exp $
+.\"	$NetBSD: main,v 1.61.2.56 2002/03/25 17:51:40 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -637,7 +637,7 @@ Support for the Socket Communications LP-E Type II PCMCIA NE2000
 clone card has been added to
 .Xr ne 4 .
 .It
-The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
+The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 24,
 to fix core dumps in
 .Xr dhclient 8 ,
 among other things.  Please note that the new
