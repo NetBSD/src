@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.49 2004/04/12 14:41:09 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.50 2004/04/16 22:45:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.49 2004/04/12 14:41:09 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.50 2004/04/16 22:45:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ tar_endwr(void)
 off_t
 tar_endrd(void)
 {
-	return((off_t)BLKMULT);
+	return((off_t)(NULLCNT*BLKMULT));
 }
 
 /*
@@ -178,12 +178,14 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 */
 	if (!in_resync) {
 		++*cnt;
+#if 0
 		/*
 		 * old GNU tar (up through 1.13) only writes one block of
 		 * trailers, so we pretend we got another
 		 */
 		if (is_gnutar)
 			++*cnt;
+#endif
 		if (*cnt >= NULLCNT)
 			return(0);
 	}
