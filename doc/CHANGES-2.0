@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.275 2004/06/16 18:15:20 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.276 2004/06/17 08:42:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3450,10 +3450,10 @@ lib/libc/sys/close.2				patch
 	Dont refer to errno as "global integer variable".
 	[kleink, ticket #432]
 
-distrib/acorn32/mksparkive.sh			0-1.2
-distrib/acorn32/stand/Makefile			1.12
-distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites.uue	deleted
-distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites22.uue	deleted
+distrib/acorn32/mksparkive.sh					0-1.2
+distrib/acorn32/stand/Makefile					1.12
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites.uue		deleted
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites22.uue		deleted
 distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites.uue	0-1.3
 distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites22.uue	0-1.3
 
@@ -3894,4 +3894,25 @@ sys/kern/uipc_socket2.c				1.64
 	Fix mbuf leak after mbuf exhaustion in sbappendaddrchain() if
 	MBUFTRACE is enabled.
 	[jonathan, ticket #503]
+
+distrib/acorn32/mksparkive.sh				1.3-1.5
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Run		1.3
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/Files		1.2-1.3
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/fastboot	1.6-1.8
+distrib/acorn32/stand/BtNetBSD/Settype			delete
+distrib/acorn32/stand/BtNetBSD/misc/SettScr		delete
+distrib/acorn32/stand/Makefile				1.13-1.17
+distrib/acorn32/stand/splug.bas.uue			1.1
+distrib/utils/Makefile					1.16
+distrib/utils/Makefile.inc				1.11
+distrib/utils/sparkcrc/Makefile				1.1-1.2
+distrib/utils/sparkcrc/sparkcrc.c			1.1
+share/mk/bsd.own.mk					1.420
+share/mk/bsd.sys.mk					1.113
+sys/arch/acorn32/stand/lib/srt0.S			1.3
+tools/Makefile						1.82
+tools/sparkcrc/Makefile					1.1
+
+	Get NetBSD-acorn32 bootloader and installation set to a working state.
+	[abs, ticket #497]
 
