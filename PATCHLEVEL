@@ -87,4 +87,7 @@ new revisions of the S3 chipset.
 could cause the kernel to panic if the interface was ifconfig'd down
 right before the IP layer tried to output through it.
 
-
+[kernel/amiga]: Two fixes for the builtin serial port driver: don't pretend
+we can operate at 50 or 75 bps, and fix the problem that the driver would
+drop incoming characters under heavy load due to a forgotten splser()/splx()
+pair.
