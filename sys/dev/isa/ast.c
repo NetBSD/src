@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.26 1996/04/15 18:55:23 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.27 1996/05/05 19:49:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
@@ -62,9 +63,10 @@ struct ast_softc {
 	bus_io_handle_t sc_slaveioh[NSLAVES];
 };
 
-int astprobe();
-void astattach();
+int astprobe __P((struct device *, void *, void *));
+void astattach __P((struct device *, struct device *, void *));
 int astintr __P((void *));
+int astprint __P((void *, char *));
 
 struct cfattach ast_ca = {
 	sizeof(struct ast_softc), astprobe, astattach
@@ -76,7 +78,8 @@ struct cfdriver ast_cd = {
 
 int
 astprobe(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	void *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -146,7 +149,8 @@ astattach(parent, self, aux)
 	struct ast_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
-	int i, subunit;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	int i;
 
 	sc->sc_bc = ia->ia_bc;
 	sc->sc_iobase = ia->ia_iobase;
@@ -164,8 +168,6 @@ astattach(parent, self, aux)
 	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
-		struct cfdata *match;
-
 		ca.ca_slave = i;
 		ca.ca_bc = sc->sc_bc;
 		ca.ca_ioh = sc->sc_slaveioh[i];
