@@ -1,6 +1,6 @@
-.\"	$NetBSD: sysinst,v 1.19 2001/04/07 14:56:48 jhawk Exp $
+.\"	$NetBSD: sysinst,v 1.20 2001/04/07 18:48:09 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -314,7 +314,7 @@ space free, where
 .Em n
 is the number of megabytes of
 main memory in your system. If you wish to install
-the X window system as well, you will need at least
+the X Window System as well, you will need at least
 60 MB more.
 .bullet)
 .if \n[alpha]:\n[i386]:\n[news68k] \{\
@@ -336,7 +336,6 @@ command prompt:
 .Dl Ic "rawrite"
 .Pp
 When asked for a source filename, answer
-.Pp
 .if r_i386 \{\
 .Dl Pa \&..\efloppy\eboot1.fs
 for the first diskette and
@@ -400,7 +399,7 @@ It isn't actually required at this point, but
 it may be more convenient. Go back to the main menu.
 .It
 Choose
-.Me install
+.Me install .
 .It
 You will be guided through some steps regarding the
 setup of your disk, and the selection of distributed components
@@ -442,7 +441,7 @@ For configuring the X window system, if installed, see the files in
 .Pa /usr/X11R6/lib/X11/doc .
 .if !\n[macppc]:\n[sparc] \{\
 Further information can be found on
-.Lk http://www.xfree86.org/
+.Lk http://www.xfree86.org/ .
 .\}
 .bullet)
 .bullet)
@@ -586,7 +585,7 @@ it is installed, you should first go to the utilities menu, and select
 .Ic Configure network option .
 If you only want to temporarily
 use networking during the installation, you can specify these
-parameters later. If you are not using Domain Name Service (DNS),
+parameters later. If you are not using the Domain Name System (DNS),
 you can give an empty response in reply to answers relating to
 this.
 .It
@@ -847,7 +846,7 @@ In previous versions of
 .Nx ,
 the kernel from the
 install floppy was copied onto the hard drive in a special
-step. In the new install system, the kernel on the floppy is
+step. In the current install system, the kernel on the floppy is
 unsuited to being copied onto the hard drive. Instead, a new set,
 .Sy kern ,
 has been added which contains a generic kernel to
@@ -914,7 +913,7 @@ The sets can be made available in a few different ways. The
 following sections describe each of those methods. After
 reading the one about the method you will be using, you
 can continue to section labeled
-.Sq Extracting the distribution sets
+.Sq Extracting the distribution sets .
 .It
 .Em Installation using ftp
 .Pp
@@ -923,7 +922,7 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP number, hostname, etc. If you
+to provide some data, like IP address, hostname, etc. If you
 do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
@@ -934,7 +933,7 @@ to transfer the sets from, the directory on that host,
 and the account name and password used to log into that
 host using ftp. If you did not set up DNS when answering
 the questions to configure networking, you will need to
-specify an IP number instead of a hostname for the ftp
+specify an IP address instead of a hostname for the ftp
 server.
 .Pp
 .Ic sysinst
@@ -948,7 +947,7 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP number, hostname, etc. If you
+to provide some data, like IP address, hostname, etc. If you
 do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
@@ -961,7 +960,7 @@ by the machine you are installing on, i.e. correctly
 exported to your machine.
 .Pp
 If you did not set up DNS when answering the questions to
-configure networking, you will need to specify an IP number
+configure networking, you will need to specify an IP address
 instead of a hostname for the NFS server.
 .It
 .Em Installation from CD-ROM
@@ -1018,7 +1017,7 @@ After the install sets containing the
 distribution
 have been made available, you can either extract all the
 sets (a full installation), or only extract sets that
-you have selected. In the latter case you will be shown the
+you have selected. In the latter case, you will be shown the
 currently selected sets, and given the opportunity to select
 the sets you want. Some sets always need to be installed
 .Pq Sy kern, base No and Sy etc
@@ -1035,7 +1034,7 @@ configured networking, you will be asked if you want to
 use this configuration for normal operation. If so, these
 values will be installed in the network configuration files.
 The next menu will allow you to select the time zone that you're in,
-to make sure your clock has the right offset from GMT. 
+to make sure your clock has the right offset from UTC. 
 Finally you can set a password for the "root" account, to prevent 
 the machine coming up without access restrictions.  
 .It
