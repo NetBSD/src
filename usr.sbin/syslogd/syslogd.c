@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.57 2002/11/16 03:59:36 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.58 2003/05/14 23:53:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.57 2002/11/16 03:59:36 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.58 2003/05/14 23:53:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,8 @@ getgroup:
 	}
 
 	consfile.f_type = F_CONSOLE;
-	(void)strcpy(consfile.f_un.f_fname, ctty);
+	(void)strlcpy(consfile.f_un.f_fname, ctty,
+	    sizeof(consfile.f_un.f_fname));
 	(void)gethostname(LocalHostName, sizeof(LocalHostName));
 	LocalHostName[sizeof(LocalHostName) - 1] = '\0';
 	if ((p = strchr(LocalHostName, '.')) != NULL) {
@@ -672,8 +673,8 @@ printsys(char *msg)
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
 
-	(void)strcpy(line, _PATH_UNIX);
-	(void)strcat(line, ": ");
+	(void)strlcpy(line, _PATH_UNIX, sizeof(line));
+	(void)strlcat(line, ": ", sizeof(line));
 	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
 		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
@@ -798,7 +799,8 @@ logmsg(int pri, char *msg, char *from, int flags)
 					sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
-				(void)strcpy(f->f_prevline, msg);
+				(void)strlcpy(f->f_prevline, msg,
+				    sizeof(f->f_prevline));
 				fprintlog(f, flags, (char *)NULL);
 			} else {
 				f->f_prevline[0] = 0;
@@ -1408,7 +1410,8 @@ cfline(char *line, struct filed *f)
 	switch (*p)
 	{
 	case '@':
-		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
+		(void)strlcpy(f->f_un.f_forw.f_hname, ++p,
+		    sizeof(f->f_un.f_forw.f_hname));
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
@@ -1425,7 +1428,7 @@ cfline(char *line, struct filed *f)
 		break;
 
 	case '/':
-		(void)strcpy(f->f_un.f_fname, p);
+		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
 		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
 			f->f_type = F_UNUSED;
 			logerror(p);
