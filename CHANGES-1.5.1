@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.76 2001/05/28 19:41:46 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.77 2001/06/10 19:48:27 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3573,6 +3573,7 @@ usr.sbin/ktutil/Makefile			1.3-1.9
 
 share/man/man4/man4.i386/ie.4			delete
 share/man/man4/man4.i386/Makefile		patch
+distrib/sets/lists/man/obsolete.mi		1.21
 
   Let this manual page die; it's subsumed by ef(4), ix(4) and ai(4).
 
@@ -5034,3 +5035,210 @@ sys/arch/alpha/stand/netboot/Makefile		1.23 via patch
 etc/etc.alpha/Makefile.inc			1.2
 
   Add Makefile snippets to install ``netboot'' under ``make release''.
+
+distrib/notes/common/main			patch
+
+  Put in text advertising the pkgsrc overhaul for 1.5.1.
+
+sys/arch/hp300/dev/sd.c				1.45
+
+  Initialize the b_dep field after malloc().  Fixes PR#13065.
+
+sys/arch/i386/pci/pci_intr_fixup.c		1.11
+
+  Initialize VIA Tehcnologies' 82C686's ICU as if it were an 82C586.
+  Fixes interrupt allocation on modern Compaq laptops.
+
+usr.sbin/catman/catman.c			1.16
+
+  Fix catman(8) processing of globs in /etc/man.conf.
+  Fixes PR#12742, PR#12903.
+
+sys/arch/mips/mips/locore_mips3.S		1.67
+sys/arch/mips/mips/mips_machdep.c		1.114-1.115 via patch
+sys/arch/mips/include/asm.h			1.25
+
+  Implement power saving for RM5200 and RM7000 CPUs, as used in
+  e.g. Cobalt RaQ2.
+
+sys/netinet6/icmp6.c				1.65
+
+  Correct icmp6 hoplimit value.
+
+sbin/sysctl/sysctl.8				patch
+
+  Typo correction; add a plural ``s'' to ``maxfragpacket''.
+
+distrib/sets/lists/base/mi			1.262 via patch
+distrib/sets/lists/base/obsolete.mi		1.29
+distrib/sets/lists/man/mi			1.359 via patch
+distrib/sets/lists/man/obsolete.mi		1.28
+usr.sbin/Makefile				1.158
+usr.sbin/pim6dd/LICENSE.mrouted			deleted
+usr.sbin/pim6dd/LICENSE.pimd			deleted
+usr.sbin/pim6dd/Makefile			deleted
+usr.sbin/pim6dd/VERSION				deleted
+usr.sbin/pim6dd/callout.c			deleted
+usr.sbin/pim6dd/config.c			deleted
+usr.sbin/pim6dd/debug.c				deleted
+usr.sbin/pim6dd/debug.h				deleted
+usr.sbin/pim6dd/defs.h				deleted
+usr.sbin/pim6dd/inet6.c				deleted
+usr.sbin/pim6dd/kern.c				deleted
+usr.sbin/pim6dd/main.c				deleted
+usr.sbin/pim6dd/mld6.c				deleted
+usr.sbin/pim6dd/mld6.h				deleted
+usr.sbin/pim6dd/mld6_proto.c			deleted
+usr.sbin/pim6dd/mrt.c				deleted
+usr.sbin/pim6dd/mrt.h				deleted
+usr.sbin/pim6dd/pathnames.h			deleted
+usr.sbin/pim6dd/pim6.c				deleted
+usr.sbin/pim6dd/pim6_proto.c			deleted
+usr.sbin/pim6dd/pim6dd.8			deleted
+usr.sbin/pim6dd/pim6dd.conf.5			deleted
+usr.sbin/pim6dd/pimdd.h				deleted
+usr.sbin/pim6dd/route.c				deleted
+usr.sbin/pim6dd/routesock.c			deleted
+usr.sbin/pim6dd/timer.c				deleted
+usr.sbin/pim6dd/trace.c				deleted
+usr.sbin/pim6dd/trace.h				deleted
+usr.sbin/pim6dd/vers.c				deleted
+usr.sbin/pim6dd/vif.c				deleted
+usr.sbin/pim6dd/vif.h				deleted
+usr.sbin/pim6sd/BUGS.TODO			deleted
+usr.sbin/pim6sd/BUGS.V6				deleted
+usr.sbin/pim6sd/LICENSE.mrouted			deleted
+usr.sbin/pim6sd/LICENSE.pim6dd			deleted
+usr.sbin/pim6sd/LICENSE.pim6sd			deleted
+usr.sbin/pim6sd/LICENSE.pimd			deleted
+usr.sbin/pim6sd/Makefile			deleted
+usr.sbin/pim6sd/README				deleted
+usr.sbin/pim6sd/README.first			deleted
+usr.sbin/pim6sd/callout.c			deleted
+usr.sbin/pim6sd/callout.h			deleted
+usr.sbin/pim6sd/cfparse.h			deleted
+usr.sbin/pim6sd/cfparse.y			deleted
+usr.sbin/pim6sd/cftoken.l			deleted
+usr.sbin/pim6sd/config.c			deleted
+usr.sbin/pim6sd/config.h			deleted
+usr.sbin/pim6sd/crc.c				deleted
+usr.sbin/pim6sd/crc.h				deleted
+usr.sbin/pim6sd/debug.c				deleted
+usr.sbin/pim6sd/debug.h				deleted
+usr.sbin/pim6sd/defs.h				deleted
+usr.sbin/pim6sd/inet6.c				deleted
+usr.sbin/pim6sd/inet6.h				deleted
+usr.sbin/pim6sd/kern.c				deleted
+usr.sbin/pim6sd/kern.h				deleted
+usr.sbin/pim6sd/main.c				deleted
+usr.sbin/pim6sd/mld6.c				deleted
+usr.sbin/pim6sd/mld6.h				deleted
+usr.sbin/pim6sd/mld6_proto.c			deleted
+usr.sbin/pim6sd/mld6_proto.h			deleted
+usr.sbin/pim6sd/mrt.c				deleted
+usr.sbin/pim6sd/mrt.h				deleted
+usr.sbin/pim6sd/pathnames.h			deleted
+usr.sbin/pim6sd/pim6.c				deleted
+usr.sbin/pim6sd/pim6.h				deleted
+usr.sbin/pim6sd/pim6_proto.c			deleted
+usr.sbin/pim6sd/pim6_proto.h			deleted
+usr.sbin/pim6sd/pim6sd.8			deleted
+usr.sbin/pim6sd/pim6sd.conf.5			deleted
+usr.sbin/pim6sd/pim6sd.conf.sample		deleted
+usr.sbin/pim6sd/pim6stat			deleted
+usr.sbin/pim6sd/pim6stat.1			deleted
+usr.sbin/pim6sd/pimd.h				deleted
+usr.sbin/pim6sd/route.c				deleted
+usr.sbin/pim6sd/route.h				deleted
+usr.sbin/pim6sd/routesock.c			deleted
+usr.sbin/pim6sd/routesock.h			deleted
+usr.sbin/pim6sd/rp.c				deleted
+usr.sbin/pim6sd/rp.h				deleted
+usr.sbin/pim6sd/timer.c				deleted
+usr.sbin/pim6sd/timer.h				deleted
+usr.sbin/pim6sd/trace.c				deleted
+usr.sbin/pim6sd/trace.h				deleted
+usr.sbin/pim6sd/var.h				deleted
+usr.sbin/pim6sd/vers.c				deleted
+usr.sbin/pim6sd/vif.c				deleted
+usr.sbin/pim6sd/vif.h				deleted
+usr.sbin/pim6sd/vmbuf.h				deleted
+
+  Remove pim6dd and pim6sd due to these programs having a more
+  restrictive license than we wish to deal with.  The programs are
+  instead available through pkgsrc.
+
+usr.sbin/Makefile				1.159
+distrib/sets/lists/base/mi			1.263 via patch
+distrib/sets/lists/man/mi			1.360 via patch
+distrib/sets/lists/base/obsolete.mi		1.30 via patch
+distrib/sets/lists/man/obsolete.mi		1.29 via patch
+
+  Do not build mtrace6, since it depends on the now-removed pim6[sd]
+  code.  Also remove traces of pim6stat.
+
+sys/net/if_ether.h				1.25
+sys/net/if_ethersubr.c				1.83 via patch
+
+  Consider the configured MTU of the interface when determining
+  if a packet is too large.
+
+usr.bin/make/var.c				1.61
+
+  Expand variables in SysV patterns, as in ``${SRCS:.c=.${O}}''.
+
+sys/compat/hpux/hpux_compat.c			1.56
+sys/compat/hpux/syscalls.master			1.26
+sys/compat/hpux/hpux_sysent.c			regenerate
+sys/compat/hpux/hpux_syscalls.c			regenerate
+sys/compat/hpux/hpux_syscall.h			regenerate
+sys/compat/hpux/hpux_syscallargs.h		regenerate
+
+  Use the NetBSD version of dup(2) instead of our own (incorrect!)
+  version.
+
+sys/kern/kern_descrip.c				1.75 via patch
+sys/kern/uipc_usrreq.c				1.49
+sys/sys/filedesc.h				1.21
+
+  Change fdalloc() to return ERESTART if reallocation of the
+  descriptor array was needed, and change uses to handle that
+  condition.  Make finishdup() close the descriptor in the new slot
+  if it exists, and change sys_dup2() accordingly.  Closes a race
+  condition when using kernel-assisted user threads.
+
+distrib/notes/common/main			patch
+distrib/notes/common/contents			patch
+
+  Mention planned binary snapshot of XFree86 4.0.3 for i386, and
+  the state of the xsrc set (XFree86 3.3.6 and XFree86 version 4).
+
+lib/libc/gen/__fts13.c				1.29-1.34
+
+  Make sure we ascend in the same tree we descended, to counter
+  the effects of otherwise possibly malicious directory tree moves.  
+  Also improve error handling.
+
+sys/net/if_stf.c				1.16
+
+  Inject packets to bpf in outgoing path.
+
+usr.sbin/mailwrapper/mailer.conf.5		1.3-1.6
+
+  Correct wording in reference to postfix.  Add ``hoststat'' and
+  ``purgestat'' invocations for sendmail.  Also some punctuation
+  and cross-reference fixes.
+
+sys/kern/subr_extent.c				1.36
+
+  Fix calculation of whether we overflow the end of the extent.
+  Fixes PR#13075.
+
+usr.sbin/cron/do_command.c			1.7
+
+  Restore default handler for SIG_CHLD before starting grand-children.
+  Fixes problem with e.g. Perl scripts run from cron.  Fixes PR#11778.
+
+sys/arch/i386/i386/sys_machdep.c		1.58
+
+  Copy in segment descriptors all at once rather than one at a time.
