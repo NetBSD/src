@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.8 2001/12/12 15:44:47 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.9 2001/12/16 15:11:19 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.8 2001/12/12 15:44:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.9 2001/12/16 15:11:19 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,13 @@ struct urio_softc {
 
 #define URIO_RW_TIMEOUT 4000	/* ms */
 
+static const struct usb_devno urio_devs[] = {
+	{ USB_VENDOR_DIAMOND, USB_PRODUCT_DIAMOND_RIO500USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO600USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
+};
+#define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
+
 USB_DECLARE_DRIVER(urio);
 
 USB_MATCH(urio)
@@ -139,15 +146,8 @@ USB_MATCH(urio)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	if ( ( uaa->vendor == USB_VENDOR_DIAMOND &&
-	      uaa->product == USB_PRODUCT_DIAMOND_RIO500USB ) ||
-	     ( uaa->vendor == USB_VENDOR_DIAMOND2 &&
-	       ( uaa->product == USB_PRODUCT_DIAMOND2_RIO600USB ||
-		 uaa->product == USB_PRODUCT_DIAMOND2_RIO800USB ) )
-	   )
-		return (UMATCH_VENDOR_PRODUCT);
-	else
-		return (UMATCH_NONE);
+	return (urio_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(urio)
