@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.7 1996/05/16 15:57:10 abrown Exp $ */
+/*	$NetBSD: cache.h,v 1.8 1996/06/12 14:47:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -170,14 +170,19 @@ void	cache_flush __P((caddr_t, u_int));	/* flush region */
  */
 struct cacheinfo {
 	int	c_totalsize;		/* total size, in bytes */
+					/* if split, MAX(icache,dcache) */
 	int	c_enabled;		/* true => cache is enabled */
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
 	int	c_l2linesize;		/* log2(linesize) */
 	int	c_physical;		/* true => cache is physical */
 	int 	c_split;		/* true => cache is split */
-	int 	dc_totalsize;		/* if split, data cache info */
-	int 	dc_enabled;		/*   note: instr cache in c_* */
+	int 	ic_totalsize;		/* instruction cache */
+	int 	ic_enabled;
+	int 	ic_linesize;
+	int 	ic_l2linesize;
+	int 	dc_totalsize;		/* data cache */
+	int 	dc_enabled;
 	int 	dc_linesize;
 	int 	dc_l2linesize;
 	int	ec_totalsize;		/* external cache info */
