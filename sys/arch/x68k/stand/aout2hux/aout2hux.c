@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.4 1999/11/16 00:48:12 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.5 1999/11/19 03:54:08 itohy Exp $
  */
 
 #include <sys/types.h>
@@ -203,7 +203,7 @@ open_elf(fn, fp, hdr, inf)
 		return 1;
 	}
 
-	if (get_uint16(&hdr->e_type) != EL_EXEC) {
+	if (get_uint16(&hdr->e_type) != ET_EXEC) {
 		fprintf(stderr, "%s: not an executable\n", fn);
 		return 1;
 	}
