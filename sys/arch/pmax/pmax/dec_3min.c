@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.11 1999/06/11 00:53:35 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.12 1999/08/13 09:01:50 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.11 1999/06/11 00:53:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.12 1999/08/13 09:01:50 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ extern int physmem_boardmax;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
-extern int _splx_ioasic __P((int));
+extern int _splrestore_ioasic __P((int));
 struct splsw spl_3min = {
 	{ _spllower_ioasic,	0 },
 	{ _splraise_ioasic,	IPL_BIO },
@@ -135,7 +135,7 @@ struct splsw spl_3min = {
 	{ _splraise_ioasic,	IPL_TTY },
 	{ _splraise_ioasic,	IPL_IMP },
 	{ _splraise_ioasic,	IPL_CLOCK },
-	{ _splx_ioasic,		0 },
+	{ _splrestore_ioasic,	0 },
 };
 
 extern struct chiptime *mcclock_addr;	/* XXX */

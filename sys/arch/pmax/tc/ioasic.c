@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.10 1999/05/11 06:43:14 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.11 1999/08/13 09:01:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.10 1999/05/11 06:43:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.11 1999/08/13 09:01:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,59 +54,17 @@ struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
 };
 
-tc_addr_t ioasic_base;
-
-/* XXX XXX XXX */
-#define IOASIC_INTR_SCSI	0x000e0200
-#define XINE_INTR_FDC		0x00000090
-#define	XINE_INTR_VINT		0x00000008
-#define XINE_INTR_DTOP		0x00000001
-#define XINE_INTR_TC_0		0x00001000
-#define XINE_INTR_TC_1		0x00000020
-#define KN03_INTR_TC_0		0x00000800
-#define KN03_INTR_TC_1		0x00001000
-#define KN03_INTR_TC_2		0x00002000
-#define KMIN_INTR_CLOCK		0x00000020
-
-extern u_int32_t iplmask[], oldiplmask[];
-/* XXX XXX XXX */
-
-#define C(x)	(void *)(x)
-
-#if defined(DEC_MAXINE)
-struct ioasic_dev xine_ioasic_devs[] = {
-	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
-	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0,			},
-	{ "isdn",	0x240000, C(SYS_DEV_ISDN),  IOASIC_INTR_ISDN,	},
-	{ "dtop",	0x280000, C(SYS_DEV_DTOP),  XINE_INTR_DTOP,	},
-	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),   XINE_INTR_FDC,	},
-	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
-	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  XINE_INTR_TC_0	},
-	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  XINE_INTR_TC_1	},
-	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  XINE_INTR_VINT	},
-};
-int xine_builtin_ndevs = 7;
-int xine_ioasic_ndevs = sizeof(xine_ioasic_devs)/sizeof(xine_ioasic_devs[0]);
-#endif
-
-#if defined(DEC_3MIN) || defined(DEC_3MAXPLUS)
-struct ioasic_dev kn03_ioasic_devs[] = {
-	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
-	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
-	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), KMIN_INTR_CLOCK,	},
-	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
-	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  KN03_INTR_TC_0	},
-	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  KN03_INTR_TC_1	},
-	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  KN03_INTR_TC_2	},
-};
-int kn03_builtin_ndevs = 5;
-int kn03_ioasic_ndevs = sizeof(kn03_ioasic_devs)/sizeof(kn03_ioasic_devs[0]);
-#endif
-
 struct ioasic_dev *ioasic_devs;
 int ioasic_ndevs, builtin_ndevs;
+
+tc_addr_t ioasic_base;
+
+extern struct ioasic_dev xine_ioasic_devs[];
+extern int xine_builtin_ndevs, xine_ioasic_ndevs;
+extern struct ioasic_dev kmin_ioasic_devs[];
+extern int kmin_builtin_ndevs, kmin_ioasic_ndevs;
+extern struct ioasic_dev kn03_ioasic_devs[];
+extern int kn03_builtin_ndevs, kn03_ioasic_ndevs;
 
 int
 ioasicmatch(parent, cfdata, aux)
@@ -131,8 +89,14 @@ ioasicmatch(parent, cfdata, aux)
 		builtin_ndevs = xine_builtin_ndevs;
 		break;
 #endif
-#if defined(DEC_3MIN) || defined(DEC_3MAXPLUS)
+#if defined(DEC_3MIN)
 	case DS_3MIN:
+		ioasic_devs = kmin_ioasic_devs;
+		ioasic_ndevs = kmin_ioasic_ndevs;
+		builtin_ndevs = kmin_builtin_ndevs;
+		break;
+#endif
+#if defined(DEC_3MAXPLUS)
 	case DS_3MAXPLUS:
 		ioasic_devs = kn03_ioasic_devs;
 		ioasic_ndevs = kn03_ioasic_ndevs;
@@ -153,7 +117,9 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
+#if 0
 	int i, imsk;
+#endif
 
 	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
@@ -168,6 +134,7 @@ ioasicattach(parent, self, aux)
 
 	printf("\n");
 
+#if 0
 	/*
 	 * Turn off all device interrupt bits.
 	 * (This _does_ include TC option slot bits.
@@ -177,7 +144,6 @@ ioasicattach(parent, self, aux)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 
-#if 0
 	(void)ioasic_lance_dma_setup(sc);
 #endif
 
@@ -230,96 +196,24 @@ ioasic_lance_ether_address()
 	return (char *)(ioasic_base + IOASIC_SLOT_2_START);
 }
 
-#if 0 /* Jason's new LANCE DMA region */
-/*
- * DMA area for IOASIC LANCE.
- * XXX Should be done differently, but this is better than it used to be.
- */
-#define LE_IOASIC_MEMSIZE	(128*1024)
-#define LE_IOASIC_MEMALIGN	(128*1024)
-caddr_t le_iomem;
-
-int
-ioasic_lance_dma_setup(sc)
-	struct ioasic_softc *sc;
-{
-	bus_dma_tag_t dmat = sc->sc_dmat;
-	bus_dmamap_t le_dmam;
-	bus_dma_segment_t seg;
-	caddr_t	le_mem;
-	u_int32_t csr;
-	tc_addr_t tca;
-	int rseg;
-
-	/*
-	 * Allocate a DMA area for the chip.
-	 */
-	if (bus_dmamem_alloc(dmat, LE_IOASIC_MEMSIZE, LE_IOASIC_MEMALIGN,
-	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't allocate DMA area for LANCE\n",
-		    sc->sc_dv.dv_xname);
-		return 0;
-	}
-	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
-	    &le_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: can't map DMA area for LANCE\n",
-		    sc->sc_dv.dv_xname);
-		bus_dmamem_free(dmat, &seg, rseg);
-		return 0;
-	}
-
-	/*
-	 * Create and load the DMA map for the DMA area.
-	 */
-	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
-	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &le_dmam)) {
-		printf("%s: can't create DMA map\n", sc->sc_dv.dv_xname);
-		goto bad;
-	}
-	if (bus_dmamap_load(dmat, le_dmam,
-	    &le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load DMA map\n", sc->sc_dv.dv_xname);
-		goto bad;
-	}
-	tca = (tc_addr_t)le_dmam->dm_segs[0].ds_addr;
-#if 0
-	if (tca != le_dmam->dm_segs[0].ds_addr) {
-		printf("%s: bad LANCE DMA address\n", sc->sc_dv.dv_xname);
-		bus_dmamap_unload(dmat, le_dmam);
-		goto bad;
-	}
-#endif
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-		IOASIC_LANCE_DMAPTR,
-		((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f));
-	csr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
-	csr |= IOASIC_CSR_DMAEN_LANCE;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, csr);
-	return tca;
-
- bad:
-	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
-	bus_dmamem_free(dmat, &seg, rseg);
-	return tca;
-}
-#else	/* old NetBSD/pmax code */
+#if 1
 void	ioasic_lance_dma_setup __P((void *));
 
 void
 ioasic_lance_dma_setup(v)
 	void *v;
 {
-	volatile u_int32_t *ldp;
 	tc_addr_t tca;
+	u_int32_t ldp, csr;
 
 	tca = (tc_addr_t)v;
-
-	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(ioasic_base);
-	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
+	ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
+	*(u_int32_t *)IOASIC_REG_LANCE_DMAPTR(ioasic_base) = ldp;
 	tc_wmb();
 
-	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
-	    IOASIC_CSR_DMAEN_LANCE;
+	csr = *(u_int32_t *)IOASIC_REG_CSR(ioasic_base);
+	csr |= IOASIC_CSR_DMAEN_LANCE;
+	*(u_int32_t *)IOASIC_REG_CSR(ioasic_base) = csr;
 	tc_wmb();
 }
 #endif
@@ -327,10 +221,9 @@ ioasic_lance_dma_setup(v)
 /*
  * spl(9) for IOASIC DECstations
  */
-
 int _splraise_ioasic __P((int));
 int _spllower_ioasic __P((int));
-int _splx_ioasic __P((int));
+int _splrestore_ioasic __P((int));
 
 int
 _splraise_ioasic(lvl)
@@ -339,33 +232,32 @@ _splraise_ioasic(lvl)
 	u_int32_t new;
 
 	new = oldiplmask[lvl] = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-	new &= ~iplmask[lvl];
+	new &= iplmask[IPL_HIGH] &~ iplmask[lvl];
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = new;
 	tc_wmb();
-	return lvl | _splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1);
+	return lvl;
 }
 
 int
-_spllower_ioasic(mask)
+_spllower_ioasic(lvl)
 {
-	int s;
+	u_int32_t new;
 
-	s = IPL_NONE | _spllower(mask);
-	oldiplmask[IPL_NONE] = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+	new = oldiplmask[lvl] = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = iplmask[IPL_HIGH];
 	tc_wmb();
-	return s;
+	return lvl;
 }
 
 int
-_splx_ioasic(lvl)
+_splrestore_ioasic(lvl)
 	int lvl;
 {
-	(void)_splset(lvl & MIPS_INT_MASK);
-	if (lvl & 0xff) {
-		*(u_int32_t *)(ioasic_base + IOASIC_IMSK) =
-			oldiplmask[lvl & 0xff];
+	if (lvl > IPL_HIGH)
+		_splset(MIPS_SR_INT_IE | lvl);
+	else {
+		*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = oldiplmask[lvl];
 		tc_wmb();
 	}
-	return 0;
+	return lvl;
 }
