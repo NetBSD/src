@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.5 2002/09/27 15:35:48 provos Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.6 2002/10/09 00:06:57 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -354,8 +354,7 @@ ixpcomhwiflow(tp, block)
 }
 
 static void
-ixpcom_filltx(sc)
-	struct ixpcom_softc *sc;
+ixpcom_filltx(struct ixpcom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -434,9 +433,7 @@ out:
 }
 
 static void
-ixpcom_break(sc, onoff)
-	struct ixpcom_softc *sc;
-	int onoff;
+ixpcom_break(struct ixpcom_softc *sc, int onoff)
 {
 	if (onoff)
 		SET(ixpcom_cr, CR_BRK);
@@ -453,8 +450,7 @@ ixpcom_break(sc, onoff)
 }
 
 static void
-ixpcom_shutdown(sc)
-	struct ixpcom_softc *sc;
+ixpcom_shutdown(struct ixpcom_softc *sc)
 {
 	int s;
 
@@ -785,8 +781,7 @@ ixpcom_iflush(sc)
 }
 
 static void
-ixpcom_set_cr(sc)
-	struct ixpcom_softc *sc;
+ixpcom_set_cr(struct ixpcom_softc *sc)
 {
 	/* XXX */
 	ixpcom_cr &= ~(CR_RIE | CR_XIE);
@@ -796,13 +791,9 @@ ixpcom_set_cr(sc)
 }
 
 /* Initialization for serial console */
-int
-ixpcominit(iot, iobase, baud, cflag, iohp)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	int baud;
-	tcflag_t cflag;
-	bus_space_handle_t *iohp;
+static int
+ixpcominit(bus_space_tag_t iot, bus_addr_t iobase, int baud,
+    tcflag_t cflag, bus_space_handle_t *iohp)
 {
 	int cr;
 

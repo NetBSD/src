@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.8 2002/09/27 15:36:01 provos Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.9 2002/10/09 00:08:23 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -223,7 +223,7 @@ void ixdp_ixp12x0_cc_setup(void);
 static void fakecninit();
 #endif
 
-extern int db_trapper();
+extern int db_trapper(u_int, u_int, trapframe_t *, int);
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
