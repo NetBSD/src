@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.675 2004/02/27 14:52:01 skrll Exp $
+#	$NetBSD: mi,v 1.676 2004/03/14 09:23:22 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2038,6 +2038,11 @@
 ./usr/share/man/cat2/rename.0			comp-c-catman		.cat
 ./usr/share/man/cat2/revoke.0			comp-c-catman		.cat
 ./usr/share/man/cat2/rmdir.0			comp-c-catman		.cat
+./usr/share/man/cat2/sa_enable.0		comp-c-catman		.cat
+./usr/share/man/cat2/sa_setconcurrency.0	comp-c-catman		.cat
+./usr/share/man/cat2/sa_register.0		comp-c-catman		.cat
+./usr/share/man/cat2/sa_stacks.0		comp-c-catman		.cat
+./usr/share/man/cat2/sa_yield.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat2/seek.0			comp-c-catman		.cat
 ./usr/share/man/cat2/select.0			comp-c-catman		.cat
@@ -5655,6 +5660,11 @@
 ./usr/share/man/man2/rename.2			comp-c-man		.man
 ./usr/share/man/man2/revoke.2			comp-c-man		.man
 ./usr/share/man/man2/rmdir.2			comp-c-man		.man
+./usr/share/man/man2/sa_enable.2		comp-c-man		.man
+./usr/share/man/man2/sa_setconcurrency.2	comp-c-man		.man
+./usr/share/man/man2/sa_register.2		comp-c-man		.man
+./usr/share/man/man2/sa_stacks.2		comp-c-man		.man
+./usr/share/man/man2/sa_yield.2			comp-c-man		.man
 ./usr/share/man/man2/sbrk.2			comp-c-man		.man
 ./usr/share/man/man2/seek.2			comp-c-man		.man
 ./usr/share/man/man2/select.2			comp-c-man		.man
