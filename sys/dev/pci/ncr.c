@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.36 1996/06/03 20:30:34 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.37 1996/07/15 16:40:52 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -211,6 +211,7 @@ extern PRINT_ADDR();
 
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
 #define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_bc, (void *)(va))
 #endif
 
@@ -1329,7 +1330,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.36 1996/06/03 20:30:34 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.37 1996/07/15 16:40:52 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
