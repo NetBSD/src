@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.38 2005/01/08 22:31:28 cube Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.39 2005/03/11 20:55:10 bouyer Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,6 +88,7 @@
 #	rx*	MSCP floppy disk (RX33/50/...)
 #	up*	other UNIBUS devices (e.g. on Emulex SC-21V controller)
 #	vnd*	"file" pseudo-disks
+#	xbd*	Xen virtual disks
 #	xd*	Xylogic 753/7053 disks
 #	xy*	Xylogic 450/451 disks
 #
@@ -150,6 +151,7 @@
 #	dhu*    UNIBUS DHU11 (vax)
 #	dmz*    UNIBUS DMZ32 (vax)
 #	dl*	UNIBUS DL11 (vax)
+#	xencons	Xen virtual console
 #
 # Terminal multiplexors:
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
@@ -275,6 +277,7 @@
 #	view*	generic interface to graphic displays (Amiga)
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
+#	xenevt	Xen event interface
 
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
@@ -565,6 +568,14 @@ wsmux*)
 	mkdev wsmuxctl$unit c %wsmux_chr% $(($unit + 128)) 200
 	;;
 
+xenevt)
+	mkdev xenevt c %xenevt_chr% 0
+	;;
+
+xencons)
+	mkdev xencons c %xencons_chr% 0
+	;;
+
 ttyEstat)
 	mkdev ttyEstat c %wsdisplay_chr% 254
 	;;
@@ -671,6 +682,11 @@ ed*)
 
 ofdisk*)
 	name=ofdisk; unit=${i#ofdisk}; blk=%ofdisk_blk%; chr=%ofdisk_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+xbd*)
+	name=xbd; unit=${i#xbd}; blk=%xbd_blk%; chr=%xbd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
