@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.h,v 1.5 1998/02/13 08:28:59 enami Exp $	*/
+/*	$NetBSD: ss_mustek.h,v 1.6 2005/01/31 23:06:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -67,18 +67,18 @@
  */
 
 struct mustek_set_window_cmd {
-	u_int8_t opcode;		/* 0x04 */
-	u_int8_t reserved[3];
-	u_int8_t length;		/* in bytes */
-	u_int8_t control;
+	uint8_t opcode;		/* 0x04 */
+	uint8_t reserved[3];
+	uint8_t length;		/* in bytes */
+	uint8_t control;
 };
 
 struct mustek_window {
-	u_int8_t header;		/* unit-defines also apply */
-	u_int8_t tl_x[2];		/* LSB */
-	u_int8_t tl_y[2];
-	u_int8_t br_x[2];
-	u_int8_t br_y[2];
+	uint8_t header;		/* unit-defines also apply */
+	uint8_t tl_x[2];		/* LSB */
+	uint8_t tl_y[2];
+	uint8_t br_x[2];
+	uint8_t br_y[2];
 };
 
 struct mustek_set_window_data {
@@ -101,32 +101,32 @@ struct mustek_set_window_data {
 };
 
 struct mustek_read_cmd {
-	u_int8_t opcode;		/* 0x08 */
-	u_int8_t reserved;
-	u_int8_t length[3];
-	u_int8_t control;
+	uint8_t opcode;		/* 0x08 */
+	uint8_t reserved;
+	uint8_t length[3];
+	uint8_t control;
 };
 
 struct mustek_get_status_cmd {
-	u_int8_t opcode;		/* 0x0f */
-	u_int8_t reserved[3];
-	u_int8_t length;		/* 0x06 */
-	u_int8_t control;
+	uint8_t opcode;		/* 0x0f */
+	uint8_t reserved[3];
+	uint8_t length;		/* 0x06 */
+	uint8_t control;
 };
 
 struct mustek_get_status_data {
 #define MUSTEK_READY 0
 #define MUSTEK_BUSY  -1	
-	u_int8_t ready_busy;		/* 0 = ready */
-	u_int8_t bytes_per_line[2];	/* LSB */
-	u_int8_t lines[3];		/* LSB */
+	uint8_t ready_busy;		/* 0 = ready */
+	uint8_t bytes_per_line[2];	/* LSB */
+	uint8_t lines[3];		/* LSB */
 };
 
 struct mustek_mode_select_cmd {
-	u_int8_t opcode;		/* 0x15 */
-	u_int8_t reserved[2];
-	u_int8_t length[2];
-	u_int8_t control;
+	uint8_t opcode;		/* 0x15 */
+	uint8_t reserved[2];
+	uint8_t length[2];
+	uint8_t control;
 };
 
 /*
@@ -146,19 +146,19 @@ struct mustek_mode_select_data {
 #define MUSTEK_MODE_MASK		0x83
 #define MUSTEK_HT_PATTERN_BUILTIN	0x00
 #define MUSTEK_HT_PATTERN_DOWNLOADED	0x10
-	u_int8_t mode;
-	u_int8_t resolution;
-	u_int8_t brightness;
-	u_int8_t contrast;
-	u_int8_t grain;			/* 0 = 8x8, .....  5 = 2x2  */
-	u_int8_t velocity;		/* 0 = fast, ...., 4 = slow */
-	u_int8_t reserved[2];
-	u_int8_t paperlength[2];	/* LSB */
+	uint8_t mode;
+	uint8_t resolution;
+	uint8_t brightness;
+	uint8_t contrast;
+	uint8_t grain;			/* 0 = 8x8, .....  5 = 2x2  */
+	uint8_t velocity;		/* 0 = fast, ...., 4 = slow */
+	uint8_t reserved[2];
+	uint8_t paperlength[2];	/* LSB */
 };
 
 struct mustek_start_scan_cmd {
-	u_int8_t opcode;		/* 0x1b */
-	u_int8_t reserved[3];
+	uint8_t opcode;		/* 0x1b */
+	uint8_t reserved[3];
 #define MUSTEK_SCAN_STOP	0x00
 #define MUSTEK_SCAN_START	0x01
 #define MUSTEK_GRAY_FILTER	0x00
@@ -169,6 +169,6 @@ struct mustek_start_scan_cmd {
 #define MUSTEK_BIT_MODE		0x00
 #define MUSTEK_RES_STEP_1	0x00
 #define MUSTEK_RES_STEP_10	0x80
-	u_int8_t mode;
-	u_int8_t control;
+	uint8_t mode;
+	uint8_t control;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.174 2005/01/31 21:13:16 reinoud Exp $ */
+/*	$NetBSD: st.c,v 1.175 2005/01/31 23:06:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.174 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.175 2005/01/31 23:06:42 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -328,16 +328,16 @@ static void	ststart(struct scsipi_periph *);
 static void	strestart(void *);
 static void	stdone(struct scsipi_xfer *, int);
 static int	st_read(struct st_softc *, char *, int, int);
-static int	st_space(struct st_softc *, int, u_int, int);
+static int	st_space(struct st_softc *, int, uint, int);
 static int	st_write_filemarks(struct st_softc *, int, int);
 static int	st_check_eod(struct st_softc *, boolean, int *, int);
-static int	st_load(struct st_softc *, u_int, int);
-static int	st_rewind(struct st_softc *, u_int, int);
+static int	st_load(struct st_softc *, uint, int);
+static int	st_rewind(struct st_softc *, uint, int);
 static int	st_interpret_sense(struct scsipi_xfer *);
 static int	st_touch_tape(struct st_softc *);
 static int	st_erase(struct st_softc *, int full, int flags);
-static int	st_rdpos(struct st_softc *, int, u_int32_t *);
-static int	st_setpos(struct st_softc *, int, u_int32_t *);
+static int	st_rdpos(struct st_softc *, int, uint32_t *);
+static int	st_setpos(struct st_softc *, int, uint32_t *);
 
 static const struct scsipi_periphsw st_switch = {
 	st_interpret_sense,
@@ -541,7 +541,7 @@ st_loadquirks(struct st_softc *st)
 static int
 stopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	u_int stmode, dsty;
+	uint stmode, dsty;
 	int error, sflags, unit, tries, ntries;
 	struct st_softc *st;
 	struct scsipi_periph *periph;
@@ -824,7 +824,7 @@ static int
 st_mount_tape(dev_t dev, int flags)
 {
 	int unit;
-	u_int dsty;
+	uint dsty;
 	struct st_softc *st;
 	struct scsipi_periph *periph;
 	int error = 0;
@@ -1384,7 +1384,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
  * knows about the internals of this device
  */
 static int
-stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
+stioctl(dev_t dev, ulong cmd, caddr_t arg, int flag, struct proc *p)
 {
 	int error = 0;
 	int unit;
@@ -1392,7 +1392,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	int flags;
 	struct st_softc *st;
 	int hold_blksize;
-	u_int8_t hold_density;
+	uint8_t hold_density;
 	struct mtop *mt = (struct mtop *) arg;
 
 	/*
@@ -1405,7 +1405,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
-	switch ((u_int) cmd) {
+	switch ((uint) cmd) {
 
 	case MTIOCGET: {
 		struct mtget *g = (struct mtget *) arg;
@@ -1564,19 +1564,19 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		break;
 
 	case MTIOCRDSPOS:
-		error = st_rdpos(st, 0, (u_int32_t *) arg);
+		error = st_rdpos(st, 0, (uint32_t *) arg);
 		break;
 
 	case MTIOCRDHPOS:
-		error = st_rdpos(st, 1, (u_int32_t *) arg);
+		error = st_rdpos(st, 1, (uint32_t *) arg);
 		break;
 
 	case MTIOCSLOCATE:
-		error = st_setpos(st, 0, (u_int32_t *) arg);
+		error = st_setpos(st, 0, (uint32_t *) arg);
 		break;
 
 	case MTIOCHLOCATE:
-		error = st_setpos(st, 1, (u_int32_t *) arg);
+		error = st_setpos(st, 1, (uint32_t *) arg);
 		break;
 
 
@@ -1695,7 +1695,7 @@ st_erase(struct st_softc *st, int full, int flags)
  * skip N blocks/filemarks/seq filemarks/eom
  */
 static int
-st_space(struct st_softc *st, int number, u_int what, int flags)
+st_space(struct st_softc *st, int number, uint what, int flags)
 {
 	struct scsi_space cmd;
 	int error;
@@ -1883,7 +1883,7 @@ st_check_eod(struct st_softc *st, boolean position, int *nmarks, int flags)
  * load/unload/retension
  */
 static int
-st_load(struct st_softc *st, u_int type, int flags)
+st_load(struct st_softc *st, uint type, int flags)
 {
 	int error;
 	struct scsi_load cmd;
@@ -1927,7 +1927,7 @@ st_load(struct st_softc *st, u_int type, int flags)
  *  Rewind the device
  */
 static int
-st_rewind(struct st_softc *st, u_int immediate, int flags)
+st_rewind(struct st_softc *st, uint immediate, int flags)
 {
 	struct scsi_rewind cmd;
 	int error;
@@ -1965,10 +1965,10 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 }
 
 static int
-st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
+st_rdpos(struct st_softc *st, int hard, uint32_t *blkptr)
 {
 	int error;
-	u_int8_t posdata[20];
+	uint8_t posdata[20];
 	struct scsi_tape_read_position cmd;
 
 	/*
@@ -2021,7 +2021,7 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 }
 
 static int
-st_setpos(struct st_softc *st, int hard, u_int32_t *blkptr)
+st_setpos(struct st_softc *st, int hard, uint32_t *blkptr)
 {
 	int error;
 	struct scsi_tape_locate cmd;
@@ -2066,7 +2066,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 	struct st_softc *st = (void *)periph->periph_dev;
 	int retval = EJUSTRETURN;
 	int doprint = ((xs->xs_control & XS_CTL_SILENT) == 0);
-	u_int8_t key;
+	uint8_t key;
 	int32_t info;
 
 	/*
