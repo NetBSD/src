@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.5 1997/03/15 18:11:57 is Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.6 1997/03/17 03:44:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: devar.h,v 1.11 1997/02/19 16:22:18 thomas Exp
+ * Id: devar.h,v 1.14 1997/03/15 17:28:19 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
@@ -331,6 +331,7 @@ typedef enum {
     TULIP_21140_SMC_9332,		/* SMC 9332 */
     TULIP_21140_COGENT_EM100,		/* Cogent EM100 100 only */
     TULIP_21140_ZNYX_ZX34X,		/* ZNYX ZX342 10/100 */
+    TULIP_21140_ASANTE,			/* AsanteFast 10/100 */
     TULIP_21041_GENERIC			/* Generic 21041 card */
 } tulip_board_t;
 
@@ -364,10 +365,15 @@ typedef enum {
 
 typedef struct {
     tulip_board_t bd_type;
-    int (*bd_media_probe)(tulip_softc_t * const sc);
+    void (*bd_media_probe)(tulip_softc_t * const sc);
     void (*bd_media_select)(tulip_softc_t * const sc);
     void (*bd_media_poll)(tulip_softc_t * const sc, tulip_mediapoll_event_t event);
     void (*bd_media_preset)(tulip_softc_t * const sc);
+#if defined(__bsdi__)
+    struct ifmedia_entry *bd_media_list;
+    int bd_media_cnt;
+    int bd_media_options_mask;
+#endif
 } tulip_boardsw_t;
 
 /*
@@ -457,8 +463,12 @@ struct _tulip_softc_t {
     caddr_t tulip_bpf;			/* for BPF */
 #else
     prf_t tulip_pf;			/* printf function */
-#endif
-#endif
+#if _BSDI_VERSION >= 199701
+    struct mii_data tulip_mii;		/* Generic MII and media data */
+#define	tulip_ifmedia tulip_mii.mii_media
+#endif /* _BSDI_VERSION >= 199701 */
+#endif /* _BSDI_VERSION < 199401 */
+#endif /* __bsdi__ */
 #if defined(__NetBSD__)
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
@@ -467,18 +477,20 @@ struct _tulip_softc_t {
     bus_space_handle_t tulip_bushandle;	/* CSR region handle */
     pci_chipset_tag_t tulip_pc;
     struct ethercom tulip_ec;
+    u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
 #else
     struct arpcom tulip_ac;
 #endif
+    struct ifmedia tulip_ifmedia;
     tulip_regfile_t tulip_csrs;
     u_int32_t tulip_flags;
 #define	TULIP_WANTSETUP		0x00000001
 #define	TULIP_WANTHASH		0x00000002
 #define	TULIP_DOINGSETUP	0x00000004
-#define	TULIP_ALTPHYS		0x00000008
+#define	TULIP_DEVICEPROBE	0x00000008
 #define	TULIP_PRINTMEDIA	0x00000010
 #define	TULIP_TXPROBE_ACTIVE	0x00000020
-#define	TULIP_TXPROBE_OK	0x00000040
+#define	TULIP_xxx1		0x00000040
 #define	TULIP_WANTRXACT		0x00000080
 #define	TULIP_RXACT		0x00000100
 #define	TULIP_INRESET		0x00000200
@@ -593,10 +605,9 @@ struct _tulip_softc_t {
     tulip_srom_connection_t tulip_conntype;
     tulip_desc_t tulip_rxdescs[TULIP_RXDESCS];
     tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
-#if defined(__NetBSD__)
-    u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
-#endif
 };
+
+#define	TULIP_DO_AUTOSENSE(sc)	(IFM_SUBTYPE((sc)->tulip_ifmedia.ifm_media) == IFM_AUTO)
 
 #if defined(TULIP_HDR_DATA)
 static const char * const tulip_chipdescs[] = { 
@@ -627,6 +638,23 @@ static const char * const tulip_mediums[] = {
     "100baseFX",		/* TULIP_MEDIA_100BASEFX */
     "Full Duplex 100baseFX",	/* TULIP_MEDIA_100BASEFX_FD */
 };
+
+#if defined(IFM_ETHER)
+static const int tulip_media_to_ifmedia[] = {
+    IFM_ETHER | IFM_NONE,		/* TULIP_MEDIA_UNKNOWN */
+    IFM_ETHER | IFM_10_T,		/* TULIP_MEDIA_10BASET */
+    IFM_ETHER | IFM_10_T | IFM_FDX,	/* TULIP_MEDIA_10BASET_FD */
+    IFM_ETHER | IFM_10_2,		/* TULIP_MEDIA_BNC */
+    IFM_ETHER | IFM_10_5,		/* TULIP_MEDIA_AUI */
+    IFM_ETHER | IFM_10_2,		/* TULIP_MEDIA_EXTSIA */
+    IFM_ETHER | IFM_10_5,		/* TULIP_MEDIA_AUIBNC */
+    IFM_ETHER | IFM_100_TX,		/* TULIP_MEDIA_100BASET */
+    IFM_ETHER | IFM_100_TX | IFM_FDX,	/* TULIP_MEDIA_100BASET_FD */
+    IFM_ETHER | IFM_100_T4,		/* TULIP_MEDIA_100BASET4 */
+    IFM_ETHER | IFM_100_FX,		/* TULIP_MEDIA_100BASEFX */
+    IFM_ETHER | IFM_100_FX | IFM_FDX,	/* TULIP_MEDIA_100BASEFX_FD */
+};
+#endif /* defined(IFM_ETHER) */
 
 static const char * const tulip_system_errors[] = {
     "parity error",
@@ -717,18 +745,6 @@ static const struct {
 };
 #endif /* TULIP_HDR_DATA */
 
-#ifndef IFF_ALTPHYS
-#define	IFF_ALTPHYS	IFF_LINK2		/* In case it isn't defined */
-#endif
-
-#ifndef IFF_FULLDUPLEX
-#define	IFF_FULLDUPLEX	IFF_LINK1
-#endif
-
-#if (IFF_ALTPHYS&IFF_FULLDUPLEX) != 0
-#error IFF_ALTPHYS and IFF_FULLDUPLEX overlap
-#endif
-
 /*
  * This driver supports a maximum of 32 tulip boards.
  * This should be enough for the forseeable future.
@@ -785,7 +801,7 @@ NETISR_SET(NETISR_DE, tulip_softintr);
 
 #if defined(__bsdi__)
 typedef int ifnet_ret_t;
-typedef int ioctl_cmd_t;
+typedef u_long ioctl_cmd_t;
 extern struct cfdriver decd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)		(TULIP_UNIT_TO_SOFTC((ifp)->if_unit))
@@ -795,6 +811,7 @@ extern struct cfdriver decd;
 #endif
 #define	loudprintf			aprint_verbose
 #define	printf				(*sc->tulip_pf)
+#define	MCNT(x) (sizeof(x) / sizeof(struct ifmedia_entry))
 #elif _BSDI_VERSION <= 199401
 #define	DRQNONE				0
 #define	loudprintf			printf
@@ -821,9 +838,9 @@ extern struct cfdriver de_cd;
 #define	loudprintf			printf
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
-#define TULIP_ETHERCOM			sc->tulip_ec
-#define TULIP_MULTICAST_CNT		sc->tulip_ec.ec_multicnt
-#define TULIP_ARPINITPAR		ifp
+#define	TULIP_ETHERCOM			sc->tulip_ec
+#define	TULIP_MULTICAST_CNT		sc->tulip_ec.ec_multicnt
+#define	TULIP_ARPINITPAR		ifp
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
@@ -841,40 +858,36 @@ extern struct cfdriver de_cd;
 #define	TULIP_BURSTSIZE(unit)		3
 #endif
 
-#ifndef TULIP_ETHERCOM		
-#define TULIP_ETHERCOM			sc->tulip_ac
+#ifndef TULIP_ETHERCOM
+#define	TULIP_ETHERCOM			sc->tulip_ac
 #endif
 
-#ifndef TULIP_MULTICAST_CNT		
-#define TULIP_MULTICAST_CNT		sc->tulip_ac.ac_multicnt
+#ifndef TULIP_MULTICAST_CNT
+#define	TULIP_MULTICAST_CNT		sc->tulip_ac.ac_multicnt
 #endif
 
-#ifndef TULIP_ARPINITPAR		
-#define TULIP_ARPINITPAR		&sc->tulip_ac
+#ifndef TULIP_ARPINITPAR
+#define	TULIP_ARPINITPAR		&sc->tulip_ac
 #endif
 
 #if defined(__NetBSD__)
 #define	tulip_if	tulip_ec.ec_if
-#define	tulip_name	tulip_ec.ec_if.if_name
-#ifndef tulip_unit
-#define	tulip_unit	tulip_ec.ec_if.if_unit
-#endif
 #define	tulip_hwaddr	tulip_enaddr
-#define tulip_bpf	tulip_ec.ec_if.if_bpf
+#define	tulip_bpf	tulip_ec.ec_if.if_bpf
 
-#else /* __NetBSD__ */
+#else /* ! __NetBSD__ */
 
 #define	tulip_if	tulip_ac.ac_if
-#define	tulip_name	tulip_ac.ac_if.if_name
 #ifndef tulip_unit
 #define	tulip_unit	tulip_ac.ac_if.if_unit
 #endif
+#define	tulip_name	tulip_ac.ac_if.if_name
 #define	tulip_hwaddr	tulip_ac.ac_enaddr
-#endif /* __NetBSD__ */
 
 #if !defined(tulip_bpf) && (!defined(__bsdi__) || _BSDI_VERSION >= 199401)
 #define	tulip_bpf	tulip_ac.ac_if.if_bpf
 #endif
+#endif /* __NetBSD__ */
 
 #if !defined(tulip_intrfunc_t)
 #define	tulip_intrfunc_t	int
