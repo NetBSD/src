@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2000/01/24 02:54:01 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.7 2000/04/22 20:29:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -210,12 +210,24 @@ scbinit()
 	mtpr(20, PR_IPL);
 }
 
+extern int jbuf[10];
+extern int sluttid, senast, skip;
+
 void
 rtimer()
 {
 	mtpr(31, PR_IPL);
 	tickcnt++;
 	mtpr(0xc1, PR_ICCS);
+	if (skip)
+		return;
+	if (vax_boardtype == VAX_BTYP_46) {
+		int nu = sluttid - getsecs();
+		if (senast != nu) {
+			mtpr(20, PR_IPL);
+			longjmp(jbuf);
+		}
+	}
 }
 
 asm("
