@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsreg.h,v 1.2 2002/11/04 14:56:10 kent Exp $	*/
+/*	$NetBSD: ydsreg.h,v 1.3 2003/03/12 13:28:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -76,8 +76,8 @@
 # define YDS_PCI_EX_LEGACY_JSIO_204	(0x0080 << 16)
 # define YDS_PCI_EX_LEGACY_JSIO_205	(0x00c0 << 16)
 # define YDS_PCI_EX_LEGACY_MAIM		(0x0100 << 16)
-# define YDS_PCI_EX_LEGACY_SBMOD_PCI	(0x0000 << 16)
-# define YDS_PCI_EX_LEGACY_SBMOD_DDMA	(0x1000 << 16)
+# define YDS_PCI_EX_LEGACY_SMOD_PCI	(0x0000 << 16)
+# define YDS_PCI_EX_LEGACY_SMOD_DDMA	(0x1000 << 16)
 # define YDS_PCI_EX_LEGACY_SBVER_3	(0x0000 << 16)
 # define YDS_PCI_EX_LEGACY_SBVER_2	(0x2000 << 16)
 # define YDS_PCI_EX_LEGACY_SBVER_1	(0x4000 << 16)
