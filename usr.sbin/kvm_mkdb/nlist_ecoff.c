@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.1 1996/09/29 02:19:58 cgd Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.2 1996/10/03 23:05:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: nlist_ecoff.c,v 1.1 1996/09/29 02:19:58 cgd Exp $";
+static char *rcsid = "$NetBSD: nlist_ecoff.c,v 1.2 1996/10/03 23:05:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ create_knlist_ecoff(name, db)
 	DBT key, data;
 	char *mappedfile, *symname, *fsymname, *tmpcp;
 	size_t mappedsize, symnamesize, fsymnamesize;
-	u_long symhdroff, extrstroff, kerntextoff;
+	u_long symhdroff, extrstroff;
 	u_long symhdrsize, i, nesyms;
 	int fd, rv;
 
@@ -130,12 +130,6 @@ create_knlist_ecoff(name, db)
 	 * We've recognized it as an ECOFF binary.  From here
 	 * on out, all errors are fatal.
 	 */
-
-	/*
-	 * Find the start of the kernel's text, for later use in
-	 * setting up the version string's entry.
-	 */
-	kerntextoff = get_kerntext(name);
 
 	/*
 	 * Find the symbol list and string table.
@@ -223,11 +217,27 @@ create_knlist_ecoff(name, db)
 		 * entered string) of the version string.
 		 */
 		if (strcmp((char *)key.data, VRS_SYM) == 0) {
+			unsigned long vma;
+
 			key.data = (u_char *)VRS_KEY;
 			key.size = sizeof(VRS_KEY) - 1;
+
 			/* Find the version string, relative to start */
-			data.data = strdup(&mappedfile[nbuf.n_value -
-			    kerntextoff + ECOFF_TXTOFF(exechdrp)]);
+			vma = nbuf.n_value;
+			if (exechdrp->a.text_start <= vma &&
+		            vma <= (exechdrp->a.text_start + exechdrp->a.tsize))
+                		vma = vma - exechdrp->a.text_start +
+				    ECOFF_TXTOFF(exechdrp);
+			else if (exechdrp->a.data_start <= vma &&
+			    vma <= (exechdrp->a.data_start + exechdrp->a.dsize))
+				vma = vma - exechdrp->a.data_start +
+				    ECOFF_DATOFF(exechdrp);
+			else {
+				warn("version string neither text nor data");
+				punt();
+			}
+			data.data = strdup(&mappedfile[vma]);
+
 			/* assumes newline terminates version. */
 			if ((tmpcp = strchr(data.data, '\n')) != NULL)
 				*tmpcp = '\0';
