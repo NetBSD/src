@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.20 2002/10/02 16:51:26 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.20 2002/10/02 16:51:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.21 2003/04/01 02:04:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.20 2002/10/02 16:51:26 thorpej Exp
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
+#include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 #if defined(__alpha__)
 #include <machine/intr.h>
@@ -410,7 +411,7 @@ lmc_busdma_allocmem(
 {
     bus_dma_segment_t segs[1];
     int nsegs, error;
-    error = bus_dmamem_alloc(sc->lmc_dmatag, size, 1, NBPG,
+    error = bus_dmamem_alloc(sc->lmc_dmatag, size, 1, PAGE_SIZE,
 			     segs, sizeof(segs)/sizeof(segs[0]),
 			     &nsegs, BUS_DMA_NOWAIT);
     if (error == 0) {
