@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.93.2.2 1999/02/25 03:56:50 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.93.2.3 1999/04/09 04:29:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2183,6 +2183,12 @@ vfs_shutdown()
 	register struct buf *bp;
 	int iter, nbusy;
 
+	/*
+	 * If we've panic'd, don't make the situation potentially worse.
+	 */
+	if (panicstr != NULL)
+		return;
+
 	printf("syncing disks... ");
 
 	/* XXX Should suspend scheduling. */
@@ -2206,13 +2212,6 @@ vfs_shutdown()
 		return;
 	} else
 		printf("done\n");
-
-	/*
-	 * If we've panic'd, don't make the situation potentially
-	 * worse by unmounting the file systems.
-	 */
-	if (panicstr != NULL)
-		return;
 
 	/* Release inodes held by texts before update. */
 #if !defined(UVM)
