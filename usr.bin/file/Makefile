@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1999/11/01 17:39:26 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2000/01/23 18:00:38 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic
-all:		file magic
+realall:		file magic
 
 MAGDIRF:sh=	echo $(.CURDIR)/magdir/[0-9a-z]*
 MAGFILES=	$(.CURDIR)/Header \
