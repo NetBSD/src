@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $	*/
+/*	$NetBSD: crib.c,v 1.14 2001/02/05 00:28:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $");
+__RCSID("$NetBSD: crib.c,v 1.14 2001/02/05 00:28:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,8 +196,6 @@ makeboard()
 void
 gamescore()
 {
-	extern int Lastscore[];
-
 	if (pgames || cgames) {
 		mvprintw(SCORE_Y + 1, SCORE_X + 28, "Games: %3d", pgames);
 		mvprintw(SCORE_Y + 7, SCORE_X + 28, "Games: %3d", cgames);
