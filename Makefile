@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.219 2003/07/25 00:26:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.220 2003/07/25 19:20:47 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -161,6 +161,11 @@ postinstall-fix-obsolete: .NOTMAIN
 #
 # Targets (in order!) called by "make build".
 #
+.if ${USE_TOOLS_TOOLCHAIN} == "no"
+LIBGCC_EXT=3
+.else
+LIBGCC_EXT=
+.endif
 
 BUILDTARGETS+=	check-tools
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
@@ -180,7 +185,7 @@ BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-tools-compat
 .if ${MKGCC} != "no"
-BUILDTARGETS+=	do-gnu-lib-libgcc
+BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib-libdes do-lib do-gnu-lib \
 		do-ld.so do-build
@@ -312,7 +317,7 @@ do-${targ}: ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu gnu/lib/libgcc lib/libc lib/libdes lib gnu/lib
+.for dir in tools tools/compat lib/csu gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib
 do-${dir:S/\//-/g}:
 .for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
