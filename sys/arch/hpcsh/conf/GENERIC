@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.34 2004/06/16 15:07:40 christos Exp $
+# $NetBSD: GENERIC,v 1.35 2004/06/18 15:04:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -183,7 +183,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# kernel symbol table interface

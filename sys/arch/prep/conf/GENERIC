@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2004/06/16 15:07:41 christos Exp $
+# $NetBSD: GENERIC,v 1.76 2004/06/18 15:04:05 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.75 $"
+#ident		"GENERIC-$Revision: 1.76 $"
 
 maxusers	32
 
@@ -512,7 +512,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator

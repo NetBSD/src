@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.675 2004/05/29 12:12:28 sekiya Exp $
+#	$NetBSD: files,v 1.676 2004/06/18 15:02:29 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -43,6 +43,8 @@ defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defflag	opt_ntp.h		PPS_SYNC NTP
+
+defflag	opt_ptm.h		NO_DEV_PTM
 
 defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
 defflag	opt_malloclog.h		MALLOCLOG
@@ -1015,7 +1017,6 @@ defpseudo md:		disk
 defpseudo fss:		disk
 
 defpseudo pty:		tty
-defpseudo ptm:		tty
 defpseudo tb:		tty
 defpseudo rnd
 defpseudo ksyms
@@ -1200,7 +1201,7 @@ file	kern/sysv_sem.c			sysvsem
 file	kern/sysv_shm.c			sysvshm
 file	kern/tty.c
 file	kern/tty_conf.c
-file	kern/tty_pty.c			pty | ptm		needs-flag
+file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_subr.c
 file	kern/tty_tb.c			tb			needs-count
 file	kern/tty_tty.c
