@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/01/26 00:40:40 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2004/05/23 02:24:50 lukem Exp $
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPRIVATELIB=	yes
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -15,8 +13,5 @@ SRCS=	basename.c c-stack.c cmpbuf.c error.c exclude.c exitfail.c \
 	freesoft.c \
 	hard-locale.c imaxtostr.c offtostr.c prepargs.c posixver.c quotesys.c \
 	regex.c setmode.c strftime.c umaxtostr.c xmalloc.c xstrtoumax.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
