@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.48 1999/01/24 02:39:30 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.49 1999/01/25 23:17:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.48 1999/01/24 02:39:30 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.49 1999/01/25 23:17:37 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -417,7 +417,8 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 			mtime = sb.st_mtime;
 			filesize = sb.st_size;
 		}
-		fprintf(ttyout, "Copying %s\n", path);
+		if (verbose)
+			fprintf(ttyout, "Copying %s\n", path);
 	} else {				/* ftp:// or http:// URLs */
 		if (proxyenv == NULL) {
 			if (urltype == HTTP_URL_T)
@@ -543,8 +544,9 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 				hp->h_addr_list++;
 				memcpy(&sin.sin_addr, hp->h_addr_list[0],
 				    (size_t)hp->h_length);
-				fprintf(ttyout, "Trying %s...\n",
-				    inet_ntoa(sin.sin_addr));
+				if (verbose)
+					fprintf(ttyout, "Trying %s...\n",
+					    inet_ntoa(sin.sin_addr));
 				(void)close(s);
 				s = socket(AF_INET, SOCK_STREAM, 0);
 				if (s < 0) {
@@ -563,15 +565,17 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 		 * Proxy requests don't want leading /.
 		 */
 		if (isproxy) {
-			fprintf(ttyout, "Requesting %s\n  (via %s)\n",
-			    url, proxyenv);
+			if (verbose)
+				fprintf(ttyout, "Requesting %s\n  (via %s)\n",
+				    url, proxyenv);
 			fprintf(fin, "GET %s HTTP/1.0\r\n", path);
 			if (flushcache)
 				fprintf(fin, "Pragma: no-cache\r\n");
 		} else {
 			struct utsname unam;
 
-			fprintf(ttyout, "Requesting %s\n", url);
+			if (verbose)
+				fprintf(ttyout, "Requesting %s\n", url);
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s\r\n", host);
 			fprintf(fin, "Accept: */*\r\n");
@@ -584,11 +588,14 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
 		if (wwwauth) {
-			fprintf(ttyout, "  (with authorization)\n");
+			if (verbose)
+				fprintf(ttyout, "  (with authorization)\n");
 			fprintf(fin, "Authorization: %s\r\n", wwwauth);
 		}
 		if (proxyauth) {
-			fprintf(ttyout, "  (with proxy authorization)\n");
+			if (verbose)
+				fprintf(ttyout,
+				    "  (with proxy authorization)\n");
 			fprintf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
 		}
 		fprintf(fin, "\r\n");
@@ -1083,9 +1090,6 @@ fetch_ftp(url, outfile)
 		rval = -1;
 		goto cleanup_fetch_ftp;
 	}
-
-	if (!verbose)
-		fprintf(ttyout, "Retrieving %s/%s\n", dir ? dir : "", file);
 
 	if (dirhasglob) {
 		snprintf(rempath, sizeof(rempath), "%s/%s", dir, file);
