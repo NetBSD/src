@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.226 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.227 2003/10/13 05:45:59 dyoung Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -495,6 +495,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
