@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.23 1998/03/30 01:52:02 mrg Exp $	*/
+/*	$NetBSD: subr.c,v 1.24 2000/09/19 16:17:48 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.23 1998/03/30 01:52:02 mrg Exp $");
+__RCSID("$NetBSD: subr.c,v 1.24 2000/09/19 16:17:48 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -612,8 +612,7 @@ makeenv(env)
 
 	ep = env;
 	if (TT && *TT) {
-		strncat(termbuf, TT, 128);
-		termbuf[127] = (char)NULL;
+		strlcat(termbuf, TT, sizeof(termbuf));
 		*ep++ = termbuf;
 	}
 	if ((p = EV) != NULL) {
@@ -701,7 +700,7 @@ autobaud()
 	if (select(32, (fd_set *)&rfds, (fd_set *)NULL,
 	    (fd_set *)NULL, &timeout) <= 0)
 		return (type);
-	if (read(STDIN_FILENO, &c, sizeof(char)) != sizeof(char))
+	if (read(STDIN_FILENO, &c, 1) != 1)
 		return (type);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 20;
