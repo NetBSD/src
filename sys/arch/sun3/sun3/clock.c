@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1997/01/27 20:50:36 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 1997/02/19 23:35:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -60,6 +60,8 @@
 #include <machine/mon.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
+
+#include <dev/clock_subr.h>
 
 #include <sun3/sun3/interreg.h>
 #include "intersil7170.h"
@@ -327,8 +329,6 @@ microtime(tvp)
  *
  * Resettodr restores the time of day hardware after a time change.
  */
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
 
 static long clk_get_secs(void);
 static void clk_set_secs(long);
@@ -392,207 +392,103 @@ void resettodr()
 	clk_set_secs(time.tv_sec);
 }
 
-/*
- * Machine dependent base year:
- * Note: must be < 1970
- */
-#define	CLOCK_BASE_YEAR	1968
-
 
 /*
- * Routine to copy state into and out of the clock.
+ * Routines to copy state into and out of the clock.
  * The clock registers have to be read or written
  * in sequential order (or so it appears). -gwr
  */
-static void clk_get_dt(struct date_time *dt)
+static void
+clk_get_dt(struct clock_ymdhms *dt)
 {
+	register volatile struct date_time *isdt;
 	int s;
-	register volatile char *src, *dst;
 
-	src = (char *) &intersil_clock->counters;
-
+	isdt = &intersil_clock->counters;
 	s = splhigh();
+
+	/* Enable read (stop time) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-	dst = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (dst < (char*)dt);
+	/* Copy the info.  Careful about the order! */
+	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
+	dt->dt_hour = isdt->dt_hour;
+	dt->dt_min  = isdt->dt_min;
+	dt->dt_sec  = isdt->dt_sec;
+	dt->dt_mon  = isdt->dt_month;
+	dt->dt_day  = isdt->dt_day;
+	dt->dt_year = isdt->dt_year;
+	dt->dt_wday = isdt->dt_dow;
 
+	/* Done reading (time wears on) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
-static void clk_set_dt(struct date_time *dt)
+static void
+clk_set_dt(struct clock_ymdhms *dt)
 {
+	register volatile struct date_time *isdt;
 	int s;
-	register volatile char *src, *dst;
 
-	dst = (char *) &intersil_clock->counters;
-
+	isdt = &intersil_clock->counters;
 	s = splhigh();
+
+	/* Enable write (stop time) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-	src = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (src < (char *)dt);
+	/* Copy the info.  Careful about the order! */
+	isdt->dt_csec = 0;
+	isdt->dt_hour = dt->dt_hour;
+	isdt->dt_min  = dt->dt_min;
+	isdt->dt_sec  = dt->dt_sec;
+	isdt->dt_month= dt->dt_mon;
+	isdt->dt_day  = dt->dt_day;
+	isdt->dt_year = dt->dt_year;
+	isdt->dt_dow  = dt->dt_wday;
 
+	/* Done writing (time wears on) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
-
-
-/*
- * Generic routines to convert to or from a POSIX date
- * (seconds since 1/1/1970) and  yr/mo/day/hr/min/sec
- *
- * These are organized this way mostly to so the code
- * can easily be tested in an independent user program.
- * (These are derived from the hp300 code.)
- */
-
-/* Traditional UNIX base year */
-#define	POSIX_BASE_YEAR	1970
-#define FEBRUARY	2
-
-#define	leapyear(year)		((year) % 4 == 0)
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
-
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-void gmt_to_dt(long *tp, struct date_time *dt)
-{
-	register int i;
-	register long days, secs;
-
-	days = *tp / SECDAY;
-	secs = *tp % SECDAY;
-
-	/* Hours, minutes, seconds are easy */
-	dt->dt_hour = secs / 3600;
-	secs = secs % 3600;
-	dt->dt_min  = secs / 60;
-	secs = secs % 60;
-	dt->dt_sec  = secs;
-
-	/* Day of week (Note: 1/1/1970 was a Thursday) */
-	dt->dt_dow = (days + 4) % 7;
-
-	/* Number of years in days */
-	i = POSIX_BASE_YEAR;
-	while (days >= days_in_year(i)) {
-		days -= days_in_year(i);
-		i++;
-	}
-	dt->dt_year = i - CLOCK_BASE_YEAR;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; days >= days_in_month(i); i++)
-		days -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-	dt->dt_month = i;
-
-	/* Days are what is left over (+1) from all that. */
-	dt->dt_day = days + 1;
-}
-
-void dt_to_gmt(struct date_time *dt, long *tp)
-{
-	register int i;
-	register long tmp;
-	int year;
-
-	/*
-	 * Hours are different for some reason. Makes no sense really.
-	 */
-
-	tmp = 0;
-
-	if (dt->dt_hour >= 24) goto out;
-	if (dt->dt_day  >  31) goto out;
-	if (dt->dt_month > 12) goto out;
-
-	year = dt->dt_year + CLOCK_BASE_YEAR;
-
-	/*
-	 * Compute days since start of time
-	 * First from years, then from months.
-	 */
-	for (i = POSIX_BASE_YEAR; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && dt->dt_month > FEBRUARY)
-		tmp++;
-
-	/* Months */
-	for (i = 1; i < dt->dt_month; i++)
-	  	tmp += days_in_month(i);
-	tmp += (dt->dt_day - 1);
-
-	/* Now do hours */
-	tmp = tmp * 24 + dt->dt_hour;
-
-	/* Now do minutes */
-	tmp = tmp * 60 + dt->dt_min;
-
-	/* Now do seconds */
-	tmp = tmp * 60 + dt->dt_sec;
-
- out:
-	*tp = tmp;
-}
 
 /*
  * Now routines to get and set clock as POSIX time.
+ * Our clock keeps "years since 1/1/1968".
  */
+#define	CLOCK_BASE_YEAR 1968
 
-static long clk_get_secs()
+static long
+clk_get_secs()
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
+	long secs;
 
 	clk_get_dt(&dt);
-	dt_to_gmt(&dt, &gmt);
-	return (gmt);
+
+	if ((dt.dt_hour > 24) ||
+		(dt.dt_day  > 31) ||
+		(dt.dt_mon  > 12))
+		return (0);
+
+	dt.dt_year += CLOCK_BASE_YEAR;
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
 }
 
-static void clk_set_secs(long secs)
+static void
+clk_set_secs(secs)
+	long secs;
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
 
-	gmt = secs;
-	gmt_to_dt(&gmt, &dt);
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
+
 	clk_set_dt(&dt);
 }
-
-
-#ifdef	DEBUG
-/* Call this from DDB or whatever... */
-int clkdebug()
-{
-	struct date_time dt;
-	long gmt;
-	long *lp;
-
-	bzero((char*)&dt, sizeof(dt));
-	clk_get_dt(&dt);
-	lp = (long*)&dt;
-	printf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
-
-	dt_to_gmt(&dt, &gmt);
-	printf("clkdebug: gmt=%x\n", gmt);
-}
-#endif
