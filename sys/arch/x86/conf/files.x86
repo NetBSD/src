@@ -1,8 +1,8 @@
-#	$NetBSD: files.x86,v 1.7 2003/05/11 18:24:12 fvdl Exp $
+#	$NetBSD: files.x86,v 1.8 2003/05/29 20:22:31 fvdl Exp $
 
 # options for MP configuration through the MP spec
-defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
-defflag opt_mpacpi.h MPACPI
+defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
+defflag opt_mpacpi.h MPACPI MPACPI_SCANPCI
 
 # MTRR support
 defflag                 MTRR

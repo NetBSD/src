@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2003/05/29 20:22:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2003/05/29 20:22:32 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,10 +106,20 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $")
 
 #include "ioapic.h"
 #include "eisa.h"
+#include "opt_mpbios.h"
+#include "opt_mpacpi.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#endif
+
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>
+#endif
+
+#ifdef MPACPI
+#include <machine/mpacpi.h>
 #endif
 
 #include "opt_pci_conf_mode.h"
@@ -201,6 +211,12 @@ pci_attach_hook(parent, self, pba)
 
 	if (pba->pba_bus == 0)
 		printf(": configuration mode %d", pci_mode);
+#ifdef MPBIOS
+	mpbios_pci_attach_hook(parent, self, pba);
+#endif
+#ifdef MPACPI
+	mpacpi_pci_attach_hook(parent, self, pba);
+#endif
 }
 
 int

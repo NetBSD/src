@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.8 2003/05/29 20:22:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,6 +128,12 @@
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
 #endif
 
+#include "pci.h"
+
+#if NPCI > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#endif
 
 static struct mpbios_ioapic default_ioapic = {
     2,0,1,IOAPICENTRY_FLAG_EN,(u_int32_t)IOAPIC_BASE_DEFAULT
@@ -1109,3 +1115,46 @@ mpbios_int(ent, enttype, mpi)
 		    bitmask_snprintf(flags, flagtype_fmt, buf, sizeof(buf)));
 	}
 }
+
+#if NPCI > 0
+int
+mpbios_pci_attach_hook(struct device *parent, struct device *self,
+		       struct pcibus_attach_args *pba)
+{
+	struct mp_bus *mpb;
+
+	if (mpbios_scanned == 0)
+		return ENOENT;
+
+	if (pba->pba_bus >= mp_nbus)
+		return EINVAL;
+
+	mpb = &mp_busses[pba->pba_bus];
+	if (strcmp(mpb->mb_name, "pci"))
+		return EINVAL;
+
+	mpb->mb_configured = 1;
+	return 0;
+}
+
+int
+mpbios_scan_pci(struct device *self, struct pcibus_attach_args *pba,
+	        cfprint_t print)
+{
+	int i;
+	struct mp_bus *mpb;
+	struct pci_attach_args;
+
+	for (i = 0; i < mp_nbus; i++) {
+		mpb = &mp_busses[i];
+		if (mpb->mb_name == NULL)
+			continue;
+		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
+			pba->pba_bus = i;
+			config_found(self, pba, print);
+		}
+	}
+	return 0;
+}
+
+#endif
