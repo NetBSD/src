@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.yppasswdd.8,v 1.14 2003/08/23 23:20:12 wiz Exp $
+.\"	$NetBSD: rpc.yppasswdd.8,v 1.15 2005/02/26 16:37:40 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -29,12 +29,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 22, 2003
+.Dd February 26, 2005
 .Dt RPC.YPPASSWDD 8
 .Os
 .Sh NAME
 .Nm rpc.yppasswdd
-.Nd YP update password file daemon
+.Nd NIS update password file daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar directory
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 .Nm
 must be running on the
-.Tn YP
+.Tn NIS
 master server to allow users to change information
 in the password file.
 .Pp
@@ -82,7 +82,7 @@ in
 .Xr chpass 1 ,
 .Xr passwd 1 ,
 .Xr hosts_access 5 ,
-.Xr yp 8 ,
+.Xr nis 8 ,
 .Xr ypbind 8 ,
 .Xr ypserv 8
 .Sh AUTHORS
