@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.23 2004/11/10 17:54:07 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.24 2004/11/13 03:20:37 sekiya Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.23 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -205,6 +205,10 @@ ss*     at scsibus? target ? lun ?	# SCSI scanners
 ses*    at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
 uk*     at scsibus? target ? lun ?	# unknown SCSI
 
+# Personal Iris / Indigo R3k
+pic0		at mainbus0 addr 0x1fa00000
+gio0		at pic0
+
 # Indy / Indigo^2
 imc0 		at mainbus0 addr 0x1fa00000
 gio0 		at imc0
@@ -224,9 +228,9 @@ wsdisplay*	at grtwo? console ?
 # HPC devices
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
-dpclock*	at hpc0 offset ?	# IP20
-dsclock*	at hpc0 offset ?	# IP22/24
-haltwo*         at hpc0 offset ?
+dpclock*	at hpc0 offset ?	# IP12 / IP20
+dsclock*	at hpc0 offset ?	# IP22 / 24
+haltwo*         at hpc0 offset ?	# IP22 / 24
 pckbc*		at hpc0 offset ?
 
 pckbd*  	at pckbc?
