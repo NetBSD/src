@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.30 2003/01/10 20:00:28 christos Exp $ */
+/*	$NetBSD: mbr.c,v 1.31 2003/02/08 09:53:08 shin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -631,7 +631,7 @@ get_mapping(parts, i, cylinder, head, sector, absolute)
 	if (apart->mbrp_typ == 0)
 		return -1;
 	if (i % 2 == 0) {
-		*cylinder = MBR_PCYL(apart->mbrp_scyl, part->mbrp_ssect);
+		*cylinder = MBR_PCYL(apart->mbrp_scyl, apart->mbrp_ssect);
 		*head = apart->mbrp_shd;
 		*sector = MBR_PSECT(apart->mbrp_ssect) - 1;
 		*absolute = apart->mbrp_start;
