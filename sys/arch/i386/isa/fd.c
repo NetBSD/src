@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.39 1994/04/09 02:57:14 mycroft Exp $
+ *	$Id: fd.c,v 1.40 1994/04/20 07:23:52 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -102,8 +103,7 @@ struct fdc_softc {
 	u_short	sc_drq;
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
-	struct fd_softc *sc_afd;	/* active drive */
-	struct buf sc_q;
+	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
 	enum fdc_state sc_state;
 	int sc_retry;			/* number of retries so far */
 	u_char sc_status[7];		/* copy of registers */
@@ -159,6 +159,7 @@ struct fd_softc {
 #endif
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
+	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	struct buf sc_q;		/* head of buf chain */
 	int sc_drive;			/* unit number on this controller */
 	int sc_flags;
@@ -186,6 +187,7 @@ struct dkdriver fddkdriver = { fdstrategy };
 #endif
 
 struct fd_type *fd_nvtotype __P((char *, int, int));
+void fdstart __P((struct fd_softc *fd));
 void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((struct fd_softc *fd));
 void fd_motor_on __P((struct fd_softc *fd));
@@ -197,6 +199,7 @@ void fdctimeout __P((struct fdc_softc *fdc));
 void fdcpseudointr __P((struct fdc_softc *fdc));
 int fdcintr __P((struct fdc_softc *fdc));
 void fdcretry __P((struct fdc_softc *fdc));
+void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 
 int
 fdcprobe(parent, self, aux)
@@ -294,6 +297,8 @@ fdcattach(parent, self, aux)
 	fdc->sc_iobase = ia->ia_iobase;
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
+	TAILQ_INIT(&fdc->sc_drives);
+
 	printf("\n");
 
 #ifdef NEWCONFIG
@@ -512,36 +517,37 @@ fdstrategy(bp)
 	       bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
 #endif
 	s = splbio();
-	dp = &fd->sc_q;
-	disksort(dp, bp);
+	disksort(&fd->sc_q, bp);
 	untimeout((timeout_t)fd_motor_off, (caddr_t)fd); /* a good idea */
-	if (!dp->b_active) {
-		register struct buf *cp;
-		dp->b_forw = NULL;
-		dp->b_active = 1;
-		cp = &fdc->sc_q;
-		if (!cp->b_forw)
-			cp->b_forw = dp;
-		else
-			cp->b_back->b_forw = dp;
-		cp->b_back = dp;
-		if (!cp->b_active) {
-			cp->b_active = 1;
-			fdcstart(fdc);
-		}
-	}
+	if (!fd->sc_q.b_active)
+		fdstart(fd);
 #ifdef DIAGNOSTIC
-	else if (!fdc->sc_q.b_active) {
+	else if (fdc->sc_state == DEVIDLE) {
 		printf("fdstrategy: controller inactive\n");
-		fdc->sc_q.b_active = 1;
 		fdcstart(fdc);
 	}
 #endif
 	splx(s);
 	return;
 
-    bad:
+bad:
 	biodone(bp);
+}
+
+void
+fdstart(fd)
+	struct fd_softc *fd;
+{
+	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	int active = fdc->sc_drives.tqh_first != 0;
+
+	/* Link into controller queue. */
+	fd->sc_q.b_active = 1;
+	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+
+	/* If controller not already active, start it. */
+	if (!active)
+		fdcstart(fdc);
 }
 
 void
@@ -553,7 +559,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if (fd = fdc->sc_afd)
+	if (fd = fdc->sc_drives.tqh_first)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -584,7 +590,7 @@ fd_motor_on(fd)
 	int s = splbio();
 
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_afd == fd) && (fdc->sc_state == MOTORWAIT))
+	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
 		(void) fdcintr(fdc);
 	splx(s);
 }
@@ -718,17 +724,17 @@ void
 fdctimeout(fdc)
 	struct fdc_softc *fdc;
 {
-	struct fd_softc *fd = fdc->sc_afd;
+	struct fd_softc *fd;
 	int s = splbio();
+
+	fd = fdc->sc_drives.tqh_first;
 
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
-	if (fd->sc_q.b_actf) {
+	if (fd->sc_q.b_actf)
 		fdc->sc_state++;
-	} else {
-		fdc->sc_afd = NULL;
+	else
 		fdc->sc_state = DEVIDLE;
-	}
 
 	(void) fdcintr(fdc);
 	splx(s);
@@ -752,43 +758,29 @@ fdcintr(fdc)
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
-	struct buf *dp, *bp;
+	struct buf *bp;
 	u_short iobase = fdc->sc_iobase;
 	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
 	struct fd_type *type;
 
 again:
-	dp = fdc->sc_q.b_forw;
-	if (!dp) {
+	fd = fdc->sc_drives.tqh_first;
+	if (!fd) {
 		/* no drives waiting; end */
 		fdc->sc_state = DEVIDLE;
-		fdc->sc_q.b_active = 0;
-#ifdef DIAGNOSTIC
-		if (fd = fdc->sc_afd) {
-			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
-				fd->sc_dev.dv_xname);
-			fdc->sc_afd = NULL;
-		}
-#endif
  		return 1;
 	}
-	bp = dp->b_actf;
+	bp = fd->sc_q.b_actf;
 	if (!bp) {
 		/* nothing queued on this drive; try next */
-		fdc->sc_q.b_forw = dp->b_forw;
-		dp->b_active = 0;
+		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
+		fd->sc_q.b_active = 0;
 		goto again;
 	}
-	fd = fdcd.cd_devs[FDUNIT(bp->b_dev)];
-#ifdef DIAGNOSTIC
-	if (fdc->sc_afd && (fd != fdc->sc_afd))
-		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
-#endif
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
 		fdc->sc_retry = 0;
-		fdc->sc_afd = fd;
 		fd->sc_skip = 0;
 		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
 		untimeout((timeout_t)fd_motor_off, (caddr_t)fd);
@@ -954,14 +946,7 @@ again:
 			bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
 			goto doseek;
 		} else {
-			bp->b_resid = 0;
-			fd->sc_q.b_actf = bp->b_actf;
-			biodone(bp);
-			/* turn off motor 5s from now */
-			timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
-			fd->sc_skip = 0;
-			fdc->sc_afd = NULL;
-			fdc->sc_state = DEVIDLE;
+			fdfinish(fd, bp);
 			goto again;
 		}
 
@@ -1027,9 +1012,10 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	register struct buf *bp;
-	struct fd_softc *fd = fdc->sc_afd;
+	struct fd_softc *fd;
+	struct buf *bp;
 
+	fd = fdc->sc_drives.tqh_first;
 	bp = fd->sc_q.b_actf;
 
 	switch (fdc->sc_retry) {
@@ -1049,8 +1035,6 @@ fdcretry(fdc)
 		break;
 
 	default:
-		fd = fdc->sc_afd;
-
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 			fd->sc_skip, (struct disklabel *)NULL);
 		printf(" (st0 %b ", fdc->sc_status[0], NE7_ST0BITS);
@@ -1061,16 +1045,43 @@ fdcretry(fdc)
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount - fd->sc_skip;
-		fd->sc_q.b_actf = bp->b_actf;
-		biodone(bp);
-		/* turn off motor 5s from now */
-		timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
-		fd->sc_skip = 0;
-		fdc->sc_afd = NULL;
-		fdc->sc_state = DEVIDLE;
+		fdfinish(fd, bp);
 	}
 	fdc->sc_retry++;
+}
+
+void
+fdfinish(fd, bp)
+	struct fd_softc *fd;
+	struct buf *bp;
+{
+	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+
+#if 0
+	/*
+	 * This might seem like a good idea, but each drive switch takes .25
+	 * second because we can't keep both motors running at the same time
+	 * and we have to wait for the new one to stabilize for each I/O.
+	 */
+	/*
+	 * Move this drive to the end of the queue to give others a `fair'
+	 * chance.
+	 */
+	if (fd->sc_drivechain.tqe_next) {
+		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
+		if (bp->b_actf) {
+			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+		} else
+			fd->sc_q.b_active = 0;
+	}
+#endif
+	bp->b_resid = bp->b_bcount - fd->sc_skip;
+	fd->sc_skip = 0;
+	fd->sc_q.b_actf = bp->b_actf;
+	biodone(bp);
+	/* turn off motor 5s from now */
+	timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
+	fdc->sc_state = DEVIDLE;
 }
 
 int
