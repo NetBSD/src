@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.566 2003/08/17 18:03:29 chs Exp $
+$NetBSD: pcidevs,v 1.567 2003/08/20 22:56:13 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1051,7 +1051,7 @@ product BROADCOM 5805		0x5805	5805 Security processor
 product BROADCOM 5820		0x5820	5820 Security processor
 product BROADCOM 5821		0x5821	5821 Security processor
 product BROADCOM 5822		0x5822	5822 Security processor
-product BROADCOM 5823		0x5822	5823 Security processor
+product BROADCOM 5823		0x5823	5823 Security processor
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	Bt848 Video Capture
