@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.5 2000/04/21 16:18:16 minoura Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.5.4.1 2002/03/06 22:03:59 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,10 +35,14 @@
  * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
  */
 
+#include "opt_ntp.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
 
@@ -46,6 +50,7 @@
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>
 #include <compat/freebsd/freebsd_timex.h>
+#include <compat/freebsd/freebsd_signal.h>
 
 int
 freebsd_sys_msync(p, v, retval)
@@ -90,6 +95,7 @@ freebsd_sys_rtprio(p, v, retval)
 	return ENOSYS;	/* XXX */
 }
 
+#ifdef NTP
 int
 freebsd_ntp_adjtime(p, v, retval)
 	struct proc *p;
@@ -103,4 +109,43 @@ freebsd_ntp_adjtime(p, v, retval)
 #endif
 
 	return ENOSYS;	/* XXX */
+}
+#endif
+
+int
+freebsd_sys_sigaction4(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct freebsd_sys_sigaction4_args /* {
+		syscallarg(int) signum;
+		syscallarg(const struct freebsd_sigaction4 *) nsa;
+		syscallarg(struct freebsd_sigaction4 *) osa;
+	} */ *uap = v;
+	struct freebsd_sigaction4 nesa, oesa;
+	struct sigaction nbsa, obsa;
+	int error;
+
+	if (SCARG(uap, nsa)) {
+		error = copyin(SCARG(uap, nsa), &nesa, sizeof(nesa));
+		if (error)
+			return (error);
+		nbsa.sa_handler = nesa.sa_handler;
+		nbsa.sa_mask    = nesa.sa_mask;
+		nbsa.sa_flags   = nesa.sa_flags;
+	}
+	error = sigaction1(p, SCARG(uap, signum),
+	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	if (error)
+		return (error);
+	if (SCARG(uap, osa)) {
+		oesa.sa_handler = obsa.sa_handler;
+		oesa.sa_mask    = obsa.sa_mask;
+		oesa.sa_flags   = obsa.sa_flags;
+		error = copyout(&oesa, SCARG(uap, osa), sizeof(oesa));
+		if (error)
+			return (error);
+	}
+	return (0);
 }
