@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.11 1997/09/14 07:31:57 lukem Exp $	*/
+/*	$NetBSD: sleep.c,v 1.12 1997/11/05 21:18:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.11 1997/09/14 07:31:57 lukem Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.12 1997/11/05 21:18:47 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(argc, argv)
 	int fracflag;
 	int ch;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	(void)signal(SIGALRM, alarmhandle);
 
@@ -129,6 +129,7 @@ main(argc, argv)
 	(void)nanosleep(&ntime, NULL);
 
 	exit(0);
+	/* NOTREACHED */
 }
 
 void
@@ -139,6 +140,7 @@ usage()
 	exit(1);
 }
 
+/* ARGSUSED */
 void
 alarmhandle(i)
 	int i;

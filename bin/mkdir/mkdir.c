@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.17 1997/07/20 18:55:32 christos Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.18 1997/11/05 21:17:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.17 1997/07/20 18:55:32 christos Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.18 1997/11/05 21:17:35 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ main(argc, argv)
 	mode_t *set;
 	mode_t mode, dir_mode;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	/*
 	 * The default file mode is a=rwx (0777) with selected permissions
@@ -122,6 +122,7 @@ main(argc, argv)
 		}
 	}
 	exit(exitval);
+	/* NOTREACHED */
 }
 
 /*
