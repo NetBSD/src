@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.140 2002/08/04 02:27:51 gmcgarry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.141 2002/08/04 03:16:19 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.140 2002/08/04 02:27:51 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.141 2002/08/04 03:16:19 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -156,7 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.140 2002/08/04 02:27:51 gmcgarry 
 #include <mips/pte.h>
 #include <machine/cpu.h>
 
-#ifdef __pmax__
+#if defined(__pmax__) || defined(__mipsco__) || defined(__sgimips__)
 #include <machine/bootinfo.h>		/* XXX pmax only so far */
 #endif
 
@@ -1124,7 +1124,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
-#if defined(__pmax__)
+#if defined(__pmax__) || defined(__mipsco__) || defined(__sgimips__)
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
 	        if(!bibp)
