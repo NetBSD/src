@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp $
+$NetBSD: pcidevs,v 1.305 2001/03/04 21:26:44 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -557,6 +557,7 @@ vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
+vendor NETMOS		0x9710	Netmos
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -1385,6 +1386,9 @@ product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 /* Netgear products */
 product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
 product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
+
+/* Netmos products */
+product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
