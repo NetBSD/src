@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.6 1998/08/26 10:31:37 mrg Exp $
+# 	$NetBSD: NONPLUS,v 1.7 1998/08/27 11:43:15 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -11,7 +11,6 @@ maxusers	64
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - Ultra 140 and 170
 options		TRAPWIN		# use a new window for traps
-options		BUS_DMA		# enable bus_dma*() instead of dvma_mapin()
 
 ## System options specific to the sparc machine type
 

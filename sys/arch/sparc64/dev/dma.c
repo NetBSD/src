@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.3 1998/08/13 02:10:41 eeh Exp $ */
+/*	$NetBSD: dma.c,v 1.4 1998/08/27 11:43:14 mrg Exp $ */
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -232,11 +232,9 @@ dmaattach_sbus(parent, self, aux)
 			bp = sa->sa_bp + 1;
 	}
 
-#ifdef BUS_DMA
 	/* Allocate a dmamap */
 	bus_dmamap_create(sc->sc_dmatag, 16*1024*1024, 1, 16*1024*1024,
 			  0, BUS_DMA_WAITOK, &sc->sc_dmamap);
-#endif
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	sbt = dma_alloc_bustag(sc);
 	dma_identify(sc);
@@ -499,18 +497,6 @@ dma_setup(sc, addr, len, datain, dmasize)
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
-#ifndef BUS_DMA
-		/*
-		 * Use dvma mapin routines to map the buffer into DVMA space.
-		 */
-		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
-		sc->sc_dvmakaddr = kdvma_mapin(sc->sc_dvmaaddr,
-					       sc->sc_dmasize, 0);
-		if (sc->sc_dvmakaddr == NULL)
-			panic("dma: cannot allocate DVMA address");
-		DMADDR(sc) = sc->sc_dvmakaddr;
-		NCR_DMA((" dmakaddr = %p\n", sc->sc_dvmakaddr));
-#else 
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap, 
 				    *sc->sc_dmaaddr, sc->sc_dmasize, 
 				    NULL /* This should already be mapped into the kernel */, 
@@ -518,7 +504,6 @@ dma_setup(sc, addr, len, datain, dmasize)
 		    || (sc->sc_dmamap->dm_segs[0].ds_addr == NULL))
 			panic("dma: cannot allocate DVMA address");
 		DMADDR(sc) = sc->sc_dvmakaddr = (caddr_t)sc->sc_dmamap->dm_segs[0].ds_addr;
-#endif
 	} else {
 		DMADDR(sc) = *sc->sc_dmaaddr;
 		NCR_DMA((" dmakaddr = %p\n", sc->sc_dmaaddr));
@@ -657,14 +642,8 @@ espdmaintr(arg)
 	if (csr & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
 
-#ifndef BUS_DMA
-	if (sc->sc_dvmakaddr)
-		dvma_mapout((vaddr_t)sc->sc_dvmakaddr,
-			    (vaddr_t)sc->sc_dvmaaddr, sc->sc_dmasize);
-#else
 	if (sc->sc_dvmakaddr)
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
-#endif
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
