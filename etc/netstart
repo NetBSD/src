@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.34 1997/05/12 11:26:10 lukem Exp $
+#	$NetBSD: netstart,v 1.35 1997/05/12 23:40:50 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -23,7 +23,7 @@ if [ -n "$domainname" ]; then
 	domainname $domainname
 fi
 
-# enable, flush and install packet filter rules before configuring interfaces.
+# Enable, flush and install packet filter rules before configuring interfaces.
 if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
 	echo 'installing packet filter rules ... '
 	ipf -E -Fa -f /etc/ipf.conf
@@ -77,12 +77,12 @@ if [ "$net_interfaces" != NO ]; then
 	echo '.'
 fi
 
-# set the address for the loopback interface if it's not configured
+# Set the address for the loopback interface if it's not configured
 if [ $configured_lo0 != "yes" ]; then
 	ifconfig lo0 inet localhost
 fi
 
-# use loopback, not the wire
+# Use loopback, not the wire
 route add $hostname localhost
 
 # Check $defaultroute, then /etc/mygate, for the name of my gateway host.
@@ -113,7 +113,7 @@ for int in $configured_interfaces; do
 			else
 				ifconfig $int inet alias $addr netmask $net
 			fi
-			# use loopback, not the wire
+			# Use loopback, not the wire
 			route add $addr localhost
 		done
 	fi
