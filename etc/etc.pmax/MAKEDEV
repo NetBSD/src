@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1997/11/28 00:55:10 jonathan Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1997/11/28 01:09:52 jonathan Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -118,7 +118,7 @@ bpf*|tun*)
 	tun*) name=tun;	unit=${i#tun};	chr=90;;
 	esac
 	rm -f $name$unit
-	mknod $name$unit c 12 $unit
+	mknod $name$unit c $chr $unit
 	chmod 600 $name$unit
 	chown root.wheel $name$unit
 	;;
