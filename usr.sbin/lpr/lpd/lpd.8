@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.17 2000/04/10 08:09:33 mrg Exp $
+.\"	$NetBSD: lpd.8,v 1.17.4.1 2001/04/26 12:49:12 he Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Dt LPD 8
 .Os
 .Sh NAME
-.Nm lpd
+.Nm
 .Nd line printer spooler daemon
 .Sh SYNOPSIS
 .Nm ""
@@ -46,7 +46,7 @@
 .Op Fl w Ar maxwait
 .Op port
 .Sh DESCRIPTION
-.Nm Lpd
+.Nm
 is the line printer daemon (spool area handler) and is normally invoked
 at boot time from the
 .Xr rc 8
@@ -79,7 +79,7 @@ for more details.
 The
 .Fl l
 flag causes
-.Nm lpd
+.Nm
 to log valid requests received from the network.
 This can be useful for debugging purposes.
 .It Fl n
@@ -93,20 +93,24 @@ will spawn.  The default is 32.
 .It Fl r
 The
 .Fl r
-flag allows the ``of'' filter to be use if specified for a remote
+flag allows the
+.Dq of
+filter to be use if specified for a remote
 printer.  Traditionally,
 .Nm
 would not use the output filter for remote printers.
 .It Fl s
 The
 .Fl s
-flag selects ``secure'' mode, in which 
-.Nm lpd
+flag selects
+.Dq secure
+mode, in which
+.Nm
 does not listen on a TCP socket but only takes commands from a
 .Ux
 domain socket.
 This is valuable when the machine on which
-.Nm lpd 
+.Nm
 runs is subject to attack over the network and it is desired that the
 machine be protected from attempts to remotely fill spools and similar
 attacks.
@@ -139,7 +143,7 @@ or
 Second, if the
 .Li rs
 capability is specified in the
-.Xr printcap
+.Xr printcap 5
 entry for the printer being accessed,
 .Em lpr
 requests will only be honored for those users with accounts on the
@@ -157,7 +161,7 @@ The daemon begins processing files
 after it has successfully set the lock for exclusive
 access (described a bit later),
 and scans the spool directory
-for files beginning with 
+for files beginning with
 .Em cf .
 Lines in each
 .Em cf
@@ -183,21 +187,23 @@ String to be used as the title for
 .It H
 Host Name.
 Name of the machine where
-.Xr lpr
+.Xr lpr 1
 was invoked.
 .It P
 Person.
 Login name of the person who invoked
-.Xr lpr .
+.Xr lpr 1 .
 This is used to verify ownership by
-.Xr lprm .
+.Xr lprm 1 .
 .It M
 Send mail to the specified user when the current print job completes.
 .It f
 Formatted File.
 Name of a file to print which is already formatted.
 .It l
-Like ``f'' but passes control characters and does not make page breaks.
+Like
+.Dq f
+but passes control characters and does not make page breaks.
 .It p
 Name of a file to print using
 .Xr pr 1
@@ -257,7 +263,7 @@ Name of file to remove upon completion of printing.
 File name.
 The name of the file which is being printed, or a blank for the
 standard input (when
-.Xr lpr
+.Xr lpr 1
 is invoked in a pipeline).
 .El
 .Pp
@@ -266,11 +272,11 @@ If a file cannot be opened, a message will be logged via
 using the
 .Em LOG_LPR
 facility.
-.Nm Lpd
+.Nm
 will try up to 20 times to reopen a file it expects to be there,
 after which it will skip the file to be printed.
 .Pp
-.Nm Lpd
+.Nm
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
@@ -283,7 +289,7 @@ form and contains two lines.
 The first is the process id of the daemon and the second is the control
 file name of the current job being printed.
 The second line is updated to reflect the current status of
-.Nm lpd
+.Nm
 for the programs
 .Xr lpq 1
 and
