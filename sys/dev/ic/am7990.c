@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.2 1995/07/24 04:15:35 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.3 1995/07/24 04:34:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -379,7 +379,7 @@ leread(sc, boff, len)
 	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHER_MAX_LEN) {
+	    len > ETHERMTU + sizeof(struct ether_header)) {
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
@@ -683,7 +683,7 @@ lestart(ifp)
 		len = leput(sc, LE_TBUFADDR(sc, bix), m);
 
 #ifdef LEDEBUG
-		if (len > ETHERMTU)
+		if (len > ETHERMTU + sizeof(struct ether_header))
 			printf("packet length %d\n", len);
 #endif
 
