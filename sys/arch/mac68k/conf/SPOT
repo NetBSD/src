@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.17 1996/10/29 04:26:58 briggs Exp $
+#	$NetBSD: SPOT,v 1.18 1996/11/11 18:02:59 scottr Exp $
 #
 # SPOT
 
@@ -7,7 +7,6 @@ include "arch/mac68k/conf/std.mac68k"
 maxusers	16
 
 makeoptions CC="cc -m68030"
-options 	MAXFDESCS=2048
 
 # Standard system options
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
@@ -64,6 +63,10 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	MACHINE_NONCONTIG
+
+# SPOT-specific options
+options 	TIMEZONE=360
+options 	DST=1
 
 config		netbsd	swap generic
 
