@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.19 1998/10/07 01:08:58 jtk Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.20 1998/10/08 20:12:52 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp 
+ *	NetBSD: pcmciadevs,v 1.18 1998/10/08 20:11:59 thorpej Exp 
  */
 
 /*-
@@ -162,6 +162,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Megahertz Corporation",
 	    "Megahertz XJ4288 Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ5560,
+	    PCMCIA_CIS_MEGAHERTZ_XJ5560,
+	    0,
+	    "Megahertz Corporation",
+	    "Megahertz X-JACK 56kbps Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
