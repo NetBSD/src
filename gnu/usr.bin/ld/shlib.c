@@ -1,5 +1,5 @@
 /*
- * $Id: shlib.c,v 1.5 1993/11/21 21:01:08 mycroft Exp $
+ * $Id: shlib.c,v 1.6 1993/12/07 03:04:28 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <string.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <a.out.h>
 
