@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.46.4.2 1996/12/11 09:53:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -763,7 +763,7 @@ nfs_unmount(mp, mntflags, p)
 	if (error)
 		return(error);
 	vp = NFSTOV(np);
-	if (vp->v_usecount > 2) {
+	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 2) {
 		vput(vp);
 		return (EBUSY);
 	}
