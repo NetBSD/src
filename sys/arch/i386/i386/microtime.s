@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.4.4.3 1993/10/31 20:03:58 mycroft Exp $
+ *	$Id: microtime.s,v 1.4.4.4 1993/10/31 20:21:04 mycroft Exp $
  */
 
 #include "../include/asm.h"
@@ -107,8 +107,10 @@ ENTRY(microtime)
 	je	1f
 	addl	$-11932,%ebx	# yes, subtract one clock period
 1:
+#if 0
 	movl	$0x0b,%eax	# tell ICU we want ISR 
 	outb	%al,$IO_ICU1	#   (rest of kernel expects this)
+#endif
 2:
 	sti			# enable interrupts
 
