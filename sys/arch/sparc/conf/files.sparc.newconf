@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.15 1994/10/02 22:00:03 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.16 1994/10/15 06:01:20 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -7,7 +7,9 @@ maxusers 2 8 64
 device mainbus at root {}
 
 device obio at mainbus { [addr = 0], [level = -1] }
-file	arch/sparc/dev/obio.c
+device vmel at mainbus { [addr = 0], [level = -1], [vect = -1] }
+device vmes at mainbus { [addr = 0], [level = -1], [vect = -1] }
+file	arch/sparc/dev/obio.c		obio vmel vmes
 
 device audio at mainbus
 file	arch/sparc/dev/bsd_audio.c		bsdaudio audio needs-flag
@@ -77,6 +79,8 @@ file	arch/sparc/dev/bt_subr.c	cgsix cgthree
 device le at sbus, ledma, obio: ifnet, ether
 file	arch/sparc/dev/if_le.c		le
 
+#device ie at vmes: ifnet, ether
+#file	arch/sparc/dev/if_ie.c		ie
 
 
 pseudo-device	kbd
