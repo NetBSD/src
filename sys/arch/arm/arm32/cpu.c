@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 2002/10/01 22:33:10 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43 2002/10/12 21:06:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2002/10/01 22:33:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2002/10/12 21:06:46 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -511,6 +511,52 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		break;
 	}
 			       
+}
+
+int
+cpu_alloc_idlepcb(struct cpu_info *ci)
+{
+	vaddr_t uaddr;
+	struct pcb *pcb;
+	struct trapframe *tf;
+	int error;
+
+	/*
+	 * Generate a kernel stack and PCB (in essence, a u-area) for the
+	 * new CPU.
+	 */
+	uaddr = uvm_uarea_alloc();
+	error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
+	if (error)
+		return error;
+	ci->ci_idlepcb = pcb = (struct pcb *)uaddr;
+
+	/*
+	 * This code is largely derived from cpu_fork(), with which it
+	 * should perhaps be shared.
+	 */
+
+	/* Copy the pcb */
+	*pcb = proc0.p_addr->u_pcb;
+
+	/* Set up the undefined stack for the process. */
+	pcb->pcb_un.un_32.pcb32_und_sp = uaddr + USPACE_UNDEF_STACK_TOP;
+	pcb->pcb_un.un_32.pcb32_sp = uaddr + USPACE_SVC_STACK_TOP;
+
+#ifdef STACKCHECKS
+	/* Fill the undefined stack with a known pattern */
+	memset(((u_char *)uaddr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
+	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
+	/* Fill the kernel stack with a known pattern */
+	memset(((u_char *)uaddr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
+#endif	/* STACKCHECKS */
+
+	pcb->pcb_tf = tf =
+	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
+	*tf = *proc0.p_addr->u_pcb.pcb_tf;
+	return 0;
 }
 
 /* End of cpu.c */
