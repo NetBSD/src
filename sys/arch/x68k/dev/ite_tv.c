@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.1 1997/01/26 12:04:54 oki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.2 1997/02/03 21:40:45 oki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -66,7 +66,7 @@
 u_int  tv_top;
 u_char *tv_row[PLANELINES];
 char   *tv_font[256];
-__volatile char *tv_kfont[0x7e];
+__volatile char *tv_kfont[0x7f];
 
 u_char kern_font[256 * FONTHEIGHT];
 u_char kbdled;
@@ -74,6 +74,9 @@ u_char kbdled;
 #define PHYSLINE(y)  ((tv_top + (y)) % PLANELINES)
 #define ROWOFFSET(y) ((y) * FONTHEIGHT * ROWBYTES)
 #define CHADDR(y, x) (tv_row[PHYSLINE(y)] + (x))
+
+#define SETGLYPH(to,from) bcopy(&kern_font[(to)*16], &kern_font[(from)*16],16)
+#define KFONTBASE(left)   ((left) * FONTHEIGHT * 0x5e - 0x21 * FONTHEIGHT)
 
 /* prototype */
 void tv_init	__P((struct ite_softc *));
@@ -153,21 +156,21 @@ tv_init(ip)
 	/* shadow ANK font */
 	bcopy((void *)&IODEVbase->cgrom0_8x16, kern_font, 256 * FONTHEIGHT);
 	/* glyph */
-	if (glyphmode & 4)
-		bcopy(&kern_font[0x82 * 16], &kern_font['|' * 16], 16);
-	if (glyphmode & 2)
-		bcopy(&kern_font[0x81 * 16], &kern_font['~' * 16], 16);
-	if (glyphmode & 1)
-		bcopy(&kern_font[0x80 * 16], &kern_font['\\' * 16], 16);
+	if (glyph & 4)
+		SETGLYPH(0x82, '|');
+	if (glyph & 2)
+		SETGLYPH(0x81, '~');
+	if (glyph & 1)
+		SETGLYPH(0x80, '\\');
 	/* set font address cache */
 	for (i = 0; i < 256; i++)
 		tv_font[i] = &kern_font[i * FONTHEIGHT];
 	for (i = 0x21; i < 0x30; i++)
-		tv_kfont[i] = &IODEVbase->cgrom0_16x16[(i-0x21)*32*0x5e];
+		tv_kfont[i] = &IODEVbase->cgrom0_16x16[KFONTBASE(i-0x21)];
 	for (; i < 0x50; i++)
-		tv_kfont[i] = &IODEVbase->cgrom1_16x16[(i-0x30)*32*0x5e];
+		tv_kfont[i] = &IODEVbase->cgrom1_16x16[KFONTBASE(i-0x30)];
 	for (; i < 0x7f; i++)
-		tv_kfont[i] = &IODEVbase->cgrom2_16x16[(i-0x50)*32*0x5e];
+		tv_kfont[i] = &IODEVbase->cgrom2_16x16[KFONTBASE(i-0x50)];
 
 	/*
 	 * initialize part of ip
@@ -283,7 +286,7 @@ tv_putc_nm(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 			*(u_short *)p = *kf++;
@@ -315,7 +318,7 @@ tv_putc_in(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 			*(u_short *)p = ~*kf++;
@@ -347,7 +350,7 @@ tv_putc_bd(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -398,7 +401,7 @@ tv_putc_ul(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
 			*(u_short *)p = *kf++;
@@ -438,7 +441,7 @@ tv_putc_bd_in(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -474,7 +477,7 @@ tv_putc_ul_in(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
 			*(u_short *)p = ~*kf++;
@@ -514,7 +517,7 @@ tv_putc_bd_ul(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
 			ch = *kf++;
@@ -564,7 +567,7 @@ tv_putc_bd_ul_in(ip, ch, p)
 	if (hi >= 0x21 && hi <= 0x7e) {
 		/* multibyte character */
 		kf = (short *)tv_kfont[hi];
-		kf += ((ch & 0x7f) - 0x21) * FONTHEIGHT;
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
 			ch = *kf++;
