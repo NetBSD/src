@@ -1,14 +1,13 @@
-#	$NetBSD: files.pci,v 1.10 1996/02/27 01:31:33 cgd Exp $
+#	$NetBSD: files.pci,v 1.11 1996/02/28 01:47:06 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-# ports should define their own "device pci" line (like the one below,
-# but with the correct bus attachment).
-
-#device	pci at mainbus {[bus = -1], [dev = -1]}
-file	dev/pci/pci_subr.c		pci needs-flag
+# XXX should not attach to root
+device	pci at pcibus, root {[dev = -1], [function = -1]}
+file	dev/pci/pci.c			pci needs-flag
+file	dev/pci/pci_subr.c		pci
 
 # Adaptec 7870 chips
 device	ahc at pci: scsi, aic7xxx
@@ -25,3 +24,7 @@ file	dev/pci/if_fpa.c		fpa
 # NCR 53c8xx SCSI chips
 device	ncr at pci: scsi
 file	dev/pci/ncr.c			ncr
+
+# PCI-PCI bridge chips
+device	ppb at pci: pcibus
+file	dev/pci/ppb.c			ppb
