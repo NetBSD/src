@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.16 1998/11/20 05:33:12 simonb Exp $	
+	$NetBSD: install,v 1.17 1998/11/24 02:49:13 simonb Exp $	
 
 Reminder:
 	Always back up files before installing or upgrading.
@@ -161,12 +161,12 @@ Once you've booted the diskimage
 
 Once you'e booted a diskimage and pointed the kernel at the approriate
 devices to use for root, and dump, NetBSD kernel will prompt you for
-a single-user shell;
+a single-user shell
 
 	Enter pathname of shell or RETURN for sh: 
 
-At this point, press the RETURN key.
-then when you get a standalone root prompt, set your terminal type
+At this point, press the RETURN key.  When you get a standalone root
+prompt, set your terminal type
 
 	TERM=pmax; export TERM;
 
