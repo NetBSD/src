@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.55 2001/06/19 13:42:13 wiz Exp $	*/
+/*	$NetBSD: fault.c,v 1.56 2001/06/26 22:09:19 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -405,7 +405,6 @@ copyfault:
 		    pmap_handled_emulation(map->pmap, va))
 			goto out;
 
-#ifdef DIAGNOSTIC
 		if (current_intr_depth > 0) {
 #ifdef DDB
 			printf("Non-emulated page fault with intr_depth > 0\n");
@@ -416,7 +415,6 @@ copyfault:
 			panic("Fault with intr_depth > 0");
 #endif	/* DDB */
 		}
-#endif	/* DIAGNOSTIC */
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
@@ -620,6 +618,9 @@ cowfault(va)
 	if (va >= VM_MAXUSER_ADDRESS)
 		return (EFAULT);
 
+	/* uvm_fault can't be called from within an interrupt */
+	KASSERT(current_intr_depth == 0);
+	
 	vm = curproc->p_vmspace;
 	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE);
 	return error;
