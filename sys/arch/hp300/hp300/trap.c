@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 2001/12/08 04:09:19 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.94 2001/12/26 19:11:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,6 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
 #endif
 
 #ifdef COMPAT_SUNOS
