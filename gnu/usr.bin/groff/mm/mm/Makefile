@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2000/01/23 22:19:27 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ FILESDIR=	${TMACDIR}/mm
 
 CLEANFILES+=locale se_locale
 
-all: locale se_locale
+realall: locale se_locale
 locale:	Makefile
 	touch ${.TARGET}
 
