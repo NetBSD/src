@@ -24,14 +24,7 @@
  * rights to redistribute these changes.
  */
 /*
- * HISTORY
- * $Log: scsi_5380.h,v $
- * Revision 1.1  1994/02/23 08:28:53  glass
- * boots, presents shell prompt, and doesn't crash immediately
- *
- * Revision 1.1  94/02/22  23:38:09  glass
- * hey, it gets to a shell prompt
- * 
+ * HISTORY (mach3)
  * Revision 2.3  91/08/24  12:25:10  af
  * 	Moved padding of regmap in impl file.
  * 	[91/08/02  04:22:39  af]
