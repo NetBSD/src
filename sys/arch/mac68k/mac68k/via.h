@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.11 1995/04/13 04:05:13 briggs Exp $	*/
+/*	$NetBSD: via.h,v 1.12 1995/07/17 01:25:12 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -124,9 +124,6 @@ extern volatile unsigned char *Via1Base;
 
 #define VIA1		0
 extern int VIA2;
-/* #define VIA2		1 */   /* These days we have to deal with RBV, too! */
-#define VIABUFA		0
-#define VIABUFB		1
 
 	/* VIA interface registers */
 #define vBufA		0x1e00	/* register A */
@@ -148,7 +145,7 @@ extern int VIA2;
 	/* RBV interface registers */
 #define rBufB		0	/* register B */
 #define rBufA		2	/* register A */
-#define rIFR		3	/* interrupt flag register */
+#define rIFR		0x3	/* interrupt flag register (writes?) */
 #define rIER		0x13	/* interrupt enable register */
 #define rMonitor	0x10	/* Monitor type */
 #define rSlotInt	0x12	/* Slot interrupt */
