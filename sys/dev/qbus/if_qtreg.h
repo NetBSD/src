@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qtreg.h,v 1.3 2003/08/29 14:39:29 ragge Exp $	*/
+/*	$NetBSD: if_qtreg.h,v 1.4 2005/02/26 12:45:06 simonb Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -28,7 +28,7 @@
  *	@(#)if_qtreg.h  1.0 (GTE) 10/12/92
  */
 /*
- * Modification History 
+ * Modification History
  *  26 Feb 93 -- sms
  *	Add defines for number of receive and transmit ring descriptors.
  *
