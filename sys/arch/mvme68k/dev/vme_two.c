@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.6 2000/08/20 17:07:42 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.7 2000/08/20 21:51:32 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -197,19 +197,19 @@ vmetwo_attach(parent, self, aux)
 	reg = vme2_lcsr_read(sc, VME2LCSR_IO_CONTROL);
 	if (reg & VME2_IO_CONTROL_I1EN) {
 		/* This range is fixed to A16, DATA */
-		sc->sc_master[0].vr_am = VME_AM_MBO | VME_AM_A16 | VME_AM_DATA;
+		sc->sc_master[0].vr_am = VME_AM_A16 | MVMEBUS_AM_CAP_DATA;
 
 		/* However, SUPER/USER is selectable... */
 		if (reg & VME2_IO_CONTROL_I1SU)
-			sc->sc_master[0].vr_am |= VME_AM_SUPER;
+			sc->sc_master[0].vr_am |= MVMEBUS_AM_CAP_SUPER;
 		else
-			sc->sc_master[0].vr_am |= VME_AM_USER;
+			sc->sc_master[0].vr_am |= MVMEBUS_AM_CAP_USER;
 
 		/* As is the datasize */
 		if (reg & VME2_IO_CONTROL_I1D16)
 			sc->sc_master[0].vr_datasize = VME_D16;
 		else
-			sc->sc_master[0].vr_datasize = VME_D32 | VME_D16;
+			sc->sc_master[0].vr_datasize = VME_D32;
 
 		sc->sc_master[0].vr_locstart = VME2_IO0_LOCAL_START;
 		sc->sc_master[0].vr_mask = VME2_IO0_MASK;
@@ -220,27 +220,27 @@ vmetwo_attach(parent, self, aux)
 
 	if (reg & VME2_IO_CONTROL_I2EN) {
 		/* These two ranges are fixed to A24D16 and A32D16 */
-		sc->sc_master[1].vr_am = VME_AM_MBO | VME_AM_A24;
+		sc->sc_master[1].vr_am = VME_AM_A24;
 		sc->sc_master[1].vr_datasize = VME_D16;
-		sc->sc_master[2].vr_am = VME_AM_MBO | VME_AM_A32;
+		sc->sc_master[2].vr_am = VME_AM_A32;
 		sc->sc_master[2].vr_datasize = VME_D16;
 
 		/* However, SUPER/USER is selectable */
 		if (reg & VME2_IO_CONTROL_I2SU) {
-			sc->sc_master[1].vr_am |= VME_AM_SUPER;
-			sc->sc_master[2].vr_am |= VME_AM_SUPER;
+			sc->sc_master[1].vr_am |= MVMEBUS_AM_CAP_SUPER;
+			sc->sc_master[2].vr_am |= MVMEBUS_AM_CAP_SUPER;
 		} else {
-			sc->sc_master[1].vr_am |= VME_AM_USER;
-			sc->sc_master[2].vr_am |= VME_AM_USER;
+			sc->sc_master[1].vr_am |= MVMEBUS_AM_CAP_USER;
+			sc->sc_master[2].vr_am |= MVMEBUS_AM_CAP_USER;
 		}
 
 		/* As is PROGRAM/DATA */
 		if (reg & VME2_IO_CONTROL_I2PD) {
-			sc->sc_master[1].vr_am |= VME_AM_PRG;
-			sc->sc_master[2].vr_am |= VME_AM_PRG;
+			sc->sc_master[1].vr_am |= MVMEBUS_AM_CAP_PROG;
+			sc->sc_master[2].vr_am |= MVMEBUS_AM_CAP_PROG;
 		} else {
-			sc->sc_master[1].vr_am |= VME_AM_DATA;
-			sc->sc_master[2].vr_am |= VME_AM_DATA;
+			sc->sc_master[1].vr_am |= MVMEBUS_AM_CAP_DATA;
+			sc->sc_master[2].vr_am |= MVMEBUS_AM_CAP_DATA;
 		}
 
 		sc->sc_master[1].vr_locstart = VME2_IO1_LOCAL_START;
@@ -313,8 +313,14 @@ vmetwo_master_range(sc, range, vr)
 	 */
 	attr = vme2_lcsr_read(sc, VME2LCSR_MASTER_ATTR);
 	attr >>= VME2_MASTER_ATTR_AM_SHIFT(range);
-	vr->vr_am = VME_AM_MBO | (attr & VME2_MASTER_ATTR_AM_MASK);
 
+	/*
+	 * Fix up the datasizes available through this range
+	 */
+	vr->vr_datasize = (attr & VME2_MASTER_ATTR_D16) ? VME_D16 : VME_D32;
+	attr &= VME2_MASTER_ATTR_AM_MASK;
+
+	vr->vr_am = (attr & VME_AM_ADRSIZEMASK) | MVMEBUS_AM2CAP(attr);
 	switch (vr->vr_am & VME_AM_ADRSIZEMASK) {
 	case VME_AM_A32:
 	default:
@@ -329,14 +335,6 @@ vmetwo_master_range(sc, range, vr)
 		vr->vr_mask = 0x0000ffffu;
 		break;
 	}
-
-	/*
-	 * Fix up the datasizes available through this range
-	 */
-	if (attr & VME2_MASTER_ATTR_D16)
-		vr->vr_datasize = VME_D16;
-	else
-		vr->vr_datasize = VME_D32 | VME_D16;
 
 	/*
 	 * XXX
@@ -405,11 +403,11 @@ vmetwo_slave_range(sc, range, am, vr)
 	reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_CTRL);
 
 	if (am == VME_AM_A32 && (reg & VME2_SLAVE_AMSEL_A32(range))) {
-		vr->vr_am = VME_AM_A32 | VME_AM_MBO;
+		vr->vr_am = VME_AM_A32;
 		vr->vr_mask = 0xffffffffu;
 	} else
 	if (am == VME_AM_A24 && (reg & VME2_SLAVE_AMSEL_A24(range))) {
-		vr->vr_am = VME_AM_A24 | VME_AM_MBO;
+		vr->vr_am = VME_AM_A24;
 		vr->vr_mask = 0x00ffffffu;
 	} else {
 		/* The range is not enabled */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.5 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.6 2000/08/20 21:51:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct pcc_softc {
 };
 
 extern struct pcc_softc *sys_pcc;
+extern bus_addr_t pcc_slave_base_addr;
 
 void	pccintr_establish __P((int, int (*)(void *), int, void *));
 void	pccintr_disestablish __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.4 2000/08/13 17:00:52 scw Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.5 2000/08/20 21:51:32 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,10 +39,16 @@
 #ifndef _MVME68K_VME_PCCVAR_H
 #define _MVME68K_VME_PCCVAR_H
 
+#define VME1_SLAVE_A32	0
+#define VME1_SLAVE_A24	1
+#define VME1_SLAVE_A16	2
+#define VME1_NSLAVES	3
+
 struct vme_pcc_softc {
 	struct mvmebus_softc	sc_mvmebus;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
+	struct mvmebus_range	sc_slave[VME1_NSLAVES];
 };
 
 #endif /* __MVME68K_VME_PCCVAR_H */

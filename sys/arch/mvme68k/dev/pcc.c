@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.13 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.14 2000/08/20 21:51:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -137,7 +138,12 @@ static int pcc_vec2intctrl[] = {
 	PCCREG_SOFT2_INTR_CTRL	/* PCCV_SOFT2 */
 };
 
+extern phys_ram_seg_t mem_clusters[];
 struct pcc_softc *sys_pcc;
+
+/* The base address of the MVME147 from the VMEbus */
+bus_addr_t pcc_slave_base_addr;
+
 
 /* ARGSUSED */
 int
@@ -193,6 +199,14 @@ pccattach(parent, self, args)
 	/* Make sure the global interrupt line is hot. */
 	reg = pcc_reg_read(sc, PCCREG_GENERAL_CONTROL) | PCC_GENCR_IEN;
 	pcc_reg_write(sc, PCCREG_GENERAL_CONTROL, reg);
+
+	/*
+	 * Calculate the board's VMEbus slave base address, for the
+	 * benefit of the VMEchip driver.
+	 * (Weird that this register is in the PCC ...)
+	 */
+	reg = pcc_reg_read(sc, PCCREG_SLAVE_BASE_ADDR) & PCC_SLAVE_BASE_MASK;
+	pcc_slave_base_addr = (bus_addr_t)reg * mem_clusters[0].size;
 
 	/*
 	 * Attach configured children.
