@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.15 1998/08/15 16:09:46 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,6 +153,10 @@ struct ep_pcmcia_product {
 	  0,				0,
 	  PCMCIA_STR_3COM_3C589 },
 
+	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_ROADRUNNER,
+	  EP_FLAGS_MII,			0,
+	  PCMCIA_STR_3COM_3C574 },
+
 	{ 0,				0,
 	  0,				0,
 	  NULL },
@@ -266,7 +270,7 @@ ep_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	struct ep_pcmcia_product *epp;
 	u_int8_t myla[ETHER_ADDR_LEN];
-	u_int8_t *enaddr;
+	u_int8_t *enaddr = NULL;
 	int i;
 
 	psc->sc_pf = pa->pf;
@@ -320,18 +324,22 @@ ep_pcmcia_attach(parent, self, aux)
 		printf(": can't map i/o space\n");
 		return;
 	}
-	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
+
+	switch (pa->product) {
+	case PCMCIA_PRODUCT_3COM_3C562:
 		/*
 		 * 3c562a-c use this; 3c562d does it in the regular way.
 		 * we might want to check the revision and produce a warning
 		 * in the future.
 		 */
-		if (pcmcia_scan_cis(parent, ep_pcmcia_get_enaddr, myla) != 1)
-			enaddr = NULL;
-		else
+		/* FALLTHROUGH */
+	case PCMCIA_PRODUCT_3COM_3C574:
+		/*
+		 * Apparently, some 3c574s do it this way, as well.
+		 */
+		if (pcmcia_scan_cis(parent, ep_pcmcia_get_enaddr, myla))
 			enaddr = myla;
-	} else {
-		enaddr = NULL;
+		break;
 	}
 
 	sc->bustype = EP_BUS_PCMCIA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.43 1998/08/16 01:16:57 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.44 1998/08/17 23:20:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -392,6 +392,13 @@ epconfig(sc, chipset, enaddr)
 	GO_WINDOW(0);
 
 	/*
+	 * Display some additional information, if pertinent.
+	 */
+	if (sc->ep_flags & EP_FLAGS_USEFIFOBUFFER)
+		printf("%s: RoadRunner FIFO buffer enabled\n",
+		    sc->sc_dev.dv_xname);
+
+	/*
 	 * Initialize our media structures and MII info.  We'll
 	 * probe the MII if we discover that we have one.
 	 */
@@ -706,6 +713,28 @@ epinit(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
+	if (sc->ep_chipset == EP_CHIPSET_ROADRUNNER) {
+		/*
+		 * Enable options in the PCMCIA LAN COR register, via
+		 * RoadRunner Window 1.
+		 *
+		 * XXX MAGIC CONSTANTS!
+		 */
+		u_int16_t cor;
+
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_RDCTL, (1 << 11));
+
+		cor = bus_space_read_2(iot, ioh, 0) & ~0x30;
+		if (sc->ep_flags & EP_FLAGS_USESHAREDMEM)
+			cor |= 0x10;
+		if (sc->ep_flags & EP_FLAGS_FORCENOWAIT)
+			cor |= 0x20;
+		bus_space_write_2(iot, ioh, 0, cor);
+
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_WRCTL, 0);
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_RDCTL, 0);
+	}
+
 	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE |
 				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
@@ -798,6 +827,16 @@ epsetmedia(sc)
 		int config0, config1;
 
 		GO_WINDOW(3);
+
+		if (sc->ep_chipset == EP_CHIPSET_ROADRUNNER) {
+			int resopt;
+
+			resopt = bus_space_read_2(iot, ioh,
+			    EP_W3_RESET_OPTIONS);
+			bus_space_write_2(iot, ioh,
+			    EP_W3_RESET_OPTIONS, resopt|EP_RUNNER_ENABLE_MII);
+		}
+
 		config0 = (u_int)bus_space_read_2(iot, ioh,
 		    EP_W3_INTERNAL_CONFIG);
 		config1 = (u_int)bus_space_read_2(iot, ioh,
@@ -1027,6 +1066,18 @@ startagain:
 	sh = splhigh();
 
 	txreg = ep_w1_reg(sc, EP_W1_TX_PIO_WR_1);
+
+	if (sc->ep_flags & EP_FLAGS_USEFIFOBUFFER) {
+		/*
+		 * Prime the FIFO buffer counter (number of 16-bit
+		 * words about to be written to the FIFO).
+		 *
+		 * NOTE: NO OTHER ACCESS CAN BE PERFORMED WHILE THIS
+		 * COUNTER IS NON-ZERO!
+		 */
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_WRCTL,
+		    (len + pad) >> 1);
+	}
 
 	bus_space_write_2(iot, ioh, txreg, len);
 	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
@@ -1433,7 +1484,7 @@ epget(sc, totlen)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct mbuf *top, **mp, *m;
+	struct mbuf *top, **mp, *m, *rv = NULL;
 	bus_addr_t rxreg;
 	int len, remaining;
 	int sh;
@@ -1468,6 +1519,17 @@ epget(sc, totlen)
 
 	rxreg = ep_w1_reg(sc, EP_W1_RX_PIO_RD_1);
 
+	if (sc->ep_flags & EP_FLAGS_USEFIFOBUFFER) {
+		/*
+		 * Prime the FIFO buffer counter (number of 16-bit
+		 * words about to be read from the FIFO).
+		 *
+		 * NOTE: NO OTHER ACCESS CAN BE PERFORMED WHILE THIS
+		 * COUNTER IS NON-ZERO!
+		 */
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_RDCTL, totlen >> 1);
+	}
+
 	while (totlen > 0) {
 		if (top) {
 			m = sc->mb[sc->next_mb];
@@ -1475,9 +1537,8 @@ epget(sc, totlen)
 			if (m == 0) {
 				MGET(m, M_DONTWAIT, MT_DATA);
 				if (m == 0) {
-					splx(sh);
 					m_freem(top);
-					return 0;
+					goto out;
 				}
 			} else {
 				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
@@ -1487,10 +1548,9 @@ epget(sc, totlen)
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				splx(sh);
 				m_free(m);
 				m_freem(top);
-				return 0;
+				goto out;
 			}
 			len = MCLBYTES;
 		}
@@ -1553,13 +1613,18 @@ epget(sc, totlen)
 		mp = &m->m_next;
 	}
 
+	rv = top;
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 
+ out:
+	if (sc->ep_flags & EP_FLAGS_USEFIFOBUFFER)
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_RDCTL, 0);
 	splx(sh);
 
-	return top;
+	return rv;
 }
 
 int
@@ -1709,6 +1774,16 @@ epstop(sc)
 	if (sc->ep_flags & EP_FLAGS_MII) {
 		/* Stop the one second clock. */
 		untimeout(ep_tick, sc);
+	}
+
+	if (sc->ep_chipset == EP_CHIPSET_ROADRUNNER) {
+		/*
+		 * Clear the FIFO buffer count, thus halting
+		 * any currently-running transactions.
+		 */
+		GO_WINDOW(1);		/* sanity */
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_WRCTL, 0);
+		bus_space_write_2(iot, ioh, EP_W1_RUNNER_RDCTL, 0);
 	}
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);

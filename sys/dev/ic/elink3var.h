@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.17 1998/08/15 16:15:40 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.18 1998/08/17 23:20:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -47,6 +47,8 @@ struct ep_softc {
 	struct mii_data sc_mii;		/* MII/media control		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
+	bus_space_tag_t sc_memt;	/* RoadRunner only		*/
+	bus_space_handle_t sc_memh;	/* RoadRunner only		*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -56,21 +58,24 @@ struct ep_softc {
 					/* w/o underrun			*/
 
 	u_int	ep_flags;		/* capabilities flag (from EEPROM) */
-#define EP_FLAGS_PNP			0x0001
-#define EP_FLAGS_FULLDUPLEX		0x0002
-#define EP_FLAGS_LARGEPKT		0x0004	/* 4k packet support */
-#define EP_FLAGS_SLAVEDMA		0x0008
-#define EP_FLAGS_SECONDDMA		0x0010
-#define EP_FLAGS_FULLDMA		0x0020
-#define EP_FLAGS_FRAGMENTDMA		0x0040
-#define EP_FLAGS_CRC_PASSTHRU		0x0080
-#define EP_FLAGS_TXDONE			0x0100
-#define EP_FLAGS_NO_TXLENGTH		0x0200
-#define EP_FLAGS_RXREPEAT		0x0400
-#define EP_FLAGS_SNOOPING		0x0800
-#define EP_FLAGS_100MBIT		0x1000
-#define EP_FLAGS_POWERMGMT		0x2000
-#define	EP_FLAGS_MII			0x4000
+#define EP_FLAGS_PNP			0x00001
+#define EP_FLAGS_FULLDUPLEX		0x00002
+#define EP_FLAGS_LARGEPKT		0x00004	/* 4k packet support */
+#define EP_FLAGS_SLAVEDMA		0x00008
+#define EP_FLAGS_SECONDDMA		0x00010
+#define EP_FLAGS_FULLDMA		0x00020
+#define EP_FLAGS_FRAGMENTDMA		0x00040
+#define EP_FLAGS_CRC_PASSTHRU		0x00080
+#define EP_FLAGS_TXDONE			0x00100
+#define EP_FLAGS_NO_TXLENGTH		0x00200
+#define EP_FLAGS_RXREPEAT		0x00400
+#define EP_FLAGS_SNOOPING		0x00800
+#define EP_FLAGS_100MBIT		0x01000
+#define EP_FLAGS_POWERMGMT		0x02000
+#define	EP_FLAGS_MII			0x04000
+#define	EP_FLAGS_USEFIFOBUFFER		0x08000	/* RoadRunner only */
+#define	EP_FLAGS_USESHAREDMEM		0x10000	/* RoadRunner only */
+#define	EP_FLAGS_FORCENOWAIT		0x20000	/* RoadRunner only */
 
 	u_short ep_chipset;		/* Chipset family on this board */
 #define EP_CHIPSET_3C509		0x00	/* PIO: 3c509, 3c589 */
