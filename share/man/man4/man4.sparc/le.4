@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.4 1996/07/31 20:33:06 thorpej Exp $
+.\"	$NetBSD: le.4,v 1.5 1997/07/07 22:36:04 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,8 @@
 .Nd SPARC AMD 7990 LANCE ethernet interface
 .Sh SYNOPSIS
 .Cd "le* at sbus? slot ? offset ?"
+.Cd "le* at ledma0 slot ? offset ?"
+.Cd "le* at lebuffer? slot ? offset ?"
 .Sh DESCRIPTION
 The 
 .Nm
@@ -66,31 +68,38 @@ interface employs the address resolution protocol described in
 to dynamically map between Internet and Ethernet addresses on the local
 network.
 .Pp
-The sun4m interface has two types of connectors:
+Interfaces attached to an
+.Sy ledma0
+typically have have two types of connectors:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -offset indent -width xxxxxxxxxxxxxxxxxx
 .It AUI/DIX
 Standard 15 pin connector
 .It 10BaseT
 UTP, also known as twisted pair
 .El
 .Pp
-The default port to use is selected by examining all media types for carrier.
-The first port with carrier will be selected and used. If carrier is dropped
-on that port, the driver will (by default) switch between the possible
-ports until one with carrier is found. To modify this default behavior, pass
-the following flags to
-.Xr ifconfig 8
-or place them in your /etc/hostname.le? file.
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It link0
-Use the UTP port only. No automatic carrier detection or port switching.
-.It link1
-Use the AUI port only. No automatic carrier detection or port switching.
-.It -link0 -link1
-Use the default behavior described above.
+The appropriate connector can be selected by supplying a
+.Fl media
+flag to
+.Xr ifconfig 8 .
+The supported arguments for
+.Fl media
+are:
+.Bl -tag -offset indent -width xxxxxxxxxxxxxxxxxx
+.It Dq 10base5/AUI
+to select the AUI connector, or
+.It Dq 10baseT/UTP
+to select the UTP connector.
 .El
+.Pp
+If a
+.Fl media
+flag is not specified, a default connector is selected for use by examining
+all media types for carrier. The first connector on which a carrier is
+detected will be selected.
+Additionally, if carrier is dropped on a port, the driver will switch between
+the possible ports until one with carrier is found.
 .Pp
 .Sh SEE ALSO
 .Xr intro 4 ,
