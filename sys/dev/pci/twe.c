@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.42 2003/09/21 19:20:18 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.43 2003/09/21 19:27:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.42 2003/09/21 19:20:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.43 2003/09/21 19:27:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,11 +103,6 @@ static void	twe_attach(struct device *, struct device *, void *);
 static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
 static int	twe_match(struct device *, struct cfdata *, void *);
-static int	twe_param_get(struct twe_softc *, int, int, size_t,
-		    void (*)(struct twe_ccb *, int), struct twe_param **);
-static int	twe_param_get_1(struct twe_softc *, int, int, uint8_t *);
-static int	twe_param_get_2(struct twe_softc *, int, int, uint16_t *);
-static int	twe_param_get_4(struct twe_softc *, int, int, uint32_t *);
 static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
@@ -752,7 +747,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
  * These are short-hand functions that execute TWE_OP_GET_PARAM to
  * fetch 1, 2, and 4 byte parameter values, respectively.
  */
-static int
+int
 twe_param_get_1(struct twe_softc *sc, int table_id, int param_id,
     uint8_t *valp)
 {
@@ -767,7 +762,7 @@ twe_param_get_1(struct twe_softc *sc, int table_id, int param_id,
 	return (0);
 }
 
-static int
+int
 twe_param_get_2(struct twe_softc *sc, int table_id, int param_id,
     uint16_t *valp)
 {
@@ -782,7 +777,7 @@ twe_param_get_2(struct twe_softc *sc, int table_id, int param_id,
 	return (0);
 }
 
-static int
+int
 twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
     uint32_t *valp)
 {
@@ -805,7 +800,7 @@ twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
  *
  * The caller or callback is responsible for freeing the buffer.
  */
-static int
+int
 twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	      void (*func)(struct twe_ccb *, int), struct twe_param **pbuf)
 {
