@@ -1,4 +1,4 @@
-/*	$NetBSD: urem.S,v 1.1 2002/02/24 00:08:23 matt Exp $	*/
+/*	$NetBSD: urem.S,v 1.2 2002/02/24 00:12:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,29 +45,29 @@
  * urem() takes an ordinary dividend/divisor pair;
  */
 
-#define	DIVIDEND	4(ap)
-#define	DIVISOR		8(ap)
+#define	DIVIDEND	4(%ap)
+#define	DIVISOR		8(%ap)
 
 #ifdef __ELF__
 ENTRY(__urem, 0)
 #else
 ASENTRY(urem, 0)
 #endif
-	movl	8(ap),r2
+	movl	8(%ap),%r2
 	jlss	Leasy		# big divisor: settle by comparison
-	movl	4(ap),r0
+	movl	4(%ap),%r0
 	jlss	Lhard		# big dividend: need extended division
-	divl3	r2,r0,r1	# small divisor and dividend: signed modulus
-	mull2	r2,r1
-	subl2	r1,r0
+	divl3	%r2,%r0,%r1	# small divisor and dividend: signed modulus
+	mull2	%r2,%r1
+	subl2	%r1,%r0
 	ret
 Lhard:
-	clrl	r1
-	ediv	r2,r0,r1,r0
+	clrl	%r1
+	ediv	%r2,%r0,%r1,%r0
 	ret
 Leasy:
-	subl3	r2,DIVIDEND,r0
+	subl3	%r2,DIVIDEND,%r0
 	jcc	Ldifference	# if divisor goes in once, return difference
-	movl	DIVIDEND,r0	# if divisor is bigger, return dividend
+	movl	DIVIDEND,%r0	# if divisor is bigger, return dividend
 Ldifference:
 	ret
