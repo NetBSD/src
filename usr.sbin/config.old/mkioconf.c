@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.29 1994/03/29 04:27:18 mycroft Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.30 1994/04/05 23:07:07 chopps Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1036,7 +1036,6 @@ amiga_ioconf()
 	(void) fclose(fp);
 }
 
-#define isfloppydev(n) eq(n,"fd")
 #define isscsidev(n) (eq(n,"sd") || eq(n,"st"))
 
 amigabadslave(mp, dp)
@@ -1044,13 +1043,6 @@ amigabadslave(mp, dp)
 {
 	extern char *awnum();
 
-	if (mp == TO_NEXUS && isfloppydev(dp->d_name) ||
-	    mp != TO_NEXUS && eq(mp->d_name, "floppy") &&
-	    !isfloppydev(dp->d_name)) {
-		printf("%s%s must be attached to a floppy\n",
-		       dp->d_name, awnum(dp->d_unit));
-		return (1);
-	}
 	if (mp == TO_NEXUS && isscsidev(dp->d_name) ||
 	    mp != TO_NEXUS && eq(mp->d_name, "scsi") &&
 	    !isscsidev(dp->d_name)) {
