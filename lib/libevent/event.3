@@ -1,4 +1,4 @@
-.\"	$NetBSD: event.3,v 1.2 2003/06/13 04:11:31 itojun Exp $
+.\"	$NetBSD: event.3,v 1.3 2003/07/04 12:17:59 wiz Exp $
 .\"	$OpenBSD: event.3,v 1.4 2002/07/12 18:50:48 provos Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
@@ -167,7 +167,7 @@ argument indicating the type of event, and a
 argument given in the
 .Fa arg
 argument.
-The 
+The
 .Fa fd
 indicates the file descriptor that should be monitored for events.
 The events can be either
@@ -207,7 +207,7 @@ The function
 .Fn event_add
 schedules the execution of the
 .Fa ev
-event when the event specified in 
+event when the event specified in
 .Fn event_set
 occurs or in at least the time specified in the
 .Fa tv .
@@ -242,7 +242,7 @@ function can be used to check if the event specified by
 is pending to run.
 If
 .Va EV_TIMEOUT
-was specified and 
+was specified and
 .Fa tv
 is not
 .Va NULL ,
