@@ -1,11 +1,8 @@
-/*	$NetBSD: intr.c,v 1.12 1998/07/06 00:53:07 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.13 1998/09/05 03:59:29 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
- * Copyright (c) 1994 Brini.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * All rights reserved.
- *
- * This code is derived from software written for Brini by Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,15 +14,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -33,6 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * Soft interrupt and other generic interrupt functions.
  */
 
 #include "opt_uvm.h"
@@ -93,14 +93,32 @@
 #include <net/if_ppp.h>
 #endif	/* NPPP > 0 */
 
-extern int current_intr_depth;
-extern u_int spl_mask;
-extern u_int soft_interrupts;
+u_int soft_interrupts = 0;
+
+extern int current_spl_level;
+
+/* Generate soft interrupt counts if IRQSTATS is defined */
 #ifdef IRQSTATS
-extern u_int intrcnt[];
+extern u_int sintrcnt[];
+#define INC_SINTRCNT(x) ++sintrcnt[x]
+#else
+#define INC_SINTRCNT(x)
 #endif	/* IRQSTATS */
 
-/* Eventually this will become macros */
+#if defined(UVM)
+#define	COUNT	uvmexp.softs;
+#else
+#define	COUNT	cnt.v_soft;
+#endif
+
+/* Prototypes */
+
+#include "com.h"
+#if NCOM > 0
+extern void comsoft	__P((void));
+#endif	/* NCOM > 0 */
+
+/* Eventually these will become macros */
 
 void
 setsoftintr(intrmask)
@@ -110,15 +128,28 @@ setsoftintr(intrmask)
 }
 
 void
+clearsoftintr(intrmask)
+	u_int intrmask;
+{
+	atomic_clear_bit(&soft_interrupts, intrmask);
+}
+
+void
 setsoftclock()
 {
-	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
+	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_CLOCK));
 }
 
 void
 setsoftnet()
 {
-	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTNET);
+	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
+}
+
+void
+setsoftserial()
+{
+	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_SERIAL));
 }
 
 int astpending;
@@ -143,48 +174,34 @@ need_resched(void)
 void
 dosoftints()
 {
-	register u_int softints;
+	u_int softints;
 	int s;
 
-	softints = soft_interrupts & spl_mask;
+	softints = soft_interrupts & spl_smasks[current_spl_level];
 	if (softints == 0) return;
-
-	if (current_intr_depth > 1)
-		return;
-
-	s = splsoft();
 
 	/*
 	 * Software clock interrupts
 	 */
 
-	if (softints & IRQMASK_SOFTCLOCK) {
-#if defined(UVM)
-		++uvmexp.softs;
-#else
-  		++cnt.v_soft;
-#endif
-#ifdef IRQSTATS
-		++intrcnt[IRQ_SOFTCLOCK];
-#endif	/* IRQSTATS */
-		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
+	if (softints & SOFTIRQ_BIT(SOFTIRQ_CLOCK)) {
+		s = splsoftclock();
+		++COUNT;
+		INC_SINTRCNT(SOFTIRQ_CLOCK);
+		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_CLOCK));
 		softclock();
+		splx(s);
 	}
 
 	/*
 	 * Network software interrupts
 	 */
 
-	if (softints & IRQMASK_SOFTNET) {
-#if defined(UVM)
-		++uvmexp.softs;
-#else
-  		++cnt.v_soft;
-#endif
-#ifdef IRQSTATS
-		++intrcnt[IRQ_SOFTNET];
-#endif	/* IRQSTATS */
-		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
+	if (softints & SOFTIRQ_BIT(SOFTIRQ_NET)) {
+		s = splsoftnet();
+		++COUNT;
+		INC_SINTRCNT(SOFTIRQ_NET);
+		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_NET));
 
 #ifdef INET
 #if NARP > 0
@@ -240,8 +257,22 @@ dosoftints()
 			pppintr();
 		}
 #endif
+		splx(s);
 	}
-	(void)lowerspl(s);
+	/*
+	 * Serial software interrupts
+	 */
+
+	if (softints & SOFTIRQ_BIT(SOFTIRQ_SERIAL)) {
+		s = splsoftserial();
+		++COUNT;
+		INC_SINTRCNT(SOFTIRQ_SERIAL);
+		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_SERIAL));
+#if NCOM > 0
+		comsoft();
+#endif	/* NCOM > 0 */
+		splx(s);
+	}
 }
 
 /* End of intr.c */
