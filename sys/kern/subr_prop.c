@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.1 2001/10/04 18:56:06 eeh Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.2 2001/10/05 12:55:24 pooka Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -117,8 +117,8 @@ allocprop(const char *name, size_t len, int wait)
 	dsize = ALIGN(len);
 	nsize = ALIGN(strlen(name));
 
-	DPRINTF(x, ("allocprop: allocating %ld bytes for %s %s\n",
-		sizeof(struct kdbprop) + dsize + nsize, name, 
+	DPRINTF(x, ("allocprop: allocating %lu bytes for %s %s\n",
+		(unsigned long)(sizeof(struct kdbprop) + dsize + nsize), name, 
 		wait ? "can wait" : "can't wait"));
 
 	kp = (struct kdbprop *)malloc(sizeof(struct kdbprop) + dsize + nsize,
@@ -338,7 +338,7 @@ prop_set(propdb_t db, opaque_t object, const char *name,
 	int s;
 
 	DPRINTF(x, ("prop_set: %p, %p, %s, %p, %lx, %x, %d\n", db, object, 
-		name ? name : "NULL", val, len, type, wait));
+		name ? name : "NULL", val, (unsigned long)len, type, wait));
 
 	/* Find our object */
 	s = splvm();
@@ -412,7 +412,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	int s;
 
 	DPRINTF(x, ("prop_get: %p, %p, %s, %p, %lx, %p\n", db, object, 
-		name ? name : "NULL", val, len, type));
+		name ? name : "NULL", val, (unsigned long)len, type));
 
 	/* Find our object */
 	s = splvm();
@@ -453,7 +453,8 @@ prop_objs(propdb_t db, opaque_t *objects, size_t len)
 	struct kdbobj *obj;
 	int i, j, s, nelem = (len / sizeof(opaque_t));
 
-	DPRINTF(x, ("prop_objs: %p, %p, %lx\n", db, objects, len));
+	DPRINTF(x, ("prop_objs: %p, %p, %lx\n", db, objects,
+	    (unsigned long)len));
 
 	s = splvm();
 	for (i=0, j=0; i < db->kd_size; i++) {
@@ -480,7 +481,7 @@ prop_list(propdb_t db, opaque_t object, char *names, size_t len)
 	int s, i = 0;
 
 	DPRINTF(x, ("prop_list: %p, %p, %p, %lx\n", 
-		db, object, names, len));
+		db, object, names, (unsigned long)len));
 
 	/* Find our source object */
 	s = splvm();
