@@ -951,4 +951,3 @@ struct sysent sysent[] = {
 #endif
 };
 
-int	nsysent= sizeof(sysent) / sizeof(sysent[0]);
