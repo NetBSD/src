@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 2004/01/06 19:30:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2004/01/06 19:30:38 tsutsui Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -303,7 +303,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
-cpu_lwp_free(struct lwp *l)
+cpu_lwp_free(struct lwp *l, int proc)
 {
 
 	/* Nothing to do */
