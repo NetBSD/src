@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.8 1997/04/21 11:31:15 mrg Exp $	*/
+/*	$NetBSD: optr.c,v 1.9 1997/04/21 21:05:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.8 1997/04/21 11:31:15 mrg Exp $";
+static char rcsid[] = "$NetBSD: optr.c,v 1.9 1997/04/21 21:05:07 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ sendmes(tty, message)
 	FILE *f_tty;
 
 	(void)strncpy(t, _PATH_DEV, sizeof(t) - 1);
-	(void)strncat(t, tty, sizeof(t) sizeof(_PATH_DEV) - 1);
+	(void)strncat(t, tty, sizeof(t) - sizeof(_PATH_DEV) - 1);
 	t[sizeof(t) - 1] = '\0';
 
 	if ((f_tty = fopen(t, "w")) != NULL) {
