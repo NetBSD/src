@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/04/26 09:17:16 uwe Exp $
+#	$NetBSD: Makefile,v 1.16 2004/06/12 14:57:57 jmc Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -149,8 +149,8 @@ auto-build.h: Makefile
 	mkdir .ab && \
 	(cd .ab && \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
-			--build=`${.CURDIR}/../../../dist/gcc/config.guess` \
-			--host=`${.CURDIR}/../../../dist/gcc/config.guess` \
+			--build=`${HOST_SH} ${.CURDIR}/../../../dist/gcc/config.guess` \
+			--host=`${HOST_SH} ${.CURDIR}/../../../dist/gcc/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
 		mv auto-host.h ../auto-build.h) && \
 	rm -rf .ab
