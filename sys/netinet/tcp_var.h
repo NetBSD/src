@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.124 2005/03/29 20:10:16 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.125 2005/04/05 01:07:17 kurahone Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -294,6 +294,7 @@ struct tcpcb {
 	struct sackblk rcv_dsack_block;	/* RX D-SACK block. */
 	struct ipqehead timeq;		/* time sequenced queue. */
 	struct sackhead snd_holes;	/* TX SACK holes. */
+	int	snd_numholes;		/* Number of TX SACK holes. */
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	tcp_seq sack_newdata;		/* New data xmitted in this recovery
 					   episode starts at this seq number*/
@@ -719,6 +720,9 @@ extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 extern	int tcp_do_loopback_cksum;/* do TCP checksum on loopback? */
+extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
+extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
+extern int tcp_sack_globalholes;	/* Number of holes present. */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
