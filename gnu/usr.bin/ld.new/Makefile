@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/27 21:20:46 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/09/30 16:47:47 jonathan Exp $
+
+# XXX set MACHINE_GNU_ARCH for _<arch>.mk
+.include <bsd.own.mk>
 
 PROG=		ld
 
@@ -23,7 +26,9 @@ BFDOBJ!=	cd ${.CURDIR}/../../lib/bfd; ${MAKE} print-objdir
 
 .PATH:		${DIST}/ld
 
-.include "${MACHINE_ARCH}.mk"
+
+.include "_${MACHINE_ARCH}.mk"
+
 
 LIB_PATH=	${LIBDIR}	# passed to genscripts.sh
 
