@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.4 2001/07/19 19:09:22 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.5 2003/07/14 23:25:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -67,6 +67,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.5 2003/07/14 23:25:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
