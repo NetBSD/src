@@ -42,7 +42,7 @@
 # define ipc_phys(x)	(x)
 #else /* CPU_SINGLE */
 # include <sys/param.h>
-# include <news/newsipc/newsipc.h>
+# include <newsmips/newsipc/newsipc.h>
 # ifdef mips
 #  define ipc_phys(x)	K0_TT0(x)
 # else /* mips */

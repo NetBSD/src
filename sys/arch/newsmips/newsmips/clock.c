@@ -50,7 +50,7 @@
 #include <machine/autoconf.h>
 #include <machine/adrsmap.h>
 
-#include <news/news/clockreg.h>
+#include <newsmips/newsmips/clockreg.h>
 
 static int clockmatch __P((struct device *, struct cfdata *, void *));
 static void clockattach __P((struct device *, struct device *, void *));

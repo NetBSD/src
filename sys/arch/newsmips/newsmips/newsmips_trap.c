@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.1 1998/02/18 13:48:32 tsubai Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.2 1998/03/04 22:22:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
 #include <machine/mips_opcode.h>
 #include <mips/locore.h>		/* wbflush() */
 
-#include <news/dev/scc.h>
+#include <newsmips/dev/scc.h>
 
 #include <sys/socket.h>
 #include <sys/mbuf.h>
@@ -92,7 +92,7 @@ struct ifnet; struct ethercom;
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
-#include <news/news/trap.h>
+#include <newsmips/newsmips/trap.h>
 
 #include <machine/autoconf.h>
 #include <machine/adrsmap.h>
@@ -196,7 +196,7 @@ news3400_errintr()
 }
 #endif
 
-#include <news/dev/dmac_0448.h>
+#include <newsmips/dev/dmac_0448.h>
 
 /*
  * news3400 - INT0 service routine.

@@ -42,7 +42,7 @@
 #include <sys/systm.h>
 
 #include <machine/keyboard.h>
-#include <news/dev/kbreg.h>
+#include <newsmips/dev/kbreg.h>
 
 #define FN(n,name,addr,len1,str1,len2,str2) {addr, {len1, str1}, {len2, str2}}
 

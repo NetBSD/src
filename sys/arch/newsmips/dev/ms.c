@@ -60,8 +60,8 @@
 #include <machine/mouse.h>
 #include <machine/autoconf.h>
 
-#include <news/dev/msreg.h>
-#include <news/dev/scc.h>
+#include <newsmips/dev/msreg.h>
+#include <newsmips/dev/scc.h>
 
 #ifndef mips
 #define volatile
