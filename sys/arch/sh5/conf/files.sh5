@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.13 2003/10/05 09:57:47 scw Exp $
+#	$NetBSD: files.sh5,v 1.14 2004/05/14 08:58:32 he Exp $
 
 
 #
@@ -155,3 +155,6 @@ file	netns/ns_cksum.c			ns
 defflag	opt_sh5_debug.h		SH5_SIM SH5_DEBUG_ST50
 defparam opt_sh5_cpu.h		SH5_CPU_SPEED
 defparam opt_kernel_ipt.h	KERNEL_IPT_SIZE
+
+# special compiler settings (no optimization for a few files)
+file	miscfs/genfs/genfs_vnops.c compile-with "${CC_NOOPT}"
