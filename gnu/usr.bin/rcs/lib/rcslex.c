@@ -49,7 +49,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(lexId, "$Id: rcslex.c,v 1.2 1993/08/02 17:47:26 mycroft Exp $")
+libId(lexId, "$Id: rcslex.c,v 1.3 1993/12/01 01:41:51 cgd Exp $")
 
 static struct hshentry *nexthsh;  /*pointer to next hash entry, set by lookup*/
 
@@ -856,7 +856,8 @@ void Ifclose(f) RILE *f; { if (f && Iclose(f)!=0) Ierror(); }
 void Ofclose(f) FILE *f; { if (f && fclose(f)!=0) Oerror(); }
 #else
 void Ofclose(f) FILE *f; { if (f && (fflush(f)!=0 ||
-				     fsync(fileno(f))!=0 ||
+				     ((fsync(fileno(f)) == -1) &&
+				         (errno != EINVAL)) ||
 				     fclose(f)!=0)) Oerror(); }
 #endif
 void Izclose(p) RILE **p; { Ifclose(*p); *p = 0; }
