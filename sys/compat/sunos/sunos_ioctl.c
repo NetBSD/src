@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.31 2000/03/30 11:27:19 augustss Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.32 2000/07/27 14:00:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -804,7 +804,7 @@ sunos_sys_ioctl(p, v, retval)
 	case _IO('S', 5):	/* I_FLUSH */
 	    {
 		int tmp = 0;
-		switch ((int)SCARG(uap, data)) {
+		switch ((int)(u_long)SCARG(uap, data)) {
 		case SUNOS_S_FLUSHR:	tmp = FREAD;
 		case SUNOS_S_FLUSHW:	tmp = FWRITE;
 		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
@@ -814,7 +814,8 @@ sunos_sys_ioctl(p, v, retval)
 	case _IO('S', 9):	/* I_SETSIG */
 	    {
 		int on = 1;
-		if (((int)SCARG(uap, data) & (SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
+		if (((int)(u_long)SCARG(uap, data) &
+			(SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
 		    SUNOS_S_HIPRI)
 			return EOPNOTSUPP;
                 return (*ctl)(fp, FIOASYNC, (caddr_t)&on, p);

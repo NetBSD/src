@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.38 2000/04/12 15:12:13 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.39 2000/07/27 14:00:56 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1259,7 +1259,7 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	/* set up SIGIO receiver if needed */
 	if (dat != NULL) {
 		SCARG(&fa, cmd) = F_SETOWN;
-		SCARG(&fa, arg) = (void *) p->p_pid;
+		SCARG(&fa, arg) = (void *)(u_long)p->p_pid;
 		return sys_fcntl(p, &fa, &flags);
 	}
 	return 0;

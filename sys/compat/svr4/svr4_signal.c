@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.38 2000/04/09 06:28:28 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.39 2000/07/27 14:00:56 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ svr4_sys_signal(p, v, retval)
 		error = sigaction1(p, signum, &nbsa, &obsa);
 		if (error)
 			return (error);
-		*retval = (int)obsa.sa_handler;
+		*retval = (u_int)(u_long)obsa.sa_handler;
 		return (0);
 
 	case SVR4_SIGHOLD_MASK:
