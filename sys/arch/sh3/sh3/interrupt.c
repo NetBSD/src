@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7 2003/08/08 00:52:42 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.8 2003/10/08 23:31:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2003/08/08 00:52:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2003/10/08 23:31:43 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -137,7 +137,7 @@ intc_intr_disestablish(void *arg)
 	struct intc_intrhand *ih = arg;
 	int evtcode = ih->ih_evtcode;
 
-	/* Mask interrupt if IPR can manage it. if not, cascated ICU will do */
+	/* Mask interrupt if IPR can manage it. if not, cascaded ICU will do */
 	intc_intr_priority(evtcode, 0);
 
 	/* Unmap interrupt handler */
@@ -196,6 +196,15 @@ do {									\
 
 	if (CPU_IS_SH3)
 		switch (evtcode) {
+		case SH7709_INTEVT2_IRQ3:
+			SH7709_IPR(C, 12, level);
+			break;
+		case SH7709_INTEVT2_IRQ2:
+			SH7709_IPR(C, 8, level);
+			break;
+		case SH7709_INTEVT2_IRQ1:
+			SH7709_IPR(C, 4, level);
+			break;
 		case SH7709_INTEVT2_IRQ0:
 			SH7709_IPR(C, 0, level);
 			break;
@@ -204,6 +213,9 @@ do {									\
 			break;
 		case SH7709_INTEVT2_PINT8F:
 			SH7709_IPR(D, 8, level);
+			break;
+		case SH7709_INTEVT2_IRQ5:
+			SH7709_IPR(D, 4, level);
 			break;
 		case SH7709_INTEVT2_IRQ4:
 			SH7709_IPR(D, 0, level);
@@ -240,7 +252,7 @@ intc_alloc_ih()
 	int i;
 
 	for (i = 1; i <= _INTR_N; i++, ih++)
-		if (ih->ih_idx == 0) {	/* no driver use this. */
+		if (ih->ih_idx == 0) {	/* no driver uses this. */
 			ih->ih_idx = i;	/* register myself */
 			return (ih);
 		}
