@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5 1996/09/10 11:22:33 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.6 1996/09/13 03:10:56 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -678,8 +678,8 @@ apmprobe(parent, match, aux)
 		apminfo.apm_entrypt = regs.bx;
 		apminfo.apm_code16_seg_base = regs.cx << 4;
 		apminfo.apm_data_seg_base = regs.dx << 4;
-		apminfo.apm_code32_seg_len = regs.si << 4;
-		apminfo.apm_data_seg_len = regs.di << 4;
+		apminfo.apm_code32_seg_len = regs.si;
+		apminfo.apm_data_seg_len = regs.di;
 
 
 #ifdef APM_FORCE_64KSEG
