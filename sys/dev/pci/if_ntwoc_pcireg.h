@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pcireg.h,v 1.2 1999/02/15 04:54:35 hubertf Exp $	*/
+/*	$NetBSD: if_ntwoc_pcireg.h,v 1.3 2000/01/04 06:31:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -38,6 +38,43 @@
 
 #ifndef _IF_NTWOC_PCIREG_H_
 #define _IF_NTWOC_PCIREG_H_
+
+/* config flags are as follows */
+/*
+ * 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+ * +-------------+ +-----+ +-----+ + +---+ +-+     + +---+ +-+   +
+ *       tmc         tdiv    rdiv  e1 rxs1 ts1    e0 rxs0  txs0  nports - 1
+ */
+#define	NTWOC_FLAGS_CLK0_MASK	0x000000fc	/* port 0 clock info mask */
+#define	NTWOC_FLAGS_CLK1_MASK	0x0000fc00	/* port 1 clock info mask */
+#define	NTWOC_FLAGS_RXDIV_MASK	0x000F0000	/* rx div mask */
+#define	NTWOC_FLAGS_TXDIV_MASK	0x00F00000	/* tx div mask */
+#define	NTWOC_FLAGS_TMC_MASK	0xFF000000	/* tmc port 0 mask */
+
+#define	NTWOC_FLAGS_CLK1_SHIFT	8
+
+/* these are used after you shift down to the clock byte for the resp. port */
+#define	NTWOC_FLAGS_TXS_SHIFT		2
+#define	NTWOC_FLAGS_TXS_MASK	0x0000000c	/* port 0 tx clk source mask */
+#define	NTWOC_FLAGS_TXS_LINE		0	/* use the line clock */
+#define	NTWOC_FLAGS_TXS_INTERNAL	1	/* use the internal clock */
+#define	NTWOC_FLAGS_TXS_RXCLOCK		2	/* use the receive clock */
+
+#define	NTWOC_FLAGS_RXS_SHIFT		4
+#define	NTWOC_FLAGS_RXS_MASK	0x00000070	/* port 0 rx clk source mask */
+#define	NTWOC_FLAGS_RXS_LINE		0	/* use the line clock */
+#define NTWOC_FLAGS_RXS_LINE_SN		1	/* use line with noise supp. */
+#define NTWOC_FLAGS_RXS_INTERNAL	2	/* use internal clock */
+#define NTWOC_FLAGS_RXS_ADPLL_OUT	3	/* use brg out for adpll clk */
+#define NTWOC_FLAGS_RXS_ADPLL_IN	4	/* use line in for adpll clk */
+
+#define	NTWOC_FLAGS_ECLOCK_SHIFT	7	/* generate external clock */
+#define	NTWOC_FLAGS_ECLOCK_MASK	0x00000080	/* port 0 ext clk gen mask */
+
+/* these are used on the flags directly */
+#define	NTWOC_FLAGS_RXDIV_SHIFT	16
+#define	NTWOC_FLAGS_TXDIV_SHIFT	20
+#define	NTWOC_FLAGS_TMC_SHIFT	24
 
 /*
  * ASIC register offsets
