@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.46 1995/01/29 02:58:20 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.47 1995/01/29 07:36:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -61,7 +61,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/comreg.h>
+#include <dev/isa/comreg.h>
 #include <dev/ic/ns16550.h>
 
 struct com_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.68 1995/01/22 07:37:28 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.69 1995/01/29 07:37:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -69,8 +69,8 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/if_epreg.h>
-#include <i386/isa/elink.h>
+#include <dev/isa/if_epreg.h>
+#include <dev/isa/elink.h>
 
 #define ETHER_MIN_LEN 64
 #define ETHER_MAX_LEN   1518

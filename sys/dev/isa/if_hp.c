@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.18 1994/10/30 21:43:55 cgd Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.19 1995/01/29 07:37:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991 William F. Jolitz.
@@ -91,7 +91,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa_device.h>
-#include <i386/isa/if_nereg.h>
+#include <dev/isa/if_nereg.h>
 #include <i386/isa/icu.h>
 
 int     hpprobe(), hpattach(), hpintr();

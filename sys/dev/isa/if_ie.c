@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.31 1995/01/29 02:58:28 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.32 1995/01/29 07:37:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -146,9 +146,9 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <dev/ic/i82586.h>
-#include <i386/isa/if_ieatt.h>
-#include <i386/isa/if_ie507.h>
-#include <i386/isa/elink.h>
+#include <dev/isa/if_ieatt.h>
+#include <dev/isa/if_ie507.h>
+#include <dev/isa/elink.h>
 
 static struct mbuf *last_not_for_us;
 

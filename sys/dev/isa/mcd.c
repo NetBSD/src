@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.26 1995/01/03 01:31:45 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.27 1995/01/29 07:37:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -61,7 +61,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/mcdreg.h>
+#include <dev/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
 #define MCD_TRACE(fmt,a,b,c,d)
