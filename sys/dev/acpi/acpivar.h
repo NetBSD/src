@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.9 2003/02/14 11:05:40 tshiozak Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.10 2003/04/17 01:22:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -46,6 +46,8 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/acpi/acpica.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 /*
  * acpibus_attach_args:
@@ -113,6 +115,12 @@ struct acpi_softc {
 	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
 
 	void *sc_sdhook;		/* shutdown hook */
+
+	/*
+	 * Power switch handlers for fixed-feature buttons.
+	 */
+	struct sysmon_pswitch sc_smpsw_power;
+	struct sysmon_pswitch sc_smpsw_sleep;
 
 	/*
 	 * Sleep state to transition to when a given

@@ -1,7 +1,8 @@
-/*	$NetBSD: acpi_button.c,v 1.6 2002/10/02 16:33:36 thorpej Exp $	*/
+#define ACPI_BUT_DEBUG
+/*	$NetBSD: acpi_button.c,v 1.7 2003/04/17 01:22:21 thorpej Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -40,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.6 2002/10/02 16:33:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.7 2003/04/17 01:22:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,15 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.6 2002/10/02 16:33:36 thorpej Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
 struct acpibut_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
-	int sc_buttype;			/* button type */
+	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 	int sc_flags;			/* see below */
 };
-
-#define	ACPIBUT_TYPE_POWER		0
-#define	ACPIBUT_TYPE_SLEEP		1
 
 #define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
 
@@ -68,8 +68,7 @@ void	acpibut_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, NULL, NULL);
 
-void	acpibut_pressed_for_sleep(void *);
-void	acpibut_pressed_for_wakeup(void *);
+void	acpibut_pressed_event(void *);
 void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
 
 /*
@@ -105,11 +104,13 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	const char *desc;
 	ACPI_STATUS rv;
 
+	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+
 	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0C") == 0) {
-		sc->sc_buttype = ACPIBUT_TYPE_POWER;
+		sc->sc_smpsw.smpsw_type = SMPSW_TYPE_POWER;
 		desc = "Power";
 	} else if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0E") == 0) {
-		sc->sc_buttype = ACPIBUT_TYPE_SLEEP;
+		sc->sc_smpsw.smpsw_type = SMPSW_TYPE_SLEEP;
 		desc = "Sleep";
 	} else {
 		printf("\n");
@@ -119,6 +120,12 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	printf(": ACPI %s Button\n", desc);
 
 	sc->sc_node = aa->aa_node;
+
+	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
+		printf("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, sc);
@@ -135,41 +142,19 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
- * acpibut_pressed_for_sleep:
+ * acpibut_pressed_event:
  *
- *	Deal with a button being pressed for sleep.
+ *	Deal with a button being pressed.
  */
 void
-acpibut_pressed_for_sleep(void *arg)
+acpibut_pressed_event(void *arg)
 {
 	struct acpibut_softc *sc = arg;
 
 	if (sc->sc_flags & ACPIBUT_F_VERBOSE)
-		printf("%s: button pressed for sleep\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: button pressed\n", sc->sc_dev.dv_xname);
 
-	/*
-	 * XXX Perform the appropriate action.
-	 */
-}
-
-/*
- * acpibut_pressed_for_wakeup:
- *
- *	Deal with a button being pressed for wakeup.
- */
-void
-acpibut_pressed_for_wakeup(void *arg)
-{
-	struct acpibut_softc *sc = arg;
-
-	if (sc->sc_flags & ACPIBUT_F_VERBOSE)
-		printf("%s: button pressed for wakeup\n",
-		    sc->sc_dev.dv_xname);
-
-	/*
-	 * XXX Perform the appropriate action.
-	 */
+	sysmon_pswitch_event(&sc->sc_smpsw, SMPSW_EVENT_PRESSED);
 }
 
 /*
@@ -193,10 +178,10 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		    sc->sc_dev.dv_xname);
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-		    acpibut_pressed_for_sleep, sc);
+		    acpibut_pressed_event, sc);
 		if (rv != AE_OK)
 			printf("%s: WARNING: unable to queue button pressed "
-			    "event: %d\n", sc->sc_dev.dv_xname, rv);
+			    "callback: %d\n", sc->sc_dev.dv_xname, rv);
 		break;
 
 	/* XXX ACPI_NOTIFY_DeviceWake?? */
