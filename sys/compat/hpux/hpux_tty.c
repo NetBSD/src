@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.26 2004/04/25 06:04:54 matt Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.27 2004/10/27 19:29:57 david Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.26 2004/04/25 06:04:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.27 2004/10/27 19:29:57 david Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -118,6 +118,7 @@ hpux_termio(fd, com, data, l)
 {
 	struct proc *p = l->l_proc;
 	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 	struct termios tios;
 	struct hpux_termios htios;
 	int line, error;
@@ -125,8 +126,8 @@ hpux_termio(fd, com, data, l)
 	int (*ioctlrout) __P((struct file *fp, u_long com,
 	    void *data, struct proc *p));
 
-
-	fp = p->p_fd->fd_ofiles[fd];
+        if ((fp = fd_getfile(fdp, fd)) == NULL)
+                return EBADF;
 	ioctlrout = fp->f_ops->fo_ioctl;
 	switch (com) {
 	case HPUXTCGETATTR:
@@ -513,6 +514,8 @@ hpuxtobsdbaud(hpux_speed)
 		B0,	B0,	B0,	B0,	B0,	B0,	EXTA,	EXTB
 	};
 
+	if (hpux_speed < 0)
+		return(B0);
 	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }
 
