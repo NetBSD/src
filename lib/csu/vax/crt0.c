@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.13 2002/02/24 01:06:18 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.14 2002/05/16 19:38:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ asm("eprol:");
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
-#endif MCRT0
+#endif /* MCRT0 */
 
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
@@ -117,7 +117,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.13 2002/02/24 01:06:18 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.14 2002/05/16 19:38:21 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
