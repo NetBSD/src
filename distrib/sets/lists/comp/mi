@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.302 2001/01/26 02:04:22 jwise Exp $
+#	$NetBSD: mi,v 1.303 2001/01/28 06:09:27 jwise Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3107,6 +3107,7 @@
 ./usr/share/man/cat9/fuword.0		comp-kern-catman
 ./usr/share/man/cat9/gsignal.0		comp-kern-catman
 ./usr/share/man/cat9/humanize_number.0		comp-kern-catman
+./usr/share/man/cat9/i386/bioscall.0		man-sys-catman
 ./usr/share/man/cat9/inittodr.0		comp-kern-catman
 ./usr/share/man/cat9/intro.0		comp-kern-catman
 ./usr/share/man/cat9/ioctl.0		comp-kern-catman
@@ -3215,6 +3216,10 @@
 ./usr/share/man/cat9/subyte.0		comp-kern-catman
 ./usr/share/man/cat9/suibyte.0		comp-kern-catman
 ./usr/share/man/cat9/suiword.0		comp-kern-catman
+./usr/share/man/cat9/sun3/isr_add.0		man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_autovect.0	man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_custom.0	man-sys-catman
+./usr/share/man/cat9/sun3/isr_add_vectored.0	man-sys-catman
 ./usr/share/man/cat9/suswintr.0		comp-kern-catman
 ./usr/share/man/cat9/susword.0		comp-kern-catman
 ./usr/share/man/cat9/suword.0		comp-kern-catman
@@ -4941,6 +4946,7 @@
 ./usr/share/man/man9/fuword.9		comp-kern-man
 ./usr/share/man/man9/gsignal.9		comp-kern-man
 ./usr/share/man/man9/humanize_number.9		comp-kern-man
+./usr/share/man/man9/i386/bioscall.9	comp-kern-man
 ./usr/share/man/man9/inittodr.9		comp-kern-man
 ./usr/share/man/man9/intro.9		comp-kern-man
 ./usr/share/man/man9/ioctl.9		comp-kern-man
@@ -5046,6 +5052,10 @@
 ./usr/share/man/man9/splx.9		comp-kern-man
 ./usr/share/man/man9/sprintf.9		comp-kern-man
 ./usr/share/man/man9/store.9		comp-kern-man
+./usr/share/man/man9/sun3/isr_add.9		comp-kern-man
+./usr/share/man/man9/sun3/isr_add_autovect.9		comp-kern-man
+./usr/share/man/man9/sun3/isr_add_custom.9		comp-kern-man
+./usr/share/man/man9/sun3/isr_add_vectored.9		comp-kern-man
 ./usr/share/man/man9/subyte.9		comp-kern-man
 ./usr/share/man/man9/suibyte.9		comp-kern-man
 ./usr/share/man/man9/suiword.9		comp-kern-man
