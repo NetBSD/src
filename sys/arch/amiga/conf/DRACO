@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.28 1999/02/15 19:18:48 is Exp $
+# $NetBSD: DRACO,v 1.29 1999/02/28 07:45:13 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.114 1999/02/04 19:01:38 is Exp $
+#$ NetBSD: GENERIC,v 1.115 1999/02/28 07:42:47 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -171,9 +171,6 @@ com*		at drsupio? port ?	# DraCo serial
 lpt0		at drsupio? port ?	# DraCo parallel
 
 #Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
-
-melody* 	at zbus0		# Melody MPEG audio decoder
-audio*		at melody?
 
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
