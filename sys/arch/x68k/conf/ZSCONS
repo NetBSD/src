@@ -1,4 +1,4 @@
-# 	$NetBSD: ZSCONS,v 1.1.2.3 1999/01/30 15:07:40 minoura Exp $
+# 	$NetBSD: ZSCONS,v 1.1.2.4 1999/02/02 23:46:44 minoura Exp $
 
 #
 #	ZSCONS -- like GENERIC, but use zs console.
@@ -178,6 +178,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 ## Fundamental devices; see also std.x68k
 dmac0	at intio0 addr 0xe84000		# DMA controler
 xel0	at intio0
+opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
@@ -191,8 +192,7 @@ grf1	at grfbus0			# flexible graphics
 pseudo-device	pow		2	#! software power switch
 
 ## floppy disks
-#!fdc0	at intio0 addr 0xe92000 intr 96 dma 0
-fdc0	at mainbus0			#! floppy controller
+fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
