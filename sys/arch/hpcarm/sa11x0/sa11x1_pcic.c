@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.5 2001/06/29 17:22:52 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.6 2001/07/07 08:45:43 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
@@ -87,6 +90,16 @@ static struct sapcic_tag sacpcic_functions = {
 	sacpcic_intr_disestablish
 };
 
+static int j720_power_capability[] = {
+	SAPCIC_POWER_5V | SAPCIC_POWER_3V, SAPCIC_POWER_3V
+};
+
+static struct platid_data sacpcic_platid_table[] = {
+	{ &platid_mask_MACH_HP_JORNADA_720, j720_power_capability },
+	{ &platid_mask_MACH_HP_JORNADA_720JP, j720_power_capability },
+	{ NULL, NULL }
+};
+
 struct cfattach sacpcic_ca = {
 	sizeof(struct sacpcic_softc), sacpcic_match, sacpcic_attach
 };
@@ -106,15 +119,17 @@ sacpcic_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	int i;
+	int i, *ip;
 	struct pcmciabus_attach_args paa;
 	struct sacpcic_softc *sc = (struct sacpcic_softc *)self;
 	struct sacc_softc *psc = (struct sacc_softc *)parent;
+	struct platid_data *p;
 
 	printf("\n");
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
+	p = platid_search(&platid, sacpcic_platid_table);
 
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
@@ -127,6 +142,13 @@ sacpcic_attach(parent, self, aux)
 		sc->sc_socket[i].event = 0;
 		sc->sc_socket[i].laststatus = SAPCIC_CARD_INVALID;
 		sc->sc_socket[i].shutdown = 0;
+
+		if (p == NULL) {
+			sc->sc_socket[i].power_capability = SAPCIC_POWER_5V;
+		} else {
+			ip = (int *)p->data;
+			sc->sc_socket[i].power_capability = ip[i];
+		}
 
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;

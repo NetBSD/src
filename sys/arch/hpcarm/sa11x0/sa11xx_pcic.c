@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.3 2001/03/27 18:06:39 toshii Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.4 2001/07/07 08:45:43 toshii Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -402,9 +402,16 @@ sapcic_socket_enable(pch)
 	sapcic_delay(300 + 100, "pccen0");
 
 	/* power up the socket */
-	(so->pcictag->set_power)(so, so->socket ? SAPCIC_POWER_3V : SAPCIC_POWER_5V); /* XXX */
-	(so->pcictag->write)(so, SAPCIC_CONTROL_POWERSELECT,
-			     so->socket ? SAPCIC_POWER_3V : SAPCIC_POWER_5V); /* XXX */
+	/* XXX voltage selection should be done in PCMCIA code */
+	if (so->power_capability & SAPCIC_POWER_5V) {
+		(so->pcictag->set_power)(so, SAPCIC_POWER_5V);
+		(so->pcictag->write)(so, SAPCIC_CONTROL_POWERSELECT,
+				     SAPCIC_POWER_5V);
+	} else {
+		(so->pcictag->set_power)(so, SAPCIC_POWER_3V);
+		(so->pcictag->write)(so, SAPCIC_CONTROL_POWERSELECT,
+				     SAPCIC_POWER_3V);
+	}
 
 	/* enable PCMCIA control lines */
 	(so->pcictag->write)(so, SAPCIC_CONTROL_LINEENABLE, 1);
