@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.4 2004/07/28 12:34:05 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.5 2004/07/30 11:08:03 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct field {
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */
 #define FLG_NOAUTO	0x0004		/* skip variable on -a flag */
 #define FLG_MODIFY	0x0008		/* variable may be modified with += */
+#define FLG_DISABLED	0x0010		/* variable is not available */
 #define FLG_GET		0x0100		/* read this variable from driver */
 #define FLG_SET		0x0200		/* write this variable to driver */
 	int flags;
@@ -81,6 +82,7 @@ struct field {
 void field_setup __P((struct field *, int));
 struct field *field_by_name __P((char *));
 struct field *field_by_value __P((void *));
+void field_disable_by_value __P((void *));
 void pr_field __P((struct field *, char *));
 void rd_field __P((struct field *, char *, int));
 int name2ksym __P((char *));
