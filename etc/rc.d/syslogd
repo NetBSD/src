@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.14 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: syslogd,v 1.15 2004/10/11 13:29:52 lukem Exp $
 #
 
 # PROVIDE: syslogd
@@ -36,11 +36,14 @@ syslogd_precmd()
 	#	syslog socket to list of sockets to watch.
 	#
 	for _lr in $(rcorder -k chrootdir /etc/rc.d/*); do
+	    (
 		_l=${_lr##*/}
+		load_rc_config ${_l}
 		eval _ldir=\$${_l}_chrootdir
 		if checkyesno $_l && [ -n "$_ldir" ]; then
 			echo "${_ldir}/var/run/log" >> $_sockfile
 		fi
+	    )
 	done
 
 	#	If other sockets have been provided, change run_rc_command()'s
