@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/05 02:04:09 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:39 fvdl Exp $
 
 SUBDIR=		floppies
 TARGETS+=	release

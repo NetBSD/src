@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/05 02:04:10 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:40 fvdl Exp $
 
 FLOPPYBASE=	boot
 FLOPPYMAX=	2
