@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1995/05/01 08:06:46 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1995/05/12 20:57:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1441,7 +1441,7 @@ pmap_copy_page(src, dst)
 
 	pmap_dump_pvlist(src, "pmap_copy_page: src");
 	pmap_dump_pvlist(dst, "pmap_copy_page: dst");
-	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KW;
+	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KR;
 	*CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	pmap_update();
 	bcopy(CADDR1, CADDR2, NBPG);
