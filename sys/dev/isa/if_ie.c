@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.16 1994/10/30 21:43:57 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.17 1994/11/03 23:14:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -280,8 +280,8 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int ieprobe();
-void ieattach();
+int ieprobe __P((struct device *, void *, void *));
+void ieattach __P((struct device *, struct device *, void *));
 
 struct cfdriver iecd = {
 	NULL, "ie", ieprobe, ieattach, DV_IFNET, sizeof(struct ie_softc)
@@ -345,11 +345,11 @@ ie_ack(sc, mask)
 }
 
 int
-ieprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ieprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct ie_softc *sc = (void *)self;
+	struct ie_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 
 	if (sl_probe(sc, ia))

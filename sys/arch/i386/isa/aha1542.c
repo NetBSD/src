@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.34 1994/10/27 04:16:43 cgd Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.35 1994/11/03 23:08:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -356,8 +356,8 @@ struct scsi_device aha_dev = {
 	0
 };
 
-int ahaprobe();
-void ahaattach();
+int ahaprobe __P((struct device *, void *, void *));
+void ahaattach __P((struct device *, struct device *, void *));
 
 struct cfdriver ahacd = {
 	NULL, "aha", ahaprobe, ahaattach, DV_DULL, sizeof(struct aha_softc)
@@ -509,11 +509,11 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
  * autoconf.c
  */
 int
-ahaprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ahaprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct aha_softc *aha = (void *)self;
+	struct aha_softc *aha = match;
 	struct isa_attach_args *ia = aux;
 
 #ifdef NEWCONFIG

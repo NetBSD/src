@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.58 1994/10/30 21:43:53 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.59 1994/11/03 23:14:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -94,8 +94,8 @@ struct ep_softc {
 	char	bus32bit;		/* 32bit access possible */
 };
 
-static int epprobe();
-static void epattach();
+static int epprobe __P((struct device *, void *, void *));
+static void epattach __P((struct device *, struct device *, void *));
 
 struct cfdriver epcd = {
 	NULL, "ep", epprobe, epattach, DV_IFNET, sizeof(struct ep_softc)
@@ -152,11 +152,11 @@ epaddcard(iobase, irq, bus32bit)
  * matching cards.
  */
 int
-epprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+epprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct ep_softc *sc = (void *)self;
+	struct ep_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	static int probed;
 	int slot, iobase, i;

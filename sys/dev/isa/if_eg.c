@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.5 1994/10/30 21:43:49 cgd Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.6 1994/11/03 23:14:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -111,8 +111,8 @@ struct eg_softc {
 	u_char  *eg_outbuf;		/* Outgoing packet buffer */
 };
 
-static int egprobe();
-static void egattach();
+int egprobe __P((struct device *, void *, void *));
+void egattach __P((struct device *, struct device *, void *));
 
 struct cfdriver egcd = {
 	NULL, "eg", egprobe, egattach, DV_IFNET, sizeof(struct eg_softc)
@@ -282,11 +282,11 @@ egreadPCB(sc)
  */
 
 int
-egprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+egprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct eg_softc *sc = (void *)self;
+	struct eg_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	int i;
 
