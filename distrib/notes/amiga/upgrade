@@ -123,7 +123,7 @@ Your system has now been upgraded to NetBSD _VER.
 	do, to insure that the system works properly.
 
 	You will probably want to get the etc distribution,
-	extract it, and compare its contents with those in your /etc/
+	extract it, and compare its contents with those in your /etc
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
 	in the new versions into yours.
