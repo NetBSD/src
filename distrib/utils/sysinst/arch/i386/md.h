@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 1997/10/17 22:18:06 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.1 1997/10/30 06:16:00 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,19 +56,34 @@ EXTERN int usefull;
 /* Definition of files to retreive from ftp. */
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
 EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
-EXTERN char *dist_list[]
+EXTERN distinfo dist_list[]
 #ifdef MAIN
-= { "kern%s%s", "base%s%s", "comp%s%s", "etc%s%s", "games%s%s", "man%s%s",
-    "misc%s%s", "text%s%s", "CKSUMS", NULL }
-#endif
-;
-EXTERN char *fd_last[]
-#ifdef MAIN
-= { "ab", "ab", "ab", "ab", "ab", "ab", "ab", "ab", NULL}
+= { {"kern%s%s", 1, "ae", "Kernel       : "},
+    {"etc%s%s",  1, "aa", "System (/etc): "},
+    {"base%s%s", 1, "bo", "Base         : "}, 
+    {"comp%s%s", 1, "bd", "Compiler     : "},
+    {"games%s%s", 1, "am","Games        : "},
+    {"man%s%s",  1, "ak", "Manuals      : "},
+    {"misc%s%s", 1, "ai", "Miscellaneous: "},
+    {"text%s%s", 1, "ae", "Text tools   : "},
+    {NULL, 0, NULL }
+}
 #endif
 ;
 
-EXTERN char *fdtype INIT("msdos");
+/* Disk information */
+
+EXTERN	char *disk_names[]
+#ifdef MAIN
+= {"wd", "sd", NULL}
+#endif
+;
+
+EXTERN	char *fdtype INIT("msdos");
+
+/* Legal start character for a disk for checking input. */
+#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
+
 
 /* prototypes */
 
@@ -78,3 +93,4 @@ void	disp_cur_geom (void);
 int	check_geom (void);
 int 	partsoverlap (int, int);
 void	get_fdisk_info (void);
+
