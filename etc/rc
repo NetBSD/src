@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.60 1996/08/26 06:02:21 tls Exp $
+#	$NetBSD: rc,v 1.61 1996/10/03 07:11:35 mrg Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -169,6 +169,12 @@ fi
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
 	echo -n ' named';		named $named_flags
+fi
+
+# $dhcpd_flags is imported from /etc/netstart;
+# if $dhcpd_flags != NO, dhcpd is run.
+if [ "X${dhcpd_flags}" != X"NO" -a -r /etc/dhcpd.conf ]; then
+	echo -n ' dhcpd';		dhcpd $dhcpd_flags
 fi
 
 # $rwhod is imported from /etc/netstart;
