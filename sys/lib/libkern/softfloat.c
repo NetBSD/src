@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $ */
+/* $NetBSD: softfloat.c,v 1.2 2002/12/05 17:12:06 thorpej Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -44,9 +44,12 @@ this code that are retained.
 ===============================================================================
 */
 
+/* If you need this in a boot program, you have bigger problems... */
+#ifndef _STANDALONE
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.2 2002/12/05 17:12:06 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -5495,3 +5498,5 @@ uint32 float32_to_uint32_round_to_zero( float32 a )
 }
 
 #endif
+
+#endif /* _STANDALONE */
