@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.38.8.1 2002/11/01 08:41:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38.8.1 2002/11/01 08:41:49 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -240,8 +240,11 @@ mfs_mount(mp, path, data, ndp, p)
 	 * the problem is that MFS needs to allocate pages to clean pages,
 	 * so if we wait until the last minute to clean pages then there
 	 * may not be any pages available to do the cleaning.
+	 * ... and since the default partially-synchronous mode turns out
+	 * to not be sufficient under heavy load, make it full synchronous.
 	 */
 	mp->mnt_flag &= ~MNT_ASYNC;
+	mp->mnt_flag |= MNT_SYNCHRONOUS;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args));
 	if (error)
