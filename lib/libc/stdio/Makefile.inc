@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.2 1993/08/01 05:40:44 mycroft Exp $
+#	$Id: Makefile.inc,v 1.3 1993/10/07 19:28:46 jtc Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -16,8 +16,8 @@ SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	wbuf.c wsetup.c
 
 MAN3+=	fclose.0 ferror.0 fflush.0 fgetline.0 fgets.0 fopen.0 fputs.0 \
-	fread.0 fseek.0 funopen.0 getc.0 mktemp.0 printf.0 putc.0 remove.0 \
-	scanf.0 setbuf.0 stdio.0 strerror.0 tmpnam.0 ungetc.0
+	fread.0 fseek.0 funopen.0 getc.0 mktemp.0 perror.0 printf.0 putc.0 \
+	remove.0 scanf.0 setbuf.0 stdio.0 tmpnam.0 ungetc.0
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
@@ -36,5 +36,4 @@ MLINKS+=putc.3 fputc.3 putc.3 putchar.3 putc.3 putw.3
 MLINKS+=scanf.3 fscanf.3 scanf.3 sscanf.3 scanf.3 vfscanf.3 scanf.3 vscanf.3 \
 	scanf.3 vsscanf.3
 MLINKS+=setbuf.3 setbuffer.3 setbuf.3 setlinebuf.3 setbuf.3 setvbuf.3
-MLINKS+=strerror.3 perror.3
 MLINKS+=tmpnam.3 tempnam.3 tmpnam.3 tmpfile.3
