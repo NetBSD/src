@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.1.2.3 1994/02/02 20:21:30 mycroft Exp $
+ *	$Id: if_ie.c,v 1.1.2.4 1994/02/02 20:26:04 mycroft Exp $
  */
 
 /*
@@ -1029,6 +1029,7 @@ ie_readframe(sc, num)
 	struct ie_recv_frame_desc rfd;
 	struct mbuf *m = 0;
 	struct ether_header eh;
+	u_short etype;
 #if NBPFILTER > 0
 	int bpf_gets_it = 0;
 #endif
@@ -1060,12 +1061,14 @@ ie_readframe(sc, num)
 		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		       ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 	}
-	if (ntohs(eh.ether_type) > ETHERTYPE_TRAIL
-	    && ntohs(eh.ether_type) < (ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER))
+	etype = ntohs(eh.ether_type);
+	if (etype > ETHERTYPE_TRAIL &&
+	    etype < (ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER))
 		printf("received trailer!\n");
 #endif
 
-	if (!m) return;
+	if (!m)
+		return;
 
 #ifdef FILTER
 	if (last_not_for_us) {
@@ -1109,8 +1112,6 @@ ie_readframe(sc, num)
 	 * as a multicast router or when using BPF.
 	 */
 #endif /* FILTER */
-
-	eh.ether_type = ntohs(eh.ether_type);
 
 	/*
 	 * Finally pass this packet up to higher layers.
