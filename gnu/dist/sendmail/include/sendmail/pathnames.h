@@ -9,7 +9,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: pathnames.h,v 8.16.8.5 2000/06/09 18:16:13 geir Exp
+ *	Id: pathnames.h,v 8.16.8.8 2000/09/28 21:26:39 gshapiro Exp
  */
 
 

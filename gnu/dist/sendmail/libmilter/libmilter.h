@@ -17,7 +17,7 @@
 # define EXTERN
 # define INIT(x)	= x
 # ifndef lint
-static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gshapiro Exp";
+static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.10 2000/11/20 21:15:36 ca Exp";
 # endif /* ! lint */
 #else /* _DEFINE */
 # define EXTERN extern
@@ -37,9 +37,19 @@ static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gsh
 #include "sendmail/useful.h"
 
 # define ValidSocket(sd)	((sd) >= 0)
+# define INVALID_SOCKET		-1
+# define MI_SOCK_READ(s, b, l)	(read(s, b, l))
+# define MI_SOCK_WRITE(s, b, l)	(write(s, b, l))
 
 # define thread_create(ptid,wr,arg) pthread_create(ptid, NULL, wr, arg)
 # define sthread_get_id()	pthread_self()
+
+typedef pthread_mutex_t smutex_t;
+# define smutex_init(mp)	(pthread_mutex_init(mp, NULL) == 0)
+# define smutex_destroy(mp)	(pthread_mutex_destroy(mp) == 0)
+# define smutex_lock(mp)	(pthread_mutex_lock(mp) == 0)
+# define smutex_unlock(mp)	(pthread_mutex_unlock(mp) == 0)
+# define smutex_trylock(mp)	(pthread_mutex_trylock(mp) == 0)
 
 #include <sys/time.h>
 
@@ -50,6 +60,12 @@ static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gsh
 /* some defaults */
 #define MI_TIMEOUT	1800		/* default timeout for read/write */
 #define MI_CHK_TIME	5		/* checking whether to terminate */
+
+#if SOMAXCONN > 20
+# define MI_SOMAXCONN	SOMAXCONN
+#else /* SOMAXCONN */
+# define MI_SOMAXCONN	20
+#endif /* SOMAXCONN */
 
 /* maximum number of repeated failures in mi_listener() */
 #define MAX_FAILS_M	16	/* malloc() */
@@ -74,8 +90,6 @@ static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gsh
 #define SMI_LOG_INFO	LOG_INFO
 #define SMI_LOG_DEBUG	LOG_DEBUG
 
-#define MI_INVALID_SOCKET	(-1)
-
 /* stop? */
 #define MILTER_CONT	0
 #define MILTER_STOP	1
@@ -84,13 +98,14 @@ static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gsh
 /* functions */
 extern int	mi_handle_session __P((SMFICTX_PTR));
 extern int	mi_engine __P((SMFICTX_PTR));
-extern int	mi_listener __P((char *, int, smfiDesc_ptr, time_t));
+extern int	mi_listener __P((char *, int, smfiDesc_ptr, time_t, int));
 extern void	mi_clr_macros __P((SMFICTX_PTR, int));
 extern int	mi_stop __P((void));
 extern int	mi_control_startup __P((char *));
 extern void	mi_stop_milters __P((int));
 extern void	mi_clean_signals __P((void));
 extern struct hostent *mi_gethostbyname __P((char *, int));
+extern void	mi_closener __P((void));
 
 /* communication functions */
 extern char	*mi_rd_cmd __P((socket_t, struct timeval *, char *, size_t *, char *));
