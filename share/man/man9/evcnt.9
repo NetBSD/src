@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.10 2003/04/16 13:35:28 wiz Exp $
+.\" $NetBSD: evcnt.9,v 1.11 2004/02/18 08:54:30 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd June 1, 2000
+.Dd February 18, 2004
 .Dt EVCNT 9
 .Os
 .Sh NAME
@@ -288,7 +288,7 @@ All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The event counter framework itself is implemented within the file
-.Pa sys/kern/subr_autoconf.c .
+.Pa sys/kern/subr_evcnt.c .
 Data structures and function prototypes for the framework are located in
 .Pa sys/sys/device.h .
 .Pp
