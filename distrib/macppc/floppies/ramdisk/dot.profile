@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1998/07/29 05:52:19 tsubai Exp $
+#	$NetBSD: dot.profile,v 1.2 1999/01/20 14:02:53 tsubai Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=sun
+TERM=vt100
 export TERM
 HOME=/
 export HOME
@@ -60,8 +60,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 			_forceloop="done"
 		fi
 	done
-
-	exec /bin/sh		# XXX
 
 	# Installing or upgrading?
 	_forceloop=""
