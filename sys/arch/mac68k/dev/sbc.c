@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.15 1996/12/16 16:17:12 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.16 1997/01/05 10:01:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -87,14 +87,18 @@
  * These are offsets from SCSIBase (see pmap_bootstrap.c)
  */
 #define	SBC_REG_OFS		0x10000
-#define	SBC_HSK_OFS		0x06000
 #define	SBC_DMA_OFS		0x12000
+#define	SBC_HSK_OFS		0x06000
 
 #define	SBC_DMA_OFS_PB500	0x06000
 
 #define	SBC_REG_OFS_IIFX	0x08000		/* Just guessing... */
-#define	SBC_HSK_OFS_IIFX	0x0e000
 #define	SBC_DMA_OFS_IIFX	0x0c000
+#define	SBC_HSK_OFS_IIFX	0x0e000
+
+#define	SBC_REG_OFS_DUO2	0x00000
+#define	SBC_DMA_OFS_DUO2	0x02000
+#define	SBC_HSK_OFS_DUO2	0x04000
 
 #ifdef SBC_DEBUG
 # define	SBC_DB_INTR	0x01
@@ -216,9 +220,23 @@ sbc_match(parent, cf, args)
 	struct cfdata *cf;
 	void *args;
 {
-	if (!mac68k_machine.scsi80)
-		return 0;
-	return 1;
+	switch (current_mac_model->machineid) {
+	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
+		break;
+	case MACH_MACPB210:
+	case MACH_MACPB230:
+	case MACH_MACPB250:
+	case MACH_MACPB270:
+	case MACH_MACPB280:
+	case MACH_MACPB280C:
+		if (cf->cf_unit == 1)
+			return 1;
+		/*FALLTHROUGH*/
+	default:
+		if (cf->cf_unit == 0 && mac68k_machine.scsi80)
+			return 1;
+	}
+	return 0;
 }
 
 static void
@@ -252,6 +270,19 @@ sbc_attach(parent, self, args)
 		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_PB500);
 		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
 		break;
+	case MACH_MACPB210:
+	case MACH_MACPB230:
+	case MACH_MACPB250:
+	case MACH_MACPB270:
+	case MACH_MACPB280:
+	case MACH_MACPB280C:
+		if (cf->cf_unit == 1) {
+			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
+			sc->sc_drq_addr = (vm_offset_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
+			sc->sc_nodrq_addr = (vm_offset_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
+			break;
+		}
+		/*FALLTHROUGH*/
 	default:
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
 		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS);
