@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.c,v 1.6 1999/07/03 12:30:58 simonb Exp $ */
+/* $NetBSD: zutil.c,v 1.7 2001/01/08 14:48:22 itojun Exp $ */
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -14,7 +14,7 @@
 struct internal_state      {int dummy;}; /* for buggy compilers */
 
 #ifndef STDC
-extern void exit OF((int));
+extern void exit __P((int));
 #endif
 
 const char *z_errmsg[10] = {
@@ -205,8 +205,8 @@ void  zcfree (voidpf opaque, voidpf ptr)
 #ifndef MY_ZCALLOC /* Any system without a special alloc function */
 
 #ifndef STDC
-extern voidp  calloc OF((uInt items, uInt size));
-extern void   free   OF((voidpf ptr));
+extern voidp  calloc __P((uInt items, uInt size));
+extern void   free   __P((voidpf ptr));
 #endif
 
 voidpf zcalloc (opaque, items, size)
