@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.76 2004/05/14 14:07:46 cl Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.77 2004/06/10 00:29:59 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -22,9 +22,9 @@ CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-D_KERNEL -D_LKM
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+_YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+DPSRCS+=	${_YKMSRCS}
+CLEANFILES+=	${_YKMSRCS}
 CLEANFILES+=	machine ${MACHINE_CPU} tmp.o
 
 # see below why this is necessary
