@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.16 1998/08/09 20:15:39 perry Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.17 1998/09/01 03:20:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -57,6 +57,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/lock.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -105,6 +106,8 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_vnodeopv_descs,
 };
 
+struct pool ext2fs_inode_pool;
+
 extern u_long ext2gennumber;
 
 void
@@ -116,7 +119,13 @@ ext2fs_init()
 		return;
 	done = 1;
 	ufs_ihashinit();
-	return;
+
+	/*
+	 * XXX Same structure as FFS inodes?  Should we share a common pool?
+	 */
+	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
+	    "ext2fsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_EXT2FSNODE);
 }
 
 /*
@@ -873,7 +882,7 @@ ext2fs_vget(mp, ino, vpp)
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
-	MALLOC(ip, struct inode *, sizeof(struct inode), M_EXT2FSNODE, M_WAITOK);
+	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
