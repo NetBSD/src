@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1998/09/13 08:19:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1998/09/13 11:57:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -767,7 +767,6 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
-	extern char sigcode[], esigcode[];
 
 	tf = p->p_md.md_regs;
 
@@ -840,12 +839,15 @@ sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_r0 = frame.sf_signum;
 	tf->tf_r1 = frame.sf_code;
-	tf->tf_r2 = (u_int)frame.sf_scp;
-	tf->tf_r3 = (u_int)frame.sf_handler;
+	tf->tf_r2 = (int)frame.sf_scp;
+	tf->tf_r3 = (int)frame.sf_handler;
 	tf->tf_usr_sp = (int)fp;
-	tf->tf_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
-
+	tf->tf_pc = (int)psp->ps_sigcode;
 	cpu_cache_syncI();
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 

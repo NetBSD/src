@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.141 1998/09/13 01:51:29 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.142 1998/09/13 11:57:58 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 1998/09/13 01:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 1998/09/13 11:57:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1704,7 +1704,6 @@ sendsig(catcher, sig, mask, code)
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack, fsize, rndfsize;
-	extern char sigcode[], esigcode[];
 	extern struct proc *fpcurproc;
 
 	frame = p->p_md.md_tf;
@@ -1720,9 +1719,10 @@ sendsig(catcher, sig, mask, code)
 
 	if (onstack)
 		scp = (struct sigcontext *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - rndfsize);
+						     psp->ps_sigstk.ss_size);
 	else
-		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
+		scp = (struct sigcontext *)(alpha_pal_rdusp());
+	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -1801,13 +1801,16 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Set up the registers to return to sigcode. */
-	frame->tf_regs[FRAME_PC] =
-	    (u_int64_t)PS_STRINGS - (esigcode - sigcode);
+	frame->tf_regs[FRAME_PC] = (u_int64_t)psp->ps_sigcode;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = code;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
 	alpha_pal_wrusp((unsigned long)scp);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
