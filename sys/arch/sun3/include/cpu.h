@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2001/02/03 12:50:53 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2001/02/04 01:31:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -153,6 +153,8 @@ union sun3sir {
 #define	setsoftint(x)	isr_soft_request(x)
 #define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint(1))
 #define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint(1))
+
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 #endif	/* _KERNEL */
 
