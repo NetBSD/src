@@ -492,7 +492,16 @@ case "${targ}" in
     targ_defvec=sparclynx_coff_vec
     targ_selvecs=sparclynx_aout_vec
     ;;
-  sparc-*-netbsd* | sparc-*-openbsd*)
+  sparc-*-netbsd*elf*)
+    targ_selvecs="sparcnetbsd_vec sunos_big_vec"
+    targ_defvec=bfd_elf32_sparc_vec
+    ;;
+  sparc-*-netbsd)
+    targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
+    targ_defvec=sparcnetbsd_vec
+    targ_underscore=yes
+    ;;
+  sparc-*-openbsd*)
     targ_defvec=sparcnetbsd_vec
     targ_underscore=yes
     ;;
