@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.29 2000/10/22 08:20:10 explorer Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.30 2000/10/24 03:59:16 explorer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ Static struct usbd_quirk_entry {
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_HUB0100,         0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
- 	0x100, { UQ_ASSUME_CM_OVER_DATA }},
+ 	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { 0, 0, 0, { 0 } }
 };
 
