@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.18 2002/09/03 16:56:05 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.19 2002/09/26 06:15:38 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ void	device_reassign __P((int, char *[]));
 void	device_release __P((int, char *[]));
 void	device_reserve __P((int, char *[]));
 void	device_reset __P((int, char *[]));
+void	device_debug __P((int, char *[]));
 void	device_start __P((int, char *[]));
 void	device_stop __P((int, char *[]));
 void	device_tur __P((int, char *[]));
@@ -95,6 +96,7 @@ struct command device_commands[] = {
 	{ "release",	"",			device_release },
 	{ "reserve",	"",			device_reserve },
 	{ "reset",	"",			device_reset },
+	{ "debug",	"level",		device_debug },
 	{ "start",	"",			device_start },
 	{ "stop",	"",			device_stop },
 	{ "tur",	"",			device_tur },
@@ -573,6 +575,30 @@ device_reset(argc, argv)
 
 	if (ioctl(fd, SCIOCRESET, NULL) != 0)
 		err(1, "SCIOCRESET");
+
+	return;
+}
+
+/*
+ * device_debug:
+ *
+ *	Set debug level to a SCSI device.
+ *	scsipi will print anything iff SCSIPI_DEBUG set in config.
+ */
+void
+device_debug(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int lvl;
+
+	if (argc < 1)
+		usage();
+
+	lvl = atoi(argv[0]);
+
+	if (ioctl(fd, SCIOCDEBUG, &lvl) != 0)
+		err(1, "SCIOCDEBUG");
 
 	return;
 }
