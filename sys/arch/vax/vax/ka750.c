@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.15 1996/08/27 21:58:27 cgd Exp $ */
+/*	$NetBSD: ka750.c,v 1.16 1996/10/11 01:51:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -68,14 +68,14 @@ ka750_conf(parent, self, aux)
 	extern	char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
-	printf(": 11/750, hardware rev %d, ucode rev %d\n",
+	kprintf(": 11/750, hardware rev %d, ucode rev %d\n",
 	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
-	printf("%s: ", self->dv_xname);
+	kprintf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
-		printf("FPA present, enabling.\n");
+		kprintf("FPA present, enabling.\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
-		printf("no FPA\n");
+		kprintf("no FPA\n");
 
 	/* Call ctuattach() here so it can setup its vectors. */
 	ctuattach();
@@ -140,27 +140,27 @@ ka750_memenable(parent, self, aux)
 	/* We will use this info for error reporting - later! */
 	cardinfo = mcr->mc_inf;
 	switch ((cardinfo >> 24) & 3) {
-	case 0: printf(": L0011 ");
+	case 0: kprintf(": L0011 ");
 		break;
 
-	case 1: printf(": L0016 ");
+	case 1: kprintf(": L0016 ");
 		m = cardinfo & 0xaaaa;
 		for (k = l = 0; k < 16; k++){
 			if (m & 1)
 				l++;
 			m >>= 1;
 		}
-		printf("with %d M8750",l);
+		kprintf("with %d M8750",l);
 		break;
 
-	case 3: printf(": L0022 ");
+	case 3: kprintf(": L0022 ");
 		m = cardinfo & 0x5555;
 		for (k = l = 0; k < 16; k++) {
 			if (m & 1)
 				l++;
 			m>>=1;
 		}
-		printf("with %d M7199",l);
+		kprintf("with %d M7199",l);
 		m = cardinfo & 0xaaaa;
 		if (m) {
 			for (k = l = 0; k < 16; k++) {
@@ -168,11 +168,11 @@ ka750_memenable(parent, self, aux)
 					l++;
 				m >>= 1;
 			}
-			printf(" and %d M8750",l);
+			kprintf(" and %d M8750",l);
 		}
 		break;
 	}
-	printf("\n");
+	kprintf("\n");
 
 
 	M750_ENA((struct mcr750 *)mcraddr[0]);
@@ -187,9 +187,9 @@ ka750_memerr()
 
 	if (M750_ERR(mcr)) {
 		err = mcr->mc_err;	/* careful with i/o space refs */
-		printf("mcr0: %s", err & M750_UNCORR ?
+		kprintf("mcr0: %s", err & M750_UNCORR ?
 		    "hard error" : "soft ecc");
-		printf(" addr %x syn %x\n", M750_ADDR(err), M750_SYN(err));
+		kprintf(" addr %x syn %x\n", M750_ADDR(err), M750_SYN(err));
 		M750_INH(mcr);
 	}
 }
@@ -224,19 +224,19 @@ ka750_mchk(cmcf)
 	register int type = mcf->mc5_summary;
 	int mcsr = mfpr(PR_MCSR);
 
-	printf("machine check %x: %s%s\n", type, mc750[type&0xf],
+	kprintf("machine check %x: %s%s\n", type, mc750[type&0xf],
 	    (type&0xf0) ? " abort" : " fault"); 
-	printf(
+	kprintf(
 "\tva %x errpc %x mdr %x smr %x rdtimo %x tbgpar %x cacherr %x\n",
 	    mcf->mc5_va, mcf->mc5_errpc, mcf->mc5_mdr, mcf->mc5_svmode,
 	    mcf->mc5_rdtimo, mcf->mc5_tbgpar, mcf->mc5_cacherr);
-	printf("\tbuserr %x mcesr %x pc %x psl %x mcsr %x\n",
+	kprintf("\tbuserr %x mcesr %x pc %x psl %x mcsr %x\n",
 	    mcf->mc5_buserr, mcf->mc5_mcesr, mcf->mc5_pc, mcf->mc5_psl,
 	    mcsr);
 	mtpr(0, PR_TBIA);
 	mtpr(0xf, PR_MCESR);
 	if (type == MC750_TBERR && (mcf->mc5_mcesr&0xe) == MC750_TBPAR) {
-		printf("tbuf par: flushing and returning\n");
+		kprintf("tbuf par: flushing and returning\n");
 		return (MCHK_RECOVERED);
 	}
 	return (MCHK_PANIC);
@@ -279,9 +279,9 @@ cmi_print(aux, name)
         struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
         if (name)
-		printf("unknown device 0x%x at %s", sa->type, name);
+		kprintf("unknown device 0x%x at %s", sa->type, name);
 
-        printf(" tr%d", sa->nexnum);
+        kprintf(" tr%d", sa->nexnum);
         return (UNCONF);
 }
 
@@ -306,7 +306,7 @@ cmi_attach(parent, self, aux)
         u_int   nexnum, maxnex, minnex;
         struct  sbi_attach_args sa;
 
-	printf("I\n");
+	kprintf("I\n");
 	/*
 	 * Probe for memory, can be in the first 4 slots.
 	 */
