@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.4 1999/04/28 23:27:02 fvdl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.5 1999/04/30 15:29:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -145,6 +145,10 @@ invpart:
  */
 boot:
 	movb_ireg0_reg(SI_INDEX,DL)
+	data32
+	xorl	%ecx,%ecx
+	data32
+	xorl	%eax,%eax
 	movb	$8,%ah
 	int	$0x13
 
@@ -161,14 +165,16 @@ boot:
 	orl	%ebx,%ecx
 	incl	%ecx			/* cx has #cylinders */
 
-	mul	%edx			/* h * s (will fit in 16 bits) */
-	mul	%ecx			/* dx:ax = c * h * s */
+	mull	%edx			/* h * s (will fit in 16 bits) */
+	data32
+	mull	%ecx			/* %eax = c * h * s */
 
-	cmpw_reg_iregoff(DX,SI_INDEX,10)
 	movb_ireg0_reg(SI_INDEX,DL)
-	jl	noext
-	jne	tryext
-	cmpw_reg_iregoff(AX,SI_INDEX,8)
+	data32
+	addr32
+	movl	8(%esi), %ebx
+	data32
+	cmpl	%eax, %ebx
 	jl	noext			/* total # chs sectors > part. start */
 
 tryext:
