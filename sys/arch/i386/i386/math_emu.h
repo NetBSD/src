@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emu.h,v 1.5 1995/05/03 00:17:16 mycroft Exp $	*/
+/*	$NetBSD: math_emu.h,v 1.6 1999/04/22 00:23:33 fvdl Exp $	*/
 
 /*
  * linux/include/linux/math_emu.h
@@ -102,6 +102,21 @@ struct i387_struct {
 #define set_C1() (I387.swd |= 0x0200)
 #define set_C2() (I387.swd |= 0x0400)
 #define set_C3() (I387.swd |= 0x4000)
+
+#define INSPREF_LOCK	0xf0
+#define INSPREF_REPN	0xf2
+#define INSPREF_REPE	0xf3
+
+#define INSPREF_CS	0x2e
+#define INSPREF_SS	0x36
+#define INSPREF_DS	0x3e
+#define INSPREF_ES	0x26
+#define INSPREF_FS	0x64
+#define INSPREF_GS	0x65
+
+#define INSPREF_OSIZE	0x66
+#define INSPREF_ASIZE	0x67
+
 
 /* ea.c */
 
