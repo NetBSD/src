@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.c,v 1.5 1995/10/07 09:26:33 mycroft Exp $	*/
+/*	$NetBSD: muldi3.c,v 1.6 1998/03/27 01:30:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)muldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: muldi3.c,v 1.5 1995/10/07 09:26:33 mycroft Exp $";
+__RCSID("$NetBSD: muldi3.c,v 1.6 1998/03/27 01:30:05 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,8 +112,8 @@ __muldi3(a, b)
 	quad_t a, b;
 {
 	union uu u, v, low, prod;
-	register u_long high, mid, udiff, vdiff;
-	register int negall, negmid;
+	u_long high, mid, udiff, vdiff;
+	int negall, negmid;
 #define	u1	u.ul[H]
 #define	u0	u.ul[L]
 #define	v1	v.ul[H]

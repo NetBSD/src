@@ -1,6 +1,8 @@
+/*	$NetBSD: strncmp.c,v 1.9 1998/03/27 01:30:10 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strncmp.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: strncmp.c,v 1.8 1997/10/13 11:56:07 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)strncmp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strncmp.c,v 1.9 1998/03/27 01:30:10 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -44,8 +50,8 @@ static char *rcsid = "$NetBSD: strncmp.c,v 1.8 1997/10/13 11:56:07 lukem Exp $";
 
 int
 strncmp(s1, s2, n)
-	register const char *s1, *s2;
-	register size_t n;
+	const char *s1, *s2;
+	size_t n;
 {
 
 	if (n == 0)

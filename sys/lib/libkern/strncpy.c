@@ -1,6 +1,8 @@
+/*	$NetBSD: strncpy.c,v 1.8 1998/03/27 01:30:12 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -34,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strncpy.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: strncpy.c,v 1.7 1997/10/13 11:56:12 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strncpy.c,v 1.8 1998/03/27 01:30:12 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -53,11 +59,11 @@ char *
 strncpy(dst, src, n)
 	char *dst;
 	const char *src;
-	register size_t n;
+	size_t n;
 {
 	if (n != 0) {
-		register char *d = dst;
-		register const char *s = src;
+		char *d = dst;
+		const char *s = src;
 
 		do {
 			if ((*d++ = *s++) == 0) {

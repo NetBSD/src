@@ -1,8 +1,8 @@
-/*	$NetBSD: memchr.c,v 1.4 1998/02/22 05:10:55 mycroft Exp $	*/
+/*	$NetBSD: memchr.c,v 1.5 1998/03/27 01:30:04 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -36,16 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)memchr.c	5.6 (Berkeley) 1/26/91";
+static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: memchr.c,v 1.4 1998/02/22 05:10:55 mycroft Exp $");
+__RCSID("$NetBSD: memchr.c,v 1.5 1998/03/27 01:30:04 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -55,11 +55,11 @@ __RCSID("$NetBSD: memchr.c,v 1.4 1998/02/22 05:10:55 mycroft Exp $");
 void *
 memchr(s, c, n)
 	const void *s;
-	register unsigned char c;
-	register size_t n;
+	unsigned char c;
+	size_t n;
 {
 	if (n != 0) {
-		register const unsigned char *p = s;
+		const unsigned char *p = s;
 
 		do {
 			if (*p++ == c)

@@ -1,6 +1,8 @@
+/*	$NetBSD: memcmp.c,v 1.3 1998/03/27 01:30:04 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -34,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)memcmp.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: memcmp.c,v 1.2 1997/10/13 11:55:32 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: memcmp.c,v 1.3 1998/03/27 01:30:04 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -54,7 +60,7 @@ memcmp(s1, s2, n)
 	size_t n;
 {
 	if (n != 0) {
-		register const unsigned char *p1 = s1, *p2 = s2;
+		const unsigned char *p1 = s1, *p2 = s2;
 
 		do {
 			if (*p1++ != *p2++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.8 1996/12/07 12:58:25 fvdl Exp $	*/
+/*	$NetBSD: mcount.c,v 1.9 1998/03/27 01:30:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -33,11 +33,14 @@
  * SUCH DAMAGE.
  */
 
+/* If compiling for a standalone program, there is no profiling support. */
+#if !defined(_STANDALONE)
+
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.8 1996/12/07 12:58:25 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mcount.c,v 1.9 1998/03/27 01:30:03 cgd Exp $";
 #endif
 #endif
 
@@ -189,3 +192,5 @@ overflow:
  * which is included by <sys/gmon.h>.
  */
 MCOUNT
+
+#endif /* !defined(_STANDALONE) */

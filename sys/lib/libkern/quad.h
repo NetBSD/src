@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.7 1996/04/18 02:20:04 cgd Exp $	*/
+/*	$NetBSD: quad.h,v 1.8 1998/03/27 01:30:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/types.h>
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
 #else
 #include <machine/limits.h>
@@ -101,8 +101,6 @@ union uu {
 #define	LHALF(x)	((u_long)(x) & (((long)1 << HALF_BITS) - 1))
 #define	LHUP(x)		((u_long)(x) << HALF_BITS)
 
-extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
-
 /*
  * XXX
  * Compensate for gcc 1 vs gcc 2.  Gcc 1 defines ?sh?di3's second argument
@@ -116,22 +114,31 @@ typedef u_quad_t	qshift_t;
 #endif
 
 __BEGIN_DECLS
-quad_t	__adddi3	__P((quad_t, quad_t));
-quad_t	__anddi3	__P((quad_t, quad_t));
-quad_t	__ashldi3	__P((quad_t, qshift_t));
-quad_t	__ashrdi3	__P((quad_t, qshift_t));
-int	__cmpdi2	__P((quad_t, quad_t));
-quad_t	__divdi3	__P((quad_t, quad_t));
-quad_t	__iordi3	__P((quad_t, quad_t));
-quad_t	__lshldi3	__P((quad_t, qshift_t));
-quad_t	__lshrdi3	__P((quad_t, qshift_t));
-quad_t	__moddi3	__P((quad_t, quad_t));
-quad_t	__muldi3	__P((quad_t, quad_t));
-quad_t	__negdi2	__P((quad_t));
-quad_t	__one_cmpldi2	__P((quad_t));
-quad_t	__subdi3	__P((quad_t, quad_t));
-int	__ucmpdi2	__P((u_quad_t, u_quad_t));
-u_quad_t __udivdi3	__P((u_quad_t, u_quad_t));
-u_quad_t __umoddi3	__P((u_quad_t, u_quad_t));
-quad_t	__xordi3	__P((quad_t, quad_t));
+int __cmpdi2 __P((quad_t, quad_t));
+quad_t __adddi3 __P((quad_t, quad_t));
+quad_t __anddi3 __P((quad_t, quad_t));
+quad_t __ashldi3 __P((quad_t, qshift_t));
+quad_t __ashrdi3 __P((quad_t, qshift_t));
+int __cmpdi2 __P((quad_t, quad_t ));
+quad_t __divdi3 __P((quad_t, quad_t));
+quad_t __fixdfdi __P((double));
+quad_t __fixsfdi __P((float));
+u_quad_t __fixunsdfdi __P((double));
+u_quad_t __fixunssfdi __P((float));
+double __floatdidf __P((quad_t));
+float __floatdisf __P((quad_t));
+double __floatunsdidf __P((u_quad_t));
+quad_t __iordi3 __P((quad_t, quad_t));
+quad_t __lshldi3 __P((quad_t, qshift_t));
+quad_t __lshrdi3 __P((quad_t, qshift_t));
+quad_t __moddi3 __P((quad_t, quad_t));
+quad_t __muldi3 __P((quad_t, quad_t));
+quad_t __negdi2 __P((quad_t));
+quad_t __one_cmpldi2 __P((quad_t));
+u_quad_t __qdivrem __P((u_quad_t, u_quad_t, u_quad_t *));
+quad_t __subdi3 __P((quad_t, quad_t));
+int __ucmpdi2 __P((u_quad_t, u_quad_t));
+u_quad_t __udivdi3 __P((u_quad_t, u_quad_t ));
+u_quad_t __umoddi3 __P((u_quad_t, u_quad_t ));
+quad_t __xordi3 __P((quad_t, quad_t));
 __END_DECLS

@@ -1,6 +1,8 @@
+/*	$NetBSD: strcpy.c,v 1.9 1998/03/27 01:30:09 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strcpy.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$NetBSD: strcpy.c,v 1.8 1997/10/13 11:55:54 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)strcpy.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strcpy.c,v 1.9 1998/03/27 01:30:09 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -44,8 +50,8 @@ static char *rcsid = "$NetBSD: strcpy.c,v 1.8 1997/10/13 11:55:54 lukem Exp $";
 
 char *
 strcpy(to, from)
-	register char *to;
-	register const char *from;
+	char *to;
+	const char *from;
 {
 	char *save = to;
 

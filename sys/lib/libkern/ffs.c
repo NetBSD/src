@@ -1,6 +1,8 @@
+/*	$NetBSD: ffs.c,v 1.8 1998/03/27 01:30:01 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ffs.c	5.4 (Berkeley) 5/17/90";*/
-static char *rcsid = "$NetBSD: ffs.c,v 1.7 1997/10/13 11:55:27 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: ffs.c,v 1.8 1998/03/27 01:30:01 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -47,9 +53,9 @@ static char *rcsid = "$NetBSD: ffs.c,v 1.7 1997/10/13 11:55:27 lukem Exp $";
  */
 int
 ffs(mask)
-	register int mask;
+	int mask;
 {
-	register int bit;
+	int bit;
 
 	if (mask == 0)
 		return(0);

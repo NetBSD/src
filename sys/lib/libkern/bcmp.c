@@ -1,6 +1,8 @@
+/*	$NetBSD: bcmp.c,v 1.10 1998/03/27 01:29:59 cgd Exp $	*/
+
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$NetBSD: bcmp.c,v 1.9 1997/10/13 11:55:15 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: bcmp.c,v 1.10 1998/03/27 01:29:59 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -48,9 +54,9 @@ static char *rcsid = "$NetBSD: bcmp.c,v 1.9 1997/10/13 11:55:15 lukem Exp $";
 int
 bcmp(b1, b2, length)
 	const void *b1, *b2;
-	register size_t length;
+	size_t length;
 {
-	register const char *p1, *p2;
+	const char *p1, *p2;
 
 	if (length == 0)
 		return(0);

@@ -1,6 +1,8 @@
+/*	$NetBSD: strlen.c,v 1.8 1998/03/27 01:30:10 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strlen.c	5.5 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: strlen.c,v 1.7 1997/10/13 11:55:59 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)strlen.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strlen.c,v 1.8 1998/03/27 01:30:10 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -46,7 +52,7 @@ size_t
 strlen(str)
 	const char *str;
 {
-	register const char *s;
+	const char *s;
 
 	for (s = str; *s; ++s);
 	return(s - str);
