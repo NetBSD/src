@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.14 1995/09/01 20:06:09 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.15 1995/09/19 22:56:42 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -385,11 +385,12 @@ svr4_sendsig(catcher, sig, mask, code)
  * sysi86
  */
 int
-svr4_sysarch(p, uap, retval)
+svr4_sysarch(p, v, retval)
 	struct proc *p;
-	struct svr4_sysarch_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct svr4_sysarch_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
 	*retval = 0;	/* XXX: What to do */

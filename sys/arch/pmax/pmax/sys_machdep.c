@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1994/10/26 21:10:42 cgd Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 1995/09/19 23:03:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,17 +50,20 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 
+#include <sys/syscallargs.h>
+
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, uap, retval)
+vtrace(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int vdoualarm();
 
 	switch (SCARG(uap, request)) {
@@ -107,13 +110,15 @@ vdoualarm(arg)
 #endif
 
 int
-sysarch(p, uap, retval)
+sysarch(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
+
 	return ENOSYS;
 }

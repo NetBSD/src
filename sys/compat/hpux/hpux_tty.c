@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.9 1995/05/10 16:45:43 christos Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.10 1995/09/19 22:53:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -472,20 +472,24 @@ hpuxtobsdbaud(hpux_speed)
 #ifdef COMPAT_HPUX_6X
 
 int
-compat_hpux_6x_gtty(p, uap, retval)
+compat_hpux_6x_gtty(p, v, retval)
 	struct proc *p;
-	struct compat_hpux_6x_gtty_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_hpux_6x_gtty_args *uap = v;
+
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
-compat_hpux_6x_stty(p, uap, retval)
+compat_hpux_6x_stty(p, v, retval)
 	struct proc *p;
-	struct compat_hpux_6x_stty_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_hpux_6x_stty_args *uap = v;
+
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }
 

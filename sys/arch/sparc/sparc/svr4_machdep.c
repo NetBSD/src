@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.9 1995/09/01 20:06:20 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.10 1995/09/19 22:59:06 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -471,11 +471,13 @@ svr4_trap(type, p)
 /*
  */
 int
-svr4_sysarch(p, uap, retval)
+svr4_sysarch(p, v, retval)
 	struct proc *p;
-	struct svr4_sysarch_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct svr4_sysarch_args *uap = v;
+
 	switch (SCARG(uap, op)) {
 	default:
 		printf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
