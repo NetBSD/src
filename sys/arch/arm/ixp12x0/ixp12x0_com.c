@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.8 2002/12/02 14:10:13 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.9 2002/12/03 09:28:27 ichiro Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,7 +135,7 @@ u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
 static bus_space_tag_t ixpcomconstag;
 static bus_space_handle_t ixpcomconsioh;
-static bus_addr_t ixpcomconsaddr;
+static bus_addr_t ixpcomconsaddr = IXPCOM_UART_BASE; /* XXX initial value */
 
 static int ixpcomconsattached;
 static int ixpcomconsrate;
@@ -900,7 +900,7 @@ ixpcomcnputc(dev, c)
 {
 	int s;
 
-	s = spltty();   /* XXX do we need this? */
+	s = splserial();
 
 	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
 	    & SR_TXR))
@@ -926,7 +926,7 @@ ixpcomcngetc(dev)
 {
         int c, s;
 
-        s = spltty();   /* XXX do we need this? */
+        s = splserial();
 
 	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
 	    & SR_RXR))
