@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.5 2000/03/08 13:09:00 hubertf Exp $
+.\" $NetBSD: sysinst,v 1.5.4.1 2000/10/02 01:11:54 minoura Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,6 +65,7 @@ Do not let this discourage you, the install program is not hard
 to use.
 .
 .if !r_pmax  \{\
+.if !r_x68k  \{\
 .It_need
 .Em Possible Tn PCMCIA Em issues
 .Pp
@@ -120,6 +121,7 @@ DDB (the in-kernel debugger) and use "write pcic_isa_intr_alloc_mask 0x0808"
 (or any appropriate value for your machine) to mask out the offending
 interrupt before continuing.  By default the kernel masks out IRQ 10, and
 the corresponding mask is 0xfbff.
+.\}
 .\}
 .\}
 .It_need
