@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.92 2004/02/22 00:19:48 enami Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.93 2004/03/08 22:48:09 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.92 2004/02/22 00:19:48 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.93 2004/03/08 22:48:09 dbj Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -368,6 +368,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 {
 	int off, slack;
 	size_t trysize, phsize;
+	int s;
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -551,9 +552,11 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	simple_unlock(&pool_head_slock);
 
 	/* Insert this into the list of pools using this allocator. */
+	s = splvm();
 	simple_lock(&palloc->pa_slock);
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
 	simple_unlock(&palloc->pa_slock);
+	splx(s);
 }
 
 /*
@@ -564,11 +567,14 @@ pool_destroy(struct pool *pp)
 {
 	struct pool_item_header *ph;
 	struct pool_cache *pc;
+	int s;
 
 	/* Locking order: pool_allocator -> pool */
+	s = splvm();
 	simple_lock(&pp->pr_alloc->pa_slock);
 	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
 	simple_unlock(&pp->pr_alloc->pa_slock);
+	splx(s);
 
 	/* Destroy all caches for this pool. */
 	while ((pc = TAILQ_FIRST(&pp->pr_cachelist)) != NULL)
@@ -2091,15 +2097,21 @@ pool_page_free(struct pool *pp, void *v)
 void *
 pool_subpage_alloc(struct pool *pp, int flags)
 {
-
-	return (pool_get(&psppool, flags));
+	void *v;
+	int s;
+	s = splvm();
+	v = pool_get(&psppool, flags);
+	splx(s);
+	return v;
 }
 
 void
 pool_subpage_free(struct pool *pp, void *v)
 {
-
+	int s;
+	s = splvm();
 	pool_put(&psppool, v);
+	splx(s);
 }
 
 /* We don't provide a real nointr allocator.  Maybe later. */
