@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.15 1997/05/15 16:43:36 mellon Exp $	*/
+/*	$NetBSD: promio.c,v 1.16 1997/05/21 19:41:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,7 @@
 #include "scc.h"
 #include "asc.h"
 #include "tc.h"
+#include  "rasterconsole.h"
 
 #if NDC > 0
 #include <machine/dc7085cons.h>
@@ -209,9 +210,9 @@ consinit()
 	 * whatever the PROM vector gave us.
 	 */
 
+#if NRASTERCONSOLE > 0
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		screen = 1;
-#if NRASTERCONSOLE > 0
 	/*
 	 * The boot program uses PMAX ROM entrypoints so the ROM sets
 	 * osconsole to '1' like the PMAX.
@@ -307,7 +308,8 @@ consinit()
 
 
 remcons:
-#endif /* NRASTERCONSOLE > 0 */
+
+#endif	/* NRASTERCONSOLE > 0 */
 
 	/*
 	 * Configure a serial port as a remote console.
