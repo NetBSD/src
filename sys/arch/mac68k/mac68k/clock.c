@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 1999/06/11 06:51:39 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.38.4.1 1999/11/15 00:38:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -442,6 +442,8 @@ mac68k_calibrate_delay()
 {
 	u_int sum, n;
 
+	(void)spl0();
+
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
 	via1_register_irq(VIA1_T1, delay_timer1_irq, NULL);
@@ -492,4 +494,6 @@ mac68k_calibrate_delay()
 	if (clock_debug)
 		printf("mac68k_calibrate_delay(): delay_factor calibrated\n");
 #endif
+
+	(void)splhigh();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.8 1999/01/08 18:10:35 augustss Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.8.10.1 1999/11/15 00:40:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,9 +57,6 @@
 #define	ELFSIZE		DB_ELFSIZE
 
 #include <sys/exec_elf.h>
-
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFDEFNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 static char *db_elf_find_strtab __P((db_symtab_t *));
 
@@ -134,12 +131,13 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 * Validate the Elf header.
 	 */
 	elf = (Elf_Ehdr *)symtab;
-	if (memcmp(elf->e_ident, Elf_e_ident, Elf_e_siz) != 0)
+	if (memcmp(elf->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    elf->e_ident[EI_CLASS] != ELFCLASS)
 		goto badheader;
 
 	switch (elf->e_machine) {
 
-	ELFDEFNAME(MACHDEP_ID_CASES)
+	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
 		goto badheader;
@@ -160,9 +158,9 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
 	for (i = 0; i < elf->e_shnum; i++) {
 		switch (shp[i].sh_type) {
-		case Elf_sht_strtab:
+		case SHT_STRTAB:
 			if (shp[i].sh_size < NBPG) {
-				shp[i].sh_type = Elf_sht_null;
+				shp[i].sh_type = SHT_NULL;
 				continue;
 			}
 			if (strtab_start != NULL)
@@ -172,7 +170,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 			    shp[i].sh_size;
 			break;
 		
-		case Elf_sht_symtab:
+		case SHT_SYMTAB:
 			if (symtab_start != NULL)
 				goto multiple_symtab;
 			symtab_start = (Elf_Sym *)((char *)symtab + 
@@ -237,7 +235,7 @@ db_elf_find_strtab(stab)
 	int i;
 
 	for (i = 0; i < elf->e_shnum; i++) {
-		if (shp[i].sh_type == Elf_sht_strtab)
+		if (shp[i].sh_type == SHT_STRTAB)
 			return (stab->private + shp[i].sh_offset);
 	}
 
@@ -306,23 +304,23 @@ db_elf_search_symbol(symtab, off, strategy, diffp)
 				rsymp = symp;
 				if (diff == 0) {
 					if (strategy == DB_STGY_PROC &&
-					    ELF_SYM_TYPE(symp->st_info) ==
-					      Elf_estt_func &&
-					    ELF_SYM_BIND(symp->st_info) !=
-					      Elf_estb_local)
+					    ELFDEFNNAME(ST_TYPE)(symp->st_info)
+					      == STT_FUNC &&
+					    ELFDEFNNAME(ST_BIND)(symp->st_info)
+					      != STB_LOCAL)
 						break;
 					if (strategy == DB_STGY_ANY &&
-					    ELF_SYM_BIND(symp->st_info) !=
-					      Elf_estb_local)
+					    ELFDEFNNAME(ST_BIND)(symp->st_info)
+					      != STB_LOCAL)
 						break;
 				}
 			} else if ((off - symp->st_value) == diff) {
 				if (rsymp == NULL)
 					rsymp = symp;
-				else if (ELF_SYM_BIND(rsymp->st_info) ==
-				      Elf_estb_local &&
-				    ELF_SYM_BIND(symp->st_info) !=
-				      Elf_estb_local) {
+				else if (ELFDEFNNAME(ST_BIND)(rsymp->st_info)
+				      == STB_LOCAL &&
+				    ELFDEFNNAME(ST_BIND)(symp->st_info)
+				      != STB_LOCAL) {
 					/* pick the external symbol */
 					rsymp = symp;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.21.4.1 1999/11/15 00:40:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -119,6 +119,7 @@ int wdcdebug_wd_mask = 0;
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 void  _wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
+void  wdc_ata_bio_kill_xfer __P((struct channel_softc *,struct wdc_xfer *));
 void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
 int   wdc_ata_ctrl_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
@@ -152,6 +153,7 @@ wdc_ata_bio(drvp, ata_bio)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = wdc_ata_bio_start;
 	xfer->c_intr = wdc_ata_bio_intr;
+	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
 	wdc_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
 }
@@ -565,6 +567,36 @@ end:
 		wdc_ata_bio_done(chp, xfer);
 	}
 	return 1;
+}
+
+void
+wdc_ata_kill_pending(drvp)
+	struct ata_drive_datas *drvp;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+
+	wdc_kill_pending(chp);
+}
+
+void
+wdc_ata_bio_kill_xfer(chp, xfer)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+{
+	struct ata_bio *ata_bio = xfer->cmd;
+	int drive = xfer->drive;
+
+	untimeout(wdctimeout, chp);
+	/* remove this command from xfer queue */
+	wdc_free_xfer(chp, xfer);
+
+	ata_bio->flags |= ATA_ITSDONE;
+	ata_bio->error = ERR_NODEV;
+	ata_bio->r_error = WDCE_ABRT;
+	if ((ata_bio->flags & ATA_POLL) == 0) {
+		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+		wddone(chp->ch_drive[drive].drv_softc);
+	}
 }
 
 void

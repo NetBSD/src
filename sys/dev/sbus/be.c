@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.6.4.1 1999/11/15 00:41:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -331,7 +331,8 @@ beattach(parent, self, aux)
 
 	if ((sc->sc_conf & BE_CONF_MII) != 0) {
 #if 1
-		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff);
+		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY);
 #else
 		/* TEST */
 		extern int mii_print __P((void *, const char *));
@@ -610,6 +611,11 @@ bestop(sc)
 	bus_space_handle_t br = sc->sc_br;
 
 	untimeout(be_tick, sc);
+
+	if (sc->sc_conf & BE_CONF_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
+	}
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);

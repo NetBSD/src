@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.15 1999/06/18 08:17:50 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.15.4.1 1999/11/15 00:38:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1078,18 +1078,7 @@ END(mips1_TLBFlushAddr)
 LEAF(mips1_TLBUpdate)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-
-	li	v0, -1				# check to use current entryhi
-	bne	v0, a0, 1f
 	nop
-	tlbp
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
-	nop
-	tlbwi					# update the entry
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS
-
-1:
 	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
 	nop
 	mtc0	a0, MIPS_COP_0_TLB_HI		# set entryhi

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.2 1999/10/15 06:42:39 haya Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.2.4.1 1999/11/15 00:41:06 fvdl Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -101,7 +101,7 @@
 #define PCI12XX_CBCTRL_INTR_DET 0x0100 /* functional interrupt detect */
 
 
-/* PCI_BCR_INTR additional bit for RF5C46[567] */
+/* PCI_BCR_INTR additional bit for Rx5C46[567] */
 #define CB_BCRI_RL_3E0_ENA 0x08000000
 #define CB_BCRI_RL_3E2_ENA 0x10000000
 

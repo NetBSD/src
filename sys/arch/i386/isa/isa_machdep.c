@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.43 1999/09/17 19:59:43 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.43.4.1 1999/11/15 00:38:08 fvdl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -243,15 +243,18 @@ struct intrhand *intrhand[ICU_LEN];
 void
 intr_calculatemasks()
 {
-	int irq, level;
+	int irq, level, unusedirqs;
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
+	unusedirqs = 0xffff;
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
+		if (levels)
+			unusedirqs &= ~(1 << irq);
 	}
 
 	/* Then figure out which IRQs use each level. */
@@ -260,7 +263,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs;
+		imask[level] = irqs | unusedirqs;
 	}
 
 	/*
@@ -329,7 +332,6 @@ intr_calculatemasks()
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
-		SET_ICUS();
 	}
 }
 
@@ -486,6 +488,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
+	SET_ICUS();
 	return (ih);
 }
 
@@ -517,6 +520,7 @@ isa_intr_disestablish(ic, arg)
 	free(ih, M_DEVBUF);
 
 	intr_calculatemasks();
+	SET_ICUS();
 
 	if (intrhand[irq] == NULL)
 		intrtype[irq] = IST_NONE;
@@ -527,7 +531,7 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	static struct i386_isa_chipset i386_isa_chipset;
+	extern struct i386_isa_chipset i386_isa_chipset;
 	extern int isa_has_been_seen;
 
 	/*

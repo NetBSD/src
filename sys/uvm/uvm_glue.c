@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.29 1999/07/25 06:30:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29.4.1 1999/11/15 00:42:29 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -231,7 +231,7 @@ uvm_chgkprot(addr, len, rw)
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa, prot, TRUE, 0);
+		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
 }
 #endif

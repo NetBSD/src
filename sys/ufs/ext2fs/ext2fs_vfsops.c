@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.28.4.2 1999/11/03 23:40:31 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.28.4.3 1999/11/15 00:42:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -649,7 +649,8 @@ ext2fs_unmount(mp, mntflags, p)
 		fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
-	ump->um_devvp->v_specmountpoint = NULL;
+	if (ump->um_devvp->v_type != VBAD)
+		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);

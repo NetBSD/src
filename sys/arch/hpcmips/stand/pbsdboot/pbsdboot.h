@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.4 1999/09/26 12:46:57 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.4.4.1 1999/11/15 00:37:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -95,6 +95,7 @@ struct system_info {
 	unsigned char *si_asmcode;
 	int si_asmcodelen;
 	int (*si_boot) __P((caddr_t));
+	int si_intrvec;
 };
 extern struct system_info system_info;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.12 1999/09/20 11:58:15 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.12.4.1 1999/11/15 00:42:07 fvdl Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.

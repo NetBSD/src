@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp $
+$NetBSD: podules,v 1.9.14.1 1999/11/15 00:37:21 fvdl Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -75,6 +75,7 @@ podule	ACORN		BBCIO		0x0006	BBC IO interface
 podule	ACORN		ST506		0x000b	ST506 HD interface
 podule	ACORN		MIDI		0x0013	MIDI interface
 podule	ACORN		ETHER2		0x0061	ether 2 interface
+podule	ACORN		ETHERI		0x0139	EtherI interface
 
 podule	CCONCEPTS	LASERDIRECT	0x0014	laser direct (Canon LBP-4)
 
@@ -96,6 +97,7 @@ podule	LINGENUITY	SCSI8		0x0040	8 bit SCSI interface
 podule	LINGENUITY	SCSI8SHARE	0x008c	8 bit SCSIShare interface
 
 podule	IRLAM		24I16		0x00e6	24i16 digitiser
+podule	IRLAM		ETHERN		0x5678	EtherN interface
 
 podule	OAK		SCSI		0x0058	16 bit SCSI interface
 

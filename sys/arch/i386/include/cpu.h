@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 1999/10/06 20:04:53 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56.4.1 1999/11/15 00:38:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -146,6 +146,7 @@ void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
 
 /* clock.c */
+void	initrtclock __P((void));
 void	startrtclock __P((void));
 
 /* npx.c */

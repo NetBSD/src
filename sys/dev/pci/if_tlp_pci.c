@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.20 1999/09/30 17:48:25 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.20.4.1 1999/11/15 00:41:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -229,6 +229,12 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
+
+const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
+	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
+	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -515,6 +521,16 @@ tlp_pci_attach(parent, self, aux)
 	    PCI_BHLC_REG));
 
 	/*
+	 * Get PCI data moving command info.
+	 */
+	if (pa->pa_flags & PCI_FLAGS_MRL_OKAY)
+		sc->sc_flags |= TULIPF_MRL;
+	if (pa->pa_flags & PCI_FLAGS_MRM_OKAY)
+		sc->sc_flags |= TULIPF_MRM;
+	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+		sc->sc_flags |= TULIPF_MWI;
+
+	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
@@ -674,6 +690,35 @@ tlp_pci_attach(parent, self, aux)
 		 * Deal with any quirks this board might have.
 		 */
 		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21140_quirks);
+
+		/*
+		 * Bail out now if we can't deal with this board.
+		 */
+		if (sc->sc_mediasw == NULL)
+			goto cant_cope;
+		break;
+
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/* Check for new format SROM. */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Not an ISV SROM; can't cope, for now.
+			 */
+			goto cant_cope;
+		} else {
+			/*
+			 * We start out with the 2114x ISV media switch.
+			 * When we search for quirks, we may change to
+			 * a different switch.
+			 */
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+		}
+
+		/*
+		 * Deal with any quirks this board might have.
+		 */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21142_quirks);
 
 		/*
 		 * Bail out now if we can't deal with this board.

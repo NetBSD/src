@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.45 1999/09/12 01:17:35 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.45.4.1 1999/11/15 00:42:28 fvdl Exp $	*/
 
 /*
  *
@@ -683,7 +683,7 @@ ReFault:
 	 * identify the players
 	 */
 
-	amap = ufi.entry->aref.ar_amap;	/* top layer */
+	amap = ufi.entry->aref.ar_amap;		/* top layer */
 	uobj = ufi.entry->object.uvm_obj;	/* bottom layer */
 
 	/*
@@ -841,11 +841,17 @@ ReFault:
 			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
 			    ufi.orig_map->pmap, currva, anon->u.an_page, 0);
 			uvmexp.fltnamap++;
-			pmap_enter(ufi.orig_map->pmap, currva,
+			/*
+			 * Since this isn't the page that's actually faulting,
+			 * ignore pmap_enter() failures; it's not critical
+			 * that we enter these right now.
+			 */
+			(void) pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
 			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
-			    enter_prot, 
-			    VM_MAPENT_ISWIRED(ufi.entry), 0);
+			    enter_prot,
+			    PMAP_CANFAIL |
+			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
 		simple_unlock(&anon->an_lock);
 	}
@@ -858,6 +864,9 @@ ReFault:
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
 	 * call to pmap_enter with everything locked.   bad?
+	 *
+	 * XXX Actually, that is bad; pmap_enter() should just fail in that
+	 * XXX case.  --thorpej
 	 */
 	
 	/*
@@ -968,9 +977,17 @@ ReFault:
 				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
 				  ufi.orig_map->pmap, currva, pages[lcv], 0);
 				uvmexp.fltnomap++;
-				pmap_enter(ufi.orig_map->pmap, currva,
+				/*
+				 * Since this page isn't the page that's
+				 * actually fauling, ignore pmap_enter()
+				 * failures; it's not critical that we
+				 * enter these right now.
+				 */
+				(void) pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
-				    enter_prot & MASK(ufi.entry), wired, 0);
+				    enter_prot & MASK(ufi.entry),
+				    PMAP_CANFAIL |
+				     (wired ? PMAP_WIRED : 0));
 
 				/* 
 				 * NOTE: page can't be PG_WANTED or PG_RELEASED
@@ -1224,11 +1241,34 @@ ReFault:
 
 	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
-	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, wired, access_type);
+	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
+	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
+	    != KERN_SUCCESS) {
+		/*
+		 * No need to undo what we did; we can simply think of
+		 * this as the pmap throwing away the mapping information.
+		 *
+		 * We do, however, have to go through the ReFault path,
+		 * as the map may change while we're asleep.
+		 */
+		uvmfault_unlockall(&ufi, amap, uobj, oanon);
+#ifdef DIAGNOSTIC
+		if (uvmexp.swpgonly > uvmexp.swpages)
+			panic("uvmexp.swpgonly botch");
+#endif
+		if (uvmexp.swpgonly == uvmexp.swpages) {
+			UVMHIST_LOG(maphist,
+			    "<- failed.  out of VM",0,0,0,0);
+			/* XXX instrumentation */
+			return (KERN_RESOURCE_SHORTAGE);
+		}
+		/* XXX instrumentation */
+		uvm_wait("flt_pmfail1");
+		goto ReFault;
+	}
 
 	/*
-	 * ... and update the page queues.
+	 * ... update the page queues.
 	 */
 
 	uvm_lock_pageq();
@@ -1286,7 +1326,7 @@ Case2:
 		     UVM_ET_ISCOPYONWRITE(ufi.entry);
 	}
 	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
-	promote, (uobj == NULL), 0,0);
+	    promote, (uobj == NULL), 0,0);
 
 	/*
 	 * if uobjpage is not null then we do not need to do I/O to get the
@@ -1323,16 +1363,17 @@ Case2:
 		 */
 
 		if (result != VM_PAGER_OK) {
-			
 #ifdef DIAGNOSTIC 
 			if (result == VM_PAGER_PEND)
-	panic("uvm_fault: pgo_get got PENDing on non-async I/O");
+				panic("uvm_fault: pgo_get got PENDing "
+				    "on non-async I/O");
 #endif
 
 			if (result == VM_PAGER_AGAIN) {
-	UVMHIST_LOG(maphist, "  pgo_get says TRY AGAIN!",0,0,0,0);
-	tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
-	goto ReFault;
+				UVMHIST_LOG(maphist,
+				    "  pgo_get says TRY AGAIN!",0,0,0,0);
+				tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
+				goto ReFault;
 			}
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
@@ -1387,7 +1428,8 @@ Case2:
 				uvmexp.fltpgrele++;
 #ifdef DIAGNOSTIC
 				if (uobj->pgops->pgo_releasepg == NULL)
-			panic("uvm_fault: object has no releasepg function");
+					panic("uvm_fault: object has no "
+					    "releasepg function");
 #endif
 				/* frees page */
 				if (uobj->pgops->pgo_releasepg(uobjpage,NULL))
@@ -1469,7 +1511,7 @@ Case2:
 					/*
 					 * drop ownership of page, it can't
 					 * be released
-					 * */
+					 */
 					if (uobjpage->flags & PG_WANTED)
 						wakeup(uobjpage);
 					uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
@@ -1657,8 +1699,41 @@ Case2:
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
-	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, wired, access_type);
+	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
+	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
+	    != KERN_SUCCESS) {
+		/*
+		 * No need to undo what we did; we can simply think of
+		 * this as the pmap throwing away the mapping information.
+		 *
+		 * We do, however, have to go through the ReFault path,
+		 * as the map may change while we're asleep.
+		 */
+		if (pg->flags & PG_WANTED)
+			wakeup(pg);		/* lock still held */
+
+		/* 
+		 * note that pg can't be PG_RELEASED since we did not drop
+		 * the object lock since the last time we checked.
+		 */
+ 
+		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
+		UVM_PAGE_OWN(pg, NULL);
+		uvmfault_unlockall(&ufi, amap, uobj, NULL);
+#ifdef DIAGNOSTIC
+		if (uvmexp.swpgonly > uvmexp.swpages)
+			panic("uvmexp.swpgonly botch");
+#endif
+		if (uvmexp.swpgonly == uvmexp.swpages) {
+			UVMHIST_LOG(maphist,
+			    "<- failed.  out of VM",0,0,0,0);
+			/* XXX instrumentation */
+			return (KERN_RESOURCE_SHORTAGE);
+		}
+		/* XXX instrumentation */
+		uvm_wait("flt_pmfail2");
+		goto ReFault;
+	}
 
 	uvm_lock_pageq();
 

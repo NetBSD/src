@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 1999/10/04 19:11:42 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.155.4.1 1999/11/15 00:39:19 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -188,7 +188,8 @@ cpu_startup()
 	 * Map the message buffer (physical location 0).
 	 */
 	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0,
-	    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 
 	/*
 	 * XXX - sun4
@@ -259,7 +260,7 @@ cpu_startup()
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1375,7 +1376,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		pmap_enter(pmap_kernel(), dva,
 			   (pa & ~(NBPG-1))| PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 
 		dva += PAGE_SIZE;
 		vaddr += sgsize;
@@ -1499,7 +1500,7 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 #endif
 		pmap_enter(pmap_kernel(), (vaddr_t)dva,
 			   pa | PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		dva += PAGE_SIZE;
 	}
 

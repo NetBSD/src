@@ -5,7 +5,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: dos_errno.h,v 1.1 1998/09/01 19:53:26 itohy Exp $
+ *	$NetBSD: dos_errno.h,v 1.1.16.1 1999/11/15 00:39:56 fvdl Exp $
  */
 
 #ifndef X68K_DOS_ERRNO_H
@@ -70,5 +70,8 @@ __const char * __pure dos_strerror __P((int)) __attribute__((__const__));
 /* dos_errlist end */
 
 #define	DOS_ELAST	40	/* largest DOS errno */
+
+/* internal use only */
+#define _DOS_EEXIST	80	/* File exists (from DOS call) */
 
 #endif /* X68K_DOS_ERRNO_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io_asm.S,v 1.8 1998/06/28 07:27:54 thorpej Exp $	*/
+/*	$NetBSD: podulebus_io_asm.S,v 1.8.16.1 1999/11/15 00:37:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -104,7 +104,7 @@ ENTRY(podulebus_bs_rm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_insw
+	b	_C_LABEL(insw)
 
 /*
  * write multiple
@@ -130,4 +130,4 @@ ENTRY(podulebus_bs_wm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_outsw
+	b	_C_LABEL(outsw)

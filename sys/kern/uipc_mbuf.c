@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.43 1999/08/05 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.43.4.1 1999/11/15 00:41:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ int	max_datalen;
 
 void	*mclpool_alloc __P((unsigned long, int, int));
 void	mclpool_release __P((void *, unsigned long, int));
+static struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
@@ -401,6 +402,25 @@ m_copym(m, off0, len, wait)
 	int off0, wait;
 	int len;
 {
+	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
+}
+
+struct mbuf *
+m_dup(m, off0, len, wait)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+{
+	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
+}
+
+static struct mbuf *
+m_copym0(m, off0, len, wait, deep)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+	int deep;	/* deep copy */
+{
 	struct mbuf *n, **np;
 	int off = off0;
 	struct mbuf *top;
@@ -440,9 +460,15 @@ m_copym(m, off0, len, wait)
 		}
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
-			n->m_data = m->m_data + off;
-			n->m_ext = m->m_ext;
-			MCLADDREFERENCE(m, n);
+			if (!deep) {
+				n->m_data = m->m_data + off;
+				n->m_ext = m->m_ext;
+				MCLADDREFERENCE(m, n);
+			} else {
+				MCLGET(n, wait);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
+				    (unsigned)n->m_len);
+			}
 		} else
 			memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
 			    (unsigned)n->m_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117 1999/09/23 11:53:13 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.117.4.1 1999/11/15 00:40:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -367,7 +367,10 @@ audiodetach(self, flags)
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
+	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
+	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);
+	vdevgone(maj, mn | MIXER_DEVICE,    mn | MIXER_DEVICE, VCHR);
 
 	return (0);
 }
@@ -2705,6 +2708,13 @@ audiosetinfo(sc, ai)
 			int bs = ai->blocksize;
 			if (hw->round_blocksize)
 				bs = hw->round_blocksize(sc->hw_hdl, bs);
+			/* 
+			 * The blocksize should never be 0, but a faulty
+			 * driver might set it wrong.  Just use something.
+			 */
+			if (bs <= 0)
+				bs = 512;
+
 			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
 		}

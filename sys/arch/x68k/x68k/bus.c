@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.6 1999/07/08 18:11:02 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.6.4.1 1999/11/15 00:39:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -419,8 +419,8 @@ x68k_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("x68k_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
 

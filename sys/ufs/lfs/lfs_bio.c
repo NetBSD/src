@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.11 1999/06/01 03:00:40 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.11.4.1 1999/11/15 00:42:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -348,10 +348,9 @@ lfs_check(vp, blkno, flags)
 {
 	int error;
 	struct lfs *fs;
+	extern int lfs_dirvcount;
 
 	error = 0;
-	if (incore(vp, blkno))
-		return (0);
 	
 	/* If out of buffers, wait on writer */
 	/* XXX KS - if it's the Ifile, we're probably the cleaner! */
@@ -365,7 +364,7 @@ lfs_check(vp, blkno, flags)
 
 	if (locked_queue_count > LFS_MAX_BUFS
 	    || locked_queue_bytes > LFS_MAX_BYTES
-	    || fs->lfs_dirvcount > LFS_MAXDIROP
+	    || lfs_dirvcount > LFS_MAXDIROP
 	    || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;

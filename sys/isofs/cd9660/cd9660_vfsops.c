@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.4.1 1999/10/19 12:50:00 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.4.2 1999/11/15 00:41:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -510,7 +510,9 @@ cd9660_unmount(mp, mntflags, p)
 		iso_dunmap(isomp->im_dev);
 #endif
 
-	isomp->im_devvp->v_specmountpoint = NULL;
+	if (isomp->im_devvp->v_type != VBAD)
+		isomp->im_devvp->v_specmountpoint = NULL;
+
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);

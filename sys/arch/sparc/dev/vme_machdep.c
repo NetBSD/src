@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.20 1999/07/08 18:08:58 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.20.4.1 1999/11/15 00:39:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -878,7 +878,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		pmap_enter(pmap_kernel(), dvmaddr,
 		    (pa & ~(pagesz-1)) | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 
 		dvmaddr += pagesz;
 		vaddr += sgsize;
@@ -960,7 +960,7 @@ sparc_vme4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 			pa |= PG_IOC;
 #endif
 		pmap_enter(pmap_kernel(), dvmaddr, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		dvmaddr += PAGE_SIZE;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151 1999/10/17 09:44:48 ragge Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.4.1 1999/11/15 00:41:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ sdattach(parent, sd, sc_link, ops)
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
 
-#if !defined(i386) && !defined(vax)
+#if !defined(__i386__) && !defined(__vax__)
 	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
 #endif
 
@@ -1205,9 +1205,6 @@ sddump(dev, blkno, va, size)
 	struct scsipi_xfer *xs;	/* ... convenience */
 	int	retval;
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (ENODEV);
-
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
 		return (EFAULT);
@@ -1221,6 +1218,9 @@ sddump(dev, blkno, va, size)
 	/* Check for acceptable drive number. */
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1999/03/26 04:29:22 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.11.10.1 1999/11/15 00:39:31 fvdl Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -148,11 +148,11 @@ define	V_FAULTS	offsetof(struct uvmexp, faults)
 #define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
 
 # FPU state
-define	FS_REGS		offsetof(struct fpstate, fs_regs)
-define	FS_FSR		offsetof(struct fpstate, fs_fsr)
-define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
-define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
-define	FS_SIZE		sizeof(struct fpstate)
+define	FS_REGS		offsetof(struct fpstate64, fs_regs)
+define	FS_FSR		offsetof(struct fpstate64, fs_fsr)
+define	FS_QSIZE	offsetof(struct fpstate64, fs_qsize)
+define	FS_QUEUE	offsetof(struct fpstate64, fs_queue)
+define	FS_SIZE		sizeof(struct fpstate64)
 define	FSR_QNE		FSR_QNE
 define	FPRS_FEF	FPRS_FEF
 define	FPRS_DL		FPRS_DL
@@ -180,26 +180,26 @@ define  PCB_LASTCALL	offsetof(struct pcb, lastcall)
 define	PCB_SIZE	sizeof(struct pcb)
 
 
-# trapframe fields
-define	TF_TSTATE	offsetof(struct trapframe, tf_tstate)
-define	TF_PC		offsetof(struct trapframe, tf_pc)
-define	TF_NPC		offsetof(struct trapframe, tf_npc)
-define	TF_FAULT	offsetof(struct trapframe, tf_fault)
-define	TF_KSTACK	offsetof(struct trapframe, tf_kstack)
-define	TF_Y		offsetof(struct trapframe, tf_y)
-define	TF_PIL		offsetof(struct trapframe, tf_pil)
-define	TF_OLDPIL	offsetof(struct trapframe, tf_oldpil)
-define	TF_TT		offsetof(struct trapframe, tf_tt)
-define	TF_GLOBAL	offsetof(struct trapframe, tf_global)
-define	TF_OUT		offsetof(struct trapframe, tf_out)
-define	TF_LOCAL	offsetof(struct trapframe, tf_local)
-define	TF_IN		offsetof(struct trapframe, tf_in)
+# trapframe64 fields
+define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)
+define	TF_PC		offsetof(struct trapframe64, tf_pc)
+define	TF_NPC		offsetof(struct trapframe64, tf_npc)
+define	TF_FAULT	offsetof(struct trapframe64, tf_fault)
+define	TF_KSTACK	offsetof(struct trapframe64, tf_kstack)
+define	TF_Y		offsetof(struct trapframe64, tf_y)
+define	TF_PIL		offsetof(struct trapframe64, tf_pil)
+define	TF_OLDPIL	offsetof(struct trapframe64, tf_oldpil)
+define	TF_TT		offsetof(struct trapframe64, tf_tt)
+define	TF_GLOBAL	offsetof(struct trapframe64, tf_global)
+define	TF_OUT		offsetof(struct trapframe64, tf_out)
+define	TF_LOCAL	offsetof(struct trapframe64, tf_local)
+define	TF_IN		offsetof(struct trapframe64, tf_in)
 # shortened versions
-define	TF_G		offsetof(struct trapframe, tf_global)
-define	TF_O		offsetof(struct trapframe, tf_out)
-define	TF_L		offsetof(struct trapframe, tf_local)
-define	TF_I		offsetof(struct trapframe, tf_in)
-define	TF_SIZE		sizeof(struct trapframe)
+define	TF_G		offsetof(struct trapframe64, tf_global)
+define	TF_O		offsetof(struct trapframe64, tf_out)
+define	TF_L		offsetof(struct trapframe64, tf_local)
+define	TF_I		offsetof(struct trapframe64, tf_in)
+define	TF_SIZE		sizeof(struct trapframe64)
 
 ifdef notyet
 # clockframe fields 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.18 1999/05/14 11:40:28 drochner Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.18.4.1 1999/11/15 00:40:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -164,15 +164,8 @@ tlphyattach(parent, self, aux)
 	else
 		sc->sc_mii.mii_capabilities = 0;
 
+
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
-	    BMCR_ISO);
-
-	if ((sc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
-		    sc->sc_mii.mii_inst), BMCR_LOOP);
-
 #define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
@@ -180,19 +173,18 @@ tlphyattach(parent, self, aux)
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base2/BNC");
+			PRINT("10base2");
 		} else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base5/AUI");
+			PRINT("10base5");
 		}
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
 		printf(sep);
-		mii_add_media(mii, sc->sc_mii.mii_capabilities,
-		    sc->sc_mii.mii_inst);
-	} else if ((sc->sc_tlphycap & (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5))
-	    == 0)
+		mii_add_media(&sc->sc_mii);
+	} else if ((sc->sc_tlphycap &
+		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
 		printf("no media present");
 	printf("\n");
 #undef ADD
@@ -256,9 +248,7 @@ tlphy_service(self, mii, cmd)
 		default:
 			PHY_WRITE(&sc->sc_mii, MII_TLPHY_CTRL, 0);
 			delay(100000);
-			PHY_WRITE(&sc->sc_mii, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(&sc->sc_mii);
 		}
 		break;
 
@@ -304,6 +294,10 @@ tlphy_service(self, mii, cmd)
 		if (tlphy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(&sc->sc_mii);
+		return (0);
 	}
 
 	/* Update the media status. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_40.h,v 1.4 1999/09/25 19:27:36 is Exp $	*/
+/*	$NetBSD: cacheops_40.h,v 1.4.4.1 1999/11/15 00:38:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,13 +54,13 @@ extern __inline void
 TBIS_40(va)
 	vaddr_t	va;
 {
-	register vaddr_t	r_va __asm("a0") = va;
+	register vaddr_t	r_va __asm("%a0") = va;
 	int	tmp;
 
-	__asm __volatile (" movc   %1, dfc;"	/* select supervisor	*/
-			  " .word 0xf508;"	/* pflush a0@		*/
+	__asm __volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
+			  " .word 0xf508;"	/* pflush %a0@		*/
 			  " moveq  %3, %1;"	/* select user		*/
-			  " movc   %1, dfc;"
+			  " movc   %1, %%dfc;"
 			  " .word 0xf508;" : "=d" (tmp) :
 			  "0" (FC_SUPERD), "a" (r_va), "i" (FC_USERD));
 }
@@ -137,9 +137,9 @@ extern __inline void
 DCIAS_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
 void PCIA_40 __P((void));
@@ -162,9 +162,9 @@ extern __inline void
 ICPL_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,a0@ */
+	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,%a0@ */
 }
 
 /* invalidate instruction physical cache page */
@@ -173,9 +173,9 @@ extern __inline void
 ICPP_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,a0@ */
+	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,%a0@ */
 }
 
 /* invalidate data physical cache line */
@@ -184,9 +184,9 @@ extern __inline void
 DCPL_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,a0@ */
+	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,%a0@ */
 }
 
 /* invalidate data physical cache page */
@@ -195,9 +195,9 @@ extern __inline void
 DCPP_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,a0@ */
+	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,%a0@ */
 }
 
 /* invalidate data physical all */
@@ -214,9 +214,9 @@ extern __inline void
 DCFL_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
 /* data cache flush page */
@@ -225,7 +225,7 @@ extern __inline void
 DCFP_40(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("a0") = pa;
+	register paddr_t	r_pa __asm("%a0") = pa;
 
-	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,a0@ */
+	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,%a0@ */
 }

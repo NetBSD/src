@@ -1,4 +1,4 @@
-/*	$NetBSD: smallnet.c,v 1.1 1999/05/13 08:38:05 simonb Exp $	*/
+/*	$NetBSD: smallnet.c,v 1.1.6.1 1999/11/15 00:39:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.264 1999/10/08 13:53:00 drochner Exp $
+#	$NetBSD: GENERIC,v 1.264.4.1 1999/11/15 00:37:57 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -112,9 +112,26 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -138,8 +155,9 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 
-options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
 # wscons options
@@ -160,7 +178,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
-options		PCDISPLAY_SOFTCURSOR
+options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -174,6 +192,12 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 #apm0	at mainbus0			# Advanced power management
+
+# Tuning for power management, see apm(4) for more details.
+#options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
+#options 	APM_V10_ONLY		# Use only the APM 1.0 calls
+#options 	APM_NO_POWEROFF		# Don't power off on halt(8)
+#options 	APM_NO_POWER_PRINT	# Don't print stats on the console
 
 
 # Basic Bus Support
@@ -447,6 +471,10 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rl*	at pci? dev ? function ?	# Realtek 8129/8139
@@ -454,6 +482,7 @@ rl*	at pci? dev ? function ?	# Realtek 8129/8139
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
 fea*	at eisa? slot ?			# DEC DEFEA FDDI
+tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
@@ -461,6 +490,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
+awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
@@ -503,11 +533,13 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -551,11 +583,32 @@ uaudio*	at uhub? port ? configuration ?
 # USB Generic driver
 ugen*	at uhub? port ?
 
+
+# Plug-and-Play BIOS and attached devices
+
+#pnpbios0 at mainbus0
+
+# mainboard audio chips
+#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
+#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
+#ym*	at pnpbios0 index ?	# OPL3-SA3
+
+# com port
+#com*	at pnpbios0 index ?
+
+# parallel port
+#lpt*	at pnpbios0 index ?
+
+# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
+#pciide* at pnpbios0 index ?
+
+
 # Audio Devices
 
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+fms*	at pci? dev ? function ?	# Forte Media FM801
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -580,6 +633,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
 opl*	at ess?
+opl*	at fms?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
@@ -590,6 +644,7 @@ opl*	at ym?
 audio*	at eap?
 audio*	at eso?
 audio*	at ess?
+audio*	at fms?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
@@ -603,10 +658,12 @@ audio*	at ym?
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
 mpu*	at eso?
+mpu*	at fms?
 mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
+midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -671,6 +728,8 @@ pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals

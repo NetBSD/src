@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $	*/
+/* $NetBSD: dec_3min.c,v 1.21.4.1 1999/11/15 00:39:03 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21.4.1 1999/11/15 00:39:03 fvdl Exp $");
 
 
 #include <sys/types.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $
 #include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
-#include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 /* all these to get ioasic_base */
@@ -95,9 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
@@ -108,9 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $
  * forward declarations
  */
 void		dec_3min_init __P((void));
-void		dec_3min_os_init __P((void));
 void		dec_3min_bus_reset __P((void));
-void		dec_3maxplus_device_register __P((struct device *, void *));
 
 void		dec_3min_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
@@ -125,15 +120,10 @@ void		dec_3min_cons_init __P((void));
  */
 void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
 			       int clockmask));
-u_long	kmin_tc3_imask;
-
 void kn02ba_wbflush __P((void));
 unsigned kn02ba_clkread __P((void));
-extern unsigned (*clkread) __P((void));
 
-extern volatile struct chiptime *mcclock_addr; /* XXX */
-extern char cpu_model[];
-extern int physmem_boardmax;
+static u_int32_t kmin_tc3_imask;
 
 #ifdef MIPS3
 static unsigned latched_cycle_cnt;
@@ -141,24 +131,72 @@ extern u_int32_t mips3_cycle_count __P((void));
 #endif
 
 
-/*
- * Fill in platform struct.
- */
 void
 dec_3min_init()
 {
-	platform.iobus = "tc3min";
+	extern char cpu_model[];
+	extern int physmem_boardmax;
 
-	platform.os_init = dec_3min_os_init;
+	platform.iobus = "tc3min";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
+	platform.iointr = dec_3min_intr;
+	platform.clkread = kn02ba_clkread;
 
-	dec_3min_os_init();
+	/* clear any memory errors */
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	kn02ba_wbflush();
+
+	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
+	mips_hardware_intr = dec_3min_intr; 
+	tc_enable_interrupt = dec_3min_enable_intr;
+
+	/*
+	 * Since all the motherboard interrupts come through the
+	 * IOASIC, it has to be turned off for all the spls and
+	 * since we don't know what kinds of devices are in the
+	 * TURBOchannel option slots, just splhigh().
+	 */
+	splvec.splbio = MIPS_SPL_0_1_2_3;
+	splvec.splnet = MIPS_SPL_0_1_2_3; 
+	splvec.spltty = MIPS_SPL_0_1_2_3;
+	splvec.splimp = MIPS_SPL_0_1_2_3;
+	splvec.splclock = MIPS_SPL_0_1_2_3;
+	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+
+	/* calibrate cpu_mhz value */ 
+	dec_3min_mcclock_cpuspeed(
+	    (void *)(ioasic_base + IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
+
+	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+#if 0	
+	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+#endif	
+  
+	/* sanitize interrupt mask */
+	kmin_tc3_imask = (KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT);
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+
+	/*
+	 * The kmin memory hardware seems to wrap memory addresses
+	 * with 4Mbyte SIMMs, which causes the physmem computation
+	 * to lose.  Find out how big the SIMMS are and set
+	 * max_ physmem accordingly.
+	 * XXX Do MAXINEs lose the same way?
+	 */
+	physmem_boardmax = KMIN_PHYS_MEMORY_END + 1;
+	if ((KMIN_MSR_SIZE_16Mb & *(int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR))
+			== 0)
+		physmem_boardmax = physmem_boardmax >> 2;
+	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
 	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
 }
-
 
 /*
  * Initalize the memory system and I/O buses.
@@ -177,71 +215,6 @@ dec_3min_bus_reset()
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ba_wbflush();
 }
-
-
-void
-dec_3min_os_init()
-{
-	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
-	mips_hardware_intr = dec_3min_intr;
-	tc_enable_interrupt = dec_3min_enable_intr;	/* XXX */
-	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
-
-	/* R4000 3MIN can ultilize on-chip counter */
-	clkread = kn02ba_clkread;
-
-	/*
-	 * All the baseboard interrupts come through the I/O ASIC
-	 * (at INT_MASK_3), so  it has to be turned off for all the spls.
-	 * Since we don't know what kinds of devices are in the
-	 * turbochannel option slots, just block them all.
-	 */
-	splvec.splbio = MIPS_SPL_0_1_2_3;
-	splvec.splnet = MIPS_SPL_0_1_2_3;
-	splvec.spltty = MIPS_SPL_0_1_2_3;
-	splvec.splimp = MIPS_SPL_0_1_2_3;
-	splvec.splclock = MIPS_SPL_0_1_2_3;
-	splvec.splstatclock = MIPS_SPL_0_1_2_3;
-
-	dec_3min_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
-
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-#if 0
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
-#endif
-	/*
-	 * Initialize interrupts.
-	 */
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_IM0;
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-
-	/*
-	 * The kmin memory hardware seems to wrap  memory addresses
-	 * with 4Mbyte SIMMs, which causes the physmem computation
-	 * to lose.  Find out how big the SIMMS are and set
-	 * max_	physmem accordingly.
-	 */
-	physmem_boardmax = KMIN_PHYS_MEMORY_END + 1;
-	if ((*(int *)(MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR)) &
-	     KMIN_MSR_SIZE_16Mb) == 0)
-		physmem_boardmax = physmem_boardmax >> 2;
-	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
-
-	/* clear any memory errors from probes */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
-	kn02ba_wbflush();
-
-	kmin_tc3_imask =
-		(KMIN_INTR_CLOCK | KMIN_INTR_PSWARN | KMIN_INTR_TIMEOUT);
-
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) =
-		kmin_tc3_imask |
-		(KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
-}
-
 
 void
 dec_3min_cons_init()
@@ -399,12 +372,9 @@ dec_3min_intr(cpumask, pc, status, cause)
 
 		if (intr & KMIN_INTR_CLOCK) {
 			struct clockframe cf;
-			struct chiptime *clk;
-			volatile int temp;
 
-			clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
-			temp = clk->regc;	/* XXX clear interrupt bits */
-
+			__asm __volatile("lbu $0,48(%0)" ::
+				"r"(ioasic_base + IOASIC_SLOT_8_START));
 #ifdef MIPS3
 			if (CPUISMIPS3) {
 				latched_cycle_cnt = mips3_cycle_count();

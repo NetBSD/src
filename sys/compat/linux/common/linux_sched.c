@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.2 1999/10/11 01:18:35 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.2.4.1 1999/11/15 00:40:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
+
+#include <machine/cpu.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>

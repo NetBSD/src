@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.10 1999/04/15 09:15:29 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.10.4.1 1999/11/15 00:37:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -213,18 +213,18 @@ le_vme_match(parent, cfp, aux)
 			}
 		}
 		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
-			bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
+			bus_space_unmap(iot, ioh, le_ap->reg_size);
 			continue;
 		}
 
 		if (bus_space_map(memt, le_ap->mem_addr, le_ap->mem_size, 0, &memh)) {
-			bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
+			bus_space_unmap(iot, ioh, le_ap->reg_size);
 			printf("leprobe: cannot map memory-area\n");
 			return (0);
 		}
 		found = probe_addresses(&iot, &memt, &ioh, &memh);
-		bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
-		bus_space_unmap(memt, (caddr_t)le_ap->mem_addr, le_ap->mem_size);
+		bus_space_unmap(iot, ioh, le_ap->reg_size);
+		bus_space_unmap(memt, memh, le_ap->mem_size);
 
 		if (found) {
 			va->va_iobase = le_ap->reg_addr;
@@ -581,14 +581,14 @@ bvme410_mem_size(memt, mem_addr)
 	if (bus_space_map(memt, mem_addr, 256*1024, 0, &memh))
 		return VMECF_MEMSIZ_DEFAULT;
 	if (!bus_space_peek_1(memt, memh, 0)) {
-		bus_space_unmap(memt, (caddr_t)mem_addr, 256*1024);
+		bus_space_unmap(memt, memh, 256*1024);
 		return VMECF_MEMSIZ_DEFAULT;
 	}
 	bus_space_write_1(memt, memh, 0, 128);
 	bus_space_write_1(memt, memh, 64*1024, 32);
 	bus_space_write_1(memt, memh, 32*1024, 8);
 	r = (int)(bus_space_read_1(memt, memh, 0) * 2048);
-	bus_space_unmap(memt, (caddr_t)mem_addr, 256*1024);
+	bus_space_unmap(memt, memh, 256*1024);
 	return r;
 }
 

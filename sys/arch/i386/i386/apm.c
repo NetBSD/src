@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.41 1999/09/09 03:52:21 itohy Exp $ */
+/*	$NetBSD: apm.c,v 1.41.4.1 1999/11/15 00:37:59 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -376,6 +376,12 @@ apm_resume(sc, regs)
 	struct apm_softc *sc;
 	struct bioscallregs *regs;
 {
+
+	/*
+	 * Some system requires its clock to be initialized after hybernation.
+	 */
+	initrtclock();
+
 	inittodr(time.tv_sec);
 	dopowerhooks(PWR_RESUME);
 	apm_record_event(sc, regs->BX);
@@ -413,6 +419,7 @@ apm_event_handle(sc, regs)
 {
 	int error;
 	struct bioscallregs nregs;
+	char *code;
 
 	switch (regs->BX) {
 	case APM_USER_STANDBY_REQ:
@@ -530,7 +537,21 @@ apm_event_handle(sc, regs)
 		break;
 
 	default:
-		printf("APM nonstandard event code %x\n", regs->BX);
+		switch (regs->BX >> 8) {
+			case 0:
+				code = "reserved system";
+				break;
+			case 1:
+				code = "reserved device";
+				break;
+			case 2:
+				code = "OEM defined";
+				break;
+			default:
+				code = "reserved";
+				break;
+		}	
+		printf("APM: %s event code %x\n", code, regs->BX);
 	}
 }
 

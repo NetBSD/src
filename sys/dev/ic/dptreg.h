@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.3 1999/10/01 12:08:51 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.3.4.1 1999/11/15 00:40:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -39,7 +39,8 @@
 #define	DPT_MAX_XFER		((DPT_SG_SIZE - 1) << PGSHIFT)
 #define DPT_MAX_CCBS		256
 #define DPT_SG_SIZE        	64
-#define DPT_ABORT_TIMEOUT	2000
+#define DPT_ABORT_TIMEOUT	2000	/* milliseconds */
+#define DPT_MORE_TIMEOUT	1000	/* microseconds */
 
 #ifdef _KERNEL
 
@@ -181,8 +182,7 @@ struct eata_cp {
  * contains status, message info and a handle on the initiating CCB. 
  */
 struct eata_sp {
-	u_int8_t	sp_hba_status : 7;	/* host adapter status */
-	u_int8_t	sp_eoc : 1;		/* end of command (unsafe) */
+	u_int8_t	sp_hba_status;		/* host adapter status */
 	u_int8_t	sp_scsi_status;		/* SCSI bus status */
 	u_int8_t	sp_reserved[2];		/* reserved */
 	u_int32_t	sp_inv_residue;		/* bytes not transfered */
@@ -193,7 +193,9 @@ struct eata_sp {
 	u_int8_t	sp_messages[9];
 };
 
-/* HBA status as returned by status packet */
+/* 
+ * HBA status as returned by status packet. Bit 7 signals end of command. 
+ */
 #define HA_NO_ERROR             0x00    /* No error on command */
 #define HA_ERROR_SEL_TO         0x01    /* Device selection timeout */
 #define HA_ERROR_CMD_TO         0x02    /* Device command timeout */

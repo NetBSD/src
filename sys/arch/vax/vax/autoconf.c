@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1999/09/17 20:07:20 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44.4.1 1999/11/15 00:39:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -95,6 +95,11 @@ cpu_rootconf()
 		booted_partition = B_PARTITION(bootdev);
 	}
 
+#ifdef DEBUG
+	printf("booted from type %d unit %d controller %d adapter %d\n",
+	    B_TYPE(bootdev), B_UNIT(bootdev), B_CONTROLLER(bootdev),
+	    B_ADAPTOR(bootdev));
+#endif
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
@@ -149,16 +154,91 @@ struct	cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
+#include "sd.h"
+#include "cd.h"
+
+int	booted_qe(struct device *, void *);
+int	booted_ze(struct device *, void *);
+int	booted_sd(struct device *, void *);
+
+int (*devreg[])(struct device *, void *) = {
+	booted_qe,
+	booted_ze,
+#if NSD > 0 || NCD > 0
+	booted_sd,
+#endif
+	0,
+};
+
 void
 device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	if ((B_TYPE(bootdev) == BDEV_QE) &&
-	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
-		booted_from = dev;
+	int (**dp)(struct device *, void *) = devreg;
 
+	while (*dp) {
+		if ((*dp)(dev, aux)) {
+			booted_from = dev;
+			break;
+		}
+		dp++;
+	}
+}
+
+int
+booted_ze(dev, aux)
+	struct device *dev;
+	void *aux;
+{
 	if ((B_TYPE(bootdev) == BDEV_ZE) &&
 	    !strcmp("ze", dev->dv_cfdata->cf_driver->cd_name))
-		booted_from = dev;
+		return 1;
+	return 0;
 }
+
+int
+booted_qe(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	if ((B_TYPE(bootdev) == BDEV_QE) &&
+	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
+		return 1;
+	return 0;
+}
+
+#if NSD > 0 || NCD > 0
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+int
+booted_sd(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	struct scsipibus_attach_args *sa = aux;
+	struct device *ppdev;
+
+	/* Did we boot from SCSI? */
+	if (B_TYPE(bootdev) != BDEV_SD)
+		return 0;
+
+	/* Is this a SCSI device? */
+	if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) &&
+	    strcmp("cd", dev->dv_cfdata->cf_driver->cd_name))
+		return 0;
+
+	if (sa->sa_sc_link->type != BUS_SCSI)
+		return 0; /* ``Cannot happen'' */
+
+	if (sa->sa_sc_link->scsipi_scsi.target != B_UNIT(bootdev))
+		return 0; /* Wrong unit */
+
+	ppdev = dev->dv_parent->dv_parent;
+	if ((strcmp(ppdev->dv_cfdata->cf_driver->cd_name, "ncr") == 0) &&
+	    (ppdev->dv_unit == B_CONTROLLER(bootdev)))
+			return 1;
+
+	return 0; /* Where did we come from??? */
+}
+#endif

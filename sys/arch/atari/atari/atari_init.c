@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.43 1999/09/22 07:16:05 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.43.4.1 1999/11/15 00:37:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,6 +46,7 @@
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
+#include <sys/extent.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/dkbad.h>
@@ -86,6 +87,21 @@ static void set_machtype __P((void));
 static void mmu040_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
 			      pt_entry_t *, u_int, u_int));
 #endif
+
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ * This means that the fixed static storage is only used for registrating
+ * the found memory regions and the bus-mapping of the console.
+ *
+ * The extent maps are not static!  They are used for bus address space
+ * allocation.
+ */
+static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct extent *iomem_ex;
+int iomem_malloc_safe;
 
 /*
  * All info needed to generate a panic dump. All fields are setup by
@@ -541,6 +557,20 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * Initialize stmem allocator
 	 */
 	init_stmem();
+
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	/*
 	 * Initialize interrupt mapping.

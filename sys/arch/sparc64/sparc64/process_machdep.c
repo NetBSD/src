@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 1999/10/11 01:57:46 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.6.4.1 1999/11/15 00:39:34 fvdl Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -80,7 +80,7 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 #ifdef __arch64__
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	/* 
@@ -101,7 +101,7 @@ process_read_regs(p, regs)
 	return (0);
 #else
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	/* 
@@ -144,7 +144,7 @@ process_write_regs(p, regs)
 	return (0);
 #else
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	tf->tf_pc = regp->r_pc;
@@ -186,17 +186,17 @@ struct proc	*p;
 struct fpreg	*regs;
 {
 #ifdef __arch64__
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	extern struct fpstate64	initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	if (p->p_md.md_fpstate)
 		statep = p->p_md.md_fpstate;
-	bcopy(statep, regs, sizeof(struct fpreg));
+	bcopy(statep, regs, sizeof(struct fpreg64));
 	return 0;
 #else
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	extern struct fpstate64	initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
@@ -223,11 +223,11 @@ struct fpreg	*regs;
 	if (p->p_md.md_fpstate == NULL)
 		return EINVAL;
 
-	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
+	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg64));
 	return 0;
 #else
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	extern struct fpstate64	initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 

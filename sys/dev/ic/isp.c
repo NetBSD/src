@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.39 1999/10/17 01:38:27 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.39.4.1 1999/11/15 00:40:33 fvdl Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1934,11 +1934,17 @@ ispscsicmd(xs)
 		XS_RESID(xs) = 0;
 
 		/*
-		 * Fibre Channel always requires some kind of tag, but
-		 * the firmware seems to be happy if we don't use a tag.
+		 * Fibre Channel always requires some kind of tag.
+		 * The Qlogic drivers seem be happy not to use a tag,
+		 * but this breaks for some devices (IBM drives).
 		 */
 		if (XS_CANTAG(xs)) {
 			t2reqp->req_flags = XS_KINDOF_TAG(xs);
+		} else {
+			if (XS_CDBP(xs)[0] == 0x3)	/* REQUEST SENSE */
+				t2reqp->req_flags = REQFLAG_HTAG;
+			else
+				t2reqp->req_flags = REQFLAG_OTAG;
 		}
 	} else {
 		sdparam *sdp = (sdparam *)isp->isp_param;
@@ -2039,8 +2045,8 @@ isp_control(isp, ctl, arg)
 			bus = *((int *) arg);
 			mbs.param[2] = bus;
 		} else {
-			/* Unparameterized. */
 			mbs.param[1] = 10;
+			mbs.param[2] = 0;
 			bus = 0;
 		}
 		isp->isp_sendmarker = 1 << bus;
@@ -3142,8 +3148,6 @@ command_known:
 				SYS_DELAY(100);
 				goto command_known;
 			}
-			PRINTF("%s: isp_mboxcmd sees mailbox int with 0x%x in "
-			    "mbox0\n", isp->isp_name, mbox);
 		}
 		SYS_DELAY(100);
 		if (--loops < 0) {

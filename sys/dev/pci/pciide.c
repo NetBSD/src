@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44 1999/09/02 23:23:03 ross Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44.4.1 1999/11/15 00:41:10 fvdl Exp $	*/
 
 
 /*
@@ -113,9 +113,6 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_sis_reg.h>
 #include <dev/pci/pciide_acer_reg.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
-#include <dev/ata/atavar.h>
-#include <dev/ic/wdcreg.h>
-#include <dev/ic/wdcvar.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 #include <machine/bswap.h> 
@@ -157,35 +154,6 @@ pciide_pci_write(pc, pa, reg, val)
 	pcival |= (val << ((reg & 0x03) * 8));
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
-
-struct pciide_softc {
-	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
-	pcitag_t		sc_tag;
-	void			*sc_pci_ih;	/* PCI interrupt handle */
-	int			sc_dma_ok;	/* bus-master DMA info */
-	bus_space_tag_t		sc_dma_iot;
-	bus_space_handle_t	sc_dma_ioh;
-	bus_dma_tag_t		sc_dmat;
-	/* Chip description */
-	const struct pciide_product_desc *sc_pp;
-	/* common definitions */
-	struct channel_softc *wdc_chanarray[PCIIDE_NUM_CHANNELS];
-	/* internal bookkeeping */
-	struct pciide_channel {			/* per-channel data */
-		struct channel_softc wdc_channel; /* generic part */
-		char		*name;
-		int		hw_ok;		/* hardware mapped & OK? */
-		int		compat;		/* is it compat? */
-		void		*ih;		/* compat or pci handle */
-		/* DMA tables and DMA map for xfer, for each drive */
-		struct pciide_dma_maps {
-			bus_dmamap_t    dmamap_table;
-			struct idedma_table *dma_table;
-			bus_dmamap_t    dmamap_xfer;
-		} dma_maps[2];
-	} pciide_channels[PCIIDE_NUM_CHANNELS];
-};
 
 void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 
@@ -1300,7 +1268,7 @@ piix_chip_map(sc, pa)
 		    PIIX_IDETIM_IDE) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		/* PIIX are compat-only pciide devices */
 		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
@@ -1691,7 +1659,7 @@ apollo_chip_map(sc, pa)
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
@@ -1907,7 +1875,7 @@ cmd_chip_map(sc, pa)
 		return;
 #endif
 
-	printf("%s: hardware does not support DMA",
+	printf("%s: hardware does not support DMA\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	sc->sc_dma_ok = 0;
 
@@ -2210,7 +2178,7 @@ sis_chip_map(sc, pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			return;
+			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);

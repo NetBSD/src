@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.2 1999/08/03 17:25:52 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2.4.1 1999/11/15 00:41:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -507,7 +507,8 @@ sip_attach(parent, self, aux)
 	sc->sc_mii.mii_statchg = sip_mii_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, sip_mediachange,
 	    sip_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -1561,6 +1562,9 @@ sip_stop(sc, drain)
 	 * Stop the one second clock.
 	 */
 	untimeout(sip_tick, sc);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
 
 	/*
 	 * Disable interrupts.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.12 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_output.h,v 1.12.4.1 1999/11/15 00:40:08 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,3 +38,11 @@ int db_print_position __P((void));
 void db_printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void db_end_line __P((void));
+
+extern int	db_radix;
+extern int	db_max_width;
+extern int	db_tab_stop_width;
+extern int	db_max_line;
+
+#define	DB_NEXT_TAB(i) \
+	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 1998/09/22 02:48:42 eeh Exp $ */
+/*	$NetBSD: fpu.c,v 1.2.14.1 1999/11/15 00:39:26 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ static u_char fpu_codes[] = {
 void
 fpu_cleanup(p, fs)
 	register struct proc *p;
-	register struct fpstate *fs;
+	register struct fpstate64 *fs;
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
@@ -194,7 +194,7 @@ out:
 fpu_emulate(p, tf, fs)
 	struct proc *p;
 	register struct trapframe *tf;
-	register struct fpstate *fs;
+	register struct fpstate64 *fs;
 {
 
 	do {
@@ -246,7 +246,7 @@ fpu_execute(fe, instr)
 {
 	register struct fpn *fp;
 	register int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
-	register struct fpstate *fs;
+	register struct fpstate64 *fs;
 	u_int space[4];
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.3.4.1 1999/11/15 00:40:20 fvdl Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -66,36 +66,15 @@
 #include <net/netisr.h>
 #include <net/if_ether.h>
 
-#if defined INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
-
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/bus.h>
 #if defined pciinc
 #include <dev/pci/pcidevs.h>
 #endif
-#if pccard
-#include <dev/pccard/cardbusvar.h>
-#include <dev/pccard/pccardcis.h>
-#else
+
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
-#endif
 
 #include <dev/mii/miivar.h>
 
@@ -204,7 +183,7 @@ ex_cardbus_attach(parent, self, aux)
   bus_addr_t adr;
 
 
-  if (cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
+  if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
 			 &(sc->sc_iot), &ioh, &adr, NULL)) {
     panic("io alloc in ex_attach_cardbus\n");
   }
@@ -233,7 +212,7 @@ ex_cardbus_attach(parent, self, aux)
 		CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE);
 
     /* Cardbus function status window */
-    if (cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
+    if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 			   CARDBUS_MAPREG_TYPE_MEM, 0,
 			   &psc->sc_funct, &psc->sc_funch, 0, NULL)) {
       panic("mem alloc in ex_attach_cardbus\n");
@@ -382,7 +361,7 @@ ex_cardbus_enable(sc)
   cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
   cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
-  cardbus_function_enable(csc->sc_ct);
+  Cardbus_function_enable(csc->sc_ct);
   cardbus_restore_bar(csc->sc_ct);
 
   sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET, ex_intr, sc);
@@ -408,7 +387,7 @@ ex_cardbus_disable(sc)
 
   cardbus_save_bar(csc->sc_ct);
   
-  cardbus_function_disable(csc->sc_ct);
+  Cardbus_function_disable(csc->sc_ct);
 
   cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 }

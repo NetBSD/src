@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.3 1999/10/15 11:10:58 augustss Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.3.4.1 1999/11/15 00:40:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -157,6 +157,7 @@ typedef u_int16_t cardbus_product_id_t;
 #define CARDBUS_BASE4_REG  0x20
 #define CARDBUS_BASE5_REG  0x24
 #define CARDBUS_CIS_REG    0x28
+#define CARDBUS_ROM_REG	   0x30
 #  define CARDBUS_CIS_ASIMASK 0x07
 #    define CARDBUS_CIS_ASI(x) (CARDBUS_CIS_ASIMASK & (x))
 #  define CARDBUS_CIS_ASI_TUPLE 0x00
@@ -170,6 +171,7 @@ typedef u_int16_t cardbus_product_id_t;
 #  define CARDBUS_CIS_ADDRMASK 0x0ffffff8
 #    define CARDBUS_CIS_ADDR(x) (CARDBUS_CIS_ADDRMASK & (x))
 #    define CARDBUS_CIS_ASI_BAR(x) (((CARDBUS_CIS_ASIMASK & (x))-1)*4+0x10)
+#    define CARDBUS_CIS_ASI_ROM_IMAGE(x) (((x) >> 28) & 0xf)
 
 #define	CARDBUS_INTERRUPT_REG   0x3c
 
@@ -216,9 +218,9 @@ typedef struct cardbus_functions {
 } cardbus_function_t, *cardbus_function_tag_t;
 #endif /* rbus */
 
-/**********************************************************************
-* struct cbslot_attach_args is the attach argument for cardbus card.
-**********************************************************************/
+/*
+ * struct cbslot_attach_args is the attach argument for cardbus card.
+ */
 struct cbslot_attach_args {
   char *cba_busname;
   bus_space_tag_t cba_iot;	/* cardbus i/o space tag */
@@ -250,9 +252,9 @@ struct cbslot_attach_args {
 
 struct cardbus_devfunc;
 
-/**********************************************************************
-* struct cardbus_softc is the softc for cardbus card.
-**********************************************************************/
+/*
+ * struct cardbus_softc is the softc for cardbus card.
+ */
 struct cardbus_softc {
   struct device sc_dev;		/* fundamental device structure */
 
@@ -283,13 +285,13 @@ struct cardbus_softc {
 };
 
 
-/**********************************************************************
+/*
  * struct cardbus_devfunc:
  *
  *   This is the data deposit for each function of a CardBus device.
  *   This structure is used for memory or i/o space allocation and
  *   disallocation.
- **********************************************************************/
+ */
 typedef struct cardbus_devfunc {
   cardbus_chipset_tag_t ct_cc;
   cardbus_function_tag_t ct_cf;
@@ -315,6 +317,24 @@ typedef struct cardbus_devfunc {
 } *cardbus_devfunc_t;
 
 
+/* XXX various things extracted from CIS */
+struct cardbus_cis_info {
+    int32_t		manufacturer;
+    int32_t		product;
+    char		cis1_info_buf[256];
+    char*		cis1_info[4];
+    struct cb_bar_info {
+	unsigned int flags;
+	unsigned int size;
+    } bar[7];
+    unsigned int	funcid;
+    union {
+	struct {
+	    char netid[6];
+	} network;
+    } funce;
+};
+
 struct cardbus_attach_args {
   int ca_unit;
   cardbus_devfunc_t ca_ct;
@@ -336,6 +356,8 @@ struct cardbus_attach_args {
   rbus_tag_t ca_rbus_iot;	/* CardBus i/o rbus tag */
   rbus_tag_t ca_rbus_memt;	/* CardBus mem rbus tag */
 #endif
+
+  struct cardbus_cis_info ca_cis;
 };
 
 
@@ -384,24 +406,34 @@ int cardbus_attach_card __P((struct cardbus_softc *));
 void *cardbus_intr_establish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, cardbus_intr_handle_t irq, int level, int (*func) (void *), void *arg));
 void cardbus_intr_disestablish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, void *handler));
 
-int cardbus_mapreg_map __P((cardbus_devfunc_t, int, cardbusreg_t,
+int cardbus_mapreg_map __P((struct cardbus_softc *, int, int, cardbusreg_t,
 			    int, bus_space_tag_t *, bus_space_handle_t *,
 			    bus_addr_t *, bus_size_t *));
 
 int cardbus_save_bar __P((cardbus_devfunc_t));
 int cardbus_restore_bar __P((cardbus_devfunc_t));
 
-int cardbus_function_enable __P((cardbus_devfunc_t));
-int cardbus_function_disable __P((cardbus_devfunc_t));
+int cardbus_function_enable __P((struct cardbus_softc *, int function));
+int cardbus_function_disable __P((struct cardbus_softc *, int function));
+
+#define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
+#define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
+
+
+
+#define Cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep) \
+	cardbus_mapreg_map((ct)->ct_sc, (ct->ct_func), (reg), (type),\
+			   (busflags), (tagp), (handlep), (basep), (sizep))
 
 #define Cardbus_make_tag(ct) (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc, (ct)->ct_bus, (ct)->ct_dev, (ct)->ct_func)
 #define cardbus_make_tag(cc, cf, bus, device, function) ((cf)->cardbus_make_tag)((cc), (bus), (device), (function))
 
 #define Cardbus_free_tag(ct, tag) (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
+#define cardbus_free_tag(cc, cf, tag) (*(cf)->cardbus_free_tag)(cc, (tag))
 
 #define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
-#define Cardbus_conf_write(ct, tag, offs, val) (*(cc)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
 #define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* SYS_DEV_CARDBUS_CARDBUSVAR_H */
