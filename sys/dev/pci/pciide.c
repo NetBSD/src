@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.11 1998/10/19 12:24:33 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.12 1998/10/20 18:47:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1281,7 +1281,7 @@ pio:			/* setup PIO mode */
 			    APO_DATATIM_RECOV(channel, drive,
 				apollo_pio_rec[mode]);
 			drvp->PIO_mode = mode;
-			drvp->DMA_mode = mode + 2;
+			drvp->DMA_mode = mode - 2;
 			printf("%s(%s:%d:%d): using PIO mode %d",
 			    drvp->drv_softc->dv_xname,
 			    sc->sc_wdcdev.sc_dev.dv_xname,
