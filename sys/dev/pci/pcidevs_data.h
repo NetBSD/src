@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.214 2000/04/19 07:52:33 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.215 2000/04/22 18:07:19 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.209 2000/04/19 07:51:20 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp 
  */
 
 /*
@@ -1172,6 +1172,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "USB0673",
+	},
+	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
+	    0,
+	    "C-Media Electronics Inc",
+	    "CMI8338A PCI Audio Device",
+	},
+	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338B,
+	    0,
+	    "C-Media Electronics Inc",
+	    "CMI8338B PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738,
