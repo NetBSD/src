@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.40 1998/09/26 20:56:33 itohy Exp $	*/
+/*	$NetBSD: parser.c,v 1.41 1999/01/25 14:20:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.40 1998/09/26 20:56:33 itohy Exp $");
+__RCSID("$NetBSD: parser.c,v 1.41 1999/01/25 14:20:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -960,27 +960,36 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 						USTPUTC('\\', out);
 					if (SQSYNTAX[c] == CCTL)
 						USTPUTC(CTLESC, out);
+					else if (eofmark == NULL)
+						USTPUTC(CTLQUOTEMARK, out);
 					USTPUTC(c, out);
 					quotef++;
 				}
 				break;
 			case CSQUOTE:
+				if (eofmark == NULL)
+					USTPUTC(CTLQUOTEMARK, out);
 				syntax = SQSYNTAX;
 				break;
 			case CDQUOTE:
+				if (eofmark == NULL)
+					USTPUTC(CTLQUOTEMARK, out);
 				syntax = DQSYNTAX;
 				dblquote = 1;
 				break;
 			case CENDQUOTE:
-				if (eofmark) {
+				if (eofmark != NULL && arinest == 0 &&
+				    varnest == 0) {
 					USTPUTC(c, out);
 				} else {
-					if (arinest)
+					if (arinest) {
 						syntax = ARISYNTAX;
-					else
+						dblquote = 0;
+					} else if (eofmark == NULL) {
 						syntax = BASESYNTAX;
+						dblquote = 0;
+					}
 					quotef++;
-					dblquote = 0;
 				}
 				break;
 			case CVAR:	/* '$' */
@@ -1007,6 +1016,10 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 						if (--arinest == 0) {
 							USTPUTC(CTLENDARI, out);
 							syntax = prevsyntax;
+							if (syntax == DQSYNTAX)
+								dblquote = 1;
+							else
+								dblquote = 0;
 						} else
 							USTPUTC(')', out);
 					} else {
@@ -1412,6 +1425,10 @@ parsearith: {
 		prevsyntax = syntax;
 		syntax = ARISYNTAX;
 		USTPUTC(CTLARI, out);
+		if (dblquote)
+			USTPUTC('"',out);
+		else
+			USTPUTC(' ',out);
 	} else {
 		/*
 		 * we collapse embedded arithmetic expansion to
@@ -1447,6 +1464,8 @@ noexpand(text)
 
 	p = text;
 	while ((c = *p++) != '\0') {
+		if (c == CTLQUOTEMARK)
+			continue;
 		if (c == CTLESC)
 			p++;
 		else if (BASESYNTAX[(int)c] == CCTL)

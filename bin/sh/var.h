@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.14 1997/04/11 22:45:40 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.15 1999/01/25 14:20:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,6 +94,7 @@ extern struct var vhistsize;
  */
 
 #define ifsval()	(vifs.text + 4)
+#define ifsset()	((vifs.flags & VUNSET) == 0)
 #define mailval()	(vmail.text + 5)
 #define mpathval()	(vmpath.text + 9)
 #define pathval()	(vpath.text + 5)
