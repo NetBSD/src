@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222 2000/05/31 05:09:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.223 2000/08/16 04:44:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2009,13 +2009,19 @@ switch_exited:
 	jnz	switch_restored
 #endif
 
+	/*
+	 * Activate the address space.  We're curproc, so %cr3 will
+	 * be reloaded, but we're not yet curpcb, so the LDT won't
+	 * be reloaded, although the PCB copy of the selector will
+	 * be refreshed from the pmap.
+	 */
+	pushl	%edi
+	call	_C_LABEL(pmap_activate)
+	addl	$4,%esp
+
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
-
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
+	movl	P_MD_TSS_SEL(%edi),%edx
 
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%eax,%edx, 1)
@@ -2087,7 +2093,7 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
+	movl	P_MD_TSS_SEL(%ebx),%edx
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
