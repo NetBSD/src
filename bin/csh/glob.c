@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)glob.c	5.21 (Berkeley) 6/25/91";*/
-static char rcsid[] = "$Id: glob.c,v 1.4 1993/08/01 19:00:42 mycroft Exp $";
+static char rcsid[] = "$Id: glob.c,v 1.5 1993/11/03 18:02:57 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -355,7 +355,7 @@ static Char **
 libglob(vl)
     Char  **vl;
 {
-    int     gflgs = GLOB_QUOTE | GLOB_NOCHECK;
+    int     gflgs = GLOB_QUOTE | GLOB_NOCHECK, badmagic = 0, goodmagic = 0;
     glob_t  globv;
     char   *ptr;
 
@@ -378,12 +378,21 @@ libglob(vl)
 	}
 	if (!nonomatch && (globv.gl_matchc == 0) &&
 	    (globv.gl_flags & GLOB_MAGCHAR)) {
-	    globfree(&globv);
-	    return (NULL);
-	}
+	    badmagic = 1;
+	    globv.gl_pathc--;
+	    free(globv.gl_pathv[globv.gl_pathc]);
+	    globv.gl_pathv[globv.gl_pathc] = (char *)0;
+	} else
+	    if (!nonomatch && (globv.gl_matchc > 0) && 
+		(globv.gl_flags & GLOB_MAGCHAR))
+		goodmagic = 1;
 	gflgs |= GLOB_APPEND;
     }
     while (*++vl);
+    if (badmagic && !goodmagic) {
+	globfree(&globv);
+	return (NULL);
+    }
     vl = blk2short(globv.gl_pathv);
     globfree(&globv);
     return (vl);
