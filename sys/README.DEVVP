@@ -13,3 +13,7 @@ suspect, and needs to be carefully reviewed.  In particular:
 
 	* Should a revoke still kill all vnodes for a device, even
 	  if they are clones?
+
+	* Need to be consistent about the locking state of a vnode when
+	  open/close is called. Currently this varies per device class
+	  (char/block), and if FNONBLOCK was passed or not.
