@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.87 2003/02/05 21:38:42 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.88 2003/02/06 09:46:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.87 2003/02/05 21:38:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.88 2003/02/06 09:46:46 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,6 +476,8 @@ bawrite(bp)
 
 /*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
+ * Call at splbio() and with the buffer interlock locked.
+ * Note: called only from biodone() through ffs softdep's bioops.io_complete()
  */
 void
 bdirty(bp)
@@ -483,12 +485,9 @@ bdirty(bp)
 {
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
-	int s;
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
-
-	s = splbio();
-	simple_lock(&bp->b_interlock);
+	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
 
 	CLR(bp->b_flags, B_AGE);
 
@@ -497,9 +496,6 @@ bdirty(bp)
 		p->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
-
-	simple_unlock(&bp->b_interlock);
-	splx(s);
 }
 
 /*
