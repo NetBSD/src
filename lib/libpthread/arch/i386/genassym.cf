@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.6 2001/09/04 21:50:07 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.7 2002/02/11 20:19:30 nathanw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,6 +58,8 @@ define PT_STATE_RECYCLABLE	PT_STATE_RECYCLABLE
 define STACKSPACE		STACKSPACE
 
 define _UC_CPU		_UC_CPU
+define _UC_USER		_UC_USER
+define _UC_USER_BIT	_UC_USER_BIT
 
 define _REG_GS		_REG_GS
 define _REG_FS		_REG_FS
