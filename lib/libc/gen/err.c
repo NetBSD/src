@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1994 Christos Zoulas
- * All rights reserved.
+/*-
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,15 +12,17 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -29,37 +31,174 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+/* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: err.c,v 1.9 1994/12/12 22:42:06 jtc Exp $";
+#endif /* LIBC_SCCS and not lint */
 
-#ifdef __weak_reference
-__weak_reference(__err, err);
-__weak_reference(__verr, verr);
-__weak_reference(__errx, errx);
-__weak_reference(__verrx, verrx);
-__weak_reference(__warn, warn);
-__weak_reference(__vwarn, vwarn);
-__weak_reference(__warnx, warnx);
-__weak_reference(__vwarnx, vwarnx);
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __STDC__
+#include <stdarg.h>
 #else
-
-/*
- * Without weak references, we would have to put one function per file
- * in order to be able to replace only a single function without picking
- * up all the others. Too bad; I am not going to create 100 little files.
- * Also it is not that simple to just create dummy stubs that call __func
- * because most of the functions are varyadic and we need to parse the
- * argument list anyway.
- */
-
-#define	__err err
-#define	__verr verr
-#define	__errx errx
-#define	__verrx verrx
-#define	__warn warn
-#define	__vwarn vwarn
-#define	__warnx warnx
-#define	__vwarnx vwarnx
-
-#include "__err.c"
-
+#include <varargs.h>
 #endif
+
+extern char *__progname;		/* Program name, from crt0. */
+
+__dead void
+_verr(eval, fmt, ap)
+	int eval;
+	const char *fmt;
+	va_list ap;
+{
+	int sverrno;
+
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	exit(eval);
+}
+
+
+__dead void
+#ifdef __STDC__
+_err(int eval, const char *fmt, ...)
+#else
+_err(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	int eval;
+	const char *fmt;
+
+	va_start(ap);
+	eval = va_arg(ap, int);
+	fmt = va_arg(ap, const char *);
+#endif
+	__verr(eval, fmt, ap);
+	va_end(ap);
+}
+
+
+__dead void
+_verrx(eval, fmt, ap)
+	int eval;
+	const char *fmt;
+	va_list ap;
+{
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL)
+		(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+	exit(eval);
+}
+
+
+__dead void
+#if __STDC__
+_errx(int eval, const char *fmt, ...)
+#else
+_errx(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	int eval;
+	const char *fmt;
+
+	va_start(ap);
+	eval = va_arg(ap, int);
+	fmt = va_arg(ap, const char *);
+#endif
+	__verrx(eval, fmt, ap);
+	va_end(ap);
+}
+
+
+void
+_vwarn(fmt, ap)
+	const char *fmt;
+	va_list ap;
+{
+	int sverrno;
+
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+}
+
+
+void
+#if __STDC__
+_warn(const char *fmt, ...)
+#else
+_warn(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	const char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, const char *);
+#endif
+	__vwarn(fmt, ap);
+	va_end(ap);
+}
+
+
+void
+_vwarnx(fmt, ap)
+	const char *fmt;
+	va_list ap;
+{
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL)
+		(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+}
+
+
+void
+#ifdef __STDC__
+_warnx(const char *fmt, ...)
+#else
+_warnx(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	const char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, const char *);
+#endif
+	__vwarnx(fmt, ap);
+	va_end(ap);
+}
