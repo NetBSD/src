@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.25 1999/04/11 22:40:19 bouyer Exp $ */
+/*	$NetBSD: disks.c,v 1.26 1999/04/13 20:17:47 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,9 +69,6 @@ static int
 static int fsck_with_error_menu(const char *diskpart);
 static int target_mount_with_error_menu(const char *opt, char *diskpart,
 					const char *mntpt);
-
-/* external */
-const char* target_prefix __P((void));
 
 
 static void get_disks(void)
