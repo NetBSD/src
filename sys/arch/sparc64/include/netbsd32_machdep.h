@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 1999/03/25 16:26:19 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2 1999/03/25 17:49:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -35,7 +35,7 @@
 typedef u_int32_t netbsd32_sigcontextp_t;
 
 /* XXX how can this work? */
-struct sparc32_sigcontext {
+struct netbsd32_sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
 	/* begin machine dependent portion */
