@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 1998/12/25 22:18:19 perry Exp $
+#	$NetBSD: Makefile,v 1.93 1999/01/06 06:08:37 abs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # XXX: For NO_SENDMAIL and USE_BIND4
@@ -94,7 +94,7 @@ distribution: distrib-dirs
 	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
-	${INSTALL} -c -o ${BINOWN} -g operator -m 644 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g operator -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
 	${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
