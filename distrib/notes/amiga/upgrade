@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.16 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: upgrade,v 1.17 1999/04/09 20:55:28 is Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ Installation" section above.
 .Pp
 Now boot up
 .Nx
-using the _VER kernel using the loadbsd
+using the \*V kernel using the loadbsd
 command:
 .Dl loadbsd -b netbsd
 If you machine has a split memory space, like, e.g., DraCo
