@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.2 1994/06/24 12:04:53 pk Exp $";
+static char *rcsid = "$Id: mount_nfs.c,v 1.3 1994/07/27 03:16:06 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -155,7 +155,8 @@ main(argc, argv)
 
 #ifdef KERBEROS
 	last_ruid = -1;
-	(void)strcpy(realm, KRB_REALM);
+	if (krb_get_lrealm(realm, 0) != KSUCCESS)
+	    (void)strcpy(realm, KRB_REALM);
 #endif
 	retrycnt = DEF_RETRY;
 
