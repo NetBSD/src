@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.12 1999/01/15 23:29:55 thorpej Exp $ */
+/* $NetBSD: mcclock.c,v 1.13 2001/11/13 12:49:45 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,8 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.12 1999/01/15 23:29:55 thorpej Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.13 2001/11/13 12:49:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

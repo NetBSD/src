@@ -1,4 +1,7 @@
-/* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
+/* $NetBSD: wskbdmap_lk201.c,v 1.5 2001/11/13 12:49:45 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_lk201.c,v 1.5 2001/11/13 12:49:45 lukem Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
