@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.5 1999/07/31 18:41:18 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.6 1999/08/24 00:46:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,8 +32,10 @@
 #ifndef _NETKEY_KEY_VAR_H_
 #define _NETKEY_KEY_VAR_H_
 
+#ifdef __NetBSD__
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
+#endif
 #endif
 
 /* sysctl */
