@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2000/08/01 01:57:57 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2000/10/05 09:02:48 lukem Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -41,6 +41,9 @@ all: ${TARG}.$i
 
 ${TARG}.ps: ${SRCS}
 	groff ${ARGS_PS}   -mdoc      ${MAIN} > $@
+
+${TARG}.pdf: ${TARG}.ps
+	ps2pdf ${TARG}.ps $@
 
 ${TARG}.txt: ${SRCS}
 	groff ${ARGS_TXT}  -mdoc      ${MAIN} > $@
