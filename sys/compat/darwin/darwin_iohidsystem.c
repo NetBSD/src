@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.5 2003/05/14 14:41:05 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.6 2003/05/14 18:28:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.5 2003/05/14 14:41:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.6 2003/05/14 18:28:05 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.5 2003/05/14 14:41:05 manu 
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
 
-#include <compat/darwin/darwin_iohidsystem.h>
 #include <compat/darwin/darwin_iokit.h>
+#include <compat/darwin/darwin_iohidsystem.h>
 
 static struct uvm_object *darwin_iohidsystem_shmem = NULL;
 static void darwin_iohidsystem_shmeminit(vaddr_t);

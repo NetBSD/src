@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.26 2003/05/14 14:41:05 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.27 2003/05/14 18:28:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.26 2003/05/14 14:41:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.27 2003/05/14 18:28:04 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,6 +80,7 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 2813, mach_io_registry_entry_get_child_iterator,
 	    "io_registry_entry_get_child_iterator" },
 	{ 2815, mach_io_service_open, "io_service_open" },
+	{ 2816, mach_io_service_close, "io_service_close" },
 	{ 2817, mach_io_connect_get_service, "io_connect_get_service" },
 	{ 2818, mach_io_connect_set_notification_port,
 	    "io_connect_set_notification_port" },
