@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.51 2001/05/30 12:28:38 mrg Exp $ */
+/* $NetBSD: pmap.h,v 1.52 2001/07/15 16:42:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -182,7 +182,6 @@ void	pmap_do_reactivate(struct cpu_info *, struct trapframe *);
 
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
-void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
 	pmap_tlb_shootdown((pm), (va), (pte))
 #else
