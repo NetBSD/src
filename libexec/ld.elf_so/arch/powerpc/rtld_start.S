@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2002/10/31 20:23:25 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2002/12/04 01:19:37 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -44,19 +44,23 @@ _rtld_start:
 /*	stw	%r7,28(%r1)		# cleanup	(always 0) */
 	stw	%r8,32(%r1)		# ps_strings
 
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
+	bl	_GLOBAL_OFFSET_TABLE_-4@local
 	mflr	%r31			# r31 = (real) GOT
-	lwz	%r30,_GLOBAL_OFFSET_TABLE_@got(31)
-					# the linker thought GOT were ...
-	lwz	%r3,_DYNAMIC@got(%r31)
+	lwz	%r28,0(%r31)		# base-relative &_DYNAMIC
 
-	subf	%r4,%r30,%r31		# r4 = relocbase
-	add	%r3,%r3,%r4		# r3 = &_DYNAMIC
+	bl	0f			# lr = next instruction
+	b	_DYNAMIC@local
+0:	mflr	%r30
+	lwz	%r29,0(%r30)		# load instruction contents
+	rlwinm	%r29,%r29,0,6,29	# extract PC offset
+	add	%r3,%r29,%r30		# r3 = &_DYNAMIC
+	sub	%r28,%r3,%r28
+	mr	%r4,%r28		# r4 = relocbase
 	bl	_rtld_relocate_nonplt_self@plt
 
-	subf	4,30,31			# r4 = relocbase
 	lwz	%r3,16(%r1)
 	addi	%r3,%r3,-12		# sp = &argv[-3]	/* XXX */
+	mr	%r4,%r28		# r4 = relocbase
 	bl	_rtld@plt		# _start = _rtld(sp, relocbase)
 	mtlr	%r3
 
