@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1996/01/07 22:02:39 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1996/02/03 22:49:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -403,6 +403,7 @@ mainbus_attach(parent, self, aux)
 					{"nubus0",     1},
 					{"ncrscsi0",   0},
 					{"ncr96scsi0", 0},
+					{"sbc0",       0},
 					{"asc0",       0},
 					{"fpu0",       0},
 					{"floppy0",    0},
