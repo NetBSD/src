@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.13 1999/11/26 01:38:40 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.14 1999/12/06 21:06:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -523,13 +523,13 @@ uaudio_mixer_add_ctl(sc, mc)
 	struct uaudio_softc *sc;
 	struct mixerctl *mc;
 {
-	if (sc->sc_nctls == 0)
+	if (sc->sc_nctls == NULL)
 		sc->sc_ctls = malloc(sizeof *mc, M_USBDEV, M_NOWAIT);
 	else
 		sc->sc_ctls = realloc(sc->sc_ctls, 
 				      (sc->sc_nctls+1) * sizeof *mc,
 				      M_USBDEV, M_NOWAIT);
-	if (sc->sc_ctls == 0) {
+	if (sc->sc_ctls == NULL) {
 		printf("uaudio_mixer_add_ctl: no memory\n");
 		return;
 	}
@@ -947,13 +947,13 @@ uaudio_add_alt(sc, ai)
 	struct uaudio_softc *sc;
 	struct as_info *ai;
 {
-	if (sc->sc_nalts == 0)
+	if (sc->sc_nalts == NULL)
 		sc->sc_alts = malloc(sizeof *ai, M_USBDEV, M_NOWAIT);
 	else
 		sc->sc_alts = realloc(sc->sc_alts,
 				      (sc->sc_nalts+1) * sizeof *ai,
 				      M_USBDEV, M_NOWAIT);
-	if (sc->sc_alts == 0) {
+	if (sc->sc_alts == NULL) {
 		printf("uaudio_add_alt: no memory\n");
 		return;
 	}
@@ -1154,7 +1154,7 @@ uaudio_identify_ac(sc, cdesc)
 	/* Locate the AudioControl interface descriptor. */
 	offs = 0;
 	id = uaudio_find_iface(buf, size, &offs, USUBCLASS_AUDIOCONTROL);
-	if (!id)
+	if (id == NULL)
 		return (USBD_INVAL);
 	if (offs + sizeof *acdp > size)
 		return (USBD_INVAL);
@@ -1207,7 +1207,7 @@ uaudio_identify_ac(sc, cdesc)
 
 	for (i = 0; i < ndps; i++) {
 		dp = dps[i];
-		if (dp == 0)
+		if (dp == NULL)
 			continue;
 		DPRINTF(("uaudio_identify: subtype=%d\n", 
 			 dp->bDescriptorSubtype));
@@ -1365,7 +1365,7 @@ uaudio_halt_out_dma(addr)
 	struct uaudio_softc *sc = addr;
 
 	DPRINTF(("uaudio_halt_out_dma: enter\n"));
-	if (sc->sc_chan.pipe) {
+	if (sc->sc_chan.pipe != NULL) {
 		uaudio_chan_close(sc, &sc->sc_chan);
 		sc->sc_chan.pipe = 0;
 		uaudio_chan_free_buffers(sc, &sc->sc_chan);
@@ -1380,7 +1380,7 @@ uaudio_halt_in_dma(addr)
 	struct uaudio_softc *sc = addr;
 
 	DPRINTF(("uaudio_halt_in_dma: enter\n"));
-	if (sc->sc_chan.pipe) {
+	if (sc->sc_chan.pipe != NULL) {
 		uaudio_chan_close(sc, &sc->sc_chan);
 		sc->sc_chan.pipe = 0;
 		uaudio_chan_free_buffers(sc, &sc->sc_chan);

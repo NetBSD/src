@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.50 1999/12/01 23:22:57 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.51 1999/12/06 21:07:00 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -431,6 +431,14 @@ USB_DETACH(ukbd)
 		 */
 		panic("ukbd_detach: console keyboard");
 #else
+		/*
+		 * Disconnect our consops and set ukbd_is_console
+		 * back to 1 so that the next USB keyboard attached
+		 * to the system will get it.
+		 * XXX Should notify some other keyboard that it can be
+		 * XXX console, if there are any other keyboards.
+		 */
+		printf("%s: was console keyboard\n", USBDEVNAME(sc->sc_dev));
 		wskbd_cndetach();
 		ukbd_is_console = 1;
 #endif

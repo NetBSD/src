@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.57 1999/12/01 23:19:11 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.58 1999/12/06 21:06:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1245,7 +1245,7 @@ ohci_device_request(xfer)
 	memcpy(KERNADDR(&opipe->u.ctl.reqdma), req, sizeof *req);
 
 	setup->td.td_flags = LE(OHCI_TD_SETUP | OHCI_TD_NOCC |
-				 OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
+				OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
 	setup->td.td_cbp = LE(DMAADDR(&opipe->u.ctl.reqdma));
 	setup->nexttd = next;
 	setup->td.td_nexttd = LE(next->physaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.69 1999/12/01 00:42:05 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.70 1999/12/06 21:07:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -520,7 +520,7 @@ uhci_power(why, v)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
-		if (sc->sc_has_timo)
+		if (sc->sc_has_timo != NULL)
 			usb_untimeout(uhci_timo, sc->sc_has_timo, 
 				      sc->sc_has_timo->timo_handle);
 		sc->sc_bus.use_polling++;
@@ -552,7 +552,7 @@ uhci_power(why, v)
 		uhci_run(sc, 1); /* and start traffic again */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_bus.use_polling--;
-		if (sc->sc_has_timo)
+		if (sc->sc_has_timo != NULL)
 			usb_timeout(uhci_timo, sc->sc_has_timo, 
 				    sc->sc_ival, sc->sc_has_timo->timo_handle);
 #ifdef UHCI_DEBUG
@@ -1510,6 +1510,9 @@ uhci_device_bulk_start(xfer)
 	callout_handle_init(&ii->timeout_handle);
 #endif
 #ifdef DIAGNOSTIC
+	if (!ii->isdone) {
+		printf("uhci_device_bulk_transfer: not done, ii=%p\n", ii);
+	}
 	ii->isdone = 0;
 #endif
 
@@ -1713,6 +1716,9 @@ uhci_device_intr_start(xfer)
 	callout_handle_init(&ii->timeout_handle);
 #endif
 #ifdef DIAGNOSTIC
+	if (!ii->isdone) {
+		printf("uhci_device_intr_transfer: not done, ii=%p\n", ii);
+	}
 	ii->isdone = 0;
 #endif
 
@@ -1887,6 +1893,9 @@ uhci_device_request(xfer)
 	callout_handle_init(&ii->timeout_handle);
 #endif
 #ifdef DIAGNOSTIC
+	if (!ii->isdone) {
+		printf("uhci_device_request: not done, ii=%p\n", ii);
+	}
 	ii->isdone = 0;
 #endif
 
@@ -2058,6 +2067,9 @@ uhci_device_isoc_start(xfer)
 	callout_handle_init(&ii->timeout_handle);
 #endif
 #ifdef DIAGNOSTIC
+	if (!ii->isdone) {
+		printf("uhci_device_isoc_start: not done, ii=%p\n", ii);
+	}
 	ii->isdone = 0;
 #endif
 	LIST_INSERT_HEAD(&sc->sc_intrhead, ii, list);
@@ -2262,6 +2274,9 @@ uhci_device_intr_done(xfer)
 		callout_handle_init(&ii->timeout_handle);
 #endif
 #ifdef DIAGNOSTIC
+		if (!ii->isdone) {
+			printf("uhci_device_intr_done: not done, ii=%p\n", ii);
+		}
 		ii->isdone = 0;
 #endif
 		for (i = 0; i < npoll; i++) {
@@ -2939,7 +2954,7 @@ void
 uhci_root_ctrl_abort(xfer)
 	usbd_xfer_handle xfer;
 {
-	/* Nothing to do, all transfers are syncronous. */
+	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
@@ -2947,9 +2962,6 @@ void
 uhci_root_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
-	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
-
-	sc->sc_has_timo = 0;
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }
 
@@ -2961,7 +2973,7 @@ uhci_root_intr_abort(xfer)
 	uhci_softc_t *sc = (uhci_softc_t *)xfer->pipe->device->bus;
 
 	usb_untimeout(uhci_timo, xfer, xfer->timo_handle);
-	sc->sc_has_timo = 0;
+	sc->sc_has_timo = NULL;
 
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTF(("uhci_root_intr_abort: remove\n"));
@@ -3013,6 +3025,6 @@ uhci_root_intr_close(pipe)
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
 	usb_untimeout(uhci_timo, pipe->intrxfer, pipe->intrxfer->timo_handle);
-	sc->sc_has_timo = 0;
+	sc->sc_has_timo = NULL;
 	DPRINTF(("uhci_root_intr_close\n"));
 }
