@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1996/07/11 03:46:04 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3 1996/07/14 04:15:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,9 +47,10 @@
  */
 struct pcb {
 	struct alpha_pcb pcb_hw;		/* PALcode defined */
-	u_int64_t	pcb_context[9];		/* s[0-6], ra, ps	[SW] */
+	unsigned long	pcb_context[9];		/* s[0-6], ra, ps	[SW] */
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
-	caddr_t		pcb_onfault;		/* for copy faults	[SW] */
+	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
+	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
 };
 
 /*
