@@ -1,7 +1,7 @@
-	$NetBSD: syscalls.master,v 1.6 1994/11/18 02:54:32 christos Exp $
+	$NetBSD: syscalls.master,v 1.7 1995/01/08 21:31:50 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
-; System call name/number master file (or rather, slave, from SunOS).
+; System call name/number master file (or rather, slave, from SVR4).
 ; Processed to created svr4_sysent.c, svr4_syscalls.c and svr4_syscall.h.
 
 ; Columns: number type nargs name altname/comments
@@ -15,6 +15,8 @@
 #include <sys/param.h>
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_statvfs.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -61,7 +63,7 @@
 24	NOARGS		{ uid_t getuid(void); }
 25	UNIMPL		svr4_stime
 26	UNIMPL		svr4_ptrace
-27	UNIMPL		svr4_alarm
+27	STD		{ int svr4_alarm(unsigned sec); }
 28	STD		{ int svr4_fstat(int fd, struct svr4_stat *sb); }
 29	UNIMPL		svr4_pause
 30	UNIMPL		svr4_utime
@@ -71,7 +73,7 @@
 34	UNIMPL		svr4_nice
 35	UNIMPL		svr4_statfs
 36	NOARGS		{ int sync(void); }
-37	NOARGS		{ int kill(int pid, int signum); }
+37	STD		{ int svr4_kill(int pid, int signum); }
 38	UNIMPL		svr4_fstatfs
 39	STD		{ int svr4_pgrpsys(int cmd, int pid, int pgid); }
 40	UNIMPL		svr4_xenix
@@ -156,14 +158,17 @@
 96	NOARGS		{ int sigaltstack(struct sigaltstack *nss, \
 					  struct sigaltstack *oss); }
 97	NOARGS		{ int sigsuspend(int mask); }
-98	NOARGS		{ int sigaction(int signum, struct sigaction *nsa, \
-					struct sigaction *osa); }
+98	STD		{ int svr4_sigaction(int signum, \
+					     struct svr4_sigaction *nsa, \
+					     struct svr4_sigaction *osa); }
 99	STD		{ int svr4_sigpending(int what, svr4_sigset_t *mask); }
-100	UNIMPL		svr4_context
+100	STD		{ int svr4_context(int func, \
+					   struct svr4_ucontext *uc); }
 101	UNIMPL		svr4_evsys
 102	UNIMPL		svr4_evtrapret
-103	UNIMPL		svr4_statvfs
-104	UNIMPL		svr4_fstatvfs
+103	STD		{ int svr4_statvfs(char *path, \
+					   struct svr4_statvfs *fs); }
+104	STD		{ int svr4_fstatvfs(int fd, struct svr4_statvfs *fs); }
 105	UNIMPL		svr4 reserved
 #ifdef NFSSERVER
 106	UNIMPL		svr4_nfssvc

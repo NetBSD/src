@@ -8,6 +8,8 @@
 #include <sys/param.h>
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_statvfs.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -36,10 +38,11 @@ int	compat_43_lseek();
 int	getpid();
 int	setuid();
 int	getuid();
+int	svr4_alarm();
 int	svr4_fstat();
 int	svr4_access();
 int	sync();
-int	kill();
+int	svr4_kill();
 int	svr4_pgrpsys();
 int	dup();
 int	pipe();
@@ -80,8 +83,11 @@ int	fchown();
 int	svr4_sigprocmask();
 int	sigaltstack();
 int	sigsuspend();
-int	sigaction();
+int	svr4_sigaction();
 int	svr4_sigpending();
+int	svr4_context();
+int	svr4_statvfs();
+int	svr4_fstatvfs();
 #ifdef NFSSERVER
 #else
 #endif
@@ -232,8 +238,8 @@ struct sysent svr4_sysent[] = {
 	    nosys },				/* 25 = unimplemented svr4_stime */
 	{ 0, 0,
 	    nosys },				/* 26 = unimplemented svr4_ptrace */
-	{ 0, 0,
-	    nosys },				/* 27 = unimplemented svr4_alarm */
+	{ 1, s(struct svr4_alarm_args),
+	    svr4_alarm },			/* 27 = svr4_alarm */
 	{ 2, s(struct svr4_fstat_args),
 	    svr4_fstat },			/* 28 = svr4_fstat */
 	{ 0, 0,
@@ -252,8 +258,8 @@ struct sysent svr4_sysent[] = {
 	    nosys },				/* 35 = unimplemented svr4_statfs */
 	{ 0, 0,
 	    sync },				/* 36 = sync */
-	{ 2, s(struct kill_args),
-	    kill },				/* 37 = kill */
+	{ 2, s(struct svr4_kill_args),
+	    svr4_kill },			/* 37 = svr4_kill */
 	{ 0, 0,
 	    nosys },				/* 38 = unimplemented svr4_fstatfs */
 	{ 3, s(struct svr4_pgrpsys_args),
@@ -389,20 +395,20 @@ struct sysent svr4_sysent[] = {
 	    sigaltstack },			/* 96 = sigaltstack */
 	{ 1, s(struct sigsuspend_args),
 	    sigsuspend },			/* 97 = sigsuspend */
-	{ 3, s(struct sigaction_args),
-	    sigaction },			/* 98 = sigaction */
+	{ 3, s(struct svr4_sigaction_args),
+	    svr4_sigaction },			/* 98 = svr4_sigaction */
 	{ 2, s(struct svr4_sigpending_args),
 	    svr4_sigpending },			/* 99 = svr4_sigpending */
-	{ 0, 0,
-	    nosys },				/* 100 = unimplemented svr4_context */
+	{ 2, s(struct svr4_context_args),
+	    svr4_context },			/* 100 = svr4_context */
 	{ 0, 0,
 	    nosys },				/* 101 = unimplemented svr4_evsys */
 	{ 0, 0,
 	    nosys },				/* 102 = unimplemented svr4_evtrapret */
-	{ 0, 0,
-	    nosys },				/* 103 = unimplemented svr4_statvfs */
-	{ 0, 0,
-	    nosys },				/* 104 = unimplemented svr4_fstatvfs */
+	{ 2, s(struct svr4_statvfs_args),
+	    svr4_statvfs },			/* 103 = svr4_statvfs */
+	{ 2, s(struct svr4_fstatvfs_args),
+	    svr4_fstatvfs },			/* 104 = svr4_fstatvfs */
 	{ 0, 0,
 	    nosys },				/* 105 = unimplemented svr4 reserved */
 #ifdef NFSSERVER
