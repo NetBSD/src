@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.16 2003/12/30 23:56:19 sekiya Exp $	*/
+/*	$NetBSD: console.c,v 1.17 2004/01/01 13:29:08 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.16 2003/12/30 23:56:19 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.17 2004/01/01 13:29:08 sekiya Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -108,10 +108,7 @@ consinit()
 #endif
 
 #if (defined(IP2X)) && (NZSC > 0)
-	/* zs console on IP20 crashes the machine fast, use ARCS for now */
-	if (mach_type == MACH_SGI_IP20)
-		goto force_arcs;
-	else if (mach_type == MACH_SGI_IP22) {
+	if ( (mach_type == MACH_SGI_IP20) || (mach_type == MACH_SGI_IP22) ) {
 		if (strlen(consdev) == 9 &&
 		    strncmp(consdev, "serial", 6) == 0 &&
 		    (consdev[7] == '0' || consdev[7] == '1')) {
