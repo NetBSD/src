@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86 2001/03/03 03:29:20 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.87 2001/04/10 21:45:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -408,6 +409,14 @@ if_attach(ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
+#ifdef PFIL_HOOKS
+	ifp->if_pfil.ph_type = PFIL_TYPE_IFNET;
+	ifp->if_pfil.ph_ifnet = ifp;
+	if (pfil_head_register(&ifp->if_pfil) != 0)
+		printf("%s: WARNING: unable to register pfil hook\n",
+		    ifp->if_xname);
+#endif
+
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
@@ -478,6 +487,10 @@ if_detach(ifp)
 		altq_disable(&ifp->if_snd);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
+#endif
+
+#ifdef PFIL_HOOKS
+	(void) pfil_head_unregister(&ifp->if_pfil);
 #endif
 
 	if_free_sadl(ifp);
