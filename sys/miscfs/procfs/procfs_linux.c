@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.15.2.1 2004/08/30 08:48:40 tron Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.15.2.2 2004/08/30 08:53:05 tron Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.15.2.1 2004/08/30 08:48:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.15.2.2 2004/08/30 08:53:05 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,11 +117,12 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct proc *curp, struct proc *p, struct lwp *l, struct pfsnode *pfs,
+procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512], *cp;
 	int len, error;
+	struct proc *p = l->l_proc;
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
