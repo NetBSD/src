@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.5 1994/06/29 06:30:42 cgd Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.5.2.1 1994/08/01 18:00:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,12 +90,60 @@
 
 #include <vm/vm.h>
 
+#define GSI_PROG_ENV 1
+
+struct ultrix_getsysinfo_args {
+	unsigned	op;
+	char		*buffer;
+	unsigned	nbytes;
+	int		*start;
+	char		*arg;
+};
+
+ultrix_getsysinfo(p, uap, retval)
+	struct proc *p;
+	struct ultrix_getsysinfo_args *uap;
+	int *retval;
+{
+	static short progenv = 0;
+
+	switch (uap->op) {
+		/* operations implemented: */
+	case GSI_PROG_ENV:
+		if (uap->nbytes < sizeof(short))
+			return EINVAL;
+		*retval = 1;
+		return(copyout(&progenv, uap->buffer, sizeof(short)));
+	default:
+		*retval = 0; /* info unavail */
+		return 0;
+	}
+}
+
+struct ultrix_setsysinfo_args {
+	unsigned	op;
+	char		*buffer;
+	unsigned	nbytes;
+	unsigned	arg;
+	unsigned	flag;
+};
+
+ultrix_setsysinfo(p, uap, retval)
+	struct proc *p;
+	struct ultrix_setsysinfo_args *uap;
+	int *retval;
+{
+	*retval = 0;
+	return 0;
+}
+
 struct ultrix_waitpid_args {
 	int	pid;
 	int	*status;
 	int	options;
 	struct	rusage *rusage;
 };
+
 ultrix_waitpid(p, uap, retval)
 	struct proc *p;
 	struct ultrix_waitpid_args *uap;
