@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.23 2001/04/14 16:58:48 kleink Exp $
+.\" $NetBSD: doc2html,v 1.24 2001/07/02 00:03:31 lukem Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1208,6 +1208,7 @@ AT&T UNIX\\$*
 .	if "\\$1"V.2"  <code>AT&T</code> System V.2 <code>UNIX</code>\\$2
 .	if "\\$1"V.3"  <code>AT&T</code> System V.3 <code>UNIX</code>\\$2
 .	if "\\$1"V.4"  <code>AT&T</code> System V.4 <code>UNIX</code>\\$2
+.	if "\\$1"v1"  Version 1 <code>AT&T UNIX</code>\\$2
 .	if "\\$1"v5"  Version 5 <code>AT&T UNIX</code>\\$2
 .	if "\\$1"v6"  Version 6 <code>AT&T UNIX</code>\\$2
 .	if "\\$1"v7"  Version 7 <code>AT&T UNIX</code>\\$2
@@ -1219,6 +1220,8 @@ AT&T UNIX\\$*
 .	if "\\$1"V.2"  <code>AT&T</code> System V.2 <code>UNIX</code>
 .	if "\\$1"V.3"  <code>AT&T</code> System V.3 <code>UNIX</code>
 .	if "\\$1"V.4"  <code>AT&T</code> System V.4 <code>UNIX</code>
+.	if "\\$1"v1"  Version 1 <code>AT&T UNIX</code>
+.	if "\\$1"v5"  Version 5 <code>AT&T UNIX</code>
 .	if "\\$1"v6"  Version 6 <code>AT&T UNIX</code>
 .	if "\\$1"v7"  Version 7 <code>AT&T UNIX</code>
 .   \}
