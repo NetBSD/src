@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2002/01/02 21:12:18 he Exp $
+.\"	$NetBSD: install,v 1.16 2002/04/05 21:14:35 scw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,12 +39,14 @@ this document in hand it should not be too difficult.
 There are several ways to install
 .Nx
 onto your disk. If your
+.Tn MVME147
 machine has a tape drive the easiest way is
 .Sx "Installing from tape"
-(details below). If your machine is on a network with a suitable
-NFS server, then
+(details below).
+All other machines can be installed easily over the network from a
+suitable NFS server. See
 .Sx "Installing from NFS"
-is the next best method.
+for details.
 Otherwise, if you have another \*M machine running
 .Nx
 you can
@@ -91,7 +93,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.15 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.16 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -146,7 +148,7 @@ then at the Bug monitor prompt use a command like:
         	1x7Bug\*> bo 0,,b:
 
 To view this message again, type:  cat /.welcome
-ssh:
+#
 .disp)
 .Pp
 You must now create a disklabel on the disk you wish to use for the
@@ -223,7 +225,7 @@ To create the disklabel and partitions, use the
 .Li edlabel
 program, passing it the name of the Raw Partition of your root/boot disk.
 .Pp
-.Dl ssh: Ic "edlabel /dev/rsd0c"
+.Dl # Ic "edlabel /dev/rsd0c"
 .Dl edlabel menu:
 .Dl print   - display the current disk label
 .Dl modify  - prompt for changes to the label
@@ -328,7 +330,7 @@ You now need to write this new disklabel, together with the partition
 details you've just entered, to disk. You might also try the
 .Sq Ic p
 command
-to view the partitions. Once written, you can quit back to ssh using
+to view the partitions. Once written, you can quit back to the shell using
 .Sq Ic q .
 .Pp
 .Dl edlabel\*> Ic p
@@ -352,31 +354,31 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
 .Pp
 .Dl edlabel\*> Ic w
 .Dl edlabel\*> Ic q
-.Dl ssh:
+.Dl #
 .Pp
 Now that your disk's partitioned, you need to get the proper installation
 miniroot image onto it. The miniroot image is designed to be copied into
 the swap partition of your disk. This is a safe place which won't be
-overwritten by the installation procedure. From the ssh prompt, use the
+overwritten by the installation procedure. From the shell prompt, use the
 following commands to copy the miniroot image from tape to swap (b).
 .Pp
-.Dl ssh: Ic "mt -f /dev/nrst0 rewind"
-.Dl ssh: Ic "mt -f /dev/nrst0 fsf 3"
-.Dl ssh: Ic "dd bs=8k if=/dev/nrst0 of=/dev/rsd0b"
+.Dl # Ic "mt -f /dev/nrst0 rewind"
+.Dl # Ic "mt -f /dev/nrst0 fsf 3"
+.Dl # Ic "dd bs=8k if=/dev/nrst0 of=/dev/rsd0b"
 .Pp
 The disk and the miniroot must now be made bootable using the
 .Xr installboot 8
 command. To do this, issue the following commands:
 .Pp
-.Dl ssh: Ic "mount /dev/sd0b /mnt"
-.Dl ssh: Ic "installboot /mnt/usr/mdec/bootsd /bootxx /dev/rsd0b"
-.Dl ssh: Ic "umount /dev/sd0b"
+.Dl # Ic "mount /dev/sd0b /mnt"
+.Dl # Ic "installboot /mnt/usr/mdec/bootsd /bootxx /dev/rsd0b"
+.Dl # Ic "umount /dev/sd0b"
 .Pp
 You can now shutdown the system.
 .Pp
-.Dl ssh: Ic halt
+.Dl # Ic halt
 .Dl signal 15
-.Dl ssh: syncing disks... done
+.Dl syncing disks... done
 .Dl unmounting / (root_device)...
 .Dl halted
 .Pp
@@ -484,7 +486,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.15 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.16 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -525,14 +527,14 @@ copy the miniroot from tape.)
 You must now configure the network interface before you can access the
 NFS server containing the miniroot image. For example the command:
 .Pp
-.Dl ssh: Ic "ifconfig le0 inet 192.168.1.4 up"
+.Dl # Ic "ifconfig le0 inet 192.168.1.4 up"
 .Pp
 will bring up the MVME147 network interface
 .Li le0
 with that address.
 The command:
 .Pp
-.Dl ssh: Ic "ifconfig ie0 inet 192.168.1.4 up"
+.Dl # Ic "ifconfig ie0 inet 192.168.1.4 up"
 .Pp
 will bring up the MVME162/172 or MVME167/177 network interface
 .Li ie0
@@ -543,43 +545,26 @@ either NFS or remote shell. (In the examples that follow, the server has
 IP address 192.168.1.1) You may then need to add a default route if the
 server is on a different subnet:
 .Pp
-.Dl ssh: Ic "route add default 192.168.1.2 1"
+.Dl # Ic "route add default 192.168.1.2 1"
 .Pp
 You can look at the route table using:
 .Pp
-.Dl ssh: Ic "route show"
+.Dl # Ic "route show"
 .Pp
 Now mount the NFS file system containing the miniroot image:
 .Pp
-.Dl ssh: Ic "mount -r 192.168.1.1:/export/soapy /mnt"
+.Dl # Ic "mount -r 192.168.1.1:/export/soapy /mnt"
 .Pp
 The procedure is simpler if you have space for an expanded (not
 compressed) copy of the miniroot image. In that case:
 .Pp
-.Dl ssh: Ic "dd bs=8k if=/mnt/miniroot of=/dev/rsd0b"
+.Dl # Ic "dd bs=8k if=/mnt/miniroot of=/dev/rsd0b"
 .Pp
 Otherwise, you will need to use
-.Ic zcat
+.Ic gzcat
 to expand the miniroot image while copying.
-This is tricky because the
-.Ic ssh
-program (small shell) does not handle
-.Xr sh 1
-pipeline syntax. Instead, you first run the reader
-in the background with its input set to
-.Pa /dev/pipe
-and then run the other program in the foreground with its output to
-.Pa /dev/pipe .
-The result looks like this:
 .Pp
-.Dl ssh: Ic "run -bg dd obs=8k if=/dev/pipe of=/dev/rsd0b"
-.Dl ssh: Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
-.Pp
-To load the miniroot using rsh to the server, you would use a pair
-of commands similar to the above. Here is another example:
-.Pp
-.Dl ssh: Ic "run -b dd obs=8k if=/dev/pipe of=/dev/rsd0b"
-.Dl ssh: Ic "run -o /dev/pipe rsh 192.168.1.1 zcat miniroot.fs.gz"
+.Dl # Ic gzcat miniroot.fs.gz | dd obs=8k of=/dev/rsd0b
 .Pp
 You must now make the disk bootable. Refer to the previous section on
 installing from tape, where it describes how to run
@@ -592,20 +577,16 @@ miniroot from tape.
 Assuming the miniroot is installed on partition
 .Sq Li b
 of the disk with
-SCSI-ID 0, then the 147Bug boot command is:
+SCSI-ID 0, then the boot command is:
 .Pp
-.Dl 147-Bug\*> Ic "bo 0,,b:"
-.Pp
-The corresponding 162Bug, 167Bug, 172Bug or 177Bug boot command is:
-.Pp
-.Dl 1xx-Bug\*> Ic "bo 0,,,b:"
+.Dl 1xx-Bug\*> Ic "bo 0,,b:"
 .Pp
 The command line parameters above are:
 .Pp
 .(tag xxx
 .It Ic 0
 controller (usually zero)
-.It Ic ,, or ,,,
+.It Ic ,,
 bug argument separators
 .It Ic \&b:\&
 tell the bootstrap code to boot from partition
@@ -644,10 +625,26 @@ installation program.
 .Ss2 Miniroot install program:
 .
 The miniroot's install program is very simple to use. It will guide
-you through the entire process, and is well automated. Additional
-improvements are planned for future releases.
+you through the entire process, and is well automated.
 .Pp
-The miniroot's install program will:
+Starting with
+.Nx
+version 1.6, you have the option of using
+.Ic sysinst
+instead of the old installation and upgrade shell scripts.
+At this time,
+.Ic sysinst
+is not capable of installing distribution sets from tape. In such a
+case, you should fallback to the shell script installation or upgrade
+procedure. In all other cases,
+.Ic sysinst
+should be used. Note that as soon as
+.Ic sysinst
+can deal with tapes, the shell script tools will be removed.
+.Pp
+The miniroot's install program (both
+.Ic sysinst
+and the shell script version) will:
 .(bullet
 Allow you to place disklabels on additional disks.
 The disk we are installing on should already have
@@ -718,3 +715,5 @@ Check your file systems for integrity.
 .Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.
+.
+.so ../common/sysinst
