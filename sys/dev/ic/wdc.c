@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.97 2001/06/11 21:18:36 bjh21 Exp $ */
+/*	$NetBSD: wdc.c,v 1.98 2001/06/13 18:17:38 bjh21 Exp $ */
 
 
 /*
@@ -653,6 +653,8 @@ wdcstart(chp)
 		chp->ch_drive[xfer->drive].drive_flags &= ~DRIVE_RESET;
 		chp->ch_drive[xfer->drive].state = 0;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		KASSERT(xfer->c_flags & C_POLL);
 	xfer->c_start(chp, xfer);
 }
 
@@ -1258,6 +1260,8 @@ wdc_exec_command(drvp, wdc_c)
 		return WDC_TRY_AGAIN;
 	 }
 
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		wdc_c->flags |= AT_POLL;
 	if (wdc_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->drive = drvp->drive;
