@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.20 2001/03/12 23:39:35 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.21 2001/03/14 06:46:17 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2088,10 +2088,12 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 		if (OHCI_BITVAL(val, OHCI_SelfID_Gen) !=
 		    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen))
 			goto again;
+#ifdef FW_DEBUG
 		if (fw_verbose)
 			printf("%s: SelfID Gen mismatch (%d, %d)\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
 			    OHCI_BITVAL(val, OHCI_SelfID_Gen));
+#endif
 		return -1;
 	}
 	if (i != count) {
