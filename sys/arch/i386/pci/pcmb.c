@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.1 2001/03/25 09:54:10 jdolecek Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.2 2001/04/21 19:18:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -80,17 +80,11 @@ pcmbmatch(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/*
-	 * Match all known PCI-MCA bridges.
+	 * Match anything which claims to be PCI-MCA bridge.
 	 */
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_IBM:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_IBM_MCABRIDGE:
-		case PCI_PRODUCT_IBM_MCABRIDGE2:
-			return (1);
-		}
-		break;
-	}
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE
+	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_MC)
+		return (1);
 
 	return (0);
 }
