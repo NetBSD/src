@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.11 1996/12/02 06:12:40 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.12 1996/12/02 06:46:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -116,6 +116,26 @@ void		__C(CHIP,_io_write_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_write_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, const u_int64_t *, bus_size_t));
 
+/* set multiple */
+void		__C(CHIP,_io_set_multi_1) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t));
+void		__C(CHIP,_io_set_multi_2) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t));
+void		__C(CHIP,_io_set_multi_4) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t));
+void		__C(CHIP,_io_set_multi_8) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t));
+
+/* set region */
+void		__C(CHIP,_io_set_region_1) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t));
+void		__C(CHIP,_io_set_region_2) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t));
+void		__C(CHIP,_io_set_region_4) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t));
+void		__C(CHIP,_io_set_region_8) __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t));
+
 /* barrier */
 void		__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int));
@@ -142,7 +162,7 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 	__C(CHIP,_io_read_4),
 	__C(CHIP,_io_read_8),
 	
-	/* read multi */
+	/* read multiple */
 	__C(CHIP,_io_read_multi_1),
 	__C(CHIP,_io_read_multi_2),
 	__C(CHIP,_io_read_multi_4),
@@ -160,7 +180,7 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 	__C(CHIP,_io_write_4),
 	__C(CHIP,_io_write_8),
 	
-	/* write multi */
+	/* write multiple */
 	__C(CHIP,_io_write_multi_1),
 	__C(CHIP,_io_write_multi_2),
 	__C(CHIP,_io_write_multi_4),
@@ -172,11 +192,17 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 	__C(CHIP,_io_write_region_4),
 	__C(CHIP,_io_write_region_8),
 
-	/* set multi */
-	/* XXX IMPLEMENT */
-
+	/* set multiple */
+	__C(CHIP,_io_set_multi_1),
+	__C(CHIP,_io_set_multi_2),
+	__C(CHIP,_io_set_multi_4),
+	__C(CHIP,_io_set_multi_8),
+	
 	/* set region */
-	/* XXX IMPLEMENT */
+	__C(CHIP,_io_set_region_1),
+	__C(CHIP,_io_set_region_2),
+	__C(CHIP,_io_set_region_4),
+	__C(CHIP,_io_set_region_8),
 
 	/* copy */
 	/* XXX IMPLEMENT */
@@ -605,6 +631,45 @@ CHIP_io_write_region_N(1,u_int8_t)
 CHIP_io_write_region_N(2,u_int16_t)
 CHIP_io_write_region_N(4,u_int32_t)
 CHIP_io_write_region_N(8,u_int64_t)
+
+#define CHIP_io_set_multi_N(BYTES,TYPE)					\
+void									\
+__C(__C(CHIP,_io_set_multi_),BYTES)(v, h, o, val, c)			\
+	void *v;							\
+	bus_space_handle_t h;						\
+	bus_size_t o, c;						\
+	TYPE val;							\
+{									\
+									\
+	while (c-- > 0) {						\
+		__C(__C(CHIP,_io_write_),BYTES)(v, h, o, val);		\
+		__C(CHIP,_io_barrier)(v, h, o, sizeof val,		\
+		    BUS_BARRIER_WRITE);					\
+	}								\
+}
+CHIP_io_set_multi_N(1,u_int8_t)
+CHIP_io_set_multi_N(2,u_int16_t)
+CHIP_io_set_multi_N(4,u_int32_t)
+CHIP_io_set_multi_N(8,u_int64_t)
+
+#define CHIP_io_set_region_N(BYTES,TYPE)				\
+void									\
+__C(__C(CHIP,_io_set_region_),BYTES)(v, h, o, val, c)			\
+	void *v;							\
+	bus_space_handle_t h;						\
+	bus_size_t o, c;						\
+	TYPE val;							\
+{									\
+									\
+	while (c-- > 0) {						\
+		__C(__C(CHIP,_io_write_),BYTES)(v, h, o, val);		\
+		o += sizeof val;					\
+	}								\
+}
+CHIP_io_set_region_N(1,u_int8_t)
+CHIP_io_set_region_N(2,u_int16_t)
+CHIP_io_set_region_N(4,u_int32_t)
+CHIP_io_set_region_N(8,u_int64_t)
 
 void
 __C(CHIP,_io_barrier)(v, h, o, l, f)
