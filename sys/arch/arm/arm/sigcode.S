@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.2 2002/06/23 00:16:20 thorpej Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3 2002/06/23 19:16:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.2 2002/06/23 00:16:20 thorpej Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.3 2002/06/23 19:16:43 thorpej Exp $")
 
 #include "assym.h"
 #include <sys/syscall.h>
@@ -44,20 +44,10 @@ RCSID("$NetBSD: sigcode.S,v 1.2 2002/06/23 00:16:20 thorpej Exp $")
 
 ENTRY_NP(sigcode)
 /*
- * r0-r2 are our signal handler parameters
- * r3 is the handler address
+ * The kernel arranges for the handler to be invoked directly.  This
+ * trampoline is used only to return from the signal.
  *
  * The stack pointer points to the saved sigcontext.
- */
-
-	add	lr, pc, #0			/* Set return address */
-	mov	pc, r3				/* Call the handler */
-
-/*
- * Call sig_return with address of the signal context.  Note the
- * pointer to this may have been clobbered by the handler, so
- * we need to recompute from the stack pointer (which, thankfully,
- * is quite easy).
  */
 	mov	r0, sp
 	swi	SYS___sigreturn14
