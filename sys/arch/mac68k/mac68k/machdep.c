@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 1999/02/27 05:28:35 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222 1999/02/27 06:39:36 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_adb.h"
+#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"

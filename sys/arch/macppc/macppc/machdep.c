@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1999/02/26 18:36:15 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1999/02/27 06:39:36 scottr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 1999/02/14 12:48:02 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.140 1999/02/27 06:39:37 scottr Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
 
+#include "opt_bufcache.h"
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
