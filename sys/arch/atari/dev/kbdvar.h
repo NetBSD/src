@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.1 1996/04/12 19:55:28 leo Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.2 1997/01/12 22:15:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -65,6 +65,8 @@ struct kbd_softc {
 #define	KBD_TIMEO_PKG	6		/* Timeout package		*/
 
 #ifdef _KERNEL
+extern	u_char	kbd_modifier;
+
 void	kbd_write __P((u_char *, int));
 int	kbdgetcn __P((void));
 void	kbdbell __P((void));
