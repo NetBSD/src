@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.22 1994/01/03 16:21:54 mycroft Exp $
+ *	$Id: trap.c,v 1.23 1994/01/04 00:15:28 mycroft Exp $
  */
 
 /*
@@ -537,7 +537,7 @@ done:
 		printf("ss %x call %d\n", frame.tf_ss, code);
 	if ((frame.tf_cs&0xffff) != _ucodesel)
 		printf("cs %x call %d\n", frame.tf_cs, code);
-	if (frame.tf_eip > VM_MAXUSER_ADDRESS) {
+	if (frame.tf_eip >= VM_MAXUSER_ADDRESS) {
 		printf("eip %x call %d\n", frame.tf_eip, code);
 		frame.tf_eip = 0;
 	}
