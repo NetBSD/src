@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.10 2002/03/27 17:54:40 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.11 2002/03/28 10:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -111,6 +111,10 @@
  *   _ENCODING_IS_STATE_DEPENDENT :
  *     If the encoding is state dependent, this should be expanded to
  *     non-zero integral value.  Otherwise, 0.
+ *
+ *   _STATE_NEEDS_EXPLICIT_INIT(ps) :
+ *     If the encoding state pointed by "ps" needs to be initialized
+ *     explicitly, return non-zero. Otherwize, 0.
  *
  */
 
@@ -339,6 +343,9 @@ do {									\
 	do {								\
 		if (_pspriv_ == NULL) {					\
 			_pse_ = &_CEI_TO_STATE(_cei_, _func_);		\
+			if (_STATE_NEEDS_EXPLICIT_INIT(_pse_))		\
+			    _FUNCNAME(init_state)(_CEI_TO_EI(_cei_),	\
+							psenc);		\
 		} else {						\
 			_pse_ = &_state;				\
 			_FUNCNAME(unpack_state)(_CEI_TO_EI(_cei_),	\
