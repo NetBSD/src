@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 2000/08/22 19:46:32 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.16 2000/08/23 21:35:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,9 @@
 #define PIL_FD		11
 #define PIL_SER		12
 #define PIL_AUD		13
+#define	PIL_HIGH	15
+#define	PIL_SCHED	PIL_HIGH
+#define	PIL_LOCK	PIL_SCHED
 
 /* 
  * SPARC V9 CCR register
@@ -402,10 +405,10 @@ SPLHOLD(splaudio, PIL_AUD)
 /* second sparc timer interrupts at level 14 */
 SPLHOLD(splstatclock, 14)
 
-SPLHOLD(splhigh, 15)
+SPLHOLD(splsched, PIL_SCHED)
+SPLHOLD(spllock, PIL_LOCK)
 
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
+SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
@@ -439,6 +442,8 @@ static __inline void splx(newpil)
 #define	splserial()	splzerialX(__FILE__, __LINE__)
 #define	splaudio()	splaudioX(__FILE__, __LINE__)
 #define	splstatclock()	splstatclockX(__FILE__, __LINE__)
+#define	splsched()	splschedX(__FILE__, __LINE__)
+#define	spllock()	spllockX(__FILE__, __LINE__)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 

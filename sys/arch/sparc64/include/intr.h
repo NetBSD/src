@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2000/06/26 15:13:26 eeh Exp $ */
+/*	$NetBSD: intr.h,v 1.6 2000/08/23 21:35:56 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,19 +37,21 @@
  */
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
-#define IPL_NONE	0	/* nothing */
-#define IPL_SOFTINT	1	/* softint */
-#define IPL_SOFTCLOCK	1	/* timeouts */
-#define IPL_SOFTNET	1	/* protocol stack */
-#define IPL_BIO		PIL_BIO	/* block I/O */
-#define IPL_NET		PIL_NET	/* network */
-#define IPL_SOFTSERIAL	4	/* serial */
-#define IPL_TTY		PIL_TTY	/* terminal */
-#define IPL_IMP		PIL_IMP	/* memory allocation */
-#define IPL_AUDIO	PIL_AUD	/* audio */
-#define IPL_CLOCK	PIL_CLOCK	/* clock */
-#define IPL_SERIAL	PIL_SER	/* serial */
-#define IPL_HIGH	15	/* everything */
+#define	IPL_NONE	0		/* nothing */
+#define	IPL_SOFTINT	1		/* softint */
+#define	IPL_SOFTCLOCK	1		/* timeouts */
+#define	IPL_SOFTNET	1		/* protocol stack */
+#define	IPL_BIO		PIL_BIO		/* block I/O */
+#define	IPL_NET		PIL_NET		/* network */
+#define	IPL_SOFTSERIAL	4		/* serial */
+#define	IPL_TTY		PIL_TTY		/* terminal */
+#define	IPL_IMP		PIL_IMP		/* memory allocation */
+#define	IPL_AUDIO	PIL_AUD		/* audio */
+#define	IPL_CLOCK	PIL_CLOCK	/* clock */
+#define	IPL_SERIAL	PIL_SER		/* serial */
+#define	IPL_SCHED	PIL_SCHED	/* scheduler */
+#define	IPL_LOCK	PIL_LOCK	/* locks */
+#define	IPL_HIGH	PIL_HIGH	/* everything */
 
 #define	__GENERIC_SOFT_INTERRUPTS
 
