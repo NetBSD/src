@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.9 2000/04/29 06:01:08 veego Exp $
+# $NetBSD: network,v 1.10 2000/05/09 10:49:26 itojun Exp $
 #
 
 # PROVIDE: network
@@ -61,6 +61,10 @@ network_start()
 	# NOTE: obscure networking problems may occur if lo0 isn't configured...
 	#
 	ifconfig lo0 inet 127.0.0.1
+
+	# According to RFC1122, 127.0.0.0/8 should not leave the node.
+	#
+	route add -inet 127.0.0.0 -netmask 0xff000000 127.0.0.1 -reject
 
 	# Configure all of the network interfaces listed in $net_interfaces;
 	# if $auto_ifconfig is YES, grab all interfaces from ifconfig.
