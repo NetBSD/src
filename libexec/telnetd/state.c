@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.20 2001/08/20 11:13:17 wiz Exp $	*/
+/*	$NetBSD: state.c,v 1.21 2001/08/24 00:14:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.20 2001/08/20 11:13:17 wiz Exp $");
+__RCSID("$NetBSD: state.c,v 1.21 2001/08/24 00:14:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,6 @@ telrcv()
 {
 	register int c;
 	static int state = TS_DATA;
-#if	defined(CRAY2) && defined(UNICOS5)
-	char *opfrontp = pfrontp;
-#endif
 
 	while (ncc > 0) {
 		if ((&ptyobuf[BUFSIZ] - pfrontp) < 2)
@@ -367,23 +364,6 @@ gotiac:			switch (c) {
 			exit(1);
 		}
 	}
-#if	defined(CRAY2) && defined(UNICOS5)
-	if (!linemode) {
-		char	xptyobuf[BUFSIZ+NETSLOP];
-		char	xbuf2[BUFSIZ];
-		register char *cp;
-		int n = pfrontp - opfrontp, oc;
-		memmove(xptyobuf, opfrontp, n);
-		pfrontp = opfrontp;
-		pfrontp += term_input(xptyobuf, pfrontp, n, BUFSIZ+NETSLOP,
-					xbuf2, &oc, BUFSIZ);
-		for (cp = xbuf2; oc > 0; --oc) {
-			output_data("%c", *cp);
-			if (*cp++ == IAC)
-				output_data("%c", IAC);
-		}
-	}
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 }  /* end of telrcv */
 
 /*

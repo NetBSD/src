@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.28 2001/08/20 11:14:05 wiz Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.29 2001/08/24 00:14:04 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.28 2001/08/20 11:14:05 wiz Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.29 2001/08/24 00:14:04 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -991,20 +991,6 @@ doit(who)
 	/*NOTREACHED*/
 }  /* end of doit */
 
-#if	defined(CRAY2) && defined(UNICOS5) && defined(UNICOS50)
-	int
-Xterm_output(ibufp, obuf, icountp, ocount)
-	char **ibufp, *obuf;
-	int *icountp, ocount;
-{
-	int ret;
-	ret = term_output(*ibufp, obuf, *icountp, ocount);
-	*ibufp += *icountp;
-	*icountp = 0;
-	return(ret);
-}
-#define	term_output	Xterm_output
-#endif	/* defined(CRAY2) && defined(UNICOS5) && defined(UNICOS50) */
 
 /*
  * Main loop.  Select from pty and network, and
@@ -1151,9 +1137,6 @@ telnet(f, p, host)
 
 	(void) ioctl(f, FIONBIO, (char *)&on);
 	(void) ioctl(p, FIONBIO, (char *)&on);
-#if	defined(CRAY2) && defined(UNICOS5)
-	init_termdriver(f, p, interrupt, sendbrk);
-#endif
 
 #if	defined(SO_OOBINLINE)
 	(void) setsockopt(net, SOL_SOCKET, SO_OOBINLINE,
@@ -1173,20 +1156,6 @@ telnet(f, p, host)
 
 	(void) signal(SIGCHLD, cleanup);
 
-#if	defined(CRAY2) && defined(UNICOS5)
-	/*
-	 * Cray-2 will send a signal when pty modes are changed by slave
-	 * side.  Set up signal handler now.
-	 */
-	if ((int)signal(SIGUSR1, termstat) < 0)
-		perror("signal");
-	else if (ioctl(p, TCSIGME, (char *)SIGUSR1) < 0)
-		perror("ioctl:TCSIGME");
-	/*
-	 * Make processing loop check terminal characteristics early on.
-	 */
-	termstat();
-#endif
 
 #ifdef  TIOCNOTTY
 	{
@@ -1276,10 +1245,6 @@ telnet(f, p, host)
 		if (ncc < 0 && pcc < 0)
 			break;
 
-#if	defined(CRAY2) && defined(UNICOS5)
-		if (needtermstat)
-			_termstat();
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 		FD_ZERO(&ibits);
 		FD_ZERO(&obits);
 		FD_ZERO(&xbits);
@@ -1421,7 +1386,6 @@ telnet(f, p, host)
 			} else {
 				if (pcc <= 0)
 					break;
-#if	!defined(CRAY2) || !defined(UNICOS5)
 #ifdef	LINEMODE
 				/*
 				 * If ioctl from pty, pass it through net
@@ -1468,16 +1432,6 @@ telnet(f, p, host)
 				}
 				pcc--;
 				ptyip = ptyibuf+1;
-#else	/* defined(CRAY2) && defined(UNICOS5) */
-				if (!uselinemode) {
-					unpcc = pcc;
-					unptyip = ptyibuf;
-					pcc = term_output(&unptyip, ptyibuf2,
-								&unpcc, BUFSIZ);
-					ptyip = ptyibuf2;
-				} else
-					ptyip = ptyibuf;
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 			}
 		}
 
@@ -1487,11 +1441,6 @@ telnet(f, p, host)
 			c = *ptyip++ & 0377, pcc--;
 			if (c == IAC)
 				output_data("%c", c);
-#if	defined(CRAY2) && defined(UNICOS5)
-			else if (c == '\n' &&
-				     my_state_is_wont(TELOPT_BINARY) && newmap)
-				otput_data("\r");
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 			output_data("%c", c);
 			if ((c == '\r') && (my_state_is_wont(TELOPT_BINARY))) {
 				if (pcc > 0 && ((*ptyip & 0377) == '\n')) {
@@ -1501,17 +1450,6 @@ telnet(f, p, host)
 					output_datalen("\0", 1);
 			}
 		}
-#if	defined(CRAY2) && defined(UNICOS5)
-		/*
-		 * If chars were left over from the terminal driver,
-		 * note their existence.
-		 */
-		if (!uselinemode && unpcc) {
-			pcc = unpcc;
-			unpcc = 0;
-			ptyip = unptyip;
-		}
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 
 		if (FD_ISSET(f, &obits) && (nfrontp - nbackp) > 0)
 			netflush();
