@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1996/03/30 21:13:53 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@
 #include "cd.h"
 
 #include "zs.h"
-#include "fd.h"
+#include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
 #include "cgthree.h"
 #include "cgfour.h"
