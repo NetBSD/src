@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.16 1997/11/23 18:37:33 chopps Exp $
+.\"	$NetBSD: ddb.4,v 1.17 1998/01/15 06:38:18 thorpej Exp $
 .\"
-.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -732,7 +732,9 @@ In general, sending a break on a serial console will activate
 There are also key sequences for each port that will activate
 .Nm
 from the keyboard:
-.Bl -tag -offset indent -width "mac68k"
+.Bl -tag -offset indent -width "mvme68k"
+.It alpha
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
 .It amiga
 <LAlt>-<LAmiga>-<F10>
 .It hp300
@@ -741,6 +743,8 @@ from the keyboard:
 <Ctrl>-<Alt>-<Esc>
 .It mac68k
 <Command>-<Power>, or the Interrupt switch.
+.It mvme68k
+Abort switch on CPU card.
 .It sparc
 <L1>-A, or <Stop>-A
 .El
