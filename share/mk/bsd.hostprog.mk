@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.15 2001/10/25 01:21:14 thorpej Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.16 2001/10/25 13:48:50 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -108,6 +108,7 @@ cleanprog:
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
 beforedepend:
+CPPFLAGS=	${HOST_CPPFLAGS}
 
 .if defined(SRCS)
 afterdepend: .depend
