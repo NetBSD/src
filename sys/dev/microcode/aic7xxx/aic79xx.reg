@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.5 2003/08/29 01:28:53 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.6 2003/08/29 01:52:16 thorpej Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -1379,7 +1379,10 @@ register LUNLEN {
 	address			0x030
 	access_mode	RW
 	modes		M_CFG
+	mask		ILUNLEN	0x0F
+	mask		TLUNLEN	0xF0
 }
+const LUNLEN_SINGLE_LEVEL_LUN 0xF
 
 /*
  * CDB Limit
