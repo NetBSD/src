@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.58 1996/10/10 19:25:45 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.59 1996/10/12 23:06:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -144,27 +144,29 @@ int	seltrue __P((dev_t dev, int events, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
+
+void	printf __P((const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+int	sprintf __P((char *buf, const char *, ...))
+    __attribute__((__format__(__printf__,2,3)));
+
 void	panic __P((const char *, ...))
 #ifdef __KPRINTF_ATTRIBUTE__
     __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
 #else
     __attribute__((__noreturn__));
 #endif
-void	kprintf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
-int	ksprintf __P((char *buf, const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 
 void	tablefull __P((const char *));
 
-void	bcopy __P((const void *from, void *to, size_t len));
-void	ovbcopy __P((const void *from, void *to, size_t len));
-void	bzero __P((void *buf, size_t len));
-int	bcmp __P((const void *b1, const void *b2, size_t len));
+void	bcopy __P((const void *, void *, size_t));
+void	ovbcopy __P((const void *, void *, size_t));
+void	bzero __P((void *, size_t));
+int	bcmp __P((const void *, const void *, size_t));
 
 int      memcmp __P((const void *, const void *, size_t));
 void    *memcpy __P((void *, const void *, size_t));
@@ -231,7 +233,7 @@ void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
 
-int	uiomove __P((caddr_t, int, struct uio *));
+int	uiomove __P((void *, int, struct uio *));
 
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
