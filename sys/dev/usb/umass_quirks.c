@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.65 2004/06/25 13:23:55 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.66 2004/06/28 06:47:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.65 2004/06/25 13:23:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.66 2004/06/28 06:47:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
-
 	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_ORCA },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_WRONG_CSWTAG,
@@ -152,6 +151,18 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, umass_fixup_sony
+	},
+
+	/*
+	 * Stupid device reports itself as SFF-8070, but actually returns a UFI
+	 * interrupt descriptor.  - mycroft, 2004/06/28
+	 */
+	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40_MS },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
 	},
 
 	/*
