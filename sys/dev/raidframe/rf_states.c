@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.23 2003/12/31 17:47:53 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.24 2004/01/01 23:35:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.23 2003/12/31 17:47:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.24 2004/01/01 23:35:08 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -587,7 +587,6 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMap_t *asm_p;
-	RF_DagHeader_t *dag_h;
 	RF_Etimer_t timer;
 	int i;
 
@@ -602,24 +601,10 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 	tracerec->specific.user.dag_retry_us = 0;
 
 	RF_ETIMER_START(timer);
-	if (desc->flags & RF_DAG_RETURN_DAG) {
-		/* copy dags into paramDAG */
-		*(desc->paramDAG) = desc->dagArray[0].dags;
-		dag_h = *(desc->paramDAG);
-		for (i = 1; i < desc->numStripes; i++) {
-			/* concatenate dags from remaining stripes */
-			RF_ASSERT(dag_h);
-			while (dag_h->next)
-				dag_h = dag_h->next;
-			dag_h->next = desc->dagArray[i].dags;
-		}
-	} else {
-		/* free all dags */
-		for (i = 0; i < desc->numStripes; i++) {
-			rf_FreeDAG(desc->dagArray[i].dags);
-		}
+	/* free all dags */
+	for (i = 0; i < desc->numStripes; i++) {
+		rf_FreeDAG(desc->dagArray[i].dags);
 	}
-
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.cleanup_us = RF_ETIMER_VAL_US(timer);
@@ -645,10 +630,7 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 	tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
 
 	RF_ETIMER_START(timer);
-	if (desc->flags & RF_DAG_RETURN_ASM)
-		*(desc->paramASM) = asmh;
-	else
-		rf_FreeAccessStripeMap(asmh);
+	rf_FreeAccessStripeMap(asmh);
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.cleanup_us += RF_ETIMER_VAL_US(timer);
