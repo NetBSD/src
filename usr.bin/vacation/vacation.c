@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.24 2003/08/07 11:16:59 agc Exp $	*/
+/*	$NetBSD: vacation.c,v 1.25 2004/04/03 20:55:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.24 2003/08/07 11:16:59 agc Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.25 2004/04/03 20:55:13 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -89,14 +89,19 @@ alias_t *names;
 DB *db;
 char from[MAXLINE];
 static int tflag = 0;
-#define	APPARENTLY_TO	1
-#define	DELIVERED_TO	2
+#define	APPARENTLY_TO		1
+#define	DELIVERED_TO		2
+static int fflag = 0;
+#define	FROM_FROM		1
+#define	RETURN_PATH_FROM	2
+#define	SENDER_FROM		4
 
 int main(int, char **);
 int junkmail(void);
 int nsearch(const char *, const char *);
 void readheaders(void);
 int recent(void);
+void getfrom(char *);
 void sendmessage(const char *);
 void setinterval(time_t);
 void setreply(void);
@@ -113,8 +118,8 @@ main(int argc, char **argv)
 
 	opterr = iflag = 0;
 	interval = -1;
-	openlog("vacation", 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:Iir:t:")) != -1)
+	openlog(getprogname(), 0, LOG_USER);
+	while ((ch = getopt(argc, argv, "a:f:Iir:t:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
@@ -122,6 +127,22 @@ main(int argc, char **argv)
 			cur->name = optarg;
 			cur->next = names;
 			names = cur;
+			break;
+		case 'f':
+			for (p = optarg; *p; p++)
+				switch (*p) {
+				case 'F':
+					fflag |= FROM_FROM;
+					break;
+				case 'R':
+					fflag |= RETURN_PATH_FROM;
+					break;
+				case 'S':
+					fflag |= SENDER_FROM;
+					break;
+				default:
+					errx(1, "Unknown -f option `%c'", *p);
+				}
 			break;
 		case 'I':			/* backward compatible */
 		case 'i':			/* init the database */
@@ -223,18 +244,13 @@ readheaders(void)
 	cont = tome = 0;
 	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
 		switch(*buf) {
-		case 'F':		/* "From " */
-			/* XXX should instead consider Return-Path: and Sender: */
+		case 'F':		/* "From " or "From:" */
 			cont = 0;
-			if (!strncmp(buf, "From ", 5)) {
-				for (p = buf + 5; *p && *p != ' '; ++p);
-				*p = '\0';
-				(void)strlcpy(from, buf + 5, sizeof(from));
-				if ((p = strchr(from, '\n')))
-					*p = '\0';
-				if (junkmail())
-					exit(0);
-			}
+			if (!strncmp(buf, "From ", 5))
+				getfrom(buf + 5);
+			if ((fflag & FROM_FROM) == 0 ||
+			    strncmp(buf, "From:", 5))
+				getfrom(buf + 5);
 			break;
 		case 'P':		/* "Precedence:" */
 			cont = 0;
@@ -244,7 +260,8 @@ readheaders(void)
 				break;
 			if (!(p = strchr(buf, ':')))
 				break;
-			while (*++p && isspace((unsigned char)*p));
+			while (*++p && isspace((unsigned char)*p))
+				continue;
 			if (!*p)
 				break;
 			if (!strncasecmp(p, "junk", 4) ||
@@ -262,18 +279,30 @@ readheaders(void)
 				break;
 			cont = 1;
 			goto findme;
-		case 'A':
+		case 'A':		/* "Apparently-To:" */
 			if ((tflag & APPARENTLY_TO) == 0 ||
-			    strncmp(buf, "Apparently-To:", 3))
+			    strncmp(buf, "Apparently-To:", 14))
 				break;
 			cont = 1;
 			goto findme;
-		case 'D':
+		case 'D':		/* "Delivered-To:" */
 			if ((tflag & DELIVERED_TO) == 0 ||
-			    strncmp(buf, "Delivered-To:", 3))
+			    strncmp(buf, "Delivered-To:", 13))
 				break;
 			cont = 1;
 			goto findme;
+		case 'R':		/* "Return-Path:" */
+			cont = 0;
+			if ((fflag & RETURN_PATH_FROM) == 0 ||
+			    strncmp(buf, "Return-Path:", 12))
+				getfrom(buf + 12);
+			break;
+		case 'S':		/* "Sender:" */
+			cont = 0;
+			if ((fflag & SENDER_FROM) == 0 ||
+			    strncmp(buf, "Sender:", 7))
+				getfrom(buf + 7);
+			break;
 		default:
 			if (!isspace((unsigned char)*buf) || !cont || tome) {
 				cont = 0;
@@ -303,6 +332,31 @@ nsearch(const char *name, const char *str)
 		if (!strncasecmp(name, str, len))
 			return(1);
 	return(0);
+}
+
+/*
+ * getfrom --
+ *	return the first string in the buffer, stripping leading and trailing
+ *	blanks and <>.
+ */
+void
+getfrom(char *buf)
+{
+	char *s, *p;
+
+	for (s = buf; *s && isspace((unsigned char)*s); s++)
+		continue;
+	if (*s == '<')
+		*s++;
+	for (p = s; *p && !isspace((unsigned char)*p); p++)
+		continue;
+	if (*--p == '>')
+		*p = '\0';
+	else
+		*p = '\0';
+	(void)strlcpy(from, s, sizeof(from));
+	if (junkmail())
+		exit(0);
 }
 
 /*
