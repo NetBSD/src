@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.12 2002/12/31 15:47:37 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.13 2003/01/03 13:40:05 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,12 +46,8 @@
 struct mach_emuldata {
 	mach_cproc_t med_p;		/* Thread id */
 	int med_thpri;			/* Saved priority */
-	/* 
-	 * Lists for all the process rights. There is also a right 
-	 * list for all process, which is protected by a lock. This
-	 * lock protects the per processes lists.
-	 */
 	LIST_HEAD(med_right, mach_right) med_right;
+	struct lock med_rightlock;	/* process right list and lock */
 	mach_port_t med_nextright;	/* next unused right */
 
 	struct mach_port *med_bootstrap;/* task bootstrap port */
