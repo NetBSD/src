@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.74 2002/02/20 07:06:56 enami Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.75 2002/05/15 00:19:12 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74 2002/02/20 07:06:56 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.75 2002/05/15 00:19:12 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1245,6 +1245,7 @@ uvm_pagefree(pg)
 		pg->owner_tag = NULL;
 #endif
 		if (pg->loan_count) {
+			uvm_pagedequeue(pg);
 			return;
 		}
 	}
