@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.77 2004/06/04 09:49:12 he Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.78 2004/06/05 07:14:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -337,6 +337,13 @@ int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
 
 #ifdef SOCKBUF_DEBUG
+/*
+ * SBLASTRECORDCHK: check sb->sb_lastrecord is maintained correctly.
+ * SBLASTMBUFCHK: check sb->sb_mbtail is maintained correctly.
+ *
+ * => panic if the socket buffer is inconsistent.
+ * => 'where' is used for a panic message.
+ */
 void	sblastrecordchk(struct sockbuf *, const char *);
 #define	SBLASTRECORDCHK(sb, where)	sblastrecordchk((sb), (where))
 
