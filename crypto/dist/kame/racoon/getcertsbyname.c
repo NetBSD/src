@@ -1,4 +1,4 @@
-/*	$KAME: getcertsbyname.c,v 1.3 2001/07/29 13:56:43 itojun Exp $	*/
+/*	$KAME: getcertsbyname.c,v 1.4 2001/08/06 05:46:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,6 +41,7 @@
 #include <netdb.h>
 #endif
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 #ifdef DNSSEC_DEBUG
