@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.58 2002/07/22 15:13:41 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.59 2002/07/26 15:41:55 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -677,8 +677,8 @@ command to boot from your hard drive.
 .\}
 .if \n[sgimips] \{\
 Once the system reaches the PROM prompt, you will need to modify your
-PROM environment settings for SystemPartition, OSLoadPartition, OSLoader
-and OSLoadFilename and then boot the hard drive.
+PROM environment settings for SystemPartition, OSLoadPartition, OSLoader,
+OSLoadFilename and OSLoadOptions and then boot the hard drive.
 .\}
 .Nx
 will now boot.
@@ -1272,7 +1272,29 @@ if you are installing onto a drive that will be used with
 (i.e. you selected
 .Me "Re-install sets or install additional sets"
 from the main menu).
-.\}
+.\} \" \n[macppc]
+.if \n[sgimips] \{\
+.(bullet
+It is imprtant to note the disk on which 
+.Nx 
+is being installed on must already have an SGI volume header.  Disks not
+already formatted for
+.Tn IRIX 
+can be prepared with the
+.Tn IRIX
+.Xr fx 1 
+disk formatting tool.  
+.It
+Please also note that shared installs of 
+.Tn IRIX
+and 
+.Nx
+on the same drive have not been tested, and as such may cause problems 
+or may not work.  It is
+.Em strongly
+recommended that all data is backed before attempting such installs.
+.bullet)
+.\} \" \n[sgimips]
 .if !\n[atari]:\n[macppc]:\n[sgimips] \{\
 .(bullet
 Which portion of the disk to use.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 2002/07/15 12:48:01 rafal Exp $
+.\"	$NetBSD: prep,v 1.5 2002/07/26 15:41:56 rafal Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -9,10 +9,11 @@ Booting
 for the first time is most commonly done from the network.
 You must set up DHCP, TFTP, and possibly NFS for the installation
 procedure to be successful.
-Some SGI bootproms, such as the ones found on O2s, can read
-ELF kernels directly from the network, others require that you boot
-an ECOFF version of the kernel.
-You will notice this from the following message from PROM:
+Although newer SGI bootproms can read ELF kernels directly from the
+network, others require that you boot an ECOFF version of the kernel.
+Attempting to boot an ELF kernel on a system with a PROM that only
+supports ECOFF binaries will result in the following message being
+displayed by the PROM:
 .Pp
 .Dl Illegal f_magic number 0x7f45, expected MIPSELMAGIC or MIPSEBMAGIC.
 .Pp
@@ -21,19 +22,19 @@ format kernel into an ECOFF kernel using the
 .Pa elf2ecoff
 tool.
 .Pp
-Different SGI hardware will require the executable code in the loadable
-image to start at a different address.
-You must decide which image your system is capable of loading.
-The current options are:
-.(bullet
-Indigo2, Indy, Challenge M, Challenge S
-.It
-O2
-.bullet)
-.Pp
-Additionally there may be a third type in the future for 64bit machines.
-From now on this document assumes you are familiar with selecting the
-correct image for your system.
+.\" Different SGI hardware will require the executable code in the loadable
+.\" image to start at a different address.
+.\" You must decide which image your system is capable of loading.
+.\" The current options are:
+.\" .(bullet
+.\" Indigo2, Indy, Challenge M, Challenge S
+.\" .It
+.\" O2
+.\" .bullet)
+.\" .Pp
+.\" Additionally there may be a third type in the future for 64bit machines.
+.\" From now on this document assumes you are familiar with selecting the
+.\" correct image for your system.
 .Pp
 Note that some older bootproms have an interesting bug in reading the
 kernel via TFTP.
@@ -46,7 +47,10 @@ to set
 .Dq net.inet.ip.anonportmin
 and
 .Dq net.inet.ip.anonportmax
-to more suitable values.
+to more suitable values.  For example:
 .Pp
-The O2 internal MACE Ethernet chip isn't supported yet, so to boot the O2
-and mount nfsroot, you will need an external NIC in the PCI slot.
+.Dl # Ic sysctl -w net.inet.ip.anonportmin=16384
+.Dl # Ic sysctl -w net.inet.ip.anonportmax=32767
+.Pp
+.\" The O2 internal MACE Ethernet chip isn't supported yet, so to boot the O2
+.\" and mount nfsroot, you will need an external NIC in the PCI slot.
