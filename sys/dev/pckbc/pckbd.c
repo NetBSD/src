@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.10 1998/08/02 14:21:02 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.11 1998/08/07 10:28:36 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -62,7 +62,7 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wskbdmap_mfii.h>
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__alpha__)
 #include <sys/kernel.h> /* XXX for hz */
 #endif
 
@@ -513,6 +513,10 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		/* keyboard can't beep - use md code */
 #ifdef __i386__
 		sysbeep(d->pitch, d->period * hz / 1000);
+		/* comes in as ms, goes out as ticks; volume ignored */
+#endif
+#ifdef __alpha__
+		isabeep(d->pitch, d->period * hz / 1000);
 		/* comes in as ms, goes out as ticks; volume ignored */
 #endif
 #undef d
