@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.14 2000/05/29 21:10:42 jdolecek Exp $	*/
+/*	$NetBSD: config.c,v 1.15 2002/03/22 18:20:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.14 2000/05/29 21:10:42 jdolecek Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: config.c,v 1.15 2002/03/22 18:20:58 bouyer Exp $");
+#endif
 #endif
 #endif /* not lint */
 
