@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.14 2001/07/23 21:03:21 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.15 2001/07/31 13:15:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -76,7 +76,9 @@ struct pckbc_devcmd {
 
 /* data per slave device */
 struct pckbc_slotdata {
-	int polling; /* don't read data port in interrupt handler */
+	int polling;	/* don't process data in interrupt handler */
+	int poll_data;	/* data read from inr handler if polling */
+	int poll_stat;	/* status read from inr handler if polling */
 	TAILQ_HEAD(, pckbc_devcmd) cmdqueue; /* active commands */
 	TAILQ_HEAD(, pckbc_devcmd) freequeue; /* free commands */
 #define NCMD 5
@@ -147,6 +149,11 @@ pckbc_send_cmd(iot, ioh_c, val)
 	return (1);
 }
 
+/*
+ * Note: the spl games here are to deal with some strange PC kbd controllers
+ * in some system configurations.
+ * This is not canonical way to handle polling input.
+ */
 int
 pckbc_poll_data1(pt, slot, checkaux)
 	pckbc_tag_t pt;
@@ -154,8 +161,19 @@ pckbc_poll_data1(pt, slot, checkaux)
 	int checkaux;
 {
 	struct pckbc_internal *t = pt;
-	int i;
+	struct pckbc_slotdata *q = t->t_slotdata[slot];
+	int i, s;
 	u_char stat, c;
+
+	s = splhigh();
+
+	if (q && q->polling && q->poll_data != -1 && q->poll_stat != -1) {
+		stat	= q->poll_stat;
+		c	= q->poll_data;
+		q->poll_data = -1;
+		q->poll_stat = -1;
+		goto process;
+	}
 
 	/* if 1 port read takes 1us (?), this polls for 100ms */
 	for (i = 100000; i; i--) {
@@ -164,6 +182,7 @@ pckbc_poll_data1(pt, slot, checkaux)
 			KBD_DELAY;
 			c = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 		    
+		    process:
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {
 #ifdef PCKBCDEBUG
@@ -179,9 +198,12 @@ pckbc_poll_data1(pt, slot, checkaux)
 					continue;
 				}
 			}
+			splx(s);
 			return (c);
 		}
 	}
+
+	splx(s);
 	return (-1);
 }
 
@@ -522,7 +544,10 @@ pckbc_set_poll(self, slot, on)
 
 	t->t_slotdata[slot]->polling = on;
 
-	if (!on) {
+	if (on) {
+		t->t_slotdata[slot]->poll_data = -1;
+		t->t_slotdata[slot]->poll_stat = -1;
+	} else {
                 int s;
 
                 /*
@@ -917,15 +942,19 @@ pckbcintr(vsc)
 			continue;
 		}
 
-		if (q->polling)
-			break; /* pckbc_poll_data() will get it */
-
 		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
 #if NRND > 0
 		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
 #endif
+
+		if (q->polling) {
+			q->poll_data = data;
+			q->poll_stat = stat;
+			break; /* pckbc_poll_data() will get it */
+		}
+
 		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
 			continue;
 
