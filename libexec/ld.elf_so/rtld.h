@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.2 1996/12/17 05:04:10 cgd Exp $	*/
+/*	$NetBSD: rtld.h,v 1.3 1997/02/14 22:30:25 cgd Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,9 +39,7 @@
 #include <sys/types.h>
 #include <sys/exec_elf.h>
 #include "rtldenv.h"
-#ifdef RTLD_LOADER
 #include "link.h"
-#endif
 
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib:/usr/local/lib"
 
@@ -148,9 +146,7 @@ typedef struct Struct_Obj_Entry {
     int symbolic : 1;		/* True if generated with "-Bsymbolic" */
     int printed : 1;		/* True if ldd has printed it */
 
-#ifdef RTLD_LOADER
     struct link_map linkmap;	/* for GDB */
-#endif
 } Obj_Entry;
 
 extern struct r_debug _rtld_debug;
