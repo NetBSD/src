@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.6 1998/06/08 12:38:13 lukem Exp $
+.\" $NetBSD: pkg_info.1,v 1.7 1998/07/09 17:49:51 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -79,7 +79,16 @@ are generated.
 .It Fl e Ar pkg-name
 If the package identified by
 .Ar pkg-name
-is currently installed, return 0, otherwise return 1.  This option
+is currently installed, return 0, otherwise return 1.
+If the give pkg-name contains a
+shell metacharacter, it will be matched against all installed
+packages using
+.Xr fnmatch 3 ,
+and any packages found installed are printed to stdout, one name per
+line. This printing can be turned off using the
+.Fl q
+option.
+This option
 allows you to easily test for the presence of another (perhaps
 prerequisite) package from a script.
 .It Fl l Ar str
