@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.38 1994/10/27 04:16:46 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.39 1994/11/04 18:57:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -507,8 +507,7 @@ ahbprobe1(ahb, ia)
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != ahb->ahb_int) {
 			printf("ahb%d: irq mismatch; kernel configured %d != board configured %d\n",
-				ahb->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				ffs(ahb->ahb_int) - 1);
+			    ahb->sc_dev.dv_unit, ia->ia_irq, ahb->ahb_int);
 			return 0;
 		}
 	} else
@@ -917,22 +916,22 @@ ahb_find(ahb)
 	intdef = inb(iobase + INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
-		ahb->ahb_int = IRQ9;
+		ahb->ahb_int = 9;
 		break;
 	case INT10:
-		ahb->ahb_int = IRQ10;
+		ahb->ahb_int = 10;
 		break;
 	case INT11:
-		ahb->ahb_int = IRQ11;
+		ahb->ahb_int = 11;
 		break;
 	case INT12:
-		ahb->ahb_int = IRQ12;
+		ahb->ahb_int = 12;
 		break;
 	case INT14:
-		ahb->ahb_int = IRQ14;
+		ahb->ahb_int = 14;
 		break;
 	case INT15:
-		ahb->ahb_int = IRQ15;
+		ahb->ahb_int = 15;
 		break;
 	default:
 		printf("illegal int setting %x\n", intdef);
