@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.15 1998/10/19 22:21:19 tron Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.16 1999/03/15 07:55:19 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -466,8 +466,6 @@ loop:
 		printf("scheduler: no room for pid %d(%s), free %d\n",
 	   p->p_pid, p->p_comm, uvmexp.free);
 #endif
-	printf("scheduler: no room for pid %d(%s), free %d\n",
-	   p->p_pid, p->p_comm, uvmexp.free);/*XXXCDC: HIGHLY BOGUS */
 	(void) splhigh();
 	uvm_wait("schedpwait");
 	(void) spl0();
