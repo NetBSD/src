@@ -199,9 +199,9 @@ $ SIGCONT
 $ SIGCHLD
 20 Kindprozess beendet
 $ SIGTTIN
-21 Getsoppt (Eingabe)
+21 Gestoppt (Eingabe)
 $ SIGTTOU
-22 Getoppt (Ausgabe)
+22 Gestoppt (Ausgabe)
 $ SIGIO
 23 Ein/Ausgabe ist möglich
 $ SIGXCPU
