@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2002/04/27 23:38:22 shin Exp $
+#	$NetBSD: list,v 1.8 2002/05/29 04:11:02 lukem Exp $
 
 # extras in bin
 #PROG	bin/csh
@@ -28,10 +28,6 @@ SYMLINK	/tmp	var/tmp
 
 # termcap file
 COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
-
-# various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
-LINK	etc/spwd.db			etc/pwd.db
 
 # sysinst needs disktab template
 COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
