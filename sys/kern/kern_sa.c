@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sa.c,v 1.59 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.60 2005/03/02 11:05:34 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.59 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.60 2005/03/02 11:05:34 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
