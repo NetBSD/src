@@ -553,6 +553,7 @@ runqueue(forkflag, verbose)
 	extern ENVELOPE BlankEnvelope;
 	extern void clrdaemon __P((void));
 	extern void runqueueevent __P((bool));
+	extern void drop_privileges __P((void));
 
 	/*
 	**  If no work will ever be selected, don't even bother reading
@@ -657,12 +658,7 @@ runqueue(forkflag, verbose)
 
 	/* drop privileges */
 	if (geteuid() == (uid_t) 0)
-	{
-		if (RunAsGid != (gid_t) 0)
-			(void) setgid(RunAsGid);
-		if (RunAsUid != (uid_t) 0)
-			(void) setuid(RunAsUid);
-	}
+		drop_privileges();
 
 	/*
 	**  Create ourselves an envelope
