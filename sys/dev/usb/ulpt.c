@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.15 1999/08/22 22:22:43 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.16 1999/08/23 22:35:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@ int ulpt_status __P((struct ulpt_softc *));
 void ulpt_reset __P((struct ulpt_softc *));
 int ulpt_statusmsg __P((u_char, struct ulpt_softc *));
 
+void ieee1284_print_id __P((char *));
+
 #define	ULPTUNIT(s)	(minor(s) & 0x1f)
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
 
@@ -149,10 +151,9 @@ USB_ATTACH(ulpt)
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id = usbd_get_interface_descriptor(iface);
-#if 0
 	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
 	usb_device_request_t req;
-#endif
+	int len, alen;
 	char devinfo[1024];
 	usb_endpoint_descriptor_t *ed;
 	usbd_status r;
@@ -188,27 +189,27 @@ USB_ATTACH(ulpt)
 	}
 	sc->sc_ifaceno = id->bInterfaceNumber;
 
-#if 0
-XXX needs a different way to read the id string since the length
-is unknown.  usbd_do_request() returns error on a short transfer.
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_DEVICE_ID;
 	USETW(req.wValue, cd->bConfigurationValue);
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
 	USETW(req.wLength, sizeof devinfo - 1);
-	r = usbd_do_request(dev, &req, devinfo);
-	if (r == USBD_NORMAL_COMPLETION) {
-		int len;
-		char *idstr;
-		len = (devinfo[0] << 8) | (devinfo[1] & 0xff);
-		/* devinfo now contains an IEEE-1284 device ID */
-		idstr = devinfo+2;
-		idstr[len] = 0;
-		printf("%s: device id <%s>\n", USBDEVNAME(sc->sc_dev), idstr);
-	} else {
+	r = usbd_do_request_flags(dev, &req, devinfo,USBD_SHORT_XFER_OK,&alen);
+	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
+	} else if (alen <= 2) {
+		printf("%s: empty device id, no printer connected?\n",
+		       USBDEVNAME(sc->sc_dev));
+	} else {
+		/* devinfo now contains an IEEE-1284 device ID */
+		len = ((devinfo[0] & 0xff) << 8) | (devinfo[1] & 0xff);
+		if (len > sizeof devinfo - 3)
+			len = sizeof devinfo - 3;
+		devinfo[len] = 0;
+		printf("%s: device id <", USBDEVNAME(sc->sc_dev));
+		ieee1284_print_id(devinfo+2);
+		printf(">\n");
 	}
-#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 
@@ -461,6 +462,29 @@ ulptioctl(dev, cmd, data, flag, p)
 	}
 
 	return error;
+}
+
+/* XXX This does not belong here. */
+/*
+ * Print secelect parts of a IEEE 1284 device ID.
+ */
+void
+ieee1284_print_id(str)
+	char *str;
+{
+	char *p, *q;
+
+	for (p = str-1; p; p = strchr(p, ';')) {
+		p++;		/* skip ';' */
+		if (strncmp(p, "MFG:", 4) == 0 ||
+		    strncmp(p, "MANUFACTURER:", 14) == 0 ||
+		    strncmp(p, "MDL:", 4) == 0 ||
+		    strncmp(p, "MODEL:", 6) == 0) {
+			q = strchr(p, ';');
+			if (q)
+				printf("%.*s", (int)(q - p + 1), p);
+		}
+	}
 }
 
 #if defined(__FreeBSD__)
