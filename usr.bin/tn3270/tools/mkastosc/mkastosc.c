@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.4 1998/03/04 13:16:11 christos Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.5 1998/03/11 09:00:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -154,8 +154,8 @@ char	*argv[];
 		if ((Ph->name[i] != 0) &&
 			(Ph->name[i][0] == this->name[0]) &&
 			(strcmp(Ph->name[i], this->name) == 0)) {
-		    printf("\t{ 0x%02x, %s, ",
-				Ph-Hits, shiftof[i]);
+		    printf("\t{ 0x%02lx, %s, ",
+				(u_long)(Ph-Hits), shiftof[i]);
 		    if (memcmp("AID_", this->name, 4) == 0) {	/* AID key */
 			printf("FCN_AID, ");
 		    } else {
