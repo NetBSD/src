@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.22 2001/02/07 12:40:44 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23 2001/02/18 20:17:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -87,7 +87,9 @@ ext2fs_inactive(v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL); 
+		if (ip->i_e2fs_size != 0) {
+			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
+		}
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
