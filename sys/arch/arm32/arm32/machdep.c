@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1998/01/21 22:55:19 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1998/02/21 23:00:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -153,7 +153,8 @@ int cold = 1;
 
 void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -240,20 +241,29 @@ delay(n)
 }
 
 
-/* A few functions that are used to help construct the page tables
+/*
+ * A few functions that are used to help construct the page tables
  * during the bootstrap process.
  */
 
 void
-map_section(pagetable, va, pa)
+map_section(pagetable, va, pa, cacheable)
 	vm_offset_t pagetable;
 	vm_offset_t va;
-	vm_offset_t pa; 
+	vm_offset_t pa;
+	int cacheable;
 {
+#ifdef	DIAGNOSTIC
 	if ((va & 0xfffff) != 0)
 		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
+#endif	/* DIAGNOSTIC */
 
-	((u_int *)pagetable)[(va >> 20)] = L1_SEC((pa & PD_MASK));
+	if (cacheable)
+		((u_int *)pagetable)[(va >> PDSHIFT)] =
+		    L1_SEC((pa & PD_MASK), PT_C);
+	else
+		((u_int *)pagetable)[(va >> PDSHIFT)] =
+		    L1_SEC((pa & PD_MASK), 0);
 }
 
 
@@ -263,12 +273,19 @@ map_pagetable(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
+#ifdef	DIAGNOSTIC
 	if ((pa & 0xc00) != 0)
 		panic("pagetables should be group allocated on pageboundry");
-	((u_int *)pagetable)[(va >> 20) + 0] = L1_PTE((pa & PG_FRAME) + 0x000);
-	((u_int *)pagetable)[(va >> 20) + 1] = L1_PTE((pa & PG_FRAME) + 0x400);
-	((u_int *)pagetable)[(va >> 20) + 2] = L1_PTE((pa & PG_FRAME) + 0x800);
-	((u_int *)pagetable)[(va >> 20) + 3] = L1_PTE((pa & PG_FRAME) + 0xc00);
+#endif	/* DIAGNOSTIC */
+
+	((u_int *)pagetable)[(va >> PDSHIFT) + 0] =
+	     L1_PTE((pa & PG_FRAME) + 0x000);
+	((u_int *)pagetable)[(va >> PDSHIFT) + 1] =
+	     L1_PTE((pa & PG_FRAME) + 0x400);
+	((u_int *)pagetable)[(va >> PDSHIFT) + 2] =
+	     L1_PTE((pa & PG_FRAME) + 0x800);
+	((u_int *)pagetable)[(va >> PDSHIFT) + 3] =
+	     L1_PTE((pa & PG_FRAME) + 0xc00);
 }
 
 
@@ -278,6 +295,10 @@ map_entry(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
+/*
+	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KRW));
+*/
 	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
 	    L2_PTE((pa & PG_FRAME), AP_KRW));
 }
@@ -289,6 +310,10 @@ map_entry_nc(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
+/*
+	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW));
+*/
 	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
 	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW));
 }
@@ -300,6 +325,11 @@ map_entry_ro(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
+/*
+	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KR));
+*/
+
 	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
 	    L2_PTE((pa & PG_FRAME), AP_KR));
 }
@@ -325,70 +355,7 @@ cpu_startup()
 
 	/* Set the cpu control register */
 
-#if 1
 	cpu_setup(boot_args);
-#else
-	/* XXX - this should be vectored via a setup function */
-
-	switch (cputype) {
-#ifdef CPU_ARM6
-	case ID_ARM610:
-		cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE;
-                                        
-		if (cpu_cache & 1)
-			cpu_ctrl |= CPU_CONTROL_IDC_ENABLE;
-		if (cpu_cache & 2)
-			cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
-
-		if (!(cpu_cache & 4))
-			cpu_ctrl |= CPU_CONTROL_CPCLK;
-
-#ifdef ARM6_LATE_ABORT
-		cpu_ctrl |= CPU_CONTROL_LABT_ENABLE;
-#endif	/* ARM6_LATE_ABORT */
-		break;
-#endif	/* CPU_ARM6 */
-#ifdef CPU_ARM7
-	case ID_ARM700:
-	case ID_ARM710:
-		cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
-		   | CPU_CONTROL_LABT_ENABLE;
-                                        
-		if (cpu_cache & 1)
-			cpu_ctrl |= CPU_CONTROL_IDC_ENABLE;
-		if (cpu_cache & 2)
-			cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
-
-		if (!(cpu_cache & 4))
-			cpu_ctrl |= CPU_CONTROL_CPCLK;
-		break;
-#endif	/* CPU_ARM7 */
-#ifdef CPU_SA110
-	case ID_SA110:
-		cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-			   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE;
-		if (cpu_cache & 1)
-			cpu_ctrl |= (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE);
-		if (cpu_cache & 2)
-			cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
-		if (cpu_cache & 8)
-			cpu_ctrl |= CPU_CONTROL_IC_ENABLE;
-		if (cpu_cache & 16)
-			cpu_ctrl |= CPU_CONTROL_DC_ENABLE;
-		break;
-#endif	/* CPU_SA110 */
-	default:
-		panic("Unrecognised CPU\n");
-	}
-
-	/* Clear out the cache */
-
-	cpu_cache_purgeID();
-    
-	cpu_control(0xffffffff, cpu_ctrl);
-#endif
 
 	/* All domains MUST be clients, permissions are VERY important */
 
@@ -397,6 +364,11 @@ cpu_startup()
 	/* Lock down zero page */
 
 	zero_page_readonly();
+
+	/*
+	 * Give pmap a chance to set up a few more things now the vm
+	 * is initialised
+	 */
 
 	pmap_postinit();
 
@@ -459,13 +431,13 @@ cpu_startup()
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 
-	/*
-	 * First <residual> buffers get (base+1) physical pages
-	 * allocated for them.  The rest get (base) physical pages.
-	 *
-	 * The rest of each buffer occupies virtual space,
-	 * but has no physical memory allocated for it.
-	 */
+		/*
+		 * First <residual> buffers get (base+1) physical pages
+		 * allocated for them.  The rest get (base) physical pages.
+		 *
+		 * The rest of each buffer occupies virtual space,
+		 * but has no physical memory allocated for it.
+		 */
 
 		curbuf = (vm_offset_t)buffers + loop * MAXBSIZE;
 		curbufsize = CLBYTES * (loop < residual ? base+1 : base);
