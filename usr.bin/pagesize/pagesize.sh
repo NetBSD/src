@@ -31,38 +31,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mkioctls	8.2 (Berkeley) 4/28/95
+#	@(#)pagesize.sh	8.1 (Berkeley) 4/3/94
 #
-awk '
-BEGIN {
-	print "#include <sys/param.h>"
-	print "#include <sys/socket.h>"
-	print "#include <sys/socketvar.h>"
-	print "#include <net/route.h>"
-	print "#include <net/if.h>"
-	print "#include <sys/termios.h>"
-	print "#define COMPAT_43"
-	print "#include <sys/ioctl.h>"
-	print ""
-	print "char *"
-	print "ioctlname(val)"
-	print "{"
-	print ""
-}
 
-/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO)[A-Z]*[ 	]*_IO/ {
-	
-	# find where the name starts
-	for (i = 1; i <= NF; i++)
-		if ($i ~ /define/)
-			break;
-	++i;
-	# 
-	printf("\tif (val ==  %s)\n\t\treturn(\"%s\");\n", $i, $i);
+PATH=/bin:/usr/bin:/usr/sbin
+export PATH
 
-}
-END {
-	print "\n\treturn(NULL);"
-	print "}"
-}
-' /usr/include/sys/ioctl.h /usr/include/sys/ioctl_compat.h
+sysctl -n hw.pagesize
