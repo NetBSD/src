@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 1999/10/22 10:43:11 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 1999/10/22 20:59:08 is Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -49,6 +49,7 @@
  * ar_io.c
  */
 extern const char *arcname;
+extern int curdirfd;
 extern const char *gzip_program;
 extern time_t starttime;
 int ar_open __P((const char *));
@@ -63,6 +64,7 @@ int ar_fow __P((off_t, off_t *));
 int ar_rev __P((off_t ));
 int ar_next __P((void));
 void ar_summary __P((int));
+int ar_dochdir __P((char *));
 
 /*
  * ar_subs.c
@@ -150,7 +152,7 @@ int set_crc __P((ARCHD *, int));
  * ftree.c
  */
 int ftree_start __P((void));
-int ftree_add __P((char *));
+int ftree_add __P((char *, int));
 void ftree_sel __P((ARCHD *));
 void ftree_chk __P((void));
 int next_file __P((ARCHD *));
@@ -181,17 +183,17 @@ int getoldopt __P((int, char **, char *));
 extern FSUB fsub[];
 extern int ford[];
 extern int cpio_mode;
-extern char *chdir_dir;
 void options __P((int, char **));
 OPLIST * opt_next __P((void));
 int opt_add __P((const char *));
+int opt_chdir __P((char *));
 int bad_opt __P((void));
 
 /*
  * pat_rep.c
  */
 int rep_add __P((char *));
-int pat_add __P((char *));
+int pat_add __P((char *, int));
 void pat_chk __P((void));
 int pat_sel __P((ARCHD *));
 int pat_match __P((ARCHD *));

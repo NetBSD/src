@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.8 1998/07/28 17:44:24 mycroft Exp $	*/
+/*	$NetBSD: ftree.c,v 1.9 1999/10/22 20:59:08 is Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.8 1998/07/28 17:44:24 mycroft Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.9 1999/10/22 20:59:08 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,11 +157,12 @@ ftree_start()
 
 #if __STDC__
 int
-ftree_add(char *str)
+ftree_add(char *str, int isdir)
 #else
 int
-ftree_add(str)
+ftree_add(str, isdir)
 	char *str;
+	int isdir;
 #endif
 {
 	FTREE *ft;
@@ -188,7 +189,7 @@ ftree_add(str)
 	if (((len = strlen(str) - 1) > 0) && (str[len] == '/'))
 		str[len] = '\0';
 	ft->fname = str;
-	ft->refcnt = 0;
+	ft->refcnt = -isdir;
 	ft->fow = NULL;
 	if (fthead == NULL) {
 		fttail = fthead = ft;
@@ -266,7 +267,7 @@ ftree_chk()
 	 * that never had a match
 	 */
 	for (ft = fthead; ft != NULL; ft = ft->fow) {
-		if (ft->refcnt > 0)
+		if (ft->refcnt != 0)
 			continue;
 		if (wban == 0) {
 			tty_warn(1,
@@ -327,6 +328,16 @@ ftree_arg()
 				ftcur = fthead;
 			else if ((ftcur = ftcur->fow) == NULL)
 				return(-1);
+
+			if (ftcur->refcnt < 0) {
+				/*
+				 * chdir entry.
+				 * Change directory and retry loop.
+				 */
+				if (ar_dochdir(ftcur->fname))
+					return (-1);
+				continue;
+			}
 			farray[0] = ftcur->fname;
 		}
 
