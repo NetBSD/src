@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.5 1993/05/26 10:06:47 deraadt Exp $
+ *	$Id: tty_pty.c,v 1.6 1993/06/06 23:05:15 cgd Exp $
  */
 
 /*
@@ -172,12 +172,12 @@ again:
 			goto again;
 		}
 		while (RB_LEN(&tp->t_can) > 1 && uio->uio_resid > 0)
-			if (ureadc(getc(&tp->t_can), uio) < 0) {
+			if (ureadc(rbgetc(&tp->t_can), uio) < 0) {
 				error = EFAULT;
 				break;
 			}
 		if (RB_LEN(&tp->t_can) == 1)
-			(void) getc(&tp->t_can);
+			(void) rbgetc(&tp->t_can);
 		if (RB_LEN(&tp->t_can))
 			return (error);
 	} else
@@ -629,7 +629,7 @@ ptyioctl(dev, cmd, data, flag)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-			while (getc(&tp->t_out) >= 0)
+			while (rbgetc(&tp->t_out) >= 0)
 				;
 			break;
 
