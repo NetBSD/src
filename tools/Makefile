@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2003/07/20 14:06:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.69 2003/07/24 13:00:52 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -129,3 +129,6 @@ depend-${d} all-${d} dependall-${d}: ${_deps}
 # stash current name in case the next entry is .WAIT
 _prev:=		${d}
 .endfor
+
+cleandir:
+	rm -f ${CLEANFILES}
