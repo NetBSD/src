@@ -1,7 +1,7 @@
-.\"	$NetBSD: rpcgen.1,v 1.13 2003/01/05 19:28:13 sommerfeld Exp $
+.\"	$NetBSD: rpcgen.1,v 1.14 2003/01/06 19:26:17 wiz Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd April 3, 2001
+.Dd January 6, 2003
 .Dt RPCGEN 1
 .Sh NAME
 .Nm rpcgen
@@ -293,10 +293,10 @@ Compile stubs in "backwards compatible" mode, disabling support for
 transport-independant RPC.
 .It Fl l
 Compile into client-side stubs.
-.Xr inetd 8 .  
+.Xr inetd 8 .
 .It Fl I
-Compile stubs meant for use in programs started by 
-.Xr inetd 8 .  
+Compile stubs meant for use in programs started by
+.Xr inetd 8 .
 .It Fl L
 Server errors will be sent to syslog instead of stderr.
 .It Fl m
@@ -470,7 +470,7 @@ use:
 $ rpcgen -n tcp -o prot_svc.c prot.x
 .Ed
 .Sh SEE ALSO
-.Xr cpp 1
+.Xr cpp 1 ,
 .Xr inetd 8
 .Sh HISTORY
 The
