@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.11 1997/09/16 12:32:25 lukem Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.12 1997/09/21 02:35:44 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.11 1997/09/16 12:32:25 lukem Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.12 1997/09/21 02:35:44 enami Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -151,7 +151,8 @@ portal_tcp(pcr, key, v, kso, fdp)
 		}
 
 		sain.sin_addr = *ipp[0];
-		if (connect(so, (struct sockaddr *) &sain, sizeof(sain)) == 0) {
+		if (connect(so, (struct sockaddr *) &sain,
+		    sizeof(sain)) == 0) {
 			*fdp = so;
 			return (0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.9 1997/09/16 12:32:24 lukem Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.10 1997/09/21 02:35:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.9 1997/09/16 12:32:24 lukem Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.10 1997/09/21 02:35:43 enami Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -72,7 +72,8 @@ portal_file(pcr, key, v, so, fdp)
 	strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
 
 #ifdef DEBUG
-	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_gid);
+	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid,
+	    pcr->pcr_gid);
 #endif
 
 	if (setegid(pcr->pcr_gid) < 0 ||
@@ -90,7 +91,7 @@ portal_file(pcr, key, v, so, fdp)
 
 	if (seteuid((uid_t) 0) < 0) {	/* XXX - should reset gidset too */
 		error = errno;
-		syslog(LOG_ERR, "setcred: %s", strerror(error));
+		syslog(LOG_ERR, "setcred: %m");
 		if (fd >= 0) {
 			(void) close(fd);
 			fd = -1;
@@ -101,7 +102,8 @@ portal_file(pcr, key, v, so, fdp)
 		*fdp = fd;
 
 #ifdef DEBUG
-	fprintf(stderr, "pt_file returns *fdp = %d, error = %d\n", *fdp, error);
+	fprintf(stderr, "pt_file returns *fdp = %d, error = %d\n", *fdp,
+	    error);
 #endif
 
 	return (error);
