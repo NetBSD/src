@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.9 2001/11/13 06:17:47 lukem Exp $ */
+/* $NetBSD: wsevent.c,v 1.10 2002/01/12 16:41:02 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.9 2001/11/13 06:17:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.10 2002/01/12 16:41:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -108,8 +108,7 @@ wsevent_init(struct wseventvar *ev)
 #endif
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
-		       M_DEVBUF, M_WAITOK);
-	memset(ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
+		       M_DEVBUF, M_WAITOK|M_ZERO);
 }
 
 /*

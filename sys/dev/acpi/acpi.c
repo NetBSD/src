@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.5 2001/11/13 13:01:57 lukem Exp $	*/
+/*	$NetBSD: acpi.c,v 1.6 2002/01/12 16:43:53 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.5 2001/11/13 13:01:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.6 2002/01/12 16:43:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,10 +431,9 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 		case ACPI_TYPE_PROCESSOR:
 		case ACPI_TYPE_THERMAL:
 		case ACPI_TYPE_POWER:
-			ad = malloc(sizeof(*ad), M_DEVBUF, M_NOWAIT);
+			ad = malloc(sizeof(*ad), M_DEVBUF, M_NOWAIT|M_ZERO);
 			if (ad == NULL)
 				return (AE_NO_MEMORY);
-			memset(ad, 0, sizeof(*ad));
 
 			ad->ad_handle = handle;
 			ad->ad_level = level;
