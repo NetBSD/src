@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.239 2004/04/30 02:14:17 lukem Exp $
+.\"	$NetBSD: options.4,v 1.240 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -420,8 +420,7 @@ This is currently limited to the i386 and vax ports.
 On those architectures that support it, this enables binary
 compatibility with IRIX o32 binaries built for the same architecture.
 This feature is experimental, and it is currently limited to
-the sgimips port of
-.Nx .
+the sgimips port.
 .It Cd options COMPAT_MACH
 On those architectures that support it, this enables the emulation of
 Mach kernel traps for binaries built for the same architecture.
@@ -1466,7 +1465,7 @@ for details.
 Include support for ALTQ-implemented HFSC (Hierarchical Fair Service Curve)
 module.
 HFSC supports both link-sharing and guaranteed real-time services.
-H-FSC employs a service curve based QoS model, and its unique feature
+HFSC employs a service curve based QoS model, and its unique feature
 is an ability to decouple delay and bandwidth allocation.
 Requires
 .Em ALTQ_RED

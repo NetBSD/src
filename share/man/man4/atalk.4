@@ -1,4 +1,4 @@
-.\"	$NetBSD: atalk.4,v 1.16 2003/04/16 13:35:16 wiz Exp $
+.\"	$NetBSD: atalk.4,v 1.17 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" This file is derived from the atalk.4 man page in the Netatalk 1.4b2
 .\" distribution. That distribution is covered by the following copyright:
@@ -89,7 +89,8 @@ The node for
 .Xr bind 2
 must always be
 .Dv ATADDR_ANYNODE :
-``this node.'' The net
+.Dq this node .
+The net
 .\"may
 must
 be
@@ -97,8 +98,9 @@ be
 .\"or
 .\".Dv ATADDR_LATENET .
 .Dv ATADDR_ANYNET
-corresponds to the machine's ``primary'' address (the first
-configured).
+corresponds to the machine's
+.Dq primary
+address (the first configured).
 .\".Dv ATADDR_LATENET
 .\"causes the address in outgoing packets to be determined when a packet
 .\"is sent, i.e. determined late.
