@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/30 06:41:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/12/19 15:23:43 rtr Exp $
 
 XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
 
@@ -72,7 +72,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/mesa/src/X
 
-CPPFLAGS+=	-DIN_MODULE -DXFree86Module -DGLXEXT -DGLX_USE_MESA
+CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
