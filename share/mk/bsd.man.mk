@@ -1,5 +1,5 @@
 #	from: @(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
-#	$Id: bsd.man.mk,v 1.10 1993/08/15 21:27:26 mycroft Exp $
+#	$Id: bsd.man.mk,v 1.11 1994/01/25 23:35:36 jtc Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -82,12 +82,12 @@ manlinkinstall:
 	while test $$# -ge 2; do \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '[^\.]*\.\(.*\)'`; \
-		l=$${dir}${MANSUBDIR}/`expr $$name : '\([^\.]*\)'`.0; \
+		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
+		l=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0; \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '[^\.]*\.\(.*\)'`; \
-		t=$${dir}${MANSUBDIR}/`expr $$name : '\([^\.]*\)'`.0; \
+		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
+		t=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
 		ln $$l $$t; \
