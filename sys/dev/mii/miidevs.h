@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.44 2003/01/16 18:46:08 jonathan Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.45 2003/01/17 06:21:13 gendalia Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.44 2003/01/16 18:43:40 jonathan Exp 
+ *	NetBSD: miidevs,v 1.45 2003/01/17 06:20:07 gendalia Exp 
  */
 
 /*-
@@ -110,6 +110,8 @@
 #define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
 #define	MII_MODEL_ALTIMA_AC101	0x0021
 #define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101L	0x0012
+#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
