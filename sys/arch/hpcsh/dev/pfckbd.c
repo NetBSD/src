@@ -1,7 +1,7 @@
-/*	$NetBSD: pfckbd.c,v 1.3 2001/09/14 17:11:52 uch Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.4 2002/01/27 05:15:35 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#define PFCKBD_DEBUG
+
+#include "debug_hpcsh.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,20 +53,11 @@
 
 #include <hpcsh/dev/pfckbdvar.h>
 
-#ifdef PFCKBD_DEBUG
-int	pfckbd_debug = 0;
-#define	DPRINTF(fmt, args...)						\
-	if (pfckbd_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#define	DPRINTFN(n, arg)						\
-	if (pfckbd_debug > (n))						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#define STATIC
-#else
-#define	DPRINTF(arg...)		((void)0)
-#define DPRINTFN(n, arg...)	((void)0)
-#define STATIC	static
+#ifdef	PFCKBD_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	pfckbd_debug
 #endif
+#include <hpcsh/hpcsh/debug.h>
 
 STATIC int pfckbd_match(struct device *, struct cfdata *, void *);
 STATIC void pfckbd_attach(struct device *, struct device *, void *);
