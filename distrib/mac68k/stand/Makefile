@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.2 2004/03/27 18:05:38 fredb Exp $
+#       $NetBSD: Makefile,v 1.3 2004/06/26 16:09:09 fredb Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,6 +15,8 @@ UUDECODE_FILES+=pdisk.sea.hqx Installer_1.1h.src.sea.hqx res-edit-and-others.hqx
 
 release: ${UUDECODE_FILES}
 	${INSTALL} -d ${RELEASEDIR}/${MACHINE}/installation/misc
+	${RELEASE_INSTALL} ${DISTRIBDIR}/mac68k/stand/extensions.map \
+	  ${RELEASEDIR}/${MACHINE}/installation/misc
 	rm -f \
 	  ${RELEASEDIR}/${MACHINE}/installation/misc/{BSDSUM,CKSUM,MD5,SYSVSUM}
 	for i in BSD_Mac68k_Booter.bin Mkfs.sea.hqx Booter-HTML-manual-12.tar \
