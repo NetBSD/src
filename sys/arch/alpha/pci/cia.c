@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.51 2000/02/06 01:26:50 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.52 2000/02/09 01:39:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.51 2000/02/06 01:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.52 2000/02/09 01:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ struct cia_config cia_configuration;
 #endif
 
 #ifndef CIA_PYXIS_FORCE_BWX
-#define	CIA_PYXIS_FORCE_BWX 1
+#define	CIA_PYXIS_FORCE_BWX 0
 #endif
 
 int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
