@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1997/01/31 02:09:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1997/01/31 22:34:40 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
+#include <machine/mon.h>
 
 #include "pmap_pvt.h"
 
@@ -71,9 +72,9 @@ static int net_mkunit __P((int, int));
 static int sd_mkunit __P((int, int));
 static int xx_mkunit __P((int, int));
 
-void	findroot __P((struct device **, int *)); 
+void	findroot __P((struct device **, int *));
 
-struct devnametobdevmaj sun3x_nam2blk[] = {
+static struct devnametobdevmaj nam2blk[] = {
 	{ "xy",		3 },
 	{ "sd",		7 },
 	{ "xd",		10 },
@@ -84,7 +85,7 @@ struct devnametobdevmaj sun3x_nam2blk[] = {
 
 void configure()
 {
-	struct device *mainbus, *booted_device;
+	struct device *booted_device;
 	int booted_partition;
 
 	/* General device autoconfiguration. */
@@ -100,7 +101,7 @@ void configure()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, sun3_nam2blk);
+	setroot(booted_device, booted_partition, nam2blk);
 
 	swapconf();
 	dumpconf();
@@ -160,16 +161,18 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
-	struct device *dv;
+	MachMonRomVector *rvec;
 	MachMonBootParam *bpp;
+	struct device *dv;
 	char name[32];
 	int unit, part, i;
+
+	rvec = romVectorPtr;
+	bpp = *rvec->bootParam;
 
 	/* Default to "Not found". */
 	*devpp = NULL;
 	*partp = 0;
-
-	bpp = *romp->bootParam;
 
 	/* Extract device name (always two letters). */
 	name[0] = bpp->devName[0];
