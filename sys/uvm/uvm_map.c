@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.29 1998/10/11 23:14:47 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.30 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -663,7 +663,7 @@ step3:
 		 * are likely to extend
 		 */
 		vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ? 
-			UVM_AMAP_CHUNK * PAGE_SIZE : 0;
+			UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
 		struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
 		new_entry->aref.ar_slotoff = 0;
 		new_entry->aref.ar_amap = amap;
@@ -1480,7 +1480,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		newentry->aref.ar_amap = entry->aref.ar_amap;
 		if (newentry->aref.ar_amap) {
 			newentry->aref.ar_slotoff =
-			    entry->aref.ar_slotoff + (fudge / PAGE_SIZE);
+			    entry->aref.ar_slotoff + (fudge >> PAGE_SHIFT);
 			amap_ref(newentry, AMAP_SHARED |
 			    ((flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0));
 		} else {

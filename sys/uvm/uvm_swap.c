@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.19 1998/09/06 23:09:40 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.20 1998/10/18 23:50:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -578,7 +578,7 @@ sys_swapctl(p, v, retval)
 				 * with NetBSD 1.3.
 				 */
 				sdp->swd_ose.ose_inuse = 
-				    btodb(sdp->swd_npginuse * PAGE_SIZE);
+				    btodb(sdp->swd_npginuse << PAGE_SHIFT);
 				error = copyout((caddr_t)&sdp->swd_ose,
 				    (caddr_t)sep, sizeof(struct oswapent));
 
@@ -902,7 +902,7 @@ swap_on(p, sdp)
 	 */
 
 	sdp->swd_ose.ose_nblks = nblocks;
-	npages = dbtob((u_int64_t)nblocks) / PAGE_SIZE;
+	npages = dbtob((u_int64_t)nblocks) >> PAGE_SHIFT;
 
 	/*
 	 * for block special files, we want to make sure that leave
@@ -966,7 +966,7 @@ swap_on(p, sdp)
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
 		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
-		rootpages = round_page(dbtob(rootblocks)) / PAGE_SIZE;
+		rootpages = round_page(dbtob(rootblocks)) >> PAGE_SHIFT;
 		if (rootpages > npages)
 			panic("swap_on: miniroot larger than swap?");
 
@@ -1151,7 +1151,7 @@ swstrategy(bp)
 	 * be yanked out from under us because we are holding resources
 	 * in it (i.e. the blocks we are doing I/O on).
 	 */
-	pageno = dbtob(bp->b_blkno) / PAGE_SIZE;
+	pageno = dbtob(bp->b_blkno) >> PAGE_SHIFT;
 	simple_lock(&swap_data_lock);
 	sdp = swapdrum_getsdp(pageno);
 	simple_unlock(&swap_data_lock);
@@ -1168,7 +1168,7 @@ swstrategy(bp)
 	 */
 
 	pageno = pageno - sdp->swd_drumoffset;	/* page # on swapdev */
-	bn = btodb(pageno * PAGE_SIZE);		/* convert to diskblock */
+	bn = btodb(pageno << PAGE_SHIFT);	/* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld\n",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
@@ -1732,7 +1732,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
-	startblk = btodb(startslot * PAGE_SIZE);
+	startblk = btodb(startslot << PAGE_SHIFT);
 
 	/*
 	 * first, map the pages into the kernel (XXX: currently required
@@ -1779,7 +1779,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/* XXXMRG: probably -- this is obviously something inherited... */
 	if (swapdev_vp->v_type == VBLK)
 		bp->b_dev = swapdev_vp->v_rdev;
-	bp->b_bcount = npages * PAGE_SIZE;
+	bp->b_bcount = npages << PAGE_SHIFT;
 
 	/* 
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].
@@ -1787,7 +1787,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_dirtyoff = 0;
-		bp->b_dirtyend = npages * PAGE_SIZE;
+		bp->b_dirtyend = npages << PAGE_SHIFT;
 		s = splbio();
 		swapdev_vp->v_numoutput++;
 		splx(s);
@@ -1897,9 +1897,7 @@ uvm_swap_aiodone(aio)
 	struct uvm_aiodesc *aio;
 {
 	struct swapbuf *sbp = aio->pd_ptr;
-	/* XXXMRG: does this work if PAGE_SIZE is a variable, eg SUN4C&&SUN4 */
-	/* XXX it does with GCC */
-	struct vm_page *pps[MAXBSIZE/PAGE_SIZE];
+	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT];
 	int lcv, s;
 	vaddr_t addr;
 	UVMHIST_FUNC("uvm_swap_aiodone"); UVMHIST_CALLED(pdhist);
@@ -1909,7 +1907,7 @@ uvm_swap_aiodone(aio)
 	/*
 	 * sanity check
 	 */
-	if (aio->npages > (MAXBSIZE/PAGE_SIZE))
+	if (aio->npages > (MAXBSIZE >> PAGE_SHIFT))
 		panic("uvm_swap_aiodone: aio too big!");
 #endif
 

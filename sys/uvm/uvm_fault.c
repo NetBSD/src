@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.14 1998/10/16 19:34:57 tv Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -687,10 +687,11 @@ ReFault:
 			panic("fault: advice mismatch!");
 #endif
 		nback = min(uvmadvice[ufi.entry->advice].nback,
-		(ufi.orig_rvaddr - ufi.entry->start) / PAGE_SIZE);
-		startva = ufi.orig_rvaddr - (nback * PAGE_SIZE);
+			    (ufi.orig_rvaddr - ufi.entry->start) >> PAGE_SHIFT);
+		startva = ufi.orig_rvaddr - (nback << PAGE_SHIFT);
 		nforw = min(uvmadvice[ufi.entry->advice].nforw,
-		((ufi.entry->end - ufi.orig_rvaddr) / PAGE_SIZE) - 1);
+			    ((ufi.entry->end - ufi.orig_rvaddr) >>
+			     PAGE_SHIFT) - 1);
 		/*
 		 * note: "-1" because we don't want to count the
 		 * faulting page as forw
@@ -750,14 +751,14 @@ ReFault:
 			    (startva - ufi.entry->start) + ufi.entry->offset;
 			simple_lock(&uobj->vmobjlock);
 			(void) uobj->pgops->pgo_flush(uobj, objaddr, objaddr + 
-				    (nback * PAGE_SIZE), PGO_DEACTIVATE);
+				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
 			simple_unlock(&uobj->vmobjlock);
 		}
 
 		/* now forget about the backpages */
 		if (amap)
 			anons += nback;
-		startva = startva + (nback * PAGE_SIZE);
+		startva = startva + (nback << PAGE_SHIFT);
 		npages -= nback;
 		nback = centeridx = 0;
 	}
