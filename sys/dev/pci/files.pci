@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.23 1997/03/15 18:11:53 is Exp $
+#	$NetBSD: files.pci,v 1.24 1997/06/05 02:15:36 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -63,3 +63,8 @@ file	dev/pci/ppb.c			ppb
 # Cyclades Cyclom-8/16/32 
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
+
+# Intel EtherExpress PRO 10/100B
+device	fxp: ether, ifnet, arp
+attach	fxp at pci 
+file	dev/pci/if_fxp.c		fxp
