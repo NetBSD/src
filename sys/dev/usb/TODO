@@ -14,8 +14,6 @@ Throw out more USBDI gunk.
 Make hub driver notice transition between self and bus powered state.
 Handle overcurrent conditions.
 
-Use a TD chain in ohci.c to allow transfers > 8K.
-
 Add an event mechanism to find out about attach and detach.
 
 Make it possible to open any device in a "generic" way, i.e., like ugen.
