@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	6.3 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.6 1994/01/24 22:37:46 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/04/29 00:05:49 cgd Exp $
 
 DIR=	usd/15.vi
 DOC=	15.vi
 
 SRCS=	vi.in vi.chars
+EXTRA=	vi.summary vi.apwh.ms
 MACROS=	-ms
-CLEANFILES+=summary.* viapwh.*
 
 .include <bsd.doc.mk>
 
