@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.39 2000/07/06 07:11:18 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.40 2000/08/12 14:52:44 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -342,7 +342,11 @@ struct umass_softc {
 #	define PROTO_SCSI	0x0100		/* command protocol */
 #	define PROTO_ATAPI	0x0200
 #	define PROTO_UFI	0x0400
+#	define PROTO_RBC	0x0800
 #	define PROTO_COMMAND	0xff00		/* command protocol mask */
+
+	u_char			subclass;	/* interface subclass */
+	u_char			protocol;	/* interface protocol */
 
 	usbd_interface_handle	iface;		/* Mass Storage interface */
 	int			ifaceno;	/* MS iface number */
@@ -673,6 +677,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 #else
 		sc->proto = PROTO_ATAPI | PROTO_CBI;
 #endif
+		sc->subclass = UISUBCLASS_SFF8020I;
+		sc->protocol = UIPROTO_MASS_CBI;
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 		return (UMATCH_VENDOR_PRODUCT);
 	}
@@ -698,17 +704,22 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		if (UGETW(dd->bcdDevice) <= 0x128)
 			sc->quirks |= NO_TEST_UNIT_READY;
 
+		sc->subclass = UISUBCLASS_UFI;
+		sc->protocol = UIPROTO_MASS_CBI;
+
 		sc->quirks |= RS_NO_CLEAR_UA;
 		sc->transfer_speed = UMASS_FLOPPY_TRANSFER_SPEED;
 		return (UMATCH_VENDOR_PRODUCT_REV);
 	}
 
-
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
 		return (UMATCH_NONE);
 
-	switch (id->bInterfaceSubClass) {
+	sc->subclass = id->bInterfaceSubClass;
+	sc->protocol = id->bInterfaceProtocol;
+
+	switch (sc->subclass) {
 	case UISUBCLASS_SCSI:
 		sc->proto |= PROTO_SCSI;
 		break;
@@ -721,13 +732,16 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	case UISUBCLASS_QIC157:
 		sc->proto |= PROTO_ATAPI;
 		break;
+	case UISUBCLASS_RBC:
+		sc->proto |= PROTO_RBC;
+		break;
 	default:
 		DPRINTF(UDMASS_GEN, ("%s: Unsupported command protocol %d\n",
 			USBDEVNAME(sc->sc_dev), id->bInterfaceSubClass));
 		return (UMATCH_NONE);
 	}
 
-	switch (id->bInterfaceProtocol) {
+	switch (sc->protocol) {
 	case UIPROTO_MASS_CBI:
 		sc->proto |= PROTO_CBI;
 		break;
@@ -764,6 +778,7 @@ USB_MATCH(umass)
 #else if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct umass_softc scs, *sc = &scs;
 	memset(sc, 0, sizeof *sc);
+	strcpy(sc->sc_dev.dv_xname, "umass");
 #endif
 
 	if (uaa->iface == NULL)
@@ -794,7 +809,10 @@ USB_ATTACH(umass)
 	sc->ifaceno = uaa->ifaceno;
 
 	/* initialise the proto and drive values in the umass_softc (again) */
-	(void) umass_match_proto(sc, sc->iface, uaa->device);
+	if (umass_match_proto(sc, sc->iface, uaa->device) == 0) {
+		printf("%s: match failed\n", USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
 
 	/*
 	 * The timeout is based on the maximum expected transfer size
@@ -808,7 +826,10 @@ USB_ATTACH(umass)
 	id = usbd_get_interface_descriptor(sc->iface);
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
-	switch (id->bInterfaceSubClass) {
+	switch (sc->subclass) {
+	case UISUBCLASS_RBC:
+		sSubclass = "RBC";
+		break;
 	case UISUBCLASS_SCSI:
 		sSubclass = "SCSI";
 		break;
@@ -828,7 +849,7 @@ USB_ATTACH(umass)
 		sSubclass = "unknown";
 		break;
 	}
-	switch (id->bInterfaceProtocol) {
+	switch (sc->protocol) {
 	case UIPROTO_MASS_CBI:
 		sProto = "CBI";
 		break;
@@ -1058,6 +1079,7 @@ USB_ATTACH(umass)
 	 */
 	switch (sc->proto & PROTO_COMMAND) {
 	case PROTO_UFI:
+	case PROTO_RBC:
 		sc->u.sc_link.quirks |= SDEV_ONLYBIG;
 		/* fall into */
 	case PROTO_SCSI:
