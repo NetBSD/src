@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.5 2002/05/08 19:00:27 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.6 2002/05/08 21:22:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1015,7 +1015,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		t->tcpip_ipcs = ipcs;
 		t->tcpip_tucs = tucs;
 		t->tcpip_cmdlen =
-		    htole32(WTX_CMD_DEXT | WTX_CMD_IDE | WTX_DTYP_C) | tcmd;
+		    htole32(WTX_CMD_DEXT | WTX_DTYP_C) | tcmd;
 		t->tcpip_seg = 0;
 		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
@@ -1164,6 +1164,7 @@ wm_start(struct ifnet *ifp)
 		 * is used to set the checksum context).
 		 */
 		txs->txs_mbuf = m0;
+		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_ndesc = dmamap->dm_nsegs;
 
 		/*
@@ -1184,6 +1185,8 @@ wm_start(struct ifnet *ifp)
 			cksumcmd = 0;
 			cksumfields = 0;
 		}
+
+		cksumcmd |= htole32(WTX_CMD_IDE);
 
 		/*
 		 * Initialize the transmit descriptor.
@@ -1241,6 +1244,8 @@ wm_start(struct ifnet *ifp)
 		}
 #endif /* XXXJRT */
 
+		txs->txs_lastdesc = lasttx;
+
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: desc %d: cmdlen 0x%08x\n", sc->sc_dev.dv_xname,
 		    lasttx, sc->sc_txdescs[lasttx].wtx_cmdlen));
@@ -1254,17 +1259,6 @@ wm_start(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: TDT -> %d\n", sc->sc_dev.dv_xname, nexttx));
-
-		/*
-		 * Remember that txdirty will be once the packet is
-		 * done.
-		 *
-		 * Note: If we're doing checksum offload, we are actually
-		 * using one descriptor before firstdesc, but it doesn't
-		 * really matter.
-		 */
-		txs->txs_firstdesc = sc->sc_txnext;
-		txs->txs_lastdesc = lasttx;
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: finished transmitting packet, job %d\n",
@@ -1284,7 +1278,7 @@ wm_start(struct ifnet *ifp)
 #endif /* NBPFILTER > 0 */
 	}
 
-	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
+	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
