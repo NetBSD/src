@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.30 2001/02/12 23:32:44 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31 2001/02/23 05:38:27 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -568,7 +568,7 @@ typedef struct isp_icb {
 #define	ICBOPT_PREVLOOP		0x0800
 #define	ICBOPT_STOP_ON_QFULL	0x1000
 #define	ICBOPT_FULL_LOGIN	0x2000
-#define	ICBOPT_USE_PORTNAME	0x4000
+#define	ICBOPT_BOTH_WWNS	0x4000
 #define	ICBOPT_EXTENDED		0x8000
 
 #define	ICBXOPT_CLASS2_ACK0	0x0200
