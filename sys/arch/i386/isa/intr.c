@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 1994/11/04 18:35:12 mycroft Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 1994/11/04 19:13:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -77,7 +77,7 @@ isa_defaultirq()
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
 	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
-	outb(IO_ICU1+1, IRQ_SLAVE);	/* slave on line 2 */
+	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
 #ifdef AUTO_EOI_1
 	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
 #else
@@ -92,7 +92,7 @@ isa_defaultirq()
 
 	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
 	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
-	outb(IO_ICU2+1, ffs(IRQ_SLAVE)-1);
+	outb(IO_ICU2+1, IRQ_SLAVE);
 #ifdef AUTO_EOI_2
 	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
 #else
@@ -202,7 +202,7 @@ intr_calculatemasks()
 			if (intrhand[irq])
 				irqs |= 1 << irq;
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
-			irqs |= IRQ_SLAVE;
+			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
 		SET_ICUS();
 	}
