@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.31 2001/07/08 06:23:15 blymn Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.32 2002/01/12 02:25:32 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -449,16 +449,19 @@ template found in the file:
 \&.\e" /usr/share/misc/mdoc.template:
 \&.\e" The following six lines are required.
 \&.Dd Month day, year
-\&.Os OPERATING_SYSTEM [version/release]
-\&.Dt DOCUMENT_TITLE [section number] [volume]
+\&.Os
+\&.Dt DOCUMENT_TITLE SECTION_NUMBER [MACHINE]
 \&.Sh NAME
 \&.\e" This next request is for sections 2 and 3 only; see next comment.
 \&.Sh LIBRARY
 \&.Sh SYNOPSIS
 \&.Sh DESCRIPTION
 \&.\e" The following requests should be uncommented and
-\&.\e" used where appropriate.  This next request is
-\&.\e" for sections 2 and 3 function return values only.
+\&.\e" used where appropriate.  This next request is for
+\&.\e" sections 1 and 8 exit statuses only.
+\&.\e" .Sh EXIT STATUS
+\&.\e" This next request is for sections 2 and 3 function return
+\&.\e"     values only.
 \&.\e" .Sh RETURN VALUES
 \&.\e" This next request is for sections 1, 6, 7 & 8 only
 \&.\e" .Sh ENVIRONMENT
@@ -466,7 +469,7 @@ template found in the file:
 \&.\e" .Sh EXAMPLES
 \&.\e" This next request is for sections 1, 6, 7 & 8 only
 \&.\e"     (command return values (to shell) and
-\&.\e"	  fprintf/stderr type diagnostics)
+\&.\e"	   fprintf/stderr type diagnostics)
 \&.\e" .Sh DIAGNOSTICS
 \&.\e" The next request is for sections 2 and 3 error
 \&.\e" and signal handling only.
@@ -476,17 +479,18 @@ template found in the file:
 \&.\e" .Sh HISTORY
 \&.\e" .Sh AUTHORS
 \&.\e" .Sh BUGS
+\&.\e" .Sh SECURITY CONSIDERATIONS
 .Ed
 .Pp
 The first items in the template are the macros
 .Pq Li \&.Dd , \&.Os , \&.Dt ;
 the document date,
 the operating system the man page or subject source is developed
-or modified for,
+or modified for (should have no argument by default),
 and the man page title
 .Pq Em in upper case
 along with the section of the manual the page
-belongs in.
+belongs in, and optionally the machine if it is machine specific.
 These macros identify the page,
 and are discussed below in
 .Sx TITLE MACROS .
@@ -519,46 +523,21 @@ and the date of authorship.
 These macros are one called once at the very beginning of the document
 and are used to construct the headers and footers only.
 .Bl -tag -width 6n
-.It Li \&.Dt DOCUMENT_TITLE section# [volume]
+.It Li \&.Dt DOCUMENT_TITLE SECTION_NUMBER [MACHINE]
 The document title is the
 subject of the man page and must be in
 .Tn CAPITALS
 due to troff
 limitations.
-The section number may be 1,\ ...,\ 9,
-and if it is specified,
-the volume title may be omitted.
-A volume title may be arbitrary or one of the following:
-.\" .Cl
-.\" USD	UNIX User's Supplementary Documents
-.\" .Cl
-.\" PS1	UNIX Programmer's Supplementary Documents
-.Pp
-.Bl -column SMM -offset indent -compact
-.It Li AMD	NetBSD Ancestral Manual Documents
-.It Li SMM	NetBSD System Manager's Manual
-.It Li URM	NetBSD Reference Manual
-.It Li PRM	NetBSD Programmer's Manual
-.It Li KM	NetBSD Kernel Manual
-.El
-.Pp
-The default volume labeling is
-.Li URM
-for sections 1, 6, and 7;
-.Li SMM
-for section 8;
-.Li PRM
-for sections 2, 3, 4, and 5;
-.Li KM
-for section 9.
-.\" .Cl
-.\" MMI	UNIX Manual Master Index
-.\" .Cl
-.\" CON	UNIX Contributed Software Manual
-.\" .Cl
-.\" LOC	UNIX Local Manual
+The section number may be 1,\ ...,\ 9, and the machine should be the
+machine the man page is for (that is, the
+.Nx
+port to which it applies).
 .It Li \&.Os operating_system release#
-The name of the operating system
+This should have no argument on
+.Nx
+man pages by default.
+Otherwise, the name of the operating system
 should be the common acronym, e.g.
 .Tn BSD
 or
@@ -577,9 +556,9 @@ or for a locally produced set
 .Pp
 The Berkeley default,
 .Ql \&.Os
-without an argument, has been defined as
-.Nx 1.4
-in the site specific file
+without an argument, has been defined as the current
+.Nx
+version, see
 .Pa /usr/share/tmac/tmac.doc-common .
 Note, if the
 .Ql \&.Os
