@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.33 1999/11/02 23:53:31 jdolecek Exp $	*/
+/*	$NetBSD: db_command.c,v 1.34 2000/02/21 05:48:56 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,13 @@
 #include <sys/pool.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+#ifdef MULTIPROCESSOR
+#include <machine/cpu.h>
+#endif
 
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
@@ -480,6 +487,9 @@ db_command_loop()
 			db_printf("\n");
 		db_output_line = 0;
 
+#ifdef MULTIPROCESSOR
+		db_printf("(cpu %d)", cpu_number());
+#endif
 		db_printf("db> ");
 		(void) db_read_line();
 
