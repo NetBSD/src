@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * Copyright (c) 1992 Terrence R. Lambert.
+ * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.34 1993/07/05 01:53:56 cgd Exp $
+ *	$Id: machdep.c,v 1.35 1993/07/06 00:48:06 cgd Exp $
  */
 
 #include "npx.h"
@@ -598,37 +598,37 @@ dumpsys()
 		return;
 	if ((minor(dumpdev)&07) != 1)
 		return;
-	printf("\nThe operating system is saving a copy of RAM memory to device %x, offset %d\n\
-(hit any key to abort): [ amount left to save (MB) ] ", dumpdev, dumplo);
 	dumpsize = physmem;
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
 
 	case ENXIO:
-		printf("-- device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("-- device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("-- area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		printf("-- i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	case EINTR:
-		printf("-- aborted from console\n");
+		printf("aborted from console\n");
 		break;
 
 	default:
-		printf(" succeeded\n");
+		printf("succeeded\n");
 		break;
 	}
-	printf("system rebooting.\n\n");
-	DELAY(10000);
+	printf("\n\n");
+	DELAY(1000);
 }
 
 #ifdef HZ
