@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.25 2000/02/05 18:11:56 augustss Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.26 2000/03/01 20:51:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1583,8 +1583,10 @@ ex_detach(sc)
 	/* Unhook our tick handler. */
 	untimeout(ex_tick, sc);
 
-	/* Detach all PHYs */
-	mii_detach(&sc->ex_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	if (sc->ex_conf & EX_CONF_MII) {
+		/* Detach all PHYs */
+		mii_detach(&sc->ex_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	}
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->ex_mii.mii_media, IFM_INST_ANY);
@@ -1620,32 +1622,6 @@ ex_detach(sc)
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_upd,
 	    EX_NUPD * sizeof (struct ex_upd));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
-
-#if 0
-	for (i = 0; i < TULIP_NRXDESC; i++) {
-		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
-			m_freem(rxs->rxs_mbuf);
-			rxs->rxs_mbuf = NULL;
-		}
-		bus_dmamap_destroy(sc->sc_dmat, rxs->rxs_dmamap);
-	}
-	for (i = 0; i < TULIP_TXQUEUELEN; i++) {
-		txs = &sc->sc_txsoft[i];
-		if (txs->txs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
-			m_freem(txs->txs_mbuf);
-			txs->txs_mbuf = NULL;
-		}
-		bus_dmamap_destroy(sc->sc_dmat, txs->txs_dmamap);
-	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
-	    sizeof(struct tulip_control_data));
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
-#endif
 
 	shutdownhook_disestablish(sc->sc_sdhook);
 
