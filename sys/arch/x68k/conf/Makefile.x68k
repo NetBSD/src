@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.33 1999/03/16 16:30:16 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.34 1999/03/30 04:26:01 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -18,6 +18,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
+.include <bsd.own.mk>
+
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
@@ -34,7 +36,7 @@ SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
 
-COPTS?= -O2
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -42,7 +44,7 @@ S!=	cd ../../../..; pwd
 .endif
 X68K=	$S/arch/x68k
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
 .if empty(IDENT:M-DM68060)
@@ -183,6 +185,10 @@ depend: .depend
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${X68k}/x68k/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration
@@ -195,7 +201,12 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration 
-dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+fd.o intio_dmac.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+
+# depend on DEBUG and/or DIAGNOSTIC options
+grf.o par.o sram.o: Makefile
+intio_dmac.o mfp.o neptune.o opm.o scsirom.o xel.o zs.o bus.o: Makefile
+intio.o vm_machdep.o: Makefile
 
 
 locore.o: ${X68K}/x68k/locore.s assym.h
