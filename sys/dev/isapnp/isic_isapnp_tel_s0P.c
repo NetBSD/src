@@ -1,49 +1,58 @@
 /*
- * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
+ *   Copyright (c) 1997 Andrew Gordon. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *   Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *   1. Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *   3. Neither the name of the author nor the names of any co-contributors
+ *      may be used to endorse or promote products derived from this software
+ *      without specific prior written permission.
+ *   4. Altered versions must be plainly marked as such, and must not be
+ *      misrepresented as being the original software and/or documentation.
+ *   
+ *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *   SUCH DAMAGE.
  *
  *---------------------------------------------------------------------------
  *
- *	isic - I4B Siemens ISDN Chipset Driver for Creatix PnP cards
- *	============================================================
+ *	isic - I4B Siemens ISDN Chipset Driver for Teles S0 PnP
+ *	=======================================================
  *
- *	$Id: i4b_ctx_s0P.c,v 1.1.1.1 2001/01/05 12:50:18 martin Exp $ 
+ *		EXPERIMENTAL !!!
+ *		================
+ *
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.1 2001/02/18 09:24:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include "opt_isicpnp.h"
-#if ISICPNP_CRTX_S0_P
+#ifdef ISICPNP_TEL_S0_16_3_P
 
 #include <sys/param.h>
-
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <sys/ioccom.h>
 #else
 #include <sys/ioctl.h>
 #endif
-
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -71,35 +80,30 @@
 #include <netisdn/i4b_ioctl.h>
 #endif
 
-#include <netisdn/i4b_global.h>
-
 #include <dev/ic/i4b_isicl1.h>
 #include <dev/ic/i4b_isac.h>
 #include <dev/ic/i4b_hscx.h>
 
+#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t ctxs0P_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void ctxs0P_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void ctxs0P_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void ctxs0P_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-void isic_attach_Cs0P(struct l1_softc *sc);
+static u_int8_t tels0163P_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
+static void tels0163P_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void tels0163P_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
+static void tels0163P_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+void isic_attach_s0163P __P((struct l1_softc *sc));
 #endif
 
-#ifdef __FreeBSD__
-#include <i386/isa/pnp.h>
-extern void isicintr ( int unit );
-#endif
 
 /*---------------------------------------------------------------------------*
- *      Creatix ISDN-S0 P&P ISAC get fifo routine
+ *      Teles S0/16.3 PnP read fifo routine
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
 static void             
-ctxs0P_read_fifo(void *buf, const void *base, size_t len)
+tels0163P_read_fifo(void *buf, const void *base, size_t len)
 {
         insb((int)base + 0x3e, (u_char *)buf, (u_int)len);
 }
@@ -107,7 +111,7 @@ ctxs0P_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-ctxs0P_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+tels0163P_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -118,12 +122,12 @@ ctxs0P_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 #endif
 
 /*---------------------------------------------------------------------------*
- *      Creatix ISDN-S0 P&P ISAC put fifo routine
+ *      Teles S0/16.3 PnP write fifo routine
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
 static void
-ctxs0P_write_fifo(void *base, const void *buf, size_t len)
+tels0163P_write_fifo(void *base, const void *buf, size_t len)
 {
         outsb((int)base + 0x3e, (u_char *)buf, (u_int)len);
 }
@@ -131,7 +135,7 @@ ctxs0P_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-ctxs0P_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+tels0163P_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -141,12 +145,12 @@ ctxs0P_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 #endif
 
 /*---------------------------------------------------------------------------*
- *      Creatix ISDN-S0 P&P ISAC put register routine
+ *      Teles S0/16.3 PnP write register routine
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
 static void
-ctxs0P_write_reg(u_char *base, u_int offset, u_int v)
+tels0163P_write_reg(u_char *base, u_int offset, u_int v)
 {
         outb((int)base + offset, (u_char)v);
 }
@@ -154,7 +158,7 @@ ctxs0P_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-ctxs0P_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+tels0163P_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -164,12 +168,12 @@ ctxs0P_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 #endif
 
 /*---------------------------------------------------------------------------*
- *	Creatix ISDN-S0 P&P ISAC get register routine
+ *	Teles S0/16.3 PnP read register routine
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
 static u_char
-ctxs0P_read_reg(u_char *base, u_int offset)
+tels0163P_read_reg(u_char *base, u_int offset)
 {
 	return (inb((int)base + offset));
 }
@@ -177,23 +181,21 @@ ctxs0P_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-ctxs0P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+tels0163P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
 	bus_size_t o = sc->sc_maps[what+1].offset;
 	return bus_space_read_1(t, h, o + offs);
 }
-
 #endif
 
-#ifdef __FreeBSD__
-
 /*---------------------------------------------------------------------------*
- *	isic_probe_Cs0P - probe for Creatix ISDN-S0 P&P and compatibles
+ *	isic_probe_s0163P - probe for Teles S0/16.3 PnP and compatibles
  *---------------------------------------------------------------------------*/
+#ifdef __FreeBSD__
 int
-isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
+isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 {
 	struct l1_softc *sc = &l1_sc[dev->id_unit];
 	
@@ -201,7 +203,7 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 	
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
-		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Creatix ISDN-S0 P&P!\n",
+		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Teles S0/16.3 PnP!\n",
 				dev->id_unit, dev->id_unit);
 		return(0);	
 	}	
@@ -218,9 +220,9 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 		case 11:
 		case 12:
 			break;
-			
-		default:
-			printf("isic%d: Error, invalid IRQ [%d] specified for Creatix ISDN-S0 P&P!\n",
+
+		default:					
+			printf("isic%d: Error, invalid IRQ [%d] specified for Teles S0/16.3 PnP!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
 			return(0);
 			break;
@@ -231,29 +233,23 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 
 	if(dev->id_maddr)
 	{
-		printf("isic%d: Error, mem addr 0x%lx specified for Creatix ISDN-S0 P&P!\n",
+		printf("isic%d: Error, mem addr 0x%lx specified for Teles S0/16.3 PnP!\n",
 			dev->id_unit, (u_long)dev->id_maddr);
 		return(0);
 	}
 	dev->id_msize = 0;
 	
-	if(iobase2 == 0)
-	{
-		printf("isic%d: Error, iobase2 is 0 for Creatix ISDN-S0 P&P!\n",
-			dev->id_unit);
-		return(0);
-	}
-
 	/* check if we got an iobase */
 
 	switch(dev->id_iobase)
 	{
-		case 0x120:
-		case 0x180:
-/*XXX*/			break;
+		case 0x580:
+		case 0x500:
+		case 0x680:
+			break;
 			
 		default:
-			printf("isic%d: Error, invalid iobase 0x%x specified for Creatix ISDN-S0 P&P!\n",
+			printf("isic%d: Error, invalid iobase 0x%x specified for Teles S0/16.3 PnP!\n",
 				dev->id_unit, dev->id_iobase);
 			return(0);
 			break;
@@ -263,15 +259,15 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 	/* setup access routines */
 
 	sc->clearirq = NULL;
-	sc->readreg = ctxs0P_read_reg;
-	sc->writereg = ctxs0P_write_reg;
+	sc->readreg = tels0163P_read_reg;
+	sc->writereg = tels0163P_write_reg;
 
-	sc->readfifo = ctxs0P_read_fifo;
-	sc->writefifo = ctxs0P_write_fifo;
+	sc->readfifo = tels0163P_read_fifo;
+	sc->writefifo = tels0163P_write_fifo;
 
 	/* setup card type */
 	
-	sc->sc_cardtyp = CARD_TYPEP_CS0P;
+	sc->sc_cardtyp = CARD_TYPEP_163P;
 
 	/* setup IOM bus type */
 	
@@ -279,22 +275,39 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC and HSCX base addr */
 	
-	ISAC_BASE   = (caddr_t) dev->id_iobase - 0x20;
-	HSCX_A_BASE = (caddr_t) iobase2 - 0x20;
-	HSCX_B_BASE = (caddr_t) iobase2;
+	switch(dev->id_iobase)
+	{
+		case 0x580:
+		        ISAC_BASE = (caddr_t) 0x580 - 0x20;
+			HSCX_A_BASE = (caddr_t) 0x180 - 0x20;
+			HSCX_B_BASE = (caddr_t) 0x180;
+			break;
+
+		case 0x500:
+		        ISAC_BASE = (caddr_t) 0x500 - 0x20;
+			HSCX_A_BASE = (caddr_t) 0x100 - 0x20;
+			HSCX_B_BASE = (caddr_t) 0x100;
+			break;
+
+		case 0x680:
+		        ISAC_BASE = (caddr_t) 0x680 - 0x20;
+			HSCX_A_BASE = (caddr_t) 0x280 - 0x20;
+			HSCX_B_BASE = (caddr_t) 0x280;
+			break;
+	}
 
 	/* 
-	 * Read HSCX A/B VSTR.  Expected value for the Creatix PnP card is
-	 * 0x05 ( = version 2.1 ) in the least significant bits.
+	 * Read HSCX A/B VSTR.  Expected value for the S0/16.3 PnP card is
+	 * 0x05 in the least significant bits.
 	 */
 
 	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) ||
             ((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) )
 	{
-		printf("isic%d: HSCX VSTR test failed for Creatix PnP\n",
+		printf("isic%d: HSCX VSTR test failed for Teles S0/16.3 PnP\n",
 			dev->id_unit);
 		printf("isic%d: HSC0: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(0, H_VSTR));
@@ -305,12 +318,14 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 
 	return (1);
 }
+#endif
 
 /*---------------------------------------------------------------------------*
- *	isic_attach_s0163P - attach Creatix ISDN-S0 P&P
+ *	isic_attach_s0163P - attach Teles S0/16.3 PnP and compatibles
  *---------------------------------------------------------------------------*/
+#ifdef __FreeBSD__
 int
-isic_attach_Cs0P(struct isa_device *dev, unsigned int iobase2)
+isic_attach_s0163P(struct isa_device *dev, unsigned int iobase2)
 {
 	outb((dev->id_iobase) + 0x1c, 0);
 	DELAY(SEC_DELAY / 10);
@@ -319,10 +334,10 @@ isic_attach_Cs0P(struct isa_device *dev, unsigned int iobase2)
 	return(1);
 }
 
-#else /* !__FreeBSD__ */
+#else
 
 void
-isic_attach_Cs0P(struct l1_softc *sc)
+isic_attach_s0163P(struct l1_softc *sc)
 {
 	/* init card */
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -335,15 +350,15 @@ isic_attach_Cs0P(struct l1_softc *sc)
 	/* setup access routines */
 
 	sc->clearirq = NULL;
-	sc->readreg = ctxs0P_read_reg;
-	sc->writereg = ctxs0P_write_reg;
+	sc->readreg = tels0163P_read_reg;
+	sc->writereg = tels0163P_write_reg;
 
-	sc->readfifo = ctxs0P_read_fifo;
-	sc->writefifo = ctxs0P_write_fifo;
+	sc->readfifo = tels0163P_read_fifo;
+	sc->writefifo = tels0163P_write_fifo;
 
 	/* setup card type */
 	
-	sc->sc_cardtyp = CARD_TYPEP_CS0P;
+	sc->sc_cardtyp = CARD_TYPEP_163P;
 
 	/* setup IOM bus type */
 	
@@ -354,5 +369,5 @@ isic_attach_Cs0P(struct l1_softc *sc)
 }
 #endif
 
-#endif /* ISICPNP_CRTX_S0_P */
+#endif /* ISICPNP_TEL_S0_16_3_P */
 
