@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.50 2000/05/15 16:59:37 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.50.4.1 2000/12/31 17:57:43 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -114,6 +114,38 @@ struct proc;
 struct rtentry;
 struct socket;
 struct ether_header;
+struct ifnet;
+
+/*
+ * Length of interface external name, including terminating '\0'.
+ * Note: this is the same size as a generic device's external name.
+ */
+#define	IFNAMSIZ	16
+#define	IF_NAMESIZE	IFNAMSIZ
+
+/*
+ * Structure describing a `cloning' interface.
+ */
+struct if_clone {
+	LIST_ENTRY(if_clone) ifc_list;	/* on list of cloners */
+	const char *ifc_name;		/* name of device, e.g. `gif' */
+	size_t ifc_namelen;		/* length of name */
+
+	int	(*ifc_create)(struct if_clone *, int);
+	void	(*ifc_destroy)(struct ifnet *);
+};
+
+#define	IF_CLONE_INITIALIZER(name, create, destroy)			\
+	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+
+/*
+ * Structure used to query names of interface cloners.
+ */
+struct if_clonereq {
+	int	ifcr_total;		/* total cloners (out) */
+	int	ifcr_count;		/* room for this many in user buffer */
+	char	*ifcr_buffer;		/* buffer for cloner names */
+};
 
 /*
  * Structure defining statistics and other data kept regarding a network
@@ -182,13 +214,6 @@ struct if_data14 {
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
-
-/*
- * Length of interface external name, including terminating '\0'.
- * Note: this is the same size as a generic device's external name.
- */
-#define	IFNAMSIZ	16
-#define	IF_NAMESIZE	IFNAMSIZ
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
@@ -581,6 +606,12 @@ struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
 struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+
+void	if_clone_attach __P((struct if_clone *));
+void	if_clone_detach __P((struct if_clone *));
+
+int	if_clone_create __P((const char *));
+int	if_clone_destroy __P((const char *));
 
 int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));
