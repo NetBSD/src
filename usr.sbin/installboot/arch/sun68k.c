@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.5 2002/04/25 18:11:54 tv Exp $ */
+/*	$NetBSD: sun68k.c,v 1.6 2002/04/29 13:07:41 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.5 2002/04/25 18:11:54 tv Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.6 2002/04/29 13:07:41 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -151,7 +151,7 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	memset(&bb, 0, SUN68K_BOOT_BLOCK_MAX_SIZE);
+	memset(&bb, 0, sizeof(bb));
 	rv = read(params->s1fd, &bb, sizeof(bb));
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
@@ -238,12 +238,12 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	rv = pwrite(params->fsfd, &bb, SUN68K_BOOT_BLOCK_MAX_SIZE,
+	rv = pwrite(params->fsfd, &bb, sizeof(bb),
 	    startblock * SUN68K_BOOT_BLOCK_BLOCKSIZE);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != SUN68K_BOOT_BLOCK_MAX_SIZE) {
+	} else if (rv != sizeof(bb)) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	} else {
