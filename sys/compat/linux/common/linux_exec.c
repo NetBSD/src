@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.34 1998/10/07 22:17:57 erh Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.35 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ linux_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
