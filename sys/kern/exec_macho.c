@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.26 2003/08/08 18:53:14 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.27 2003/09/07 11:16:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.26 2003/08/08 18:53:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.27 2003/09/07 11:16:59 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -442,6 +442,9 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 			for (sc = exec_macho_supported_cpu; *sc; sc++)
 				if (*sc == be32toh(arch.cputype))
 					break;
+
+			if (sc != NULL) 
+				break;
 		}
 		if (sc == NULL || *sc == 0) {
 			DPRINTF(("CPU %d not supported by this binary",
