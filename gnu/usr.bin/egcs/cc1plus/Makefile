@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/04/09 00:32:33 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1998/07/09 19:44:38 tv Exp $
 
 
 PROG=	cc1plus
@@ -8,7 +8,7 @@ SRCS=	c-common.c call.c class.c cvt.c decl.c decl2.c errfn.c error.c except.c \
 	xref.c
 YHEADER=1
 
-lex.c pt.c spew.c: parse-h
+lex.o pt.o spew.o: parse-h
 
 parse-h: parse.h
 	grep '^#define[         ]*YYEMPTY' parse.c >>parse.h
