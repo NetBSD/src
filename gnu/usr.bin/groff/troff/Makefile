@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/08/02 17:45:32 mycroft Exp $
+#	$Id: Makefile,v 1.8 1995/01/12 19:14:55 jtc Exp $
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
@@ -20,7 +20,7 @@ majorminor.cc: $(.CURDIR)/../VERSION
 TMACDIR=/usr/share/tmac
 
 afterinstall:
-	install -c -o bin -g bin -m 444 $(.CURDIR)/hyphen.us \
+	install -c -o ${BINDIR} -g ${BINGRP} -m 444 $(.CURDIR)/hyphen.us \
 		$(DESTDIR)$(TMACDIR)/hyphen.us
 
 .include "../../Makefile.inc"

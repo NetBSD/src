@@ -1,12 +1,14 @@
-#	$Id: Makefile,v 1.10 1994/02/10 02:17:56 cgd Exp $
+#	$Id: Makefile,v 1.11 1995/01/12 19:11:12 jtc Exp $
 
 SUBDIR= libg++ genclass
 
 INCLUDEDIRS=	iostream libg++ g++-include
 
 beforeinstall:
-	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/g++
-	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/g++/gen
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/gen
 	@-for i in ${INCLUDEDIRS}; do \
 		echo installing includes from $$i ; \
 		(cd $$i; for j in *.[ih]; do \
