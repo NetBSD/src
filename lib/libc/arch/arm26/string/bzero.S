@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.1 2000/05/09 21:55:50 bjh21 Exp $	*/
+/*	$NetBSD: bzero.S,v 1.2 2000/12/14 19:40:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,4 +41,4 @@
 ENTRY(bzero)
 	mov	r2, r1
 	mov	r1, #0
-	b	_C_FUNC(memset)
+	b	_C_LABEL(memset)
