@@ -236,7 +236,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode)
 			goto punt;
 	}
 	bp = MXHostBuf;
-	ep = MXHostBuf + sizeof(MXHostBuf);
+	ep = MXHostBuf + sizeof(MXHostBuf) - 1;	/* save one for trailing dot */
 	ancount = ntohs((u_short)hp->ancount);
 	while (--ancount >= 0 && cp < eom && nmx < MAXMXHOSTS - 1)
 	{
