@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.12 1994/03/01 06:32:54 cgd Exp $";
+static char *rcsid = "$Id: process.c,v 1.13 1994/03/24 15:55:01 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ redirect:
 				if ((p = memchr(ps, '\n', psl)) == NULL)
 					pd = 1;
 				else {
-					psl -= (p - ps) - 1;
+					psl -= (p + 1) - ps;
 					memmove(ps, p + 1, psl);
 				}
 				goto new;
