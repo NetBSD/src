@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2001/12/06 12:40:51 blymn Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2003/02/10 23:59:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.30 2001/12/06 12:40:51 blymn Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2003/02/10 23:59:48 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: main.c,v 1.30 2001/12/06 12:40:51 blymn Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -90,6 +92,9 @@ int     allcounter;
 
 static	WINDOW *wload;			/* one line window for load average */
 
+static void (*sv_stop_handler)(int);
+
+static void stop(int);
 static void usage(void);
 int main(int, char **);
 
@@ -191,6 +196,7 @@ main(int argc, char **argv)
 	signal(SIGQUIT, die);
 	signal(SIGTERM, die);
 	signal(SIGWINCH, redraw);
+	sv_stop_handler = signal(SIGTSTP, stop);
 
 	/*
 	 * Initialize display.  Load average appears in a one line
@@ -317,13 +323,37 @@ void
 redraw(int signo)
 {
 	sigset_t set;
+	struct winsize win;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, NULL);
-	wrefresh(curscr);
-	refresh();
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != -1) {
+		resizeterm(win.ws_row, win.ws_col);
+		CMDLINE = LINES - 1;
+		labels();
+	}
+
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
+	display(0);
+}
+
+static void
+stop(int signo)
+{
+	sigset_t set;
+
+	signal(SIGTSTP, sv_stop_handler);
+	/* unblock SIGTSTP */
+	sigemptyset(&set);
+	sigaddset(&set, SIGTSTP);
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
+	/* stop ourselves */
+	kill(0, SIGTSTP);
+	/* must have been restarted */
+	redraw(signo);
+	signal(SIGTSTP, stop);
 }
 
 void
