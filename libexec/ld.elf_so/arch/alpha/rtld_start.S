@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2001/05/28 06:10:20 nathanw Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2001/12/13 20:30:48 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,6 +30,7 @@
 #include <machine/asm.h>
 
 	.extern	_GLOBAL_OFFSET_TABLE_
+	.extern _GOT_END_
 
 /*
  * Note: we can call ourselves LEAF even though we use callee-saved
@@ -56,7 +57,7 @@ L2:	ldiq	t3, L2		/* get where the linker thought we were */
 #if defined(OLD_GOT)
 	ldq	t4, 0(t9)	/* Get the address of dynamic table */
 #else
-	lda	t4, _DYNAMIC
+	lda	t4, _GOT_END_	/* Get the address of the end of the GOT */
 #endif
 	addq	t8, t4, t10	/* add the displacement */
 
@@ -146,8 +147,15 @@ NESTED_NOPROFILE(_rtld_bind_start, 0, 168, ra, 0, 0)
 L100:	LDGP(t0)
 
 	/* Set up the arguments for _rtld_bind. */
+#ifdef NEW_PLT_FORMAT
+	subq	at_reg, pv, a1		/* calculate offset of reloc entry */
+	ldq	a0, 8(pv)		/* object structure */
+	subq	a1, 20, a1		/* = (at - pv - 20) / 12 * 24 */
+	addq	a1, a1, a1
+#else
 	ldq	a0, 8(pv)		/* object structure */
 	mov	at_reg, a1		/* offset of reloc entry */
+#endif /* NEW_PLT_FORMAT */
 	CALL(_rtld_bind)
 
 	/* Move the destination address into position. */
