@@ -1,3 +1,3 @@
-/*	$NetBSD: dkcksum.h,v 1.2 1998/01/09 08:04:00 perry Exp $	*/
+/*	$NetBSD: dkcksum.h,v 1.3 2000/12/24 05:59:11 lukem Exp $	*/
 
-u_short dkcksum __P((struct disklabel *));
+u_short	dkcksum(struct disklabel *);

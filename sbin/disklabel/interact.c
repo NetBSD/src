@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.15 2000/09/04 02:09:26 lukem Exp $	*/
+/*	$NetBSD: interact.c,v 1.16 2000/12/24 05:59:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.15 2000/09/04 02:09:26 lukem Exp $");
+__RCSID("$NetBSD: interact.c,v 1.16 2000/12/24 05:59:11 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -47,28 +47,28 @@ __RCSID("$NetBSD: interact.c,v 1.15 2000/09/04 02:09:26 lukem Exp $");
 
 #include "extern.h"
 
-static void cmd_help __P((struct disklabel *, char *, int));
-static void cmd_chain __P((struct disklabel *, char *, int));
-static void cmd_print __P((struct disklabel *, char *, int));
-static void cmd_printall __P((struct disklabel *, char *, int));
-static void cmd_info __P((struct disklabel *, char *, int));
-static void cmd_part __P((struct disklabel *, char *, int));
-static void cmd_label __P((struct disklabel *, char *, int));
-static void cmd_round __P((struct disklabel *, char *, int));
-static void cmd_name __P((struct disklabel *, char *, int));
-static int runcmd __P((char *, struct disklabel *, int));
-static int getinput __P((const char *, const char *, const char *, char *));
-static int alphacmp __P((const void *, const void *));
-static void defnum __P((char *, struct disklabel *, int));
-static void dumpnames __P((const char *, const char * const *, size_t));
-static int getnum __P((char *, int, struct disklabel *));
+static void	cmd_help(struct disklabel *, char *, int);
+static void	cmd_chain(struct disklabel *, char *, int);
+static void	cmd_print(struct disklabel *, char *, int);
+static void	cmd_printall(struct disklabel *, char *, int);
+static void	cmd_info(struct disklabel *, char *, int);
+static void	cmd_part(struct disklabel *, char *, int);
+static void	cmd_label(struct disklabel *, char *, int);
+static void	cmd_round(struct disklabel *, char *, int);
+static void	cmd_name(struct disklabel *, char *, int);
+static int	runcmd(struct disklabel *, char *, int);
+static int	getinput(const char *, const char *, const char *, char *);
+static int	alphacmp(const void *, const void *);
+static void	defnum(struct disklabel *, char *, int);
+static void	dumpnames(const char *, const char * const *, size_t);
+static int	getnum(struct disklabel *, char *, int);
 
 static int rounding = 0;	/* sector rounding */
 static int chaining = 0;	/* make partitions contiguous */
 
 static struct cmds {
 	const char *name;
-	void (*func) __P((struct disklabel *, char *, int));
+	void (*func)(struct disklabel *, char *, int);
 	const char *help;
 } cmds[] = {
 	{ "?",	cmd_help,	"print this menu" },
@@ -86,10 +86,7 @@ static struct cmds {
 	
 
 static void
-cmd_help(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_help(struct disklabel *lp, char *s, int fd)
 {
 	struct cmds *cmd;
 
@@ -101,13 +98,10 @@ cmd_help(lp, s, fd)
 
 
 static void
-cmd_chain(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_chain(struct disklabel *lp, char *s, int fd)
 {
-	int i;
-	char line[BUFSIZ];
+	int	i;
+	char	line[BUFSIZ];
 
 	i = getinput(":", "Automatically adjust partitions",
 	    chaining ? "yes" : "no", line);
@@ -127,35 +121,30 @@ cmd_chain(lp, s, fd)
 	}
 }
 
+
 static void
-cmd_printall(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_printall(struct disklabel *lp, char *s, int fd)
 {
 
 	showinfo(stdout, lp);
 	showpartitions(stdout, lp);
 }
 
+
 static void
-cmd_print(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_print(struct disklabel *lp, char *s, int fd)
 {
+
 	showpartitions(stdout, lp);
 }
 
+
 static void
-cmd_info(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_info(struct disklabel *lp, char *s, int fd)
 {
-	char line[BUFSIZ];
-	char def[BUFSIZ];
-	int v, i;
+	char	line[BUFSIZ];
+	char	def[BUFSIZ];
+	int	v, i;
 	u_int32_t u;
 
 	printf("# Current values:\n");
@@ -189,7 +178,7 @@ cmd_info(lp, s, fd)
 			continue;
 		}
 		lp->d_type = v;
-done_typename:
+ done_typename:
 		break;
 	}
 
@@ -401,15 +390,13 @@ done_typename:
 	}
 }
 
+
 static void
-cmd_name(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_name(struct disklabel *lp, char *s, int fd)
 {
-	char line[BUFSIZ];
-	char def[BUFSIZ];
-	int i;
+	char	line[BUFSIZ];
+	char	def[BUFSIZ];
+	int	i;
 
 	snprintf(def, sizeof(def), "%.*s",
 	    (int) sizeof(lp->d_packname), lp->d_packname);
@@ -419,14 +406,12 @@ cmd_name(lp, s, fd)
 	(void) strncpy(lp->d_packname, line, sizeof(lp->d_packname));
 }
 
+
 static void
-cmd_round(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_round(struct disklabel *lp, char *s, int fd)
 {
-	int i;
-	char line[BUFSIZ];
+	int	i;
+	char	line[BUFSIZ];
 
 	i = getinput(":", "Rounding", rounding ? "cylinders" : "sectors", line);
 	if (i <= 0)
@@ -445,18 +430,18 @@ cmd_round(lp, s, fd)
 	}
 }
 
-static void
-cmd_part(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
-{
-	int i;
-	char line[BUFSIZ];
-	char def[BUFSIZ];
-	int part = *s - 'a';
-	struct partition *p = &lp->d_partitions[part];
 
+static void
+cmd_part(struct disklabel *lp, char *s, int fd)
+{
+	int	i;
+	char	line[BUFSIZ];
+	char	def[BUFSIZ];
+	int	part;
+	struct partition *p;
+
+	part = s[0] - 'a';
+	p = &lp->d_partitions[part];
 	if (part >= lp->d_npartitions)
 		lp->d_npartitions = part + 1;
 
@@ -482,17 +467,17 @@ cmd_part(lp, s, fd)
 			}
 		printf("Invalid file system typename `%s'\n", line);
 		continue;
-done_typename:
+ done_typename:
 		break;
 	}
 	for (;;) {
-		defnum(def, lp, p->p_offset);
+		defnum(lp, def, p->p_offset);
 		i = getinput(":", "Start offset", def, line);
 		if (i == -1)
 			return;
 		else if (i == 0)
 			break;
-		if ((i = getnum(line, 0, lp)) == -1) {
+		if ((i = getnum(lp, line, 0)) == -1) {
 			printf("Bad offset `%s'\n", line);
 			continue;
 		}
@@ -500,14 +485,14 @@ done_typename:
 		break;
 	}
 	for (;;) {
-		defnum(def, lp, p->p_size);
+		defnum(lp, def, p->p_size);
 		i = getinput(":", "Partition size ('$' for all remaining)",
 		    def, line);
 		if (i == -1)
 			return;
 		else if (i == 0)
 			break;
-		if ((i = getnum(line, lp->d_secperunit - p->p_offset, lp))
+		if ((i = getnum(lp, line, lp->d_secperunit - p->p_offset))
 		    == -1) {
 			printf("Bad size `%s'\n", line);
 			continue;
@@ -531,13 +516,10 @@ done_typename:
 
 
 static void
-cmd_label(lp, s, fd)
-	struct disklabel *lp;
-	char *s;
-	int fd;
+cmd_label(struct disklabel *lp, char *s, int fd)
 {
-	char line[BUFSIZ];
-	int i;
+	char	line[BUFSIZ];
+	int	i;
 
 	i = getinput("?", "Label disk", "n", line);
 	if (i <= 0 || (*line != 'y' && *line != 'Y') )
@@ -557,10 +539,7 @@ cmd_label(lp, s, fd)
 
 
 static int
-runcmd(line, lp, fd)
-	char *line;
-	struct disklabel *lp;
-	int fd;
+runcmd(struct disklabel *lp, char *line, int fd)
 {
 	struct cmds *cmd;
 
@@ -584,12 +563,9 @@ runcmd(line, lp, fd)
 
 
 static int
-getinput(sep, prompt, def, line)
-	const char *sep;
-	const char *prompt;
-	const char *def;
-	char *line;
+getinput(const char *sep, const char *prompt, const char *def, char *line)
 {
+
 	for (;;) {
 		printf("%s", prompt);
 		if (def)
@@ -613,8 +589,7 @@ getinput(sep, prompt, def, line)
 }
 
 static int
-alphacmp(a, b)
-	const void *a, *b;
+alphacmp(const void *a, const void *b)
 {
 
 	return (strcasecmp(*(const char **)a, *(const char **)b));
@@ -622,13 +597,10 @@ alphacmp(a, b)
 
 
 static void
-dumpnames(prompt, olist, numentries)
-	const char *prompt;
-	const char * const *olist;
-	size_t numentries;
+dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 {
-	int i, j, w;
-	int columns, width, lines;
+	int	i, j, w;
+	int	columns, width, lines;
 	const char *p;
 	const char **list;
 
@@ -680,11 +652,9 @@ dumpnames(prompt, olist, numentries)
 
 
 static void
-defnum(buf, lp, size)
-	char *buf;
-	struct disklabel *lp;
-	int size;
+defnum(struct disklabel *lp, char *buf, int size)
 {
+
 	(void) snprintf(buf, BUFSIZ, "%gc, %ds, %gM",
 	    size / (float) lp->d_secpercyl,
 	    size, size  * (lp->d_secsize / (float) (1024 * 1024)));
@@ -692,14 +662,11 @@ defnum(buf, lp, size)
 
 
 static int
-getnum(buf, max, lp)
-	char *buf;
-	int max;
-	struct disklabel *lp;
+getnum(struct disklabel *lp, char *buf, int max)
 {
-	char *ep;
-	double d;
-	int rv;
+	char	*ep;
+	double	 d;
+	int	 rv;
 
 	if (max && buf[0] == '$' && buf[1] == 0)
 		return max;
@@ -708,8 +675,8 @@ getnum(buf, max, lp)
 	if (buf == ep)
 		return -1;
 
-#define ROUND(a)	((a / lp->d_secpercyl) + \
-		 ((a % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl
+#define ROUND(a)	((((a) / lp->d_secpercyl) + \
+		 	 (((a) % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl)
 
 	switch (*ep) {
 	case '\0':
@@ -739,16 +706,14 @@ getnum(buf, max, lp)
 
 
 void
-interact(lp, fd)
-	struct disklabel *lp;
-	int fd;
+interact(struct disklabel *lp, int fd)
 {
-	char line[BUFSIZ];
+	char	line[BUFSIZ];
 
 	for (;;) {
 		if (getinput(">", "partition", NULL, line) == -1)
 			return;
-		if (runcmd(line, lp, fd) == -1)
+		if (runcmd(lp, line, fd) == -1)
 			return;
 	}
 }
