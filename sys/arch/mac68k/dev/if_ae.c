@@ -19,14 +19,18 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.2 1993/12/15 03:38:20 briggs Exp $
+ * $Id: if_ae.c,v 1.3 1993/12/21 03:18:04 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.2  1993/12/15 03:38:20  briggs
+ * Revision 1.3  1993/12/21 03:18:04  briggs
+ * Update ethernet driver to use config.new.  At least, it's a first stab
+ * working from mycroft's magnum changes to if_ed.c.
+ *
+ * Revision 1.2  1993/12/15  03:38:20  briggs
  * Get rid of IFF_ALTPHYS and hence IFF_LLC0 reference.  It doesn't appear
  * to have been used in this driver ;-)
  *
@@ -76,19 +80,27 @@
 #include "net/bpfdesc.h"
 #endif
 
-#include "device.h"
+#include "sys/device.h"
+#include "nubus.h"
 #include "if_aereg.h"
+
+struct ae_device {
+	struct device	ae_dev;
+/*	struct nubusdev	ae_nu;
+	struct intrhand	ae_ih;	*/
+};
 
 /*
  * ae_softc: per line info and status
  */
 struct	ae_softc {
+	struct ae_device	*sc_ae;
+
 	struct	arpcom arpcom;	/* ethernet common */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
-	u_char	slot;		/* slot (0-f) */
 #define	APPLE_CARD(sc)		((sc)->vendor == AE_VENDOR_APPLE)
 #define	REG_MAP(sc, reg)	(APPLE_CARD(sc) ? (0x0f-(reg))<<2 : (reg)<<2)
 #define NIC_GET(sc, reg)	((sc)->nic_addr[REG_MAP(sc, reg)])
@@ -118,6 +130,9 @@ void	ae_find();
 int	ae_attach(), ae_init(), aeintr(), ae_ioctl(), ae_probe(),
 	ae_start(), ae_reset(), ae_watchdog();
 
+struct cfdriver aecd =
+{ NULL, "ae", ae_probe, ae_attach, DV_IFNET, sizeof(struct ae_device), NULL, 0 };
+
 static void ae_stop();
 static inline void ae_rint();
 static inline void ae_xmit();
@@ -125,77 +140,42 @@ static inline char *ae_ring_copy();
 
 extern int ether_output();
 
-/*
-struct isa_driver eddriver = {
-	ae_probe,
-	ae_attach,
-	"ae"
-};
-*/
-	
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 #define	ETHER_HDR_SIZE	14
 
-extern struct nubus_hw nubus_table[MAXSLOTS];
 char ae_name[] = "8390 Nubus Ethernet card";
 static char zero = 0;
 static u_char ones = 0xff;
 
-
-void
-ae_find(struct macdriver *md)
-{
-	int slot;
-
-	for (slot = 0; slot < MAXSLOTS; slot++)
-	{
-		register struct nubus_hw *nu = &nubus_table[slot];
-
-		if (!nu->found || nu->claimed)
-			continue;
-
-		if (nu->Slot.type == NUBUS_NETWORK) {
-printf("ae: found network card; slot %d, type 0x%x\n", slot, nu->Slot.type);
-
-			if (ae_probe(md, slot)) {
-				if (!md->hwfound) {
-					md->hwfound = 1;
-					md->name = ae_name;
-				}
-				nu->claimed = 1;
-				ae_attach(md);
-			}
-
-			break;
-		}
-	}
-}
-
 int
-ae_probe(struct macdriver *md, int slot)
+ae_probe(parent, cf, aux)
+	struct cfdriver	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
-	register struct nubus_hw *nu = &nubus_table[slot];
-	struct ae_softc *sc = &ae_softc[md->unit];
+	register struct nubus_hw *nu = (struct nubus_hw *) aux;
+	struct ae_softc *sc = &ae_softc[cf->cf_unit];
 	int i, memsize;
 	int flags = 0;
 
+	if (nu->Slot.type != NUBUS_NETWORK)
+		return 0;
+
 	/*
 	 * Try to determine what type of card this is...
-	 */
 	sc->vendor == AE_VENDOR_APPLE;
+	 */
 
 	/* see if it's an Interlan/GatorCard */
 	sc->rom_addr = nu->addr + GC_ROM_OFFSET;
 	if (sc->rom_addr[0x18] == 0x0 &&
 	    sc->rom_addr[0x1c] == 0x55) {
 		sc->vendor = AE_VENDOR_INTERLAN;
-printf("found interlan card in slot %x\n", slot);
 	}
- 
+
 	sc->type = 0;
-	sc->slot = slot;
 
 	switch (sc->vendor) {
 	      case AE_VENDOR_INTERLAN:
@@ -252,8 +232,8 @@ printf("found interlan card in slot %x\n", slot);
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->smem_start[i]) {
-	        	printf("ae%d: failed to clear shared memory at %x\n",
-			       md->unit, sc->smem_start + i);
+	        	printf(": failed to clear shared memory at %x\n",
+			       sc->smem_start + i);
 
 			return(0);
 		}
@@ -280,31 +260,47 @@ printf("found interlan card in slot %x\n", slot);
  * Install interface into kernel networking data structures
  */
 int
-ae_attach(struct macdriver *md)
+ae_attach(parent, self, aux)
+	struct cfdriver	*parent, *self;
+	void		*aux;
 {
-	struct ae_softc *sc = &ae_softc[md->unit];
+	struct nubus_hw	*nu = aux;
+	struct ae_device *ae = (struct ae_device *) self;
+	struct ae_softc *sc = &ae_softc[ae->ae_dev.dv_unit];
+	struct cfdata *cf = ae->ae_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
  
+	sc->sc_ae = ae;
+
 	/*
 	 * Set interface to stopped condition (reset)
 	 */
-	ae_stop(md->unit);
+	ae_stop(sc);
 
 	/*
 	 * Initialize ifnet structure
 	 */
-	ifp->if_unit = md->unit;
-	ifp->if_name = "ae";
+	ifp->if_unit = ae->ae_dev.dv_unit;
+	ifp->if_name = aecd.cd_name;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = ae_init;
 	ifp->if_output = ether_output;
+	ifp->if_init = ae_init;
 	ifp->if_start = ae_start;
 	ifp->if_ioctl = ae_ioctl;
 	ifp->if_reset = ae_reset;
 	ifp->if_watchdog = ae_watchdog;
 	ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS);
+
+#if 0
+	/*
+	 * Set default state for ALTPHYS flag (used to disable the transceiver
+	 * for AUI operation), based on compile-time config option.
+	 */
+	if (cf->cf_flags & AE_FLAGS_DISABLE_TRANSCEIVER)
+		ifp->if_flags |= IFF_ALTPHYS;
+#endif
 
 	/*
 	 * Attach the interface
@@ -337,8 +333,7 @@ ae_attach(struct macdriver *md)
 	/*
 	 * Print additional info when attached
 	 */
-	printf("ae%d: address %s, ", md->unit,
-		ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	if (sc->type_str && (*sc->type_str != 0))
 		printf("type %s ", sc->type_str);
@@ -353,15 +348,14 @@ ae_attach(struct macdriver *md)
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
 }
- 
+
 /*
  * Reset interface.
  */
 int
-ae_reset(unit)
-	int unit;
+ae_reset(sc)
+	struct ae_softc *sc;
 {
 	int s;
 
@@ -370,8 +364,8 @@ ae_reset(unit)
 	/*
 	 * Stop interface and re-initialize.
 	 */
-	ae_stop(unit);
-	ae_init(unit);
+	ae_stop(sc);
+	ae_init(sc);
 
 	(void) splx(s);
 }
@@ -380,10 +374,9 @@ ae_reset(unit)
  * Take interface offline.
  */
 void
-ae_stop(unit)
-	int unit;
+ae_stop(sc)
+	struct ae_softc *sc;
 {
-	struct ae_softc *sc = &ae_softc[unit];
 	int n = 5000;
 
 	/*
@@ -405,13 +398,13 @@ ae_stop(unit)
  */
 int
 ae_watchdog(unit)
-	int unit;
+	short unit;
 {
 	log(LOG_ERR, "ae%d: device timeout\n", unit);
 {
 struct ae_softc *sc = &ae_softc[unit];
 printf("cr %x, isr %x\n", NIC_GET(sc, AE_P0_CR), NIC_GET(sc, AE_P0_ISR));
-via_dump();
+/* via_dump(); */
 if (NIC_GET(sc, AE_P0_ISR)) {
 	aeintr(0);
 	return;
@@ -423,10 +416,9 @@ if (NIC_GET(sc, AE_P0_ISR)) {
 /*
  * Initialize device. 
  */
-ae_init(unit)
-	int unit;
+ae_init(sc)
+	struct ae_softc *sc;
 {
-	struct ae_softc *sc = &ae_softc[unit];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int i, s;
 	u_char	command;
@@ -553,8 +545,8 @@ ae_init(unit)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* */
-	add_nubus_intr(sc->slot, aeintr, sc - ae_softc);
+	/* XXXXXX */
+	add_nubus_intr(sc->rom_addr - GC_ROM_OFFSET, aeintr, sc - ae_softc);
 
 	/*
 	 * ...and attempt to start output
