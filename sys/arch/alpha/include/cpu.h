@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1995/02/13 23:07:33 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1995/03/24 15:01:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,6 @@
 #define	cpu_exec(p)			/* nothing XXX? */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_setstack(p, ap)		(p)->p_addr->u_pcb.pcb_usp
-#define	cpu_set_init_frame(p, fp)	(p)->p_md.md_tf = fp
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
