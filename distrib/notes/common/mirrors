@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of May 10, 1999.
+The following sites mirror NetBSD as of May 22, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -38,7 +38,7 @@ If you wish to become a distribution site for NetBSD, contact
 .
 .Country "Brazil"
 .mirror "ftp.ravel.ufrj.br" \
-"Cidade Universitaria" \
+"Universidade Federal do Rio de Janeiro" \
 "ftp://ftp.ravel.ufrj.br/pub/NetBSD/"
 .
 .Country "Denmark"
@@ -55,6 +55,9 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp.fr.netbsd.org" \
 "Paris University" \
 "ftp://ftp.fr.netbsd.org/pub/NetBSD/"
+.mirror "ftp2.fr.netbsd.org" \
+"Universite Pierre et Marie Curie, Paris 05" \
+"ftp://ftp2.fr.netbsd.org/pub/NetBSD/"
 .
 .Country "Germany"
 .mirror "ftp.de.netbsd.org" \
@@ -91,6 +94,11 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp.nl.netbsd.org" \
 "University of Amsterdam" \
 "ftp://ftp.nl.netbsd.org/pub/NetBSD/"
+.
+.Country "New Zealand"
+.mirror "ftp.clear.net.nz" \
+"CLEAR Net, Auckland" \
+"ftp://ftp.clear.net.nz/pub/NetBSD/"
 .
 .Country "Norway"
 .mirror "ftp.no.netbsd.org" \
@@ -168,6 +176,9 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "sup.fr.netbsd.org" \
 "Paris University" \
 "Instructions: Similar to sup.netbsd.org"
+.mirror "sup2.fr.netbsd.org" \
+"Universite Pierre et Marie Curie, Paris 05" \
+"Instructions: Similar to sup.netbsd.org"
 .
 .Country "Germany"
 .mirror "sup.de.netbsd.org" \
@@ -219,6 +230,9 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "www.fr.netbsd.org" \
 "Paris University" \
 "http://www.fr.netbsd.org/"
+.mirror "www2.fr.netbsd.org" \
+"Universite Pierre et Marie Curie, Paris 05" \
+"http://www2.fr.netbsd.org/"
 .
 .Country "Germany"
 .mirror "www.de.netbsd.org" \
@@ -236,7 +250,7 @@ If you wish to become a distribution site for NetBSD, contact
 .
 .Country "USA"
 .mirror "www.netbsd.org" \
-"Western Washington State University" \
+"Western Washington University" \
 "http://www.netbsd.org/"
 .mirror "www2.us.netbsd.org" \
 "Global Wire Oy, New York" \
