@@ -1,7 +1,9 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.1 2002/12/09 12:15:50 scw Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.2 2004/03/27 01:47:46 simonb Exp $
 
-# Convert a kernel to an tftp image loadable by the walnut IBM openbios.
+# Convert a kernel to an tftp image loadable by the IBM PowerPC OpenBIOS.
+
+magic=5394511	# IBM OpenBIOS magic number 0x0052504f
 
 if [ $# -ne 2 ] ; then
 	echo usage: $0 kernel image 1>&2
@@ -19,13 +21,12 @@ start=`printf "%d" $start`
 ${OBJCOPY} -O binary ${kernel} ${kernel}.bin.$$
 size=`/bin/ls -l ${kernel}.bin.$$ | awk '{ printf "%d", ( $5 + 511 ) / 512 }'`
 
-printf "%d\n%d\n0\n%d\n0\n0\n0\n" $start $size $start |
-    awk 'BEGIN { printf "\x00\x52\x50\x4f" }
-	{
-		printf "%c", $0 / 256 / 256 / 256 ;
-		printf "%c", $0 / 256 / 256 ;
-		printf "%c", $0 / 256 ;
-		printf "%c", $0 ;
+printf "%d\n%d\n%d\n0\n%d\n0\n0\n0\n" $magic $start $size $start |
+    awk '{
+		printf "%c", int($0 / 256 / 256 / 256) % 256;
+		printf "%c", int($0 / 256 / 256      ) % 256;
+		printf "%c", int($0 / 256            ) % 256;
+		printf "%c", int($0                  ) % 256;
 	}
     ' > ${output}
 
