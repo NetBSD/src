@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.13 2000/12/11 05:29:00 mycroft Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.14 2000/12/18 20:38:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -65,7 +65,7 @@ const struct emul emul_freebsd = {
 	NULL,
 	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	freebsd_syscall_intern,
 #else
 	syscall,
 #endif
