@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.6 1998/03/01 02:23:46 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.7 1998/06/09 06:33:22 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -86,7 +86,7 @@ ext2fs_inactive(v)
 	extern int prtactive;
 	
 	if (prtactive && vp->v_usecount != 0)
-		vprint("ffs_inactive: pushing active", vp);
+		vprint("ext2fs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0)
 		goto out;
