@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $	*/
+/*	$NetBSD: kex.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: kex.c,v 1.10 2000/09/07 20:27:51 deraadt Exp */
+/* from OpenBSD: kex.c,v 1.16 2000/12/20 19:37:22 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $");
+__RCSID("$NetBSD: kex.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "packet.h"
-#include "cipher.h"
 #include "compat.h"
 
 #include <openssl/bn.h>
@@ -53,6 +52,7 @@ __RCSID("$NetBSD: kex.c,v 1.2 2000/10/04 03:43:57 itojun Exp $");
 #include <openssl/rand.h>
 
 #include "kex.h"
+#include "key.h"
 
 #define KEX_COOKIE_LEN	16
 
@@ -60,7 +60,7 @@ Buffer *
 kex_init(char *myproposal[PROPOSAL_MAX])
 {
 	int first_kex_packet_follows = 0;
-	unsigned char cookie[KEX_COOKIE_LEN];
+	u_char cookie[KEX_COOKIE_LEN];
 	u_int32_t rand = 0;
 	int i;
 	Buffer *ki = xmalloc(sizeof(*ki));
@@ -134,11 +134,6 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 	int n = BN_num_bits(dh_pub);
 	int bits_set = 0;
 
-	/* we only accept g==2 */
-	if (!BN_is_word(dh->g, 2)) {
-		log("invalid DH base != 2");
-		return 0;
-	}
 	if (dh_pub->neg) {
 		log("invalid public DH value: negativ");
 		return 0;
@@ -155,40 +150,73 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 	return 0;
 }
 
-DH *
-dh_new_group1()
+void
+dh_gen_key(DH *dh)
 {
-	static char *group1 =
-	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
-	    "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
-	    "EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
-	    "E485B576" "625E7EC6" "F44C42E9" "A637ED6B" "0BFF5CB6" "F406B7ED"
-	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE65381"
-	    "FFFFFFFF" "FFFFFFFF";
-	DH *dh;
-	int ret, tries = 0;
-	dh = DH_new();
-	if(dh == NULL)
-		fatal("DH_new");
-	ret = BN_hex2bn(&dh->p, group1);
-	if(ret<0)
-		fatal("BN_hex2bn");
-	dh->g = BN_new();
-	if(dh->g == NULL)
-		fatal("DH_new g");
-	BN_set_word(dh->g, 2);
+	int tries = 0;
+
 	do {
 		if (DH_generate_key(dh) == 0)
 			fatal("failed to generate DH key: rnd(4) is mandatory.");
 		if (tries++ > 10)
 			fatal("dh_new_group1: too many bad keys: giving up");
 	} while (!dh_pub_is_valid(dh, dh->pub_key));
-	return dh;
+}
+
+DH *
+dh_new_group_asc(const char *gen, const char *modulus)
+{
+	DH *dh;
+	int ret;
+
+	dh = DH_new();
+	if (dh == NULL)
+		fatal("DH_new");
+
+	if ((ret = BN_hex2bn(&dh->p, modulus)) < 0)
+		fatal("BN_hex2bn p");
+	if ((ret = BN_hex2bn(&dh->g, gen)) < 0)
+		fatal("BN_hex2bn g");
+
+	return (dh);
+}
+
+/*
+ * This just returns the group, we still need to generate the exchange
+ * value.
+ */
+
+DH *
+dh_new_group(BIGNUM *gen, BIGNUM *modulus)
+{
+	DH *dh;
+
+	dh = DH_new();
+	if (dh == NULL)
+		fatal("DH_new");
+	dh->p = modulus;
+	dh->g = gen;
+
+	return (dh);
+}
+
+DH *
+dh_new_group1(void)
+{
+	static char *gen = "2", *group1 =
+	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
+	    "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
+	    "EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
+	    "E485B576" "625E7EC6" "F44C42E9" "A637ED6B" "0BFF5CB6" "F406B7ED"
+	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE65381"
+	    "FFFFFFFF" "FFFFFFFF";
+
+	return (dh_new_group_asc(gen, group1));
 }
 
 #ifdef DEBUG_KEX
-static void
-dump_digest(unsigned char *digest, int len)
+void
+dump_digest(u_char *digest, int len)
 {
 	int i;
 	for (i = 0; i< len; i++){
@@ -200,7 +228,7 @@ dump_digest(unsigned char *digest, int len)
 }
 #endif
 
-unsigned char *
+u_char *
 kex_hash(
     char *client_version_string,
     char *server_version_string,
@@ -212,7 +240,7 @@ kex_hash(
     BIGNUM *shared_secret)
 {
 	Buffer b;
-	static unsigned char digest[EVP_MAX_MD_SIZE];
+	static u_char digest[EVP_MAX_MD_SIZE];
 	EVP_MD *evp_md = EVP_sha1();
 	EVP_MD_CTX md;
 
@@ -249,8 +277,61 @@ kex_hash(
 	return digest;
 }
 
-static unsigned char *
-derive_key(int id, int need, char unsigned *hash, BIGNUM *shared_secret)
+u_char *
+kex_hash_gex(
+    char *client_version_string,
+    char *server_version_string,
+    char *ckexinit, int ckexinitlen,
+    char *skexinit, int skexinitlen,
+    char *serverhostkeyblob, int sbloblen,
+    int minbits, BIGNUM *prime, BIGNUM *gen,
+    BIGNUM *client_dh_pub,
+    BIGNUM *server_dh_pub,
+    BIGNUM *shared_secret)
+{
+	Buffer b;
+	static u_char digest[EVP_MAX_MD_SIZE];
+	EVP_MD *evp_md = EVP_sha1();
+	EVP_MD_CTX md;
+
+	buffer_init(&b);
+	buffer_put_string(&b, client_version_string, strlen(client_version_string));
+	buffer_put_string(&b, server_version_string, strlen(server_version_string));
+
+	/* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
+	buffer_put_int(&b, ckexinitlen+1);
+	buffer_put_char(&b, SSH2_MSG_KEXINIT);
+	buffer_append(&b, ckexinit, ckexinitlen);
+	buffer_put_int(&b, skexinitlen+1);
+	buffer_put_char(&b, SSH2_MSG_KEXINIT);
+	buffer_append(&b, skexinit, skexinitlen);
+
+	buffer_put_string(&b, serverhostkeyblob, sbloblen);
+	buffer_put_int(&b, minbits);
+	buffer_put_bignum2(&b, prime);
+	buffer_put_bignum2(&b, gen);
+	buffer_put_bignum2(&b, client_dh_pub);
+	buffer_put_bignum2(&b, server_dh_pub);
+	buffer_put_bignum2(&b, shared_secret);
+	
+#ifdef DEBUG_KEX
+	buffer_dump(&b);
+#endif
+
+	EVP_DigestInit(&md, evp_md);
+	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
+	EVP_DigestFinal(&md, digest, NULL);
+
+	buffer_free(&b);
+
+#ifdef DEBUG_KEX
+	dump_digest(digest, evp_md->md_size);
+#endif
+	return digest;
+}
+
+static u_char *
+derive_key(int id, int need, u_char *hash, BIGNUM *shared_secret)
 {
 	Buffer b;
 	EVP_MD *evp_md = EVP_sha1();
@@ -258,7 +339,7 @@ derive_key(int id, int need, char unsigned *hash, BIGNUM *shared_secret)
 	char c = id;
 	int have;
 	int mdsz = evp_md->md_size;
-	unsigned char *digest = xmalloc(((need+mdsz-1)/mdsz)*mdsz);
+	u_char *digest = xmalloc(((need+mdsz-1)/mdsz)*mdsz);
 
 	buffer_init(&b);
 	buffer_put_bignum2(&b, shared_secret);
@@ -331,28 +412,9 @@ choose_enc(Enc *enc, char *client, char *server)
 	char *name = get_match(client, server);
 	if (name == NULL)
 		fatal("no matching cipher found: client %s server %s", client, server);
-	enc->type = cipher_number(name);
-
-	switch (enc->type) {
-	case SSH_CIPHER_3DES_CBC:
-		enc->key_len = 24;
-		enc->iv_len = 8;
-		enc->block_size = 8;
-		break;
-	case SSH_CIPHER_BLOWFISH_CBC:
-	case SSH_CIPHER_CAST128_CBC:
-		enc->key_len = 16;
-		enc->iv_len = 8;
-		enc->block_size = 8;
-		break;
-	case SSH_CIPHER_ARCFOUR:
-		enc->key_len = 16;
-		enc->iv_len = 0;
-		enc->block_size = 8;
-		break;
-	default:
-		fatal("unsupported cipher %s", name);
-	}
+	enc->cipher = cipher_by_name(name);
+	if (enc->cipher == NULL)
+		fatal("matching cipher is not supported: %s", name);
 	enc->name = name;
 	enc->enabled = 0;
 	enc->iv = NULL;
@@ -400,17 +462,22 @@ choose_kex(Kex *k, char *client, char *server)
 	k->name = get_match(client, server);
 	if (k->name == NULL)
 		fatal("no kex alg");
-	if (strcmp(k->name, KEX_DH1) != 0)
+	if (strcmp(k->name, KEX_DH1) == 0) {
+		k->kex_type = DH_GRP1_SHA1;
+	} else if (strcmp(k->name, KEX_DHGEX) == 0) {
+		k->kex_type = DH_GEX_SHA1;
+	} else
 		fatal("bad kex alg %s", k->name);
 }
 static void
 choose_hostkeyalg(Kex *k, char *client, char *server)
 {
-	k->hostkeyalg = get_match(client, server);
-	if (k->hostkeyalg == NULL)
+	char *hostkeyalg = get_match(client, server);
+	if (hostkeyalg == NULL)
 		fatal("no hostkey alg");
-	if (strcmp(k->hostkeyalg, KEX_DSS) != 0)
-		fatal("bad hostkey alg %s", k->hostkeyalg);
+	k->hostkey_type = key_type_from_name(hostkeyalg);
+	if (k->hostkey_type == KEY_UNSPEC)
+		fatal("bad hostkey alg '%s'", hostkeyalg);
 }
 
 Kex *
@@ -445,10 +512,10 @@ kex_choose_conf(char *cprop[PROPOSAL_MAX], char *sprop[PROPOSAL_MAX], int server
 	    sprop[PROPOSAL_SERVER_HOST_KEY_ALGS]);
 	need = 0;
 	for (mode = 0; mode < MODE_MAX; mode++) {
-	    if (need < k->enc[mode].key_len)
-		    need = k->enc[mode].key_len;
-	    if (need < k->enc[mode].iv_len)
-		    need = k->enc[mode].iv_len;
+	    if (need < k->enc[mode].cipher->key_len)
+		    need = k->enc[mode].cipher->key_len;
+	    if (need < k->enc[mode].cipher->block_size)
+		    need = k->enc[mode].cipher->block_size;
 	    if (need < k->mac[mode].key_len)
 		    need = k->mac[mode].key_len;
 	}
@@ -458,12 +525,12 @@ kex_choose_conf(char *cprop[PROPOSAL_MAX], char *sprop[PROPOSAL_MAX], int server
 }
 
 int
-kex_derive_keys(Kex *k, unsigned char *hash, BIGNUM *shared_secret)
+kex_derive_keys(Kex *k, u_char *hash, BIGNUM *shared_secret)
 {
 	int i;
 	int mode;
 	int ctos;
-	unsigned char *keys[NKEYS];
+	u_char *keys[NKEYS];
 
 	for (i = 0; i < NKEYS; i++)
 		keys[i] = derive_key('A'+i, k->we_need, hash, shared_secret);
