@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.40 1996/08/03 19:33:19 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.41 1996/10/10 21:25:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -64,9 +64,9 @@
 
 /* for debugging convenience */
 #ifdef EL_DEBUG
-#define dprintf(x) printf x
+#define DPRINTF(x) kprintf x
 #else
-#define dprintf(x)
+#define DPRINTF(x)
 #endif
 
 /*
@@ -140,21 +140,21 @@ elprobe(parent, match, aux)
 	 * Now attempt to grab the station address from the PROM and see if it
 	 * contains the 3com vendor code.
 	 */
-	dprintf(("Probing 3c501 at 0x%x...\n", iobase));
+	DPRINTF(("Probing 3c501 at 0x%x...\n", iobase));
 
 	/* Reset the board. */
-	dprintf(("Resetting board...\n"));
+	DPRINTF(("Resetting board...\n"));
 	bus_io_write_1(bc, ioh, EL_AC, EL_AC_RESET);
 	delay(5);
 	bus_io_write_1(bc, ioh, EL_AC, 0);
 
 	/* Now read the address. */
-	dprintf(("Reading station address...\n"));
+	DPRINTF(("Reading station address...\n"));
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		bus_io_write_1(bc, ioh, EL_GPBL, i);
 		station_addr[i] = bus_io_read_1(bc, ioh, EL_EAW);
 	}
-	dprintf(("Address is %s\n", ether_sprintf(station_addr)));
+	DPRINTF(("Address is %s\n", ether_sprintf(station_addr)));
 
 	/*
 	 * If the vendor code is ok, return a 1.  We'll assume that whoever
@@ -162,10 +162,10 @@ elprobe(parent, match, aux)
 	 */
 	if (station_addr[0] != 0x02 || station_addr[1] != 0x60 ||
 	    station_addr[2] != 0x8c) {
-		dprintf(("Bad vendor code.\n"));
+		DPRINTF(("Bad vendor code.\n"));
 		goto out;
 	}
-	dprintf(("Vendor code ok.\n"));
+	DPRINTF(("Vendor code ok.\n"));
 
 	ia->ia_iosize = 4;	/* XXX */
 	ia->ia_msize = 0;
@@ -193,13 +193,13 @@ elattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t i;
 
-	printf("\n");
+	kprintf("\n");
 
-	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));
+	DPRINTF(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
 	/* Map i/o space. */
 	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		kprintf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
@@ -229,24 +229,24 @@ elattach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	/* Now we can attach the interface. */
-	dprintf(("Attaching interface...\n"));
+	DPRINTF(("Attaching interface...\n"));
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
 	/* Print out some information for the user. */
-	printf("%s: address %s\n", self->dv_xname,
+	kprintf("%s: address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 #if NBPFILTER > 0
-	dprintf(("Attaching to BPF...\n"));
+	DPRINTF(("Attaching to BPF...\n"));
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, elintr, sc);
 
-	dprintf(("elattach() finished.\n"));
+	DPRINTF(("elattach() finished.\n"));
 }
 
 /*
@@ -258,7 +258,7 @@ elreset(sc)
 {
 	int s;
 
-	dprintf(("elreset()\n"));
+	DPRINTF(("elreset()\n"));
 	s = splnet();
 	elstop(sc);
 	elinit(sc);
@@ -311,7 +311,7 @@ elinit(sc)
 	el_hardreset(sc);
 
 	/* Configure rx. */
-	dprintf(("Configuring rx...\n"));
+	DPRINTF(("Configuring rx...\n"));
 	if (ifp->if_flags & IFF_PROMISC)
 		bus_io_write_1(bc, ioh, EL_RXC,
 		    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
@@ -323,11 +323,11 @@ elinit(sc)
 	bus_io_write_1(bc, ioh, EL_RBC, 0);
 
 	/* Configure TX. */
-	dprintf(("Configuring tx...\n"));
+	DPRINTF(("Configuring tx...\n"));
 	bus_io_write_1(bc, ioh, EL_TXC, 0);
 
 	/* Start reception. */
-	dprintf(("Starting reception...\n"));
+	DPRINTF(("Starting reception...\n"));
 	bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 
 	/* Set flags appropriately. */
@@ -353,7 +353,7 @@ elstart(ifp)
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
 
-	dprintf(("elstart()...\n"));
+	DPRINTF(("elstart()...\n"));
 	s = splnet();
 
 	/* Don't do anything if output is active. */
@@ -387,11 +387,11 @@ elstart(ifp)
 		bus_io_write_1(bc, ioh, EL_RBC, 0);
 
 		/* Transfer datagram to board. */
-		dprintf(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
+		DPRINTF(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
 		off = EL_BUFSIZ - max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
-			printf("%s: bogus off 0x%x\n",
+			kprintf("%s: bogus off 0x%x\n",
 			    sc->sc_dev.dv_xname, off);
 #endif
 		bus_io_write_1(bc, ioh, EL_GPBL, off & 0xff);
@@ -415,9 +415,9 @@ elstart(ifp)
 			}
 			/* Check out status. */
 			i = bus_io_read_1(bc, ioh, EL_TXS);
-			dprintf(("tx status=0x%x\n", i));
+			DPRINTF(("tx status=0x%x\n", i));
 			if ((i & EL_TXS_READY) == 0) {
-				dprintf(("el: err txs=%x\n", i));
+				DPRINTF(("el: err txs=%x\n", i));
 				if (i & (EL_TXS_COLL | EL_TXS_COLL16)) {
 					ifp->if_collisions++;
 					if ((i & EL_TXC_DCOLL16) == 0 &&
@@ -472,16 +472,16 @@ el_xmit(sc)
 	 * instead?
 	 */
 
-	dprintf(("el: xmit..."));
+	DPRINTF(("el: xmit..."));
 	bus_io_write_1(bc, ioh, EL_AC, EL_AC_TXFRX);
 	i = 20000;
 	while ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_TXBUSY) && (i > 0))
 		i--;
 	if (i == 0) {
-		dprintf(("tx not ready\n"));
+		DPRINTF(("tx not ready\n"));
 		return -1;
 	}
-	dprintf(("%d cycles.\n", 20000 - i));
+	DPRINTF(("%d cycles.\n", 20000 - i));
 	return 0;
 }
 
@@ -498,7 +498,7 @@ elintr(arg)
 	u_int8_t rxstat;
 	int len;
 
-	dprintf(("elintr: "));
+	DPRINTF(("elintr: "));
 
 	/* Check board status. */
 	if ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_RXBUSY) != 0) {
@@ -514,7 +514,7 @@ elintr(arg)
 
 		/* If there's an overflow, reinit the board. */
 		if ((rxstat & EL_RXS_NOFLOW) == 0) {
-			dprintf(("overflow.\n"));
+			DPRINTF(("overflow.\n"));
 			el_hardreset(sc);
 			/* Put board back into receive mode. */
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
@@ -533,7 +533,7 @@ elintr(arg)
 		/* Incoming packet. */
 		len = bus_io_read_1(bc, ioh, EL_RBL);
 		len |= bus_io_read_1(bc, ioh, EL_RBH) << 8;
-		dprintf(("receive len=%d rxstat=%x ", len, rxstat));
+		DPRINTF(("receive len=%d rxstat=%x ", len, rxstat));
 		bus_io_write_1(bc, ioh, EL_AC, EL_AC_HOST);
 
 		/* Pass data up to upper levels. */
@@ -543,7 +543,7 @@ elintr(arg)
 		if ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_RXBUSY) != 0)
 			break;
 
-		dprintf(("<rescan> "));
+		DPRINTF(("<rescan> "));
 	}
 
 	(void)bus_io_read_1(bc, ioh, EL_RXC);
@@ -565,7 +565,7 @@ elread(sc, len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		printf("%s: invalid packet size %d; dropping\n",
+		kprintf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;
