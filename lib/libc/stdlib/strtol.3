@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.12 2000/03/16 04:57:11 enami Exp $
+.\"	$NetBSD: strtol.3,v 1.13 2001/03/21 22:42:29 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 6, 2000
+.Dd March 21, 2001
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -51,15 +51,15 @@
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft long int
-.Fn strtol "const char *nptr" "char **endptr" "int base"
+.Fn strtol "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Ft long long int
-.Fn strtoll "const char *nptr" "char **endptr" "int base"
+.Fn strtoll "const char * restrict nptr" "char ** restrict endptr" "int base"
 
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft quad_t
-.Fn strtoq "const char *nptr" "char **endptr" "int base"
+.Fn strtoq "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Sh DESCRIPTION
 The
 .Fn strtol
