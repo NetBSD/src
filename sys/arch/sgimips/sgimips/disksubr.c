@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 2002/01/10 06:56:18 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 2002/02/19 17:09:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -55,7 +55,7 @@ int     mipsvh_cksum(struct sgilabel *vhp);
 
 /*
  * Attempt to read a disk label from a device using the indicated
- * stategy routine. The label must be partly set up before this:
+ * strategy routine. The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines must be
  * filled in before calling us.
