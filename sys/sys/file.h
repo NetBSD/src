@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.16 1998/06/30 07:39:22 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.17 1998/07/01 00:03:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@
 
 struct proc;
 struct uio;
+struct iovec;
 
 /*
  * Kernel descriptor table.
