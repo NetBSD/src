@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.12 2002/03/04 00:55:04 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.13 2002/03/13 00:38:18 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -69,6 +69,16 @@ struct cpu_info cpu_info_store;
 
 char cpu_model[80];
 
+void
+cpu_probe_cache(void)
+{
+	/* XXXX Initialze cache_info */
+	curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
+	curcpu()->ci_ci.icache_size = PAGE_SIZE;
+	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+}
+
 struct cpu_info *
 cpu_attach_common(struct device *self, int id)
 {
@@ -130,6 +140,7 @@ cpu_attach_common(struct device *self, int id)
 	    id == 0 ? " (primary)" : "");
 
 	__asm __volatile("mfspr %0,%1" : "=r"(hid0) : "n"(SPR_HID0));
+	cpu_probe_cache();
 
 	/*
 	 * Configure power-saving mode.
