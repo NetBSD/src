@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.51 1996/11/20 21:26:48 perry Exp $	*/
+/*	$NetBSD: ncr.c,v 1.52 1996/11/23 21:42:28 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1334,7 +1334,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.51 1996/11/20 21:26:48 perry Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.52 1996/11/23 21:42:28 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4304,7 +4304,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%x STAT=%x/%x\n", (unsigned)cp & 0xfff,
+		printf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp & 0xfff,
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
