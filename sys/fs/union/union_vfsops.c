@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.19 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.20 2004/05/29 23:49:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.19 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.20 2004/05/29 23:49:31 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,6 +638,6 @@ struct vfsops union_vfsops = {
 	NULL,
 	NULL,				/* vfs_mountroot */
 	union_checkexp,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	layerfs_snapshot,
 	union_vnodeopv_descs,
 };
