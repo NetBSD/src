@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.19 1996/10/13 02:59:41 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.20 1996/12/10 22:54:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ struct cgtwo_softc {
 
 /* autoconfiguration driver */
 static void	cgtwoattach __P((struct device *, struct device *, void *));
-static int	cgtwomatch __P((struct device *, void *, void *));
+static int	cgtwomatch __P((struct device *, struct cfdata *, void *));
 static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
@@ -118,11 +118,11 @@ extern struct tty *fbconstty;
  * Match a cgtwo.
  */
 int
-cgtwomatch(parent, vcf, aux)
+cgtwomatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 #if defined(SUN4)

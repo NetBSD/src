@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.11 1996/10/13 02:59:33 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.12 1996/12/10 22:54:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -89,7 +89,7 @@ struct cgeight_softc {
 
 /* autoconfiguration driver */
 static void	cgeightattach(struct device *, struct device *, void *);
-static int	cgeightmatch(struct device *, void *, void *);
+static int	cgeightmatch(struct device *, struct cfdata *, void *);
 #if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
 #endif
@@ -124,11 +124,11 @@ static void cgeight_set_video __P((struct cgeight_softc *, int));
  * Match a cgeight.
  */
 int
-cgeightmatch(parent, vcf, aux)
+cgeightmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

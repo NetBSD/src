@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.48 1996/10/28 00:20:31 abrown Exp $ */
+/*	$NetBSD: clock.c,v 1.49 1996/12/10 23:17:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ static void oclk_set_secs __P((long));
 static void gmt_to_dt __P((long *, struct date_time *));
 #endif
 
-static int oclockmatch __P((struct device *, void *, void *));
+static int oclockmatch __P((struct device *, struct cfdata *, void *));
 static void oclockattach __P((struct device *, struct device *, void *));
 
 struct cfattach oclock_ca = {
@@ -156,7 +156,7 @@ static void	eeprom_give __P((void));
 static int	eeprom_update __P((char *, int, int));
 #endif
 
-static int	eeprom_match __P((struct device *, void *, void *));
+static int	eeprom_match __P((struct device *, struct cfdata *, void *));
 static void	eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
@@ -167,7 +167,7 @@ struct	cfdriver eeprom_cd = {
 	NULL, "eeprom", DV_DULL
 };
 
-static int	clockmatch __P((struct device *, void *, void *));
+static int	clockmatch __P((struct device *, struct cfdata *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
 
 struct cfattach clock_ca = {
@@ -178,7 +178,7 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
-static int	timermatch __P((struct device *, void *, void *));
+static int	timermatch __P((struct device *, struct cfdata *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
 
 struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
@@ -205,9 +205,10 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
  * old clock match routine
  */
 static int
-oclockmatch(parent, vcf, aux)
+oclockmatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 
@@ -284,11 +285,11 @@ oclockattach(parent, self, aux)
  * Sun 4/100, 4/200 EEPROM match routine.
  */
 static int
-eeprom_match(parent, vcf, aux)
+eeprom_match(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
 	if (!CPU_ISSUN4)
@@ -337,9 +338,10 @@ eeprom_attach(parent, self, aux)
  * own special match function to call it the "clock".
  */
 static int
-clockmatch(parent, vcf, aux)
+clockmatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 
@@ -438,9 +440,10 @@ clockattach(parent, self, aux)
  * The OPENPROM calls the timer the "counter-timer".
  */
 static int
-timermatch(parent, vcf, aux)
+timermatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 

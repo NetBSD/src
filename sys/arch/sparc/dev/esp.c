@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.64 1996/12/10 21:27:44 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.65 1996/12/10 22:54:55 pk Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -107,7 +107,7 @@
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
-/*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
@@ -156,12 +156,12 @@ struct scsi_device esp_dev = {
 };
 
 int
-espmatch(parent, vcf, aux)
+espmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 #ifdef SPARC_DRIVER
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.17 1996/11/16 23:00:24 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.18 1996/12/10 23:17:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-static int memregmatch __P((struct device *, void *, void *));
+static int memregmatch __P((struct device *, struct cfdata *, void *));
 static void memregattach __P((struct device *, struct device *, void *));
 
 struct cfattach memreg_ca = {
@@ -80,11 +80,11 @@ static void hardmemerr4m __P((int, u_int, u_int));
  * The OPENPROM calls this "memory-error".
  */
 static int
-memregmatch(parent, vcf, aux)
+memregmatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
