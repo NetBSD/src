@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.21 2001/07/29 05:08:33 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.22 2001/08/16 17:45:26 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -73,11 +73,10 @@ static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
 extern struct ip6protosw in6_gif_protosw;
 
 int
-in6_gif_output(ifp, family, m, rt)
+in6_gif_output(ifp, family, m)
 	struct ifnet *ifp;
 	int family; /* family of the packet to be encapsulate. */
 	struct mbuf *m;
-	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
