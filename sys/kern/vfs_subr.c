@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.100.4.2 1999/07/04 01:41:46 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.100.4.3 1999/07/31 18:37:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -535,21 +535,18 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct proc *p;
 	int slpflag, slptimeo;
 {
-	register struct buf *bp;
-	struct buf *nbp, *blist;
-	int s, error;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct buf *bp, *nbp, *blist;
+	int s, error, rv;
+	int flushflags = PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO|
+		(flags & V_SAVE ? PGO_CLEANIT : 0);
 
 	/* XXX fixme! this doesn't look at flags or slp* */
 	if (vp->v_type == VREG) {
-		struct uvm_object *uobj = &vp->v_uvm.u_obj;
-		int rv;
-
 		simple_lock(&uobj->vmobjlock);
-		rv = (uobj->pgops->pgo_flush)(uobj, 0, 0,
-			PGO_CLEANIT | PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO);
+		rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
 		simple_unlock(&uobj->vmobjlock);
-
-		if (rv == 0) {
+		if (!rv) {
 			return EIO;
 		}
 	}
@@ -610,14 +607,14 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 
 void
 vflushbuf(vp, sync)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int sync;
 {
-	register struct buf *bp, *nbp;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct buf *bp, *nbp;
 	int s;
 
 	if (vp->v_type == VREG) {
-		struct uvm_object *uobj = &vp->v_uvm.u_obj;
 		int flags = PGO_CLEANIT|PGO_ALLPAGES| (sync ? PGO_SYNCIO : 0);
 
 		simple_lock(&uobj->vmobjlock);
