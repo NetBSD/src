@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 1998/01/12 18:04:19 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 1998/03/10 11:43:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -81,6 +81,7 @@ void		*auxp;
 	iba.iba_busname = "isa";
 	iba.iba_iot     = ISA_IOSTART;
 	iba.iba_memt    = ISA_MEMSTART;
+	iba.iba_dmat	= BUS_ISA_DMA_TAG;
 
 	MFP->mf_aer    |= (IO_ISA1|IO_ISA2); /* ISA interrupts: LOW->HIGH */
 
