@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.9 1998/10/14 11:25:19 kleink Exp $	*/
+/*	$NetBSD: mmap.c,v 1.10 1998/11/15 17:23:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: mmap.c,v 1.9 1998/10/14 11:25:19 kleink Exp $");
+__RCSID("$NetBSD: mmap.c,v 1.10 1998/11/15 17:23:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,10 @@ mmap(addr, len, prot, flags, fd, offset)
 	caddr_t rv;
 
 	q = __syscall((quad_t)SYS_mmap, addr, len, prot, flags, fd, 0, offset);
-	if (sizeof (quad_t) == sizeof (register_t) ||
-	    BYTE_ORDER == LITTLE_ENDIAN)
+	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
+	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 		rv = (caddr_t)(long)q;
 	else
-		rv = (caddr_t)(long)(q >> 32);
+		rv = (caddr_t)(long)((u_quad_t)q >> 32);
 	return rv;
 }

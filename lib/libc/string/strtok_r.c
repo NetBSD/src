@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok_r.c,v 1.4 1998/09/27 17:57:49 kleink Exp $	*/
+/*	$NetBSD: strtok_r.c,v 1.5 1998/11/15 17:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strtok.c	5.8 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strtok_r.c,v 1.4 1998/09/27 17:57:49 kleink Exp $");
+__RCSID("$NetBSD: strtok_r.c,v 1.5 1998/11/15 17:21:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ strtok_r(s, delim, lasts)
 	const char *delim;
 	char **lasts;
 {
-	char *spanp;
+	const char *spanp;
 	int c, sc;
 	char *tok;
 
@@ -67,7 +67,7 @@ strtok_r(s, delim, lasts)
 	 */
 cont:
 	c = *s++;
-	for (spanp = (char *)delim; (sc = *spanp++) != 0;) {
+	for (spanp = delim; (sc = *spanp++) != 0;) {
 		if (c == sc)
 			goto cont;
 	}
@@ -84,7 +84,7 @@ cont:
 	 */
 	for (;;) {
 		c = *s++;
-		spanp = (char *)delim;
+		spanp = delim;
 		do {
 			if ((sc = *spanp++) == c) {
 				if (c == 0)

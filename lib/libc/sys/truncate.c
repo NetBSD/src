@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.8 1997/07/13 20:25:34 christos Exp $	*/
+/*	$NetBSD: truncate.c,v 1.9 1998/11/15 17:23:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: truncate.c,v 1.8 1997/07/13 20:25:34 christos Exp $");
+__RCSID("$NetBSD: truncate.c,v 1.9 1998/11/15 17:23:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,10 +59,10 @@ truncate(path, length)
 	int rv;
 
 	q = __syscall((quad_t)SYS_truncate, path, 0, length);
-	if (sizeof (quad_t) == sizeof (register_t) ||
-	    BYTE_ORDER == LITTLE_ENDIAN)
+	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
+	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 		rv = (int)q;
 	else
-		rv = (int)(q >> 32);
+		rv = (int)((u_quad_t)q >> 32);
 	return rv;
 }
