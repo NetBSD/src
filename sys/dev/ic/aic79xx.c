@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.13 2003/08/29 01:58:32 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.14 2003/08/29 02:18:16 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -41,7 +41,7 @@
  *
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#193 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.16 2003/05/26 21:43:29 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.17 2003/05/30 02:15:15 scottl Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.13 2003/08/29 01:58:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.14 2003/08/29 02:18:16 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
