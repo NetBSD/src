@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.413 2000/12/28 11:10:16 jdolecek Exp $
+#	$NetBSD: files,v 1.414 2000/12/29 00:54:58 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -564,6 +564,9 @@ file	dev/usb/ehci.c			ehci	needs-flag
 device	fwlynx: fwbus
 device	fwohci: fwbus
 
+# Attribute used by various things that need BPF's virtual machine
+define	bpf_filter
+
 # legitimate pseudo-devices
 defpseudo vnd: disk
 defpseudo ccd: disk
@@ -577,11 +580,11 @@ defpseudo rnd
 
 defpseudo loop: ifnet
 defpseudo sl: ifnet
-defpseudo ppp: ifnet
+defpseudo ppp: ifnet, bpf_filter
 defpseudo sppp: ifnet
 defpseudo tun: ifnet
 defpseudo vlan: ifnet, ether
-defpseudo bpfilter: ifnet
+defpseudo bpfilter: ifnet, bpf_filter
 defpseudo strip: ifnet
 defpseudo ipfilter: ifnet
 defpseudo ipip: ifnet
@@ -849,7 +852,7 @@ file msdosfs/msdosfs_lookup.c		msdosfs
 file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
 file net/bpf.c				bpfilter		needs-count
-file net/bpf_filter.c			bpfilter | ppp
+file net/bpf_filter.c			bpf_filter
 file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
