@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.c,v 1.6 1993/07/15 14:25:28 cgd Exp $
+ *	vm_map.c,v 1.6 1993/07/15 14:25:28 cgd Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -2428,6 +2428,7 @@ vm_map_simplify(map, start)
 	vm_map_unlock(map);
 }
 
+#ifdef DDB
 /*
  *	vm_map_print:	[ debug ]
  */
@@ -2455,18 +2456,18 @@ vm_map_print(map, full)
 		if (map->is_main_map) {
 		     	static char *inheritance_name[4] =
 				{ "share", "copy", "none", "donate_copy"};
-			printf("prot=%x/%x/%s, ",
-				entry->protection,
-				entry->max_protection,
-				inheritance_name[entry->inheritance]);
+			db_printf("prot=%x/%x/%s, ",
+                                  entry->protection,
+                                  entry->max_protection,
+                                  inheritance_name[entry->inheritance]);
 			if (entry->wired_count != 0)
-				printf("wired, ");
+				db_printf("wired, ");
 		}
 
 		if (entry->is_a_map || entry->is_sub_map) {
-		 	printf("share=0x%x, offset=0x%x\n",
-				(int) entry->object.share_map,
-				(int) entry->offset);
+		 	db_printf("share=0x%x, offset=0x%x\n",
+                                  (int) entry->object.share_map,
+                                  (int) entry->offset);
 			if ((entry->prev == &map->header) ||
 			    (!entry->prev->is_a_map) ||
 			    (entry->prev->object.share_map !=
@@ -2478,13 +2479,13 @@ vm_map_print(map, full)
 				
 		}
 		else {
-			printf("object=0x%x, offset=0x%x",
-				(int) entry->object.vm_object,
-				(int) entry->offset);
+			db_printf("object=0x%x, offset=0x%x",
+                                  (int) entry->object.vm_object,
+                                  (int) entry->offset);
 			if (entry->copy_on_write)
-				printf(", copy (%s)",
-				       entry->needs_copy ? "needed" : "done");
-			printf("\n");
+				db_printf(", copy (%s)",
+                                          entry->needs_copy ? "needed" : "done");
+			db_printf("\n");
 
 			if ((entry->prev == &map->header) ||
 			    (entry->prev->is_a_map) ||
@@ -2498,3 +2499,4 @@ vm_map_print(map, full)
 	}
 	indent -= 2;
 }
+#endif
