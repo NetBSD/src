@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.20 2004/01/03 22:56:52 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.21 2004/05/25 20:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.20 2004/01/03 22:56:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.21 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -279,6 +279,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0)
 				return;
 		}
+		wdc_init_shadow_regs(cp);
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
 		    AUX_REGISTER_SPACE, 0, &cp->ctl_ioh))
 			return;
