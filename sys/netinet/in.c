@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.61.4.2 2000/10/06 07:00:37 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.61.4.3 2000/10/17 00:45:36 tv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,6 +143,13 @@ static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 
 int subnetsarelocal = SUBNETSARELOCAL;
 int hostzeroisbroadcast = HOSTZEROBROADCAST;
+
+/*
+ * This list is used to keep track of in_multi chains which belong to
+ * deleted interface addresses.  We use in_ifaddr so that a chain head
+ * won't be deallocated until all multicast address record are deleted.
+ */
+static TAILQ_HEAD(, in_ifaddr) in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -557,6 +564,15 @@ in_purgeaddr(ifa, ifp)
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	if (ia->ia_allhosts != NULL)
+		in_delmulti(ia->ia_allhosts);
+	if (LIST_FIRST(&ia->ia_multiaddrs) != NULL &&
+	    /*
+	     * If the interface is going away, don't bother to save
+	     * the multicast entries.
+	     */
+	    ifp->if_output != if_nulloutput)
+		in_savemkludge(ia);
 	IFAFREE(&ia->ia_ifa);
 	in_setmaxmtu();
 }
@@ -573,6 +589,7 @@ in_purgeif(ifp)
 			continue;
 		in_purgeaddr(ifa, ifp);
 	}
+	in_purgemkludge(ifp);
 }
 
 /*
@@ -864,14 +881,19 @@ in_ifinit(ifp, ia, sin, scrub)
 	if (error == EEXIST)
 		error = 0;
 	/*
+	 * recover multicast kludge entry, if there is.
+	 */
+	if (ifp->if_flags & IFF_MULTICAST)
+		in_restoremkludge(ia, ifp);
+	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
-	if (ifp->if_flags & IFF_MULTICAST) {
+	if ((ifp->if_flags & IFF_MULTICAST) != 0 && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
-		in_addmulti(&addr, ifp);
+		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 	return (error);
 bad:
@@ -917,6 +939,89 @@ in_broadcast(in, ifp)
 			return 1;
 	return (0);
 #undef ia
+}
+
+/*
+ * Multicast address kludge:
+ * If there were any multicast addresses attached to this interface address,
+ * either move them to another address on this interface, or save them until
+ * such time as this interface is reconfigured for IPv4.
+ */
+void
+in_savemkludge(oia)
+	struct in_ifaddr *oia;
+{
+	struct in_ifaddr *ia;
+	struct in_multi *inm, *next;
+
+	IFP_TO_IA(oia->ia_ifp, ia);
+	if (ia) {	/* there is another address */
+		for (inm = oia->ia_multiaddrs.lh_first; inm; inm = next){
+			next = inm->inm_list.le_next;
+			IFAFREE(&inm->inm_ia->ia_ifa);
+			IFAREF(&ia->ia_ifa);
+			inm->inm_ia = ia;
+			LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
+		}
+	} else {	/* last address on this if deleted, save */
+		TAILQ_INSERT_TAIL(&in_mk, oia, ia_list);
+		IFAREF(&oia->ia_ifa);
+	}
+}
+
+/*
+ * Continuation of multicast address hack:
+ * If there was a multicast group list previously saved for this interface,
+ * then we re-attach it to the first address configured on the i/f.
+ */
+void
+in_restoremkludge(ia, ifp)
+	struct in_ifaddr *ia;
+	struct ifnet *ifp;
+{
+	struct in_ifaddr *oia;
+
+	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
+	    oia = TAILQ_NEXT(oia, ia_list)) {
+		if (oia->ia_ifp == ifp) {
+			struct in_multi *inm, *next;
+
+			for (inm = LIST_FIRST(&oia->ia_multiaddrs);
+			    inm != NULL; inm = next) {
+				next = LIST_NEXT(inm, inm_list);
+				IFAFREE(&inm->inm_ia->ia_ifa);
+				IFAREF(&ia->ia_ifa);
+				inm->inm_ia = ia;
+				LIST_INSERT_HEAD(&ia->ia_multiaddrs,
+				    inm, inm_list);
+			}
+	    		TAILQ_REMOVE(&in_mk, oia, ia_list);
+			IFAFREE(&oia->ia_ifa);
+			break;
+		}
+	}
+}
+
+void
+in_purgemkludge(ifp)
+	struct ifnet *ifp;
+{
+	struct in_ifaddr *oia;
+
+	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
+	    oia = TAILQ_NEXT(oia, ia_list)) {
+		if (oia->ia_ifp != ifp)
+			continue;
+
+		/*
+		 * Leaving from all multicast groups joined through
+		 * this interface is done via in_pcbpurgeif().
+		 */
+
+	    	TAILQ_REMOVE(&in_mk, oia, ia_list);
+		IFAFREE(&oia->ia_ifa);
+		break;
+	}
 }
 
 /*
