@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.53 1998/03/12 12:28:51 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.54 1998/05/20 16:19:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -426,9 +426,6 @@ STATIC void	gusics_dac_mute __P((struct ics2101_softc *, int));
 STATIC void	gusics_mic_mute __P((struct ics2101_softc *, int));
 STATIC void	gusics_linein_mute __P((struct ics2101_softc *, int));
 STATIC void	gusics_cd_mute __P((struct ics2101_softc *, int));
-
-STATIC __inline int gus_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
-STATIC __inline int gus_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 
 void	stereo_dmaintr __P((void *));
 
@@ -1068,11 +1065,11 @@ gusopen(addr, flags)
 
 	if (HAS_CODEC(sc)) {
 		ad1848_open(&sc->sc_codec, flags);
-		sc->sc_codec.aux1_mute = 0;
-		ad1848_mute_aux1(&sc->sc_codec, 0); /* turn on DAC output */
+		sc->sc_codec.mute[AD1848_AUX1_CHANNEL] = 0;
+		ad1848_mute_channel(&sc->sc_codec, AD1848_AUX1_CHANNEL, 0); /* turn on DAC output */
 		if (flags & FREAD) {
-			sc->sc_codec.mono_mute = 0;
-			cs4231_mute_mono(&sc->sc_codec, 0);
+			sc->sc_codec.mute[AD1848_MONO_CHANNEL] = 0;
+			ad1848_mute_channel(&sc->sc_codec, AD1848_MONO_CHANNEL, 0);
 		}
 	} else if (flags & FREAD) {
 		/* enable/unmute the microphone */
@@ -1300,8 +1297,8 @@ gusmax_close(addr)
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
 #if 0
-	ac->aux1_mute = 1;
-	ad1848_mute_aux1(ac, 1);	/* turn off DAC output */
+	ac->mute[AD1848_AUX1_CHANNEL] = MUTE_ALL;
+	ad1848_mute_channel(ac, MUTE_ALL); /* turn off DAC output */
 #endif
 	ad1848_close(ac);
 	gusclose(sc);
@@ -1415,29 +1412,29 @@ int playcntr;
 
 STATIC void
 gus_dmaout_timeout(arg)
-	void *arg;
+ 	void *arg;
 {
-	struct gus_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
-	int s;
+ 	struct gus_softc *sc = arg;
+ 	bus_space_tag_t iot = sc->sc_iot;
+ 	bus_space_handle_t ioh2 = sc->sc_ioh2;
+ 	int s;
 
-	printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
-	/*
-	 * Stop any DMA.
-	 */
+ 	printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
+ 	/*
+ 	 * Stop any DMA.
+ 	 */
 
-	s = splgus();
-	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
-	
+ 	s = splgus();
+ 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+ 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
+ 	
 #if 0
-	/* XXX we will dmadone below? */
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	/* XXX we will dmadone below? */
+ 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
 #endif
-	
-	gus_dmaout_dointr(sc);
-	splx(s);
+ 	
+ 	gus_dmaout_dointr(sc);
+ 	splx(s);
 }
 
 
@@ -1471,13 +1468,13 @@ STATIC void
 gus_dmaout_dointr(sc)
 	struct gus_softc *sc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+ 	bus_space_tag_t iot = sc->sc_iot;
+ 	bus_space_handle_t ioh2 = sc->sc_ioh2;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
-	isa_dmadone(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	isa_dmadone(sc->sc_dev.dv_parent, sc->sc_drq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
-	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
+ 	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
 
 	/*
@@ -1989,8 +1986,8 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
-	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_drq, buffaddr, length,
-	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
+ 	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_drq, buffaddr, length,
+ 	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 	/*
 	 * Set up DMA address - use the upper 16 bits ONLY
@@ -2990,14 +2987,14 @@ gus_dma_input(addr, buf, size, callback, arg)
 	if (sc->sc_recdrq >= 4)
 		dmac |= GUSMASK_SAMPLE_DATA16;
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
-	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
-	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE ||
-	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE)
+ 	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
+ 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE ||
+ 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
-	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_recdrq, buf, size,
-	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
+ 	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_recdrq, buf, size,
+ 	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
 	sc->sc_flags |= GUS_DMAIN_ACTIVE;
@@ -3024,7 +3021,7 @@ gus_dmain_intr(sc)
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
-	    isa_dmadone(sc->sc_dev.dv_parent, sc->sc_recdrq);
+ 	    isa_dmadone(sc->sc_dev.dv_parent, sc->sc_recdrq);
 	    callback = sc->sc_dmainintr;
 	    arg = sc->sc_inarg;
 
@@ -3067,20 +3064,20 @@ int
 gus_halt_out_dma(addr)
 	void * addr;
 {
-	struct gus_softc *sc = addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+ 	struct gus_softc *sc = addr;
+ 	bus_space_tag_t iot = sc->sc_iot;
+ 	bus_space_handle_t ioh2 = sc->sc_ioh2;
 
 	DMAPRINTF(("gus_halt_out_dma called\n"));
 	/*
 	 * Make sure the GUS _isn't_ setup for DMA
 	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
+  	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+ 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
 	untimeout(gus_dmaout_timeout, sc);
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3103,20 +3100,20 @@ int
 gus_halt_in_dma(addr)
 	void * addr;
 {
-	struct gus_softc *sc = addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+ 	struct gus_softc *sc = addr;
+ 	bus_space_tag_t iot = sc->sc_iot;
+ 	bus_space_handle_t ioh2 = sc->sc_ioh2;
 	DMAPRINTF(("gus_halt_in_dma called\n"));
 
 	/*
 	 * Make sure the GUS _isn't_ setup for DMA
 	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
-	     bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
-
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_recdrq);
+  	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
+ 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+ 	     bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
+  
+ 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_recdrq);
 	sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = 0;
 	sc->sc_inarg = 0;
@@ -3126,39 +3123,24 @@ gus_halt_in_dma(addr)
 	return 0;
 }
 
-STATIC __inline int
-gus_to_vol(cp, vol)
-	mixer_ctrl_t *cp;
-	struct ad1848_volume *vol;
-{
-	if (cp->un.value.num_channels == 1) {
-		vol->left = vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		return(1);
-	}
-	else if (cp->un.value.num_channels == 2) {
-		vol->left  = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-		vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
-		return(1);
-	}
-	return(0);
-}
 
-STATIC __inline int
-gus_from_vol(cp, vol)
-	mixer_ctrl_t *cp;
-	struct ad1848_volume *vol;
-{
-	if (cp->un.value.num_channels == 1) {
-		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol->left;
-		return(1);
-	}
-	else if (cp->un.value.num_channels == 2) {
-		cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol->left;
-		cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol->right;
-		return(1);
-	}
-	return(0);
-}
+static ad1848_devmap_t gusmapping[] = {
+  {GUSMAX_DAC_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL},
+  {GUSMAX_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL},
+  {GUSMAX_MONO_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL},
+  {GUSMAX_CD_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL},
+  {GUSMAX_MONITOR_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL},
+  {GUSMAX_OUT_LVL, AD1848_KIND_LVL, AD1848_DAC_CHANNEL},
+  {GUSMAX_DAC_MUTE, AD1848_KIND_MUTE, AD1848_AUX1_CHANNEL},
+  {GUSMAX_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_LINE_CHANNEL},
+  {GUSMAX_MONO_MUTE, AD1848_KIND_MUTE, AD1848_MONO_CHANNEL},
+  {GUSMAX_CD_MUTE, AD1848_KIND_MUTE, AD1848_AUX2_CHANNEL},
+  {GUSMAX_MONITOR_MUTE, AD1848_KIND_MUTE, AD1848_MONITOR_CHANNEL},
+  {GUSMAX_REC_LVL, AD1848_KIND_RECORDGAIN, -1},
+  {GUSMAX_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1}
+};
+
+static int nummap = sizeof(gusmapping) / sizeof(gusmapping[0]);
 
 STATIC int
 gusmax_mixer_get_port(addr, cp)
@@ -3168,72 +3150,14 @@ gusmax_mixer_get_port(addr, cp)
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
 	struct ad1848_volume vol;
-	int error = EINVAL;
+	int error = ad1848_mixer_get_port(ac, gusmapping, nummap, cp);
     
-	DPRINTF(("gusmax_mixer_get_port: port=%d\n", cp->dev));
+	if (error != ENXIO)
+	  return (error);
+
+	error = EINVAL;
 
 	switch (cp->dev) {
-#if 0 /* use mono level instead */
-	case GUSMAX_MIC_IN_LVL:	/* Microphone */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = ad1848_get_mic_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-#endif
-
-	case GUSMAX_DAC_LVL:		/* dac out */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = ad1848_get_aux1_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_LINE_IN_LVL:	/* line in */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = cs4231_get_linein_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_MONO_LVL:	/* mono */
-		if (cp->type == AUDIO_MIXER_VALUE &&
-		    cp->un.value.num_channels == 1) {
-			error = cs4231_get_mono_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_CD_LVL:	/* CD */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = ad1848_get_aux2_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_MONITOR_LVL:	/* monitor level */
-		if (cp->type == AUDIO_MIXER_VALUE &&
-		    cp->un.value.num_channels == 1) {
-			error = ad1848_get_mon_gain(ac, &vol);
-			if (!error)
-				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-					vol.left;
-		}
-		break;
-
-	case GUSMAX_OUT_LVL:	/* output level */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = ad1848_get_out_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
 	case GUSMAX_SPEAKER_LVL:	/* fake speaker for mute naming */
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			if (sc->sc_mixcontrol & GUSMASK_LINE_OUT)
@@ -3241,43 +3165,7 @@ gusmax_mixer_get_port(addr, cp)
 			else
 				vol.left = vol.right = AUDIO_MIN_GAIN;
 			error = 0;
-			gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_LINE_IN_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ac->line_mute;
-			error = 0;
-		}
-		break;
-
-
-	case GUSMAX_DAC_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ac->aux1_mute;
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_CD_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ac->aux2_mute;
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_MONO_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ac->mono_mute;
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_MONITOR_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ac->mon_mute;
-			error = 0;
+			ad1848_from_vol(cp, &vol);
 		}
 		break;
 
@@ -3287,22 +3175,6 @@ gusmax_mixer_get_port(addr, cp)
 			error = 0;
 		}
 		break;
-
-	case GUSMAX_REC_LVL:		/* record level */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			error = ad1848_get_rec_gain(ac, &vol);
-			if (!error)
-				gus_from_vol(cp, &vol);
-		}
-		break;
-
-	case GUSMAX_RECORD_SOURCE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			cp->un.ord = ad1848_get_rec_port(ac);
-			error = 0;
-		}
-		break;
-
 	default:
 		error = ENXIO;
 		break;
@@ -3379,7 +3251,7 @@ gus_mixer_get_port(addr, cp)
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_MASTER][ICSMIX_LEFT];
 			vol.right = ic->sc_setting[GUSMIX_CHAN_MASTER][ICSMIX_RIGHT];
-			if (gus_from_vol(cp, &vol))
+			if (ad1848_from_vol(cp, &vol))
 				error = 0;
 		}
 		break;
@@ -3388,7 +3260,7 @@ gus_mixer_get_port(addr, cp)
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_MIC][ICSMIX_LEFT];
 			vol.right = ic->sc_setting[GUSMIX_CHAN_MIC][ICSMIX_RIGHT];
-			if (gus_from_vol(cp, &vol))
+			if (ad1848_from_vol(cp, &vol))
 				error = 0;
 		}
 		break;
@@ -3397,7 +3269,7 @@ gus_mixer_get_port(addr, cp)
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_LINE][ICSMIX_LEFT];
 			vol.right = ic->sc_setting[GUSMIX_CHAN_LINE][ICSMIX_RIGHT];
-			if (gus_from_vol(cp, &vol))
+			if (ad1848_from_vol(cp, &vol))
 				error = 0;
 		}
 		break;
@@ -3407,7 +3279,7 @@ gus_mixer_get_port(addr, cp)
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_CD][ICSMIX_LEFT];
 			vol.right = ic->sc_setting[GUSMIX_CHAN_CD][ICSMIX_RIGHT];
-			if (gus_from_vol(cp, &vol))
+			if (ad1848_from_vol(cp, &vol))
 				error = 0;
 		}
 		break;
@@ -3416,7 +3288,7 @@ gus_mixer_get_port(addr, cp)
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_DAC][ICSMIX_LEFT];
 			vol.right = ic->sc_setting[GUSMIX_CHAN_DAC][ICSMIX_RIGHT];
-			if (gus_from_vol(cp, &vol))
+			if (ad1848_from_vol(cp, &vol))
 				error = 0;
 		}
 		break;
@@ -3489,70 +3361,18 @@ gusmax_mixer_set_port(addr, cp)
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
 	struct ad1848_volume vol;
-	int error = EINVAL;
+	int error = ad1848_mixer_set_port(ac, gusmapping, nummap, cp);
     
+	if (error != ENXIO)
+	  return (error);
+
 	DPRINTF(("gusmax_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
 
 	switch (cp->dev) {
-#if 0
-	case GUSMAX_MIC_IN_LVL:	/* Microphone */
-		if (cp->type == AUDIO_MIXER_VALUE &&
-		    cp->un.value.num_channels == 1) {
-			/* XXX enable/disable pre-MUX fixed gain */
-			if (gus_to_vol(cp, &vol))
-				error = ad1848_set_mic_gain(ac, &vol);
-		}
-		break;
-#endif
-	
-	case GUSMAX_DAC_LVL:		/* dac out */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol))
-				error = ad1848_set_aux1_gain(ac, &vol);
-		}
-		break;
-
-	case GUSMAX_LINE_IN_LVL:	/* line in */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol))
-				error = cs4231_set_linein_gain(ac, &vol);
-		}
-		break;
-
-	case GUSMAX_MONO_LVL:	/* mic/mono in */
-		if (cp->type == AUDIO_MIXER_VALUE &&
-		    cp->un.value.num_channels == 1) {
-			if (gus_to_vol(cp, &vol))
-				error = cs4231_set_mono_gain(ac, &vol);
-		}
-		break;
-
-	case GUSMAX_CD_LVL:	/* CD: AUX2 */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol))
-				error = ad1848_set_aux2_gain(ac, &vol);
-		}
-		break;
-
-	case GUSMAX_MONITOR_LVL:
-		if (cp->type == AUDIO_MIXER_VALUE &&
-		    cp->un.value.num_channels == 1) {
-			vol.left  = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			error = ad1848_set_mon_gain(ac, &vol);
-		}
-		break;
-
-	case GUSMAX_OUT_LVL:	/* output volume */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol))
-				error = ad1848_set_out_gain(ac, &vol);
-		}
-		break;
-
 	case GUSMAX_SPEAKER_LVL:
 		if (cp->type == AUDIO_MIXER_VALUE &&
 		    cp->un.value.num_channels == 1) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				gus_speaker_ctl(sc, vol.left > AUDIO_MIN_GAIN ?
 						SPKR_ON : SPKR_OFF);
 				error = 0;
@@ -3560,70 +3380,10 @@ gusmax_mixer_set_port(addr, cp)
 		}
 		break;
 
-	case GUSMAX_LINE_IN_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			ac->line_mute = cp->un.ord ? 1 : 0;
-			DPRINTF(("line mute %d\n", cp->un.ord));
-			cs4231_mute_line(ac, ac->line_mute);
-			gus_linein_ctl(sc, ac->line_mute ? SPKR_OFF : SPKR_ON);
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_DAC_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			ac->aux1_mute = cp->un.ord ? 1 : 0;
-			DPRINTF(("dac mute %d\n", cp->un.ord));
-			ad1848_mute_aux1(ac, ac->aux1_mute);
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_CD_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			ac->aux2_mute = cp->un.ord ? 1 : 0;
-			DPRINTF(("cd mute %d\n", cp->un.ord));
-			ad1848_mute_aux2(ac, ac->aux2_mute);
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_MONO_MUTE:	/* Microphone */
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			ac->mono_mute = cp->un.ord ? 1 : 0;
-			DPRINTF(("mono mute %d\n", cp->un.ord));
-			cs4231_mute_mono(ac, ac->mono_mute);
-			gus_mic_ctl(sc, ac->mono_mute ? SPKR_OFF : SPKR_ON);
-			error = 0;
-		}
-		break;
-
-	case GUSMAX_MONITOR_MUTE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			ac->mon_mute = cp->un.ord ? 1 : 0;
-			DPRINTF(("mono mute %d\n", cp->un.ord));
-			cs4231_mute_monitor(ac, ac->mon_mute);
-			error = 0;
-		}
-		break;
-
 	case GUSMAX_SPEAKER_MUTE:
 		if (cp->type == AUDIO_MIXER_ENUM) {
 			gus_speaker_ctl(sc, cp->un.ord ? SPKR_OFF : SPKR_ON);
 			error = 0;
-		}
-		break;
-
-	case GUSMAX_REC_LVL:		/* record level */
-		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol))
-				error = ad1848_set_rec_gain(ac, &vol);
-		}
-		break;
-	
-	case GUSMAX_RECORD_SOURCE:
-		if (cp->type == AUDIO_MIXER_ENUM) {
-			error = ad1848_set_rec_port(ac, cp->un.ord);
 		}
 		break;
 
@@ -3700,7 +3460,7 @@ gus_mixer_set_port(addr, cp)
 
 	case GUSICS_MASTER_LVL:
 		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				ics2101_mix_attenuate(ic,
 						      GUSMIX_CHAN_MASTER,
 						      ICSMIX_LEFT,
@@ -3716,7 +3476,7 @@ gus_mixer_set_port(addr, cp)
 
 	case GUSICS_MIC_IN_LVL:	/* Microphone */
 		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				ics2101_mix_attenuate(ic,
 						      GUSMIX_CHAN_MIC,
 						      ICSMIX_LEFT,
@@ -3732,7 +3492,7 @@ gus_mixer_set_port(addr, cp)
 	
 	case GUSICS_LINE_IN_LVL:	/* line in */
 		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				ics2101_mix_attenuate(ic,
 						      GUSMIX_CHAN_LINE,
 						      ICSMIX_LEFT,
@@ -3749,7 +3509,7 @@ gus_mixer_set_port(addr, cp)
 
 	case GUSICS_CD_LVL:
 		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				ics2101_mix_attenuate(ic,
 						      GUSMIX_CHAN_CD,
 						      ICSMIX_LEFT,
@@ -3765,7 +3525,7 @@ gus_mixer_set_port(addr, cp)
 
 	case GUSICS_DAC_LVL:		/* dac out */
 		if (cp->type == AUDIO_MIXER_VALUE) {
-			if (gus_to_vol(cp, &vol)) {
+			if (ad1848_to_vol(cp, &vol)) {
 				ics2101_mix_attenuate(ic,
 						      GUSMIX_CHAN_DAC,
 						      ICSMIX_LEFT,
