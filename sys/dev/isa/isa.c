@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.89 1996/10/21 22:41:09 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.90 1996/11/23 21:36:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -127,8 +127,10 @@ isascan(parent, match)
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
 
+#ifdef __i386__
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
+#endif
 
 	ia.ia_iot = sc->sc_iot;
 	ia.ia_memt = sc->sc_memt;
