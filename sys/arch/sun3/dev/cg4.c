@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.22 2001/09/05 13:27:53 tsutsui Exp $	*/
+/*	$NetBSD: cg4.c,v 1.23 2001/09/19 18:10:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/idprom.h>
 #include <machine/pmap.h>
 

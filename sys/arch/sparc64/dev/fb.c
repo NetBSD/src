@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.18 2000/08/23 12:08:16 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.19 2001/09/19 18:10:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 #include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/kbd.h>
 #include <machine/fbvar.h>
 #include <machine/conf.h>
