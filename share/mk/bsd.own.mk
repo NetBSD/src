@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.294.2.1 2002/06/11 15:58:32 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.294.2.2 2002/06/13 02:41:48 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -126,6 +126,7 @@ CTAGS=		${TOOLDIR}/bin/nbctags
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2ECOFF=	${TOOLDIR}/bin/nbmips-elf2ecoff
 EQN=		${TOOLDIR}/bin/nbeqn
+FGEN=		${TOOLDIR}/bin/nbfgen
 GENCAT=		${TOOLDIR}/bin/nbgencat
 #GRIND=		${TOOLDIR}/bin/nbvgrind -f
 GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
