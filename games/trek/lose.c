@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.4 1997/10/12 21:24:58 christos Exp $	*/
+/*	$NetBSD: lose.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lose.c,v 1.4 1997/10/12 21:24:58 christos Exp $");
+__RCSID("$NetBSD: lose.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: lose.c,v 1.4 1997/10/12 21:24:58 christos Exp $");
 **	actions which need be taken are taken.
 */
 
-char	*Losemsg[] =
+const char	*const Losemsg[] =
 {
 	"You ran out of time",
 	"You ran out of energy",

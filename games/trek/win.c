@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.4 1997/10/12 21:25:28 christos Exp $	*/
+/*	$NetBSD: win.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.4 1997/10/12 21:25:28 christos Exp $");
+__RCSID("$NetBSD: win.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ void
 win()
 {
 	long		s;
-	struct cvntab	*p = NULL;
+	const struct cvntab	*p = NULL;
 	extern jmp_buf env;
 
 	sleep(1);
