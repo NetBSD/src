@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.71 2002/11/25 08:07:04 grant Exp $
+.\"	$NetBSD: rc.conf.5,v 1.72 2002/11/26 12:25:53 grant Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -373,21 +373,21 @@ packet log information and log it to a file or the system log.
 Passes
 .Sy ipmon_flags .
 .It Sy ipmon_flags
-Set to
-.Dq Li -ns
-by default.
-This variable contains flags passed to the
-.Xr ipmon 8
-program.
-Another typical example would be
+A string. Specifies arguments to supply to
+.Xr ipmon 8 .
+Defaults to
+.Dq Li -ns .
+A typical example would be
 .Dq Fl nD Pa /var/log/ipflog
 to have
 .Xr ipmon 8
 log directly to a file bypassing
 .Xr syslogd 8 .
-Make sure to adjust
+If the
+.Dq -D
+argument is used, remember to modify
 .Pa /etc/newsyslog.conf
-in such case like this:
+accordingly; for example:
 .Bd -literal
 /var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
 .Ed
