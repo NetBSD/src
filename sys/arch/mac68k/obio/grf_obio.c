@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.42 1999/04/28 05:24:08 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.43 1999/07/19 05:20:15 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -251,6 +251,8 @@ grfiv_attach(parent, self, aux)
 		case MACH_MACLC475:
 		case MACH_MACLC475_33:
 		case MACH_MACLC575:
+		case MACH_MACQ605:
+		case MACH_MACQ605_33:
 			vbase1 &= 0x3f;
 			break;
 		}
