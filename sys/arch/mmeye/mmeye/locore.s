@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 2000/06/07 05:28:17 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 2000/08/30 18:41:18 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -43,6 +43,7 @@
 #define DIAGNOSTIC 1
 
 #include "opt_ddb.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 
@@ -465,16 +466,32 @@ ENTRY(longjmp)
  */
 
 ENTRY(idle)
-	ECLI
+	/* 
+	 * When we get here, interrupts are off (via ECLI) and
+	 * sched_lock is held.
+	 */
 	STI
+
 	mov.l	XLwhichqs, r0
-	mov.l	@r0, r0
-	mov	r0, r14
-	tst	r0, r0
+	mov.l	@r0, r14
+	tst	r14, r14
 	bf	sw1
+
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
 	ESTI
 
 	sleep
+
+	ECLI
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
 
 	bra	_C_LABEL(idle)
 	nop
@@ -610,6 +627,12 @@ ENTRY(cpu_switch)
 	mov.l	r1, @r0
 #endif
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
 	xor	r0, r0
 	mov.l	XXLcpl, r1
 	mov.l	r0, @r1			/* spl0() */
@@ -622,8 +645,10 @@ ENTRY(cpu_switch)
 	.align	2
 XXLcpl:		.long	_C_LABEL(cpl)
 XXLXspllower:	.long	_C_LABEL(Xspllower)
+#if 0
 XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
+#endif
 
 switch_search:
 	/*
@@ -638,18 +663,26 @@ switch_search:
 	 *   r8  - new process
 	 */
 
-	/* Wait for new process. */
+	/* Lock the scheduler. */
 	ECLI				/* splhigh doesn't do a cli */
-	mov.l	XLwhichqs, r0
-	mov.l	@r0, r0
-	mov	r0, r14
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
 
-#define TESTANDSHIFT \
-	rotr	r0		; /* LSB -> T */ \
-	bt	1f		; \
+	/* Wait for new process. */
+	mov.l	XLwhichqs, r0
+	mov.l	@r0, r14
+
+#define TESTANDSHIFT					\
+	rotr	r0		; /* LSB -> T */	\
+	bt	1f		;			\
 	add	#1, r2
 
-sw1:	mov	#0, r2
+sw1:
+	mov	r14, r0
+	mov	#0, r2
 	TESTANDSHIFT	/* bit 0 */
 	TESTANDSHIFT	/* bit 1 */
 	TESTANDSHIFT	/* bit 2 */
@@ -766,6 +799,15 @@ XL_switch_error:
 	xor	r0, r0
 	mov.l	r0, @(P_BACK, r8)	/* r8->p_back = 0 */
 
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
+
 	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Process now running on a processor. */
@@ -876,6 +918,11 @@ XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXLcurproc:	.long	_C_LABEL(curproc)
 XL_KernelSp:	.long	KernelSp
+
+#if defined(LOCKDEBUG)
+Xsched_lock:	.long	_C_LABEL(sched_lock_idle)
+Xsched_unlock:	.long	_C_LABEL(sched_unlock_idle)
+#endif
 
 /*
  * switch_exit(struct proc *p);
