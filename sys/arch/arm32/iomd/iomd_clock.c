@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.5 1996/06/03 21:41:09 mark Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.6 1996/06/12 20:00:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -87,7 +87,7 @@ clockhandler(frame)
 		leds = 0;
 #endif
 	hardclock(frame);
-	return(1);
+	return(0);	/* Pass the interrupt on down the chain */
 }
 
 
@@ -104,7 +104,7 @@ statclockhandler(frame)
 	struct clockframe *frame;
 {
 	statclock(frame);
-	return(1);
+	return(0);	/* Pass the interrupt on down the chain */
 }
 
 
