@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.17 1994/10/30 21:47:58 cgd Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.18 1994/10/31 21:26:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -129,7 +129,7 @@ ttcompat(tp, com, data, flag, p)
 		tp->t_flags = (ttcompatgetflags(tp)&0xffff0000) | (sg->sg_flags&0xffff);
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA, 
-			&term, flag, p));
+			(caddr_t)&term, flag, p));
 	}
 
 	case TIOCGETC: {
@@ -202,7 +202,7 @@ ttcompat(tp, com, data, flag, p)
 			break;
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, &term, flag, p));
+		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
 	}
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
