@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.17 2002/09/08 01:44:08 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.18 2002/09/20 13:08:21 mycroft Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/poll.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -106,11 +107,10 @@ static void usage __P((char *));
 int
 main(int argc, char **argv)
 {
-	int s, maxfd, ch, once = 0;
+	int s, ch, once = 0;
 	struct timeval *timeout;
 	char *argv0, *opts;
-	fd_set *fdsetp, *selectfdp;
-	int fdmasks;
+	struct pollfd set[2];
 #ifdef USE_RTSOCK
 	int rtsock;
 #endif
@@ -205,26 +205,20 @@ main(int argc, char **argv)
 		exit(1);
 		/*NOTREACHED*/
 	}
-	maxfd = s;
+	set[0].fd = s;
+	set[0].events = POLLIN;
+
 #ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
 	}
-	if (rtsock > maxfd)
-		maxfd = rtsock;
+	set[1].fd = rtsock;
+	set[1].events = POLLIN;
+#else
+	set[1].events = 0;
 #endif
-
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsetp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	if ((selectfdp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
 
 	/* configuration per interface */
 	if (ifinit()) {
@@ -262,15 +256,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	memset(fdsetp, 0, fdmasks);
-	FD_SET(s, fdsetp);
-#ifdef USE_RTSOCK
-	FD_SET(rtsock, fdsetp);
-#endif
-	while (1) {		/* main loop */
+	for (;;) {		/* main loop */
 		int e;
-
-		memcpy(selectfdp, fdsetp, fdmasks);
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
@@ -294,7 +281,7 @@ main(int argc, char **argv)
 			if (ifi == NULL)
 				break;
 		}
-		e = select(maxfd + 1, selectfdp, NULL, NULL, timeout);
+		e = poll(set, 2, timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFTIM);
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
@@ -305,10 +292,10 @@ main(int argc, char **argv)
 
 		/* packet reception */
 #ifdef USE_RTSOCK
-		if (FD_ISSET(rtsock, selectfdp))
+		if (set[1].revents & POLLIN)
 			rtsock_input(rtsock);
 #endif
-		if (FD_ISSET(s, selectfdp))
+		if (set[0].revents & POLLIN)
 			rtsol_input(s);
 	}
 	/* NOTREACHED */
@@ -581,7 +568,7 @@ rtsol_check_timer(void)
 		TIMEVAL_SUB(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
-		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld:%08ld",
+		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld.%06ld",
 		    (long)returnval.tv_sec, (long)returnval.tv_usec);
 
 	return(&returnval);
