@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.61 1999/11/29 02:28:55 jun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.62 1999/11/29 12:55:20 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.60 1999/11/29 02:28:19 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.61 1999/11/29 12:54:00 itojun Exp 
  */
 
 /*-
@@ -265,9 +265,12 @@
 #define	PCMCIA_CIS_TDK_XIR_CE3_10_100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_CE3_10_100	0x010a
 #define	PCMCIA_STR_TDK_XIR_CE3_10_100	"Xircom CreditCard CE3 10/100 Ethernet"
-#define	PCMCIA_CIS_TDK_XIR_CNW	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
-#define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
+#define	PCMCIA_CIS_TDK_XIR_CNW_801	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CNW_801	0x0801
+#define	PCMCIA_STR_TDK_XIR_CNW_801	"Xircom CreditCard Netwave (Canada)"
+#define	PCMCIA_CIS_TDK_XIR_CNW_802	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CNW_802	0x0802
+#define	PCMCIA_STR_TDK_XIR_CNW_802	"Xircom CreditCard Netwave (US)"
 
 /* New Media Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
