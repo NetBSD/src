@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.27 2001/02/04 19:52:07 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.28 2002/05/15 19:43:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.27 2001/02/04 19:52:07 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.28 2002/05/15 19:43:29 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,6 +282,8 @@ setvareq(s, flags)
 {
 	struct var *vp, **vpp;
 
+	if (aflag)
+		flags |= VEXPORT;
 	vpp = hashvar(s);
 	for (vp = *vpp ; vp ; vp = vp->next) {
 		if (varequal(s, vp->text)) {
