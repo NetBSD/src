@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.43 2002/03/28 06:06:29 nathanw Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.44 2002/06/29 18:27:30 chs Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.43 2002/03/28 06:06:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.44 2002/06/29 18:27:30 chs Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -843,11 +843,11 @@ ReStart:
 			 * PG_RELEASED | PG_WANTED.
 			 */
 
-			npg->flags &= ~(PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(npg, NULL);
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);
 			uvm_unlock_pageq();
+			npg->flags &= ~(PG_BUSY|PG_FAKE);
+			UVM_PAGE_OWN(npg, NULL);
 			simple_unlock(&nanon->an_lock);
 		}
 		simple_unlock(&anon->an_lock);
