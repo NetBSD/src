@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.5 2004/01/29 09:53:18 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.6 2004/01/29 09:55:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -841,27 +841,47 @@ struct atw_rxdesc {
 #define ATW_SRAM_SIZE		(0x200 * 2)
 
 /*
- * Registers for Silicon Laboratories Si4126/Si4126 RF synthesizer.
+ * Registers for Silicon Laboratories Si4126/Si4136 RF synthesizer.
  */
 #define SI4126_MAIN	0	/* main configuration */
-#define		SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)
-#define		SI4126_MAIN_IFDIV_MASK	BITS(11, 10)
-#define		SI4126_MAIN_XINDIV2	BIT(6)
-#define		SI4126_MAIN_LPWR	BIT(5)
-#define		SI4126_MAIN_AUTOPDB	BIT(3)
-#define SI4126_GAIN	1	/* phase detector gain */
-#define		SI4126_GAIN_KPI_MASK	BITS(5, 4)
-#define		SI4126_GAIN_KP2_MASK	BITS(3, 2)
-#define		SI4126_GAIN_KP1_MASK	BITS(1, 0)
-#define SI4126_POWER	2	/* powerdown */
-#define		SI4126_POWER_PDIB	BIT(1)
-#define		SI4126_POWER_PDRB	BIT(0)
-#define SI4126_RF1N	3	/* RF1 N divider */
-#define SI4126_RF2N	4	/* RF2 N divider */
-#define SI4126_IFN	5	/* IF N divider */
-#define SI4126_RF1R	6	/* RF1 R divider */
-#define SI4126_RF2R	7	/* RF2 R divider */
-#define SI4126_IFR	8	/* IF R divider */
+#define	SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)	/* aux. output pin function */
+/* reserved */
+#define	SI4126_MAIN_AUXSEL_RSVD		LSHIFT(0x0, SI4126_MAIN_AUXSEL_MASK)
+/* force low */
+#define	SI4126_MAIN_AUXSEL_FRCLOW	LSHIFT(0x1, SI4126_MAIN_AUXSEL_MASK)
+/* Lock Detect (LDETB) */
+#define	SI4126_MAIN_AUXSEL_LDETB	LSHIFT(0x3, SI4126_MAIN_AUXSEL_MASK)
+
+#define	SI4126_MAIN_IFDIV_MASK	BITS(11, 10)	/* IFOUT = IFVCO
+						 * frequency / 2**IFDIV.
+						 */
+
+#define	SI4126_MAIN_XINDIV2	BIT(6)	/* 1: divide crystal input (XIN) by 2 */
+#define	SI4126_MAIN_LPWR	BIT(5)	/* 1: low-power mode */
+#define	SI4126_MAIN_AUTOPDB	BIT(3)	/* 1: equivalent to
+					 *    reg[SI4126_POWER] <-
+					 *    SI4126_POWER_PDIB |
+					 *    SI4126_POWER_PDRB.
+					 *
+					 * 0: power-down under control of
+					 *    reg[SI4126_POWER].
+					 */
+
+#define	SI4126_GAIN	1		/* phase detector gain */
+#define	SI4126_GAIN_KPI_MASK	BITS(5, 4)	/* IF phase detector gain */
+#define	SI4126_GAIN_KP2_MASK	BITS(3, 2)	/* RF2 phase detector gain */
+#define	SI4126_GAIN_KP1_MASK	BITS(1, 0)	/* RF1 phase detector gain */
+
+#define	SI4126_POWER	2		/* powerdown */
+#define	SI4126_POWER_PDIB	BIT(1)	/* 1: IF synthesizer on */
+#define	SI4126_POWER_PDRB	BIT(0)	/* 1: RF synthesizer on */
+
+#define	SI4126_RF1N	3		/* RF1 N divider */
+#define	SI4126_RF2N	4		/* RF2 N divider */
+#define	SI4126_IFN	5		/* IF N divider */
+#define	SI4126_RF1R	6		/* RF1 R divider */
+#define	SI4126_RF2R	7		/* RF2 R divider */
+#define	SI4126_IFR	8		/* IF R divider */
 
 /*
  * Registers for RF Microdevices RF3000 spread-spectrum baseband modem.
