@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.40 2003/03/04 06:18:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.41 2003/03/05 01:52:41 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.40 2003/03/04 06:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.41 2003/03/05 01:52:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,6 +842,58 @@ uvm_unloan(void *v, int npages, int flags)
 }
 
 /*
+ * Minimal pager for uvm_loanzero_object.  We need to provide a "put"
+ * method, because the page can end up on a paging queue, and the
+ * page daemon will want to call pgo_put when it encounters the page
+ * on the inactive list.
+ */
+
+static int
+ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
+{
+	struct vm_page *pg;
+
+	KDASSERT(uobj == &uvm_loanzero_object);
+
+	/*
+	 * Don't need to do any work here if we're not freeing pages.
+	 */
+
+	if ((flags & PGO_FREE) == 0) {
+		simple_unlock(&uobj->vmobjlock);
+		return 0;
+	}
+
+	/*
+	 * we don't actually want to ever free the uvm_loanzero_page, so
+	 * just reactivate or dequeue it.
+	 */
+
+	pg = TAILQ_FIRST(&uobj->memq);
+	KASSERT(pg != NULL);
+	KASSERT(TAILQ_NEXT(pg, listq) == NULL);
+
+	uvm_lock_pageq();
+	if (pg->uanon)
+		uvm_pageactivate(pg);
+	else
+		uvm_pagedequeue(pg);
+	uvm_unlock_pageq();
+
+	simple_unlock(&uobj->vmobjlock);
+	return 0;
+}
+
+static struct uvm_pagerops ulz_pager = {
+	NULL,		/* init */
+	NULL,		/* reference */
+	NULL,		/* detach */
+	NULL,		/* fault */
+	NULL,		/* get */
+	ulz_put,	/* put */
+};
+
+/*
  * uvm_loan_init(): initialize the uvm_loan() facility.
  */
 
@@ -851,4 +903,5 @@ uvm_loan_init(void)
 
 	simple_lock_init(&uvm_loanzero_object.vmobjlock);
 	TAILQ_INIT(&uvm_loanzero_object.memq);
+	uvm_loanzero_object.pgops = &ulz_pager;
 }
