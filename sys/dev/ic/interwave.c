@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.22 2004/07/09 02:05:09 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.23 2004/07/09 02:46:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.22 2004/07/09 02:05:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23 2004/07/09 02:46:44 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,9 +240,7 @@ void
 iwclose(addr)
 	void	*addr;
 {
-	struct	iw_softc *sc = addr;
-
-	DPRINTF(("iwclose sc %p\n", sc));
+	DPRINTF(("iwclose sc %p\n", addr));
 
 #ifdef DIAGNOSTIC
 	DPRINTF(("iwclose: outputs %d ints %d inputs %d in_ints %d\n",
