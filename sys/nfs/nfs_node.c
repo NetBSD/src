@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.75 2004/04/05 10:44:09 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.76 2004/04/20 11:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.75 2004/04/05 10:44:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.76 2004/04/20 11:51:28 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -250,7 +250,20 @@ nfs_inactive(v)
 	removed = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
+
+	if ((nmp->nm_flag & NFSMNT_NQNFS) && CIRCLEQ_NEXT(np, n_timer) != 0) {
+		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
+	}
+
+	if (vp->v_type == VDIR && np->n_dircache)
+		nfs_invaldircache(vp, 1);
+
 	VOP_UNLOCK(vp, 0);
+
+	/* XXXMP only kernel_lock protects vp */
+	if (removed)
+		vrecycle(vp, NULL, p);
+
 	if (sp != NULL) {
 
 		/*
@@ -270,16 +283,6 @@ nfs_inactive(v)
 			vrele(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
-
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && CIRCLEQ_NEXT(np, n_timer) != 0) {
-		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
-	}
-
-	if (vp->v_type == VDIR && np->n_dircache)
-		nfs_invaldircache(vp, 1);
-
-	if (removed)
-		vrecycle(vp, NULL, p);
 
 	return (0);
 }
