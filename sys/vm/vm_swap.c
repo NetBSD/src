@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_swap.c	8.1 (Berkeley) 6/11/93
- *	$Id: vm_swap.c,v 1.18 1994/04/25 23:53:53 cgd Exp $
+ *	from: @(#)vm_swap.c	8.5 (Berkeley) 2/17/94
+ *	$Id: vm_swap.c,v 1.19 1994/05/23 03:12:08 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -46,7 +46,6 @@
 #include <sys/file.h>
 
 #include <miscfs/specfs/specdev.h>
-#include <vm/vm.h>
 
 /*
  * Indirect driver for multi-controller paging.

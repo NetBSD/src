@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_kern.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_kern.c,v 1.10 1994/01/08 05:26:10 mycroft Exp $
+ *	from: @(#)vm_kern.c	8.3 (Berkeley) 1/12/94
+ *	$Id: vm_kern.c,v 1.11 1994/05/23 03:11:41 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,12 +68,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_user.h>
 
 /*
  *	kmem_alloc_pageable:
@@ -92,7 +92,7 @@ kmem_alloc_pageable(map, size)
 #if	0
 	if (map != kernel_map)
 		panic("kmem_alloc_pageable: not called with kernel_map");
-#endif	0
+#endif
 
 	size = round_page(size);
 
@@ -102,11 +102,6 @@ kmem_alloc_pageable(map, size)
 	if (result != KERN_SUCCESS) {
 		return(0);
 	}
-
-#ifdef KMEM_DEBUG
-	if (map == kernel_map)
-		printf("kmem_alloc_pageable: %x %x\n", addr, size);
-#endif
 
 	return(addr);
 }
@@ -121,7 +116,6 @@ kmem_alloc(map, size)
 	register vm_size_t	size;
 {
 	vm_offset_t		addr;
-	register int		result;
 	register vm_offset_t	offset;
 	extern vm_object_t	kernel_object;
 	vm_offset_t		i;
@@ -134,25 +128,18 @@ kmem_alloc(map, size)
 	 *	referenced more than once.
 	 */
 
-	addr = vm_map_min(map);
-	result = vm_map_find(map, NULL, (vm_offset_t) 0,
-				 &addr, size, TRUE);
-	if (result != KERN_SUCCESS) {
-		return(0);
-	}
-
 	/*
-	 *	Since we didn't know where the new region would
-	 *	start, we couldn't supply the correct offset into
-	 *	the kernel object.  Re-allocate that address
-	 *	region with the correct offset.
+	 * Locate sufficient space in the map.  This will give us the
+	 * final virtual address for the new memory, and thus will tell
+	 * us the offset within the kernel map.
 	 */
-
+	vm_map_lock(map);
+	if (vm_map_findspace(map, 0, size, &addr)) {
+		vm_map_unlock(map);
+		return (0);
+	}
 	offset = addr - VM_MIN_KERNEL_ADDRESS;
 	vm_object_reference(kernel_object);
-
-	vm_map_lock(map);
-	vm_map_delete(map, addr, addr + size);
 	vm_map_insert(map, kernel_object, offset, addr, addr + size);
 	vm_map_unlock(map);
 
@@ -206,11 +193,6 @@ kmem_alloc(map, size)
 
 	vm_map_simplify(map, addr);
 
-#ifdef KMEM_DEBUG
-	if (map == kernel_map)
-		printf("kmem_alloc: %x %x\n", addr, size);
-#endif
-
 	return(addr);
 }
 
@@ -227,14 +209,7 @@ kmem_free(map, addr, size)
 	register vm_offset_t	addr;
 	vm_size_t		size;
 {
-
-#ifdef KMEM_DEBUG
-	if (map == kernel_map)
-		printf("kmem_free: %x %x\n", addr, size);
-#endif
-
 	(void) vm_map_remove(map, trunc_page(addr), round_page(addr + size));
-	vm_map_simplify(map, addr);
 }
 
 /*
@@ -276,90 +251,7 @@ kmem_suballoc(parent, min, max, size, pageable)
 		panic("kmem_suballoc: cannot create submap");
 	if ((ret = vm_map_submap(parent, *min, *max, result)) != KERN_SUCCESS)
 		panic("kmem_suballoc: unable to change range to submap");
-
-#ifdef KMEM_DEBUG
-	if (parent == kernel_map)
-		printf("kmem_suballoc: %x %x %x %x\n", *min, *max, size, pageable);
-#endif
-
 	return(result);
-}
-
-/*
- *	vm_move:
- *
- *	Move memory from source to destination map, possibly deallocating
- *	the source map reference to the memory.
- *
- *	Parameters are as follows:
- *
- *	src_map		Source address map
- *	src_addr	Address within source map
- *	dst_map		Destination address map
- *	num_bytes	Amount of data (in bytes) to copy/move
- *	src_dealloc	Should source be removed after copy?
- *
- *	Assumes the src and dst maps are not already locked.
- *
- *	Returns new destination address or 0 (if a failure occurs).
- */
-vm_offset_t
-vm_move(src_map,src_addr,dst_map,num_bytes,src_dealloc)
-	vm_map_t		src_map;
-	register vm_offset_t	src_addr;
-	register vm_map_t	dst_map;
-	vm_offset_t		num_bytes;
-	boolean_t		src_dealloc;
-{
-	register vm_offset_t	src_start;	/* Beginning of region */
-	register vm_size_t	src_size;	/* Size of rounded region */
-	vm_offset_t		dst_start;	/* destination address */
-	register int		result;
-
-	/*
-	 *	Page-align the source region
-	 */
-
-	src_start = trunc_page(src_addr);
-	src_size = round_page(src_addr + num_bytes) - src_start;
-
-	/*
-	 *	If there's no destination, we can be at most deallocating
-	 *	the source range.
-	 */
-	if (dst_map == NULL) {
-		if (src_dealloc)
-			if (vm_deallocate(src_map, src_start, src_size)
-					!= KERN_SUCCESS) {
-				printf("vm_move: deallocate of source");
-				printf(" failed, dealloc_only clause\n");
-			}
-		return(0);
-	}
-
-	/*
-	 *	Allocate a place to put the copy
-	 */
-
-	dst_start = (vm_offset_t) 0;
-	if ((result = vm_allocate(dst_map, &dst_start, src_size, TRUE))
-				== KERN_SUCCESS) {
-		/*
-		 *	Perform the copy, asking for deallocation if desired
-		 */
-		result = vm_map_copy(dst_map, src_map, dst_start, src_size,
-					src_start, FALSE, src_dealloc);
-	}
-
-	/*
-	 *	Return the destination address corresponding to
-	 *	the source address given (rather than the front
-	 *	of the newly-allocated page).
-	 */
-
-	if (result == KERN_SUCCESS)
-		return(dst_start + (src_addr - src_start));
-	return(0);
 }
 
 /*
@@ -396,27 +288,21 @@ kmem_malloc(map, size, canwait)
 	size = round_page(size);
 	addr = vm_map_min(map);
 
-	if (vm_map_find(map, NULL, (vm_offset_t)0,
-			&addr, size, TRUE) != KERN_SUCCESS) {
-		if (canwait) { /* XXX -- then we should wait */
-			if (map == kmem_map)
-				panic("kmem_malloc: kmem_map too small (should wait)");
-			else if (map == mb_map)
-				panic("kmem_malloc: mb_map too small (should wait)");
-		}
-		return 0;
-	}
-
 	/*
-	 * Since we didn't know where the new region would start,
-	 * we couldn't supply the correct offset into the kmem object.
-	 * Re-allocate that address region with the correct offset.
+	 * Locate sufficient space in the map.  This will give us the
+	 * final virtual address for the new memory, and thus will tell
+	 * us the offset within the kernel map.
 	 */
+	vm_map_lock(map);
+	if (vm_map_findspace(map, 0, size, &addr)) {
+		vm_map_unlock(map);
+		if (canwait)		/* XXX  should wait */
+			panic("kmem_malloc: %s too small",
+			    map == kmem_map ? "kmem_map" : "mb_map");
+		return (0);
+	}
 	offset = addr - vm_map_min(kmem_map);
 	vm_object_reference(kmem_object);
-
-	vm_map_lock(map);
-	vm_map_delete(map, addr, addr + size);
 	vm_map_insert(map, kmem_object, offset, addr, addr + size);
 
 	/*
@@ -505,95 +391,29 @@ kmem_alloc_wait(map, size)
 	vm_size_t	size;
 {
 	vm_offset_t	addr;
-	int		result;
 
 	size = round_page(size);
 
-	do {
+	for (;;) {
 		/*
-		 *	To make this work for more than one map,
-		 *	use the map's lock to lock out sleepers/wakers.
-		 *	Unfortunately, vm_map_find also grabs the map lock.
+		 * To make this work for more than one map,
+		 * use the map's lock to lock out sleepers/wakers.
 		 */
 		vm_map_lock(map);
-		lock_set_recursive(&map->lock);
-
-		addr = vm_map_min(map);
-		result = vm_map_find(map, NULL, (vm_offset_t) 0,
-				&addr, size, TRUE);
-
-		lock_clear_recursive(&map->lock);
-		if (result != KERN_SUCCESS) {
-
-			if ( (vm_map_max(map) - vm_map_min(map)) < size ) {
-				vm_map_unlock(map);
-				return(0);
-			}
-
-			assert_wait((int)map, TRUE);
+		if (vm_map_findspace(map, 0, size, &addr) == 0)
+			break;
+		/* no space now; see if we can ever get space */
+		if (vm_map_max(map) - vm_map_min(map) < size) {
 			vm_map_unlock(map);
-thread_wakeup(&vm_pages_needed); /* XXX */
-			thread_block();
+			return (0);
 		}
-		else {
-			vm_map_unlock(map);
-		}
-
-	} while (result != KERN_SUCCESS);
-
-	return(addr);
-}
-
-/*
- *	kmem_alloc_wired_wait
- *
- *	Allocates nonpageable memory from a sub-map of the kernel.  If the submap
- *	has no room, the caller sleeps waiting for more memory in the submap.
- *
- */
-vm_offset_t
-kmem_alloc_wired_wait(map, size)
-	vm_map_t	map;
-	vm_size_t	size;
-{
-	vm_offset_t	addr;
-	int		result;
-
-	size = round_page(size);
-
-	do {
-		/*
-		 *	To make this work for more than one map,
-		 *	use the map's lock to lock out sleepers/wakers.
-		 *	Unfortunately, vm_map_find also grabs the map lock.
-		 */
-		vm_map_lock(map);
-		lock_set_recursive(&map->lock);
-
-		addr = vm_map_min(map);
-		result = vm_map_find(map, NULL, (vm_offset_t) 0,
-				&addr, size, FALSE);
-
-		lock_clear_recursive(&map->lock);
-		if (result != KERN_SUCCESS) {
-
-			if ( (vm_map_max(map) - vm_map_min(map)) < size ) {
-				vm_map_unlock(map);
-				return(0);
-			}
-
-			assert_wait((int)map, TRUE);
-			vm_map_unlock(map);
-thread_wakeup(&vm_pages_needed); /* XXX */
-			thread_block();
-		}
-		else {
-			vm_map_unlock(map);
-		}
-
-	} while (result != KERN_SUCCESS);
-
-	return(addr);
+		assert_wait((int)map, TRUE);
+		vm_map_unlock(map);
+		thread_block();
+	}
+	vm_map_insert(map, NULL, (vm_offset_t)0, addr, addr + size);
+	vm_map_unlock(map);
+	return (addr);
 }
 
 /*
@@ -612,30 +432,27 @@ kmem_free_wakeup(map, addr, size)
 	(void) vm_map_delete(map, trunc_page(addr), round_page(addr + size));
 	thread_wakeup((int)map);
 	vm_map_unlock(map);
-	vm_map_simplify(map, addr);
 }
 
 /*
- *	kmem_init:
- *
- *	Initialize the kernel's virtual memory map, taking
- *	into account all memory allocated up to this time.
+ * Create the kernel map; insert a mapping covering kernel text, data, bss,
+ * and all space allocated thus far (`boostrap' data).  The new map will thus
+ * map the range between VM_MIN_KERNEL_ADDRESS and `start' as allocated, and
+ * the range between `start' and `end' as free.
  */
 void
 kmem_init(start, end)
 	vm_offset_t	start;
 	vm_offset_t	end;
 {
-	vm_offset_t	addr;
-	extern vm_map_t	kernel_map;
+	register vm_map_t m;
 
-#ifdef KMEM_DEBUG
-	printf("kmem_init: %x %x %x\n", VM_MIN_KERNEL_ADDRESS, start, end);
-#endif
-
-	addr = VM_MIN_KERNEL_ADDRESS;
-	kernel_map = vm_map_create(pmap_kernel(), addr, end, FALSE);
-	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-				&addr, (start - VM_MIN_KERNEL_ADDRESS),
-				FALSE);
+	m = vm_map_create(kernel_pmap, VM_MIN_KERNEL_ADDRESS, end, FALSE);
+	vm_map_lock(m);
+	/* N.B.: cannot use kgdb to debug, starting with this assignment ... */
+	kernel_map = m;
+	(void) vm_map_insert(m, NULL, (vm_offset_t)0,
+	    VM_MIN_KERNEL_ADDRESS, start);
+	/* ... and ending with the completion of the above `insert' */
+	vm_map_unlock(m);
 }
