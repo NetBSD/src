@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.13 2000/03/14 21:20:52 jdc Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.14 2000/03/19 12:39:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -122,14 +122,22 @@ struct zs_chanstate {
 	/* MD code might define a larger variant of this. */
 };
 
+struct consdev;
 struct zsc_attach_args {
-	int channel;	/* two serial channels per zsc */
-	int hwflags;
+	int channel;		/* two serial channels per zsc */
+	int hwflags;		/* see definitions below */
+	/* `consdev' is only valid if ZS_HWFLAG_USE_CONSDEV is set */
+	struct consdev *consdev;
 };
-#define ZS_HWFLAG_CONSOLE	1
-#define ZS_HWFLAG_NO_DCD	2	/* Ignore the DCD bit */
-#define ZS_HWFLAG_NO_CTS	4	/* Ignore the CTS bit */
-#define ZS_HWFLAG_RAW   	8	/* advise raw mode */
+/* In case of split console devices, use these: */
+#define ZS_HWFLAG_CONSOLE_INPUT		1
+#define ZS_HWFLAG_CONSOLE_OUTPUT	2
+#define ZS_HWFLAG_CONSOLE		\
+	(ZS_HWFLAG_CONSOLE_INPUT | ZS_HWFLAG_CONSOLE_OUTPUT)
+#define ZS_HWFLAG_NO_DCD	4	/* Ignore the DCD bit */
+#define ZS_HWFLAG_NO_CTS	8	/* Ignore the CTS bit */
+#define ZS_HWFLAG_RAW   	16	/* advise raw mode */
+#define ZS_HWFLAG_USE_CONSDEV  	32	/* Use console ops from `consdev' */
 
 int 	zsc_intr_soft __P((void *));
 int 	zsc_intr_hard __P((void *));
