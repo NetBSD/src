@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.22 1998/02/11 17:27:37 bad Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.23 1998/02/12 05:27:51 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.22 1998/02/11 17:27:37 bad Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.23 1998/02/12 05:27:51 mrg Exp $");
 #endif
 #endif
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.22 1998/02/11 17:27:37 bad Exp $");
 #include <nlist.h>
 #include <syslog.h>
 #ifdef BSD
-#if defined(UVM)
 #include <sys/sysctl.h>
+#if defined(UVM)
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #else
@@ -102,10 +102,8 @@ int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 struct nlist nl[] = {
 #define	X_IFNET		0
 	{ "_ifnet" },
-#define	X_BOOTTIME	1
-	{ "_boottime" },
 #if !defined(UVM)
-#define	X_CNT		2
+#define	X_CNT		1
 	{ "_cnt" },
 #endif
 	{ NULL },
@@ -227,10 +225,10 @@ updatestat(dummy)
 {
 	long off;
 	int i;
-#if defined(UVM)
-	struct uvmexp uvmexp;
 	size_t len;
 	int mib[2];
+#if defined(UVM)
+	struct uvmexp uvmexp;
 #else
 	struct vmmeter cnt;
 #endif
@@ -281,10 +279,11 @@ updatestat(dummy)
 	stats_all.s3.avenrun[0] = avrun[0] * FSCALE;
 	stats_all.s3.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s3.avenrun[2] = avrun[2] * FSCALE;
- 	if (kvm_read(kfd, (long)nl[X_BOOTTIME].n_value,
-		     (char *)&btm, sizeof (stats_all.s3.boottime))
-	    != sizeof (stats_all.s3.boottime)) {
-		syslog(LOG_ERR, "can't read boottime from kmem");
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BOOTTIME;
+	len = sizeof(btm);
+	if (sysctl(mib, 2, &btm, &len, NULL, 0) < 0) {
+		syslog(LOG_ERR, "can't sysctl kern.boottime");
 		exit(1);
 	}
 	stats_all.s3.boottime.tv_sec = btm.tv_sec;
