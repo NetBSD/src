@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.5 1997/05/25 12:40:17 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.6 1997/05/27 01:20:46 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.5 1997/05/25 12:40:17 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.6 1997/05/27 01:20:46 thorpej Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -94,6 +94,7 @@ extern	kmutex_t	ipf_natfrag;
 #endif
 
 static	int	flush_nattable __P((void)), clear_natlist __P((void));
+static	void	nat_delete __P((struct nat *));
 
 void fix_outcksum(sp, n)
 u_short *sp;
@@ -163,7 +164,11 @@ u_long n;
  */
 int nat_ioctl(data, cmd, mode)
 caddr_t data;
+#if defined(__NetBSD__)
 u_long cmd;
+#else
+int cmd;
+#endif
 int mode;
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
