@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.45 1999/01/15 23:35:54 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.46 1999/01/23 06:13:30 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.45 1999/01/15 23:35:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.46 1999/01/23 06:13:30 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -487,6 +487,7 @@ struct pridtab cputab[] = {
 	{ MIPS_RC32364,	"IDT RC32364 CPU",	3 },
 	{ MIPS_RM5230,	"QED RM5200 CPU",	4 },
 	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	3 },
+	{ MIPS_R5400,	"NEC VR5400 CPU",	4 },
 #if 0 /* ID crashs */
 	/*
 	 * According to documents from Toshiba and QED, PRid 0x22 is
