@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.28 2004/02/29 22:11:54 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.29 2004/03/02 16:40:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.28 2004/02/29 22:11:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.29 2004/03/02 16:40:10 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -406,18 +406,22 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 						break;
 					}
 				} else {
+#if RF_DEBUG_PSS > 0
 					if (rf_pssDebug) {
 						printf("raid%d: skipping force/block because already done, psid %ld\n",
 						       desc->raidPtr->raidid, 
 						       (long) asm_p->stripeID);
 					}
+#endif
 				}
 			} else {
+#if RF_DEBUG_PSS > 0
 				if (rf_pssDebug) {
 					printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
 					       desc->raidPtr->raidid, 
 					       (long) asm_p->stripeID);
 				}
+#endif
 			}
 		}
 #if RF_ACC_TRACE > 0
