@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.19 2004/12/15 16:29:53 wiz Exp $	*/
+/*	$NetBSD: pthread.h,v 1.20 2004/12/29 00:59:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ int	pthread_attr_getschedparam(const pthread_attr_t *,
     struct sched_param *);
 int	pthread_attr_setschedparam(pthread_attr_t *,
     const struct sched_param *);
+int	pthread_attr_getschedpolicy(const pthread_attr_t *, int *);
+int	pthread_attr_setschedpolicy(pthread_attr_t *, int);
 int	pthread_attr_getscope(const pthread_attr_t *, int *);
 int	pthread_attr_setscope(pthread_attr_t *, int);
 int	pthread_attr_getstack(const pthread_attr_t *, void **, size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.3 2003/11/09 18:56:48 christos Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.4 2004/12/29 00:59:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.3 2003/11/09 18:56:48 christos Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.4 2004/12/29 00:59:57 nathanw Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -262,6 +262,31 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 		return EINVAL;
 
 	param->sched_priority = 0;
+
+	return 0;
+}
+
+
+int
+/*ARGSUSED*/
+pthread_attr_setschedpolicy(pthread_attr_t *attr,
+    int policy)
+{
+
+	if (policy != SCHED_OTHER)
+		return ENOTSUP;
+
+	return 0;
+}
+
+
+int
+/*ARGSUSED*/
+pthread_attr_getschedpolicy(const pthread_attr_t *attr,
+    int *policy)
+{
+
+	policy = SCHED_OTHER;
 
 	return 0;
 }
