@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rinit.c,v 1.4 1997/04/06 20:09:10 cgd Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.5 1997/04/07 23:41:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,7 +44,10 @@
  *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: wscons_rinit.c,v 1.5 1997/04/07 23:41:20 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

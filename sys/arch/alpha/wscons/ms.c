@@ -1,4 +1,4 @@
-/* $NetBSD: ms.c,v 1.5 1997/04/07 06:09:17 cgd Exp $ */
+/* $NetBSD: ms.c,v 1.6 1997/04/07 23:41:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,10 @@
  * Mouse driver.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.6 1997/04/07 23:41:17 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

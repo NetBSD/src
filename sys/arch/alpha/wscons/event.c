@@ -1,4 +1,4 @@
-/* $NetBSD: event.c,v 1.4 1997/04/06 20:09:04 cgd Exp $ */
+/* $NetBSD: event.c,v 1.5 1997/04/07 23:41:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,10 @@
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.5 1997/04/07 23:41:13 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

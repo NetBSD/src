@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.5 1997/04/07 06:09:16 cgd Exp $ */
+/* $NetBSD: kbd.c,v 1.6 1997/04/07 23:41:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,10 @@
  * passes them up to the appropriate reader.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.6 1997/04/07 23:41:15 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

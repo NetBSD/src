@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_emul.c,v 1.8 1997/04/06 20:09:09 cgd Exp $ */
+/* $NetBSD: wscons_emul.c,v 1.9 1997/04/07 23:41:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,10 @@
  * Console emulator for a 'generic' ANSI X3.64 console.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: wscons_emul.c,v 1.9 1997/04/07 23:41:19 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

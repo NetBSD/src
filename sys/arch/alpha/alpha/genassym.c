@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.10 1997/04/07 00:19:14 cgd Exp $ */
+/* $NetBSD: genassym.c,v 1.11 1997/04/07 23:39:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -35,7 +35,10 @@
  *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: genassym.c,v 1.11 1997/04/07 23:39:52 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
