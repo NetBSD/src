@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1994/12/03 23:34:30 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1995/03/23 20:19:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,7 +227,7 @@ extern unsigned char ssir;
 #define	MHZ_33		4
 #define	MHZ_40		5
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct mac68k_machine_S {
 	int			cpu_model_index;
 	/*
@@ -271,7 +271,7 @@ extern unsigned long		NuBusBase;	/* Base address of NuBus */
 extern  struct mac68k_machine_S	mac68k_machine;
 extern	int			mmutype, cpu040;
 extern	unsigned long		load_addr      ;
-#endif
+#endif /* _KERNEL */
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.3 1994/10/26 08:46:09 cgd Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.4 1995/03/23 20:19:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,6 +114,6 @@ struct	grfreg {
 #define GRFIMDEV	0x20	/* images planes */
 #define GRFUNIT(d)	((d) & 0x7)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct grf_softc grf_softc[];
-#endif
+#endif /* _KERNEL */
