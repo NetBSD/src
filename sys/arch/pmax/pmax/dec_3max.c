@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.26 2000/03/06 03:13:36 mhitch Exp $ */
+/* $NetBSD: dec_3max.c,v 1.27 2000/03/07 23:41:35 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.26 2000/03/06 03:13:36 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.27 2000/03/07 23:41:35 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,22 +284,18 @@ dec_3max_intr(cpumask, pc, status, cause)
                         ifound = 0;
                         csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
                         csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
-                        switch (csr & 0xf0) {
-                        case KN02_IP_DZ:
-                                CALLINTR(SYS_DEV_SCC0); break;
-                        case KN02_IP_LANCE:
-                                CALLINTR(SYS_DEV_LANCE); break;
-                        case KN02_IP_SCSI:
-                                CALLINTR(SYS_DEV_SCSI); break;
-                        }
-                        switch (csr & 0x0f) {
-                        case KN02_IP_SLOT2:
-                                CALLINTR(SYS_DEV_OPT2); break;
-                        case KN02_IP_SLOT1:
-                                CALLINTR(SYS_DEV_OPT1); break;
-                        case KN02_IP_SLOT0:
-                                CALLINTR(SYS_DEV_OPT0); break;
-                        }
+                        if (csr & KN02_IP_DZ)
+                                CALLINTR(SYS_DEV_SCC0);
+                        if (csr & KN02_IP_LANCE)
+                                CALLINTR(SYS_DEV_LANCE);
+                        if (csr & KN02_IP_SCSI)
+                                CALLINTR(SYS_DEV_SCSI);
+                        if (csr & KN02_IP_SLOT2)
+                                CALLINTR(SYS_DEV_OPT2);
+                        if (csr & KN02_IP_SLOT1)
+                                CALLINTR(SYS_DEV_OPT1);
+                        if (csr & KN02_IP_SLOT0)
+                                CALLINTR(SYS_DEV_OPT0);
                 } while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_3) {
