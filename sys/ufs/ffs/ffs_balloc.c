@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.18 2000/05/28 08:15:40 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.19 2000/05/28 08:31:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -306,7 +306,7 @@ ffs_balloc(v)
 	 * Get the data block, allocating if necessary.
 	 */
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, indirs[i].in_off, &bap[0]);
+		pref = ffs_blkpref(ip, lbn, indirs[num].in_off, &bap[0]);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 		    &newb);
 		if (error) {
@@ -321,8 +321,8 @@ ffs_balloc(v)
 			clrbuf(nbp);
 		if (DOINGSOFTDEP(vp))
 			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[i].in_off, nb, 0, nbp);
-		bap[indirs[i].in_off] = ufs_rw32(nb, needswap);
+			    indirs[num].in_off, nb, 0, nbp);
+		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -385,10 +385,12 @@ fail:
 					bdwrite(bp);
 			}
 		}
-		bp = getblk(vp, indirs[unwindidx + 1].in_lbn,
-		    (int)fs->fs_bsize, 0, 0);
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		for (i = unwindidx + 1; i <= num; i++) {
+			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
+			    0);
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+		}
 	}
 	if (deallocated) {
 #ifdef QUOTA
