@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.12 2002/05/26 22:07:27 wiz Exp $	*/
+/*	$NetBSD: auth.c,v 1.13 2003/07/14 08:36:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.12 2002/05/26 22:07:27 wiz Exp $");
+__RCSID("$NetBSD: auth.c,v 1.13 2003/07/14 08:36:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: auth.c,v 1.12 2002/05/26 22:07:27 wiz Exp $");
  */
 
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 #include <stdio.h>
 #include <sys/types.h>
 #include <signal.h>
