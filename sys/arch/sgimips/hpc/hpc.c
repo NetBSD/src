@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.27 2004/04/10 21:59:42 pooka Exp $	*/
+/*	$NetBSD: hpc.c,v 1.28 2004/04/11 10:29:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.27 2004/04/10 21:59:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.28 2004/04/11 10:29:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if defined(BLINK)
-	if (mach_type == MACH_SGI_IP20)
+	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20)
 		hpc_blink(sc);
 #endif
 }
