@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.248 1999/08/02 17:37:41 augustss Exp $
+#	$NetBSD: GENERIC,v 1.249 1999/08/02 17:44:59 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -573,10 +573,10 @@ audio*	at sv?
 audio*	at wss?
 audio*	at ym?
 
-# MPU 401 cards
-#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible
-mpu*	at sb?
+# MPU 401 UARTs
+#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
 mpu*	at eso?
+mpu*	at sb?
 
 # MIDI support
 midi*	at mpu?			# MPU 401
