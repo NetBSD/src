@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.73 2003/11/25 05:14:58 cdi Exp $ */
+/*	$NetBSD: db_interface.c,v 1.74 2004/01/06 20:41:23 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2003/11/25 05:14:58 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2004/01/06 20:41:23 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2003/11/25 05:14:58 cdi Exp $"
 #include "esp_sbus.h"
 
 extern void OF_enter __P((void));
+
+db_regs_t		ddb_regs;
 
 extern struct traptrace {
 	unsigned short tl:3,	/* Trap level */
