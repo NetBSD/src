@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2003/05/22 05:25:48 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2003/05/22 05:47:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,21 +49,6 @@
  * Mappings >= KERNEL_BASE are constant across all processes
  */
 #define	KERNEL_BASE		0xf0000000
-
-/*
- * The Kernel VM Size varies depending on the machine depending on how
- * much space is needed (and where) for other mappings.
- * In some cases the chosen value may not be the maximum in order that
- * we don't waste memory with kernel pages tables as we can't currently
- * grow the kernel page tables after booting.
- * You only need to increase these values if you find that the number of
- * buffers is being limited due to lack of VA space.
- */
-/*
- * The range 0xf1000000 - 0xf5ffffff is available for kernel VM space
- * Fixed mappings exist from 0xf6000000 - 0xffffffff
- */
-#define	KERNEL_VM_SIZE		0x05000000
 
 /*
  * Override the default pager_map size, there's not enough KVA.
