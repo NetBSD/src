@@ -34,15 +34,48 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.6 1997/10/13 11:56:27 lukem Exp $
+ *	$NetBSD: SYS.h,v 1.7 1998/02/22 06:40:17 mycroft Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
-#define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
+#ifdef __STDC__
+#define SYSTRAP(x)	movl $(SYS_ ## x),%eax; int $0x80
+#else
+#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; int $0x80
+#endif
+
+
+#define _SYSCALL_NOERROR(x,y)						\
+	ENTRY(x);							\
+	SYSTRAP(y)
+
+#define _SYSCALL(x,y)							\
+	.text; .align 2;						\
+	2: jmp PIC_PLT(cerror);						\
+	_SYSCALL_NOERROR(x,y);						\
+	jc 2b
+
+#define SYSCALL_NOERROR(x)						\
+	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)							\
+	_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)						\
+	_SYSCALL_NOERROR(x,y);						\
+	ret
+
+#define PSEUDO(x,y)							\
+	_SYSCALL(x,y);							\
+	ret
+
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)							\
+	PSEUDO(x,x)
+
 
 	.globl	cerror
