@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2002/03/16 14:41:15 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.29 2002/03/16 18:47:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2002/03/16 14:41:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2002/03/16 18:47:51 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -352,46 +352,49 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
+	printf(": %s\n", cpu_model);
+
+	printf("%s:", dv->dv_xname);
+
 	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
 	case CPU_CLASS_ARM7:
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			strcat(cpu_model, " IDC disabled");
+			printf(" IDC disabled");
 		else
-			strcat(cpu_model, " IDC enabled");
+			printf(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			strcat(cpu_model, " DC disabled");
+			printf(" DC disabled");
 		else
-			strcat(cpu_model, " DC enabled");
+			printf(" DC enabled");
 		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			strcat(cpu_model, " IC disabled");
+			printf(" IC disabled");
 		else
-			strcat(cpu_model, " IC enabled");
+			printf(" IC enabled");
 		break;
 	default:
 		break;
 	}
 	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		strcat(cpu_model, " WB disabled");
+		printf(" WB disabled");
 	else
-		strcat(cpu_model, " WB enabled");
+		printf(" WB enabled");
 
 	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
-		strcat(cpu_model, " LABT");
+		printf(" LABT");
 	else
-		strcat(cpu_model, " EABT");
+		printf(" EABT");
 
 	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		strcat(cpu_model, " branch prediction enabled");
+		printf(" branch prediction enabled");
 
-	/* Print the info */
-	printf(": %s\n", cpu_model);
+	printf("\n");
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
