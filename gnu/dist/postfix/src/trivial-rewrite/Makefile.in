@@ -76,6 +76,7 @@ resolve.o: ../../include/rewrite_clnt.h
 resolve.o: ../../include/resolve_local.h
 resolve.o: ../../include/mail_conf.h
 resolve.o: ../../include/quote_822_local.h
+resolve.o: ../../include/quote_flags.h
 resolve.o: ../../include/tok822.h
 resolve.o: ../../include/resolve_clnt.h
 resolve.o: trivial-rewrite.h
