@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.7 2001/08/31 09:53:23 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.7.2.1 2002/08/02 00:42:07 lukem Exp $	*/
 /*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ static void policy_parse_request_init __P((void));
 static caddr_t policy_parse __P((char *msg, int msglen));
 
 extern void __policy__strbuffer__init__ __P((char *msg));
+extern void __policy__strbuffer__free__ __P((void));
 extern int yyparse __P((void));
 extern int yylex __P((void));
 
@@ -399,6 +400,8 @@ policy_parse(msg, msglen)
 	__policy__strbuffer__init__(msg);
 
 	error = yyparse();	/* it must be set errcode. */
+	__policy__strbuffer__free__();
+
 	if (error) {
 		if (pbuf != NULL)
 			free(pbuf);
