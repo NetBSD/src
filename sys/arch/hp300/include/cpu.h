@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2000/05/26 21:19:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2000/05/27 21:46:42 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@ struct cpu_info {
 };
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store
+extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
 
