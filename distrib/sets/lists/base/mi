@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.311 2002/03/17 10:55:02 wiz Exp $
+# $NetBSD: mi,v 1.312 2002/03/17 22:14:05 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -487,7 +487,7 @@
 ./usr/lib			base-sys-usr
 ./usr/libdata			base-sys-usr
 ./usr/libdata/lint		base-c-usr
-./usr/lib/runemodule		base-rune-root
+./usr/lib/i18n			base-i18n-root
 ./usr/libexec			base-sys-usr
 ./usr/libexec/atrun		base-cron-bin
 ./usr/libexec/comsat		base-mail-bin

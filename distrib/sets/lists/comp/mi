@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.430 2002/03/17 10:56:05 wiz Exp $
+#	$NetBSD: mi,v 1.431 2002/03/17 22:14:07 tshiozak Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -984,12 +984,12 @@
 ./usr/lib/liby_p.a		comp-c-proflib
 ./usr/lib/libz.a		comp-c-lib
 ./usr/lib/libz_p.a		comp-c-proflib
-./usr/lib/runemodule/libBIG5.a	comp-rune-lib
-./usr/lib/runemodule/libEUC.a	comp-rune-lib
-./usr/lib/runemodule/libEUCTW.a	comp-rune-lib
-./usr/lib/runemodule/libISO2022.a	comp-rune-lib
-./usr/lib/runemodule/libMSKanji.a	comp-rune-lib
-./usr/lib/runemodule/libUTF8.a	comp-rune-lib
+./usr/lib/i18n/libBIG5.a	comp-i18n-lib
+./usr/lib/i18n/libEUC.a		comp-i18n-lib
+./usr/lib/i18n/libEUCTW.a	comp-i18n-lib
+./usr/lib/i18n/libISO2022.a	comp-i18n-lib
+./usr/lib/i18n/libMSKanji.a	comp-i18n-lib
+./usr/lib/i18n/libUTF8.a	comp-i18n-lib
 ./usr/libexec/cc1			comp-c-bin
 ./usr/libexec/cc1obj			comp-objc-bin
 ./usr/libexec/cc1plus			comp-cxx-bin

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2001/12/28 18:25:24 augustss Exp $
+#	$NetBSD: Makefile,v 1.75 2002/03/17 22:14:12 tshiozak Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -37,7 +37,7 @@ SUBDIR+=	libtelnet
 # IPv6/IPsec
 SUBDIR+=	libipsec
 
-# multibyte locale
-SUBDIR+=	runemodule
+# I18N modules
+SUBDIR+=	i18n_module
 
 .include <bsd.subdir.mk>
