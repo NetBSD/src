@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.344 2001/04/19 17:20:08 jdolecek Exp $
+# $NetBSD: mi,v 1.345 2001/04/20 09:56:45 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -472,7 +472,6 @@
 ./usr/share/man/cat4/arm32/asc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/arm32/beep.0		man-sys-catman
-./usr/share/man/cat4/arm32/com.0		man-sys-catman
 ./usr/share/man/cat4/arm32/cosc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/csc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/eh.0			man-sys-catman
@@ -527,6 +526,7 @@
 ./usr/share/man/cat4/cmpci.0			man-sys-catman
 ./usr/share/man/cat4/cms.0			man-sys-catman
 ./usr/share/man/cat4/cnw.0			man-sys-catman
+./usr/share/man/cat4/com.0			man-sys-catman
 ./usr/share/man/cat4/cs.0			man-sys-catman
 ./usr/share/man/cat4/cue.0			man-sys-catman
 ./usr/share/man/cat4/cy.0			man-sys-catman
@@ -596,7 +596,6 @@
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman
 ./usr/share/man/cat4/i386/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/i386/busmouse.0		man-sys-catman
-./usr/share/man/cat4/i386/com.0			man-sys-catman
 ./usr/share/man/cat4/i386/console.0		man-sys-catman
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman
@@ -1971,7 +1970,6 @@
 ./usr/share/man/man4/arm32/asc.4		man-sys-man
 ./usr/share/man/man4/arm32/autoconf.4		man-sys-man
 ./usr/share/man/man4/arm32/beep.4		man-sys-man
-./usr/share/man/man4/arm32/com.4		man-sys-man
 ./usr/share/man/man4/arm32/cosc.4		man-sys-man
 ./usr/share/man/man4/arm32/csc.4		man-sys-man
 ./usr/share/man/man4/arm32/eh.4			man-sys-man
@@ -2026,6 +2024,7 @@
 ./usr/share/man/man4/cmpci.4			man-sys-man
 ./usr/share/man/man4/cms.4			man-sys-man
 ./usr/share/man/man4/cnw.4			man-sys-man
+./usr/share/man/man4/com.4			man-sys-man
 ./usr/share/man/man4/cs.4			man-sys-man
 ./usr/share/man/man4/cue.4			man-sys-man
 ./usr/share/man/man4/cy.4			man-sys-man
@@ -2095,7 +2094,6 @@
 ./usr/share/man/man4/i386/apm.4			man-sys-man
 ./usr/share/man/man4/i386/autoconf.4		man-sys-man
 ./usr/share/man/man4/i386/busmouse.4		man-sys-man
-./usr/share/man/man4/i386/com.4			man-sys-man
 ./usr/share/man/man4/i386/console.4		man-sys-man
 ./usr/share/man/man4/i386/ed.4			man-sys-man
 ./usr/share/man/man4/i386/fdc.4			man-sys-man
