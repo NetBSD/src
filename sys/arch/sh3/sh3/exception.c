@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.10 2003/08/07 16:29:29 agc Exp $	*/
+/*	$NetBSD: exception.c,v 1.11 2003/10/13 18:08:45 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.10 2003/08/07 16:29:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.11 2003/10/13 18:08:45 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -469,6 +469,12 @@ do {									\
 		return;
 	}
 
+	if ((map != kernel_map) && (l->l_flag & L_SA)) {
+		KDASSERT(l->l_proc != NULL && l->l_proc->p_sa != NULL);
+		l->l_proc->p_sa->sa_vp_faultaddr = (vaddr_t)va;
+		l->l_flag |= L_SA_PAGEFAULT;
+	}
+
 	err = uvm_fault(map, va, 0, ftype);
 
 	/* User stack extension */
@@ -486,6 +492,8 @@ do {									\
 		}
 	}
 
+	if (map != kernel_map)
+		l->l_flag &= ~L_SA_PAGEFAULT;
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		boolean_t loaded = __pmap_pte_load(pmap, va, track);
