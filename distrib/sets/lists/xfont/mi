@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2004/03/06 03:54:25 rtr Exp $
+# $NetBSD: mi,v 1.18 2004/03/10 00:39:13 lukem Exp $
 ./etc/mtree/set.xfont						xfont-sys-root
 ./usr/X11R6/lib/X11/fonts                                       xfont   share
 ./usr/X11R6/lib/X11/fonts/100dpi                                xfont   share
@@ -3807,6 +3807,7 @@
 ./usr/X11R6/lib/X11/fonts/CID/fonts.dir				xfont	share
 ./usr/X11R6/lib/X11/fonts/CID/fonts.scale			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo                                xfont   share
+./usr/X11R6/lib/X11/fonts/Speedo/encodings.dir			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0419.spd			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0582.spd			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0583.spd			xfont	share
