@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.41 2000/02/11 19:30:30 thorpej Exp $    */
+/*      $NetBSD: param.h,v 1.42 2000/03/07 00:05:59 matt Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -73,6 +73,7 @@
 #define	VAX_PGSHIFT	9
 #define	VAX_NBPG	(1 << VAX_PGSHIFT)
 #define	VAX_PGOFSET	(VAX_NBPG - 1)
+#define	VAX_NPTEPG	(VAX_NBPG / 4)
 
 #define	KERNBASE	0x80000000		/* start of kernel virtual */
 
@@ -203,9 +204,6 @@
 #define	spl5()		splx(0x15)
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
-
-#define vmapbuf(p,q)
-#define vunmapbuf(p,q)
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
