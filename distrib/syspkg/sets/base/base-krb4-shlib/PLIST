@@ -1,0 +1,9 @@
+@cwd /
+./usr/lib/libkadm.so.5
+./usr/lib/libkadm.so.5.0
+./usr/lib/libkdb.so.5
+./usr/lib/libkdb.so.5.0
+./usr/lib/libkrb.so.5
+./usr/lib/libkrb.so.5.1
+./usr/lib/libkstream.so.2
+./usr/lib/libkstream.so.2.0

@@ -1,0 +1,2 @@
+SETNAME=etc
+PREFIX=/

@@ -1,0 +1,4 @@
+@cwd /
+./usr/share/gnats
+./usr/share/gnats/netbsd
+./usr/share/gnats/send-pr.el

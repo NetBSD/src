@@ -1,0 +1,7 @@
+@cwd /
+./usr/share/locale/fi_FI.ISO8859-1
+./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE
+./usr/share/locale/fi_FI.ISO8859-15
+./usr/share/locale/fi_FI.ISO8859-15/LC_CTYPE
+./usr/share/nls/fi
+./usr/share/nls/fi/libc.cat
