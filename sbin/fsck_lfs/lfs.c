@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.7 2003/08/07 10:04:23 agc Exp $ */
+/* $NetBSD: lfs.c,v 1.8 2005/02/26 05:45:54 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -101,6 +101,7 @@
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
+extern void pwarn(const char *, ...);
 
 extern struct uvnodelst vnodelist;
 extern struct uvnodelst getvnodelist;
@@ -372,17 +373,19 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	ip->i_flag = 0;
 
 	/* Load inode block and find inode */
-	bread(fs->lfs_unlockvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
-	bp->b_flags |= B_AGE;
-	dip = lfs_ifind(fs, ino, bp);
-	if (dip == NULL) {
+	if (daddr > 0) {
+		bread(fs->lfs_unlockvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
+		bp->b_flags |= B_AGE;
+		dip = lfs_ifind(fs, ino, bp);
+		if (dip == NULL) {
+			brelse(bp);
+			free(ip);
+			free(vp);
+			return NULL;
+		}
+		memcpy(ip->i_din.ffs1_din, dip, sizeof(*dip));
 		brelse(bp);
-		free(ip);
-		free(vp);
-		return NULL;
 	}
-	memcpy(ip->i_din.ffs1_din, dip, sizeof(*dip));
-	brelse(bp);
 	ip->i_number = ino;
 	/* ip->i_devvp = fs->lfs_unlockvp; */
 	ip->i_lfs = fs;
@@ -449,7 +452,7 @@ check_sb(struct lfs *fs)
 
 /* Initialize LFS library; load superblocks and choose which to use. */
 struct lfs *
-lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
+lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 {
 	struct uvnode *devvp;
 	struct ubuf *bp;
@@ -470,55 +473,64 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
 	LIST_INIT(&devvp->v_dirtyblkhd);
 
 	tryalt = 0;
-	if (sblkno == 0) {
-		sblkno = btodb(LFS_LABELPAD);
-		tryalt = 1;
-	} else if (debug) {
-		printf("No -b flag given, not attempting to verify checkpoint\n");
-	}
-	error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
-	fs = (struct lfs *) malloc(sizeof(*fs));
-	memset(fs, 0, sizeof(*fs));
-	fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-	fs->lfs_unlockvp = devvp;
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
-
-	if (tryalt) {
-		error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
-		    LFS_SBPAD, NOCRED, &bp);
-		altfs = (struct lfs *) malloc(sizeof(*altfs));
-		memset(altfs, 0, sizeof(*altfs));
-		altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-		altfs->lfs_unlockvp = devvp;
+	if (dummy_read) {
+		if (sblkno == 0)
+			sblkno = btodb(LFS_LABELPAD);
+		fs = (struct lfs *) malloc(sizeof(*fs));
+		memset(fs, 0, sizeof(*fs));
+		fs->lfs_unlockvp = devvp;
+	} else {
+		if (sblkno == 0) {
+			sblkno = btodb(LFS_LABELPAD);
+			tryalt = 1;
+		} else if (debug) {
+			printf("No -b flag given, not attempting to verify checkpoint\n");
+		}
+		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
+		fs = (struct lfs *) malloc(sizeof(*fs));
+		memset(fs, 0, sizeof(*fs));
+		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
+		fs->lfs_unlockvp = devvp;
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
-
-		if (check_sb(fs)) {
-			if (debug)
-				printf("Primary superblock is no good, using first alternate\n");
-			free(fs);
-			fs = altfs;
-		} else {
-			/* If both superblocks check out, try verification */
-			if (check_sb(altfs)) {
+	
+		if (tryalt) {
+			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
+		    	LFS_SBPAD, NOCRED, &bp);
+			altfs = (struct lfs *) malloc(sizeof(*altfs));
+			memset(altfs, 0, sizeof(*altfs));
+			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
+			altfs->lfs_unlockvp = devvp;
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+	
+			if (check_sb(fs) || fs->lfs_idaddr <= 0) {
 				if (debug)
-					printf("First alternate superblock is no good, using primary\n");
-				free(altfs);
+					printf("Primary superblock is no good, using first alternate\n");
+				free(fs);
+				fs = altfs;
 			} else {
-				if (lfs_verify(fs, altfs, devvp, debug) == fs) {
+				/* If both superblocks check out, try verification */
+				if (check_sb(altfs)) {
+					if (debug)
+						printf("First alternate superblock is no good, using primary\n");
 					free(altfs);
 				} else {
-					free(fs);
-					fs = altfs;
+					if (lfs_verify(fs, altfs, devvp, debug) == fs) {
+						free(altfs);
+					} else {
+						free(fs);
+						fs = altfs;
+					}
 				}
 			}
 		}
+		if (check_sb(fs)) {
+			free(fs);
+			return NULL;
+		}
 	}
-	if (check_sb(fs)) {
-		free(fs);
-		return NULL;
-	}
+
 	/* Compatibility */
 	if (fs->lfs_version < 2) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
@@ -527,13 +539,19 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
-	fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));
-	fs->lfs_suflags[0] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
-	fs->lfs_suflags[1] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+
+	if (!dummy_read) {
+		fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));
+		fs->lfs_suflags[0] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+		fs->lfs_suflags[1] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+	}
 
 	if (idaddr == 0)
 		idaddr = fs->lfs_idaddr;
-	fs->lfs_ivnode = lfs_raw_vget(fs, fs->lfs_ifile, devvp->v_fd, idaddr);
+	/* NB: If dummy_read!=0, idaddr==0 here so we get a fake inode. */
+	fs->lfs_ivnode = lfs_raw_vget(fs,
+		(dummy_read ? LFS_IFILE_INUM : fs->lfs_ifile), devvp->v_fd,
+		idaddr);
 
 	register_vget((void *)fs, lfs_vget);
 
@@ -655,11 +673,11 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 		if (debug)
 			printf("done.\n");
 		if (daddr == nsb->lfs_offset) {
-			warnx("** Newer checkpoint verified, recovered %lld seconds of data\n",
+			pwarn("** Newer checkpoint verified, recovered %lld seconds of data\n",
 			    (long long) nsb->lfs_tstamp - (long long) osb->lfs_tstamp);
 			sbdirty();
 		} else {
-			warnx("** Newer checkpoint invalid, lost %lld seconds of data\n", (long long) nsb->lfs_tstamp - (long long) osb->lfs_tstamp);
+			pwarn("** Newer checkpoint invalid, lost %lld seconds of data\n", (long long) nsb->lfs_tstamp - (long long) osb->lfs_tstamp);
 		}
 		return (daddr == nsb->lfs_offset ? nsb : osb);
 	}
@@ -714,11 +732,11 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 	for (i = 0, j = 0;
 	     i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, INOPB(fs)); i++) {
 		if (i >= sp->ss_nfinfo && *idp != daddr) {
-			warnx("Not enough inode blocks in pseg at 0x%" PRIx32
+			pwarn("Not enough inode blocks in pseg at 0x%" PRIx32
 			      ": found %d, wanted %d\n",
 			      pseg_addr, j, howmany(sp->ss_ninos, INOPB(fs)));
 			if (debug)
-				warnx("*idp=%x, daddr=%" PRIx32 "\n", *idp,
+				pwarn("*idp=%x, daddr=%" PRIx32 "\n", *idp,
 				      daddr);
 			break;
 		}
@@ -748,13 +766,13 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 	}
 
 	if (datac != nblocks) {
-		warnx("Partial segment at 0x%llx expected %d blocks counted %d\n",
+		pwarn("Partial segment at 0x%llx expected %d blocks counted %d\n",
 		    (long long) pseg_addr, nblocks, datac);
 	}
 	ccksum = cksum(datap, nblocks * sizeof(u_int32_t));
 	/* Check the data checksum */
 	if (ccksum != sp->ss_datasum) {
-		warnx("Partial segment at 0x%" PRIx32 " data checksum"
+		pwarn("Partial segment at 0x%" PRIx32 " data checksum"
 		      " mismatch: given 0x%x, computed 0x%x\n",
 		      pseg_addr, sp->ss_datasum, ccksum);
 		free(datap);
