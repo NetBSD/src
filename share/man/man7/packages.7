@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.11 1999/01/26 22:18:42 agc Exp $
+.\"	$NetBSD: packages.7,v 1.12 1999/01/30 23:19:51 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -189,11 +189,11 @@ The name of the mtree file.  The default is
 if
 .Dv USE_IMAKE
 or
-.Dv USE_X11
+.Dv USE_X11BASE
 is set, or
 .Pa /etc/mtree/BSD.pkg.dist
 otherwise.
-.It BUILD_USES_X11
+.It USE_X11
 Instructs the package system that the package will use headers and libraries
 from
 .Dv X11BASE
@@ -286,9 +286,9 @@ for building and running.
 .It USE_IMAKE	
 Says that the package uses
 .Pa imake .
-.It USE_X11	
-Says that the package uses X11 (i.e., installs in
-.Dv ${X11BASE} ) .
+.It USE_X11BASE	
+Says that the package installs itself into the X11 base directory
+.Dv ${X11BASE} .
 .It USE_GTEXINFO	
 Says that the package uses gtexinfo.
 .It USE_MOTIF
