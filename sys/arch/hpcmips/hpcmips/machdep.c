@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2001/09/15 14:08:15 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2001/09/15 19:51:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2001/09/15 14:08:15 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2001/09/15 19:51:38 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -176,8 +176,6 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 unsigned ssir;				/* schedules software interrupt */
-
-struct splvec	splvec;			/* XXX will go XXX */
 
 void mach_init(int, char *[], struct bootinfo *);
 
@@ -341,6 +339,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
+	intr_init();
 	mips_vector_init();
 
 	/*

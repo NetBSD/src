@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.23 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.24 2001/09/15 19:51:39 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -155,17 +155,7 @@ tx_init()
 void
 tx_os_init()
 {
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
 
-	splvec.splbio = MIPS_SPL_2_4;
-	splvec.splnet = MIPS_SPL_2_4;
-	splvec.spltty = MIPS_SPL_2_4;
-	splvec.splvm = MIPS_SPL_2_4;
-	splvec.splclock = MIPS_SPL_2_4;
-	splvec.splstatclock = MIPS_SPL_2_4;
-	
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
 }
