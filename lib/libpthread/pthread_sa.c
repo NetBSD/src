@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.17 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.18 2003/10/24 17:35:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.17 2003/09/29 09:50:22 wiz Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.18 2003/10/24 17:35:22 yamt Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -232,7 +232,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			pthread__alarm_process(self, arg);
 		/*
 		 * PT_RRTIMER_MAGIC doesn't need explicit handling;
-		 * the per-thread work below will put the interrupted
+		 * the per-thread work above will put the interrupted
 		 * thread on the back of the run queue, and
 		 * pthread_next() will get one from the front.
 		 */
