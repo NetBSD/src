@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/06/24 18:54:56 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/06/26 01:45:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,10 +58,14 @@
  * Evil STACK_SWITCH()
  * See comments in ../i386/pthread_switch.S.
  */
-#define STACK_SWITCH(pt,tmp)		  \
+#define STACK_SWITCH(pt,tmp,z)		  \
+	lwz	tmp, PT_TRAPUC(pt)	; \
+	or.	tmp, tmp, tmp		; \
+	bne	1f			; \
 	lwz	tmp, PT_UC(pt)		; \
-	la	%r1, -STACKSPACE(tmp)
-
+1:	la	%r1, -STACKSPACE(tmp)	; \
+	li	z, 0			; \
+	stw	z, PT_TRAPUC(pt)
 
 /*
  * void
@@ -115,10 +119,9 @@ ENTRY(pthread__switch)
 	addi	%r6, %r6, pthread__switch_return_point@l
 #endif
 	stw	%r6, (_REG_PC + 16)(%r1)
-
-	STACK_SWITCH(%r4, %r7)
-
 	stw	%r31, PT_UC(%r3)
+
+	STACK_SWITCH(%r4, %r7, %r6)
 
 2:	mr	%r3, %r7
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
@@ -134,7 +137,7 @@ ENTRY_NOPROFILE(pthread__switch_return_point)
 
 
 pthread__switch_away:
-	STACK_SWITCH(%r4,%r6)
+	STACK_SWITCH(%r4, %r6, %r7)
 
 	or.	%r5, %r5, %r5
 	beq	1f
@@ -155,7 +158,7 @@ ENTRY(pthread__upcall_switch)
 	addi	%r6, %r6, 1
 	stw	%r6, PT_SPINLOCKS(%r4)
 
-	STACK_SWITCH(%r4,%r5)
+	STACK_SWITCH(%r4, %r5, %r6)
 
 	lwz	%r7, PT_NEXT(%r3)
 	or.	%r7, %r7, %r7
@@ -270,10 +273,9 @@ ENTRY(pthread__locked_switch)
 	addi	%r6, %r6, locked_return@l
 #endif
 	stw	%r6, (_REG_PC + 16)(%r1)
-
-	STACK_SWITCH(%r4, %r7)
-
 	stw	%r31, PT_UC(%r3)
+
+	STACK_SWITCH(%r4, %r7, %r6)
 
 	/* Check if the switcher was preempted and continued to here. */
 	lwz	%r8, PT_NEXT(%r3)
@@ -295,13 +297,6 @@ ENTRY(pthread__locked_switch)
 	lwz	%r6, PT_SPINLOCKS(%r3)
 	addi	%r6, %r6, -1
 	stw	%r6, PT_SPINLOCKS(%r3)
-
-	/*
-	 * Save the context we previously stored in PT_UC(%r3);
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere.
-	 */
-	stw	%r31, PT_SLEEPUC(%r3)
 
 	mr	%r3, %r4
 	mr	%r4, %r8

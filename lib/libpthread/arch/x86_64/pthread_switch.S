@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 22:03:18 fvdl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/26 01:45:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,8 +102,12 @@
  */
 
 #define STACK_SWITCH			  \
+	movq	PT_TRAPUC(%r13), %r11	; \
+	cmpq	$0, %r11		; \
+	jne	1f			; \
 	movq	PT_UC(%r13), %r11	; \
-	leaq	(-STACKSPACE)(%r11), %rsp
+1:	leaq	(-STACKSPACE)(%r11), %rsp ; \
+	movq	$0, PT_TRAPUC(%r13)
 
 
 /*
@@ -141,10 +145,9 @@ ENTRY(pthread__switch)
 	leaq	pthread__switch_return_point, %r11
 #endif
 	movq	%r11, UC_RIP(%r14)
+	movq	%r14, PT_UC(%r12)
 	
 	STACK_SWITCH
-	
-	movq	%r14, PT_UC(%r12)
 
 	movq	%r11, %rdi		/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
@@ -216,10 +219,10 @@ ENTRY(pthread__locked_switch)
 	leaq	locked_return_point, %r11
 #endif
 	movq	%r11, UC_RIP(%r15)
+	movq	%r15, PT_UC(%r12)
 	
 	STACK_SWITCH
 	
-	movq	%r15, PT_UC(%r12)
 	/*
 	 * Check if the original thread was preempted while holding
 	 * its queue lock.
@@ -241,13 +244,6 @@ ENTRY(pthread__locked_switch)
 	movq	%r13, PT_SWITCHTO(%r12)
 	movq	%r14, PT_HELDLOCK(%r12)
 	decl	PT_SPINLOCKS(%r12)
-
-	/*
-	 * Save the context we previously stored in PT_UC(%eax); 
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere. 
-	 */
-	movq	%r15, PT_SLEEPUC(%r12)
 
 	movq	PT_NEXT(%r12), %r11
 	movq	%r13, %r12

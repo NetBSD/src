@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 21:46:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/26 01:45:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,8 +62,11 @@
  */
 	
 #define STACK_SWITCH(pt,tmp)		  \
+	ldq	tmp, PT_TRAPUC(pt)	; \
+	bne	tmp, 1f			; \
 	ldq	tmp, PT_UC(pt)		; \
-	lda	sp, -STACKSPACE(tmp)
+1:	lda	sp, -STACKSPACE(tmp)	; \
+	stq	zero, PT_TRAPUC(pt)
 
 NESTED(pthread__switch, 2, CONTEXTSIZE + 24, ra, 0, 0)
 	LDGP(pv)
@@ -84,10 +87,10 @@ NESTED(pthread__switch, 2, CONTEXTSIZE + 24, ra, 0, 0)
 	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
 
 	lda	t0, 24(sp)
+	stq	t0, PT_UC(a0)
 
 	STACK_SWITCH(a1, t2)
 	
-	stq	t0, PT_UC(a0)
 	mov	t2, a0
 	CALL(_setcontext_u)
 XNESTED(pthread__switch_return_point, 2)
@@ -146,10 +149,10 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
 
 	lda	t0, 32(sp)
+	stq	t0, PT_UC(a0)
 	
 	STACK_SWITCH(a1, t2)
 
-	stq	t0, PT_UC(a0)
 	/* Check if the switcher was preempted and continued to here. */
 	ldq	t0, PT_NEXT(a0)
 	beq	t0, 1f
@@ -169,12 +172,6 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	ldl	t4, PT_SPINLOCKS(a0)
 	subl	t4, 1, t4
 	stl	t4, PT_SPINLOCKS(a0)
-
-	/* Save the context we previously stored in PT_UC(a0); 
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere. 
-	 */
-	stq	t3, PT_SLEEPUC(a0)
 
 	mov	a1, a0
 	mov	t0, a1
