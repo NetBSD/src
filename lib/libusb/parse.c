@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 2000/02/22 12:39:22 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.9 2000/03/17 18:09:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -104,7 +104,7 @@ int
 hid_get_item(hid_data_t s, hid_item_t *h)
 {
 	hid_item_t *c;
-	unsigned int bTag = 0, bType = 0, bSize;
+	unsigned int bTag = 0, bType = 0, bSize, oldpos;
 	unsigned char *data;
 	int dval;
 	unsigned char *p;
@@ -285,7 +285,9 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
+				oldpos = c->pos;
 				s->cur = *hi;
+				c->pos = oldpos;
 				free(hi);
 				break;
 			default:
