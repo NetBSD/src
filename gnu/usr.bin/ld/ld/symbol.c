@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.14 1998/09/04 09:43:29 pk Exp $	*/
+/*	$NetBSD: symbol.c,v 1.15 1998/12/17 14:34:52 pk Exp $	*/
 
 /*
  *	- symbol table routines
@@ -15,7 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "shlib.h"
 #include "ld.h"
+#include "ld_i.h"
 
 symbol	*symtab[SYMTABSIZE];	/* The symbol table. */
 int	num_hash_tab_syms;	/* Number of symbols in symbol hash table. */
@@ -26,6 +28,8 @@ symbol	*end_symbol;		/* the symbol _end */
 symbol	*got_symbol;		/* the symbol __GLOBAL_OFFSET_TABLE_ */
 symbol	*plt_symbol;		/* the symbol __PROCEDURE_LINKAGE_TABLE_ */
 symbol	*dynamic_symbol;	/* the symbol __DYNAMIC */
+
+static int hash_string __P((char *));
 
 void
 symtab_init(relocatable_output)
@@ -63,7 +67,6 @@ symtab_init(relocatable_output)
 /*
  * Compute the hash code for symbol name KEY.
  */
-
 int
 hash_string (key)
      char *key;

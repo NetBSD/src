@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.26 1998/10/19 03:09:34 matt Exp $	*/
+/*	$NetBSD: rrs.c,v 1.27 1998/12/17 14:34:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,9 @@
 #include <stab.h>
 #include <string.h>
 
+#include "shlib.h"
 #include "ld.h"
+#include "ld_i.h"
 
 static struct _dynamic		rrs_dyn;		/* defined in link.h */
 static struct so_debug		rrs_so_debug;		/* defined in link.h */
@@ -83,9 +85,15 @@ static int	current_got_offset;
 static int	max_got_offset;
 static int	min_got_offset;
 static int	got_origin;
-static int	current_reloc_offset;
 static int	current_hash_index;
 int		number_of_shobjs;
+
+/* */
+static struct relocation_info	*rrs_next_reloc __P((void));
+static void			rrs_insert_hash __P((char *, int));
+static void			write_rrs_data __P((void));
+static void			write_rrs_text __P((void));
+
 
 /* Convert a GOT offset into a table entry */
 #define GOTP(off)		((got_t *)((long)rrs_got + got_origin + (off)))
@@ -536,10 +544,11 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 	if (lsp->gotslot_offset != -1) {
 		/* Already claimed */
 		if (*GOTP(lsp->gotslot_offset) != addend)
-			errx(1, "%s: gotslot at %#x is multiple valued: %#x vs %#x",
-				get_file_name(entry), lsp->gotslot_offset,
-				*GOTP(lsp->gotslot_offset), addend);
-		return lsp->gotslot_offset;
+			errx(1,
+			 "%s: gotslot at %#lx is multiple valued: %#lx vs %#lx",
+			     get_file_name(entry), lsp->gotslot_offset,
+			     *GOTP(lsp->gotslot_offset), addend);
+		return (lsp->gotslot_offset);
 	}
 
 	if (current_got_offset == 0)
@@ -572,7 +581,7 @@ printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
 	r->r_address = got_symbol->value + lsp->gotslot_offset;
 	RELOC_EXTERN_P(r) = 0;
 	md_make_gotreloc(rp, r, RELTYPE_RELATIVE);
-	return lsp->gotslot_offset;
+	return (lsp->gotslot_offset);
 }
 
 void
@@ -672,9 +681,10 @@ void
 consider_rrs_section_lengths()
 {
 	int		n;
-	struct shobj	*shp, **shpp;
+	struct shobj	*shp;
 
 #ifdef notyet
+	struct shobj	**shpp;
 /* We run into trouble with this as long as shared object symbols
    are not checked for definitions */
 	/*
@@ -764,7 +774,7 @@ consider_rrs_section_lengths()
 	dynamic_symbol->rrs_symbolnum = number_of_rrs_symbols++;
 	FOR_EACH_SYMBOL(i ,sp) {
 		if ((link_mode & SHAREABLE) && sp->warning) {
-			/* Allocate N_WARNING & co */
+			/* Allocate N_WARN & co */
 			rrs_strtab_size +=
 				2 + strlen(sp->name) + strlen(sp->warning);
 			number_of_rrs_symbols += 2;
@@ -1050,9 +1060,9 @@ write_rrs_text()
 
 		if ((link_mode & SHAREABLE) && sp->warning) {
 			/*
-			 * Write a N_WARNING duo.
+			 * Write a N_WARN duo.
 			 */
-			nlp->nz_type = N_WARNING;
+			nlp->nz_type = N_WARN;
 			nlp->nz_un.n_strx = offset;
 			nlp->nz_value = 0;
 			nlp->nz_other = 0;

@@ -1,13 +1,10 @@
-/*	$NetBSD: lib.c,v 1.18 1998/10/17 17:14:01 itohy Exp $	*/
+/*	$NetBSD: lib.c,v 1.19 1998/12/17 14:34:51 pk Exp $	*/
 
 /*
  *	- library routines
  */
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -16,13 +13,18 @@
 #include <fcntl.h>
 #include <ar.h>
 #include <ranlib.h>
-#include <a.out.h>
 #include <stab.h>
-#include <string.h>
-#include <dirent.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <a.out.h>
 
+#include "shlib.h"
 #include "ld.h"
+#include "ld_i.h"
 
 static void		linear_library __P((int, struct file_entry *));
 static void		symdef_library __P((int, struct file_entry *, int));
@@ -80,15 +82,16 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	int             subfile_offset;
 	int            *length_loc;
 {
-	int             bytes_read;
-	register int    namelen;
-	int             member_length, content_length;
-	int		starting_offset;
-	register char  *name;
-	struct ar_hdr   hdr1;
-	register struct file_entry *subentry;
+	int	bytes_read;
+	int	namelen;
+	int	member_length, content_length;
+	int	starting_offset;
+	char	*name;
+	struct	ar_hdr  hdr1;
+	struct	file_entry *subentry;
 
-	lseek(fd, subfile_offset, 0);
+	if (lseek(fd, subfile_offset, SEEK_SET) == -1)
+		return (NULL);
 
 	bytes_read = read(fd, &hdr1, sizeof hdr1);
 	if (!bytes_read)
@@ -104,7 +107,7 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	if (sscanf(hdr1.ar_size, "%d", &member_length) != 1)
 		errx(1, "%s: malformatted header of archive member: %.*s",
 			get_file_name(library_entry),
-			sizeof(hdr1.ar_name), hdr1.ar_name);
+			(int)sizeof(hdr1.ar_name), hdr1.ar_name);
 
 	subentry = (struct file_entry *) xmalloc(sizeof(struct file_entry));
 	bzero(subentry, sizeof(struct file_entry));
@@ -131,7 +134,7 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 		if (read(fd, name, namelen) != namelen)
 			errx(1, "%s: malformatted archive member: %.*s",
 				get_file_name(library_entry),
-				sizeof(hdr1.ar_name), hdr1.ar_name);
+				(int)sizeof(hdr1.ar_name), hdr1.ar_name);
 		name[namelen] = 0;
 		content_length -= namelen;
 		starting_offset += namelen;
@@ -157,9 +160,9 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	subentry->flags = 0;
 #endif
 
-	(*length_loc) = member_length;
+	*length_loc = member_length;
 
-	return subentry;
+	return (subentry);
 }
 
 static int	subfile_wanted_p __P((struct file_entry *));
@@ -177,16 +180,16 @@ symdef_library(fd, entry, member_length)
 	struct file_entry *entry;
 	int             member_length;
 {
-	int            *symdef_data = (int *) xmalloc(member_length);
-	register struct ranlib *symdef_base;
-	char           *sym_name_base;
-	int             nsymdefs;
-	int             length_of_strings;
-	int             not_finished;
-	int             bytes_read;
-	register int    i;
+	int		*symdef_data = (int *) xmalloc(member_length);
+	struct ranlib	*symdef_base;
+	char		*sym_name_base;
+	int		nsymdefs;
+	int		length_of_strings;
+	int		not_finished;
+	int		bytes_read;
+	int		i;
 	struct file_entry *prev = 0;
-	int             prev_offset = 0;
+	int		prev_offset = 0;
 
 	bytes_read = read(fd, symdef_data, member_length);
 	if (bytes_read != member_length)
@@ -242,9 +245,9 @@ symdef_library(fd, entry, member_length)
 					common_defined_global_count)); i++) {
 
 			register symbol *sp;
-			int             junk;
-			register int    j;
-			register int    offset = symdef_base[i].ran_off;
+			int    junk;
+			int    j;
+			int    offset = symdef_base[i].ran_off;
 			struct file_entry *subentry;
 
 
@@ -369,19 +372,20 @@ linear_library(fd, entry)
 	int             fd;
 	struct file_entry *entry;
 {
-	register struct file_entry *prev = 0;
-	register int    this_subfile_offset = SARMAG;
+	struct	file_entry *prev = 0;
+	int	this_subfile_offset = SARMAG;
 
 	while ((link_mode & FORCEARCHIVE) ||
 		undefined_global_sym_count || common_defined_global_count) {
 
-		int				member_length;
-		register struct file_entry	*subentry;
+		int			member_length;
+		struct file_entry	*subentry;
 
 		subentry = decode_library_subfile(fd, entry,
-					this_subfile_offset, &member_length);
+						  this_subfile_offset,
+						  &member_length);
 
-		if (!subentry)
+		if (subentry == NULL)
 			return;
 
 		read_entry_symbols(fd, subentry);
@@ -389,7 +393,7 @@ linear_library(fd, entry)
 		read_entry_strings(fd, subentry);
 
 		if (!(link_mode & FORCEARCHIVE) &&
-					!subfile_wanted_p(subentry)) {
+		    !subfile_wanted_p(subentry)) {
 			if (subentry->symbols)
 				free(subentry->symbols);
 			free(subentry->filename);
@@ -830,7 +834,7 @@ struct file_entry	*p;
 
 dot_a:
 	p->flags &= ~E_SEARCH_DYNAMIC;
-	if (cp = strrchr(p->filename, '/')) {
+	if ((cp = strrchr(p->filename, '/')) != NULL) {
 		*cp++ = '\0';
 		fname = concat(concat(p->filename, "/lib", cp), ".a", "");
 		*(--cp) = '/';
