@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.198 2001/11/09 05:49:09 augustss Exp $
+$NetBSD: usbdevs,v 1.199 2001/11/14 17:50:21 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -757,6 +757,7 @@ product MCT HUB0100		0x0100	Hub
 product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP USB BAY Hub
 product MCT USB232		0x0210	USB-232 Interface
 product MCT SITECOM_USB232	0x0230	Sitecom USB-232 Products
+product MCT ML_4500		0x0302	ML-4500
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
