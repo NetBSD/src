@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.4 2003/06/28 14:21:14 darrenr Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.5 2003/11/28 23:47:42 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.4 2003/06/28 14:21:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.5 2003/11/28 23:47:42 jhawk Exp $");
 
 #include "opt_largepages.h"
 
