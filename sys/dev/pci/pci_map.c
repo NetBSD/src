@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.2 1997/09/23 23:08:47 mycroft Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.3 1997/10/03 18:45:39 lonhyn Exp $	*/
 
 /*
  * Copyright (c) 1994, 1997 Charles M. Hannum.  All rights reserved.
@@ -171,22 +171,21 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 int
-pci_mapreg_info(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pci_mapreg_info(pa, reg, type, basep, sizep)
+	struct pci_attach_args *pa;
 	int reg;
 	pcireg_t type;
 	bus_addr_t *basep;
 	bus_size_t *sizep;
-	int *flagsp;
 {
+	int flags;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
-		return (pci_io_find(pc, tag, reg, type, basep, sizep,
-		    flagsp));
+		return (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type,
+		    basep, sizep, &flags));
 	else
-		return (pci_mem_find(pc, tag, reg, type, basep, sizep,
-		    flagsp));
+		return (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type,
+		    basep, sizep, &flags));
 }
 
 int
