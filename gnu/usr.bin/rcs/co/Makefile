@@ -1,9 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/03/24 22:06:39 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/18 04:42:06 lukem Exp $
 
 PROG=	co
-CFLAGS+= -I${.CURDIR}/../lib
-LDADD=	${LIBRCS} -lgnumalloc
-DPADD=	${LIBRCS} ${LIBGNUMALLOC}
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
