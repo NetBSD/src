@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.18 1999/07/27 00:55:34 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.19 1999/08/03 17:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,8 +90,9 @@ int	epic_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	epic_shutdown __P((void *));
 
 void	epic_reset __P((struct epic_softc *));
-void	epic_init __P((struct epic_softc *));
-void	epic_stop __P((struct epic_softc *));
+int	epic_init __P((struct epic_softc *));
+void	epic_rxdrain __P((struct epic_softc *));
+void	epic_stop __P((struct epic_softc *, int));
 int	epic_add_rxbuf __P((struct epic_softc *, int));
 void	epic_read_eeprom __P((struct epic_softc *, int, int, u_int16_t *));
 void	epic_set_mchash __P((struct epic_softc *));
@@ -107,6 +108,8 @@ void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
 	    INTSTAT_TXC | INTSTAT_RQE | INTSTAT_RCC)
+
+int	epic_copy_small = 0;
 
 /*
  * Attach an EPIC interface to the system.
@@ -184,18 +187,9 @@ epic_attach(sc)
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
+		EPIC_DSRX(sc, i)->ds_mbuf = NULL;
 	}
 
-	/*
-	 * Pre-allocate the receive buffers.
-	 */
-	for (i = 0; i < EPIC_NRXDESC; i++) {
-		if ((error = epic_add_rxbuf(sc, i)) != 0) {
-			printf("%s: unable to allocate or map rx buffer %d\n,"
-			    " error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_6;
-		}
-	}
 
 	/*
 	 * Bring the chip out of low-power mode and reset it to a known state.
@@ -273,14 +267,6 @@ epic_attach(sc)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
- fail_6:
-	for (i = 0; i < EPIC_NRXDESC; i++) {
-		if (EPIC_DSRX(sc, i)->ds_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    EPIC_DSRX(sc, i)->ds_dmamap);
-			m_freem(EPIC_DSRX(sc, i)->ds_mbuf);
-		}
-	}
  fail_5:
 	for (i = 0; i < EPIC_NRXDESC; i++) {
 		if (EPIC_DSRX(sc, i)->ds_dmamap != NULL)
@@ -314,7 +300,7 @@ epic_shutdown(arg)
 {
 	struct epic_softc *sc = arg;
 
-	epic_stop(sc);
+	epic_stop(sc, 1);
 }
 
 /*
@@ -505,7 +491,7 @@ epic_watchdog(ifp)
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	epic_init(sc);
+	(void) epic_init(sc);
 }
 
 /*
@@ -532,7 +518,8 @@ epic_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			epic_init(sc);
+			if ((error = epic_init(sc)) != 0)
+				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
@@ -548,12 +535,12 @@ epic_ioctl(ifp, cmd, data)
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ifp->if_addrlen);
 			/* Set new address. */
-			epic_init(sc);
+			error = epic_init(sc);
 			break;
 		    }
 #endif /* NS */
 		default:
-			epic_init(sc);
+			error = epic_init(sc);
 			break;
 		}
 		break;
@@ -572,20 +559,20 @@ epic_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			epic_stop(sc);
+			epic_stop(sc, 1);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interfase it marked up and it is stopped, then
 			 * start it.
 			 */
-			epic_init(sc);
+			error = epic_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			epic_init(sc);
+			error = epic_init(sc);
 		}
 		break;
 
@@ -694,12 +681,11 @@ epic_intr(arg)
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-			/*
-			 * Add a new buffer to the receive chain.  If this
-			 * fails, the old buffer is recycled.
-			 */
-			m = ds->ds_mbuf;
-			if (epic_add_rxbuf(sc, i) != 0) {
+			len = rxd->er_rxlength;
+			if (len < sizeof(struct ether_header)) {
+				/*
+				 * Runt packet; drop it now.
+				 */
 				ifp->if_ierrors++;
 				EPIC_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
@@ -708,10 +694,39 @@ epic_intr(arg)
 				continue;
 			}
 
-			len = rxd->er_rxlength;
-			if (len < sizeof(struct ether_header)) {
-				m_freem(m);
-				continue;
+			/*
+			 * If the packet is small enough to fit in a
+			 * single header mbuf, allocate one and copy
+			 * the data into it.  This greatly reduces
+			 * memory consumption when we receive lots
+			 * of small packets.
+			 *
+			 * Otherwise, we add a new buffer to the receive
+			 * chain.  If this fails, we drop the packet and
+			 * recycle the old buffer.
+			 */
+			if (epic_copy_small != 0 && len <= MHLEN) {
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL)
+					goto dropit;
+				memcpy(mtod(m, caddr_t),
+				    mtod(ds->ds_mbuf, caddr_t), len);
+				EPIC_INIT_RXDESC(sc, i);
+				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
+				    ds->ds_dmamap->dm_mapsize,
+				    BUS_DMASYNC_PREREAD);
+			} else {
+				m = ds->ds_mbuf;
+				if (epic_add_rxbuf(sc, i) != 0) {
+ dropit:
+					ifp->if_ierrors++;
+					EPIC_INIT_RXDESC(sc, i);
+					bus_dmamap_sync(sc->sc_dmat,
+					    ds->ds_dmamap, 0,
+					    ds->ds_dmamap->dm_mapsize,
+					    BUS_DMASYNC_PREREAD);
+					continue;
+				}
 			}
 
 			m->m_pkthdr.rcvif = ifp;
@@ -833,7 +848,7 @@ epic_intr(arg)
 	 */
 	if (intstat & INTSTAT_FATAL_INT) {
 		printf("%s: fatal error, resetting\n", sc->sc_dev.dv_xname);
-		epic_init(sc);
+		(void) epic_init(sc);
 	}
 
 	/*
@@ -902,7 +917,7 @@ epic_reset(sc)
 /*
  * Initialize the interface.  Must be called at splnet().
  */
-void
+int
 epic_init(sc)
 	struct epic_softc *sc;
 {
@@ -911,13 +926,14 @@ epic_init(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
+	struct epic_descsoft *ds;
 	u_int32_t genctl, reg0;
-	int i;
+	int i, error = 0;
 
 	/*
 	 * Cancel any pending I/O.
 	 */
-	epic_stop(sc);
+	epic_stop(sc, 0);
 
 	/*
 	 * Reset the EPIC to a known state.
@@ -997,11 +1013,24 @@ epic_init(sc)
 	sc->sc_txlast = EPIC_NTXDESC - 1;
 
 	/*
-	 * Initialize the receive descriptor ring.  The buffers are
-	 * already allocated.
+	 * Initialize the receive descriptor ring.
 	 */
-	for (i = 0; i < EPIC_NRXDESC; i++)
-		EPIC_INIT_RXDESC(sc, i);
+	for (i = 0; i < EPIC_NRXDESC; i++) {
+		ds = EPIC_DSRX(sc, i);
+		if (ds->ds_mbuf == NULL) {
+			if ((error = epic_add_rxbuf(sc, i)) != 0) {
+				printf("%s: unable to allocate or map rx "
+				    "buffer %d error = %d\n",
+				    sc->sc_dev.dv_xname, i, error);
+				/*
+				 * XXX Should attempt to run with fewer receive
+				 * XXX buffers instead of just failing.
+				 */
+				epic_rxdrain(sc);
+				goto out;
+			}
+		}
+	}
 	sc->sc_rxptr = 0;
 
 	/*
@@ -1039,14 +1068,40 @@ epic_init(sc)
 	 * Attempt to start output on the interface.
 	 */
 	epic_start(ifp);
+
+ out:
+	if (error)
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	return (error);
+}
+
+/*
+ * Drain the receive queue.
+ */
+void
+epic_rxdrain(sc)
+	struct epic_softc *sc;
+{
+	struct epic_descsoft *ds;
+	int i;
+
+	for (i = 0; i < EPIC_NRXDESC; i++) {
+		ds = EPIC_DSRX(sc, i);
+		if (ds->ds_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
+			m_freem(ds->ds_mbuf);
+			ds->ds_mbuf = NULL;
+		}
+	}
 }
 
 /*
  * Stop transmission on the interface.
  */
 void
-epic_stop(sc)
+epic_stop(sc, drain)
 	struct epic_softc *sc;
+	int drain;
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
@@ -1086,6 +1141,13 @@ epic_stop(sc)
 			m_freem(ds->ds_mbuf);
 			ds->ds_mbuf = NULL;
 		}
+	}
+
+	if (drain) {
+		/*
+		 * Release the receive buffers.
+		 */
+		epic_rxdrain(sc);
 	}
 
 	/*

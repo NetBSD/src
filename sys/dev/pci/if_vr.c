@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.22 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.23 1999/08/03 17:25:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -303,8 +303,9 @@ static void vr_txeof		__P((struct vr_softc *));
 static int vr_intr		__P((void *));
 static void vr_start		__P((struct ifnet *));
 static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void vr_init		__P((void *));
-static void vr_stop		__P((struct vr_softc *));
+static int vr_init		__P((struct vr_softc *));
+static void vr_stop		__P((struct vr_softc *, int));
+static void vr_rxdrain		__P((struct vr_softc *));
 static void vr_watchdog		__P((struct ifnet *));
 static void vr_tick		__P((void *));
 
@@ -320,6 +321,8 @@ static void vr_mii_statchg	__P((struct device *));
 static u_int8_t vr_calchash	__P((u_int8_t *));
 static void vr_setmulti		__P((struct vr_softc *));
 static void vr_reset		__P((struct vr_softc *));
+
+int	vr_copy_small = 0;
 
 #define	VR_SETBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
@@ -790,19 +793,38 @@ vr_rxeof(sc)
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
-		 * Try to conjure up a new mbuf cluster. If that
-		 * fails, it means we have an out of memory condition and
-		 * should leave the buffer in place and continue. This will
-		 * result in a lost packet, but there's little else we
-		 * can do in this situation.
+		 * If the packet is small enough to fit in a
+		 * single header mbuf, allocate one and copy
+		 * the data into it.  This greatly reduces
+		 * memory consumption when we receive lots
+		 * of small packets.
+		 *
+		 * Otherwise, we add a new buffer to the receive
+		 * chain.  If this fails, we drop the packet and
+		 * recycle the old buffer.
 		 */
-		m = ds->ds_mbuf;
-		if (vr_add_rxbuf(sc, i) == ENOBUFS) {
-			ifp->if_ierrors++;
+		if (vr_copy_small != 0 && total_len <= MHLEN) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL)
+				goto dropit;
+			memcpy(mtod(m, caddr_t),
+			    mtod(ds->ds_mbuf, caddr_t), total_len);
 			VR_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
-			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			continue;
+			    ds->ds_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
+		} else {
+			m = ds->ds_mbuf;
+			if (vr_add_rxbuf(sc, i) == ENOBUFS) {
+ dropit:
+				ifp->if_ierrors++;
+				VR_INIT_RXDESC(sc, i);
+				bus_dmamap_sync(sc->vr_dmat,
+				    ds->ds_dmamap, 0,
+				    ds->ds_dmamap->dm_mapsize,
+				    BUS_DMASYNC_PREREAD);
+				continue;
+			}
 		}
 #else
 		/*
@@ -957,7 +979,7 @@ vr_intr(arg)
 
 	/* Suppress unwanted interrupts. */
 	if ((ifp->if_flags & IFF_UP) == 0) {
-		vr_stop(sc);
+		vr_stop(sc, 1);
 		return (0);
 	}
 
@@ -1007,7 +1029,7 @@ vr_intr(arg)
 			printf("%s: PCI bus error\n", sc->vr_dev.dv_xname);
 			/* vr_init() calls vr_start() */
 			dotx = 0;
-			vr_init(sc);
+			(void) vr_init(sc);
 		}
 	}
 
@@ -1188,17 +1210,17 @@ vr_start(ifp)
 /*
  * Initialize the interface.  Must be called at splnet.
  */
-static void
-vr_init(xsc)
-	void *xsc;
+static int
+vr_init(sc)
+	struct vr_softc *sc;
 {
-	struct vr_softc *sc = xsc;
 	struct ifnet *ifp = &sc->vr_ec.ec_if;
 	struct vr_desc *d;
-	int i;
+	struct vr_descsoft *ds;
+	int i, error;
 
 	/* Cancel pending I/O. */
-	vr_stop(sc);
+	vr_stop(sc, 0);
 
 	/* Reset the Rhine to a known state. */
 	vr_reset(sc);
@@ -1225,11 +1247,24 @@ vr_init(xsc)
 	sc->vr_txlast = VR_NTXDESC - 1;
 
 	/*
-	 * Initialize the receive descriptor ring.  The buffers are
-	 * already allocated.
+	 * Initialize the receive descriptor ring.
 	 */
-	for (i = 0; i < VR_NRXDESC; i++)
-		VR_INIT_RXDESC(sc, i);
+	for (i = 0; i < VR_NRXDESC; i++) {
+		ds = VR_DSRX(sc, i);
+		if (ds->ds_mbuf == NULL) {
+			if ((error = vr_add_rxbuf(sc, i)) != 0) {
+				printf("%s: unable to allocate or map rx "
+				    "buffer %d, error = %d\n",
+				    sc->vr_dev.dv_xname, i, error);
+				/*
+				 * XXX Should attempt to run with fewer receive
+				 * XXX buffers instead of just failing.
+				 */
+				vr_rxdrain(sc);
+				goto out;
+			}
+		}
+	}
 	sc->vr_rxptr = 0;
 
 	/* If we want promiscuous mode, set the allframes bit. */
@@ -1271,6 +1306,11 @@ vr_init(xsc)
 
 	/* Attempt to start output on the interface. */
 	vr_start(ifp);
+
+ out:
+	if (error)
+		printf("%s: interface not running\n", sc->vr_dev.dv_xname);
+	return (error);
 }
 
 /*
@@ -1322,12 +1362,13 @@ vr_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			vr_init(sc);
+			if ((error = vr_init(sc)) != 0)
+				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
-			vr_init(sc);
+			error = vr_init(sc);
 			break;
 		}
 		break;
@@ -1352,20 +1393,20 @@ vr_ioctl(ifp, command, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			vr_stop(sc);
+			vr_stop(sc, 1);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			vr_init(sc);
+			error = vr_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			vr_init(sc);
+			error = vr_init(sc);
 		}
 		break;
 
@@ -1409,7 +1450,7 @@ vr_watchdog(ifp)
 	printf("%s: device timeout\n", sc->vr_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	vr_init(sc);
+	(void) vr_init(sc);
 }
 
 /*
@@ -1430,12 +1471,33 @@ vr_tick(arg)
 }
 
 /*
+ * Drain the receive queue.
+ */
+static void
+vr_rxdrain(sc)
+	struct vr_softc *sc;
+{
+	struct vr_descsoft *ds;
+	int i;
+
+	for (i = 0; i < VR_NRXDESC; i++) {
+		ds = VR_DSRX(sc, i);
+		if (ds->ds_mbuf != NULL) {
+			bus_dmamap_unload(sc->vr_dmat, ds->ds_dmamap);
+			m_freem(ds->ds_mbuf);
+			ds->ds_mbuf = NULL;
+		}
+	}
+}
+
+/*
  * Stop the adapter and free any mbufs allocated to the
  * transmit lists.
  */
 static void
-vr_stop(sc)
+vr_stop(sc, drain)
 	struct vr_softc *sc;
+	int drain;
 {
 	struct vr_descsoft *ds;
 	struct ifnet *ifp;
@@ -1463,6 +1525,13 @@ vr_stop(sc)
 			m_freem(ds->ds_mbuf);
 			ds->ds_mbuf = NULL;
 		}
+	}
+
+	if (drain) {
+		/*
+		 * Release the receive buffers.
+		 */
+		vr_rxdrain(sc);
 	}
 
 	/*
@@ -1519,7 +1588,7 @@ vr_shutdown(arg)
 {
 	struct vr_softc *sc = (struct vr_softc *)arg;
 
-	vr_stop(sc);
+	vr_stop(sc, 1);
 }
 
 /*
@@ -1732,17 +1801,7 @@ vr_attach(parent, self, aux)
 			    "error = %d\n", sc->vr_dev.dv_xname, i, error);
 			goto fail_5;
 		}
-	}
-
-	/*
-	 * Pre-allocate the receive buffers.
-	 */
-	for (i = 0; i < VR_NRXDESC; i++) {
-		if ((error = vr_add_rxbuf(sc, i)) != 0) {
-			printf("%s: unable to allocate or map rx buffer %d, "
-			    "error = %d\n", sc->vr_dev.dv_xname, i, error);
-			goto fail_6;
-		}
+		VR_DSRX(sc, i)->ds_mbuf = NULL;
 	}
 
 	ifp = &sc->vr_ec.ec_if;
@@ -1787,14 +1846,6 @@ vr_attach(parent, self, aux)
 			sc->vr_dev.dv_xname);
 	return;
 
- fail_6:
-	for (i = 0; i < VR_NRXDESC; i++) {
-		if (sc->vr_rxsoft[i].ds_mbuf != NULL) {
-			bus_dmamap_unload(sc->vr_dmat,
-			    sc->vr_rxsoft[i].ds_dmamap);
-			(void) m_freem(sc->vr_rxsoft[i].ds_mbuf);
-		}
-	}
  fail_5:
 	for (i = 0; i < VR_NRXDESC; i++) {
 		if (sc->vr_rxsoft[i].ds_dmamap != NULL)
