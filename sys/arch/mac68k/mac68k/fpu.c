@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 1995/06/21 03:20:58 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 1995/08/12 04:10:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -118,7 +118,7 @@ fpu_probe()
 	 * Presumably, if we're an 040 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		return 3;
 	}
 
