@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2002/05/19 18:56:55 augustss Exp $
+#	$NetBSD: genassym.cf,v 1.4 2003/01/18 06:23:33 thorpej Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -65,9 +65,12 @@ define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 
-define	P_FORW		offsetof(struct proc, p_forw)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_ADDR		offsetof(struct proc, p_addr)
+define	L_FORW		offsetof(struct lwp, l_forw)
+define	L_BACK		offsetof(struct lwp, l_back)
+define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_CPU		offsetof(struct lwp, l_cpu)
+define	L_STAT		offsetof(struct lwp, l_stat)
+define	L_PRIORITY	offsetof(struct lwp, l_priority)
 
 define	SPLX		offsetof(struct machvec, splx)
 

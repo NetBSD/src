@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.6 2002/07/28 07:07:45 chs Exp $	*/
+/*	$NetBSD: altivec.c,v 1.7 2003/01/18 06:23:31 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
@@ -47,9 +48,9 @@ void
 enable_vec()
 {
 	struct cpu_info *ci = curcpu();
-	struct proc *p = curproc;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct trapframe *tf = trapframe(p);
+	struct lwp *l = curlwp;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = trapframe(l);
 	struct vreg *vr = pcb->pcb_vr;
 	int msr, scratch;
 
@@ -82,10 +83,10 @@ enable_vec()
 	msr = mfmsr();
 	mtmsr((msr & ~PSL_EE) | PSL_VEC);
 	__asm __volatile ("isync");
-	if (ci->ci_vecproc) {
+	if (ci->ci_veclwp) {
 		save_vec_cpu();
 	}
-	KASSERT(curcpu()->ci_vecproc == NULL);
+	KASSERT(curcpu()->ci_veclwp == NULL);
 
 	/*
 	 * Restore VSCR by first loading it into a vector and then into VSCR.
@@ -122,7 +123,7 @@ enable_vec()
 	 * Record the new ownership of the AltiVec unit.
 	 */
 	tf->srr1 |= PSL_VEC;
-	curcpu()->ci_vecproc = p;
+	curcpu()->ci_veclwp = l;
 	pcb->pcb_veccpu = curcpu();
 	__asm __volatile ("sync");
 
@@ -136,7 +137,7 @@ void
 save_vec_cpu(void)
 {
 	struct cpu_info *ci = curcpu();
-	struct proc *p;
+	struct lwp *l;
 	struct pcb *pcb;
 	struct vreg *vr;
 	struct trapframe *tf;
@@ -148,13 +149,13 @@ save_vec_cpu(void)
 	msr = mfmsr();
 	mtmsr((msr & ~PSL_EE) | PSL_VEC);
 	__asm __volatile ("isync");
-	p = ci->ci_vecproc;
-	if (p == NULL) {
+	l = ci->ci_veclwp;
+	if (l == NULL) {
 		goto out;
 	}
-	pcb = &p->p_addr->u_pcb;
+	pcb = &l->l_addr->u_pcb;
 	vr = pcb->pcb_vr;
-	tf = trapframe(p);
+	tf = trapframe(l);
 
 #define	STVX(n,vr)	__asm /*__volatile*/("stvx %2,%0,%1" \
 	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
@@ -190,7 +191,7 @@ save_vec_cpu(void)
 	 */
 	tf->srr1 &= ~PSL_VEC;
 	pcb->pcb_veccpu = NULL;
-	ci->ci_vecproc = NULL;
+	ci->ci_veclwp = NULL;
 	__asm __volatile ("dssall; sync");
 
  out:
@@ -208,10 +209,10 @@ save_vec_cpu(void)
  * this function).
  */
 void
-save_vec_proc(p)
-	struct proc *p;
+save_vec_lwp(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct cpu_info *ci = curcpu();
 
 	/*
@@ -227,7 +228,7 @@ save_vec_proc(p)
 	 * state.
 	 */
 
-	if (p == ci->ci_vecproc) {
+	if (l == ci->ci_veclwp) {
 		save_vec_cpu();
 		return;
 	}
@@ -238,7 +239,7 @@ save_vec_proc(p)
 	 * It must be on another CPU, flush it from there.
 	 */
 
-	mp_save_vec_proc(p);
+	mp_save_vec_lwp(l);
 #endif
 }
 

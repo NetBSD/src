@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2002/07/05 18:45:21 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.4 2003/01/18 06:23:29 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,12 +36,16 @@
 /*
  * Machine-dependent part of the proc structure
  */
-struct trapframe;
-struct mdproc {
-	void (*md_syscall)(struct trapframe *);
+struct mdlwp {
 	int md_flags;
+};
 #define MDP_USEDFP	0x0001	/* this process has used the FPU */
 #define	MDP_USEDVEC	0x0002	/* this process has used AltiVec */
+
+struct trapframe;
+
+struct mdproc {
+	void (*md_syscall)(struct trapframe *);
 };
 
 #ifdef _KERNEL
