@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ivsdma.c
- *	$Id: ivsc.c,v 1.3 1994/06/13 08:13:02 chopps Exp $
+ *	$Id: ivsc.c,v 1.4 1994/10/06 20:34:25 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,10 +116,12 @@ ivscmatch(pdp, cdp, auxp)
 		 *
 		 * XXXX pa 0x00f00000 shouldn't be used for anything
 		 */
-		if (pmap_extract(kernel_pmap, ztwomap(0x00f00000)) == 0x00f00000) {
+		if (pmap_extract(kernel_pmap, (vm_offset_t) ztwomap(0x00f00000))
+		    == 0x00f00000) {
 			physaccess(ztwomap(0x00f00000),zap->pa,
 			    NBPG, PG_W|PG_CI);
-			zap->va = ztwomap(0x00f00000) + ((int)zap->pa & PGOFSET);
+			zap->va = (void *) ztwomap(0x00f00000) +
+			    ((int)zap->pa & PGOFSET);
 #ifdef DEBUG
 			printf("IVS Vector: mapped to %x kva %x\n",
 			    ztwomap(0x00f00000), zap->va);
