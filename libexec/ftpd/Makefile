@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1997/10/12 13:08:41 mycroft Exp $
+#	$NetBSD: Makefile,v 1.22 1997/10/12 13:09:11 mycroft Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 # XXX Work-around a compiler bug for now... can't use -O
@@ -21,6 +21,7 @@ CLEANFILES+=ftpcmd.c y.tab.h
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
+.endif
 
 .ifdef KERBEROS
 SRCS+=	klogin.c
