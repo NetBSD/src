@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.7 1995/06/27 15:25:30 gwr Exp $	*/
+/*	$NetBSD: nfs.c,v 1.8 1995/07/03 04:56:33 gwr Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -89,17 +89,7 @@ struct nfs_iodesc {
 	struct nfsv2_fattrs fa;	/* all in network order */
 };
 
-struct nfs_iodesc nfs_root_node = {
-	/* iodesc = */ NULL,
-	/* off = */ 0,
-	/* fh = */ { 0 },
-	{	/* Fake up attributes for the root dir. */
-		/* fa_type  = */ htonl(NFDIR),
-		/* fa_mode  = */ htonl(0755),
-		/* fa_nlink = */ htonl(2),
-		0
-	}
-};
+struct nfs_iodesc nfs_root_node;
 
 
 /* Fetch the root file handle (call mount daemon) */
@@ -280,6 +270,7 @@ nfs_mount(sock, ip, path)
 	char *path;
 {
 	struct iodesc *desc;
+	struct nfsv2_fattrs *fa;
 
 	if (!(desc = socktodesc(sock))) {
 		errno = EINVAL;
@@ -292,6 +283,11 @@ nfs_mount(sock, ip, path)
 	if (nfs_getrootfh(desc, path, nfs_root_node.fh))
 		return (-1);
 	nfs_root_node.iodesc = desc;
+	/* Fake up attributes for the root dir. */
+	fa = &nfs_root_node.fa;
+	fa->fa_type  = htonl(NFDIR);
+	fa->fa_mode  = htonl(0755);
+	fa->fa_nlink = htonl(2);
 
 #ifdef NFS_DEBUG
 	if (debug)
