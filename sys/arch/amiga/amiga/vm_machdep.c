@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 1998/01/06 07:49:36 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 1998/01/22 23:13:41 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,6 +195,8 @@ physaccess(vaddr, paddr, size, prot)
 	/* if cache not inhibited, set cacheable & copyback */
 	if (mmutype == MMU_68040 && (prot & PG_CI) == 0)
 		prot |= PG_CCB;
+	else if (cputype == CPU_68060 && (prot & PG_CI))
+		prot |= PG_CIN;
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
