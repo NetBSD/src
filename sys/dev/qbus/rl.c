@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.11 2002/03/23 18:12:09 ragge Exp $	*/
+/*	$NetBSD: rl.c,v 1.11.2.1 2002/05/16 11:50:41 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.11 2002/03/23 18:12:09 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.11.2.1 2002/05/16 11:50:41 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,8 +77,6 @@ static	void rlattach(struct device *, struct device *, void *);
 static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
 static	void rlcreset(struct device *);
-cdev_decl(rl);
-bdev_decl(rl);
 
 struct cfattach rlc_ca = {
 	sizeof(struct rlc_softc), rlcmatch, rlcattach
@@ -88,8 +86,25 @@ struct cfattach rl_ca = {
 	sizeof(struct rl_softc), rlmatch, rlattach
 };
 
+dev_type_open(rlopen);
+dev_type_close(rlclose);
+dev_type_read(rlread);
+dev_type_write(rlwrite);
+dev_type_ioctl(rlioctl);
+dev_type_strategy(rlstrategy);
+dev_type_dump(rldump);
+dev_type_size(rlsize);
+
+const struct bdevsw rl_bdevsw = {
+	rlopen, rlclose, rlstrategy, rlioctl, rldump, rlsize, D_DISK
+};
+
+const struct cdevsw rl_cdevsw = {
+	rlopen, rlclose, rlread, rlwrite, rlioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 #define	MAXRLXFER (RL_BPS * RL_SPT)
-#define	RLMAJOR	14
 
 #define	RL_WREG(reg, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, (reg), (val))
@@ -297,7 +312,8 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 		rc->rc_state = DK_OPEN;
 		/* Get disk label */
 		printf("%s: ", rc->rc_dev.dv_xname);
-		if ((msg = readdisklabel(MAKEDISKDEV(RLMAJOR,
+		maj = cdevsw_lookup_major(&rl_cdevsw);
+		if ((msg = readdisklabel(MAKEDISKDEV(maj,
 		    rc->rc_dev.dv_unit, RAW_PART), rlstrategy, dl, NULL)))
 			printf("%s: ", msg);
 		printf("size %d sectors\n", dl->d_secperunit);
