@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.6 1998/02/22 17:38:35 kleink Exp $
+.\"	$NetBSD: copy.9,v 1.7 1998/07/26 20:18:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -110,6 +110,7 @@ NUL, is returned in
 .Fa *done .
 .It Fn copyoutstr
 Copies a NUL-terminated string, at most
+.Fa len
 bytes long, from kernel-space address
 .Fa kaddr
 to user-space address
