@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.15 2002/10/22 15:19:08 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.16 2002/11/23 09:05:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -100,6 +100,7 @@ struct sysfpga_device {
 static struct sysfpga_device sysfpga_devices[] = {
 	{"superio", SYSFPGA_OFFSET_SUPERIO},
 	{"sm", SYSFPGA_OFFSET_LAN},
+	{"alphaled", SYSFPGA_OFFSET_ALPHALED},
 	{NULL, 0}
 };
 
@@ -279,7 +280,7 @@ sysfpgaprint(void *arg, const char *cp)
 	if (cp)
 		printf("%s at %s", sa->sa_name, cp);
 
-	printf(" offset 0x%lx", sa->sa_offset - sa->_sa_base);
+	printf(" offset 0x%x", sa->sa_offset - sa->_sa_base);
 
 	return (UNCONF);
 }
