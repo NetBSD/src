@@ -1,3 +1,5 @@
+/*	$NetBSD: if_elreg.h,v 1.4 1994/10/27 04:17:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
  * to use, copy, modify and distribute this software provided that both
@@ -8,8 +10,6 @@
 
 /*
  * 3COM Etherlink 3C501 Register Definitions
- *
- *	$Id: if_elreg.h,v 1.3 1994/03/01 05:41:27 mycroft Exp $
  */
 
 /*

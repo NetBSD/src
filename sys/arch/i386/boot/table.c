@@ -1,3 +1,5 @@
+/*	$NetBSD: table.c,v 1.6 1994/10/27 04:14:42 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *     
- *	$Id: table.c,v 1.5 1994/02/04 16:08:54 mycroft Exp $
  */
 
 /*

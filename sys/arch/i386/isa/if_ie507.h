@@ -1,5 +1,6 @@
+/*	$NetBSD: if_ie507.h,v 1.4 1994/10/27 04:17:39 cgd Exp $	*/
+
 /*
- * $Id: if_ie507.h,v 1.3 1994/03/31 06:16:37 mycroft Exp $
  * Definitions for 3C507
  */
 

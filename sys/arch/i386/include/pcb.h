@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.12 1994/10/27 04:16:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pcb.h	5.10 (Berkeley) 5/12/91
- *	pcb.h,v 1.6 1993/06/27 04:50:12 andrew Exp
+ *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
  */
 
 #ifndef _I386_PCB_H_

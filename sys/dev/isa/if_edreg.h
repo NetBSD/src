@@ -1,3 +1,5 @@
+/*	$NetBSD: if_edreg.h,v 1.12 1994/10/27 04:17:23 cgd Exp $	*/
+
 /*
  * National Semiconductor DS8390 NIC register definitions.
  *
@@ -6,8 +8,6 @@
  * the above copyright and these terms are retained.  Under no circumstances is
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
- *
- *	$Id: if_edreg.h,v 1.11 1994/10/23 21:22:18 mycroft Exp $
  */
 
 /*

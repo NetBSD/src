@@ -1,3 +1,5 @@
+/*	$NetBSD: boot.h,v 1.5 1994/10/27 04:14:33 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: boot.h,v 1.4 1994/06/13 19:15:14 cgd Exp $
  */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: mcd.c,v 1.20 1994/10/27 04:17:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright 1993 by Holger Veit (data part)
@@ -34,8 +36,6 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mcd.c,v 1.19 1994/10/14 18:26:53 cgd Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/

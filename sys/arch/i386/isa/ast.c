@@ -1,11 +1,11 @@
+/*	$NetBSD: ast.c,v 1.9 1994/10/27 04:16:50 cgd Exp $	*/
+
 /*
  * Multi-port serial card interrupt demuxing support.
  * Roland McGrath 3/20/94
  * The author disclaims copyright and places this file in the public domain.
  *
  * Modified by: Charles Hannum, 3/22/94
- *
- *	$Id: ast.c,v 1.8 1994/08/14 14:13:25 mycroft Exp $
  */
 
 #include <sys/param.h>

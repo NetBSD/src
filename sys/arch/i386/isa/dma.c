@@ -1,3 +1,5 @@
+/*	$NetBSD: dma.c,v 1.8 1994/10/27 04:17:07 cgd Exp $	*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_hp.c,v 1.17 1994/10/27 04:17:34 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1991 William F. Jolitz.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -30,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: if_hp.c,v 1.16 1994/03/08 12:21:24 mycroft Exp $
  */
 
 /*

@@ -1,10 +1,10 @@
+/*	$NetBSD: inet.h,v 1.3 1994/10/27 04:21:14 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Various UDP/IP definitions (see RFC 768, and 791)
- *
- *	$Id: inet.h,v 1.2 1993/08/02 17:52:55 mycroft Exp $
  */
 
 /* generic IP address */

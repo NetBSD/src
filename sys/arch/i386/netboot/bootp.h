@@ -1,3 +1,5 @@
+/*	$NetBSD: bootp.h,v 1.3 1994/10/27 04:21:09 cgd Exp $	*/
+
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
  *
@@ -18,8 +20,6 @@
  * University.  Carnegie Mellon makes no representations about the
  * suitability of this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
- *
- *	$Id: bootp.h,v 1.2 1993/08/02 17:52:51 mycroft Exp $
  */
 
 

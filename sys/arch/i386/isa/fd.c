@@ -1,3 +1,5 @@
+/*	$NetBSD: fd.c,v 1.56 1994/10/27 04:17:13 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.55 1994/10/20 04:46:17 mycroft Exp $
+ *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
 
 #include <sys/param.h>

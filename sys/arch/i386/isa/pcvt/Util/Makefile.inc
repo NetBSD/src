@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.inc,v 1.2 1994/10/27 04:19:34 cgd Exp $
+
 BINDIR	=	/usr/local/bin
 FONTDIR	=	/usr/share/misc/vgafonts
 LIBDIR	=	/usr/local/lib

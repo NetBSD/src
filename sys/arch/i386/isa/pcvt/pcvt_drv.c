@@ -1,3 +1,5 @@
+/*	$NetBSD: pcvt_drv.c,v 1.6 1994/10/27 04:18:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
  *                              Joerg Wunsch and Scott Turner.

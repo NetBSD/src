@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ep.c,v 1.57 1994/10/27 04:17:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_ep.c,v 1.56 1994/09/05 00:21:40 mycroft Exp $
  */
 
 #include "bpfilter.h"

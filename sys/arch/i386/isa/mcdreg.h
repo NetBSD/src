@@ -1,3 +1,5 @@
+/*	$NetBSD: mcdreg.h,v 1.5 1994/10/27 04:17:59 cgd Exp $	*/
+
 /*
  * Copyright 1993 by Holger Veit (data part)
  * Copyright 1993 by Brian Moore (audio part)
@@ -39,8 +41,6 @@
  * driver, and is thus not complete (and may even be wrong). Some day
  * the manufacturer or anyone else might provide better documentation,
  * so this file (and the driver) will then have a better quality.
- *
- *	$Id: mcdreg.h,v 1.4 1994/02/21 15:23:59 mycroft Exp $
  */
 
 #ifdef __GNUC__

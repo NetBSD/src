@@ -1,3 +1,5 @@
+$NetBSD: COPYRIGHT,v 1.2 1994/10/27 04:19:57 cgd Exp $
+
 The font files:
 
 	vt100pc.814.uu, vt100sg.814.uu, vt220h.808.uu, vt220h.810.uu,

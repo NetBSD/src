@@ -1,10 +1,10 @@
+/*	$NetBSD: assert.h,v 1.3 1994/10/27 04:21:07 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * assert.h
- *
- *	$Id: assert.h,v 1.2 1993/08/02 17:52:50 mycroft Exp $
  */
 
 #ifndef	NDEBUG

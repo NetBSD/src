@@ -1,3 +1,5 @@
+/*	$NetBSD: arp.c,v 1.4 1994/10/27 04:21:01 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
@@ -6,8 +8,6 @@
  * No doubt this code is overkill, but I had it lying around.
  *
  * Copyright (c) 1992 by Leendert van Doorn
- *
- *	$Id: arp.c,v 1.3 1993/08/02 17:52:47 mycroft Exp $
  */
 
 #include "proto.h"

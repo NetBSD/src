@@ -1,3 +1,5 @@
+/*	$NetBSD: in_cksum.c,v 1.5 1994/10/27 04:15:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,8 +34,7 @@
  * SUCH DAMAGE.
  *
  * from tahoe:	in_cksum.c	1.2	86/01/05
- *	from: @(#)in_cksum.c	1.3 (Berkeley) 1/19/91
- *	$Id: in_cksum.c,v 1.4 1994/10/16 15:37:41 mycroft Exp $
+ *	@(#)in_cksum.c	1.3 (Berkeley) 1/19/91
  */
 
 #include <sys/param.h>

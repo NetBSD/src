@@ -1,3 +1,5 @@
+/*	$NetBSD: wd.c,v 1.4 1994/10/27 04:22:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wd.c	7.3 (Berkeley) 5/4/91
- *	$Id: wd.c,v 1.3 1993/05/22 08:02:26 cgd Exp $
+ *	@(#)wd.c	7.3 (Berkeley) 5/4/91
  */
 
 /*  device driver for winchester disk  */

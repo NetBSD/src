@@ -1,3 +1,5 @@
+/*	$NetBSD: if_el.c,v 1.14 1994/10/27 04:17:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
  * to use, copy, modify and distribute this software provided that both
@@ -8,8 +10,6 @@
 
 /*
  * 3COM Etherlink 3C501 device driver
- *
- *	$Id: if_el.c,v 1.13 1994/05/13 06:13:48 mycroft Exp $
  */
 
 /*

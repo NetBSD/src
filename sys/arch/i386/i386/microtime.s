@@ -1,3 +1,5 @@
+/*	$NetBSD: microtime.s,v 1.9 1994/10/27 04:15:36 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: microtime.s,v 1.8 1994/05/04 02:07:24 mycroft Exp $
  */
 
 #include <machine/asm.h>

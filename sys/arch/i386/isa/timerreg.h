@@ -1,3 +1,5 @@
+/*	$NetBSD: timerreg.h,v 1.4 1994/10/27 04:18:17 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: timerreg.h,v 1.3 1993/06/15 21:37:19 mycroft Exp $
  */
 
 /*

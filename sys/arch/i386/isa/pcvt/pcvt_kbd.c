@@ -1,3 +1,5 @@
+/*	$NetBSD: pcvt_kbd.c,v 1.4 1994/10/27 04:18:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
  *                              Joerg Wunsch and Holger Veit.

@@ -1,3 +1,5 @@
+/*	$NetBSD: comreg.h,v 1.4 1994/10/27 04:17:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)comreg.h	7.2 (Berkeley) 5/9/91
- *	$Id: comreg.h,v 1.3 1994/03/08 08:12:59 mycroft Exp $
+ *	@(#)comreg.h	7.2 (Berkeley) 5/9/91
  */
 
 #include <i386/isa/ic/ns16550.h>

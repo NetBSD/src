@@ -1,3 +1,5 @@
+/*	$NetBSD: tss.h,v 1.4 1994/10/27 04:16:31 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tss.h	5.4 (Berkeley) 1/18/91
- *	$Id: tss.h,v 1.3 1993/05/22 08:00:43 cgd Exp $
+ *	@(#)tss.h	5.4 (Berkeley) 1/18/91
  */
 
 /*

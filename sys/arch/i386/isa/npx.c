@@ -1,3 +1,5 @@
+/*	$NetBSD: npx.c,v 1.23 1994/10/27 04:18:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 William Jolitz.
@@ -32,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.22 1994/10/26 01:31:01 mycroft Exp $
+ *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 #include "npx.h"
 #if NNPX > 0

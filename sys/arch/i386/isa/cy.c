@@ -1,3 +1,5 @@
+/*	$NetBSD: cy.c,v 1.8 1994/10/27 04:17:04 cgd Exp $	*/
+
 /*
  * cyclades cyclom-y serial driver
  *	Andrew Herbert <andrew@werple.apana.org.au>, 17 August 1993
@@ -26,8 +28,6 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: cy.c,v 1.7 1994/05/24 07:31:12 mycroft Exp $
  */
 
 /*

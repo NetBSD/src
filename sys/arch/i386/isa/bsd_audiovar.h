@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audiovar.h,v 1.2 1994/10/27 04:16:53 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
- *	$Id: bsd_audiovar.h,v 1.1 1994/01/09 19:35:05 cgd Exp $
+ *	Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
  */
 
 #define AUCB_SIZE 4096

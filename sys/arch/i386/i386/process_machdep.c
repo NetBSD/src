@@ -1,3 +1,5 @@
+/*	$NetBSD: process_machdep.c,v 1.11 1994/10/27 04:15:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -36,8 +38,6 @@
  *
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: process_machdep.c,v 1.10 1994/10/09 12:57:18 mycroft Exp $
  */
 
 /*

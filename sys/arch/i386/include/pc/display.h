@@ -1,7 +1,7 @@
+/*	$NetBSD: display.h,v 1.4 1994/10/27 04:16:36 cgd Exp $	*/
+
 /*
  * IBM PC display definitions
- *
- *	$Id: display.h,v 1.3 1993/12/20 05:26:02 mycroft Exp $
  */
 
 /* Color attributes for foreground text */

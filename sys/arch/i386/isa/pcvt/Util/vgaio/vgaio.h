@@ -1,3 +1,5 @@
+/*	$NetBSD: vgaio.h,v 1.2 1994/10/27 04:20:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Joerg Wunsch
  *
@@ -33,19 +35,7 @@
  */
 
 /*
- * $Header
  * The author may be reached unter <joerg_wunsch@uriah.sax.de>
- *
- * $Log: vgaio.h,v $
- * Revision 1.1  1994/03/29 02:47:25  mycroft
- * pcvt 3.0, with some performance enhancements by Joerg Wunsch and me.
- *
- * Revision 1.2  1994/01/08  17:42:58  j
- * cleanup
- * made multiple commands per line work
- * wrote man page
- *
- *
  */
 
 /* common structure to hold the definition for a VGA register */

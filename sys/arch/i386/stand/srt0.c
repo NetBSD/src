@@ -1,3 +1,5 @@
+/*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)srt0.c	5.3 (Berkeley) 4/28/91
- *	$Id: srt0.c,v 1.2 1993/05/22 08:02:23 cgd Exp $
+ *	@(#)srt0.c	5.3 (Berkeley) 4/28/91
  */
 
 /*

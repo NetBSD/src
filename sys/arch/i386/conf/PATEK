@@ -1,7 +1,6 @@
+#	$NetBSD: PATEK,v 1.17 1994/10/27 04:14:56 cgd Exp $
 #
 # PATEK -- Mycroft's 486 test box
-#
-#	$Id: PATEK,v 1.16 1994/10/25 21:31:44 cgd Exp $
 #
 
 machine		"i386"
