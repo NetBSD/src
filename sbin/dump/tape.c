@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.21.6.1 2000/10/17 21:49:33 tv Exp $	*/
+/*	$NetBSD: tape.c,v 1.21.6.2 2001/05/09 19:16:07 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.21.6.1 2000/10/17 21:49:33 tv Exp $");
+__RCSID("$NetBSD: tape.c,v 1.21.6.2 2001/05/09 19:16:07 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: tape.c,v 1.21.6.1 2000/10/17 21:49:33 tv Exp $");
 #else
 #include <ufs/ufs/dinode.h>
 #endif
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
 
 #include <protocols/dumprestore.h>
 
@@ -424,6 +426,14 @@ trewind()
 	(void) close(tapefd);
 	while ((f = open(tape, 0)) < 0)
 		sleep (10);
+	if (eflag) {
+		struct mtop offl;
+
+		msg("Ejecting %s\n", tape);
+		offl.mt_op = MTOFFL;
+		offl.mt_count = 0;
+		(void) ioctl(f, MTIOCTOP, &offl);
+	}
 	(void) close(f);
 }
 
