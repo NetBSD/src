@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.135 2001/04/25 17:53:41 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.136 2001/05/04 07:48:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
  */
 
 #include "opt_scsi.h"
-#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,14 +72,10 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
-#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
-#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/stvar.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
@@ -110,30 +105,6 @@
  * Define various devices that we know mis-behave in some way,
  * and note how they are bad, so we can correct for them
  */
-struct modes {
-	u_int quirks;			/* same definitions as in quirkdata */
-	int blksize;
-	u_int8_t density;
-};
-
-struct quirkdata {
-	u_int quirks;
-#define	ST_Q_FORCE_BLKSIZE	0x0001
-#define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
-#define	ST_Q_IGNORE_LOADS	0x0004
-#define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
-#define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
-#define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
-#define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
-	u_int page_0_size;
-#define	MAX_PAGE_0_SIZE	64
-	struct modes modes[4];
-};
-
-struct st_quirk_inquiry_pattern {
-	struct scsipi_inquiry_pattern pattern;
-	struct quirkdata quirkdata;
-};
 
 const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
@@ -313,54 +284,6 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 #define NOEJECT 0
 #define EJECT 1
 
-struct st_softc {
-	struct device sc_dev;
-/*--------------------present operating parameters, flags etc.---------------*/
-	int flags;		/* see below                         */
-	u_int quirks;		/* quirks for the open mode          */
-	int blksize;		/* blksize we are using              */
-	u_int8_t density;	/* present density                   */
-	u_int page_0_size;	/* size of page 0 data		     */
-	u_int last_dsty;	/* last density opened               */
-	short mt_resid;		/* last (short) resid                */
-	short mt_erreg;		/* last error (sense key) seen       */
-#define	mt_key	mt_erreg
-	u_int8_t asc;		/* last asc code seen		     */
-	u_int8_t ascq;		/* last asc code seen		     */
-/*--------------------device/scsi parameters---------------------------------*/
-	struct scsipi_periph *sc_periph;/* our link to the adpter etc.       */
-/*--------------------parameters reported by the device ---------------------*/
-	int blkmin;		/* min blk size                       */
-	int blkmax;		/* max blk size                       */
-	struct quirkdata *quirkdata;	/* if we have a rogue entry          */
-/*--------------------parameters reported by the device for this media-------*/
-	u_long numblks;		/* nominal blocks capacity            */
-	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
-	u_int8_t media_density;	/* this is what it said when asked    */
-/*--------------------quirks for the whole drive-----------------------------*/
-	u_int drive_quirks;	/* quirks of this drive               */
-/*--------------------How we should set up when opening each minor device----*/
-	struct modes modes[4];	/* plus more for each mode            */
-	u_int8_t  modeflags[4];	/* flags for the modes                */
-#define DENSITY_SET_BY_USER	0x01
-#define DENSITY_SET_BY_QUIRK	0x02
-#define BLKSIZE_SET_BY_USER	0x04
-#define BLKSIZE_SET_BY_QUIRK	0x08
-/*--------------------storage for sense data returned by the drive-----------*/
-	u_char sense_data[MAX_PAGE_0_SIZE];	/*
-						 * additional sense data needed
-						 * for mode sense/select.
-						 */
-	struct buf_queue buf_queue;	/* the queue of pending IO */
-					/* operations */
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
-};
-
-
-int	stmatch __P((struct device *, struct cfdata *, void *));
-void	stattach __P((struct device *, struct device *, void *));
 void	st_identify_drive __P((struct st_softc *,
 	    struct scsipi_inquiry_pattern *));
 void	st_loadquirks __P((struct st_softc *));
@@ -384,12 +307,6 @@ int	st_touch_tape __P((struct st_softc *));
 int	st_erase __P((struct st_softc *, int full, int flags));
 int	st_rdpos __P((struct st_softc *, int, u_int32_t *));
 int	st_setpos __P((struct st_softc *, int, u_int32_t *));
-
-struct cfattach st_ca = {
-	sizeof(struct st_softc), stmatch, stattach
-};
-
-extern struct cfdriver st_cd;
 
 const struct scsipi_periphsw st_switch = {
 	st_interpret_sense,
@@ -429,26 +346,6 @@ const struct scsipi_periphsw st_switch = {
 #else
 #define	ST_INIT_FLAGS	0
 #endif
-
-struct scsipi_inquiry_pattern st_patterns[] = {
-	{T_SEQUENTIAL, T_REMOV,
-	 "",         "",                 ""},
-};
-
-int
-stmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct scsipibus_attach_args *sa = aux;
-	int priority;
-
-	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)st_patterns, sizeof(st_patterns)/sizeof(st_patterns[0]),
-	    sizeof(st_patterns[0]), &priority);
-	return (priority);
-}
 
 /*
  * The routine called by the low level scsi routine when it discovers
