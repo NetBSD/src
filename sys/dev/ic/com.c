@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.139 1998/02/22 05:09:58 enami Exp $	*/
+/*	$NetBSD: com.c,v 1.140 1998/02/25 08:32:35 ross Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1644,6 +1644,11 @@ comsoft(arg)
 #endif
 #endif
 }
+
+#ifdef __ALIGN_BRACKET_LEVEL_FOR_CTAGS
+	/* there has got to be a better way to do comsoft() */
+}}
+#endif
 
 int
 comintr(arg)
