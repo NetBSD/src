@@ -1,0 +1,3 @@
+grep: warning: test/c/d/d: recursive directory loop
+
+test/c/match:Test string
