@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.16 2003/06/29 22:31:18 fvdl Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.17 2003/07/18 17:34:07 fvdl Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16 2003/06/29 22:31:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.17 2003/07/18 17:34:07 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,6 +931,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	if (kq->kq_count == 0) {
 		if (timeout < 0) { 
 			error = EWOULDBLOCK;
+			simple_unlock(&kq->kq_lock);
 		} else {
 			kq->kq_state |= KQ_SLEEP;
 			error = ltsleep(kq, PSOCK | PCATCH | PNORELOCK,
