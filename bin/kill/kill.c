@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.18 2001/07/29 22:46:36 wiz Exp $	*/
+/* $NetBSD: kill.c,v 1.19 2001/09/16 13:55:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.18 2001/07/29 22:46:36 wiz Exp $");
+__RCSID("$NetBSD: kill.c,v 1.19 2001/09/16 13:55:09 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ main(int argc, char *argv[])
 	int errors, numsig, pid;
 	char *ep;
 
+	setprogname(argv[0]);
 	if (argc < 2)
 		usage();
 
@@ -182,10 +183,11 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: kill [-s signal_name] pid ...\n");
-	(void)fprintf(stderr, "       kill -l [exit_status]\n");
-	(void)fprintf(stderr, "       kill -signal_name pid ...\n");
-	(void)fprintf(stderr, "       kill -signal_number pid ...\n");
+	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n"
+	    "       %s -l [exit_status]\n"
+	    "       %s -signal_name pid ...\n"
+	    "       %s -signal_number pid ...\n",
+	    getprogname(), getprogname(), getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
