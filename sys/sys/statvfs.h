@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.4 2004/05/11 10:30:48 yamt Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.5 2004/10/06 04:30:04 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -72,11 +72,12 @@ typedef	_BSD_SIZE_T_		size_t;
 
 struct statvfs {
 	unsigned long	f_flag;		/* copy of mount exported flags */
-	unsigned long	f_bsize;	/* system block size */
-	unsigned long	f_frsize;	/* system fragment size */
+	unsigned long	f_bsize;	/* file system block size */
+	unsigned long	f_frsize;	/* fundamental file system block size */
 	unsigned long	f_iosize;	/* optimal file system block size */
 
-	fsblkcnt_t	f_blocks;	/* number of blocks in file system */
+	fsblkcnt_t	f_blocks;	/* number of blocks in file system, */
+					/*   (in units of f_frsize) */
 	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
 	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
 	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
