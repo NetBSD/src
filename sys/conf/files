@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.132 1997/07/31 22:33:15 augustss Exp $
+#	$NetBSD: files,v 1.133 1997/08/03 20:33:58 leo Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -170,7 +170,7 @@ file ddb/db_xxx.c			ddb
 file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
-file dev/md.c				md			needs-flag
+file dev/md.c				md			needs-count
 file dev/mulaw.c			mulaw
 file dev/vnd.c				vnd			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
