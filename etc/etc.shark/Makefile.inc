@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/11/29 22:45:55 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.1 2002/02/10 19:30:42 pooka Exp $
 #
-#	etc.arm32/Makefile.inc -- arm32-specific etc Makefile targets
+#	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
 
-KERNEL_SETS=		SHARK
+KERNEL_SETS=		GENERIC
 
-BUILD_KERNELS=		SHARKINST
+BUILD_KERNELS=		INSTALL
 
 INSTALLATION_DIRS+=	installation/kernel \
 			installation/misc
@@ -16,7 +16,7 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/arm32 && ${MAKE} release
+	cd ${.CURDIR}/../distrib/shark && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernels '*.gz'
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'
