@@ -41,8 +41,8 @@
  *
  *	@(#)esp.c	8.1 (Berkeley) 6/11/93
  *
- * from: Header: esp.c,v 1.28 93/04/27 14:40:44 torek Exp  (LBL)
- * $Id: esp.c,v 1.3 1993/11/05 12:41:54 deraadt Exp $
+ * from: Header: esp.c,v 1.29 93/11/06 12:36:27 torek Locked  (LBL)
+ * $Id: esp.c,v 1.4 1993/11/12 00:50:48 deraadt Exp $
  *
  * Loosely derived from Mary Baker's devSCSIC90.c from the Berkeley
  * Sprite project, which is:
@@ -775,7 +775,7 @@ printf("\tfifo count = %x\n", reg);
 		 * handle as for data out.
 		 */
 		dma->dma_csr |= DMA_DRAIN;
-		DELAY(1);
+		DELAY(1);	/* allow time for draining (???) */
 		reg = 0;		/* FIFO auto flushed? */
 		goto dma_data_done;
 
@@ -1061,7 +1061,7 @@ espixfer_in(sc, esp, dma, buf, len)
 			sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
 			sc->sc_espintr = esp->esp_intr;
 			dma->dma_csr |= DMA_DRAIN;
-			DELAY(1);
+			DELAY(1);	/* allow time for draining (???) */
 			sc->sc_dmacsr = n;
 			n = esp->esp_tcl | (esp->esp_tch << 8);
 			if (n == 0 && (sc->sc_espstat & ESPSTAT_TC) == 0)
