@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsb.c,v 1.2 1997/03/12 21:11:01 cgd Exp $	*/
+/* $NetBSD: tlsb.c,v 1.3 1997/04/06 20:09:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,6 +37,8 @@
  * Autoconfiguration and support routines for the TurboLaser System Bus
  * found on AlphaServer 8200 and 8400 systems.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
