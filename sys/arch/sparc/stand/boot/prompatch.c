@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.8 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: prompatch.c,v 1.9 2004/03/18 12:26:51 hannken Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -203,7 +203,7 @@ static struct prom_patch prom_patch_tab[] = {
  */
 char * match_c5ip(void)
 {
-	if (strcmp(PROM_getpropstring(prom_findroot(), "banner-name"),
+	if (strcmp(prom_getpropstring(prom_findroot(), "banner-name"),
 	    "Cycle Computer Corporation") == 0)
 		 return "Cycle 5 IP";
 
@@ -225,7 +225,7 @@ prom_patch(void)
 	if (prom_version() == PROM_OLDMON)
 		return;		/* don't bother - no forth in this */
 
-	propval = PROM_getpropstringA(prom_findroot(), "name",
+	propval = prom_getpropstringA(prom_findroot(), "name",
 				 namebuf, sizeof(namebuf));
 	if (propval == NULL)
 		return;
