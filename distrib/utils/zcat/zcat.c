@@ -1,4 +1,4 @@
-/*	$NetBSD: zcat.c,v 1.1.1.1 1996/09/12 20:24:00 gwr Exp $	*/
+/*	$NetBSD: zcat.c,v 1.2 1996/09/24 20:40:11 gwr Exp $	*/
 
 /* mini zcat.c -- a minimal zcat using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -63,7 +63,7 @@ void gz_uncompress(in, out)
 
 
 /* ===========================================================================
- * Usage:  miniunzip [files...]
+ * Usage:  zcat [files...]
  */
 
 int main(argc, argv)
@@ -99,4 +99,26 @@ int main(argc, argv)
 		gz_uncompress(zfp, stdout);
 	} while (argv++, --argc);
     return 0; /* to avoid warning */
+}
+
+
+/*
+ * XXX: hacks to keep gzio.c from pulling in deflate stuff
+ */
+
+int deflateInit2_ (z_streamp strm, int  level, int  method,
+				    int windowBits, int memLevel, int strategy,
+				    const char *version, int stream_size)
+{
+	return(-1);
+}
+
+int deflate (z_streamp strm, int flush)
+{
+	return(-1);
+}
+
+int deflateEnd (z_streamp strm)
+{
+	return(-1);
 }
