@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.3 1998/07/23 19:03:11 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.4 1998/07/23 19:26:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -82,6 +82,9 @@ struct cs_softc {
 
 	int	sc_irq;			/* IRQ line */
 	int	sc_drq;			/* DRQ line */
+
+	int	sc_prodid;		/* saved product ID */
+	int	sc_prodrev;		/* saved product rev */
 
 	bus_addr_t sc_pktpgaddr;	/* PacketPage bus memory address */
 
