@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.24 1998/06/24 11:20:54 jonathan Exp $	*/
+/*	$NetBSD: gram.y,v 1.25 1999/01/21 13:10:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@ static	int	adepth;
 #define	new_s(s)	new0(NULL, s, NULL, 0, NULL)
 #define	new_p(p)	new0(NULL, NULL, p, 0, NULL)
 #define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
+#define	new_sx(s, x)	new0(NULL, s, NULL, 0, x)
 
 #define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
 #define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
@@ -85,6 +86,11 @@ static	int	adepth;
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
 static	void	check_maxpart __P((void));
+
+static	void	app __P((struct nvlist *, struct nvlist *));
+
+static	struct nvlist *mk_nsis __P((const char *, int, struct nvlist *, int));
+static	struct nvlist *mk_ns __P((const char *, struct nvlist *));
 
 %}
 
@@ -119,6 +125,7 @@ static	void	check_maxpart __P((void));
 %type	<str>	atname
 %type	<list>	loclist_opt loclist locdef
 %type	<str>	locdefault
+%type	<list>	values locdefaults
 %type	<list>	attrs_opt attrs
 %type	<list>	locators locator
 %type	<list>	dev_spec
@@ -297,17 +304,24 @@ loclist_opt:
 
 /* loclist order matters, must use right recursion */
 loclist:
-	locdef ',' loclist		{ ($$ = $1)->nv_next = $3; } |
+	locdef ',' loclist		{ $$ = $1; app($1, $3); } |
 	locdef				{ $$ = $1; };
 
 /* "[ WORD locdefault ]" syntax may be unnecessary... */
 locdef:
 	WORD locdefault 		{ $$ = new_nsi($1, $2, 0); } |
 	WORD				{ $$ = new_nsi($1, NULL, 0); } |
-	'[' WORD locdefault ']'		{ $$ = new_nsi($2, $3, 1); };
+	'[' WORD locdefault ']'		{ $$ = new_nsi($2, $3, 1); } |
+	WORD '[' NUMBER ']'		{ $$ = mk_nsis($1, $3, NULL, 0); } |
+	WORD '[' NUMBER ']' locdefaults	{ $$ = mk_nsis($1, $3, $5, 0); } |
+	'[' WORD '[' NUMBER ']' locdefaults ']'
+					{ $$ = mk_nsis($2, $4, $6, 1); };
 
 locdefault:
 	'=' value			{ $$ = $2; };
+
+locdefaults:
+	'=' '{' values '}'		{ $$ = $3; };
 
 fsoptfile_opt:
 	PATHNAME			{ $$ = $1; } |
@@ -323,6 +337,10 @@ value:
 	signed_number			{ char bf[40];
 					    (void)sprintf(bf, FORMAT($1), $1);
 					    $$ = intern(bf); };
+
+values:
+	value ',' values		{ $$ = new_sx($1, $3); } |
+	value				{ $$ = new_s($1); };
 
 signed_number:
 	NUMBER				{ $$ = $1; } |
@@ -446,11 +464,11 @@ attachment:
 	WORD				{ $$ = $1; };
 
 locators:
-	locators locator		{ ($$ = $2)->nv_next = $1; } |
+	locators locator		{ $$ = $2; app($2, $1); } |
 	/* empty */			{ $$ = NULL; };
 
 locator:
-	WORD value			{ $$ = new_ns($1, $2); } |
+	WORD values			{ $$ = mk_ns($1, $2); } |
 	WORD '?'			{ $$ = new_ns($1, NULL); };
 
 flags_opt:
@@ -515,3 +533,59 @@ check_maxpart()
 		stop("cannot proceed without maxpartitions specifier");
 	}
 }
+
+static void
+app(p, q)
+	struct nvlist *p, *q;
+{
+	while (p->nv_next)
+		p = p->nv_next;
+	p->nv_next = q;
+}
+
+static struct nvlist *
+mk_nsis(name, count, adefs, opt)
+	const char *name;
+	int count;
+	struct nvlist *adefs;
+	int opt;
+{
+	struct nvlist *defs = adefs;
+	struct nvlist **p;
+	char buf[200];
+	int i;
+
+	if (count <= 0) {
+		fprintf(stderr, "config: array with <= 0 size: %s\n", name);
+		exit(1);
+	}
+	p = &defs;
+	for(i = 0; i < count; i++) {
+		if (*p == NULL)
+			*p = new_s("0");
+		sprintf(buf, "%s%c%d", name, ARRCHR, i);
+		(*p)->nv_name = i == 0 ? name : intern(buf);
+		(*p)->nv_int = i > 0 || opt;
+		p = &(*p)->nv_next;
+	}
+	*p = 0;
+	return defs;
+}
+
+
+static struct nvlist *
+mk_ns(name, vals)
+	const char *name;
+	struct nvlist *vals;
+{
+	struct nvlist *p;
+	char buf[200];
+	int i;
+
+	for(i = 0, p = vals; p; i++, p = p->nv_next) {
+		sprintf(buf, "%s%c%d", name, ARRCHR, i);
+		p->nv_name = i == 0 ? name : intern(buf);
+	}
+	return vals;
+}
+

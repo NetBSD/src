@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.40 1998/06/30 03:30:56 jonathan Exp $	*/
+/*	$NetBSD: config.h,v 1.41 1999/01/21 13:10:08 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,8 @@
 #define _PATH_DEVNULL "/dev/null"
 #endif
 
+
+#define ARRCHR '#'
 
 /*
  * Name/value lists.  Values can be strings or pointers and/or can carry

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.50 1998/08/30 21:33:27 pk Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.51 1999/01/21 13:10:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,8 @@ static int emitvfslist __P((FILE *));
 static int emitname2blk __P((FILE *));
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
+
+#define ARRNAME(n, l) (strchr((n), ARRCHR) && strncmp((n), (l), strlen((l))) == 0)
 
 /*
  * NEWLINE can only be used in the emitXXX functions.
@@ -211,10 +213,9 @@ cf_locnames_print(name, value, arg)
 	if (a->a_locs) {
 		if (fprintf(fp, "const char *%scf_locnames[] = { ", name) < 0)
 			return (1);
-		for (nv = a->a_locs; nv; nv = nv->nv_next) {
+		for (nv = a->a_locs; nv; nv = nv->nv_next)
 			if (fprintf(fp, "\"%s\", ", nv->nv_name) < 0)
 				return (1);
-		}
 		if (fprintf(fp, "NULL};\n") < 0)
 			return (1);
 	}
@@ -271,6 +272,7 @@ emitcfdata(fp)
 	struct attr *a;
 	char *loc;
 	char locbuf[20];
+	const char *lastname = "";
 
 	if (fprintf(fp, "\n\
 #define NORM FSTATE_NOTFOUND\n\
@@ -292,10 +294,18 @@ struct cfdata cfdata[] = {\n\
 		if (v == 0 && fputs("root", fp) < 0)
 			return (1);
 		a = i->i_atattr;
-		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
-			if (fprintf(fp, " %s %s",
-			    nv->nv_name, i->i_locs[v]) < 0)
-				return (1);
+		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++) {
+			if (ARRNAME(nv->nv_name, lastname)) {
+				if (fprintf(fp, " %s %s",
+				    nv->nv_name, i->i_locs[v]) < 0)
+					return (1);
+			} else {
+				if (fprintf(fp, " %s %s",
+					    nv->nv_name, i->i_locs[v]) < 0)
+					return (1);
+				lastname = nv->nv_name;
+			}
+		}
 		if (fputs(" */\n", fp) < 0)
 			return (-1);
 
