@@ -1,7 +1,7 @@
-/* $NetBSD: pci_550.c,v 1.13 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.13 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.14 2000/03/19 02:25:29 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,13 +112,23 @@ void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *));
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
-#define	DEC_550_MAX_IRQ		48
+#define	DEC_550_MAX_IRQ		(64 - DEC_550_PCI_IRQ_BEGIN)
 
 /*
  * The Miata has a Pyxis, which seems to have problems with stray
  * interrupts.  Work around this by just ignoring strays.
  */
 #define	PCI_STRAY_MAX		0
+
+/*
+ * Some Miata models, notably models with a Cypress PCI-ISA bridge, have
+ * a PCI device (the OHCI USB controller) with interrupts tied to ISA IRQ
+ * lines.  This IRQ is encoded as:
+ *
+ *	line = 0xe0 | isa_irq;
+ */
+#define	DEC_550_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xef)
+#define	DEC_550_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 struct alpha_shared_intr *dec_550_pci_intr;
 #ifdef EVCNT_COUNTERS
@@ -151,13 +161,15 @@ pci_550_pickintr(ccp)
 	 * mask register.  Nothing to map.
 	 */
 
-	for (i = DEC_550_PCI_IRQ_BEGIN; i < DEC_550_MAX_IRQ; i++)
-		dec_550_intr_disable(i);	
+	for (i = 0; i < DEC_550_MAX_IRQ; i++)
+		dec_550_intr_disable(i);
 
 	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ);
-	for (i = 0; i < DEC_550_MAX_IRQ; i++)
+	for (i = 0; i < DEC_550_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_550_pci_intr, i,
-			PCI_STRAY_MAX);
+		    PCI_STRAY_MAX);
+		alpha_shared_intr_set_private(dec_550_pci_intr, i, ccp);
+	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
@@ -215,7 +227,8 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 			if (device == 7) {
 				if (function == 0)
 					panic("dec_550_intr_map: SIO device");
-				return (1);
+				if (function == 1 || function == 2)
+					return (1);
 			}
 		}
 	}
@@ -230,10 +243,15 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 		return (1);
 	}
 
-	/* Account for the PCI interrupt offset. */
-	line += DEC_550_PCI_IRQ_BEGIN;
+#if NSIO == 0
+	if (DEC_550_LINE_IS_ISA(line)) {
+		printf("dec_550_intr_map: ISA IRQ %d for %d/%d/%d\n",
+		    DEC_550_LINE_ISA_IRQ(line), bus, device, function);
+		return (1);
+	}
+#endif
 
-	if (line >= DEC_550_MAX_IRQ)
+	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ)
 		panic("dec_550_intr_map: dec 550 irq too large (%d)\n",
 		    line);
 
@@ -250,6 +268,12 @@ dec_550_intr_string(ccv, ih)
 	struct cia_config *ccp = ccv;
 #endif
 	static char irqstr[16];		/* 12 + 2 + NULL + sanity */
+
+#if NSIO
+	if (DEC_550_LINE_IS_ISA(ih))
+		return (sio_intr_string(NULL /*XXX*/,
+		    DEC_550_LINE_ISA_IRQ(ih)));
+#endif
 
 	if (ih >= DEC_550_MAX_IRQ)
 		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx\n", ih);
@@ -269,6 +293,12 @@ dec_550_intr_establish(ccv, ih, level, func, arg)
 #endif
 	void *cookie;
 
+#if NSIO
+	if (DEC_550_LINE_IS_ISA(ih))
+		return (sio_intr_establish(NULL /*XXX*/,
+		    DEC_550_LINE_ISA_IRQ(ih), IST_LEVEL, level, func, arg));
+#endif
+
 	if (ih >= DEC_550_MAX_IRQ)
 		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx\n", ih);
 
@@ -284,12 +314,23 @@ void
 dec_550_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-#if 0
 	struct cia_config *ccp = ccv;
-#endif
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
+
+#if NSIO
+	/*
+	 * We have to determine if this is an ISA IRQ or not!  We do this
+	 * by checking to see if the intrhand points back to an intrhead
+	 * that points to our cia_config.  If not, it's an ISA IRQ.  Pretty
+	 * disgusting, eh?
+	 */
+	if (ih->ih_intrhead->intr_private != ccp) {
+		sio_intr_disestablish(NULL /*XXX*/, cookie);
+		return;
+	}
+#endif
  
 	s = splhigh();
 
@@ -341,7 +382,7 @@ dec_550_iointr(framep, vec)
 	int irq; 
 
 	if (vec >= 0x900) {
-		irq = ((vec - 0x900) >> 4) + DEC_550_PCI_IRQ_BEGIN;
+		irq = ((vec - 0x900) >> 4);
 
 		if (irq >= DEC_550_MAX_IRQ)
 			panic("550_iointr: vec 0x%lx out of range\n", vec);
@@ -375,38 +416,14 @@ void
 dec_550_intr_enable(irq)
 	int irq;
 {
-	u_int64_t imask;
-	int s;
 
-#if 0
-	printf("dec_550_intr_enable: enabling %d\n", irq);
-#endif
-
-	s = splhigh();
-	alpha_mb();
-	imask = REGVAL64(PYXIS_INT_MASK);
-	imask |= (1UL << irq);
-	REGVAL64(PYXIS_INT_MASK) = imask;
-	alpha_mb();
-	splx(s);
+	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 1);
 }
 
 void
 dec_550_intr_disable(irq)
 	int irq;
 {
-	u_int64_t imask;
-	int s;
 
-#if 0
-	printf("dec_550_intr_disable: disabling %d\n", irq);
-#endif
-
-	s = splhigh();
-	alpha_mb();
-	imask = REGVAL64(PYXIS_INT_MASK);
-	imask &= ~(1UL << irq);
-	REGVAL64(PYXIS_INT_MASK) = imask;
-	alpha_mb();
-	splx(s);
+	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 0);
 }
