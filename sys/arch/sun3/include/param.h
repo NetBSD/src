@@ -46,7 +46,7 @@
  * Machine dependent constants for HP9000 series 300.
  */
 #define	MACHINE     "sun3"
-#define MID_MACHINE MID_SUN020
+#define MID_MACHINE MID_M68K
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
@@ -175,6 +175,7 @@
 #define splimp()        spl6()
 #define spltty()        spl6()
 #define splclock()      spl5()
+#define splstatclock()  splclock()
 #define splvm()         spl2()
 #define splhigh()       spl7()
 #define splsched()      spl7()

@@ -19,8 +19,13 @@ options		"TCP_COMPAT_42"
 options		SWAPPAGER, VNODEPAGER, DEVPAGER
 options		KTRACE
 options		INET
+options 	FFS
 options 	NFSSERVER
 options 	NFSCLIENT
+
+# sun3 debug options
+options CONTEXT_DEBUG
+options VMFAULT_TRACE
 
 include "TIMESINK.nfsdiskless"	#mega sad
 

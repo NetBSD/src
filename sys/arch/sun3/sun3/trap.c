@@ -112,6 +112,45 @@ int mmudebug = 0;
 #endif
 
 /*
+ * Define the code needed before returning to user mode, for
+ * trap, and syscall.
+ */
+void userret(p, pc, oticks)
+	struct proc *p;
+	int pc;
+	u_quad_t oticks;
+{
+        int sig;
+    
+	while ((sig = CURSIG(p)) !=0)
+		psig(sig);
+	p->p_pri = p->p_usrpri;
+	if (want_resched) {
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrq ourselves but before we
+		 * swtch()'ed, we might not be on the queue indicated by
+		 * our priority.
+		 */
+	        (void) splstatclock();
+		setrq(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		swtch();
+		spl0();
+		while ((sig = CURSIG(p)) != 0)
+			psig(sig);
+	}
+	/*
+	 * If profiling, charge recent system time to the trapped pc.
+	 */
+	if (p->p_flag & SPROFIL)
+		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+
+	curpri = p->p_pri;
+}
+/*
  * Trap is called from locore to handle most types of processor traps,
  * including events such as simulated software interrupts/AST's.
  * System calls are broken out for efficiency.
@@ -123,23 +162,22 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
-	register int i;
+	register int i = 0;
 	unsigned ucode = 0;
 	register struct proc *p = curproc;
-	struct timeval syst;
+	u_quad_t sticks;
 	unsigned ncode;
 	int s;
 
 	cnt.v_trap++;
-	if (!p)
-	    p = &proc0;
-	syst = p->p_stime;
+	if ((p = curproc) == NULL)
+		p = &proc0;
+	sticks = p->p_sticks;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		p->p_regs = frame.f_regs;
 	}
 	switch (type) {
-
 	default:
 dopanic:
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
@@ -374,9 +412,10 @@ copyfault:
 		}
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
-#if VMFAULT_TRACE
-		printf("vm_fault(%x, %x, %x, 0) -> %x in context %d\n",
-		       map, va, ftype, rv, get_context());
+#ifdef VMFAULT_TRACE
+		printf("vm_fault(%x, %x, %x, 0) -> %x in context %d at %x\n",
+		       map, va, ftype, rv, get_context(),
+		       ((int *) frame.f_regs)[PC]);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
 #endif
@@ -399,7 +438,7 @@ copyfault:
 		}
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
-#if VMFAULT_TRACE
+#ifdef VMFAULT_TRACE
 	    printf("vm_fault resolved access to map %x va %x type ftype %d\n",
 	       map, va, ftype);
 #endif
@@ -410,10 +449,12 @@ copyfault:
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			       map, va, ftype, rv);
+			printf("vm_fault(%x, %x, %x, 0) at %x -> %x\n",
+			       map, va, ftype,
+			       ((int *) frame.f_regs)[PC], rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
+			
 			goto dopanic;
 		}
 		ucode = v;
@@ -421,51 +462,16 @@ copyfault:
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
+	if (i)
+	    trapsignal(p, i, ucode);
 out:
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		s = splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		splx(s);
-		while (i = CURSIG(p))
-			psig(i);
-	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.f_pc, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.f_pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-	curpri = p->p_pri;
+	userret(p, frame.f_pc, sticks);
 }
 
 /*
- * Proces a system call.
+ * Process a system call.
  */
 syscall(code, frame)
 	volatile int code;
@@ -476,6 +482,7 @@ syscall(code, frame)
 	register struct sysent *callp;
 	register struct proc *p = curproc;
 	int error, opc, numsys, s;
+	u_quad_t sticks;
 	struct args {
 		int i[8];
 	} args;
@@ -489,7 +496,7 @@ syscall(code, frame)
 
 	printf("entered syscall()\n");
 	cnt.v_syscall++;
-	syst = p->p_stime;
+	sticks = p->p_sticks;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p->p_regs = frame.f_regs;
@@ -563,43 +570,7 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		s = splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		splx(s);
-		while (i = CURSIG(p))
-			psig(i);
-	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.f_pc, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.f_pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-	curpri = p->p_pri;
+	userret(p, opc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

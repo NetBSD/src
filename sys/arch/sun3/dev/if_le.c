@@ -91,7 +91,8 @@
 
 int	ledebug = 1;		/* console error messages */
 
-int	leintr(), leinit(), leioctl(), lestart(), ether_output();
+int	leintr(), leioctl(), ether_output();
+void lestart(), leinit();
 struct	mbuf *leget();
 extern	struct ifnet loif;
 
@@ -172,7 +173,6 @@ void leattach(parent, self, args)
 	ifp->if_unit = unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = leinit;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
@@ -268,7 +268,7 @@ lereset(unit)
 /*
  * Initialization of interface
  */
-leinit(unit)
+void leinit(unit)
 	int unit;
 {
 	struct le_softc *le = lecd.cd_devs[unit];
@@ -295,7 +295,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
-lestart(ifp)
+void lestart(ifp)
 	struct ifnet *ifp;
 {
 	register struct le_softc *le = lecd.cd_devs[ifp->if_unit];
@@ -304,10 +304,10 @@ lestart(ifp)
 	int len;
 
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 	IF_DEQUEUE(&le->sc_if.if_snd, m);
 	if (m == 0)
-		return (0);
+		return;
 	len = leput(le->sc_r2->ler2_tbuf[0], m);
 #if NBPFILTER > 0
 	/*
@@ -322,7 +322,6 @@ lestart(ifp)
 	tmd->tmd2 = -len;
 	tmd->tmd1_bits = LE_OWN | LE_STP | LE_ENP;
 	le->sc_if.if_flags |= IFF_OACTIVE;
-	return (0);
 }
 
 leintr(unit)

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.13 1993/10/12 05:27:33 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.14 1993/11/23 05:29:18 glass Exp $
  */
 
 #include "systm.h"
@@ -82,8 +82,9 @@ static void initialize_vector_table()
 	if (vector_table[i] == COPY_ENTRY)
 	    set_vector_entry(i, old_vector_table[i]);
     }
-    setvbr(vector_table);
+    setvbr((unsigned int *) vector_table);
     orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
+    mon_printf("initializing vector table (finished)\n");
 }
 
 vm_offset_t high_segment_alloc(npages)
@@ -111,7 +112,7 @@ void sun3_stop()
     mon_printf("sun3_stop: clock(0,0)\n");
     setvbr(old_vector_table);
     new_vect = getvbr();
-    printf("post: nmi vec %x\n", new_vect[VEC_LEVEL_7_INT]);
+    mon_printf("post: nmi vec %x\n", new_vect[VEC_LEVEL_7_INT]);
 /*    set_clk_mode(IREG_CLOCK_ENAB_7,0);*/
     mon_printf("interrupt_reg_value: %x\n", *interrupt_reg);
     mon_printf("sun3_stop: clock(7,1)\n");
@@ -347,15 +348,15 @@ void sun3_vm_init()
     load_u_area(&proc0paddr->u_pcb);
     curpcb = &proc0paddr->u_pcb;
 
-    clock_va = obio_alloc((caddr_t) OBIO_CLOCK,
-			  OBIO_CLOCK_SIZE, OBIO_WRITE);
+    clock_va = (vm_offset_t) obio_alloc((caddr_t) OBIO_CLOCK,
+					OBIO_CLOCK_SIZE, OBIO_WRITE);
     if (clock_va != CLOCK_VA)
 	mon_printf("clock is not at CLOCK_VA, %x vs. %x\n", clock_va,
 		   CLOCK_VA);
 
     interrupt_reg = obio_alloc((caddr_t) OBIO_INTERREG,
 			       OBIO_INTERREG_SIZE, OBIO_WRITE);
-    if (interrupt_reg != INTERREG_VA)
+    if ((unsigned int) interrupt_reg != INTERREG_VA)
 	mon_printf("interrupt_reg is not at INTERREG_VA, %x vs. %x\n",
 		   interrupt_reg, INTERREG_VA);
     sun3_context_equiv();
@@ -586,14 +587,14 @@ void sun3_bootstrap()
     mon_printf("%s\n", hello);
     mon_printf("\nPROM Version: %x\n", romp->romvecVersion);
 
+    sun3_monitor_hooks();
+
     sun3_verify_hardware();
 
     initialize_vector_table();	/* point interrupts/exceptions to our table */
 
     sun3_vm_init();		/* handle kernel mapping problems, etc */
     printf("sun3 vm initialization complete\n");
-
-    sun3_monitor_hooks();
 
     pmap_bootstrap();		/*  */
     printf("pmap module bootstrapped\n");

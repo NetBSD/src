@@ -37,24 +37,25 @@
 
 #define KERNEL
 
-#include "types.h"
-#include "param.h"
-#include "cdefs.h"
-#include "errno.h"
-#include "proc.h"
-#include "vmmeter.h"
+#include <cdefs.h>
+#include <types.h>
+#include <param.h>
+#include <cdefs.h>
+#include <errno.h>
+#include <proc.h>
+#include <vmmeter.h>
 
-#include "vm/vm.h"
+#include <vm/vm.h>
 
-#include "machine/pcb.h"
-#include "machine/psl.h"
-#include "machine/pte.h"
-#include "machine/control.h"
-#include "machine/mon.h"
-#include "machine/param.h"
-#include "machine/memmap.h"
-#include "machine/cpu.h"
-#include "machine/trap.h"
+#include <machine/pcb.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/control.h>
+#include <machine/mon.h>
+#include <machine/param.h>
+#include <machine/memmap.h>
+#include <machine/cpu.h>
+#include <machine/trap.h>
 
 #include "intersil7170.h"
 #include "interreg.h"

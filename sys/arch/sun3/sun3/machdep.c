@@ -102,6 +102,7 @@ int	bufpages = 0;
 int *nofault;
 
 extern vm_offset_t u_area_va;
+caddr_t allocsys();
 
 void identifycpu()
 {
@@ -136,89 +137,80 @@ void load_u_area(pcbp)
 void cpu_startup()
 {
     caddr_t v;
-    int firstaddr, i;
+    int sz, i;
     vm_size_t size;    
+    int base, residual;
     vm_offset_t minaddr, maxaddr, uarea_pages;
 
 
     /* msgbuf mapped earlier, should figure out why? */
     printf(version);
     identifycpu();
-		/* compute physmem? */
     printf("real mem  = %d\n", ctob(physmem));
-    /*
-     * Allocate space for system data structures.
-     * The first available real memory address is in "firstaddr".
-     * The first available kernel virtual address is in "v".
-     * As pages of kernel virtual memory are allocated, "v" is incremented.
-     * As pages of memory are allocated and cleared,
-     * "firstaddr" is incremented.
-     * An index into the kernel page table corresponding to the
-     * virtual memory address maintained in "v" is kept in "mapaddr".
-     */
-    /*
-     * Make two passes.  The first pass calculates how much memory is
-     * needed and allocates it.  The second pass assigns virtual
-     * addresses to the various data structures.
-     */
     
-    firstaddr = 0;
- again:
-    v = (caddr_t)firstaddr;
-    
-#define	valloc(name, type, num) \
-    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-	    /*	valloc(cfree, struct cblock, nclist);  no clists any more!!! - cgd */
-	    valloc(callout, struct callout, ncallout);
-    valloc(swapmap, struct map, nswapmap = maxproc * 2);
-#ifdef SYSVSHM
-    valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-    if (bufpages == 0)
-	if (physmem < (2 * 1024 * 1024))
-	    bufpages = physmem / 10 / CLSIZE;
-	else
-	    bufpages = ((2 * 1024 * 1024 + physmem) / 20) / CLSIZE;
-    if (nswbuf == 0) {
-	nswbuf = (nbuf / 2) &~ 1;	/* force even */
-	if (nswbuf > 256)
-	    nswbuf = 256;		/* sanity */
-    }
-    valloc(swbuf, struct buf, nswbuf);
-    valloc(buf, struct buf, nbuf);
     /*
-     * End of first pass, size has been calculated so allocate memory
+     * Find out how much space we need, allocate it,
+     * and then give everything true virtual addresses.
      */
-    if (firstaddr == 0) {
-	size = (vm_size_t)(v - firstaddr);
-	firstaddr = (int) kmem_alloc(kernel_map, round_page(size));
-	if (firstaddr == 0)
-	    panic("cpu_startup: no room for tables");
-	goto again;
-    }
+    sz = (int)allocsys((caddr_t)0);
+    if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+	panic("startup: no room for tables");
+    if (allocsys(v) - v != sz)
+	panic("startup: table size inconsistency");
+
     /*
-     * End of second pass, addresses have been assigned
+     * Now allocate buffers proper.  They are different than the above
+     * in that they usually occupy more virtual memory than physical.
      */
-    if ((vm_size_t)(v - firstaddr) != size)
-	panic("cpu_startup: table size inconsistency");
-    /* buffer_map stuff but not used */
+    size = MAXBSIZE * nbuf;
+    buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+			       &maxaddr, size, FALSE);
+    minaddr = (vm_offset_t)buffers;
+    if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+		    &minaddr, size, FALSE) != KERN_SUCCESS)
+	panic("startup: cannot allocate buffers");
+    if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+	/* don't want to alloc more physical mem than needed */
+	bufpages = btoc(MAXBSIZE) * nbuf;
+    }
+    base = bufpages / nbuf;
+    residual = bufpages % nbuf;
+    for (i = 0; i < nbuf; i++) {
+	vm_size_t curbufsize;
+	vm_offset_t curbuf;
+
+	/*
+	 * First <residual> buffers get (base+1) physical pages
+	 * allocated for them.  The rest get (base) physical pages.
+	 *
+	 * The rest of each buffer occupies virtual space,
+	 * but has no physical memory allocated for it.
+	 */
+	curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+	curbufsize = CLBYTES * (i < residual ? base+1 : base);
+	vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+	vm_map_simplify(buffer_map, curbuf);
+    }
+
     /*
      * Allocate a submap for exec arguments.  This map effectively
      * limits the number of processes exec'ing at any time.
      */
-    /*	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-     *				16*NCARGS, TRUE);
-     *	NOT CURRENTLY USED -- cgd
+#if 0				/* XXX not currently used */
+    exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+			     16*NCARGS, TRUE);
+#endif
+
+    /*
+     * Allocate a submap for physio
      */
     /*
      * Allocate a map for physio and DVMA
      */
     phys_map = vm_map_create(kernel_pmap, DVMA_SPACE_START, DVMA_SPACE_END, 0);
-    if (!phys_map)
+    if (phys_map == NULL)
 	panic("cpu_startup: unable to create physmap");
-    
+
     /*
      * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
      * we use the more space efficient malloc in place of kmem_alloc.
@@ -228,15 +220,22 @@ void cpu_startup()
     bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
     mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
 			   VM_MBUF_SIZE, FALSE);
+
     /*
      * Initialize callouts
      */
     callfree = callout;
     for (i = 1; i < ncallout; i++)
 	callout[i-1].c_next = &callout[i];
+
+    printf("avail mem = %d\n", ptoa(vm_page_free_count));
+    printf("using %d buffers containing %d bytes of memory\n",
+	   nbuf, bufpages * CLBYTES);
+
+
     
     printf("avail mem = %d\n", ptoa(vm_page_free_count));
-/*    initcpu();*/
+    /*    initcpu();*/
     /*
      * Set up buffers, so they can be used to read disk labels.
      */
@@ -248,6 +247,56 @@ void cpu_startup()
     configure();
     
     cold = 0;
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and then call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	register caddr_t v;
+{
+
+#define	valloc(name, type, num) \
+	    v = (caddr_t)(((name) = (type *)v) + (num))
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+	valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+
+	/*
+	 * Determine how many buffers to allocate (enough to
+	 * hold 5% of total physical memory, but at least 16).
+	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 */
+	if (bufpages == 0)
+	    if (physmem < btoc(2 * 1024 * 1024))
+		bufpages = (physmem / 10) / CLSIZE;
+	    else
+		bufpages = (physmem / 20) / CLSIZE;
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return v;
 }
 
 void internal_configure()
@@ -822,7 +871,10 @@ regdump(rp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
+	if (curproc) 
+	    printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
+	else
+    	    printf("curproc == NULL, pc = %s, ", hexstr(rp[PC], 8));
 	printf("ps = %s, ", hexstr(rp[PS], 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
@@ -904,4 +956,79 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
+}
+
+
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ */
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	return ENOEXEC;
+}
+
+struct sysarch_args {
+	int op;
+	char *parms;
+};
+
+int
+sysarch(p, uap, retval)
+	struct proc *p;
+	register struct sysarch_args *uap;
+	int *retval;
+{
+    return EINVAL;
+}
+
+/*
+ * The registers are in the frame; the frame is in the user area of
+ * the process in question; when the process is active, the registers
+ * are in "the kernel stack"; when it's not, they're still there, but
+ * things get flipped around.  So, since p->p_regs is the whole address
+ * of the register set, take its offset from the kernel stack, and
+ * index into the user block.  Don't you just *love* virtual memory?
+ * (I'm starting to think seymour is right...)
+ */
+int
+ptrace_set_pc (struct proc *p, unsigned int addr)
+{
+        p->p_regs[PC] = addr;
+	return 0;
+}
+
+int
+ptrace_single_step (struct proc *p)
+{
+	struct pcb *pcb;
+	void *regs = (char*)p->p_addr +
+		((char*) p->p_regs - (char*) USRSTACK);
+
+	pcb = &p->p_addr->u_pcb;
+
+	pcb->pcb_ps |= PSL_T;
+	return 0;
+}
+
+/*
+ * Copy the registers to user-space.  This is tedious because
+ * we essentially duplicate code for trapframe and syscframe. *sigh*
+ */
+int
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
+    return 0;
+}
+
+int
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
+    return 0;
 }

@@ -41,6 +41,8 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
+#ifdef KERNEL
+
 /*
  * Exported definitions unique to sun3/68k cpu support.
  */
@@ -70,14 +72,15 @@
  * clockframe; for hp300, use just what the hardware
  * leaves on the stack.
  */
-typedef struct intrframe {
+struct clockframe {
 	int	pc;
 	int	ps;
-} clockframe;
+}; 
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_INTR(framep)	(0) /* XXX laziness */
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -90,7 +93,7 @@ typedef struct intrframe {
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, aston())
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -100,8 +103,11 @@ typedef struct intrframe {
 
 #define aston() (astpending++)
 
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
+int astpending;	 /* need to trap before returning to user mode */
+int want_resched; /* resched() was called */
+
+#define fuswintr(x) (-1)
+#define suswintr(x,y) (-1)
 
 #include <machine/mtpr.h>
 
@@ -117,11 +123,8 @@ int	want_resched;		/* resched() was called */
 #define SUN3_MACH_60   0x07
 #define SUN3_MACH_E    0x08
 
-#ifdef KERNEL
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
-
-#endif
 
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
@@ -137,4 +140,4 @@ extern	char *intiobase, *intiolimit;
 #define	IC_CE		0x0004	/* clear instruction cache entry */
 #define	IC_CLR		0x0008	/* clear entire instruction cache */
 
-
+#endif

@@ -44,9 +44,7 @@
 
 #define	BYTE_ORDER	BIG_ENDIAN
 
-#ifndef KERNEL
 #include <sys/cdefs.h>
-#endif
 
 __BEGIN_DECLS
 unsigned long	htonl __P((unsigned long));

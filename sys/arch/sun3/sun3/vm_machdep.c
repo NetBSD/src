@@ -234,3 +234,26 @@ caddr_t obio_vm_alloc(npages)
     vm_map_unlock(phys_map);
     return (caddr_t) addr;
 }
+
+/*
+ * Move pages from one kernel virtual address to another.
+ * Both addresses are assumed to reside in the Sysmap,
+ * and size must be a multiple of CLSIZE.
+ */
+void pagemove(from, to, size)
+        caddr_t from, to;
+	int size;
+{
+        vm_offset_t fpte;
+
+	if (size % CLBYTES)
+		panic("pagemove");
+	while (size > 0) {
+	    fpte = get_pte(from);
+	    set_pte(to, fpte);
+	    set_pte(from, PG_INVAL);
+	    from += NBPG;
+	    to += NBPG;
+	    size -= NBPG;
+	}
+}

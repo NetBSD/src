@@ -59,7 +59,7 @@
 /*
  * Setrq(p)
  *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * Call should be made at splclock(), and p->p_stat should be SRUN
  */
 ENTRY(setrq)
 	movl	sp@(4),a0
@@ -91,7 +91,7 @@ Lset2:
 /*
  * Remrq(p)
  *
- * Call should be made at spl6().
+ * Call should be made at splclock().
  */
 ENTRY(remrq)
 	movl	sp@(4),a0
@@ -178,11 +178,11 @@ Lbadsw:
 
 .globl _load_u_area;
 /*
- * Swtch()
+ * cpu_swtch()
  *
  * Hacked for sun3	
  */
-ENTRY(swtch)
+ENTRY(cpu_swtch)
 	movl	_curpcb,a0		| current pcb
 	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
@@ -251,7 +251,6 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE no-cmap shit*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state

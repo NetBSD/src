@@ -36,14 +36,14 @@
  * The standard executable formats are taken care of automatically;
  * machine-specific ones can be defined using this function.
  */
-#define cpu_exec_makecmds(p,epp)        ENOEXEC
+/*#define cpu_exec_makecmds(p,epp)        ENOEXEC*/
 
 /*
  * the following function/macro checks to see if a given machine
  * type (a_mid) field is valid for this architecture
  * a non-zero return value indicates that the machine type is correct.
  */
-#define cpu_exec_checkmid(mid) (mid == MID_SUN3)
+/*#define cpu_exec_checkmid(mid) (mid == MID_SUN3)*/
 
 #define __LDPGSZ	8192
 

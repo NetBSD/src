@@ -28,11 +28,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.10 1993/10/12 05:25:13 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.11 1993/11/23 05:29:06 glass Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
+ *
+ * [this code suffered terribly when we were pursuing the fast clock interrupt
+ *  problem.  in particular, the level switching code is not legitimate]
  *
  */
 
@@ -44,8 +47,10 @@
 #include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
+
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/control.h>
 
 #include "intersil7170.h"
 #include "interreg.h"
@@ -198,7 +203,7 @@ void clockattach(parent, self, args)
     void level5intr_clock();
     vm_offset_t pte;
 
-    clock_addr = OBIO_CLOCK;
+    clock_addr = (caddr_t) OBIO_CLOCK;
     clock->clock_level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 5);
     clock->clock_va = (caddr_t) CLOCK_VA;
     if (!clock->clock_va) {
@@ -218,20 +223,54 @@ void clockattach(parent, self, args)
     printf("\n");
 }
 
+/*
+ * Set up the real-time clock.  Leave stathz 0 since there is no secondary
+ * clock available.
+ */
+void
+cpu_initclocks(void)
+{
+    struct timer_softc *clock;
+    unsigned char dummy;
+
+    if (clockcd.cd_ndevs < 1 ||
+	!(clock = clockcd.cd_devs[0]))
+	panic("cpu_initclocks: no timer");
+
+	/* make sure irq5/7 stuff is resolved :) */
+
+    dummy = intersil_clear();
+    dummy++;
+    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
+    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
+						   INTERSIL_CMD_IENABLE);
+}
+
+/*
+ * This doesn't need to do anything, as we have only one timer and
+ * profhz==stathz==hz.
+ */
+void
+setstatclockrate(newhz)
+	int newhz;
+{
+	/* nothing */
+}
+
+
 int clock_count = 0;
 
 void clock_intr(frame)
-     clockframe frame;
+     struct clockframe frame;
 {
-    if ((clock_count % 1000) == 0) {
-#if 0
-	printf("clock_intr: total of %d interrupts received\n",
-	       clock_count);
-	printf("clock_intr: frame pc %x sr %x\n", frame.pc, frame.ps);
-#endif
-    }
+    static unsigned char led_pattern = 0;
+
     clock_count++;
-    hardclock(frame);
+    if ((clock_count%20) == 0) {
+	set_control_byte((char *) DIAG_REG, led_pattern);
+	led_pattern = ~led_pattern;
+    }
+    hardclock(&frame);
 }
 
 
@@ -249,33 +288,6 @@ void clock_intr(frame)
  * also microtime support
  */
 
-/*
- * Start the real-time clock.
- */
-void startrtclock()
-{
-    char dummy;
-
-    if (!intersil_softc)
-	panic("clock: not initialized");
-
-    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
-    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
-						   INTERSIL_CMD_IDISABLE);
-    dummy = intersil_clear();
-}
-
-void enablertclock()
-{
-    unsigned char dummy;
-	/* make sure irq5/7 stuff is resolved :) */
-
-    dummy = intersil_clear();
-    dummy++;
-    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
-    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
-						   INTERSIL_CMD_IENABLE);
-}
 
 void intersil_counter_state(map)
      struct intersil_map *map;
@@ -421,7 +433,7 @@ void resettodr()
 void microtime(tvp)
      register struct timeval *tvp;
 {
-    int s;
+    int s = splhigh();
     static struct timeval lasttime;
 
     /* as yet...... this makes little sense*/

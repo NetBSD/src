@@ -17,9 +17,10 @@
 void promattach __P((struct device *, struct device *, void *));
 
 struct prom_softc {
-    int flags;
-    int nopen;
-    struct tty t;
+    struct device prom_dev;
+    int prom_flags;
+    int prom_nopen;
+    struct tty *prom_t;
 };
 
 struct cfdriver promcd = 
@@ -36,15 +37,12 @@ void promattach(parent, self, args)
      struct device *self;
      void *args;
 {
-    struct prom_softc *prom;
+    struct prom_softc *promp = (struct prom_softc *) self;
 
-    prom = (struct prom_softc *) self;
-    prom->flags = 0;
-    prom->nopen = 0;
     printf("\n");		
 }
 
-int promstart __P((struct tty *));
+void promstart __P((struct tty *));
 
 int promopen(dev, flag, mode, p)
 	dev_t dev;
@@ -52,15 +50,17 @@ int promopen(dev, flag, mode, p)
 	struct proc *p;
 {
     struct tty *tp;
-    struct prom_softc *prom;
+    struct prom_softc *promp;
     int unit;
     int s,error=0;
 
     unit = minor(dev);
     PROM_CHECK(unit);
-    prom = UNIT_TO_PROMP(unit);
-    bzero(&prom->t, sizeof(struct tty));
-    tp = &prom->t;
+    promp = UNIT_TO_PROMP(unit);
+    if (!promp->prom_t)
+	tp = promp->prom_t = ttymalloc();
+    else
+	tp = promp->prom_t;
     tp->t_oproc = promstart;
     tp->t_dev = dev;
     if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -74,14 +74,15 @@ int promopen(dev, flag, mode, p)
 	    tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	}
 	ttsetwater(tp);
-	}
-    else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+    }
+    else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 	return (EBUSY);
+
     s = spltty();
-    while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
+    while ((flag & O_NONBLOCK) == 0 && (tp->t_cflag &CLOCAL) == 0 &&
 	   (tp->t_state & TS_CARR_ON) == 0) {
 	tp->t_state |= TS_WOPEN;
-	if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
+	if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 			     ttopen, 0))
 	    break;
     }
@@ -98,12 +99,12 @@ promclose(dev, flag, mode, p)
 {
     struct tty *tp;
     int unit;
-    struct prom_softc *prom;    
+    struct prom_softc *promp;    
 
     unit = minor(dev);
     PROM_CHECK(unit);
-    prom = UNIT_TO_PROMP(unit);
-    tp = &prom->t;
+    promp = UNIT_TO_PROMP(unit);
+    tp = promp->prom_t;
     (*linesw[tp->t_line].l_close)(tp, flag);
     ttyclose(tp);
     return 0;
@@ -115,12 +116,12 @@ promread(dev, uio, flag)
 {
     int unit;
     register struct tty *tp;
-    struct prom_softc *prom;    
+    struct prom_softc *promp;    
 
     unit = minor(dev);
     PROM_CHECK(unit);
-    prom = UNIT_TO_PROMP(unit);
-    tp = &prom->t;
+    promp = UNIT_TO_PROMP(unit);
+    tp = promp->prom_t;
     return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 promwrite(dev, uio, flag)
@@ -129,39 +130,68 @@ promwrite(dev, uio, flag)
 {
     int unit;
     register struct tty *tp;
-    struct prom_softc *prom;    
+    struct prom_softc *promp;    
 
     unit = minor(dev);
     PROM_CHECK(unit);
-    prom = UNIT_TO_PROMP(unit);
-    tp = &prom->t;
+    promp = UNIT_TO_PROMP(unit);
+    tp = promp->prom_t;
  
     return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-int promstart(tp)
+int promioctl(dev, cmd, data, flag)
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+{
+    int unit;
+    register struct tty *tp;
+    struct prom_softc *promp;
+    int error;
+
+    unit = minor(dev);
+    PROM_CHECK(unit);
+    promp = UNIT_TO_PROMP(unit);
+    tp = promp->prom_t;
+
+    error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+    if (error >= 0)
+	return error;
+    error = ttioctl(tp, cmd, data, flag);
+    if (error >= 0)
+	return error;
+
+    switch (cmd) {
+    default:
+	return ENOTTY;
+    }
+
+    return 0;
+}
+void promstart(tp)
      struct tty *tp;
 {
     int s;
     int c;
 
     s = spltty();
-    if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) goto out;
-    if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
-	if (tp->t_state&TS_ASLEEP) {
-	    tp->t_state &= ~TS_ASLEEP;
-	    wakeup((caddr_t)&tp->t_out);
+    if (tp->t_state & (TS_BUSY | TS_TTSTOP)) goto out;
+    if (tp->t_outq.c_cc <= tp->t_lowat) {
+	if (tp->t_state & TS_ASLEEP) {
+	    tp->t_state &=~ TS_ASLEEP;
+	    wakeup((caddr_t)&tp->t_outq);
 	}
 	selwakeup(&tp->t_wsel);
     }
-    if (RB_LEN(&tp->t_out) == 0)
+    if (tp->t_outq.c_cc == 0)
 	goto out;
-    c = rbgetc(&tp->t_out);
     tp->t_state |= TS_BUSY;
+    c = getc(&tp->t_outq);
     mon_putchar(c);
  out:
     splx(s);
-    return 0;
 }
 
 /*
