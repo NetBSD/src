@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.9 2002/06/13 23:41:15 wiz Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.10 2003/05/17 14:58:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.9 2002/06/13 23:41:15 wiz Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.10 2003/05/17 14:58:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ char	*string;		/* if non-zero, where to connect to */
 	}
     }
 
-    if (sscanf(string, "%[^:]:%d:%s", thehostname,
+    if (sscanf(string, "%[^:]:%d:%99s", thehostname,
 				(int *)&port, keyname) != 3) {
 	fprintf(stderr, "API3270 environmental variable has bad format.\n");
 	return -1;
@@ -132,7 +132,7 @@ char	*string;		/* if non-zero, where to connect to */
 	perror("fopen");
 	return -1;
     }
-    if (fscanf(keyfile, "%s\n", inkey) != 1) {
+    if (fscanf(keyfile, "%99s\n", inkey) != 1) {
 	perror("fscanf");
 	return -1;
     }
