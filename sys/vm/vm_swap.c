@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.47.2.2 1997/12/09 20:30:34 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.47.2.3 1998/11/08 22:29:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1078,7 +1078,7 @@ sw_reg_strategy(sdp, bp, bn)
 				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz));
 
 		getvndbuf(nbp);
-		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
+		nbp->vb_buf.b_flags    = bp->b_flags | B_NOCACHE | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = bp->b_bufsize;
 		nbp->vb_buf.b_error    = 0;
