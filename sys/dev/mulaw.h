@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.4 1997/05/13 19:02:12 augustss Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.5 1997/05/23 21:20:02 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,3 +45,4 @@ extern void change_sign16 __P((void *, u_char *buf, int cnt));
 /* Convert between little and big endian. */
 extern void swap_bytes __P((void *, u_char *buf, int cnt));
 extern void swap_bytes_change_sign16 __P((void *, u_char *buf, int cnt));
+extern void change_sign16_swap_bytes __P((void *, u_char *buf, int cnt));
