@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.40 2000/04/15 17:51:28 simonb Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.41 2000/06/28 02:53:49 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,7 +75,8 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <sys/sysctl.h>
 
 #include <net/if.h>
