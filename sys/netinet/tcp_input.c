@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.162 2003/02/26 06:31:15 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.163 2003/03/01 04:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.162 2003/02/26 06:31:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.163 2003/03/01 04:40:27 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1687,9 +1687,18 @@ after_listen:
 		 */
 		if (tp->t_flags & TF_SYN_REXMT)
 			tp->snd_cwnd = tp->t_peermss;
-		else
-			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
-			    tp->t_peermss);
+		else {
+			int ss = tcp_init_win;
+#ifdef INET
+			if (inp != NULL && in_localaddr(inp->inp_faddr))
+				ss = tcp_init_win_local;
+#endif
+#ifdef INET6
+			if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
+				ss = tcp_init_win_local;
+#endif
+			tp->snd_cwnd = TCP_INITIAL_WINDOW(ss, tp->t_peermss);
+		}
 
 		tcp_rmx_rtt(tp);
 		if (tiflags & TH_ACK) {
@@ -3384,8 +3393,18 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	 */
 	if (sc->sc_rxtshift)
 		tp->snd_cwnd = tp->t_peermss;
-	else
-		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, tp->t_peermss);
+	else {
+		int ss = tcp_init_win;
+#ifdef INET
+		if (inp != NULL && in_localaddr(inp->inp_faddr))
+			ss = tcp_init_win_local;
+#endif
+#ifdef INET6
+		if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
+			ss = tcp_init_win_local;
+#endif
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(ss, tp->t_peermss);
+	}
 
 	tcp_rmx_rtt(tp);
 	tp->snd_wl1 = sc->sc_irs;
