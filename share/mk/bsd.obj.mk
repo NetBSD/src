@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.41 2003/07/18 04:06:18 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.42 2003/07/20 15:02:11 lukem Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -73,15 +73,9 @@ obj:
 		fi; \
 		subdir=$${subdir%/}; \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf}; \
-		if [ -h $${here}${__objdir} ]; then \
-			curtarg=`ls -ld $${here}${__objdir} | awk '{print $$NF}'` ; \
-			if [ "$$curtarg" = "$$dest" ]; then \
-				: ; \
-			else \
-				echo "$${here}${__objdir} -> $$dest"; \
-				rm -rf ${__objdir}; \
-				ln -s $$dest ${__objdir}; \
-			fi; \
+		if  ttarg=`${TOOL_STAT} -qf '%Y' $${here}${__objdir}` && \
+		    [ "$$dest" = "$$ttarg" ]; then \
+			: ; \
 		else \
 			echo "$${here}${__objdir} -> $$dest"; \
 			rm -rf ${__objdir}; \
