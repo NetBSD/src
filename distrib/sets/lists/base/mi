@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.519 2005/01/20 04:26:00 ginsbach Exp $
+# $NetBSD: mi,v 1.520 2005/01/21 04:47:23 dyoung Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -402,7 +402,7 @@
 ./usr/bin/compile_et				base-krb5-bin		kerberos
 ./usr/bin/compress				base-util-bin
 ./usr/bin/cpio					base-util-bin
-./usr/bin/cpp					base-util-bin
+./usr/bin/cpp					base-util-bin		gcccmds
 ./usr/bin/crontab				base-cron-bin
 ./usr/bin/ctags					base-c-bin
 ./usr/bin/cu					base-uucp-bin		uucp
@@ -432,7 +432,7 @@
 ./usr/bin/fsplit				base-util-bin
 ./usr/bin/fstat					base-util-bin
 ./usr/bin/ftp					base-netutil-bin
-./usr/bin/gcpp					base-util-bin
+./usr/bin/gcpp					base-util-bin		gcccmds
 ./usr/bin/gencat				base-locale-bin
 ./usr/bin/getconf				base-util-bin
 ./usr/bin/getent				base-util-bin
