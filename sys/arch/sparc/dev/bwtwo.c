@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.10 1995/08/29 22:20:01 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.11 1995/09/17 20:43:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,8 +80,14 @@ struct bwtwo_softc {
 };
 
 /* autoconfiguration driver */
-static void	bwtwoattach(struct device *, struct device *, void *);
-static int	bwtwomatch(struct device *, void *, void *);
+static void	bwtwoattach __P((struct device *, struct device *, void *));
+static int	bwtwomatch __P((struct device *, void *, void *));
+int		bwtwoopen __P((dev_t, int, int, struct proc *));
+int		bwtwoclose __P((dev_t, int, int, struct proc *));
+int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int		bwtwommap __P((dev_t, int, int));
+static void	bwtwounblank __P((struct device *));
+
 struct cfdriver bwtwocd =
     { NULL, "bwtwo", bwtwomatch, bwtwoattach,
       DV_DULL, sizeof(struct bwtwo_softc) };
@@ -89,8 +95,9 @@ struct cfdriver bwtwocd =
 /* XXX we do not handle frame buffer interrupts (do not know how) */
 
 /* frame buffer generic driver */
-static void	bwtwounblank(struct device *);
-static struct fbdriver bwtwofbdriver = { bwtwounblank };
+static struct fbdriver bwtwofbdriver = {
+	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwommap
+};
 
 extern int fbnode;
 extern struct tty *fbconstty;
@@ -98,8 +105,6 @@ extern int (*v_putc)();
 extern int nullop();
 static int bwtwo_cnputc();
 static struct bwtwo_softc *bwcons;
-
-#define	BWTWO_MAJOR	27		/* XXX */
 
 /*
  * Match a bwtwo.
@@ -142,8 +147,6 @@ bwtwoattach(parent, self, args)
 	int isconsole;
 	int sbus = 1;
 	char *nam;
-
-	sc->sc_fb.fb_major = BWTWO_MAJOR;	/* XXX to be removed */
 
 	sc->sc_fb.fb_driver = &bwtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
@@ -263,7 +266,7 @@ bwtwoattach(parent, self, args)
 #ifdef RCONSOLE
 		/* XXX: doesn't work (??) on Sun 4 yet. */
 		if (cputyp != CPU_SUN4)
-			rcons_init(&sc->sc_fb);
+			fbrcons_init(&sc->sc_fb);
 #endif
 	} else
 		printf("\n");
