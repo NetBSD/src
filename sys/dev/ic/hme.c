@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.3 1999/12/15 10:33:31 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.4 1999/12/17 14:37:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ void		hme_watchdog __P((struct ifnet *));
 void		hme_shutdown __P((void *));
 void		hme_init __P((struct hme_softc *));
 void		hme_meminit __P((struct hme_softc *));
+void		hme_mifinit __P((struct hme_softc *));
 void		hme_reset __P((struct hme_softc *));
 void		hme_setladrf __P((struct hme_softc *));
 
@@ -242,6 +243,8 @@ hme_config(sc)
 
 	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
 
+	hme_mifinit(sc);
+
 	mii_phy_probe(&sc->sc_dev, mii, 0xffffffff,
 			MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -340,17 +343,20 @@ hme_meminit(sc)
 	hr->rb_txddma = dma;
 	p += ntbuf * HME_XD_SIZE;
 	dma += ntbuf * HME_XD_SIZE;
+	/* We have reserved descriptor space until the next 2048 byte boundary.*/
+	dma = (bus_addr_t)roundup((u_long)dma, 2048);
+	p = (caddr_t)roundup((u_long)p, 2048);
 
 	/*
 	 * Allocate receive descriptors
-	 * Buffer descriptors must be aligned on a 2048 byte boundary.
 	 */
-	dma = (bus_addr_t)roundup((long)dma, 2048);
-	p = (caddr_t)roundup((long)p, 2048);
 	hr->rb_rxd = p;
 	hr->rb_rxddma = dma;
 	p += nrbuf * HME_XD_SIZE;
 	dma += nrbuf * HME_XD_SIZE;
+	/* Again move forward to the next 2048 byte boundary.*/
+	dma = (bus_addr_t)roundup((u_long)dma, 2048);
+	p = (caddr_t)roundup((u_long)p, 2048);
 
 
 	/*
@@ -418,6 +424,9 @@ hme_init(sc)
 
 	/* step 1 & 2. Reset the Ethernet Channel */
 	hme_stop(sc);
+
+	/* Re-initialize the MIF */
+	hme_mifinit(sc);
 
 	/* Call MI reset function if any */
 	if (sc->sc_hwreset)
@@ -531,9 +540,9 @@ hme_init(sc)
 	/* step 11. XIF Configuration */
 	v = bus_space_read_4(t, mac, HME_MACI_XIF);
 	v |= HME_MAC_XIF_OE;
-	/* If an external transceiver is connected, disable MII drivers */
+	/* If an external transceiver is connected, enable its MII drivers */
 	if ((bus_space_read_4(t, mif, HME_MIFI_CFG) & HME_MIF_CFG_MDI1) != 0)
-		v |= HME_MAC_XIF_MIIDISAB;
+		v |= HME_MAC_XIF_MIIENABLE;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 
@@ -548,14 +557,6 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
 	/* step 14. Issue Transmit Pending command */
-
-	/*
-	 * Put MIF in frame mode
-	 * XXX - do bit-bang mode later
-	 */
-	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	v &= ~HME_MIF_CFG_BBMODE;
-	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
@@ -727,7 +728,7 @@ hme_read(sc, ix, len)
 
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ether_cmp(eh->ether_dhost, sc->sc_enaddr)) {
+		    ether_cmp(eh->ether_dhost, sc->sc_enaddr) == 0) {
 			m_freem(m);
 			return;
 		}
@@ -878,8 +879,13 @@ hme_rint(sc)
 		if (flags & HME_XD_OWN)
 			break;
 
-		len = HME_XD_DECODE_RSIZE(flags);
-		hme_read(sc, ri, len);
+		if (flags & HME_XD_OFL) {
+			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
+					sc->sc_dev.dv_xname, ri, flags);
+		} else {
+			len = HME_XD_DECODE_RSIZE(flags);
+			hme_read(sc, ri, len);
+		}
 
 		/* This buffer can be used by the hardware again */
 		HME_XD_SETFLAGS(xdr, ri,
@@ -946,6 +952,23 @@ hme_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	hme_reset(sc);
+}
+
+/*
+ * Initialize the MII Management Interface
+ */
+void
+hme_mifinit(sc)
+	struct hme_softc *sc;
+{
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mif = sc->sc_mif;
+	u_int32_t v;
+
+	/* Configure the MIF in frame mode */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	v &= ~HME_MIF_CFG_BBMODE;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 }
 
 /*
