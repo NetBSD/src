@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.6 2002/05/23 06:19:39 itojun Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.7 2002/06/08 23:17:01 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.6 2002/05/23 06:19:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.7 2002/06/08 23:17:01 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -555,6 +555,9 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	ifs = ifunit(req->ifbr_ifsname);
 	if (ifs == NULL)
 		return (ENOENT);
+
+	if (sc->sc_if.if_mtu != ifs->if_mtu)
+		return (EINVAL);
 
 	if (ifs->if_bridge == sc)
 		return (EEXIST);
