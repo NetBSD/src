@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.21 2001/06/28 11:38:19 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.22 2001/08/05 01:51:23 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -84,7 +84,7 @@ split_line(FIELD *field, unsigned pos);
 static void
 bump_lines(FIELD *field, int pos, int amt, bool do_len);
 static bool
-check_dynamic_size(FIELD *field);
+check_field_size(FIELD *field);
 
 
 /*
@@ -168,30 +168,35 @@ bump_lines(FIELD *field, int pos, int amt, bool do_len)
 }
 
 /*
- * Check the sizing of the dynamic field, if the maximum size is set then
- * check that the number of rows or columns does not exceed the set
- * maximum.  The decision to check the rows or columns is made on the basis
- * of how many rows are in the field - one row means the max applies to
- * the number of columns otherwise it applies to the number of rows.  If
- * the row/column count is less than the maximum then return TRUE.
+ * Check the sizing of the field, if the maximum size is set for a
+ * dynamic field then check that the number of rows or columns does
+ * not exceed the set maximum.  The decision to check the rows or
+ * columns is made on the basis of how many rows are in the field -
+ * one row means the max applies to the number of columns otherwise it
+ * applies to the number of rows.  If the row/column count is less
+ * than the maximum then return TRUE.
  *
  */
-bool
-check_dynamic_size(FIELD *field)
+static bool
+check_field_size(FIELD *field)
 {
-	if (field->max == 0) /* unlimited */
-		return TRUE;
+	if ((field->opts & O_STATIC) != O_STATIC) {
+		  /* dynamic field */
+		if (field->max == 0) /* unlimited */
+			return TRUE;
 
-	if (field->rows == 1) {
-		if (field->buffers[0].length >= field->max)
-			return FALSE;
-		else
-			return TRUE;
+		if (field->rows == 1) {
+			return (field->buffers[0].length < field->max);
+		} else {
+			return (field->row_count <= field->max);
+		}
 	} else {
-		if (field->row_count > field->max)
-			return FALSE;
-		else
-			return TRUE;
+		if ((field->rows + field->nrows) == 1) {
+			return (field->buffers[0].length < field->cols);
+		} else {
+			return (field->row_count <= (field->rows
+						     + field->nrows));
+		}
 	}
 }
 
@@ -973,7 +978,11 @@ _formi_redraw_field(FORM *form, int field)
 		
 			if (slen > cur->start_char) {
 				slen -= cur->start_char;
-				post += cur->start_char;
+				if (slen > flen)
+					post = 0;
+				else
+					post = flen - slen;
+				
 				if (post > flen)
 					post = flen;
 			} else {
@@ -1121,10 +1130,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	if ((field->overlay == 0)
 	    || ((field->overlay == 1) && (pos >= field->buffers[0].length))) {
 		  /* first check if the field can have more chars...*/
-		if ((((field->opts & O_STATIC) == O_STATIC) &&
-		     (field->buffers[0].length >= (field->cols * field->rows))) ||
-		    (((field->opts & O_STATIC) != O_STATIC) &&
-		     (check_dynamic_size(field) == FALSE)))
+		if (check_field_size(field) == FALSE)
 			return E_REQUEST_DENIED;
 		
 		if (field->buffers[0].length + 1
@@ -1173,7 +1179,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	   * max field size - this can happen if the field is re-wrapped
 	   * and the row count is increased past the set limit.
 	   */
-	if ((status != E_OK) || (check_dynamic_size(field) == FALSE)) {
+	if ((status != E_OK) || (check_field_size(field) == FALSE)) {
 		if ((field->overlay == 0)
 		    || ((field->overlay == 1)
 			&& (pos >= field->buffers[0].length))) {
