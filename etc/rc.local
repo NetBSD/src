@@ -1,27 +1,14 @@
-#	$NetBSD: rc.local,v 1.19 1997/03/12 19:23:32 mycroft Exp $
+#	$NetBSD: rc.local,v 1.20 1997/04/19 03:10:58 perry Exp $
+#	originally from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
-# site-specific startup actions, daemons
+# This file is (nearly) the last thing invoked by /etc/rc during a
+# normal boot.
+# It is intended to be edited locally to add site-specific boot-time
+# actions, such as starting locally installed daemons.
 #
-#	from: @(#)rc.local	8.3 (Berkeley) 4/28/94
-#
-
-if [ ! -f /etc/motd ]; then
-	install -c -o root -g wheel -m 664 /dev/null /etc/motd
-fi
-T=/tmp/_motd
-rm -f $T
-sysctl -n kern.version | sed 1q > $T
-echo "" >> $T
-sed '1,/^$/d' < /etc/motd >> $T
-cmp -s $T /etc/motd || cp $T /etc/motd
-rm -f $T
 
 echo -n 'starting local daemons:'
 
-# Kerberos runs ONLY on the Kerberos server machine
-if [ "$kerberos_server" = YES ]; then
-	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
-	echo -n ' kadmind';	kadmind -n >> /var/log/kadmind.log &
-fi
+# add your local daemons here, following the startup models in /etc/rc
 
 echo '.'
