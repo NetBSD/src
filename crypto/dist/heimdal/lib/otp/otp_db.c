@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-__RCSID("$Heimdal: otp_db.c,v 1.19 2002/05/19 22:11:03 joda Exp $"
-        "$NetBSD: otp_db.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: otp_db.c,v 1.20 2003/04/16 16:20:58 lha Exp $"
+        "$NetBSD: otp_db.c,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $");
 #endif
 
 #include "otp_locl.h"
@@ -200,7 +200,7 @@ otp_put (void *v, OtpContext *ctx)
 
   if (rem < len)
       return -1;
-  strcpy (p, ctx->alg->name);
+  strlcpy (p, ctx->alg->name, rem);
   p += len;
   rem -= len;
 
@@ -225,7 +225,7 @@ otp_put (void *v, OtpContext *ctx)
   len = strlen(ctx->seed) + 1;
   if (rem < len)
       return -1;
-  strcpy (p, ctx->seed);
+  strlcpy (p, ctx->seed, rem);
   p += len;
   rem -= len;
   dat.dptr  = buf;

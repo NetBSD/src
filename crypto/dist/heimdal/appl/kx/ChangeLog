@@ -1,3 +1,29 @@
+2003-04-16  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kx.c (doit_{passive,active}): use kc->thataddr directly
+
+	* kx.h: don't directly use sockaddr_storage, since we can't always
+	know what it looks like
+
+2003-04-11  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* rxterm.1: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	* rxtelnet.1: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	* kxd.8: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	* kx.1: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	
+2003-02-25  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* krb4.c: remove \n from warnx, from NetBSD
+	
+2002-12-11  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kx.c (connect_host): pass size of thisaddr_ss to getsockname
+
+2002-10-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* some ipv6 support (from Love)
+
 2002-09-09  Johan Danielsson  <joda@pdc.kth.se>
 
 	* krb5.c (krb5_authenticate): use subkey

@@ -14,14 +14,14 @@
 
 @SET_MAKE@
 
-# $Heimdal: Makefile.am,v 1.22 2002/08/13 14:02:54 joda Exp $
-# $NetBSD: Makefile.in,v 1.1.1.6 2002/09/12 12:41:43 joda Exp $
+# $Heimdal: Makefile.am,v 1.23.2.1 2003/05/12 15:20:47 joda Exp $
+# $NetBSD: Makefile.in,v 1.1.1.7 2003/05/15 20:28:50 lha Exp $
 
 # $Heimdal: Makefile.am.common,v 1.5 2002/05/19 18:35:37 joda Exp $
-# $NetBSD: Makefile.in,v 1.1.1.6 2002/09/12 12:41:43 joda Exp $
+# $NetBSD: Makefile.in,v 1.1.1.7 2003/05/15 20:28:50 lha Exp $
 
-# $Heimdal: Makefile.am.common,v 1.36 2002/08/19 16:10:25 joda Exp $
-# $NetBSD: Makefile.in,v 1.1.1.6 2002/09/12 12:41:43 joda Exp $
+# $Heimdal: Makefile.am.common,v 1.37.2.1 2003/05/08 17:08:09 joda Exp $
+# $NetBSD: Makefile.in,v 1.1.1.7 2003/05/15 20:28:50 lha Exp $
 SHELL = @SHELL@
 
 srcdir = @srcdir@
@@ -117,6 +117,7 @@ LIB_roken = @LIB_roken@
 LIB_security = @LIB_security@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAINT = @MAINT@
 NEED_WRITEAUTH_FALSE = @NEED_WRITEAUTH_FALSE@
 NEED_WRITEAUTH_TRUE = @NEED_WRITEAUTH_TRUE@
 NROFF = @NROFF@
@@ -195,7 +196,7 @@ LIB_readline = @LIB_readline@
 
 NROFF_MAN = groff -mandoc -Tascii
 
-@KRB4_TRUE@LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
+LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
 
 @KRB5_TRUE@LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la \
 @KRB5_TRUE@	$(top_builddir)/lib/asn1/libasn1.la
@@ -213,7 +214,7 @@ otptest_LDADD = libotp.la
 include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
-libotp_la_LDFLAGS = -version-info 1:3:1
+libotp_la_LDFLAGS = -version-info 1:4:1
 libotp_la_LIBADD = $(LIB_des) $(LIB_roken) $(LIB_NDBM)
 
 @HAVE_DB3_TRUE@ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
@@ -234,7 +235,7 @@ libotp_la_SOURCES = \
 	$(ROKEN_SRCS)
 
 
-@do_roken_rename_TRUE@ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c
+@do_roken_rename_TRUE@ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
 subdir = lib/otp
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/include/config.h
@@ -242,13 +243,14 @@ CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(lib_LTLIBRARIES)
 
 libotp_la_DEPENDENCIES =
-@HAVE_DB3_TRUE@am__objects_15 = ndbm_wrap.lo
-@HAVE_DB3_FALSE@am__objects_15 =
-@do_roken_rename_TRUE@am__objects_13 = snprintf.lo strcasecmp.lo \
-@do_roken_rename_TRUE@	strncasecmp.lo strlwr.lo
+@HAVE_DB3_TRUE@am__objects_16 = ndbm_wrap.lo
+@HAVE_DB3_FALSE@am__objects_16 =
+@do_roken_rename_TRUE@am__objects_14 = snprintf.lo strcasecmp.lo \
+@do_roken_rename_TRUE@	strncasecmp.lo strlwr.lo strlcpy.lo \
+@do_roken_rename_TRUE@	strlcat.lo
 am_libotp_la_OBJECTS = otp.lo otp_challenge.lo otp_db.lo otp_md.lo \
-	otp_parse.lo otp_print.lo otp_verify.lo $(am__objects_15) \
-	$(am__objects_13)
+	otp_parse.lo otp_print.lo otp_verify.lo $(am__objects_16) \
+	$(am__objects_14)
 libotp_la_OBJECTS = $(am_libotp_la_OBJECTS)
 check_PROGRAMS = otptest$(EXEEXT)
 noinst_PROGRAMS = otptest$(EXEEXT)
@@ -284,10 +286,10 @@ all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .et .h .x .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .c .lo .o .obj
-$(srcdir)/Makefile.in:  Makefile.am $(top_srcdir)/Makefile.am.common $(top_srcdir)/cf/Makefile.am.common $(top_srcdir)/configure.in $(ACLOCAL_M4)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/Makefile.am.common $(top_srcdir)/cf/Makefile.am.common $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --foreign  lib/otp/Makefile
-Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
+Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 libLTLIBRARIES_INSTALL = $(INSTALL)
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
@@ -481,7 +483,9 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local install-includeHEADERS
+install-data-am: install-includeHEADERS
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 
 install-exec-am: install-libLTLIBRARIES
 	@$(NORMAL_INSTALL)
@@ -510,7 +514,7 @@ uninstall-am: uninstall-includeHEADERS uninstall-info-am \
 	clean-libtool clean-noinstPROGRAMS distclean distclean-compile \
 	distclean-generic distclean-libtool distclean-tags distdir dvi \
 	dvi-am info info-am install install-am install-data \
-	install-data-am install-data-local install-exec install-exec-am \
+	install-data-am install-exec install-exec-am \
 	install-includeHEADERS install-info install-info-am \
 	install-libLTLIBRARIES install-man install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
@@ -643,7 +647,7 @@ dist-hook: dist-cat1-mans dist-cat3-mans dist-cat5-mans dist-cat8-mans
 install-cat-mans:
 	$(SHELL) $(top_srcdir)/cf/install-catman.sh "$(INSTALL_DATA)" "$(mkinstalldirs)" "$(srcdir)" "$(DESTDIR)$(mandir)" '$(CATMANEXT)' $(man_MANS) $(man1_MANS) $(man3_MANS) $(man5_MANS) $(man8_MANS)
 
-install-data-local: install-cat-mans
+install-data-hook: install-cat-mans
 
 .et.h:
 	$(COMPILE_ET) $<
@@ -665,6 +669,10 @@ strncasecmp.c:
 	$(LN_S) $(srcdir)/../roken/strncasecmp.c .
 strlwr.c:
 	$(LN_S) $(srcdir)/../roken/strlwr.c .
+strlcpy.c:
+	$(LN_S) $(srcdir)/../roken/strlcpy.c .
+strlcat.c:
+	$(LN_S) $(srcdir)/../roken/strlcat.c .
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

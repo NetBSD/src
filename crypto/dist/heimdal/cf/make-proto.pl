@@ -1,6 +1,6 @@
 # Make prototypes from .c files
-# $Heimdal: make-proto.pl,v 1.15 2002/08/12 16:23:58 joda Exp $
-# $NetBSD: make-proto.pl,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $
+# $Heimdal: make-proto.pl,v 1.16 2002/09/19 19:29:42 joda Exp $
+# $NetBSD: make-proto.pl,v 1.1.1.5 2003/05/15 20:28:51 lha Exp $
 
 ##use Getopt::Std;
 require 'getopts.pl';
@@ -50,9 +50,9 @@ while(<>) {
 	    s/\/\*(.|\n)*\ca//;
 	}
 	s/^\s*//;
-	s/\s$//;
+	s/\s*$//;
 	s/\s+/ /g;
-	if($line =~ /\)\s$/){
+	if($_ =~ /\)$/){
 	    if(!/^static/ && !/^PRIVATE/){
 		if(/(.*)(__attribute__\s?\(.*\))/) {
 		    $attr = $2;

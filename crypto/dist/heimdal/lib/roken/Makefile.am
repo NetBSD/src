@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.122 2002/09/09 19:17:01 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $
+# $Heimdal: Makefile.am,v 1.122.6.1 2003/05/12 15:20:47 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -8,7 +8,7 @@ ACLOCAL_AMFLAGS = -I ../../cf
 CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 16:0:0
+libroken_la_LDFLAGS = -version-info 16:2:0
 
 noinst_PROGRAMS = make-roken snprintf-test
 
