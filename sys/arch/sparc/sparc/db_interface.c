@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 1996/03/31 23:38:32 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.11 1996/04/01 17:37:08 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -216,7 +216,7 @@ db_write_text(dst, ch)
 	if (cputyp == CPU_SUN4M) {
 #endif
 	if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address %p not a valid page\n", dst);
 		splx(s);
 		return;
 	}
