@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.30 2002/09/23 12:48:03 mycroft Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.31 2003/05/17 22:54:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.30 2002/09/23 12:48:03 mycroft Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.31 2003/05/17 22:54:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ main(argc, argv)
 		char hbuf[NI_MAXHOST];
 		if (getnameinfo((struct sockaddr *)&from, fromlen, hbuf,
 				sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
-			strncpy(hbuf, "invalid", sizeof(hbuf));
+			strlcpy(hbuf, "invalid", sizeof(hbuf));
 		}
 		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)\n",
 		    hbuf);
@@ -302,8 +302,7 @@ doit(f, fromp)
 		hostname = saddr;
 		res0 = NULL;
 		if (check_all || local_domain(saddr)) {
-			strncpy(hostnamebuf, saddr, sizeof(hostnamebuf) - 1);
-			hostnamebuf[sizeof(hostnamebuf) - 1] = 0;
+			strlcpy(hostnamebuf, saddr, sizeof(hostnamebuf));
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = fromp->sa_family;
 			hints.ai_socktype = SOCK_STREAM;
@@ -341,15 +340,14 @@ doit(f, fromp)
 				}
 			}
 		}
-		hostname = strncpy(hostnamebuf, hostname,
-				   sizeof(hostnamebuf) - 1);
+		strlcpy(hostnamebuf, hostname, sizeof(hostnamebuf));
+		hostname = hostnamebuf;
 		if (res0)
 			freeaddrinfo(res0);
-	} else
-		hostname = strncpy(hostnamebuf, naddr,
-				   sizeof(hostnamebuf) - 1);
-
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+	} else {
+		strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
+		hostname = hostnamebuf;
+	}
 
 	if (ntohs(*portp) >= IPPORT_RESERVED ||
 	    ntohs(*portp) < IPPORT_RESERVED/2) {
@@ -360,7 +358,7 @@ doit(f, fromp)
 #ifdef IP_OPTIONS
 	if (fromp->sa_family == AF_INET) {
 		u_char optbuf[BUFSIZ/3], *cp;
-		char lbuf[BUFSIZ], *lp;
+		char lbuf[BUFSIZ], *lp, *ep;
 		int optsize = sizeof(optbuf), ipproto;
 		struct protoent *ip;
 
@@ -371,8 +369,9 @@ doit(f, fromp)
 		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf,
 		    &optsize) == 0 && optsize != 0) {
 			lp = lbuf;
+			ep = lbuf + sizeof(lbuf);
 			for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-				sprintf(lp, " %2.2x", *cp);
+				snprintf(lp, ep - lp, " %2.2x", *cp);
 			syslog(LOG_NOTICE,
 			    "Connection received using IP options (ignored):%s",
 			    lbuf);
@@ -606,19 +605,22 @@ fatal(f, msg, syserr)
 	int syserr;
 {
 	int len;
-	char buf[BUFSIZ], *bp = buf;
+	char buf[BUFSIZ], *bp, *ep;
+
+	bp = buf;
+	ep = buf + sizeof(buf);
 
 	/*
 	 * Prepend binary one to message if we haven't sent
 	 * the magic null as confirmation.
 	 */
 	if (!confirmed)
-		*bp++ = '\01';		/* error indicator */
+		*bp++ = '\001';		/* error indicator */
 	if (syserr)
-		len = sprintf(bp, "rlogind: %s: %s.\r\n",
+		len = snprintf(bp, ep - bp, "rlogind: %s: %s.\r\n",
 		    msg, strerror(errno));
 	else
-		len = sprintf(bp, "rlogind: %s.\r\n", msg);
+		len = snprintf(bp, ep - bp, "rlogind: %s.\r\n", msg);
 	(void) write(f, buf, bp + len - buf);
 	exit(1);
 }
