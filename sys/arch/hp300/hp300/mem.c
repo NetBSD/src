@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 2000/06/29 08:23:03 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.31 2000/07/17 06:52:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,9 +66,10 @@ static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -76,9 +77,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
