@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.67 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.68 1996/08/11 03:16:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1190,18 +1190,26 @@ bad:
  * Sun lets you pass in a boot string which the PROM
  * saves and provides to the next boot program.
  */
+
+#define SUNOS_RB_ASKNAME	0x001
+#define SUNOS_RB_SINGLE 	0x002
+#define SUNOS_RB_NOSYNC		0x004
+#define SUNOS_RB_HALT		0x008
+#define SUNOS_RB_DUMP		0x080
+#define	SUNOS_RB_STRING		0x200
+
 static struct sunos_howto_conv {
 	int sun_howto;
 	int bsd_howto;
 } sunos_howto_conv[] = {
-	{ 0x001,	RB_ASKNAME },
-	{ 0x002,	RB_SINGLE },
-	{ 0x004,	RB_NOSYNC },
-	{ 0x008,	RB_HALT },
-	{ 0x080,	RB_DUMP },
-	{ 0x000,	0 },
+	{ SUNOS_RB_ASKNAME,	RB_ASKNAME },
+	{ SUNOS_RB_SINGLE,	RB_SINGLE },
+	{ SUNOS_RB_NOSYNC,	RB_NOSYNC },
+	{ SUNOS_RB_HALT,	RB_HALT },
+	{ SUNOS_RB_DUMP,	RB_DUMP },
+	{ SUNOS_RB_STRING,	RB_STRING },
+	{ 0x000,		0 },
 };
-#define	SUNOS_RB_STRING	0x200
 
 int
 sunos_sys_reboot(p, v, retval)
@@ -1210,10 +1218,12 @@ sunos_sys_reboot(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_reboot_args *uap = v;
+	struct sys_reboot_args ua;
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
+	char *bootstr;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0) {
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1223,7 +1233,7 @@ sunos_sys_reboot(p, v, retval)
 	bsd_howto = 0;
 	convp = sunos_howto_conv;
 	while (convp->sun_howto) {
-		if (sun_howto &  convp->sun_howto)
+		if (sun_howto & convp->sun_howto)
 			bsd_howto |= convp->bsd_howto;
 		convp++;
 	}
@@ -1238,18 +1248,17 @@ sunos_sys_reboot(p, v, retval)
 
 		error = copyinstr(SCARG(uap, bootstr), bs, sizeof(bs), 0);
 
-		if (error) {
-#if 0
-			return error;
-#endif
-			bs = NULL:
-		}
+		if (error)
+			bootstr = NULL;
+		else
+			bootstr = bs;
 	} else
-		bs = NULL;
+		bootstr = NULL;
 
-	boot(bsd_howto, bs);
-
-	return 0;
+	SCARG(&ua, opt) = bsd_howto;
+	SCARG(&ua, bootstr) = bootstr;
+	sys_reboot(p, &ua, retval);
+	return(0);
 }
 
 /*
