@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 2001/06/19 00:20:09 fvdl Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 2002/01/03 01:37:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,7 +56,7 @@
 #define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
 #define	_BSD_SSIZE_T_		long		/* byte count or error */
 #define	_BSD_TIME_T_		int		/* time() */
-#if 1
+#ifdef __GNUC__
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
 #else
 #define _BSD_VA_LIST_		char *		/* XXXfvdl should be ok? */
