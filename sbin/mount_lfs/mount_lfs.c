@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.12 2000/11/13 22:12:49 perseant Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.13 2002/02/26 15:57:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.12 2000/11/13 22:12:49 perseant Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.13 2002/02/26 15:57:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ mount_lfs(argc, argv)
 	nsegs = "4";
 	mntflags = noclean = 0;
 	cleaner_bytes = 1;
-	while ((ch = getopt(argc, argv, "dN:no:s")) != -1)
+	while ((ch = getopt(argc, argv, "bdN:no:s")) != -1)
 		switch (ch) {
 		case 'b':
 			cleaner_bytes = !cleaner_bytes;
