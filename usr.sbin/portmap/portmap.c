@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.3 1993/12/03 10:01:06 mycroft Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.4 1993/12/05 13:58:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -138,6 +138,7 @@ main(argc, argv)
 		exit(1);
 	}
 
+	bzero((char *)&addr, sizeof addr);
 	addr.sin_addr.s_addr = 0;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PMAPPORT);
