@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.12 1998/01/22 18:48:43 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $");
+__RCSID("$NetBSD: dir.c,v 1.12 1998/01/22 18:48:43 ws Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -944,7 +944,7 @@ reconnect(dosfs, boot, fat, head)
 	struct dosDirEntry d;
 	u_char *p;
 
-	if (ask(1, "Reconnect"))
+	if (!ask(1, "Reconnect"))
 		return FSERROR;
 
 	if (!lostDir) {
