@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.2 2000/10/14 23:41:05 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.2 2000/10/14 23:41:05 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -195,7 +195,6 @@ ei_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n",
 	       self->dv_xname, irq_string(sc->sc_ih));
 	ei_cli(sc);
-	irq_enable(sc->sc_ih);
 }
 
 static void
