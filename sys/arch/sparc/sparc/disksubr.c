@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1994/11/20 20:54:16 deraadt Exp $ */
+/*	$NetBSD: disksubr.c,v 1.5 1995/06/26 22:57:29 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Theo de Raadt
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/dkbad.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -401,4 +402,29 @@ sun_dkioctl(dk, cmd, data, partition)
 		return (-1);
 	}
 	return (0);
+}
+
+/*
+ * Search the bad sector table looking for the specified sector.
+ * Return index if found.
+ * Return -1 if not found.
+ */
+int
+isbad(bt, cyl, trk, sec)
+	register struct dkbad *bt;
+{
+	register int i;
+	register long blk, bblk;
+
+	blk = ((long)cyl << 16) + (trk << 8) + sec;
+	for (i = 0; i < 126; i++) {
+		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
+			bt->bt_bad[i].bt_trksec;
+		if (blk == bblk)
+			return (i);
+		if (blk < bblk || bblk < 0)
+			break;
+	}
+	return (-1);
+
 }
