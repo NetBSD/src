@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.3 1995/03/23 20:13:25 jtc Exp $
+#	$Id: Makefile,v 1.4 1995/04/27 19:15:17 jtc Exp $
 #
 
 SRCS=newsyscall.c
@@ -45,7 +45,7 @@ KOBJS=mycall.o
 MODOBJ=combined.o
 
 KMOD=newsyscall
-CFLAGS= -DKERNEL -D_KERNEL -I/sys
+CFLAGS= -D_KERNEL -I/sys
 
 all:	$(MODOBJ)
 
