@@ -50,6 +50,8 @@ void s_align_bytes ();
 static void s_uacons PARAMS ((int));
 static sh_opcode_info *find_cooked_opcode PARAMS ((char **));
 static unsigned int assemble_ppi PARAMS ((char *, sh_opcode_info *));
+static void little PARAMS ((int));
+static void big PARAMS ((int));
 
 #ifdef OBJ_ELF
 static void sh_elf_cons PARAMS ((int));
@@ -58,9 +60,24 @@ symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
 #endif
 
 static void
+big (ignore)
+     int ignore ATTRIBUTE_UNUSED;
+{
+  if (! target_big_endian)
+    as_bad (_("directive .big encountered when option -big required"));
+
+  /* Stop further messages.  */
+  target_big_endian = 1;
+}
+
+static void
 little (ignore)
      int ignore ATTRIBUTE_UNUSED;
 {
+  if (target_big_endian)
+    as_bad (_("directive .little encountered when option -little required"));
+
+  /* Stop further messages.  */
   target_big_endian = 0;
 }
 
@@ -81,6 +98,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"int", cons, 4},
   {"word", cons, 2},
 #endif /* OBJ_ELF */
+  {"big", big, 0},
   {"form", listing_psize, 0},
   {"little", little, 0},
   {"heading", listing_title, 0},
@@ -2124,11 +2142,13 @@ CONST char *md_shortopts = "";
 struct option md_longopts[] =
 {
 #define OPTION_RELAX  (OPTION_MD_BASE)
-#define OPTION_LITTLE (OPTION_MD_BASE + 1)
+#define OPTION_BIG (OPTION_MD_BASE + 1)
+#define OPTION_LITTLE (OPTION_BIG + 1)
 #define OPTION_SMALL (OPTION_LITTLE + 1)
 #define OPTION_DSP (OPTION_SMALL + 1)
 
   {"relax", no_argument, NULL, OPTION_RELAX},
+  {"big", no_argument, NULL, OPTION_BIG},
   {"little", no_argument, NULL, OPTION_LITTLE},
   {"small", no_argument, NULL, OPTION_SMALL},
   {"dsp", no_argument, NULL, OPTION_DSP},
@@ -2145,6 +2165,10 @@ md_parse_option (c, arg)
     {
     case OPTION_RELAX:
       sh_relax = 1;
+      break;
+
+    case OPTION_BIG:
+      target_big_endian = 1;
       break;
 
     case OPTION_LITTLE:
@@ -2173,6 +2197,7 @@ md_show_usage (stream)
   fprintf (stream, _("\
 SH options:\n\
 -little			generate little endian code\n\
+-big			generate big endian code\n\
 -relax			alter jump instructions for long displacements\n\
 -small			align sections to 4 byte boundaries, not 16\n\
 -dsp			enable sh-dsp insns, and disable sh3e / sh4 insns.\n"));
