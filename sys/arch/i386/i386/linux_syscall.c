@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.3 2000/12/09 11:21:52 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.4 2000/12/09 13:20:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 
-void linux_syscall __P((struct trapframe *));
+void linux_syscall __P((struct trapframe));
 
 /*
  * syscall(frame):
@@ -118,7 +118,7 @@ void linux_syscall __P((struct trapframe *));
 /*ARGSUSED*/
 void
 linux_syscall(frame)
-	struct trapframe *frame;
+	struct trapframe frame;
 {
 	register const struct sysent *callp;
 	register struct proc *p;
@@ -129,7 +129,7 @@ linux_syscall(frame)
 
 	p = curproc;
 	sticks = p->p_sticks;
-	code = frame->tf_eax;
+	code = frame.tf_eax;
 
 	callp = p->p_emul->e_sysent;
 
@@ -139,7 +139,7 @@ linux_syscall(frame)
 	 * it get a SIGSYS and have the VM86 handler in the process take care
 	 * of it.
 	 */
-	if (frame->tf_eflags & PSL_VM)
+	if (frame.tf_eflags & PSL_VM)
 		code = -1;
 	else
 #endif /* VM86 */
@@ -156,15 +156,15 @@ linux_syscall(frame)
 		 */
 		switch (argsize >> 2) {
 		case 5:
-			args[4] = frame->tf_edi;
+			args[4] = frame.tf_edi;
 		case 4:
-			args[3] = frame->tf_esi;
+			args[3] = frame.tf_esi;
 		case 3:
-			args[2] = frame->tf_edx;
+			args[2] = frame.tf_edx;
 		case 2:
-			args[1] = frame->tf_ecx;
+			args[1] = frame.tf_ecx;
 		case 1:
-			args[0] = frame->tf_ebx;
+			args[0] = frame.tf_ebx;
 			break;
 		default:
 			panic("linux syscall bogus argument size %d",
@@ -184,8 +184,8 @@ linux_syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		frame->tf_eax = rval[0];
-		frame->tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_eax = rval[0];
+		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -193,7 +193,7 @@ linux_syscall(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame->tf_eip -= frame->tf_err;
+		frame.tf_eip -= frame.tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -201,15 +201,15 @@ linux_syscall(frame)
 	default:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame->tf_eax = error;
-		frame->tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p, frame->tf_eip, sticks);
+	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

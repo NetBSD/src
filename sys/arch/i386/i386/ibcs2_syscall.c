@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.3 2000/12/09 11:21:52 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.4 2000/12/09 13:20:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 
-void ibcs2_syscall __P((struct trapframe *));
+void ibcs2_syscall __P((struct trapframe));
 
 /*
  * syscall(frame):
@@ -118,7 +118,7 @@ void ibcs2_syscall __P((struct trapframe *));
 /*ARGSUSED*/
 void
 ibcs2_syscall(frame)
-	struct trapframe *frame;
+	struct trapframe frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -130,14 +130,14 @@ ibcs2_syscall(frame)
 
 	p = curproc;
 	sticks = p->p_sticks;
-	code = frame->tf_eax;
+	code = frame.tf_eax;
 
 	callp = p->p_emul->e_sysent;
 
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
 
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
 	/*
@@ -145,7 +145,7 @@ ibcs2_syscall(frame)
 	 * it get a SIGSYS and have the VM86 handler in the process take care
 	 * of it.
 	 */
-	if (frame->tf_eflags & PSL_VM)
+	if (frame.tf_eflags & PSL_VM)
 		code = -1;
 	else
 #endif /* VM86 */
@@ -184,9 +184,9 @@ ibcs2_syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		frame->tf_eax = rval[0];
-		frame->tf_edx = rval[1];
-		frame->tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_eax = rval[0];
+		frame.tf_edx = rval[1];
+		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -194,7 +194,7 @@ ibcs2_syscall(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame->tf_eip -= frame->tf_err;
+		frame.tf_eip -= frame.tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -203,15 +203,15 @@ ibcs2_syscall(frame)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame->tf_eax = error;
-		frame->tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p, frame->tf_eip, sticks);
+	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
