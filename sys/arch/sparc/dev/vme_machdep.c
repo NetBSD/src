@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.11 1998/08/23 10:05:53 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.12 1998/08/23 10:40:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1085,20 +1085,6 @@ sparc_vme4m_dmamem_free(t, segs, nsegs)
 	bus_dmamem_free(sc->sc_dmatag, segs, nsegs);
 }
 
-int
-sparc_vme_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
-
-	return (bus_dmamem_map(sc->sc_dmatag, segs, nsegs, size, kvap, flags));
-}
-
 void
 sparc_vme4m_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
@@ -1113,3 +1099,17 @@ sparc_vme4m_dmamap_sync(t, map, offset, len, ops)
 	 */
 }
 #endif /* SUN4M */
+
+int
+sparc_vme_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
+	return (bus_dmamem_map(sc->sc_dmatag, segs, nsegs, size, kvap, flags));
+}
