@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1994/11/23 22:33:46 dean Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1994/11/28 18:42:21 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,15 +49,15 @@
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
-int	swstrategy	__P((struct buf *));
+void	swstrategy	__P((struct buf *)); /* why not include <vm/vm_extern.h>? */
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
 					   struct file *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	int n __P((struct buf *))
+#define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, int, caddr_t, int, struct proc *))
+	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
 #define	dev_type_dump(n)	int n __P((dev_t))
@@ -401,7 +401,11 @@ iskmemdev(dev)
 	dev_t dev;
 {
 
+#ifdef COMPAT_BSD44
 	if (major(dev) == 2 && (minor(dev) == 0 || minor(dev) == 1))
+#else
+	if (major(dev) == 3 && (minor(dev) == 0 || minor(dev) == 1))
+#endif
 		return (1);
 	return (0);
 }
@@ -409,7 +413,11 @@ iskmemdev(dev)
 iszerodev(dev)
 	dev_t dev;
 {
+#ifdef COMPAT_BSD44
 	return (major(dev) == 2 && minor(dev) == 12);
+#else
+	return (major(dev) == 3 && minor(dev) == 12);
+#endif
 }
 
 /*
@@ -423,13 +431,19 @@ isdisk(dev, type)
 {
 
 	switch (major(dev)) {
-	case 0:
-	case 2:
+	case 21: /* NetBSD rz */
+#ifdef COMPAT_BSD44
+	case 0: /*4.4bsd rz */
+#endif
+	case 2:	/* vnode disk */
 		if (type == VBLK)
 			return (1);
 		return (0);
-	case 9:
-	case 11:
+	case 56:/* NetBSD rz */
+#ifdef COMPAT_BSD44
+	case 9: /*4.4bsd rz*/
+#endif
+	case 11:	/* vnode disk */
 		if (type == VCHR)
 			return (1);
 		/* FALLTHROUGH */
