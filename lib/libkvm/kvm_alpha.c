@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.6 1997/08/12 16:34:07 gwr Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.7 1997/10/10 08:45:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,6 +42,7 @@
 
 #include <limits.h>
 #include <db.h>
+#include <stdlib.h>
 
 #include "kvm_private.h"
 
@@ -134,7 +135,7 @@ _kvm_kvatop(kd, va, pa)
 			_kvm_err(kd, 0, "invalid translation (invalid L3 PTE)");
 			goto lose;
 		}
-		*pa = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size + page_off;
+		*pa = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size + page_off + 
 		    vatopte(va) * sizeof(alpha_pt_entry_t);
 		rv = cpu_kh->page_size - page_off;
 	} else {
