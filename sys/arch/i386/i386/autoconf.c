@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1998/01/09 16:01:27 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1998/10/06 21:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,6 +101,9 @@ configure()
 
 	spl0();
 	cold = 0;
+
+	/* XXX Finish deferred buffer cache allocation. */
+	i386_bufinit();
 }
 
 void
