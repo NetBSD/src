@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1996/10/13 04:10:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 1996/10/15 20:46:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,11 +110,12 @@ int	trap_types = sizeof trap_type / sizeof trap_type[0];
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
 short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
-	-1, -1, -1,	/* type 4-6 - undefined */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1,		/* type 5-6 - undefined */
 	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
@@ -141,7 +142,7 @@ int mmupid   = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_ISPID(p)	(p) == mmupid
+#define MDB_ISPID(pid)	((pid) == mmupid)
 static void dumpwb __P((int, u_short, u_int, u_int));
 static void dumpssw __P((u_short));
 #endif
@@ -232,13 +233,43 @@ panictrap(type, code, v, fp)
 	u_int code, v;
 	struct frame *fp;
 {
-	static int panicing = 0;
-	if (panicing++ == 0) {
-		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(fp, 128);
+	int	s;
+
+	printf("trap type %d, code = %x, v = %x\n", type, code, v);
+	printf("%s program counter = 0x%x\n",
+			(type & T_USER) ? "user" : "kernel", fp->f_pc);
+
+	/*
+	 * Let the kernel debugger see the trap frame that
+	 * caused us to panic.  This is a convenience so
+	 * one can see registers at the point of failure.
+	 */
+	s = splhigh();
+#ifdef KGDB
+	/* If connected, step or cont returns 1 */
+	if (kgdb_trap(type, &fp))
+		goto kgdb_cont;
+#endif
+#ifdef DDB
+	(void)kdb_trap(type, (struct mc68020_saved_state *)fp);
+#endif
+#ifdef KGDB
+kgdb_cont:
+#endif
+	splx(s);
+
+	if (panicstr) {
+		printf("Double panic\n");
+#ifdef DEBUG
+		/* XXX Should be a machine dependent hook */
+		printf("(press a key)\n"); (void)cngetc();
+#endif
 	}
-	type &= ~T_USER;
+
+	regdump(fp, 128);
 	DCIS(); /* XXX? push cache */
+
+	type &= ~T_USER;
 	if ((u_int)type < trap_types)
 		panic(trap_type[type]);
 	panic("trap");
@@ -289,6 +320,14 @@ trap(type, code, v, frame)
 	sticks = ucode = 0;
 	cnt.v_trap++;
 
+	/* I have verified that this DOES happen! -gwr */
+	if (p == NULL)
+		p = &proc0;
+#ifdef DIAGNOSTIC
+	if (p->p_addr == NULL)
+		panic("trap: no pcb");
+#endif
+
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -321,23 +360,35 @@ trap(type, code, v, frame)
 		ucode = v;
 		i = SIGBUS;
 		break;
-	/*
-	 * User illegal/privleged inst fault
+
+	/* 
+	 * Kernel coprocessor violation
 	 */
-	case T_ILLINST|T_USER:
-	case T_PRIVINST|T_USER:
-		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+	case T_COPERR:
+		/*FALLTHROUGH*/
+	/*
+	 * Kernel/User format error
+	 */
+	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
+	case T_FMTERR:
+		/*
+		 * The user has most likely trashed the RTE or FP state info
+		 * in the stack frame of a signal handler.
+		 */
+		type |= T_USER;
+#ifdef DEBUG
+		printf("pid %d: kernel %s exception\n", p->p_pid,
+		    type==T_COPERR ? "coprocessor" : "format");
+#endif
+		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
+		i = sigmask(SIGILL);
+		p->p_sigignore &= ~i;
+		p->p_sigcatch  &= ~i;
+		p->p_sigmask   &= ~i;
 		i = SIGILL;
+		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		break;
-	/*
-	 * divde by zero, CHK/TRAPV inst 
-	 */
-	case T_ZERODIV|T_USER:
-	case T_CHKINST|T_USER:
-	case T_TRAPVINST|T_USER:
-		ucode = frame.f_format;
-		i = SIGFPE;
-		break;
+
 	/* 
 	 * User coprocessor violation
 	 */
@@ -345,6 +396,7 @@ trap(type, code, v, frame)
 		ucode = 0;
 		i = SIGFPE;	/* XXX What is a proper response here? */
 		break;
+
 	/* 
 	 * 6888x exceptions 
 	 */
@@ -362,17 +414,7 @@ trap(type, code, v, frame)
 		ucode = code;
 		i = SIGFPE;
 		break;
-	/*
-	 * FPU faults in supervisor mode.
-	 */
-	case T_FPEMULI:
-	case T_FPEMULD: {
-		extern int	*nofault;
 
-		if (nofault)	/* If we're probing. */
-			longjmp((label_t *) nofault);
-		panictrap(type, code, v, &frame);
-	}
 	/*
 	 * Unimplemented FPU instructions/datatypes.
 	 */
@@ -387,40 +429,47 @@ trap(type, code, v, frame)
 		i = SIGILL;
 #endif
 		break;
-	/* 
-	 * Kernel coprocessor violation
-	 */
-	case T_COPERR:
-		/*FALLTHROUGH*/
+
 	/*
-	 * Kernel format error
+	 * FPU faults in supervisor mode.
 	 */
-	case T_FMTERR:
-		/*
-		 * The user has most likely trashed the RTE or FP state info
-		 * in the stack frame of a signal handler.
-		 */
-		type |= T_USER;
-#ifdef DEBUG
-		printf("pid %d: kernel %s exception\n", p->p_pid,
-		    type==T_COPERR ? "coprocessor" : "format");
-#endif
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
-		i = sigmask(SIGILL);
-		p->p_sigignore &= ~i;
-		p->p_sigcatch &= ~i;
-		p->p_sigmask &= ~i;
+	case T_FPEMULI:
+	case T_FPEMULD: {
+		extern int	*nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp((label_t *) nofault);
+		panictrap(type, code, v, &frame);
+	}
+
+	/*
+	 * User illegal/privileged inst fault
+	 */
+	case T_ILLINST|T_USER:
+	case T_PRIVINST|T_USER:
+		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		i = SIGILL;
-		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
+		break;
+
+	/*
+	 * divde by zero, CHK/TRAPV inst 
+	 */
+	case T_ZERODIV|T_USER:
+	case T_CHKINST|T_USER:
+	case T_TRAPVINST|T_USER:
+		ucode = frame.f_format;
+		i = SIGFPE;
 		break;
 	/*
-	 * Trace traps.
+	 * XXX: Trace traps are a nightmare.
 	 *
-	 * M68k NetBSD uses trap #2,
-	 * SUN 3.x uses trap #15,
-	 * KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
+	 *	HP-UX uses trap #1 for breakpoints,
+	 *	NetBSD/m68k uses trap #2,
+	 *	SUN 3.x uses trap #15,
+	 *	DDB and KGDB use trap #15 (for kernel breakpoints;
+	 *	handled elsewhere).
 	 *
-	 * Atari traps get mapped by locore.s into T_TRACE.
+	 * NetBSD and HP-UX traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */
@@ -488,6 +537,10 @@ trap(type, code, v, frame)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
+		/*
+		 * If we were doing profiling ticks or other user mode
+		 * stuff from interrupt code, Just Say No.
+		 */
 		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail) {
 			trapcpfault(p, &frame);
@@ -506,7 +559,7 @@ trap(type, code, v, frame)
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
 		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
-		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
+		       p ? p->p_pid : -1, code, v, frame.f_pc, frame.f_sr);
 #endif
 		/*
 		 * It is only a kernel address space fault iff:
@@ -517,10 +570,10 @@ trap(type, code, v, frame)
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
+		    ((p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
-			map = &vm->vm_map;
+			map = vm ? &vm->vm_map : kernel_map;
 		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
@@ -545,7 +598,8 @@ trap(type, code, v, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
+		    && map != kernel_map) {
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
@@ -570,7 +624,7 @@ trap(type, code, v, frame)
 				trapcpfault(p, &frame);
 				return;
 			}
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("\nvm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -587,7 +641,7 @@ trap(type, code, v, frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, &frame, sticks, v, 0); 
+	userret(p, &frame, sticks, v, 1); 
 }
 
 #ifdef M68040
@@ -1054,7 +1108,7 @@ syscall(code, frame)
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
 		frame.f_regs[SP] -= sizeof (int);
 #endif
-	userret(p, &frame, sticks, 0, 0);
+	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -1072,7 +1126,7 @@ child_return(p, frame)
 	frame.f_sr &= ~PSL_C;	/* carry bit */
 	frame.f_format = FMT0;
 
-	userret(p, &frame, 0, 0, 0);
+	userret(p, &frame, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
