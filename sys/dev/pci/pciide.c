@@ -1,8 +1,8 @@
-/*	$NetBSD: pciide.c,v 1.112 2001/04/21 16:36:37 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.113 2001/05/04 15:25:05 bouyer Exp $	*/
 
 
 /*
- * Copyright (c) 1999 Manuel Bouyer.
+ * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -278,6 +278,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -290,6 +291,7 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -322,23 +324,25 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
 const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	  0,
-	  "VIA Tech VT82C586 IDE Controller",
+	  NULL,
 	  apollo_chip_map,
 	 },
 	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	  0,
-	  "VIA Tech VT82C586A IDE Controller",
+	  NULL,
 	  apollo_chip_map,
 	},
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -351,6 +355,7 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -363,6 +368,7 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -375,6 +381,7 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -402,6 +409,7 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -424,6 +432,7 @@ const struct pciide_product_desc pciide_opti_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -436,6 +445,7 @@ const struct pciide_product_desc pciide_triones_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -458,6 +468,7 @@ const struct pciide_product_desc pciide_acard_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -526,11 +537,11 @@ pciide_lookup_product(id)
 	if ((pp = vp->ide_products) == NULL)
 		return NULL;
 
-	for (; pp->ide_name != NULL; pp++)
+	for (; pp->chip_map != NULL; pp++)
 		if (PCI_PRODUCT(id) == pp->ide_product)
 			break;
     
-	if (pp->ide_name == NULL)
+	if (pp->chip_map == NULL)
 		return NULL;
 	return pp;
 }
@@ -587,7 +598,10 @@ pciide_attach(parent, self, aux)
 	} else
 		displaydev = sc->sc_pp->ide_name;
 
-	printf(": %s (rev. 0x%02x)\n", displaydev, PCI_REVISION(pa->pa_class));
+	/* if displaydev == NULL, printf is done in chip-specific map */
+	if (displaydev)
+		printf(": %s (rev. 0x%02x)\n", displaydev,
+		    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -1974,13 +1988,55 @@ apollo_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	int rev = PCI_REVISION(pa->pa_class);
 	int channel;
-	u_int32_t ideconf, udma_conf, old_udma_conf;
+	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
+	pcitag_t pcib_tag;
+	pcireg_t pcib_id, pcib_class;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+	/* get a PCI tag for the ISA bridge (function 0 of the same device) */
+	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+	/* and read ID and rev of the ISA bridge */
+	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
+	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+	printf(": VIA Technologies ");
+	switch (PCI_PRODUCT(pcib_id)) {
+	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
+		printf("VT82C586 (Apollo VP) ");
+		if(PCI_REVISION(pcib_class) >= 0x02) {
+			printf("ATA33 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 2;
+		} else {
+			printf("controller\n");
+			sc->sc_wdcdev.UDMA_cap = 0;
+		}
+		break;
+	case PCI_PRODUCT_VIATECH_VT82C596A:
+		printf("VT82C596A (Apollo Pro) ");
+		if (PCI_REVISION(pcib_class) >= 0x12) {
+			printf("ATA66 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 4;
+		} else {
+			printf("ATA33 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 2;
+		}
+		break;
+	case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
+		printf("VT82C686A (Apollo KX133) ");
+		if (PCI_REVISION(pcib_class) >= 0x40) {
+			printf("ATA100 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 5;
+		} else {
+			printf("ATA66 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 4;
+		}
+	default:
+		printf("unknown ATA controller\n");
+		sc->sc_wdcdev.UDMA_cap = 0;
+	}
+			
 	printf("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -1990,50 +2046,22 @@ apollo_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE
-		    && rev >= 6)
+		if (sc->sc_wdcdev.UDMA_cap > 0)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = apollo_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
-	old_udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	WDCDEBUG_PRINT(("apollo_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM),
-	    old_udma_conf),
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA)),
 	    DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag,
-	    old_udma_conf | (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0) | APO_UDMA_CLK66(0)),
-	    APO_UDMA);
-	udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
-	WDCDEBUG_PRINT(("apollo_chip_map: APO_UDMA now 0x%x\n", udma_conf),
-	    DEBUG_PROBE);
-	if ((udma_conf & (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0))) ==
-	    (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0))) {
-		if ((udma_conf & APO_UDMA_CLK66(0)) ==
-		    APO_UDMA_CLK66(0)) {
-			printf("%s: Ultra/66 capable\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 4;
-		} else {
-			printf("%s: Ultra/33 capable\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 2;
-		}
-	} else {
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_UDMA;
-	}
-	pci_conf_write(sc->sc_pc, sc->sc_tag, old_udma_conf, APO_UDMA);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -2086,24 +2114,6 @@ apollo_setup_channel(chp)
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
-	/*
-	 * We can't mix Ultra/33 and Ultra/66 on the same channel, so
-	 * downgrade to Ultra/33 if needed
-	 */
-	if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
-	    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
-		/* both drives UDMA */
-		if (chp->ch_drive[0].UDMA_mode > 2 && 
-		    chp->ch_drive[1].UDMA_mode <= 2) {
-			/* drive 0 Ultra/66, drive 1 Ultra/33 */
-			chp->ch_drive[0].UDMA_mode = 2;
-		} else if (chp->ch_drive[1].UDMA_mode > 2 &&
-		    chp->ch_drive[0].UDMA_mode <= 2) {
-			/* drive 1 Ultra/66, drive 0 Ultra/33 */
-			chp->ch_drive[1].UDMA_mode = 2;
-		}
-	}
-
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
@@ -2120,12 +2130,22 @@ apollo_setup_channel(chp)
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
-			    APO_UDMA_EN_MTH(chp->channel, drive) |
-			    APO_UDMA_TIME(chp->channel, drive,
-				apollo_udma_tim[drvp->UDMA_mode]);
-			if (drvp->UDMA_mode > 2)
-				udmatim_reg |=
-				    APO_UDMA_CLK66(chp->channel);
+			    APO_UDMA_EN_MTH(chp->channel, drive);
+			if (sc->sc_wdcdev.UDMA_cap == 5) {
+				/* 686b */
+				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma100_tim[drvp->UDMA_mode]);
+			} else if (sc->sc_wdcdev.UDMA_cap == 4) {
+				/* 596b or 686a */
+				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma66_tim[drvp->UDMA_mode]);
+			} else {
+				/* 596a or 586b */
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma33_tim[drvp->UDMA_mode]);
+			}
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
