@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.12 2002/10/10 22:33:16 jdolecek Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.13 2002/10/10 22:36:09 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -179,12 +179,10 @@ dev_type_open(ucbsndopen);
 dev_type_close(ucbsndclose);
 dev_type_read(ucbsndread);
 dev_type_write(ucbsndwrite);
-dev_type_ioctl(ucbsndioctl);
-dev_type_mmap(ucbsndmmap);
 
 const struct cdevsw ucbsnd_cdevsw = {
-	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, ucbsndioctl,
-	nostop, notty, nopoll, ucbsndmmap,
+	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, nullioctl,
+	nostop, notty, nopoll, nullmmap,
 };
 
 int
@@ -640,26 +638,6 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 	s = splaudio();
 	ringbuf_reset(&sc->sc_rb);
 	splx(s);
-
-	return (error);
-}
-
-int
-ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
-{
-	int error = 0;
-
-	/* not coded yet */
-
-	return (error);
-}
-
-paddr_t
-ucbsndmmap(dev_t dev, off_t off, int prot)
-{
-	int error = 0;
-
-	/* not coded yet */
 
 	return (error);
 }
