@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.45 1998/08/18 06:45:04 thorpej Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.46 1999/01/31 09:24:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1410,8 +1410,8 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			va.va_type == VFIFO) {
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
-			error = suser(cred, (u_short *)0);
-			if (error) {
+			if (va.va_type != VFIFO &&
+			    (error = suser(cred, (u_short *)0))) {
 				vrele(nd.ni_startdir);
 				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1605,8 +1605,8 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		if (!error)
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	} else {
-		error = suser(cred, (u_short *)0);
-		if (error) {
+		if (va.va_type != VFIFO &&
+		    (error = suser(cred, (u_short *)0))) {
 			vrele(nd.ni_startdir);
 			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
