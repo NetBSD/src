@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.1 2002/04/26 02:05:10 ad Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.2 2002/05/15 14:15:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.1 2002/04/26 02:05:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.2 2002/05/15 14:15:17 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_DEC,
-		PCI_PRODUCT_DEC_CPQ42XX,
+		PCI_PRODUCT_DEC_21554,
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_AAC364,
 		AAC_HWIF_STRONGARM,
@@ -246,7 +246,7 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_DEC,
-		PCI_PRODUCT_DEC_CPQ42XX,
+		PCI_PRODUCT_DEC_21554,
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR5400S,
 		AAC_HWIF_STRONGARM,
@@ -255,7 +255,7 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_DEC,
-		PCI_PRODUCT_DEC_CPQ42XX,
+		PCI_PRODUCT_DEC_21554,
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_PERC_2QC,
 		AAC_HWIF_STRONGARM,
@@ -264,7 +264,7 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_DEC,
-		PCI_PRODUCT_DEC_CPQ42XX,
+		PCI_PRODUCT_DEC_21554,
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_PERC_3QC,
 		AAC_HWIF_STRONGARM,
@@ -273,7 +273,7 @@ struct aac_ident {
 	},
 	{
 		PCI_VENDOR_DEC,
-		PCI_PRODUCT_DEC_CPQ42XX,
+		PCI_PRODUCT_DEC_21554,
 		PCI_VENDOR_HP,
 		PCI_PRODUCT_HP_NETRAID_4M,
 		AAC_HWIF_STRONGARM,
