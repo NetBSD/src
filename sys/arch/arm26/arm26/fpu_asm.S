@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_asm.S,v 1.1 2001/01/12 13:23:49 bjh21 Exp $	*/
+/*	$NetBSD: fpu_asm.S,v 1.2 2001/01/18 17:47:59 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: fpu_asm.S,v 1.1 2001/01/12 13:23:49 bjh21 Exp $")
+RCSID("$NetBSD: fpu_asm.S,v 1.2 2001/01/18 17:47:59 tv Exp $")
 
 #include <machine/fpureg.h>
 

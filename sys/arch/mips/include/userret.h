@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2001/01/14 21:22:56 thorpej Exp $	*/
+/*	$NetBSD: userret.h,v 1.5 2001/01/18 17:48:01 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

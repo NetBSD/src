@@ -1,4 +1,4 @@
-/* $Id: linux_exec_alpha.c,v 1.1 2000/11/17 03:55:18 erh Exp $ */
+/*	$NetBSD: linux_exec_alpha.c,v 1.2 2001/01/18 17:48:04 tv Exp $	*/
 
 #define ELFSIZE 64
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: gtenvar.h,v 1.3 2001/01/18 17:48:02 tv Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
