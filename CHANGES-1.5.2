@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.5 2001/07/30 16:06:48 he Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.6 2001/08/06 22:04:05 he Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -140,3 +140,20 @@ sys/kern/kern_sig.c				patch
 sys/arch/i386/include/frame.h			1.14
 
   Protect against multiple inclusion.
+
+distrib/i386/floppies/ramdisk-rescuetiny/Makefile	patch
+sys/arch/i386/conf/INSTALL_TINY			patch
+
+  Bump size of INSTALL_TINY ramdisk image and the rescuetiny
+  image to accommodate increased size.
+
+distrib/i386/floppies/ramdisk-big/Makefile	patch
+distrib/i386/floppies/ramdisk-big/list		patch
+distrib/i386/floppies/ramdisk-big/ramdiskbin.conf	patch
+
+  Add restore / rrestore to this image, so that PCI-only machines
+  can have a chance at being restored.
+
+distrib/utils/sysinst/arch/i386/md.h		patch
+
+  The ``base'' i386 set grew one more split fragment.
