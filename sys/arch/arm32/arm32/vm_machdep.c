@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4 1996/04/26 20:48:31 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.5 1996/04/27 03:00:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -38,7 +38,7 @@
  *
  * vm_machdep.h
  *
- * vm machine specifiv bits
+ * vm machine specific bits
  *
  * Created      : 08/10/94
  */
@@ -246,7 +246,7 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	void *pc;
+	void (*pc) __P((struct proc *));
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
 
@@ -389,7 +389,7 @@ cpu_swapout(p)
 void
 pagemove(from, to, size)
 	caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
 
