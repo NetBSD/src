@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.131 2001/11/27 23:42:40 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.132 2001/12/01 10:25:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.131 2001/11/27 23:42:40 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.132 2001/12/01 10:25:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -676,7 +676,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 {
 	FILE	*fd;
 	int	 retval;
-	char	*glob, *perm, *class, *buf, *p;
+	char	*word, *perm, *class, *buf, *p;
 	size_t	 len, line;
 
 	retval = def;
@@ -690,7 +690,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 	    (buf = fparseln(fd, &len, &line, NULL, FPARSELN_UNESCCOMM |
 	    		FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
 	    free(buf), buf = NULL) {
-		glob = perm = class = NULL;
+		word = perm = class = NULL;
 		p = buf;
 		if (len < 1)
 			continue;
@@ -699,10 +699,10 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 		if (EMPTYSTR(p))
 			continue;
 
-		NEXTWORD(p, glob);
+		NEXTWORD(p, word);
 		NEXTWORD(p, perm);
 		NEXTWORD(p, class);
-		if (EMPTYSTR(glob))
+		if (EMPTYSTR(word))
 			continue;
 		if (!EMPTYSTR(class)) {
 			if (strcasecmp(class, "all") == 0 ||
@@ -715,7 +715,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 		}
 
 					/* have a host specifier */
-		if ((p = strchr(glob, '@')) != NULL) {
+		if ((p = strchr(word, '@')) != NULL) {
 			unsigned long	net, mask, addr;
 			int		bits;
 
@@ -731,12 +731,12 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 					continue;
 
 					/* check against hostname glob */
-			} else if (fnmatch(p, remotehost, 0) != 0)
+			} else if (fnmatch(p, remotehost, FNM_CASEFOLD) != 0)
 				continue;
 		}
 
 					/* have a group specifier */
-		if ((p = strchr(glob, ':')) != NULL) {
+		if ((p = strchr(word, ':')) != NULL) {
 			gid_t	*groups, *ng;
 			int	 gsize, i, found;
 
@@ -768,7 +768,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 		}
 
 					/* check against username glob */
-		if (fnmatch(glob, name, 0) != 0)
+		if (fnmatch(word, name, 0) != 0)
 			continue;
 
 		if (perm != NULL &&
@@ -1260,7 +1260,7 @@ retrieve(char *argv[], const char *name)
 		logxfer("get", byte_count, name, NULL, tdp, NULL);
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
-		FILE *err;
+		FILE *errf;
 		struct stat sb;
 
 		if (!isls && argv != NULL && closerv != 0) {
@@ -1274,18 +1274,18 @@ retrieve(char *argv[], const char *name)
 		}
 		if (!isls && argv != NULL && stderrfd != -1 &&
 		    (fstat(stderrfd, &sb) == 0) && sb.st_size > 0 &&
-		    ((err = fdopen(stderrfd, "r")) != NULL)) {
+		    ((errf = fdopen(stderrfd, "r")) != NULL)) {
 			char *cp, line[LINE_MAX];
 
 			reply(-226, "Command error messages:");
-			rewind(err);
-			while (fgets(line, sizeof(line), err) != NULL) {
+			rewind(errf);
+			while (fgets(line, sizeof(line), errf) != NULL) {
 				if ((cp = strchr(line, '\n')) != NULL)
 					*cp = '\0';
 				reply(0, "  %s", line);
 			}
 			(void) fflush(stdout);
-			(void) fclose(err);
+			(void) fclose(errf);
 				/* a reply(226,) must follow */
 		}
 		reply(226, "Transfer complete.");
@@ -1299,7 +1299,7 @@ retrieve(char *argv[], const char *name)
 }
 
 void
-store(const char *name, const char *mode, int unique)
+store(const char *name, const char *fmode, int unique)
 {
 	FILE *fout, *din;
 	struct stat st;
@@ -1308,7 +1308,7 @@ store(const char *name, const char *mode, int unique)
 	char *desc;
 
 	din = NULL;
-	desc = (*mode == 'w') ? "put" : "append";
+	desc = (*fmode == 'w') ? "put" : "append";
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
 		logxfer(desc, -1, name, NULL, NULL,
@@ -1317,8 +1317,8 @@ store(const char *name, const char *mode, int unique)
 	}
 
 	if (restart_point)
-		mode = "r+";
-	fout = fopen(name, mode);
+		fmode = "r+";
+	fout = fopen(name, fmode);
 	closefunc = fclose;
 	tdp = NULL;
 	if (fout == NULL) {
@@ -1378,14 +1378,14 @@ store(const char *name, const char *mode, int unique)
 }
 
 static FILE *
-getdatasock(const char *mode)
+getdatasock(const char *fmode)
 {
 	int		on, s, t, tries;
 	in_port_t	port;
 
 	on = 1;
 	if (data >= 0)
-		return (fdopen(data, mode));
+		return (fdopen(data, fmode));
 	if (! dropprivs)
 		(void) seteuid((uid_t)0);
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
@@ -1432,7 +1432,7 @@ getdatasock(const char *mode)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	}
 #endif
-	return (fdopen(s, mode));
+	return (fdopen(s, fmode));
  bad:
 		/* Return the real value of errno (close may change it) */
 	t = errno;
@@ -1444,7 +1444,7 @@ getdatasock(const char *mode)
 }
 
 FILE *
-dataconn(const char *name, off_t size, const char *mode)
+dataconn(const char *name, off_t size, const char *fmode)
 {
 	char sizebuf[32];
 	FILE *file;
@@ -1491,18 +1491,18 @@ dataconn(const char *name, off_t size, const char *mode)
 #endif
 		reply(150, "Opening %s mode data connection for '%s'%s.",
 		     type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);
-		return (fdopen(pdata, mode));
+		return (fdopen(pdata, fmode));
 	}
 	if (data >= 0) {
 		reply(125, "Using existing data connection for '%s'%s.",
 		    name, sizebuf);
 		usedefault = 1;
-		return (fdopen(data, mode));
+		return (fdopen(data, fmode));
 	}
 	if (usedefault)
 		data_dest = his_addr;
 	usedefault = 1;
-	file = getdatasock(mode);
+	file = getdatasock(fmode);
 	if (file == NULL) {
 		char hbuf[NI_MAXHOST];
 		char pbuf[NI_MAXSERV];
@@ -1937,7 +1937,7 @@ statcmd(void)
 
 							/* LPSV/LPRT */
 	    {
-		int alen, af, i;
+		int alen, i;
 
 		alen = 0;
 		switch (su->su_family) {
@@ -2642,7 +2642,7 @@ send_file_list(const char *whichf)
 	DIR *dirp = NULL;
 	struct dirent *dir;
 	FILE *dout = NULL;
-	char **dirlist, *dirname, *p;
+	char **dirlist, *dirname, *notglob, *p;
 	int simple = 0;
 	int freeglob = 0;
 	glob_t gl;
@@ -2670,8 +2670,8 @@ send_file_list(const char *whichf)
 		}
 		dirlist = gl.gl_pathv;
 	} else {
-		p = xstrdup(whichf);
-		onefile[0] = p;
+		notglob = xstrdup(whichf);
+		onefile[0] = notglob;
 		dirlist = onefile;
 		simple = 1;
 	}
@@ -2747,8 +2747,6 @@ send_file_list(const char *whichf)
 			 */
 			if (simple || (stat(nbuf, &st) == 0 &&
 			    S_ISREG(st.st_mode))) {
-				char *p;
-
 				if (dout == NULL) {
 					dout = dataconn("file list", (off_t)-1,
 						"w");
@@ -2779,8 +2777,8 @@ send_file_list(const char *whichf)
  out:
 	total_xfers++;
 	total_xfers_out++;
-	if (p)
-		free(p);
+	if (notglob)
+		free(notglob);
 	if (freeglob)
 		globfree(&gl);
 }
@@ -2901,17 +2899,17 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
  * Returns 2 if password expired, 1 if otherwise failed, 0 if ok
  */
 int
-checkpassword(const struct passwd *pw, const char *password)
+checkpassword(const struct passwd *pwent, const char *password)
 {
 	char	*orig, *new;
 	time_t	 expire;
 
 	expire = 0;
-	if (pw == NULL)
+	if (pwent == NULL)
 		return 1;
 
-	orig = pw->pw_passwd;		/* save existing password */
-	expire = pw->pw_expire;
+	orig = pwent->pw_passwd;	/* save existing password */
+	expire = pwent->pw_expire;
 
 	if (orig[0] == '\0')		/* don't allow empty passwords */
 		return 1;

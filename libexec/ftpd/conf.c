@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 2001/09/19 00:50:52 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 2001/12/01 10:25:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.44 2001/09/19 00:50:52 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.45 2001/12/01 10:25:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -511,19 +511,19 @@ parse_conf(const char *findclass)
 			REASSIGN(template, EMPTYSTR(arg) ? NULL : xstrdup(arg));
 
 		} else if (strcasecmp(word, "umask") == 0) {
-			mode_t umask;
+			mode_t fumask;
 
 			curclass.umask = DEFAULT_UMASK;
 			if (none || EMPTYSTR(arg))
 				continue;
-			umask = (mode_t)strtoul(arg, &endp, 8);
-			if (*endp != 0 || umask > 0777) {
+			fumask = (mode_t)strtoul(arg, &endp, 8);
+			if (*endp != 0 || fumask > 0777) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid umask %s",
 				    infile, (int)line, arg);
 				continue;
 			}
-			curclass.umask = umask;
+			curclass.umask = fumask;
 
 		} else if (strcasecmp(word, "upload") == 0) {
 			CONF_FLAG(upload);
@@ -557,7 +557,7 @@ show_chdir_messages(int code)
 	glob_t	 gl;
 	time_t	 now, then;
 	int	 age;
-	char	 cwd[MAXPATHLEN];
+	char	 curwd[MAXPATHLEN];
 	char	*cp, **rlist;
 
 	if (code == -1) {
@@ -579,14 +579,14 @@ show_chdir_messages(int code)
 	}
 
 		/* Check if this directory has already been visited */
-	if (getcwd(cwd, sizeof(cwd) - 1) == NULL) {
+	if (getcwd(curwd, sizeof(curwd) - 1) == NULL) {
 		syslog(LOG_WARNING, "can't getcwd: %s", strerror(errno));
 		return;
 	}
-	if (sl_find(slist, cwd) != NULL)
+	if (sl_find(slist, curwd) != NULL)
 		return;	
 
-	cp = xstrdup(cwd);
+	cp = xstrdup(curwd);
 	if (sl_add(slist, cp) == -1)
 		syslog(LOG_WARNING, "can't add `%s' to stringlist", cp);
 
@@ -630,7 +630,7 @@ display_file(const char *file, int code)
 {
 	FILE   *f;
 	char   *buf, *p;
-	char	cwd[MAXPATHLEN];
+	char	curwd[MAXPATHLEN];
 	size_t	len;
 	off_t	lastnum;
 	time_t	now;
@@ -664,13 +664,14 @@ display_file(const char *file, int code)
 					break;
 
 				case 'C':
-					if (getcwd(cwd, sizeof(cwd)-1) == NULL){
+					if (getcwd(curwd, sizeof(curwd)-1)
+					    == NULL){
 						syslog(LOG_WARNING,
 						    "can't getcwd: %s",
 						    strerror(errno));
 						continue;
 					}
-					cprintf(stdout, "%s", cwd);
+					cprintf(stdout, "%s", curwd);
 					break;
 
 				case 'E':
