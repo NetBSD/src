@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.23 1996/11/19 21:21:13 gwr Exp $	*/
+/*	$NetBSD: am7990.c,v 1.24 1996/12/06 21:54:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -184,6 +184,10 @@ am7990_config(sc)
 	case 65536:
 		sc->sc_nrbuf = 32;
 		sc->sc_ntbuf = 8;
+		break;
+	case 131072:
+		sc->sc_nrbuf = 64;
+		sc->sc_ntbuf = 16;
 		break;
 	default:
 		panic("am7990_config: weird memory size");
