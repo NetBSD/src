@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/10 18:56:48 he Exp $
+#	$NetBSD: Makefile,v 1.1 2000/06/12 18:51:17 he Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk.fs
+IMAGE=		ramdisk-tiny.fs
 
-AUXDEPENDS= 	dot.profile termcap.mini
+AUXTARGETS=	install.sh upgrade.sh start.sh
+AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
+		termcap.mini
+AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
 
@@ -28,9 +31,18 @@ RAMDISKSPC=	128
 RAMDISKCYLS=	24
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
+install.sh: install.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
+upgrade.sh: upgrade.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
+start.sh: start.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
 realall: ${IMAGE}
 
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+${IMAGE}: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
@@ -64,7 +76,7 @@ ${CBIN}: libhack.o
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
-# turn off small gethostby*
+# turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 release:
