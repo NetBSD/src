@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.10 1999/12/09 01:56:23 sato Exp $
+#	$NetBSD: files.hpcmips,v 1.11 1999/12/12 17:11:20 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -202,6 +202,11 @@ file arch/hpcmips/dev/p7416buf.c	p7416buf	needs-flag
 device m38813c: skbdif
 attach m38813c at txcsbus
 file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
+
+#	TOSHIBA TC5165BTFS buffer driver (keyboard)
+device tc5165buf: skbdif
+attach tc5165buf at txcsbus
+file arch/hpcmips/dev/tc5165buf.c	tc5165buf	needs-flag
 
 #	Simple keyboard interface for wskbd
 device skbd: wskbddev
