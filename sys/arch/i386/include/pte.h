@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pte.h	5.5 (Berkeley) 5/9/91
- *	$Id: pte.h,v 1.2 1993/05/22 08:00:34 cgd Exp $
+ *	$Id: pte.h,v 1.3 1993/06/27 04:50:14 andrew Exp $
  */
 
 /*
@@ -47,6 +47,9 @@
  * There is a structure describing each.  There is also an ancillary
  * structure used in page clustering.
  */
+
+#ifndef _I386_PTE_H_
+#define _I386_PTE_H_
 
 #ifndef LOCORE
 struct pde
@@ -135,3 +138,5 @@ unsigned int
 extern	struct pte *Sysmap;
 #endif
 #endif
+
+#endif /* _I386_PTE_H_ */
