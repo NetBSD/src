@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkheaders.c	5.7 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkheaders.c,v 1.5 1993/08/01 18:00:09 mycroft Exp $";
+static char rcsid[] = "$Id: mkheaders.c,v 1.6 1994/03/10 19:50:45 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: mkheaders.c,v 1.5 1993/08/01 18:00:09 mycroft Exp $"
 #include <ctype.h>
 #include "config.h"
 #include "y.tab.h"
+#include "specfile.h"
 
 headers()
 {
@@ -51,9 +52,21 @@ headers()
 
 	for (fl = ftab; fl != 0; fl = fl->f_next)
 	    if (fl->f_was_driver)
-		    do_count(fl->f_needs, fl->f_needs, 1);
+		    do_identifiers(fl->f_needs);
 	    else if (fl->f_needs_count)
-		    do_count(fl->f_countname, fl->f_countname, 1);
+		    do_identifiers(fl->f_countname);
+}
+
+do_identifiers(expr)
+	register struct name_expr *expr;
+{
+
+	if (expr->left)
+		do_identifiers(expr->left);
+	if (expr->type == T_IDENTIFIER)
+		do_count(expr->name, expr->name, 1);
+	if (expr->right)
+		do_identifiers(expr->right);
 }
 
 /*
