@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: sunndd,v 1.1 2001/05/17 23:19:06 fredette Exp $
+# $NetBSD: ndbootd,v 1.1 2001/05/22 14:51:37 fredette Exp $
 #
 
-# PROVIDE: sunndd
+# PROVIDE: ndbootd
 # REQUIRE: DAEMON
 
 . /etc/rc.subr
 
-name="sunndd"
+name="ndbootd"
 rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
