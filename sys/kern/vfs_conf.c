@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.17 1994/04/14 04:05:29 cgd Exp $
+ *	$Id: vfs_conf.c,v 1.18 1994/05/11 18:51:18 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -85,6 +85,10 @@ extern struct vfsops lofs_vfsops;
 
 #ifdef PORTAL
 extern struct vfsops portal_vfsops;
+#endif
+
+#ifdef ADOSFS
+extern struct vfsops adosfs_vfsops;
 #endif
 
 /*
@@ -142,6 +146,11 @@ struct vfsops *vfssw[] = {
 #endif
 #ifdef PORTAL
 	&portal_vfsops,		/* 12 = MOUNT_PORTAL */
+#else
+	(struct vfsops *)0,
+#endif
+#ifdef ADOSFS
+	&adosfs_vfsops,
 #else
 	(struct vfsops *)0,
 #endif

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
- *	$Id: malloc.h,v 1.13 1993/12/21 07:58:37 cgd Exp $
+ *	$Id: malloc.h,v 1.14 1994/05/11 18:50:36 chopps Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -104,7 +104,9 @@
 #define M_MRTABLE	53	/* multicast routing tables */
 #define M_LOFSMNT	54	/* Loopback FS mount structures */
 #define M_PORTALMNT	55	/* Portal FS mount structures */
-#define M_LAST		M_PORTALMNT
+#define M_ADOSFSMNT	56	/* adosfs mount structures. */
+#define M_ANODE		57	/* adosfs anode structures and tables. */
+#define M_LAST		M_ANODE
 
 #define INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -163,6 +165,8 @@
 	"mcast route",	/* 53 M_MRTABLE */ \
 	"lofs mount",	/* 54 M_LOFSMNT */ \
 	"portal mount",	/* 55 M_PORTALMNT */ \
+	"adosfs mount", /* 56 M_ADOSFSMNT */ \
+	"adosfs anode", /* 57 M_ANODE */ \
 }
 
 struct kmemstats {

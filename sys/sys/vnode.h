@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.18 1994/04/25 03:50:38 cgd Exp $
+ *	$Id: vnode.h,v 1.19 1994/05/11 18:50:41 chopps Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -59,7 +59,8 @@ enum vtype 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
  * and should NEVER be inspected inside the kernel.
  */
 enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_LFS, VT_MSDOSFS, VT_ISOFS,
-		  VT_KERNFS, VT_FDESC, VT_PROCFS, VT_LOFS, VT_PORTAL };
+		  VT_KERNFS, VT_FDESC, VT_PROCFS, VT_LOFS, VT_PORTAL,
+		  VT_ADOSFS };
 
 /*
  * This defines the maximum size of the private data area
