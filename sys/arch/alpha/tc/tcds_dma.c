@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.21 1997/09/02 13:20:41 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.21 1997/09/02 13:20:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.21 1997/09/02 13:20:41 thorpej Exp $"
 #include <alpha/tc/tcdsreg.h>
 #include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/ascvar.h>
+
+#include <machine/vmparam.h>
+#include <machine/pte.h>
 
 void
 tcds_dma_reset(sc)
