@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.40.4.1 1997/08/23 07:08:31 thorpej Exp $
+#	$NetBSD: files.atari,v 1.40.4.2 1997/09/01 18:30:41 thorpej Exp $
 
 maxpartitions 16
 
@@ -134,11 +134,22 @@ attach	pcibus at mainbus
 
 include "dev/pci/files.pci"
 
+#
+# ISA-devices
+#
+file	arch/atari/isa/isa_machdep.c	isa
+
+device	isabus
+attach	isabus at mainbus
+
+include "dev/isa/files.isa"
+
+#
 # XXX: Some scsi-devices must be at fixed major#
 major   {sd = 4}
 major   {st = 5}
 major   {cd = 6}
-include "scsi/files.scsi"
+include "dev/scsipi/files.scsipi"
 
 # ncr 5380 controller
 device	ncrscsi: scsi
