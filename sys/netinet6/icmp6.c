@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.16 2000/01/06 15:46:08 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.17 2000/01/07 06:44:30 itohy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@ icmp6_error(m, type, code, param)
 {
 	struct ip6_hdr *oip6, *nip6;
 	struct icmp6_hdr *icmp6;
-	u_int prep;
+	u_int preplen;
 	int off;
 	u_char nxt;
 
@@ -286,10 +286,10 @@ icmp6_error(m, type, code, param)
 	if (m->m_pkthdr.len >= ICMPV6_PLD_MAXLEN)
 		m_adj(m, ICMPV6_PLD_MAXLEN - m->m_pkthdr.len);
 
-	prep = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
-	M_PREPEND(m, prep, M_DONTWAIT);
-	if (m && m->m_len < prep)
-		m = m_pullup(m, prep);
+	preplen = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
+	M_PREPEND(m, preplen, M_DONTWAIT);
+	if (m && m->m_len < preplen)
+		m = m_pullup(m, preplen);
 	if (m == NULL) {
 		printf("ENOBUFS in icmp6_error %d\n", __LINE__);
 		return;
