@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.1 2001/09/18 09:10:00 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.2 2001/09/19 04:09:56 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1098,8 +1098,8 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	struct ieee80211_frame *wh;
 	struct ieee80211_bss *bs;
 	u_int8_t *frm, *efrm, *tstamp, *bintval, *capinfo, *ssid, *rates;
-	u_int8_t chan;
-	u_int16_t dwell;
+	u_int8_t chan, fhindex;
+	u_int16_t fhdwell;
 
 	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0 &&
 	    ic->ic_state != IEEE80211_S_SCAN) {
@@ -1124,7 +1124,8 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	capinfo = frm;	frm += 2;
 	ssid = rates = NULL;
 	chan = ic->ic_bss.bs_chan;
-	dwell = 0;
+	fhdwell = 0;
+	fhindex = 0;
 	while (frm < efrm) {
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
@@ -1134,8 +1135,9 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 			rates = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
-			dwell = frm[2];
-			chan = frm[5];
+			fhdwell = (frm[3] << 8) | frm[2];
+			chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
+			fhindex = frm[6];
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
 			chan = frm[2];
@@ -1195,7 +1197,8 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	bs->bs_intval = le16toh(*(u_int16_t *)bintval);
 	bs->bs_capinfo = le16toh(*(u_int16_t *)capinfo);
 	bs->bs_chan = chan;
-	bs->bs_dwell = dwell;
+	bs->bs_fhdwell = fhdwell;
+	bs->bs_fhindex = fhindex;
 	if (ic->ic_state == IEEE80211_S_SCAN && ic->ic_scan_timer == 0)
 		ieee80211_end_scan(&ic->ic_if);
 }
