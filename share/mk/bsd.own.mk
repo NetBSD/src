@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.101 1998/11/21 22:18:36 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.102 1998/11/22 13:51:04 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -115,6 +115,7 @@ OBJECT_FMT?=a.out
     (${MACHINE_ARCH} == "i386") || \
     (${MACHINE_ARCH} == "ns32k") || \
     (${MACHINE_ARCH} == "mips") || \
+    (${MACHINE_ARCH} == "sparc") || \
     (${MACHINE_ARCH} == "sparc64") || \
     (${MACHINE_ARCH} == "vax")
 USE_EGCS=1
