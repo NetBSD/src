@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.37 1999/08/13 12:28:52 ad Exp $
+$NetBSD: acronyms,v 1.38 1999/08/13 12:30:38 ad Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -27,6 +27,7 @@ EMSG	email message
 ETLA	extended three letter acronym
 FSDO	for some definition of
 FUBAR	fucked up beyond all recognition
+FUD	fear, uncertianty and doubt
 FWIW	for what it's worth
 FYI	for your information
 G	grin
