@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.20 1996/10/13 02:32:37 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.21 1996/10/17 16:31:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -220,9 +220,6 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
-#ifdef tahoe
-		sn *= DEV_BSIZE / lp->d_secsize;		/* XXX */
-#endif
 		sn += lp->d_partitions[part].p_offset;
 		(*pr)(" (%s%d bn %d; cn %d", dname, unit, sn,
 		    sn / lp->d_secpercyl);

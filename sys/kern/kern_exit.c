@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.40 1996/10/17 16:31:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -247,10 +247,7 @@ exit1(p, rv)
 	 */
 	if (p->p_flag & P_FSTRACE)
 		wakeup((caddr_t)p);
-#if defined(tahoe)
-	/* move this to cpu_exit */
-	p->p_addr->u_pcb.pcb_savacc.faddr = (float *)NULL;
-#endif
+
 	/*
 	 * Clear curproc after we've done all operations
 	 * that could block, and before tearing down the rest
