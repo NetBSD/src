@@ -243,7 +243,7 @@ read_files()
 	int nreqs, first = 1, configdep, isdup, std, filetype, driver;
 
 	ftab = 0;
-	(void) strcpy(fname, "../../conf/files");
+	(void) strcpy(fname, "../../../conf/files");
 	read_file(fname,1,0);
 	(void) sprintf(fname, "files.%s", machinename);
 	read_file(fname,1,0);
