@@ -1,6 +1,6 @@
-/*	$NetBSD: sftp-server.c,v 1.13 2001/09/27 03:24:05 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.14 2002/03/08 02:00:55 itojun Exp $	*/
 /*
- * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.30 2001/07/31 12:42:50 jakob Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.33 2002/02/13 00:28:13 markus Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -139,7 +139,7 @@ handle_init(void)
 {
 	int i;
 
-	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++)
+	for (i = 0; i < sizeof(handles)/sizeof(Handle); i++)
 		handles[i].use = HANDLE_UNUSED;
 }
 
@@ -148,7 +148,7 @@ handle_new(int use, char *name, int fd, DIR *dirp)
 {
 	int i;
 
-	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++) {
+	for (i = 0; i < sizeof(handles)/sizeof(Handle); i++) {
 		if (handles[i].use == HANDLE_UNUSED) {
 			handles[i].use = use;
 			handles[i].dirp = dirp;
@@ -584,6 +584,11 @@ process_setstat(void)
 	name = get_string(NULL);
 	a = get_attrib();
 	TRACE("setstat id %d name %s", id, name);
+	if (a->flags & SSH2_FILEXFER_ATTR_SIZE) {
+		ret = truncate(name, a->size);
+		if (ret == -1)
+			status = errno_to_portable(errno);
+	}
 	if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) {
 		ret = chmod(name, a->perm & 0777);
 		if (ret == -1)
@@ -619,6 +624,11 @@ process_fsetstat(void)
 	if (fd < 0) {
 		status = SSH2_FX_FAILURE;
 	} else {
+		if (a->flags & SSH2_FILEXFER_ATTR_SIZE) {
+			ret = ftruncate(fd, a->size);
+			if (ret == -1)
+				status = errno_to_portable(errno);
+		}
 		if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) {
 			ret = fchmod(fd, a->perm & 0777);
 			if (ret == -1)
@@ -752,7 +762,7 @@ process_readdir(void)
 		}
 		if (count > 0) {
 			send_names(id, count, stats);
-			for(i = 0; i < count; i++) {
+			for (i = 0; i < count; i++) {
 				xfree(stats[i].name);
 				xfree(stats[i].long_name);
 			}
@@ -878,7 +888,7 @@ process_readlink(void)
 		send_status(id, errno_to_portable(errno));
 	else {
 		Stat s;
-		
+
 		link[len] = '\0';
 		attrib_clear(&s.attrib);
 		s.name = s.long_name = link;
@@ -932,7 +942,7 @@ process(void)
 
 	if (buffer_len(&iqueue) < 5)
 		return;		/* Incomplete message. */
-	cp = (u_char *) buffer_ptr(&iqueue);
+	cp = buffer_ptr(&iqueue);
 	msg_len = GET_32BIT(cp);
 	if (msg_len > 256 * 1024) {
 		error("bad message ");

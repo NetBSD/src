@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.14 2001/11/07 06:26:48 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.15 2002/03/08 02:00:55 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.46 2001/10/02 08:38:50 djm Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.50 2002/01/29 14:27:57 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -52,6 +52,15 @@ RCSID("$OpenBSD: ssh-add.c,v 1.46 2001/10/02 08:38:50 djm Exp $");
 
 /* argv0 */
 extern char *__progname;
+
+/* Default files to add */
+static char *default_files[] = {
+	_PATH_SSH_CLIENT_ID_RSA,
+	_PATH_SSH_CLIENT_ID_DSA,
+	_PATH_SSH_CLIENT_IDENTITY, 
+	NULL
+};
+
 
 /* we keep a cache of one passphrases */
 static char *pass = NULL;
@@ -85,7 +94,7 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 
 	key_free(public);
 	xfree(comment);
-	
+
 	return ret;
 }
 
@@ -155,7 +164,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 
 	xfree(comment);
 	key_free(private);
-	
+
 	return ret;
 }
 
@@ -164,16 +173,16 @@ update_card(AuthenticationConnection *ac, int add, const char *id)
 {
 	if (ssh_update_card(ac, add, id)) {
 		fprintf(stderr, "Card %s: %s\n",
-		     add ? "added" : "removed", id);
+		    add ? "added" : "removed", id);
 		return 0;
 	} else {
 		fprintf(stderr, "Could not %s card: %s\n",
-		     add ? "add" : "remove", id);
+		    add ? "add" : "remove", id);
 		return -1;
 	}
 }
 
-static void
+static int
 list_identities(AuthenticationConnection *ac, int do_fp)
 {
 	Key *key;
@@ -183,8 +192,8 @@ list_identities(AuthenticationConnection *ac, int do_fp)
 
 	for (version = 1; version <= 2; version++) {
 		for (key = ssh_get_first_identity(ac, &comment, version);
-		     key != NULL;
-		     key = ssh_get_next_identity(ac, &comment, version)) {
+		    key != NULL;
+		    key = ssh_get_next_identity(ac, &comment, version)) {
 			had_identities = 1;
 			if (do_fp) {
 				fp = key_fingerprint(key, SSH_FP_MD5,
@@ -201,8 +210,24 @@ list_identities(AuthenticationConnection *ac, int do_fp)
 			xfree(comment);
 		}
 	}
-	if (!had_identities)
+	if (!had_identities) {
 		printf("The agent has no identities.\n");
+		return -1;
+	}
+	return 0;
+}
+
+static int
+do_file(AuthenticationConnection *ac, int deleting, char *file)
+{
+	if (deleting) {
+		if (delete_file(ac, file) == -1)
+			return -1;
+	} else {
+		if (add_file(ac, file) == -1)
+			return -1;
+	}
+	return 0;
 }
 
 static void
@@ -226,8 +251,6 @@ main(int argc, char **argv)
 	extern char *optarg;
 	extern int optind;
 	AuthenticationConnection *ac = NULL;
-	struct passwd *pw;
-	char buf[1024];
 	char *sc_reader_id = NULL;
 	int i, ch, deleting = 0, ret = 0;
 
@@ -237,13 +260,14 @@ main(int argc, char **argv)
 	ac = ssh_get_authentication_connection();
 	if (ac == NULL) {
 		fprintf(stderr, "Could not open a connection to your authentication agent.\n");
-		exit(1);
+		exit(2);
 	}
-        while ((ch = getopt(argc, argv, "lLdDe:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "lLdDe:s:")) != -1) {
 		switch (ch) {
 		case 'l':
 		case 'L':
-			list_identities(ac, ch == 'l' ? 1 : 0);
+			if (list_identities(ac, ch == 'l' ? 1 : 0) == -1)
+				ret = 1;
 			goto done;
 			break;
 		case 'd':
@@ -258,7 +282,7 @@ main(int argc, char **argv)
 			sc_reader_id = optarg;
 			break;
 		case 'e':
-			deleting = 1; 
+			deleting = 1;
 			sc_reader_id = optarg;
 			break;
 		default:
@@ -275,30 +299,26 @@ main(int argc, char **argv)
 		goto done;
 	}
 	if (argc == 0) {
-		pw = getpwuid(getuid());
-		if (!pw) {
+		char buf[MAXPATHLEN];
+		struct passwd *pw;
+
+		if ((pw = getpwuid(getuid())) == NULL) {
 			fprintf(stderr, "No user found with uid %u\n",
 			    (u_int)getuid());
 			ret = 1;
 			goto done;
 		}
-		snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, _PATH_SSH_CLIENT_IDENTITY);
-		if (deleting) {
-			if (delete_file(ac, buf) == -1)
-				ret = 1;
-		} else {
-			if (add_file(ac, buf) == -1)
+
+		for(i = 0; default_files[i]; i++) {
+			snprintf(buf, sizeof(buf), "%s/%s", pw->pw_dir, 
+			    default_files[i]);
+			if (do_file(ac, deleting, buf) == -1)
 				ret = 1;
 		}
 	} else {
-		for (i = 0; i < argc; i++) {
-			if (deleting) {
-				if (delete_file(ac, argv[i]) == -1)
-					ret = 1;
-			} else {
-				if (add_file(ac, argv[i]) == -1)
-					ret = 1;
-			}
+		for(i = 0; i < argc; i++) {
+			if (do_file(ac, deleting, argv[i]) == -1)
+				ret = 1;
 		}
 	}
 	clear_pass();
