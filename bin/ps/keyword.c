@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.31 2003/03/03 23:13:21 dsl Exp $	*/
+/*	$NetBSD: keyword.c,v 1.32 2003/03/06 09:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.31 2003/03/03 23:13:21 dsl Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.32 2003/03/06 09:04:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,15 +61,14 @@ __RCSID("$NetBSD: keyword.c,v 1.31 2003/03/03 23:13:21 dsl Exp $");
 
 #include "ps.h"
 
-static VAR *findvar __P((char *));
-static int  vcmp __P((const void *, const void *));
+static VAR *findvar(const char *);
+static int  vcmp(const void *, const void *);
 
-#ifdef NOTINUSE
-	{"stime", "STIME", NULL, 0, cputime},	/* XXX add stime, utime ... */
-	{"utime", "UTIME", NULL, 0, cputime},	/* ... display to cputime() */
-	{"idrss", "IDRSS", NULL, 0, pvar, 0, POFF(p_uru_idrss), ULONG, "d"},
-	{"isrss", "ISRSS", NULL, 0, pvar, 0, POFF(p_uru_isrss), ULONG, "d"},
-	{"ixrss", "IXRSS", NULL, 0, pvar, 0, POFF(p_uru_ixrss), ULONG, "d"},
+#if 0 	/* kernel doesn't calculate these */
+	PUVAR("idrss", "IDRSS", 0, p_uru_idrss, UINT64, PRIu64),
+	PUVAR("isrss", "ISRSS", 0, p_uru_isrss, UINT64, PRId64),
+	PUVAR("ixrss", "IXRSS", 0, p_uru_ixrss, UINT64, PRId64),
+	PUVAR("maxrss", "MAXRSS", 0, p_uru_maxrss, UINT64, PRIu64),
 #endif
 
 /* Compute offset in common structures. */
@@ -77,126 +76,132 @@ static int  vcmp __P((const void *, const void *));
 #define	LOFF(x)	offsetof(struct kinfo_lwp, x)
 
 #define	UIDFMT	"u"
-#define	UID(n1, n2, fn, off) \
-	{ n1, n2, NULL, 0, fn, 0, off, UINT32, UIDFMT }
-#define	GID(n1, n2, fn, off)	UID(n1, n2, fn, off)
+#define	UID(n1, n2, off) \
+	{ n1, n2, 0, pvar, POFF(off), UINT32, UIDFMT }
+#define	GID(n1, n2, off)	UID(n1, n2, off)
 
 #define	PIDFMT	"d"
-#define	PID(n1, n2, fn, off) \
-	{ n1, n2, NULL, 0, fn, 0, off, INT32, PIDFMT }
+#define	PID(n1, n2, off) \
+	{ n1, n2, 0, pvar, POFF(off), INT32, PIDFMT }
 
+#define	LVAR(n1, n2, fl, off, type, fmt) \
+	{ n1, n2, (fl) | LWP, pvar, LOFF(off), type, fmt }
+#define	PVAR(n1, n2, fl, off, type, fmt) \
+	{ n1, n2, (fl) | 0, pvar, POFF(off), type, fmt }
+#define	PUVAR(n1, n2, fl, off, type, fmt) \
+	{ n1, n2, (fl) | UAREA, pvar, POFF(off), type, fmt }
+
+/* NB: table must be sorted, in vi use:
+ *	:/^VAR/,/end_sort/! sort -t\" +1
+ * breaking long lines just makes the sort harder
+ */
 VAR var[] = {
-	{"%cpu", "%CPU", NULL, 0, pcpu},
-	{"%mem", "%MEM", NULL, 0, pmem},
-	{"acflag", "ACFLG", NULL, 0, pvar, 0, POFF(p_acflag), USHORT, "x"},
-	{"acflg", "", "acflag"},
-	{"blocked", "", "sigmask"},
-	{"caught", "", "sigcatch"},
-	{"command", "COMMAND", NULL, COMM|LJUST, command},
-	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "u"},
-	{"cputime", "", "time"},
-	GID("egid", "EGID", pvar, POFF(p_gid)),
-	{"egroup", "EGROUP", NULL, LJUST, gname},
-	UID("euid", "EUID", pvar, POFF(p_uid)),
-	{"euser", "EUSER", NULL, LJUST, uname},
-	{"f", "F", NULL, 0, pvar, 0, POFF(p_flag), INT, "x"},
-	{"flags", "", "f"},
-	GID("gid", "GID", pvar, POFF(p_gid)),
-	{"group", "GROUP", NULL, LJUST, gname},
-	{"groupnames", "GROUPNAMES", NULL, LJUST, groupnames},
-	{"groups", "GROUPS", NULL, LJUST, groups},
-	{"holdcnt", "HOLDCNT", NULL, LWP, pvar, 0, LOFF(l_holdcnt), INT, "d"},
-	{"ignored", "", "sigignore"},
-	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), UINT64, "llu"},
-	{"inblock", "", "inblk"},
-	{"jobc", "JOBC", NULL, 0, pvar, 0, POFF(p_jobc), SHORT, "d"},
-	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
-	/* XXX */
-	{"ktracep", "KTRACEP", NULL, 0, pvar, 0, POFF(p_tracep), KPTR, "llx"},
-	{"lid", "LID", NULL, LWP, pvar, 0, LOFF(l_lid), ULONG, "d"},
-	{"lim", "LIM", NULL, 0, maxrss},
-	{"login", "LOGIN", NULL, LJUST, logname},
-	{"logname", "", "login"},
-	{"lstart", "STARTED", NULL, LJUST, lstarted},
-	{"lstate", "STAT", NULL, LJUST|LWP, lstate},
-	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), UINT64, "llu"},
-	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), UINT64, "llu"},
-	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), UINT64, "llu"},
-	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), UINT64, "llu"},
-	{"ni", "", "nice"},
-	{"nice", "NI", NULL, 0, pnice},
-	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), UINT64, "llu"},
-	{"nlwp", "NLWP", NULL, 0, pvar, 0, POFF(p_nlwps), UINT64, "lld"},
-	{"nsignals", "", "nsigs"},
-	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), UINT64, "llu"},
-	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), UINT64, "llu"},
-	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), UINT64, "llu"},
-	/* XXX */
-	{"nwchan", "WCHAN", NULL, LWP, pvar, 0, LOFF(l_wchan), KPTR, "llx"},
-	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), UINT64, "llu"},
-	{"oublock", "", "oublk"},
-	/* XXX */
-	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "llx"},
-	/* XXX */
-	{"paddr", "PADDR", NULL, 0, pvar, 0, POFF(p_paddr), KPTR, "llx"},
-	{"pagein", "PAGEIN", NULL, 0, pagein},
-	{"pcpu", "", "%cpu"},
-	{"pending", "", "sig"},
-	PID("pgid", "PGID", pvar, POFF(p__pgid)),
-	PID("pid", "PID", pvar, POFF(p_pid)),
-	{"pmem", "", "%mem"},
-	PID("ppid", "PPID", pvar, POFF(p_ppid)),
-	{"pri", "PRI", NULL, LWP, pri},
-	{"re", "RE", NULL, INF127|LWP, pvar, 0, LOFF(l_swtime), UINT, "u"},
-	GID("rgid", "RGID", pvar, POFF(p_rgid)),
-	{"rgroup", "RGROUP", NULL, LJUST, rgname},
-	/* XXX */
-	{"rlink", "RLINK", NULL, LWP, pvar, 0, LOFF(l_back), KPTR, "llx"},
-	{"rlwp", "RLWP", NULL, 0, pvar, 0, POFF(p_nrlwps), UINT64, "lld"},
-	{"rss", "RSS", NULL, 0, p_rssize},
-	{"rssize", "", "rsz"},
-	{"rsz", "RSZ", NULL, 0, rssize},
-	UID("ruid", "RUID", pvar, POFF(p_ruid)),
-	{"ruser", "RUSER", NULL, LJUST, runame},
-	{"sess", "SESS", NULL, 0, pvar, 0, POFF(p_sess), KPTR24, "llx"},
-	PID("sid", "SID", pvar, POFF(p_sid)),
-	{"sig", "PENDING",
-	    NULL, 0, pvar, 0, POFF(p_siglist), SIGLIST, "s"},
-	{"sigcatch", "CAUGHT",
-	    NULL, 0, pvar, 0, POFF(p_sigcatch), SIGLIST, "s"},
-	{"sigignore", "IGNORED",
-	    NULL, 0, pvar, 0, POFF(p_sigignore), SIGLIST, "s"},
-	{"sigmask", "BLOCKED",
-	    NULL, 0, pvar, 0, POFF(p_sigmask), SIGLIST, "s"},
-	{"sl", "SL", NULL, INF127|LWP, pvar, 0, LOFF(l_slptime), UINT, "u"},
-	{"start", "STARTED", NULL, 0, started},
-	{"stat", "", "state"},
-	{"state", "STAT", NULL, LJUST, state},
-	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
-	{"svgroup", "SVGROUP", NULL, LJUST, svgname},
-	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
-	{"svuser", "SVUSER", NULL, LJUST, svuname},
-	{"tdev", "TDEV", NULL, 0, tdev},
-	{"time", "TIME", NULL, 0, cputime},
-	PID("tpgid", "TGPID", pvar, POFF(p_tpgid)),
-	{"tsess", "TSESS", NULL, 0, pvar, 0, POFF(p_tsess), KPTR, "llx"},
-	{"tsiz", "TSIZ", NULL, 0, tsize},
-	{"tt", "TT", NULL, LJUST, tname},
-	{"tty", "TTY", NULL, LJUST, longtname},
-	{"ucomm", "UCOMM", NULL, LJUST, ucomm},
-	UID("uid", "UID", pvar, POFF(p_uid)),
-	{"upr", "UPR", NULL, LWP, pvar, 0, LOFF(l_usrpri), UCHAR, "u"},
-	{"user", "USER", NULL, LJUST, uname},
-	{"usrpri", "", "upr"},
-	{"vsize", "", "vsz"},
-	{"vsz", "VSZ", NULL, 0, vsize},
-	{"wchan", "WCHAN", NULL, LJUST|LWP, wchan},
-	{"xstat", "XSTAT", NULL, 0, pvar, 0, POFF(p_xstat), USHORT, "x"},
+	{"%cpu", "%CPU", 0, pcpu, 0, PCPU},
+	{"%mem", "%MEM", 0, pmem, POFF(p_vm_rssize), INT32},
+	PVAR("acflag", "ACFLG", 0, p_acflag, USHORT, "x"),
+	{"acflg", "acflag", ALIAS},
+	{"blocked", "sigmask", ALIAS},
+	{"caught", "sigcatch", ALIAS},
+	{"command", "COMMAND", COMM|LJUST, command},
+	PVAR("cpu", "CPU", 0, p_estcpu, UINT, "u"),
+	{"cputime", "time", ALIAS},
+	{"ctime", "CTIME", 0, putimeval, POFF(p_uctime_sec), TIMEVAL},
+	GID("egid", "EGID", p_gid),
+	{"egroup", "EGROUP", LJUST, gname},
+	UID("euid", "EUID", p_uid),
+	{"euser", "EUSER", LJUST, uname},
+	PVAR("f", "F", 0, p_flag, INT, "x"),
+	{"flags", "f", ALIAS},
+	GID("gid", "GID", p_gid),
+	{"group", "GROUP", LJUST, gname},
+	{"groupnames", "GROUPNAMES", LJUST, groupnames},
+	{"groups", "GROUPS", LJUST, groups},
+	LVAR("holdcnt", "HOLDCNT", 0, l_holdcnt, INT, "d"),
+	{"ignored", "sigignore", ALIAS},
+	PUVAR("inblk", "INBLK", 0, p_uru_inblock, UINT64, PRIu64),
+	{"inblock", "inblk", ALIAS},
+	PVAR("jobc", "JOBC", 0, p_jobc, SHORT, "d"),
+	PVAR("ktrace", "KTRACE", 0, p_traceflag, INT, "x"),
+/*XXX*/	PVAR("ktracep", "KTRACEP", 0, p_tracep, KPTR, PRIx64),
+	LVAR("lid", "LID", 0, l_lid, ULONG, "d"),
+	{"lim", "LIM", 0, maxrss},
+	{"login", "LOGIN", LJUST, logname},
+	{"logname", "login", ALIAS},
+	{"lstart", "STARTED", LJUST, lstarted, POFF(p_ustart_sec), UINT32},
+	{"lstate", "STAT", LJUST|LWP, lstate},
+	PUVAR("majflt", "MAJFLT", 0, p_uru_majflt, UINT64, PRIu64),
+	PUVAR("minflt", "MINFLT", 0, p_uru_minflt, UINT64, PRIu64),
+	PUVAR("msgrcv", "MSGRCV", 0, p_uru_msgrcv, UINT64, PRIu64),
+	PUVAR("msgsnd", "MSGSND", 0, p_uru_msgsnd, UINT64, PRIu64),
+	{"ni", "nice", ALIAS},
+	{"nice", "NI", 0, pnice, POFF(p_nice), UCHAR},
+	PUVAR("nivcsw", "NIVCSW", 0, p_uru_nivcsw, UINT64, PRIu64),
+	PVAR("nlwp", "NLWP", 0, p_nlwps, UINT64, PRId64),
+	{"nsignals", "nsigs", ALIAS},
+	PUVAR("nsigs", "NSIGS", 0, p_uru_nsignals, UINT64, PRIu64),
+	PUVAR("nswap", "NSWAP", 0, p_uru_nswap, UINT64, PRIu64),
+	PUVAR("nvcsw", "NVCSW", 0, p_uru_nvcsw, UINT64, PRIu64),
+/*XXX*/	LVAR("nwchan", "WCHAN", 0, l_wchan, KPTR, PRIx64),
+	PUVAR("oublk", "OUBLK", 0, p_uru_oublock, UINT64, PRIu64),
+	{"oublock", "oublk", ALIAS},
+/*XXX*/	PVAR("p_ru", "P_RU", 0, p_ru, KPTR, PRIx64),
+/*XXX*/	PVAR("paddr", "PADDR", 0, p_paddr, KPTR, PRIx64),
+	PUVAR("pagein", "PAGEIN", 0, p_uru_majflt, UINT64, PRIu64),
+	{"pcpu", "%cpu", ALIAS},
+	{"pending", "sig", ALIAS},
+	PID("pgid", "PGID", p__pgid),
+	PID("pid", "PID", p_pid),
+	{"pmem", "%mem", ALIAS},
+	PID("ppid", "PPID", p_ppid),
+	{"pri", "PRI", LWP, pri},
+	LVAR("re", "RE", INF127, l_swtime, UINT, "u"),
+	GID("rgid", "RGID", p_rgid),
+	{"rgroup", "RGROUP", LJUST, rgname},
+/*XXX*/	LVAR("rlink", "RLINK", 0, l_back, KPTR, PRIx64),
+	PVAR("rlwp", "RLWP", 0, p_nrlwps, UINT64, PRId64),
+	{"rss", "RSS", 0, p_rssize, POFF(p_vm_rssize), INT32},
+	{"rssize", "rsz", ALIAS},
+	{"rsz", "RSZ", 0, rssize, POFF(p_vm_rssize), INT32},
+	UID("ruid", "RUID", p_ruid),
+	{"ruser", "RUSER", LJUST, runame},
+	PVAR("sess", "SESS", 0, p_sess, KPTR24, PRIx64),
+	PID("sid", "SID", p_sid),
+	PVAR("sig", "PENDING", 0, p_siglist, SIGLIST, "s"),
+	PVAR("sigcatch", "CAUGHT", 0, p_sigcatch, SIGLIST, "s"),
+	PVAR("sigignore", "IGNORED", 0, p_sigignore, SIGLIST, "s"),
+	PVAR("sigmask", "BLOCKED", 0, p_sigmask, SIGLIST, "s"),
+	LVAR("sl", "SL", INF127, l_slptime, UINT, "u"),
+	{"start", "STARTED", 0, started, POFF(p_ustart_sec), UINT32},
+	{"stat", "state", ALIAS},
+	{"state", "STAT", LJUST, state},
+	{"stime", "STIME", 0, putimeval, POFF(p_ustime_sec), TIMEVAL},
+	GID("svgid", "SVGID", p_svgid),
+	{"svgroup", "SVGROUP", LJUST, svgname},
+	UID("svuid", "SVUID", p_svuid),
+	{"svuser", "SVUSER", LJUST, svuname},
+	{"tdev", "TDEV", 0, tdev, POFF(p_tdev), UINT32},
+	{"time", "TIME", 0, cputime, 0, CPUTIME},
+	PID("tpgid", "TGPID", p_tpgid),
+	PVAR("tsess", "TSESS", 0, p_tsess, KPTR, PRIx64),
+	{"tsiz", "TSIZ", 0, tsize, POFF(p_vm_tsize), INT32},
+	{"tt", "TT", LJUST, tname},
+	{"tty", "TTY", LJUST, longtname},
+	{"ucomm", "UCOMM", LJUST, ucomm},
+	UID("uid", "UID", p_uid),
+	LVAR("upr", "UPR", 0, l_usrpri, UCHAR, "u"),
+	{"user", "USER", LJUST, uname},
+	{"usrpri", "upr", ALIAS},
+	{"utime", "UTIME", 0, putimeval, POFF(p_uutime_sec), TIMEVAL},
+	{"vsize", "vsz", ALIAS},
+	{"vsz", "VSZ", 0, vsize, 0, VSIZE},
+	{"wchan", "WCHAN", LJUST|LWP, wchan},
+	PVAR("xstat", "XSTAT", 0, p_xstat, USHORT, "x"),
+/* "zzzz" end_sort */
 	{""},
 };
 
 void
-showkey()
+showkey(void)
 {
 	VAR *v;
 	int i;
@@ -216,11 +221,14 @@ showkey()
 	(void) printf("\n");
 }
 
-void
-parsefmt(p)
-	char *p;
+static void
+parsevarlist(const char *pp, struct varent **head, struct varent **tail)
 {
-	static struct varent *vtail;
+	char *p;
+
+	/* dup to avoid zapping arguments, can't free because it
+	   might contain a header. */
+	p = strdup(pp);
 
 #define	FMTSEP	" \t,\n"
 	while (p && *p) {
@@ -236,54 +244,58 @@ parsefmt(p)
 			err(1, NULL);
 		vent->var = v;
 		vent->next = NULL;
-		if (vhead == NULL)
-			vhead = vtail = vent;
-		else {
-			vtail->next = vent;
-			vtail = vent;
-		}
+		if (*head == NULL)
+			*head = vent;
+		else
+			(*tail)->next = vent;
+		*tail = vent;
 	}
-	if (!vhead)
+	if (!*head)
 		errx(1, "no valid keywords");
 }
 
-static VAR *
-findvar(p)
-	char *p;
+void
+parsefmt(const char *p)
 {
-	VAR *v, key;
-	char *hp;
+	static struct varent *vtail;
 
-	key.name = p;
+	parsevarlist(p, &vhead, &vtail);
+}
+
+void
+parsesort(const char *p)
+{
+	static struct varent *sorttail;
+
+	parsevarlist(p, &sorthead, &sorttail);
+}
+
+static VAR *
+findvar(const char *p)
+{
+	VAR *v;
+	char *hp;
 
 	hp = strchr(p, '=');
 	if (hp)
 		*hp++ = '\0';
 
-	key.name = p;
-	v = bsearch(&key, var, sizeof(var)/sizeof(VAR) - 1, sizeof(VAR), vcmp);
-
-	if (v && v->alias) {
-		if (hp) {
-			warnx("%s: illegal keyword specification", p);
-			eval = 1;
-		}
-		parsefmt(v->alias);
-		return ((VAR *)NULL);
-	}
+	v = bsearch(p, var, sizeof(var)/sizeof(VAR) - 1, sizeof(VAR), vcmp);
+	if (v && v->flag & ALIAS)
+		v = findvar(v->header);
 	if (!v) {
 		warnx("%s: keyword not found", p);
 		eval = 1;
-		return ((VAR *)NULL);
+		return NULL;
 	}
-	if (hp)
+
+	if (v && hp)
 		v->header = hp;
-	return (v);
+	return v;
 }
 
 static int
-vcmp(a, b)
-        const void *a, *b;
+vcmp(const void *a, const void *b)
 {
-        return (strcmp(((VAR *)a)->name, ((VAR *)b)->name));
+        return strcmp(a, ((VAR *)b)->name);
 }

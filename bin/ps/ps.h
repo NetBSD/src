@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.19 2003/01/18 10:52:18 thorpej Exp $	*/
+/*	$NetBSD: ps.h,v 1.20 2003/03/06 09:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,8 +41,10 @@
 #define WIDTHMODE	1	/* determine width of column */
 
 enum type {
-	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR, KPTR24,
-	INT32, UINT32, SIGLIST, INT64, UINT64
+	UNSPECIFIED,
+	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG,
+	KPTR, KPTR24, INT32, UINT32, SIGLIST, INT64, UINT64,
+	TIMEVAL, CPUTIME, PCPU, VSIZE
 };
 
 /* Variables. */
@@ -54,15 +56,15 @@ typedef struct varent {
 typedef struct var {
 	char	*name;		/* name(s) of variable */
 	char	*header;	/* default header */
-	char	*alias;		/* aliases */
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	INF127	0x04		/* 127 = infinity: if > 127, print 127. */
 #define LWP	0x08		/* dispatch to kinfo_lwp routine */
+#define UAREA	0x10		/* need to check p_uvalid */
+#define	ALIAS	0x20		/* entry is alias for 'header' */
 	u_int	flag;
 				/* output routine */
 	void	(*oproc) __P((void *, struct varent *, int));
-	short	width;		/* printing width */
 	/*
 	 * The following (optional) elements are hooks for passing information
 	 * to the generic output routine: pvar (that which prints simple
@@ -71,7 +73,9 @@ typedef struct var {
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
 	char	*fmt;		/* printf format */
+
 	/* current longest element */
+	int	width;		/* printing width */
 	int64_t	longestp;	/* longest positive signed value */
 	int64_t	longestn;	/* longest negative signed value */
 	u_int64_t longestu;	/* longest unsigned value */
