@@ -1317,7 +1317,7 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return EINVAL;
 		case 0x6:
 			if(!silent)
-				printf("st%d: Unit attention.\n", unit); 
+				printf("st%d: media change\n", unit); 
 			st->flags &= ~(ST_AT_FILEMARK|ST_AT_EOM);
 			st->info_valid = FALSE;
 			if (st->flags & ST_OPEN) /* TEMP!!!! */

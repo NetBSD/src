@@ -879,7 +879,7 @@ struct	scsi_xfer	*xs;
 								sense->ext.extended.info[13] ;
 			return(EINVAL);
 		case	0x6:
-			if(!silent) printf("st%d: Unit attention.\n ", unit); 
+			if(!silent)printf("st%d: media change\n", unit); 
 			ch_data[unit].lsterr=(sense->ext.extended.info[12]<<8)|
 								sense->ext.extended.info[13] ;
 			ch_info_valid[unit] = FALSE;
