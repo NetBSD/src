@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.4 1999/01/25 23:34:25 garbled Exp $
+#	$NetBSD: install.tmpl,v 1.5 1999/01/31 17:35:49 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -98,6 +98,15 @@ drivetype=sd
 sect_fwd=""
 type=SCSI
 prefdrive=${drivetype}0
+
+# find out what units are possible for that disk, and query the user.
+driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
+if [ "X${driveunits}" = "X" ]; then
+	echo	"No devices for disks of type '${drivetype}'."
+	echo	"This is probably a bug in the install disks."
+	echo	"Exiting install program."
+	exit
+fi
 
 echo	"NetBSD can be SCSI disks."
 echo	""
