@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.147 2004/10/07 20:06:58 tron Exp $	*/
+/*	$NetBSD: if.c,v 1.148 2004/12/04 16:10:25 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.147 2004/10/07 20:06:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.148 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_inet.h"
 
@@ -271,6 +271,7 @@ struct ifnet_head ifnet;
 size_t if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
+struct ifnet *lo0ifp;
 
 /*
  * Allocate the link level name for the specified interface.  This
