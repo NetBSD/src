@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 2000/03/06 03:15:46 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.43 2000/09/23 04:30:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -186,6 +186,8 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
+#include "urio.h"
+#include "uscanner.h"
 #include "vcoda.h"			/* coda file system */
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -279,6 +281,8 @@ struct cdevsw cdevsw[] = {
 	cdev_ugen_init(NUGEN,ugen),	/* 72: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 73: ws multiplexor */
 	cdev_tty_init(NUCOM,ucom),	/* 74: USB tty */
+	cdev_usbdev_init(NURIO,urio),	/* 75: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 76: USB scanner */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -395,6 +399,8 @@ static int chrtoblktbl[] = {
     /* 72 */	    NODEV,
     /* 73 */	    NODEV,
     /* 74 */	    NODEV,
+    /* 75 */	    NODEV,
+    /* 76 */	    NODEV,
 };
 
 /*
