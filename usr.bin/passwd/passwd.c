@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.18 2000/04/14 06:11:09 simonb Exp $	*/
+/*	$NetBSD: passwd.c,v 1.18.4.1 2002/02/26 22:09:31 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.18 2000/04/14 06:11:09 simonb Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.18.4.1 2002/02/26 22:09:31 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: passwd.c,v 1.18 2000/04/14 06:11:09 simonb Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include "extern.h"
 
