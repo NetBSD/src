@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.15 2002/12/01 00:12:11 matt Exp $	*/
+/*	$NetBSD: dir.h,v 1.16 2003/04/19 22:02:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,8 +60,8 @@
  * structures, which are of variable length.  Each directory entry has
  * a struct direct at the front of it, containing its inode number,
  * the length of the entry, and the length of the name contained in
- * the entry.  These are followed by the name padded to a 4 byte boundary
- * with null bytes.  All names are guaranteed null terminated.
+ * the entry.  These are followed by the name padded to a 4 byte boundary.
+ * All names are guaranteed null terminated.
  * The maximum length of a name in a directory is MAXNAMLEN.
  *
  * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
