@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.35 2004/02/26 01:20:47 wiz Exp $	*/
+/*	$NetBSD: queue.h,v 1.36 2004/03/23 09:51:48 he Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -79,6 +79,10 @@
  *
  * For details on the use of these macros, see the queue(3) manual page.
  */
+
+#ifdef QUEUEDEBUG
+#include <sys/systm.h>
+#endif
 
 /*
  * List definitions.
