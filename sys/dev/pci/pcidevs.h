@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.449 2002/06/26 10:09:16 cjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.450 2002/06/27 09:52:53 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp 
+ *	NetBSD: pcidevs,v 1.446 2002/06/27 09:50:06 pooka Exp 
  */
 
 /*
@@ -940,6 +940,8 @@
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz! Card ISDN Interface */
+#define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
+#define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
 /* Stallion products */
 #define	PCI_PRODUCT_STALLION_EC8_32	0x0000		/* EC8/32 */

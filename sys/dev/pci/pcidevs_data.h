@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.447 2002/06/26 10:09:17 cjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.448 2002/06/27 09:52:54 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp 
+ *	NetBSD: pcidevs,v 1.446 2002/06/27 09:50:06 pooka Exp 
  */
 
 /*
@@ -1712,6 +1712,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AVM",
 	    "Fritz! Card ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
+	    0,
+	    "AVM",
+	    "Basic Rate B1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
+	    0,
+	    "AVM",
+	    "Primary Rate T1 ISDN Interface",
 	},
 	{
 	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
