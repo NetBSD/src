@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.29 2000/02/23 02:04:21 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.30 2000/02/23 03:44:02 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -516,6 +516,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		}
 	}
 
+	raidPtr->numNewFailures = 0;
 	raidPtr->copyback_in_progress = 0;
 	raidPtr->parity_rewrite_in_progress = 0;
 	raidPtr->recon_in_progress = 0;
@@ -756,6 +757,7 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	raidPtr->numFailures++;
 	raidPtr->Disks[row][col].status = rf_ds_dist_spared;
 	raidPtr->status[row] = rf_rs_reconfigured;
+	rf_update_component_labels(raidPtr);
 	/* install spare table only if declustering + distributed sparing
 	 * architecture. */
 	if (raidPtr->Layout.map->flags & RF_BD_DECLUSTERED)
@@ -779,6 +781,7 @@ rf_FailDisk(
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
 	raidPtr->status[frow] = rf_rs_degraded;
+	rf_update_component_labels(raidPtr);
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	if (initRecon)
 		rf_ReconstructFailedDisk(raidPtr, frow, fcol);

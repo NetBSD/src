@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.55 2000/02/23 02:11:05 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.56 2000/02/23 03:44:03 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1537,6 +1537,14 @@ raidstart(raidPtr)
 	unit = raidPtr->raidid;
 	rs = &raid_softc[unit];
 	
+	/* quick check to see if anything has died recently */
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	if (raidPtr->numNewFailures > 0) {
+		rf_update_component_labels(raidPtr);
+		raidPtr->numNewFailures--;
+	}
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	/* Check to see if we're at the limit... */
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	while (raidPtr->openings > 0) {
@@ -1811,6 +1819,7 @@ KernelWakeupFunc(vbp)
 			    rf_ds_failed;
 			queue->raidPtr->status[queue->row] = rf_rs_degraded;
 			queue->raidPtr->numFailures++;
+			queue->raidPtr->numNewFailures++;
 			/* XXX here we should bump the version number for each component, and write that data out */
 		} else {	/* Disk is already dead... */
 			/* printf("Disk already marked as dead!\n"); */
