@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.30 2003/05/03 11:19:05 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.31 2003/05/03 15:02:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.30 2003/05/03 11:19:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.31 2003/05/03 15:02:54 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	default:
+		break;
 		/* NOTREACHED */
 	}
 
