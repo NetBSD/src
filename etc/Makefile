@@ -4,7 +4,7 @@ NOOBJ=	oobj
 
 # disktab may be wrong -- hcx9 is a tahoe, but gets its own.
 # -rw-r--r--
-BIN1=	aliases csh.cshrc csh.login csh.logout crontab daily dm.conf \
+BIN1=	aliases csh.cshrc csh.login csh.logout daily dm.conf \
 	ftpusers gettytab group hosts hosts.equiv hosts.lpd inetd.conf \
 	man.conf monthly motd netstart phones printcap protocols rc \
 	rc.local remote security services shells syslog.conf ttys weekly \
@@ -24,6 +24,7 @@ all clean cleandir depend etc install lint:
 distribution:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
+	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	(cd ${DESTDIR}/etc; pwd_mkdb -p master.passwd)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
