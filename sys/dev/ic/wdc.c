@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.200 2004/08/12 22:39:41 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.201 2004/08/13 02:10:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.200 2004/08/12 22:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.201 2004/08/13 02:10:43 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1449,7 +1449,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer->c_kill_xfer = __wdccommand_kill_xfer;
 
 	s = splbio();
-	wdc_exec_xfer(chp, xfer);
+	ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
 	if ((ata_c->flags & AT_POLL) != 0 &&
 	    (ata_c->flags & AT_DONE) == 0)
@@ -1805,24 +1805,6 @@ wdccommandshort(struct wdc_channel *chp, int drive, int command)
 	    WDSD_IBM | (drive << 4));
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0, command);
-}
-
-/* Add a command to the queue and start controller. Must be called at splbio */
-void
-wdc_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
-{
-
-	WDCDEBUG_PRINT(("wdc_exec_xfer %p channel %d drive %d\n", xfer,
-	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
-
-	/* complete xfer setup */
-	xfer->c_chp = chp;
-
-	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(chp);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.43 2004/08/12 22:39:40 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.44 2004/08/13 02:10:43 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.43 2004/08/12 22:39:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.44 2004/08/13 02:10:43 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.43 2004/08/12 22:39:40 thorpej Exp $");
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
+#define	DEBUG_XFERS  0x40
 #ifdef WDCDEBUG
 extern int wdcdebug_mask; /* init'ed in wdc.c */
 #define WDCDEBUG_PRINT(args, level) \
@@ -498,6 +499,26 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		drvp->n_dmaerrs = 1; /* just got an error */
 		drvp->n_xfers = 1; /* restart counting from this error */
 	}
+}
+
+/*
+ * Add a command to the queue and start controller. Must be called at splbio
+ */
+void
+ata_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+{
+
+	WDCDEBUG_PRINT(("ata_exec_xfer %p channel %d drive %d\n", xfer,
+	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
+
+	/* complete xfer setup */
+	xfer->c_chp = chp;
+
+	/* insert at the end of command list */
+	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
+	WDCDEBUG_PRINT(("wdcstart from ata_exec_xfer, flags 0x%x\n",
+	    chp->ch_flags), DEBUG_XFERS);
+	wdcstart(chp);
 }
 
 struct ata_xfer *
