@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1999/05/05 13:46:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,13 +129,6 @@ extern int astpending;		/* need to trap before returning to user mode */
  * The rest of this should probably be moved to <machine/x68kcpu.h>
  * although some of it could probably be put into generic 68k headers.
  */
-
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_50		6
 
 #ifdef _KERNEL
 extern int machineid;
