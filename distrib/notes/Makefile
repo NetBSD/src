@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 1997/11/24 23:32:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 1998/11/07 04:08:25 cgd Exp $
 
 NOPROG=	notreally
 
@@ -19,6 +19,7 @@ all:	${TARG}
 
 ${TARG}: ${DEP}
 	cpp -I${.CURDIR}/$M -D_MACH=$M -D_VER=$V -Uunix -U$M -C -P ${SRC} \
-		| sed 's/_SVER_S/'${V_S}'/g ' > $@
+		| sed -e 's/_SVER_S/'${V_S}'/g ' \
+		      -e 's/[\t ]*[$$]NetBSD:..*[$$]//g' > $@
 
 .include <bsd.prog.mk>
