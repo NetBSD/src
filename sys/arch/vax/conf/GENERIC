@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29 1998/03/18 16:34:44 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.30 1998/03/21 10:02:40 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -46,6 +46,9 @@ options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
 options 	FIFO
 options 	NFSSERVER
+options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
+
+#options 	UVM
 
 # System V shared memory & semaphores support.
 options 	SYSVMSG
@@ -130,11 +133,13 @@ scsibus*	at ncr?
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?
 
+# Graphic adapters.
+qd0		at uba? csr 0177400
 
 # Ethernet cards
 de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-le0		at vsbus0		# LANCE
+ln0		at vsbus0		# LANCE
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.8 1996/10/13 03:35:39 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.9 1998/03/21 10:02:40 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,6 +59,7 @@ void	kdbprinttrap __P((int, int));
 
 int	db_active = 0;
 
+extern int qdpolling;
 /*
  * DDB is called by either <ESC> - D on keyboard, via a TRACE or
  * BPT trap or from kernel, normally as a result of a panic.
@@ -109,13 +110,11 @@ kdb_trap(frame)
 	/* XXX Should switch to interrupt stack here, if needed. */
 
 	s = splddb();
-	mtpr(0, PR_RXCS);
-	mtpr(0, PR_TXCS);
 	db_active++;
-	db_trap(frame->trap, frame->code);
-	db_active--;
-	mtpr(GC_RIE, PR_RXCS);
-	mtpr(GC_TIE, PR_TXCS);
+        cnpollc(TRUE);
+        db_trap(frame->trap, frame->code);
+        cnpollc(FALSE);
+        db_active--;
 	splx(s);
 
 	if (!panicstr)

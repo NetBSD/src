@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1998/02/08 14:06:25 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1998/03/21 10:02:40 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -147,10 +147,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
-#define gencnpollc	nullcnpollc
 cons_decl(gen);
 #define dzcnpollc	nullcnpollc
 cons_decl(dz);
+cons_decl(qd);
+#include "qv.h"
+#include "qd.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX780 || VAX750 || VAX650 || VAX630
@@ -165,9 +167,13 @@ struct	consdev constab[]={
 #else
 #define NDZCN	0
 #endif
-#if 0 /* VAX410 || VAX43 || VAX650 || VAX630 */
+#if VAX410 || VAX43 || VAX650 || VAX630
+#if NQV
 	cons_init(qv),	/* QVSS/QDSS bit-mapped console driver */
+#endif
+#if NQD
 	cons_init(qd),
+#endif
 #endif
 
 #ifdef notyet
@@ -318,10 +324,7 @@ cdev_decl(dhu);
 #include "dmz.h"
 cdev_decl(dmz);
 
-#include "qv.h"
 cdev_decl(qv);
-
-#include "qd.h"
 cdev_decl(qd);
 
 #include "ipfilter.h"
