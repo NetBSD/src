@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 1998/02/26 20:31:13 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 1998/06/08 20:47:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,6 +43,8 @@
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -62,6 +64,10 @@
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
@@ -216,7 +222,11 @@ trap(type, code, v, tf)
 	u_int ucode;
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 	sig = 0;
@@ -478,7 +488,7 @@ trap(type, code, v, tf)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		va = trunc_page((vm_offset_t)v);
+		va = m68k_trunc_page((vm_offset_t)v);
 
 		/*
 		 * Need to resolve the fault.
@@ -572,7 +582,11 @@ syscall(code, tf)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(tf.tf_sr))
 		panic("syscall");
 	p = curproc;
