@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1997/03/16 03:43:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1997/03/16 09:12:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -430,53 +430,6 @@ setregs(p, pack, stack, retval)
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-
-#ifdef COMPAT_HPUX
-	p->p_md.md_flags &= ~MDP_HPUXMMAP;
-	if (p->p_emul == &emul_hpux) {
-		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-		retval[0] = 0;		/* no float card */
-		if (fputype)
-			retval[1] = 1;	/* yes 68881 */
-		else
-			retval[1] = 0;	/* no 68881 */
-	}
-	/*
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
-	 *
-	 * Ensure we perform the right action on traps type 1 and 2:
-	 * If our parent is an HPUX process and we are being traced, turn
-	 * on HPUX style interpretation.  Else if we were using the HPUX
-	 * style interpretation, revert to the BSD interpretation.
-	 *
-	 * Note that we do this by changing the trap instruction in the
-	 * global "sigcode" array which then gets copied out to the user's
-	 * sigcode in the stack.  Since we are changing it in the global
-	 * array we must always reset it, even for non-HPUX processes.
-	 *
-	 * Note also that implementing it in this way creates a potential
-	 * race where we could have tweaked it for process A which then
-	 * blocks in the copyout to the stack and process B comes along
-	 * and untweaks it causing A to wind up with the wrong setting
-	 * when the copyout continues.  However, since we have already
-	 * copied something out to this user stack page (thereby faulting
-	 * it in), this scenerio is extremely unlikely.
-	 */
-	{
-		extern short sigcodetrap[];
-
-		if ((p->p_pptr->p_emul == &emul_hpux) &&
-		    (p->p_flag & P_TRACED)) {
-			p->p_md.md_flags |= MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E42;
-		} else {
-			p->p_md.md_flags &= ~MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E41;
-		}
-	}
-#endif
 }
 
 /*
