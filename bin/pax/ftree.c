@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.23 2002/10/19 20:33:18 provos Exp $	*/
+/*	$NetBSD: ftree.c,v 1.24 2003/04/21 22:10:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.23 2002/10/19 20:33:18 provos Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.24 2003/04/21 22:10:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,6 +573,8 @@ next_file(ARCHD *arcn)
 			return(-1);
 	}
 
+	if (ftsp == NULL)
+		return -1;
 	/*
 	 * loop until we get a valid file to process
 	 */
@@ -592,15 +594,6 @@ next_file(ARCHD *arcn)
 		 */
 		switch(ftent->fts_info) {
 		case FTS_D:
-			/*
-			 * cpio does *not* decend directories listed in the
-			 * arguments, unlike pax/tar, so needs special handling
-			 * here.  failure to do so results in massive amounts
-			 * of duplicated files in the output.
-			 */
-			if (strcmp(NM_CPIO, argv0) == 0)
-				continue;
-			/* FALLTHROUGH */
 		case FTS_DEFAULT:
 		case FTS_F:
 		case FTS_SL:
@@ -744,5 +737,16 @@ next_file(ARCHD *arcn)
 	 */
 	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
 	arcn->org_name = ftent->fts_path;
+	if (strcmp(NM_CPIO, argv0) == 0) {
+		/*
+		 * cpio does *not* descend directories listed in the
+		 * arguments, unlike pax/tar, so needs special handling
+		 * here.  failure to do so results in massive amounts
+		 * of duplicated files in the output. We kill fts after
+		 * the first name is extracted, what a waste.
+		 */
+		ftcur->refcnt = 1;
+		(void)ftree_arg();
+	}
 	return(0);
 }
