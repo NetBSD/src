@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.65 2000/02/01 18:38:50 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.66 2000/02/19 04:00:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.65 2000/02/01 18:38:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.66 2000/02/19 04:00:59 mycroft Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -549,7 +549,6 @@ cpu_identify()
 	if (cpu_id.cpu.cp_imp == MIPS_RC64470)	/* FPU PRid is 0x21 */
 		fpuname = "built-in FPU";
 
-	printf("cpu0: ");
 	if (cpuname != NULL)
 		printf(cpuname);
 	else
