@@ -1,7 +1,7 @@
 %define libmaj 0
 %define libmin 9
-%define librel 6
-%define librev g
+%define librel 7
+%define librev b
 Release: 1
 
 %define openssldir /var/ssl
@@ -109,10 +109,6 @@ for x in $RPM_BUILD_ROOT/usr/man/man*/*
 	do mv ${x} ${x}ssl
 done
 
-# Install RSAref stuff
-install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
-install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
-
 # Make backwards-compatibility symlink to ssleay
 ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
 
@@ -156,7 +152,8 @@ ldconfig
 %changelog
 * Thu Mar 22 2001 Richard Levitte <richard@levitte.org>
 - Removed redundant subsection that re-installed libcrypto.a and libssl.a
-  as well.
+  as well.  Also remove RSAref stuff completely, since it's not needed
+  any more.
 * Thu Mar 15 2001 Jeremiah Johnson <jjohnson@penguincomputing.com>
 - Removed redundant subsection that re-installed libcrypto.so.0.9.6 and
   libssl.so.0.9.6.  As well as the subsection that created symlinks for

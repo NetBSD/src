@@ -60,8 +60,22 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 
+#if 0
+#undef OpenSSL_add_all_algorithms
+
 void OpenSSL_add_all_algorithms(void)
-{
+	{
+	OPENSSL_add_all_algorithms_noconf();
+	}
+#endif
+
+void OPENSSL_add_all_algorithms_noconf(void)
+	{
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-}
+#ifndef OPENSSL_NO_ENGINE
+# if defined(__OpenBSD__) || defined(__FreeBSD__)
+	ENGINE_setup_bsd_cryptodev();
+# endif
+#endif
+	}

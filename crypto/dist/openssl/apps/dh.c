@@ -57,7 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -87,11 +87,17 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE *e = NULL;
+#endif
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
 
 	apps_startup();
 
@@ -99,6 +105,12 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
+#ifndef OPENSSL_NO_ENGINE
+	engine=NULL;
+#endif
 	infile=NULL;
 	outfile=NULL;
 	informat=FORMAT_PEM;
@@ -129,6 +141,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
+#endif
 		else if (strcmp(*argv,"-check") == 0)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -160,10 +179,17 @@ bad:
 		BIO_printf(bio_err," -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
+#ifndef OPENSSL_NO_ENGINE
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#endif
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
+
+#ifndef OPENSSL_NO_ENGINE
+        e = setup_engine(bio_err, engine, 0);
+#endif
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
@@ -186,7 +212,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -319,6 +345,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}
 #endif
