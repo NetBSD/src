@@ -30,8 +30,10 @@
 // for printf()
 #include <stdio.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 #include <getopt.h>
+#endif
+#ifdef __linux__
 #include <malloc.h>
 #else
 // for malloc() & free()
@@ -376,7 +378,7 @@ int
 get_options(int argc, char **argv)
 {
     int c;
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
     static struct option long_options[] =
     {
 	// name		has_arg			&flag	val
@@ -414,7 +416,7 @@ get_options(int argc, char **argv)
     cflag = CFLAG_DEFAULT;
     fflag = FFLAG_DEFAULT;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
     optind = 0;	// reset option scanner logic
     while ((c = getopt_long(argc, argv, "hlvdricp", long_options,
 	    &option_index)) >= 0)
@@ -423,7 +425,7 @@ get_options(int argc, char **argv)
     while ((c = getopt(argc, argv, "hlvdraLicp")) != EOF)
 #endif
 	{
-#ifndef __linux__
+#if !(defined(__linux__) || defined(__NetBSD__))
 	if (c == '?') {
 	    getopt_error = 1;
 	    c = optopt;
