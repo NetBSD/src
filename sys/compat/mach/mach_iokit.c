@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.14 2003/04/30 18:38:19 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.15 2003/05/13 20:48:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.14 2003/04/30 18:38:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.15 2003/05/13 20:48:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -314,52 +314,6 @@ mach_io_connect_get_service(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_service.name = (mach_port_t)mr->mr_name;
 	rep->rep_service.disposition = 0x11; /* XXX */
-	rep->rep_trailer.msgh_trailer_size = 8;
-
-	*msglen = sizeof(*rep);
-	return 0;
-}
-
-int
-mach_io_registry_entry_get_property(args)
-	struct mach_trap_args *args;
-{
-	mach_io_registry_entry_get_property_request_t *req = args->smsg;
-	mach_io_registry_entry_get_property_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
-	struct lwp *l = args->l;
-	struct mach_port *mp;
-	struct mach_right *mr;
-	mach_port_t mn;
-	struct mach_iokit_devclass *mid;
-
-	mn = req->req_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
-		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
-	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
-		mid = mr->mr_port->mp_data;
-		if (mid->mid_registry_entry_get_property == NULL)
-			printf("no registry_entry_get_property method "
-			    "for darwin_iokit_class %s\n", mid->mid_name);
-		else
-			return (mid->mid_registry_entry_get_property)(args);
-	}
-
-	mp = mach_port_get();
-	mp->mp_flags |= MACH_MP_INKERNEL;
-	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
-
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_properties.name = (mach_port_t)mr->mr_name;
-	rep->rep_properties.disposition = 0x11; /* XXX */
-	rep->rep_properties_count = 1; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -648,11 +602,12 @@ mach_io_registry_entry_get_properties(args)
 	mid = mr->mr_port->mp_data;
 	if (mid->mid_properties == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
-	size = round_page(strlen(mid->mid_properties));
+	size = strlen(mid->mid_properties);
 
 	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, size,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
+	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
@@ -681,6 +636,100 @@ mach_io_registry_entry_get_properties(args)
 	rep->rep_properties.pad1 = 1; /* XXX */
 	rep->rep_properties.type = 1; /* XXX */
 	rep->rep_count = size;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_get_property(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_get_property_request_t *req = args->smsg;
+	mach_io_registry_entry_get_property_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	int error;
+	vaddr_t va;
+	size_t size;
+	size_t len;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+	struct mach_iokit_property *mip;
+
+	/* We do not handle non zero offset and multiple names yet */
+	if (req->req_property_nameoffset != 0) {
+		printf("pid %d.%d: mach_io_registry_entry_get_property "
+		    "offset = %d\n", l->l_proc->p_pid, l->l_lid,
+		    req->req_property_nameoffset);
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	}
+	if (req->req_property_namecount != 1) {
+		printf("pid %d.%d: mach_io_registry_entry_get_property "
+		    "count = %d\n", l->l_proc->p_pid, l->l_lid, 
+		    req->req_property_namecount);
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	}
+
+	/* Find the port */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+	/* Find the devclass information */
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+
+	mid = mr->mr_port->mp_data;
+	if (mid->mid_properties_array == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+
+	/* Lookup the property name */
+	for (mip = mid->mid_properties_array; mip->mip_name; mip++) {
+		len = strlen(mip->mip_name);
+		if (memcmp(mip->mip_name, req->req_propery_name, len) == 0)
+			break;
+	}
+	if (mip->mip_value == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_ENOENT);
+
+	/* And copyout its associated value */
+	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
+	size = strlen(mip->mip_value);
+
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
+	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
+		return mach_msg_error(args, error);
+
+#ifdef DEBUG_MACH
+	printf("pid %d.%d: copyout iokit property at %p\n",
+		    l->l_proc->p_pid, l->l_lid, (void *)va);
+#endif
+	if ((error = copyout(mip->mip_value, (void *)va, size)) != 0) {
+#ifdef DEBUG_MACH
+		printf("pid %d.%d: copyout iokit property failed\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_properties.address = (void *)va;
+	rep->rep_properties.size = size;
+	rep->rep_properties.deallocate = 0; /* XXX */
+	rep->rep_properties.copy = 2; /* XXX */
+	rep->rep_properties.pad1 = 0; /* XXX */
+	rep->rep_properties.type = 0; /* XXX */
+	rep->rep_properties_count = 1;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
