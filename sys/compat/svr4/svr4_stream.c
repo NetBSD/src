@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.21 1997/03/18 18:57:21 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.22 1997/09/09 21:15:34 mycroft Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -1502,9 +1502,9 @@ svr4_sys_putmsg(p, v, retval)
 		{
 			struct sys_connect_args co;
 
-			co.s = SCARG(uap, fd);
-			co.name = (void *) sup;
-			co.namelen = (int) sasize;
+			SCARG(&co, s) = SCARG(uap, fd);
+			SCARG(&co, name) = (void *) sup;
+			SCARG(&co, namelen) = (int) sasize;
 			return sys_connect(p, &co, retval);
 		}
 
@@ -1512,6 +1512,7 @@ svr4_sys_putmsg(p, v, retval)
 		{
 			struct msghdr msg;
 			struct iovec aiov;
+
 			msg.msg_name = (caddr_t) sup;
 			msg.msg_namelen = sasize;
 			msg.msg_iov = &aiov;
@@ -1526,6 +1527,7 @@ svr4_sys_putmsg(p, v, retval)
 			*retval = 0;
 			return error;
 		}
+
 	default:
 		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
 		return ENOSYS;
