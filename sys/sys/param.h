@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.153 2002/11/17 22:53:46 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.154 2002/12/11 23:22:03 abs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -105,10 +105,12 @@
 #define	MAXLOGNAME	(LOGIN_NAME_MAX - 1) /* max login name length */
 #define	NCARGS		ARG_MAX		/* max bytes for an exec function */
 #define	NGROUPS		NGROUPS_MAX	/* max number groups */
-#define	NOFILE		OPEN_MAX	/* max open files per process */
 #define	NOGROUP		65535		/* marker for empty group set member */
 #define	MAXHOSTNAMELEN	256		/* max hostname size */
 
+#ifndef NOFILE
+#define	NOFILE		OPEN_MAX	/* max open files per process */
+#endif
 #ifndef MAXUPRC				/* max simultaneous processes */
 #define	MAXUPRC		CHILD_MAX	/* POSIX 1003.1-compliant default */
 #else
