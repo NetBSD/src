@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.337 2003/08/16 06:36:29 itojun Exp $
+$NetBSD: usbdevs,v 1.338 2003/09/08 16:06:57 tron Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1263,6 +1263,7 @@ product SANDISK SDDR05		0x0005	ImageMate SDDR-05
 product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 product SANDISK SDDR75		0x0810	ImageMate SDDR-75
+product SANDISK SDDR86		0x0621  ImageMate SDDR-86
 
 /* Sanwa Supply products */
 product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
