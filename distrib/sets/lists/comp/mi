@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.516 2003/01/19 13:06:50 lha Exp $
+#	$NetBSD: mi,v 1.517 2003/01/19 19:26:46 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -840,6 +840,7 @@
 ./usr/include/tcpd.h			comp-c-include
 ./usr/include/termcap.h			comp-c-include
 ./usr/include/termios.h			comp-c-include
+./usr/include/threadlib.h		comp-c-include
 ./usr/include/time.h			comp-c-include
 ./usr/include/ttyent.h			comp-c-include
 ./usr/include/tzfile.h			comp-c-include
