@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.29 2001/11/29 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.30 2002/07/25 15:19:17 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -181,6 +181,14 @@ menu editfsparts, y=13, exit;
 	option "Changer f", action { editpart = F;}, sub menu edfspart;
 	option "Changer g", action { editpart = G;}, sub menu edfspart;
 	option "Changer h", action { editpart = H;}, sub menu edfspart;
+	option "Changer i", action { editpart = I;}, sub menu edfspart;
+	option "Changer j", action { editpart = J;}, sub menu edfspart;
+	option "Changer k", action { editpart = K;}, sub menu edfspart;
+	option "Changer l", action { editpart = L;}, sub menu edfspart;
+	option "Changer m", action { editpart = M;}, sub menu edfspart;
+	option "Changer n", action { editpart = N;}, sub menu edfspart;
+	option "Changer o", action { editpart = O;}, sub menu edfspart;
+	option "Changer p", action { editpart = P;}, sub menu edfspart;
 	option "Changer d'unité", action { reask_sizemult(dlcylsize); };
  
 
