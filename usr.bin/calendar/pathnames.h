@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 2003/08/07 11:13:14 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2004/12/07 16:47:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,3 +35,4 @@
 
 #define	_PATH_CPP	"/usr/bin/cpp"
 #define	_PATH_CALENDARS	"/usr/share/calendar"
+#define _PATH_SYSTEM_CALENDAR	"/etc/calendar"
