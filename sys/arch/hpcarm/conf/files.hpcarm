@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.44 2002/07/19 19:15:48 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.45 2002/07/19 19:29:28 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -37,10 +37,15 @@ file	arch/hpcarm/hpcarm/hpc_machdep.c
 # Include hpcarm/StrongARM config definitions.
 include "arch/arm/conf/files.sa11x0"
 
-# iPAQ Virtual bus
+# XXX iPAQ Virtual bus
 device	ipaqbus {}
 attach	ipaqbus at saip
-file	arch/hpcarm/dev/ipaq_saip.c			ipaqbus
+file	arch/hpcarm/dev/ipaq_saip.c		ipaqbus
+
+# IPAC PCMCIA
+device	ipaqpcic: pcmciabus
+attach	ipaqpcic at ipaqbus
+file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
 
 #
 # H/PC Platform common files.
