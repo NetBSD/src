@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.10 1993/05/13 21:39:36 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.11 1993/05/16 03:42:46 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -959,6 +959,10 @@ init386(first)
 	proc0.p_addr->u_pcb.pcb_tss.tss_esp0 = (int) kstack + UPAGES*NBPG;
 	proc0.p_addr->u_pcb.pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL) ;
 	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
+
+	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt = 
+		(sizeof(tss))<<16;
+
 	ltr(_gsel_tss);
 
 	/* make a call gate to reenter kernel with */
