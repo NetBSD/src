@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.15 1997/03/21 22:40:33 thorpej Exp $
+#	$NetBSD: VME147,v 1.16 1997/07/22 18:49:21 phil Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -19,6 +19,7 @@ file-system 	FFS
 file-system 	NFS	
 #file-system 	MFS
 #file-system	MSDOSFS
+#file-system	UNION
 
 #options	NFSSERVER
 options 	FIFO
