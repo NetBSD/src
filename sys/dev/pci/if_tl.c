@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.6 1997/11/18 12:26:09 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.7 1997/11/30 15:18:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -164,7 +164,11 @@ typedef u_long ioctl_cmd_t;
 	bus_space_write_1(sc->tl_bustag, sc->tl_bushandle, (reg), (data))
 #define ETHER_MIN_TX (ETHERMIN + sizeof(struct ether_header))
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int tl_pci_match __P((struct device *, void *, void *));
+#else
+static int tl_pci_match __P((struct device *, struct cfdata *, void *));
+#endif
 static void tl_pci_attach __P((struct device *, struct device *, void *));
 static int tl_intr __P((void *));
 
@@ -308,7 +312,11 @@ static char *nullbuf = NULL;
 static int
 tl_pci_match(parent, match, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
+#else
+	struct cfdata *match;
+#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
