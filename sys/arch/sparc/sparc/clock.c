@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1995/04/10 16:48:44 mycroft Exp $ */
+/*	$NetBSD: clock.c,v 1.22 1995/05/29 23:57:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 /*
- * Clock driver.  This is the id prom (``eeprom'') driver as well
+ * Clock driver.  This is the id prom and eeprom driver as well
  * and includes the timer register functions too.
  */
 
@@ -56,6 +56,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/malloc.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -63,6 +64,7 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
+#include <machine/eeprom.h>
 
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
@@ -118,17 +120,46 @@ static void oclockattach __P((struct device *, struct device *, void *));
 struct cfdriver oclockcd =
     { NULL, "oclock", oclockmatch, oclockattach, DV_DULL,
 	sizeof(struct device) };
-#endif
 
-static int clockmatch __P((struct device *, void *, void *));
-static void clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd =
-    { NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device) };
+#endif /* SUN4 */
 
-static int timermatch __P((struct device *, void *, void *));
-static void timerattach __P((struct device *, struct device *, void *));
-struct cfdriver timercd =
-    { NULL, "timer", timermatch, timerattach, DV_DULL, sizeof(struct device) };
+/*
+ * Sun 4 machines use the old-style (a'la Sun 3) EEPROM.  On the
+ * 4/100's and 4/200's, this is at a separate obio space.  On the
+ * 4/300's and 4/400's, however, it is the cl_nvram[] chunk of the
+ * Mostek chip.  Therefore, eeprom_match will only return true on
+ * the 100/200 models, and the eeprom will be attached separately.
+ * On the 300/400 models, the eeprom will be dealt with when the clock is
+ * attached.
+ */
+static char	*eeprom_va = NULL;
+static int	eeprom_busy = 0;
+static int	eeprom_wanted = 0;
+static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
+
+static int	eeprom_match __P((struct device *, void *, void *));
+static void	eeprom_attach __P((struct device *, struct device *, void *));
+static int	eeprom_update __P((char *, int, int));
+static int	eeprom_take __P((void));
+static void	eeprom_give __P((void));
+struct	cfdriver eepromcd = {
+	NULL, "eeprom", eeprom_match, eeprom_attach,
+	DV_DULL, sizeof(struct device)
+};
+
+static int	clockmatch __P((struct device *, void *, void *));
+static void	clockattach __P((struct device *, struct device *, void *));
+struct cfdriver clockcd = {
+	NULL, "clock", clockmatch, clockattach,
+	DV_DULL, sizeof(struct device)
+};
+
+static int	timermatch __P((struct device *, void *, void *));
+static void	timerattach __P((struct device *, struct device *, void *));
+struct cfdriver timercd = {
+	NULL, "timer", timermatch, timerattach,
+	DV_DULL, sizeof(struct device)
+};
 
 
 /*
@@ -182,6 +213,49 @@ oclockattach(parent, self, aux)
 #endif /* SUN4 */
 
 /*
+ * Sun 4/100, 4/200 EEPROM match routine.
+ */
+static int
+eeprom_match(parent, vcf, aux)
+	struct device *parent;
+	void *aux, *vcf;
+{
+#if defined(SUN4)
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+
+	if (cputyp == CPU_SUN4) {
+		if (cf->cf_unit != 0)
+			return (0);
+
+		if (cpumod == SUN4_100 || cpumod == SUN4_200)
+			return (strcmp(eepromcd.cd_name,
+				       ca->ca_ra.ra_name) == 0);
+
+		return (0);
+	}
+#endif /* SUN4 */
+	return (0);
+}
+
+static void
+eeprom_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+#if defined(SUN4)
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	printf("\n");
+
+	eeprom_va = (char *)mapiodev(ra->ra_paddr, EEPROM_SIZE, ca->ca_bustype);
+
+	eeprom_nvram = 0;
+#endif /* SUN4 */
+}
+
+/*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
  * own special match function to call it the "clock".
  */
@@ -196,7 +270,8 @@ clockmatch(parent, vcf, aux)
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
-			return (strcmp(clockcd.cd_name, ca->ca_ra.ra_name) == 0);
+			return (strcmp(clockcd.cd_name,
+				       ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
 #endif /* SUN4 */
@@ -253,8 +328,14 @@ clockattach(parent, self, aux)
 	}
 
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4)
+	if (cputyp == CPU_SUN4) {
 		idp = &idprom;
+
+		if (cpumod == SUN4_300 || cpumod == SUN4_400) {
+			eeprom_va = (char *)cl->cl_nvram;
+			eeprom_nvram = 1;
+		}
+	}
 #endif
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
@@ -953,3 +1034,162 @@ microtime(tvp)
 	splx(s);
 }
 #endif /* SUN4 */
+
+/*
+ * XXX: these may actually belong somewhere else, but since the
+ * EEPROM is so closely tied to the clock on some models, perhaps
+ * it needs to stay here...
+ */
+int
+eeprom_uio(uio)
+	struct uio *uio;
+{
+#if defined(SUN4)
+	int error;
+	int off;	/* NOT off_t */
+	u_int cnt;
+	caddr_t va;
+	caddr_t buf = NULL;
+
+	if (cputyp != CPU_SUN4)
+		return (ENODEV);
+
+	off = uio->uio_offset;
+	if (off > EEPROM_SIZE)
+		return (EFAULT);
+
+	cnt = uio->uio_resid;
+	if (cnt > (EEPROM_SIZE - off))
+		cnt = (EEPROM_SIZE - off);
+
+	if ((error = eeprom_take()) != 0)
+		return (error);
+
+	if (eeprom_va == NULL) {
+		error = ENXIO;
+		goto out;
+	}
+
+	va = eeprom_va;
+	if (uio->uio_rw != UIO_READ) {
+		/* Write requires a temporary buffer. */
+		buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
+		if (buf == NULL) {
+			error = EAGAIN;
+			goto out;
+		}
+		va = buf;
+	}
+
+	if ((error = uiomove(va + off, (int)cnt, uio)) != 0)
+		goto out;
+
+	if (uio->uio_rw != UIO_READ)
+		error = eeprom_update(buf, off, cnt);
+
+ out:
+	if (buf)
+		free(buf, M_DEVBUF);
+	eeprom_give();
+	return (error);
+#else /* ! SUN4 */
+	return (ENODEV);
+#endif /* SUN4 */
+}
+
+/*
+ * Update the EEPROM from the passed buf.
+ */
+static int
+eeprom_update(buf, off, cnt)
+	char *buf;
+	int off, cnt;
+{
+#if defined(SUN4)
+	int error = 0;
+	volatile char *ep;
+	char *bp;
+
+	if (eeprom_va == NULL)
+		return (ENXIO);
+
+	ep = eeprom_va + off;
+	bp = buf + off;
+
+	/*
+	 * XXX: I'm not totally sure if this is necessary, and I don't
+	 * know if there are any harmful side effects, either.
+	 *	--thorpej
+	 */
+	if (eeprom_nvram)
+		clk_wenable(1);
+
+	while (cnt > 0) {
+		/*
+		 * DO NOT WRITE IT UNLESS WE HAVE TO because the
+		 * EEPROM has a limited number of write cycles.
+		 * After some number of writes it just fails!
+		 */
+		if (*ep != *bp) {
+			*ep = *bp;
+			/*
+			 * We have written the EEPROM, so now we must
+			 * sleep for at least 10 milliseconds while
+			 * holding the lock to prevent all access to
+			 * the EEPROM while it recovers.
+			 */
+			(void)tsleep(eeprom_va, PZERO - 1, "eeprom", hz/50);
+		}
+		/* Make sure the write worked. */
+		if (*ep != *bp) {
+			error = EIO;
+			goto out;
+		}
+		++ep;
+		++bp;
+		--cnt;
+	}
+ out:
+	/* XXX: see above. */
+	if (eeprom_nvram)
+		clk_wenable(0);
+
+	return (error);
+#else /* ! SUN4 */
+	return (0);
+#endif /* SUN4 */
+}
+
+/* Take a lock on the eeprom. */
+static int
+eeprom_take()
+{
+#if defined(SUN4)
+	int error = 0;
+	while (eeprom_busy) {
+		eeprom_wanted = 1;
+		error = tsleep(&eeprom_busy, PZERO | PCATCH, "eeprom", 0);
+		eeprom_wanted = 0;
+		if (error)	/* interrupted */
+			goto out;
+	}
+	eeprom_busy = 1;
+ out:
+	return (error);
+#else /* ! SUN4 */
+	return (ENODEV);
+#endif /* SUN4 */
+}
+
+/* Give a lock on the eeprom away. */
+static void
+eeprom_give()
+{
+#if defined(SUN4)
+	eeprom_busy = 0;
+	if (eeprom_wanted) {
+		eeprom_wanted = 0;
+		wakeup(&eeprom_busy);
+	}
+#endif /* SUN4 */
+}
