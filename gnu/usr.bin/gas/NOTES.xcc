@@ -1,4 +1,4 @@
-$NetBSD: NOTES.xcc,v 1.1 1997/09/19 01:03:40 jeremy Exp $
+$NetBSD: NOTES.xcc,v 1.2 2002/04/26 16:21:25 lukem Exp $
 Notes for creating Cross-Assemblers on NetBSD
 =============================================
 
@@ -18,6 +18,6 @@ To create a cross-assembler:
 		MID_M68K	(for m68k 8k page machine targets)
 		MID_M68K4K	(for m68k 4k page machine targets)
 	  If you are unsure which of these applies to your target, examine
-	  $(BSDSRCDIR)/sys/arch/<target-machine>/include/param.h
+	  $(NETBSDSRCDIR)/sys/arch/<target-machine>/include/param.h
 
 2.	Run ``make''.
