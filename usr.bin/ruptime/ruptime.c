@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.5 1997/01/09 15:27:01 tls Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.6 1997/10/19 14:26:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -33,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-static char rcsid[] = "$NetBSD: ruptime.c,v 1.5 1997/01/09 15:27:01 tls Exp $";
+__RCSID("$NetBSD: ruptime.c,v 1.6 1997/10/19 14:26:26 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,6 +75,7 @@ int rflg = 1;
 int	 hscmp __P((const void *, const void *));
 char	*interval __P((time_t, char *));
 int	 lcmp __P((const void *, const void *));
+int	 main __P((int, char **));
 void	 morehosts __P((void));
 int	 tcmp __P((const void *, const void *));
 int	 ucmp __P((const void *, const void *));
@@ -85,7 +86,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	struct dirent *dp;
 	struct hs *hsp;
 	struct whod *wd;
@@ -96,9 +96,10 @@ main(argc, argv)
 	char buf[sizeof(struct whod)];
 	int (*cmp) __P((const void *, const void *));
 
+	hsp = NULL;
 	aflg = 0;
 	cmp = hscmp;
-	while ((ch = getopt(argc, argv, "alrut")) != EOF)
+	while ((ch = getopt(argc, argv, "alrut")) != -1)
 		switch (ch) {
 		case 'a':
 			aflg = 1;
@@ -143,12 +144,12 @@ main(argc, argv)
 		if (nhosts == hspace) {
 			if ((hs =
 			    realloc(hs, (hspace += 40) * sizeof(*hs))) == NULL)
-				err(1, NULL);
+				err(1, "realloc");
 			hsp = hs + nhosts;
 		}
 
 		if ((hsp->hs_wd = malloc((size_t)WHDRSIZE)) == NULL)
-			err(1, NULL);
+			err(1, "malloc");
 		memmove(hsp->hs_wd, buf, (size_t)WHDRSIZE);
 
 		for (wd = (struct whod *)buf, i = 0; i < 2; ++i)
