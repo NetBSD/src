@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.239 2001/03/21 16:25:38 wiz Exp $
+# $NetBSD: mi,v 1.240 2001/03/27 00:50:10 pooka Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1237,6 +1237,7 @@
 ./usr/share/misc/language		base-reference-share
 ./usr/share/misc/magic			base-reference-share
 ./usr/share/misc/magic.mime		base-reference-share
+./usr/share/misc/magic.mgc		base-reference-share
 ./usr/share/misc/mail.help		base-reference-share
 ./usr/share/misc/mail.tildehelp		base-reference-share
 ./usr/share/misc/map3270		base-reference-share
