@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 1997/06/06 23:14:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.232 1997/06/06 23:29:25 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ extern struct proc *npxproc;
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
+char machine_arch[] = "i386";		/* machine == machine_arch */
 
 /*
  * Declare these as initialized data so we can patch them.
