@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.43 2003/04/02 04:35:27 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.44 2003/06/29 09:56:24 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -227,10 +227,10 @@ cgtwoattach(parent, self, aux)
 }
 
 int
-cgtwoopen(dev, flags, mode, p)
+cgtwoopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -240,12 +240,12 @@ cgtwoopen(dev, flags, mode, p)
 }
 
 int
-cgtwoioctl(dev, cmd, data, flags, p)
+cgtwoioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	register caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
