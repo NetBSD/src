@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.31 1996/03/30 23:05:54 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.32 1996/04/22 01:26:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,7 +107,6 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <dev/ccdvar.h>
