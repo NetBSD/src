@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.5 2001/03/02 15:42:39 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.6 2001/05/27 01:40:16 itojun Exp $	*/
 /*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMate
 	}
 
 	if (keyMaterial != NULL) {
-		strncpy(key->keyMaterial, keyMaterial, keyLen/4);
+		memcpy(key->keyMaterial, keyMaterial, keyLen/8);
 	}
 
 	key->ROUNDS = keyLen/32 + 6;
