@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.31 2001/01/10 08:26:20 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.32 2001/01/23 02:35:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.31 2001/01/10 08:26:20 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.32 2001/01/23 02:35:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -629,8 +629,8 @@ makeentry(parent, ino, name)
 	idesc.id_fix = DONTKNOW;
 	idesc.id_name = name;
 	dp = ginode(parent);
-	if (iswap16(dp->di_size) % DIRBLKSIZ) {
-		dp->di_size = iswap16(roundup(iswap16(dp->di_size), DIRBLKSIZ));
+	if (iswap64(dp->di_size) % DIRBLKSIZ) {
+		dp->di_size = iswap64(roundup(iswap64(dp->di_size), DIRBLKSIZ));
 		inodirty();
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
