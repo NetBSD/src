@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.5 1996/04/12 06:07:18 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.6 1996/04/15 18:58:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
@@ -114,6 +115,7 @@ dec_2100_a50_consinit(constype)
 			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
 			    &comconsioh))
 				panic("can't map serial console I/O ports");
+			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
