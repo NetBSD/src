@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.2 2000/06/08 22:33:53 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.3 2000/06/08 23:26:10 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.2 2000/06/08 22:33:53 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.3 2000/06/08 23:26:10 bjh21 Exp $")
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>
@@ -330,7 +330,7 @@ ENTRY(cpu_loswitch)
 ENTRY(proc_trampoline)
 	mov	fp, #0			/* Tie knot in top of stack */
 	mov	r0, #0
-	bl	_C_FUNC(splx)		/* spl0() */
+	bl	_C_FUNC(lowerspl)		/* spl0() */
 	cmp	r4, #0			/* Function to call? */
 	beq	Lproc_trampoline_nofunc
 	mov	r0, r5

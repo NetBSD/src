@@ -1,4 +1,4 @@
-/* $NetBSD: spl.h,v 1.2 2000/06/08 10:49:19 bjh21 Exp $ */
+/* $NetBSD: spl.h,v 1.3 2000/06/08 23:26:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -55,11 +55,9 @@
 #define IPL_HIGH	12
 #define NIPL		IPL_HIGH + 1
 
-#define spl0()		splx(IPL_NONE)
 #define splsoftnet()	raisespl(IPL_SOFTNET)
-#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
-#define spllowersoftclock() lowerspl(IPL_SOFTCLOCK)
 #define splsoft()	splsoftnet()
+#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
 #define splbio()	raisespl(IPL_BIO)
 #define splnet()	raisespl(IPL_NET)
 #define spltty()	raisespl(IPL_TTY)
@@ -67,15 +65,18 @@
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splclock()	raisespl(IPL_CLOCK)
 #define splstatclock()	raisespl(IPL_STATCLOCK)
-#define splhigh()	splx(IPL_HIGH)
+#define splhigh()	raisespl(IPL_HIGH)
+
+#define spl0()			lowerspl(IPL_NONE)
+#define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
+#define splx(s)			lowerspl(s)
 
 #define signotify(p)	setsoftast()
 
 #ifdef _KERNEL
 #ifndef ASSEMBLER
 extern int raisespl(int);
-extern int lowerspl(int);
-extern int splx(int);
+extern void lowerspl(int);
 
 void setsoftnet(void);
 void setsoftast(void);
