@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2003/01/21 11:27:18 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 2003/03/24 14:26:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -75,12 +75,6 @@
 #ifndef _SH5_ASM_H
 #define	_SH5_ASM_H
 
-#define	PIC_PROLOGUE
-#define	PIC_EPILOGUE
-#define	PIC_PLT(x)	x
-#define	PIC_GOT(x)	x
-#define	PIC_GOTOFF(x)	x
-
 #ifdef __NO_LEADING_UNDERSCORES__
 # define _C_LABEL(x)	x
 #else
@@ -122,6 +116,7 @@
 	_TEXT_SECTION							;\
 	_ALIGN_TEXT							;\
 	.globl x							;\
+	.type x,@function						;\
 	x:
 
 /*
@@ -129,7 +124,11 @@
  * the function prologue...
  */
 #ifdef GPROF
-#define	_PROF_PROLOGUE	pta/l	_mcount, tr0; blink tr0, r0
+#ifdef PIC
+#define	_PROF_PROLOGUE	pta/l	__mcount@PLT, tr0; blink tr0, r0
+#else
+#define	_PROF_PROLOGUE	pta/l	__mcount, tr0; blink tr0, r0
+#endif
 #else
 #define	_PROF_PROLOGUE
 #endif
@@ -240,6 +239,7 @@
 	shori	(((v) >> 16) & 65535), reg	;\
 	shori	((v) & 65535), reg
 
+
 #ifndef _LP64
 /*
  * Load the effective address of a data object into a register
@@ -247,19 +247,35 @@
 #define	LEA(sym, reg)		LDC32(datalabel (sym), reg)
 
 /*
+ * Ditto, but used for loading a relative address
+ */
+#define	LEAR(sym, label, reg)						\
+	movi	(((datalabel sym - (label - .)) >> 16) & 65535), reg;	\
+	shori	((datalabel sym - (label - .)) & 65535), reg
+
+/*
  * Load the effective address of a function into a register.
  */
 #define	LEAF(sym, reg)		LDC32(sym, reg)
 
 /*
+ * Ditto, but used for loading a relative address
+ */
+#define	LEARF(fn, label, reg)					\
+	movi	(((fn - (label - .)) >> 16) & 65535), reg;	\
+	shori	((fn - (label - .)) & 65535), reg
+
+/*
  * Instruction to load a pointer
  */
 #define	LDPTR			ld.l
+#define	LDXPTR			ldx.l
 
 /*
  * Instruction to store a pointer
  */
 #define	STPTR			st.l
+#define	STXPTR			stx.l
 
 /*
  * Set up/Clear down a C-like stack frame on entry/exit to an assembly function
@@ -301,9 +317,21 @@
  */
 
 #define	LEA(sym, reg)		LDC64(datalabel (sym), reg)
+#define	LEAR(sym, label, reg)						\
+	movi	(((datalabel sym - (label - .)) >> 48) & 65535), reg;	\
+	movi	(((datalabel sym - (label - .)) >> 32) & 65535), reg;	\
+	movi	(((datalabel sym - (label - .)) >> 16) & 65535), reg;	\
+	shori	((datalabel sym - (label - .)) & 65535), reg
 #define	LEAF(sym, reg)		LDC64(sym, reg)
+#define	LEARF(fn, label, reg)					\
+	movi	(((fn - (label - .)) >> 48) & 65535), reg;	\
+	movi	(((fn - (label - .)) >> 32) & 65535), reg;	\
+	movi	(((fn - (label - .)) >> 16) & 65535), reg;	\
+	shori	((fn - (label - .)) & 65535), reg
 #define	LDPTR			ld.q
+#define	LDXPTR			ldx.q
 #define	STPTR			st.q
+#define	STXPTR			stx.q
 #define	LINK_FRAME(sz)			\
 	addi	r15, -(16 + (sz)), r15	;\
 	st.q	r15, (sz), r14		;\
@@ -330,6 +358,44 @@
 	ld.q	r15, 0, r14		;\
 	ld.q	r15, 8, r18		;\
 	addi	r15, 16, r15
+#endif
+
+#ifndef PIC
+#define	PIC_PROLOGUE
+#define	PIC_EPILOGUE
+#define	PIC_GET_GOT(tr)
+#define	PIC_LEAF(x, r)					\
+	LEAF(x, r)
+#define	PIC_LEA(x, r)					\
+	LEA(x, r)
+#define	PIC_PTAL(x, tmp, tr)				\
+	pta/l	x, tr
+#define	PIC_PTAU(x, tmp, tr)				\
+	pta/u	x, tr
+#else
+#define	PIC_GET_GOT(tr)					\
+	LEAR(_GLOBAL_OFFSET_TABLE_, 1f, r12)		;\
+1:	ptrel/u	r12, tr					;\
+	gettr	tr, r12
+#define	PIC_PROLOGUE					\
+	addi	r15, -8, r15				;\
+	st.q	r15, 0, r12				;\
+	PIC_GET_GOT(tr0)
+#define	PIC_EPILOGUE					\
+	ld.q	r15, 0, r12				;\
+	addi	r15, 8, r15
+#define	PIC_LEAF(x, r)					\
+	LEAF(x@GOTPLT, r)				;\
+	LDXPTR	r12, r, r
+#define	PIC_LEA(x, r)					\
+	LEA(x@GOT, r)					;\
+	LDXPTR	r12, r, r
+#define	PIC_PTAL(x, tmp, tr)				\
+	PIC_LEAF(x, tmp)				;\
+	ptabs/l	tmp, tr
+#define	PIC_PTAU(x, tmp, tr)				\
+	PIC_LEAF(x, tmp)				;\
+	ptabs/u	tmp, tr
 #endif
 
 
