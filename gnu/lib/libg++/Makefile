@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/03/11 04:58:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 1996/03/11 17:22:42 phil Exp $
 
 SUBDIR= libg++ libstdc++ # libio libiostream
 
@@ -31,7 +31,7 @@ beforeinstall:
 	done)
 	@echo installing includes from libstdc++/stl
 	@(cd libstdc++/stl ; for j in *.h; do \
-		cmp -s $$j ${DESTDIR}/usr/include/g++stl/$$j || \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/stl/$$j || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
 			${DESTDIR}/usr/include/g++/stl/$$j; \
 	done)
