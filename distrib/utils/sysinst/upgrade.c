@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.19 1999/06/22 00:57:06 cgd Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.20 1999/06/22 06:57:01 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,7 +101,8 @@ do_upgrade()
 	wclear(stdscr);
 	wrefresh(stdscr);
 
-	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
+	if (get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr) != 0)
+		return;
 
 	/* Copy back any files we should restore after the upgrade.*/
 	merge_etc();
@@ -214,8 +215,8 @@ do_reinstall_sets()
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
-	get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack);
+	if (get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack) != 0)
+		return;
 
 	sanity_check();
-
 }

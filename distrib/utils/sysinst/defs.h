@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.44 1999/06/22 02:43:09 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.45 1999/06/22 06:57:00 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -298,7 +298,7 @@ void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
 void	ask_verbose_dist __P((void));
-void 	get_and_unpack_sets(int success_msg, int failure_msg);
+int 	get_and_unpack_sets(int success_msg, int failure_msg);
 int	sanity_check __P((void));
 
 /* from target.c */

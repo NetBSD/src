@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.18 1999/06/22 00:57:06 cgd Exp $	*/
+/*	$NetBSD: install.c,v 1.19 1999/06/22 06:57:00 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,8 @@ do_install()
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
-	get_and_unpack_sets(MSG_instcomplete, MSG_abortinst);
+	if (get_and_unpack_sets(MSG_instcomplete, MSG_abortinst) != 0)
+		return;
 
 	sanity_check();
 
