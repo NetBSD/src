@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.162 2004/12/09 20:58:39 ginsbach Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.163 2004/12/11 18:37:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.162 2004/12/09 20:58:39 ginsbach Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.163 2004/12/11 18:37:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,7 @@ main(int argc, char *argv[])
 		reply(530, "System not available.");
 		exit(0);
 	}
-	(void)display_file(conffilename(_PATH_FTPWELCOME), 220);
+	(void)display_file(conffilename(_NAME_FTPWELCOME), 220);
 		/* reply(220,) must follow */
 	if (EMPTYSTR(version))
 		reply(220, "%s FTP server ready.", hostname);
@@ -688,11 +688,11 @@ static int	permitted;	/* USER permitted */
  * Sets global passwd pointer pw if named account exists and is acceptable;
  * sets askpasswd if a PASS command is expected.  If logged in previously,
  * need to reset state.  If name is "ftp" or "anonymous", the name is not in
- * _PATH_FTPUSERS, and ftp account exists, set guest and pw, then just return.
+ * _NAME_FTPUSERS, and ftp account exists, set guest and pw, then just return.
  * If account doesn't exist, ask for passwd anyway.  Otherwise, check user
  * requesting login privileges.  Disallow anyone who does not have a standard
  * shell as returned by getusershell().  Disallow anyone mentioned in the file
- * _PATH_FTPUSERS to allow people such as root and uucp to be avoided.
+ * _NAME_FTPUSERS to allow people such as root and uucp to be avoided.
  */
 void
 user(const char *name)
@@ -758,14 +758,14 @@ user(const char *name)
 	strlcpy(curname, name, curname_len);
 
 			/* check user in /etc/ftpusers, and setup class */
-	permitted = checkuser(_PATH_FTPUSERS, curname, 1, 0, &class);
+	permitted = checkuser(_NAME_FTPUSERS, curname, 1, 0, &class);
 
 			/* check user in /etc/ftpchroot */
-	if (checkuser(_PATH_FTPCHROOT, curname, 0, 0, NULL)) {
+	if (checkuser(_NAME_FTPCHROOT, curname, 0, 0, NULL)) {
 		if (curclass.type == CLASS_GUEST) {
 			syslog(LOG_NOTICE,
 	    "Can't change guest user to chroot class; remove entry in %s",
-			    _PATH_FTPCHROOT);
+			    _NAME_FTPCHROOT);
 			exit(1);
 		}
 		curclass.type = CLASS_CHROOT;
@@ -998,7 +998,7 @@ static int
 checkaccess(const char *name)
 {
 
-	return (checkuser(_PATH_FTPUSERS, name, 1, 0, NULL));
+	return (checkuser(_NAME_FTPUSERS, name, 1, 0, NULL));
 }
 
 static void
