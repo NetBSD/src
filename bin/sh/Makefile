@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2004/01/16 23:24:38 dsl Exp $
+#	$NetBSD: Makefile,v 1.75 2004/01/17 11:47:30 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -21,6 +21,9 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS=	-8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
 
+# The .depend file can get references to these temporary files
+.OPTIONAL: lex.yy.c y.tab.c
+
 .ifdef CRUNCHEDPROG
 LFLAGS+=-L
 YFLAGS+=-l
@@ -40,7 +43,7 @@ CPPFLAGS+=-DSMALL
 	${NETBSDSRCDIR}/usr.bin/printf \
 	${NETBSDSRCDIR}/bin/kill
 
-CLEANFILES+= mkinit mkinit.lo mksyntax mksyntax.lo
+CLEANFILES+= mksyntax
 CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
@@ -56,9 +59,9 @@ builtins.c: mkbuiltins shell.h builtins.def
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f builtins.h ]
 
-init.c: mkinit ${SHSRCS}
+init.c: mkinit.sh ${SHSRCS}
 	${_MKTARGET_CREATE}
-	./${.ALLSRC}
+	${HOST_SH} ${.ALLSRC}
 
 nodes.h: nodes.c
 
@@ -79,14 +82,6 @@ COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
 NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
-mkinit: mkinit.lo
-	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
-
-mknodes: mknodes.lo
-	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
-
 .if	(${MACHINE_ARCH} == "powerpc") || \
 	(${MACHINE_CPU} == "arm")
 TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char"
@@ -94,7 +89,7 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char"
 TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
-mksyntax: mksyntax.lo
+mksyntax: mksyntax.c
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${TARGET_CHARFLAG} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
 
