@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2003/05/04 01:19:17 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.231 2003/08/06 12:32:04 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.231 $"
 
 maxusers 32
 
@@ -294,6 +294,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+esiop*	at	pci? dev ? function ?		# Symbios 53c875 SCSI and newer
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
@@ -443,6 +444,7 @@ scsibus* at	dpt?
 scsibus* at	iha?
 scsibus* at	isp?
 scsibus* at	siop?
+scsibus* at	esiop?
 scsibus* at	pcscp?
 scsibus* at	uha?
 

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.183 2003/06/01 20:30:49 martin Exp $
+# $NetBSD: ALPHA,v 1.184 2003/08/06 12:32:03 bouyer Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.183 $"
+ident		"ALPHA-$Revision: 1.184 $"
 
 maxusers 32
 
@@ -292,6 +292,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+esiop*	at	pci? dev ? function ?		# Symbios 53c875 SCSI and newer
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
@@ -449,6 +450,7 @@ scsibus* at	dpt?
 scsibus* at	iha?
 scsibus* at	isp?
 scsibus* at	siop?
+scsibus* at	esiop?
 scsibus* at	pcscp?
 scsibus* at	uha?
 
