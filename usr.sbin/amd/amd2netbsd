@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl
+#!/usr/pkg/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.19 1999/02/01 19:05:09 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.19.2.1 1999/09/21 04:54:22 cgd Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -18,7 +18,7 @@
 #  Written by Christos Zoulas July 17, 1997 for am-utils-6.0a13
 #
 
-$version = "6.0.1s3";
+$version = "6.0.1s11";
 
 # definitions ...
 
@@ -118,10 +118,10 @@ $version = "6.0.1s3";
 @wiretestef = ();
 
 
-@docf = ("am-utils.info", "am-utils.info-1", "am-utils.info-2",
+@docf = ("am-utils.texi", "hlfsd.ps", "version.texi", "am-utils.ps", 
+	 "am-utils.info", "am-utils.info-1", "am-utils.info-2",
 	 "am-utils.info-3", "am-utils.info-4", "am-utils.info-5",
-	 "am-utils.info-6", "am-utils.texi", "hlfsd.ps", "texinfo.tex",
-	 "version.texi");
+	 "am-utils.info-6", "am-utils.info-7");
 
 @docdf = ();
 
@@ -156,6 +156,18 @@ sub fixrcs
     elsif ($t =~ /.*\.[yl]/) {
 	$hdr = 1;
     }
+    elsif ($t =~ /am-utils\.texi/) {
+	$hdr = 2;
+    }
+    elsif ($t =~ /.*\.texi/) {
+	print OFILE '@c', "\t", '$', 'NetBSD', '$', "\n";
+    }
+    elsif ($t =~ /.*\.tex$/) {
+	print OFILE "%\t", '$', 'NetBSD', '$', "\n";
+    }
+    elsif ($t =~ /.*\.ps/) {
+	$hdr = 3;
+    }
     else {
 	print OFILE '$', 'NetBSD', '$', "\n";
     }
@@ -166,6 +178,21 @@ sub fixrcs
 		$hdr = 0;
 		next;
 	    }
+	}
+	elsif ($hdr == 2) {
+	    if (/\\input[ \t]+texinfo/) {
+		print OFILE $_;
+		print OFILE '@c', "\t", '$', 'NetBSD', '$', "\n";
+		$hdr = 0;
+		next;
+	    }
+	}
+	elsif ($hdr == 3) {
+	    # First line is magic.  Insert Id between lines 1 and 2.
+	    print OFILE $_;
+	    print OFILE "%\t", '$', 'NetBSD', '$', "\n";
+	    $hdr = 0;
+	    next;
 	}
 	if ($state == 2) {
 	    if (/#endif/) {
@@ -398,7 +425,7 @@ foreach $n (keys(%sedlist)) {
 __END__
 %% file usr.sbin/amd/Makefile
 %% NetBSD #
-SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map pawd wire-test
+SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map pawd wire-test doc
 
 all-amd all-amq all-hlfsd all-fixmount all-fsinfo all-mk-amd-map all-pawd \
     all-wire-test: all-libamu
@@ -539,40 +566,36 @@ minor=0
 #
 cat << __EOF
 
+/* Automatically generated file, do not edit! */
+ 
+/* Define name and version of host machine (eg. solaris2.5.1) */
+#define HOST_OS "`uname -s | tr '[A-Z]' '[a-z]'``uname -r`"
+
+/* Define only name of host machine OS (eg. solaris2) */
+#define HOST_OS_NAME "`uname -s | tr '[A-Z]' '[a-z]'``uname -r | cut -d. -f 1`"
+
+/* Define only version of host machine (eg. 2.5.1) */
+#define HOST_OS_VERSION "`uname -r`"
+
+/* Define the header version of (linux) hosts (eg. 2.2.10) */
+#define HOST_HEADER_VERSION "`uname -r`"
+
+/* Define name of host */
+#define HOST_NAME "`hostname`"
+
 /* Define user name */
 #define USER_NAME "`whoami`"
 
 /* Define configuration date */
 #define CONFIG_DATE "`date`"
-
-/* Define name of host */
-#define HOST_NAME "`hostname`"
-
-/* Define only version of host machine (eg. 2.5.1) */
-#define HOST_OS_VERSION "`uname -r`"
-
-/* Define only name of host machine OS (eg. solaris2) */
-#define HOST_OS_NAME "`uname -s | tr '[A-Z]' '[a-z]'``uname -r | cut -d. -f 1`"
-
-#define HOST_OS "`uname -s | tr '[A-Z]' '[a-z]'``uname -r`"
-
 __EOF
 %% file usr.sbin/amd/doc/Makefile
 %% NetBSD #
 
-PROG = am-utils
-SRCS = am-utils.texinfo
+TEXINFO = am-utils.info
+INFOFLAGS = -I${.CURDIR}
 
-${PROG}: am-utils.dvi
-
-am-utils.dvi: ${SRCS}
-	-tex am-utils.texinfo; tex am-utils.texinfo
-
-clean:
-	-rm -f am-utils.aux am-utils.cp am-utils.cps am-utils.dvi am-utils.fn \
-	 am-utils.fns am-utils.ky am-utils.kys am-utils.log am-utils.pg \
-	 am-utils.pgs am-utils.toc am-utils.tp am-utils.tps am-utils.vr \
-	 am-utils.vrs
+.include <bsd.info.mk>
 %% file usr.sbin/amd/include/config.h
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -1347,7 +1370,7 @@ clean:
 /* does ufs_ars_t have ufs_pgthresh field? */
 /* #undef HAVE_FIELD_UFS_ARGS_T_UFS_PGTHRESH */
 
-/* does struct fhstatus have an fhs_fh field? */
+/* does struct fhstatus have a fhs_fh field? */
 /* #undef HAVE_FIELD_STRUCT_FHSTATUS_FHS_FH */
 
 /* does struct statfs have an f_fstypename field? */
@@ -1359,14 +1382,20 @@ clean:
 /* does struct nfs_args have an acregmin field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_ACREGMIN */
 
+/* does struct nfs_args have a bsize field? */
+/* #undef HAVE_FIELD_NFS_ARGS_T_BSIZE */
+
 /* does struct nfs_args have an fh_len field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_FH_LEN */
 
 /* does struct nfs_args have an fhsize field? */
 #define HAVE_FIELD_NFS_ARGS_T_FHSIZE 1
 
-/* does struct nfs_args have an gfs_flags field? */
+/* does struct nfs_args have a gfs_flags field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_GFS_FLAGS */
+
+/* does struct nfs_args have a namlen field? */
+/* #undef HAVE_FIELD_NFS_ARGS_T_NAMLEN */
 
 /* does struct nfs_args have an optstr field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_OPTSTR */
@@ -1409,8 +1438,15 @@ clean:
 /* #undef _ALL_SOURCE */
 #endif
 
+/* Define if using alloca.c.  */
+/* #undef C_ALLOCA */
+
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
+
+/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
+   This function is required for alloca.c support on those systems.  */
+/* #undef CRAY_STACKSEG_END */
 
 /* Define to the type of elements in the array set by `getgroups'.
    Usually this is either `int' or `gid_t'.  */
@@ -1418,6 +1454,12 @@ clean:
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
+
+/* Define if you have alloca, as a function or macro.  */
+#define HAVE_ALLOCA 1
+
+/* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
+/* #undef HAVE_ALLOCA_H */
 
 /* Define if you support file names longer than 14 characters.  */
 #define HAVE_LONG_FILE_NAMES 1
@@ -1459,6 +1501,15 @@ clean:
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+ STACK_DIRECTION > 0 => grows toward higher addresses
+ STACK_DIRECTION < 0 => grows toward lower addresses
+ STACK_DIRECTION = 0 => direction of growth unknown
+ */
+/* #undef STACK_DIRECTION */
+
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
 /* #undef STAT_MACROS_BROKEN */
 
@@ -1479,10 +1530,6 @@ clean:
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-#include <sys/types.h>
-#if BYTE_ORDER == BIG_ENDIAN
-#define WORDS_BIGENDIAN 
-#endif
 /* #undef WORDS_BIGENDIAN */
 
 /* Define if lex declares yytext as a char * by default, not a char[].  */
@@ -1501,7 +1548,7 @@ clean:
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0.1s3"
+#define VERSION "6.0.1s11"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1531,7 +1578,7 @@ clean:
 #define am_nfs_fh3 nfs_fh3
 
 /* define name of am-utils' NFS protocol header */
-#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_3.h"
+#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_4.h"
 
 /* Define a type for the nfs_args structure */
 #define nfs_args_t struct nfs_args
@@ -1687,6 +1734,9 @@ clean:
 
 /* Define if you have the gethostname function.  */
 #define HAVE_GETHOSTNAME 1
+
+/* Define if you have the getifaddrs function.  */
+/* #undef HAVE_GETIFADDRS */
 
 /* Define if you have the getmntinfo function.  */
 #define HAVE_GETMNTINFO 1
@@ -2015,6 +2065,9 @@ clean:
 /* Define if you have the <ctype.h> header file.  */
 #define HAVE_CTYPE_H 1
 
+/* Define if you have the <db1/ndbm.h> header file.  */
+/* #undef HAVE_DB1_NDBM_H */
+
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
 
@@ -2032,6 +2085,12 @@ clean:
 
 /* Define if you have the <hsfs/hsfs.h> header file.  */
 /* #undef HAVE_HSFS_HSFS_H */
+
+/* Define if you have the <ifaddrs.h> header file.  */
+/* #undef HAVE_IFADDRS_H */
+
+/* Define if you have the <irs.h> header file.  */
+/* #undef HAVE_IRS_H */
 
 /* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
 #define HAVE_ISOFS_CD9660_CD9660_MOUNT_H 1
@@ -2424,7 +2483,7 @@ clean:
 #define PACKAGE "am-utils"
 
 /* Version number of package */
-#define VERSION "6.0.1s3"
+#define VERSION "6.0.1s11"
 
 
 /**************************************************************************/
