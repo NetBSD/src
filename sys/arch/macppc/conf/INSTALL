@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 2000/07/24 10:04:10 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.33 2000/09/24 15:59:34 jdolecek Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -147,4 +147,4 @@ wskbd*	at ukbd? console ?
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
 #pseudo-device	sl		2	# Serial Line IP
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals

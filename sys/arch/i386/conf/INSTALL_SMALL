@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.52 2000/09/13 16:26:16 thorpej Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.53 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -484,7 +484,7 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.1 2000/06/17 20:57:12 deberg Exp $
+# $NetBSD: SLAB,v 1.2 2000/09/24 15:59:36 jdolecek Exp $
 #
 # deberg's development machine
 #
@@ -188,7 +188,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

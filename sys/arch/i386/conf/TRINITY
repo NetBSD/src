@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.99 2000/08/21 07:39:44 itohy Exp $
+#	$NetBSD: TRINITY,v 1.100 2000/09/24 15:59:34 jdolecek Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -677,7 +677,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.26 2000/02/12 03:32:48 thorpej Exp $
+#	$NetBSD: LAGER,v 1.27 2000/09/24 15:59:32 jdolecek Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -94,7 +94,7 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		128	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	bpfilter	4	# packet filter devices
 pseudo-device	vnd		4	# vnode pseudo-disks
