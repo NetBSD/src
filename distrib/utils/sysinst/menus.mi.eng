@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.10 1997/10/30 00:03:32 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.11 1997/10/31 23:00:45 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,12 +66,14 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
 	option "Reboot the computer", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
+	option "Exit Install System", exit, action (endwin) {};
 
 menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); puts(CL); };
 	option "Configure network",
 		action { config_network(); };
+/*	option "Partition a disk"; XXX add later.  */
 	option "Halt the system", exit,
 		action (endwin) { run_prog("/sbin/halt"); };
 
@@ -164,6 +166,8 @@ menu edfspart, title "  Change what? ", exit, y=15;
 			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
 			msg_prompt_add (MSG_size, NULL, buf, 40);
 			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+			if (size == -1)
+				size = dlsize - start;
 			if (editpart == 1 && 
 			    bsdlabel[editpart][D_FSTYPE] == T_SWAP)
 				size -= swapadj;

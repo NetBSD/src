@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 1997/09/26 23:02:53 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1997/10/31 23:00:40 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,11 +47,18 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-int main(void);
+int main(int argc, char **argv);
 
-int main(void)
+int main(int argc, char **argv)
 {
 	WINDOW *win;
+
+	/* Check for TERM ... */
+	if (!getenv("TERM")) {
+		fprintf (stderr, "%s: TERM environment varible not set.\n",
+			 argv[0]);
+		exit(1);
+	}
 
 	/* initialize message window */
 	win = newwin(22,78,1,1);
