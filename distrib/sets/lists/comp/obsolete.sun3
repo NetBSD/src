@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.sun3,v 1.1 2001/09/19 17:51:28 thorpej Exp $
+/usr/include/sun3/fbio.h
