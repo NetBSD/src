@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.129 2004/06/25 15:03:39 wiz Exp $
+#	$NetBSD: build.sh,v 1.130 2004/07/02 04:25:24 jmc Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -856,9 +856,9 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.129 2004/06/25 15:03:39 wiz Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.130 2004/07/02 04:25:24 jmc Exp $
+# with these arguments: ${_args}
 #
-
 EOF
 	for f in ${makeenv}; do
 		if eval "[ -z \"\${$f}\" -a \"\${${f}-X}\" = \"X\" ]"; then
@@ -997,6 +997,7 @@ installworld()
 main()
 {
 	initdefaults
+	_args=$@
 	parseoptions "$@"
 
 	build_start=$(date)
