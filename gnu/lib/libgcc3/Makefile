@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/27 14:41:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/29 00:13:21 uwe Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -54,7 +54,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 
 .include <bsd.lib.mk>
 
-${OBJS} ${SOBJS} ${POBJS} .depend: ${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
+${OBJS} ${SOBJS} ${POBJS} ${DEPENDSRCS}: ${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 
 # XXX /bin/sh
 tconfig.h:
