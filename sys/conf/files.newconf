@@ -1,4 +1,4 @@
-#	$NetBSD: files.newconf,v 1.36 1995/02/23 07:19:57 glass Exp $
+#	$NetBSD: files.newconf,v 1.37 1995/03/08 00:54:17 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -72,7 +72,7 @@ file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
 file kern/exec_aout.c	
 file kern/exec_conf.c	
-file kern/exec_ecoff.c		compat_ultrix	
+file kern/exec_ecoff.c		compat_ultrix compat_osf1
 file kern/exec_script.c	
 file kern/exec_subr.c	
 file kern/init_main.c	
