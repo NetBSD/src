@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 2003/05/08 18:13:27 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.127 2003/05/10 21:10:43 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -179,6 +179,7 @@ int	startpmapdebug = 0;
 #endif
 
 paddr_t	  avail_start, avail_end;
+vaddr_t	  virtual_avail, virtual_end; /* Available virtual memory	*/
 
 struct pv_entry *get_pventry(void);
 void free_pventry(struct pv_entry *);
@@ -288,9 +289,6 @@ pmap_bootstrap()
 	 * amount of physical memory also, therefore sysptsize is 
 	 * a variable here that is changed dependent of the physical
 	 * memory size.
-	 *
-	 * Note that setting virtual_avail/virtual_end defines the
-	 * boundaries of the managed kernel virtual address space.
 	 */
 	virtual_avail = avail_end + KERNBASE;
 	virtual_end = KERNBASE + sysptsize * VAX_NBPG;
@@ -419,17 +417,30 @@ pmap_bootstrap()
 }
 
 /*
+ * Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
+}
+
+/*
  * Let the VM system do early memory allocation from the direct-mapped
  * physical memory instead.
  */
 vaddr_t
-pmap_steal_memory(size)
+pmap_steal_memory(size, vstartp, vendp)
 	vsize_t size;
+	vaddr_t *vstartp, *vendp;
 {
 	vaddr_t v;
 	int npgs;
 
-	PMDEBUG(("pmap_steal_memory: size 0x%lx\n", size));
+	PMDEBUG(("pmap_steal_memory: size 0x%lx start %p end %p\n",
+		    size, vstartp, vendp));
 
 	size = round_page(size);
 	npgs = btoc(size);

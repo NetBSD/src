@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.13 2003/05/08 18:13:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.14 2003/05/10 21:10:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -163,8 +163,9 @@ long		 pmap_wired_count __P((pmap_t));
 void		 pmap_zero_page __P((paddr_t));
 #endif
 
+void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #if defined(PMAP_STEAL_MEMORY)
-vaddr_t		 pmap_steal_memory __P((vsize_t));
+vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
 #endif
 
 #if defined(PMAP_FORK)

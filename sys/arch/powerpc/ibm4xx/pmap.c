@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2003/05/08 18:13:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2003/05/10 21:10:36 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -386,12 +386,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	pmap_kernel()->pm_ctx = KERNEL_PID;
 	nextavail = avail->start;
 
-	/*
-	 * Define the boundaries of the managed kernel virtual
-	 * address space.
-	 */
-	virtual_avail = (vaddr_t) VM_MIN_KERNEL_ADDRESS;
-	virtual_end = (vaddr_t) VM_MAX_KERNEL_ADDRESS;
 
 	evcnt_attach_static(&tlbhit_ev);
 	evcnt_attach_static(&tlbmiss_ev);
@@ -464,6 +458,25 @@ pmap_init(void)
 
 	/* Setup a pool for additional pvlist structures */
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
+}
+
+/*
+ * How much virtual space is available to the kernel?
+ */
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+{
+
+#if 0
+	/*
+	 * Reserve one segment for kernel virtual memory
+	 */
+	*start = (vaddr_t)(KERNEL_SR << ADDR_SR_SHFT);
+	*end = *start + SEGMENT_LENGTH;
+#else
+	*start = (vaddr_t) VM_MIN_KERNEL_ADDRESS;
+	*end = (vaddr_t) VM_MAX_KERNEL_ADDRESS;
+#endif
 }
 
 #ifdef PMAP_GROWKERNEL

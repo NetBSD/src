@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2003/05/08 18:13:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2003/05/10 21:10:37 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1017,6 +1017,20 @@ pmap_init(void)
 	evcnt_attach_static(&pmap_evcnt_ptes_secondary[6]);
 	evcnt_attach_static(&pmap_evcnt_ptes_secondary[7]);
 #endif
+}
+
+/*
+ * How much virtual space does the kernel get?
+ */
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+{
+	/*
+	 * For now, reserve one segment (minus some overhead) for kernel
+	 * virtual memory
+	 */
+	*start = VM_MIN_KERNEL_ADDRESS;
+	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
 /*
@@ -2531,7 +2545,7 @@ pmap_pool_mfree(struct pool *pp, void *va)
  * pmap needs and above 256MB for other stuff.
  */
 vaddr_t
-pmap_steal_memory(vsize_t vsize)
+pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vsize_t size;
 	vaddr_t va;
@@ -2541,6 +2555,9 @@ pmap_steal_memory(vsize_t vsize)
 
 	if (uvm.page_init_done == TRUE)
 		panic("pmap_steal_memory: called _after_ bootstrap");
+
+	*vstartp = VM_MIN_KERNEL_ADDRESS;
+	*vendp = VM_MAX_KERNEL_ADDRESS;
 
 	size = round_page(vsize);
 	npgs = atop(size);
@@ -2717,14 +2734,6 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	paddr_t s, e;
 	psize_t size;
 	int i, j;
-
-	/*
-	 * Define the boundaries of the managed kernel virtual address
-	 * space.  For now, reserve one segment (minus some overhead)
-	 * for kernel virtual memory.
-	 */
-	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Get memory.

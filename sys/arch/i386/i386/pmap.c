@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2003/05/08 18:13:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2003/05/10 21:10:31 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2003/05/08 18:13:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2003/05/10 21:10:31 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -359,6 +359,17 @@ paddr_t avail_end;	/* PA of last available physical page */
 
 static pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
 static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
+
+/*
+ * the following two vaddr_t's are used during system startup
+ * to keep track of how much of the kernel's VM space we have used.
+ * once the system is started, the management of the remaining kernel
+ * VM space is turned over to the kernel_map vm_map.
+ */
+
+static vaddr_t virtual_avail;	/* VA of first free KVA */
+static vaddr_t virtual_end;	/* VA of last free KVA */
+
 
 /*
  * pv_page management structures: locked by pvalloc_lock
@@ -809,8 +820,8 @@ pmap_bootstrap(kva_start)
 	int i;
 
 	/*
-	 * define the boundaries of the managed kernel virtual address
-	 * space.
+	 * set up our local static global vars that keep track of the
+	 * usage of KVM before kernel_map is set up
 	 */
 
 	virtual_avail = kva_start;		/* first free KVA */
@@ -947,7 +958,7 @@ pmap_bootstrap(kva_start)
 	pte += X86_MAXPROCS * NPTECL;
 #else
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
-	virtual_avail += PAGE_SIZE; pte++;		   /* advance */
+	virtual_avail += PAGE_SIZE; pte++;			     /* advance */
 
 	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
@@ -1967,6 +1978,20 @@ vtophys(va)
 	return (0);
 }
 
+
+/*
+ * pmap_virtual_space: used during bootup [pmap_steal_memory] to
+ *	determine the bounds of the kernel virtual addess space.
+ */
+
+void
+pmap_virtual_space(startp, endp)
+	vaddr_t *startp;
+	vaddr_t *endp;
+{
+	*startp = virtual_avail;
+	*endp = virtual_end;
+}
 
 /*
  * pmap_map: map a range of PAs into kvm

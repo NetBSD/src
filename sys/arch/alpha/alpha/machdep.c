@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.267 2003/05/09 05:33:52 enami Exp $ */
+/* $NetBSD: machdep.c,v 1.268 2003/05/10 21:10:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2003/05/09 05:33:52 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2003/05/10 21:10:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,13 +635,20 @@ nobootinfo:
 		if (sz != reqsz)
 			printf("WARNING: %ld bytes not available for msgbuf "
 			    "in last cluster (%ld used)\n", reqsz, sz);
+
 	}
+
+	/*
+	 * NOTE: It is safe to use uvm_pageboot_alloc() before
+	 * pmap_bootstrap() because our pmap_virtual_space()
+	 * returns compile-time constants.
+	 */
 
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
 	lwp0.l_addr = proc0paddr =
-	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE);
+	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
 	 * Allocate space for system data structures.  These data structures
@@ -650,7 +657,7 @@ nobootinfo:
 	 * virtual address space.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size);
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("alpha_init: table size inconsistency");
 

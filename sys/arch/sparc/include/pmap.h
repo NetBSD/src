@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.67 2003/05/08 18:13:23 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.68 2003/05/10 21:10:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -264,6 +264,7 @@ paddr_t		pmap_phys_address __P((int));
 void		pmap_reference __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 #define		pmap_update(pmap)		/* nothing (yet) */
+void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;

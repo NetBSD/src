@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.87 2003/05/08 18:13:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.88 2003/05/10 21:10:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.87 2003/05/08 18:13:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.88 2003/05/10 21:10:23 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -111,6 +111,15 @@ boolean_t vm_page_zero_enable = FALSE;
 /*
  * local variables
  */
+
+/*
+ * these variables record the values returned by vm_page_bootstrap,
+ * for debugging purposes.  The implementation of uvm_pageboot_alloc
+ * and pmap_startup here also uses them internally.
+ */
+
+static vaddr_t      virtual_space_start;
+static vaddr_t      virtual_space_end;
 
 /*
  * we use a hash table with only one bucket during bootup.  we will
@@ -233,7 +242,8 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
  */
 
 void
-uvm_page_init(void)
+uvm_page_init(kvm_startp, kvm_endp)
+	vaddr_t *kvm_startp, *kvm_endp;
 {
 	vsize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray;
@@ -355,6 +365,15 @@ uvm_page_init(void)
 	}
 
 	/*
+	 * pass up the values of virtual_space_start and
+	 * virtual_space_end (obtained by uvm_pageboot_alloc) to the upper
+	 * layers of the VM.
+	 */
+
+	*kvm_startp = round_page(virtual_space_start);
+	*kvm_endp = trunc_page(virtual_space_end);
+
+	/*
 	 * init locks for kernel threads
 	 */
 
@@ -439,17 +458,11 @@ uvm_pageboot_alloc(size)
 	 * on first call to this function, initialize ourselves.
 	 */
 	if (initialized == FALSE) {
-		/*
-		 * make sure machine-dependent code has initialized our
-		 * virtual address space boundaries properly.
-		 */
-		if (virtual_end <= virtual_avail)
-			panic("uvm_pageboot_alloc: MD code did not init "
-			    "KVA boundaries");
+		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 
 		/* round it the way we like it */
-		virtual_avail = round_page(virtual_avail);
-		virtual_end = trunc_page(virtual_end);
+		virtual_space_start = round_page(virtual_space_start);
+		virtual_space_end = trunc_page(virtual_space_end);
 
 		initialized = TRUE;
 	}
@@ -462,10 +475,11 @@ uvm_pageboot_alloc(size)
 	/*
 	 * defer bootstrap allocation to MD code (it may want to allocate
 	 * from a direct-mapped segment).  pmap_steal_memory should adjust
-	 * virtual_avail/virtual_end if necessary.
+	 * virtual_space_start/virtual_space_end if necessary.
 	 */
 
-	addr = pmap_steal_memory(size);
+	addr = pmap_steal_memory(size, &virtual_space_start,
+	    &virtual_space_end);
 
 	return(addr);
 
@@ -474,11 +488,11 @@ uvm_pageboot_alloc(size)
 	/*
 	 * allocate virtual memory for this request
 	 */
-	if (virtual_avail == virtual_end ||
-	    (virtual_end - virtual_avail) < size)
+	if (virtual_space_start == virtual_space_end ||
+	    (virtual_space_end - virtual_space_start) < size)
 		panic("uvm_pageboot_alloc: out of virtual space");
 
-	addr = virtual_avail;
+	addr = virtual_space_start;
 
 #ifdef PMAP_GROWKERNEL
 	/*
@@ -492,7 +506,7 @@ uvm_pageboot_alloc(size)
 	}
 #endif
 
-	virtual_avail += size;
+	virtual_space_start += size;
 
 	/*
 	 * allocate and mapin physical pages to back new virtual pages

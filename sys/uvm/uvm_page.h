@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.33 2003/05/08 18:13:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.34 2003/05/10 21:10:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -263,7 +263,7 @@ extern int vm_nphysseg;
  * prototypes: the following prototypes define the interface to pages
  */
 
-void uvm_page_init __P((void));
+void uvm_page_init __P((vaddr_t *, vaddr_t *));
 #if defined(UVM_PAGE_TRKOWN)
 void uvm_page_own __P((struct vm_page *, char *));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2003/05/08 18:13:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2003/05/10 21:10:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ int tmp_vpages_inuse;	/* Temporary virtual pages are in use */
  * XXX:  For now, retain the traditional variables that were
  * used in the old pmap/vm interface (without NONCONTIG).
  */
+/* Kernel virtual address space available: */
+vaddr_t	virtual_avail, virtual_end;
 /* Physical address space available: */
 paddr_t	avail_start, avail_end;
 
@@ -3510,6 +3512,19 @@ pmap_kcore_hdr(sh)
 	}
 }
 
+
+/* pmap_virtual_space			INTERFACE
+ **
+ * Return the current available range of virtual addresses in the
+ * arguuments provided.  Only really called once.
+ */
+void
+pmap_virtual_space(vstart, vend)
+	vaddr_t *vstart, *vend;
+{
+	*vstart = virtual_avail;
+	*vend = virtual_end;
+}
 
 /*
  * Provide memory to the VM system.

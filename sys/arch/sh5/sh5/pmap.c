@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2003/05/08 18:13:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2003/05/10 21:10:38 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -218,8 +218,7 @@ PMSTR(pmap_t pm)
  * 
  * E0000000 - FFFFFFFF  (KSEG1)
  * 	KSEG1 is basically the `managed' kernel virtual address space
- *	as reported to uvm(9) by the setting of virtual_avail and
- *	virtual_end in pmap_bootstrap().
+ *	as reported to uvm(9) by pmap_virtual_space().
  * 
  * 	It uses regular TLB mappings, but backed by a dedicated IPT
  * 	with 1-1 V2Phys PTELs. The IPT will be up to 512KB (for NEFF=32)
@@ -1146,12 +1145,6 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	pmap_kva_avail_start = pmap_device_kva_start +
 	    PMAP_BOOTSTRAP_DEVICE_KVA;
 
-	/*
-	 * Define the bounaries of the kernel virtual address space.
-	 */
-	virtual_avail = pmap_kva_avail_start;
-	virtual_end = SH5_KSEG1_BASE + ((KERNEL_IPT_SIZE - 1) * PAGE_SIZE);
-
 	pmap_asid_next = PMAP_ASID_USER_START;
 	pmap_asid_max = SH5_PTEH_ASID_MASK;	/* XXX Should be cpu specific */
 
@@ -1264,6 +1257,17 @@ pmap_init(void)
 	evcnt_attach_static(&pmap_copy_page_dpurge_dst_events);
 	for (i = 0; i < SH5_PTEG_SIZE; i++)
 		evcnt_attach_static(&pmap_pteg_idx_events[i]);
+}
+
+/*
+ * How much virtual space does the kernel get?
+ */
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+{
+
+	*start = pmap_kva_avail_start;
+	*end = SH5_KSEG1_BASE + ((KERNEL_IPT_SIZE - 1) * PAGE_SIZE);
 }
 
 /*
@@ -2952,7 +2956,7 @@ pmap_pool_ufree(struct pool *pp, void *va)
 }
 
 vaddr_t
-pmap_steal_memory(vsize_t vsize)
+pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vsize_t size;
 	vaddr_t va;
