@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 1996/04/26 20:22:52 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.4 1996/05/06 00:32:19 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -59,6 +59,7 @@
 #include "sd.h"
 #include "cd.h"
 #include "wcd.h"
+#include "podulebus.h"
 
 extern dev_t rootdev;
 extern dev_t swapdev;
@@ -264,7 +265,9 @@ configure()
  */
 
 	config_rootfound("mainbus", NULL);
+#if NPODULEBUS > 0
 	config_rootfound("podulebus", NULL);
+#endif
 
 /* Debugging information */
 
