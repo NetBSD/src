@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.28 2002/03/11 16:06:42 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.29 2002/03/21 00:30:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -296,6 +296,8 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 #endif
+
+#define	bus_space_vaddr(t, h)	((void *)(h))
 
 /* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
