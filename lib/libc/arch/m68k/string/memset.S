@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memset.S,v 1.1 1993/12/06 23:08:48 mycroft Exp $"
+	.asciz "$Id: memset.S,v 1.2 1993/12/06 23:45:51 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -67,14 +67,15 @@ ENTRY(memset)
 bzeven:
 	movl	d0,d1
 	lsrl	#2,d1		/* convert to longword count */
-	cmpl	#4,d1
-	jl	bzbloop		/* too small to be worthwhile */
+	cmpl	#3,d1
+	jle	bzbloop		/* too small to be worthwhile */
 	clrl	d1		/* replicate byte to fill longword */
 	movb	d2,d1
 	lsll	#8,d1
 	orl	d1,d2
-	movw	d2,d1
-	lsll	#16,d1
+	lsll	#8,d1
+	orl	d1,d2
+	lsll	#8,d1
 	orl	d1,d2
 	movl	d0,d1
 	lsrl	#2,d1		/* recalculate longword count */
