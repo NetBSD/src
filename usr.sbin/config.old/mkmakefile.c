@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.10 1993/07/07 10:47:05 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.11 1993/07/18 10:07:39 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -44,10 +44,12 @@ static char rcsid[] = "$Id: mkmakefile.c,v 1.10 1993/07/07 10:47:05 cgd Exp $";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <machine/param.h>
 #include "y.tab.h"
 #include "config.h"
 
 #define DEF_MAXFDESCS	2048
+#define	DEF_LOADADDRESS	KERNBASE
 
 #define next_word(fp, wd) \
 	{ register char *word = get_word(fp); \
@@ -191,6 +193,9 @@ makefile()
 		printf("warning: maxusers > %d (%d)\n", up->u_max, maxusers);
 	fprintf(ofp, "PARAM=-DTIMEZONE=%d -DDST=%d -DMAXUSERS=%d -DMAXFDESCS=%d\n",
 	    zone, dst, maxusers, maxfdescs);
+	if (loadaddress == 0)
+		loadaddress = DEF_LOADADDRESS;
+	fprintf(ofp, "LOAD_ADDRESS=%X\n", loadaddress);
 	for (op = mkopt; op; op = op->op_next)
 		fprintf(ofp, "%s=%s\n", op->op_name, op->op_value);
 	if (debugging)
