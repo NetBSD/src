@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.51 2002/09/28 17:22:49 tsutsui Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.52 2002/09/29 17:10:37 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.51 2002/09/28 17:22:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.52 2002/09/29 17:10:37 tsutsui Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -144,7 +144,7 @@ mb86960_attach(sc, type, myea)
 
 	switch (sc->type) {
 	case MB86960_TYPE_86960:
-		sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_EC;
+		sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_ED_TEST; /* XXX */
 		break;
 	case MB86960_TYPE_86965:
 		sc->proto_dlcr7 = FE_D7_BYTSWP_LH;
