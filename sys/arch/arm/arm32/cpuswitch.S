@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.10 2002/08/12 19:33:01 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.11 2002/08/12 21:00:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -281,16 +281,15 @@ ENTRY(cpu_switch)
 
 	/*
 	 * Get the current process and indicate that there is no longer
-	 * a valid process (curproc = 0)
+	 * a valid process (curproc = 0).  Zero the current PCB pointer
+	 * while we're at it.
 	 */
 	ldr	r7, Lcurproc
-	ldr	r1, [r7]
+	ldr	r6, Lcurpcb
 	mov	r0, #0x00000000
-	str	r0, [r7]
-
-	/* Zero the pcb */
-	ldr	r7, Lcurpcb
-	str	r0, [r7]
+	ldr	r1, [r7]		/* r1 = curproc */
+	str	r0, [r7]		/* curproc = NULL */
+	str	r0, [r6]		/* curpcb = NULL */
 
 	/* stash the old proc while we call functions */
 	mov	r5, r1
