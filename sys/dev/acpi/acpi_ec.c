@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.9 2003/02/14 11:05:39 tshiozak Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.10 2003/08/03 08:16:07 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.9 2003/02/14 11:05:39 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.10 2003/08/03 08:16:07 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,13 +248,10 @@ EcLock(struct acpi_ec_softc *sc)
 static __inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
-	UINT32 handle;
-
 	if (!EcIsLocked(sc))
 		return;
-	handle = sc->sc_lockhandle;
-	sc->sc_flags &= EC_F_LOCKED;
-	acpi_release_global_lock(handle);
+	sc->sc_flags &= ~EC_F_LOCKED;
+	acpi_release_global_lock(sc->sc_lockhandle);
 }
 
 typedef struct {
