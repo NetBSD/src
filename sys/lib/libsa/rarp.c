@@ -61,7 +61,7 @@ rarp_getipaddress(sock)
 	ap->arp_pro = htons(ETHERTYPE_IP);
 	ap->arp_hln = sizeof(ap->arp_sha); /* hardware address length */
 	ap->arp_pln = sizeof(ap->arp_spa); /* protocol address length */
-	ap->arp_op = htons(REVARP_REQUEST);
+	ap->arp_op = htons(ARPOP_REQUEST);
 	bcopy(d->myea, ap->arp_sha, 6);
 	bcopy(d->myea, ap->arp_tha, 6);
 
@@ -119,7 +119,7 @@ rarprecv(d, pkt, len)
 	}
 
 	ap = (struct ether_arp *)(ep + 1);
-	if (ntohs(ap->arp_op) != REVARP_REPLY ||
+	if (ntohs(ap->arp_op) != ARPOP_REPLY ||
 	    ntohs(ap->arp_pro) != ETHERTYPE_IP)  {
 		errno = 0;
 		return (-1);
