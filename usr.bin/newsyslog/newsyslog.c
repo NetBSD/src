@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.15 1998/07/06 06:54:06 mrg Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.16 1998/07/29 01:31:50 simonb Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.15 1998/07/06 06:54:06 mrg Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.16 1998/07/29 01:31:50 simonb Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -563,22 +563,6 @@ age_old_log(file)
                 return(-1);
         return( (int) (timenow - sb.st_mtime + 1800) / 3600);
 }
-
-
-#ifndef OSF
-/* Duplicate a string using malloc */
-
-char *
-strdup(strp)
-	char   *strp;
-{
-        char *cp;
-
-        if ((cp = malloc((unsigned) strlen(strp) + 1)) == NULL)
-                abort();
-        return(strcpy (cp, strp));
-}
-#endif
 
 /* Skip Over Blanks */
 char *sob(p)
