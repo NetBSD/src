@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/05/27 04:08:05 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2001/05/27 04:40:39 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ MKLINT=no
 
 CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/lib/dst \
 		-DHMAC_MD5 -DUSE_MD5
-.if ${MKCRYPTO} == "yes"
+.if 0 # ${MKCRYPTO} == "yes"
 CPPFLAGS+=	-I${BIND_CRYPTO_DIST_DIR}/lib/dnssafe -DDNSSAFE \
 		-I${BIND_CRYPTO_DIST_DIR}/lib/cylink -DCYLINK_DSS
 .endif
@@ -63,7 +63,7 @@ SRCS+=	dns.c dns_gr.c dns_ho.c dns_nw.c dns_pr.c dns_pw.c \
 	nis_sv.c nul_ng.c util.c
 # ${BIND_DIST_DIR}/lib/bsd
 SRCS+=	gettimeofday.c
-.if ${MKCRYPTO} == "yes"
+.if 0 # ${MKCRYPTO} == "yes"
 # ${BIND_DIST_DIR}/lib/cylink
 SRCS+=	bn.c bn00.c lbn00.c lbnmem.c legal.c \
 	bits.c dss.c math.c ctk_prime.c rand.c sha.c swap.c 
