@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.44 2004/12/29 11:35:00 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2005/02/10 22:52:31 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.44 2004/12/29 11:35:00 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2005/02/10 22:52:31 grant Exp $");
 #endif
 #endif
 
@@ -51,13 +51,12 @@ size_t  PlayPenSize = sizeof(PlayPen);
 char   *CheckPkg = NULL;
 size_t  termwidth = 0;
 lpkg_head_t pkgs;
-int	usedot;
 
 static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	    "usage: pkg_info [-.BbcDdFfhIikLmNnpqRrSsVv] [-e package] [-K pkg_dbdir] [-l prefix]",
+	    "usage: pkg_info [-BbcDdFfhIikLmNnpqRrSsVv] [-e package] [-K pkg_dbdir] [-l prefix]",
 	    "                pkg-name [pkg-name ...]",
 	    "       pkg_info -a [flags]",
 	    "       pkg_info -Q variable pkg-name [pkg-name ...]");
@@ -74,8 +73,7 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
-		case '.':
-			usedot = 1;
+		case '.':	/* for backward compatibility */
 			break;
 
 		case 'a':

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.45 2004/11/10 17:40:41 agc Exp $
+.\" $NetBSD: pkg_info.1,v 1.46 2005/02/10 22:52:31 grant Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd November 10, 2004
+.Dd February 10, 2005
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl .BbcDdFfhIikLmNnpqRrSsVv
+.Op Fl BbcDdFfhIikLmNnpqRrSsVv
 .Bk -words
 .Op Fl e Ar package
 .Ek
@@ -67,8 +67,6 @@ is also given), or a URL to an ftp-available package.
 .Pp
 The following command-line options are supported:
 .Bl -tag -width indent
-.It Fl .
-Recognise uninstalled binary packages in the current working directory.
 .It Fl a
 Show information for all currently installed packages.
 .It Fl B
