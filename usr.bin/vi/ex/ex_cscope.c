@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.6 2002/04/09 01:47:33 thorpej Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.7 2003/01/20 16:10:51 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -252,6 +252,10 @@ cscope_add(sp, cmdp, dname)
 		dbname = CSCOPE_DBFILE;
 	} else if ((dbname = strrchr(dname, '/')) != NULL)
 		*dbname++ = '\0';
+	else {
+		dbname = dname;
+		dname = ".";
+	}
 
 	/* Allocate a cscope connection structure and initialize its fields. */
 	len = strlen(dname);
@@ -277,12 +281,7 @@ cscope_add(sp, cmdp, dname)
 	LIST_INSERT_HEAD(&exp->cscq, csc, q);
 
 	/* Read the initial prompt from the cscope to make sure it's okay. */
-	if (read_prompt(sp, csc)) {
-		terminate(sp, csc, 0);
-		return (1);
-	}
-
-	return (0);
+	return read_prompt(sp, csc);
 
 err:	free(csc);
 	return (1);
@@ -764,8 +763,7 @@ parse(sp, csc, tqp, matchesp)
 		++*matchesp;
 	}
 
-	(void)read_prompt(sp, csc);
-	return (0);
+	return read_prompt(sp, csc);
 
 io_err:	if (feof(csc->from_fp))
 		errno = EIO;
