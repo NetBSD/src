@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.26 1997/10/04 14:39:55 kleink Exp $
+.\"	$NetBSD: options.4,v 1.27 1997/10/04 17:36:25 veego Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -631,7 +631,7 @@ the
 .Xr ncr 4
 driver,
 and much of the networking code.
-.It Cd options MAXUPROC=integer
+.It Cd options MAXUPRC=integer
 Sets the
 .Em RLIMIT_NPROC
 resource limit, which specifies the maximum number of simultaneous
@@ -641,7 +641,7 @@ It defaults to
 .Em CHILD_MAX ,
 which is currently defined to be 80.
 Setting
-.Em MAXUPROC
+.Em MAXUPRC
 to a value less than
 .Em CHILD_MAX
 is not permitted, as this would result in a violation of the semantics of
