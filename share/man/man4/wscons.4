@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.4 1999/02/03 21:27:02 augustss Exp $
+.\" $NetBSD: wscons.4,v 1.5 1999/03/22 19:15:03 drochner Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -40,29 +40,17 @@
 .Sh SYNOPSIS
 .Cd "options WSEMUL_SUN"
 .Cd "options WSEMUL_VT100"
+.Cd options WSEMUL_NO_DUMB
+.Cd options \&"WSEMUL_DEFAULT=\e"xxx\e""
 .Cd "options WS_KERNEL_FG=WSCOL_XXX"
 .Cd "options WSDISPLAY_COMPAT_PCVT"
 .Cd "options WSDISPLAY_COMPAT_SYSCONS"
 .Cd "options WSDISPLAY_COMPAT_USL"
 .Cd "options WSDISPLAY_COMPAT_RAWKBD"
-.Cd "options PCKBD_LAYOUT=XXX"
 
-.Cd "pckbc0     at isa?"
-.Cd "pckbd*     at pckbc?"
-.Cd "pms*       at pckbc?"
-.Cd "vga0       at isa?"
-.Cd "vga*       at pci?"
-.Cd "pcdisplay0 at isa?"
-.Cd "wsdisplay* at vga? console ?"
-.Cd "wsdisplay* at pcdisplay? console ?"
-.Cd "lms0       at isa? port 0x23c irq 5"
-.Cd "mms0       at isa? port 0x23c irq 5"
-.Cd "wskbd*     at pckbd? console ?"
-.Cd "wskbd*     at ukbd? console ?"
-.Cd "wsmouse*   at pms?"
-.Cd "wsmouse*   at lms?"
-.Cd "wsmouse*   at mms?"
-.Cd "wsmouse*   at ums?"
+.Cd wsdisplay* at ...
+.Cd wskbd*     at ...
+.Cd wsmouse*   at ...
 .Pp
 .Sh DESCRIPTION
 The
@@ -71,13 +59,9 @@ driver provides support for machine independent access to the console.
 .Sh BUGS
 This man page is extremely incomplete.
 .Sh SEE ALSO
-.Xr isa 4 ,
-.Xr pci 4 ,
-.Xr ukbd 4 ,
-.Xr lms 4 ,
-.Xr mms 4 ,
-.Xr pms 4 ,
-.Xr ums 4 ,
+.Xr wsdisplay 4 ,
+.Xr wskbd 4 ,
+.Xr wsmouse 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
 .Xr wsfontload 8
