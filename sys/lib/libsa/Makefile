@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 1997/05/07 16:20:48 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 1997/05/30 01:55:11 cjs Exp $
 
 LIB=	sa
 NOPIC=
 NOPROFILE=
+
+# this library needed only during build
+NOINSTALL=1
 
 SA_USE_CREAD?= no
 SA_INCLUDE_NET?= yes
@@ -35,9 +38,6 @@ SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
 SRCS+=	ufs.c nfs.c cd9660.c
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
 
