@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.19 2004/09/23 16:44:26 tshiozak Exp $	*/
+/*	$NetBSD: gettext.c,v 1.20 2004/09/23 21:35:27 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.19 2004/09/23 16:44:26 tshiozak Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.20 2004/09/23 21:35:27 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -300,6 +300,196 @@ validate(arg, mohandle)
 		return 1;
 }
 
+/*
+ * calculate the step value if the hash value is conflicted.
+ */
+static __inline u_int32_t
+calc_collision_step(u_int32_t hashval, u_int32_t hashsize)
+{
+	_DIAGASSERT(hashsize>2);
+	return (hashval % (hashsize - 2)) + 1;
+}
+
+/*
+ * calculate the next index while conflicting.
+ */
+static __inline u_int32_t
+calc_next_index(u_int32_t curidx, u_int32_t hashsize, u_int32_t step)
+{
+	return curidx+step - (curidx >= hashsize-step ? hashsize : 0);
+}
+
+static int
+get_sysdep_string_table(struct mosysdepstr_h **table_h,
+			u_int32_t *ofstable, uint32_t nstrings,
+			u_int32_t magic, char *base)
+{
+	int i, j;
+	int count;
+	size_t l;
+	struct mosysdepstr *table;
+
+	for (i=0; i<nstrings; i++) {
+		/* get mosysdepstr record */
+		/* LINTED: ignore the alignment problem. */
+		table = (struct mosysdepstr *)(base + flip(ofstable[i], magic));
+		/* count number of segments */
+		count = 0;
+		while (flip(table->segs[count++].ref, magic) != MO_LASTSEG)
+			;
+		/* get table */
+		l = sizeof(struct mosysdepstr_h) +
+		    sizeof(struct mosysdepsegentry_h) * (count-1);
+		table_h[i] = (struct mosysdepstr_h *)malloc(l);
+		if (!table_h[i])
+			return -1;
+		memset(table_h[i], 0, l);
+		table_h[i]->off = (const char *)(base + flip(table->off, magic));
+		for (j=0; j<count; j++) {
+			table_h[i]->segs[j].len =
+			    flip(table->segs[j].len, magic);
+			table_h[i]->segs[j].ref =
+			    flip(table->segs[j].ref, magic);
+		}
+		/* LINTED: ignore the alignment problem. */
+		table = (struct mosysdepstr *)&table->segs[count];
+	}
+	return 0;
+}
+
+static int
+expand_sysdep(struct mohandle *mohandle, struct mosysdepstr_h *str)
+{
+	int i;
+	const char *src;
+	char *dst;
+
+	/* check whether already expanded */
+	if (str->expanded)
+		return 0;
+
+	/* calc total length */
+	str->expanded_len = 1;
+	for (i=0; /*CONSTCOND*/1; i++) {
+		str->expanded_len += str->segs[i].len;
+		if (str->segs[i].ref == MO_LASTSEG)
+			break;
+		str->expanded_len +=
+		    mohandle->mo.mo_sysdep_segs[str->segs[i].ref].len;
+	}
+	/* expand */
+	str->expanded = malloc(str->expanded_len);
+	if (!str->expanded)
+		return -1;
+	src = str->off;
+	dst = str->expanded;
+	for (i=0; /*CONSTCOND*/1; i++) {
+		memcpy(dst, src, str->segs[i].len);
+		src += str->segs[i].len;
+		dst += str->segs[i].len;
+		if (str->segs[i].ref == MO_LASTSEG)
+			break;
+		memcpy(dst, mohandle->mo.mo_sysdep_segs[str->segs[i].ref].str,
+		       mohandle->mo.mo_sysdep_segs[str->segs[i].ref].len);
+		dst += mohandle->mo.mo_sysdep_segs[str->segs[i].ref].len;
+	}
+	*dst = '\0';
+
+	return 0;
+}
+
+static void
+insert_to_hash(u_int32_t *htable, u_int32_t hsize, const char *str,
+	       u_int32_t ref)
+{
+	u_int32_t hashval, idx, step;
+
+	hashval = __intl_string_hash(str);
+	step = calc_collision_step(hashval, hsize);
+	idx = hashval % hsize;
+
+	while (htable[idx])
+		idx = calc_next_index(idx, hsize, step);
+
+	htable[idx] = ref;
+}
+
+static int
+setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
+{
+	u_int32_t magic;
+	struct moentry *stable;
+	size_t l;
+	int i;
+	char *v;
+	u_int32_t *ofstable;
+
+	magic = mo->mo_magic;
+
+	mohandle->mo.mo_sysdep_nsegs = flip(mo->mo_sysdep_nsegs, magic);
+	mohandle->mo.mo_sysdep_nstring = flip(mo->mo_sysdep_nstring, magic);
+
+	if (mohandle->mo.mo_sysdep_nstring == 0)
+		return 0;
+
+	/* check hash size */
+	if (mohandle->mo.mo_hsize <= 2 ||
+	    mohandle->mo.mo_hsize <
+	    (mohandle->mo.mo_nstring + mohandle->mo.mo_sysdep_nstring))
+		return -1;
+
+	/* get sysdep segments */
+	l = sizeof(struct mosysdepsegs_h *) * mohandle->mo.mo_sysdep_nsegs;
+	mohandle->mo.mo_sysdep_segs = (struct mosysdepsegs_h *)malloc(l);
+	if (!mohandle->mo.mo_sysdep_segs)
+		return -1;
+	/* LINTED: ignore the alignment problem. */
+	stable = (struct moentry *)(base + flip(mo->mo_sysdep_segoff, magic));
+	for (i=0; i<mohandle->mo.mo_sysdep_nsegs; i++) {
+		v = base + flip(stable[i].off, magic);
+		mohandle->mo.mo_sysdep_segs[i].str =
+		    __intl_sysdep_get_string_by_tag(
+			    v,
+			    &mohandle->mo.mo_sysdep_segs[i].len);
+	}
+
+	/* get sysdep string table */
+	mohandle->mo.mo_sysdep_otable =
+	    (struct mosysdepstr_h **)calloc(mohandle->mo.mo_sysdep_nstring,
+					    sizeof(struct mosysdepstr_h *));
+	if (!mohandle->mo.mo_sysdep_otable)
+		return -1;
+	/* LINTED: ignore the alignment problem. */
+	ofstable = (u_int32_t *)(base + flip(mo->mo_sysdep_otable, magic));
+	if (get_sysdep_string_table(mohandle->mo.mo_sysdep_otable, ofstable,
+				    mohandle->mo.mo_sysdep_nstring, magic,
+				    base))
+		return -1;
+	mohandle->mo.mo_sysdep_ttable =
+	    (struct mosysdepstr_h **)calloc(mohandle->mo.mo_sysdep_nstring,
+					    sizeof(struct mosysdepstr_h *));
+	if (!mohandle->mo.mo_sysdep_ttable)
+		return -1;
+	/* LINTED: ignore the alignment problem. */
+	ofstable = (u_int32_t *)(base + flip(mo->mo_sysdep_ttable, magic));
+	if (get_sysdep_string_table(mohandle->mo.mo_sysdep_ttable, ofstable,
+				    mohandle->mo.mo_sysdep_nstring, magic,
+				    base))
+		return -1;
+
+	/* update hash */
+	for (i=0; i<mohandle->mo.mo_sysdep_nstring; i++) {
+		if (expand_sysdep(mohandle, mohandle->mo.mo_sysdep_otable[i]))
+			return -1;
+		insert_to_hash(mohandle->mo.mo_htable,
+			       mohandle->mo.mo_hsize,
+			       mohandle->mo.mo_sysdep_otable[i]->expanded,
+			       (i+1) | MO_HASH_SYSDEP_MASK);
+	}
+
+	return 0;
+}
+
 int
 mapit(path, db)
 	const char *path;
@@ -308,7 +498,7 @@ mapit(path, db)
 	int fd;
 	struct stat st;
 	char *base;
-	u_int32_t magic, revision;
+	u_int32_t magic, revision, flags = 0;
 	struct moentry *otable, *ttable;
 	const u_int32_t *htable;
 	struct moentry_h *p;
@@ -346,10 +536,10 @@ mapit(path, db)
 	}
 	switch (flip(revision, magic)) {
 	case MO_MAKE_REV(0, 0):
-#if 0
+		break;
 	case MO_MAKE_REV(0, 1):
 	case MO_MAKE_REV(1, 1):
-#endif
+		flags |= MO_F_SYSDEP;
 		break;
 	default:
 		close(fd);
@@ -372,6 +562,7 @@ mapit(path, db)
 	mohandle->mo.mo_revision = flip(mo->mo_revision, magic);
 	mohandle->mo.mo_nstring = flip(mo->mo_nstring, magic);
 	mohandle->mo.mo_hsize = flip(mo->mo_hsize, magic);
+	mohandle->mo.mo_flags = flags;
 
 	/* validate otable/ttable */
 	/* LINTED: ignore the alignment problem. */
@@ -466,10 +657,33 @@ mapit(path, db)
 	 * the *.mo file as we cannot support it.
 	 */
 
+	/* system dependent string support */
+	if ((mohandle->mo.mo_flags & MO_F_SYSDEP) != 0) {
+		if (setup_sysdep_stuffs(mo, mohandle, base)) {
+			unmapit(db);
+			goto fail;
+		}
+	}
+
 	return 0;
 
 fail:
 	return -1;
+}
+
+static void
+free_sysdep_table(struct mosysdepstr_h **table, u_int32_t nstring)
+{
+	u_int32_t i;
+
+	for (i=0; i<nstring; i++) {
+		if (table[i]) {
+			if (table[i]->expanded)
+				free(table[i]->expanded);
+			free(table[i]);
+		}
+	}
+	free(table);
 }
 
 static int
@@ -490,27 +704,18 @@ unmapit(db)
 		free(mohandle->mo.mo_charset);
 	if (mohandle->mo.mo_htable)
 		free(mohandle->mo.mo_htable);
+	if (mohandle->mo.mo_sysdep_segs)
+		free(mohandle->mo.mo_sysdep_segs);
+	if (mohandle->mo.mo_sysdep_otable) {
+		free_sysdep_table(mohandle->mo.mo_sysdep_otable,
+				  mohandle->mo.mo_sysdep_nstring);
+	}
+	if (mohandle->mo.mo_sysdep_ttable) {
+		free_sysdep_table(mohandle->mo.mo_sysdep_ttable,
+				  mohandle->mo.mo_sysdep_nstring);
+	}
 	memset(&mohandle->mo, 0, sizeof(mohandle->mo));
 	return 0;
-}
-
-/*
- * calculate the step value if the hash value is conflicted.
- */
-static __inline u_int32_t
-calc_collision_step(u_int32_t hashval, u_int32_t hashsize)
-{
-	_DIAGASSERT(hashsize>2);
-	return (hashval % (hashsize - 2)) + 1;
-}
-
-/*
- * calculate the next index while conflicting.
- */
-static __inline u_int32_t
-calc_next_index(u_int32_t curidx, u_int32_t hashsize, u_int32_t step)
-{
-	return curidx+step - (curidx >= hashsize-step ? hashsize : 0);
 }
 
 /* ARGSUSED */
@@ -522,6 +727,7 @@ lookup_hash(msgid, db)
 	struct mohandle *mohandle = &db->mohandle;
 	u_int32_t idx, hashval, step, strno;
 	size_t len;
+	struct mosysdepstr_h *sysdep_otable, *sysdep_ttable;
 
 	if (mohandle->mo.mo_hsize <= 2 || mohandle->mo.mo_htable == NULL)
 		return NULL;
@@ -537,10 +743,26 @@ lookup_hash(msgid, db)
 			return NULL;
 		}
 		strno--;
-		if (len <= mohandle->mo.mo_otable[strno].len &&
-		    !strcmp(msgid, mohandle->mo.mo_otable[strno].off)) {
-			/* hit */
-			return mohandle->mo.mo_ttable[strno].off;
+		if ((strno & MO_HASH_SYSDEP_MASK) == 0) {
+			/* system independent strings */
+			if (len <= mohandle->mo.mo_otable[strno].len &&
+			    !strcmp(msgid, mohandle->mo.mo_otable[strno].off)) {
+				/* hit */
+				return mohandle->mo.mo_ttable[strno].off;
+			}
+		} else {
+			/* system dependent strings */
+			strno &= ~MO_HASH_SYSDEP_MASK;
+			sysdep_otable = mohandle->mo.mo_sysdep_otable[strno];
+			sysdep_ttable = mohandle->mo.mo_sysdep_ttable[strno];
+			if (len <= sysdep_otable->expanded_len &&
+			    !strcmp(msgid, sysdep_otable->expanded)) {
+				/* hit */
+				if (expand_sysdep(mohandle, sysdep_ttable))
+					/* memory exhausted */
+					return NULL;
+				return sysdep_ttable->expanded;
+			}
 		}
 		idx = calc_next_index(idx, mohandle->mo.mo_hsize, step);
 	}
