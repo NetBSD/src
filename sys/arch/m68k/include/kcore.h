@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 1997/04/09 19:25:00 thorpej Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3 1997/05/01 22:48:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,13 +90,11 @@ struct m68k_kcore_hdr {
 /*
  * kcore information for the sun3
  */
-#define	SUN3_NPHYS_RAM_SEGS	4
 struct sun3_kcore_hdr {
 	u_int32_t	segshift;
 	u_int32_t	pg_frame;	/* PTE bits */
 	u_int32_t	pg_valid;
 	u_int8_t	ksegmap[256];	/* kernel segment map */
-	phys_ram_seg_t	ram_segs[SUN3_NPHYS_RAM_SEGS];
 };
 
 /*
