@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.12 2000/08/13 18:41:38 jhawk Exp $	*/
+/*	$NetBSD: inet6.c,v 1.13 2000/10/11 14:46:14 is Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.12 2000/08/13 18:41:38 jhawk Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.13 2000/10/11 14:46:14 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ ip6protopr(off, name)
 	register struct in6pcb *prev, *next;
 	int istcp;
 	static int first = 1;
-
+	int width = 22;
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp6") == 0;
@@ -192,13 +192,15 @@ ip6protopr(off, name)
 			if (aflag)
 				printf(" (including servers)");
 			putchar('\n');
-			if (Aflag)
+			if (Aflag) {
 				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+				width = 18;
+			}
+			printf( "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
 				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
+				-width, width, "Local Address", 
+				-width, width, "Foreign Address", 
+				"(state)");
 			first = 0;
 		}
 		if (Aflag) {

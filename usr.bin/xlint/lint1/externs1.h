@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.9 2000/07/06 01:09:56 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.10 2000/10/11 14:46:23 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -119,7 +119,8 @@ extern	void	error __P((int, ...));
 extern	void	warning __P((int, ...));
 extern	void	message __P((int, ...));
 extern	int	gnuism __P((int, ...));
-extern	void	lerror __P((const char *, ...)) __attribute__((__noreturn__));
+extern	void	lerror __P((const char *, ...)) 
+     __attribute__((__noreturn__,__format__(__printf__, 1, 2)));
 
 /*
  * decl.c
