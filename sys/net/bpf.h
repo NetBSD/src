@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.22 1998/07/25 11:31:18 explorer Exp $	*/
+/*	$NetBSD: bpf.h,v 1.23 1999/05/11 02:11:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -190,6 +190,10 @@ struct bpf_hdr {
 #define DLT_HIPPI	15	/* HIPPI */
 #define DLT_HDLC	16	/* HDLC framing */
 
+/* NetBSD-specific types */
+#define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
+#define	DLT_PPP_ETHER	51	/* PPP over Ethernet */
+
 /*
  * The instruction encondings.
  */
@@ -267,6 +271,7 @@ int	 bpf_validate __P((struct bpf_insn *, int));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
+void	 bpf_change_type __P((caddr_t *, u_int, u_int));
 void	 bpfilterattach __P((int));
 #endif
 
