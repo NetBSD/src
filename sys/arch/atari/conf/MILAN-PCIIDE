@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.12.4.3 2002/08/01 04:42:30 lukem Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.12.4.4 2003/01/10 06:57:58 jmc Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
-#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
+#		NetBSD: MILAN.in,v 1.8.10.1 2002/06/18 23:52:07 lukem Exp $
+#		NetBSD$
 
 #This configuration file is for a generic Milan
 
@@ -61,7 +61,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -171,7 +171,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md		2	# Boot memory disk
+pseudo-device	md		3	# Boot memory disk
 
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel

@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.47.4.1 2002/08/01 04:42:02 lukem Exp $
+# $NetBSD: FALCON,v 1.47.4.2 2003/01/10 06:57:56 jmc Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
+#		NetBSD$
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -65,7 +65,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -172,7 +172,7 @@ pseudo-device	ppp			# ppp
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md		2	# Boot memory disk
+pseudo-device	md		3	# Boot memory disk
 
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
