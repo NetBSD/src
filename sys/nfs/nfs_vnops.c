@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.159 2003/02/26 06:31:20 matt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.160 2003/03/31 14:47:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.159 2003/02/26 06:31:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.160 2003/03/31 14:47:03 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2770,7 +2770,7 @@ nfs_commit(vp, offset, cnt, procp)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("commit %lu - %lu\n", (unsigned long)offset,
 	    (unsigned long)(offset + cnt));
 #endif
