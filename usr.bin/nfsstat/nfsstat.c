@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.8 1997/03/03 22:22:48 explorer Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.9 1997/10/19 06:27:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: nfsstat.c,v 1.8 1997/03/03 22:22:48 explorer Exp $";
+__RCSID("$NetBSD: nfsstat.c,v 1.9 1997/10/19 06:27:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,12 +75,18 @@ static char *rcsid = "$NetBSD: nfsstat.c,v 1.8 1997/03/03 22:22:48 explorer Exp 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
 	{ "_nfsstats" },
-	"",
+	{ "" },
 };
 kvm_t *kd;
 
-void intpr(), printhdr(), sidewaysintpr(), usage();
+void	catchalarm __P((int));
+void	intpr __P((u_long));
+int	main __P((int, char **));
+void	printhdr __P((void));
+void	sidewaysintpr __P((u_int, u_long));
+void	usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -94,7 +100,7 @@ main(argc, argv)
 
 	interval = 0;
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:w:")) != EOF)
+	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -130,14 +136,10 @@ main(argc, argv)
 	if (nlistf != NULL || memf != NULL)
 		setgid(getgid());
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == 0) {
-		fprintf(stderr, "nfsstat: kvm_openfiles: %s\n", errbuf);
-		exit(1);
-	}
-	if (kvm_nlist(kd, nl) != 0) {
-		fprintf(stderr, "nfsstat: kvm_nlist: can't get names\n");
-		exit(1);
-	}
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == 0)
+		errx(1, "kvm_openfiles: %s", errbuf);
+	if (kvm_nlist(kd, nl) != 0)
+		errx(1, "kvm_nlist: can't get names");
 
 	if (interval)
 		sidewaysintpr(interval, nl[N_NFSSTAT].n_value);
@@ -155,10 +157,9 @@ intpr(nfsstataddr)
 {
 	struct nfsstats nfsstats;
 
-	if (kvm_read(kd, (u_long)nfsstataddr, (char *)&nfsstats, sizeof(struct nfsstats)) < 0) {
-		fprintf(stderr, "nfsstat: kvm_read failed\n");
-		exit(1);
-	}
+	if (kvm_read(kd, (u_long)nfsstataddr,
+	    (char *)&nfsstats, sizeof(struct nfsstats)) < 0)
+		errx(1, "kvm_read failed");
 	printf("Client Info:\n");
 	printf("Rpc Counts:\n");
 	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
@@ -309,22 +310,19 @@ sidewaysintpr(interval, off)
 {
 	struct nfsstats nfsstats, lastst;
 	int hdrcnt, oldmask;
-	void catchalarm();
 
 	(void)signal(SIGALRM, catchalarm);
 	signalled = 0;
 	(void)alarm(interval);
-	bzero((caddr_t)&lastst, sizeof(lastst));
+	memset((caddr_t)&lastst, 0, sizeof(lastst));
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt) {
 			printhdr();
 			hdrcnt = 20;
 		}
-		if (kvm_read(kd, off, (char *)&nfsstats, sizeof nfsstats) < 0) {
-			fprintf(stderr, "nfsstat: kvm_read failed\n");
-			exit(1);
-		}
+		if (kvm_read(kd, off, (char *)&nfsstats, sizeof nfsstats) < 0)
+			errx(1, "kvm_read failed");
 		printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
 		    nfsstats.rpccnt[NFSPROC_GETATTR]-lastst.rpccnt[NFSPROC_GETATTR],
 		    nfsstats.rpccnt[NFSPROC_LOOKUP]-lastst.rpccnt[NFSPROC_LOOKUP],
@@ -371,7 +369,8 @@ printhdr()
  * Sets a flag to not wait for the alarm.
  */
 void
-catchalarm()
+catchalarm(dummy)
+	int dummy;
 {
 	signalled = 1;
 }
