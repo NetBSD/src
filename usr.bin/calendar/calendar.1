@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.8 1997/08/26 19:58:10 thorpej Exp $
+.\"	$NetBSD: calendar.1,v 1.9 1997/10/18 12:27:31 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm calendar
 .Nd reminder service
 .Sh SYNOPSIS
-.Nm calendar
+.Nm
 .Op Fl a
 .Op Fl f Ar file
 .Op Fl l Ar days
@@ -48,7 +48,7 @@
 .Op Fl d Ar MMDD[[YY]YY]
 .Sh DESCRIPTION
 The 
-.Nm calendar
+.Nm
 utility processes text files and displays lines that match certain dates.
 .Pp
 The following options are available:
@@ -80,7 +80,7 @@ one) from the specified date and display their entries as well.
 Causes the program to add the specified number of days to the ``look
 ahead'' number if and only if the day specified is a Friday. The default
 value is two, which causes
-.Nm calendar
+.Nm
 to print entries through the weekend on Fridays.
 .El
 .Pp
@@ -157,7 +157,7 @@ so that roving holidays are set correctly for the current year.
 .Xr cron 8
 .Sh COMPATIBILITY
 The
-.Nm calendar
+.Nm
 program previously selected lines which had the correct date anywhere
 in the line.
 This is no longer true, the date is only recognized when it occurs
@@ -168,6 +168,6 @@ A
 command appeared in 
 .At v7 .
 .Sh BUGS
-.Nm Calendar
+.Nm
 doesn't handle events that move around from year to year, i.e.,
 ``the last Monday in April''.
