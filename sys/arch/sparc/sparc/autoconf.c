@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.167 2002/03/28 19:50:21 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.168 2002/04/02 06:39:32 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1721,11 +1721,12 @@ instance_match(dev, aux, bp)
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
-		    "want space %#x addr %#x have space %#lx addr %#llx\n",
-		    bp->val[0], bp->val[1], BUS_ADDR_IOSPACE(ma->ma_paddr),
+		    "want space %#x addr %#x have space %#x addr %#llx\n",
+		    bp->val[0], bp->val[1], (int)BUS_ADDR_IOSPACE(ma->ma_paddr),
 			(unsigned long long)BUS_ADDR_PADDR(ma->ma_paddr)));
 		if ((u_long)bp->val[0] == BUS_ADDR_IOSPACE(ma->ma_paddr) &&
-		    (bus_addr_t)(u_long)bp->val[1] == BUS_ADDR_PADDR(ma->ma_paddr))
+		    (bus_addr_t)(u_long)bp->val[1] ==
+		    BUS_ADDR_PADDR(ma->ma_paddr))
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
