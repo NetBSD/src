@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.9 2002/02/09 03:52:31 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.10 2002/04/12 04:52:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -324,6 +324,10 @@ splx(int new)
 	old = current_spl_level;
 	current_spl_level = new;
 
+	/* If there are software interrupts to process, do it. */
+	if ((ipending & ~IRQ_BITS) & ~new)
+		iq80310_do_pending();
+
 	/*
 	 * If there are pending hardware interrupts (i.e. the
 	 * external interrupt is disabled in the ICU), and all
@@ -336,10 +340,6 @@ splx(int new)
 	 */
 	if ((new & IRQ_BITS) == 0 && (ipending & IRQ_BITS))
 		i80200_intr_enable(INTCTL_IM);
-
-	/* If there are software interrupts to process, do it. */
-	if ((ipending & ~IRQ_BITS) & ~new)
-		iq80310_do_pending();
 }
 
 int
