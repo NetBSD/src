@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.11 2001/05/14 07:46:57 mbw Exp $
+.\"	$NetBSD: install,v 1.12 2001/05/19 05:43:29 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -29,12 +29,18 @@ specify an entirely different device for the kernel.
 For instance, you could have a
 .Tn MacOS
 drive on your
-.Em ultra0
+.Em ultra1
 (ATA) bus, and a
 .Nx
 drive on your
-.Em ultra1
-bus.
+.Em ultra0
+bus (since 
+.Pa wd0 No Ns ,
+the first drive recognized by 
+.Nx*M
+is usually found on the
+.Em ultra0
+bus).
 .Pp
 The exact command you will be using depends on which version of Open Firmware
 your machine has and which device you will be booting from.  Sometimes you
@@ -87,7 +93,13 @@ Firmware 2.4)
 .Pp
 The floppy disk has a
 .Sq partition zero
-bootloader. All you need to do is:
+bootloader. 
+.(Note
+This is not a normal
+.Tn MacOS
+boot floppy -- you must enter Open Firmware and type a boot command.
+.Note)
+All you need to do is:
 .Pp
 .Dl 0 > Ic boot fd:0
 .Pp
@@ -108,6 +120,10 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .Dl 0 > Ic boot "enet:,ofwboot.xcf enet:,netbsd.ram.gz"
+.(Note
+Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
+correctly. These machines cannot netboot.
+.Note)
 .It
 .Em Ethernet
 .br
@@ -154,6 +170,14 @@ Another thing to note is that you
 use capital letters when specifying the filename to load.
 Also, keep in mind what format your CD-R has to be for your version of
 Open Firmware (pure ISO versus hybrid ISO/HFS) before giving up.
+.Pp
+You may be able to get a directory listing of the files on your CD-ROM
+disk with the following command (where
+.Pa scsi/sd@3:0
+is the device alias and path to your CD-ROM drive):
+.Dl 0 > Ic "dir scsi/sd@3:0,\e\"
+If you have subdirectories, you can examine them as well:
+.Dl 0 > Ic "dir scsi/sd@3:0,\e\\&subdirectory\e\"
 .Pp
 Here are some examples of what you might use to boot from CD-ROM (Apple
 usually sets their CD-ROM drives to SCSI ID 3):
@@ -209,6 +233,14 @@ you can run the following command to print out the partition table on your
 drive:
 .Dl % Ic "sudo pdisk /dev/disk0 -dump"
 .Pp
+You may be able to get a directory listing of the files on your hard
+drive with the following command (where
+.Pa hd-devalias
+is the device alias and path to your hard drive):
+.Dl 0 > Ic "dir hd-devalias:,\e\"
+If you have subdirectories, you can examine them as well:
+.Dl 0 > Ic "dir hd-devalias:,\e\\&subdirectory\e\"
+.Pp
 If bootloader is on a different partition from the
 .Nx
 kernel, you will need to specify where to find the kernel.
@@ -216,11 +248,20 @@ kernel, you will need to specify where to find the kernel.
 Remember, that SCSI Zip disks are usually ID 5 or 6. Internal hard drives
 are usually SCSI ID 0.
 .Pp
-Here are some examples of what you might use to boot from such a drive:
+Here are some examples of what you might use to boot the boot floppy image 
+located on an HFS or HFS+ partition (note, you must use the path to the floppy
+image):
 .Pp
 .Dl 0 > Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:9,boot.fs"
 .Dl 0 > Ic "boot ide0/disk@0:10,ofwboot.xcf ide0/disk@0:9,boot.fs"
 .Dl 0 > Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs"
+.Pp
+Here are some examples of what you might use to boot a kernel located on the
+same HFS or HFS+ partition as the bootloader (note, you do not specify a 
+path to the kernel name):
+.Pp
+.Dl 0 > Ic "boot ultra1:9,ofwboot.xcf netbsd.ram.gz"
+.Dl 0 > Ic "boot hd:10,ofwboot.xcf netbsd.GENERIC.gz"
 .bullet)
 .
 .Ss2 Example of a normal boot
@@ -384,6 +425,13 @@ Open Firmware 1 and 2 machines, it must be an XCOFF file (such as
 and for Open Firmware 3 machines, it must be either XCOFF or ELF (such as
 a kernel).  Make sure that you have use binary mode to FTP the files, and
 that they are properly uncompressed.
+.It
+.Dq Li "bad partition number, using 0no bootable HFS partition"
+.Pp
+If you're trying to boot an Open Firmware 1.0.5, 1.1.22, or 2.0.x system,
+this probably means that your media (i.e. hard drive or CD-ROM) has an HFS
+filesystem on it (such as a hybrid CD-R or a hard drive with MacOS
+partitions).
 .It
 .Dq Li "TFTP timeout"
 .Pp

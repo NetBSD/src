@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.11 2001/05/14 07:46:57 mbw Exp $
+.\"$NetBSD: hardware,v 1.12 2001/05/19 05:43:29 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -240,6 +240,12 @@ On-board MESH SCSI controller
 Adaptec PCI controllers 291x, 2920, 2930C, 294x, 295x, 39xx, 19160, 29160
 and AIC-78xx
 .Pq Em ahc
+.(Note
+The 294x models are not bootable in Open Firmware, even though they
+can boot
+.Tn MacOS No Ns .
+.Note)
+.Pp
 .It
 AdvanSys 1200[A,B], 9xx[U,UA] SCSI controller
 .Pq Em adv
@@ -259,7 +265,17 @@ IDE
 .(bullet -compact
 On-board IDE controlers
 .It
-Many PCI IDE controllers should work, although no one has tried them
+Promise Ultra66
+.Pq Em pciide
+(this, and other PC-based cards are not bootable on \*M)
+.It
+Some other PCI IDE controllers should work, although no one has had much success
+.(Note
+The Sonnet Tempo ATA/66 card does not work with
+.Nx*M
+yet.
+.Note)
+.Pp
 .It
 Most IDE disk/CD-ROM/ATAPI devices should work
 .bullet)
@@ -382,6 +398,7 @@ Though
 .Nx*M
 can boot from a floppy, there is no kernel support yet
 .Note)
+.Pp
 .It
 FireWire (IEEE 1394)
 .It
@@ -395,6 +412,7 @@ Although
 can boot with more than one processor present, it will not use the additional
 CPUs
 .Note)
+.Pp
 .It
 AirPort
 .It
