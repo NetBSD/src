@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.8 1997/11/06 00:41:45 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.9 1998/01/29 22:20:15 ross Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,13 @@ extern void dec_eb164_init __P((void));
 #define	dec_eb164_init		platform_not_configured
 #endif
 
+#include "opt_avalon_a12.h"
+#ifdef AVALON_A12
+extern void avalon_a12_init __P((void));
+#else
+#define	avalon_a12_init		platform_not_configured
+#endif
+
 struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  0: ??? */
 	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
@@ -101,7 +108,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  5: ??? */
 	cpu_notsupp("ST_DEC_2000_300"),		     /*  6: ST_DEC_2000_300 */
 	cpu_init(dec_3000_300_init,"DEC_3000_300"),  /*  7: ST_DEC_3000_300 */
-	cpu_notsupp("???"),			     /*  8: ??? */
+	cpu_init(avalon_a12_init,"ST_AVALON_A12"),   /*  8: ST_AVALON_A12 */
 	cpu_notsupp("ST_DEC_2100_A500"),	     /*  9: ST_DEC_2100_A500 */
 	cpu_notsupp("ST_DEC_APXVME_64"),	     /* 10: ST_DEC_APXVME_64 */
 	cpu_init(dec_axppci_33_init,"DEC_AXPPCI_33"),/* 11: ST_DEC_AXPPCI_33 */
