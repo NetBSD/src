@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.37 1998/09/12 15:08:04 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.38 1998/09/22 13:39:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -604,6 +604,15 @@ srmmu_vcache_flush_page(va)
 }
 
 /*
+ * Flush entire cache.
+ */
+void
+srmmu_cache_flush_all()
+{
+	srmmu_vcache_flush_context();
+}
+
+/*
  * Flush a range of virtual addresses (in the current context).
  * The first byte is at (base&~PGOFSET) and the last one is just
  * before byte (base+len).
@@ -684,6 +693,28 @@ ms1_cache_flush(base, len)
 	/* XXX investigate other methods instead of blowing the entire cache */
 	sta(0, ASI_DCACHECLR, 0);
 }
+
+/*
+ * Flush entire cache.
+ */
+void
+ms1_cache_flush_all()
+{
+
+	/* Flash-clear both caches */
+	sta(0, ASI_ICACHECLR, 0);
+	sta(0, ASI_DCACHECLR, 0);
+}
+
+void
+hypersparc_cache_flush_all()
+{
+
+	srmmu_vcache_flush_context();
+	/* Flush instruction cache */
+	hypersparc_pure_vcache_flush();
+}
+
 
 void
 viking_cache_flush(base, len)
