@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/24 02:32:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/25 02:23:21 thorpej Exp $
 
 XLINT_TARGET_PREFIX=${MACHINE_GNU_PLATFORM}-
 
@@ -7,5 +7,7 @@ HOST_SRCDIR=	usr.bin/xlint/lint2
 HOST_BINDIR=	${TOOLDIR}/libexec
 
 .include "${.CURDIR}/../Makefile.host"
+
+.include "${_CURDIR}/../lint/Makefile.inc"
 
 ${TIMESTAMP}: ${SRCS}
