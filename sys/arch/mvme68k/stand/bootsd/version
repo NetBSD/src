@@ -1,5 +1,6 @@
-$NetBSD: version,v 1.2 2000/09/24 12:32:36 jdolecek Exp $
+$NetBSD: version,v 1.3 2001/08/02 12:24:07 bjh21 Exp $
 
 1.1:	Initial bootsd import (from sun3 port, adjusted for mvme68k port
 	by Chuck Cranor)
 1.2:	Support verbose/quiet boot.
+1.3:	loadfile() update:  ELF symbols no longer need backward seeks.

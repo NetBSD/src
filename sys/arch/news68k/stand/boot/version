@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2001/01/30 14:29:49 tsutsui Exp $
+$NetBSD: version,v 1.2 2001/08/02 12:24:07 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -8,3 +8,4 @@ is taken as the current.
 1.2:	Add news1200 support
 1.3:	Return PROM prompt even if loading kernel fails halfway
 1.4:	Use newvers_stand.sh and print version strings
+1.5:	loadfile() update:  ELF symbols no longer need backward seeks.

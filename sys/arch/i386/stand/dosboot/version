@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2000/09/24 12:32:35 jdolecek Exp $
+$NetBSD: version,v 1.8 2001/08/02 12:24:06 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,3 +12,4 @@ is taken as the current.
 1.4:	Support BIOS Int13-Extensions.
 1.5:	Support ELF.
 1.6:	Support verbose/quiet boot.
+1.7:	loadfile() update:  ELF symbols no longer need backward seeks.

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2001/06/14 12:57:16 fredette Exp $
+$NetBSD: version,v 1.2 2001/08/02 12:24:09 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -16,3 +16,4 @@ is taken as the current.
 	on each so shared root images are possible.
 1.8:	Changed to use MI sys/conf/newvers_stand.sh & vers.c.
 1.9:	Convert to ELF and use MI loadfile().
+1.10:	loadfile() update:  ELF symbols no longer need backward seeks.

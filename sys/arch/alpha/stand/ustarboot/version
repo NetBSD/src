@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.3 2000/07/21 21:25:19 jdolecek Exp $
+$NetBSD: version,v 1.4 2001/08/02 12:24:05 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.1:	Initial version (part of The Great Boot Block Cleanup of April 1999).
+1.2:	loadfile() update:  ELF symbols no longer need backward seeks.

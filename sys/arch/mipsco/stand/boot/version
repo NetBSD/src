@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1 2000/09/18 11:40:47 wdk Exp $
+$NetBSD: version,v 1.2 2001/08/02 12:24:06 bjh21 Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.0:	Initial 2 stage bootloader for Mips Computer Corp. machines
+1.1:	loadfile() update:  ELF symbols no longer need backward seeks.
