@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1999/04/28 16:17:42 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1999/05/05 13:38:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1387,6 +1387,7 @@ setmemrange(void)
 	psize_t s, min, max;
 	struct memlist *mlist = memlist;
 	u_long h;
+	int basemax = ctob(physmem);
 
 	/*
 	 * VM system is not started yet.  Use the first and second avalable
@@ -1421,12 +1422,12 @@ setmemrange(void)
 		 * But some type of extended memory is in 32bit address space.
 		 * Check whether.
 		 */
-		if (!mem_exists(mlist[i].base, avail_end))
+		if (!mem_exists(mlist[i].base, basemax))
 			continue;
 		h = 0;
 		/* range check */
 		for (s = min; s <= max; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, h))
+			if (!mem_exists(mlist[i].base + s - 4, basemax))
 				break;
 			h = (u_long)(mlist[i].base + s);
 		}
