@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.101 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: unistd.h,v 1.102 2005/03/05 19:48:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -280,11 +280,12 @@ pid_t	 vfork(void) __RENAME(__vfork14);
 char	*getwd(char *);				/* obsoleted by getcwd() */
 #endif
 
-/* FIXME: this should go to <sys/time.h>! */
+/* This must be consistent with <sys/select.h>; for compatibility only. */
 #if __STDC__
 struct timeval;				/* select(2) XXX */
 #endif
-int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int	 select(int, fd_set * __restrict, fd_set * __restrict,
+	     fd_set * __restrict, struct timeval * __restrict);
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.26 2005/03/03 20:49:47 kleink Exp $
+.\"	$NetBSD: select.2,v 1.27 2005/03/05 19:48:38 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,18 +33,17 @@
 .Dt SELECT 2
 .Os
 .Sh NAME
-.Nm select
+.Nm select ,
+.Nm pselect
 .Nd synchronous I/O multiplexing
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In sys/types.h
-.In sys/time.h
-.In unistd.h
+.In sys/select.h
 .Ft int
-.Fn select "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
+.Fn select "int nfds" "fd_set * restrict readfds" "fd_set * restrict writefds" "fd_set * restrict exceptfds" "struct timeval * restrict timeout"
 .Ft int
-.Fn pselect "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "const struct timespec *timeout" "const sigset_t *sigmask"
+.Fn pselect "int nfds" "fd_set * restrict readfds" "fd_set * restrict writefds" "fd_set * restrict exceptfds" "const struct timespec *restrict timeout" "const sigset_t * restrict sigmask"
 .Fn FD_SET "int fd" "fd_set *fdset"
 .Fn FD_CLR "int fd" "fd_set *fdset"
 .Fn FD_ISSET "int fd" "fd_set *fdset"

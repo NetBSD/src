@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.65 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: types.h,v 1.66 2005/03/05 19:48:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -290,6 +290,7 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 
 /*
