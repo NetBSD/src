@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2001/09/22 16:26:34 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2001/09/24 03:56:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -577,7 +577,7 @@ cpu_reboot(howto, bootstr)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) && (waittime < 0)) {
+	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
 		waittime = 0;
 		vfs_shutdown();
 
