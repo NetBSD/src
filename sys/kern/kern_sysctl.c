@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.169.2.3 2004/04/28 05:32:25 jmc Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169.2.4 2004/04/28 05:33:39 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.3 2004/04/28 05:32:25 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.4 2004/04/28 05:33:39 jmc Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -128,8 +128,7 @@ static struct sysctlnode sysctl_root = {
 	 *
 	 *	.sysctl_size = sizeof(struct sysctlnode),
 	 */
-	._sysctl_size = { .__sysc_ustr = { .__sysc_sdatum =
-		sizeof(struct sysctlnode), }, },
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 	.sysctl_name = "(root)",
 };
 
