@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.5 2000/07/18 01:20:24 enami Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.6 2000/10/10 20:29:03 jeffs Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */
@@ -25,6 +25,9 @@ XLEAF(ovbcopy)
 XLEAF(memmove)
 XLEAF(memcpy)
 	.set	noat
+
+	move	v0, a1		# save dst for return value.
+
 	/*
 	 *	Make sure we can copy forwards.
 	 */
@@ -69,17 +72,17 @@ XLEAF(memcpy)
 #if SZREG == 8
 	.set	mips3
 
-	or	v0,a0,a1	# 4 or 8 byte aligned?
-	andi	v0,v0,7
-	bne	v0,zero,cp
+	or	t3,a0,a1	# 4 or 8 byte aligned?
+	andi	t3,t3,7
+	bne	t3,zero,cp
 	nop			# BDSLOT
 cp8:
-	ld	v0,0(a1)
+	ld	t3,0(a1)
 	ld	v1,8(a1)
 	ld	t0,16(a1)
 	ld	t1,24(a1)
 	addu	a1,32
-	sd	v0,0(a0)
+	sd	t3,0(a0)
 	sd	v1,8(a0)
 	sd	t0,16(a0)
 	sd	t1,24(a0)
@@ -90,25 +93,25 @@ cp8:
 	nop			# BDSLOT
 #endif
 cp:
-	lw	v0,0(a1)
+	lw	t3,0(a1)
 	lw	v1,4(a1)
 	lw	t0,8(a1)
 	lw	t1,12(a1)
 	addu	a1,32
-	sw	v0,0(a0)
+	sw	t3,0(a0)
 	sw	v1,4(a0)
 	sw	t0,8(a0)
 	sw	t1,12(a0)
 	lw	t1,-4(a1)
 	lw	t0,-8(a1)
 	lw	v1,-12(a1)
-	lw	v0,-16(a1)
+	lw	t3,-16(a1)
 	addu	a0,32
 	sw	t1,-4(a0)
 	sw	t0,-8(a0)
 	sw	v1,-12(a0)
 	bne	a1,a3,cp
-	sw	v0,-16(a0)	# BDSLOT
+	sw	t3,-16(a0)	# BDSLOT
 
 	/*
 	 *	Copy a word at a time, no loop unrolling.
@@ -120,9 +123,9 @@ wordcopy:
 	addu	t0,a1,t2	# BDSLOT stop at t0
 	subu	a2,a2,t2
 1:
-	lw	v0,0(a1)
+	lw	t3,0(a1)
 	addu	a1,4
-	sw	v0,0(a0)
+	sw	t3,0(a0)
 	bne	a1,t0,1b
 	addu	a0,4		# BDSLOT
 
@@ -130,9 +133,9 @@ bytecopy:
 	beq	a2,zero,copydone	# nothing left to do?
 	nop
 2:
-	lb	v0,0(a1)
+	lb	t3,0(a1)
 	addu	a1,1
-	sb	v0,0(a0)
+	sb	t3,0(a0)
 	subu	a2,1
 	bgtz	a2,2b
 	addu	a0,1		# BDSLOT
@@ -151,10 +154,10 @@ destaligned:
 	move	a2,t0		# this many to do after we are done
 
 3:
-	LWHI	v0,0(a1)
-	LWLO	v0,3(a1)
+	LWHI	t3,0(a1)
+	LWLO	t3,3(a1)
 	addi	a1,4
-	sw	v0,0(a0)
+	sw	t3,0(a0)
 	bne	a1,a3,3b
 	addi	a0,4		# BDSLOT
 
@@ -169,9 +172,9 @@ backcopy:
 	addu	t0,a1,a2	# BDSLOT: end of source
 	addu	t1,a0,a2	# end of destination
 4:
-	lb	v0,-1(t0)	
+	lb	t3,-1(t0)	
 	subu	t0,1
-	sb	v0,-1(t1)
+	sb	t3,-1(t1)
 	bne	t0,a1,4b
 	subu	t1,1		# BDSLOT
 	j	ra
