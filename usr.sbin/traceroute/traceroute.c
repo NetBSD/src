@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.31 1999/06/05 09:50:39 tron Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.32 1999/06/16 13:26:16 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.31 1999/06/05 09:50:39 tron Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.32 1999/06/16 13:26:16 is Exp $");
 #endif
 #endif
 
@@ -1102,8 +1102,8 @@ again:
 			if (errno == EMSGSIZE) {
 				packlen = *mtuptr++;
 #ifdef _NoLongerLooksUgly_
-                		Printf("\nmessage too big, "
-				    "trying new MTU = %d ", packlen);
+                		Printf("message too big, "
+				    "trying new MTU = %d\n", packlen);
 #endif
 				goto again;
 			} else
@@ -1181,7 +1181,7 @@ packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
 
-		nextmtu = htons(icp->icmp_nextmtu);	/* for frag_err() */
+		nextmtu = ntohs(icp->icmp_nextmtu);	/* for frag_err() */
 			
 		if (useicmp) {
 			/* XXX */
@@ -1490,7 +1490,7 @@ frag_err()
         } else {
                 packlen = *mtuptr++;
                 Printf("fragmentation required and DF set, "
-		    "trying new MTU = %d ", packlen);
+		    "trying new MTU = %d\n", packlen);
         }
 }
 
