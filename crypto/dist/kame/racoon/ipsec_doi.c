@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.146 2001/08/17 12:18:02 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.156 2002/04/15 08:13:00 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -315,9 +315,7 @@ get_ph1approvalx(p, proposal, sap)
 	struct prop_pair *p;
 	struct isakmpsa *proposal, *sap;
 {
-#ifdef YIPS_DEBUG
 	struct isakmp_pl_p *prop = p->prop;
-#endif
 	struct isakmp_pl_t *trns = p->trns;
 	struct isakmpsa sa, *s, *tsap;
 
@@ -825,6 +823,7 @@ ipsecdoi_checkph2proposal(iph2)
 		goto end;
 
 	/* make a SA to be replayed. */
+	vfree(iph2->sa_ret);
 	iph2->sa_ret = get_sabyproppair(p, iph2->ph1);
 	free_proppair0(p);
 	if (iph2->sa_ret == NULL)
@@ -1088,11 +1087,14 @@ static void
 free_proppair0(pair)
 	struct prop_pair *pair;
 {
-	struct prop_pair *p, *q;
+	struct prop_pair *p, *q, *r, *s;
 
 	for (p = pair; p; p = q) {
 		q = p->next;
-		racoon_free(p);
+		for (r = p; r; r = s) {
+			s = r->tnext;
+			racoon_free(r);
+		}
 	}
 }
 
@@ -2543,6 +2545,7 @@ setph1attr(sa, buf)
 	case OAKLEY_ATTR_GRP_DESC_MODP2048:
 	case OAKLEY_ATTR_GRP_DESC_MODP3072:
 	case OAKLEY_ATTR_GRP_DESC_MODP4096:
+	case OAKLEY_ATTR_GRP_DESC_MODP6144:
 	case OAKLEY_ATTR_GRP_DESC_MODP8192:
 		/* don't attach group type for known groups */
 		attrlen += sizeof(struct isakmp_data);
@@ -2802,6 +2805,8 @@ ipsecdoi_setph2proposal(iph2)
 			if (iph2->sa == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to allocate my sa buffer\n");
+				if (q)
+					vfree(q);
 				return -1;
 			}
 			memcpy(iph2->sa->v + iph2->sa->l - q->l, q->v, q->l);
@@ -2942,13 +2947,13 @@ ipsecdoi_checkid1(iph1)
 	if (iph1->id_p == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid iph1 passed id_p == NULL\n");
-		return -1;
+		return ISAKMP_INTERNAL_ERROR;
 	}
-	if (iph1->id_p->l < sizeof(id_b)) {
+	if (iph1->id_p->l < sizeof(*id_b)) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid value passed as \"ident\" (len=%lu)\n",
 			(u_long)iph1->id_p->l);
-		return -1;
+		return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 	}
 
 	id_b = (struct ipsecdoi_id_b *)iph1->id_p->v;
@@ -2961,7 +2966,7 @@ ipsecdoi_checkid1(iph1)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"Expecting IP address type in main mode, "
 				"but %s.\n", s_ipsecdoi_ident(id_b->type));
-			return -1;
+			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 	}
 
@@ -3010,7 +3015,7 @@ ipsecdoi_checkid1(iph1)
 					plog(LLV_ERROR, LOCATION, NULL,
 						"invalid family: %d\n",
 						iph1->remote->sa_family);
-					return -1;
+					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 				}
 				if (ntohs(id_b->port) != port) {
 					plog(LLV_WARNING, LOCATION, NULL,
@@ -3022,20 +3027,20 @@ ipsecdoi_checkid1(iph1)
 		}
 	}
 
-	/* XXX check peers and defined id type */
-
 	/* compare with the ID if specified. */
 	if (iph1->rmconf->idv_p) {
 		vchar_t *ident0 = NULL;
 		vchar_t ident;
 
-		/* XXX to be moved above "XXX" */
+		/* check the type of both IDs */
 		if (iph1->rmconf->idvtype_p != doi2idtype(id_b->type)) {
 			plog(LLV_WARNING, LOCATION, NULL,
 				"ID type mismatched.\n");
-			/*FALLTHROUGH*/
+			if (iph1->rmconf->verify_identifier)
+				return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 
+		/* compare defined ID with the ID sent by peer. */
 		ident0 = getidval(iph1->rmconf->idvtype_p, iph1->rmconf->idv_p);
 
 		switch (iph1->rmconf->idvtype_p) {
@@ -3045,14 +3050,16 @@ ipsecdoi_checkid1(iph1)
 			if (eay_cmp_asn1dn(ident0, &ident)) {
 				plog(LLV_WARNING, LOCATION, NULL,
 					"ID value mismatched.\n");
-				/*FALLTHROUGH*/
+				if (iph1->rmconf->verify_identifier)
+					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 			}
 			break;
 		default:
 			if (memcmp(ident0->v, id_b + 1, ident0->l)) {
 				plog(LLV_WARNING, LOCATION, NULL,
 					"ID value mismatched.\n");
-				/*FALLTHROUGH*/
+				if (iph1->rmconf->verify_identifier)
+					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 			}
 			break;
 		}
@@ -3131,14 +3138,12 @@ ipsecdoi_setid1(iph1)
 		switch (ipid->sa_family) {
 		case AF_INET:
 			id_b.type = IPSECDOI_ID_IPV4_ADDR;
-			id_b.port = ((struct sockaddr_in *)ipid)->sin_port;
 			l = sizeof(struct in_addr);
 			p = (caddr_t)&((struct sockaddr_in *)ipid)->sin_addr;
 			break;
 #ifdef INET6
 		case AF_INET6:
 			id_b.type = IPSECDOI_ID_IPV6_ADDR;
-			id_b.port = ((struct sockaddr_in6 *)ipid)->sin6_port;
 			l = sizeof(struct in6_addr);
 			p = (caddr_t)&((struct sockaddr_in6 *)ipid)->sin6_addr;
 			break;
@@ -3149,6 +3154,7 @@ ipsecdoi_setid1(iph1)
 			goto err;
 		}
 		id_b.proto_id = IPPROTO_UDP;
+		id_b.port = htons(PORT_ISAKMP);
 		ident = vmalloc(l);
 		if (!ident) {
 			plog(LLV_ERROR, LOCATION, NULL,
