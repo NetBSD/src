@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.17 2002/09/30 15:48:48 onoe Exp $	*/
+/*	$NetBSD: awivar.h,v 1.18 2003/07/06 20:01:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ struct awi_softc {
 				sc_enab_intr:1,
 				sc_adhoc_ap:1,
 				sc_invalid:1;
-	struct ifmedia		sc_media;
 	enum ieee80211_state	sc_nstate;
 	enum awi_sub_state	sc_substate;
 	int			sc_sleep_cnt;
