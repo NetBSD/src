@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 1999/05/02 04:42:47 ross Exp $
+#	$NetBSD: Makefile,v 1.13 1999/07/02 17:48:26 sakamoto Exp $
 
 SUBDIR=	mbr
 
-.if (${MACHINE} == "i386" || ${MACHINE} == "powerpc")
+.if (${MACHINE} == "i386" || ${MACHINE} == "bebox" || ${MACHINE} == "ofppc")
 PROG=	fdisk 
 SRCS=	fdisk.c
 DPADD+=	${LIBUTIL}
