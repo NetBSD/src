@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.10 1997/06/03 16:00:30 cgd Exp $
+#	$NetBSD: bsd.inc.mk,v 1.11 1998/09/29 11:47:51 christos Exp $
 
 .PHONY:		incinstall
 includes:	${INCS} incinstall
@@ -13,10 +13,10 @@ incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endif
 ${DESTDIR}${INCSDIR}/$I: $I
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${.ALLSRC} ${.TARGET}" && \
-	     ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${.ALLSRC} ${.TARGET})
+	    (echo "${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
+	     ${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 .endfor
 .endif
 
