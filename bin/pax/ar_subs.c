@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.13 1999/10/22 10:43:11 mrg Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.14 2000/02/17 03:12:23 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.13 1999/10/22 10:43:11 mrg Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.14 2000/02/17 03:12:23 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ extern sigset_t s_mask;
  * the user: list, append, read ...
  */
 
-static char hdbuf[BLKMULT];             /* space for archive header on read */
+static char hdbuf[BLKMULT];		/* space for archive header on read */
 u_long flcnt;				/* number of files processed */
 ARCHD archd;
 
@@ -268,7 +268,7 @@ extract()
 		}
 
 		/*
-		 * Non standard -Y and -Z flag. When the exisiting file is
+		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip; ignore this for GNU long links.
 		 */
 		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0)) &&
@@ -471,7 +471,7 @@ wr_archive(arcn, is_app)
 		if ((res > 0) || (docrc && (set_crc(arcn, fd) < 0))) {
 			/*
 			 * unable to obtain the crc we need, close the file,
-			 * purge link table entry 
+			 * purge link table entry
 			 */
 			rdfile_close(arcn, &fd);
 			purg_lnk(arcn);
@@ -494,7 +494,7 @@ wr_archive(arcn, is_app)
 		}
 		wr_one = 1;
 		if (res > 0) {
-			/* 
+			/*
 			 * format write says no file data needs to be stored
 			 * so we are done messing with this file
 			 */
@@ -532,7 +532,7 @@ wr_archive(arcn, is_app)
 	}
 
 	/*
-	 * tell format to write trailer; pad to block boundry; reset directory
+	 * tell format to write trailer; pad to block boundary; reset directory
 	 * mode/access times, and check if all patterns supplied by the user
 	 * were matched. block off signals to avoid chance for multiple entry
 	 * into the cleanup code
@@ -557,7 +557,7 @@ wr_archive(arcn, is_app)
  *	is called to add the new members.
  *	PAX IMPLEMENTATION DETAIL NOTE:
  *	-u is implemented by adding the new members to the end of the archive.
- *	Care is taken so that these do not end up as links to the older 
+ *	Care is taken so that these do not end up as links to the older
  *	version of the same file already stored in the archive. It is expected
  *	when extraction occurs these newer versions will over-write the older
  *	ones stored "earlier" in the archive (this may be a bad assumption as
@@ -589,7 +589,7 @@ append()
 
 	/*
 	 * Do not allow an append operation if the actual archive is of a
-	 * different format than the user specified foramt.
+	 * different format than the user specified format.
 	 */
 	if (get_arc() < 0)
 		return;
@@ -685,7 +685,7 @@ append()
 	lnk_end();
 
 	/*
-	 * try to postion for write, if this fails quit. if any error occurs,
+	 * try to position for write, if this fails quit. if any error occurs,
 	 * we will refuse to write
 	 */
 	if (appnd_start(tlen) < 0)
@@ -698,7 +698,7 @@ append()
 		(void)fputs("done.\n", stderr);
 		vfpart = 0;
 	}
-       
+
 	/*
 	 * go to the writing phase to add the new members
 	 */
@@ -784,7 +784,7 @@ copy()
 
 	/*
 	 * start up the hard link table; file traversal routines and the
-	 * modification time and access mode database 
+	 * modification time and access mode database
 	 */
 	if ((lnk_start() < 0) || (ftree_start() < 0) || (dir_start() < 0))
 		return;
@@ -845,10 +845,10 @@ copy()
 			res = lstat(dirbuf, &sb);
 			*dest_pt = '\0';
 
-		    	if (res == 0) {
+			if (res == 0) {
 				if (uflag && Dflag) {
 					if ((arcn->sb.st_mtime<=sb.st_mtime) &&
-			    		    (arcn->sb.st_ctime<=sb.st_ctime))
+					    (arcn->sb.st_ctime<=sb.st_ctime))
 						continue;
 				} else if (Dflag) {
 					if (arcn->sb.st_ctime <= sb.st_ctime)
@@ -900,7 +900,7 @@ copy()
 		 * try to create a hard link to the src file if requested
 		 * but make sure we are not trying to overwrite ourselves.
 		 */
-		if (lflag) 
+		if (lflag)
 			res = cross_lnk(arcn);
 		else
 			res = chk_same(arcn);
@@ -1005,9 +1005,9 @@ next_head(arcn)
 	int res;
 	int shftsz;
 	int hsz;
-	int in_resync = 0; 	/* set when we are in resync mode */
+	int in_resync = 0;		/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
-	
+
 	/*
 	 * set up initial conditions, we want a whole frmt->hsz block as we
 	 * have no data yet.
@@ -1037,7 +1037,7 @@ next_head(arcn)
 			if (!in_resync) {
 				if (act == APPND) {
 					tty_warn(1,
-				          "Archive I/O error, cannot continue");
+					  "Archive I/O error, cannot continue");
 					return(-1);
 				}
 				tty_warn(1,
@@ -1156,7 +1156,7 @@ get_arc()
 	int minhd = BLKMULT;
 	char *hdend;
 	int notice = 0;
-	
+
 	/*
 	 * find the smallest header size in all archive formats and then set up
 	 * to read the archive.
@@ -1217,7 +1217,7 @@ get_arc()
 			if ((*fsub[ford[i]].id)(hdbuf, hdsz) < 0)
 				continue;
 			frmt = &(fsub[ford[i]]);
-			/* 
+			/*
 			 * yuck, to avoid slow special case code in the extract
 			 * routines, just push this header back as if it was
 			 * not seen. We have left extra space at start of the
