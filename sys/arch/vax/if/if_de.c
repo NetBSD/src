@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.26 1997/03/15 18:11:10 is Exp $	*/
+/*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -61,6 +61,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_dl.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -89,8 +90,8 @@ extern char all_es_snpa[], all_is_snpa[];
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-#define	NXMT	3	/* number of transmit buffers */
-#define	NRCV	7	/* number of receive buffers (must be > 1) */
+#define NXMT	3	/* number of transmit buffers */
+#define NRCV	7	/* number of receive buffers (must be > 1) */
 
 int	dedebug = 0;
 
@@ -110,28 +111,28 @@ struct	de_softc {
 	struct	device ds_dev;	/* Configuration common part */
 	struct	ethercom ds_ec;		/* Ethernet common part */
 	struct	dedevice *ds_vaddr;	/* Virtual address of this interface */
-#define	ds_if	ds_ec.ec_if		/* network-visible interface */
+#define ds_if	ds_ec.ec_if		/* network-visible interface */
 	int	ds_flags;
-#define	DSF_RUNNING	2		/* board is enabled */
-#define	DSF_SETADDR	4		/* physical address is changed */
+#define DSF_RUNNING	2		/* board is enabled */
+#define DSF_SETADDR	4		/* physical address is changed */
 	int	ds_ubaddr;		/* map info for incore structs */
 	struct	ifubinfo ds_deuba;	/* unibus resource structure */
 	struct	ifrw ds_ifr[NRCV];	/* unibus receive maps */
 	struct	ifxmt ds_ifw[NXMT];	/* unibus xmt maps */
 	/* the following structures are always mapped in */
 	struct	de_pcbb ds_pcbb;	/* port control block */
-	struct	de_ring ds_xrent[NXMT];	/* transmit ring entrys */
-	struct	de_ring ds_rrent[NRCV];	/* receive ring entrys */
+	struct	de_ring ds_xrent[NXMT]; /* transmit ring entrys */
+	struct	de_ring ds_rrent[NRCV]; /* receive ring entrys */
 	struct	de_udbbuf ds_udbbuf;	/* UNIBUS data buffer */
 	/* end mapped area */
-#define	INCORE_BASE(p)	((char *)&(p)->ds_pcbb)
-#define	RVAL_OFF(s,n)	((char *)&(s)->n - INCORE_BASE(s))
-#define	LVAL_OFF(s,n)	((char *)(s)->n - INCORE_BASE(s))
-#define	PCBB_OFFSET(s)	RVAL_OFF(s,ds_pcbb)
-#define	XRENT_OFFSET(s)	LVAL_OFF(s,ds_xrent)
-#define	RRENT_OFFSET(s)	LVAL_OFF(s,ds_rrent)
-#define	UDBBUF_OFFSET(s)	RVAL_OFF(s,ds_udbbuf)
-#define	INCORE_SIZE(s)	RVAL_OFF(s, ds_xindex)
+#define INCORE_BASE(p)	((char *)&(p)->ds_pcbb)
+#define RVAL_OFF(s,n)	((char *)&(s)->n - INCORE_BASE(s))
+#define LVAL_OFF(s,n)	((char *)(s)->n - INCORE_BASE(s))
+#define PCBB_OFFSET(s)	RVAL_OFF(s,ds_pcbb)
+#define XRENT_OFFSET(s) LVAL_OFF(s,ds_xrent)
+#define RRENT_OFFSET(s) LVAL_OFF(s,ds_rrent)
+#define UDBBUF_OFFSET(s)	RVAL_OFF(s,ds_udbbuf)
+#define INCORE_SIZE(s)	RVAL_OFF(s, ds_xindex)
 	int	ds_xindex;		/* UNA index into transmit chain */
 	int	ds_rindex;		/* UNA index into receive chain */
 	int	ds_xfree;		/* index for next transmit buffer */
@@ -142,16 +143,16 @@ int	dematch __P((struct device *, void *, void *));
 void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
 void	deinit __P((struct de_softc *));
-int     deioctl __P((struct ifnet *, u_long, caddr_t));
+int	deioctl __P((struct ifnet *, u_long, caddr_t));
 void	dereset __P((int));
-void    destart __P((struct ifnet *));
+void	destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
-void    derecv __P((int));
+void	derecv __P((int));
 void	de_setaddr __P((u_char *, struct de_softc *));
 void	deintr __P((int));
 
 
-struct  cfdriver de_cd = {
+struct	cfdriver de_cd = {
 	NULL, "de", DV_IFNET
 };
 
@@ -217,7 +218,7 @@ deattach(parent, self, aux)
 	(void)dewait(ds, "read addr ");
 
 	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
- 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
+	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
 		ether_sprintf(myaddr));
 	ifp->if_ioctl = deioctl;
@@ -344,7 +345,7 @@ deinit(ds)
 	destart(&ds->ds_if);		/* queue output packets */
 	ds->ds_flags |= DSF_RUNNING;		/* need before de_setaddr */
 	if (ds->ds_flags & DSF_SETADDR)
-		de_setaddr(ds->ds_addr, ds);
+		de_setaddr(LLADDR(ds->ds_if.if_sadl), ds);
 	addr->pclow = CMD_START | PCSR0_INTE;
 	splx(s);
 }
@@ -359,7 +360,7 @@ void
 destart(ifp)
 	struct ifnet *ifp;
 {
-        int len;
+	int len;
 	register struct de_softc *ds = ifp->if_softc;
 	volatile struct dedevice *addr = ds->ds_vaddr;
 	register struct de_ring *rp;
@@ -495,7 +496,7 @@ deintr(unit)
  * If input error just drop packet.
  * Otherwise purge input buffered data path and examine 
  * packet to determine type.  If can't determine length
- * from type, then have to drop packet.  Othewise decapsulate
+ * from type, then have to drop packet.	 Othewise decapsulate
  * packet based on type and pass to type specific higher-level
  * input routine.
  */
@@ -561,7 +562,7 @@ deread(ds, ifrw, len)
 	int len;
 {
 	struct ether_header *eh;
-    	struct mbuf *m;
+	struct mbuf *m;
 
 	/*
 	 * Deal with trailer protocol: if type is trailer type
@@ -696,7 +697,7 @@ dematch(parent, match, aux)
 	void	*match, *aux;
 {
 	struct	uba_attach_args *ua = aux;
-	volatile struct	dedevice *addr = (struct dedevice *)ua->ua_addr;
+	volatile struct dedevice *addr = (struct dedevice *)ua->ua_addr;
 	int	i;
 
 	/*
@@ -727,7 +728,7 @@ dematch(parent, match, aux)
 	DELAY(50000);
 
 	ua->ua_ivec = deintr;
-	ua->ua_reset = dereset;	/* Wish to be called after ubareset */
+	ua->ua_reset = dereset; /* Wish to be called after ubareset */
 
 	return 1;
 }
