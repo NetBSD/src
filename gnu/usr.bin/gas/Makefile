@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.4 1993/10/04 01:34:43 cgd Exp $
+#	$Id: Makefile,v 1.5 1993/10/04 22:17:29 pk Exp $
 
 .if !defined (HOST)
 HOST=$(MACHINE)
@@ -19,8 +19,6 @@ SRCS=		app.c as.c atof-generic.c bignum-copy.c \
 		listing.c messages.c obstack.c output-file.c read.c subsegs.c \
 		symbols.c version.c write.c xmalloc.c xrealloc.c \
 		obj-$(OBJFORMAT).c
-#	$(srcdir)/strerror.c
-#	$(srcdir)/strstr.c
 CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DPIC -DOLD_GAS -DSIGTY=void -Derror=as_fatal
 .PATH: $(.CURDIR)/config
