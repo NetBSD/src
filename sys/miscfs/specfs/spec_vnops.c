@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.24 1995/07/02 07:20:50 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.25 1995/07/08 00:42:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -479,6 +479,7 @@ loop:
 		}
 #ifdef DIAGNOSTIC
 		if (vp->v_dirtyblkhd.lh_first) {
+			splx(s);
 			vprint("spec_fsync: dirty", vp);
 			goto loop;
 		}
