@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.35 1997/08/29 16:12:50 gwr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.36 1997/09/02 21:33:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -71,15 +71,14 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfs_var.h>
 
-#include "ether.h"
-#if NETHER == 0
-/* XXX - Do we still need this?  How can I tell? -gwr */
+#include "arp.h"
+#if NARP == 0
 
 int nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	printf("nfs_boot: NETHER == 0\n");
+	printf("nfs_boot: NARP == 0\n");
 	return (ENXIO);
 }
 
@@ -90,7 +89,7 @@ nfs_boot_getfh(ndm)
 	return (ENXIO);
 }
 
-#else /* NETHER */
+#else /* NARP */
 
 /*
  * There are two implementations of NFS diskless boot.
@@ -382,4 +381,4 @@ out:
 	return error;
 }
 
-#endif /* NETHER */
+#endif /* NARP */
