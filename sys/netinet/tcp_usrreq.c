@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.79 2003/06/28 14:22:09 darrenr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.80 2003/06/29 12:00:47 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.79 2003/06/28 14:22:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.80 2003/06/29 12:00:47 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -952,7 +952,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return tcp_sysctl_ident(&name[1], namelen - 1, oldp, oldlenp,
 		    newp, newlen);
 
-	/* All sysctl names at this level are terminal. */
+	/* All remaining sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
