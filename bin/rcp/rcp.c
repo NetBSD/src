@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.16 1997/07/30 05:07:22 thorpej Exp $	*/
+/*	$NetBSD: rcp.c,v 1.17 1997/09/14 08:17:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.16 1997/07/30 05:07:22 thorpej Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.17 1997/09/14 08:17:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(argc, argv)
 	char *targ, *shell;
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
 		switch(ch) {			/* User-visible flags. */
 		case 'K':
 #ifdef KERBEROS
