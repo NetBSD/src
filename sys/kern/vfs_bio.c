@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.105 2004/01/08 23:41:14 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.106 2004/01/09 06:26:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.105 2004/01/08 23:41:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.106 2004/01/09 06:26:15 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.105 2004/01/08 23:41:14 tls Exp $");
 #  error BUFCACHE is not between 5 and 95
 # endif
 #else
-# define BUFCACHE 30
+# define BUFCACHE 20
 #endif
 
 u_int	nbuf;			/* XXX - for softdep_lockedbufs */
