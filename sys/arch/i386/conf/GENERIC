@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82.2.5 1997/08/26 15:20:26 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.82.2.6 1997/08/27 08:10:37 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -91,7 +91,7 @@ config		netbsd	root on ? type ?
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
-#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	SCSIVERBOSE	# Verbose SCSI errors
 
 mainbus0 at root
 
@@ -213,18 +213,18 @@ ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 audio*	at sp0
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 sb*	at isapnp?
 audio*	at sb?
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 audio*	at wss0
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 audio*	at pas0
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 audio*	at gus0
 #spkr0	at pckbd? port 0x61
 
