@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.55 2002/10/01 05:56:12 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.56 2002/11/16 03:36:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.55 2002/10/01 05:56:12 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.56 2002/11/16 03:36:17 itojun Exp $");
 #endif
 #endif
 
@@ -1559,15 +1559,17 @@ int
 str2val(const char *str, const char *what, int mi, int ma)
 {
 	const char *cp;
-	int val;
+	long val;
 	char *ep;
 
+	errno = 0;
+	ep = NULL;
 	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
 		cp = str + 2;
-		val = (int)strtol(cp, &ep, 16);
+		val = strtol(cp, &ep, 16);
 	} else
-		val = (int)strtol(str, &ep, 10);
-	if (*ep != '\0') {
+		val = strtol(str, &ep, 10);
+	if (errno || str[0] == '\0' || *ep != '\0') {
 		Fprintf(stderr, "%s: \"%s\" bad value for %s \n",
 		    prog, str, what);
 		exit(1);
@@ -1585,7 +1587,7 @@ str2val(const char *str, const char *what, int mi, int ma)
 		Fprintf(stderr, "%s: %s must be <= %d\n", prog, what, ma);
 		exit(1);
 	}
-	return (val);
+	return ((int)val);
 }
 
 __dead void
