@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.23 2000/04/04 19:22:50 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.24 2000/04/04 19:33:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -305,26 +305,17 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
 		/* Check for new format SROM. */
-		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
-			/*
-			 * Not an ISV SROM; try the old DEC Ethernet Address
-			 * ROM format.
-			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0)
-				goto cant_cope;
-		} else {
+		if (tlp_isv_srom_enaddr(sc, enaddr) != 0) {
 			/*
 			 * We start out with the 2114x ISV media switch.
 			 * When we search for quirks, we may change to
 			 * a different switch.
 			 */
 			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
-		}
-
-		if (sc->sc_mediasw == NULL) {
+		} else if (tlp_parse_old_srom(sc, enaddr) == 0) {
 			/*
-			 * If there's no MAC address in the CIS, bail out
-			 * now.
+			 * Not an ISV SROM, and not in old DEC Address
+			 * ROM format.  Try to snarf it out of the CIS.
 			 */
 			if (ca->ca_cis.funce.network.netid_present == 0)
 				goto cant_cope;
@@ -332,12 +323,17 @@ tlp_cardbus_attach(parent, self, aux)
 			/* Grab the MAC address from the CIS. */
 			memcpy(enaddr, ca->ca_cis.funce.network.netid,
 			    sizeof(enaddr));
+		}
 
-			/*
-			 * XXX Assume MII-on-SIO.  Should probably use
-			 * XXX CIS strings to determine the GPIO reset
-			 * XXX information.
-			 */
+		/* XXX XXX XXX QUIRKS XXX XXX XXX */
+
+		/*
+		 * If we don't already have a media switch, default to
+		 * MII-over-SIO, with no special reset routine.
+		 */
+		if (sc->sc_mediasw == NULL) {
+			printf("%s: defaulting to MII-over-SIO; no bets...\n",
+			    sc->sc_dev.dv_xname);
 			sc->sc_mediasw = &tlp_sio_mii_mediasw;
 		}
 		break;
