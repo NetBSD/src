@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.515 2002/09/24 22:20:17 pooka Exp $
+# $NetBSD: mi,v 1.516 2002/09/25 01:07:43 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1557,6 +1557,8 @@
 ./usr/share/man/cat8/ntpq.0			man-ntp-catman
 ./usr/share/man/cat8/ntptime.0			man-ntp-catman
 ./usr/share/man/cat8/ntptrace.0			man-ntp-catman
+./usr/share/man/cat8/ofppc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/ofppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/pac.0			man-sysutil-catman
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman
@@ -3302,6 +3304,8 @@
 ./usr/share/man/man8/ntpq.8			man-ntp-man
 ./usr/share/man/man8/ntptime.8			man-ntp-man
 ./usr/share/man/man8/ntptrace.8			man-ntp-man
+./usr/share/man/man8/ofppc/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/ofppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/pac.8			man-sysutil-man
 ./usr/share/man/man8/pc532/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/pc532/bim.8		man-sysutil-man
