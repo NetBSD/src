@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.45 2000/03/06 18:32:23 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.46 2000/08/08 22:31:14 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,12 +95,8 @@ typedef struct {
 
 #define	RAND_MAX	0x7fffffff
 
-#if 0	/* no wide char stuff (yet) */
 extern int __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
-#else
-#define	MB_CUR_MAX	1	/* XXX */
-#endif
 
 __BEGIN_DECLS
 __dead	 void abort __P((void)) __attribute__((__noreturn__));
