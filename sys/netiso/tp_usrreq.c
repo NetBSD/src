@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.24 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.25 2004/04/20 02:13:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.24 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.25 2004/04/20 02:13:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,12 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.24 2004/04/19 05:16:46 matt Exp $");
 #include <sys/proc.h>
 
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_timer.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_seq.h>
+#include <netiso/tp_stat.h>
 #include <netiso/tp_ip.h>
 #include <netiso/tp_pcb.h>
-#include <netiso/tp_var.h>
 #include <netiso/argo_debug.h>
 #include <netiso/tp_trace.h>
 #include <netiso/tp_meas.h>
