@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 1995/03/30 06:01:16 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.5 1995/04/22 22:20:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -210,11 +210,11 @@
 #define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
 
 #ifdef _KERNEL
-extern int	cpuspeed;
 void delay __P((int));
-void DELAY __P((int));
+
+#define	DELAY(n)	delay(n)
 #else
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_MACHINE_PARAM_H_ */
