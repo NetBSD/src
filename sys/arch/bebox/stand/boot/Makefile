@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/07/21 21:34:27 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2001/02/17 11:11:13 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,7 +8,7 @@ NEWVERSWHAT= "BOOT"
 ASRCS+= srt0.s
 CSRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 CSRCS+= fd.c filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-CSRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
+CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
 CLEANFILES+= vers.c ${BOOTPROG}
 
