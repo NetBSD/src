@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.36 2002/06/09 03:38:59 yamt Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.37 2002/06/10 09:14:28 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.36 2002/06/09 03:38:59 yamt Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.37 2002/06/10 09:14:28 yamt Exp $");
 #endif
 
 /*
@@ -102,7 +102,7 @@ expect(int fd, const char *str, int *ftprc)
     int done;
     struct timeval timeout;
     int retval;
-    regmatch_t pmatch;
+    regmatch_t match;
     int verbose_expect=0;
 
 #if EXPECT_DEBUG
@@ -179,15 +179,15 @@ expect(int fd, const char *str, int *ftprc)
 	    }
 #endif /* EXPECT_DEBUG */
 
-	    if (regexec(&rstr, buf, 1, &pmatch, 0) == 0) {
+	    if (regexec(&rstr, buf, 1, &match, 0) == 0) {
 #if EXPECT_DEBUG
 		if (expect_debug)
-		    printf("Gotcha -> %s!\n", buf+pmatch.rm_so+1);
+		    printf("Gotcha -> %s!\n", buf+match.rm_so+1);
 		fflush(stdout);
 #endif /* EXPECT_DEBUG */
 
-		if (ftprc && isdigit(buf[pmatch.rm_so+1])) 
-		    *ftprc = atoi(buf+pmatch.rm_so+1);
+		if (ftprc && isdigit(buf[match.rm_so+1])) 
+		    *ftprc = atoi(buf+match.rm_so+1);
 
 		done=1;
 		retval=0;
@@ -637,7 +637,6 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		/* Verify if the url is really ok */
-		int rc;
 		char exp[FILENAME_MAX];
 
 		rc=expandURL(exp, url);
