@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 1996/03/31 23:00:53 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.19 1996/04/04 23:06:32 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -269,7 +269,10 @@ cpu_attach(parent, dev, aux)
 				    panic("bad icache line size %d", l);
 				cacheinfo.c_l2linesize = i;
 				cacheinfo.c_totalsize = getpropint(node,
-							"icache-nlines", 64)*l;
+							"icache-nlines", 64)*
+							getpropint(node,
+							"icache-associativity",
+							1)*l;
 
 				cacheinfo.dc_linesize = l = getpropint(node,
 						       "dcache-line-size",0);
@@ -279,7 +282,10 @@ cpu_attach(parent, dev, aux)
 				    panic("bad dcache line size %d", l);
 				cacheinfo.dc_l2linesize = i;
 				cacheinfo.dc_totalsize = getpropint(node,
-							"dcache-nlines",128)*l;
+							"dcache-nlines",128)*
+							getpropint(node,
+							"dcache-associativity",
+							1)*l;
 
 				cacheinfo.ec_linesize = l = getpropint(node,
 						       "ecache-line-size",0);
@@ -289,8 +295,10 @@ cpu_attach(parent, dev, aux)
 				    panic("bad ecache line size %d", l);
 				cacheinfo.ec_l2linesize = i;
 				cacheinfo.ec_totalsize = getpropint(node,
-							"ecache-nlines", 32768)
-				    * l;
+							"ecache-nlines", 32768)*
+							getpropint(node,
+							"ecache-associativity",
+							1)*l;
 				break;
 			    case SUN4M_MMU_HS:
 				printf("Warning, guessing on HyperSPARC cache...\n");
@@ -358,27 +366,27 @@ cpu_attach(parent, dev, aux)
 		if (cacheinfo.c_split) {
 			printf("%s: physical", dev->dv_xname);
 			if (cacheinfo.c_totalsize > 0) {
-				printf("%s%d byte instruction (%d b/l)", sep,
-				    cacheinfo.c_totalsize,
+				printf("%s%dK instruction (%d b/l)", sep,
+				    cacheinfo.c_totalsize/1024,
 				    cacheinfo.c_linesize);
 				    sep = ", ";
 			}
 			if (cacheinfo.dc_totalsize > 0) {
-				printf("%s%d byte data (%d b/l)", sep,
-				    cacheinfo.dc_totalsize,
+				printf("%s%dK data (%d b/l)", sep,
+				    cacheinfo.dc_totalsize/1024,
 				    cacheinfo.dc_linesize);
 				    sep = ", ";
 			}
 			if (cacheinfo.ec_totalsize > 0) {
-				printf("%s%d byte external (%d b/l)", sep,
-				    cacheinfo.ec_totalsize,
+				printf("%s%dK external (%d b/l)", sep,
+				    cacheinfo.ec_totalsize/1024,
 				    cacheinfo.ec_linesize);
 			}
 			printf(" ");
 		} else
-		    printf("%s: physical %d byte combined cache (%d bytes/"
+		    printf("%s: physical %dK combined cache (%d bytes/"
 			   "line) ", dev->dv_xname,
-			   cacheinfo.c_totalsize,
+			   cacheinfo.c_totalsize/1024,
 			   cacheinfo.c_linesize);
 		cache_enable();
 	}
