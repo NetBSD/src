@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.8 2000/02/03 23:03:11 enami Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.9 2000/02/04 05:30:55 chopps Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -235,8 +235,6 @@ pcic_isa_probe_interrupts(sc, h)
 		}
 		isa_intr_disestablish(ic, ih);
 	}
-	mask |= 0x8000;
-
 	sc->intr_mask[h->chip] = mask;
 	printf("%s\n", sc->intr_mask ? "" : " none");
 
