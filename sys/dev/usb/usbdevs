@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.151 2001/03/25 22:53:56 augustss Exp $
+$NetBSD: usbdevs,v 1.152 2001/03/26 13:13:33 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -271,6 +271,7 @@ vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical Co., Ltd.
 vendor BOCASYSTEMS	0x0a43	Boca Systems, Inc.
 vendor BROADCOM		0x0a5c	Broadcom Corp.
+vendor GREENHOUSE	0x0a6b	GREENHOUSE Co., Ltd.
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
@@ -382,6 +383,7 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 
 /* Canon, Inc. products */
 product CANON S10		0x3041	PowerShot S10
+product CANON N656U		0x2206	CANOSCAN N656U
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
@@ -481,6 +483,9 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
+
+/* GREENHOUSE products */
+product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
