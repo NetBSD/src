@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.32 2002/11/15 15:45:18 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.33 2002/11/16 10:13:35 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -578,6 +578,8 @@ sys/netinet/ip_output.c				1.98-1.99
 	[itojun, ticket #356]
 
 sys/dev/pci/pcidevs				1.466
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
 
 	Add Promise Ultra133TX2 and Ultra133TX2v2 PCI ID.
 	[bouyer, ticket #724]
@@ -845,6 +847,8 @@ libexec/ftpd/ftpcmd.y				1.69
 	[tv, ticket #418]
 
 sys/dev/usb/usbdevs				1.258
+sys/dev/usb/usbdevs.h				regenerate
+sys/dev/usb/usbdevs_data.h			regenerate
 
 	Add product code for SMC 2206USB/ETH EZ Connect Ethernet adapter
 	[rh, ticket #442]
@@ -869,6 +873,8 @@ sys/net/if_gre.c				1.27
 	[martin, ticket #226]
 
 sys/dev/pci/pcidevs				1.451
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
 
 	Clean up Intel i8254x product names, and add i82540, i82545,
 	and i82546 product IDs.
@@ -1079,21 +1085,116 @@ dist/bind/lib/nameser/ns_samedomain.c		1.2
 
 	Apply http://www.isc.org/products/BIND/patches/bind833.diff
 	to fix recent vulnerabilities:
-		* BIND: Remote Execution of Code (BIND 4 & 8)
-		* BIND: Multiple Denial of Service (BIND 8 only)
+	 o BIND: Remote Execution of Code (BIND 4 & 8)
+	 o BIND: Multiple Denial of Service (BIND 8 only)
 	[itojun, ticket #989]
 
 lib/libc/net/getnetnamadr.c			1.26
 
 	Pull in changes in
 	http://www.isc.org/products/BIND/patches/bind4910.diff
-		* better error check on __dn_skipname
-		* more strict reverse lookup handling
+	 o better error check on __dn_skipname
+	 o more strict reverse lookup handling
 	[itojun, ticket #990]
 
 Makefile					1.177-1.180
 
-        Change directory to .CURDIR before invoking ${MAKE}.
-	Only run postinstall-check if UNPRIVED is not set or
-	the original target was not distribution, release or snapshot.
+	Change directory to .CURDIR before invoking ${MAKE}.  Only
+	run postinstall-check if UNPRIVED is not set or the original
+	target was not distribution, release or snapshot.
+	[grant, ticket #993]
 
+dist/am-utils/libamu/mount_fs.c			1.4-1.5
+usr.sbin/amd/include/config.h			1.23
+
+	Add new option ``xlatecookie'' to amd(8), to support NFSv3
+	mounts with cookie translation.  Fixes PR#17245.
+	[tron, ticket #624]
+
+gnu/dist/toolchain/gcc/config/arm/arm.h		1.5
+gnu/dist/toolchain/gcc/config/arm/arm.c		1.6
+
+	 o Add -march=armv5, -march=armv5t, -march=armv5te, which are
+	   internally treated like -march=armv4t, but which generate
+	   __ARM_ARCH_5__, __ARM_ARCH_5T__, and __ARM_ARCH_5TE__
+	   defines, respectively.
+	 o Add -mcpu=xscale, which is internally treated like
+	   -mcpu=strongarm, but which generates __ARM_ARCH_5TE__ and
+	   __XSCALE__ defines.
+	
+	These command-line options and definitions are consistent
+	with gcc 3.x, and allow NetBSD Makefiles to use them in a
+	forward-compatible way, and also give hand-tuned source
+	code (e.g. assembly) a chance of tuning for XScale.
+	[thorpej, ticket #635]
+
+gnu/dist/toolchain/gcc/config/arm/netbsd-elf.h	1.11
+
+	Define __ARMEL__ if little-endian, as gcc 3.x does.
+	[thorpej, ticket #636]
+
+sys/arch/evbarm/conf/IQ80310			1.17
+sys/arch/evbarm/conf/IQ80321			1.8
+sys/arch/evbarm/conf/TEAMASA_NPWR		1.17
+
+	Use -mcpu=xscale.
+	[thorpej, ticket #637]
+
+sys/arch/powerpc/include/ansi.h			1.13 via patch
+
+	Correct __va_list typedef for GCC 3.x to match the GCC 3.x
+	definition.
+	[matt, ticket #638]
+
+sys/dev/pci/pcidevs				1.459
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/aac_pci.c				1.3
+
+	Add additional Adaptec RAID controller types.
+	Fixes PR#17719.
+	[ad, ticket #646]
+
+sys/dev/mii/miidevs				1.41
+sys/dev/mii/miidevs.h				regenerate
+sys/dev/mii/miidevs_data.h			regenerate
+
+	Add ID for Marvell 881011 phy found on newer i8254x-based
+	gig-ether cards.
+	[thorpej, ticket #648]
+
+sys/dev/mii/makphy.c				1.8
+
+	Match 881011 PHY.
+	[thorpej, ticket #649]
+
+share/man/man4/wm.4				1.3
+
+	Update supported hardware list.
+	[thorpej, ticket #651]
+
+sys/arch/arm/arm32/fusu.S			1.4
+
+	Use ldrt/strt.
+	[thorpej, ticket #657]
+
+sys/arch/arm/arm32/copystr.S			1.4
+
+	Use ldrbt/strbt, and some other cleanups.
+	[thorpej, ticket #658]
+
+sys/arch/arm/arm/cpufunc_asm_xscale.S		1.14
+
+	Drain write buffer after cleaning the mini-D$, and fix a
+	typo in a comment.
+	[thorpej, ticket #661]
+
+sys/arch/arm/arm32/pmap.c			1.107
+
+	Clean up some warts in pmap_protect().
+	[thorpej, ticket #662]
+
+libexec/ld.elf_so/Makefile			1.50 via patch
+
+	Build for ``armeb''.
+	[thorpej, ticket #663]
