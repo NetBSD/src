@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.10 2002/02/27 05:02:25 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.11 2002/03/01 01:01:18 enami Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.10 2002/02/27 05:02:25 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.11 2002/03/01 01:01:18 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,9 @@ void fwnode_attach(struct device *, struct device *, void *);
 int  fwnode_detach(struct device *, int);
 static void fwnode_configrom_input(struct ieee1394_abuf *, int);
 static int  fwnode_print(void *, const char *);
+#ifdef FWNODE_DEBUG
 static void fwnode_dump_rom(struct fwnode_softc *,u_int32_t *, u_int32_t);
+#endif
 
 #ifdef FWNODE_DEBUG
 #define DPRINTF(x)      if (fwnodedebug) printf x
@@ -288,6 +290,7 @@ fwnode_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+#ifdef FWNODE_DEBUG
 static void
 fwnode_dump_rom(struct fwnode_softc *sc, u_int32_t *t, u_int32_t len)
 {
@@ -304,3 +307,4 @@ fwnode_dump_rom(struct fwnode_softc *sc, u_int32_t *t, u_int32_t len)
 	}
 	printf("\n");
 }
+#endif
