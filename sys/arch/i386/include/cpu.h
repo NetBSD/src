@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 1998/01/15 22:26:03 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 1998/01/21 23:29:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -156,6 +156,9 @@ void	npxsave __P((void));
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
 
+#if !defined(_LKM)
+#include "opt_math_emulate.h"
+#endif
 #ifdef MATH_EMULATE
 /* math_emulate.c */
 int	math_emulate __P((struct trapframe *));
