@@ -2,12 +2,9 @@
 
 MAN1=	shar.0
 
-all shar: ${MAN1}
+all shar:
 
-clean depend lint tags:
-
-cleandir:
-	rm -f ${MAN1}
+clean cleandir depend lint tags:
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
