@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.17 2004/03/19 02:27:44 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.18 2004/03/19 17:01:26 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct RF_Pools_s {
 	struct pool dagh;        /* DAG headers */
 	struct pool dagnode;     /* DAG nodes */
 	struct pool daglist;     /* DAG lists */
+	struct pool dagpcache;   /* DAG pointer/param cache */
 	struct pool dqd;         /* Disk Queue Data */
 	struct pool fss;         /* Failed Stripe Structures */
 	struct pool funclist;    /* Function Lists */
