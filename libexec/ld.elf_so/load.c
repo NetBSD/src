@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.14 2001/05/27 23:26:47 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.15 2001/11/02 15:28:36 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -309,7 +309,7 @@ _rtld_preload(preload_path, dodebug)
 
 	if (preload_path != NULL) {
 		cp = buf = xstrdup(preload_path);
-		while ((path = strsep(&cp, " ")) != NULL && status == 0) {
+		while ((path = strsep(&cp, " :")) != NULL && status == 0) {
 			if (_rtld_load_object(xstrdup(path), RTLD_GLOBAL,
 			    dodebug) == NULL)
 				status = -1;
