@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.87 1997/07/31 22:03:33 matt Exp $
+#	$NetBSD: GENERIC,v 1.88 1997/08/03 05:26:35 mikel Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -103,6 +103,7 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at mainbus0			# all other ISA
+isapnp0	at isa?				# ISA Plug-and-Play
 
 apm0	at mainbus0			# Advanced power management
 
@@ -123,7 +124,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at rtfps? slave ?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #cy*	at pci? dev ? function ?	# Cyclades serial cards
-  
+
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
@@ -192,6 +193,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isapnp?
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
@@ -208,6 +210,7 @@ pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
@@ -215,15 +218,10 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+joy*	at isapnp?
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
-
-# PnP bus and devices should be declared last 
-isapnp0	at isa? 
-ep*	at isapnp?
-sb*	at isapnp?
-joy*	at isapnp?
 
 include	"arch/i386/conf/GENERIC.local"
 
@@ -232,7 +230,7 @@ pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	ipfilter		# IP filter
 
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
