@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/28 09:58:10 jmc Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/18 14:00:34 lukem Exp $
 
-DIST=	${.CURDIR}/../../dist
+.include <bsd.own.mk>
+
+DIST=	${NETBSDSRCDIR}/dist
 .PATH:	${DIST}/nawk
 
 PROG=	awk

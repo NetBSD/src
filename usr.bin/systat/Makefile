@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.26 2002/08/08 17:06:31 abs Exp $
+#	$NetBSD: Makefile,v 1.27 2002/09/18 14:00:41 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
 
 PROG=	systat
 
-.PATH:	${.CURDIR}/../../usr.bin/vmstat ${.CURDIR}/../../usr.bin/who
+.PATH:	${NETBSDSRCDIR}/usr.bin/vmstat ${NETBSDSRCDIR}/usr.bin/who
 
-CPPFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat -DSUPPORT_UTMP -DSUPPORT_UTMPX \
-	-I${.CURDIR}/../../usr.bin/who
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/vmstat -DSUPPORT_UTMP -DSUPPORT_UTMPX \
+	-I${NETBSDSRCDIR}/usr.bin/who
 CWARNFLAGS+=    -Wno-format-y2k
 SRCS=	bufcache.c cmds.c cmdtab.c disks.c dkstats.c fetch.c globalcmds.c \
 	icmp.c iostat.c ip.c keyboard.c main.c mbufs.c netcmds.c netstat.c \

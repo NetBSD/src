@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2002/06/18 00:08:00 enami Exp $
+#	$NetBSD: Makefile,v 1.10 2002/09/18 14:00:43 lukem Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
+
+NOMAN=		# defined
 
 CATALOG=	dutch english french german ru_RU.KOI8-R spanish swedish
 VI_FILES=	${.CURDIR}/../cl/*.c ${.CURDIR}/../common/*.c \
@@ -10,7 +12,6 @@ FILESDIR=	/usr/share/vi/catalog
 
 HOSTPROG=	dump
 SRCS=		dump.c
-NOMAN=		# defined
 
 CLEANFILES+=	${CATALOG} english.base *.check __ck1 __ck2
 

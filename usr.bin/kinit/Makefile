@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.11 2001/12/31 19:25:36 thorpej Exp $
+# $NetBSD: Makefile,v 1.12 2002/09/18 14:00:37 lukem Exp $
 
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kuser
 
 WARNS?=  1
@@ -15,12 +15,12 @@ SRCS= kinit.c
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/kuser		\
-	 -I${.CURDIR}/../../include/heimdal	\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
 	 -I${DESTDIR}/usr/include/kerberosIV	\
 	 -I${DESTDIR}/usr/include/krb5		\
 	 -DHAVE_CONFIG_H
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD=						\
 	-lkafs					\

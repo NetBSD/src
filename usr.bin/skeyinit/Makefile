@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/24 09:01:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/18 14:00:40 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG= skeyinit
 BINOWN=root
 BINMODE=4555
-CPPFLAGS+= -I${.CURDIR}/../../lib/libskey
+CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libskey
 DPADD=	${LIBCRYPT} ${LIBSKEY}
 LDADD=	-lcrypt -lskey
 

@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.9 2001/12/12 12:24:28 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2002/09/18 14:00:39 lukem Exp $
 
 NOMAN=	# defined
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/sl
 
 WARNS?=  1
@@ -18,11 +18,11 @@ YHEADER=	1
 
 CFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/sl		\
-	-I${.CURDIR}/../../include/heimdal	\
+	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-L${VERS} -lvers \
 	-lroken \

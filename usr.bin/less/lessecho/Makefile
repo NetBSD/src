@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:45 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/09/18 14:00:38 lukem Exp $
+
+NOMAN=	# defined
 
 PROG=	lessecho
 SRCS=   lessecho.c version.c
 CPPFLAGS+=-I${.CURDIR}/../less
-NOMAN=
-# defined
 .PATH: ${.CURDIR}/../less
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/08/27 14:46:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/09/18 14:00:38 lukem Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,7 @@ NOMAN=		# defined
 
 PROG=		ktruss
 SRCS=		ktrace.c dump.c subr.c ioctl.c misc.c setemul.c
-CPPFLAGS+=	-I. -I${.CURDIR}/../ktrace -I${.CURDIR}/../../sys \
+CPPFLAGS+=	-I. -I${.CURDIR}/../ktrace -I${NETBSDSRCDIR}/sys \
 		-I${.CURDIR}/../kdump -DKTRUSS
 CLEANFILES+=	misc.c misc.h ioctl.c
 WFORMAT=1

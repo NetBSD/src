@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2002/01/31 19:31:31 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/18 14:00:43 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-PROG=	uudecode
 NOMAN=	# defined
+
+PROG=	uudecode
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>

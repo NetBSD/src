@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:47 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/18 14:00:42 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-PROG=	unexpand
 NOMAN=	# defined
+
+PROG=	unexpand
 
 .include <bsd.prog.mk>
