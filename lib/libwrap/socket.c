@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.13 2002/06/07 01:36:09 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.14 2002/06/07 01:39:07 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.13 2002/06/07 01:36:09 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.14 2002/06/07 01:39:07 itojun Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ static void sock_sink __P((int));
 
 static const char *
 append_dot(name)
-char *name;
+const char *name;
 {
     static char hbuf[MAXHOSTNAMELEN + 1];
 
