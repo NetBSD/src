@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.5 2000/10/11 21:08:54 he Exp $	*/
+/*	$NetBSD: newfs.c,v 1.6 2000/12/05 19:51:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.5 2000/10/11 21:08:54 he Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.6 2000/12/05 19:51:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,11 @@ __RCSID("$NetBSD: newfs.c,v 1.5 2000/10/11 21:08:54 he Exp $");
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/lfs/lfs.h>
 
 #include <disktab.h>
 #include <errno.h>
@@ -103,6 +105,61 @@ static void rewritelabel __P((char *, int, struct disklabel *));
 #endif
 static void usage __P((void));
 
+#define CHUNKSIZE 65536
+
+static size_t
+auto_segsize(int fd, off_t len, int version)
+{
+	off_t off, bw;
+	time_t start, finish;
+	char buf[CHUNKSIZE];
+	long seeks;
+	size_t final;
+	int i;
+	
+	/* First, get sequential access bandwidth */
+	time(&start);
+	finish = start;
+	for (off = 0; finish - start < 10; off += CHUNKSIZE) {
+		if (pread(fd, buf, CHUNKSIZE, off) < 0)
+			break;
+		time(&finish);
+	}
+	/* Bandwidth = bytes / sec */
+	/* printf("%ld bytes in %ld seconds\n", (long)off, (long)(finish - start)); */
+	bw = off / (finish - start);
+
+	/* Second, seek time */
+	time(&start);
+	finish = start; /* structure copy */
+	for (seeks = 0; finish - start < 10; ) {
+		off = (((double)rand()) * len) / (off_t)RAND_MAX;
+		if (pread(fd, buf, dbtob(1), off) < 0)
+			break;
+		time(&finish);
+		++seeks;
+	}
+	/* printf("%ld seeks in %ld seconds\n", (long)seeks, (long)(finish - start)); */
+	/* Seek time in units/sec */
+	seeks /= (finish - start);
+	if (seeks == 0)
+		seeks = 1;
+
+	printf("bandwidth %ld B/s, seek time %ld ms (%ld seeks/s)\n",
+		(long)bw, 1000/seeks, seeks);
+	final = dbtob(btodb(4 * bw / seeks));
+
+	/* Version 1 filesystems have po2 segment sizes */
+	if (version == 1) {
+		for (i = 0; final; final >>= 1, i++)
+			;
+		final = 1 << i;
+	}
+
+	printf("using initial segment size %ld\n", (long)final);
+	return final;
+}
+
 int
 main(argc, argv)
 	int argc;
@@ -112,7 +169,7 @@ main(argc, argv)
 	struct partition *pp;
 	struct disklabel *lp;
 	struct stat st;
-	int debug, force, lfs, fsi, fso, segsize, maxpartitions;
+	int debug, force, fsi, fso, segsize, maxpartitions;
 	char *cp, *opstring;
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
@@ -124,11 +181,14 @@ main(argc, argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "B:DFLNb:f:M:m:s:";
+	opstring = "AB:DFLNb:f:M:m:s:";
 
-	debug = force = lfs = segsize = 0;
+	debug = force = segsize = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
+		case 'A':	/* Adaptively configure segment size */
+			segsize = -1;
+			break;
 		case 'B':	/* LFS segment size */
 			if ((segsize = atoi(optarg)) < LFS_MINSEGSIZE)
 				fatal("%s: bad segment size", optarg);
@@ -139,8 +199,7 @@ main(argc, argv)
 		case 'F':
 			force = 1;
 			break;
-		case 'L':	/* Create lfs */
-			lfs = 1;
+		case 'L':	/* Compatibility only */
 			break;
 		case 'M':
 			minfreeseg = atoi(optarg);
@@ -153,7 +212,7 @@ main(argc, argv)
 			disktype = optarg;
 			break;  
 #endif 
-		case 'b':	/* used for LFS */
+		case 'b':
 			if ((bsize = atoi(optarg)) < LFS_MINBLOCKSIZE)
 				fatal("%s: bad block size", optarg);
 			break;
@@ -207,6 +266,7 @@ main(argc, argv)
 	if (fstat(fsi, &st) < 0)
 		fatal("%s: %s", special, strerror(errno));
 
+
 	if (!debug && !S_ISCHR(st.st_mode))
 		(void)printf("%s: %s: not a character-special device\n",
 		    progname, special);
@@ -240,6 +300,10 @@ main(argc, argv)
 		pp->p_frag   = 0;
 		pp->p_sgs    = 0;
 	}
+
+	/* Try autoconfiguring segment size, if asked to */
+	if (segsize == -1)
+		segsize = auto_segsize(fsi, dbtob(pp->p_size), 1);
 
 	/* If we're making a LFS, we break out here */
 	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize,
@@ -355,14 +419,14 @@ usage()
 {
 	fprintf(stderr, "usage: newfs_lfs [ -fsoptions ] special-device\n");
 	fprintf(stderr, "where fsoptions are:\n");
-	fprintf(stderr, "\t-B LFS segment size\n");
+	fprintf(stderr, "\t-A (autoconfigure segment size)\n");
+	fprintf(stderr, "\t-B segment size in bytes\n");
 	fprintf(stderr, "\t-D debug\n");
-	/* fprintf(stderr, "\t-L create LFS file system\n"); */
 	fprintf(stderr,
-	    "\t-N do not create file system, just print out parameters\n");
-	fprintf(stderr, "\t-b block size\n");
-	fprintf(stderr, "\t-f frag size\n");
+	    "\t-N (do not create file system, just print out parameters)\n");
+	fprintf(stderr, "\t-b block size in bytes\n");
+	fprintf(stderr, "\t-f frag size in bytes\n");
 	fprintf(stderr, "\t-m minimum free space %%\n");
-	fprintf(stderr, "\t-s file system size (sectors)\n");
+	fprintf(stderr, "\t-s file system size in sectors\n");
 	exit(1);
 }
