@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ns.c	5.13 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: ns.c,v 1.4 1993/08/01 18:10:49 mycroft Exp $";
+static char rcsid[] = "$Id: ns.c,v 1.5 1994/03/28 10:29:55 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ static char rcsid[] = "$Id: ns.c,v 1.4 1993/08/01 18:10:49 mycroft Exp $";
 #include <netns/spp_debug.h>
 
 #include <nlist.h>
+#include <kvm.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -93,16 +94,16 @@ nsprotopr(off, name)
 	if (off == 0)
 		return;
 	isspp = strcmp(name, "spp") == 0;
-	kvm_read(off, (char *)&cb, sizeof (struct nspcb));
+	kvm_read((void *)(long)off, (char *)&cb, sizeof (struct nspcb));
 	nspcb = cb;
-	prev = (struct nspcb *)off;
-	if (nspcb.nsp_next == (struct nspcb *)off)
+	prev = (struct nspcb *)(long)off;
+	if (nspcb.nsp_next == (struct nspcb *)(long)off)
 		return;
-	for (;nspcb.nsp_next != (struct nspcb *)off; prev = next) {
+	for (;nspcb.nsp_next != (struct nspcb *)(long)off; prev = next) {
 		off_t ppcb;
 
 		next = nspcb.nsp_next;
-		kvm_read((off_t)next, (char *)&nspcb, sizeof (nspcb));
+		kvm_read(next, (char *)&nspcb, sizeof (nspcb));
 		if (nspcb.nsp_prev != prev) {
 			printf("???\n");
 			break;
@@ -110,12 +111,13 @@ nsprotopr(off, name)
 		if (!aflag && ns_nullhost(nspcb.nsp_faddr) ) {
 			continue;
 		}
-		kvm_read((off_t)nspcb.nsp_socket,
+		kvm_read(nspcb.nsp_socket,
 				(char *)&sockb, sizeof (sockb));
-		ppcb = (off_t) nspcb.nsp_pcb;
+		ppcb = (off_t)(long)nspcb.nsp_pcb;
 		if (ppcb) {
 			if (isspp) {
-				kvm_read(ppcb, (char *)&sppcb, sizeof (sppcb));
+				kvm_read((void *)(long)ppcb, (char *)&sppcb,
+				    sizeof (sppcb));
 			} else continue;
 		} else
 			if (isspp) continue;
@@ -165,7 +167,7 @@ spp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&spp_istat, sizeof (spp_istat));
+	kvm_read((void *)(long)off, (char *)&spp_istat, sizeof (spp_istat));
 	printf("%s:\n", name);
 	ANY(spp_istat.nonucn, "connection", " dropped due to no new sockets ");
 	ANY(spp_istat.gonawy, "connection", " terminated due to our end dying");
@@ -241,7 +243,7 @@ idp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&idpstat, sizeof (idpstat));
+	kvm_read((void *)(long)off, (char *)&idpstat, sizeof (idpstat));
 	printf("%s:\n", name);
 	ANY(idpstat.idps_toosmall, "packet", " smaller than a header");
 	ANY(idpstat.idps_tooshort, "packet", " smaller than advertised");
@@ -279,7 +281,7 @@ nserr_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&ns_errstat, sizeof (ns_errstat));
+	kvm_read((void *)(long)off, (char *)&ns_errstat, sizeof (ns_errstat));
 	printf("NS error statistics:\n");
 	ANY(ns_errstat.ns_es_error, "call", " to ns_error");
 	ANY(ns_errstat.ns_es_oldshort, "error",

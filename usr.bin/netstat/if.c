@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	5.15 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: if.c,v 1.5 1994/03/03 22:03:33 deraadt Exp $";
+static char rcsid[] = "$Id: if.c,v 1.6 1994/03/28 10:29:31 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,8 @@ static char rcsid[] = "$Id: if.c,v 1.5 1994/03/03 22:03:33 deraadt Exp $";
 #include <netiso/iso_var.h>
 #endif /* ISO */
 
+#include <nlist.h>
+#include <kvm.h>
 #include <stdio.h>
 #include <signal.h>
 
@@ -99,7 +101,7 @@ intpr(interval, ifnetaddr)
 		sidewaysintpr((unsigned)interval, ifnetaddr);
 		return;
 	}
-	kvm_read(ifnetaddr, (char *)&ifnetaddr, sizeof ifnetaddr);
+	kvm_read((void *)(long)ifnetaddr, (char *)&ifnetaddr, sizeof ifnetaddr);
 	printf("%-5.5s %-5.5s %-11.11s %-15.15s %8.8s %5.5s %8.8s %5.5s",
 		"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
 		"Opkts", "Oerrs");
@@ -120,10 +122,11 @@ intpr(interval, ifnetaddr)
 		struct in_addr inet_makeaddr();
 
 		if (ifaddraddr == 0) {
-			kvm_read(ifnetaddr, (char *)&ifnet, sizeof ifnet);
-			kvm_read((off_t)ifnet.if_name, name, 16);
+			kvm_read((void *)(long)ifnetaddr, (char *)&ifnet,
+			    sizeof ifnet);
+			kvm_read(ifnet.if_name, name, 16);
 			name[15] = '\0';
-			ifnetaddr = (off_t) ifnet.if_next;
+			ifnetaddr = (off_t)(long)ifnet.if_next;
 			if (interface != 0 &&
 			    (strcmp(name, interface) != 0 || unit != ifnet.if_unit))
 				continue;
@@ -132,16 +135,17 @@ intpr(interval, ifnetaddr)
 			if ((ifnet.if_flags&IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
-			ifaddraddr = (off_t)ifnet.if_addrlist;
+			ifaddraddr = (off_t)(long)ifnet.if_addrlist;
 		}
 		printf("%-5.5s %-5d ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-11.11s ", "none");
 			printf("%-15.15s ", "none");
 		} else {
-			kvm_read(ifaddraddr, (char *)&ifaddr, sizeof ifaddr);
+			kvm_read((void *)(long)ifaddraddr, (char *)&ifaddr,
+			    sizeof ifaddr);
 #define CP(x) ((char *)(x))
-			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
+			cp = (CP(ifaddr.ifa.ifa_addr) - CP((long)ifaddraddr)) +
 				CP(&ifaddr); sa = (struct sockaddr *)cp;
 			switch (sa->sa_family) {
 			case AF_UNSPEC:
@@ -222,7 +226,7 @@ intpr(interval, ifnetaddr)
 					putchar(' ');
 				break;
 			}
-			ifaddraddr = (off_t)ifaddr.ifa.ifa_next;
+			ifaddraddr = (off_t)(long)ifaddr.ifa.ifa_next;
 		}
 		printf("%8d %5d %8d %5d %5d",
 		    ifnet.if_ipackets, ifnet.if_ierrors,
@@ -267,7 +271,7 @@ sidewaysintpr(interval, off)
 	int oldmask;
 	void catchalarm();
 
-	kvm_read(off, (char *)&firstifnet, sizeof (off_t));
+	kvm_read((void *)(long)off, (char *)&firstifnet, sizeof (off_t));
 	lastif = iftot;
 	sum = iftot + MAXIF - 1;
 	total = sum - 1;
@@ -275,9 +279,9 @@ sidewaysintpr(interval, off)
 	for (off = firstifnet, ip = iftot; off;) {
 		char *cp;
 
-		kvm_read(off, (char *)&ifnet, sizeof ifnet);
+		kvm_read((void *)(long)off, (char *)&ifnet, sizeof ifnet);
 		ip->ift_name[0] = '(';
-		kvm_read((off_t)ifnet.if_name, ip->ift_name + 1, 15);
+		kvm_read(ifnet.if_name, ip->ift_name + 1, 15);
 		if (interface && strcmp(ip->ift_name + 1, interface) == 0 &&
 		    unit == ifnet.if_unit)
 			interesting = ip;
@@ -287,7 +291,7 @@ sidewaysintpr(interval, off)
 		ip++;
 		if (ip >= iftot + MAXIF - 2)
 			break;
-		off = (off_t) ifnet.if_next;
+		off = (off_t)(long)ifnet.if_next;
 	}
 	lastif = ip;
 
@@ -330,7 +334,7 @@ loop:
 	sum->ift_co = 0;
 	sum->ift_dr = 0;
 	for (off = firstifnet, ip = iftot; off && ip < lastif; ip++) {
-		kvm_read(off, (char *)&ifnet, sizeof ifnet);
+		kvm_read((void *)(long)off, (char *)&ifnet, sizeof ifnet);
 		if (ip == interesting) {
 			printf("%8d %5d %8d %5d %5d",
 				ifnet.if_ipackets - ip->ift_ip,
@@ -354,7 +358,7 @@ loop:
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
 		sum->ift_dr += ip->ift_dr;
-		off = (off_t) ifnet.if_next;
+		off = (off_t)(long)ifnet.if_next;
 	}
 	if (lastif - iftot > 0) {
 		printf("  %8d %5d %8d %5d %5d",

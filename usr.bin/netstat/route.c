@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	5.20 (Berkeley) 11/29/90";*/
-static char rcsid[] = "$Id: route.c,v 1.7 1994/03/07 09:19:56 cgd Exp $";
+static char rcsid[] = "$Id: route.c,v 1.8 1994/03/28 10:29:58 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,8 @@ static char rcsid[] = "$Id: route.c,v 1.7 1994/03/07 09:19:56 cgd Exp $";
 #include <sys/kinfo.h>
 
 #include <stdio.h>
+#include <nlist.h>
+#include <kvm.h>
 #include <string.h>
 
 extern	int nflag, aflag, Aflag, af;
@@ -70,7 +72,7 @@ extern	char *ns_print();
 #endif
 extern	char *malloc();
 #define kget(p, d) \
-	(kvm_read((off_t)(p), (char *)&(d), sizeof (d)))
+	(kvm_read((p), (char *)&(d), sizeof (d)))
 
 /*
  * Definitions for showing gateway flags.
@@ -132,9 +134,10 @@ routepr(hostaddr, netaddr, hashsizeaddr, treeaddr)
 		printf("rthashsize: symbol not in namelist\n");
 		return;
 	}
-	kget(hashsizeaddr, hashsize);
+	kget((void *)(long)hashsizeaddr, hashsize);
 	routehash = (struct mbuf **)malloc( hashsize*sizeof (struct mbuf *) );
-	kvm_read(hostaddr, (char *)routehash, hashsize*sizeof (struct mbuf *));
+	kvm_read((void *)(long)hostaddr, (char *)routehash,
+	    hashsize*sizeof (struct mbuf *));
 again:
 	for (i = 0; i < hashsize; i++) {
 		if (routehash[i] == 0)
@@ -149,7 +152,7 @@ again:
 		}
 	}
 	if (doinghost) {
-		kvm_read(netaddr, (char *)routehash,
+		kvm_read((void *)(long)netaddr, (char *)routehash,
 			hashsize*sizeof (struct mbuf *));
 		doinghost = 0;
 		goto again;
@@ -225,7 +228,7 @@ off_t rtree;
 
 	if (Aflag == 0 && NewTree)
 		return(ntreestuff());
-	for (kget(rtree, rnh); rnh; rnh = head.rnh_next) {
+	for (kget((void *)(long)rtree, rnh); rnh; rnh = head.rnh_next) {
 		kget(rnh, head);
 		if (head.rnh_af == 0) {
 			if (Aflag || af == AF_UNSPEC) { 
@@ -248,7 +251,7 @@ register struct sockaddr *dst;
 {
 	kget(dst, pt_u.u_sa);
 	if (pt_u.u_sa.sa_len > sizeof (pt_u.u_sa)) {
-		kvm_read((off_t)dst, pt_u.u_data, pt_u.u_sa.sa_len);
+		kvm_read(dst, pt_u.u_data, pt_u.u_sa.sa_len);
 	}
 	return (&pt_u.u_sa);
 }
@@ -563,7 +566,7 @@ p_interface_nl(rt)
 		return;
 	}
 	kget(rt->rt_ifp, ifnet);
-	kvm_read((off_t)ifnet.if_name, name, 16);
+	kvm_read(ifnet.if_name, name, 16);
 	printf(" %.15s%d%s", name, ifnet.if_unit,
 		rt->rt_nodes[0].rn_dupedkey ? " =>\n" : "\n");
 }
@@ -602,7 +605,7 @@ register struct ortentry *rt;
 		return;
 	}
 	kget(rt->rt_ifp, ifnet);
-	kvm_read((off_t)ifnet.if_name, name, 16);
+	kvm_read(ifnet.if_name, name, 16);
 	printf(" %.15s%d\n", name, ifnet.if_unit);
 }
 
@@ -718,7 +721,7 @@ rt_stats(off)
 		printf("rtstat: symbol not in namelist\n");
 		return;
 	}
-	kvm_read(off, (char *)&rtstat, sizeof (rtstat));
+	kvm_read((void *)(long)off, (char *)&rtstat, sizeof (rtstat));
 	printf("routing:\n");
 	printf("\t%u bad routing redirect%s\n",
 		rtstat.rts_badredirect, plural(rtstat.rts_badredirect));
