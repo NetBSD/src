@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -51,8 +51,4 @@ ENTRY(fpsetsticky)
 	orr	r0, r1, r0
 	wfs	r0
 	mov	r0, r1			/* Return old mask */
-#ifdef __APCS_26__
-	movs	r15, r14		/* return */ 
-#else
 	mov	r15, r14		/* return */
-#endif

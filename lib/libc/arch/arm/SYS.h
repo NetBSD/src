@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.6 2002/05/26 12:24:55 wiz Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7 2003/04/05 23:08:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,17 +70,6 @@
 #define SYSCALL(x)							\
 	_SYSCALL(x,x)
 
-#ifdef __APCS_26__
-
-#define PSEUDO_NOERROR(x,y)						\
-	_SYSCALL_NOERROR(x,y);						\
-	movs r15, r14
-
-#define PSEUDO(x,y)							\
-	_SYSCALL(x,y);							\
-	movs r15, r14
-
-#else /* !__APCS_26__ */
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
@@ -90,7 +79,6 @@
 	_SYSCALL(x,y);							\
 	mov r15, r14
 
-#endif /* !__APCS_26__ */
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)

@@ -1,4 +1,4 @@
-/*      $NetBSD: strcmp.S,v 1.2 2002/11/23 03:10:27 chris Exp $ */
+/*      $NetBSD: strcmp.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcmp.S,v 1.2 2002/11/23 03:10:27 chris Exp $")
+RCSID("$NetBSD: strcmp.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $")
 
 ENTRY(strcmp)
 1:
@@ -40,8 +40,4 @@ ENTRY(strcmp)
 	cmpcs	r2, r3
 	beq	1b
 	sub	r0, r2, r3
-#ifdef __APCS_26__
-        movs	pc, lr
-#else
 	mov	pc, lr
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.5 2002/08/17 19:54:32 thorpej Exp $ */
+/*	$NetBSD: ptrace.S,v 1.6 2003/04/05 23:08:53 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,11 +65,7 @@ ENTRY(ptrace)
 
 	SYSTRAP(ptrace)
 	bcs	PIC_SYM(CERROR, PLT)
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 #ifndef _REENTRANT
 #ifdef PIC

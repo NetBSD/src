@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.4 2002/08/17 19:54:30 thorpej Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -73,11 +73,7 @@ ENTRY(setjmp)
 	/* Store integer registers */
         stmia	r0, {r4-r14}
         mov	r0, #0x00000000
-#ifdef __APCS_26__
-        movs	r15, r14
-#else
         mov	r15, r14
-#endif
 
 .Lsetjmp_magic:
 	.word	_JB_MAGIC_SETJMP

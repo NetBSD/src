@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.1 2002/11/23 14:26:04 chris Exp $ */
+/*      $NetBSD: memcmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,17 +30,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.1 2002/11/23 14:26:04 chris Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $")
 
 ENTRY(memcmp)
 /* if ((len - 1) < 0) return 0 */
 	subs	r2, r2, #1
 	movmi	r0, #0
-#ifdef __APCS_26__
-	movmis	pc, lr
-#else
 	movmi	pc, lr
-#endif
 
 /* ip == last src address to compare */
 	add	ip, r0, r2
@@ -51,8 +47,4 @@ ENTRY(memcmp)
 	cmpcs	r2, r3
 	beq	1b
 	sub	r0, r2, r3
-#ifdef __APCS_26__
-        movs	pc, lr
-#else
 	mov	pc, lr
-#endif

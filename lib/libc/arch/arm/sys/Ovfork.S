@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.4 2001/07/16 05:50:06 matt Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,8 +56,4 @@ ENTRY(vfork)
 	bcs	PIC_SYM(CERROR, PLT)
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
-#ifdef __APCS_26__
-	movs	r15, r2
-#else
 	mov	r15, r2
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2002/08/17 19:54:31 thorpej Exp $	*/
+/*	$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.4 2002/08/17 19:54:31 thorpej Exp $")
+RCSID("$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -61,11 +61,7 @@ ENTRY(ffs)
 	/* now lookup in table indexed on top 6 bits of r0 */
 	ldrneb  r0, [ r2, r0, lsr #26 ]
 
-#ifdef __APCS_26__
-        movs  pc, lr
-#else
         mov   pc, lr
-#endif
 .text;
 .type .L_ffs_table, _ASM_TYPE_OBJECT;
 .L_ffs_table:

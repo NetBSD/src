@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.3 2003/02/13 02:50:48 nathanw Exp $	*/
+/*	$NetBSD: fork.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,8 +48,4 @@
 _SYSCALL(__fork,fork)
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
-#ifdef __APCS_26__
-	movs	r15, r14
-#else
 	mov	r15, r14
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.4 2002/08/17 19:54:31 thorpej Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,11 +89,7 @@ ENTRY(_brk)
 
 	/* Return 0 for success */
 	mov	r0, #0x00000000
-#ifdef __APCS_26__
-	movs	r15, r14
-#else
 	mov	r15, r14
-#endif
 
 	.align	2
 #ifdef PIC

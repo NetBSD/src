@@ -1,4 +1,4 @@
-/*	$NetBSD: _memcpy.S,v 1.3 2002/08/17 19:54:31 thorpej Exp $	*/
+/*	$NetBSD: _memcpy.S,v 1.4 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,11 +75,7 @@ ENTRY(_memcpy)
 	bcc	.Lmemcpy_backwards
 
 	moveq	r0, #0			/* Quick abort for len=0 */
-#ifdef __APCS_26__
-	moveqs	pc, lr
-#else
 	moveq	pc, lr
-#endif
 
 	stmdb	sp!, {r0, lr}		/* memcpy() returns dest addr */
 	subs	r2, r2, #4
@@ -147,11 +143,7 @@ ENTRY(_memcpy)
 	strgeb	r3, [r0], #1
 	ldrgtb	r3, [r1], #1
 	strgtb	r3, [r0], #1
-#ifdef __APCS_26__
-	ldmia	sp!, {r0, pc}^
-#else
 	ldmia	sp!, {r0, pc}
-#endif
 
 	/* erg - unaligned destination */
 .Lmemcpy_fdestul:
@@ -345,11 +337,7 @@ ENTRY(_memcpy)
 	strgeb	r3, [r0, #-1]!
 	ldrgtb	r3, [r1, #-1]!
 	strgtb	r3, [r0, #-1]!
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 	/* erg - unaligned destination */
 .Lmemcpy_bdestul:

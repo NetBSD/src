@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.3 2001/07/16 05:50:07 matt Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.4 2003/04/05 23:08:53 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,8 +45,4 @@ ENTRY(sigsuspend)
 	SYSTRAP(compat_13_sigsuspend13)
 	bcs	PIC_SYM(CERROR, PLT)
 	mov	r0, #0x00000000
-#ifdef __APCS_26__
-	mov	r15, r14
-#else
 	movs	r15, r14
-#endif
