@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800.c,v 1.1 2003/07/30 18:54:22 bsh Exp $ */
+/*	$NetBSD: smdk2800.c,v 1.2 2003/09/03 03:18:31 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -102,3 +102,31 @@ get_flash_info(void *addr, struct flash_info *info)
 	return 0;
 }
 #endif
+
+long get_com_freq(void);
+long
+get_com_freq(void)
+{
+	long clk;
+	uint16_t clkcon = *(volatile uint16_t*)(S3C2800_CLKMAN_BASE+CLKMAN_CLKCON);
+	uint32_t pllcon = *(volatile uint32_t*)(S3C2800_CLKMAN_BASE+CLKMAN_PLLCON);
+
+	int mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
+	int pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
+	int sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
+
+#if XTAL_CLK < 1000   /* in MHz */
+	clk = (XTAL_CLK * 1000000 * (8 + mdiv)) / ((pdiv + 2) << sdiv);
+#else /* in Hz */
+	clk = (XTAL_CLK * (8 + mdiv)) / ((pdiv + 2) << sdiv);
+#endif
+
+	/*printf( "M=%d P=%d S=%d\n", mdiv, pdiv, sdiv);*/
+
+	if (clkcon & CLKCON_HCLK)
+		clk /= 2;
+	if (clkcon & CLKCON_PCLK)
+		clk /= 2;
+
+	return clk;
+}

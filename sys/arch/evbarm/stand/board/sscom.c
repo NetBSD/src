@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.1 2003/07/30 18:54:21 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.2 2003/09/03 03:18:31 mycroft Exp $ */
 
 
 /*
@@ -74,53 +74,24 @@
 
 #include <sys/types.h>
 #include <arch/arm/s3c2xx0/s3c2xx0reg.h>
-#include <arch/arm/s3c2xx0/s3c2800reg.h>
+#include <arch/arm/s3c2xx0/s3c24x0reg.h>
+#include <arch/arm/s3c2xx0/s3c2410reg.h>
 #include <lib/libsa/stand.h>
 
 #include "board.h"
-
-#ifndef XTAL_CLK
-#error XTAL_CLK is not defined
-#endif
 
 #ifndef SSCOM_TOLERANCE
 #define	SSCOM_TOLERANCE	30	/* XXX: baud rate tolerance, in 0.1% units */
 #endif
 
 #define	INB(x)		*((__volatile uint8_t *) ((CONADDR) + (x)))
-#define	INW(x)		*((__volatile uint16_t *) ((CONADDR) + (x)))
+#define	INW(x)		*((__volatile uint32_t *) ((CONADDR) + (x)))
 #define	OUTB(x, v)	(*((__volatile uint8_t *) ((CONADDR) + (x))) = (v))
-#define	OUTW(x, v)	(*((__volatile uint16_t *) ((CONADDR) + (x))) = (v))
+#define	OUTW(x, v)	(*((__volatile uint32_t *) ((CONADDR) + (x))) = (v))
 
 #define	ISSET(t,f)	((t) & (f))
 
 long get_com_freq(void);
-long
-get_com_freq(void)
-{
-	long clk;
-	uint16_t clkcon = *(volatile uint16_t*)(S3C2800_CLKMAN_BASE+CLKMAN_CLKCON);
-	uint32_t pllcon = *(volatile uint32_t*)(S3C2800_CLKMAN_BASE+CLKMAN_PLLCON);
-
-	int mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
-	int pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
-	int sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
-
-#if XTAL_CLK < 1000   /* in MHz */
-	clk = (XTAL_CLK * 1000000 * (8 + mdiv)) / ((pdiv + 2) << sdiv);
-#else /* in Hz */
-	clk = (XTAL_CLK * (8 + mdiv)) / ((pdiv + 2) << sdiv);
-#endif
-
-	/*printf( "M=%d P=%d S=%d\n", mdiv, pdiv, sdiv);*/
-
-	if (clkcon & CLKCON_HCLK)
-		clk /= 2;
-	if (clkcon & CLKCON_PCLK)
-		clk /= 2;
-
-	return clk;
-}
 
 static int
 sscomspeed(long speed)
@@ -183,7 +154,7 @@ getchar(void)
 static void
 iputchar(int c)
 {
-	uint16_t stat;
+	uint32_t stat;
 	int timo;
 
 	/* Wait for any pending transmission to finish. */

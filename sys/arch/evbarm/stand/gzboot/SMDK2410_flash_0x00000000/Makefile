@@ -1,0 +1,23 @@
+#	$NetBSD: Makefile,v 1.1 2003/09/03 03:18:32 mycroft Exp $
+
+S=	${.CURDIR}/../../../../..
+
+PLATFORM= SMDK2410
+RELOC= 0x00000000
+MAXIMAGESIZE= 0		# concatenate
+LOADADDR= 0x30200000
+
+CPPFLAGS+= -DCONSPEED=115200
+CPPFLAGS+= -DCONADDR=0x50000000UL
+# CPPFLAGS+= -DCONADDR=0x50004000UL
+# CPPFLAGS+= -DCONADDR=0x50008000UL
+CPPFLAGS+= -DIO_INIT_HOOK=smdk2410_io_init -DRAM_INIT_HOOK=smdk2410_ram_init
+CPPFLAGS+= -DXTAL_CLK=12000000 -DFCLK=180000000 -DSDRAM_SIZE=32*1024*1024
+COPTS+= -march=armv4
+
+LDSCRIPT= ${.CURDIR}/ldscript
+
+SRCS+=	smdk2410.c sscom.c
+SRCS+=	smdk2410_io_init.c s3c2410_vector.S  smdk2410_ram_init.S
+
+.include "${S}/arch/evbarm/stand/gzboot/Makefile.gzboot"
