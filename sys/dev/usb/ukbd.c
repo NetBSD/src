@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.6 1998/08/01 18:16:19 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.7 1998/08/01 20:11:38 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -306,6 +306,9 @@ ukbd_disco(p)
 	void *p;
 {
 	struct ukbd_softc *sc = p;
+
+	DPRINTF(("ukbd_disco: sc=%p\n", sc));
+	usbd_abort_pipe(sc->sc_intrpipe);
 	sc->sc_disconnected = 1;
 }
 
@@ -445,7 +448,9 @@ ukbd_ioctl(v, cmd, data, flag, p)
 	}
 	return -1;
 }
- 
+
+/* Console interface. */
+/* XXX does not work. */
 void
 ukbd_cngetc(v, type, data)
 	void *v;

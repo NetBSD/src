@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.3 1998/08/01 18:16:19 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.4 1998/08/01 20:11:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -346,8 +346,8 @@ uhub_explore(parent, dev)
 				 * address, and since we cannot leave
 				 * at 0 we have to disable the port
 				 * instead. */
-				printf("%s: disable port %d\n",
-				       "usb", port); /* XXX */
+				printf("%s: device problem, disable port %d\n",
+				       parent->dv_xname, port);
 				usbd_clear_port_feature(dev, port, 
 							UHF_PORT_ENABLE);
 			}
