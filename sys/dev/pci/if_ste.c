@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.1 2001/06/19 23:00:47 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.2 2001/06/29 23:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1024,10 +1024,11 @@ ste_rxintr(struct ste_softc *sc)
 		 * chain.  If this fails, we drop the packet and
 		 * recycle the old buffer.
 		 */
-		if (ste_copy_small != 0 && len <= MHLEN) {
+		if (ste_copy_small != 0 && len <= (MHLEN - 2)) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
+			m->m_data += 2;
 			memcpy(mtod(m, caddr_t),
 			    mtod(ds->ds_mbuf, caddr_t), len);
 			STE_INIT_RXDESC(sc, i);
