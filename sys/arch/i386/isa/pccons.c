@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.76 1994/11/18 22:14:36 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.77 1994/12/01 11:12:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -85,11 +85,11 @@ extern u_short *Crtat;			/* pointer to backing store */
 static u_short *crtat;			/* pointer to current char */
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
-static u_char lock_state,		/* all off */
+static u_char lock_state = 0x00,	/* all off */
 	      old_lock_state = 0xff,
 	      typematic_rate = 0xff,	/* don't update until set by user */
 	      old_typematic_rate = 0xff;
-static u_short cursor_shape,		/* cursor shape */
+static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 	       old_cursor_shape = 0xffff;
 int pc_xmode = 0;
 
@@ -284,10 +284,33 @@ set_cursor_shape()
 	register int iobase = addr_6845;
 
 	outb(iobase, 10);
-	outb(iobase+1, cursor_shape>>8);
+	outb(iobase+1, cursor_shape >> 8);
 	outb(iobase, 11);
 	outb(iobase+1, cursor_shape);
 	old_cursor_shape = cursor_shape;
+}
+
+void
+get_cursor_shape()
+{
+	register int iobase = addr_6845;
+
+	outb(iobase, 10);
+	cursor_shape = inb(iobase+1) << 8;
+	outb(iobase, 11);
+	cursor_shape |= inb(iobase+1);
+
+	/*
+	 * real 6845's, as found on, MDA, Hercules or CGA cards, do
+	 * not support reading the cursor shape registers. the 6845
+	 * tri-states it's data bus. This is _normally_ read by the
+	 * cpu as either 0x00 or 0xff.. in which case we just use
+	 * a line cursor.
+	 */
+	if (cursor_shape == 0x0000 || cursor_shape == 0xffff)
+		cursor_shape = 0x0b10;
+	else
+		cursor_shape &= 0x1f1f;
 }
 
 void
@@ -323,7 +346,7 @@ do_async_update(poll)
 	if (pos != old_pos) {
 		register int iobase = addr_6845;
 		outb(iobase, 14);
-		outb(iobase+1, pos>>8);
+		outb(iobase+1, pos >> 8);
 		outb(iobase, 15);
 		outb(iobase+1, pos);
 		old_pos = pos;
@@ -808,23 +831,6 @@ sput(cp, n)
 
 #ifdef FAT_CURSOR
 		cursor_shape = 0x0012;
-#else
-		/* Extract cursor shape */
-		outb(addr_6845, 10);
-		cursor_shape = inb(addr_6845+1) << 8;
-		outb(addr_6845, 11);
-		cursor_shape |= inb(addr_6845+1);
-
-		/*
-		 * real 6845's, as found on, MDA, Hercules or CGA cards, do
-		 * not support reading the cursor shape registers. the 6845
-		 * tri-states it's data bus. This is _normally_ read by the
-		 * cpu as either 0x00 or 0xff.. in which case we just use
-		 * a line cursor.
-		 */
-		if (cursor_shape == 0x0000 || cursor_shape == 0xffff)
-			cursor_shape = 0x0b10;
-		cursor_shape &= 0x1f1f;
 #endif
 
 		crtat = Crtat + cursorat;
@@ -1586,6 +1592,12 @@ pc_xmode_on()
 	if (pc_xmode)
 		return;
 	pc_xmode = 1;
+
+#ifdef XFREE86_BUG_COMPAT
+	/* If still unchanged, get current shape. */
+	if (cursor_shape == 0xffff)
+		get_cursor_shape();
+#endif
 
 	fp = (struct trapframe *)curproc->p_md.md_regs;
 	fp->tf_eflags |= PSL_IOPL;
