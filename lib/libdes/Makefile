@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/07/23 05:46:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2003/07/24 02:23:51 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ SRCS=	cbc_cksm.c cbc_enc.c cfb64ede.c cfb64enc.c cfb_enc.c \
 	enc_writ.c fcrypt.c fcrypt_b.c ofb64ede.c ofb64enc.c \
 	ofb_enc.c pcbc_enc.c qud_cksm.c rand_key.c read2pwd.c \
 	read_pwd.c rpc_enc.c set_key.c str2key.c xcbc_enc.c
+
+# NetBSD addition
 SRCS+=	rnd_keys.c
 
 CPPFLAGS+=-DOPENSSL_VERSION_PTEXT="\" based on OpenSSL 0.9.6j 10 Apr 2003\""
