@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.25 2003/04/17 02:59:29 lukem Exp $ */
+/* $NetBSD: style,v 1.26 2003/08/05 13:26:13 jmmv Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.25 2003/04/17 02:59:29 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.26 2003/08/05 13:26:13 jmmv Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -282,11 +282,12 @@ main(int argc, char *argv[])
 	k = !(l & FLAGS);
 
 	/*
-	 * Exits should be 0 on success, and 1 on failure.  Don't denote
-	 * all the possible exit points, using the integers 1 through 300.
-	 * Avoid obvious comments such as "Exit 0 on success."
+	 * Exits should be EXIT_SUCCESS on success, and EXIT_FAILURE on
+	 * failure.  Don't denote all the possible exit points, using the
+	 * integers 1 through 300.  Avoid obvious comments such as "Exit
+	 * 0 on success."
 	 */
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 /*
