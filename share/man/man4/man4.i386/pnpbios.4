@@ -1,4 +1,4 @@
-.\" $NetBSD: pnpbios.4,v 1.1 1999/11/14 17:02:21 augustss Exp $
+.\" $NetBSD: pnpbios.4,v 1.2 1999/11/14 20:03:25 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,9 @@ provides support for finding and attaching devices by
 extracting information from the PnP BIOS of a machine.
 .Sh SUPPORTED DEVICES
 .Nx
-includes the following drivers, sorted driver name:
+includes the following
+.Nm
+drivers, sorted driver name:
 .Pp
 .Bl -tag -width speaker -offset indent -compact
 .It com
@@ -68,6 +70,22 @@ Yamaha OPL3-SA3 sound driver
 .El
 .\"
 .Pp
+.Sh CAVEATS
+The
+.Nm
+bus provides a different way to attach devices than the real buses
+(e.g., 
+.Xr isa 4 ).
+The reason to use
+.Nm
+instead of the real bus is that some machines have weird routings
+of, e.g., interrupts.  The exact information about these things can
+be found in the BIOS, which is why the
+.Nm
+bus has a better chance of succeeding with getting it right.
+.Pp
+Many older BIOSes do not support PnP, and some newer ones do not
+follow the standards.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr com 4 ,
