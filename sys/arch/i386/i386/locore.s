@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.16 1993/06/15 01:27:14 cgd Exp $
+ *	$Id: locore.s,v 1.17 1993/06/16 22:22:39 jtc Exp $
  */
 
 
@@ -726,6 +726,49 @@ ENTRY(bcopy)
 	popl	%edi
 	popl	%esi
 	cld
+	ret
+
+/*
+ * strlen (s)
+ *	compute the length of the string s.
+ *
+ * Written by:
+ *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
+ */
+
+ENTRY(strlen)
+	pushl	%edi
+	movl	8(%esp),%edi		/* string address */
+	cld				/* set search forward */
+	xorl	%eax,%eax		/* set search for null terminator */
+	movl	$-1,%ecx		/* set search for lots of characters */
+	repne				/* search! */
+	scasb
+	movl	%ecx,%eax		/* get length by taking	twos-	*/
+	notl	%eax			/* complement and subtracting	*/
+	decl	%eax			/* one */
+	popl	%edi
+	ret
+
+/*
+ * ffs(value)
+ *	finds the first bit set in value and returns the index of 
+ *	that bit.  Bits are numbered starting from 1, starting at the
+ *	rightmost bit.  A return value of 0 means that the argument
+ *	was zero.
+ *
+ * Written by:
+ *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
+ */
+
+ENTRY(ffs)
+	bsfl	4(%esp),%eax
+	jz	1f	 		/* ZF is set if all bits are 0 */
+	incl	%eax			/* bits numbered from 1, not 0 */
+	ret
+
+	ALIGN_TEXT
+1:	xorl	%eax,%eax		/* clear result */
 	ret
 
 #ifdef notdef
