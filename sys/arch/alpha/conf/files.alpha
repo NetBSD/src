@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.75 1998/05/13 21:59:32 thorpej Exp $
+# $NetBSD: files.alpha,v 1.76 1998/05/23 22:42:14 matt Exp $
 #
 # alpha-specific configuration info
 
@@ -396,3 +396,34 @@ file	arch/alpha/alpha/db_trace.c		ddb
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
+
+# XXXX pcic here because it needs to be late.  The catch: pcic needs
+# to be late, so devices which attach to it are attached late.  But it
+# needs to be before its isa and pci attachments.  This answer is
+# non-optimal, but I don't have a better answer right now.
+
+# PCIC pcmcia contoller
+# XXX this needs to be done very late, so it's done here.  This feels
+# like a kludge, but it might be for the best.
+
+defopt	PCIC_ISA_ALLOC_IOBASE
+defopt	PCIC_ISA_ALLOC_IOSIZE
+defopt	PCIC_ISA_INTR_ALLOC_MASK
+
+device	pcic {[controller = -1], [socket = -1]}
+file	dev/ic/i82365.c			pcic
+
+# PCIC pcmcia contoller
+attach	pcic at isa with pcic_isa
+file	dev/isa/i82365_isa.c		pcic_isa
+
+# PCIC pcmcia contoller
+attach	pcic at pci with pcic_pci
+file	dev/pci/i82365_pci.c		pcic_pci
+
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include "dev/pcmcia/files.pcmcia"
