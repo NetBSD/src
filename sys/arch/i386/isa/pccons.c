@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.20 1993/10/28 12:15:16 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.21 1993/10/29 13:18:41 mycroft Exp $
  */
 
 /*
@@ -701,7 +701,9 @@ sput(ps, cp, n)
 		return;
 
 	while (n--) {
-		c = *cp++;
+		if (!(c = *cp++))
+			continue;
+
 		scroll = 1;	/* do scroll check */
 
 		switch (c) {
