@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.16 2001/04/15 11:59:43 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.17 2001/04/21 18:51:17 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.16 2001/04/15 11:59:43 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.17 2001/04/21 18:51:17 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -69,6 +69,8 @@ __RCSID("$NetBSD: irq.c,v 1.16 2001/04/15 11:59:43 bjh21 Exp $");
 
 #define NIRQ 20
 extern char *irqnames[];
+
+int current_intr_depth = 0;
 
 /*
  * Interrupt masks are held in 32-bit integers.  At present, the
@@ -117,6 +119,7 @@ irq_handler(struct irqframe *irqf)
 	int s, status, result, stray;
 	struct irq_handler *h;
 
+	current_intr_depth++;
 	KASSERT(the_ioc != NULL);
 	/* Get the current interrupt state */
 	status = ioc_irq_status_full();
@@ -173,6 +176,7 @@ irq_handler(struct irqframe *irqf)
 
 	int_off();
 	hardsplx(s);
+	current_intr_depth--;
 }
 
 struct irq_handler *
