@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.16 2003/06/23 13:05:50 agc Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.17 2003/06/27 22:12:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: msgdb.c,v 1.16 2003/06/23 13:05:50 agc Exp $");
+__RCSID("$NetBSD: msgdb.c,v 1.17 2003/06/27 22:12:00 dsl Exp $");
 #endif
 
 
@@ -144,17 +144,21 @@ write_msg_file ()
 		"#define MSG_DEFS_H\n"
 		"#include <stdio.h>\n"
 		"#include <stdlib.h>\n"
+		"#include <unistd.h>\n"
+		"#include <fcntl.h>\n"
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
 		"#include <stdarg.h>\n"
 		"#include <stdint.h>\n"
 		"#include <curses.h>\n"
+		"#include <sys/mman.h>\n"
 		"\n"
 		"typedef const char *msg;\n"
 		"\n"
 		"/* Prototypes */\n"
 		"WINDOW *msg_window(WINDOW *window);\n"
-		"const char *msg_string (msg msg_no);\n"
+		"const char *msg_string(msg msg_no);\n"
+		"int msg_file(const char *);\n"
 		"void msg_clear(void);\n"
 		"void msg_standout(void);\n"
 		"void msg_standend(void);\n"
