@@ -1,7 +1,6 @@
-PROG=		vnconfig
-CFLAGS+=	-I/sys
-MAN8=		vnconfig.0
+#	$Id: Makefile,v 1.2 1993/12/23 07:04:31 cgd Exp $
 
-all: ${PROG} ${MAN8}
+PROG=		vnconfig
+MAN8=		vnconfig.0
 
 .include <bsd.prog.mk>
