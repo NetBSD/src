@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.9 1998/08/14 00:23:26 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.10 1998/11/02 22:31:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,6 +175,7 @@ nsphy_service(self, mii, cmd)
 	int cmd;
 {
 	struct nsphy_softc *sc = (struct nsphy_softc *)self;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
 	switch (cmd) {
@@ -182,8 +183,7 @@ nsphy_service(self, mii, cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 		break;
 
@@ -192,8 +192,7 @@ nsphy_service(self, mii, cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst) {
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
 			reg = NSPHY_READ(sc, MII_BMCR);
 			NSPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
@@ -238,7 +237,7 @@ nsphy_service(self, mii, cmd)
 
 		NSPHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
-		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			/*
 			 * If we're already in auto mode, just return.
@@ -256,10 +255,8 @@ nsphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			NSPHY_WRITE(sc, MII_ANAR,
-			    mii_anar(mii->mii_media.ifm_media));
-			NSPHY_WRITE(sc, MII_BMCR,
-			    mii->mii_media.ifm_cur->ifm_data);
+			NSPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
+			NSPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -267,14 +264,13 @@ nsphy_service(self, mii, cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(mii->mii_media.ifm_media) != IFM_AUTO)
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		/*
