@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.86 2002/12/15 16:20:45 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.87 2003/01/23 10:43:23 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1855,3 +1855,20 @@ usr.sbin/lpr/lpd/printjob.c			1.35-1.36 via patch
 
   When ``-r'' is given, actually pass the file through ``of'' and
   also enable ``if''.
+
+sys/dev/ata/ata.c				1.17
+sys/dev/ata/atavar.h				1.24
+sys/dev/ic/wdc.c				1.114
+
+  read status after data commands in wdc_exec_command(). Mandatory for data out
+  commands (nonw are used for now), and doesn't hurt for data in. Also keep
+  track if we did transfer data. Makes the probe more robust and solves
+  kern/16159
+
+sys/netinet6/esp_rijndael.c			1.9
+sys/netinet6/ipcomp_core.c			patch
+sys/netkey/keydb.h				1.12
+sys/netkey/keysoc.c				1.21
+
+  allocate route_in6 in struct secashead, to avoid mistakenly overrun
+  the end of secashead.  Fixes PR18751.
