@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1999/03/05 03:26:36 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1999/03/06 01:29:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -610,7 +610,7 @@ allocsys(v)
 	 * buffer cache.  We allocate 1/2 as many swap buffer headers
 	 * as file I/O buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (bufcache == 0) {		/* use old algorithm */
 			/*
 			 * Determine how many buffers to allocate. We use 10%
@@ -635,7 +635,7 @@ allocsys(v)
 			}
 			bufpages= physmem / (CLSIZE * 100) * bufcache;
 		}
-
+	}
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
 		panic("bufpages = 0\n");
