@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.61 2000/12/22 20:01:18 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.62 2000/12/25 02:00:47 wiz Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.61 2000/12/22 20:01:18 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.62 2000/12/25 02:00:47 wiz Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
@@ -270,10 +270,10 @@ int iplattach()
 		return EIO;
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 105150000
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+#  if __NetBSD_Version__ >= 105110000
+	ph_inet = pfil_head_get((void *)(u_long) AF_INET, DLT_RAW);
 #ifdef USE_INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet6 = pfil_head_get((void *)(u_long) AF_INET6, DLT_RAW);
 #endif
 	if (ph_inet == NULL
 #ifdef USE_INET6
@@ -393,10 +393,12 @@ int ipldetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
-# if __NetBSD_Version__ >= 105150000
-	struct pfil_head *ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+# if __NetBSD_Version__ >= 105110000
+	struct pfil_head *ph_inet = pfil_head_get((void *)(u_long) AF_INET,
+	    DLT_RAW);
 #ifdef USE_INET6
-	struct pfil_head *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	struct pfil_head *ph_inet6 = pfil_head_get((void *)(u_long) AF_INET6,
+	    DLT_RAW);
 #endif
 # endif
 	int error = 0;
