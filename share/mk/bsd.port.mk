@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.36 1998/01/24 23:06:33 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.37 1998/01/25 14:39:49 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -22,7 +22,8 @@
 # contact information on the person(s) to contact if you have questions/
 # suggestions about that specific port.  By default (if no MAINTAINER
 # is listed), a port is maintained by the subscribers of the ports@freebsd.org
-# mailing list, and any correspondece should be directed there.
+# mailing list (NetBSD: packages@netbsd.org), and any correspondece
+# should be directed there.  
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
 OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
@@ -68,7 +69,8 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # GMAKE			- Set to path of GNU make if not in $PATH (default: gmake).
 # XMKMF			- Set to path of `xmkmf' if not in $PATH (default: xmkmf -a ).
 # MAINTAINER	- The e-mail address of the contact person for this port
-#				  (default: ports@FreeBSD.ORG).
+#				  Defaults: ports@FreeBSD.ORG      (FreeBSD)
+#                           packages@NetBSD.ORG    (NetBSD)
 # CATEGORIES	- A list of descriptive categories into which this port falls.
 # WRKOBJDIR		- A top level directory where, if defined, the separate working
 #				  directories will get created, and symbolically linked to from
@@ -741,7 +743,11 @@ _IGNOREFILES?=	${IGNOREFILES}
 EXTRACT_ONLY?=	${DISTFILES}
 
 # Documentation
+.if (${OPSYS} == "NetBSD")
+MAINTAINER?=	packages@NetBSD.ORG
+.else
 MAINTAINER?=	ports@FreeBSD.ORG
+.endif
 
 .if !defined(CATEGORIES)
 .BEGIN:
