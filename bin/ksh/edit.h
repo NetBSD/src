@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.h,v 1.2 1997/01/12 19:11:45 tls Exp $	*/
+/*	$NetBSD: edit.h,v 1.3 1999/11/02 22:06:45 jdolecek Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -10,7 +10,7 @@
  *      
  *
  * RCSid:
- *      $NetBSD: edit.h,v 1.2 1997/01/12 19:11:45 tls Exp $
+ *      $NetBSD: edit.h,v 1.3 1999/11/02 22:06:45 jdolecek Exp $
  *
  */
 
@@ -57,6 +57,7 @@ int	x_cf_glob ARGS((int flags, const char *buf, int buflen, int pos, int *startp
 int	x_longest_prefix ARGS((int nwords, char *const *words));
 int	x_basename ARGS((const char *s, const char *se));
 void	x_free_words ARGS((int nwords, char **words));
+int	x_escape ARGS((const char *, size_t, int (*)(const char *s, size_t len)));
 /* emacs.c */
 int 	x_emacs		ARGS((char *buf, size_t len));
 void 	x_init_emacs	ARGS((void));
