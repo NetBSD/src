@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param.h,v 1.12 1994/05/23 06:21:28 mycroft Exp $
+ *	$Id: param.h,v 1.13 1994/08/24 19:34:07 mycroft Exp $
  */
 
 /*
@@ -81,6 +81,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
+#define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 /*
  * Constants related to network buffer management.
