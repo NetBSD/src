@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.5 1999/12/31 14:28:03 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.6 1999/12/31 14:50:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.5 1999/12/31 14:28:03 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.6 1999/12/31 14:50:16 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,6 +74,7 @@ struct whatisstruct {
 };
 
 int              main (int, char **);
+char		*findwhitespace(char *);
 char		*GetS(gzFile, char *, int);
 int		 manpagesection (char *);
 int		 addmanpage (manpage **, ino_t, char *);
@@ -155,6 +156,19 @@ main(int argc,char **argv)
 		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
 
 	return EXIT_SUCCESS;
+}
+
+char
+*findwhitespace(char *str)
+
+{
+	while (!isspace(*str))
+		if (*str++ == '\0') {
+			str = NULL;
+			break;
+		}
+
+	return str;
 }
 
 char
@@ -398,7 +412,7 @@ manpreprocess(char *line)
 		if (isspace(*from))
 			from++;
 
-		if ((sect = strchr(from, ' ')) != NULL) {
+		if ((sect = findwhitespace(from)) != NULL) {
 			int	 length;
 
 			*sect++ = '\0';
@@ -434,10 +448,10 @@ parsemanpage(gzFile *in, int defaultsection)
 			ptr = &buffer[3];
 			if (isspace(*ptr))
 				ptr++;
-			if ((ptr = strchr(ptr, ' ')) == NULL)
+			if ((ptr = findwhitespace(ptr)) == NULL)
 				continue;
 
-			if ((end = strchr(++ptr, ' ')) != NULL)
+			if ((end = findwhitespace(++ptr)) != NULL)
 				*end = '\0';
 
 			free(section);
@@ -516,7 +530,7 @@ parsemanpage(gzFile *in, int defaultsection)
 				if (*ptr == '.') {
 					char	*space;
 
-					if ((space = strchr(ptr, ' ')) == NULL)
+					if ((space = findwhitespace(ptr)) == NULL)
 						ptr = "";
 					else {
 						space++;
@@ -548,7 +562,7 @@ parsemanpage(gzFile *in, int defaultsection)
 		if (*buffer == '.') {
 			char	*space;
 
-			if ((space = strchr(buffer, ' ')) == NULL) {
+			if ((space = findwhitespace(buffer)) == NULL) {
 				free(section);
 				return NULL;
 			}
@@ -577,7 +591,7 @@ parsemanpage(gzFile *in, int defaultsection)
 			if (*ptr == '.') {
 				char	*space;
 
-				if ((space = strchr(ptr, ' ')) == NULL) {
+				if ((space = findwhitespace(ptr)) == NULL) {
 					continue;
 				}
 
