@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532.newconf,v 1.9 1995/02/12 03:53:47 phil Exp $
+#	$NetBSD: files.pc532.newconf,v 1.10 1995/04/11 10:00:34 mellon Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -52,6 +52,7 @@ device  lpt at membus: tty, ether, ifnet
 file    arch/pc532/dev/lpt.c            lpt needs-count
 
 file	dev/cons.c
+file	dev/cninit.c
 file	netinet/in_cksum.c		inet
 file	scsi/scsiconf.c			scsi
 file	scsi/scsi_base.c		scsi

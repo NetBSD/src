@@ -1,4 +1,4 @@
-#	$NetBSD: files.da30.newconf,v 1.7 1995/02/08 17:49:06 mycroft Exp $
+#	$NetBSD: files.da30.newconf,v 1.8 1995/04/11 09:54:00 mellon Exp $
 
 # config file for da30
 
@@ -49,3 +49,4 @@ file arch/da30/da30/trap.c
 file arch/da30/da30/vm_machdep.c
 file arch/m68k/m68k/copy.s
 file dev/cons.c
+file dev/cninit.c
