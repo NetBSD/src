@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.1.2.2 2002/05/30 07:14:41 gehenna Exp $
+#	$NetBSD: majors.alpha,v 1.1.2.3 2002/07/09 05:27:18 gehenna Exp $
 #
 # Device majors for alpha
 #
@@ -69,3 +69,4 @@ device-major	pci		char 66			pci
 device-major	agp		char 67			agp
 device-major	stic		char 68			stic
 device-major	clockctl	char 69			clockctl
+device-major	systrace	char 70			systrace
