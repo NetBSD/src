@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.7 1998/02/20 23:45:27 jeremy Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hexsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: hexsyntax.c,v 1.7 1998/02/20 23:45:27 jeremy Exp $");
+__RCSID("$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"hexdump: [-bcdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n");
+"hexdump: [-bcCdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n"
+	);
 	exit(1);
 }
