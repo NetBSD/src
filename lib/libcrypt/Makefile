@@ -3,13 +3,17 @@
 # into this directory to make distribution of exportable and non-exportable
 # systems easier.
 #
-#	$Id: Makefile,v 1.3 1993/08/02 17:50:08 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/07 01:36:21 cgd Exp $
 
-.if exists(crypt.c)
 LIB=	crypt
+
+.if exists(crypt.c) && !defined(EXPORTABLE_SYSTEM)
 SRCS=	crypt.c
-	 
-.include <bsd.lib.mk>
 .else
-all install clean cleandir depend obj:
+SRCS=	crypt_dummy.c
 .endif
+
+MAN3=	crypt.0
+MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
+
+.include <bsd.lib.mk>
