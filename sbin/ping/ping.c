@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.61 2001/10/10 15:58:04 yamt Exp $	*/
+/*	$NetBSD: ping.c,v 1.62 2001/11/01 08:06:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.61 2001/10/10 15:58:04 yamt Exp $");
+__RCSID("$NetBSD: ping.c,v 1.62 2001/11/01 08:06:57 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -1196,11 +1196,11 @@ in_cksum(u_short *p,
  * compute the difference of two timevals in seconds
  */
 static double
-diffsec(struct timeval *now,
+diffsec(struct timeval *timenow,
 	struct timeval *then)
 {
-	return ((now->tv_sec - then->tv_sec)*1.0
-		+ (now->tv_usec - then->tv_usec)/1000000.0);
+	return ((timenow->tv_sec - then->tv_sec)*1.0
+		+ (timenow->tv_usec - then->tv_usec)/1000000.0);
 }
 
 
@@ -1290,7 +1290,7 @@ summary(int header)
  */
 /* ARGSUSED */
 static void
-prtsig(int s)
+prtsig(int dummy)
 {
 	summary(0);
 #ifdef SIGINFO
@@ -1305,13 +1305,13 @@ prtsig(int s)
  * On the first SIGINT, allow any outstanding packets to dribble in
  */
 static void
-prefinish(int s)
+prefinish(int dummy)
 {
 	if (lastrcvd			/* quit now if caught up */
 	    || nreceived == 0)		/* or if remote is dead */
 		finish(0);
 
-	(void)signal(s, finish);	/* do this only the 1st time */
+	(void)signal(dummy, finish);	/* do this only the 1st time */
 
 	if (npackets > ntransmitted)	/* let the normal limit work */
 		npackets = ntransmitted;
@@ -1323,7 +1323,7 @@ prefinish(int s)
  */
 /* ARGSUSED */
 static void
-finish(int s)
+finish(int dummy)
 {
 #if defined(SIGINFO) && defined(NOKERNINFO)
 	struct termios ts;
