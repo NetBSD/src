@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.26 1997/10/20 22:05:24 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.27 1997/10/22 00:51:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -217,24 +217,30 @@ __BEGIN_DECLS
 int	chmod __P((const char *, mode_t));
 int	mkdir __P((const char *, mode_t));
 int	mkfifo __P((const char *, mode_t));
+#ifdef __LIBC12_SOURCE__
 int	stat __P((const char *, struct stat12 *));
 int	fstat __P((int, struct stat12 *));
 int	__stat13 __P((const char *, struct stat *));
 int	__fstat13 __P((int, struct stat *));
+#else
+int	stat __P((const char *, struct stat *))	__RENAME("__stat13");
+int	fstat __P((int, struct stat *))		__RENAME("__fstat13");
+#endif
 mode_t	umask __P((mode_t));
 #ifndef _POSIX_SOURCE
 int	chflags __P((const char *, u_long));
 int	fchflags __P((int, u_long));
 int	fchmod __P((int, mode_t));
 int	lchmod __P((const char *, mode_t));
+#ifdef __LIBC12_SOURCE__
 int	lstat __P((const char *, struct stat12 *));
 int	__lstat13 __P((const char *, struct stat *));
+#else
+int	lstat __P((const char *, struct stat *))	__RENAME("__lstat13");
 #endif
-__END_DECLS
+#endif
 
-#define stat(f,b)  __stat13(f,b)
-#define fstat(f,b) __fstat13(f,b)
-#define lstat(f,b) __lstat13(f,b)
+__END_DECLS
 
 #endif
 #endif /* !_SYS_STAT_H_ */
