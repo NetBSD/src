@@ -343,11 +343,11 @@ _intrnames:
 	.asciz	"splx"
 	.asciz	"splx!0"
 	.asciz	"unpend_V"
-	.asciz	"spl25"		/* spl25-spl31 are spares */
-	.asciz	"spl26"
-	.asciz	"spl27"
-	.asciz	"spl28"
-	.asciz	"spl29"
+	.asciz	"netisr_iso"
+	.asciz	"netisr_imp2"
+	.asciz	"netisr_ns2"
+	.asciz	"netisr_iso2"
+	.asciz	"spl29"		/* spl29-spl31 are spares */
 	.asciz	"spl30"
 	.asciz	"spl31"
 /*
