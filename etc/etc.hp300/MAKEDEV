@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.43 2002/03/03 14:16:02 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.44 2002/03/04 07:10:46 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -148,8 +148,8 @@ ct*|mt*|st*)
 		#mknod ${name}${four}	b $blk $four
 		#mknod ${name}${eight}	b $blk $eight
 		#mknod ${name}${twelve}	b $blk $twelve
-		#ln ${name}{$four} n${name}${unit}	;: sanity w/pdp11 v7
-		#ln ${name}{$twelve} n${name}${eight}	;: ditto
+		#ln -s ${name}{$four} n${name}${unit}	;: sanity w/pdp11 v7
+		#ln -s ${name}{$twelve} n${name}${eight}	;: ditto
 		#chgrp operator ${name}${unit} ${name}${four} ${name}${eight} \
 		#    ${name}${twelve} n${name}${unit} n${name}${eight}
 		#chmod 660 ${name}${unit} ${name}${four} ${name}${eight} \
@@ -161,8 +161,8 @@ ct*|mt*|st*)
 		mknod r${name}${four}	c $chr $four
 		mknod r${name}${eight}	c $chr $eight
 		mknod r${name}${twelve}	c $chr $twelve
-		ln r${name}${four} nr${name}${unit}	;: sanity w/pdp11 v7
-		ln r${name}${twelve} nr${name}${eight}	;: ditto
+		ln -s r${name}${four} nr${name}${unit}	;: sanity w/pdp11 v7
+		ln -s r${name}${twelve} nr${name}${eight}	;: ditto
 		chgrp operator r${name}${unit} r${name}${four} \
 		    r${name}${eight} r${name}${twelve} nr${name}${unit} \
 		    nr${name}${eight}
@@ -321,13 +321,13 @@ hil)
 			mouse)
 				if [ ! -f locator ]
 				then
-					ln hil${unit} locator
+					ln -s hil${unit} locator
 				fi
 				;;
 			keyboard)
 				if [ ! -f keyboard ]
 				then
-					ln hil${unit} keyboard
+					ln -s hil${unit} keyboard
 				fi
 				;;
 			*)
@@ -337,8 +337,8 @@ hil)
 	done
 	if [ ! -f /usr/sbin/hilinfo ]
 	then
-		ln hil1 keyboard
-		ln hil3 locator
+		ln -s hil1 keyboard
+		ln -s hil3 locator
 	fi
 	chmod 666 hil*
 #	echo "hil: use $0.hpux to make HP-UX names for devices"
