@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rquotad.8,v 1.3 1996/08/30 20:15:07 thorpej Exp $
+.\"	$NetBSD: rpc.rquotad.8,v 1.4 1997/10/20 02:46:44 enami Exp $
 .\" 
 .\" Copyright (c) 1994 Theo de Raadt
 .\" All rights reserved.
@@ -32,24 +32,24 @@
 .Dt RPC.RQUOTAD 8
 .Os BSD 4.3
 .Sh NAME
-.Nm rquotad ,
-.Nm rpc.rquotad 
+.Nm rpc.rquotad ,
+.Nm rquotad
 .Nd remote quota server 
 .Sh SYNOPSIS
 .Nm /usr/libexec/rpc.rquotad
 .Sh DESCRIPTION
-.Nm rpc.rquotad
+.Nm
 is a
 .Xr rpc 3
 server which returns quotas for a user of a local filesystem
 which is NFS-mounted onto a remote machine. 
 .Xr quota 1
 uses the results to display user quotas for remote filesystems.
-.Nm rpc.rquotad
+.Nm
 is normally invoked by
 .Xr inetd 8 .
 .Pp
-.Nm rpc.rquotad
+.Nm
 uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rquota.x .
 .Sh BUGS
