@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.370 2001/10/24 00:14:47 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.371 2001/10/24 00:19:21 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.365 2001/10/24 00:13:41 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.366 2001/10/24 00:18:49 thorpej Exp 
  */
 
 /*
@@ -1550,6 +1550,10 @@
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
+
+/* Powerhouse Systems products */
+#define	PCI_PRODUCT_POWERHOUSE_POWERTOP	0x6037		/* PowerTop PowerPC system controller */
+#define	PCI_PRODUCT_POWERHOUSE_POWERPRO	0x6073		/* PowerPro PowerPC system controller */
 
 /* ProLAN products - XXX better descriptions */
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
