@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.69 2000/01/25 01:17:41 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.70 2000/01/25 06:53:26 jlam Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
