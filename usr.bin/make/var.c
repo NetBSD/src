@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -435,12 +435,17 @@ Var_Set (name, val, ctxt)
     GNode          *ctxt;	/* context in which to set it */
 {
     register Var   *v;
-
+    char *cp = name;
+    
     /*
      * We only look for a variable in the given context since anything set
      * here will override anything in a lower context, so there's not much
      * point in searching them all just to save a bit of memory...
      */
+    if ((name = strchr(cp, '$'))) {
+	name = Var_Subst(NULL, cp, ctxt, 0);
+    } else
+	name = cp;
     v = VarFind (name, ctxt, 0);
     if (v == (Var *) NIL) {
 	VarAdd (name, val, ctxt);
@@ -459,6 +464,8 @@ Var_Set (name, val, ctxt)
     if (ctxt == VAR_CMD) {
 	setenv(name, val, 1);
     }
+    if (name != cp)
+	free(name);
 }
 
 /*-
@@ -491,7 +498,13 @@ Var_Append (name, val, ctxt)
 {
     register Var   *v;
     Hash_Entry	   *h;
+    char *cp = name;
 
+    if ((name = strchr(cp, '$'))) {
+	name = Var_Subst(NULL, cp, ctxt, 0);
+    } else
+	name = cp;
+    
     v = VarFind (name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == (Var *) NIL) {
@@ -517,6 +530,8 @@ Var_Append (name, val, ctxt)
 	    Hash_SetValue(h, v);
 	}
     }
+    if (name != cp)
+	free(name);
 }
 
 /*-
