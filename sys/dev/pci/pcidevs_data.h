@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.22 2003/06/30 02:35:47 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.23 2003/07/10 15:54:23 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.24 2003/06/30 02:33:36 grant Exp 
+ *	NetBSD: pcidevs,v 1.428.2.25 2003/07/10 15:52:59 tron Exp 
  */
 
 /*
@@ -3514,6 +3514,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/100 VM (MOB) Network Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
+	    0,
+	    "Intel",
+	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
+	    0,
+	    "Intel",
+	    "PRO/100 VM Network Controller with 82562ET PHY",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
 	    0,
 	    "Intel",
@@ -4030,10 +4042,88 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801DB IDE Controller (UltraATA/100)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA,
+	    0,
+	    "Intel",
+	    "82801DB ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
 	    0,
 	    "Intel",
-	    "82801DB USB EHCI Controller",
+	    "82801DB/DBM USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC,
+	    0,
+	    "Intel",
+	    "82801EB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SATA,
+	    0,
+	    "Intel",
+	    "82801EB Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_0,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SMB,
+	    0,
+	    "Intel",
+	    "82801EB/ER SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_1,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
+	    0,
+	    "Intel",
+	    "82801EB/ER AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_MOD,
+	    0,
+	    "Intel",
+	    "82801EB/ER AC'97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_2,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_IDE,
+	    0,
+	    "Intel",
+	    "82801EB/ER IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_EHCI,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801ER_SATA,
+	    0,
+	    "Intel",
+	    "82801ER Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
@@ -4160,6 +4250,66 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82845G/GL Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_DRAM,
+	    0,
+	    "Intel",
+	    "82875P DRAM Controller / Host-Hub Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP,
+	    0,
+	    "Intel",
+	    "82875P Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
+	    0,
+	    "Intel",
+	    "31244 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_DDR,
+	    0,
+	    "Intel",
+	    "82855PM MCH Host Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_AGP,
+	    0,
+	    "Intel",
+	    "82855PM Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM,
+	    0,
+	    "Intel",
+	    "82855PM Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH,
+	    0,
+	    "Intel",
+	    "82855GM Host-to-Hub Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Memory Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_CP,
+	    0,
+	    "Intel",
+	    "82855PM GMCH Configuration Process",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
