@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.19 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_output.c,v 1.20 1999/10/28 06:37:32 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -70,8 +70,6 @@ int	db_output_position = 0;		/* output column */
 int	db_output_line = 0;		/* output line number */
 int	db_last_non_space = 0;		/* last non-space character */
 int	db_tab_stop_width = 8;		/* how wide are tab stops? */
-#define	NEXT_TAB(i) \
-	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)
 int	db_max_line = DB_MAX_LINE;	/* output max lines */
 int	db_max_width = DB_MAX_WIDTH;	/* output line width */
 
@@ -87,7 +85,7 @@ db_force_whitespace()
 
 	last_print = db_last_non_space;
 	while (last_print < db_output_position) {
-	    next_tab = NEXT_TAB(last_print);
+	    next_tab = DB_NEXT_TAB(last_print);
 	    if (next_tab <= db_output_position) {
 		while (last_print < next_tab) { /* DON'T send a tab!!! */
 			cnputc(' ');
@@ -170,7 +168,7 @@ db_putchar(c)
 	}
 	else if (c == '\t') {
 	    /* assume tabs every 8 positions */
-	    db_output_position = NEXT_TAB(db_output_position);
+	    db_output_position = DB_NEXT_TAB(db_output_position);
 	}
 	else if (c == ' ') {
 	    /* space */
