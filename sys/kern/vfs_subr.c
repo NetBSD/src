@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_subr.c	8.13 (Berkeley) 4/18/94
- *	$Id: vfs_subr.c,v 1.30 1994/06/08 11:28:56 mycroft Exp $
+ *	$Id: vfs_subr.c,v 1.31 1994/06/13 15:37:55 mycroft Exp $
  */
 
 /*
@@ -72,10 +72,8 @@ int	vttoif_tab[9] = {
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
 
-/*
- * Flag to permit forcible unmounting.
- */
-int doforce = 1;
+int doforce = 1;		/* 1 => permit forcible unmounting */
+int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 /*
  * Insq/Remq for the vnode usage lists.
