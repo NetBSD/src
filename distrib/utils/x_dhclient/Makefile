@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/10/18 18:26:00 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2000/12/27 08:12:01 mrg Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -25,7 +25,9 @@ COMOBJS+= ${COMSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 SRCS+= ${COMSRCS}
 
 CPPFLAGS+=-DSMALL -I${RSRCDIR} -I${RSRCDIR}/includes
+.if ${MACHINE} != "sparc64"
 COPTS+=	-Os
+.endif
 
 all: ${PROG}
 
