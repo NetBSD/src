@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1995/06/02 00:22:47 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1995/06/09 22:18:04 gwr Exp $
 
 PROG=	installboot
 MAN=	installboot.8
+BINDIR=/usr/mdec
 
 .include <bsd.prog.mk>
