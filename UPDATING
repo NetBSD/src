@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.119 2004/05/03 03:57:15 atatat Exp $
+$NetBSD: UPDATING,v 1.120 2004/05/03 04:12:21 atatat Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -19,10 +19,14 @@ Recent changes:
 	will not work on a kernel built from sources dated after
 	2004/04/25.  If you need a new sysctl binary but build.sh
 	does not work, make sure that your revision of
-	/usr/include/sys/sysctl.h is 1.112 (or later), and then
-	the following should provide a functioning sysctl binary:
+	src/sys/sys/sysctl.h is 1.112 (or later), and then the
+	do the following:
 
-	cd src/sbin/sysctl
+	cd /usr/src (or wherever your source tree is)
+	make USETOOLS=no includes
+	cd lib/libc
+	make USETOOLS=no dependall install
+	cd ../../sbin/sysctl
 	make USETOOLS=no dependall install
 
 20040425:
