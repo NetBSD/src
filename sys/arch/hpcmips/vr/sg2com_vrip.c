@@ -1,4 +1,4 @@
-/*	$NetBSD: sg2com_vrip.c,v 1.2 2001/12/29 09:26:23 takemura Exp $	*/
+/*	$NetBSD: sg2com_vrip.c,v 1.3 2002/01/02 10:09:35 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -68,6 +68,7 @@ struct sg2com_vrip_softc {
 };
 static struct bus_space_tag sg2com_vrip_cniotx;
 static bus_space_tag_t sg2com_vrip_cniot = &sg2com_vrip_cniotx;
+static int sg2com_vrip_cniobase;
 
 static int sg2com_vrip_probe(struct device *, struct cfdata *, void *);
 static void sg2com_vrip_attach(struct device *, struct device *, void *);
@@ -205,6 +206,7 @@ sg2com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate,
 		DPRINTF(("sg2com_vrip_cndb_attach(): probe failed\n"));
 		return (ENOTTY);
 	}
+	sg2com_vrip_cniobase = iobase;
 	DPRINTF(("sg2com_vrip_cndb_attach(): probe succeeded\n"));
 #ifdef KGDB
 	if (kgdb)
@@ -240,7 +242,8 @@ sg2com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 	int res;
 	
 	if (sg2com_vrip_cniot->bs_base == iot &&
-	    com_is_console(sg2com_vrip_cniot->bs_base, va->va_addr, 0)) {
+	    sg2com_vrip_cniobase == va->va_addr &&
+	    com_is_console(sg2com_vrip_cniot, va->va_addr, 0)) {
 		/*
 		 *  We have alredy probed.
 		 */
@@ -268,10 +271,17 @@ sg2com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	struct sg2com_vrip_softc *vsc = (void *)self;
 	struct com_softc *sc = &vsc->sc_com;
 	struct vrip_attach_args *va = aux;
-	bus_space_tag_t iot = &vsc->sc_iot;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	sg2com_vrip_iot_init(iot, va->va_iot);
+	if (sg2com_vrip_cniot->bs_base == va->va_iot &&
+	    sg2com_vrip_cniobase == va->va_addr &&
+	    com_is_console(sg2com_vrip_cniot, va->va_addr, 0)) {
+		iot = sg2com_vrip_cniot;
+	} else {
+		iot = &vsc->sc_iot;
+		sg2com_vrip_iot_init(iot, va->va_iot);
+	}
 	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
 		printf(": can't map bus space\n");
 		return;
