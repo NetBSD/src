@@ -1,5 +1,7 @@
-#	$NetBSD: files.sh3,v 1.25 2002/03/27 10:44:39 uch Exp $
+#	$NetBSD: files.sh3,v 1.26 2002/04/20 19:59:11 thorpej Exp $
 #
+
+defflag	opt_cputype.h		SH3 SH4
 
 defparam	PCLOCK
 defflag	opt_kstack_debug.h	KSTACK_DEBUG
