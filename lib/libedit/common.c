@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.13 2002/11/15 14:32:33 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.14 2002/11/20 16:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.13 2002/11/15 14:32:33 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.14 2002/11/20 16:50:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -905,25 +905,13 @@ ed_command(EditLine *el, int c)
 	char tmpbuf[EL_BUFSIZ];
 	int tmplen;
 
-	el->el_line.buffer[0] = '\0';
-	el->el_line.lastchar = el->el_line.buffer;
-	el->el_line.cursor = el->el_line.buffer;
+	tmplen = c_gets(el, tmpbuf, "\n: ");
+	term__putc('\n');
 
-	c_insert(el, 3);	/* prompt + ": " */
-	*el->el_line.cursor++ = '\n';
-	*el->el_line.cursor++ = ':';
-	*el->el_line.cursor++ = ' ';
-	re_refresh(el);
+	if (tmplen < 0 || (tmpbuf[tmplen] = 0, parse_line(el, tmpbuf)) == -1)
+		term_beep(el);
 
-	tmplen = c_gets(el, tmpbuf);
-	tmpbuf[tmplen] = '\0';
-
-	el->el_line.buffer[0] = '\0';
-	el->el_line.lastchar = el->el_line.buffer;
-	el->el_line.cursor = el->el_line.buffer;
-
-	if (parse_line(el, tmpbuf) == -1)
-		return (CC_ERROR);
-	else
-		return (CC_REFRESH);
+	el->el_map.current = el->el_map.key;
+	re_clear_display(el);
+	return CC_REFRESH;
 }
