@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2003/07/01 13:58:37 wiz Exp $
+# $NetBSD: Makefile,v 1.18 2003/10/20 00:54:37 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -50,13 +50,14 @@ MDOCFILES=	doc-common doc-ditroff doc-nroff doc-syms \
 
 .if ${MKSHARE} != "no"
 FILESDIR=	${TMACDIR}
-dependall: ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
-install: ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
+realall: ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
 
 .for f in ${MDOCFILES}
 FILES+= $f-s
 FILESNAME_$f-s=mdoc/$f
 $f-s: $f
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -f ${DIST_DIR}/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
 
@@ -64,6 +65,8 @@ $f-s: $f
 FILES+= $f-s
 FILESNAME_$f-s=$f
 $f-s: $f
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -f ${DIST_DIR}/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
 
@@ -71,6 +74,8 @@ $f-s: $f
 FILES+= $f-s
 FILESNAME_$f-s=$f
 $f-s: $f
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -e "s;@TMAC_AN_PREFIX@;${tmac_an_prefix};g" \
 	    -e "s;@TMAC_S_PREFIX@;${tmac_s_prefix};g" \
 	    -e "s;@PNMTOPS_NOSETPAGE@;pnmtops -nosetpage;g" \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2003/09/02 06:36:22 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.8 2003/10/20 00:54:36 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -89,16 +89,21 @@ CXXFLAGS+=	-fno-rtti -fno-exceptions
 USE_LIBSTDCXX=	no
 .endif
 
-.y.o:
-	$(YACC) $(YFLAGS) $(.IMPSRC)
-	mv -f y.tab.c $(.PREFIX).cpp
-	mv -f y.tab.h $(.PREFIX)_tab.h
-	${CXX} ${CXXFLAGS} -c $(.PREFIX).cpp -o ${.TARGET}
+
+.ifdef GROFFYSRCS
+YFLAGS+=	-d
+SRCS+=		${GROFFYSRCS:.y=.cpp}
+DPSRCS+=	${GROFFYSRCS:.y=.cpp}
+CLEANFILES+=	${GROFFYSRCS:.y=.cpp} ${GROFFYSRCS:.y=_tab.h}
+.endif
 
 .y.cpp:
-	$(YACC) $(YFLAGS) $(.IMPSRC)
-	mv -f y.tab.c $(.PREFIX).cpp
-	mv -f y.tab.h $(.PREFIX)_tab.h
+	${_MKMSGYACC}
+	${_MKCMD}\
+	${YACC.y} -o ${.TARGET} ${.IMPSRC}
+	${_MKCMD}\
+	mv -f ${.PREFIX}.h ${.PREFIX}_tab.h
+
 
 .SUFFIXES: .man .1 .2 .3 .4 .5 .6 .7 .8
 
@@ -106,9 +111,11 @@ version=`cat $(GROFF_DIST)/VERSION`
 revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 
 .man.8 .man.7 .man.6 .man.5 .man.4 .man.3 .man.2 .man.1:
-	@${ECHO} Making $@ from $<
-	@-rm -f $@
-	@sed -e "s;@BINDIR@;${BINDIR};g" \
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	rm -f $@
+	${_MKCMD}\
+	sed -e "s;@BINDIR@;${BINDIR};g" \
 	-e "s;@FONTDIR@;$(fontdir);g" \
 	-e "s;@LOCALFONTDIR@;$(localfontdir);g" \
 	-e "s;@LEGACYFONTDIR@;$(legacyfontdir);g" \
@@ -140,8 +147,11 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 .SUFFIXES: .sh .pl
 
 .sh .pl:
-	@${ECHO} Making ${.TARGET} from ${.IMPSRC}
-	@sed -e "s|@BINDIR@|${BINDIR}|g" \
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	rm -f $@
+	${_MKCMD}\
+	sed -e "s|@BINDIR@|${BINDIR}|g" \
 	     -e "s;@FONTDIR@;$(fontdir);g" \
 	     -e "s|@SEP@|:|g" \
 	     -e "s|@VERSION@|$(version)$(revision)|" \
