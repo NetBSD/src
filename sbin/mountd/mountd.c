@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	5.14 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mountd.c,v 1.9 1993/09/09 16:34:34 ws Exp $";
+static char rcsid[] = "$Id: mountd.c,v 1.10 1994/01/06 13:52:00 deraadt Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -241,8 +241,8 @@ mntsrv(rqstp, transp)
 		}
 
 		/* Check to see if it's a valid dirpath */
-		if (stat(dirpath, &stb) < 0 || (stb.st_mode&S_IFMT) !=
-			S_IFDIR) {
+		if (stat(dirpath, &stb) < 0 ||
+		    (!S_ISDIR(stb.st_mode) && !S_ISREG(stb.st_mode))) {
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
 				syslog(LOG_ERR, "Can't send reply");
 			return;
@@ -516,10 +516,11 @@ get_exportlist()
 		 */
 		savedc = *endcp;
 		*endcp = '\0';
-		if (stat(cp, &sb) < 0 || (sb.st_mode & S_IFMT) != S_IFDIR) {
+		if (stat(cp, &sb) < 0 ||
+		    (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))) {
 			syslog(LOG_ERR,
 			    "Bad Exports File, %s: %s, mountd Failed",
-			    cp, "Not a directory");
+			    cp, "Not a directory or regular file");
 			exit(2);
 		}
 		fep = (struct exportlist *)0;
