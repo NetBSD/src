@@ -1,4 +1,4 @@
-.TH REGEX 7 "17 May 1993"
+.TH REGEX 7 "7 Feb 1994"
 .BY "Henry Spencer"
 .SH NAME
 regex \- POSIX 1003.2 regular expressions
@@ -133,12 +133,14 @@ There are two special cases\(dg of bracket expressions:
 the bracket expressions `[[:<:]]' and `[[:>:]]' match the null string at
 the beginning and end of a word respectively.
 A word is defined as a sequence of
-.I alnum
-characters (as defined by
-.IR ctype (3))
+word characters
 which is neither preceded nor followed by
+word characters.
+A word character is an
 .I alnum
-characters.
+character (as defined by
+.IR ctype (3))
+or an underscore.
 This is an extension,
 compatible with but not specified by POSIX 1003.2,
 and should be used with
@@ -227,3 +229,5 @@ Avoid using them.
 1003.2's specification of case-independent matching is vague.
 The ``one case implies all cases'' definition given above
 is current consensus among implementors as to the right interpretation.
+.PP
+The syntax for word boundaries is incredibly ugly.
