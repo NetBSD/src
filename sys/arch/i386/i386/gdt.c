@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.17 1999/05/12 19:28:28 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.18 1999/06/18 06:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ gdt_init()
 	old_gdt = gdt;
 	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt,
-	    (vaddr_t)gdt + min_len, FALSE);
+	    (vaddr_t)gdt + min_len, FALSE, FALSE);
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 
 	setregion(&region, gdt, max_len - 1);
@@ -205,7 +205,7 @@ gdt_grow()
 	new_len = old_len << 1;
 
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
-	    (vaddr_t)gdt + new_len, FALSE);
+	    (vaddr_t)gdt + new_len, FALSE, FALSE);
 }
 
 void
@@ -218,7 +218,7 @@ gdt_shrink()
 	new_len = old_len >> 1;
 
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
-	    (vaddr_t)gdt + old_len, TRUE);
+	    (vaddr_t)gdt + old_len, TRUE, FALSE);
 }
 
 /*
