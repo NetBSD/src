@@ -1,3 +1,5 @@
+/*	$NetBSD: ns87307.c,v 1.3 1998/05/01 21:18:40 cgd Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
