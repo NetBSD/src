@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 1996/12/23 08:37:41 matthias Exp $	*/
+/*	$NetBSD: psl.h,v 1.19 1997/11/13 20:57:31 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,9 +99,9 @@
 struct iv {
 	void (*iv_vec) __P((void *));
 	void *iv_arg;
-	int iv_level;
-	int iv_mask;
-	int iv_cnt;
+	long iv_level;
+	long iv_mask;
+	long iv_cnt;
 	char *iv_use;
 };
 
