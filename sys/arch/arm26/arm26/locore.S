@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.17 2001/08/20 23:10:51 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.18 2001/08/21 22:42:17 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -441,7 +441,7 @@ ENTRY(cpu_loswitch)
 	stmfd	r2!, {r4-r11, r13-r14}	/* Save all relevant registers */
 	str	r2, [r0]		/* Save switchframe pointer */
 	ldmfd	r1, {r4-r11, r13-r14}	/* Restore from old switchframe */
-	movs	pc, r14			/* and return */
+	mov	pc, r14			/* and return */
 
 	/*
 	 * This funny little routine implements starting a process.
@@ -468,13 +468,13 @@ Lproc_trampoline_nofunc:
 ENTRY(setjmp)
 	stmia	r0, {r4-r11, r13-r14}	/* Save relevant registers */
 	mov	r0, #0			/* Return 0 */
-	movs	pc, lr
+	mov	pc, lr
 
 /* LINTSTUB: Func: void longjmp(label_t *) */
 ENTRY(longjmp)
 	ldmia	r0, {r4-r11, r13-r14}	/* Restore registers */
 	mov	r0, #1			/* Return 1 through longjmp */
-	movs	pc, lr
+	mov	pc, lr
 
 #ifdef DDB
 /* Enter DDB -- shove registers in a trapframe first */
@@ -482,7 +482,7 @@ ENTRY(longjmp)
 ENTRY(cpu_Debugger)
 	stmfd	r13!, {r14}
 	.word	KERNEL_BREAKPOINT
-	ldmfd	r13!, {pc}^
+	ldmfd	r13!, {pc}
 #endif
 
 /*
@@ -498,4 +498,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.17 2001/08/20 23:10:51 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.18 2001/08/21 22:42:17 bjh21 Exp $")
