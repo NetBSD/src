@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 1997/07/29 09:58:07 fair Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 1997/10/19 22:29:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -178,6 +178,7 @@ struct fd_type fd_types[] = {
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
+	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,0xf6,1, "1.2MB/NEC" } /* 1.2 MB japanese format */
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -655,7 +656,8 @@ fdstrategy(bp)
 	if (unit >= fd_cd.cd_ndevs ||
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
+	    (((bp->b_bcount % FD_BSIZE(fd)) != 0 ||
+	      (bp->b_blkno * DEV_BSIZE) % FD_BSIZE(fd) != 0) &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -665,10 +667,11 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	sz = howmany(bp->b_bcount, FDC_BSIZE);
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	if (bp->b_blkno + sz > fd->sc_type->size) {
-		sz = fd->sc_type->size - bp->b_blkno;
+	if (bp->b_blkno + sz > (fd->sc_type->size * DEV_BSIZE) / FD_BSIZE(fd)) {
+		sz = (fd->sc_type->size * DEV_BSIZE) / FD_BSIZE(fd)
+		     - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -683,7 +686,8 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
+ 	bp->b_cylin = (bp->b_blkno * DEV_BSIZE) /
+		      (FD_BSIZE(fd) * fd->sc_type->seccyl);
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
@@ -1219,7 +1223,7 @@ loop:
 		fdc->sc_errors = 0;
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
-		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
+		fd->sc_blkno = (bp->b_blkno * DEV_BSIZE) / FD_BSIZE(fd);
 		untimeout(fd_motor_off, fd);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
@@ -1290,10 +1294,10 @@ loop:
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = min(nblks, fd->sc_bcount / FD_BSIZE(fd));
+		nblks = min(nblks, FDC_MAXIOSIZE / FD_BSIZE(fd));
 		fd->sc_nblks = nblks;
-		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
+		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FD_BSIZE(fd);
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -1433,7 +1437,8 @@ loop:
 		}
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
-			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+			    fd->sc_skip / FD_BSIZE(fd),
+			    (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
 		} else {
@@ -1563,7 +1568,7 @@ fdcretry(fdc)
 	fail:
 		if ((fd->sc_opts & FDOPT_SILENT) == 0) {
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
-				fd->sc_skip / FDC_BSIZE,
+				fd->sc_skip / FD_BSIZE(fd),
 				(struct disklabel *)NULL);
 
 			printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
@@ -1848,8 +1853,9 @@ fdformat(dev, finfo, p)
 	 * Calculate a fake blkno, so fdstrategy() would initiate a
 	 * seek to the requested cylinder.
 	 */
-	bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
-		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
+	bp->b_blkno = ((finfo->cyl * (type->sectrac * type->heads)
+		       + finfo->head * type->sectrac) * FD_BSIZE(fd))
+		      / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (caddr_t)finfo;
@@ -1898,7 +1904,7 @@ fdgetdisklabel(dev)
 	bzero(lp, sizeof(struct cpu_disklabel));
 
 	lp->d_type = DTYPE_FLOPPY;
-	lp->d_secsize = FDC_BSIZE;
+	lp->d_secsize = FD_BSIZE(fd);
 	lp->d_secpercyl = fd->sc_type->seccyl;
 	lp->d_nsectors = fd->sc_type->sectrac;
 	lp->d_ncylinders = fd->sc_type->cylinders;
