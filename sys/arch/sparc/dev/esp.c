@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.30 1995/11/28 22:49:33 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.31 1995/12/01 01:00:55 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -436,12 +436,12 @@ esp_init(sc, doreset)
 		sc->sc_flags |= ESP_ABORTING;
 		sc->sc_state = ESP_IDLE;
 		if (sc->sc_nexus != NULL) {
-			sc->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
+			sc->sc_nexus->xs->error = XS_TIMEOUT;
 			esp_done(sc->sc_nexus);
 		}
 		sc->sc_nexus = NULL;
 		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
-			ecb->xs->error = XS_DRIVER_STUFFUP;
+			ecb->xs->error = XS_TIMEOUT;
 			esp_done(ecb);
 		}
 	}
@@ -621,7 +621,6 @@ esp_scsi_cmd(xs)
 	splx(s);
 		
 	if (ecb == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		ESP_MISC(("TRY_AGAIN_LATER"));
 		return TRY_AGAIN_LATER;
 	}
@@ -776,7 +775,7 @@ esp_done(ecb)
 	 */
 	if (xs->error == XS_NOERROR) {
 		if ((ecb->flags & ECB_ABORTED) != 0) {
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = XS_TIMEOUT;
 		} else if ((ecb->flags & ECB_CHKSENSE) != 0) {
 			xs->error = XS_SENSE;
 		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
@@ -1393,12 +1392,6 @@ espintr(sc)
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
 				}
-#if 0 /* esp_init will STUFFUP all nexi */
-				if (sc->sc_state == ESP_HASNEXUS) {
-					ecb->xs->error = XS_DRIVER_STUFFUP;
-					esp_done(ecb);
-				}
-#endif
 				esp_init(sc, 0); /* Restart everything */
 				return 1;
 			}
