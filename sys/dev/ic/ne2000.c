@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.2 1997/10/14 22:54:09 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.3 1997/10/15 01:15:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -392,21 +392,23 @@ ne2000_write_mbuf(sc, m, buf)
 	savelen = m->m_pkthdr.len;
 
 	/* Select page 0 registers. */
-	NIC_PUT(nict, nich, ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
+	bus_space_write_1(nict, nich, ED_P0_CR,
+	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/* Reset remote DMA complete flag. */
-	NIC_PUT(nict, nich, ED_P0_ISR, ED_ISR_RDC);
+	bus_space_write_1(nict, nich, ED_P0_ISR, ED_ISR_RDC);
 
 	/* Set up DMA byte count. */
-	NIC_PUT(nict, nich, ED_P0_RBCR0, savelen);
-	NIC_PUT(nict, nich, ED_P0_RBCR1, savelen >> 8);
+	bus_space_write_1(nict, nich, ED_P0_RBCR0, savelen);
+	bus_space_write_1(nict, nich, ED_P0_RBCR1, savelen >> 8);
 
 	/* Set up destination address in NIC mem. */
-	NIC_PUT(nict, nich, ED_P0_RSAR0, buf);
-	NIC_PUT(nict, nich, ED_P0_RSAR1, buf >> 8);
+	bus_space_write_1(nict, nich, ED_P0_RSAR0, buf);
+	bus_space_write_1(nict, nich, ED_P0_RSAR1, buf >> 8);
 
 	/* Set remote DMA write. */
-	NIC_PUT(nict, nich, ED_P0_CR, ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
+	bus_space_write_1(nict, nich,
+	    ED_P0_CR, ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/*
 	 * Transfer the mbuf chain to the NIC memory.  NE2000 cards
