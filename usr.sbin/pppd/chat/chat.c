@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.21 2000/12/20 01:29:21 cgd Exp $	*/
+/*	$NetBSD: chat.c,v 1.22 2001/01/16 02:37:03 cgd Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.21 2000/12/20 01:29:21 cgd Exp $");
+__RCSID("$NetBSD: chat.c,v 1.22 2001/01/16 02:37:03 cgd Exp $");
 #endif
 #endif
 
@@ -1266,7 +1266,7 @@ register char *s;
 
     if (verbose) {
 	if (quiet)
-	    logf("send (?????\?)");
+	    logf("send (?????\?)");	/* backslash to avoid trigraph ??) */
 	else
 	    logf("send (%v)", s);
     }
