@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.1 1998/10/15 00:42:45 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.2 1999/03/06 12:30:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.1 1998/10/15 00:42:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.2 1999/03/06 12:30:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ extern u_int32_t iplmask[];
 struct devnametobdevmaj pmax_nam2blk[] = {
 	{ "sd",		19 },
 	{ "cd",		25 },
+	{ "md",		17 },
 	{ NULL,		0 },
 };
 
