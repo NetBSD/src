@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_ident.c,v 1.2 2003/07/15 03:35:59 lukem Exp $	*/
+/*	$NetBSD: cpu_ident.c,v 1.3 2003/11/01 17:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ident.c,v 1.2 2003/07/15 03:35:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ident.c,v 1.3 2003/11/01 17:35:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ struct sh5_tlb_ops sh5_tlb_ops;
  * architecture. We use its cache/tlb description in the case where
  * we don't recognise the CPU ID.
  *
- * This is enough to limp along to the point where we can bitch to
+ * This is enough to limp along to the point where we can whine to
  * the user that their cpu is not supported.
  */
 static struct sh5_cache_ops stb1_cache_ops = {
@@ -115,7 +115,7 @@ cpu_identify(void)
 	default:
 		/*
 		 * Default to the STB1 ops.
-		 * We'll bitch later about lack of specific cpu support.
+		 * We'll whine later about lack of specific cpu support.
 		 */
 		sh5_cache_ops = stb1_cache_ops;
 		sh5_tlb_ops = stb1_tlb_ops;

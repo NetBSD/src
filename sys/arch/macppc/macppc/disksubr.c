@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2003/11/01 17:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -96,7 +96,7 @@
 
 /* rewritten, 2-5-93 MLF */
 /* its alot cleaner now, and adding support for new partition types
- * isn't a bitch anymore
+ * is possible without causing serious brain-damage
  * known bugs:
  * 1) when only an HFS_PART part exists on a drive it gets assigned to "B"
  * this is because of line 623 of sd.c, I think this line should go.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2003/10/08 04:25:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2003/11/01 17:35:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

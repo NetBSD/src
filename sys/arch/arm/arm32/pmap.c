@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2003/10/29 05:48:19 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2003/11/01 17:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/10/29 05:48:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/11/01 17:35:42 jdolecek Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3882,7 +3882,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 
 		/*
 		 * Make sure the descriptor itself has the correct cache mode.
-		 * If not, fix it, but bitch about the problem. Port-meisters
+		 * If not, fix it, but whine about the problem. Port-meisters
 		 * should consider this a clue to fix up their initarm()
 		 * function. :)
 		 */
