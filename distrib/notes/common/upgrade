@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.16 2002/07/09 14:32:38 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.17 2002/07/15 12:48:00 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .Pp
 The upgrade to
 .Nx \*V
-is a binary upgrade; it can be quite difficult
-to advance to a later version by recompiling from source due primarily
-to interdependencies in the various components.
+is a binary upgrade; it can be quite difficult to update the system
+from an earlier version by recompiling from source, primarily due to
+interdependencies in the various components.
 .Pp
 .ie r_atari \{\
 To do the upgrade, you must first boot the system as described in the
@@ -91,8 +91,9 @@ Since upgrading involves replacing the boot blocks on your
 .Nx
 partition, the kernel, and most of the system binaries, it has the
 potential to cause data loss.
-You are strongly advised to .Em back up any important data on your disk,
-whether on the
+You are strongly advised to 
+.Em back up 
+any important data on your disk, whether on the
 .Nx
 partition or on
 another operating system's partition, before beginning the upgrade
