@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.1 2002/04/23 05:51:14 manu Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.1.2.1 2002/05/16 04:35:10 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1 2002/04/23 05:51:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1.2.1 2002/05/16 04:35:10 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.1 2002/04/23 05:51:14 manu Exp $");
 #include <sys/vnode.h>
 
 #include <compat/irix/irix_usema.h>
+
+dev_type_open(irix_usemaopen);
+dev_type_close(irix_usemaclose);
+dev_type_read(irix_usemaread);
+dev_type_write(irix_usemawrite);
+dev_type_ioctl(irix_usemaioctl);
+dev_type_poll(irix_usemapoll);
+
+const struct cdevsw irix_usema_cdevsw = {
+	irix_usemaopen, irix_usemaclose, irix_usemaread, irix_usemawrite,
+	irix_usemaioctl, nostop, notty, irix_usemapoll, nommap,
+};
 
 struct irix_usema_softc {
 	struct device irix_usema_dev;
