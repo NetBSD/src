@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.43 2003/08/04 00:32:50 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.44 2003/08/04 22:29:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -200,7 +200,7 @@ _C_LABEL(dsitrap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bc	12,17,1f		/* branch if PSL_PR is set */
+	bt	17,1f			/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
 
@@ -208,7 +208,7 @@ _C_LABEL(dsitrap):
 	addis	%r31,%r31,_C_LABEL(battable)@ha
 	ldreg	%r30,_C_LABEL(battable)@l(%r31)
 	mtcr	%r30
-	bc	4,30,1f			/* branch if supervisor valid is
+	bf	30,1f			/* branch if supervisor valid is
 					   false */
 	/* get batl */
 	ldreg	%r31,_C_LABEL(battable)+SZREG@l(%r31)
@@ -261,7 +261,7 @@ _C_LABEL(dsi601trap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bc	12,17,1f		/* branch if PSL_PR is set */
+	bt	17,1f			/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,12,20,28	/* get "segment" battable offset */
 
@@ -269,7 +269,7 @@ _C_LABEL(dsi601trap):
 	addis	%r31,%r31,_C_LABEL(battable)@ha
 	ldreg	%r30,_C_LABEL(battable)+SZREG@l(%r31)
 	mtcr	%r30
-	bc	4,25,1f			/* branch if Valid is is false,
+	bf	25,1f			/* branch if Valid is is false,
 					   presently assumes supervisor only */
 
 	/* get batu */
@@ -770,7 +770,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	GET_CPUINFO(%r2);						\
 	ldreg	%r3,(savearea+CPUSAVE_SRR1)(%r2);			\
 	mtcr	%r3;							\
-	bc	4,17,1f;		/* branch if PSL_PR is false */	\
+	bf	17,1f;			/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(%r2,%r3);					\
 	RESTORE_USER_SRS(%r2,%r3);					\
@@ -801,6 +801,20 @@ disitrap:
 	mfdsisr	%r31
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_DAR)(%r1)
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_DSISR)(%r1)
+
+	mfsrr1	%r30
+	mtcr	%r30
+
+	bt	17,u_trap		/* branch if PSL_PR is true */
+	mfsprg1	%r1			/* restore [K]SP */
+	subf	%r30,%r30,%r1		/* get the distance between the KSP
+					   and the exception address */
+	cmplwi	%r30,NBPG		/* distance less than a page? */
+	bgt+	k_trap			/* no, use existing kernel stack */
+	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
+	ldptr	%r1,CI_SPILLSTK(%r1)	/* get top of spill stack */
+	b	k_trap
+
 	.globl	_C_LABEL(trapstart)
 _C_LABEL(trapstart):
 realtrap:
@@ -810,8 +824,9 @@ realtrap:
 	mfsprg1	%r1			/* restore SP (might have been
 					   overwritten) */
 s_trap:
-	bc	4,17,k_trap		/* branch if PSL_PR is false */
-	GET_CPUINFO(%r1)
+	bf	17,k_trap		/* branch if PSL_PR is false */
+u_trap:
+	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
 	ldptr	%r1,CI_CURPCB(%r1)
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */
 
@@ -843,7 +858,7 @@ trapexit:
 /* Test AST pending: */
 	ldreg	%r5,(FRAME_SRR1+(2*SZREG))(%r1)
 	mtcr	%r5
-	bc	4,17,1f			/* branch if PSL_PR is false */
+	bf	17,1f			/* branch if PSL_PR is false */
 	GET_CPUINFO(%r3)
 	ldint	%r4,CI_ASTPENDING(%r3)
 	andi.	%r4,%r4,1
@@ -945,7 +960,7 @@ _C_LABEL(sctrapexit):
 	streg	%r4,IFRAME_SRR0(%r1);					\
 	streg	%r3,IFRAME_SRR1(%r1);					\
 	mtcr	%r3;							\
-	bc	4,17,99f;	/* branch if PSL_PR is false */		\
+	bf	17,99f;	/* branch if PSL_PR is false */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(%r3,%r4);					\
 	CPU601_KERN_ENTRY(%r3,%r4);					\
@@ -991,7 +1006,7 @@ intr_exit:
 
 /* Returning to user mode? */
 	mtcr	%r6			/* saved SRR1 */
-	bc	4,17,1f			/* branch if PSL_PR is false */
+	bf	17,1f			/* branch if PSL_PR is false */
 
 	CPU601_KERN_LEAVE(%r3,%r4)
 	RESTORE_USER_SRS(%r3,%r4)
