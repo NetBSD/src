@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.15.6.1 1997/01/26 04:57:39 rat Exp $
+.\"	$NetBSD: sh.1,v 1.15.6.2 1997/03/04 15:18:16 mycroft Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1336,6 +1336,14 @@ to be taken. When the shell forks off a subshell, it
 resets trapped (but not ignored) signals to the
 default action. The trap command has no effect on
 signals that were ignored on entry to the shell.
+.TP
+type [name]...
+Interpret each name as a command and print the
+resolution of the command search. Possible resolutions are:
+shell keyword, alias, shell builtin, command, tracked alias
+and not found.  For aliases the alias expansion is printed;
+for commands and tracked aliases the complete pathname of
+the command is printed.
 .TP
 umask [ mask ]
 Set the value of umask (see umask(2)) to the specified

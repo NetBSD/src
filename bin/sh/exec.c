@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17.6.1 1997/01/26 04:57:17 rat Exp $	*/
+/*	$NetBSD: exec.c,v 1.17.6.2 1997/03/04 15:18:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.17.6.1 1997/01/26 04:57:17 rat Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.17.6.2 1997/03/04 15:18:10 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ static char rcsid[] = "$NetBSD: exec.c,v 1.17.6.1 1997/01/26 04:57:17 rat Exp $"
 #include "mystring.h"
 #include "show.h"
 #include "jobs.h"
+#include "alias.h"
 
 
 #define CMDTABLESIZE 31		/* should be prime */
@@ -842,4 +843,78 @@ unsetfunc(name)
 		return (0);
 	}
 	return (1);
+}
+
+/*
+ * Locate and print what a word is...
+ */
+
+int
+typecmd(argc, argv)
+	int argc;
+	char **argv;
+{
+	struct cmdentry entry;
+	struct tblentry *cmdp;
+	char **pp;
+	struct alias *ap;
+	int i;
+	int error = 0;
+	extern char *const parsekwd[];
+
+	for (i = 1; i < argc; i++) {
+		out1str(argv[i]);
+		/* First look at the keywords */
+		for (pp = (char **)parsekwd; *pp; pp++)
+			if (**pp == *argv[i] && equal(*pp, argv[i]))
+				break;
+
+		if (*pp) {
+			out1str(" is a shell keyword\n");
+			continue;
+		}
+
+		/* Then look at the aliases */
+		if ((ap = lookupalias(argv[i], 1)) != NULL) {
+			out1fmt(" is an alias for %s\n", ap->val);
+			continue;
+		}
+
+		/* Then check if it is a tracked alias */
+		if ((cmdp = cmdlookup(argv[i], 0)) != NULL) {
+			entry.cmdtype = cmdp->cmdtype;
+			entry.u = cmdp->param;
+		}
+		else {
+			/* Finally use brute force */
+			find_command(argv[i], &entry, 0, pathval());
+		}
+
+		switch (entry.cmdtype) {
+		case CMDNORMAL: {
+			int j = entry.u.index;
+			char *path = pathval(), *name;
+			do { 
+				name = padvance(&path, argv[i]);
+				stunalloc(name);
+			} while (--j >= 0);
+			out1fmt(" is%s %s\n",
+			    cmdp ? " a tracked alias for" : "", name);
+			break;
+		}
+		case CMDFUNCTION:
+			out1str(" is a shell function\n");
+			break;
+
+		case CMDBUILTIN:
+			out1str(" is a shell builtin\n");
+			break;
+
+		default:
+			out1str(" not found\n");
+			error |= 127;
+			break;
+		}
+	}
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.9.6.1 1997/01/26 04:57:18 rat Exp $	*/
+/*	$NetBSD: exec.h,v 1.9.6.2 1997/03/04 15:18:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,3 +69,4 @@ void getcmdentry __P((char *, struct cmdentry *));
 void addcmdentry __P((char *, struct cmdentry *));
 void defun __P((char *, union node *));
 int unsetfunc __P((char *));
+int typecmd __P((int, char **));
