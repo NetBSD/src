@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.5 2004/10/27 19:59:24 dsl Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.6 2004/10/28 21:14:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.5 2004/10/27 19:59:24 dsl Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.6 2004/10/28 21:14:52 dsl Exp $");
 #endif
 
 #include "namespace.h"
@@ -174,7 +174,7 @@ get_next_format_from_width(const char **pf)
 			RETURN(pf,f,FMTCHECK_PRECISION);
 		}
 		/* eat any precision (empty is allowed) */
-		while (isdigit(*f & 0xff)) f++;
+		while (isdigit((unsigned char)*f)) f++;
 		if (!*f) RETURN(pf,f,FMTCHECK_UNKNOWN);
 	}
 	RETURN(pf,f,get_next_format_from_precision(pf));
@@ -218,7 +218,7 @@ get_next_format(const char **pf, EFT eft)
 		RETURN(pf,f,FMTCHECK_WIDTH);
 	}
 	/* eat any width */
-	while (isdigit(*f & 0xff)) f++;
+	while (isdigit((unsigned char)*f)) f++;
 	if (!*f) {
 		RETURN(pf,f,FMTCHECK_UNKNOWN);
 	}
