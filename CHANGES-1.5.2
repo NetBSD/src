@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.22 2001/08/16 17:37:40 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.23 2001/08/16 18:53:23 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -255,3 +255,31 @@ sys/dev/pci/if_fxp_pci.c			1.19
 
   Add enable/disable hooks on devices that have ACPI power management
   capability, using D3 and D0 power states.
+
+lib/libossaudio/ossaudio.c			1.13-1.14
+lib/libossaudio/soundcard.h			1.11
+sys/compat/ossaudio/ossaudio.c			1.34-1.35
+
+  Correctly calculate input and output hardware buffer sizes.
+  Fixes PR lib/12796.
+
+dist/dhcp/*					sync at 2001-August-16
+distrib/notes/common/main			patch
+distrib/sets/lists/base/mi			1.270 by patch
+distrib/sets/lists/man/mi			1.390 by patch
+usr.sbin/dhcp/Makefile				sync with 1.12
+usr.sbin/dhcp/Makefile.inc			sync with 1.15
+usr.sbin/dhcp/client/Makefile			1.13-1.14
+usr.sbin/dhcp/clientscript/Makefile		1.1-1.2
+usr.sbin/dhcp/clientscript/dhclient-script	1.1
+usr.sbin/dhcp/common/Makefile			1.19
+usr.sbin/dhcp/dhcpctl/Makefile			1.2
+usr.sbin/dhcp/dst/Makefile			1.3-1.4
+usr.sbin/dhcp/minires/Makefile			1.4-1.5
+usr.sbin/dhcp/omapip/Makefile			1.4-1.5
+usr.sbin/dhcp/omshell/Makefile			1.1-1.2
+usr.sbin/dhcp/relay/Makefile			1.3
+usr.sbin/dhcp/server/Makefile			1.11-1.12
+usr.sbin/dhcp/(others)				remove
+
+  Update dhcp to Version 3, Release Candidate 10.
