@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/05 19:57:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2002/03/05 21:23:28 thorpej Exp $
+
+.include <bsd.own.mk>
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
@@ -63,5 +65,4 @@ clean cleandir distclean:
 # nothing to do here
 depend includes lint regress tags:
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
