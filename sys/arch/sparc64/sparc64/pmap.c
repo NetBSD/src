@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 1998/07/07 03:05:05 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 1998/07/08 04:43:21 thorpej Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define printf	db_printf */
@@ -840,7 +840,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			atop(mp->start),
 			atop(mp->size),
 			atop(mp->start),
-			atop(mp->size));
+			atop(mp->size),
+			VM_FREELIST_DEFAULT);
 #else
 		vm_page_physload(
 			atop(mp->start),

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 1998/07/04 22:18:40 jonathan Exp $ */
+/*	$NetBSD: pmap.c,v 1.120 1998/07/08 04:43:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -884,7 +884,8 @@ pmap_page_upload()
 				atop(avail_next),
 				atop(unavail_gap_start),
 				atop(avail_next),
-				atop(unavail_gap_start));
+				atop(unavail_gap_start),
+				VM_FREELIST_DEFAULT);
 #else
 			vm_page_physload(
 				atop(avail_next),
@@ -910,7 +911,7 @@ pmap_page_upload()
 			atop(start),
 			atop(end),
 			atop(start),
-			atop(end));
+			atop(end), VM_FREELIST_DEFAULT);
 #else
 		vm_page_physload(
 			atop(start),

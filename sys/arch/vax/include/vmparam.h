@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 1998/05/03 13:02:22 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 1998/07/08 04:43:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,6 +140,9 @@
 #define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_NOADD
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH /* XXX */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 struct pmap_physseg {
 };

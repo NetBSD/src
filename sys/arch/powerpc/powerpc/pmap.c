@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1998/06/21 13:30:43 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1998/07/08 04:43:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -499,7 +499,8 @@ pmap_bootstrap(kernelstart, kernelend)
 	for (mp = avail; mp->size; mp++)
 #if defined(UVM)
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
-			atop(mp->start), atop(mp->start + mp->size));
+			atop(mp->start), atop(mp->start + mp->size),
+			VM_FREELIST_DEFAULT);
 #else
 		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size));

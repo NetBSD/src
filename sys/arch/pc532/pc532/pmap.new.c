@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.5 1998/05/23 12:52:27 matthias Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.6 1998/07/08 04:43:19 thorpej Exp $	*/
 
 /*
  *
@@ -822,7 +822,8 @@ vm_offset_t kva_start;
    */
 
   uvm_page_physload(atop(avail_start), atop(avail_end),
-			atop(avail_start), atop(avail_end));
+			atop(avail_start), atop(avail_end),
+			VM_FREELIST_DEFAULT);
 
   /*
    * ensure the TLB is sync'd with reality by flushing it...

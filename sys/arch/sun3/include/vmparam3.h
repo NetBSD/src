@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.21 1998/02/20 21:51:29 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.22 1998/07/08 04:43:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -123,6 +123,9 @@
 #define VM_PHYSSEG_MAX		4	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 struct pmap_physseg {
 	/* NULL */

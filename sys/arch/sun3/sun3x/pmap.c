@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1998/06/09 20:47:18 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1998/07/08 04:43:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -128,7 +128,6 @@
 #if defined(UVM)
 #include <uvm/uvm.h>
 /* XXX - Gratuitous name changes... */
-#define vm_page_physload uvm_page_physload
 #define vm_set_page_size uvm_setpagesize
 #endif	/* UVM */
 
@@ -3691,7 +3690,11 @@ pmap_page_upload()
 		if (i == 0)
 			a = atop(avail_start);
 
+#if defined(UVM)
+		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(a, b, a, b);
+#endif
 
 		if (avail_mem[i].pmem_next == NULL)
 			break;

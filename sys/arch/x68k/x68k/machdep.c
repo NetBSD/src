@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1998/07/05 08:49:40 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1998/07/08 04:45:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -233,11 +233,13 @@ consinit()
 		vm_offset_t startmem = i == 0 ? avail_start : low[i];
 
 		uvm_page_physload(atop(startmem), atop(high[i]),
-				atop(startmem), atop(high[i]));
+				atop(startmem), atop(high[i]),
+				VM_FREELIST_DEFAULT);
 	}
 #else
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-			atop(avail_start), atop(avail_end));
+			atop(avail_start), atop(avail_end),
+			VM_FREELIST_DEFAILT);
 #endif
 #else	/* not UVM */
 #ifdef MACHINE_NONCONTIG

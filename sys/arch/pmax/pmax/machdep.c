@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 1998/07/04 22:18:36 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 1998/07/04 22:18:36 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -471,7 +471,8 @@ mach_init(argc, argv, code, cv)
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
 #if defined(UVM)
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last));
+	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
+	    VM_FREELIST_DEFAULT);
 #else
 	vm_page_physload(atop(first), atop(last), atop(first), atop(last));
 #endif

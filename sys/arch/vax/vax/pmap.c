@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1998/05/23 19:18:59 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.51 1998/07/08 04:43:23 thorpej Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -271,7 +271,8 @@ pmap_bootstrap()
 	 */
 #if defined(UVM)
 	uvm_page_physload(avail_start >> CLSHIFT, avail_end >> CLSHIFT,
-	    avail_start >> CLSHIFT, avail_end >> CLSHIFT);
+	    avail_start >> CLSHIFT, avail_end >> CLSHIFT,
+	    VM_FREELIST_DEFAULT);
 #endif
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);

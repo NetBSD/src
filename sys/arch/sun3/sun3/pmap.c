@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 1998/07/04 22:18:43 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 1998/07/08 04:43:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@
 #if defined(UVM)
 #include <uvm/uvm.h>
 /* XXX - Gratuitous name changes... */
-#define vm_page_physload uvm_page_physload
 #define vm_set_page_size uvm_setpagesize
 #define kmem_alloc uvm_km_alloc
 #endif	/* UVM */
@@ -1901,14 +1900,26 @@ pmap_page_upload()
 		 */
 		a = atop(avail_start);
 		b = atop(hole_start);
+#if defined(UVM)
+		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(a, b, a, b);
+#endif
 		c = atop(hole_start + hole_size);
 		d = atop(avail_end);
+#if defined(UVM)
+		uvm_page_physload(b, d, c, d, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(b, d, c, d);
+#endif
 	} else {
 		a = atop(avail_start);
 		d = atop(avail_end);
+#if defined(UVM)
+		uvm_page_physload(a, d, a, d, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(a, d, a, d);
+#endif
 	}
 }
 

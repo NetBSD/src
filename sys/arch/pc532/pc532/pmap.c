@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1998/05/19 19:00:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1998/07/08 04:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -292,7 +292,8 @@ pmap_bootstrap(virtual_start)
 	 */
 #if defined(UVM)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-			atop(avail_start), atop(avail_end));
+			atop(avail_start), atop(avail_end),
+			VM_FREELIST_DEFAULT);
 #else
 	vm_page_physload(atop(avail_start), atop(avail_end),
 			atop(avail_start), atop(avail_end));
