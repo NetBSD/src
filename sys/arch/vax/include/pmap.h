@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.48 2001/09/10 21:19:29 chris Exp $	   */
+/*	$NetBSD: pmap.h,v 1.49 2001/09/24 01:48:15 chs Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -157,6 +157,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #define pmap_collect(pmap)		/* No need so far */
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_deactivate(p)		/* Dont do anything */
 #define pmap_reference(pmap)		(pmap)->ref_count++
 
