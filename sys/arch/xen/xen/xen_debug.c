@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_debug.c,v 1.2 2004/05/07 13:56:48 cl Exp $	*/
+/*	$NetBSD: xen_debug.c,v 1.3 2005/03/09 22:39:21 bouyer Exp $	*/
 
 /*
  *
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.2 2004/05/07 13:56:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.3 2005/03/09 22:39:21 bouyer Exp $");
 
 #define XENDEBUG
 
@@ -81,7 +81,7 @@ printk(const char *fmt, ...)
 	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
 	va_end(ap);
 	buf[ret] = 0;
-	(void)HYPERVISOR_console_write(buf, ret);
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, ret, buf);
 }
 
 void
@@ -92,7 +92,7 @@ vprintk(const char *fmt, va_list ap)
 
 	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
 	buf[ret] = 0;
-	(void)HYPERVISOR_console_write(buf, ret);
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, ret, buf);
 }
 
 #endif

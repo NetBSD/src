@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.12 2004/12/10 20:05:05 jmc Exp $ */
+/* $NetBSD: xbd.c,v 1.13 2005/03/09 22:39:21 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12 2004/12/10 20:05:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.13 2005/03/09 22:39:21 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -69,12 +69,15 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12 2004/12/10 20:05:05 jmc Exp $");
 
 #include <dev/dkvar.h>
 #include <machine/xbdvar.h>
+
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#include <machine/hypervisor-ifs/hypervisor-if.h>
-#include <machine/hypervisor-ifs/vbd.h>
-#include <machine/events.h>
+#include <machine/evtchn.h>
+#include <machine/ctrl_if.h>
 
+
+static void	control_send(blkif_request_t *, blkif_response_t *);
+static void	send_interface_connect(void);
 
 static void xbd_attach(struct device *, struct device *, void *);
 static int xbd_detach(struct device *, int);
@@ -89,7 +92,7 @@ extern struct cfdriver xbd_cd;
 
 #if NWD > 0
 int xbd_wd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(wd, sizeof(struct xbd_softc),
+CFATTACH_DECL(wd_xen, sizeof(struct xbd_softc),
     xbd_wd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver wd_cd;
@@ -97,7 +100,7 @@ extern struct cfdriver wd_cd;
 
 #if NSD > 0
 int xbd_sd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(sd, sizeof(struct xbd_softc),
+CFATTACH_DECL(sd_xen, sizeof(struct xbd_softc),
     xbd_sd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver sd_cd;
@@ -105,7 +108,7 @@ extern struct cfdriver sd_cd;
 
 #if NCD > 0
 int xbd_cd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(cd, sizeof(struct xbd_softc),
+CFATTACH_DECL(cd_xen, sizeof(struct xbd_softc),
     xbd_cd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver cd_cd;
@@ -184,11 +187,13 @@ static dev_t xbd_cd_cdev_major;
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
+#if 0
 static void	xbd_update_create_kthread(void *);
 static void	xbd_update_kthread(void *);
 static int	xbd_update_handler(void *);
+#endif
 
-static int	xbdinit(struct xbd_softc *, xen_disk_t *, struct dk_intf *);
+static int	xbdinit(struct xbd_softc *, vdisk_t *, struct dk_intf *);
 
 /* Pseudo-disk Interface */
 static struct dk_intf dkintf_esdi = {
@@ -352,18 +357,42 @@ static int bufq_users = 0;
 
 #define MAX_VBDS 64
 static int nr_vbds;
-static xen_disk_t *vbd_info;
+static vdisk_t *vbd_info;
 
-static blk_ring_t *blk_ring = NULL;
-static BLK_RING_IDX resp_cons; /* Response consumer for comms ring. */
-static BLK_RING_IDX req_prod;  /* Private request producer.         */
-static BLK_RING_IDX last_req_prod;  /* Request producer at last trap. */
+static blkif_ring_t *blk_ring = NULL;
+static BLKIF_RING_IDX resp_cons; /* Response consumer for comms ring. */
+static BLKIF_RING_IDX req_prod;  /* Private request producer.         */
+static BLKIF_RING_IDX last_req_prod;  /* Request producer at last trap. */
 
-#define STATE_ACTIVE    0
-#define STATE_SUSPENDED 1
-#define STATE_CLOSED    2
-static unsigned int state = STATE_SUSPENDED;
+#define STATE_CLOSED		0
+#define STATE_DISCONNECTED	1
+#define STATE_CONNECTED		2
+static unsigned int state = STATE_CLOSED;
 
+static int in_autoconf; /* are we still in autoconf ? */
+static unsigned int blkif_evtchn = 0;
+static unsigned int blkif_irq = 0;
+static unsigned int blkif_handle = 0;
+
+static int blkif_control_rsp_valid = 0;
+static blkif_response_t blkif_control_rsp;
+
+/* block device interface info. */
+struct xbd_ctrl {
+
+	cfprint_t xc_cfprint;
+	struct device *xc_parent;
+#define BLK_CTRL_NMSGS 8
+	ctrl_msg_t *msgs[BLK_CTRL_NMSGS]; /* ring of pending messages */
+	volatile int msg_producer, msg_consumer;
+	struct proc *sc_thread;
+
+};
+
+static struct xbd_ctrl blkctrl;
+
+static void xbdc_create_thread(void *);
+static void xbdc_thread(void *);
 
 #define XBDUNIT(x)		DISKUNIT(x)
 #define GETXBD_SOFTC(_xs, x)	if (!((_xs) = getxbd_softc(x))) return ENXIO
@@ -402,70 +431,353 @@ getxbd_softc(dev_t dev)
 }
 
 static int
-get_vbd_info(xen_disk_t *disk_info)
+get_vbd_info(vdisk_t *disk_info)
 {
-	int err;
-	block_io_op_t op; 
+	vdisk_t *buf;
+	int nr;
+	blkif_request_t req;
+	blkif_response_t rsp;
+	paddr_t pa;
 
+	buf = (vdisk_t *)uvm_km_kmemalloc1(kmem_map, NULL,
+	    PAGE_SIZE, PAGE_SIZE, UVM_UNKNOWN_OFFSET, 0);
+	pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
 	/* Probe for disk information. */
-	memset(&op, 0, sizeof(op)); 
-	op.cmd = BLOCK_IO_OP_VBD_PROBE; 
-	op.u.probe_params.domain = 0; 
-	op.u.probe_params.xdi.max = MAX_VBDS;
-	op.u.probe_params.xdi.disks = disk_info;
-	op.u.probe_params.xdi.count = 0;
+	memset(&req, 0, sizeof(req));
+	req.operation = BLKIF_OP_PROBE;
+	req.nr_segments = 1;
+	req.frame_and_sects[0] = xpmap_ptom_masked(pa) | 7;
 
-	err = HYPERVISOR_block_io_op(&op);
-	if (err) {
-		printf("WARNING: Could not probe disks (%d)\n", err);
-		DIAGPANIC(("get_vbd_info: Could not probe disks (%d)", err));
-		return -1;
+	control_send(&req, &rsp);
+	nr = rsp.status > MAX_VBDS ? MAX_VBDS : rsp.status;
+
+	if (rsp.status < 0)
+		printf("WARNING: Could not probe disks (%d)\n", rsp.status);
+
+	memcpy(disk_info, buf, nr * sizeof(vdisk_t));
+
+	uvm_km_free(kmem_map, (vaddr_t)buf, PAGE_SIZE);
+
+	return nr;
+}
+
+static struct xbd_attach_args *
+get_xbda(vdisk_t *xd)
+{
+
+	switch (XEN_MAJOR(xd->device)) {
+#if NSD > 0
+	case XEN_SCSI_DISK0_MAJOR:
+	case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
+	case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
+		if (xd->capacity == 0)
+			return NULL;
+		return &sd_ata;
+	case XEN_SCSI_CDROM_MAJOR:
+		return &cd_ata;
+#endif
+#if NWD > 0
+	case XEN_IDE0_MAJOR:
+	case XEN_IDE1_MAJOR:
+	case XEN_IDE2_MAJOR:
+	case XEN_IDE3_MAJOR:
+	case XEN_IDE4_MAJOR:
+	case XEN_IDE5_MAJOR:
+	case XEN_IDE6_MAJOR:
+	case XEN_IDE7_MAJOR:
+	case XEN_IDE8_MAJOR:
+	case XEN_IDE9_MAJOR:
+		switch (VDISK_TYPE(xd->info)) {
+		case VDISK_TYPE_CDROM:
+			return &cd_ata;
+		case VDISK_TYPE_DISK:
+			if (xd->capacity == 0)
+				return NULL;
+			return &wd_ata;
+		default:
+			return NULL;
+		}
+		break;
+#endif
+	default:
+		if (xd->capacity == 0)
+			return NULL;
+		return &xbd_ata;
+	}
+	return NULL;
+}
+
+static void
+free_interface(void)
+{
+
+	/* Prevent new requests being issued until we fix things up. */
+	// simple_lock(&blkif_io_lock);
+	// recovery = 1;
+	state = STATE_DISCONNECTED;
+	// simple_unlock(&blkif_io_lock);
+
+	/* Free resources associated with old device channel. */
+	if (blk_ring) {
+		uvm_km_free(kmem_map, (vaddr_t)blk_ring, PAGE_SIZE);
+		blk_ring = NULL;
 	}
 
-	return op.u.probe_params.xdi.count;
+	if (blkif_irq) {
+#if 0
+		free_irq(blkif_irq, NULL);
+#endif
+		blkif_irq = 0;
+	}
+
+	if (blkif_evtchn) {
+#if 0
+		unbind_evtchn_from_irq(blkif_evtchn);
+#endif
+		blkif_evtchn = 0;
+	}
+}
+
+static void
+close_interface(void){
+}
+
+static void
+disconnect_interface(void)
+{
+
+	if (blk_ring == NULL)
+		blk_ring = (blkif_ring_t *)uvm_km_kmemalloc1(kmem_map, NULL,
+		    PAGE_SIZE, PAGE_SIZE, UVM_UNKNOWN_OFFSET, 0);
+	memset(blk_ring, 0, PAGE_SIZE);
+	blk_ring->req_prod = blk_ring->resp_prod = resp_cons = req_prod =
+		last_req_prod = 0;
+	state = STATE_DISCONNECTED;
+	send_interface_connect();
 }
 
 static void
 reset_interface(void)
 {
-	block_io_op_t op; 
 
-	op.cmd = BLOCK_IO_OP_RESET;
-	if (HYPERVISOR_block_io_op(&op) != 0)
-		printf("xbd: Possible blkdev trouble: couldn't reset ring\n");
+	printf("Recovering virtual block device driver\n");
+	free_interface();
+	disconnect_interface();
 }
 
 static void
-init_interface(void)
+connect_interface(blkif_fe_interface_status_t *status)
 {
-	block_io_op_t op; 
+	// unsigned long flags;
+	struct xbd_attach_args *xbda;
+	vdisk_t *xd;
+	int i;
 
-	reset_interface();
+	blkif_evtchn = status->evtchn;
+	blkif_irq = bind_evtchn_to_irq(blkif_evtchn);
 
-	if (blk_ring == NULL) {
-		op.cmd = BLOCK_IO_OP_RING_ADDRESS;
-		(void)HYPERVISOR_block_io_op(&op);
+	event_set_handler(blkif_irq, &xbd_response_handler, NULL, IPL_BIO);
+	hypervisor_enable_irq(blkif_irq);
 
-		blk_ring = (blk_ring_t *)uvm_km_valloc_align(kernel_map,
-		    PAGE_SIZE, PAGE_SIZE);
-		pmap_kenter_ma((vaddr_t)blk_ring, op.u.ring_mfn << PAGE_SHIFT,
-		    VM_PROT_READ|VM_PROT_WRITE);
-		DPRINTF(XBDB_SETUP, ("init_interface: "
-		    "ring va %p and wired to %p\n",
-		    blk_ring, (void *)(op.u.ring_mfn << PAGE_SHIFT)));
+	/* Transition to connected in case we need to do 
+	 *  a partition probe on a whole disk. */
+	state = STATE_CONNECTED;
 
-		blk_ring->req_prod = blk_ring->resp_prod =
-			resp_cons = req_prod = last_req_prod = 0;
+	/* Probe for discs attached to the interface. */
+	// xlvbd_init();
+	MALLOC(vbd_info, vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
+	    M_DEVBUF, M_WAITOK);
+	memset(vbd_info, 0, MAX_VBDS * sizeof(vdisk_t));
+	nr_vbds  = get_vbd_info(vbd_info);
+	if (nr_vbds <= 0)
+		goto out;
 
-		event_set_handler(_EVENT_BLKDEV, &xbd_response_handler,
-		    NULL, IPL_BIO);
-		hypervisor_enable_event(_EVENT_BLKDEV);
+	for (i = 0; i < nr_vbds; i++) {
+		xd = &vbd_info[i];
+		xbda = get_xbda(xd);
+		if (xbda) {
+			xbda->xa_xd = xd;
+			config_found(blkctrl.xc_parent, xbda,
+			    blkctrl.xc_cfprint);
+		}
 	}
 
-	__insn_barrier();
-	state = STATE_ACTIVE;
+#if 0
+	/* Kick pending requests. */
+	save_and_cli(flags);
+	// simple_lock(&blkif_io_lock);
+	kick_pending_request_queues();
+	// simple_unlock(&blkif_io_lock);
+	restore_flags(flags);
+#endif
+	if (in_autoconf) {
+		in_autoconf = 0;
+		config_pending_decr();
+	}
+	return;
+
+ out:
+	FREE(vbd_info, M_DEVBUF);
+	vbd_info = NULL;
+	if (in_autoconf) {
+		in_autoconf = 0;
+		config_pending_decr();
+	}
+	return;
 }
 
+static void
+unexpected(blkif_fe_interface_status_t *status)
+{
+
+	printf("Unexpected blkif status %d in state %d\n", 
+	    status->status, state);
+}
+
+#if 0
+static struct device *
+find_device(vdisk_t *xd)
+{
+	struct device *dv;
+	struct xbd_softc *xs = NULL;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_cfattach == NULL ||
+		    dv->dv_cfattach->ca_attach != xbd_attach)
+			continue;
+		xs = (struct xbd_softc *)dv;
+		if (xd == NULL || xs->sc_xd_device == xd->device)
+			break;
+	}
+	return dv;
+}
+#endif
+
+static void
+blkif_status(blkif_fe_interface_status_t *status)
+{
+
+	if (status->handle != blkif_handle) {
+		printf("Invalid blkif: handle=%u", status->handle);
+		return;
+	}
+
+	switch (status->status) {
+	case BLKIF_INTERFACE_STATUS_CLOSED:
+		switch (state) {
+		case STATE_CLOSED:
+			unexpected(status);
+			break;
+		case STATE_DISCONNECTED:
+		case STATE_CONNECTED:
+			unexpected(status);
+			close_interface();
+			break;
+		}
+		break;
+
+	case BLKIF_INTERFACE_STATUS_DISCONNECTED:
+		switch (state) {
+		case STATE_CLOSED:
+			disconnect_interface();
+			break;
+		case STATE_DISCONNECTED:
+		case STATE_CONNECTED:
+			unexpected(status);
+			reset_interface();
+			break;
+		}
+		break;
+
+	case BLKIF_INTERFACE_STATUS_CONNECTED:
+		switch (state) {
+		case STATE_CLOSED:
+			unexpected(status);
+			disconnect_interface();
+			connect_interface(status);
+			break;
+		case STATE_DISCONNECTED:
+			connect_interface(status);
+			break;
+		case STATE_CONNECTED:
+			unexpected(status);
+			connect_interface(status);
+			break;
+		}
+		break;
+
+	case BLKIF_INTERFACE_STATUS_CHANGED:
+		switch (state) {
+		case STATE_CLOSED:
+		case STATE_DISCONNECTED:
+			unexpected(status);
+			break;
+		case STATE_CONNECTED:
+#if 0
+			vbd_update();
+#endif
+			break;
+		}
+		break;
+
+	default:
+		printf(" Invalid blkif status: %d\n", status->status);
+		break;
+	}
+}
+
+static void
+xbdc_thread(void *arg)
+{
+	struct xbd_ctrl *xbdc_sc = arg;
+	int s;
+
+	for (;;) {
+		s = splbio();
+		/* get messages from ring */
+		while(xbdc_sc->msg_consumer != xbdc_sc->msg_producer) {
+			blkif_status((blkif_fe_interface_status_t *)
+			    &(xbdc_sc->msgs[xbdc_sc->msg_consumer]->msg[0]));
+			ctrl_if_send_response(
+			    xbdc_sc->msgs[xbdc_sc->msg_consumer]);
+			xbdc_sc->msg_consumer++;
+			if (xbdc_sc->msg_consumer == BLK_CTRL_NMSGS)
+				xbdc_sc->msg_consumer = 0;
+		}
+		(void) tsleep(&xbdc_sc->msgs, PRIBIO, "xbdc", 0);
+		splx(s);
+	}
+}
+
+
+static void
+xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
+{
+	switch (msg->subtype) {
+	case CMSG_BLKIF_FE_INTERFACE_STATUS:
+		if (msg->length != sizeof(blkif_fe_interface_status_t))
+			goto parse_error;
+		/* store messages in ring, and wakeup thread */
+		blkctrl.msgs[blkctrl.msg_producer] = msg;
+		blkctrl.msg_producer++;
+		if (blkctrl.msg_producer == BLK_CTRL_NMSGS)
+			blkctrl.msg_producer = 0;
+		if (blkctrl.msg_producer == blkctrl.msg_consumer)
+			panic("xbdc: ring too small");
+		wakeup(&blkctrl.msgs);
+		break;        
+	default:
+		goto parse_error;
+	}
+
+	return;
+
+ parse_error:
+	msg->length = 0;
+	ctrl_if_send_response(msg);
+}
+
+#if 0
 static void
 enable_update_events(struct device *self)
 {
@@ -474,20 +786,100 @@ enable_update_events(struct device *self)
 	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO);
 	hypervisor_enable_event(_EVENT_VBD_UPD);
 }
+#endif
 
 static void
 signal_requests_to_xen(void)
 {
-	block_io_op_t op; 
 
-	DPRINTF(XBDB_IO, ("signal_requests_to_xen: %d -> %d\n",
-	    blk_ring->req_prod, MASK_BLK_IDX(req_prod)));
-	blk_ring->req_prod = MASK_BLK_IDX(req_prod);
+	DPRINTF(XBDB_IO, ("signal_requests_to_xen: %x -> %x\n",
+		    blk_ring->req_prod, req_prod));
+	blk_ring->req_prod = req_prod;
 	last_req_prod = req_prod;
 
-	op.cmd = BLOCK_IO_OP_SIGNAL; 
-	HYPERVISOR_block_io_op(&op);
+	hypervisor_notify_via_evtchn(blkif_evtchn);
 	return;
+}
+
+static void
+control_send(blkif_request_t *req, blkif_response_t *rsp)
+{
+	unsigned long flags;
+	struct xbdreq *xr;
+
+ retry:
+	while ((req_prod - resp_cons) == BLKIF_RING_SIZE) {
+		/* XXX where is the wakeup ? */
+		tsleep((caddr_t) &req_prod, PUSER | PCATCH,
+		    "blkfront", 0);
+	}
+
+	save_and_cli(flags);
+	// simple_lock(&blkif_io_lock);
+	if ((req_prod - resp_cons) == BLKIF_RING_SIZE) {
+		// simple_unlock(&blkif_io_lock);
+		restore_flags(flags);
+		goto retry;
+	}
+
+	blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req = *req;    
+
+	GET_XBDREQ(xr);
+	blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req.id = (unsigned long)xr;
+	// rec_ring[id].id = (unsigned long) req;
+
+	// translate_req_to_pfn( &rec_ring[id], req );
+
+	req_prod++;
+	signal_requests_to_xen();
+
+	// simple_unlock(&blkif_io_lock);
+	restore_flags(flags);
+
+	while (!blkif_control_rsp_valid) {
+		tsleep((caddr_t)&blkif_control_rsp_valid, PUSER | PCATCH,
+		    "blkfront", 0);
+	}
+
+	memcpy(rsp, &blkif_control_rsp, sizeof(*rsp));
+	blkif_control_rsp_valid = 0;
+}
+
+/* Send a driver status notification to the domain controller. */
+static void
+send_driver_status(int ok)
+{
+	ctrl_msg_t cmsg = {
+		.type    = CMSG_BLKIF_FE,
+		.subtype = CMSG_BLKIF_FE_DRIVER_STATUS,
+		.length  = sizeof(blkif_fe_driver_status_t),
+	};
+	blkif_fe_driver_status_t *msg = (blkif_fe_driver_status_t *)cmsg.msg;
+    
+	msg->status = ok ? BLKIF_DRIVER_STATUS_UP : BLKIF_DRIVER_STATUS_DOWN;
+
+	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
+}
+
+/* Tell the controller to bring up the interface. */
+static void
+send_interface_connect(void)
+{
+	ctrl_msg_t cmsg = {
+		.type    = CMSG_BLKIF_FE,
+		.subtype = CMSG_BLKIF_FE_INTERFACE_CONNECT,
+		.length  = sizeof(blkif_fe_interface_connect_t),
+	};
+	blkif_fe_interface_connect_t *msg =
+		(blkif_fe_interface_connect_t *)cmsg.msg;
+    	paddr_t pa;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)blk_ring, &pa);
+
+	msg->handle = 0;
+	msg->shmem_frame = xpmap_ptom_masked(pa) >> PAGE_SHIFT;
+
+	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
 }
 
 static void
@@ -520,62 +912,16 @@ setup_sysctl(void)
 		diskcookies = pnode;
 }
 
-static struct xbd_attach_args *
-get_xbda(xen_disk_t *xd)
-{
-
-	switch (XEN_MAJOR(xd->device)) {
-#if NSD > 0
-	case XEN_SCSI_DISK0_MAJOR:
-	case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
-	case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
-		if (xd->capacity == 0)
-			return NULL;
-		return &sd_ata;
-	case XEN_SCSI_CDROM_MAJOR:
-		return &cd_ata;
-#endif
-#if NWD > 0
-	case XEN_IDE0_MAJOR:
-	case XEN_IDE1_MAJOR:
-	case XEN_IDE2_MAJOR:
-	case XEN_IDE3_MAJOR:
-	case XEN_IDE4_MAJOR:
-	case XEN_IDE5_MAJOR:
-	case XEN_IDE6_MAJOR:
-	case XEN_IDE7_MAJOR:
-	case XEN_IDE8_MAJOR:
-	case XEN_IDE9_MAJOR:
-		switch (XD_TYPE(xd->info)) {
-		case XD_TYPE_CDROM:
-			return &cd_ata;
-		case XD_TYPE_DISK:
-			if (xd->capacity == 0)
-				return NULL;
-			return &wd_ata;
-		default:
-			return NULL;
-		}
-		break;
-#endif
-	default:
-		if (xd->capacity == 0)
-			return NULL;
-		return &xbd_ata;
-	}
-	return NULL;
-}
-
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
     cfprint_t print)
 {
 	struct xbdreq *xr;
-	struct xbd_attach_args *xbda;
-	xen_disk_t *xd;
 	int i;
 
-	init_interface();
+	blkctrl.xc_parent = self;
+	blkctrl.xc_cfprint = print;
+
 	if (xen_start_info.flags & SIF_PRIVILEGED)
 		setup_sysctl();
 
@@ -599,49 +945,37 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	xbd_cd_cdev_major = major(devsw_blk2chr(makedev(xbd_cd_major, 0)));
 #endif
 
-	MALLOC(xr, struct xbdreq *, BLK_RING_SIZE * sizeof(struct xbdreq),
+	MALLOC(xr, struct xbdreq *, BLKIF_RING_SIZE * sizeof(struct xbdreq),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 #ifdef DEBUG
 	xbd_allxr = xr;
 #endif
-
-	/* XXX Xen1.2: We cannot use BLK_RING_SIZE many slots, since
-	 * Xen 1.2 keeps indexes masked in the ring and the case where
-	 * we queue all slots at once is handled wrong. 
-	 */
-	for (i = 0; i < BLK_RING_SIZE - 1; i++)
+	for (i = 0; i < BLKIF_RING_SIZE - 1; i++)
 		PUT_XBDREQ(&xr[i]);
 
-	MALLOC(vbd_info, xen_disk_t *, MAX_VBDS * sizeof(xen_disk_t),
-	    M_DEVBUF, M_WAITOK);
-	memset(vbd_info, 0, MAX_VBDS * sizeof(xen_disk_t));
-	nr_vbds  = get_vbd_info(vbd_info);
-	if (nr_vbds <= 0)
-		goto out;
+	(void)ctrl_if_register_receiver(CMSG_BLKIF_FE, xbd_ctrlif_rx,
+	    CALLBACK_IN_BLOCKING_CONTEXT);
 
-	for (i = 0; i < nr_vbds; i++) {
-		xd = &vbd_info[i];
-		xbda = get_xbda(xd);
-		if (xbda) {
-			xbda->xa_xd = xd;
-			config_found(self, xbda, print);
-		}
-	}
+	in_autoconf = 1;
+	config_pending_incr();
+	blkctrl.msg_producer = blkctrl.msg_consumer = 0;
+	kthread_create(xbdc_create_thread, &blkctrl);
 
-	enable_update_events(self);
+	send_driver_status(1);
 
-	return 0;
-
- out:
-	FREE(vbd_info, M_DEVBUF);
-	vbd_info = NULL;
-	FREE(xr, M_DEVBUF);
-#ifdef DEBUG
-	xbd_allxr = NULL;
-#endif
-	SLIST_INIT(&xbdreqs);
 	return 0;
 }
+
+static void
+xbdc_create_thread(void *arg)
+{
+	struct xbd_ctrl *xbdc_sc = arg;
+	int error;
+	if ((error = kthread_create1(xbdc_thread, xbdc_sc, &xbdc_sc->sc_thread,
+	    "%s", "xbdc")) != 0)
+		aprint_error("xbdc: unable to create kernel thread: error %d\n",
+		    error);
+}	
 
 #if NXBD > 0
 int
@@ -710,8 +1044,9 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 		    NULL, 0, &xs->sc_xd_device, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
+
 #if NRND > 0
-	rnd_attach_source(&xs->rnd_source, xs->sc_dev.dv_xname,
+	rnd_attach_source(&xs->sc_rnd_source, xs->sc_dev.dv_xname,
 	    RND_TYPE_DISK, 0);
 #endif
 }
@@ -854,20 +1189,21 @@ fill_ring(struct xbdreq *xr)
 	paddr_t pa;
 	unsigned long ma;
 	vaddr_t addr, off;
-	blk_ring_req_entry_t *ring_req;
-	int breq, nr_sectors;
+	blkif_request_t *ring_req;
+	int breq, nr_sectors, fsect, lsect;
 
 	/* Fill out a communications ring structure. */
-	ring_req = &blk_ring->ring[MASK_BLK_IDX(req_prod)].req;
+	ring_req = &blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req;
 	ring_req->id = (unsigned long)xr;
-	ring_req->operation = pxr->xr_bp->b_flags & B_READ ? XEN_BLOCK_READ :
-		XEN_BLOCK_WRITE;
-	ring_req->sector_number = (xen_sector_t)pxr->xr_bn;
+	ring_req->operation = pxr->xr_bp->b_flags & B_READ ? BLKIF_OP_READ :
+		BLKIF_OP_WRITE;
+	ring_req->sector_number = pxr->xr_bn;
 	ring_req->device = pxr->xr_sc->sc_xd_device;
 
 	DPRINTF(XBDB_IO, ("fill_ring(%d): bp %p sector %llu pxr %p xr %p\n",
-	    MASK_BLK_IDX(req_prod), pxr->xr_bp, (unsigned long long)pxr->xr_bn,
-	    pxr, xr));
+		    MASK_BLKIF_IDX(req_prod), pxr->xr_bp,
+		    (unsigned long long)pxr->xr_bn,
+		    pxr, xr));
 
 	xr->xr_breq = 0;
 	ring_req->nr_segments = 0;
@@ -880,7 +1216,7 @@ fill_ring(struct xbdreq *xr)
 #else
 		pmap_extract(pmap_kernel(), addr, &pa);
 #endif
-		ma = xpmap_ptom_masked(pa) + off;
+		ma = xpmap_ptom_masked(pa);
 		DIAGCONDPANIC((ma & (XEN_BSIZE - 1)) != 0,
 		    ("xbd request ma not sector aligned"));
 
@@ -888,23 +1224,29 @@ fill_ring(struct xbdreq *xr)
 			breq = PAGE_SIZE - off;
 		else
 			breq = pxr->xr_bqueue;
+
 		nr_sectors = breq >> XEN_BSHIFT;
 		DIAGCONDPANIC(nr_sectors >= XEN_BSIZE,
 		    ("xbd request nr_sectors >= XEN_BSIZE"));
 
+		fsect = off >> XEN_BSHIFT;
+		lsect = fsect + nr_sectors - 1;
+		DIAGCONDPANIC(fsect > 7, ("xbd request fsect > 7"));
+		DIAGCONDPANIC(lsect > 7, ("xbd request lsect > 7"));
+
 		DPRINTF(XBDB_IO, ("fill_ring(%d): va 0x%08lx pa 0x%08lx "
 		    "ma 0x%08lx, sectors %d, left %ld/%ld\n",
-		    MASK_BLK_IDX(req_prod), addr, pa, ma, nr_sectors,
+		    MASK_BLKIF_IDX(req_prod), addr, pa, ma, nr_sectors,
 		    pxr->xr_bqueue >> XEN_BSHIFT, pxr->xr_bqueue));
 
-		ring_req->buffer_and_sects[ring_req->nr_segments++] =
-			ma | nr_sectors;
+		ring_req->frame_and_sects[ring_req->nr_segments++] =
+			ma | (fsect<<3) | lsect;
 		addr += PAGE_SIZE;
 		pxr->xr_bqueue -= breq;
 		pxr->xr_bn += nr_sectors;
 		xr->xr_breq += breq;
 		off = 0;
-		if (ring_req->nr_segments == MAX_BLK_SEGS)
+		if (ring_req->nr_segments == BLKIF_MAX_SEGMENTS_PER_REQUEST)
 			break;
 	}
 	pxr->xr_data = addr;
@@ -936,13 +1278,12 @@ xbdresume(void)
 				if (pxr->xr_aligned)
 					unmap_align(pxr);
 				PUT_XBDREQ(pxr);
-				if (xs)
-				{
+				if (xs) {
 					disk_unbusy(&xs->sc_dksc.sc_dkdev,
 					    (bp->b_bcount - bp->b_resid),
 					    (bp->b_flags & B_READ));
 #if NRND > 0
-					rnd_add_uint32(&xs->rnd_source,
+					rnd_add_uint32(&xs->sc_rnd_source,
 					    bp->b_blkno);
 #endif
 				}
@@ -1064,69 +1405,86 @@ xbd_response_handler(void *arg)
 {
 	struct buf *bp;
 	struct xbd_softc *xs;
-	blk_ring_resp_entry_t *ring_resp;
+	blkif_response_t *ring_resp;
 	struct xbdreq *pxr, *xr;
-	int i;
+	BLKIF_RING_IDX i, rp;
 
-	for (i = resp_cons; i != blk_ring->resp_prod; i = BLK_RING_INC(i)) {
-		ring_resp = &blk_ring->ring[MASK_BLK_IDX(i)].resp;
+	rp = blk_ring->resp_prod;
+	__insn_barrier(); /* Ensure we see queued responses up to 'rp'. */
+
+	for (i = resp_cons; i != rp; i++) {
+		ring_resp = &blk_ring->ring[MASK_BLKIF_IDX(i)].resp;
 		xr = (struct xbdreq *)ring_resp->id;
-		pxr = xr->xr_parent;
 
-		DPRINTF(XBDB_IO, ("xbd_response_handler(%d): pxr %p xr %p "
-		    "bdone %04lx breq %04lx\n", i, pxr, xr, pxr->xr_bdone,
-		    xr->xr_breq));
-		pxr->xr_bdone -= xr->xr_breq;
-		DIAGCONDPANIC(pxr->xr_bdone < 0,
-		    ("xbd_response_handler: pxr->xr_bdone < 0"));
+		switch (ring_resp->operation) {
+		case BLKIF_OP_READ:
+		case BLKIF_OP_WRITE:
+			pxr = xr->xr_parent;
 
-		if (__predict_false(ring_resp->status)) {
-			pxr->xr_bp->b_flags |= B_ERROR;
-			pxr->xr_bp->b_error = EIO;
-		}
+			DPRINTF(XBDB_IO, ("xbd_response_handler(%d): pxr %p "
+				    "xr %p bdone %04lx breq %04lx\n", i, pxr,
+				    xr, pxr->xr_bdone, xr->xr_breq));
+			pxr->xr_bdone -= xr->xr_breq;
+			DIAGCONDPANIC(pxr->xr_bdone < 0,
+			    ("xbd_response_handler: pxr->xr_bdone < 0"));
 
-		if (xr != pxr) {
-			PUT_XBDREQ(xr);
-			if (!SIMPLEQ_EMPTY(&xbdr_suspended))
-				xbdresume();
-		}
-
-		if (pxr->xr_bdone == 0) {
-			bp = pxr->xr_bp;
-			xs = getxbd_softc(bp->b_dev);
-			if (xs == NULL) { /* don't fail bp if we're shutdown */
-				bp->b_flags |= B_ERROR;
-				bp->b_error = EIO;
+			if (__predict_false(ring_resp->status)) {
+				pxr->xr_bp->b_flags |= B_ERROR;
+				pxr->xr_bp->b_error = EIO;
 			}
-			DPRINTF(XBDB_IO, ("xbd_response_handler(%d): "
-			    "completed bp %p\n", i, bp));
-			if (bp->b_flags & B_ERROR)
-				bp->b_resid = bp->b_bcount;
-			else
-				bp->b_resid = 0;
 
-			if (pxr->xr_aligned)
-				unmap_align(pxr);
+			if (xr != pxr) {
+				PUT_XBDREQ(xr);
+				if (!SIMPLEQ_EMPTY(&xbdr_suspended))
+					xbdresume();
+			}
 
-			PUT_XBDREQ(pxr);
-			if (xs) {
-				disk_unbusy(&xs->sc_dksc.sc_dkdev,
-				    (bp->b_bcount - bp->b_resid),
-				    (bp->b_flags & B_READ));
+			if (pxr->xr_bdone == 0) {
+				bp = pxr->xr_bp;
+				xs = getxbd_softc(bp->b_dev);
+				if (xs == NULL) { /* don't fail bp if we're shutdown */
+					bp->b_flags |= B_ERROR;
+					bp->b_error = EIO;
+				}
+				DPRINTF(XBDB_IO, ("xbd_response_handler(%d): "
+					    "completed bp %p\n", i, bp));
+				if (bp->b_flags & B_ERROR)
+					bp->b_resid = bp->b_bcount;
+				else
+					bp->b_resid = 0;
+
+				if (pxr->xr_aligned)
+					unmap_align(pxr);
+
+				PUT_XBDREQ(pxr);
+				if (xs) {
+					disk_unbusy(&xs->sc_dksc.sc_dkdev,
+					    (bp->b_bcount - bp->b_resid),
+					    (bp->b_flags & B_READ));
 #if NRND > 0
-				rnd_add_uint32(&xs->rnd_source,
-				    bp->b_blkno);
+					rnd_add_uint32(&xs->sc_rnd_source,
+					    bp->b_blkno);
 #endif
+				}
+				biodone(bp);
+				if (!SIMPLEQ_EMPTY(&xbdr_suspended))
+					xbdresume();
+				/* XXX possible lockup if this was the only
+				 * active device and requests were held back in
+				 * the queue.
+				 */
+				if (xs)
+					dk_iodone(xs->sc_di, &xs->sc_dksc);
 			}
-			biodone(bp);
-			if (!SIMPLEQ_EMPTY(&xbdr_suspended))
-				xbdresume();
-			/* XXX possible lockup if this was the only
-			 * active device and requests were held back in
-			 * the queue.
-			 */
-			if (xs)
-				dk_iodone(xs->sc_di, &xs->sc_dksc);
+			break;
+		case BLKIF_OP_PROBE:
+			memcpy(&blkif_control_rsp, ring_resp,
+			    sizeof(*ring_resp));
+			blkif_control_rsp_valid = 1;
+			wakeup((caddr_t)&blkif_control_rsp_valid);
+			break;
+		default:
+			panic("unknown response");
 		}
 	}
 	resp_cons = i;
@@ -1136,23 +1494,7 @@ xbd_response_handler(void *arg)
 	return 0;
 }
 
-static struct device *
-find_device(xen_disk_t *xd)
-{
-	struct device *dv;
-	struct xbd_softc *xs;
-
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_cfattach == NULL ||
-		    dv->dv_cfattach->ca_attach != xbd_attach)
-			continue;
-		xs = (struct xbd_softc *)dv;
-		if (xs->sc_xd_device == xd->device)
-			break;
-	}
-	return dv;
-}
-
+#if 0
 static void
 xbd_update_create_kthread(void *arg)
 {
@@ -1166,24 +1508,24 @@ xbd_update_kthread(void *arg)
 	struct device *parent = arg;
 	struct xbd_attach_args *xbda;
 	struct device *dev;
-	xen_disk_t *xd;
-	xen_disk_t *vbd_info_update, *vbd_info_old;
+	vdisk_t *xd;
+	vdisk_t *vbd_info_update, *vbd_info_old;
 	int i, j, new_nr_vbds;
 	extern int hypervisor_print(void *, const char *);
 
-	MALLOC(vbd_info_update, xen_disk_t *, MAX_VBDS *
-	    sizeof(xen_disk_t), M_DEVBUF, M_WAITOK);
+	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
+	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
 
 	for (;;) {
-		memset(vbd_info_update, 0, MAX_VBDS * sizeof(xen_disk_t));
+		memset(vbd_info_update, 0, MAX_VBDS * sizeof(vdisk_t));
 		new_nr_vbds  = get_vbd_info(vbd_info_update);
 
 		if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
-		    sizeof(xen_disk_t)) == 0) {
+		    sizeof(vdisk_t)) == 0) {
 			FREE(vbd_info_update, M_DEVBUF);
 			tsleep(parent, PWAIT, "xbdupd", 0);
-			MALLOC(vbd_info_update, xen_disk_t *, MAX_VBDS *
-			    sizeof(xen_disk_t), M_DEVBUF, M_WAITOK);
+			MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
+			    sizeof(vdisk_t), M_DEVBUF, M_WAITOK);
 			continue;
 		}
 
@@ -1249,6 +1591,7 @@ xbd_update_handler(void *arg)
 
 	return 0;
 }
+#endif
 
 /* XXX: we should probably put these into dksubr.c, mostly */
 int
@@ -1330,7 +1673,7 @@ xbddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 static int
-xbdinit(struct xbd_softc *xs, xen_disk_t *xd, struct dk_intf *dkintf)
+xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 {
 	struct dk_geom *pdg;
 	char buf[9];

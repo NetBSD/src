@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2004/09/23 02:24:22 tls Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/03/09 22:39:21 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/09/23 02:24:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/03/09 22:39:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,20 +44,20 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/09/23 02:24:22 tls Exp $");
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#include <machine/events.h>
+#include <machine/evtchn.h>
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
 
 #include "config_time.h"		/* for CONFIG_TIME */
 
-static int xen_timer_handler(void *, struct trapframe *);
+static int xen_timer_handler(void *, struct intrframe *);
 
 /* These are peridically updated in shared_info, and then copied here. */
-static uint64_t shadow_tsc_stamp;
-static uint64_t shadow_system_time;
-static unsigned long shadow_time_version;
-static struct timeval shadow_tv;
+volatile static uint64_t shadow_tsc_stamp;
+volatile static uint64_t shadow_system_time;
+volatile static unsigned long shadow_time_version;
+volatile static struct timeval shadow_tv;
 
 static int timeset;
 
@@ -77,8 +77,7 @@ get_time_values_from_xen(void)
 		__insn_barrier();
 		shadow_tv.tv_sec = HYPERVISOR_shared_info->wc_sec;
 		shadow_tv.tv_usec = HYPERVISOR_shared_info->wc_usec;
-		shadow_tsc_stamp = HYPERVISOR_shared_info->tsc_timestamp <<
-		    HYPERVISOR_shared_info->rdtsc_bitshift;
+		shadow_tsc_stamp = HYPERVISOR_shared_info->tsc_timestamp;
 		shadow_system_time = HYPERVISOR_shared_info->system_time;
 		__insn_barrier();
 	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
@@ -159,7 +158,7 @@ resettodr()
 	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
 #ifdef DOM0OPS
-	if (xen_start_info.dom_id == 0) {
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		s = splclock();
 
 		op.cmd = DOM0_SETTIME;
@@ -185,12 +184,37 @@ startrtclock()
 void
 xen_delay(int n)
 {
-	u_int64_t when;
+	if (n < 500000) {
+		/*
+		 * shadow_system_time is updated every hz tick, it's not
+		 * precise enouth for short delays. Use the CPU counter
+		 * instead. We assume it's working at this point.
+		 */
+		u_int64_t cc, cc2, when;
+		struct cpu_info *ci = curcpu();
 
-	get_time_values_from_xen();
-	when = shadow_system_time + n * 1000;
-	while (shadow_system_time < when)
+		cc = cpu_counter();
+		when = cc + (u_int64_t)n * cpu_frequency(ci) / 1000000LL;
+		if (when < cc) {
+			/* wait for counter to wrap */
+			cc2 = cpu_counter();
+			while (cc2 > cc)
+				cc2 = cpu_counter();
+		}
+		cc2 = cpu_counter();
+		while (cc2 < when)
+			cc2 = cpu_counter();
+		
+		return;
+	} else {
+		uint64_t when;
+
+		/* for large delays, shadow_system_time is OK */
 		get_time_values_from_xen();
+		when = shadow_system_time + n * 1000;
+		while (shadow_system_time < when)
+			get_time_values_from_xen();
+	}
 }
 
 void
@@ -203,17 +227,18 @@ xen_microtime(struct timeval *tv)
 void
 xen_initclocks()
 {
+	int irq = bind_virq_to_irq(VIRQ_TIMER);
 
 	get_time_values_from_xen();
 	processed_system_time = shadow_system_time;
-	
-	event_set_handler(_EVENT_TIMER, (int (*)(void *))xen_timer_handler,
+
+	event_set_handler(irq, (int (*)(void *))xen_timer_handler,
 	    NULL, IPL_CLOCK);
-	hypervisor_enable_event(_EVENT_TIMER);
+	hypervisor_enable_irq(irq);
 }
 
 static int
-xen_timer_handler(void *arg, struct trapframe *regs)
+xen_timer_handler(void *arg, struct intrframe *regs)
 {
 	int64_t delta;
 
@@ -245,7 +270,7 @@ xen_timer_handler(void *arg, struct trapframe *regs)
 	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns() -
 			  processed_system_time);
 	while (delta >= NS_PER_TICK) {
-		hardclock((struct clockframe *)regs);
+		hardclock(regs);
 		delta -= NS_PER_TICK;
 		processed_system_time += NS_PER_TICK;
 	}
@@ -256,4 +281,18 @@ xen_timer_handler(void *arg, struct trapframe *regs)
 void
 setstatclockrate(int arg)
 {
+}
+
+void
+idle_block(void)
+{
+
+	/*
+	 * We set the timer to when we expect the next timer
+	 * interrupt.  We could set the timer to later if we could
+	 * easily find out when we will have more work (callouts) to
+	 * process from hardclock.
+	 */
+	if (HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK) == 0)
+		HYPERVISOR_block();
 }
