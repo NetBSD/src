@@ -1,4 +1,5 @@
-;	@(#)named.boot	5.1 (Berkeley) 6/30/90
+;	$NetBSD: named.boot,v 1.2 1996/10/15 04:02:53 perry Exp $
+;	from @(#)named.boot	5.1 (Berkeley) 6/30/90
 
 ; boot file for secondary name server
 ; Note that there should be one primary entry for each SOA record.

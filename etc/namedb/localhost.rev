@@ -1,4 +1,5 @@
-;	@(#)localhost.rev	5.1 (Berkeley) 6/30/90
+;	$NetBSD: localhost.rev,v 1.2 1996/10/15 04:02:52 perry Exp $
+;	from @(#)localhost.rev	5.1 (Berkeley) 6/30/90
 
 @	IN	SOA	ucbvax.Berkeley.EDU. rwh.ucbvax.Berkeley.EDU.  (
 				1.4	; Serial
