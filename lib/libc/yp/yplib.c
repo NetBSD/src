@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.37 2000/07/06 03:14:05 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.37.2.1 2002/12/10 06:25:55 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.37 2000/07/06 03:14:05 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.37.2.1 2002/12/10 06:25:55 thorpej Exp $");
 #endif
 
 #include "namespace.h"
@@ -89,8 +89,9 @@ _yp_dobind(dom, ypdb)
 	struct sockaddr_in clnt_sin;
 	int             clnt_sock, fd, gpid;
 	CLIENT         *client;
-	int             new = 0, r;
+	int             new = 0;
 	int             nerrs = 0;
+	ssize_t		r;
 
 	if (dom == NULL || *dom == '\0')
 		return YPERR_BADARGS;
@@ -158,7 +159,7 @@ again:
 			iov[1].iov_len = sizeof ybr;
 
 			r = readv(fd, iov, 2);
-			if (r != iov[0].iov_len + iov[1].iov_len) {
+			if (r != (ssize_t)(iov[0].iov_len + iov[1].iov_len)) {
 				(void)close(fd);
 				ysd->dom_vers = -1;
 				goto again;
@@ -232,7 +233,7 @@ trynet:
 			bn->ypbind_binding_port;
 gotit:
 		ysd->dom_vers = YPVERS;
-		(void)strncpy(ysd->dom_domain, dom, sizeof(ysd->dom_domain)-1);
+		(void)strlcpy(ysd->dom_domain, dom, sizeof(ysd->dom_domain));
 	}
 	if (ysd->dom_client)
 		clnt_destroy(ysd->dom_client);

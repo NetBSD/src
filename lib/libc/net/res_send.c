@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.33.2.1 2001/10/08 20:20:24 nathanw Exp $	*/
+/*	$NetBSD: res_send.c,v 1.33.2.2 2002/12/10 06:25:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.33.2.1 2001/10/08 20:20:24 nathanw Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.33.2.2 2002/12/10 06:25:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,8 +146,8 @@ static int af = 0;	/* address family of socket */
 		if (getnameinfo(address, (size_t)address->sa_len, abuf,
 		    sizeof(abuf), pbuf, sizeof(pbuf),
 		    NI_NUMERICHOST|NI_NUMERICSERV|NI_WITHSCOPEID) != 0) {
-			strcpy(abuf, "?");
-			strcpy(pbuf, "?");
+			strlcpy(abuf, "?", sizeof(abuf));
+			strlcpy(pbuf, "?", sizeof(pbuf));
 		}
 		fprintf(file, "res_send: %s ([%s].%s): %s\n",
 			string, abuf, pbuf, strerror(error));
@@ -440,7 +440,7 @@ res_send(buf, buflen, ans, anssiz)
 			do {
 				res_sendhookact act;
 
-				act = (*Qhook)((struct sockaddr_in **)&nsap,
+				act = (*Qhook)((void *)&nsap,
 					       &buf, &buflen,
 					       ans, anssiz, &resplen);
 				switch (act) {

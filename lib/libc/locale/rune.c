@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.10.2.2 2002/03/22 20:42:18 nathanw Exp $	*/
+/*	$NetBSD: rune.c,v 1.10.2.3 2002/12/10 06:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.10.2.2 2002/03/22 20:42:18 nathanw Exp $");
+__RCSID("$NetBSD: rune.c,v 1.10.2.3 2002/12/10 06:25:50 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,7 +90,7 @@ static int
 readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
 	FILE *fp)
 {
-	int i;
+	uint32_t i;
 	_RuneEntry *re;
 	_FileRuneEntry fre;
 
@@ -179,7 +179,7 @@ find_codeset(_RuneLocale *rl)
 	char *top, *codeset, *tail;
 
 	rl->rl_codeset = NULL;
-	if (!(top=strstr(rl->rl_variable, _RUNE_CODESET)))
+	if (!(top = strstr(rl->rl_variable, _RUNE_CODESET)))
 		return;
 	tail = strpbrk(top, " \t");
 	codeset = top + sizeof(_RUNE_CODESET)-1;
@@ -187,10 +187,9 @@ find_codeset(_RuneLocale *rl)
 		*top = *tail;
 		*tail = '\0';
 		rl->rl_codeset = strdup(codeset);
-		strcpy(top+1, tail+1);
-			
+		strcpy(top + 1, tail + 1);
 	} else {
-		*top='\0';
+		*top = '\0';
 		rl->rl_codeset = strdup(codeset);
 	}
 }
@@ -199,7 +198,7 @@ void
 _freeentry(_RuneRange *rr)
 {
 	_RuneEntry *re;
-	int i;
+	uint32_t i;
 
 	_DIAGASSERT(rr != NULL);
 
@@ -410,7 +409,7 @@ _Read_CTypeAsRune(fp)
 	rl->rl_variable_len = 0;
 
 	for (x = 0; x < _CACHED_RUNES; ++x) {
-		if (x > len)
+		if ((uint32_t) x > len)
 			continue;
 
 		/*

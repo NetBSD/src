@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.8 2002/11/11 22:22:19 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.9 2002/12/10 06:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -197,6 +197,7 @@
 #define ftrylockfile		_ftrylockfile
 #define funlockfile		_funlockfile
 #define fnmatch			_fnmatch
+#define fparseln		_fparseln
 #define fpgetmask		_fpgetmask
 #define fpgetround		_fpgetround
 #define fpgetsticky		_fpgetsticky
@@ -441,6 +442,8 @@
 #define strptime		_strptime
 #define strsep			_strsep
 #define strsignal		_strsignal
+#define strsuftoll	 	_strsuftoll
+#define strsuftollx	 	_strsuftollx
 #define strsvis			_strsvis
 #define strsvisx		_strsvisx
 #define strtok_r		_strtok_r

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.11.2.1 2001/10/08 20:20:20 nathanw Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.11.2.2 2002/12/10 06:25:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.11.2.1 2001/10/08 20:20:20 nathanw Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.11.2.2 2002/12/10 06:25:51 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,8 +66,7 @@ ns_addr(name)
 
 	_DIAGASSERT(name != NULL);
 
-	(void)strncpy(buf, name, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
+	(void)strlcpy(buf, name, sizeof(buf));
 
 	/*
 	 * First, figure out what he intends as a field separtor.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.44.2.3 2002/06/21 18:18:16 nathanw Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.44.2.4 2002/12/10 06:25:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.44.2.3 2002/06/21 18:18:16 nathanw Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.44.2.4 2002/12/10 06:25:51 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,8 +135,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		 * Canonicalise hostname.
 		 * XXX: Should we really do this?
 		 */
-		strncpy(hbuf, res->ai_canonname, sizeof(hbuf) - 1);
-		hbuf[sizeof(hbuf) - 1] = '\0';
+		strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
 		*ahost = hbuf;
 	}
 
@@ -197,8 +196,7 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		return (-1);
 	}
 	if (res->ai_canonname) {
-		strncpy(hbuf, res->ai_canonname, sizeof(hbuf) - 1);
-		hbuf[sizeof(hbuf) - 1] = '\0';
+		strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
 		*ahost = hbuf;
 	}
 	
@@ -276,7 +274,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			warnx("rcmd: connect to address %s", hbuf);
 			errno = oerrno;
 			perror(0);
@@ -284,7 +282,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-				strcpy(hbuf, "(invalid)");
+				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
 			continue;
 		}
@@ -313,7 +311,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
-		if (write(s, num, strlen(num) + 1) != strlen(num) + 1) {
+		if (write(s, num, strlen(num) + 1) !=
+		    (ssize_t) (strlen(num) + 1)) {
 			warn("rcmd: write (setting up stderr)");
 			(void)close(s2);
 			goto bad;

@@ -2,7 +2,7 @@ $set 1
 $ EPERM
 1 Operación no permitida
 $ ENOENT
-2 Fichero o directorio no existente
+2 Archivo o directorio inexistente
 $ ESRCH
 3 Proceso inexistente
 $ EINTR
@@ -12,11 +12,11 @@ $ EIO
 $ ENXIO
 6 Dispositivo no configurado
 $ E2BIG
-7 La lista de argumentos es demasiado amplia
+7 La lista de argumentos es demasiado larga
 $ ENOEXEC
 8 Error en el formato del ejecutable 
 $ EBADF
-9 Descriptor de fichero incorrecto
+9 Descriptor de archivo incorrecto
 $ ECHILD
 10 No hay procesos hijo 
 $ EDEADLK
@@ -32,7 +32,7 @@ $ ENOTBLK
 $ EBUSY
 16 Dispositivo ocupado
 $ EEXIST
-17 El fichero ya existe
+17 El archivo ya existe
 $ EXDEV
 18 Enlace entre dispositivos
 $ ENODEV
@@ -44,21 +44,21 @@ $ EISDIR
 $ EINVAL
 22 Argumento inadecuado
 $ ENFILE
-23 Hay demasiados ficheros abiertos en el sistema
+23 Hay demasiados archivos abiertos en el sistema
 $ EMFILE
-24 Hay demasiados ficheros abiertos
+24 Hay demasiados archivos abiertos
 $ ENOTTY
 25 IOCTL inapropiado para el dispositivo
 $ ETXTBSY
-26 Fichero de texto ocupado
+26 Archivo de texto ocupado
 $ EFBIG
-27 Fichero demasiado grande
+27 Archivo demasiado grande
 $ ENOSPC
 28 No queda espacio libre en el dispositivo
 $ ESPIPE
 29 Búsqueda ilegal
 $ EROFS
-30 Fichero del sistema de sólo lectura
+30 Archivo del sistema de sólo lectura
 $ EMLINK
 31 Demasiados enlaces
 $ EPIPE
@@ -68,13 +68,13 @@ $ EDOM
 $ ERANGE
 34 El resultado es demasiado grande
 $ EAGAIN, EWOULDBLOCK
-35 El recurso está temporalmente no disponible
+35 El recurso no está disponible temporalmente
 $ EINPROGRESS
 36 Operación actualmente en proceso
 $ EALREADY
 37 La operación ya estaba realizándose
 $ ENOTSOCK
-38 Se ha intentado realizar una operación de socket en algo que no es un socket
+38 Operación de socket inaceptable por el dispositivo
 $ EDESTADDRREQ
 39 Se necesita una dirección de destino
 $ EMSGSIZE
@@ -104,11 +104,11 @@ $ ENETUNREACH
 $ ENETRESET
 52 La conexión a la red se interrumpió al reinicializar
 $ ECONNABORTED
-53 La conexión se ha abortado debid a problemas en el software
+53 La conexión se ha abortado debido a problemas en el software
 $ ECONNRESET
 54 El interlocutor ha reinicializado la comunicación
 $ ENOBUFS
-55 No queda espacio en el almacenamiento intermedio
+55 No queda espacio en el buffer
 $ EISCONN
 56 El socket ya estaba conectado
 $ ENOTCONN
@@ -116,7 +116,7 @@ $ ENOTCONN
 $ ESHUTDOWN
 58 No se puede enviar tras la desconexión del socket
 $ ETOOMANYREFS
-59 Demasiadas referencias: no se puede unir
+59 Demasiadas referencias: no se pueden unir
 $ ETIMEDOUT
 60 El tiempo de conexión ha expirado
 $ ECONNREFUSED
@@ -124,9 +124,9 @@ $ ECONNREFUSED
 $ ELOOP
 62 Demasiados niveles de enlaces simbólicos
 $ ENAMETOOLONG
-63 Nombre de fichero demasiado largo
+63 Nombre de archivo demasiado largo
 $ EHOSTDOWN
-64 La máquina está caída
+64 La máquina está fuera de servicio
 $ EHOSTUNREACH
 65 No hay ruta hasta la máquina
 $ ENOTEMPTY
@@ -138,7 +138,7 @@ $ EUSERS
 $ EDQUOT
 69 Cuota de disco sobrepasada
 $ ESTALE
-70 Manejador de fichero NFS inválido
+70 Descriptor de archivo NFS inválido
 $ EREMOTE
 71 Camino con demasiados niveles
 $ EBADRPC
@@ -156,26 +156,38 @@ $ ENOLCK
 $ ENOSYS
 78 Función no realizada
 $ EFTYPE
-79 Tipo de fichero o formato inapropiado
+79 Tipo de archivo o formato inapropiado
 $ EAUTH
 80 Error de la autentificación
 $ ENEEDAUTH
-81 Authenticator de la necesidad
+81 Se necesita un autenticador
 $ EIDRM
 82 Identificador quitado
 $ ENOMSG
-83 Ninjún mensaje del tipo deseado
+83 No hay mensajes del tipo deseado
 $ EOVERFLOW
-84 Valor demasiado grande para almacenar en tipo des datos
+84 Valor demasiado grande para ser almacenado en el tipo de datos
 $ EILSEQ
 85 Sequencia de bytes no legal
+$ ENOTSUP
+86 No soportado
+$ ECANCELED
+87 Operación cancelada
+$ EBADMSG
+88 Mensaje incorrecto o corrupto
+$ ENODATA
+89 No hay mensajes disponibles
+$ ENOSR
+90 No hay recursos de tipo STREAM
+$ ENOSTR
+91 No es un STREAM
 $set 2
 $ SIGHUP
-1 Bloqueo del sistema
+1 Fín de línea (hangup)
 $ SIGINT
-2 Interrupción
+2 Interrumpido
 $ SIGQUIT
-3 Terminación
+3 Terminado
 $ SIGILL
 4 Instrucción ilegal
 $ SIGTRAP
@@ -183,11 +195,11 @@ $ SIGTRAP
 $ SIGABRT
 6 Llamada de aborto
 $ SIGEMT
-7 EMT trap
+7 Captura de EMT
 $ SIGFPE
 8 Excepción de coma flotante
 $ SIGKILL
-9 Asesinato
+9 Matado
 $ SIGBUS
 10 Error en el bus
 $ SIGSEGV
@@ -207,7 +219,7 @@ $ SIGSTOP
 $ SIGTSTP
 18 Detenido
 $ SIGCONT
-19 Continuado {continuando}
+19 Continuando
 $ SIGCHLD
 20 Proceso hijo finalizado
 $ SIGTTIN
@@ -215,15 +227,15 @@ $ SIGTTIN
 $ SIGTTOU
 22 Detenido (salida tty)
 $ SIGIO
-23 E/S posible {permisible}
+23 E/S posible
 $ SIGXCPU
 24 Se ha sobrepasado el tiempo límite de la CPU
 $ SIGXFSZ
-25 Se ha sobrepasado el límite de longitud de fichero
+25 Se ha sobrepasado el límite de longitud de archivo
 $ SIGVTALRM
 26 Temporizador virtual expirado
 $ SIGPROF
-27 Perfilador expirado
+27 Temporizador de perfilación expirado
 $ SIGWINCH
 28 Cambios en el tamaño de la ventana
 $ SIGINFO
@@ -232,3 +244,5 @@ $ SIGUSR1
 30 Señal definida por el usuario nº 1
 $ SIGUSR2
 31 Señal definida por el usuario nº 2
+$ SIGPWR
+32 Fallo o reinicio de la alimentación

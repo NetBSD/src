@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.30.2.3 2002/08/27 23:49:36 nathanw Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.30.2.4 2002/12/10 06:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.30.2.3 2002/08/27 23:49:36 nathanw Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.30.2.4 2002/12/10 06:25:51 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -473,9 +473,9 @@ __p_fqnname(cp, msg, msglen, name, namelen)
 
 	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
 		return (NULL);
-	newlen = strlen (name);
+	newlen = strlen(name);
 	if (newlen == 0 || name[newlen - 1] != '.') {
-		if (newlen+1 >= namelen)	/* Lack space for final dot */
+		if (newlen + 1 >= namelen)	/* Lack space for final dot */
 			return (NULL);
 		else
 			strcpy(name + newlen, ".");

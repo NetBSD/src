@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.14.6.1 2001/10/08 20:19:33 nathanw Exp $	*/
+/*	$NetBSD: timezone.c,v 1.14.6.2 2002/12/10 06:25:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: timezone.c,v 1.14.6.1 2001/10/08 20:19:33 nathanw Exp $");
+__RCSID("$NetBSD: timezone.c,v 1.14.6.2 2002/12/10 06:25:49 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,8 +80,7 @@ timezone(zone, dst)
 			if (dst)
 				return(++end);
 			*end = '\0';
-			(void)strncpy(czone,beg,sizeof(czone) - 1);
-			czone[sizeof(czone) - 1] = '\0';
+			(void)strlcpy(czone, beg, sizeof(czone));
 			*end = ',';
 			return(czone);
 		}
