@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.78 2004/05/08 20:52:59 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.78 2004/05/08 20:52:59 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1192,7 +1192,7 @@ install_bootsel(int needed)
 		return;
 	}
 
-	if (!f_flag && bootsize == 0)
+	if (!f_flag && bootsize == 0 && !i_flag)
 		/* Output an explanation for the 'update bootcode' prompt. */
 		printf("\n%s\n",
 		    "Installed bootfile doesn't support required options.");
