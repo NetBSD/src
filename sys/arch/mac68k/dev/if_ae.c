@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.34 1995/07/30 21:39:17 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.35 1995/08/09 12:16:10 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -909,7 +909,7 @@ aeintr(arg)
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				ifp->if_opackets;
+				++ifp->if_opackets;
 			}
 
 			/* Done with the buffer. */
