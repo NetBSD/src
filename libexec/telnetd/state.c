@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.10 1996/09/07 21:45:52 explorer Exp $	*/
+/*	$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: state.c,v 1.10 1996/09/07 21:45:52 explorer Exp $";
+__RCSID("$NetBSD: state.c,v 1.11 1997/10/08 08:45:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +46,8 @@ static char rcsid[] = "$NetBSD: state.c,v 1.10 1996/09/07 21:45:52 explorer Exp 
 #if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
 #endif
+
+static int envvarok __P((char *));
 
 unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
 unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
@@ -453,10 +456,10 @@ send_do(option, init)
 }
 
 #ifdef	AUTHENTICATION
-extern void auth_request();
+extern void auth_request __P((void));	/* libtelnet */
 #endif
 #ifdef	LINEMODE
-extern void doclientstat();
+extern void doclientstat __P((void));
 #endif
 
 	void
@@ -464,7 +467,7 @@ willoption(option)
 	int option;
 {
 	int changeok = 0;
-	void (*func)() = 0;
+	void (*func) __P((void)) = 0;
 
 	/*
 	 * process input from peer.

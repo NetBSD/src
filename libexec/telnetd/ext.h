@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
+/*	$NetBSD: ext.h,v 1.7 1997/10/08 08:45:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -140,9 +140,9 @@ extern void
 	start_login P((char *, int, char *)),
 	start_slc P((int)),
 #if	defined(AUTHENTICATION)
-	start_slave P((char *)),
+	startslave P((char *)),
 #else
-	start_slave P((char *, int, char *)),
+	startslave P((char *, int, char *)),
 #endif
 	suboption P((void)),
 	telrcv P((void)),

@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $	*/
+/*	$NetBSD: termstat.c,v 1.6 1997/10/08 08:45:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $";
+__RCSID("$NetBSD: termstat.c,v 1.6 1997/10/08 08:45:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +139,6 @@ int	newmap = 1;	/* nonzero if \n maps to ^M^J */
 	void
 localstat()
 {
-	void netflush();
 	int need_will_echo = 0;
 
 #if	defined(CRAY2) && defined(UNICOS5)
@@ -378,7 +378,6 @@ flowstat()
 clientstat(code, parm1, parm2)
 	register int code, parm1, parm2;
 {
-	void netflush();
 
 	/*
 	 * Get a copy of terminal characteristics.
@@ -466,7 +465,7 @@ clientstat(code, parm1, parm2)
 		 ack = (useeditmode & MODE_ACK);
 		 useeditmode &= ~MODE_ACK;
 
-		 if (changed = (useeditmode ^ editmode)) {
+		 if ((changed = (useeditmode ^ editmode))) {
 			/*
 			 * This check is for a timing problem.  If the
 			 * state of the tty has changed (due to the user

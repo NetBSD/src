@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.8 1997/10/08 01:09:02 enami Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.9 1997/10/08 08:45:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,22 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: telnetd.c,v 1.8 1997/10/08 01:09:02 enami Exp $";
+__RCSID("$NetBSD: telnetd.c,v 1.9 1997/10/08 08:45:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 #include "pathnames.h"
+
+#include <arpa/inet.h>
+
+int tgetent __P((char *, char *));	/* XXX from <curses.h> */
 
 #include <sys/cdefs.h>
 #define P __P
@@ -136,6 +137,14 @@ char *gettyname = "default";
 char *progname;
 
 extern void usage P((void));
+int main __P((int, char *[]));
+void usage __P((void));
+int getterminaltype __P((char *));
+int getent __P((char *, char *));
+void doit __P((struct sockaddr_in *));
+void _gettermname __P((void));
+int terminaltypeok __P((char *));
+char *getstr __P((char *, char **));
 
 /*
  * The string to pass to getopt().  We do it this way so
@@ -168,6 +177,7 @@ char valid_opts[] = {
 	'\0'
 };
 
+int
 main(argc, argv)
 	char *argv[];
 {
@@ -381,7 +391,7 @@ main(argc, argv)
 		usage();
 		/* NOT REACHED */
 	    } else if (argc == 1) {
-		    if (sp = getservbyname(*argv, "tcp")) {
+		    if ((sp = getservbyname(*argv, "tcp"))) {
 			sin.sin_port = sp->s_port;
 		    } else {
 			sin.sin_port = atoi(*argv);
@@ -523,6 +533,9 @@ main(argc, argv)
 	net = 0;
 	doit(&from);
 	/* NOTREACHED */
+#ifdef __GNUC__
+	exit(0);
+#endif
 }  /* end of main */
 
 	void
@@ -586,7 +599,6 @@ getterminaltype(name)
     char *name;
 {
     int retval = -1;
-    void _gettermname();
 
     settimer(baseline);
 #if	defined(AUTHENTICATION)
@@ -770,11 +782,11 @@ extern void telnet P((int, int, char *));
 /*
  * Get a pty, scan input lines.
  */
+void
 doit(who)
 	struct sockaddr_in *who;
 {
-	char *host, *inet_ntoa();
-	int t;
+	char *host;
 	struct hostent *hp;
 	int level;
 	int ptynum;
@@ -826,6 +838,9 @@ doit(who)
 	if (hp == NULL && registerd_host_only) {
 		fatal(net, "Couldn't resolve your address into a host name.\r\n\
 	 Please contact your net administrator");
+#ifdef __GNUC__
+		host = NULL;	/* XXX gcc */
+#endif
 	} else if (hp &&
 	    (strlen(hp->h_name) <= (unsigned int)((utmp_len < 0) ? -utmp_len
 								 : utmp_len))) {
@@ -916,7 +931,6 @@ telnet(f, p, host)
 	char *HE;
 	char *HN;
 	char *IM;
-	void netflush();
 	int nfd;
 
 	/*
@@ -1109,7 +1123,6 @@ telnet(f, p, host)
 #endif
 
 	if (getent(defent, gettyname) == 1) {
-		char *getstr();
 		char *cp=defstrs;
 
 		HE = getstr("he", &cp);

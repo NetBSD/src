@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.10 1996/09/27 02:30:05 thorpej Exp $	*/
+/*	$NetBSD: utility.c,v 1.11 1997/10/08 08:45:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,17 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: utility.c,v 1.10 1996/09/27 02:30:05 thorpej Exp $";
+__RCSID("$NetBSD: utility.c,v 1.11 1997/10/08 08:45:15 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/utsname.h>
 #define PRINTOPTIONS
 #include "telnetd.h"
+
+char *nextitem __P((char *));
+void fatalperror __P((int, char *));
+void edithost __P((char *, char *));
+void putstr __P((char *));
 
 /*
  * utility functions performing io related tasks
@@ -61,7 +67,6 @@ static char rcsid[] = "$NetBSD: utility.c,v 1.10 1996/09/27 02:30:05 thorpej Exp
     void
 ttloop()
 {
-    void netflush();
 
     DIAG(TD_REPORT, {sprintf(nfrontp, "td: ttloop\r\n");
 		     nfrontp += strlen(nfrontp);});
@@ -328,8 +333,8 @@ fatal(f, msg)
 {
 	char buf[BUFSIZ];
 
-	(void) sprintf(buf, "telnetd: %s.\r\n", msg);
-	(void) write(f, buf, (int)strlen(buf));
+	(void)snprintf(buf, sizeof buf,"telnetd: %s.\r\n", msg);
+	(void)write(f, buf, (int)strlen(buf));
 	sleep(1);	/*XXX*/
 	exit(1);
 }
@@ -339,9 +344,9 @@ fatalperror(f, msg)
 	int f;
 	char *msg;
 {
-	char buf[BUFSIZ], *strerror();
+	char buf[BUFSIZ];
 
-	(void) sprintf(buf, "%s: %s", msg, strerror(errno));
+	(void)snprintf(buf, sizeof buf, "%s: %s", msg, strerror(errno));
 	fatal(f, buf);
 }
 
@@ -353,7 +358,6 @@ edithost(pat, host)
 	register char *host;
 {
 	register char *res = editedhost;
-	char *strncpy();
 
 	if (!pat)
 		pat = "";
@@ -425,7 +429,6 @@ putf(cp, where)
 #ifdef	STREAMSPTY
 	extern char *strchr();
 #else
-	extern char *strrchr();
 #endif
 
 	uname(&utsinfo);
@@ -511,8 +514,7 @@ printsub(direction, pointer, length)
     unsigned char	*pointer;	/* where suboption data sits */
     int			length;		/* length of suboption data */
 {
-    register int i;
-    char buf[512];
+    register int i = 0;		/* XXX gcc */
 
 	if (!(diagnostic & TD_OPTIONS))
 		return;
@@ -758,7 +760,8 @@ printsub(direction, pointer, length)
 		}
 		{
 		    char tbuf[32];
-		    sprintf(tbuf, "%s%s%s%s%s",
+
+		    (void)snprintf(tbuf, sizeof tbuf, "%s%s%s%s%s",
 			pointer[2]&MODE_EDIT ? "|EDIT" : "",
 			pointer[2]&MODE_TRAPSIG ? "|TRAPSIG" : "",
 			pointer[2]&MODE_SOFT_TAB ? "|SOFT_TAB" : "",
@@ -931,7 +934,6 @@ printsub(direction, pointer, length)
 			    break;
 
 			default:
-			def_case:
 			    if (isprint(pointer[i]) && pointer[i] != '"') {
 				if (noquote) {
 				    *nfrontp++ = '"';
