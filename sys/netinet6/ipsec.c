@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.80 2003/09/12 07:53:29 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.81 2003/09/12 07:58:25 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.80 2003/09/12 07:53:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.81 2003/09/12 07:58:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -597,7 +597,6 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	struct pf_tag *t;
 #endif
 	u_int16_t tag;
-
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
