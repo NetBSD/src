@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.27 1999/09/27 23:09:42 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.28 1999/09/28 06:47:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.27 1999/09/27 23:09:42 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.28 1999/09/28 06:47:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,6 @@ char	connecthelp[] =	"connect to remote ftp server";
 char	crhelp[] =	"toggle carriage return stripping on ascii gets";
 char	debughelp[] =	"toggle/set debugging mode";
 char	deletehelp[] =	"delete remote file";
-char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
 #ifndef NO_EDITCOMPLETE
@@ -76,6 +75,7 @@ char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
 char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
+char	lpagehelp[] =	"view a local file through your pager";
 char	lpwdhelp[] =	"print local working directory";
 char	lshelp[] =	"list contents of remote directory";
 char	macdefhelp[] =  "define a macro";
@@ -88,11 +88,11 @@ char	modehelp[] =	"set file transfer mode";
 char	modtimehelp[] = "show last modification time of remote file";
 char	mputhelp[] =	"send multiple files";
 char	newerhelp[] =	"get file if remote file is newer than local file ";
-char	nlisthelp[] =	"nlist contents of remote directory";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
 char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
+char	plshelp[] =	"list contents of remote directory through your pager";
 char	porthelp[] =	"toggle use of PORT/LPRT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
 			"retrieved files";
@@ -155,7 +155,7 @@ struct cmd cmdtab[] = {
 	{ "cr",		crhelp,		0, 0, 0, CMPL0		setcr },
 	{ "debug",	debughelp,	0, 0, 0, CMPL0		setdebug },
 	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
-	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "dir",	lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
 #ifndef NO_EDITCOMPLETE
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
@@ -173,6 +173,7 @@ struct cmd cmdtab[] = {
 	{ "image",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
 	{ "lcd",	lcdhelp,	0, 0, 0, CMPL(l)	lcd },
 	{ "less",	pagehelp,	1, 1, 1, CMPL(r)	page },
+	{ "lpage",	lpagehelp,	0, 0, 0, CMPL(l)	lpage },
 	{ "lpwd",	lpwdhelp,	0, 0, 0, CMPL0		lpwd },
 	{ "ls",		lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "macdef",	macdefhelp,	0, 0, 0, CMPL0		macdef },
@@ -187,12 +188,14 @@ struct cmd cmdtab[] = {
 	{ "mput",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "msend",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "newer",	newerhelp,	1, 1, 1, CMPL(r)	newer },
-	{ "nlist",	nlisthelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "nlist",	lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
 	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
 	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
 	{ "page",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
+	{ "pdir",	plshelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "pls",	plshelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "preserve",	preservehelp,	0, 0, 0, CMPL0		setpreserve },
 	{ "progress",	progresshelp,	0, 0, 0, CMPL0		setprogress },
 	{ "prompt",	prompthelp,	0, 0, 0, CMPL0		setprompt },

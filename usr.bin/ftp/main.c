@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 1999/09/27 23:09:44 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.53 1999/09/28 06:47:42 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 1999/09/27 23:09:44 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 1999/09/28 06:47:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,7 @@ main(argc, argv)
 		pw = getpwuid(getuid());
 	if (pw != NULL) {
 		home = homedir;
-		(void)strcpy(home, pw->pw_dir);
+		(void)strlcpy(home, pw->pw_dir, sizeof(home));
 	}
 
 	setttywidth(0);
