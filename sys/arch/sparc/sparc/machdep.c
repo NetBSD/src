@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 1998/10/11 23:21:03 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.134 1998/10/12 14:32:15 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -904,7 +904,7 @@ dumpsys()
 	extern int npmemarr;
 
 	/* copy registers to memory */
-	snapshot(cpcb);
+	snapshot(cpuinfo.curpcb);
 	stackdump();
 
 	if (dumpdev == NODEV)
