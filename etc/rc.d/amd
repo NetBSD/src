@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.11 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: amd,v 1.12 2004/10/12 13:44:45 lukem Exp $
 #
 
 # PROVIDE: amd
@@ -12,6 +12,9 @@ $_rc_subr_loaded . /etc/rc.subr
 name="amd"
 rcvar=$name
 command="/usr/sbin/${name}"
+reload_cmd="/usr/sbin/amq -f"
+extra_commands="reload"
+
 load_rc_config $name
 
 command_args='-p -a '$amd_dir' -F /etc/amd.conf >/var/run/amd.pid'
