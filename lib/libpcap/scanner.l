@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.11 2000/05/04 13:08:25 is Exp $	*/
+/*	$NetBSD: scanner.l,v 1.12 2000/12/28 22:12:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.11 2000/05/04 13:08:25 is Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.12 2000/12/28 22:12:07 thorpej Exp $");
 #endif
 #endif
 
@@ -258,6 +258,30 @@ ${B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
 #endif /*INET6*/
 			}
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
+icmptype		{ yylval.i = 0; return NUM; }
+icmpcode		{ yylval.i = 1; return NUM; }
+icmp-echoreply		{ yylval.i = 0; return NUM; }
+icmp-unreach		{ yylval.i = 3; return NUM; }
+icmp-sourcequench	{ yylval.i = 4; return NUM; }
+icmp-redirect		{ yylval.i = 5; return NUM; }
+icmp-echo		{ yylval.i = 8; return NUM; }
+icmp-routeradvert	{ yylval.i = 9; return NUM; }
+icmp-routersolicit	{ yylval.i = 10; return NUM; }
+icmp-timxceed		{ yylval.i = 11; return NUM; }
+icmp-paramprob		{ yylval.i = 12; return NUM; }
+icmp-tstamp		{ yylval.i = 13; return NUM; }
+icmp-tstampreply	{ yylval.i = 14; return NUM; }
+icmp-ireq		{ yylval.i = 15; return NUM; }
+icmp-ireqreply		{ yylval.i = 16; return NUM; }
+icmp-maskreq		{ yylval.i = 17; return NUM; }
+icmp-maskreply		{ yylval.i = 18; return NUM; }
+tcpflags		{ yylval.i = 13; return NUM; }
+tcp-fin			{ yylval.i = 0x01; return NUM; }
+tcp-syn			{ yylval.i = 0x02; return NUM; }
+tcp-rst			{ yylval.i = 0x04; return NUM; }
+tcp-push		{ yylval.i = 0x08; return NUM; }
+tcp-ack			{ yylval.i = 0x10; return NUM; }
+tcp-urg			{ yylval.i = 0x20; return NUM; }
 [A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
