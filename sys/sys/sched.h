@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.9 2000/08/26 04:01:18 sommerfeld Exp $ */
+/* $NetBSD: sched.h,v 1.10 2000/08/26 04:17:44 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ extern __volatile u_int32_t sched_whichqs;
 #define	SLPQUE(ident)	(&sched_slpque[SLPQUE_LOOKUP(ident)])
 
 struct proc;
+struct cpu_info;
 
 void schedclock(struct proc *p);
 void sched_wakeup(void *);
