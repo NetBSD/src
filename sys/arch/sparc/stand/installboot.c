@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.11 1995/11/08 09:09:20 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.12 1996/10/20 16:00:14 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -64,6 +64,7 @@ int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
+char	*karch;
 char	cpumodel[100];
 
 
@@ -78,7 +79,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -94,9 +95,12 @@ main(argc, argv)
 	int	mib[2];
 	size_t	size;
 
-	while ((c = getopt(argc, argv, "vnh")) != EOF) {
+	while ((c = getopt(argc, argv, "a:vnh")) != EOF) {
 		switch (c) {
-		case 'h':
+		case 'a':
+			karch = optarg;
+			break;
+		case 'h':	/* Note: for backwards compatibility */
 			/* Don't strip a.out header */
 			hflag = 1;
 			break;
@@ -121,21 +125,35 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	dev = argv[optind + 2];
 
+	if (karch == NULL) {
+		mib[0] = CTL_HW;
+		mib[1] = HW_MODEL;
+		size = sizeof(cpumodel);
+		if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
+			err(1, "sysctl");
+
+		if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
+			/* Assume a sun4c/sun4m */
+			karch = "sun4c";
+		else
+			karch = "sun4";
+	}
+
 	if (verbose) {
 		printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
+		printf("architecture: %s\n", karch);
 	}
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_MODEL;
-	size = sizeof(cpumodel);
-	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
-		err(1, "sysctl");
-
-	if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
-		/* Assume a sun4c/sun4m */
+	if (strcmp(karch, "sun4") == 0) {
+		hflag = 0;
+	} else if (strcmp(karch, "sun4c") == 0) {
 		hflag = 1;
+	} else if (strcmp(karch, "sun4m") == 0) {
+		hflag = 1;
+	} else
+		errx(1, "Unsupported architecture");
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
