@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.12 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.13 2004/12/07 19:14:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -212,10 +212,12 @@ struct ahb_ecb {
 	short   cksum;
 	u_char	scsi_cmd[12];
 
+	/*-----------------end of hardware supported fields----------------*/
+
 	struct ahb_dma_seg ahb_dma[AHB_NSEG];
 	struct ahb_ecb_status ecb_status;
 	struct scsipi_sense_data ecb_sense;
-	/*-----------------end of hardware supported fields----------------*/
+
 	TAILQ_ENTRY(ahb_ecb) chain;
 	struct ahb_ecb *nexthash;
 	int32_t hashkey;
