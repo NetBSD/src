@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/07/10 10:34:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2004/04/21 21:19:51 dsl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,13 +17,15 @@ LISTS+=			${.CURDIR}/list.miniroot
 IMAGEDEPENDS+=		netbsd.gz
 
 ${CRUNCHBIN}: ${CRUNCHBINDIR}/${CRUNCHBIN}
+	mkdir sysinst
+	cp -p ${CRUNCHBINDIR}/sysinst/sysinstmsgs.* sysinst
 	cp ${.ALLSRC} ${.TARGET}
 
 netbsd.gz: ${KERNOBJDIR}/GENERIC/netbsd
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+=	${CRUNCHBIN} netbsd.gz
+CLEANFILES+=	${CRUNCHBIN} netbsd.gz sysinst
 
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
