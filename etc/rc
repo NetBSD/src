@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.69 1997/03/10 10:15:11 mycroft Exp $
+#	$NetBSD: rc,v 1.70 1997/03/12 19:15:16 mycroft Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -256,7 +256,12 @@ if [ -f /var/account/acct ]; then
 fi
 
 echo -n standard daemons:
-echo -n ' update';		update
+if [ "$update_flags" != NO ]; then
+	if [ "$update_flags" = DEFAULT ]; then
+		update_flags="30"
+	fi
+	echo -n ' update';		update $update_flags
+fi
 echo -n ' cron';		cron
 echo '.'
 
