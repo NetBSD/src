@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1995/02/18 09:42:19 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.24 1995/03/02 20:39:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -312,7 +312,7 @@ cdev_decl(ch);
 cdev_decl(cgsix);
 
 #include "bsdaudio.h"
-cdev_decl(audio);
+cdev_decl(oudio);
 
 #include "tun.h"
 cdev_decl(tun);
@@ -407,7 +407,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
-	cdev_gen_init(NBSDAUDIO,audio),	/* 69: /dev/audio */
+	cdev_gen_init(NBSDAUDIO,oudio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71 */
 	cdev_notdef(),			/* 72 */

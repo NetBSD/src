@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.7 1994/11/23 07:02:02 deraadt Exp $ */
+/*	$NetBSD: bsd_audio.c,v 1.8 1995/03/02 20:37:46 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -101,8 +101,8 @@ struct selinfo {
 /*
  * Initial/default block size is patchable.
  */
-int audio_blocksize = DEFBLKSIZE;
-int audio_backlog = 400;		/* 50ms in samples */
+int oudio_blocksize = DEFBLKSIZE;
+int oudio_backlog = 400;		/* 50ms in samples */
 
 /*
  * Software state, per AMD79C30 audio chip.
@@ -253,29 +253,29 @@ audioattach(dev)
 	return (0);
 }
 #else
-#define AUDIOOPEN(d, f, i, p) audioopen(dev_t d, int f, int i, struct proc *p)
-#define AUDIOCLOSE(d, f, i, p) audioclose(dev_t d, int f, int i, \
+#define AUDIOOPEN(d, f, i, p) oudioopen(dev_t d, int f, int i, struct proc *p)
+#define AUDIOCLOSE(d, f, i, p) oudioclose(dev_t d, int f, int i, \
 					  struct proc *p)
-#define AUDIOREAD(d, u, f) audioread(dev_t d, struct uio *u, int f)
-#define AUDIOWRITE(d, u, f) audiowrite(dev_t d, struct uio *u, int f)
+#define AUDIOREAD(d, u, f) oudioread(dev_t d, struct uio *u, int f)
+#define AUDIOWRITE(d, u, f) oudiowrite(dev_t d, struct uio *u, int f)
 #define AUDIOIOCTL(d, c, a, f, o)\
-	audioioctl(dev_t dev, u_long c, caddr_t a, int f, struct proc *p)
-#define AUDIOSELECT(d, r, p) audioselect(dev_t dev, int rw, struct proc *p)
+	oudioioctl(dev_t dev, u_long c, caddr_t a, int f, struct proc *p)
+#define AUDIOSELECT(d, r, p) oudioselect(dev_t dev, int rw, struct proc *p)
 #define SELWAKEUP selwakeup
 
 #define AUDIO_SET_SWINTR ienab_bis(IE_L6)
 
 /* autoconfiguration driver */
-void	audioattach __P((struct device *, struct device *, void *));
-int	audiomatch __P((struct device *, void *, void *));
+void	oudioattach __P((struct device *, struct device *, void *));
+int	oudiomatch __P((struct device *, void *, void *));
 struct	cfdriver audiocd =
-    { NULL, "audio", audiomatch, audioattach,
+    { NULL, "audio", oudiomatch, oudioattach,
       DV_DULL, sizeof(struct audio_softc) };
 #define SOFTC(dev) audiocd.cd_devs[minor(dev)]
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
 
 int
-audiomatch(parent, vcf, aux)
+oudiomatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
@@ -292,7 +292,7 @@ audiomatch(parent, vcf, aux)
  * Audio chip found.
  */
 void
-audioattach(parent, self, args)
+oudioattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
@@ -382,10 +382,10 @@ AUDIOOPEN(dev, flags, ifmt, p)
 		return (EBUSY);
 	sc->sc_open = 1;
 
-	sc->sc_au.au_lowat = audio_blocksize;
+	sc->sc_au.au_lowat = oudio_blocksize;
 	sc->sc_au.au_hiwat = AUCB_SIZE - sc->sc_au.au_lowat;
-	sc->sc_au.au_blksize = audio_blocksize;
-	sc->sc_au.au_backlog = audio_backlog;
+	sc->sc_au.au_blksize = oudio_blocksize;
+	sc->sc_au.au_backlog = oudio_backlog;
 
 	/* set up read and write blocks and `dead sound' zero value. */
 	AUCB_INIT(&sc->sc_au.au_rb);
