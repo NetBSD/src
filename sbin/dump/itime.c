@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.11 2001/05/28 01:09:55 lukem Exp $	*/
+/*	$NetBSD: itime.c,v 1.12 2001/12/23 12:54:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,21 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.11 2001/05/28 01:09:55 lukem Exp $");
+__RCSID("$NetBSD: itime.c,v 1.12 2001/12/23 12:54:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#include <ufs/fs.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 
 #include <protocols/dumprestore.h>
 

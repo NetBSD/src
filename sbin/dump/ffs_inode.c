@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.9 2001/12/22 08:05:24 lukem Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.10 2001/12/23 12:54:53 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -40,24 +40,16 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.9 2001/12/22 08:05:24 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.10 2001/12/23 12:54:53 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-#endif
 
 #include <protocols/dumprestore.h>
 
