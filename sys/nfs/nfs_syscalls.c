@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.61 2003/05/21 13:50:55 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.62 2003/05/21 14:41:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.61 2003/05/21 13:50:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.62 2003/05/21 14:41:26 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -544,7 +544,7 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
-				free((caddr_t)nd, M_NFSRVDESC);
+				FREE(nd, M_NFSRVDESC);
 				nd = NULL;
 			}
 			nfsd->nfsd_slp = (struct nfssvc_sock *)0;
@@ -717,7 +717,7 @@ nfssvc_nfsd(nsd, argp, l)
 			if (solockp)
 				nfs_sndunlock(solockp);
 			if (error == EINTR || error == ERESTART) {
-				free((caddr_t)nd, M_NFSRVDESC);
+				FREE(nd, M_NFSRVDESC);
 				nfsrv_slpderef(slp);
 				s = splsoftnet();
 				goto done;
@@ -731,7 +731,7 @@ nfssvc_nfsd(nsd, argp, l)
 			break;
 		    };
 		    if (nd) {
-			FREE((caddr_t)nd, M_NFSRVDESC);
+			FREE(nd, M_NFSRVDESC);
 			nd = NULL;
 		    }
 
@@ -814,7 +814,7 @@ nfsrv_zapsock(slp)
 		for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
 			nnwp = LIST_NEXT(nwp, nd_tq);
 			LIST_REMOVE(nwp, nd_tq);
-			free((caddr_t)nwp, M_NFSRVDESC);
+			FREE(nwp, M_NFSRVDESC);
 		}
 		LIST_INIT(&slp->ns_tq);
 		splx(s);
