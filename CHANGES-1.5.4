@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.148 2004/04/12 05:09:59 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.149 2004/04/15 08:04:47 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2594,3 +2594,10 @@ usr.sbin/route6d/route6d.c			patch
 
 	Validate packet length.
 	[itojun, ticket #105]
+
+lib/libc/net/gethnamaddr.c			1.58
+
+	Back out rev. 1.56; `pointer points the byte just after the valid
+	region' is normal case.  If the parser wants something more, there
+	should be another bounds check for it.
+	[itojun, ticket #141]
