@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2002/02/21 11:09:43 manu Exp $
+	$NetBSD: syscalls.master,v 1.24 2002/02/21 22:15:29 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -250,8 +250,8 @@
 133	UNIMPL		sgigsc
 134	NOARGS		{ void *svr4_sys_mmap(void *addr, svr4_size_t len, \
 			    int prot, int flags, int fd, svr4_off_t pos); }
-135	UNIMPL		munmap
-136	UNIMPL		mprotect
+135	NOARGS		{ int sys_munmap(void *addr, int len); }
+136	NOARGS		{ int sys_mprotect(void *addr, int len, int prot); }
 137	UNIMPL		msync
 138	UNIMPL		madvise
 139	UNIMPL		pagelock
