@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1 1995/10/03 15:02:41 hpeyerl Exp $	*/
+/*	$NetBSD: key.c,v 1.2 1997/07/17 05:46:51 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: key.c,v 1.1 1995/10/03 15:02:41 hpeyerl Exp $";
+__RCSID("$NetBSD: key.c,v 1.2 1997/07/17 05:46:51 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +57,8 @@ static char rcsid[] = "$NetBSD: key.c,v 1.1 1995/10/03 15:02:41 hpeyerl Exp $";
 #include "extern.h"
 
 __BEGIN_DECLS
+static int
+	c_key __P((const void *, const void *));
 void	f_cbreak __P((struct info *));
 void	f_columns __P((struct info *));
 void	f_dec __P((struct info *));
