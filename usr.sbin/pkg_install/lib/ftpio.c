@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.5 2000/02/02 23:09:11 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.6 2000/02/04 22:55:20 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.5 2000/02/02 23:09:11 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.6 2000/02/04 22:55:20 he Exp $");
 #endif
 
 /*
@@ -119,7 +119,7 @@ expect(int fd, const char *str, int *ftprc)
 
     if(0) setbuf(stdout, NULL);
 
-    memset(buf, '#', sizeof(buf));
+    memset(buf, '\n', sizeof(buf));
 
     timeout.tv_sec=5*60;
     timeout.tv_usec=0;
