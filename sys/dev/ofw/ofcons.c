@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.6 1998/01/12 09:33:32 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.7 1998/01/26 21:49:00 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -272,14 +272,22 @@ static int
 ofcprobe()
 {
 	int chosen;
+	char stdinbuf[4], stdoutbuf[4];
 
 	if (stdin)
 		return 1;
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return 0;
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin
-	    || OF_getprop(chosen, "stdout", &stdout, sizeof stdout) != sizeof stdout)
+	if (OF_getprop(chosen, "stdin", stdinbuf, sizeof stdinbuf) !=
+	      sizeof stdinbuf ||
+	    OF_getprop(chosen, "stdout", stdoutbuf, sizeof stdoutbuf) !=
+	      sizeof stdoutbuf)
 		return 0;
+
+	/* Decode properties. */
+	stdin = of_decode_int(stdinbuf);
+	stdout = of_decode_int(stdoutbuf);
+
 	return 1;
 }
 
