@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.13 1996/03/17 01:46:54 thorpej Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.14 1996/04/08 00:57:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,6 +90,7 @@ xcfb needs dtop device
 #else
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -113,9 +114,9 @@ xcfb needs dtop device
 #include <pmax/pmax/cons.h>
 
 #include <pmax/dev/xcfbreg.h>
+#include <pmax/dev/xcfbvar.h>
 #include <pmax/dev/ims332.h>
 #include <pmax/pmax/maxine.h>
-#include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/dev/dtopreg.h>
 
@@ -192,7 +193,7 @@ xcfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
+	/*struct cfdata *cf = match;*/
 	struct confargs *ca = aux;
 
 	/* Make sure that it's an xcfb. */
@@ -211,7 +212,7 @@ xcfbattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 
-	if (!xcfbinit(NULL, ca->ca_addr, self->dv_unit, 0));
+	if (!xcfbinit(NULL, (caddr_t)ca->ca_addr, self->dv_unit, 0));
 		return;
 
 	/* no interrupts for XCFB */
@@ -230,8 +231,6 @@ xcfbinit(fi, base, unit, silent)
 	int unit;
 	int silent;
 {
-	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
-
 	/*XXX*/
 	/*
 	 * If this device is being intialized as the console, malloc()
@@ -243,7 +242,7 @@ xcfbinit(fi, base, unit, silent)
 	} else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			printf("cfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}

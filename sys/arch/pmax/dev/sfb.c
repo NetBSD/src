@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.10 1996/03/17 22:02:59 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.11 1996/04/08 00:57:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@
 #include "sfb.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>					/* printf() */
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -118,7 +119,7 @@ extern int pmax_boardtype;
  * Forward references.
  */
 
-int sfbinit (char *, int, int);
+int sfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
@@ -154,7 +155,7 @@ sfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
+	/*struct cfdata *cf = match;*/
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for this type of device. */
@@ -185,6 +186,7 @@ sfbattach(parent, self, aux)
 	struct confargs *ca = aux;
 	caddr_t sfbaddr = (caddr_t)ca->ca_addr;
 	int unit = self->dv_unit;
+	struct fbinfo *fi = (struct fbinfo *) self;
 
 #ifdef notyet
 	/* if this is the console, it's already configured. */
@@ -192,7 +194,7 @@ sfbattach(parent, self, aux)
 		return;	/* XXX patch up f softc pointer */
 #endif
 
-	if (!sfbinit(sfbaddr, unit, 0))
+	if (!sfbinit(fi, sfbaddr, unit, 0))
 		return;
 
 #if 0 /*XXX*/
@@ -200,27 +202,17 @@ sfbattach(parent, self, aux)
 #endif
 }
 
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-/*ARGSUSED*/
-sfbprobe(cp)
-	struct pmax_ctlr *cp;
-{
-}
 
 /*
  * Initialization
  */
 int
-sfbinit(base, unit, silent)
+sfbinit(fi, base, unit, silent)
+	struct fbinfo *fi;
 	char *base;
 	int unit;
 	int silent;
 {
-	struct fbinfo *fi;
-	u_char foo;
 
 	/*
 	 * If this device is being intialized as the console, malloc()
@@ -233,7 +225,7 @@ sfbinit(base, unit, silent)
 	else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			printf("cfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
