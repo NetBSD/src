@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.48 1999/05/25 00:16:08 tron Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.49 1999/09/03 17:07:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -345,7 +345,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->sym_offset + i) < curp->sym_size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf( "LKM: LMLOADSYMS (loading @ %ld of %ld, i = %d)\n",
+			if (lkmdebug & LKMDB_LOAD)
+		printf( "LKM: LMLOADSYMS (loading @ %ld of %ld, i = %d)\n",
 			curp->sym_offset, curp->sym_size, i);
 #endif	/* DEBUG*/
 		}
@@ -367,9 +368,6 @@ lkmioctl(dev, cmd, data, flag, p)
 		break;
 
 	case LMREADY:		/* module loaded: call entry */
-#ifdef DEBUG
-	    printf("LKM: try READY");
-#endif	/* DEBUG */
 		if (securelevel > 0)
 			return EPERM;
 
