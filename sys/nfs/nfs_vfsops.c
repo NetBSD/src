@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.49 1996/06/24 10:26:40 pk Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.50 1996/10/10 23:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -291,7 +291,7 @@ nfs_mountroot()
 	 */
 	nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root);
 	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
-	printf("root on %s\n", nd.nd_root.ndm_host);
+	kprintf("root on %s\n", nd.nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
@@ -316,7 +316,7 @@ nfs_mountroot()
 	if (error) panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.tv_sec;
 #ifdef	DEBUG
-	printf("root time: 0x%lx\n", n);
+	kprintf("root time: 0x%lx\n", n);
 #endif
 	inittodr(n);
 
@@ -345,7 +345,7 @@ nfs_mountroot()
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("nfs_mountroot: can't setup swap vp");
 	if (swdevt[0].sw_dev != NODEV) {
-		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
+		kprintf("swap on device 0x%x\n", swdevt[0].sw_dev);
 		return (0);
 	}
 
@@ -359,7 +359,7 @@ nfs_mountroot()
 #ifdef Lite2_integrated
 	vfs_unbusy(mp, procp);
 #endif
-	printf("swap on %s\n", nd.nd_swap.ndm_host);
+	kprintf("swap on %s\n", nd.nd_swap.ndm_host);
 
 	/*
 	 * Since the swap file is not the root dir of a file system,
@@ -377,7 +377,7 @@ nfs_mountroot()
 		panic("nfs_mountroot: getattr for swap");
 	n = (long) (attr.va_size >> DEV_BSHIFT);
 #ifdef	DEBUG
-	printf("swap size: 0x%lx (blocks)\n", n);
+	kprintf("swap size: 0x%lx (blocks)\n", n);
 #endif
 	swdevt[0].sw_nblks = n;
 
@@ -547,7 +547,7 @@ nfs_decode_args(nmp, argp)
 		nfs_disconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0)) {
-				printf("nfs_args: retrying connect\n");
+				kprintf("nfs_args: retrying connect\n");
 				(void) tsleep((caddr_t)&lbolt,
 					      PSOCK, "nfscon", 0);
 			}
