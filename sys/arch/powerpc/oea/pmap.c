@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2004/03/21 10:34:56 aymeric Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2004/06/09 19:30:57 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2004/03/21 10:34:56 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2004/06/09 19:30:57 kleink Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1957,13 +1957,32 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
-		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
-		if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
-			register_t batl = battable[va >> ADDR_SR_SHFT].batl;
-			register_t mask = (~(batu & BAT_BL) << 15) & ~0x1ffffL;
-			*pap = (batl & mask) | (va & ~mask);
-			return TRUE;
+		if ((MFPVR() >> 16) != MPC601) {
+			register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
+				register_t batl =
+				    battable[va >> ADDR_SR_SHFT].batl;
+				register_t mask =
+				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
+				*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			}
+		} else {
+			register_t batu = battable[va >> 23].batu;
+			register_t batl = battable[va >> 23].batl;
+			register_t sr = iosrtable[va >> ADDR_SR_SHFT];
+			if (BAT601_VALID_P(batl) &&
+			    BAT601_VA_MATCH_P(batu, batl, va)) {
+				register_t mask =
+				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
+				*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			} else if (SR601_VALID_P(sr) &&
+				   SR601_PA_MATCH_P(sr, va)) {
+				*pap = va;
+				return TRUE;
+			}
 		}
 		return FALSE;
 	}
