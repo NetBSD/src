@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.44 1997/08/29 10:09:38 veego Exp $
+#	$NetBSD: netstart,v 1.45 1997/09/07 09:47:31 mycroft Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -52,7 +52,7 @@ fi
 
 # Set the address for the first loopback interface, so that the auto-route
 # from a newly configured interface's address to lo0 works correctly.
-ifconfig lo0 inet localhost
+ifconfig lo0 inet 127.0.0.1
 
 # Configure all of the network interfaces listed in $net_interfaces;
 # if $net_interfaces is DEFAULT, grab all interfaces from ifconfig.
@@ -130,7 +130,7 @@ for int in $configured_interfaces; do
 				ifconfig $int inet alias $addr netmask $net
 			fi
 			# Use loopback, not the wire
-			route add $addr localhost
+			route add $addr 127.0.0.1
 		done
 	fi
 done
@@ -149,7 +149,7 @@ if [ -f /etc/ifaliases ]; then
 			ifconfig $int inet alias $addr netmask $net
 		fi
 		# use loopback, not the wire
-		route add $addr localhost
+		route add $addr 127.0.0.1
 	done
 ) < /etc/ifaliases
 fi
