@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.23 1998/09/01 03:26:05 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.24 1998/09/11 21:27:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -278,6 +278,7 @@ lfs_mountfs(devvp, mp, p)
 	struct proc *p;
 {
 	extern struct vnode *rootvp;
+	struct dlfs *dfs;
 	register struct lfs *fs;
 	register struct ufsmount *ump;
 	struct vnode *vp;
@@ -326,11 +327,12 @@ lfs_mountfs(devvp, mp, p)
 	error = bread(devvp, LFS_LABELPAD / size, LFS_SBPAD, cred, &bp);
 	if (error)
 		goto out;
-	fs = (struct lfs *)bp->b_data;
+	
+	dfs = (struct dlfs *)bp->b_data;
 
 	/* Check the basics. */
-	if (fs->lfs_magic != LFS_MAGIC || fs->lfs_bsize > MAXBSIZE ||
-	    fs->lfs_bsize < sizeof(struct lfs)) {
+	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
+	    dfs->dlfs_bsize < sizeof(struct dlfs)) {
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
 	}
@@ -338,7 +340,7 @@ lfs_mountfs(devvp, mp, p)
 	/* Allocate the mount structure, copy the superblock into it. */
 	ump = (struct ufsmount *)malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	fs = ump->um_lfs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, fs, sizeof(struct lfs));
+	bcopy(bp->b_data, &(fs->lfs_dlfs), sizeof(struct dlfs));
 	if (sizeof(struct lfs) < LFS_SBPAD)			/* XXX why? */
 		bp->b_flags |= B_INVAL;
 	brelse(bp);

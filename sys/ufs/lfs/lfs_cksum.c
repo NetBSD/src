@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.8 1998/03/01 02:23:24 fvdl Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.9 1998/09/11 21:27:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,16 +36,16 @@
  */
 
 #include <sys/types.h>
-#ifdef _KERNEL
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/lock.h>
+#endif
+#include <sys/mount.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-#else
-u_long cksum __P((void *, size_t));
-#endif
 
 /*
  * Simple, general purpose, fast checksum.  Data must be short-aligned.
@@ -67,4 +67,14 @@ cksum(str, len)
 		str = (void *)((u_short *)str + 1);
 	}
 	return (sum);
+}
+
+u_long  
+lfs_sb_cksum(fs)
+        struct dlfs *fs;
+{
+        size_t size;  
+
+        size = sizeof(*fs) - sizeof(fs->dlfs_cksum) - sizeof(fs->dlfs_pad);
+        return cksum(fs,size);
 }
