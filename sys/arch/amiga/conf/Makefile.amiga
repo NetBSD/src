@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.75 1998/05/31 23:25:41 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.76 1998/09/05 15:15:14 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -155,7 +155,7 @@ __CLEANDEPEND: .USE
 
 clean: __CLEANKERNEL
 
-cleandir: __CLEANKERNEL __CLEANDEPEND
+cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1997/11/04 21:18:28 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.14 1998/09/05 15:15:19 lukem Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -62,7 +62,7 @@ cleancompatlib:		.NOTMAIN __always_make_compatlib
 	@echo cleaning the compat library objects
 	@${COMPATMAKE} clean
 
-cleandir:		.NOTMAIN cleandircompatlib
+cleandir distclean:	.NOTMAIN cleandircompatlib
 cleandircompatlib:	.NOTMAIN __always_make_compatlib
 	@echo cleandiring the compat library objects
 	@${COMPATMAKE} cleandir

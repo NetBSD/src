@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.43 1998/08/22 09:16:45 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.44 1998/09/05 15:15:18 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -144,7 +144,7 @@ __CLEANDEPEND: .USE
 
 clean: __CLEANKERNEL
 
-cleandir: __CLEANKERNEL __CLEANDEPEND
+cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
