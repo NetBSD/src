@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.25 2003/01/01 02:29:39 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.26 2003/04/02 20:53:13 he Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -821,7 +821,7 @@ rdmakelabel(struct disklabel *dl, struct rdgeom *g)
 	int n, p = 0;
 
 	dl->d_bbsize = BBSIZE;
-	dl->d_sbsize = SBSIZE;
+	dl->d_sbsize = SBLOCKSIZE;
 	dl->d_typename[p++] = MSCP_MID_CHAR(2, g->media_id);
 	dl->d_typename[p++] = MSCP_MID_CHAR(1, g->media_id);
 	if (MSCP_MID_ECH(0, g->media_id))
