@@ -780,10 +780,6 @@ send differences instead of entire files.  In the degenerate case
 (e.g. "cvs diff" without arguments) the required network traffic is
 reduced to zero, and the client need not even contact the server.
 
-196.  Using a CVSROOT with a trailing slash will confuse CVS.  I think
-we need to add a call to strip_trailing_slashes in root.c
-(parse_cvsroot), but I haven't considered all of the ramifications.
-
 197.  Analyze the difference between CVS_UNLINK & unlink_file.  As far as I
 can tell, unlink_file aborts in noexec mode and CVS_UNLINK does not.  I'm not
 sure it would be possible to remove even the use of temp files in noexec mode,
@@ -852,23 +848,11 @@ glibc version.
 216.  Avoid command-line keyword expansion modes overriding binary mode
 (or make binary mode completely separate from keyword expansion mode).
 
-217.  Fix assertion failures that occur when CVSROOT is a symlink to the
-actual repository location.
-
 218.  Fix "checkout -d ." in client/server mode.
-
-219.  Fix "checkout -d multi/level/dir" in client/server mode.
-
-220.  Send correct Max-dotdot in client/server mode (broken by change to
-support multiple repositories).
 
 221.  Handle spaces in file/directory names.  (Most, if not all, of the
 internal infrastructure already handles them correctly, but most of the
 administrative file interfaces do not.)
-
-222.  Fix assertion failure (*rcsnode == NULL in commit.c, line 2056)
-when adding a file from a case-insensitive client that matches an Attic
-file with case differences.
 
 223.  Internationalization support.  This probably means using some kind
 of universal character set (ISO 10646?) internally and converting on
@@ -889,11 +873,6 @@ local time string according to the localization settings before printing it.
 
 225.  Add support for --allow-root to server command.
 
-226.  Add support for upgrading read locks to write locks and use it to
-avoid holding potentially long-term write locks (for example, in tag and
-commit).  Note that avoiding deadlock is tricky if two read lock holders
-both want to upgrade to write.
-
 227.  'cvs release' should use the CVS/Root in the directory being released
 when such is specified rather than $CVSROOT.  In my work directory with no CVS
 dir, a release of subdirectories causes the released projects to be tested
@@ -906,3 +885,6 @@ the other CVSROOT.  This happens a lot with my copies of the ccvs project.
 229.  Improve the locking code to use a random delay with exponential
 backoff ala Ethernet and separate the notification interval from the
 wait interval.
+
+230.  Support for options like compression as part of the CVSROOT might be
+nice.  This should be fairly easy to implement now using the method options.
