@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.34 2003/02/16 17:35:16 augustss Exp $
+#	$NetBSD: IOPENER,v 1.35 2003/03/15 19:34:17 jmmv Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.34 $"
+#ident 		"IOPENER-$Revision: 1.35 $"
 
 maxusers	32		# estimated number of users
 
@@ -55,6 +55,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
