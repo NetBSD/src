@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.27 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.28 2000/04/16 15:28:00 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.53 2000/04/16 14:01:42 itojun Exp $	*/
 
 /*
@@ -406,13 +406,7 @@ in6_ifattach_addaddr(ifp, ia)
 #endif
 			rtflag = 0;
 			break;
-#if 1
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-#else
 		default:
-#endif
 			ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
 			ia->ia_ifa.ifa_flags |= RTF_CLONING;
 			rtflag = RTF_CLONING;
