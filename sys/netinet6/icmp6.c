@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.53 2001/02/07 08:59:48 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.54 2001/02/07 10:56:38 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.191 2001/02/07 08:07:38 itojun Exp $	*/
 
 /*
@@ -559,9 +559,6 @@ icmp6_input(mp, offp, proto)
 			 * always copy the length we specified.
 			 */
 			if (maxlen >= MCLBYTES) {
-#ifdef DIAGNOSTIC
-				printf("MCLBYTES too small\n");
-#endif
 				/* Give up remote */
 				m_freem(n0);
 				break;
@@ -680,9 +677,6 @@ icmp6_input(mp, offp, proto)
 				goto badcode;
 			maxlen = sizeof(*nip6) + sizeof(*nicmp6) + 4;
 			if (maxlen >= MCLBYTES) {
-#ifdef DIAGNOSTIC
-				printf("MCLBYTES too small\n");
-#endif
 				/* Give up remote */
 				break;
 			}
