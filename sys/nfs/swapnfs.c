@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
- *	$Id: swapnfs.c,v 1.6 1994/04/18 06:18:24 glass Exp $
+ *	$Id: swapnfs.c,v 1.7 1994/04/29 15:54:10 glass Exp $
  */
 
 /*
@@ -55,7 +55,7 @@ dev_t	dumpdev = NODEV;
 
 struct	swdevt swdevt[] = {
 	{ NODEV, 0, 0 },
-        { 0, 0, 0 }
+        { NODEV, 0, 0 }
 };
 
 extern int nfs_mountroot();
