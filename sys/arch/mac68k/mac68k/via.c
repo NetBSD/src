@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.18 1995/04/13 04:05:10 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.19 1995/04/21 04:00:55 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -260,13 +260,25 @@ void	*client_data;
 
 	nubus_intr_mask |= (1 << (slot-9));
 
+	/*
+	 * The following should be uncommented and the call in if_ae.c
+	 * removed when we can reliably handle interrupts from the video
+	 * cards.
+	 */
+/*	enable_nubus_intr();	*/
+
+	splx(s);
+	return 1;
+}
+
+void
+enable_nubus_intr(void)
+{
 	if (VIA2 == VIA2OFF) {
 		via_reg(VIA2, vIER) = V2IF_SLOTINT | 0x80;
 	} else {
 		via_reg(VIA2, rIER) = V2IF_SLOTINT | 0x80;
 	}
-	splx(s);
-	return 1;
 }
 
 long
