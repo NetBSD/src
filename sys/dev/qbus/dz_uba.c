@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.9 2000/03/30 12:45:37 augustss Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.10 2000/04/30 11:46:49 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -133,6 +133,7 @@ dz_uba_attach(parent, self, aux)
 	/* Now register the TX & RX interrupt handlers */
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, dzxint, sc);
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dzrint, sc);
+	uba_reset_establish(dzreset, self);
 
 	dzattach(sc);
 }

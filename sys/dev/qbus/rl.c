@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.1 2000/04/22 16:46:46 ragge Exp $	*/
+/*	$NetBSD: rl.c,v 1.2 2000/04/30 11:46:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -94,6 +94,7 @@ static	int rlmatch(struct device *, struct cfdata *, void *);
 static	void rlattach(struct device *, struct device *, void *);
 static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
+static	void rlreset(struct device *);
 cdev_decl(rl);
 bdev_decl(rl);
 
@@ -221,6 +222,8 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	struct rl_softc *rc = (struct rl_softc *)self;
 	struct rlc_attach_args *ra = aux;
 	struct disklabel *dl;
+
+	uba_reset_establish(rlreset, self);
 
 	rc->rc_hwid = ra->hwid;
 	rc->rc_disk.dk_name = rc->rc_dev.dv_xname;
@@ -567,4 +570,26 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		RL_WREG(RL_CS, RLCS_IE|RLCS_RD|(rc->rc_hwid << RLCS_USHFT));
 	else
 		RL_WREG(RL_CS, RLCS_IE|RLCS_WD|(rc->rc_hwid << RLCS_USHFT));
+}
+
+void
+rlreset(struct device *dev)
+{
+	struct rl_softc *rc = (struct rl_softc *)dev;
+	struct rlc_softc *sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
+	u_int16_t mp;
+
+	if (rc->rc_state != DK_OPEN)
+		return;
+	RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
+	waitcrdy(sc);
+	mp = RL_RREG(RL_MP);
+	rc->rc_head = ((mp & RLMP_HS) == RLMP_HS);
+	rc->rc_cyl = (mp >> 7) & 0777;
+	if (sc->sc_active == 0)
+		return;
+
+	BUFQ_INSERT_HEAD(&sc->sc_q, sc->sc_active);
+	sc->sc_active = 0;
+	rlcstart(sc, 0);
 }
