@@ -1,0 +1,86 @@
+RaWrite 1.2
+-----------
+
+Purpose
+-------
+
+Write a disk image file to a 360K floppy disk.
+
+
+Equipment/Software Requirements
+-------------------------------
+
+PC/XT/AT with a floppy disk drive capable of reading and writing a 360K
+diskette.
+
+This program uses generic low-level BIOS diskette read/write functions.  It
+should be portable to nearly every PC in existance.  PS/2's should be able
+to run RawWrite but this has not been tested.
+   
+
+CAVEAT
+------
+
+This program will write ANY disk file to a floppy, overwriting any previous
+information that may have been present.  If you wish to re-use a diskette
+under MS-DOS thats been written to by RawWrite then the disk will need to be
+reformatted; all MS-DOS specific information will have been erased.
+
+
+How to Compile
+--------------
+
+TCC rawrite.c
+
+The source code is specific to Borland International's Turbo C 2.01 and has
+been tested in all memory models.
+
+
+Usage
+-----
+
+C> RAWRITE
+
+And follow the prompts.  All arguments are case-insensitive.
+
+A sample run is shown below.  The disk file being written, in this example,
+is named DEMODISK and the destination - where the image is being written -
+is the B: drive.
+
+This program may be aborted at any time by typing ^C.
+
+
+Sample Run
+----------
+
+C> RAWRITE
+RaWrite 1.2 - Write disk file to raw floppy diskette
+
+Enter source file name: DEMODISK
+Enter destination drive: B
+Please insert a formatted 360K diskette into drive B: and press -ENTER- :
+Writing image to drive B:
+
+
+Errors
+------
+
+RaWrite attempts to determine if the diskette is a 360K, 720K, 1.2M, or
+1.44M diskette by reading specific sectors.  If the inserted diskette is not
+one of the mentioned types, then RaWrite will abort with a short error
+message.
+
+Errors such as write protect, door open, bad disk, bad sector, etc. cause a
+program abort with a short error message.
+
+
+History
+-------
+
+  1.0	-	Initial release
+  1.1	-	Beta test (fixing bugs)				4/5/91
+  		Some BIOS's don't like full-track writes.
+  1.101	-	Last beta release.				4/8/91
+  		Fixed BIOS full-track write by only only
+		writing 3 sectors at a time.
+  1.2	-	Final code and documentation clean-ups.		4/9/91
