@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $	*/
+/*	$NetBSD: vis.c,v 1.20 2002/01/21 21:33:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,20 +34,18 @@
  * SUCH DAMAGE.
  */
 
-
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $");
+__RCSID("$NetBSD: vis.c,v 1.20 2002/01/21 21:33:42 tv Exp $");
 #endif /* not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
-#include <limits.h>
-#include <stdio.h>
-#include <string.h>
 #include <vis.h>
 
 #ifdef __weak_alias
@@ -58,6 +56,13 @@ __weak_alias(strvisx,_strvisx)
 __weak_alias(svis,_svis)
 __weak_alias(vis,_vis)
 #endif
+#endif
+
+#if !HAVE_VIS_H
+#include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 #undef BELL
 #if defined(__STDC__)
@@ -294,3 +299,4 @@ strvisx(dst, src, len, flag)
 	MAKEEXTRALIST(flag, extra);
 	return (strsvisx(dst, src, len, flag, extra));
 }
+#endif
