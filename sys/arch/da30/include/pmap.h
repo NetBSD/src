@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 1995/04/10 12:41:54 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 1995/05/11 16:53:02 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -100,7 +100,7 @@ typedef struct pv_entry {
 #define	PV_CI		0x01	/* all entries must be cache inhibited */
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 pv_entry_t	pv_table;		/* array of entries, one per page */
 
 #define pa_index(pa)		atop(pa - vm_first_phys)

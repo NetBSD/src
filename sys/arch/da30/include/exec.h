@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.5 1995/03/28 18:15:35 jtc Exp $	*/
+/*	$NetBSD: exec.h,v 1.6 1995/05/11 16:53:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 
 #ifndef _DA30_EXEC_H_
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 
 struct exec_package;
 
