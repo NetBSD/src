@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.5 1996/03/28 21:40:22 mark Exp $ */
+/* $NetBSD: conf.c,v 1.6 1996/04/19 19:40:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -127,6 +127,9 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 38: */
 	bdev_lkm_dummy(),		/* 39: */
 	bdev_lkm_dummy(),		/* 40: */
+	bdev_lkm_dummy(),		/* 41: */
+	bdev_lkm_dummy(),		/* 42: */
+	bdev_lkm_dummy(),		/* 43: */
   };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -188,6 +191,18 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, write, ioctl */
+#define cdev_iic_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+
+/* open, close, write, ioctl */
+#define cdev_rtc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #include "vt.h"                                 
@@ -246,6 +261,10 @@ cdev_decl(kbd);
 cdev_decl(audio);
 #include "cpu.h"
 cdev_decl(cpu);
+#include "iic.h"
+cdev_decl(iic);
+#include "rtc.h"
+cdev_decl(rtc);
 /* Temporary hack for ATAPI CDROM */
 cdev_decl(wcd);
 
@@ -282,8 +301,8 @@ struct cdevsw cdevsw[] = {
 	cdev_ch_init(NCH,ch),	 	/* 27: SCSI autochanger */
 	cdev_ch_init(NUK,uk),	 	/* 28: SCSI unknown */
 	cdev_ss_init(NSS,ss),	 	/* 29: SCSI scanner */
-	cdev_lkm_dummy(),		/* 30 */
-	cdev_lkm_dummy(),		/* 31 */
+	cdev_lkm_dummy(),		/* 30: */
+	cdev_lkm_dummy(),		/* 31: */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 32: Berkeley packet filter */
         cdev_bpftun_init(NTUN,tun),     /* 33: network tunnel */
         cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
@@ -291,8 +310,11 @@ struct cdevsw cdevsw[] = {
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(1,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
-	cdev_lkm_dummy(),		/* 39 */
+	cdev_lkm_dummy(),		/* 39: */
 	cdev_mouse_init(NPMS,pms),      /* 40: PS2 mouse driver */
+	cdev_lkm_dummy(),		/* 41: */
+	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
+	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -365,6 +387,9 @@ static int chrtoblktbl[] = {
     /* 38 */        NODEV,
     /* 39 */        NODEV,
     /* 40 */        NODEV,
+    /* 41 */        NODEV,
+    /* 42 */        NODEV,
+    /* 43 */        NODEV,
 };
 
 /*
