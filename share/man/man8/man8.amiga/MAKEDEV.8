@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.11 2001/01/08 06:22:42 martin Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.12 2001/02/04 16:59:22 ad Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -129,6 +129,8 @@ Memory pseudo-disk devices, see
 . Bl -tag -width 0123456789 -compact
 . It Ar ttye#
 Ite bitmapped consoles
+. It Ar ttyE#
+Wscons
 . El
 .It Pointing devices:
 . Bl -tag -width 0123456789 -compact
@@ -179,6 +181,9 @@ Trace device
 Custom chip (grf0), Retina Z2/Z3 (grf1/grf2), Cirrus boards (grf3), A2410 (grf4) video, CyberVision 64 (grf5), ET4000 boards (grf6) or CyberVision 64/3D (grf7).
 . It Ar kbd
 Amiga keyboard
+. It Ar wskbd#
+Wscons keyboard events, see
+.Xr wskbd 4 
 . It Ar view#
 Generic interface to graphic displays
 . It Ar lkm
