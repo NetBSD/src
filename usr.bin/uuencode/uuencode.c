@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uuencode.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uuencode.c,v 1.4 1993/10/13 18:34:49 jtc Exp $";
+static char rcsid[] = "$Id: uuencode.c,v 1.5 1993/11/09 01:47:00 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -44,13 +44,14 @@ static char rcsid[] = "$Id: uuencode.c,v 1.4 1993/10/13 18:34:49 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 static void encode();
-static void usage();
+static __dead void usage();
 
 int
 main(argc, argv)
@@ -60,7 +61,9 @@ main(argc, argv)
 	struct stat sb;
 	int mode;
 
-	while (getopt(argc, argv, "") != EOF)
+	setlocale(LC_ALL, "");
+
+	while (getopt(argc, argv, "") != -1)
 		usage();
 	argv += optind;
 	argc -= optind;
