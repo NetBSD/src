@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $	*/
+/*	$NetBSD: du.c,v 1.18 2002/09/27 03:33:33 provos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $");
+__RCSID("$NetBSD: du.c,v 1.18 2002/09/27 03:33:33 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +65,11 @@ __RCSID("$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $");
 
 int	linkchk __P((FTSENT *));
 int	main __P((int, char **));
+void	prstat __P((const char *, int64_t));
 void	usage __P((void));
+
+int hflag;
+long blocksize;
 
 int
 main(argc, argv)
@@ -82,7 +87,7 @@ main(argc, argv)
 	Hflag = Lflag = Pflag = aflag = cflag = kmflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPackmrsx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPachkmrsx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -101,6 +106,9 @@ main(argc, argv)
 			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'k':
 			blocksize = 1024;
@@ -183,9 +191,7 @@ main(argc, argv)
 			 * root of a traversal, display the total.
 			 */
 			if (listdirs || (!listfiles && !p->fts_level))
-				(void)printf("%ld\t%s\n",
-				    howmany(p->fts_number, blocksize),
-				    p->fts_path);
+				prstat(p->fts_path, p->fts_number);
 			break;
 		case FTS_DC:			/* Ignore. */
 			break;
@@ -203,9 +209,7 @@ main(argc, argv)
 			 * the root of a traversal, display the total.
 			 */
 			if (listfiles || !p->fts_level)
-				(void)printf("%lld\t%s\n", (long long)
-				    howmany(p->fts_statp->st_blocks, blocksize),
-				    p->fts_path);
+				prstat(p->fts_path, p->fts_statp->st_blocks);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
 			if (cflag)
 				totalblocks += p->fts_statp->st_blocks;
@@ -213,10 +217,27 @@ main(argc, argv)
 	if (errno)
 		err(1, "fts_read");
 	if (cflag)
-		(void)printf("%ld\ttotal\n",
-		    howmany(totalblocks, blocksize));
-	exit(0);
+		prstat("total", totalblocks);
+	exit(rval);
 }
+
+void
+prstat(const char *fname, int64_t blocks)
+{
+	if (hflag) {
+		char buf[5];
+		int64_t sz = blocks * 512;
+
+		humanize_number(buf, sizeof(buf), sz, "", HN_AUTOSCALE,
+		    HN_B | HN_NOSPACE | HN_DECIMAL);
+
+		(void)printf("%s\t%s\n", buf, fname);
+	} else
+		(void)printf("%lld\t%s\n",
+		    (long long)howmany(blocks, (int64_t)blocksize),
+		    fname);
+}
+
 
 typedef struct _ID {
 	dev_t	dev;
@@ -254,6 +275,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-ckmrx] [file ...]\n");
+		"usage: du [-H | -L | -P] [-a | -s] [-chkmrx] [file ...]\n");
 	exit(1);
 }
