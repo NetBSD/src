@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.12 1999/09/20 04:39:30 lukem Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.13 2001/01/25 02:06:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.12 1999/09/20 04:39:30 lukem Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.13 2001/01/25 02:06:25 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,12 +66,17 @@ fwrite(buf, size, count, fp)
 	struct __suio uio;
 	struct __siov iov;
 
-	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(fp != NULL);
+	/*
+	 * SUSv2 requires a return value of 0 for a count or a size of 0.
+	 */
+	if ((n = count * size) == 0)
+		return (0);
+	_DIAGASSERT(buf != NULL);
 
 	/* LINTED we don't play with buf */
 	iov.iov_base = (void *)buf;
-	uio.uio_resid = iov.iov_len = n = count * size;
+	uio.uio_resid = iov.iov_len = n;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 

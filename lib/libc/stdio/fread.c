@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.13 1999/09/20 04:39:28 lukem Exp $	*/
+/*	$NetBSD: fread.c,v 1.14 2001/01/25 02:06:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.13 1999/09/20 04:39:28 lukem Exp $");
+__RCSID("$NetBSD: fread.c,v 1.14 2001/01/25 02:06:25 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,16 +63,17 @@ fread(buf, size, count, fp)
 	int r;
 	size_t total;
 
-	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(fp != NULL);
-
 	/*
 	 * The ANSI standard requires a return value of 0 for a count
-	 * or a size of 0.  Peculiarily, it imposes no such requirements
-	 * on fwrite; it only requires fread to be broken.
+	 * or a size of 0.  Whilst ANSI imposes no such requirements on
+	 * fwrite, the SUSv2 does.
 	 */
 	if ((resid = count * size) == 0)
 		return (0);
+
+	_DIAGASSERT(buf != NULL);
+
 	FLOCKFILE(fp);
 	if (fp->_r < 0)
 		fp->_r = 0;
