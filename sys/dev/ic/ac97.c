@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.42 2003/06/11 14:22:27 scw Exp $ */
+/*      $NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.42 2003/06/11 14:22:27 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,7 @@ void ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
 u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
 int ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src);
 
+static void ac97_ad1981_init(struct ac97_softc *);
 static void ac97_alc650_init(struct ac97_softc *);
 static void ac97_vt1616_init(struct ac97_softc *);
 
@@ -365,7 +366,7 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
-	  0xffffffff,			"Analog Devices AD1981" },
+	  0xffffffff,			"Analog Devices AD1981", ac97_ad1981_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
@@ -1449,6 +1450,29 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 	si->next = AUDIO_MIXER_LAST;
 
 	return 0;
+}
+
+/**
+ * Codec-dependent initialization
+ */
+
+#define AC97_AD_REG_MISC	0x76
+#define	AC97_AD_MISC_MBG	0x0001  /* 0 */
+#define AC97_AD_MISC_VREFD	0x0002  /* 1 */
+#define AC97_AD_MISC_VREFH	0x0004  /* 2 */
+#define AC97_AD_MISC_MADST	0x0008  /* 3 */
+#define AC97_AD_MISC_MADPD	0x0020  /* 5 */
+#define AC97_AD_MISC_FMXE	0x0100  /* 8 */
+#define AC97_AD_MISC_DAM	0x0400  /*10 */
+#define AC97_AD_MISC_MSPLT	0x1000  /*12 */
+#define AC97_AD_MISC_DACZ	0x4000  /*14 */
+static void
+ac97_ad1981_init(struct ac97_softc *as)
+{
+	unsigned short misc;
+
+	ac97_read(as, AC97_AD_REG_MISC, &misc);
+	ac97_write(as, AC97_AD_REG_MISC, misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
 }
 
 #define ALC650_REG_MULTI_CHANNEL_CONTROL	0x6a
