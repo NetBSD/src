@@ -1,7 +1,7 @@
-/*	$NetBSD: fil.c,v 1.15.2.4 1998/09/22 19:03:04 cgd Exp $	*/
+/*	$NetBSD: fil.c,v 1.15.2.5 1998/11/24 07:18:51 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.17 1998/06/07 16:27:07 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.27 1998/11/22 01:50:15 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -32,7 +32,9 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.17 1998/06/07 16:27:07 d
 # endif
 #else
 # include <sys/byteorder.h>
+# if SOLARIS2 < 5
 # include <sys/dditypes.h>
+# endif
 # include <sys/stream.h>
 #endif
 #ifndef linux
@@ -90,13 +92,8 @@ extern	int	opts;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 # define	IPLLOG(a, c, d, e)		ipflog(a, c, d, e)
-# if SOLARIS
-extern	krwlock_t	ipf_mutex, ipf_auth;
-# endif
-# if defined(__sgi)
-extern	kmutex_t	ipf_mutex, ipf_auth;
-# endif
 # if SOLARIS || defined(__sgi)
+extern	KRWLOCK_T	ipf_mutex, ipf_auth;
 extern	kmutex_t	ipf_rw;
 # endif
 # if SOLARIS
@@ -203,7 +200,6 @@ fr_info_t *fin;
 {
 	struct optlist *op;
 	tcphdr_t *tcp;
-	icmphdr_t *icmp;
 	fr_ip_t *fi = &fin->fin_fi;
 	u_short optmsk = 0, secmsk = 0, auth = 0;
 	int i, mv, ol, off;
@@ -224,14 +220,13 @@ fr_info_t *fin;
 	fin->fin_hlen = hlen;
 	fin->fin_dlen = ip->ip_len - hlen;
 	tcp = (tcphdr_t *)((char *)ip + hlen);
-	icmp = (icmphdr_t *)tcp;
 	fin->fin_dp = (void *)tcp;
 	(*(((u_short *)fi) + 1)) = (*(((u_short *)ip) + 4));
 	(*(((u_32_t *)fi) + 1)) = (*(((u_32_t *)ip) + 3));
 	(*(((u_32_t *)fi) + 2)) = (*(((u_32_t *)ip) + 4));
 
 	fi->fi_fl = (hlen > sizeof(ip_t)) ? FI_OPTIONS : 0;
-	off = (ip->ip_off & 0x1fff) << 3;
+	off = (ip->ip_off & IP_OFFMASK) << 3;
 	if (ip->ip_off & 0x3fff)
 		fi->fi_fl |= FI_FRAG;
 	switch (ip->ip_p)
@@ -239,10 +234,12 @@ fr_info_t *fin;
 	case IPPROTO_ICMP :
 	{
 		int minicmpsz = sizeof(struct icmp);
+		icmphdr_t *icmp;
 
-		if (!off && ip->ip_len > ICMP_MINLEN + hlen &&
-		    (icmp->icmp_type == ICMP_ECHOREPLY ||
-		     icmp->icmp_type == ICMP_UNREACH))
+		icmp = (icmphdr_t *)tcp;
+
+		if (!off && (icmp->icmp_type == ICMP_ECHOREPLY ||
+		     icmp->icmp_type == ICMP_ECHO))
 			minicmpsz = ICMP_MINLEN;
 		if ((!(ip->ip_len >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
@@ -434,7 +431,7 @@ void *m;
 	fin->fin_fr = NULL;
 	fin->fin_rule = 0;
 	fin->fin_group = 0;
-	off = ip->ip_off & 0x1fff;
+	off = ip->ip_off & IP_OFFMASK;
 	pass |= (fi->fi_fl << 24);
 
 	 if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
@@ -554,7 +551,7 @@ void *m;
 
 /*
  * frcheck - filter check
- * check using source and destination addresses/pors in a packet whether
+ * check using source and destination addresses/ports in a packet whether
  * or not to pass it on or not.
  */
 int fr_check(ip, hlen, ifp, out
@@ -593,19 +590,20 @@ int out;
 	     ip->ip_p == IPPROTO_ICMP)) {
 		int plen = 0;
 
-		switch(ip->ip_p)
-		{
-		case IPPROTO_TCP:
-			plen = sizeof(tcphdr_t);
-			break;
-		case IPPROTO_UDP:
-			plen = sizeof(udphdr_t);
-			break;
-		case IPPROTO_ICMP:
+		if ((ip->ip_off & IP_OFFMASK) == 0)
+			switch(ip->ip_p)
+			{
+			case IPPROTO_TCP:
+				plen = sizeof(tcphdr_t);
+				break;
+			case IPPROTO_UDP:
+				plen = sizeof(udphdr_t);
+				break;
 			/* 96 - enough for complete ICMP error IP header */
-			plen = sizeof(struct icmp) + sizeof(ip_t) + 8;
-			break;
-		}
+			case IPPROTO_ICMP:
+				plen = 76 + sizeof(struct icmp);
+				break;
+			}
 		up = MIN(hlen + plen, ip->ip_len);
 
 		if (up > m->m_len) {
@@ -950,7 +948,7 @@ int len;
 		u_short	s;
 	} bytes;
 	u_32_t sum;
-	u_short	*sp;
+	u_short	*sp, slen;
 # if SOLARIS || defined(__sgi)
 	int add, hlen;
 # endif
@@ -958,28 +956,27 @@ int len;
 	/*
 	 * Add up IP Header portion
 	 */
-	bytes.c[0] = 0;
-	bytes.c[1] = IPPROTO_TCP;
-	len -= (ip->ip_hl << 2);
-	sum = bytes.s;
-	sum += htons((u_short)len);
 	sp = (u_short *)&ip->ip_src;
+	len -= (ip->ip_hl << 2);
+	slen = (u_short)len;
+	sum = ntohs(IPPROTO_TCP);
+	sum += htons(slen);
+	sum += *sp++;	/* ip_src */
 	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
+	sum += *sp++;	/* ip_dst */
 	sum += *sp++;
 	if (sp != (u_short *)tcp)
 		sp = (u_short *)tcp;
+	sum += *sp++;	/* sport */
+	sum += *sp++;	/* dport */
+	sum += *sp++;	/* seq */
 	sum += *sp++;
+	sum += *sp++;	/* ack */
 	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp;
+	sum += *sp++;	/* off */
+	sum += *sp;	/* win */
 	sp += 2;	/* Skip over checksum */
-	sum += *sp++;
+	sum += *sp++;	/* urp */
 
 #if SOLARIS
 	/*
@@ -994,9 +991,12 @@ int len;
 			hlen -= add;
 			if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 				m = m->b_cont;
-				PANIC((!m),("fr_tcpsum: not enough data"));
-				if (!hlen)
+				if (!hlen) {
+					if (!m)
+						break;
 					sp = (u_short *)m->b_rptr;
+				}
+				PANIC((!m),("fr_tcpsum(1): not enough data"));
 			}
 		}
 	}
@@ -1012,11 +1012,14 @@ int len;
 			add = MIN(hlen, m->m_len);
 			sp = (u_short *)(mtod(m, caddr_t) + add);
 			hlen -= add;
-			if (add >= m->m_len) {
+			if (add == m->m_len) {
 				m = m->m_next;
-				PANIC((!m),("fr_tcpsum: not enough data"));
-				if (!hlen)
+				if (!hlen) {
+					if (!m)
+						break;
 					sp = mtod(m, u_short *);
+				}
+				PANIC((!m),("fr_tcpsum(1): not enough data"));
 			}
 		}
 	}
@@ -1024,39 +1027,51 @@ int len;
 
 	if (!(len -= sizeof(*tcp)))
 		goto nodata;
-	while (len > 0) {
+	while (len > 1) {
 #if SOLARIS
-		while ((caddr_t)sp >= (caddr_t)m->b_wptr) {
+		if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 			m = m->b_cont;
-			PANIC((!m),("fr_tcpsum: not enough data"));
+			PANIC((!m),("fr_tcpsum(2): not enough data"));
 			sp = (u_short *)m->b_rptr;
 		}
+		if ((caddr_t)(sp + 1) > (caddr_t)m->b_wptr) {
+			bytes.c[0] = *(u_char *)sp;
+			m = m->b_cont;
+			PANIC((!m),("fr_tcpsum(3): not enough data"));
+			sp = (u_short *)m->b_rptr;
+			bytes.c[1] = *(u_char *)sp;
+			sum += bytes.s;
+			sp = (u_short *)((u_char *)sp + 1);
+		}
 #else
-		while (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len)
-		{
+		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len) {
 			m = m->m_next;
-			PANIC((!m),("fr_tcpsum: not enough data"));
+			PANIC((!m),("fr_tcpsum(2): not enough data"));
 			sp = mtod(m, u_short *);
 		}
+		if (((caddr_t)(sp + 1) - mtod(m, caddr_t)) > m->m_len) {
+			bytes.c[0] = *(u_char *)sp;
+			m = m->m_next;
+			PANIC((!m),("fr_tcpsum(3): not enough data"));
+			sp = mtod(m, u_short *);
+			bytes.c[1] = *(u_char *)sp;
+			sum += bytes.s;
+			sp = (u_short *)((u_char *)sp + 1);
+		}
 #endif /* SOLARIS */
-		if (len < 2)
-			break;
-		if((u_long)sp & 1) {
+		if ((u_long)sp & 1) {
 			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
 		} else
 			sum += *sp++;
 		len -= 2;
 	}
-	if (len) {
-		bytes.c[1] = 0;
-		bytes.c[0] = *(u_char *)sp;
-		sum += bytes.s;
-	}
+	if (len)
+		sum += ntohs(*(u_char *)sp << 8);
 nodata:
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum += (sum >> 16);
-	sum = (u_short)((~sum) & 0xffff);
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = (u_short)(~sum & 0xffff);
 	return sum;
 }
 
@@ -1095,7 +1110,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.0.2.41.2.17 1998/06/07 16:27:07 darrenr Exp 
+ * Id: fil.c,v 2.0.2.41.2.27 1998/11/22 01:50:15 darrenr Exp 
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
