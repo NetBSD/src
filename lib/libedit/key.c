@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.3 1997/07/06 18:25:28 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.4 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.3 1997/07/06 18:25:28 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.4 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -673,8 +673,8 @@ key__decode_char(buf, cnt, ch)
     }
     else {
 	buf[cnt++] = '\\';
-	buf[cnt++] = ((ch >> 6) & 7) + '0';
-	buf[cnt++] = ((ch >> 3) & 7) + '0';
+	buf[cnt++] = (((unsigned int)ch >> 6) & 7) + '0';
+	buf[cnt++] = (((unsigned int)ch >> 3) & 7) + '0';
 	buf[cnt] = (ch & 7) + '0';
     }
     return cnt;
@@ -721,8 +721,8 @@ key__decode_str(str, buf, sep)
 	}
 	else {
 	    *b++ = '\\';
-	    *b++ = ((*p >> 6) & 7) + '0';
-	    *b++ = ((*p >> 3) & 7) + '0';
+	    *b++ = (((unsigned int)*p >> 6) & 7) + '0';
+	    *b++ = (((unsigned int)*p >> 3) & 7) + '0';
 	    *b++ = (*p & 7) + '0';
 	}
     }

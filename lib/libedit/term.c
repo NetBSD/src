@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.14 1998/05/20 01:04:17 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.15 1998/12/12 20:08:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.14 1998/05/20 01:04:17 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.15 1998/12/12 20:08:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -590,7 +590,8 @@ mc_again:
 		(void) tputs(tgoto(Str(T_LE), -del, -del), -del, term__putc);
 	    else {		/* can't go directly there */
 		/* if the "cost" is greater than the "cost" from col 0 */
-		if (EL_CAN_TAB ? (-del > ((where >> 3) + (where & 07)))
+		if (EL_CAN_TAB ? (-del > (((unsigned int)where >> 3) +
+					 (where & 07)))
 		    : (-del > where)) {
 		    term__putc('\r');	/* do a CR */
 		    el->el_cursor.h = 0;

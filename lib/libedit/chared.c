@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.4 1998/02/03 19:12:37 perry Exp $	*/
+/*	$NetBSD: chared.c,v 1.5 1998/12/12 20:08:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.4 1998/02/03 19:12:37 perry Exp $");
+__RCSID("$NetBSD: chared.c,v 1.5 1998/12/12 20:08:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,7 +59,8 @@ __RCSID("$NetBSD: chared.c,v 1.4 1998/02/03 19:12:37 perry Exp $");
 protected void
 cv_undo(el, action, size, ptr)
     EditLine *el;
-    int action, size;
+    int action;
+    size_t size;
     char *ptr;
 {
     c_undo_t *vu = &el->el_chared.c_undo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.9 1998/06/01 14:31:26 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.10 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.9 1998/06/01 14:31:26 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.10 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -85,6 +85,7 @@ read_debug(el)
 /* read__fixio():
  *	Try to recover from a read error
  */
+/* ARGSUSED */
 private int
 read__fixio(fd, e)
     int fd, e;
@@ -190,6 +191,7 @@ el_push(el, str)
 
     if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 	ma->level++;
+	/* LINTED const cast */
 	ma->macro[ma->level] = (char *) str;
     }
     else {

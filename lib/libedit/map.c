@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.7 1998/07/29 02:26:01 lukem Exp $	*/
+/*	$NetBSD: map.c,v 1.8 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.7 1998/07/29 02:26:01 lukem Exp $");
+__RCSID("$NetBSD: map.c,v 1.8 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1250,7 +1250,7 @@ map_bind(el, argc, argv)
     char **argv;
 {
     el_action_t *map;
-    int     ntype, remove;
+    int     ntype, rem;
     char   *p;
     char    inbuf[EL_BUFSIZ];
     char    outbuf[EL_BUFSIZ];
@@ -1265,7 +1265,7 @@ map_bind(el, argc, argv)
 
     map = el->el_map.key;
     ntype = XK_CMD;
-    key = remove = 0;
+    key = rem = 0;
     for (argc = 1; (p = argv[argc]) != NULL; argc++)
 	if (p[0] == '-')
 	    switch (p[1]) {
@@ -1286,7 +1286,7 @@ map_bind(el, argc, argv)
 		break;
 
 	    case 'r':
-		remove = 1;
+		rem = 1;
 		break;
 
 	    case 'v':
@@ -1323,7 +1323,7 @@ map_bind(el, argc, argv)
 	    return -1;
 	}
 
-    if (remove) {
+    if (rem) {
 	if (key) {
 	    (void) term_clear_arrow(el, in);
 	    return -1;

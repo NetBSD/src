@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 1998/07/29 02:26:01 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.9 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.8 1998/07/29 02:26:01 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.9 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -113,13 +113,13 @@ el_parse(el, argc, argv)
     ptr = strchr(argv[0], ':');
     if (ptr != NULL) {
 	char *tprog;
-	int l;
+	size_t l;
 
 	l = ptr - argv[0] - 1;
 	tprog = (char *)malloc(l + 1);
 	if (tprog == NULL)
 	    return 0;
-	strncpy(tprog, argv[0], l);
+	(void)strncpy(tprog, argv[0], l);
 	tprog[l] = '\0';
 	ptr++;
 	l = el_match(el->el_prog, tprog);

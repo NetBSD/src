@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.4 1998/05/20 01:03:30 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.5 1998/12/12 20:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.4 1998/05/20 01:03:30 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.5 1998/12/12 20:08:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -131,8 +131,8 @@ re_addc(el, c)
     }
     else {
 	re_putc(el, '\\');
-	re_putc(el, ((c >> 6) & 07) + '0');
-	re_putc(el, ((c >> 3) & 07) + '0');
+	re_putc(el, (((unsigned int)c >> 6) & 07) + '0');
+	re_putc(el, (((unsigned int)c >> 3) & 07) + '0');
 	re_putc(el, (c & 07) + '0');
     }
 } /* end re_addc */
@@ -221,7 +221,7 @@ re_refresh(el)
 	 * screen line, it won't be a NUL or some old leftover stuff.
 	 */
 	re__copy_and_pad(el->el_display[i], el->el_vdisplay[i], 
-			el->el_term.t_size.h);
+			(size_t)el->el_term.t_size.h);
     }
     RE_DEBUG(1,(__F,
 	 "\r\nel->el_refresh.r_cursor.v=%d,el->el_refresh.r_oldcv=%d i=%d\r\n",
@@ -231,7 +231,7 @@ re_refresh(el)
 	for (; i <= el->el_refresh.r_oldcv; i++) {
 	    term_move_to_line(el, i);
 	    term_move_to_char(el, 0);
-	    term_clear_EOL(el, strlen(el->el_display[i]));
+	    term_clear_EOL(el, (int)strlen(el->el_display[i]));
 #ifdef DEBUG_REFRESH
 	    term_overwrite(el, "C\b", 2);
 #endif /* DEBUG_REFRESH */
@@ -669,12 +669,12 @@ re_update_line(el, old, new, i)
 	     * write (nsb-nfd) - fx chars of new starting at (nfd + fx)
 	     */
 	    term_overwrite(el, nfd + fx, (nsb - nfd) - fx);
-	    re__strncopy(ofd + fx, nfd + fx, (nsb - nfd) - fx);
+	    re__strncopy(ofd + fx, nfd + fx, (size_t)((nsb - nfd) - fx));
 	}
 	else {
 	    RE_DEBUG(1,(__F, "without anything to save\r\n"),);
 	    term_overwrite(el, nfd, (nsb - nfd));
-	    re__strncopy(ofd, nfd, (nsb - nfd));
+	    re__strncopy(ofd, nfd, (size_t)(nsb - nfd));
 	    /*
 	     * Done
 	     */
@@ -706,7 +706,7 @@ re_update_line(el, old, new, i)
 	     * write (nsb-nfd) chars of new starting at nfd
 	     */
 	    term_overwrite(el, nfd, (nsb - nfd));
-	    re__strncopy(ofd, nfd, (nsb - nfd));
+	    re__strncopy(ofd, nfd, (size_t)(nsb - nfd));
 
 	}
 	else {
@@ -795,12 +795,12 @@ re_update_line(el, old, new, i)
 	     * write (nsb-nfd) - fx chars of new starting at (nfd + fx)
 	     */
 	    term_overwrite(el, nfd + fx, (nsb - nfd) - fx);
-	    re__strncopy(ofd + fx, nfd + fx, (nsb - nfd) - fx);
+	    re__strncopy(ofd + fx, nfd + fx, (size_t)((nsb - nfd) - fx));
 	}
 	else {
 	    RE_DEBUG(1,(__F, "without anything to save\r\n"),);
 	    term_overwrite(el, nfd, (nsb - nfd));
-	    re__strncopy(ofd, nfd, (nsb - nfd));
+	    re__strncopy(ofd, nfd, (size_t)(nsb - nfd));
 	}
     }
 
@@ -970,8 +970,8 @@ re_fastaddc(el)
     }
     else {
 	re_fastputc(el, '\\');
-	re_fastputc(el, ((c >> 6) & 7) + '0');
-	re_fastputc(el, ((c >> 3) & 7) + '0');
+	re_fastputc(el, (((unsigned int)c >> 6) & 7) + '0');
+	re_fastputc(el, (((unsigned int)c >> 3) & 7) + '0');
 	re_fastputc(el, (c & 7) + '0');
     }
     term__flush();

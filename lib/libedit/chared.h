@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.2 1997/01/11 06:47:49 lukem Exp $	*/
+/*	$NetBSD: chared.h,v 1.3 1998/12/12 20:08:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,11 +74,11 @@ typedef struct c_macro_t {
  * Undo information for both vi and emacs
  */
 typedef struct c_undo_t {
-    int   action;
-    int   isize;
-    int   dsize;
-    char *ptr;
-    char *buf;
+    int    action;
+    size_t isize;
+    size_t dsize;
+    char  *ptr;
+    char  *buf;
 } c_undo_t;
 
 /*
@@ -140,7 +140,7 @@ protected int   cv__isword	__P((int));
 protected void  cv_delfini	__P((EditLine *));
 protected char *cv__endword	__P((char *, char *, int));
 protected int   ce__isword	__P((int));
-protected void  cv_undo		__P((EditLine *, int, int, char *));
+protected void  cv_undo		__P((EditLine *, int, size_t, char *));
 protected char *cv_next_word	__P((EditLine*, char *, char *, int, 
 				     int (*)(int)));
 protected char *cv_prev_word	__P((EditLine*, char *, char *, int,
