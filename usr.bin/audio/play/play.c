@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.7.2.4 1999/10/22 09:37:04 he Exp $	*/
+/*	$NetBSD: play.c,v 1.7.2.5 1999/11/11 21:18:14 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -71,6 +71,7 @@ main(argc, argv)
 	ssize_t	hdrlen;
 	off_t	filesize;
 	int	ch, audiofd, ctlfd;
+	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
 	int	qflag = 0;
 	int	verbose = 0;
@@ -188,8 +189,11 @@ main(argc, argv)
 
 		do {
 			fd = open(*argv, O_RDONLY);
-			if (fd < 0)
-				err(1, "could not open %s", *argv);
+			if (fd < 0) {
+				warn("could not open %s", *argv);
+				exitstatus = EXIT_FAILURE;
+				continue;
+			}
 
 			if (fstat(fd, &sb) < 0)
 				err(1, "could not fstat %s", *argv);
@@ -197,7 +201,7 @@ main(argc, argv)
 
 			oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
 			    MAP_SHARED, fd, 0);
-			if (addr == (void *)-1)
+			if (addr == MAP_FAILED)
 				err(1, "could not mmap %s", *argv);
 
 			if ((hdrlen = audioctl_write_fromhdr(addr,
@@ -210,12 +214,12 @@ play_error:
 			}
 
 			filesize -= hdrlen;
-			(char *)addr += hdrlen;
+			addr = (char *)addr + hdrlen;
 
 			while (filesize > bufsize) {
 				if (write(audiofd, addr, bufsize) != bufsize)
 					err(1, "write failed");
-				(char *)addr += bufsize;
+				addr = (char *)addr + bufsize;
 				filesize -= bufsize;
 			}
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
@@ -267,7 +271,7 @@ play_error:
 		ioctl(audiofd, AUDIO_DRAIN);
 	}
 
-	exit(0);
+	exit(exitstatus);
 }
 
 /*
@@ -370,5 +374,5 @@ usage()
 	    "-m monitor volume\n\t"
 	    "-p output port\n\t"
 	    "-v volume\n");
-	exit(0);
+	exit(EXIT_FAILURE);
 }
