@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.11 2004/03/13 02:20:40 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.12 2004/03/13 02:31:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,15 +86,10 @@ struct RF_RaidAccessDesc_s {
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
 						 * I/O */
 	void   *callbackArg;	/* arg to give to callback func */
-
 	RF_AllocListElem_t *cleanupList;	/* memory to be freed at the
 						 * end of the access */
-
 	RF_RaidAccessDesc_t *next;
-
-	RF_DECLARE_MUTEX(mutex)	/* these are used to implement blocking I/O */
 	int     async_flag;
-
 	RF_Etimer_t timer;	/* used for timing this access */
 };
 #endif				/* !_RF__RF_DESC_H_ */
