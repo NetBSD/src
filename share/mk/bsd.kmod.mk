@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.19 1997/05/09 13:25:50 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.20 1997/05/09 13:40:34 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -18,7 +18,7 @@ KERN=		$S/kern
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
-DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS}
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
