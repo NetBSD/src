@@ -1,4 +1,4 @@
-/*	$NetBSD: tt.h,v 1.6 1999/10/04 23:31:30 lukem Exp $	*/
+/*	$NetBSD: tt.h,v 1.7 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -49,35 +49,35 @@
  */
 struct tt {
 		/* startup and cleanup */
-	void	(*tt_start) __P((void));
-	void	(*tt_reset) __P((void));
-	void	(*tt_end) __P((void));
+	void	(*tt_start)(void);
+	void	(*tt_reset)(void);
+	void	(*tt_end)(void);
 
 		/* terminal functions */
-	void	(*tt_move) __P((int, int));
-	void	(*tt_insline) __P((int));
-	void	(*tt_delline) __P((int));
-	void	(*tt_inschar) __P((char));
-	void	(*tt_insspace) __P((int));
-	void	(*tt_delchar) __P((int));
-	void	(*tt_write) __P((char *, int));	/* write a whole block */
-	void	(*tt_putc) __P((char));		/* write one character */
-	void	(*tt_clreol) __P((void));
-	void	(*tt_clreos) __P((void));
-	void	(*tt_clear) __P((void));
-	void	(*tt_scroll_down) __P((int));
-	void	(*tt_scroll_up) __P((int));
-	void	(*tt_setscroll) __P((int, int));/* set scrolling region */
-	void	(*tt_setmodes) __P((int));	/* set display modes */
-	void	(*tt_set_token) __P((int, char *, int));
+	void	(*tt_move)(int, int);
+	void	(*tt_insline)(int);
+	void	(*tt_delline)(int);
+	void	(*tt_inschar)(char);
+	void	(*tt_insspace)(int);
+	void	(*tt_delchar)(int);
+	void	(*tt_write)(char *, int);	/* write a whole block */
+	void	(*tt_putc)(char);		/* write one character */
+	void	(*tt_clreol)(void);
+	void	(*tt_clreos)(void);
+	void	(*tt_clear)(void);
+	void	(*tt_scroll_down)(int);
+	void	(*tt_scroll_up)(int);
+	void	(*tt_setscroll)(int, int);/* set scrolling region */
+	void	(*tt_setmodes)(int);	/* set display modes */
+	void	(*tt_set_token)(int, char *, int);
 						/* define a token */
-	void	(*tt_put_token) __P((int, char *, int));
+	void	(*tt_put_token)(int, char *, int);
 						/* refer to a defined token */
-	void	(*tt_compress) __P((int));	/* begin, end compression */
-	void	(*tt_checksum) __P((char *, int));
+	void	(*tt_compress)(int);	/* begin, end compression */
+	void	(*tt_checksum)(char *, int);
 						/* compute checksum */
-	void	(*tt_checkpoint) __P((void));	/* checkpoint protocol */
-	int	(*tt_rint) __P((char *, int));	/* input processing */
+	void	(*tt_checkpoint)(void);	/* checkpoint protocol */
+	int	(*tt_rint)(char *, int);	/* input processing */
 
 		/* internal variables */
 	char tt_modes;			/* the current display modes */
@@ -106,7 +106,7 @@ struct tt {
 	short *tt_frame;
 
 		/* ttflush() hook */
-	void	(*tt_flush) __P((void));
+	void	(*tt_flush)(void);
 };
 EXTERN struct tt tt;
 
@@ -122,7 +122,7 @@ EXTERN struct tt tt;
 struct tt_tab {
 	char *tt_name;
 	int tt_len;
-	int (*tt_func) __P((void));
+	int (*tt_func)(void);
 };
 EXTERN struct tt_tab tt_tab[];
 
@@ -138,28 +138,28 @@ struct tt_str {
 	int ts_n;
 };
 
-struct tt_str *tttgetstr __P((char *));
-struct tt_str *ttxgetstr __P((char *));	/* tgetstr() and expand delays */
+struct tt_str *tttgetstr(char *);
+struct tt_str *ttxgetstr(char *);	/* tgetstr() and expand delays */
 
-int	tt_f100 __P((void));
-int	tt_generic __P((void));
-int	tt_h19 __P((void));
-int	tt_h29 __P((void));
-int	tt_tvi925 __P((void));
-int	tt_wyse60 __P((void));
-int	tt_wyse75 __P((void));
-int	tt_zapple __P((void));
-int	tt_zentec __P((void));
-void	ttflush __P((void));
-struct tt_str *tttgetstr __P((char *));
-int	ttinit __P((void));
-void	ttpgoto __P((struct tt_str *, int, int, int));
-void	ttputs __P((char *));
-int	ttstrcmp __P((struct tt_str *, struct tt_str *));
-void	tttgoto __P((struct tt_str *, int, int));
-int	tttputc __P((int));
-void	ttwrite __P((char *, int));
-int	ttxputc __P((int));
+int	tt_f100(void);
+int	tt_generic(void);
+int	tt_h19(void);
+int	tt_h29(void);
+int	tt_tvi925(void);
+int	tt_wyse60(void);
+int	tt_wyse75(void);
+int	tt_zapple(void);
+int	tt_zentec(void);
+void	ttflush(void);
+struct tt_str *tttgetstr(char *);
+int	ttinit(void);
+void	ttpgoto(struct tt_str *, int, int, int);
+void	ttputs(char *);
+int	ttstrcmp(struct tt_str *, struct tt_str *);
+void	tttgoto(struct tt_str *, int, int);
+int	tttputc(int);
+void	ttwrite(char *, int);
+int	ttxputc(int);
 
 #define tttputs(s, n)	tputs((s)->ts_str, (n), tttputc)
 #define ttxputs(s)	ttwrite((s)->ts_str, (s)->ts_n)

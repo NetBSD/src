@@ -1,4 +1,4 @@
-/*	$NetBSD: wwmisc.c,v 1.5 1997/11/21 08:37:34 lukem Exp $	*/
+/*	$NetBSD: wwmisc.c,v 1.6 2002/06/14 01:07:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwmisc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwmisc.c,v 1.5 1997/11/21 08:37:34 lukem Exp $");
+__RCSID("$NetBSD: wwmisc.c,v 1.6 2002/06/14 01:07:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: wwmisc.c,v 1.5 1997/11/21 08:37:34 lukem Exp $");
  * Sufficient but not necessary test for total visibility.
  */
 int
-wwvisible(w)
-	struct ww *w;
+wwvisible(struct ww *w)
 {
 	int i;
 	int nvis = 0;
@@ -70,7 +69,7 @@ wwvisible(w)
 }
 
 void
-wwbell()
+wwbell(void)
 {
 	ttputc(ctrl('g'));
 }

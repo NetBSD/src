@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinschar.c,v 1.5 1997/11/21 08:37:27 lukem Exp $	*/
+/*	$NetBSD: wwinschar.c,v 1.6 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinschar.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwinschar.c,v 1.5 1997/11/21 08:37:27 lukem Exp $");
+__RCSID("$NetBSD: wwinschar.c,v 1.6 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,10 +50,7 @@ __RCSID("$NetBSD: wwinschar.c,v 1.5 1997/11/21 08:37:27 lukem Exp $");
 #include "xx.h"
 
 void
-wwinschar(w, row, col, c, m)
-	struct ww *w;
-	int row, col;
-	char c, m;
+wwinschar(struct ww *w, int row, int col, char c, char m)
 {
 	int i;
 	int nvis;

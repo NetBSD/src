@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd.c,v 1.6 1998/08/25 20:59:42 ross Exp $	*/
+/*	$NetBSD: cmd.c,v 1.7 2002/06/14 01:06:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd.c,v 1.6 1998/08/25 20:59:42 ross Exp $");
+__RCSID("$NetBSD: cmd.c,v 1.7 2002/06/14 01:06:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +49,10 @@ __RCSID("$NetBSD: cmd.c,v 1.6 1998/08/25 20:59:42 ross Exp $");
 #include "defs.h"
 #include "char.h"
 
-int	checkproc __P((struct ww *));
+int	checkproc(struct ww *);
 
 void
-docmd()
+docmd(void)
 {
 	int c;
 	struct ww *w;
@@ -224,7 +224,7 @@ docmd()
 }
 
 struct ww *
-getwin()
+getwin(void)
 {
 	int c;
 	struct ww *w = 0;
@@ -254,8 +254,7 @@ getwin()
 }
 
 int
-checkproc(w)
-	struct ww *w;
+checkproc(struct ww *w)
 {
 	if (w->ww_state != WWS_HASPROC) {
 		error("No process in window.");
@@ -265,8 +264,7 @@ checkproc(w)
 }
 
 void
-setcmd(new)
-	char new;
+setcmd(char new)
 {
 	if (new && !incmd) {
 		if (!terse)
@@ -287,8 +285,7 @@ setcmd(new)
 }
 
 void
-setterse(new)
-	char new;
+setterse(char new)
 {
 	if (incmd) {
 		if (new && !terse) {
@@ -304,8 +301,7 @@ setterse(new)
  * Set the current window.
  */
 void
-setselwin(w)
-	struct ww *w;
+setselwin(struct ww *w)
 {
 	if (selwin == w)
 		return;

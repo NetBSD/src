@@ -1,4 +1,4 @@
-/*	$NetBSD: parser5.c,v 1.4 1997/11/21 08:36:16 lukem Exp $	*/
+/*	$NetBSD: parser5.c,v 1.5 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser5.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser5.c,v 1.4 1997/11/21 08:36:16 lukem Exp $");
+__RCSID("$NetBSD: parser5.c,v 1.5 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: parser5.c,v 1.4 1997/11/21 08:36:16 lukem Exp $");
  * unary $ $? + - ! ~
  */
 int
-p_expr11(v, flag)
-	struct value *v;
-	char flag;
+p_expr11(struct value *v, char flag)
 {
 	int op;
 	char *opname;
@@ -156,9 +154,7 @@ p_expr11(v, flag)
  * Always return v_type == V_ERR when flag == 0.
  */
 int
-p_expr12(v, flag)
-	struct value *v;
-	char flag;
+p_expr12(struct value *v, char flag)
 {
 	v->v_type = V_ERR;
 	switch (token) {

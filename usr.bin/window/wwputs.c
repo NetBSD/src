@@ -1,4 +1,4 @@
-/*	$NetBSD: wwputs.c,v 1.4 1997/11/21 08:37:43 lukem Exp $	*/
+/*	$NetBSD: wwputs.c,v 1.5 2002/06/14 01:07:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,16 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)wwputs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwputs.c,v 1.4 1997/11/21 08:37:43 lukem Exp $");
+__RCSID("$NetBSD: wwputs.c,v 1.5 2002/06/14 01:07:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 void
-wwputs(s, w)
-	char *s;
-	struct ww *w;
+wwputs(char *s, struct ww *w)
 {
 	char *p = s;
 

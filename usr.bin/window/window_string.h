@@ -1,4 +1,4 @@
-/*	$NetBSD: window_string.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
+/*	$NetBSD: window_string.h,v 1.6 2002/06/14 01:06:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -49,11 +49,11 @@
 
 #define STR_DEBUG
 
-char	*str_cat __P((char *, char *));
-char	*str_cpy __P((char *));
-char	*str_itoa __P((int));
-int	 str_match __P((char *, char *, int));
-char	*str_ncpy __P((char *, int));
+char	*str_cat(char *, char *);
+char	*str_cpy(char *);
+char	*str_itoa(int);
+int	 str_match(char *, char *, int);
+char	*str_ncpy(char *, int);
 
 #define str_cmp(a, b)	strcmp(a, b)
 
@@ -69,8 +69,8 @@ EXTERN struct string str_head;
 #define str_offset ((unsigned)str_head.s_data - (unsigned)&str_head)
 #define str_stos(s) ((struct string *)((unsigned)(s) - str_offset))
 
-char	*str_alloc __P((size_t));
-void	str_free __P((char *));
+char	*str_alloc(size_t);
+void	str_free(char *);
 #else
 #define str_free(s)	free(s)
 #define str_alloc(s)	malloc(s)

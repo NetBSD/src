@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.5 1997/11/21 08:36:19 lukem Exp $	*/
+/*	$NetBSD: startup.c,v 1.6 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: startup.c,v 1.5 1997/11/21 08:36:19 lukem Exp $");
+__RCSID("$NetBSD: startup.c,v 1.6 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: startup.c,v 1.5 1997/11/21 08:36:19 lukem Exp $");
 #include "local.h"
 
 int
-doconfig()
+doconfig(void)
 {
 	char buf[100];
 	char *home;
@@ -70,7 +70,7 @@ doconfig()
  * The default is two windows of equal size.
  */
 void
-dodefault()
+dodefault(void)
 {
 	struct ww *w;
 	int r = wwnrow / 2 - 1;
@@ -87,7 +87,7 @@ dodefault()
 }
 
 void
-setvars()
+setvars(void)
 {
 	/* try to use a random ordering to balance the tree */
 	(void) var_setnum("nrow", wwnrow);
