@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.34 1995/04/02 20:38:33 chopps Exp $
+#	$NetBSD: GENERIC,v 1.35 1995/04/06 19:24:47 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -103,6 +103,7 @@ options		DDB		# Kernel debugger
 #
 options		MACHINE_NONCONTIG # Non-contiguous memory support
 options		RETINACONSOLE	# enable code to allow retina to be console
+#options	RETINA_SPEED_HACK	# enable fast scroll code, may not work
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
