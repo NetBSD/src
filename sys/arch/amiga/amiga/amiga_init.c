@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.67 1999/10/15 21:50:35 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.67.4.1 1999/11/14 23:39:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -207,7 +207,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	struct boot_memlist *ml;
 	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 	u_int *shadow_pt = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+#ifdef	P5PPC68KBOARD
         struct cfdev *cdp, *ecdp;
+#endif
 
 #ifdef DEBUG_KERNEL_START
 	/* XXX this only is valid if Altais is in slot 0 */

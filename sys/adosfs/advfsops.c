@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.38.4.1 1999/10/26 19:15:15 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.38.4.2 1999/11/14 23:39:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -299,6 +299,8 @@ adosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	amp = VFSTOADOSFS(mp);
+	if (amp->devvp->v_type != VBAD)
+		devvp->v_specmountpoint = NULL;
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vput(amp->devvp);
