@@ -8,9 +8,10 @@ Bugs:
    * Don't save FP context at getcontext() time, but do something
      More Clever with lazy FPU switching.
 
-- MD bug: tests/thread2 panics the alpha somewhere after the first
-  unblocked upcall. The kernel appears to jump into space.
-  sh3 appears to also have the same problem.  Check cpu_setfunc()!
+- MD bug: tests/thread2 panics dreamcast somewhere after the first
+  unblocked upcall. The kernel appears to jump into space. Appears
+  similar to the fixed alpha bug (not updating SP in PCB) in
+  cpu_setfunc().
 
 - MI/MD bug: The PMC framework does not work with SAs .. at all.  This
   needs to be straightened out.
@@ -30,7 +31,7 @@ Platform status:
 
 - algor: P6032 compiles, otherwise untested.
 
-- alpha: Mystery bug that crashes system; see above.
+- alpha: Works.
 
 - amiga: GENERIC compiles, otherwise untested.
 
