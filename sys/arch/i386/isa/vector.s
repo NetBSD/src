@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.46 2000/01/20 03:19:27 enami Exp $	*/
+/*	$NetBSD: vector.s,v 1.47 2001/07/17 13:52:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
-#define	IRQ_BYTE(irq_num)	((irq_num) / 8)
+#define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
 #ifdef ICU_SPECIAL_MASK_MODE
 
