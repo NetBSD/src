@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.7 2003/01/18 13:12:55 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.8 2003/01/18 13:53:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.7 2003/01/18 13:12:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.8 2003/01/18 13:53:29 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -179,7 +179,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 * create and map the pad buffer
 	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
-	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT,&sc->sc_nulldmamap)) != 0) {
+	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT, &sc->sc_nulldmamap)) != 0) {
 		printf("%s: unable to create pad buffer DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_5;
@@ -396,11 +396,11 @@ sonic_start(struct ifnet *ifp)
 				    htosonic32(sc,
 				    (sc->sc_nulldma >> 16) & 0xffff);
 				tda32->tda_frags[seg].frag_ptr0 =
-				    htosonic32(sc,
-				    sc->sc_nulldma & 0xffff);
+				    htosonic32(sc, sc->sc_nulldma & 0xffff);
 				tda32->tda_frags[seg].frag_size =
 				    htosonic32(sc, ETHER_PAD_LEN - totlen);
 				totlen = ETHER_PAD_LEN;
+				seg++;
 			}
 				    
 			tda32->tda_status = 0;
@@ -435,11 +435,11 @@ sonic_start(struct ifnet *ifp)
 				    htosonic16(sc,
 				    (sc->sc_nulldma >> 16) & 0xffff);
 				tda16->tda_frags[seg].frag_ptr0 =
-				    htosonic16(sc,
-				    sc->sc_nulldma & 0xffff);
+				    htosonic16(sc, sc->sc_nulldma & 0xffff);
 				tda16->tda_frags[seg].frag_size =
 				    htosonic16(sc, ETHER_PAD_LEN - totlen);
 				totlen = ETHER_PAD_LEN;
+				seg++;
 			}
 
 			tda16->tda_status = 0;
