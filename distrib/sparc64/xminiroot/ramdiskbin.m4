@@ -1,9 +1,9 @@
-#	$NetBSD: ramdiskbin.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
+#	$NetBSD: ramdiskbin.m4,v 1.2 2002/04/09 00:31:41 lukem Exp $
 #
 # ramdiskbin.conf - unified binary for the install ramdisk
 #
 
-srcdirs bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin sys/arch/MACHINE/stand
+srcdirs bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
 progs cat chmod chown chroot cp dd df disklabel dhclient ed
 progs fsck fsck_ffs ftp gzip ifconfig init installboot less
@@ -29,7 +29,9 @@ special ping srcdir distrib/utils/x_ping
 
 ifelse(MACHINE,sparc64,special pppd srcdir usr.sbin/pppd/pppd)
 ifelse(MACHINE,sparc64,special chat srcdir usr.sbin/pppd/chat)
-ifelse(MACHINE,sparc64,special installboot srcdir sys/arch/sparc/stand/installboot)
+
+# we have not switched to MI usr.sbin/installboot yet.
+special installboot srcdir sys/arch/sparc/stand/installboot
 
 # "special" gzip is actually larger assuming nothing else uses -lz..
 #special gzip srcdir distrib/utils/x_gzip
