@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2004/02/21 15:56:03 skrll Exp $
+#	$NetBSD: Makefile,v 1.66 2004/02/22 01:39:43 uwe Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -23,7 +23,9 @@ M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 PROG=	ld.elf_so
 
-LDFLAGS+= -Bshareable -Bsymbolic
+CFLAGS+=	-shared -symbolic -nostartfiles
+LDFLAGS+=	-non_shared
+
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
 .if exists($M/Makefile.inc)
@@ -51,7 +53,7 @@ DBG=	-O3 -fomit-frame-pointer
 CPPFLAGS+= -DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
-LDADD+=	-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -non_shared -lc_pic
+LDADD+=	-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -lc_pic
 .if ${MKPICINSTALL} != "no" 
 DPADD+=	${LIBC_PIC}
 .endif
@@ -63,7 +65,7 @@ STRIPFLAG=
 
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKMSG_LINK} ${PROG}
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+	${CC} ${CFLAGS} ${LDFLAGS:@F@-Wl,$F@} -o ${PROG} ${OBJS} ${LDADD}
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
