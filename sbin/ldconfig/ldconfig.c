@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.34 2001/11/01 07:33:43 lukem Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.35 2003/01/05 22:28:41 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ enter(dir, file, name, dewey, ndewey)
 	shp = (struct shlib_list *)xmalloc(sizeof *shp);
 	shp->name = strdup(name);
 	shp->path = concat(dir, "/", file);
-	memcpy(shp->dewey, dewey, MAXDEWEY);
+	memcpy(shp->dewey, dewey, sizeof(shp->dewey));
 	shp->ndewey = ndewey;
 	shp->next = NULL;
 
