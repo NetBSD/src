@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acct.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: acct.2,v 1.3 1993/11/25 00:38:21 jtc Exp $
+.\"	$Id: acct.2,v 1.4 1994/04/19 00:10:47 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt ACCT 2
@@ -90,8 +90,11 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ENOENT
 The named file does not exist.
 .It Bq Er EACCES
