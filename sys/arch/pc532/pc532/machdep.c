@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 1999/04/25 02:56:28 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 1999/04/26 22:46:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -324,7 +324,7 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, FALSE, FALSE, NULL);
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
