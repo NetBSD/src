@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.18 2004/04/02 13:13:47 jmmv Exp $
+#	$NetBSD: weekly,v 1.19 2004/04/09 17:35:21 kim Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -25,6 +25,17 @@ else
 	echo "Can't read /etc/rc.subr; aborting."
 	exit 1;
 fi
+
+WEEKLYDIR=`mktemp -d /tmp/_weekly.XXXXXX` || exit 1
+
+trap "/bin/rm -rf $WEEKLYDIR ; exit 0" EXIT INT QUIT PIPE
+
+if ! cd "$WEEKLYDIR"; then
+	echo "Can not cd to $WEEKLYDIR".
+	exit 1
+fi
+
+TMP=weekly.$$
 
 #echo ""
 #echo "Removing old .o files:"
@@ -75,7 +86,10 @@ if checkyesno rebuild_locatedb; then
 fi
 
 if [ -f /etc/weekly.local ]; then
-	echo ""
-	echo "Running /etc/weekly.local:"
-	. /etc/weekly.local
+	. /etc/weekly.local > $TMP 2>&1
+	if [ -s $TMP ] ; then
+		printf "\nRunning /etc/weekly.local:\n"
+		cat $TMP
+	fi
+	rm -f $TMP
 fi
