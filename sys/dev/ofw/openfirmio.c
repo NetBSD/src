@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.1 2000/11/14 06:45:54 matt Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.2 2000/11/14 21:10:05 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,13 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	int node, len, ok, error, s;
 	char *name, *value;
 
+	if (cmd == OFIOCGETOPTNODE) {
+		s = splhigh();
+		*(int *) data = OF_finddevice("/options");
+		splx(s);
+		return (0);
+	}
+
 	/* Verify node id */
 	of = (struct ofiocdesc *)data;
 	node = of->of_nodeid;
@@ -188,12 +195,12 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 #endif
 
 	case OFIOCNEXTPROP: {
-		char newname[33];
+		char newname[32];
 		if ((flags & FREAD) == 0)
 			return (EBADF);
 		if (node == 0)
 			return (EINVAL);
-		if (of->of_namelen != 0 || of->of_name != NULL) {
+		if (of->of_namelen != 0) {
 			error = openfirmgetstr(of->of_namelen, of->of_name,
 			    &name);
 			if (error)
@@ -202,6 +209,10 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		s = splhigh();
 		ok = OF_nextprop(node, name, newname);
 		splx(s);
+		if (ok == 0) {
+			error = ENOENT;
+			break;
+		}
 		if (ok == -1) {
 			error = EINVAL;
 			break;
@@ -246,7 +257,7 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = ENOENT;
 			break;
 		}
-		of->of_nodeid = node;
+		of->of_nodeid = lastnode = node;
 		break;
 
 	default:
