@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.9 2002/10/14 13:43:22 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.10 2003/01/07 17:13:07 jonb Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,28 +71,20 @@ For example, the interface to driver
 is defined with:
 .Pp
 .Bd -literal
-struct cfattach foo_ca = {
+CFATTACH_DECL(foo, 			/* driver name */
 	sizeof(struct foo_softc),	/* size of instance data */
 	foo_match,			/* match/probe function */
 	foo_attach,			/* attach function */
 	foo_detach,			/* detach function */
-	foo_activate			/* activate function */
-};
+	foo_activate);			/* activate function */
 .Ed
-.Pp
-The structure variable must be named
-.Va foo_ca
-by appending the letters
-.Dq _ca
-to the driver's base name.
-This convention is mandated by the autoconfiguration framework.
 .Pp
 For each device instance controlled by the driver, the
 autoconfiguration framework allocates a block of memory to record
 device-instance-specific driver variables.
-The size of this memory block is specified by the first field in the
-.Em cfattach
-structure.
+The size of this memory block is specified by the second argument in the
+.Em CFATTACH_DECL
+macro.
 The memory block is referred to as the driver's
 .Em softc
 structure.
