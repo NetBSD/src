@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.23 2000/06/19 00:55:11 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.23.2.1 2001/03/20 18:04:00 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2000/06/19 00:55:11 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.23.2.1 2001/03/20 18:04:00 he Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: main.c,v 1.23 2000/06/19 00:55:11 hubertf Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "aBbcDde:fFhIikLl:mpqRrsSv";
+static char Options[] = "aBbcDde:fFhIikLl:mpqRrsSvV";
 
 int     Flags = 0;
 Boolean AllInstalled = FALSE;
@@ -55,7 +55,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_info [-BbcDdFfIikLmpqRrSsvh] [-e package] [-l prefix]",
+	    "usage: pkg_info [-BbcDdFfIikLmpqRrSsVvh] [-e package] [-l prefix]",
 	    "                pkg-name [pkg-name ...]",
 	    "       pkg_info -a [flags]");
 	exit(1);
@@ -175,6 +175,10 @@ main(int argc, char **argv)
 			    SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
 			    SHOW_REQBY | SHOW_DEPENDS | SHOW_PKG_SIZE | SHOW_ALL_SIZE;
 			break;
+
+		case 'V':
+			show_version();
+			/* NOTREACHED */
 
 		case 'h':
 		case '?':
