@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2003/02/05 12:06:52 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.29 2003/04/01 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -139,7 +139,7 @@ cpu_init(pa, cpu_num)
 	struct pglist pglist;
 	int error;
 
-	size = NBPG; /* XXXX 8K, 64K, 512K, or 4MB */
+	size = PAGE_SIZE; /* XXXX 8K, 64K, 512K, or 4MB */
 	if ((error = uvm_pglistalloc(size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)size, (paddr_t)0, &pglist, 1, 0)) != 0)
 		panic("cpu_start: no memory, error %d", error);
@@ -165,7 +165,7 @@ cpu_init(pa, cpu_num)
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_zero_page(pa);
 		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
