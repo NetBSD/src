@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.1 2002/10/08 13:08:02 augustss Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.2 2002/10/08 16:13:36 pooka Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -409,7 +409,7 @@ USB_DETACH(ubsa)
 	return (rv);
 }
 
-Static int
+int
 ubsa_activate(device_ptr_t self, enum devact act)
 {
 	struct ubsa_softc *sc = (struct ubsa_softc *)self;
