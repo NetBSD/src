@@ -39,17 +39,6 @@ Boston, MA 02111-1307, USA.  */
 #include "tree.h"
 #include "expr.h"
 
-
-int
-arm_preserved_register(int n)
-{
-    if(flag_pic && (n == arm_pic_register))
-        return 1;
-       
-    return !call_used_regs[n];
-}
-
-
 /* The maximum number of insns skipped which will be conditionalised if
    possible.  */
 #define MAX_INSNS_SKIPPED  5
@@ -57,9 +46,6 @@ arm_preserved_register(int n)
 /* Some function declarations.  */
 extern FILE *asm_out_file;
 extern char *output_multi_immediate ();
-
-extern void arm_increase_location ();  // only in 2.7
-static int get_prologue_size PROTO ((void));
 
 HOST_WIDE_INT int_log2 PROTO ((HOST_WIDE_INT));
 static int arm_gen_constant PROTO ((enum rtx_code, enum machine_mode,
@@ -96,19 +82,6 @@ int arm_text_location = 0;
    but all of these can be `put after' return insns */
 int lr_save_eliminated;
 
-/* A hash table is used to store text segment labels and their associated
-   offset from the start of the text segment.  */
-struct label_offset
-{
-  char *name;
-  int offset;
-  struct label_offset *cdr;
-};
-
-#define LABEL_HASH_SIZE  257
-
-static struct label_offset *offset_table[LABEL_HASH_SIZE];
-
 /* Set to 1 when a return insn is output, this means that the epilogue
    is not needed. */
 
@@ -128,6 +101,16 @@ char *arm_condition_codes[] =
 };
 
 #define ARM_INVERSE_CONDITION_CODE(X)  ((X) ^ 1)
+
+int
+arm_preserved_register (regno)
+     int regno;
+{
+  if (flag_pic && regno == PIC_OFFSET_TABLE_REGNUM)
+    return 1;
+       
+  return ! call_used_regs[regno];
+}
 
 /* Return 1 if it is possible to return using a single instruction */
 
@@ -1939,16 +1922,7 @@ multi_register_push (op, mode)
 
   return 1;
 }
- 
- /* Routines for use with attributes */
- 
- int
- const_pool_offset (symbol)
-      rtx symbol;
- {
-   return get_pool_offset (symbol) - get_pool_size () - get_prologue_size ();
- }
- 
+
 /* Routines for use in generating RTL */
 
 rtx
@@ -2236,37 +2210,6 @@ arm_gen_store_multiple (base_regno, count, to, up, write_back, unchanging_p,
  			    gen_rtx (SUBREG, QImode, operands[2], 0)));
      }
  }
- 
- /* Check to see if a branch is forwards or backwards.  Return TRUE if it
-    is backwards.  */
- 
- int
- arm_backwards_branch (from, to)
-      int from, to;
- {
-   return insn_addresses[to] <= insn_addresses[from];
- }
- 
- /* Check to see if a branch is within the distance that can be done using
-    an arithmetic expression. */
- int
- short_branch (from, to)
-      int from, to;
- {
-   int delta = insn_addresses[from] + 8 - insn_addresses[to];
- 
-   return abs (delta) < 980;	/* A small margin for safety */
- }
- 
- /* Check to see that the insn isn't the target of the conditionalizing
-    code */
- int
- arm_insn_not_targeted (insn)
-      rtx insn;
- {
-   return insn != arm_target_insn;
- }
- 
  
  /* Routines to output assembly language.  */
  
@@ -2946,7 +2889,6 @@ arithmetic_instr (op, shift_first_arg)
  	    fputs ("\"\n", stream);
  	  fputs ("\t.ascii\t\"", stream);
  	  len_so_far = 0;
- 	  arm_increase_location (chars_so_far);
  	  chars_so_far = 0;
  	}
  
@@ -2971,240 +2913,244 @@ arithmetic_instr (op, shift_first_arg)
      }
  
    fputs ("\"\n", stream);
-   arm_increase_location (chars_so_far);
  }
  
  
- /* Try to determine whether a pattern really clobbers the link register.
-    This information is useful when peepholing, so that lr need not be pushed
-    if we combine a call followed by a return.
-    NOTE: This code does not check for side-effect expressions in a SET_SRC:
-    such a check should not be needed because these only update an existing
-    value within a register; the register must still be set elsewhere within
-    the function. */
- 
- static int
- pattern_really_clobbers_lr (x)
-      rtx x;
- {
-   int i;
-   
-   switch (GET_CODE (x))
-     {
-     case SET:
-       switch (GET_CODE (SET_DEST (x)))
- 	{
- 	case REG:
- 	  return REGNO (SET_DEST (x)) == 14;
- 
-         case SUBREG:
- 	  if (GET_CODE (XEXP (SET_DEST (x), 0)) == REG)
- 	    return REGNO (XEXP (SET_DEST (x), 0)) == 14;
- 
- 	  if (GET_CODE (XEXP (SET_DEST (x), 0)) == MEM)
- 	    return 0;
- 	  abort ();
- 
-         default:
- 	  return 0;
-         }
- 
-     case PARALLEL:
-       for (i = 0; i < XVECLEN (x, 0); i++)
- 	if (pattern_really_clobbers_lr (XVECEXP (x, 0, i)))
- 	  return 1;
-       return 0;
- 
-     case CLOBBER:
-       switch (GET_CODE (XEXP (x, 0)))
-         {
- 	case REG:
- 	  return REGNO (XEXP (x, 0)) == 14;
- 
-         case SUBREG:
- 	  if (GET_CODE (XEXP (XEXP (x, 0), 0)) == REG)
- 	    return REGNO (XEXP (XEXP (x, 0), 0)) == 14;
- 	  abort ();
- 
-         default:
- 	  return 0;
-         }
- 
-     case UNSPEC:
-       return 1;
- 
-     default:
-       return 0;
-     }
- }
- 
- static int
- function_really_clobbers_lr (first)
-      rtx first;
- {
-   rtx insn, next;
-   
-   for (insn = first; insn; insn = next_nonnote_insn (insn))
-     {
-       switch (GET_CODE (insn))
-         {
- 	case BARRIER:
- 	case NOTE:
- 	case CODE_LABEL:
- 	case JUMP_INSN:		/* Jump insns only change the PC (and conds) */
- 	case INLINE_HEADER:
- 	  break;
- 
-         case INSN:
- 	  if (pattern_really_clobbers_lr (PATTERN (insn)))
- 	    return 1;
- 	  break;
- 
-         case CALL_INSN:
- 	  /* Don't yet know how to handle those calls that are not to a 
- 	     SYMBOL_REF */
- 	  if (GET_CODE (PATTERN (insn)) != PARALLEL)
- 	    abort ();
- 
- 	  switch (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)))
- 	    {
- 	    case CALL:
- 	      if (GET_CODE (XEXP (XEXP (XVECEXP (PATTERN (insn), 0, 0), 0), 0))
- 		  != SYMBOL_REF)
- 		return 1;
- 	      break;
- 
- 	    case SET:
- 	      if (GET_CODE (XEXP (XEXP (SET_SRC (XVECEXP (PATTERN (insn),
- 							  0, 0)), 0), 0))
- 		  != SYMBOL_REF)
- 		return 1;
- 	      break;
- 
- 	    default:	/* Don't recognize it, be safe */
- 	      return 1;
- 	    }
- 
- 	  /* A call can be made (by peepholing) not to clobber lr iff it is
- 	     followed by a return.  There may, however, be a use insn iff
- 	     we are returning the result of the call. 
- 	     If we run off the end of the insn chain, then that means the
- 	     call was at the end of the function.  Unfortunately we don't
- 	     have a return insn for the peephole to recognize, so we
- 	     must reject this.  (Can this be fixed by adding our own insn?) */
- 	  if ((next = next_nonnote_insn (insn)) == NULL)
- 	    return 1;
- 
- 	  if (GET_CODE (next) == INSN && GET_CODE (PATTERN (next)) == USE
- 	      && (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == SET)
- 	      && (REGNO (SET_DEST (XVECEXP (PATTERN (insn), 0, 0)))
- 		  == REGNO (XEXP (PATTERN (next), 0))))
- 	    if ((next = next_nonnote_insn (next)) == NULL)
- 	      return 1;
- 
- 	  if (GET_CODE (next) == JUMP_INSN
- 	      && GET_CODE (PATTERN (next)) == RETURN)
- 	    break;
- 	  return 1;
- 
-         default:
- 	  abort ();
-         }
-     }
- 
-   /* We have reached the end of the chain so lr was _not_ clobbered */
-   return 0;
- }
- 
+/* Try to determine whether a pattern really clobbers the link register.
+   This information is useful when peepholing, so that lr need not be pushed
+   if we combine a call followed by a return.
+   NOTE: This code does not check for side-effect expressions in a SET_SRC:
+   such a check should not be needed because these only update an existing
+   value within a register; the register must still be set elsewhere within
+   the function. */
+
+static int
+pattern_really_clobbers_lr (x)
+     rtx x;
+{
+  int i;
+  
+  switch (GET_CODE (x))
+    {
+    case SET:
+      switch (GET_CODE (SET_DEST (x)))
+	{
+	case REG:
+	  return REGNO (SET_DEST (x)) == 14;
+
+        case SUBREG:
+	  if (GET_CODE (XEXP (SET_DEST (x), 0)) == REG)
+	    return REGNO (XEXP (SET_DEST (x), 0)) == 14;
+
+	  if (GET_CODE (XEXP (SET_DEST (x), 0)) == MEM)
+	    return 0;
+	  abort ();
+
+        default:
+	  return 0;
+        }
+
+    case PARALLEL:
+      for (i = 0; i < XVECLEN (x, 0); i++)
+	if (pattern_really_clobbers_lr (XVECEXP (x, 0, i)))
+	  return 1;
+      return 0;
+
+    case CLOBBER:
+      switch (GET_CODE (XEXP (x, 0)))
+        {
+	case REG:
+	  return REGNO (XEXP (x, 0)) == 14;
+
+        case SUBREG:
+	  if (GET_CODE (XEXP (XEXP (x, 0), 0)) == REG)
+	    return REGNO (XEXP (XEXP (x, 0), 0)) == 14;
+	  abort ();
+
+        default:
+	  return 0;
+        }
+
+    case UNSPEC:
+      return 1;
+
+    default:
+      return 0;
+    }
+}
+
+static int
+function_really_clobbers_lr (first)
+     rtx first;
+{
+  rtx insn, next;
+  
+  for (insn = first; insn; insn = next_nonnote_insn (insn))
+    {
+      switch (GET_CODE (insn))
+        {
+	case BARRIER:
+	case NOTE:
+	case CODE_LABEL:
+	case JUMP_INSN:		/* Jump insns only change the PC (and conds) */
+	case INLINE_HEADER:
+	  break;
+
+        case INSN:
+	  if (pattern_really_clobbers_lr (PATTERN (insn)))
+	    return 1;
+	  break;
+
+        case CALL_INSN:
+	  /* Don't yet know how to handle those calls that are not to a 
+	     SYMBOL_REF */
+	  if (GET_CODE (PATTERN (insn)) != PARALLEL)
+	    abort ();
+
+	  switch (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)))
+	    {
+	    case CALL:
+	      if (GET_CODE (XEXP (XEXP (XVECEXP (PATTERN (insn), 0, 0), 0), 0))
+		  != SYMBOL_REF)
+		return 1;
+	      break;
+
+	    case SET:
+	      if (GET_CODE (XEXP (XEXP (SET_SRC (XVECEXP (PATTERN (insn),
+							  0, 0)), 0), 0))
+		  != SYMBOL_REF)
+		return 1;
+	      break;
+
+	    default:	/* Don't recognize it, be safe */
+	      return 1;
+	    }
+
+	  /* A call can be made (by peepholing) not to clobber lr iff it is
+	     followed by a return.  There may, however, be a use insn iff
+	     we are returning the result of the call. 
+	     If we run off the end of the insn chain, then that means the
+	     call was at the end of the function.  Unfortunately we don't
+	     have a return insn for the peephole to recognize, so we
+	     must reject this.  (Can this be fixed by adding our own insn?) */
+	  if ((next = next_nonnote_insn (insn)) == NULL)
+	    return 1;
+
+	  /* No need to worry about lr if the call never returns */
+	  if (GET_CODE (next) == BARRIER)
+	    break;
+
+	  if (GET_CODE (next) == INSN && GET_CODE (PATTERN (next)) == USE
+	      && (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == SET)
+	      && (REGNO (SET_DEST (XVECEXP (PATTERN (insn), 0, 0)))
+		  == REGNO (XEXP (PATTERN (next), 0))))
+	    if ((next = next_nonnote_insn (next)) == NULL)
+	      return 1;
+
+	  if (GET_CODE (next) == JUMP_INSN
+	      && GET_CODE (PATTERN (next)) == RETURN)
+	    break;
+	  return 1;
+
+        default:
+	  abort ();
+        }
+    }
+
+  /* We have reached the end of the chain so lr was _not_ clobbered */
+  return 0;
+}
+
 char *
-output_return_instruction (operand, really_return)
+output_return_instruction (operand, really_return, reverse)
      rtx operand;
      int really_return;
+     int reverse;
 {
-    char instr[100];
-    int reg, live_regs = 0;
-    int volatile_func = (optimize > 0 
-                         && TREE_THIS_VOLATILE (current_function_decl));
-    
-    return_used_this_function = 1;
-    
-    if (volatile_func)
-        {
-            rtx ops[2];
-            /* If this function was declared non-returning, and we have found a tail 
-            call, then we have to trust that the called function won't return. */
-            if (! really_return)
-                return "";
-            
-            /* Otherwise, trap an attempted return by aborting. */
-            ops[0] = operand;
-            ops[1] = gen_rtx (SYMBOL_REF, Pmode, "abort");
-            output_asm_insn ("bl%d0\t%a1", ops);
-            return "";
-        }
-    
-    if (current_function_calls_alloca && ! really_return)
-        abort();
+  char instr[100];
+  int reg, live_regs = 0;
+  int volatile_func = (optimize > 0 
+		       && TREE_THIS_VOLATILE (current_function_decl));
 
-    if (current_function_uses_pic_offset_table && flag_pic)
-        regs_ever_live[arm_pic_register] = 1;
+  return_used_this_function = 1;
+
+  if (volatile_func)
+    {
+      rtx ops[2];
+      /* If this function was declared non-returning, and we have found a tail 
+	 call, then we have to trust that the called function won't return. */
+      if (! really_return)
+	return "";
+
+      /* Otherwise, trap an attempted return by aborting. */
+      ops[0] = operand;
+      ops[1] = gen_rtx (SYMBOL_REF, Pmode, "abort");
+      assemble_external_libcall (ops[1]);
+      output_asm_insn (reverse ? "bl%D0\t%a1" : "bl%d0\t%a1", ops);
+      return "";
+    }
+      
+  if (current_function_calls_alloca && ! really_return)
+    abort();
     
-    for (reg = 0; reg <= 10; reg++)
-        if (regs_ever_live[reg] && arm_preserved_register(reg))
-            live_regs++;
-    
-    if (live_regs || (regs_ever_live[14] && ! lr_save_eliminated))
+  for (reg = 0; reg <= 10; reg++)
+    if (regs_ever_live[reg] && arm_preserved_register(reg))
+      live_regs++;
+
+  if (live_regs || (regs_ever_live[14] && ! lr_save_eliminated))
+    live_regs++;
+
+  if (frame_pointer_needed)
+    live_regs += 4;
+
+  if (live_regs)
+    {
+      if (lr_save_eliminated || ! regs_ever_live[14])
         live_regs++;
-    
-    if (frame_pointer_needed)
-        live_regs += 4;
-    
-    if (live_regs)
+
+      if (frame_pointer_needed)
+        strcpy (instr,
+		reverse ? "ldm%?%D0ea\t%|fp, {" : "ldm%?%d0ea\t%|fp, {");
+      else
+        strcpy (instr, 
+		reverse ? "ldm%?%D0fd\t%|sp!, {" : "ldm%?%d0fd\t%|sp!, {");
+
+      for (reg = 0; reg <= 10; reg++)
+        if (regs_ever_live[reg] && arm_preserved_register(reg))
+          {
+	    strcat (instr, "%|");
+            strcat (instr, reg_names[reg]);
+	    if (--live_regs)
+              strcat (instr, ", ");
+          }
+
+      if (frame_pointer_needed)
         {
-            if (lr_save_eliminated || ! regs_ever_live[14])
-                live_regs++;
-            
-            if (frame_pointer_needed)
-                strcpy (instr, "ldm%?%d0ea\t%|fp, {");
-            else
-                strcpy (instr, "ldm%?%d0fd\t%|sp!, {");
-            
-            for (reg = 0; reg <= 10; reg++)
-                if (regs_ever_live[reg] && arm_preserved_register(reg))
-                    {
-                        strcat (instr, "%|");
-                        strcat (instr, reg_names[reg]);
-                        if (--live_regs)
-                            strcat (instr, ", ");
-                    }
-            
-            if (frame_pointer_needed)
-                {
-                    strcat (instr, "%|");
-                    strcat (instr, reg_names[11]);
-                    strcat (instr, ", ");
-                    strcat (instr, "%|");
-                    strcat (instr, reg_names[13]);
-                    strcat (instr, ", ");
-                    strcat (instr, "%|");
-                    strcat (instr, really_return ? reg_names[15] : reg_names[14]);
-                }
-            else
-                {
-                    strcat (instr, "%|");
-                    strcat (instr, really_return ? reg_names[15] : reg_names[14]);
-                }
-            strcat (instr, (TARGET_6 || !really_return) ? "}" : "}^");
-            output_asm_insn (instr, &operand);
+	  strcat (instr, "%|");
+          strcat (instr, reg_names[11]);
+          strcat (instr, ", ");
+	  strcat (instr, "%|");
+          strcat (instr, reg_names[13]);
+          strcat (instr, ", ");
+	  strcat (instr, "%|");
+          strcat (instr, really_return ? reg_names[15] : reg_names[14]);
         }
-    else if (really_return)
-        {
-            strcpy (instr,
-                    TARGET_6 ? "mov%?%d0\t%|pc, lr" : "mov%?%d0s\t%|pc, %|lr");
-            output_asm_insn (instr, &operand);
-        }
-    
-    return "";
+      else
+	{
+	  strcat (instr, "%|");
+	  strcat (instr, really_return ? reg_names[15] : reg_names[14]);
+	}
+      strcat (instr, (TARGET_6 || !really_return) ? "}" : "}^");
+      output_asm_insn (instr, &operand);
+    }
+  else if (really_return)
+    {
+      sprintf (instr, "mov%%?%%%s0%s\t%%|pc, %%|lr",
+	       reverse ? "D" : "d", TARGET_6 ? "" : "s");
+      output_asm_insn (instr, &operand);
+    }
+
+  return "";
 }
 
 /* Return nonzero if optimizing and the current function is volatile.
@@ -3217,15 +3163,6 @@ int
 arm_volatile_func ()
 {
   return (optimize > 0 && TREE_THIS_VOLATILE (current_function_decl));
-}
-
-/* Return the size of the prologue.  It's not too bad if we slightly 
-   over-estimate.  */
-
-static int
-get_prologue_size ()
-{
-  return profile_flag ? 12 : 0;
 }
 
 /* The amount of stack adjustment that happens here, in output_return and in
@@ -3243,7 +3180,6 @@ output_func_prologue (f, frame_size)
      int frame_size;
 {
   int reg, live_regs_mask = 0;
-  rtx operands[3];
   int volatile_func = (optimize > 0
 		       && TREE_THIS_VOLATILE (current_function_decl));
 
@@ -3301,6 +3237,11 @@ output_func_prologue (f, frame_size)
     fprintf (f,"\t%s I don't think this function clobbers lr\n",
 	     ASM_COMMENT_START);
 
+#ifdef AOF_ASSEMBLER
+  if (flag_pic)
+    fprintf (f, "\tmov\t%sip, %s%s\n", REGISTER_PREFIX, REGISTER_PREFIX,
+	     reg_names[PIC_OFFSET_TABLE_REGNUM]);
+#endif
 }
 
 
@@ -3309,9 +3250,9 @@ output_func_epilogue (f, frame_size)
      FILE *f;
      int frame_size;
 {
-  int reg, live_regs_mask = 0, code_size = 0;
+  int reg, live_regs_mask = 0;
   /* If we need this then it will always be at lesat this much */
-  int floats_offset = 24;
+  int floats_offset = 12;
   rtx operands[3];
   int volatile_func = (optimize > 0
 		       && TREE_THIS_VOLATILE (current_function_decl));
@@ -3319,9 +3260,7 @@ output_func_epilogue (f, frame_size)
   if (use_return_insn() && return_used_this_function)
     {
       if (frame_size && !(frame_pointer_needed || TARGET_APCS))
-        {
-          abort ();
-        }
+	abort ();
       goto epilogue_done;
     }
 
@@ -3329,8 +3268,8 @@ output_func_epilogue (f, frame_size)
   if (volatile_func)
     {
       rtx op = gen_rtx (SYMBOL_REF, Pmode, "abort");
+      assemble_external_libcall (op);
       output_asm_insn ("bl\t%a0", &op);
-      code_size = 4;
       goto epilogue_done;
     }
 
@@ -3346,16 +3285,14 @@ output_func_epilogue (f, frame_size)
       for (reg = 23; reg > 15; reg--)
 	if (regs_ever_live[reg] && arm_preserved_register(reg))
 	  {
+	    floats_offset += 12;
 	    fprintf (f, "\tldfe\t%s%s, [%sfp, #-%d]\n", REGISTER_PREFIX,
 		     reg_names[reg], REGISTER_PREFIX, floats_offset);
-	    floats_offset += 12;
-	    code_size += 4;
 	  }
 
       live_regs_mask |= 0xA800;
       print_multi_reg (f, "ldmea\t%sfp", live_regs_mask,
 		       TARGET_6 ? FALSE : TRUE);
-      code_size += 4;
     }
   else
     {
@@ -3369,47 +3306,47 @@ output_func_epilogue (f, frame_size)
 
       for (reg = 16; reg < 24; reg++)
 	if (regs_ever_live[reg] && arm_preserved_register(reg))
-	  {
-	    fprintf (f, "\tldfe\t%s%s, [%ssp], #12\n", REGISTER_PREFIX,
-		     reg_names[reg], REGISTER_PREFIX);
-	    code_size += 4;
-	  }
+	  fprintf (f, "\tldfe\t%s%s, [%ssp], #12\n", REGISTER_PREFIX,
+		   reg_names[reg], REGISTER_PREFIX);
+
       if (current_function_pretend_args_size == 0 && regs_ever_live[14])
 	{
-	  print_multi_reg (f, "ldmfd\t%ssp!", live_regs_mask | 0x8000,
-			   TARGET_6 ? FALSE : TRUE);
-	  code_size += 4;
+	  if (lr_save_eliminated)
+	    fprintf (f, (TARGET_6 ? "\tmov\t%spc, %slr\n"
+			 : "\tmovs\t%spc, %slr\n"),
+		     REGISTER_PREFIX, REGISTER_PREFIX, f);
+	  else
+	    print_multi_reg (f, "ldmfd\t%ssp!", live_regs_mask | 0x8000,
+			     TARGET_6 ? FALSE : TRUE);
 	}
       else
 	{
 	  if (live_regs_mask || regs_ever_live[14])
 	    {
-	      live_regs_mask |= 0x4000;
-	      print_multi_reg (f, "ldmfd\t%ssp!", live_regs_mask, FALSE);
-	      code_size += 4;
+	      /* Restore the integer regs, and the return address into lr */
+	      if (! lr_save_eliminated)
+		live_regs_mask |= 0x4000;
+
+	      if (live_regs_mask != 0)
+		print_multi_reg (f, "ldmfd\t%ssp!", live_regs_mask, FALSE);
 	    }
+
 	  if (current_function_pretend_args_size)
 	    {
+	      /* Unwind the pre-pushed regs */
 	      operands[0] = operands[1] = stack_pointer_rtx;
 	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
 				     current_function_pretend_args_size);
 	      output_add_immediate (operands);
 	    }
-	  fprintf (f,
-		   TARGET_6 ? "\tmov\t%spc, %slr\n" : "\tmovs\t%spc, %slr\n",
+	  /* And finally, go home */
+	  fprintf (f, (TARGET_6 ? "\tmov\t%spc, %slr\n"
+		       : "\tmovs\t%spc, %slr\n"),
 		   REGISTER_PREFIX, REGISTER_PREFIX, f);
-	  code_size += 4;
 	}
     }
 
- epilogue_done:
-
-  /* insn_addresses isn't allocated when not optimizing */
-
-  if (optimize > 0)
-    arm_increase_location (code_size
-			   + insn_addresses[INSN_UID (get_last_insn ())]
-			   + get_prologue_size ());
+epilogue_done:
 
   current_function_anonymous_args = 0;
 }
@@ -3463,8 +3400,6 @@ arm_expand_prologue ()
 {
   int reg;
   rtx amount = GEN_INT (- get_frame_size ());
-  rtx push_insn;
-  int num_regs;
   int live_regs_mask = 0;
   int store_arg_regs = 0;
   int volatile_func = (optimize > 0
@@ -3589,7 +3524,6 @@ arm_print_operand (stream, x, code)
 		 "%ld",
 #endif
 		 ARM_SIGN_EXTEND (~ INTVAL (x)));
-        
       else
 	{
 	  putc ('~', stream);
@@ -3627,11 +3561,18 @@ arm_print_operand (stream, x, code)
       }
       return;
 
+    case 'Q':
+      if (REGNO (x) > 15)
+	abort ();
+      fputs (REGISTER_PREFIX, stream);
+      fputs (reg_names[REGNO (x) + (WORDS_BIG_ENDIAN ? 1 : 0)], stream);
+      return;
+
     case 'R':
       if (REGNO (x) > 15)
 	abort ();
       fputs (REGISTER_PREFIX, stream);
-      fputs (reg_names[REGNO (x) + 1], stream);
+      fputs (reg_names[REGNO (x) + (WORDS_BIG_ENDIAN ? 0 : 1)], stream);
       return;
 
     case 'm':
@@ -3657,11 +3598,7 @@ arm_print_operand (stream, x, code)
       return;
 
     case 'D':
-      if (x && (flag_fast_math
-		|| GET_CODE (x) == EQ || GET_CODE (x) == NE
-		|| (GET_MODE (XEXP (x, 0)) != CCFPEmode
-		    && (GET_MODE_CLASS (GET_MODE (XEXP (x, 0)))
-			!= MODE_FLOAT))))
+      if (x)
         fputs (arm_condition_codes[ARM_INVERSE_CONDITION_CODE
 				   (get_arm_condition_code (x))],
 	       stream);
@@ -3693,157 +3630,6 @@ arm_print_operand (stream, x, code)
     }
 }
 
-/* Increase the `arm_text_location' by AMOUNT if we're in the text
-   segment.  */
-
-void
-arm_increase_location (amount)
-     int amount;
-{
-  if (in_text_section ())
-    arm_text_location += amount;
-}
-
-
-/* Output a label definition.  If this label is within the .text segment, it
-   is stored in OFFSET_TABLE, to be used when building `llc' instructions.
-   Maybe GCC remembers names not starting with a `*' for a long time, but this
-   is a minority anyway, so we just make a copy.  Do not store the leading `*'
-   if the name starts with one.  */
-
-void
-arm_asm_output_label (stream, name)
-     FILE *stream;
-     char *name;
-{
-  char *real_name, *s;
-  struct label_offset *cur;
-  int hash = 0;
-
-  assemble_name (stream, name);
-  fputs (":\n", stream);
-  if (! in_text_section ())
-    return;
-
-  if (name[0] == '*')
-    {
-      real_name = xmalloc (1 + strlen (&name[1]));
-      strcpy (real_name, &name[1]);
-    }
-  else
-    {
-      real_name = xmalloc (2 + strlen (name));
-      strcpy (real_name, USER_LABEL_PREFIX);
-      strcat (real_name, name);
-    }
-  for (s = real_name; *s; s++)
-    hash += *s;
-
-  hash = hash % LABEL_HASH_SIZE;
-  cur = (struct label_offset *) xmalloc (sizeof (struct label_offset));
-  cur->name = real_name;
-  cur->offset = arm_text_location;
-  cur->cdr = offset_table[hash];
-  offset_table[hash] = cur;
-}
-
-/* Load a symbol that is known to be in the text segment into a register.
-   This should never be called when not optimizing.  */
-
-char *
-output_load_symbol (insn, operands)
-     rtx insn;
-     rtx *operands;
-{
-  char *s;
-  char *name = XSTR (operands[1], 0);
-  struct label_offset *he;
-  int hash = 0;
-  int offset;
-  unsigned int mask, never_mask = 0xffffffff;
-  int shift, inst;
-  char buffer[100];
-
-  if (optimize == 0 || *name != '*')
-    abort ();
-
-  for (s = &name[1]; *s; s++)
-    hash += *s;
-
-  hash = hash % LABEL_HASH_SIZE;
-  he = offset_table[hash];
-  while (he && strcmp (he->name, &name[1]))
-    he = he->cdr;
-  
-  if (!he)
-    abort ();
-  
-  offset = (arm_text_location + insn_addresses[INSN_UID (insn)]
-	    + get_prologue_size () + 8 - he->offset);
-  if (offset < 0)
-    abort ();
-
-  /* When generating the instructions, we never mask out the bits that we
-     think will be always zero, then if a mistake has occurred somewhere, the
-     assembler will spot it and generate an error.  */
-
-  /* If the symbol is word aligned then we might be able to reduce the
-     number of loads.  */
-  shift = ((offset & 3) == 0) ? 2 : 0;
-
-  /* Clear the bits from NEVER_MASK that will be orred in with the individual
-     instructions.  */
-  for (; shift < 32; shift += 8)
-    {
-      mask = 0xff << shift;
-      if ((offset & mask) || ((unsigned) offset) > mask)
-	never_mask &= ~mask;
-    }
-
-  inst = 8;
-  mask = 0xff << (shift - 32);
-
-  while (mask && (never_mask & mask) == 0)
-    {
-      if (inst == 8)
-	{
-	  strcpy (buffer, "sub%?\t%0, %|pc, #(8 + . -%a1)");
-	  if ((never_mask | mask) != 0xffffffff)
-	    sprintf (buffer + strlen (buffer), " & 0x%x", mask | never_mask);
-	}
-      else
-	sprintf (buffer, "sub%%?\t%%0, %%0, #(%d + . -%%a1) & 0x%x",
-		 inst, mask | never_mask);
-
-      output_asm_insn (buffer, operands);
-      mask <<= 8;
-      inst -= 4;
-    }
-
-  return "";
-}
-
-/* Output code resembling an .lcomm directive.  /bin/as doesn't have this
-   directive hence this hack, which works by reserving some `.space' in the
-   bss segment directly.
-
-   XXX This is a severe hack, which is guaranteed NOT to work since it doesn't
-   define STATIC COMMON space but merely STATIC BSS space.  */
-
-void
-output_lcomm_directive (stream, name, size, rounded)
-     FILE *stream;
-     char *name;
-     int size, rounded;
-{
-  fprintf (stream, "\n\t.bss\t%s .lcomm\n", ASM_COMMENT_START);
-  assemble_name (stream, name);
-  fprintf (stream, ":\t.space\t%d\n", rounded);
-  if (in_text_section ())
-    fputs ("\n\t.text\n", stream);
-  else
-    fputs ("\n\t.data\n", stream);
-}
 
 /* A finite state machine takes care of noticing whether or not instructions
    can be conditionally executed, and thus decrease execution time and code
@@ -4455,7 +4241,6 @@ legitimize_pic_address (orig, mode, reg)
 
 
 rtx aof_pic_label = NULL_RTX;
-
 struct pic_chain
 {
   struct pic_chain *next;
@@ -4656,6 +4441,7 @@ find_barrier (from, max_count)
 {
   int count = 0;
   rtx found_barrier = 0;
+  rtx last = from;
 
   while (from && count < max_count)
     {
@@ -4669,11 +4455,12 @@ find_barrier (from, max_count)
 	  && CONSTANT_POOL_ADDRESS_P (SET_SRC (PATTERN (from))))
 	{
 	  rtx src = SET_SRC (PATTERN (from));
-	  count += 2;
+	  count += 8;
 	}
       else
 	count += get_attr_length (from);
 
+      last = from;
       from = NEXT_INSN (from);
     }
 
@@ -4684,7 +4471,7 @@ find_barrier (from, max_count)
       rtx label = gen_label_rtx ();
 
       if (from)
-	from = PREV_INSN (from);
+	from = PREV_INSN (last);
       else
 	from = get_last_insn ();
 
@@ -4948,118 +4735,6 @@ arm_reorg (first)
 	  insn = scan;
 	}
     }
-}
-
-arm_print_operand_address(STREAM, X)
-    FILE* STREAM;
-    rtx X;
-{
-    int is_minus = GET_CODE (X) == MINUS;				
-    
-    if (GET_CODE (X) == REG)						
-	fprintf (STREAM, "[%s%s, #0]", REGISTER_PREFIX,			
-		 reg_names[REGNO (X)]);					
-    else if (GET_CODE (X) == PLUS || is_minus)				
-        {									
-            rtx base = XEXP (X, 0);						
-            rtx index = XEXP (X, 1);					
-            char *base_reg_name;						
-            HOST_WIDE_INT offset = 0;					
-            if (GET_CODE (base) != REG)					
-                {								
-                    /* Ensure that BASE is a register (one of them must be). */	
-                    rtx temp = base;						
-                    base = index;						
-                    index = temp;						
-                }								
-            base_reg_name = reg_names[REGNO (base)];			
-            switch (GET_CODE (index))					
-                {								
-                  case CONST_INT:						
-                    offset = INTVAL (index);					
-                    if (is_minus)						
-                        offset = -offset;						
-                    fprintf (STREAM, "[%s%s, #%d]", REGISTER_PREFIX,		
-                             base_reg_name, offset);				
-                    break;							
-                    
-                  case REG:							
-                    fprintf (STREAM, "[%s%s, %s%s%s]", REGISTER_PREFIX,		
-                             base_reg_name, is_minus ? "-" : "",		
-                             REGISTER_PREFIX, reg_names[REGNO (index)] );	
-                    break;							
-                    
-                  case MULT:							
-                  case ASHIFTRT:						
-                  case LSHIFTRT:						
-                  case ASHIFT:							
-                  case ROTATERT:						
-                    {								
-                        fprintf (STREAM, "[%s%s, %s%s%s", REGISTER_PREFIX,		
-                                 base_reg_name, is_minus ? "-" : "", REGISTER_PREFIX,
-                                 reg_names[REGNO (XEXP (index, 0))]);		
-                        arm_print_operand (STREAM, index, 'S');			
-                        fputs ("]", STREAM);					
-                        break;							
-                    }
-                  default:							
-                    abort();							
-                }								
-        }							        	
-    else if (GET_CODE (X) == PRE_INC || GET_CODE (X) == POST_INC		
-             || GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_DEC)	
-        {									
-                        
-            if (GET_CODE (XEXP (X, 0)) != REG)				
-                abort ();							
-            
-            if (GET_CODE (X) == PRE_DEC || GET_CODE (X) == PRE_INC)		
-                fprintf (STREAM, "[%s%s, #%s%d]!", REGISTER_PREFIX,		
-                         reg_names[REGNO (XEXP (X, 0))],			
-                         GET_CODE (X) == PRE_DEC ? "-" : "",			
-                         GET_MODE_SIZE (output_memory_reference_mode));		
-            else								
-                fprintf (STREAM, "[%s%s], #%s%d", REGISTER_PREFIX,		
-                         reg_names[REGNO (XEXP (X, 0))],			
-                         GET_CODE (X) == POST_DEC ? "-" : "",			
-                         GET_MODE_SIZE (output_memory_reference_mode));		
-        }									
-    else if (flag_pic && GET_CODE(X) == CONST && is_pic(X))	   
-        {
-            output_pic_addr_const(STREAM, X);                
-        }
-    else output_addr_const(STREAM, X);					
-}
-
-output_pic_addr_const(stream, exp)
-    FILE* stream;
-    rtx exp;
-{
-    rtx u, v;
-    
-    // we expect (const (minus (const (plus (u (pc)))) v)
-    if((GET_CODE(exp) == CONST)
-       && (GET_CODE(XEXP (exp, 0)) == MINUS)
-       && (GET_CODE(XEXP (XEXP (exp, 0), 0)) == CONST)
-       && (GET_CODE(XEXP (XEXP (XEXP (exp, 0), 0), 0)) == PLUS)
-       && (u = (XEXP (XEXP (XEXP (XEXP (exp, 0), 0), 0), 0)))
-       && (GET_CODE(XEXP( XEXP (XEXP (XEXP (exp, 0), 0), 0),1)) == PC)
-       && (v = (XEXP (XEXP (exp, 0), 1)))
-       ){
-        output_addr_const(stream, u);
-        fputs(" + (", stream);
-        output_addr_const(stream, XEXP( XEXP (XEXP (XEXP (exp, 0), 0), 0),1));
-        fputs(" - (", stream);
-        output_addr_const(stream, XEXP (XEXP (XEXP (exp, 0), 1), 0));
-        fputs(") )", stream);        
-        
-    } else {
-        output_addr_const(stream, XEXP (XEXP (XEXP (exp, 0), 0), 0));	
-        fputs(" - (", stream);						
-        output_addr_const(stream, XEXP (XEXP (XEXP (exp, 0), 1), 0));	
-        fputs(")", stream);
-    }
-    
 }
 
 /* Return TRUE if X references a LABEL_REF.  */
