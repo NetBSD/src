@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.605 2003/09/10 14:12:23 christos Exp $
+# $NetBSD: mi,v 1.606 2003/09/12 20:01:14 christos Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1265,6 +1265,7 @@
 ./usr/share/man/cat5/security.conf.0		man-sys-catman
 ./usr/share/man/cat5/services.0			man-net-catman
 ./usr/share/man/cat5/shells.0			man-sys-catman
+./usr/share/man/cat5/siginfo.0			man-sys-catman
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman
 ./usr/share/man/cat5/stab.0			man-sys-catman
