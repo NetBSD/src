@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2003/05/10 23:12:36 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2003/07/15 02:46:32 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/07/15 02:46:32 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>

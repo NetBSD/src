@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.6 2003/01/01 01:50:32 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.7 2003/07/15 02:43:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -35,6 +35,9 @@
  *  T.Horiuichi
  *  Brains Corp. 1998.8.25
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.7 2003/07/15 02:43:44 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

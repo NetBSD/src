@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.1 1995/11/03 04:47:06 briggs Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.2 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -30,6 +30,9 @@
  *
  *	@(#)fpu_exp.c	10/24/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.2 2003/07/15 02:43:09 lukem Exp $");
 
 #include "fpu_emulate.h"
 

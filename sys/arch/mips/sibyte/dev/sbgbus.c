@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.6 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbgbus.c,v 1.7 2003/07/15 02:43:39 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.7 2003/07/15 02:43:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

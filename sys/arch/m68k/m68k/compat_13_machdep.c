@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4 2003/01/17 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5 2003/07/15 02:43:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,9 @@
  *	from: Utah Hdr: machdep.c 1.74 92/12/20
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 2003/07/15 02:43:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

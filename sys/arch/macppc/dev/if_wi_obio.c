@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.5 2003/07/09 14:30:29 he Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.6 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.6 2003/07/15 02:43:29 lukem Exp $");
 
 #include "opt_inet.h"
 

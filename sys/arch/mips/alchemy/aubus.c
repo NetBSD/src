@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.8 2003/04/02 02:18:52 hpeyerl Exp $ */
+/* $NetBSD: aubus.c,v 1.9 2003/07/15 02:43:34 lukem Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -64,6 +64,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.9 2003/07/15 02:43:34 lukem Exp $");
 
 #include "locators.h"
 

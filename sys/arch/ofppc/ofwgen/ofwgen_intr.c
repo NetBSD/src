@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.6 2003/06/16 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.7 2003/07/15 02:46:33 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
  * Software-simulated spl/interrupt routines.  Used in generic
  * OpenFirmware driver configurations.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7 2003/07/15 02:46:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.17 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.18 2003/07/15 02:43:28 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

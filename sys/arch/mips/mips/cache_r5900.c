@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.c,v 1.3 2002/03/05 16:06:04 simonb Exp $	*/
+/*	$NetBSD: cache_r5900.c,v 1.4 2003/07/15 02:43:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.4 2003/07/15 02:43:37 lukem Exp $");
 
 #include <sys/param.h>
 

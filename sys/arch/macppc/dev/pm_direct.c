@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.19 2002/06/18 05:22:51 itojun Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.20 2003/07/15 02:43:30 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -30,6 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.20 2003/07/15 02:43:30 lukem Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG

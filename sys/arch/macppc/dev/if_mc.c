@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.8 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -34,6 +34,9 @@
  * MACE ethernet chip). Also uses the PSC (Peripheral Subsystem
  * Controller) for DMA to and from the MACE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9 2003/07/15 02:43:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

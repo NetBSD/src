@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2001/03/30 23:21:30 wdk Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2003/07/15 02:43:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2 2003/07/15 02:43:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_pci.c,v 1.2 2001/10/30 01:21:24 thorpej Exp $	*/
+/*	$NetBSD: firepower_pci.c,v 1.3 2003/07/15 02:46:31 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * PCI Configuration Space support for the Powerhouse PowerPro
  * and PowerTop system controllers, found in Firepower systems.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower_pci.c,v 1.3 2003/07/15 02:46:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2000/11/24 09:36:40 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2003/07/15 02:43:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Implementation of bus_space mapping for the mvme68k.
  * Derived from the hp300 bus_space implementation by Jason Thorpe.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2003/07/15 02:43:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.7 2003/01/01 01:48:56 thorpej Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.8 2003/07/15 02:43:41 lukem Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.8 2003/07/15 02:43:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.11 2003/06/29 22:28:40 fvdl Exp $ */
+/* $NetBSD: sbobio.c,v 1.12 2003/07/15 02:43:40 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.12 2003/07/15 02:43:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

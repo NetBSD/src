@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.22 2003/06/18 08:58:38 drochner Exp $	*/
+/*	$NetBSD: sbic.c,v 1.23 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -52,6 +52,10 @@
  * This version of the driver is pretty well generic, so should work with
  * any flavour of WD33C93 chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.23 2003/07/15 02:43:47 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.9 2002/10/02 05:36:37 thorpej Exp $ */
+/* $NetBSD: macfb.c,v 1.10 2003/07/15 02:43:18 lukem Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.10 2003/07/15 02:43:18 lukem Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
