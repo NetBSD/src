@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.5 1998/02/22 15:11:28 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $NetBSD: ffs.S,v 1.4 1997/10/13 11:57:50 lukem Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
-#endif  /* LIBC_SCCS and not lint */
-
 #include <machine/asm.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: ffs.S,v 1.5 1998/02/22 15:11:28 mycroft Exp $")
+#endif
+#endif  /* LIBC_SCCS and not lint */
 
 /*
  * ffs returns the number of the rightmost bit set in its argument,
@@ -94,7 +98,7 @@ ENTRY(ffs)
 	retl
 	 add	%o0, 24, %o0
 
-ffstab:
+ENTRY(__ffstab)
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */
