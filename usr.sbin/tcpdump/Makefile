@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/02/18 09:37:11 itojun Exp $	
+#	$NetBSD: Makefile,v 1.27 2002/02/18 09:45:11 itojun Exp $	
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,6 @@ LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
 .endif
 
-CLEANFILES+=	tcpdump.8 version.c
+CLEANFILES+=	version.c
 
 .include <bsd.prog.mk>
