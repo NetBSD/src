@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.12 1996/08/26 23:39:46 mrg Exp $
+#	$NetBSD: ATARITT,v 1.13 1996/09/16 06:14:21 leo Exp $
 #
 # ATARI-TT
 #
@@ -17,12 +17,22 @@ maxusers	16
 # processors this kernel should support
 #
 options		"M68030"	# support for 030
+# options	"M68040"	# support for 040
 
-options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		TIMEZONE=0	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
-#options	FPSP
+#
+# X11R6 related options
+#
+options		UCONSOLE	# Allow xconsole to work
+
+#
+# Floating-point options
+#
+options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
+# options	FPSP			# 68040 Floatingpoint support
 
 #
 # Networking options
@@ -34,6 +44,7 @@ options		MFS		# Memory based filesystem
 options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
 options		NULLFS		# Loopback filesystem
+options		UNION		# union file system
 options		MSDOSFS		# MSDOS filesystem
 options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
@@ -61,14 +72,13 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
-options 	COMPAT_12
 
 #
 # Support for System V IPC facilities.
 #
-#options	SYSVSHM		# System V shared memory
-#options	SYSVMSG		# System V messages
-#options	SYSVSEM		# System V semaphores
+# options	SYSVSHM		# System V shared memory
+# options	SYSVMSG		# System V messages
+# options	SYSVSEM		# System V semaphores
 
 #
 # Support for various kernel options
@@ -83,6 +93,7 @@ options		GENERIC			# Mini-root boot support
 #
 options		TT_SCSI			# SCSI-support for TT only
 options		TT_VIDEO		# Graphics support for TT only
+options		STATCLOCK		# Separate {stat,prof}clock
 options		RAMDISK_HOOKS		# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
@@ -93,7 +104,7 @@ options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 config		netbsd swap on generic
 
 pseudo-device	mouse	1	# mouse
-pseudo-device	view	2	# View (graphics mapping)
+pseudo-device	view	4	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
@@ -105,7 +116,9 @@ pseudo-device	rd	1	# Boot ramdisk
 #The following sections describe various hardware options.
 #
 zs0	at mainbus0		# Serial support through 8530
-grf1	at grfbus0		# second graphics driver
-ite1	at grf1			# second tty
+grfcc1	at grfbus0		# second graphics driver
+ite*	at grfcc1		# second tty
+grfcc2	at grfbus0		# third graphics driver
+ite*	at grfcc2		# third tty
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
