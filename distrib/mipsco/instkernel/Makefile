@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/02/25 03:36:20 wdk Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/05 05:07:45 wdk Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -13,6 +13,11 @@ DISKTAB=	${.CURDIR}/disktab.diskimage
 DISKTYPE=	miniroot
 NEWFSOPTS?=	-c 32 -B be -i 32768	# don't need many inodes!
 
+MDEC?=		${DESTDIR}/usr/mdec
+BOOT_PRIMARY=	${MDEC}/bootxx_ffs
+BOOT_SECONDARY=	${MDEC}/boot
+INSTALLBOOT?=	${MDEC}/installboot	
+
 KERN=		${KERNOBJDIR}/RAMDISK/netbsd
 RAMDISK!=	cd ${.CURDIR}/../ramdisk; ${MAKE} echoimage
 CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
@@ -21,17 +26,9 @@ CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
 VND?=		vnd0
 VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 #VND_GEOM=	512/18/2/$$((${IMAGESIZE} / (18 * 2)))
 
 MOUNT_POINT?=	/mnt
-
-#
-# install bootblock, so that we can boot from there
-#
-BOOTINSTALL= ${DESTDIR}/usr/mdec/installboot ${VND_CDEV} \
-	${DESTDIR}/usr/mdec/bootxx_ffs
 
 realall:	${IMAGE}.gz
 
@@ -46,17 +43,14 @@ netbsd.gz: ${KERN} ${RAMDISK}
 	rm -f netbsd.gz
 	gzip -9 netbsd
 
-${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot
+${IMAGE}.gz: netbsd.gz ${BOOT_PRIMARY} ${BOOT_SECONDARY}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND} ${IMAGE} ${VND_GEOM}
-.ifdef notyet
-	-disklabel ${VND} > /dev/null
 	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
-.endif
-	newfs -B be -m 0 -o space ${NEWFSOPTS} ${VND_DEV}
-	${BOOTINSTALL}
+	newfs -B be -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
+	${INSTALLBOOT} ${VND_RDEV} ${BOOT_PRIMARY}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp -p ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}
+	cp -p ${BOOT_SECONDARY} ${MOUNT_POINT}
 	cp -p netbsd.gz ${MOUNT_POINT}/netbsd
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -71,17 +65,25 @@ unconfig:
 	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE} ${IMAGE}.gz
 
-realinstall release:
+.if !defined(RELEASEDIR)
+release: .USE
+	@echo setenv RELEASEDIR first!
+	@false
+.else
+release: ${IMAGE}.gz
 	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${NONBINMODE} ${IMAGE}.gz ${DISKBINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${BINMODE} netbsd.gz ${KERNBINDIR}/install.gz
-.ifdef ECOFF_KERNEL
+.if defined(ECOFF_KERNEL)
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${BINMODE} netbsd.ecoff.gz \
 		${KERNBINDIR}/install.ecoff.gz
-.endif #ECOFF_KERNEL
+.endif # ECOFF_KERNEL
+.endif # RELEASEDIR
+
+realinstall: release
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
