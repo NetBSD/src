@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.111.2.4 1994/08/15 07:00:24 mycroft Exp $
+ *	$Id: machdep.c,v 1.111.2.5 1994/08/15 22:39:12 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1300,20 +1300,11 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
-#ifdef COMPAT_SVR4
-	extern int svr4_exec_elf_makecmds __P((struct proc *,
-					       struct exec_package *));
-#endif /* ! COMPAT_SVR4 */
 
 #ifdef COMPAT_NOMID
 	if ((error = exec_nomid(p, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
-
-#ifdef COMPAT_SVR4
-	if ((error = svr4_exec_elf_makecmds(p, epp)) == 0)
-		return error;
-#endif /* ! COMPAT_SVR4 */
 
 	return error;
 }
