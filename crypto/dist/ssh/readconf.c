@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.10 2001/09/27 02:00:47 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.11 2001/11/07 06:20:20 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.90 2001/09/19 19:24:18 stevesk Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.91 2001/10/01 21:51:16 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -116,7 +116,7 @@ typedef enum {
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
 	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
-	oClearAllForwardings
+	oClearAllForwardings, oNoHostAuthenticationForLocalhost 
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -187,6 +187,7 @@ static struct {
 	{ "bindaddress", oBindAddress },
 	{ "smartcarddevice", oSmartcardDevice },
 	{ "clearallforwardings", oClearAllForwardings }, 
+	{ "nohostauthenticationforlocalhost", oNoHostAuthenticationForLocalhost }, 
 	{ NULL, 0 }
 };
 
@@ -412,6 +413,10 @@ parse_flag:
 
 	case oKeepAlives:
 		intptr = &options->keepalives;
+		goto parse_flag;
+
+	case oNoHostAuthenticationForLocalhost:
+		intptr = &options->no_host_authentication_for_localhost;
 		goto parse_flag;
 
 	case oNumberOfPasswordPrompts:
@@ -792,6 +797,7 @@ initialize_options(Options * options)
 	options->preferred_authentications = NULL;
 	options->bind_address = NULL;
 	options->smartcard_device = NULL;
+	options->no_host_authentication_for_localhost = - 1;
 }
 
 /*
@@ -910,6 +916,8 @@ fill_default_options(Options * options)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->clear_forwardings == 1)
 		clear_forwardings(options);
+	if (options->no_host_authentication_for_localhost == - 1)
+		options->no_host_authentication_for_localhost = 0;
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
