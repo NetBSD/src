@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.39 1998/06/20 12:15:52 mrg Exp $
+#	$NetBSD: MAKEDEV,v 1.40 1998/10/15 21:22:54 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -69,6 +69,7 @@
 #	md*	memory pseudo-disk driver
 #	ipl	ip filter
 #	random	Random number generator
+#	scsibus* SCSI busses
 
 dialin=0
 dialout=524288		# high bit of the minor number
@@ -89,6 +90,7 @@ all)
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3
 	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh -$- $0 cgeight0 tcx0
+	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh -$- $0 lkm random local
 	;;
 floppy)
@@ -417,6 +419,14 @@ magma*)
 
 	mknod bpp${unit}0 c 101 $(($unit * 64 + 0))
 	mknod bpp${unit}1 c 101 $(($unit * 64 + 1))
+	;;
+
+scsibus*)
+	unit=${i#scsibus}; 
+	rm -f scsibus$unit
+	mknod scsibus$unit c 120 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
 	;;
 
 local)

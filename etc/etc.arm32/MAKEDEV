@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1998/10/06 02:48:18 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1998/10/15 21:22:52 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,6 +90,7 @@
 #	tun*	network tunnel driver
 #	ch*	SCSI Auto changer
 #	uk*	SCSI Unknown device
+#	scsibus* SCSI busses
 #	ss*	SCSI scanner device
 #	iic*	IIC bus device
 #	rtc*	RTC device
@@ -112,6 +113,7 @@ all)
 	sh $0 usbs
 	sh $0 mouse-qms0 random
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 ramdisk|floppy)
@@ -496,6 +498,14 @@ cfs*)
 	mknod $cfs c $major $unit
 	chown root.wheel $cfs
 	chmod 600 $cfs
+	;;
+
+scsibus*)
+	unit=${i#scsibus}; 
+	rm -f scsibus$unit
+	mknod scsibus$unit c 70 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
 	;;
 
 local)

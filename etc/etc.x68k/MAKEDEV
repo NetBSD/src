@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1998/10/01 15:28:41 minoura Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1998/10/15 21:22:54 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	ch*	SCSI changer device
 #	uk*	SCSI unknown device
 #	ss*	SCSI scanner device
+#	scsibus* SCSI busses
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -102,6 +103,7 @@ all)
 	sh $0 ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm ipl
 	sh $0 sram audio pow0 pow1 bell random local
 	sh $0 md0 md1 ch0 uk0 uk1 ss0
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 floppy)
@@ -487,6 +489,14 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+scsibus*)
+	unit=${i#scsibus}; 
+	rm -f scsibus$unit
+	mknod scsibus$unit c 40 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
 	;;
 
 local)

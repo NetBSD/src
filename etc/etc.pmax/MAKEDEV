@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 1998/05/10 16:52:14 mhitch Exp $
+#	$NetBSD: MAKEDEV,v 1.23 1998/10/15 21:22:54 thorpej Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -37,7 +37,7 @@
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
 #	px*	raw interface to i860-accelerated framebuffers
-#	sd*, st*, cd*, ss*, uk*  -- MI scsi devices
+#	scsibus*, sd*, st*, cd*, ss*, uk*  -- MI scsi devices
 #	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
 #	audio*	phone-quality audio on Personal  DECstations
 #
@@ -62,6 +62,7 @@ all)
 #	sh $0 lkm local			# XXX no lkm driver in 1.3_ALPHA(?)
 #	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
 #	sh $0 cd0 			 # no MI scsi yet
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 std)
@@ -303,6 +304,14 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+scsibus*)
+	unit=${i#scsibus}; 
+	rm -f scsibus$unit
+	mknod scsibus$unit c 95 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
 	;;
 
 local)
