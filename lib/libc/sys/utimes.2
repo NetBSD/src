@@ -1,4 +1,4 @@
-.\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
+.\"	$NetBSD: utimes.2,v 1.10 1997/10/06 01:12:06 enami Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,12 +37,16 @@
 .Dt UTIMES 2
 .Os BSD 4
 .Sh NAME
-.Nm utimes
+.Nm utimes ,
+.Nm lutimes ,
+.Nm futimes
 .Nd set file access and modification times
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
 .Ft int
 .Fn utimes "const char *file" "const struct timeval *times"
+.Ft int
+.Fn lutimes "const char *file" "const struct timeval *times"
 .Ft int
 .Fn futimes "int fd" "const struct timeval *times"
 .Sh DESCRIPTION
@@ -72,6 +76,17 @@ The caller must be the owner of the file or be the super-user.
 .Pp
 In either case, the inode-change-time of the file is set to the current
 time.
+.Pp
+.Fn Lutimes
+is like
+.Fn utimes
+except in the case where the named file is a symbolic link,
+in which case
+.Fn lutimes
+changes the access and modification times of the link,
+while
+.Fn utimes
+changes the times of the file the link references.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of -1 is returned and
@@ -119,6 +134,13 @@ does not match the owner of the file and is not the super-user.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
 .El
+.Pp
+.Fn Lutimes
+is like 
+.Fn utimes
+except that it doesn't return
+.Er ELOOP .
+.Pp
 .Fn Futimes
 will fail if:
 .Bl -tag -width Er
@@ -160,3 +182,7 @@ The
 .Fn futimes
 function call appeared in
 .Nx 1.2 .
+The
+.Fn lutimes
+function call appeared in
+.Nx 1.3 .
