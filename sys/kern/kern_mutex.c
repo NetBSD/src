@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.3 2002/03/12 00:07:31 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.4 2002/03/12 07:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.3 2002/03/12 00:07:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.4 2002/03/12 07:51:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -229,8 +229,13 @@ mutex_vector_exit(kmutex_t *mtx)
 		return;
 	}
 
-	if (MUTEX_OWNER(mtx) != curproc)
-		panic("mutex_vector_exit: not owner");
+	if (MUTEX_OWNER(mtx) != curproc) {
+		if (MUTEX_OWNER(mtx) == NULL)
+			panic("mutex_vector_exit: not owned");
+		else
+			panic("mutex_vector_exit: not owner, owner = %p, "
+			    "current = %p", MUTEX_OWNER(mtx), curproc);
+	}
 
 	/*
 	 * Get this lock's turnstile.  This gets the interlock on
