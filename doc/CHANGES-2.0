@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.311 2004/07/02 20:02:30 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.312 2004/07/02 22:55:02 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4895,3 +4895,45 @@ sys/dev/ic/elinkxl.c				1.73
 	producing a machine check, by only reading the mii media
 	status if the interface is up.  Fixes PR#25788.
 	[bouyer, ticket #581]
+
+sys/dev/usb/umass.c				1.116
+
+	When starting a bulk-only transfer, punt early if the device
+	is going away.
+	[mycroft, ticket #582]
+
+sys/dev/pci/if_ath_pci.c			1.7
+
+	Accept an alternate Atheros vendor ID by munging it to look
+	like the expected one.  This is needed for DWL-G520 cards
+	which otherwise ``just work''.  This should eventually be
+	dealt with in the HAL.
+	[mycroft, ticket #582]
+
+sys/arch/alpha/pci/sio_pic.c			1.32
+
+	Fix a really old ("since day one") bug: send specific EOIs
+	to the PIC, not non-specific EOIs.  Should not matter so
+	much, but strange interaction with PALcode, possibly only
+	on some systems, is suspected.
+	[mycroft, ticket #582]
+
+sys/arch/x86/x86/intr.c				1.17
+
+	This is clearly derived from the old i386/isa/intr.c, so
+	insert the copyright from there.
+	[mycroft, ticket #582]
+
+sys/arch/alpha/pci/lca_dma.c			1.16
+
+	Actually initialize the direct-mapped DMA window, which is
+	clearly not set up by the firmware on the Multia.  Now
+	devices like the built-in tlp actually work.
+	[mycroft, ticket #582]
+
+distrib/sets/lists/base/gcc.shl			1.2
+distrib/sets/lists/comp/gcc.shl			1.7
+
+	Move libgcc_s.so.X into base as C++ programs (ala groff)
+	will need them.
+	[jmc, ticket #583]
