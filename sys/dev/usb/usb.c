@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.47 2000/08/24 14:12:34 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.48 2000/12/13 04:05:14 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dev = sc->sc_bus->devices[addr];
 		if (dev == NULL)
 			return (ENXIO);
-		usbd_fill_deviceinfo(dev, di);
+		usbd_fill_deviceinfo(dev, di, 1);
 		break;
 	}
 
@@ -620,7 +620,7 @@ usbd_add_dev_event(int type, usbd_device_handle udev)
 {
 	struct usb_event ue;
 
-	usbd_fill_deviceinfo(udev, &ue.u.ue_device);
+	usbd_fill_deviceinfo(udev, &ue.u.ue_device, USB_EVENT_IS_ATTACH(type));
 	usb_add_event(type, &ue);
 }
 
