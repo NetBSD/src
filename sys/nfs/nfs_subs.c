@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.117 2003/05/03 16:35:22 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.118 2003/05/03 18:07:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.117 2003/05/03 16:35:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.118 2003/05/03 18:07:42 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2119,7 +2119,7 @@ out:
 }
 
 /*
- * A fiddled version of m_adj() that ensures null fill to a long
+ * A fiddled version of m_adj() that ensures null fill to a 32-bit
  * boundary and only trims off the back end
  */
 void
@@ -2150,6 +2150,18 @@ nfsm_adj(mp, len, nul)
 	if (m->m_len > len) {
 		m->m_len -= len;
 		if (nul > 0) {
+			if (M_ROMAP(m)) {
+				struct mbuf *n;
+
+				KDASSERT(MLEN >= nul);
+				n = m_get(M_WAIT, MT_DATA);
+				MCLAIM(n, &nfs_mowner);
+				n->m_len = nul;
+				n->m_next = m->m_next;
+				m->m_len -= nul;
+				m->m_next = n;
+				m = n;
+			}
 			cp = mtod(m, caddr_t)+m->m_len-nul;
 			for (i = 0; i < nul; i++)
 				*cp++ = '\0';
@@ -2168,6 +2180,18 @@ nfsm_adj(mp, len, nul)
 		if (m->m_len >= count) {
 			m->m_len = count;
 			if (nul > 0) {
+				if (M_ROMAP(m)) {
+					struct mbuf *n;
+
+					KDASSERT(MLEN >= nul);
+					n = m_get(M_WAIT, MT_DATA);
+					MCLAIM(n, &nfs_mowner);
+					n->m_len = nul;
+					n->m_next = m->m_next;
+					m->m_len -= nul;
+					m->m_next = n;
+					m = n;
+				}
 				cp = mtod(m, caddr_t)+m->m_len-nul;
 				for (i = 0; i < nul; i++)
 					*cp++ = '\0';
