@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:06 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/24 08:50:36 $
+ * $Revision: 1.2 $
  */
 
 DeclareCDKObjects(my_funcs,Label);
@@ -244,6 +244,7 @@ static void _drawCDKLabel (CDKOBJS *object, boolean Box GCC_UNUSED)
    /* Refresh the window. */
    wnoutrefresh (label->infoWin);
    wnoutrefresh (label->win);
+   doupdate();
 }
 
 /*
