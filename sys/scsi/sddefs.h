@@ -1,3 +1,6 @@
+/*
+ *	$Id: sddefs.h,v 1.3 1993/05/20 03:46:46 cgd Exp $
+ */
 
 struct sd_data {
 	int flags;

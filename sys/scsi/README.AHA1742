@@ -1,10 +1,4 @@
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+#	$Id: README.AHA1742,v 1.2 1993/05/20 03:46:12 cgd Exp $
 
 Just a note:
 The new bootblocks do not work with the 1742 in extended mode:

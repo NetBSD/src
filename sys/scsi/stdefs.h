@@ -1,3 +1,7 @@
+/*
+ *	$Id: stdefs.h,v 1.3 1993/05/20 03:46:55 cgd Exp $
+ */
+
 #define STQSIZE		4
 struct	st_data {
 	struct scsi_switch *sc_sw;	/* address of scsi low level switch */

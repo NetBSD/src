@@ -1,16 +1,5 @@
-/* 
- */
 /*
- * HISTORY
- * 
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * 
+ *	$Id: ch.c,v 1.3 1993/05/20 03:46:22 cgd Exp $
  */
 
 #include	<sys/types.h>
