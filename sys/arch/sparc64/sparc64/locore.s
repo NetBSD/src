@@ -225,14 +225,12 @@ _C_LABEL(kgdb_stack):
 	.space	KGDB_STACK_SIZE		! hope this is enough
 #endif
 
-#ifdef DEBUG
 /*
  * This is an emergency stack used when we overflow the normal kernel stack.
  */
 	.space	USPACE
 	.align	16
 panicstack:
-#endif
 
 /*
  * _cpcbtte is the TTE for cpcb which allows the data fault code to not fault
@@ -4886,7 +4884,7 @@ print_dtlb:
 	inc	%l2
 	srax	%o4, 32, %o4
 	set	2f, %o0
-	call	db_printf
+	call	_C_LABEL(printf)
 	 inc	8, %l1
 	
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4900,7 +4898,7 @@ print_dtlb:
 	inc	%l2
 	srax	%o4, 32, %o4
 	set	3f, %o0
-	call	db_printf
+	call	_C_LABEL(printf)
 	 inc	8, %l1
 
 	cmp	%l1, %l3
@@ -5491,7 +5489,7 @@ _C_LABEL(tlb_flush_pte):
 	mov	%i1, %o1
 	andn	%i0, 0xfff, %o3
 	or	%o3, 0x010, %o3
-	call	db_printf
+	call	_C_LABEL(printf)
 	 mov	%i0, %o2
 	restore
 	set	KERNBASE, %o4
