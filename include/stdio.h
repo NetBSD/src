@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.41.2.3 2002/01/28 21:27:19 nathanw Exp $	*/
+/*	$NetBSD: stdio.h,v 1.41.2.4 2002/05/02 17:02:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -251,6 +251,8 @@ FILE	*tmpfile __P((void));
 int	 ungetc __P((int, FILE *));
 int	 vfprintf __P((FILE * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_));
+int	 vfprintf_unlocked __P((FILE * __restrict, const char * __restrict,
+	    _BSD_VA_LIST_));
 int	 vprintf __P((const char * __restrict, _BSD_VA_LIST_));
 
 #ifndef __AUDIT__
@@ -403,6 +405,8 @@ __END_DECLS
 __BEGIN_DECLS
 int	__srget __P((FILE *));
 int	__svfscanf __P((FILE * __restrict, const char * __restrict,
+	    _BSD_VA_LIST_));
+int	__svfscanf_unlocked __P((FILE * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_));
 int	__swbuf __P((int, FILE *));
 __END_DECLS
