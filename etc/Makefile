@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154.2.7 2000/10/20 17:01:14 tv Exp $
+#	$NetBSD: Makefile,v 1.154.2.8 2000/10/21 18:12:35 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -67,7 +67,7 @@ BIN3=
 # add to this.
 # NOTE: Parent directories must be listed before subdirectories.
 INSTALLATION_DIRS= \
-	binary binary/sets binary/kernel binary/security installation
+	binary binary/sets binary/kernel installation
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
