@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.310 2003/04/05 17:22:50 nakayama Exp $
+$NetBSD: usbdevs,v 1.311 2003/04/05 19:10:12 nakayama Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1098,7 +1098,7 @@ product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
 product PANASONIC LS120		0x0901	LS-120 Camera
 
 /* Pen Driver */
-product PEN USBREADER		0x0240	USB Reader
+product PEN USBREADER		0x0240	USB 6 in 1 Card Reader/Writer
 product PEN USBDISK		0x0d7d	USB Disk
 
 /* Peracom products */
