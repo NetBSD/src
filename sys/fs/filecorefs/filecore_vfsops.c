@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.11 2004/04/27 17:37:30 jrf Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.12 2004/05/04 13:26:58 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.11 2004/04/27 17:37:30 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.12 2004/05/04 13:26:58 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -203,7 +203,7 @@ filecore_mount(mp, path, data, ndp, p)
 		vfs_showexport(mp, &args.export, &fcmp->fc_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof (struct filecore_args));
+	error = copyin(data, &args, sizeof (struct filecore_args));
 	if (error)
 		return (error);
 	
@@ -342,12 +342,12 @@ filecore_mountfs(devvp, mp, p, argp)
 		goto out;
        	fcdr = (struct filecore_disc_record *)(bp->b_data + 4);
 	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
-	memset((caddr_t)fcmp, 0, sizeof *fcmp);
+	memset(fcmp, 0, sizeof *fcmp);
 	if (fcdr->log2bpmb > fcdr->log2secsize)
 		fcmp->log2bsize = fcdr->log2bpmb;
 	else	fcmp->log2bsize = fcdr->log2secsize;
 	fcmp->blksize = 1 << fcmp->log2bsize;
-	memcpy((caddr_t)&fcmp->drec, (caddr_t)fcdr, sizeof(*fcdr));
+	memcpy(&fcmp->drec, fcdr, sizeof(*fcdr));
 	fcmp->map = map;
 	fcmp->idspz = ((8 << fcdr->log2secsize) - fcdr->zone_spare)
 	    / (fcdr->idlen + 1);
@@ -399,7 +399,7 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	VOP_UNLOCK(devvp, 0);
 	if (fcmp) {
-		free((caddr_t)fcmp, M_FILECOREMNT);
+		free(fcmp, M_FILECOREMNT);
 		mp->mnt_data = NULL;
 	}
 	return error;
@@ -448,7 +448,7 @@ filecore_unmount(mp, mntflags, p)
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, p);
 	vput(fcmp->fc_devvp);
-	free((caddr_t)fcmp, M_FILECOREMNT);
+	free(fcmp, M_FILECOREMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
@@ -640,7 +640,7 @@ filecore_vget(mp, ino, vpp)
 
 	if (ino == FILECORE_ROOTINO) {
 		/* Here we need to construct a root directory inode */
-		memcpy((caddr_t)ip->i_dirent.name, (caddr_t)"root", 4);
+		memcpy(ip->i_dirent.name, "root", 4);
 		ip->i_dirent.load = 0;
 		ip->i_dirent.exec = 0;
 		ip->i_dirent.len = FILECORE_DIR_SIZE;
@@ -660,8 +660,8 @@ filecore_vget(mp, ino, vpp)
 			return (error);
 		}
 		
-		memcpy((caddr_t)&ip->i_dirent,
-		    (caddr_t)fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
+		memcpy(&ip->i_dirent,
+		    fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
 		    sizeof(struct filecore_direntry));
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf5\n", bp);

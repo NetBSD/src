@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.9 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.9 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -756,7 +756,7 @@ adosfs_readdir(v)
 		memcpy(adp->name, ap->name, adp->namlen);
 		vput(vp);
 
-		error = uiomove((caddr_t) adp, sizeof(struct adirent), uio);
+		error = uiomove(adp, sizeof(struct adirent), uio);
 		if (error)
 			break;
 		if (sp->a_ncookies) {

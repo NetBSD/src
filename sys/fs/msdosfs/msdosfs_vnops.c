@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.10 2004/05/04 13:26:58 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1513,7 +1513,7 @@ msdosfs_readdir(v)
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
-				error = uiomove((caddr_t) &dirbuf,
+				error = uiomove(&dirbuf, 
 						dirbuf.d_reclen, uio);
 				if (error)
 					goto out;
@@ -1627,7 +1627,7 @@ msdosfs_readdir(v)
 				brelse(bp);
 				goto out;
 			}
-			error = uiomove((caddr_t) &dirbuf,
+			error = uiomove(&dirbuf,
 					dirbuf.d_reclen, uio);
 			if (error) {
 				brelse(bp);
