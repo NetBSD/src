@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.13 1994/05/23 06:14:11 mycroft Exp $
+ *	$Id: conf.c,v 1.14 1994/06/06 14:57:33 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -90,7 +90,9 @@ bdev_decl(no);	/* dummy declarations */
 #include "st.h"
 #include "rd.h"
 #include "sd.h"
+#if 0
 #include "cd.h"
+#endif
 #include "vn.h"
 
 bdev_decl(ct);
@@ -107,7 +109,11 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRD,rd),	/* 2: hpib disk */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
+#if 0
 	bdev_disk_init(NCD,cd),	/* 5: concatenated disk driver */
+#else	
+	bdev_notdef(),
+#endif
 	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
 	bdev_tape_init(NST,st),	/* 7: exabyte tape */
 };
@@ -307,7 +313,11 @@ struct cdevsw	cdevsw[] =
 	cdev_hil_init(1,hil),		/* 14: human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_notdef(),			/* 16 */
+#if 0
 	cdev_disk_init(NCD,cd),		/* 17: concatenated disk */
+#else
+	cdev_notdef(),
+#endif
 	cdev_notdef(),			/* 18 */
 	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
