@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.12 2002/05/20 15:00:11 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.13 2002/08/02 14:10:25 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -524,7 +524,6 @@ free_form(FORM *form)
 		form->fields[i]->index = -1;
 	}
 
-	free(*form->fields);
 	free(form);
 
 	return E_OK;
