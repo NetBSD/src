@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.9 1994/04/06 06:40:28 cgd Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.10 1994/04/21 07:59:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -381,7 +381,7 @@ check_space()
 		Perror(LOG_ERR, "%s: %m\n", dirname);
 		exit(1);
 	}
- 	spacefree = fsbuf.f_bavail * fsbuf.f_fsize / 1024;
+ 	spacefree = fsbuf.f_bavail * fsbuf.f_bsize / 1024;
 	minfree = read_number("minfree");
  	if (minfree > 0 && spacefree - dumpsize < minfree) {
 		log(LOG_WARNING, "Dump omitted, not enough space on device\n");
