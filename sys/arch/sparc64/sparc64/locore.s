@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 2000/09/28 19:27:49 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 2000/09/29 17:02:39 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,9 +53,9 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
-#define TEST_DEBUG
-	
-#undef	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
+#define INTRLIST
+
+#define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
@@ -4036,7 +4036,7 @@ setup_sparcintr:
 #ifdef	INTR_INTERLOCK
 	add	%g5, IH_PEND, %g6
 	DLFLUSH(%g6, %g7)
-	ldstub	[%g5+IH_PEND], %g6	! Read pending flag
+	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
 	DLFLUSH2(%g7)
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 #endif
@@ -4050,6 +4050,14 @@ setup_sparcintr:
 	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
 	add	%g1, %g3, %g1
 1:
+#ifdef INTRLIST
+	LDPTR	[%g1], %g3		! Load list head
+	STPTR	%g3, [%g5+IH_PEND]	! Link our intrhand node in
+	mov	%g5, %g7
+	CASPTR	[%g1] ASI_N, %g3, %g7
+	cmp	%g7, %g3		! Did it work?
+	bne,pn	%xcc, 1b		! No, try again
+#else	/* INTRLIST */
 #if 1
 	DLFLUSH(%g1, %g3)
 	mov	%g5, %g3
@@ -4102,6 +4110,7 @@ setup_sparcintr:
 	LOCTOGLOB
 	restore
 #endif
+#endif	/* INTRLIST */
 2:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
@@ -4326,6 +4335,35 @@ sparc_intr_retry:
 	add	%l2, %l4, %l4
 	mov	8, %l7
 
+#ifdef INTRLIST
+1:	
+	LDPTR	[%l4], %l2		! Check a slot
+	brz,pn	%l2, intrcmplt		! Empty list?
+	
+	 mov	%g0, %l7
+	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
+	cmp	%l7, %l2
+	bne,pn	%icc, 1b
+	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
+2:	
+	LDPTR	[%l2 + IH_CLR], %l1
+	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
+	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+	
+	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
+	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	LDPTR	[%l2 + IH_PEND], %l7	! Clear pending flag
+	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
+	
+	brz,pn	%l1, 0f
+	 add	%l5, %o0, %l5
+	stx	%g0, [%l1]		! Clear intr source
+	membar	#Sync			! Should not be needed
+0:
+	brnz,pn	%l7, 2b			! 'Nother?
+	 mov	%l7, %l2
+
+#else /* INTRLIST */
 	/*
 	 * Register usage at this point:
 	 *	%l4 - current slot at intrpending[PIL]
@@ -4377,7 +4415,7 @@ sparc_intr_check_slot:
 !	STPTR	%g0, [%l4]		! Clear the slot
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	clrb	[%l2 + IH_PEND]		! Clear pending flag
+	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
 	STPTR	%g0, [%l4]		! Clear the slot
 
 #ifdef DEBUG
@@ -4504,7 +4542,7 @@ sparc_intr_check_slot:
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
-	clrb	[%l4 + IH_PEND]		! Clear the pending bit
+	STPTR	%g0, [%l4 + IH_PEND]	! Clear the pending bit
 	LDPTR	[%l4 + IH_CLR], %l3
 	brz,pn	%l3, 2f			! Clear intr?
 	 nop
@@ -4521,7 +4559,7 @@ sparc_intr_check_slot:
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #endif /* UNUSED INTERRUPT CODE */
-
+#endif /* INTRLIST */
 intrcmplt:
 #ifdef VECTORED_INTERRUPTS
 	/*
@@ -10823,7 +10861,7 @@ ENTRY(send_softint)
 #ifdef	VECTORED_INTERRUPTS
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
-	ldstub	[%o2 + IH_PEND], %o5
+	LDPTR	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
 #ifdef INTR_INTERLOCK
 	brnz	%o5, 1f
@@ -10831,6 +10869,15 @@ ENTRY(send_softint)
 	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
+#ifdef INTRLIST
+	LDPTR	[%o3], %o5		! Load list head
+	STPTR	%o5, [%o2+IH_PEND]	! Link our intrhand node in
+	mov	%o2, %o4
+	CASPTR	[%o3] ASI_N, %o5, %o4
+	cmp	%o4, %o5		! Did it work?
+	bne,pn	%xcc, 2b		! No, try again
+	 nop
+#else	/* INTRLIST */
 #if 1
 	DLFLUSH(%o3, %o5)
 	mov	%o2, %o5
@@ -10851,6 +10898,7 @@ ENTRY(send_softint)
 	!! We'll resort to polling in this case.
 4:
 	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
+#endif /* INTRLIST */
 1:
 #endif	/* VECTORED_INTERRUPTS */
 	mov	1, %o3			! Change from level to bitmask

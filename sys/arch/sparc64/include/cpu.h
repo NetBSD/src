@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2000/09/28 19:16:35 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.26 2000/09/29 17:02:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,8 +219,8 @@ struct intrhand {
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	char			ih_pil;		/* interrupt priority */
-	char			ih_pending;	/* interrupt queued */
 	struct intrhand		*ih_next;	/* global list */
+	struct intrhand		*ih_pending;	/* interrupt queued */
 	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
 	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
 };
