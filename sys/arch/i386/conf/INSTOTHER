@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.4 1996/02/27 00:07:02 cgd Exp $
+#	$NetBSD: INSTOTHER,v 1.5 1996/02/28 02:02:37 cgd Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -52,6 +52,9 @@ isa0	at root
 eisa0	at root
 pci0	at root
 
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
@@ -78,7 +81,7 @@ bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt2	at isa? port ? irq ?
 scsibus* at bt?
-ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 sea0	at isa? iomem 0xc8000 irq 5
 scsibus* at sea?
@@ -110,9 +113,9 @@ el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
-le*	at pci? bus ? dev ?			# PCnet-PCI based ethernet cards
-de*	at pci? bus ? dev ?			# DC21X4X-based ethernet cards
-ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
