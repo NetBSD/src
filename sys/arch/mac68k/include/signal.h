@@ -1,5 +1,3 @@
-/*
- *	signal.h,v 1.1 1993/10/13 07:58:39 cgd Exp
- */
+/*	$NetBSD: signal.h,v 1.3 1994/10/26 08:46:47 cgd Exp $	*/
 
 #include <m68k/signal.h>

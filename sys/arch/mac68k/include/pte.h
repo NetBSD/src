@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.7 1994/10/26 08:46:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -71,8 +73,7 @@
 /*
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
- *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.6 1994/06/29 04:55:57 briggs Exp $
+ *	@(#)pte.h	7.3 (Berkeley) 5/8/91
  */
 
 #ifndef _MACHINE_PTE_H_

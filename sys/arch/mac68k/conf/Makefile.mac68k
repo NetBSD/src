@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.mac68k,v 1.12 1994/10/26 08:45:53 cgd Exp $
+
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
 #

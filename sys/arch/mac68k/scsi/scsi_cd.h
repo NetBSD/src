@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_cd.h,v 1.4 1994/10/26 08:47:30 cgd Exp $	*/
+
 /*
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems.
@@ -13,8 +15,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- *	$Id: scsi_cd.h,v 1.3 1994/01/30 01:21:25 briggs Exp $
  */
 #ifndef	_SCSI_SCSI_CD_H
 #define _SCSI_SCSI_CD_H 1

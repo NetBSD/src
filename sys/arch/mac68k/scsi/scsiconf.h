@@ -1,3 +1,5 @@
+/*	$NetBSD: scsiconf.h,v 1.5 1994/10/26 08:47:38 cgd Exp $	*/
+
 /*
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
@@ -13,8 +15,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- *	$Id: scsiconf.h,v 1.4 1994/02/22 00:57:31 briggs Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.12 1994/10/26 08:46:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -64,8 +66,7 @@
  *
  */
 /*-
- *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.11 1994/08/30 11:04:17 briggs Exp $
+ *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 /*
    ALICE

@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.1 1994/07/02 13:11:10 briggs Exp $
+#	$NetBSD: Makefile,v 1.2 1994/10/26 08:45:48 cgd Exp $
+
+#	@(#)Makefile	7.3 (Berkeley) 6/9/91
 S=${BSDSRCDIR}/sys
 COMM=	$S/vm/*.[ch] $S/ufs/*/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 	$S/isofs/*/*.[ch] \

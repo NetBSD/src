@@ -1,3 +1,5 @@
+/*	$NetBSD: mac68k_init.c,v 1.6 1994/10/26 08:47:07 cgd Exp $	*/
+
 /*
  * Copyright (C) 1994	Allen K. Briggs
  * All rights reserved.
@@ -28,9 +30,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: mac68k_init.c,v 1.5 1994/07/10 16:58:11 briggs Exp $
- *
  */
 
 #include <sys/types.h>

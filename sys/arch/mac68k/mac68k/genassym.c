@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.10 1994/10/26 08:47:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -29,10 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
-*/
-/*
- *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.9 1994/07/07 00:25:10 briggs Exp $
+ *
+ *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
  */
 
 #include <sys/param.h>

@@ -1,8 +1,8 @@
+/*	$NetBSD: ch.c,v 1.5 1994/10/26 08:47:26 cgd Exp $	*/
+
 /* 
  * Written by grefen@?????
  * Based on scsi drivers by Julian Elischer (julian@tfs.com)
- *
- *      $Id: ch.c,v 1.4 1994/02/22 00:57:25 briggs Exp $
  */
 
 #include <sys/types.h>

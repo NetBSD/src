@@ -1,8 +1,8 @@
+/*	$NetBSD: scsi_debug.h,v 1.3 1994/10/26 08:47:32 cgd Exp $	*/
+
 /*#define SCSIDEBUG 1*/
 /*
  * Written by Julian Elischer (julian@tfs.com)
- *
- *	$Id: scsi_debug.h,v 1.2 1994/01/30 01:21:28 briggs Exp $
  */
 #ifndef	_SCSI_SCSI_DEBUG_H
 #define _SCSI_SCSI_DEBUG_H 1

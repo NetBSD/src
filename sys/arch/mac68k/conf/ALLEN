@@ -1,6 +1,6 @@
-# GENERIC
+#	$NetBSD: ALLEN,v 1.6 1994/10/26 08:45:51 cgd Exp $
 #
-#     $Id: ALLEN,v 1.5 1994/10/20 21:21:02 briggs Exp $
+# GENERIC
 
 include	"std.mac68k"
 
