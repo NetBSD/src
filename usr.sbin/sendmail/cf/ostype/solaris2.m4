@@ -34,10 +34,10 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
+VERSIONID(`@(#)solaris2.m4	8.1 (Berkeley) 8/7/93')
+divert(-1)
 
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
-define(`ALIAS_FILE', /usr/lib/aliases)dnl
-define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+define(`ALIAS_FILE', /etc/mail/aliases)
+define(`HELP_FILE', /var/lib/sendmail.hf)
+define(`STATUS_FILE', /etc/mail/sendmail.st)
+define(`LOCAL_MAILER_FLAGS', `fSn')
