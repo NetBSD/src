@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.31 1999/07/02 15:28:50 simonb Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.32 2000/01/15 19:16:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.31 1999/07/02 15:28:50 simonb Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.32 2000/01/15 19:16:32 chs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -468,6 +468,8 @@ kvm_getprocs(kd, op, arg, cnt)
 
 		nprocs = kvm_deadprocs(kd, op, arg, nl[1].n_value,
 		    nl[2].n_value, nl[3].n_value, nprocs);
+		if (nprocs < 0)
+			return (0);
 #ifdef notdef
 		size = nprocs * sizeof(struct kinfo_proc);
 		(void)realloc(kd->procbase, size);
