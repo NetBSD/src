@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.6 1998/07/25 00:41:47 thorpej Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.7 2001/11/24 20:18:55 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -143,6 +143,8 @@
 #define PKTPG_TX_LENGTH		0x0146
 #define PKTPG_LOG_ADDR		0x0150	/* logical address filter hash tbl */
 #define PKTPG_IND_ADDR		0x0158
+#define PKTPG_8920_INT_NUM	0x0370
+#define PKTPG_8920_DMA_CHANNEL	0x0374
 #define PKTPG_RX_STATUS		0x0400
 #define PKTPG_RX_LENGTH		0x0402
 #define PKTPG_RX_FRAME		0x0404
