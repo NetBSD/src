@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.4.2.1 1997/06/01 04:11:28 cgd Exp $ */
+/* $NetBSD: mcclock.c,v 1.4.2.2 1997/08/12 05:54:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,15 +30,15 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.4.2.1 1997/06/01 04:11:28 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.4.2.2 1997/08/12 05:54:52 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <alpha/alpha/clockvar.h>
-#include <alpha/alpha/mcclockvar.h>
+#include <dev/dec/clockvar.h>
+#include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
 
 struct cfdriver mcclock_cd = {

@@ -1,4 +1,4 @@
-/* $NetBSD: cia_bus_io.c,v 1.6.2.1 1997/06/01 04:13:06 cgd Exp $ */
+/* $NetBSD: cia_swiz_bus_io.c,v 1.11.2.2 1997/08/12 05:56:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_bus_io.c,v 1.6.2.1 1997/06/01 04:13:06 cgd Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_io.c,v 1.11.2.2 1997/08/12 05:56:00 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(1, "$NetBSD: cia_bus_io.c,v 1.6.2.1 1997/06/01 04:13:06 cgd Exp $
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#define	CHIP		cia
+#define	CHIP		cia_swiz
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct cia_config *)(v))->cc_mallocsafe)
 #define	CHIP_IO_EXTENT(v)	(((struct cia_config *)(v))->cc_io_ex)
