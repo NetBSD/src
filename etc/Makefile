@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.223 2002/07/06 18:19:31 fredette Exp $
+#	$NetBSD: Makefile,v 1.224 2002/07/28 01:21:07 bjh21 Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -52,8 +52,12 @@ MAKESUMS=	CKSUM=${CKSUM:Q} sh ../distrib/sets/makesums
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
 MKISOFS?=	mkisofs
+DISTRIBREV!=	sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
+# ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
+ISO_VOLID!=	echo NETBSD_${MACHINE}_${DISTRIBREV} | tr a-z A-Z
 MKISOFS_FLAGS+= -J -l \
 		-r -T -v \
+		-V ${ISO_VOLID} \
 		-P "The NetBSD Project" \
 		-m "${RELEASEDIR}/installation/cdrom"
 
