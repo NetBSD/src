@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.14 2000/07/10 11:15:07 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.15 2000/07/11 11:39:46 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -139,27 +139,32 @@ is replaced by an asterisk
 then the interval is not taken into account
 when determining when to trim the log file.
 .It Ar flags
-This field specifies any special processing that is required.  The
-.Ar Z
-flag means that archived log files should be compressed with
-.Xr gzip 1
-to save space.
-The
-.Ar B
-flag means that the file is a binary file and so the
+This field specifies any special processing that is required.  Individual 
+flags and their meanings:
+.Bl -tag -width indent
+.It Sy -
+This flag means nothing - it is used as a spacer when no flags are set.
+.It Sy b
+The file is a binary file or is not in
+.Xr syslogd 8
+format:
+the
 .Tn ASCII
 message which
 .Nm
 inserts to indicate that the logs have been trimmed should not be included.
-The
-.Ar N
-flag means that no signal should be sent when the log is trimmed.  The
-.Ar C
-flag instructs
-.Nm
-to create an empty log file if none currently exists.  The
-.Ar -
-flag means nothing - it is used as a spacer when no flags are set.
+.It Sy c
+Create an empty log file if none currently exists.
+.It Sy n
+No signal should be sent when the log is trimmed.
+.It Sy p
+The first historical log file (i.e. the historical log file with the suffix
+``.0'') should not be compressed.
+.It Sy z
+Archived log files should be compressed with
+.Xr gzip 1
+to save space.
+.El
 .It Ar path_to_pid_file
 This optional field specifies
 the file name to read to find the daemon process id.  If this

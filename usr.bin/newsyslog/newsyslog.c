@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.28 2000/07/10 11:15:07 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.29 2000/07/11 11:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.28 2000/07/10 11:15:07 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.29 2000/07/11 11:39:47 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,10 +83,11 @@ __RCSID("$NetBSD: newsyslog.c,v 1.28 2000/07/10 11:15:07 ad Exp $");
 #define	PRHDRINFO(x)	((void)(verbose ? printf x : 0))
 #define	PRINFO(x)	((void)(verbose ? printf("  ") + printf x : 0))
 
-#define	CE_COMPACT	1	/* Compact the achived log files */
-#define	CE_BINARY	2	/* Logfile is a binary file/non-syslog */
-#define	CE_NOSIGNAL	4	/* Don't send a signal when trimmed */
-#define CE_CREATE	8	/* Create log file if none exists */
+#define	CE_COMPRESS	0x01	/* Compress the achived log files */
+#define	CE_BINARY	0x02	/* Logfile is a binary file/non-syslog */
+#define	CE_NOSIGNAL	0x04	/* Don't send a signal when trimmed */
+#define CE_CREATE	0x08	/* Create log file if none exists */
+#define CE_PLAIN0	0x10	/* Do not compress zero'th history file */
 
 struct conf_entry {
 	uid_t	uid;			/* Owner of log */
@@ -108,6 +109,7 @@ char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
 int	main(int, char **);
 int	parse(struct conf_entry *, FILE *, size_t *);
 
+void	log_compress(struct conf_entry *, const char *);
 void	log_create(struct conf_entry *);
 void	log_examine(struct conf_entry *, int);
 void	log_trim(struct conf_entry *);
@@ -125,7 +127,7 @@ void	usage(void);
 int
 main(int argc, char **argv)
 {
-	struct conf_entry ent;
+	struct conf_entry log;
 	FILE *fd;
 	char *p, *cfile;
 	int c, force, needroot;
@@ -150,7 +152,7 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			noaction = 1;
-			verbose = 0;
+			verbose = 1;
 			break;
 		case 'r':
 			needroot = 0;
@@ -175,8 +177,8 @@ main(int argc, char **argv)
 	else if ((fd = fopen(cfile, "rt")) == NULL)
 		err(EXIT_FAILURE, "%s", cfile);
 
-	for (lineno = 0; !parse(&ent, fd, &lineno);)
-		log_examine(&ent, force);
+	for (lineno = 0; !parse(&log, fd, &lineno);)
+		log_examine(&log, force);
 	
 	if (fd != stdin)
 		fclose(fd);
@@ -274,8 +276,11 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		case 'n':
 			log->flags |= CE_NOSIGNAL;
 			break;
+		case 'p':
+			log->flags |= CE_PLAIN0;
+			break;
 		case 'z':
-			log->flags |= CE_COMPACT;
+			log->flags |= CE_COMPRESS;
 			break;
 		case '-':
 			break;
@@ -304,7 +309,7 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
  * trim the log file.
  */
 void
-log_examine(struct conf_entry *ent, int force)
+log_examine(struct conf_entry *log, int force)
 {
 	struct stat sb;
 	size_t size;
@@ -312,35 +317,35 @@ log_examine(struct conf_entry *ent, int force)
 	char tmp[MAXPATHLEN];
 	time_t now;
 
-	if (ent->logfile[0] == '\0')
+	if (log->logfile[0] == '\0')
 		return;
 
-	PRHDRINFO(("\n%s <%d%s>: ", ent->logfile, ent->numhist, 
-	    (ent->flags & CE_COMPACT) != 0 ? "Z" : ""));
+	PRHDRINFO(("\n%s <%d%s>: ", log->logfile, log->numhist, 
+	    (log->flags & CE_COMPRESS) != 0 ? "Z" : ""));
 
-	if (stat(ent->logfile, &sb) < 0) {
-		if (errno == ENOENT && (ent->flags & CE_CREATE) != 0) {
+	if (stat(log->logfile, &sb) < 0) {
+		if (errno == ENOENT && (log->flags & CE_CREATE) != 0) {
 			PRHDRINFO(("creating; "));
 			if (!noaction)
-				log_create(ent);
+				log_create(log);
 			else {
 				PRHDRINFO(("can't proceed with `-n'\n"));
 				return;
 			}
-			if (stat(ent->logfile, &sb))
-				err(EXIT_FAILURE, "%s", ent->logfile);
+			if (stat(log->logfile, &sb))
+				err(EXIT_FAILURE, "%s", log->logfile);
 		} else if (errno == ENOENT) {
 			PRHDRINFO(("does not exist --> skip log\n"));
 			return;
 		} else if (errno != 0)
-			err(EXIT_FAILURE, "%s", ent->logfile);
+			err(EXIT_FAILURE, "%s", log->logfile);
 	}
 	
 
 	size = ((size_t)sb.st_blocks * S_BLKSIZE) >> 10;
 
 	now = time(NULL);
-	strlcpy(tmp, ent->logfile, sizeof(tmp));
+	strlcpy(tmp, log->logfile, sizeof(tmp));
 	strlcat(tmp, ".0", sizeof(tmp));
 	if (stat(tmp, &sb) < 0) {
 		strlcat(tmp, ".gz", sizeof(tmp));
@@ -352,22 +357,22 @@ log_examine(struct conf_entry *ent, int force)
 		age = (int)(now - sb.st_mtime + 1800) / 3600;
 
 	if (verbose) {
-		if (ent->maxsize != (size_t)-1)
+		if (log->maxsize != (size_t)-1)
 			PRHDRINFO(("size (Kb): %lu [%lu] ",
 				(u_long)size,
-				(u_long)ent->maxsize));
-		if (ent->maxage > 0)
-			PRHDRINFO(("age (hr): %d [%d] ", age, ent->maxage));
+				(u_long)log->maxsize));
+		if (log->maxage > 0)
+			PRHDRINFO(("age (hr): %d [%d] ", age, log->maxage));
 	}
 	
 	/*
 	 * Note: if maxage is used as a trim condition, we need at least one
 	 * historical log file to determine the `age' of the active log file.
 	 */
-	if ((ent->maxage > 0 && (age >= ent->maxage || age < 0)) ||
-	    size >= ent->maxsize || force) {
+	if ((log->maxage > 0 && (age >= log->maxage || age < 0)) ||
+	    size >= log->maxsize || force) {
 		PRHDRINFO(("--> trim log\n"));
-		log_trim(ent);
+		log_trim(log);
 	} else
 		PRHDRINFO(("--> skip log\n"));
 }
@@ -379,50 +384,62 @@ void
 log_trim(struct conf_entry *log)
 {
 	char file1[MAXPATHLEN], file2[MAXPATHLEN];
- 	char zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
 	int i;
 	struct stat st;
 	pid_t pid;
 
-	/* Remove oldest log */
-	snprintf(file1, sizeof(file1), "%s.%d", log->logfile, 
-	    log->numhist - 1);
-	strcpy(zfile1, file1);
-	strlcat(zfile1, ".gz", sizeof(zfile1));
+	/* Remove oldest historical log */
+	snprintf(file1, sizeof(file1), "%s.%d", log->logfile, log->numhist - 1);
 
 	PRINFO(("rm -f %s\n", file1));
 	if (!noaction)
 		unlink(file1);
-	PRINFO(("rm -f %s\n", zfile1));
+	strlcat(file1, ".gz", sizeof(file1));
+	PRINFO(("rm -f %s\n", file1));
 	if (!noaction)
-		unlink(zfile1);
+		unlink(file1);
 
 	/* Move down log files */
 	for (i = log->numhist - 1; i != 0; i--) {
-		strcpy(file2, file1);
 		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i - 1);
-		strcpy(zfile1, file1);
-		strcpy(zfile2, file2);
+		snprintf(file2, sizeof(file2), "%s.%d", log->logfile, i);
 
 		if (lstat(file1, &st) != 0) {
-			strlcat(zfile1, ".gz", sizeof(zfile1));
-			strlcat(zfile2, ".gz", sizeof(zfile2));
-			if (lstat(zfile1, &st) != 0)
+			strlcat(file1, ".gz", sizeof(file1));
+			strlcat(file2, ".gz", sizeof(file2));
+			if (lstat(file1, &st) != 0)
 				continue;
 		}
 
-		PRINFO(("mv %s %s\n", zfile1, zfile2));
+		PRINFO(("mv %s %s\n", file1, file2));
 		if (!noaction)
-			if (rename(zfile1, zfile2))
-				err(EXIT_FAILURE, "%s", zfile1); 
-		PRINFO(("chmod %o %s\n", log->mode, zfile2));
+			if (rename(file1, file2))
+				err(EXIT_FAILURE, "%s", file1);
+		PRINFO(("chmod %o %s\n", log->mode, file2));
 		if (!noaction)
-			if (chmod(zfile2, log->mode))
-				err(EXIT_FAILURE, "%s", zfile2); 
-		PRINFO(("chown %d:%d %s\n", log->uid, log->gid, zfile2));
+			if (chmod(file2, log->mode))
+				err(EXIT_FAILURE, "%s", file2); 
+		PRINFO(("chown %d:%d %s\n", log->uid, log->gid, file2));
 		if (!noaction)
-			if (chown(zfile2, log->uid, log->gid))
-				err(EXIT_FAILURE, "%s", zfile2); 
+			if (chown(file2, log->uid, log->gid))
+				err(EXIT_FAILURE, "%s", file2); 
+		
+	}
+
+	/*
+	 * If a historical log file isn't compressed, and 'z' has been
+	 * specified, compress it.  (This is convenient, but is also needed
+	 * if 'p' has been specified.)  It should be noted that gzip(1)
+	 * preserves file ownership and file mode.
+	 */
+	for (i = (log->flags & CE_PLAIN0) != 0; i < log->numhist; i++) {
+		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i);
+		if (lstat(file1, &st) != 0)
+			continue;
+		snprintf(file2, sizeof(file2), "%s.gz", file1);
+		if (lstat(file2, &st) == 0)
+			continue;
+		log_compress(log, file1);
 	}
 
 	log_trimmed(log);
@@ -433,12 +450,14 @@ log_trim(struct conf_entry *log)
 			if (unlink(log->logfile))
 				err(EXIT_FAILURE, "%s", log->logfile);
 	} else {
+		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		PRINFO(("mv %s %s\n", log->logfile, file1));
 		if (!noaction)
 			if (rename(log->logfile, file1))
 				err(EXIT_FAILURE, "%s", log->logfile);
 	}
 
+	PRINFO(("(create new log)\n"));
 	log_create(log);
 	log_trimmed(log);
 
@@ -454,26 +473,17 @@ log_trim(struct conf_entry *log)
 			pid = readpidfile(_PATH_SYSLOGDPID);
 		
 		if (pid != (pid_t)-1) {
-			PRINFO(("kill -%s %d\n", sys_signame[log->signum], 
-			    pid));
+			PRINFO(("kill -%s %lu\n", sys_signame[log->signum], 
+			    (u_long)pid));
 			if (!noaction)
 				if (kill(pid, log->signum))
 					warn("kill");
 		}
 	}
-	
-	if ((log->flags & CE_COMPACT) != 0) {
-		PRINFO(("gzip %s.0\n", log->logfile));
-		if (!noaction) {
-			if ((pid = fork()) < 0)
-				err(EXIT_FAILURE, "fork");
-			else if (pid == 0) {
-				snprintf(file1, sizeof(file1), "%s.0", 
-				    log->logfile);
-				execl(_PATH_GZIP, "gzip", "-f", file1, NULL);
-				err(EXIT_FAILURE, _PATH_GZIP);
-			}
-		}
+
+	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS) {
+		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
+		log_compress(log, file1);
 	}
 }
 
@@ -500,28 +510,47 @@ log_trimmed(struct conf_entry *log)
 	daytime = ctime(&now) + 4;
 	daytime[15] = '\0';
 		
-	fprintf(fd, "%s %s newsyslog[%ld]: log file turned over\n", daytime, 
-	    hostname, (long)getpid());
+	fprintf(fd, "%s %s newsyslog[%lu]: log file turned over\n", daytime, 
+	    hostname, (u_long)getpid());
 	fclose(fd);
 }
 
 /*
- * Create a new log file.  This routine does not obey `noaction'.
+ * Create a new log file.
  */
 void
-log_create(struct conf_entry *ent)
+log_create(struct conf_entry *log)
 {
 	int fd;
 
-	PRINFO(("(create new log)\n"));
 	if (noaction)
 		return;
 
-	if ((fd = creat(ent->logfile, ent->mode)) < 0)
-		err(EXIT_FAILURE, "%s", ent->logfile);
-	if (fchown(fd, ent->uid, ent->gid) < 0)
-		err(EXIT_FAILURE, "%s", ent->logfile);
+	if ((fd = creat(log->logfile, log->mode)) < 0)
+		err(EXIT_FAILURE, "%s", log->logfile);
+	if (fchown(fd, log->uid, log->gid) < 0)
+		err(EXIT_FAILURE, "%s", log->logfile);
 	close(fd);
+}
+
+/*
+ * Compress a log file.  This routine takes an additional string argument:
+ * it is also used to compress historical log files.
+ */
+void
+log_compress(struct conf_entry *log, const char *fn)
+{
+	pid_t pid;
+
+	PRINFO(("gzip %s\n", fn));
+	if (!noaction) {
+		if ((pid = fork()) < 0)
+			err(EXIT_FAILURE, "fork");
+		else if (pid == 0) {
+			execl(_PATH_GZIP, "gzip", "-f", fn, NULL);
+			err(EXIT_FAILURE, _PATH_GZIP);
+		}
+	}
 }
 
 /*
@@ -597,8 +626,11 @@ readpidfile(const char *file)
 	if (fgets(line, sizeof(line) - 1, fd) != NULL) {
 		line[sizeof(line) - 1] = '\0';
 		pid = (pid_t)strtol(line, NULL, 0);
+	} else {
+		warnx("unable to read %s", file);
+		pid = (pid_t)-1;
 	}
-	
+
 	fclose(fd);
 	return (pid);
 }
