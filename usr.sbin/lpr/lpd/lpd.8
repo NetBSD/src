@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.16 1999/12/11 01:59:43 mrg Exp $
+.\"	$NetBSD: lpd.8,v 1.17 2000/04/10 08:09:33 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl dlsr
 .Op Fl n Ar maxchild
 .Op Fl w Ar maxwait
+.Op port
 .Sh DESCRIPTION
 .Nm Lpd
 is the line printer daemon (spool area handler) and is normally invoked
@@ -119,6 +120,15 @@ no response is returned from a connected server within this period,
 the connection is closed and a message logged.  The default is
 120 seconds.
 .El
+.Pp
+If the
+.Op port
+parameter is passed,
+.Nm
+listens on this port instead of the usual
+.Dq printer/tcp
+port from
+.Pa /etc/services .
 .Pp
 Access control is provided by two means.
 First, all requests must come from one of the machines listed in
