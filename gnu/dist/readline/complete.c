@@ -185,7 +185,7 @@ char *rl_completer_word_break_characters = (char *)NULL;
 char *rl_completer_quote_characters = (char *)NULL;
 
 /* List of characters that should be quoted in filenames by the completer. */
-char *rl_filename_quote_characters = (char *)NULL;
+char *rl_filename_quote_characters = "";
 
 /* List of characters that are word break characters, but should be left
    in TEXT when it is passed to the completion function.  The shell uses
