@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.7 1998/08/24 00:25:32 hubertf Exp $	*/
+/*	$NetBSD: cypher.c,v 1.8 1999/03/25 16:46:08 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.7 1998/08/24 00:25:32 hubertf Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.8 1999/03/25 16:46:08 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -118,6 +118,36 @@ cypher()
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
+						/* Some objects (type NOUNS)
+						 * have special treatment in
+						 * take().  For these we
+						 * must set the type to NOUNS.
+						 * However for SWORD and BODY
+						 * all it does is find which
+						 * of many objects is meant,
+						 * so we need do nothing here.
+						 * BATHGOD must become
+						 * NORMGOD as well.  NOUNS
+						 * with no special case
+						 * must be included here to
+						 * get the right error.  DOOR
+						 * cannot occur as an object
+						 * so need not be included.  */
+						switch(n) {
+						case BATHGOD:
+							wordvalue[wordnumber + 1] = NORMGOD;
+						case NORMGOD:
+						case AMULET:
+						case MEDALION:
+						case TALISMAN:
+						case MAN:
+						case TIMER:
+						case NATIVE:
+							wordtype[wordnumber + 1] = NOUNS;
+							break;
+						default:
+							wordtype[wordnumber + 1] = OBJECT;
+						}
 						wordnumber = take(location[position].objects);
 					}
 				wordnumber++;
