@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.39 1998/05/25 04:32:12 tv Exp $
+#	$NetBSD: files.arm32,v 1.40 1998/05/26 01:42:53 tv Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -23,10 +23,12 @@ device	pioc { [offset = -1], [dack = -1], [irq = -1] }
 attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
-include "../../../dev/isa/files.isa"
-include "../../../dev/ata/files.ata"
-
 # Standard NetBSD wd driver
+device  wdc: atapi, ata
+device  wd: disk
+attach  wd at ata
+file    arch/arm32/dev/wdc.c           wdc needs-flag
+file    arch/arm32/dev/wd.c            wd needs-flag
 major   {wd = 16}
 
 attach	wdc at pioc with wdc_pioc
@@ -41,6 +43,8 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Standard parallel driver
+device	lpt
+file	dev/ic/lpt.c				lpt needs-flag
 major   {lpt = 8}
 
 attach  lpt at pioc with lpt_pioc
