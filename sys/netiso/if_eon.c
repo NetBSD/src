@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.44 2004/04/21 04:17:29 matt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.45 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.44 2004/04/21 04:17:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.45 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_eon.h"
 
@@ -147,7 +147,7 @@ eonattach(void)
 		printf("eonattach()\n");
 	}
 #endif
-	sprintf(ifp->if_xname, "eon%d", 0);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "eon%d", 0);
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_softc = NULL;
 	/* since everything will go out over ether or token ring */

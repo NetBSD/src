@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.84 2003/08/07 16:32:53 agc Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.85 2004/04/21 18:40:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.84 2003/08/07 16:32:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.85 2004/04/21 18:40:40 itojun Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -202,7 +202,8 @@ slattach()
 
 	for (sc = sl_softc; i < NSL; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "sl%d", i++);
+		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
+		    "sl%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags =

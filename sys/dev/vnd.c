@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.106 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.107 2004/04/21 18:40:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.106 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.107 2004/04/21 18:40:37 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -944,7 +944,7 @@ vndioctl(dev, cmd, data, flag, p)
 
 		/* Attach the disk. */
 		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
-		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
+		snprintf(vnd->sc_xname, sizeof(vnd->sc_xname), "vnd%d", unit);
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 

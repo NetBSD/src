@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.38 2004/04/19 00:10:48 matt Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.39 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.38 2004/04/19 00:10:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.39 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -97,7 +97,8 @@ nsipattach(void)
 
 	if (nsipif.if_mtu == 0) {
 		ifp = &nsipif;
-		sprintf(ifp->if_xname, "nsip%d", nsipif_unit);
+		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "nsip%d",
+		    nsipif_unit);
 		ifp->if_mtu = LOMTU;
 		ifp->if_ioctl = nsipioctl;
 		ifp->if_output = nsipoutput;
@@ -111,7 +112,7 @@ nsipattach(void)
 	nsip_list = m;
 	ifp = &m->ifen_ifnet;
 
-	sprintf(ifp->if_xname, "nsip%d", nsipif_unit++);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "nsip%d", nsipif_unit++);
 	ifp->if_mtu = LOMTU;
 	ifp->if_ioctl = nsipioctl;
 	ifp->if_output = nsipoutput;
@@ -125,7 +126,8 @@ nsipattach(void)
 	 * XXX in the days before if_xname.
 	 */
 	bzero(nsipif.if_xname, sizeof(nsipif.if_xname));
-	sprintf(nsipif.if_xname, "nsip%d", nsipif_unit);
+	snprintf(nsipif.if_xname, sizeof(nsipif.if_xname), "nsip%d",
+	    nsipif_unit);
 
 	return (m);
 }
@@ -397,7 +399,7 @@ nsip_route(struct mbuf *m)
 	 * now configure this as a point to point link
 	 */
 	bzero(ifr.ifr_name, sizeof(ifr.ifr_name));
-	sprintf(ifr.ifr_name, "nsip%d", nsipif_unit - 1);
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "nsip%d", nsipif_unit - 1);
 	ifr.ifr_dstaddr = *snstosa(ns_dst);
 	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
 	    (struct ifnet *)ifn, NULL);

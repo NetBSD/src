@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.38 2003/12/05 19:35:43 scw Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.39 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.38 2003/12/05 19:35:43 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.39 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -233,7 +233,8 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
 	splx(s);
 
-	sprintf(ifp->if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
+	    unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vlan_start;

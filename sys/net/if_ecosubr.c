@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.13 2003/08/07 16:32:51 agc Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.13 2003/08/07 16:32:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.13 2003/08/07 16:32:51 agc Exp $");
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.13 2003/08/07 16:32:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -833,9 +833,9 @@ eco_sprintf(const u_int8_t *ea)
 	static char buf[8];
 
 	if (ea[1] == 0)
-		sprintf(buf, "%d", ea[0]);
+		snprintf(buf, sizeof(buf), "%d", ea[0]);
 	else
-		sprintf(buf, "%d.%d", ea[1], ea[0]);
+		snprintf(buf, sizeof(buf), "%d.%d", ea[1], ea[0]);
 	return buf;
 }
 		    

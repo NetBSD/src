@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.26 2004/04/18 19:11:39 matt Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.27 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.26 2004/04/18 19:11:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.27 2004/04/21 18:40:41 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,7 +745,8 @@ to_bcd(b, sa, xcp)
 		char            dnicname[sizeof(long) * NBBY / 3 + 2];
 		char  *p = dnicname;
 
-		sprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
+		snprintf(p, sizeof(dnicname), "%d",
+		    xcp->xc_addr.x25_net & 0x7fff);
 		for (; *p; p++)	/* *p == 0 means dnic matched */
 			if ((*p ^ *x++) & 0x0f)
 				break;

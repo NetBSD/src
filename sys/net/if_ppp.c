@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.88 2003/10/28 20:16:28 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.89 2004/04/21 18:40:39 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.88 2003/10/28 20:16:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.89 2004/04/21 18:40:39 itojun Exp $");
 
 #include "ppp.h"
 
@@ -237,7 +237,7 @@ pppattach()
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
-	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "ppp%d", i++);
 	callout_init(&sc->sc_timo_ch);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = PPP_MTU;

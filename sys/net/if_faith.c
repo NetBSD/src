@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.26 2003/08/07 16:32:52 agc Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.27 2004/04/21 18:40:38 itojun Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.26 2003/08/07 16:32:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.27 2004/04/21 18:40:38 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -125,7 +125,8 @@ faith_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct faith_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct faith_softc));
 
-	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 
 	sc->sc_if.if_mtu = FAITHMTU;
 	/* Change to BROADCAST experimentaly to announce its prefix. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.21 2004/04/18 19:11:39 matt Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.22 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.21 2004/04/18 19:11:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.22 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -924,7 +924,8 @@ pk_from_bcd(a, iscalling, sa, xcp)
 	if (xcp->xc_addr.x25_net && (xcp->xc_nodnic || xcp->xc_prepnd0)) {
 		octet           dnicname[sizeof(long) * NBBY / 3 + 2];
 
-		sprintf((char *) dnicname, "%d", xcp->xc_addr.x25_net);
+		snprintf((char *) dnicname, sizeof(dnicname), "%d",
+		    xcp->xc_addr.x25_net);
 		prune_dnic((char *) buf, sa->x25_addr, dnicname, xcp);
 	} else
 		bcopy((caddr_t) buf, (caddr_t) sa->x25_addr, count + 1);

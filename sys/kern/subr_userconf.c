@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.11 2004/03/23 13:22:04 junyoung Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.12 2004/04/21 18:40:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.11 2004/03/23 13:22:04 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.12 2004/04/21 18:40:38 itojun Exp $");
 
 #include "opt_userconf.h"
 
@@ -155,7 +155,7 @@ void
 userconf_hist_int(val)
 	int val;
 {
-	sprintf(userconf_histbuf," %d",val);
+	snprintf(userconf_histbuf, sizeof(userconf_histbuf), " %d", val);
 	if ((userconf_histcur + strlen(userconf_histbuf)) < userconf_histsz) {
 		memcpy(&userconf_history[userconf_histcur],
 		      userconf_histbuf,
