@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.31 1998/08/03 01:49:26 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.32 1998/08/08 05:06:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.31 1998/08/03 01:49:26 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.32 1998/08/08 05:06:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -527,10 +527,10 @@ remotesize(file, noisy)
 		cp = strchr(reply_string, ' ');
 		if (cp != NULL) {
 			cp++;
-#ifdef NO_QUAD
-			size = strtol(cp, &ep, 10);
-#else
+#ifndef NO_QUAD
 			size = strtoq(cp, &ep, 10);
+#else
+			size = strtol(cp, &ep, 10);
 #endif
 			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
@@ -692,8 +692,12 @@ progressmeter(flag)
 		abbrevsize >>= 10;
 	}
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    " %5qd %c%c ", (long long)abbrevsize, prefixes[i],
-	    prefixes[i] == ' ' ? ' ' : 'B');
+#ifndef NO_QUAD
+	    " %5qd %c%c ", (long long)abbrevsize,
+#else
+	    " %5ld %c%c ", (long)abbrevsize,
+#endif
+	    prefixes[i], prefixes[i] == ' ' ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
