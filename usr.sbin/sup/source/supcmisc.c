@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.6 1997/06/17 18:56:50 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.7 1997/06/18 15:23:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -105,6 +105,23 @@ char *fname;
 	return (estabd (fname,dpart));
 }
 
+int makedir(fname, mode, statp)
+char *fname;
+int mode;
+struct stat *statp;
+{
+	if (lstat(fname, statp) != -1 && !S_ISDIR(statp->st_mode)) {
+		if (unlink(fname) == -1) {
+			notify ("SUP: Can't delete %s\n", fname);
+			return -1;
+		}
+	}
+
+	(void) mkdir (fname, 0755);
+
+	return stat (fname, statp);
+}
+
 int estabd (fname,dname)
 char *fname,*dname;
 {
@@ -120,10 +137,9 @@ char *fname,*dname;
 	}
 	x = estabd (fname,dpart);
 	if (x)  return (TRUE);
-	(void) mkdir (dname,0755);
-	if (stat (dname,&sbuf) < 0) {		/* didn't work */
-		notify ("SUP: Can't create directory %s for %s\n",dname,fname);
-		return (TRUE);
+	if (makedir(dname, 0755, &sbuf) < 0) {
+		vnotify ("SUP: Can't create directory %s for %s\n",dname,fname);
+		return TRUE;
 	}
 	vnotify ("SUP Created directory %s for %s\n",dname,fname);
 	return (FALSE);
