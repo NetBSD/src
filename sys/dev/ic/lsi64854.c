@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.5 1999/03/23 00:32:27 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.5.2.1 1999/04/17 10:24:53 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -342,12 +342,12 @@ lsi64854_scsi_intr(arg)
 		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (D_ERR_PEND|D_SLAVE_ERR)) {
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~D_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= D_INVALIDATE|D_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
 		return (-1);
 	}
 
@@ -461,14 +461,15 @@ static int dodrain=0;
 	csr = L64854_GCSR(sc);
 
 	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~L64854_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= E_INVALIDATE|E_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
 		DMA_RESET(sc);
 		dodrain = 1;
+		return (1);
 	}
 
 	if (dodrain) {	/* XXX - is this necessary with D_DSBL_WRINVAL on? */
@@ -569,12 +570,13 @@ lsi64854_pp_intr(arg)
 		 bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (P_ERR_PEND|P_SLAVE_ERR)) {
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~P_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= P_INVALIDATE|P_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
+		return (1);
 	}
 
 	ret = (csr & P_INT_PEND) != 0;
