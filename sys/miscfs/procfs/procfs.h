@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.29 2000/03/16 18:08:26 jdolecek Exp $	*/
+/*	$NetBSD: procfs.h,v 1.30 2000/11/24 18:58:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -116,7 +116,6 @@ vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
 #define PFIND(pid) ((pid) ? pfind(pid) : &proc0)
 int procfs_freevp __P((struct vnode *));
 int procfs_allocvp __P((struct mount *, struct vnode **, long, pfstype));
-struct vnode *procfs_findtextvp __P((struct proc *));
 int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *,
