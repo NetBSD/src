@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7870.c,v 1.8 1996/03/17 00:55:23 thorpej Exp $	*/
+/*	$NetBSD: aic7870.c,v 1.9 1996/05/13 00:03:02 mycroft Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -27,6 +27,8 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <machine/intr.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.65 1996/04/29 19:51:30 christos Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.66 1996/05/12 23:53:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

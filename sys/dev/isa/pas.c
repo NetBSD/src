@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.16 1996/04/29 20:03:28 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.17 1996/05/12 23:53:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -48,6 +48,7 @@
 #include <sys/proc.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>

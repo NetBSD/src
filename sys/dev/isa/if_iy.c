@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.3 1996/05/08 17:29:40 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -73,6 +73,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>

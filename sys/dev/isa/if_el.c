@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.38 1996/05/07 01:55:20 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -52,6 +52,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

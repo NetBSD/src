@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.83 1996/05/08 23:32:39 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.84 1996/05/12 23:53:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -35,9 +35,6 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#ifndef i386							/* XXX */
-#include <machine/intr.h>
-#endif								/* XXX */
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

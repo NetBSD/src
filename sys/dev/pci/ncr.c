@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.34 1996/05/03 17:39:49 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35 1996/05/13 00:03:26 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -194,9 +194,7 @@ extern PRINT_ADDR();
 #else
 #include <sys/device.h>
 #include <machine/bus.h>
-#ifdef __alpha__
 #include <machine/intr.h>
-#endif
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -1330,7 +1328,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.34 1996/05/03 17:39:49 christos Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.35 1996/05/13 00:03:26 mycroft Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
