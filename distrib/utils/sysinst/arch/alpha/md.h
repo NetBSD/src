@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4.4.2 2000/11/01 02:06:53 tv Exp $	*/
+/*	$NetBSD: md.h,v 1.4.4.3 2001/10/25 18:05:26 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@ EXTERN distinfo dist_list[]
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", NULL}
+= {"wd", "sd", "ld", NULL}
 #endif
 ;
 
@@ -87,7 +87,7 @@ EXTERN	char *disk_names[]
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
+#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'l')
 
 /*
  * Machine-specific command to write a new label to a disk.

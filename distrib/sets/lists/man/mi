@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.30 2001/08/16 18:53:24 tv Exp $
+# $NetBSD: mi,v 1.253.2.31 2001/10/25 18:05:30 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -496,7 +496,6 @@
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
-./usr/share/man/cat4/ca.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/cardslot.0
@@ -598,7 +597,9 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
+./usr/share/man/cat4/iop.0
 ./usr/share/man/cat4/iophy.0
+./usr/share/man/cat4/iopsp.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipf.0
@@ -616,6 +617,7 @@
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/lc.0
+./usr/share/man/cat4/ld.0
 ./usr/share/man/cat4/le.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lm.0
@@ -645,6 +647,7 @@
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mixer.0
+./usr/share/man/cat4/mlx.0
 ./usr/share/man/cat4/mpu.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/music.0
@@ -789,6 +792,7 @@
 ./usr/share/man/cat4/tr.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
+./usr/share/man/cat4/twe.0
 ./usr/share/man/cat4/uaudio.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
@@ -1917,7 +1921,6 @@
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/bt.4
-./usr/share/man/man4/ca.4
 ./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
 ./usr/share/man/man4/cardslot.4
@@ -2019,7 +2022,9 @@
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
+./usr/share/man/man4/iop.4
 ./usr/share/man/man4/iophy.4
+./usr/share/man/man4/iopsp.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ip6.4
 ./usr/share/man/man4/ipf.4
@@ -2037,6 +2042,7 @@
 ./usr/share/man/man4/iy.4
 ./usr/share/man/man4/kue.4
 ./usr/share/man/man4/lc.4
+./usr/share/man/man4/ld.4
 ./usr/share/man/man4/le.4
 ./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lm.4
@@ -2066,6 +2072,7 @@
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mixer.4
+./usr/share/man/man4/mlx.4
 ./usr/share/man/man4/mpu.4
 ./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/music.4
@@ -2210,6 +2217,7 @@
 ./usr/share/man/man4/tr.4
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
+./usr/share/man/man4/twe.4
 ./usr/share/man/man4/uaudio.4
 ./usr/share/man/man4/ucom.4
 ./usr/share/man/man4/udp.4

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.373.2.9 2001/03/30 21:51:22 he Exp $
+#	$NetBSD: files,v 1.373.2.10 2001/10/25 18:05:23 he Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -190,6 +190,10 @@ file	ipkdb/ipkdb_if.c		ipkdb
 define	mii_bitbang
 file	dev/mii/mii_bitbang.c		mii_bitbang
 
+# Logical disks, e.g. hardware RAID arrays
+device	ld: disk
+file	dev/ld.c			ld	needs-flag
+
 # Central clearing house for system monitoring.
 define	sysmon
 file	dev/sysmon/sysmon.c		sysmon	needs-flag
@@ -223,9 +227,15 @@ file	dev/ic/dpt.c			dpt
 device	cac {unit = -1}
 file	dev/ic/cac.c			cac
 
-device	ca: disk
-attach	ca at cac
-file	dev/ic/ca.c			ca	needs-flag
+attach	ld at cac with ld_cac
+file	dev/ic/ld_cac.c		ld_cac
+
+# Mylex DAC960 RAID controllers
+device	mlx {unit = -1}
+file	dev/ic/mlx.c			mlx			needs-flag
+
+attach	ld at mlx with ld_mlx
+file	dev/ic/ld_mlx.c			ld_mlx
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
