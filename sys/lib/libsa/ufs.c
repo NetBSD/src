@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.9 1995/01/06 00:22:58 pk Exp $	*/
+/*	$NetBSD: ufs.c,v 1.10 1995/01/07 20:53:31 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -379,8 +379,9 @@ ufs_open(path, f)
 	ino_t inumber, parent_inumber;
 	struct file *fp;
 	struct fs *fs;
-	int rc, nlinks = 0;
+	int rc;
 	u_int buf_size;
+	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
 	char *buf = NULL;
 
@@ -482,46 +483,43 @@ ufs_open(path, f)
 		 */
 		if ((fp->f_di.di_mode & IFMT) == IFLNK) {
 			int link_len = fp->f_di.di_size;
+			int len;
 
-			if (fp->f_di.di_size >= MAXPATHLEN - 1 ||
-			     nlinks >= MAXSYMLINKS) {
+			len = strlen(cp);
+
+			if (link_len + len > MAXPATHLEN ||
+			    ++nlinks > MAXSYMLINKS) {
 				rc = ENOENT;
 				goto out;
 			}
 
-			strcpy(namebuf, ncp);
-#ifdef DEBUG
-			printf(" %s  ", namebuf);
-#endif
+			bcopy(cp, &namebuf[link_len], len + 1);
 
 			if (link_len < fs->fs_maxsymlinklen) {
-				/*
-				 * Symbolic link data is in the inode.
-				 */
 				bcopy(fp->f_di.di_shortlink, namebuf,
-				      (unsigned)link_len);
+				      (unsigned) link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
 				 */
-				u_int buf_size = fs->fs_bsize;
-				daddr_t diskblock;
+				u_int buf_size;
+				daddr_t	disk_block;
+				register struct fs *fs = fp->f_fs;
 
 				if (!buf)
-					buf = alloc(buf_size);
-				rc = block_map(f, 0, &diskblock);
+					buf = alloc(fs->fs_bsize);
+				rc = block_map(f, (daddr_t)0, &disk_block);
 				if (rc)
 					goto out;
-
+				
 				rc = (f->f_dev->dv_strategy)(f->f_devdata,
-					F_READ, fsbtodb(fs, diskblock),
+					F_READ, fsbtodb(fs, disk_block),
 					fs->fs_bsize, buf, &buf_size);
 				if (rc)
 					goto out;
 
 				bcopy((char *)buf, namebuf, (unsigned)link_len);
 			}
-			namebuf[link_len] = '\0';
 
 			/*
 			 * If relative pathname, restart at parent directory.
@@ -535,9 +533,6 @@ ufs_open(path, f)
 
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
-#ifdef DEBUG
-			printf(" -> ");
-#endif
 		}
 	}
 
@@ -546,7 +541,6 @@ ufs_open(path, f)
 	 */
 	rc = 0;
 out:
-	printf("\n");
 	if (buf)
 		free(buf, fs->fs_bsize);
 	if (rc)
