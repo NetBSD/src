@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.2 1999/01/28 21:18:00 drochner Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.3 1999/02/03 05:05:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -111,25 +111,20 @@ procfs_domap(curp, p, pfs, uio)
 		 * format:
 		 *  start, end, resident, private resident, cow, access, type.
 		 */
-#if 0
 		snprintf(mebuffer, sizeof(mebuffer),
-		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d %d\n",
-#else
-		sprintf(mebuffer,
 #if defined(UVM)
-		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d %d\n",
+		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
 #else
-		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d\n",
-#endif
+		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d\n",
 #endif
 			entry->start, entry->end,
 
-			(entry->protection & VM_PROT_READ) ? "r" : "-",
-			(entry->protection & VM_PROT_WRITE) ? "w" : "-",
-			(entry->protection & VM_PROT_EXECUTE) ? "x" : "-",
-			(entry->max_protection & VM_PROT_READ) ? "r" : "-",
-			(entry->max_protection & VM_PROT_WRITE) ? "w" : "-",
-			(entry->max_protection & VM_PROT_EXECUTE) ? "x" : "-",
+			(entry->protection & VM_PROT_READ) ? 'r' : '-',
+			(entry->protection & VM_PROT_WRITE) ? 'w' : '-',
+			(entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
+			(entry->max_protection & VM_PROT_READ) ? 'r' : '-',
+			(entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
+			(entry->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
 
 #if defined(UVM)
 			(entry->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
