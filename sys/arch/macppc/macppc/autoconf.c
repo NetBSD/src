@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2003/07/15 02:43:31 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 2003/10/08 11:12:36 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2003/07/15 02:43:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2003/10/08 11:12:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -234,10 +234,11 @@ device_register(dev, aux)
 		return;
 	}
 	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "pci") ||
-	    DEVICE_IS(dev, "scsibus"))
+	    DEVICE_IS(dev, "scsibus") || DEVICE_IS(dev, "atabus"))
 		return;
 
 	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
+	    DEVICE_IS(dev->dv_parent, "atabus") ||
 	    DEVICE_IS(dev->dv_parent, "pci") ||
 	    DEVICE_IS(dev->dv_parent, "scsibus")) {
 		if (dev->dv_parent->dv_parent != parent)
@@ -289,7 +290,7 @@ device_register(dev, aux)
 		/* periph_target is target for scsi, drive # for atapi */
 		if (addr != sa->sa_periph->periph_target)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
+	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "pciide")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
@@ -306,7 +307,7 @@ device_register(dev, aux)
 			return;
 		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "wdc")) {
+	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "wdc")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
