@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.13 2002/02/06 02:17:14 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.14 2002/02/15 04:04:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.13 2002/02/06 02:17:14 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.14 2002/02/15 04:04:57 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -252,7 +252,12 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		bcleanup();
 
 		/* write out superblock; image is now complete */
+
+	((struct fs *)fsopts->superblock)->fs_fmod = 0;
 	ffs_write_superblock(fsopts->superblock, fsopts);
+	if (close(fsopts->fd) == -1)
+		err(1, "Closing `%s'", image);
+	fsopts->fd = -1;
 	printf("Image `%s' complete\n", image);
 }
 
