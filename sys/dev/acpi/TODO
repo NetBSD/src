@@ -17,8 +17,6 @@ Important things to make ACPI useful on more machines:
 * Deal with the "implicit return" problem for older laptops.  (Mostly
   affects older Toshiba laptops, like the Portege 7140.)
 
-* Fix the locking protocol in acpiec.
-
 * Support thermal levels and fan control in acpitz.
 
-- mycroft, 2003/11/02
+- mycroft, 2003/11/03
