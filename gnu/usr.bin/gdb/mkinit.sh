@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mkinit.sh,v 1.1.1.1 1997/09/26 04:37:02 gwr Exp $
+# $NetBSD: mkinit.sh,v 1.2 1999/09/25 05:29:27 enami Exp $
 #
 # Generate the init.c file on stdout.
 # Arguments are names of *.o files.
@@ -12,8 +12,12 @@
 # Which awk do we use? (awk,gawk,nawk?)
 awk=${AWK:-awk}
 
+# $NM may be a name of nm command for cross compilation.  The default
+# value here is a default when you invoke this script manually.
+nm=${NM:-nm}
+
 # Does the compiler prepend an underscore?
-if (nm version.o |grep -q ' _version')
+if ($nm version.o |grep -q ' _version')
 then
  sedarg='s/ _/ /'
 else
@@ -27,7 +31,7 @@ echo 'void initialize_all_files () {'
 
 for f
 do
-  nm -p $f
+  $nm -p $f
 done |
 sed -e "$sedarg" |
 $awk '
