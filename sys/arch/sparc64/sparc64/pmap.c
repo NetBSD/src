@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2001/01/03 23:05:22 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2001/01/14 02:03:49 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1836,7 +1836,7 @@ pmap_activate(p)
 	 * the new context.
 	 */
 
-	s = splpmap();
+	s = splvm();
 	if (p == curproc) {
 		write_user_windows();
 		if (pmap->pm_ctx == NULL)
@@ -3417,7 +3417,7 @@ ctx_alloc(pm)
 #endif
 		return (0);
 	}
-	s = splpmap();
+	s = splvm();
 	cnum = next;
 	do {
 		if (cnum >= numctx-1) 
