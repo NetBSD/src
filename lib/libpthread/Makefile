@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/06/03 21:34:00 nathanw Exp $
+#	$NetBSD: Makefile,v 1.18 2003/07/18 22:33:45 nathanw Exp $
 #
 
 WARNS=	2
@@ -40,6 +40,7 @@ LIB=	pthread
 #
 SRCS=	pthread.c 
 SRCS+=	pthread_alarms.c
+SRCS+=	pthread_attr.c
 SRCS+=	pthread_barrier.c
 SRCS+=	pthread_cancelstub.c
 SRCS+=	pthread_cond.c
