@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1995/04/25 21:22:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/02/14 01:37:06 thorpej Exp $
 
 .PATH:	${.CURDIR}/termios
 
@@ -6,7 +6,7 @@ SRCS+=	cfgetispeed.c cfgetospeed.c cfmakeraw.c cfsetispeed.c cfsetospeed.c \
 	cfsetspeed.c tcdrain.c tcflow.c tcflush.c tcgetattr.c tcgetpgrp.c \
 	tcsendbreak.c tcsetattr.c tcsetpgrp.c
 
-MAN+=	tcgetpgrp.3 tcsendbreak.3 tcsetattr.3 tcsetpgrp.3
+MAN+=	tcgetpgrp.3 tcgetsid.3 tcsendbreak.3 tcsetattr.3 tcsetpgrp.3
 
 MLINKS+=tcsendbreak.3 tcdrain.3 tcsendbreak.3 tcflow.3 \
 	tcsendbreak.3 tcflush.3
