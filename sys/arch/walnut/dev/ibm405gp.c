@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.4 2002/08/13 04:57:50 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.5 2002/08/13 05:25:40 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
-#include <powerpc/ibm4xx/pcicreg.h>
+#include <powerpc/ibm4xx/dev/pcicreg.h>
 
 static bus_space_tag_t	pcicfg_iot = galaxy_make_bus_space_tag(0, 0);
 static bus_space_handle_t pcicfg_ioh = 0;
