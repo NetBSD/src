@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.389 2003/03/09 13:50:56 he Exp $
+# $NetBSD: mi,v 1.390 2003/03/15 22:32:08 he Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -572,23 +572,6 @@
 ./usr/libexec/uugetty		base-uucp-bin
 ./usr/libexec/virecover		base-util-bin
 ./usr/lkm			base-sys-usr
-./usr/lkm/adosfs.o		base-vfs-lkm
-./usr/lkm/cd9660.o		base-vfs-lkm
-./usr/lkm/coda.o		base-vfs-lkm
-./usr/lkm/ext2fs.o		base-vfs-lkm
-./usr/lkm/fdesc.o		base-vfs-lkm
-./usr/lkm/filecorefs.o		base-vfs-lkm
-./usr/lkm/if_ipl.o		base-ipf-lkm
-./usr/lkm/lfs.o			base-vfs-lkm
-./usr/lkm/kernfs.o		base-vfs-lkm
-./usr/lkm/mfs.o			base-vfs-lkm
-./usr/lkm/msdosfs.o		base-vfs-lkm
-./usr/lkm/ntfs.o		base-vfs-lkm
-./usr/lkm/nullfs.o		base-vfs-lkm
-./usr/lkm/overlay.o		base-vfs-lkm
-./usr/lkm/portal.o		base-vfs-lkm
-./usr/lkm/procfs.o		base-vfs-lkm
-./usr/lkm/umapfs.o		base-vfs-lkm
 ./usr/mdec			base-sys-usr
 ./usr/sbin			base-sys-usr
 ./usr/sbin/ac			base-sysutil-bin
