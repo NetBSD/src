@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52 2002/05/09 09:45:28 mbw Exp $
+.\"	$NetBSD: contents,v 1.53 2002/05/23 06:44:17 pooka Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,10 @@ A gzipped
 kernel containing code for everything supported in this release.
 .if r_hpcmips \{\
 This kernel runs on Vr41xx and TX3922 CPU only.
+.\}
+.
+.if r_sgimips \{\
+This kernel will boot on O2 and similar machines.
 .\}
 .
 .if r_amiga \{\
@@ -141,6 +145,14 @@ A kernel for MVME172 boards.
 .			It Pa netbsd.VME177.gz
 A kernel for MVME177 boards.
 .\}
+.
+.if r_sgimips \{\
+.			It Pa netbsd-GENERIC_INDY.gz
+A kernel similar to GENERIC, but will boot on an Indy and similar machines.
+.			It Pa netbsd.ecoff-GENERIC_INDY.gz
+GENERIC targeted for being bootable on Indigo 2 and similar machines.
+.\}
+.
 .		tag)
 .		It Pa sets/
 \*M binary distribution sets;
@@ -185,7 +197,7 @@ this image.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[mvme68k]:\n[macppc] \{\
+.if !\n[mvme68k]:\n[macppc]:\n[sgimips] \{\
 .		It Pa misc/
 .
 .if r_alpha \{\
@@ -222,6 +234,11 @@ ship with a floppy drive (pre-Open Firmware 3); see below.
 Two programs needed to boot \*M kernels over the network; see below.
 .		It Pa tapeimage/
 Tape boot programs, and a RAMDISK kernel; see below.
+.\}
+.
+.if r_sgimips \{\
+.		It Pa netboot/
+NFS-root images
 .\}
 .
 .if \n[sparc]:\n[sparc64] \{\
