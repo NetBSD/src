@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.143 1998/03/22 00:55:37 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.144 1998/06/10 12:06:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -93,6 +93,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timepps.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -177,6 +178,15 @@ static bus_space_handle_t comconsioh;
 static int	comconsattached;
 static int comconsrate;
 static tcflag_t comconscflag;
+
+static int ppscap =
+	PPS_TSFMT_TSPEC |
+	PPS_CAPTUREASSERT | 
+	PPS_CAPTURECLEAR |
+#ifdef  PPS_SYNC 
+	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
+#endif	/* PPS_SYNC */
+	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
 static u_char tiocm_xxx2mcr __P((int));
 
@@ -595,6 +605,13 @@ com_shutdown(sc)
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
 
+	/* Turn off PPS capture on last close. */
+	sc->sc_ppsclearmask = 0;
+	sc->sc_ppsassertmask = 0;
+	sc->sc_ppsassert = 1;
+	sc->sc_ppsclear = 1;
+	sc->ppsparam.mode = 0;
+
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -688,6 +705,12 @@ comopen(dev, flag, mode, p)
 
 		/* Fetch the current modem control status, needed later. */
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
+
+		/* Clear PPS capture state on first open. */
+		sc->sc_ppsclearmask = 0;
+		sc->sc_ppsassertmask = 0;
+		sc->sc_ppsassert = 1;
+		sc->sc_ppsclear = 1;
 
 		splx(s2);
 
@@ -933,6 +956,116 @@ comioctl(dev, cmd, data, flag, p)
 		*(int *)data = bits;
 		break;
 	}
+
+	case PPS_CREATE:
+		break;
+
+	case PPS_DESTROY:
+		break;
+
+	case PPS_GETPARAMS: {
+		pps_params_t *pp;
+		pp = (pps_params_t *)data;
+		*pp = sc->ppsparam;
+		break;
+	}
+
+	case PPS_SETPARAMS: {
+	  	pps_params_t *pp;
+		int mode;
+		pp = (pps_params_t *)data;
+		if (pp->mode & ~ppscap) {
+			error = EINVAL;
+			break;
+		}
+		sc->ppsparam = *pp;
+	 	/* 
+		 * Compute msr masks from user-specified timestamp state.
+		 */
+		mode = sc->ppsparam.mode;
+		if (mode & PPS_HARDPPSONASSERT) {
+			mode |= PPS_CAPTUREASSERT;
+			/* XXX revoke any previous HARDPPS source */
+		}
+		if (mode & PPS_HARDPPSONCLEAR) {
+			mode |= PPS_CAPTURECLEAR;
+			/* XXX revoke any previous HARDPPS source */
+		}
+		switch (mode & PPS_CAPTUREBOTH) {
+		case 0:
+			sc->sc_ppsassertmask = 0;
+			sc->sc_ppsassert = 1;
+			sc->sc_ppsclearmask = 0;
+			sc->sc_ppsclear = 1;
+			break;
+	
+		case PPS_CAPTUREASSERT:
+			sc->sc_ppsassertmask = MSR_DCD;
+			sc->sc_ppsassert = MSR_DCD;
+			sc->sc_ppsclearmask = 0;
+			sc->sc_ppsclear = 1;
+			break;
+	
+		case PPS_CAPTURECLEAR:
+			sc->sc_ppsassertmask = 0;
+			sc->sc_ppsassert = 1;
+			sc->sc_ppsclearmask = MSR_DCD;
+			sc->sc_ppsclear = 0;
+			break;
+
+		case PPS_CAPTUREBOTH:
+			sc->sc_ppsassertmask = MSR_DCD;
+			sc->sc_ppsclearmask = MSR_DCD;
+			sc->sc_ppsassert = MSR_DCD;
+			sc->sc_ppsclear = 0;
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
+	}
+
+	case PPS_GETCAP:
+		*(int*)data = ppscap;
+		break;
+
+	case PPS_FETCH: {
+		pps_info_t *pi;
+		pi = (pps_info_t *)data;
+		*pi = sc->ppsinfo;
+		break;
+	}
+
+	case PPS_WAIT:
+		  /* XXX */
+		error = EOPNOTSUPP;
+		break;
+
+	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
+		/*
+		 * Some GPS clocks models use the falling rather than
+		 * rising edge as the on-the-second signal. 
+		 * The old API has no way to specify PPS polarity.
+		 */
+#ifndef PPS_TRAILING_EDGE
+		sc->sc_ppsassertmask = MSR_DCD;
+		sc->sc_ppsassert = MSR_DCD;
+		sc->sc_ppsclearmask = 0;
+		sc->sc_ppsclear = 1;
+		TIMESPEC_TO_TIMEVAL((struct timeval*)data, 
+		    &sc->ppsinfo.assert_timestamp);
+#else
+		sc->sc_ppsassertmask = 0;
+		sc->sc_ppsassert = 1
+		sc->sc_ppsclearmask = MSR_DCD;
+		sc->sc_ppsclear = 0;
+		TIMESPEC_TO_TIMEVAL((struct timeval*)data, 
+		    &sc->ppsinfo.clear_timestamp);
+#endif
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -1749,6 +1882,58 @@ comintr(arg)
 		sc->sc_msr = msr;
 		if (ISSET(delta, sc->sc_msr_mask)) {
 			SET(sc->sc_msr_delta, delta);
+
+			/*
+			 * Pulse-per-second clock  signal on edge of DCD?
+			 */
+			if (ISSET(delta, (sc->sc_ppsassertmask |
+					  sc->sc_ppsclearmask))) {
+				struct timeval tv;
+			    	if ((msr & sc->sc_ppsassertmask) ==
+				    sc->sc_ppsassert) {
+
+					/* XXX nanotime() */
+					microtime(&tv);
+					TIMEVAL_TO_TIMESPEC(&tv, 
+					    &sc->ppsinfo.assert_timestamp);
+					if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
+						timespecadd(&sc->ppsinfo.assert_timestamp,
+						    &sc->ppsparam.assert_offset,
+						    &sc->ppsinfo.assert_timestamp);
+						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.assert_timestamp);
+	}
+
+#ifdef PPS_SYNC
+					if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
+						hardpps(&tv, tv.tv_usec);
+#endif
+					sc->ppsinfo.assert_sequence++;
+					sc->ppsinfo.current_mode = 
+					    sc->ppsparam.mode;
+
+				} else if ((msr & sc->sc_ppsclearmask) == 
+				    sc->sc_ppsclear) {
+					/* XXX nanotime() */
+
+					microtime(&tv);
+					TIMEVAL_TO_TIMESPEC(&tv, 
+					    &sc->ppsinfo.clear_timestamp);
+					if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
+						timespecadd(&sc->ppsinfo.clear_timestamp,
+						    &sc->ppsparam.clear_offset,
+						    &sc->ppsinfo.clear_timestamp);
+						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.clear_timestamp);
+	}
+
+#ifdef PPS_SYNC
+					if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
+						hardpps(&tv, tv.tv_usec);
+#endif
+					sc->ppsinfo.clear_sequence++;
+					sc->ppsinfo.current_mode = 
+					    sc->ppsparam.mode;
+				}
+			}
 
 			/*
 			 * Stop output immediately if we lose the output
