@@ -69,11 +69,11 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <sys/types.h>
+#define	DES_LONG	u_int32_t
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
-#include <sys/types.h>
-#define	DES_LONG	u_int32_t
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];
