@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.188 2003/09/07 22:11:23 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.189 2003/09/08 01:13:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.188 2003/09/07 22:11:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.189 2003/09/08 01:13:04 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -2215,12 +2215,8 @@ cd_set_pa_immed(cd, flags)
 	oflags = page->flags;
 	page->flags &= ~CD_PA_SOTC;
 	page->flags |= CD_PA_IMMED;
-	if (oflags == page->flags) {
-printf("flags are same; punting\n");
+	if (oflags == page->flags)
 		return (0);
-	} else {
-printf("flags are not same; changing\n");
-	}
 
 	if (big) {
 		_lto2b(0, data.header.big.data_length);
@@ -2423,11 +2419,11 @@ cd_setblksize(cd)
 	}
 
 	if (bsize == 0) {
-printf("trying to change bsize, but no blk_desc\n");
+printf("cd_setblksize: trying to change bsize, but no blk_desc\n");
 		return (EINVAL);
 	}
 	if (_3btol(bdesc->blklen) == 2048) {
-printf("trying to change bsize, but blk_desc is correct\n");
+printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 		return (EINVAL);
 	}
 		
