@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.9.2.3 2002/06/24 22:06:34 nathanw Exp $	*/
+/*	$NetBSD: bus.c,v 1.9.2.4 2002/07/02 22:05:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -676,7 +676,7 @@ _bus_dmamap_sync_r4k(t, map, offset, len, ops)
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curlwp))
+	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
 		useindex = 0;
 	else
 		useindex = 1;
