@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.8 2000/05/29 17:37:12 jhawk Exp $ */
+/* $NetBSD: awivar.h,v 1.9 2000/06/09 05:31:18 onoe Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define	AWI_TRANS_TIMEOUT	2000
 
 #define	AWI_NTXBUFS		4
+#define	AWI_MAX_KEYLEN		16
 
 enum awi_status {
 	AWI_ST_INIT,
@@ -76,6 +77,14 @@ struct awi_bss
 	u_int8_t	essid[IEEE80211_NWID_LEN + 2];
 };
 
+struct awi_wep_algo {
+	char		*awa_name;
+	int		(*awa_ctxlen) __P((void));
+	void		(*awa_setkey) __P((void *, u_char *, int));
+	void		(*awa_encrypt) __P((void *, u_char *, u_char *, int));
+	void		(*awa_decrypt) __P((void *, u_char *, u_char *, int));
+};
+
 struct awi_softc 
 {
 #ifdef __NetBSD__
@@ -92,7 +101,6 @@ struct awi_softc
 	struct device		sc_dev;
 #endif
 	struct arpcom		sc_ec;
-	struct callout_handle	sc_tohandle;
 #endif
 	struct am79c930_softc 	sc_chip;
 	struct ifnet		*sc_ifp;
@@ -123,6 +131,8 @@ struct awi_softc
 	u_int8_t		sc_scan_max;
 	u_int8_t		sc_scan_set;
 	struct awi_bss		sc_bss;
+	u_int8_t		sc_ownssid[IEEE80211_NWID_LEN + 2];
+	u_int8_t		sc_ownch;
 
 	int			sc_rx_timer;
 	u_int32_t		sc_rxdoff;
@@ -137,6 +147,13 @@ struct awi_softc
 	u_int32_t		sc_txnext;
 	u_int32_t		sc_txdone;
 
+	int			sc_wep_keylen[IEEE80211_WEP_NKID]; /* keylen */
+	u_int8_t		sc_wep_key[IEEE80211_WEP_NKID][AWI_MAX_KEYLEN];
+	int			sc_wep_defkid;
+	void			*sc_wep_ctx;	/* work area */
+	struct awi_wep_algo	*sc_wep_algo;
+
+	char			sc_banner[AWI_BANNER_LEN];
 	struct awi_mib_local	sc_mib_local;
 	struct awi_mib_addr	sc_mib_addr;
 	struct awi_mib_mac	sc_mib_mac;
@@ -186,4 +203,32 @@ void	awi_reset __P((struct awi_softc *));
 #ifdef __NetBSD__
 int	awi_activate __P((struct device *, enum devact));
 int	awi_detach __P((struct awi_softc *));
+void	awi_power __P((struct awi_softc *, int));
+#endif
+
+void awi_stop __P((struct awi_softc *sc));
+int awi_init __P((struct awi_softc *sc));
+int awi_init_region __P((struct awi_softc *));
+int awi_wicfg __P((struct ifnet *, u_long, caddr_t));
+
+int awi_wep_getalgo __P((struct awi_softc *));
+int awi_wep_setalgo __P((struct awi_softc *, int));
+int awi_wep_setkey __P((struct awi_softc *, int, unsigned char *, int));
+int awi_wep_getkey __P((struct awi_softc *, int, unsigned char *, int *));
+struct mbuf *awi_wep_encrypt __P((struct awi_softc *, struct mbuf *, int));
+
+#ifdef __FreeBSD__
+/* Provide mem* for compat with NetBSD to fix LINT */
+static __inline int
+memcmp(const void *b1, const void *b2, size_t len)
+{
+	return (bcmp(b1, b2, len));
+}
+
+static __inline void *
+memset(void *b, int c, size_t len)
+{
+	bzero(b, len);
+	return (b);
+}
 #endif
