@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.75 2002/10/25 02:12:33 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.76 2002/10/28 17:59:44 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1766,3 +1766,7 @@ crypto/dist/heimdal/kadmin/version4.c		1.2
 libexec/ftpd/cmds.c				1.19
 
   Correct RFC959 compliance in quoting lines starting with digits (page 36).
+
+sys/netinet6/esp_input.c			1.27
+
+  Increase correct statistics on ESP packet length check.  Fixes KAME PR#445.
