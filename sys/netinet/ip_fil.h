@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.11 1997/05/25 12:40:15 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.12 1997/05/27 01:17:04 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.11 1997/05/25 12:40:15 darrenr Exp $
+ * $Id: ip_fil.h,v 1.12 1997/05/27 01:17:04 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -320,12 +320,22 @@ extern	int	send_reset __P((struct ip *, struct ifnet *));
 extern	int	icmp_error __P((struct ip *, struct ifnet *));
 extern	int	ipllog __P((void));
 extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
+# if defined(__NetBSD__)
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
+#else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+#endif
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #else /* #ifndef _KERNEL */
-extern	int	iplattach __P((void));
-extern	int	ipldetach __P((void));
+/* Pseudo-device attach routine; no-op, really. */
+# if defined(__NetBSD__)
+extern	void	ipfilterattach __P((int));
+# else
+extern	void	iplattach __P((int));
+# endif
+extern	int	ipl_enable __P((void));
+extern	int	ipl_disable __P((void));
 # if	SOLARIS
 extern	int	fr_check __P((struct ip *, int, struct ifnet *, int, qif_t *,
 			      queue_t *, mblk_t **));
@@ -355,7 +365,11 @@ extern	int	iplidentify __P((char *));
 extern	u_short	fr_tcpsum __P((struct mbuf *, ip_t *, tcphdr_t *));
 #  if (_BSDI_VERSION >= 199510) || (__FreeBSD_version >= 220000) || \
       (NetBSD >= 199511)
+#   if defined(__NetBSD__)
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+#   else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+#   endif
 extern	int	iplopen __P((dev_t, int, int, struct proc *));
 extern	int	iplclose __P((dev_t, int, int, struct proc *));
 #  elif !defined(__NetBSD__) || (NetBSD < 199609)
