@@ -99,7 +99,7 @@ struct pipemapping {
 	vsize_t		cnt;		/* number of chars in buffer */
 	voff_t		pos;		/* current position within page */
 	int		npages;		/* how many pages allocated */
-	struct vm_page **ms;
+	struct vm_page	**pgs;		/* pointers to the pages */
 };
 #endif
 
