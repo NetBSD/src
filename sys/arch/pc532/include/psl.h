@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 1995/08/25 07:52:19 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.11 1995/08/29 22:40:55 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,14 +57,8 @@
 #define PSL_P		0x00000400	/* Prevent TRC trap */
 #define	PSL_I		0x00000800	/* interrupt enable bit */
 
-#define	PSL_MBZ		0x00000000	/* must be zero bits */
-#define	PSL_MBO		0x00000000	/* must be one bits */
-
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
-#define	PSL_USERCLR	(PSL_I)
-
-/* The PSR versions ... */
-#define PSR_USR PSL_USER
+#define	PSL_USERSTATIC	(PSL_USER | PSL_US | PSL_I)
 
 /*
  * Structure of the software interrupt table

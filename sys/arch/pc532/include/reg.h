@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.9 1995/07/28 08:03:29 phil Exp $	*/
+/*	$NetBSD: reg.h,v 1.10 1995/08/29 22:40:59 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,44 +72,25 @@
 /* The reg struct .. in the order of above. */
 
 struct reg {
-	unsigned int 	r_r7;
-	unsigned int 	r_r6;
-	unsigned int 	r_r5;
-	unsigned int 	r_r4;
-	unsigned int 	r_r3;
-	unsigned int 	r_r2;
-	unsigned int 	r_r1;
-	unsigned int 	r_r0;
+	int	r_r7;
+	int	r_r6;
+	int	r_r5;
+	int	r_r4;
+	int	r_r3;
+	int	r_r2;
+	int	r_r1;
+	int	r_r0;
 
-	unsigned int 	r_sp;
-	unsigned int 	r_sb;
-	unsigned int 	r_fp;
-	unsigned int 	r_pc;
-	unsigned int 	r_psr;
+	int	r_sp;
+	int	r_sb;
+	int	r_fp;
+	int	r_pc;
+	short	r_mod;
+	short	r_psr;
 };
 
 struct fpreg {
-	double	r_f0;
-	double	r_f1;
-	double	r_f2;
-	double	r_f3;
-	double	r_f4;
-	double	r_f5;
-	double	r_f6;
-	double	r_f7;
-
-	unsigned int 	r_fpsr;
+	int    r_fsr;
+	double r_freg[8];
 };
-
-
-/*
- * Registers accessible to ptrace(2) syscall for debugger
- */
-#define	NIPCREG 13
-#ifdef IPCREG
-int ipcreg[NIPCREG] =
-  { REG_R0, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7,
-      REG_SP, REG_SB, REG_FP, REG_PC, REG_PSR };
-#endif
-
-#endif
+#endif /* _MACHINE_REG_H_ */

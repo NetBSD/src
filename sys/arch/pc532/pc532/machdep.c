@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1995/08/25 07:49:10 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1995/08/29 22:37:49 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -87,6 +87,7 @@ vm_map_t buffer_map;
 
 /* A local function... */
 void reboot_cpu();
+void dumpsys __P((void));
 
 
 /* the following is used externally (sysctl_hw) */
@@ -698,36 +699,6 @@ microtime(tvp)
 	splx(s);
 }
 
-physstrat(bp, strat, prio)
-	struct buf *bp;
-	int (*strat)(), prio;
-{
-	register int s;
-	caddr_t baddr;
-
-	/*
-	 * vmapbuf clobbers b_addr so we must remember it so that it
-	 * can be restored after vunmapbuf.  This is truely rude, we
-	 * should really be storing this in a field in the buf struct
-	 * but none are available and I didn't want to add one at
-	 * this time.  Note that b_addr for dirty page pushes is 
-	 * restored in vunmapbuf. (ugh!)
-	 */
-	baddr = bp->b_un.b_addr;
-	vmapbuf(bp);
-	(*strat)(bp);
-	/* pageout daemon doesn't wait for pushed pages */
-	if (bp->b_flags & B_DIRTY)
-		return;
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		sleep((caddr_t)bp, prio);
-	splx(s);
-	vunmapbuf(bp);
-	bp->b_un.b_addr = baddr;
-}
-
-
 /*
  * Strange exec values!  (Do we want to support a minix a.out header?)
  */
@@ -736,7 +707,6 @@ cpu_exec_aout_makecmds()
 {
   return ENOEXEC;
 };
-
 
 /*
  * Clear registers on exec
