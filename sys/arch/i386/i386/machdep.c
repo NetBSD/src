@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 1995/04/10 13:14:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 1995/04/13 19:36:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1057,13 +1057,13 @@ init386(first_avail)
 	gdt_segs[GCODE_SEL].ssd_limit = i386_btop(i386_round_page(&etext)) - 1;
 #endif
 	for (x = 0; x < NGDT; x++)
-		ssdtosd(gdt_segs + x, gdt + x);
+		ssdtosd(&gdt_segs[x], &gdt[x].sd);
 
 	/* make ldt memory segments */
 	ldt_segs[LUCODE_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
 	ldt_segs[LUDATA_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
 	for (x = 0; x < NLDT; x++)
-		ssdtosd(ldt_segs + x, ldt + x);
+		ssdtosd(&ldt_segs[x], &ldt[x].sd);
 
 	/* exceptions */
 	for (x = 0; x < NIDT; x++)
