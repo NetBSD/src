@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.160.2.2 1997/07/17 13:42:46 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.160.2.3 1997/07/17 17:03:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -57,6 +57,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/wdreg.h>
 #include <dev/isa/wdlink.h>
+#include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
 
@@ -125,8 +126,8 @@ wdprobe(parent, match, aux)
 		return 0;
 
 	drive = d_link->drive;
-	if (cf->cf_loc[WDCCF_DRIVE] != WDCCF_DRIVE_DEFAULT &&
-		cf->cf_loc[WDCCF_DRIVE] != drive)
+	if (cf->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
+		cf->cf_loc[ATACF_DRIVE] != drive)
 		return 0;
 
 	return 1;
