@@ -755,9 +755,12 @@ c_decode_option (argc, argv)
   else if (!strcmp (p, "-Wno-traditional"))
     warn_traditional = 0;
   else if (!strcmp (p, "-Wnetbsd-format-audit"))
-    warn_format = 2;
+    warn_format = MAX(warn_format, 2);
   else if (!strcmp (p, "-Wformat"))
-    warn_format = warn_format_y2k = warn_format_extra_args = 1;
+    {
+      warn_format_y2k = warn_format_extra_args = 1;
+      warn_format = MAX(warn_format, 1);
+    }
   else if (!strcmp (p, "-Wno-format"))
     warn_format = warn_format_y2k = 0;
   else if (!strcmp (p, "-Wno-format-extra-args"))
@@ -837,7 +840,8 @@ c_decode_option (argc, argv)
       warn_return_type = 1;
       warn_unused = 1;
       warn_switch = 1;
-      warn_format = warn_format_y2k = 1;
+      warn_format_y2k = 1;
+      warn_format = MAX(warn_format, 1);
       warn_char_subscripts = 1;
       warn_parentheses = 1;
       warn_missing_braces = 1;
