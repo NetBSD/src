@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.22 2003/09/19 05:41:33 itojun Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.23 2004/03/20 20:26:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -29,39 +29,6 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1997, Christos Zoulas
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- *	This product includes software developed by Christos Zoulas.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
@@ -69,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.22 2003/09/19 05:41:33 itojun Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.23 2004/03/20 20:26:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,26 +66,24 @@ static char *linebuf = NULL;
 static size_t maxlen = 0;
 
 
-static void doname __P((char *));
-static void dorefname __P((char *));
-static void getfrom __P((char *));
-static void oldman __P((char *, char *));
-static void newman __P((char *, char *));
-static void remcomma __P((char *, size_t *));
-static void remquote __P((char *, size_t *));
-static void fixxref __P((char *, size_t *));
-static void split __P((char *, char *));
-static void usage __P((void));
+static void doname(char *);
+static void dorefname(char *);
+static void getfrom(char *);
+static void oldman(char *, char *);
+static void newman(char *, char *);
+static void remcomma(char *, size_t *);
+static void remquote(char *, size_t *);
+static void fixxref(char *, size_t *);
+static void split(char *, char *);
+static void usage(void);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 /* The .SH NAMEs that are allowed. */
-char *names[] = { "name", "namn", 0 };
+static const char *names[] = { "name", "namn", 0 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -148,12 +113,11 @@ main(argc, argv)
 
 	for (; *argv; ++argv)
 		getfrom(*argv);
-	exit(0);
+	return 0;
 }
 
-void
-getfrom(pathname)
-	char *pathname;
+static void
+getfrom(char *pathname)
 {
 	char *name;
 	char *line;
@@ -170,7 +134,10 @@ getfrom(pathname)
 	for (;;) {
 		if ((line = fgetln(stdin, &len)) == NULL) {
 			if (typeflag)
-				printf("%-60s\tUNKNOWN\n", pathname);
+				(void)printf("%-60s\tUNKNOWN\n", pathname);
+			if (verbose)
+				warnx("missing .TH or .Dt section in `%s'",
+				    pathname);
 			return;
 		}
 		if (len < 3)
@@ -178,18 +145,19 @@ getfrom(pathname)
 		if (line[0] != '.')
 			continue;
 		if ((line[1] == 'T' && line[2] == 'H') ||
-		    (line[1] == 't' && line[2] == 'h'))
-			return oldman(pathname, name);
-		if (line[1] == 'D' && line[2] == 't')
-			return newman(pathname, name);
+		    (line[1] == 't' && line[2] == 'h')) {
+			oldman(pathname, name);
+			return;
+		}
+		if (line[1] == 'D' && line[2] == 't') {
+			newman(pathname, name);
+			return;
+		}
 	}
-	if (verbose)
-		warnx("missing .TH or .Dt section in `%s'", pathname);
 }
 
 static void
-oldman(pathname, name)
-	char *pathname, *name;
+oldman(char *pathname, char *name)
 {
 	char *line, *ext, *s, *newlinebuf;
 	size_t len, i, extlen;
@@ -197,7 +165,7 @@ oldman(pathname, name)
 	size_t newmaxlen;
 
 	if (typeflag) {
-		printf("%-60s\tOLD\n", pathname);
+		(void)printf("%-60s\tOLD\n", pathname);
 		return;
 	}
 	for (;;) {
@@ -293,13 +261,12 @@ oldman(pathname, name)
 	if (intro)
 		split(linebuf, name);
 	else
-		printf("%s\n", linebuf);
+		(void)printf("%s\n", linebuf);
 	return;
 }
 
 static void
-newman(pathname, name)
-	char *pathname, *name;
+newman(char *pathname, char *name)
 {
 	char *line, *ext, *s, *newlinebuf;
 	size_t len, i, extlen;
@@ -307,7 +274,7 @@ newman(pathname, name)
 	size_t newmaxlen;
 
 	if (typeflag) {
-		printf("%-60s\tNEW\n", pathname);
+		(void)printf("%-60s\tNEW\n", pathname);
 		return;
 	}
 	for (;;) {
@@ -412,16 +379,14 @@ newman(pathname, name)
 	if (intro)
 		split(linebuf, name);
 	else
-		printf("%s\n", linebuf);
+		(void)printf("%s\n", linebuf);
 }
 
 /*
  * convert " ," -> " "
  */
 static void
-remcomma(line, len)
-	char *line;
-	size_t *len;
+remcomma(char *line, size_t *len)
 {
 	char *pline = line, *loc;
 	size_t plen = *len;
@@ -441,10 +406,8 @@ remcomma(line, len)
 /*
  * Get rid of quotes in macros.
  */
-static
-void remquote(line, len)
-	char *line;
-	size_t *len;
+static void
+remquote(char *line, size_t *len)
 {
 	char *loc;
 	char *pline = &line[4];
@@ -465,9 +428,7 @@ void remquote(line, len)
  * Handle cross references
  */
 static void
-fixxref(line, len)
-	char *line;
-	size_t *len;
+fixxref(char *line, size_t *len)
 {
 	char *loc;
 	char *pline = &line[4];
@@ -487,35 +448,34 @@ fixxref(line, len)
 }
 
 static void
-doname(name)
-	char *name;
+doname(char *name)
 {
 	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
-		putchar(*dp++);
+		(void)putchar(*dp++);
 	if (*dp)
 		for (ep = dp+1; *ep; ep++)
 			if (*ep == '.') {
-				putchar(*dp++);
+				(void)putchar(*dp++);
 				goto again;
 			}
-	putchar('(');
+	(void)putchar('(');
 	if (*dp)
 		dp++;
 	while (*dp)
-		putchar (*dp++);
-	putchar(')');
-	putchar(' ');
+		(void)putchar(*dp++);
+	(void)putchar(')');
+	(void)putchar(' ');
 }
 
 static void
-split(line, name)
-	char *line, *name;
+split(char *line, char *name)
 {
 	char *cp, *dp;
-	char *sp, *sep;
+	char *sp;
+	const char *sep;
 
 	cp = strchr(line, '-');
 	if (cp == 0)
@@ -537,37 +497,36 @@ split(line, name)
 			for (++cp; *cp == ' ' || *cp == '\t'; cp++)
 				;
 		}
-		printf("%s%s\t", sep, dp);
+		(void)printf("%s%s\t", sep, dp);
 		dorefname(name);
-		printf("\t- %s", sp);
+		(void)printf("\t- %s", sp);
 	}
-	putchar('\n');
+	(void)putchar('\n');
 }
 
 static void
-dorefname(name)
-	char *name;
+dorefname(char *name)
 {
 	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
-		putchar(*dp++);
+		(void)putchar(*dp++);
 	if (*dp)
 		for (ep = dp+1; *ep; ep++)
 			if (*ep == '.') {
-				putchar(*dp++);
+				(void)putchar(*dp++);
 				goto again;
 			}
-	putchar('.');
+	(void)putchar('.');
 	if (*dp)
 		dp++;
 	while (*dp)
-		putchar (*dp++);
+		(void)putchar(*dp++);
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "Usage: %s [-itw] file ...\n", getprogname());
