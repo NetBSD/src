@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.23 1994/10/26 07:24:26 cgd Exp $	*/
+/*	$NetBSD: ite.c,v 1.24 1994/12/13 14:20:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,7 +91,7 @@ struct	tty *ite_tty[NITE];
 struct  ite_softc *kbd_ite = NULL;
 struct  ite_softc ite_softc[NITE];
 
-void	itestart(), iterestart();
+void	itestart();
 
 /*
  * Primary attribute buffer to be used by the first bitmapped console
@@ -319,17 +319,6 @@ iteioctl(dev, cmd, addr, flag, p)
 }
 
 void
-iterestart(tp)
-	register struct tty *tp;
-{
-	register int s = splite();
-
-	tp->t_state &= ~TS_TIMEOUT;
-	itestart(tp);
-	splx(s);
-}
-
-void
 itestart(tp)
 	register struct tty *tp;
 {
@@ -388,11 +377,19 @@ itestart(tp)
 		}
 		if (hiwat) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout(iterestart, tp, 1);
+			timeout(ttrstrt, tp, 1);
 		}
 	}
 	tp->t_state &= ~TS_BUSY;
 	splx(s);
+}
+
+void
+itestart(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
 }
 
 itefilter(stat, c)
