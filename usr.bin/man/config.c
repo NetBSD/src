@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.12 2000/05/28 16:23:55 he Exp $	*/
+/*	$NetBSD: config.c,v 1.13 2000/05/28 19:30:19 dante Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.12 2000/05/28 16:23:55 he Exp $");
+__RCSID("$NetBSD: config.c,v 1.13 2000/05/28 19:30:19 dante Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,6 +217,9 @@ addentry(tp, newent, head)
 		TAILQ_INSERT_TAIL(&tp->list, ep, q);
 }
 
+/*
+ * removelist() and renamelist() are used by catman(8)
+ */
 void
 removelist(name)
 	const char *name;
