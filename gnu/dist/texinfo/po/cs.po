@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: texinfo 4.0\n"
-"POT-Creation-Date: 2002-11-13 04:36-0800\n"
+"POT-Creation-Date: 2003-01-24 13:32-0800\n"
 "PO-Revision-Date: 2000-10-31 15:17+01:00\n"
 "Last-Translator: Vladimir Michl <Vladimir.Michl@seznam.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -231,8 +231,8 @@ msgstr ""
 msgid "Try --help for more information.\n"
 msgstr "Více informací mù¾ete získat pomocí pøepínaèe --help.\n"
 
-#: info/info.c:279 info/infokey.c:139 makeinfo/makeinfo.c:696
-#: util/install-info.c:1250 util/texindex.c:346
+#: info/info.c:279 info/infokey.c:139 makeinfo/makeinfo.c:698
+#: util/install-info.c:1252 util/texindex.c:346
 #, c-format
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
@@ -950,49 +950,49 @@ msgid ""
 "  --version            display version information and exit.\n"
 msgstr ""
 
-#: info/infomap.c:1398
+#: info/infomap.c:1512
 #, c-format
 msgid "Ignoring invalid infokey file `%s' - too small"
 msgstr ""
 
-#: info/infomap.c:1401
+#: info/infomap.c:1515
 #, c-format
 msgid "Ignoring invalid infokey file `%s' - too big"
 msgstr ""
 
-#: info/infomap.c:1414
+#: info/infomap.c:1528
 #, c-format
 msgid "Error reading infokey file `%s' - short read"
 msgstr ""
 
-#: info/infomap.c:1432
+#: info/infomap.c:1546
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad magic numbers) -- run infokey to update it"
 msgstr ""
 
-#: info/infomap.c:1438
+#: info/infomap.c:1552
 #, c-format
 msgid "Your infokey file `%s' is out of date -- run infokey to update it"
 msgstr ""
 
-#: info/infomap.c:1451
+#: info/infomap.c:1565
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad section length) -- run infokey to update it"
 msgstr ""
 
-#: info/infomap.c:1471
+#: info/infomap.c:1585
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad section code) -- run infokey to update it"
 msgstr ""
 
-#: info/infomap.c:1609
+#: info/infomap.c:1723
 msgid "Bad data in infokey file -- some key bindings ignored"
 msgstr ""
 
-#: info/infomap.c:1660
+#: info/infomap.c:1774
 msgid "Bad data in infokey file -- some var settings ignored"
 msgstr ""
 
@@ -1096,7 +1096,7 @@ msgstr "Pøesun na konec øádku"
 msgid "Move to the start of the line"
 msgstr "Pøesun na zaèátek øádku"
 
-#: info/session.c:885 makeinfo/node.c:1364
+#: info/session.c:885 makeinfo/node.c:1365
 msgid "Next"
 msgstr "Dal¹í"
 
@@ -1519,65 +1519,65 @@ msgstr "interaktivní hledání: "
 msgid "Failing "
 msgstr "Bezvýsledné "
 
-#: info/session.c:4340
+#: info/session.c:4346
 msgid "Move to the previous cross reference"
 msgstr "Pøesun na pøedcházející køí¾ový odkaz"
 
-#: info/session.c:4349
+#: info/session.c:4355
 msgid "Move to the next cross reference"
 msgstr "Pøesun na následující køí¾ový odkaz"
 
-#: info/session.c:4359
+#: info/session.c:4365
 msgid "Select reference or menu item appearing on this line"
 msgstr "Zobrazení odkazu nebo polo¾ky menu, která je na tomto øádku"
 
-#: info/session.c:4381
+#: info/session.c:4387
 msgid "Cancel current operation"
 msgstr "Zru¹ení aktuální operace"
 
-#: info/session.c:4388
+#: info/session.c:4394
 msgid "Quit"
 msgstr "Ukonèení operace"
 
-#: info/session.c:4397
+#: info/session.c:4403
 msgid "Move the cursor to a specific line of the window"
 msgstr "Pøesun kurzoru na zadaný øádek okna"
 
-#: info/session.c:4429
+#: info/session.c:4435
 msgid "Redraw the display"
 msgstr "Pøekreslení obrazovky"
 
-#: info/session.c:4466
+#: info/session.c:4472
 msgid "Quit using Info"
 msgstr "Ukonèení Infa"
 
-#: info/session.c:4479
+#: info/session.c:4485
 msgid "Run command bound to this key's lowercase variant"
 msgstr ""
 
-#: info/session.c:4491
+#: info/session.c:4497
 #, c-format
 msgid "Unknown command (%s)."
 msgstr "Neznámý pøíkaz (%s)."
 
-#: info/session.c:4494
+#: info/session.c:4500
 msgid "\"\" is invalid"
 msgstr "Sekvence kláves \"\" je neplatná"
 
-#: info/session.c:4495
+#: info/session.c:4501
 #, c-format
 msgid "\"%s\" is invalid"
 msgstr "Sekvence kláves \"%s\" je neplatná"
 
-#: info/session.c:4713
+#: info/session.c:4719
 msgid "Add this digit to the current numeric argument"
 msgstr "Pøidání této èíslice do aktuálního èíselného argumentu"
 
-#: info/session.c:4722
+#: info/session.c:4728
 msgid "Start (or multiply by 4) the current numeric argument"
 msgstr "Zaèátek (nebo dìlení ètyømi) aktuálního èíselného argumentu"
 
-#: info/session.c:4737
+#: info/session.c:4743
 msgid "Internally used by \\[universal-argument]"
 msgstr "Vnitønì u¾íváno funkcí \\[universal-argument]"
 
@@ -1673,152 +1673,152 @@ msgstr "-%s%s-Info: (%s)%s, øádkù: %d --%s--"
 msgid " Subfile: %s"
 msgstr " Podsoubor: %s"
 
-#: lib/getopt.c:692 lib/getopt.c:704
+#: lib/getopt.c:688 lib/getopt.c:700
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr "%s: pøepínaè `%s' není jednoznaèný\n"
 
-#: lib/getopt.c:737 lib/getopt.c:741
+#: lib/getopt.c:733 lib/getopt.c:737
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr "%s: pøepínaè `--%s' musí být zadán bez argumentu\n"
 
-#: lib/getopt.c:750 lib/getopt.c:755
+#: lib/getopt.c:746 lib/getopt.c:751
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr "%s: pøepínaè `%c%s' musí být zadán bez argumentu\n"
 
-#: lib/getopt.c:791 lib/getopt.c:804 lib/getopt.c:1093 lib/getopt.c:1106
+#: lib/getopt.c:787 lib/getopt.c:800 lib/getopt.c:1089 lib/getopt.c:1102
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr "%s: pøepínaè `%s' vy¾aduje argument\n"
 
-#: lib/getopt.c:842 lib/getopt.c:845
+#: lib/getopt.c:838 lib/getopt.c:841
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr "%s: neznámý pøepínaè `--%s'\n"
 
-#: lib/getopt.c:853 lib/getopt.c:856
+#: lib/getopt.c:849 lib/getopt.c:852
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr "%s: neznámý pøepínaè `%c%s'\n"
 
-#: lib/getopt.c:903 lib/getopt.c:906
+#: lib/getopt.c:899 lib/getopt.c:902
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr "%s: neznámý pøepínaè -- %c\n"
 
-#: lib/getopt.c:912 lib/getopt.c:915
+#: lib/getopt.c:908 lib/getopt.c:911
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr "%s: neznámý pøepínaè -- %c\n"
 
-#: lib/getopt.c:962 lib/getopt.c:973 lib/getopt.c:1159 lib/getopt.c:1172
+#: lib/getopt.c:958 lib/getopt.c:969 lib/getopt.c:1155 lib/getopt.c:1168
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr "%s: pøepínaè vy¾aduje argument -- %c\n"
 
-#: lib/getopt.c:1025 lib/getopt.c:1036
+#: lib/getopt.c:1021 lib/getopt.c:1032
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr "%s: pøepínaè `-W %s' není jednoznaèný\n"
 
-#: lib/getopt.c:1060 lib/getopt.c:1072
+#: lib/getopt.c:1056 lib/getopt.c:1068
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: pøepínaè `-W %s' musí být zadán bez argumentu\n"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "January"
 msgstr "Leden"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "February"
 msgstr "Únor"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "March"
 msgstr "Bøezen"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "April"
 msgstr "Duben"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "May"
 msgstr "Kvìten"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "June"
 msgstr "Èerven"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "July"
 msgstr "Èervenec"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "August"
 msgstr "Srpen"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "September"
 msgstr "Záøí"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "October"
 msgstr "Øíjen"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:525
 msgid "November"
 msgstr "Listopad"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:525
 msgid "December"
 msgstr "Prosinec"
 
-#: makeinfo/cmds.c:666
+#: makeinfo/cmds.c:667
 #, c-format
 msgid "unlikely character %c in @var"
 msgstr "nepravdìpodobný znak %c ve @var"
 
-#: makeinfo/cmds.c:709
+#: makeinfo/cmds.c:710
 msgid "@sc argument all uppercase, thus no effect"
 msgstr "@sc argument je celý velkými písmeny, zbyteènì"
 
-#: makeinfo/cmds.c:767
+#: makeinfo/cmds.c:768
 #, fuzzy, c-format
 msgid "`{' expected, but saw `%c'"
 msgstr "`@end' vy¾aduje `%s', ale vidí `%s'"
 
-#: makeinfo/cmds.c:797
+#: makeinfo/cmds.c:808
 msgid "end of file inside verb block"
 msgstr ""
 
-#: makeinfo/cmds.c:805
+#: makeinfo/cmds.c:816
 #, fuzzy, c-format
 msgid "`}' expected, but saw `%c'"
 msgstr "`@end' vy¾aduje `%s', ale vidí `%s'"
 
-#: makeinfo/cmds.c:970
+#: makeinfo/cmds.c:984
 #, c-format
 msgid "%c%s is obsolete"
 msgstr "Pøíkaz %c%s je zastaralý"
 
-#: makeinfo/cmds.c:1049
+#: makeinfo/cmds.c:1063
 #, c-format
 msgid "@sp requires a positive numeric argument, not `%s'"
 msgstr "@sp vy¾aduje kladný èíselný argument a ne `%s'"
 
-#: makeinfo/cmds.c:1384 makeinfo/cmds.c:1410 makeinfo/footnote.c:81
+#: makeinfo/cmds.c:1400 makeinfo/cmds.c:1426 makeinfo/footnote.c:81
 #, c-format
 msgid "Bad argument to %c%s"
 msgstr "©patný argument pro %c%s"
 
-#: makeinfo/cmds.c:1394 makeinfo/makeinfo.c:4156
+#: makeinfo/cmds.c:1410 makeinfo/makeinfo.c:4171
 msgid "asis"
 msgstr "asis"
 
-#: makeinfo/cmds.c:1396 makeinfo/makeinfo.c:4158
+#: makeinfo/cmds.c:1412 makeinfo/makeinfo.c:4173
 msgid "none"
 msgstr "none"
 
@@ -1944,83 +1944,83 @@ msgstr "Polo¾ka pro rejstøík `%s' je mimo v¹echny uzly"
 msgid "(outside of any node)"
 msgstr "(mimo v¹echny uzly)"
 
-#: makeinfo/insertion.c:200
+#: makeinfo/insertion.c:201
 msgid "Broken-Type in insertion_type_pname"
 msgstr "Chybný typ v insertion_type_pname"
 
-#: makeinfo/insertion.c:275
+#: makeinfo/insertion.c:276
 msgid "Enumeration stack overflow"
 msgstr "Výpoèetní zásobník pøetekl"
 
-#: makeinfo/insertion.c:307
+#: makeinfo/insertion.c:308
 #, c-format
 msgid "lettering overflow, restarting at %c"
 msgstr "písmenkování pøeteklo, znovu zaèínám na %c"
 
-#: makeinfo/insertion.c:580
+#: makeinfo/insertion.c:581
 #, c-format
 msgid "%s requires an argument: the formatter for %citem"
 msgstr "%s vy¾aduje argument : formátovaè pro %citem"
 
-#: makeinfo/insertion.c:740
+#: makeinfo/insertion.c:741
 #, c-format
 msgid "`@end' expected `%s', but saw `%s'"
 msgstr "`@end' vy¾aduje `%s', ale vidí `%s'"
 
-#: makeinfo/insertion.c:986
+#: makeinfo/insertion.c:988
 #, c-format
 msgid "No matching `%cend %s'"
 msgstr "Chybí odpovídající `%cend %s'"
 
-#: makeinfo/insertion.c:1147
+#: makeinfo/insertion.c:1153
 #, c-format
 msgid "%s requires letter or digit"
 msgstr "%s vy¾aduje písmeno nebo èíslici"
 
-#: makeinfo/insertion.c:1227
+#: makeinfo/insertion.c:1233
 msgid "end of file inside verbatim block"
 msgstr ""
 
-#: makeinfo/insertion.c:1406
+#: makeinfo/insertion.c:1412
 msgid "@menu seen before first @node, creating `Top' node"
 msgstr "@menu spatøeno pøed prvním @node, vytvoøen uzel `Top'"
 
-#: makeinfo/insertion.c:1407
+#: makeinfo/insertion.c:1413
 msgid ""
 "perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
 msgstr ""
 "proto¾e vá¹ uzel @top by mìl být uzavøen v @ifnottex spí¹e ne¾ v @ifinfo?"
 
-#: makeinfo/insertion.c:1419
+#: makeinfo/insertion.c:1425
 msgid "@detailmenu seen before first node, creating `Top' node"
 msgstr "@detailmenu spatøeno pøed prvním uzlem, vytvoøen uzel `Top'"
 
-#: makeinfo/insertion.c:1434
+#: makeinfo/insertion.c:1440
 #, c-format
 msgid "Unmatched `%c%s'"
 msgstr "Nepárový `%c%s'"
 
-#: makeinfo/insertion.c:1441
+#: makeinfo/insertion.c:1447
 #, c-format
 msgid "`%c%s' needs something after it"
 msgstr "`%c%s' potøebuje nìjaký argument"
 
-#: makeinfo/insertion.c:1447
+#: makeinfo/insertion.c:1453
 #, c-format
 msgid "Bad argument to `%s', `%s', using `%s'"
 msgstr "Chybný argument pro `%s', `%s', pou¾ívám `%s'"
 
-#: makeinfo/insertion.c:1543
+#: makeinfo/insertion.c:1549
 #, c-format
 msgid "@%s not meaningful inside `@%s' block"
 msgstr "@%s není myslitelné uvnitø `@%s' bloku"
 
-#: makeinfo/insertion.c:1552
+#: makeinfo/insertion.c:1558
 #, c-format
 msgid "@itemx not meaningful inside `%s' block"
 msgstr "@itemx není myslitelný uvnitø `%s' bloku"
 
-#: makeinfo/insertion.c:1736
+#: makeinfo/insertion.c:1742
 #, c-format
 msgid "%c%s found outside of an insertion block"
 msgstr "%c%s nalezen mimo vkládaný blok"
@@ -2103,7 +2103,7 @@ msgstr "%s:%d: varování: "
 msgid "Too many errors!  Gave up.\n"
 msgstr "Pøíli¹ mnoho chyb!  Konec.\n"
 
-#: makeinfo/makeinfo.c:353 makeinfo/makeinfo.c:2036
+#: makeinfo/makeinfo.c:353 makeinfo/makeinfo.c:2051
 #, c-format
 msgid "Misplaced %c"
 msgstr "©patnì umístìný znak %c"
@@ -2253,77 +2253,77 @@ msgstr ""
 "obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky k pøekladu\n"
 "zasílejte na <cs@li.org> (èesky)."
 
-#: makeinfo/makeinfo.c:577 makeinfo/makeinfo.c:600 makeinfo/makeinfo.c:662
-#: makeinfo/makeinfo.c:683
+#: makeinfo/makeinfo.c:579 makeinfo/makeinfo.c:602 makeinfo/makeinfo.c:664
+#: makeinfo/makeinfo.c:685
 #, c-format
 msgid "%s: %s arg must be numeric, not `%s'.\n"
 msgstr "%s: %s argument musí být èíslo ne `%s'.\n"
 
-#: makeinfo/makeinfo.c:590
+#: makeinfo/makeinfo.c:592
 #, c-format
 msgid "Couldn't open macro expansion output `%s'"
 msgstr "Výstup %s pro expanzi makra nelze otevøít"
 
-#: makeinfo/makeinfo.c:593
+#: makeinfo/makeinfo.c:595
 msgid "Cannot specify more than one macro expansion output"
 msgstr "Pro expanzi makra nelze zadat více ne¾ jeden výstup"
 
-#: makeinfo/makeinfo.c:631
+#: makeinfo/makeinfo.c:633
 #, c-format
 msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
 msgstr ""
 "%s: argument pro --paragraph-indent musí být èíslo|`none'|`asis', ale ne `%"
 "s'.\n"
 
-#: makeinfo/makeinfo.c:672
+#: makeinfo/makeinfo.c:674
 #, c-format
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgstr ""
 "%s: argument k --footnote-style musí být `separate'|`end', ale ne `%s'.\n"
 
-#: makeinfo/makeinfo.c:731
+#: makeinfo/makeinfo.c:733
 #, c-format
 msgid "%s: missing file argument.\n"
 msgstr "%s: chybí argument jména souboru.\n"
 
-#: makeinfo/makeinfo.c:906
+#: makeinfo/makeinfo.c:921
 #, c-format
 msgid "Expected `%s'"
 msgstr "Oèekáváno `%s'"
 
-#: makeinfo/makeinfo.c:1373
+#: makeinfo/makeinfo.c:1388
 msgid "File exists, but is not a directory"
 msgstr ""
 
-#: makeinfo/makeinfo.c:1374
+#: makeinfo/makeinfo.c:1389
 #, c-format
 msgid "Can't create directory `%s': %s"
 msgstr ""
 
-#: makeinfo/makeinfo.c:1422
+#: makeinfo/makeinfo.c:1437
 #, c-format
 msgid "No `%s' found in `%s'"
 msgstr "Soubor `%s' nenalezen v `%s'"
 
-#: makeinfo/makeinfo.c:1504
+#: makeinfo/makeinfo.c:1519
 #, c-format
 msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
 msgstr ""
 "%s: Vynechávám expanzi makra na stdout a expanze jde jako Info výstup.\n"
 
-#: makeinfo/makeinfo.c:1534
+#: makeinfo/makeinfo.c:1549
 #, c-format
 msgid "Making %s file `%s' from `%s'.\n"
 msgstr "Vytváøím %s soubor `%s' ze souboru `%s'.\n"
 
-#: makeinfo/makeinfo.c:1569
+#: makeinfo/makeinfo.c:1584
 #, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr ""
 "Toto je Info soubor %s, produkován programem makeinfo verze %s ze souboru %"
 "s.\n"
 
-#: makeinfo/makeinfo.c:1591
+#: makeinfo/makeinfo.c:1606
 #, c-format
 msgid ""
 "%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
@@ -2331,97 +2331,97 @@ msgstr ""
 "%s: Výstupní soubor maker `%s' byl odstranìn, proto¾e byly nalezeny chyby;\n"
 "u¾ijte pøepínaè --force k ponechání souboru.\n"
 
-#: makeinfo/makeinfo.c:1635
+#: makeinfo/makeinfo.c:1650
 #, c-format
 msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
 msgstr ""
 "%s: Výstupní soubor `%s' byl odstranìn, proto¾e byly nalezeny chyby;\n"
 "u¾ijte pøepínaè --force k ponechání souboru.\n"
 
-#: makeinfo/makeinfo.c:1863
+#: makeinfo/makeinfo.c:1878
 #, c-format
 msgid "Unknown command `%s'"
 msgstr "Neznámý pøíkaz `%s'"
 
-#: makeinfo/makeinfo.c:1885
+#: makeinfo/makeinfo.c:1900
 #, c-format
 msgid "Use braces to give a command as an argument to @%s"
 msgstr "Pou¾ijte závorky k zadání pøíkazu jako argumentu @%s"
 
-#: makeinfo/makeinfo.c:2078
+#: makeinfo/makeinfo.c:2093
 #, c-format
 msgid "%c%s expected `{...}'"
 msgstr "%c%s oèekáváno `{...}'"
 
-#: makeinfo/makeinfo.c:2108
+#: makeinfo/makeinfo.c:2123
 msgid "Unmatched }"
 msgstr "Nepárová }"
 
-#: makeinfo/makeinfo.c:2158
+#: makeinfo/makeinfo.c:2173
 msgid "NO_NAME!"
 msgstr "Funkce neexistuje!"
 
-#: makeinfo/makeinfo.c:2179
+#: makeinfo/makeinfo.c:2194
 #, c-format
 msgid "%c%s missing close brace"
 msgstr "%c%s chybìjící uzavírací závorka"
 
-#: makeinfo/makeinfo.c:2976
+#: makeinfo/makeinfo.c:2991
 msgid "First argument to cross-reference may not be empty"
 msgstr ""
 
-#: makeinfo/makeinfo.c:3036 makeinfo/makeinfo.c:3254 makeinfo/xml.c:1421
+#: makeinfo/makeinfo.c:3051 makeinfo/makeinfo.c:3269 makeinfo/xml.c:1422
 msgid "see "
 msgstr "viz"
 
-#: makeinfo/makeinfo.c:3036
+#: makeinfo/makeinfo.c:3051
 msgid "See "
 msgstr "Viz"
 
-#: makeinfo/makeinfo.c:3182
+#: makeinfo/makeinfo.c:3197
 #, c-format
 msgid "`.' or `,' must follow cross reference, not %c"
 msgstr "`.' nebo `,' musí následovat za køí¾ovým odkazem, ale ne za %c"
 
-#: makeinfo/makeinfo.c:3230
+#: makeinfo/makeinfo.c:3245
 msgid "First argument to @inforef may not be empty"
 msgstr ""
 
-#: makeinfo/makeinfo.c:3439
+#: makeinfo/makeinfo.c:3454
 #, fuzzy, c-format
 msgid "@image file `%s' (for HTML) not readable: %s"
 msgstr "soubor `%s' v pøíkazu @image je neèitelný: %s"
 
-#: makeinfo/makeinfo.c:3452
+#: makeinfo/makeinfo.c:3467
 #, fuzzy, c-format
 msgid "No `%s.png' or `.jpg', and no extension supplied"
 msgstr "®ádný .png nebo .jpg soubor pro `%s'"
 
-#: makeinfo/makeinfo.c:3502
+#: makeinfo/makeinfo.c:3517
 #, fuzzy, c-format
 msgid "@image file `%s' (for text) unreadable: %s"
 msgstr "soubor `%s' v pøíkazu @image je neèitelný: %s"
 
-#: makeinfo/makeinfo.c:3509
+#: makeinfo/makeinfo.c:3524
 msgid "@image missing filename argument"
 msgstr "pøíkaz @image postrádá jméno souboru"
 
-#: makeinfo/makeinfo.c:3706
+#: makeinfo/makeinfo.c:3721
 #, c-format
 msgid "{No value for `%s'}"
 msgstr "{Pro `%s' není hodnota}"
 
-#: makeinfo/makeinfo.c:3760
+#: makeinfo/makeinfo.c:3775
 #, c-format
 msgid "%c%s requires a name"
 msgstr "%c%s po¾aduje jméno"
 
-#: makeinfo/makeinfo.c:3866
+#: makeinfo/makeinfo.c:3881
 #, c-format
 msgid "Reached eof before matching @end %s"
 msgstr "Vstupní soubor skonèil a pøíkaz `@end %s' nebyl nalezen"
 
-#: makeinfo/makeinfo.c:4097
+#: makeinfo/makeinfo.c:4112
 #, c-format
 msgid "`%.40s...' is too long for expansion; not expanded"
 msgstr ""
@@ -2458,128 +2458,128 @@ msgstr "** Vícesloupcový výstup z posledního øádku:\n"
 msgid "* column #%d: output = %s\n"
 msgstr "* sloupec #%d: výstup = %s\n"
 
-#: makeinfo/node.c:276
+#: makeinfo/node.c:277
 #, c-format
 msgid "Node `%s' previously defined at line %d"
 msgstr "Uzel `%s' ji¾ byl definován na øádku %d"
 
-#: makeinfo/node.c:599
+#: makeinfo/node.c:600
 #, c-format
 msgid "Formatting node %s...\n"
 msgstr "Formátování uzlu %s...\n"
 
-#: makeinfo/node.c:660
-#, c-format
-msgid "Node `%s' requires a sectioning command (e.g. %c%s)"
+#: makeinfo/node.c:661
+#, fuzzy, c-format
+msgid "Node `%s' requires a sectioning command (e.g., %c%s)"
 msgstr "Uzel `%s' vy¾aduje pøíkaz na vytváøení sekcí (tøeba %c%s)"
 
-#: makeinfo/node.c:820
+#: makeinfo/node.c:821
 #, c-format
 msgid "No node name specified for `%c%s' command"
 msgstr "Pøíkazu `%c%s' nebyl zadán název uzlu"
 
-#: makeinfo/node.c:861 makeinfo/node.c:1082
+#: makeinfo/node.c:862 makeinfo/node.c:1083
 #, c-format
 msgid "Anchor `%s' and node `%s' map to the same file name"
 msgstr ""
 
-#: makeinfo/node.c:864
+#: makeinfo/node.c:865
 msgid "This @anchor command ignored; references to it will not work"
 msgstr ""
 
-#: makeinfo/node.c:866 makeinfo/node.c:1085
+#: makeinfo/node.c:867 makeinfo/node.c:1086
 msgid "Rename this anchor or use the `--no-split' option"
 msgstr ""
 
-#: makeinfo/node.c:896
+#: makeinfo/node.c:897
 #, c-format
 msgid "Unexpected string at end of split-HTML file `%s'"
 msgstr ""
 
-#: makeinfo/node.c:926
+#: makeinfo/node.c:927
 msgid "Node:"
 msgstr "Uzel:"
 
-#: makeinfo/node.c:936
+#: makeinfo/node.c:937
 msgid "Next:"
 msgstr "Dal¹í:"
 
-#: makeinfo/node.c:946
+#: makeinfo/node.c:947
 msgid "Previous:"
 msgstr "Pøedchozí:"
 
-#: makeinfo/node.c:956
+#: makeinfo/node.c:957
 msgid "Up:"
 msgstr "Nahoru:"
 
-#: makeinfo/node.c:1079
+#: makeinfo/node.c:1080
 #, c-format
 msgid "Anchors `%s' and `%s' map to the same file name"
 msgstr ""
 
-#: makeinfo/node.c:1084
+#: makeinfo/node.c:1085
 msgid "@anchor command ignored; references to it will not work"
 msgstr ""
 
-#: makeinfo/node.c:1284
-#, c-format
-msgid "%s reference to nonexistent node `%s'"
+#: makeinfo/node.c:1285
+#, fuzzy, c-format
+msgid "%s reference to nonexistent node `%s' (perhaps incorrect sectioning?)"
 msgstr "%s se odkazuje na neexistující uzel `%s'"
 
-#: makeinfo/node.c:1301
+#: makeinfo/node.c:1302
 msgid "Menu"
 msgstr "Menu"
 
-#: makeinfo/node.c:1303
+#: makeinfo/node.c:1304
 msgid "Cross"
 msgstr "Odkaz"
 
-#: makeinfo/node.c:1387
-#, c-format
-msgid "Next field of node `%s' not pointed to"
+#: makeinfo/node.c:1388
+#, fuzzy, c-format
+msgid "Next field of node `%s' not pointed to (perhaps incorrect sectioning?)"
 msgstr "Následující uzel uzlu `%s' neukazuje na tento"
 
-#: makeinfo/node.c:1390
+#: makeinfo/node.c:1391
 #, c-format
 msgid "This node (%s) has the bad Prev"
 msgstr "Tento uzel (%s) má chybný odkaz na pøedchozí uzel"
 
-#: makeinfo/node.c:1402
+#: makeinfo/node.c:1403
 msgid "Prev"
 msgstr "Pøedchozí"
 
-#: makeinfo/node.c:1445
+#: makeinfo/node.c:1446
 #, c-format
 msgid "Prev field of node `%s' not pointed to"
 msgstr "Pøedchozí uzel uzlu `%s' neukazuje na tento"
 
-#: makeinfo/node.c:1449
+#: makeinfo/node.c:1450
 #, c-format
 msgid "This node (%s) has the bad Next"
 msgstr "Tento uzel (%s) má chybný odkaz na následující uzel"
 
-#: makeinfo/node.c:1461
+#: makeinfo/node.c:1462
 #, c-format
-msgid "`%s' has no Up field"
-msgstr "`%s' nemá zadán vy¹¹í uzel"
+msgid "`%s' has no Up field (perhaps incorrect sectioning?)"
+msgstr ""
 
-#: makeinfo/node.c:1464
+#: makeinfo/node.c:1465
 msgid "Up"
 msgstr "Nahoru"
 
-#: makeinfo/node.c:1530
+#: makeinfo/node.c:1531
 #, c-format
 msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
 msgstr ""
 "Uzel `%s' postrádá polo¾ku menu pro `%s' navzdory tomu, ¾e je jeho vy¹¹ím "
 "uzlem"
 
-#: makeinfo/node.c:1559
+#: makeinfo/node.c:1560
 #, c-format
 msgid "node `%s' has been referenced %d times"
 msgstr "na uzel `%s' se bylo odkazováno %d krát"
 
-#: makeinfo/node.c:1573
+#: makeinfo/node.c:1574
 #, c-format
 msgid "unreferenced node `%s'"
 msgstr "uzel `%s' - nesmìøuje na nìj ¾ádný odkaz"
@@ -2627,7 +2627,7 @@ msgstr "Krátký obsah"
 msgid "%s: TOC should be here, but it was not found"
 msgstr "%s: Obsah bìl být zde, ale nebyl nalezen"
 
-#: makeinfo/xml.c:1189
+#: makeinfo/xml.c:1190
 #, c-format
 msgid "@image file `%s' unreadable: %s"
 msgstr "soubor `%s' v pøíkazu @image je neèitelný: %s"
@@ -2724,7 +2724,7 @@ msgstr ""
 "k pøekladu zasílejte na <cs@li.org> (èesky).\n"
 
 #: util/install-info.c:451
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "This is the file .../info/dir, which contains the\n"
 "topmost node of the Info hierarchy, called (dir)Top.\n"
@@ -2740,7 +2740,7 @@ msgid ""
 "  In Emacs, you can click mouse button 2 on a menu item or cross reference\n"
 "  to select it.\n"
 "\n"
-"* Menu:\n"
+"%s\n"
 msgstr ""
 "  Toto je soubor .../info/dir, který obsahuje nejvy¹¹í uzly hierarchie\n"
 "Info dokumentù a je nazýván (dir)Top. Kdy¾ poprvé spustíte Info dostanete\n"
@@ -2761,60 +2761,60 @@ msgstr ""
 "\n"
 "* Menu:\n"
 
-#: util/install-info.c:474
+#: util/install-info.c:476
 #, c-format
 msgid "%s: could not read (%s) and could not create (%s)\n"
 msgstr "%s: %s nelze èíst a %s nelze vytvoøit\n"
 
-#: util/install-info.c:565
+#: util/install-info.c:567
 #, c-format
 msgid "%s: empty file"
 msgstr "%s: prázdný soubor"
 
-#: util/install-info.c:892 util/install-info.c:932
+#: util/install-info.c:894 util/install-info.c:934
 msgid "START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"
 msgstr "START-INFO-DIR-ENTRY bez odpovídajícího END-INFO-DIR-ENTRY"
 
-#: util/install-info.c:927
+#: util/install-info.c:929
 msgid "END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"
 msgstr "END-INFO-DIR-ENTRY bez pøedchozího START-INFO-DIR-ENTRY"
 
-#: util/install-info.c:1176 util/install-info.c:1186
+#: util/install-info.c:1178 util/install-info.c:1188
 #, c-format
 msgid "%s: Specify the Info directory only once.\n"
 msgstr "%s: Info adresáø zadejte pouze jednou.\n"
 
-#: util/install-info.c:1221
+#: util/install-info.c:1223
 #, c-format
 msgid "%s: Specify the Info file only once.\n"
 msgstr "%s: Info soubor zadejte pouze jednou.\n"
 
-#: util/install-info.c:1270
+#: util/install-info.c:1272
 #, c-format
 msgid "excess command line argument `%s'"
 msgstr "nadbyteèný argument `%s' v pøíkazovém øádku"
 
-#: util/install-info.c:1274
+#: util/install-info.c:1276
 msgid "No input file specified; try --help for more information."
 msgstr ""
 "Vstupní soubor nezadán; pou¾itím pøepínaèe --help získáte bli¾¹í informace."
 
-#: util/install-info.c:1277
+#: util/install-info.c:1279
 msgid "No dir file specified; try --help for more information."
 msgstr ""
 "Adresáø nebyl zadán; pou¾itím pøepínaèe `--help' získáte bli¾¹í informace"
 
-#: util/install-info.c:1299
+#: util/install-info.c:1301
 #, c-format
 msgid "no info dir entry in `%s'"
 msgstr "v Info adresáøi `%s' není ¾ádná polo¾ka"
 
-#: util/install-info.c:1414
+#: util/install-info.c:1416
 #, c-format
 msgid "menu item `%s' already exists, for file `%s'"
 msgstr "polo¾ka menu `%s' ji¾ pro soubor `%s' existuje"
 
-#: util/install-info.c:1437
+#: util/install-info.c:1439
 #, c-format
 msgid "no entries found for `%s'; nothing deleted"
 msgstr "pro `%s' nebyly nalezeny ¾ádné polo¾ky"
@@ -2886,6 +2886,9 @@ msgstr "polo¾ka %s následuje za polo¾kou se sekundárním jménem"
 #, c-format
 msgid "%s; for file `%s'.\n"
 msgstr "%s; pro soubor `%s'.\n"
+
+#~ msgid "`%s' has no Up field"
+#~ msgstr "`%s' nemá zadán vy¹¹í uzel"
 
 #, fuzzy
 #~ msgid "\\%-10[scroll-forward]  Scroll forward 1 line.\n"

@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c Id: texinfo.txi,v 1.13 2002/11/14 18:41:35 karl Exp
+@c Id: texinfo.txi,v 1.29 2003/02/04 15:17:21 karl Exp
 @c Ordinarily Texinfo files have the extension .texi.  But texinfo.texi
 @c clashes with texinfo.tex on 8.3 filesystems, so we use texinfo.txi.
 
@@ -39,7 +39,7 @@ a documentation system that can produce both online information and a
 printed manual from a single source.
 
 Copyright (C) 1988, 1990, 1991, 1992, 1993, 1995, 1996, 1997, 1998,
-1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -177,6 +177,7 @@ Overview of Texinfo
 
 * Reporting Bugs::              Submitting effective bug reports.
 * Using Texinfo::               Create printed or online output.
+* Output Formats::              Overview of the supported output formats.
 * Info Files::                  What is an Info file?
 * Printed Books::               Characteristics of a printed book or manual.
 * Formatting Commands::         @@-commands are used for formatting.
@@ -365,7 +366,7 @@ Quotations and Examples
 * verbatim::                    Writing a verbatim example.
 * verbatiminclude::             Including a file verbatim.
 * lisp::                        Illustrating Lisp code.
-* small::                       Forms for @code{@@smallbook}.
+* small::                       Examples in a smaller font.
 * display::                     Writing an example in the current font.
 * format::                      Writing an example without narrowed margins.
 * exdent::                      Undo indentation on a line.
@@ -545,8 +546,8 @@ Formatting and Printing Hardcopy
 * smallbook::                   How to print small format books and manuals.
 * A4 Paper::                    How to print on A4 or A5 paper.
 * pagesizes::                   How to print with customized page sizes.
-* Cropmarks and Magnification::  How to print marks to indicate the size
-                               of pages and how to print scaled up output.
+* Cropmarks and Magnification:: How to print marks to indicate the size
+                                  of pages and how to print scaled up output.
 * PDF Output::                  Portable Document Format output.
 
 Creating and Installing Info Files
@@ -567,7 +568,7 @@ Creating an Info File
 * Batch Formatting::            How to format for Info in Emacs Batch mode.
 * Tag and Split Files::         How tagged and split files help Info
                                  to run better.
-* makeinfo html::               Generating HTML output.
+* Generating HTML::             Generating HTML output with makeinfo.
 
 Installing an Info File
 
@@ -591,7 +592,7 @@ Include Files
 * Using Include Files::         How to use the @code{@@include} command.
 * texinfo-multiple-files-update::  How to create and update nodes and
                                  menus when using included files.
-* Include File Requirements::   What @code{texinfo-multiple-files-update} expects.
+* Include Files Requirements::  What @code{texinfo-multiple-files-update} expects.
 * Sample Include File::         A sample outer file with included files
                                  within it; and a sample included file.
 * Include Files Evolution::     How use of the @code{@@include} command
@@ -699,6 +700,7 @@ that one document.
 @menu
 * Reporting Bugs::              Submitting effective bug reports.
 * Using Texinfo::               Create printed or online output.
+* Output Formats::              Overview of the supported output formats.
 * Info Files::                  What is an Info file?
 * Printed Books::               Characteristics of a printed book or manual.
 * Formatting Commands::         @@-commands are used for formatting.
@@ -768,18 +770,17 @@ Emacs Manual} is a good example of a Texinfo file, as is this manual.
 
 To make a printed document, you process a Texinfo source file with the
 @TeX{} typesetting program (but the Texinfo language is very different
-and much stricter than @TeX{}'s usual language, plain @TeX{}).  This
-creates a DVI file that you can typeset and print as a book or report
-(@pxref{Hardcopy}).
+from and much stricter than @TeX{}'s usual languages, plain @TeX{} and
+La@TeX{}).  This creates a DVI file that you can typeset and print as
+a book or report (@pxref{Hardcopy}).
 
 @pindex makeinfo
 To output an Info file, process your Texinfo source with the
-@code{makeinfo} utility or Emacs's @code{texinfo-format-buffer} command.
-You can install the result in your Info tree (@pxref{Installing an Info
-File}).
+@code{makeinfo} utility.  You can install the result in your Info tree
+(@pxref{Installing an Info File}).
 
 To output an HTML file, run @code{makeinfo --html} on your Texinfo
-source.  You can (for example) install the result on your web site.
+source.  You can (for example) install the result on a web site.
 
 @cindex Docbook, converting to Texinfo
 @cindex Conversion, from Docbook to Texinfo
@@ -788,28 +789,18 @@ To output DocBook (a particular form of XML), run @code{makeinfo
 --docbook}.  If you want to convert from Docbook @emph{to} Texinfo,
 please see @uref{http://docbook2X.sourceforge.net/}.
 
-@cindex Output formats, supporting more
-@cindex SGML-tools output format
-If you are a programmer and would like to contribute to the GNU project
-by implementing additional output formats for Texinfo, that would be
-excellent.  But please do not write a separate translator texi2foo for
-your favorite format foo!  That is the hard way to do the job, and makes
-extra work in subsequent maintenance, since the Texinfo language is
-continually being enhanced and updated.  Instead, the best approach is
-modify @code{makeinfo} to generate the new format, as it does now for
-Info, plain text, HTML, XML, and DocBook.
-
 @TeX{} works with virtually all printers; Info works with virtually all
 computer terminals; the HTML output works with virtually all web
 browsers.  Thus Texinfo can be used by almost any computer user.
 
-@cindex Source file
-A Texinfo source file is a plain @sc{ascii} file containing text and
-@dfn{@@-commands} (words preceded by an @samp{@@}) that tell the
-typesetting and formatting programs what to do.  You may edit a Texinfo
-file with any text editor; but it is especially convenient to use GNU
-Emacs since that editor has a special mode, called Texinfo mode, that
-provides various Texinfo-related features.  (@xref{Texinfo Mode}.)
+@cindex Source file format
+A Texinfo source file is a plain @sc{ascii} file containing text
+interspersed with @dfn{@@-commands} (words preceded by an @samp{@@})
+that tell the typesetting and formatting programs what to do.  You may
+edit a Texinfo file with any text editor; but it is especially
+convenient to use GNU Emacs since that editor has a special mode,
+called Texinfo mode, that provides various Texinfo-related features.
+(@xref{Texinfo Mode}.)
 
 Before writing a Texinfo source file, you should learn about nodes,
 menus, cross references, and the rest, for example by reading this
@@ -821,26 +812,121 @@ is the official documentation format of the GNU project.  More
 information is available at the @uref{http://www.gnu.org/doc/, GNU
 documentation web page}.
 
+
+@node Output Formats
+@section Output Formats
+@cindex Output formats
+@cindex Back-end output formats
+
+Here is a brief overview of the output formats currently supported by
+Texinfo.
+
+@table @asis
+@item Info
+@cindex Info output
+(Generated via @command{makeinfo}.)  This format is a plain text
+transliteration of the Texinfo source.  It uses control characters to
+separate nodes and provide other navigational information.  See the
+next section (@pxref{Info Files}) for more details on this format.
+The Emacs Info subsystem (@pxref{Top,,Getting Started,info, Info}),
+and the standalone @command{info} program (@pxref{info
+standalone,,,info-stnd, GNU Info}), among others, can read these
+files.  @xref{Creating and Installing Info Files}.
+
+@item Plain text
+@cindex Plain text output
+(Generated via @command{makeinfo --no-headers}.)  This is almost the
+same as Info output, except the navigational control characters are
+omitted.
+
+@item HTML
+@cindex HTML output
+@cindex W3 consortium
+@cindex Mozilla
+@cindex Lynx
+@cindex Emacs-W3
+(Generated via @command{makeinfo --html}.)  This is the Hyper Text
+Markup Language that has become the most commonly used language for
+writing documents on the World Wide Web.  Web browsers, such as
+Mozilla, Lynx, and Emacs-W3, can render this language online.  There
+are many versions of HTML; @command{makeinfo} tries to use a subset
+of the language that can be interpreted by any common browser.  For
+details of the HTML language and much related information, see
+@uref{http://www.w3.org/MarkUp/}.  @xref{Generating HTML}.
+
+@item DVI
+@cindex DVI output
+@pindex Dvips
+@pindex Xdvi
+(Generated via @command{texi2dvi}.)  This DeVice Independent binary
+format is output by the @TeX{} typesetting program
+(@uref{http://tug.org}).  It is then read by a DVI `driver', which
+writes the actual device-specific commands that can be viewed or
+printed, notably Dvips for translation to PostScript (@pxref{dvips
+invocation,,, dvips, Dvips}) and Xdvi for viewing on an X display
+(@uref{http://sourceforge.net/projects/xdvi/}).  @xref{Hardcopy}.
+
+@item PDF
+@cindex PDF output
+@cindex Beebe, Nelson
+@pindex pdftex
+(Generated via @command{texi2dvi --pdf}.)  This format, based on
+PostScript, was developed by Adobe Systems for document interchange.
+It is intended to be platform-independent and easily viewable, among
+other design goals; for a discussion, see
+@uref{http://tug.org/tugboat/Articles/tb22-3/tb72beebeI.pdf}.  Texinfo
+uses the @command{pdftex} program, a variant of @TeX{}, to output pdf;
+see @uref{http://tug.org/applications/pdftex}.  @xref{PDF Output}.
+
+@item XML
+@cindex XML output
+@cindex DTD, for Texinfo XML
+(Generated via @command{makeinfo --xml}.)  XML is a generic syntax
+specification usable for any sort of content (see, for example,
+@uref{http://www.w3.org/XML/}).  The @command{makeinfo} xml output,
+unlike all the formats above, interprets very little of the  Texinfo
+source.  Rather, it merely translates the Texinfo markup commands into
+XML syntax, for processing by further XML tools.  The particular
+syntax output is defined in the file @file{texinfo.dtd} included in
+the Texinfo source distribution.
+
+@item DocBook
+@cindex DocBook output
+(Generated via @command{makeinfo --docbook}.)  This is an XML format
+of long standing used primarily for technical documentation.  See
+@uref{http://www.docbook.org/}.
+
+@end table
+
 @cindex Man page output, not supported
 From time to time, proposals are made to generate traditional Unix man
-pages from Texinfo source.  This is not likely to ever be supported,
-because man pages have a very strict conventional format.  Merely
-enhancing @command{makeinfo} to output troff format would be
-insufficient.  Generating a good man page therefore requires a
+pages from Texinfo source.  However, because man pages have a very
+strict conventional format, generating a good man page requires a
 completely different source than the typical Texinfo applications of
-writing a good user tutorial or a good reference manual.  This makes
-generating man pages incompatible with the Texinfo design goal of not
-having to document the same information in different ways for different
-output formats.  You might as well just write the man page directly.
+writing a good user tutorial and/or a good reference manual.  This
+makes generating man pages incompatible with the Texinfo design goal
+of not having to document the same information in different ways for
+different output formats.  You might as well just write the man page
+directly.
 
 @pindex help2man 
 @cindex O'Dea, Brendan
-Man pages still have their place, and if you wish to support them, the
-program @command{help2man} may be useful; it generates a traditional man
-page from the @samp{--help} output of a program.  In fact, this is
-currently used to generate man pages for the Texinfo programs
-themselves.  It is GNU software written by Brendan O'Dea, available from
-@uref{ftp://ftp.gnu.org/gnu/help2man/}.
+Man pages still have their place, and if you wish to support them, you
+may find the program @command{help2man} to be useful; it generates a
+traditional man page from the @samp{--help} output of a program.  In
+fact, this is currently used to generate man pages for the programs in
+the Texinfo distribution.  It is GNU software written by Brendan
+O'Dea, available from @uref{ftp://ftp.gnu.org/gnu/help2man/}.
+
+@cindex Output formats, supporting more
+@cindex SGML-tools output format
+If you are a programmer and would like to contribute to the GNU project
+by implementing additional output formats for Texinfo, that would be
+excellent.  But please do not write a separate translator texi2foo for
+your favorite format foo!  That is the hard way to do the job, and makes
+extra work in subsequent maintenance, since the Texinfo language is
+continually being enhanced and updated.  Instead, the best approach is
+modify @code{makeinfo} to generate the new format.
 
 
 @node Info Files
@@ -980,7 +1066,7 @@ file @file{texinfo.tex} that contains information (definitions or
 to @TeX{} commands, which @TeX{} can then process to create the typeset
 document.)  @file{texinfo.tex} contains the specifications for printing
 a document.  You can get the latest version of @file{texinfo.tex} from
-@uref{ftp://ftp.gnu.org/gnu/texinfo.tex}.
+@uref{ftp://ftp.gnu.org/gnu/texinfo/texinfo.tex}.
 
 In the United States, documents are most often printed on 8.5 inch by 11
 inch pages (216@dmn{mm} by 280@dmn{mm}); this is the default size.  But
@@ -1074,7 +1160,7 @@ marks text as being code.)@refill
 @item
 Write a command such as @code{@@example} on a line of its own; write the
 body-text on following lines; and write the matching @code{@@end}
-command, @code{@@end example} in this case, at the on a line of its own
+command, @code{@@end example} in this case, on a line of its own
 after the body-text. (@code{@@example} @dots{} @code{@@end example}
 indents and typesets body-text as an example.)  It's usually ok to
 indent environment commands like this, but in complicated and
@@ -1106,21 +1192,33 @@ This section describes the general conventions used in all Texinfo documents.
 
 @itemize @bullet
 @item
+@cindex Source files, characters used
 All printable @sc{ascii} characters except @samp{@@}, @samp{@{} and
 @samp{@}} can appear in a Texinfo file and stand for themselves.
 @samp{@@} is the escape character which introduces commands, while
 @samp{@{} and @samp{@}} are used to surround arguments to certain
 commands.  To put one of these special characters into the document, put
-an @samp{@@} character in front of it, like this: @samp{@@@@},
+xan @samp{@@} character in front of it, like this: @samp{@@@@},
 @samp{@@@{}, and @samp{@@@}}.
 
 @item
-It is customary in @TeX{} to use doubled single-quote characters to
-begin and end quotations: @w{@t{`@w{}`@dots{}'@w{}'}}.  This
-convention should be followed in Texinfo files.  @TeX{} converts
-two single quotes to left- and right-hand doubled
-quotation marks, 
-@c this comes out as "like this" in Info, of course, which is just confusing.
+@cindex Paragraph separator
+@cindex Blank lines, as paragraph separator
+@cindex Newlines, as blank lines
+Separate paragraphs with one or more blank lines.  Currently Texinfo
+only recognizes newline characters as end of line, not the CRLF
+sequence used on some systems; so a @dfn{blank line} means exactly two
+consecutive newlines.  Sometimes blank lines are useful or convenient
+in other cases as well; you can use the @code{@@noindent} to inhibit
+paragraph indentation if required (@pxref{noindent,,@code{@@noindent}}).
+
+@item
+@cindex Quotation characters (`'), in source
+Use doubled single-quote characters to begin and end quotations:
+@w{@t{`@w{}`@dots{}'@w{}'}}.  (Texinfo takes this convention from
+@TeX{}.)  @TeX{} converts two single quotes to left- and right-hand
+doubled quotation marks,
+@c this comes out as "like this" in Info, which is just confusing.
 @iftex
 ``like this'', 
 @end iftex
@@ -1128,14 +1226,11 @@ and Info converts doubled single-quote characters to @sc{ascii}
 double-quotes: @w{@t{`@w{}`@dots{}'@w{}'}} becomes @w{@t{"@dots{}"}}.
 
 @item
+@cindex Dashes, in source
 Use three hyphens in a row, @samp{---}, for a dash---like this.  In
 @TeX{}, a single or double hyphen produces a printed dash that is
 shorter than the usual typeset dash. Info reduces three hyphens to two
 for display on the screen.
-
-@item
-To prevent a paragraph from being indented in the printed manual, precede
-the paragraph with the command @code{@@noindent}
 
 @item
 If you mark off a region of the Texinfo file with the @code{@@iftex}
@@ -1146,9 +1241,10 @@ text surrounded by @code{@@ifnottex} and @code{@@end ifnottex} will
 appear in all output formats @emph{except} @TeX{}.
 
 Each of the other output formats (@code{html}, @code{info},
-@code{plaintext}) have an analogous pair of commands.  @xref{Conditionals}.
-@end itemize
+@code{plaintext}, @code{xml}) have an analogous pair of commands.
+@xref{Conditionals}.
 
+@item
 @cindex Tabs; don't use!
 @quotation
 @strong{Caution:} Do not use tab characters in a Texinfo file (except in
@@ -1167,6 +1263,7 @@ spaces when you press the @key{TAB} key.
 Also, you can run @code{untabify} in Emacs to convert tabs in a region
 to multiple spaces.
 @end quotation
+@end itemize
 
 
 @node Comments
@@ -1388,7 +1485,7 @@ which it is distributed.  @xref{GNU Sample Texts}.
 @@copying
 This is a short example of a complete Texinfo file, version 1.0.
 
-Copyright @@copyright@{@} 2002 Free Software Foundation, Inc.
+Copyright @@copyright@{@} 2003 Free Software Foundation, Inc.
 @@end copying
 @end group
 @end example
@@ -1423,24 +1520,23 @@ writing it out again; it is output on the back of the title page.  The
 @subheading Part 4: `Top' Node and Master Menu
 
 @noindent
-The `Top' node contains the master menu for the Info file.  Since a
-printed manual uses a table of contents rather than a menu, the master
-menu appears only in online output.  We also include the copying text
-again for the benefit of online readers.  And since the copying text
-begins with a brief description of the manual, no other text is needed.
+The `Top' node contains the master menu for the Info file.  Since the
+printed manual uses a table of contents rather than a menu, it
+excludes the `Top' node.  We also include the copying text again for
+the benefit of online readers.  Since the copying text begins with
+a brief description of the manual, no other text is needed in this
+case.  The @samp{@@top} command itself helps @command{makeinfo}
+determine the relationships between nodes.
 
 @example
-@group
 @@ifnottex
 @@node Top
-@@end ifnottex
-@end group
-@end example
+@@top Short Sample
 
-@example
-@group
 @@insertcopying
+@@end ifnottex
 
+@group
 @@menu
 * First Chapter::    The first chapter is the
                        only chapter in this sample.
@@ -4873,20 +4969,15 @@ limited support for using @w{@@-commands} in node names; see
 @ref{Pointer Validation}.)
 
 @item
-@cindex Parentheses in nodename
-You cannot use parentheses in node names, because a node name such as
-@samp{(foo)bar} is interpreted by the Info readers as a node
-@samp{bar} in an Info file @file{foo}.
-
-@item
-@cindex Apostrophe in nodename
 @cindex Colon in nodename
 @cindex Comma in nodename
+@cindex Parentheses in nodename
 @cindex Period in nodename
 @cindex Characters, invalid in node name
 @cindex Invalid characters in node names
-Unfortunately, you cannot use periods, commas, colons or apostrophes
-within a node name; these confuse @TeX{} or the Info formatters.
+@cindex Node names, invalid characters in
+Unfortunately, you cannot use periods, commas, colons or parentheses
+within a node name; these confuse the Texinfo processors.
 
 @need 700
 For example, the following is a section title in this manual:
@@ -7419,7 +7510,7 @@ line.
 * verbatim::                    Writing a verbatim example.
 * verbatiminclude::             Including a file verbatim.
 * lisp::                        Illustrating Lisp code.
-* small::                       Forms for @code{@@smallbook}.
+* small::                       Examples in a smaller font.
 * display::                     Writing an example in the current font.
 * format::                      Writing an example without narrowed margins.
 * exdent::                      Undo indentation on a line.
@@ -7547,36 +7638,32 @@ This is a foo.
 @cindex Formatting examples
 @findex example
 
-The @code{@@example} command is used to indicate an example that is
-not part of the running text, such as computer input or output.
+The @code{@@example} environment is used to indicate an example that
+is not part of the running text, such as computer input or output.
+Write an @code{@@example} command at the beginning of a line by
+itself.  Mark the end of the example with an @code{@@end example}
+command, also written at the beginning of a line by itself.
 
-@example
-@group
-This is an example of text written between an
-@code{@@example} command
-and an @code{@@end example} command.
-The text is indented but not filled.
-@end group
+An @code{@@example} environment has the following characteristics:
 
-@group
-In the printed manual, the text is typeset in a
-fixed-width font, and extra spaces and blank lines are
-significant.  In the Info file, an analogous result is
-obtained by indenting each line with five spaces.
-@end group
-@end example
+@itemize
+@item Each line in the input file is a line in the output; that is,
+the source text is not filled as it normally is.
+@item Extra spaces and blank lines are significant.
+@item The output is indented.
+@item The output uses a fixed-width font (for formats where this is
+possible and meaningful).
+@item Texinfo commands @emph{are} expanded; if you want the input to
+be the output verbatim, use the @code{@@verbatim} environment instead
+(@pxref{verbatim,,@code{@@verbatim}}).
+@end itemize
 
-Write an @code{@@example} command at the beginning of a line by itself.
-Mark the end of the example
-with an @code{@@end example} command, also written at the beginning of a
-line by itself.@refill
-
-@need 700
 For example,
 
 @example
 @@example
-mv foo bar
+cp foo @@var@{dest1@}; \
+ cp foo @@var@{dest2@}
 @@end example
 @end example
 
@@ -7584,37 +7671,34 @@ mv foo bar
 produces
 
 @example
-mv foo bar
+cp foo @var{dest1}; \
+ cp foo @var{dest2}
 @end example
 
-The lines containing @code{@@example} and @code{@@end example}
-will disappear from the output.
-To make the output look good,
-you should put a blank line before the
-@code{@@example} and another blank line after the @code{@@end example}.
-Note that blank lines inside the beginning
-@code{@@example} and the ending @code{@@end example} will appear in
-the output.@refill
+The lines containing @code{@@example} and @code{@@end example} will
+disappear from the output.  To make the output look good, you should
+put a blank line before the @code{@@example} and another blank line
+after the @code{@@end example}.  Blank lines inside the beginning
+@code{@@example} and the ending @code{@@end example}, on the other
+hand, do appear in the output.
 
 @quotation
-@strong{Caution:} Do not use tabs in the lines of an example or anywhere
-else in Texinfo (except in verbatim environments)!  The @TeX{}
-implementation of Texinfo treats tabs as single spaces, and that is not
-what they look like.  (If necessary, in Emacs, you can use @kbd{M-x
-untabify} to convert tabs in a region to multiple spaces.)@refill
+@strong{Caution:} Do not use tabs in the lines of an example!  (Or
+anywhere else in Texinfo, except in verbatim environments.)  @TeX{}
+treats tabs as single spaces, and that is not what they look like.  In
+Emacs, you can use @kbd{M-x untabify} to convert tabs in a region to
+multiple spaces.
 @end quotation
 
 Examples are often, logically speaking, ``in the middle'' of a
-paragraph, and the text that continues after an example should not be
-indented.  The @code{@@noindent} command prevents a piece of text from
-being indented as if it were a new paragraph.
-@ifinfo
-(@xref{noindent}.)
-@end ifinfo
+paragraph, and the text that continues afterwards should not be
+indented, as in the example above.  The @code{@@noindent} command
+prevents a piece of text from being indented as if it were a new
+paragraph (@pxref{noindent,,@code{@@noindent}}.
 
-(The @code{@@code} command is used for examples of code that are
-embedded within sentences, not set off from preceding and following
-text.  @xref{code, , @code{@@code}}.)
+If you want to embed code fragments within sentences, instead of
+displaying them, use the @code{@@code} command or its relatives
+(@pxref{code,,@code{@@code}}).
 
 
 @node verbatim
@@ -7692,6 +7776,18 @@ The contents of @var{filename} is printed in a verbatim environment
 (@pxref{verbatim,,@code{@@verbatim}}).  Generally, the file is printed
 exactly as it is, with all special characters and white space retained.
 
+The name of the file is taken literally, with a single exception:
+@code{@@value@{@var{var}@}} references are expanded.  This makes it
+possible to reliably include files in other directories in a
+distribution, for instance:
+
+@example
+@@include @@value@{top_srcdir@}/NEWS
+@end example
+
+@noindent (You still have to get @code{top_srcdir} defined in the
+first place.)
+
 
 @node lisp
 @section @code{@@lisp}: Marking a Lisp Example
@@ -7714,7 +7810,7 @@ library.@footnote{It would be straightforward to extend Texinfo to work
 in a similar fashion for C, Fortran, or other languages.}
 
 Mark the end of @code{@@lisp} with @code{@@end lisp} on a line by
-itself.@refill
+itself.
 
 
 @node small
@@ -7732,65 +7828,37 @@ Texinfo has ``small'' example-style commands.  These are
 @code{@@smalldisplay}, @code{@@smallexample}, @code{@@smallformat}, and
 @code{@@smalllisp}.
 
-In @TeX{}, the @code{@@small@dots{}} commands typeset text in a smaller
-font than the non-small example commands.  Consequently, many examples
-containing long lines fit on a page without needing to be shortened.
-
 In Info, the @code{@@small@dots{}} commands are equivalent to their
 non-small companion commands.
+
+In @TeX{}, however, the @code{@@small@dots{}} commands typeset text in
+a smaller font than the non-small example commands.  Consequently,
+many examples containing long lines fit on a page without needing to
+be shortened.
 
 Mark the end of an @code{@@small@dots{}} block with a corresponding
 @code{@@end small@dots{}}.  For example, pair @code{@@smallexample} with
 @code{@@end smallexample}.
 
-@iftex
-Here is an example written in the small font used by the
-@code{@@smallexample} and @code{@@smalllisp} commands:
+Here is an example of the font used by the @code{@@small@dots{}}
+commands (in Info, the output will be the same as usual):
 
-@ifclear smallbook
-@display
-@tex
-% Remove extra vskip; this is a kludge to counter the effect of display
-\vskip-3\baselineskip
-{\smalltt
-\dots{} to make sure that you have the freedom to
+@smallexample
+@dots{} to make sure that you have the freedom to
 distribute copies of free software (and charge for
 this service if you wish), that you receive source
 code or can get it if you want it, that you can
 change the software or use pieces of it in new free
-programs; and that you know you can do these things.}
-@end tex
-@end display
-@end ifclear
-@end iftex
-@ifset smallbook
-@iftex
-@smallexample
-This is an example of text written between @code{@@smallexample} and
-@code{@@end smallexample}.  In Info this text appears in its normal size;
-but in printed manuals, this text appears in a smaller font.
+programs; and that you know you can do these things.
 @end smallexample
-@end iftex
-@end ifset
-@ifinfo
-@smallexample
-This is an example of text written between @code{@@smallexample} and
-@code{@@end smallexample}.  In Info this text appears in its normal size;
-but in a 7 by 9.25 inch manual, this text appears in a smaller font.
-@end smallexample
-@end ifinfo
 
 The @code{@@small@dots{}} commands make it easier to prepare manuals
 without forcing you to edit examples by hand to fit them onto narrower
 pages.
 
-As a general rule, a printed document looks better if you use only one
-of (for example) @code{@@example} or in @code{@@smallexample}
-consistently within a chapter.  Only occasionally should you mix the two
-formats.
-
-@xref{smallbook, , Printing ``Small'' Books}, for more information
-about the @code{@@smallbook} command.
+As a general rule, a printed document looks much better if you use
+only one of (for instance) @code{@@example} or @code{@@smallexample}
+consistently within a chapter.  
 
 
 @node display
@@ -8370,7 +8438,7 @@ a letter, beginning with that lower case letter.@refill
 
 You can also nest enumerated lists, as in an outline.@refill
 
-@node Two-column Tables, Multi-column Tables, enumerate, Lists and Tables
+@node Two-column Tables
 @section Making a Two-column Table
 @cindex Tables, making two-column
 @findex table
@@ -8387,35 +8455,35 @@ exhibits, and command-line option summaries.
 * itemx::                       How to put more entries in the first column.
 @end menu
 
-@node table, ftable vtable, Two-column Tables, Two-column Tables
-@ifinfo
-@subheading Using the @code{@@table} Command
+@node table
+@subsection Using the @code{@@table} Command
 
-Use the @code{@@table} command to produce two-column tables.@refill
-@end ifinfo
+@cindex Definition lists, typesetting
+Use the @code{@@table} command to produce two-column tables.  It is
+usually listed for ``definition lists'' of various sorts, where you
+have a list of terms and a brief text with each one.
 
-Write the @code{@@table} command at the beginning of a line and follow
-it on the same line with an argument that is a Texinfo ``indicating''
-command such as @code{@@code}, @code{@@samp}, @code{@@var}, or
-@code{@@kbd} (@pxref{Indicating}).  Although these commands are usually
-followed by arguments in braces, in this case you use the command name
-without an argument because @code{@@item} will supply the argument.
-This command will be applied to the text that goes into the first column
-of each item and determines how it will be highlighted.  For example,
-@code{@@code} will cause the text in the first column to be highlighted
-with an @code{@@code} command.  (We recommend @code{@@code} for
-@code{@@table}'s of command-line options.)
+Write the @code{@@table} command at the beginning of a line, after a
+blank line, and follow it on the same line with an argument that is a
+Texinfo ``indicating'' command such as @code{@@code}, @code{@@samp},
+@code{@@var}, @code{@@option}, or @code{@@kbd} (@pxref{Indicating}).
+
+This command will be applied to the text that goes into the first
+column of each item and thus determines how it will be highlighted.
+For example, @code{@@table @@code} will cause the text in the first
+column to be output as if it @code{@@code} command.
 
 @findex asis
-You may also choose to use the @code{@@asis} command as an argument to
+You may also use the @code{@@asis} command as an argument to
 @code{@@table}.  @code{@@asis} is a command that does nothing; if you
-use this command after @code{@@table}, @TeX{} and the Info formatting
-commands output the first column entries without added highlighting
-(``as is'').@refill
+use this command after @code{@@table}, the first column entries are
+output without added highlighting (``as is'').
 
-(The @code{@@table} command may work with other commands besides those
-listed here.  However, you can only use commands that normally take
-arguments in braces.)@refill
+The @code{@@table} command works with other commands besides those
+explicitly mentioned here.  However, you can only use commands that
+normally take arguments in braces.  (In this case, however, you use
+the command name without an argument, because the subsequent
+@code{@@item}'s will supply the argument.)
 
 @findex item
 Begin each table entry with an @code{@@item} command at the beginning
@@ -8424,16 +8492,20 @@ of a line.  Write the first column text on the same line as the
 following the @code{@@item} line and on subsequent lines.  (You do not
 need to type anything for an empty second column entry.)  You may
 write as many lines of supporting text as you wish, even several
-paragraphs.  But only text on the same line as the @code{@@item} will
-be placed in the first column, including any footnote.
+paragraphs.  But only the text on the same line as the @code{@@item}
+will be placed in the first column (including any footnotes).
 
 Normally, you should put a blank line before an @code{@@item} line.
-This puts a blank like in the Info file.  Except when the entries are
-very brief, a blank line looks better.@refill
+This puts a blank line in the Info file.  Except when the entries are
+very brief, a blank line looks better.
+
+End the table with a line consisting of @code{@@end table}, followed
+by a blank line.  @TeX{} will always start a new paragraph after the
+table, so the blank line is needed for the Info output to be analogous.
 
 @need 1500
 The following table, for example, highlights the text in the first
-column with an @code{@@samp} command:@refill
+column with an @code{@@samp} command:
 
 @example
 @group
@@ -8460,8 +8532,7 @@ Text for @samp{bar}.
 @end table
 
 If you want to list two or more named items with a single block of
-text, use the @code{@@itemx} command.  (@xref{itemx, ,
-@code{@@itemx}}.)@refill
+text, use the @code{@@itemx} command.  (@xref{itemx,,@code{@@itemx}}.)
 
 
 @node ftable vtable
@@ -9236,7 +9307,7 @@ emacs, The GNU Emacs Manual}).
 Do not put braces after any of these commands.
 
 
-@node Multiple Spaces, dmn, Ending a Sentence, Inserting Space
+@node Multiple Spaces
 @subsection Multiple Spaces
 
 @cindex Multiple spaces
@@ -9281,7 +9352,7 @@ Other possible uses of @code{@@@kbd{SPACE}} have been subsumed by
 
 Do not follow any of these commands with braces.
 
-To produce a non-breakable space, see @ref{w, non-breakable space}.
+To produce a non-breakable space, see @ref{tie, @code{@@tie}}.
 
 
 @node dmn
@@ -10422,12 +10493,7 @@ in two places.
 @end group
 @end example
 
-@noindent
-(Note that the space after the first @code{@@*} command is faithfully
-carried down to the next line.)@refill
-
-@need 800
-The @code{@@*} command is often used in a file's copyright page:@refill
+The @code{@@*} command is often used in a file's copyright page:
 
 @example
 @group
@@ -10438,17 +10504,12 @@ and is for @dots{}
 
 @noindent
 In this case, the @code{@@*} command keeps @TeX{} from stretching the
-line across the whole page in an ugly manner.@refill
-
-@quotation
-@strong{Please note:} Do not write braces after an @code{@@*} command;
-they are not needed.@refill
+line across the whole page in an ugly manner.
 
 Do not write an @code{@@refill} command at the end of a paragraph
 containing an @code{@@*} command; it will cause the paragraph to be
 refilled after the line break occurs, negating the effect of the line
 break.@refill
-@end quotation
 
 
 @node - and hyphenation
@@ -11975,11 +12036,11 @@ text is omitted for both Info and plain text output, not just Info.  To
 specify text which appears only in Info and not in plain text, use
 @code{@@ifnotplaintext}, like this:
 @example
-@ifinfo
-@ifnotplaintext
+@@ifinfo
+@@ifnotplaintext
 This will be in Info, but not plain text.
-@end ifnotplaintext
-@end ifinfo
+@@end ifnotplaintext
+@@end ifinfo
 @end example
 
 The regions delimited by these commands are ordinary Texinfo source as
@@ -12828,13 +12889,16 @@ Twice: a,b & a,b.
 @cindex Macro details
 @cindex Details of macro usage
 
-Due to unavoidable disparities in the @TeX{} and @command{makeinfo}
-implementations, Texinfo macros have the following limitations.
+Due to unavoidable limitations, certain macro-related constructs cause
+problems with @TeX{}.  If you get macro-related errors when producing
+the printed version of a manual, try expanding the macros with
+@command{makeinfo} by invoking @command{texi2dvi} with the @samp{-E}
+option (@ref{Format with texi2dvi}).
 
 @itemize @bullet
 @item
 All macros are expanded inside at least one @TeX{} group.  This means
-that @code{@@set} and other such commands will have no effect inside a
+that @code{@@set} and other such commands have no effect inside a
 macro.
 
 @item
@@ -12846,9 +12910,14 @@ Commas in macro arguments, even if escaped by a backslash, don't
 always work.
 
 @item
-The @TeX{} implementation cannot construct macros that define macros in
-the natural way.  To do this, you must use conditionals and raw @TeX{}.
-For example:
+It is best to avoid comments inside macro definitions.
+
+@item
+Macro arguments cannot cross lines.
+
+@item
+Macros cannot define macros in the natural way.  To do this, you must
+use conditionals and raw @TeX{}.  For example:
 
 @example
 @@ifnottex
@@ -12864,15 +12933,8 @@ something involving \arg\ somehow
 @@end tex
 @end example
 
-@item
-It is best to avoid comments inside macro definitions.
-
 @end itemize
 
-If some macro feature causes errors when producing the printed version
-of a manual, try expanding the macros with @command{makeinfo} by
-invoking @command{texi2dvi} with the @samp{-E} option; see @ref{Format
-with texi2dvi}.
 
 @node alias
 @section @samp{@@alias @var{new}=@var{existing}}
@@ -13028,8 +13090,8 @@ print queue, and delete a job from the print queue.
 * smallbook::                   How to print small format books and manuals.
 * A4 Paper::                    How to print on A4 or A5 paper.
 * pagesizes::                   How to print with customized page sizes.
-* Cropmarks and Magnification::  How to print marks to indicate the size
-                               of pages and how to print scaled up output.
+* Cropmarks and Magnification:: How to print marks to indicate the size
+                                 of pages and how to print scaled up output.
 * PDF Output::                  Portable Document Format output.
 @end menu
 
@@ -13712,7 +13774,8 @@ file, before the title page:@refill
 @noindent
 (Since many books are about 7 by 9.25 inches, this command might better
 have been called the @code{@@regularbooksize} command, but it came to be
-called the @code{@@smallbook} command by comparison to the 8.5 by 11 inch format.)
+called the @code{@@smallbook} command by comparison to the 8.5 by 11
+inch format.)
 
 If you write the @code{@@smallbook} command between the
 start-of-header and end-of-header lines, the Texinfo mode @TeX{}
@@ -13874,17 +13937,16 @@ magnifications.  Be prepared to experiment.
 @pindex pdftex
 You can generate a PDF output file from Texinfo source by using the
 @command{pdftex} program to process your file instead of plain
-@command{tex}.  Just run @samp{pdftex foo.texi} instead of @samp{tex
+@command{tex}.  That is, run @samp{pdftex foo.texi} instead of @samp{tex
 foo.texi}, or give the @samp{--pdf} option to @command{texi2dvi}.
 
 @dfn{PDF} stands for `Portable Document Format'. It was invented by
 Adobe Systems some years ago for document interchange, based on their
-PostScript language.  A @uref{http://www.foolabs.com/xpdf/, PDF reader}
-for the X window system is freely available, as is the
-@uref{http://partners.adobe.com/asn/developer/technotes/, definition of
-the file format}.  Since PDF is a binary format, there are no
-@samp{@@ifpdf} or @samp{@@pdf} commands as with the other output
-formats.
+PostScript language.  A @uref{http://www.foolabs.com/xpdf/, PDF
+reader} for the X window system is freely available, as is the
+@uref{http://partners.adobe.com/asn/developer/technotes/, definition
+of the file format}.  At present, there are no @samp{@@ifpdf} or
+@samp{@@pdf} commands as with the other output formats.
 
 Despite the `portable' in the name, PDF files are nowhere near as
 portable in practice as the plain ASCII formats (Info, HTML) that
@@ -13934,7 +13996,7 @@ For information on installing the Info file in the Info system,
 * Batch Formatting::            How to format for Info in Emacs Batch mode.
 * Tag and Split Files::         How tagged and split files help Info
                                  to run better.
-* makeinfo html::               Generating HTML output.
+* Generating HTML::             Generating HTML output with makeinfo.
 @end menu
 
 
@@ -14085,7 +14147,7 @@ Print a usage message listing all available options, then exit successfully.
 
 @item --html
 @opindex --html
-Generate HTML output rather than Info.  @xref{makeinfo html}.  By
+Generate HTML output rather than Info.  @xref{Generating HTML}.  By
 default, the HTML output is split into one output file per source node,
 and the split output is written into a subdirectory with the name of the
 top-level info file.
@@ -14143,7 +14205,7 @@ distribution (as in an @file{INSTALL} file).
 For HTML output, likewise omit menus.  And if @samp{--no-split} is also
 specified, do not include a navigation links at the top of each node
 (these are never included in the default case of split output).
-@xref{makeinfo html}.
+@xref{Generating HTML}.
 
 In both cases, write to standard output by default (can still be
 overridden by @option{-o}).
@@ -14170,7 +14232,7 @@ commands even if generating the given format.  For instance, if
 Suppress the splitting stage of @code{makeinfo}.  By default, large
 output files (where the size is greater than 70k bytes) are split into
 smaller subfiles.  For Info output, each one is approximately 50k bytes.
-For HTML output, each file contains one node (@pxref{makeinfo html}).
+For HTML output, each file contains one node (@pxref{Generating HTML}).
 
 @item --no-pointer-validate
 @itemx --no-validate
@@ -14209,7 +14271,7 @@ file name specified in the @code{@@setfilename} command found in the
 Texinfo source (@pxref{setfilename}).  If @var{file} is @samp{-}, output
 goes to standard output and @samp{--no-split} is implied.  For split
 HTML output, @var{file} is the name for the directory into which all
-HTML nodes are written (@pxref{makeinfo html}).
+HTML nodes are written (@pxref{Generating HTML}).
 
 @item -P @var{dir}
 @opindex -P @var{dir}
@@ -14386,11 +14448,9 @@ Format the current buffer for Info.@refill
 @findex makeinfo-buffer
 @end table
 
-When you invoke either @code{makeinfo-region} or
-@code{makeinfo-buffer}, Emacs prompts for a file name, offering the
-name of the visited file as the default.  You can edit the default
-file name in the minibuffer if you wish, before pressing @key{RET} to
-start the @code{makeinfo} process.@refill
+When you invoke @code{makeinfo-region} the output goes to a temporary
+buffer.  When you invoke @code{makeinfo-buffer} output goes to the
+file set with @code{@@setfilename} (@pxref{setfilename}).
 
 The Emacs @code{makeinfo-region} and @code{makeinfo-buffer} commands
 run the @code{makeinfo} program in a temporary shell buffer.  If
@@ -14621,7 +14681,7 @@ validate the structure of the nodes, see @ref{Using
 Info-validate}.@refill
 
 
-@node makeinfo html
+@node Generating HTML
 @subsection Generating HTML
 @cindex HTML
 
@@ -16697,7 +16757,7 @@ it for a printed manual.
 @@copying
 This is a short example of a complete Texinfo file.
 
-Copyright (C) 2002 Free Software Foundation, Inc.
+Copyright (C) 2003 Free Software Foundation, Inc.
 @@end copying
 
 @@titlepage
@@ -16786,7 +16846,7 @@ The @samp{$Id:} comment is for the CVS (@pxref{Top,, Overview, cvs,
 Concurrent Versions System}) or RCS (see rcsintro(1)) version control
 systems, which expand it into a string such as:
 @example
-Id: texinfo.txi,v 1.13 2002/11/14 18:41:35 karl Exp
+Id: texinfo.txi,v 1.29 2003/02/04 15:17:21 karl Exp
 @end example
 (This is useful in all sources that use version control, not just manuals.)
 You may wish to include the @samp{$Id:} comment in the @code{@@copying}
@@ -16847,25 +16907,23 @@ copying, rather than the FDL.  @xref{Verbatim Copying License}.
 
 Here is the sample document:
 
-@c We do the first part of this with @example instead of @verbatim
-@c because the literal @setfilename and @include confuse Automake.  Argh.
-@example
-\input texinfo    @@c -*-texinfo-*-
-@@comment Id: texinfo.txi,v 1.13 2002/11/14 18:41:35 karl Exp
-@@comment %**start of header
-@@setfilename sample.info
-@@include version.texi
-@@settitle GNU Sample @@value@{VERSION@}
-@@syncodeindex pg cp
-@@comment %**end of header
-@@copying
+@verbatim
+\input texinfo   @c -*-texinfo-*-
+@comment Id: texinfo.txi,v 1.29 2003/02/04 15:17:21 karl Exp
+@comment %**start of header
+@setfilename sample.info
+@include version.texi
+@settitle GNU Sample @value{VERSION}
+@syncodeindex pg cp
+@comment %**end of header
+@copying
 This manual is for GNU Sample
-(version @@value@{VERSION@}, @@value@{UPDATED@}),
+(version @value{VERSION}, @value{UPDATED}),
 which is an example in the Texinfo documentation.
 
-Copyright @@copyright@{@} 2002 Free Software Foundation, Inc.
+Copyright @copyright{} 2003 Free Software Foundation, Inc.
 
-@@quotation
+@quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
 any later version published by the Free Software Foundation; with no
@@ -16877,67 +16935,67 @@ License.''
 (a) The FSF's Back-Cover Text is: ``You have freedom to copy and modify
 this GNU Manual, like GNU software.  Copies published by the Free
 Software Foundation raise funds for GNU development.''
-@@end quotation
-@@end copying
+@end quotation
+@end copying
 
-@@dircategory Texinfo documentation system
-@@direntry
+@dircategory Texinfo documentation system
+@direntry
 * sample: (sample)Invoking sample.    
-@@end direntry
+@end direntry
 
-@@titlepage
-@@title GNU Sample
-@@subtitle for version @@value@{VERSION@}, @@value@{UPDATED@}
-@@author A.U. Thor (@@email@{bug-texinfo@@@@gnu.org@})
-@@page
-@@vskip 0pt plus 1filll
-@@insertcopying
-@@end titlepage
+@titlepage
+@title GNU Sample
+@subtitle for version @value{VERSION}, @value{UPDATED}
+@author A.U. Thor (@email{bug-texinfo@@gnu.org})
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
 
-@@contents
+@contents
 
-@@ifnottex
-@@node Top
-@@top GNU Sample
+@ifnottex
+@node Top
+@top GNU Sample
 
-@@insertcopying
-@@end ifnottex
+@insertcopying
+@end ifnottex
 
-@@menu
+@menu
 * Invoking sample::
 * Copying This Manual::
 * Index::
-@@end menu
+@end menu
 
 
-@@node Invoking sample
-@@chapter Invoking sample
+@node Invoking sample
+@chapter Invoking sample
 
-@@pindex sample
-@@cindex invoking @@command@{sample@}
+@pindex sample
+@cindex invoking @command{sample}
 
 This is a sample manual.  There is no sample program to
 invoke, but if there was, you could see its basic usage
 and command line options here.
 
 
-@@node Copying This Manual
-@@appendix Copying This Manual
+@node Copying This Manual
+@appendix Copying This Manual
 
-@@menu
+@menu
 * GNU Free Documentation License::  License for copying this manual.
-@@end menu
+@end menu
 
-@@include fdl.texi
+@include fdl.texi
 
 
-@@node Index
-@@unnumbered Index
+@node Index
+@unnumbered Index
 
-@@printindex cp
+@printindex cp
 
-@@bye
-@end example
+@bye
+@end verbatim
 
 
 @node Verbatim Copying License
@@ -16962,7 +17020,7 @@ see the previous sections.
 @copying
 This document is a sample for allowing verbatim copying only.
 
-Copyright @copyright{} 2002 Free Software Foundation, Inc.
+Copyright @copyright{} 2003 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to make and distribute verbatim copies
@@ -16993,7 +17051,7 @@ the license text itself.  For a complete sample document, see the
 previous sections.
 
 @example
-Copyright @copyright{} 2002 Free Software Foundation, Inc.
+Copyright @copyright{} 2003 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -17018,25 +17076,30 @@ conveniently small parts.
 * Using Include Files::         How to use the @code{@@include} command.
 * texinfo-multiple-files-update::  How to create and update nodes and
                                  menus when using included files.
-* Include File Requirements::   What @code{texinfo-multiple-files-update} expects.
+* Include Files Requirements::  What @code{texinfo-multiple-files-update} expects.
 * Sample Include File::         A sample outer file with included files
                                  within it; and a sample included file.
 * Include Files Evolution::     How use of the @code{@@include} command
                                  has changed over time.
 @end menu
 
-@node Using Include Files, texinfo-multiple-files-update, Include Files, Include Files
+@node Using Include Files
 @section How to Use Include Files
 @findex include
 
 To include another file within a Texinfo file, write the
 @code{@@include} command at the beginning of a line and follow it on
-the same line by the name of a file to be included.  For
-example:@refill
+the same line by the name of a file to be included.  For example:
 
 @example
 @@include buffers.texi
 @end example
+
+The name of the file is taken literally, with a single exception:
+@code{@@value@{@var{var}@}} references are expanded.  This makes it
+possible to reliably include files in other directories in a
+distribution.  @xref{verbatiminclude,,@code{@@verbatiminclude}}, for
+an example.
 
 An included file should simply be a segment of text that you expect to
 be included as is into the overall or @dfn{outer} Texinfo file; it
@@ -17045,7 +17108,7 @@ file.  In particular, you should not start an included file with a
 line saying @samp{\input texinfo}; if you do, that phrase is inserted
 into the output file as is.  Likewise, you should not end an included
 file with an @code{@@bye} command; nothing after @code{@@bye} is
-formatted.@refill
+formatted.
 
 In the past, you were required to write an @code{@@setfilename} line at the
 beginning of an included file, but no longer.  Now, it does not matter
@@ -17066,7 +17129,8 @@ whole file.  Either you must insert the menus and the `Next',
 Texinfo mode command, @code{texinfo-multiple-files-update}, that is
 designed for @code{@@include} files.@refill
 
-@node texinfo-multiple-files-update, Include File Requirements, Using Include Files, Include Files
+
+@node texinfo-multiple-files-update
 @section @code{texinfo-multiple-files-update}
 @findex texinfo-multiple-files-update
 
@@ -17143,9 +17207,9 @@ updates @strong{every} pointer and menu in @strong{all} the files and then inser
 master menu.@refill
 
 
-@node Include File Requirements
-@section Include File Requirements
-@cindex Include file requirements
+@node Include Files Requirements
+@section Include Files Requirements
+@cindex Include files requirements
 @cindex Requirements for include files
 
 If you plan to use the @code{texinfo-multiple-files-update} command,
@@ -17169,58 +17233,40 @@ should @emph{not} contain any nodes besides the single `Top' node.  The
 @code{texinfo-multiple-files-update} command will not process
 them.@refill
 
-@node Sample Include File, Include Files Evolution, Include File Requirements, Include Files
+
+@node Sample Include File
 @section Sample File with @code{@@include}
 @cindex Sample @code{@@include} file
 @cindex Include file sample
 @cindex @code{@@include} file sample
 
-Here is an example of a complete outer Texinfo file with @code{@@include} files
+Here is an example of an outer Texinfo file with @code{@@include} files
 within it before running @code{texinfo-multiple-files-update}, which
-would insert a main or master menu:@refill
+would insert a main or master menu:
 
 @example
 @group
 \input texinfo @@c -*-texinfo-*-
 @c %**start of header
-@@setfilename  include-example.info
+@@setfilename include-example.info
 @@settitle Include Example
 @c %**end of header
 @end group
 
-@group
-@@setchapternewpage odd
-@@titlepage
-@@sp 12
-@@center @@titlefont@{Include Example@}
-@@sp 2
-@@center by Whom Ever
-@end group
+... @xref{Sample Texinfo Files}, for
+examples of the rest of the frontmatter ...
 
 @group
-@@page
-@@vskip 0pt plus 1filll
-Copyright @@copyright@{@} 2002 Free Software Foundation, Inc.
-@@end titlepage
-@end group
-
-@group
-@@ifinfo
-@@node Top, First, , (dir)
-@@top Master Menu
-@@end ifinfo
+@@ifnottex
+@@node Top
+@@top Include Example 
+@@end ifnottex
 @end group
 
 @group
 @@include foo.texinfo
 @@include bar.texinfo
 @@include concept-index.texinfo
-@end group
-
-@group
-@@summarycontents
-@@contents
-
 @@bye
 @end group
 @end example
@@ -17229,7 +17275,7 @@ An included file, such as @file{foo.texinfo}, might look like this:
 
 @example
 @group
-@@node First, Second, , Top
+@@node First
 @@chapter First Chapter
 
 Contents of first chapter @dots{}
@@ -17250,7 +17296,7 @@ The full contents of @file{concept-index.texinfo} might be as simple as this:
 The outer Texinfo source file for @cite{The GNU Emacs Lisp Reference
 Manual} is named @file{elisp.texi}.  This outer file contains a master
 menu with 417 entries and a list of 41 @code{@@include}
-files.@refill
+files.
 
 
 @node Include Files Evolution
@@ -18804,7 +18850,7 @@ For an example of Lisp code.
 
 @item @@smallexample
 @itemx @@smalllisp
-Like @@table and @@lisp @r{but for} @@smallbook.
+Like @@table and @@lisp, but for (originally) @@smallbook.
 @end table
 
 @c subheading Conditionals

@@ -163,6 +163,9 @@
 /* Define to 1 if you have the `setvbuf' function. */
 #undef HAVE_SETVBUF
 
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
 /* Define to 1 if you have the `sigprocmask' function. */
 #undef HAVE_SIGPROCMASK
 
@@ -228,6 +231,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/stream.h> header file. */
+#undef HAVE_SYS_STREAM_H
+
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
@@ -252,10 +258,13 @@
 /* Define to 1 if you have the `tsearch' function. */
 #undef HAVE_TSEARCH
 
+/* Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>. */
+#undef HAVE_UINTMAX_T
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the unsigned long long type. */
+/* Define if you have the 'unsigned long long' type. */
 #undef HAVE_UNSIGNED_LONG_LONG
 
 /* Define to 1 if you have the `vprintf' function. */
@@ -349,6 +358,6 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
-/* Define to unsigned long or unsigned long long if <inttypes.h> and
-   <stdint.h> don't define. */
+/* Define to unsigned long or unsigned long long if <stdint.h> and
+   <inttypes.h> don't define. */
 #undef uintmax_t
