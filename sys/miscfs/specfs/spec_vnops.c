@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.70 2003/10/15 08:41:26 dsl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.71 2003/11/06 08:58:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.70 2003/10/15 08:41:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.71 2003/11/06 08:58:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.70 2003/10/15 08:41:26 dsl Exp $");
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
+#include <sys/tty.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -645,6 +646,7 @@ spec_close(v)
 	struct vnode *vp = ap->a_vp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
+	struct session *sess;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
@@ -665,12 +667,19 @@ spec_close(v)
 		 * process' controlling terminal.  In that case,
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
+		 * Also remove the link from the tty back to the session
+		 * and pgrp - due to the way consoles are handled we cannot
+		 * guarantee that the vrele() will do the final close on the
+		 * actual tty device.
 		 */
 		if (count == 2 && ap->a_p &&
-		    vp == ap->a_p->p_session->s_ttyvp) {
+		    vp == (sess = ap->a_p->p_session)->s_ttyvp) {
+			sess->s_ttyvp = NULL;
+			sess->s_ttyp->t_pgrp = NULL;
+			sess->s_ttyp->t_session = NULL;
+			SESSRELE(sess);
 			vrele(vp);
 			count--;
-			ap->a_p->p_session->s_ttyvp = NULL;
 		}
 		/*
 		 * If the vnode is locked, then we are in the midst
