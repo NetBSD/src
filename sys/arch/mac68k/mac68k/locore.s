@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 1998/05/24 19:32:44 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 1998/06/30 04:16:00 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,8 +116,8 @@ GLOBAL(macos_tt1)
 	.long	0
 GLOBAL(bletch)
 	.long	0
-GLOBAL(esym)
-	.long	0
+
+BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 1998/06/09 01:57:44 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200 1998/06/30 04:16:01 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -788,10 +788,10 @@ cpu_reboot(howto, bootstr)
 void
 cpu_init_kcore_hdr()
 {
+	extern int end;
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
-	extern char end[];
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
 
@@ -835,7 +835,7 @@ cpu_init_kcore_hdr()
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)end;
+	m->relocend = (u_int32_t)&end;
 
 	/*
 	 * mac68k has multiple RAM segments on some models.
@@ -1238,10 +1238,10 @@ getenvvars(flag, buf)
 	char   *buf;
 {
 	extern u_long bootdev, videobitdepth, videosize;
-	extern u_long esym;
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
-	extern char end[];
+	extern int *esym;
+	extern int end;
 	int root_scsi_id;
 
 	/*
@@ -1308,11 +1308,11 @@ getenvvars(flag, buf)
 	/*
 	 * Get end of symbols for kernel debugging
 	 */
-	esym = getenv("END_SYM");
+	esym = (int *)getenv("END_SYM");
 #ifndef SYMTAB_SPACE
-	if (esym == 0)
+	if (esym == (int *)0)
 #endif
-		esym = (u_int32_t)end;
+		esym = (int *)&end;
 
 	/* Get MacOS time */
 	macos_boottime = getenv("BOOTTIME");
