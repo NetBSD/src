@@ -1,8 +1,8 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$NetBSD: Makefile,v 1.21 1998/02/15 02:54:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 1999/01/13 05:21:46 ross Exp $
 
 # IF YOU ADD TO MSRCS, MAKE SURE YOU UPDATE `CATDEPS' IN bsd.man.mk!
-MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms
+MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
 MMACS=  ${MSRCS:S@^@tmac.@g}
 FILES=	${MMACS}
 FILESDIR=${BINDIR}/tmac
