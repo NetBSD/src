@@ -1,5 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/06/15 15:50:05 nonaka Exp $	*/
-
+/*	$NetBSD: mainbus.c,v 1.4 2001/06/20 14:35:26 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,14 +31,18 @@
  */
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
 #include "pci.h"
+#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -48,7 +51,7 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-int	mainbus_print (void *, const char *);
+int	mainbus_print(void *, const char *);
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -82,6 +85,9 @@ mainbus_attach(parent, self, aux)
 {
 	union mainbus_attach_args mba;
 	struct confargs ca;
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
+#endif
 
 	printf("\n");
 
@@ -96,6 +102,18 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
+#ifdef PCI_NETBSD_CONFIGURE
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+
+	pci_configure_bus(0, ioext, memext, NULL);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif
+
 	mba.mba_pba.pba_busname = "pci";
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
