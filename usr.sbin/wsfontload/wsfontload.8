@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.7 2000/08/22 08:49:50 lukem Exp $
+.\"	$NetBSD: wsfontload.8,v 1.8 2000/10/02 17:04:12 bjh21 Exp $
 .\"
 .Dd January 13, 1999
 .Os
@@ -39,9 +39,7 @@ The font gets assigned a name in this process which it can be referred to
 by later for use on a display screen.
 The font is loaded from the specified
 .Ar fontfile ,
-or from
-.Pa stdin
-if
+or from standard input if
 .Ar fontfile
 is not provided.
 .Pp
@@ -94,8 +92,6 @@ No font files are provided with the wscons framework. The fonts installed by
 .Xr pcvt 4
 can be used instead, as can raw font files from other operating system
 distributions.
-.Sh FILES
-.Pa /etc/wscons.conf
 .Sh EXAMPLES
 .Dl wsfontload -N myname -h 8 -e ibm /usr/share/pcvt/fonts/vt220l.808
 .Pp
@@ -105,11 +101,13 @@ distribution. This (or another 8x8-font) is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
-.Sh BUGS
-Many features are missing.
-.Pp
-There is no way ro remove a loaded font.
+.Sh FILES
+.Pa /etc/wscons.conf
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8
+.Sh BUGS
+Many features are missing.
+.Pp
+There is no way to remove a loaded font.
