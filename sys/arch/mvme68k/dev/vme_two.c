@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.5 2000/08/13 17:00:52 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.6 2000/08/20 17:07:42 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ static struct vmetwo_softc *vmetwo_sc;
 
 void vmetwo_master_range __P((struct vmetwo_softc *, int,
 			      struct mvmebus_range *));
+void vmetwo_slave_range __P((struct vmetwo_softc *, int, vme_am_t,
+			      struct mvmebus_range *));
 int vmetwo_local_isr_trampoline __P((void *));
 void vmetwo_intr_establish __P((void *, int, int, int,
 				int (*)(void *), void *));
@@ -167,9 +169,6 @@ vmetwo_attach(parent, self, aux)
 	/* Zap all the IRQ level registers */
 	for (i = 0; i < VME2_NUM_IL_REGS; i++)
 		vme2_lcsr_write(sc, VME2LCSR_INTERRUPT_LEVEL_BASE + (i * 4), 0);
-
-	/* Disable the VMEbus Slave Windows for now */
-	vme2_lcsr_write(sc, VME2LCSR_SLAVE_CTRL, 0);
 
 	/* Disable the tick timers */
 	reg = vme2_lcsr_read(sc, VME2LCSR_TIMER_CONTROL);
@@ -265,6 +264,16 @@ vmetwo_attach(parent, self, aux)
 		vmetwo_master_range(sc, i,
 		    &(sc->sc_master[i + VME2_MASTER_PROG_START]));
 
+	/* XXX: No A16 slave yet :XXX */
+	sc->sc_slave[VME2_SLAVE_A16].vr_am = MVMEBUS_AM_DISABLED;
+
+	for (i = 0; i < VME2_SLAVE_WINDOWS; i++) {
+		vmetwo_slave_range(sc, i, VME_AM_A32,
+		    &sc->sc_slave[i + VME2_SLAVE_PROG_START]);
+		vmetwo_slave_range(sc, i, VME_AM_A24,
+		    &sc->sc_slave[i + VME2_SLAVE_PROG_START + 2]);
+	}
+
 	/* Let the NMI handler deal with level 7 ABORT switch interrupts */
 	vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, 0, nmihand, NULL);
 
@@ -273,8 +282,8 @@ vmetwo_attach(parent, self, aux)
 	sc->sc_mvmebus.sc_chip = sc;
 	sc->sc_mvmebus.sc_nmasters = VME2_NMASTERS;
 	sc->sc_mvmebus.sc_masters = &sc->sc_master[0];
-	sc->sc_mvmebus.sc_nslaves = 0;
-	sc->sc_mvmebus.sc_slaves = NULL;
+	sc->sc_mvmebus.sc_nslaves = VME2_NSLAVES;
+	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
 	sc->sc_mvmebus.sc_intr_establish = vmetwo_intr_establish;
 	sc->sc_mvmebus.sc_intr_disestablish = vmetwo_intr_disestablish;
 
@@ -377,6 +386,90 @@ vmetwo_master_range(sc, range, vr)
 	 */
 	vr->vr_vmestart = start;
 	vr->vr_vmeend = end - 1;
+}
+
+void
+vmetwo_slave_range(sc, range, am, vr)
+	struct vmetwo_softc *sc;
+	int range;
+	vme_am_t am;
+	struct mvmebus_range *vr;
+{
+	u_int32_t reg;
+
+	/*
+	 * First, check if the range is actually enabled.
+	 * Note that bit 1 of `range' is used to indicte if we're
+	 * looking for an A24 range (set) or an A32 range (clear).
+	 */
+	reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_CTRL);
+
+	if (am == VME_AM_A32 && (reg & VME2_SLAVE_AMSEL_A32(range))) {
+		vr->vr_am = VME_AM_A32 | VME_AM_MBO;
+		vr->vr_mask = 0xffffffffu;
+	} else
+	if (am == VME_AM_A24 && (reg & VME2_SLAVE_AMSEL_A24(range))) {
+		vr->vr_am = VME_AM_A24 | VME_AM_MBO;
+		vr->vr_mask = 0x00ffffffu;
+	} else {
+		/* The range is not enabled */
+		vr->vr_am = MVMEBUS_AM_DISABLED;
+		return;
+	}
+
+	if ((reg & VME2_SLAVE_AMSEL_DAT(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_DATA;
+
+	if ((reg & VME2_SLAVE_AMSEL_PGM(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_PROG;
+
+	if ((reg & VME2_SLAVE_AMSEL_USR(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_USER;
+
+	if ((reg & VME2_SLAVE_AMSEL_SUP(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_SUPER;
+
+	if ((reg & VME2_SLAVE_AMSEL_BLK(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_BLK;
+
+	if ((reg & VME2_SLAVE_AMSEL_BLKD64(range)) != 0)
+		vr->vr_am |= MVMEBUS_AM_CAP_BLKD64;
+
+	vr->vr_datasize = VME_D32 | VME_D16 | VME_D8;
+
+	/*
+	 * Record the VMEbus start and end addresses of the slave image
+	 */
+	reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_ADDRESS(range));
+	vr->vr_vmestart = reg & VME2_SLAVE_ADDRESS_START_MASK;
+	vr->vr_vmestart <<= VME2_SLAVE_ADDRESS_START_SHIFT;
+	vr->vr_vmestart &= vr->vr_mask;
+	vr->vr_vmeend = reg & VME2_SLAVE_ADDRESS_END_MASK;
+	vr->vr_vmeend <<= VME2_SLAVE_ADDRESS_END_SHIFT;
+	vr->vr_vmeend &= vr->vr_mask;
+	vr->vr_vmeend |= 0xffffu;
+
+	/*
+	 * Now figure out the local-bus address
+	 */
+	reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_CTRL);
+	if ((reg & VME2_SLAVE_CTRL_ADDER(range)) != 0) {
+		reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_TRANS(range));
+		reg &= VME2_SLAVE_TRANS_ADDRESS_MASK;
+		reg <<= VME2_SLAVE_TRANS_ADDRESS_SHIFT;
+		vr->vr_locstart = vr->vr_vmestart + reg;
+	} else {
+		u_int32_t sel, addr;
+
+		reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_TRANS(range));
+		sel = reg & VME2_SLAVE_TRANS_SELECT_MASK;
+		sel <<= VME2_SLAVE_TRANS_SELECT_SHIFT;
+		addr = reg & VME2_SLAVE_TRANS_ADDRESS_MASK;
+		addr <<= VME2_SLAVE_TRANS_ADDRESS_SHIFT;
+
+		vr->vr_locstart = addr & sel;
+		vr->vr_locstart |= vr->vr_vmestart & (~sel);
+	}
 }
 
 int

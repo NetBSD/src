@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.4 2000/08/13 17:00:53 scw Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.5 2000/08/20 17:07:43 scw Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -119,6 +119,10 @@ typedef struct mvme68k_bus_dmamap *bus_dmamap_t;
 struct mvme68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+
+	/* PRIVATE */
+	bus_addr_t	_ds_cpuaddr;	/* CPU-relative phys addr of segment */
+	int		_ds_padding;
 };
 typedef struct mvme68k_bus_dma_segment	bus_dma_segment_t;
 
@@ -227,10 +231,14 @@ int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct uio *, int));
 int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
-
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_sync_030 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
+void	_bus_dmamap_sync_0460 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int));
+/* Set to the appropriate function in machdep.c */
+extern void (*_bus_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
 	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,

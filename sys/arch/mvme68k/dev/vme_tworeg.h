@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.2 2000/03/18 22:33:04 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.3 2000/08/20 17:07:42 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,24 +57,24 @@
 	 */
 #define VME2_SLAVE_WINDOWS		2
 #define	VME2LCSR_SLAVE_ADDRESS(x)	(0x00 + ((x) * 4))
-#define  VME2_SLAVE_ADDRESS_START_SHIFT	0
+#define  VME2_SLAVE_ADDRESS_START_SHIFT	16
 #define  VME2_SLAVE_ADDRESS_START_MASK	(0x0000ffffu)
-#define  VME2_SLAVE_ADDRESS_END_SHIFT	16
+#define  VME2_SLAVE_ADDRESS_END_SHIFT	0
 #define  VME2_SLAVE_ADDRESS_END_MASK	(0xffff0000u)
 
 #define	VME2LCSR_SLAVE_TRANS(x)		(0x08 + ((x) * 4))
-#define  VME2_SLAVE_TRANS_SELECT_SHIFT	0
+#define  VME2_SLAVE_TRANS_SELECT_SHIFT	16
 #define  VME2_SLAVE_TRANS_SELECT_MASK	(0x0000ffffu)
-#define  VME2_SLAVE_TRANS_ADDRESS_SHIFT	16
+#define  VME2_SLAVE_TRANS_ADDRESS_SHIFT	0
 #define  VME2_SLAVE_TRANS_ADDRESS_MASK	(0xffff0000u)
 
 #define	VME2LCSR_SLAVE_CTRL		0x10
 #define	 VME2_SLAVE_AMSEL_DAT(x)	(1u << (0 + ((x) * 16)))
 #define	 VME2_SLAVE_AMSEL_PGM(x)	(1u << (1 + ((x) * 16)))
 #define	 VME2_SLAVE_AMSEL_BLK(x)	(1u << (2 + ((x) * 16)))
-#define	 VME2_SLAVE_AMSEL_D64(x)	(1u << (3 + ((x) * 16)))
-#define	 VME2_SLAVE_AMSEL_D24(x)	(1u << (4 + ((x) * 16)))
-#define	 VME2_SLAVE_AMSEL_D32(x)	(1u << (5 + ((x) * 16)))
+#define	 VME2_SLAVE_AMSEL_BLKD64(x)	(1u << (3 + ((x) * 16)))
+#define	 VME2_SLAVE_AMSEL_A24(x)	(1u << (4 + ((x) * 16)))
+#define	 VME2_SLAVE_AMSEL_A32(x)	(1u << (5 + ((x) * 16)))
 #define	 VME2_SLAVE_AMSEL_USR(x)	(1u << (6 + ((x) * 16)))
 #define	 VME2_SLAVE_AMSEL_SUP(x)	(1u << (7 + ((x) * 16)))
 #define	 VME2_SLAVE_CTRL_WP(x)		(1u << (8 + ((x) * 16)))

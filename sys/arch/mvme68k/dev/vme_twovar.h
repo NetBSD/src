@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.5 2000/08/13 17:00:53 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.6 2000/08/20 17:07:42 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,8 +43,11 @@
 #define	VME2_MASTER_FIXED_A24	1
 #define	VME2_MASTER_FIXED_A32	2
 #define VME2_MASTER_PROG_START	3
+#define VME2_SLAVE_A16		0
+#define VME2_SLAVE_PROG_START	1
 
 #define VME2_NMASTERS		(VME2_MASTER_PROG_START + VME2_MASTER_WINDOWS)
+#define VME2_NSLAVES		(VME2_SLAVE_PROG_START+(VME2_SLAVE_WINDOWS * 2))
 
 struct vmetwo_softc {
 	struct mvmebus_softc	sc_mvmebus;
@@ -52,6 +55,7 @@ struct vmetwo_softc {
 	bus_space_handle_t	sc_lcrh;
 	bus_space_handle_t	sc_gcrh;
 	struct mvmebus_range	sc_master[VME2_NMASTERS];
+	struct mvmebus_range	sc_slave[VME2_NSLAVES];
 };
 
 #endif /* _MVME68K_VME_TWOVAR_H */
