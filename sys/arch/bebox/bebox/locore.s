@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1998/09/09 00:07:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1998/09/13 09:15:51 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -1304,7 +1304,7 @@ _C_LABEL(sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
 	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS_sigreturn
+	li	0,SYS___sigreturn14
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit
 	sc				/* exit(errno) */
