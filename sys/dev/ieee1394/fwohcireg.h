@@ -526,4 +526,6 @@ struct fwohci_desc {
 #define	OHCI_DESC_BRANCH	0x000c
 #define	OHCI_DESC_WAIT		0x0003
 
+#define	OHCI_DESC_MAX		8
+
 #endif	/* _DEV_IEEE1394_FWOHCIREG_ */

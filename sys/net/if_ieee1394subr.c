@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.2 2000/11/14 11:14:56 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.3 2000/11/20 12:12:19 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,8 @@
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
+#define	IEEE1394_REASS_TIMEOUT	3	/* 3 sec */
+
 #define	senderr(e)	do { error = (e); goto bad; } while(0/*CONSTCOND*/)
 
 static int  ieee1394_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -107,20 +109,20 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				senderr(EHOSTUNREACH);
 		}
 		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == 0)
+			if (rt->rt_gwroute == NULL)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt);
 				rt = rt0;
   lookup:
 				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 				/* the "G" test below also prevents rt == rt0 */
 				if ((rt->rt_flags & RTF_GATEWAY) ||
 				    (rt->rt_ifp != ifp)) {
 					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
+					rt0->rt_gwroute = NULL;
 					senderr(EHOSTUNREACH);
 				}
 			}
@@ -193,19 +195,17 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	    memcmp(&hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
 		return looutput(ifp, m0, dst, rt);
 
+	/*
+	 * XXX:
+	 * The maximum possible rate depends on the topology.
+	 * So the determination of maxrec and fragmentation should be
+	 * called from the driver after probing the topology map.
+	 */
 	if (m0->m_flags & (M_BCAST | M_MCAST)) {
 		hdrlen = IEEE1394_GASP_LEN;
-		/*
-		 * XXX: There should be sophisticated way to determine
-		 * maximum available rate for all IP capable nodes.
-		 */
-		hwdst.iha_speed = 0;
+		hwdst.iha_speed = 0;	/* XXX */
 	} else
 		hdrlen = 0;
-
-	/*
-	 * XXX: The maximum possible rate depends on the topology.
-	 */
 	if (hwdst.iha_speed > myaddr->iha_speed)
 		hwdst.iha_speed = myaddr->iha_speed;
 	if (hwdst.iha_maxrec > myaddr->iha_maxrec)
@@ -218,6 +218,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	m0 = ieee1394_fragment(ifp, m0, (2<<hwdst.iha_maxrec) - hdrlen, etype);
 	if (m0 == NULL)
 		senderr(ENOBUFS);
+
 	s = splimp();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
@@ -300,11 +301,10 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 		ifh->ifh_etype_off = htons(off);
 		ifh->ifh_dgl = htons(ic->ic_dgl);
 		ifh->ifh_reserved = 0;
-		m->m_next = m_copy(m0, off + sizeof(struct ieee1394_fraghdr),
-		    fraglen);
+		m->m_next = m_copy(m0, sizeof(*ifh) + off, fraglen);
 		if (m->m_next == NULL)
 			goto bad;
-		m->m_pkthdr.len = sizeof(struct ieee1394_fraghdr) + fraglen;
+		m->m_pkthdr.len = sizeof(*ifh) + fraglen;
 		off += fraglen;
 		*mp = m;
 		mp = &m->m_nextpkt;
@@ -338,8 +338,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 	if (m->m_len < sizeof(*ih) + sizeof(*iuh)) {
-		m = m_pullup(m, sizeof(*ih) + sizeof(*iuh));
-		if (m == NULL)
+		if ((m = m_pullup(m, sizeof(*ih) + sizeof(*iuh))) == NULL)
 			return;
 	}
 
@@ -347,8 +346,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	iuh = (struct ieee1394_unfraghdr *)&ih[1];
 
 	if (ntohs(iuh->iuh_ft) & (IEEE1394_FT_SUBSEQ | IEEE1394_FT_MORE)) {
-		m = ieee1394_reass(ifp, m);
-		if (m == NULL)
+		if ((m = ieee1394_reass(ifp, m)) == NULL)
 			return;
 		ih = mtod(m, struct ieee1394_header *);
 		iuh = (struct ieee1394_unfraghdr *)&ih[1];
@@ -356,8 +354,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	etype = ntohs(iuh->iuh_etype);
 
 	/* strip off the ieee1394 header */
-	m_adj(m, sizeof(struct ieee1394_header) +
-	    sizeof(struct ieee1394_unfraghdr));
+	m_adj(m, sizeof(*ih) + sizeof(*iuh));
 #if NBPFILTER > 0
 	/* XXX: emulate DLT_EN10MB */
 	if (ifp->if_bpf) {
@@ -420,8 +417,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 	u_int16_t off, ftype, size, dgl;
 
 	if (m0->m_len < sizeof(*ih) + sizeof(*ifh)) {
-		m0 = m_pullup(m0, sizeof(*ih) + sizeof(*ifh));
-		if (m0 == NULL)
+		if ((m0 = m_pullup(m0, sizeof(*ih) + sizeof(*ifh))) == NULL)
 			return NULL;
 	}
 	ih = mtod(m0, struct ieee1394_header *);
@@ -460,16 +456,28 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 		nrp = LIST_NEXT(rp, rp_next);
 		if (rp->rp_dgl != dgl)
 			continue;
-		/* sanity check: datagram size must be same for all fragments */
-		if (rp->rp_size != size) {
+		/*
+		 * sanity check:
+		 * datagram size must be same for all fragments, and
+		 * no overlap is allowed.
+		 */
+		if (rp->rp_size != size ||
+		    (off < rp->rp_off + rp->rp_len && off + len > rp->rp_off)) {
 			/*
-			 * This is possibly by wrapping dgl value.
-			 * Destroy previous received fragment.
+			 * This happens probably due to wrapping dgl value.
+			 * Destroy all previously received fragment and
+			 * enqueue current fragment.
 			 */
-			LIST_REMOVE(rp, rp_next);
-			m_freem(rp->rp_m);
-			free(rp, M_FTABLE);
-			continue;
+			for (rp = LIST_FIRST(&rq->rq_pkt); rp != NULL;
+			    rp = nrp) {
+				nrp = LIST_NEXT(rp, rp_next);
+				if (rp->rp_dgl == dgl) {
+					LIST_REMOVE(rp, rp_next);
+					m_freem(rp->rp_m);
+					free(rp, M_FTABLE);
+				}
+			}
+			break;
 		}
 		if (rp->rp_off + rp->rp_len == off) {
 			/*
@@ -488,6 +496,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 				LIST_REMOVE(nrp, rp_next);
 				m_cat(rp->rp_m, nrp->rp_m);
 				rp->rp_len += nrp->rp_len;
+				free(nrp, M_FTABLE);
 				nrp = LIST_NEXT(rp, rp_next);
 			}
 			m0 = NULL;	/* mark merged */
@@ -546,6 +555,9 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 	trp->rp_off = off;
 	trp->rp_dgl = dgl;
 	trp->rp_len = len;
+	trp->rp_ttl = IEEE1394_REASS_TIMEOUT;
+	if (trp->rp_ttl <= ifp->if_timer)
+		trp->rp_ttl = ifp->if_timer + 1;
 
 	if (rp == NULL) {
 		/* first fragment for the dgl */
@@ -558,6 +570,48 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 		LIST_INSERT_BEFORE(nrp, trp, rp_next);
 	}
 	return NULL;
+}
+
+void
+ieee1394_drain(struct ifnet *ifp)
+{
+	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	struct ieee1394_reassq *rq;
+	struct ieee1394_reass_pkt *rp;
+
+	while ((rq = LIST_FIRST(&ic->ic_reassq)) != NULL) {
+		LIST_REMOVE(rq, rq_node);
+		while ((rp = LIST_FIRST(&rq->rq_pkt)) != NULL) {
+			LIST_REMOVE(rp, rp_next);
+			m_freem(rp->rp_m);
+			free(rp, M_FTABLE);
+		}
+		free(rq, M_FTABLE);
+	}
+}
+
+void
+ieee1394_watchdog(struct ifnet *ifp)
+{
+	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	struct ieee1394_reassq *rq;
+	struct ieee1394_reass_pkt *rp, *nrp;
+	int dec;
+
+	dec = (ifp->if_timer > 0) ? ifp->if_timer : 1;
+	for (rq = LIST_FIRST(&ic->ic_reassq); rq != NULL;
+	    rq = LIST_NEXT(rq, rq_node)) {
+		for (rp = LIST_FIRST(&rq->rq_pkt); rp != NULL; rp = nrp) {
+			nrp = LIST_NEXT(rp, rp_next);
+			if (rp->rp_ttl >= dec)
+				rp->rp_ttl -= dec;
+			else {
+				LIST_REMOVE(rp, rp_next);
+				m_freem(rp->rp_m);
+				free(rp, M_FTABLE);
+			}
+		}
+	}
 }
 
 const char *
@@ -584,6 +638,9 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_mtu = IEEE1394MTU;
 	ifp->if_output = ieee1394_output;
 	ifp->if_input = ieee1394_input;
+	ifp->if_drain = ieee1394_drain;
+	ifp->if_watchdog = ieee1394_watchdog;
+	ifp->if_timer = 1;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(100);
 	if ((sdl = ifp->if_sadl) && sdl->sdl_family == AF_LINK) {
@@ -594,7 +651,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_broadcastaddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	baddr = (struct ieee1394_hwaddr *)ifp->if_broadcastaddr;
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
-	baddr->iha_speed = 0;	/*XXX*/
+	baddr->iha_speed = 0;	/*XXX: how to determine the speed for bcast? */
 	baddr->iha_maxrec = 512 << baddr->iha_speed;
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
 	LIST_INIT(&ic->ic_reassq);
@@ -605,6 +662,7 @@ ieee1394_ifdetach(struct ifnet *ifp)
 {
 	struct sockaddr_dl *sdl = ifp->if_sadl;
 
+	ieee1394_drain(ifp);
 	free(ifp->if_broadcastaddr, M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
 	memset(LLADDR(sdl), 0, sizeof(struct ieee1394_hwaddr));
