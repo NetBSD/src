@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $	
+.\"	$NetBSD: msgsnd.2,v 1.2.2.1 1997/11/28 08:38:45 mellon Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"/
+.\"
 .Dd August 17, 1995
 .Dt MSGSND 2
 .Os NetBSD
@@ -47,55 +47,63 @@ The
 function sends a message from the message queue specified in
 .Fa msqid .
 .Fa msgp
-points to a structuer containing the message. This structure should
+points to a structure containing the message. This structure should
 consist of the following members:
 .Bd -literal
     long mtype;    /* message type */
     char mtext[1]; /* body of message */
 .Ed
-
+.Pp
 .Va mtype
 is an integer greater than 0 that can be used for selecting messages (see
-.Xr msgrcv 2 ) ,
+.Xr msgrcv 2 ) .
 .Va mtext 
-is an array of bytes, with a size up to that of the system limit (MSGMAX).
-
+is an array of bytes, with size up to the system limit
+.Dv MSGMAX .
+.Pp
 If the number of bytes already on the message queue plus
 .Fa msgsz
-is bigger than the maximum number of bytes on the message queue (
-.Va msg_qbytes ,
+is greater than the maximum number of bytes in the message queue
+.Pf ( Va msg_qbytes ,
 see
 .Xr msgctl 2 ) ,
-or the number of messages on all queues system-wide is already equal to
+or if the number of messages on all queues system-wide is already equal to
 the system limit,
 .Fa msgflg
 determines the action of
 .Fn msgsnd .
 If
 .Fa msgflg
-has IPC_NOWAIT mask set in it, the call will return immediately. If
+has
+.Dv IPC_NOWAIT
+mask set in it, the call will return immediately. If
 .Fa msgflg
-does not have IPC_NOWAIT set in it, the call will block until:
+does not have
+.Dv IPC_NOWAIT
+set in it, the call will block until:
 .Bl -bullet
 .It
-The condition which caused the call to block does no longer exist.
-The message will be sent.
+The condition which caused the call to block no longer exists.
+The message was sent.
 .It
-The messag queue is removed, in which case -1 will be returned, and
+The message queue is removed, in which case -1 will be returned and
 .Va errno
-is set to EINVAL.
+set to 
+.Er EINVAL .
 .It
 The caller catches a signal. The call returns with
 .Va errno
-set to EINTR.
+set to
+.Er EINTR .
 .El
-
+.Pp
 After a successful call, the data structure associated with the message
 queue is updated in the following way:
 .Bl -bullet
 .It
 .Va msg_cbytes
-is incremented by the size of the message.
+is incremented by
+.Fa msgsz .
 .It
 .Va msg_qnum
 is incremented by 1.
@@ -116,21 +124,23 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa msqid
-is not a valid message queue identifier
-
+is not a valid message queue identifier.
+.Pp
 The message queue was removed while
 .Fn msgsnd
 was waiting for a resource to become available in order to deliver the
 message.
-
+.Pp
 .Fa msgsz
 is less than 0, or greater than
 .Va msg_qbytes .
-.It Bq Er EACCESS
+.It Bq Er EACCES
 The calling process does not have write access to the message queue.
 .It Bq Er EAGAIN
-There was no space for this message either on the queue, or in the whole
-system, and IPC_NOWAIT was set in
+There was no space for this message either on the queue or in the whole
+system, and
+.Dv IPC_NOWAIT
+was set in
 .Fa msgflg .
 .It Bq Er EFAULT
 .Fa msgp
@@ -143,7 +153,11 @@ The system call was interrupted by the delivery of a signal.
 .Xr msgget 2 ,
 .Xr msgrcv 2
 .Sh BUGS
-NetBSD does not define the EIDRM error value, which should be used
+.Nx
+does not define the
+.Er EIDRM
+error value, which should be used
 in the case of a removed message queue.
 .Sh HISTORY
-Message queues appeared in the first release of AT&T Unix System V.
+Message queues appeared in the first release of
+.At V .
