@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.64 2003/08/07 11:13:51 agc Exp $	*/
+/*	$NetBSD: fstat.c,v 1.65 2003/10/21 02:16:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.64 2003/08/07 11:13:51 agc Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.65 2003/10/21 02:16:59 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,7 +319,7 @@ dofiles(p)
 	Pid = p->p_pid;
 	Comm = p->p_comm;
 
-	if (p->p_fd == NULL || p->p_cwdi == NULL)
+	if (p->p_fd == 0 || p->p_cwdi == 0)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
 		warnx("can't read filedesc at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
