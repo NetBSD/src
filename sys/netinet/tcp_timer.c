@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.66 2004/01/02 15:51:04 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.67 2005/01/26 21:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.66 2004/01/02 15:51:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.67 2005/01/26 21:49:27 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -372,6 +372,7 @@ tcp_timer_rexmt(void *arg)
 		tp->t_srtt = 0;
 	}
 	tp->snd_nxt = tp->snd_una;
+	tp->snd_high = tp->snd_max;
 	/*
 	 * If timing a segment in this window, stop the timer.
 	 */
