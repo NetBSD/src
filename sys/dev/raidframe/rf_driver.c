@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.99 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.100 2004/04/10 05:52:33 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.99 2004/04/09 23:10:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.100 2004/04/10 05:52:33 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -202,6 +202,8 @@ rf_UnconfigureArray()
 int 
 rf_Shutdown(RF_Raid_t *raidPtr)
 {
+	RF_VoidPointerListElem_t *tmp;
+
 	if (!raidPtr->valid) {
 		RF_ERRORMSG("Attempt to shut down unconfigured RAIDframe driver.  Aborting shutdown\n");
 		return (EINVAL);
@@ -238,6 +240,22 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	rf_UnconfigureVnodes(raidPtr);
 
+	/* Free the emergency IO buffers */
+	while (raidPtr->iobuf != NULL) {
+		tmp = raidPtr->iobuf;
+		raidPtr->iobuf = raidPtr->iobuf->next;
+		free(tmp->p, M_RAIDFRAME);
+		rf_FreeVPListElem(tmp);
+	}
+
+	/* Free the emergency stripe buffers */
+	while (raidPtr->stripebuf != NULL) {
+		tmp = raidPtr->stripebuf;
+		raidPtr->stripebuf = raidPtr->stripebuf->next;
+		free(tmp->p, M_RAIDFRAME);
+		rf_FreeVPListElem(tmp);
+	}
+		
 	rf_ShutdownList(&raidPtr->shutdownList);
 
 	rf_UnconfigureArray();
