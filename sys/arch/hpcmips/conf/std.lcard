@@ -1,4 +1,4 @@
-#	$NetBSD: std.lcard,v 1.3 2003/12/13 01:33:41 sekiya Exp $
+#	$NetBSD: std.lcard,v 1.3.2.1 2004/04/18 02:19:40 jmc Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -9,6 +9,7 @@ options 	SOFTFLOAT		# emulate FPU insn
 
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
+makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	VR41XX			# NEC VR41xx series
 options 	MIPS3_NO_PV_UNCACHED
 options		NO_SYMBOLSZ_ENTRY
