@@ -1,0 +1,117 @@
+.\"     $NetBSD: install,v 1.1 2002/03/30 09:12:40 thorpej Exp $
+.\" 
+.\" Copyright (c) 1999, 2000, 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"  
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met: 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE. 
+.\" 
+.
+The steps taken for installing
+.Nx*M
+are different for diskless and hard disk configurations.
+.Ss2 Installation for diskless configurations
+This sections assumes you know how to configure DHCP, TFTP,
+and NFS services on your server.
+.Pp
+.(enum
+Place the kernel into the TFTP server's download area.  If the
+kernel has a
+.Dq .gz
+suffix, you must first uncompress it using the
+.Pa gunzip
+program.
+.Pp
+.Dl server# Ic cp netbsd-GENERIC /tftpboot/netbsd-shark
+.Pp
+Note that your DHCP server must be configured to specify
+this file as the boot file for the client.
+.It
+Unpack the distribution sets into the client's root directory
+on the server.
+.Pp
+.Dl server# Ic cd /export/client/shark
+.Dl server# Ic gzcat .../base.tgz | tar xvpf -
+.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl [ repeat for all sets you wish to unpack ]
+.It
+Load the kernel from the TFTP server.
+.Pp
+.Dl ok Ic boot net
+.enum)
+.Pp
+The installation of your diskless
+.Nx*M
+system is now complete!  You may now skip ahead to any post-installation
+instructions.
+.
+.Ss2 Installation onto a hard disk
+To install or upgrade
+.Nx*M
+on a hard disk, you need to first boot the installation
+program and then interact with the screen-menu program
+.Ic sysinst .
+The installation program actually consists of the
+.Nx
+kernel plus an in-memory file system of utility programs.
+.Pp
+If you have an existing
+.Nx
+installation on your hard disk,
+you may copy the special installation kernel into your existing
+root file system.
+.Pp
+.Dl client# Ic gzcat .../shark/installation/instkernel/netbsd.gz > /netbsd.inst
+.Pp
+You may then boot the installation kernel.
+.Pp
+.Dl ok Ic boot disk netbsd.inst
+.Pp
+If you do not have an existing
+.Nx
+installation, then you must load the installation kernel over the
+network.  You must configure a DHCP and TFTP server in order to do this.
+.Pp
+Place the installation kernel into the TFTP server's download area.
+.Pp
+.Dl server# Ic gzcat .../shark/installation/instkernel/netbsd.gz > /tftpboot/shark-inst
+.Pp 
+Note that your DHCP server must be configured to specify
+this file as the boot file for the client.
+.Pp
+You may then boot the installation kernel.
+.Pp
+.Dl ok Ic boot net
+.Pp
+Once the installation kernel has loaded, the
+.Ic sysinst
+installation program should launch automatically.
+.
+.
+.Pp
+.so ../common/sysinst
