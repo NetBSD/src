@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1998/08/22 10:55:34 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1999/01/31 14:06:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -33,7 +33,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#define DKTYPENAMES
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
