@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/03/22 00:30:06 fredette Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/26 23:19:31 fredette Exp $
 
 LIB=sa
 
@@ -52,10 +52,9 @@ libinstall::
 
 # bring in the required libgcc integer support:
 .if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
-LIBGCC_OBJS=   _mulsi3.o _divsi3.o _udivsi3.o _modsi3.o _umodsi3.o _muldi3.o
-${LIBGCC_OBJS}:
-	@${AR} xv ${DESTDIR}/usr/lib/libgcc.a $@
-OBJS+= ${LIBGCC_OBJS}
+SRCS+= ${DIR_KERN}/arch/m68k/mulsi3.S ${DIR_KERN}/arch/m68k/divsi3.S \
+	${DIR_KERN}/arch/m68k/udivsi3.S ${DIR_KERN}/arch/m68k/modsi3.S \
+	${DIR_KERN}/arch/m68k/umodsi3.S muldi3.c
 .endif
 
 .include <bsd.own.mk>
