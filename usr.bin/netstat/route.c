@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.57 2001/08/19 02:01:25 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.58 2001/10/06 18:56:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.57 2001/08/19 02:01:25 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.58 2001/10/06 18:56:49 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -490,46 +490,11 @@ p_sockaddr(sa, mask, flags, width)
 #endif
 
 	case AF_LINK:
-	    {
-		struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
-
-		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
-		    sdl->sdl_slen == 0)
-			(void)snprintf(workbuf, sizeof workbuf, "link#%d",
-			    sdl->sdl_index);
-		else switch (sdl->sdl_type) {
-		case IFT_FDDI:
-		case IFT_ETHER:
-		case IFT_IEEE1394:
-		    {
-			int i, alen = sdl->sdl_alen;
-			u_char *lla = (u_char *)sdl->sdl_data +
-			    sdl->sdl_nlen;
-
-			if (sdl->sdl_type == IFT_IEEE1394 && alen > 8)
-				alen = 8;
-
-			cplim = "";
-			for (i = 0; i < alen; i++, lla++) {
-				/* XXX */
-				n = snprintf(cp, ep - cp,
-				    "%s%02x", cplim, *lla);
-				if (n < 0)
-					continue;
-				if (n >= ep - cp)
-					n = ep - cp - 1;
-				cp += n;
-				cplim = ":";
-			}
-			cp = workbuf;
-			break;
-		    }
-		default:
-			cp = link_ntoa(sdl);
-			break;
-		}
+		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
+		    NULL, 0, NI_NUMERICHOST) != 0)
+			strncpy(workbuf, "invalid", sizeof(workbuf));
+		cp = workbuf;
 		break;
-	    }
 
 	default:
 	    {
