@@ -1,3 +1,5 @@
+/*	$NetBSD: fdset.h,v 1.5 1996/02/28 21:04:00 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fdset.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: fdset.h,v 1.4 1996/02/24 01:18:38 jtk Exp $
  */
 
 /*
