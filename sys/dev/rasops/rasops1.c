@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1.c,v 1.2 1999/04/13 00:40:09 ad Exp $ */
+/* $NetBSD: rasops1.c,v 1.3 1999/04/13 03:02:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -31,7 +31,7 @@
 #ifdef RASOPS1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.2 1999/04/13 00:40:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.3 1999/04/13 03:02:40 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,15 +40,16 @@ __KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.2 1999/04/13 00:40:09 ad Exp $");
 #include <machine/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
 static void	rasops1_putchar __P((void *, int, int col, u_int, long));
 static void	rasops1_putchar8 __P((void *, int, int col, u_int, long));
 static void	rasops1_putchar16 __P((void *, int, int col, u_int, long));
 static void	rasops1_copycols __P((void *, int, int, int, int));
-static void	rasops1_erasecols __P((void *, int, int, int));
-static void	rasops1_erasecols8 __P((void *, int, int, int));
-static void	rasops1_eraserows __P((void *, int, int));
+static void	rasops1_erasecols __P((void *, int, int, int, long));
+static void	rasops1_erasecols8 __P((void *, int, int, int, long));
+static void	rasops1_eraserows __P((void *, int, int, long));
 static int32_t	rasops1_fg_color __P((long));
 static int32_t	rasops1_bg_color __P((long));
 static void	rasops1_do_cursor __P((struct rasops_info *));
@@ -162,7 +163,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	long attr;
 {
 
-	/* XXX i need implemention */
+	panic("rasops1_putchar: i need implemention");
 }
 
 
@@ -183,14 +184,15 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING	
-	if (row < 0 || row >= ri->ri_rows)
+	/* Catches 'row < 0' case too */ 
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
-	if (col < 0 || col >= ri->ri_cols)
+	if ((unsigned)col >= (unsigned)ri->ri_cols)
 		return;
 #endif
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
 	
@@ -247,14 +249,15 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING	
-	if (row < 0 || row >= ri->ri_rows)
+	/* Catches 'row < 0' case too */ 
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
-	if (col < 0 || col >= ri->ri_cols)
+	if ((unsigned)col >= (unsigned)ri->ri_cols)
 		return;
 #endif
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
 	
@@ -312,7 +315,7 @@ rasops1_erasecols(cookie, row, col, num, attr)
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING	
-	if (row < 0 || row > ri->ri_rows)
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
 	if (col < 0) {
@@ -326,8 +329,8 @@ rasops1_erasecols(cookie, row, col, num, attr)
 	if (num <= 0)
 		return;
 #endif
-	col *= ri->ri_fontwidth;
-	num *= ri->ri_fontwidth;
+	col *= ri->ri_font->fontwidth;
+	num *= ri->ri_font->fontwidth;
 
 	/*
 	 * lmask: mask for leftmost int32
@@ -336,10 +339,10 @@ rasops1_erasecols(cookie, row, col, num, attr)
 	 */ 
 	lmask = leftmask[col & 31];
 	rmask = rightmask[(col + num) & 31];
-	nint = ((col + num) & ~31) - ((col + 31) & ~31) >> 5;
+	nint = (((col + num) & ~31) - ((col + 31) & ~31)) >> 5;
 
 	/* Merge both masks if the span is encapsulated within one int32 */
-	if (col & ~31 == (col + num) & ~31) {
+	if ((col & ~31) == ((col + num) & ~31)) {
 		lmask &= rmask;
 		rmask = 0;
 	}
@@ -349,8 +352,8 @@ rasops1_erasecols(cookie, row, col, num, attr)
 	rclr = clr & rmask;
 	lmask = ~lmask;
 	rmask = ~rmask;
-	height = ri->ri_fontheight;
-	rp = ri->ri_bits + row*ri->ri_yscale + ((col >> 3) & ~3);
+	height = ri->ri_font->fontheight;
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + ((col >> 3) & ~3));
 	
 	while (height--) {
 		dp = rp;
@@ -385,7 +388,7 @@ rasops1_erasecols8(cookie, row, col, num, attr)
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING	
-	if (row < 0 || row >= ri->ri_rows)
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
 	if (col < 0) {
@@ -446,25 +449,25 @@ rasops1_do_cursor(ri)
 	int height, row, col;
 	
 	row = ri->ri_crow;
-	col = ri->ri_ccol * ri->ri_fontwidth;
+	col = ri->ri_ccol * ri->ri_font->fontwidth;
 
 	/*
 	 * lmask: mask for leftmost int32
 	 * rmask: mask for rightmost int32
 	 */ 
 	lmask = leftmask[col & 31];
-	rmask = rightmask[(col + ri->ri_fontwidth) & 31];
+	rmask = rightmask[(col + ri->ri_font->fontwidth) & 31];
 
 	/* Merge both masks if the span is encapsulated within one int32 */
-	if (col & ~31 == (col + ri->ri_fontwidth) & ~31) {
+	if ((col & ~31) == ((col + ri->ri_font->fontwidth) & ~31)) {
 		lmask &= rmask;
 		rmask = 0;
 	}
 	
 	lmask = ~lmask;
 	rmask = ~rmask;
-	height = ri->ri_fontheight;
-	rp = ri->ri_bits + row*ri->ri_yscale + ((col >> 3) & ~3);
+	height = ri->ri_font->fontheight;
+	rp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale + ((col >> 3) & ~3));
 	
 	while (height--) {
 		dp = rp;
@@ -488,8 +491,8 @@ rasops1_do_cursor8(ri)
 	int width, height, cnt;
 	u_char *dp, *rp;
 	
-	height = ri->ri_fontheight;
-	width = ri->ri_fontwidth >> 3;
+	height = ri->ri_font->fontheight;
+	width = ri->ri_font->fontwidth >> 3;
 	rp = ri->ri_bits + ri->ri_crow * ri->ri_yscale + 
 	    ri->ri_ccol * ri->ri_xscale;
 	
@@ -504,7 +507,7 @@ rasops1_do_cursor8(ri)
 
 
 /*
- * Erase rows. 
+ * Erase rows. This is easy.
  */
 static void
 rasops1_eraserows(cookie, row, num, attr)
@@ -564,71 +567,12 @@ rasops1_eraserows(cookie, row, num, attr)
  * a width that's a multiple of 8 pels, otherwise this is used...
  */
 static void
-rasops1_copycols(cookie, row, src, src)
+rasops1_copycols(cookie, row, src, dst, num)
 	void *cookie;
-	int row, src, dst;
+	int row, src, dst, num;
 {
-#ifdef notyet
-	struct rasops_info *ri;
-	int32_t *dp, *drp, *sp, *srp, lmask, rmask;
-	int nint, height, cnt;
-	
-	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	if (row < 0 || row >= ri->ri_rows)
-		return;
-
-	if (col < 0) {
-		num += col;
-		col = 0;
-	}
-
-	if ((col + num) > ri->ri_cols)
-		num = ri->ri_cols - col;
-	
-	if (num <= 0)
-		return;
-#endif
-	src *= ri->ri_fontwidth;
-	dst *= ri->ri_fontwidth;
-	num *= ri->ri_fontwidth;
-
-	/*
-	 * lmask: mask for leftmost int32
-	 * rmask: mask for rightmost int32
-	 * nint: number of full int32s
-	 */ 
-	lmask = leftmask[col & 31];
-	rmask = rightmask[(col + num) & 31];
-	nint = ((col + num) & ~31) - ((col + 31) & ~31) >> 5;
-
-	/* Merge both masks if the span is encapsulated within one int32 */
-	if (col & ~31 == (col + num) & ~31) {
-		lmask &= rmask;
-		rmask = 0;
-	}
-	
-	lmask = ~lmask;
-	rmask = ~rmask;
-	height = ri->ri_fontheight;
-	drp = ri->ri_bits + row*ri->ri_yscale + ((dst >> 3) & ~3);
-	srp = ri->ri_bits + row*ri->ri_yscale + ((src >> 3) & ~3);
-	
-	while (height--) {
-		dp = rp;
-		DELTA(rp, ri->ri_stride, int32_t *);
-	
-		if (lmask != 0xffffffffU)
-			*dp++ = (*dp & lmask) | lclr;
-			
-		for (cnt = nint; cnt; cnt--)
-			*dp++ = clr;
-
-		if (rmask != 0xffffffffU)
-			*dp = (*dp & rmask) | rclr;
-	}
-#endif
+	panic("rasops1_copycols: i need implemention");
 }
 
 #endif /* RASOPS1 */

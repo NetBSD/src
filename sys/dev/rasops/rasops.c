@@ -1,4 +1,4 @@
-/* $NetBSD: rasops.c,v 1.2 1999/04/13 00:40:08 ad Exp $ */
+/* $NetBSD: rasops.c,v 1.3 1999/04/13 03:02:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.2 1999/04/13 00:40:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.3 1999/04/13 03:02:40 ad Exp $");
 
 #include "opt_rasops.h"
 
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.2 1999/04/13 00:40:08 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+
+#include <machine/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -462,7 +464,8 @@ rasops_copycols(cookie, row, src, dst, num)
 	if (dst == src)
 		return;
 		
-	if (row < 0 || row >= ri->ri_rows)
+	/* Catches < 0 case too */
+	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 	
 	if (src < 0) {
@@ -571,7 +574,12 @@ rasops_init_devcmap(ri)
 		else 
 			c = (*p++ << (ri->ri_bnum - 8)) << ri->ri_bpos;
 
-		ri->ri_devcmap[i] = c;
+		if (!ri->ri_swab)
+			ri->ri_devcmap[i] = c;
+		else if (ri->ri_depth <= 32)
+			ri->ri_devcmap[i] = bswap32(c);
+		else /* if (ri->ri_depth <= 16) */
+			ri->ri_devcmap[i] = bswap16(c);
 	}
 }
 #endif

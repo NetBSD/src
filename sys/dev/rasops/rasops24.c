@@ -1,4 +1,4 @@
-/* $NetBSD: rasops24.c,v 1.2 1999/04/13 00:40:09 ad Exp $ */
+/* $NetBSD: rasops24.c,v 1.3 1999/04/13 03:02:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -27,12 +27,12 @@
  *
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.2 1999/04/13 00:40:09 ad Exp $");
-
 #include "opt_rasops.h"
 #ifdef RASOPS24
 #error This is dangerously incomplete.
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.3 1999/04/13 03:02:40 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
