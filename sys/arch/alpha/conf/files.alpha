@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.107 2000/02/14 21:42:51 thorpej Exp $
+# $NetBSD: files.alpha,v 1.108 2000/03/14 05:34:04 nisimura Exp $
 #
 # alpha-specific configuration info
 
@@ -82,6 +82,9 @@ major { wd = 4 }
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
 
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # "Workstation Console" glue.
@@ -127,7 +130,7 @@ file	arch/alpha/mcbus/mcmem.c	mcmem
 include "dev/dec/files.dec"
 
 #
-# TurboChannel Devices
+# TURBOchannel Devices
 #
 include "dev/tc/files.tc"
 
@@ -145,7 +148,7 @@ file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
-# the TurboChannel IOCTL ASIC
+# the TURBOchannel IOCTL ASIC
 #  IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
@@ -155,9 +158,9 @@ attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb		needs-flag
 
 # Smart Frame buffer
-device	sfb: wsemuldisplaydev, wsrasteremulops
+device	sfb: wsemuldisplaydev, rasops8
 attach	sfb at tc
-file	arch/alpha/tc/sfb.c		sfb		needs-flag
+file	dev/tc/sfb.c			sfb		needs-flag
 
 # 8530 UARTs
 device	scc: tty
