@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.34 1994/02/10 03:31:19 cgd Exp $
+#	$Id: Makefile,v 1.35 1994/03/31 04:06:01 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -73,7 +73,8 @@ copies:
 	cd ../sys/arch/${MACHINE}/include; \
 	    tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -);
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
-	if test ${MACHINE} != ${MACHINE_ARCH} ; then \
+	if test ${MACHINE} != ${MACHINE_ARCH} -a \
+	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
 		install -d -o bin -g bin -m 755 \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 		cd ../sys/arch/${MACHINE_ARCH}/include ; \
@@ -92,7 +93,8 @@ symlinks:
 	rm -rf ${DESTDIR}/usr/include/machine
 	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
-	if test ${MACHINE} != ${MACHINE_ARCH} ; then \
+	if test ${MACHINE} != ${MACHINE_ARCH} -a \
+	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
 		ln -s /sys/arch/${MACHINE_ARCH}/include \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	else \
