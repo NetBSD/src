@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.350 2000/06/08 21:42:14 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.351 2000/06/11 00:21:01 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.350 $"
+#ident 		"GENERIC-$Revision: 1.351 $"
 
 maxusers	32		# estimated number of users
 
@@ -460,8 +460,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
 ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
