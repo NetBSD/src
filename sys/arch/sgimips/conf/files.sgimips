@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.31 2003/12/15 13:02:28 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.32 2004/01/12 12:15:05 sekiya Exp $
 
 maxpartitions 16
 
@@ -21,6 +21,10 @@ define giobus {}
 device imc: giobus, eisabus
 attach imc at mainbus
 file arch/sgimips/dev/imc.c		imc
+
+device pic: giobus
+attach pic at mainbus
+file arch/sgimips/dev/pic.c		pic
 
 device crime
 attach crime at mainbus
