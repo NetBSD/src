@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.11 2003/08/07 11:16:43 agc Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.12 2004/11/19 14:19:45 peter Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.11 2003/08/07 11:16:43 agc Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.12 2004/11/19 14:19:45 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ typedef struct string {
  * (and, we restrict any given one to live on one and only one such list)
  *
  * Also, they may live on the list of values for someone else's variable,
- * or as someone's dependancy.
+ * or as someone's dependency.
  */
 
 typedef struct same {
