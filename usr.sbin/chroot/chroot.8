@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: chroot.8,v 1.3 1997/03/06 07:00:51 mikel Exp $
+.\"	$NetBSD: chroot.8,v 1.4 1997/06/22 08:26:10 lukem Exp $
 .\"
 .Dd June 9, 1993
 .Dt CHROOT 8
@@ -74,6 +74,10 @@ is used.
 .Xr chdir 2 ,
 .Xr chroot 2 ,
 .Xr environ 7
+.Sh CAVEATS
+.Nm
+should never be installed setuid root, as it would then be possible
+to exploit the program to gain root privileges.
 .Sh HISTORY
 The
 .Nm
