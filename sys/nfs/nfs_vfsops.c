@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.17 1994/04/23 07:55:13 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.18 1994/05/11 22:26:09 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -185,7 +185,7 @@ nfs_mountroot()
 	ireq.ifr_name[len] = '0' + ifp->if_unit; /* XXX */
 	ireq.ifr_name[len+1] = '\0';
 	ireq.ifr_flags = IFF_UP;
-	if (error = ifioctl(NULL, SIOCSIFFLAGS, &ireq, curproc))
+	if (error = ifioctl(NULL, SIOCSIFFLAGS, (caddr_t)&ireq, curproc))
 		panic("nfs_mountroot, bringing interface %s up",
 		      ireq.ifr_name);
 	bzero((caddr_t) &diskless, sizeof(diskless));
@@ -204,16 +204,16 @@ nfs_mountroot()
 	 */
 	if (socreate(AF_INET, &so, SOCK_DGRAM, 0))
 		panic("nfs ifconf");
-	if (ifioctl(so, SIOCSIFADDR, &ireq, curproc))
+	if (ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, curproc))
 		panic("nfs_mountroot: setting interface address\n");
 	bcopy((caddr_t) sin, (caddr_t) &diskless.myif.ifra_addr,
 	      sizeof(struct sockaddr));
-	if (ifioctl(so, SIOCGIFBRDADDR, &ireq, curproc))
+	if (ifioctl(so, SIOCGIFBRDADDR, (caddr_t)&ireq, curproc))
 		panic("nfs baddr");
 	bcopy((caddr_t) &ireq.ifr_broadaddr,
 	      (caddr_t) &diskless.myif.ifra_broadaddr,
 	      sizeof (ireq.ifr_broadaddr));
-	if (ifioctl(so, SIOCGIFNETMASK, &ireq, curproc))
+	if (ifioctl(so, SIOCGIFNETMASK, (caddr_t)&ireq, curproc))
 		panic("nfs get netmask");
 	soclose(so);
 
