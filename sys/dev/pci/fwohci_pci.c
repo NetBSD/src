@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.7 2001/03/15 22:20:12 enami Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.8 2001/03/15 23:01:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,12 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
+
+#if BYTE_ORDER == BIG_ENDIAN
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER,
+	    csr | PCI_GLOBAL_SWAP_BE);
+#endif
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
