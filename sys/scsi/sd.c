@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.61 1995/03/23 11:33:25 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.62 1995/03/23 11:43:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -617,9 +617,12 @@ sdioctl(dev, cmd, addr, flag, p)
 		error = setdisklabel(&sd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
-		if (error == 0 && cmd == DIOCWDINFO)
-			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
-			    &sd->sc_dk.dk_label, &sd->sc_dk.dk_cpulabel);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(SDLABELDEV(dev),
+				    sdstrategy, &sd->sc_dk.dk_label,
+				    &sd->sc_dk.dk_cpulabel);
+		}
 
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
