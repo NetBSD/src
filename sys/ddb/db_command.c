@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.14 1995/10/16 05:28:14 mycroft Exp $	*/
+/*	$NetBSD: db_command.c,v 1.15 1995/10/26 14:52:33 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,8 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
