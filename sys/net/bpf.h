@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.33 2004/01/22 00:32:41 jonathan Exp $	*/
+/*	$NetBSD: bpf.h,v 1.34 2004/04/10 23:31:52 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -102,12 +102,12 @@ struct bpf_version {
  * header files.  If your using gcc, we assume that you
  * have run fixincludes so the latter set should work.
  */
-#define	BIOCGBLEN	 _IOR('B',102, u_int)
-#define	BIOCSBLEN	_IOWR('B',102, u_int)
-#define	BIOCSETF	 _IOW('B',103, struct bpf_program)
-#define	BIOCFLUSH	  _IO('B',104)
+#define BIOCGBLEN	 _IOR('B',102, u_int)
+#define BIOCSBLEN	_IOWR('B',102, u_int)
+#define BIOCSETF	 _IOW('B',103, struct bpf_program)
+#define BIOCFLUSH	  _IO('B',104)
 #define BIOCPROMISC	  _IO('B',105)
-#define	BIOCGDLT	 _IOR('B',106, u_int)
+#define BIOCGDLT	 _IOR('B',106, u_int)
 #define BIOCGETIF	 _IOR('B',107, struct ifreq)
 #define BIOCSETIF	 _IOW('B',108, struct ifreq)
 #define BIOCSRTIMEOUT	 _IOW('B',109, struct timeval)
@@ -117,10 +117,12 @@ struct bpf_version {
 #define BIOCVERSION	 _IOR('B',113, struct bpf_version)
 #define BIOCSTCPF	 _IOW('B',114, struct bpf_program)
 #define BIOCSUDPF	 _IOW('B',115, struct bpf_program)
-#define	BIOCGHDRCMPLT	 _IOR('B',116, u_int)
-#define	BIOCSHDRCMPLT	 _IOW('B',117, u_int)
-#define	BIOCSDLT	 _IOW('B',118, u_int)
-#define	BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
+#define BIOCGHDRCMPLT	 _IOR('B',116, u_int)
+#define BIOCSHDRCMPLT	 _IOW('B',117, u_int)
+#define BIOCSDLT	 _IOW('B',118, u_int)
+#define BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
+#define BIOCGSEESENT	 _IOR('B',120, u_int)
+#define BIOCSSEESENT	 _IOW('B',121, u_int)
 
 /*
  * Structure prepended to each packet.
