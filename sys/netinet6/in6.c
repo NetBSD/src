@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.56 2002/05/23 06:53:13 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.57 2002/05/25 22:18:49 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.56 2002/05/23 06:53:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.57 2002/05/25 22:18:49 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -2201,9 +2201,6 @@ in6if_do_dad(ifp)
 		return(0);
 
 	switch (ifp->if_type) {
-#ifdef IFT_DUMMY
-	case IFT_DUMMY:
-#endif
 	case IFT_FAITH:
 		/*
 		 * These interfaces do not have the IFF_LOOPBACK flag,
