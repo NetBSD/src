@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.5 1999/03/12 01:01:42 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.5.2.1 1999/05/02 21:38:30 perry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -48,6 +48,7 @@ struct biosdisk_ll {
 	int             dev;		/* BIOS device number */
 	int             sec, head, cyl;	/* geometry */
 	int		flags;		/* see below */
+	int		chs_sectors;	/* # of sectors addressable by CHS */
 };
 #define	BIOSDISK_EXT13	1		/* BIOS supports int13 extension */
 
