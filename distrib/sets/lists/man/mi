@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.469 2002/04/22 21:07:47 ad Exp $
+# $NetBSD: mi,v 1.470 2002/04/23 12:04:12 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -444,6 +444,12 @@
 ./usr/share/man/cat4/acorn26/podulebus.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/unixbp.0		man-sys-catman
 ./usr/share/man/cat4/acphy.0			man-sys-catman
+./usr/share/man/cat4/acpi.0			man-sys-catman
+./usr/share/man/cat4/acpiacad.0			man-sys-catman
+./usr/share/man/cat4/acpibat.0			man-sys-catman
+./usr/share/man/cat4/acpibut.0			man-sys-catman
+./usr/share/man/cat4/acpiec.0			man-sys-catman
+./usr/share/man/cat4/acpilid.0			man-sys-catman
 ./usr/share/man/cat4/adv.0			man-sys-catman
 ./usr/share/man/cat4/adw.0			man-sys-catman
 ./usr/share/man/cat4/agp.0			man-sys-catman
@@ -895,6 +901,7 @@
 ./usr/share/man/cat4/sparc/openprom.0		man-sys-catman
 ./usr/share/man/cat4/sparc/tcx.0		man-sys-catman
 ./usr/share/man/cat4/speaker.0			man-sys-catman
+./usr/share/man/cat4/spic.0			man-sys-catman
 ./usr/share/man/cat4/spkr.0			man-sys-catman
 ./usr/share/man/cat4/spp.0			man-sys-catman
 ./usr/share/man/cat4/sqphy.0			man-sys-catman
@@ -2136,6 +2143,12 @@
 ./usr/share/man/man4/acorn26/podulebus.4		man-sys-man
 ./usr/share/man/man4/acorn26/unixbp.4		man-sys-man
 ./usr/share/man/man4/acphy.4			man-sys-man
+./usr/share/man/man4/acpi.4			man-sys-man
+./usr/share/man/man4/acpiacad.4			man-sys-man
+./usr/share/man/man4/acpibat.4			man-sys-man
+./usr/share/man/man4/acpibut.4			man-sys-man
+./usr/share/man/man4/acpiec.4			man-sys-man
+./usr/share/man/man4/acpilid.4			man-sys-man
 ./usr/share/man/man4/adv.4			man-sys-man
 ./usr/share/man/man4/adw.4			man-sys-man
 ./usr/share/man/man4/agp.4			man-sys-man
@@ -2587,6 +2600,7 @@
 ./usr/share/man/man4/sparc/openprom.4		man-sys-man
 ./usr/share/man/man4/sparc/tcx.4		man-sys-man
 ./usr/share/man/man4/speaker.4			man-sys-man
+./usr/share/man/man4/spic.4			man-sys-man
 ./usr/share/man/man4/spkr.4			man-sys-man
 ./usr/share/man/man4/spp.4			man-sys-man
 ./usr/share/man/man4/sqphy.4			man-sys-man
