@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2000/02/21 02:04:49 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.12 2000/02/21 05:50:14 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
-#include <sys/queue.h>
 #include <sys/vmmeter.h>
 
 #include <vm/vm.h>
@@ -62,7 +60,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
-#include <machine/iopreg.h>
 #include <machine/psc.h>
 #include <machine/viareg.h>
 
@@ -171,9 +168,6 @@ intr_init()
 
 	/* Initialize the VIAs */
 	via_init();
-
-	/* Initialize the IOPs (if present) */
-	iop_init(1);
 
 	/* Initialize the PSC (if present) */
 	psc_init();
