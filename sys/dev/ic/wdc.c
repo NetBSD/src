@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.37 1998/10/20 17:00:26 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.38 1998/10/21 09:12:46 bouyer Exp $ */
 
 
 /*
@@ -409,6 +409,19 @@ wdcstart(wdc, channel)
 {
 	struct wdc_xfer *xfer;
 	struct channel_softc *chp;
+
+#ifdef WDC_DIAGNOSTIC
+	int spl1, spl2;
+
+	spl1 = splbio();
+	spl2 = splbio();
+	if (spl2 != spl1) {
+		printf("wdcstart: not at splbio()\n");
+		panic("wdcstart");
+	}
+	splx(spl2);
+	splx(spl1);
+#endif /* WDC_DIAGNOSTIC */
 
 	/* is there a xfer ? */
 	if ((xfer = wdc->channels[channel].ch_queue->sc_xfer.tqh_first) == NULL)
