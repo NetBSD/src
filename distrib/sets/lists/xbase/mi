@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.15 1999/07/21 13:10:23 tron Exp $
+# $NetBSD: mi,v 1.16 1999/09/03 07:48:36 tron Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -264,6 +264,8 @@
 ./usr/X11R6/lib/X11/locale/th_TH.TACTIS/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh
 ./usr/X11R6/lib/X11/locale/zh/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/zh_TW.Big5
+./usr/X11R6/lib/X11/locale/zh_TW.Big5/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh_TW
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE
 ./usr/X11R6/lib/X11/proxymngr
@@ -313,6 +315,7 @@
 ./usr/X11R6/lib/X11/xkb/compat/basic
 ./usr/X11R6/lib/X11/xkb/compat/complete
 ./usr/X11R6/lib/X11/xkb/compat/default
+./usr/X11R6/lib/X11/xkb/compat/group_led
 ./usr/X11R6/lib/X11/xkb/compat/iso9995
 ./usr/X11R6/lib/X11/xkb/compat/japan
 ./usr/X11R6/lib/X11/xkb/compat/keypad
@@ -432,6 +435,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/ca_enhanced
 ./usr/X11R6/lib/X11/xkb/symbols/cs
 ./usr/X11R6/lib/X11/xkb/symbols/ctrl
+./usr/X11R6/lib/X11/xkb/symbols/czsk
 ./usr/X11R6/lib/X11/xkb/symbols/de
 ./usr/X11R6/lib/X11/xkb/symbols/de_CH
 ./usr/X11R6/lib/X11/xkb/symbols/digital
@@ -453,6 +457,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/group
 ./usr/X11R6/lib/X11/xkb/symbols/hu
 ./usr/X11R6/lib/X11/xkb/symbols/iso9995-3
+./usr/X11R6/lib/X11/xkb/symbols/is
 ./usr/X11R6/lib/X11/xkb/symbols/it
 ./usr/X11R6/lib/X11/xkb/symbols/jp
 ./usr/X11R6/lib/X11/xkb/symbols/keypad
