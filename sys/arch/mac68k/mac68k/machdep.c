@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 1996/06/21 06:11:02 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 1996/08/04 03:53:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2143,6 +2143,7 @@ void
 setmachdep()
 {
 	static int firstpass = 1;
+	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
 
 	/*
@@ -2158,16 +2159,8 @@ setmachdep()
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
 
-	if (firstpass == 0)
+	if (!firstpass)
 		return;
-
-	/*
-	 * Set up current ROM Glue vectors.  Actually now all we do
-	 * is save the address of the ROM Glue Vector table. This gets
-	 * used later when we re-map the vectors from MacOS Address
-	 * Space to NetBSD Address Space.
-	 */
-	mrg_MacOSROMVectors = cpui->rom_vectors;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2182,6 +2175,7 @@ setmachdep()
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		setup_mrg_vectors = 1;
 		break;
 	case MACH_CLASSPB:
 		VIA2 = 1;
@@ -2261,6 +2255,16 @@ setmachdep()
 	case MACH_CLASSIIfx:
 		break;
 	}
+
+	/*
+	 * Set up current ROM Glue vectors.  Actually now all we do
+	 * is save the address of the ROM Glue Vector table. This gets
+	 * used later when we re-map the vectors from MacOS Address
+	 * Space to NetBSD Address Space.
+	 */
+	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
+		mrg_MacOSROMVectors = cpui->rom_vectors;
+
 	firstpass = 0;
 }
 
