@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.18 1999/05/14 15:44:48 jwise Exp $
+.\" $NetBSD: main,v 1.19 1999/05/24 07:03:18 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -443,7 +443,45 @@ Other directories provide unpacked source trees for distribution via
 the source update protocol, for more information see:
 .Lk http://www.netbsd.org/Sites/net.html#sup
 .\}
-.so ../common/contents -----------------------------------------------
+.
+.
+.so contents -----------------------------------------------
+.
+.
+.(Note
+Each directory in the \*[MACHINE] binary distribution also has its
+own checksum files, just as the source distribution does:
+.Pp
+.No All Tn BSDSUM
+files are historic
+.Tn BSD No checksums for the various files
+in that directory, in the format produced by the command:
+.Ic cksum -o 1 Ar file
+.Pp
+.No All Tn CKSUM No files are
+.Tn POSIX
+checksums for the various files in that
+directory, in the format produced by the command:
+.Ic cksum Ar file .
+.Pp
+.No All Tn MD5 No files are
+.Tn MD5
+digests for the various files in that
+directory, in the format produced by the command:
+.Ic cksum Fl m Ar file .
+.Pp
+.No All Tn SYSVSUM
+files are historic AT\*&T System V
+.Ux
+checksums for the various files in that directory, in the format produced by
+the command:
+.Ic cksum Fl o 2 Ar file .
+.Pp
+The MD5 digest is the safest checksum, followed by the POSIX
+checksum. The other two checksums are provided only to ensure
+that the widest possible range of system can check the integrity
+of the release files.
+.Note)
 .br_ne 7P
 .
 .Ss "NetBSD/\*[MACHINE] System Requirements and Supported Devices"
