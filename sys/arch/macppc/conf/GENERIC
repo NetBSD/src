@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 1999/11/21 14:00:40 itojun Exp $
+#	$NetBSD: GENERIC,v 1.44 1999/12/26 11:39:16 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -136,6 +136,7 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev? function ?		# PCI-CardBus bridge
