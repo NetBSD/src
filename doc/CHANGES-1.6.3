@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.140 2005/03/19 07:38:57 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.141 2005/03/19 10:24:20 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1659,3 +1659,13 @@ sys/dev/microcode/siop/ncr53cxxx.c		patch
 
 	Fix this to build with GCC 3.3.x.
 	[tron, ticket #5713]
+
+sys/dev/pci/aac_pci.c				1.8-1.10
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for Adaptec 2200S Vulcan 2M, Dell PERC
+	320/DC, Adaptec 2410SA and Adaptec 2810SA controllers.
+	[he, ticket #1755]
+
