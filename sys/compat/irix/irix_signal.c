@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.14.2.2 2002/07/15 10:34:52 gehenna Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.14.2.3 2002/08/29 05:22:12 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.14.2.2 2002/07/15 10:34:52 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.14.2.3 2002/08/29 05:22:12 gehenna Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -604,7 +604,8 @@ irix_sys_sginap(p, v, retval)
 	if (rticks != 0)
 		microtime(&tvb);
 
-	if ((tsleep(&dontcare, PCATCH, 0, rticks) != 0) && (rticks != 0)) {
+	if ((tsleep(&dontcare, PZERO|PCATCH, 0, rticks) != 0) &&
+	    (rticks != 0)) {
 		microtime(&tve);
 		timersub(&tve, &tvb, &tvd);
 		delta = ((tvd.tv_sec * 1000000) + tvd.tv_usec); /* XXX */
@@ -801,11 +802,10 @@ loop:
 			 * parent a SIGCHLD.  The rest of the cleanup will be
 			 * done when the old parent waits on the child.
 			 */
-			if ((q->p_flag & P_TRACED) &&
-			    q->p_oppid != q->p_pptr->p_pid) {
-				t = pfind(q->p_oppid);
+			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
+				t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
-				q->p_oppid = 0;
+				q->p_opptr = NULL;
 				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				psignal(q->p_pptr, SIGCHLD);
 				wakeup((caddr_t)q->p_pptr);

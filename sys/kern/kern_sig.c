@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.120.6.1 2002/07/15 10:36:33 gehenna Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.120.6.2 2002/08/29 05:23:08 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.120.6.1 2002/07/15 10:36:33 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.120.6.2 2002/08/29 05:23:08 gehenna Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.120.6.1 2002/07/15 10:36:33 gehenna E
 #include <uvm/uvm_extern.h>
 
 static void	proc_stop(struct proc *p);
-void		killproc(struct proc *, char *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
@@ -1307,7 +1306,7 @@ postsig(int signum)
  * Kill the current process for stated reason.
  */
 void
-killproc(struct proc *p, char *why)
+killproc(struct proc *p, const char *why)
 {
 
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
@@ -1348,8 +1347,9 @@ sigexit(struct proc *p, int signum)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {
+			/* XXX What if we ever have really large UIDs? */
 			int uid = p->p_cred && p->p_ucred ? 
-				p->p_ucred->cr_uid : -1;
+				(int) p->p_ucred->cr_uid : -1;
 
 			if (error) 
 				log(LOG_INFO, lognocoredump, p->p_pid,

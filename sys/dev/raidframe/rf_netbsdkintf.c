@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.117.6.3 2002/07/15 10:35:50 gehenna Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.117.6.4 2002/08/29 05:22:50 gehenna Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.3 2002/07/15 10:35:50 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.4 2002/08/29 05:22:50 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -145,15 +145,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.3 2002/07/15 10:35:50 geh
 #include "rf_dagflags.h"
 #include "rf_desc.h"
 #include "rf_diskqueue.h"
-#include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_debugMem.h"
 #include "rf_kintf.h"
 #include "rf_options.h"
 #include "rf_driver.h"
 #include "rf_parityscan.h"
-#include "rf_debugprint.h"
 #include "rf_threadstuff.h"
 
 int     rf_kdebug_level = 0;
@@ -230,7 +227,7 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct buf_queue buf_queue;	/* used for the device queue */
+	struct bufq_state buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -377,7 +374,7 @@ raidattach(num)
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
-		BUFQ_INIT(&raid_softc[raidID].buf_queue);
+		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
@@ -726,7 +723,7 @@ raidstrategy(bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_INSERT_TAIL(&rs->buf_queue, bp);
+	BUFQ_PUT(&rs->buf_queue, bp);
 
 	raidstart(raidPtrs[raidID]);
 
@@ -1675,11 +1672,10 @@ raidstart(raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_FIRST(&rs->buf_queue)) == NULL) {
+		if ((bp = BUFQ_GET(&rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
-		BUFQ_REMOVE(&rs->buf_queue, bp);
 
 		/* Ok, for the bp we have here, bp->b_blkno is relative to the
 		 * partition.. Need to make it absolute to the underlying 
@@ -2710,6 +2706,12 @@ rf_find_raid_components()
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
 			continue;
 		}
+
+		/* we don't care about CD's... */
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"cd")) {
+			continue;
+		}
+
 		/* hdfd is the Atari/Hades floppy driver */
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
 			continue;
@@ -3283,7 +3285,9 @@ rf_auto_config_set(cset,unit)
 	int raidID;
 	int retcode;
 
+#if DEBUG
 	printf("RAID autoconfigure\n");
+#endif
 
 	retcode = 0;
 	*unit = -1;
@@ -3336,7 +3340,11 @@ rf_auto_config_set(cset,unit)
 		printf("(Out of RAID devs!)\n");
 		return(1);
 	}
+
+#if DEBUG
 	printf("Configuring raid%d:\n",raidID);
+#endif
+
 	raidPtr = raidPtrs[raidID];
 
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */

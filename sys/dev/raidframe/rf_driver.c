@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.46.8.1 2002/07/15 10:35:49 gehenna Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.46.8.2 2002/08/29 05:22:49 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46.8.1 2002/07/15 10:35:49 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46.8.2 2002/08/29 05:22:49 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46.8.1 2002/07/15 10:35:49 gehenna E
 #include "rf_revent.h"
 #include "rf_callback.h"
 #include "rf_engine.h"
-#include "rf_memchunk.h"
 #include "rf_mcpair.h"
 #include "rf_nwayxor.h"
 #include "rf_debugprint.h"
@@ -156,7 +155,7 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
 				 * stuff configged */
-RF_DECLARE_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
+RF_DECLARE_LKMGR_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 					 * stuff */
 static RF_ShutdownList_t *globalShutdown;	/* non array-specific
 						 * stuff */
@@ -173,7 +172,7 @@ rf_BootRaidframe()
 		return (EBUSY);
 	raidframe_booted = 1;
 
-	rc = rf_mutex_init(&configureMutex);
+	rc = rf_lkmgr_mutex_init(&configureMutex);
 	if (rc) {
 		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
 		    __LINE__, rc);
@@ -195,14 +194,14 @@ rf_UnbootRaidframe()
 {
 	int     rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	if (configureCount) {
-		RF_UNLOCK_MUTEX(configureMutex);
+		RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 		return (EBUSY);
 	}
 	raidframe_booted = 0;
-	RF_UNLOCK_MUTEX(configureMutex);
-	rc = rf_mutex_destroy(&configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
+	rc = rf_lkmgr_mutex_destroy(&configureMutex);
 	if (rc) {
 		RF_ERRORMSG3("Unable to destroy mutex file %s line %d rc=%d\n", __FILE__,
 		    __LINE__, rc);
@@ -218,7 +217,7 @@ rf_UnconfigureArray()
 {
 	int     rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	if (--configureCount == 0) {	/* if no active configurations, shut
 					 * everything down */
 		isconfigged = 0;
@@ -235,7 +234,7 @@ rf_UnconfigureArray()
 		if (rf_memDebug)
 			rf_print_unfreed();
 	}
-	RF_UNLOCK_MUTEX(configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 }
 
 /*
@@ -296,7 +295,7 @@ rf_Shutdown(raidPtr)
 		RF_ERRORMSG2("RAIDFRAME: failed %s with %d\n", RF_STRING(f), rc); \
 		rf_ShutdownList(&globalShutdown); \
 		configureCount--; \
-		RF_UNLOCK_MUTEX(configureMutex); \
+		RF_UNLOCK_LKMGR_MUTEX(configureMutex); \
 		return(rc); \
 	} \
 }
@@ -345,7 +344,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_RowCol_t row, col;
 	int     i, rc;
 
-	RF_LOCK_MUTEX(configureMutex);
+	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
 		rc = rf_create_managed_mutex(&globalShutdown, &rf_printf_mutex);
@@ -356,10 +355,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 			return (rc);
 		}
 		/* initialize globals */
-		printf("RAIDFRAME: protectedSectors is %ld\n", 
-		       rf_protectedSectors);
-
-		rf_clear_debug_print_buffer();
 
 		DO_INIT_CONFIGURE(rf_ConfigureAllocList);
 
@@ -373,20 +368,18 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		DO_INIT_CONFIGURE(rf_ConfigureMapModule);
 		DO_INIT_CONFIGURE(rf_ConfigureReconEvent);
 		DO_INIT_CONFIGURE(rf_ConfigureCallback);
-		DO_INIT_CONFIGURE(rf_ConfigureMemChunk);
 		DO_INIT_CONFIGURE(rf_ConfigureRDFreeList);
 		DO_INIT_CONFIGURE(rf_ConfigureNWayXor);
 		DO_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
 		DO_INIT_CONFIGURE(rf_ConfigureMCPair);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGs);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGFuncs);
-		DO_INIT_CONFIGURE(rf_ConfigureDebugPrint);
 		DO_INIT_CONFIGURE(rf_ConfigureReconstruction);
 		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
 		isconfigged = 1;
 	}
-	RF_UNLOCK_MUTEX(configureMutex);
+	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
@@ -494,6 +487,25 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	rf_StartUserStats(raidPtr);
 
 	raidPtr->valid = 1;
+
+	printf("raid%d: %s\n", raidPtr->raidid,
+	       raidPtr->Layout.map->configName);
+	printf("raid%d: Components:", raidPtr->raidid);
+	for (row = 0; row < raidPtr->numRow; row++) {
+		for (col = 0; col < raidPtr->numCol; col++) {
+			printf(" %s", raidPtr->Disks[row][col].devname);
+			if (RF_DEAD_DISK(raidPtr->Disks[row][col].status)) {
+				printf("[**FAILED**]");
+			}
+		}
+	}
+	printf("\n");
+	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
+	       raidPtr->raidid,
+	       (unsigned long) raidPtr->totalSectors,
+	       (unsigned long) (raidPtr->totalSectors / 1024 * 
+				(1 << raidPtr->logBytesPerSector) / 1024));
+
 	return (0);
 }
 
@@ -753,7 +765,7 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	if (rf_quiesceDebug)
-		printf("Suspending new reqs\n");
+		printf("raid%d: Suspending new reqs\n", raidPtr->raidid);
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended++;
@@ -762,12 +774,13 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	if (raidPtr->waiting_for_quiescence) {
 		raidPtr->access_suspend_release = 0;
 		while (!raidPtr->access_suspend_release) {
-			printf("Suspending: Waiting for Quiescence\n");
+			printf("raid%d: Suspending: Waiting for Quiescence\n",
+			       raidPtr->raidid);
 			WAIT_FOR_QUIESCENCE(raidPtr);
 			raidPtr->waiting_for_quiescence = 0;
 		}
 	}
-	printf("Quiescence reached..\n");
+	printf("raid%d: Quiescence reached..\n", raidPtr->raidid);
 
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 	return (raidPtr->waiting_for_quiescence);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.20.8.1 2002/05/30 14:46:37 gehenna Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.20.8.2 2002/08/29 05:22:45 gehenna Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.20.8.1 2002/05/30 14:46:37 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.20.8.2 2002/08/29 05:22:45 gehenna Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -3144,7 +3144,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		dma_prog = (u_long * ) bktr->odd_dma_prog;
 
 		/* sync vre */
-		*dma_prog++ = OP_SYNC | 1 << 24 |  1 << 15 | BKTR_FM1;
+		*dma_prog++ = OP_SYNC |  1 << 15 | BKTR_FM1;
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		for (i = 0; i < (rows/interlace) ; i++) {

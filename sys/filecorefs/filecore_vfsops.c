@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.18.8.1 2002/05/16 04:16:11 gehenna Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.18.8.2 2002/08/29 05:23:02 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18.8.1 2002/05/16 04:16:11 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18.8.2 2002/08/29 05:23:02 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -328,7 +328,7 @@ filecore_mountfs(devvp, mp, p, argp)
 	brelse(bp);
 	bp = NULL;
 
-	mp->mnt_data = (qaddr_t)fcmp;
+	mp->mnt_data = fcmp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FILECORE);
 	mp->mnt_maxsymlinklen = 0;
@@ -361,7 +361,7 @@ out:
 	VOP_UNLOCK(devvp, 0);
 	if (fcmp) {
 		free((caddr_t)fcmp, M_FILECOREMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return error;
 }
@@ -410,7 +410,7 @@ filecore_unmount(mp, mntflags, p)
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, p);
 	vput(fcmp->fc_devvp);
 	free((caddr_t)fcmp, M_FILECOREMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

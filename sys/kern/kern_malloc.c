@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.71 2002/04/03 09:45:22 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.71.2.1 2002/08/29 05:23:07 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.71 2002/04/03 09:45:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.71.2.1 2002/08/29 05:23:07 gehenna Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -547,7 +547,7 @@ void *
 realloc(void *curaddr, unsigned long newsize, int type, int flags)
 {
 	struct kmemusage *kup;
-	long cursize;
+	unsigned long cursize;
 	void *newaddr;
 #ifdef DIAGNOSTIC
 	long alloc;

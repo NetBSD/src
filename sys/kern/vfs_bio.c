@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.81.2.1 2002/05/16 04:12:26 gehenna Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.81.2.2 2002/08/29 05:23:15 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81.2.1 2002/05/16 04:12:26 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81.2.2 2002/08/29 05:23:15 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,7 @@ bufinit()
 {
 	struct buf *bp;
 	struct bqueues *dp;
-	int i;
-	int base, residual;
+	u_int i, base, residual;
 
 	/*
 	 * Initialize the buffer pool.  This pool is used for buffers

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.75.4.3 2002/07/15 10:35:07 gehenna Exp $
+#	$NetBSD: osrelease.sh,v 1.75.4.4 2002/08/29 05:22:18 gehenna Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@
 #	sys/sys/param.h:	__NetBSD_Version__
 #	share/tmac/doc-common:	ds oS
 #
-release=1.6D
+release=1.6G
 
 case $1 in
 -s)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.22.2.1 2002/07/15 10:35:37 gehenna Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.22.2.2 2002/08/29 05:22:39 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.22.2.1 2002/07/15 10:35:37 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.22.2.2 2002/08/29 05:22:39 gehenna Exp $");
 
 #include "rnd.h"
 
@@ -117,6 +117,10 @@ const struct fxp_pci_product {
 	  "Intel InBusiness Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
+	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
+	  "Intel i82559 Ethernet" },
+	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
+	  "Intel i82559 Ethernet" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
@@ -369,6 +373,15 @@ fxp_pci_attach(parent, self, aux)
 		 */
 		sc->sc_rev = 1;
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		break;
+	case PCI_PRODUCT_INTEL_82801E_LAN_1:
+	case PCI_PRODUCT_INTEL_82801E_LAN_2:
+		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+
+		/*
+		 *  XXX We have to read the C-ICH's developer's manual
+		 *  in detail
+		 */
 		break;
 	}
 
