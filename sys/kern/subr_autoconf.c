@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.22 1996/06/13 04:50:29 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.23 1996/10/10 22:46:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -262,7 +262,7 @@ config_found_sm(parent, aux, print, submatch)
 	if ((match = config_search(submatch, parent, aux)) != NULL)
 		return (config_attach(parent, match, aux, print));
 	if (print)
-		printf(msgs[(*print)(aux, parent->dv_xname)]);
+		kprintf(msgs[(*print)(aux, parent->dv_xname)]);
 	return (NULL);
 }
 
@@ -278,7 +278,7 @@ config_rootfound(rootname, aux)
 
 	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, match, aux, (cfprint_t)NULL));
-	printf("root device %s not configured\n", rootname);
+	kprintf("root device %s not configured\n", rootname);
 	return (NULL);
 }
 
@@ -333,9 +333,9 @@ config_attach(parent, match, aux, print)
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
 
 	if (parent == ROOT)
-		printf("%s (root)", dev->dv_xname);
+		kprintf("%s (root)", dev->dv_xname);
 	else {
-		printf("%s at %s", dev->dv_xname, parent->dv_xname);
+		kprintf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
 			(void) (*print)(aux, (char *)0);
 	}

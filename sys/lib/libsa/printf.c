@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.7 1996/02/08 20:19:36 gwr Exp $	*/
+/*	$NetBSD: printf.c,v 1.8 1996/10/10 22:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
  * The format %b is supported to decode error registers.
  * Its usage is:
  *
- *	printf("reg=%b\n", regval, "<base><arg>*");
+ *	kprintf("reg=%b\n", regval, "<base><arg>*");
  *
  * where <base> is the output base expressed as a control character, e.g.
  * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
@@ -51,7 +51,7 @@
  * the next characters (up to a control character, i.e. a character <= 32),
  * give the name of the register.  Thus:
  *
- *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
+ *	kprintf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
  *
  * would produce output:
  *
@@ -70,7 +70,7 @@
 
 static void kprintn __P((void (*)(int), u_long, int));
 static void sputchar __P((int));
-static void kprintf __P((void (*)(int), const char *, va_list));
+static void kdoprnt __P((void (*)(int), const char *, va_list));
 
 static char *sbuf;
 
@@ -83,9 +83,9 @@ sputchar(c)
 
 void
 #ifdef __STDC__
-sprintf(char *buf, const char *fmt, ...)
+ksprintf(char *buf, const char *fmt, ...)
 #else
-sprintf(buf, fmt, va_alist)
+ksprintf(buf, fmt, va_alist)
 	char *buf, *fmt;
 #endif
 {
@@ -97,16 +97,16 @@ sprintf(buf, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	kprintf(sputchar, fmt, ap);
+	kdoprnt(sputchar, fmt, ap);
 	va_end(ap);
 	*sbuf = '\0';
 }
 
 void
 #ifdef __STDC__
-printf(const char *fmt, ...)
+kprintf(const char *fmt, ...)
 #else
-printf(fmt, va_alist)
+kprintf(fmt, va_alist)
 	char *fmt;
 #endif
 {
@@ -117,18 +117,18 @@ printf(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	kprintf(putchar, fmt, ap);
+	kdoprnt(putchar, fmt, ap);
 	va_end(ap);
 }
 
 void
-vprintf(const char *fmt, va_list ap)
+kvprintf(const char *fmt, va_list ap)
 {
-	kprintf(putchar, fmt, ap);
+	kdoprnt(putchar, fmt, ap);
 }
 
 void
-kprintf(put, fmt, ap)
+kdoprnt(put, fmt, ap)
 	void (*put)__P((int));
 	const char *fmt;
 	va_list ap;

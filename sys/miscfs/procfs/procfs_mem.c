@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.9 1996/06/11 01:49:38 mycroft Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.10 1996/10/10 22:54:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -277,9 +277,9 @@ procfs_findtextvp(p)
 		if (!error) {
 			vm_pager_t pager;
 
-			printf("procfs: found vm object\n");
+			kprintf("procfs: found vm object\n");
 			vm_map_lookup_done(map, out_entry);
-			printf("procfs: vm object = %x\n", object);
+			kprintf("procfs: vm object = %x\n", object);
 
 			/*
 			 * At this point, assuming no errors, object
@@ -289,20 +289,21 @@ procfs_findtextvp(p)
 			 */
 
 			pager = object->pager;
-			printf("procfs: pager = %x\n", pager);
+			kprintf("procfs: pager = %x\n", pager);
 			if (pager)
-				printf("procfs: found pager, type = %d\n", pager->pg_type);
+				kprintf("procfs: found pager, type = %d\n",
+				    pager->pg_type);
 			if (pager && pager->pg_type == PG_VNODE) {
 				struct vnode *vp;
 
 				vp = (struct vnode *) pager->pg_handle;
-				printf("procfs: vp = 0x%x\n", vp);
+				kprintf("procfs: vp = 0x%x\n", vp);
 				return (vp);
 			}
 		}
 	}
 
-	printf("procfs: text object not found\n");
+	kprintf("procfs: text object not found\n");
 	return (0);
 }
 #endif /* probably_never */

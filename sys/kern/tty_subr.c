@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.14 1996/10/10 22:46:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -294,7 +294,7 @@ putc(c, clp)
 	if (clp->c_cc == 0) {
 		if (!clp->c_cs) {
 #if defined(DIAGNOSTIC) || 1
-			printf("putc: required clalloc\n");
+			kprintf("putc: required clalloc\n");
 #endif
 			if(clalloc(clp, 1024, 1)) {
 out:
@@ -392,7 +392,7 @@ b_to_q(cp, count, clp)
 	if (clp->c_cc == 0) {
 		if (!clp->c_cs) {
 #if defined(DIAGNOSTIC) || 1
-			printf("b_to_q: required clalloc\n");
+			kprintf("b_to_q: required clalloc\n");
 #endif
 			if(clalloc(clp, 1024, 1))
 				goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.27 1996/05/25 17:50:41 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.28 1996/10/10 22:54:01 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -115,7 +115,7 @@ msdosfs_lookup(v)
 	int olddos = 1;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): looking for %s\n", cnp->cn_nameptr);
+	kprintf("msdosfs_lookup(): looking for %s\n", cnp->cn_nameptr);
 #endif
 	dp = VTODE(vdp);
 	pmp = dp->de_pmp;
@@ -123,8 +123,8 @@ msdosfs_lookup(v)
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
-	       vdp, dp, dp->de_Attributes);
+	kprintf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
+	    vdp, dp, dp->de_Attributes);
 #endif
 
 	/*
@@ -176,7 +176,7 @@ msdosfs_lookup(v)
 		if (!error) {
 			if (vpid == vdp->v_id) {
 #ifdef MSDOSFS_DEBUG
-				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
+				kprintf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
 				       vdp, dp->de_Name);
 #endif
 				return (0);
@@ -203,7 +203,7 @@ msdosfs_lookup(v)
 		isadir = ATTR_DIRECTORY;
 		scn = MSDOSFSROOT;
 #ifdef MSDOSFS_DEBUG
-		printf("msdosfs_lookup(): looking for . or .. in root directory\n");
+		kprintf("msdosfs_lookup(): looking for . or .. in root directory\n");
 #endif
 		cluster = MSDOSFSROOT;
 		blkoff = MSDOSFSROOT_OFS;
@@ -238,8 +238,8 @@ msdosfs_lookup(v)
 		slotcount = 0;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename %s, length %d\n",
-	       dosfilename, cnp->cn_namelen);
+	kprintf("msdosfs_lookup(): dos version of filename %s, length %d\n",
+	    dosfilename, cnp->cn_namelen);
 #endif
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
@@ -333,8 +333,8 @@ msdosfs_lookup(v)
 					continue;
 				}
 #ifdef MSDOSFS_DEBUG
-				printf("msdosfs_lookup(): match blkoff %d, diroff %d\n",
-				       blkoff, diroff);
+				kprintf("msdosfs_lookup(): match blkoff %d, diroff %d\n",
+				    blkoff, diroff);
 #endif
 				/*
 				 * Remember where this directory
@@ -377,9 +377,9 @@ notfound:;
 	 * the pathname and the directory hasn't been removed.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): op %d, refcnt %d\n",
-	       nameiop, dp->de_refcnt);
-	printf("               slotcount %d, slotoffset %d\n",
+	kprintf("msdosfs_lookup(): op %d, refcnt %d\n",
+	    nameiop, dp->de_refcnt);
+	kprintf("               slotcount %d, slotoffset %d\n",
 	       slotcount, slotoffset);
 #endif
 	if ((nameiop == CREATE || nameiop == RENAME) &&
@@ -589,8 +589,8 @@ createde(dep, ddep, depp, cnp)
 	int blsize;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
-	       dep, ddep, depp, cnp);
+	kprintf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
+	    dep, ddep, depp, cnp);
 #endif
 
 	/*
@@ -750,8 +750,8 @@ dosdirempty(dep)
 				    bcmp(dentp->deName, "..         ", 11)) {
 					brelse(bp);
 #ifdef MSDOSFS_DEBUG
-					printf("dosdirempty(): entry found %02x, %02x\n",
-					       dentp->deName[0], dentp->deName[1]);
+					kprintf("dosdirempty(): entry found %02x, %02x\n",
+					    dentp->deName[0], dentp->deName[1]);
 #endif
 					return (0);	/* not empty */
 				}
@@ -835,7 +835,7 @@ out:;
 	if (bp)
 		brelse(bp);
 	if (error == ENOTDIR)
-		printf("doscheckpath(): .. not a directory?\n");
+		kprintf("doscheckpath(): .. not a directory?\n");
 	if (dep != NULL)
 		vput(DETOV(dep));
 	return (error);
@@ -912,7 +912,7 @@ removede(pdep, dep)
 	u_long offset = pdep->de_fndoffset;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("removede(): filename %s, dep %08x, offset %08x\n",
+	kprintf("removede(): filename %s, dep %08x, offset %08x\n",
 	    dep->de_Name, dep, offset);
 #endif
 
