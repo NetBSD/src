@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: Makefile,v 1.5 1997/12/12 04:15:41 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -19,10 +19,8 @@ LISTS=	${TOP}/common/mini_sbin.list \
 KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
 
 MOUNT_POINT=	/mnt
-BDEV=		/dev/sd2b
-CDEV=		/dev/rsd2b
-#BDEV=		/dev/sd0d
-#CDEV=		/dev/rsd0d
+BDEV=		/dev/sd1b
+CDEV=		/dev/rsd1b
 
 # These are all the parameters for the miniroot: (8MB)
 DISKTYPE=	miniroot
