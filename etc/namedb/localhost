@@ -1,0 +1,11 @@
+;	$NetBSD: localhost,v 1.1 2000/04/26 01:33:27 itojun Exp $
+
+@	IN	SOA	netbsd.org. hostmaster.netbsd.org.  (
+				1999012100	; Serial
+				3600		; Refresh
+				300		; Retry
+				3600000		; Expire
+				3600 )		; Minimum
+		IN	NS	localhost.
+localhost.	IN	A	127.0.0.1
+		IN	AAAA	::1
