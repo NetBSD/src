@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 2005/03/01 16:42:53 christos Exp $
+# $NetBSD: mi,v 1.153 2005/03/04 21:16:10 kleink Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -289,6 +289,7 @@
 ./var/log/authlog				etc-sys-log
 ./var/log/cron					etc-cron-log
 ./var/log/lastlog				etc-sys-log
+./var/log/lastlogx				etc-sys-log
 ./var/log/lpd-errs				etc-lpr-log
 ./var/log/maillog				etc-sendmail-log
 ./var/log/messages				etc-sys-log
