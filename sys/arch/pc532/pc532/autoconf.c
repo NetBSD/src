@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1994/10/26 08:24:49 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1994/12/05 19:27:38 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -311,7 +311,7 @@ membusattach(parent, dev, aux)
 
 	printf ("\n");
 
-	for (name=name_list ; name ; name++) {
+	for (name=name_list ; *name ; name++) {
 		if (!config_found(dev, name, membusprint)) {
 			fail++;
 		}
