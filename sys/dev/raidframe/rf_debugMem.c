@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.5 1999/09/04 16:26:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,14 +38,9 @@
 
 #include "rf_types.h"
 
-#if RF_UTILITY == 0
 #include "rf_threadstuff.h"
 #include "rf_threadid.h"
 #include "rf_options.h"
-#else				/* RF_UTILITY == 0 */
-#include "rf_utility.h"
-#endif				/* RF_UTILITY == 0 */
-
 #include "rf_debugMem.h"
 #include "rf_general.h"
 
@@ -150,19 +145,17 @@ rf_real_Malloc(size, line, file)
 		rf_mem_alloc += size;
 		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
 	}
-#if RF_UTILITY == 0
 	if (rf_memDebug > 1) {
 		rf_get_threadid(tid);
 		printf("[%d] malloc 0x%lx - 0x%lx (%d) %s %d\n", tid, p, p + size, size,
 		    file, line);
 	}
-#endif				/* RF_UTILITY == 0 */
 	if (rf_memDebug)
 		rf_record_malloc(p, size, line, file);
 	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
 	return (p);
 }
-#if RF_UTILITY == 0
+
 char   *
 rf_real_MallocAndAdd(size, alist, line, file)
 	int     size;
@@ -198,7 +191,6 @@ rf_real_MallocAndAdd(size, alist, line, file)
 	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
 	return (p);
 }
-#endif				/* RF_UTILITY == 0 */
 
 char   *
 rf_real_Calloc(nel, elsz, line, file)
@@ -224,20 +216,18 @@ rf_real_Calloc(nel, elsz, line, file)
 		rf_mem_alloc += size;
 		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
 	}
-#if RF_UTILITY == 0
 	if (rf_memDebug > 1) {
 		rf_get_threadid(tid);
 		printf("[%d] calloc 0x%lx - 0x%lx (%d,%d) %s %d\n", tid, p, p + size, nel,
 		    elsz, file, line);
 	}
-#endif				/* RF_UTILITY == 0 */
 	if (rf_memDebug) {
 		rf_record_malloc(p, size, line, file);
 	}
 	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
 	return (p);
 }
-#if RF_UTILITY == 0
+
 char   *
 rf_real_CallocAndAdd(nel, elsz, alist, line, file)
 	int     nel;
@@ -276,7 +266,6 @@ rf_real_CallocAndAdd(nel, elsz, alist, line, file)
 	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
 	return (p);
 }
-#endif				/* RF_UTILITY == 0 */
 
 void 
 rf_real_Free(p, sz, line, file)
@@ -287,13 +276,11 @@ rf_real_Free(p, sz, line, file)
 {
 	int     tid;
 
-#if RF_UTILITY == 0
 	if (rf_memDebug > 1) {
 		rf_get_threadid(tid);
 		printf("[%d] free 0x%lx - 0x%lx (%d) %s %d\n", tid, p, ((char *) p) + sz, sz,
 		    file, line);
 	}
-#endif				/* RF_UTILITY == 0 */
 	RF_LOCK_MUTEX(rf_debug_mem_mutex);
 	if (rf_memAmtDebug) {
 		rf_mem_alloc -= sz;
