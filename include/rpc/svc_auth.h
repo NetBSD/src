@@ -35,8 +35,14 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#ifndef _RPC_SVCAUTH_H
+#define _RPC_SVCAUTH_H
 
 /*
  * Server side authenticator
  */
-extern enum auth_stat _authenticate();
+__BEGIN_DECLS
+extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
+__END_DECLS
+
+#endif /* !_RPC_SVCAUTH_H */

@@ -65,6 +65,10 @@
  * The service supports remote procedure calls on udp/ip or tcp/ip socket 111.
  */
 
+#ifndef _RPC_PMAPPROT_H
+#define _RPC_PMAPPROT_H
+#include <sys/cdefs.h>
+
 #define PMAPPORT		((u_short)111)
 #define PMAPPROG		((u_long)100000)
 #define PMAPVERS		((u_long)2)
@@ -84,11 +88,14 @@ struct pmap {
 	long unsigned pm_port;
 };
 
-extern bool_t xdr_pmap();
-
 struct pmaplist {
 	struct pmap	pml_map;
 	struct pmaplist *pml_next;
 };
 
-extern bool_t xdr_pmaplist();
+__BEGIN_DECLS
+extern bool_t xdr_pmap		__P((XDR *, struct pmap *));
+extern bool_t xdr_pmaplist	__P((XDR *, struct pmaplist **));
+__END_DECLS
+
+#endif /* !_RPC_PMAPPROT_H */
