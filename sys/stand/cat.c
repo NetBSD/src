@@ -1,3 +1,5 @@
+/*	$NetBSD: cat.c,v 1.6 1998/09/13 15:19:12 christos Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cat.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$NetBSD: cat.c,v 1.5 1994/06/29 06:43:27 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)cat.c	8.1 (Berkeley) 6/11/93";
+#else
+__RCSID("$NetBSD: cat.c,v 1.6 1998/09/13 15:19:12 christos Exp $");
+#endif
 #endif /* not lint */
 
 main()
