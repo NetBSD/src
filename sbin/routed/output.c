@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.19 2001/01/15 13:19:12 itojun Exp $	*/
+/*	$NetBSD: output.c,v 1.20 2001/03/10 23:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)output.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.19 2001/01/15 13:19:12 itojun Exp $");
-#endif
-
 #include "defs.h"
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: output.c,v 1.20 2001/03/10 23:52:45 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.23 ");
+#ident "Revision: 2.23 "
+#endif
 
 
 u_int update_seqno;
@@ -823,7 +825,7 @@ void
 rip_bcast(int flash)
 {
 #ifdef _HAVE_SIN_LEN
-	static struct sockaddr_in dst = {sizeof(dst), AF_INET};
+	static struct sockaddr_in dst = {sizeof(dst), AF_INET, 0, {0}, {0}};
 #else
 	static struct sockaddr_in dst = {AF_INET};
 #endif
@@ -899,7 +901,7 @@ void
 rip_query(void)
 {
 #ifdef _HAVE_SIN_LEN
-	static struct sockaddr_in dst = {sizeof(dst), AF_INET};
+	static struct sockaddr_in dst = {sizeof(dst), AF_INET, 0, {0}, {0}};
 #else
 	static struct sockaddr_in dst = {AF_INET};
 #endif

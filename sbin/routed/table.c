@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.13 2000/03/02 21:01:34 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.14 2001/03/10 23:52:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,23 +33,24 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.13 2000/03/02 21:01:34 christos Exp $");
-#endif
-
 #include "defs.h"
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: table.c,v 1.14 2001/03/10 23:52:46 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.23 ");
+#ident "Revision: 2.23 "
+#endif
 
 static struct rt_spare *rts_better(struct rt_entry *);
 static struct rt_spare rts_empty = {0,0,0,HOPCNT_INFINITY,0,0,0};
-
-static void	set_need_flash(void);
+static void  set_need_flash(void);
 #ifdef _HAVE_SIN_LEN
-static void	masktrim(struct sockaddr_in *ap);
+static void masktrim(struct sockaddr_in *ap);
 #else
-static void	masktrim(struct sockaddr_in_new *ap);
+static void masktrim(struct sockaddr_in_new *ap);
 #endif
 
 
@@ -61,7 +62,7 @@ int	need_flash = 1;			/* flash update needed
 
 struct timeval age_timer;		/* next check of old routes */
 struct timeval need_kern = {		/* need to update kernel table */
-	EPOCH+MIN_WAITTIME-1
+	EPOCH+MIN_WAITTIME-1, 0
 };
 
 int	stopint;
@@ -638,9 +639,12 @@ rtm_type_name(u_char type)
 #ifdef RTM_OIFINFO
 		"RTM_OIFINFO",
 #endif
-		"RTM_IFINFO"
+		"RTM_IFINFO",
+		"RTM_NEWMADDR",
+		"RTM_DELMADDR"
 	};
-	static char name0[10];
+#define NEW_RTM_PAT "RTM type %#x"
+	static char name0[sizeof(NEW_RTM_PAT)+2];
 
 
 	if (type > sizeof(rtm_types)/sizeof(rtm_types[0])
@@ -650,6 +654,7 @@ rtm_type_name(u_char type)
 	} else {
 		return rtm_types[type-1];
 	}
+#undef NEW_RTM_PAT
 }
 
 
@@ -1260,7 +1265,7 @@ read_rt(void)
 			trace_act("ignore multicast %s", str);
 			continue;
 		}
-		
+
 		if (m.r.rtm.rtm_flags & RTF_LLINFO) {
 			trace_act("ignore ARP %s", str);
 			continue;
@@ -1633,8 +1638,8 @@ rtinit(void)
 
 
 #ifdef _HAVE_SIN_LEN
-static struct sockaddr_in dst_sock = {sizeof(dst_sock), AF_INET};
-static struct sockaddr_in mask_sock = {sizeof(mask_sock), AF_INET};
+static struct sockaddr_in dst_sock = {sizeof(dst_sock), AF_INET, 0, {0}, {0}};
+static struct sockaddr_in mask_sock = {sizeof(mask_sock), AF_INET, 0, {0}, {0}};
 #else
 static struct sockaddr_in_new dst_sock = {_SIN_ADDR_SIZE, AF_INET};
 static struct sockaddr_in_new mask_sock = {_SIN_ADDR_SIZE, AF_INET};

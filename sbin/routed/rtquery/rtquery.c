@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.13 2000/07/27 16:34:31 thorpej Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.14 2001/03/10 23:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -33,19 +33,7 @@
  * SUCH DAMAGE.
  */
 
-char copyright[] =
-"@(#) Copyright (c) 1982, 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-
-#if !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused))= "@(#)query.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.13 2000/07/27 16:34:31 thorpej Exp $");
-#endif
-
 #include <sys/param.h>
-#include <sys/cdefs.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -64,6 +52,24 @@ __RCSID("$NetBSD: rtquery.c,v 1.13 2000/07/27 16:34:31 thorpej Exp $");
 #include <bstring.h>
 #endif
 
+#define UNUSED __attribute__((unused))
+#ifndef __RCSID
+#define __RCSID(_s) static const char rcsid[] UNUSED = _s
+#endif
+#ifndef __COPYRIGHT
+#define __COPYRIGHT(_s) static const char copyright[] UNUSED = _s
+#endif
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
+	    "The Regents of the University of California."
+	    "  All rights reserved.\n");
+#ifdef __NetBSD__
+__RCSID("$NetBSD: rtquery.c,v 1.14 2001/03/10 23:52:47 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.23 ");
+#ident "Revision: 2.23 "
+#endif
 #include <md5.h>
 
 #ifndef sgi

@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.14 2000/07/21 00:22:38 thorpej Exp $	*/
+/*	$NetBSD: parms.c,v 1.15 2001/03/10 23:52:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.14 2000/07/21 00:22:38 thorpej Exp $");
-#endif
-
 #include "defs.h"
 #include "pathnames.h"
 #include <sys/stat.h>
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: parms.c,v 1.15 2001/03/10 23:52:46 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.24 ");
+#ident "Revision: 2.24 "
+#endif
 
 
 struct parm *parms;
@@ -313,7 +315,7 @@ gwkludge(void)
 		if (state & IS_PASSIVE)
 			state |= IS_NO_RIP;
 
-		ifp = check_dup(gate,dst,netmask,0);
+		ifp = check_dup(gate,dst,netmask,state);
 		if (ifp != 0) {
 			msglog("duplicate "_PATH_GATEWAYS" entry \"%s\"",lptr);
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.19 2001/01/15 13:19:12 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.20 2001/03/10 23:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  *	@(#)defs.h	8.1 (Berkeley) 6/5/93
+ *
+ *	$FreeBSD$
+ *	"Revision: 2.23 "
  */
 
 /* Definitions for RIPv2 routing process.
@@ -96,6 +99,12 @@
 #define RIPVERSION RIPv2
 #include <protocols/routed.h>
 
+#ifndef __RCSID
+#define __RCSID(_s) static const char rcsid[] UNUSED = _s
+#endif
+#ifndef __COPYRIGHT
+#define __COPYRIGHT(_s) static const char copyright[] UNUSED = _s
+#endif
 
 /* Type of an IP address.
  *	Some systems do not like to pass structures, so do not use in_addr.
@@ -649,6 +658,9 @@ extern struct interface *iflookup(naddr);
 extern struct auth *find_auth(struct interface *);
 extern void end_md5_auth(struct ws_buf *, struct auth *);
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <md5.h>
+#else
 #define MD5_DIGEST_LEN 16
 typedef struct {
 	u_int32_t state[4];		/* state (ABCD) */
@@ -658,3 +670,4 @@ typedef struct {
 extern void MD5Init(MD5_CTX*);
 extern void MD5Update(MD5_CTX*, u_char*, u_int);
 extern void MD5Final(u_char[MD5_DIGEST_LEN], MD5_CTX*);
+#endif

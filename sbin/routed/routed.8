@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.28 2000/11/07 06:43:25 lukem Exp $
+.\"	$NetBSD: routed.8,v 1.29 2001/03/10 23:52:46 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -245,8 +245,6 @@ The following options are available:
 force
 .Nm
 to supply routing information.
-With this explicit option, the daemon is always in "quiet-mode" for RIP
-and does not supply routing information to other computers.
 This is the default if multiple network interfaces are present on which
 RIP or Router Discovery have not been disabled, and if the kernel switch
 ipforwarding=1.
@@ -255,6 +253,8 @@ is the opposite of the
 .Fl s
 option.
 This is the default when only one interface is present.
+With this explicit option, the daemon is always in "quiet-mode" for RIP
+and does not supply routing information to other computers.
 .It Fl d
 do not run in the background.
 This option is meant for interactive use.
