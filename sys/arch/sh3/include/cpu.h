@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2002/02/28 16:54:32 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2002/03/03 14:28:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
  */
 #include <machine/psl.h>
 #include <machine/frame.h>
-#include <machine/segments.h>
 
 #include <sys/sched.h>
 struct cpu_info {
@@ -90,7 +89,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define clockframe trapframe
 
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_r15, (frame)->tf_ssr))
+#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_ssr))
 /* XXX we should fix this */
 #define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->tf_spc)
@@ -171,33 +170,13 @@ do {									\
 
 #ifdef _KERNEL
 void sh_cpu_init(int, int);
-void sh3_startup(void);
 void delay(int);
+void _cpu_spin(u_int32_t);	/* for delay loop. */
+void cpu_reset(void);		/* Soft reset */
+void sh3_startup(void);
 struct pcb;
 void savectx(struct pcb *);
 void dumpsys(void);
 #endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_NKPDE		2	/* int: number of kernel PDEs */
-#define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
-#define	CPU_SETPRIVPROC		4	/* set current proc to piviledged proc
-					   */
-#define	CPU_DEBUGMODE		5	/* set debug mode */
-#define	CPU_LOADANDRESET	6	/* load kernel image and reset */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "nkpde", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "set_priv_proc", CTLTYPE_INT }, \
-	{ "debug_mode", CTLTYPE_INT }, \
-	{ "load_and_reset", CTLTYPE_INT }, \
-}
 
 #endif /* !_SH3_CPU_H_ */

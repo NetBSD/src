@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2002/03/02 22:26:26 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2002/03/03 14:28:50 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
@@ -61,6 +60,7 @@
 #include <sh3/cpu.h>
 #include <sh3/mmu.h>
 #include <sh3/clock.h>
+#include <sh3/intcreg.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -84,10 +84,7 @@
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/kloader.h>
-
 #include <hpcsh/dev/hd64465/hd64465var.h>
-
-#include <sh3/intcreg.h>
 
 #ifdef DEBUG
 #define DPRINTF_ENABLE
@@ -129,16 +126,6 @@ paddr_t msgbuf_paddr;
 extern int nkpde;
 extern char cpu_model[];
 extern paddr_t avail_start, avail_end;	// XXX
-
-#if defined(sh3_debug) || defined(SYSCALL_DEBUG)
-int cpu_debug_mode = 1;
-#else
-int cpu_debug_mode = 0;
-#endif
-#ifdef	SYSCALL_DEBUG
-#define	SCDEBUG_ALL 0x0004
-extern int	scdebug;
-#endif
 
 /* VM */
 static int	mem_cluster_init(paddr_t);
@@ -401,9 +388,6 @@ cpu_startup()
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
 	    MHZ(cpuclock), MHZ(pclock));
-#ifdef SYSCALL_DEBUG
-	scdebug |= SCDEBUG_ALL;
-#endif
 }
 
 int
@@ -419,9 +403,9 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
 	default:
-		return (EOPNOTSUPP);
 	}
-	/* NOTREACHED */
+
+	return (EOPNOTSUPP);
 }
 
 void
