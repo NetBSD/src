@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.42 1999/10/28 08:12:14 jun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.43 1999/10/28 09:21:46 jun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -238,6 +238,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
+
+    { PCMCIA_STR_SOCEKT_LP_ETHER_CF,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
+      PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+      0, -1, { 0x00, 0xc0, 0x1b} },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
