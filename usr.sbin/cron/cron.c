@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.8 1998/07/09 18:35:10 msaitoh Exp $	*/
+/*	$NetBSD: cron.c,v 1.9 1999/03/17 20:57:05 fair Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.8 1998/07/09 18:35:10 msaitoh Exp $");
+__RCSID("$NetBSD: cron.c,v 1.9 1999/03/17 20:57:05 fair Exp $");
 #endif
 #endif
 
@@ -235,10 +235,10 @@ cron_sleep() {
 		 */
 	} while (seconds_to_wait > 0 && job_runqueue());
 
-	while (seconds_to_wait > 0) {
+	while ((seconds_to_wait = (int) (TargetTime - time((time_t *)0))) > 0) {
 		Debug(DSCH, ("[%d] sleeping for %d seconds\n",
 			getpid(), seconds_to_wait))
-		seconds_to_wait = (int) sleep((unsigned int) seconds_to_wait);
+		sleep((unsigned int) seconds_to_wait);
 	}
 }
 
