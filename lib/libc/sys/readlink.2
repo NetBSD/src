@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.22 2004/05/11 17:38:18 kleink Exp $
+.\"	$NetBSD: readlink.2,v 1.23 2004/05/11 17:39:36 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,6 +91,7 @@ which reads the contents of a symbolic link named
 .Pa /symbolic/link
 and stores them as null-terminated string:
 .Bd -literal -offset indent
+#include <limits.h>
 #include <unistd.h>
 
 char buf[PATH_MAX];
