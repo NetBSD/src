@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.s,v 1.4 1998/09/24 22:22:07 thorpej Exp $ */
+/* $NetBSD: atomic.s,v 1.5 1998/09/25 23:59:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.4 1998/09/24 22:22:07 thorpej Exp $")
+__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.5 1998/09/25 23:59:42 thorpej Exp $")
 
 /*
  * Misc. `atomic' operations.
@@ -164,3 +164,30 @@ Laatq_already:
 Laatq_retry:
 	br	Laatq_loop
 	END(alpha_atomic_testset_q)
+
+/*
+ * alpha_atomic_loadlatch_q:
+ *
+ *	Atomically load and latch a quadword value.
+ *
+ * Inputs:
+ *
+ *	a0	Address of quadword to load and latch.
+ *	a1	Value to store at 0(a0) once value has been loaded.
+ *
+ * Outputs:
+ *
+ *	v0	Value loaded from 0(a0).
+ */
+	.text
+LEAF(alpha_atomic_loadlatch_q,2)
+Laallq_loop:
+	mov	a1, t0
+	ldq_l	v0, 0(a0)
+	stq_c	t0, 0(a0)
+	beq	t0, Laallq_retry
+	mb
+	RET
+Laallq_retry:
+	br	Laallq_loop
+	END(alpha_atomic_loadlatch_q)
