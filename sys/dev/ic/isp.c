@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.7 1997/06/08 06:31:52 thorpej Exp $	*/
+/*	$NetBSD: isp.c,v 1.8 1997/06/22 19:57:06 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -99,7 +99,7 @@ isp_reset(isp)
 {
 	mbreg_t mbs;
 	int loops, i;
-	u_int8_t oldclock;
+	u_int8_t clock;
 
 	isp->isp_state = ISP_NILSTATE;
 	/*
@@ -109,16 +109,22 @@ isp_reset(isp)
 
 	/*
 	 * Try and get old clock rate out before we hit the
-	 * chip over the head.
+	 * chip over the head- but if and only if we don't
+	 * know our desired clock rate.
 	 */
-	mbs.param[0] = MBOX_GET_CLOCK_RATE;
-	(void) isp_mboxcmd(isp, &mbs);
-	if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
-		oldclock = mbs.param[1];
-	} else {
-		oldclock = 0;
+	clock = isp->isp_mdvec->dv_clock;
+	if (clock == 0) {
+		mbs.param[0] = MBOX_GET_CLOCK_RATE;
+		(void) isp_mboxcmd(isp, &mbs);
+		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
+			clock = mbs.param[1];
+			printf("%s: using board clock 0x%x\n",
+				isp->isp_name, clock);
+		} else {
+			clock = 0;
+		}
 	}
-	
+
 	/*
 	 * Hit the chip over the head with hammer.
 	 */
@@ -270,11 +276,9 @@ isp_reset(isp)
 	/*
 	 * Set CLOCK RATE
 	 */
-	if (isp->isp_mdvec->dv_clock || oldclock) {
-		u_int8_t save;
+	if (clock) {
 		mbs.param[0] = MBOX_SET_CLOCK_RATE;
-		save = mbs.param[1] =
-			(oldclock)? oldclock : isp->isp_mdvec->dv_clock;
+		mbs.param[1] = clock;
 		(void) isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			printf("%s: failed to set CLOCKRATE\n", isp->isp_name);
