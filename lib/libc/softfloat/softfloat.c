@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.5 2001/03/13 08:15:14 ross Exp $ */
+/* $NetBSD: softfloat.c,v 1.6 2002/03/04 21:27:19 jmc Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.5 2001/03/13 08:15:14 ross Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.6 2002/03/04 21:27:19 jmc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -100,7 +100,6 @@ specific.
 */
 #include "softfloat-specialize"
 
-#ifndef SOFTFLOAT_FOR_GCC /* Not used */
 /*
 -------------------------------------------------------------------------------
 Takes a 64-bit fixed-point value `absZ' with binary point between bits 6
@@ -204,7 +203,6 @@ static int64 roundAndPackInt64( flag zSign, bits64 absZ0, bits64 absZ1 )
     return z;
 
 }
-#endif
 
 /*
 -------------------------------------------------------------------------------
@@ -1286,6 +1284,8 @@ floatx80 int64_to_floatx80( int64 a )
 
 #endif
 
+#endif /* !SOFTFLOAT_FOR_GCC */
+
 #ifdef FLOAT128
 
 /*
@@ -1323,7 +1323,6 @@ float128 int64_to_float128( int64 a )
 }
 
 #endif
-#endif /* !SOFTFLOAT_FOR_GCC */
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
 /*
