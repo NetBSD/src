@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1997/11/10 01:07:12 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1997/11/10 01:52:46 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -362,8 +362,8 @@ void	md_copy_filesystem (void)
 	 * an install with target root == current root, they'd
 	 * be be hidden under the  target's /usr filesystem.
 	 */
- 	run_prog ("(cd /usrbin ; tar --one-one-file-system -cf - / ) |"
-		  "(cd /usr/bin ; tar --unlink  -xpf - )"
+ 	run_prog (
+           "tar --one-file-system -cf - -C /usrbin . | tar -xpf - -C /usr/bin"
 		  );
 
 	if (target_already_root()) {
