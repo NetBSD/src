@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.18 1997/04/17 07:42:07 mikel Exp $
+#	$NetBSD: security,v 1.19 1997/04/21 11:14:41 mycroft Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -255,6 +255,7 @@ if [ "$check_rhosts" = YES ]; then
 	awk -F: '$1 != "root" && $1 != "toor" && \
 		($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 			{ print $1 " " $9 }' /etc/master.passwd |
+	sort -k2 |
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts ] ; then
 			rhost=`ls -ldgT ${homedir}/.rhosts`
@@ -266,7 +267,8 @@ if [ "$check_rhosts" = YES ]; then
 		cat $OUTPUT
 	fi
 
-	awk -F: '{ print $1 " " $9 }' /etc/master.passwd | \
+	awk -F: '{ print $1 " " $9 }' /etc/master.passwd |
+	sort -k2 |
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts ] && \
 		    egrep '\+' ${homedir}/.rhosts > /dev/null ; then
@@ -282,7 +284,8 @@ fi
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
 if [ "$check_homes" = YES ]; then
-	awk -F: '{ print $1 " " $9 }' /etc/master.passwd | \
+	awk -F: '{ print $1 " " $9 }' /etc/master.passwd |
+	sort -k2 |
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
 			file=`ls -ldgT ${homedir}`
@@ -301,8 +304,9 @@ if [ "$check_homes" = YES ]; then
 	fi
 
 	# Files that should not be owned by someone else or readable.
-	list=".netrc .rhosts"
-	awk -F: '{ print $1 " " $9 }' /etc/master.passwd | \
+	list=".Xauthority .netrc .rhosts"
+	awk -F: '{ print $1 " " $9 }' /etc/master.passwd |
+	sort -k2 |
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
@@ -323,9 +327,11 @@ if [ "$check_homes" = YES ]; then
 		{ print "user " $1 " " $2 " file is other writeable" }' > $OUTPUT
 
 	# Files that should not be owned by someone else or writeable.
-	list=".bashrc .cshrc .emacs .exrc .forward .klogin .login .logout \
-	      .profile .tcshrc .qmail"
-	awk -F: '{ print $1 " " $9 }' /etc/master.passwd | \
+	list=".bash_history .bash_login .bash_logout .bash_profile .bashrc \
+	      .cshrc .emacs .exrc .forward .history .klogin .login .logout \
+	      .profile .qmail .rc_history .tcshrc .twmrc .xinitrc .xsession"
+	awk -F: '{ print $1 " " $9 }' /etc/master.passwd |
+	sort -k2 |
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
