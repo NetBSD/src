@@ -49,33 +49,35 @@ static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/device.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
+#include <machine/autoconf.h>
 
 #include <limits.h>
 #include <db.h>
 
 #include "kvm_private.h"
 
-#define NPMEG 128
-
-/* XXX from sparc/pmap.c */
-#define MAXMEM  (128 * 1024 * 1024)     /* no more than 128 MB phys mem */
-#define NPGBANK 16                      /* 2^4 pages per bank (64K / bank) */
-#define BSHIFT  4                       /* log2(NPGBANK) */
-#define BOFFSET (NPGBANK - 1)
-#define BTSIZE  (MAXMEM / 4096 / NPGBANK)
-#define HWTOSW(pmap_stod, pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
-
+#define MA_SIZE 32 /* XXX */
 struct vmstate {
-	struct regmap regmap[NKREG];
-	int *pmeg;
-	int pmap_stod[BTSIZE];              /* dense to sparse */
+	struct {
+		int x_seginval;
+		int x_npmemarr;
+		struct memarr x_pmemarr[MA_SIZE];
+		struct segmap x_segmap_store[NKREG*NSEGRG];
+	} x;
+#define seginval x.x_seginval
+#define npmemarr x.x_npmemarr
+#define pmemarr x.x_pmemarr
+#define segmap_store x.x_segmap_store
+	int *pte;
 };
+#define NPMEG(vm) ((vm)->seginval+1)
 
 static int cputyp = -1;
 
@@ -108,13 +110,19 @@ _kvm_freevtop(kd)
 	kvm_t *kd;
 {
 	if (kd->vmst != 0) {
-		if (kd->vmst->pmeg != 0)
-			free(kd->vmst->pmeg);
+		if (kd->vmst->pte != 0)
+			free(kd->vmst->pte);
 		free(kd->vmst);
 		kd->vmst  = 0;
 	}
 }
 
+/*
+ * Prepare for translation of kernel virtual addresses into offsets
+ * into crash dump files. We use the MMU specific goop written at the
+ * and of crash dump by pmap_dumpmmu().
+ * (note: sun4/sun4c 2-level MMU specific)
+ */
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
@@ -123,22 +131,14 @@ _kvm_initvtop(kd)
 	register int off;
 	register struct vmstate *vm;
 	struct stat st;
-	struct nlist nlist[2];
+	struct nlist nlist[5];
 
 	_kvm_mustinit(kd);
 
-#if XXX
-	if (kd->vmst == 0) {
-		kd->vmst = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-		if (kd->vmst == 0)
+	if ((vm = kd->vmst) == 0) {
+		kd->vmst = vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
+		if (vm == 0)
 			return (-1);
-		kd->vmst->pmeg = (int *)_kvm_malloc(kd,
-		    NPMEG * nptesg * sizeof(int));
-		if (kd->vmst->pmeg == 0) {
-			free(kd->vmst);
-			kd->vmst = 0;
-			return (-1);
-		}
 	}
 
 	if (fstat(kd->pmfd, &st) < 0)
@@ -146,61 +146,34 @@ _kvm_initvtop(kd)
 	/*
 	 * Read segment table.
 	 */
-	off = st.st_size - roundup(sizeof(vm->regmap), kd->nbpg);
+
+	off = st.st_size - roundup(sizeof(vm->x), kd->nbpg);
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
-	    read(kd->pmfd, (char *)vm->regmap, sizeof(vm->regmap)) < 0) {
+	    read(kd->pmfd, (char *)&vm->x, sizeof(vm->x)) < 0) {
 		_kvm_err(kd, kd->program, "cannot read segment map");
 		return (-1);
 	}
+
+	vm->pte = (int *)_kvm_malloc(kd, NPMEG(vm) * nptesg * sizeof(int));
+	if (vm->pte == 0) {
+		free(kd->vmst);
+		kd->vmst = 0;
+		return (-1);
+	}
+
 	/*
 	 * Read PMEGs.
 	 */
-	off = st.st_size - roundup(NPMEG * nptesg * sizeof(int), kd->nbpg) +
-	    ((sizeof(vm->regmap) + kd->nbpg - 1) >> pgshift);
+	off = st.st_size - roundup(sizeof(vm->x), kd->nbpg) -
+	      roundup(NPMEG(vm) * nptesg * sizeof(int), kd->nbpg);
+
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
-	    read(kd->pmfd, (char *)vm->pmeg, NPMEG * nptesg * sizeof(int)) < 0) {
+	    read(kd->pmfd, (char *)vm->pte, NPMEG(vm) * nptesg * sizeof(int)) < 0) {
 		_kvm_err(kd, kd->program, "cannot read PMEG table");
 		return (-1);
 	}
-	/*
-	 * Make pmap_stod be an identity map so we can bootstrap it in.
-	 * We assume it's in the first contiguous chunk of physical memory.
-	 */
-	for (i = 0; i < BTSIZE; ++i) 
-		vm->pmap_stod[i] = i << 4;
-
-	/*
-	 * It's okay to do this nlist separately from the one kvm_getprocs()
-	 * does, since the only time we could gain anything by combining
-	 * them is if we do a kvm_getprocs() on a dead kernel, which is
-	 * not too common.
-	 */
-	nlist[0].n_name = "_pmap_stod";
-	nlist[1].n_name = 0;
-	(void)kvm_nlist(kd, nlist);
-
-	/*
-	 * a kernel compiled only for the sun4 will not contain the symbol
-	 * pmap_stod. Instead, we are happy to use the identity map
-	 * initialized earlier.
-	 * If we are not a sun4, the lack of this symbol is fatal.
-	 */
-	if (nlist[0].n_value != 0) {
-		if (kvm_read(kd, (u_long)nlist[0].n_value, 
-		    (char *)vm->pmap_stod, sizeof(vm->pmap_stod))
-		    != sizeof(vm->pmap_stod)) {
-			_kvm_err(kd, kd->program, "cannot read pmap_stod");
-			return (-1);
-		}
-	} else {
-		if (cputyp != CPU_SUN4) {
-			_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
-			return (-1);
-		}
-	}
-#endif
 
 	return (0);
 }
@@ -219,27 +192,43 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-#if XXX
-	register struct vmstate *vm;
-	register int s;
-	register int pte;
-	register int off;
+	register int vr, vs, pte, off, nmem;
+	register struct vmstate *vm = kd->vmst;
+	struct regmap *rp;
+	struct segmap *sp;
+	struct memarr *mp;
 
 	_kvm_mustinit(kd);
 
-	if (va >= KERNBASE) {
-		vm = kd->vmst;
-		s = vm->regmap[VA_VREG(va) - NUREG];
-		pte = vm->pmeg[VA_VPG(va) + nptesg * s];
-		if ((pte & PG_V) != 0) {
-			off = VA_OFF(va);
-			*pa = (HWTOSW(vm->pmap_stod, pte & PG_PFNUM)
-			       << pgshift) | off;
+	if (va < KERNBASE)
+		goto err;
 
-			return (kd->nbpg - off);
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+
+	sp = &vm->segmap_store[(vr-NUREG)*NSEGRG + vs];
+	if (sp->sg_npte == 0)
+		goto err;
+	if (sp->sg_pmeg == vm->seginval)
+		goto err;
+	pte = vm->pte[sp->sg_pmeg * nptesg + VA_VPG(va)];
+	if ((pte & PG_V) != 0) {
+		register long p, dumpoff = 0;
+
+		off = VA_OFF(va);
+		p = (pte & PG_PFNUM) << pgshift;
+		/* Translate (sparse) pfnum to (packed) dump offset */
+		for (mp = vm->pmemarr, nmem = vm->npmemarr; --nmem >= 0; mp++) {
+			if (mp->addr <= p && p < mp->addr + mp->len)
+				break;
+			dumpoff += mp->len;
 		}
+		if (nmem < 0)
+			goto err;
+		*pa = (dumpoff + p - mp->addr) | off;
+		return (kd->nbpg - off);
 	}
-#endif
+err:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
