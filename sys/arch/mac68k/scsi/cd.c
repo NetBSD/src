@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.8 1994/08/05 22:58:03 mycroft Exp $
+ *      $Id: cd.c,v 1.9 1994/10/14 18:27:08 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -48,10 +48,9 @@ int	Debugger();
 #define	CDOUTSTANDING	2
 #define	CDRETRIES	1
 
-#define	MAKECDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
-#define CDPART(z)	(minor(z) & 0x07)
-#define CDUNIT(z)	(minor(z) >> 3)
-#define	RAW_PART	3
+#define	CDUNIT(z)			DISKUNIT(z)
+#define	CDPART(z)			DISKPART(z)
+#define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj,unit,part)
 
 struct cd_data {
 	struct dkdevice sc_dk;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.1 1994/08/02 20:21:51 ragge Exp $
+ *	$Id: disksubr.c,v 1.2 1994/10/14 18:27:35 cgd Exp $
  */
 
 #include "param.h"
@@ -47,8 +47,6 @@
 #define dkminor(unit, part)	(((unit) << 3) | (part))
 
 #define	b_cylin	b_resid
-
-#define	RAW_PART	3
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -141,7 +139,7 @@ writedisklabel(dev, strat, lp, osdep)
 }
 /*
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.1 1994/08/02 20:21:51 ragge Exp $
+ *	$Id: disksubr.c,v 1.2 1994/10/14 18:27:35 cgd Exp $
  */
 
 /*

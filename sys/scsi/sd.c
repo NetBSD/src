@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.35 1994/07/26 19:39:19 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.36 1994/10/14 18:27:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -75,14 +75,11 @@ int     Debugger();
 #define	SDOUTSTANDING	2
 #define	SDRETRIES	4
 
-#define SDUNIT(dev)	(minor(dev) / MAXPARTITIONS)
-#define SDPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define makesddev(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
-#ifndef RAW_PART
-#define	RAW_PART	3		/* XXX should be 2 */
-#endif 
-#define	SDLABELDEV(dev)	(makesddev(major(dev), SDUNIT(dev), RAW_PART))
+#define	SDUNIT(dev)			DISKUNIT(dev)
+#define	SDPART(dev)			DISKPART(dev)
+#define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
+
+#define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
 struct sd_data {
 	struct device sc_dev;
@@ -665,7 +662,7 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	if (errstring = readdisklabel(makesddev(0, sd->sc_dev.dv_unit,
+	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit,
 	    RAW_PART), sdstrategy, &sd->sc_dk.dk_label,
 	    &sd->sc_dk.dk_cpulabel)) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
@@ -840,7 +837,7 @@ sdsize(dev_t dev)
 		return -1;
 
 	if ((sd->flags & SDHAVELABEL) == 0) {
-		val = sdopen(makesddev(major(dev), unit, RAW_PART), FREAD,
+		val = sdopen(MAKESDDEV(major(dev), unit, RAW_PART), FREAD,
 		    S_IFBLK, 0);
 		if (val != 0)
 			return -1;

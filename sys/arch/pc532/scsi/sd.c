@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.3 1994/06/30 01:12:50 phil Exp $
+ *	$Id: sd.c,v 1.4 1994/10/14 18:27:19 cgd Exp $
  */
 
 #include "sd.h"
@@ -53,7 +53,6 @@ long int sdstrats, sdqueues;
 #define MAKESDDEV(maj, unit, part)	(makedev(maj, ((unit<<3)+part)))
 #define	UNITSHIFT	3
 #define PARTITION(z)	(minor(z) & 0x07)
-#define	RAW_PART	2		/* /dev/xxxc !!! */
 #define UNIT(z)		(  (minor(z) >> UNITSHIFT) )
 
 #undef	NSD

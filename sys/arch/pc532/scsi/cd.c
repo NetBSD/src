@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.3 1994/08/05 22:57:44 mycroft Exp $
+ *	$Id: cd.c,v 1.4 1994/10/14 18:27:17 cgd Exp $
  */
 
 #define SPLCD splbio
@@ -60,7 +60,6 @@ int	Debugger();
 
 #define	UNITSHIFT	3
 #define PARTITION(z)	(minor(z) & 0x07)
-#define	RAW_PART	3
 #define UNIT(z)		(  (minor(z) >> UNITSHIFT) )
 
 #undef	NCD

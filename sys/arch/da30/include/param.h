@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param.h,v 1.5 1994/09/16 02:39:50 jtc Exp $
+ *	$Id: param.h,v 1.6 1994/10/14 18:26:35 cgd Exp $
  */
 
 /*
@@ -119,13 +119,6 @@
 
 /* bytes to pages */
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
-
-#ifndef LABELSECTOR
-#define LABELSECTOR	0
-#endif
-#ifndef LABELOFFSET
-#define LABELOFFSET	64
-#endif
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
 	((unsigned)(bytes) >> DEV_BSHIFT)
