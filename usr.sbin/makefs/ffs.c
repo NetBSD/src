@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.30 2004/06/24 22:30:13 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.31 2004/07/24 16:30:50 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.30 2004/06/24 22:30:13 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.31 2004/07/24 16:30:50 dbj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -90,6 +90,10 @@ __RCSID("$NetBSD: ffs.c,v 1.30 2004/06/24 22:30:13 lukem Exp $");
 #include <unistd.h>
 
 #include "makefs.h"
+
+#if HAVE_STRUCT_STATVFS_F_IOSIZE
+#include <sys/statvfs.h>
+#endif
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
