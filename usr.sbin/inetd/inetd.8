@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.21 1999/07/02 16:55:45 itojun Exp $
+.\"	$NetBSD: inetd.8,v 1.22 1999/08/13 13:57:52 itojun Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,6 +504,11 @@ for the same service on different local addresses.  Provided you never
 have more than one entry for a given RPC service, everything should
 work correctly.  (Note that default host address specifiers do apply to
 RPC lines with no explicit specifier.)
+.Pp
+.Dq rpc
+or
+.Dq tcpmux
+on IPv6 is not tested enough.
 .Sh SEE ALSO
 .Xr comsat 8 ,
 .Xr fingerd 8 ,
@@ -536,8 +541,3 @@ and
 built-in trivial services is not recommended because remote
 users may abuse these to cause a denial of network service to 
 or from the local host.
-.Sh BUGS
-.Dq rpc
-or
-.Dq tcpmux
-on IPv6 is not tested enough.
