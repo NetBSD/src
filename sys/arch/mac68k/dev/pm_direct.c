@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.4 1998/02/23 03:11:26 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.5 1998/03/29 03:50:30 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Takashi HAMADA
+ *  This product includes software developed by Takashi Hamada
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* From: pm_direct.c 1.22 01/09/97 Takashi Hamada */
+/* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include "opt_adb.h"
 
@@ -200,20 +200,31 @@ void	pm_adb_poll_next_device_pm1 __P((PMData *));
  * These variables are in adb_direct.c.
  */
 extern u_char	*adbBuffer;	/* pointer to user data area */
-#define MAX_ADB_MSG_LENGTH	20
-extern u_char	adbInputBuffer[MAX_ADB_MSG_LENGTH];      /* data input buffer */
 extern void	*adbCompRout;	/* pointer to the completion routine */
 extern void	*adbCompData;	/* pointer to the completion routine data */
 extern int	adbWaiting;	/* waiting for return data from the device */
 extern int	adbWaitingCmd;	/* ADB command we are waiting for */
 extern int	adbStarting;	/* doing ADB reinit, so do "polling" differently */
 
+#define	ADB_MAX_MSG_LENGTH	16
+#define	ADB_MAX_HDR_LENGTH	8
+struct adbCommand {
+	u_char	header[ADB_MAX_HDR_LENGTH];	/* not used yet */
+	u_char	data[ADB_MAX_MSG_LENGTH];	/* packet data only */
+	u_char	*saveBuf;	/* where to save result */
+	u_char	*compRout;	/* completion routine pointer */
+	u_char	*compData;	/* completion routine data pointer */
+	u_int	cmd;		/* the original command for this data */
+	u_int	unsol;		/* 1 if packet was unsolicited */
+	u_int	ack_only;	/* 1 for no special processing */
+};
+extern	void	adb_pass_up __P((struct adbCommand *));
+
+
 /*
  * Define the external functions
  */
 extern int	zshard __P((int));		/* from zs.c */
-extern void	adb_comp_exec __P((void));	/* from adb_direct.c */
-
 
 #ifdef ADB_DEBUG
 /*
@@ -296,9 +307,9 @@ pm_wait_busy(delay)
 		zshard(0);		/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
-			return (1);	/* timeout */
+			return 1;	/* timeout */
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -314,9 +325,9 @@ pm_wait_free(delay)
 		zshard(0);		/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
-			return (0);	/* timeout */
+			return 0;	/* timeout */
 	}
-	return (1);
+	return 1;
 }
 
 
@@ -355,7 +366,7 @@ pm_receive_pm1(data)
 	PM_SET_STATE_ACKON();
 	via_reg(VIA2, vDirA) = 0x00;
 
-	return (rval);
+	return rval;
 }
 
 
@@ -378,7 +389,7 @@ pm_send_pm1(data, delay)
 		PM_SET_STATE_ACKON();
 		via_reg(VIA2, vDirA) = 0x00;
 
-		return (0xffffcd36);
+		return 0xffffcd36;
 	}
 
 	rval = 0x0;
@@ -389,7 +400,7 @@ pm_send_pm1(data, delay)
 	PM_SET_STATE_ACKON();
 	via_reg(VIA2, vDirA) = 0x00;
 
-	return (rval);
+	return rval;
 }
 
 
@@ -426,7 +437,7 @@ pm_pmgrop_pm1(pmdata)
 					/* restore formar value */
 					via_reg(VIA1, vDirA) = via1_vDirA;
 					via_reg(VIA1, vIER) = via1_vIER;
-					return (0xffffcd38);
+					return 0xffffcd38;
 				}
 
 				switch (mac68k_machine.machineid) {
@@ -446,7 +457,7 @@ pm_pmgrop_pm1(pmdata)
 								via_reg(VIA2, vDirA) = 0x00;
 								/* restore formar value */
 								via_reg(VIA1, vIER) = via1_vIER;
-								return (0xffffcd38);
+								return 0xffffcd38;
 							}
 						}
 				} /* end switch */
@@ -470,7 +481,7 @@ pm_pmgrop_pm1(pmdata)
 				/* restore formar value */
 				via_reg(VIA1, vDirA) = via1_vDirA;
 				via_reg(VIA1, vIER) = via1_vIER;
-					return (0xffffcd38);
+					return 0xffffcd38;
 			}
 
 			/* send # of PM data */
@@ -527,12 +538,12 @@ pm_pmgrop_pm1(pmdata)
 	if (s != 0x81815963)
 		splx(s);
 
-	return (rval);
+	return rval;
 }
 
 
 /*
- * My PM interrupt routine for PB100-series
+ * My PM interrupt routine for PB1XX series
  */
 void
 pm_intr_pm1()
@@ -625,7 +636,7 @@ pm_receive_pm2(data)
 	PM_SET_STATE_ACKON();
 	via_reg(VIA1, vACR) |= 0x1c;
 
-	return (rval);
+	return rval;
 }	
 
 
@@ -649,7 +660,7 @@ pm_send_pm2(data)
 
 		via_reg(VIA1, vACR) |= 0x1c;
 
-		return (rval);		
+		return rval;		
 	}
 
 	PM_SET_STATE_ACKON();
@@ -660,7 +671,7 @@ pm_send_pm2(data)
 	PM_SET_STATE_ACKON();
 	via_reg(VIA1, vACR) |= 0x1c;
 
-	return (rval);
+	return rval;
 }
 
 
@@ -796,7 +807,7 @@ pm_pmgrop_pm2(pmdata)
 	via_reg(VIA1, vIER) = via1_vIER;
 	splx(s);
 
-	return (rval);
+	return rval;
 }
 
 
@@ -894,7 +905,7 @@ pm_pmgrop_mrg(pmdata)
 
 	asm("
 		movl	%1, a0
-		.word   0xa085
+		.word	0xa085
 		movl	d0, %0"
 		: "=g" (rval)
 		: "g" (pmdata)
@@ -920,7 +931,7 @@ pmgrop(pmdata)
 			break;
 		default:
 			/* return (pmgrop_mrg(pmdata)); */
-			return (-1);
+			return 1;
 	}
 }
 
@@ -955,14 +966,15 @@ pm_adb_op(buffer, compRout, data, command)
 	void *data;
 	int command;
 {
-	int i, len;
+	int i;
 	int s;
 	int rval;
 	int delay;
 	PMData pmdata;
+	struct adbCommand packet;
 
 	if (adbWaiting == 1)
-		return (-1);
+		return 1;
 
 	s = splhigh();
 	via_reg(VIA1, vIER) = 0x10;
@@ -994,14 +1006,29 @@ pm_adb_op(buffer, compRout, data, command)
 	} else
 		pmdata.data[2] = 0;
 
+	if ((command & 0xc) != 0xc) {		/* if the command is not TALK */
+		/* set up stuff for adb_pass_up */
+		packet.data[0] = 1 + pmdata.data[2];
+		packet.data[1] = command;
+		for (i = 0; i < pmdata.data[2]; i++)
+			packet.data[i+2] = pmdata.data[i+3];
+		packet.saveBuf = adbBuffer;
+		packet.compRout = adbCompRout;
+		packet.compData = adbCompData;
+		packet.cmd = command;
+		packet.unsol = 0;
+		packet.ack_only = 1;
+		adb_polling = 1;
+		adb_pass_up(&packet);
+		adb_polling = 0;
+	}
+
 	rval = pmgrop(&pmdata);
 	if (rval != 0)
-		return (-1);
+		return 1;
 
-	if (adbWaiting == 0) {
-		adbWaiting = 1;
-		adbWaitingCmd = command;
-	}
+	adbWaiting = 1;
+	adbWaitingCmd = command;
 
 	PM_VIA_INTR_ENABLE();
 
@@ -1014,19 +1041,11 @@ pm_adb_op(buffer, compRout, data, command)
 			zshard(0);		/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
-			return (-1);
-	}
-
-	if (buffer != (u_char *)0) {
-		len = adbInputBuffer[3];
-		for (i=0; i<=len; i++)
-				buffer[i] = adbInputBuffer[3 + i];
-		if (len < 0)
-			buffer[0] = 0;	
+			return 1;
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
-	if (HwCfgFlags3 & 0x00020000) {		/* PB Duo series, PB 500 series */
+	if (HwCfgFlags3 & 0x00020000) {		/* PB Duo series, PB 5XX series */
 		pmdata.command = 0x20;
 		pmdata.num_data = 4;
 		pmdata.s_buf = pmdata.data;
@@ -1035,7 +1054,7 @@ pm_adb_op(buffer, compRout, data, command)
 		pmdata.data[1] = 0x86;	/* magic spell for awaking the PM */
 		pmdata.data[2] = 0x00;	
 		pmdata.data[3] = 0x0c;	/* each bit may express the existent ADB device */
-	} else {				/* PB 100-series */
+	} else {				/* PB 1XX series */
 		pmdata.command = 0x20;
 		pmdata.num_data = 3;
 		pmdata.s_buf = pmdata.data;
@@ -1047,7 +1066,7 @@ pm_adb_op(buffer, compRout, data, command)
 	rval = pmgrop(&pmdata);
 
 	splx(s);
-	return (rval);
+	return rval;
 }
 
 
@@ -1056,29 +1075,27 @@ pm_adb_get_TALK_result(pmdata)
 	PMData *pmdata;
 {
 	int i;
-	int rx_pm_adb_cmd;
+	struct adbCommand packet;
 
-	rx_pm_adb_cmd = (u_int)pmdata->data[3] & 0xff;
+	/* set up data for adb_pass_up */
+	packet.data[0] = pmdata->num_data-1;
+	packet.data[1] = pmdata->data[3];
+	for (i = 0; i <packet.data[0]-1; i++)
+		packet.data[i+2] = pmdata->data[i+4];
 
-	pmdata->data[2] &= 0xf;
-	pmdata->data[1] = pmdata->data[3];
-	pmdata->data[3] = pmdata->num_data - 2;
+	packet.saveBuf = adbBuffer;
+	packet.compRout = adbCompRout;
+	packet.compData = adbCompData;
+	packet.unsol = 0;
+	packet.ack_only = 0;
+	adb_polling = 1;
+	adb_pass_up(&packet);
+	adb_polling = 0;
 
-	adbInputBuffer[0] = pmdata->num_data + 1;
-	for (i = 1; i < pmdata->num_data + 2; i++)
-		adbInputBuffer[i] = pmdata->data[i];
-
-	if ((adbWaiting == 1) && (rx_pm_adb_cmd == adbWaitingCmd)) {
-		if (adbStarting == 0)
-			adb_complete(&pmdata->data[3], (long)0, adbWaitingCmd);
-		adbWaitingCmd = 0x0;
-					
-		adbWaiting = 0;
-		adb_comp_exec();
-		adbBuffer = (long)0;
-		adbCompRout = (long)0;
-		adbCompData = (long)0;
-	}
+	adbWaiting = 0;
+	adbBuffer = (long)0;
+	adbCompRout = (long)0;
+	adbCompData = (long)0;
 }
 
 
@@ -1087,15 +1104,16 @@ pm_adb_get_ADB_data(pmdata)
 	PMData *pmdata;
 {
 	int i;
+	struct adbCommand packet;
 
-	i = (u_int)pmdata->data[3] & 0xff;
-	pmdata->data[2] &= 0xf;
-	pmdata->data[1] = pmdata->data[3];
-	pmdata->data[3] = pmdata->num_data - 2;
-
-	adbInputBuffer[0] = pmdata->num_data + 1;
-	if (adbStarting == 0)
-		adb_complete(&pmdata->data[3], (long)0, i);
+	/* set up data for adb_pass_up */
+	packet.data[0] = pmdata->num_data-1;	/* number of raw data */
+	packet.data[1] = pmdata->data[3];	/* ADB command */
+	for (i = 0; i <packet.data[0]-1; i++)
+		packet.data[i+2] = pmdata->data[i+4];
+	packet.unsol = 1;
+	packet.ack_only = 0;
+	adb_pass_up(&packet);
 }
 
 
@@ -1127,5 +1145,6 @@ pm_adb_poll_next_device_pm1(pmdata)
 	tmp_pmdata.data[2] = 0x00;
 	rval = pmgrop(&tmp_pmdata);
 }
+
 
 
