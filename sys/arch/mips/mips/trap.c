@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 1997/08/09 06:06:37 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 1997/08/10 01:14:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -477,10 +477,6 @@ syscall(status, cause, opc, frame)
 	size_t code, numsys, nsaved, argsiz;
 	struct sysent *callp;
 
-	/* XXX: why not in locore glue? */
-	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
-
 #ifdef DEBUG
 	trp->status = status;
 	trp->cause = cause;
@@ -494,6 +490,9 @@ syscall(status, cause, opc, frame)
 #endif
 
 	cnt.v_syscall++;
+
+	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
+		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
