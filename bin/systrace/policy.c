@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.14 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: policy.c,v 1.15 2003/08/01 05:42:48 provos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.14 2003/06/03 04:33:44 provos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.15 2003/08/01 05:42:48 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,8 +104,6 @@ SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare);
 extern int userpolicy;
 
 static char policydir[MAXPATHLEN];
-static char *groupnames[NGROUPS_MAX];
-static int ngroups;
 
 struct tmplqueue templates;
 
@@ -140,30 +138,8 @@ systrace_setupdir(char *path)
 int
 systrace_initpolicy(char *file, char *path)
 {
-	gid_t groups[NGROUPS_MAX];
-	char gidbuf[11];
-	int i;
-
 	SPLAY_INIT(&policyroot);
 	SPLAY_INIT(&polnrroot);
-
-	/* Find out group names for current user */
-	if ((ngroups = getgroups(NGROUPS_MAX, groups)) == -1)
-		err(1, "getgroups");
-
-	for (i = 0; i < ngroups; i++) {
-		struct group *gr;
-
-		if ((gr = getgrgid(groups[i])) != NULL) {
-			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
-				err(1, "strdup(%s)", gr->gr_name);
-		} else {
-			snprintf(gidbuf, sizeof(gidbuf), "%u",
-			    groups[i]);
-			if ((groupnames[i] = strdup(gidbuf)) == NULL)
-				err(1, "strdup(%s)", gidbuf);
-		}
-	}
 
 	if (userpolicy) {
 		systrace_setupdir(path);
