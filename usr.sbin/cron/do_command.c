@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.1.1.4 1994/01/20 02:47:22 jtc Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.2 1995/04/14 19:49:34 mycroft Exp $";
 #endif
 
 
@@ -366,8 +366,8 @@ child_process(e, u)
 				auto char	hostname[MAXHOSTNAMELEN];
 
 				(void) gethostname(hostname, MAXHOSTNAMELEN);
-				(void) sprintf(mailcmd, MAILARGS,
-					       MAILCMD, mailto);
+				(void) snprintf(mailcmd, sizeof(mailcmd),
+				    MAILARGS, MAILCMD);
 				if (!(mail = cron_popen(mailcmd, "w"))) {
 					perror(MAILCMD);
 					(void) _exit(ERROR_EXIT);
