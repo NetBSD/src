@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.63 2004/08/28 17:37:02 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.64 2004/08/28 17:45:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.63 2004/08/28 17:37:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.64 2004/08/28 17:45:24 thorpej Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -230,7 +230,7 @@ int	rddebug = 0x80;
  * Misc. HW description, indexed by sc_type.
  * Nothing really critical here, could do without it.
  */
-const struct rdidentinfo rdidentinfo[] = {
+static const struct rdidentinfo rdidentinfo[] = {
 	{ RD7946AID,	0,	"7945A",	NRD7945ABPT,
 	  NRD7945ATRK,	968,	 108416 },
 
@@ -586,17 +586,13 @@ rdgetinfo(dev_t dev)
 		return (0);
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, ", rs->sc_dev.dv_xname, msg);
-#ifdef COMPAT_NOLABEL
-	printf("using old default partitioning\n");
-	rdmakedisklabel(unit, lp);
-#else
-	printf("defining `c' partition as entire disk\n");
+	printf("%s: WARNING: %s\n", rs->sc_dev.dv_xname, msg);
+
 	pi[2].p_size = rdidentinfo[rs->sc_type].ri_nblocks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
 	pi[0].p_size = 0;
-#endif
+
 	return(0);
 }
 
