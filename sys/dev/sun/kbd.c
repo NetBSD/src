@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5 1996/03/17 00:57:14 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.6 1996/03/21 22:37:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,7 +190,7 @@ struct zsops zsops_kbd;
 static int	kbd_match(struct device *, void *, void *);
 static void	kbd_attach(struct device *, struct device *, void *);
 
-struct cfattach kdb_ca = {
+struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbd_match, kbd_attach
 };
 
