@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.42 2001/11/13 00:57:03 lukem Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.43 2001/11/21 06:28:09 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.42 2001/11/13 00:57:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.43 2001/11/21 06:28:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2628,6 +2628,7 @@ ipsec4_output(state, sp, flags)
 		panic("state->ro == NULL in ipsec4_output");
 	if (!state->dst)
 		panic("state->dst == NULL in ipsec4_output");
+	state->encap = 0;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
 		printf("ipsec4_output: applyed SP\n");
@@ -2765,6 +2766,8 @@ ipsec4_output(state, sp, flags)
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
+
+			state->encap++;
 		} else
 			splx(s);
 
