@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.62 2000/06/08 21:02:49 jdc Exp $
+#	$NetBSD: termcap.src,v 1.63 2000/10/22 19:29:46 scottr Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -8023,7 +8023,7 @@ ibm3161|ibm3163|wy60-316X|wyse60-316X|IBM 3161/3163 display:\
 	:F5=\E\041c\r:F6=\E\041d\r:F7=\E\041e\r:F8=\E\041f\r:\
 	:F9=\E\041g\r:FA=\E\041h\r:FB=\E\041i\r:FC=\E\041j\r:\
 	:FD=\E\041k\r:FE=\E\041l\r:\
-	:ac=l\354q\361k\353x\370j\352m\355w\367u\365v\366t\364n\356:\
+	:al=\EN:ac=l\354q\361k\353x\370j\352m\355w\367u\365v\366t\364n\356:\
 	:bl=^G:cd=\EJ:ce=\EI:cl=\EH\EJ:cm=\EY%+ %+ :cr=^M:dc=\EQ:\
 	:dl=\EO:do=\EB:ho=\EH:k1=\Ea\r:k2=\Eb\r:k3=\Ec\r:k4=\Ed\r:\
 	:k5=\Ee\r:k6=\Ef\r:k7=\Eg\r:k8=\Eh\r:k9=\Ei\r:k;=\Ej\r:\
