@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2 2002/03/21 23:41:32 fredette Exp $
+.\"	$NetBSD: install,v 1.3 2002/05/08 16:32:55 fredette Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ Create the
 .Nx*M
 \*V boot tape as described in the section
 entitled
-.Sx "Preparing a boot tape"
+.Sx "Creating boot/install tapes"
 and boot the tape. At the PROM
 monitor prompt, use one of the commands:
 .Pp
@@ -158,10 +158,10 @@ Now mount the NFS file system containing the miniroot image:
 .Pp
 .Dl ssh\*> Ic "mount -o rdonly,-r=1024 192.233.20.195:/server/path /mnt"
 .Pp
-The procedure is simpler if you have space for an expanded
+The procedure is simpler and much faster if you have space for an expanded
 (not compressed) copy of the miniroot image. In that case:
 .Pp
-.Dl ssh\*> Ic "dd if=/mnt/miniroot of=/dev/rsd0b bs=8k"
+.Dl ssh\*> Ic "dd if=/mnt/miniroot.fs of=/dev/rsd0b bs=8k"
 .Pp
 Otherwise, you will need to use
 .Ic zcat
@@ -179,13 +179,24 @@ and then run the other program in the foreground with its output to
 The result looks like this:
 .Pp
 .Dl ssh\*> Ic "run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.gz"
+.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
 .Pp
 To load the miniroot using rsh to the server, you would use a
 pair of commands similar to the above. Here is another example:
 .Pp
 .Dl ssh\*> Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz"
+.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.fs.gz"
+.Pp
+Note that decompression on a sun2 is
+.Em extremely
+slow, be prepared to wait.  For this reason, expanding the miniroot
+image on the NFS server is highly recommended.
+.Pp
+Once the miniroot has been copied using one of the above methods,
+you reboot from that just installed miniroot. See the section
+entitled
+.Sx Booting the miniroot
+for details.
 .
 .Ss2 Installing from SunOS
 .
@@ -194,7 +205,7 @@ To install
 onto a machine already running
 .Tn SunOS ,
 you
-will need the miniroot image (miniroot.gz) and some means to
+will need the miniroot image (miniroot.fs.gz) and some means to
 decompress it.
 .Pp
 First, boot
@@ -219,17 +230,21 @@ Now copy the miniroot image onto your swap device (here
 .Pa /dev/rsd0b )
 with the command
 .Pp
-.Dl Ic "gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k"
+.Dl Ic "gzip -dc miniroot.fs.gz | dd of=/dev/rsd0b obs=32k"
 .Pp
 or if you have already decompressed the miniroot
 .Pp
-.Dl Ic "dd if=miniroot.gz of=/dev/rsd0b obs=32k"
+.Dl Ic "dd if=miniroot.fs of=/dev/rsd0b obs=32k"
 .Pp
-Finally, reboot the machine and instruct the ROM to boot from
+Finally, reboot the machine and instruct the PROM to boot from
 the swap device as described in the next section.
 .
 .Ss2 Booting the Miniroot
 .
+If the machine is not already at the PROM monitor, run the
+.Pa halt
+command.
+.Pp
 If the miniroot was installed on partition
 .Sq Li b
 of the disk with
