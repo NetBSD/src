@@ -1,4 +1,40 @@
-/*	$NetBSD: umass.c,v 1.6 1999/08/29 18:58:03 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.7 1999/08/29 19:58:55 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -117,6 +153,7 @@ typedef struct umass_softc {
 
 /* Bulk-Only specific request */
 #define	UR_RESET	0xff
+#define	UR_GET_MAX_LUN	0xfe
 
 /* Bulk-Only Mass Storage features */
 /* Command Block Wrapper */
@@ -158,6 +195,7 @@ usbd_status umass_usb_transfer __P((usbd_interface_handle iface,
 
 /* Bulk-Only related functions */
 usbd_status umass_bulk_reset	__P((umass_softc_t *sc));
+usbd_status umass_bulk_get_max_lun __P((umass_softc_t *sc, u_int8_t *maxlun));
 usbd_status umass_bulk_transfer	__P((umass_softc_t *sc, int lun,
 				void *cmd, int cmdlen,
 		    		void *data, int datalen,
@@ -200,8 +238,9 @@ USB_ATTACH(umass)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char devinfo[1024];
+	usbd_status err;
 	int i;
-	int err;
+	u_int8_t maxlun;
 
 	sc->sc_iface = uaa->iface;
 	sc->sc_bulkout_pipe = NULL;
@@ -241,6 +280,16 @@ USB_ATTACH(umass)
 		}
 	}
 
+	/*
+	 * Get the maximum LUN supported by the device.
+	 */
+	err = umass_bulk_get_max_lun(sc, &maxlun);
+	if (err != USBD_NORMAL_COMPLETION) {
+		printf("%s: unable to get Max Lun: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		USB_ATTACH_ERROR_RETURN;
+	}
+
 	/* Open the bulk-in and -out pipe */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout,
 				USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
@@ -269,7 +318,7 @@ USB_ATTACH(umass)
 	sc->sc_link.device = &umass_dev;
 	sc->sc_link.openings = 4;		/* XXX */
 	sc->sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE; /* XXX */
-	sc->sc_link.scsipi_scsi.max_lun = 0;	/* XXX */
+	sc->sc_link.scsipi_scsi.max_lun = maxlun;
 	sc->sc_link.type = BUS_SCSI;
 
 	if (config_found(&sc->sc_dev, &sc->sc_link, scsiprint) == NULL) {
@@ -359,8 +408,52 @@ umass_usb_transfer(usbd_interface_handle iface, usbd_pipe_handle pipe,
 	return(USBD_NORMAL_COMPLETION);
 }
 
+usbd_status
+umass_bulk_get_max_lun(umass_softc_t *sc, u_int8_t *maxlun)
+{
+	usbd_device_handle dev;
+	usb_device_request_t req;
+	usbd_status err;
+	usb_interface_descriptor_t *id;
 
+	DPRINTF(UDMASS_BULK, ("%s: Get Max Lun\n", USBDEVNAME(sc->sc_dev)));
 
+	usbd_interface2device_handle(sc->sc_iface, &dev);
+	id = usbd_get_interface_descriptor(sc->sc_iface);
+
+	/* The Get Max Lun command is a class-specific request. */
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UR_GET_MAX_LUN;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, id->bInterfaceNumber);
+	USETW(req.wLength, 1);
+
+	err = usbd_do_request(dev, &req, maxlun);
+	switch (err) {
+	case USBD_NORMAL_COMPLETION:
+		DPRINTF(UDMASS_BULK, ("%s: Max Lun %d\n",
+		    USBDEVNAME(sc->sc_dev), *maxlun));
+		break;
+
+	case USBD_STALLED:
+		/*
+		 * Device doesn't support Get Max Lun request.  Default
+		 * to `0' (one LUN).
+		 */
+		*maxlun = 0;
+		err = USBD_NORMAL_COMPLETION;
+		DPRINTF(UDMASS_BULK, ("%s: Get Max Lun not supported\n",
+		    USBDEVNAME(sc->sc_dev)));
+		break;
+
+	default:
+		printf("%s: Get Max Lun failed: %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		/* XXX Should we port_reset the device? */
+	}
+
+	return (err);
+}
 
 usbd_status
 umass_bulk_reset(umass_softc_t *sc)
