@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.10 1999/01/31 08:51:53 mrg Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.11 1999/07/02 06:00:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char const copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char const rcsid[] = "$NetBSD: fingerd.c,v 1.10 1999/01/31 08:51:53 mrg Exp $";
+static char const rcsid[] = "$NetBSD: fingerd.c,v 1.11 1999/07/02 06:00:06 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,11 @@ main(argc, argv)
 	register FILE *fp;
 	register int ch, ac = 2;
 	register char *lp = NULL /* XXX gcc */;
-	struct hostent *hp;
-	struct sockaddr_in sin;
+	struct sockaddr_storage ss;
 	int p[2], logging, no_forward, user_required, short_list, sval;
 #define	ENTRIES	50
 	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog, *s;
+	char hostbuf[MAXHOSTNAMELEN];
 
 	prog = _PATH_FINGER;
 	logging = no_forward = user_required = short_list = 0;
@@ -119,14 +119,12 @@ main(argc, argv)
 
 
 	if (logging) {
-		sval = sizeof(sin);
-		if (getpeername(0, (struct sockaddr *)&sin, &sval) < 0)
+		sval = sizeof(ss);
+		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0)
 			err("getpeername: %s", strerror(errno));
-		if ((hp = gethostbyaddr((char *)&sin.sin_addr.s_addr,
-		    sizeof(sin.sin_addr.s_addr), AF_INET)))
-			lp = hp->h_name;
-		else
-			lp = inet_ntoa(sin.sin_addr);
+		(void)getnameinfo((struct sockaddr *)&ss, ss.__ss_len,
+				hostbuf, sizeof(hostbuf), NULL, 0, 0);
+		lp = hostbuf;
 	}
 	
 	if (!fgets(line, sizeof(line), stdin)) {
