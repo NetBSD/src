@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.25 1996/02/29 19:06:57 jtc Exp $
+#	$NetBSD: sys.mk,v 1.26 1996/04/10 05:44:49 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -13,7 +13,7 @@ RANLIB?=	ranlib
 
 AS?=		as
 AFLAGS?=
-COMPILE.s?=	${AS} ${AFLAGS}
+COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
