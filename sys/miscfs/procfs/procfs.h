@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.7 1994/02/06 14:01:16 ws Exp $
+ *	$Id: procfs.h,v 1.8 1994/04/12 02:55:51 cgd Exp $
  */
 
 /*
@@ -128,6 +128,11 @@ extern int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp,
 extern int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 extern int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 extern int procfs_rw __P((struct vnode *, struct uio *, int, struct ucred *));
+
+/* functions to check whether or not files should be displayed */
+extern int procfs_validfile __P((struct proc *));
+extern int procfs_validfpregs __P((struct proc *));
+extern int procfs_validregs __P((struct proc *));
 
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02
