@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.13 1999/12/17 06:05:40 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.14 1999/12/18 05:00:56 tsubai Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -41,7 +41,7 @@ static int sc_scsi_cmd __P((struct scsipi_xfer *));
 static int sc_poll __P((struct sc_softc *, int, int));
 static void sc_sched __P((struct sc_softc *));
 void sc_done __P((struct sc_scb *));
-int sc_intr __P((struct sc_softc *));
+int sc_intr __P((void *));
 static void cxd1185_timeout __P((void *));
 
 extern void sc_send __P((struct sc_scb *, int, int));
@@ -49,7 +49,6 @@ extern int scintr __P((void));
 extern void scsi_hardreset __P((void));
 extern int sc_busy __P((struct sc_softc *, int));
 extern paddr_t kvtophys __P((vaddr_t));
-extern int dma_intr __P((void *));
 
 static int sc_disconnect = IDT_DISCON;
 
@@ -125,7 +124,7 @@ cxd1185_attach(parent, self, aux)
 	cxd1185_init(sc);
 	DELAY(100000);
 
-	hb_intr_establish(intlevel, IPL_BIO, dma_intr, sc);
+	hb_intr_establish(intlevel, IPL_BIO, sc_intr, sc);
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
@@ -402,10 +401,34 @@ sc_done(scb)
 }
 
 int
-sc_intr(sc)
-	struct sc_softc *sc;
+sc_intr(v)
+	void *v;
 {
-	return scintr();
+	/* struct sc_softc *sc = v; */
+	volatile u_char *gsp = (u_char *)DMAC_GSTAT;
+	u_int gstat = *gsp;
+	int mrqb, i;
+
+	if ((gstat & CH_INT(CH_SCSI)) == 0)
+		return 0;
+
+	/*
+	 * when DMA interrupt occurs there remain some untransferred data.
+	 * wait data transfer completion.
+	 */
+	mrqb = (gstat & CH_INT(CH_SCSI)) << 1;
+	if (gstat & mrqb) {
+		/*
+		 * XXX SHOULD USE DELAY()
+		 */
+		for (i = 0; i < 50; i++)
+			;
+		if (*gsp & mrqb)
+			printf("sc_intr: MRQ\n");
+	}
+	scintr();
+
+	return 1;
 }
 
 
