@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.123 2000/05/07 08:32:50 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.124 2000/05/08 16:42:36 joda Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,9 +139,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
+#define cdev_viaenv_init(c,n) cdev_lm78_init(c,n)
 
 #include "lm.h"
 cdev_decl(lm);
+
+#include "viaenv.h"
+cdev_decl(viaenv_);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -391,6 +395,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCA, ca),	/* 69: Compaq array */
 	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
 	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
+	cdev_viaenv_init(NVIAENV, viaenv_),/* 72: VIA VT82C686A hwmon */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
