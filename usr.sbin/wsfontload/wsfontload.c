@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.9 2004/01/05 23:23:39 jmmv Exp $ */
+/* $NetBSD: wsfontload.c,v 1.10 2005/03/16 01:34:11 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -51,14 +51,13 @@
 #define DEFBITORDER	WSDISPLAY_FONTORDER_L2R
 #define DEFBYTEORDER	WSDISPLAY_FONTORDER_L2R
 
-int main __P((int, char**));
-static void usage __P((void));
-static int getencoding __P((char *));
-static char *rgetencoding __P((int));
-static char *rgetfontorder __P((int));
+static void usage(void);
+static int getencoding(char *);
+static const char *rgetencoding(int);
+static const char *rgetfontorder(int);
 
 static struct {
-	char *name;
+	const char *name;
 	int val;
 } fontorders[] = {
 	{ "known", WSDISPLAY_FONTORDER_KNOWN}, 
@@ -67,7 +66,7 @@ static struct {
 };
 
 static struct {
-	char *name;
+	const char *name;
 	int val;
 } encodings[] = {
 	{"iso", WSDISPLAY_FONTENC_ISO},
@@ -78,7 +77,7 @@ static struct {
 };
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -91,9 +90,8 @@ usage()
 /*
  * map given fontorder to it's string representation
  */
-static char *
-rgetfontorder(fontorder)
-	int fontorder;
+static const char *
+rgetfontorder(int fontorder)
 {
 	int i;
 
@@ -107,9 +105,8 @@ rgetfontorder(fontorder)
 /* 
  * map given encoding to it's string representation
  */
-static char *
-rgetencoding(enc)
-	int enc;
+static const char *
+rgetencoding(int enc)
 {
 	int i;
 
@@ -124,8 +121,7 @@ rgetencoding(enc)
  * map given encoding string to integer value
  */
 static int
-getencoding(name)
-	char *name;
+getencoding(char *name)
 {
 	int i;
 
@@ -139,11 +135,9 @@ getencoding(name)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	char *wsdev;
+	const char *wsdev;
 	struct wsdisplay_font f;
 	int c, res, wsfd, ffd, verbose = 0;
 	size_t len;
