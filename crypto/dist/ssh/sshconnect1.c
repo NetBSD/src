@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.1.1.9 2001/05/15 15:02:38 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.1.1.10 2001/06/23 16:36:52 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.31 2001/04/17 08:14:01 markus Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.35 2001/06/23 15:12:21 itojun Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -56,7 +56,7 @@ extern char *__progname;
  * Checks if the user has an authentication agent, and if so, tries to
  * authenticate using the agent.
  */
-int
+static int
 try_agent_authentication(void)
 {
 	int type;
@@ -156,7 +156,7 @@ try_agent_authentication(void)
  * Computes the proper response to a RSA challenge, and sends the response to
  * the server.
  */
-void
+static void
 respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 {
 	u_char buf[32], response[16];
@@ -201,7 +201,7 @@ respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
  * Checks if the user has authentication file, and if so, tries to authenticate
  * the user using it.
  */
-int
+static int
 try_rsa_authentication(const char *authfile)
 {
 	BIGNUM *challenge;
@@ -322,7 +322,7 @@ try_rsa_authentication(const char *authfile)
  * Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
  * authentication and RSA host authentication.
  */
-int
+static int
 try_rhosts_rsa_authentication(const char *local_user, Key * host_key)
 {
 	int type;
@@ -333,7 +333,7 @@ try_rhosts_rsa_authentication(const char *local_user, Key * host_key)
 
 	/* Tell the server that we are willing to authenticate using this key. */
 	packet_start(SSH_CMSG_AUTH_RHOSTS_RSA);
-	packet_put_string(local_user, strlen(local_user));
+	packet_put_cstring(local_user);
 	packet_put_int(BN_num_bits(host_key->rsa->n));
 	packet_put_bignum(host_key->rsa->e);
 	packet_put_bignum(host_key->rsa->n);
@@ -380,7 +380,7 @@ try_rhosts_rsa_authentication(const char *local_user, Key * host_key)
 }
 
 #ifdef KRB4
-int
+static int
 try_kerberos_authentication(void)
 {
 	KTEXT_ST auth;		/* Kerberos data */
@@ -497,7 +497,7 @@ try_kerberos_authentication(void)
 #endif /* KRB4 */
 
 #ifdef AFS
-int
+static int
 send_kerberos_tgt(void)
 {
 	CREDENTIALS *creds;
@@ -528,7 +528,7 @@ send_kerberos_tgt(void)
 	xfree(creds);
 
 	packet_start(SSH_CMSG_HAVE_KERBEROS_TGT);
-	packet_put_string(buffer, strlen(buffer));
+	packet_put_cstring(buffer);
 	packet_send();
 	packet_write_wait();
 
@@ -542,7 +542,7 @@ send_kerberos_tgt(void)
 	return 1;
 }
 
-void
+static void
 send_afs_tokens(void)
 {
 	CREDENTIALS creds;
@@ -595,7 +595,7 @@ send_afs_tokens(void)
 		if (creds_to_radix(&creds, (u_char *) buffer, sizeof buffer) <= 0)
 			break;
 		packet_start(SSH_CMSG_HAVE_AFS_TOKEN);
-		packet_put_string(buffer, strlen(buffer));
+		packet_put_cstring(buffer);
 		packet_send();
 		packet_write_wait();
 
@@ -616,8 +616,8 @@ send_afs_tokens(void)
  * Tries to authenticate with any string-based challenge/response system.
  * Note that the client code is not tied to s/key or TIS.
  */
-int
-try_challenge_reponse_authentication(void)
+static int
+try_challenge_response_authentication(void)
 {
 	int type, i;
 	int payload_len;
@@ -678,7 +678,7 @@ try_challenge_reponse_authentication(void)
 /*
  * Tries to authenticate with plain passwd authentication.
  */
-int
+static int
 try_password_authentication(char *prompt)
 {
 	int type, i, payload_len;
@@ -785,8 +785,8 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 			       SSH_SMSG_PUBLIC_KEY);
 	k.type = KEY_RSA1;
 	k.rsa = host_key;
-	check_host_key(host, hostaddr, &k,
-	    options.user_hostfile, options.system_hostfile);
+	if (verify_host_key(host, hostaddr, &k) == -1)
+		fatal("host_key verification failed");
 
 	client_flags = SSH_PROTOFLAG_SCREEN_NUMBER | SSH_PROTOFLAG_HOST_IN_FWD_OPEN;
 
@@ -923,7 +923,7 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 
 	/* Send the name of the user to log in as on the server. */
 	packet_start(SSH_CMSG_USER);
-	packet_put_string(server_user, strlen(server_user));
+	packet_put_cstring(server_user);
 	packet_send();
 	packet_write_wait();
 
@@ -981,7 +981,7 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	    options.rhosts_authentication) {
 		debug("Trying rhosts authentication.");
 		packet_start(SSH_CMSG_AUTH_RHOSTS);
-		packet_put_string(local_user, strlen(local_user));
+		packet_put_cstring(local_user);
 		packet_send();
 		packet_write_wait();
 
@@ -1025,8 +1025,8 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	}
 	/* Try challenge response authentication if the server supports it. */
 	if ((supported_authentications & (1 << SSH_AUTH_TIS)) &&
-	    options.challenge_reponse_authentication && !options.batch_mode) {
-		if (try_challenge_reponse_authentication())
+	    options.challenge_response_authentication && !options.batch_mode) {
+		if (try_challenge_response_authentication())
 			return;
 	}
 	/* Try password authentication if the server supports it. */

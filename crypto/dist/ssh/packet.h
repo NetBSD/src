@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.h,v 1.1.1.6 2001/05/15 15:02:30 itojun Exp $	*/
+/*	$NetBSD: packet.h,v 1.1.1.7 2001/06/23 16:36:35 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: packet.h,v 1.22 2001/04/14 16:33:20 stevesk Exp $"); */
+/* RCSID("$OpenBSD: packet.h,v 1.23 2001/05/28 23:58:35 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -72,7 +72,7 @@ void    packet_set_interactive(int interactive);
 int     packet_is_interactive(void);
 
 /* Starts constructing a packet to send. */
-void    packet_start(int type);
+void    packet_start(u_char type);
 
 /* Appends a character to the packet data. */
 void    packet_put_char(int ch);
@@ -208,9 +208,6 @@ do { \
 /* remote host is connected via a socket/ipv4 */
 int	packet_connection_is_on_socket(void);
 int	packet_connection_is_ipv4(void);
-
-/* enable SSH2 packet format */
-void	packet_set_ssh2_format(void);
 
 /* returns remaining payload bytes */
 int	packet_remaining(void);

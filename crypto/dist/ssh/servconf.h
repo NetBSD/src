@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.1.1.6 2001/05/15 15:02:32 itojun Exp $	*/
+/*	$NetBSD: servconf.h,v 1.1.1.7 2001/06/23 16:36:39 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: servconf.h,v 1.41 2001/04/13 22:46:53 beck Exp $"); */
+/* RCSID("$OpenBSD: servconf.h,v 1.44 2001/06/23 02:34:31 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -93,7 +93,7 @@ typedef struct {
 	int     password_authentication;	/* If true, permit password
 						 * authentication. */
 	int     kbd_interactive_authentication;	/* If true, permit */
-	int     challenge_reponse_authentication;
+	int     challenge_response_authentication;
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     use_login;	/* If true, login(1) is used */
@@ -125,6 +125,9 @@ typedef struct {
 					 * for this many intervals, above
 					 * diconnect the session 
 					 */
+
+	char   *authorized_keys_file;	/* File containing public keys */
+	char   *authorized_keys_file2;
 
 }       ServerOptions;
 /*

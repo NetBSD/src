@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.1.1.6 2001/04/10 07:14:07 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.1.1.7 2001/06/23 16:36:44 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -30,7 +30,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.16 2001/04/05 10:42:52 markus Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.17 2001/06/23 15:12:20 itojun Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -52,7 +52,7 @@ RCSID("$OpenBSD: sftp-client.c,v 1.16 2001/04/05 10:42:52 markus Exp $");
 /* Message ID */
 static u_int msg_id = 1;
 
-void
+static void
 send_msg(int fd, Buffer *m)
 {
 	int mlen = buffer_len(m);
@@ -71,7 +71,7 @@ send_msg(int fd, Buffer *m)
 	buffer_free(&oqueue);
 }
 
-void
+static void
 get_msg(int fd, Buffer *m)
 {
 	u_int len, msg_len;
@@ -99,7 +99,7 @@ get_msg(int fd, Buffer *m)
 	}
 }
 
-void
+static void
 send_string_request(int fd, u_int id, u_int code, char *s,
     u_int len)
 {
@@ -114,7 +114,7 @@ send_string_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-void
+static void
 send_string_attrs_request(int fd, u_int id, u_int code, char *s,
     u_int len, Attrib *a)
 {
@@ -130,7 +130,7 @@ send_string_attrs_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-u_int
+static u_int
 get_status(int fd, int expected_id)
 {
 	Buffer msg;
@@ -155,7 +155,7 @@ get_status(int fd, int expected_id)
 	return(status);
 }
 
-char *
+static char *
 get_handle(int fd, u_int expected_id, u_int *len)
 {
 	Buffer msg;
@@ -184,7 +184,7 @@ get_handle(int fd, u_int expected_id, u_int *len)
 	return(handle);
 }
 
-Attrib *
+static Attrib *
 get_decode_stat(int fd, u_int expected_id, int quiet)
 {
 	Buffer msg;
@@ -284,7 +284,7 @@ do_close(int fd_in, int fd_out, char *handle, u_int handle_len)
 }
 
 
-int
+static int
 do_lsreaddir(int fd_in, int fd_out, char *path, int printflag,
     SFTP_DIRENT ***dir)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.1.1.7 2001/05/15 15:02:34 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.1.1.8 2001/06/23 16:36:44 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.36 2001/04/15 08:43:46 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.37 2001/06/23 15:12:20 itojun Exp $");
 
 #include <glob.h>
 
@@ -114,7 +114,7 @@ const struct CMD cmds[] = {
 	{ NULL,			-1}
 };
 
-void
+static void
 help(void)
 {
 	printf("Available commands:\n");
@@ -146,7 +146,7 @@ help(void)
 	printf("?                             Synonym for help\n");
 }
 
-void
+static void
 local_do_shell(const char *args)
 {
 	int status;
@@ -183,7 +183,7 @@ local_do_shell(const char *args)
 		error("Shell exited with status %d", WEXITSTATUS(status));
 }
 
-void
+static void
 local_do_ls(const char *args)
 {
 	if (!args || !*args)
@@ -199,7 +199,7 @@ local_do_ls(const char *args)
 	}
 }
 
-char *
+static char *
 path_append(char *p1, char *p2)
 {
 	char *ret;
@@ -213,7 +213,7 @@ path_append(char *p1, char *p2)
 	return(ret);
 }
 
-char *
+static char *
 make_absolute(char *p, char *pwd)
 {
 	char *abs;
@@ -227,7 +227,7 @@ make_absolute(char *p, char *pwd)
 		return(p);
 }
 
-int
+static int
 infer_path(const char *p, char **ifp)
 {
 	char *cp;
@@ -247,7 +247,7 @@ infer_path(const char *p, char **ifp)
 	return(0);
 }
 
-int
+static int
 parse_getput_flags(const char **cpp, int *pflag)
 {
 	const char *cp = *cpp;
@@ -270,7 +270,7 @@ parse_getput_flags(const char **cpp, int *pflag)
 	return(0);
 }
 
-int
+static int
 get_pathname(const char **cpp, char **path)
 {
 	const char *cp = *cpp, *end;
@@ -318,7 +318,7 @@ get_pathname(const char **cpp, char **path)
 	return (-1);
 }
 
-int
+static int
 is_dir(char *path)
 {
 	struct stat sb;
@@ -330,7 +330,7 @@ is_dir(char *path)
 	return(sb.st_mode & S_IFDIR);
 }
 
-int
+static int
 remote_is_dir(int in, int out, char *path)
 {
 	Attrib *a;
@@ -343,7 +343,7 @@ remote_is_dir(int in, int out, char *path)
 	return(a->perm & S_IFDIR);
 }
 
-int
+static int
 process_get(int in, int out, char *src, char *dst, char *pwd, int pflag)
 {
 	char *abs_src = NULL;
@@ -420,7 +420,7 @@ out:
 	return(err);
 }
 
-int
+static int
 process_put(int in, int out, char *src, char *dst, char *pwd, int pflag)
 {
 	char *tmp_dst = NULL;
@@ -500,7 +500,7 @@ out:
 	return(err);
 }
 
-int
+static int
 parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
     char **path1, char **path2)
 {
@@ -645,7 +645,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 	return(cmdnum);
 }
 
-int
+static int
 parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 {
 	char *path1, *path2, *tmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.8 2001/05/15 15:02:31 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.9 2001/06/23 16:36:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.77 2001/04/30 11:18:51 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.81 2001/06/23 02:34:30 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -163,9 +163,9 @@ static struct {
 	{ "host", oHost },
 	{ "escapechar", oEscapeChar },
 	{ "globalknownhostsfile", oGlobalKnownHostsFile },
-	{ "userknownhostsfile", oUserKnownHostsFile },
+	{ "userknownhostsfile", oUserKnownHostsFile },		/* obsolete */
 	{ "globalknownhostsfile2", oGlobalKnownHostsFile2 },
-	{ "userknownhostsfile2", oUserKnownHostsFile2 },
+	{ "userknownhostsfile2", oUserKnownHostsFile2 },	/* obsolete */
 	{ "connectionattempts", oConnectionAttempts },
 	{ "batchmode", oBatchMode },
 	{ "checkhostip", oCheckHostIP },
@@ -332,7 +332,7 @@ parse_flag:
 		goto parse_flag;
 
 	case oChallengeResponseAuthentication:
-		intptr = &options->challenge_reponse_authentication;
+		intptr = &options->challenge_response_authentication;
 		goto parse_flag;
 
 #ifdef KRB4
@@ -640,7 +640,7 @@ parse_int:
 		else if (strlen(arg) == 1)
 			value = (u_char) arg[0];
 		else if (strcmp(arg, "none") == 0)
-			value = -2;
+			value = SSH_ESCAPECHAR_NONE;
 		else {
 			fatal("%.200s line %d: Bad escape character.",
 			      filename, linenum);
@@ -722,7 +722,7 @@ initialize_options(Options * options)
 	options->rhosts_authentication = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
-	options->challenge_reponse_authentication = -1;
+	options->challenge_response_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
 #endif
@@ -782,10 +782,10 @@ fill_default_options(Options * options)
 		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
 		options->forward_x11 = 0;
-#ifdef XAUTH_PATH
+#ifdef _PATH_XAUTH
 	if (options->xauth_location == NULL)
-		options->xauth_location = XAUTH_PATH;
-#endif /* XAUTH_PATH */
+		options->xauth_location = _PATH_XAUTH;
+#endif
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->use_privileged_port == -1)
@@ -796,8 +796,8 @@ fill_default_options(Options * options)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
-	if (options->challenge_reponse_authentication == -1)
-		options->challenge_reponse_authentication = 0;
+	if (options->challenge_response_authentication == -1)
+		options->challenge_response_authentication = 0;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 1;

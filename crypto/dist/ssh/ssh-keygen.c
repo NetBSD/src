@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.1.1.7 2001/05/15 15:02:36 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.1.1.8 2001/06/23 16:36:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.60 2001/04/23 22:14:13 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.63 2001/06/23 15:12:20 itojun Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -76,7 +76,7 @@ extern char *__progname;
 
 char hostname[MAXHOSTNAMELEN];
 
-void
+static void
 ask_filename(struct passwd *pw, const char *prompt)
 {
 	char buf[1024];
@@ -109,15 +109,18 @@ ask_filename(struct passwd *pw, const char *prompt)
 	have_identity = 1;
 }
 
-Key *
-try_load_pem_key(char *filename)
+static Key *
+load_identity(char *filename)
 {
 	char *pass;
 	Key *prv;
 
 	prv = key_load_private(filename, "", NULL);
 	if (prv == NULL) {
-		pass = read_passphrase("Enter passphrase: ", 1);
+		if (identity_passphrase)
+			pass = xstrdup(identity_passphrase);
+		else
+			pass = read_passphrase("Enter passphrase: ", 1);
 		prv = key_load_private(filename, pass, NULL);
 		memset(pass, 0, strlen(pass));
 		xfree(pass);
@@ -130,7 +133,7 @@ try_load_pem_key(char *filename)
 #define SSH_COM_PRIVATE_BEGIN		"---- BEGIN SSH2 ENCRYPTED PRIVATE KEY ----"
 #define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
-void
+static void
 do_convert_to_ssh2(struct passwd *pw)
 {
 	Key *k;
@@ -145,7 +148,7 @@ do_convert_to_ssh2(struct passwd *pw)
 		exit(1);
 	}
 	if ((k = key_load_public(identity_file, NULL)) == NULL) {
-		if ((k = try_load_pem_key(identity_file)) == NULL) {
+		if ((k = load_identity(identity_file)) == NULL) {
 			fprintf(stderr, "load failed\n");
 			exit(1);
 		}
@@ -163,7 +166,7 @@ do_convert_to_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-void
+static void
 buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 {
 	int bits = buffer_get_int(b);
@@ -176,12 +179,13 @@ buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 	buffer_consume(b, bytes);
 }
 
-Key *
+static Key *
 do_convert_private_ssh2_from_blob(char *blob, int blen)
 {
 	Buffer b;
 	Key *key = NULL;
-	int ignore, magic, rlen, ktype;
+	int magic, rlen, ktype, i1, i2, i3, i4;
+	u_long e;
 	char *type, *cipher;
 
 	buffer_init(&b);
@@ -193,13 +197,13 @@ do_convert_private_ssh2_from_blob(char *blob, int blen)
 		buffer_free(&b);
 		return NULL;
 	}
-	ignore = buffer_get_int(&b);
+	i1 = buffer_get_int(&b);
 	type   = buffer_get_string(&b, NULL);
 	cipher = buffer_get_string(&b, NULL);
-	ignore = buffer_get_int(&b);
-	ignore = buffer_get_int(&b);
-	ignore = buffer_get_int(&b);
-
+	i2 = buffer_get_int(&b);
+	i3 = buffer_get_int(&b);
+	i4 = buffer_get_int(&b);
+	debug("ignore (%d %d %d %d)", i1,i2,i3,i4);
 	if (strcmp(cipher, "none") != 0) {
 		error("unsupported cipher %s", cipher);
 		xfree(cipher);
@@ -229,7 +233,17 @@ do_convert_private_ssh2_from_blob(char *blob, int blen)
 		buffer_get_bignum_bits(&b, key->dsa->priv_key);
 		break;
 	case KEY_RSA:
-		if (!BN_set_word(key->rsa->e, (u_long) buffer_get_char(&b))) {
+		e  = buffer_get_char(&b);
+		debug("e %lx", e);
+		if (e < 30) {
+			e <<= 8;
+			e += buffer_get_char(&b);
+			debug("e %lx", e);
+			e <<= 8;
+			e += buffer_get_char(&b);
+			debug("e %lx", e);
+		}
+		if (!BN_set_word(key->rsa->e, e)) {
 			buffer_free(&b);
 			key_free(key);
 			return NULL;
@@ -252,15 +266,15 @@ do_convert_private_ssh2_from_blob(char *blob, int blen)
 		u_int slen;
 		u_char *sig, data[10] = "abcde12345";
 
-		key_sign(key, &sig, &slen, data, sizeof data);
-		key_verify(key, sig, slen, data, sizeof data);
+		key_sign(key, &sig, &slen, data, sizeof(data));
+		key_verify(key, sig, slen, data, sizeof(data));
 		xfree(sig);
 	}
 #endif
 	return key;
 }
 
-void
+static void
 do_convert_from_ssh2(struct passwd *pw)
 {
 	Key *k;
@@ -333,7 +347,7 @@ do_convert_from_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-void
+static void
 do_print_public(struct passwd *pw)
 {
 	Key *prv;
@@ -345,7 +359,7 @@ do_print_public(struct passwd *pw)
 		perror(identity_file);
 		exit(1);
 	}
-	prv = try_load_pem_key(identity_file);
+	prv = load_identity(identity_file);
 	if (prv == NULL) {
 		fprintf(stderr, "load failed\n");
 		exit(1);
@@ -357,7 +371,7 @@ do_print_public(struct passwd *pw)
 	exit(0);
 }
 
-void
+static void
 do_fingerprint(struct passwd *pw)
 {
 	FILE *f;
@@ -454,7 +468,7 @@ do_fingerprint(struct passwd *pw)
  * Perform changing a passphrase.  The argument is the passwd structure
  * for the current user.
  */
-void
+static void
 do_change_passphrase(struct passwd *pw)
 {
 	char *comment;
@@ -530,7 +544,7 @@ do_change_passphrase(struct passwd *pw)
 /*
  * Change the comment of a private key file.
  */
-void
+static void
 do_change_comment(struct passwd *pw)
 {
 	char new_comment[1024], *comment, *passphrase;
@@ -623,7 +637,7 @@ do_change_comment(struct passwd *pw)
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	printf("Usage: %s [-ceilpqyB] [-t type] [-b bits] [-f file] [-C comment] "

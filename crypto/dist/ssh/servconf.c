@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.1.1.7 2001/05/15 15:02:32 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.1.1.8 2001/06/23 16:36:38 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.79 2001/05/03 21:43:01 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.84 2001/06/23 15:12:19 itojun Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -32,8 +32,8 @@ RCSID("$OpenBSD: servconf.c,v 1.79 2001/05/03 21:43:01 stevesk Exp $");
 #include "kex.h"
 #include "mac.h"
 
-void add_listen_addr(ServerOptions *options, char *addr, u_short port);
-void add_one_listen_addr(ServerOptions *options, char *addr, u_short port);
+static void add_listen_addr(ServerOptions *, char *, u_short);
+static void add_one_listen_addr(ServerOptions *, char *, u_short);
 
 /* AF_UNSPEC or AF_INET or AF_INET6 */
 extern int IPv4or6;
@@ -82,7 +82,7 @@ initialize_server_options(ServerOptions *options)
 #endif
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
-	options->challenge_reponse_authentication = -1;
+	options->challenge_response_authentication = -1;
 	options->permit_empty_passwd = -1;
 	options->use_login = -1;
 	options->allow_tcp_forwarding = -1;
@@ -102,6 +102,8 @@ initialize_server_options(ServerOptions *options)
 	options->reverse_mapping_check = -1;
 	options->client_alive_interval = -1;
 	options->client_alive_count_max = -1;
+	options->authorized_keys_file = NULL;
+	options->authorized_keys_file2 = NULL;
 }
 
 void
@@ -144,10 +146,10 @@ fill_default_server_options(ServerOptions *options)
 		options->x11_forwarding = 0;
 	if (options->x11_display_offset == -1)
 		options->x11_display_offset = 10;
-#ifdef XAUTH_PATH
+#ifdef _PATH_XAUTH
 	if (options->xauth_location == NULL)
-		options->xauth_location = XAUTH_PATH;
-#endif /* XAUTH_PATH */
+		options->xauth_location = _PATH_XAUTH;
+#endif
 	if (options->strict_modes == -1)
 		options->strict_modes = 1;
 	if (options->keepalives == -1)
@@ -186,8 +188,8 @@ fill_default_server_options(ServerOptions *options)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
 		options->kbd_interactive_authentication = 0;
-	if (options->challenge_reponse_authentication == -1)
-		options->challenge_reponse_authentication = 1;
+	if (options->challenge_response_authentication == -1)
+		options->challenge_response_authentication = 1;
 	if (options->permit_empty_passwd == -1)
 		options->permit_empty_passwd = 0;
 	if (options->use_login == -1)
@@ -208,6 +210,10 @@ fill_default_server_options(ServerOptions *options)
 		options->client_alive_interval = 0;  
 	if (options->client_alive_count_max == -1)
 		options->client_alive_count_max = 3;
+	if (options->authorized_keys_file == NULL)
+		options->authorized_keys_file = _PATH_SSH_USER_PERMITTED_KEYS;
+	if (options->authorized_keys_file2 == NULL)
+		options->authorized_keys_file2 = _PATH_SSH_USER_PERMITTED_KEYS2;
 }
 
 /* Keyword tokens. */
@@ -233,7 +239,7 @@ typedef enum {
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
 	sBanner, sReverseMappingCheck, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval, 
-	sClientAliveCountMax
+	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -299,6 +305,8 @@ static struct {
 	{ "reversemappingcheck", sReverseMappingCheck },
 	{ "clientaliveinterval", sClientAliveInterval },
 	{ "clientalivecountmax", sClientAliveCountMax },
+	{ "authorizedkeysfile", sAuthorizedKeysFile },
+	{ "authorizedkeysfile2", sAuthorizedKeysFile2 },
 	{ NULL, 0 }
 };
 
@@ -321,7 +329,7 @@ parse_token(const char *cp, const char *filename,
 	return sBadOption;
 }
 
-void
+static void
 add_listen_addr(ServerOptions *options, char *addr, u_short port)
 {
 	int i;
@@ -335,7 +343,7 @@ add_listen_addr(ServerOptions *options, char *addr, u_short port)
 		add_one_listen_addr(options, addr, port);
 }
 
-void
+static void
 add_one_listen_addr(ServerOptions *options, char *addr, u_short port)
 {
 	struct addrinfo hints, *ai, *aitop;
@@ -426,11 +434,21 @@ parse_int:
 
 		case sLoginGraceTime:
 			intptr = &options->login_grace_time;
-			goto parse_int;
+parse_time:
+			arg = strdelim(&cp);
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: missing time value.",
+				    filename, linenum);
+			if ((value = convtime(arg)) == -1)
+				fatal("%s line %d: invalid time value.",
+				    filename, linenum);
+			if (*intptr == -1)
+				*intptr = value;
+			break;
 
 		case sKeyRegenerationTime:
 			intptr = &options->key_regeneration_time;
-			goto parse_int;
+			goto parse_time;
 
 		case sListenAddress:
 			arg = strdelim(&cp);
@@ -600,7 +618,7 @@ parse_flag:
 			goto parse_flag;
 
 		case sChallengeResponseAuthentication:
-			intptr = &options->challenge_reponse_authentication;
+			intptr = &options->challenge_response_authentication;
 			goto parse_flag;
 
 		case sPrintMotd:
@@ -789,12 +807,27 @@ parse_flag:
 		case sBanner:
 			charptr = &options->banner;
 			goto parse_filename;
+		/*
+		 * These options can contain %X options expanded at
+		 * connect time, so that you can specify paths like:
+		 *
+		 * AuthorizedKeysFile	/etc/ssh_keys/%u
+		 */
+		case sAuthorizedKeysFile:
+		case sAuthorizedKeysFile2:
+			charptr = (opcode == sAuthorizedKeysFile ) ?
+			    &options->authorized_keys_file :
+			    &options->authorized_keys_file2;
+			goto parse_filename;
+
 		case sClientAliveInterval:
 			intptr = &options->client_alive_interval;
-			goto parse_int;
+			goto parse_time;
+
 		case sClientAliveCountMax:
 			intptr = &options->client_alive_count_max;
 			goto parse_int;
+
 		default:
 			fatal("%s line %d: Missing handler for opcode %s (%d)",
 			    filename, linenum, arg, opcode);
