@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.65 2001/01/17 15:07:07 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.66 2001/04/07 04:24:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -406,7 +406,7 @@ struct ifaddr {
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
-#define	IFA_ROUTE	RTF_UP		/* route installed */
+#define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
 
 /*
  * The prefix structure contains information about one prefix
@@ -711,8 +711,6 @@ struct ifnet loif[];
 #endif
 extern int if_index;
 
-void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
-void	ether_ifdetach __P((struct ifnet *));
 char	*ether_sprintf __P((const u_char *));
 
 void	if_alloc_sadl __P((struct ifnet *));
