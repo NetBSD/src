@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2000/01/10 03:53:21 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.19 2000/02/09 05:48:34 shin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 # ifndef INET
 #  include <netinet/in.h>
 # endif
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #ifdef NS
