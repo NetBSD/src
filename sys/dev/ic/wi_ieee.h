@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.8 2002/01/20 04:37:04 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.9 2002/01/21 11:28:18 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,6 +87,9 @@ struct wi_req {
 #define WI_RID_ZERO_CACHE	0x0300
 #define WI_RID_READ_CACHE	0x0400
 #endif
+#define	WI_RID_MONITOR_MODE	0x0500
+#define	WI_RID_SCAN_APS		0x0600
+#define	WI_RID_READ_APS		0x0700
 
 struct wi_80211_hdr {
 	u_int16_t		frame_ctl;
@@ -178,20 +181,6 @@ struct wi_counters {
 	u_int32_t		wi_rx_WEP_cant_decrypt;
 	u_int32_t		wi_rx_msg_in_msg_frags;
 	u_int32_t		wi_rx_msg_in_bad_msg_frags;
-};
-
-/*
- * These are all the LTV record types that we can read or write
- * from the WaveLAN. Not all of them are temendously useful, but I
- * list as many as I know about here for completeness.
- */
-#define WI_SCAN_RESULTS_MAXLEN	512
-struct wi_scan_results {
-	int			truncated;	/* incomplete data in result */
-	u_int			scanning;	/* in hz units */
-	struct timeval		lastscan;	/* time scan was completed */
-	u_int16_t		len;		/* number of words */
-	u_int16_t		scan_results[WI_SCAN_RESULTS_MAXLEN];
 };
 
 /*
@@ -338,11 +327,25 @@ struct wi_ltv_keys {
 /*
  * Scan Information
  */
-#define WI_RID_SCAN_REQ		0xFCE1
-#define WI_RID_JOIN_REQ		0xFCE2
+#define WI_RID_SCAN_REQ		0xFCE1 /* Scan request (STA only) */
+#define WI_RID_JOIN_REQ		0xFCE2 /* Join request (STA only) */
 #define	WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */
 #define	WI_RID_CHANNEL_REQ	0xFCE4 /* Channel Information Request (AP) */
 #define WI_RID_SCAN_RESULTS	0xFD88 /* Scan Results Table */
+
+struct wi_apinfo {
+	int			scanreason;	/* ScanReason */
+	char			bssid[6];	/* BSSID (mac address) */
+	int			channel;	/* Channel */
+	int			signal;		/* Signal level */
+	int			noise;		/* Average Noise Level*/
+	int			quality;	/* Quality */
+	int			namelen;	/* Length of SSID string */
+	char			name[32];	/* SSID string */
+	int			capinfo;	/* Capability info. */ 
+	int			interval;	/* BSS Beacon Interval */
+	int			rate;		/* Data Rate */
+};
 
 /*
  * Modem information
