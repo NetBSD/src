@@ -689,6 +689,7 @@
 ./usr/share/examples/emul/svr4/etc
 ./usr/share/examples/emul/ultrix
 ./usr/share/examples/emul/ultrix/etc
+./usr/share/examples/ftpd
 ./usr/share/examples/ipf
 ./usr/share/examples/supfiles
 ./usr/share/games
