@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.23 1994/10/09 15:02:12 mycroft Exp $
+ *	$Id: pmap.c,v 1.24 1994/10/18 06:11:15 cgd Exp $
  */
 
 /*
@@ -1658,8 +1658,7 @@ pmap_pvdump(pa)
 
 	printf("pa %x", pa);
 	for (pv = &pv_table[pmap_page_index(pa)]; pv; pv = pv->pv_next) {
-		printf(" -> pmap %x, va %x, flags %x",
-		       pv->pv_pmap, pv->pv_va, pv->pv_flags);
+		printf(" -> pmap %x, va %x", pv->pv_pmap, pv->pv_va);
 		pads(pv->pv_pmap);
 	}
 	printf(" ");
