@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/04/28 13:27:18 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1999/08/21 14:18:36 sommerfeld Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
@@ -11,6 +11,6 @@ LINKFLAGS=	-N -Ttext ${RELOC} -e start
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -o ${.TARGET} ${LINKFLAGS} ${OBJS} ${LIBSA} ${LIBKERN}
-	@size ${.TARGET}
+	@${SIZE} ${.TARGET}
 
 .include <bsd.prog.mk>
