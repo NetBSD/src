@@ -48,25 +48,25 @@ typedef struct fpreg fpregset_t;
 extern int arm_apcs_32;
 
 void
-supply_gregset (gregset_t *gregset)
+supply_gregset (gregset_t *gregsetp)
 {
   int regno;
   CORE_ADDR r_pc;
 
   /* Integer registers.  */
   for (regno = ARM_A1_REGNUM; regno < ARM_SP_REGNUM; regno++)
-    supply_register (regno, (char *) &gregset->r[regno]);
+    supply_register (regno, (char *) &gregsetp->r[regno]);
 
-  supply_register (ARM_SP_REGNUM, (char *) &gregset->r_sp);
-  supply_register (ARM_LR_REGNUM, (char *) &gregset->r_lr);
+  supply_register (ARM_SP_REGNUM, (char *) &gregsetp->r_sp);
+  supply_register (ARM_LR_REGNUM, (char *) &gregsetp->r_lr);
   /* This is ok: we're running native...  */
-  r_pc = ADDR_BITS_REMOVE (gregset->r_pc);
+  r_pc = ADDR_BITS_REMOVE (gregsetp->r_pc);
   supply_register (ARM_PC_REGNUM, (char *) &r_pc);
 
   if (arm_apcs_32)
-    supply_register (ARM_PS_REGNUM, (char *) &gregset->r_cpsr);
+    supply_register (ARM_PS_REGNUM, (char *) &gregsetp->r_cpsr);
   else
-    supply_register (ARM_PS_REGNUM, (char *) &gregset->r_pc);
+    supply_register (ARM_PS_REGNUM, (char *) &gregsetp->r_pc);
 }
 
 void
