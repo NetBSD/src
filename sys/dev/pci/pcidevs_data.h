@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.330 2001/06/11 06:36:51 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.331 2001/06/11 21:13:50 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.326 2001/06/11 06:36:23 tron Exp 
+ *	NetBSD: pcidevs,v 1.327 2001/06/11 21:12:29 thorpej Exp 
  */
 
 /*
@@ -3242,6 +3242,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LeadTek Research",
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_LEVELONE, PCI_PRODUCT_LEVELONE_LXT1001,
+	    0,
+	    "Level One",
+	    "LXT-1001 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_TX,
@@ -8893,6 +8899,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LEVELONE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Level One",
 	    NULL,
 	},
 	{
