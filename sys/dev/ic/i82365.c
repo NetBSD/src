@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.41 2000/02/04 08:42:07 chopps Exp $	*/
+/*	$NetBSD: i82365.c,v 1.42 2000/02/04 09:45:34 itojun Exp $	*/
 
 #define	PCICDEBUG
 
@@ -282,6 +282,14 @@ pcic_power (why, arg)
 				PCIC_CSC_INTR_FORMAT,
 				bitbuf, sizeof(bitbuf))));
 		}
+
+		/*
+		 * check for card insertion or removal during suspend period.
+		 * XXX: the code can't cope with card swap (remove then insert).
+		 * how can we detect such situation?
+		 */
+		if (why == PWR_RESUME)
+			(void)pcic_intr_socket(h);
 	}
 }
 
