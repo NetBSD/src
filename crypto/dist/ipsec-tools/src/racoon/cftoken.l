@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.2 2005/02/23 14:54:12 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.3 2005/02/24 20:52:47 manu Exp $	*/
 
-/* Id: cftoken.l,v 1.31 2005/02/11 06:59:01 manubsd Exp */
+/* Id: cftoken.l,v 1.31.2.1 2005/02/24 18:31:56 manubsd Exp */
 
 %{
 /*
@@ -154,6 +154,7 @@ hexstring	0x{hexdigit}+
 <S_PRIV>{bcl}		{ return(BOC); }
 <S_PRIV>user		{ YYD; return(USER); }
 <S_PRIV>group		{ YYD; return(GROUP); }
+<S_PRIV>chroot		{ YYD; return(CHROOT); }
 <S_PRIV>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* path */

@@ -1,3 +1,12 @@
+2005-02-24  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/privsep.c: safety check port numbers given by the
+	  unprivilegied instance.
+	* src/libipsec/libpfkey.h: prefer __inline to inline
+	* src/racoon/racoonctl.8: display fixes in racoonctl(8)
+	* src/racoon/{cfparse.y|cftoken.l|localconf.c|localconf.h|privsep.c}
+	  src/racoon/racoon.conf.5: Add chroot capability
+	
 2005-02-23  Emmanuel Dreyfus <manu@netbsd.org>
 
         * configure.ac, src/racoon/{Makefile.am|crypto_openssl.c}: optionnal
