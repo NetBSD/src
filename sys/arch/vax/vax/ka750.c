@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.9 1996/02/02 18:08:56 mycroft Exp $	*/
+/*	$NetBSD: ka750.c,v 1.10 1996/02/17 18:48:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -47,6 +47,7 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
+#include <machine/scb.h>
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
 
@@ -58,7 +59,7 @@ ka750_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
+	extern	char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
@@ -69,6 +70,9 @@ ka750_conf(parent, self, aux)
 		mtpr(0x8000, PR_ACCS);
 	} else
 		printf("no FPA\n");
+
+	/* Call ctuattach() here so it can setup its vectors. */
+	ctuattach();
 }
 
 /*
