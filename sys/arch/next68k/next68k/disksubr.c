@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 2000/11/20 08:24:19 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 2002/02/19 17:09:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -51,7 +51,7 @@
 #define	b_cylinder	b_resid
 
 /*
- * Attempt to read a disk label from a device using the indicated stategy
+ * Attempt to read a disk label from a device using the indicated strategy
  * routine.  The label must be partly set up before this: secpercyl and
  * anything required in the strategy routine (e.g., sector size) must be
  * filled in before calling us.  Returns null on success and an error

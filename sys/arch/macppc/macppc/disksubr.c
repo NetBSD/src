@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2002/02/19 17:09:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -490,7 +490,7 @@ done:
 }
 
 /*
- * Attempt to read a disk label from a device using the indicated stategy
+ * Attempt to read a disk label from a device using the indicated strategy
  * routine.  The label must be partly set up before this: secpercyl and
  * anything required in the strategy routine (e.g., sector size) must be
  * filled in before calling us.  Returns null on success and an error

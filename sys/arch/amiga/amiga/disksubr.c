@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.39 2002/01/28 09:56:46 aymeric Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40 2002/02/19 17:09:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2002/01/28 09:56:46 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40 2002/02/19 17:09:42 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ struct rdbmap *getrdbmap(dev_t, void (*)(struct buf *), struct disklabel *,
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
