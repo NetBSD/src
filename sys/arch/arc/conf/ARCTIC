@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.25 2003/10/08 11:04:56 bouyer Exp $
+#	$NetBSD: ARCTIC,v 1.26 2003/10/21 16:28:20 tsutsui Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -167,8 +167,38 @@ wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 wdc1		at isa? port 0x170 irq 15 flags 0x00
 #wdc*		at isapnp?
 
-# ATA bus
-atabus* 	at wdc? channel ?
+# ISA parallel printer interfaces
+lpt0		at isa? port 0x378 irq 7
+
+# ISA network interfaces
+ec0		at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
+ep0		at isa? port ? irq ?		# 3C509 ethernet cards
+ne0		at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
+ne1		at isa? port 0x300 irq 10
+#ne*		at isapnp?			# NE[12]000 PnP ethernet
+we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1		at isa? port 0x300 iomem 0xcc000 irq 10
+
+#aha0		at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
+#aha1		at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
+btl0		at isa? port 0x330 irq ? drq ?
+#wds0		at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 SCSI
+#wds1		at isa? port 0x358 irq 11 drq 5
+
+# SCSI bus support
+scsibus*	at scsi?
+
+#### SCSI bus devices
+
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?
+cd*		at scsibus? target ? lun ?
+ch*		at scsibus? target ? lun ?
+ss*		at scsibus? target ? lun ?
+uk*		at scsibus? target ? lun ?
+
+# ATA (IDE) bus support
+atabus* 	at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -184,37 +214,7 @@ atabus* 	at wdc? channel ?
 wd*		at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus*	at atabus?
-
-# ISA parallel printer interfaces
-lpt0		at isa? port 0x378 irq 7
-
-# ISA network interfaces
-ec0		at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-ep0		at isa? port ? irq ?		# 3C509 ethernet cards
-ne0		at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
-ne1		at isa? port 0x300 irq 10
-#ne*		at isapnp?			# NE[12]000 PnP ethernet
-we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
-we1		at isa? port 0x300 iomem 0xcc000 irq 10
-
-#aha0		at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
-#aha1		at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
-#scsibus*	at aha?
-btl0		at isa? port 0x330 irq ? drq ?
-scsibus*	at btl?
-#wds0		at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 SCSI
-#wds1		at isa? port 0x358 irq 11 drq 5
-#scsibus*	at wds?
-
-#### SCSI bus devices
-
-sd*		at scsibus? target ? lun ?
-st*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-ch*		at scsibus? target ? lun ?
-ss*		at scsibus? target ? lun ?
-uk*		at scsibus? target ? lun ?
+atapibus*	at atapi?
 
 #### ATAPI bus devices
 
