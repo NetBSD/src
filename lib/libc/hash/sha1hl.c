@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.6 2000/07/05 11:35:36 ad Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.7 2002/03/31 12:58:55 bjh21 Exp $	*/
 
 /* sha1hl.c
  * ----------------------------------------------------------------------------
@@ -23,8 +23,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_SHA1_H
+
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.6 2000/07/05 11:35:36 ad Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.7 2002/03/31 12:58:55 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
@@ -100,3 +106,5 @@ SHA1Data (data, len, buf)
     SHA1Update(&ctx, data, len);
     return(SHA1End(&ctx, buf));
 }
+
+#endif /* HAVE_SHA1_H */
