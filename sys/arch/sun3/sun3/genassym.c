@@ -1,7 +1,7 @@
-/*	$NetBSD: genassym.c,v 1.25 1995/02/11 21:08:42 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.26 1995/03/28 04:30:45 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
  */
 
 #define KERNEL
+#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/types.h>
