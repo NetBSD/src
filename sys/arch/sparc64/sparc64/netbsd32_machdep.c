@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.30 2003/02/09 19:44:20 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.31 2003/04/16 08:56:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -1044,7 +1044,7 @@ int
 netbsd32_md_ioctl(fp, com, data32, p)
 	struct file *fp;
 	netbsd32_u_long com;
-	caddr_t data32;
+	void *data32;
 	struct proc *p;
 {
 	u_int size;
