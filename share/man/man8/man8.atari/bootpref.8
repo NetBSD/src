@@ -1,4 +1,4 @@
-.\" $NetBSD: bootpref.8,v 1.4 1999/11/24 13:36:14 jdc Exp $
+.\" $NetBSD: bootpref.8,v 1.4.4.1 2001/03/11 22:10:40 he Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,8 @@
 .Op -v
 .Op -o os
 .Op -d delay
-.Op -k kbd
 .Op -l lang
+.Op -k kbd
 .Op -s id
 .Op -f fmt
 .Op -1
@@ -91,34 +91,34 @@ seconds, where
 .Ar delay
 is a value between 0 and 255
 .sp
-.It Fl k Ar english
+.It Fl l Ar english
 set the language to English
-.It Fl k Ar german
+.It Fl l Ar german
 set the language to German
-.It Fl k Ar french
+.It Fl l Ar french
 set the language to French
-.It Fl k Ar spanish
+.It Fl l Ar spanish
 set the language to Spanish
-.It Fl k Ar italian
+.It Fl l Ar italian
 set the language to Italian
 .sp
-.It Fl l Ar american
+.It Fl k Ar american
 set the keyboard layout to American
-.It Fl l Ar german
+.It Fl k Ar german
 set the keyboard layout to German
-.It Fl l Ar french
+.It Fl k Ar french
 set the keyboard layout to French
-.It Fl l Ar british
+.It Fl k Ar british
 set the keyboard layout to British
-.It Fl l Ar spanish
+.It Fl k Ar spanish
 set the keyboard layout to Spanish
-.It Fl l Ar italian
+.It Fl k Ar italian
 set the keyboard layout to Italian
-.It Fl l Ar sw f
-.It Fl l Ar swiss french
+.It Fl k Ar sw f
+.It Fl k Ar swiss french
 set the keyboard layout to Swiss (French)
-.It Fl l Ar sw g
-.It Fl l Ar swiss german
+.It Fl k Ar sw g
+.It Fl k Ar swiss german
 set the keyboard layout to Swiss (German)
 .sp
 .It Fl s Ar id
