@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.55 2000/02/10 09:45:00 soren Exp $
+$NetBSD: acronyms,v 1.56 2000/02/14 05:16:20 deberg Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -29,6 +29,7 @@ DWIM	do what I mean
 EG	evil grin
 EMSG	email message
 ETLA	extended three letter acronym
+FIIK	fuck if I know
 FSDO	for some definition of
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
