@@ -1,7 +1,7 @@
-/*	$NetBSD: ip6.c,v 1.4 2000/06/13 13:37:13 ad Exp $	*/
+/*	$NetBSD: ip6.c,v 1.5 2000/07/05 11:03:22 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.4 2000/06/13 13:37:13 ad Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.5 2000/07/05 11:03:22 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,13 +54,18 @@ __RCSID("$NetBSD: ip6.c,v 1.4 2000/06/13 13:37:13 ad Exp $");
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str);
 #define SHOW(stat, row, col) \
-    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.##stat)
 
-struct mystat {
-	struct ip6stat i;
+enum update {
+	UPDATE_TIME,
+	UPDATE_BOOT,
+	UPDATE_RUN,
 };
 
-static struct mystat curstat;
+static enum update update = UPDATE_TIME;
+static struct ip6stat curstat;
+static struct ip6stat newstat;
+static struct ip6stat oldstat;
 
 static struct nlist namelist[] = {
 	{ "_ip6stat" },
@@ -75,8 +80,7 @@ openip6(void)
 }
 
 void
-closeip6(w)
-	WINDOW *w;
+closeip6(WINDOW *w)
 {
 
 	if (w != NULL) {
@@ -143,52 +147,52 @@ showip6(void)
 
 	m2m = 0;
 	for (i = 0;
-	     i < sizeof(curstat.i.ip6s_m2m)/sizeof(curstat.i.ip6s_m2m[0]);
+	     i < sizeof(curstat.ip6s_m2m)/sizeof(curstat.ip6s_m2m[0]);
 	     i++) {
-		m2m += curstat.i.ip6s_m2m[i];
+		m2m += curstat.ip6s_m2m[i];
 	}
 #endif
 
-	SHOW(i.ip6s_total, 0, 0);
-	SHOW(i.ip6s_toosmall, 1, 0);
-	SHOW(i.ip6s_tooshort, 2, 0);
-	SHOW(i.ip6s_badoptions, 3, 0);
-	SHOW(i.ip6s_badvers, 4, 0);
-	SHOW(i.ip6s_exthdrtoolong, 5, 0);
-	SHOW(i.ip6s_delivered, 6, 0);
-	SHOW(i.ip6s_notmember, 7, 0);
-	SHOW(i.ip6s_toomanyhdr, 8, 0);
-	SHOW(i.ip6s_nogif, 9, 0);
+	SHOW(ip6s_total, 0, 0);
+	SHOW(ip6s_toosmall, 1, 0);
+	SHOW(ip6s_tooshort, 2, 0);
+	SHOW(ip6s_badoptions, 3, 0);
+	SHOW(ip6s_badvers, 4, 0);
+	SHOW(ip6s_exthdrtoolong, 5, 0);
+	SHOW(ip6s_delivered, 6, 0);
+	SHOW(ip6s_notmember, 7, 0);
+	SHOW(ip6s_toomanyhdr, 8, 0);
+	SHOW(ip6s_nogif, 9, 0);
 
-	SHOW(i.ip6s_fragments, 11, 0);
-	SHOW(i.ip6s_fragdropped, 12, 0);
-	SHOW(i.ip6s_fragtimeout, 13, 0);
-	SHOW(i.ip6s_fragoverflow, 14, 0);
-	SHOW(i.ip6s_reassembled, 15, 0);
+	SHOW(ip6s_fragments, 11, 0);
+	SHOW(ip6s_fragdropped, 12, 0);
+	SHOW(ip6s_fragtimeout, 13, 0);
+	SHOW(ip6s_fragoverflow, 14, 0);
+	SHOW(ip6s_reassembled, 15, 0);
 
 #if 0
-	SHOW(i.ip6s_m1, 17, 0);
-	SHOW(i.ip6s_mext1, 18, 0);
-	SHOW(i.ip6s_mext2m, 19, 0);
+	SHOW(ip6s_m1, 17, 0);
+	SHOW(ip6s_mext1, 18, 0);
+	SHOW(ip6s_mext2m, 19, 0);
 	mvwprintw(wnd, 20, 0, "%9llu", (unsigned long long)m2m);
 #endif
 
-	SHOW(i.ip6s_forward, 0, 35);
-	SHOW(i.ip6s_cantforward, 1, 35);
-	SHOW(i.ip6s_redirectsent, 2, 35);
+	SHOW(ip6s_forward, 0, 35);
+	SHOW(ip6s_cantforward, 1, 35);
+	SHOW(ip6s_redirectsent, 2, 35);
 
-	SHOW(i.ip6s_localout, 4, 35);
-	SHOW(i.ip6s_rawout, 5, 35);
-	SHOW(i.ip6s_odropped, 6, 35);
-	SHOW(i.ip6s_noroute, 7, 35);
-	SHOW(i.ip6s_fragmented, 8, 35);
-	SHOW(i.ip6s_ofragments, 9, 35);
-	SHOW(i.ip6s_cantfrag, 10, 35);
+	SHOW(ip6s_localout, 4, 35);
+	SHOW(ip6s_rawout, 5, 35);
+	SHOW(ip6s_odropped, 6, 35);
+	SHOW(ip6s_noroute, 7, 35);
+	SHOW(ip6s_fragmented, 8, 35);
+	SHOW(ip6s_ofragments, 9, 35);
+	SHOW(ip6s_cantfrag, 10, 35);
 
-	SHOW(i.ip6s_badscope, 12, 35);
-	SHOW(i.ip6s_pulldown, 13, 35);
-	SHOW(i.ip6s_pulldown_alloc, 14, 35);
-	SHOW(i.ip6s_pulldown_copy, 15, 35);
+	SHOW(ip6s_badscope, 12, 35);
+	SHOW(ip6s_pulldown, 13, 35);
+	SHOW(ip6s_pulldown_alloc, 14, 35);
+	SHOW(ip6s_pulldown_copy, 15, 35);
 }
 
 int
@@ -213,5 +217,75 @@ void
 fetchip6(void)
 {
 
-	KREAD((void *)namelist[0].n_value, &curstat.i, sizeof(curstat.i));
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_total);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_toosmall);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_tooshort);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_badoptions);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_badvers);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_exthdrtoolong);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_delivered);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_notmember);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_toomanyhdr);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_nogif);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_fragments);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_fragdropped);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_fragtimeout);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_fragoverflow);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_reassembled);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_m1);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_mext1);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_mext2m);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_forward);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_cantforward);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_redirectsent);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_localout);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_rawout);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_odropped);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_noroute);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_fragmented);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_ofragments);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_cantfrag);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_badscope);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown_alloc);
+	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown_copy);
+
+	if (update == UPDATE_TIME)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+}
+
+void
+ip6_boot(char *args)
+{
+
+	memset(&oldstat, 0, sizeof(oldstat));
+	update = UPDATE_BOOT;
+}
+
+void
+ip6_run(char *args)
+{
+
+	if (update != UPDATE_RUN) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_RUN;
+	}
+}
+
+void
+ip6_time(char *args)
+{
+
+	if (update != UPDATE_TIME) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_TIME;
+	}
+}
+
+void
+ip6_zero(char *args)
+{
+
+	if (update == UPDATE_RUN)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
 }

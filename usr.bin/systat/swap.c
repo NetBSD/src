@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.12 2000/06/04 18:29:14 mycroft Exp $	*/
+/*	$NetBSD: swap.c,v 1.13 2000/07/05 11:03:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.12 2000/06/04 18:29:14 mycroft Exp $");
+__RCSID("$NetBSD: swap.c,v 1.13 2000/07/05 11:03:23 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: swap.c,v 1.12 2000/06/04 18:29:14 mycroft Exp $");
 #include "systat.h"
 #include "extern.h"
 
-void showspace __P((char *header, int hlen, long blocksize));
+void showspace(char *header, int hlen, long blocksize);
 
 static	long blocksize;
 static	int hlen, nswap, rnswap;
@@ -66,15 +66,14 @@ static	int first = 1;
 static	struct swapent *swap_devices;
 
 WINDOW *
-openswap()
+openswap(void)
 {
 
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closeswap(w)
-	WINDOW *w;
+closeswap(WINDOW *w)
 {
 
 	if (w == NULL)
@@ -86,14 +85,14 @@ closeswap(w)
 
 /* do nothing */
 int
-initswap()
+initswap(void)
 {
 
 	return (1);
 }
 
 void
-fetchswap()
+fetchswap(void)
 {
 	int	update_label = 0;
 
@@ -122,7 +121,7 @@ fetchswap()
 }
 
 void
-labelswap()
+labelswap(void)
 {
 	char	*header;
 	int	row;
@@ -143,7 +142,8 @@ labelswap()
 }
 
 void
-showswap() {
+showswap(void)
+{
 	int	col, div, i, avail, used, xsize, free;
 	struct	swapent *sep;
 	char	*p;
