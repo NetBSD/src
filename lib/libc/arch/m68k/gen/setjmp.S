@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: setjmp.S,v 1.1 1993/11/25 23:37:19 paulus Exp $"
+	.asciz "$Id: setjmp.S,v 1.2 1994/05/10 08:15:57 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,14 +55,15 @@
 #include "DEFS.h"
 
 ENTRY(setjmp)
-	subql	#8,sp		/* space for sigstack args/rvals */
+	subl	#12,sp		/* space for sigstack args/rvals */
 	clrl	sp@		/* don't change it... */
 	movl	sp,sp@(4)	/* ...but return the current val */
-	jbsr	_sigstack	/* note: onstack returned in sp@(4) */
+	jbsr	_sigaltstack	/* note: flags returned in sp@(8) */
 	clrl	sp@		/* don't change mask, just return */
 	jbsr	_sigblock	/*   old value */
-	movl	sp@(4),d1	/* old onstack value */
-	addql	#8,sp
+	movl	sp@(8),d1	/* old flags value */
+	andl	#1,d1		/* extract onstack flag */
+	addl	#12,sp
 	movl	sp@(4),a0	/* save area pointer */
 	movl	d1,a0@+		/* save old onstack value */
 	movl	d0,a0@+		/* save old signal mask */
