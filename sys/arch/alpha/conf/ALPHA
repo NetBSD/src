@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.127.2.1 2000/07/12 21:04:17 thorpej Exp $
+# $NetBSD: ALPHA,v 1.127.2.2 2000/08/11 18:23:18 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.127.2.1 $"
+ident		"ALPHA-$Revision: 1.127.2.2 $"
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -345,6 +345,8 @@ bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+le*	at	depca?
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
