@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.2 2004/07/21 20:57:30 manu Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.3 2004/07/21 23:43:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.2 2004/07/21 20:57:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.3 2004/07/21 23:43:25 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -196,7 +196,8 @@ darwin_ifaddrs(af, dst, sizep)
 				struct sockaddr_storage sa;
 				size_t len = ifa->ifa_netmask->sa_len;
 
-				native_to_darwin_socket(ifa->ifa_netmask, &sa);
+				native_to_darwin_sockaddr
+				    (ifa->ifa_netmask, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout netmask 0x%x@%p\n", len, dst);
 #endif
@@ -210,7 +211,7 @@ darwin_ifaddrs(af, dst, sizep)
 				struct sockaddr_storage sa;
 				size_t len = ifa->ifa_addr->sa_len;
 
-				native_to_darwin_socket(ifa->ifa_addr, &sa);
+				native_to_darwin_sockaddr(ifa->ifa_addr, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout ifa 0x%x@%p\n", len, dst);
 #endif
@@ -224,7 +225,8 @@ darwin_ifaddrs(af, dst, sizep)
 				struct sockaddr_storage sa;
 				size_t len = ifa->ifa_dstaddr->sa_len;
 
-				native_to_darwin_socket(ifa->ifa_dstaddr, &sa);
+				native_to_darwin_sockaddr
+				    (ifa->ifa_dstaddr, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout dst 0x%x@%p\n", len, dst);
 #endif
@@ -238,8 +240,8 @@ darwin_ifaddrs(af, dst, sizep)
 				struct sockaddr_storage sa;
 				size_t len = ifa->ifa_broadaddr->sa_len;
 
-				native_to_darwin_socket(ifa->ifa_broadaddr, 
-				    &sa);
+				native_to_darwin_sockaddr
+				    (ifa->ifa_broadaddr, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout broad 0x%x@%p\n", len, dst);
 #endif

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2004/07/07 22:03:38 christos Exp $
+	$NetBSD: syscalls.master,v 1.24 2004/07/21 23:43:25 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -110,15 +110,15 @@
 			    int flags); }
 28	NOARGS		{ ssize_t sys_sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-29	NOARGS		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
-			    int flags, struct sockaddr *from, \
+29	STD		{ ssize_t darwin_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, struct sockaddr *from, \
 			    unsigned int *fromlenaddr); }
-30	NOARGS		{ int sys_accept(int s, struct sockaddr *name, \
+30	STD		{ int darwin_sys_accept(int s, struct sockaddr *name, \
 			    unsigned int *anamelen); }
-31	NOARGS		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
-			    unsigned int *alen); }
-32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
-			    unsigned int *alen); }
+31	STD		{ int darwin_sys_getpeername(int fdes, \
+			    struct sockaddr *asa, unsigned int *alen); }
+32	STD		{ int darwin_sys_getsockname(int fdes, \
+			    struct sockaddr *asa, unsigned int *alen); }
 33	NODEF		{ int bsd_sys_access(const char *path, \
 			    int flags); }
 34	NODEF		{ int bsd_sys_chflags(const char *path, \
@@ -220,8 +220,10 @@
 94	UNIMPL
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
-98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
+97	STD		{ int darwin_sys_socket(int domain, \
+			    int type, int protocol); }
+98	STD		{ int darwin_sys_connect(int s, \
+			    const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	NOARGS    	{ int compat_43_sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
@@ -232,7 +234,8 @@
 			    int flags); } orecv
 103	STD	    	{ int darwin_sys_sigreturn_x2(struct \
 			    darwin_ucontext *uctx); }
-104	NODEF		{ int bsd_sys_bind(int s, const struct sockaddr *name, \
+104	STD		{ int darwin_sys_bind(int s, \
+			     const struct sockaddr *name, \
 			    unsigned int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, unsigned int valsize); }
@@ -280,7 +283,7 @@
 131	NOARGS		{ int sys_flock(int fd, int how); }
 132	NODEF		{ int bsd_sys_mkfifo(const char *path, \
 			    mode_t mode); }
-133	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
+133	STD		{ ssize_t darwin_sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }

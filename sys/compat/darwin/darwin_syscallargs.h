@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.39 2004/07/07 22:04:27 christos Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.40 2004/07/21 23:43:25 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -96,6 +96,33 @@ struct darwin_sys_ptrace_args {
 	syscallarg(int) data;
 };
 
+struct darwin_sys_recvfrom_args {
+	syscallarg(int) s;
+	syscallarg(void *) buf;
+	syscallarg(size_t) len;
+	syscallarg(int) flags;
+	syscallarg(struct sockaddr *) from;
+	syscallarg(unsigned int *) fromlenaddr;
+};
+
+struct darwin_sys_accept_args {
+	syscallarg(int) s;
+	syscallarg(struct sockaddr *) name;
+	syscallarg(unsigned int *) anamelen;
+};
+
+struct darwin_sys_getpeername_args {
+	syscallarg(int) fdes;
+	syscallarg(struct sockaddr *) asa;
+	syscallarg(unsigned int *) alen;
+};
+
+struct darwin_sys_getsockname_args {
+	syscallarg(int) fdes;
+	syscallarg(struct sockaddr *) asa;
+	syscallarg(unsigned int *) alen;
+};
+
 struct bsd_sys_access_args {
 	syscallarg(const char *) path;
 	syscallarg(int) flags;
@@ -173,11 +200,23 @@ struct bsd_compat_12_sys_swapon_args {
 	syscallarg(const char *) name;
 };
 
+struct darwin_sys_socket_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+};
+
+struct darwin_sys_connect_args {
+	syscallarg(int) s;
+	syscallarg(const struct sockaddr *) name;
+	syscallarg(unsigned int) namelen;
+};
+
 struct darwin_sys_sigreturn_x2_args {
 	syscallarg(struct darwin_ucontext *) uctx;
 };
 
-struct bsd_sys_bind_args {
+struct darwin_sys_bind_args {
 	syscallarg(int) s;
 	syscallarg(const struct sockaddr *) name;
 	syscallarg(unsigned int) namelen;
@@ -196,6 +235,15 @@ struct bsd_compat_43_sys_truncate_args {
 struct bsd_sys_mkfifo_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
+};
+
+struct darwin_sys_sendto_args {
+	syscallarg(int) s;
+	syscallarg(const void *) buf;
+	syscallarg(size_t) len;
+	syscallarg(int) flags;
+	syscallarg(const struct sockaddr *) to;
+	syscallarg(unsigned int) tolen;
 };
 
 struct bsd_sys_mkdir_args {
@@ -378,13 +426,13 @@ int	sys_recvmsg(struct lwp *, void *, register_t *);
 
 int	sys_sendmsg(struct lwp *, void *, register_t *);
 
-int	sys_recvfrom(struct lwp *, void *, register_t *);
+int	darwin_sys_recvfrom(struct lwp *, void *, register_t *);
 
-int	sys_accept(struct lwp *, void *, register_t *);
+int	darwin_sys_accept(struct lwp *, void *, register_t *);
 
-int	sys_getpeername(struct lwp *, void *, register_t *);
+int	darwin_sys_getpeername(struct lwp *, void *, register_t *);
 
-int	sys_getsockname(struct lwp *, void *, register_t *);
+int	darwin_sys_getsockname(struct lwp *, void *, register_t *);
 
 int	bsd_sys_access(struct lwp *, void *, register_t *);
 
@@ -508,9 +556,9 @@ int	sys_fsync(struct lwp *, void *, register_t *);
 
 int	sys_setpriority(struct lwp *, void *, register_t *);
 
-int	sys_socket(struct lwp *, void *, register_t *);
+int	darwin_sys_socket(struct lwp *, void *, register_t *);
 
-int	sys_connect(struct lwp *, void *, register_t *);
+int	darwin_sys_connect(struct lwp *, void *, register_t *);
 
 int	compat_43_sys_accept(struct lwp *, void *, register_t *);
 
@@ -522,7 +570,7 @@ int	compat_43_sys_recv(struct lwp *, void *, register_t *);
 
 int	darwin_sys_sigreturn_x2(struct lwp *, void *, register_t *);
 
-int	bsd_sys_bind(struct lwp *, void *, register_t *);
+int	darwin_sys_bind(struct lwp *, void *, register_t *);
 
 int	sys_setsockopt(struct lwp *, void *, register_t *);
 
@@ -574,7 +622,7 @@ int	sys_flock(struct lwp *, void *, register_t *);
 
 int	bsd_sys_mkfifo(struct lwp *, void *, register_t *);
 
-int	sys_sendto(struct lwp *, void *, register_t *);
+int	darwin_sys_sendto(struct lwp *, void *, register_t *);
 
 int	sys_shutdown(struct lwp *, void *, register_t *);
 
