@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.18 1998/10/07 22:45:51 erh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.19 1998/10/07 22:50:42 erh Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -377,7 +377,7 @@ linux_sys_rt_sigprocmask(p, v, retval)
 
 	/* Use non-rt function: sigsetsize is ignored. */
 	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
-	if (SCARG(uap, sigsetsize) != sizeof(struct linux_old_sigset_t)) {
+	if (SCARG(uap, sigsetsize) != sizeof(linux_old_sigset_t)) {
 #ifdef LINUX_DEBUG
 	    printf("linux_sys_rt_sigprocmask: sigsetsize != sizeof(old_sigset_t)");
 #endif
@@ -386,7 +386,7 @@ linux_sys_rt_sigprocmask(p, v, retval)
 
 	return(linux_sigprocmask1(p, SCARG(uap, how), 
 				(const linux_old_sigset_t *)SCARG(uap, set),
-				(linux_old_sigset_t *)SCARG(uap, oset));
+				(linux_old_sigset_t *)SCARG(uap, oset)));
 }
 
 int
