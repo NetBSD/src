@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.19 1999/09/29 18:52:19 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.20 1999/09/30 17:48:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -153,14 +153,12 @@ const struct tulip_pci_product {
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
 	  TULIP_CHIP_82C168,		0 },
 
-#if 0
 	/*
-	 * Note: This is like a MX98715A with Wake-On-LAN and a
+	 * Note: This is like a MX98725 with Wake-On-LAN and a
 	 * 128-bit multicast hash table.
 	 */
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
-	  TULIP_CHIP_82C115,		0 },
-#endif
+	  TULIP_CHIP_82C115,		0x48 },
 
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
 	  TULIP_CHIP_MX98713,		0 },
@@ -389,6 +387,8 @@ tlp_pci_attach(parent, self, aux)
 		break;
 
 	case TULIP_CHIP_MX98715:
+		if (sc->sc_rev >= 0x20)
+			sc->sc_chip = TULIP_CHIP_MX98715A;
 		if (sc->sc_rev >= 0x30)
 			sc->sc_chip = TULIP_CHIP_MX98725;
 		break;
@@ -440,6 +440,7 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_21140A:
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98715A:
 	case TULIP_CHIP_MX98725:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
@@ -710,8 +711,22 @@ tlp_pci_attach(parent, self, aux)
 		}
 		/* FALLTHROUGH */
 
+	case TULIP_CHIP_82C115:
+		/*
+		 * Yippee!  The Lite-On 82C115 is a clone of
+		 * the MX98725 (the data sheet even says `MXIC'
+		 * on it)!  Imagine that, a clone of a clone.
+		 *
+		 * The differences are really minimal:
+		 *
+		 *	- Wake-On-LAN support
+		 *	- 128-bit multicast hash table, rather than
+		 *	  the standard 512-bit hash table
+		 */
+		/* FALLTHROUGH */
+
 	case TULIP_CHIP_MX98713A:
-	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98715A:
 	case TULIP_CHIP_MX98725:
 		/*
 		 * The MX98713A has an MII as well as an internal Nway block,
@@ -722,14 +737,10 @@ tlp_pci_attach(parent, self, aux)
 		 * just that - performs Nway.  Once autonegotiation completes,
 		 * we must program the GPR media information into the chip.
 		 *
-		 * The Ethernet address is at offset 20 in the SROM, like
-		 * the Tulip ISV.
-		 *
-		 * XXX Do some more investigating; do these chips also
-		 * XXX have ISV-like SROMs?
+		 * The byte offset of the Ethernet address is stored at
+		 * offset 0x70.
 		 */
-		memcpy(enaddr, &sc->sc_srom[TULIP_ROM_IEEE_NETWORK_ADDRESS],
-		    ETHER_ADDR_LEN);
+		memcpy(enaddr, &sc->sc_srom[sc->sc_srom[0x70]], ETHER_ADDR_LEN);
 		sc->sc_mediasw = &tlp_pmac_mediasw;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.17 1999/09/29 23:11:37 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.18 1999/09/30 17:48:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -139,13 +139,14 @@ typedef enum {
 	TULIP_CHIP_82C115    = 10,	/* Lite-On 82C115 PNIC II */
 	TULIP_CHIP_MX98713   = 11,	/* Macronix 98713 PMAC */
 	TULIP_CHIP_MX98713A  = 12,	/* Macronix 98713A PMAC */
-	TULIP_CHIP_MX98715   = 13,	/* Macronix 98715, 98715A PMAC */
-	TULIP_CHIP_MX98725   = 14,	/* Macronix 98725 PMAC */
-	TULIP_CHIP_WB89C840F = 15,	/* Winbond 89C840F */
-	TULIP_CHIP_DM9102    = 16,	/* Davicom DM9102 */
-	TULIP_CHIP_AL981     = 17,	/* ADMtek AL981 */
-	TULIP_CHIP_AX88140   = 18,	/* ASIX AX88140 */
-	TULIP_CHIP_AX88141   = 19,	/* ASIX AX88141 */
+	TULIP_CHIP_MX98715   = 13,	/* Macronix 98715 PMAC */
+	TULIP_CHIP_MX98715A  = 14,	/* Macronix 98715A PMAC */
+	TULIP_CHIP_MX98725   = 15,	/* Macronix 98725 PMAC */
+	TULIP_CHIP_WB89C840F = 16,	/* Winbond 89C840F */
+	TULIP_CHIP_DM9102    = 17,	/* Davicom DM9102 */
+	TULIP_CHIP_AL981     = 18,	/* ADMtek AL981 */
+	TULIP_CHIP_AX88140   = 19,	/* ASIX AX88140 */
+	TULIP_CHIP_AX88141   = 20,	/* ASIX AX88141 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -164,6 +165,7 @@ typedef enum {
 	"Macronix MX98713",						\
 	"Macronix MX98713A",						\
 	"Macronix MX98715",						\
+	"Macronix MX98715A",						\
 	"Macronix MX98725",						\
 	"Winbond 89C840F",						\
 	"Davicom DM9102",						\

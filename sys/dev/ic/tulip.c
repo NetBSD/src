@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.24 1999/09/30 00:07:29 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.25 1999/09/30 17:48:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -179,8 +179,7 @@ void	tlp_pnic_preinit __P((struct tulip_softc *));
 void	tlp_21140_reset __P((struct tulip_softc *));
 
 u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
-#define	tlp_mchash(addr)	(tlp_crc32((addr), ETHER_ADDR_LEN) &	\
-				 (TULIP_MCHASHSIZE - 1))
+#define	tlp_mchash(addr, sz) (tlp_crc32((addr), ETHER_ADDR_LEN) & ((sz) - 1))
 
 #ifdef TLP_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
@@ -1431,6 +1430,7 @@ tlp_init(sc)
 
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98715A:
 	case TULIP_CHIP_MX98725:
 		TULIP_WRITE(sc, CSR_PMAC_TOR, PMAC_TOR_98715);
 		break;
@@ -2054,7 +2054,7 @@ tlp_filter_setup(sc)
 	struct ether_multistep step;
 	__volatile u_int32_t *sp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	u_int32_t hash;
+	u_int32_t hash, hashsize;
 	int cnt;
 
 	DPRINTF(sc, ("%s: tlp_filter_setup: sc_flags 0x%08x\n",
@@ -2074,6 +2074,15 @@ tlp_filter_setup(sc)
 		return;
 	}
 	sc->sc_flags &= ~TULIPF_WANT_SETUP;
+
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_82C115:
+		hashsize = TULIP_PNICII_HASHSIZE;
+		break;
+
+	default:
+		hashsize = TULIP_MCHASHSIZE;
+	}
 
 	/*
 	 * If we're running, idle the transmit and receive engines.  If
@@ -2189,20 +2198,20 @@ tlp_filter_setup(sc)
 			 */
 			goto allmulti;
 		}
-		hash = tlp_mchash(enm->enm_addrlo);
+		hash = tlp_mchash(enm->enm_addrlo, hashsize);
 		sp[hash >> 4] |= 1 << (hash & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
-		hash = tlp_mchash(etherbroadcastaddr);
+		hash = tlp_mchash(etherbroadcastaddr, hashsize);
 		sp[hash >> 4] |= 1 << (hash & 0xf);
 	}
 
 	if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY) {
 		/* ...and our station address. */
-		hash = tlp_mchash(enaddr);
+		hash = tlp_mchash(enaddr, hashsize);
 		sp[hash >> 4] |= 1 << (hash & 0xf);
 	} else {
 		/*
@@ -4366,6 +4375,8 @@ void	tlp_pmac_nway_auto_timeout __P((void *));
 void	tlp_pmac_nway_status __P((struct tulip_softc *));
 void	tlp_pmac_nway_acomp __P((struct tulip_softc *));
 
+void	tlp_pmac_check_link __P((struct tulip_softc *));
+
 void
 tlp_pmac_tmsw_init(sc)
 	struct tulip_softc *sc;
@@ -4526,6 +4537,8 @@ tlp_pmac_nway_service(sc, cmd)
 	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 		return (0);
 
+	tlp_pmac_check_link(sc);
+
 	switch (cmd) {
 	case MII_POLLSTAT:
 		/* Nothing special to do here. */
@@ -4564,14 +4577,8 @@ tlp_pmac_nway_service(sc, cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->sc_nway_ticks != 5) {
-			/*
-			 * Update status; this may indicate link-up
-			 * next time around.
-			 */
-			tlp_pmac_nway_status(sc);
+		if (++sc->sc_nway_ticks != 5)
 			return (0);
-		}
 
 		sc->sc_nway_ticks = 0;
 		tlp_pmac_nway_reset(sc);
@@ -4589,6 +4596,9 @@ tlp_pmac_nway_service(sc, cmd)
 		(*sc->sc_statchg)(&sc->sc_dev);
 		sc->sc_nway_active = mii->mii_media_active;
 	}
+
+	tlp_pmac_check_link(sc);
+
 	return (0);
 }
 
@@ -4598,7 +4608,7 @@ tlp_pmac_nway_reset(sc)
 {
 
 	TULIP_WRITE(sc, CSR_PMAC_NWAYRESET, 0);
-	delay(100);
+	delay(1000);
 }
 
 int
@@ -4713,22 +4723,27 @@ tlp_pmac_nway_status(sc)
 		 */
 		mii->mii_media_active = ife->ifm_media;
 	}
+}
 
-	/*
-	 * Update link status.
-	 */
+void
+tlp_pmac_check_link(sc)
+	struct tulip_softc *sc;
+{
+	u_int32_t reg;
+
 	reg = TULIP_READ(sc, CSR_PMAC_10TSTAT);
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T &&
+	if (IFM_SUBTYPE(sc->sc_nway_active) == IFM_10_T &&
 	    (reg & PMAC_10TSTAT_LS10) == 0)
 		sc->sc_flags |= TULIPF_LINK_UP;
-	else if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX &&
+	else if (IFM_SUBTYPE(sc->sc_nway_active) == IFM_100_TX &&
 	         (reg & PMAC_10TSTAT_LS100) == 0)
 		sc->sc_flags |= TULIPF_LINK_UP;
 	else
 		sc->sc_flags &= ~TULIPF_LINK_UP;
 
+	sc->sc_mii.mii_media_status = IFM_AVALID;
 	if (sc->sc_flags & TULIPF_LINK_UP)
-		mii->mii_media_status |= IFM_ACTIVE;
+		sc->sc_mii.mii_media_status |= IFM_ACTIVE;
 }
 
 void
