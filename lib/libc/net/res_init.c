@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.7 1995/02/25 06:20:57 cgd Exp $	*/
+/*	$NetBSD: res_init.c,v 1.8 1995/06/03 22:33:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$Id: res_init.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.7 1995/02/25 06:20:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.8 1995/06/03 22:33:36 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,13 +109,14 @@ res_init()
 	int nsort = 0;
 	u_long mask;
 
+	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
+	_res.nsaddr.sin_family = AF_INET;
+	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 #ifdef USELOOPBACK
 	_res.nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
 #else
 	_res.nsaddr.sin_addr.s_addr = INADDR_ANY;
 #endif
-	_res.nsaddr.sin_family = AF_INET;
-	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 	_res.nscount = 1;
 	_res.ndots = 1;
 	_res.pfcode = 0;
@@ -254,10 +255,11 @@ res_init()
 		    while (*cp == ' ' || *cp == '\t')
 			cp++;
 		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
-			_res.nsaddr_list[nserv].sin_addr = a;
+			_res.nsaddr_list[nserv].sin_len = sizeof(struct sockaddr_in);
 			_res.nsaddr_list[nserv].sin_family = AF_INET;
 			_res.nsaddr_list[nserv].sin_port =
 				htons(NAMESERVER_PORT);
+			_res.nsaddr_list[nserv].sin_addr = a;
 			nserv++;
 		    }
 		    continue;

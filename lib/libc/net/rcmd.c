@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.11 1995/02/25 06:20:53 cgd Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.11 1995/02/25 06:20:53 cgd Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,9 +97,10 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			return (-1);
 		}
 		fcntl(s, F_SETOWN, pid);
+		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
 		sin.sin_port = rport;
+		bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
 		if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
 			break;
 		(void)close(s);
@@ -174,7 +175,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 		*fd2p = s3;
-		from.sin_port = ntohs((u_short)from.sin_port);
+		from.sin_port = ntohs(from.sin_port);
 		if (from.sin_family != AF_INET ||
 		    from.sin_port >= IPPORT_RESERVED ||
 		    from.sin_port < IPPORT_RESERVED / 2) {
@@ -217,6 +218,7 @@ rresvport(alport)
 	struct sockaddr_in sin;
 	int s;
 
+	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	s = socket(AF_INET, SOCK_STREAM, 0);

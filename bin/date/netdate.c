@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.8 1995/03/21 09:03:54 cgd Exp $	*/
+/*	$NetBSD: netdate.c,v 1.9 1995/06/03 22:24:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: netdate.c,v 1.8 1995/03/21 09:03:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: netdate.c,v 1.9 1995/06/03 22:24:45 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,10 @@ netsettime(tval)
 	}
 
 	memset(&dest, 0, sizeof(dest));
-	dest.sin_port = sp->s_port;
+	dest.sin_len = sizeof(struct sockaddr_in);
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = htonl((u_long)INADDR_ANY);
+	dest.sin_port = sp->s_port;
+	dest.sin_addr.s_addr = htonl(INADDR_ANY);
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {
 		if (errno != EPROTONOSUPPORT)
@@ -100,6 +101,7 @@ netsettime(tval)
 	}
 
 	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = AF_INET;
 	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
 		sin.sin_port = htons((u_short)port);
