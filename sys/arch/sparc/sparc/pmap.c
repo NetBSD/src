@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245 2003/02/24 15:14:51 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.246 2003/02/26 14:18:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -364,8 +364,8 @@ int	ctx_kick;			/* allocation rover when none free */
 int	ctx_kickdir;			/* ctx_kick roves both directions */
 int	ncontext;			/* sizeof ctx_freelist */
 
-void	ctx_alloc __P((struct pmap *));
-void	ctx_free __P((struct pmap *));
+void	ctx_alloc(struct pmap *);
+void	ctx_free(struct pmap *);
 
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
@@ -389,8 +389,8 @@ u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 static struct pool L1_pool;
 static struct pool L23_pool;
 
-static void *pgt_page_alloc __P((struct pool *, int));
-static void  pgt_page_free __P((struct pool *, void *));
+static void *pgt_page_alloc(struct pool *, int);
+static void  pgt_page_free(struct pool *, void *);
 
 static struct pool_allocator pgt_page_allocator = {
 	pgt_page_alloc, pgt_page_free, 0,
@@ -398,8 +398,7 @@ static struct pool_allocator pgt_page_allocator = {
 
 #endif
 
-#define	MA_SIZE	32		/* size of memory descriptor arrays */
-struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
+struct	memarr *pmemarr;	/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 
 static paddr_t	avail_start;	/* first available physical page, other
@@ -409,7 +408,7 @@ static vaddr_t	etext_gap_end;	/* end of gap between text & data */
 static vaddr_t	virtual_avail;	/* first free kernel virtual address */
 static vaddr_t	virtual_end;	/* last free kernel virtual address */
 
-static void pmap_page_upload __P((void));
+static void pmap_page_upload(void);
 
 int mmu_has_hole;
 
@@ -421,8 +420,8 @@ vaddr_t prom_vend;
  */
 static struct pool pmap_pmap_pool;
 static struct pool_cache pmap_pmap_pool_cache;
-static int	pmap_pmap_pool_ctor __P((void *, void *, int));
-static void	pmap_pmap_pool_dtor __P((void *, void *));
+static int	pmap_pmap_pool_ctor(void *, void *, int);
+static void	pmap_pmap_pool_dtor(void *, void *);
 
 #if defined(SUN4)
 /*
@@ -461,10 +460,10 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
 #if defined(SUN4M) || defined(SUN4D)
-void		setpgt4m __P((int *ptep, int pte));
-void		setpte4m __P((vaddr_t va, int pte));
+void		setpgt4m(int *ptep, int pte);
+void		setpte4m(vaddr_t va, int pte);
 #if defined(MULTIPROCESSOR)
-void		setpgt4m_va __P((vaddr_t, int *, int, int, int, u_int));
+void		setpgt4m_va(vaddr_t, int *, int, int, int, u_int);
 #else
 #define		setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset) do { \
 	if ((pageflush)) \
@@ -501,35 +500,35 @@ void		setpgt4m_va __P((vaddr_t, int *, int, int, int, u_int));
  */
 
 #if defined(SUN4M) || defined(SUN4D)
-static void mmu_setup4m_L1 __P((int, struct pmap *));
-static void mmu_setup4m_L2 __P((int, struct regmap *));
-static void  mmu_setup4m_L3 __P((int, struct segmap *));
-/*static*/ void	mmu_reservemon4m __P((struct pmap *));
+static void mmu_setup4m_L1(int, struct pmap *);
+static void mmu_setup4m_L2(int, struct regmap *);
+static void  mmu_setup4m_L3(int, struct segmap *);
+/*static*/ void	mmu_reservemon4m(struct pmap *);
 
-/*static*/ void pmap_rmk4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_rmu4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ int  pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
-				int, struct vm_page *, int));
-/*static*/ int  pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
-				int, struct vm_page *, int));
-/*static*/ void pv_changepte4m __P((struct vm_page *, int, int));
-/*static*/ int  pv_syncflags4m __P((struct vm_page *));
-/*static*/ int  pv_link4m __P((struct vm_page *, struct pmap *, vaddr_t, u_int *));
-/*static*/ void pv_unlink4m __P((struct vm_page *, struct pmap *, vaddr_t));
+/*static*/ void pmap_rmk4m(struct pmap *, vaddr_t, vaddr_t, int, int);
+/*static*/ void pmap_rmu4m(struct pmap *, vaddr_t, vaddr_t, int, int);
+/*static*/ int  pmap_enk4m(struct pmap *, vaddr_t, vm_prot_t,
+				int, struct vm_page *, int);
+/*static*/ int  pmap_enu4m(struct pmap *, vaddr_t, vm_prot_t,
+				int, struct vm_page *, int);
+/*static*/ void pv_changepte4m(struct vm_page *, int, int);
+/*static*/ int  pv_syncflags4m(struct vm_page *);
+/*static*/ int  pv_link4m(struct vm_page *, struct pmap *, vaddr_t, u_int *);
+/*static*/ void pv_unlink4m(struct vm_page *, struct pmap *, vaddr_t);
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
-/*static*/ void	mmu_reservemon4_4c __P((int *, int *));
-/*static*/ void pmap_rmk4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_rmu4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ int  pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
-				  int, struct vm_page *, int));
-/*static*/ int  pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
-				  int, struct vm_page *, int));
-/*static*/ void pv_changepte4_4c __P((struct vm_page *, int, int));
-/*static*/ int  pv_syncflags4_4c __P((struct vm_page *));
-/*static*/ int  pv_link4_4c __P((struct vm_page *, struct pmap *, vaddr_t, int));
-/*static*/ void pv_unlink4_4c __P((struct vm_page *, struct pmap *, vaddr_t));
+/*static*/ void	mmu_reservemon4_4c(int *, int *);
+/*static*/ void pmap_rmk4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
+/*static*/ void pmap_rmu4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
+/*static*/ int  pmap_enk4_4c(struct pmap *, vaddr_t, vm_prot_t,
+				  int, struct vm_page *, int);
+/*static*/ int  pmap_enu4_4c(struct pmap *, vaddr_t, vm_prot_t,
+				  int, struct vm_page *, int);
+/*static*/ void pv_changepte4_4c(struct vm_page *, int, int);
+/*static*/ int  pv_syncflags4_4c(struct vm_page *);
+/*static*/ int  pv_link4_4c(struct vm_page *, struct pmap *, vaddr_t, int);
+/*static*/ void pv_unlink4_4c(struct vm_page *, struct pmap *, vaddr_t);
 #endif
 
 #if !(defined(SUN4M) || defined(SUN4D)) && (defined(SUN4) || defined(SUN4C))
@@ -544,20 +543,20 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 
 /* function pointer declarations */
 /* from pmap.h: */
-boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
-boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
-int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
-boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
-boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
-void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
-void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
-void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-void		(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
+boolean_t	(*pmap_clear_modify_p)(struct vm_page *);
+boolean_t	(*pmap_clear_reference_p)(struct vm_page *);
+int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+boolean_t	(*pmap_is_modified_p)(struct vm_page *);
+boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
+void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+void		(*pmap_kremove_p)(vaddr_t, vsize_t);
+void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
+void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+void		(*pmap_changeprot_p)(pmap_t, vaddr_t, vm_prot_t, int);
 /* local: */
-void 		(*pmap_rmk_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void 		(*pmap_rmk_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
+void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
 
 #define		pmap_rmk	(*pmap_rmk_p)
 #define		pmap_rmu	(*pmap_rmu_p)
@@ -752,8 +751,8 @@ updatepte4m(va, pte, bic, bis, ctx, cpuset)
 	return (oldval);
 }
 
-static u_int	VA2PA __P((caddr_t));
-static u_long	srmmu_bypass_read __P((u_long));
+static u_int	VA2PA(caddr_t);
+static u_long	srmmu_bypass_read(u_long);
 
 /*
  * VA2PA(addr) -- converts a virtual address to a physical address using
@@ -957,13 +956,13 @@ pgt_page_free(struct pool *pp, void *v)
 } while (0)
 
 
-static void get_phys_mem __P((void));
-void	kvm_iocache __P((caddr_t, int));
+static void get_phys_mem(caddr_t *);
+void	kvm_iocache(caddr_t, int);
 
 #ifdef DEBUG
-void	pm_check __P((char *, struct pmap *));
-void	pm_check_k __P((char *, struct pmap *));
-void	pm_check_u __P((char *, struct pmap *));
+void	pm_check(char *, struct pmap *);
+void	pm_check_k(char *, struct pmap *);
+void	pm_check_u(char *, struct pmap *);
 #endif
 
 /*
@@ -985,12 +984,20 @@ static u_long va2pa_offset;
  * While here, compute `physmem'.
  */
 void
-get_phys_mem()
+get_phys_mem(caddr_t *top)
 {
 	struct memarr *mp;
+	caddr_t p;
 	int i;
 
-	npmemarr = prom_makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	/* Load the memory descriptor array at the current kernel top */
+	p = (caddr_t)ALIGN(*top);
+	pmemarr = (struct memarr *)p;
+	npmemarr = prom_makememarr(pmemarr, 1000, MEMARR_AVAILPHYS);
+
+	/* Update kernel top */
+	p += npmemarr * sizeof(struct memarr);
+	*top = p;
 
 	for (physmem = 0, mp = pmemarr, i = npmemarr; --i >= 0; mp++)
 		physmem += btoc(mp->len);
@@ -1463,10 +1470,10 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-struct mmuentry *me_alloc __P((struct mmuhd *, struct pmap *, int, int));
-void		me_free __P((struct pmap *, u_int));
-struct mmuentry	*region_alloc __P((struct mmuhd *, struct pmap *, int));
-void		region_free __P((struct pmap *, u_int));
+struct mmuentry *me_alloc(struct mmuhd *, struct pmap *, int, int);
+void		me_free(struct pmap *, u_int);
+struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
+void		region_free(struct pmap *, u_int);
 
 /*
  * Change contexts.  We need the old context number as well as the new
@@ -2886,10 +2893,10 @@ int nptesg;
 #endif
 
 #if defined(SUN4M) || defined(SUN4D)
-static void pmap_bootstrap4m __P((void));
+static void pmap_bootstrap4m(caddr_t);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-static void pmap_bootstrap4_4c __P((int, int, int));
+static void pmap_bootstrap4_4c(caddr_t, int, int, int);
 #endif
 
 /*
@@ -2903,7 +2910,9 @@ void
 pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
+	caddr_t p;
 	extern char etext[], kernel_data_start[];
+	extern char *kernel_top;
 
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
@@ -2922,7 +2931,8 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	/*
 	 * Grab physical memory list.
 	 */
-	get_phys_mem();
+	p = kernel_top;
+	get_phys_mem(&p);
 
 	/*
 	 * The data segment in sparc ELF images is aligned to a 64KB
@@ -2937,11 +2947,11 @@ pmap_bootstrap(nctx, nregion, nsegment)
 
 	if (CPU_HAS_SRMMU) {
 #if defined(SUN4M) || defined(SUN4D)
-		pmap_bootstrap4m();
+		pmap_bootstrap4m(p);
 #endif
 	} else if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4) || defined(SUN4C)
-		pmap_bootstrap4_4c(nctx, nregion, nsegment);
+		pmap_bootstrap4_4c(p, nctx, nregion, nsegment);
 #endif
 	}
 
@@ -2950,7 +2960,8 @@ pmap_bootstrap(nctx, nregion, nsegment)
 
 #if defined(SUN4) || defined(SUN4C)
 void
-pmap_bootstrap4_4c(nctx, nregion, nsegment)
+pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
+	caddr_t top;
 	int nsegment, nctx, nregion;
 {
 	union ctxinfo *ci;
@@ -2968,7 +2979,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	caddr_t p;
 	int lastpage;
 	vaddr_t va;
-	extern char *kernel_top;
 	extern char kernel_text[];
 
 	/*
@@ -3079,7 +3089,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	/*
 	 * Allocate and clear mmu entries and context structures.
 	 */
-	p = kernel_top;
+	p = top;
 
 #if defined(SUN4_MMU3L)
 	mmuregions = mmureg = (struct mmuentry *)p;
@@ -3357,7 +3367,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
  * Switches from ROM to kernel page tables, and sets up initial mappings.
  */
 static void
-pmap_bootstrap4m(void)
+pmap_bootstrap4m(top)
+	caddr_t top;
 {
 	int i, j;
 	caddr_t p, q;
@@ -3366,7 +3377,6 @@ pmap_bootstrap4m(void)
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
 	paddr_t pagetables_start_pa;
-	extern char *kernel_top;
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
 	extern char kernel_text[];
@@ -3400,7 +3410,7 @@ pmap_bootstrap4m(void)
 	/*
 	 * p points to top of kernel mem
 	 */
-	p = kernel_top;
+	p = top;
 
 	/*
 	 * Intialize the kernel pmap.
@@ -3709,7 +3719,7 @@ mmu_install_tables(sc)
 #endif
 }
 
-void srmmu_restore_prom_ctx __P((void));
+void srmmu_restore_prom_ctx(void);
 
 void
 srmmu_restore_prom_ctx()
@@ -7654,7 +7664,7 @@ pmap_writetext(dst, ch)
 
 #ifdef EXTREME_DEBUG
 
-static void test_region __P((int, int, int));
+static void test_region(int, int, int));
 
 void
 debug_pagetables()
