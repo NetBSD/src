@@ -1,3 +1,5 @@
+/*	$NetBSD: sd.c,v 1.9 1994/10/26 08:47:40 cgd Exp $	*/
+
 /* 
  * Written by Julian Elischer (julian@dialix.oz.au)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
@@ -13,8 +15,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
- *
- *      $Id: sd.c,v 1.8 1994/10/14 18:27:11 cgd Exp $
  */
 
 #include <sys/types.h>

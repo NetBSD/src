@@ -1,6 +1,5 @@
-/*
- *	$Id: profile.h,v 1.1 1994/05/23 03:54:52 briggs Exp $
- */
+/*	$NetBSD: profile.h,v 1.2 1994/10/26 08:46:41 cgd Exp $	*/
+
 #ifndef _MACHINE_PROFILE_H_
 #define _MACHINE_PROFILE_H_
 

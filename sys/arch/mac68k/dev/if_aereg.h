@@ -1,22 +1,7 @@
+/*	$NetBSD: if_aereg.h,v 1.3 1994/10/26 08:46:12 cgd Exp $	*/
+
 /*
  * National Semiconductor DS8390 NIC register definitions 
- *
- * $Id: if_aereg.h,v 1.2 1994/03/01 15:24:26 briggs Exp $
- *
- * Modification history
- *
- * $Log: if_aereg.h,v $
- * Revision 1.2  1994/03/01 15:24:26  briggs
- * More Dayna separation.
- *
- * Revision 1.1  1993/11/29  00:32:46  briggs
- * Update to current work in progress.  This includes an update to
- * use config.new.
- * Numerous updates to console so it works better on the SE/30 screen.
- * Some nice changes from Brad Parker for handling NuBUS and an ethernet
- * driver that I haven't worked on, yet.
- *
- * 
  */
 
 /*

@@ -1,6 +1,7 @@
+/*	$NetBSD: scsi_base.c,v 1.5 1994/10/26 08:47:29 cgd Exp $	*/
+
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.4 1994/02/22 00:57:26 briggs Exp $
  */
 
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/*
- *	$Id: psl.h,v 1.3 1994/01/10 23:55:28 briggs Exp $
- */
+/*	$NetBSD: psl.h,v 1.4 1994/10/26 08:46:42 cgd Exp $	*/
 
 #include <m68k/psl.h>

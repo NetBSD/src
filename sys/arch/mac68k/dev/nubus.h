@@ -1,3 +1,5 @@
+/*	$NetBSD: nubus.h,v 1.3 1994/10/26 08:46:15 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,9 +31,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: nubus.h,v 1.2 1993/11/29 00:32:52 briggs Exp $
- *
  */
 
 #define NUBUS_VIDEO		3
