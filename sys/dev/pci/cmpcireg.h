@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcireg.h,v 1.4 2001/11/04 06:57:40 itohy Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.5 2003/11/22 16:48:14 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -119,9 +119,10 @@
 
 #define CMPCI_REG_MISC			0x18
 #  define CMPCI_REG_2ND_SPDIFIN		0x00000100
-#  define CMPCI_REG_SPDIF_48K		0x00008000
+#  define CMPCI_REG_SPDIFOUT_48K	0x00008000
 #  define CMPCI_REG_FM_ENABLE		0x00080000
 #  define CMPCI_REG_SPDFLOOPI		0x00100000
+#  define CMPCI_REG_SPDIF48K		0x01000000
 #  define CMPCI_REG_5V			0x02000000
 #  define CMPCI_REG_N4SPK3D		0x04000000
 
