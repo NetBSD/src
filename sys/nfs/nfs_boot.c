@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.39 1997/09/30 20:44:31 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.40 1998/01/09 15:10:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -69,18 +69,8 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfsdiskless.h>
 
-#include "arp.h"
-#if NARP == 0
-
-int nfs_boot_init(nd, procp)
-	struct nfs_diskless *nd;
-	struct proc *procp;
-{
-	printf("nfs_boot: NARP == 0\n");
-	return (ENXIO);
-}
-
-#else /* NARP */
+#include "opt_nfs_boot_bootp.h"
+#include "opt_nfs_boot_bootparam.h"
 
 /*
  * There are two implementations of NFS diskless boot.
@@ -88,12 +78,13 @@ int nfs_boot_init(nd, procp)
  * the other uses Sun RPC/bootparams.  See the files:
  *    nfs_bootp.c:   BOOTP (RFC951, RFC1048)
  *    nfs_bootsun.c: Sun RPC/bootparams
- *
- * The variable nfs_boot_rfc951 selects which to use.
- * This is defined as BSS so machine-dependent code
- * may provide a data definition to override this.
  */
-int nfs_boot_rfc951; /* 1: BOOTP. 0: RARP/SUNRPC */
+#ifdef NFS_BOOT_BOOTP
+int nfs_boot_rfc951 = 1; /* BOOTP enabled (default) */
+#endif
+#ifdef NFS_BOOT_BOOTPARAM
+int nfs_boot_bootparam = 1; /* BOOTPARAM enabled (default) */
+#endif
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
@@ -125,21 +116,28 @@ nfs_boot_init(nd, procp)
 		       root_device->dv_xname);
 		return (ENXIO);
 	}
-	if (ifp->if_type != IFT_ETHER) {
-		printf("nfs_boot: unknown I/F type %d\n", ifp->if_type);
-		return (ENODEV);	/* Op. not supported by device */
-	}
 
+	error = EADDRNOTAVAIL; /* ??? */
+#ifdef NFS_BOOT_BOOTP
 	if (nfs_boot_rfc951) {
 		printf("nfs_boot: trying BOOTP/DHCP\n");
 		error = nfs_bootdhcp(ifp, nd, procp);
-	} else {
+		if (!error)
+			goto ok;
+	}
+#endif
+#ifdef NFS_BOOT_BOOTPARAM
+	if (nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
 		error = nfs_bootparam(ifp, nd, procp);
+		if (!error)
+			goto ok;
 	}
-	if (error)
-		return (error);
+#endif
+	if (0) goto ok; /* XXX stupid gcc */
+	return (error);
 
+ok:
 	/*
 	 * If the gateway address is set, add a default route.
 	 * (The mountd RPCs may go across a gateway.)
@@ -153,17 +151,6 @@ nfs_boot_init(nd, procp)
 	error = nfs_boot_getfh(&nd->nd_root);
 	if (error)
 		return (error);
-
-#if 0	/* swap now comes in from swapctl(2) */
-	if (nd->nd_swap.ndm_saddr.sa_len) {
-		error = nfs_boot_getfh(&nd->nd_swap);
-		if (error) {
-			printf("nfs_boot: warning: getfh(swap), error=%d\n", error);
-			/* Just ignore the error */
-			error = 0;
-		}
-	}
-#endif
 
 	return (error);
 }
@@ -547,5 +534,3 @@ out:
 	m_freem(m);
 	return error;
 }
-
-#endif /* NARP */
