@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.2 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -209,7 +209,8 @@ lpt_gsc_attach(parent, self, aux)
 
 	lpt_attach_subr(sc);
 
-	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
-				       ga->ga_irq, lptintr, sc, &sc->sc_dev);
+	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY,
+					 lptintr, sc,
+					 ga->ga_int_reg, ga->ga_irq);
 	printf("\n");
 }

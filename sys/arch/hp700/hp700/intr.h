@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2002/08/14 16:18:11 fredette Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,6 +80,11 @@ struct hp700_int_reg {
 #define	INT_REG_BIT_REG_POS	(7)
 #define	INT_REG_BIT_REG		(1 << INT_REG_BIT_REG_POS)
 #define	INT_REG_BIT_UNUSED	INT_REG_BIT_REG
+
+	/*
+	 * The mask of allocatable bit numbers.
+	 */
+	int int_reg_allocatable_bits;
 };
 
 extern	struct hp700_int_reg int_reg_cpu;
@@ -87,6 +92,8 @@ void	hp700_intr_bootstrap __P((void));
 void	hp700_intr_reg_establish __P((struct hp700_int_reg *));
 void *	hp700_intr_establish __P((struct device *, int, int (*)(void *), void *,
 				  struct hp700_int_reg *, int));
+int	hp700_intr_allocate_bit __P((struct hp700_int_reg *));
+int	_hp700_intr_ipl_next __P((void));
 int	_hp700_intr_spl_mask __P((void *));
 void	hp700_intr_init __P((void));
 void	hp700_intr_dispatch __P((int, int, struct trapframe *));
