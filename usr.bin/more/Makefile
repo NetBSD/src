@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 3/12/91
+#	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
+#	$Id: Makefile,v 1.4 1993/11/09 05:07:24 cgd Exp $
 
 PROG=	more
 CFLAGS+=-I${.CURDIR} -DREGEX 
