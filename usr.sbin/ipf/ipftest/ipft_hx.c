@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.7 1997/10/30 05:28:09 mrg Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.8 1997/11/14 08:03:26 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -33,23 +33,18 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <net/if.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.0.2.8 1997/10/19 15:39:23 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.0.2.8.2.1 1997/11/12 10:56:07 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -97,10 +92,10 @@ char	*buf, **ifn;
 int	cnt, *dir;
 {
 	register char *s, *t, *u;
-	struct	ip *ip;
 	char	line[513];
+	ip_t	*ip;
 
- 	ip = (struct ip *)buf;
+ 	ip = (ip_t *)buf;
 	while (fgets(line, sizeof(line)-1, tfp)) {
 		if ((s = index(line, '\n'))) {
 			if (s == line)
@@ -143,7 +138,7 @@ int	cnt, *dir;
 			}
 		} else
 			s = line;
-		ip = (struct ip *)readhex(s, (char *)ip);
+		ip = (ip_t *)readhex(s, (char *)ip);
 	}
 	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.7 1997/10/30 05:28:04 mrg Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.8 1997/11/14 08:03:23 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -33,24 +33,19 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11 1997/10/19 15:39:24 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.1 1997/11/12 10:56:11 darrenr Exp ";
 #endif
 
 extern	int	opts;
