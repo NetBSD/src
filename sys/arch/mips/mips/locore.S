@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.18 2002/12/31 01:03:48 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.19 2003/01/03 21:34:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -541,7 +541,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 END(cpu_switchto)
 
 /*
- * switch_exit(struct lwp *)
+ * switch_exit(struct lwp *, void (*exit)(struct lwp *))
  *
  * Make the named process exit.  Switch SP to proc0 stack, then
  * call exit2() to schedule exiting proc's vmspace and stack to be
@@ -554,7 +554,7 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
-	jal	_C_LABEL(exit2)			# proc already in a0
+	jal	ra, a1				# lwp already in a0
 	nop
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
@@ -573,35 +573,6 @@ LEAF(switch_exit)
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
 
-/*
- * switch_lwp_exit(struct lwp *)
- *
- *  Similar to switch_exit above, except exits via lwp_exit2() 
- */
-LEAF(switch_lwp_exit)
-	lw	v0, _C_LABEL(proc0paddr)		# get lwp0 l_addr
-	nop
-	sw	v0, _C_LABEL(curpcb)		# set current pcb
-	REG_PROLOGUE
-	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
-	REG_EPILOGUE
-#if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
-	nop
-#endif
-	/*
-	 * Now jump back into the middle of cpu_switch().  Note that
-	 * we must clear s0 to guarantee that the check for switching
-	 * to ourselves in cpu_switch() will fail.  This is safe since
-	 * s0 will be restored when a new process is resumed.
-	 */
-	li	s0, 0
-
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	_C_LABEL(lwp_exit2)			# proc already in a0
-	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
-END(switch_lwp_exit)
-	
 /*
  * savectx(struct user *up)
  */
