@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2001/06/10 16:45:52 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 2001/06/10 17:03:01 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -429,7 +429,7 @@ Linit1x7:
 	/*
 	 * Verify the user has removed the GPIO#0 jumper...
 	 */
-	moveq	#1,%d0
+	movel	#0x01000000,%d0
 	andl	0xfff40088,%d0		| Clear == jumper installed
 	jne	1f			| Ok.
 
