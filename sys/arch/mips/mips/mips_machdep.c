@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.138 2002/08/04 01:43:03 gmcgarry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.139 2002/08/04 01:47:15 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.138 2002/08/04 01:43:03 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.139 2002/08/04 01:47:15 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1132,6 +1132,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 #endif
+	case CPU_LLSC:
+		return (sysctl_rdint(oldp, oldlenp, newp, MIPS_HAS_LLSC));
 	case CPU_ROOT_DEVICE:
 	default:
 		return (EOPNOTSUPP);
