@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.110.2.4 2000/08/23 11:45:06 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.110.2.5 2000/09/29 02:08:45 simonb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1053,9 +1053,9 @@ generate
 # ./usr/share/groff_font/devps
 ..
 
-# ./share/groff_font/devlj4
+# ./usr/share/groff_font/devlj4
 devlj4
-# ./share/groff_font/devlj4
+# ./usr/share/groff_font/devlj4
 ..
 
 # ./usr/share/groff_font
