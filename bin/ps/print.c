@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.61 2001/01/08 18:03:45 itojun Exp $	*/
+/*	$NetBSD: print.c,v 1.62 2001/01/09 01:21:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.61 2001/01/08 18:03:45 itojun Exp $");
+__RCSID("$NetBSD: print.c,v 1.62 2001/01/09 01:21:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -930,11 +930,11 @@ printval(bp, v, mode)
 			vok = VUNSIGN;
 			break;
 		case KPTR:
-			uval = (unsigned long)GET(void *);
+			uval = (unsigned long long)GET(u_int64_t);
 			vok = VPTR;
 			break;
 		case KPTR24:
-			uval = (unsigned long)GET(void *);
+			uval = (unsigned long long)GET(u_int64_t);
 			uval &= 0xffffff;
 			vok = VPTR;
 			break;
@@ -1031,12 +1031,11 @@ printval(bp, v, mode)
 		(void)printf(ofmt, width, CHK_INF127(GET(u_long)));
 		return;
 	case KPTR:
-		(void)printf(ofmt, width,
-		    (unsigned long long)(unsigned long)GET(void *));
+		(void)printf(ofmt, width, (unsigned long long)GET(u_int64_t));
 		return;
 	case KPTR24:
 		(void)printf(ofmt, width,
-		    (unsigned long long)(unsigned long)GET(void *));
+		    (unsigned long long)GET(u_int64_t) & 0xffffff);
 		return;
 	case SIGLIST:
 		{
