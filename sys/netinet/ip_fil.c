@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.43 2000/03/01 12:49:31 itojun Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.44 2000/03/07 04:58:35 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.43 2000/03/01 12:49:31 itojun Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.44 2000/03/07 04:58:35 mycroft Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -426,15 +426,17 @@ int mode;
 
 	if (unit == IPL_LOGNAT) {
 		if (!fr_running)
-			return EIO;
-		error = nat_ioctl(data, cmd, mode);
+			error = EIO;
+		else
+			error = nat_ioctl(data, cmd, mode);
 		SPL_X(s);
 		return error;
 	}
 	if (unit == IPL_LOGSTATE) {
 		if (!fr_running)
-			return EIO;
-		error = fr_state_ioctl(data, cmd, mode);
+			error = EIO;
+		else
+			error = fr_state_ioctl(data, cmd, mode);
 		SPL_X(s);
 		return error;
 	}
