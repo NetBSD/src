@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2003/08/07 16:29:03 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2003/10/19 17:45:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2003/08/07 16:29:03 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2003/10/19 17:45:35 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ cpu_setfunc(l, func, arg)
 /*
  * cpu_swapout is called immediately before a process's 'struct user'
  * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
+ * after its P_INMEM flag is cleared).  If the process is the
  * current owner of the floating point unit, the FP state has to be
  * saved, so that it goes out with the pcb, which is in the user area.
  */
