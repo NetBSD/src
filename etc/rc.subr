@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.53 2003/01/04 15:27:44 lukem Exp $
+# $NetBSD: rc.subr,v 1.54 2003/01/05 11:40:29 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -727,7 +727,9 @@ load_rc_config()
 		err 3 'USAGE: load_rc_config command'
 	fi
 
-	if ! ${_rc_conf_loaded:-false}; then
+	if ${_rc_conf_loaded:-false}; then
+		:
+	else
 		. /etc/rc.conf
 		_rc_conf_loaded=true
 	fi
