@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.9 1993/09/30 23:01:03 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/02/10 01:55:21 cgd Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc
@@ -13,9 +13,6 @@ STRIP_SED = ../me/strip.sed
 OFILES=	tmac.an.v6compat tmac.an6n tmac.an6t tmac.a tmac.cp tmac.doc.old
 
 all clean cleandir depend lint tags:
-
-beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}/tmac
 
 realinstall:
 	for i in ${MSRCS}; do \

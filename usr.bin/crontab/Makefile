@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/01/20 03:03:05 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/02/10 02:03:33 cgd Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c
@@ -19,9 +19,7 @@ crontab.5.0:	crontab.5
 	nroff -mandoc ${.ALLSRC} > ${.TARGET}
 
 maninstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${MANDIR}1
 	${MINSTALL} crontab.1.0 ${DESTDIR}${MANDIR}1/crontab.0
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${MANDIR}5
 	${MINSTALL} crontab.5.0 ${DESTDIR}${MANDIR}5/crontab.0
 .endif
 
