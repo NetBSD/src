@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.7 2000/02/17 18:42:21 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.8 2000/02/27 22:15:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -217,6 +217,8 @@ DRIVER_MODULE(if_cue, uhub, cue_driver, cue_devclass, usbd_driver_load, 0);
 #define CUE_CLRBIT(sc, reg, x)				\
 	csr_write_1(sc, reg, csr_read_1(sc, reg) & ~(x))
 
+#define CUE_DO_REQUEST(dev, req, data) usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
+
 static int
 csr_read_1(sc, reg)
 	struct cue_softc	*sc;
@@ -235,7 +237,7 @@ csr_read_1(sc, reg)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 1);
 
-	err = usbd_do_request(sc->cue_udev, &req, &val);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, &val);
 
 	splx(s);
 
@@ -263,7 +265,7 @@ csr_read_2(sc, reg)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 2);
 
-	err = usbd_do_request(sc->cue_udev, &req, &val);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, &val);
 
 	splx(s);
 
@@ -290,7 +292,7 @@ csr_write_1(sc, reg, val)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 0);
 
-	err = usbd_do_request(sc->cue_udev, &req, NULL);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
 
 	splx(s);
 
@@ -318,7 +320,7 @@ csr_write_2(sc, reg, val)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 0);
 
-	err = usbd_do_request(sc->cue_udev, &req, NULL);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
 
 	splx(s);
 
@@ -352,7 +354,7 @@ cue_mem(sc, cmd, addr, buf, len)
 	USETW(req.wIndex, addr);
 	USETW(req.wLength, len);
 
-	err = usbd_do_request(sc->cue_udev, &req, buf);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, buf);
 
 	splx(s);
 
@@ -379,7 +381,7 @@ cue_getmac(sc, buf)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, ETHER_ADDR_LEN);
 
-	err = usbd_do_request(sc->cue_udev, &req, buf);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, buf);
 
 	splx(s);
 
@@ -474,7 +476,7 @@ cue_reset(sc)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
-	err = usbd_do_request(sc->cue_udev, &req, NULL);
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
 
 	splx(s);
 
@@ -555,7 +557,7 @@ USB_ATTACH(cue)
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
+		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->cue_dev), i);
