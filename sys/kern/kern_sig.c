@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.63 1997/04/23 18:59:56 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.64 1997/04/28 02:36:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -791,7 +791,7 @@ issignal(p)
 #ifdef	PROCFS
 				/* procfs debugging */
 				p->p_stat = SSTOP;
-				wakeup((caddr_t)p);
+				wakeup(p->p_pptr);
 				mi_switch();
 #else
 				panic("procfs debugging");
