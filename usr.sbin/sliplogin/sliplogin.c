@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.19 2003/08/07 11:25:43 agc Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.20 2003/10/21 02:53:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.19 2003/08/07 11:25:43 agc Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.20 2003/10/21 02:53:57 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ main(argc, argv)
 	 * to see whether changes are allowed (or just "route get").
 	 */
 	(void)setuid(0);
-	if ((s = system(logincmd)) != NULL) {
+	if ((s = system(logincmd)) != 0) {
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		       loginname, s, loginfile);
 		(void)ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
