@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.6 2002/06/02 14:14:04 itojun Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.7 2002/06/02 15:05:24 zuntum Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -330,7 +330,7 @@ menu crypttype, title "Kodowanie hasel";
 	option "DES", exit, action { yesno = 1; };
 	option "MD5", exit, action { yesno = 2; };
 	option "Blowfish 2^7 round", exit, action { yesno = 3; };
-	option "do not change", exit, action { yesno = 0; };
+	option "nie zmieniaj", exit, action { yesno = 0; };
 
 menu cdromsource, title "Zmien";
 	display action
