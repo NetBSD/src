@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.12 2000/12/06 23:42:34 matt Exp $
+#	$NetBSD: files.prep,v 1.13 2001/01/05 17:49:43 tsutsui Exp $
 #
 # prep-specific configuration info
 #
@@ -94,6 +94,9 @@ include "dev/isa/files.isa"
 major	{mcd = 7}
 file	arch/prep/isa/isa_machdep.c	isa
 file	arch/prep/isa/isadma_machdep.c	isa
+
+# ISA Plug 'n Play devices
+file	arch/prep/isa/isapnp_machdep.c	isapnp
 
 #
 # clock
