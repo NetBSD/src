@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.18 2004/08/27 07:02:45 skrll Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.19 2004/09/20 17:53:08 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.18 2004/08/27 07:02:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.19 2004/09/20 17:53:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.18 2004/08/27 07:02:45 skrll Exp 
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/tty.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
 
 #include <miscfs/procfs/procfs.h>
 #include <compat/linux/common/linux_exec.h>
@@ -248,4 +250,62 @@ procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		return 0;
 
 	return (uiomove_frombuf(buf, len, uio));
+}
+
+int
+procfs_domounts(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+		 struct uio *uio)
+{
+	char buf[512], *mtab = NULL;
+	const char *fsname;
+	size_t len, mtabsz = 0;
+	struct mount *mp, *nmp;
+	struct statvfs *sfs;
+	int error = 0;
+
+	simple_lock(&mountlist_slock);
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+			continue;
+		}
+
+		sfs = &mp->mnt_stat;
+
+		/* Linux uses different names for some filesystems */
+		fsname = sfs->f_fstypename;
+		if (strcmp(fsname, "procfs") == 0)
+			fsname = "proc";
+		else if (strcmp(fsname, "ext2fs") == 0)
+			fsname = "ext2";
+		
+		len = snprintf(buf, sizeof(buf), "%s %s %s %s%s%s%s%s%s 0 0\n",
+			sfs->f_mntfromname,
+			sfs->f_mntonname,
+			fsname,
+			(mp->mnt_flag & MNT_RDONLY) ? "ro" : "rw",
+			(mp->mnt_flag & MNT_NOSUID) ? ",nosuid" : "",
+			(mp->mnt_flag & MNT_NOEXEC) ? ",noexec" : "",
+			(mp->mnt_flag & MNT_NODEV) ? ",nodev" : "",
+			(mp->mnt_flag & MNT_SYNCHRONOUS) ? ",sync" : "",
+			(mp->mnt_flag & MNT_NOATIME) ? ",noatime" : ""
+			);
+
+		mtab = realloc(mtab, mtabsz + len, M_TEMP, M_WAITOK);
+		memcpy(mtab + mtabsz, buf, len);
+		mtabsz += len;
+
+		simple_lock(&mountlist_slock);
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		vfs_unbusy(mp);
+	}
+	simple_unlock(&mountlist_slock);
+
+	if (mtabsz > 0) {
+		error = uiomove_frombuf(mtab, mtabsz, uio);
+		free(mtab, M_TEMP);
+	}
+
+	return error;
 }
