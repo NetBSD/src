@@ -29,6 +29,7 @@
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
+./usr/mdec/mbr_bootsel
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/bad144
