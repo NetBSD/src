@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2001/12/14 05:34:47 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.73 2001/12/14 05:56:59 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 # Support for various CPU types
 options 	HP320
@@ -76,7 +76,7 @@ options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
-options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
+options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
