@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993, 1994
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,61 +29,71 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)page.h	8.2 (Berkeley) 5/31/94
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
+#endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stddef.h>
+#include <stdio.h>
+
+#include <db.h>
+
+DB *
+dbopen(fname, flags, mode, type, openinfo)
+	const char *fname;
+	int flags, mode;
+	DBTYPE type;
+	const void *openinfo;
+{
+
+#define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
+#define	USE_OPEN_FLAGS							\
+	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
+	 O_RDWR | O_SHLOCK | O_TRUNC)
+
+	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
+		switch (type) {
+		case DB_BTREE:
+			return (__bt_open(fname, flags & USE_OPEN_FLAGS,
+			    mode, openinfo, flags & DB_FLAGS));
+		case DB_HASH:
+			return (__hash_open(fname, flags & USE_OPEN_FLAGS,
+			    mode, openinfo, flags & DB_FLAGS));
+		case DB_RECNO:
+			return (__rec_open(fname, flags & USE_OPEN_FLAGS,
+			    mode, openinfo, flags & DB_FLAGS));
+		}
+	errno = EINVAL;
+	return (NULL);
+}
+
+static int
+__dberr()
+{
+	return (RET_ERROR);
+}
 
 /*
- * Definitions for hashing page file format.
- */
-
-/*
- * routines dealing with a data page
+ * __DBPANIC -- Stop.
  *
- * page format:
- *	+------------------------------+
- * p	| n | keyoff | datoff | keyoff |
- * 	+------------+--------+--------+
- *	| datoff | free  |  ptr  | --> |
- *	+--------+---------------------+
- *	|	 F R E E A R E A       |
- *	+--------------+---------------+
- *	|  <---- - - - | data          |
- *	+--------+-----+----+----------+
- *	|  key   | data     | key      |
- *	+--------+----------+----------+
- *
- * Pointer to the free space is always:  p[p[0] + 2]
- * Amount of free space on the page is:  p[p[0] + 1]
+ * Parameters:
+ *	dbp:	pointer to the DB structure.
  */
-
-/*
- * How many bytes required for this pair?
- *	2 shorts in the table at the top of the page + room for the
- *	key and room for the data
- *
- * We prohibit entering a pair on a page unless there is also room to append
- * an overflow page. The reason for this it that you can get in a situation
- * where a single key/data pair fits on a page, but you can't append an
- * overflow page and later you'd have to split the key/data and handle like
- * a big pair.
- * You might as well do this up front.
- */
-
-#define	PAIRSIZE(K,D)	(2*sizeof(u_int16_t) + (K)->size + (D)->size)
-#define BIGOVERHEAD	(4*sizeof(u_int16_t))
-#define KEYSIZE(K)	(4*sizeof(u_int16_t) + (K)->size);
-#define OVFLSIZE	(2*sizeof(u_int16_t))
-#define FREESPACE(P)	((P)[(P)[0]+1])
-#define	OFFSET(P)	((P)[(P)[0]+2])
-#define PAIRFITS(P,K,D) \
-	(((P)[2] >= REAL_KEY) && \
-	    (PAIRSIZE((K),(D)) + OVFLSIZE) <= FREESPACE((P)))
-#define PAGE_META(N)	(((N)+3) * sizeof(u_int16_t))
-
-typedef struct {
-	BUFHEAD *newp;
-	BUFHEAD *oldp;
-	BUFHEAD *nextp;
-	u_int16_t next_addr;
-}       SPLIT_RETURN;
+void
+__dbpanic(dbp)
+	DB *dbp;
+{
+	/* The only thing that can succeed is a close. */
+	dbp->del = (int (*)())__dberr;
+	dbp->fd = (int (*)())__dberr;
+	dbp->get = (int (*)())__dberr;
+	dbp->put = (int (*)())__dberr;
+	dbp->seq = (int (*)())__dberr;
+	dbp->sync = (int (*)())__dberr;
+}

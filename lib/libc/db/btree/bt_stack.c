@@ -3,7 +3,7 @@
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
+ * Mike Olson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,61 +32,65 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)bt_stack.c	8.4 (Berkeley) 6/20/94";
+#endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <db.h>
+#include "btree.h"
+
+/*
+ * When a page splits, a new record has to be inserted into its parent page.
+ * This page may have to split as well, all the way up to the root.  Since
+ * parent pointers in each page would be expensive, we maintain a stack of
+ * parent pages as we descend the tree.
  *
- *	@(#)page.h	8.2 (Berkeley) 5/31/94
+ * XXX
+ * This is a concurrency problem -- if user a builds a stack, then user b
+ * splits the tree, then user a tries to split the tree, there's a new level
+ * in the tree that user a doesn't know about.
  */
 
 /*
- * Definitions for hashing page file format.
- */
-
-/*
- * routines dealing with a data page
+ * __BT_PUSH -- Push parent page info onto the stack (LIFO).
  *
- * page format:
- *	+------------------------------+
- * p	| n | keyoff | datoff | keyoff |
- * 	+------------+--------+--------+
- *	| datoff | free  |  ptr  | --> |
- *	+--------+---------------------+
- *	|	 F R E E A R E A       |
- *	+--------------+---------------+
- *	|  <---- - - - | data          |
- *	+--------+-----+----+----------+
- *	|  key   | data     | key      |
- *	+--------+----------+----------+
+ * Parameters:
+ *	t:	tree
+ *	pgno:	page
+ *	index:	page index
  *
- * Pointer to the free space is always:  p[p[0] + 2]
- * Amount of free space on the page is:  p[p[0] + 1]
+ * Returns:
+ * 	RET_ERROR, RET_SUCCESS
  */
+int
+__bt_push(t, pgno, index)
+	BTREE *t;
+	pgno_t pgno;
+	indx_t index;
+{
+	size_t sz;
 
-/*
- * How many bytes required for this pair?
- *	2 shorts in the table at the top of the page + room for the
- *	key and room for the data
- *
- * We prohibit entering a pair on a page unless there is also room to append
- * an overflow page. The reason for this it that you can get in a situation
- * where a single key/data pair fits on a page, but you can't append an
- * overflow page and later you'd have to split the key/data and handle like
- * a big pair.
- * You might as well do this up front.
- */
+	if (t->bt_sp == t->bt_maxstack) {
+		t->bt_maxstack += 50;
+		sz = t->bt_maxstack * sizeof(EPGNO);
+		t->bt_stack = (EPGNO *)(t->bt_stack == NULL ?
+		    malloc(sz) : realloc(t->bt_stack, sz));
+		if (t->bt_stack == NULL) {
+			t->bt_maxstack -= 50;
+			return (RET_ERROR);
+		}
+	}
 
-#define	PAIRSIZE(K,D)	(2*sizeof(u_int16_t) + (K)->size + (D)->size)
-#define BIGOVERHEAD	(4*sizeof(u_int16_t))
-#define KEYSIZE(K)	(4*sizeof(u_int16_t) + (K)->size);
-#define OVFLSIZE	(2*sizeof(u_int16_t))
-#define FREESPACE(P)	((P)[(P)[0]+1])
-#define	OFFSET(P)	((P)[(P)[0]+2])
-#define PAIRFITS(P,K,D) \
-	(((P)[2] >= REAL_KEY) && \
-	    (PAIRSIZE((K),(D)) + OVFLSIZE) <= FREESPACE((P)))
-#define PAGE_META(N)	(((N)+3) * sizeof(u_int16_t))
-
-typedef struct {
-	BUFHEAD *newp;
-	BUFHEAD *oldp;
-	BUFHEAD *nextp;
-	u_int16_t next_addr;
-}       SPLIT_RETURN;
+	t->bt_stack[t->bt_sp].pgno = pgno;
+	t->bt_stack[t->bt_sp].index = index;
+	++t->bt_sp;
+	return (RET_SUCCESS);
+}

@@ -1,8 +1,10 @@
-#	@(#)Makefile.inc	5.1 (Berkeley) 2/24/91
+#	@(#)Makefile.inc	8.2 (Berkeley) 2/21/94
 #
-.PATH: ${.CURDIR}/db
+CFLAGS+=-D__DBINTERFACE_PRIVATE
 
 .include "${.CURDIR}/db/btree/Makefile.inc"
+.include "${.CURDIR}/db/db/Makefile.inc"
 .include "${.CURDIR}/db/hash/Makefile.inc"
-
-MAN3+=	db.0
+.include "${.CURDIR}/db/man/Makefile.inc"
+.include "${.CURDIR}/db/mpool/Makefile.inc"
+.include "${.CURDIR}/db/recno/Makefile.inc"

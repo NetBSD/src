@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,19 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)search.h	8.1 (Berkeley) 6/4/93
+ *	@(#)recno.h	8.1 (Berkeley) 6/4/93
  */
 
-/* Backward compatibility to hsearch interface. */
-typedef struct entry {
-	char *key;
-	char *data;
-} ENTRY;
+enum SRCHOP { SDELETE, SINSERT, SEARCH};	/* Rec_search operation. */
 
-typedef enum {
-	FIND, ENTER
-} ACTION;
-
-int	 hcreate __P((unsigned int));
-void	 hdestroy __P((void));
-ENTRY	*hsearch __P((ENTRY, ACTION));
+#include "../btree/btree.h"
+#include "extern.h"

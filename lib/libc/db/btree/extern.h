@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,19 +30,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)search.h	8.1 (Berkeley) 6/4/93
+ *	@(#)extern.h	8.4 (Berkeley) 6/4/94
  */
 
-/* Backward compatibility to hsearch interface. */
-typedef struct entry {
-	char *key;
-	char *data;
-} ENTRY;
+int	 __bt_close __P((DB *));
+int	 __bt_cmp __P((BTREE *, const DBT *, EPG *));
+int	 __bt_crsrdel __P((BTREE *, EPGNO *));
+int	 __bt_defcmp __P((const DBT *, const DBT *));
+size_t	 __bt_defpfx __P((const DBT *, const DBT *));
+int	 __bt_delete __P((const DB *, const DBT *, u_int));
+int	 __bt_dleaf __P((BTREE *, PAGE *, int));
+int	 __bt_fd __P((const DB *));
+EPG	*__bt_first __P((BTREE *, const DBT *, int *));
+int	 __bt_free __P((BTREE *, PAGE *));
+int	 __bt_get __P((const DB *, const DBT *, DBT *, u_int));
+PAGE	*__bt_new __P((BTREE *, pgno_t *));
+void	 __bt_pgin __P((void *, pgno_t, void *));
+void	 __bt_pgout __P((void *, pgno_t, void *));
+int	 __bt_push __P((BTREE *, pgno_t, int));
+int	 __bt_put __P((const DB *dbp, DBT *, const DBT *, u_int));
+int	 __bt_ret __P((BTREE *, EPG *, DBT *, DBT *));
+EPG	*__bt_search __P((BTREE *, const DBT *, int *));
+int	 __bt_seq __P((const DB *, DBT *, DBT *, u_int));
+int	 __bt_split __P((BTREE *, PAGE *,
+	    const DBT *, const DBT *, int, size_t, u_int32_t));
+int	 __bt_sync __P((const DB *, u_int));
 
-typedef enum {
-	FIND, ENTER
-} ACTION;
+int	 __ovfl_delete __P((BTREE *, void *));
+int	 __ovfl_get __P((BTREE *, void *, size_t *, char **, size_t *));
+int	 __ovfl_put __P((BTREE *, const DBT *, pgno_t *));
 
-int	 hcreate __P((unsigned int));
-void	 hdestroy __P((void));
-ENTRY	*hsearch __P((ENTRY, ACTION));
+#ifdef DEBUG
+void	 __bt_dnpage __P((DB *, pgno_t));
+void	 __bt_dpage __P((PAGE *));
+void	 __bt_dump __P((DB *));
+#endif
+#ifdef STATISTICS
+void	 __bt_stat __P((DB *));
+#endif

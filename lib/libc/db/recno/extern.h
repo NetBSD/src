@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,19 +30,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)search.h	8.1 (Berkeley) 6/4/93
+ *	@(#)extern.h	8.3 (Berkeley) 6/4/94
  */
 
-/* Backward compatibility to hsearch interface. */
-typedef struct entry {
-	char *key;
-	char *data;
-} ENTRY;
+#include "../btree/extern.h"
 
-typedef enum {
-	FIND, ENTER
-} ACTION;
-
-int	 hcreate __P((unsigned int));
-void	 hdestroy __P((void));
-ENTRY	*hsearch __P((ENTRY, ACTION));
+int	 __rec_close __P((DB *));
+int	 __rec_delete __P((const DB *, const DBT *, u_int));
+int	 __rec_dleaf __P((BTREE *, PAGE *, u_int32_t));
+int	 __rec_fd __P((const DB *));
+int	 __rec_fmap __P((BTREE *, recno_t));
+int	 __rec_fout __P((BTREE *));
+int	 __rec_fpipe __P((BTREE *, recno_t));
+int	 __rec_get __P((const DB *, const DBT *, DBT *, u_int));
+int	 __rec_iput __P((BTREE *, recno_t, const DBT *, u_int));
+int	 __rec_put __P((const DB *dbp, DBT *, const DBT *, u_int));
+int	 __rec_ret __P((BTREE *, EPG *, recno_t, DBT *, DBT *));
+EPG	*__rec_search __P((BTREE *, recno_t, enum SRCHOP));
+int	 __rec_seq __P((const DB *, DBT *, DBT *, u_int));
+int	 __rec_sync __P((const DB *, u_int));
+int	 __rec_vmap __P((BTREE *, recno_t));
+int	 __rec_vout __P((BTREE *));
+int	 __rec_vpipe __P((BTREE *, recno_t));

@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993, 1994
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Margo Seltzer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,61 +29,65 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)page.h	8.2 (Berkeley) 5/31/94
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)bt_page.c	8.2 (Berkeley) 2/21/94";
+#endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+
+#include <stdio.h>
+
+#include <db.h>
+#include "btree.h"
 
 /*
- * Definitions for hashing page file format.
+ * __BT_FREE -- Put a page on the freelist.
+ *
+ * Parameters:
+ *	t:	tree
+ *	h:	page to free
+ *
+ * Returns:
+ *	RET_ERROR, RET_SUCCESS
  */
+int
+__bt_free(t, h)
+	BTREE *t;
+	PAGE *h;
+{
+	/* Insert the page at the start of the free list. */
+	h->prevpg = P_INVALID;
+	h->nextpg = t->bt_free;
+	t->bt_free = h->pgno;
+
+	/* Make sure the page gets written back. */
+	return (mpool_put(t->bt_mp, h, MPOOL_DIRTY));
+}
 
 /*
- * routines dealing with a data page
+ * __BT_NEW -- Get a new page, preferably from the freelist.
  *
- * page format:
- *	+------------------------------+
- * p	| n | keyoff | datoff | keyoff |
- * 	+------------+--------+--------+
- *	| datoff | free  |  ptr  | --> |
- *	+--------+---------------------+
- *	|	 F R E E A R E A       |
- *	+--------------+---------------+
- *	|  <---- - - - | data          |
- *	+--------+-----+----+----------+
- *	|  key   | data     | key      |
- *	+--------+----------+----------+
+ * Parameters:
+ *	t:	tree
+ *	npg:	storage for page number.
  *
- * Pointer to the free space is always:  p[p[0] + 2]
- * Amount of free space on the page is:  p[p[0] + 1]
+ * Returns:
+ *	Pointer to a page, NULL on error.
  */
+PAGE *
+__bt_new(t, npg)
+	BTREE *t;
+	pgno_t *npg;
+{
+	PAGE *h;
 
-/*
- * How many bytes required for this pair?
- *	2 shorts in the table at the top of the page + room for the
- *	key and room for the data
- *
- * We prohibit entering a pair on a page unless there is also room to append
- * an overflow page. The reason for this it that you can get in a situation
- * where a single key/data pair fits on a page, but you can't append an
- * overflow page and later you'd have to split the key/data and handle like
- * a big pair.
- * You might as well do this up front.
- */
-
-#define	PAIRSIZE(K,D)	(2*sizeof(u_int16_t) + (K)->size + (D)->size)
-#define BIGOVERHEAD	(4*sizeof(u_int16_t))
-#define KEYSIZE(K)	(4*sizeof(u_int16_t) + (K)->size);
-#define OVFLSIZE	(2*sizeof(u_int16_t))
-#define FREESPACE(P)	((P)[(P)[0]+1])
-#define	OFFSET(P)	((P)[(P)[0]+2])
-#define PAIRFITS(P,K,D) \
-	(((P)[2] >= REAL_KEY) && \
-	    (PAIRSIZE((K),(D)) + OVFLSIZE) <= FREESPACE((P)))
-#define PAGE_META(N)	(((N)+3) * sizeof(u_int16_t))
-
-typedef struct {
-	BUFHEAD *newp;
-	BUFHEAD *oldp;
-	BUFHEAD *nextp;
-	u_int16_t next_addr;
-}       SPLIT_RETURN;
+	if (t->bt_free != P_INVALID &&
+	    (h = mpool_get(t->bt_mp, t->bt_free, 0)) != NULL) {
+			*npg = t->bt_free;
+			t->bt_free = h->nextpg;
+			return (h);
+	}
+	return (mpool_new(t->bt_mp, npg));
+}
