@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.41 2001/02/10 04:14:27 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.42 2001/02/11 04:29:30 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -1445,6 +1445,7 @@ in6_addmulti(maddr6, ifp, errorp)
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
+			IFAFREE(&ia->ia_ifa);
 			splx(s);
 			return(NULL);
 		}
