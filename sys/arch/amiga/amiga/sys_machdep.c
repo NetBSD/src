@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 1996/04/21 21:07:13 veego Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14.4.1 1996/05/26 16:23:34 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -126,7 +126,7 @@ cachectl(req, addr, len)
 	int len;
 {
 	int error = 0;
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
@@ -236,7 +236,7 @@ dma_cachectl(addr, len)
 	caddr_t	addr;
 	int len;
 {
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0;
