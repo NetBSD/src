@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.45 1997/10/13 19:15:19 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.46 1997/10/14 08:50:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -272,7 +272,7 @@ struct vndbuf {
 
 /* To get from a buffer to the encapsulating vndbuf */
 #define BUF_TO_VNDBUF(bp) \
-	((struct vndbuf *)((int)bp - ((int)&((struct vndbuf *)0)->vb_buf)))
+	((struct vndbuf *)((long)bp - ((long)&((struct vndbuf *)0)->vb_buf)))
 
 /*
  * We keep a pool vndbuf's and vndxfer structures.
