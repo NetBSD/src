@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:41 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/07/02 07:39:40 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/appl/kf
 
@@ -22,6 +22,6 @@ LDADD=	-lkrb5 \
 	-lroken \
 	-lcrypt
 
-NOMAN=
+MAN=	kfd.8
 
 .include <bsd.prog.mk>
