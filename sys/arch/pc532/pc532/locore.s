@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1995/01/18 08:14:32 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1995/01/22 07:06:48 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -914,11 +914,7 @@ ENTRY(_trap_flg)
 	addd	r1, r0
 	cinv	i, r0		/* Invalidate possible second line */
 #else
-	sprd	cfg, r0		/* Trying something different! PAN */
-	bicd	CFG_INS, r0
-	lprd	cfg, r0
-	ord	CFG_INS, r0
-	lprd	cfg, r0
+	cinv	ia, r0		/* Invalidate the entire cache. */
 #endif	
 	addqd	1, tos		/* Increment return address */
 	rett	0
