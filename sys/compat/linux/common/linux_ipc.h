@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.h,v 1.4 1998/10/04 00:02:35 fvdl Exp $	*/
+/*	$NetBSD: linux_ipc.h,v 1.5 1999/01/03 03:52:22 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _LINUX_IPC_H
 #define _LINUX_IPC_H
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_sysv.h"
+#endif
 
 #include <sys/ipc.h>
 
