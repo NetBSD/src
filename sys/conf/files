@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.426 2001/02/24 01:34:28 lukem Exp $
+#	$NetBSD: files,v 1.427 2001/02/27 00:29:36 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -40,7 +40,7 @@ defopt	COMPAT_IBCS2
 defopt	COMPAT_LINUX
 defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
-defopt	COMPAT_SVR4
+defopt	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defopt	COMPAT_ULTRIX
 defopt	COMPAT_NETBSD32
 defopt	COMPAT_AOUT
