@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.15 2000/06/29 09:02:56 mrg Exp $ */
+/* $NetBSD: promcons.c,v 1.16 2000/11/02 00:26:36 eeh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.15 2000/06/29 09:02:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.16 2000/11/02 00:26:36 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ promopen(dev, flag, mode, p)
 
 	splx(s);
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error == 0 && setuptimeout) {
 		polltime = hz / PROM_POLL_HZ;
 		if (polltime < 1)
@@ -126,7 +126,7 @@ promclose(dev, flag, mode, p)
 	struct tty *tp = prom_tty[unit];
 
 	callout_stop(&prom_ch);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
@@ -139,7 +139,7 @@ promread(dev, uio, flag)
 {
 	struct tty *tp = prom_tty[minor(dev)];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -150,7 +150,7 @@ promwrite(dev, uio, flag)
 {
 	struct tty *tp = prom_tty[minor(dev)];
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
  
 int
@@ -165,7 +165,7 @@ promioctl(dev, cmd, data, flag, p)
 	struct tty *tp = prom_tty[unit];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -233,7 +233,7 @@ promtimeout(v)
 
 	while (promcnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
-			(*linesw[tp->t_line].l_rint)(c, tp);
+			(*tp->t_linesw->l_rint)(c, tp);
 	}
 	callout_reset(&prom_ch, polltime, promtimeout, tp);
 }
