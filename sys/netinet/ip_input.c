@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.46 1997/02/19 08:30:04 cjs Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.47 1997/02/25 08:35:42 cjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -78,7 +78,10 @@
 #define	IPSENDREDIRECTS	1
 #endif
 #ifndef IPFORWSRCRT
-#define	IPFORWSRCRT	1	/* allow source-routed packets */
+#define	IPFORWSRCRT	1	/* forward source-routed packets */
+#endif
+#ifndef IPALLOWSRCRT
+#define	IPALLOWSRCRT	0	/* reject all source-routed packets */
 #endif
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -96,6 +99,7 @@ int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_defttl = IPDEFTTL;
 int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
+int	ip_allowsrcrt = IPALLOWSRCRT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -711,6 +715,11 @@ ip_dooptions(m)
 		 */
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
+			if (ip_allowsrcrt == 0) {
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_NET_PROHIB;
+				goto bad;
+			}
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
@@ -1248,9 +1257,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
 	case IPCTL_FORWSRCRT:
-		/*
-		 * Don't allow this to change in a secure environment.
-		 */
+		/* Don't allow this to change in a secure environment.  */
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp,
 			    ip_forwsrcrt));
@@ -1260,6 +1267,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_directedbcast));
+	case IPCTL_ALLOWSRCRT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_allowsrcrt));
 	default:
 		return (EOPNOTSUPP);
 	}
