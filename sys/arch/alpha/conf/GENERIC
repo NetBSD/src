@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.197 2001/11/20 08:43:20 lukem Exp $
+# $NetBSD: GENERIC,v 1.198 2001/11/20 12:56:19 lukem Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.197 $"
+#ident 		"GENERIC-$Revision: 1.198 $"
 
 maxusers 32
 
@@ -88,10 +88,10 @@ options 	COMPAT_LINUX
 
 # System V-like message queues
 options 	SYSVMSG
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 
 # System V-like semaphores
 options 	SYSVSEM
@@ -334,8 +334,8 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
 #wdc*	at	isapnp?
-we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
@@ -477,8 +477,8 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

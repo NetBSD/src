@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.21 2001/11/20 08:43:39 lukem Exp $
+# $NetBSD: DISKLESS3X,v 1.22 2001/11/20 12:56:41 lukem Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -27,7 +27,7 @@ maxusers	2
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
+#makeoptions	DEBUG="-g"	# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
@@ -105,7 +105,7 @@ ms0	at zsc0 channel 1	# mouse
 
 # Intel Ethernet (onboard, or VME)
 #ie0 at obio0 addr 0x65000000 ipl 3
-#ie1 at vme2  addr   0xe88000 ipl 3 vect 0x75
+#ie1 at vme2 addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr 0x65002000 ipl 3
@@ -115,7 +115,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 #
 
 # P4 Monochrome frame buffer.
-bwtwo0  at obmem0 addr 0x50300000
+bwtwo0	at obmem0 addr 0x50300000
 
 # P4 8-bit color frame buffer
 cgfour0 at obmem0 addr 0x50300000

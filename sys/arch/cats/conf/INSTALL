@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7 2001/11/13 17:54:48 augustss Exp $
+#	$NetBSD: INSTALL,v 1.8 2001/11/20 12:56:23 lukem Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -119,7 +119,7 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
-options		PMAP_STATIC_L1S=128
+options 	PMAP_STATIC_L1S=128
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
@@ -138,7 +138,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internally consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

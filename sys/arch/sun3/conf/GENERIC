@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.83 2001/11/20 08:43:39 lukem Exp $
+# $NetBSD: GENERIC,v 1.84 2001/11/20 12:56:41 lukem Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.83 $"
+#ident 		"GENERIC-$Revision: 1.84 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -18,10 +18,10 @@ maxusers	4
 options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	LKM		# loadable kernel modules
@@ -31,7 +31,7 @@ options 	LKM		# loadable kernel modules
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
+#makeoptions	DEBUG="-g"	# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
@@ -73,7 +73,7 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -125,7 +125,7 @@ ms0	at zsc0 channel 1	# mouse
 
 # Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x0C0000 ipl 3
-ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
+ie1 at vme2 addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr 0x120000 ipl 3
@@ -150,8 +150,8 @@ options 	LANCE_REVC_BUG
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
 si0 at obio0 addr 0x140000 ipl 2
-si0 at vme2  addr 0x200000 ipl 2 vect 0x40
-si1 at vme2  addr 0x204000 ipl 2 vect 0x41
+si0 at vme2 addr 0x200000 ipl 2 vect 0x40
+si1 at vme2 addr 0x204000 ipl 2 vect 0x41
 
 # Xylogics 450/451 controllers (VME A16/D16)
 xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48

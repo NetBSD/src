@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.3 2001/11/13 17:54:46 augustss Exp $
+#	$NetBSD: NC_WSCONS,v 1.4 2001/11/20 12:56:17 lukem Exp $
 #
 #	NC - with wscons
 #
@@ -24,7 +24,7 @@ options 	CPU_ARM7	# Support the ARM7 core
 # Architecture options
 options 	RISCPC		# We are a RiscPC
 #options 	RC7500		# We are a RC7500
-options		NC
+options 	NC
 
 # FPA options
 
@@ -86,7 +86,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Bootloader options
-#options		COMPAT_OLD_BOOTLOADER
+#options 	COMPAT_OLD_BOOTLOADER
 
 
 # Shared memory options
@@ -114,19 +114,19 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ne0 type nfs
-options		NFS_BOOT_DHCP
-#options	NFS_BOOTPARAM
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOTPARAM
 
 # serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
 # this really be fixed some day
-#options         COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600    
+#options 	COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600
 
 # The main bus device
 mainbus0 at root
@@ -155,29 +155,29 @@ todclock0	at rtc?
 # VIDC device
 vidc0		at mainbus?
 
-# WSCONS             
+# WSCONS
 # ws console uses DUMB, SUN or VT100 terminal emulation
-#options        WSEMUL_NODUMB
-#options        WSEMUL_SUN
-options         WSEMUL_VT100
+#options 	WSEMUL_NODUMB
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
 
-#options         FONT_BOLD8x16
-#options         FONT_GALLANT12x22        # Very nice font
-#options         FONT_LUCIDA16x29
-#options         FONT_OMRON12x20         # looks funny
-#options         FONT_QVSS8x15           # broken ?
-#options         FONT_SONY12x25          # looks like VT220 font
-#options         FONT_SONY8x16           # not tested
-options         FONT_VT220L8x8          # 8x8 font as in Arch. cons
-#options         FONT_VT220L8x16         # 8x(2x8) font as in Arch. cons
-#options         FONT_VT220L8x10         # not tested
-#options         FONT_VT220L8x20         # not tested
+#options 	FONT_BOLD8x16
+#options 	FONT_GALLANT12x22	# Very nice font
+#options 	FONT_LUCIDA16x29
+#options 	FONT_OMRON12x20		# looks funny
+#options 	FONT_QVSS8x15		# broken ?
+#options 	FONT_SONY12x25		# looks like VT220 font
+#options 	FONT_SONY8x16		# not tested
+options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
+#options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
+#options 	FONT_VT220L8x10		# not tested
+#options 	FONT_VT220L8x20		# not tested
 
-vidcvideo0      at vidc?                 # wscons driver for VIDC
-wsdisplay*      at vidcvideo? console ?  # display itself
+vidcvideo0	at vidc?		# wscons driver for VIDC
+wsdisplay*	at vidcvideo? console ?	# display itself
 
-rpckbd*         at iomd?                 # based on old `kbd' driver
-wskbd*          at rpckbd?               # wskbd on RiscPC keyboard
+rpckbd*		at iomd?		# based on old `kbd' driver
+wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 pseudo-device	wsmux
 
@@ -185,17 +185,17 @@ pseudo-device	wsmux
 # The origional vidcconsole :
 # vidcconsole kbd at IOMD
 # vidcconsole PS2 mouse at IOMD
-#vidcconsole0   at vidc?                 # display + vt100 emulation
-#kbd*           at iomd?                 # PS/2 keyboard for vidcconsole
-#opms*          at iomd?                 # RiscPC mouse for vidcconsole
+#vidcconsole0	at vidc?		# display + vt100 emulation
+#kbd*		at iomd?		# PS/2 keyboard for vidcconsole
+#opms*		at iomd?		# RiscPC mouse for vidcconsole
 
 # generic VT console device
-#vt0     at vidc?
-#vt1     at vidc?
-#vt2     at vidc?
-#vt3     at vidc?
-#vt4     at vidc?
-#vt5     at vidc?
+#vt0	at vidc?
+#vt1	at vidc?
+#vt2	at vidc?
+#vt3	at vidc?
+#vt4	at vidc?
+#vt5	at vidc?
 
 # Peripheral IO Controller
 pioc0	at mainbus? base 0x00210000
@@ -209,20 +209,20 @@ pioc0	at mainbus? base 0x00210000
 #sd*	at atapibus? drive ?
 
 # Floppy disk controller
-#fdc*    at pioc? offset 0x03f0 irq 12 dack 0x2000
-#fdc*    at pioc? offset 0x0370 irq -1 dack 0x2000
-#fd0     at fdc? drive ?
+#fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
+#fdc*	at pioc? offset 0x0370 irq -1 dack 0x2000
+#fd0	at fdc? drive ?
 
 # Serial ports
-#com*    at pioc? offset 0x03f8 irq 10
-#com*    at pioc? offset 0x02f8 irq -1
-#com*    at pioc? offset 0x0338 irq -1
-#com*    at pioc? offset 0x0238 irq -1
+#com*	at pioc? offset 0x03f8 irq 10
+#com*	at pioc? offset 0x02f8 irq -1
+#com*	at pioc? offset 0x0338 irq -1
+#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-lpt*    at pioc? offset 0x0278 irq 0
-#lpt*    at pioc? offset 0x0378 irq -1
-#lpt*    at pioc? offset 0x03bc irq -1
+lpt*	at pioc? offset 0x0278 irq 0
+#lpt*	at pioc? offset 0x0378 irq -1
+#lpt*	at pioc? offset 0x03bc irq -1
 
 # Crude sound device
 beep0	at vidc?
@@ -286,25 +286,25 @@ podulebus0	at root
 ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	wsmux
-pseudo-device	loop	1               # network loopback
-#pseudo-device	bpfilter 8              # packet filter
-#pseudo-device	sl	2               # CSLIP
+pseudo-device	loop	1		# network loopback
+#pseudo-device	bpfilter 8		# packet filter
+#pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-#pseudo-device	strip	4		# STRIP 
+#pseudo-device	strip	4		# STRIP
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # disk-like interface to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-#makeoptions MONITOR="Taxan875+LR"
-makeoptions MONITOR="AKF85"
-makeoptions MODES="640,480,70"
-#makeoptions MODES="800,600,60"
+#makeoptions	MONITOR="Taxan875+LR"
+makeoptions	MONITOR="AKF85"
+makeoptions	MODES="640,480,70"
+#makeoptions	MODES="800,600,60"
 
-#makeoptions MONITOR="PALTV"
-#makeoptions MODES="640,256,60 640,480,60 1024,768,60 1024,768,70 800,600,60 1280,1024 1152,900"
+#makeoptions	MONITOR="PALTV"
+#makeoptions	MODES="640,256,60 640,480,60 1024,768,60 1024,768,70 800,600,60 1280,1024 1152,900"
 

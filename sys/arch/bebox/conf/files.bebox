@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.29 2001/10/11 04:14:45 briggs Exp $
+#	$NetBSD: files.bebox,v 1.30 2001/11/20 12:56:23 lukem Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -49,8 +49,8 @@ major	{wd = 0}
 #
 # Memory Disk for install floppy
 #
-file arch/bebox/bebox/md_root.c   memory_disk_hooks 
-major   {md = 17}
+file arch/bebox/bebox/md_root.c		memory_disk_hooks
+major	{md = 17}
 
 #
 # RAIDframe

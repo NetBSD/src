@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.8 2001/11/20 08:43:31 lukem Exp $
+# $NetBSD: SLAB,v 1.9 2001/11/20 12:56:35 lukem Exp $
 #
 # deberg's development machine
 #
@@ -28,7 +28,7 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
-makeoptions DEBUG="-g"			# debugging symbols for gdb
+makeoptions	DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB			# support for kernel gdb
 #options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
 #options 	KGDB_DEVRATE=9600	# baud rate
@@ -38,7 +38,7 @@ options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options         SWAPDEBUG
+options 	SWAPDEBUG
 
 # Compatibility options
 #options 	COMPAT_43	# and 4.3BSD and ...
@@ -78,7 +78,7 @@ file-system 	NULLFS		# loopback file system
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -115,8 +115,8 @@ options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
 # wscons options
-options         RCONS_2BPP              # necessary for nextdisplay
-options         RCONS_16BPP             # necessary for nextdisplay
+options 	RCONS_2BPP		# necessary for nextdisplay
+options 	RCONS_16BPP		# necessary for nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -137,21 +137,21 @@ mainbus0 at root
 #fpu0 at mainbus?
 
 # device space
-intio0  at mainbus?
+intio0	at mainbus?
 
-nextkbd0    at intio? ipl 3
-nextdisplay0    at mainbus?
+nextkbd0	at intio? ipl 3
+nextdisplay0	at mainbus?
 
-wsdisplay*      at nextdisplay? console ?
-wskbd*          at nextkbd? console ?
+wsdisplay*	at nextdisplay? console ?
+wskbd*		at nextkbd? console ?
 
 # INTIO
-zsc0    at intio? ipl 5
-#zsc1    at intio? ipl 5
+zsc0	at intio? ipl 5
+#zsc1	at intio? ipl 5
 
-xe*     at intio? ipl 3         # ethernet
+xe*	at intio? ipl 3			# ethernet
 
-#esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
+#esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
 
 #
 # Serial ports

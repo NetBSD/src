@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.8 2001/11/20 08:43:23 lukem Exp $
+#	$NetBSD: DELPHI,v 1.9 2001/11/20 12:56:29 lukem Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.8 $"
+ident 		"DELPHI-$Revision: 1.9 $"
 
 maxusers	64		# estimated number of users
 
@@ -31,7 +31,7 @@ options 	XSERVER		# X server support in console drivers
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -113,7 +113,7 @@ file-system 	PROCFS		# /proc
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -246,7 +246,7 @@ isapnp0	at isa?
 
 # CardBus bus support
 #cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?	
+#cardslot*	at cbb?
 
 #cardbus*	at cardslot?
 #pcmcia* 	at cardslot?
@@ -417,7 +417,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-#wdc*	at isapnp? 
+#wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
@@ -546,8 +546,8 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #ne1	at isa? port 0x300 irq 10
 #sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
-#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
-#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
+#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
 #tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 #we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
@@ -665,7 +665,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
@@ -699,7 +699,7 @@ audio*	at eap?
 #audio*	at ym?
 
 # MPU 401 UARTs
-#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+#mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
 #mpu*	at eso?
 #mpu*	at fms?
 #mpu*	at sb?

@@ -13,7 +13,7 @@ SECTIONS
   {
     *(.text)
     *(.strings)
-     _etext = . ; 
+     _etext = . ;
   }  > ram
   .tors :
   AT ( ROM + SIZEOF(.text))
@@ -29,19 +29,19 @@ SECTIONS
   AT ( ROM + SIZEOF(.text) + SIZEOF(.tors))
   {
     *(.data)
-     _edata = . ; 
+     _edata = . ;
   }  > ram
   .bss :
   AT ( ROM + SIZEOF(.text) + SIZEOF(.tors) + SIZEOF(.data))
   {
-     _bss_start = . ; 
+     _bss_start = . ;
     *(.bss)
     *(COMMON)
-     _end = . ;  
+     _end = . ;
   }  > ram
   .stack   :
   {
-     _stack = . ; 
+     _stack = . ;
     *(.stack)
   }  > ram
   .stab 0 (NOLOAD) :

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.146 2001/11/20 08:43:20 lukem Exp $
+# $NetBSD: files.alpha,v 1.147 2001/11/20 12:56:19 lukem Exp $
 #
 # alpha-specific configuration info
 
@@ -90,10 +90,10 @@ major { wd = 4 }
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
 
-# RAIDframe 
+# RAIDframe
 major { raid = 16 }
 
-# Logical disks 
+# Logical disks
 major { ld = 17 }
 
 # Raster operations
@@ -210,7 +210,7 @@ device	scc: tty
 attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
-# 8530 UARTs using the MI 8530 driver   
+# 8530 UARTs using the MI 8530 driver
 device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic
 file	dev/tc/zs_ioasic.c		zsc_ioasic	needs-flag
