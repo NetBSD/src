@@ -90,7 +90,6 @@ main()
 	def("PCB_ESP", &pcb->pcb_tss.tss_esp);
 	def("PCB_FS", &pcb->pcb_tss.tss_fs);
 	def("PCB_GS", &pcb->pcb_tss.tss_gs);
-	def("PCB_IML", &pcb->pcb_iml);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
 	def("PCB_SAVEFPU", &pcb->pcb_savefpu);
 	def("PCB_USERLDT", &pcb->pcb_ldt);
