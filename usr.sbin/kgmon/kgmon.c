@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.9 1997/10/23 12:26:02 enami Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.10 1997/10/23 12:35:12 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.9 1997/10/23 12:26:02 enami Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.10 1997/10/23 12:35:12 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ dumpstate(kvp)
 	}
 	if (i != kvp->gpm.kcountsize) {
 		(void)fprintf(stderr,
-		    "kgmon: read ticks: read %lu, got %lu: %s",
+		    "kgmon: read ticks: read %lu, got %lu: %s\n",
 		    kvp->gpm.kcountsize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(6);
@@ -392,7 +392,7 @@ dumpstate(kvp)
 	}
 	if (i != kvp->gpm.fromssize) {
 		(void)fprintf(stderr,
-		   "kgmon: read froms: read %lu, got %lu: %s",
+		   "kgmon: read froms: read %lu, got %lu: %s\n",
 		    kvp->gpm.fromssize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(9);
@@ -411,7 +411,8 @@ dumpstate(kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize) {
-		(void)fprintf(stderr, "kgmon: read tos: read %lu, got %lu: %s",
+		(void)fprintf(stderr,
+		    "kgmon: read tos: read %lu, got %lu: %s\n",
 		    kvp->gpm.tossize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(11);
