@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.42 2000/05/30 01:07:44 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.43 2000/07/06 02:59:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.42 2000/05/30 01:07:44 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.43 2000/07/06 02:59:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -207,6 +207,7 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	return (error);
 }
 
+/*ARGSUSED*/
 static int
 resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 	struct addrinfo *res;
@@ -339,12 +340,12 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 		*fd2p = s3;
-		switch (((struct sockaddr *)&from)->sa_family) {
+		switch (((struct sockaddr *)(void *)&from)->sa_family) {
 		case AF_INET:
 #ifdef INET6
 		case AF_INET6:
 #endif
-			if (getnameinfo((struct sockaddr *)&from, len,
+			if (getnameinfo((struct sockaddr *)(void *)&from, len,
 			    NULL, 0, num, sizeof(num), NI_NUMERICSERV) != 0 ||
 			    (atoi(num) >= IPPORT_RESERVED ||
 			     atoi(num) < IPPORT_RESERVED / 2)) {
@@ -525,14 +526,14 @@ rresvport_af(alport, family)
 	_DIAGASSERT(alport != NULL);
 
 	memset(&ss, 0, sizeof(ss));
-	sa = (struct sockaddr *)&ss;
+	sa = (struct sockaddr *)(void *)&ss;
 	switch (family) {
 	case AF_INET:
 #ifdef BSD4_4
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in);
-		portp = &((struct sockaddr_in *)sa)->sin_port;
+		portp = &((struct sockaddr_in *)(void *)sa)->sin_port;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -540,7 +541,7 @@ rresvport_af(alport, family)
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in6);
-		portp = &((struct sockaddr_in6 *)sa)->sin6_port;
+		portp = &((struct sockaddr_in6 *)(void *)sa)->sin6_port;
 		break;
 #endif
 	default:
@@ -556,7 +557,7 @@ rresvport_af(alport, family)
 	case AF_INET:
 	case AF_INET6:
 		*portp = 0;
-		if (bindresvport(s, (struct sockaddr_in *)sa) < 0) {
+		if (bindresvport(s, (struct sockaddr_in *)(void *)sa) < 0) {
 			int sverr = errno;
 
 			(void)close(s);
@@ -610,8 +611,8 @@ ruserok(rhost, superuser, ruser, luser)
 		return (-1);
 
 	for (r = res; r; r = r->ai_next) {
-		if (iruserok_sa(r->ai_addr, r->ai_addrlen, superuser, ruser,
-		    luser) == 0) {
+		if (iruserok_sa(r->ai_addr, (int)r->ai_addrlen, superuser,
+		    ruser, luser) == 0) {
 			freeaddrinfo(res);
 			return (0);
 		}
@@ -672,13 +673,15 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	_DIAGASSERT(ruser != NULL);
 	_DIAGASSERT(luser != NULL);
 
-	sa = (struct sockaddr *)raddr;
+	/*LINTED const castaway*/
+	sa = (struct sockaddr *)(void *)raddr;
 
 	first = 1;
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser_sa(hostf, sa, rlen, luser, ruser) == 0) {
+		if (__ivaliduser_sa(hostf, sa, (socklen_t)rlen, luser,
+		    ruser) == 0) {
 			(void)fclose(hostf);
 			return (0);
 		}
@@ -757,7 +760,7 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin,
+	return __ivaliduser_sa(hostf, (struct sockaddr *)(void *)&sin,
 	    sizeof(struct sockaddr_in), luser, ruser);
 }
 
