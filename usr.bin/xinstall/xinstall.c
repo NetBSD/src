@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.19 1997/04/19 03:50:29 mikel Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.20 1997/10/19 14:42:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
+#else
+__RCSID("$NetBSD: xinstall.c,v 1.20 1997/10/19 14:42:38 mrg Exp $");
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.19 1997/04/19 03:50:29 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +90,7 @@ void	install_dir __P((char *));
 u_long	string_to_flags __P((char **, u_long *, u_long *));
 void	strip __P((char *));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -404,11 +406,11 @@ install(from_name, to_name, fset, flags)
  */
 void
 copy(from_fd, from_name, to_fd, to_name, size)
-	register int from_fd, to_fd;
+	int from_fd, to_fd;
 	char *from_name, *to_name;
 	off_t size;
 {
-	register int nr, nw;
+	int nr, nw;
 	int serrno;
 	char *p;
 	char buf[MAXBSIZE];
@@ -476,7 +478,7 @@ void
 install_dir(path)
         char *path;
 {
-        register char *p;
+        char *p;
         struct stat sb;
         int ch;
 
