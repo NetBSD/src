@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.104 1998/02/13 00:12:51 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.105 1998/02/13 00:27:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 1998/02/13 00:12:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 1998/02/13 00:27:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,11 +862,10 @@ alpha_variation_name(variation, avtp)
 const char *
 alpha_unknown_sysname()
 {
-	/* string is 24 bytes + 64 bit hex number (16 bytes) */
-	static char s[42];
+	static char s[128];		/* safe size */
 
-	sprintf(s, "unknown model variation %lx",
-	    hwrpb->rpb_variation & SV_ST_MASK);
+	sprintf(s, "%s family, unknown model variation 0x%lx",
+	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
 }
 
