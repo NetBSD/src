@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.1.1.1 2004/05/18 00:06:58 christos Exp $ */
+/* Id: platform.h.in,v 1.12.2.1.10.2 2004/08/28 06:25:26 marka Exp */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1
@@ -77,6 +77,16 @@
  * Used to control how extern data is linked; needed for Win32 platforms.
  */
 #undef LWRES_PLATFORM_USEDECLSPEC
+
+/*
+ * Defined this system needs vsnprintf() and snprintf().
+ */
+#undef LWRES_PLATFORM_NEEDVSNPRINTF
+ 
+/*
+ * If this system need a modern sprintf() that returns (int) not (char*).
+ */
+#undef LWRES_PLATFORM_NEEDSPRINTF
 
 #ifndef LWRES_PLATFORM_USEDECLSPEC
 #define LIBLWRES_EXTERNAL_DATA
