@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.41 1994/04/20 23:39:25 mycroft Exp $
+#	$Id: GENERICAHA,v 1.42 1994/04/26 00:04:24 mycroft Exp $
 #
 
 machine		"i386"
@@ -82,16 +82,16 @@ tape		st1	at scsibus2 slave ?
 disk		cd0	at scsibus2 slave ?
 disk		cd1	at scsibus2 slave ?
 
-#controller	sea0	at isa? iomem 0xc8000 irq 5
-#master		scsibus3 at uha0
-#disk		sd0	at scsibus3 slave ?
-#disk		sd1	at scsibus3 slave ?
-#disk		sd2	at scsibus3 slave ?
-#disk		sd3	at scsibus3 slave ?
-#tape		st0	at scsibus3 slave ?
-#tape		st1	at scsibus3 slave ?
-#disk		cd0	at scsibus3 slave ?
-#disk		cd1	at scsibus3 slave ?
+controller	aic0	at isa? port 0x340 irq 11 drq 6
+master		scsibus3 at aic0
+disk		sd0	at scsibus3 slave ?
+disk		sd1	at scsibus3 slave ?
+disk		sd2	at scsibus3 slave ?
+disk		sd3	at scsibus3 slave ?
+tape		st0	at scsibus3 slave ?
+tape		st1	at scsibus3 slave ?
+disk		cd0	at scsibus3 slave ?
+disk		cd1	at scsibus3 slave ?
 
 device ed0 at isa? port 0x280 irq 9 iomem 0xd0000
 device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
