@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.247 2003/02/27 14:19:41 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.248 2003/03/02 21:37:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -505,6 +505,7 @@ static void mmu_setup4m_L2(int, struct regmap *);
 static void  mmu_setup4m_L3(int, struct segmap *);
 /*static*/ void	mmu_reservemon4m(struct pmap *);
 
+/*static*/ void pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 /*static*/ void pmap_rmk4m(struct pmap *, vaddr_t, vaddr_t, int, int);
 /*static*/ void pmap_rmu4m(struct pmap *, vaddr_t, vaddr_t, int, int);
 /*static*/ int  pmap_enk4m(struct pmap *, vaddr_t, vm_prot_t,
@@ -519,6 +520,7 @@ static void  mmu_setup4m_L3(int, struct segmap *);
 
 #if defined(SUN4) || defined(SUN4C)
 /*static*/ void	mmu_reservemon4_4c(int *, int *);
+/*static*/ void pmap_changeprot4_4c(pmap_t, vaddr_t, vm_prot_t, int);
 /*static*/ void pmap_rmk4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
 /*static*/ void pmap_rmu4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
 /*static*/ int  pmap_enk4_4c(struct pmap *, vaddr_t, vm_prot_t,
@@ -551,9 +553,9 @@ boolean_t	(*pmap_is_modified_p)(struct vm_page *);
 boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
 void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
 void		(*pmap_kremove_p)(vaddr_t, vsize_t);
+void		(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
 void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
 void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-void		(*pmap_changeprot_p)(pmap_t, vaddr_t, vm_prot_t, int);
 /* local: */
 void 		(*pmap_rmk_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
 void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
@@ -2800,12 +2802,12 @@ static void pv_uncache(struct vm_page *pg)
 	struct pvlist *pv;
 	int s;
 
-	for (pv = VM_MDPAGE_PVHEAD(pg); pv != NULL; pv = pv->pv_next)
-		pv->pv_flags |= PV_NC;
-
 	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pv_slock);
+
+	for (pv = VM_MDPAGE_PVHEAD(pg); pv != NULL; pv = pv->pv_next)
+		pv->pv_flags |= PV_NC;
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU)
@@ -3026,9 +3028,9 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	pmap_is_referenced_p	=	pmap_is_referenced4_4c;
 	pmap_kenter_pa_p 	=	pmap_kenter_pa4_4c;
 	pmap_kremove_p	 	=	pmap_kremove4_4c;
+	pmap_kprotect_p	 	=	pmap_kprotect4_4c;
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
-	pmap_changeprot_p	=	pmap_changeprot4_4c;
 	pmap_rmk_p		=	pmap_rmk4_4c;
 	pmap_rmu_p		=	pmap_rmu4_4c;
 #endif /* defined SUN4M || defined SUN4D */
@@ -3400,9 +3402,9 @@ pmap_bootstrap4m(top)
 	pmap_is_referenced_p	=	pmap_is_referenced4m;
 	pmap_kenter_pa_p 	=	pmap_kenter_pa4m;
 	pmap_kremove_p	 	=	pmap_kremove4m;
+	pmap_kprotect_p	 	=	pmap_kprotect4m;
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
-	pmap_changeprot_p	=	pmap_changeprot4m;
 	pmap_rmk_p		=	pmap_rmk4m;
 	pmap_rmu_p		=	pmap_rmu4m;
 #endif /* defined SUN4/SUN4C */
@@ -4216,7 +4218,7 @@ pmap_reference(pm)
 
 #if defined(SUN4M) || defined(SUN4D)
 /*
- * SRMMU helper to deallocate level 1 & 2 page tables.
+ * SRMMU helper to deallocate level 2 & 3 page tables.
  */
 static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 				struct segmap *sp, int vr, int vs)
@@ -4226,7 +4228,7 @@ static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 	pool_put(&L23_pool, sp->sg_pte);
 	sp->sg_pte = NULL;
 
-	/* If segment is now empty, remove level 1 pagetable as well */
+	/* If region is now empty, remove level 2 pagetable as well */
 	if (--rp->rg_nsegmap == 0) {
 		int n = 0;
 #ifdef MULTIPROCESSOR
@@ -5026,32 +5028,30 @@ pmap_protect4_4c(pm, sva, eva, prot)
  * is changing.
  */
 void
-pmap_changeprot4_4c(pm, va, prot, wired)
+pmap_changeprot4_4c(pm, va, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 {
-	int vr, vs, tpte, newprot, ctx, s;
+	int vr, vs, tpte, newprot, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
 		printf("pmap_changeprot(%p, 0x%lx, 0x%x, 0x%x)\n",
-		    pm, va, prot, wired);
+		    pm, va, prot, flags);
 #endif
 
 	write_user_windows();	/* paranoia */
 
-	va &= ~(NBPG-1);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
 		newprot = prot & VM_PROT_WRITE ? PG_W : 0;
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
-	s = splvm();		/* conservative */
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 	pmap_stats.ps_changeprots++;
@@ -5088,7 +5088,6 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 		setpte4(va, tpte);
 		setcontext4(ctx);
 	}
-	splx(s);
 }
 
 #endif /* SUN4 || SUN4C */
@@ -5237,6 +5236,7 @@ pmap_protect4m(pm, sva, eva, prot)
 #endif
 
 	s = splvm();
+	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
@@ -5297,6 +5297,7 @@ pmap_protect4m(pm, sva, eva, prot)
 		}
 	}
 	simple_unlock(&pm->pm_lock);
+	PMAP_MAP_TO_HEAD_UNLOCK();
 	splx(s);
 }
 
@@ -5306,32 +5307,28 @@ pmap_protect4m(pm, sva, eva, prot)
  * is changing.
  */
 void
-pmap_changeprot4m(pm, va, prot, wired)
+pmap_changeprot4m(pm, va, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 {
-	int pte, newprot, s;
+	int pte, newprot;
 	struct regmap *rp;
 	struct segmap *sp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
 		printf("pmap_changeprot[%d](%p, 0x%lx, 0x%x, 0x%x)\n",
-		    cpu_number(), pm, va, prot, wired);
+		    cpu_number(), pm, va, prot, flags);
 #endif
 
-	va &= ~(NBPG-1);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
 	else
 		newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
 
 	pmap_stats.ps_changeprots++;
-
-	s = splvm();		/* conservative */
-	simple_lock(&pm->pm_lock);
 
 	rp = &pm->pm_regmap[VA_VREG(va)];
 	sp = &rp->rg_segmap[VA_VSEG(va)];
@@ -5340,7 +5337,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 	if ((pte & SRMMU_PROT_MASK) == newprot) {
 		/* only wiring changed, and we ignore wiring */
 		pmap_stats.ps_useless_changeprots++;
-		goto out;
+		return;
 	}
 
 	if (pm->pm_ctx) {
@@ -5359,9 +5356,6 @@ pmap_changeprot4m(pm, va, prot, wired)
 		 (pte & ~SRMMU_PROT_MASK) | newprot,
 		 pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
-out:
-	simple_unlock(&pm->pm_lock);
-	splx(s);
 }
 #endif /* SUN4M || SUN4D */
 
@@ -5472,9 +5466,8 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 		if ((tpte & (PG_PFNUM|PG_TYPE)) ==
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
+			pmap_changeprot4_4c(pm, va, prot, flags);
 			splx(s);
-			pmap_changeprot4_4c(pm, va, prot,
-					    (flags & PMAP_WIRED) != 0);
 			return (0);
 		}
 
@@ -5671,14 +5664,13 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
-				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot4_4c(pm, va, prot,
-						    (flags & PMAP_WIRED) != 0);
+				pmap_changeprot4_4c(pm, va, prot, flags);
 				if ((flags & PMAP_WIRED) != 0)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
+				splx(s);
 				return (0);
 			}
 			/*
@@ -5937,6 +5929,41 @@ pmap_kremove4_4c(va, len)
 	splx(s);
 }
 
+/*
+ * Change protection on a range of kernel addresses.
+ */
+void
+pmap_kprotect4_4c(vaddr_t va, vsize_t size, vm_prot_t prot)
+{
+	int pte, newprot, ctx;
+
+	newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
+
+	ctx = getcontext4();
+	setcontext4(0);
+	while (size > 0) {
+		pte = getpte4(va);
+
+		if ((pte & PG_PROT) == newprot) {
+			/* no change */
+			continue;
+		}
+
+		/*
+		 * Flush cache if page has been referenced to
+		 * avoid stale protection bits in the cache tags.
+		 */
+		if ((pte & (PG_NC|PG_TYPE)) == PG_OBMEM)
+			cache_flush_page(va, 0);
+
+		pte = (pte & ~PG_PROT) | newprot;
+		setpte4(va, pte);
+
+		va += NBPG;
+		size -= MIN(NBPG,size);
+	}
+	setcontext4(ctx);
+}
 #endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M) || defined(SUN4D)	/* SRMMU versions of enter routines */
@@ -6048,11 +6075,10 @@ pmap_enk4m(pm, va, prot, flags, pg, pteproto)
 
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
 			/* just changing protection and/or wiring */
+			pmap_changeprot4m(pm, va, prot, flags);
 			simple_unlock(&pm->pm_lock);
 			PMAP_MAP_TO_HEAD_UNLOCK();
 			splx(s);
-			pmap_changeprot4m(pm, va, prot,
-					  (flags & PMAP_WIRED) != 0);
 			return (0);
 		}
 
@@ -6209,6 +6235,10 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		setpgt4m(&rp->rg_seg_ptps[vs],
 			(VA2PA((caddr_t)pte) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 	} else {
+#ifdef DIAGNOSTIC
+		if (sp->sg_npte <= 0)
+			panic("pm %p: npte %d", pm, sp->sg_npte);
+#endif
 		/*
 		 * Might be a change: fetch old pte
 		 */
@@ -6222,16 +6252,15 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 			if ((tpte & SRMMU_PPNMASK) ==
 			    (pteproto & SRMMU_PPNMASK)) {
 				/* just changing prot and/or wiring */
-				simple_unlock(&pm->pm_lock);
-				PMAP_MAP_TO_HEAD_UNLOCK();
-				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot4m(pm, va, prot,
-						  (flags & PMAP_WIRED) != 0);
+				pmap_changeprot4m(pm, va, prot, flags);
 				if ((flags & PMAP_WIRED) != 0)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
+				simple_unlock(&pm->pm_lock);
+				PMAP_MAP_TO_HEAD_UNLOCK();
+				splx(s);
 				return (0);
 			}
 			/*
@@ -6411,6 +6440,45 @@ pmap_kremove4m(va, len)
 	splx(s);
 }
 
+/*
+ * Change protection on a range of kernel addresses.
+ */
+void
+pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
+{
+	struct pmap *pm = pmap_kernel();
+	int pte, newprot;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
+
+	while (size > 0) {
+		rp = &pm->pm_regmap[VA_VREG(va)];
+		sp = &rp->rg_segmap[VA_VSEG(va)];
+		pte = sp->sg_pte[VA_SUN4M_VPG(va)];
+
+		if ((pte & SRMMU_PROT_MASK) == newprot) {
+			/* no change */
+			continue;
+		}
+
+		/*
+		 * Flush cache if page has been referenced to
+		 * avoid stale protection bits in the cache tags.
+		 */
+		if ((pte & (SRMMU_PG_C|SRMMU_PGTYPE)) ==
+		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
+			cache_flush_page(va, 0);
+
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+			 (pte & ~SRMMU_PROT_MASK) | newprot,
+			 1, pm->pm_ctxnum, PMAP_CPUSET(pm));
+
+		va += NBPG;
+		size -= MIN(NBPG,size);
+	}
+}
 #endif /* SUN4M || SUN4D */
 
 /*
