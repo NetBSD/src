@@ -344,6 +344,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ALG2302",
 	},
 	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 617",
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
 	    0,
 	    "BusLogic",
@@ -674,6 +680,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SmartCache/Raid",
 	},
 	{
+	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
+	    0,
+	    "Dolphin Interconnect Solutions",
+	    "PCI-SCI Bridge",
+	},
+	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
 	    0,
 	    "Emulex",
@@ -932,10 +944,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82430VX (Triton VX) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
+	    0,
+	    "Intel",
+	    "82439TX (Triton TX) Host Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB,
 	    0,
 	    "Intel",
 	    "82371AB PIIX4 ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABIDE,
+	    0,
+	    "Intel",
+	    "82371AB IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABUSB,
+	    0,
+	    "Intel",
+	    "82371AB USB Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABPM,
+	    0,
+	    "Intel",
+	    "82371AB Power Management / SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,

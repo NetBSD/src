@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.32 1997/08/03 23:40:27 fvdl Exp $
+$NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -586,6 +586,9 @@ product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 
+/* Bit3 products */
+product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
 product BUSLOGIC MULTIMASTER	0x1040	MultiMaster
@@ -668,6 +671,9 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/Raid
 
+/* Dolphin products */
+product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
@@ -730,7 +736,11 @@ product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
 product INTEL 82430VX	0x7030	82430VX (Triton VX) Host Bridge
+product INTEL 82439TX	0x7100	82439TX (Triton TX) Host Bridge
 product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
+product INTEL 82371ABIDE	0x7111	82371AB IDE Controller
+product INTEL 82371ABUSB	0x7112	82371AB USB Interface
+product INTEL 82371ABPM	0x7113	82371AB Power Management / SMBus Controller
 product INTEL PCI450_PB	0x84c4	450 PCIset (Orion) Host-PCI bridge
 product INTEL PCI450_MC	0x84c5	450 PCIset (Orion) Memory Controller
 
