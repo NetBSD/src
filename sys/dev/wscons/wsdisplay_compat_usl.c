@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.1 1998/06/11 22:00:04 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.2 1998/06/13 14:36:32 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -94,6 +94,7 @@ usl_sync_init(scr, sdp)
 	if (!sd)
 		return (ENOMEM);
 	sd->s_scr = scr;
+	sd->s_flags = 0;
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -107,8 +108,12 @@ static void
 usl_sync_done(sd)
 	struct usl_syncdata *sd;
 {
-	if (sd->s_flags & SF_DETACHPENDING)
+	if (sd->s_flags & SF_DETACHPENDING) {
+		untimeout(usl_detachtimeout, sd);
 		(*sd->s_callback)(sd->s_cbarg, 0);
+	}
+	if (sd->s_flags & SF_ATTACHPENDING)
+		untimeout(usl_attachtimeout, sd);
 	wsscreen_detach_sync(sd->s_scr);
 	free(sd, M_DEVBUF);
 }
