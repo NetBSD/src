@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.10 2002/10/12 17:41:20 jdolecek Exp $
+# $NetBSD: makelintstub,v 1.11 2002/10/23 09:25:49 jdolecek Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -65,9 +65,7 @@ header()
 	#include <sys/shm.h>
 	#include <sys/timex.h>
 	#include <sys/socket.h>
-	#ifdef WITH_KQUEUE
 	#include <sys/event.h>
-	#endif
 	#ifdef __STDC__
 	#include <stdarg.h>
 	#else
