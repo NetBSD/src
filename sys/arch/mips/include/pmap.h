@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2005/01/17 04:37:20 atatat Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46 2005/01/17 04:54:14 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,8 +171,8 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
  * the virtually-indexed cache on mips3 CPUs.
  */
 #ifdef MIPS3_PLUS
-#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va))
-void	pmap_prefer(vaddr_t, vaddr_t *);
+#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (td))
+void	pmap_prefer(vaddr_t, vaddr_t *, int);
 #endif /* MIPS3_PLUS */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
