@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2001/10/31 16:15:01 tv Exp $
+# $NetBSD: Makefile,v 1.18 2001/11/08 19:47:59 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -136,6 +136,7 @@ INCS=	krb5.h					\
 MAN=						\
 	kerberos.8				\
 	krb5.conf.5				\
+	krb5.3					\
 	krb5_425_conv_principal.3		\
 	krb5_appdefault.3			\
 	krb5_auth_context.3			\
