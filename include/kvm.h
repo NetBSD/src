@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
+/*	$NetBSD: kvm.h,v 1.8 2000/05/26 02:34:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,6 +42,13 @@
 #define	VRS_SYM		"_version"
 #define	VRS_KEY		"VERSION"
 
+/*
+ * Flag for kvm_open*() to disable opening of kernel files - used
+ * by programs that use only sysctl() function to access kernel
+ * information.
+ */
+#define KVM_NO_FILES	0x80000000
+
 #include <nlist.h>
 #include <sys/cdefs.h>
 #include <stdio.h>
@@ -51,15 +58,20 @@ __BEGIN_DECLS
 typedef struct __kvm kvm_t;
 
 struct kinfo_proc;
+struct kinfo_proc2;
 int	  kvm_close __P((kvm_t *));
 int	  kvm_dump_inval __P((kvm_t *));
 int	  kvm_dump_mkheader __P((kvm_t *, off_t));
 int	  kvm_dump_wrtheader __P((kvm_t *, FILE *, int));
 char	**kvm_getargv __P((kvm_t *, const struct kinfo_proc *, int));
+char	**kvm_getargv2 __P((kvm_t *, const struct kinfo_proc2 *, int));
 char	**kvm_getenvv __P((kvm_t *, const struct kinfo_proc *, int));
+char	**kvm_getenvv2 __P((kvm_t *, const struct kinfo_proc2 *, int));
 char	 *kvm_geterr __P((kvm_t *));
 int	  kvm_getloadavg __P((kvm_t *, double [], int));
 char	 *kvm_getfiles __P((kvm_t *, int, int, int *));
+struct kinfo_proc2 *
+	  kvm_getproc2 __P((kvm_t *, int, int, size_t, int *));
 struct kinfo_proc *
 	  kvm_getprocs __P((kvm_t *, int, int, int *));
 int	  kvm_nlist __P((kvm_t *, struct nlist *));
