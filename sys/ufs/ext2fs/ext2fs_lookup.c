@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.18 2001/11/08 02:39:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.19 2002/05/30 18:54:55 thorpej Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.18 2001/11/08 02:39:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.19 2002/05/30 18:54:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,10 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	 * XXX Rigth now this can't happen, but if one day
 	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
 	 */
+#if 0
 	if (e2dir->e2d_namlen > MAXNAMLEN)
 		panic("ext2fs: e2dir->e2d_namlen\n");
+#endif
 #endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);
 
