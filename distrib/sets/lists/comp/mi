@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.358 2001/07/17 03:07:17 thorpej Exp $
+#	$NetBSD: mi,v 1.359 2001/07/18 23:11:44 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1306,6 +1306,7 @@
 ./usr/share/man/cat1/unifdef.0		comp-c-catman
 ./usr/share/man/cat1/xstr.0		comp-c-catman
 ./usr/share/man/cat1/yacc.0		comp-c-catman
+./usr/share/man/cat2/__clone.0		comp-c-catman
 ./usr/share/man/cat2/__syscall.0	comp-c-catman
 ./usr/share/man/cat2/_exit.0		comp-c-catman
 ./usr/share/man/cat2/accept.0		comp-c-catman
@@ -1324,6 +1325,7 @@
 ./usr/share/man/cat2/clock_getres.0	comp-c-catman
 ./usr/share/man/cat2/clock_gettime.0	comp-c-catman
 ./usr/share/man/cat2/clock_settime.0	comp-c-catman
+./usr/share/man/cat2/clone.0		comp-c-catman
 ./usr/share/man/cat2/close.0		comp-c-catman
 ./usr/share/man/cat2/connect.0		comp-c-catman
 ./usr/share/man/cat2/dup.0		comp-c-catman
@@ -3448,6 +3450,7 @@
 ./usr/share/man/man1/unifdef.1		comp-util-man
 ./usr/share/man/man1/xstr.1		comp-c-man
 ./usr/share/man/man1/yacc.1		comp-c-man
+./usr/share/man/man2/__clone.2			comp-c-man
 ./usr/share/man/man2/__syscall.2		comp-c-man
 ./usr/share/man/man2/_exit.2		comp-c-man
 ./usr/share/man/man2/accept.2		comp-c-man
@@ -3466,6 +3469,7 @@
 ./usr/share/man/man2/clock_getres.2		comp-c-man
 ./usr/share/man/man2/clock_gettime.2		comp-c-man
 ./usr/share/man/man2/clock_settime.2		comp-c-man
+./usr/share/man/man2/clone.2		comp-c-man
 ./usr/share/man/man2/close.2		comp-c-man
 ./usr/share/man/man2/connect.2		comp-c-man
 ./usr/share/man/man2/dup.2		comp-c-man
