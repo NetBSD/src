@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.18 1994/03/30 11:19:12 cgd Exp $
+ *	$Id: boot.c,v 1.19 1994/05/01 06:46:27 cgd Exp $
  */
 
 /*
@@ -217,14 +217,9 @@ loadprog(howto)
          *  arg7 = conventional memory size (640)
          *  arg8 = extended memory size (8196)
 	 */
-	switch(maj)
-	{
-	case 2:
+	if (maj == 2) {
 		printf("\n\nInsert file system floppy \n");
 		getchar();
-		break;
-	case 4:
-		break;
 	}
 
 	startaddr &= 0xffffff;
@@ -246,7 +241,7 @@ getbootdev(howto)
 	int *howto;
 {
 	char c, *ptr = namebuf;
-	printf("Boot: [[[%s(%d,%c)]%s][-a][-d][-r][-s]] :- ",
+	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] :- ",
 	    devs[maj], unit, 'a'+part, name);
 	if (gets(namebuf)) {
 		while (c = *ptr) {
@@ -255,24 +250,18 @@ getbootdev(howto)
 			if (!c)
 				return;
 			if (c == '-')
-				while ((c = *++ptr) && c != ' ')
-					switch (c) {
-					case 'a':
+				while ((c = *++ptr) && c != ' ') {
+					if (c == 'a')
 						*howto |= RB_ASKNAME;
-						continue;
-					case 'b':
+					else if (c == 'b')
 						*howto |= RB_HALT;
-						continue;
-					case 'd':
+					else if (c == 'd')
 						*howto |= RB_KDB;
-						continue;
-					case 'r':
+					else if (c == 'r')
 						*howto |= RB_DFLTROOT;
-						continue;
-					case 's':
+					else if (c == 's')
 						*howto |= RB_SINGLE;
-						continue;
-					}
+				}
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');

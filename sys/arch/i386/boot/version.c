@@ -1,12 +1,15 @@
 /*
- *	$Id: version.c,v 1.19 1994/03/30 11:19:28 cgd Exp $
+ *	$Id: version.c,v 1.20 1994/05/01 06:46:34 cgd Exp $
  */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
  *
+ *	1.19 -> 1.20
+ *		display options in std. format, more changes for size (cgd)
+ *
  *	1.18 -> 1.19
- *		add a '-r' option, to specify RB_DFLTROOT
+ *		add a '-r' option, to specify RB_DFLTROOT (cgd)
  *
  *	1.17 -> 1.18
  *		removed some more code we don't need for BDB. (mycroft)
@@ -26,4 +29,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.19 $";
+char *version = "$Revision: 1.20 $";
