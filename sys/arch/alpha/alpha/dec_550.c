@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.12 2001/04/25 17:53:05 bouyer Exp $ */
+/* $NetBSD: dec_550.c,v 1.13 2001/05/02 02:30:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,13 +32,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.12 2001/04/25 17:53:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.13 2001/05/02 02:30:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <dev/cons.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
@@ -104,6 +106,11 @@ dec_550_init()
 	platform.cons_init = dec_550_cons_init;
 	platform.device_register = dec_550_device_register;
 	platform.powerdown = dec_550_powerdown;
+
+	/*
+	 * If Miata systems have a secondary cache, it's 2MB.
+	 */
+	uvmexp.ncolors = atop(2 * 1024 * 1024);
 }
 
 static void

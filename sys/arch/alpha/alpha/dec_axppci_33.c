@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.47 2001/04/25 17:53:05 bouyer Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.48 2001/05/02 02:30:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,13 +31,15 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.47 2001/04/25 17:53:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.48 2001/05/02 02:30:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <dev/cons.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/rpb.h>
 #include <machine/alpha.h>
@@ -149,6 +151,14 @@ dec_axppci_33_init()
 	bus_space_write_1(iot, nsio, NSIO_DATA, cfg0val);
 
 	/* Leave nsio mapped to catch any accidental port space collisions  */
+
+	/*
+	 * AXPpci33 systems have either 0, 256K, or 1M secondary
+	 * caches.  Default to middle-of-the-road.
+	 *
+	 * XXX Dynamically size it!
+	 */
+	uvmexp.ncolors = atop(256 * 1024);
 }
 
 static void
