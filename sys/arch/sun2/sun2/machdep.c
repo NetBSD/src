@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2003/04/01 15:47:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2003/04/26 11:05:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -151,6 +151,7 @@
 #include <sys/vnode.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -189,6 +190,8 @@
 #include <sun2/sun2/machdep.h>
 
 #include <sun68k/sun68k/vme_sun68k.h>
+
+#include "ksyms.h"
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -264,12 +267,12 @@ cpu_startup()
 	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end[];
 		extern char *esym;
 
-		ddb_init(end[0], end + 1, (int*)esym);
+		ksyms_init(end[0], end + 1, (int*)esym);
 	}
 #endif /* DDB */
 

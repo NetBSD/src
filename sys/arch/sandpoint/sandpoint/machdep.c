@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2003/03/18 16:40:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2003/04/26 11:05:19 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -105,6 +106,8 @@ void isa_intr_init(void);
 #include <dev/ic/comvar.h>
 #endif
 
+#include "ksyms.h"
+
 /*
  * Global variables used here and there
  */
@@ -121,7 +124,7 @@ void initppc __P((u_int, u_int, u_int, void *)); /* Called from locore */
 void strayintr __P((int));
 void lcsplx __P((int));
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 extern void *startsym, *endsym;
 #endif
 void consinit(void);
@@ -221,8 +224,8 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.39 2003/04/01 23:54:11 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.40 2003/04/26 11:05:08 ragge Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -53,6 +53,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
@@ -73,6 +74,7 @@
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 
+#include "ksyms.h"
 #include "opt_ipkdb.h"
 
 #include "isa.h"
@@ -837,22 +839,24 @@ initarm(bootargs)
 		ipkdb_connect(0);
 #endif
 
-#ifdef DDB
-	db_machine_init();
+#if NKSYMS || defined(DDB) || defined(LKM)
 #ifdef __ELF__
 	/* ok this is really rather sick, in ELF what happens is that the
 	 * ELF symbol table is added after the text section.
 	 */
-	ddb_init(0, NULL, NULL);	/* XXX */
+	ksyms_init(0, NULL, NULL);	/* XXX */
 #else
 	{
 		extern int end;
 		extern int *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif /* __ELF__ */
+#endif
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

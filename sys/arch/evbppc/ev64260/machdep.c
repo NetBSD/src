@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/04/02 03:52:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/04/26 11:05:11 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -110,6 +111,8 @@ void isa_intr_init(void);
 #include <dev/marvell/gtmpscreg.h>
 #include <dev/marvell/gtmpscvar.h>
 #endif
+
+#include "ksyms.h"
 
 /*
  * Global variables used here and there
@@ -235,10 +238,10 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern void *startsym, *endsym;
-		ddb_init((int)((u_int)endsym - (u_int)startsym),
+		ksyms_init((int)((u_int)endsym - (u_int)startsym),
 		    startsym, endsym);
 	}
 #endif

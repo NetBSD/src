@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2003/04/02 03:59:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2003/04/26 11:05:13 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/sysctl.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -67,7 +68,10 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-#if defined(DDB) || defined(KGDB)
+
+#include "ksyms.h"
+
+#if NKSYMS || defined(LKM) || defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -259,12 +263,14 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-	/* Debugger. */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (symbolsize) {
-		ddb_init(symbolsize, &end, end + symbolsize);
+		ksyms_init(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);
 	}
+#endif
+#ifdef DDB
+	/* Debugger. */
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif /* DDB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2003/04/02 02:34:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2003/04/26 11:05:17 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,6 +70,7 @@
 #include <sys/vnode.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -110,6 +111,8 @@
 #include <next68k/next68k/nextrom.h>
 #include <next68k/next68k/rtc.h>
 #include <next68k/next68k/seglist.h>
+
+#include "ksyms.h"
 
 int nsym;
 char *ssym, *esym;
@@ -255,9 +258,9 @@ consinit()
 #if defined(KGDB) && (NZSC > 0)
 		zs_kgdb_init();
 #endif
-#ifdef  DDB
-		/* Initialize kernel debugger, if compiled in. */
-		ddb_init(nsym, ssym, esym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+		/* Initialize kernel symbol table, if compiled in. */
+		ksyms_init(nsym, ssym, esym);
 #endif
 		if (boothowto & RB_KDB) {
 #if defined(KGDB)

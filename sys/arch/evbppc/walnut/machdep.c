@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2003/04/02 03:52:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/04/26 11:05:12 ragge Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -87,6 +87,7 @@
 #include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/properties.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,7 +104,9 @@
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if defined(DDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -133,7 +136,7 @@ char bootpath[256];
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 void *startsym, *endsym;
 #endif
 
@@ -317,8 +320,10 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	printf("  pci_speed = %u\n", board_data.pci_speed);
 #endif
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
 #ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
