@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.27 1997/03/18 05:04:50 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.28 1997/03/24 00:45:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.27 1997/03/18 05:04:50 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.28 1997/03/24 00:45:30 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -954,8 +954,9 @@ status()
 	printf("\tmedia: ");
 	print_media_word(ifmr.ifm_current);
 	if (ifmr.ifm_active != ifmr.ifm_current) {
+		putchar(' ');
 		putchar('(');
-		print_media_word(ifmr.ifm_current);
+		print_media_word(ifmr.ifm_active);
 		putchar(')');
 	}
 
