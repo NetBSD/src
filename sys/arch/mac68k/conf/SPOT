@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.7 1996/05/19 22:29:09 scottr Exp $
+#	$NetBSD: SPOT,v 1.8 1996/05/20 03:23:36 scottr Exp $
 #
 # SPOT
 
@@ -66,6 +66,15 @@ config		netbsd	swap generic
 options		GENERIC
 
 intvid0		at obio?	# Internal video hardware
+
+nubus0		at mainbus?
+
+ae*		at nubus?
+macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
+grf*		at macvid?
 
 #ncrscsi0	at obio?		# SCSI NCR 5380
 #ncr96scsi0	at obio?		# SCSI NCR 53C96
