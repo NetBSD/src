@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.243 2000/07/10 16:14:02 ad Exp $
+$NetBSD: pcidevs,v 1.244 2000/07/20 14:46:51 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -504,6 +504,7 @@ vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor DAVICOM		0x1282	Davicom Semiconductor
+vendor ESSTECH2		0x1285	ESS Technology Inc
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor ALTEON		0x12ae	Alteon
@@ -948,6 +949,9 @@ product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E PCI Audio Accelerator
 product ESSTECH	MAESTRO3	0x1998	Maestro 3 PCI Audio Accelerator
 product ESSTECH	MAESTRO3MODEM	0x1999	Maestro 3 Modem
+
+/* ESS Technology Inc products */
+product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
 /* O2 Micro Inc */
 product O2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
