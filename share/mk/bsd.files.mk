@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.25 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.26 2003/10/18 16:40:47 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -20,6 +20,8 @@ FILESMODE?=	${NONBINMODE}
 filesinstall::	# ensure existence
 
 __fileinstall: .USE
+	${_MKMSG} "install  ${.TARGET}"
+	${_MKCMD}\
 	${INSTALL_FILE} \
 	    -o ${FILESOWN_${.ALLSRC:T}:U${FILESOWN}} \
 	    -g ${FILESGRP_${.ALLSRC:T}:U${FILESGRP}} \
