@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.70 2004/12/12 22:41:03 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.71 2004/12/14 03:09:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.70 2004/12/12 22:41:03 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.71 2004/12/14 03:09:24 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,7 @@ vtrans(vp, i, flag)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %7ld %*s", (long)fst.fileid, nflg ? 5 : 10, mode);
+	(void)printf(" %7lu %*s", (unsigned long)fst.fileid, nflg ? 5 : 10, mode);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
