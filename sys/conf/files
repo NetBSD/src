@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.629 2003/08/26 19:19:36 thorpej Exp $
+#	$NetBSD: files,v 1.630 2003/08/26 19:20:44 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -202,16 +202,16 @@ define	auconv
 define	aurateconv
 file	dev/aurateconv.c	aurateconv	needs-flag
 
-# Generic real-time clock subroutines.
-define	clock_subr
-file	dev/clock_subr.c	clock_subr
-
 # audio and midi devices, attaches to audio hardware driver
 #
 device	audio
 attach	audio at audiobus
 device	midi
 attach	midi at midibus
+
+# Generic real-time clock subroutines.
+define	clock_subr
+file	dev/clock_subr.c	clock_subr
 
 # IR device support
 include	"dev/ir/files.ir"
