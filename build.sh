@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.77 2002/12/25 00:42:50 lukem Exp $
+#  $NetBSD: build.sh,v 1.78 2003/01/02 05:11:12 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -17,6 +17,8 @@ bomb () {
 	echo "*** BUILD ABORTED ***"
 	exit 1
 }
+
+cd `dirname $0`
 [ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
 [ -f share/mk/bsd.own.mk ] || bomb "src/share/mk is missing; please re-fetch the source tree"
 
@@ -434,7 +436,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.77 2002/12/25 00:42:50 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.78 2003/01/02 05:11:12 lukem Exp $
 #
 
 EOF
