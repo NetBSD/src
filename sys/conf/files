@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/sys/conf/files,v 1.5 1993/04/09 19:38:32 cgd Exp $
+# $Header: /cvsroot/src/sys/conf/files,v 1.6 1993/04/10 12:02:29 glass Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -57,9 +57,9 @@ kern/sysv_shm.c		optional sysvshm
 kern/tty.c		standard
 kern/tty_compat.c	standard
 kern/tty_conf.c		standard
-kern/tty_pty.c		optional pty
+kern/tty_pty.c		optional pty device-driver
 kern/tty_ring.c		standard
-kern/tty_tb.c		optional tb
+kern/tty_tb.c		optional tb device-driver requires broken
 kern/tty_tty.c		standard
 kern/uipc_domain.c	standard
 kern/uipc_mbuf.c	standard
@@ -81,12 +81,12 @@ miscfs/kernfs/kernfs_vfsops.c	optional kernfs
 miscfs/kernfs/kernfs_vnops.c	optional kernfs
 net/af.c		standard
 net/bpf.c		optional bpfilter
-net/bpf_filter.c	optional bpfilter
+net/bpf_filter.c	optional bpfilter device-driver
 net/if.c		standard
-net/if_ethersubr.c	optional ether
-net/if_loop.c		optional loop
-net/if_sl.c		optional sl
-net/if_tun.c		optional tun device-driver
+net/if_ethersubr.c	optional ether device-driver
+net/if_loop.c		optional loop device-driver
+net/if_sl.c		optional sl device-driver
+net/if_tun.c		optional tun device-driver requires broken
 net/radix.c		standard
 net/raw_cb.c		standard
 net/raw_usrreq.c	standard
@@ -110,7 +110,7 @@ netccitt/pk_usrreq.c	optional ccitt
 netimp/if_imp.c		optional imp
 netimp/if_imphost.c	optional imp
 netimp/raw_imp.c	optional imp
-netinet/if_ether.c	optional ether
+netinet/if_ether.c	optional ether inet
 netinet/in.c		optional inet
 netinet/in_pcb.c	optional inet
 netinet/in_proto.c	optional inet
@@ -142,34 +142,21 @@ netiso/iso_chksum.c	optional iso
 netiso/iso_pcb.c	optional iso
 netiso/iso_proto.c	optional iso
 netiso/iso_snpac.c	optional iso
-netiso/tp_astring.c	optional iso
-netiso/tp_astring.c	optional tpip
+netiso/tp_astring.c	optional iso or tpip
 netiso/tp_cons.c	optional iso
-netiso/tp_driver.c	optional iso
-netiso/tp_driver.c	optional tpip
-netiso/tp_emit.c	optional iso
-netiso/tp_emit.c	optional tpip
-netiso/tp_inet.c	optional iso
-netiso/tp_inet.c	optional tpip
-netiso/tp_input.c	optional iso
-netiso/tp_input.c	optional tpip
+netiso/tp_driver.c	optional iso or tpip
+netiso/tp_emit.c	optional iso or tpip
+netiso/tp_inet.c	optional iso or tpip
+netiso/tp_input.c	optional iso or tpip
 netiso/tp_iso.c		optional iso
-netiso/tp_meas.c	optional iso
-netiso/tp_meas.c	optional tpip
-netiso/tp_output.c	optional iso
-netiso/tp_output.c	optional tpip
-netiso/tp_pcb.c		optional iso
-netiso/tp_pcb.c		optional tpip
-netiso/tp_subr.c	optional iso
-netiso/tp_subr.c	optional tpip
-netiso/tp_subr2.c	optional iso
-netiso/tp_subr2.c	optional tpip
-netiso/tp_timer.c	optional iso
-netiso/tp_timer.c	optional tpip
-netiso/tp_trace.c	optional iso
-netiso/tp_trace.c	optional tpip
-netiso/tp_usrreq.c	optional iso
-netiso/tp_usrreq.c	optional tpip
+netiso/tp_meas.c	optional iso or tpip
+netiso/tp_output.c	optional iso or tpip
+netiso/tp_pcb.c		optional iso or tpip
+netiso/tp_subr.c	optional iso or tpip
+netiso/tp_subr2.c	optional iso or tpip
+netiso/tp_timer.c	optional iso or tpip
+netiso/tp_trace.c	optional iso or tpip
+netiso/tp_usrreq.c	optional iso or tpip
 netns/idp_usrreq.c	optional ns
 netns/ns.c		optional ns
 netns/ns_error.c	optional ns
@@ -180,26 +167,26 @@ netns/ns_pcb.c		optional ns
 netns/ns_proto.c	optional ns
 netns/spp_debug.c	optional ns
 netns/spp_usrreq.c	optional ns
-nfs/nfs_bio.c		optional nfs
-nfs/nfs_node.c		optional nfs
-nfs/nfs_serv.c		optional nfs
-nfs/nfs_socket.c	optional nfs
-nfs/nfs_srvcache.c	optional nfs
-nfs/nfs_subs.c		optional nfs
-nfs/nfs_syscalls.c	optional nfs
-nfs/nfs_vfsops.c	optional nfs
-nfs/nfs_vnops.c		optional nfs
+nfs/nfs_bio.c		optional nfs requires inet
+nfs/nfs_node.c		optional nfs requires inet
+nfs/nfs_serv.c		optional nfs requires inet
+nfs/nfs_socket.c	optional nfs requires inet
+nfs/nfs_srvcache.c	optional nfs requires inet
+nfs/nfs_subs.c		optional nfs requires inet
+nfs/nfs_syscalls.c	optional nfs requires inet
+nfs/nfs_vfsops.c	optional nfs requires inet
+nfs/nfs_vnops.c		optional nfs requires inet
 pcfs/pcfs_conv.c	optional pcfs
 pcfs/pcfs_denode.c	optional pcfs
 pcfs/pcfs_fat.c		optional pcfs
 pcfs/pcfs_lookup.c	optional pcfs
 pcfs/pcfs_vfsops.c	optional pcfs
 pcfs/pcfs_vnops.c	optional pcfs
-scsi/cd.c		optional cd
-scsi/ch.c		optional ch
+scsi/cd.c		optional cd device-driver requires scsi
+scsi/ch.c		optional ch device-driver requires scsi
 scsi/scsiconf.c		optional scsi
-scsi/sd.c		optional sd
-scsi/st.c		optional st
+scsi/sd.c		optional sd device-driver requires scsi
+scsi/st.c		optional st device-driver requires scsi
 ufs/mfs_vfsops.c	optional mfs
 ufs/mfs_vnops.c		optional mfs
 ufs/ufs_alloc.c		standard
@@ -213,9 +200,9 @@ ufs/ufs_subr.c		standard
 ufs/ufs_tables.c	standard
 ufs/ufs_vfsops.c	standard
 ufs/ufs_vnops.c		standard
-vm/device_pager.c	optional devpager
+vm/device_pager.c	optional devpager device-driver
 vm/kern_lock.c		standard
-vm/swap_pager.c		optional swappager
+vm/swap_pager.c		optional swappager device-driver
 vm/vm_fault.c		standard
 vm/vm_glue.c		standard
 vm/vm_init.c		standard
@@ -230,4 +217,4 @@ vm/vm_pager.c		standard
 vm/vm_swap.c		standard
 vm/vm_unix.c		standard
 vm/vm_user.c		standard
-vm/vnode_pager.c	optional vnodepager
+vm/vnode_pager.c	optional vnodepager device-driver
