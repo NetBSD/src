@@ -121,7 +121,6 @@ ofisaessattach(parent, dev, aux)
     ia.ia_maddr = MADDRUNK;
     ia.ia_msize = 0;
     ia.ia_aux = (void *)ofp->phandle;
-    ia.ia_delaybah = 0;			/* don't have this! */
 
     config_found(dev, &ia, NULL);
 }
