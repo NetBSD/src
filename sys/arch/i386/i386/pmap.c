@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.29 2001/01/14 23:25:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.30 2001/02/11 09:12:15 enami Exp $	*/
 
 /*
  *
@@ -415,6 +415,7 @@ static caddr_t csrcp, cdstp, zerop, ptpp;
 struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
 
+void   *pmap_pdp_pool_page_alloc(unsigned long, int, int);
 int	pmap_pdp_ctor(void *, void *, int);
 
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
@@ -1054,9 +1055,9 @@ pmap_bootstrap(kva_start)
 	 * initialize the PDE pool and cache.
 	 */
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    0, pmap_pdp_pool_page_alloc, pool_page_free_nointr, M_VMPMAP);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, NULL, NULL);
+	    pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1661,6 +1662,28 @@ pmap_get_ptp(pmap, pde_index)
 /*
  * p m a p  l i f e c y c l e   f u n c t i o n s
  */
+
+/*
+ * pmap_pdp_pool_page_alloc: allocator for the PDP pool page.
+ */
+
+void *
+pmap_pdp_pool_page_alloc(unsigned long sz, int flags, int mtype)
+{
+	void *pg;
+
+	/*
+	 * There was no free items in the PDP pool.  We have to
+	 * release pmaps_lock since pmap_growkernel() might be called
+	 * during page allocation.  Reacquire the lock before
+	 * constructing PDP cache.
+	 */
+	simple_unlock(&pmaps_lock);
+	pg = pool_page_alloc_nointr(sz, flags, mtype);
+	simple_lock(&pmaps_lock);
+
+	return (pg);
+}
 
 /*
  * pmap_pdp_ctor: constructor for the PDP cache.
