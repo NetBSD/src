@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient,v 1.5.4.1 2000/08/09 19:09:39 lukem Exp $
+# $NetBSD: dhclient,v 1.5.4.2 2000/10/02 01:10:10 lukem Exp $
 #
 
 # PROVIDE: dhclient
@@ -13,6 +13,7 @@
 . /etc/rc.subr
 
 name="dhclient"
+rcvar=$name
 command="/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 
