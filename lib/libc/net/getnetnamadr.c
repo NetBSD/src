@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.29 2004/05/08 18:52:15 kleink Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.30 2004/05/21 02:30:03 christos Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.29 2004/05/08 18:52:15 kleink Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.30 2004/05/21 02:30:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,22 +104,19 @@ static int   __ypcurrentlen;
 static	struct netent net_entry;
 static	char *net_aliases[MAXALIASES];
 
-static struct netent *getnetanswer __P((querybuf *, int, int));
-int	_files_getnetbyaddr __P((void *, void *, va_list));
-int	_files_getnetbyname __P((void *, void *, va_list));
-int	_dns_getnetbyaddr __P((void *, void *, va_list));
-int	_dns_getnetbyname __P((void *, void *, va_list));
+static struct netent *getnetanswer(querybuf *, int, int);
+int	_files_getnetbyaddr(void *, void *, va_list);
+int	_files_getnetbyname(void *, void *, va_list);
+int	_dns_getnetbyaddr(void *, void *, va_list);
+int	_dns_getnetbyname(void *, void *, va_list);
 #ifdef YP
-int	_yp_getnetbyaddr __P((void *, void *, va_list));
-int	_yp_getnetbyname __P((void *, void *, va_list));
-struct netent *_ypnetent __P((char *));
+int	_yp_getnetbyaddr(void *, void *, va_list);
+int	_yp_getnetbyname(void *, void *, va_list);
+struct netent *_ypnetent(char *);
 #endif
 
 static struct netent *
-getnetanswer(answer, anslen, net_i)
-	querybuf *answer;
-	int anslen;
-	int net_i;
+getnetanswer(querybuf *answer, int anslen, int net_i)
 {
 	HEADER *hp;
 	u_char *cp;
@@ -159,7 +156,7 @@ getnetanswer(answer, anslen, net_i)
 			h_errno = HOST_NOT_FOUND;
 		else
 			h_errno = TRY_AGAIN;
-		return (NULL);
+		return NULL;
 	}
 	while (qdcount-- > 0) {
 		n = __dn_skipname(cp, eom);
@@ -188,7 +185,7 @@ getnetanswer(answer, anslen, net_i)
 			n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 			if ((n < 0) || !res_hnok(bp)) {
 				cp += n;
-				return (NULL);
+				return NULL;
 			}
 			cp += n; 
 			*ap++ = bp;
@@ -211,7 +208,7 @@ getnetanswer(answer, anslen, net_i)
 			in = *ap++;
 			if (in == NULL) {
 				h_errno = HOST_NOT_FOUND;
-				return (NULL);
+				return NULL;
 			}
 			net_entry.n_name = ans;
 			aux2[0] = '\0';
@@ -243,18 +240,15 @@ getnetanswer(answer, anslen, net_i)
     (defined(__sh__) && defined(_LP64))
 		net_entry.__n_pad0 = 0;
 #endif
-		return (&net_entry);
+		return &net_entry;
 	}
 	h_errno = TRY_AGAIN;
-	return (NULL);
+	return NULL;
 }
 
 /*ARGSUSED*/
 int
-_files_getnetbyaddr(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_files_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 {
 	struct netent *p;
 	unsigned long net;
@@ -281,10 +275,7 @@ _files_getnetbyaddr(rv, cb_data, ap)
 
 /*ARGSUSED*/
 int
-_dns_getnetbyaddr(rv, cb_data, ap)
-	void    *rv;
-	void    *cb_data;
-	va_list  ap;
+_dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 {
 	unsigned int netbr[4];
 	int nn, anslen;
@@ -294,6 +285,7 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 	struct netent *np;
 	unsigned long net;
 	int type;
+	res_state res;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -329,15 +321,23 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 		h_errno = NETDB_INTERNAL;
 		return NS_NOTFOUND;
 	}
-	anslen = res_query(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
+	res = __res_get_state();
+	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
+		h_errno = NETDB_INTERNAL;
+		__res_put_state(res);
+		return NS_NOTFOUND;
+	}
+	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (res->options & RES_DEBUG)
 			printf("res_query failed\n");
 #endif
+		__res_put_state(res);
 		return NS_NOTFOUND;
 	}
+	__res_put_state(res);
 	np = getnetanswer(buf, anslen, BYADDR);
 	free(buf);
 	if (np) {
@@ -359,9 +359,7 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 
 
 struct netent *
-getnetbyaddr(net, net_type)
-	uint32_t net;
-	int net_type;
+getnetbyaddr(uint32_t net, int net_type)
 {
 	struct netent *np;
 	static const ns_dtab dtab[] = {
@@ -371,26 +369,18 @@ getnetbyaddr(net, net_type)
 		{ 0 }
 	};
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-
 	np = NULL;
 	h_errno = NETDB_INTERNAL;
 	if (nsdispatch(&np, dtab, NSDB_NETWORKS, "getnetbyaddr", __nsdefaultsrc,
 	    net, net_type) != NS_SUCCESS)
-		return (NULL);
+		return NULL;
 	h_errno = NETDB_SUCCESS;
-	return (np);
+	return np;
 }
 
 /*ARGSUSED*/
 int
-_files_getnetbyname(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_files_getnetbyname(void *rv, void *cb_data, va_list ap)
 {
 	struct netent *p;
 	char **cp;
@@ -420,16 +410,14 @@ found:
 
 /*ARGSUSED*/
 int
-_dns_getnetbyname(rv, cb_data, ap)
-	void    *rv;
-	void    *cb_data;
-	va_list  ap;
+_dns_getnetbyname(void *rv, void *cb_data, va_list ap)
 {
 	int anslen;
 	querybuf *buf;
 	char qbuf[MAXDNAME];
 	struct netent *np;
 	const char *net;
+	res_state res;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -440,15 +428,25 @@ _dns_getnetbyname(rv, cb_data, ap)
 		h_errno = NETDB_INTERNAL;
 		return NS_NOTFOUND;
 	}
-	anslen = res_search(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
+	res = __res_get_state();
+	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
+		h_errno = NETDB_INTERNAL;
+		__res_put_state(res);
+		return NS_NOTFOUND;
+	}
+
+	anslen = res_nsearch(res, qbuf, C_IN, T_PTR, buf->buf,
+	    sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (res->options & RES_DEBUG)
 			printf("res_search failed\n");
 #endif
+		__res_put_state(res);
 		return NS_NOTFOUND;
 	}
+	__res_put_state(res);
 	np = getnetanswer(buf, anslen, BYNAME);
 	free(buf);
 	*((struct netent **)rv) = np;
@@ -460,8 +458,7 @@ _dns_getnetbyname(rv, cb_data, ap)
 }
 
 struct netent *
-getnetbyname(net)
-	const char *net;
+getnetbyname(const char *net)
 {
 	struct netent *np;
 	static const ns_dtab dtab[] = {
@@ -473,27 +470,19 @@ getnetbyname(net)
 
 	_DIAGASSERT(net != NULL);
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-
 	np = NULL;
 	h_errno = NETDB_INTERNAL;
 	if (nsdispatch(&np, dtab, NSDB_NETWORKS, "getnetbyname", __nsdefaultsrc,
 	    net) != NS_SUCCESS)
-		return (NULL);
+		return NULL;
 	h_errno = NETDB_SUCCESS;
-	return (np);
+	return np;
 }
 
 #ifdef YP
 /*ARGSUSED*/
 int
-_yp_getnetbyaddr(rv, cb_data, ap)
-	void    *rv;
-	void    *cb_data;
-	va_list  ap;
+_yp_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 {
 	struct netent *np;
 	char qbuf[MAXDNAME];
@@ -553,10 +542,7 @@ _yp_getnetbyaddr(rv, cb_data, ap)
 
 int
 /*ARGSUSED*/
-_yp_getnetbyname(rv, cb_data, ap)
-	void    *rv;
-	void    *cb_data;
-	va_list  ap;
+_yp_getnetbyname(void *rv, void *cb_data, va_list ap)
 {
 	struct netent *np;
 	const char *name;
@@ -588,8 +574,7 @@ _yp_getnetbyname(rv, cb_data, ap)
 }
 
 struct netent *
-_ypnetent(line)
-	char *line;
+_ypnetent(char *line)
 {
 	char *cp, *p, **q;
 
@@ -598,7 +583,7 @@ _ypnetent(line)
 	net_entry.n_name = line;
 	cp = strpbrk(line, " \t");
 	if (cp == NULL)
-		return (NULL);
+		return NULL;
 	*cp++ = '\0';
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
@@ -630,6 +615,6 @@ _ypnetent(line)
 	}
 	*q = NULL;
 
-	return (&net_entry);
+	return &net_entry;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.20 2002/11/11 17:56:11 thorpej Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.21 2004/05/21 02:30:03 christos Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -39,8 +39,7 @@
  * of this file.  Extensive changes have been made on each step of the
  * path.
  *
- * This implementation is not truly thread-safe at the moment because
- * it uses res_send() and accesses _res.
+ * This implementation is thread-safe because it uses res_nsend().
  */
 
 #include <sys/cdefs.h>
@@ -52,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.20 2002/11/11 17:56:11 thorpej Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.21 2004/05/21 02:30:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -426,23 +425,28 @@ get_txt_records(qclass, name)
 	unsigned char	 qbuf[PACKETSZ], abuf[MAX_HESRESP], *p, *eom, *eor;
 	char		*dst, **list;
 	int		 ancount, qdcount, i, j, n, skip, type, class, len;
+	res_state	 res = __res_get_state();
 
 	_DIAGASSERT(name != NULL);
 
 	/* Make sure the resolver is initialized. */
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
+		__res_put_state(res);
 		return NULL;
+	}
 
 	/* Construct the query. */
-	n = res_mkquery(QUERY, name, qclass, T_TXT, NULL, 0,
+	n = res_nmkquery(res, QUERY, name, qclass, T_TXT, NULL, 0,
 	    NULL, qbuf, PACKETSZ);
 	if (n < 0) {
 		errno = EMSGSIZE;
+		__res_put_state(res);
 		return NULL;
 	}
 
 	/* Send the query. */
-	n = res_send(qbuf, n, abuf, MAX_HESRESP);
+	n = res_nsend(res, qbuf, n, abuf, MAX_HESRESP);
+	__res_put_state(res);
 	if (n < 0) {
 		errno = ECONNREFUSED;
 		return NULL;
