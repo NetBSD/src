@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2000/04/16 10:16:19 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2000/04/21 14:10:39 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2000/04/16 10:16:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2000/04/21 14:10:39 shin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1860,8 +1860,7 @@ pmap_asid_alloc(pmap)
 				curproc->p_pid, curproc->p_comm);
 		else
 			printf("pmap_asid_alloc: curproc <none> ");
-		printf("segtab %p asid %d pid %d '%s'\n",
-			pmap->pm_segtab, pmap->pm_asid, p->p_pid, p->p_comm);
+		printf("segtab %p asid %d\n", pmap->pm_segtab, pmap->pm_asid);
 	}
 #endif
 }
