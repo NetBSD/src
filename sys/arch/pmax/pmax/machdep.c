@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2000/09/13 15:00:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2000/09/24 12:32:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2000/09/13 15:00:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2000/09/24 12:32:38 jdolecek Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2000/09/13 15:00:21 thorpej Exp $"
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -267,20 +268,17 @@ mach_init(argc, argv, code, cv, bim, bip)
 				boothowto &= ~RB_SINGLE;
 				break;
 
-			case 'd': /* break into the kernel debugger ASAP */
-				boothowto |= RB_KDB;
-				break;
-
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
 			case 'n': /* ask for names */
 				boothowto |= RB_ASKNAME;
 				break;
 
 			case 'N': /* don't ask for names */
 				boothowto &= ~RB_ASKNAME;
+				break;
+
+			default:
+				BOOT_FLAG(*cp, boothowto);
+				break;
 			}
 		}
 	}

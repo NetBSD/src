@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2000/09/13 15:00:19 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.12 2000/09/24 12:32:35 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2000/09/13 15:00:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2000/09/24 12:32:35 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2000/09/13 15:00:19 thorpej Exp $")
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -206,17 +207,7 @@ consinit()
 	 * NetBSD/luna68k cares only the first argment; any of "sda".
 	 */
 	for (cp = bootarg; *cp != ' '; cp++) {
-		switch (*cp) {
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
-		case 'd':
-			boothowto |= RB_KDB;
-			break;
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-		}
+		BOOT_FLAG(*cp, boothowto);
 		if (i++ >= sizeof(bootarg))
 			break;
 	}

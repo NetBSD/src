@@ -8,7 +8,6 @@
  *
  *	loadbsd options:
  *		-h	help
- *		-v	verbose
  *		-V	print version and exit
  *
  *	kernel options:
@@ -17,14 +16,16 @@
  *		-D	enter kernel debugger
  *		-b	ask root device
  *		-r	specify root device
+ *		-q	quiet boot
+ *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.5 2000/07/29 20:06:30 jdolecek Exp $
+ *	$NetBSD: loadbsd.c,v 1.6 2000/09/24 12:32:39 jdolecek Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.5 2000/07/29 20:06:30 jdolecek Exp $");
-#define VERSION	"$Revision: 1.5 $ $Date: 2000/07/29 20:06:30 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.6 2000/09/24 12:32:39 jdolecek Exp $");
+#define VERSION	"$Revision: 1.6 $ $Date: 2000/09/24 12:32:39 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -492,6 +493,7 @@ main(argc, argv)
 				break;
 			case 'v':
 				opt_v = 1;
+				boothowto |= AB_VERBOSE; /* XXX */
 				break;
 			case 'V':
 				xprintf("loadbsd %s\n", VERSION);
@@ -519,6 +521,9 @@ main(argc, argv)
 				break;
 			case 'D':
 				boothowto |= RB_KDB;
+				break;
+			case 'q':
+				boothowto |= AB_QUIET;
 				break;
 
 			default:

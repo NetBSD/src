@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.12 2000/08/31 07:21:46 jdolecek Exp $	*/
+/*	$NetBSD: libi386.h,v 1.13 2000/09/24 12:32:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -44,7 +44,6 @@ ssize_t pread __P((int, void *, size_t));
 void startprog __P((physaddr_t, int, unsigned long*, physaddr_t));
 
 int exec_netbsd __P((const char*, physaddr_t, int));
-int netbsd_opt __P((char));
 
 void delay __P((int));
 int getbasemem __P((void));
