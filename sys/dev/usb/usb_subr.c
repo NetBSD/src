@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.23 1998/12/30 18:06:25 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.24 1999/01/01 15:21:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -415,7 +415,6 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	usbd_interface_handle ifc = &dev->ifaces[ifaceidx];
 	char *p, *end;
 	int endpt, nendpt;
-	usbd_status r;
 
 	DPRINTFN(4,("usbd_fill_iface_data: ifaceidx=%d altidx=%d\n",
 		    ifaceidx, altidx));
@@ -445,27 +444,30 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 			DPRINTFN(10,("usbd_fill_iface_data: p=%p end=%p "
 				     "len=%d type=%d\n",
 				 p, end, ed->bLength, ed->bDescriptorType));
-			if (p + ed->bLength <= end && 
+			if (p + ed->bLength <= end && ed->bLength != 0 &&
 			    ed->bDescriptorType == UDESC_ENDPOINT)
-				break;
+				goto found;
 			if (ed->bDescriptorType == UDESC_INTERFACE ||
-			    ed->bLength == 0) {
-				r = USBD_INVAL;
-				goto bad;
-			}
+			    ed->bLength == 0)
+				break;
 		}
+		/* passed end, or bad desc */
+		goto bad;
+	found:
 		ifc->endpoints[endpt].edesc = ed;
 		ifc->endpoints[endpt].state = USBD_ENDPOINT_ACTIVE;
 		ifc->endpoints[endpt].refcnt = 0;
 		ifc->endpoints[endpt].toggle = 0;
+		p += ed->bLength;
 	}
 #undef ed
 	LIST_INIT(&ifc->pipes);
 	ifc->state = USBD_INTERFACE_ACTIVE;
 	return (USBD_NORMAL_COMPLETION);
+
  bad:
 	free(ifc->endpoints, M_USB);
-	return (r);
+	return (USBD_INVAL);
 }
 
 void
