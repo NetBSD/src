@@ -1,4 +1,4 @@
-#	$NetBSD: files.lubbock,v 1.1 2002/12/18 04:56:52 bsh Exp $
+#	$NetBSD: files.lubbock,v 1.2 2003/06/16 17:40:51 thorpej Exp $
 #
 # Intel LUBBOCK evaluation board configuration info
 #
@@ -9,7 +9,7 @@ file	arch/evbarm/lubbock/lubbock_machdep.c
 include "arch/arm/xscale/files.pxa2x0"
 
 # LUBBOCK on-board devices (including CPLD)
-device	obio {[addr=-1], [intr=-1]}
+device	obio {[addr = -1], [size = -1], [width = -1], [intr = -1]}
 attach	obio at pxaip
 file	arch/evbarm/lubbock/obio.c			obio
 
