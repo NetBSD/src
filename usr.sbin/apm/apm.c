@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.9 2001/02/19 23:22:41 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.10 2001/07/22 16:05:18 itojun Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -296,6 +296,10 @@ main(int argc, char *argv[])
 		    printf("A/C adapter state: %s\n", ac_state(reply.batterystate.ac_state));
 		if (dostatus)
 		    printf("Power management enabled\n");
+		if (reply.batterystate.nbattery) {
+		    printf("Number of batteries: %u\n",
+			reply.batterystate.nbattery);
+		}
 	    } else {
 		if (dobstate)
 		    printf("%d\n", reply.batterystate.battery_state);
