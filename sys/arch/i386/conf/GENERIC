@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.264.2.13 2001/04/23 09:41:45 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.264.2.14 2001/04/23 15:30:27 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.264.2.13 $"
+#ident 		"GENERIC-$Revision: 1.264.2.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -376,7 +376,7 @@ lpt2	at isa? port 0x3bc
 # Hardware monitors 
 
 # LM7[89] and compatible hardware monitors
-lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
@@ -427,8 +427,8 @@ bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
 #dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
-nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
-nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
+#nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -448,9 +448,9 @@ scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
 scsibus* at esp?
-scsibus* at isp?
 scsibus* at iopsp?
-scsibus* at nca?
+scsibus* at isp?
+#scsibus* at nca?
 #scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
@@ -568,9 +568,6 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-ti*	at pci? dev ? function ?	# netgear gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
