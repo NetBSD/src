@@ -1,5 +1,7 @@
+/*	$NetBSD: cmd.h,v 1.1.1.2 1997/04/22 13:45:43 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,9 +68,9 @@
 #define	A_PIPE			37
 #define	A_INDEX_FILE		38
 #define	A_UNDO_SEARCH		39
-
-
-
+#define	A_FF_SCREEN		40
+#define	A_LSHIFT		41
+#define	A_RSHIFT		42
 #define	A_AGAIN_SEARCH		43
 #define	A_T_AGAIN_SEARCH	44
 #define	A_REVERSE_SEARCH	45
@@ -115,3 +117,5 @@
 #define	EC_NOHISTORY	02
 #define	EC_NOCOMPLETE	04
 
+/* Environment variable stuff */
+#define	EV_OK		01
