@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.38 2000/08/17 04:15:43 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.39 2000/08/17 04:18:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -623,6 +623,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			lkp->lk_sharecount--;
 			COUNT(lkp, p, cpu_id, -1);
 		}
+#ifdef DIAGNOSTIC
+		else
+			panic("lockmgr: release of unlocked lock!");
+#endif
 		WAKEUP_WAITER(lkp);
 		break;
 
