@@ -841,6 +841,30 @@ Change the current \*y of the window to
 .Vn y\*,x ). (
 \*(Es
 .Ds
+.Fn mvaddch "int y" "int x" "chtype ch"
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then adds a character in the same manner as
+.Fn addch .
+.Ds
+.Fn mvaddstr "int y" "int x" "char *str" \(dg
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then adds a string in the same manner as
+.Fn addstr .
+.Ds
+.Fn mvaddnstr "int y" "int x" "char *str" \(dg
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then adds a string in the same manner as
+.Fn addnstr .
+.Ds
 .Fn mvcur "int lasty" "int lastx" "int newy" "int newx"
 .De
 Moves the terminal's cursor from
@@ -962,6 +986,15 @@ scanw(fmt, ...);
 Sleep for
 .Vn ms
 milliseconds.
+.Ds
+.Ft "WINDOW *"
+.Fn newpad "int lines" "int cols"
+.De
+Create a new pad with
+.Vn lines
+lines and
+.Vn cols
+columns.
 .Ds
 .Ft "SCREEN *"
 .Fn newterm "char *type" "FILE *outfd" "FILE *infd"
@@ -1120,10 +1153,21 @@ blanks on
 become blank on
 .Vn win2 .
 .Ds
-.Fn pair content "short pair" "short *fore" "short *back"
+.Fn pair_content "short pair" "short *fore" "short *back"
 .De
 Get the foreground and background colors of pair
 .Vn pair .
+.Ds 
+.Fn pnoutrefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
+.De    
+Add the pad contents to a virtual screen.  Several pads can be added
+before a call to
+.Fn doupdate ,
+thus allowing the screen to updated in an efficient manner.
+.Ds
+.Fn prefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
+.De 
+Synchronize the terminal screen with the desired pad.
 .Ds
 .Fn printw "char *fmt" "..."
 .De
@@ -1282,6 +1326,24 @@ on black background, unless
 or
 .Fn use_default_colors
 are called.
+.Ds
+.Ft "WINDOW *"
+.Fn subpad "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
+.De
+Create a new pad with
+.Vn lines
+lines and
+.Vn cols
+columns starting at position
+.Vn begin\*_y\*,begin\*_x ) (
+inside the pad
+.i win .
+This means that any change made to either pad
+in the area covered
+by the subpad will be made on both pads.
+.Vn begin\*_y\*,begin\*_x
+are specified relative to the relative (0\*,0) of
+.Vn win .
 .Ds
 .Ft "WINDOW *"
 .Fn subwin "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
