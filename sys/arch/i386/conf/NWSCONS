@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.10 1998/09/29 23:18:57 matt Exp $
+#	$NetBSD: NWSCONS,v 1.11 1998/10/01 10:01:20 frueauf Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -36,8 +36,8 @@ options 	XSERVER		# X server support in console drivers
 # values.  Note that the BIOS may *correctly* report less than 640k of base
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
-#options 	REALBASEMEM=...	# size of base memory
-#options 	REALEXTMEM=...	# size of extended memory
+#options 	REALBASEMEM=639		# size of base memory (in KB)
+#options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
 # Standard system options
 
