@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.48 2004/08/10 19:23:21 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.49 2004/08/11 04:25:28 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.48 2004/08/10 19:23:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.49 2004/08/11 04:25:28 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,6 @@ com_pcmcia_validate_config(cfe)
 		return (EINVAL);
 	/* Some cards have a memory space, but we don't use it. */
 	cfe->num_memspace = 0;
-	/* Some cards don't have IO8 in their CIS. */
-	cfe->flags |= PCMCIA_CFE_IO8;
 	return (0);
 }
 

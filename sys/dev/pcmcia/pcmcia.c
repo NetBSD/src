@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.61 2004/08/11 00:32:44 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.62 2004/08/11 04:25:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.61 2004/08/11 00:32:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.62 2004/08/11 04:25:28 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -828,18 +828,10 @@ pcmcia_config_map(pf)
 	for (n = 0; n < cfe->num_iospace; n++) {
 		int width;
 
-		switch (cfe->flags & (PCMCIA_CFE_IO8|PCMCIA_CFE_IO16)) {
-		case PCMCIA_CFE_IO8:
-			width = PCMCIA_WIDTH_IO8;
-			break;
-		case PCMCIA_CFE_IO16:
-			width = PCMCIA_WIDTH_IO16;
-			break;
-		case PCMCIA_CFE_IO8|PCMCIA_CFE_IO16:
-		default:
+		if (cfe->flags & PCMCIA_CFE_IO16)
 			width = PCMCIA_WIDTH_AUTO;
-			break;
-		}
+		else
+			width = PCMCIA_WIDTH_IO8;
 		error = pcmcia_io_map(pf, width, &cfe->iospace[n].handle,
 		    &cfe->iospace[n].window);
 		if (error)
