@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2003/04/02 07:36:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2003/06/23 13:06:55 thorpej Exp $	*/
 
 /*
  *
@@ -338,10 +338,8 @@ extern int nkpde;			/* current # of PDEs for kernel */
  * prototypes
  */
 
-void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
-void		pmap_deactivate __P((struct proc *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2002/07/09 23:10:03 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2003/06/23 13:06:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@ struct switchframe {
 	long	sf_r3;
 	long	sf_fp;
 	int	sf_pc;
-	struct	proc *sf_p;
+	struct	lwp *sf_lwp;
 };
 
 /*
@@ -99,6 +99,18 @@ struct sigframe {
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
+};
+
+/*
+ * Scheduler Activation upcall frame
+ */
+struct saframe {
+	int		sa_ra;
+	int		sa_type;
+	struct sa_t**	sa_sas;
+	int		sa_events;
+	int		sa_interrupted;
+	void*		sa_arg;
 };
 
 #endif /* _NS532_FRAME_H_ */

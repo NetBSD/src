@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2002/09/25 22:21:16 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4 2003/06/23 13:06:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -49,17 +49,19 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h> 
 
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp, context;
 	struct reg *regs;
 	sigset_t mask;
@@ -74,7 +76,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Restore the register context. */
-	regs = p->p_md.md_regs;
+	regs = l->l_md.md_regs;
 
 	/*
 	 * Check for security violations.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2003/05/10 21:10:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 2003/06/23 13:06:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -63,6 +63,8 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -326,14 +328,15 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct reg *regs;
 	struct sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	regs = p->p_md.md_regs;
+	regs = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -362,7 +365,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 	frame.sf_signum = sig;
 	frame.sf_code = code;
@@ -404,7 +407,7 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -422,6 +425,37 @@ sendsig(sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+void
+cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
+	struct lwp *l;
+	int type, nevents, ninterrupted;
+	void *sas, *ap, *sp;
+	sa_upcall_t upcall;
+{
+	struct saframe *sf, frame;
+	struct reg *regs;
+
+	regs = l->l_md.md_regs;
+
+	/* Build up and copy the SA frame. */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_arg = ap;
+	frame.sa_ra = 0;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work.  Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	regs->r_sp = (int) sf;
+	regs->r_pc = (int) upcall;
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -433,14 +467,15 @@ sendsig(sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct reg *regs;
 
@@ -454,7 +489,7 @@ sys___sigreturn14(p, v, retval)
 		return (EFAULT);
 
 	/* Restore the register context. */
-	regs = p->p_md.md_regs;
+	regs = l->l_md.md_regs;
 
 	/*
 	 * Check for security violations.
@@ -500,13 +535,10 @@ cpu_getmcontext(l, mcp, flags)
 
 #ifdef NS381
 	{
-		/*
-		 * XXX Unaware of LWP universe.
-		 */
-		extern struct proc *fpu_proc;
+		extern struct lwp *fpu_lwp;
 
 		/* If we're the FPU owner, dump its state to the PCB first. */
-		if (fpu_proc == p)
+		if (fpu_lwp == l)
 			save_fpu_context(&l->l_addr->u_pcb);
 
 		mcp->__fpregs.__fpr_psr = l->l_addr->u_pcb.pcb_fsr;
@@ -529,7 +561,7 @@ cpu_setmcontext(l, mcp, flags)
 	/* Restore CPU context, if any. */
 	if (flags & _UC_CPU) {
 		/* Check for security violations. */
-		if (((mcp.__gregs[_REG_PS] ^ regs->r_psr) & PSL_USERSTATIC)
+		if (((mcp->__gregs[_REG_PS] ^ regs->r_psr) & PSL_USERSTATIC)
 		    != 0)
 			return (EINVAL);
 		(void)memcpy(l->l_md.md_regs, mcp->__gregs,
@@ -538,16 +570,15 @@ cpu_setmcontext(l, mcp, flags)
 
 #ifdef NS381
 	/* Restore FPU context, if any. */
-	/*
-	 * XXX Unaware of LWP universe.
-	 */
 	if (flags & _UC_FPU) {
+		extern struct lwp *fpu_lwp;
+
 		l->l_addr->u_pcb.pcb_fsr = mcp->__fpregs.__fpr_psr;
 		(void)memcpy(l->l_addr->u_pcb.pcb_freg,
 		    mcp->__fpregs.__fpr_regs,
 		    sizeof (l->l_addr->u_pcb.pcb_freg));
 		/* If we're the FPU owner, force a reload. */
-		if (fpu_proc == p)
+		if (fpu_lwp == l)
 			restore_fpu_context(&l->l_addr->u_pcb);
 	}
 #endif
@@ -616,7 +647,7 @@ cpu_reboot(howto, bootstr)
 			dump_sf.sf_fp = fp[0];
 			dump_sf.sf_pc = fp[1];
 			dump_sf.sf_pl = s;
-			dump_sf.sf_p  = curproc;
+			dump_sf.sf_lwp = curlwp;
 		}
 		dumpsys();
 	}
@@ -868,17 +899,18 @@ err:
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct reg *r = p->p_md.md_regs;
-	struct pcb *pcbp = &p->p_addr->u_pcb;
-	extern struct proc *fpu_proc;
+	struct proc *p = l->l_proc;
+	struct reg *r = l->l_md.md_regs;
+	struct pcb *pcbp = &l->l_addr->u_pcb;
+	extern struct lwp *fpu_lwp;
 
-	if (p == fpu_proc)
-		fpu_proc = 0;
+	if (l == fpu_lwp)
+		fpu_lwp = 0;
 
 	memset(r, 0, sizeof(*r));
 	r->r_sp  = stack;
@@ -1063,7 +1095,7 @@ init532()
 	proc0paddr = (struct user *)alloc_pages(UPAGES);
 	proc0paddr->u_pcb.pcb_ptb = (int) pd;
 	proc0paddr = (struct user *) ((vaddr_t)proc0paddr + KERNBASE);
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	/* Allocate second level page tables for kernel virtual address space */
 	map(pd, VM_MIN_KERNEL_ADDRESS, PA(-1), 0, nkpde << PDSHIFT);
@@ -1102,11 +1134,11 @@ init532()
 	pmap_bootstrap(avail_start + KERNBASE);
 
 	/* Construct an empty syscframe for proc0. */
-	curpcb = &proc0.p_addr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_onstack = (struct reg *)
-			      ((u_int)proc0.p_addr + USPACE) - 1;
+			      ((u_int)lwp0.l_addr + USPACE) - 1;
 
-	/* Switch to proc0's stack. */
+	/* Switch to lwp0's stack. */
 	lprd(sp, curpcb->pcb_onstack);
 	lprd(fp, 0);
 

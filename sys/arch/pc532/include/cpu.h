@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2002/05/25 04:30:16 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2003/06/23 13:06:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,7 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	cpu_proc_fork(p1, p2)		/* nothing */
 #define cpu_swapin(p)           	/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
@@ -119,7 +120,7 @@ void	delay __P((int));
 
 #ifdef _KERNEL
 /* ieee_handler.c */
-int	ieee_handle_exception __P((struct proc *));
+int	ieee_handle_exception __P((struct lwp *));
 
 /* locore.s */
 void	delay __P((int));

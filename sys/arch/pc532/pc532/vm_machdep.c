@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 2003/04/02 02:24:16 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55 2003/06/23 13:06:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -59,7 +59,7 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 
-extern struct proc *fpu_proc;
+extern struct lwp *fpu_lwp;
 
 void	setredzone __P((u_short *, caddr_t));
 
@@ -82,38 +82,38 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct syscframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct syscframe *tf;
+	struct switchframe *sf;
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * if l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
 	 */
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
-	/* Copy pcb from proc p1 to p2. */
-	*pcb = p1->p_addr->u_pcb;
-	pcb->pcb_onstack = (struct reg *)((u_int)p2->p_addr + USPACE) - 1;
-	*pcb->pcb_onstack = *p1->p_addr->u_pcb.pcb_onstack;
-	/* If p1 is holding the FPU, update the FPU context of p2. */
-	if (fpu_proc == p1)
+	/* Copy pcb from lwp l1 to l2. */
+	*pcb = l1->l_addr->u_pcb;
+	pcb->pcb_onstack = (struct reg *)((u_int)l2->l_addr + USPACE) - 1;
+	*pcb->pcb_onstack = *l1->l_addr->u_pcb.pcb_onstack;
+	/* If l1 is holding the FPU, update the FPU context of l2. */
+	if (fpu_lwp == l1)
 		save_fpu_context(pcb);
-	pmap_activate(p2);
+	pmap_activate(l2);
 
 	/*
 	 * Copy the syscframe.
 	 */
-	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
+	tf = (struct syscframe *)((u_int)l2->l_addr + USPACE) - 1;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -121,9 +121,31 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf->sf_regs.r_sp = (u_int)stack + stacksize;
 
-	p2->p_md.md_regs = &tf->sf_regs;
+	l2->l_md.md_regs = &tf->sf_regs;
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_p  = p2;
+	sf->sf_lwp= l2;
+	sf->sf_pc = (long) proc_trampoline;
+	sf->sf_fp = (long) &tf->sf_regs.r_fp;
+	sf->sf_r3 = (long) func;
+	sf->sf_r4 = (long) arg;
+	sf->sf_pl = imask[IPL_ZERO];
+	pcb->pcb_ksp = (long) sf;
+	pcb->pcb_kfp = (long) &sf->sf_fp;
+}
+
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct syscframe *tf;
+	struct switchframe *sf;
+
+	tf = (struct syscframe *)((u_int)l->l_addr + USPACE) - 1;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_lwp = l;
 	sf->sf_pc = (long) proc_trampoline;
 	sf->sf_fp = (long) &tf->sf_regs.r_fp;
 	sf->sf_r3 = (long) func;
@@ -141,16 +163,16 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  * saved, so that it goes out with the pcb, which is in the user area.
  */
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(l)
+	struct lwp *l;
 {
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (fpu_proc != p)
+	if (fpu_lwp != l)
 		return;
-	save_fpu_context(&p->p_addr->u_pcb);
-	fpu_proc = 0;
+	save_fpu_context(&l->l_addr->u_pcb);
+	fpu_lwp = 0;
 }
 
 /*
@@ -161,19 +183,20 @@ cpu_swapout(p)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(arg)
-	struct proc *arg;
+cpu_exit(arg, proc)
+	struct lwp *arg;
+	int proc;
 {
 	extern struct user *proc0paddr;
-	register struct proc *p __asm("r3");
+	register struct lwp *l __asm("r3");
 	uvmexp.swtch++;
 
 	/* Copy arg into a register. */
-	movd(arg, p);
+	movd(arg, l);
 
 	/* If we were using the FPU, forget about it. */
-	if (fpu_proc == p)
-		fpu_proc = 0;
+	if (fpu_lwp == l)
+		fpu_lwp = 0;
 
 	/* Switch to temporary stack and address space. */
 	lprd(sp, INTSTACK);
@@ -181,10 +204,13 @@ cpu_exit(arg)
 
 	/* Schedule the vmspace and stack to be freed. */
 	(void) splhigh();
-	exit2(p);
+	if (proc)		/* XXXJRT FRAGILE!  USE A REGISTER! */
+		exit2(l);
+	else
+		lwp_exit2(l);
 
 	/* Don't update pcb in cpu_switch. */
-	curproc = NULL;
+	curlwp = NULL;
 	cpu_switch(NULL, NULL);
 	/* NOTREACHED */
 }
@@ -198,12 +224,13 @@ struct md_core {
 };
 
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -214,12 +241,12 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
+	error = process_read_regs(l, &md_core.intreg);
 	if (error)
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
+	error = process_read_fpregs(l, &md_core.freg);
 	if (error)
 		return error;
 
