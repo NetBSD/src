@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.35.2.1 1999/05/03 12:56:07 perry Exp $	*/
+/*	$NetBSD: locore.c,v 1.35.2.2 2000/03/01 12:46:36 he Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -169,12 +169,21 @@ start()
 			if (vax_boardtype == VAX_BTYP_49)
 				dep_call = &ka48_calls;
 #endif
-			if ((dep_call == &ka410_calls ||
-			    dep_call == &ka43_calls) &&
-			    (vax_confdata & 0x80))
+#if VAX410 || VAX43
+			if ((
+#if VAX410 && VAX43
+				dep_call == &ka410_calls ||
+				dep_call == &ka43_calls
+#elif VAX410
+				dep_call == &ka410_calls
+#else
+				dep_call == &ka43_calls
+#endif
+			    ) && (vax_confdata & 0x80))
 				strcpy(cpu_model, "MicroVAX ");
 			else
 				strcpy(cpu_model, "VAXstation ");
+#endif
 
 			switch (vax_boardtype) {
 #if VAX410
