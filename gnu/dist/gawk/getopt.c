@@ -235,6 +235,8 @@ my_index (str, chr)
 /* gcc with -traditional declares the built-in strlen to return int,
    and has done so at least since version 2.4.5. -- rms.  */
 extern int strlen (const char *);
+#else /* __STDC__ */
+extern size_t strlen (const char *);
 #endif /* not __STDC__ */
 #endif /* __GNUC__ */
 
