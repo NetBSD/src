@@ -1,0 +1,66 @@
+#
+# Device majors for acorn32
+#
+
+device-major	mem		char 0
+device-major	swap		char 1   block 1
+device-major	cons		char 2
+device-major	ctty		char 3
+device-major	physcon		char 4			vt & vidcconsole
+device-major	log		char 5
+device-major	ptc		char 6			pty
+device-major	pts		char 7			pty
+device-major	lpt		char 8			lpt
+device-major	qms		char 9			qms
+device-major	beep		char 10			beep
+device-major	kbd		char 11			kbd
+device-major	com		char 12			com
+
+device-major	wd		char 16  block 16	wd
+device-major	fd		char 17  block 17	fdc
+device-major	md		char 18  block 18	md
+device-major	vnd		char 19  block 19	vnd
+
+device-major	ccd		char 21  block 21	ccd
+
+device-major	sd		char 24  block 24	sd
+device-major	st		char 25  block 25	st
+device-major	cd		char 26  block 26	cd
+device-major	ch		char 27			ch
+device-major	uk		char 28			uk
+device-major	ss		char 29			ss
+
+device-major	bpf		char 32			bpfilter
+device-major	tun		char 33			tun
+device-major	filedesc	char 34
+device-major	lkm		char 35			lkm
+device-major	audio		char 36			audio
+device-major	vidcconsole	char 37			vidcconsole
+
+device-major	opms		char 40			opms
+
+device-major	iic		char 42			iic
+device-major	rtc		char 43			rtc
+
+device-major	ipl		char 46			ipfilter
+
+device-major	rnd		char 52			rnd
+
+device-major	midi		char 57			midi
+device-major	sequencer	char 58			sequencer
+device-major	vcoda		char 59			vcoda
+device-major	wsdisplay	char 60			wsdisplay
+device-major	wskbd		char 61			wskbd
+device-major	wsmouse		char 62			wsmouse
+
+device-major	scsibus		char 70			scsibus
+device-major	raid		char 71  block 71	raid
+
+device-major	wsmux		char 73			wsmux
+
+device-major	isdn		char 79			isdn
+device-major	isdnctl		char 80			isdnctl
+device-major	isdnbchan	char 81			isdnbchan
+device-major	isdntrc		char 82			isdntrc
+device-major	isdntel		char 83			isdntel
+device-major	clockctl	char 84			clockctl

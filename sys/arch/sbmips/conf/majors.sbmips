@@ -1,0 +1,69 @@
+#
+# Device majors for sbmips
+#
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 1
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	tun		char 7			tun
+device-major	sd		char 8   block 8	sd
+device-major	vnd		char 9   block 9	vnd
+device-major	filedesc	char 10
+device-major	bpf		char 11			bpfilter
+device-major	st		char 12  block 2	st
+device-major	cd		char 13  block 3	cd
+device-major	ch		char 14			ch
+
+device-major	lkm		char 16			lkm
+device-major	ikoscons	char 17			ikos
+device-major	sbjcn		char 17			jtagconsole & !ikos
+device-major	sbscn		char 17			sbscn & !jtaconsole & !ikos
+
+device-major	audio		char 24			audio
+device-major	wsdisplay	char 25			wsdisplay
+device-major	com		char 26			com
+device-major	ccd		char 27  block 7	ccd
+device-major	md		char 28  block 6	md
+device-major	wskbd		char 29			wskbd
+device-major	wsmouse		char 30			wsmouse
+device-major	lpt		char 31			lpt
+device-major	ss		char 32			ss
+device-major	uk		char 33			uk
+
+device-major	ipl		char 35			ipfilter
+device-major	wd		char 36  block 4	wd
+device-major	se		char 37			se
+device-major	satlink		char 38			satlink
+device-major	rnd		char 39			rnd
+
+device-major	spkr		char 41			spkr
+device-major	scsibus		char 42			scsibus
+device-major	raid		char 43  block 16	raid
+device-major	esh		char 44			esh
+device-major	usb		char 45			usb
+device-major	uhid		char 46			uhid
+device-major	ulpt		char 47			ulpt
+device-major	ugen		char 48			ugen
+device-major	midi		char 49			midi
+device-major	sequencer	char 50			sequencer
+device-major	isdn		char 51			isdn
+device-major	isdnctl		char 52			isdnctl
+device-major	isdnbchan	char 53			isdnbchan
+device-major	isdntrc		char 54			isdntrc
+device-major	isdntel		char 55			isdntel
+device-major	wsmux		char 56			wsmux
+device-major	ucom		char 57			ucom
+device-major	ses		char 58			ses
+device-major	ld		char 59  block 17	ld
+device-major	cy		char 60			cy
+device-major	cz		char 61			cz
+device-major	urio		char 62			urio
+device-major	uscanner	char 63			uscanner
+device-major	altq		char 64			altq
+device-major	mlx		char 65			mlx
+device-major	pci		char 66			pci
+
+device-major	clockctl	char 69			clockctl

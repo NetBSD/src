@@ -1,0 +1,51 @@
+#
+# Device majors for sgimips
+#
+
+device-major	cons		char 0
+device-major	swap		char 1   block 1
+device-major	md		char 2   block 2	md
+device-major	ccd		char 3   block 3	ccd
+device-major	vnd		char 4   block 4	vnd
+device-major	raid		char 5   block 5	raid
+
+device-major	sd		char 10  block 10	sd
+device-major	st		char 11  block 11	st
+device-major	cd		char 12  block 12	cd
+device-major	wd		char 13  block 13	wd
+device-major	ld		char 14  block 14	ld
+
+device-major	mem		char 20
+device-major	ctty		char 21
+device-major	pts		char 22			pty
+device-major	ptc		char 23			pty
+device-major	log		char 24
+device-major	lkm		char 25			lkm
+device-major	filedesc	char 26
+device-major	bpf		char 27			bpfilter
+device-major	tun		char 28			tun
+device-major	ipl		char 29			ipfilter
+device-major	rnd		char 30			rnd
+device-major	uk		char 31			uk
+device-major	ss		char 32			ss
+device-major	ch		char 33			ch
+device-major	scsibus		char 34			scsibus
+device-major	zstty		char 35			zstty
+device-major	com		char 36			com
+device-major	arcbios		char 37
+device-major	isdn		char 38			isdn
+device-major	isdnctl		char 39			isdnctl
+device-major	isdnbchan	char 40			isdnbchan
+device-major	isdntrc		char 41			isdntrc
+device-major	isdntel		char 42			isdntel
+device-major	svr4_net	char 43			compat_svr4
+
+device-major	wsdisplay	char 50			wsdisplay
+device-major	wskbd		char 51			wskbd
+device-major	wsmouse		char 52			wsmouse
+device-major	wsmux		char 53			wsmux
+device-major	wsfont		char 54			wsfont
+
+device-major	clockctl	char 60			clockctl
+device-major	irix_kmem	char 61			compat_irix
+device-major	irix_usema	char 62			compat_irix
