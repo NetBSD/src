@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.6 1997/07/11 09:33:18 pk Exp $
+.\"	$NetBSD: le.4,v 1.7 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,13 +49,16 @@
 .Cd "le* at ledma0 slot ? offset ?"
 .Cd "le* at lebuffer? slot ? offset ?"
 .Sh DESCRIPTION
-The 
+The
 .Nm
-interface provides access to the 10 Mb/s Ethernet network via the
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network via the
 .Tn AMD
-7990
-.Tn LANCE
-Ethernet chip set.
+Am7990
+Local Area Network Controller for Ethernet
+.Pq Tn LANCE
+chip set.
 .Pp
 Each of the host's network addresses
 is specified at boot time with an
@@ -65,7 +68,9 @@ The
 .Nm
 interface employs the address resolution protocol described in
 .Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local
 network.
 .Pp
 Interfaces attached to an
@@ -95,9 +100,9 @@ to select the UTP connector.
 .Pp
 If a
 .Cm media
-parameter is not specified, a default connector is selected for use by examining
-all media types for carrier. The first connector on which a carrier is
-detected will be selected.
+parameter is not specified, a default connector is selected for
+use by examining all media types for carrier.
+The first connector on which a carrier is detected will be selected.
 Additionally, if carrier is dropped on a port, the driver will switch between
 the possible ports until one with carrier is found.
 .Pp
