@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/18 10:33:19 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2000/06/22 14:24:09 minoura Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -25,15 +25,15 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-RAMDISKSPT=	36
+RAMDISKSPT=	15
 RAMDISKCYLS=	80
-RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS} \* 2
+RAMDISKSIZE!=	expr ${RAMDISKSPT} \* ${RAMDISKCYLS} \* 2
 
 realall: ${IMAGE}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} passwd
 	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKTPC}/2/${RAMDISKCYLS}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPT}/2/${RAMDISKCYLS}
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
