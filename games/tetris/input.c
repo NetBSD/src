@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.4 1999/01/03 02:00:17 hubertf Exp $	*/
+/*	$NetBSD: input.c,v 1.5 2002/06/02 22:17:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 int
 rwait(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int i;
 	struct timeval starttv, endtv, *s;
