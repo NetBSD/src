@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.19 2002/10/03 23:49:31 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.20 2002/10/27 21:12:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.19 2002/10/03 23:49:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.20 2002/10/27 21:12:38 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -177,7 +177,7 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 		break;
 	case CLOCK_MONOTONIC:
 		/* XXX "hz" granularity */
-		s = splclock(); 
+		s = splclock();
 		atv = mono_time;
 		splx(s);
 		TIMEVAL_TO_TIMESPEC(&atv,&ats);
@@ -291,7 +291,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	s = splclock();
 	timeradd(&atv,&time,&atv);
 	timo = hzto(&atv);
-	/* 
+	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
 	if (timo == 0)
@@ -406,7 +406,7 @@ settimeofday1(utv, utzp, p)
 	 */
 	if (tzp)
 		log(LOG_WARNING, "pid %d attempted to set the "
-		    "(obsolete) kernel time zone\n", p->p_pid); 
+		    "(obsolete) kernel time zone\n", p->p_pid);
 	return (0);
 }
 
@@ -493,7 +493,7 @@ adjtime1(delta, olddelta, p)
 /*
  * Interval timer support. Both the BSD getitimer() family and the POSIX
  * timer_*() family of routines are supported.
- * 
+ *
  * All timers are kept in an array pointed to by p_timers, which is
  * allocated on demand - many processes don't use timers at all. The
  * first three elements in this array are reserved for the BSD timers:
@@ -540,14 +540,14 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	for (timerid = 3; timerid < TIMER_MAX; timerid++)
 		if (p->p_timers->pts_timers[timerid] == NULL)
 			break;
-	
+
 	if (timerid == TIMER_MAX)
 		return EAGAIN;
 
 	pt = pool_get(&ptimer_pool, PR_WAITOK);
 	evp = SCARG(uap, evp);
 	if (evp) {
-		if (((error = 
+		if (((error =
 		    copyin(evp, &pt->pt_ev, sizeof (pt->pt_ev))) != 0) ||
 		    ((pt->pt_ev.sigev_notify < SIGEV_NONE) ||
 			(pt->pt_ev.sigev_notify > SIGEV_SA))) {
@@ -584,14 +584,14 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	timerclear(&pt->pt_time.it_value);
 	if (id == CLOCK_REALTIME)
 		callout_init(&pt->pt_ch);
-	else 
+	else
 		pt->pt_active = 0;
-	
+
 	p->p_timers->pts_timers[timerid] = pt;
 
 	return copyout(&timerid, SCARG(uap, timerid), sizeof(timerid));
 }
-				       
+
 
 /* Delete a POSIX realtime timer */
 int
@@ -607,8 +607,8 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 
 	timerid = SCARG(uap, timerid);
 
-	if ((p->p_timers == NULL) || 
-	    (timerid < 2) || (timerid >= TIMER_MAX) || 
+	if ((p->p_timers == NULL) ||
+	    (timerid < 2) || (timerid >= TIMER_MAX) ||
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
@@ -623,7 +623,7 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 			    &ptn->pt_time.it_value);
 		splx(s);
 	}
-		
+
 	p->p_timers->pts_timers[timerid] = NULL;
 	pool_put(&ptimer_pool, pt);
 
@@ -650,7 +650,7 @@ timer_settime(struct ptimer *pt)
 			 * Don't need to check hzto() return value, here.
 			 * callout_reset() does it for us.
 			 */
-			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value), 
+			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
 			    realtimerexpire, pt);
 		}
 	} else {
@@ -746,15 +746,15 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 
 	timerid = SCARG(uap, timerid);
 
-	if ((p->p_timers == NULL) || 
-	    (timerid < 2) || (timerid >= TIMER_MAX) || 
+	if ((p->p_timers == NULL) ||
+	    (timerid < 2) || (timerid >= TIMER_MAX) ||
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
-	
-	if ((error = copyin(SCARG(uap, value), &value, 
+
+	if ((error = copyin(SCARG(uap, value), &value,
 	    sizeof(struct itimerspec))) != 0)
 		return (error);
-	
+
 	TIMESPEC_TO_TIMEVAL(&val.it_value, &value.it_value);
 	TIMESPEC_TO_TIMEVAL(&val.it_interval, &value.it_interval);
 	if (itimerfix(&val.it_value) || itimerfix(&val.it_interval))
@@ -767,7 +767,7 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 	/* If we've been passed an absolute time, convert it to relative. */
 	if (timerisset(&pt->pt_time.it_value) &&
 	    (SCARG(uap, flags) & TIMER_ABSTIME))
-		timersub(&pt->pt_time.it_value, &time, 
+		timersub(&pt->pt_time.it_value, &time,
 		    &pt->pt_time.it_value);
 	timer_settime(pt);
 	splx(s);
@@ -775,13 +775,13 @@ sys_timer_settime(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, ovalue)) {
 		TIMEVAL_TO_TIMESPEC(&oval.it_value, &ovalue.it_value);
 		TIMEVAL_TO_TIMESPEC(&oval.it_interval, &ovalue.it_interval);
-		return copyout(&ovalue, SCARG(uap, ovalue), 
+		return copyout(&ovalue, SCARG(uap, ovalue),
 		    sizeof(struct itimerspec));
 	}
 
 	return (0);
 }
-		
+
 /* Return the time remaining until a POSIX timer fires. */
 int
 sys_timer_gettime(struct lwp *l, void *v, register_t *retval)
@@ -795,11 +795,11 @@ sys_timer_gettime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int s, timerid;
 	struct ptimer *pt;
-	
+
 	timerid = SCARG(uap, timerid);
 
-	if ((p->p_timers == NULL) || 
-	    (timerid < 2) || (timerid >= TIMER_MAX) || 
+	if ((p->p_timers == NULL) ||
+	    (timerid < 2) || (timerid >= TIMER_MAX) ||
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
@@ -830,8 +830,8 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 
 	timerid = SCARG(uap, timerid);
 
-	if ((p->p_timers == NULL) || 
-	    (timerid < 2) || (timerid >= TIMER_MAX) || 
+	if ((p->p_timers == NULL) ||
+	    (timerid < 2) || (timerid >= TIMER_MAX) ||
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
@@ -884,7 +884,7 @@ realtimerexpire(void *arg)
 			 * Don't need to check hzto() return value, here.
 			 * callout_reset() does it for us.
 			 */
-			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value), 
+			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
 			    realtimerexpire, pt);
 			splx(s);
 			return;
@@ -946,7 +946,7 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
-	if (itvp && 
+	if (itvp &&
 	    (error = copyin(itvp, &aitv, sizeof(struct itimerval)) != 0))
 		return (error);
 	if (SCARG(uap, oitv) != NULL) {
@@ -960,11 +960,11 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 		return (EINVAL);
 
-	/* 
+	/*
 	 * Don't bother allocating data structures if the process just
 	 * wants to clear the timer.
 	 */
-	if (!timerisset(&aitv.it_value) && 
+	if (!timerisset(&aitv.it_value) &&
 	    ((p->p_timers == NULL) ||(p->p_timers->pts_timers[which] == NULL)))
 		return (0);
 
@@ -1069,13 +1069,13 @@ timers_free(struct proc *p, int which)
 		}
 		for ( ; i < TIMER_MAX; i++)
 			if ((pt = pts->pts_timers[i]) != NULL) {
-				if (pt->pt_type == CLOCK_REALTIME) 
+				if (pt->pt_type == CLOCK_REALTIME)
 					callout_stop(&pt->pt_ch);
 				pts->pts_timers[i] = NULL;
 				pool_put(&ptimer_pool, pt);
 			}
-		if ((pts->pts_timers[0] == NULL) && 
-		    (pts->pts_timers[1] == NULL) && 
+		if ((pts->pts_timers[0] == NULL) &&
+		    (pts->pts_timers[1] == NULL) &&
 		    (pts->pts_timers[2] == NULL)) {
 			p->p_timers = NULL;
 			free(pts, M_SUBPROC);
@@ -1150,9 +1150,9 @@ itimerfire(struct ptimer *pt)
 	struct proc *p = pt->pt_proc;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
-		/* 
+		/*
 		 * No RT signal infrastructure exists at this time;
-		 * just post the signal number and throw away the 
+		 * just post the signal number and throw away the
 		 * value.
 		 */
 		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
@@ -1164,7 +1164,7 @@ itimerfire(struct ptimer *pt)
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
 		struct sadata *sa = p->p_sa;
-		
+
 		if (p->p_userret == NULL) {
 			if (sa->sa_idle)
 				wakeup(p);
@@ -1187,7 +1187,7 @@ ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 	struct timeval tv, delta;
 	int s, rv = 0;
 
-	s = splclock(); 
+	s = splclock();
 	tv = mono_time;
 	splx(s);
 
@@ -1215,7 +1215,7 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 	struct timeval tv, delta;
 	int s, rv;
 
-	s = splclock(); 
+	s = splclock();
 	tv = mono_time;
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.37 2002/10/22 17:40:46 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.38 2002/10/27 21:12:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	/* We have to be using scheduler activations */
 	if (sa == NULL)
 		return (EINVAL);
-	
+
 	if (p->p_flag & P_SA) /* Already running! */
 		return (EBUSY);
 
@@ -245,13 +245,13 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 
 	*retval = sa->sa_concurrency;
 	/*
-	 * Concurrency greater than the number of physical CPUs does 
-	 * not make sense. 
-	 * XXX Should we ever support hot-plug CPUs, this will need 
+	 * Concurrency greater than the number of physical CPUs does
+	 * not make sense.
+	 * XXX Should we ever support hot-plug CPUs, this will need
 	 * adjustment.
 	 */
 	sa->sa_concurrency = min(SCARG(uap, concurrency), 1 /* XXX ncpus */);
-	    
+
 	return (0);
 }
 
@@ -283,7 +283,7 @@ sa_yield(struct lwp *l)
 	 * signals.
 	 */
 	if (p->p_nrlwps == 1) {
-		DPRINTFN(1,("sa_yield(%d.%d) going dormant\n", 
+		DPRINTFN(1,("sa_yield(%d.%d) going dormant\n",
 		    p->p_pid, l->l_lid));
 		/*
 		 * A signal will probably wake us up. Worst case, the upcall
@@ -348,7 +348,7 @@ sa_preempt(struct lwp *l)
 
 	if (sa->sa_flag & SA_FLAG_PREEMPT)
 		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
-} 
+}
 
 
 /*
@@ -365,7 +365,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sadata *sa = l->l_proc->p_sa;
 	stack_t st;
 
-	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
+	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for
 			      memory */
 	sau = sadata_upcall_alloc(1);
 	l->l_flag |= L_SA;
@@ -378,7 +378,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		return (ENOMEM);
 	}
 	st = sa->sa_stacks[--sa->sa_nstacks];
-	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d, nrstacks   = %d\n", 
+	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d, nrstacks   = %d\n",
 	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks, sa->sa_nrstacks));
 
 	return sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
@@ -408,7 +408,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 	l->l_flag |= L_SA_UPCALL;
-	
+
 	return (0);
 }
 
@@ -449,7 +449,7 @@ sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
 }
 
 
-/* 
+/*
  * Called by tsleep(). Block current LWP and switch to another.
  *
  * WE ARE NOT ALLOWED TO SLEEP HERE!  WE ARE CALLED FROM WITHIN
@@ -518,7 +518,7 @@ sa_switch(struct lwp *l, int type)
 		}
 
 		st = sa->sa_stacks[--sa->sa_nstacks];
-		sa->sa_rstacks[sa->sa_nrstacks++] = 
+		sa->sa_rstacks[sa->sa_nrstacks++] =
 		    sa->sa_stacks[--sa->sa_nstacks];
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
@@ -531,7 +531,7 @@ sa_switch(struct lwp *l, int type)
 			goto sa_upcall_failed;
 		}
 		cpu_setfunc(l2, sa_switchcall, NULL);
-		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, 
+		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL,
 		    sau, &st);
 		if (error) {
 #ifdef DIAGNOSTIC
@@ -540,12 +540,12 @@ sa_switch(struct lwp *l, int type)
 #endif
 			goto sa_upcall_failed;
 		}
-		
+
 		l->l_flag |= L_SA_BLOCKING;
 		l2->l_priority = l2->l_usrpri;
 		setrunnable(l2);
 		PRELE(l2); /* Remove the artificial hold-count */
-		
+
 		KDASSERT(l2 != l);
 	} else if (sa->sa_vp != NULL) {
 		/*
@@ -602,7 +602,7 @@ sa_switch(struct lwp *l, int type)
 		sa->sa_woken = NULL;
 
 
-	/* 
+	/*
 	 * The process is trying to exit. In this case, the last thing
 	 * we want to do is put something back on the cache list.
 	 * It's also not useful to make the upcall at all, so just punt.
@@ -651,7 +651,7 @@ sa_yieldcall(void *arg)
 
 	l = arg;
 	sa = l->l_proc->p_sa;
-	
+
 	sa->sa_vp = l;
 
 	sa_yield(l);
@@ -685,7 +685,7 @@ sa_newcachelwp(struct lwp *l)
 }
 
 /*
- * Take a normal process LWP and place it in the SA cache. 
+ * Take a normal process LWP and place it in the SA cache.
  * LWP must not be running!
  */
 void
@@ -702,7 +702,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	l->l_stat = LSSUSPENDED;
 	l->l_flag |= (L_DETACHED | L_SA);
 	PHOLD(l);
-	/* XXX lock sadata */	
+	/* XXX lock sadata */
 	DPRINTFN(5,("sa_addcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
 	LIST_INSERT_HEAD(&sa->sa_lwpcache, l, l_sibling);
@@ -765,14 +765,14 @@ sa_upcall_userret(struct lwp *l)
 		    p->p_pid, l->l_lid));
 
 		l2 = sa_vp_repossess(l);
-		
+
 		l->l_flag &= ~L_SA;
 		sau = sadata_upcall_alloc(1);
 		l->l_flag |= L_SA;
-		
+
 		KDASSERT(sa->sa_nrstacks > 0);
 		st = sa->sa_rstacks[--sa->sa_nrstacks];
-		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau, 
+		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau,
 		    &st) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
@@ -784,7 +784,7 @@ sa_upcall_userret(struct lwp *l)
 #endif
 			sigexit(l, SIGABRT);
 			/* NOTREACHED */
-		}	
+		}
 		l->l_flag &= ~L_SA_BLOCKING;
 	}
 
@@ -801,8 +801,8 @@ sa_upcall_userret(struct lwp *l)
 		    sau->sau_state.deferred.i_lwp);
 	}
 
-	stack = (void *) 
-	    (((uintptr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size) 
+	stack = (void *)
+	    (((uintptr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size)
 		& ~ALIGNBYTES);
 
 	self_sa.sa_id = l->l_lid;
@@ -813,7 +813,7 @@ sa_upcall_userret(struct lwp *l)
 	nint = 0;
 	if (sau->sau_state.captured.e_sa.sa_context != NULL) {
 		if (copyout(&sau->sau_state.captured.e_ctx,
-		    sau->sau_state.captured.e_sa.sa_context, 
+		    sau->sau_state.captured.e_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
 		printf("sa_upcall_userret(%d.%d): couldn't copyout"
@@ -831,7 +831,7 @@ sa_upcall_userret(struct lwp *l)
 		KDASSERT(sau->sau_state.captured.i_sa.sa_context !=
 		    sau->sau_state.captured.e_sa.sa_context);
 		if (copyout(&sau->sau_state.captured.i_ctx,
-		    sau->sau_state.captured.i_sa.sa_context, 
+		    sau->sau_state.captured.i_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
 		printf("sa_upcall_userret(%d.%d): couldn't copyout"
@@ -845,7 +845,7 @@ sa_upcall_userret(struct lwp *l)
 		nsas++;
 		nint = 1;
 	}
-	
+
 	/* Copy out the activation's ucontext */
 	u.uc_stack = sau->sau_stack;
 	u.uc_flags = _UC_STACK;
@@ -924,7 +924,7 @@ sa_vp_repossess(struct lwp *l)
 	sa->sa_vp = l;
 	if (sa->sa_idle == l2)
 		sa->sa_idle = NULL;
-	
+
 	KDASSERT(l2 != l);
 	if (l2) {
 		SCHED_LOCK(s);
@@ -939,7 +939,7 @@ sa_vp_repossess(struct lwp *l)
 #ifdef DIAGNOSTIC
 		default:
 			panic("SA VP %d.%d is in state %d, not running"
-			    " or sleeping\n", p->p_pid, l2->l_lid, 
+			    " or sleeping\n", p->p_pid, l2->l_lid,
 			    l2->l_stat);
 #endif
 		}
@@ -975,9 +975,9 @@ debug_print_sa(struct proc *p)
 	struct lwp *l;
 	struct sadata *sa;
 
-	printf("Process %d (%s), state %d, address %p, flags %x\n", 
+	printf("Process %d (%s), state %d, address %p, flags %x\n",
 	    p->p_pid, p->p_comm, p->p_stat, p, p->p_flag);
-	printf("LWPs: %d (%d running, %d zombies)\n", 
+	printf("LWPs: %d (%d running, %d zombies)\n",
 	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling)
 	    debug_print_lwp(l);
@@ -993,7 +993,7 @@ debug_print_sa(struct proc *p)
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
 	}
-	
+
 	return 0;
 }
 
@@ -1008,7 +1008,7 @@ debug_print_lwp(struct lwp *l)
 	if (l->l_wchan)
 		printf("wait %p %s", l->l_wchan, l->l_wmesg);
 	printf("\n");
-	
+
 	return 0;
 }
 

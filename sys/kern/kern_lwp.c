@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.18 2002/10/25 17:26:27 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.19 2002/10/27 21:12:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	 * __LWP_ASLWP is probably needed for Solaris compat.
 	 */
 
-	newlwp(l, p, uaddr, 
-	    SCARG(uap, flags) & LWP_DETACHED, 
+	newlwp(l, p, uaddr,
+	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, NULL, startlwp, newuc, &l2);
 
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
@@ -111,7 +111,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		l2->l_stat = LSSUSPENDED;
 	}
 
-	error = copyout(&l2->l_lid, SCARG(uap, new_lwp), 
+	error = copyout(&l2->l_lid, SCARG(uap, new_lwp),
 	    sizeof(l2->l_lid));
 	if (error)
 		return (error);
@@ -120,7 +120,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 }
 
 
-int	
+int
 sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 {
 
@@ -135,7 +135,7 @@ sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
-	
+
 	return (0);
 }
 
@@ -161,7 +161,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 		return (ESRCH);
 
 	if (t == l) {
-		/* 
+		/*
 		 * Check for deadlock, which is only possible
 		 * when we're suspending ourself.
 		 */
@@ -176,7 +176,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 		SCHED_LOCK(s);
 		l->l_stat = LSSUSPENDED;
 		/* XXX NJWLWP check if this makes sense here: */
-		l->l_proc->p_stats->p_ru.ru_nvcsw++; 
+		l->l_proc->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
@@ -249,7 +249,7 @@ lwp_continue(struct lwp *l)
 	if (l->l_stat != LSSUSPENDED)
 		return;
 
-	if (l->l_wchan == 0) { 
+	if (l->l_wchan == 0) {
 		/* LWP was runnable before being suspended. */
 		SCHED_LOCK(s);
 		setrunnable(l);
@@ -278,7 +278,7 @@ int sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 
 	if (t == NULL)
 		return (ESRCH);
-	
+
 	if (t->l_stat != LSSLEEP)
 		return (ENODEV);
 
@@ -330,13 +330,13 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 
 	if (lid == l->l_lid)
 		return (EDEADLK); /* Waiting for ourselves makes no sense. */
-	
+
 	wpri = PWAIT |
 	    ((flags & LWPWAIT_EXITCONTROL) ? PNOEXITERR : PCATCH);
- loop:       
+ loop:
 	nfound = 0;
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-		if ((l2 == l) || (l2->l_flag & L_DETACHED) || 
+		if ((l2 == l) || (l2->l_flag & L_DETACHED) ||
 		    ((lid != 0) && (lid != l2->l_lid)))
 			continue;
 
@@ -344,7 +344,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		if (l2->l_stat == LSZOMB) {
 			if (departed)
 				*departed = l2->l_lid;
-			
+
 			s = proclist_lock_write();
 			LIST_REMOVE(l2, l_zlist); /* off zomblwp */
 			proclist_unlock_write(s);
@@ -355,9 +355,9 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			p->p_nzlwps--;
 			simple_unlock(&p->p_lwplock);
 			/* XXX decrement limits */
-			
+
 			pool_put(&lwp_pool, l2);
-			
+
 			return (0);
 		} else if (l2->l_stat == LSSLEEP ||
 		           l2->l_stat == LSSUSPENDED) {
@@ -374,18 +374,18 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			}
 			if (l3 == NULL) /* Everyone else is waiting. */
 				return (EDEADLK);
-				
+
 			/* XXX we'd like to check for a cycle of waiting
 			 * LWPs (specific LID waits, not any-LWP waits)
 			 * and detect that sort of deadlock, but we don't
 			 * have a good place to store the lwp that is
 			 * being waited for. wchan is already filled with
 			 * &p->p_nlwps, and putting the lwp address in
-			 * there for deadlock tracing would require 
+			 * there for deadlock tracing would require
 			 * exiting LWPs to call wakeup on both their
 			 * own address and &p->p_nlwps, to get threads
 			 * sleeping on any LWP exiting.
-			 * 
+			 *
 			 * Revisit later. Maybe another auxillary
 			 * storage location associated with sleeping
 			 * is in order.
@@ -396,7 +396,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	if (nfound == 0)
 		return (ESRCH);
 
-	if ((error = tsleep((caddr_t) &p->p_nlwps, wpri, 
+	if ((error = tsleep((caddr_t) &p->p_nlwps, wpri,
 	    (lid != 0) ? waitstr1 : waitstr2, 0)) != 0)
 		return (error);
 
@@ -405,7 +405,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 
 
 int
-newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, 
+newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
     int flags, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
@@ -420,10 +420,10 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
 
 
 	memset(&l2->l_startzero, 0,
-	       (unsigned) ((caddr_t)&l2->l_endzero - 
+	       (unsigned) ((caddr_t)&l2->l_endzero -
 			   (caddr_t)&l2->l_startzero));
 	memcpy(&l2->l_startcopy, &l1->l_startcopy,
-	       (unsigned) ((caddr_t)&l2->l_endcopy - 
+	       (unsigned) ((caddr_t)&l2->l_endcopy -
 			   (caddr_t)&l2->l_startcopy));
 
 #if !defined(MULTIPROCESSOR)
@@ -451,7 +451,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
 		*rnewlwpp = l2;
 
 	l2->l_addr = (struct user *)uaddr;
-	uvm_lwp_fork(l1, l2, stack, stacksize, func, 
+	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
 
@@ -460,7 +460,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
 	simple_unlock(&p2->p_lwplock);
-	
+
 	/* XXX should be locked differently... */
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
@@ -482,18 +482,19 @@ lwp_exit(struct lwp *l)
 	int s;
 
 	DPRINTF(("lwp_exit: %d.%d exiting.\n", p->p_pid, l->l_lid));
-	DPRINTF((" nlwps: %d nrlwps %d nzlwps: %d\n", 
+	DPRINTF((" nlwps: %d nrlwps %d nzlwps: %d\n",
 	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
-	/* 
+
+	/*
 	 * If we are the last live LWP in a process, we need to exit
 	 * the entire process (if that's not already going on). We do
 	 * so with an exit status of zero, because it's a "controlled"
-	 * exit, and because that's what Solaris does.  
+	 * exit, and because that's what Solaris does.
 	 */
 	if (((p->p_nlwps - p->p_nzlwps) == 1) && ((p->p_flag & P_WEXIT) == 0)) {
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
-		exit1(l, 0); 
+		exit1(l, 0);
 	}
 
 	s = proclist_lock_write();
@@ -510,7 +511,7 @@ lwp_exit(struct lwp *l)
 	simple_unlock(&p->p_lwplock);
 
 	l->l_stat = LSDEAD;
-	
+
 	/* cpu_exit() will not return */
 	cpu_exit(l, 0);
 
@@ -528,9 +529,9 @@ lwp_exit2(struct lwp *l)
 	wakeup(&deadproc);
 }
 
-/* 
- * Pick a LWP to represent the process for those operations which 
- * want information about a "process" that is actually associated 
+/*
+ * Pick a LWP to represent the process for those operations which
+ * want information about a "process" that is actually associated
  * with a LWP.
  */
 struct lwp *
