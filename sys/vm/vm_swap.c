@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.10 1993/08/01 19:26:42 mycroft Exp $
+ *	$Id: vm_swap.c,v 1.11 1993/08/29 01:50:20 cgd Exp $
  */
 
 #include "param.h"
@@ -124,6 +124,7 @@ swstrategy(bp)
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	if (bp->b_blkno + sz > nswap) {
 		bp->b_flags |= B_ERROR;
+		bp->b_error = EINVAL;
 		biodone(bp);
 		return;
 	}
@@ -131,6 +132,7 @@ swstrategy(bp)
 		off = bp->b_blkno % dmmax;
 		if (off+sz > dmmax) {
 			bp->b_flags |= B_ERROR;
+			bp->b_error = EINVAL;
 			biodone(bp);
 			return;
 		}
@@ -144,7 +146,8 @@ swstrategy(bp)
 	if ((bp->b_dev = sp->sw_dev) == 0)
 		panic("swstrategy");
 	if (sp->sw_vp == NULL) {
-		bp->b_error |= B_ERROR;
+		bp->b_flags |= B_ERROR;
+		bp->b_error = ENODEV;
 		biodone(bp);
 		return;
 	}
@@ -162,6 +165,7 @@ swstrategy(bp)
 	if (bp->b_vp != NULL)
 		brelvp(bp);
 	bp->b_vp = sp->sw_vp;
+
 	VOP_STRATEGY(bp);
 }
 
