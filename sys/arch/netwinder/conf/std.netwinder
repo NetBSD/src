@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwinder,v 1.6 2001/11/20 12:56:34 lukem Exp $
+#	$NetBSD: std.netwinder,v 1.7 2001/11/24 00:11:00 thorpej Exp $
 #
 # standard NetBSD/netwinder options
 
@@ -9,7 +9,6 @@ options 	EXEC_SCRIPT
 options 	EXEC_ELF32
 
 # To support easy transit to ../arch/arm/arm32
-options 	PROG32
 options 	ARM32
 
 makeoptions	LOADADDRESS="0xF000C000"
