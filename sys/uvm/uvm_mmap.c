@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.13 2002/07/12 01:40:45 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.14 2002/07/16 14:09:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.13 2002/07/12 01:40:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.14 2002/07/16 14:09:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,8 +1086,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			return (EACCES);
 
 		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, 0, curproc->p_ucred, 
-			    curproc);
+			error = VOP_MMAP(vp, 0, curproc->p_ucred, curproc);
 			if (error) {
 				return error;
 			}
