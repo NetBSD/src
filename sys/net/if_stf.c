@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.38 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.39 2004/04/26 01:41:15 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.38 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.39 2004/04/26 01:41:15 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -599,12 +599,7 @@ stf_checkaddr6(sc, in6, inifp)
 }
 
 void
-#if __STDC__
 in_stf_input(struct mbuf *m, ...)
-#else
-in_stf_input(m, va_alist)
-	struct mbuf *m;
-#endif
 {
 	int off, proto;
 	struct stf_softc *sc;
