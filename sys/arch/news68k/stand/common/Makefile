@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/13 17:48:10 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2003/03/30 08:01:13 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -9,6 +9,7 @@ CFLAGS= -Os -Wall
 CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
+CPPFLAGS+= -D__daddr_t=int32_t
 AFLAGS= -D_LOCORE
 
 CLEANFILES+= machine m68k
