@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.59 2002/05/13 01:33:12 matt Exp $ */
+/* $NetBSD: scc.c,v 1.59.2.1 2002/05/16 16:03:35 gehenna Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59 2002/05/13 01:33:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59.2.1 2002/05/16 16:03:35 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59 2002/05/13 01:33:12 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
@@ -97,14 +98,11 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59 2002/05/13 01:33:12 matt Exp $");
 #include <alpha/tc/sccvar.h>
 
 #include <machine/rpb.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-
-#undef	SCCDEV
-#define	SCCDEV		15			/* XXX */
 
 #define raster_console() 1	/* Treat test for cn_screen as true */
 #define CONSOLE_ON_UNIT(unit) 0	/* No raster console on Alphas */
@@ -189,6 +187,20 @@ struct cfattach scc_ca = {
 };
 
 extern struct cfdriver scc_cd;
+
+dev_type_open(sccopen);
+dev_type_close(sccclose);
+dev_type_read(sccread);
+dev_type_write(sccwrite);
+dev_type_ioctl(sccioctl);
+dev_type_stop(sccstop);
+dev_type_tty(scctty);
+dev_type_poll(sccpoll);
+
+const struct cdevsw scc_cdevsw = {
+	sccopen, sccclose, sccread, sccwrite, sccioctl,
+	sccstop, scctty, sccpoll, nommap, D_TTY
+};
 
 int		sccGetc __P((dev_t));
 void		sccPutc __P((dev_t, int));
@@ -371,7 +383,8 @@ sccattach(parent, self, aux)
 		if (alpha_donot_kludge_scc)
 			printf("\nSWITCHING TO SERIAL CONSOLE!\n");
 		cn_tab = &scccons;
-		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&scc_cdevsw),
+					 sc->sc_dv.dv_unit * 2);
 
 		printf("%s console\n", alpha_donot_kludge_scc ? "\n***" : ":");
 
@@ -957,7 +970,9 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) && raster_console()) {
+	if (tp == scctty(makedev(cdevsw_lookup_major(&scc_cdevsw),
+						 SCCKBD_PORT)) &&
+				 raster_console()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
