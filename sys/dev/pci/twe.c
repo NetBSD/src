@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.1 2000/10/19 14:11:30 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.2 2000/10/20 15:14:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -518,7 +518,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	}
 
 	free(tp, M_DEVBUF);
-	twe_ccb_free(sc, NULL, ccb);
+	twe_ccb_free(sc, ccb);
 }
 
 /*
@@ -538,7 +538,7 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	struct twe_param *tp;
 	int rv, s;
 
-	if (twe_ccb_alloc(sc, NULL, &ccb, 1) != 0) {
+	if (twe_ccb_alloc(sc, &ccb, 1) != 0) {
 		/* XXX */
 		return (NULL);
 	}
@@ -565,7 +565,7 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 
 	/* Map the transfer. */
 	if (twe_ccb_map(sc, ccb) != 0) {
-		twe_ccb_free(sc, NULL, ccb);
+		twe_ccb_free(sc, ccb);
 		free(tp, M_DEVBUF);
 		return (NULL);
 	}
@@ -576,7 +576,7 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 		if ((rv = twe_ccb_submit(sc, ccb)) == 0)
 			rv = twe_ccb_poll(sc, ccb, 5);
 		twe_ccb_unmap(sc, ccb);
-		twe_ccb_free(sc, NULL, ccb);
+		twe_ccb_free(sc, ccb);
 		splx(s);
 		if (rv != 0) {
 			free(tp, M_DEVBUF);
@@ -601,7 +601,7 @@ twe_init_connection(struct twe_softc *sc)
 	struct twe_cmd *tc;
 	int rv;
 
-	if ((rv = twe_ccb_alloc(sc, NULL, &ccb, 1)) != 0)
+	if ((rv = twe_ccb_alloc(sc, &ccb, 1)) != 0)
 		return (rv);
 
 	/* Build the command. */
@@ -615,7 +615,7 @@ twe_init_connection(struct twe_softc *sc)
 	/* Submit the command for immediate execution. */
 	if ((rv = twe_ccb_submit(sc, ccb)) == 0)
 		rv = twe_ccb_poll(sc, ccb, 5);
-	twe_ccb_free(sc, NULL, ccb);
+	twe_ccb_free(sc, ccb);
 	return (rv);
 }
 
@@ -717,27 +717,13 @@ twe_status_check(struct twe_softc *sc, u_int status)
  * Allocate and initialise a CCB.
  */
 int
-twe_ccb_alloc(struct twe_softc *sc, struct twe_initiator *ti,
-	      struct twe_ccb **ccbp, int nowait)
+twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int nowait)
 {
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 	int s;
 
 	s = splbio();
-
-	/* Don't exceed the maximum allowed queued command count. */
-	if (ti != NULL) {
-		if (ti->ti_queuecnt == TWE_MAX_PI_QUEUECNT) {
-			if (nowait) {
-				splx(s);
-				return (EAGAIN);
-			}
-			ti->ti_waitcnt++;
-			tsleep(&ti->ti_waitcnt, PRIBIO, "twepiqc", 0);
-		}
-		ti->ti_queuecnt++;
-	}
 
 	/* Allocate a CCB and command block. */
 	if (SLIST_FIRST(&sc->sc_ccb_freelist) == NULL) {
@@ -764,34 +750,21 @@ twe_ccb_alloc(struct twe_softc *sc, struct twe_initiator *ti,
 }
 
 /*
- * Free a CCB.  Wake one process that's waiting for a free CCB, if any.  If
- * an initiator is specified, and that initiator has attempted to exceed the
- * maximum allowed queued message count, wake one process that's waiting for
- * the queue count to recede, if any.
+ * Free a CCB.  Wake one process that's waiting for a free CCB, if any.
  */
 void
-twe_ccb_free(struct twe_softc *sc, struct twe_initiator *ti,
-	     struct twe_ccb *ccb)
+twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 {
 	int s;
 
 	ccb->ccb_flags = 0;
 
 	s = splbio();
-
 	SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
 	if (sc->sc_ccb_waitcnt != 0) {
 		sc->sc_ccb_waitcnt--;
 		wakeup_one(&sc->sc_ccb_waitcnt);
 	}
-	if (ti != NULL) {
-		ti->ti_queuecnt--;
-		if (ti->ti_waitcnt != 0) {
-			ti->ti_waitcnt--;
-			wakeup_one(&ti->ti_waitcnt);
-		}
-	}
-
 	splx(s);
 }
 
@@ -814,7 +787,8 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
 		splx(s);
 		data = (void *)ccb->ccb_abuf;
-		memcpy(data, ccb->ccb_data, ccb->ccb_datasize);
+		if ((ccb->ccb_flags & TWE_CCB_DATA_OUT) != 0)
+			memcpy(data, ccb->ccb_data, ccb->ccb_datasize);
 	} else {
 		ccb->ccb_abuf = (vaddr_t)0;
 		data = ccb->ccb_data;
@@ -895,7 +869,9 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 	bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
 
 	if (ccb->ccb_abuf != (vaddr_t)0) {
-		memcpy(ccb->ccb_data, (void *)ccb->ccb_abuf, ccb->ccb_datasize);
+		if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
+			memcpy(ccb->ccb_data, (void *)ccb->ccb_abuf,
+			    ccb->ccb_datasize);
 		s = splimp();
 		/* XXX */
 		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize);
