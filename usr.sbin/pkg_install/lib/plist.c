@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.26 2000/04/30 07:57:45 mycroft Exp $	*/
+/*	$NetBSD: plist.c,v 1.26.4.1 2000/07/05 20:38:52 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.26 2000/04/30 07:57:45 mycroft Exp $");
+__RCSID("$NetBSD: plist.c,v 1.26.4.1 2000/07/05 20:38:52 hubertf Exp $");
 #endif
 #endif
 
@@ -366,8 +366,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				    "this packing list is incorrect - ignoring delete request", tmp);
 			} else {
 				if (p->next &&
-				    p->next->type == PLIST_COMMENT &&
-				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {	/* || PLIST_MD5 - HF */
+				    p->next->type == PLIST_COMMENT && /* || PLIST_MD5 - HF */
+				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 					char   *cp, buf[LegibleChecksumLen];
 
 					if ((cp = MD5File(tmp, buf)) != NULL) {
@@ -461,6 +461,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 
 /*
  * Selectively delete a hierarchy
+ * Returns 1 on error, 0 else.
  */
 int
 delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
