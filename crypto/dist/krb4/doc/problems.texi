@@ -99,7 +99,7 @@ constraints, and similar. The N32 format is the default format from IRIX
 You select ABI at compile time, and you can do this with the
 @samp{--with-mips-abi} configure option. The valid arguments are
 @samp{o32}, @samp{n32}, and @samp{64}, N32 is the default. Libraries for
-the three different ABI:s are normally installed installed in different
+the three different ABI:s are normally installed in different
 directories (@samp{lib}, @samp{lib32}, and @samp{lib64}). If you want
 more than one set of libraries you have to reconfigure and recompile for
 each ABI, but you should probably install only N32 binaries.
@@ -128,7 +128,7 @@ there is a kernel module that provides this functionality at
 @file{appl/telnet/telnetd/sys_term.c} (and possibily
 @file{appl/bsd/forkpty.c}), if used with too much optimization.
 
-Some versions of the @kbd{xlc} preprocessor doesn't recognise the
+Some versions of the @kbd{xlc} preprocessor do not recognise the
 (undocumented) @samp{-qnolm} option. If this option is passed to the
 preprocessor (like via the configuration file @file{/etc/ibmcxx.cfg},
 configure will fail.

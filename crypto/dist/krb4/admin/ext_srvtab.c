@@ -9,7 +9,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: ext_srvtab.c,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $");
+RCSID("$Id: ext_srvtab.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
 
 static des_cblock master_key;
 static des_cblock session_key;
@@ -29,7 +29,7 @@ usage(void)
 {
     fprintf(stderr, 
 	    "Usage: %s [-n] [-r realm] instance [instance ...]\n",
-	    __progname);
+	    getprogname());
     StampOutSecrets();
     exit(1);
 }
@@ -55,11 +55,13 @@ main(int argc, char **argv)
     int prompt = KDB_GET_PROMPT;
     int n, i;
     
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     memset(realm, 0, sizeof(realm));
     
-#ifdef HAVE_ATEXIT
+#if defined(HAVE_ATEXIT)
     atexit(StampOutSecrets);
+#elif defined(HAVE_ON_EXIT)
+    on_exit(StampOutSecrets);
 #endif
 
     /* Parse commandline arguments */

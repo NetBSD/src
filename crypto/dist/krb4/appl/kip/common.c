@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$Id: common.c,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $");
+RCSID("$Id: common.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
 
 sig_atomic_t disconnect = 0;
 int isserver = 0;
@@ -128,7 +128,7 @@ copy_packets (int tundev, int netdev, int mtu, des_cblock *iv,
 		       len = 1;
 		   buf[len-1] = '\0';
 
-		   fatal (-1, buf, schedule, &iv2);
+		   fatal (-1, (const char *)buf, schedule, &iv2);
 		   return -1;
 	       }
 

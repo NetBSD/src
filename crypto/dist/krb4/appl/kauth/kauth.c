@@ -41,7 +41,7 @@
 
 #include "kauth.h"
 
-RCSID("$Id: kauth.c,v 1.1.1.2 2000/12/29 01:42:52 assar Exp $");
+RCSID("$Id: kauth.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
 
 krb_principal princ;
 static char srvtab[MaxPathLen];
@@ -60,7 +60,7 @@ usage(void)
 	    "  %s [-ad] [-n name] [-r remoteuser] [-t remote ticketfile]\n"
 	    "        [-l lifetime (in minutes) ] [-f srvtab ] [-c AFS cell name ]\n"
 	    "        [-h hosts... [--]] [command ... ]\n\n",
-	    __progname, __progname);
+	    getprogname(), getprogname());
     fprintf(stderr, 
 	    "A fully qualified name can be given: user[.instance][@realm]\n"
 	    "Realm is converted to uppercase!\n");
@@ -205,7 +205,7 @@ main(int argc, char **argv)
     int nhost;
     char tf[MaxPathLen];
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if ((file =  getenv("KRBTKFILE")) == 0)
 	file = TKT_FILE;  
@@ -274,7 +274,6 @@ main(int argc, char **argv)
 	    break;
 	case 'v':
 	    version_flag++;
-	    print_version(NULL);
 	    break;
 	case '?':
 	default:
@@ -315,7 +314,7 @@ main(int argc, char **argv)
 	}while(f < 0);
 	close(f);
 	unlink(tf);
-	setenv("KRBTKFILE", tf, 1);
+	esetenv("KRBTKFILE", tf, 1);
 	krb_set_tkt_string (tf);
     }
     
