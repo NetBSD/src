@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.18 2000/05/29 18:04:31 mycroft Exp $	*/
+/*	$NetBSD: inode.h,v 1.19 2000/05/29 18:41:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -206,16 +206,18 @@ struct indir {
 
 #define	EXT2FS_ITIMES(ip, acc, mod, cre) {				\
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
-		(ip)->i_flag |= IN_MODIFIED;				\
 		if ((ip)->i_flag & IN_ACCESS) {				\
 			(ip)->i_e2fs_atime = (acc)->tv_sec;		\
+			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
 		if ((ip)->i_flag & IN_UPDATE) {				\
 			(ip)->i_e2fs_mtime = (mod)->tv_sec;		\
 			(ip)->i_modrev++;				\
+			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE) {				\
 			(ip)->i_e2fs_ctime = (cre)->tv_sec;		\
+			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
