@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1995/09/11 21:49:37 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 1995/09/13 19:36:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,7 +286,7 @@ setroot()
 	int  majdev, mindev, unit, part, controller;
 	dev_t temp, orootdev;
 	struct swdevt *swp;
-	register struct scsi_device *dp;
+	register struct pmax_scsi_device *dp;
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != B_DEVMAGIC)
