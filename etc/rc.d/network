@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.6 2000/04/11 05:03:24 lukem Exp $
+# $NetBSD: network,v 1.7 2000/04/20 02:12:04 itojun Exp $
 #
 
 # PROVIDE: network
@@ -310,12 +310,6 @@ network_stop()
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local stop
-	fi
-
-	rtsolpid=`check_process rtsol`
-	if [ -n "$rtsolpid" ]; then
-		echo "Stopping rtsol (IPv6 router solicitation daemon)."
-		kill -TERM $rtsolpid
 	fi
 
 	echo "Deleting aliases."
