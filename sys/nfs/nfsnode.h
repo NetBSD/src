@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.46 2004/03/12 16:52:38 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.47 2004/05/27 12:55:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -274,7 +274,6 @@ int	nfs_bwrite	__P((void *));
 #define nfs_reallocblks	genfs_eopnotsupp
 #define	nfs_vfree	genfs_nullop
 int	nfs_truncate	__P((void *));
-int	nfs_update	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
 int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
