@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.26 1998/09/10 21:08:39 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.27 1998/09/19 15:47:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -329,9 +329,17 @@ iommu_attach(parent, self, aux)
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
 		ia.iom_dmatag = &iommu_dma_tag;
+
 		ia.iom_node = node;
 		ia.iom_bp = bp;
+
+		ia.iom_reg = NULL;
+		getprop(node, "reg", sizeof(struct sbus_reg),
+			&ia.iom_nreg, (void **)&ia.iom_reg);
+
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
+		if (ia.iom_reg != NULL)
+			free(ia.iom_reg, M_DEVBUF);
 	}
 #endif
 }

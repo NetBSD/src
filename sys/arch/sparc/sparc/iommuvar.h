@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.3 1998/08/21 13:29:57 pk Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.4 1998/09/19 15:47:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,11 +39,19 @@
 #ifndef _IOMMU_VAR_H
 #define _IOMMU_VAR_H
 
+struct iommu_reg {
+	u_int32_t	ior_iospace;
+	u_int32_t	ior_pa;
+	u_int32_t	ior_size;
+};
+
 struct iommu_attach_args {
 	bus_space_tag_t	iom_bustag;
 	bus_dma_tag_t	iom_dmatag;
 	char		*iom_name;	/* PROM node name */
         int		iom_node;	/* PROM handle */
+	struct iommu_reg *iom_reg;
+	int		iom_nreg;
 	struct bootpath	*iom_bp;	/* used for locating boot device */
 };
 
