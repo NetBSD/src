@@ -38,37 +38,44 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: iteioctl.h,v 1.7 1994/04/10 00:43:36 chopps Exp $
+ *	$Id: iteioctl.h,v 1.8 1994/05/11 19:06:47 chopps Exp $
  */
 
 struct itewinsize {
-    int x;			/* leftedge offset to the right */
-    int y;			/* topedge offset down */
-    u_int width;		/* width of ite display */
-    u_int height;		/* height of ite display */
-    u_int depth;		/* depth of ite display */
+	int x;			/* leftedge offset to the right */
+	int y;			/* topedge offset down */
+	u_int width;		/* width of ite display */
+	u_int height;		/* height of ite display */
+	u_int depth;		/* depth of ite display */
 };
 
 struct itebell {
-    u_int volume;		/* volume of bell (0-64) */
-    u_int pitch;		/* pitch of bell (10-2000) */
-    u_int msec;			/* duration of bell */
+	u_int volume;		/* volume of bell (0-64) */
+	u_int pitch;		/* pitch of bell (10-2000) */
+	u_int msec;		/* duration of bell */
 };
-
 #define MAXBVOLUME (63)
 #define MAXBPITCH (2000)
 #define MINBPITCH (10)
 #define MAXBTIME (5000)		/* 5 seconds */
 
+struct iterepeat {
+	int start;		/* number of 100/s before repeat start */
+	int next;		/* number of 100/s before next repeat */
+};
+#define ITEMINREPEAT	5	/* mininum number of 100/s for key repeat */
+
+#define ITEIOCSKMAP	_IOW('Z',0x70, struct kbdmap)
+#define ITEIOCGKMAP	_IOR('Z',0x71, struct kbdmap)
 #define ITEIOCGWINSZ	_IOR('Z',0x72, struct itewinsize)
 #define ITEIOCSWINSZ	_IOW('Z',0x73, struct itewinsize)
 #define ITEIOCDSPWIN	_IO('Z', 0x74)
 #define ITEIOCREMWIN	_IO('Z', 0x75)
 #define ITEIOCGBELL	_IOR('Z', 0x76, struct itebell)
 #define ITEIOCSBELL	_IOW('Z', 0x77, struct itebell)
+#define ITEIOCGREPT	_IOR('Z', 0x78, struct iterepeat)
+#define ITEIOCSREPT	_IOW('Z', 0x79, struct iterepeat)
 
 
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
-#define ITELOADKMAP	_IOW('Z',0x70, struct kbdmap)
-#define ITEGETKMAP	_IOR('Z',0x71, struct kbdmap)
 

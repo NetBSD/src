@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: ahsc.c,v 1.1 1994/05/08 05:52:54 chopps Exp $
+ *	$Id: ahsc.c,v 1.2 1994/05/11 19:06:40 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ ahscattach(pdp, dp, auxp)
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc;
 	
+	printf("\n");
+
 	sc = (struct sbic_softc *)dp;
 	sc->sc_cregs = rp = ztwomap(0xdd0000);
 	/*
