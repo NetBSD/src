@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.23 2002/11/02 17:05:19 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.24 2003/01/06 13:26:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.23 2002/11/02 17:05:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.24 2003/01/06 13:26:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.23 2002/11/02 17:05:19 jdolecek Exp 
 /*
  * Ultrix file system data structure, as modified by
  * Ultrix getmntent(). This  structure is padded to 2560 bytes, for
- * compatiblity with the size the Ultrix kernel and user apps expect.
+ * compatibility with the size the Ultrix kernel and user apps expect.
  */
 struct ultrix_fs_data {
 	u_int32_t	ufsd_flags;	/* how mounted */

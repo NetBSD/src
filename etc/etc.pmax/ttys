@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.7 2002/02/13 09:46:12 martti Exp $
+#	$NetBSD: ttys,v 1.8 2003/01/06 13:26:25 wiz Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -20,7 +20,7 @@ ttyc	"/usr/libexec/getty std.9600"	unknown off secure	"1st comm port"
 ttyD2	"/usr/libexec/getty std.9600"	unknown off secure	"1st comm port"
 ttyD3	"/usr/libexec/getty std.9600"	unknown off secure	"2nd comm port"
 #
-# ttys for historical compatiblity (Qbus decsystems?)
+# ttys for historical compatibility (Qbus decsystems?)
 #
 tty00	"/usr/libexec/getty std.9600"	unknown off secure
 tty01	"/usr/libexec/getty std.9600"	unknown off secure

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.32 2002/02/05 00:17:26 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.33 2003/01/06 13:26:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -360,7 +360,7 @@ main(argc, argv)
 		case 'n':
 			sep = 0;
 			break;
-		case 'f': /* compatiblity */
+		case 'f': /* compatibility */
 		case 'd':
 			file = optarg;
 			break;

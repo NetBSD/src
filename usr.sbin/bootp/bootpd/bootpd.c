@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.16 2002/09/18 23:16:13 mycroft Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.17 2003/01/06 13:26:28 wiz Exp $");
 #endif
 
 /*
@@ -1026,7 +1026,7 @@ sendreply(int forward, int32 dst_override)
 
 	/*
 	 * If the destination address was specified explicitly
-	 * (i.e. the broadcast address for HP compatiblity)
+	 * (i.e. the broadcast address for HP compatibility)
 	 * then send the response to that address.  Otherwise,
 	 * act in accordance with RFC951:
 	 *   If the client IP address is specified, use that
