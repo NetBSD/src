@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.35 2000/03/12 05:04:44 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.36 2000/03/12 12:08:16 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	8
 
@@ -126,6 +126,8 @@ hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
 wskbd*		at	vrkiu? mux 1
 wsmouse*	at	vrpiu? mux 0
+btnmgr0		at	mainbus0
+wskbd*		at	btnmgr0 mux 1
 
 #
 # hpcmips isa? bus irq locator means:
@@ -297,7 +299,6 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
-pseudo-device	btnmgr		1	# button event handler
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
