@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.8 2002/01/21 16:40:19 wiz Exp $	*/
+/*	$NetBSD: checknr.c,v 1.9 2002/01/21 16:46:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.8 2002/01/21 16:40:19 wiz Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.9 2002/01/21 16:46:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,6 @@ char *knowncmds[MAXCMDS] = {
 };
 
 int	lineno;		/* current line number in input file */
-char	line[256];	/* the current line */
 char	*cfilename;	/* name of current file */
 int	nfiles;		/* number of files to process */
 int	fflag;		/* -f: ignore \f */
@@ -283,6 +282,7 @@ void
 process(FILE *f)
 {
 	int i, n;
+	char line[256];	/* the current line */
 	char mac[5];	/* The current macro or nroff command */
 	int pl;
 
@@ -492,11 +492,11 @@ eq(const void *s1, const void *s2)
 
 /* print the first part of an error message, given the line number */
 void
-pe(int lineno)
+pe(int pelineno)
 {
 	if (nfiles > 1)
 		printf("%s: ", cfilename);
-	printf("%d: ", lineno);
+	printf("%d: ", pelineno);
 }
 
 void
@@ -561,7 +561,7 @@ addmac(char *mac)
 	}
 	/* binsrch sets slot as a side effect */
 #ifdef DEBUG
-printf("binsrch(%s) -> %d\n", mac, slot);
+	printf("binsrch(%s) -> %d\n", mac, slot);
 #endif
 	loc = &knowncmds[slot];
 	src = &knowncmds[ncmds-1];
@@ -572,7 +572,9 @@ printf("binsrch(%s) -> %d\n", mac, slot);
 	strcpy(*loc, mac);
 	ncmds++;
 #ifdef DEBUG
-printf("after: %s %s %s %s %s, %d cmds\n", knowncmds[slot-2], knowncmds[slot-1], knowncmds[slot], knowncmds[slot+1], knowncmds[slot+2], ncmds);
+	printf("after: %s %s %s %s %s, %d cmds\n", knowncmds[slot-2],
+	    knowncmds[slot-1], knowncmds[slot], knowncmds[slot+1],
+	    knowncmds[slot+2], ncmds);
 #endif
 }
 
