@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.104 2000/12/09 07:04:48 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.105 2000/12/28 11:10:15 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -605,3 +605,5 @@
 #endif
 304	STD		{ int sys_lchflags(const char *path, u_long flags); }
 305	STD		{ int sys_issetugid(void); }
+306	STD		{ int sys_utrace(const char *id, void *addr, \
+				size_t len); }
