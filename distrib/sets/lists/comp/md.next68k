@@ -1,4 +1,4 @@
-# $NetBSD: md.next68k,v 1.14 2000/06/26 15:49:56 kleink Exp $
+# $NetBSD: md.next68k,v 1.15 2001/02/17 11:40:59 ragge Exp $
 ./usr/include/next68k	comp-c-include
 ./usr/include/next68k/_G_config.h	comp-c-include
 ./usr/include/next68k/ansi.h	comp-c-include
@@ -44,3 +44,4 @@
 ./usr/include/next68k/varargs.h	comp-c-include
 ./usr/include/next68k/vmparam.h	comp-c-include
 ./usr/include/next68k/z8530var.h	comp-c-include
+./usr/include/ieeefp.h		comp-c-include
