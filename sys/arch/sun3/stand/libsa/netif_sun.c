@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.9.4.1 1998/01/27 02:29:55 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9.4.2 1998/01/27 18:49:57 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -446,20 +446,21 @@ netif_getether(si, ea)
 #endif
 
 	/*
-	 * PROM versions 3.0 and later support this.
-	 * Maybe earlier ones too, but who knows?
+	 * On Sun3X machines we want to use the PROM function
+	 * to gets our Ethernet address.  On old Sun3 machines
+	 * the PROM usually does not provide that function, so
+	 * those do it the old way (by reading control space).
 	 */
-	if (romVectorPtr->monId[0] >= '3') {
+	if (_is3x) {
+		/*
+		 * All Sun3X machines have PROM version 3.0 or later.
+		 * Well... I hope so anyway.  If not, loose here.
+		 */
+		if (romVectorPtr->monId[0] < '3')
+			panic("netboot on Sun3X needs PROM 3.0 or later");
 		(*sif->sif_macaddr)(ea);
 		return;
 	}
-
-	/*
-	 * All Sun3X machines have PROM version 3.0 or later.
-	 * Well... I hope so anyway.  If not, loose here.
-	 */
-	if (_is3x)
-		panic("netboot on Sun3X needs PROM 3.0 or later");
 
 	/*
 	 * Old Sun3 PROMs may not have sif_macaddr,
