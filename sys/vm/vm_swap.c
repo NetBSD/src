@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.9 1997/05/08 20:05:25 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.10 1997/05/09 02:29:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -74,7 +74,7 @@
  * The cmd can be one of:
  *	SWAP_NSWAP - swap(2) returns the number of swap devices
  *		currently in use. (done)
- *	SWAP_STATS - swap(2) takes a struct swapent[] in (void *arg)
+ *	SWAP_STATS - swap(2) takes a struct ent * in (void *arg)
  *		and writes misc or fewer (to zero) entries of
  *		configured swap devices, and returns the number of
  *		entries written.  -1 on error (EFAULT, EPERM, ..)
@@ -160,9 +160,8 @@ sys_swapon(p, v, retval)
 	struct nameidata nd;
 	struct swappri *spp;
 	struct swapdev *sdp = NULL;
-	struct swapinfo si;
 	struct swapent *sep;
-	int	count = 0, error, misc;
+	int	count, error, misc;
 
 	misc = SCARG(uap, misc);
 
@@ -183,17 +182,14 @@ sys_swapon(p, v, retval)
 
 	/* stats on the swap devices. */
 	if (SCARG(uap, cmd) == SWAP_STATS) {
+		sep = (struct swapent *)SCARG(uap, arg);
+		count = 0;
 
-		error = copyin(SCARG(uap, arg), &si, sizeof(si));
-		if (error)
-			return error;
-		sep = si.si_ent;
-
-		for (spp = swap_priority.lh_first; spp != NULL && misc-- > 0;
+		for (spp = swap_priority.lh_first; spp != NULL;
 		    spp = spp->spi_swappri.le_next) {
 			for (sdp = spp->spi_swapdev.cqh_first;
-			     sdp != (void *)&spp->spi_swapdev;
-			     sdp = sdp->swd_next.cqe_next) {	
+			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
+			     sdp = sdp->swd_next.cqe_next) {
 				if (sdp->swd_dev == NODEV)
 					continue;
 				error = copyout((caddr_t)&sdp->swd_se,
@@ -210,8 +206,7 @@ sys_swapon(p, v, retval)
 #endif /* SWAPDEBUG */
 		*retval = count;
 		return (0);
-	}
-	
+	} 
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
@@ -266,12 +261,11 @@ sys_swapon(p, v, retval)
 			nspp->spi_priority = priority;
 			CIRCLEQ_INIT(&nspp->spi_swapdev);
 
-			if (pspp) {
+			if (pspp)
 				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
-			} else {
+			else
 				LIST_INSERT_HEAD(&swap_priority, nspp,
 						 spi_swappri);
-			}
 
 			spp = nspp;
 		}
