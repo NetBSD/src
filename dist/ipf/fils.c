@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.8 2000/05/11 19:54:35 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.9 2000/05/23 06:16:44 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -67,7 +67,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.3 2000/05/08 12:35:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.4 2000/05/22 12:47:38 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -543,7 +543,7 @@ ips_stat_t *ipsp;
 			ipsp->iss_tcp, ipsp->iss_udp, ipsp->iss_icmp);
 		PRINTF("\t%lu hits\n\t%lu misses\n", ipsp->iss_hits,
 			ipsp->iss_miss);
-		PRINTF("\t%lu maximum\n\t%lu no memory\n\tbkts in use\t%lu\n",
+		PRINTF("\t%lu maximum\n\t%lu no memory\n\t%lu bkts in use\n",
 			ipsp->iss_max, ipsp->iss_nomem, ipsp->iss_inuse);
 		PRINTF("\t%lu active\n\t%lu expired\n\t%lu closed\n",
 			ipsp->iss_active, ipsp->iss_expire, ipsp->iss_fin);
