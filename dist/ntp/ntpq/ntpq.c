@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.2 2000/10/09 14:57:22 is Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.3 2000/10/10 12:51:20 itojun Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -628,13 +628,13 @@ openhost(
 
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == INVALID_SOCKET) {
-		error("socket", "", "");
+		error("socket");
 		exit(-1);
 	}
 #else
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == -1)
-	    error("socket", "", "");
+	    error("socket");
 #endif /* SYS_WINNT */
 
 	
@@ -643,14 +643,14 @@ openhost(
 	{ int rbufsize = DATASIZE + 2048;	/* 2K for slop */
 	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
 		       &rbufsize, sizeof(int)) == -1)
-	    error("setsockopt", "", "");
+	    error("setsockopt");
 	}
 # endif
 #endif
 
 	if (connect(sockfd, (struct sockaddr *)&hostaddr,
 		    sizeof(hostaddr)) == -1)
-	    error("connect", "", "");
+	    error("connect");
 	
 	havehost = 1;
 	return 1;
@@ -672,7 +672,7 @@ sendpkt(
 
 
 	if (send(sockfd, xdata, xdatalen, 0) == -1) {
-		warning("write to %s failed", currenthost, "");
+		warning("write to %s failed", currenthost);
 		return -1;
 	}
 
@@ -749,7 +749,7 @@ getresponse(
 #endif
 
 	if (n == -1) {
-		warning("select fails", "", "");
+		warning("select fails");
 		return -1;
 	}
 	if (n == 0) {
@@ -783,7 +783,7 @@ getresponse(
 
 	n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
 	if (n == -1) {
-		warning("read", "", "");
+		warning("read");
 		return -1;
 	}
 
