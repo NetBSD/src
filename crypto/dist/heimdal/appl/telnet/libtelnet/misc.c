@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,7 +30,7 @@
 #include <config.h>
 
 __RCSID("$Heimdal: misc.c,v 1.15 2000/01/25 23:24:58 assar Exp $"
-        "$NetBSD: misc.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+        "$NetBSD: misc.c,v 1.2 2003/08/07 09:15:25 agc Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
