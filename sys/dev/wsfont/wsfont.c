@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.13 2000/06/13 13:37:06 ad Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.14 2000/11/21 11:44:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.13 2000/06/13 13:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.14 2000/11/21 11:44:45 tsutsui Exp $");
 
 #include "opt_wsfont.h"
 
@@ -76,6 +76,16 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.13 2000/06/13 13:37:06 ad Exp $");
 #ifdef FONT_VT220L8x10
 #define HAVE_FONT 1
 #include <dev/wsfont/vt220l8x10.h>
+#endif
+
+#ifdef FONT_SONY8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/sony8x16.h>
+#endif
+
+#ifdef FONT_SONY12x24
+#define HAVE_FONT 1
+#include <dev/wsfont/sony12x24.h>
 #endif
 
 /* Make sure we always have at least one font. */
@@ -123,6 +133,12 @@ static struct font *list, builtin_fonts[] = {
 #endif
 #ifdef FONT_VT220L8x10
 	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SONY8x16
+	{ NULL, NULL, &sony8x16, 0, 9, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SONY12x24
+	{ NULL, NULL, &sony12x24, 0, 10, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ NULL, NULL, NULL, 0 },
 };
