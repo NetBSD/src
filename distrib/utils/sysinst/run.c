@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.5 1998/06/20 13:05:50 mrg Exp $	*/
+/*	$NetBSD: run.c,v 1.6 1998/08/10 02:23:45 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ va_prog_cmdstr(char *cmd, va_list ap)
 {
 	static char command[STRSIZE];
 
-	bzero(command, STRSIZE);
+	memset(command, 0, STRSIZE);
 	(void)vsnprintf(command, STRSIZE, cmd, ap);
 	return (command);
 }
