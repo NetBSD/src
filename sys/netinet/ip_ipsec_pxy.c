@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.2.10.1 2004/08/03 10:54:40 skrll Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.2.10.2 2004/08/05 21:01:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -12,7 +12,7 @@
  *
  */
 
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.2.10.1 2004/08/03 10:54:40 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.2.10.2 2004/08/05 21:01:25 skrll Exp $");
 
 #define	IPF_IPSEC_PROXY
 
@@ -124,7 +124,7 @@ nat_t *nat;
 	ipn->in_apr = NULL;
 	ipn->in_use = 1;
 	ipn->in_hits = 1;
-	ipn->in_nip = nat->nat_outip.s_addr;
+	ipn->in_nip = ntohl(nat->nat_outip.s_addr);
 	ipn->in_ippip = 1;
 	ipn->in_inip = nat->nat_inip.s_addr;
 	ipn->in_inmsk = 0xffffffff;
