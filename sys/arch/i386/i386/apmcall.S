@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.10 2002/10/14 02:08:38 takemura Exp $ */
+/*	$NetBSD: apmcall.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include "opt_apm.h"
 
-__KERNEL_RCSID(0, "$NetBSD: apmcall.s,v 1.10 2002/10/14 02:08:38 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmcall.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $");
 
 /* LINTSTUB: include <machine/bioscall.h> */
 /* LINTSTUB: include <machine/apmvar.h> */
