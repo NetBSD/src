@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.h,v 1.6 1998/03/18 17:03:15 bouyer Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.7 2001/02/04 21:29:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int bread __P((int fd, char *buf, daddr_t blk, long size));
-extern void bwrite __P((int fd, char *buf, daddr_t blk, long size));
 extern void rwerror __P((char *mesg, daddr_t blk));
-extern int reply __P((char *question));
 
 extern long dev_bsize;
 extern long secsize;

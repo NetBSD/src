@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.23 2001/01/26 17:37:16 thorpej Exp $	*/
+/*	$NetBSD: fsck.h,v 1.24 2001/02/04 21:25:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -211,7 +211,7 @@ int16_t	*lncntp;		/* ptr to link count table */
 
 extern ino_t	lfdir;		/* lost & found directory inode number */
 extern char	*lfname;	/* lost & found directory name */
-int	lfmode;			/* lost & found directory creation mode */
+extern int	lfmode;		/* lost & found directory creation mode */
 
 ufs_daddr_t n_blks;		/* number of blocks in use */
 ufs_daddr_t n_files;		/* number of files in use */
