@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.2 1998/12/03 14:58:24 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.3 1999/01/14 20:29:38 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -351,7 +351,6 @@ static int init_dqd(dqd)
 #ifdef __NetBSD__
 	/* XXX not sure if the following malloc is appropriate... probably not quite... */
 	dqd->bp = (struct buf *) malloc( sizeof(struct buf), M_DEVBUF, M_NOWAIT);
-	memset(dqd->bp,0,sizeof(struct buf)); /* if you don't do it, nobody else will.. */
 	/* XXX */
 	/* printf("NEED TO IMPLEMENT THIS BETTER!\n"); */
 #else
@@ -360,6 +359,9 @@ static int init_dqd(dqd)
 	if (dqd->bp == NULL) {
 		return(ENOMEM);
 	}
+#ifdef __NetBSD__
+	memset(dqd->bp,0,sizeof(struct buf)); /* if you don't do it, nobody else will.. */
+#endif
 #endif /* KERNEL */
 	return(0);
 }
