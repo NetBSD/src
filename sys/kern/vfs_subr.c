@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.60 1997/02/22 03:22:32 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.61 1997/02/23 00:07:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -200,9 +200,9 @@ vfs_busy(mp)
 	while(mp->mnt_flag & MNT_MPBUSY) {
 		mp->mnt_flag |= MNT_MPWANT;
 		tsleep((caddr_t)&mp->mnt_flag, PVFS, "vfsbusy", 0);
+		if (unmounting)
+			return (1);
 	}
-	if (unmounting)
-		return (1);
 	mp->mnt_flag |= MNT_MPBUSY;
 	return (0);
 }
