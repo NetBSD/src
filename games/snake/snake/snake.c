@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.5 1995/04/22 08:34:36 cgd Exp $	*/
+/*	$NetBSD: snake.c,v 1.6 1995/04/22 10:18:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: snake.c,v 1.5 1995/04/22 08:34:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: snake.c,v 1.6 1995/04/22 10:18:17 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$NetBSD: snake.c,v 1.5 1995/04/22 08:34:36 cgd Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <stdlib>
+#include <stdlib.h>
 #include <time.h>
 
 #include "snake.h"
