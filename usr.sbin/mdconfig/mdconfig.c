@@ -1,4 +1,4 @@
-/*	$NetBSD: mdconfig.c,v 1.2 1997/01/02 00:22:45 pk Exp $	*/
+/*	$NetBSD: mdconfig.c,v 1.3 1997/10/17 10:24:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -30,6 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mdconfig.c,v 1.3 1997/10/17 10:24:24 lukem Exp $");
+#endif
+
 /*
  * This program exists for the sole purpose of providing
  * user-space memory for the new memory-disk driver (md).
@@ -37,19 +42,26 @@
  * (But this design allows any filesystem format!)
  */
 
-#include <fcntl.h>
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 
 #include <dev/md.h>
 
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main __P((int, char **));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	struct md_conf md;
-	int nblks, fd, error;
+	int nblks, fd;
 
 	if (argc <= 2) {
 		fprintf(stderr, "usage: mdconfig <device> <%d-byte-blocks>\n",
