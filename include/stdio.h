@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.46 2002/11/30 03:04:44 lukem Exp $	*/
+/*	$NetBSD: stdio.h,v 1.47 2002/12/20 20:59:22 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -257,7 +257,7 @@ int	 vprintf __P((const char * __restrict, _BSD_VA_LIST_));
 char	*gets __P((char *));
 int	 sprintf __P((char * __restrict, const char * __restrict, ...));
 char	*tmpnam __P((char *));
-int	 vsprintf __P((char * __resitrct, const char * __restrict,
+int	 vsprintf __P((char * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_));
 #endif
 
