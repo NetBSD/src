@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.37 1993/12/18 04:23:04 mycroft Exp $
+#	$Id: Makefile.i386,v 1.38 1993/12/30 06:56:48 deraadt Exp $
 #
 # Makefile for NetBSD
 #
@@ -114,7 +114,7 @@ assym.s: genassym
 	./genassym >assym.s
 
 genassym: ${I386}/i386/genassym.c
-	${CC} ${INCLUDES} -DKERNEL ${IDENT} ${PARAM} \
+	${CC} -static ${INCLUDES} -DKERNEL ${IDENT} ${PARAM} \
 		 ${I386}/i386/genassym.c -o genassym
 
 depend: assym.s param.c
