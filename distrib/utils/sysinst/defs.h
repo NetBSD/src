@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.49 2000/01/04 08:33:51 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.50 2000/01/13 18:52:21 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,9 @@
 #include <sys/disklabel.h>
 
 #include "msg_defs.h"
+
+#define	min(a,b)	(a < b ? a : b)
+#define	max(a,b)	(a > b ? a : b)
 
 /* Define for external varible use */ 
 #ifdef MAIN
