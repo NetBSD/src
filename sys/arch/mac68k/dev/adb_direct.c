@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.1 1997/04/08 03:16:18 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.2 1997/04/08 06:53:28 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996, 1997 John P. Wittkoski
@@ -1338,7 +1338,7 @@ int
 send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 command)
 {
-        int     i, s, len;
+        int i, s, len;
 
         if (adbActionState == ADB_ACTION_NOTREADY)
                 return 1;
@@ -2233,8 +2233,8 @@ int
 adb_set_date_time(unsigned long time)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
-        int     result;
-        int     flag = 0;
+        int result;
+        volatile int flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_II:
@@ -2322,8 +2322,8 @@ int
 adb_prog_switch_enable(void)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
-        int     result;
-        int     flag = 0;
+        int result;
+        volatile int flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_IISI:
@@ -2356,8 +2356,8 @@ int
 adb_prog_switch_disable(void)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
-        int     result;
-        int     flag = 0;
+        int result;
+        volatile int flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_IISI:
