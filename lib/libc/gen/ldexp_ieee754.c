@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_ieee754.c,v 1.2 2003/10/27 00:05:46 kleink Exp $	*/
+/*	$NetBSD: ldexp_ieee754.c,v 1.3 2003/10/27 03:09:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_ieee754.c,v 1.2 2003/10/27 00:05:46 kleink Exp $");
+__RCSID("$NetBSD: ldexp_ieee754.c,v 1.3 2003/10/27 03:09:43 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ ldexp(double val, int expon)
 	int oldexp, newexp;
 	union ieee_double_u u, mul;
 
-	u.dlbu_d = val;
+	u.dblu_d = val;
 	oldexp = u.dblu_dbl.dbl_exp;
 
 	/*
