@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.1 2001/12/13 22:34:52 thorpej Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.2 2001/12/14 00:53:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -39,6 +39,13 @@
 #include <sys/stat.h>
 
 #include "rtld.h"
+#include "debug.h"
+
+#ifdef RTLD_DEBUG_ALPHA
+#define	adbg(x)		if (dodebug) xprintf x
+#else
+#define	adbg(x)		/* nothing */
+#endif
 
 /*
  * _rtld_setup_alpha_pltgot:
@@ -46,16 +53,54 @@
  *	Set up the Alpha pltgot glue.
  */
 void
-_rtld_setup_alpha_pltgot(const Obj_Entry *obj)
+_rtld_setup_alpha_pltgot(const Obj_Entry *obj, bool dodebug)
 {
+	uint32_t word0;
 
 	/*
-	 * XXX We need to look at the one of the PLT entries and
-	 * XXX see which format it's in, and set the binding routine
-	 * XXX appropriately.
+	 * The PLTGOT on the Alpha looks like this:
+	 *
+	 *	PLT HEADER
+	 *	.
+	 *	. 32 bytes
+	 *	.
+	 *	PLT ENTRY #0
+	 *	.
+	 *	. 12 bytes
+	 *	.
+	 *	PLT ENTRY #1
+	 *	.
+	 *	. 12 bytes
+	 *	.
+	 *	etc.
+	 *
+	 * The old-format entries look like (displacements filled in
+	 * by the linker):
+	 *
+	 *	ldah	$28, 0($31)		# 0x279f0000
+	 *	lda	$28, 0($28)		# 0x239c0000
+	 *	br	$31, plt0		# 0xc3e00000
+	 *
+	 * The new-format entries look like:
+	 *
+	 *	br	$28, plt0		# 0xc3800000
+	 *					# 0x00000000
+	 *					# 0x00000000
+	 *
+	 * What we do is fetch the first PLT entry and check to
+	 * see the first word of it matches the first word of the
+	 * old format.  If so, we use a binding routine that can
+	 * handle the old format, otherwise we use a binding routine
+	 * that handles the new format.
+	 *
+	 * Note that this is done on a per-object basis, we can mix
+	 * and match shared objects build with both the old and new
+	 * linker.
 	 */
-	if (1) {
+	word0 = *(uint32_t *)(((char *) obj->pltgot) + 32);
+	if ((word0 & 0xffff0000) == 0x279f0000) {
 		/* Old PLT entry format. */
+		adbg(("ALPHA: object %p has old PLT format\n", obj));
 		obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start_old;
 		obj->pltgot[3] = (Elf_Addr) obj;
 
@@ -63,6 +108,7 @@ _rtld_setup_alpha_pltgot(const Obj_Entry *obj)
 	}
 
 	/* New PLT entry format. */
+	adbg(("ALPHA: object %p has new PLT format\n", obj));
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
 	obj->pltgot[3] = (Elf_Addr) obj;
 }

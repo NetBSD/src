@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.31 2001/12/13 22:34:52 thorpej Exp $	 */
+/*	$NetBSD: rtld.h,v 1.32 2001/12/14 00:53:07 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -293,7 +293,7 @@ Obj_Entry *_rtld_obj_new(void);
 
 #if defined(__alpha__)
 /* alpha_reloc.c */
-void	_rtld_setup_alpha_pltgot __P((const Obj_Entry *));
+void	_rtld_setup_alpha_pltgot __P((const Obj_Entry *, bool));
 
 /* rtld_start.S */
 void	_rtld_bind_start_old __P((void));
