@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2001/06/20 02:01:19 assar Exp $
+# $NetBSD: Makefile,v 1.13 2001/09/17 12:34:43 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -19,15 +19,17 @@ krb5_err.c krb5_err.h: krb5_err.et
 heim_err.c heim_err.h: heim_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/heim_err.et
 
-ERR_FILES= krb5_err.c heim_err.c
+k524_err.c k524_err.h: k524_err.et
+	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/k524_err.et
 
-DPSRCS=	krb5_err.h heim_err.h
+ERR_FILES= krb5_err.c heim_err.c k524_err.c
+
+DPSRCS=	krb5_err.h heim_err.h k524_err.h
 
 SRCS=						\
 	acl.c					\
 	add_et_list.c				\
 	addr_families.c				\
-	address.c				\
 	aname_to_localname.c			\
 	appdefault.c				\
 	asn1_glue.c				\
@@ -125,6 +127,7 @@ INCS=	krb5.h					\
 	krb5-private.h				\
 	krb5_err.h				\
 	heim_err.h				\
+	k524_err.h				\
 	krb5-types.h
 
 MAN=						\
@@ -155,10 +158,7 @@ ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\
-	 -I${DIST}/openssl/crypto/md5		\
-	 -I${DIST}/openssl/crypto/sha		\
-	 -I${DIST}/openssl/crypto/rc4		\
-	 -I${DIST}/openssl/crypto/des		\
+	 -I${DIST}/openssl/crypto		\
 	 -I${ASN1}				\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/com_err		\
@@ -167,9 +167,9 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-CLEANFILES = $(ERR_FILES) krb5_err.h heim_err.h krb5-types.h
+CLEANFILES = $(ERR_FILES) krb5_err.h heim_err.h krb5-types.h k524_err.h
 
-$(SRCS:.c=.o): krb5_err.h heim_err.h
+$(SRCS:.c=.o): krb5_err.h heim_err.h k524_err.h
 
 TEXINFO=	heimdal.texi
 INFOFLAGS=	-I${DIST}/heimdal/doc

@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.9 2001/06/20 02:01:18 assar Exp $	*/
+/*	$NetBSD: version.h,v 1.10 2001/09/17 12:34:41 assar Exp $	*/
 
 #if defined(__KRB5_VERSION) && !defined(__NO_KRB4_VERSION)
 #define	heimdal_long_version	__heimdal_long_version
@@ -13,11 +13,11 @@
 #endif
 
 #ifndef __NO_KRB5_VERSION
-const char *heimdal_long_version = "@(#)$Version: heimdal-0.3f (NetBSD) $";
-const char *heimdal_version = "heimdal-0.3f";
+const char *heimdal_long_version = "@(#)$Version: heimdal-0.4e (NetBSD) $";
+const char *heimdal_version = "heimdal-0.4e";
 #endif
 
 #ifndef __NO_KRB4_VERSION
-const char *krb4_long_version = "@(#)$Version: krb4-1.0.5 (NetBSD) $";
-const char *krb4_version = "krb4-1.0.5";
+const char *krb4_long_version = "@(#)$Version: krb4-1.1 (NetBSD) $";
+const char *krb4_version = "krb4-1.1";
 #endif

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2001/01/24 09:32:48 enami Exp $
+# $NetBSD: Makefile,v 1.7 2001/09/17 12:34:41 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,8 @@ hdb_err.c hdb_err.h: hdb_err.et
 
 ERR_FILES = hdb_err.c
 
-gen_files = asn1_Key.x asn1_Event.x asn1_HDBFlags.x asn1_hdb_entry.x asn1_Salt.x
+gen_files = asn1_Key.x asn1_Event.x asn1_HDBFlags.x asn1_hdb_entry.x \
+	asn1_Salt.x asn1_GENERATION.x
 
 DPSRCS=	hdb_asn1.h hdb_err.h
 
@@ -52,8 +53,7 @@ CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
 	 -I${KRB5}				\
 	 -I${DIST}/heimdal/lib/krb5		\
-	 -I${DIST}/openssl/crypto/rc4		\
-	 -I${DIST}/openssl/crypto/des		\
+	 -I${DIST}/openssl/crypto		\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -I${.CURDIR}/../../include/heimdal	\
