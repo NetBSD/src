@@ -1,0 +1,7 @@
+# Swap device numbers
+#
+#	$Id: devices.pc532,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+#
+sd	0
+st	2
+rd	3
