@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.69 2003/09/05 23:02:41 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.70 2003/10/02 01:27:20 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.69 2003/09/05 23:02:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.70 2003/10/02 01:27:20 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2514,7 +2514,7 @@ sppp_lcp_tlu(struct sppp *sp)
 	else
 		sp->pp_phase = SPPP_PHASE_NETWORK;
 
-	if(debug)
+	if (debug)
 	{
 		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
 		    sppp_phase_name(sp->pp_phase));
@@ -2561,7 +2561,7 @@ sppp_lcp_tld(struct sppp *sp)
 
 	sp->pp_phase = SPPP_PHASE_TERMINATE;
 
-	if(debug)
+	if (debug)
 	{
 		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
 			sppp_phase_name(sp->pp_phase));
@@ -2594,7 +2594,7 @@ sppp_lcp_tls(struct sppp *sp)
 
 	sp->pp_phase = SPPP_PHASE_ESTABLISH;
 
-	if(debug)
+	if (debug)
 	{
 		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
 			sppp_phase_name(sp->pp_phase));
@@ -2612,7 +2612,7 @@ sppp_lcp_tlf(struct sppp *sp)
 
 	sp->pp_phase = SPPP_PHASE_DEAD;
 
-	if(debug)
+	if (debug)
 	{
 		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
 			sppp_phase_name(sp->pp_phase));
@@ -4800,7 +4800,7 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 			}
 		}
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
-		if(debug && error)
+		if (debug && error)
 		{
 			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", ifp->if_xname, error);
@@ -5019,7 +5019,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    }
 		}
 		if (cfg->hisname_length == 0) {
-		    if(sp->hisauth.name != NULL)
+		    if (sp->hisauth.name != NULL)
 			cfg->hisname_length = sp->hisauth.name_len + 1;
 		} else {
 		    if (sp->hisauth.name == NULL) {
@@ -5215,7 +5215,7 @@ sppp_phase_network(struct sppp *sp)
 
 	sp->pp_phase = SPPP_PHASE_NETWORK;
 
-	if(debug)
+	if (debug)
 	{
 		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
 			sppp_phase_name(sp->pp_phase));
