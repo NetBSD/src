@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.93 2004/10/04 04:11:34 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.94 2004/10/04 04:16:26 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
