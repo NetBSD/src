@@ -10,3 +10,6 @@ sys/arch/alpha/pci/pci_pte32_sgmap.c
 sys/arch/alpha/pci/pci_pte32_sgmap.h
 sys/arch/alpha/pci/pci_pte64_sgmap.c
 sys/arch/alpha/pci/pci_pte64_sgmap.h
+sys/arch/alpha/tc/tc_dma.c
+sys/arch/alpha/tc/tc_sgmap.c
+sys/arch/alpha/tc/tc_sgmap.h
