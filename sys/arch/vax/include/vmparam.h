@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1994/10/26 08:02:36 cgd Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 1994/11/25 19:09:02 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,10 +80,6 @@
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 
-#define PxTOP0(x) ((x&0x40000000) ?                          \
-                   (x+MAXTSIZ+MAXDSIZ+MAXSSIZ-0x80000000):   \
-                   (x&0x7fffffff))
-
 /*
  * Default sizes of swap allocation chunks (see dmap.h).
  * The actual values may be changed in vminit() based on MAXDSIZ.
@@ -143,22 +139,6 @@
 					   protected against replacement */
 
 /*
- * Paging thresholds (see vm_sched.c).
- * Strategy of 1/19/85:
- *	lotsfree is 512k bytes, but at most 1/4 of memory
- *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
- */
-/*
-#define	LOTSFREE	(512 * 1024)
-#define	LOTSFREEFRACT	4
-#define	DESFREE		(200 * 1024)
-#define	DESFREEFRACT	8
-#define	MINFREE		(64 * 1024)
-#define	MINFREEFRACT	2
-*/
-
-/*
  * There are two clock hands, initially separated by HANDSPREAD bytes
  * (but at most all of user memory).  The amount of time to reclaim
  * a page once the pageout process examines it increases with this
@@ -190,7 +170,7 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x80000000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x7FFFE000)
 #define VM_MAX_ADDRESS		((vm_offset_t)0xC0000000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x80000000)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(VM_MIN_KERNEL_ADDRESS+\

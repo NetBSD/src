@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.2 1994/10/26 08:02:15 cgd Exp $	*/
+/*      $NetBSD: mtpr.h,v 1.3 1994/11/25 19:08:53 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,6 +31,9 @@
  */
 
  /* All bugs are subject to removal without further notice */
+
+#ifndef	_VAX_MTPR_H_
+#define	_VAX_MTPR_H_
 
 /******************************************************************************
 
@@ -80,6 +83,7 @@
 #define	AST_NO	  4
 #define	AST_OK	  3
 
+#ifndef	ASSEMBLER
 
 #define mtpr(val,reg)                                   \
 {                                                       \
@@ -96,4 +100,6 @@
                         : "g" (reg));                   \
         val;                                            \
 })
+#endif	/* ASSEMBLER */
 
+#endif /* _VAX_MTPR_H_ */
