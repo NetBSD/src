@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.30 2004/03/13 02:00:15 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.31 2004/03/19 01:56:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.30 2004/03/13 02:00:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.31 2004/03/19 01:56:03 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -289,8 +289,10 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
 #endif
-	int     suspended = RF_FALSE;
+	RF_CallbackDesc_t *cb;
 	RF_Raid_t *raidPtr;
+	int     suspended = RF_FALSE;
+	int need_cb, used_cb;
 
 	raidPtr = desc->raidPtr;
 
@@ -299,18 +301,37 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	RF_ETIMER_START(desc->timer);
 #endif
 
+	need_cb = 0;
+	used_cb = 0;
+	cb = NULL;
+
+	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	/* Do an initial check to see if we might need a callback structure */
+	if (raidPtr->accesses_suspended) {
+		need_cb = 1;
+	}
+	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+
+	if (need_cb) {
+		/* create a callback if we might need it...
+		   and we likely do. */
+		cb = rf_AllocCallbackDesc();
+	}
+
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	if (raidPtr->accesses_suspended) {
-		RF_CallbackDesc_t *cb;
-		cb = rf_AllocCallbackDesc();
-
 		cb->callbackFunc = (void (*) (RF_CBParam_t)) rf_ContinueRaidAccess;
 		cb->callbackArg.p = (void *) desc;
 		cb->next = raidPtr->quiesce_wait_list;
 		raidPtr->quiesce_wait_list = cb;
 		suspended = RF_TRUE;
+		used_cb = 1;
 	}
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+
+	if ((need_cb == 1) && (used_cb == 0)) {
+		rf_FreeCallbackDesc(cb);
+	}
 
 #if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
