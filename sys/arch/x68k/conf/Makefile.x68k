@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.x68k,v 1.50 2001/05/29 02:20:27 mrg Exp $
-
+#	$NetBSD: Makefile.x68k,v 1.51 2001/09/29 01:24:30 minoura Exp $
+#
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
@@ -34,11 +34,12 @@ COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
-S!=	cd ../../../..; pwd
+#S!=	cd ../../../..; pwd
+S=	../../../..
 .endif
 X68K=	$S/arch/x68k
 
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dx68k
 CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
