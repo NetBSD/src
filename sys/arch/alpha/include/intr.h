@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.30 2000/07/13 05:47:39 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.31 2000/08/13 18:20:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
 
 void	alpha_send_ipi(unsigned long, unsigned long);
 void	alpha_broadcast_ipi(unsigned long);
+void	alpha_multicast_ipi(unsigned long, unsigned long);
 
 /*
  * Alpha shared-interrupt-line common code.
