@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.51 1999/09/13 19:49:41 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.52 1999/09/13 21:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -685,6 +685,8 @@ uhci_add_ctrl(sc, sqh)
 {
 	uhci_soft_qh_t *eqh;
 
+	SPLUSBCHECK;
+
 	DPRINTFN(10, ("uhci_add_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_ctl_end;
 	sqh->hlink       = eqh->hlink;
@@ -701,6 +703,8 @@ uhci_remove_ctrl(sc, sqh)
 	uhci_soft_qh_t *sqh;
 {
 	uhci_soft_qh_t *pqh;
+
+	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_ctrl: sqh=%p\n", sqh));
 	for (pqh = sc->sc_ctl_start; pqh->hlink != sqh; pqh=pqh->hlink)
@@ -726,6 +730,8 @@ uhci_add_bulk(sc, sqh)
 {
 	uhci_soft_qh_t *eqh;
 
+	SPLUSBCHECK;
+
 	DPRINTFN(10, ("uhci_add_bulk: sqh=%p\n", sqh));
 	eqh = sc->sc_bulk_end;
 	sqh->hlink       = eqh->hlink;
@@ -742,6 +748,8 @@ uhci_remove_bulk(sc, sqh)
 	uhci_soft_qh_t *sqh;
 {
 	uhci_soft_qh_t *pqh;
+
+	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
 	for (pqh = sc->sc_bulk_start; pqh->hlink != sqh; pqh = pqh->hlink)
@@ -882,6 +890,7 @@ uhci_check_intr(sc, ii)
 	uhci_idone(ii);
 }
 
+/* Called at splusb() */
 void
 uhci_idone(ii)
 	uhci_intr_info_t *ii;
@@ -1316,11 +1325,13 @@ uhci_device_bulk_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (uhci_device_bulk_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (uhci_device_bulk_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -1475,11 +1486,13 @@ uhci_device_ctrl_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (uhci_device_ctrl_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (uhci_device_ctrl_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -1509,11 +1522,13 @@ uhci_device_intr_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (uhci_device_intr_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (uhci_device_intr_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -1796,7 +1811,7 @@ uhci_device_isoc_transfer(reqh)
 
 	/* and put on interrupt list if the pipe wasn't running */
 	if (r == USBD_NORMAL_COMPLETION)
-		uhci_device_isoc_start(reqh);
+		uhci_device_isoc_start(SIMPLEQ_FIRST(&reqh->pipe->queue));
 
 	return (r);
 }
@@ -2428,11 +2443,13 @@ uhci_root_ctrl_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (uhci_root_ctrl_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (uhci_root_ctrl_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -2443,7 +2460,7 @@ uhci_root_ctrl_start(reqh)
 	usb_device_request_t *req;
 	void *buf;
 	int port, x;
-	int len, value, index, status, change, l, totlen = 0;
+	int s, len, value, index, status, change, l, totlen = 0;
 	usb_port_status_t ps;
 	usbd_status r;
 
@@ -2762,7 +2779,9 @@ uhci_root_ctrl_start(reqh)
  ret:
 	reqh->status = r;
 	reqh->hcpriv = 0;
+	s = splusb();
 	usb_transfer_complete(reqh);
+	splx(s);
 	return (USBD_IN_PROGRESS);
 }
 
@@ -2802,11 +2821,13 @@ uhci_root_intr_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (uhci_root_intr_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (uhci_root_intr_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 /* Start a transfer on the root interrupt pipe */
