@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.20 2001/10/25 08:04:27 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.21 2001/11/01 08:03:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.20 2001/10/25 08:04:27 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.21 2001/11/01 08:03:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ extern  gid_t egid;
 extern  char *time_string;
 extern  char default_time_string[];
 
-static void do_timestamp(time_t time, char *msg);
+static void do_timestamp(time_t, char *);
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -215,10 +215,10 @@ struct tm *localclock;
 void
 broadcast(char	*message)
 {
-	time_t		clock;
-	FILE	*f_utmp;
-	struct	utmp	utmp;
-	char	**np;
+	struct utmp utmp;
+	time_t	now;
+	FILE   *f_utmp;
+	char  **np;
 	int	pid, s;
 
 	if (!notify || gp == NULL)
@@ -239,8 +239,8 @@ broadcast(char	*message)
 		return;
 	}
 
-	clock = time((time_t *)0);
-	localclock = localtime(&clock);
+	now = time((time_t *)0);
+	localclock = localtime(&now);
 
 	if ((f_utmp = fopen(_PATH_UTMP, "r")) == NULL) {
 		msg("Cannot open %s: %s\n", _PATH_UTMP, strerror(errno));
@@ -314,12 +314,12 @@ DUMP: NEEDS ATTENTION: ",
 #define STAMP_LENGTH 80
 
 static void
-do_timestamp(time_t time, char *msg)
+do_timestamp(time_t thistime, char *message)
 {
 	struct tm tm_time;
 	char then[STAMP_LENGTH + 1];
 	
-	(void) localtime_r(&time, &tm_time);
+	(void) localtime_r(&thistime, &tm_time);
 	if (strftime(then, STAMP_LENGTH, time_string, &tm_time) == 0) {
 		time_string = default_time_string;
 		strftime(then, STAMP_LENGTH, time_string, &tm_time);
@@ -327,7 +327,7 @@ do_timestamp(time_t time, char *msg)
 		   "DUMP: ERROR: TIMEFORMAT too long, reverting to default\n");
 	}
 	
-	fprintf(stderr, msg, then);
+	fprintf(stderr, message, then);
 }
 
 			
