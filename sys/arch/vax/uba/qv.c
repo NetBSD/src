@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.13 2003/08/07 16:30:14 agc Exp $	*/
+/*	$NetBSD: qv.c,v 1.14 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.13 2003/08/07 16:30:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.14 2004/01/04 16:19:44 wiz Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -310,7 +310,7 @@ qvprobe(reg, ctlr)
 	/*
 	 * Turn on the keyboard and vertical interrupt vectors.
 	 */
-	qvaddr->qv_intcsr = 0;		/* init the interrupt controler */
+	qvaddr->qv_intcsr = 0;		/* init the interrupt controller */
 	qvaddr->qv_intcsr = 0x40;	/* reset irr			*/
 	qvaddr->qv_intcsr = 0x80;	/* specify individual vectors	*/
 	qvaddr->qv_intcsr = 0xc0;	/* preset autoclear data	*/

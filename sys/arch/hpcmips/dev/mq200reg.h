@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.7 2002/05/11 14:10:06 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.8 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -376,7 +376,7 @@
  */
 
 /*
- * Flat Pannel Controler
+ * Flat Pannel Controller
  */
 #define MQ200_FPR(n)		(MQ200_FP + (n)*4)
 /* FP Control	(FP00R)	*/

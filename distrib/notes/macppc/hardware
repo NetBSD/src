@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.39 2003/09/07 00:03:47 mbw Exp $
+.\"$NetBSD: hardware,v 1.40 2004/01/04 16:19:43 wiz Exp $
 .
 Currently,
 .Nx*M
@@ -315,13 +315,13 @@ Most SCSI disk/tape/CD-ROM devices should work
 .It
 IDE
 .(bullet -compact
-On-board IDE controlers
+On-board IDE controllers
 .It
 Promise Ultra66
 .Pq Em pciide
 (this, and other PC-based cards are not bootable on \*M)
 .It
-Acard ATP-850/860 based IDE controlers
+Acard ATP-850/860 based IDE controllers
 .Pq Em pciide
 (including the Acard AEC-6210/6260 and the Sonnet Tempo ATA/66 cards)
 .It

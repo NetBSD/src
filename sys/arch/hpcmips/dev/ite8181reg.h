@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.2 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.3 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -115,7 +115,7 @@
 #define 	ITE8181_EMA_ENABLED	0x01	/* EMA enabled (r) */
 
 /* ITE8181 LCD Controller Timming Reg. */
-#define ITE8181_EMA_HSIZE	0x80	/* LCD Controler H size Reg. */
+#define ITE8181_EMA_HSIZE	0x80	/* LCD Controller H size Reg. */
 #define ITE8181_EMA_HALIGN	0x81	/* LCD H Align Adjust Reg. */
 #define ITE8181_EMA_HRETRACE	0x82	/* LCD H Retrace Adjust Reg. */
 #define ITE8181_EMA_HADJUST	0x83	/* LCD H Adjust Reg. */

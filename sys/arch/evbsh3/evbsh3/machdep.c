@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2004/01/04 16:19:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2004/01/04 16:19:43 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -550,7 +550,7 @@ shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
 #if !defined(DONT_INIT_BSC)
 /*
  * InitializeBsc
- * : BSC(Bus State Controler)
+ * : BSC(Bus State Controller)
  */
 void InitializeBsc __P((void));
 

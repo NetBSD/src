@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2003/09/22 14:11:31 cl Exp $
+# $NetBSD: GENERIC,v 1.93 2004/01/04 16:19:44 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 maxusers	8
 
@@ -219,7 +219,7 @@ options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #### Device configurations
 
 ## Fundamental devices; see also std.x68k
-dmac0	at intio0 addr 0xe84000		# DMA controler
+dmac0	at intio0 addr 0xe84000		# DMA controller
 xel0	at intio0
 opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
@@ -235,7 +235,7 @@ options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 pseudo-device	pow		2	# software power switch
 
 ## floppy disks
-fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
+fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controller
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices

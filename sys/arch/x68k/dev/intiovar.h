@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.4 2002/09/29 05:17:04 isaki Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.5 2004/01/04 16:19:44 wiz Exp $	*/
 
 /*
  *
@@ -134,7 +134,7 @@ extern u_int8_t *intiobase;
 #define intio_get_sysport_mpustat() \
 	(intio_sysport[sysport_mpustat])
 
-/* I/O controler (sicilian/pluto) */
+/* I/O controller (sicilian/pluto) */
 #define INTIO_SICILIAN		(0x00e9c000)
 #define intio_sicilian		INTIO_ADDR(INTIO_SICILIAN)
 #define sicilian_intr		1
