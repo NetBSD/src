@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.15 1995/03/26 20:24:53 jtc Exp $	*/
+/*	$NetBSD: time.h,v 1.16 1995/06/15 23:08:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,16 +45,16 @@
  * and used in other calls.
  */
 struct timeval {
-	int32_t	tv_sec;		/* seconds */
-	int32_t	tv_usec;	/* and microseconds */
+	long	tv_sec;		/* seconds */
+	long	tv_usec;	/* and microseconds */
 };
 
 /*
  * Structure defined by POSIX.4 to be like a timeval.
  */
 struct timespec {
-	int32_t	ts_sec;		/* seconds */
-	int32_t	ts_nsec;	/* and nanoseconds */
+	time_t	ts_sec;		/* seconds */
+	long	ts_nsec;	/* and nanoseconds */
 };
 
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
