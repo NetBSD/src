@@ -1,148 +1,149 @@
 # Airport Code : Airport
 #	@(#)airport	5.1 (Berkeley) 5/10/90
-CAK:Akron/Canton Regional
-ABQ:Albuquerque International
 ABE:Allentown-Bethlehem-Easton International
-ANC:Anchorage International
-AVL:Asheville (NC) Regional
-ATL:Atlanta William B. Hartsfield International
+ABQ:Albuquerque International
+AGC:Pittsburgh/Allegheny County
 AIY:Atlantic City International
+ANC:Anchorage International
+ATL:Atlanta William B. Hartsfield International
 AUS:Austin Robert Mueller Municipal
-BWI:Baltimore-Washington International
+AVL:Asheville (NC) Regional
+BDL:Hartford/Springfield Bradley International
+BFI:Seattle Kings County International/Boeing Field
 BGR:Bangor International
-BTR:Baton Rouge
-BIL:Billings Logan International
 BHM:Birmingham Municipal
+BIL:Billings Logan International
 BIS:Bismarck Municipal
+BKL:Cleveland Lakefront
+BNA:Nashville Metro
 BOI:Boise Air Terminal/Gowen Field
 BOS:Boston Logan International
+BTR:Baton Rouge
+BTV:Burlington International
 BUF:Buffalo International
 BUR:Burbank/Glendale/Pasadena
-BTV:Burlington International
+BWI:Baltimore-Washington International
+CAE:Columbia (SC) Metropolitan
+CAK:Akron/Canton Regional
+CGX:Chicago Merrill C. Meigs Field
+CHS:Charleston (SC) International
+CLE:Cleveland-Hopkins International
+CLT:Charlotte/Douglas International
+CMH:Columbus (OH) International
 CPR:Casper/Natrone County International
 CRM:Charleston (WV) Yeager
-CHS:Charleston (SC) International
-CLT:Charlotte/Douglas International
-CYS:Cheyenne
-MDW:Chicago Midway
-ORD:Chicago-O'Hare International
-CGX:Chicago Merrill C. Meigs Field
-CVG:Cincinnati International
-CLE:Cleveland-Hopkins International
-BKL:Cleveland Lakefront
-CAE:Columbia (SC) Metropolitan
-CMH:Columbus (OH) International
 CRP:Corpus Christi International
-DFW:Dallas-Ft. Worth International
+CVG:Cincinnati International
+CYS:Cheyenne
 DAL:Dallas Love Field
 DAY:Dayton James M. Cox International
+DCA:Washington National
 DEN:Denver Stapleton International
-DSM:Des Moines International
 DET:Detroit City
+DFW:Dallas-Ft. Worth International
+DSM:Des Moines International
 DTW:Detroit Metropolitan/Wayne County
 ELP:El Paso International
+EWR:Newark International
+EYW:Key West International
 FAI:Fairbanks International
 FAR:Fargo Hector International
-FLL:Ft. Lauderdale-Hollywood International
-RSW:Ft. Meyers Southwest Florida Regional
-FWA:Ft. Wayne Allen County
 FAT:Fresno Air Terminal
+FLL:Ft. Lauderdale-Hollywood International
+FOE:Topeka Forbes Field
+FSD:Sioux Falls Regional
+FWA:Ft. Wayne Allen County
+GEG:Spokane International
 GRR:Grand Rapids/Kent County International
 GSO:Greensboro-High Pt.-Winston Salem Regional
-MDT:Harrisburg International
-BDL:Hartford/Springfield Bradley International
-ITO:Hilo General Lyman Field
 HNL:Honolulu International
 HOT:Hot Springs Memorial Field
-IAH:Houston Intercontinental
 HOU:Houston William P. Hobby
+HPN:White Plains/Westchester County
+HUF:Terre Haute Hulman Regional
+HVN:New Haven Tweed
+IAD:Washington Dulles
+IAH:Houston Intercontinental
+ICT:Wichita Mid-Continent
+ILG:Wilmington/New Castle County
 IND:Indianapolis International
+INT:Winston-Salem Smith Reynolds
 ITH:Ithaca Tompkins County
+ITO:Hilo General Lyman Field
 JAN:Jackson Municipal/Thompson Field
 JAX:Jacksonville (FL) International
-OAJ:Jacksonville (NC) Albert J. Ellis
+JFK:New York John F. Kennedy International
 JNU:Juneau International
-OGG:Kahului (HI)
 KOA:Kailua-Kona Keahole (HI)
-MCI:Kansas City International
-MKC:Kansas City Downtown
-EYW:Key West International
-TYS:Knoxville McGhee Tyson
 LAN:Lansing Capital City
 LAS:Las Vegas McCarran International
+LAX:Los Angeles International
+LGA:New York La Guardia
+LGB:Long Beach Daugherty Field
 LIH:Lihue (HI)
 LIT:Little Rock Regional
 LNK:Lincoln Municipal
-LGB:Long Beach Daugherty Field
-LAX:Los Angeles International
-SDF:Louisville Standiford Field
-MSN:Madison (WI) Dane County Regional
-MHT:Manchester
+MBS:Saginaw Tri-City
+MCI:Kansas City International
+MCO:Orlando International
+MDT:Harrisburg International
+MDW:Chicago Midway
 MEM:Memphis International
-MIA:Miami International
-MKE:Milwaukee General Mitchell International
-MSP:Minneapolis-St. Paul International
-MSO:Missoula County
-MOB:Mobile Municipal/Bates Field
-MLI:Moline Quad City
 MGM:Montgomery Municipal/Dannelly Field
-BNA:Nashville Metro
-EWR:Newark International
-HVN:New Haven Tweed
+MHT:Manchester
+MIA:Miami International
+MKC:Kansas City Downtown
+MKE:Milwaukee General Mitchell International
+MLI:Moline Quad City
+MOB:Mobile Municipal/Bates Field
+MSN:Madison (WI) Dane County Regional
+MSO:Missoula County
+MSP:Minneapolis-St. Paul International
 MSY:New Orleans International
-PHF:Newport News Patrick Henry International
-JFK:New York John F. Kennedy International
-LGA:New York La Guardia
-ORF:Norfolk International
+OAJ:Jacksonville (NC) Albert J. Ellis
 OAK:Oakland International
+OGG:Kahului (HI)
 OKC:Oklahoma City Will Rogers World
 OLM:Olympia (WA)
 OMA:Omaha Eppley Airfield
 ONT:Ontario (CA) International
-MCO:Orlando International
+ORD:Chicago-O'Hare International
+ORF:Norfolk International
 PBI:Palm Beach International
-PSP:Palm Springs Municipal
+PDX:Portland (OR) International
+PHF:Newport News Patrick Henry International
 PHL:Philadelphia International
 PHX:Phoenix Sky Harbor International
-AGC:Pittsburgh/Allegheny County
-PIT:Pittsburgh International
-PWM:Portland (ME) International Jetport
-PDX:Portland (OR) International
-PVD:Providence Theodore Francis Green State
-RDU:Raleigh-Durham
-RNO:Reno Cannon International
-RIC:Richmond International/Byrd Field
-ROC:Rochester International
-SMF:Sacramento Metro
-MBS:Saginaw Tri-City
-STL:St. Louis/Lambert International
 PIE:St. Petersburg/Clearwater
-SLC:Salt Lake City International
-SAT:San Antonio International
+PIT:Pittsburgh International
+PSP:Palm Springs Municipal
+PVD:Providence Theodore Francis Green State
+PWM:Portland (ME) International Jetport
+RDU:Raleigh-Durham
+RIC:Richmond International/Byrd Field
+RNO:Reno Cannon International
+ROC:Rochester International
+RSW:Ft. Meyers Southwest Florida Regional
 SAN:San Diego International/Lindbergh Field
-SFO:San Francisco International
-SJC:San Jose (CA) International
-SNA:Santa Ana/Orange County/John Wayne
-SBA:Santa Barbara Municipal
+SAT:San Antonio International
 SAV:Savannah International
-BFI:Seattle Kings County International/Boeing Field
+SBA:Santa Barbara Municipal
+SDF:Louisville Standiford Field
 SEA:Seattle-Tacoma International
-SUX:Sioux City International
-FSD:Sioux Falls Regional
-GEG:Spokane International
+SFO:San Francisco International
 SGF:Springfield (MO) Regional
+SJO:San Jose (CA) International
+SLC:Salt Lake City International
+SMF:Sacramento Metro
+SNA:Santa Ana/Orange County/John Wayne
+SPS:Wichita Falls
+STL:St. Louis/Lambert International
+SUX:Sioux City International
 SYR:Syracuse Hancock International
-TPA:Tampa International
-HUF:Terre Haute Hulman Regional
 TOL:Toledo Express
-FOE:Topeka Forbes Field
+TPA:Tampa International
 TUL:Tulsa International
 TUS:Tucson International
+TYS:Knoxville McGhee Tyson
 UCA:Utica/Oneida County
-DCA:Washington National
-IAD:Washington Dulles
-HPN:White Plains/Westchester County
-SPS:Wichita Falls
-ICT:Wichita Mid-Continent
-ILG:Wilmington/New Castle County
-INT:Winston-Salem Smith Reynolds
+YVR:Vancouver International
