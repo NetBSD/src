@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2000/05/20 13:38:58 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.80 2000/05/29 20:00:55 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,12 +76,23 @@ vaddr_t	istack;
 #define PROT_RO		(PG_RO >> PROTSHIFT)
 #define PROT_URKW	(PG_URKW >> PROTSHIFT)
 
+/*
+ * Scratch pages usage:
+ * Page 1: initial frame pointer during autoconfig. Stack and pcb for
+ *	   processes during exit on boot cpu only.
+ * Page 2: cpu_info struct for master (or only) cpu.
+ * Page 3: unused
+ * Page 4: unused
+ */
+long	scratch;
+#define	SCRATCHPAGES	4
+
+
 struct pmap kernel_pmap_store;
 
 struct	pte *Sysmap;		/* System page table */
 struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
 int	pventries;
-void	*scratch;
 vaddr_t	iospace;
 
 vaddr_t ptemapstart, ptemapend;
@@ -197,10 +208,10 @@ pmap_bootstrap()
 	kvtopte(istack)->pg_v = 0;
 
 	/* Some scratch pages */
-	scratch = (void *)((u_int)istack + ISTACK_SIZE);
+	scratch = ((u_int)istack + ISTACK_SIZE);
 
 	/* Physical-to-virtual translation table */
-	(unsigned)pv_table = (u_int)scratch + 4 * VAX_NBPG;
+	(unsigned)pv_table = scratch + 4 * VAX_NBPG;
 
 	avail_start = (unsigned)pv_table + (ROUND_PAGE(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -241,7 +252,7 @@ pmap_bootstrap()
 
 #if 0 /* Breaks cninit() on some machines */
 	cninit();
-	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
+	printf("Sysmap %p, istack %lx, scratch %\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
 	printf("SYSPTSIZE %x\n",sysptsize);
 	printf("pv_table %p, ptemapstart %lx ptemapend %lx\n",
@@ -268,6 +279,12 @@ pmap_bootstrap()
 	mtpr(pcb->P0BR = pmap->pm_p0br, PR_P0BR);
 	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
 	mtpr(pcb->P0LR = pmap->pm_p0lr, PR_P0LR);
+
+	/* cpu_info struct */
+	pcb->SSP = scratch + VAX_NBPG;
+	mtpr(pcb->SSP, PR_SSP);
+	bzero((caddr_t)pcb->SSP, sizeof(struct cpu_info));
+	curcpu()->ci_exit = scratch;
 
 	/*
 	 * Now everything should be complete, start virtual memory.
