@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2000/06/26 14:20:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2000/06/29 07:51:47 mrg Exp $	*/
 
 /*
  *
@@ -68,8 +68,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

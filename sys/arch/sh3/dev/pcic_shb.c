@@ -1,4 +1,4 @@
-/* $NetBSD: pcic_shb.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $ */
+/* $NetBSD: pcic_shb.c,v 1.3 2000/06/29 07:44:02 mrg Exp $ */
 
 #define	PCICSHBDEBUG
 
@@ -45,7 +45,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

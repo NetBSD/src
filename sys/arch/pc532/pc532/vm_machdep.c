@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 2000/06/26 14:20:54 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 2000/06/29 07:51:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -53,8 +53,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 2000/06/26 14:20:57 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 2000/06/29 07:44:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -55,8 +55,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

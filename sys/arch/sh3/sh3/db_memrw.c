@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1999/09/13 10:31:28 itojun Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 2000/06/29 07:44:04 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -37,7 +37,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 
