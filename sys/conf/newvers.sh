@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.31 2000/07/14 07:14:03 thorpej Exp $
+#	$NetBSD: newvers.sh,v 1.32 2003/03/02 22:17:30 christos Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,26 +41,56 @@ then
 fi
 
 touch version
-v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
-if [ -f ident ]; then
-	id="`cat ident`"
+v=$(cat version) u=${USER-root} d=$(pwd) h=$(hostname) t=$(date)
+
+if [ -f ident ]
+then
+	id="$(cat ident)"
 else
-	id=`basename ${d}`
+	id=$(basename ${d})
 fi
-osrelcmd=`dirname $0`/osrelease.sh
+
+osrelcmd=$(dirname $0)/osrelease.sh
 
 ost="NetBSD"
-osr=`sh $osrelcmd`
+osr=$(sh $osrelcmd)
 
-echo "const char ostype[] = \"${ost}\";" > vers.c
-echo "const char osrelease[] = \"${osr}\";" >> vers.c
-echo \
-  "const char sccs[] = \
-    \"@""(#)${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
-  >> vers.c
-echo \
-  "const char version[] = \
-    \"${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
-  >> vers.c
+cat << _EOF > vers.c
+/*
+ * Automatically generated file from $0
+ * Do not edit.
+ */
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
 
-echo `expr ${v} + 1` > version
+const char ostype[] = "${ost}";
+const char osrelease[] = "${osr}";
+const char sccs[] = 
+    "@(#)${ost} ${osr} (${id}) #${v}: ${t}\n"
+    "\t${u}@${h}:${d}\n";
+const char version[] = 
+    "${ost} ${osr} (${id}) #${v}: ${t}\n"
+    "\t${u}@${h}:${d}\n";
+
+#ifdef notyet
+/*
+ * NetBSD identity note.
+ */
+#define	_S(TAG)	__STRING(TAG)
+__asm(
+	".section\t\".note.netbsd.ident\", \"a\"\n"
+	"\t.p2align\t2\n"
+	"\t.long\t" _S(ELF_NOTE_NETBSD_NAMESZ) "\n"
+	"\t.long\t" _S(ELF_NOTE_NETBSD_DESCSZ) "\n"
+	"\t.long\t" _S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
+	"\t.ascii\t" _S(ELF_NOTE_NETBSD_NAME) "\n"
+	"\t.long\t" _S(__NetBSD_Version__) "\n"
+	"\t.p2align\t2\n"
+);
+#endif
+
+_EOF
+echo $(expr ${v} + 1) > version
