@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.16 1997/10/19 07:40:26 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.17 1997/10/20 08:22:42 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,8 +137,8 @@ by read or write; all access is by reading and writing to
 the mapped memory.  The device appears as a block of memory
 of size
 .Va buffersize
-available via 
-.Dv AUDIO_GETINFO .
+(as available via 
+.Dv AUDIO_GETINFO ).
 The device driver will continuously move data from this buffer
 from/to the audio hardware, wrapping around at the end of the
 buffer.  To find out where the hardware is currently accessing
@@ -152,6 +152,15 @@ mapped separately if both are to be used.
 Only encodings that are not emulated (i.e. where
 .Dv AUDIO_ENCODINGFLAG_EMULATED
 is not set) work properly for a mapped device.
+.Pp
+The audio device, like most devices, can be used in
+.Va select,
+can be set in non-blocking mode and can be set to send a
+.Dv SIGIO
+when I/O is possible.
+The mixer device can be set to generate a
+.Dv SIGIO
+whenever a mixer value is changed.
 .Pp
 The following
 .Xr ioctl 2
@@ -182,12 +191,14 @@ typedef struct audio_device {
         char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
 .Ed
+.It Dv AUDIO_GETFD (int)
+The command returns the current setting of the full duplex mode.
 .It Dv AUDIO_GETENC (audio_encoding_t)
 This command is used iteratively to fetch sample encoding names and
 format_ids into the input/output audio_encoding_t argument.
 .Bd -literal
 typedef struct audio_encoding {
-	int index;	/* input: nth encoding */
+	int index;      /* input: nth encoding */
 	char name[MAX_AUDIO_DEV_LEN]; /* name of encoding */
 	int encoding;   /* value for encoding parameter */
 	int precision;  /* value for precision parameter */
@@ -196,7 +207,7 @@ typedef struct audio_encoding {
 } audio_encoding_t;
 .Ed
 To query
-all the supported encodings, start with an index field of zero and
+all the supported encodings, start with an index field of 0 and
 continue with successive encodings (1, 2, ...) until the command returns
 an error.
 .It Dv AUDIO_SETFD (int)
@@ -206,7 +217,7 @@ contains a zero value.  If the device does not support full-duplex
 operation, attempting to set full-duplex mode returns an error.
 .It Dv AUDIO_GETPROPS (int)
 This command gets a bit set of hardware properties.  If the hardware
-has a certain property a bit is set, otherwise it is not.
+has a certain property the corresponding bit is set, otherwise it is not.
 The properties can have the following values:
 .Bl -tag -width indent -compact
 .It Dv AUDIO_PROP_FULLDUPLEX
@@ -240,12 +251,12 @@ Get or set audio information as encoded in the audio_info structure.
 typedef struct audio_info {
 	struct	audio_prinfo play;   /* info for play (output) side */
 	struct	audio_prinfo record; /* info for record (input) side */
-	u_int	_ispare[1];
+        u_int	monitor_gain;
 	/* BSD extensions */
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
-	u_int	backlog;	/* samples of output backlog to gen. */
+	u_int	_ispare1;
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
@@ -283,17 +294,12 @@ mark.
 .Va hiwat
 and
 .Va lowat
-set those high- and low-water marks (in audio blocks).
-.Pp
-.Va buffer_size
-is the total size of the audio buffer.  The buffer size divided
-by the 
-.Va blocksize
-gives the maximum value for
+set those high- and low-water marks (in audio blocks).  The default for
+.Va hiwat
+is the maximum value and for
+.Va lowat
+75 % of 
 .Va hiwat .
-Currently the
-.Va blocksize
-can only be read and not set.
 .Pp
 .Va blocksize
 sets the current audio blocksize.  The generic audio driver layer and
@@ -311,9 +317,6 @@ even when the encoding is changed.  The stickyness can be cleared
 by reopening the device or setting the
 .Va blocksize
 to 0.
-.Pp
-.Va backlog
-is currently unused.
 .Bd -literal
 struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in samples/s */
@@ -375,7 +378,11 @@ and
 .Va balance
 settings provide simple shortcuts to the richer mixer
 interface described below.  The gain should be in the range
-.Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN .
+.Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN 
+and the balance in the range
+.Bq Dv AUDIO_LEFT_BALANCE , Dv AUDIO_RIGHT_BALANCE
+withe the normal setting at
+.Dv AUDIO_MID_BALANCE .
 .br
 The input port should be a combination of
 .Bl -tag -width indent -compact
@@ -395,6 +402,18 @@ to select headphone output.
 .It Dv AUDIO_LINE_OUT
 to select line output.
 .El
+The available ports can be found in
+.Va avail_ports .
+.Pp
+.Va buffer_size
+is the total size of the audio buffer.  The buffer size divided
+by the 
+.Va blocksize
+gives the maximum value for
+.Va hiwat .
+Currently the
+.Va buffer_size
+can only be read and not set.
 .Pp
 The
 .Va seek
@@ -434,10 +453,10 @@ This command is the same as described above for the sampling devices.
 .It Dv AUDIO_MIXER_READ (mixer_ctrl_t)
 .It Dv AUDIO_MIXER_WRITE (mixer_ctrl_t)
 .Bd -literal
-#define AUDIO_MIXER_CLASS	0
-#define AUDIO_MIXER_ENUM	1
-#define AUDIO_MIXER_SET		2
-#define AUDIO_MIXER_VALUE	3
+#define AUDIO_MIXER_CLASS  0
+#define AUDIO_MIXER_ENUM   1
+#define AUDIO_MIXER_SET    2
+#define AUDIO_MIXER_VALUE  3
 typedef struct mixer_ctrl {
 	int dev;			/* input: nth device */
 	int type;
@@ -452,7 +471,8 @@ These commands read the current mixer state or set new mixer state for
 the specified device
 .Va dev .
 .Va type
-identifies which type of value is supplied in the mixer_ctrl_t
+identifies which type of value is supplied in the 
+.Va mixer_ctrl_t
 argument.  
 For a mixer value, the
 .Va value
@@ -474,7 +494,7 @@ or
 .It Dv AUDIO_MIXER_DEVINFO (mixer_devinfo_t)
 This command is used iteratively to fetch audio mixer device information
 into the input/output mixer_devinfo_t argument.  To query all the
-supported encodings, start with an index field of zero and continue with
+supported encodings, start with an index field of 0 and continue with
 successive encodings (1, 2, ...) until the command returns an error.
 .Bd -literal
 typedef struct mixer_devinfo {
@@ -522,6 +542,8 @@ field identifies the type of this mixer control.
 Enumeration types are typically used for on/off style controls (e.g. a
 mute control) or for input/output device selection (e.g. select
 recording input source from CD, line in, or microphone).
+Set types are similar to enumeration types but any combination
+of the mask bits can be used.
 .Pp
 The
 .Va mixer_class
@@ -554,16 +576,16 @@ example, a mute control would return appropriate values paired with
 AudioNon and AudioNoff.
 For
 .Dv AUDIO_MIXER_VALUE
+and
+.Dv AUDIO_MIXER_SET
 mixer control types, the channel count is
 returned; the units name specifies what the level controls (typical
 values are AudioNvolume, AudioNtreble, AudioNbass).
 .\" For AUDIO_MIXER_SET mixer control types, what is what?
 .El
 .Pp
-By convention, all the mixer device indices for generic
-class grouping are at the end of the index number space for a particular
-hardware device, and can be distinguished from other mixer controls
-because they use a name from one of the AudioC* string values.
+By convention, all the mixer device can be distinguished from other
+mixer controls because they use a name from one of the AudioC* string values.
 .Sh FILES
 .Bl -tag -width /dev/audioctl -compact
 .It Pa /dev/audio
@@ -583,8 +605,6 @@ For ports using the ISA bus:
 .Xr sb 4 ,
 .Xr wss 4 .
 .Sh BUGS
-The device class conventions are just a wish and not yet reality.
-.Pp
 If the device is used in
 .Xr mmap 2
 it is currently always mapped for writing (playing) due to
