@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.5 1996/08/28 19:00:50 cgd Exp $	*/
+/*	$NetBSD: spc.c,v 1.6 1996/09/08 18:46:12 oki Exp $	*/
 
 #define	integrate	static inline
 
@@ -346,7 +346,6 @@ int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 
 int	spcmatch	__P((struct device *, void *, void *));
 void	spcattach	__P((struct device *, struct device *, void *));
-int	spcprint	__P((void *, const char *));
 void	spc_minphys	__P((struct buf *));
 int	spcintr		__P((int));
 void 	spc_init	__P((struct spc_softc *));
