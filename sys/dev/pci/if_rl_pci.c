@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.2 2000/04/19 08:44:32 haya Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.3 2000/04/24 15:25:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -215,12 +215,9 @@ rl_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s;
-#ifndef RL_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
+	int			s, pmreg;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
+	pcireg_t		command;
 	struct rl_pci_softc *psc = (struct rl_pci_softc *)self;
 	struct rl_softc *sc = &psc->sc_rl;
 	u_int16_t		rl_did = 0;
@@ -238,10 +235,10 @@ rl_pci_attach(parent, self, aux)
 	 * Handle power management nonsense.
 	 */
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, RL_PCI_PWRMGMTCTRL);
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		command = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOIO);
@@ -253,7 +250,7 @@ rl_pci_attach(parent, self, aux)
 			"-- setting to D0\n", sc->sc_dev.dv_xname,
 			       command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, RL_PCI_PWRMGMTCTRL, command);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, command);
 
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
