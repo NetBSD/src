@@ -1,4 +1,4 @@
-.\"	$NetBSD: de.4,v 1.10 2003/08/07 10:31:10 agc Exp $
+.\"	$NetBSD: de.4,v 1.11 2003/08/31 11:34:09 ragge Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,13 +35,13 @@
 .Sh NAME
 .Nm de
 .Nd
-.Tn DEC DEUNA
+.Tn DEC DEUNA/DELUA
 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "de0 at uba0 csr 174510 vector deintr"
+.Cd "de0 at uba? csr 174510"
 .Sh DESCRIPTION
 The
-.Nm de
+.Nm
 interface provides access to a 10 Mb/s Ethernet network through
 a Digital Equipment
 .Tn UNIBUS
@@ -53,24 +53,12 @@ is specified at boot time with an
 .Dv SIOCSIFADDR
 .Xr ioctl 2 .
 The
-.Nm de
+.Nm
 interface employs the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
 network.
 .Pp
-The interface normally tries to use a
-.Dq trailer
-encapsulation
-to minimize copying data on input and output.
-The use of trailers is negotiated with
-.Tn ARP .
-This negotiation may be disabled, on a per-interface basis,
-by setting the
-.Dv IFF_NOTRAILERS
-flag with an
-.Dv SIOCSIFFLAGS
-.Xr ioctl 2 .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It de%d: hardware address %s.
@@ -86,23 +74,6 @@ The status and error flags are reported.
 The hardware indicated an error
 in reading a packet from the cable.
 The status and error flags are reported.
-.Pp
-.It de%d: can't handle af%d.
-The interface was handed
-a message with addresses formatted in an unsuitable address
-family; the packet was dropped.
-.Pp
-.It de%d: buffer unavailable.
-The interface received more packets
-than it had buffers allocated to receive them.
-.Pp
-.It de%d: address change failed, csr0=%b csr1=%b.
-The interface was unable to reprogram
-its physical Ethernet address.
-This may happen with very early models of the interface.
-This facility is used only when
-the controller is not the first network interface configured for
-.Tn XNS .
 .El
 .Pp
 The following messages indicate a probable hardware error performing
