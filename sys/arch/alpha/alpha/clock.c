@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.23 1999/02/12 06:30:08 thorpej Exp $ */
+/* $NetBSD: clock.c,v 1.24 1999/02/23 02:56:40 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,12 +44,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 1999/02/12 06:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 1999/02/23 02:56:40 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/sched.h>
 
 #include <dev/clock_subr.h>
 
@@ -144,6 +145,7 @@ cpu_initclocks()
 	 * isn't set at that time.
 	 */
 	platform.clockintr = (void (*) __P((void *))) hardclock;
+	schedhz = 16;
 
 	/*
 	 * Get the clock started.
