@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.27 1998/10/05 00:51:21 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.28 2000/06/05 23:44:57 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -175,7 +175,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
