@@ -4,7 +4,7 @@
  * Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Public domain.
  *
- * $Id: ethers.c,v 1.1 1993/12/16 05:17:37 deraadt Exp $
+ * $Id: ethers.c,v 1.2 1993/12/16 19:19:14 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -104,6 +104,7 @@ ether_ntohost(hostname, e)
 				return 0;
 			}
 			free(ypbuf);
+			continue;
 		}
 #endif
 		if (ether_line(buf, &try, hostname) == 0 &&
@@ -150,6 +151,7 @@ ether_hostton(hostname, e)
 				return 0;
 			}
 			free(ypbuf);
+			continue;
 		}
 #endif
 		if (ether_line(buf, e, try) == 0 && strcmp(hostname, try) == 0) {
