@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd.c,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: ukbd.c,v 1.2 1998/07/25 15:36:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,21 @@
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
-
+#include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wskbdmap_mfii.h>
+
+#include "opt_pckbd_layout.h"
+#include "opt_wsdisplay_compat.h"
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (ukbddebug) printf x
@@ -71,6 +80,10 @@ int	ukbddebug = 0;
 #define UPROTO_BOOT_KEYBOARD 1
 
 #define NKEYCODE 6
+
+#define NUM_LOCK 0x01
+#define CAPS_LOCK 0x02
+#define SCROLL_LOCK 0x04
 
 struct ukbd_data {
 	u_int8_t	modifiers;
@@ -128,30 +141,29 @@ struct ukbd_softc {
 	struct ukbd_data sc_ndata;
 	struct ukbd_data sc_odata;
 
-	struct clist sc_q;
-	struct selinfo sc_rsel;
-	u_char sc_state;	/* keyboard driver state */
-#define	UKBD_OPEN	0x01	/* device is open */
-#define	UKBD_ASLP	0x02	/* waiting for keyboard data */
-#define UKBD_NEEDCLEAR	0x04	/* needs clearing endpoint stall */
-
+	int sc_state;
+#define UKBD_NEEDCLEAR	0x01		/* needs clearing endpoint stall */
 	int sc_disconnected;		/* device is gone */
+
+	int sc_leds;
+	struct device *sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 #define	UKBDUNIT(dev)	(minor(dev))
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
 
-int ukbd_match __P((struct device *, struct cfdata *, void *));
-void ukbd_attach __P((struct device *, struct device *, void *));
+int	ukbd_match __P((struct device *, struct cfdata *, void *));
+void	ukbd_attach __P((struct device *, struct device *, void *));
 
-int ukbdopen __P((dev_t, int, int, struct proc *));
-int ukbdclose __P((dev_t, int, int, struct proc *p));
-int ukbdread __P((dev_t, struct uio *uio, int));
-int ukbdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int ukbdpoll __P((dev_t, int, struct proc *));
-void ukbd_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
-void ukbd_disco __P((void *));
+void	ukbd_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
+void	ukbd_disco __P((void *));
+
+void	ukbd_set_leds __P((void *, int));
+int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 extern struct cfdriver ukbd_cd;
 
@@ -192,6 +204,7 @@ ukbd_attach(parent, self, aux)
 	usb_endpoint_descriptor_t *ed;
 	usbd_status r;
 	char devinfo[1024];
+	struct wskbddev_attach_args a;
 	
 	sc->sc_disconnected = 1;
 	sc->sc_iface = iface;
@@ -232,6 +245,33 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
 	sc->sc_disconnected = 0;
+
+	a.console = 0;	/* XXX */
+#ifdef PCKBD_LAYOUT
+	a.layout = PCKBD_LAYOUT;
+#else
+	a.layout = KB_US;
+#endif
+	a.keydesc = pckbd_keydesctab;
+	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
+	a.getc = NULL;
+	a.pollc = NULL;
+	a.set_leds = ukbd_set_leds;
+	a.ioctl = ukbd_ioctl;
+	a.accesscookie = sc;
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+
+	/* Set up interrupt pipe. */
+	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
+				USBD_SHORT_XFER_OK,
+				&sc->sc_intrpipe, sc, &sc->sc_ndata, 
+				sizeof(sc->sc_ndata), ukbd_intr);
+	if (r != USBD_NORMAL_COMPLETION) {
+		printf("%s: usbd_open_pipe_intr failed, error=%d\n",
+		       sc->sc_dev.dv_xname, r);
+		return;
+	}
+	usbd_set_disco(sc->sc_intrpipe, ukbd_disco, sc);
 }
 
 void
@@ -253,7 +293,7 @@ ukbd_intr(reqh, addr, status)
 	int mod, omod;
 	char ibuf[NMOD+2*NKEYCODE];	/* chars events */
 	int nkeys, i, j;
-	int key, ch;
+	int key, c;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
 
 	DPRINTFN(5, ("ukbd_intr: status=%d\n", status));
@@ -290,9 +330,9 @@ ukbd_intr(reqh, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == ud->keycode[j])
 					goto rfound;
-			ch = ukbd_trtab[key];
-			if (ch)
-				ADDKEY(ch | RELEASE);
+			c = ukbd_trtab[key];
+			if (c)
+				ADDKEY(c | RELEASE);
 		rfound:
 			;
 		}
@@ -305,183 +345,70 @@ ukbd_intr(reqh, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == sc->sc_odata.keycode[j])
 					goto pfound;
-			ch = ukbd_trtab[key];
-			if (ch)
-				ADDKEY(ch | PRESS);
+			c = ukbd_trtab[key];
+			if (c)
+				ADDKEY(c | PRESS);
 		pfound:
 			;
 		}
 	}
 	sc->sc_odata = *ud;
 
-	if (nkeys) {
-		b_to_q(ibuf, nkeys, &sc->sc_q);
-		
-		if (sc->sc_state & UKBD_ASLP) {
-			sc->sc_state &= ~UKBD_ASLP;
-			DPRINTFN(5, ("ukbd_intr: waking %p\n", sc));
-			wakeup((caddr_t)sc);
-		}
-		selwakeup(&sc->sc_rsel);
+	for (i = 0; i < nkeys; i++) {
+		c = ibuf[i];
+		wskbd_input(sc->sc_wskbddev, 
+			    c&0x80 ? WSCONS_EVENT_KEY_UP:WSCONS_EVENT_KEY_DOWN,
+			    c & 0x7f);
 	}
 }
 
-int
-ukbdopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+void
+ukbd_set_leds(v, leds)
+	void *v;
+	int leds;
 {
-	int unit = UKBDUNIT(dev);
-	struct ukbd_softc *sc;
-	usbd_status r;
+	struct ukbd_softc *sc = v;
+	u_int8_t res;
 
-	if (unit >= ukbd_cd.cd_ndevs)
-		return ENXIO;
-	sc = ukbd_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
+	DPRINTF(("ukbd_set_leds: sc=%p leds=%d\n", sc, leds));
 
-	DPRINTF(("ukbdopen: sc=%p, disco=%d\n", sc, sc->sc_disconnected));
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	if (sc->sc_state & UKBD_OPEN)
-		return EBUSY;
-
-	if (clalloc(&sc->sc_q, UKBD_BSIZE, 0) == -1)
-		return ENOMEM;
-
-	sc->sc_state |= UKBD_OPEN;
-
-	/* Set up interrupt pipe. */
-	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-				USBD_SHORT_XFER_OK,
-				&sc->sc_intrpipe, sc, &sc->sc_ndata, 
-				sizeof(sc->sc_ndata), ukbd_intr);
-	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("ukbdopen: usbd_open_pipe_intr failed, error=%d\n",r));
-		sc->sc_state &= ~UKBD_OPEN;
-		clfree(&sc->sc_q);
-		return (EIO);
-	}
-	usbd_set_disco(sc->sc_intrpipe, ukbd_disco, sc);
-	return 0;
+	sc->sc_leds = leds;
+	res = 0;
+	if (leds & WSKBD_LED_SCROLL)
+		res |= SCROLL_LOCK;
+	if (leds & WSKBD_LED_NUM)
+		res |= NUM_LOCK;
+	if (leds & WSKBD_LED_CAPS)
+		res |= CAPS_LOCK;
+	usbd_set_report(sc->sc_iface, UHID_OUTPUT_REPORT, 0, &res, 1);
 }
 
 int
-ukbdclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	struct ukbd_softc *sc = ukbd_cd.cd_devs[UKBDUNIT(dev)];
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	/* Disable interrupts. */
-	usbd_abort_pipe(sc->sc_intrpipe);
-	usbd_close_pipe(sc->sc_intrpipe);
-
-	sc->sc_state &= ~UKBD_OPEN;
-
-	clfree(&sc->sc_q);
-
-	return 0;
-}
-
-int
-ukbdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	struct ukbd_softc *sc = ukbd_cd.cd_devs[UKBDUNIT(dev)];
-	int s;
-	int error = 0;
-	size_t length;
-	u_char buffer[UKBD_CHUNK];
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	/* Block until keyboard activity occured. */
-	s = spltty();
-	while (sc->sc_q.c_cc == 0) {
-		if (flag & IO_NDELAY) {
-			splx(s);
-			return EWOULDBLOCK;
-		}
-		sc->sc_state |= UKBD_ASLP;
-		DPRINTFN(5, ("ukbdread: sleep on %p\n", sc));
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "ukbdrea", 0);
-		DPRINTFN(5, ("ukbdread: woke, error=%d\n", error));
-		if (error) {
-			sc->sc_state &= ~UKBD_ASLP;
-			splx(s);
-			return error;
-		}
-	}
-	splx(s);
-
-	/* Transfer as many chunks as possible. */
-	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
-		if (length > sizeof(buffer))
-			length = sizeof(buffer);
-
-		/* Remove a small chunk from the input queue. */
-		(void) q_to_b(&sc->sc_q, buffer, length);
-		DPRINTFN(5, ("ukbdread: got %d chars\n", length));
-
-		/* Copy the data to the user process. */
-		if ((error = uiomove(buffer, length, uio)) != 0)
-			break;
-	}
-
-	return error;
-}
-
-int
-ukbdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+ukbd_ioctl(v, cmd, data, flag, p)
+	void *v;
 	u_long cmd;
-	caddr_t addr;
+	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct ukbd_softc *sc = ukbd_cd.cd_devs[UKBDUNIT(dev)];
+	struct ukbd_softc *sc = v;
 
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	return EINVAL;
+	switch (cmd) {
+	case WSKBDIO_GTYPE:
+		*(int *)data = WSKBD_TYPE_PC_XT;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		ukbd_set_leds(v, *(int *)data);
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = sc->sc_leds;
+		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return (0);
+#endif
+	}
+	return -1;
 }
-
-int
-ukbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct ukbd_softc *sc = ukbd_cd.cd_devs[UKBDUNIT(dev)];
-	int revents = 0;
-	int s;
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	s = spltty();
-	if (events & (POLLIN | POLLRDNORM))
-		if (sc->sc_q.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-
-	splx(s);
-	return (revents);
-}
+ 
