@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.428 2001/12/05 12:50:52 augustss Exp $
+# $NetBSD: mi,v 1.429 2001/12/08 05:50:52 gmcgarry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -650,6 +650,7 @@
 ./usr/share/man/cat4/hp300/rbox.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rd.0			man-sys-catman
 ./usr/share/man/cat4/hp300/rmp.0		man-sys-catman
+./usr/share/man/cat4/hp300/rtc.0		man-sys-catman
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman
@@ -2302,6 +2303,7 @@
 ./usr/share/man/man4/hp300/rbox.4		man-sys-man
 ./usr/share/man/man4/hp300/rd.4			man-sys-man
 ./usr/share/man/man4/hp300/rmp.4		man-sys-man
+./usr/share/man/man4/hp300/rtc.4		man-sys-man
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man
 ./usr/share/man/man4/i386/apm.4			man-sys-man
