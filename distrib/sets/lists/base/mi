@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.226 2001/02/06 19:40:33 tron Exp $
+# $NetBSD: mi,v 1.227 2001/02/07 17:05:37 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -728,6 +728,7 @@
 ./usr/sbin/sesd			base-sysutil-bin
 ./usr/sbin/setencstat		base-sysutil-bin
 ./usr/sbin/setobjstat		base-sysutil-bin
+./usr/sbin/sftp			base-secsh-bin
 ./usr/sbin/sliplogin		base-slip-bin
 ./usr/sbin/slstats		base-slip-bin
 ./usr/sbin/spray		base-netutil-bin

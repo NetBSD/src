@@ -1,5 +1,3 @@
-/*	$NetBSD: cipher.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,17 +34,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: cipher.c,v 1.41 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: cipher.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: cipher.c,v 1.43 2001/02/04 15:32:23 stevesk Exp $");
 
-#include "ssh.h"
 #include "xmalloc.h"
+#include "log.h"
+#include "cipher.h"
 
 #include <openssl/md5.h>
 
@@ -273,7 +266,7 @@ cast_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 static void
 cast_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
-	if (iv == NULL) 
+	if (iv == NULL)
 		fatal("no IV for %s.", cc->cipher->name);
 	memcpy(cc->u.cast.iv, (char *)iv, 8);
 }
@@ -302,7 +295,7 @@ rijndael_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 static void
 rijndael_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
-	if (iv == NULL) 
+	if (iv == NULL)
 		fatal("no IV for %s.", cc->cipher->name);
 	memcpy((u_char *)cc->u.rijndael.iv, iv, RIJNDAEL_BLOCKSIZE);
 }
@@ -422,7 +415,7 @@ Cipher ciphers[] = {
 		SSH_CIPHER_SSH2, 16, 32,
 		rijndael_setkey, rijndael_setiv,
 		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
-        { NULL, SSH_CIPHER_ILLEGAL, 0, 0, NULL, NULL, NULL, NULL }
+	{ NULL, SSH_CIPHER_ILLEGAL, 0, 0, NULL, NULL, NULL, NULL }
 };
 
 /*--*/

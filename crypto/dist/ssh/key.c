@@ -213,7 +213,7 @@ key_fingerprint(Key *k)
  * last processed (and maybe modified) character.  Note that this may modify
  * the buffer containing the number.
  */
-int
+static int
 read_bignum(char **cpp, BIGNUM * value)
 {
 	char *cp = *cpp;
@@ -249,7 +249,7 @@ read_bignum(char **cpp, BIGNUM * value)
 	*cpp = cp;
 	return 1;
 }
-int
+static int
 write_bignum(FILE *f, BIGNUM *num)
 {
 	char *buf = BN_bn2dec(num);
@@ -449,7 +449,7 @@ key_size(Key *k){
 	return 0;
 }
 
-RSA *
+static RSA *
 rsa_generate_private_key(u_int bits)
 {
 	RSA *private;
@@ -459,7 +459,7 @@ rsa_generate_private_key(u_int bits)
 	return private;
 }
 
-DSA*
+static DSA*
 dsa_generate_private_key(u_int bits)
 {
 	DSA *private = DSA_generate_parameters(bits, NULL, 0, NULL, NULL, NULL, NULL);

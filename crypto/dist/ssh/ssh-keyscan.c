@@ -202,7 +202,7 @@ fdlim_set(int lim)
  * separators.  This is the same as the 4.4BSD strsep, but different from the
  * one in the GNU libc.
  */
-inline char *
+static inline char *
 xstrsep(char **str, const char *delim)
 {
 	char *s, *e;
@@ -224,7 +224,7 @@ xstrsep(char **str, const char *delim)
  * Get the next non-null token (like GNU strsep).  Strsep() will return a
  * null token for two adjacent separators, so we may have to loop.
  */
-char *
+static char *
 strnnsep(char **stringp, char *delim)
 {
 	char *tok;
@@ -235,7 +235,7 @@ strnnsep(char **stringp, char *delim)
 	return (tok);
 }
 
-void
+static void
 keyprint(char *host, char *output_name, char *kd, int len)
 {
 	static Key *rsa;
@@ -270,7 +270,7 @@ keyprint(char *host, char *output_name, char *kd, int len)
 	fputs("\n", stdout);
 }
 
-int
+static int
 tcpconnect(char *host)
 {
 	struct addrinfo hints, *ai, *aitop;
@@ -303,7 +303,7 @@ tcpconnect(char *host)
 	return s;
 }
 
-int
+static int
 conalloc(char *iname, char *oname)
 {
 	int s;
@@ -341,7 +341,7 @@ conalloc(char *iname, char *oname)
 	return (s);
 }
 
-void
+static void
 confree(int s)
 {
 	close(s);
@@ -357,7 +357,7 @@ confree(int s)
 	ncon--;
 }
 
-void
+static void
 contouch(int s)
 {
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
@@ -366,7 +366,7 @@ contouch(int s)
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
 }
 
-int
+static int
 conrecycle(int s)
 {
 	int ret;
@@ -382,7 +382,7 @@ conrecycle(int s)
 	return (ret);
 }
 
-void
+static void
 congreet(int s)
 {
 	char buf[80];
@@ -413,7 +413,7 @@ congreet(int s)
 	contouch(s);
 }
 
-void
+static void
 conread(int s)
 {
 	int n;
@@ -453,7 +453,7 @@ conread(int s)
 	contouch(s);
 }
 
-void
+static void
 conloop(void)
 {
 	fd_set r, e;
@@ -496,7 +496,7 @@ conloop(void)
 	}
 }
 
-char *
+static char *
 nexthost(int argc, char **argv)
 {
 	static Linebuf *lb;

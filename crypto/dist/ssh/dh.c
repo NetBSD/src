@@ -39,7 +39,7 @@ RCSID("$OpenBSD: dh.c,v 1.6 2001/01/21 19:05:49 markus Exp $");
 #include "log.h"
 #include "misc.h"
 
-int
+static int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)
 {
 	char *cp, *arg;

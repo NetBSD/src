@@ -1,7 +1,5 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: sshd.8,v 1.4 2001/01/24 22:59:11 jdolecek Exp $
-.\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
 .\"                    All rights reserved
@@ -36,7 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 3, 2000
+.\" $OpenBSD: sshd.8,v 1.90 2001/02/04 11:11:55 djm Exp $
+.Dd September 25, 1999
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -44,7 +43,7 @@
 .Nd secure shell daemon
 .Sh SYNOPSIS
 .Nm sshd
-.Op Fl diqDQ46
+.Op Fl diqD46
 .Op Fl b Ar bits
 .Op Fl f Ar config_file
 .Op Fl g Ar login_grace_time
@@ -55,17 +54,17 @@
 .Op Fl V Ar client_protocol_id
 .Sh DESCRIPTION
 .Nm
-(Secure Shell Daemon) is the server side companion to
+(Secure Shell Daemon) is the daemon program for
 .Xr ssh 1 .
 Together these programs replace rlogin and rsh, and
 provide secure encrypted communications between two untrusted hosts
 over an insecure network.
 The programs are intended to be as easy to
-use as possible.
+install and use as possible.
 .Pp
 .Nm
 is the daemon that listens for connections from clients.
-It is normally started at boot time from
+It is normally started at boot from
 .Pa /etc/rc.d/sshd .
 It forks a new
 daemon for each incoming connection.
@@ -263,8 +262,6 @@ When this option is specified
 will not detach and does not become a daemon.
 This allows easy monitoring of
 .Nm sshd .
-.It Fl Q
-Do not print an error message if RSA support is missing.
 .It Fl V Ar client_protocol_id
 SSH-2 compatibility mode.
 When this option is specified
@@ -304,14 +301,14 @@ Default is
 This keyword can be followed by a number of group names, separated
 by spaces.
 If specified, login is allowed only for users whose primary
-group matches one of the patterns.
+group or supplementary group list matches one of the patterns.
 .Ql \&*
 and
 .Ql ?
 can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID isn't recognized.
-By default login is allowed regardless of the primary group.
+By default login is allowed regardless of the group list.
 .Pp
 .It Cm AllowTcpForwarding
 Specifies whether TCP forwarding is permitted.
@@ -334,6 +331,13 @@ wildcards in the patterns.
 Only user names are valid; a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
 .Pp
+.It Cm Banner
+In some jurisdictions, sending a warning message before authentication
+may be relevant for getting legal protection.
+The contents of the specified file are sent to the remote user before
+authentication is allowed.
+This option is only available for protocol version 2.
+.Pp
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
@@ -348,15 +352,15 @@ The default is
 .It Cm DenyGroups
 This keyword can be followed by a number of group names, separated
 by spaces.
-Users whose primary group matches one of the patterns
-aren't allowed to log in.
+Users whose primary group or supplementary group list matches
+one of the patterns aren't allowed to log in.
 .Ql \&*
 and
 .Ql ?
 can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID isn't recognized.
-By default login is allowed regardless of the primary group.
+By default login is allowed regardless of the group list.
 .Pp
 .It Cm DenyUsers
 This keyword can be followed by a number of user names, separated
@@ -386,9 +390,9 @@ The default is
 Specifies the file containing the private host keys (default
 .Pa /etc/ssh_host_key )
 used by SSH protocol versions 1 and 2.
-If this file is group/world-accessible,
+Note that
 .Nm
-refuses to use the file and prints warning to stderr.
+will refuse to use a file if it is group/world-accessible.
 It is possible to have multiple host key files.
 .Dq rsa1
 keys are used for version 1 and
@@ -401,27 +405,13 @@ Specifies that
 .Pa .rhosts
 and
 .Pa .shosts
-files will not be used in authentication for non-root users.
+files will not be used in authentication.
 .Pa /etc/hosts.equiv
 and
 .Pa /etc/shosts.equiv
 are still used.
 The default is
 .Dq yes .
-.It Cm IgnoreRootRhosts
-Specifies that
-.Pa .rhosts
-and
-.Pa .shosts
-files
-will not be used in authentication for root.
-The default is the value of
-.Cm IgnoreRhosts .
-.Pa /etc/hosts.equiv
-and
-.Pa /etc/shosts.equiv
-are never used in authentication for root, irregardless of the setting of
-.Cm IgnoreRootRhosts .
 .It Cm IgnoreUserKnownHosts
 Specifies whether
 .Nm
@@ -525,14 +515,14 @@ the three colon separated values
 .Dq start:rate:full
 (e.g., "10:30:60").
 .Nm
-will refuse connection attempts with a probabillity of
+will refuse connection attempts with a probability of
 .Dq rate/100
 (30%)
 if there are currently
 .Dq start
 (10)
 unauthenticated connections.
-The probabillity increases linearly and all connection attempts
+The probability increases linearly and all connection attempts
 are refused if the number of unauthenticated connections reaches
 .Dq full
 (60).
@@ -603,6 +593,14 @@ The default is
 .It Cm RandomSeed
 Obsolete.
 Random number generation uses other techniques.
+.It Cm ReverseMappingCheck
+Specifies whether
+.Nm
+should try to verify the remote host name and check that
+the resolved host name for the remote IP address maps back to the
+very same IP address.
+The default is
+.Dq no .
 .It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
 files is sufficient.
@@ -626,15 +624,15 @@ Note that this option applies to protocol version 1 only.
 .It Cm ServerKeyBits
 Defines the number of bits in the server key.
 The minimum value is 512, and the default is 768.
-.It Cm SkeyAuthentication
+.It Cm ChallengeResponseAuthentication
 Specifies whether
-.Xr skey 1
+challenge reponse
 authentication is allowed.
+Currently there is only support for
+.Xr skey 1
+authentication.
 The default is
 .Dq yes .
-Note that s/key authentication is enabled only if
-.Cm PasswordAuthentication
-is allowed, too.
 .It Cm StrictModes
 Specifies whether
 .Nm
@@ -807,6 +805,9 @@ authentication.
 The command supplied by the user (if any) is ignored.
 The command is run on a pty if the connection requests a pty;
 otherwise it is run without a tty.
+Note that if you want a 8-bit clean channel,
+you must not request a pty or should specify
+.Cm no-pty .
 A quote may be included in the command by quoting it with a backslash.
 This option might be useful
 to restrict certain RSA keys to perform just a specific operation.
@@ -997,7 +998,7 @@ not used by rlogin and rshd, so using this permits access using SSH only.
 .It Pa /etc/hosts.equiv
 This file is used during
 .Pa .rhosts
-authentication for non root users.
+authentication.
 In the simplest form, this file contains host names, one per line.
 Users on
 those hosts are permitted to log in without a password, provided they
@@ -1034,7 +1035,7 @@ Note that this warning also applies to rsh/rlogin.
 This is processed exactly as
 .Pa /etc/hosts.equiv .
 However, this file may be useful in environments that want to run both
-rsh/rlogin and ssh, with separate access control files for each service.
+rsh/rlogin and ssh.
 .It Pa $HOME/.ssh/environment
 This file is read into the environment at login (if it exists).
 It can only contain empty lines, comment lines (that start with
@@ -1075,13 +1076,18 @@ This can be used to specify
 machine-specific login-time initializations globally.
 This file should be writable only by root, and should be world-readable.
 .El
-.Sh AUTHOR
-Tatu Ylonen <ylo@cs.hut.fi>,
-Aaron Campbell, Bob Beck, Markus Friedl,
-Niels Provos, Theo de Raadt, and Dug Song.
+.Sh AUTHORS
+OpenSSH is a derivative of the original and free
+ssh 1.2.12 release by Tatu Ylonen.
+Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos,
+Theo de Raadt and Dug Song
+removed many bugs, re-added newer features and
+created OpenSSH.
+Markus Friedl contributed the support for SSH
+protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
-.Xr login.conf 5 ,
 .Xr scp 1 ,
+.Xr sftp 1 ,
 .Xr sftp-server 8 ,
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,

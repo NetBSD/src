@@ -1,3 +1,4 @@
+#	$NetBSD: sshd_config,v 1.2 2001/02/07 17:05:35 itojun Exp $
 #	$OpenBSD: sshd_config,v 1.32 2001/02/06 22:07:50 deraadt Exp $
 
 # This is the sshd server system-wide configuration file.  See sshd(8)
@@ -17,6 +18,7 @@ PermitRootLogin yes
 #
 # Don't read ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes
+IgnoreRootRhosts yes
 # Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
 #IgnoreUserKnownHosts yes
 StrictModes yes

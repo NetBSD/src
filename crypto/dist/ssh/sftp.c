@@ -40,7 +40,7 @@ RCSID("$OpenBSD: sftp.c,v 1.5 2001/02/06 23:53:54 djm Exp $");
 #include "sftp-client.h"
 #include "sftp-int.h"
 
-void
+static void
 connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 {
 	int c_in, c_out;
@@ -81,7 +81,7 @@ connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 	close(c_out);
 }
 
-char **
+static char **
 make_ssh_args(char *add_arg)
 {
 	static char **args = NULL;
@@ -125,7 +125,7 @@ make_ssh_args(char *add_arg)
 	return(args);
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: sftp [-vC] [-osshopt=value] [user@]host\n");

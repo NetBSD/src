@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.321 2001/02/06 19:32:47 tron Exp $
+# $NetBSD: mi,v 1.322 2001/02/07 17:05:38 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -319,6 +319,7 @@
 ./usr/share/man/cat1/sdiff.0			man-util-catman
 ./usr/share/man/cat1/sed.0			man-util-catman
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman
+./usr/share/man/cat1/sftp.0			man-secsh-catman
 ./usr/share/man/cat1/sh.0			man-util-catman
 ./usr/share/man/cat1/shar.0			man-util-catman
 ./usr/share/man/cat1/shlock.0			man-util-catman
@@ -1792,6 +1793,7 @@
 ./usr/share/man/man1/sdiff.1			man-util-man
 ./usr/share/man/man1/sed.1			man-util-man
 ./usr/share/man/man1/send-pr.1			man-gnats-man
+./usr/share/man/man1/sftp.1			man-secsh-man
 ./usr/share/man/man1/sh.1			man-util-man
 ./usr/share/man/man1/shar.1			man-util-man
 ./usr/share/man/man1/shlock.1			man-util-man

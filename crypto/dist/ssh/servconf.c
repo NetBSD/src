@@ -1,5 +1,3 @@
-/*	$NetBSD: servconf.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
-
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,23 +9,31 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: servconf.c,v 1.55 2000/12/19 23:17:57 markus Exp */
+#include "includes.h"
+RCSID("$OpenBSD: servconf.c,v 1.65 2001/02/04 15:32:24 stevesk Exp $");
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: servconf.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
+#ifdef KRB4
+#include <krb.h>
+#endif
+#ifdef AFS
+#include <kafs.h>
 #endif
 
-#include "includes.h"
-
 #include "ssh.h"
-#include "pathnames.h"
+#include "log.h"
 #include "servconf.h"
 #include "xmalloc.h"
 #include "compat.h"
+#include "pathnames.h"
+#include "tildexpand.h"
+#include "misc.h"
+#include "cipher.h"
 
 /* add listen address */
 void add_listen_addr(ServerOptions *options, char *addr);
+
+/* AF_UNSPEC or AF_INET or AF_INET6 */
+extern int IPv4or6;
 
 /* Initializes the server options to their default values. */
 
@@ -71,9 +77,7 @@ initialize_server_options(ServerOptions *options)
 #endif
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
-#ifdef SKEY
-	options->skey_authentication = -1;
-#endif
+	options->challenge_reponse_authentication = -1;
 	options->permit_empty_passwd = -1;
 	options->use_login = -1;
 	options->allow_tcp_forwarding = -1;
@@ -88,6 +92,8 @@ initialize_server_options(ServerOptions *options)
 	options->max_startups_begin = -1;
 	options->max_startups_rate = -1;
 	options->max_startups = -1;
+	options->banner = NULL;
+	options->reverse_mapping_check = -1;
 }
 
 void
@@ -130,10 +136,10 @@ fill_default_server_options(ServerOptions *options)
 		options->x11_forwarding = 0;
 	if (options->x11_display_offset == -1)
 		options->x11_display_offset = 10;
-#ifdef _PATH_XAUTH
+#ifdef XAUTH_PATH
 	if (options->xauth_location == NULL)
-		options->xauth_location = _PATH_XAUTH;
-#endif /* _PATH_XAUTH */
+		options->xauth_location = XAUTH_PATH;
+#endif /* XAUTH_PATH */
 	if (options->strict_modes == -1)
 		options->strict_modes = 1;
 	if (options->keepalives == -1)
@@ -168,10 +174,8 @@ fill_default_server_options(ServerOptions *options)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
 		options->kbd_interactive_authentication = 0;
-#ifdef SKEY
-	if (options->skey_authentication == -1)
-		options->skey_authentication = 1;
-#endif
+	if (options->challenge_reponse_authentication == -1)
+		options->challenge_reponse_authentication = 1;
 	if (options->permit_empty_passwd == -1)
 		options->permit_empty_passwd = 0;
 	if (options->use_login == -1)
@@ -186,6 +190,8 @@ fill_default_server_options(ServerOptions *options)
 		options->max_startups_rate = 100;		/* 100% */
 	if (options->max_startups_begin == -1)
 		options->max_startups_begin = options->max_startups;
+	if (options->reverse_mapping_check == -1)
+		options->reverse_mapping_check = 0;
 }
 
 /* Keyword tokens. */
@@ -200,9 +206,7 @@ typedef enum {
 #ifdef AFS
 	sKerberosTgtPassing, sAFSTokenPassing,
 #endif
-#ifdef SKEY
-	sSkeyAuthentication,
-#endif
+	sChallengeResponseAuthentication,
 	sPasswordAuthentication, sKbdInteractiveAuthentication, sListenAddress,
 	sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
@@ -210,6 +214,7 @@ typedef enum {
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
+	sBanner, sReverseMappingCheck,
 	sIgnoreRootRhosts
 } ServerOpCodes;
 
@@ -221,7 +226,7 @@ static struct {
 	{ "port", sPort },
 	{ "hostkey", sHostKeyFile },
 	{ "hostdsakey", sHostKeyFile },					/* alias */
- 	{ "pidfile", sPidFile },
+	{ "pidfile", sPidFile },
 	{ "serverkeybits", sServerKeyBits },
 	{ "logingracetime", sLoginGraceTime },
 	{ "keyregenerationinterval", sKeyRegenerationTime },
@@ -244,9 +249,8 @@ static struct {
 #endif
 	{ "passwordauthentication", sPasswordAuthentication },
 	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication },
-#ifdef SKEY
-	{ "skeyauthentication", sSkeyAuthentication },
-#endif
+	{ "challengeresponseauthentication", sChallengeResponseAuthentication },
+	{ "skeyauthentication", sChallengeResponseAuthentication }, /* alias */
 	{ "checkmail", sCheckMail },
 	{ "listenaddress", sListenAddress },
 	{ "printmotd", sPrintMotd },
@@ -271,6 +275,8 @@ static struct {
 	{ "gatewayports", sGatewayPorts },
 	{ "subsystem", sSubsystem },
 	{ "maxstartups", sMaxStartups },
+	{ "banner", sBanner },
+	{ "reversemappingcheck", sReverseMappingCheck },
 	{ NULL, 0 }
 };
 
@@ -300,7 +306,6 @@ parse_token(const char *cp, const char *filename,
 void
 add_listen_addr(ServerOptions *options, char *addr)
 {
-	extern int IPv4or6;
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr;
@@ -351,7 +356,7 @@ read_server_config(ServerOptions *options, const char *filename)
 		/* Ignore leading whitespace */
 		if (*arg == '\0')
 			arg = strdelim(&cp);
-		if (!*arg || *arg == '#')
+		if (!arg || !*arg || *arg == '#')
 			continue;
 		intptr = NULL;
 		charptr = NULL;
@@ -545,11 +550,9 @@ parse_flag:
 			intptr = &options->check_mail;
 			goto parse_flag;
 
-#ifdef SKEY
-		case sSkeyAuthentication:
-			intptr = &options->skey_authentication;
+		case sChallengeResponseAuthentication:
+			intptr = &options->challenge_reponse_authentication;
 			goto parse_flag;
-#endif
 
 		case sPrintMotd:
 			intptr = &options->print_motd;
@@ -566,7 +569,7 @@ parse_flag:
 		case sXAuthLocation:
 			charptr = &options->xauth_location;
 			goto parse_filename;
-			
+
 		case sStrictModes:
 			intptr = &options->strict_modes;
 			goto parse_flag;
@@ -585,6 +588,10 @@ parse_flag:
 
 		case sGatewayPorts:
 			intptr = &options->gateway_ports;
+			goto parse_flag;
+
+		case sReverseMappingCheck:
+			intptr = &options->reverse_mapping_check;
 			goto parse_flag;
 
 		case sLogFacility:
@@ -715,13 +722,17 @@ parse_flag:
 			intptr = &options->max_startups;
 			goto parse_int;
 
+		case sBanner:
+			charptr = &options->banner;
+			goto parse_filename;
+
 		default:
 			fprintf(stderr, "%s line %d: Missing handler for opcode %s (%d)\n",
 				filename, linenum, arg, opcode);
 			exit(1);
 		}
 		if ((arg = strdelim(&cp)) != NULL && *arg != '\0') {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"%s line %d: garbage at end of line; \"%.200s\".\n",
 				filename, linenum, arg);
 			exit(1);

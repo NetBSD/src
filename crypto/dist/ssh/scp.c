@@ -1,5 +1,3 @@
- /*	$NetBSD: scp.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
-
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,18 +74,13 @@
  *
  */
 
-/* from OpenBSD: scp.c,v 1.48 2001/01/01 14:52:49 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: scp.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: scp.c,v 1.53 2001/02/04 23:56:22 deraadt Exp $");
 
-#include "ssh.h"
-#include "pathnames.h"
 #include "xmalloc.h"
+#include "atomicio.h"
+#include "pathnames.h"
+#include "log.h"
 
 /* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5
@@ -121,8 +114,7 @@ int verbose_mode = 0;
 int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
-
-char *ssh_program = _PATH_SSH;
+char *ssh_program = _PATH_SSH_PROGRAM;
 
 /* This is the list of arguments that scp passes to ssh */
 struct {
@@ -202,8 +194,7 @@ char *colon(char *);
 void lostconn(int);
 void nospace(void);
 int okname(char *);
-void run_err(const char *,...)
-     __attribute__((__format__(__printf__,1,2)));
+void run_err(const char *,...);
 void verifydir(char *);
 
 struct passwd *pwd;
@@ -214,14 +205,15 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
+int main(int, char *[]);
 int response(void);
 void rsource(char *, struct stat *);
 void sink(int, char *[]);
 void source(int, char *[]);
 void tolocal(int, char *[]);
+char *cleanhostname(char *);
 void toremote(char *, int, char *[]);
 void usage(void);
-int main(int, char *[]);
 
 int
 main(argc, argv)
@@ -239,7 +231,7 @@ main(argc, argv)
 	addargs("-oFallBackToRsh no");
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S:o:")) != EOF)
+	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S:o:")) != -1)
 		switch (ch) {
 		/* User-visible flags. */
 		case '4':
@@ -302,7 +294,7 @@ main(argc, argv)
 	remin = STDIN_FILENO;
 	remout = STDOUT_FILENO;
 
-	if (fflag) {	
+	if (fflag) {
 		/* Follow "protocol", send data. */
 		(void) response();
 		source(argc, argv);
@@ -336,8 +328,9 @@ main(argc, argv)
 	exit(errs != 0);
 }
 
-static char *
-cleanhostname(char *host)
+char *
+cleanhostname(host)
+	char *host;
 {
 	if (*host == '[' && host[strlen(host) - 1] == ']') {
 		host[strlen(host) - 1] = '\0';
@@ -820,7 +813,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				amt = size - i;
 			count += amt;
 			do {
-				j = atomic_read(remin, cp, amt);
+				j = read(remin, cp, amt);
 				if (j == -1 && (errno == EINTR || errno == EAGAIN)) {
 					continue;
 				} else if (j <= 0) {
@@ -1140,8 +1133,9 @@ progressmeter(int flag)
 		i++;
 		abbrevsize >>= 10;
 	}
-	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5lld %c%c ",
-	    (long long) abbrevsize, prefixes[i], prefixes[i] == ' ' ? ' ' : 'B');
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5qd %c%c ",
+	    (unsigned long long) abbrevsize, prefixes[i],
+	    prefixes[i] == ' ' ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {

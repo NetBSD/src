@@ -55,8 +55,8 @@ extern char *__progname;
  * Checks if the user has an authentication agent, and if so, tries to
  * authenticate using the agent.
  */
-int
-try_agent_authentication()
+static int
+try_agent_authentication(void)
 {
 	int type;
 	char *comment;
@@ -155,7 +155,7 @@ try_agent_authentication()
  * Computes the proper response to a RSA challenge, and sends the response to
  * the server.
  */
-void
+static void
 respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 {
 	u_char buf[32], response[16];
@@ -200,7 +200,7 @@ respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
  * Checks if the user has authentication file, and if so, tries to authenticate
  * the user using it.
  */
-int
+static int
 try_rsa_authentication(const char *authfile)
 {
 	BIGNUM *challenge;
@@ -321,7 +321,7 @@ try_rsa_authentication(const char *authfile)
  * Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
  * authentication and RSA host authentication.
  */
-int
+static int
 try_rhosts_rsa_authentication(const char *local_user, RSA * host_key)
 {
 	int type;
@@ -379,8 +379,8 @@ try_rhosts_rsa_authentication(const char *local_user, RSA * host_key)
 }
 
 #ifdef KRB4
-int
-try_kerberos_authentication()
+static int
+try_kerberos_authentication(void)
 {
 	KTEXT_ST auth;		/* Kerberos data */
 	char *reply;
@@ -497,7 +497,7 @@ try_kerberos_authentication()
 
 #ifdef AFS
 int
-send_kerberos_tgt()
+send_kerberos_tgt(void)
 {
 	CREDENTIALS *creds;
 	char pname[ANAME_SZ], pinst[INST_SZ], prealm[REALM_SZ];
@@ -615,8 +615,8 @@ send_afs_tokens(void)
  * Tries to authenticate with any string-based challenge/response system.
  * Note that the client code is not tied to s/key or TIS.
  */
-int
-try_challenge_reponse_authentication()
+static int
+try_challenge_reponse_authentication(void)
 {
 	int type, i;
 	int payload_len;
@@ -677,7 +677,7 @@ try_challenge_reponse_authentication()
 /*
  * Tries to authenticate with plain passwd authentication.
  */
-int
+static int
 try_password_authentication(char *prompt)
 {
 	int type, i, payload_len;

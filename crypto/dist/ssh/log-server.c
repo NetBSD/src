@@ -1,5 +1,3 @@
-/*	$NetBSD: log-server.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,26 +35,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: log-server.c,v 1.17 2000/09/12 20:53:10 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: log-server.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: log-server.c,v 1.20 2001/01/21 19:05:50 markus Exp $");
 
 #include <syslog.h>
 #include "packet.h"
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
-static int log_facility = LOG_AUTH;
-
 static int log_on_stderr = 0;
-static int log_quiet_mode = 0;
-static int log_debug_mode = 0;
+static int log_facility = LOG_AUTH;
 
 /* Initialize the log.
  *   av0	program name (should be argv[0])
@@ -65,14 +54,12 @@ static int log_debug_mode = 0;
  */
 
 void
-log_init(const char *av0, LogLevel level, SyslogFacility facility,
-    int on_stderr, int quiet_mode, int debug_mode)
+log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 {
-
 	switch (level) {
 	case SYSLOG_LEVEL_QUIET:
-	case SYSLOG_LEVEL_ERROR:
 	case SYSLOG_LEVEL_FATAL:
+	case SYSLOG_LEVEL_ERROR:
 	case SYSLOG_LEVEL_INFO:
 	case SYSLOG_LEVEL_VERBOSE:
 	case SYSLOG_LEVEL_DEBUG1:
@@ -85,7 +72,6 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 			(int) level);
 		exit(1);
 	}
-
 	switch (facility) {
 	case SYSLOG_FACILITY_DAEMON:
 		log_facility = LOG_DAEMON;
@@ -121,15 +107,11 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 		log_facility = LOG_LOCAL7;
 		break;
 	default:
-		fprintf(stderr,
-		    "Unrecognized internal syslog facility code %d\n",
-		    (int) facility);
+		fprintf(stderr, "Unrecognized internal syslog facility code %d\n",
+			(int) facility);
 		exit(1);
 	}
-
 	log_on_stderr = on_stderr;
-	log_quiet_mode = quiet_mode;
-	log_debug_mode = debug_mode;
 }
 
 #define MSGBUFSIZ 1024
@@ -138,6 +120,7 @@ void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
 	char msgbuf[MSGBUFSIZ];
+	char fmtbuf[MSGBUFSIZ];
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	extern char *__progname;
@@ -145,15 +128,17 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	if (level > log_level)
 		return;
 	switch (level) {
+	case SYSLOG_LEVEL_FATAL:
+		txt = "fatal";
+		pri = LOG_CRIT;
+		break;
 	case SYSLOG_LEVEL_ERROR:
 		txt = "error";
 		pri = LOG_ERR;
 		break;
-	case SYSLOG_LEVEL_FATAL:
-		txt = "fatal";
-		pri = LOG_ERR;
-		break;
 	case SYSLOG_LEVEL_INFO:
+		pri = LOG_INFO;
+		break;
 	case SYSLOG_LEVEL_VERBOSE:
 		pri = LOG_INFO;
 		break;
@@ -175,12 +160,8 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		break;
 	}
 	if (txt != NULL) {
-	  	int len;
-
-		snprintf(msgbuf, sizeof(msgbuf), "%s: ", txt);
-		len = strlen(msgbuf);
-		if (len < sizeof(msgbuf))
-		  	vsnprintf(msgbuf+len, sizeof(msgbuf)-len, fmt, args);
+		snprintf(fmtbuf, sizeof(fmtbuf), "%s: %s", txt, fmt);
+		vsnprintf(msgbuf, sizeof(msgbuf), fmtbuf, args);
 	} else {
 		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}

@@ -278,7 +278,7 @@ ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr,
  * with:  O(exp(1.9223 * (ln q)^(1/3) (ln ln q)^(2/3)))
  */
 
-int
+static int
 dh_estimate(int bits)
 {
 
@@ -662,7 +662,7 @@ userauth_passwd(Authctxt *authctxt)
 	return 1;
 }
 
-int
+static int
 sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 {
 	Buffer b;
@@ -747,13 +747,14 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 }
 
 /* sign callback */
-int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+static int
+key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return key_sign(key, sigp, lenp, data, datalen);
 }
 
-int
+static int
 userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 {
 	Key *k;
@@ -802,13 +803,14 @@ userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 }
 
 /* sign callback */
-int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+static int
+agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return ssh_agent_sign(authctxt->agent, key, sigp, lenp, data, datalen);
 }
 
-int
+static int
 userauth_pubkey_agent(Authctxt *authctxt)
 {
 	static int called = 0;
@@ -981,7 +983,7 @@ authmethod_clear(void)
  * given auth method name, if configurable options permit this method fill
  * in auth_ident field and return true, otherwise return false.
  */
-int
+static int
 authmethod_is_enabled(Authmethod *method)
 {
 	if (method == NULL)

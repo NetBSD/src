@@ -51,7 +51,7 @@ RCSID("$OpenBSD: sftp-client.c,v 1.5 2001/02/07 10:55:12 djm Exp $");
 /* Message ID */
 static u_int msg_id = 1;
 
-void
+static void
 send_msg(int fd, Buffer *m)
 {
 	int mlen = buffer_len(m);
@@ -63,20 +63,20 @@ send_msg(int fd, Buffer *m)
 	buffer_append(&oqueue, buffer_ptr(m), mlen);
 	buffer_consume(m, mlen);
 
-	len = atomicio(write, fd, buffer_ptr(&oqueue), buffer_len(&oqueue));
+	len = atomic_write(fd, buffer_ptr(&oqueue), buffer_len(&oqueue));
 	if (len <= 0)
 		fatal("Couldn't send packet: %s", strerror(errno));
 
 	buffer_free(&oqueue);
 }
 
-void
+static void
 get_msg(int fd, Buffer *m)
 {
 	u_int len, msg_len;
 	unsigned char buf[4096];
 
-	len = atomicio(read, fd, buf, 4);
+	len = atomic_read(fd, buf, 4);
 	if (len != 4)
 		fatal("Couldn't read packet: %s", strerror(errno));
 
@@ -85,7 +85,7 @@ get_msg(int fd, Buffer *m)
 		fatal("Received message too long %d", msg_len);
 
 	while (msg_len) {
-		len = atomicio(read, fd, buf, MIN(msg_len, sizeof(buf)));
+		len = atomic_read(fd, buf, MIN(msg_len, sizeof(buf)));
 		if (len <= 0)
 			fatal("Couldn't read packet: %s", strerror(errno));
 
@@ -94,7 +94,7 @@ get_msg(int fd, Buffer *m)
 	}
 }
 
-void
+static void
 send_string_request(int fd, u_int id, u_int code, char *s,
     u_int len)
 {
@@ -109,7 +109,7 @@ send_string_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-void
+static void
 send_string_attrs_request(int fd, u_int id, u_int code, char *s,
     u_int len, Attrib *a)
 {
@@ -125,7 +125,7 @@ send_string_attrs_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-u_int
+static u_int
 get_status(int fd, int expected_id)
 {
 	Buffer msg;
@@ -150,7 +150,7 @@ get_status(int fd, int expected_id)
 	return(status);
 }
 
-char *
+static char *
 get_handle(int fd, u_int expected_id, u_int *len)
 {
 	Buffer msg;
@@ -179,7 +179,7 @@ get_handle(int fd, u_int expected_id, u_int *len)
 	return(handle);
 }
 
-Attrib *
+static Attrib *
 get_decode_stat(int fd, u_int expected_id)
 {
 	Buffer msg;
@@ -659,7 +659,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 
 		debug3("In read loop, got %d offset %lld", len,
 		    (unsigned long long)offset);
-		if (atomicio(write, local_fd, data, len) != len) {
+		if (atomic_write(local_fd, data, len) != len) {
 			error("Couldn't write to \"%s\": %s", local_path,
 			    strerror(errno));
 			do_close(fd_in, fd_out, handle, handle_len);

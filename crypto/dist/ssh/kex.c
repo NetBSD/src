@@ -1,5 +1,3 @@
-/*	$NetBSD: kex.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,35 +22,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: kex.c,v 1.16 2000/12/20 19:37:22 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: kex.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
-#endif
-
 #include "includes.h"
-
-#include "ssh.h"
-#include "ssh2.h"
-#include "xmalloc.h"
-#include "buffer.h"
-#include "bufaux.h"
-#include "packet.h"
-#include "compat.h"
-
-#include <openssl/bn.h>
-#include <openssl/dh.h>
+RCSID("$OpenBSD: kex.c,v 1.19 2001/02/04 15:32:23 stevesk Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 
+#include "ssh2.h"
+#include "xmalloc.h"
+#include "buffer.h"
+#include "bufaux.h"
+#include "packet.h"
+#include "compat.h"
+#include "cipher.h"
 #include "kex.h"
 #include "key.h"
+#include "log.h"
 
 #define KEX_COOKIE_LEN	16
 
@@ -65,10 +53,8 @@ kex_init(char *myproposal[PROPOSAL_MAX])
 	int i;
 	Buffer *ki = xmalloc(sizeof(*ki));
 	for (i = 0; i < KEX_COOKIE_LEN; i++) {
-		if (i % 4 == 0) {
-			/* XXXthorpej */
-			RAND_pseudo_bytes((u_char *)&rand, sizeof(rand));
-		}
+		if (i % 4 == 0)
+			rand = arc4random();
 		cookie[i] = rand & 0xff;
 		rand >>= 8;
 	}
@@ -93,7 +79,7 @@ kex_exchange_kexinit(
 
 	debug("send KEXINIT");
 	packet_start(SSH2_MSG_KEXINIT);
-	packet_put_raw(buffer_ptr(my_kexinit), buffer_len(my_kexinit));	
+	packet_put_raw(buffer_ptr(my_kexinit), buffer_len(my_kexinit));
 	packet_send();
 	packet_write_wait();
 	debug("done");
@@ -157,7 +143,7 @@ dh_gen_key(DH *dh)
 
 	do {
 		if (DH_generate_key(dh) == 0)
-			fatal("failed to generate DH key: rnd(4) is mandatory.");
+			fatal("DH_generate_key");
 		if (tries++ > 10)
 			fatal("dh_new_group1: too many bad keys: giving up");
 	} while (!dh_pub_is_valid(dh, dh->pub_key));
@@ -215,7 +201,7 @@ dh_new_group1(void)
 }
 
 #ifdef DEBUG_KEX
-void
+static void
 dump_digest(u_char *digest, int len)
 {
 	int i;
@@ -260,7 +246,7 @@ kex_hash(
 	buffer_put_bignum2(&b, client_dh_pub);
 	buffer_put_bignum2(&b, server_dh_pub);
 	buffer_put_bignum2(&b, shared_secret);
-	
+
 #ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
@@ -313,7 +299,7 @@ kex_hash_gex(
 	buffer_put_bignum2(&b, client_dh_pub);
 	buffer_put_bignum2(&b, server_dh_pub);
 	buffer_put_bignum2(&b, shared_secret);
-	
+
 #ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
@@ -382,7 +368,7 @@ get_match(char *client, char *server)
 	c = cp = xstrdup(client);
 	s = sp = xstrdup(server);
 
-	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0'; 
+	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0';
 	     (p = strsep(&sp, SEP)), i++) {
 		if (i < MAX_PROP)
 			sproposals[i] = p;
@@ -391,7 +377,7 @@ get_match(char *client, char *server)
 	}
 	nproposals = i;
 
-	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0'; 
+	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0';
 	     (p = strsep(&cp, SEP)), i++) {
 		for (j = 0; j < nproposals; j++) {
 			if (strcmp(p, sproposals[j]) == 0) {
@@ -478,6 +464,7 @@ choose_hostkeyalg(Kex *k, char *client, char *server)
 	k->hostkey_type = key_type_from_name(hostkeyalg);
 	if (k->hostkey_type == KEY_UNSPEC)
 		fatal("bad hostkey alg '%s'", hostkeyalg);
+	xfree(hostkeyalg);
 }
 
 Kex *

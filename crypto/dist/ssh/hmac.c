@@ -31,6 +31,8 @@ RCSID("$OpenBSD: hmac.c,v 1.6 2001/01/21 19:05:49 markus Exp $");
 
 #include <openssl/hmac.h>
 
+#include "hmac.h"
+
 u_char *
 hmac(
     EVP_MD *evp_md,

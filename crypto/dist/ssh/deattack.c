@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.12 2001/01/21 19:05:48 markus Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -19,19 +19,13 @@
  * <http://www.core-sdi.com>
  */
 
-/* from OpenBSD: deattack.c,v 1.11 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: deattack.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
-#endif
-
 #include "includes.h"
 #include "deattack.h"
-#include "ssh.h"
+#include "log.h"
 #include "crc32.h"
 #include "getput.h"
 #include "xmalloc.h"
+#include "deattack.h"
 
 /* SSH Constants */
 #define SSH_MAXBLOCKS	(32 * 1024)

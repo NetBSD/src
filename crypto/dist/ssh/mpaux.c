@@ -21,6 +21,8 @@ RCSID("$OpenBSD: mpaux.c,v 1.15 2000/12/19 23:17:57 markus Exp $");
 
 #include <openssl/md5.h>
 
+#include "mpaux.h"
+
 void
 compute_session_id(u_char session_id[16],
     u_char cookie[8],

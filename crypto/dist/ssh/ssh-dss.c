@@ -34,6 +34,7 @@ RCSID("$OpenBSD: ssh-dss.c,v 1.5 2001/02/04 15:32:25 stevesk Exp $");
 #include "compat.h"
 #include "log.h"
 #include "key.h"
+#include "ssh-dss.h"
 
 #define INTBLOB_LEN	20
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
