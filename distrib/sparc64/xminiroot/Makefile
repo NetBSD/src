@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/12/04 18:14:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/26 15:18:24 mason Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -67,7 +67,7 @@ netbsd.INSTALL: ${KERN} ${IMAGE}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}
+	vnconfig -v -c ${VND_CRDEV} ${IMAGE}
 	-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	#newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	newfs -B ${FS_END} -m 0 -o space ${VND_RDEV} ${DISKTYPE}
@@ -84,11 +84,11 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
 	umount ${MOUNT_POINT}
 	dd if=${MDEC}/bootblk of=${VND_CDEV} bs=512 count=15 conv=notrunc seek=1
 	#${MDEC}/installboot -v ${MDEC}/bootblk ${VND_CDEV}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND_CRDEV}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
 dot.profile: dot.profile.m4
