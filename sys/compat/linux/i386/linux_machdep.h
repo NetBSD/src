@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.7 1998/09/11 12:50:07 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.8 1998/10/01 02:22:01 erh Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_MACHDEP_H
-#define _LINUX_MACHDEP_H
+#ifndef _I386_LINUX_MACHDEP_H
+#define _I386_LINUX_MACHDEP_H
 
 /*
  * The Linux sigcontext, pretty much a standard 386 trapframe.
@@ -59,6 +59,8 @@ struct linux_sigcontext {
 	int	sc_esp_at_signal;
 	int	sc_ss;
 	int	sc_387;
+/* XXX XAX is this sigset_t? old_sigset_t? */
+/* XXX XAX what happens with RT sigs? */
 	linux_sigset_t sc_mask;
 	int	sc_cr2;
 };
@@ -76,8 +78,12 @@ struct linux_sigframe {
 	sig_t	sf_handler;
 };
 
+#ifdef _KERNEL
+__BEGIN_DECLS
 void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
+__END_DECLS
+#endif /* _KERNEL */
 
 /*
  * Major device numbers of VT device on both Linux and NetBSD. Used in
@@ -117,4 +123,4 @@ dev_t linux_fakedev __P((dev_t));
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
 
-#endif /* _LINUX_MACHDEP_H */
+#endif /* _I386_LINUX_MACHDEP_H */
