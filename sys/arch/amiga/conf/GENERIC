@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.93.2.3 1998/02/10 07:09:49 mellon Exp $
+#	$NetBSD: GENERIC,v 1.93.2.4 1998/05/08 05:18:09 mycroft Exp $
 
 #
 # GENERIC AMIGA
@@ -117,9 +117,14 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #
 # Amiga specific options
 #
-options		LIMITMEM=24	# dont use more than LIMITMEM MB of RAM.
-				# remove this line to use more than 24 MB, and
-				# increase NKMEMCLUSTERS
+#options	LIMITMEM=24	# Don't use more than LIMITMEM MB of the
+				# first bank of RAM. (default: unlimited)
+#options	NKPTADD=4	# set this for 4 additional KPT pages
+#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+				# per 16 MB (1<<24 bytes) of RAM
+                                # define and decrease this, or define and
+                                # increase NKPTADD if you get "out of PT pages"
+                                # panics.
 
 options 	MACHINE_NONCONTIG # Non-contiguous memory support
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
