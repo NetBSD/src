@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.14 1997/03/14 01:39:34 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.15 1997/04/05 03:27:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.14 1997/03/14 01:39:34 christos Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.15 1997/04/05 03:27:33 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ struct cmd cmdtab[] = {
 	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idle },
 	{ "image",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
 	{ "lcd",	lcdhelp,	0, 0, 0, CMPL(l)	lcd },
+	{ "less",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "lpwd",	lpwdhelp,	0, 0, 0, CMPL0		lpwd },
 	{ "ls",		lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "macdef",	macdefhelp,	0, 0, 0, CMPL0		macdef },
@@ -175,6 +176,7 @@ struct cmd cmdtab[] = {
 	{ "mls",	mlshelp,	1, 1, 1, CMPL(R)	mls },
 	{ "mode",	modehelp,	0, 1, 1, CMPL0		setftmode },
 	{ "modtime",	modtimehelp,	0, 1, 1, CMPL(r)	modtime },
+	{ "more",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "mput",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "msend",	mputhelp,	1, 1, 1, CMPL(L)	mput },
 	{ "newer",	newerhelp,	1, 1, 1, CMPL(r)	newer },
