@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.10 2003/05/16 18:15:34 itojun Exp $	*/
+/*	$NetBSD: utils.c,v 1.11 2003/05/17 20:49:28 itojun Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -40,7 +40,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.13 2001/03/16 02:08:13 paulus Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.10 2003/05/16 18:15:34 itojun Exp $");
+__RCSID("$NetBSD: utils.c,v 1.11 2003/05/17 20:49:28 itojun Exp $");
 #endif
 #endif
 
@@ -87,46 +87,6 @@ struct buffer_info {
     char *ptr;
     int len;
 };
-
-#if 0
-/*
- * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcpy(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t ret = strlen(src);
-
-    if (len != 0) {
-	if (ret < len)
-	    strcpy(dest, src);
-	else {
-	    strncpy(dest, src, len - 1);
-	    dest[len-1] = 0;
-	}
-    }
-    return ret;
-}
-
-/*
- * strlcat - like strcat/strncat, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcat(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t dlen = strlen(dest);
-
-    return dlen + strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
-}
-#endif
 
 /*
  * slprintf - format a message into a buffer.  Like sprintf except we
