@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.48 2001/12/02 03:13:10 jmc Exp $
+$NetBSD: UPDATING,v 1.49 2001/12/07 09:56:44 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,22 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20011207:
+
+	If you're attempting to build a snapshot on sparc64 and are getting
+	reloc errors from the toolchain groff binary this means your native
+	toolchain has some broken C++ bits.
+
+	To fix:
+
+	Build a new toolchain (i.e. build.sh -t)
+	Use the new toolchain to build and install natively (i.e. /usr/lib)
+
+	gnu/lib/libgcc
+	gnu/lib/libstc++
+
+	After this a snapshot will be able to be built.
+
 20011201:
 	In order for a sparc64 build to work you must have a working awk. If
 	you've built and installed a system with the new toolchain up to this
