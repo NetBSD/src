@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.8 2000/03/27 17:03:26 kleink Exp $	*/
+/*	$NetBSD: dump.c,v 1.9 2000/04/10 09:42:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.8 2000/03/27 17:03:26 kleink Exp $");
+__RCSID("$NetBSD: dump.c,v 1.9 2000/04/10 09:42:37 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,53 +69,13 @@ __RCSID("$NetBSD: dump.c,v 1.8 2000/03/27 17:03:26 kleink Exp $");
 
 #include "ktrace.h"
 #include "misc.h"
+#include "setemul.h"
 
 int timestamp, decimal, fancy = 1, tail, maxdata;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
 #include <sys/syscall.h>
-
-#include "../../sys/compat/hpux/hpux_syscall.h"
-#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
-#include "../../sys/compat/linux/linux_syscall.h"
-#include "../../sys/compat/osf1/osf1_syscall.h"
-#include "../../sys/compat/sunos/sunos_syscall.h"
-#include "../../sys/compat/svr4/svr4_syscall.h"
-#include "../../sys/compat/ultrix/ultrix_syscall.h"
-
-#define KTRACE
-#include "../../sys/kern/syscalls.c"
-
-#include "../../sys/compat/hpux/hpux_syscalls.c"
-#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "../../sys/compat/linux/linux_syscalls.c"
-#include "../../sys/compat/osf1/osf1_syscalls.c"
-#include "../../sys/compat/sunos/sunos_syscalls.c"
-#include "../../sys/compat/svr4/svr4_syscalls.c"
-#include "../../sys/compat/ultrix/ultrix_syscalls.c"
-#undef KTRACE
-
-struct emulation {
-	char *name;		/* Emulation name */
-	char **sysnames;	/* Array of system call names */
-	int  nsysnames;		/* Number of */
-};
-
-static struct emulation emulations[] = {
-	{ "netbsd",	     syscallnames,        SYS_MAXSYSCALL },
-	{ "hpux",	hpux_syscallnames,   HPUX_SYS_MAXSYSCALL },
-	{ "ibcs2",     ibcs2_syscallnames,  IBCS2_SYS_MAXSYSCALL },
-	{ "linux",     linux_syscallnames,  LINUX_SYS_MAXSYSCALL },
-	{ "osf1",       osf1_syscallnames,   OSF1_SYS_MAXSYSCALL },
-	{ "sunos",     sunos_syscallnames,  SUNOS_SYS_MAXSYSCALL },
-	{ "svr4",       svr4_syscallnames,   SVR4_SYS_MAXSYSCALL },
-	{ "ultrix",   ultrix_syscallnames, ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,			     NULL,		    NULL }
-};
-
-struct emulation *current = &emulations[0];	/* NetBSD */
-
 
 static char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
@@ -132,11 +92,10 @@ void	ioctldecode __P((u_long));
 int	ktrsyscall __P((struct ktr_syscall *, int, char *, int, int *));
 void	ktrsysret __P((struct ktr_sysret *, char *, int, int *));
 void	ktrnamei __P((char *, int, char *, int, int *));
-void	ktremul __P((char *, int, char *, int, int *));
+void	ktremul __P((struct ktr_header *, char *, int, char *, int, int *));
 void	ktrgenio __P((struct ktr_genio *, int, char *, int, int *));
 void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
-void	setemul __P((char *));
 
 #define	KTR_BUFSZ	512
 #define	BLEFT	(bufsz - (bp - buff))
@@ -177,14 +136,19 @@ dumprecord(ktr, trpoints, sizep, mp, fp)
 		errx(1, "bogus length 0x%x", ktrlen);
 	m = *mp;
 	if (ktrlen >= *sizep) {
-		*mp = m = (void *)realloc(m, *sizep = ktrlen+1);
+		while(ktrlen > *sizep) *sizep *= 2;
+		*mp = m = (void *)realloc(m, *sizep);
 		if (m == NULL)
-			errx(1, "%s", strerror(ENOMEM));
+			errx(1, "realloc: %s", strerror(ENOMEM));
 	}
 	if (ktrlen && fread_tail(m, ktrlen, 1, fp) == 0)
 		errx(1, "data too short");
 	if ((trpoints & (1<<ktr->ktr_type)) == 0)
 		return;
+
+	/* update context to match currently processed record */
+	ectx_sanify(ktr->ktr_pid);
+
 	switch (ktr->ktr_type)
 	{
 	case KTR_SYSCALL:
@@ -222,7 +186,7 @@ dumprecord(ktr, trpoints, sizep, mp, fp)
 		ktrcsw((struct ktr_csw *)m);
 		break;
 	case KTR_EMUL:
-		ktremul(m, ktrlen, bp, sizeof(buff), lenp);
+		ktremul(ktr, m, ktrlen, bp, sizeof(buff), lenp);
 		break;
 	}
 
@@ -243,9 +207,9 @@ dumpfile(file, fd, trpoints)
 	FILE *fp;
 	int size;
 
-	m = (void *)malloc(size = 1025);
+	m = (void *)malloc(size = 1024);
 	if (m == NULL)
-		errx(1, "%s", strerror(ENOMEM));
+		errx(1, "malloc: %s", strerror(ENOMEM));
 	if (!file || !*file) {
 		if (!(fp = fdopen(fd, "r")))
 			err(1, "fdopen(%d)", fd);
@@ -477,7 +441,8 @@ ktrnamei(cp, len, buff, buffsz, lenp)
 }
 
 void
-ktremul(cp, len, buff, buffsz, lenp)
+ktremul(ktr_header, cp, len, buff, buffsz, lenp)
+	struct ktr_header *ktr_header;
 	int buffsz, *lenp;
 	char *cp, *buff;
 {
@@ -486,7 +451,7 @@ ktremul(cp, len, buff, buffsz, lenp)
 	snprintf(buff + *lenp, buffsz - *lenp, "emul(%s)\n", cp);
 	*lenp += strlen(buff + *lenp);
 
-	setemul(cp);
+	setemul(cp, ktr_header->ktr_pid, 1);
 }
 
 void
@@ -560,17 +525,4 @@ ktrcsw(cs)
 {
 	(void)printf("%s %s\n", cs->out ? "stop" : "resume",
 	    cs->user ? "user" : "kernel");
-}
-
-void
-setemul(name)
-	char *name;
-{
-	int i;
-	for (i = 0; emulations[i].name != NULL; i++)
-		if (strcmp(emulations[i].name, name) == 0) {
-			current = &emulations[i];
-			return;
-		}
-	warnx("Emulation `%s' unknown", name);
 }
