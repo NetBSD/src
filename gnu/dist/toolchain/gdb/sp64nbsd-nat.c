@@ -30,6 +30,121 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "gdbcore.h"
 
+static void
+supply_regs64 (regs)
+     char *regs;
+{
+  uint64_t tstate;
+  CORE_ADDR sp;
+  char regbuf[16 * 8];
+  int i;
+
+  /* %g0 is always 0.  */
+  memset (regbuf, 0, sizeof (regbuf));
+  supply_register (G0_REGNUM, regbuf);
+
+  /* Global regs start 32 bytes into the buffer. */
+  for (i = 1; i < 8; i++)
+    supply_register (G0_REGNUM + i, regs + (32 + (i * 8)));
+
+  /* Output registers start 96 bytes into the buffer. */
+  for (i = 0; i < 8; i++)
+    supply_register (O0_REGNUM + i, regs + (96 + (i * 8)));
+
+  supply_register (TSTATE_REGNUM, regs + 0);
+  supply_register (PC_REGNUM, regs + 8);
+  supply_register (NPC_REGNUM, regs + 16);
+
+  /* %y is 32 bits in the reg structure, but GDB treats it as 64 bits.
+     Compensate by copying it into the correct half of a temporary
+     buffer and providing THAT to the register cache.  */
+  memcpy (&regbuf[4], regs + 24, 4);
+  supply_register (Y_REGNUM, regbuf);
+
+  /* Decompose tstate into its constituent parts.  */
+  memcpy (&tstate, regs + 0, sizeof (tstate));
+
+  *(uint64_t *)regbuf = tstate & TSTATE_CWP;
+  supply_register (CWP_REGNUM, regbuf);
+
+  *(uint64_t *)regbuf = (tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;
+  supply_register (ASI_REGNUM, regbuf);
+
+  *(uint64_t *)regbuf = (tstate & TSTATE_PSTATE) >> TSTATE_PSTATE_SHIFT;
+  supply_register (PSTATE_REGNUM, regbuf);
+
+  *(uint64_t *)regbuf = (tstate & TSTATE_CCR) >> TSTATE_CCR_SHIFT;
+  supply_register (CCR_REGNUM, regbuf);
+
+  sp = *(CORE_ADDR *)&registers[REGISTER_BYTE (SP_REGNUM)];
+  if (sp & 0x1)
+    {
+      sp += BIAS;
+      if (0 != target_read_memory (sp, regbuf,
+                                   16 * REGISTER_RAW_SIZE (L0_REGNUM)))
+        {
+          /* fprintf_unfiltered so user can still use gdb */
+          fprintf_unfiltered (gdb_stderr,
+              "Couldn't read input and local registers from core file\n");
+        }
+      else
+	{
+	  for (i = 0; i < 16; i++)
+	    supply_register (L0_REGNUM + i, &regbuf[i * 8]);
+	}
+    }
+  else
+    {
+      char tmp[16 * 4];
+      sp &= 0x0ffffffff;
+      if (0 != target_read_memory (sp, tmp, 16 * 4))
+        {
+          /* fprintf_unfiltered so user can still use gdb */
+          fprintf_unfiltered (gdb_stderr,
+              "Couldn't read input and local registers from core file\n");
+	}
+      else
+        {
+          memset (regbuf, 0, sizeof (regbuf));
+	  for (i = 0; i < 16; i++)
+            {
+              memcpy (&regbuf[4], &tmp[i * 4], 4);
+	      supply_register (L0_REGNUM + i, regbuf);
+	    }
+	}
+    }
+}
+
+static void
+supply_fakeregs ()
+{
+  int i;
+
+  /* If we don't set these valid, read_register_bytes()
+     thinks we can't store to these regs and calling functions
+     does not work. */
+  for (i = TPC_REGNUM; i < NUM_REGS; i++)
+    register_valid[i] = 1;	/* Not true yet, FIXME */
+}
+
+static void
+supply_fpregs64 (fregs)
+     char *fregs;
+{
+  int i;
+
+  /* 32 floats */
+  for (i = 0; i < 32; i++)
+    supply_register (FP0_REGNUM + i, fregs + (i * 4));
+
+  /* 16 doubles */
+  for (; i < 48; i++)
+    supply_register (FP0_REGNUM + i, fregs + (128 + (i * 8)));
+
+  /* %fsr */
+  supply_register (FSR_REGNUM, fregs + 256);
+}
+
 /* We don't store all registers immediately when requested, since they
    get sent over in large chunks anyway.  Instead, we accumulate most
    of the changes and send them over once.  "deferred_stores" keeps
@@ -50,7 +165,6 @@ fetch_inferior_registers (regno)
 {
   struct reg64 inferior_registers;
   struct fpreg64 inferior_fp_registers;
-  long save_g0;
   int i;
 
   /* We should never be called with deferred stores, because a prerequisite
@@ -66,66 +180,14 @@ fetch_inferior_registers (regno)
      to the stack pointer.  */
   if (regno < O7_REGNUM  /* including -1 */
       || regno >= PC_REGNUM
-      || (!register_valid[SP_REGNUM] && regno < I7_REGNUM))
+      || (!register_valid[SP_REGNUM] && regno <= I7_REGNUM))
     {
       if (0 != ptrace (PT_GETREGS, inferior_pid,
 		       (PTRACE_ARG3_TYPE) &inferior_registers, 0))
 	perror("ptrace_getregs");
 
-      /* Copy them (in order shown in reg.h) */
-      memcpy (&registers[REGISTER_BYTE (G0_REGNUM)],
-	      &inferior_registers.r_global[0],
-	      sizeof(inferior_registers.r_global));
-      memcpy (&registers[REGISTER_BYTE (O0_REGNUM)],
-	      &inferior_registers.r_out[0],
-	      sizeof(inferior_registers.r_out));
-      *(long *)&registers[REGISTER_BYTE (TSTATE_REGNUM)] =
-	inferior_registers.r_tstate;
-      *(long *)&registers[REGISTER_BYTE (PC_REGNUM)] =
-	inferior_registers.r_pc;
-      *(long *)&registers[REGISTER_BYTE (NPC_REGNUM)] =
-	inferior_registers.r_npc;
-      *(long *)&registers[REGISTER_BYTE (Y_REGNUM)] =
-	inferior_registers.r_y;
-
-      /*
-       * Now we need to decompose good old tstate into
-       * its constituent parts.
-       */
-      *(long *)&registers[REGISTER_BYTE (CWP_REGNUM)] =
-	      (inferior_registers.r_tstate&TSTATE_CWP);
-      *(long *)&registers[REGISTER_BYTE (ASI_REGNUM)] = 
-	      ((inferior_registers.r_tstate&TSTATE_ASI)>>TSTATE_ASI_SHIFT);
-      *(long *)&registers[REGISTER_BYTE (PSTATE_REGNUM)] = 
-	      ((inferior_registers.r_tstate&TSTATE_PSTATE)>>TSTATE_PSTATE_SHIFT);
-      *(long *)&registers[REGISTER_BYTE (CCR_REGNUM)] = 
-	      ((inferior_registers.r_tstate&TSTATE_CCR)>>TSTATE_CCR_SHIFT);
-
-      /*
-       * Note that the G0 slot actually carries the
-       * value of the %tt register, and G0 is zero.
-       */
-      *(long *)&registers[REGISTER_BYTE(TT_REGNUM)] =
-        *(long *)&registers[REGISTER_BYTE(G0_REGNUM)];
-      *(long *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
-
-      /* Mark what is valid (not the %i regs). */
-      for (i = G0_REGNUM; i <= O7_REGNUM; i++)
-	register_valid[i] = 1;
-      register_valid[TSTATE_REGNUM] = 1;
-      register_valid[PC_REGNUM] = 1;
-      register_valid[NPC_REGNUM] = 1;
-      register_valid[Y_REGNUM] = 1;
-      register_valid[PSTATE_REGNUM] = 1;
-      register_valid[ASI_REGNUM] = 1;
-      register_valid[CCR_REGNUM] = 1;
-      register_valid[CWP_REGNUM] = 1;
-
-      /* If we don't set these valid, read_register_bytes()
-	 thinks we can't store to these regs and calling functions 
-	 does not work. */
-      for (i=TPC_REGNUM; i<NUM_REGS; i++)
-	      register_valid[i] = 1;	/* Not true yet, FIXME */
+      supply_regs64 ((char *) &inferior_registers);
+      supply_fakeregs ();
     }
 
   /* Floating point registers */
@@ -133,63 +195,10 @@ fetch_inferior_registers (regno)
       (regno >= FP0_REGNUM && regno <= FP0_REGNUM + 63))
     {
       if (0 != ptrace (PT_GETFPREGS, inferior_pid,
-		       (PTRACE_ARG3_TYPE) &inferior_fp_registers,
-		       0))
+		       (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0))
 	perror("ptrace_getfpregs");
-      memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	      &inferior_fp_registers.fr_regs[0],
-	      sizeof (inferior_fp_registers.fr_regs));
-      memcpy (&registers[REGISTER_BYTE (FSR_REGNUM)],
-	      &inferior_fp_registers.fr_fsr,
-	      sizeof (inferior_fp_registers.fr_fsr));
-      for (i = FP0_REGNUM; i <= FP0_REGNUM+63; i++)
-	register_valid[i] = 1;
-      register_valid[FSR_REGNUM] = 1;
-    }
-
-  /* These regs are saved on the stack by the kernel.  Only read them
-     all (16 ptrace calls!) if we really need them.  */
-  if (regno == -1)
-    {
-      CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
-      if (sp & 0x1) {
-	      sp += BIAS;
-	      target_read_memory (sp,
-				  &registers[REGISTER_BYTE (L0_REGNUM)],
-				  16*REGISTER_RAW_SIZE (L0_REGNUM));
-	      for (i = L0_REGNUM; i <= I7_REGNUM; i++)
-		      register_valid[i] = 1;
-      } else {
-	      int tmp[16];
-
-	      sp &= 0x0ffffffffL;
-	      target_read_memory (sp, (void *)&tmp, sizeof(tmp));
-	      for (i = L0_REGNUM; i <= I7_REGNUM; i++) {
-		      *(long *)&registers[REGISTER_BYTE (i)] =
-			      (long)tmp[i];
-		      register_valid[i] = 1;
-	      }
-      }
-    }
-  else if (regno >= L0_REGNUM && regno <= I7_REGNUM)
-    {
-      CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
-      if (sp & 0x1) {
-	      sp += BIAS;
-	      i = REGISTER_BYTE (regno);
-	      target_read_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
-				  &registers[i], REGISTER_RAW_SIZE (regno));
-	      register_valid[regno] = 1;
-      } else {
-	      int tmp;
-
-	      sp &= 0x0ffffffffL;
-	      i = REGISTER_BYTE (regno);
-	      target_read_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
-				  (void *)&tmp, sizeof(tmp));
-	      *(long *)&registers[i] = (long)tmp;
-	      register_valid[regno] = 1;
-      }
+        
+      supply_fpregs64 ((char *) &inferior_fp_registers);
     }
 }
 
@@ -252,37 +261,42 @@ store_inferior_registers (regno)
       if (regno < 0 || regno == SP_REGNUM)
 	{
 	  if (!register_valid[L0_REGNUM+5]) abort();
-	  if (sp & 0x1) {
-		  sp += BIAS;
-		  target_write_memory (sp, 
-				       &registers[REGISTER_BYTE (L0_REGNUM)],
-				       16*REGISTER_RAW_SIZE (L0_REGNUM));
-	  } else {
-		  int i, tmp[16];
+	  if (sp & 0x1)
+	    {
+	      sp += BIAS;
+	      target_write_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)],
+	                           16 * REGISTER_RAW_SIZE (L0_REGNUM));
+	    }
+	  else
+	    {
+	      int i, tmp[16];
 
-		  sp &= 0x0ffffffffL;
-		  for (i = L0_REGNUM; i <= I7_REGNUM; i++)
-			  tmp[i] = *(long *)&registers[REGISTER_BYTE (i)];
-		  target_write_memory (sp, (void *)&tmp, sizeof(tmp));
-	  }
+	      sp &= 0x0ffffffffL;
+	      for (i = L0_REGNUM; i <= I7_REGNUM; i++)
+	        tmp[i] = *(long *) &registers[REGISTER_BYTE (i)];
+	      target_write_memory (sp, (void *)&tmp, sizeof(tmp));
+	    }
 	}
       else
 	{
 	  if (!register_valid[regno]) abort();
-	  if (sp & 0x1) {
-		  sp += BIAS;
-		  target_write_memory ((sp + REGISTER_BYTE (regno) -
-					REGISTER_BYTE (L0_REGNUM)),
-				       &registers[REGISTER_BYTE (regno)],
-				       REGISTER_RAW_SIZE (regno));
-	  } else {
-		  int tmp;
+	  if (sp & 0x1)
+	    {
+	      sp += BIAS;
+	      target_write_memory ((sp + REGISTER_BYTE (regno) -
+	                            REGISTER_BYTE (L0_REGNUM)),
+	                           &registers[REGISTER_BYTE (regno)],
+	                           REGISTER_RAW_SIZE (regno));
+	    }
+	  else
+	    {
+	      int tmp;
 
-		  sp &= 0x0ffffffffL;
-		  tmp = *(long *)&registers[REGISTER_BYTE (regno)];
-		  target_write_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
-				       (void *)&tmp, sizeof(tmp));
-	  }
+	      sp &= 0x0ffffffffL;
+	      tmp = *(long *)&registers[REGISTER_BYTE (regno)];
+	      target_write_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
+	                           (void *)&tmp, sizeof(tmp));
+	    }
 	}
 	
     }
@@ -313,7 +327,6 @@ store_inferior_registers (regno)
       if (0 != ptrace (PT_SETREGS, inferior_pid,
 		       (PTRACE_ARG3_TYPE) &inferior_registers, 0))
 	perror("ptrace_setregs");
-printf("ptrace: wrote pc %p npc %p\n", inferior_registers.r_pc, inferior_registers.r_npc);
     }
 
   if (wanna_store & FP_REGS)
@@ -332,7 +345,6 @@ printf("ptrace: wrote pc %p npc %p\n", inferior_registers.r_pc, inferior_registe
     }
 }
 
-
 static void
 fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
@@ -342,96 +354,73 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
 {
   struct md_coredump *core_reg;
   struct trapframe64 *tf;
-  struct fpstate64 *fs;
+  struct reg64 reg64;
 
   core_reg = (struct md_coredump *)core_reg_sect;
   tf = &core_reg->md_tf;
-  fs = &core_reg->md_fpstate;
 
   /* We get everything from the .reg section. */
   if (which != 0)
     return;
 
-  if (core_reg_size < sizeof(*core_reg)) {
-    fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
-    return;
-  }
+  if (core_reg_size < sizeof(*core_reg))
+    {
+      fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
+      return;
+    }
+
+  /* Convert to a reg64 structure and use supply_regs (). */
+  reg64.r_tstate = tf->tf_tstate;
+  reg64.r_pc = tf->tf_pc;
+  reg64.r_npc = tf->tf_npc;
+  reg64.r_y = tf->tf_y;
+  memcpy(reg64.r_global, tf->tf_global, sizeof (reg64.r_global));
+  memcpy(reg64.r_out, tf->tf_out, sizeof (reg64.r_out));
 
   /* Integer registers */
-  memcpy(&registers[REGISTER_BYTE (G0_REGNUM)],
-	 &tf->tf_global[0], sizeof(tf->tf_global));
-  memcpy(&registers[REGISTER_BYTE (O0_REGNUM)],
-	 &tf->tf_out[0], sizeof(tf->tf_out));
-  *(long *)&registers[REGISTER_BYTE (TSTATE_REGNUM)]  = tf->tf_tstate;
-  *(long *)&registers[REGISTER_BYTE (PC_REGNUM)]  = tf->tf_pc;
-  *(long *)&registers[REGISTER_BYTE (NPC_REGNUM)] = tf->tf_npc;
-  *(long *)&registers[REGISTER_BYTE (Y_REGNUM)]   = tf->tf_y;
-
-      /*
-       * Now we need to decompose good old tstate into
-       * its constituent parts.
-       */
-      *(long *)&registers[REGISTER_BYTE (CWP_REGNUM)] =
-	      (tf->tf_tstate&TSTATE_CWP);
-      *(long *)&registers[REGISTER_BYTE (ASI_REGNUM)] = 
-	      ((tf->tf_tstate&TSTATE_ASI)>>TSTATE_ASI_SHIFT);
-      *(long *)&registers[REGISTER_BYTE (PSTATE_REGNUM)] = 
-	      ((tf->tf_tstate&TSTATE_PSTATE)>>TSTATE_PSTATE_SHIFT);
-      *(long *)&registers[REGISTER_BYTE (CCR_REGNUM)] = 
-	      ((tf->tf_tstate&TSTATE_CCR)>>TSTATE_CCR_SHIFT);
-
-  /* Clear out the G0 slot (see reg.h) */
-  *(long *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
-
-  /* My best guess at where to get the locals and input
-     registers is exactly where they usually are, right above
-     the stack pointer.  If the core dump was caused by a bus error
-     from blowing away the stack pointer (as is possible) then this
-     won't work, but it's worth the try. */
-  {
-    CORE_ADDR sp;
-
-    sp = *(CORE_ADDR *)&registers[REGISTER_BYTE (SP_REGNUM)];
-    if (sp & 0x1) {
-	    sp += BIAS;
-	    if (0 != target_read_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)], 
-					 16 * REGISTER_RAW_SIZE (L0_REGNUM)))
-	    {
-		    /* fprintf_unfiltered so user can still use gdb */
-		    fprintf_unfiltered (gdb_stderr,
-					"Couldn't read input and local registers from core file\n");
-	    }
-    } else {
-	    int i, tmp[16];
-
-	    sp &= 0x0ffffffff;
-	    if (0 != target_read_memory (sp, (void *)&tmp, sizeof(tmp))) {
-		    /* fprintf_unfiltered so user can still use gdb */
-		    fprintf_unfiltered (gdb_stderr,
-					"Couldn't read input and local registers from core file\n");
-	    } else
-	    for (i = L0_REGNUM; i <= I7_REGNUM; i++) {
-		    *(long *)&registers[REGISTER_BYTE (i)] =
-			    (long)tmp[i];
-		    register_valid[i] = 1;
-	    }
-	    
-    }
-  }
+  supply_regs64 ((char *) &reg64);
+  supply_fakeregs ();
 
   /* Floating point registers */
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	  &fs->fs_regs[0], sizeof (fs->fs_regs));
-  memcpy (&registers[REGISTER_BYTE (FSR_REGNUM)],
-	  &fs->fs_fsr,	sizeof (fs->fs_fsr));
+  supply_fpregs64 ((char *) &core_reg->md_fpstate);
+}
 
-  registers_fetched ();
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size == sizeof (struct reg64))
+	{
+	  supply_regs64 (core_reg_sect);
+	  supply_fakeregs ();
+	}
+      else
+	warning ("Wrong size register set in core file.");
+      break;
+
+    case 2:  /* Floating point registers */
+      if (core_reg_size == sizeof (struct fpreg64))
+	supply_fpregs64 (core_reg_sect);
+      else
+	warning ("Wrong size FP register set in core file.");
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it. */
+      break;
+    }
 }
 
 /* Register that we are able to handle sparcnbsd core file formats.
    FIXME: is this really bfd_target_unknown_flavour? */
 
-static struct core_fns nat_core_fns =
+static struct core_fns sp64nat_core_fns =
 {
   bfd_target_unknown_flavour,
   default_check_format,			/* check_format */
@@ -440,17 +429,22 @@ static struct core_fns nat_core_fns =
   NULL
 };
 
-void
-_initialize_sparcnbsd_nat ()
+static struct core_fns sp64nat_elfcore_fns =
 {
-  add_core_fns (&nat_core_fns);
+  bfd_target_elf_flavour,
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,
+  NULL
+};
+
+void
+_initialize_sp64nbsd_nat ()
+{
+  add_core_fns (&sp64nat_core_fns);
+  add_core_fns (&sp64nat_elfcore_fns);
 }
 
-
-/*
- * kernel_u_size() is not helpful on NetBSD because
- * the "u" struct is NOT in the core dump file.
- */
 
 #ifdef	FETCH_KCORE_REGISTERS
 /*
