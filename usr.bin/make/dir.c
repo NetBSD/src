@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)dir.c	5.6 (Berkeley) 12/28/90"; */
-static char *rcsid = "$Id: dir.c,v 1.6 1994/06/06 22:45:25 jtc Exp $";
+static char *rcsid = "$Id: dir.c,v 1.7 1994/12/24 16:54:24 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -852,7 +852,7 @@ Dir_FindFile (name, path)
 		}
 		entry = Hash_CreateEntry(&mtimes, (char *) file,
 					 (Boolean *)NULL);
-		Hash_SetValue(entry, stb.st_mtime);
+		Hash_SetValue(entry, (long)stb.st_mtime);
 		nearmisses += 1;
 		return (file);
 	    } else {
@@ -930,7 +930,7 @@ Dir_FindFile (name, path)
 	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
-	Hash_SetValue(entry, stb.st_mtime);
+	Hash_SetValue(entry, (long)stb.st_mtime);
 	return (strdup (name));
     } else {
 	if (DEBUG(DIR)) {
@@ -986,9 +986,9 @@ Dir_MTime (gn)
 	 */
 	if (DEBUG(DIR)) {
 	    printf("Using cached time %s for %s\n",
-		    Targ_FmtTime((time_t) Hash_GetValue(entry)), fullName);
+		    Targ_FmtTime((time_t)(long)Hash_GetValue(entry)), fullName);
 	}
-	stb.st_mtime = (time_t)Hash_GetValue(entry);
+	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
 	Hash_DeleteEntry(&mtimes, entry);
     } else if (stat (fullName, &stb) < 0) {
 	if (gn->type & OP_MEMBER) {

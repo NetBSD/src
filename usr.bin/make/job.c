@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: job.c,v 1.8 1994/11/25 19:16:48 christos Exp $";
+static char *rcsid = "$Id: job.c,v 1.9 1994/12/24 16:54:28 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -314,7 +314,7 @@ JobPassSig(signo)
 {
     int	    mask;
     
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData)signo);
+    Lst_ForEach(jobs, JobCondPassSig, (ClientData)(long)signo);
 
     /*
      * Deal with proper cleanup based on the signal received. We only run
