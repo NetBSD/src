@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.56 1999/09/07 15:45:07 perry Exp $
+# $NetBSD: md.i386,v 1.57 1999/12/13 10:45:31 christos Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -9,6 +9,8 @@
 ./usr/bin/vttest
 ./usr/lib/libi386.so.0
 ./usr/lib/libi386.so.0.2
+./usr/lib/libm387.so.0
+./usr/lib/libm387.so.0.0
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
