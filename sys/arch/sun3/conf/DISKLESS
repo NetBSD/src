@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.4 1994/12/12 18:58:45 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.5 1995/02/11 21:01:18 gwr Exp $
 
 #
 # DISKLESS -- config file for a diskless Sun3/50 or Sun3/60
@@ -9,6 +9,7 @@ include "std.sun3"
 # Machines to be supported by this kernel
 options		"SUN3_50"
 options		"SUN3_60"
+options 	FPCOPROC
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
