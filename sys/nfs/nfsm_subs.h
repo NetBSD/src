@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.9 1996/02/18 11:54:01 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -327,7 +327,10 @@
 		else \
 		   (void) nfs_rephead((s), nfsd, slp, error, cache, &frev, \
 			mrq, &mb, &bpos); \
-		m_freem(mrep); \
+		if (mrep != NULL) { \
+			m_freem(mrep); \
+			mrep = NULL; \
+		} \
 		mreq = *mrq; \
 		if (error && (!(nfsd->nd_flag & ND_NFSV3) || \
 			error == EBADRPC)) \
