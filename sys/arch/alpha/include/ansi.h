@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.8 1997/04/06 08:47:15 cgd Exp $ */
+/* $NetBSD: ansi.h,v 1.9 1997/11/23 20:20:53 kleink Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,19 +47,21 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_	int			/* clock() */
-#define	_BSD_PTRDIFF_T_	long			/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_	unsigned long		/* sizeof() */
-#define	_BSD_SSIZE_T_	long			/* byte count or error */
-#define	_BSD_TIME_T_	int			/* time() */
+#define	_BSD_CLOCK_T_		int		/* clock() */
+#define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
+#define	_BSD_SSIZE_T_		long		/* byte count or error */
+#define	_BSD_TIME_T_		int		/* time() */
 typedef struct {
 	char *__base;
 	int __offset;
 	int __pad;
 } __va_list;
-#define	_BSD_VA_LIST_	__va_list		/* va_list */
-#define _BSD_CLOCKID_T_	int
-#define _BSD_TIMER_T_	int
+#define	_BSD_VA_LIST_		__va_list	/* va_list */
+#define	_BSD_CLOCKID_T_		int		/* clockid_t */
+#define	_BSD_TIMER_T_		int		/* timer_t */
+#define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
+#define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
