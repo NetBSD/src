@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.23 2003/05/09 23:51:28 fvdl Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.24 2004/07/09 02:11:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.23 2003/05/09 23:51:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.24 2004/07/09 02:11:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,11 +546,6 @@ ad1848_isa_close(addr)
 {
 	struct ad1848_isa_softc *isc = addr;
 	struct ad1848_softc *sc = &isc->sc_ad1848;
-
-	ad1848_isa_halt_output(isc);
-	ad1848_isa_halt_input(isc);
-
-	isc->sc_pintr = isc->sc_rintr = NULL;
 
 	if (isc->sc_playdrq != -1)
 		isa_drq_free(isc->sc_ic, isc->sc_playdrq);
