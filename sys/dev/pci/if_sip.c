@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.39 2001/07/08 16:56:50 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.40 2001/07/08 17:15:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ do {									\
 
 #define	SIP_RXCHAIN_LINK(sc, m)						\
 do {									\
-	*(sc)->sc_rxtailp = sc->sc_rxtail = (m);			\
+	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
 #endif /* DP83820 */
@@ -1594,7 +1594,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		}
 
 		/*
-		 * No errors.  Reset receive state.
+		 * No errors.
 		 *
 		 * Note, the DP83820 includes the CRC with
 		 * every packet.
@@ -1640,20 +1640,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		}
 #endif /* ! __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = len;
-
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
-
 		/*
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
@@ -1664,6 +1650,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 			vtag = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
 			if (vtag == NULL) {
+				ifp->if_ierrors++;
 				printf("%s: unable to allocate VLAN tag\n",
 				    sc->sc_dev.dv_xname);
 				m_freem(m);
@@ -1697,6 +1684,20 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 					    M_CSUM_TCP_UDP_BAD;
 			}
 		}
+
+		ifp->if_ipackets++;
+		m->m_flags |= M_HASFCS;
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = len;
+
+#if NBPFILTER > 0
+		/*
+		 * Pass this up to any BPF listeners, but only
+		 * pass if up the stack if it's for us.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
