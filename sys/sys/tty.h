@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.48 2000/03/23 06:31:52 thorpej Exp $	*/
+/*	$NetBSD: tty.h,v 1.49 2000/03/28 05:52:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -248,12 +248,6 @@ struct tty
 	*ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
 u_char	*firstc __P((struct clist *clp, int *c));
-
-int	cttyopen __P((dev_t, int, int, struct proc *));
-int	cttyread __P((dev_t, struct uio *, int));
-int	cttywrite __P((dev_t, struct uio *, int));
-int	cttyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cttypoll __P((dev_t, int, struct proc *));
 
 int	clalloc __P((struct clist *, int, int));
 void	clfree __P((struct clist *));
