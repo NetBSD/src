@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.16 1994/06/26 13:11:11 briggs Exp $
+ *	$Id: machdep.c,v 1.17 1994/06/29 04:57:43 briggs Exp $
  */
 
 #include <param.h>
@@ -2248,10 +2248,17 @@ setmachdep(void)
 static	int			firstpass = 1;
 
 	/* Sets a bunch of machine-specific variables */
-	load_addr = 0;
 
-	has5380scsi = 1;
-	has53c96scsi = 0;
+	/* First, set things that need to be set on the first pass only */
+	/* Ideally, we'd only call this once, but for some reason, the  */
+	/* VIAs need interrupts turned off twice !? */
+	if (firstpass) {
+		load_addr = 0;
+
+		has5380scsi = 1;
+		has53c96scsi = 0;
+	}
+
 	/* Set up any machine specific stuff that we have to before */
 	/*  ANYTHING else happens */
 	switch(machineid){	/* remove bit overlap */
