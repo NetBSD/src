@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.1 2000/01/16 13:45:56 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.2 2000/01/16 14:24:33 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -535,13 +535,17 @@ aue_miibus_statchg(dev)
 
 	AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_RX_ENB | AUE_CTL0_TX_ENB);
 
-	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
-	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
-		/* Make LINK LED behave like the adapter label says. */
-		aue_miibus_writereg(USBDEV(sc->aue_dev), 0, 0x1b, 
-		    aue_miibus_readreg(USBDEV(sc->aue_dev), 0, 0x1b) | 0x04);
+	/*
+	 * Set the LED modes on the LinkSys adapter.
+	 * This turns on the 'dual link LED' bin in the auxmode
+	 * register of the Broadcom PHY.
+	 */
+	if (sc->aue_vendor == USB_VENDOR_LINKSYS &&
+	    sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) {
+		u_int16_t               auxmode;
+		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
+		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
 	}
-
 }
 
 #define AUE_POLY	0xEDB88320
