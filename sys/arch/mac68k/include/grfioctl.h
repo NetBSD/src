@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.4 1995/07/02 00:29:03 briggs Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,7 @@ struct grfmodes {
 #define GRFIOCLISTMODES	_IOWR('G', 16, struct grfmodes) /* Get list of modes */
 #define GRFIOCGETMODE	_IOR('G', 17, int)	/* Get list of modes */
 #define GRFIOCSETMODE	_IOW('G', 18, int)	/* Set to mode_id mode */
+#define GRFIOCGMODE	_IOR('G', 19, struct grfmode)	/* Get list of modes */
 
 /*
  * Obsolete structure.
@@ -96,4 +97,3 @@ struct	grfinfo {
 	int	gd_dheight;		/* displayed part height */
 	int	gd_pad[6];		/* for future expansion */
 };
-
