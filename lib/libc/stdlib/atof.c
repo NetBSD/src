@@ -40,7 +40,7 @@ static char sccsid[] = "@(#)atof.c	5.2 (Berkeley) 6/1/90";
 
 double
 atof(ascii)
-	char *ascii;
+	const char *ascii;
 {
 	return(strtod(ascii, (char **)NULL));
 }
