@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.37 1997/11/03 08:20:38 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.38 1997/11/03 15:35:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -563,12 +563,10 @@ zsclose(dev, flags, mode, p)
 
 	s = splzs();
 
-	/* Turn off interrupts. */
-#ifdef DDB
+	/* Turn off interrupts if not the console. */
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
 		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
 	else
-#endif
 		cs->cs_creg[1] = cs->cs_preg[1] = 0;
 	zs_write_reg(cs, 1, cs->cs_creg[1]);
 
