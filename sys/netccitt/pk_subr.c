@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.18 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.19 2000/03/30 13:53:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -98,8 +98,8 @@ struct pklcd *
 pk_attach(so)
 	struct socket  *so;
 {
-	register struct pklcd *lcp;
-	register int    error = ENOBUFS;
+	struct pklcd *lcp;
+	int    error = ENOBUFS;
 
 	MALLOC(lcp, struct pklcd *, sizeof(*lcp), M_PCB, M_NOWAIT);
 	if (lcp) {
@@ -127,9 +127,9 @@ pk_attach(so)
  */
 void
 pk_disconnect(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
-	register struct socket *so = lcp->lcd_so;
+	struct socket *so = lcp->lcd_so;
 
 	switch (lcp->lcd_state) {
 	case LISTEN:
@@ -166,7 +166,7 @@ void
 pk_close(lcp)
 	struct pklcd   *lcp;
 {
-	register struct socket *so = lcp->lcd_so;
+	struct socket *so = lcp->lcd_so;
 
 	/*
 	 * If the X.25 connection is torn down due to link
@@ -205,8 +205,8 @@ struct mbuf *
 pk_template(lcn, type)
 	int             lcn, type;
 {
-	register struct mbuf *m;
-	register struct x25_packet *xp;
+	struct mbuf *m;
+	struct x25_packet *xp;
 
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m == 0)
@@ -241,12 +241,12 @@ pk_template(lcn, type)
 
 void
 pk_restart(pkp, restart_cause)
-	register struct pkcb *pkp;
+	struct pkcb *pkp;
 	int             restart_cause;
 {
-	register struct mbuf *m;
-	register struct pklcd *lcp;
-	register int    i;
+	struct mbuf *m;
+	struct pklcd *lcp;
+	int    i;
 
 	/* Restart all logical channels. */
 	if (pkp->pk_chan == 0)
@@ -292,7 +292,7 @@ pk_restart(pkp, restart_cause)
 
 void
 pk_freelcd(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
 	if (lcp == NULL)
 		return;
@@ -311,7 +311,7 @@ pk_ifwithaddr(sx)
 {
 	struct ifnet   *ifp;
 	struct ifaddr  *ifa;
-	register struct x25_ifaddr *ia;
+	struct x25_ifaddr *ia;
 	char           *addr = sx->x25_addr;
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
@@ -344,8 +344,8 @@ pk_bind(lcp, nam)
 	struct pklcd   *lcp;
 	struct mbuf    *nam;
 {
-	register struct pklcd *pp;
-	register struct sockaddr_x25 *sa;
+	struct pklcd *pp;
+	struct sockaddr_x25 *sa;
 
 	if (nam == NULL)
 		return (EADDRNOTAVAIL);
@@ -371,7 +371,7 @@ pk_bind(lcp, nam)
 	 * For ISO's sake permit default listeners, but only one such . . .
 	 */
 	for (pp = pk_listenhead.tqh_first; pp; pp = pp->lcd_listen.tqe_next) {
-		register struct sockaddr_x25 *sa2 = pp->lcd_ceaddr;
+		struct sockaddr_x25 *sa2 = pp->lcd_ceaddr;
 		if ((sa2->x25_udlen == sa->x25_udlen) &&
 		    (sa2->x25_udlen == 0 ||
 		     (bcmp(sa2->x25_udata, sa->x25_udata,
@@ -388,7 +388,7 @@ pk_bind(lcp, nam)
  */
 int
 pk_listen(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
 	if (lcp->lcd_ceaddr == 0)
 		return (EDESTADDRREQ);
@@ -414,9 +414,9 @@ pk_protolisten(spi, spilen, callee)
 	int		spilen;
 	int             (*callee) __P((struct mbuf *, void *));
 {
-	register struct pklcd *lcp = pk_attach((struct socket *) 0);
-	register struct mbuf *nam;
-	register struct sockaddr_x25 *sa;
+	struct pklcd *lcp = pk_attach((struct socket *) 0);
+	struct mbuf *nam;
+	struct sockaddr_x25 *sa;
 	int             error = ENOBUFS;
 
 	if (lcp) {
@@ -447,9 +447,9 @@ pk_protolisten(spi, spilen, callee)
 
 void
 pk_assoc(pkp, lcp, sa)
-	register struct pkcb *pkp;
-	register struct pklcd *lcp;
-	register struct sockaddr_x25 *sa;
+	struct pkcb *pkp;
+	struct pklcd *lcp;
+	struct sockaddr_x25 *sa;
 {
 
 	lcp->lcd_pkp = pkp;
@@ -473,12 +473,12 @@ pk_assoc(pkp, lcp, sa)
 
 int
 pk_connect(lcp, sa)
-	register struct pklcd *lcp;
-	register struct sockaddr_x25 *sa;
+	struct pklcd *lcp;
+	struct sockaddr_x25 *sa;
 {
-	register struct pkcb *pkp;
-	register struct rtentry *rt;
-	register struct rtentry *nrt;
+	struct pkcb *pkp;
+	struct rtentry *rt;
+	struct rtentry *nrt;
 
 	if (sa->x25_addr[0] == '\0')
 		return (EDESTADDRREQ);
@@ -548,11 +548,11 @@ pk_connect(lcp, sa)
 
 void
 pk_callcomplete(pkp)
-	register struct pkcb *pkp;
+	struct pkcb *pkp;
 {
-	register struct pklcd *lcp;
-	register int    i;
-	register int    ni;
+	struct pklcd *lcp;
+	int    i;
+	int    ni;
 
 
 	if (pkp->pk_dxerole & DTE_CONNECTPENDING)
@@ -625,12 +625,12 @@ struct bcdinfo {
 void
 pk_callrequest(lcp, sa, xcp)
 	struct pklcd   *lcp;
-	register struct sockaddr_x25 *sa;
-	register struct x25config *xcp;
+	struct sockaddr_x25 *sa;
+	struct x25config *xcp;
 {
-	register struct x25_calladdr *a;
-	register struct mbuf *m = lcp->lcd_template;
-	register struct x25_packet *xp = mtod(m, struct x25_packet *);
+	struct x25_calladdr *a;
+	struct mbuf *m = lcp->lcd_template;
+	struct x25_packet *xp = mtod(m, struct x25_packet *);
 	struct bcdinfo  b;
 
 	if (lcp->lcd_flags & X25_DBIT)
@@ -656,13 +656,13 @@ pk_callrequest(lcp, sa, xcp)
 
 void
 pk_build_facilities(m, sa, type)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr_x25 *sa;
 	int type;
 {
-	register octet *cp;
-	register octet *fcp;
-	register int    revcharge;
+	octet *cp;
+	octet *fcp;
+	int    revcharge;
 
 	cp = mtod(m, octet *) + m->m_len;
 	fcp = cp + 1;
@@ -694,11 +694,11 @@ pk_build_facilities(m, sa, type)
 
 int
 to_bcd(b, sa, xcp)
-	register struct bcdinfo *b;
+	struct bcdinfo *b;
 	struct sockaddr_x25 *sa;
-	register struct x25config *xcp;
+	struct x25config *xcp;
 {
-	register char  *x = sa->x25_addr;
+	char  *x = sa->x25_addr;
 	unsigned        start = b->posn;
 	/*
 	 * The nodnic and prepnd0 stuff looks tedious,
@@ -707,7 +707,7 @@ to_bcd(b, sa, xcp)
 	 */
 	if (xcp->xc_addr.x25_net && (xcp->xc_nodnic || xcp->xc_prepnd0)) {
 		char            dnicname[sizeof(long) * NBBY / 3 + 2];
-		register char  *p = dnicname;
+		char  *p = dnicname;
 
 		sprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
 		for (; *p; p++)	/* *p == 0 means dnic matched */
@@ -738,9 +738,9 @@ to_bcd(b, sa, xcp)
 
 int
 pk_getlcn(pkp)
-	register struct pkcb *pkp;
+	struct pkcb *pkp;
 {
-	register int    i;
+	int    i;
 
 	if (pkp->pk_chan == 0)
 		return (0);
@@ -764,11 +764,11 @@ pk_getlcn(pkp)
 
 void
 pk_clear(lcp, diagnostic, abortive)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	int diagnostic;
 	int abortive;
 {
-	register struct mbuf *m = pk_template(lcp->lcd_lcn, X25_CLEAR);
+	struct mbuf *m = pk_template(lcp->lcd_lcn, X25_CLEAR);
 
 	m->m_len += 2;
 	m->m_pkthdr.len += 2;
@@ -797,7 +797,7 @@ pk_clear(lcp, diagnostic, abortive)
  */
 void
 pk_flowcontrol(lcp, inhibit, forced)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	int inhibit;
 	int forced;
 {
@@ -818,11 +818,11 @@ pk_flowcontrol(lcp, inhibit, forced)
 
 static void
 pk_reset(lcp, diagnostic)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	int diagnostic;
 {
-	register struct mbuf *m;
-	register struct socket *so = lcp->lcd_so;
+	struct mbuf *m;
+	struct socket *so = lcp->lcd_so;
 
 	if (lcp->lcd_state != DATA_TRANSFER)
 		return;
@@ -853,9 +853,9 @@ pk_reset(lcp, diagnostic)
  */
 void
 pk_flush(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
-	register struct socket *so;
+	struct socket *so;
 
 	if (lcp->lcd_template)
 		m_freem(lcp->lcd_template);
@@ -881,7 +881,7 @@ pk_flush(lcp)
 void
 pk_procerror(error, lcp, errstr, diagnostic)
 	int error;
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	char *errstr;
 	int diagnostic;
 {
@@ -912,7 +912,7 @@ pk_ack(lcp, pr)
 	struct pklcd   *lcp;
 	unsigned        pr;
 {
-	register struct socket *so = lcp->lcd_so;
+	struct socket *so = lcp->lcd_so;
 
 	if (lcp->lcd_output_window == pr)
 		return (PACKET_OK);
@@ -947,9 +947,9 @@ pk_ack(lcp, pr)
 
 int
 pk_decode(xp)
-	register struct x25_packet *xp;
+	struct x25_packet *xp;
 {
-	register int    type;
+	int    type;
 
 	if (X25GBITS(xp->bits, fmt_identifier) != 1)
 		return (PK_INVALID_PACKET);
@@ -1041,10 +1041,10 @@ pk_decode(xp)
 void
 pk_restartcause(pkp, xp)
 	struct pkcb    *pkp;
-	register struct x25_packet *xp;
+	struct x25_packet *xp;
 {
-	register struct x25config *xcp = pkp->pk_xcp;
-	register int    lcn = LCN(xp);
+	struct x25config *xcp = pkp->pk_xcp;
+	int    lcn = LCN(xp);
 
 	switch (xp->packet_data) {
 	case X25_RESTART_LOCAL_PROCEDURE_ERROR:
@@ -1077,11 +1077,11 @@ int             Reset_cause[] = {
 void
 pk_resetcause(pkp, xp)
 	struct pkcb    *pkp;
-	register struct x25_packet *xp;
+	struct x25_packet *xp;
 {
-	register struct pklcd *lcp =
+	struct pklcd *lcp =
 	pkp->pk_chan[LCN(xp)];
-	register int    code = xp->packet_data;
+	int    code = xp->packet_data;
 
 	if (code > MAXRESETCAUSE)
 		code = 7;	/* EXRNCG */
@@ -1108,11 +1108,11 @@ int Clear_cause[] = {
 void
 pk_clearcause(pkp, xp)
 	struct pkcb    *pkp;
-	register struct x25_packet *xp;
+	struct x25_packet *xp;
 {
-	register struct pklcd *lcp =
+	struct pklcd *lcp =
 	pkp->pk_chan[LCN(xp)];
-	register int    code = xp->packet_data;
+	int    code = xp->packet_data;
 
 	if (code > MAXCLEARCAUSE)
 		code = 5;	/* EXRNCG */
@@ -1122,7 +1122,7 @@ pk_clearcause(pkp, xp)
 
 char *
 format_ntn(xcp)
-	register struct x25config *xcp;
+	struct x25config *xcp;
 {
 
 	return (xcp->xc_addr.x25_addr);
@@ -1161,12 +1161,12 @@ pk_message(lcn, xcp, fmt, va_alist)
 int
 pk_fragment(lcp, m0, qbit, mbit, wait)
 	struct mbuf    *m0;
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	int qbit, mbit, wait;
 {
-	register struct mbuf *m = m0;
-	register struct x25_packet *xp;
-	register struct sockbuf *sb;
+	struct mbuf *m = m0;
+	struct x25_packet *xp;
+	struct sockbuf *sb;
 	struct mbuf    *head = 0, *next, **mp = &head;
 	int             totlen, psize = 1 << (lcp->lcd_packetsize);
 
