@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.43 1994/10/30 21:49:26 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.44 1994/11/15 23:00:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -993,7 +993,7 @@ int
 sddump()
 {
 	printf("\nsddump()        -- not implemented\n");
-	delay(60000000);	/* 60 seconds */
+	delay(6000000);		/* 6 seconds */
 	return -1;
 }
 #endif	/* SCSIDUMP */
