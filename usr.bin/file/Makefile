@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 1997/05/17 21:15:35 mjacob Exp $
+#	$NetBSD: Makefile,v 1.14 1997/09/30 17:00:36 is Exp $
 
-FILESDIR=	/etc
+FILESDIR=	/usr/share/misc
 FILES=		magic
 MAGIC=		${FILESDIR}/${FILES}
 
