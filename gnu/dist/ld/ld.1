@@ -713,6 +713,15 @@ relocate it or include it in the output.  This allows your output file
 to refer symbolically to absolute locations of memory defined in other
 programs.
 
+For compatibility with other ELF linkers, if the `\|\c
+.B \-R\c
+\&\|' option is
+followed by a directory name, rather than a file name, it is treated as
+the `\|\c
+.B \-rpath\c
+\&\|' option.
+
+
 .TP
 .B \-relax
 An option with machine dependent effects.  Currently this option is only
