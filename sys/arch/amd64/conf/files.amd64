@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.13 2004/08/30 15:05:16 drochner Exp $
+#	$NetBSD: files.amd64,v 1.14 2004/08/30 15:35:20 drochner Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -94,7 +94,6 @@ device	mainbus: isabus, pcibus, bios32, acpibus, cpubus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
-define cpu { [apid = -1] }
 device cpu
 attach cpu at cpubus
 file	arch/amd64/amd64/cpu.c		cpu
