@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/04/14 20:50:20 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/04/19 07:32:08 gmcgarry Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
@@ -13,8 +13,8 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 	cd ${.CURDIR}/../sys/arch/hp300/stand && ${MAKE} cleandir
 .endif
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} release
 	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} release
 	cd ${.CURDIR}/../sys/arch/hp300/stand && \
