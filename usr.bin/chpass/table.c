@@ -1,6 +1,8 @@
+/*	$NetBSD: table.c,v 1.3 1995/03/26 04:55:34 glass Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)table.c	5.1 (Berkeley) 2/12/91";*/
-static char rcsid[] = "$Id: table.c,v 1.2 1993/08/01 18:17:55 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)table.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: table.c,v 1.3 1995/03/26 04:55:34 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,9 +47,6 @@ static char rcsid[] = "$Id: table.c,v 1.2 1993/08/01 18:17:55 mycroft Exp $";
 
 char e1[] = ": ";
 char e2[] = ":,";
-
-int p_change(), p_class(), p_expire(), p_gecos(), p_gid(), p_hdir();
-int p_login(), p_passwd(), p_shell(), p_uid();
 
 ENTRY list[] = {
 	{ "login",		p_login,  1,   5, e1,   },

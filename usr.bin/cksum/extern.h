@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.5 1995/03/26 05:15:19 glass Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.4 1994/12/24 16:02:50 cgd Exp $
+ *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
 #include <sys/cdefs.h>
