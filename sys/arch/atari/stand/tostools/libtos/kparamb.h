@@ -1,4 +1,4 @@
-/*	$NetBSD: kparamb.h,v 1.3 1997/05/27 10:28:32 leo Exp $	*/
+/*	$NetBSD: kparamb.h,v 1.4 1999/02/19 21:51:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -45,7 +45,7 @@ struct kparamb {
 	long	esym_loc;	/* 32: End of symbol table		*/
 };
 
-#ifndef	STANDALONE
+#ifndef	_STANDALONE
 /*
  * Values for 'bootflags'.
  * Note: These should match with the values NetBSD uses!
@@ -73,4 +73,4 @@ struct kparamb {
 #define	RB_SINGLE	0x02
 #define	RB_KDB		0x40
 
-#endif	/* STANDALONE */
+#endif	/* _STANDALONE */

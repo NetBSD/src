@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/19 21:51:26 leo Exp $
 
 LIB=	sa
 
@@ -10,7 +10,7 @@ CPPFLAGS+=	${DEFS} ${INCL}
 CFLAGS+=	-fomit-frame-pointer -Wall
 NO_NET=
 
-DEFS=	-DSTANDALONE
+DEFS=	-D_STANDALONE
 INCL=	-I- -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 #
