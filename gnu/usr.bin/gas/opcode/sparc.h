@@ -20,7 +20,7 @@ along with GAS or GDB; see the file COPYING.	If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.	*/
 
 /*
- * $Id: sparc.h,v 1.3 1994/02/02 19:50:05 pk Exp $
+ * $Id: sparc.h,v 1.4 1994/02/03 23:30:09 pk Exp $
  */
 
  /* FIXME-someday: perhaps the ,a's and such should be embedded in the
@@ -681,6 +681,7 @@ cond ("ba",	"ta",   CONDA, F_ALIAS), /* for nothing */
 cond ("bcc",	"tcc",  CONDCC, 0),
 cond ("bcs",	"tcs",  CONDCS, 0),
 cond ("be",	"te",   CONDE, 0),
+cond ("beq",	"teq",  CONDE, F_ALIAS), /* for be */
 cond ("bg",	"tg",   CONDG, 0),
 cond ("bgt",	"tgt",   CONDG, F_ALIAS),
 cond ("bge",	"tge",  CONDGE, 0),
