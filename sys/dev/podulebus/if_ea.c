@@ -1,7 +1,7 @@
-/* $NetBSD: if_ea.c,v 1.26 2001/03/18 15:56:04 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.1 2001/03/24 00:14:53 bjh21 Exp $ */
 
 /*
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1995 Mark Brinicombe
  * All rights reserved.
  *
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.26 2001/03/18 15:56:04 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.1 2001/03/24 00:14:53 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: if_ea.c,v 1.26 2001/03/18 15:56:04 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/irq.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -120,8 +119,9 @@ eaattach(struct device *parent, struct device *self, void *aux)
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
 	/* Set the address of the controller for easy access */
-	bus_space_shift(pa->pa_mod_t, pa->pa_mod_h, EA_8005_SHIFT,
-			&sc->sc_8005.sc_iot, &sc->sc_8005.sc_ioh);
+	podulebus_shift_tag(pa->pa_mod_t, EA_8005_SHIFT, &sc->sc_8005.sc_iot);
+	bus_space_map(sc->sc_8005.sc_iot, pa->pa_mod_base, /* XXX */ 0, 0,
+	    &sc->sc_8005.sc_ioh);
 
 	/* Get the Ethernet address from the device description string. */
 	if (pa->pa_descr == NULL) {

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eareg.h,v 1.5 2000/09/18 20:51:16 bjh21 Exp $ */
+/* $NetBSD: if_eareg.h,v 1.1 2001/03/24 00:14:53 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe

@@ -1,6 +1,11 @@
-# $NetBSD: files.podulebus,v 1.1 2001/03/19 23:58:12 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.2 2001/03/24 00:14:52 bjh21 Exp $
 
 # Acorn Ether1
 device	ei: ether, ifnet, arp, i82586
 attach	ei at podulebus
 file	dev/podulebus/if_ei.c			ei
+
+# Acorn/Atomwide Ether3
+device	ea: ether, ifnet, arp, seeq8005
+attach	ea at podulebus
+file	dev/podulebus/if_ea.c			ea
