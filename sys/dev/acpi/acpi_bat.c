@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.29 2003/11/01 10:24:17 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.30 2003/11/01 10:25:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.29 2003/11/01 10:24:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.30 2003/11/01 10:25:35 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,10 +504,10 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CHARGERATE].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DISCHARGERATE].validflags &= ~ENVSYS_FCURVALID;
 	if (p2[1].Integer.Value != -1) {
-		if (status & ACPIBAT_CHARGING) {
+		if (status & ACPIBAT_ST_CHARGING) {
 			sc->sc_data[ACPIBAT_CHARGERATE].cur.data_s = p2[1].Integer.Value * 1000;
 			sc->sc_data[ACPIBAT_CHARGERATE].validflags |= ENVSYS_FCURVALID;
-		} else if (status & ACPIBAT_DISCHARGING) {
+		} else if (status & ACPIBAT_ST_DISCHARGING) {
 			sc->sc_data[ACPIBAT_DISCHARGERATE].cur.data_s = p2[1].Integer.Value * 1000;
 			sc->sc_data[ACPIBAT_DISCHARGERATE].validflags |= ENVSYS_FCURVALID;
 		}
