@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_page.c,v 1.8 1997/07/21 14:06:34 jtc Exp $	*/
+/*	$NetBSD: bt_page.c,v 1.9 1997/10/10 21:08:53 is Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_page.c	8.3 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: bt_page.c,v 1.8 1997/07/21 14:06:34 jtc Exp $");
+__RCSID("$NetBSD: bt_page.c,v 1.9 1997/10/10 21:08:53 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,7 @@ __bt_free(t, h)
 	h->prevpg = P_INVALID;
 	h->nextpg = t->bt_free;
 	t->bt_free = h->pgno;
+	F_SET(t, B_METADIRTY);
 
 	/* Make sure the page gets written back. */
 	return (mpool_put(t->bt_mp, h, MPOOL_DIRTY));
@@ -100,6 +101,7 @@ __bt_new(t, npg)
 	    (h = mpool_get(t->bt_mp, t->bt_free, 0)) != NULL) {
 		*npg = t->bt_free;
 		t->bt_free = h->nextpg;
+		F_SET(t, B_METADIRTY);
 		return (h);
 	}
 	return (mpool_new(t->bt_mp, npg));
