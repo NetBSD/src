@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2002/02/10 01:57:11 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2002/02/27 01:19:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -75,10 +75,6 @@ cdev_decl(raid);
 
 /* open, close, read, ioctl */
 #define cdev_prof_init(c,n)	cdev__ocri_init(c,n)
-
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
 
 cdev_decl(physcon);
 cdev_decl(vidcconsole);

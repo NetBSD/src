@@ -1,8 +1,3 @@
-/*	$NetBSD: conf.h,v 1.1 2001/10/16 15:38:43 uch Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2002/02/27 01:19:07 christos Exp $	*/
 
 #include <sys/conf.h>
-
-#define mmread mmrw
-#define mmwrite mmrw
-
-cdev_decl(mm);
