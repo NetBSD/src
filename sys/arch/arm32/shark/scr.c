@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.7 2000/03/16 23:21:09 darrenr Exp $	*/
+/*	$NetBSD: scr.c,v 1.8 2000/03/19 19:14:42 tron Exp $	*/
 
 /*
  * Copyright 1997
@@ -783,7 +783,7 @@ void scrattach(parent, self, aux)
         KERN_DEBUG (scrdebug, SCRATTACH_DEBUG_INFO,("scrattach: called \n"));
 
         /* set initial state machine values */
-        scrClkInit(sc);
+        scrClkInit();
         initStates(sc);
         sc->open = FALSE;
     } 
@@ -980,7 +980,7 @@ int scrclose(dev, flag, mode, p)
     if (sc->open)
     {
         /* put everything in the idle state */
-        scrClkInit(sc);
+        scrClkInit();
         initStates(sc);
         sc->open = FALSE;
 
