@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.9 1999/04/20 14:30:32 minoura Exp $
+.\" $NetBSD: main,v 1.10 1999/04/21 15:38:09 oster Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,7 +203,7 @@ for an overview.
 .It
 RAIDframe, version 1.1, from the Parallel Data Laboratory at Carnegie
 Mellon University, has been integrated.  Supports RAID levels 0, 1, 4,
-5, 6, parity logging, and more.
+5, and more.
 .It
 Luke Mewburn added
 .Xr nsswitch.conf 5
