@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.58 2001/01/24 09:04:15 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.59 2001/03/01 16:31:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -414,13 +414,6 @@ icmp_input(m, va_alist)
 	if (icmpprintfs)
 		printf("icmp_input, type %d code %d\n", icp->icmp_type,
 		    icp->icmp_code);
-#endif
-#ifdef IPSEC
-	/* drop it if it does not match the policy */
-	if (ipsec4_in_reject(m, NULL)) {
-		ipsecstat.in_polvio++;
-		goto freeit;
-	}
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.127 2001/01/24 09:04:15 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.128 2001/03/01 16:31:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -709,6 +709,19 @@ found:
 				ip_freef(fp);
 		IPQ_UNLOCK();
 	}
+
+#ifdef IPSEC
+	/*
+	 * enforce IPsec policy checking if we are seeing last header.
+	 * note that we do not visit this with protocols with pcb layer
+	 * code - like udp/tcp/raw ip.
+	 */
+	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0 &&
+	    ipsec4_in_reject(m, NULL)) {
+		ipsecstat.in_polvio++;
+		goto bad;
+	}
+#endif
 
 	/*
 	 * Switch out to protocol's input routine.
