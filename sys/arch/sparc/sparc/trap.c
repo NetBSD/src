@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.16 1994/05/07 05:08:38 deraadt Exp $
+ * $Id: trap.c,v 1.17 1994/05/13 20:13:00 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -182,8 +182,8 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 		 * but before we switched, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splclock();
-		setrq(p);
+		(void) splstatclock();
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		(void) spl0();
