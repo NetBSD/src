@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6 1997/10/09 08:40:05 jtc Exp $	*/
+/*	$NetBSD: isr.c,v 1.7 1997/11/13 10:43:11 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -277,10 +277,13 @@ void
 netintr()
 {
 #ifdef INET
+#include "arp.h"
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
