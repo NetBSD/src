@@ -25,7 +25,7 @@
  *
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_access.c,v 1.3 1993/12/18 04:46:25 mycroft Exp $
+ *	$Id: db_access.c,v 1.4 1994/01/31 23:55:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ db_get_value(addr, size, is_signed)
 	db_read_bytes(addr, size, data);
 
 	value = 0;
-#if	BYTE_MSF
+#ifdef	BYTE_MSF
 	for (i = 0; i < size; i++)
 #else	/* BYTE_LSF */
 	for (i = size - 1; i >= 0; i--)
@@ -86,7 +86,7 @@ db_put_value(addr, size, value)
 	char		data[sizeof(int)];
 	register int	i;
 
-#if	BYTE_MSF
+#ifdef	BYTE_MSF
 	for (i = size - 1; i >= 0; i--)
 #else	/* BYTE_LSF */
 	for (i = 0; i < size; i++)
