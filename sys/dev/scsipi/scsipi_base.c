@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.53 2001/08/20 07:47:01 ad Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.54 2001/08/20 11:20:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1346,6 +1346,7 @@ scsipi_complete(xs)
 		scsipi_request_sense(xs);
 	}
 	splx(s);
+
 	/*
 	 * If it's a user level request, bypass all usual completion
 	 * processing, let the user work it out..  
@@ -1358,7 +1359,6 @@ scsipi_complete(xs)
 		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		return 0;
 	}
-
 
 	switch (xs->error) {
 	case XS_NOERROR:
