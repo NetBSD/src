@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.86 2003/01/12 00:25:33 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.87 2003/01/12 12:37:01 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3036,3 +3036,12 @@ sys/arch/i386/stand/lib/biosdisk_ll.c		1.12-1.13
 
 	Fixes PR kern/3418 by Keith Moore.
 	[jdolecek, ticket #1067]
+
+share/termcap/termcap.src			1.73
+
+	Wscons terminals (wsvt25) have 25 lines, so we shouldn't use the vt220
+	initialisation sequence (which sets the scrolling region to the top 24
+	lines).
+	Noticed by Martin Husemann.
+	[jdc, ticket #1068]
+
