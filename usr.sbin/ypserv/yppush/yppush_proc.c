@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_proc.c,v 1.2 1997/07/18 21:57:14 thorpej Exp $	*/
+/*	$NetBSD: yppush_proc.c,v 1.3 1997/10/13 07:38:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yppush_proc.c,v 1.3 1997/10/13 07:38:11 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 
