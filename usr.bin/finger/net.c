@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.12 1998/08/10 03:11:07 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.13 1999/07/02 06:01:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.12 1998/08/10 03:11:07 perry Exp $");
+__RCSID("$NetBSD: net.c,v 1.13 1999/07/02 06:01:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: net.c,v 1.12 1998/08/10 03:11:07 perry Exp $");
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "finger.h"
 #include "extern.h"
@@ -71,45 +72,51 @@ netfinger(name)
 {
 	FILE *fp;
 	int c, lastc;
-	struct hostent *hp;
-	struct servent *sp;
-	struct sockaddr_in sin;
 	int s;
 	char *host;
+	struct addrinfo hints, *res, *res0;
+	int error;
+	char *emsg = NULL;
 
 	lastc = 0;
 	if (!(host = strrchr(name, '@')))
 		return;
 	*host++ = '\0';
-	if (inet_aton(host, &sin.sin_addr) == 0) {
-		hp = gethostbyname(host);
-		if (hp == 0) {
-			(void)fprintf(stderr,
-			    "finger: unknown host: %s\n", host);
-			return;
-		}
-		sin.sin_family = hp->h_addrtype;
-		memcpy((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
-		host = hp->h_name;
-	} else
-		sin.sin_family = AF_INET;
-	if (!(sp = getservbyname("finger", "tcp"))) {
-		(void)fprintf(stderr, "finger: tcp/finger: unknown service\n");
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+	error = getaddrinfo(host, "finger", &hints, &res0);
+	if (error) {
+		warnx("%s: %s", gai_strerror(error), host);
 		return;
 	}
-	sin.sin_port = sp->s_port;
-	if ((s = socket(sin.sin_family, SOCK_STREAM, 0)) < 0) {
-		perror("finger: socket");
+
+	s = -1;
+	for (res = res0; res; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0) {
+			emsg = "socket";
+			continue;
+		}
+
+		if (connect(s, res->ai_addr, res->ai_addrlen)) {
+			close(s);
+			s = -1;
+			emsg = "connect";
+			continue;
+		}
+
+		break;
+	}
+	if (s < 0) {
+		if (emsg != NULL)
+			warn(emsg);
 		return;
 	}
 
 	/* have network connection; identify the host connected with */
-	(void)printf("[%s]\n", host);
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		perror("finger: connect");
-		(void)close(s);
-		return;
-	}
+	(void)printf("[%s]\n", res0->ai_canonname ? res0->ai_canonname : host);
 
 	/* -l flag for remote fingerd  */
 	if (lflag)
