@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.12 2003/10/22 21:10:15 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.13 2003/10/31 02:46:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.12 2003/10/22 21:10:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.13 2003/10/31 02:46:58 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -429,6 +429,9 @@ do {									\
 		track = 0;	/* call uvm_fault first. (COW) */
 		ftype = VM_PROT_WRITE;
 		break;
+
+	default:
+		TLB_ASSERT(0, "impossible expevt");
 	}
 
 	/* Select address space */
