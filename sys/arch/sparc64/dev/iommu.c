@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.10 2000/05/17 09:53:53 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.11 2000/06/08 16:17:29 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -112,7 +112,6 @@
 /*
  * UltraSPARC IOMMU support; used by both the sbus and pci code.
  */
-
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -141,6 +140,7 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
+
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
  *	- allocate and setup the iotsb.
@@ -154,24 +154,18 @@ iommu_init(name, is, tsbsize)
 	struct iommu_state *is;
 	int tsbsize;
 {
+	bus_space_handle_t vtsbp;
+	psize_t size;
+	vaddr_t va;
+	paddr_t pa;
+	vm_page_t m;
+	struct pglist mlist;
 
 	/*
 	 * Setup the iommu.
 	 *
 	 * The sun4u iommu is part of the SBUS or PCI controller so we
 	 * will deal with it here..
-	 *
-	 * First we need to allocate a IOTSB.  Problem is that the IOMMU
-	 * can only access the IOTSB by physical address, so all the 
-	 * pages must be contiguous.  Luckily, the smallest IOTSB size
-	 * is one 8K page.
-	 */
-	if (tsbsize != 0)
-		panic("tsbsize != 0; FIX ME");	/* XXX */
-	
-	/* we want 8K pages */
-	is->is_cr = IOMMUCR_8KPG | IOMMUCR_EN;
-	/*
 	 *
 	 * The IOMMU address space always ends at 0xffffe000, but the starting
 	 * address depends on the size of the map.  The map size is 1024 * 2 ^
@@ -182,11 +176,41 @@ iommu_init(name, is, tsbsize)
 	 * NULL DMA pointer will be translated by the first page of the IOTSB.
 	 * To trap bugs we'll skip the first entry in the IOTSB.
 	 */
-	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize) + NBPG;
+	is->is_cr = (tsbsize << 16) | IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
-	is->is_tsb = malloc(NBPG, M_DMAMAP, M_WAITOK);	/* XXX */
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)is->is_tsb,
-	    (paddr_t *)&is->is_ptsb);
+	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize) + NBPG;
+
+	/*
+	 * Allocate memory for I/O pagetables.
+	 * This takes 64K of contiguous physical memory to map 64M of
+	 * DVMA space (starting at IOMMU_DVMA_BASE).
+	 * The table must be aligned on a (-IOMMU_DVMA_BASE/pagesize)
+	 * boundary (i.e. 64K for 64M of DVMA space).
+	 */
+
+	size = NBPG<<(is->is_tsbsize);
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
+		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
+		panic("iommu_init: no memory");
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("iommu_init: no memory");
+	is->is_tsb = (int64_t *)va;
+
+	m = TAILQ_FIRST(&mlist);
+	is->is_ptsb = VM_PAGE_TO_PHYS(m);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NVC,
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		va += NBPG;
+	}
+	bzero(is->is_tsb, size);
 
 #ifdef DEBUG
 	if (iommudebug & IDB_DVMA)
@@ -199,8 +223,8 @@ iommu_init(name, is, tsbsize)
 		       &regs->iommu_tsb, &regs->iommu_flush);
 		cr = regs->iommu_cr;
 		tsb = regs->iommu_tsb;
-		printf("iommu cr=%lx tsb=%lx\n", (long)cr, (long)tsb);
-		printf("TSB base %p phys %p\n", (long)is->is_tsb, (long)is->is_ptsb);
+		printf("iommu cr=%qx tsb=%qx\n", cr, tsb);
+		printf("TSB base %p phys %qx\n", (void *)is->is_tsb, (u_int64_t)is->is_ptsb);
 		delay(1000000); /* 1 s */
 	}
 #endif
@@ -220,6 +244,9 @@ iommu_init(name, is, tsbsize)
 	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
+	printf("DVMA map: %x to %x\n", 
+		(unsigned int)is->is_dvmabase,
+		(unsigned int)IOTSB_VEND);
 	is->is_dvmamap = extent_create(name,
 				       is->is_dvmabase, IOTSB_VEND,
 				       M_DEVBUF, 0, 0, EX_NOWAIT);
@@ -236,8 +263,11 @@ iommu_reset(is)
 {
 
 	/* Need to do 64-bit stores */
-	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_cr, 0, is->is_cr);
 	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_tsb, 0, is->is_ptsb);
+	/* Enable IOMMU in diagnostic mode */
+	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_cr, 0, 
+		is->is_cr|IOMMUCR_DE);
+
 
 	if (!is->is_sb)
 		return;
@@ -466,17 +496,17 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	    map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
 	splx(s);
 
-	if (err != 0)
-		return (err);
-
 #ifdef DEBUG
-	if (dvmaddr == (bus_addr_t)-1)	
+	if (err || (dvmaddr == (bus_addr_t)-1))	
 	{ 
 		printf("iommu_dvmamap_load(): extent_alloc(%d, %x) failed!\n",
 		    sgsize, flags);
 		Debugger();
 	}		
 #endif	
+	if (err != 0)
+		return (err);
+
 	if (dvmaddr == (bus_addr_t)-1)
 		return (ENOMEM);
 
@@ -511,8 +541,8 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			sgsize = buflen;
 
 		DPRINTF(IDB_DVMA,
-		    ("iommu_dvmamap_load: map %p loading va %lx at pa %lx\n",
-		    map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
+		    ("iommu_dvmamap_load: map %p loading va %p dva %lx at pa %lx\n",
+		    map, (void *)vaddr, (long)dvmaddr, (long)(curaddr&~(NBPG-1))));
 		iommu_enter(is, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags);
 			
