@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.6 1997/01/05 12:07:53 mrg Exp $
+.\"	$NetBSD: ldconfig.8,v 1.7 1997/08/27 06:43:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 3, 1993
+.Dd August 24, 1997
 .Dt LDCONFIG 8
 .Os NetBSD
 .Sh NAME
@@ -36,32 +36,30 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl mrsv
+.Op Fl cmrsSv
 .Op Ar directory Ar ...
 .Sh DESCRIPTION
 .Nm
 is used to prepare a set of
 .Dq hints
 for use by the run-time linker
-.Xr ld.so
+.Nm ld.so
 to facilitate quick lookup of shared libraries available in multiple
-directories.  It scans a set of built-in system directories and any
+directories.  By default, it scans a set of built-in system directories,
+directories listed in
+.Pa /etc/ld.so.conf ,
+and any
 .Ar directories
 specified on the command line (in the given order) looking for shared
 libraries and stores the results in the file
-.Xr /var/run/ld.so.hints
+.Pa /var/run/ld.so.hints
 to forestall the overhead that would otherwise result from the
 directory search operations
-.Xr ld.so
-would have to perform to load the required shared libraries.  The system
-reads the file
-.Pa /etc/ld.so.conf
-as a list of directories to pass to
-.Nm
-at boot time.
+.Nm ld.so
+would have to perform to load required shared libraries.
 .Pp
 The shared libraries so found will be automatically available for loading
-if needed by the program being prepared for execution. This obviates the need
+if needed by the program being prepared for execution.  This obviates the need
 for storing search paths within the executable.
 .Pp
 The
@@ -72,59 +70,72 @@ directories where shared libraries might be found.
 .Ev LD_LIBRARY_PATH
 is a
 .Sq \:
-separated list of directory paths which are searched by
-.Xr ld.so
-when it needs to load a shared library. It can be viewed as the run-time
+separated list of directory paths that are searched by
+.Nm ld.so
+when it needs to load a shared library.  It can be viewed as the run-time
 equivalent of the
 .Fl L
 switch of
-.Xr ld.
+.Nm ld .
 .Pp
-.Nm Ldconfig
+.Nm
 is typically run as part of the boot sequence.
 .Pp
 The following options are recognized by
-.Nm ldconfig:
+.Nm ldconfig :
 .Bl -tag -width indent
+.It Fl c
+Do not scan directories listed in
+.Pa /etc/ld.so.conf
+for shared libraries.
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
-the existing hints file. The default action is to build the hints file afresh.
+the existing hints file.  The default action is to build the hints file afresh.
 .It Fl r
 Lists the current contents of
-.Xr ld.so.hints
-on the standard output. The hints file will not be modified.
+.Pa ld.so.hints
+on the standard output.  The hints file will not be modified.
 .It Fl s
 Do not scan the built-in system directory
-.Pq Dq /usr/lib
+.Pq Dq /usr/lib ,
+nor any directories listed in
+.Pa /etc/ld.so.conf
 for shared libraries.
+.It Fl S
+Do not scan the built-in system directory
+.Pq Dq /usr/lib ,
+for shared libraries.  (Directories listed in
+.Pa /etc/ld.so.conf
+are still scanned.)
 .It Fl v
 Switch on verbose mode.
 .Sh Security
 Special care must be taken when loading shared libraries into the address
 space of
 .Ev set-user-Id
-programs. Whenever such a program is run,
-.Xr ld.so
+programs.  Whenever such a program is run,
+.Nm ld.so
 will only load shared libraries from the
-.Ev ld.so.hints
-file. In particular, the
+.Pa ld.so.hints
+file.  In particular, the
 .Ev LD_LIBRARY_PATH
-is not used to search for libraries. Thus, the role of ldconfig is dual. In
+is not used to search for libraries.  Thus, the role of ldconfig is dual.  In
 addition to building a set of hints for quick lookup, it also serves to
 specify the trusted collection of directories from which shared objects can
-be safely loaded. It is presumed that the set of directories specified to
-.Nm ldconfig
-are under control of the system's administrator.
-.Xr ld.so
+be safely loaded.  It is presumed that the set of directories specified to
+.Nm
+is under control of the system's administrator.
+.Nm ld.so
 further assists set-user-Id programs by erasing the
 .Ev LD_LIBRARY_PATH
 from the environment.
 
 .Sh FILES
-.Xr /var/run/ld.so.hints ,
-.Xr /etc/ld.so.conf
+.Pa /var/run/ld.so.hints ,
+.Pa /etc/ld.so.conf
 .Sh SEE ALSO
 .Xr ld 1 ,
+.Xr ld.so 1 ,
 .Xr ld.so.conf 5 ,
 .Xr link 5
 .Sh HISTORY
