@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.35 2001/01/29 09:39:46 itojun Exp $
+#	$NetBSD: special,v 1.36 2001/04/21 22:53:36 atatat Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -27,7 +27,6 @@ csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.conf	type=file mode=0644 uname=root gname=wheel
-dhclient-script	type=file mode=0555 uname=root gname=wheel
 dm.conf		type=file mode=0644 uname=root gname=wheel
 dumpdates	type=file mode=0664 uname=root gname=operator optional
 exports		type=file mode=0644 uname=root gname=wheel optional
