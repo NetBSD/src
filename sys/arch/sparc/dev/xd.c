@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.16 1996/02/22 06:50:49 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.17 1996/02/25 21:54:00 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.16 1996/02/22 06:50:49 thorpej Exp $
+ * id: $NetBSD: xd.c,v 1.17 1996/02/25 21:54:00 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -357,7 +357,7 @@ int xdcmatch(parent, match, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		xdc = (struct xdc *) ra->ra_vaddr;
 		if (probeget(&xdc->xdc_csr, 1) == -1)
 			return (0);
@@ -1218,7 +1218,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 					XDPC_RBC | XDPC_ECC2;
 			ctrl->throttle = XDC_THROTTLE;
 #ifdef sparc
-			if (cputyp == CPU_SUN4 && cpumod == SUN4_300)
+			if (CPU_ISSUN4 && cpumod == SUN4_300)
 				ctrl->delay = XDC_DELAY_4_300;
 			else
 				ctrl->delay = XDC_DELAY_SPARC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.15 1996/02/23 16:29:34 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.16 1996/02/25 21:53:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -275,7 +275,7 @@ si_match(parent, vcf, args)
 		return (0);
 
 	/* Nothing but a Sun 4 is going to have these devices. */
-	if (cputyp != CPU_SUN4)
+	if (!CPU_ISSUN4)
 		return (0);
 
 	/*
