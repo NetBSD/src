@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.2 2001/10/10 14:19:52 leo Exp $	*/
+/*	$NetBSD: libtos.h,v 1.3 2001/10/11 07:07:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LIBTOS_H
-#define LIBTOS_H
+#ifndef _LIBTOS_H
+#define _LIBTOS_H
 
 #ifdef __STDC__
 #define	PROTO(x)	x
@@ -72,4 +72,4 @@ EXTERN void	xexit            PROTO((int)) NORETURN;
 EXTERN void *	xmalloc          PROTO((size_t));
 EXTERN void *	xrealloc         PROTO((void *, size_t));
 
-#endif	/* LIBTOS_H */
+#endif	/* !_LIBTOS_H */

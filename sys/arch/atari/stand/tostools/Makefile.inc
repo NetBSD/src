@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1996/01/07 22:05:41 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/10/11 07:07:41 leo Exp $
 
 #
 # Configurable stuff.
@@ -32,9 +32,9 @@ STRIP	=
 
 
 HEADERS	:= ${HEADERS} ../libtos/libtos.h
-LDADD	:= ${LDADD} ../libtos/libtos.a
+LDADD	:= ${LDADD} ../libtos/libtos.a -lz
 INCL	:= ${INCL} -I. -I../libtos
-DEFS	:= ${DEFS} -DTOSTOOLS
+DEFS	:= ${DEFS} -DTOSTOOLS -DCOMPRESSED_READ
 
 CFLAGS	:= ${CFLAGS} -Wall ${DEBUG} ${BASREL} ${OPTIM} ${INCL}
 LDFLAGS	:= ${LDFLAGS} ${DEBUG} ${BASREL} ${STRIP}
@@ -61,4 +61,4 @@ ${OBJS}: ${HEADERS}
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
 
 .s.o:
-	${CPP} ${CPPFLAGS} $< | ${AS} ${ASFLAGS} -o $@
+	${CPP} ${CPPFLAGS} $< | sed -e 's/%//g' | ${AS} ${ASFLAGS} -o $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.1 2001/10/10 14:19:51 leo Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include "tosdefs.h"
 #include "kparamb.h"
 #include "libtos.h"
+#include "cread.h"
 
 /*
  * Load an elf image.

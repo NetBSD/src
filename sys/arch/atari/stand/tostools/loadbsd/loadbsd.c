@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.17 2001/10/10 14:24:48 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.18 2001/10/11 07:07:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -34,8 +34,6 @@
  * NetBSD loader for the Atari-TT.
  */
 
-#include "exec_elf.h"
-#include <a_out.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <osbind.h>
@@ -45,13 +43,7 @@
 #include <unistd.h>
 #include "libtos.h"
 #include "tosdefs.h"
-
-#ifdef COMPRESSED_READ
-#define	open	copen
-#define	read	cread
-#define	lseek	clseek
-#define	close	cclose
-#endif /* COMPRESSED_READ */
+#include "cread.h"
 
 char	*Progname;		/* How are we called		*/
 int	d_flag  = 0;		/* Output debugging output?	*/
@@ -61,7 +53,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.17 $";
+const char version[] = "$Revision: 1.18 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -75,8 +67,6 @@ void usage PROTO((void));
 void get_sys_info PROTO((osdsc_t *));
 void start_kernel PROTO((osdsc_t *));
 
-#define ELFMAGIC	((ELFMAG0 << 24) | (ELFMAG1 << 16) | \
-				(ELFMAG2 << 8) | ELFMAG3)
 int
 main(argc, argv)
 int	argc;

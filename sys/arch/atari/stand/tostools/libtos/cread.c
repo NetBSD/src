@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.1 1999/06/23 19:26:13 leo Exp $	*/
+/*	$NetBSD: cread.c,v 1.1 2001/10/11 07:07:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+#include <unistd.h>
 #include <string.h>
 #include <memory.h>
 #include <fcntl.h>

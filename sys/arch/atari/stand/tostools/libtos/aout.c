@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.1 2001/10/10 14:19:50 leo Exp $	*/
+/*	$NetBSD: aout.c,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -49,6 +49,8 @@
 #include "tosdefs.h"
 #include "kparamb.h"
 #include "libtos.h"
+#include "cread.h"
+
 
 #ifdef TOSTOOLS
 /*
