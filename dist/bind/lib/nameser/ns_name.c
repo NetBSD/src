@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.4 2002/06/20 10:30:38 itojun Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.1.1.5 2002/11/17 14:04:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_name.c,v 8.18 2002/05/24 05:10:40 marka Exp";
+static const char rcsid[] = "Id: ns_name.c,v 8.18.4.1 2002/11/14 13:32:08 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -343,6 +343,10 @@ ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz)
 	dn = dst;
 	eom = dst + dstsiz;
 
+	if (dn >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
 	while ((n = *cp++) != 0) {
 		if ((n & NS_CMPRSFLGS) == NS_CMPRSFLGS) {
 			/* Some kind of compression pointer. */

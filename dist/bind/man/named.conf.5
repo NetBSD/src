@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.1.1.3 2002/06/20 10:29:17 itojun Exp $
+.\"     $NetBSD: named.conf.5,v 1.1.1.4 2002/11/17 14:04:14 itojun Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -667,6 +667,8 @@ is used:
 .Dl category panic { default_syslog; default_stderr; };
 .It Ic update
 Dynamic updates.
+.It Ic update-security
+Denied dynamic updates due to access controls.
 .It Ic ncache
 Negative caching.
 .It Ic xfer-in
@@ -860,11 +862,14 @@ bit is always set on
 .Dv NXDOMAIN
 responses, even if the server is not actually authoritative.
 The default is
-.Li yes .
-Do not turn off
-.Ic auth-nxdomain
-unless you are sure you know what you are
-doing, as some older software won't like it.
+.Li no .
+Turning 
+.Lc auth-nxdomain
+will allow older clients that require
+.Li AA
+to be set to accept
+.Dv NXDOMAIN
+responses to work.
 .It Ic deallocate-on-exit
 If
 .Li yes ,

@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_resp.c,v 1.1.1.6 2002/06/28 05:59:43 itojun Exp $	*/
+/*	$NetBSD: ns_resp.c,v 1.1.1.7 2002/11/17 14:04:27 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: ns_resp.c,v 8.178 2002/06/27 03:09:19 marka Exp";
+static const char rcsid[] = "Id: ns_resp.c,v 8.178.2.2 2002/11/14 13:39:13 marka Exp";
 #endif /* not lint */
 
 /*
@@ -2003,7 +2003,7 @@ rrextract(u_char *msg, int msglen, u_char *rrp, struct databuf **dpp,
 		 * to BOUNDS_CHECK() here.
 		 */
 		cp1 += (n = strlen((char *)cp1) + 1);
-		n1 = sizeof(data) - n;
+		n1 = sizeof(data) - n - INT16SZ;
 		n = dn_expand(msg, eom, cp, (char *)cp1, n1);
 		if (n < 0) {
 			hp->rcode = FORMERR;
@@ -2045,8 +2045,18 @@ rrextract(u_char *msg, int msglen, u_char *rrp, struct databuf **dpp,
 			ttl = origTTL;
 		}
 
+		/*
+		 * Check that expire and signature times are internally
+		 * consistant.
+		 */
+		if (!SEQ_GT(exptime, signtime) && exptime != signtime) {
+			ns_debug(ns_log_default, 3,
+			"ignoring SIG: signature expires before it was signed");
+			return ((cp - rrp) + dlen);
+		}
+
 		/* Don't let bogus signers "sign" in the future.  */
-		if (signtime > now) {
+		if (SEQ_GT(signtime, now)) {
 			ns_debug(ns_log_default, 3,
 			  "ignoring SIG: signature date %s is in the future",
 				 p_secstodate (signtime));
@@ -2054,7 +2064,7 @@ rrextract(u_char *msg, int msglen, u_char *rrp, struct databuf **dpp,
 		}
 		
 		/* Ignore received SIG RR's that are already expired.  */
-		if (exptime <= now) {
+		if (SEQ_GT(now, exptime)) {
 			ns_debug(ns_log_default, 3,
 				"ignoring SIG: expiration %s is in the past",
 				 p_secstodate (exptime));
