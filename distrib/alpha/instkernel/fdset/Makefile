@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/05/11 20:08:01 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/09 00:37:38 ross Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
@@ -34,13 +34,13 @@ all:	netbsd
 			on disk 2.)
 	@ echo ''
 	dd if=/dev/zero of=${IMAGE1} count=2880
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE1}
 	dd bs=8k seek=1 count=179 if=${FSTMP} of=${VND_CDEV}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -rw ${VND} ${DISKTYPE}
 	@echo "installing new bootblocks"
 	${MDEC}/installboot.old -b 17 -v	\
 		${SECONDARYBOOT} ${PRIMARYBOOT} ${VND_CRDEV}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 	@echo Making disk number two.
 	echo USTARFS 2 > ${IMAGE2}
 	(echo 'Prototype image created on: ';	\
@@ -55,7 +55,7 @@ netbsd: ${INSTKERNEL}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_CDEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE1} ${IMAGE2}
 
 clean cleandir distclean:

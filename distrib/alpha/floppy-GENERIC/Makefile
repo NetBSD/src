@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/05/02 16:06:45 sjg Exp $
+#	$NetBSD: Makefile,v 1.12 2001/12/09 00:37:38 ross Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -34,12 +34,12 @@ GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
 	tar cvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
 	@echo Creating vn image
 	dd if=/dev/zero of=${.TARGET}.tmp count=2880
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${.TARGET}.tmp
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${.TARGET}.tmp
 	dd bs=8k seek=1 if=ustar.tmp of=${VND_CDEV}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -rw ${VND} ${DISKTYPE}
 	${MDEC}/installboot.old -b 17 -v	\
 		${MDEC}/boot ${MDEC}/bootxx.old ${VND_CRDEV}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 	mv ${.TARGET}.tmp ${.TARGET}
 
 ${GZKERNEL}: ${KERNEL}
@@ -49,7 +49,7 @@ ${GZKERNEL}: ${KERNEL}
 	mv ${.TARGET}.gz ${.TARGET}
 
 unconfig:
-	-vnconfig -u ${VND_CDEV}
+	-vnconfig -u ${VND}
 
 disk: all
 	dd if=GENERIC.fs bs=18k of=/dev/rfd0a
