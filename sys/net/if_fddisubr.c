@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.47 2003/02/26 07:47:42 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.48 2003/05/14 15:50:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.47 2003/02/26 07:47:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.48 2003/05/14 15:50:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -107,18 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.47 2003/02/26 07:47:42 matt Exp $"
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#if defined(__NetBSD__)
 #include <netinet/if_inarp.h>
 #include "opt_gateway.h"
-#else
-#include <netinet/if_ether.h>
 #endif
-#endif
-#if defined(__FreeBSD__)
-#include <netinet/if_fddi.h>
-#else
 #include <net/if_fddi.h>
-#endif
 
 #ifdef IPX
 #include <netipx/ipx.h> 
@@ -181,22 +173,7 @@ extern struct ifqueue pkintrq;
 #define	llc_snap	llc_un.type_snap
 #endif
 
-#if defined(__bsdi__) || defined(__NetBSD__)
-#define	RTALLOC1(a, b)			rtalloc1(a, b)
-#define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e)
-#define	ETYPEHTONS(t)			(t)
-#elif defined(__FreeBSD__)
-#define	RTALLOC1(a, b)			rtalloc1(a, b, 0UL)
-#define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e, f)
-#define	ETYPEHTONS(t)			(t)
-#endif
-
-#if defined(__NetBSD__)
 #define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
-#else
-#define	FDDICOM(ifp)		((struct arpcom *)(ifp))
-#define	FDDIADDR(ifp)		(FDDICOM(ifp)->ac_enaddr)
-#endif
 
 static	int fddi_output __P((struct ifnet *, struct mbuf *,
 	    struct sockaddr *, struct rtentry *)); 
@@ -230,7 +207,7 @@ fddi_output(ifp, m0, dst, rt0)
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = RTALLOC1(dst, 1)) != NULL)
+			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL)
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -240,7 +217,7 @@ fddi_output(ifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = RTALLOC1(rt->rt_gateway, 1);
+			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}
@@ -262,26 +239,15 @@ fddi_output(ifp, m0, dst, rt0)
 
 #ifdef INET
 	case AF_INET: {
-#if !defined(__bsdi__) || _BSDI_VERSION >= 199401
-#if defined(__NetBSD__)
 #define SIN(x) ((struct sockaddr_in *)(x))
 		if (m->m_flags & M_BCAST)
                 	bcopy((caddr_t)fddibroadcastaddr, (caddr_t)edst,
 				sizeof(edst));
-
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
 			    (caddr_t)edst)
 		} else if (!arpresolve(ifp, rt, m, dst, edst))
-#else
-		if (!ARPRESOLVE(FDDICOM(ifp), rt, m, dst, edst, rt0))
-#endif
 			return (0);	/* if not yet resolved */
-#else
-		int usetrailers;
-		if (!arpresolve(FDDICOM(ifp), m, &((struct sockaddr_in *)dst)->sin_addr, edst, &usetrailers))
-			return (0);	/* if not yet resolved */
-#endif
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -422,15 +388,6 @@ fddi_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
-#if defined(__FreeBSD__)
-		IFDEBUG(D_ETHER)
-			int i;
-			printf("unoutput: sending pkt to: ");
-			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf("\n");
-		ENDDEBUG
-#endif
 		} break;
 #endif /* ISO */
 #ifdef	LLC
@@ -499,7 +456,7 @@ fddi_output(ifp, m0, dst, rt0)
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
-		etype = ETYPEHTONS(eh->ether_type);
+		etype = eh->ether_type;
 		break;
 	}
 
@@ -539,13 +496,8 @@ fddi_output(ifp, m0, dst, rt0)
 	}
 #endif
 	default:
-#if defined(__NetBSD__)
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 		       dst->sa_family);
-#else
-		printf("%s%d: can't handle af%d\n", ifp->if_name, ifp->if_unit,
-		       dst->sa_family);
-#endif
 		senderr(EAFNOSUPPORT);
 	}
 
@@ -769,11 +721,6 @@ fddi_input(ifp, m)
 				if (m == 0)
 					return;
 				*mtod(m, struct fddi_header *) = *fh;
-#if defined(__FreeBSD__)
-				IFDEBUG(D_ETHER)
-					printf("clnp packet");
-				ENDDEBUG
-#endif
 				schednetisr(NETISR_ISO);
 				inq = &clnlintrq;
 				break;
