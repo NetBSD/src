@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.176 2003/10/05 09:18:28 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.177 2003/10/05 11:58:16 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2260,4 +2260,19 @@ crypto/dist/kame/libipsec/policy_parse.y	1.3 (via patch)
 
 	realloc error check failure; Greg Troxel, sync w/ kame
 	[itojun, ticket #1507]
+
+distrib/sets/lists/man/mi			1.610
+share/man/man4/Makefile				1.298
+share/man/man4/bce.4				1.1 (new file)
+share/man/man4/bge.4				1.7
+sys/arch/i386/conf/GENERIC			1.571
+sys/arch/i386/conf/GENERIC_LAPTOP		1.77
+sys/dev/pci/files.pci				1.194
+sys/dev/pci/if_bce.c				1.1-1.3 (new file)
+sys/dev/pci/if_bcereg.h				1.1-1.3 (new file)
+
+	Add new driver for broadcom BCM4401 chipset (as seen on recent dell
+	laptops) written by Cliff Wright <cliff@snipe444.org> and tested by
+	yours truly.
+	[mrg, ticket #1486]
 
