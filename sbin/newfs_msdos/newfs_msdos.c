@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.12 2003/10/08 03:56:21 lukem Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.13 2003/11/23 23:16:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.12 2003/10/08 03:56:21 lukem Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.13 2003/11/23 23:16:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -562,6 +562,29 @@ main(int argc, char *argv[])
 	bpb.spf = bpb.bspf;
 	bpb.bspf = 0;
     }
+    ch = 0;
+    if (fat == 12)
+	ch = 1;			/* 001 Primary DOS with 12 bit FAT */
+    else if (fat == 16) {
+	if (bpb.bsec == 0)
+	    ch = 4;		/* 004 Primary DOS with 16 bit FAT <32M */
+	else
+	    ch = 6;		/* 006 Primary 'big' DOS, 16-bit FAT (> 32MB) */
+				/*
+				 * XXX: what about:
+				 * 014 DOS (16-bit FAT) - LBA
+				 *  ?
+				 */
+    } else if (fat == 32) {
+	ch = 11;		/* 011 Primary DOS with 32 bit FAT */
+				/*
+				 * XXX: what about:
+				 * 012 Primary DOS with 32 bit FAT - LBA
+				 *  ?
+				 */
+    }
+    if (ch != 0)
+	printf("MBR type: %d\n", ch);
     print_bpb(&bpb);
     if (!opt_N) {
 	gettimeofday(&tv, NULL);
