@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.24 2003/04/21 06:52:47 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.25 2003/04/21 07:02:31 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.24 2003/04/21 06:52:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.25 2003/04/21 07:02:31 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -300,8 +300,8 @@ gre_mobile_input(m, va_alist)
 	} else
 		msiz = MOB_H_SIZ_S;
 
-	if (m->m_len < msiz) {
-		m = m_pullup(m, msiz);
+	if (m->m_len < (ip->ip_hl << 2) + msiz) {
+		m = m_pullup(m, (ip->ip_hl << 2) + msiz);
 		if (m == NULL)
 			return;
 		ip = mtod(m, struct ip *);
