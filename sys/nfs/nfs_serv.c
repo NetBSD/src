@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.71 2003/04/03 15:19:12 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.72 2003/05/03 18:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.71 2003/04/03 15:19:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.72 2003/05/03 18:36:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.71 2003/04/03 15:19:12 yamt Exp $");
 #include <sys/kernel.h>
 #include <ufs/ufs/dir.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>
@@ -94,6 +94,7 @@ extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
+int nfsd_use_loan = 1;	/* use page-loan for READ OP */
 
 /*
  * nfs v3 access service
@@ -579,20 +580,17 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct iovec *iv;
-	struct iovec *iv2;
 	struct mbuf *m;
 	struct nfs_fattr *fp;
 	u_int32_t *tl;
 	int32_t t1;
 	int i;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, cnt, len, left, siz, tlen, getret;
+	int error = 0, rdonly, cache, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
-	uint32_t reqlen;
+	uint32_t reqlen, len, cnt, left, tlen;
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct mbuf *m2;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -658,54 +656,129 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		tl += (NFSX_V2FATTR / sizeof (u_int32_t));
 	}
 	len = left = cnt;
-	if (cnt > 0) {
-		/*
-		 * Generate the mbuf list with the uio_iov ref. to it.
-		 */
-		i = 0;
-		m = m2 = mb;
-		while (left > 0) {
-			siz = min(M_TRAILINGSPACE(m), left);
-			if (siz > 0) {
-				left -= siz;
-				i++;
+	if (cnt >= 0) {
+		if (nfsd_use_loan) {
+			struct vm_page **pgpp;
+			voff_t pgoff = trunc_page(off);
+			int orignpages, npages;
+			vaddr_t lva;
+
+			npages = orignpages = (round_page(off + cnt) - pgoff)
+			    >> PAGE_SHIFT;
+			KASSERT(npages <= M_EXT_MAXPAGES); /* XXX */
+
+			lva = sokvaalloc(npages << PAGE_SHIFT, slp->ns_so);
+			if (lva == 0) {
+				/* fall back to VOP_READ */
+				goto loan_fail;
 			}
-			if (left > 0) {
-				m = m_get(M_WAIT, MT_DATA);
-				MCLAIM(m, &nfs_mowner);
-				m_clget(m, M_WAIT);
-				m->m_len = 0;
-				m2->m_next = m;
-				m2 = m;
+
+			m = m_get(M_WAIT, MT_DATA);
+			pgpp = m->m_ext.ext_pgs;
+again:
+			simple_lock(&vp->v_interlock);
+again_locked:
+			error = VOP_GETPAGES(vp, pgoff, pgpp, &npages, 0,
+			    VM_PROT_READ, 0, PGO_SYNCIO);
+			if (error == EAGAIN) {
+				tsleep(&lbolt, PVM, "nfsread", 0);
+				goto again;
 			}
+			if (error) {
+				sokvafree(lva, orignpages << PAGE_SHIFT);
+				m_free(m);
+				goto read_error;
+			}
+			KASSERT(npages == orignpages);
+			
+			/* loan and unbusy pages */
+			simple_lock(&vp->v_interlock);
+			for (i = 0; i < npages; i++) {
+				if (pgpp[i]->flags & PG_RELEASED) {
+					uvm_lock_pageq();
+					uvm_page_unbusy(pgpp, npages);
+					uvm_unlock_pageq();
+					goto again_locked;
+				}
+			}
+			uvm_loanuobjpages(pgpp, npages);
+			simple_unlock(&vp->v_interlock);
+
+			/* map pages */
+			for (i = 0; i < npages; i++) {
+				pmap_kenter_pa(lva + (i << PAGE_SHIFT),
+				    VM_PAGE_TO_PHYS(pgpp[i]), VM_PROT_READ);
+			}
+
+			lva += off & PAGE_MASK;
+
+			MCLAIM(m, &nfs_mowner);
+			MEXTADD(m, (void *)lva, cnt, M_MBUF, soloanfree,
+			    slp->ns_so);
+			m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
+			m->m_len = cnt;
+
+			pmap_update(pmap_kernel());
+			mb->m_next = m;
+			mb = m;
+			error = 0;
+			uiop->uio_resid = 0;
+		} else {
+			struct iovec *iv;
+			struct iovec *iv2;
+			struct mbuf *m2;
+			int siz;
+loan_fail:
+			/*
+			 * Generate the mbuf list with the uio_iov ref. to it.
+			 */
+			i = 0;
+			m = m2 = mb;
+			while (left > 0) {
+				siz = min(M_TRAILINGSPACE(m), left);
+				if (siz > 0) {
+					left -= siz;
+					i++;
+				}
+				if (left > 0) {
+					m = m_get(M_WAIT, MT_DATA);
+					MCLAIM(m, &nfs_mowner);
+					m_clget(m, M_WAIT);
+					m->m_len = 0;
+					m2->m_next = m;
+					m2 = m;
+				}
+			}
+			iv = malloc(i * sizeof(struct iovec), M_TEMP, M_WAITOK);
+			uiop->uio_iov = iv2 = iv;
+			m = mb;
+			left = cnt;
+			i = 0;
+			while (left > 0) {
+				if (m == NULL)
+					panic("nfsrv_read iov");
+				siz = min(M_TRAILINGSPACE(m), left);
+				if (siz > 0) {
+					iv->iov_base = mtod(m, caddr_t) +
+					    m->m_len;
+					iv->iov_len = siz;
+					m->m_len += siz;
+					left -= siz;
+					iv++;
+					i++;
+				}
+				m = m->m_next;
+			}
+			uiop->uio_iovcnt = i;
+			uiop->uio_offset = off;
+			uiop->uio_resid = cnt;
+			uiop->uio_rw = UIO_READ;
+			uiop->uio_segflg = UIO_SYSSPACE;
+			error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
+			off = uiop->uio_offset;
+			free((caddr_t)iv2, M_TEMP);
 		}
-		iv = malloc(i * sizeof (struct iovec), M_TEMP, M_WAITOK);
-		uiop->uio_iov = iv2 = iv;
-		m = mb;
-		left = cnt;
-		i = 0;
-		while (left > 0) {
-			if (m == NULL)
-				panic("nfsrv_read iov");
-			siz = min(M_TRAILINGSPACE(m), left);
-			if (siz > 0) {
-				iv->iov_base = mtod(m, caddr_t) + m->m_len;
-				iv->iov_len = siz;
-				m->m_len += siz;
-				left -= siz;
-				iv++;
-				i++;
-			}
-			m = m->m_next;
-		}
-		uiop->uio_iovcnt = i;
-		uiop->uio_offset = off;
-		uiop->uio_resid = cnt;
-		uiop->uio_rw = UIO_READ;
-		uiop->uio_segflg = UIO_SYSSPACE;
-		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
-		off = uiop->uio_offset;
-		free((caddr_t)iv2, M_TEMP);
+read_error:
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
@@ -715,14 +788,15 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			nfsm_srvpostop_attr(getret, &va);
 			return (0);
 		}
-	} else
+	} else {
 		uiop->uio_resid = 0;
+	}
 	vput(vp);
 	nfsm_srvfillattr(&va, fp);
 	len -= uiop->uio_resid;
 	tlen = nfsm_rndup(len);
 	if (cnt != tlen || tlen != len)
-		nfsm_adj(mb, cnt - tlen, tlen - len);
+		nfsm_adj(mb, (int)cnt - tlen, tlen - len);
 	if (v3) {
 		*tl++ = txdr_unsigned(len);
 		if (len < reqlen)
