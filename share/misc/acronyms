@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.66 2000/08/10 03:56:58 hubertf Exp $
+$NetBSD: acronyms,v 1.67 2000/08/12 11:09:43 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -31,6 +31,7 @@ EMSG	email message
 ETLA	extended three letter acronym
 FAQ	frequently asked question
 FIIK	fuck if I know
+FOAD	fall over and die
 FSDO	for some definition of
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
