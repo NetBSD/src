@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.53.2.2 2000/09/08 23:57:19 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.53.2.3 2000/09/20 20:13:14 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,7 +140,7 @@ EXTERN struct disk_desc *disk;
 EXTERN int sectorsize;
 
 /* Actual name of the disk. */
-EXTERN char diskdev[SSTRSIZE];
+EXTERN char diskdev[SSTRSIZE] INIT("");
 EXTERN char disknames[STRSIZE];
 EXTERN int  numdisks;
 EXTERN char *disktype;		/* ST506, SCSI, ... */
