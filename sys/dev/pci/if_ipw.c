@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.3 2004/08/27 00:02:02 lukem Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.4 2004/09/14 00:31:20 lukem Exp $	*/
 /*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.3 2004/08/27 00:02:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.4 2004/09/14 00:31:20 lukem Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.3 2004/08/27 00:02:02 lukem Exp $");
 #include <net/if_types.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -267,6 +268,19 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_newstate = ipw_newstate;
 
 	ieee80211_media_init(ifp, ipw_media_change, ieee80211_media_status);
+
+#if NBPFILTER > 0
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO, 
+	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+
+	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(IPW_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(IPW_TX_RADIOTAP_PRESENT);
+#endif
 }
 
 static int
@@ -277,6 +291,9 @@ ipw_detach(struct device* self, int flags)
 
 	ipw_reset(sc);
 
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -423,6 +440,19 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	m = sbuf->m;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = le32toh(status->len);
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct ipw_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->wr_flags = 0;
+		tap->wr_antsignal = status->rssi;
+		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+	}
+#endif
 
 	wh = mtod(m, struct ieee80211_frame *);
 
@@ -677,6 +707,18 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		if (m == NULL)
 			return ENOBUFS;
 	}
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+	}
+#endif
 
 	wh = mtod(m, struct ieee80211_frame *);
 

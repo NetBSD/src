@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.3 2004/09/14 00:27:26 lukem Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.4 2004/09/14 00:31:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -49,6 +49,30 @@ struct ipw_soft_buf {
 	bus_dmamap_t			map;
 	TAILQ_ENTRY(ipw_soft_buf)	next;
 };
+
+struct ipw_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+	u_int8_t	wr_flags;
+	u_int16_t	wr_chan_freq;
+	u_int16_t	wr_chan_flags;
+	u_int8_t	wr_antsignal;
+};
+
+#define IPW_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+
+struct ipw_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+	u_int8_t	wt_flags;
+	u_int16_t	wt_chan_freq;
+	u_int16_t	wt_chan_flags;
+};
+
+#define IPW_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct ipw_softc {
 	struct device			sc_dev;
@@ -102,6 +126,24 @@ struct ipw_softc {
 	u_int32_t			txcur;
 	u_int32_t			txold;
 	u_int32_t			rxcur;
+
+#if NBPFILTER > 0
+	struct bpf_if			*sc_drvbpf;
+
+	union {
+		struct ipw_rx_radiotap_header th;
+		u_int8_t	pad[64];
+	} sc_rxtapu;
+#define sc_rxtap	sc_rxtapu.th
+	int				sc_rxtap_len;
+
+	union {
+		struct ipw_tx_radiotap_header th;
+		u_int8_t	pad[64];
+	} sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int				sc_txtap_len;
+#endif
 };
 
 #define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
