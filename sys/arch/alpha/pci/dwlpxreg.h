@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.4.2.4 1997/06/07 04:43:25 cgd Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.4.2.5 1997/07/22 06:00:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -132,6 +132,20 @@
 #define	PCIA_TBIT	0x380A00000LL	/* PCI TBIT */
 #define	PCIA_MCTL	0x380C00000LL	/* PCI Module Control */
 #define	PCIA_IBR	0x380E00000LL	/* PCI Information Base Repair */
+
+/*
+ * Bits in PCIA_PRESENT.
+ */
+#define	PCIA_PRESENT_REVSHIFT	25	/* shift by this to get revision */
+#define	PCIA_PRESENT_REVMASK	0xf
+#define	PCIA_PRESENT_STDIO	0x01000000 /* STD I/O bridge present */
+#define	PCIA_PRESENT_SLOTSHIFT(hpc, slot) \
+		(((hpc) << 3) + ((slot) << 1))
+#define	PCIA_PRESENT_SLOT_MASK	0x3
+#define	PCIA_PRESENT_SLOT_NONE	0x0
+#define	PCIA_PRESENT_SLOT_25W	0x1
+#define	PCIA_PRESENT_SLOT_15W	0x2
+#define	PCIA_PRESENT_SLOW_7W	0x3
 
 /*
  * Location of the DWLPx SGMAP page table SRAM.
