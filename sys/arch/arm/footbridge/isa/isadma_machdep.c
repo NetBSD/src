@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.5 2003/04/01 15:03:36 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.6 2003/07/30 17:28:20 he Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.5 2003/04/01 15:03:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.6 2003/07/30 17:28:20 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
 struct arm32_bus_dma_tag isa_bus_dma_tag = {
 	0,				/* _ranges */
 	0,				/* _nranges */
+	NULL,
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
 	_isa_bus_dmamap_load,
