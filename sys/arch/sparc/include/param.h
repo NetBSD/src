@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.36 1998/08/23 10:08:25 pk Exp $ */
+/*	$NetBSD: param.h,v 1.37 1999/02/01 22:20:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,6 +184,7 @@ extern int cputyp;
 #define CPU_SUN4	0
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
+#define CPU_SUN4U	3
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
