@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.5 2003/07/27 14:18:22 itojun Exp $
+#	$NetBSD: majors.mipsco,v 1.6 2003/08/22 05:06:53 itojun Exp $
 #
 # Device majors for mipsco
 #
@@ -42,3 +42,4 @@ device-major	clockctl	char 75			clockctl
 device-major	systrace	char 76			systrace
 device-major	ksyms		char 77			ksyms
 device-major	pf		char 78			pf
+device-major	crypto		char 79			opencrypto

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.5 2003/07/27 14:18:21 itojun Exp $
+#	$NetBSD: majors.hpcsh,v 1.6 2003/08/22 05:06:51 itojun Exp $
 #
 # Device majors for hpcsh
 #
@@ -42,3 +42,4 @@ device-major	systrace	char 35			systrace
 device-major	cgd		char 36  block 10	cgd
 device-major	ksyms		char 37			ksyms
 device-major	pf		char 38			pf
+device-major	crypto		char 39			opencrypto

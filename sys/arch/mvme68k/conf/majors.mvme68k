@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.5 2003/07/27 14:18:23 itojun Exp $
+#	$NetBSD: majors.mvme68k,v 1.6 2003/08/22 05:06:53 itojun Exp $
 #
 # Device majors for mvme68k
 #
@@ -39,3 +39,4 @@ device-major	systrace	char 40			systrace
 device-major	cgd		char 41  block 17	cgd
 device-major	ksyms		char 42			ksyms
 device-major	pf		char 43			pf
+device-major	crypto		char 44			opencrypto

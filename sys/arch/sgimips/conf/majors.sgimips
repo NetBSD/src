@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.6 2003/07/27 14:18:26 itojun Exp $
+#	$NetBSD: majors.sgimips,v 1.7 2003/08/22 05:06:57 itojun Exp $
 #
 # Device majors for sgimips
 #
@@ -67,3 +67,4 @@ device-major	sequencer	char 75			sequencer
 device-major	uscanner	char 76			uscanner
 device-major	ksyms		char 77			ksyms
 device-major	pf		char 78			pf
+device-major	crypto		char 79			opencrypto
