@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.c,v 1.1 2001/01/11 23:27:27 bjh21 Exp $	*/
+/*	$NetBSD: in_cksum_arm.c,v 1.2 2001/05/23 19:33:48 chris Exp $	*/
 
 /*
  * ARM version:
@@ -50,8 +50,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -128,29 +132,26 @@
 #define ADVANCE(n)	{w += n; mlen -= n;}
 #define ADVANCEML(n)	{mlen -= n;}
 
-int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+static __inline__ int
+in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)	
 {
-	register u_char *w;
-	register u_int sum = 0;
-	register int mlen = 0;
+	u_char *w;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	/*
-	 * Declare two temporary registers for use by the asm code.  We
+	 * Declare four temporary registers for use by the asm code.  We
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	/* XXX - initialized because of gcc's `-Wuninitialized' ! */
-	register u_int tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
+	u_int tmp1, tmp2, tmp3, tmp4;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_char *);
-		mlen = m->m_len;
+		w = mtod(m, u_char *) + off;
+		mlen = m->m_len - off;
+		off = 0;
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
@@ -172,7 +173,7 @@ in_cksum(m, len)
 		}
 
 		/*
-		 * Do as many 32 bit operattions as possible using the
+		 * Do as many 32 bit operations as possible using the
 		 * 64/32/16/8/4 macro's above, using as many as possible of
 		 * these.
 		 */
@@ -217,4 +218,53 @@ in_cksum(m, len)
 	ADDCARRY;
 
 	return (0xffff ^ sum);
+}
+
+int
+in_cksum(m, len)
+    struct mbuf *m;
+    int len;
+{
+    return (in_cksum_internal(m, 0, len, 0));
+}
+
+int
+in4_cksum(m, nxt, off, len)
+    struct mbuf *m;
+    u_int8_t nxt;
+    int off, len;
+{
+	u_int sum = 0;
+
+	/* for ADD macros */
+	u_int tmp1, tmp2, tmp3, tmp4;
+	if (nxt != 0) {
+    	    u_char *w;
+	    struct ipovly ipov;
+	    /* pseudo header */
+	    if (off < sizeof(struct ipovly))
+		panic("in4_cksum: offset too short");
+	    if (m->m_len < sizeof(struct ip))
+		panic("in4_cksum: bad mbuf chain");
+	    
+	    bzero(&ipov, sizeof(ipov));
+	    ipov.ih_len = htons(len);
+	    ipov.ih_pr = nxt; 
+	    ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+	    ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+	    w = (u_char *)&ipov;
+	    
+	    /* assumes sizeof(ipov) == 20 */
+	    ADD16;
+	    w += 16;
+	    ADD4;
+	}
+	/* skip unnecessary part */
+	while (m && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	return (in_cksum_internal(m, off, len, sum));
 }
