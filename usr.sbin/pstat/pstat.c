@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.67 2002/02/22 05:04:43 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.68 2002/02/22 05:21:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.67 2002/02/22 05:04:43 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.68 2002/02/22 05:21:01 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ vnodemode()
 	e_vnodebase = loadvnodes(&numvnodes);
 	if (totalflag) {
 		(void)printf("%7d vnodes\n", numvnodes);
-		return;
+		goto out;
 	}
 	endvnode = e_vnodebase + numvnodes * (VPTRSZ + VNODESZ);
 	(void)printf("%d active vnodes\n", numvnodes);
@@ -360,6 +360,8 @@ vnodemode()
 			(*vnode_fsprint)(vp, ovflw);
 		(void)printf("\n");
 	}
+
+ out:
 	free(e_vnodebase);
 }
 
