@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.1 2001/07/10 13:48:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -62,6 +62,10 @@
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
 
+static int	filt_ttyread(struct knote *kn, long hint);
+static void 	filt_ttyrdetach(struct knote *kn);
+static int	filt_ttywrite(struct knote *kn, long hint);
+static void 	filt_ttywdetach(struct knote *kn);
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
@@ -1048,6 +1052,88 @@ ttpoll(struct tty *tp, int events, struct proc *p)
 	splx(s);
 	return (revents);
 }
+
+static struct filterops ttyread_filtops =
+	{ 1, NULL, filt_ttyrdetach, filt_ttyread };
+static struct filterops ttywrite_filtops =
+	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
+
+int
+ttykqfilter(dev_t dev, struct knote *kn)
+{
+	struct tty	*tp;
+	struct klist	*klist;
+	int		s;
+
+	tp = (*cdevsw[major(dev)].d_tty)(dev);
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &tp->t_rsel.si_klist;
+		kn->kn_fop = &ttyread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &tp->t_wsel.si_klist;
+		kn->kn_fop = &ttywrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)dev;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+static void
+filt_ttyrdetach(struct knote *kn)
+{
+	struct tty	*tp;
+	int		s;
+
+	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	s = spltty();
+	SLIST_REMOVE(&tp->t_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ttyread(struct knote *kn, long hint)
+{
+	struct tty	*tp;
+
+	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	kn->kn_data = ttnread(tp);
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_ttywdetach(struct knote *kn)
+{
+	struct tty	*tp;
+	int		s;
+
+	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	s = spltty();
+	SLIST_REMOVE(&tp->t_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ttywrite(kn, hint)
+	struct knote *kn;
+	long hint;
+{
+	struct tty	*tp;
+
+	tp = (*cdevsw[major((dev_t)kn->kn_hook)].d_tty)((dev_t)kn->kn_hook);
+	kn->kn_data = tp->t_outq.c_cc;
+	return (kn->kn_data <= tp->t_lowat && CONNECTED(tp));
+}
+
 
 static int
 ttnread(struct tty *tp)
