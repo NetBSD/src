@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,19 +35,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf_tcreg.h 1.10 91/03/25
- *	from: @(#)grf_tcreg.h	7.3 (Berkeley) 5/7/91
- *	$Id: grf_tcreg.h,v 1.4 1993/08/08 03:42:38 mycroft Exp $
+ * from: Utah $Hdr: grf_tcreg.h 1.11 92/01/21$
+ *
+ *	from: @(#)grf_tcreg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: grf_tcreg.h,v 1.5 1994/05/25 11:47:56 mycroft Exp $
  */
+
+#include <hp300/dev/iotypes.h>	/* XXX */
 
 #define tccm_waitbusy(regaddr) \
 	while (((struct tcboxfb *)(regaddr))->cmap_busy & 0x04) DELAY(100)
 
 #define tc_waitbusy(regaddr,planes) \
 	while (((struct tcboxfb *)(regaddr))->busy & planes) DELAY(100)
-
-#define	vu_char		volatile u_char
-#define	vu_short	volatile u_short
 
 struct tcboxfb {
   u_char 	:8;
@@ -142,4 +142,3 @@ struct tcboxfb {
   u_char 	f24[0x60f0-0x60ba-2];
   vu_short 	strobe;			/* color map trigger 	      0x60f0 */
 };
-

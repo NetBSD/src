@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: ppi.c,v 1.4 1994/05/05 10:10:34 mycroft Exp $
+ *	from: @(#)ppi.c	8.1 (Berkeley) 6/16/93
+ *	$Id: ppi.c,v 1.5 1994/05/25 11:49:17 mycroft Exp $
  */
 
 /*
@@ -50,7 +50,8 @@
 #include <hp300/dev/device.h>
 #include <hp300/dev/ppiioctl.h>
 
-int	ppiattach(), ppistart(), ppitimo();
+int	ppiattach(), ppistart();
+void	ppitimo();
 struct	driver ppidriver = {
 	ppiattach, "ppi", ppistart,
 };
@@ -144,24 +145,22 @@ ppiclose(dev, flags)
 	return(0);
 }
 
-ppistart(arg)
-	void *arg;
+ppistart(unit)
+	int unit;
 {
-	int unit = (int)arg;
-
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppistart(%x)\n", unit);
 #endif
 	ppi_softc[unit].sc_flags &= ~PPIF_DELAY;
 	wakeup(&ppi_softc[unit]);
+	return (0);
 }
 
-ppitimo(arg)
-	void *arg;
+void
+ppitimo(unit)
+	int unit;
 {
-	int unit = (int)arg;
-
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppitimo(%x)\n", unit);
@@ -215,7 +214,7 @@ ppirw(dev, uio)
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
-	buflen = MIN(sc->sc_burst, uio->uio_resid);
+	buflen = min(sc->sc_burst, uio->uio_resid);
 	buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
 	sc->sc_flags |= PPIF_UIO;
 	if (sc->sc_timo > 0) {
@@ -223,7 +222,7 @@ ppirw(dev, uio)
 		timeout(ppitimo, (void *)unit, sc->sc_timo);
 	}
 	while (uio->uio_resid > 0) {
-		len = MIN(buflen, uio->uio_resid);
+		len = min(buflen, uio->uio_resid);
 		cp = buf;
 		if (uio->uio_rw == UIO_WRITE) {
 			error = uiomove(cp, len, uio);
@@ -302,7 +301,8 @@ again:
 		 */
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
-			timeout(ppistart, (void *)unit, sc->sc_delay);
+			timeout((void (*)__P((void *)))ppistart, (void *)unit,
+			    sc->sc_delay);
 			error = tsleep(sc, PCATCH|PZERO+1, "hpib", 0);
 			if (error) {
 				splx(s);
@@ -327,7 +327,7 @@ again:
 		sc->sc_flags &= ~PPIF_TIMO;
 	}
 	if (sc->sc_flags & PPIF_DELAY) {
-		untimeout(ppistart, (void *)unit);
+		untimeout((void (*)__P((void *)))ppistart, (void *)unit);
 		sc->sc_flags &= ~PPIF_DELAY;
 	}
 	splx(s);

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,10 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf_gbreg.h 1.1 90/07/09
- *	from: @(#)grf_gbreg.h	7.2 (Berkeley) 11/4/90
- *	$Id: grf_gbreg.h,v 1.2 1993/08/01 19:24:13 mycroft Exp $
+ * from: Utah $Hdr: grf_gbreg.h 1.11 92/01/21$
+ *
+ *	from: @(#)grf_gbreg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: grf_gbreg.h,v 1.3 1994/05/25 11:47:31 mycroft Exp $
  */
+
+#include <hp300/dev/iotypes.h>	/* XXX */
 
 /*
  * Gatorbox driver regs
@@ -59,8 +62,6 @@
 
 #define gbcm_waitbusy(regaddr) \
 	while (((struct gboxfb *)(regaddr))->cmap_busy != 0xff)
-
-#define	vu_char		volatile u_char
 
 struct gboxfb {
   u_char 	:8;

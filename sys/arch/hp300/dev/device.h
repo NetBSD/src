@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.2 1993/08/01 19:24:01 mycroft Exp $
+ *	from: @(#)device.h	8.1 (Berkeley) 6/10/93
+ *	$Id: device.h,v 1.3 1994/05/25 11:47:14 mycroft Exp $
  */
 
 struct driver {
@@ -117,8 +117,10 @@ struct hp_hw {
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))
 
 #ifdef KERNEL
+#ifdef hp300
 extern struct hp_hw sc_table[];
 extern struct hp_ctlr hp_cinit[];
 extern struct hp_device hp_dinit[];
 extern caddr_t sctova(), sctopa(), iomap();
+#endif
 #endif

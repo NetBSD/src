@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,30 +35,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_rb.c 1.16 91/01/21
- *	from: @(#)ite_rb.c	7.5 (Berkeley) 5/7/91
- *	$Id: ite_rb.c,v 1.3 1993/08/01 19:24:24 mycroft Exp $
+ * from: Utah $Hdr: ite_rb.c 1.19 93/06/25$
+ *
+ *	from: @(#)ite_rb.c	8.1 (Berkeley) 7/8/93
+ *	$Id: ite_rb.c,v 1.4 1994/05/25 11:48:39 mycroft Exp $
  */
 
 #include "ite.h"
 #if NITE > 0
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
-#include "itevar.h"
-#include "itereg.h"
-#include "grf_rbreg.h"
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grf_rbreg.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* XXX */
-#include "grfioctl.h"
-#include "grfvar.h"
+#include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
 
 #define REGBASE		((struct rboxfb *)(ip->regbase))
 #define WINDOWMOVER	rbox_windowmove
@@ -70,12 +71,28 @@ rbox_init(ip)
 
 	/* XXX */
 	if (ip->regbase == 0) {
-		struct grf_softc *gp = &grf_softc[ip - ite_softc];
+		struct grf_softc *gp = ip->grf;
+
 		ip->regbase = gp->g_regkva;
 		ip->fbbase = gp->g_fbkva;
+		ip->fbwidth = gp->g_display.gd_fbwidth;
+		ip->fbheight = gp->g_display.gd_fbheight;
+		ip->dwidth = gp->g_display.gd_dwidth;
+		ip->dheight = gp->g_display.gd_dheight;
+		/*
+		 * XXX some displays (e.g. the davinci) appear
+		 * to return a display height greater than the
+		 * returned FB height.  Guess we should go back
+		 * to getting the display dimensions from the
+		 * fontrom...
+		 */
+		if (ip->dwidth > ip->fbwidth)
+			ip->dwidth = ip->fbwidth;
+		if (ip->dheight > ip->fbheight)
+			ip->dheight = ip->fbheight;
 	}
 
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 
 	REGBASE->reset = 0x39;
 	DELAY(1000);
@@ -86,7 +103,7 @@ rbox_init(ip)
 	REGBASE->drive = 0x01;
 	REGBASE->vdrive = 0x0;
 
-	ite_devinfo(ip);
+	ite_fontinfo(ip);
 	
 	REGBASE->opwen = 0xFF;
 
@@ -94,17 +111,17 @@ rbox_init(ip)
 	 * Clear the framebuffer.
 	 */
 	rbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 
 	for(i = 0; i < 16; i++) {
-		*(REGADDR + 0x63c3 + i*4) = 0x0;
-		*(REGADDR + 0x6403 + i*4) = 0x0;
-		*(REGADDR + 0x6803 + i*4) = 0x0;
-		*(REGADDR + 0x6c03 + i*4) = 0x0;
-		*(REGADDR + 0x73c3 + i*4) = 0x0;
-		*(REGADDR + 0x7403 + i*4) = 0x0;
-		*(REGADDR + 0x7803 + i*4) = 0x0;
-		*(REGADDR + 0x7c03 + i*4) = 0x0;
+		*(ip->regbase + 0x63c3 + i*4) = 0x0;
+		*(ip->regbase + 0x6403 + i*4) = 0x0;
+		*(ip->regbase + 0x6803 + i*4) = 0x0;
+		*(ip->regbase + 0x6c03 + i*4) = 0x0;
+		*(ip->regbase + 0x73c3 + i*4) = 0x0;
+		*(ip->regbase + 0x7403 + i*4) = 0x0;
+		*(ip->regbase + 0x7803 + i*4) = 0x0;
+		*(ip->regbase + 0x7c03 + i*4) = 0x0;
 	}
 
 	REGBASE->rep_rule = 0x33;
@@ -146,7 +163,7 @@ rbox_deinit(ip)
 	struct ite_softc *ip;
 {
 	rbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 
    	ip->flags &= ~ITE_INITED;
 }
@@ -197,8 +214,6 @@ rbox_scroll(ip, sy, sx, count, dir)
 	register int height = 1;
 	register int width = ip->cols;
 
-	rbox_cursor(ip, ERASE_CURSOR);
-
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
 		height = ip->rows - sy;
@@ -232,7 +247,7 @@ rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	if (h == 0 || w == 0)
 		return;
 	
-	rb_waitbusy(REGADDR);
+	rb_waitbusy(ip->regbase);
 	rp->rep_rule = func << 4 | func;
 	rp->source_y = sy;
 	rp->source_x = sx;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hilvar.h 1.1 90/07/09
- *	from: @(#)hilvar.h	7.2 (Berkeley) 11/4/90
- *	$Id: hilvar.h,v 1.6 1994/04/10 22:12:33 hpeyerl Exp $
+ * from: Utah $Hdr: hilvar.h 1.3 92/01/21$
+ *
+ *	from: @(#)hilvar.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hilvar.h,v 1.7 1994/05/25 11:48:23 mycroft Exp $
  */
 
 #ifndef TRUE
@@ -54,11 +55,17 @@
 #define HILLOOPDEV	0		/* loop device index */
 
 /*
- * XXX: HPUX minor numbers are of the form "D0" where D is the device number
- * BSD uses "0D".  For compatibility we accept either.  Maybe we should just
- * use the HPUX numbering.
+ * Minor device numbers.
+ * HP-UX uses 12 bits of the form:
+ *	LLLLDDDD0000
+ * where L is 4 bits of loop number, D 4 bits of device and 4 bits of 0.
+ * BSD uses 8 bits:
+ *	LLLLDDDD
+ * Device files are in BSD format, we map device numbers to HP-UX format
+ * on stat calls.
  */
-#define HILUNIT(d)	(((((d)>>4)&7)==0)?((d)&7):(((d)>>4)&7))
+#define HILUNIT(d)	((d) & 0xF)
+#define HILLOOP(d)	(((d)>>4) & 0xF)
 
 #define	hildevmask(d)	(1 << (d))
 #define	hilqmask(q)	(1 << (q))
@@ -82,11 +89,10 @@ struct hilloopdev {
 #define HIL_PSEUDO	0x02	/* device is virtual */
 #define HIL_READIN	0x04	/* device using read() input interface */
 #define HIL_QUEUEIN	0x08	/* device using shared Q input interface */
-/* was	HIL_SELCOLL	0x10	/* select collision on device */
+#define	HIL_OPENED	0x10	/* flag for first open */
 #define HIL_NOBLOCK	0x20	/* device is in non-blocking read mode */
 #define HIL_ASLEEP	0x40	/* process awaiting input on device */
 #define HIL_DERROR	0x80	/* loop has reconfigured, reality altered */
-#define HIL_OPENED      0x100   /* flag for first open */
 
 struct hilloop {
 	struct	hil_dev	*hl_addr;	/* base of hardware registers */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hil_keymaps.c 1.1 90/07/09
- *	from: @(#)hil_keymaps.c	7.3 (Berkeley) 12/16/90
- *	$Id: hil_keymaps.c,v 1.3 1993/08/01 19:24:20 mycroft Exp $
+ * from: Utah $Hdr: hil_keymaps.c 1.1 90/07/09$
+ *
+ *	from: @(#)hil_keymaps.c	8.1 (Berkeley) 6/10/93
+ *	$Id: hil_keymaps.c,v 1.4 1994/05/25 11:48:14 mycroft Exp $
  */
 
 /*
@@ -60,8 +61,8 @@
  * space.  Having keymaps for all 18 or so HP supported layouts would be bad
  * news.
  */
-#include "sys/param.h"
-#include "kbdmap.h"
+#include <sys/param.h>
+#include <hp300/dev/kbdmap.h>
 
 char	us_keymap[] = {
 	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,  

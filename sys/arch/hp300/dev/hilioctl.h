@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: hilioctl.h 1.1 90/07/09
- *	from: @(#)hilioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: hilioctl.h,v 1.3 1993/09/02 19:04:41 mycroft Exp $
+ * from: Utah $Hdr: hilioctl.h 1.10 92/01/21$
+ *
+ *	from: @(#)hilioctl.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hilioctl.h,v 1.4 1994/05/25 11:48:17 mycroft Exp $
  */
 
 struct _hilbell {
@@ -78,9 +79,22 @@ struct hilqinfo {
  * Note that some are not defined as in HPUX
  * due to the difference in the definitions of IOC_VOID.
  */
+#ifdef hp800
+#define _IOHpux(x,y)	_IO(x,y)
+#else
 #define _IOHpux(x,y)	(IOC_IN|((x)<<8)|y)	/* IOC_IN is IOC_VOID */
+#endif
 
-#define HILID	_IOR('h',0x03, struct _hilbuf11) /* Identify & describe */
+/*
+ * The HP compiler (at least as of HP-UX 7.X) pads odd sized structures
+ * to a short boundary.  To avoid issues of whether our compiler pads
+ * and, if so to what boundary, we explicitly state the values for
+ * troublesome ioctls:
+ *
+ *	HILID (HILIOCID)	_IOR('h',0x03, struct _hilbuf11),
+ *	EFTRRT (HILIOCRRT)	_IOR('H',0x31, struct _hilbuf5).
+ */
+#define HILID	0x400C6803			/* Identify & describe */
 #define HILSC	_IOR('h',0x33, struct _hilbuf16) /* Security code */
 #define HILRN	_IOR('h',0x30, struct _hilbuf16) /* Report name */
 #define HILRS	_IOR('h',0x31, struct _hilbuf16) /* Report status */
@@ -111,16 +125,21 @@ struct hilqinfo {
 #define EFTSBP  _IOW('H',0xc4,struct _hilbuf4)	/* Send data to the beeper. */
 #define EFTRLC  _IOR('H',0x12,char)		/* Read the language code. */
 #define EFTRCC  _IOR('H',0x11,char)		/* Read configuration code. */
-#define EFTRRT  _IOR('H',0x31,struct _hilbuf5)	/* Read the real time. */
+#define EFTRRT  0x40064831			/* Read the real time. */
 #define EFTRT   _IOR('H',0xf4,struct _hilbuf4)	/* Read the timers for the
 	                                              four voices. */
+#ifdef hp800
+#define EFTSBI  _IOW('H',0xa3,char)		/* Do the beep thing. */
+#else
 #define EFTSBI  _IOW('H',0xa3,struct _hilbuf2)	/* Set the bell information. */
+#endif
 
 /*
  * BSD ioctls.
  * Mostly the same as the HPUX versions except for shared-queue ioctls.
  */
-#define HILIOCID	_IOR('h',0x03, struct _hilbuf11)
+#define OHILIOCID	0x400B6803		/* XXX compat */
+#define HILIOCID	HILID
 #define HILIOCSC	_IOR('h',0x33, struct _hilbuf16)
 #define HILIOCRN	_IOR('h',0x30, struct _hilbuf16)
 #define HILIOCRS	_IOR('h',0x31, struct _hilbuf16)
@@ -129,7 +148,8 @@ struct hilqinfo {
 #define HILIOCAR1	_IO('h',0x3E)
 #define HILIOCAR2	_IO('h',0x3F)
 #define HILIOCSBP	_IOW('H',0xc4,struct _hilbuf4)
-#define HILIOCRRT	_IOR('H',0x31,struct _hilbuf5)
+#define OHILIOCRRT	0x40054831		/* XXX compat */
+#define HILIOCRRT	EFTRRT
 #define HILIOCRT	_IOR('H',0xf4,struct _hilbuf4)
 #define HILIOCBEEP	_IOW('H',0xA3,struct _hilbell)
 #	define	BELLDUR		80	/* tone duration in msec (10 - 2560) */
@@ -176,4 +196,4 @@ typedef union hilqueue {
 } HILQ;
 
 #define HEVQSIZE	\
-	((sizeof(HILQ) - sizeof(struct q_data)) / sizeof(hil_packet) + 1)
+	((sizeof(HILQ) - sizeof(struct q_data)) / sizeof(hil_packe
