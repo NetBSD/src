@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.13 2002/05/05 13:02:44 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.14 2002/05/07 03:34:17 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -90,7 +90,7 @@ CLEANFILES+=	${KERNELS} ${KERNELSYMS}
 realall: ${KERNELS}
 
 .if defined(MDSET_RELEASEDIR)
-release: check_RELEASEDIR .WAIT ${KERNELS}
+release:: check_RELEASEDIR .WAIT ${KERNELS}
 	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
 	    ${RELEASEDIR}/${MDSET_RELEASEDIR}
 .endif
