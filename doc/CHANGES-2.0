@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.513 2004/11/12 05:55:59 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.514 2004/11/12 05:59:11 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7927,3 +7927,11 @@ sys/dev/pci/ahc_pci.c				1.46-1.47
 
 	Bring back ALLOW_MEMIO change that was lost between 1.38 and 1.39.
 	[christos, ticket #930]
+
+sys/netinet/ip_fil_netbsd.c			patch
+
+	Build a new fr_info_t structure in fr_send_ip() and pass it through to
+	the fastroute function so that it uses accurate packet information about
+	the packet being sent out rather than the packet received (impacts both
+	return-rst and return-icmp features.) PR#27093
+	[darrenr, ticket #934]
