@@ -10,8 +10,8 @@
  * ====================================================
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: e_j1.c,v 1.6 1994/08/18 23:05:33 jtc Exp $";
+#if defined(LIBM_SCCS) && !defined(lint)
+static char rcsid[] = "$Id: e_j1.c,v 1.7 1994/09/22 16:39:42 jtc Exp $";
 #endif
 
 /* __ieee754_j1(x), __ieee754_y1(x)
