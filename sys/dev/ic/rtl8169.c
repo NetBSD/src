@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.1 2004/12/23 06:26:30 jonathan Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.2 2004/12/26 06:48:13 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2036,7 +2036,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
-			if (RTK_IS_ENABLED(sc))
+			if (ifp->if_flags & IFF_RUNNING)
 				rtk_setmulti(sc);
 			error = 0;
 		}
