@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.128.2.3 2000/07/20 00:14:40 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.128.2.4 2000/09/06 08:41:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/fcntl.h>
@@ -2352,7 +2353,7 @@ void
 vfs_shutdown()
 {
 	struct buf *bp;
-	int iter, nbusy, dcount, s;
+	int iter, nbusy, nbusy_prev = 0, dcount, s;
 	struct proc *p = curproc;
 
 	/* XXX we're certainly not running in proc0's context! */
@@ -2361,7 +2362,8 @@ vfs_shutdown()
 	
 	printf("syncing disks... ");
 
-	/* XXX Should suspend scheduling. */
+	/* remove user process from run queue */
+	suspendsched();
 	(void) spl0();
 
 	/* avoid coming back this way again if we panic. */
@@ -2371,7 +2373,7 @@ vfs_shutdown()
 
 	/* Wait for sync to finish. */
 	dcount = 10000;
-	for (iter = 0; iter < 20; iter++) {
+	for (iter = 0; iter < 20;) {
 		nbusy = 0;
 		for (bp = &buf[nbuf]; --bp >= buf; ) {
 			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
@@ -2398,8 +2400,15 @@ vfs_shutdown()
 		}
 		if (nbusy == 0)
 			break;
+		if (nbusy_prev == 0)
+			nbusy_prev = nbusy;
 		printf("%d ", nbusy);
-		DELAY(40000 * iter);
+		tsleep(&nbusy, PRIBIO, "bflush",
+		    (iter == 0) ? 1 : hz / 25 * iter);
+		if (nbusy >= nbusy_prev) /* we didn't flush anything */
+			iter++;
+		else
+			nbusy_prev = nbusy;
 	}
 	if (nbusy) {
 fail:
