@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.c,v 1.2 1997/01/11 06:48:17 lukem Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: tty.c,v 1.2 1997/01/11 06:48:17 lukem Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /* 
