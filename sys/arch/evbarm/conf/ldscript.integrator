@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.integrator,v 1.1.4.2 2002/08/01 02:41:32 nathanw Exp $	*/
+/*	$NetBSD: ldscript.integrator,v 1.1.4.3 2002/11/15 19:33:39 thorpej Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -24,6 +24,7 @@ SECTIONS
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
+    *(link_set*)
   } =0
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
