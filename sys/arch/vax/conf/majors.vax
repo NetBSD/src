@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.8 2003/08/22 05:06:59 itojun Exp $
+#	$NetBSD: majors.vax,v 1.9 2003/10/05 08:04:26 jdolecek Exp $
 #
 # Device majors for vax
 #
@@ -90,3 +90,7 @@ device-major	crypto		char 81			opencrypto
 device-major	ht			 block 1	ht
 device-major	ctu			 block 8	ctu
 device-major	uu			 block 13	uu
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.

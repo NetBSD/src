@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.7 2003/08/22 05:06:54 itojun Exp $
+#	$NetBSD: majors.newsmips,v 1.8 2003/10/05 08:04:25 jdolecek Exp $
 #
 # Device majors for newsmips
 #
@@ -46,3 +46,7 @@ device-major	cgd		char 77  block 33	cgd
 device-major	ksyms		char 78			ksyms
 device-major	pf		char 79			pf
 device-major	crypto		char 80			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.6 2003/08/22 05:06:58 itojun Exp $
+#	$NetBSD: majors.shark,v 1.7 2003/10/05 08:04:26 jdolecek Exp $
 #
 # Device majors for shark
 #
@@ -60,3 +60,7 @@ device-major	systrace	char 85			systrace
 device-major	ksyms		char 86			ksyms
 device-major	pf		char 87			pf
 device-major	crypto		char 88			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.

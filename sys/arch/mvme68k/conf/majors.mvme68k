@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.6 2003/08/22 05:06:53 itojun Exp $
+#	$NetBSD: majors.mvme68k,v 1.7 2003/10/05 08:04:25 jdolecek Exp $
 #
 # Device majors for mvme68k
 #
@@ -40,3 +40,7 @@ device-major	cgd		char 41  block 17	cgd
 device-major	ksyms		char 42			ksyms
 device-major	pf		char 43			pf
 device-major	crypto		char 44			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.

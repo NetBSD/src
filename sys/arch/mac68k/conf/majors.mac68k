@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.6 2003/08/22 05:06:52 itojun Exp $
+#	$NetBSD: majors.mac68k,v 1.7 2003/10/05 08:04:25 jdolecek Exp $
 #
 # Device majors for mac68k
 #
@@ -51,3 +51,7 @@ device-major	cgd		char 51  block 23	cgd
 device-major	ksyms		char 52			ksyms
 device-major	pf		char 53			pf
 device-major	crypto		char 54			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.

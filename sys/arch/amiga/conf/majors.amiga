@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.7 2003/09/22 18:17:31 jandberg Exp $
+#	$NetBSD: majors.amiga,v 1.8 2003/10/05 08:04:24 jdolecek Exp $
 #
 # Device majors for amiga
 #
@@ -58,3 +58,7 @@ device-major	ksyms		char 58			ksyms
 device-major	pf		char 59			pf
 device-major	crypto		char 60			opencrypto
 device-major	wsmouse		char 61			wsmouse
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.
