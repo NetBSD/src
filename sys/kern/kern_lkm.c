@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.61 2002/10/23 09:14:19 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.62 2002/11/05 01:24:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.61 2002/10/23 09:14:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.62 2002/11/05 01:24:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -68,6 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.61 2002/10/23 09:14:19 jdolecek Exp $
 #endif
 
 #include <uvm/uvm_extern.h>
+
+struct vm_map *lkm_map;
+
+#define	LKM_SPACE_ALLOC(size)		uvm_km_alloc(lkm_map, (size))
+#define	LKM_SPACE_FREE(addr, size)	uvm_km_free(lkm_map, (addr), (size))
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG
@@ -117,6 +122,17 @@ const struct cdevsw lkm_cdevsw = {
 	lkmopen, lkmclose, noread, nowrite, lkmioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
+
+void
+lkm_init(void)
+{
+	/*
+	 * If machine-dependent code hasn't initialized the lkm_map
+	 * then just use kernel_map.
+	 */
+	if (lkm_map == NULL)
+		lkm_map = kernel_map;
+}
 
 /*ARGSUSED*/
 int
@@ -169,14 +185,14 @@ lkmunreserve()
 #ifdef DDB
 		db_del_symbol_table(curp->private.lkm_any->lkm_name);
 #endif
-		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
+		LKM_SPACE_FREE(curp->syms, curp->sym_size);
 		curp->syms = 0;
 	}
 	/*
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
-		uvm_km_free(kernel_map, curp->area, curp->size);/**/
+		LKM_SPACE_FREE(curp->area, curp->size);
 		curp->area = 0;
 	}
 	lkm_state = LKMS_IDLE;
@@ -263,7 +279,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		 */
 		curp->size = resrvp->size;
 
-		curp->area = uvm_km_alloc(kernel_map, curp->size);/**/
+		curp->area = LKM_SPACE_ALLOC(curp->size);
 
 		curp->offset = 0;		/* load offset */
 
@@ -272,7 +288,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		if (cmd == LMRESERV && resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-			curp->syms = (u_long)uvm_km_alloc(kernel_map, curp->sym_size);/**/
+			curp->syms = (u_long) LKM_SPACE_ALLOC(curp->sym_size);
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms; /* ret symbol addr */
 		} else {
