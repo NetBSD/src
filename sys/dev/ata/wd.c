@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.220.10.5 2004/03/28 08:07:44 jmc Exp $ */
+/*	$NetBSD: wd.c,v 1.220.10.6 2004/03/28 08:13:09 jmc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.5 2004/03/28 08:07:44 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.10.6 2004/03/28 08:13:09 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -351,7 +351,10 @@ wdattach(parent, self, aux)
 	    (u_int64_t)wd->sc_capacity * DEV_BSIZE);
 	printf("%s: %s, %d cyl, %d head, %d sec, "
 	    "%d bytes/sect x %d sectors\n",
-	    self->dv_xname, pbuf, wd->sc_params.atap_cylinders,
+	    self->dv_xname, pbuf,
+	    (wd->sc_flags & WDF_LBA) ? (int)(wd->sc_capacity /
+		(wd->sc_params.atap_heads * wd->sc_params.atap_sectors)) :
+		wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
 	    DEV_BSIZE, wd->sc_capacity);
 
@@ -874,7 +877,9 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = wd->sc_params.atap_heads;
 	lp->d_nsectors = wd->sc_params.atap_sectors;
-	lp->d_ncylinders = wd->sc_params.atap_cylinders;
+	lp->d_ncylinders = (wd->sc_flags & WDF_LBA) ? wd->sc_capacity /
+		(wd->sc_params.atap_heads * wd->sc_params.atap_sectors) :
+		wd->sc_params.atap_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
