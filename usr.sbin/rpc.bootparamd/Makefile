@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/01/05 19:24:07 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.24 2003/01/06 02:26:53 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ LDADD=	-lrpcsvc -lutil
 RPC_SVCFILES=	bootparam_prot_svc.c
 RPC_SVCFLAGS=	-L -m
 RPC_XDIR=	${DESTDIR}/usr/include/rpcsvc/
+
+CPPFLAGS+=	-I${RPC_XDIR}
 
 .include <bsd.rpc.mk>
 .include <bsd.prog.mk>
