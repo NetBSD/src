@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.8 2004/05/07 14:15:11 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.8 2004/05/07 14:15:11 cl Exp $");
 
 #include "xbd.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $");
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
 
 #include <uvm/uvm.h>
 
@@ -68,12 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $");
 #include <machine/events.h>
 
 
-void xbd_attach(struct device *, struct device *, void *);
+static void xbd_attach(struct device *, struct device *, void *);
+static int xbd_detach(struct device *, int);
 
 #if NXBD > 0
 int xbd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(xbd, sizeof(struct xbd_softc),
-    xbd_match, xbd_attach, NULL, NULL);
+    xbd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver xbd_cd;
 #endif
@@ -81,7 +84,7 @@ extern struct cfdriver xbd_cd;
 #if NWD > 0
 int xbd_wd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(wd, sizeof(struct xbd_softc),
-    xbd_wd_match, xbd_attach, NULL, NULL);
+    xbd_wd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver wd_cd;
 #endif
@@ -89,7 +92,7 @@ extern struct cfdriver wd_cd;
 #if NSD > 0
 int xbd_sd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(sd, sizeof(struct xbd_softc),
-    xbd_sd_match, xbd_attach, NULL, NULL);
+    xbd_sd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver sd_cd;
 #endif
@@ -97,7 +100,7 @@ extern struct cfdriver sd_cd;
 #if NCD > 0
 int xbd_cd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(cd, sizeof(struct xbd_softc),
-    xbd_cd_match, xbd_attach, NULL, NULL);
+    xbd_cd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver cd_cd;
 #endif
@@ -175,6 +178,9 @@ static dev_t xbd_cd_cdev_major;
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
+static void	xbd_update_create_kthread(void *);
+static void	xbd_update_kthread(void *);
+static int	xbd_update_handler(void *);
 
 static int	xbdinit(struct xbd_softc *, xen_disk_t *, struct dk_intf *);
 
@@ -239,6 +245,7 @@ int xbddebug = 0;
 #define XBDB_FOLLOW	0x1
 #define XBDB_IO		0x2
 #define XBDB_SETUP	0x4
+#define XBDB_HOTPLUG	0x8
 
 #define IFDEBUG(x,y)		if (xbddebug & (x)) y
 #define DPRINTF(x,y)		IFDEBUG(x, printf y)
@@ -446,15 +453,19 @@ init_interface(void)
 		event_set_handler(_EVENT_BLKDEV, &xbd_response_handler,
 		    NULL, IPL_BIO);
 		hypervisor_enable_event(_EVENT_BLKDEV);
-#if 0
-		event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler,
-		    NULL, IPL_BIO);
-		hypervisor_enable_event(_EVENT_VBD_UPD);
-#endif
 	}
 
 	__insn_barrier();
 	state = STATE_ACTIVE;
+}
+
+static void
+enable_update_events(struct device *self)
+{
+
+	kthread_create(xbd_update_create_kthread, self);
+	event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler, self, IPL_BIO);
+	hypervisor_enable_event(_EVENT_VBD_UPD);
 }
 
 static void
@@ -501,6 +512,52 @@ setup_sysctl(void)
 		diskcookies = pnode;
 }
 
+static struct xbd_attach_args *
+get_xbda(xen_disk_t *xd)
+{
+
+	switch (XEN_MAJOR(xd->device)) {
+#if NSD > 0
+	case XEN_SCSI_DISK0_MAJOR:
+	case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
+	case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
+		if (xd->capacity == 0)
+			return NULL;
+		return &sd_ata;
+	case XEN_SCSI_CDROM_MAJOR:
+		return &cd_ata;
+#endif
+#if NWD > 0
+	case XEN_IDE0_MAJOR:
+	case XEN_IDE1_MAJOR:
+	case XEN_IDE2_MAJOR:
+	case XEN_IDE3_MAJOR:
+	case XEN_IDE4_MAJOR:
+	case XEN_IDE5_MAJOR:
+	case XEN_IDE6_MAJOR:
+	case XEN_IDE7_MAJOR:
+	case XEN_IDE8_MAJOR:
+	case XEN_IDE9_MAJOR:
+		switch (XD_TYPE(xd->info)) {
+		case XD_TYPE_CDROM:
+			return &cd_ata;
+		case XD_TYPE_DISK:
+			if (xd->capacity == 0)
+				return NULL;
+			return &wd_ata;
+		default:
+			return NULL;
+		}
+		break;
+#endif
+	default:
+		if (xd->capacity == 0)
+			return NULL;
+		return &xbd_ata;
+	}
+	return NULL;
+}
+
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
     cfprint_t print)
@@ -545,56 +602,21 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 	MALLOC(vbd_info, xen_disk_t *, MAX_VBDS * sizeof(xen_disk_t),
 	    M_DEVBUF, M_WAITOK);
+	memset(vbd_info, 0, MAX_VBDS * sizeof(xen_disk_t));
 	nr_vbds  = get_vbd_info(vbd_info);
 	if (nr_vbds <= 0)
 		goto out;
 
 	for (i = 0; i < nr_vbds; i++) {
 		xd = &vbd_info[i];
-		switch (XEN_MAJOR(xd->device)) {
-#if NSD > 0
-		case XEN_SCSI_DISK0_MAJOR:
-		case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
-		case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
-			xbda = &sd_ata;
-			break;
-		case XEN_SCSI_CDROM_MAJOR:
-			xbda = &cd_ata;
-			break;
-#endif
-#if NWD > 0
-		case XEN_IDE0_MAJOR:
-		case XEN_IDE1_MAJOR:
-		case XEN_IDE2_MAJOR:
-		case XEN_IDE3_MAJOR:
-		case XEN_IDE4_MAJOR:
-		case XEN_IDE5_MAJOR:
-		case XEN_IDE6_MAJOR:
-		case XEN_IDE7_MAJOR:
-		case XEN_IDE8_MAJOR:
-		case XEN_IDE9_MAJOR:
-			switch (XD_TYPE(xd->info)) {
-			case XD_TYPE_CDROM:
-				xbda = &cd_ata;
-				break;
-			case XD_TYPE_DISK:
-				xbda = &wd_ata;
-				break;
-			default:
-				xbda = NULL;
-				break;
-			}
-			break;
-#endif
-		default:
-			xbda = &xbd_ata;
-			break;
-		}
+		xbda = get_xbda(xd);
 		if (xbda) {
-			xbda->xa_disk = i;
+			xbda->xa_xd = xd;
 			config_found(self, xbda, print);
 		}
 	}
+
+	enable_update_events(self);
 
 	return 0;
 
@@ -657,7 +679,7 @@ xbd_cd_match(struct device *parent, struct cfdata *match, void *aux)
 }
 #endif
 
-void
+static void
 xbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xbd_attach_args *xbda = (struct xbd_attach_args *)aux;
@@ -667,7 +689,7 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
-	xbdinit(xs, &vbd_info[xbda->xa_disk], xbda->xa_dkintf);
+	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
 	if (diskcookies) {
 		/* XXX beware that xs->sc_xd_device is a long */
 		sysctl_createv(NULL, 0, &diskcookies, NULL,
@@ -676,6 +698,33 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 		    NULL, 0, &xs->sc_xd_device, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
+}
+
+static int
+xbd_detach(struct device *dv, int flags)
+{
+	struct	xbd_softc *xs = (struct	xbd_softc *)dv;
+
+	/* 
+	 * Mark disk about to be removed (between now and when the xs
+	 * will be freed).
+	 */
+	xs->sc_shutdown = 1;
+
+	/* And give it some time to settle if it's busy. */
+	if (xs->sc_dksc.sc_dkdev.dk_busy > 0)
+		tsleep(&xs, PWAIT, "xbdetach", hz);
+
+	/* Detach the disk. */
+	disk_detach(&xs->sc_dksc.sc_dkdev);
+
+	/* XXX decrement bufq_users and free? */
+
+	/* XXX no need to remove sysctl nodes since they only exist
+	 * in domain0 and domain0's devices are never removed.
+	 */
+
+	return 0;
 }
 
 int
@@ -723,7 +772,14 @@ xbdstrategy(struct buf *bp)
 
 	DPRINTF_FOLLOW(("xbdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
-	/* XXXrcd: Should we test for (xs != NULL)? */
+
+	if (xs == NULL || xs->sc_shutdown) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
+		biodone(bp);
+		return;
+	}
+
 	dk_strategy(xs->sc_di, &xs->sc_dksc, bp);
 	return;
 }
@@ -734,7 +790,7 @@ xbdsize(dev_t dev)
 	struct xbd_softc *xs = getxbd_softc(dev);
 
 	DPRINTF_FOLLOW(("xbdsize(%d)\n", dev));
-	if (!xs)
+	if (xs == NULL || xs->sc_shutdown)
 		return -1;
 	return dk_size(xs->sc_di, &xs->sc_dksc, dev);
 }
@@ -844,11 +900,34 @@ static void
 xbdresume(void)
 {
 	struct xbdreq *pxr, *xr;
+	struct xbd_softc *xs;
+	struct buf *bp;
 
 	while ((pxr = SIMPLEQ_FIRST(&xbdr_suspended)) != NULL) {
 		DPRINTF(XBDB_IO, ("xbdstart: resuming xbdreq %p for bp %p\n",
 		    pxr, pxr->xr_bp));
-		/* XXXcl: Should check if a previous transfer failed */
+		bp = pxr->xr_bp;
+		xs = getxbd_softc(bp->b_dev);
+		if (xs == NULL || xs->sc_shutdown) {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
+		}
+		if (bp->b_flags & B_ERROR) {
+			pxr->xr_bdone -= pxr->xr_bqueue;
+			pxr->xr_bqueue = 0;
+			if (pxr->xr_bdone == 0) {
+				bp->b_resid = bp->b_bcount;
+				if (pxr->xr_aligned)
+					unmap_align(pxr);
+				PUT_XBDREQ(pxr);
+				if (xs)
+					disk_unbusy(&xs->sc_dksc.sc_dkdev,
+					    (bp->b_bcount - bp->b_resid),
+					    (bp->b_flags & B_READ));
+				biodone(bp);
+			}
+			continue;
+		}
 		while (__predict_true(pxr->xr_bqueue > 0)) {
 			GET_XBDREQ(xr);
 			if (__predict_false(xr == NULL))
@@ -857,7 +936,7 @@ xbdresume(void)
 			fill_ring(xr);
 		}
 		DPRINTF(XBDB_IO, ("xbdstart: resumed xbdreq %p for bp %p\n",
-		    pxr, pxr->xr_bp));
+		    pxr, bp));
 		SIMPLEQ_REMOVE_HEAD(&xbdr_suspended, xr_suspended);
 	}
 
@@ -879,8 +958,15 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	runqueue = 1;
 	ret = -1;
 
-	GETXBD_SOFTC(xs, bp->b_dev);
+	xs = getxbd_softc(bp->b_dev);
+	if (xs == NULL || xs->sc_shutdown) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
+		biodone(bp);
+		return 0;
+	}
 	dksc = &xs->sc_dksc;
+
 	/* XXXrcd:
 	 * Translate partition relative blocks to absolute blocks,
 	 * this probably belongs (somehow) in dksubr.c, since it
@@ -958,11 +1044,8 @@ xbd_response_handler(void *arg)
 	struct xbd_softc *xs;
 	blk_ring_resp_entry_t *ring_resp;
 	struct xbdreq *pxr, *xr;
-	int i, s;
+	int i;
 
-	s = splbio();
-	if (s != IPL_BIO)
-		printf("xbd_response_handler: called at %d != IPL_BIO\n", s);
 	for (i = resp_cons; i != blk_ring->resp_prod; i = BLK_RING_INC(i)) {
 		ring_resp = &blk_ring->ring[MASK_BLK_IDX(i)].resp;
 		xr = (struct xbdreq *)ring_resp->id;
@@ -989,6 +1072,10 @@ xbd_response_handler(void *arg)
 		if (pxr->xr_bdone == 0) {
 			bp = pxr->xr_bp;
 			xs = getxbd_softc(bp->b_dev);
+			if (xs == NULL) { /* don't fail bp if we're shutdown */
+				bp->b_flags |= B_ERROR;
+				bp->b_error = EIO;
+			}
 			DPRINTF(XBDB_IO, ("xbd_response_handler(%d): "
 			    "completed bp %p\n", i, bp));
 			if (bp->b_flags & B_ERROR)
@@ -1000,20 +1087,139 @@ xbd_response_handler(void *arg)
 				unmap_align(pxr);
 
 			PUT_XBDREQ(pxr);
-			disk_unbusy(&xs->sc_dksc.sc_dkdev,
-			    (bp->b_bcount - bp->b_resid),
-			    (bp->b_flags & B_READ));
+			if (xs)
+				disk_unbusy(&xs->sc_dksc.sc_dkdev,
+				    (bp->b_bcount - bp->b_resid),
+				    (bp->b_flags & B_READ));
 			biodone(bp);
 			if (!SIMPLEQ_EMPTY(&xbdr_suspended))
 				xbdresume();
-			dk_iodone(xs->sc_di, &xs->sc_dksc);
+			/* XXX possible lockup if this was the only
+			 * active device and requests were held back in
+			 * the queue.
+			 */
+			if (xs)
+				dk_iodone(xs->sc_di, &xs->sc_dksc);
 		}
 	}
 	resp_cons = i;
 	/* check if xbdresume queued any requests */
 	if (blk_ring->req_prod != req_prod)
 		signal_requests_to_xen();
-	splx(s);
+	return 0;
+}
+
+static struct device *
+find_device(xen_disk_t *xd)
+{
+	struct device *dv;
+	struct xbd_softc *xs;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_cfattach == NULL ||
+		    dv->dv_cfattach->ca_attach != xbd_attach)
+			continue;
+		xs = (struct xbd_softc *)dv;
+		if (xs->sc_xd_device == xd->device)
+			break;
+	}
+	return dv;
+}
+
+static void
+xbd_update_create_kthread(void *arg)
+{
+
+	kthread_create1(xbd_update_kthread, arg, NULL, "xbdupdate");
+}
+
+static void
+xbd_update_kthread(void *arg)
+{
+	struct device *parent = arg;
+	struct xbd_attach_args *xbda;
+	struct device *dev;
+	xen_disk_t *xd;
+	xen_disk_t *vbd_info_update, *vbd_info_old;
+	int i, j, new_nr_vbds;
+	extern int hypervisor_print(void *, const char *);
+
+	MALLOC(vbd_info_update, xen_disk_t *, MAX_VBDS *
+	    sizeof(xen_disk_t), M_DEVBUF, M_WAITOK);
+
+	for (;;) {
+		memset(vbd_info_update, 0, MAX_VBDS * sizeof(xen_disk_t));
+		new_nr_vbds  = get_vbd_info(vbd_info_update);
+
+		if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
+		    sizeof(xen_disk_t)) == 0) {
+			FREE(vbd_info_update, M_DEVBUF);
+			tsleep(parent, PWAIT, "xbdupd", 0);
+			MALLOC(vbd_info_update, xen_disk_t *, MAX_VBDS *
+			    sizeof(xen_disk_t), M_DEVBUF, M_WAITOK);
+			continue;
+		}
+
+		j = 0;
+		for (i = 0; i < new_nr_vbds; i++) {
+			while (j < nr_vbds &&
+			    vbd_info[j].device < vbd_info_update[i].device) {
+				DPRINTF(XBDB_HOTPLUG,
+				    ("delete device %x size %lx\n",
+					vbd_info[j].device,
+					vbd_info[j].capacity));
+				xd = &vbd_info[j];
+				dev = find_device(xd);
+				if (dev)
+					config_detach(dev, DETACH_FORCE);
+				j++;
+			}
+			if (j < nr_vbds &&
+			    vbd_info[j].device == vbd_info_update[i].device) {
+				DPRINTF(XBDB_HOTPLUG,
+				    ("update device %x size %lx size %lx\n",
+					vbd_info_update[i].device,
+					vbd_info[j].capacity,
+					vbd_info_update[i].capacity));
+				j++;
+			} else {
+				DPRINTF(XBDB_HOTPLUG,
+				    ("add device %x size %lx\n",
+					vbd_info_update[i].device,
+					vbd_info_update[i].capacity));
+				xd = &vbd_info_update[i];
+				xbda = get_xbda(xd);
+				if (xbda) {
+					xbda->xa_xd = xd;
+					config_found(parent, xbda, hypervisor_print);
+				}
+			}
+		}
+
+		while (j < nr_vbds) {
+			DPRINTF(XBDB_HOTPLUG, ("delete device %x\n",
+			    vbd_info[j].device));
+			xd = &vbd_info[j];
+			dev = find_device(xd);
+			if (dev)
+				config_detach(dev, DETACH_FORCE);
+			j++;
+		}
+
+		nr_vbds = new_nr_vbds;
+
+		vbd_info_old = vbd_info;
+		vbd_info = vbd_info_update;
+		vbd_info_update = vbd_info_old;
+	}
+}
+
+static int
+xbd_update_handler(void *arg)
+{
+
+	wakeup(arg);
+
 	return 0;
 }
 
@@ -1108,6 +1314,7 @@ xbdinit(struct xbd_softc *xs, xen_disk_t *xd, struct dk_intf *dkintf)
 	xs->sc_dksc.sc_size = xd->capacity;
 	xs->sc_xd_device = xd->device;
 	xs->sc_di = dkintf;
+	xs->sc_shutdown = 0;
 
 	/*
 	 * XXX here we should probe the underlying device.  If we
@@ -1132,9 +1339,10 @@ xbdinit(struct xbd_softc *xs, xen_disk_t *xd, struct dk_intf *dkintf)
 	 * XXX we reference count the usage in case so we can de-alloc
 	 *     the bufq if all devices are deconfigured.
 	 */
-	if (bufq_users == 0)
+	if (bufq_users == 0) {
 		bufq_alloc(&bufq, BUFQ_FCFS);
-	bufq_users++;
+		bufq_users = 1;
+	}
 	memcpy(&xs->sc_dksc.sc_bufq, &bufq, sizeof(struct bufq_state));
 
 	xs->sc_dksc.sc_flags |= DKF_INITED;
