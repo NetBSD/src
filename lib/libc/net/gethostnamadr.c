@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.3 1993/08/26 00:45:49 jtc Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.4 1994/01/28 03:10:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,18 +47,27 @@ static char *rcsid = "$Id: gethostnamadr.c,v 1.3 1993/08/26 00:45:49 jtc Exp $";
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
+#endif
 
 #define	MAXALIASES	35
 #define	MAXADDRS	35
 
 static char *h_addr_ptrs[MAXADDRS + 1];
 
+#ifdef YP
+static char *__ypdomain;
+#endif
+
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
 static char hostbuf[BUFSIZ+1];
 static struct in_addr host_addr;
 static FILE *hostf = NULL;
-static char hostaddr[MAXADDRS];
+static u_long hostaddr[MAXADDRS];
 static char *host_addrs[2];
 static int stayopen = 0;
 char *strpbrk();
@@ -233,8 +242,10 @@ gethostbyname(name)
 {
 	querybuf buf;
 	register char *cp;
-	int n;
-	extern struct hostent *_gethtbyname();
+	int n, i;
+	extern struct hostent *_gethtbyname(), *_yp_gethtbyname();
+	register struct hostent *hp;
+	char lookups[MAXDNSLUS];
 
 	/*
 	 * disallow names consisting only of digits/dots, unless
@@ -274,17 +285,40 @@ gethostbyname(name)
 				break;
 		}
 
-	if ((n = res_search(name, C_IN, T_A, buf.buf, sizeof(buf))) < 0) {
-#ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_search failed\n");
-#endif
-		if (errno == ECONNREFUSED)
-			return (_gethtbyname(name));
-		else
-			return ((struct hostent *) NULL);
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return (_gethtbyname(name));
+
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0') {
+		lookups[0] = 'b';
+		lookups[1] = 'f';
 	}
-	return (getanswer(&buf, n, 0));
+
+	hp = (struct hostent *)NULL;
+	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+#ifdef YP
+		case 'y':
+			hp = _yp_gethtbyname(name);
+			break;
+#endif
+		case 'b':
+			if ((n = res_search(name, C_IN, T_A, buf.buf,
+			    sizeof(buf))) < 0) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG)
+					printf("res_search failed\n");
+#endif
+				break;
+			}
+			hp = getanswer(&buf, n, 0);
+			break;
+		case 'f':
+			hp = _gethtbyname(name);
+			break;
+		}
+	}
+	return (hp);
 }
 
 struct hostent *
@@ -292,11 +326,12 @@ gethostbyaddr(addr, len, type)
 	const char *addr;
 	int len, type;
 {
-	int n;
+	int n, i;
 	querybuf buf;
 	register struct hostent *hp;
 	char qbuf[MAXDNAME];
-	extern struct hostent *_gethtbyaddr();
+	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
+	char lookups[MAXDNSLUS];
 	
 	if (type != AF_INET)
 		return ((struct hostent *) NULL);
@@ -305,28 +340,51 @@ gethostbyaddr(addr, len, type)
 		((unsigned)addr[2] & 0xff),
 		((unsigned)addr[1] & 0xff),
 		((unsigned)addr[0] & 0xff));
-	n = res_query(qbuf, C_IN, T_PTR, (char *)&buf, sizeof(buf));
-	if (n < 0) {
-#ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
-#endif
-		if (errno == ECONNREFUSED)
-			return (_gethtbyaddr(addr, len, type));
-		return ((struct hostent *) NULL);
+
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return (_gethtbyaddr(addr, len, type));
+
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0') {
+		lookups[0] = 'b';
+		lookups[1] = 'f';
 	}
-	hp = getanswer(&buf, n, 1);
-	if (hp == NULL)
-		return ((struct hostent *) NULL);
-	hp->h_addrtype = type;
-	hp->h_length = len;
-	h_addr_ptrs[0] = (char *)&host_addr;
-	h_addr_ptrs[1] = (char *)0;
-	host_addr = *(struct in_addr *)addr;
-#if BSD < 43 && !defined(h_addr)	/* new-style hostent structure */
-	hp->h_addr = h_addr_ptrs[0];
+
+	hp = (struct hostent *)NULL;
+	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+#ifdef YP
+		case 'y':
+			hp = _yp_gethtbyaddr(addr, len, type);
+			break;
 #endif
-	return(hp);
+		case 'b':
+			n = res_query(qbuf, C_IN, T_PTR, (char *)&buf, sizeof(buf));
+			if (n < 0) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG)
+					printf("res_query failed\n");
+#endif
+				break;
+			}
+			hp = getanswer(&buf, n, 1);
+			if (hp == NULL)
+				break;
+			hp->h_addrtype = type;
+			hp->h_length = len;
+			h_addr_ptrs[0] = (char *)&host_addr;
+			h_addr_ptrs[1] = (char *)0;
+			host_addr = *(struct in_addr *)addr;
+#if BSD < 43 && !defined(h_addr)	/* new-style hostent structure */
+			hp->h_addr = h_addr_ptrs[0];
+#endif
+			break;
+		case 'f':
+			hp = _gethtbyaddr(addr, len, type);
+			break;
+		}
+	}
+	return (hp);
 }
 
 _sethtent(f)
@@ -372,7 +430,7 @@ again:
 #if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 	host.h_addr_list = host_addrs;
 #endif
-	host.h_addr = hostaddr;
+	host.h_addr = (char *)hostaddr;
 	*((u_long *)host.h_addr) = inet_addr(p);
 	host.h_length = sizeof (u_long);
 	host.h_addrtype = AF_INET;
@@ -432,3 +490,133 @@ _gethtbyaddr(addr, len, type)
 	_endhtent();
 	return (p);
 }
+
+#ifdef YP
+struct hostent *
+_yphostent(line)
+	char *line;
+{
+	static struct hostent host;
+	char *p = line;
+	char *cp, **q;
+	char **hap;
+	u_long *buf;
+	int more;
+
+	host.h_name = NULL;
+#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
+	host.h_addr_list = h_addr_ptrs;
+#endif
+	host.h_addr = (char *)hostaddr;
+	host.h_length = sizeof (u_long);
+	host.h_addrtype = AF_INET;
+	hap = h_addr_ptrs;
+	buf = hostaddr;
+	q = host.h_aliases = host_aliases;
+
+nextline:
+	more = 0;
+	cp = strpbrk(p, " \t");
+	if (cp == NULL) {
+		if (host.h_name == NULL)
+			return (NULL);
+		else
+			return (&host);
+	}
+	*cp++ = '\0';
+
+	*hap++ = (char *)buf;
+	*buf++ = inet_addr(p);
+
+	while (*cp == ' ' || *cp == '\t')
+		cp++;
+	p = cp;
+	cp = strpbrk(p, " \t\n");
+	if (cp != NULL) {
+		if (*cp == '\n')
+			more = 1;
+		*cp++ = '\0';
+	}
+	if (!host.h_name)
+		host.h_name = p;
+	else if (q < &host_aliases[MAXALIASES - 1])
+		*q++ = p;
+	p = cp;
+	if (more)
+		goto nextline;
+
+	while (cp && *cp) {
+		if (*cp == ' ' || *cp == '\t') {
+			cp++;
+			continue;
+		}
+		if (*cp == '\n') {
+			cp++;
+			goto nextline;
+		}
+		if (q < &host_aliases[MAXALIASES - 1])
+			*q++ = cp;
+		cp = strpbrk(cp, " \t");
+		if (cp != NULL)
+			*cp++ = '\0';
+	}
+	*q = NULL;
+#if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
+	*hap = NULL;
+#else
+	host.h_addr = h_addr_ptrs[0];
+#endif
+	return (&host);
+}
+
+struct hostent *
+_yp_gethtbyaddr(addr, len, type)
+	const char *addr;
+	int len, type;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	sprintf(name, "%u.%u.%u.%u",
+		((unsigned)addr[0] & 0xff),
+		((unsigned)addr[1] & 0xff),
+		((unsigned)addr[2] & 0xff),
+		((unsigned)addr[3] & 0xff));
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byaddr", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	return (hp);
+}
+
+struct hostent *
+_yp_gethtbyname(name)
+	const char *name;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byname", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	return (hp);
+}
+#endif
