@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.8 2000/10/07 01:14:24 itojun Exp $
+#	$NetBSD: mi,v 1.231.2.9 2000/10/15 18:34:49 perry Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2566,6 +2566,8 @@
 ./usr/share/man/cat3/strsignal.0	comp-c-catman
 ./usr/share/man/cat3/strspn.0	comp-c-catman
 ./usr/share/man/cat3/strstr.0	comp-c-catman
+./usr/share/man/cat3/strsvis.0	comp-c-catman
+./usr/share/man/cat3/strsvisx.0	comp-c-catman
 ./usr/share/man/cat3/strtod.0	comp-c-catman
 ./usr/share/man/cat3/strtok.0	comp-c-catman
 ./usr/share/man/cat3/strtok_r.0	comp-c-catman
@@ -2619,6 +2621,7 @@
 ./usr/share/man/cat3/svcraw_create.0	comp-c-catman
 ./usr/share/man/cat3/svctcp_create.0	comp-c-catman
 ./usr/share/man/cat3/svcudp_bufcreate.0	comp-c-catman
+./usr/share/man/cat3/svis.0	comp-c-catman
 ./usr/share/man/cat3/swab.0	comp-c-catman
 ./usr/share/man/cat3/swapon.0	comp-c-catman
 ./usr/share/man/cat3/sys_siglist.0	comp-c-catman
@@ -4262,6 +4265,8 @@
 ./usr/share/man/man3/strsignal.3		comp-c-man
 ./usr/share/man/man3/strspn.3		comp-c-man
 ./usr/share/man/man3/strstr.3		comp-c-man
+./usr/share/man/man3/strsvis.3		comp-c-man
+./usr/share/man/man3/strsvisx.3		comp-c-man
 ./usr/share/man/man3/strtod.3		comp-c-man
 ./usr/share/man/man3/strtok.3		comp-c-man
 ./usr/share/man/man3/strtok_r.3		comp-c-man
@@ -4315,6 +4320,7 @@
 ./usr/share/man/man3/svcraw_create.3		comp-c-man
 ./usr/share/man/man3/svctcp_create.3		comp-c-man
 ./usr/share/man/man3/svcudp_bufcreate.3		comp-c-man
+./usr/share/man/man3/svis.3		comp-c-man
 ./usr/share/man/man3/swab.3		comp-c-man
 ./usr/share/man/man3/swapon.3		comp-c-man
 ./usr/share/man/man3/sys_siglist.3		comp-c-man
