@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/04/12 04:30:35 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/04/28 15:55:51 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -111,8 +111,6 @@ int	safepri = MIPS1_PSL_LOWIPL;
 
 extern caddr_t esym;
 extern struct user *proc0paddr;
-
-static int cobalt_hardware_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -242,8 +240,6 @@ mach_init(memsize)
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
-
-	mips_hardware_intr = cobalt_hardware_intr;
 
 	pmap_bootstrap();
 }
@@ -490,17 +486,22 @@ cpu_intr_establish(level, ipl, func, arg)
 	return (void *)-1;
 }
 
-static int
-cobalt_hardware_intr(mask, pc, status, cause)
-	u_int32_t mask;
-	u_int32_t pc;
+void cpu_intr (u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
+void
+cpu_intr(status, cause, pc, ipending)
 	u_int32_t status;
 	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
 {
 	struct clockframe cf;
 	static u_int32_t cycles;
+	int i;
 
-	if (cause & MIPS_INT_MASK_0) {
+	uvmexp.intrs++;
+
+	if (ipending & MIPS_INT_MASK_0) {
 		volatile u_int32_t *irq_src =
 				(u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000c18);
 
@@ -515,41 +516,40 @@ cobalt_hardware_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
-	if (cause & MIPS_INT_MASK_5) {
+	for (i = 0; i < 5; i++) {
+		if (ipending & (MIPS_INT_MASK_0 << i))
+			if (intrtab[i].func != NULL)
+				if ((*intrtab[i].func)(intrtab[i].arg))
+					cause &= ~(MIPS_INT_MASK_0 << i);
+	}
+
+	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cycle_count();
 		mips3_write_compare(cycles + 1250000);	/* XXX */
 
+#if 0
 		cf.pc = pc;
 		cf.sr = status;
-#if 0
+
 		statclock(&cf);
 #endif
 		cause &= ~MIPS_INT_MASK_5;
 	}
 
-	if (cause & MIPS_INT_MASK_1) {
-		if (intrtab[1].func != NULL)
-			if ((*intrtab[1].func)(intrtab[1].arg))
-				cause &= ~MIPS_INT_MASK_1;
+	/* 'softnet' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_1) {
+		clearsoftnet();
+		uvmexp.softs++;
+		netintr();
 	}
 
-	if (cause & MIPS_INT_MASK_2) {
-		if (intrtab[2].func != NULL)
-			if ((*intrtab[2].func)(intrtab[2].arg))
-				cause &= ~MIPS_INT_MASK_2;
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		clearsoftclock();
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
 	}
 
-	if (cause & MIPS_INT_MASK_3) {
-		if (intrtab[3].func != NULL)
-			if ((*intrtab[3].func)(intrtab[3].arg))
-				cause &= ~MIPS_INT_MASK_3;
-	}
-
-	if (cause & MIPS_INT_MASK_4) {
-		if (intrtab[4].func != NULL)
-			if ((*intrtab[4].func)(intrtab[4].arg))
-				cause &= ~MIPS_INT_MASK_4;
-	}
-
-	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
