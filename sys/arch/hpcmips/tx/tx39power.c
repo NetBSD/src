@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.2 1999/12/07 17:11:05 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.3 1999/12/12 17:06:22 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -136,6 +136,11 @@ tx39power_attach(parent, self, aux)
 	 * enable stop timer
 	 */
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
+
+	reg &= ~(TX39_POWERCTRL_STPTIMERVAL_MASK <<
+		 TX39_POWERCTRL_STPTIMERVAL_SHIFT);
+	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg, 1);
+
 	reg |= TX39_POWERCTRL_ENSTPTIMER;
 	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
 
