@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.4.1 2002/06/20 02:52:11 lukem Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.4.2 2002/06/20 02:53:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -95,6 +95,8 @@ cpu_probe_cache(void)
 	case MPC603e:
 	case MPC603ev:
 	case MPC604:
+	case MPC8240:
+	case MPC8245:
 		curcpu()->ci_ci.dcache_size = 16 K;
 		curcpu()->ci_ci.icache_size = 16 K;
 		assoc = 4;
@@ -118,7 +120,7 @@ cpu_probe_cache(void)
 	/*
 	 * Possibly recolor.
 	 */
-        uvm_page_recolor(atop(curcpu()->ci_ci.dcache_line_size / assoc));
+	uvm_page_recolor(atop(curcpu()->ci_ci.dcache_size / assoc));
 }
 
 struct cpu_info *
@@ -195,6 +197,8 @@ cpu_attach_common(struct device *self, int id)
 	case MPC750:
 	case MPC7400:
 	case MPC7410:
+	case MPC8240:
+	case MPC8245:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -342,6 +346,7 @@ static const struct cputab models[] = {
 	{ MPC7450,   "7450" },
 	{ MPC7455,   "7455" },
 	{ MPC8240,   "8240" },
+	{ MPC8245,   "8245" },
 	{ 0,	       NULL }
 };
 
