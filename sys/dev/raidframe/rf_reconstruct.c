@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.82 2005/02/05 23:32:43 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.83 2005/02/05 23:39:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.82 2005/02/05 23:32:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.83 2005/02/05 23:39:12 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -639,8 +639,6 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	while (reconDesc->numDisksDone < raidPtr->numCol - 1) {
 		
 		event = rf_GetNextReconEvent(reconDesc);
-		RF_ASSERT(event);
-
 		status = ProcessReconEvent(raidPtr, event);
 
 		/* the normal case is that a read completes, and all is well. */
@@ -711,9 +709,8 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	while (!recon_error && rf_UnitsLeftToReconstruct(raidPtr->reconControl->reconMap) > 0) {
 		
 		event = rf_GetNextReconEvent(reconDesc);
-		RF_ASSERT(event);
-
 		status = ProcessReconEvent(raidPtr, event);
+
 		if (status == RF_RECON_WRITE_ERROR) {
 			recon_error = 1;
 			raidPtr->reconControl->error = 1; 
@@ -765,6 +762,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		if (!write_error) {
 			/* wait for writes to complete */
 			while (raidPtr->reconControl->pending_writes > 0) {
+
 				event = rf_GetNextReconEvent(reconDesc);
 				status = ProcessReconEvent(raidPtr, event);
 
