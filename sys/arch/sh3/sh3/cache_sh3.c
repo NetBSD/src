@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.6 2002/05/10 15:28:45 uch Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.7 2002/11/08 14:58:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
 	/* operate for each way */
 	for (way = 0; way < n; way++) {
 		cca = (SH3_CCA | way << sh_cache_way_shift | va);
-		_reg_write_4(cca, _reg_read_4(cca) & ~bits);
+		_reg_bclr_4(cca, bits);
 	}
 }
 
