@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.61 1999/07/07 06:02:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.62 1999/07/07 21:04:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2520,6 +2520,11 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			case PGO_FREE:
+				/* XXX skip the page if it's wired */
+				if (pg->wire_count != 0) {
+					simple_unlock(&anon->an_lock);
+					continue;
+				}
 				amap_unadd(&entry->aref, offset);
 				refs = --anon->an_ref;
 				simple_unlock(&anon->an_lock);
