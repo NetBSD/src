@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.23 2001/07/30 10:17:41 wiz Exp $ */
+/* $NetBSD: test.c,v 1.24 2001/09/16 19:03:26 wiz Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.23 2001/07/30 10:17:41 wiz Exp $");
+__RCSID("$NetBSD: test.c,v 1.24 2001/09/16 19:03:26 wiz Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -196,15 +196,15 @@ int testcmd(int, char **);
 int
 testcmd(int argc, char **argv)
 #else
-int main(int, char **);
+int main(int, char *[]);
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 #endif
 {
-	int	res;
+	int res;
 
-
+	setprogname(argv[0]);
 	if (strcmp(argv[0], "[") == 0) {
 		if (strcmp(argv[--argc], "]"))
 			error("missing ]");
@@ -400,7 +400,9 @@ filstat(char *nm, enum token mode)
 static enum token
 t_lex(char *s)
 {
-	struct t_op const *op = ops;
+	struct t_op const *op;
+
+	op = ops;
 
 	if (s == 0) {
 		t_wp_op = (struct t_op *)0;
@@ -423,10 +425,10 @@ t_lex(char *s)
 static int
 isoperand(void)
 {
-	struct t_op const *op = ops;
-	char *s;
-	char *t;
+	struct t_op const *op;
+	char *s, *t;
 
+	op = ops;
 	if ((s  = *(t_wp+1)) == 0)
 		return 1;
 	if ((t = *(t_wp+2)) == 0)
