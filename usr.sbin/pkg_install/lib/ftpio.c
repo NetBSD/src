@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.47 2002/10/26 14:43:43 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.48 2002/12/06 15:15:29 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.47 2002/10/26 14:43:43 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.48 2002/12/06 15:15:29 thorpej Exp $");
 #endif
 
 /*
@@ -661,16 +661,16 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		/* Verify if the url is really ok */
-		char exp[FILENAME_MAX];
+		char expnd[FILENAME_MAX];
 
-		rc=expandURL(exp, url);
+		rc=expandURL(expnd, url);
 		if (rc == -1) {
 			warnx("unpackURL: verification expandURL failed");
 			return -1;
 		}
-		if (strcmp(exp, url) != 0) {
+		if (strcmp(expnd, url) != 0) {
 			warnx("unpackURL: verification expandURL failed, '%s'!='%s'",
-			      exp, url);
+			      expnd, url);
 			return -1;
 		}
 	}
