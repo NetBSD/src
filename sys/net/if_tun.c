@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.36 1998/11/30 21:43:11 sommerfe Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.37 1999/03/04 02:38:31 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -556,7 +556,8 @@ tunwrite(dev, uio, ioflag)
 	}
 
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
-		TUNDEBUG("%s: len=%d!\n", ifp->if_xname, uio->uio_resid);
+		TUNDEBUG("%s: len=%lu!\n", ifp->if_xname,
+		    (unsigned long)uio->uio_resid);
 		return (EIO);
 	}
 
