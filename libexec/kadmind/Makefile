@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:41 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/03 04:09:28 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kadmin
 
@@ -9,7 +9,8 @@ PROG= kadmind
 
 SRCS= 	kadmind.c				\
 	server.c				\
-	version4.c
+	version4.c				\
+	kadm_conn.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kadmin		\
@@ -34,6 +35,7 @@ LDADD=	-lkadm5srv				\
 	-lcrypto				\
 	-lasn1					\
 	-lcom_err				\
+	-lvers					\
 	-lroken					\
 	-lcrypt
 
