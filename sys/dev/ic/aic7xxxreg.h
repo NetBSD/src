@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxreg.h,v 1.4 1996/10/08 03:04:04 gibbs Exp $	*/
+/*	$NetBSD: aic7xxxreg.h,v 1.4.4.1 1997/03/12 21:22:19 is Exp $	*/
 
 /*
  * Aic7xxx register and scratch ram definitions.
@@ -36,7 +36,7 @@
 /*
  * This header is shared by the sequencer code and the kernel level driver.
  *
- * All page numbers refer to the Adaptec AIC-7770 Data Book availible from
+ * All page numbers refer to the Adaptec AIC-7770 Data Book available from
  * Adaptec's Technical Documents Department 1-800-934-2766
  */
 
@@ -106,7 +106,7 @@
 #define		P_STATUS	0xc0
 #define		P_MESGIN	0xe0
 /*
- * SCSI Contol Signal Write Register (p. 3-16).
+ * SCSI Control Signal Write Register (p. 3-16).
  * Writing to this register modifies the control signals on the bus.  Only
  * those signals that are allowed in the current mode (Initiator/Target) are
  * asserted.
@@ -144,18 +144,18 @@
 
 /*
  * SCSI Latched Data (p. 3-19).
- * Read/Write latchs used to transfer data on the SCSI bus during
+ * Read/Write latches used to transfer data on the SCSI bus during
  * Automatic or Manual PIO mode.  SCSIDATH can be used for the
- * upper byte of a 16bit wide asyncronouse data phase transfer.
+ * upper byte of a 16bit-wide asynchronous data phase transfer.
  */
 #define SCSIDATL		0x006
 #define SCSIDATH		0x007
 
 /*
  * SCSI Transfer Count (pp. 3-19,20)
- * These registers count down the number of bytes transfered
+ * These registers count down the number of bytes transferred
  * across the SCSI bus.  The counter is decremented only once
- * the data has been safely transfered.  SDONE in SSTAT0 is
+ * the data has been safely transferred.  SDONE in SSTAT0 is
  * set when STCNT goes to 0
  */ 
 #define STCNT			0x008
@@ -246,7 +246,7 @@
  * transfered on the SCSI bus.  They are counted up in the same
  * manner as STCNT is counted down.  SHADDR should always be used
  * to determine the address of the last byte transfered since HADDR
- * can be squewed by write ahead.
+ * can be skewed by write-ahead.
  */
 #define	SHADDR			0x014
 #define	SHADDR0			0x014
@@ -331,7 +331,7 @@
 /*
  * Host Address (p. 3-48)
  * This register contains the address of the byte about
- * to be transfered across the host bus.
+ * to be transferred across the host bus.
  */
 #define HADDR			0x088
 #define HADDR0			0x088
@@ -386,7 +386,7 @@
 
 /*
  * Host Control (p. 3-47) R/W
- * Overal host control of the device.
+ * Overall host control of the device.
  */
 #define HCNTRL			0x087
 /*    UNUSED			0x80 */
@@ -522,7 +522,7 @@
  * The two reserved bytes at SCBARRAY+1[23] are expected to be set to
  * zero. Bit 3 in SCBARRAY+0 is used as an internal flag to indicate
  * whether or not to DMA an SCB from host ram. This flag prevents the
- * "re-fetching" of transactions that are requed because the target is
+ * "re-fetching" of transactions that are requeued because the target is
  * busy with another command. We also use bits 6 & 7 to indicate whether
  * or not to initiate SDTR or WDTR repectively when starting this command.
  */
@@ -645,7 +645,7 @@
 #define TARG_SCRATCH		0x020
 
 /*
- * The sequencer will stick the frist byte of any rejected message here so
+ * The sequencer will stick the first byte of any rejected message here so
  * we can see what is getting thrown away.  Extended messages put the
  * extended message type in REJBYTE_EXT.
  */
@@ -704,7 +704,7 @@
 					 * this card.
 					 */
 #define	COMP_SCBCOUNT		0x048	/*
-					 * Two's compliment of SCBCOUNT
+					 * Two's complement of SCBCOUNT
 					 */
 #define QCNTMASK		0x049	/*
 					 * Mask of bits to test against

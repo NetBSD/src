@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.12 1996/12/22 10:10:29 cgd Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.12.6.1 1997/03/12 21:24:26 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,7 @@ umapfs_mount(mp, path, data, ndp, p)
 #endif
 
 	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
-	    2*sizeof(u_long)*args.nentries);
+	    2*sizeof(u_long)*args.gnentries);
 	if (error)
 		return (error);
 
@@ -199,7 +199,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, makefstype(MOUNT_LOFS));
+	getnewfsid(mp, makefstype(MOUNT_UMAP));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);

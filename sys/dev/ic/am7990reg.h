@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.1.8.1 1997/03/12 21:22:27 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -91,8 +91,8 @@ struct leinit {
 #define	LE_INITADDR(sc)		(sc->sc_initaddr)
 #define	LE_RMDADDR(sc, bix)	(sc->sc_rmdaddr + sizeof(struct lermd) * (bix))
 #define	LE_TMDADDR(sc, bix)	(sc->sc_tmdaddr + sizeof(struct letmd) * (bix))
-#define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr + LEBLEN * (bix))
-#define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr + LEBLEN * (bix))
+#define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr[bix])
+#define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr[bix])
 
 /* register addresses */
 #define	LE_CSR0		0x0000		/* Control and status register */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.42 1997/02/04 05:08:46 perry Exp $
+#	$NetBSD: Makefile.pmax,v 1.42.4.1 1997/03/12 21:17:43 is Exp $
 
 # Makefile for NetBSD
 #
@@ -40,14 +40,14 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpmax ${GP}
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 STRIPFLAGS=	-d
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
+HOSTED_CFLAGS=	${CFLAGS:S/-mno-abicalls//:S/-mno-half-pic//}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

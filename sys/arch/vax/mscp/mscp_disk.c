@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.8 1997/01/31 02:13:00 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.8.4.1 1997/03/12 21:19:34 is Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -120,7 +120,7 @@ struct	mscp_device ra_device = {
 #define	raminor(u, p)	(((u) << UNITSHIFT) | (p))
 
 struct	cfdriver ra_cd = {
-	NULL, "ra", DV_DULL
+	NULL, "ra", DV_DISK
 };
 
 struct	cfattach ra_ca = {

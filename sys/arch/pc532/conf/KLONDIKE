@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.10 1997/01/31 01:57:10 thorpej Exp $
+#	$NetBSD: KLONDIKE,v 1.10.2.1 1997/03/12 21:15:37 is Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -17,18 +17,21 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 #options	SHMMAXPGS=1024
 options		LKM			# loadable kernel modules
 options		INSECURE		# allow lkms in multiuser mode
+options		PFIL_HOOKS		# pfil(9) packet filter hooks
 
 # compatibility options
 options		COMPAT_43		# 4.3 system calls
 
 # file system options
-file-system 	FFS			# Berkeley fast file system
+file-system	FFS			# Berkeley fast file system
 #file-system	LFS			# log-structered file system
-file-system 	MFS			# memory file system; uses RAM and swap
-file-system 	FDESC			# /dev/fd
-file-system 	KERNFS			# /kern
-file-system 	PROCFS			# /proc
-file-system 	NFS			# Network File System client
+file-system	MFS			# memory file system; uses RAM and swap
+file-system	UNION
+file-system	NULLFS
+file-system	FDESC			# /dev/fd
+file-system	KERNFS			# /kern
+file-system	PROCFS			# /proc
+file-system	NFS			# Network File System client
 
 options		FIFO			# fifos; recommended
 options		NFSSERVER		# Network File System server

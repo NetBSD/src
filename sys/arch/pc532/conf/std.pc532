@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.2 1996/12/23 08:36:46 matthias Exp $
+#	$NetBSD: std.pc532,v 1.2.4.1 1997/03/12 21:15:48 is Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -8,7 +8,25 @@ mainbus0 	at root
 #clock0 	at mainbus0
 ncr0		at mainbus0		# SCSI driver
 scsibus0	at ncr0 		# SCSI bus
+#aic0		at mainbus0
+#scsibus1	at aic0
 scn*		at mainbus0
+#XXX Wildcards don't work with holes at the moment,
+#XXX so we do a config for every channel.
+#XXX The following is better, but still wrong:
+#scn*		at mainbus0
+#XXX It should look like:
+#scn*		at mainbus0
+#scntty*	at scn? channel?
+scn0		at mainbus? flags 0x1 # addr 0x28000000
+scn1		at mainbus? flags 0x0 # addr 0x28000008
+scn2		at mainbus? flags 0x0 # addr 0x28000010
+scn3		at mainbus? flags 0x0 # addr 0x28000018
+scn4		at mainbus? flags 0x0 # addr 0x28000020
+scn5		at mainbus? flags 0x0 # addr 0x28000028
+scn6		at mainbus? flags 0x0 # addr 0x28000030
+scn7		at mainbus? flags 0x0 # addr 0x28000038
+
 
 options 	EXEC_AOUT		# #! scripts
 options 	EXEC_SCRIPT		# a.out executables

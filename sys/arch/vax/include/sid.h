@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.8 1996/08/20 14:19:41 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.8.6.1 1997/03/12 21:19:14 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -97,14 +97,21 @@
 
  
 #define VAX_BTYP_650	0x0A000001	/* MicroVAX 3500, 3600 */
-     /* VAX_BTYP_65D	0x0A000001	   VAXstation 3200, 3500 */
-     /* VAX_BTYP_640	0x0A000001	   MicroVAX 3300, 3400 */
-     /* VAX_BTYP_655	0x0A000001	   MicroVAX 3800, 3900 */
+     /* VAX_BTYP_65D	0x0A000001	   VAXstation 3200, 3500 XXX */
+     /* VAX_BTYP_640	0x0A000001	   MicroVAX 3300, 3400 XXX */
+     /* VAX_BTYP_655	0x0A000001	   MicroVAX 3800, 3900 XXX */
 #define VAX_BTYP_9CC	0x0A000002	/* VAX 6000 model 210/310 */
 #define VAX_BTYP_60	0x0A000003	/* VAXstation 3520, 3540 */
 #define VAX_BTYP_420	0x0A000004	/* VAXstation 3100 models 10 - 48 */
 #define VAX_BTYP_510	0x0A000007	/* VAXft model 110 */
      /* VAX_BTYP_520	0x0A000007	   VAXft model 310 */
+
+/*
+ * SID Extension register definitions for CVAX series
+ */
+#define	VAX_SIE_KA640	0x2		/* KA640 MicroVAX 3300, 3400 */
+#define	VAX_SIE_KA650	0x1		/* KA650 MicroVAX 3500, 3600 */
+#define	VAX_SIE_KA655	0x3		/* KA655 MicroVAX 3800, 3900 */
  
 /*
  * Rigel chip series (1990)

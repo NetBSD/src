@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.4 1996/10/13 03:36:11 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.4.6.1 1997/03/12 21:21:04 is Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -421,10 +421,9 @@ rdstrategy(bp)
 	 */
 	/*------------------------------*/
 	blkno = bp->b_blkno / (rd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (HDCPART(bp->b_dev) != RAW_PART) {
-		p = &rd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
-		blkno += p->p_offset;
-	}
+	p = &rd->sc_dk.dk_label->d_partitions[HDCPART(bp->b_dev)];
+	blkno += p->p_offset;
+
 	/* nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize); */
 
 	if (hdc_strategy(hdc, rd, HDCUNIT(bp->b_dev), 

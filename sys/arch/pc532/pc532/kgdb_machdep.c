@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1996/10/09 07:45:08 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.6.1 1997/03/12 21:16:52 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 #include <vm/vm.h>
-#include "kgdb.h"
+#include <sys/kgdb.h>
 
 #include <machine/frame.h>
 #include <machine/pte.h>
@@ -156,3 +156,40 @@ kgdb_setregs(regs, gdb_regs)
 	regs->tf_regs.r_psr = gdb_regs[PS_REGNUM]
 				| (regs->tf_regs.r_psr & PSL_T);
 }	
+
+/*
+ * Trap into kgdb to wait for debugger to connect,
+ * noting on the console why nothing else is going on.
+ */
+void
+kgdb_connect(verbose)
+	int verbose;
+{
+
+	if (kgdb_dev < 0)
+		return;
+
+	if (verbose)
+		printf("kgdb waiting...");
+
+	Debugger();
+
+	if (verbose)
+		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
+}
+
+/*
+ * Decide what to do on panic.
+ * (This is called by panic, like Debugger())
+ */
+void
+kgdb_panic()
+{
+	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+		printf("entering kgdb\n");
+		kgdb_connect(kgdb_active == 0);
+	}
+}
+

@@ -2,7 +2,7 @@
 # Distribition miniroot kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.10 1997/01/31 01:59:14 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.10.4.1 1997/03/12 21:17:39 is Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -71,8 +71,7 @@ options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options		"HZ=256"	# RTC rate required
 
 # Note that this configuration is unlikely to work, yet...
-#config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
-config		gennetbsd	root on ? type ?
+config		netbsd	root on ? type ?
 
 
 ########################################################################

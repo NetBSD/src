@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1997/02/04 04:57:12 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.2.1 1997/03/12 21:16:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,16 +56,6 @@
  */
 #define cpu_swapin(p)           	/* nothing */
 #define	cpu_wait(p)			/* nothing */
-
-/*  XXX needed?  PAN
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#define	NEED_FFS		/* need ffs function */
-#define	NEED_BCMP		/* need bcmp function */
-#define	NEED_STRLEN		/* need strlen function */
 
 /*
  * Arguments to hardclock, softclock and gatherstats

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.5 1996/12/17 20:42:42 gwr Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.5.4.1 1997/03/12 21:22:59 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -131,4 +131,6 @@ int 	zs_set_speed __P((struct zs_chanstate *, int));
 int 	zs_set_modes __P((struct zs_chanstate *, int));
 
 extern int zs_major;
+
+int zs_check_kgdb __P((struct zs_chanstate *, int));
 

@@ -1,6 +1,5 @@
-/*	$NetBSD: ka750.c,v 1.17 1996/10/13 03:35:48 christos Exp $ */
-
-/*-
+/*	$NetBSD: ka750.c,v 1.17.6.1 1997/03/12 21:20:18 is Exp $ */
+/*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,6 +45,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/ka750.h>
+#include <machine/clock.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/sid.h>
@@ -56,6 +56,21 @@
 #include <vax/uba/ubareg.h>
 
 void	ctuattach __P((void));
+
+struct	cpu_dep	ka750_calls = {
+	ka750_steal_pages,
+	generic_clock,
+	ka750_mchk,
+	ka750_memerr,
+	ka750_conf,
+	generic_clkread,
+	generic_clkwrite,
+	1,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 /*
  * ka750_conf() is called by cpu_attach to do the cpu_specific setup.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.20 1997/02/01 02:28:48 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.20.4.1 1997/03/12 21:23:41 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -393,7 +393,7 @@ setroot(bootdv, bootpartition, nam2blk)
 	}
 	last_nam2blk = nam2blk;
 
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_IS_ROOT
 	bootdv = &fakemdrootdev;
 	bootpartition = 0;
 #endif
@@ -455,6 +455,7 @@ setroot(bootdv, bootpartition, nam2blk)
 				dv = getdisk(buf, len, 1, nam2blk, &nrootdev);
 				if (dv != NULL) {
 					rootdv = dv;
+					swapdv = dv;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1996/02/01 22:33:26 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3.8.1 1997/03/12 21:18:53 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	8			/* number of partitions */
-#define	RAW_PART	3			/* raw partition: xx?c (XXX) */
+#define	RAW_PART	2			/* raw partition: xx?c */
 
 /* Just a dummy */
 #ifndef _LOCORE

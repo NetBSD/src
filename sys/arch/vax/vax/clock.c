@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:35:33 christos Exp $	 */
+/*	$NetBSD: clock.c,v 1.18.6.1 1997/03/12 21:19:46 is Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,7 +37,6 @@
 
 #include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/uvax.h>
 #include <machine/clock.h>
 #include <machine/cpu.h>
 
@@ -103,7 +102,7 @@ inittodr(fs_time)
 {
 	int rv;
 
-	rv = (*cpu_calls[vax_cputype].cpu_clkread) (fs_time);
+	rv = (*dep_call->cpu_clkread) (fs_time);
 	switch (rv) {
 
 	case CLKREAD_BAD: /* No useable information from system clock */
@@ -138,7 +137,7 @@ inittodr(fs_time)
 void
 resettodr()
 {
-	(*cpu_calls[vax_cputype].cpu_clkwrite)();
+	(*dep_call->cpu_clkwrite)();
 }
 /*
  * A delayloop that delays about the number of milliseconds that is
@@ -148,32 +147,7 @@ void
 delay(i)
 	int i;
 {
-	int	mul;
-
-	switch (vax_cputype) {
-#if VAX750 || VAX630 || VAX410
-	case VAX_750:
-	case VAX_78032:
-		mul = 1; /* <= 1 VUPS */
-		break;
-#endif
-#if VAX780 || VAX8200
-	case VAX_780:
-	case VAX_8200:
-		mul = 2; /* <= 2 VUPS */
-		break;
-#endif
-#if VAX650
-	case VAX_650:
-		mul = 3; /* <= 3 VUPS */
-		break;
-#endif
-	default:	/* Would be enough... */
-	case VAX_8600:
-		mul = 6; /* <= 6 VUPS */
-		break;
-	}
-	asm ("1: sobgtr %0, 1b" : : "r" (mul * i));
+	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
 #if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800

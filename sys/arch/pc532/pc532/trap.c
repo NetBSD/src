@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1996/10/23 07:46:08 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.21.4.1 1997/03/12 21:17:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -263,17 +263,19 @@ trap(frame)
 # endif
 		} else
 #endif
-		sprd(cfg, cfg);
-		if ((cfg & CFG_F) == 0) {
-			lprd(cfg, cfg | CFG_F);
-			if (fpu_proc == p)
+		{
+			sprd(cfg, cfg);
+			if ((cfg & CFG_F) == 0) {
+				lprd(cfg, cfg | CFG_F);
+				if (fpu_proc == p)
+					return;
+				pcb = &p->p_addr->u_pcb;
+				if (fpu_proc != 0)
+					save_fpu_context(&fpu_proc->p_addr->u_pcb);
+				restore_fpu_context(pcb);
+				fpu_proc = p;
 				return;
-			pcb = &p->p_addr->u_pcb;
-			if (fpu_proc != 0)
-				save_fpu_context(&fpu_proc->p_addr->u_pcb);
-			restore_fpu_context(pcb);
-			fpu_proc = p;
-			return;
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.1 1997/01/16 22:01:00 christos Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.1.2.1 1997/03/12 21:23:20 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -394,7 +394,7 @@ isapnp_print_config(pa)
 			printf("irq[%d]: %d\n", i, p->num);
 		}
 
-	if (pa->ipa_nirq)
+	if (pa->ipa_ndrq)
 		for (i = 0; i < pa->ipa_ndrq; i++) {
 			p = &pa->ipa_drq[i];
 			printf("drq[%d]: %d\n", i, p->num);

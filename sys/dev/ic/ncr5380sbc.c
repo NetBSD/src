@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.15 1996/12/15 10:02:30 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.15.4.1 1997/03/12 21:22:36 is Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -257,7 +257,10 @@ ncr5380_pio_out(sc, phase, count, data)
 			break;
 
 		/* Put the data on the bus. */
-		*sc->sci_odata = *data++;
+		if (data)
+			*sc->sci_odata = *data++;
+		else
+			*sc->sci_odata = 0;
 
 		/* Tell the target it's there. */
 		icmd |= SCI_ICMD_ACK;
@@ -313,7 +316,10 @@ ncr5380_pio_in(sc, phase, count, data)
 			break;
 
 		/* Read the data bus. */
-		*data++ = *sc->sci_data;
+		if (data)
+			*data++ = *sc->sci_data;
+		else
+			(void) *sc->sci_data;
 
 		/* Tell target we got it. */
 		icmd |= SCI_ICMD_ACK;
@@ -1776,9 +1782,8 @@ ncr5380_msg_out(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, resel;
-	int progress, act_flags;
-	register u_char icmd;
+	int act_flags, n, phase, progress;
+	register u_char icmd, msg;
 
 	/* acknowledge phase change */
 	*sc->sci_tcmd = PHASE_MSG_OUT;
@@ -1836,9 +1841,17 @@ nextmsg:
 			NCR_BREAK();
 			goto noop;
 		}
-		resel = (sc->sc_flags & NCR5380_PERMIT_RESELECT) ? 1 : 0;
-		resel &= (sr->sr_flags & (SR_IMMED | SR_SENSE)) ? 0 : 1;
-		sc->sc_omess[0] = MSG_IDENTIFY(sr->sr_lun, resel);
+		/*
+		 * The identify message we send determines whether 
+		 * disconnect/reselect is allowed for this command.
+		 * 0xC0+LUN: allows it, 0x80+LUN disallows it.
+		 */
+		msg = 0xc0;	/* MSG_IDENTIFY(0,1) */
+		if (sc->sc_no_disconnect & (1 << sr->sr_target))
+			msg = 0x80;
+		if (sr->sr_flags & (SR_IMMED | SR_SENSE))
+			msg = 0x80;
+		sc->sc_omess[0] = msg | sr->sr_lun;
 		n = 1;
 		break;
 
@@ -2077,9 +2090,19 @@ ncr5380_data_xfer(sc, phase)
 
 	/* Make sure we have some data to move. */
 	if (sc->sc_datalen <= 0) {
-		printf("%s: can not transfer more data\n",
-		    sc->sc_dev.dv_xname);
-		goto abort;
+		/* Device needs padding. */
+		if (phase == PHASE_DATA_IN)
+			ncr5380_pio_in(sc, phase, 4096, NULL);
+		else
+			ncr5380_pio_out(sc, phase, 4096, NULL);
+		/* Make sure that caused a phase change. */
+		if (SCI_BUS_PHASE(*sc->sci_bus_csr) == phase) {
+			/* More than 4k is just too much! */
+			printf("%s: too much data padding\n",
+				sc->sc_dev.dv_xname);
+			goto abort;
+		}
+		return ACT_CONTINUE;
 	}
 
 	/*
@@ -2456,7 +2479,7 @@ ncr5380_trace(msg, val)
 	register struct trace_ent *tr;
 	register int s;
 
-	s = splhigh();
+	s = splbio();
 
 	tr = &ncr5380_tracebuf[ncr5380_traceidx];
 

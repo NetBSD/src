@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.30 1997/02/04 05:08:54 perry Exp $
+#	$NetBSD: Makefile.vax,v 1.30.4.1 1997/03/12 21:18:41 is Exp $
 
 # Makefile for NetBSD
 #
@@ -116,7 +116,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks
 
@@ -139,7 +139,7 @@ links:
 
 SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.3 1996/10/13 03:35:43 christos Exp $ */
+/*	$NetBSD: ka43.c,v 1.3.6.1 1997/03/12 21:20:04 is Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -41,6 +41,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/pte.h>
+#include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/pmap.h>
@@ -50,7 +51,7 @@
 #include <machine/clock.h>
 #include <machine/ka650.h>	/* cache ??? */
 
-#define	xtrace(x)
+#define xtrace(x)
 
 void	ka43_conf __P((struct device*, struct device*, void*));
 void	ka43_steal_pages __P((void));
@@ -58,12 +59,10 @@ void	ka43_steal_pages __P((void));
 void	ka43_memerr __P((void));
 int	ka43_mchk __P((caddr_t));
 
-struct	ka43_cpu   *ka43_cpuptr = (void*)KA43_CPU_BASE;
-struct	ka43_clock *ka43_clkptr = (void*)KA43_WAT_BASE;
+struct	ka43_clock *ka43_clkptr;
 
-extern int uVAX_fillmap __P((struct uc_map *));
 
-struct uc_map ka43_map[] = {
+static struct uc_map ka43_map[] = {
 	{ KA43_CFGTST,		KA43_CFGTST,	4,		0 },
 	{ KA43_ROM_BASE,	KA43_ROM_END,	KA43_ROM_SIZE,	0 },
 	{ KA43_CPU_BASE,	KA43_CPU_END,	KA43_CPU_SIZE,	0 },
@@ -81,6 +80,21 @@ struct uc_map ka43_map[] = {
 	 * there's more to come, eg. framebuffers (GPX/SPX)
 	 */
 	{0, 0, 0, 0},
+};
+
+struct	cpu_dep ka43_calls = {
+	ka43_steal_pages,
+	no_nicr_clock,
+	ka43_mchk,
+	ka43_memerr,
+	ka43_conf,
+	ka43_clkread,
+	ka43_clkwrite,
+	4,
+	(void*)KA43_INTREQ,
+	(void*)KA43_INTCLR,
+	(void*)KA43_INTMSK,
+	ka43_map,
 };
 
 #define CH1_BITS \
@@ -164,22 +178,7 @@ ka43_setup(uc,flags)
 {
 	uc->uc_name = "ka43";
 
-	uc->uc_phys2virt = NULL;
 	uc->uc_physmap = ka43_map;
-
-	uc->uc_steal_pages = ka43_steal_pages;
-	uc->uc_conf = ka43_conf;
-	uc->uc_clkread = ka43_clkread;
-	uc->uc_clkwrite = ka43_clkwrite;
-
-	uc->uc_memerr = ka43_memerr;
-	uc->uc_mchk = ka43_mchk;
-
-	uc->uc_intreq = (void*)KA43_INTREQ;
-	uc->uc_intclr = (void*)KA43_INTCLR;
-	uc->uc_intmsk = (void*)KA43_INTMSK;
-
-	uc->uc_busTypes = VAX_VSBUS;
 }
 
 ka43_discache()
@@ -315,7 +314,7 @@ u_long le_ioaddr;		/* base addr of RAM -- LANCE's view */
 void
 ka43_steal_pages()
 {
-	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail, avail_end;
 	int	junk;
 	int	i;
 	struct {
@@ -337,8 +336,11 @@ ka43_steal_pages()
 #else
 	*pctl = KA43_PCTL_CPEN;
 #endif
+	panic("No support for ka43");
+#if 0
 	printf("new value for parctl: ");
 	gets(line);
+#endif
 	*pctl = *line - '0';
 	printf("parctl: 0x%x\n", *pctl);
 
@@ -346,7 +348,7 @@ ka43_steal_pages()
 	p = (void*)KA43_SCR;
 	for (i=0; i<4; i++) {
 	  printf("p[%d] = %x, ", i, p[i].data);
-	  q[i]  = p[i].data;
+	  q[i]	= p[i].data;
 	}
 	p = (void*)KA43_SCRLEN;
 	printf("\nlen = %d\n", p->data);
@@ -356,7 +358,7 @@ ka43_steal_pages()
 	  printf("%x:0x%x ", i*4, srp[i]);
 	  if ((i & 0x07) == 0x07)
 	    printf("\n");
- 	}
+	}
 	printf("\n");
 
 	printf ("ka43_steal_pages: avail_end=0x%x\n", avail_end);
@@ -405,27 +407,25 @@ ka43_steal_pages()
 	/*
 	 * now map in anything listed in ka43_map...
 	 */
-	uVAX_fillmap(ka43_map);
+	uvax_fillmap();
 
 	/*
 	 * Clear restart and boot in progress flags in the CPMBX. 
 	 */
-	ka43_clkptr->cpmbx = ka43_clkptr->cpmbx & 0xF0;
+	((struct ka43_clock*)ka43_clkptr)->cpmbx = 
+	    ((struct ka43_clock*)ka43_clkptr)->cpmbx & 0xF0;
 
 	/*
 	 * Enable memory parity error detection and clear error bits.
 	 */
-	ka43_cpuptr->ka43_mser = 0x01; 
+	((struct ka43_cpu *)KA43_CPU_BASE)->ka43_mser = 0x01; 
 	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
 
 	/*
 	 * MM is not yet enabled, thus we still used the physical addresses,
 	 * but before leaving this routine, we need to reset them to virtual.
 	 */
-	ka43_cpuptr = (void*)uvax_phys2virt(KA43_CPU_BASE);
 	ka43_clkptr = (void*)uvax_phys2virt(KA43_WAT_BASE);
-
-	printf ("steal_pages done.\n");
 }
 
 /*

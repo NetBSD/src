@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 1997/01/11 11:31:26 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.35.6.1 1997/03/12 21:20:40 is Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -82,7 +82,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 #endif
 #ifdef NS
@@ -368,7 +368,7 @@ dumpconf()
 void
 cpu_initclocks()
 {
-	(cpu_calls[vax_cputype].cpu_clock) ();
+	(*dep_call->cpu_clock) ();
 }
 
 int
@@ -641,9 +641,9 @@ void
 machinecheck(frame)
 	caddr_t frame;
 {
-	if ((*cpu_calls[vax_cputype].cpu_mchk) (frame) == 0)
+	if ((*dep_call->cpu_mchk) (frame) == 0)
 		return;
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 	panic("machine check");
 }
 
@@ -791,5 +791,5 @@ process_sstep(p, sstep)
 void
 cmrerr()
 {
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1996/10/09 07:45:28 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17.4.1 1997/03/12 21:17:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -161,6 +161,7 @@ void
 cpu_exit(arg)
 	struct proc *arg;
 {
+	extern struct user *proc0paddr;
 	register struct proc *p __asm("r3");
 	cnt.v_swtch++;
 
@@ -173,7 +174,7 @@ cpu_exit(arg)
 
 	/* Switch to temporary stack and address space. */
 	lprd(sp, INTSTACK);
-	load_ptb(PTDpaddr);
+	load_ptb(proc0paddr->u_pcb.pcb_ptb);
 
 	/* Free resources. */
 	vmspace_free(p->p_vmspace);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.11 1996/09/02 06:44:32 mycroft Exp $	*/
+/*	$NetBSD: gencons.c,v 1.11.6.1 1997/03/12 21:19:53 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -48,6 +48,7 @@
 #include <dev/cons.h>
 
 #include <machine/mtpr.h>
+#include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/../vax/gencons.h>
 
@@ -254,6 +255,17 @@ gencnprobe(cndev)
 	struct	consdev *cndev;
 {
 	int i;
+
+	switch (vax_boardtype) {
+	case VAX_BTYP_410:
+	case VAX_BTYP_43:
+	
+	        cndev->cn_pri = CN_DEAD;
+	        return;
+	
+	default:
+	        break;
+	}
 
 	for (i = 0; i < nchrdev; i++)
 		if (cdevsw[i].d_open == gencnopen) {

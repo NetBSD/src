@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 1997/01/15 23:11:47 gwr Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23.4.1 1997/03/12 21:14:47 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -49,6 +49,7 @@
 extern label_t	*db_recover;
 
 int	db_active = 0;
+db_regs_t	ddb_regs;
 
 static void kdbprinttrap __P((int, int));
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.19 1997/02/04 05:08:38 perry Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.19.4.1 1997/03/12 21:15:13 is Exp $
 
 # Makefile for NetBSD
 #
@@ -128,7 +128,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -151,7 +152,7 @@ links:
 
 SRCS=	${MVME68K}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

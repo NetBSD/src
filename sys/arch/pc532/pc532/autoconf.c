@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1997/01/31 01:57:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.1 1997/03/12 21:16:29 is Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,9 +63,9 @@
  * the machine.
  */
 
-extern int cold;	/* cold start flag initialized in locore.s */
-
-void	findroot __P((struct device **, int *));
+extern int cold;		/* cold start flag initialized in locore.s */
+u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
+struct device *booted_device;	/* boot device, set by dk_establish */
 
 struct devnametobdevmaj pc532_nam2blk[] = {
 	{ "sd",		0 },
@@ -82,8 +82,8 @@ void
 configure()
 {
 	extern int safepri;
-	struct device *booted_device;
-	int i, booted_partition;
+	int i;
+	int booted_partition = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	static const char *ipl_names[] = IPL_NAMES;
 
 	/* Start the clocks. */
@@ -101,8 +101,6 @@ configure()
 	safepri = imask[IPL_ZERO];
 	spl0();
 
-	findroot(&booted_device, &booted_partition);
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
@@ -115,56 +113,6 @@ configure()
 	swapconf();
 	dumpconf();
 	cold = 0;
-}
-
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-/*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
- */
-void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
-{
-	int i, majdev, unit, part;
-	struct device *dv;
-	char buf[32];
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
-
-#if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
-#endif
-
-	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	for (i = 0; pc532_nam2blk[i].d_name != NULL; i++)
-		if (majdev == pc532_nam2blk[i].d_maj)
-			break;
-	if (pc532_nam2blk[i].d_name == NULL)
-		return;
-
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-
-	sprintf(buf, "%s%d", pc532_nam2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
-			return;
-		}
-	}
 }
 
 /* mem bus stuff */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 1996/10/09 07:45:03 matthias Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3.6.1 1997/03/12 21:16:33 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -50,52 +50,39 @@
 #include <ddb/db_interface.h>
 
 int db_spec_regs();
-int db_ns532_reg_value();
-int db_ns532_kreg_value();
 
 /*
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "r0",	(int *)&ddb_regs.tf_regs.r_r0,	FCN_NULL },
-	{ "r1",	(int *)&ddb_regs.tf_regs.r_r1,	FCN_NULL },
-	{ "r2",	(int *)&ddb_regs.tf_regs.r_r2,	FCN_NULL },
-	{ "r3",	(int *)&ddb_regs.tf_regs.r_r3,	FCN_NULL },
-	{ "r4",	(int *)&ddb_regs.tf_regs.r_r4,	FCN_NULL },
-	{ "r5",	(int *)&ddb_regs.tf_regs.r_r5,	FCN_NULL },
-	{ "r6",	(int *)&ddb_regs.tf_regs.r_r6,	FCN_NULL },
-	{ "r7",	(int *)&ddb_regs.tf_regs.r_r7,	FCN_NULL },
-	{ "sp",	(int *)&ddb_regs.tf_regs.r_sp,	FCN_NULL },
-	{ "fp",	(int *)&ddb_regs.tf_regs.r_fp,	FCN_NULL },
-	{ "sb", (int *)&ddb_regs.tf_regs.r_sb,	FCN_NULL },
-	{ "pc", (int *)&ddb_regs.tf_regs.r_pc,	FCN_NULL },
-	{ "psr",(int *)&ddb_regs.tf_regs.r_psr,	FCN_NULL },
-	{ "tear",(int *)&ddb_regs.tf_tear,	FCN_NULL },
-	{ "msr",(int *)&ddb_regs.tf_msr, 	FCN_NULL },
-	{ "ipl",(int *)&db_active_ipl,		FCN_NULL },
+	{ "r0", 	(long *)&ddb_regs.tf_regs.r_r0, FCN_NULL },
+	{ "r1", 	(long *)&ddb_regs.tf_regs.r_r1, FCN_NULL },
+	{ "r2", 	(long *)&ddb_regs.tf_regs.r_r2, FCN_NULL },
+	{ "r3", 	(long *)&ddb_regs.tf_regs.r_r3, FCN_NULL },
+	{ "r4", 	(long *)&ddb_regs.tf_regs.r_r4, FCN_NULL },
+	{ "r5", 	(long *)&ddb_regs.tf_regs.r_r5, FCN_NULL },
+	{ "r6", 	(long *)&ddb_regs.tf_regs.r_r6, FCN_NULL },
+	{ "r7", 	(long *)&ddb_regs.tf_regs.r_r7, FCN_NULL },
+	{ "sp", 	(long *)&ddb_regs.tf_regs.r_sp, FCN_NULL },
+	{ "fp", 	(long *)&ddb_regs.tf_regs.r_fp, FCN_NULL },
+	{ "sb", 	(long *)&ddb_regs.tf_regs.r_sb, FCN_NULL },
+	{ "pc", 	(long *)&ddb_regs.tf_regs.r_pc, FCN_NULL },
+	{ "psr",	(long *)&ddb_regs.tf_regs.r_psr,FCN_NULL },
+	{ "tear",	(long *)&ddb_regs.tf_tear,	FCN_NULL },
+	{ "msr",	(long *)&ddb_regs.tf_msr,	FCN_NULL },
+	{ "ipl",	(long *)&db_active_ipl, 	FCN_NULL },
 
-#ifdef FLOATS_SAVED
-	{ "f0",	(int *)&ddb_regs.r_l0a, db_ns532_reg_value },
-	{ "f1",	(int *)&ddb_regs.r_l0b, db_ns532_reg_value },
-	{ "f2",	(int *)&ddb_regs.r_l1a, db_ns532_reg_value },
-	{ "f3",	(int *)&ddb_regs.r_l1b, db_ns532_reg_value },
-	{ "f4",	(int *)&ddb_regs.r_l2a, db_ns532_reg_value },
-	{ "f5",	(int *)&ddb_regs.r_l2b, db_ns532_reg_value },
-	{ "f6",	(int *)&ddb_regs.r_l3a, db_ns532_reg_value },
-	{ "f7",	(int *)&ddb_regs.r_l3b, db_ns532_reg_value },
-	{ "fsr",(int *)&ddb_regs.r_fsr, db_ns532_reg_value },
-#endif FLOATS_SAVED
-	{ "intbase",	(int *) 0,	db_spec_regs },
-	{ "ptb",	(int *) 0,	db_spec_regs },
-	{ "ivar",	(int *) 0,	db_spec_regs },
-	{ "rtear", 	(int *) 0,	db_spec_regs }, /* current reg value */
-	{ "mcr",	(int *) 0,	db_spec_regs },
-	{ "rmsr",	(int *) 0,	db_spec_regs }, /* current reg value */
-	{ "dcr",	(int *) 0,	db_spec_regs },
-	{ "dsr",	(int *) 0,	db_spec_regs },
-	{ "car",	(int *) 0,	db_spec_regs },
-	{ "bpc",	(int *) 0,	db_spec_regs },
-	{ "cfg",	(int *) 0,	db_spec_regs },
+	{ "intbase",	(long *) 0, db_spec_regs },
+	{ "ptb",	(long *) 0, db_spec_regs },
+	{ "ivar",	(long *) 0, db_spec_regs },
+	{ "rtear",	(long *) 0, db_spec_regs }, /* Current reg value */
+	{ "mcr",	(long *) 0, db_spec_regs },
+	{ "rmsr",	(long *) 0, db_spec_regs }, /* Current reg value */
+	{ "dcr",	(long *) 0, db_spec_regs },
+	{ "dsr",	(long *) 0, db_spec_regs },
+	{ "car",	(long *) 0, db_spec_regs },
+	{ "bpc",	(long *) 0, db_spec_regs },
+	{ "cfg",	(long *) 0, db_spec_regs },
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]) - 1;
 
@@ -150,7 +137,7 @@ db_numargs(fp)
 		 *   adjsp[bwd] -n	- to remove n bytes from the stack
 		 * Gcc sometimes delays emitting these instructions and
 		 * may even throw a branch between our feet.
-		 */		 
+		 */
 		inst = db_get_value((db_addr_t) argp	, 4, FALSE);
 		args = db_get_value((db_addr_t) argp + 2, 4, FALSE);
 		if ((inst & 0xff) == 0xea) {		/* br */
@@ -198,13 +185,13 @@ db_numargs(fp)
 	return(db_numargs_default);
 }
 
-/* 
- * Figure out the next frame up in the call stack.  
- * For trap(), we print the address of the faulting instruction and 
+/*
+ * Figure out the next frame up in the call stack.
+ * For trap(), we print the address of the faulting instruction and
  *   proceed with the calling frame.  We return the ip that faulted.
  *   If the trap was caused by jumping through a bogus pointer, then
- *   the next line in the backtrace will list some random function as 
- *   being called.  It should get the argument list correct, though.  
+ *   the next line in the backtrace will list some random function as
+ *   being called.  It should get the argument list correct, though.
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
@@ -219,9 +206,9 @@ db_nextframe(fp, ip, argp, is_trap)
 	extern int	TRAP_TYPES;
 	struct trapframe *tf;
 	struct syscframe *sf;
-	
+
 	switch (is_trap) {
-	case INTERRUPT:	
+	case INTERRUPT:
 		db_printf("--- interrupt ---\n");
 	case NONE:
 		*ip = (db_addr_t)
@@ -264,7 +251,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	{
 		register char *cp = modif;
 		register char c;
-		
+
 		while ((c = *cp++) != 0) {
 			if (c == 't')
 				trace_thread = TRUE;
@@ -272,7 +259,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				kernel_only = FALSE;
 		}
 	}
-	
+
 	if (count == -1)
 		count = 65535;
 

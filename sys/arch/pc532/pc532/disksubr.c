@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1996/05/19 05:34:25 phil Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.6.1 1997/03/12 21:16:37 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -38,8 +38,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/reboot.h>
 #include <sys/syslog.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/autoconf.h>
 
 #define	b_cylin	b_resid
 
@@ -247,4 +254,25 @@ dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
+	struct scsibus_softc *sbsc;
+	int target = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
+	int lun = 0;
+
+	/*
+ 	 * scsi: sd, cd
+ 	 */
+
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+
+        	sbsc = (struct scsibus_softc *)dev->dv_parent;
+
+        	if (sbsc->sc_link[target][lun] != NULL &&
+            	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+			booted_device = dev;
+                	return;
+		}
+        }
+
+	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.28 1997/01/15 01:37:47 perry Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.28.4.1 1997/03/12 21:21:26 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1256,7 +1256,7 @@ hpux_sys_stime_6x(p, v, retval)
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	boottime.tv_sec += tv.tv_sec - time.tv_sec;
-	s = splhigh(); time = tv; splx(s);
+	s = splclock(); time = tv; splx(s);
 	resettodr();
 	return (0);
 }
@@ -1273,7 +1273,7 @@ hpux_sys_ftime_6x(p, v, retval)
 	struct hpux_otimeb tb;
 	int s;
 
-	s = splhigh();
+	s = splclock();
 	tb.time = time.tv_sec;
 	tb.millitm = time.tv_usec / 1000;
 	splx(s);

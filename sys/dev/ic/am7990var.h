@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.9.2.1 1997/02/21 19:28:32 is Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.9.2.2 1997/03/12 21:22:32 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -89,7 +89,7 @@ struct am7990_softc {
 	void	*sc_sh;		/* shutdownhook cookie */
 
 	u_int16_t sc_conf3;	/* CSR3 value */
-	u_int16_t sc_pad1;	/* be nice to m68k ports */
+	u_int16_t sc_saved_csr0;/* Value of csr0 at time of interrupt */
 
 	void	*sc_mem;	/* base address of RAM -- CPU's view */
 	u_long	sc_addr;	/* base address of RAM -- LANCE's view */
@@ -104,8 +104,8 @@ struct am7990_softc {
 	int	sc_initaddr;
 	int	sc_rmdaddr;
 	int	sc_tmdaddr;
-	int	sc_rbufaddr;
-	int	sc_tbufaddr;
+	int	*sc_rbufaddr;
+	int	*sc_tbufaddr;
 
 #ifdef LEDEBUG
 	int	sc_debug;
