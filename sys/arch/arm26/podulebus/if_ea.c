@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.21 2000/10/14 23:41:05 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.22 2001/01/07 15:56:02 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.21 2000/10/14 23:41:05 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.22 2001/01/07 15:56:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -148,7 +148,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 	/* Claim a podule interrupt */
 
 	sc->sc_ih = podulebus_irq_establish(sc->sc_8005.sc_dev.dv_parent,
-	    pa->pa_slotnum, IPL_NET, seeq8005intr, sc);
+	    pa->pa_slotnum, IPL_NET, seeq8005intr, sc, self->dv_xname);
 }
 
 /* End of if_ea.c */
