@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.52 2001/07/30 19:59:07 ad Exp $
+.\"	$NetBSD: pci.4,v 1.53 2001/08/27 20:04:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -181,7 +181,9 @@ interfaces.
 .It le
 PCNet-PCI
 .Tn Ethernet
-interfaces.
+interfaces.  Note, the
+.Xr pcn
+driver supersedes this driver.
 .It lmc
 LAN Media Corp WAN interfaces.
 .It ne
@@ -190,6 +192,10 @@ NE2000-compatible
 interfaces.
 .It ntwoc
 SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
+.It pcn
+AMD PCnet-PCI family of
+.Tn Ethernet
+interfaces.
 .It rtk
 RealTek 8129/8139 based
 .Tn Ethernet
@@ -347,6 +353,7 @@ VGA graphics boards.
 .Xr ohci 4 ,
 .Xr pcic 4 ,
 .Xr pciide 4 ,
+.Xr pcn 4 ,
 .Xr pcscp 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
