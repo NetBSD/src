@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/03/03 12:00:19 jonathan Exp $
+#	$NetBSD: Makefile,v 1.24 1999/03/03 21:18:00 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -30,7 +30,6 @@ CPPFLAGS+= -DDEBUG -DRTLD_LOADER
 
 LDADD+=	-L${DESTDIR}/${LIBDIR} -L${CLIBOBJ} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
-CFLAGS+=-g
 
 .if (${OBJECT_FMT} == "ELF")
 # to be installed

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.3 1999/03/01 16:40:07 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.4 1999/03/03 21:18:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -134,8 +134,6 @@ botch(
 #define	ASSERT(p)
 #endif
 
-/* Polstra's debugging stuff */
-extern void xprintf(const char *, ...);
 #define TRACE()	xprintf("TRACE %s:%d\n", __FILE__, __LINE__)
 
 void *
