@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.21 2002/06/29 22:45:30 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.22 2002/06/30 12:28:57 lukem Exp $
 .
 .so ../common/upgrade
 .Pp
@@ -16,7 +16,8 @@ and
 .Pa /emul/aout ,
 where they will be automatically found if an older a.out binary
 is executed.
-Sysinst will use an existing
+.Ic sysinst
+will use an existing
 .Pa /emul
 and / or
 .Pa /emul/aout
@@ -26,5 +27,6 @@ if necessary.
 .Pp
 If you already had a
 .Pa /emul
-directory, or a symbolic link by that name, sysinst should rename it
-and tell you about it.
+directory, or a symbolic link by that name,
+.Ic sysinst
+should rename it and tell you about it.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.24 2002/06/29 09:33:10 lukem Exp $
+.\"	$NetBSD: install,v 1.25 2002/06/30 12:28:55 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -493,7 +493,9 @@ The
 .Pa install
 and
 .Pa upgrade
-scripts are still there, so by exiting the sysinst program you can type
+scripts are still there, so by exiting the
+.Ic sysinst
+program you can type
 .Li install
 or
 .Li upgrade
