@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_console.8,v 1.7 2000/11/07 05:44:17 lukem Exp $
+.\"	$NetBSD: boot_console.8,v 1.8 2001/09/05 23:53:23 wiz Exp $
 .\"
 .Dd May 12, 2000
 .Os
@@ -78,7 +78,7 @@ in sequence.  If output of a character to the port succeeds (and if
 .Dq Dv DIRECT_SERIAL
 is defined the RS-232
 .Dq "modem ready"
-status is on after the character is output), the port is used as console.  
+status is on after the character is output), the port is used as console.
 If no serial port passes the check,
 .Dq Dv CONSDEV_PC
 is used.  The progress of the selection process is shown at the PC
