@@ -124,6 +124,9 @@ static CORE_ADDR flag_addr;
 #define LM_ADDR(so) ((so) -> lm.l_addr)
 #define LM_NEXT(so) ((so) -> lm.l_next)
 #define LM_NAME(so) ((so) -> lm.l_name)
+#ifdef __mips__
+#define LM_OFFS(so) ((so) -> lm.l_offs)
+#endif
 /* Test for first link map entry; first entry is the exec-file. */
 #define IGNORE_FIRST_LINK_MAP_ENTRY(x) ((x).l_prev == NULL)
 static struct r_debug debug_copy;
@@ -288,8 +291,13 @@ solib_map_sections (so)
       /* Relocate the section binding addresses as recorded in the shared
 	 object's file by the base address to which the object was actually
 	 mapped. */
+#if defined(__mips__) && defined(__NetBSD__)
+      p -> addr += (CORE_ADDR) LM_OFFS (so);
+      p -> endaddr += (CORE_ADDR) LM_OFFS (so);
+#else
       p -> addr += (CORE_ADDR) LM_ADDR (so);
       p -> endaddr += (CORE_ADDR) LM_ADDR (so);
+#endif
       so -> lmend = (CORE_ADDR) max (p -> endaddr, so -> lmend);
       if (STREQ (p -> the_bfd_section -> name, ".text"))
 	{
