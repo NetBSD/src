@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.4 1996/06/04 20:41:15 cgd Exp $	*/
+/*	$NetBSD: expr.c,v 1.5 1997/07/20 17:33:00 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -35,6 +35,24 @@ enum token	token;
 struct val     *tokval;
 char          **av;
 
+struct val *make_int __P((int));
+struct val *make_str __P((char *));
+void free_value __P((struct val *));
+int is_integer __P((struct val *, int *));
+int to_integer __P((struct val *));
+void to_string __P((struct val *));
+int is_zero_or_null __P((struct val *));
+void nexttoken __P((void));
+void error __P((void)) __attribute__((__noreturn__));
+struct val *eval6 __P((void));
+struct val *eval5 __P((void));
+struct val *eval4 __P((void));
+struct val *eval3 __P((void));
+struct val *eval2 __P((void));
+struct val *eval1 __P((void));
+struct val *eval0 __P((void));
+int main __P((int, char **));
+
 
 struct val *
 make_int(i)
@@ -44,7 +62,7 @@ make_int(i)
 
 	vp = (struct val *) malloc(sizeof(*vp));
 	if (vp == NULL) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	vp->type = integer;
 	vp->u.i = i;
@@ -60,7 +78,7 @@ make_str(s)
 
 	vp = (struct val *) malloc(sizeof(*vp));
 	if (vp == NULL || ((vp->u.s = strdup(s)) == NULL)) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	vp->type = string;
 	return vp;
@@ -154,7 +172,7 @@ to_string(vp)
 
 	tmp = malloc(25);
 	if (tmp == NULL) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	sprintf(tmp, "%d", vp->u.i);
 	vp->type = string;
@@ -222,7 +240,6 @@ error()
 struct val *
 eval6()
 {
-	struct val     *eval0 __P((void));
 	struct val     *v;
 
 	if (token == OPERAND) {
@@ -369,7 +386,8 @@ eval2()
 {
 	struct val     *l, *r;
 	enum token	op;
-	int             v, li, ri;
+	int             v = 0;	/* pacify gcc */
+	int		li, ri;
 
 	l = eval3();
 	while ((op = token) == EQ || op == NE || op == LT || op == GT || op == LE || op == GE) {
@@ -396,6 +414,21 @@ eval2()
 			case NE:
 				v = (li != ri);
 				break;
+			case MOD:
+			case EOI:
+			case OPERAND:
+			case LP:
+			case RP:
+			case MATCH:
+			case DIV:
+			case MUL:
+			case SUB:
+			case ADD:
+			case AND:
+			case OR:
+				/* Can't happen */
+				abort();
+				break;
 			}
 		} else {
 			to_string(l);
@@ -419,6 +452,21 @@ eval2()
 				break;
 			case NE:
 				v = (strcoll(l->u.s, r->u.s) != 0);
+				break;
+			case MUL:
+			case SUB:
+			case ADD:
+			case AND:
+			case OR:
+			case DIV:
+			case OPERAND:
+			case EOI:
+			case MOD:
+			case RP:
+			case MATCH:
+			case LP:
+				/* Can't happen */
+				abort();
 				break;
 			}
 		} 
