@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2 1997/06/16 01:24:00 jonathan Exp $	*/
+/*	$NetBSD: start.S,v 1.3 1999/01/21 12:33:47 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,9 +76,10 @@ start:
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
-	move	s3, a3				# save call vector
+#	move	s3, a3				# save call vector
 	beq	a2, 0x30464354, 1f		# jump if boot from DS5000
-	nop
+	move	s3, a3				# BDslot: save call vector
+#	nop
 	la	s3, _C_LABEL(callvec)		# init call vector
 1:
 	la	a0, _C_LABEL (edata)			# clear BSS
@@ -87,16 +88,18 @@ start:
 	subu	a1, a1, a0
 	sw	s3, _C_LABEL(callv)		# save call vector
 	move	a0, s0				# restore argc
-	jal	_C_LABEL(main)			# main(argc, argv)
+	jal	_C_LABEL(_main)			# main(argc, argv)
 	move	a1, s1				# restore argv
 	j	_C_LABEL(prom_restart)		# restart...
 	nop
 
+#if 0
 /* dummy routine for gcc2 */
 	.globl	_C_LABEL(__main)
 _C_LABEL(__main):
 	j	ra
 	nop
+#endif
 
 LEAF(prom_restart)
 	lw	v0, _C_LABEL (callv)
@@ -106,7 +109,7 @@ LEAF(prom_restart)
 	move	a1, zero
 END(prom_restart)
 
-#if 0
+#if 1
 LEAF(prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
@@ -126,6 +129,7 @@ LEAF(prom_read)
 END(prom_read)
 #endif
 
+#if 0
 LEAF(printf)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
 	sw	a1, 4(sp)	# store args on stack for printf
@@ -134,3 +138,4 @@ LEAF(printf)
 	j	v0		# call PROM printf
 	sw	a3, 12(sp)
 END(printf)
+#endif

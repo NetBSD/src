@@ -1,11 +1,6 @@
-/*	$NetBSD: conf.c,v 1.6 1999/01/21 12:33:46 simonb Exp $	*/
-
-/*
- * Copyright (c) 1992, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,36 +30,54 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	from: @(#)disklabel.c	8.1 (Berkeley) 6/11/93
+ *	      $Id: disklabel.c,v 1.1 1999/01/21 12:33:43 simonb Exp $
  */
 
-#include <sys/types.h>
-#include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
-#include <pmax/stand/dec_prom.h>
-#include "rz.h"
-#include "tz.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
 
-const	struct callback *callv = &callvec;
-int	errno;
+int dkcksum __P((struct disklabel *));
+    
+char *
+getdisklabel(buf, lp)
+	const char *buf;
+	struct disklabel *lp;
+{
+	struct disklabel *dlp, *elp;
+	char *msg = (char *)0;
 
-extern void	nullsys();
-extern int	nodev(), noioctl();
+	elp = (struct disklabel *)(buf + DEV_BSIZE - sizeof(*dlp));
+	for (dlp = (struct disklabel *)buf; dlp <= elp;
+	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+			if (msg == (char *)0)
+				msg = "no disk label";
+		} else if (dlp->d_npartitions > MAXPARTITIONS ||
+			   dkcksum(dlp) != 0)
+			msg = "disk label corrupted";
+		else {
+			*lp = *dlp;
+			msg = (char *)0;
+			break;
+		}
+	}
+	return (msg);
+}
 
-#ifdef SMALL
-#define rzclose /*(()(struct open_file*))*/0
-#endif	/*SMALL*/
+/*
+ * Compute checksum for disk label.
+ */
+int
+dkcksum(lp)
+	register struct disklabel *lp;
+{
+	register u_short *start, *end;
+	register u_short sum = 0;
 
-#if 1
-# define	rzioctl		noioctl
-# define	tzioctl		noioctl
-#endif
-
-struct devsw devsw[] = {
-	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
-#ifndef BOOT
-	{ "tz",	tzstrategy,	tzopen,	tzclose,	tzioctl }, /*1*/
-#endif
-};
-
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+	start = (u_short *)lp;
+	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	while (start < end)
+		sum ^= *start++;
+	return (sum);
+}

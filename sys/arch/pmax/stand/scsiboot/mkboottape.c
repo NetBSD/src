@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboottape.c,v 1.7 1997/11/01 06:49:53 lukem Exp $	*/
+/*	$NetBSD: mkboottape.c,v 1.8 1999/01/21 12:33:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@ main(argc, argv)
 	char block[DEV_BSIZE];
 
 	makebootfile = 0;
-	while ((i = getopt(argc, argv, "b")) != -1)
+	while ((i = getopt(argc, argv, "b")) != EOF)
 		switch(i) {
 		case 'b':
 			makebootfile = 1;

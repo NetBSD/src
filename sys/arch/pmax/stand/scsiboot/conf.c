@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1995/01/18 06:53:39 mellon Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1999/01/21 12:33:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,8 +38,12 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand.h>
-#include <dec_prom.h>
+#include <sys/types.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <pmax/stand/dec_prom.h>
+#include "rz.h"
+#include "tz.h"
 
 const	struct callback *callv = &callvec;
 int	errno;
@@ -47,20 +51,14 @@ int	errno;
 extern void	nullsys();
 extern int	nodev(), noioctl();
 
-int	rzstrategy(), rzopen();
 #ifdef SMALL
-#define rzclose 0
-#else	/*!SMALL*/
-int	 rzclose();
-#endif	/*!SMALL*/
+#define rzclose /*(()(struct open_file*))*/0
+#endif	/*SMALL*/
 
-#define	rzioctl		noioctl
-
-#ifndef BOOT
-int	tzstrategy(), tzopen(), tzclose();
+#if 1
+# define	rzioctl		noioctl
+# define	tzioctl		noioctl
 #endif
-#define	tzioctl		noioctl
-
 
 struct devsw devsw[] = {
 	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.11 1998/05/22 12:56:35 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.12 1999/01/21 12:33:39 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 STAND=	../../stand
@@ -14,8 +14,7 @@ AFLAGS=	-O2 ${INCPATH} ${DEFS} -D_LOCORE
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 .PATH: ${S}/stand ${S}/lib/libsa
 
-#INCPATH=-I. -I/sys
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
+INCPATH=-I${.CURDIR} -I${.CURDIR}/.. -I${S} -I${S}/arch -I${S}/lib/libsa
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -26,10 +25,13 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
 LIBSA=  ${SA_LIB}
 
 # not yet: need to write libsa/Makefile.inc first
-LIBS=  ${.OBJDIR}/libdrive.a ${.CURDIR}/libsa/libsa.a  ${KERNLIB}
-#LIBS=	libdrive.a libsa/libsa.a ../../libkern/obj/libkern.a 
+LIBSADIR != cd ${.CURDIR}/../libsa; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBSA=	${LIBSADIR}/libsa.a
+LIBS=	${.OBJDIR}/libdrive.a ${LIBSA}  #${KERNLIB}
+#LIBS=	${.OBJDIR}/libdrive.a ${.CURDIR}/../libsa/libsa.a  #${KERNLIB}
+#LIBS=	libdrive.a libsa/libsa.a ../../libkern/libkern.a 
 
-DRIVERS= rz.c
 SRCS=	${DRIVERS}
 #STUFF=	callvec.c devopen.c getenv.c gets.c strcmp.c
 STUFF=
@@ -40,10 +42,11 @@ STUFF=
 
 includes:
 
-#libsa/libsa.a::
-#	cd libsa; make
+libsa/libsa.a::
+	cd libsa; make
 
-${.OBJDIR}/libdrive.a: conf.o ${DRIVERS:.c=.o}
+# XXX doesn't belong here.
+libdrive.a: conf.o ${DRIVERS:.c=.o}
 	ar crv $@ $?
 	ranlib $@
 
