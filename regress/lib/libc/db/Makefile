@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 1/11/93
-#	$Id: Makefile,v 1.3 1993/05/27 21:27:46 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	dbtest
 SRCS=	dbtest.c
@@ -13,10 +12,13 @@ SRCS=	dbtest.c
 #SRCS+=	hash.c hash_bigkey.c hash_buf.c hash_func.c hash_log2.c \
 #	hash_page.c hsearch.c ndbm.c
 #.PATH:	${.CURDIR}/../hash
-#LDADD=	/a/users/cgd/CSRG/newdb2/src/lib/libc/obj/libc.a
+#LDADD=	/usr/src/lib/libc/obj/libc.a
 
 CFLAGS=	-g -DDEBUG -DSTATISTICS
 NOMAN=	noman
+
+CFLAGS= -g -DDEBUG -DSTATISTICS
+NOMAN=  noman
 CLEANFILES+= t1 t2 t3
 
 install:
@@ -24,5 +26,4 @@ install:
 regress:
 	sh ${.CURDIR}/run.test
 
-NOINCLUDE=1
 .include <bsd.prog.mk>
