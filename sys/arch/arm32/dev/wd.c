@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.6 1996/03/28 21:52:52 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.7 1996/05/07 21:00:09 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -30,6 +30,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	from: wd.c,v 1.149 1996/04/29 19:50:47
  */
 
 #include <sys/param.h>
@@ -46,16 +48,17 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-
-#include <arm32/mainbus/wdreg.h>
-#include <arm32/mainbus/mainbus.h>
 #include <machine/irqhandler.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
+
+#include <arm32/mainbus/wdreg.h>
+#include <arm32/mainbus/mainbus.h>
 
 extern int wdresethack;
 
@@ -138,8 +141,9 @@ struct wdc_softc {
 	u_char sc_error;		/* copy of error register */
 };
 
-int wdcprobe __P((struct device *, void *, void *));
-void wdcattach __P((struct device *, struct device *, void *));
+int	wdcprobe 	__P((struct device *, void *, void *));
+void	wdcattach 	__P((struct device *, struct device *, void *));
+int	wdcintr		__P((void *));
 
 struct cfattach wdc_ca = {
 	sizeof(struct wdc_softc), wdcprobe, wdcattach
@@ -149,8 +153,9 @@ struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
 };
 
-int wdprobe __P((struct device *, void *, void *));
-void wdattach __P((struct device *, struct device *, void *));
+int	wdprobe		__P((struct device *, void *, void *));
+void	wdattach	__P((struct device *, struct device *, void *));
+int	wdprint		__P((void *, char *));
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
@@ -160,27 +165,34 @@ struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
 
-void wdgetdisklabel __P((struct wd_softc *));
-int wd_get_parms __P((struct wd_softc *));
-void wdstrategy __P((struct buf *));
-void wdstart __P((struct wd_softc *));
+void	wdgetdisklabel	__P((struct wd_softc *));
+int	wd_get_parms	__P((struct wd_softc *));
+void	wdstrategy	__P((struct buf *));
+void	wdstart		__P((struct wd_softc *));
 
 struct dkdriver wddkdriver = { wdstrategy };
 
-void wdfinish __P((struct wd_softc *, struct buf *));
-int wdcintr __P((void *));
-void wdcstart __P((struct wdc_softc *));
-int wdcommand __P((struct wd_softc *, int, int, int, int, int));
-int wdcommandshort __P((struct wdc_softc *, int, int));
-int wdcontrol __P((struct wd_softc *));
-int wdsetctlr __P((struct wd_softc *));
+/* XXX: these should go elsewhere */
+cdev_decl(wd);
+bdev_decl(wd);
+
+void	wdfinish	__P((struct wd_softc *, struct buf *));
+int 	dcintr		__P((void *));
+void	wdcstart	__P((struct wdc_softc *));
+int	wdcommand	__P((struct wd_softc *, int, int, int, int, int));
+int	wdcommandshort	__P((struct wdc_softc *, int, int));
+int	wdcontrol	__P((struct wd_softc *));
+int	wdsetctlr	__P((struct wd_softc *));
 static void bad144intern __P((struct wd_softc *));
-int wdcreset __P((struct wdc_softc *));
-void wdcrestart __P((void *arg));
-void wdcunwedge __P((struct wdc_softc *));
-void wdctimeout __P((void *arg));
-void wderror __P((void *, struct buf *, char *));
-int wdcwait __P((struct wdc_softc *, int));
+int	wdcreset	__P((struct wdc_softc *));
+void	wdcrestart	__P((void *arg));
+void	wdcunwedge	__P((struct wdc_softc *));
+void	wdctimeout	__P((void *arg));
+void	wderror		__P((void *, struct buf *, char *));
+int	wdcwait		__P((struct wdc_softc *, int));
+int	wdlock		__P((struct wd_softc *));
+void	wdunlock	__P((struct wd_softc *));
+
 /* ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
    command is aborted. */
 #define	wait_for_drq(d)		wdcwait(d, WDCS_DRDY | WDCS_DSC | WDCS_DRQ)
@@ -483,18 +495,20 @@ wdfinish(wd, bp)
 }
 
 int
-wdread(dev, uio)
+wdread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-wdwrite(dev, uio)
+wdwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -672,13 +686,16 @@ loop:
 #endif
 		switch (wd->sc_mode) {
 		case WDM_DMA:
+#if 0
 			command = (bp->b_flags & B_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
 			/* Start the DMA channel and bounce the buffer if
 			   necessary. */
-/*			isa_dmastart(bp->b_flags & B_READ,
+			isa_dmastart(
+			    bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
 			    bp->b_data + wd->sc_skip,
-			    wd->sc_nbytes, wdc->sc_drq);*/
+			    wd->sc_nbytes, wdc->sc_drq);
+#endif
 			panic("wd cannot do DMA yet\n");
 			break;
 		case WDM_PIOMULTI:
@@ -689,6 +706,11 @@ loop:
 			command = (bp->b_flags & B_READ) ?
 			    WDCC_READ : WDCC_WRITE;
 			break;
+		default:
+#ifdef DIAGNOSTIC
+			panic("bad wd mode");
+#endif
+			return;
 		}
 	
 		/* Initiate command! */
@@ -701,7 +723,7 @@ loop:
 
 #ifdef WDDEBUG
 		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
-		    cylin, head, bp->b_data, 0/*inb(wd->sc_iobase+wd_altsts)*/);
+		    cylin, head, bp->b_data, 0/*inb(wd->sc_iobase+wd_altsts*/));
 #endif
 	} else if (wd->sc_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -723,12 +745,14 @@ loop:
 
 		/* Push out data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
-			outsw(wdc->sc_iobase+wd_data, (u_int) bp->b_data + wd->sc_skip,
+			outsw(wdc->sc_iobase+wd_data, (u_int)bp->b_data + wd->sc_skip,
 			    wd->sc_nbytes >> 1);
 		else
 			panic("wd cannot do 32 bit transfers\n");
-/*			outsl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip,
-			    wd->sc_nbytes >> 2);*/
+#if 0
+			outsl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip,
+			    wd->sc_nbytes >> 2);
+#endif
 	}
 
 	wdc->sc_flags |= WDCF_ACTIVE;
@@ -783,12 +807,12 @@ wdcintr(arg)
 	/* Turn off the DMA channel and unbounce the buffer. */
 	if (wd->sc_mode == WDM_DMA)
 		panic("wd cannot do DMA\n");
-/*		isa_dmadone(bp->b_flags & B_READ, bp->b_data + wd->sc_skip,
-		    wd->sc_nbytes, wdc->sc_drq);*/
-
+#if 0
+		isa_dmadone(bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
+		    bp->b_data + wd->sc_skip, wd->sc_nbytes, wdc->sc_drq);
+#endif
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
-	lose:
 #ifdef WDDEBUG
 		wderror(wd, NULL, "wdcintr");
 #endif
@@ -806,7 +830,9 @@ wdcintr(arg)
 			goto restart;
 		wderror(wd, bp, "hard error");
 
+#ifdef B_FORMAT
 	bad:
+#endif
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -824,12 +850,14 @@ wdcintr(arg)
 
 		/* Pull in data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
-			insw(wdc->sc_iobase+wd_data, (u_int) bp->b_data + wd->sc_skip, 
+			insw(wdc->sc_iobase+wd_data, (u_int)bp->b_data + wd->sc_skip, 
 			    wd->sc_nbytes >> 1);
 		else
 			panic("wd cannot do 32 bit transfers\n");
-/*			insl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip, 
-			    wd->sc_nbytes >> 2);*/
+#if 0
+			insl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip, 
+			    wd->sc_nbytes >> 2);
+#endif
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
@@ -896,9 +924,10 @@ wdunlock(wd)
 }
 
 int
-wdopen(dev, flag, fmt)
+wdopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
+	struct proc *p;
 {
 	struct wd_softc *wd;
 	int unit, part;
@@ -911,7 +940,7 @@ wdopen(dev, flag, fmt)
 	if (wd == 0)
 		return ENXIO;
     
-	if (error = wdlock(wd))
+	if ((error = wdlock(wd)) != 0)
 		return error;
 
 	if (wd->sc_dk.dk_openmask != 0) {
@@ -975,15 +1004,16 @@ bad3:
 }
 
 int
-wdclose(dev, flag, fmt)
+wdclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
+	struct proc *p;
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	int part = WDPART(dev);
 	int error;
     
-	if (error = wdlock(wd))
+	if ((error = wdlock(wd)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -1221,7 +1251,6 @@ int
 wdsetctlr(wd)
 	struct wd_softc *wd;
 {
-	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 
 #ifdef WDDEBUG
 	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_dev.dv_unit, wd->sc_drive,
@@ -1354,7 +1383,7 @@ wdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = wdlock(wd))
+		if ((error = wdlock(wd)) != 0)
 			return error;
 		wd->sc_flags |= WDF_LABELLING;
 
@@ -1438,7 +1467,7 @@ wdsize(dev)
 	int part;
 	int size;
     
-	if (wdopen(dev, 0, S_IFBLK) != 0)
+	if (wdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	wd = wd_cd.cd_devs[WDUNIT(dev)];
 	part = WDPART(dev);
@@ -1446,7 +1475,7 @@ wdsize(dev)
 		size = -1;
 	else
 		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (wdclose(dev, 0, S_IFBLK) != 0)
+	if (wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
@@ -1698,7 +1727,9 @@ wdcwait(wdc, mask)
 	int iobase = wdc->sc_iobase;
 	int timeout = 0;
 	u_char status;
+#ifdef WDCNDELAY_DEBUG
 	extern int cold;
+#endif
 
 	for (;;) {
 		wdc->sc_status = status = inb(iobase+wd_status);
