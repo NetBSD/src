@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2004/01/01 13:58:15 sekiya Exp $
+.\"	$NetBSD: hardware,v 1.7 2004/01/04 14:27:30 sekiya Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
@@ -42,7 +42,6 @@ Serial ports
 On-board Zilog Z8530 Dual Uart (IP2x class)
 .Pq Em ttyz ,
 .bullet)
-.It
 .(bullet -compact
 On-board 16C550 Serial ports (IP32).
 .Pq Em ttyC .
