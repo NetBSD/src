@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.8 2003/02/26 07:53:05 matt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.9 2003/06/23 11:02:12 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.8 2003/02/26 07:53:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.9 2003/06/23 11:02:12 martin Exp $");
+
+#include "opt_mbuftrace.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.37 2003/06/16 20:01:01 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.38 2003/06/23 11:01:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -40,6 +40,8 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>

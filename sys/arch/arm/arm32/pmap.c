@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2003/06/15 18:18:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -191,6 +191,8 @@
 #include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 #include "opt_ddb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2003/06/15 18:18:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2003/05/10 21:10:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2003/06/23 11:01:20 martin Exp $	*/
 
 /*
  *
@@ -60,11 +60,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2003/05/10 21:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2003/06/23 11:01:20 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_kstack_dr0.h"
 
 #include <sys/param.h>

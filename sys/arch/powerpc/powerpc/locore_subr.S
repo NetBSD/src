@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.12 2003/03/12 06:00:36 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.13 2003/06/23 11:01:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -74,6 +74,8 @@
  */
 
 #include "opt_ppcarch.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 	.data
 GLOBAL(powersave)

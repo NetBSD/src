@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.50 2003/04/17 13:12:39 fvdl Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.51 2003/06/23 11:02:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.50 2003/04/17 13:12:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.51 2003/06/23 11:02:07 martin Exp $");
+
+#include "opt_mbuftrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.135 2003/04/26 11:05:22 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.136 2003/06/23 11:01:49 martin Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -51,6 +51,7 @@
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_compat_ibcs2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

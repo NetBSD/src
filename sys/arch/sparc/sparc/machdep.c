@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2003/05/03 18:11:01 wiz Exp $ */
+/*	$NetBSD: machdep.c,v 1.225 2003/06/23 11:01:39 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>

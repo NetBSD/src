@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2002/11/17 17:10:46 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2003/06/23 11:01:15 martin Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -48,6 +48,7 @@
  */
 
 #include "opt_kgdb.h"
+#include "opt_useleds.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

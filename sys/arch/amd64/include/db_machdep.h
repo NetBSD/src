@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 2003/06/23 11:01:04 martin Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,7 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
+#include "opt_multiprocessor.h"
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <machine/trap.h>

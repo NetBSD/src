@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.103 2003/05/16 13:56:54 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.104 2003/06/23 11:02:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_43.h"
+#endif
 
 #ifndef _KERNEL
 #include <sys/featuretest.h>
