@@ -1,4 +1,4 @@
-.\" $NetBSD: rpc.bootparamd.8,v 1.14 2003/02/14 16:11:36 grant Exp $
+.\" $NetBSD: rpc.bootparamd.8,v 1.15 2003/06/26 05:38:45 itojun Exp $
 .\" @(#)bootparamd.8
 .Dd January 8, 1994
 .Dt BOOTPARAMD 8
@@ -9,8 +9,8 @@
 .Nd boot parameter server
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
-.Op Fl s
+.Op Fl ds
+.Op Fl i ar interface
 .Op Fl r Ar router
 .Op Fl f Ar file
 .Sh DESCRIPTION
@@ -37,6 +37,16 @@ will be searched immediately.
 .It Fl d
 Display the debugging information. The daemon does not fork in this
 case.
+.It Fl i Ar interface
+Specify the interface to become the default router.
+.Nm
+picks the first IPv4 address it finds on the system by default.
+With
+.Fl i ,
+you can control which interface to be used to obtain the default router address.
+.Fl r
+overrides
+.Fl i .
 .It Fl s
 Log the debugging information with
 .Xr syslog 3 .
