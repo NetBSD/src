@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.2 1994/11/14 20:27:23 jtc Exp $	*/
+/*	$NetBSD: chflags.c,v 1.3 1995/01/04 05:40:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -40,10 +40,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)chflags.c	8.5 (Berkeley) 4/1/94";
-#endif
-static char rcsid[] = "$NetBSD: chflags.c,v 1.2 1994/11/14 20:27:23 jtc Exp $";
+/*static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";*/
+static char rcsid[] = "$NetBSD: chflags.c,v 1.3 1995/01/04 05:40:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +71,7 @@ main(argc, argv)
 	char *flags, *ep;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPR")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPR")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
