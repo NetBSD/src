@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.89 2001/01/24 20:34:59 kleink Exp $	*/
+/*	$NetBSD: mount.h,v 1.90 2001/06/28 08:15:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -228,10 +228,10 @@ struct mount {
 #define	VFSGEN_MAXID	4		/* number of valid vfs.generic ids */
 
 /*
- * XXX NOTE!  These must be in the order of mountcompatnames[] in
- * XXX sys/kern/vfs_syscalls.c!
- *
  * USE THE SAME NAMES AS MOUNT_*!
+ *
+ * Only need to add new entry here if the filesystem actually supports
+ * sysctl(2).
  */
 #define	CTL_VFS_NAMES { \
 	{ "generic", CTLTYPE_NODE }, \
