@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.27 1993/11/03 14:15:27 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.28 1993/11/08 20:17:35 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -67,8 +67,8 @@
 #include <i386/isa/fdreg.h>
 #include <i386/isa/nvram.h>
 
-#define	FDUNIT(s)	((s)>>3)
-#define	FDTYPE(s)	((s)&7)
+#define	FDUNIT(s)	(minor(s)>>3)
+#define	FDTYPE(s)	(minor(s)&7)
 
 #define b_cylin b_resid
 
@@ -102,7 +102,7 @@ struct fdc_softc {
 
 	struct	fd_softc *sc_fd[4];	/* pointers to children */
 	struct	fd_softc *sc_afd;	/* active drive */
-	struct	buf sc_head;		/* head of buf chain */
+	struct	buf sc_driveq;
 	enum	fdc_state sc_state;
 	int	sc_retry;		/* number of retries so far */
 	u_char	sc_status[7];		/* copy of registers */
@@ -153,6 +153,7 @@ struct fd_softc {
 
 	struct	fd_type *sc_deftype;	/* default type descriptor */
 	struct	fd_type *sc_type;	/* current type descriptor */
+	struct	buf sc_bufq;		/* head of buf chain */
 	int	sc_drive;		/* unit number on this controller */
 	int	sc_flags;
 #define	FD_OPEN		0x01		/* it's open */
@@ -181,7 +182,7 @@ STATIC void fd_motor_off __P((struct fd_softc *fd));
 STATIC void fd_motor_on __P((struct fd_softc *fd));
 STATIC int fdc_result __P((struct fdc_softc *fdc));
 STATIC int out_fdc __P((u_short iobase, u_char x));
-STATIC void fdstart __P((struct fdc_softc *fdc));
+STATIC void fdcstart __P((struct fdc_softc *fdc));
 STATIC void fd_timeout __P((struct fdc_softc *fdc));
 STATIC void fd_pseudointr __P((struct fdc_softc *fdc));
 STATIC int fdcstate __P((struct fdc_softc *fdc));
@@ -414,19 +415,22 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	int	fdu = FDUNIT(minor(bp->b_dev));
+	int	fdu = FDUNIT(bp->b_dev);
 	struct	fd_softc *fd = fdcd.cd_devs[fdu];
 	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
 	struct	fd_type *type = fd->sc_type;
-	register struct buf *dp;
+	struct	buf *dp;
 	int	nblks;
 	daddr_t	blkno;
  	int	s;
 
 #ifdef DIAGNOSTIC
-	if (bp->b_blkno < 0 || fdu < 0 || fdu > fdcd.cd_ndevs)
-		panic("fdstrategy: fdu=%d, blkno=%d, bcount=%d\n", fdu,
-			bp->b_blkno, bp->b_bcount);
+	if (bp->b_blkno < 0 || fdu < 0 || fdu > fdcd.cd_ndevs) {
+		printf("fdstrategy: fdu=%d, blkno=%d, bcount=%d\n", fdu,
+		       bp->b_blkno, bp->b_bcount);
+		bp->b_flags |= B_ERROR;
+		goto bad;
+	}
 #endif
 
 	blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
@@ -446,11 +450,32 @@ fdstrategy(bp)
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
 	       bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
 #endif
-	dp = &(fdc->sc_head);
 	s = splbio();
+	dp = &fd->sc_bufq;
 	disksort(dp, bp);
 	untimeout((timeout_t)fd_motor_off, (caddr_t)fd); /* a good idea */
-	fdstart(fdc);
+	if (!dp->b_active) {
+		register struct buf *cp;
+		dp->b_forw = NULL;
+		dp->b_active = 1;
+		cp = &fdc->sc_driveq;
+		if (!cp->b_actf)
+			cp->b_actf = dp;
+		else
+			cp->b_actl->b_forw = dp;
+		cp->b_actl = dp;
+		if (!cp->b_active) {
+			cp->b_active = 1;
+			fdcstart(fdc);
+		}
+	}
+#ifdef DIAGNOSTIC
+	else if (!fdc->sc_driveq.b_active) {
+		printf("fdstrategy: controller inactive\n");
+		fdc->sc_driveq.b_active = 1;
+		fdcstart(fdc);
+	}
+#endif
 	splx(s);
 	return;
 
@@ -550,8 +575,8 @@ Fdopen(dev, flags)
 	dev_t	dev;
 	int	flags;
 {
- 	int fdu = FDUNIT(minor(dev));
- 	int type = FDTYPE(minor(dev));
+ 	int fdu = FDUNIT(dev);
+ 	int type = FDTYPE(dev);
 	struct fd_softc *fd;
 
 	if (fdu >= fdcd.cd_ndevs)
@@ -581,7 +606,7 @@ fdclose(dev, flags)
 	dev_t dev;
 	int flags;
 {
- 	int fdu = FDUNIT(minor(dev));
+ 	int fdu = FDUNIT(dev);
 	struct fd_softc *fd = fdcd.cd_devs[fdu];
 
 	fd->sc_flags &= ~FD_OPEN;
@@ -589,14 +614,19 @@ fdclose(dev, flags)
 }
 
 STATIC void
-fdstart(fdc)
+fdcstart(fdc)
 	struct fdc_softc *fdc;
 {
 
 	/* interrupt routine is responsible for running the work queue; just
 	   call it if idle */
-	if (fdc->sc_state == DEVIDLE)
-		(void) fdcintr((void *)fdc);
+#ifdef DIAGNOSTIC
+	if (fdc->sc_state != DEVIDLE) {
+		printf("fdstart: not idle\n");
+		return;
+	}
+#endif
+	(void) fdcintr((void *)fdc);
 }
 
 STATIC void
@@ -625,7 +655,7 @@ fd_status(fd, n, s)
 		       fdc->sc_status[5]);
 #ifdef DIAGNOSTIC
 	else
-		panic("fd_status: weird size");
+		printf("\nfd_status: weird size");
 #endif
 }
 
@@ -634,15 +664,11 @@ fd_timeout(fdc)
 	struct fdc_softc *fdc;
 {
 	struct fd_softc *fd = fdc->sc_afd;
-	struct buf *dp, *bp;
 	int s = splbio();
 
 	fd_status(fd, 0, "timeout");
 
-	dp = &fdc->sc_head;
-	bp = dp->b_actf;
-
-	if (bp) {
+	if (fd->sc_bufq.b_actf) {
 		fdc->sc_state++;
 	} else {
 		fdc->sc_afd = NULL;
@@ -684,16 +710,16 @@ fdcstate(fdc)
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
-	int fdu;
+	struct buf *dp, *bp;
 	u_short iobase = fdc->sc_iobase;
 	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
 	struct fd_type *type;
-	struct buf *dp, *bp;
 
-	dp = &(fdc->sc_head);
-	bp = dp->b_actf;
-	if (!bp) {
+	dp = fdc->sc_driveq.b_actf;
+	if (!dp) {
+		/* no drives waiting; end */
 		fdc->sc_state = DEVIDLE;
+		fdc->sc_driveq.b_active = 0;
 #ifdef DIAGNOSTIC
 		if (fd = fdc->sc_afd) {
 			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
@@ -703,8 +729,14 @@ fdcstate(fdc)
 #endif
  		return 0;
 	}
-	fdu = FDUNIT(minor(bp->b_dev));
-	fd = fdcd.cd_devs[fdu];
+	bp = dp->b_actf;
+	if (!bp) {
+		/* nothing queued on this drive; try next */
+		fdc->sc_driveq.b_actf = dp->b_forw;
+		dp->b_active = 0;
+		return 1;
+	}
+	fd = fdcd.cd_devs[FDUNIT(bp->b_dev)];
 #ifdef DIAGNOSTIC
 	if (fdc->sc_afd && (fd != fdc->sc_afd))
 		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
@@ -844,7 +876,7 @@ fdcstate(fdc)
 			goto doseek;
 		} else {
 			bp->b_resid = 0;
-			dp->b_actf = bp->av_forw;
+			fd->sc_bufq.b_actf = bp->av_forw;
 			biodone(bp);
 			/* turn off motor 5s from now */
 			timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
@@ -905,7 +937,8 @@ fdcstate(fdc)
 		return 0;
 	}
 #ifdef DIAGNOSTIC
-	panic("fdcstate: impossible");
+	printf("fdcstate: impossible");
+	return 0;
 #endif
 #undef	st0
 #undef	cyl
@@ -915,11 +948,10 @@ STATIC int
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	register struct buf *dp, *bp;
+	register struct buf *bp;
 	struct fd_softc *fd;
 
-	dp = &(fdc->sc_head);
-	bp = dp->b_actf;
+	bp = fd->sc_bufq.b_actf;
 
 	switch (fdc->sc_retry)
 	{
@@ -956,7 +988,7 @@ fdcretry(fdc)
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount - fd->sc_skip;
-		dp->b_actf = bp->av_forw;
+		fd->sc_bufq.b_actf = bp->av_forw;
 		biodone(bp);
 		/* turn off motor 5s from now */
 		timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
@@ -976,7 +1008,7 @@ fdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(minor(dev))];
+	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type;
 	struct disklabel buffer;
 	int error = 0;
