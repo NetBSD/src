@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.8 1997/10/18 11:23:10 lukem Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.9 1998/07/06 06:57:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.8 1997/10/18 11:23:10 lukem Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.9 1998/07/06 06:57:52 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,11 +171,11 @@ main(argc, argv)
 	/*
 	 *  Grab our host name and pid.
 	 */
-	if (gethostname(MyHost, MAXHOSTNAMELEN) < 0) {
+	if (gethostname(MyHost, sizeof MyHost) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		Exit(0);
 	}
-	MyHost[MAXHOSTNAMELEN] = '\0';
+	MyHost[sizeof(MyHost) - 1] = '\0';
 
 	MyPid = getpid();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon.c,v 1.23 1998/01/09 08:11:06 perry Exp $	*/
+/*	$NetBSD: daemon.c,v 1.24 1998/07/06 07:05:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
@@ -1130,6 +1130,7 @@ myhostname(hostbuf, size)
 	{
 		(void) strcpy(hostbuf, "localhost");
 	}
+	hostbuf[size - 1] = '\0';
 	hp = sm_gethostbyname(hostbuf);
 	if (hp == NULL)
 		return NULL;

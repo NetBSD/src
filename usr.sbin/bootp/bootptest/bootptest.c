@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.5 1998/03/14 04:39:53 lukem Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.6 1998/07/06 07:02:17 mrg Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.5 1998/03/14 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.6 1998/07/06 07:02:17 mrg Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -103,7 +103,7 @@ u_char eaddr[16];				/* Ethernet address */
  */
 
 int debug = 1;					/* Debugging flag (level) */
-char hostname[64];
+char hostname[MAXHOSTNAMELEN + 1];
 char *sndbuf;					/* Send packet buffer */
 char *rcvbuf;					/* Receive packet buffer */
 
@@ -330,6 +330,7 @@ main(argc, argv)
 	} else {
 		/* Fill in the client IP address. */
 		gethostname(hostname, sizeof(hostname));
+		hostname[sizeof(hostname) - 1] = '\0';
 		hep = gethostbyname(hostname);
 		if (!hep) {
 			printf("Can not get my IP address\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.16 1997/10/19 19:41:57 mycroft Exp $	*/
+/*	$NetBSD: lpr.c,v 1.17 1998/07/06 07:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.16 1997/10/19 19:41:57 mycroft Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.17 1998/07/06 07:03:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ main(argc, argv)
 
 	name = argv[0];
 	gethostname(host, sizeof (host));
+	host[sizeof(host) - 1] = '\0';
 	openlog("lpd", 0, LOG_LPR);
 
 	errs = 0;

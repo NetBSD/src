@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.2 1997/10/10 16:33:35 lukem Exp $	*/
+/*	$NetBSD: get_names.c,v 1.3 1998/07/06 07:00:31 mrg Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.2 1997/10/10 16:33:35 lukem Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.3 1998/07/06 07:00:31 mrg Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: get_names.c,v 1.2 1997/10/10 16:33:35 lukem Exp $");
 
 extern	CTL_MSG	msg;
 
-static	char	hostname[MAXHOSTNAMELEN];
+static	char	hostname[MAXHOSTNAMELEN + 1];
 char		*my_machine_name;
 
 /*
@@ -52,7 +52,8 @@ get_local_name(my_name)
 	msg.ctl_addr.sin_family = htons(AF_INET);
 # endif
 
-	(void) gethostname(hostname, sizeof (hostname));
+	(void)gethostname(hostname, sizeof (hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	my_machine_name = hostname;
 	/* look up the address of the local host */
 	hp = gethostbyname(my_machine_name);

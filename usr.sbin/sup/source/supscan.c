@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.6 1997/08/04 22:03:52 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.7 1998/07/06 07:05:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -121,7 +121,7 @@
 #include <varargs.h>
 #endif
 #include <sys/time.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include "supcdefs.h"
 #include "supextern.h"
 
@@ -408,7 +408,7 @@ va_dcl
 int localhost (host)
 register char *host;
 {
-	static char myhost[STRINGLENGTH];
+	static char myhost[MAXHOSTNAMELEN + 1];
 	static int myhostlen;
 	register int hostlen;
 
@@ -420,6 +420,7 @@ register char *host;
 		if (gethostname (myhost,sizeof (myhost)) < 0) {
 		    quit (1,"supscan: can't get kernel host name\n");
 		}
+		myhost[sizeof(myhost) - 1] = '\0';
 		myhostlen = strlen(myhost);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.10 1998/02/13 05:52:13 lukem Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.11 1998/07/06 07:01:01 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.10 1998/02/13 05:52:13 lukem Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.11 1998/07/06 07:01:01 mrg Exp $");
 #endif
 #endif
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: auth_unix.c,v 1.10 1998/02/13 05:52:13 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/param.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -187,14 +189,14 @@ AUTH *
 authunix_create_default()
 {
 	int len;
-	char machname[MAX_MACHINE_NAME + 1];
+	char machname[MAXHOSTNAMELEN + 1];
 	int uid;
 	int gid;
 	int gids[NGRPS];
 
-	if (gethostname(machname, MAX_MACHINE_NAME) == -1)
+	if (gethostname(machname, sizeof machname) == -1)
 		abort();
-	machname[MAX_MACHINE_NAME] = 0;
+	machname[sizeof(machname) - 1] = 0;
 	uid = geteuid();
 	gid = getegid();
 	if ((len = getgroups(NGRPS, gids)) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.8 1998/03/04 13:44:48 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.9 1998/07/06 07:01:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.8 1998/03/04 13:44:48 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.9 1998/07/06 07:01:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,7 +657,7 @@ char	*argv[];
 {
     int length;
     struct sockaddr_in server;
-    char sockNAME[100];
+    char sockNAME[128];
     static char **whereAPI = 0;
     int fd;
     struct timeval tv;
@@ -727,6 +727,7 @@ char	*argv[];
     /* Get name to advertise in address list */
     strcpy(sockNAME, "API3270=");
     gethostname(sockNAME+strlen(sockNAME), sizeof sockNAME-strlen(sockNAME));
+    sockNAME[sizeof(sockNAME) - 1] = '\0';
     if (strlen(sockNAME) > (sizeof sockNAME-(10+strlen(keyname)))) {
 	fprintf(stderr, "Local hostname too large; using 'localhost'.\n");
 	strcpy(sockNAME, "localhost");

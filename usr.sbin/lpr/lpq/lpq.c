@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.7 1997/10/05 15:12:18 mrg Exp $	*/
+/*	$NetBSD: lpq.c,v 1.8 1998/07/06 07:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.7 1997/10/05 15:12:18 mrg Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.8 1998/07/06 07:03:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ main(argc, argv)
 	name = *argv;
 	if (gethostname(host, sizeof(host)))
 		err(1, "lpq: gethostname");
+	host[sizeof(host) - 1] = '\0';
 	openlog("lpd", 0, LOG_LPR);
 
 	aflag = lflag = 0;

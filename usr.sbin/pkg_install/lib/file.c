@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.11 1998/05/18 23:43:57 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.12 1998/07/06 07:03:55 mrg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.11 1998/05/18 23:43:57 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.12 1998/07/06 07:03:55 mrg Exp $");
 #endif
 #endif
 
@@ -30,12 +30,14 @@ __RCSID("$NetBSD: file.c,v 1.11 1998/05/18 23:43:57 hubertf Exp $");
  */
 
 #include "lib.h"
+
+#include <sys/wait.h>
+
 #include <err.h>
 #include <ftpio.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
-#include <sys/wait.h>
 
 /* Quick check to see if a file exists */
 Boolean
@@ -174,7 +176,6 @@ fileURLFilename(char *fname, char *where, int max)
     return fname;
 }
 
-#define HOSTNAME_MAX	64
 /*
  * Try and fetch a file by URL, returning the directory name for where
  * it's unpacked, if successful.
@@ -182,8 +183,8 @@ fileURLFilename(char *fname, char *where, int max)
 char *
 fileGetURL(char *base, char *spec)
 {
-    char host[HOSTNAME_MAX], file[FILENAME_MAX];
-    char pword[HOSTNAME_MAX + 40], *uname, *cp, *rp;
+    char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
+    char pword[MAXHOSTNAMELEN + 40], *uname, *cp, *rp;
     char fname[FILENAME_MAX];
     char pen[FILENAME_MAX];
     struct passwd *pw;
@@ -226,7 +227,7 @@ fileGetURL(char *base, char *spec)
     }
     else
 	strcpy(fname, spec);
-    cp = fileURLHost(fname, host, HOSTNAME_MAX);
+    cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
     if (!*cp) {
 	warnx("URL `%s' has bad host part!", fname);
 	return NULL;
@@ -248,10 +249,11 @@ fileGetURL(char *base, char *spec)
 	strcpy(pword, "joe@");
     }
     else {
-	char me[HOSTNAME_MAX];
+	char me[MAXHOSTNAMELEN + 1];
 
-	gethostname(me, HOSTNAME_MAX);
-	snprintf(pword, HOSTNAME_MAX + 40, "%s@%s", pw->pw_name, me);
+	gethostname(me, sizeof me);
+	me[sizeof(me) - 1] = '\0';
+	snprintf(pword, sizeof pword, "%s@%s", pw->pw_name, me);
     }
     if (Verbose)
 	printf("Trying to fetch %s.\n", fname);

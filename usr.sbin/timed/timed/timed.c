@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.9 1997/10/17 14:19:48 lukem Exp $	*/
+/*	$NetBSD: timed.c,v 1.10 1998/07/06 07:06:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,12 +44,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.9 1997/10/17 14:19:48 lukem Exp $");
+__RCSID("$NetBSD: timed.c,v 1.10 1998/07/06 07:06:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.9 $"
+#ident "$Revision: 1.10 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -297,10 +297,11 @@ main(int argc, char **argv)
 	if (0 != goodgroup || 0 != goodhosts)
 		Mflag = 1;
 
-	if (gethostname(hostname, sizeof(hostname) - 1) < 0) {
+	if (gethostname(hostname, sizeof(hostname)) < 0) {
 		perror("gethostname");
 		exit(1);
 	}
+	hostname[sizeof(hostname) - 1] = '\0';
 	self.l_bak = &self;
 	self.l_fwd = &self;
 	self.h_bak = &self;

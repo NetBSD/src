@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.9 1998/02/27 10:44:14 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.10 1998/07/06 06:56:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.9 1998/02/27 10:44:14 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.10 1998/07/06 06:56:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2181,7 +2181,7 @@ telnet(user)
 
 #if	defined(AUTHENTICATION)
     {
-	static char local_host[256] = { 0 };
+	static char local_host[MAXHOSTNAMELEN + 1] = { 0 };
 
 	if (!local_host[0]) {
 		gethostname(local_host, sizeof(local_host));

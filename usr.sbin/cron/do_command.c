@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.5 1998/01/31 14:40:28 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.6 1998/07/06 06:57:18 mrg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.5 1998/01/31 14:40:28 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.6 1998/07/06 06:57:18 mrg Exp $");
 #endif
 #endif
 
@@ -378,10 +378,11 @@ child_process(e, u)
 			if (mailto) {
 				char	**env;
 				char	mailcmd[MAX_COMMAND];
-				char	hostname[MAXHOSTNAMELEN];
+				char	hostname[MAXHOSTNAMELEN + 1];
 
-				(void) gethostname(hostname, MAXHOSTNAMELEN);
-				(void) snprintf(mailcmd, sizeof(mailcmd),
+				(void)gethostname(hostname, sizeof hostname);
+				hostname[sizeof(hostname) - 1] = '\0';
+				(void)snprintf(mailcmd, sizeof(mailcmd),
 				    MAILARGS, MAILCMD);
 				if (!(mail = cron_popen(mailcmd, "w"))) {
 					perror(MAILCMD);

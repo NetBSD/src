@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1998/05/02 14:19:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 1998/07/06 07:04:28 mrg Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 1998/05/02 14:19:15 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 1998/07/06 07:04:28 mrg Exp $");
 #endif
 #endif
 
@@ -79,7 +79,7 @@ char ifname[32];		/* Interface name */
 int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
-char hostname[MAXNAMELEN];	/* Our hostname */
+char hostname[MAXNAMELEN + 1];	/* Our hostname */
 static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
@@ -197,11 +197,11 @@ main(argc, argv)
     setlogmask(LOG_UPTO(LOG_INFO));
 #endif
 
-    if (gethostname(hostname, MAXNAMELEN) < 0 ) {
+    if (gethostname(hostname, sizeof(hostname)) < 0 ) {
 	option_error("Couldn't get hostname: %m");
 	die(1);
     }
-    hostname[MAXNAMELEN-1] = 0;
+    hostname[sizeof(hostname) - 1] = 0;
 
     uid = getuid();
     privileged = uid == 0;

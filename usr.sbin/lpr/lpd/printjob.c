@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.18 1997/10/19 19:40:21 mycroft Exp $	*/
+/*	$NetBSD: printjob.c,v 1.19 1998/07/06 07:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.18 1997/10/19 19:40:21 mycroft Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.19 1998/07/06 07:03:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -424,8 +424,10 @@ printit(file)
 			if (line[1] != '\0') {
 				strncpy(class, line+1, sizeof(class) - 1);
 				class[sizeof(class)-1] = '\0';
-			} else if (class[0] == '\0')
+			} else if (class[0] == '\0') {
 				gethostname(class, sizeof(class));
+				class[sizeof(class) - 1] = '\0';
+			}
 			continue;
 
 		case 'T':	/* header title for pr */

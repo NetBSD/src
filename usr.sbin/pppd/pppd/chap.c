@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.c,v 1.11 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: chap.c,v 1.12 1998/07/06 07:04:28 mrg Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -40,7 +40,7 @@
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp ";
 #else
-__RCSID("$NetBSD: chap.c,v 1.11 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: chap.c,v 1.12 1998/07/06 07:04:28 mrg Exp $");
 #endif
 #endif
 
@@ -395,7 +395,7 @@ ChapReceiveChallenge(cstate, inp, id, len)
     u_char *rchallenge;
     int secret_len;
     char secret[MAXSECRETLEN];
-    char rhostname[256];
+    char rhostname[MAXNAMELEN+1];
     MD5_CTX mdContext;
     u_char hash[MD5_SIGNATURE_SIZE];
  
@@ -494,7 +494,7 @@ ChapReceiveResponse(cstate, inp, id, len)
     u_char *remmd, remmd_len;
     int secret_len, old_state;
     int code;
-    char rhostname[256];
+    char rhostname[MAXNAMELEN+1];
     MD5_CTX mdContext;
     char secret[MAXSECRETLEN];
     u_char hash[MD5_SIGNATURE_SIZE];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.12 1998/05/02 14:19:16 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.13 1998/07/06 07:04:29 mrg Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -50,7 +50,11 @@
 #define NUM_PPP		1	/* One PPP interface supported (per process) */
 #define MAXWORDLEN	1024	/* max length of word in file (incl null) */
 #define MAXARGS		1	/* max # args to a command */
+#ifdef MAXHOSTNAMELEN
+#define MAXNAMELEN	MAXHOSTNAMELEN	/* max length of hostname or name for auth */
+#else
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
+#endif
 #define MAXSECRETLEN	256	/* max length of password or secret */
 
 /*
@@ -61,7 +65,7 @@ extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
 extern int	ttyfd;		/* Serial device file descriptor */
-extern char	hostname[];	/* Our hostname */
+extern char	hostname[MAXNAMELEN+1];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */

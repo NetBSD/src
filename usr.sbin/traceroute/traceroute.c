@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.22 1998/07/04 20:47:24 mrg Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.23 1998/07/06 06:59:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.22 1998/07/04 20:47:24 mrg Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.23 1998/07/06 06:59:06 mrg Exp $");
 #endif
 #endif
 
@@ -1211,11 +1211,13 @@ inetname(struct in_addr in)
 	static char domain[MAXHOSTNAMELEN + 1], line[MAXHOSTNAMELEN + 1];
 
 	if (first && !nflag) {
+		int rv;
+
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.')) != NULL) {
+		rv = gethostname(domain, sizeof domain);
+		domain[sizeof(domain) - 1] = '\0';
+		if (rv == 0 && (cp = strchr(domain, '.')) != NULL) {
 			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
-			domain[sizeof(domain) - 1] = '\0';
 		} else
 			domain[0] = '\0';
 	}

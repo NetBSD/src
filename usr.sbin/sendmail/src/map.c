@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.17 1998/01/09 08:11:17 perry Exp $	*/
+/*	$NetBSD: map.c,v 1.18 1998/07/06 07:05:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995-1997 Eric P. Allman.
@@ -1141,6 +1141,7 @@ ndbm_map_close(map)
 			ndbm_map_store(map, "YP_LAST_MODIFIED", buf);
 
 			(void) gethostname(buf, sizeof buf);
+			buf[sizeof(buf) - 1] = '\0';
 			ndbm_map_store(map, "YP_MASTER_NAME", buf);
 
 			map->map_mflags = save_mflags;

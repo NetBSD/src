@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 1995/10/06 05:12:14 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 1998/07/06 06:57:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -128,7 +128,7 @@ typedef struct rmpconn_s {
 /*
  *  All these variables are defined in "conf.c".
  */
-extern	char	MyHost[];		/* this hosts' name */
+extern	char	MyHost[MAXHOSTNAMELEN+1]; /* this hosts' name */
 extern	pid_t	MyPid;			/* this processes' ID */
 extern	int	DebugFlg;		/* set true if debugging */
 extern	int	BootAny;		/* set true if we can boot anyone */

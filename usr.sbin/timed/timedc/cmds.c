@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.8 1997/10/18 07:13:33 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.9 1998/07/06 07:06:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.8 1997/10/18 07:13:33 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.9 1998/07/06 07:06:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif
 
 #include "timedc.h"
@@ -74,7 +74,7 @@ __RCSID("$NetBSD: cmds.c,v 1.8 1997/10/18 07:13:33 lukem Exp $");
 
 int sock;
 int sock_raw;
-char myname[MAXHOSTNAMELEN];
+char myname[MAXHOSTNAMELEN + 1];
 struct hostent *hp;
 struct sockaddr_in server;
 struct sockaddr_in dayaddr;
@@ -192,6 +192,7 @@ clockdiff(argc, argv)
 	}
 
 	(void)gethostname(myname,sizeof(myname));
+	myname[sizeof(myname) - 1] = '\0';
 
 	/* get the address for the date ready */
 	sp = getservbyname(DATE_PORT, DATE_PROTO);
