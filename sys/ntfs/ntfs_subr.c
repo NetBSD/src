@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.20 1999/10/10 14:48:37 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.21 1999/10/25 19:08:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -225,12 +225,11 @@ ntfs_ntvattrget(
 		dprintf(("ntfs_ntvattrget: attribute in ino: %d\n",
 				 aalp->al_inumber));
 
-/*
-		error = VFS_VGET(ntmp->ntm_mountp, aalp->al_inumber, &newvp);
-*/
+		/* this is not a main record, so we can't use just plain
+		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
-				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-					VG_EXT, curproc, &newvp);
+				NTFS_A_DATA, NULL, LK_EXCLUSIVE | LK_RETRY,
+				VG_EXT, curproc, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -364,7 +363,7 @@ ntfs_ntget(ip)
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE|LK_INTERLOCK, &ip->i_interlock);
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
 
 	return 0;
 }
@@ -394,7 +393,7 @@ ntfs_ntlookup(
 			*ipp = ip;
 			return (0);
 		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL));
+	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -957,7 +956,8 @@ ntfs_ntlookupfile(
 			/* vget node, but don't load it */
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
-				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
+				   LK_EXCLUSIVE | LK_RETRY,
+				   VG_DONTLOADIN | VG_DONTVALIDFN,
 				   curproc, &nvp);
 			if (error)
 				goto fail;
