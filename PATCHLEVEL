@@ -51,3 +51,5 @@ cause them to not work on file systems with type `ffs' in fstab.
 [kernel/sun3]: Make netboot compatible with old Sun3/50 PROMs
 
 [kernel/sun3]: Try to deal with Sun3/50 SCSI DMA hardware bug
+
+[kernel/hp300]: Fix incorrect value in HP-IB command stream.
