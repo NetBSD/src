@@ -1,4 +1,0 @@
-# $NetBSD: md.arm32,v 1.33 2001/11/25 23:34:40 thorpej Exp $
-./sbin/ldconfig			base-sysutil-root
-./usr/bin/fdformat		base-util-bin
-./usr/libexec/ld.so		base-sys-shlib
