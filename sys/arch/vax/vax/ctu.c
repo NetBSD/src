@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.12 2001/04/12 06:20:59 thorpej Exp $ */
+/*	$NetBSD: ctu.c,v 1.13 2001/05/13 21:19:44 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,8 +33,6 @@
 /*
  * Device driver for 11/750 Console TU58.
  *
- * Error checking is almost nonexistent, the driver should be
- * fixed to at least calculate checksum on incoming packets.
  * Writing of tapes does not work, by some unknown reason so far.
  * It is almost useless to try to use this driver when running
  * multiuser, because the serial device don't have any buffers 
@@ -51,60 +49,52 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/disklabel.h>	/* For disklabel prototype */
+#include <sys/conf.h>
 
 #include <machine/mtpr.h>
 #include <machine/rsp.h>
 #include <machine/scb.h>
 #include <machine/trap.h>
 
-enum tu_state {
-	SC_UNUSED,
-	SC_INIT,
-	SC_READY,
-	SC_SEND_CMD,
-	SC_GET_RESP,
-	SC_GET_WCONT,
-	SC_GET_END,
-	SC_RESTART,
-};
+#undef TUDEBUG
+
+#define	TU_IDLE		0
+#define	TU_RESET	1
+#define	TU_RUNNING	2
+#define	TU_WORKING	3
+#define TU_READING	4
+#define TU_WRITING	5
+#define	TU_ENDPACKET	6
+#define	TU_RESTART	7
 
 struct tu_softc {
-	enum	tu_state sc_state;
-	int	sc_error;
+	int	sc_state;
+	int	sc_step;
 	char	sc_rsp[15];	/* Should be struct rsb; but don't work */
-	u_char	*sc_xfptr;	/* Current char to xfer */
-	u_char	*sc_blk;	/* Base of current 128b block */
 	int	sc_tpblk;	/* Start block number */
-	int	sc_nbytes;	/* Number of bytes to xfer */
+	int 	sc_wto;		/* Timeout counter */
 	int	sc_xbytes;	/* Number of xfer'd bytes */
-	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 	int	sc_op;		/* Read/write */
-	int	sc_xmtok;	/* set if OK to xmit */
-	struct	buf_queue sc_q;	/* pending I/O requests */
+	struct	buf_queue sc_bufq;	/* pending I/O requests */
 } tu_sc;
 
 struct	ivec_dsp tu_recv, tu_xmit;
 
-void	ctutintr __P((void *));
-void	cturintr __P((void *));
-void	ctuattach __P((void));
-void	ctustart __P((struct buf *));
-void	ctuwatch __P((void *));
-short	ctu_cksum __P((unsigned short *, int));
+	void ctuattach(void);
+static	void ctutintr(void *);
+static	void cturintr(void *);
+static	void ctustart(void);
+static	void ctuwatch(void *);
+static	u_short ctu_cksum(unsigned short *, int);
 
-int	ctuopen __P((dev_t, int, int, struct proc *));
-int	ctuclose __P((dev_t, int, int, struct proc *));
-void	ctustrategy __P((struct buf *));
-int	ctuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
+bdev_decl(ctu);
 
 static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 
 void
 ctuattach()
 {
-	BUFQ_INIT(&tu_sc.sc_q);
+	BUFQ_INIT(&tu_sc.sc_bufq);
 
 	tu_recv = idsptch;
 	tu_recv.hoppaddr = cturintr;
@@ -115,94 +105,109 @@ ctuattach()
 	scb->scb_cstint = (void *)&tu_xmit;
 }
 
-int
-ctuopen(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags, devtype;
-	struct proc *p;
+static void
+ctuinit(void)
 {
-	int unit, error;
+	int s = spl7();
+#define	WAIT	while ((mfpr(PR_CSTS) & 0x80) == 0)
 
-	unit = minor(dev);
+	/*
+	 * Do a reset as described in the
+	 * "TU58 DECtape II Users Guide".
+	 */
+	mtpr(0101, PR_CSTS);	/* Enable transmit interrupt + send break */
+	WAIT;
+	mtpr(0, PR_CSTD); WAIT;
+	mtpr(0, PR_CSTD); WAIT;
+	mtpr(RSP_TYP_INIT, PR_CSTD); WAIT;
+	mtpr(RSP_TYP_INIT, PR_CSTD); WAIT;
+#undef	WAIT
+	splx(s);
+}
 
-	if (unit)
+int
+ctuopen(dev_t dev, int oflags, int devtype, struct proc *p)
+{
+	int error;
+
+	if (minor(dev))
 		return ENXIO;
 
-	if (tu_sc.sc_state != SC_UNUSED)
+	if (tu_sc.sc_state != TU_IDLE)
 		return EBUSY;
 
-	tu_sc.sc_error = 0;
+	tu_sc.sc_state = TU_RESET;
+	tu_sc.sc_step = 0;
 	mtpr(0100, PR_CSRS);	/* Enable receive interrupt */
+	mtpr(0101, PR_CSTS);	/* Enable transmit interrupt + send break */
+	if ((error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH, "reset", 0)))
+		return error;
+	
+#ifdef TUDEBUG
+	printf("ctuopen: running\n");
+#endif
+	tu_sc.sc_state = TU_RUNNING;
 	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
-
-	tu_sc.sc_state = SC_INIT;
-
-	mtpr(RSP_TYP_INIT, PR_CSTD);
-
-        if ((error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH,
-	    "ctuopen", 0)))
-                return (error);
-
-	if (tu_sc.sc_error)
-		return tu_sc.sc_error;
-
-	tu_sc.sc_state = SC_READY;
-	tu_sc.sc_xmtok = 1;
-
-	mtpr(0100, PR_CSTS);
 	return 0;
 
 }
 
 int
-ctuclose(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags, devtype;
-	struct proc *p;
+ctuclose(dev_t dev, int oflags, int devtype, struct proc *p)
 {
+	struct buf *bp;
+	int s = spl7();
+	while ((bp = BUFQ_FIRST(&tu_sc.sc_bufq)))
+		BUFQ_REMOVE(&tu_sc.sc_bufq, bp);
+	splx(s);
+
 	mtpr(0, PR_CSRS);
 	mtpr(0, PR_CSTS);
-	tu_sc.sc_state = SC_UNUSED;
+	tu_sc.sc_state = TU_IDLE;
 	callout_stop(&ctu_watch_ch);
 	return 0;
 }
 
 void
-ctustrategy(bp)
-	struct buf *bp;
+ctustrategy(struct buf *bp)
 {
-	int	s;
+	int s, empty;
 
 #ifdef TUDEBUG
-	printf("addr %x, block %x, nblock %x, read %x\n",
-		bp->b_data, bp->b_blkno, bp->b_bcount,
-		bp->b_flags & B_READ);
+	printf("ctustrategy: bcount %ld blkno %d\n", bp->b_bcount, bp->b_blkno);
+	printf("ctustrategy: bp %p\n", bp);
 #endif
-
 	if (bp->b_blkno >= 512) {
-		biodone(bp);
-		return;
+		bp->b_resid = bp->b_bcount;
+		return biodone(bp);
 	}
-	bp->b_rawblkno = bp->b_blkno;
-	s = splbio();
-	disksort_blkno(&tu_sc.sc_q, bp); /* Why not use disksort? */
-	if (tu_sc.sc_state == SC_READY)
-		ctustart(bp);
+
+	s = spl7();
+	empty = TAILQ_EMPTY(&tu_sc.sc_bufq.bq_head);
+	BUFQ_INSERT_TAIL(&tu_sc.sc_bufq, bp);
+	if (empty)
+		ctustart();
 	splx(s);
 }
 
 void
-ctustart(bp)
-	struct	buf *bp;
+ctustart()
 {
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
+	struct buf *bp;
 
-
-	tu_sc.sc_xfptr = tu_sc.sc_blk = bp->b_data;
+	bp = BUFQ_FIRST(&tu_sc.sc_bufq);
+	if (bp == NULL)
+		return;
+#ifdef TUDEBUG
+	printf("ctustart\n");
+#endif
 	tu_sc.sc_tpblk = bp->b_blkno;
-	tu_sc.sc_nbytes = bp->b_bcount;
-	tu_sc.sc_xbytes = tu_sc.sc_bbytes = 0;
+	tu_sc.sc_xbytes = 0;
 	tu_sc.sc_op = bp->b_flags & B_READ ? RSP_OP_READ : RSP_OP_WRITE;
+	tu_sc.sc_step = 0;
+	bp->b_resid = bp->b_bcount;
+	tu_sc.sc_wto = 0;
 
 	rsp->rsp_typ = RSP_TYP_COMMAND;
 	rsp->rsp_sz = 012;
@@ -210,173 +215,208 @@ ctustart(bp)
 	rsp->rsp_mod = 0;
 	rsp->rsp_drv = 0;
 	rsp->rsp_sw = rsp->rsp_xx1 = rsp->rsp_xx2 = 0;
-	rsp->rsp_cnt = tu_sc.sc_nbytes;
+	rsp->rsp_cnt = bp->b_bcount;
 	rsp->rsp_blk = tu_sc.sc_tpblk;
 	rsp->rsp_sum = ctu_cksum((unsigned short *)rsp, 6);
-	tu_sc.sc_state = SC_SEND_CMD;
-	if (tu_sc.sc_xmtok) {
-		tu_sc.sc_xmtok = 0;
-		ctutintr(NULL);
-	}
+	tu_sc.sc_state = TU_WORKING;
+	ctutintr(NULL);
 }
 
 int
-ctuioctl(dev, cmd, data, fflag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int fflag;
-	struct proc *p;
+ctuioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
-	return 0;
+	return ENOTTY;
 }
 
 /*
  * Not bloody likely... 
  */
 int
-ctudump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+ctudump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return 0;
 }
 
-void
-cturintr(arg)
-	void *arg;
+static int
+readchr(void)
 {
-	int	status = mfpr(PR_CSRD);
-	struct	buf *bp;
+	int i;
 
-	bp = BUFQ_FIRST(&tu_sc.sc_q);
-	switch (tu_sc.sc_state) {
-
-	case SC_UNUSED:
-		printf("stray console storage interrupt, got %o\n", status);
-		break;
-
-	case SC_INIT:
-		if (status != RSP_TYP_CONTINUE)
-			tu_sc.sc_error = EIO;
-		wakeup((void *)&tu_sc);
-		break;
-	case SC_GET_RESP:
-		tu_sc.sc_tpblk++;
-		if (tu_sc.sc_xbytes == tu_sc.sc_nbytes) {
-			tu_sc.sc_bbytes++;
-			if (tu_sc.sc_bbytes == 146) { /* We're finished! */
-#ifdef TUDEBUG
-				printf("Xfer ok\n");
-#endif
-				BUFQ_REMOVE(&tu_sc.sc_q, bp);
-				biodone(bp);
-				tu_sc.sc_xmtok = 1;
-				tu_sc.sc_state = SC_READY;
-				if (BUFQ_FIRST(&tu_sc.sc_q) != NULL)
-					ctustart(BUFQ_FIRST(&tu_sc.sc_q));
-			}
+	for (i = 0; i < 5000; i++)
+		if ((mfpr(PR_CSRS) & 0x80))
 			break;
-		}
-		tu_sc.sc_bbytes++;
-		if (tu_sc.sc_bbytes <  3) /* Data header */
-			break;
-		if (tu_sc.sc_bbytes == 132) { /* Finished */
-			tu_sc.sc_bbytes = 0;
-			break;
-		}
-		if (tu_sc.sc_bbytes == 131) /* First checksum */
-			break;
-		tu_sc.sc_xfptr[tu_sc.sc_xbytes++] = status;
-		break;
-
-	case SC_GET_WCONT:
-		if (status != 020)
-			printf("SC_GET_WCONT: status %o\n", status);
-		else
-			ctutintr(NULL);
-		tu_sc.sc_xmtok = 0;
-		break;
-
-	case SC_RESTART:
-		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
-		break;
-
-	default:
-		if (status == 4) { /* Protocol error, or something */
-			tu_sc.sc_state = SC_RESTART;
-			mtpr(RSP_TYP_INIT, PR_CSTD);
-			return;
-		}
-		printf("Unknown receive ctuintr state %d, pack %o\n",
-		    tu_sc.sc_state, status);
-	}
-
+	if (i == 5000)
+		return -1;
+	return mfpr(PR_CSRD);
 }
 
+/*
+ * Loop in a tight (busy-wait-)loop when receiving packets, this is
+ * the only way to avoid loosing characters.
+ */
 void
-ctutintr(arg)
-	void *arg;
+cturintr(void *arg)
 {
-	int	c;
+	int status = mfpr(PR_CSRD);
+	struct	buf *bp;
+	int i, c, tck;
+	unsigned short ck;
 
-	if (tu_sc.sc_xmtok)
+	bp = BUFQ_FIRST(&tu_sc.sc_bufq);
+	switch (tu_sc.sc_state) {
+	case TU_RESET:
+		if (status != RSP_TYP_CONTINUE)
+			printf("Bad response %d\n", status);
+		wakeup(&tu_sc);
 		return;
 
-	switch (tu_sc.sc_state) {
-	case SC_SEND_CMD:
-		c = tu_sc.sc_rsp[tu_sc.sc_xbytes++] & 0xff;
-		mtpr(c, PR_CSTD);
-		if (tu_sc.sc_xbytes > 13) {
-			tu_sc.sc_state = (tu_sc.sc_op == RSP_OP_READ ?
-			    SC_GET_RESP : SC_GET_WCONT);
-			tu_sc.sc_xbytes = 0;
-			tu_sc.sc_xmtok++;
+	case TU_READING:
+		if (status != RSP_TYP_DATA)
+			bp->b_flags |= B_ERROR;
+		tu_sc.sc_wto = 0;
+		for (i = 0; i < 131; i++) {
+			if ((c = readchr()) < 0) {
+#ifdef TUDEBUG
+				printf("Timeout...%d\n", i);
+#endif
+				goto bad;
+			}
+			if ((i > 0) && (i < 129))
+				bp->b_data[tu_sc.sc_xbytes++] = c;
+			if (i == 129)
+				ck = (c & 0xff);
+			if (i == 130)
+				ck |= ((c & 0xff) << 8);
+		}
+		tck = ctu_cksum((void *)&bp->b_data[tu_sc.sc_xbytes-128], 64);
+		tck += 0x8001; if (tck > 0xffff) tck -= 0xffff;
+		if (tck != ck) {
+#ifdef TUDEBUG
+			int i;
+			printf("Bad cksum: tck %x != ck %x\n", tck, ck);
+			printf("block %d\n", tu_sc.sc_xbytes/128-1);
+			for (i = -128; i < 0; i+=16)
+				printf("%x %x %x %x\n",
+				    *(int *)&bp->b_data[tu_sc.sc_xbytes+i],
+				    *(int *)&bp->b_data[tu_sc.sc_xbytes+i+4],
+				    *(int *)&bp->b_data[tu_sc.sc_xbytes+i+8],
+				    *(int *)&bp->b_data[tu_sc.sc_xbytes+i+12]);
+#endif
+			goto bad;
+		}
+		bp->b_resid = 0;
+		if (bp->b_bcount == tu_sc.sc_xbytes)
+			tu_sc.sc_state = TU_ENDPACKET;
+		return;
+
+	case TU_ENDPACKET:
+		if (status != RSP_TYP_COMMAND) {
+#ifdef TUDEBUG
+			int g[14], j;
+			g[0] = status;
+			for (i = 1; i < 14; i++)
+				if ((g[i] = readchr()) < 0)
+					break;
+			j=0; while (readchr() >= 0)
+				j++;
+			for (i = 0; i < 14; i++)
+				printf("%d: %x\n", i, g[i]);
+			printf("Got %d char more\n", j);
+			printf("error: state %d xbytes %d status %d\n",
+			    tu_sc.sc_state, tu_sc.sc_xbytes, status);
+#endif
+			
+			bp->b_flags |= B_ERROR;
+		}
+		tu_sc.sc_wto = 0;
+		for (i = 0; i < 13; i++) {
+			if ((c = readchr()) < 0) {
+#ifdef TUDEBUG
+				printf("Timeout epack %d\n", i);
+#endif
+				goto bad;
+			}
 		}
 		break;
 
-	case SC_GET_WCONT:
-		switch (tu_sc.sc_bbytes) {
-		case 0:
-			mtpr(1, PR_CSTD); /* This is a data packet */
-			break;
-
-		case 1:
-			mtpr(128, PR_CSTD); /* # of bytes to send */
-			break;
-
-		case 130:
-			mtpr(0, PR_CSTD); /* First checksum */
-			break;
-
-		case 131:
-			mtpr(0, PR_CSTD); /* Second checksum */
-			break;
-
-		case 132: /* Nothing to send... */
-			tu_sc.sc_bbytes = -1;
-			if (tu_sc.sc_xbytes == tu_sc.sc_nbytes + 1)
-				tu_sc.sc_op = SC_GET_END;
-			break;
-		default:
-			c = tu_sc.sc_rsp[tu_sc.sc_xbytes++] & 0xff;
-			mtpr(c, PR_CSTD);
-			break;
-		}
-		tu_sc.sc_bbytes++;
-		break;
+	case TU_RESTART:
+		if (status != RSP_TYP_CONTINUE)
+			goto bad;
+		ctustart();
+		return;
 
 	default:
-		printf("Unknown xmit ctuintr state %d\n",tu_sc.sc_state);
+		printf("bad rx state %d char %d\n", tu_sc.sc_state, status);
+		return;
+	}
+	if ((bp->b_flags & B_ERROR) == 0) {
+		BUFQ_REMOVE(&tu_sc.sc_bufq, bp);
+		biodone(bp);
+#ifdef TUDEBUG
+		printf("biodone %p\n", bp);
+#endif
+	}
+#ifdef TUDEBUG
+	  else {
+		printf("error: state %d xbytes %d status %d\n",
+		    tu_sc.sc_state, tu_sc.sc_xbytes, status);
+	}
+#endif
+	bp->b_flags &= ~B_ERROR;
+	tu_sc.sc_state = TU_IDLE;
+	ctustart();
+	return;
+
+bad:	tu_sc.sc_state = TU_RESTART;
+	ctuinit();
+}
+
+void
+ctutintr(void *arg)
+{
+	while ((mfpr(PR_CSTS) & 0x80) == 0)
+		;
+	switch (tu_sc.sc_state) {
+	case TU_RESET:
+		switch (tu_sc.sc_step) {
+		case 0:
+		case 1:
+			mtpr(0, PR_CSTD);
+			break;
+		case 2:
+		case 3:
+			mtpr(RSP_TYP_INIT, PR_CSTD);
+			break;
+		default:
+			break;
+		}
+		tu_sc.sc_step++;
+		return;
+
+	case TU_WORKING:
+		if (tu_sc.sc_step == 14) {
+			if (tu_sc.sc_op == RSP_OP_READ)
+				tu_sc.sc_state = TU_READING;
+			else
+				tu_sc.sc_state = TU_WRITING;
+		} else
+			mtpr(tu_sc.sc_rsp[tu_sc.sc_step++], PR_CSTD);
+		return;
+
+	case TU_IDLE:
+		printf("Idle interrupt\n");
+		return;
+
+	case TU_RESTART:
+		return;
+
+	default:
+		printf("bad tx state %d\n", tu_sc.sc_state);
 	}
 }
 
-short
-ctu_cksum(buf, words)
-	unsigned short *buf;
-	int words;
+unsigned short
+ctu_cksum(unsigned short *buf, int words)
 {
 	int i, cksum;
 
@@ -396,19 +436,35 @@ int	oldtp;
  * Watch so that we don't get blocked unnecessary due to lost int's.
  */
 void
-ctuwatch(arg)
-	void *arg;
+ctuwatch(void *arg)
 {
 
 	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
 
-	if (tu_sc.sc_state == SC_GET_RESP && tu_sc.sc_tpblk != 0 &&
-	    tu_sc.sc_tpblk == oldtp && (tu_sc.sc_tpblk % 128 != 0)) {
-		printf("tu0: lost recv interrupt\n");
-		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
-		return;
+	if (tu_sc.sc_state == TU_WORKING) {
+		/*
+		 * Died in sending command.
+		 * Wait 5 secs.
+		 */
+		if (tu_sc.sc_wto++ > 5) {
+#ifdef TUDEBUG
+			printf("Died in sending command\n");
+#endif
+			tu_sc.sc_state = TU_RESTART;
+			ctuinit();
+		}
 	}
-	if (tu_sc.sc_state == SC_RESTART)
-		mtpr(RSP_TYP_INIT, PR_CSTS);
-	oldtp = tu_sc.sc_tpblk;
+	if (tu_sc.sc_state == TU_READING || tu_sc.sc_state == TU_WRITING) {
+		/*
+		 * Positioning, may take long time.
+		 * Wait one minute.
+		 */
+		if (tu_sc.sc_wto++ > 60) {
+#ifdef TUDEBUG
+			printf("Died in Positioning, wto %d\n", tu_sc.sc_wto);
+#endif
+			tu_sc.sc_state = TU_RESTART;
+			ctuinit();
+		}
+	}
 }
