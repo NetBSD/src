@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 1999/07/02 15:21:26 simonb Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 2000/03/10 12:25:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.11 1999/07/02 15:21:26 simonb Exp $");
+__RCSID("$NetBSD: parse.c,v 1.12 2000/03/10 12:25:47 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: parse.c,v 1.11 1999/07/02 15:21:26 simonb Exp $");
 #include "sys.h"
 #include "el.h"
 #include "tokenizer.h"
+#include <stdlib.h>
 
 private struct {
     char *name;
