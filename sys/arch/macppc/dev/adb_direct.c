@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.13 2000/03/23 06:40:33 thorpej Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -164,9 +164,9 @@
 struct ADBDevEntry {
 	void	(*ServiceRtPtr) __P((void));
 	void	*DataAreaAddr;
-	char	devType;
-	char	origAddr;
-	char	currentAddr;
+	int	devType;
+	int	origAddr;
+	int	currentAddr;
 };
 
 /*
@@ -302,26 +302,26 @@ int	send_adb __P((u_char *, void *, void *));
  * is in [0].
  */
 void
-print_single(thestring)
-	u_char *thestring;
+print_single(str)
+	u_char *str;
 {
 	int x;
 
-	if ((int)(thestring[0]) == 0) {
-		printf_intr("nothing returned\n");
-		return;
-	}
-	if (thestring == 0) {
+	if (str == 0) {
 		printf_intr("no data - null pointer\n");
 		return;
 	}
-	if (thestring[0] > 20) {
-		printf_intr("ADB: ACK > 20 no way!\n");
-		thestring[0] = 20;
+	if (*str == 0) {
+		printf_intr("nothing returned\n");
+		return;
 	}
-	printf_intr("(length=0x%x):", thestring[0]);
-	for (x = 0; x < thestring[0]; x++)
-		printf_intr("  0x%02x", thestring[x + 1]);
+	if (*str > 20) {
+		printf_intr("ADB: ACK > 20 no way!\n");
+		*str = 20;
+	}
+	printf_intr("(length=0x%x):", *str);
+	for (x = 1; x <= *str; x++)
+		printf_intr("  0x%02x", str[x]);
 	printf_intr("\n");
 }
 #endif
@@ -423,8 +423,7 @@ switch_start:
 			 * [4], even for RTC/PRAM commands.
 			 */
 			/* set up data for adb_pass_up */
-			for (i = 0; i <= adbInputBuffer[0]; i++)
-				packet.data[i] = adbInputBuffer[i];
+			memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 				
 			if ((adbWaiting == 1) &&
 			    (adbInputBuffer[4] == adbWaitingCmd) &&
@@ -528,8 +527,7 @@ switch_start:
 				adbWaitingCmd = adbOutputBuffer[2];	/* save waiting command */
 			} else {	/* no talk, so done */
 				/* set up stuff for adb_pass_up */
-				for (i = 0; i <= adbInputBuffer[0]; i++)
-					packet.data[i] = adbInputBuffer[i];
+				memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 				packet.saveBuf = adbBuffer;
 				packet.compRout = adbCompRout;
 				packet.compData = adbCompData;
@@ -590,7 +588,7 @@ int
 send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 	command)
 {
-	int i, s, len;
+	int s, len;
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -635,12 +633,11 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		adbOutputBuffer[1] = 0x00;	/* mark as an ADB command */
 		adbOutputBuffer[2] = (u_char)command;	/* load command */
 
-		for (i = 1; i <= len; i++)	/* copy additional output
-						 * data, if any */
-			adbOutputBuffer[2 + i] = buffer[i];
+		/* copy additional output data, if any */
+		memcpy(adbOutputBuffer + 3, buffer + 1, len);
 	} else
-		for (i = 0; i <= (in[0] + 1); i++)
-			adbOutputBuffer[i] = in[i];
+		/* if data ready, just copy over */
+		memcpy(adbOutputBuffer, in, in[0] + 2);
 
 	adbSentChars = 0;	/* nothing sent yet */
 	adbBuffer = buffer;	/* save buffer to know where to save result */
@@ -731,7 +728,7 @@ adb_guess_next_device(void)
 						 * device! This can happen if
 						 * there are no devices on the
 						 * bus */
-				dummy = 2;
+				dummy = 1;
 				break;
 			}
 			/* found the next device */
@@ -837,7 +834,7 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 void
 adb_pass_up(struct adbCommand *in)
 {
-	int i, start = 0, len = 0, cmd = 0;
+	int start = 0, len = 0, cmd = 0;
 	ADBDataBlock block;
 
 	/* temp for testing */
@@ -901,7 +898,7 @@ adb_pass_up(struct adbCommand *in)
 			if (adbStarting)
 				return;
 			/* get device's comp. routine and data area */
-			if (-1 == get_adb_info(&block, ((cmd & 0xf0) >> 4)))
+			if (-1 == get_adb_info(&block, ADB_CMDADDR(cmd)))
 				return;
 		}
 	}
@@ -933,9 +930,7 @@ adb_pass_up(struct adbCommand *in)
 	 * directly into an adbCommand struct, which is passed to 
 	 * this routine, then we could eliminate this copy.
 	 */
-	for (i = 1; i <= len; i++)
-		adbInbound[adbInTail].data[i] = in->data[start+i];
-
+	memcpy(adbInbound[adbInTail].data + 1, in->data + start + 1, len);
 	adbInbound[adbInTail].data[0] = len;
 	adbInbound[adbInTail].cmd = cmd;
 
@@ -964,7 +959,7 @@ adb_pass_up(struct adbCommand *in)
 void
 adb_soft_intr(void)
 {
-	int s, i;
+	int s;
 	int cmd = 0;
 	u_char *buffer = 0;
 	u_char *comprout = 0;
@@ -997,8 +992,8 @@ adb_soft_intr(void)
 		 * For ack_only buffer was set to 0, so don't copy.
 		 */
 		if (buffer)
-			for (i = 0; i <= adbInbound[adbInHead].data[0]; i++) 
-				*(buffer+i) = adbInbound[adbInHead].data[i];
+			memcpy(buffer, adbInbound[adbInHead].data,
+			    adbInbound[adbInHead].data[0] + 1);
 
 #ifdef ADB_DEBUG
 			if (adb_debug & 0x80) {
@@ -1253,16 +1248,14 @@ void
 adb_reinit(void)
 {
 	u_char send_string[ADB_MAX_MSG_LENGTH];
-	int s = 0;
+	ADBDataBlock data;	/* temp. holder for getting device info */
 	volatile int i, x;
+	int s;
 	int command;
 	int result;
 	int saveptr;		/* point to next free relocation address */
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
-	ADBDataBlock data;	/* temp. holder for getting device info */
-
-	(void)(&s);		/* work around lame GCC bug */
 
 	/* Make sure we are not interrupted while building the table. */
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
@@ -1309,12 +1302,25 @@ adb_reinit(void)
 	/* initial scan through the devices */
 	for (i = 1; i < 16; i++) {
 		send_string[0] = 0;
-		command = (int)(0x0f | ((int)(i & 0x000f) << 4));	/* talk R3 */
+		command = ADBTALK(i, 3);
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
-		if (0x00 != send_string[0]) {	/* anything come back ?? */
-			ADBDevTable[++ADBNumDevices].devType =
-			    (u_char)send_string[2];
+
+		if (send_string[0] != 0) {
+			/* check for valid device handler */
+			switch (send_string[2]) {
+			case 0:
+			case 0xfd:
+			case 0xfe:
+			case 0xff:
+				continue;	/* invalid, skip */
+			}
+
+			/* found a device */
+			++ADBNumDevices;
+			KASSERT(ADBNumDevices < 16);
+			ADBDevTable[ADBNumDevices].devType =
+				(int)send_string[2];
 			ADBDevTable[ADBNumDevices].origAddr = i;
 			ADBDevTable[ADBNumDevices].currentAddr = i;
 			ADBDevTable[ADBNumDevices].DataAreaAddr =
@@ -1330,9 +1336,6 @@ adb_reinit(void)
 		if (-1 == get_adb_info(&data, saveptr))
 			break;
 
-	if (saveptr == 0)	/* no free addresses??? */
-		saveptr = 15;
-
 #ifdef ADB_DEBUG
 	if (adb_debug & 0x80) {
 		printf_intr("first free is: 0x%02x\n", saveptr);
@@ -1341,7 +1344,7 @@ adb_reinit(void)
 #endif
 
 	nonewtimes = 0;		/* no loops w/o new devices */
-	while (nonewtimes++ < 11) {
+	while (saveptr > 0 && nonewtimes++ < 11) {
 		for (i = 1; i <= ADBNumDevices; i++) {
 			device = ADBDevTable[i].currentAddr;
 #ifdef ADB_DEBUG
@@ -1351,12 +1354,12 @@ adb_reinit(void)
 #endif
 
 			/* send TALK R3 to address */
-			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
+			command = ADBTALK(device, 3);
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 
 			/* move device to higher address */
-			command = (int)(0x0b | ((int)(device & 0x000f) << 4));
+			command = ADBLISTEN(device, 3);
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
@@ -1364,11 +1367,34 @@ adb_reinit(void)
 			    (Ptr)0, (short)command);
 			delay(500);
 
+			/* send TALK R3 - anything at new address? */
+			command = ADBTALK(saveptr, 3);
+			adb_op_sync((Ptr)send_string, (Ptr)0,
+			    (Ptr)0, (short)command);
+			delay(500);
+
+			if (send_string[0] == 0) {
+#ifdef ADB_DEBUG
+				if (adb_debug & 0x80)
+					printf_intr("failed, continuing\n");
+#endif
+				continue;
+			}
+
 			/* send TALK R3 - anything at old address? */
-			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
+			command = ADBTALK(device, 3);
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 			if (send_string[0] != 0) {
+				/* check for valid device handler */
+				switch (send_string[2]) {
+				case 0:
+				case 0xfd:
+				case 0xfe:
+				case 0xff:
+					continue;	/* invalid, skip */
+				}
+
 				/* new device found */
 				/* update data for previously moved device */
 				ADBDevTable[i].currentAddr = saveptr;
@@ -1381,8 +1407,12 @@ adb_reinit(void)
 				if (adb_debug & 0x80)
 					printf_intr("new device found\n");
 #endif
-				ADBDevTable[++ADBNumDevices].devType =
-				    (u_char)send_string[2];
+				if (saveptr > ADBNumDevices) {
+					++ADBNumDevices;
+					KASSERT(ADBNumDevices < 16);
+				}
+				ADBDevTable[ADBNumDevices].devType =
+					(int)send_string[2];
 				ADBDevTable[ADBNumDevices].origAddr = device;
 				ADBDevTable[ADBNumDevices].currentAddr = device;
 				/* These will be set correctly in adbsys.c */
@@ -1392,11 +1422,14 @@ adb_reinit(void)
 				ADBDevTable[ADBNumDevices].ServiceRtPtr =
 				    (void *)0;
 				/* find next unused address */
-				for (x = saveptr; x > 0; x--)
+				for (x = saveptr; x > 0; x--) {
 					if (-1 == get_adb_info(&data, x)) {
 						saveptr = x;
 						break;
 					}
+				}
+				if (x == 0)
+					saveptr = 0;
 #ifdef ADB_DEBUG
 				if (adb_debug & 0x80)
 					printf_intr("new free is 0x%02x\n",
@@ -1411,7 +1444,7 @@ adb_reinit(void)
 					printf_intr("moving back...\n");
 #endif
 				/* move old device back */
-				command = (int)(0x0b | ((int)(saveptr & 0x000f) << 4));
+				command = ADBLISTEN(saveptr, 3);
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
@@ -1457,7 +1490,6 @@ adb_reinit(void)
 
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
 		splx(s);
-	return;
 }
 
 
@@ -1670,8 +1702,6 @@ adb_setup_hw_type(void)
 	case MACH_MACIIVX:		/* IIvx */
 	case MACH_MACP460:		/* Performa 460/465/467 */
 	case MACH_MACP600:		/* Performa 600 */
-	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
-	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbHardware = ADB_HW_IISI;
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -1756,8 +1786,6 @@ adb_setup_hw_type(void)
 	case MACH_MACP600:		/* Performa 600 */
 	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
 	case MACH_MACQ840AV:		/* Quadra 840AV */
-	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
-	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbSoftPower = 1;
 		break;
 	}
