@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.6 2002/10/25 21:02:45 wiz Exp $
+.\" $NetBSD: wsmoused.8,v 1.7 2002/12/25 19:13:53 jmmv Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nm
 .Op Fl d Ar device
 .Op Fl f Ar fifo
-.Op Fl n
+.Op Fl ln
 .Op Fl X Ar number
 .Op Fl x Ar number
 .Op Fl y Ar number
@@ -56,6 +56,8 @@ specifies which driver to use as the mouse device. It defaults to
 .It Fl f Ar fifo
 is used to specify an optional fifo where to redirect all mouse events
 (even if they have been processed). By default, no fifo is used.
+.It Fl l
+swaps mouse buttons, specially useful for left handed users.
 .It Fl n
 do not fork in the background (for debugging purposes).
 .It Fl X Ar number
