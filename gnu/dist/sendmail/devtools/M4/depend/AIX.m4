@@ -12,4 +12,4 @@ depend: ${BEFORE} ${LINKS}
 	done;
 	changequote
 
-#	End of $RCSfile: AIX.m4,v $
+#	End of RCSfile: AIX.m4,v

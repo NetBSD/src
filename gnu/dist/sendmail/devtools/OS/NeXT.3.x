@@ -1,4 +1,4 @@
-#	Id: NeXT.3.x,v 8.13 2000/03/11 21:21:01 gshapiro Exp
+#	Id: NeXT.3.x,v 8.13.4.1 2000/08/07 17:50:27 gshapiro Exp
 PUSHDIVERT(1)
 # NEXTSTEP 3.1 and 3.2 only support m68k and i386
 #ARCH=  -arch m68k -arch i386 -arch hppa -arch sparc
@@ -12,6 +12,7 @@ define(`confENVDEF', `-DNeXT -Wno-precomp -pipe ${RC_CFLAGS}')
 define(`confLDOPTS', `${RC_CFLAGS}')
 define(`confLIBS', `-ldbm')
 define(`confINSTALL_RAWMAN')
+define(`confMANROOTMAN', `/usr/man/man')
 define(`confMANOWN', `root')
 define(`confMANGRP', `wheel')
 define(`confUBINOWN', `root')
