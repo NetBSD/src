@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.257 2002/07/10 05:56:44 kent Exp $	*/
+/*	$NetBSD: locore.s,v 1.258 2002/08/28 09:47:16 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1982,6 +1982,25 @@ switch_restored:
 
 	/* Interrupts are okay again. */
 	sti
+
+/*
+ *  Check for restartable atomic sequences (RAS)
+ */
+	movl	_C_LABEL(curproc),%edi
+	cmpl	$0,P_NRAS(%edi)
+	je	1f
+	movl	P_MD_REGS(%edi),%edx
+	movl	TF_EIP(%edx),%eax
+	pushl	%eax
+	pushl	%edi
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	1f
+	movl	_C_LABEL(curproc),%edi
+	movl	P_MD_REGS(%edi),%edx
+	movl	%eax,TF_EIP(%edx)
+1:
 
 switch_return:
 	/*

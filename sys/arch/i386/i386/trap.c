@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.167 2002/07/07 13:24:36 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.168 2002/08/28 09:47:17 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2002/07/07 13:24:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2002/08/28 09:47:17 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2002/07/07 13:24:36 drochner Exp $");
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
+#include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 
@@ -525,7 +526,13 @@ copyfault:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
+		/*
+		 * Don't go single-stepping into a RAS.
+		 */
+		if ((p->p_nras == 0) ||
+		    (ras_lookup(p, (caddr_t)frame.tf_eip) == (caddr_t)-1)) {
+			(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
+		}
 		break;
 
 #if	NISA > 0 || NMCA > 0
