@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 1999/04/27 18:40:53 cgd Exp $
+	$NetBSD: syscalls.master,v 1.17 1999/04/28 02:03:13 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -186,8 +186,8 @@
 113	UNIMPL		old recvmsg
 114	UNIMPL		old sendmsg
 115	OBSOL		vtrace
-116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+116	STD		{ int osf1_sys_gettimeofday(struct osf1_timeval *tp, \
+			    struct osf1_timezeon *tzp); }
 117	STD		{ int osf1_sys_getrusage(int who, \
 			    struct osf1_rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
@@ -296,7 +296,7 @@
 204	UNIMPL		semctl
 205	UNIMPL		semget
 206	UNIMPL		semop
-207	UNIMPL		uname
+207	STD		{ int osf1_sys_uname(struct osf1_uname *name); }
 208	NOARGS		{ int sys___posix_lchown(const char *path, int uid, \
 			    int gid); }
 209	UNIMPL		shmat
