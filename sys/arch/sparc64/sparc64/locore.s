@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1999/06/05 05:08:25 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1999/06/05 21:58:18 eeh Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6107,6 +6107,7 @@ ENTRY(copyinstr)
 	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
+	membar	#Sync
 	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
 	mov	%o1, %o5		!	save = toaddr;
@@ -6160,6 +6161,7 @@ ENTRY(copyoutstr)
 	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
+	membar	#Sync
 	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
 	mov	%o1, %o5		!	save = toaddr;
@@ -6282,6 +6284,7 @@ ENTRY(copyin)
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
+	membar	#Sync
 	STPTR	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lcopyin_start:
@@ -6446,6 +6449,7 @@ Lcopyin_done:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 !	stb	%o4,[%o1]	! Store last byte -- should not be needed
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	membar	#Sync
 	STPTR	%g0, [%o3 + PCB_ONFAULT]
 	retl
 	 clr	%o0			! return 0
@@ -6487,6 +6491,7 @@ Ldocopy:
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	set	Lcopyfault, %o4
 !	mov	%o7, %g7		! save return address
+	membar	#Sync
 	STPTR	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lcopyout_start:
@@ -6651,6 +6656,7 @@ Lcopyout_mopb:
 Lcopyout_done:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
+	membar	#Sync
 	STPTR	%g0, [%o3 + PCB_ONFAULT]
 !	jmp	%g7 + 8		! Original instr
 	retl			! New instr
@@ -6664,6 +6670,7 @@ Lcopyfault:
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	STPTR	%g0, [%o3 + PCB_ONFAULT]
+	membar	#Sync
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
@@ -7551,6 +7558,7 @@ ENTRY(fuword)
 	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	membar	#Sync
 	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	membar	#Sync
 	LDPTRA	[%o0] ASI_AIUS, %o0	! fetch the word
@@ -7560,7 +7568,11 @@ ENTRY(fuword)
 
 Lfserr:
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	membar	#Sync
 Lfsbadaddr:
+#ifndef _LP64
+	mov	-1, %o1
+#endif
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -7672,9 +7684,9 @@ ENTRY(subyte)
  */
 	
 /*
- * probeget(asi, addr, size)
+ * probeget(addr, asi, size)
+ *	paddr_t addr;
  *	int asi;
- *	caddr_t addr;
  *	int size;
  *
  * Read or write a (byte,word,longword) from the given address.
@@ -7684,6 +7696,13 @@ ENTRY(subyte)
  * We optimize for space, rather than time, here.
  */
 ENTRY(probeget)
+#ifndef _LP64
+	!! Shuffle the args around into LP64 format
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+	mov	%o2, %o1
+	mov	%o3, %o2
+#endif
 	! %o0 = asi, %o1 = addr, %o2 = (1,2,4)
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
@@ -7692,27 +7711,49 @@ ENTRY(probeget)
 	btst	1, %o2
 	wr	%o0, 0, %asi
 	membar	#Sync
-	bnz,a	0f			! if (len & 1)
+	bz	0f			! if (len & 1)
+	 btst	2, %o2
+	ba,pt	%icc, 1f
 	 lduba	[%o1] %asi, %o0		!	value = *(char *)addr;
-0:	btst	2, %o2
-	bnz,a	0f			! if (len & 2)
+0:	
+	bz	0f			! if (len & 2)
+	 btst	4, %o2
+	ba,pt	%icc, 1f
 	 lduha	[%o1] %asi, %o0		!	value = *(short *)addr;
-0:	btst	4, %o2
-	bnz,a	0f			! if (len & 4)
+0:	
+	bz	0f			! if (len & 4)
+	 btst	8, %o2
+	ba,pt	%icc, 1f
 	 lda	[%o1] %asi, %o0		!	value = *(int *)addr;
-0:	membar	#Sync
+0:
+	ldxa	[%o1] %asi, %o0		!	value = *(long *)addr;
+#ifndef _LP64
+	srl	%o0, 0, %o1		! Split the result again
+	srlx	%o0, 32, %o0
+#endif
+1:	membar	#Sync
 	retl				! made it, clear onfault and return
 	 STPTR	%g0, [%o3 + PCB_ONFAULT]
 
 /*
- * probeset(asi, addr, size, val)
+ * probeset(addr, asi, size, val)
+ *	paddr_t addr;
  *	int asi;
- *	caddr_t addr;
- *	int size, val;
+ *	int size;
+ *	long val;
  *
  * As above, but we return 0 on success.
  */
 ENTRY(probeset)
+#ifndef _LP64
+	!! Shuffle the args around into LP64 format
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+	mov	%o2, %o1
+	mov	%o3, %o2
+	sllx	%o4, 32, %o3
+	or	%o3, %o5, %o3
+#endif
 	! %o0 = asi, %o1 = addr, %o2 = (1,2,4), %o3 = val
 	sethi	%hi(_C_LABEL(cpcb)), %o4
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! cpcb->pcb_onfault = Lfserr;
@@ -7721,16 +7762,26 @@ ENTRY(probeset)
 	btst	1, %o2
 	wr	%o0, 0, %asi
 	membar	#Sync
-	bnz,a	0f			! if (len & 1)
+	bz	0f			! if (len & 1)
+	 btst	2, %o2
+	ba,pt	%icc, 1f
 	 stba	%o3, [%o1] %asi		!	*(char *)addr = value;
-0:	btst	2, %o2
-	bnz,a	0f			! if (len & 2)
+0:	
+	bz	0f			! if (len & 2)
+	 btst	4, %o2
+	ba,pt	%icc, 1f
 	 stha	%o3, [%o1] %asi		!	*(short *)addr = value;
-0:	btst	4, %o2
-	bnz,a	0f			! if (len & 4)
+0:	
+	bz	0f			! if (len & 4)
+	 btst	8, %o2
+	ba,pt	%icc, 1f
 	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
-0:	clr	%o0			! made it, clear onfault and return 0
-	membar	#Sync
+0:
+	bz	Lfserr			! if (len & 8)
+	ba,pt	%icc, 1f
+	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
+1:	membar	#Sync
+	clr	%o0			! made it, clear onfault and return 0
 	retl
 	 STPTR	%g0, [%o4 + PCB_ONFAULT]
 

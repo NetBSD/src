@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.h,v 1.2 1998/09/07 01:39:52 eeh Exp $ */
+/*	$NetBSD: trap.h,v 1.3 1999/06/05 21:58:18 eeh Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992-1999
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
@@ -42,11 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
- */
-/*
- * Sun4m support by Aaron Brown, Harvard University.
- * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
- * All rights reserved.
  */
 
 #ifndef	_MACHINE_TRAP_H

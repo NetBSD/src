@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/06/05 20:38:25 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.46 1999/06/05 21:58:18 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1727,7 +1727,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 		return (0);
 
 	tmp = (caddr_t)bh;
-	result = (probeget(bus_type_asi[tag->type], tmp + offset, size) != -1);
+	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);

@@ -1,7 +1,7 @@
-/*	$NetBSD: param.h,v 1.9 1999/01/31 09:21:20 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.10 1999/06/05 21:58:18 eeh Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992-1999
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
@@ -43,11 +43,7 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  */
-/*
- * Sun4M support by Aaron Brown, Harvard University.
- * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
- * All rights reserved.
- */
+
 #define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
 #ifdef __arch64__
