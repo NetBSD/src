@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.46 2003/02/26 06:31:13 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.47 2003/02/26 07:47:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.46 2003/02/26 06:31:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.47 2003/02/26 07:47:42 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -224,7 +224,7 @@ fddi_output(ifp, m0, dst, rt0)
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	short mflags;
 
-	MCLAIM(m, ifp->if_owner);
+	MCLAIM(m, ifp->if_mowner);
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
