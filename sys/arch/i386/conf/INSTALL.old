@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.old,v 1.4 1995/09/14 12:46:45 hpeyerl Exp $
+#	$NetBSD: INSTALL.old,v 1.5 1995/10/06 07:12:42 mycroft Exp $
 #
 #	INSTALL -- somewhat generic kernel with a snowball's chance of
 #		   fitting on an install floppy.
@@ -61,8 +61,7 @@ pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-vt0	at isa? port 0x60 irq 1		# generic PC console device
+pc0	at isa? port 0x60 irq 1		# generic PC console device
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -72,30 +71,30 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
+lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
+mms1	at isa? port 0x238 irq 5
 
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
-#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
-#scsibus* at ahb?
-#aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
-#scsibus* at aic?
-#bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
-#scsibus* at bt?
-#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
-#scsibus* at ncr?
-#sea0	at isa? iomem 0xc8000 irq 5
-#scsibus* at sea?
-#uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
-#scsibus* at uha?
+ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+scsibus* at ahb?
+aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+scsibus* at aic?
+bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt2	at isa? port ? irq ?
+scsibus* at bt?
+ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+scsibus* at ncr?
+sea0	at isa? iomem 0xc8000 irq 5
+scsibus* at sea?
+uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+scsibus* at uha?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -104,20 +103,20 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
-#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-#ed2	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-#ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-ed0	at isa? port 0x300 iomem 0xcc000 irq 10
-#ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and EtherExpress
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp 1		# PPP
+
 pseudo-device	pty	64		# pseudo-terminals
