@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1995/05/28 03:10:06 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -110,6 +110,7 @@ int	sigpause __P((int));
 int	sigreturn __P((struct sigcontext *));
 int	sigsetmask __P((int));
 int	sigstack __P((const struct sigstack *, struct sigstack *));
+int	sigaltstack __P((const struct sigaltstack *, struct sigaltstack *));
 int	sigvec __P((int, struct sigvec *, struct sigvec *));
 void	psignal __P((unsigned int, const char *));
 #endif	/* !_POSIX_SOURCE */
