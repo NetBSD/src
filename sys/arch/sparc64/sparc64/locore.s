@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2000/07/07 23:28:28 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2000/07/08 05:04:01 mrg Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -3881,7 +3881,7 @@ intrpending:
 #define INTRDEBUG_FUNC		0x4
 #define INTRDEBUG_SPUR		0x8
 	.globl	_C_LABEL(intrdebug)
-_C_LABEL(intrdebug):	.word 0xf
+_C_LABEL(intrdebug):	.word 0x0
 #endif
 	.text
 interrupt_vector:
@@ -3898,7 +3898,7 @@ interrupt_vector:
 	ldxa	[%g0] ASI_IRSR, %g1
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
-#if DEBUG
+#if NOT_DEBUG
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	mov	%g1, %o1
 	mov	%g2, %o2
