@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.13 2001/02/26 09:42:00 joda Exp $	*/
+/*	$NetBSD: if_media.c,v 1.14 2001/05/18 08:56:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 
 		/*
 		 * If no change, we're done.
-		 * XXX Automedia may invole software intervention.
+		 * XXX Automedia may involve software intervention.
 		 *     Keep going in case the connected media changed.
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
