@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.313 2003/04/17 16:41:00 jdolecek Exp $
+$NetBSD: usbdevs,v 1.314 2003/04/18 23:28:09 uwe Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -338,6 +338,7 @@ vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
 vendor OTI		0x0ea0	Ours Technology Inc.
+vendor PILOTECH		0x0eaf  Pilotech
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -1131,6 +1132,9 @@ product PHILIPSSEMI HUB1122	0x1122	hub
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
 product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
+
+/* Pilotech Systems Co., Ltd products */
+product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
