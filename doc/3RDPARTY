@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.30 2002/12/23 12:09:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.31 2002/12/23 21:25:44 kanaoka Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -23,6 +23,31 @@
 #     should be repeated on each line, except:
 # 5.) The Notes: field tag should appear on a line by itself.  All
 #     remaining lines until the end of the record are notes.
+
+Package:	acpica
+Version:	20021205
+Current Vers:	20021205
+Maintainer:	INTEL
+Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
+Mailing List:	acpi-devel@lists.sourceforge.net
+Responsible:	kanaoka
+Notes:
+The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
+How to import:
+ 1. Extract acpica-unix-YYYYMMDD.tar.gz to /some/where.
+	% mkdir /some/where
+	% cd /some/where
+	% tar xvfz /tmp/acpica-unix-YYYYMMDD.tar.gz
+ 2. mkdir work directory and cd work directory.
+	% mkdir /some/work
+	% cd /some/work
+ 3. copy files to work directory as below.
+	% cp `find /some/where -name \*.\[ch\]` .
+ 4. Import as below.
+	% cvs import -ko \
+	    -m 'Import INTEL acpica YYYYMMDD release.' \
+	    src/sys/dev/acpi/acpica/Subsystem \
+	    INTEL acpica-unix-YYYYMMDD
 
 Package:	am-utils [amd]
 Version:	6.1b1
