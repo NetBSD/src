@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.61 2002/08/07 02:50:22 fredb Exp $
+.\"	$NetBSD: sysinst,v 1.62 2002/12/09 14:03:54 scw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,12 +63,12 @@
 .  ds part_usr e
 .\}
 .if \n[amiga]:\n[amigappc]:\n[arc]:\n[atari]:\n[cobalt]:\n[evbmips]:\
-\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\n[playstation2]:\n[sandpoint]:\
-\n[sbmips]:\n[sgimips]:\n[walnut]:\n[x86_64] \{\
+\n[evbppc]:\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\n[playstation2]:\
+\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
 .  ds part_max p
 .\}
-.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[pc532]:\n[sandpoint]:\
-\n[shark]:\n[walnut] \{\
+.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[pc532]:\
+\n[sandpoint]:\n[shark] \{\
 .  ds part_usr e
 .\}
 .if \n[macppc]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[sparc64] \{\
@@ -93,7 +93,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -292,7 +292,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" \n[i386]
-.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
 .if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
@@ -381,7 +381,7 @@ The distribution sets (in this example, they are on CD).
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
-.ie \n[acorn26]:\n[cats]:\n[macppc]:\n[sparc]:\n[walnut] \{\
+.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc] \{\
 Some form of bootable media, described above.
 .\}
 .el \{\
@@ -405,7 +405,7 @@ An FPU is not required but will be used if present
 .\}
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[i386]:\n[macppc]:\n[walnut] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
 .if \n[acorn26] 8 MB
@@ -517,7 +517,7 @@ kernels while booting.
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
+.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 Boot the system as described above.
 You should be at the
 .Ic sysinst
@@ -709,14 +709,14 @@ Further information can be found on
 .To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
 .ie \n[mac68k] \{\
 .Pp
 Prior to attempting to boot
@@ -797,13 +797,13 @@ As an alternative, try using the Traditional
 method of installation described in the next section.
 .\}
 .el \{\
-.ie \n[acorn26]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
+.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 .Pp
 You may want to read the
 boot messages, to notice your disk's name and capacity.
 Its name will be something like
 .Li sd0
-.if \n[acorn26]:\n[cats]:\n[macppc]:\n[walnut] \{\
+.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc] \{\
 or
 .Li wd0
 .\}
@@ -817,7 +817,7 @@ You will also need to know the name, to tell
 on which disk
 to install.
 The most important thing to know is that
-.if \n[acorn26]:\n[cats]:\n[macppc]:\n[walnut] \{\
+.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc] \{\
 .Li wd0
 is
 .Nx 's
@@ -924,12 +924,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
