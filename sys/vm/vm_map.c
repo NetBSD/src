@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.37 1998/03/27 01:46:20 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.38 1998/08/09 21:58:53 perry Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -166,7 +166,7 @@ vm_map_startup()
 	 * zero kentry area
 	 * XXX necessary?
 	 */
-	bzero((caddr_t)kentry_data, kentry_data_size);
+	memset((caddr_t)kentry_data, 0, kentry_data_size);
 
 	/*
 	 * Static map structures for allocation before initialization of
@@ -224,7 +224,7 @@ vmspace_init(vm, pmap, min, max, pageable)
 {
 
 	/* Just clear the whole struct.  It is not large anyway. */
-	bzero(vm, sizeof(*vm));
+	memset(vm, 0, sizeof(*vm));
 
 	vm_map_init(&vm->vm_map, min, max, pageable);
 
@@ -2276,7 +2276,7 @@ vmspace_fork(vm1)
 
 	vm2 = vmspace_alloc(old_map->min_offset, old_map->max_offset,
 	    old_map->entries_pageable);
-	bcopy(&vm1->vm_startcopy, &vm2->vm_startcopy,
+	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	    (caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;			/* XXX */
 	new_pmap = new_map->pmap;
