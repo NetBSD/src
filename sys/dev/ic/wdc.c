@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.32 1998/10/13 08:59:45 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.33 1998/10/13 09:34:01 bouyer Exp $ */
 
 
 /*
@@ -714,9 +714,11 @@ wdc_probe_caps(drvp)
 		}
 	}
 
+#if 0
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
+#endif
 
 	/*
 	 * It's not in the specs, but it seems that some drive 
@@ -1029,7 +1031,8 @@ wdc_exec_xfer(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 {
-	WDCDEBUG_PRINT(("wdc_exec_xfer %p\n", xfer), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("wdc_exec_xfer %p channel %d drive %d\n", xfer,
+	    chp->channel, xfer->drive), DEBUG_XFERS);
 
 	/* complete xfer setup */
 	xfer->channel = chp->channel;
@@ -1046,7 +1049,7 @@ wdc_exec_xfer(chp, xfer)
 	/* insert at the end of command list */
 	TAILQ_INSERT_TAIL(&chp->ch_queue->sc_xfer,xfer , c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_FUNCS);
+	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp->wdc, chp->channel);
 	xfer->c_flags |= C_NEEDDONE; /* we can now call upper level done() */
 }

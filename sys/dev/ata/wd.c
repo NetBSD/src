@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.181 1998/10/12 16:09:16 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.182 1998/10/13 09:34:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -333,7 +333,7 @@ wdstrategy(bp)
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(bp->b_dev)];
 	int s;
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
-	    DEBUG_FUNCS | DEBUG_XFERS);
+	    DEBUG_XFERS);
 	
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
@@ -386,7 +386,7 @@ wdstart(arg)
 	struct buf *dp, *bp=0;
 
 	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_FUNCS | DEBUG_XFERS);
+	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
@@ -459,7 +459,7 @@ wddone(v)
 	struct buf *bp = wd->sc_bp;
 	char buf[256], *errbuf = buf;
 	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_FUNCS | DEBUG_XFERS);
+	    DEBUG_XFERS);
 
 	bp->b_resid = wd->sc_wdc_bio.bcount;
 	errbuf[0] = '\0';
@@ -514,7 +514,7 @@ wdrestart(v)
 	struct buf *bp = wd->sc_bp;
 	int s;
 	WDCDEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_FUNCS | DEBUG_XFERS);
+	    DEBUG_XFERS);
 
 	s = splbio();
 	__wdstart(v, bp);
@@ -528,7 +528,7 @@ wdread(dev, uio, flags)
 	int flags;
 {
 
-	WDCDEBUG_PRINT(("wdread\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
 	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -539,7 +539,7 @@ wdwrite(dev, uio, flags)
 	int flags;
 {
 
-	WDCDEBUG_PRINT(("wdwrite\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
 	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -1105,7 +1105,7 @@ bad144intern(wd)
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	int i = 0;
 
-	WDCDEBUG_PRINT(("bad144intern\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
 
 	for (; i < NBT_BAD; i++) {
 		if (bt->bt_bad[i].bt_cyl == 0xffff)
