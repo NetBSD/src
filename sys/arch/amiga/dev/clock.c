@@ -38,7 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.1 1994/05/08 05:52:58 chopps Exp $
+ *	$Id: clock.c,v 1.2 1994/05/09 06:38:37 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -297,41 +297,29 @@ delay(mic)
 		;
 }
 
-int 
-_delay(mic)
-	int mic;
-{
-	DELAY(100 * mic);
-}
-
-#if 0
 /*
  * Needs to be calibrated for use, its way off most of the time
  */
-int
-DELAY (mic)
-    int mic;
+void
+DELAY(mic)
+	int mic;
 {
-  u_long n;
-  short hpos;
+	u_long n;
+	short hpos;
 
-  /* busy-poll for mic microseconds. This is *no* general timeout function,
-     it's meant for timing in hardware control, and as such, may not lower
-     interrupt priorities to really `sleep'. */
-
-  /* this function uses HSync pulses as base units. The custom chips 
-     display only deals with 31.6kHz/2 refresh, this gives us a
-     resolution of 1/15800 s, which is ~63us (add some fuzz so we really
-     wait awhile, even if using small timeouts) */
-  n = mic/63 + 2;
-  do
-    {
-      hpos = custom.vhposr & 0xff00;
-      while (hpos == (custom.vhposr & 0xff00)) ;
-    }
-  while (n--);
+	/*
+	 * this function uses HSync pulses as base units. The custom chips 
+	 * display only deals with 31.6kHz/2 refresh, this gives us a
+	 * resolution of 1/15800 s, which is ~63us (add some fuzz so we really
+	 * wait awhile, even if using small timeouts)
+	 */
+	n = mic/63 + 2;
+	do {
+		hpos = custom.vhposr & 0xff00;
+		while (hpos == (custom.vhposr & 0xff00))
+			;
+	} while (n--);
 }
-#endif
 
 #if notyet
 

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.11 1994/05/08 05:53:56 chopps Exp $
+ *	$Id: cpu.h,v 1.12 1994/05/09 06:38:50 chopps Exp $
  */
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -67,7 +67,7 @@
 #define	cpu_wait(p)	/* nothing */
 
 /*
- * Arguments to hardclock, softclock and gatherstats
+ * Arguments to hardclock, softclock and statclock
  * encapsulate the previous machine state in an opaque
  * clockframe; for hp300, use just what the hardware
  * leaves on the stack.
@@ -277,5 +277,16 @@ extern	int machineid, mmutype, cpu040;
 /* 68040 cache control */
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	0x00000000
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_CONSDEV	1	/* dev_t: console terminal device */
+#define CPU_MAXID	2	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 #endif /* !_MACHINE_CPU_H_ */
