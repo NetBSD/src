@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.20 2004/01/17 21:25:25 bjh21 Exp $	*/
+/*	$NetBSD: beep.c,v 1.21 2004/01/17 21:49:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.20 2004/01/17 21:25:25 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.21 2004/01/17 21:49:24 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -64,9 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.20 2004/01/17 21:25:25 bjh21 Exp $");
 #include <arm/iomd/waveform.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
+#include <arm/iomd/rpckbdvar.h>
 
 #include "beep.h"
 #include "locators.h"
+#include "rpckbd.h"
 
 struct beep_softc {
 	struct device sc_device;
@@ -85,6 +87,8 @@ int	beepprobe	(struct device *, struct cfdata *, void *);
 void	beepattach	(struct device *, struct device *, void *);
 int	beepintr	(void *arg);
 void	beepdma		(struct beep_softc *sc, int buf);
+
+static void beep_bell(void *, u_int, u_int, u_int, int);
 
 static int sdma_channel;
 
@@ -189,6 +193,9 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	WriteWord(vidc_base, VIDC_SIR5 | SIR_CENTRE);
 	WriteWord(vidc_base, VIDC_SIR6 | SIR_CENTRE);
 	WriteWord(vidc_base, VIDC_SIR7 | SIR_CENTRE);
+#if NRPCKBD > 0
+	rpckbd_hookup_bell(beep_bell, NULL);
+#endif
 }
 
 
@@ -236,6 +243,13 @@ beepclose(dev_t dev, int flag, int mode, struct proc *p)
 	return 0;
 }
 
+static void
+beep_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
+{
+
+	if (!poll)
+		beep_generate();
+}
 
 void
 beep_generate(void)
