@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.5 1999/12/12 17:46:37 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.6 2000/02/09 22:15:59 joda Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 
 static int fxp_cardbus_match __P((struct device *, struct cfdata *, void *));
 static void fxp_cardbus_attach __P((struct device *, struct device *, void *));
+static int fxp_cardbus_detach __P((struct device *self, int flags));
 static void fxp_cardbus_setup __P((struct fxp_softc *sc));
 static int fxp_cardbus_enable __P((struct fxp_softc *sc));
 static void fxp_cardbus_disable __P((struct fxp_softc *sc));
@@ -106,7 +107,8 @@ struct fxp_cardbus_softc {
 };
 
 struct cfattach fxp_cardbus_ca = {
-    sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach
+    sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach, 
+    fxp_cardbus_detach
 };
 
 #ifdef CBB_DEBUG
@@ -121,18 +123,12 @@ fxp_cardbus_match(parent, match, aux)
      struct cfdata *match;
      void *aux;
 {
-    /* should check CIS */
     struct cardbus_attach_args *ca = aux;
     
-    if (CARDBUS_VENDOR(ca->ca_id) != CARDBUS_VENDOR_INTEL)
-	return (0);
-
-    switch (CARDBUS_PRODUCT(ca->ca_id)) {
-    case CARDBUS_PRODUCT_INTEL_82557:
-	return (1);
-    }
-
-    return (0);
+    if(CARDBUS_VENDOR(ca->ca_id) != CARDBUS_VENDOR_INTEL &&
+       CARDBUS_PRODUCT(ca->ca_id) != CARDBUS_PRODUCT_INTEL_82557)
+	return 0;
+    return 1;
 }
 
 static void
@@ -140,6 +136,8 @@ fxp_cardbus_attach(parent, self, aux)
      struct device *parent, *self;
      void *aux;
 {
+    static const char __func__[] = "fxp_cardbus_attach";
+
     struct fxp_softc *sc = (struct fxp_softc*)self;
     struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc*)self;
     struct cardbus_attach_args *ca = aux;
@@ -169,9 +167,13 @@ fxp_cardbus_attach(parent, self, aux)
 	sc->sc_sh = ioh;
 	csc->size = size;
     } else
-	panic("%s: failed to allocate mem and io space", __FUNCTION__);
+	panic("%s: failed to allocate mem and io space", __func__);
     
     
+    if(ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1])
+	printf(": %s %s\n", ca->ca_cis.cis1_info[0], ca->ca_cis.cis1_info[1]);
+    else
+	printf("\n");
     sc->sc_dmat = ca->ca_dmat;
     sc->sc_enable = fxp_cardbus_enable;
     sc->sc_disable = fxp_cardbus_disable;
@@ -248,4 +250,41 @@ fxp_cardbus_disable(struct fxp_softc *sc)
     cardbus_intr_disestablish(cc, cf, sc->sc_ih); /* remove intr handler */
     
     Cardbus_function_disable(((struct fxp_cardbus_softc*)sc)->ct);
+}
+
+static int
+fxp_cardbus_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct fxp_softc *sc = (struct fxp_softc*)self;
+	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc*)self;
+	struct cardbus_devfunc *ct = csc->ct;
+	int rv;
+	int reg;
+
+#ifdef DIAGNOSTIC
+	if (ct == NULL) {
+		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+	}
+#endif
+
+	rv = fxp_detach(sc);
+	if (rv == 0) {
+		/*
+		 * Unhook the interrupt handler.
+		 */
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+
+		/*
+		 * release bus space and close window
+		 */
+		if(csc->base0_reg) {
+			reg = CARDBUS_BASE0_REG;
+		} else {
+			reg = CARDBUS_BASE1_REG;
+		}
+		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
+	}
+	return (rv);
 }
