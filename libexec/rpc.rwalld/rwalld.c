@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.15 2000/06/03 20:31:25 fvdl Exp $	*/
+/*	$NetBSD: rwalld.c,v 1.16 2000/06/03 20:35:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.15 2000/06/03 20:31:25 fvdl Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.16 2000/06/03 20:35:06 fvdl Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -73,7 +73,7 @@ int
 main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 
 	if (geteuid() == 0) {
