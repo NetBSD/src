@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.7 2000/01/25 03:44:27 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.8 2000/01/25 15:29:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -297,11 +297,12 @@ tlp_cardbus_attach(parent, self, aux)
 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cbenable);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
-	reg = (reg & ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE)) |
-	    csc->sc_csr;
+	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+	reg |= csc->sc_csr;
 	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
