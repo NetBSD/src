@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.37 1998/02/19 00:27:00 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.38 1998/06/10 04:33:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -360,7 +360,8 @@ void	addoption __P((const char *name, const char *value));
 void	addfsoption __P((const char *name));
 void	addmkoption __P((const char *name, const char *value));
 void	deffilesystem __P((const char *fname, struct nvlist *fses));
-void	defoption __P((const char *fname, struct nvlist *opts));
+void	defoption __P((const char *fname, struct nvlist *opts,
+	    struct nvlist *deps));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));
 void	setupdirs __P((void));
