@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.6 2002/02/13 08:18:38 ross Exp $
+.\"	$NetBSD: callout.9,v 1.6.2.1 2003/10/22 06:06:50 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,10 @@
 .Fn "callout_expired" "struct callout *c"
 .Ft void
 .Fn "callout_deactivate" "struct callout *c"
+.Ft int
+.Fn "callout_invoking" "struct callout *c"
+.Ft void
+.Fn "callout_ack" "struct callout *c"
 .Sh DESCRIPTION
 The
 .Nm callout
@@ -179,6 +183,42 @@ Note that is only safe to call
 if the callout function has already been executed, i.e. the callout
 is no longer
 .Em PENDING .
+.Pp
+The
+.Fn callout_invoking
+function checks whether the callout function in the callout
+handle
+.Em c
+is about to be executed, at which time the
+.Em INVOKING
+status is set.
+Since the priority is lowered prior to invocation of the callout
+function, other pending higher-priority code may run before the
+callout function is actually invoked.
+This may create a race condition if this higher-priority code
+deallocates storage containing one or more callout structures whose
+callout functions are about to run.
+In such cases one technique to prevent references to deallocated
+storage would be to test whether any callout functions are in the
+.Em INVOKING
+state using
+.Fn callout_invoking ,
+and if so, to mark the data structure and defer storage
+deallocation until the callout function is allowed to run.
+For this handshake protocol to work, the callout function will
+have to use the
+.Fn callout_ack
+function to clear this flag.
+.Pp
+The
+.Fn callout_ack
+function clears the
+.Em INVOKING
+state in the callout handle
+.Em c .
+This is used in situations where it is necessary to protect against
+the race condition described under
+.Fn callout_invoking .
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY
