@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.42 2003/05/08 07:14:14 uebayasi Exp $
+.\" $NetBSD: doc2html,v 1.43 2003/07/01 08:42:19 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1174,6 +1174,11 @@ AT&T UNIX\\$*
 .	       \}
 .	       if "\\$1"-ieee754" \{\
 .			ds std-tmp1 \&IEEE Std754-1985
+.	       \}
+.	       if "\\$1"-ieee754" \{\
+.			ds std-tmp1 \&IEEE Std1275-1994
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``Open Firmware'')
 .	       \}
 .	       if "\\$1"-iso8802-3" \{\
 .			ds std-tmp1 \&ISO/IEC 8802-3:1989
