@@ -1,3 +1,5 @@
+$NetBSD: TODO,v 1.2 1997/06/26 07:21:45 thorpej Exp $
+
 These are not necessarily in order of importance:
 
 Support hardware breakpoints on processors/machines

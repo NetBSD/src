@@ -1,3 +1,5 @@
+/*	$NetBSD: ipkdb_if.c,v 1.6 1997/06/26 07:21:46 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
  * Copyright (C) 1993-1996 TooLs GmbH.
