@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.21 2003/07/30 15:58:38 mrg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.22 2004/06/21 18:20:09 jmc Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -66,4 +66,4 @@ CLEANFILES+= machine sparc
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib

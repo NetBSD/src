@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/04/10 12:30:26 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2004/06/21 18:20:08 jmc Exp $
 
 NOMAN= # defined
 
@@ -103,6 +103,6 @@ CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .include <bsd.prog.mk>

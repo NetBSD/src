@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.43 2003/11/24 23:29:54 he Exp $
+# $NetBSD: Makefile.booters,v 1.44 2004/06/21 18:20:09 jmc Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -132,4 +132,4 @@ CLEANFILES+=	${PROG}.map
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/05/12 16:56:43 cl Exp $
+# $NetBSD: Makefile,v 1.3 2004/06/21 18:20:09 jmc Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -89,10 +89,10 @@ LIBSA= ${SALIB}
 cleandir distclean: cleanlibdir cleanxenmadir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 cleanxenmadir:
-	rm -rf xen-ma
+	-rm -rf xen-ma
 
 LIBLIST= ${LIBSA}
 
