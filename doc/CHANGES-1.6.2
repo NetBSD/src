@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.236 2003/11/26 05:09:30 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.237 2003/11/26 07:13:05 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3044,4 +3044,10 @@ dist/bind/bin/nslookup/commands.l		1.5
 
 	sync w/ bind837
 	[itojun, ticket #1568]
+
+lib/libc/sys/intro.2				1.36
+
+	Catch up with namei: An empty string is not a valid pathname.
+	Noted by SAITOH Akinori in PR misc/23565.
+	[kleink, ticket #1567]
 
