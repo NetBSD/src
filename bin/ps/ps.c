@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.17 1997/02/28 13:34:50 pk Exp $	*/
+/*	$NetBSD: ps.c,v 1.18 1997/04/21 05:28:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.17 1997/02/28 13:34:50 pk Exp $";
+static char rcsid[] = "$NetBSD: ps.c,v 1.18 1997/04/21 05:28:43 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,8 @@ kludge_oldps_options(s)
 	if (isdigit(*cp) && (cp == s || cp[-1] != 't' && cp[-1] != 'p' &&
 	    (cp - 1 == s || cp[-2] != 't')))
 		*ns++ = 'p';
-	(void)strcpy(ns, cp);		/* and append the number */
+	/* and append the number */
+	(void)strcpy(ns, cp);		/* XXX strcpy is safe */
 
 	return (newopts);
 }
