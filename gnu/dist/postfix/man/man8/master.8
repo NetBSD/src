@@ -9,7 +9,8 @@ Postfix master process
 .na
 .nf
 .fi
-\fBmaster\fR [\fB-c \fIconfig_dir\fR] [\fB-D\fR] [\fB-t\fR] [\fB-v\fR]
+\fBmaster\fR [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
+[\fB-D\fR] [\fB-t\fR] [\fB-v\fR]
 .SH DESCRIPTION
 .ad
 .fi
@@ -34,6 +35,9 @@ Options:
 .IP "\fB-c \fIconfig_dir\fR"
 Read the \fBmain.cf\fR and \fBmaster.cf\fR configuration files in
 the named directory instead of the default configuration directory.
+.IP "\fB-e \fIexit_time\fR"
+Terminate the master process after \fIexit_time\fR seconds. Child
+processes terminate at their convenience.
 .IP \fB-D\fR
 After initialization, run a debugger on the master process. The
 debugging command is specified with the \fBdebugger_command\fR in

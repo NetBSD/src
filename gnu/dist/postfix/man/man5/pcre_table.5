@@ -41,7 +41,7 @@ are supported, but the only other useful one is `U', which makes
 matching ungreedy (see PCRE documentation and source for more
 info).
 
-Each pattern is applied to the entire string being looked up.
+Each pattern is applied to the entire lookup key string.
 Depending on the application, that string is an entire client
 hostname, an entire client IP address, or an entire mail address.
 Thus, no parent domain or parent network search is done, and
@@ -52,9 +52,9 @@ broken up into \fIuser\fR and \fIfoo\fR.
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-Substitution of sub-strings from the matched expression is
-possible using the conventional perl syntax ($1, $2, etc.). The
-macros in the replacement string may need to be written as ${n}
+Substitution of substrings from the matched expression into the result
+string is possible using the conventional perl syntax ($1, $2, etc.).
+The macros in the result string may need to be written as ${n}
 or $(n) if they aren't followed by whitespace.
 .SH EXAMPLES
 .na

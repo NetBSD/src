@@ -111,12 +111,12 @@ rcpt foo@porcupine.org
 #
 # MX backup
 #
-mydestination spike.porcupine.org,localhost.porcupine.org
-inet_interfaces 168.100.189.2,127.0.0.1
-recipient_restrictions permit_mx_backup,reject
-rcpt wietse@wzv.win.tue.nl
-rcpt wietse@trouble.org
-rcpt wietse@porcupine.org
+#mydestination spike.porcupine.org,localhost.porcupine.org
+#inet_interfaces 168.100.189.2,127.0.0.1
+#recipient_restrictions permit_mx_backup,reject
+#rcpt wietse@wzv.win.tue.nl
+#rcpt wietse@trouble.org
+#rcpt wietse@porcupine.org
 #
 # Deferred restrictions
 #

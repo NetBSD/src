@@ -166,7 +166,15 @@ test -f $CONFIG_DIRECTORY/main.cf && {
     done
 }
 
-test -f $CONFIG_DIRECTORY/install.cf && . $CONFIG_DIRECTORY/install.cf
+test -f $CONFIG_DIRECTORY/install.cf && . $CONFIG_DIRECTORY/install.cf || {
+    test -t 0 || {
+	echo Non-interactive install needs the $CONFIG_DIRECTORY/install.cf 1>&2
+	echo file from a previous Postfix installation. 1>&2
+	echo 1>&2
+	echo Use interactive installation instead. 1>&2
+	exit 1
+    }
+}
 
 # Override default settings.
 

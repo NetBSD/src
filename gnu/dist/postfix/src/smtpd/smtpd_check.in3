@@ -1,0 +1,27 @@
+#msg_verbose 1
+smtpd_delay_reject 0
+mynetworks 127.0.0.0/8,168.100.189.0/28
+relay_domains porcupine.org
+local_recipient_maps unix:passwd.byname
+client unknown 131.155.210.17
+canonical_maps tcp:localhost:200
+#
+recipient_restrictions permit
+rcpt no.such.user@[127.0.0.1]
+#
+virtual_maps tcp:localhost:100
+#
+recipient_restrictions permit_mx_backup
+rcpt wietse@nowhere1.com
+#
+recipient_restrictions check_relay_domains
+rcpt wietse@nowhere2.com
+#
+recipient_restrictions reject_unknown_recipient_domain
+rcpt wietse@nowhere3.com
+#
+recipient_restrictions permit_auth_destination
+rcpt wietse@nowhere4.com
+#
+recipient_restrictions reject_unauth_destination
+rcpt wietse@nowhere5.com

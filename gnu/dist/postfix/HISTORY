@@ -4969,3 +4969,58 @@ Apologies for any names omitted.
 	Portability: workaround for missing prototype problem in
 	dict_ldap.c. This module should move to the global directory,
 	because it depends on Postfix main.cf parameter information.
+
+20010403
+
+	Workaround: the mysql library can return null pointers
+	rather than zero-length strings.
+
+20010404
+
+	Ergonomics: log additional information about the reason
+	why "mail for XXX loops back to myself", when the local
+	machine is the best MX host. File: smtp/smtp_addr.c.
+
+20010406
+
+	Changed some noisy LDAP client warnings into optional
+	logging. LaMont Jones, util/dict_ldap.c.
+
+20010411
+
+	Bugfix: the SMTP server now replies with 550 instead of
+	503 when it receives the DATA command without having received
+	a valid recipient address. This is needed for the Sendmail
+	client-side pipelining implementation. Problem reported by
+	Lutz Jaenicke. File: smtpd/smtpd.c.
+
+	Cleanup: shut up if chattr fails on Reiserfs and other file
+	systems that do not support the respective attributes.
+	Files: conf/postfix-script-{no,}sgid.
+
+20010413
+
+	Ergonomics: Postfix applications now warn when a DB or DBM
+	file is out of date, and recommend to rebuild the table.
+	Files: util/dict_db.c, util/dict_dbm.c.
+
+20010414
+
+	Bugfix: with a non-default inet_interfaces setting, the
+	master ignored host information in master.cf host:port
+	settings.  Fix by Jun-ichiro itojun Hagino @ iijlab.net.
+	Files: master/master.h, master/master_ent.c.
+
+20010426
+
+	Bugfix: the SMTP server did not parse invalid MAIL FROM or
+	RCPT TO addresses such as <first last <user@domain>> the
+	way it was supposed to do.  I thought this was taken care
+	of years ago. File:  smtpd/smtpd.c.
+
+20010427
+
+	Bugfix: smtpd would reject mail instead of replying with
+	a 4xx temporary error code when, for example, an LDAP or
+	mysql server was unavailable. Remotely based on a fix by
+	Robert Kiessling @ de.easynet.net. File: smtpd/smtpd_check.c.

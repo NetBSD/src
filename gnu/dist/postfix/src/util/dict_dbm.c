@@ -371,6 +371,13 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     char   *dbm_path;
     int     lock_fd;
 
+    /*
+     * Note: DICT_FLAG_LOCK is used only by programs that do fine-grained (in
+     * the time domain) locking while accessing individual database records.
+     * 
+     * Programs such as postmap/postalias use their own large-grained (in the
+     * time domain) locks while rewriting the entire file.
+     */
     if (dict_flags & DICT_FLAG_LOCK) {
 	dbm_path = concatenate(path, ".pag", (char *) 0);
 	if ((lock_fd = open(dbm_path, open_flags, 0644)) < 0)
@@ -390,7 +397,6 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
 	    msg_fatal("unlock database %s for open: %m", dbm_path);
 	if (close(lock_fd) < 0)
 	    msg_fatal("close database %s: %m", dbm_path);
-	myfree(dbm_path);
     }
     dict_dbm = (DICT_DBM *) dict_alloc(DICT_TYPE_DBM, path, sizeof(*dict_dbm));
     dict_dbm->dict.lookup = dict_dbm_lookup;
@@ -402,6 +408,17 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     if (fstat(dict_dbm->dict.fd, &st) < 0)
 	msg_fatal("dict_dbm_open: fstat: %m");
     dict_dbm->dict.mtime = st.st_mtime;
+
+    /*
+     * Warn if the source file is newer than the indexed file, except when
+     * the source file changed only seconds ago.
+     */
+    if ((dict_flags & DICT_FLAG_LOCK) != 0
+	&& stat(path, &st) == 0
+	&& st.st_mtime > dict_dbm->dict.mtime
+	&& st.st_mtime < time((time_t *) 0) - 100)
+	msg_warn("database %s is older than source file %s", dbm_path, path);
+
     close_on_exec(dbm_pagfno(dbm), CLOSE_ON_EXEC);
     close_on_exec(dbm_dirfno(dbm), CLOSE_ON_EXEC);
     dict_dbm->dict.flags = dict_flags | DICT_FLAG_FIXED;
@@ -409,7 +426,10 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
 	dict_dbm->dict.flags |= (DICT_FLAG_TRY0NULL | DICT_FLAG_TRY1NULL);
     dict_dbm->dbm = dbm;
 
-    return (DICT_DEBUG(&dict_dbm->dict));
+    if ((dict_flags & DICT_FLAG_LOCK))
+	myfree(dbm_path);
+
+    return (DICT_DEBUG (&dict_dbm->dict));
 }
 
 #endif

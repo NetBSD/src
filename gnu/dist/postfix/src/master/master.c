@@ -5,7 +5,8 @@
 /*	Postfix master process
 /* SYNOPSIS
 /* .fi
-/*	\fBmaster\fR [\fB-c \fIconfig_dir\fR] [\fB-D\fR] [\fB-t\fR] [\fB-v\fR]
+/*	\fBmaster\fR [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
+/*		[\fB-D\fR] [\fB-t\fR] [\fB-v\fR]
 /* DESCRIPTION
 /*	The \fBmaster\fR daemon is the resident process that runs Postfix
 /*	daemons on demand: daemons to send or receive messages via the
@@ -28,6 +29,9 @@
 /* .IP "\fB-c \fIconfig_dir\fR"
 /*	Read the \fBmain.cf\fR and \fBmaster.cf\fR configuration files in
 /*	the named directory instead of the default configuration directory.
+/* .IP "\fB-e \fIexit_time\fR"
+/*	Terminate the master process after \fIexit_time\fR seconds. Child
+/*	processes terminate at their convenience.
 /* .IP \fB-D\fR
 /*	After initialization, run a debugger on the master process. The
 /*	debugging command is specified with the \fBdebugger_command\fR in
@@ -163,6 +167,16 @@
 
 #include "master.h"
 
+/* master_exit_event - exit for memory leak testing purposes */
+
+static void master_exit_event(int unused_event, char *unused_context)
+{
+    msg_info("master exit time has arrived");
+    exit(0);
+}
+
+/* main - main program */
+
 int     main(int argc, char **argv)
 {
     static VSTREAM *lock_fp;
@@ -251,11 +265,14 @@ int     main(int argc, char **argv)
     /*
      * Process JCL.
      */
-    while ((ch = GETOPT(argc, argv, "c:Dtv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "c:e:Dtv")) > 0) {
 	switch (ch) {
 	case 'c':
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
 		msg_fatal("out of memory");
+	    break;
+	case 'e':
+	    event_request_timer(master_exit_event, (char *) 0, atoi(optarg));
 	    break;
 	case 'D':
 	    debug_me = 1;
@@ -267,7 +284,7 @@ int     main(int argc, char **argv)
 	    msg_verbose++;
 	    break;
 	default:
-	    msg_fatal("usage: %s [-D] [-t] [-v]", argv[0]);
+	    msg_fatal("usage: %s [-c config_dir] [-e exit_time] [-D (debug)] [-t (test)] [-v]", argv[0]);
 	    /* NOTREACHED */
 	}
     }
@@ -282,8 +299,7 @@ int     main(int argc, char **argv)
 
     /*
      * Environment import filter, to enforce consistent behavior whether
-     * Postfix is started by hand, or at system boot time. The argument list
-     * specifies what environment parameters to preserve.
+     * Postfix is started by hand, or at system boot time.
      */
     import_env = argv_split(var_import_environ, ", \t\r\n");
     clean_env(import_env->argv);

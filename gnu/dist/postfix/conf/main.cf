@@ -374,6 +374,8 @@ mail_owner = postfix
 # localpart), $recipient_delimiter. Specify ${name?value} or
 # ${name:value} to expand value only when $name does (does not) exist.
 #
+# luser_relay works only for the default Postfix local delivery agent.
+#
 # luser_relay = $user@other.host
 # luser_relay = $local@other.host
 # luser_relay = admin+$local

@@ -62,14 +62,8 @@ Reportedly, Microsoft Internet Explorer version 5 requires the
 non-standard SASL LOGIN authentication method. To enable this
 authentication method, specify ``./configure --enable-login''.
 
-Older Microsoft SMTP client software implements a non-standard 
-version of the AUTH protocol syntax, and expects that the SMTP
-server replies to EHLO with "250 AUTH=stuff" instead of "250 AUTH
-stuff".  To accomodate such clients in addition to conformant
-clients, set "broken_sasl_auth_clients = yes" in the main.cf file.
-
-The Postfix SMTP client is backwards compatible with SMTP servers
-that use the non-standard AUTH protocol syntax.
+If you install the Cyrus SASL libraries as per the default, you
+will have to symlink /usr/lib/sasl -> /usr/local/lib/sasl.
 
 Building Postfix with SASL authentication support
 =================================================
@@ -93,9 +87,6 @@ otherwise ld.so will not find the SASL shared library:
 
 Enabling SASL authentication in the Postfix SMTP server
 =======================================================
-
-If you installed the Cyrus SASL libraries as per the default, you
-will have to symlink /usr/lib/sasl -> /usr/local/lib/sasl.
 
 See conf/sample-auth.cf for examples. 
 
@@ -140,6 +131,12 @@ EXAMPLE: saslpasswd -c -u `postconf -h myhostname` exampleuser
 
 To run software chrooted with SASL support is an interesting
 exercise.  It probably is not worth the trouble.
+
+Older Microsoft SMTP client software implements a non-standard 
+version of the AUTH protocol syntax, and expects that the SMTP
+server replies to EHLO with "250 AUTH=stuff" instead of "250 AUTH
+stuff".  To accomodate such clients in addition to conformant
+clients, set "broken_sasl_auth_clients = yes" in the main.cf file.
 
 Testing SASL authentication in the Postfix SMTP server
 ======================================================
@@ -192,3 +189,8 @@ remote part of an email address).
 The SASL client password file is opened before the SMTP server
 enters the optional chroot jail, so you can keep the file in
 /etc/postfix.
+
+The Postfix SMTP client is backwards compatible with SMTP servers
+that use the non-standard AUTH=stuff... syntax in response to the
+EHLO command.
+

@@ -182,7 +182,7 @@
 /*	Allow untrusted clients to specify addresses with sender-specified
 /*	routing.  Enabling this opens up nasty relay loopholes involving
 /*	trusted backup MX hosts.
-/* .IP \fBrestriction_classes\fR
+/* .IP \fBsmtpd_restriction_classes\fR
 /*	Declares the name of zero or more parameters that contain a
 /*	list of UCE restrictions. The names of these parameters can
 /*	then be used instead of the restriction lists that they represent.
@@ -523,6 +523,7 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
     int     naddr;
     int     non_addr;
     char   *err = 0;
+    char   *junk;
 
     /*
      * Special case.
@@ -544,7 +545,13 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
      */
     if (msg_verbose)
 	msg_info("%s: input: %s", myname, STR(arg->vstrval));
-    tree = tok822_parse(STR(arg->vstrval));
+    if (STR(arg->vstrval)[0] == '<'
+	&& STR(arg->vstrval)[LEN(arg->vstrval) - 1] == '>') {
+	junk = mystrndup(STR(arg->vstrval) + 1, LEN(arg->vstrval) - 2);
+	tree = tok822_parse(junk);
+	myfree(junk);
+    } else
+	tree = tok822_parse(STR(arg->vstrval));
 
     /*
      * Find trouble.
@@ -823,9 +830,12 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
      * error.
      */
     if (state->rcpt_count == 0) {
-	if (state->cleanup == 0)
+	if (state->cleanup == 0) {
 	    state->error_mask |= MAIL_ERROR_PROTOCOL;
-	smtpd_chat_reply(state, "503 Error: need RCPT command");
+	    smtpd_chat_reply(state, "503 Error: need RCPT command");
+	} else {
+	    smtpd_chat_reply(state, "550 Error: no valid recipients");
+	}
 	return (-1);
     }
     if (argc != 1) {

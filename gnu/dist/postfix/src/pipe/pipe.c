@@ -315,7 +315,7 @@ static int parse_callback(int type, VSTRING *buf, char *context)
 
 /* expand_argv - expand macros in the argument vector */
 
-static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, long data_size)
+static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 {
     VSTRING *buf = vstring_alloc(100);
     ARGV   *result;
@@ -710,7 +710,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     vstring_sprintf(buf, "%ld", (long) request->data_size);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_SIZE, STR(buf));
     vstring_free(buf);
-    expanded_argv = expand_argv(attr.command, rcpt_list, request->data_size);
+    expanded_argv = expand_argv(attr.command, rcpt_list);
     export_env = argv_split(var_export_environ, ", \t\r\n");
 
     command_status = pipe_command(request->fp, why,
