@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.33 1999/01/21 22:58:57 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.34 1999/09/08 04:02:48 sommerfeld Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/exec_elf.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_lwp.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
