@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 1999/05/05 05:25:32 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.77 1999/05/12 19:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -118,33 +118,24 @@ cpu_fork(p1, p2)
 		panic("cpu_fork: curproc");
 #endif
 	*pcb = p1->p_addr->u_pcb;
-	pmap_activate(p2);
 
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
+	 *
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call below.
 	 */
 	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+
+	/*
+	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
+	 */
+	pmap_activate(p2);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
 	tss_alloc(pcb);
-
-#ifdef USER_LDT
-	/* Copy the LDT, if necessary. */
-	if (pcb->pcb_flags & PCB_USER_LDT) {
-		size_t len;
-		union descriptor *new_ldt;
-
-		len = pcb->pcb_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
-		memcpy(new_ldt, pcb->pcb_ldt, len);
-		pcb->pcb_ldt = new_ldt;
-		ldt_alloc(pcb, new_ldt, len);
-	}
-#endif
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
@@ -200,10 +191,6 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-#ifdef USER_LDT
-	struct pcb *pcb;
-#endif
-	struct vmspace *vm;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
@@ -211,13 +198,10 @@ cpu_exit(p)
 		npxproc = 0;
 #endif
 
-#ifdef USER_LDT
-	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & PCB_USER_LDT)
-		i386_user_cleanup(pcb);
-#endif
-
-	vm = p->p_vmspace;
+	/*
+	 * No need to do user LDT cleanup here; it's handled in
+	 * pmap_destroy().
+	 */
 
 	uvmexp.swtch++;
 	switch_exit(p);
