@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo.h	7.1 (Berkeley) 4/15/91
- *	$Id: fifo.h,v 1.5 1993/09/07 15:41:53 ws Exp $
+ *	$Id: fifo.h,v 1.6 1994/01/05 11:34:44 cgd Exp $
  */
 
 #ifndef _SYS_FIFO_H_
@@ -173,7 +173,7 @@ int	fifo_bmap __P((
 		daddr_t *bnp));
 #define fifo_strategy ((int (*) __P(( \
 		struct buf *bp))) fifo_badop)
-void	fifo_print __P((
+int	fifo_print __P((
 		struct vnode *vp));
 void	fifo_printinfo __P((
 		struct vnode *vp));

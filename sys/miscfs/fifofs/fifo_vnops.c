@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo_vnops.c	7.7 (Berkeley) 4/15/91
- *	$Id: fifo_vnops.c,v 1.6 1993/12/18 03:49:25 mycroft Exp $
+ *	$Id: fifo_vnops.c,v 1.7 1994/01/05 11:34:51 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -385,7 +385,7 @@ fifo_close(vp, fflag, cred, p)
 /*
  * Print out the contents of a fifo vnode.
  */
-void
+int
 fifo_print(vp)
 	struct vnode *vp;
 {
@@ -393,6 +393,7 @@ fifo_print(vp)
 	printf("tag VT_NON");
 	fifo_printinfo(vp);
 	printf("\n");
+	return (0);
 }
 
 /*
