@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.31 1996/11/19 04:40:26 cgd Exp $
+#	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -23,10 +23,10 @@ file	arch/alpha/common/vga.c		vga
 # Bus-independent devices
 #
 
-device	mainbus { }	              # no locators (yet?)
+device	mainbus { }			# no locators (yet?)
 attach	mainbus at root
 
-device	cpu { }				# not really optional; can be a 'bus'
+device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
@@ -139,12 +139,17 @@ include "dev/isa/files.isa"
 
 file	arch/alpha/isa/isa_machdep.c	isa
 
-device  pckbd
-attach  pckbd at isa
-file    arch/alpha/isa/pckbd.c           pckbd needs-flag
-device  pms
-attach  pms at isa
-file    arch/alpha/isa/pms.c             pms needs-flag
+device	pcppi { }
+attach	pcppi at isa
+file	arch/alpha/isa/pcppi.c		pcppi
+
+device	pckbd
+attach	pckbd at pcppi
+file	arch/alpha/isa/pckbd.c		pckbd
+
+device	pms
+attach	pms at pcppi
+file	arch/alpha/isa/pms.c		pms
 
 attach	vga at isa with vga_isa
 file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
@@ -165,15 +170,16 @@ include "dev/eisa/files.eisa"
 device	apecs: pcibus
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
+file	arch/alpha/pci/apecs_bus_io.c	apecs
+file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
 device	lca: pcibus
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
+file	arch/alpha/pci/lca_bus_io.c	lca
+file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
-
-file	arch/alpha/pci/apecs_lca_bus_io.c	apecs | lca
-file	arch/alpha/pci/apecs_lca_bus_mem.c	apecs | lca
 
 device	cia: pcibus
 attach	cia at mainbus
@@ -185,6 +191,7 @@ file	arch/alpha/pci/cia_pci.c	cia
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c	dec_eb164
+file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
 
