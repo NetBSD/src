@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.5 2000/12/17 14:46:44 ad Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.6 2000/12/22 13:30:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,13 +87,15 @@ struct stic_screen {
 struct stic_info {
 	u_int32_t	*si_slotkva;
 	u_int32_t	*si_stamp;
-	u_int32_t	*si_rbuf;
+	u_int32_t	*si_buf;
 	u_int32_t	*si_vdac;
 	u_int32_t	*si_vdac_reset;
 	volatile struct	stic_regs *si_stic;
 
 	u_int32_t	*(*si_pbuf_get)(struct stic_info *);
 	int	(*si_pbuf_post)(struct stic_info *, u_int32_t *);
+	int	(*si_ioctl)(struct stic_info *, u_long, caddr_t, int,
+			   struct proc *);
 	int	si_pbuf_select;
 
 	struct	stic_screen *si_curscreen;
@@ -109,6 +111,8 @@ struct stic_info {
 
 	tc_addr_t si_slotbase;
 	int	si_disptype;
+	paddr_t	si_buf_phys;
+	size_t	si_buf_size;
 
 	int	si_vdacctl;
 
@@ -143,6 +147,8 @@ struct stic_xinfo {
 #define	STICIO_GXINFO	_IOR('s', 0, struct stic_xinfo)
 #define	STICIO_SBLINK	_IOW('s', 1, int)
 #define	STICIO_S24BIT	_IOW('s', 2, int)
+#define	STICIO_START860	_IO('s', 3)
+#define	STICIO_RESET860	_IO('s', 4)
 
 struct stic_xmap {
 	u_int32_t	sxm_stic[PAGE_SIZE];
