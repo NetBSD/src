@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.12 2003/10/13 14:22:20 agc Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.13 2004/09/21 15:47:32 rumble Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -539,7 +539,8 @@ insert_before(void)
 
 		entry = Hash_CreateEntry(provide_hash, bl_list->s, &new);
 		if (new == 1)
-			warnx("file `%s' is before unknown provision `%s'", bl_list->node->filename, bl_list->s);
+			warnx("file `%s' is before unknown provision `%s'",
+			    bl_list->node->filename, bl_list->s);
 
 		for (pnode = Hash_GetValue(entry); pnode; pnode = pnode->next) {
 			if (pnode->head)
