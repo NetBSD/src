@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.24 2001/06/21 20:58:18 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.25 2001/09/24 13:22:38 wiz Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.24 2001/06/21 20:58:18 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.25 2001/09/24 13:22:38 wiz Exp $");
 #endif
 #endif
 
@@ -486,6 +486,7 @@ void logf __V((const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_INFO, "%s", line);
     if (to_stderr)
@@ -511,6 +512,7 @@ void fatal __V((int code, const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_ERR, "%s", line);
     if (to_stderr)

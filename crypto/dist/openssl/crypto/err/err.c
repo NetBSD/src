@@ -784,6 +784,7 @@ void ERR_add_error_data(int num, ...)
 				if (p == NULL)
 					{
 					OPENSSL_free(str);
+					va_end(args);
 					return;
 					}
 				else

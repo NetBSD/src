@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.8 2001/04/06 11:13:52 wiz Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.9 2001/09/24 13:22:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.8 2001/04/06 11:13:52 wiz Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.9 2001/09/24 13:22:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,6 +314,7 @@ error(fmt, va_alist)
 	buf[0] = 1;
 	(void)vsnprintf(buf+1, sizeof(buf) - 1, fmt, ap);
 	(void)write(2, buf, strlen(buf));
+	va_end(ap);
 }
 
 void

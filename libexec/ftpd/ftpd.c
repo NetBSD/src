@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.129 2001/09/19 00:50:52 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.130 2001/09/24 13:22:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.129 2001/09/19 00:50:52 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.130 2001/09/24 13:22:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2129,13 +2129,16 @@ reply(int n, const char *fmt, ...)
 	else
 		cprintf(stdout, "%d ", n);
 	b = vprintf(fmt, ap);
+	va_end(ap);
 	total_bytes += b;
 	total_bytes_out += b;
 	cprintf(stdout, "\r\n");
 	(void)fflush(stdout);
 	if (debug) {
 		syslog(LOG_DEBUG, "<--- %d%c", abs(n), (n < 0) ? '-' : ' ');
+		va_start(ap, fmt);
 		vsyslog(LOG_DEBUG, fmt, ap);
+		va_end(ap);
 	}
 }
 
@@ -2945,6 +2948,7 @@ cprintf(FILE *fd, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	b = vfprintf(fd, fmt, ap);
+	va_end(ap);
 	total_bytes += b;
 	total_bytes_out += b;
 }
