@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.27 2003/11/02 11:07:45 wiz Exp $ */
+/* $NetBSD: pckbc.c,v 1.28 2003/12/12 14:30:16 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.27 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.28 2003/12/12 14:30:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,6 +930,98 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;
 	sc->subname[slot] = name;
+}
+
+int
+pckbcintr_hard(vsc)
+	void *vsc;
+{
+	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
+	struct pckbc_internal *t = sc->id;
+	u_char stat;
+	pckbc_slot_t slot;
+	struct pckbc_slotdata *q;
+	int served = 0, data, next, s;
+
+	for(;;) {
+		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
+		if (!(stat & KBS_DIB))
+			break;
+
+		served = 1;
+
+		slot = (t->t_haveaux && (stat & 0x20)) ?
+		    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
+		q = t->t_slotdata[slot];
+
+		if (!q) {
+			/* XXX do something for live insertion? */
+			printf("pckbcintr: no dev for slot %d\n", slot);
+			KBD_DELAY;
+			(void) bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
+			continue;
+		}
+
+		KBD_DELAY;
+		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
+
+#if NRND > 0
+		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
+#endif
+
+		if (q->polling) {
+			q->poll_data = data;
+			q->poll_stat = stat;
+			break; /* pckbc_poll_data() will get it */
+		}
+
+		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
+			continue;
+
+		s = splhigh();
+		next = (t->rbuf_write+1) % PCKBC_RBUF_SIZE;
+		if (next == t->rbuf_read) {
+			splx(s);
+			break;
+		}
+		t->rbuf[t->rbuf_write].data = data;
+		t->rbuf[t->rbuf_write].slot = slot;
+		t->rbuf_write = next;
+		splx(s);
+	}
+
+	return (served);
+}
+
+void
+pckbcintr_soft(vsc)
+	void *vsc;
+{
+	struct pckbc_softc *sc = vsc;
+	struct pckbc_internal *t = sc->id;
+	int data, slot, s;
+#ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+	int s;
+
+	s = spltty();
+#endif
+
+	s = splhigh();
+	while (t->rbuf_read != t->rbuf_write) {
+		slot = t->rbuf[t->rbuf_read].slot;
+		data = t->rbuf[t->rbuf_read].data;
+		t->rbuf_read = (t->rbuf_read+1) % PCKBC_RBUF_SIZE;
+		splx(s);
+		if (sc->inputhandler[slot])
+			(*sc->inputhandler[slot])(sc->inputarg[slot], data);
+		s = splhigh();
+	}
+	splx(s);
+
+
+#ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+	splx(s);
+#endif
 }
 
 int
