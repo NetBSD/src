@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.22 1997/10/09 07:25:51 jtc Exp $
+#	$NetBSD: install.sub,v 1.22.2.1 1997/11/12 01:18:40 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -490,7 +490,7 @@ if [ -f /mnt/etc/rc.conf ]; then
 	. /mnt/etc/rc.conf
 
 	if [ "$net_interfaces" != NO ]; then
-		if [ "$net_interfaces" = DEFAULT ]; then
+		if [ "$auto_ifconfig" = YES ]; then
 			tmp="`ifconfig -l`"
 		else
 			tmp="$net_interfaces"
@@ -506,7 +506,7 @@ if [ -f /mnt/etc/rc.conf ]; then
 				(while read args; do
 					ifconfig $i $args
 				done) < /mnt/etc/ifconfig.$i
-			elif [ "$net_interfaces" != DEFAULT ]; then
+			elif [ "$auto_ifconfig" != YES ]; then
 				echo
 				echo -n "/mnt/etc/ifconfig.$i missing"
 				echo -n "& ifconfig_$i not set"
