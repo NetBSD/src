@@ -35,32 +35,34 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.5 1993/10/26 15:54:22 brezak Exp $
+ *	$Id: sys_machdep.c,v 1.6 1994/01/05 03:18:25 mycroft Exp $
  */
 
 #include "npx.h"
 
-#include "sys/signal.h"
-#include "machine/cpu.h"
-#include "machine/psl.h"
-#include "machine/reg.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/mtio.h>
+#include <sys/buf.h>
+#include <sys/trace.h>
+#include <sys/signal.h>
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "file.h"
-#include "time.h"
-#include "proc.h"
-#include "user.h"
-#include "uio.h"
-#include "kernel.h"
-#include "mtio.h"
-#include "buf.h"
-#include "trace.h"
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "machine/sysarch.h"
+#include <vm/vm_param.h>
+#include <vm/pmap.h>
+#include <vm/vm_map.h>
+
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/psl.h>
+#include <machine/reg.h>
+#include <machine/sysarch.h>
 
 extern vm_map_t kernel_map;
 
