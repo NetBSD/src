@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1998/09/02 05:51:37 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.4 1998/09/05 16:23:09 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -152,12 +152,10 @@ int	obio_find_rom_map __P((bus_addr_t, int,
 
 
 /*
- * The various getprop* functions obtain `properties' from the ROMs.
- * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
  */
 long	getproplen __P((int node, char *name));
-int	getprop __P((int node, char *name, void *buf, size_t bufsiz));
+int	getprop __P((int, char *, size_t, int *, void **));
 char	*getpropstring __P((int node, char *name));
 int	getpropint __P((int node, char *name, int deflt));
 
@@ -165,7 +163,6 @@ int	getpropint __P((int node, char *name, int deflt));
 extern int optionsnode;
 
 	/* new interfaces: */
-int	getpropA __P((int, char *, size_t, int *, void **));
 char	*getpropstringA __P((int, char *, char *));
 
 /*

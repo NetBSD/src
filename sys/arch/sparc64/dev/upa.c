@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.2 1998/08/13 02:10:43 eeh Exp $ */
+/*	$NetBSD: upa.c,v 1.3 1998/09/05 16:23:09 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ upa_attach(sc, busname, busnode, bp, specials)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getpropA(busnode, "ranges", sizeof(struct rom_range),
+	error = getprop(busnode, "ranges", sizeof(struct rom_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -758,7 +758,7 @@ upa_get_intr(sc, node, ip)
 	 * The `interrupts' property contains the Upa interrupt level.
 	 */
 	ipl = NULL;
-	if (getpropA(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
+	if (getprop(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
 		*ip = ipl[0];
 		free(ipl, M_DEVBUF);
 		return (0);
@@ -768,7 +768,7 @@ upa_get_intr(sc, node, ip)
 	 * Fall back on `intr' property.
 	 */
 	rip = NULL;
-	switch (getpropA(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
+	switch (getprop(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
 	case 0:
 		*ip = (rip[0].int_pri & 0xf) | UPA_INTR_COMPAT;
 		free(rip, M_DEVBUF);

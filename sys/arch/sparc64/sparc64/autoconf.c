@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1998/09/02 05:51:38 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.6 1998/09/05 16:23:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -776,19 +776,19 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = getpropstringA(node, "name", namebuf);
 		ma.ma_node = node;
-		if (getpropA(node, "reg", sizeof(ma.ma_reg[0]), 
+		if (getprop(node, "reg", sizeof(ma.ma_reg[0]), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 {
 panic("mainbus_attach(): %s has no \"reg\"\n", sp);
 			continue;
 }
-		if (getpropA(node, "interrupts", sizeof(ma.ma_interrupts[0]), 
+		if (getprop(node, "interrupts", sizeof(ma.ma_interrupts[0]), 
 			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
 panic("mainbus_attach(): %s has no \"interrupts\"\n", sp);
 			continue;
 		}
-		if (getpropA(node, "address", sizeof(*ma.ma_address), 
+		if (getprop(node, "address", sizeof(*ma.ma_address), 
 			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -830,16 +830,16 @@ panic("mainbus_attach(): %s has no \"address\"\n", sp);
 		ma.ma_name = getpropstringA(node, "name", namebuf);
 		ma.ma_node = node;
 
-		if (getpropA(node, "reg", sizeof(*ma.ma_reg), 
+		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
 
-		if (getpropA(node, "interrupts", sizeof(*ma.ma_interrupts), 
+		if (getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
 			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
 		}
-		if (getpropA(node, "address", sizeof(*ma.ma_address), 
+		if (getprop(node, "address", sizeof(*ma.ma_address), 
 			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
 			free(ma.ma_reg, M_DEVBUF);
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -958,21 +958,8 @@ overflow:
 }
 #endif
 
-/*
- * Internal form of getprop().  Returns the actual length.
- */
 int
-getprop(node, name, buf, bufsiz)
-	int node;
-	char *name;
-	void *buf;
-	size_t bufsiz;
-{
-	return OF_getprop(node, name, buf, bufsiz);
-}
-
-int
-getpropA(node, name, size, nitem, bufp)
+getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	size_t	size;
@@ -983,7 +970,7 @@ getpropA(node, name, size, nitem, bufp)
 	long	len;
 
 	len = getproplen(node, name);
-if (len <= 0 || ((len % size) != 0)) printf("getpropA(%s): len = %lx size = %lx\n", name, len, size);
+if (len <= 0 || ((len % size) != 0)) printf("getprop(%s): len = %lx size = %lx\n", name, len, size);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -994,12 +981,12 @@ if (len <= 0 || ((len % size) != 0)) printf("getpropA(%s): len = %lx size = %lx\
 	if (buf == NULL) {
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
-if (!buf) printf("getpropA(%s): malloc of %lx failed\n", name, len);
+if (!buf) printf("getprop(%s): malloc of %lx failed\n", name, len);
 		if (buf == NULL)
 			return (ENOMEM);
 	}
 
-	getprop(node, name, buf, len);
+	OF_getprop(node, name, buf, len);
 	*bufp = buf;
 	*nitem = len / size;
 	return (0);
@@ -1014,7 +1001,7 @@ getprop_reg1(node, rrp)
 	struct sbus_reg *rrp0 = NULL;
 	char buf[32];
 
-	error = getpropA(node, "reg", sizeof(struct sbus_reg),
+	error = getprop(node, "reg", sizeof(struct sbus_reg),
 			 &n, (void **)&rrp0);
 	if (error != 0) {
 		if (error == ENOENT &&
@@ -1042,7 +1029,7 @@ getprop_intr1(node, ip)
 	int *interrupts;
 	char buf[32];
 
-	if (getpropA(node, "interrupts", sizeof(*interrupts), 
+	if (getprop(node, "interrupts", sizeof(*interrupts), 
 		     &n, (void**)&interrupts) != 0) {
 		/* Now things get ugly.  We need to take this value which is
 		 * the interrupt vector number and encode the IPL into it
@@ -1063,7 +1050,7 @@ getprop_intr1(node, ip)
 	/* Go with old-style intr property.  I don't know what to do with
          * this.  Need to get to the vector.
 	 */
-	error = getpropA(node, "intr", sizeof(struct sbus_intr),
+	error = getprop(node, "intr", sizeof(struct sbus_intr),
 			 &n, (void **)&sip);
 	if (error != 0) {
 		if (error == ENOENT) {
@@ -1086,7 +1073,7 @@ getprop_address1(node, vpp)
 	int error, n;
 	void **vp = NULL;
 
-	error = getpropA(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
+	error = getprop(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
 	if (error != 0) {
 		*vpp = 0;
 		if (error == ENOENT) {
@@ -1121,14 +1108,9 @@ getpropstring(node, name)
 	int node;
 	char *name;
 {
-	register int len;
 	static char stringbuf[32];
 
-	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
-	if (len == -1)
-		len = 0;
-	stringbuf[len] = '\0';	/* usually unnecessary */
-	return (stringbuf);
+	return (getpropstringA(node, name, stringbuf));
 }
 
 /* Alternative getpropstring(), where caller provides the buffer */
@@ -1140,7 +1122,7 @@ getpropstringA(node, name, buffer)
 {
 	int blen;
 
-	if (getpropA(node, name, 1, &blen, (void **)&buffer) != 0)
+	if (getprop(node, name, 1, &blen, (void **)&buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
@@ -1157,13 +1139,13 @@ getpropint(node, name, deflt)
 	char *name;
 	int deflt;
 {
-	register int len;
-	char intbuf[16];
+	int intbuf, *ip = &intbuf;
+	int len;
 
-	len = getprop(node, name, (void *)intbuf, sizeof intbuf);
-	if (len != 4)
+	if (getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
 		return (deflt);
-	return (*(int *)intbuf);
+
+	return (*ip);
 }
 
 /*
