@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:34:35 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2000/10/26 06:17:41 garbled Exp $
 #
 #	Makefile for the tp documents:
 #   design: TP design/source guide
@@ -16,12 +16,12 @@ TROFF = /usr/local/lib/troff
 #
 program: 
 	@echo printer is $(PRINTER)
-	(cd figs; make)
+	(cd figs; ${MAKE})
 	format -P$(PRINTER) -t program.nr | rsh speedy psdit \| lpr -P$(PRINTER)
 
 parts:
 	@echo printer is $(PRINTER)
-	(cd figs; make)
+	(cd figs; ${MAKE})
 	format -P$(PRINTER) -t parts.nr   | rsh speedy psdit \| lpr -P$(PRINTER)
 #	format -P$(PRINTER) -t parts.nr > /dev/null
 #	soelim parts.nr | grn -P$(PRINTER) |\
@@ -33,8 +33,8 @@ clean:
 	touch spell_errs
 
 spell:
-	(cd figs; make)
-	(cd ../icon; make)
+	(cd figs; ${MAKE})
+	(cd ../icon; ${MAKE})
 	/usr/ucb/soelim program.nr | /usr/bin/spell -d hlista > spell_errs
 
 newdict:
