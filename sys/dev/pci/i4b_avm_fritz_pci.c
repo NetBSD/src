@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pci.c,v 1.2 2001/01/10 20:31:49 martin Exp $
+ *	$Id: i4b_avm_fritz_pci.c,v 1.3 2001/01/11 22:46:40 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -841,6 +841,9 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	/* this is no IPAC based card */
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
+
+	/* setup interrupt mapping */
+	avma1pp_map_int(psc, pa);
 	
 	/* init the card */
 	/* the Linux driver does this to clear any pending ISAC interrupts */
@@ -937,9 +940,6 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	/* init higher protocol layers */
 	
 	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
-
-	/* setup interrupt mapping */
-	avma1pp_map_int(psc, pa);
 }
 
 #endif
