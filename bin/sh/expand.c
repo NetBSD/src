@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)expand.c	5.1 (Berkeley) 3/7/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/expand.c,v 1.3 1993/03/23 00:28:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/expand.c,v 1.4 1993/05/02 01:28:40 sef Exp $";
 #endif /* not lint */
 
 /*
@@ -301,7 +301,7 @@ expbackq(cmd, quoted, full)
 	if (in.buf)
 		ckfree(in.buf);
 	if (in.jp)
-		waitforjob(in.jp);
+		exitstatus = waitforjob(in.jp);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
 	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
@@ -500,7 +500,9 @@ numvar:
 	case '*':
 		sep = ' ';
 allargs:
-		syntax = quoted? DQSYNTAX : BASESYNTAX;
+		/* Only emit CTLESC if we will do further processing,
+		   i.e. if allow_split is set.  */
+		syntax = quoted && allow_split ? DQSYNTAX : BASESYNTAX;
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			/* should insert CTLESC characters */
 			while (*p) {
@@ -515,7 +517,9 @@ allargs:
 	case '0':
 		p = arg0;
 string:
-		syntax = quoted? DQSYNTAX : BASESYNTAX;
+		/* Only emit CTLESC if we will do further processing,
+		   i.e. if allow_split is set.  */
+		syntax = quoted && allow_split ? DQSYNTAX : BASESYNTAX;
 		while (*p) {
 			if (syntax[*p] == CCTL)
 				STPUTC(CTLESC, expdest);
@@ -1096,7 +1100,9 @@ casematch(pattern, val)
 	argbackq = pattern->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifslastp = NULL;
-	argstr(pattern->narg.text, 0);
+	/* Preserve any CTLESC characters inserted previously, so that
+	   we won't expand reg exps which are inside strings.  */
+	argstr(pattern->narg.text, 1);
 	STPUTC('\0', expdest);
 	p = grabstackstr(expdest);
 	result = patmatch(p, val);
