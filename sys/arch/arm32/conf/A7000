@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.24 1998/06/26 01:53:48 lukem Exp $
+#	$NetBSD: A7000,v 1.25 1998/07/06 00:49:20 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -107,7 +107,6 @@ options 	KMEMSTATS	# kernel memory statistics
 
 # Development and Debugging options
 
-options 	MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
