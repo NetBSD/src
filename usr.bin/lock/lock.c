@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.18 2000/04/14 06:11:08 simonb Exp $	*/
+/*	$NetBSD: lock.c,v 1.19 2000/07/29 08:40:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.18 2000/04/14 06:11:08 simonb Exp $");
+__RCSID("$NetBSD: lock.c,v 1.19 2000/07/29 08:40:38 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -242,7 +242,8 @@ int
 skey_auth(user)
 	const char *user;
 {
-	char s[128], *ask;
+	char s[128];
+	const char *ask;
 	int ret = 0;
 
 	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {
