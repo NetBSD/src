@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_impl.h,v 1.1.2.3 2002/03/17 06:50:55 thorpej Exp $	*/
+/*	$NetBSD: rwlock_impl.h,v 1.1.2.4 2002/03/17 20:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,49 +54,53 @@ do {									\
 	alpha_mb();							\
 } while (/*CONSTCOND*/0)
 
-#define	RWLOCK_ACQUIRE(rwl, old, new, actual)				\
-do {									\
-	unsigned long _tmp_;						\
-									\
-	__asm __volatile(						\
-		"# BEGIN RWLOCK_ACQUIRE\n"				\
-		"1:	ldq_l	%2, %5		\n"			\
-		"	cmpeq	%2, %3, %0	\n"			\
-		"	beq	%0, 3f		\n"			\
-		"	mov	%4, %0		\n"			\
-		"	stq_c	%0, %1		\n"			\
-		"	beq	%0, 2f		\n"			\
-		"	mb			\n"			\
-		"	br	3f		\n"			\
-		"2:	br	1b		\n"			\
-		"3:				\n"			\
-		"	# END RWLOCK_ACQUIRE"				\
-		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (actual)\
-		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)		\
-		: "memory");						\
-} while (/*CONSTCOND*/0)
+static __inline int __attribute__((__unused__))
+RWLOCK_ACQUIRE(krwlock_t *rwl, unsigned long old, unsigned long new)
+{
+	unsigned long _tmp_, _actual_;
 
-#define	RWLOCK_RELEASE(rwl, old, new, actual)				\
-do {									\
-	unsigned long _tmp_;						\
-									\
-	__asm __volatile(						\
-		"# BEGIN RWLOCK_RELEASE\n"				\
-		"1:	mb			\n"			\
-		"	ldq_l	%2, %5		\n"			\
-		"	cmpeq	%2, %3, %0	\n"			\
-		"	beq	%0, 3f		\n"			\
-		"	mov	%4, %0		\n"			\
-		"	stq_c	%0, %1		\n"			\
-		"	beq	%0, 2f		\n"			\
-		"	br	3f		\n"			\
-		"2:	br	1b		\n"			\
-		"3:				\n"			\
-		"	# END RWLOCK_RELEASE"				\
-		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (actual)\
-		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)		\
-		: "memory");						\
-} while (/*CONSTCOND*/0)
+	__asm __volatile(
+		"# BEGIN RWLOCK_ACQUIRE\n"
+		"1:	ldq_l	%2, %5		\n"
+		"	cmpeq	%2, %3, %0	\n"
+		"	beq	%0, 3f		\n"
+		"	mov	%4, %0		\n"
+		"	stq_c	%0, %1		\n"
+		"	beq	%0, 2f		\n"
+		"	mb			\n"
+		"	br	3f		\n"
+		"2:	br	1b		\n"
+		"3:				\n"
+		"	# END RWLOCK_ACQUIRE"
+		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (_actual_)
+		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)
+		: "memory");
+	return (_actual_ == old);
+}
+
+static __inline int __attribute__((__unused__))
+RWLOCK_RELEASE(krwlock_t *rwl, unsigned long old, unsigned long new)
+{
+	unsigned long _tmp_, _actual_;
+
+	__asm __volatile(
+		"# BEGIN RWLOCK_RELEASE\n"
+		"1:	mb			\n"
+		"	ldq_l	%2, %5		\n"
+		"	cmpeq	%2, %3, %0	\n"
+		"	beq	%0, 3f		\n"
+		"	mov	%4, %0		\n"
+		"	stq_c	%0, %1		\n"
+		"	beq	%0, 2f		\n"
+		"	br	3f		\n"
+		"2:	br	1b		\n"
+		"3:				\n"
+		"	# END RWLOCK_RELEASE"
+		: "=&r" (_tmp_), "=m" ((rwl)->rwl_owner), "=&r" (_actual_)
+		: "r" (old), "r" (new), "m" ((rwl)->rwl_owner)
+		: "memory");
+	return (_actual_ == old);
+}
 
 #define	RWLOCK_SET_WAITERS(rwl, need_wait, set_wait)			\
 do {									\

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.2.3 2002/03/16 20:57:42 thorpej Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.2.4 2002/03/17 20:18:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.3 2002/03/16 20:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.4 2002/03/17 20:18:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,7 +87,7 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 {
 	struct turnstile *ts;
 	struct proc *p;
-	unsigned long owner, tmp, incr, need_wait, set_wait;
+	unsigned long owner, incr, need_wait, set_wait;
 
 	/*
 	 * Ensure RW_WRITER == 0, so that machine-dependent code can
@@ -131,8 +131,7 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 		 */
 		owner = rwl->rwl_owner;
 		if ((owner & need_wait) == 0) {
-			RWLOCK_ACQUIRE(rwl, owner, owner + incr, tmp);
-			if (tmp == owner) {
+			if (RWLOCK_ACQUIRE(rwl, owner, owner + incr)) {
 				/* Got it! */
 				break;
 			}
@@ -190,7 +189,7 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 int
 rw_tryenter(krwlock_t *rwl, krw_t rw)
 {
-	unsigned long owner, tmp, incr, need_wait;
+	unsigned long owner, incr, need_wait;
 
 	switch (rw) {
 	case RW_WRITER:
@@ -211,8 +210,7 @@ rw_tryenter(krwlock_t *rwl, krw_t rw)
 	for (;;) {
 		owner = rwl->rwl_owner;
 		if ((owner & need_wait) == 0) {
-			RWLOCK_ACQUIRE(rwl, owner, owner + incr, tmp);
-			if (tmp == owner) {
+			if (RWLOCK_ACQUIRE(rwl, owner, owner + incr)) {
 				/* Got it! */
 				break;
 			}
@@ -235,7 +233,7 @@ void
 rw_exit(krwlock_t *rwl)
 {
 	struct turnstile *ts;
-	unsigned long owner, tmp, decr, new;
+	unsigned long owner, decr, new;
 
 	/*
 	 * Again, we use a trick.  Since we used an add operation to
@@ -273,8 +271,7 @@ rw_exit(krwlock_t *rwl)
 		new = owner - decr;
 		if ((new & (RWLOCK_THREAD |
 			    RWLOCK_HAS_WAITERS)) != RWLOCK_HAS_WAITERS) {
-			RWLOCK_RELEASE(rwl, owner, new, tmp);
-			if (tmp == owner) {
+			if (RWLOCK_RELEASE(rwl, owner, new)) {
 				/* Ding! */
 				turnstile_exit(rwl);
 				break;
@@ -286,8 +283,7 @@ rw_exit(krwlock_t *rwl)
 		/* We're about to wake everybody up; clear waiter bits. */
 		new &= ~(RWLOCK_HAS_WAITERS | RWLOCK_WRITE_WANTED);
 
-		RWLOCK_RELEASE(rwl, owner, new, tmp);
-		if (tmp != owner) {
+		if (RWLOCK_RELEASE(rwl, owner, new) == 0) {
 			/* Oops, try again. */
 			turnstile_exit(rwl);
 			continue;
@@ -313,7 +309,7 @@ void
 rw_downgrade(krwlock_t *rwl)
 {
 	struct turnstile *ts;
-	unsigned long owner, tmp;
+	unsigned long owner;
 
 	if (RWLOCK_OWNER(rwl) != curproc) {
 		if (RWLOCK_OWNER(rwl) == NULL)
@@ -328,8 +324,7 @@ rw_downgrade(krwlock_t *rwl)
 		ts = turnstile_lookup(rwl);
 
 		owner = rwl->rwl_owner;
-		RWLOCK_RELEASE(rwl, owner, RWLOCK_READ_INCR, tmp);
-		if (tmp != owner) {
+		if (RWLOCK_RELEASE(rwl, owner, RWLOCK_READ_INCR) == 0) {
 			/* Oops, try again. */
 			turnstile_exit(rwl);
 			continue;
@@ -354,7 +349,7 @@ rw_downgrade(krwlock_t *rwl)
 int
 rw_tryupgrade(krwlock_t *rwl)
 {
-	unsigned long owner, tmp;
+	unsigned long owner;
 
 	KASSERT((rwl->rwl_owner & RWLOCK_WRITE_LOCKED) == 0);
 	KASSERT(RWLOCK_COUNT(rwl) != 0);
@@ -369,10 +364,9 @@ rw_tryupgrade(krwlock_t *rwl)
 		owner = rwl->rwl_owner;
 		if ((owner & RWLOCK_THREAD) != RWLOCK_READ_INCR)
 			return (0);
-		RWLOCK_ACQUIRE(rwl, owner,
+		if (RWLOCK_ACQUIRE(rwl, owner,
 		    ((unsigned long) curproc) | RWLOCK_WRITE_LOCKED |
-		    (owner & ~RWLOCK_THREAD), tmp);
-		if (tmp == owner) {
+		    (owner & ~RWLOCK_THREAD))) {
 			/* Ding! */
 			break;
 		}
