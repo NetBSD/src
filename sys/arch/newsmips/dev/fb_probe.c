@@ -1,4 +1,5 @@
-/*	$NetBSD: fb_probe.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: fb_probe.c,v 1.4 2000/01/23 14:57:10 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,20 +40,13 @@
  *	@(#)fb_probe.c	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef IPC_MRX
-#include "../../dev/framebuf.h"
-#include "types.h"
-#include "exec.h"
-#include "romsw.h"
-#else
-#include <machine/framebuf.h>
 #include <sys/types.h>
 #include <sys/exec.h>
-#endif
+
+#include <machine/autoconf.h>
+#include <machine/framebuf.h>
 
 #include <newsmips/dev/fbdefs.h>
-
-extern int badaddr();
 
 #ifdef CPU_SINGLE
 #define SW_CONSOLE	0x07

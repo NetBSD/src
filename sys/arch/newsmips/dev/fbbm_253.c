@@ -1,4 +1,4 @@
-/*	$NetBSD: fbbm_253.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: fbbm_253.c,v 1.4 2000/01/23 14:57:11 tsubai Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,6 +49,7 @@
 #if NNWB253 > 0
 #include <sys/param.h>
 
+#include <machine/autoconf.h>
 #include <machine/framebuf.h>
 #include <machine/locore.h>
 
@@ -204,8 +205,6 @@ int
 fb253_probe(unit)
 	int unit;
 {
-	extern int badaddr __P((caddr_t, int));
-
 	if (unit >= NNWB253)
 		return 0;
 	if (badaddr((caddr_t)0xb8ff0000, 2) || badaddr((caddr_t)0xb8e00000, 2))
