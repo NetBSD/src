@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.15 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.16 2004/04/23 21:29:16 itojun Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.15 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.16 2004/04/23 21:29:16 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,8 +330,8 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
 			for (i = 0; i < edp->ncols; i++)
 				if (edp->tabs[i]) {
-					n = sprintf(buf, "%s%d",
-						    (ps ? "/" : ""), i + 1);
+					n = snprintf(buf, sizeof(buf), "%s%d",
+					    (ps ? "/" : ""), i + 1);
 					wsdisplay_emulinput(edp->cbcookie,
 							    buf, n);
 					ps = 1;
@@ -553,8 +553,8 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 				row = ROWS_ABOVE;
 			else
 				row = edp->crow;
-			n = sprintf(buf, "\033[%d;%dR",
-				    row + 1, edp->ccol + 1);
+			n = snprintf(buf, sizeof(buf), "\033[%d;%dR",
+			    row + 1, edp->ccol + 1);
 			wsdisplay_emulinput(edp->cbcookie, buf, n);
 			}
 			break;
