@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.51 2001/04/26 05:25:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -2007,12 +2007,13 @@ union_getpages(v)
 	}
 	npages = *ap->a_count;
 	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	for (i = 0; i < npages; i++) {
+	for (i = 0; npages > 0; i++) {
 		pg = ap->a_m[i];
-		if (pg == NULL) {
+		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
 		pg->flags |= PG_RDONLY;
+		npages--;
 	}
 	simple_unlock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
 	return 0;
