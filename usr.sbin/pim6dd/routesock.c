@@ -1,4 +1,4 @@
-/*	$NetBSD: routesock.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: routesock.c,v 1.2.4.1 1999/12/27 18:37:58 wrstuden Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: routesock.c,v 1.2 1999/08/17 13:38:04 itojun Exp
+ *  KAME Id: routesock.c,v 1.4 1999/11/19 04:05:48 sumikawa Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -307,13 +307,16 @@ getmsg(rtm, msglen, rpfinfop)
 		inet_ntop(AF_INET6, &sin6->sin6_addr, in6txt, INET6_ADDRSTRLEN));
 	rpfinfop->rpfneighbor = *sin6;
 
-	/*
-	 * Copy embedded interface index to sin6_scope_id field.
-	 * XXX: This is a KAME-specific hack.
-	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+#if 0
 		rpfinfop->rpfneighbor.sin6_scope_id =
 			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+#endif
+		rpfinfop->rpfneighbor.sin6_scope_id = ifp->sdl_index;
+		/*
+		 * XXX: KAME kernel embeds the interface index to the address.
+		 * Clear the index for safety.
+		 */
 		rpfinfop->rpfneighbor.sin6_addr.s6_addr[2] = 0;
 		rpfinfop->rpfneighbor.sin6_addr.s6_addr[3] = 0;
 	}
@@ -321,7 +324,8 @@ getmsg(rtm, msglen, rpfinfop)
     
     for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) 
 	/* get the number of the interface by matching the name */
-	if (!(strncmp(v->uv_name,ifp->sdl_data,ifp->sdl_nlen)))
+	if ((strlen(v->uv_name) == ifp->sdl_nlen) &&
+	    !(strncmp(v->uv_name,ifp->sdl_data,ifp->sdl_nlen)))
 	    break;
     
     IF_DEBUG(DEBUG_RPF)

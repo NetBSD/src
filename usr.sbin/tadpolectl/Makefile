@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/12/20 09:51:07 jdc Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 1999/12/27 18:38:11 wrstuden Exp $
 
 .if ${MACHINE} == "sparc"
 PROG=	tadpolectl

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
+/*	$NetBSD: output.c,v 1.3.2.1 1999/12/27 18:37:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -239,7 +239,7 @@ flush()
 /*
  * Output a character.
  */
-	public void
+	public int
 putchr(c)
 	int c;
 {
@@ -267,6 +267,7 @@ putchr(c)
 	if (ob >= &obuf[sizeof(obuf)-1])
 		flush();
 	*ob++ = c;
+	return (0);
 }
 
 /*

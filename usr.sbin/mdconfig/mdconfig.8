@@ -1,5 +1,5 @@
 .\"
-.\"	$NetBSD: mdconfig.8,v 1.5 1999/03/22 18:44:01 garbled Exp $
+.\"	$NetBSD: mdconfig.8,v 1.5.6.1 1999/12/27 18:37:53 wrstuden Exp $
 .\"
 .\" Copyright (c) 1995 Gordon W. Ross
 .\" All rights reserved.
@@ -60,10 +60,10 @@ process started earlier.
 .El
 .Sh EXAMPLES
 .Pp
-.Dl mdconfig /dev/md0a 2048 &
+.Dl mdconfig /dev/md0c 2048 &
 .Pp
 Configures the memory disk
-.Pa md0a
+.Pa md0c
 with one megabyte of user-space memory.
 .Sh BUGS
 The special device will become inoperative if the

@@ -1,4 +1,4 @@
-/*	$NetBSD: gifconfig.c,v 1.4 1999/07/30 19:16:45 itojun Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.4.4.1 1999/12/27 18:37:41 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -363,7 +363,7 @@ ifconfig(argc, argv, af, rafp)
 	else
 		metric = ifr.ifr_metric;
 
-#ifdef SIOCGIFMTU
+#if defined(SIOCGIFMTU) && !defined(__OpenBSD__)
 	if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0)
 		perror("ioctl (SIOCGIFMTU)");
 	else

@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: ntp2netbsd,v 1.3 1999/11/16 03:53:21 jonathan Exp $
+#	$NetBSD: ntp2netbsd,v 1.3.2.1 1999/12/27 18:37:56 wrstuden Exp $
 #
 #  Perl script to convert a standard distribution directory for ntpv4.0 into
 #	a NetBSD source tree.

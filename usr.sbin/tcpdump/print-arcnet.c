@@ -1,4 +1,4 @@
-/*	$NetBSD: print-arcnet.c,v 1.1 1999/10/05 20:37:22 is Exp $	*/
+/*	$NetBSD: print-arcnet.c,v 1.1.4.1 1999/12/27 18:38:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-arcnet.c,v 1.1 1999/10/05 20:37:22 is Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.1.4.1 1999/12/27 18:38:12 wrstuden Exp $");
 #endif
 #endif
 

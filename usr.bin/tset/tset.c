@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.8 1998/12/19 23:19:45 christos Exp $	*/
+/*	$NetBSD: tset.c,v 1.8.6.1 1999/12/27 18:37:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.8 1998/12/19 23:19:45 christos Exp $");
+__RCSID("$NetBSD: tset.c,v 1.8.6.1 1999/12/27 18:37:15 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -272,7 +272,9 @@ report(name, which, def)
 	else if (new < 040) {
 		new ^= 0100;
 		(void)fprintf(stderr, "control-%c (^%c).\n", new, new);
-	} else
+	} else if (new == _POSIX_VDISABLE)
+		(void)fprintf(stderr, "<undef>.\n");
+	else
 		(void)fprintf(stderr, "%c.\n", new);
 }
 

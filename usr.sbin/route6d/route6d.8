@@ -12,7 +12,7 @@
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
 .\"
-.\"	$NetBSD: route6d.8,v 1.2 1999/07/04 14:45:54 itojun Exp $
+.\"	$NetBSD: route6d.8,v 1.2.4.1 1999/12/27 18:38:05 wrstuden Exp $
 .\"
 .Dd January 31, 1997
 .Dt ROUTE6D 8
@@ -140,7 +140,7 @@ Restrict route advertisement toward interfaces specified by
 .Ar if1,[if2...] .
 With this option
 .Nm
-will only advertise routes that is in
+will only advertise routes that matches
 .Ar prefix/preflen .
 .\"
 .It Fl q
@@ -185,11 +185,11 @@ or
 .Dv SIGUSR1 ,
 .Nm
 will dump the current internal state into
-.Pa /var/tmp/route6d_dump .
+.Pa /var/run/route6d_dump .
 .\"
 .Sh FILES
-.Bl -tag -width /var/tmp/route6d_dump -compact
-.It Pa /var/tmp/route6d_dump
+.Bl -tag -width /var/run/route6d_dump -compact
+.It Pa /var/run/route6d_dump
 dumps internal state on
 .Dv SIGINT
 or
@@ -220,7 +220,7 @@ and
 .Li ff02::xx
 .Pc
 so they will be visible on internal state dump file
-.Pq Pa /var/tmp/route6d_dump .
+.Pq Pa /var/run/route6d_dump .
 .Pp
 Routing table manipulation differs from IPv6 implementation to implementation.
 Currently

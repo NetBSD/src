@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.4.4.1 1999/12/27 18:38:10 wrstuden Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: pathnames.h,v 1.4 1999/06/06 01:55:58 thorpej Exp $
  */
 
 #include <paths.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.35 1999/08/29 04:21:55 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.35.4.1 1999/12/27 18:37:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.35 1999/08/29 04:21:55 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.35.4.1 1999/12/27 18:37:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ badlogin:
 			p = getenv("TERM");
 			/* Create an empty environment */
 			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(1, "%s", "");
+				err(1, NULL);
 			environ[0] = NULL;
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			if (p)

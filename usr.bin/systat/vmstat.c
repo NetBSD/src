@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.19.4.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.19.4.1 1999/12/27 18:37:12 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -224,7 +224,7 @@ initkre()
 		intrname = calloc(nintr, sizeof (long));
 		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
 			namelist[X_INTRNAMES].n_value);
-		if (intrnamebuf == 0 || intrname == 0 || intrloc == 0) {
+		if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
 			error("Out of memory\n");
 			if (intrnamebuf)
 				free(intrnamebuf);
@@ -322,7 +322,7 @@ labelkre()
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-				"  %3.3s", dr_name[j]);
+				" %4.4s", dr_name[j]);
 			j++;
 		}
 	for (i = 0; i < nintr; i++) {
@@ -474,7 +474,7 @@ showkre()
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-				"  %3.3s", dr_name[i]);
+				" %4.4s", dr_name[i]);
 			dinfo(i, ++c);
 		}
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
@@ -488,38 +488,42 @@ showkre()
 #undef nz
 }
 
-int
-cmdkre(cmd, args)
-	char *cmd, *args;
+void
+vmstat_boot (args)
+	char *args;
 {
+	copyinfo(&z, &s1);
+	state = BOOT;
+}
 
-	if (prefix(cmd, "run")) {
-		copyinfo(&s2, &s1);
-		state = RUN;
-		return (1);
-	}
-	if (prefix(cmd, "boot")) {
-		state = BOOT;
-		copyinfo(&z, &s1);
-		return (1);
-	}
-	if (prefix(cmd, "time")) {
-		state = TIME;
-		return (1);
-	}
-	if (prefix(cmd, "zero")) {
-		if (state == RUN)
-			getinfo(&s1, RUN);
-		return (1);
-	}
-	return (dkcmd(cmd, args));
+void
+vmstat_run (args)
+	char *args;
+{
+	copyinfo(&s1, &s2);
+	state = RUN;
+}
+
+void
+vmstat_time (args)
+	char * args;
+{
+	state = TIME;
+}
+
+void
+vmstat_zero (args)
+	char *args;
+{
+	if (state == RUN)
+		getinfo(&s1, RUN);
 }
 
 /* calculate number of users on the system */
 static int
 ucount()
 {
-	int nusers = 0;
+	int nusers = 0, onusers = -1;
 
 	if (ut < 0)
 		return (0);
@@ -527,7 +531,14 @@ ucount()
 		if (utmp.ut_name[0] != '\0')
 			nusers++;
 
+	if (nusers != onusers) {
+		if (nusers == 1)
+			mvprintw(STATROW, STATCOL + 8, " ");
+		else
+			mvprintw(STATROW, STATCOL + 8, "s");
+	}
 	lseek(ut, (off_t)0, SEEK_SET);
+	onusers = nusers;
 	return (nusers);
 }
 
@@ -623,9 +634,10 @@ allocinfo(s)
 	struct Info *s;
 {
 
-	s->intrcnt = (long *) malloc(nintr * sizeof(long));
-	if (s->intrcnt == NULL)
-		errx(2, "out of memory");
+	if ((s->intrcnt = malloc(nintr * sizeof(long))) == NULL) {
+		error("malloc failed");
+		die(0);
+	}
 }
 
 static void
@@ -656,5 +668,5 @@ dinfo(dn, c)
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
-	putfloat(atime/etime, DISKROW + 4, c, 5, 1, 1);
+	putfloat(atime/etime, DISKROW + 4, c, 5, 2, 1);
 }

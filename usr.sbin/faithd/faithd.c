@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.1 1999/07/13 22:16:49 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.1.4.1 1999/12/27 18:37:40 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -35,9 +35,6 @@
  * Usage: faithd [<port> <progpath> <arg1(progname)> <arg2> ...]
  *   e.g. faithd telnet /usr/local/v6/sbin/telnetd telnetd
  */
-
-#define ss_len		__ss_len
-#define ss_family	__ss_family
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,6 +85,7 @@ char *serverpath = NULL;
 char *serverarg[MAXARGV + 1];
 static char *faithdname = NULL;
 char logname[BUFSIZ];
+char procname[BUFSIZ];
 struct myaddrs {
 	struct myaddrs *next;
 	struct sockaddr *addr;
@@ -172,7 +170,7 @@ main(int argc, char *argv[])
 
 		memset(&ss, 0, sizeof(ss));
 		memset(&hints, 0, sizeof(hints));
-		sprintf(serv, "%u", NAMESERVER_PORT);
+		snprintf(serv, sizeof(serv), "%u", NAMESERVER_PORT);
 		hints.ai_flags = AI_NUMERICHOST;
 		if (getaddrinfo(ns, serv, &hints, &res) ==  0) {
 			res_init();
@@ -222,7 +220,7 @@ main(int argc, char *argv[])
 	hints.ai_protocol = 0;
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error) 
-		exit_error("gaddrinfo: %s", gai_strerror(error));
+		exit_error("getaddrinfo: %s", gai_strerror(error));
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (s_wld == -1)
@@ -232,7 +230,7 @@ main(int argc, char *argv[])
 	if (res->ai_family == AF_INET6) {
 		error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IPV6_FAITH): %s", ERRSTR);
 	}
 #endif
 #ifdef FAITH4
@@ -240,18 +238,18 @@ main(int argc, char *argv[])
 	if (res->ai_family == AF_INET) {
 		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IP_FAITH): %s", ERRSTR);
 	}
 #endif
 #endif /* FAITH4 */
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_REUSEADDR): %s", ERRSTR);
 	
 	error = setsockopt(s_wld, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
@@ -275,7 +273,8 @@ main(int argc, char *argv[])
 
 	start_daemon();
 
-	sprintf(logname, "accepting port %s", service);
+	snprintf(logname, sizeof(logname), "faithd %s", service);
+	snprintf(procname, sizeof(procname), "accepting port %s", service);
 	openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	syslog(LOG_INFO, "Staring faith daemon for %s port", service);
 
@@ -299,7 +298,7 @@ play_service(int s_wld)
 	 * Wait, accept, fork, faith....
 	 */
 again:
-	setproctitle(logname);
+	setproctitle(procname);
 
 	FD_ZERO(&rfds);
 	FD_SET(s_wld, &rfds);
@@ -361,6 +360,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	int len = sizeof(dstaddr6);
 	int s_dst, error, hport, nresvport, on = 1;
 	struct timeval tv;
+	struct sockaddr *sa4;
 	
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -373,7 +373,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	if (error == -1)
 		exit_failure("getsockname: %s", ERRSTR);
 
-	getnameinfo((struct sockaddr *)&dstaddr6, dstaddr6.__ss_len,
+	getnameinfo((struct sockaddr *)&dstaddr6, len,
 		dst6, sizeof(dst6), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "the client is connecting to %s", dst6);
 	
@@ -400,34 +400,39 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	 * Act as a translator
 	 */
 
-	if (dstaddr6.__ss_family == AF_INET6) {
+	switch (((struct sockaddr *)&dstaddr6)->sa_family) {
+	case AF_INET6:
 		if (!map6to4((struct sockaddr_in6 *)&dstaddr6,
 		    (struct sockaddr_in *)&dstaddr4)) {
 			close(s_src);
 			exit_error("map6to4 failed");
 		}
 		syslog(LOG_INFO, "translating from v6 to v4");
+		break;
 #ifdef FAITH4
-	} else if (dstaddr6.__ss_family == AF_INET) {
+	case AF_INET:
 		if (!map4to6((struct sockaddr_in *)&dstaddr6,
 		    (struct sockaddr_in6 *)&dstaddr4)) {
 			close(s_src);
 			exit_error("map4to6 failed");
 		}
 		syslog(LOG_INFO, "translating from v4 to v6");
+		break;
 #endif
-	} else {
+	default:
 		close(s_src);
 		exit_error("family not supported");
+		/*NOTREACHED*/
 	}
 
-	getnameinfo((struct sockaddr *)&dstaddr4, dstaddr4.__ss_len,
+	sa4 = (struct sockaddr *)&dstaddr4;
+	getnameinfo(sa4, sa4->sa_len,
 		dst4, sizeof(dst4), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "the translator is connecting to %s", dst4);
 
 	setproctitle("port %s, %s -> %s", service, src, dst4);
 
-	if (dstaddr4.__ss_family == AF_INET6)
+	if (sa4->sa_family == AF_INET6)
 		hport = ntohs(((struct sockaddr_in6 *)&dstaddr4)->sin6_port);
 	else /* AF_INET */
 		hport = ntohs(((struct sockaddr_in *)&dstaddr4)->sin_port);
@@ -435,13 +440,13 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	switch (hport) {
 	case RLOGIN_PORT:
 	case RSH_PORT:
-		s_dst = rresvport_af(&nresvport, dstaddr4.__ss_family);
+		s_dst = rresvport_af(&nresvport, sa4->sa_family);
 		break;
 	default:
 		if (pflag)
-			s_dst = rresvport_af(&nresvport, dstaddr4.__ss_family);
+			s_dst = rresvport_af(&nresvport, sa4->sa_family);
 		else
-			s_dst = socket(dstaddr4.__ss_family, SOCK_STREAM, 0);
+			s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
 		break;
 	}
 	if (s_dst == -1)
@@ -449,16 +454,16 @@ play_child(int s_src, struct sockaddr *srcaddr)
 
 	error = setsockopt(s_dst, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = setsockopt(s_src, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 	error = setsockopt(s_dst, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 
-	error = connect(s_dst, (struct sockaddr *)&dstaddr4, dstaddr4.__ss_len);
+	error = connect(s_dst, sa4, sa4->sa_family);
 	if (error == -1)
 		exit_failure("connect: %s", ERRSTR);
 
@@ -497,37 +502,52 @@ faith_prefix(struct sockaddr *dst)
 	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0)
 		exit_error("sysctl: %s", ERRSTR);
 
-	if (dst->sin6_addr.s6_addr32[0] == faith_prefix.s6_addr32[0]
-	 && dst->sin6_addr.s6_addr32[1] == faith_prefix.s6_addr32[1]
-	 && dst->sin6_addr.s6_addr32[2] == faith_prefix.s6_addr32[2])
+	if (memcmp(dst, &faith_prefix,
+			sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
 		return 1;
+	}
 	return 0;
 #else
 	struct myaddrs *p;
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in *sin4;
+	struct sockaddr_in6 *dst6;
+	struct sockaddr_in *dst4;
+	struct sockaddr_in dstmap;
+
+	dst6 = (struct sockaddr_in6 *)dst;
+	if (dst->sa_family == AF_INET6
+	 && IN6_IS_ADDR_V4MAPPED(&dst6->sin6_addr)) {
+		/* ugly... */
+		memset(&dstmap, 0, sizeof(dstmap));
+		dstmap.sin_family = AF_INET;
+		dstmap.sin_len = sizeof(dstmap);
+		memcpy(&dstmap.sin_addr, &dst6->sin6_addr.s6_addr[12],
+			sizeof(dstmap.sin_addr));
+		dst = (struct sockaddr *)&dstmap;
+	}
+
+	dst6 = (struct sockaddr_in6 *)dst;
+	dst4 = (struct sockaddr_in *)dst;
 
 	for (p = myaddrs; p; p = p->next) {
 		sin6 = (struct sockaddr_in6 *)p->addr;
 		sin4 = (struct sockaddr_in *)p->addr;
 
-		/* ugly! */
-		if (p->addr->sa_len == dst->sa_len
-		 && p->addr->sa_family == dst->sa_family) {
-			struct sockaddr_in6 *dst6 = (struct sockaddr_in6 *)dst;
-			struct sockaddr_in *dst4 = (struct sockaddr_in *)dst;
+		if (p->addr->sa_len != dst->sa_len
+		 || p->addr->sa_family != dst->sa_family)
+			continue;
 
-			switch (dst->sa_family) {
-			case AF_INET6:
-				if (sin6->sin6_scope_id == dst6->sin6_scope_id
-				 && memcmp(&sin6->sin6_addr, &dst6->sin6_addr, 16) == 0)
-					return 0;
-				break;
-			case AF_INET:
-				if (sin4->sin_addr.s_addr == dst4->sin_addr.s_addr)
+		switch (dst->sa_family) {
+		case AF_INET6:
+			if (sin6->sin6_scope_id == dst6->sin6_scope_id
+			 && IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr))
 				return 0;
-				break;
-			}
+			break;
+		case AF_INET:
+			if (sin4->sin_addr.s_addr == dst4->sin_addr.s_addr)
+				return 0;
+			break;
 		}
 	}
 	return 1;
@@ -542,7 +562,8 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 	dst4->sin_len = sizeof(*dst4);
 	dst4->sin_family = AF_INET;
 	dst4->sin_port = dst6->sin6_port;
-	dst4->sin_addr.s_addr = dst6->sin6_addr.s6_addr32[3];
+	memcpy(&dst4->sin_addr, &dst6->sin6_addr.s6_addr[12],
+		sizeof(dst4->sin_addr));
 
 	if (dst4->sin_addr.s_addr == INADDR_ANY
 	 || dst4->sin_addr.s_addr == INADDR_BROADCAST
@@ -623,7 +644,7 @@ exit_error(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "%s\n", buf);
 	exit(EXIT_FAILURE);
@@ -636,7 +657,7 @@ exit_failure(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	syslog(LOG_ERR, buf);
 	exit(EXIT_FAILURE);
@@ -649,7 +670,7 @@ exit_success(const char *fmt, ...)
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	syslog(LOG_INFO, buf);
 	exit(EXIT_SUCCESS);
@@ -726,8 +747,9 @@ grab_myaddrs()
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
 				 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
 					sin6->sin6_scope_id =
-						ntohs(sin6->sin6_addr.s6_addr16[1]);
-					sin6->sin6_addr.s6_addr16[1] = 0;
+						ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+					sin6->sin6_addr.s6_addr[2] = 0;
+					sin6->sin6_addr.s6_addr[3] = 0;
 				}
 			}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6.c,v 1.2 1999/08/19 17:31:07 itojun Exp $	*/
+/*	$NetBSD: pim6.c,v 1.2.4.1 1999/12/27 18:37:57 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: pim6.c,v 1.2 1999/08/17 10:47:27 itojun Exp
+ *  KAME Id: pim6.c,v 1.3 1999/10/26 08:39:19 itojun Exp
  */
 
 #include "defs.h"
@@ -112,7 +112,7 @@ init_pim6()
 	allpim6routers_group.sin6_len = sizeof(allpim6routers_group);
 	allpim6routers_group.sin6_family = AF_INET6;
 	if (inet_pton(AF_INET6, "ff02::d",
-		      (void *)&allpim6routers_group.sin6_addr) < 1)
+		      (void *)&allpim6routers_group.sin6_addr) != 1)
 		log(LOG_ERR, 0, "inet_pton failed for ff02::d");
     
 	if ((pim6_recv_buf = malloc(RECV_BUF_SIZE)) == NULL ||

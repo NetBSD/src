@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/11/20 19:47:58 veego Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 1999/12/27 18:37:32 wrstuden Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named-bootconf \

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.11 1998/08/25 20:59:42 ross Exp $	*/
+/*	$NetBSD: term.c,v 1.11.6.1 1999/12/27 18:37:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.11 1998/08/25 20:59:42 ross Exp $");
+__RCSID("$NetBSD: term.c,v 1.11.6.1 1999/12/27 18:37:15 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -123,7 +123,7 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 	if (rval == -1) {
 		if (!errno)
 			errno = ENOENT;
-		err(1, "%s", "");
+		err(1, NULL);
 	}
 	*tcapbufp = tbuf;
 	return (ttype);

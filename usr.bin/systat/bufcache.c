@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.5.2.1 1999/12/27 18:37:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.5.2.1 1999/12/27 18:37:11 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

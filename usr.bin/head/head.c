@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.11 1998/12/19 16:40:29 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.11.6.1 1999/12/27 18:37:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.11 1998/12/19 16:40:29 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.11.6.1 1999/12/27 18:37:00 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ obsolete(argv)
 		    !isdigit((unsigned char)ap[1]))
 			return;
 		if ((ap = malloc(strlen(*argv) + 2)) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		ap[0] = '-';
 		ap[1] = 'n';
 		(void)strcpy(ap + 2, *argv + 1);

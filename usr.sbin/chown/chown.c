@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.19 1999/03/14 19:36:05 kleink Exp $	*/
+/*	$NetBSD: chown.c,v 1.19.6.1 1999/12/27 18:37:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.19 1999/03/14 19:36:05 kleink Exp $");
+__RCSID("$NetBSD: chown.c,v 1.19.6.1 1999/12/27 18:37:35 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(argc, argv)
 		a_gid(*argv);
 
 	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
-		err(EXIT_FAILURE, "%s", "");
+		err(EXIT_FAILURE, NULL);
 
 	for (rval = EXIT_SUCCESS; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {

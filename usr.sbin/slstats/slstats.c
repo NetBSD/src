@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.11 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: slstats.c,v 1.11.6.1 1999/12/27 18:38:07 wrstuden Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slstats.c,v 1.11 1998/07/06 07:50:20 mrg Exp $");
+__RCSID("$NetBSD: slstats.c,v 1.11.6.1 1999/12/27 18:38:07 wrstuden Exp $");
 #endif
 
 #define INET
@@ -212,25 +212,26 @@ intpr()
 				(void)printf(" %6.6s %6.6s", "SEARCH", "MISS");
 			(void)putchar('\n');
 		}
-		(void)printf("%8lu %6ld %6u %6u %6u",
-			V(sc_if.if_ibytes),
+		(void)printf("%8llu %6ld %6u %6u %6u",
+			(unsigned long long)V(sc_if.if_ibytes),
 			(long)V(sc_if.if_ipackets),
 			V(sc_comp.sls_compressedin),
 			V(sc_comp.sls_uncompressedin),
 			V(sc_comp.sls_errorin));
 		if (vflag)
-			(void)printf(" %6u %6lu",
+			(void)printf(" %6u %6llu",
 				V(sc_comp.sls_tossed),
-				V(sc_if.if_ipackets) -
+				(unsigned long long)(V(sc_if.if_ipackets) -
 				  V(sc_comp.sls_compressedin) -
 				  V(sc_comp.sls_uncompressedin) -
-				  V(sc_comp.sls_errorin));
-		(void)printf(" | %8lu %6ld %6u %6u %6lu",
-			V(sc_if.if_obytes),
-			V(sc_if.if_opackets),
+				  V(sc_comp.sls_errorin)));
+		(void)printf(" | %8llu %6llu %6u %6u %6llu",
+			(unsigned long long)V(sc_if.if_obytes),
+			(unsigned long long)V(sc_if.if_opackets),
 			V(sc_comp.sls_compressed),
 			V(sc_comp.sls_packets) - V(sc_comp.sls_compressed),
-			V(sc_if.if_opackets) - V(sc_comp.sls_packets));
+			(unsigned long long)(V(sc_if.if_opackets) -
+				V(sc_comp.sls_packets)));
 		if (vflag)
 			(void)printf(" %6u %6u",
 				V(sc_comp.sls_searches),

@@ -1,4 +1,4 @@
-/*	$NetBSD: common_vars.c,v 1.1 1999/12/05 22:10:57 jdolecek Exp $	*/
+/*	$NetBSD: common_vars.c,v 1.1.2.1 1999/12/27 18:37:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: common_vars.c,v 1.1 1999/12/05 22:10:57 jdolecek Exp $");
+__RCSID("$NetBSD: common_vars.c,v 1.1.2.1 1999/12/27 18:37:50 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

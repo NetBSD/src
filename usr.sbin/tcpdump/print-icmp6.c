@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.5 1999/09/04 03:36:41 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.5.4.1 1999/12/27 18:38:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.5 1999/09/04 03:36:41 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.5.4.1 1999/12/27 18:38:13 wrstuden Exp $");
 #endif
 #endif
 
@@ -235,7 +235,8 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 				printf("M");
 			if (p->nd_ra_flags_reserved & ND_RA_FLAG_OTHER)
 				printf("O");
-			printf(" ");
+			if (p->nd_ra_flags_reserved != 0)
+				printf(" ");
 			printf("router_ltime=%d, ", ntohs(p->nd_ra_router_lifetime));
 			printf("reachable_time=%u, ",
 				(u_int32_t)ntohl(p->nd_ra_reachable));
@@ -494,7 +495,8 @@ icmp6_opt_print(register const u_char *bp, int resid)
 		       printf("L");
 		if (opp->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_AUTO)
 		       printf("A");
-		printf(" ");
+		if (opp->nd_opt_pi_flags_reserved)
+			printf(" ");
 		printf("valid_ltime=");
 		if ((u_int32_t)ntohl(opp->nd_opt_pi_valid_time) == ~0U)
 			printf("infinity");

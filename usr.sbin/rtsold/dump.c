@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.1 1999/12/10 11:04:08 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.1.2.1 1999/12/27 18:38:06 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.

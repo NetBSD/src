@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.2 1999/12/20 09:51:53 jdc Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.2.2.1 1999/12/27 18:38:11 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

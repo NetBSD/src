@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 1999/09/22 14:23:03 ws Exp $	*/
+/*	$NetBSD: main.c,v 1.43.2.1 1999/12/27 18:37:36 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,6 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 
 int	vflag;				/* verbose output */
 
-int	firstfile __P((const char *));
 int	yyparse __P((void));
 
 extern char *optarg;

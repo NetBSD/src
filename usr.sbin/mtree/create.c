@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.23 1999/07/06 15:11:15 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.23.4.1 1999/12/27 18:37:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.23 1999/07/06 15:11:15 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.23.4.1 1999/12/27 18:37:54 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,13 @@ __RCSID("$NetBSD: create.c,v 1.23 1999/07/06 15:11:15 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <vis.h>
 #include "mtree.h"
 #include "extern.h"
 
 #define	INDENTNAMELEN	15
 #define	MAXLINELEN	80
+#define VISFLAGS        VIS_CSTYLE
 
 extern int crc_total, ftsoptions;
 extern int dflag, sflag;
@@ -70,6 +72,8 @@ static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 static u_long flags;
+static char codebuf[4*MAXPATHLEN + 1];
+static const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 
 static int	dsort __P((const FTSENT **, const FTSENT **));
 static void	output __P((int *, const char *, ...));
@@ -135,10 +139,11 @@ statf(p)
 	int fd, indent;
 	char md5buf[33], *md5cp;
 
+	strsvis(codebuf, p->fts_name, VISFLAGS, extra);
 	if (S_ISDIR(p->fts_statp->st_mode))
-		indent = printf("%s", p->fts_name); 
+		indent = printf("%s", codebuf); 
 	else
-		indent = printf("    %s", p->fts_name);
+		indent = printf("    %s", codebuf);
 
 	if (indent > INDENTNAMELEN)
 		indent = MAXLINELEN;

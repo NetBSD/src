@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1999/08/19 17:31:07 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3.4.1 1999/12/27 18:37:57 wrstuden Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: pathnames.h,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
+ *  KAME Id: pathnames.h,v 1.2 1999/12/16 05:36:37 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -49,16 +49,16 @@
  */
 
 
-#define _PATH_PIM6D_CONF		"/etc/pim6dd.conf"
+#define _PATH_PIM6D_CONF		"/usr/local/v6/etc/pim6dd.conf"
 
 #if (defined(BSD) && (BSD >= 199103))
 #define _PATH_PIM6D_PID		"/var/run/pim6dd.pid"
 #define _PATH_PIM6D_GENID	"/var/run/pim6dd.genid"
-#define _PATH_PIM6D_DUMP	"/var/tmp/pim6dd.dump"
-#define _PATH_PIM6D_CACHE	"/var/tmp/pim6dd.cache"
+#define _PATH_PIM6D_DUMP	"/var/run/pim6dd.dump"
+#define _PATH_PIM6D_CACHE	"/var/run/pim6dd.cache"
 #else
 #define _PATH_PIM6D_PID		"/etc/pim6dd.pid"
 #define _PATH_PIM6D_GENID	"/etc/pim6dd.genid"
-#define _PATH_PIM6D_DUMP	"/usr/tmp/pim6dd.dump"
-#define _PATH_PIM6D_CACHE	"/usr/tmp/pim6dd.cache"
+#define _PATH_PIM6D_DUMP	"/etc/pim6dd.dump"
+#define _PATH_PIM6D_CACHE	"/etc/pim6dd.cache"
 #endif

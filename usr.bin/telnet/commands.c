@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $	*/
+/*	$NetBSD: commands.c,v 1.31.2.1 1999/12/27 18:37:13 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $");
+__RCSID("$NetBSD: commands.c,v 1.31.2.1 1999/12/27 18:37:13 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -1460,7 +1460,7 @@ shell(argc, argv)
     err = (TerminalWindowSize(&oldrows, &oldcols) == 0) ? 1 : 0;
     switch(vfork()) {
     case -1:
-	perror("Fork failed\n");
+	perror("Fork failed");
 	break;
 
     case 0:
@@ -1481,7 +1481,7 @@ shell(argc, argv)
 		execl(shellp, shellname, "-c", &saveline[1], 0);
 	    else
 		execl(shellp, shellname, 0);
-	    perror("Execl");
+	    perror("execl");
 	    _exit(1);
 	}
     default:
@@ -2201,7 +2201,6 @@ tn(argc, argv)
 
     if (connected) {
 	printf("?Already connected to %s\n", hostname);
-	setuid(getuid());
 	return 0;
     }
     if (argc < 2) {
@@ -2242,7 +2241,6 @@ tn(argc, argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\n", cmd);
-	setuid(getuid());
 	return 0;
     }
     if (hostp == 0)
@@ -2258,7 +2256,6 @@ tn(argc, argv)
 	}
 	if (hostname == NULL) {
 	    fprintf(stderr, "%s: bad source route specification\n", hostp);
-	    setuid(getuid());
 	    return 0;
 	}
 	*hostname++ = '\0';
@@ -2284,10 +2281,8 @@ tn(argc, argv)
 	/*numeric*/
 	freeaddrinfo(res0);
 	memset(&hints, 0, sizeof(hints));
-	if (doaddrlookup)
-		hints.ai_flags = AI_CANONNAME;
-	else
-		hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags = doaddrlookup ? AI_CANONNAME : 0; /*reverse lookup*/
+	hints.ai_flags |= AI_NUMERICHOST;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
@@ -2302,7 +2297,6 @@ tn(argc, argv)
     }
     if (error) {
       fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
-      setuid(getuid());
       return 0;
     }
 
@@ -2314,7 +2308,6 @@ tn(argc, argv)
     for (res = res0; res; res = res->ai_next) {
 	printf("Trying %s...\n", sockaddr_ntop(res->ai_addr));
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	setuid(getuid());
 	if (net < 0) {
 	    cause = "telnet: socket";
 	    continue;
@@ -2324,8 +2317,11 @@ tn(argc, argv)
 	    perror("setsockopt (SO_DEBUG)");
 	}
 	if (hostp[0] == '@' || hostp[0] == '!') {
-	    if ((srlen = sourceroute(res, hostp, &srp, &proto, &opt)) < 0)
+	    if ((srlen = sourceroute(res, hostp, &srp, &proto, &opt)) < 0) {
+		(void) NetClose(net);
+		net = -1;
 		continue;
+	    }
 	    if (srp && setsockopt(net, proto, opt, srp, srlen) < 0)
 		perror("setsockopt (source route)");
 	}
@@ -2348,15 +2344,19 @@ tn(argc, argv)
 	    }
 	    if ((len = ipsec_set_policy(buf, len, ipsec_policy)) < 0) {
 		printf("%s\n", ipsec_strerror());
-		freeaddrinfo(res0);
-		return 0;
+		(void) NetClose(net);
+		net = -1;
+		free(buf);
+		continue;
 	    }
 	    level = res->ai_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
 	    optname = res->ai_family == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
 	    if (setsockopt(net, level, optname, buf, len) < 0){
 		perror("setsockopt");
-		freeaddrinfo(res0);
-		return 0;
+		(void) NetClose(net);
+		net = -1;
+		free(buf);
+		continue;
 	    }
 	    free(buf);
 	}

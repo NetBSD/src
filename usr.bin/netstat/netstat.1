@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.25 1999/09/15 20:12:18 is Exp $
+.\"	$NetBSD: netstat.1,v 1.25.4.1 1999/12/27 18:37:07 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,6 +65,15 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Fl P Ar pcbaddr
+.Nm ""
+.Op Fl p Ar protocol
+.Op Fl i
+.Op Fl I Ar Interface
+.Nm ""
+.Op Fl s
+.Op Fl f Ar address_family
+.Op Fl i
+.Op Fl I Ar Interface
 .Sh DESCRIPTION
 The
 .Nm
@@ -83,6 +92,8 @@ interval specified,
 will continuously display the information regarding packet
 traffic on the configured network interfaces.
 The fourth form displays statistics about the named protocol.
+The fifth and sixth forms display per interface statistics for
+the specified protocol or address family.
 .Pp
 The options have the following meaning:
 .Bl -tag -width flag
@@ -141,6 +152,19 @@ Show information about the specified interface;
 used with a
 .Ar wait
 interval as described below.
+If the
+.Fl f Ar address_family
+option (with the
+.Fl s
+option) or the
+.Fl p Ar protocol
+option is present, show per-interface statistics on the
+.Ar interface
+for the specfied
+.Ar address_family
+or
+.Ar protocol,
+respectively.
 .It Fl i
 Show the state of interfaces which have been auto-configured
 (interfaces statically configured into a system, but not
@@ -151,6 +175,18 @@ options is also present, multicast addresses currently in use are shown
 for each Ethernet interface and for each IP interface address.
 Multicast addresses are shown on separate lines following the interface
 address with which they are associated.
+If the
+.Fl f Ar address_family
+option (with the
+.Fl s
+option) or the
+.Fl p Ar protocol
+option is present, show per-interface statistics on all interfaces
+for the specfied
+.Ar address_family
+or
+.Ar protocol,
+respectively.
 .It Fl L
 Don't show link-level routes (e.g., IPv4 ARP or IPv6 neighbour cache).
 .It Fl M
@@ -198,7 +234,9 @@ When
 .Fl s
 is also present, show routing statistics instead.
 .It Fl v
-Show extra (verbose) detail for the routing tables.
+Show extra (verbose) detail for the routing tables
+.Pq Fl r ,
+or avoid truncation of long addresses.
 .It Fl w Ar wait
 Show network interface statistics at intervals of
 .Ar wait
@@ -244,8 +282,8 @@ and
 manual pages.
 The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
-1	RTF_PROTO1	Protocol specific routing flag #1 
-2	RTF_PROTO2	Protocol specific routing flag #2 
+1	RTF_PROTO2	Protocol specific routing flag #1 
+2	RTF_PROTO1	Protocol specific routing flag #2 
 B	RTF_BLACKHOLE	Just discard pkts (during updates) 
 C	RTF_CLONING	Generate new routes on use 
 D	RTF_DYNAMIC	Created dynamically (by redirect) 

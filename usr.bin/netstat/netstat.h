@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.15 1999/09/15 20:12:18 is Exp $	*/
+/*	$NetBSD: netstat.h,v 1.15.4.1 1999/12/27 18:37:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,16 +81,19 @@ void	ipsec_stats __P((u_long, char *));
 #endif
 
 #ifdef INET6
+struct sockaddr_in6;
 void	ip6protopr __P((u_long, char *));
 void	tcp6_stats __P((u_long, char *));
 void	tcp6_dump __P((u_long));
 void	udp6_stats __P((u_long, char *));
 void	ip6_stats __P((u_long, char *));
+void	ip6_ifstats __P((char *));
 void	icmp6_stats __P((u_long, char *));
+void	icmp6_ifstats __P((char *));
 void	pim6_stats __P((u_long, char *));
 void	mroute6pr __P((u_long, u_long, u_long));
 void	mrt6_stats __P((u_long, u_long));
-char	*routename6 __P((char *));
+char	*routename6 __P((struct sockaddr_in6 *));
 #endif /*INET6*/
 
 void	mbpr(u_long, u_long, u_long, u_long, u_long);
@@ -98,9 +101,7 @@ void	mbpr(u_long, u_long, u_long, u_long, u_long);
 void	hostpr __P((u_long, u_long));
 void	impstats __P((u_long, u_long));
 
-void	intpr __P((int, u_long));
-
-void	pr_rthdr __P((void));
+void	pr_rthdr __P((int));
 void	pr_family __P((int));
 void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
@@ -122,7 +123,7 @@ void	nserr_stats __P((u_long, char *));
 void	atalkprotopr __P((u_long, char *));
 void	ddp_stats __P((u_long, char *));
 
-void	intpr __P((int, u_long));
+void	intpr __P((int, u_long, void (*) __P((char *))));
 
 void	unixpr __P((u_long));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.6 1997/10/05 15:12:05 mrg Exp $	*/
+/*	$NetBSD: lpf.c,v 1.6.8.1 1999/12/27 18:37:51 wrstuden Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.6 1997/10/05 15:12:05 mrg Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.6.8.1 1999/12/27 18:37:51 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ int	literal;	/* print control characters */
 char	*name;		/* user's login name */
 char	*host;		/* user's machine name */
 char	*acctfile;	/* accounting information file */
+int	crnl;		/* \n -> \r\n */
+int	need_cr;
 
 int main __P((int, char *[]));
 
@@ -82,7 +84,7 @@ main(argc, argv)
 	FILE *p = stdin, *o = stdout;
 	int i, col;
 	char *cp;
-	int done, linedone, maxrep, ch;
+	int done, linedone, maxrep, ch, prch;
 	char *limit;
 
 	while (--argc) {
@@ -114,6 +116,10 @@ main(argc, argv)
 			case 'c':	/* Print control chars */
 				literal++;
 				break;
+
+			case 'f':	/* Fix missing carriage returns */
+				crnl++;
+				break;
 			}
 		} else
 			acctfile = cp;
@@ -126,7 +132,10 @@ main(argc, argv)
 		col = indent;
 		maxrep = -1;
 		linedone = 0;
+		prch = ch = 0;
+		need_cr = 0;
 		while (!linedone) {
+			prch = ch;
 			switch (ch = getc(p)) {
 			case EOF:
 				linedone = done = 1;
@@ -136,6 +145,8 @@ main(argc, argv)
 			case '\f':
 				lineno = length;
 			case '\n':
+				if (crnl && prch != '\r')
+					need_cr = 1;
 				if (maxrep < 0)
 					maxrep = 0;
 				linedone = 1;
@@ -199,8 +210,11 @@ main(argc, argv)
 			}
 			if (i < maxrep)
 				putc('\r', o);
-			else
+			else {
+				if (need_cr)
+					putc('\r', o);
 				putc(ch, o);
+			}
 			if (++lineno >= length) {
 				fflush(o);
 				npages++;

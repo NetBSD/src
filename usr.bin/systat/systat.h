@@ -1,4 +1,4 @@
-/*	$NetBSD: systat.h,v 1.3 1997/07/21 07:05:08 mrg Exp $	*/
+/*	$NetBSD: systat.h,v 1.3.8.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <curses.h>
 
-struct  cmdtab {
+struct  mode {
         char    *c_name;			/* command name */
         void    (*c_refresh) __P((void));	/* display refresh */
         void    (*c_fetch) __P((void));		/* sets up data structures */
@@ -45,8 +45,14 @@ struct  cmdtab {
 	int	(*c_init) __P((void));		/* initialize namelist, etc. */
 	WINDOW	*(*c_open) __P((void));		/* open display */
 	void	(*c_close) __P((WINDOW *));	/* close display */
-	int	(*c_cmd) __P((char *, char *));	/* display command interpreter*/
+	struct	command *c_commands;		/* commands for mode */
 	char	c_flags;			/* see below */
+};
+
+struct	command {
+	char	*c_name;
+	void	(*c_cmd) __P((char *args));
+	char	*helptext;
 };
 
 #define	CF_INIT		0x1		/* been initialized */

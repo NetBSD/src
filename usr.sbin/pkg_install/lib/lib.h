@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.26 1999/09/09 01:31:44 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.26.4.1 1999/12/27 18:38:02 wrstuden Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -83,6 +83,8 @@
 #define MTREE_FNAME		"+MTREE_DIRS"
 #define BUILD_VERSION_FNAME	"+BUILD_VERSION"
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
+#define SIZE_PKG_FNAME		"+SIZE_PKG"
+#define SIZE_ALL_FNAME		"+SIZE_ALL"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 

@@ -30,12 +30,21 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+.include <bsd.own.mk>
+
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
 PROG   = dhcpd
 MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
+
+.if ${MKSHARE} != "no"
+FILESDIR= /usr/share/examples/dhcp
+
+FILES=	dhcpd.conf
+.endif
 
 OS_SYSTEM !=	uname -s
 OS_RELEASE !=	uname -r
 CPPFLAGS+=-DOS_VERSION="\"${OS_SYSTEM} ${OS_RELEASE}\""
 
 .include <bsd.prog.mk>
+.include <bsd.files.mk>

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.18 1999/08/24 00:48:39 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.18.4.1 1999/12/27 18:38:01 wrstuden Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 1999/08/24 00:48:39 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.18.4.1 1999/12/27 18:38:01 wrstuden Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: main.c,v 1.18 1999/08/24 00:48:39 hubertf Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "aBbcDde:fFIikLl:mpqRrvh";
+static char Options[] = "aBbcDde:fFhIikLl:mpqRrsSv";
 
 int     Flags = 0;
 Boolean AllInstalled = FALSE;
@@ -156,12 +156,20 @@ main(int argc, char **argv)
 			Flags |= SHOW_REQUIRE;
 			break;
 
+		case 's':
+			Flags |= SHOW_PKG_SIZE;
+			break;
+
+		case 'S':
+			Flags |= SHOW_ALL_SIZE;
+			break;
+
 		case 'v':
 			Verbose = TRUE;
 			/* Reasonable definition of 'everything' */
 			Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
 			    SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
-			    SHOW_REQBY | SHOW_DEPENDS;
+			    SHOW_REQBY | SHOW_DEPENDS | SHOW_PKG_SIZE | SHOW_ALL_SIZE;
 			break;
 
 		case 'h':

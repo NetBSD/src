@@ -1,4 +1,4 @@
-/*	$NetBSD: cnwctl.c,v 1.5 1999/12/01 03:40:51 sommerfeld Exp $	*/
+/*	$NetBSD: cnwctl.c,v 1.5.2.1 1999/12/27 18:37:36 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
