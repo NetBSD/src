@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.6 2004/03/02 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.7 2004/03/20 03:08:55 jonathan Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.6 2004/03/02 02:22:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.7 2004/03/20 03:08:55 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,6 +100,7 @@ ah4_ctlinput(cmd, sa, v)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 #ifndef notyet
+	/* jonathan@netbsd.org: XXX FIXME */ 
 	(void) ip; (void) ah; (void) icp; (void) sav;
 #else
 	if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
@@ -158,6 +159,7 @@ esp4_ctlinput(cmd, sa, v)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 #ifndef notyet
+	/* jonathan@netbsd.org: XXX FIXME */ 
 	(void) ip; (void) esp; (void) icp; (void) sav;
 #else
 	if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
@@ -229,6 +231,7 @@ esp6_ctlinput(cmd, sa, d)
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		off = 0;
 	}
 
 	if (ip6) {
@@ -278,15 +281,23 @@ esp6_ctlinput(cmd, sa, d)
 			 */
 			sa6_src = ip6cp->ip6c_src;
 			sa6_dst = (struct sockaddr_in6 *)sa;
+#ifdef KAME
 			sav = key_allocsa(AF_INET6,
 					  (caddr_t)&sa6_src->sin6_addr,
 					  (caddr_t)&sa6_dst->sin6_addr,
 					  IPPROTO_ESP, espp->esp_spi);
+#else
+			/* jonathan@netbsd.org: XXX FIXME */ 
+			(void)sa6_src; (void)sa6_dst;
+			sav = KEY_ALLOCSA((union sockaddr_union*)sa,
+					  IPPROTO_ESP, espp->esp_spi);
+
+#endif
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)
 					valid++;
-				key_freesav(sav);
+				KEY_FREESAV(&sav);
 			}
 
 			/* XXX Further validation? */
