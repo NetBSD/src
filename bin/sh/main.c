@@ -42,11 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1993/08/01 18:58:12 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1994/01/25 07:59:25 deraadt Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "shell.h"
 #include "main.h"
 #include "mail.h"
@@ -58,9 +60,8 @@ static char rcsid[] = "$Id: main.c,v 1.4 1993/08/01 18:58:12 mycroft Exp $";
 #include "jobs.h"
 #include "input.h"
 #include "trap.h"
-#if ATTY
+#include "exec.h"
 #include "var.h"
-#endif
 #include "memalloc.h"
 #include "error.h"
 #include "init.h"
@@ -275,14 +276,33 @@ readcmdfile(name)
 
 /*
  * Take commands from a file.  To be compatable we should do a path
- * search for the file, but a path search doesn't make any sense.
+ * search for the file, which is necessary to find sub-commands.
  */
+
+
+static char *
+find_dot_file(basename) char *basename; {
+	static char localname[FILENAME_MAX+1];
+	char *fullname;
+	char *path = pathval();
+	struct stat statb;
+
+	while ((fullname = padvance(&path, basename)) != NULL) {
+		strcpy(localname, fullname);
+		stunalloc(fullname);
+		if ((stat(fullname, &statb) == 0) &&
+		    S_ISREG(statb.st_mode))
+			return localname;
+	}
+	return basename;
+}
 
 dotcmd(argc, argv)  char **argv; {
 	exitstatus = 0;
 	if (argc >= 2) {		/* That's what SVR2 does */
-		setinputfile(argv[1], 1);
-		commandname = argv[1];
+		char *fullname = find_dot_file(argv[1]);
+		setinputfile(fullname, 1);
+		commandname = fullname;
 		cmdloop(0);
 		popfile();
 	}
