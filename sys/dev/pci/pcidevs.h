@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.676 2004/12/18 11:55:02 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.677 2004/12/27 17:21:46 reinoud Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.675 2004/12/18 11:54:03 xtraeme Exp 
+ *	NetBSD: pcidevs,v 1.676 2004/12/27 17:20:32 reinoud Exp 
  */
 
 /*
@@ -1407,6 +1407,7 @@
 #define	PCI_PRODUCT_EMULEX_LP9802	0xf980		/* LP9802 FibreChannel adapter */
 
 /* ENE Technology products */
+#define	PCI_PRODUCT_ENE_MCR510	0x510		/* MCR510 PCI Memory Card Reader Controller */
 #define	PCI_PRODUCT_ENE_CB710	0x710		/* CB710 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB720	0x720		/* CB720 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB1211 CardBus Controller */
