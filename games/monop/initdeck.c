@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.9 1999/09/08 21:57:18 jsm Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.10 1999/09/09 17:27:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,10 +43,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.9 1999/09/08 21:57:18 jsm Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.10 1999/09/09 17:27:59 jsm Exp $");
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -101,6 +102,8 @@ main(ac, av)
 	 */
 	CC_D.offsets = (off_t *)calloc(CC_D.num_cards + 1, sizeof (off_t));
 	CH_D.offsets = (off_t *)calloc(CH_D.num_cards + 1, sizeof (off_t));
+	if (CC_D.offsets == NULL || CH_D.offsets == NULL)
+		errx(1, "out of memory");
 	fseek(inf, 0L, SEEK_SET);
 	if ((outf = fopen(outfile, "w")) == NULL) {
 		perror(outfile);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.7 1999/09/08 21:45:27 jsm Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.8 1999/09/09 17:27:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.7 1999/09/08 21:45:27 jsm Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.8 1999/09/09 17:27:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,6 +479,8 @@ makecombo2(ocbp, osp, off, s)
 		/* make a new combo! */
 		ncbp = (struct combostr *)malloc(sizeof(struct combostr) +
 		    2 * sizeof(struct combostr *));
+		if (ncbp == NULL)
+		    panic("Out of memory!");
 		scbpp = (struct combostr **)(ncbp + 1);
 		fcbp = fsp->s_frame[r];
 		if (ocbp < fcbp) {
@@ -718,6 +720,8 @@ makecombo(ocbp, osp, off, s)
 	    /* make a new combo! */
 	    ncbp = (struct combostr *)malloc(sizeof(struct combostr) +
 		(cbp->c_nframes + 1) * sizeof(struct combostr *));
+	    if (ncbp == NULL)
+		panic("Out of memory!");
 	    scbpp = (struct combostr **)(ncbp + 1);
 	    if (sortcombo(scbpp, (struct combostr **)(cbp + 1), ocbp)) {
 		free(ncbp);
@@ -918,6 +922,8 @@ makeempty(ocbp)
 
 			/* add the combo to the list of empty spots */
 			nep = (struct elist *)malloc(sizeof(struct elist));
+			if (nep == NULL)
+			    panic("Out of memory!");
 			nep->e_combo = ocbp;
 			nep->e_off = s;
 			nep->e_frameindex = i;
