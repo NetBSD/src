@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.13 1996/03/18 16:47:25 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.14 1996/05/07 01:37:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -191,8 +191,6 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 
 #define MINDATA 60
 
-void qetimeout(int);
-
 /*
  * Ethernet software status per interface.
  *
@@ -233,17 +231,17 @@ struct	qe_softc {
 int	qematch __P((struct device *, void *, void *));
 void	qeattach __P((struct device *, struct device *, void *));
 void	qereset __P((int));
-void	qeinit __P((int));
+void	qeinit __P((struct qe_softc *));
 void	qestart __P((struct ifnet *));
 void	qeintr __P((int));
 void	qetint __P((int));
 void	qerint __P((int));
 int	qeioctl __P((struct ifnet *, u_long, caddr_t));
-void	qe_setaddr __P((u_char *, int));
+void	qe_setaddr __P((u_char *, struct qe_softc *));
 void	qeinitdesc __P((struct qe_ring *, caddr_t, int));
 void	qesetup __P((struct qe_softc *));
 void	qeread __P((struct qe_softc *, struct ifrw *, int));
-void	qetimeout __P((int));
+void	qetimeout __P((struct ifnet *));
 void	qerestart __P((struct qe_softc *));
 
 struct	cfdriver qe_cd = {
@@ -365,8 +363,8 @@ qeattach(parent, self, aux)
 
 	printf("\n");
 	sc->qe_vaddr = addr;
-	ifp->if_unit = sc->qe_dev.dv_unit;
-	ifp->if_name = "qe";
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
 	 * doesn't listen to its own.
@@ -409,17 +407,16 @@ qereset(unit)
 
 	printf(" %s", sc->qe_dev.dv_xname);
 	sc->qe_if.if_flags &= ~IFF_RUNNING;
-	qeinit(unit);
+	qeinit(sc);
 }
 
 /*
  * Initialization of interface.
  */
 void
-qeinit(unit)
-	int unit;
+qeinit(sc)
+	struct qe_softc *sc;
 {
-	struct qe_softc *sc = (struct qe_softc *)qe_cd.cd_devs[unit];
 	struct qedevice *addr = sc->qe_vaddr;
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	int i;
@@ -515,7 +512,7 @@ void
 qestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
+	register struct qe_softc *sc = ifp->if_softc;
 	volatile struct qedevice *addr = sc->qe_vaddr;
 	register struct qe_ring *rp;
 	register index;
@@ -767,7 +764,7 @@ qeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
+	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -775,7 +772,7 @@ qeioctl(ifp, cmd, data)
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		qeinit(ifp->if_unit);
+		qeinit(sc);
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -790,7 +787,7 @@ qeioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)(sc->qe_addr);
 			else
-				qe_setaddr(ina->x_host.c_host, ifp->if_unit);
+				qe_setaddr(ina->x_host.c_host, sc);
 			break;
 		    }
 #endif
@@ -819,11 +816,10 @@ qeioctl(ifp, cmd, data)
  * set ethernet address for unit
  */
 void
-qe_setaddr(physaddr, unit)
+qe_setaddr(physaddr, sc)
 	u_char *physaddr;
-	int unit;
+	struct qe_softc *sc;
 {
-	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register int i;
 
 	for (i = 0; i < 6; i++)
@@ -831,7 +827,7 @@ qe_setaddr(physaddr, unit)
 	sc->qe_flags |= QEF_SETADDR;
 	if (sc->qe_if.if_flags & IFF_RUNNING)
 		qesetup(sc);
-	qeinit(unit);
+	qeinit(sc);
 }
 
 
@@ -939,15 +935,14 @@ if (m) {
  * the hang up and restarts the device.
  */
 void
-qetimeout(unit)
-	int unit;
+qetimeout(ifp)
+	struct ifnet *ifp;
 {
-	register struct qe_softc *sc;
+	register struct qe_softc *sc = ifp->if_softc;
 
-	sc = qe_cd.cd_devs[unit];
 #ifdef notdef
-	log(LOG_ERR, "qe%d: transmit timeout, restarted %d\n",
-	     unit, sc->qe_restarts++);
+	log(LOG_ERR, "%s: transmit timeout, restarted %d\n",
+	     sc->sc_dev.dv_xname, sc->qe_restarts++);
 #endif
 	qerestart(sc);
 }
