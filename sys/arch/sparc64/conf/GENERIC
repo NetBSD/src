@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.9 1999/01/20 17:24:36 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.10 1999/01/23 19:06:59 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -11,6 +11,8 @@ maxusers	32
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - Ultra 140 and 170
 options		TRAPWIN
+options		__ELF__		# we use elf 
+#options		_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
 
@@ -30,9 +32,10 @@ options		TRAPWIN
 config		netbsd	root on ? type ?
 
 ## UVM options.
+#options	UVM_PAGE_TRKOWN
 #options 	UVMHIST
 #options 	UVMHIST_PRINT	# Loud!
-#options 	PMAP_NEW	# new pmap interface; not yet supported
+options 	PMAP_NEW
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
@@ -125,7 +128,8 @@ options 	COMPAT_SPARC32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
+#options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
+#options		SYSCALL_DEBUG
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -174,25 +178,25 @@ cpu0	at mainbus0
 
 #### Bus types found on SPARC systems.
 
-sbus0	at mainbus0				# sun4c and sun4u
+sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 #pci0	at mainbus0				# Darwin
+#ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
 
-## Auxiliary system registers on sun4c and sun4m
+## Auxiliary system registers -- We use the OBP for power management
 #auxreg0 at sbus0
+#auxreg0 at pci0
 
 # We also need:
 # bpp0 at sbus0					# parallel port
-
-## Power status and control register on Sun4m systems
-# XXX is this on the ultrasparc?
-#power0 at sbus0
+# ecpp0 at pci0					# parallel port ?
 
 ## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at sbus0 slot ? offset ?
+#clock0	at pci0
 
 ## Timer chip found on 4/300, sun4c, sun4m and sun4u systems.
 timer0	at mainbus0				# sun4c
@@ -208,6 +212,18 @@ zstty1	at zs0 channel 1	# ttyb
 zs1	at sbus0 slot ? offset ?
 kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
+
+## PCI machines apparently have serial ports
+## called `se' and `su'
+
+## Part of a PC87332VLJ?
+#se0	at ebus?		# 
+#kbd0	at su1 channel 0	# keyboard
+#ms0	at su1 channel 1	# mouse
+
+## These are two SAB82532 controllers
+#su0	at ebus?		# ttya
+#su1	at ebus?		# ttyb
 
 #### Disk controllers and disks
 
@@ -225,6 +241,7 @@ ms0	at zs1 channel 1	# mouse
 
 dma0	at sbus0 slot ? offset ?			# sun4c/sun4m/sun4u
 esp0	at dma0 flags 0x0000				# sun4m/sun4u
+scsibus* at esp?
 
 # FSBE/S SCSI
 dma*	at sbus? slot ? offset ?			# SBus
@@ -240,6 +257,9 @@ scsibus* at isp?
 #fas*	at sbus? slot ? offset ?
 #scsibus* at fas?
 
+## GLM support is missing
+#scsi*	at pci?						# 53C875 "glm" compatible
+
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
 sd*	at scsibus? target ? lun ?		# SCSI disks
@@ -253,6 +273,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # need share with the sparc...uses auxreg.  what is this on sparc64?
 #fdc0	at sbus0 slot ? offset ?
+#fdc0	at pci?					# Called fdthree?
 #fd*	at fdc0 	 			# the drive itself
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
@@ -291,6 +312,10 @@ lebuffer0	at sbus? slot ? offset ?		# SBus
 le0		at lebuffer?				# SBus
 lebuffer*	at sbus? slot ? offset ?		# SBus
 le*		at lebuffer?				# SBus
+
+## HME not supported yet
+#hme*		at sbus0 slot ? offset ?
+#network*	at pci?					# "hme" compatible
 
 ## qec/be, qec/hme
 qec*		at sbus? slot ? offset ?
@@ -356,6 +381,8 @@ cgsix*		at sbus? slot ? offset ?
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 #cgfourteen0	at obio0			# sun4m
 
+## Sun FFB not supported
+#ffb*		at upa?
 
 #### Other device configuration
 
