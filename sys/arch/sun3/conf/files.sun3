@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.14 1995/10/29 21:21:19 gwr Exp $
+#	$NetBSD: files.sun3,v 1.15 1995/10/30 21:15:40 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -122,7 +122,7 @@ device	xdc at vmel {drive = -1}
 device	xd at xdc: disk
 file	arch/sun3/dev/xd.c		xd needs-flag
 
-device	xyc at vmel {drive = -1}
+device	xyc at vmes {drive = -1}
 device	xy at xyc: disk
 file	arch/sun3/dev/xy.c		xy needs-flag
 
