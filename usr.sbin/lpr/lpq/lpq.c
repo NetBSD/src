@@ -67,6 +67,8 @@ int	 requests;		/* # of spool requests */
 char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 
+uid_t	uid, euid;
+
 void usage __P((void));
 
 int
@@ -78,6 +80,9 @@ main(argc, argv)
 	extern int	optind;
 	int	ch, lflag;		/* long output option */
 
+	euid = geteuid();
+	uid = getuid();
+	seteuid(uid);
 	name = *argv;
 	if (gethostname(host, sizeof(host))) {
 		perror("lpq: gethostname");

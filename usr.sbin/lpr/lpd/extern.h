@@ -34,6 +34,26 @@
  */
 
 #include <sys/cdefs.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+
+/*
+ * from stty.h
+ */
+struct info {
+	int fd;                                 /* file descriptor */
+	int ldisc;                              /* line discipline */  
+	int off;                                /* turn off */
+	int set;                                /* need set */
+	int wset;                               /* need window set */
+	char *arg;                              /* argument */
+	struct termios t;                       /* terminal info */  
+	struct winsize win;                     /* window info */
+}; 
 
 void       printjob __P((void));
 void       recvjob __P((void));
+void       sttyclearflags __P((struct termios *tp, long flags));
+void       sttysetflags __P((struct termios *tp, long flags));
+void       sttyclearlflags __P((struct termios *tp, long flags));
+void       sttysetlflags __P((struct termios *tp, long flags));
