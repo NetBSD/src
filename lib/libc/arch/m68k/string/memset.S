@@ -1,3 +1,5 @@
+/*	$NetBSD: memset.S,v 1.5 1995/11/17 20:21:18 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,9 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memset.S,v 1.4 1995/02/08 18:33:19 mycroft Exp $"
+#if 0
+	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: memset.S,v 1.5 1995/11/17 20:21:18 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
