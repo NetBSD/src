@@ -1,12 +1,4 @@
 ./usr/include/alpha
-./usr/include/dev/ic/smc90cx6reg.h
-./usr/include/dev/vme
-./usr/include/dev/vme/vmevar.h
-./usr/include/dev/vme/xdreg.h
-./usr/include/dev/vme/xdvar.h
-./usr/include/dev/vme/xio.h
-./usr/include/dev/vme/xyreg.h
-./usr/include/dev/vme/xyvar.h
 ./usr/include/machine/alpha_cpu.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/aout_machdep.h
