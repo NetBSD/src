@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.38.2.1 2004/04/29 04:52:08 jmc Exp $
+#	$NetBSD: bsd.x11.mk,v 1.38.2.2 2004/05/11 13:22:09 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -96,6 +96,10 @@ X11TOOL_UNXCOMM=    sed	-e '/^\#  *[0-9][0-9]*  *.*$$/d' \
 
 CPPFLAGS+=		-DCSRG_BASED -DFUNCPROTO=15 -DNARROWPROTO
 CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}
+
+.if ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=		-D__AMD64__
+.endif
 
 LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 			-R${X11USRLIBDIR} \
