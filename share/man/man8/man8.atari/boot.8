@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.7 1999/12/30 22:31:19 simonb Exp $
+.\"	$NetBSD: boot.8,v 1.8 2000/09/24 17:03:28 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -133,6 +133,10 @@ Boot into multi-user mode (the default)
 Ask for a root device
 .It Fl d
 Enter the kernel debugger
+.It Fl q
+Boot in quiet mode
+.It Fl v
+Boot in verbose mode
 .El
 .El
 .Pp
@@ -146,7 +150,7 @@ program that is supplied on the kernel-floppy. The loadbsd command line
 specification is:
 .Bd -ragged -offset indent
 .Nm loadbsd 
-.Op Fl abdhstwDV
+.Op Fl abdhqstvwDV
 .Op Fl S Ar amount
 .Op Fl T Ar amount
 .Ar kernel-path
@@ -166,6 +170,8 @@ here.
 .It Fl o Ar outputfile
 Write all output to the file
 .Ar outputfile.
+.It Fl q
+Boot in quiet mode.
 .It Fl s
 Tell
 .Nx
@@ -173,6 +179,8 @@ only to use ST compatible RAM.
 .It Fl t
 Test loading of the kernel but don't start
 .Nx .
+.It Fl v
+Boot in verbose mode.
 .It Fl w
 Wait for a keypress before exiting loadbsd. This is useful when starting this
 program under GEM.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.10 2000/08/23 21:16:45 jhawk Exp $
+.\"	$NetBSD: dosboot.8,v 1.11 2000/09/24 17:03:28 jdolecek Exp $
 .Dd May 13, 2000
 .Os
 .Dt DOSBOOT 8 i386
@@ -10,7 +10,7 @@
 .Op Fl u
 .Op Fl c Ar command
 .Op Fl i
-.Op Ar path Op Fl ads
+.Op Ar path Op Fl adqsv
 .Sh DESCRIPTION
 .Nm
 is an 
@@ -67,7 +67,7 @@ followed
 by a colon (see 
 .Xr boot 8
 and examples).
-.It Fl ads
+.It Fl adqsv
 Flags passed to the kernel, see
 .Xr boot 8 .
 .El
@@ -81,7 +81,7 @@ flag or in interactive mode are:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl ads
+.Op Fl adqsv
 .Xc
 Boot
 .Nx . See
