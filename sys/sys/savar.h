@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.7 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: savar.h,v 1.8 2003/10/31 22:47:44 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,16 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
+union sau_state {
+	struct {
+		ucontext_t	ss_ctx;
+		struct sa_t	ss_sa;
+	} ss_captured;
+	struct {
+		struct lwp	*ss_lwp;
+	} ss_deferred;
+};
+
 struct sadata_upcall {
 	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
 	int	sau_flags;
@@ -53,22 +63,19 @@ struct sadata_upcall {
 	size_t	sau_argsize;
 	void	*sau_arg;
 	stack_t	sau_stack;
-	union {
-		struct {
-			ucontext_t	e_ctx;
-			ucontext_t	i_ctx;
-			struct sa_t	e_sa;
-			struct sa_t	i_sa;
-		} captured;
-		struct {
-			struct lwp	*e_lwp;
-			struct lwp	*i_lwp;
-		} deferred;
-	} sau_state;
+	union sau_state	sau_event;
+	union sau_state	sau_interrupted;
 };
 
-#define SAU_FLAG_DEFERRED	0x1
-#define SA_UPCALL_DEFER		0x1000
+#define	SAU_FLAG_DEFERRED_EVENT		0x1
+#define	SAU_FLAG_DEFERRED_INTERRUPTED	0x2
+
+#define	SA_UPCALL_TYPE_MASK		0x00FF
+
+#define	SA_UPCALL_DEFER_EVENT		0x1000
+#define	SA_UPCALL_DEFER_INTERRUPTED	0x2000
+#define	SA_UPCALL_DEFER			(SA_UPCALL_DEFER_EVENT | \
+					 SA_UPCALL_DEFER_INTERRUPTED)
 
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
