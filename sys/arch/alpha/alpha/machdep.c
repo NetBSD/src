@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184 1999/10/07 22:15:22 sato Exp $ */
+/* $NetBSD: machdep.c,v 1.185 1999/11/30 19:31:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 1999/10/07 22:15:22 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 1999/11/30 19:31:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -895,18 +895,18 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), totalphysmem << PAGE_SHIFT);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(totalphysmem));
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(resvmem));
 	printf("(%s reserved for PROM, ", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("%s used by NetBSD)\n", pbuf);
 	if (unusedmem) {
-		format_bytes(pbuf, sizeof(pbuf), ctob(unusedmem));
+		format_bytes(pbuf, sizeof(pbuf), ptoa(unusedmem));
 		printf("WARNING: unused memory = %s\n", pbuf);
 	}
 	if (unknownmem) {
-		format_bytes(pbuf, sizeof(pbuf), ctob(unknownmem));
+		format_bytes(pbuf, sizeof(pbuf), ptoa(unknownmem));
 		printf("WARNING: %s of memory with unknown purpose\n", pbuf);
 	}
 
