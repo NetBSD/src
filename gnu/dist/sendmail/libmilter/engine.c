@@ -1,7 +1,7 @@
-/* $NetBSD: engine.c,v 1.8 2003/06/01 14:07:00 atatat Exp $ */
+/* $NetBSD: engine.c,v 1.9 2003/07/05 15:08:59 martin Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: engine.c,v 1.8 2003/06/01 14:07:00 atatat Exp $");
+__RCSID("$NetBSD: engine.c,v 1.9 2003/07/05 15:08:59 martin Exp $");
 #endif
 
 /*
@@ -225,8 +225,8 @@ mi_engine(ctx)
 		if (mi_stop() == MILTER_ABRT)
 		{
 			if (ctx->ctx_dbg > 3)
-				sm_dprintf("[%d] milter_abort\n",
-					(int) ctx->ctx_id);
+				sm_dprintf("[%p] milter_abort\n",
+					ctx->ctx_id);
 			ret = MI_FAILURE;
 			break;
 		}
@@ -247,8 +247,8 @@ mi_engine(ctx)
 		    cmd < SMFIC_VALIDCMD)
 		{
 			if (ctx->ctx_dbg > 5)
-				sm_dprintf("[%d] mi_engine: mi_rd_cmd error (%x)\n",
-					(int) ctx->ctx_id, (int) cmd);
+				sm_dprintf("[%p] mi_engine: mi_rd_cmd error (%x)\n",
+					ctx->ctx_id, (int) cmd);
 
 			/*
 			**  eof is currently treated as failure ->
@@ -260,8 +260,8 @@ mi_engine(ctx)
 			break;
 		}
 		if (ctx->ctx_dbg > 4)
-			sm_dprintf("[%d] got cmd '%c' len %d\n",
-				(int) ctx->ctx_id, cmd, (int) len);
+			sm_dprintf("[%p] got cmd '%c' len %d\n",
+				ctx->ctx_id, cmd, (int) len);
 		for (i = 0; i < ncmds; i++)
 		{
 			if (cmd == cmds[i].cm_cmd)
@@ -271,8 +271,8 @@ mi_engine(ctx)
 		{
 			/* unknown command */
 			if (ctx->ctx_dbg > 1)
-				sm_dprintf("[%d] cmd '%c' unknown\n",
-					(int) ctx->ctx_id, cmd);
+				sm_dprintf("[%p] cmd '%c' unknown\n",
+					ctx->ctx_id, cmd);
 			ret = MI_FAILURE;
 			break;
 		}
@@ -280,8 +280,8 @@ mi_engine(ctx)
 		{
 			/* stop for now */
 			if (ctx->ctx_dbg > 1)
-				sm_dprintf("[%d] cmd '%c' not impl\n",
-					(int) ctx->ctx_id, cmd);
+				sm_dprintf("[%p] cmd '%c' not impl\n",
+					ctx->ctx_id, cmd);
 			ret = MI_FAILURE;
 			break;
 		}
@@ -289,15 +289,15 @@ mi_engine(ctx)
 		/* is new state ok? */
 		newstate = cmds[i].cm_next;
 		if (ctx->ctx_dbg > 5)
-			sm_dprintf("[%d] cur %x new %x nextmask %x\n",
-				(int) ctx->ctx_id,
+			sm_dprintf("[%p] cur %x new %x nextmask %x\n",
+				ctx->ctx_id,
 				curstate, newstate, next_states[curstate]);
 
 		if (newstate != ST_NONE && !trans_ok(curstate, newstate))
 		{
 			if (ctx->ctx_dbg > 1)
-				sm_dprintf("[%d] abort: cur %d (%x) new %d (%x) next %x\n",
-					(int) ctx->ctx_id,
+				sm_dprintf("[%p] abort: cur %d (%x) new %d (%x) next %x\n",
+					ctx->ctx_id,
 					curstate, MI_MASK(curstate),
 					newstate, MI_MASK(newstate),
 					next_states[curstate]);
@@ -364,8 +364,8 @@ mi_engine(ctx)
 		else if (r == _SMFIS_ABORT)
 		{
 			if (ctx->ctx_dbg > 5)
-				sm_dprintf("[%d] function returned abort\n",
-					(int) ctx->ctx_id);
+				sm_dprintf("[%p] function returned abort\n",
+					ctx->ctx_id);
 			ret = MI_FAILURE;
 			break;
 		}
@@ -515,9 +515,9 @@ st_optionneg(g)
 	if (g->a_len < MILTER_OPTLEN)
 	{
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: len too short %d < %d",
+			"%s: st_optionneg[%p]: len too short %d < %d",
 			g->a_ctx->ctx_smfi->xxfi_name,
-			(int) g->a_ctx->ctx_id, (int) g->a_len,
+			g->a_ctx->ctx_id, (int) g->a_len,
 			MILTER_OPTLEN);
 		return _SMFIS_ABORT;
 	}
@@ -529,9 +529,9 @@ st_optionneg(g)
 	{
 		/* hard failure for now! */
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: version mismatch MTA: %d < milter: %d",
+			"%s: st_optionneg[%p]: version mismatch MTA: %d < milter: %d",
 			g->a_ctx->ctx_smfi->xxfi_name,
-			(int) g->a_ctx->ctx_id, (int) v,
+			g->a_ctx->ctx_id, (int) v,
 			g->a_ctx->ctx_smfi->xxfi_version);
 		return _SMFIS_ABORT;
 	}
@@ -547,9 +547,9 @@ st_optionneg(g)
 	if ((v & i) != i)
 	{
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: 0x%x does not fulfill action requirements 0x%x",
+			"%s: st_optionneg[%p]: 0x%x does not fulfill action requirements 0x%x",
 			g->a_ctx->ctx_smfi->xxfi_name,
-			(int) g->a_ctx->ctx_id, v, i);
+			g->a_ctx->ctx_id, v, i);
 		return _SMFIS_ABORT;
 	}
 
@@ -564,9 +564,9 @@ st_optionneg(g)
 	if ((v & i) != i)
 	{
 		smi_log(SMI_LOG_ERR,
-			"%s: st_optionneg[%d]: 0x%x does not fulfill protocol requirements 0x%x",
+			"%s: st_optionneg[%p]: 0x%x does not fulfill protocol requirements 0x%x",
 			g->a_ctx->ctx_smfi->xxfi_name,
-			(int) g->a_ctx->ctx_id, v, i);
+			g->a_ctx->ctx_id, v, i);
 		return _SMFIS_ABORT;
 	}
 
@@ -619,9 +619,9 @@ st_connectinfo(g)
 		if ((i += sizeof port) >= l)
 		{
 			smi_log(SMI_LOG_ERR,
-				"%s: connect[%d]: wrong len %d >= %d",
+				"%s: connect[%p]: wrong len %d >= %d",
 				g->a_ctx->ctx_smfi->xxfi_name,
-				(int) g->a_ctx->ctx_id, (int) i, (int) l);
+				g->a_ctx->ctx_id, (int) i, (int) l);
 			return _SMFIS_ABORT;
 		}
 
@@ -635,9 +635,9 @@ st_connectinfo(g)
 			    != 1)
 			{
 				smi_log(SMI_LOG_ERR,
-					"%s: connect[%d]: inet_aton failed",
+					"%s: connect[%p]: inet_aton failed",
 					g->a_ctx->ctx_smfi->xxfi_name,
-					(int) g->a_ctx->ctx_id);
+					g->a_ctx->ctx_id);
 				return _SMFIS_ABORT;
 			}
 			sockaddr.sa.sa_family = AF_INET;
@@ -653,9 +653,9 @@ st_connectinfo(g)
 					 &sockaddr.sin6.sin6_addr) != 1)
 			{
 				smi_log(SMI_LOG_ERR,
-					"%s: connect[%d]: mi_inet_pton failed",
+					"%s: connect[%p]: mi_inet_pton failed",
 					g->a_ctx->ctx_smfi->xxfi_name,
-					(int) g->a_ctx->ctx_id);
+					g->a_ctx->ctx_id);
 				return _SMFIS_ABORT;
 			}
 			sockaddr.sa.sa_family = AF_INET6;
@@ -672,9 +672,9 @@ st_connectinfo(g)
 			    sizeof sockaddr.sunix.sun_path)
 			{
 				smi_log(SMI_LOG_ERR,
-					"%s: connect[%d]: path too long",
+					"%s: connect[%p]: path too long",
 					g->a_ctx->ctx_smfi->xxfi_name,
-					(int) g->a_ctx->ctx_id);
+					g->a_ctx->ctx_id);
 				return _SMFIS_ABORT;
 			}
 			sockaddr.sunix.sun_family = AF_UNIX;
@@ -683,9 +683,9 @@ st_connectinfo(g)
 # endif /* NETUNIX */
 		{
 			smi_log(SMI_LOG_ERR,
-				"%s: connect[%d]: unknown family %d",
+				"%s: connect[%p]: unknown family %d",
 				g->a_ctx->ctx_smfi->xxfi_name,
-				(int) g->a_ctx->ctx_id, family);
+				g->a_ctx->ctx_id, family);
 			return _SMFIS_ABORT;
 		}
 	}
