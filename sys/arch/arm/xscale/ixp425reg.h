@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.2 2003/05/24 23:48:44 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.3 2003/05/31 00:58:40 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -323,7 +323,7 @@
 #define IXP425_EXP_HOLD_T(x)		(((x) & 3)  << IXP425_EXP_HOLD_SHIFT)
 #define IXP425_EXP_STROBE_T(x)		(((x) & 15) << IXP425_EXP_STROBE_SHIFT)
 #define IXP425_EXP_SETUP_T(x)		(((x) & 3)  << IXP425_EXP_SETUP_SHIFT)
-#define IXP425_EXP_ADDR_T(x)		(((x) & 3)  << IXP425_EXP_SETUP_SHIFT)
+#define IXP425_EXP_ADDR_T(x)		(((x) & 3)  << IXP425_EXP_ADDR_SHIFT)
 
 // EXP_CSn bits
 #define EXP_BYTE_EN                (1 << 0)
