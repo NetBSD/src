@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.6 2003/03/11 00:18:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.7 2003/03/11 16:27:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.6 2003/03/11 00:18:36 nathanw Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.7 2003/03/11 16:27:38 nathanw Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -166,7 +166,6 @@ pthread__alarm_process(pthread_t self, void *arg)
 	gettimeofday(&tv, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
 
-	pthread_alarmqlast = ts;
 	SDPRINTF(("(pro %p) alarm time %d.%06ld\n",
 	    self, ts.tv_sec, ts.tv_nsec / 1000));
 
