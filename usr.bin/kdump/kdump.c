@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.70 2003/11/24 22:12:14 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.71 2004/01/12 13:39:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.70 2003/11/24 22:12:14 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.71 2004/01/12 13:39:56 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,13 +386,18 @@ void
 ktrsyscall(ktr)
 	struct ktr_syscall *ktr;
 {
-	int argcount = ktr->ktr_argsize / sizeof (register_t);
+	int argcount;
 	const struct emulation *emul = cur_emul;
 	register_t *ap;
 	char c;
 	char *cp;
 	const char *sys_name;
 
+	if (emul->flags & EMUL_FLAG_NETBSD32)
+		/* XXX: should use register32_t ? */
+		argcount = ktr->ktr_argsize / (sizeof (register_t) / 2);
+	else
+		argcount = ktr->ktr_argsize / sizeof (register_t);
 	emul_changed = 0;
 
 	if (((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0)
@@ -413,7 +418,9 @@ ktrsyscall(ktr)
 		} else if (strcmp(sys_name, "exit") == 0) {
 			ectx_delete();
 
-		} else if (strcmp(sys_name, "ioctl") == 0 && argcount >= 2 ) {
+		} else if ((strcmp(sys_name, "ioctl") == 0 ||
+			    strcmp(sys_name, "netbsd32_ioctl") == 0) &&
+			   argcount >= 2) {
 			if (decimal || *ap <= 9)
 				(void)printf("(%ld", (long)*ap);
 			else
