@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.51 2002/10/01 15:06:31 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.52 2002/10/02 10:01:46 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -458,7 +458,7 @@ Shell builtins are executed internally to the shell, without spawning a
 new process.
 .Pp
 Otherwise, if the command name doesn't match a function or builtin, the
-command is searched for as a normal program in the filesystem (as
+command is searched for as a normal program in the file system (as
 described in the next section).
 When a normal program is executed, the shell runs the program,
 passing the arguments and the environment to the program.
@@ -1685,7 +1685,7 @@ argument.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev HOME
-Set automaticly by
+Set automatically by
 .Xr login 1
 from the user's login directory in the password file
 .Pq Xr passwd 4 .
