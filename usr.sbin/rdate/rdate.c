@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.5 1996/12/08 14:06:38 mycroft Exp $	*/
+/*	$NetBSD: rdate.c,v 1.6 1997/03/26 21:12:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,7 +38,7 @@
  *	midnight January 1st 1900.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: rdate.c,v 1.5 1996/12/08 14:06:38 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rdate.c,v 1.6 1997/03/26 21:12:59 cgd Exp $";
 #endif/* lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$NetBSD: rdate.c,v 1.5 1996/12/08 14:06:38 mycroft Exp $"
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <util.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
 #if __STDC__
@@ -146,10 +147,12 @@ main(argc, argv)
 	if (!pr) {
 	    struct timeval  tv;
 	    if (!slidetime) {
+		    logwtmp("|", "date", "");
 		    tv.tv_sec = tim;
 		    tv.tv_usec = 0;
 		    if (settimeofday(&tv, NULL) == -1)
 			    err(1, "Could not set time of day");
+		    logwtmp("{", "date", "");
 	    } else {
 		    struct timeval tv_current;
 		    if (gettimeofday(&tv_current, NULL) == -1)
