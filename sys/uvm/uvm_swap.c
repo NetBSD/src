@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.16 1998/08/29 13:27:51 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.17 1998/08/29 17:01:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -50,9 +50,9 @@
 #include <sys/mount.h>
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
+#include <sys/swap.h>
 
 #include <vm/vm.h>
-#include <vm/vm_swap.h>
 #include <vm/vm_conf.h>
 
 #include <uvm/uvm.h>
