@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.1 1995/12/28 08:42:17 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.2 1996/01/29 22:52:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -80,5 +80,17 @@ typedef int32_t		tc_offset_t;
 		
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
+
+#define	tc_badaddr(tcaddr)						\
+    badaddr((void *)(tcaddr), sizeof (u_int32_t))
+
+/*
+ * Use the following macros to compare device names on a pmax, as
+ * the autoconfig structs are in a state of flux.
+ */
+struct confargs;
+
+#define TC_BUS_MATCHNAME(ca, name) \
+     (strncmp( (ca)->ca_name, (name), TC_ROM_LLEN+1) == 0)
 
 #endif /* __MACHINE_TC_MACHDEP_H__*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.12 1995/09/11 21:29:23 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.13 1996/01/29 22:52:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,11 +91,16 @@
 
 extern int pmax_boardtype;
 
+struct dc_softc {
+	struct device sc_dv;
+	struct pdma dc_pdma[4];
+};
+
 /*
- * Autoconfiguration data for config.new.
+ * Autoconfiguration data for config.
+ * 
  * Use the statically-allocated softc until old autoconfig code and
  * config.old are completely gone.
- * 
  */
 int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
@@ -105,7 +110,7 @@ int	dcintr __P((void * xxxunit));
 
 extern struct cfdriver dccd;
 struct  cfdriver dccd = {
-	NULL, "dc", dcmatch, dcattach, DV_DULL, sizeof(struct device), 0
+	NULL, "dc", dcmatch, dcattach, DV_TTY, sizeof(struct dc_softc), 0
 };
 
 
@@ -185,7 +190,9 @@ dcmatch(parent, match, aux)
 
 	static int nunits = 0;
 
-	if (!BUS_MATCHNAME(ca, "dc"))
+	if (strcmp(ca->ca_name, "dc") != 0 &&
+	    strcmp(ca->ca_name, "mdc") != 0 &&
+	    strcmp(ca->ca_name, "dc7085") != 0)
 		return (0);
 
 	/*
@@ -207,13 +214,15 @@ dcattach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
+	caddr_t dcaddr;
 
-	(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+	dcaddr = (caddr_t)ca->ca_addr;
+	(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 			  self->dv_unit, self->dv_cfdata->cf_flags,
 			  ca->ca_slot);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dcintr, (void *)self->dv_unit);
+	BUS_INTR_ESTABLISH(ca, dcintr, self);
 	printf("\n");
 }
 
@@ -230,6 +239,11 @@ raster_console()
 }
 
 
+/*
+ * DC7085 (dz-11) probe routine from old-style config.
+ * This is only here out of intertia.
+ */
+int
 dc_doprobe(addr, unit, flags, priority)
 	void *addr;
 	int unit, flags, priority;
@@ -546,9 +560,11 @@ int
 dcintr(xxxunit)
 	void *xxxunit;
 {
-	register int unit = (int)xxxunit;
+	register struct dc_softc *sc = xxxunit;
 	register dcregs *dcaddr;
 	register unsigned csr;
+
+	register int unit = sc->sc_dv.dv_unit;
 
 	unit <<= 2;
 	dcaddr = (dcregs *)dcpdma[unit].p_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.8 1995/09/11 07:45:41 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.9 1996/01/29 22:52:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -88,6 +88,8 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <machine/autoconf.h>
+#include <dev/tc/tcvar.h>
 
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
@@ -173,8 +175,6 @@ struct fbdriver mfb_driver = {
 #define MFB_OFFSET_ROM		0x0		/* Diagnostic ROM */
 #define MFB_FB_SIZE		0x200000	/* frame buffer size */
 
-#include <sys/device.h>
-#include <machine/autoconf.h>
 
 /*
  * Autoconfiguration data for config.new.
@@ -188,18 +188,6 @@ void mfbattach __P((struct device *, struct device *, void *));
 struct cfdriver mfbcd = {
 	NULL, "mfb", mfbmatch, mfbattach, DV_DULL, sizeof(struct device), 0
 };
-
-#if 0
-int
-mfbprobe(addr)
-	caddr_t addr;
-{
-
-	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAG-AA "))
-		return (0);
-}
-#endif
 
 int
 mfbmatch(parent, match, aux)
@@ -217,7 +205,7 @@ mfbmatch(parent, match, aux)
 #endif
 
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAG-AA "))
+	if (!TC_BUS_MATCHNAME(ca, "PMAG-AA "))
 		return (0);
 
 #ifdef notyet
@@ -235,7 +223,7 @@ mfbattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	caddr_t base = 	BUS_CVTADDR(ca);
+	caddr_t mfbaddr = (caddr_t) ca->ca_addr;
 	int unit = self->dv_unit;
 	struct fbinfo *fi = &mfbfi;
 
@@ -246,7 +234,7 @@ mfbattach(parent, self, aux)
 #endif
 
 
-	if (!mfbinit(BUS_CVTADDR(ca), unit, 0))
+	if (!mfbinit(mfbaddr, unit, 0))
 		return;
 
 	/* no interrupts for MFB */
