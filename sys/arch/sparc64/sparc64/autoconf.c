@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 2000/09/24 12:32:39 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.40 2000/09/27 18:16:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -321,6 +321,8 @@ bootpath_build()
 			return;
 
 	for (;*++cp;) {
+		int fl;
+
 		fl = 0;
 		BOOT_FLAG(*cp, fl);
 		if (!fl) {
