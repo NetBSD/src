@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsold.h,v 1.6 2000/10/06 00:13:03 itojun Exp $	*/
-/*	$KAME: rtsold.h,v 1.10 2000/10/05 22:20:39 itojun Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.7 2001/07/09 06:04:29 itojun Exp $	*/
+/*	$KAME: rtsold.h,v 1.11 2000/10/10 06:18:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,3 +88,7 @@ extern void defrouter_probe __P((int ifindex));
 
 /* dump.c */
 extern void rtsold_dump_file __P((char *));
+
+/* rtsock.c */
+extern int rtsock_open __P((void));
+extern int rtsock_input __P((int));
