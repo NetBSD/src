@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.22 1997/06/26 19:11:45 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.23 1998/01/23 19:27:44 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -539,7 +539,7 @@ nfs_close(f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_close: fp=0x%x\n", fp);
+		printf("nfs_close: fp=0x%lx\n", (u_long)fp);
 #endif
 
 	if (fp)
@@ -565,7 +565,8 @@ nfs_read(f, buf, size, resid)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
+		printf("nfs_read: size=%lu off=%d\n", (u_long)size,
+		    (int)fp->off);
 #endif
 	while ((int)size > 0) {
 		twiddle();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.17 1997/06/26 19:11:53 drochner Exp $	*/
+/*	$NetBSD: rpc.c,v 1.18 1998/01/23 19:27:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -193,7 +193,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
+		printf("callrpc: cc=%ld rlen=%lu\n", (long)cc, (u_long)rlen);
 #endif
 	if (cc == -1)
 		return (-1);
@@ -250,7 +250,7 @@ recvrpc(d, pkt, len, tleft)
 	errno = 0;
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("recvrpc: called len=%d\n", len);
+		printf("recvrpc: called len=%lu\n", (u_long)len);
 #endif
 
 	n = readudp(d, pkt, len, tleft);
