@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.12 1999/03/03 17:08:25 nathanw Exp $
+.\"	$NetBSD: isa.4,v 1.13 1999/03/03 17:35:57 nathanw Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -66,7 +66,7 @@ includes machine-independent
 .Tn ISA
 drivers, sorted by device type and driver name:
 .Pp
-.Ss Disk and tape controllers
+.Ss SCSI controllers
 .Bl -tag -width speaker -offset indent
 .It aha
 Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
@@ -84,8 +84,6 @@ interfaces, and a variety of compatibles.
 BusLogic BT-445
 .Tn SCSI
 interfaces.
-.It mcd
-Mitsumi CD-ROM drives.
 .It sea
 Seagate/Future Domain
 .Tn SCSI
@@ -95,13 +93,18 @@ ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
 Ultrastor 14f
 .Tn SCSI
 interfaces.
-.It wdc
-Standard Western Digital type hard drive controllers: MFM, RLL, ESDI,
-and IDE/ATAPI.
 .It wds
 WD-7000 family of bus-mastering
 .Tn SCSI
 interfaces.
+.El
+.Ss Disk and tape controllers
+.Bl -tag -width speaker -offset indent
+.It mcd
+Mitsumi CD-ROM drives.
+.It wdc
+Standard Western Digital type hard drive controllers: MFM, RLL, ESDI,
+and IDE/ATAPI.
 .It wt
 Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
