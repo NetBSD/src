@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1 1997/12/17 21:24:11 scw Exp $
+#	$NetBSD: RAMDISK,v 1.2 1998/05/08 21:37:29 scw Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -14,3 +14,5 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
 options 	MINIROOTSIZE=768
 
+# Include one instance of the memory driver
+pseudo-device 	md 1
