@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.7 1998/04/07 16:23:19 drochner Exp $	*/
+/*	$NetBSD: if_we.c,v 1.8 1998/05/25 10:36:51 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -604,6 +604,16 @@ we_writemem(wsc, from, to, len)
 	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;
 	bus_space_handle_t memh = wsc->sc_dp8390.sc_bufh;
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	if (wsc->sc_16bitp) {
+		bus_space_write_region_stream_2(memt, memh, to,
+				(u_int16_t *)from, len >> 1);
+		if (len & 1)
+			bus_space_write_2(memt, memh, to + (len & ~1),
+				(u_int16_t)(*(from + (len & ~1))));
+	} else
+		bus_space_write_region_stream_1(memt, memh, to, from, len);
+#else
 	if (wsc->sc_16bitp) {
 		bus_space_write_region_2(memt, memh, to, (u_int16_t *)from,
 		    len >> 1);
@@ -612,6 +622,7 @@ we_writemem(wsc, from, to, len)
 			    (u_int16_t)(*(from + (len & ~1))));
 	} else
 		bus_space_write_region_1(memt, memh, to, from, len);
+#endif
 }
 
 __inline void
@@ -624,6 +635,16 @@ we_readmem(wsc, from, to, len)
 	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;
 	bus_space_handle_t memh = wsc->sc_dp8390.sc_bufh;
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	if (wsc->sc_16bitp) {
+		bus_space_read_region_stream_2(memt, memh, from,
+				(u_int16_t *)to, len >> 1);
+		if (len & 1)
+			*(to + (len & ~1)) = bus_space_read_2(memt,
+			    memh, from + (len & ~1)) & 0xff;
+	} else
+		bus_space_read_region_stream_1(memt, memh, from, to, len);
+#else
 	if (wsc->sc_16bitp) {
 		bus_space_read_region_2(memt, memh, from, (u_int16_t *)to,
 		    len >> 1);
@@ -632,6 +653,7 @@ we_readmem(wsc, from, to, len)
 			    memh, from + (len & ~1)) & 0xff;
 	} else
 		bus_space_read_region_1(memt, memh, from, to, len);
+#endif
 }
 
 int
