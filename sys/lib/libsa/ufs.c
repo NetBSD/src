@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.24 1999/03/31 07:43:39 simonb Exp $	*/
+/*	$NetBSD: ufs.c,v 1.25 1999/04/01 05:27:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -88,6 +88,9 @@ max(a, b)
 
 #if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
 #define LIBSA_NO_FS_SYMLINK
+#endif
+#if defined(COMPAT_UFS) && defined(LIBSA_NO_COMPAT_UFS)
+#undef COMPAT_UFS
 #endif
 
 
