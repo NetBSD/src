@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.53 2001/01/05 22:51:21 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.54 2001/01/05 22:57:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -418,8 +418,8 @@ extern chtype _acs_char[NUM_ACS];
 #define	COLOR_CYAN	0x06
 #define	COLOR_WHITE	0x07
 
-#define	COLOR_PAIR(n)	(((n) << 25) & A_COLOR)
-#define	PAIR_NUMBER(n)	(((n) & A_COLOR) >> 25)
+#define	COLOR_PAIR(n)	((((u_int32_t)n) << 25) & A_COLOR)
+#define	PAIR_NUMBER(n)	((((u_int32_t)n) & A_COLOR) >> 25)
 
 /* Curses external declarations. */
 extern WINDOW	*curscr;		/* Current screen. */
