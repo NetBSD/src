@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.1.1.3 2004/03/23 08:31:43 pooka Exp $	*/
+/*	$NetBSD: names.h,v 1.1.1.4 2004/12/13 10:24:54 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    This product includes software developed by Ian F. Darwin and others.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -39,7 +34,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * Id: names.h,v 1.24 2004/03/22 19:09:12 christos Exp
+ * Id: names.h,v 1.25 2004/09/11 19:15:57 christos Exp
  */
 
 /*
