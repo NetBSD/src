@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.25 1999/02/07 17:29:40 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.26 1999/02/24 22:04:15 simonb Exp $
 
 .PHONY:		cleandepend
 cleandir distclean: cleandepend
@@ -16,9 +16,9 @@ depend: .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
 	if [ "$$files" != " " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${AINC:Q} $$files; \
+	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${AINC:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} ${AINC} $$files; \
+	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} ${AINC} $$files; \
 	fi
 	@files="${.ALLSRC:M*.c}"; \
 	if [ "$$files" != "" ]; then \
