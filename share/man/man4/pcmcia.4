@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.20 2001/04/11 21:32:34 aymeric Exp $
+.\" $NetBSD: pcmcia.4,v 1.21 2001/07/03 20:26:23 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,6 +99,8 @@ Raytheon Raylink and WebGear Aviator2.4 802.11 controller.
 Megahertz Ethernet card.
 .It wi
 Lucent WaveLan/IEEE and PRISM-II based 802.11 controller.
+.It xi
+Xircom CreditCard Ethernet
 .El
 .\"
 .Pp
@@ -139,7 +141,8 @@ Digital Hinote Ultra Mobile Media Adapter
 .Xr ray 4 ,
 .Xr sm 4 ,
 .Xr tcic 4 ,
-.Xr wi 4
+.Xr wi 4 ,
+.Xr xi 4
 .Pp
 .Pa http://www.pcmcia.org/
 .Sh HISTORY
@@ -184,3 +187,26 @@ all interrupts in use; in such cases, use of
 .Cd options PCIC_ISA_INTR_ALLOC_MASK
 may be necessary. See
 .Xr options 4 .
+.Ss Unconfigured devices
+During autoconfiguration, if a message is displayed saying that your card
+is "not configured" it indicates that there isn't support for your card
+compiled into the kernel.  To fix this problem, it may simply be a matter
+of adding the manufacturer and product IDs to the
+.Tn PCMCIA
+database or adding a front-end attachment to an existing driver.  In
+the latter case, it is normally always necessary to get a dump of the
+CIS table from the card.  You can do this by adding
+.Cd options PCMCIACISDEBUG
+and
+.Cd options PCMCIADEBUG
+into your kernel config file.  Additionally, you will have to patch the
+kernel to enable run-time debugging.  This can be done in the source
+by changing the variables
+.Va pcmcia_debug
+and
+.Va pcmciacis_debug
+to 0xff.  Alternatively, you can patch the same variables at run-time
+using
+.Xr ddb 4 .
+For most drivers you should also consider enabling any driver-specific
+debugging options.
