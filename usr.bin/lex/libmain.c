@@ -1,6 +1,6 @@
 /* libmain - flex run-time support library "main" function */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/libmain.c,v 1.4 1996/12/10 07:18:47 mikel Exp $ */
+/* $NetBSD: libmain.c,v 1.5 1998/01/05 05:15:53 perry Exp $ */
 
 #include <sys/cdefs.h>
 
