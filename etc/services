@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.54 2002/05/23 04:34:39 simonb Exp $
+#	$NetBSD: services,v 1.55 2002/06/07 05:59:06 cjs Exp $
 #
 # Network services, Internet style
 #
@@ -202,8 +202,12 @@ radius		1645/udp
 radacct		1646/udp
 cvspserver	2401/tcp
 cvspserver	2401/udp
+mysql		3306/tcp		# MySQL
+mysql		3306/udp		# MySQL
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
+postgresql	5432/tcp		# PostgreSQL Database
+postgresql	5432/udp		# PostgreSQL Database
 
 #
 # Kerberos (Project Athena/MIT) services
