@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.3.2.6 1997/12/04 11:45:01 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.2 1997/12/04 11:44:50 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +37,7 @@
  *
  */
 
-/* md.c -- pmax machine specific routines */
+/* md.c -- arm32 machine specific routines */
 
 #include <stdio.h>
 #include <curses.h>
@@ -46,36 +47,74 @@
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-/*
- * temporary hack
- */
-void get_labelname __P((void));
-
-void get_labelname(void)
-{
-
-	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
-	
-}
-	
+static u_int
+filecore_checksum(u_char *bootblock);
 
 /*
  * symbolic names for disk partitions
  */
 #define PART_ROOT A
 #define PART_RAW  C
-#define PART_USR  D
+#define PART_USR  E
+
+/*
+ * static u_int filecore_checksum(u_char *bootblock)
+ *
+ * Calculates the filecore boot block checksum. This is used to validate
+ * a filecore boot block on the disc. If a boot block is validated then
+ * it is used to locate the partition table. If the boot block is not
+ * validated, it is assumed that the whole disc is NetBSD.
+ */
+
+/*
+ * This can be coded better using add with carry but as it is used rarely
+ * there is not much point writing it in assembly.
+ */
+ 
+static u_int
+filecore_checksum(bootblock)
+	u_char *bootblock;
+{
+	u_int sum;
+	u_int loop;
+    
+	sum = 0;
+
+	for (loop = 0; loop < 512; ++loop)
+		sum += bootblock[loop];
+
+	if (sum == 0) return(0xffff);
+
+	sum = 0;
+    
+	for (loop = 0; loop < 511; ++loop) {
+		sum += bootblock[loop];
+		if (sum > 255)
+			sum -= 255;
+	}
+
+	return(sum);
+}
+
 
 int	md_get_info (void)
 {	struct disklabel disklabel;
 	int fd;
 	char devname[100];
+	static char bb[DEV_BSIZE];
+	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
+	int offset = 0;
+
+	if (strncmp(disk->name, "wd", 2) == 0)
+		disktype = "ST506";
+	else
+		disktype = "SCSI";
 
 	snprintf (devname, 100, "/dev/r%sc", diskdev);
 
@@ -90,6 +129,78 @@ int	md_get_info (void)
 		fprintf (stderr, "Can't read disklabel on %s.\n", devname);
 		close(fd);
 		exit(1);
+	}
+
+	if (lseek(fd, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
+	    read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+		endwin();
+		fprintf(stderr, msg_string(MSG_badreadbb));
+		close(fd);
+		exit(1);
+	}
+
+	/* Check if table is valid. */
+	if (filecore_checksum(bb) == fcbb->checksum) {
+		/*
+		 * Check for NetBSD/arm32 (RiscBSD) partition marker.
+		 * If found the NetBSD disklabel location is easy.
+		 */
+
+		offset = (fcbb->partition_cyl_low + (fcbb->partition_cyl_high << 8))
+		    * fcbb->heads * fcbb->secspertrack;
+
+		if (fcbb->partition_type == PARTITION_FORMAT_RISCBSD)
+			;
+		else if (fcbb->partition_type == PARTITION_FORMAT_RISCIX) {
+			/*
+     			 * Ok we need to read the RISCiX partition table and
+			 * search for a partition named RiscBSD, NetBSD or
+			 * Empty:
+			 */
+
+			struct riscix_partition_table *riscix_part = (struct riscix_partition_table *)bb;
+			int loop;
+
+			if (lseek(fd, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0 ||
+			    read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+				endwin();
+				fprintf(stderr, msg_string(MSG_badreadriscix));
+				close(fd);
+				exit(1);
+			}
+			/* Break out as soon as we find a suitable partition */
+
+			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
+				if (strcmp(riscix_part->partitions[loop].rp_name, "RiscBSD") == 0
+				    || strcmp(riscix_part->partitions[loop].rp_name, "NetBSD") == 0
+				    || strcmp(riscix_part->partitions[loop].rp_name, "Empty:") == 0) {
+					offset = riscix_part->partitions[loop].rp_start;
+					break;
+				}
+			}
+			if (loop == NRISCIX_PARTITIONS) {
+				/*
+				 * Valid filecore boot block, RISCiX partition table
+				 * but no NetBSD partition. We should leave this disc alone.
+				 */
+				endwin();
+				fprintf(stderr, msg_string(MSG_notnetbsdriscix));
+				close(fd);
+				exit(1);
+			}
+		} else {
+			/*
+			 * Valid filecore boot block and no non-ADFS partition.
+			 * This means that the whole disc is allocated for ADFS 
+			 * so do not trash ! If the user really wants to put a
+			 * NetBSD disklabel on the disc then they should remove
+			 * the filecore boot block first with dd.
+			 */
+			endwin();
+			fprintf(stderr, msg_string(MSG_notnetbsd));
+			close(fd);
+			exit(1);
+		}
 	}
 	close(fd);
  
@@ -112,34 +223,42 @@ int	md_get_info (void)
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
 
+	ptstart = offset;
+
 	return 1;
 }
 
-
-/* 
- * hook called before editing new disklabel.
- */
 void	md_pre_disklabel (void)
 {
 }
 
-
-/* 
- * hook called after writing  disklabel to new target disk.
- */
 void	md_post_disklabel (void)
-
 {
 }
 
-/*
- * md back-end code for menu-driven  BSD disklabel editor.
- */
+void	md_post_newfs (void)
+{
+#if 0
+	/* XXX boot blocks ... */
+	printf (msg_string(MSG_dobootblks), diskdev);
+	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+#endif
+}
+
+void	md_copy_filesystem (void)
+{
+	/* Copy the instbin(s) to the disk */
+	printf ("%s", msg_string(MSG_dotar));
+	run_prog ("tar --one-file-system -cf - / |"
+		  "(cd /mnt ; tar --unlink -xpf - )");
+	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
+}
+
 int md_make_bsd_partitions (void)
 {
 	FILE *f;
-	int i;
-	int part;	/* next available partition */
+	int i, part;
 	int remain;
 	char isize[20];
 	int maxpart = getmaxpartitions();
@@ -148,10 +267,9 @@ int md_make_bsd_partitions (void)
 	 * Initialize global variables that track  space used on this disk.
 	 * Standard 4.3BSD 8-partition labels always cover whole disk.
 	 */
-	ptstart = 0;
-	ptsize = dlsize;
-	fsdsize = dlsize;	/* actually means `whole disk' */
-	fsptsize = dlsize;	/* netbsd partition -- same as above */
+	ptsize = dlsize - ptstart;
+	fsdsize = dlsize;		/* actually means `whole disk' */
+	fsptsize = dlsize - ptstart;	/* netbsd partition -- same as above */
 	fsdmb = fsdsize / MEG;
 
 	/* Ask for layout type -- standard or special */
@@ -180,22 +298,31 @@ int md_make_bsd_partitions (void)
 	/* Standard fstypes */
 	bsdlabel[A][D_FSTYPE] = T_42BSD;
 	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	/* Conventionally, C is whole disk. */
-	bsdlabel[D][D_FSTYPE] = T_UNUSED;	/* fill out below */
-	bsdlabel[E][D_FSTYPE] = T_UNUSED;
+	/* Conventionally, C is whole disk and D in the non NetBSD bit */
+	bsdlabel[D][D_FSTYPE] = T_UNUSED;
+	bsdlabel[D][D_OFFSET] = 0;
+	bsdlabel[D][D_SIZE]   = ptstart;
+	bsdlabel[E][D_FSTYPE] = T_UNUSED;	/* fill out below */
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
 	bsdlabel[H][D_FSTYPE] = T_UNUSED;
-	part = D;
+
 
 	switch (layoutkind) {
-	case 1: /* standard: a root, b swap, c "unused", d /usr */
-	case 2: /* standard X: a root, b swap (big), c "unused", d /usr */
+	case 1: /* standard: a root, b swap, c "unused", e /usr */
+	case 2: /* standard X: a root, b swap (big), c "unused", e /usr */
 		partstart = ptstart;
 
 		/* Root */
-		/* By convention, NetBSD/pmax uses a 32Mbyte root */
+#if 0
+		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+		/* i386 md code uses: */
+		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
+				   dlcylsize) - partstart;
+#else
+		/* By convention, NetBSD/arm32 uses a 32Mbyte root */
 		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
+#endif
 		bsdlabel[A][D_OFFSET] = partstart;
 		bsdlabel[A][D_SIZE] = partsize;
 		bsdlabel[A][D_BSIZE] = 8192;
@@ -221,7 +348,6 @@ int md_make_bsd_partitions (void)
 		bsdlabel[PART_USR][D_FSIZE] = 1024;
 		strcpy (fsmount[PART_USR], "/usr");
 
-		part = E;
 		break;
 
 	case 3: /* custom: ask user for all sizes */
@@ -229,8 +355,11 @@ int md_make_bsd_partitions (void)
 		/* root */
 		partstart = ptstart;
 		remain = fsdsize - partstart;
-		/* By convention, NetBSD/pmax uses a 32Mbyte root */
-		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
+#if 0
+		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+#endif
+		partsize = NUMSEC (32, MEG/sectorsize,
+				   dlcylsize);
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt (MSG_askfsroot, isize, isize, 20,
 			    remain/sizemult, multname);
@@ -244,7 +373,7 @@ int md_make_bsd_partitions (void)
 		
 		/* swap */
 		remain = fsdsize - partstart;
-		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
+		i = NUMSEC(2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
@@ -298,10 +427,10 @@ int md_make_bsd_partitions (void)
 			remain = fsdsize - partstart;
 			part++;
 		}
-		
 
 		break;
 	}
+
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
@@ -312,8 +441,8 @@ int md_make_bsd_partitions (void)
 		return 0;
 	}
 
-	/* read name for disklabel into global variable.  */
-	get_labelname();
+	/* Disk name */
+	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
 	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
@@ -353,109 +482,14 @@ int md_make_bsd_partitions (void)
 }
 
 
-
-/*
- * md_copy_filesystem() -- MD hook called  after the target
- * disk's filesystems are newfs'ed (install) or /fsck'ed (upgrade)
- * and mounted.
- * Gives MD code an opportunity to copy data from the install-tools
- * boot disk to the  target disk.  (e.g., on i386, put a copy of the 
- * complete install ramdisk onto the hard disk, so it's at least
- * minimally bootable.)
- *
- * On pmax, we're probably running off a release diskimage.
- * Copy the diskimage to the target disk, since it's probably
- * the  same as the  install sets and it makes the target bootable
- * to standalone.  But don't do anything if the target is
- * already  the current root: we'd clobber the files we're trying to copy.
- */
-
-void	md_copy_filesystem (void)
-{
-	/*
-	 * Make sure any binaries in a diskimage /usr.install get copied 
-	 * into the current root's /usr/bin. (may be same as target /usr/bin.)
-	 * The rest of sysinst uses /usr/bin/{tar,ftp,chgrp}.
-	 * We cannot ship those in /usr/bin, because if we did
-	 * an install with target root == current root, they'd
-	 * be be hidden under the  target's /usr filesystem.
-	 *
-	 * Now copy them into the standard  location under /usr.
-	 * (the target /usr is already mounted so they always end
-	 * up in the correct place.
-	 */
-
-	/*  diskimage location of  /usr subset  -- patchable. */
-	const char *diskimage_usr = "/usr.install";
-	int dir_exists;
-
-
-	/* test returns 0  on success */
-	dir_exists = (run_prog("test -d %s", diskimage_usr) == 0);
-	if (dir_exists) {
-		run_prog (
-		  "tar --one-file-system -cf - -C %s . | tar -xpf - -C /usr",
-		  diskimage_usr);
-	}
-
-	if (target_already_root()) {
-
-	  	/* The diskimage /usr subset has served its purpose. */
-	  	/* (but leave it for now, in case of errors.) */
-#if 0
-		run_prog("rm -fr %s 2> /dev/null", diskimage_usr);
-#endif
-		return;
-	}
-
-	/* Copy all the diskimage/ramdisk binaries to the target disk. */
-	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - -C / . |"
-		  "(cd /mnt ; tar --unlink -xpf - )");
-
-	/* Make sure target has a copy of install kernel. */
-	dup_file_into_target("/netbsd");
-
-	/* Copy next-stage profile into target /.profile. */
-	dup_file_into_target ("/tmp/.hdprofile" "/.profile");
-}
-
-
-/*
- * MD hook called after upgrade() or install() hasve finished the 
- * setting up the target disk but immediately before the user is
- * given thte ``disks are now set up'' message, that if power fails,
- * they can continue installation by  booting the target  disk and
- * doing an `upgrade'.
- *
- * On pmax, this is a convenient place to write up-to-date bootblocks 
- * to the target root filesystem.
- */
-void	md_post_newfs (void)
-{
-	/* XXX boot blocks ... */
-	if (target_already_root()) {
-		/* /usr is empty and we must already have bootblocks?*/
-		return;
-	}
-	
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-}
-
-
-
 /* Upgrade support */
 int
 md_update(void)
 {
-	/* stolen from i386 -- untested */
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
 	puts (CL);
 	wrefresh(stdscr);
-
 	return 1;
 }
