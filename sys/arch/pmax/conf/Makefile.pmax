@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.46 1997/05/24 05:56:06 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.47 1997/06/15 01:20:59 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,8 @@ MIPS=	$S/arch/mips
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpmax ${GP}
-CWARNFLAGS=	-Werror
+#	-Wno-uninitialized avoids bogus warnings in cpu_reboot()
+CWARNFLAGS=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
