@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.11 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: if_types.h,v 1.12 1998/03/01 07:13:41 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,8 +40,10 @@
 
 /*
  * Interface types for benefit of parsing media address headers.
- * This list is derived from the SNMP list of ifTypes, currently
- * documented in RFC1573.
+ * This list is derived from the SNMP list of ifTypes, originally
+ * documented in RFC1573, now maintained as:
+ *
+ *	ftp.isi.edu/in-notes/iana/assignments/smi-numbers
  */
 
 #define	IFT_OTHER	0x1		/* none of the following */
@@ -173,5 +175,5 @@
 #define IFT_DOCSCABLEMACLAYER	   0x7f /* CATV Mac Layer */
 #define IFT_DOCSCABLEDOWNSTREAM	   0x80 /* CATV Downstream interface */
 #define IFT_DOCSCABLEUPSTREAM	   0x81 /* CATV Upstream interface */
-
+#define IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
 #endif /* _NET_IF_TYPES_H_ */
