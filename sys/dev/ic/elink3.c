@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.33 1997/07/30 18:26:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1586,6 +1586,7 @@ epbusyeeprom(sc)
 		return 0;
 	}
 
+	j = 0;		/* bad GCC flow analysis */
 	while (i--) {
 		j = bus_space_read_2(iot, ioh, EP_W0_EEPROM_COMMAND);
 		if (j & EEPROM_BUSY)
