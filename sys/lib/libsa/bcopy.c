@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bcopy.c	8.1 (Berkeley) 6/11/93
- *	      $Id: bcopy.c,v 1.1 1994/01/26 02:03:36 brezak Exp $
+ *	      $Id: bcopy.c,v 1.2 1994/02/26 10:29:41 pk Exp $
  */
 
 /*
@@ -50,4 +50,13 @@ bcopy(s1, s2, n)
 		*t++ = *f++;
 		n--;
 	}
+}
+
+void
+memcpy(s1, s2, n)
+	void *s1;
+	const void *s2;
+	unsigned n;
+{
+	bcopy(s2, s1, n);
 }
