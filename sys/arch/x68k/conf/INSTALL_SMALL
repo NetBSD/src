@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.2 2000/02/05 14:35:41 minoura Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.3 2000/04/16 14:17:59 minoura Exp $
 
 #
 #	INSTALL_SMALL -- `small' installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL_SMALL-$Revision: 1.2 $"
+#ident 		"INSTALL_SMALL-$Revision: 1.3 $"
 
 maxusers	8
 
@@ -243,7 +243,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 #ch*	at scsibus? target ? lun ?	# SCSI changer devices
 #uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
-## Serial ports
+## Ports
 #zsc0	at intio0 addr 0xe98000 intr 112
 #zstty0	at zsc0 channel 0		# built-in RS-232C
 #ms0	at zsc0 channel 1		# standard mouse
@@ -253,14 +253,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 #zsc2	at intio0 addr 0xeafc10 intr 114
 #zstty4	at zsc2 channel 0
 #zstty5	at zsc2 channel 1
+#par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
 #pseudo-device	sram			# battery-backuped static RAM
 #pseudo-device	bell			# OPM bell
 
 #xcom0	at mainbus0			# NS16550 fast serial
 #xcom1	at mainbus0
-
-#par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
@@ -288,6 +287,7 @@ ne0	at neptune? addr 0x300			# NE2000 or clone
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
 #pseudo-device	raid	4
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
