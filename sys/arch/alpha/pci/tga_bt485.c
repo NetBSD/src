@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_bt485.c,v 1.4 1996/11/13 21:13:35 cgd Exp $	*/
+/* $NetBSD: tga_bt485.c,v 1.5 1997/04/07 02:01:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

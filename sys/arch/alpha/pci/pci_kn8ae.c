@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn8ae.c,v 1.2 1997/03/12 21:10:19 cgd Exp $	*/
+/* $NetBSD: pci_kn8ae.c,v 1.3 1997/04/07 02:01:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/types.h>
 #include <sys/param.h>

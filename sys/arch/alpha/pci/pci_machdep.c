@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 1997/03/08 19:25:49 cgd Exp $	*/
+/* $NetBSD: pci_machdep.c,v 1.9 1997/04/07 02:01:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,6 +30,8 @@
 /*
  * Machine-specific functions for PCI autoconfiguration.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/types.h>
 #include <sys/param.h>
