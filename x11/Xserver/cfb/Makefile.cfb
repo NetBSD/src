@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.1.1.1 2003/09/12 02:54:06 lukem Exp $
+#	$NetBSD: Makefile.cfb,v 1.2 2003/09/19 18:32:41 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -105,5 +105,5 @@ CPPFLAGS.cfbzerarcC.c=	-DRROP=GXcopy
 CPPFLAGS.cfbzerarcG.c=	-DRROP=GXset
 CPPFLAGS.cfbzerarcX.c=	-DRROP=GXxor
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
