@@ -1,3 +1,5 @@
+/*	$NetBSD: sigpending.S,v 1.2 1995/12/13 22:18:12 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90"*/
-	.asciz "$Id: sigpending.S,v 1.1 1993/11/25 23:39:34 paulus Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90")
+#else
+	RCSID("$NetBSD: sigpending.S,v 1.2 1995/12/13 22:18:12 thorpej Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 SYSCALL(sigpending)
 	movl	sp@(4),a0
