@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1999/05/13 21:58:36 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.50 1999/05/26 22:07:41 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -283,6 +283,10 @@ cpu_swapin(p)
 
 #if VAX410 || VAX43
 /*
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
+ *
  * vmapbuf()/vunmapbuf() only used on some vaxstations without
  * any busadapter with MMU.
  * XXX - This must be reworked to be effective.
