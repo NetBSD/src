@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.43 2002/04/05 16:58:10 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.44 2002/04/09 19:37:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -769,7 +769,8 @@ rpc_sa110_cc_setup(void)
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
 		pte = vtopte(sa110_cc_base + loop);
-		*pte = L2_PTE(kaddr, AP_KR);
+		*pte = L2_S_PROTO | kaddr |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_cache_mode;
 	}
 	sa110_cache_clean_addr = sa110_cc_base;
 	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;

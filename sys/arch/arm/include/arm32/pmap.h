@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2002/04/05 16:58:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45 2002/04/09 19:37:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -222,22 +222,54 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /*
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
  */
-
 #define PMAP_CACHE_VIVT
+
+/*
+ * These macros define the various bit masks in the PTE.
+ *
+ * We use these macros since we use different bits on different processor
+ * models.
+ */
+#define	L1_S_PROT_U		(L1_S_AP(AP_U))
+#define	L1_S_PROT_W		(L1_S_AP(AP_W))
+#define	L1_S_PROT_MASK		(L1_S_PROT_U|L1_S_PROT_W)
+
+#define	L1_S_CACHE_MASK		(L1_S_B|L1_S_C)
+
+#define	L2_L_PROT_U		(L2_AP(AP_U))
+#define	L2_L_PROT_W		(L2_AP(AP_W))
+#define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
+
+#define	L2_S_PROT_U		(L2_AP(AP_U))
+#define	L2_S_PROT_W		(L2_AP(AP_W))
+#define	L2_S_PROT_MASK		(L2_S_PROT_U|L2_S_PROT_W)
+
+#define	L2_CACHE_MASK		(L2_B|L2_C)
+
+/*
+ * These macros return various bits based on kernel/user and protection.
+ * Note that the compiler will usually fold these at compile time.
+ */
+#define	L1_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L1_S_PROT_U : 0) | \
+				 (((pr) & VM_PROT_WRITE) ? L1_S_PROT_W : 0))
+
+#define	L2_L_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_L_PROT_U : 0) | \
+				 (((pr) & VM_PROT_WRITE) ? L2_L_PROT_W : 0))
+
+#define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
+				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : 0))
 
 extern pt_entry_t		pte_cache_mode;
 
-/* PTE construction macros */
-#define	L2_LPTE(p, a, f)	((p) | L2_AP(a) | L2_TYPE_L | (f))
-#define	L2_SPTE(p, a, f)	((p) | L2_AP(a) | L2_TYPE_S | (f))
-#define	L2_PTE(p, a)		L2_SPTE((p), (a), pte_cache_mode)
-#define	L2_PTE_NC(p, a)		L2_SPTE((p), (a), L2_B)
-#define	L2_PTE_NC_NB(p, a)	L2_SPTE((p), (a), 0)
-#define	L1_SECPTE(p, a, f)	((p) | L1_S_AP(a) | (f) \
-				    | L1_TYPE_S | L1_S_IMP)/* XXX IMP */
+/*
+ * The following macros are used to construct prototype PTEs.
+ */
+#define	L1_S_PROTO		(L1_TYPE_S | L1_S_IMP)	/* XXX IMP */
+#define	L1_C_PROTO		(L1_TYPE_C | L1_C_IMP2)	/* XXX IMP */
 
-#define	L1_PTE(p)		((p) | 0x00 | L1_TYPE_C | L1_S_IMP)
-#define	L1_SEC(p, c)		L1_SECPTE((p), AP_KRW, (c))
+#define	L2_L_PROTO		(L2_TYPE_L)
+
+#define	L2_S_PROTO		(L2_TYPE_S)
 
 #endif /* _KERNEL */
 
