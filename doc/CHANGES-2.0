@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.393 2004/08/12 19:35:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.394 2004/08/12 20:06:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6469,3 +6469,8 @@ bin/pax/file_subs.c				1.48-1.50
 
 	Fixes for pax breaking on some archives
 	[cube, ticket #754]
+
+sys/dev/ic/ac97.c				1.54-1.58
+
+	Support for some AC'97 codecs
+	[kent, ticket #758]
