@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.29 1998/10/06 00:23:55 matt Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.29 1998/10/06 00:23:55 matt Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $");
 #endif
 
 
@@ -611,7 +611,7 @@ rarp_process(ii, pkt)
 {
 	struct ether_header *ep;
 	struct hostent *hp;
-	u_int32_t  target_ipaddr;
+	u_int32_t  target_ipaddr = 0;
 	char    ename[MAXHOSTNAMELEN + 1];
 	struct	in_addr in;
 
