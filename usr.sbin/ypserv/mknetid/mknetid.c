@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.5 1997/10/13 03:51:58 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.5.2.1 1997/11/28 09:35:37 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.5 1997/10/13 03:51:58 lukem Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.5.2.1 1997/11/28 09:35:37 mellon Exp $");
 #endif
 
 /*
@@ -68,43 +68,19 @@ struct user {
 	TAILQ_ENTRY(user) hash;		/* links in hash order */
 };
 
-#ifdef HOSTS
-char *HostFile = HOSTS;
-#else
-char *HostFile = _PATH_HOSTS;
-#endif
-
-#ifdef PASSWD
-char *PasswdFile = PASSWD;
-#else
-char *PasswdFile = _PATH_PASSWD;
-#endif
-
-#ifdef GROUP
-char *GroupFile = GROUP;
-#else
-char *GroupFile = _PATH_GROUP;
-#endif
-
-#ifdef NETID
-char *NetidFile = NETID;
-#else
-char *NetidFile = "/etc/netid";
-#endif
-
 #define HASHMAX 55
 
-int	main __P((int, char *[]));
-void	print_passwd_group __P((int, char *));
-void	print_hosts __P((FILE *, char *, char *));
-void	print_netid __P((FILE *, char *));
-void	add_user __P((char *, char *, char *));
-void	add_group __P((char *, char *));
-void	read_passwd __P((FILE *, char *));
-void	read_group __P((FILE *, char *));
-void	usage __P((void));
+void	add_group __P((const char *, const char *));
+void	add_user __P((const char *, const char *, const char *));
 int	hashidx __P((char));
 int	isgsep __P((char));
+int	main __P((int, char *[]));
+void	print_hosts __P((const char *, const char *));
+void	print_netid __P((const char *));
+void	print_passwd_group __P((int, const char *));
+void	read_group __P((const char *));
+void	read_passwd __P((const char *));
+void	usage __P((void));
 
 TAILQ_HEAD(user_list, user);
 struct user_list root;
@@ -117,9 +93,13 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	char *HostFile = _PATH_HOSTS;
+	char *PasswdFile = _PATH_PASSWD;
+	char *GroupFile = _PATH_GROUP;
+	char *NetidFile = "/etc/netid";
+
 	int qflag, ch;
 	char *domain;
-	FILE *pfile, *gfile, *hfile, *mfile;
 
 	TAILQ_INIT(&root);
 	for (ch = 0; ch < HASHMAX; ch++)
@@ -158,34 +138,19 @@ main(argc, argv)
 			usage();
 		}
 	}
-	argc -= optind; argv += optind;
-
-	if (argc != 0)
+	if (argc != optind)
 		usage();
 
 	if (domain == NULL)
 		if (yp_get_default_domain(&domain))
 			errx(1, "Can't get YP domain name");
 
-	if ((pfile = fopen(PasswdFile, "r")) == NULL)
-		err(1, "%s", PasswdFile);
-
-	if ((gfile = fopen(GroupFile, "r")) == NULL)
-		err(1, "%s", GroupFile);
-
-	if ((hfile = fopen(HostFile, "r")) == NULL)
-		err(1, "%s", HostFile);
-
-	mfile = fopen(NetidFile, "r");
-
-	read_passwd(pfile, PasswdFile);
-	read_group(gfile, GroupFile);
+	read_passwd(PasswdFile);
+	read_group(GroupFile);
 
 	print_passwd_group(qflag, domain);
-	print_hosts(hfile, HostFile, domain);
-
-	if (mfile != NULL)
-		print_netid(mfile, NetidFile);
+	print_hosts(HostFile, domain);
+	print_netid(NetidFile);
 
 	exit (0);
 }
@@ -211,7 +176,7 @@ hashidx(key)
 
 void
 add_user(username, uid, gid)
-	char *username, *uid, *gid;
+	const char *username, *uid, *gid;
 {
 	struct user *u;
 	int idx;
@@ -223,10 +188,9 @@ add_user(username, uid, gid)
 		err(1, "can't allocate user");
 	memset(u, 0, sizeof(struct user));
 
-	u->usr_name = (char *)malloc(strlen(username) + 1);
+	u->usr_name = strdup(username);
 	if (u->usr_name == NULL)
 		err(1, "can't allocate user name");
-	strcpy(u->usr_name, username);
 
 	u->usr_uid = atoi(uid);
 	u->usr_gid = atoi(gid);
@@ -238,7 +202,7 @@ add_user(username, uid, gid)
 
 void
 add_group(username, gid)
-	char *username, *gid;
+	const char *username, *gid;
 {
 	struct user *u;
 	int g, idx;
@@ -260,73 +224,64 @@ add_group(username, gid)
 }
 
 void
-read_passwd(pfile, fname)
-	FILE *pfile;
-	char *fname;
+read_passwd(fname)
+	const char *fname;
 {
-	char  line[_POSIX2_LINE_MAX];
-	int line_no = 0, len, colon;
-	char  *p, *k, *u, *g;
+	FILE	*pfile;
+	int	 line_no, colon;
+	size_t	 len;
+	char	*p, *k, *u, *g;
 
-	while (read_line(pfile, line, sizeof(line))) {
-		line_no++;
-		len = strlen(line);
+	if ((pfile = fopen(fname, "r")) == NULL)
+		err(1, "%s", fname);
 
-		if (len <= 1 || line[0] == '#')
+	line_no = 0;
+	while ((p = read_line(pfile, &len, &line_no)) != NULL) {
+		if (len == 0) {
+			warnx("%s line %d: empty line", fname, line_no);
 			continue;
+		}
 
-		/*
-		 * Check if we have the whole line
-		 */ 
-		if (line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			line[len - 1] = '\0';
-
-		p = line;
-		
 		for (k = p, colon = 0; *k != '\0'; k++)
 			if (*k == ':')
 				colon++;
 
-		if (colon > 0) {
-			/* terminate key */
-			for (k = p; *p != ':'; p++);
-			*p++ = '\0';
-
-			/* If it's a YP entry, skip it. */
-			if (strlen(k) == 1)
-				if (*k == '+' || *k == '-')
-					continue;
-		}
-
-		if (colon < 4) {
-			warnx("%s line %d: syntax error",
+		if (colon != 6) {
+			warnx("%s line %d: incorrect number of fields",
 			    fname, line_no);
 			continue;
 		}
 
+		k = p;
+		p = strchr(p, ':');
+		*p++ = '\0';
+
+		/* If it's a YP entry, skip it. */
+		if (*k == '+' || *k == '-')
+			continue;
+
 		/* terminate password */
-		for (; *p != ':'; p++);
+		p = strchr(p, ':');
 		*p++ = '\0';
 
 		/* terminate uid */
-		for (u = p; *p != ':'; p++);
+		u = p;
+		p = strchr(p, ':');
 		*p++ = '\0';
 
 		/* terminate gid */
-		for (g = p; *p != ':'; p++);
+		g = p;
+		p = strchr(p, ':');
 		*p++ = '\0';
 
 		add_user(k, u, g);
 	}
+	(void)fclose(pfile);
 }
 
 int
 isgsep(ch)
-char ch;
+	char ch;
 {
 
 	switch (ch) {
@@ -341,70 +296,56 @@ char ch;
 }
 
 void
-read_group(gfile, fname)
-	FILE *gfile;
-	char *fname;
+read_group(fname)
+	const char *fname;
 {
-	char line[_POSIX2_LINE_MAX];
-	int line_no = 0, len, colon;
-	char *p, *k, *u, *g;
+	FILE	*gfile;
+	int	 line_no, colon;
+	size_t	 len;
+	char	*p, *k, *u, *g;
 
-	while (read_line(gfile, line, sizeof(line))) {
-		line_no++;
-		len = strlen(line);
-		
-		if (len > 1) {
-			if (line[0] == '#') {
-				continue;
-			}
-		} else
+	if ((gfile = fopen(fname, "r")) == NULL)
+		err(1, "%s", fname);
+
+	line_no = 0;
+	while ((p = read_line(gfile, &len, &line_no)) != NULL) {
+		if (len == 0) {
+			warnx("%s line %d: empty line", fname, line_no);
 			continue;
-
-		/*
-		 * Check if we have the whole line
-		 */ 
-		if (line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			line[len - 1] = '\0';
-
-		p = line;
+		}
 
 		for (k = p, colon = 0; *k != '\0'; k++)
 			if (*k == ':')
 				colon++;
 
-		if (colon > 0) {
-			/* terminate key */
-			for (k = p; *p != ':'; p++);
-			*p++ = '\0';
-
-			/* If it's a YP entry, skip it. */
-			if (strlen(k) == 1)
-				if (*k == '+' || *k == '-')
-					continue;
-		}
-
-		if (colon < 3) {
-			warnx("%s line %d: syntax error",
+		if (colon != 3) {
+			warnx("%s line %d: incorrect number of fields",
 			    fname, line_no);
 			continue;
 		}
 
+		/* terminate key */
+		k = p;
+		p = strchr(p, ':');
+		*p++ = '\0';
+
+		if (*k == '+' || *k == '-')
+			continue;
+
 		/* terminate password */
-		for (; *p != ':'; p++);
+		p = strchr(p, ':');
 		*p++ = '\0';
 
 		/* terminate gid */
-		for (g = p; *p != ':'; p++);
+		g = p;
+		p = strchr(p, ':');
 		*p++ = '\0';
 
 		/* get the group list */
 		for (u = p; *u != '\0'; u = p) {
 			/* find separator */
-			for (; isgsep(*p) == 0; p++);
+			for (; isgsep(*p) == 0; p++)
+				;
 
 			if (*p != '\0') {
 				*p = '\0';
@@ -415,12 +356,13 @@ read_group(gfile, fname)
 				add_group(u, g);
 		}
 	}
+	(void)fclose(gfile);
 }
 
 void
 print_passwd_group(qflag, domain)
 	int qflag;
-	char *domain;
+	const char *domain;
 {
 	struct user *u, *p;
 	int i;
@@ -446,111 +388,62 @@ print_passwd_group(qflag, domain)
 }
 
 void
-print_hosts(pfile, fname, domain)
-	FILE *pfile;
-	char *fname, *domain;
+print_hosts(fname, domain)
+	const char *fname, *domain;
 {
-	char line[_POSIX2_LINE_MAX];
-	int line_no = 0, len;
-	char *p, *k, *u;
+	FILE	*hfile;
+	size_t	 len;
+	char	*p, *k, *u;
 
-	while (read_line(pfile, line, sizeof(line))) {
-		line_no++;
-		len = strlen(line);
+	if ((hfile = fopen(fname, "r")) == NULL)
+		err(1, "%s", fname);
 
-		if (len > 1) {
-			if (line[0] == '#') {
-				continue;
-			}
-		} else
+	while ((p = read_line(hfile, &len, NULL)) != NULL) {
+		if (len == 0 || *p == '#')
 			continue;
-
-		/*
-		 * Check if we have the whole line
-		 */ 
-		if (line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			line[len - 1] = '\0';
-
-		p = line;
 
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; isspace(*p) == 0; p++);
-		while (isspace(*p))
+		for (k = p; *p && isspace(*p) == 0; p++)
+			;
+		while (*p && isspace(*p))
 			*p++ = '\0';
 
 		/* Get first hostname. */
-		for (u = p; ; ) {
-			/* Check for EOL */
-			if (*p == '\0')
-				break;
-
-			if (isspace(*p) == 0)
-				p++;
-			else {
-				/* Got it. */
-				*p = '\0';
-				break;
-			}
-		}
+		for (u = p; *p && !isspace(*p); p++)
+			;
+		*p = '\0';
 
 		printf("unix.%s@%s 0:%s\n", u, domain, u);
 	}
+	(void) fclose(hfile);
 }
 
 void
-print_netid(mfile, fname)
-	FILE *mfile;
-	char *fname;
+print_netid(fname)
+	const char *fname;
 {
-	char line[_POSIX2_LINE_MAX];
-	int line_no = 0, len;
-	char *p, *k, *u;
+	FILE	*mfile;
+	size_t	 len;
+	char	*p, *k, *u;
 
-	while (read_line(mfile, line, sizeof(line))) {
-		line_no++;
-		len = strlen(line);
+	mfile = fopen(fname, "r");
+	if (mfile == NULL)
+		return;
 
-		if (len > 1)    
-			if (line[0] == '#')
-				continue;
-		else
+	while ((p = read_line(mfile, &len, NULL)) != NULL) {
+		if (len == 0 || *p == '#')
 			continue;
-
-		/*
-		 * Check if we have the while line
-		 */
-		if (line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			line[len - 1] = '\0';
-
-		p = line;
 
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; isspace(*p) == 0; p++);
-		while (isspace(*p))
+		for (k = p; *p && !isspace(*p); p++)
+			;
+		while (*p && isspace(*p))
 			*p++ = '\0';
 
 		/* Get netid entry. */
-		for (u = p; ; ) {
-			/* Check for EOL */
-			if (*p == '\0')
-				break;
-
-			if (isspace(*p) == 0)
-				p++;
-			else {
-				/* Got it. */
-				*p = '\0';
-				break;
-			}
-		}
+		for (u = p; *p && !isspace(*p); p++)
+			;
+		*p = '\0';
 
 		printf("%s %s\n", k, u);
 	}
