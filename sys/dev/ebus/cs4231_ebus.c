@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.1 2002/03/12 04:48:29 uwe Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.2 2002/03/12 06:00:42 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -46,11 +46,9 @@
 #include <dev/ic/ad1848var.h>
 #include <dev/ic/cs4231var.h>
 
-#define AUDIO_ROM_NAME		"sound"
-
 #ifdef AUDIO_DEBUG
 int cs4231_ebus_debug = 0;
-#define DPRINTF(x)      if (cs4231_ebus_debug) printf x
+#define DPRINTF(x)	if (cs4231_ebus_debug) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -105,7 +103,7 @@ struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_malloc,
 	cs4231_free,
 	cs4231_round_buffersize,
-        NULL,			/* mappage */
+	NULL,			/* mappage */
 	cs4231_get_props,
 	cs4231_ebus_trigger_output,
 	cs4231_ebus_trigger_input,
@@ -193,9 +191,9 @@ cs4231_ebus_attach(parent, self, aux)
 			  BUS_SPACE_MAP_LINEAR,
 			  (bus_space_handle_t *)&ebsc->sc_pdmareg) != 0)
 	{
-	    printf("%s: unable to map playback DMA registers\n",
-		   self->dv_xname);
-	    return;
+		printf("%s: unable to map playback DMA registers\n",
+		       self->dv_xname);
+		return;
 	}
 
 	/* XXX: map capture DMA registers (we just know where they are) */
@@ -205,9 +203,9 @@ cs4231_ebus_attach(parent, self, aux)
 			  BUS_SPACE_MAP_LINEAR,
 			  (bus_space_handle_t *)&ebsc->sc_rdmareg) != 0)
 	{
-	    printf("%s: unable to map capture DMA registers\n",
-		   self->dv_xname);
-	    return;
+		printf("%s: unable to map capture DMA registers\n",
+		       self->dv_xname);
+		return;
 	}
 
 	/* establish interrupt channels */
@@ -494,7 +492,7 @@ cs4231_ebus_intr(arg)
 
 	if (status & INTERRUPT_STATUS) {
 #ifdef AUDIO_DEBUG
-	    	int reason;
+		int reason;
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
 		DPRINTF(("%s: i24: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
@@ -507,13 +505,13 @@ cs4231_ebus_intr(arg)
 	ret = 0;
 
 	if (cs4231_ebus_dma_intr(&sc->sc_capture, ebsc->sc_rdmareg)) {
-	    ++sc->sc_intrcnt.ev_count;
-	    ret = 1;
+		++sc->sc_intrcnt.ev_count;
+		ret = 1;
 	}
 
 	if (cs4231_ebus_dma_intr(&sc->sc_playback, ebsc->sc_pdmareg)) {
-	    ++sc->sc_intrcnt.ev_count;
-	    ret = 1;
+		++sc->sc_intrcnt.ev_count;
+		ret = 1;
 	}
 
 	return (ret);
