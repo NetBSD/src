@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_dump.3,v 1.7 2001/04/06 14:37:27 simonb Exp $
+.\"	$NetBSD: kvm_dump.3,v 1.8 2001/04/25 02:19:49 simonb Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -99,7 +99,7 @@ All functions except
 return 0 on success, -1 on failure. The function
 .Fn kvm_dump_mkheader
 returns the size of the headers present before the actual dumpdata starts. If
-no valid headers were found but no fatal errors occured, 0 is returned. On
+no valid headers were found but no fatal errors occurred, 0 is returned. On
 fatal errors the return value is -1.
 .Pp
 In the case of failure,
