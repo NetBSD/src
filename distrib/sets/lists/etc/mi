@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2002/09/03 15:35:54 abs Exp $
+# $NetBSD: mi,v 1.107 2002/09/17 18:42:59 briggs Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -218,6 +218,7 @@
 ./var/log/secure			etc-sys-log
 ./var/log/sendmail.st			etc-sendmail-log
 ./var/log/wtmp				etc-sys-log
+./var/log/wtmpx				etc-sys-log
 ./var/log/xferlog			etc-netutil-log
 ./var/msgs/bounds			etc-sysutil-log
 ./var/run/utmp				etc-sys-log
