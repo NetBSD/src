@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.2 2002/03/24 23:37:42 bjh21 Exp $
+# $NetBSD: genassym.cf,v 1.3 2002/06/23 00:17:00 thorpej Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -49,8 +49,6 @@ define	TF_SIZE		sizeof(struct trapframe)
 
 define	IF_R15		offsetof(struct irqframe, if_r15)
 define	IF_SIZE		sizeof(struct irqframe)
-
-define	SIGF_SC		offsetof(struct sigframe, sf_sc)
 
 if NECA > 0
 define	M_NEXT		offsetof(struct mbuf, m_next)
