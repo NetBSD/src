@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.4 2002/07/23 09:02:45 lukem Exp $
+# $NetBSD: listpkgs,v 1.5 2003/06/23 09:20:55 dyoung Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
@@ -11,6 +11,8 @@ machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | ${MAKE} -s -f-`}
 arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | ${MAKE} -s -f-`}
 setd=`dirname $0`
 prefix=/
+
+. ./sets.subr
 
 usage() {
 exec 1>&2
@@ -67,20 +69,4 @@ else
 	fi
 fi
 
-(
-	cat $setd/lists/$setname/mi
-	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
-		cat $setd/lists/$setname/ad.${arch}
-	fi
-	if [ -f $setd/lists/$setname/md.${machine} ]; then
-		cat $setd/lists/$setname/md.${machine}
-	fi
-	if [ "$shlib" != "" ]; then
-		if [ -f $setd/lists/$setname/shl.mi ]; then
-			cat $setd/lists/$setname/shl.mi
-		fi
-		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
-			cat $setd/lists/$setname/shl.${shlib}
-		fi
-	fi
-)| awk -- '/^[^#]/ {print $2}' | sort -u
+list_set_files $setname | awk -- '/^[^#]/ {print $2}' | sort -u
