@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.57.2.3 2001/11/14 19:12:36 nathanw Exp $	*/
+/*	$NetBSD: advnops.c,v 1.57.2.4 2002/08/13 01:02:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.57.2.3 2001/11/14 19:12:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.57.2.4 2002/08/13 01:02:36 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -932,12 +932,6 @@ adosfs_pathconf(v)
 	switch (sp->a_name) {
 	case _PC_LINK_MAX:
 		*sp->a_retval = LINK_MAX;
-		return (0);
-	case _PC_MAX_CANON:
-		*sp->a_retval = MAX_CANON;
-		return (0);
-	case _PC_MAX_INPUT:
-		*sp->a_retval = MAX_INPUT;
 		return (0);
 	case _PC_PIPE_BUF:
 		*sp->a_retval = PIPE_BUF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.3.2.2 2002/08/01 03:28:12 nathanw Exp $	 */
+/*	$NetBSD: utmp.c,v 1.3.2.3 2002/08/13 00:59:51 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmp.c,v 1.3.2.2 2002/08/01 03:28:12 nathanw Exp $");
+__RCSID("$NetBSD: utmp.c,v 1.3.2.3 2002/08/13 00:59:51 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <utmp.h>
 

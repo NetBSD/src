@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.32.2.1 2002/08/01 03:28:15 nathanw Exp $	*/
+/*	$NetBSD: res_query.c,v 1.32.2.2 2002/08/13 00:59:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.32.2.1 2002/08/01 03:28:15 nathanw Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.32.2.2 2002/08/13 00:59:52 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -431,8 +431,8 @@ __hostalias(name)
 			for (cp2 = cp1 + 1; *cp2 && !isspace((u_char) *cp2);
 			    ++cp2)
 				;
-			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
-			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);
+			*cp2 = '\0';
+			(void)strlcpy(abuf, cp1, sizeof(abuf));
 			(void)fclose(fp);
 			return (abuf);
 		}

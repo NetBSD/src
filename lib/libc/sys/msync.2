@@ -1,4 +1,4 @@
-.\"	$NetBSD: msync.2,v 1.13.6.3 2002/03/22 20:42:39 nathanw Exp $
+.\"	$NetBSD: msync.2,v 1.13.6.4 2002/08/13 00:59:59 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)msync.2	8.2 (Berkeley) 6/21/94
 .\"
-.Dd October 10, 1997
+.Dd August 11, 2002
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -82,6 +82,12 @@ the following values
 .It Dv MS_SYNC Ta Perform synchronous writes.
 .It Dv MS_INVALIDATE Ta Invalidate cached data after writing.
 .El
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of -1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er

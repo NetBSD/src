@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.33.4.2 2002/04/25 04:01:41 nathanw Exp $	*/
+/*	$NetBSD: getcap.c,v 1.33.4.3 2002/08/13 00:59:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.33.4.2 2002/04/25 04:01:41 nathanw Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.33.4.3 2002/08/13 00:59:50 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -251,7 +252,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	size_t clen;
 	char *record, *cbuf, *newrecord;
 	int tc_not_resolved;
-	char pbuf[_POSIX_PATH_MAX];
+	char pbuf[MAXPATHLEN];
 	
 	_DIAGASSERT(cap != NULL);
 	_DIAGASSERT(len != NULL);

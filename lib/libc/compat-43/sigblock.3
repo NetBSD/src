@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigblock.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigblock.3,v 1.10.12.3 2002/03/22 20:42:04 nathanw Exp $
+.\"	$NetBSD: sigblock.3,v 1.10.12.4 2002/08/13 00:59:49 nathanw Exp $
 .\"
-.Dd June 2, 1993
+.Dd August 10, 2002
 .Dt SIGBLOCK 3
 .Os
 .Sh NAME
@@ -73,6 +73,42 @@ this restriction is silently
 imposed by the system.
 .Sh RETURN VALUES
 The previous set of masked signals is returned.
+.Sh EXAMPLES
+The following example utilizing
+.Fn sigblock :
+.Bd -literal -offset indent
+int omask;
+
+omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+.Ed
+.Pp
+Becomes:
+.Bd -literal -offset indent
+sigset_t set, oset;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, &oset);
+.Ed
+.Pp
+Another use of
+.Fn sigblock
+is to get the current set of masked signals without changing what
+is actually blocked.
+Instead of:
+.Bd -literal -offset indent
+int set;
+
+set = sigblock(0);
+.Ed
+.Pp
+Use the following:
+.Bd -literal -offset indent
+sigset_t set;
+
+sigprocmask(SIG_BLOCK, NULL, &set);
+.Ed
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
