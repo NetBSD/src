@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2000/04/09 00:13:27 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2000/05/29 15:45:15 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -78,7 +78,7 @@ pci_bus_maxdevs(pc, busno)
 	pci_chipset_tag_t pc;
 	int busno;
 {
-	return 31;		/* Probing device 31 hangs the system. */
+	return 32;
 }
 
 pcitag_t
@@ -113,6 +113,20 @@ pci_conf_read(pc, tag, reg)
 	int reg;
 {
 	pcireg_t data;
+	int bus, dev, func;
+	
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	/*
+	 * 2700 hardware wedges on accesses to device 6.
+	 */
+	if (bus == 0 && dev == 6)
+		return 0;
+	/*
+	 * 2800 hardware wedges on accesses to device 31.
+	 */
+	if (bus == 0 && dev == 31)
+		return 0;
 
 	*PCI_CFG_ADDR = 0x80000000 | tag | reg;
 	data = *PCI_CFG_DATA;
