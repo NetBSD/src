@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.20 1999/04/26 09:15:59 hannken Exp $	*/
+/*	$NetBSD: cat.c,v 1.21 1999/07/08 01:56:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.20 1999/04/26 09:15:59 hannken Exp $");
+__RCSID("$NetBSD: cat.c,v 1.21 1999/07/08 01:56:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: cat.c,v 1.20 1999/04/26 09:15:59 hannken Exp $");
 
 int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
-char *filename;
+const char *filename;
 
 int main __P((int, char *[]));
 void cook_args __P((char *argv[]));
