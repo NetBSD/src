@@ -1,9 +1,13 @@
-.\"	$NetBSD: prep,v 1.18 1999/02/19 15:01:26 is Exp $	
+.\"	$NetBSD: prep,v 1.19 1999/06/29 15:44:34 is Exp $	
 .Pp
 You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
 of AmigaDOS, so we will provide instructions for its use.
+.Pp
+Note that NetBSD can't currently be installed on disks with a sector
+size other than 512 bytes (e.g., "640 MB" 90mm MO media). You can, however,
+mount ADOSFS partitions on such MOs.
 .
 .Ss2 "Preparing your hard disk with HDToolBox"
 .
