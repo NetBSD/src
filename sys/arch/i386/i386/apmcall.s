@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.5 1998/12/01 04:30:59 thorpej Exp $ */
+/*	$NetBSD: apmcall.s,v 1.5.4.1 1999/11/09 22:01:22 he Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,7 +49,12 @@
  *	returns nonzero if error returned by APM.
  */
 	.data
+	.globl  _C_LABEL(apm_disable_interrupts)
 apmstatus:	.long 0
+#ifndef APM_DISABLE_INTERRUPTS
+#define APM_DISABLE_INTERRUPTS 1
+#endif
+_C_LABEL(apm_disable_interrupts):	.long APM_DISABLE_INTERRUPTS
 	.text
 NENTRY(apmcall)
 	pushl	%ebp
@@ -78,8 +83,11 @@ NENTRY(apmcall)
 	movl	%cs:BIOSCALLREG_EBX(%ebx),%ebx
 	pushfl
 	movl	$0,apmstatus	/* zero out just in case %ds is hosed? */
-	clc /* clear carry in case BIOS doesn't do it for us on no-error */
+	cmp	$0, _C_LABEL(apm_disable_interrupts)
+	je	nocli
 	cli
+nocli:
+	clc /* clear carry in case BIOS doesn't do it for us on no-error */
 	pushl	%ds
 	/* Now call the 32-bit code segment entry point */
 	lcall	%cs:(_C_LABEL(apminfo)+APM_ENTRY)
