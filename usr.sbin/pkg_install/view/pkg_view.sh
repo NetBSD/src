@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.34 2003/08/27 22:00:06 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.35 2003/08/28 00:57:15 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -222,7 +222,11 @@ while [ $# -gt 0 ]; do
 		if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
 			$doit $chmodprog +x ${pkg_dbdir}/$1/+INSTALL
 			$doit $envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+INSTALL $1 VIEW-INSTALL
-			exit $?
+			ec=$?
+			if [ $ec != 0 ]; then
+				echo "pkg_view: install script returned an error." 1>&2
+				exit $ec
+			fi
 		fi
 		;;
 	check)
