@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.22 2004/01/14 10:28:17 yamt Exp $	*/
+/*	$NetBSD: statd.c,v 1.23 2004/01/14 10:29:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.22 2004/01/14 10:28:17 yamt Exp $");
+__RCSID("$NetBSD: statd.c,v 1.23 2004/01/14 10:29:46 yamt Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -547,6 +547,7 @@ init_file(filename)
 		if (data.size != sizeof(status_info))
 			errx(1, "database corrupted %lu != %lu",
 			    (u_long)data.size, (u_long)sizeof(status_info));
+		memcpy(&status_info, data.data, data.size);
 		break;
 	default:
 		abort();
