@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.31 2000/06/29 08:52:57 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.32 2000/11/21 16:34:52 chs Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -301,7 +301,6 @@ cpu_Debugger()
 }
 
 void db_show_vmstat_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_vnode_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
@@ -321,7 +320,6 @@ struct db_command arm32_db_command_table[] = {
 #endif
 	{ "panic",	db_show_panic_cmd,	0, NULL },
 	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
-	{ "vnode",	db_show_vnode_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
