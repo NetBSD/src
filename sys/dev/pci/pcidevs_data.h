@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.102 1998/12/18 21:08:37 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.103 1998/12/20 16:06:25 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.97 1998/12/18 21:08:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.98 1998/12/20 16:05:32 drochner Exp 
  */
 
 /*
@@ -2540,6 +2540,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ziatech",
 	    "PCI-ST32 Bridge",
+	},
+	{
+	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120,
+	    0,
+	    "Zoran Corporation",
+	    "Video Controller",
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
