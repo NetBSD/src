@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.12 2004/09/04 23:29:57 manu Exp $
+# $NetBSD: XEN,v 1.13 2004/09/23 02:24:22 tls Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,7 +13,6 @@ maxusers	32		# estimated number of users
 #
 options		XEN
 options		DOM0OPS
-options		HZ=50
 
 #options 	I586_CPU
 options 	I686_CPU
@@ -29,7 +28,7 @@ options 	I686_CPU
 options		INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 #options 	SYSTRACE	# system call vetting via systrace(1)
