@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.69.2.4 2004/09/21 13:34:29 skrll Exp $ */
+/* $NetBSD: wskbd.c,v 1.69.2.5 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.4 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.5 2004/11/21 13:54:35 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -962,7 +962,7 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
-		    WSKBDIO_COMPLEXBELL, (caddr_t)&sc->sc_bell_data, flag, p));
+		    WSKBDIO_COMPLEXBELL, (caddr_t)&sc->sc_bell_data, flag, l));
 
 	case WSKBDIO_COMPLEXBELL:
 		if ((flag & FWRITE) == 0)
@@ -970,7 +970,7 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
-		    WSKBDIO_COMPLEXBELL, (caddr_t)ubdp, flag, p));
+		    WSKBDIO_COMPLEXBELL, (caddr_t)ubdp, flag, l));
 
 	case WSKBDIO_SETBELL:
 		if ((flag & FWRITE) == 0)
@@ -1131,7 +1131,7 @@ getkeyrepeat:
 	 */
 /* printf("kbdaccess\n"); */
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-					   flag, p);
+					   flag, l);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (!error && cmd == WSKBDIO_SETMODE && *(int *)data == WSKBD_RAW) {
 		int s = spltty();
