@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 1999/08/06 08:27:30 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 2000/01/06 12:14:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -174,8 +174,19 @@ struct fd_types {
 		{ 2, 18, 2880 , FLP_HD , "1.44MB" },	/* 1.44 Mb	*/
 };
 
+#define	FLP_TYPE_360	0		/* XXX: Please keep these in	*/
+#define	FLP_TYPE_720	1		/* sync with the numbering in	*/
+#define	FLP_TYPE_144	2		/* 'fdtypes' right above!	*/
+
+/*
+ * This is set only once at attach time. The value is determined by reading
+ * the configuration switches and is one of the FLP_TYPE_*'s. 
+ * This is simular to the way Atari handles the _FLP cookie.
+ */
+static short	def_type = 0;		/* Reflects config-switches	*/
+
 #define	FLP_DEFTYPE	1		/* 720Kb, reasonable default	*/
-#define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? FLP_DEFTYPE : DISKPART(dev) - 1 )
+#define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? def_type : DISKPART(dev) - 1 )
 
 typedef void	(*FPV) __P((void *));
 
@@ -229,6 +240,25 @@ extern __inline__ u_char read_dmastat(void)
 	DMA->dma_mode = FDC_CS | DMA_SCREG;
 	return(DMA->dma_stat);
 }
+
+/*
+ * Config switch stuff. Used only for the floppy type for now. That's
+ * why it's here...
+ * XXX: If needed in more places, it should be moved to it's own include file.
+ * Note: This location _must_ be read as an u_short. Failure to do so
+ *       will return garbage!
+ */
+static u_short rd_cfg_switch __P((void));
+static u_short rd_cfg_switch(void)
+{
+	return(*((u_short*)AD_CFG_SWITCH));
+}
+
+/*
+ * Switch definitions.
+ * Note: ON reads as a zero bit!
+ */
+#define	CFG_SWITCH_NOHD	0x4000
 
 /*
  * Autoconfig stuff....
@@ -341,9 +371,18 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct fd_softc	*sc;
-	struct fd_types *type = &fdtypes[FLP_DEFTYPE]; /* XXX: switches??? */
+	struct fd_types *type;
+	u_short		swtch;
 
 	sc = (struct fd_softc *)dp;
+
+	/*
+	 * Find out if an Ajax chip might be installed. Set the default
+	 * floppy type accordingly.
+	 */
+	swtch    = rd_cfg_switch();
+	def_type = (swtch & CFG_SWITCH_NOHD) ? FLP_TYPE_720 : FLP_TYPE_144;
+	type     = &fdtypes[def_type];
 
 	printf(": %s %d cyl, %d head, %d sec\n", type->descr,
 		type->nblocks / (type->nsectors * type->nheads), type->nheads,
