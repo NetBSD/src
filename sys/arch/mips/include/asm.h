@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13.10.2 1998/10/30 08:33:37 nisimura Exp $	*/
+/*	$NetBSD: asm.h,v 1.13.10.3 1998/12/06 21:02:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,6 +131,20 @@
 #else
 #define AENT(x)
 #endif
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced
+ * (ELF only, and thus, no leading underscores).
+ */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
+#endif /* __ELF__ */
 
 /*
  * LEAF
