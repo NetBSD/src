@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.70 2002/03/23 09:50:54 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.71 2002/04/02 20:19:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.70 2002/03/23 09:50:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.71 2002/04/02 20:19:59 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -325,8 +325,7 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION,
 	  NULL,
-	  coredump_elf32,
-	  sysctl_linux },
+	  coredump_elf32 },
 #endif
 
 #ifdef COMPAT_IRIX 
@@ -429,8 +428,7 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf64_copyargs,
 	  NULL,
-	  coredump_elf64,
-	  sysctl_linux },
+	  coredump_elf64 },
 #endif
 
 #ifdef COMPAT_SVR4
