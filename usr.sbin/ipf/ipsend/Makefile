@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.5 2004/04/01 16:09:06 tron Exp $
-
-NOGCCERROR=	# defined
+#	$NetBSD: Makefile,v 1.19.2.5.2.1 2005/02/06 07:45:03 jmc Exp $
 
 .include <bsd.own.mk>
 
