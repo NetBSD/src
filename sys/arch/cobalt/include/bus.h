@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2001/07/19 15:32:12 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.4.1 2001/11/13 22:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -599,6 +599,7 @@ struct cobalt_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct proc	*_dm_proc;	/* proc that owns this mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
