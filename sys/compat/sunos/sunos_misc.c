@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.33 1994/10/25 23:03:27 deraadt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.34 1994/11/14 07:33:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -374,27 +374,34 @@ sunos_mmap(p, uap, retval)
 
 	if ((SCARG(uap, flags) & SUNOS__MAP_NEW) == 0)
 		return (EINVAL);
-	SCARG(uap, flags) &= ~SUNOS__MAP_NEW;
 
-	if ((SCARG(uap, flags) & MAP_FIXED) == 0 &&
-		SCARG(uap, addr) != 0 &&
-		SCARG(uap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(uap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
+	SCARG(&ouap, addr) = SCARG(uap, addr);
+
+	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
+	    SCARG(&ouap, addr) != 0 &&
+	    SCARG(&ouap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+
+	SCARG(&ouap, len) = SCARG(uap, len);
+	SCARG(&ouap, prot) = SCARG(uap, prot);
+	SCARG(&ouap, fd) = SCARG(uap, fd);
+	SCARG(&ouap, pos) = SCARG(uap, pos);
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
 	fdp = p->p_fd;
-	if ((unsigned)SCARG(uap, fd) < fdp->fd_nfiles &&		/*XXX*/
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) != NULL &&		/*XXX*/
+	if ((unsigned)SCARG(&ouap, fd) < fdp->fd_nfiles &&		/*XXX*/
+	    (fp = fdp->fd_ofiles[SCARG(&ouap, fd)]) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    iszerodev(vp->v_rdev)) {					/*XXX*/
-		SCARG(uap, flags) |= MAP_ANON;
-		SCARG(uap, fd) = -1;
+		SCARG(&ouap, flags) |= MAP_ANON;
+		SCARG(&ouap, fd) = -1;
 	}
 
-	return (compat_43_mmap(p, (struct ommap_args *)uap, retval));
+	return (mmap(p, &ouap, retval));
 }
 
 #define	MC_SYNC		1
