@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.82 2003/09/22 04:47:43 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.83 2003/10/02 07:19:37 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.82 2003/09/22 04:47:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.83 2003/10/02 07:19:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3297,6 +3297,7 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 {
 	u_int8_t nxt = nxt0 & 0xff;
 	struct sockaddr_in6 *sin6;
+	struct in6_addr in6;
 
 	if (nxt != IPPROTO_IPV6)
 		return 0;
@@ -3306,7 +3307,10 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:
 		sin6 = ((struct sockaddr_in6 *)&sav->sah->saidx.dst);
-		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6->sin6_addr))
+		in6 = sin6->sin6_addr;
+		if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
+			in6.s6_addr16[1] = htons(sin6->sin6_scope_id) & 0xffff;
+		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &in6))
 			return 0;
 		break;
 	case AF_INET:
