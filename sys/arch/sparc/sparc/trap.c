@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.7 1993/11/27 01:49:20 deraadt Exp $
+ * $Id: trap.c,v 1.8 1993/12/01 20:59:59 pk Exp $
  */
 
 #include <sys/param.h>
@@ -759,6 +759,10 @@ printf("%x%s", args.i[asdf], (asdf+1<i) ? ", " : "");
 	}
 #ifdef DEBUG_SCALL
 printf(") = ");
+#endif
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
