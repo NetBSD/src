@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.18 2003/01/01 00:10:16 thorpej Exp $ */
+/*	$NetBSD: bi.c,v 1.19 2005/02/04 02:10:36 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.18 2003/01/01 00:10:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.19 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.18 2003/01/01 00:10:16 thorpej Exp $");
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>
 
-static int bi_print __P((void *, const char *));
+static int bi_print(void *, const char *);
 
 struct bi_list bi_list[] = {
 	{BIDT_MS820, DT_HAVDRV, "ms820"},

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.13 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.14 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.13 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.14 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,44 +83,44 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.13 2004/08/30 15:05:19 drochner Exp $
 
 struct ppb_softc;
 
-static int  ppb_cardbus_match   __P((struct device *, struct cfdata *, void *));
-static void ppb_cardbus_attach  __P((struct device *, struct device *, void *));
-static int  ppb_cardbus_detach  __P((struct device * self, int flags));
-/*static*/ void ppb_cardbus_setup   __P((struct ppb_softc * sc));
-/*static*/ int  ppb_cardbus_enable  __P((struct ppb_softc * sc));
-/*static*/ void ppb_cardbus_disable __P((struct ppb_softc * sc));
-static int  ppb_activate        __P((struct device *self, enum devact act));
-int rppbprint        __P((void *aux, const char *pnp));
-int rbus_intr_fixup  __P((pci_chipset_tag_t pc, int minbus,
-			  int maxbus, int line));
-void rbus_do_header_fixup __P((pci_chipset_tag_t pc, pcitag_t tag,
-			      void *context));
+static int  ppb_cardbus_match(struct device *, struct cfdata *, void *);
+static void ppb_cardbus_attach(struct device *, struct device *, void *);
+static int  ppb_cardbus_detach(struct device * self, int flags);
+/*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
+/*static*/ int  ppb_cardbus_enable(struct ppb_softc * sc);
+/*static*/ void ppb_cardbus_disable(struct ppb_softc * sc);
+static int  ppb_activate(struct device *self, enum devact act);
+int rppbprint(void *aux, const char *pnp);
+int rbus_intr_fixup(pci_chipset_tag_t pc, int minbus,
+			  int maxbus, int line);
+void rbus_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
+			      void *context);
 
-static void rbus_pci_phys_allocate __P((pci_chipset_tag_t pc,
-					pcitag_t          tag,
-					void             *context));
+static void rbus_pci_phys_allocate(pci_chipset_tag_t pc,
+					pcitag_t tag,
+					void *context);
 
-static int rbus_do_phys_allocate __P((pci_chipset_tag_t pc,
-				      pcitag_t     tag,
+static int rbus_do_phys_allocate(pci_chipset_tag_t pc,
+				      pcitag_t tag,
 				      int mapreg,
-				      void        *ctx,
+				      void *ctx,
 				      int type,
 				      bus_addr_t *addr,
-				      bus_size_t size));
+				      bus_size_t size);
 
-static void rbus_pci_phys_countspace __P((pci_chipset_tag_t pc,
-					  pcitag_t          tag,
-					  void             *context));
+static void rbus_pci_phys_countspace(pci_chipset_tag_t pc,
+					  pcitag_t tag,
+					  void *context);
 
-static int rbus_do_phys_countspace __P((pci_chipset_tag_t pc,
-					pcitag_t     tag,
+static int rbus_do_phys_countspace(pci_chipset_tag_t pc,
+					pcitag_t tag,
 					int mapreg,	
-					void        *ctx,
+					void *ctx,
 					int type,
 					bus_addr_t *addr,
-					bus_size_t size));
+					bus_size_t size);
 
-unsigned int rbus_round_up __P((unsigned int size, unsigned int min));
+unsigned int rbus_round_up(unsigned int size, unsigned int min);
 
 
 struct ppb_cardbus_softc {

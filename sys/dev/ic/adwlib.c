@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.31 2003/11/02 11:07:44 wiz Exp $        */
+/* $NetBSD: adwlib.c,v 1.32 2005/02/04 02:10:36 perry Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.31 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.32 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,26 +79,23 @@ __KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.31 2003/11/02 11:07:44 wiz Exp $");
 
 /* Static Functions */
 
-int AdwRamSelfTest __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
-int AdwLoadMCode __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
-								u_int8_t));
-int AdwASC3550Cabling __P((bus_space_tag_t, bus_space_handle_t, ADW_DVC_CFG *));
-int AdwASC38C0800Cabling __P((bus_space_tag_t, bus_space_handle_t,
-								ADW_DVC_CFG *));
-int AdwASC38C1600Cabling __P((bus_space_tag_t, bus_space_handle_t,
-								ADW_DVC_CFG *));
+int AdwRamSelfTest(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+int AdwLoadMCode(bus_space_tag_t, bus_space_handle_t, u_int16_t *, u_int8_t);
+int AdwASC3550Cabling(bus_space_tag_t, bus_space_handle_t, ADW_DVC_CFG *);
+int AdwASC38C0800Cabling(bus_space_tag_t, bus_space_handle_t, ADW_DVC_CFG *);
+int AdwASC38C1600Cabling(bus_space_tag_t, bus_space_handle_t, ADW_DVC_CFG *);
 
-static u_int16_t AdwGetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
-     							ADW_EEPROM *));
-static void AdwSetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
-					                 ADW_EEPROM *));
-static u_int16_t AdwReadEEPWord __P((bus_space_tag_t, bus_space_handle_t, int));
-static void AdwWaitEEPCmd __P((bus_space_tag_t, bus_space_handle_t));
+static u_int16_t AdwGetEEPROMConfig(bus_space_tag_t, bus_space_handle_t,
+     							ADW_EEPROM *);
+static void AdwSetEEPROMConfig(bus_space_tag_t, bus_space_handle_t,
+					                 ADW_EEPROM *);
+static u_int16_t AdwReadEEPWord(bus_space_tag_t, bus_space_handle_t, int);
+static void AdwWaitEEPCmd(bus_space_tag_t, bus_space_handle_t);
 
-static void AdwInquiryHandling __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+static void AdwInquiryHandling(ADW_SOFTC *, ADW_SCSI_REQ_Q *);
 
-static void AdwSleepMilliSecond __P((u_int32_t));
-static void AdwDelayMicroSecond __P((u_int32_t));
+static void AdwSleepMilliSecond(u_int32_t);
+static void AdwDelayMicroSecond(u_int32_t);
 
 
 /*

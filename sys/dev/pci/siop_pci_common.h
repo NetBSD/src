@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.h,v 1.4 2002/04/23 20:41:19 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.5 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -44,7 +44,7 @@ struct siop_product_desc {
 	int 	ram_size; /* size of RAM, if appropriate */
 };
 
-const struct siop_product_desc * siop_lookup_product __P((u_int32_t, int));
+const struct siop_product_desc * siop_lookup_product(u_int32_t, int);
 
 /* Driver internal state */
 struct siop_pci_common_softc {
@@ -54,7 +54,7 @@ struct siop_pci_common_softc {
 	const struct siop_product_desc *sc_pp; /* Adapter description */
 };
 
-int siop_pci_attach_common __P((struct siop_pci_common_softc *,
+int siop_pci_attach_common(struct siop_pci_common_softc *,
 	struct siop_common_softc *, struct pci_attach_args *,
-	int (*) __P((void *))));
-void siop_pci_reset __P((struct siop_common_softc *));
+	int (*)(void *));
+void siop_pci_reset(struct siop_common_softc *);

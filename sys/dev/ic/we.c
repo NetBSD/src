@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $	*/
+/*	$NetBSD: we.c,v 1.6 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.6 2005/02/04 02:10:37 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,21 +90,21 @@ __KERNEL_RCSID(0, "$NetBSD: we.c,v 1.5 2003/01/15 22:20:07 bouyer Exp $");
 #define	bus_space_write_region_stream_2	bus_space_write_region_2
 #endif
 
-static void	we_set_media __P((struct we_softc *, int));
+static void	we_set_media(struct we_softc *, int);
 
-static void	we_media_init __P((struct dp8390_softc *));
+static void	we_media_init(struct dp8390_softc *);
 
-static int	we_mediachange __P((struct dp8390_softc *));
-static void	we_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
+static int	we_mediachange(struct dp8390_softc *);
+static void	we_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
-static void	we_recv_int __P((struct dp8390_softc *));
-static void	we_init_card __P((struct dp8390_softc *));
-static int	we_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-static int	we_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-static void	we_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-static int	we_test_mem __P((struct dp8390_softc *));
+static void	we_recv_int(struct dp8390_softc *);
+static void	we_init_card(struct dp8390_softc *);
+static int	we_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+static int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+static void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+static int	we_test_mem(struct dp8390_softc *);
 
-static __inline void we_readmem __P((struct we_softc *, int, u_int8_t *, int));
+static __inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 /*
  * Delay needed when switching 16-bit access to shared memory.

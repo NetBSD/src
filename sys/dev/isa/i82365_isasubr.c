@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.34 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.35 2005/02/04 02:10:40 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.34 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.35 2005/02/04 02:10:40 perry Exp $");
 
 #define	PCICISADEBUG
 
@@ -126,8 +126,8 @@ int	pcicsubr_debug = 0;
  * just use socket 0
  */
 
-void pcic_isa_probe_interrupts __P((struct pcic_softc *, struct pcic_handle *));
-static int pcic_isa_count_intr __P((void *));
+void pcic_isa_probe_interrupts(struct pcic_softc *, struct pcic_handle *);
+static int pcic_isa_count_intr(void *);
 
 static int
 pcic_isa_count_intr(arg)
@@ -461,7 +461,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*fct) __P((void *));
+	int (*fct)(void *);
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;

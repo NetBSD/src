@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.22 2004/03/10 22:02:53 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.23 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.22 2004/03/10 22:02:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.23 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 	struct siop_pci_common_softc *pci_sc;
 	struct siop_common_softc *siop_sc;
 	struct pci_attach_args *pa;
-	int (*intr) __P((void*));
+	int (*intr)(void*);
 
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.8 2002/10/02 16:34:04 thorpej Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.9 2005/02/04 02:10:43 perry Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.8 2002/10/02 16:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.9 2005/02/04 02:10:43 perry Exp $");
 
 #include "midi.h"
 
@@ -29,8 +29,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.8 2002/10/02 16:34:04 thorpej Exp $
 
 #include <dev/ic/mpuvar.h>
 
-int	mpu_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	mpu_isapnp_attach __P((struct device *, struct device *, void *));
+int	mpu_isapnp_match(struct device *, struct cfdata *, void *);
+void	mpu_isapnp_attach(struct device *, struct device *, void *);
 
 struct mpu_isapnp_softc {
 	struct device sc_dev;

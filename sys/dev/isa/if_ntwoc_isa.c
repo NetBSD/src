@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.9 2005/02/04 02:10:40 perry Exp $	*/
 /* 
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $
+ * $Id: if_ntwoc_isa.c,v 1.9 2005/02/04 02:10:40 perry Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.9 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Ex
 #endif
 
 #if __NetBSD_Version__ >= 104160000
-static	void ntwoc_isa_config_interrupts __P((struct device *));
+static	void ntwoc_isa_config_interrupts(struct device *);
 #else
 #define	SCA_BASECLOCK	9830400
 #endif
@@ -84,16 +84,16 @@ struct ntwoc_isa_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_isa_probe __P((struct device *, struct cfdata *, void *));
-static  void ntwoc_isa_attach __P((struct device *, struct device *, void *));
+static  int ntwoc_isa_probe(struct device *, struct cfdata *, void *);
+static  void ntwoc_isa_attach(struct device *, struct device *, void *);
 
-static	void ntwoc_isa_clock_callback __P((void *, int, int));
-static	void ntwoc_isa_dtr_callback __P((void *, int, int));
-static	int ntwoc_isa_intr __P((void *));
-static	void ntwoc_isa_get_clock __P((struct sca_port *, u_int8_t, u_int8_t,
-    u_int8_t, u_int8_t));
+static	void ntwoc_isa_clock_callback(void *, int, int);
+static	void ntwoc_isa_dtr_callback(void *, int, int);
+static	int ntwoc_isa_intr(void *);
+static	void ntwoc_isa_get_clock(struct sca_port *, u_int8_t, u_int8_t,
+    u_int8_t, u_int8_t);
 static	void ntwoc_isa_setup_memory(struct sca_softc *sc);
-static	void ntwoc_isa_shutdown __P((void *sc));
+static	void ntwoc_isa_shutdown(void *sc);
 
 CFATTACH_DECL(ntwoc_isa, sizeof(struct ntwoc_isa_softc),
     ntwoc_isa_probe, ntwoc_isa_attach, NULL, NULL);
