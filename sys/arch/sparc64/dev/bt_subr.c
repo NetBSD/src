@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.2 1998/08/13 02:10:40 eeh Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.3 1998/09/11 00:04:16 eeh Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -73,11 +73,12 @@ bt_getcmap(p, cm, cmsize)
 	union bt_cmap *cm;
 	int cmsize;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int i, start, count;
+	u_char *cp;
 
-	start = fuword(&p->index);
-	count = fuword(&p->count);
+	if (copyin(&p->index, &start, sizeof(start)) ||
+	    copyin(&p->count, &count, sizeof(count)))
+		return (EFAULT);
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
