@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.342 2000/05/25 01:34:18 mason Exp $
+#	$NetBSD: GENERIC,v 1.343 2000/05/28 02:42:16 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.342 $"
+#ident 		"GENERIC-$Revision: 1.343 $"
 
 maxusers	32		# estimated number of users
 
@@ -557,7 +557,7 @@ cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
