@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.2 2003/05/05 02:47:42 dbj Exp $
+#	$NetBSD: Makefile.mbr,v 1.3 2003/05/05 13:38:23 hubertf Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -26,8 +26,8 @@ CLEANFILES+= ${PROG}.tmp
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
-	@ set -- $$( ${NM} -t x ${PROG}.tmp | grep '\<mbr_space\>' ); \
-		echo "#### There are $$((0x$$1)) free bytes in ${PROG}"
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' | sed 's/^0*//'  ); \
+		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
 
