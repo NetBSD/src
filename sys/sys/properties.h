@@ -1,6 +1,6 @@
-/*	$NetBSD: properties.h,v 1.4 2003/07/04 07:42:04 itojun Exp $	*/
+/*	$NetBSD: properties.h,v 1.5 2005/02/26 22:25:34 perry Exp $	*/
 
-/*  
+/*
  * Copyright (c) 2001 Eduardo Horvath.
  * All rights reserved.
  *
