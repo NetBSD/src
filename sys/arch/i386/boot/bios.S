@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.7 1995/01/16 02:50:33 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.8 1995/01/18 15:09:55 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -74,7 +74,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
-
 	pushl	%ebx
 	pushl	%ecx
 	pushl	%edx
@@ -113,7 +112,6 @@ ENTRY(biosread)
 	popl	%ecx
 	popl	%ebx
 	popl	%ebp
-
 	ret
 
 
@@ -271,10 +269,10 @@ ENTRY(ischar)
 ENTRY(get_diskinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%es
 	pushl	%ebx
 	pushl	%ecx
 	pushl	%edx
+	pushl	%es
 
 	movb	0x8(%ebp), %dl		# diskinfo(drive #)
 
@@ -312,10 +310,10 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
+	popl	%es
 	popl	%edx
 	popl	%ecx
 	popl	%ebx
-	popl	%es
 	popl	%ebp
 	ret
 
@@ -337,25 +335,24 @@ ENTRY(memsize)
 	movl	8(%ebp), %ebx
 
 	call	EXT(prot_to_real)		# enter real mode
+	sti
 
 	testb	%bl, %bl
 	data32
 	jnz	xext
 	
-	sti
 	int	$0x12
-	cli
 	data32
 	jmp	xdone
 
-xext:	movb	$0x88, %ah
-	sti
+xext:
+	movb	$0x88, %ah
 	int	$0x15
-	cli
 
 xdone:
 	movl	%eax, %ebx
 
+	cli
 	data32
 	call	EXT(real_to_prot)
 
