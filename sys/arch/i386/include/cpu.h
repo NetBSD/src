@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2000/03/29 03:54:03 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62 2000/04/21 18:37:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,6 +120,8 @@ struct cpu_cpuid_nameclass {
 };
 
 #ifdef _KERNEL
+extern int biosbasemem;
+extern int biosextmem;
 extern int cpu;
 extern int cpu_class;
 extern int cpu_feature;

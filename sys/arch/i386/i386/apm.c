@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.46 2000/03/15 09:30:11 fvdl Exp $ */
+/*	$NetBSD: apm.c,v 1.47 2000/04/21 18:37:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -906,7 +906,6 @@ apmattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	extern int biosbasemem;
 	struct apm_softc *apmsc = (void *)self;
 	struct bioscallregs regs;
 	int error, apm_data_seg_ok;
