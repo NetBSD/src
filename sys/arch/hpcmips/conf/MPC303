@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.11 2002/01/27 14:18:11 takemura Exp $
+# 	$NetBSD: MPC303,v 1.12 2002/03/05 16:16:45 simonb Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	16
 
@@ -51,7 +51,6 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
