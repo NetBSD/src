@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.33 1995/02/10 17:46:55 cgd Exp $
+#	$Id: Makefile.inc,v 1.34 1995/03/20 14:45:54 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -8,52 +8,15 @@ SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strftime.c strmode.c strsignal.c strtok.c strxfrm.c \
 	__strerror.c __strsignal.c
 
-.if   (${MACHINE_ARCH} == "m68k")
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.S memset.S \
-	rindex.S strcat.c strcmp.S strcpy.S strcspn.c strlen.S \
-	strncat.c strncmp.S strncpy.S strpbrk.c strsep.c \
-	strspn.c strstr.c swab.S
-SRCS+=	memcpy.S memmove.S strchr.S strrchr.S
-.elif (${MACHINE_ARCH} == "i386")
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S memset.S \
-	rindex.S strcat.S strcmp.S strcpy.S strcspn.c strlen.S \
-	strncat.c strncmp.S strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.S
-SRCS+=	memcpy.S memmove.S strchr.S strrchr.S
-.elif (${MACHINE_ARCH} == "ns32k")
-SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
-	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
-	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
-#SRCS+=	memmove.c strchr.c strrchr.c
-.elif (${MACHINE_ARCH} == "tahoe")
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.c memchr.c memcmp.S memset.c \
-	rindex.c strcat.S strcmp.S strcpy.S strcspn.c strlen.S \
-	strncat.S strncmp.S strncpy.S strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
-SRCS+=	memmove.S
-.elif (${MACHINE_ARCH} == "vax")
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.c memchr.S memcmp.S memset.S \
-	rindex.S strcat.S strcmp.S strcpy.S strcspn.S strlen.S \
-	strncat.S strncmp.S strncpy.S strpbrk.S strsep.S \
-	strspn.S strstr.S swab.c
-SRCS+=	memmove.S strchr.S strrchr.S
-.elif (${MACHINE_ARCH} == "sparc")
-SRCS+=	bcmp.c bcopy.c bzero.S ffs.S index.c memchr.c memcmp.c memset.c \
-	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.S \
-	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
-.elif (${MACHINE_ARCH} == "mips")
-SRCS+=	bcmp.S bcopy.S bzero.S  ffs.S index.S memchr.c memcmp.c memset.c \
-	rindex.S strcat.c strcmp.S strcpy.c strcspn.c strlen.S \
-	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
-.elif (${MACHINE_ARCH} == "alpha")
-SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
-	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
-	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
-.endif
+# machine-dependent net sources
+# m-d Makefile.inc must include sources for:
+#	bcmp() bcopy() bzero() ffs() index() memchr() memcmp() memset()
+#	rindex() strcat() strcmp() strcpy() strcspn() strlen()
+#	strncat() strncmp() strncpy() strpbrk() strsep()
+#	strspn() strstr() swav()
+#	memcpy() memmove() strchr() strrchr()
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
 
 # if no machine specific memmove(3), build one out of bcopy(3).
 .if empty(SRCS:Mmemmove.S)
