@@ -1,14 +1,9 @@
-/*	$NetBSD: conf.c,v 1.35 1995/04/08 04:42:01 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1995/04/10 05:42:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
- * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
- *  The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	7.9 (Berkeley) 5/28/91
+ *	@(#)conf.c	8.2 (Berkeley) 11/14/93
  */
 
 #include <sys/param.h>
@@ -47,774 +42,184 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
-
-/*
- * You may notice that this file uses the traditional method for
- * initializing the bdevsw and cdevsw entries.  I don't like the
- * way hp300/conf.c does it because the macros hide way too much
- * important information.  (In fact, some using it have suffered
- * from incorrect *devsw entries as a result 8^) -gwr
- */
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
-/*
- * macros for function declarations
- */
-#define decl_open(f)     int f __P((dev_t, int, int, struct proc *))
-#define decl_close(f)    int f __P((dev_t, int, int, struct proc *))
-#define decl_read(f)     int f __P((dev_t, struct uio *, int))
-#define decl_write(f)    int f __P((dev_t, struct uio *, int))
-#define decl_ioctl(f)    int f __P((dev_t dev, u_long cmd, caddr_t data, \
-				     int fflag, struct proc *p))
-#define	decl_stop(f)     int f __P((struct tty *, int))
-#define	decl_reset(f)    int f __P((int))
-#define	decl_select(f)   int f __P((dev_t, int, struct proc*))
-#define decl_mmap(f)     int f __P((/*dev_t, int, int*/))
-#define	decl_strategy(f) void f __P((struct buf *))
-#define	decl_dump(f)     int f ()
-#define	decl_psize(f)    int f __P((dev_t))
-
-
-/*
- * macros for functions that do nothing (not NULL pointers)
- */
-#define	null_open     (decl_open((*)))    nullop
-#define	null_close    (decl_close((*)))   nullop
-#define	null_read     (decl_read((*)))    nullop
-#define	null_write    (decl_write((*)))   nullop
-#define	null_stop     (decl_stop((*)))    nullop
-#define	null_reset    (decl_reset((*)))   nullop
-
-
-/*
- * macros for functions not supported by a device
- */
-#define	nsup_open     (decl_open((*)))    enodev
-#define	nsup_close    (decl_close((*)))   enodev
-#define	nsup_read     (decl_read((*)))    enodev
-#define	nsup_write    (decl_write((*)))   enodev
-#define nsup_ioctl    (decl_ioctl((*)))   enoioctl
-#define	nsup_stop     (decl_stop((*)))    enodev
-#define	nsup_reset    (decl_reset((*)))   enodev
-#define	nsup_ttys     (struct tty**) 0
-#define	nsup_select   (decl_select((*)))  enodev
-#define	nsup_mmap     (decl_mmap((*)))     0
-#define	nsup_strategy (decl_strategy((*))) 0
-#define	nsup_dump     (decl_dump((*)))    enodev
-#define	nsup_psize    (decl_psize((*)))    0
-
-
-/*
- * macros for unconfigured device switch records
- */
-#define	ndef_open     (decl_open((*)))    enxio
-#define	ndef_close    (decl_close((*)))   enxio
-#define	ndef_read     (decl_read((*)))    enxio
-#define	ndef_write    (decl_write((*)))   enxio
-#define ndef_ioctl    (decl_ioctl((*)))   enxio
-#define	ndef_stop     (decl_stop((*)))    enxio
-#define	ndef_reset    (decl_reset((*)))   enxio
-#define	ndef_ttys     (struct tty**) 0
-#define	ndef_select   (decl_select((*)))  enxio
-#define	ndef_mmap     (decl_mmap((*)))     0
-#define	ndef_strategy (decl_strategy((*))) 0
-#define	ndef_dump     (decl_dump((*)))    enxio
-#define	ndef_psize    (decl_psize((*)))    0
-
-
-/*
- * Block device declarations
- */
-
-/* device not configured */
-#define	bdev_notdef { \
-	ndef_open, \
-	ndef_close, \
-	ndef_strategy, \
-	ndef_ioctl, \
-	ndef_dump, \
-	ndef_psize, \
-	0 }
-
-/* scsi disk */
-#include "sd.h"
-#if NSD > 0
-decl_open(sdopen);
-decl_close(sdclose);
-decl_strategy(sdstrategy);
-decl_ioctl(sdioctl);
-decl_dump(sddump);
-decl_psize(sdsize);
-#else
-#define	sdopen		ndef_open
-#define	sdclose		ndef_close
-#define	sdstrategy	ndef_strategy
-#define	sdioctl		ndef_ioctl
-#define	sddump		ndef_dump
-#define	sdsize		ndef_psize
-#endif
-
-/* scsi tape */
-#include "st.h"
-#if NST > 0
-decl_open(stopen);
-decl_close(stclose);
-decl_strategy(ststrategy);
-decl_ioctl(stioctl);
-decl_dump(stdump);
-decl_psize(stsize);
-#else
-#define	stopen		ndef_open
-#define	stclose		ndef_close
-#define	ststrategy	ndef_strategy
-#define	stioctl		ndef_ioctl
-#define	stdump		ndef_dump
-#endif
-
-/* scsi cd-rom */
-#include "cd.h"
-#if NCD > 0
-decl_open(cdopen);
-decl_close(cdclose);
-decl_strategy(cdstrategy);
-decl_ioctl(cdioctl);
-decl_dump(cddump);
-decl_psize(cdsize);
-#else
-#define	cdopen		ndef_open
-#define	cdclose		ndef_close
-#define	cdstrategy	ndef_strategy
-#define	cdioctl		ndef_ioctl
-#define	cdsize		ndef_psize
-#endif
-
-#include "ch.h"
-#if NCH > 0
-decl_open(chopen);
-decl_close(chclose);
-decl_ioctl(chioctl);
-#else
-#define	chopen		ndef_open
-#define	chclose		ndef_close
-#define	chioctl		ndef_ioctl
-#endif
-
 #include "vnd.h"
-#if NVND > 0
-decl_open(vndopen);
-decl_close(vndclose);
-decl_strategy(vndstrategy);
-decl_ioctl(vndioctl);
-decl_dump(vnddump);
-decl_psize(vndsize);
-#else
-#define	vndopen		ndef_open
-#define	vndclose	ndef_close
-#define	vndstrategy	ndef_strategy
-#define	vndioctl	ndef_ioctl
-#define	vnddump		ndef_dump
-#define	vndsize		ndef_psize
-#endif
-
-#ifdef LKM
-/* lkm interface routines */
-decl_open(lkmopen);
-decl_close(lkmclose);
-decl_ioctl(lkmioctl);
-/* lkm "nodev" routine */
-decl_open(lkmenodev);
-#else
-#define	lkmopen		ndef_open
-#define	lkmclose	ndef_close
-#define	lkmioctl	ndef_ioctl
-#define	lkmenodev	nsup_open
-#endif
-/* an easy way to define LKM devices */
-#define	LKM_BDEV { \
-	lkmenodev, \
-	nsup_close, \
-	nsup_strategy, \
-	nsup_ioctl, \
-	nsup_dump, \
-	nsup_psize, \
-	0 }
-#define	LKM_CDEV { \
-	lkmenodev, \
-	nsup_close, \
-	nsup_read, \
-	nsup_write, \
-	nsup_ioctl, \
-	nsup_stop, \
-	nsup_reset, \
-	nsup_ttys, \
-	nsup_select, \
-	nsup_mmap, \
-	nsup_strategy }
-
-/*
- * Block device switch
- */
+bdev_decl(vnd);
+#include "sd.h"
+bdev_decl(sd);
+#include "st.h"
+bdev_decl(st);
+#include "cd.h"
+bdev_decl(cd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef,	/*  0 */
-	bdev_notdef,	/*  1: /dev/mt (tapemaster tape) */
-	bdev_notdef,	/*  2 */
-
-	/*  3: XyLogics Disk (/dev/xy*) */
-	bdev_notdef,
-
-	/* BLK Major number of internal swap device. */
-#define	SWAP_BMAJ 4
-	{	/*  4: internal swap device */
-		nsup_open,
-		nsup_close,
-		swstrategy,
-		nsup_ioctl,
-		nsup_dump,
-		nsup_psize,
-		0 },
-
-	/*  5: /dev/vnd* (vnode pseudo-device) */
-	{ vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, 0 },
-
-	bdev_notdef,	/*  6 */
-
-	/*  7: /dev/sd* (SCSI disk) */
-	{ sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, 0 },
-
-	bdev_notdef,	/*  8: /dev/xt* (do we need block tapes?) */
-
-	bdev_notdef,	/*  9 */
-
-	/* 10: /dev/xd* (Xylogics 7053 SMD Disk controller) */
-	bdev_notdef,
-
-	bdev_notdef,	/*  11: /dev/st* (do we need block tapes?) */
-	bdev_notdef,	/*  12: Sun ns? */
-
-	/*  13: /dev/rd* (RAM disk - for install tape) */
-	bdev_notdef,
-
-	bdev_notdef,	/*  14: Sun ft? */
-	bdev_notdef,	/*  15: Sun hd? */
-
-	bdev_notdef,	/*  16: Sun fd? */
-	bdev_notdef,	/*  17: Sun vd_unused */
-	bdev_notdef,	/*  18: /dev/sr* (SCSI CD-ROM) */
-
-	bdev_notdef,	/*  19: Sun vd_unused */
-	bdev_notdef,	/*  20: Sun vd_unused */
-	bdev_notdef,	/*  21: Sun vd_unused */
-	bdev_notdef,	/*  22: Sun IPI disks... */
-	bdev_notdef,	/*  23: Sun IPI disks... */
+	bdev_notdef(),			/* 0 */
+	bdev_notdef(),			/* 1: tapemaster tape */
+	bdev_notdef(),			/* 2 */
+	bdev_notdef(),			/* 3: SMD disk on Xylogics 450/451 */
+	bdev_swap_init(),		/* 4: swap pseudo-device */
+	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
+	bdev_notdef(),			/* 6 */
+	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
+	bdev_notdef(),			/* 8: Xylogics tape */
+	bdev_notdef(),			/* 9 */
+	bdev_notdef(),			/* 10: SMD disk on Xylogics 7053 */
+	bdev_tape_init(NST,st),		/* 11: SCSI tape */
+	bdev_notdef(),			/* 12: Sun ns? */
+	bdev_notdef(),			/* 13: RAM disk - for install tape */
+	bdev_notdef(),			/* 14: Sun ft? */
+	bdev_notdef(),			/* 15: Sun hd? */
+	bdev_notdef(),			/* 16: Sun fd? */
+	bdev_notdef(),			/* 17: Sun vd_unused */
+	bdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
+	bdev_notdef(),			/* 19: Sun vd_unused */
+	bdev_notdef(),			/* 20: Sun vd_unused */
+	bdev_notdef(),			/* 21: Sun vd_unused */
+	bdev_notdef(),			/* 22: Sun IPI disks... */
+	bdev_notdef(),			/* 23: Sun IPI disks... */
 };
-int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
+int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/*
- * Corresponding CHR major numbers for BLK devices above.
- * Note that isdisk() assumes non-zero entries are disks.
- */
-static int blktochrtbl[] = {
-	0,	/*  0 */
-	0,	/*  1 */
-	0,	/*  2 */
-	9,	/*  3: /dev/xy */
-	0,	/*  4 */
-	0,	/*  5 */
-	0,	/*  6 */
-	17,	/*  7: /dev/sd */
-	0,	/*  8 */
-	0,	/*  9 */
-	42,	/* 10: /dev/xd */
-	0,	/* 11 */
-	0,	/* 12 */
-	52,	/* 13: /dev/rd */
-	0,	/* 14 */
-	0,	/* 15 */
-};
-static int nblktochr = sizeof(blktochrtbl) / sizeof(blktochrtbl[0]);
+/* open, close, ioctl, mmap */
+#define	cdev_fb_init(c, n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
+	seltrue, dev_init(c,n,mmap), 0 }
 
-/*
- * Character device declarations
- */
-
-/* device not configured */
-#define	cdev_notdef { \
-	ndef_open, \
-	ndef_close, \
-	ndef_read, \
-	ndef_write, \
-	ndef_ioctl, \
-	ndef_stop, \
-	ndef_reset, \
-	ndef_ttys, \
-	ndef_select, \
-	ndef_mmap, \
-	ndef_strategy }
-
-/* virtual console */
-decl_open(cnopen);
-decl_close(cnclose);
-decl_read(cnread);
-decl_write(cnwrite);
-decl_ioctl(cnioctl);
-decl_select(cnselect);
-
-/* Controlling tty (/dev/tty) -- XXX should be a tty */
-decl_open(cttyopen);
-decl_read(cttyread);
-decl_write(cttywrite);
-decl_ioctl(cttyioctl);
-decl_select(cttyselect);
-
-/* Memory devices (/dev/{mem,kmem,null,...}) */
-decl_read(mmrw);
-decl_mmap(mmmap);
-
-/* Swap pseudo-device (/dev/drum) */
-decl_read(rawread);
-decl_write(rawwrite);
-
-/* File descriptor pseudo device. */
-decl_open(fdopen);
-
-/* Kernel message log (/dev/klog) -- XXX should be a generic device */
-decl_open(logopen);
-decl_close(logclose);
-decl_read(logread);
-decl_ioctl(logioctl);
-decl_select(logselect);
-
-/* PROM tty (internal, for console) */
+cdev_decl(cn);
+cdev_decl(kd);
+cdev_decl(ctty);
+#define	mmread	mmrw
+#define	mmwrite	mmrw
+cdev_decl(mm);
 #include "prom.h"
-#if NPROM > 0
-decl_open(promopen);
-decl_close(promclose);
-decl_read(promread);
-decl_write(promwrite);
-decl_ioctl(promioctl);
-#else
-#define	promopen		ndef_open
-#define	promclose		ndef_close
-#define	promread		ndef_read
-#define	promwrite		ndef_write
-#define	promioctl		ndef_ioctl
-#endif
-
-/* Zilog Zerial ports (/dev/tty{a,b}) */
+cdev_decl(prom);
 #include "zs.h"
-#if NZS > 0
-decl_open(zsopen);
-decl_close(zsclose);
-decl_read(zsread);
-decl_write(zswrite);
-decl_ioctl(zsioctl);
-decl_stop(zsstop);
-extern struct tty *zs_tty[];
-#else
-#define	zsopen		ndef_open
-#define	zsclose		ndef_close
-#define	zsread		ndef_read
-#define	zswrite		ndef_write
-#define	zsioctl		ndef_ioctl
-#define	zsstop		ndef_stop
-#define	zs_tty		ndef_ttys
-#endif
-
-/* keyboard/display tty (internal, for console) */
-#if NZS > 1
-decl_open(kdopen);
-decl_close(kdclose);
-decl_read(kdread);
-decl_write(kdwrite);
-decl_ioctl(kdioctl);
-extern	struct tty *kd_tty[];
-#else
-#define	kdopen		ndef_open
-#define	kdclose		ndef_close
-#define	kdread		ndef_read
-#define	kdwrite		ndef_write
-#define	kdioctl		ndef_ioctl
-#define	kd_tty		ndef_ttys
-#endif
-
-/* Mouse pseudo-device (/dev/mouse) */
-#if NZS > 1
-decl_open(msopen);
-decl_close(msclose);
-decl_read(msread);
-decl_ioctl(msioctl);
-decl_select(msselect);
-/* Keyboard pseudo-device (/dev/kbd) */
-decl_open(kbdopen);
-decl_close(kbdclose);
-decl_read(kbdread);
-decl_ioctl(kbdioctl);
-decl_select(kbdselect);
-#else
-#define msopen		ndef_open
-#define msclose		ndef_close
-#define msread		ndef_read
-#define msioctl		ndef_ioctl
-#define msselect	ndef_select
-#define kbdopen		ndef_open
-#define kbdclose	ndef_close
-#define kbdread		ndef_read
-#define kbdioctl	ndef_ioctl
-#define kbdselect	ndef_select
-#endif
-
-/* Pseudo-terminals */
+cdev_decl(zs);
+cdev_decl(ms);
+cdev_decl(log);
+cdev_decl(sd);
+cdev_decl(st);
+cdev_decl(vnd);
 #include "pty.h"
-#if NPTY > 0
-decl_open(ptsopen);
-decl_close(ptsclose);
-decl_read(ptsread);
-decl_write(ptswrite);
-decl_stop(ptsstop);
-decl_open(ptcopen);
-decl_close(ptcclose);
-decl_read(ptcread);
-decl_write(ptcwrite);
-decl_select(ptcselect);
-decl_ioctl(ptyioctl);
-struct	tty *pt_tty[];
-#else
-#define	ptsopen		ndef_open
-#define	ptsclose	ndef_close
-#define	ptsread		ndef_read
-#define	ptswrite	ndef_write
-#define	ptcopen		ndef_open
-#define	ptcclose	ndef_close
-#define	ptcread		ndef_read
-#define	ptcwrite	ndef_write
-#define	ptyioctl	ndef_ioctl
-#define	pt_tty		ndef_ttys
-#define	ptcselect	ndef_select
-#define	ptsstop		ndef_stop
-#endif
-
-/* Frame Buffer (/dev/fb) */
-decl_open(fbopen);
-decl_close(fbclose);
-decl_ioctl(fbioctl);
-decl_mmap(fbmap);
-
-/* BW2 frame buffer (/dev/bwtwo) */
-#include "bwtwo.h"
-#if NBWTWO > 0
-decl_open(bw2open);
-decl_close(bw2close);
-decl_ioctl(bw2ioctl);
-decl_mmap(bw2map);
-#else
-#define bw2open  ndef_open
-#define bw2close ndef_close
-#define bw2ioctl ndef_ioctl
-#define bw2map  ndef_mmap
-#endif
-
-/* CG2 frame buffer (/dev/cgtwo) */
-#include "cgtwo.h"
-#if NCGTWO > 0
-decl_open(cg2open);
-decl_close(cg2close);
-decl_ioctl(cg2ioctl);
-decl_mmap(cg2map);
-#else
-#define cg2open  ndef_open
-#define cg2close ndef_close
-#define cg2ioctl ndef_ioctl
-#define cg2map  ndef_mmap
-#endif
-
-/* CG4 frame buffer (/dev/cgfour) */
-#include "cgfour.h"
-#if NCGFOUR > 0
-decl_open(cg4open);
-decl_close(cg4close);
-decl_ioctl(cg4ioctl);
-decl_mmap(cg4map);
-#else
-#define cg4open  ndef_open
-#define cg4close ndef_close
-#define cg4ioctl ndef_ioctl
-#define cg4map  ndef_mmap
-#endif
-
-/* Berkeley Packet Filter -- XXX should be generic device */
-#include "bpfilter.h"
-#if NBPFILTER > 0
-decl_open(bpfopen);
-decl_close(bpfclose);
-decl_read(bpfread);
-decl_write(bpfwrite);
-decl_ioctl(bpfioctl);
-decl_select(bpfselect);
-#else
-#define	bpfopen		ndef_open
-#define	bpfclose	ndef_close
-#define	bpfread		ndef_read
-#define	bpfwrite	ndef_write
-#define	bpfioctl	ndef_ioctl
-#define	bpfselect	ndef_select
-#endif
-
-/* network TUNnel device */
+#define	pts_tty		pt_tty
+#define	ptsioctl	ptyioctl
+cdev_decl(pts);
+#define	ptc_tty		pt_tty
+#define	ptcioctl	ptyioctl
+cdev_decl(ptc);
+cdev_decl(fb);
+cdev_decl(fd);
 #include "tun.h"
-#if NTUN > 0
-decl_open(tunopen);
-decl_close(tunclose);
-decl_read(tunread);
-decl_write(tunwrite);
-decl_ioctl(tunioctl);
-decl_select(tunselect);
-#else
-#define	tunopen		ndef_open
-#define	tunclose	ndef_close
-#define	tunread		ndef_read
-#define	tunwrite	ndef_write
-#define	tunioctl	ndef_ioctl
-#define	tunselect	ndef_select
-#endif
+cdev_decl(tun);
+#include "bwtwo.h"
+cdev_decl(bw2);
+cdev_decl(kbd);
+#include "cgtwo.h"
+cdev_decl(cg2);
+#include "bpfilter.h"
+cdev_decl(bpf);
+#include "cgfour.h"
+cdev_decl(cg4);
+cdev_devl(cd);
 
 struct cdevsw	cdevsw[] =
 {
-	/*  0: virtual console (/dev/console) -- XXX should be a tty */
-	{	cnopen, cnclose, cnread, cnwrite,
-		cnioctl, null_stop, null_reset, nsup_ttys,
-		cnselect, nsup_mmap, nsup_strategy },
-
-	/*  1: keyboard/display (sun wc) */
-	{	kdopen, kdclose, kdread, kdwrite,
-		kdioctl, null_stop, null_reset, kd_tty,
-		ttselect, nsup_mmap, nsup_strategy },
-
-	/*  2: controlling terminal */
-	{	cttyopen, null_close, cttyread, cttywrite,
-		cttyioctl, null_stop, null_reset, nsup_ttys,
-		cttyselect, nsup_mmap, nsup_strategy },
-
-	/* CHR Major number of /dev/mem */
-#define	MEM_CMAJ	3
-	/*  3: /dev/{mem,kmem,null,...} */
-	{	null_open, null_close, mmrw, mmrw,
-		nsup_ioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, mmmap, nsup_strategy },
-
-	/*  4: PROM console (old sun ip) */
-	{	promopen, promclose, promread, promwrite,
-		promioctl, null_stop, null_reset, nsup_ttys,
-		ttselect, nsup_mmap, nsup_strategy },
-
-	/*  5: /dev/mt (tapemaster tape) */
-	cdev_notdef,
-
-	/*  6: /dev/vp (systech/versatec) */
-	cdev_notdef,
-
-	/*  7: /dev/drum (swap pseudo-device) */
-	{	null_open, null_close, rawread, rawwrite,
-		nsup_ioctl, null_stop, null_reset, nsup_ttys,
-		nsup_select, nsup_mmap, swstrategy },
-
-	/*  8: /dev/ar (Archive QIC-11 tape) */
-	cdev_notdef,
-
-	/*  9: /dev/xy (Xylogics 450) */
-	cdev_notdef,
-
-	/* 10: (systech multi-terminal board) */
-	cdev_notdef,
-
-	/* 11: (DES encryption chip) */
-	cdev_notdef,
-
-	/* 12: /dev/tty{a,b} (zs serial) */
-	{	zsopen, zsclose, zsread, zswrite,
-		zsioctl, zsstop, null_reset, zs_tty,
-		ttselect, nsup_mmap, nsup_strategy },
-
-	/* 13: /dev/mouse */
-	{	msopen, msclose, msread, nsup_write,
-		msioctl, null_stop, null_reset, nsup_ttys,
-		msselect, nsup_mmap, nsup_strategy },
-
-	/* 14: old sun cgone */
-	cdev_notdef,
-
-	/* 15: sun /dev/winXXX */
-	cdev_notdef,
-
-	/* 16: /dev/klog */
-	{	logopen, logclose, logread, nsup_write,
-		logioctl, null_stop, null_reset, nsup_ttys,
-		logselect, nsup_mmap, nsup_strategy },
-
-	/* 17: /dev/sd* (SCSI disk) */
-	{	sdopen, sdclose, rawread, rawwrite,
-		sdioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, nsup_mmap, sdstrategy },
-
-	/* 18: scsi tape */
-	{	stopen, stclose, rawread, rawwrite,
-		stioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, nsup_mmap, ststrategy },
-
-	/* 19: /dev/vnd* (vnode pseudo-device) */
-	{	vndopen, vndclose, rawread, rawwrite,
-		vndioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, nsup_mmap, vndstrategy },
-
-	/* 20: pseudo-tty slave */
-	{	ptsopen, ptsclose, ptsread, ptswrite,
-		ptyioctl, ptsstop, null_reset, pt_tty,
-		ttselect, nsup_mmap, nsup_strategy },
-
-	/* 21: pseudo-tty master */
-	{	ptcopen, ptcclose, ptcread, ptcwrite,
-		ptyioctl, null_stop, null_reset, pt_tty,
-		ptcselect, nsup_mmap, nsup_strategy },
-
-	/* 22: /dev/fb indirect driver */
-	{	fbopen, fbclose, nsup_read, nsup_write,
-		fbioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, fbmap, nsup_strategy },
-
-	/* 23: old sun ropc (unused) */
-	/* File descriptors (/dev/std{in,out,err}) */
-	{	fdopen, null_close, nsup_read, nsup_write,
-		nsup_ioctl, null_stop, null_reset, nsup_ttys,
-		nsup_select, nsup_mmap, nsup_strategy },
-
-	/* 24: /dev/sky (was Sky FPA) */
-	{	tunopen, tunclose, tunread, tunwrite,
-		tunioctl, null_stop, null_reset, nsup_ttys,
-		tunselect, nsup_mmap, nsup_strategy },
-
-	/* 25: sun pi? */
-	cdev_notdef,
-
-	/* 26: old sun bwone (unused) */
-	cdev_notdef,
-
- 	/* 27: /dev/bwtwo */
-	{	bw2open, bw2close, nsup_read, nsup_write,
-		bw2ioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, bw2map, nsup_strategy },
-
-	/* 28: /dev/vpc (Systech VPC-2200 versatec/centronics) */
-	cdev_notdef,
-
-	/* 29: /dev/kbd */
-	{	kbdopen, kbdclose, kbdread, nsup_write,
-		kbdioctl, null_stop, null_reset, nsup_ttys,
-		kbdselect, nsup_mmap, nsup_strategy },
-
-	/* 30: /dev/xt (Xylogics 472 tape controller) */
-	cdev_notdef,
-
-	/* 31: /dev/cgtwo* (Sun cg2 board) */
-	{	cg2open, cg2close, nsup_read, nsup_write,
-		cg2ioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, cg2map, nsup_strategy },
-
-	/* 32: /dev/gpone */
-	cdev_notdef,
-
-	/* 33: (unused) */
-	cdev_notdef,
-
-	/* 34: /dev/fpa (Floating Point Accelerator) */
-	cdev_notdef,
-
-	/* 35: (sp) */
-	cdev_notdef,
-
-	/* 36: (unused) */
-	/* Berkeley Packet Filter (old sun ip) */
-	{	bpfopen, bpfclose, bpfread, bpfwrite,
-		bpfioctl, null_stop, null_reset, nsup_ttys,
-		bpfselect, nsup_mmap, nsup_strategy },
-
-	/* 37: (clone device) */
-	cdev_notdef,
-
-	/* 38: (pc) */
-	cdev_notdef,
-
-	/* 39: /dev/cgfour* (Sun cg4 board) */
-	{	cg4open, cg4close, nsup_read, nsup_write,
-		cg4ioctl, null_stop, null_reset, nsup_ttys,
-		seltrue, cg4map, nsup_strategy },
-
-	cdev_notdef,	/* 40: (sni) */
-	cdev_notdef,	/* 41: (sun dump) */
-
-	/* 42: /dev/xd* (Xylogics 7053 SMD Disk controller) */
-	cdev_notdef,
-
-	cdev_notdef,	/* 43: (sun hrc) */
-	cdev_notdef,	/* 44: (mcp) */
-	cdev_notdef,	/* 45: (sun ifd) */
-	cdev_notdef,	/* 46: (dcp) */
-	cdev_notdef,	/* 47: (dna) */
-	cdev_notdef,	/* 48: (tbi) */
-	cdev_notdef,	/* 49: (chat) */
-	cdev_notdef,	/* 50: (chut) */
-	cdev_notdef,	/* 51: (chut) */
-	cdev_notdef,	/* 52: /dev/rd* (RAM disk) */
-	cdev_notdef,	/* 53: (hd - N/A) */
-	cdev_notdef,	/* 54: (fd - N/A) */
-
-	/* 55: /dev/cgthree */
-	cdev_notdef,
-
-	cdev_notdef,	/* 56: (pp) */
-	cdev_notdef,	/* 57: (vd) Loadable Kernel Module control */
-	cdev_notdef,	/* 58 /dev/sr* (SCSI CD-ROM) */
-	cdev_notdef,	/* 59: (vd) Loadable Kernel Module stub */
-	cdev_notdef,	/* 60:    ||      ||     ||    ||  */
-	cdev_notdef,	/* 61:    ||      ||     ||    ||  */
-
-	cdev_notdef,	/* 62: (taac) */
-	cdev_notdef,	/* 63: (tcp/tli) */
-
-	/* 64: /dev/cgeight */
-	cdev_notdef,
-
-	cdev_notdef,	/* 65: old IPI */
-	cdev_notdef,	/* 66: (mcp) parallel printer */
-
-	/* 67: /dev/cgsix */
-	cdev_notdef,
-
-	/* 68: /dev/cgnine */
-	cdev_notdef,
-
-	cdev_notdef,	/* 69: /dev/audio */
-	cdev_notdef,	/* 70: open prom */
-	cdev_notdef,	/* 71: (sg?) */
+	cdev_cn_init(1,cn),		/* 0: virtual console */
+	cdev_tty_init(NZS-1,kd),	/* 1: Sun keyboard */
+	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
+	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
+	cdev_tty_init(NPROM,prom),	/* 4: PROM console */
+	cdev_notdef(),			/* 5: tapemaster tape */
+	cdev_notdef(),			/* 6: systech/versatec */
+	cdev_swap_init(1,sw),		/* 7: /dev/drum {swap pseudo-device) */
+	cdev_notdef(),			/* 8: Archive QIC-11 tape */
+	cdev_notdef(),			/* 9: SMD disk on Xylogics 450/451 */
+	cdev_notdef(),			/* 10: systech multi-terminal board */
+	cdev_notdef(),			/* 11: DES encryption chip */
+	cdev_tty_init(NZS,zs),		/* 12: Zilog 8350 serial port */
+	cdev_mouse_init(NZS-1,ms),	/* 13: Sun mouse */
+	cdev_notdef(),			/* 14: cgone */
+	cdev_notdef(),			/* 15: /dev/winXXX */
+	cdev_log_init(1,log),		/* 16: /dev/klog */
+	cdev_disk_init(NSD,sd),		/* 17: SCSI disk */
+	cdev_tape_init(NST,st),		/* 18: SCSI tape */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
+	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
+	cdev_fd_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_fd_init(1,fd),		/* 23: file descriptor pseudo-device */
+	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
+	cdev_notdef(),			/* 25: sun pi? */
+	cdev_notdef(),			/* 26: bwone */
+	cdev_fb_init(BWTWO,bw2),	/* 27: bwtwo */
+	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
+	cdev_mouse_init(NZS-1,kbd),	/* 29: Sun keyboard */
+	cdev_notdef(),			/* 30: Xylogics tape */
+	cdev_fb_init(CGTWO,cg2),	/* 31: cgtwo */
+	cdev_notdef(),			/* 32: /dev/gpone */
+	cdev_notdef(),			/* 33 */
+	cdev_notdef(),			/* 34: floating point accelerator */
+	cdev_notdef(),			/* 35 */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 36: Berkeley packet filter */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
+	cdev_fb_init(CGFOUR,cg4),	/* 39: cgfour */
+	cdev_notdef(),			/* 40: (sni) */
+	cdev_notdef(),			/* 41: (sun dump) */
+	cdev_notdef(),			/* 43: SMD disk on Xylogics 7053 */
+	cdev_notdef(),			/* 43: (sun hrc) */
+	cdev_notdef(),			/* 44: (mcp) */
+	cdev_notdef(),			/* 45: (sun ifd) */
+	cdev_notdef(),			/* 46: (dcp) */
+	cdev_notdef(),			/* 47: (dna) */
+	cdev_notdef(),			/* 48: (tbi) */
+	cdev_notdef(),			/* 49: (chat) */
+	cdev_notdef(),			/* 50: (chut) */
+	cdev_notdef(),			/* 51: (chut) */
+	cdev_notdef(),			/* 52: RAM disk - for install tape */
+	cdev_notdef(),			/* 53: (hd - N/A) */
+	cdev_notdef(),			/* 54: (fd - N/A) */
+	cdev_notdef(),			/* 55: cgthree */
+	cdev_notdef(),			/* 56: (pp) */
+	cdev_notdef(),			/* 57: (vd) Loadable Module control */
+	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
+	cdev_notdef(),			/* 59: (vd) Loadable Module stub */
+	cdev_notdef(),			/* 60:  ||     ||      ||    ||  */
+	cdev_notdef(),			/* 61:  ||     ||      ||    ||  */
+	cdev_notdef(),			/* 62: (taac) */
+	cdev_notdef(),			/* 63: (tcp/tli) */
+	cdev_notdef(),			/* 64: cgeight */
+	cdev_notdef(),			/* 65: old IPI */
+	cdev_notdef(),			/* 66: (mcp) parallel printer */
+	cdev_notdef(),			/* 67: cgsix */
+	cdev_notdef(),			/* 68: cgnine */
+	cdev_notdef(),			/* 69: /dev/audio */
+	cdev_notdef(),			/* 70: open prom */
+	cdev_notdef(),			/* 71: (sg?) */
 };
-int nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
+int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
+
+int	mem_no = 3;	/* major device number of memory special file */
 
 /*
- * Swapdev is a fake device implemented in vm/vm_swap.c
- * and used only internally to get to swstrategy.
+ * Swapdev is a fake device implemented
+ * in sw.c used only internally to get to swstrategy.
  * It cannot be provided to the users, because the
  * swstrategy routine munches the b_dev and b_blkno entries
  * before calling the appropriate driver.  This would horribly
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(SWAP_BMAJ, 0);
+dev_t	swapdev = makedev(4, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
@@ -822,7 +227,8 @@ dev_t	swapdev = makedev(SWAP_BMAJ, 0);
 iskmemdev(dev)
 	dev_t dev;
 {
-	return ((major(dev) == MEM_CMAJ) && (minor(dev) < 2));
+
+	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 /*
@@ -831,85 +237,103 @@ iskmemdev(dev)
 iszerodev(dev)
 	dev_t dev;
 {
-	return ((major(dev) == MEM_CMAJ) && (minor(dev) == 12));
+
+	return (major(dev) == mem_no && minor(dev) == 12);
 }
+
+static int chrtoblktbl[] = {
+        /* XXXX This needs to be dynamic for LKMs. */
+        /*VCHR*/        /*VBLK*/
+	/*  0 */	NODEV,
+	/*  1 */	NODEV,
+	/*  2 */	NODEV,
+	/*  3 */	NODEV,
+	/*  4 */	NODEV,
+	/*  5 */	1,
+	/*  6 */	NODEV,
+	/*  7 */	NODEV,
+	/*  8 */	NODEV,
+	/*  9 */	3,
+	/* 10 */	NODEV,
+	/* 11 */	NODEV,
+	/* 12 */	NODEV,
+	/* 13 */	NODEV,
+	/* 14 */	NODEV,
+	/* 15 */	NODEV,
+	/* 16 */	NODEV,
+	/* 17 */	7,
+	/* 18 */	11,
+	/* 19 */	5,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	8,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	10,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	13,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	NODEV,
+	/* 58 */	18,
+	/* 59 */	NODEV,
+	/* 60 */	NODEV,
+	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
+	/* 64 */	NODEV,
+	/* 65 */	NODEV,
+	/* 66 */	NODEV,
+	/* 67 */	NODEV,
+	/* 68 */	NODEV,
+	/* 69 */	NODEV,
+	/* 70 */	NODEV,
+	/* 71 */	NODEV,
 
 /*
  * Convert a character device number to a block device number.
  */
-static int *chrtoblktbl;
-dev_t chrtoblk(dev)
+chrtoblk(dev)
 	dev_t dev;
 {
-	int maj = major(dev);
+	int blkmaj;
 
-#ifdef	DIAGNOSTIC
-	if (!chrtoblktbl)
-		panic("chrtoblk: conf_init not done");
-#endif
-
-	if (maj < 0 || maj >= nchrdev)
+	if (major(dev) >= nchrdev)
 		return (NODEV);
-	maj = chrtoblktbl[maj];
-	if (maj == NODEV)
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
 		return (NODEV);
-	return (makedev(maj, minor(dev)));
+	return (makedev(blkmaj, minor(dev)));
 }
 
 /*
- * Returns true if dev is a disk device.  For now at least,
- * all non-zero entries in blktochrtbl are disks.
- */
-isdisk(dev, type)
-	dev_t dev;
-	int type;
-{
-	int maj = major(dev);
-
-#ifdef	DIAGNOSTIC
-	if (!chrtoblktbl)
-		panic("chrtoblk: conf_init not done");
-#endif
-
-	if (type == VCHR) {
-		/* Convert to BLK major number. */
-		if (maj < 0 || maj >= nchrdev)
-			return (0);
-		maj = chrtoblktbl[maj];
-	}
-	/* Now have a BLK major number. */
-	if (maj < 0 || maj >= nblktochr)
-		return(0);
-
-	return (blktochrtbl[maj]);
-}
-
-/*
- * Build chrtoblktbl from blktochrtbl
- */
-conf_init()
-{
-	int b, c;
-
-	chrtoblktbl = malloc(nchrdev * sizeof(int), M_DEVBUF, M_NOWAIT);
-	if (!chrtoblktbl)
-		panic("conf_init: malloc");
-
-	/* Clear the CHR to BLK table. */
-	for (c = 0; c < nchrdev; c++)
-		chrtoblktbl[c] = NODEV;
-
-	/* Set CHR dev slots with corresponging BLK devices. */
-	for (b = 0; b < nblktochr; b++) {
-		c = blktochrtbl[b];
-		if (c > 0 && c < nchrdev) {
-			chrtoblktbl[c] = b;
-		}
-	}
-}
-
-/*
- * The constab is the console configuration for this type of machine.
  * This entire table could be autoconfig()ed but that would mean that
  * the kernel's idea of the console could be out of sync with that of
  * the standalone boot.  I think it best that they both use the same
@@ -917,31 +341,24 @@ conf_init()
  */
 #include <dev/cons.h>
 
-#if NZS > 1
-int kdcnprobe(), kdcninit(), kdcngetc(), kdcnputc();
-void kdcnpollc();
-#endif
-#if NPROM > 0
-int promcnprobe(), promcninit(), promcngetc(), promcnputc();
-#endif
-#if NZS > 0
-int zscnprobe_a(), zscnprobe_b(), zscninit(), zscngetc(), zscnputc();
-#endif
-
-extern void nullcnpollc();
+cons_decl(kd);
+#define	promcnpollc	nullcnpollc
+cons_decl(prom);
+#define	zscnpollc	nullcnpollc
+cons_decl(zs);
+dev_decl(zs,cnprobe_a);
+dev_decl(zs,cnprobe_b);
 
 struct	consdev constab[] = {
 #if NZS > 1
-	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, kdcnpollc },
+	cons_init(kd),
 #endif
-#if	NZS
+#if NZS > 0
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
-#endif
-#if	NZS
 	{ zscnprobe_b, zscninit, zscngetc, zscnputc, nullcnpollc },
 #endif
 #if NPROM
-	{ promcnprobe, promcninit, promcngetc, promcnputc, nullcnpollc },
+	cons_init(prom),
 #endif
-    { 0 }	/* End marker. */
+	{ 0 },
 };
