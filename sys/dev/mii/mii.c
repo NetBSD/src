@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.7 1998/08/11 00:41:44 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.8 1998/11/05 00:30:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ mii_print(aux, pnp)
 	struct mii_attach_args *ma = aux;
 
 	if (pnp != NULL)
-		printf("PHY oui 0x%x model 0x%x rev 0x%x at %s",
+		printf("OUI 0x%06x model 0x%04x rev %d at %s",
 		    MII_OUI(ma->mii_id1, ma->mii_id2), MII_MODEL(ma->mii_id2),
 		    MII_REV(ma->mii_id2), pnp);
 
