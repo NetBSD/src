@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.9 2001/08/25 17:45:32 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.10 2001/09/16 12:58:53 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.9 2001/08/25 17:45:32 bjh21 Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.10 2001/09/16 12:58:53 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -93,6 +93,7 @@ dosoftints(int level)
 {
 	struct softintr_handler *sh;
 
+again:
 	for (sh = LIST_FIRST(&sh_head); sh != NULL && sh->sh_ipl > level;
 	     sh = LIST_NEXT(sh, sh_link))
 		if (sh->sh_pending) {
@@ -100,6 +101,7 @@ dosoftints(int level)
 			uvmexp.softs++;
 			sh->sh_pending = 0;
 			sh->sh_func(sh->sh_arg);
+			goto again;
 		}
 }
 
