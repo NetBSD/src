@@ -142,7 +142,7 @@ get_fs_usage (path, disk, fsp)
 
   if (statfs (path, &fsd) < 0)
     return -1;
-#define convert_blocks(b) adjust_blocks ((b), fsd.f_fsize, 512)
+#define convert_blocks(b) adjust_blocks ((b), fsd.f_bsize, 512)
 #endif
 
 #if STAT_STATFS4		/* SVR3, Dynix, Irix.  */
