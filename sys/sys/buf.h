@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.64 2003/08/07 16:33:59 agc Exp $	*/
+/*	$NetBSD: buf.h,v 1.65 2003/12/04 15:00:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -149,13 +149,9 @@ struct bio_ops {
  * The buffer header describes an I/O operation in the kernel.
  */
 struct buf {
-	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
-	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
-	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
 	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
-	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
-	volatile long	b_flags;	/* B_* flags. */
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
+	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
 	long	b_bufsize;		/* Allocated buffer size. */
 	long	b_bcount;		/* Valid bytes in buffer. */
@@ -164,18 +160,37 @@ struct buf {
 	struct {
 		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
 	} b_un;
-	void	*b_saveaddr;		/* Original b_addr for physio. */
-	daddr_t	b_lblkno;		/* Logical block number. */
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
 	daddr_t	b_rawblkno;		/* Raw underlying physical block
 					   number (not partition relative) */
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
+	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
 	struct	vnode *b_vp;		/* File vnode. */
-	void	*b_private;		/* Private data for owner */
-	off_t	b_dcookie;		/* Offset cookie if dir block */
 	struct  workhead b_dep;		/* List of filesystem dependencies. */
+	void	*b_saveaddr;		/* Original b_addr for physio. */
+
+	/*
+	 * private data for owner.
+	 *  - buffer cache buffers are owned by corresponding filesystem.
+	 *  - non-buffer cache buffers are owned by subsystem which
+	 *    allocated them. (filesystem, disk driver, etc)
+	 */
+	union {
+		void *bf_private;
+		off_t bf_dcookie;	/* NFS: Offset cookie if dir block */
+	} b_fspriv;
+#define	b_private	b_fspriv.bf_private
+#define	b_dcookie	b_fspriv.bf_dcookie
+
+	/*
+	 * buffer cache specific data
+	 */
+	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
+	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
+	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
+	daddr_t	b_lblkno;		/* Logical block number. */
 };
 
 #define	BUF_INIT(bp)							\
