@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.8 2000/06/16 16:27:32 thorpej Exp $
+.\"	$NetBSD: crypt.3,v 1.9 2000/08/03 08:30:43 ad Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,21 +62,32 @@
 The
 .Fn crypt
 function
-performs password encryption.
-It is derived from the
+performs password encryption.  The encryption scheme used by
+.Fn crypt
+is dependent upon the contents of the
+.Dv NUL Ns -terminated
+string
+.Ar setting .
+If
+.Ar setting
+begins with the ``$'' character, a non-DES encryption scheme is selected
+(currently MD5 hashing only).  If
+.Ar setting
+begins with the ``_'' character, DES encryption with a user specified number
+of perturbations is selected.  If
+.Ar setting
+begins with any other character, DES encryption with a fixed number
+of perturbations is selected.
+.Ss "DES" encryption:
+.Pp
+The DES encryption scheme is derived from the
 .Tn NBS
 Data Encryption Standard.
-Additional code has been added to deter
-key search attempts.
-The first argument to
-.Nm crypt
-is
-a
-.Dv NUL Ns -terminated
-string (normally a password typed by a user).
-The second is a character array, 9 bytes in length, consisting of an
-underscore (``_'') followed by 4 bytes of iteration count and 4 bytes
-of salt.
+Additional code has been added to deter key search attempts and to use
+stronger hashing algorithms.  In the DES case, the first argument to
+.Fn crypt
+is a character array, 9 bytes in length, consisting of an underscore (``_'')
+followed by 4 bytes of iteration count and 4 bytes of salt.
 Both the iteration
 .Fa count
 and the 
@@ -212,7 +223,21 @@ The
 specifies perturbations to
 .Tn DES
 as described above.
+.Ss "MD5" encryption:
 .Pp
+For the
+.Tn MD5 
+encryption scheme, the version number (in this case ``1''),
+.Fa salt
+and the hashed password are separated
+by the ``$'' character.  A valid password looks like this: 
+.Pp
+``$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H.''.
+.Pp
+The entire password string is passed as 
+.Fa setting
+for interpretation.
+.Sh RETURN VALUES
 The function
 .Fn crypt
 returns a pointer to the encrypted value on success and NULL on failure.
@@ -236,7 +261,9 @@ usual political silliness.
 .Xr login 1 ,
 .Xr passwd 1 ,
 .Xr getpass 3 ,
-.Xr passwd 5
+.Xr md5 3 ,
+.Xr passwd 5 ,
+.Xr passwd.conf 5
 .sp
 .Rs
 .%T "Mathematical Cryptology for Computer Scientists and Mathematicians"
