@@ -14,11 +14,24 @@
 #include <vstring.h>
 
  /*
+  * Global library.
+  */
+#include <maps.h>
+
+ /*
   * External interface.
   */
-extern void transport_init(void);
-extern void transport_wildcard_init(void);
-extern int transport_lookup(const char *, const char *, VSTRING *, VSTRING *);
+typedef struct TRANSPORT_INFO {
+    MAPS   *transport_path;
+    VSTRING *wildcard_channel;
+    VSTRING *wildcard_nexthop;
+    int     transport_errno;
+} TRANSPORT_INFO;
+
+extern TRANSPORT_INFO *transport_pre_init(const char *, const char *);
+extern void transport_post_init(TRANSPORT_INFO *);
+extern int transport_lookup(TRANSPORT_INFO *, const char *, const char *, VSTRING *, VSTRING *);
+extern void transport_free(TRANSPORT_INFO *);
 
 /* LICENSE
 /* .ad

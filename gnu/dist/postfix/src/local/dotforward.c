@@ -78,6 +78,7 @@
 #include <mail_params.h>
 #include <mail_conf.h>
 #include <ext_prop.h>
+#include <sent.h>
 
 /* Application-specific. */
 
@@ -214,7 +215,16 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * deliver to the user instead.
      */
     if (lookup_status >= 0) {
-	if (been_here(state.dup_filter, "forward %s", STR(path)) == 0) {
+
+	/*
+	 * Don't expand a verify-only request.
+	 */
+	if (state.request->flags & DEL_REQ_FLAG_VERIFY) {
+	    *statusp = sent(BOUNCE_FLAGS(state.request), 
+				SENT_ATTR(state.msg_attr),
+			    "forward via file: %s", STR(path));
+	    forward_found = YES;
+	} else if (been_here(state.dup_filter, "forward %s", STR(path)) == 0) {
 	    state.msg_attr.exp_from = state.msg_attr.local;
 	    if (S_ISREG(st.st_mode) == 0) {
 		msg_warn("file %s is not a regular file", STR(path));

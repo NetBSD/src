@@ -135,49 +135,58 @@ decode:		root
 #        address (e.g., user).
 # 
 # CONFIGURATION PARAMETERS
-#        The following main.cf parameters are  especially  relevant
-#        to  this  topic.  See  the Postfix main.cf file for syntax
-#        details and for default values.  Use  the  postfix  reload
-#        command after a configuration change.
+#        The following main.cf parameters are especially  relevant.
+#        The  text  below  provides  only  a parameter summary. See
+#        postconf(5) for more details including examples.
+# 
+#        alias_database
+#               List of alias databases that  are  updated  by  the
+#               newaliases(1) command.
 # 
 #        alias_maps
-#               List of alias databases.
+#               List  of  alias  databases  queried by the local(8)
+#               delivery agent.
 # 
 #        allow_mail_to_commands
-#               Restrict  the  usage  of  mail delivery to external
+#               Restrict the usage of  mail  delivery  to  external
 #               command.
 # 
 #        allow_mail_to_files
-#               Restrict the usage of  mail  delivery  to  external
+#               Restrict  the  usage  of  mail delivery to external
 #               file.
 # 
 #        expand_owner_alias
 #               When delivering to an alias that has an owner- com-
-#               panion alias, set the envelope  sender  address  to
-#               the  right-hand  side  of  the owner alias, instead
+#               panion  alias,  set  the envelope sender address to
+#               the right-hand side of  the  owner  alias,  instead
 #               using of the left-hand side address.
 # 
 #        owner_request_special
-#               Give special treatment to owner-xxx and xxx-request
-#               addresses.
+#               Give  special treatment to owner-listname and list-
+#               name-request addresses.
 # 
 #        recipient_delimiter
-#               Delimiter  that  separates  recipients from address
+#               Delimiter that separates  recipients  from  address
 #               extensions.
 # 
 # BUGS
-#        Regular expression alias lookup tables  are  allowed,  but
-#        substitution  of  $1  etc. is forbidden because that would
+#        Regular  expression  alias  lookup tables are allowed, but
+#        substitution of $1 etc. is forbidden  because  that  would
 #        open a security loophole.
 # 
 # STANDARDS
 #        RFC 822 (ARPA Internet Text Messages)
 # 
 # SEE ALSO
-#        local(8) local delivery agent
-#        newaliases(1) alias database management
-#        regexp_table(5) POSIX regular expression table format
-#        pcre_table(5) Perl Compatible Regular Expression table format
+#        local(8), local delivery agent
+#        newaliases(1), create/update alias database
+#        postalias(1), create/update alias database
+#        postconf(5), configuration parameters
+# 
+# README FILES
+#        Use  "postconf  readme_directory" or "postconf html_direc-
+#        tory" to locate this information.
+#        DATABASE_README, Postfix lookup table overview
 # 
 # LICENSE
 #        The Secure Mailer license must be  distributed  with  this

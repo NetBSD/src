@@ -2,7 +2,7 @@
 /* NAME
 /*	qmgr_deliver 3
 /* SUMMARY
-/*	deliver one pe-site queue entry to that site
+/*	deliver one per-site queue entry to that site
 /* SYNOPSIS
 /*	#include "qmgr.h"
 /*
@@ -39,6 +39,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Scheduler enhancements:
+/*	Patrik Rak
+/*	Modra 6
+/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */
@@ -124,11 +129,9 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
     QMGR_RCPT_LIST list = entry->rcpt_list;
     QMGR_RCPT *recipient;
     QMGR_MESSAGE *message = entry->message;
-    char   *cp;
     VSTRING *sender_buf = 0;
     char   *sender;
     int     flags;
-    char   *nexthop;
 
     /*
      * If variable envelope return path is requested, change prefix+@origin
@@ -144,33 +147,24 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	sender = vstring_str(sender_buf);
     }
 
-    /*
-     * With mail transports that accept only one recipient per delivery, the
-     * queue name is user@nexthop, so that we can implement per-recipient
-     * concurrency limits. However, the delivery agent protocol expects
-     * nexthop only, so we must strip off the recipient local part.
-     * 
-     * XXX Should have separate fields for queue name and for destination, so
-     * that we don't have to make a special case for the error delivery agent
-     * (where nexthop is arbitrary text). See also: qmgr_message.c.
-     */
-    flags = message->inspect_xport ?
-	DEL_REQ_FLAG_BOUNCE : DEL_REQ_FLAG_DEFLT;
-    nexthop = strcmp(entry->queue->transport->name, MAIL_SERVICE_ERROR) != 0
-	&& (cp = strrchr(entry->queue->name, '@')) != 0 && cp[1] ?
-	cp + 1 : entry->queue->name;
+    flags = message->tflags
+	| (message->inspect_xport ? DEL_REQ_FLAG_BOUNCE : DEL_REQ_FLAG_DEFLT);
     attr_print(stream, ATTR_FLAG_MORE,
 	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUE, message->queue_name,
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, message->queue_id,
 	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, message->data_offset,
 	       ATTR_TYPE_LONG, MAIL_ATTR_SIZE, message->data_size,
-	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, nexthop,
+	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, entry->queue->nexthop,
 	       ATTR_TYPE_STR, MAIL_ATTR_ENCODING, message->encoding,
 	       ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
 	       ATTR_TYPE_STR, MAIL_ATTR_ERRTO, message->errors_to,
 	       ATTR_TYPE_STR, MAIL_ATTR_RRCPT, message->return_receipt,
 	       ATTR_TYPE_LONG, MAIL_ATTR_TIME, message->arrival_time,
+	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_NAME, message->client_name,
+	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, message->client_addr,
+	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, message->client_proto,
+	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, message->client_helo,
 	       ATTR_TYPE_END);
     if (sender_buf != 0)
 	vstring_free(sender_buf);
@@ -293,7 +287,6 @@ static void qmgr_deliver_update(int unused_event, char *context)
 
 void    qmgr_deliver(QMGR_TRANSPORT *transport, VSTREAM *stream)
 {
-    QMGR_QUEUE *queue;
     QMGR_ENTRY *entry;
 
     /*
@@ -317,8 +310,7 @@ void    qmgr_deliver(QMGR_TRANSPORT *transport, VSTREAM *stream)
      * agent request reading routine is prepared for the queue manager to
      * change its mind for no apparent reason.
      */
-    if ((queue = qmgr_queue_select(transport)) == 0
-	|| (entry = qmgr_entry_select(queue)) == 0) {
+    if ((entry = qmgr_job_entry_select(transport)) == 0) {
 	(void) vstream_fclose(stream);
 	return;
     }
@@ -330,10 +322,10 @@ void    qmgr_deliver(QMGR_TRANSPORT *transport, VSTREAM *stream)
      * while some other queue manipulation is happening.
      */
     if (qmgr_deliver_send_request(entry, stream) < 0) {
-	qmgr_entry_unselect(queue, entry);
+	qmgr_entry_unselect(entry);
 	qmgr_transport_throttle(transport, "mail transport unavailable");
 	qmgr_defer_transport(transport, transport->reason);
-	/* warning: entry and queue may be dangling pointers here */
+	/* warning: entry may be a dangling pointer here */
 	(void) vstream_fclose(stream);
 	return;
     }

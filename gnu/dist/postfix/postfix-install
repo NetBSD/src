@@ -95,6 +95,9 @@
 #	This directory should be in the command search path of adminstrative
 #	users. The built-in default directory name is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
+# .IP html_directory
+#	The destination directory for the Postfix HTML files.
+#	This parameter setting is recorded in the installed main.cf file.
 # .IP queue_directory
 #	The final destination directory for Postfix queues.
 #	The built-in default directory name is /var/spool/postfix.
@@ -131,6 +134,7 @@
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP sample_directory
 #	The destination directory for the Postfix sample configuration files.
+#	This parameter is obsolete as of Postfix version 2.1.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP readme_directory
 #	The destination directory for the Postfix README files.
@@ -255,11 +259,20 @@ compare_or_symlink() {
 	'`
 	ln -s $link $tempdir/junk || exit 1
 	mv -f $tempdir/junk $2 || {
-	    echo $0: Error: your mv command is unable to rename symlinks. 1>&2
+	    echo $0: Error: your mv command has trouble renaming symlinks. 1>&2
 	    echo If you run Linux, upgrade to GNU fileutils-4.0 or better, 1>&2
 	    echo or choose a tempdir that is in the same file system as $2. 1>&2
+	    echo If you run FreeBSD, upgrade to version 5 or better. 1>&2
 	    exit 1
 	}
+    }
+}
+
+compare_or_hardlink() {
+    (cmp $1 $2 >/dev/null 2>&1 && echo Skipping $2...) || {
+	echo Updating $2...
+	rm -f $2 || exit 1
+	ln $1 $2 || exit 1
     }
 }
 
@@ -332,6 +345,9 @@ sample configuration files."
 readme_directory_prompt="the destination directory for the Postfix
 README files. Specify \"no\" if you do not want to install these files."
 
+html_directory_prompt="the destination directory for the Postfix
+HTML files. Specify \"no\" if you do not want to install these files."
+
 # Default settings, just to get started.
 
 : ${install_root=/}
@@ -393,7 +409,7 @@ grep setgid_group $CONFIG_DIRECTORY/main.cf >/dev/null 2>&1 || {
 test -f $CONFIG_DIRECTORY/main.cf && {
     for name in daemon_directory command_directory queue_directory mail_owner \
 	setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-	sample_directory readme_directory
+	sample_directory html_directory readme_directory
     do
 	eval junk=\$$name
 	case "$junk" in
@@ -408,7 +424,7 @@ test -f $CONFIG_DIRECTORY/main.cf && {
 
 for name in daemon_directory command_directory queue_directory mail_owner \
     setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    sample_directory readme_directory
+    sample_directory html_directory readme_directory
 do
     eval junk=\$$name
     case "$junk" in
@@ -421,7 +437,7 @@ done
 
 test -z "$non_interactive" && for name in daemon_directory command_directory \
     queue_directory sendmail_path newaliases_path mailq_path mail_owner \
-    setgid_group manpage_directory sample_directory readme_directory
+    setgid_group html_directory manpage_directory readme_directory
 do
     while :
     do
@@ -454,7 +470,7 @@ case "$manpage_directory" in
      exit 1;;
 esac
 
-for path in "$readme_directory"
+for path in "$html_directory" "$readme_directory"
 do
    case "$path" in
    /*) ;;
@@ -465,13 +481,29 @@ do
 done
 
 for path in "$daemon_directory" "$command_directory" "$queue_directory" \
-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
-    "$sample_directory"
+    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
 do
    case "$path" in
    /*) ;;
     *) echo $0: Error: \"$path\" should be an absolute path name. 1>&2; exit 1;;
    esac
+done
+
+for path in mailq_path newaliases_path sendmail_path
+do
+    eval test -d $install_root\$$path && {
+	echo $0: Error: \"$path\" specifies a directory. 1>&2
+	exit 1
+    }
+done
+
+for path in command_directory config_directory daemon_directory \
+    manpage_directory queue_directory html_directory readme_directory
+do
+    eval test -f $install_root\$$path && {
+	echo $0: Error: \"$path\" specifies a regular file. 1>&2
+	exit 1
+    }
 done
 
 test -d $tempdir || mkdir -p $tempdir || exit 1
@@ -515,8 +547,7 @@ DAEMON_DIRECTORY=$install_root$daemon_directory
 COMMAND_DIRECTORY=$install_root$command_directory
 QUEUE_DIRECTORY=$install_root$queue_directory
 SENDMAIL_PATH=$install_root$sendmail_path
-NEWALIASES_PATH=$install_root$newaliases_path
-MAILQ_PATH=$install_root$mailq_path
+HTML_DIRECTORY=$install_root$html_directory
 MANPAGE_DIRECTORY=$install_root$manpage_directory
 SAMPLE_DIRECTORY=$install_root$sample_directory
 README_DIRECTORY=$install_root$readme_directory
@@ -526,7 +557,8 @@ README_DIRECTORY=$install_root$readme_directory
 test -d $DAEMON_DIRECTORY || mkdir -p $DAEMON_DIRECTORY || exit 1
 test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
 test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
-test -d $SAMPLE_DIRECTORY || mkdir -p $SAMPLE_DIRECTORY || exit 1
+test "$html_directory" = "no" -o -d $HTML_DIRECTORY || 
+	mkdir -p $HTML_DIRECTORY || exit 1
 test "$readme_directory" = "no" -o -d $README_DIRECTORY || 
 	mkdir -p $README_DIRECTORY || exit 1
 
@@ -553,6 +585,13 @@ do
        *) continue;;
     esac
 
+    # Skip over files that ought to be removed.
+    # Leave it up to post-install to report them to the user.
+
+    case $flags in
+    *o*) continue
+    esac
+
     # Skip over files that must be preserved.
 
     case $flags in
@@ -560,6 +599,12 @@ do
 	    eval echo "Skipping $install_root$path..."
 	    continue
 	 };;
+    esac
+
+    # Save source path before it is clobbered.
+
+    case $type in
+    [hl]) eval source=$owner;;
     esac
 
     # If installing from source code, apply special permissions or ownership.
@@ -581,24 +626,23 @@ do
 	group=;;
     esac
 
-    # Create directory.
 
     case $type in
-       d) eval path=$install_root$path
-	  test "$path" = "${install_root}no" -o -d $path || {
-	      mkdir -p $path || exit 1
-	      test -z "$owner" || chown $owner $path || exit 1
-	      test -z "$group" || chgrp $group $path || exit 1
-	      chmod $mode $path || exit 1
-	  }
-	  continue;;
-    [fl]) ;;
-       *) echo $0: Error: unknown type for $path in conf/postfix-files; exit 1;;
-    esac
 
-    # Install or replace file.
+     # Create/update directory.
 
-    echo $path | (IFS=/ read prefix file; IFS="$BACKUP_IFS"
+     d) eval path=$install_root$path
+	test "$path" = "${install_root}no" -o -d $path || {
+	    mkdir -p $path || exit 1
+	    test -z "$owner" || chown $owner $path || exit 1
+	    test -z "$group" || chgrp $group $path || exit 1
+	    chmod $mode $path || exit 1
+	}
+	continue;;
+
+     # Create/update regular file.
+
+     f) echo $path | (IFS=/ read prefix file; IFS="$BACKUP_IFS"
 	case $prefix in
 	'$daemon_directory')
 	    compare_or_replace $mode "$owner" "$group" libexec/$file \
@@ -613,26 +657,44 @@ do
 	    check_parent $SENDMAIL_PATH || exit 1
 	    compare_or_replace $mode "$owner" "$group" bin/sendmail \
 		$SENDMAIL_PATH || exit 1;;
-	'$mailq_path')
-	    check_parent $MAILQ_PATH || exit 1
-	    compare_or_symlink $SENDMAIL_PATH $MAILQ_PATH || exit 1;;
-	'$newaliases_path')
-	    check_parent $NEWALIASES_PATH || exit 1
-	    compare_or_symlink $SENDMAIL_PATH $NEWALIASES_PATH || exit 1;;
+	'$html_directory')
+	    test "$html_directory" = "no" ||
+		compare_or_replace $mode "$owner" "$group" html/$file \
+		    $HTML_DIRECTORY/$file || exit 1;;
 	'$manpage_directory')
 	    check_parent $MANPAGE_DIRECTORY/$file || exit 1
 	    compare_or_replace $mode "$owner" "$group" man/$file \
 		$MANPAGE_DIRECTORY/$file || exit 1;;
-	'$sample_directory')
-	    compare_or_replace $mode "$owner" "$group" conf/$file \
-		$SAMPLE_DIRECTORY/$file || exit 1;;
 	'$readme_directory')
 	    test "$readme_directory" = "no" ||
 		compare_or_replace $mode "$owner" "$group" README_FILES/$file \
 		    $README_DIRECTORY/$file || exit 1;;
-	 *) echo $0: Error: unknown entry $path in conf/postfix-files; exit 1;;
-    esac) || exit 1
-done
+	 *) echo $0: Error: unknown entry $path in conf/postfix-files 1>&2
+	    exit 1;;
+	esac) || exit 1
+	continue;;
+
+     # Hard link
+
+     h) eval dest_path=$install_root$path
+	check_parent $dest_path || exit 1
+	eval source_path=$install_root$source
+	compare_or_hardlink $source_path $dest_path || exit 1
+	continue;;
+
+     # Symbolic link
+
+     l) eval dest_path=$install_root$path
+	check_parent $dest_path || exit 1
+	eval source_path=$install_root$source
+	compare_or_symlink $source_path $dest_path || exit 1
+	continue;;
+
+     *) echo $0: Error: unknown type $type for $path in conf/postfix-files 1>&2
+	exit 1;;
+    esac
+
+    done
 
 # Save the installation parameters to main.cf even when they haven't
 # changed from their current default. Defaults can change between
@@ -648,6 +710,7 @@ bin/postconf -c $CONFIG_DIRECTORY -e \
     "sendmail_path = $sendmail_path" \
     "mailq_path = $mailq_path" \
     "newaliases_path = $newaliases_path" \
+    "html_directory = $html_directory" \
     "manpage_directory = $manpage_directory" \
     "sample_directory = $sample_directory" \
     "readme_directory = $readme_directory" \
@@ -657,8 +720,5 @@ bin/postconf -c $CONFIG_DIRECTORY -e \
 # post-install processing now.
 
 test -n "$install_root" || {
-    export daemon_directory command_directory queue_directory sendmail_path \
-	newaliases_path mailq_path mail_owner setgid_group manpage_directory \
-	sample_directory readme_directory
-    ${SHELL} conf/post-install $post_install_options || exit 1
+    bin/postfix post-install $post_install_options || exit 1
 }

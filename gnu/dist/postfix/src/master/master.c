@@ -15,8 +15,8 @@
 /*
 /*	Postfix daemons terminate voluntarily, either after being idle for
 /*	a configurable amount of time, or after having serviced a
-/*	configurable number of requests. The exception to this rule is the
-/*	resident Postfix queue manager.
+/*	configurable number of requests. Exceptions to this rule are the
+/*	resident queue manager and the resident address verification server.
 /*
 /*	The behavior of the \fBmaster\fR daemon is controlled by the
 /*	\fBmaster.cf\fR configuration file. The table specifies zero or
@@ -63,7 +63,6 @@
 /*	processes to finish what they are doing.
 /* DIAGNOSTICS
 /*	Problems are reported to \fBsyslogd\fR(8).
-/* BUGS
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -76,50 +75,68 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH Miscellaneous
+/*	Unlike most Postfix daemon processes, the master(8) server does
+/*	not automatically pick up changes to \fBmain.cf\fR. Changes
+/*	to \fBmaster.cf\fR are never picked up automatically.
+/*	Use the \fBpostfix reload\fR command after a configuration change.
+/* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBimport_environment\fR
-/* .IP \fBexport_environment\fR
-/*	Lists of names of environment parameters that can be imported
-/*	from (exported to) non-Postfix processes.
-/* .IP \fBmail_owner\fR
-/*	The owner of the mail queue and of most Postfix processes.
-/* .IP \fBcommand_directory\fR
-/*	Directory with Postfix support programs.
-/* .IP \fBdaemon_directory\fR
-/*	Directory with Postfix daemon programs.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue. This is also the root
-/*	directory of Postfix daemons that run chrooted.
-/* .IP \fBinet_interfaces\fR
-/*	The network interface addresses that this system receives mail on.
-/*	You need to stop and start Postfix when this parameter changes.
-/* .SH "Resource controls"
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBdefault_process_limit (100)\fR"
+/*	The default maximal number of Postfix child processes that provide
+/*	a given service.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBservice_throttle_time (60s)\fR"
+/*	How long the Postfix master(8) waits before forking a server that
+/*	appears to be malfunctioning.
+/* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBdefault_process_limit\fR
-/*	Default limit for the number of simultaneous child processes that
-/*	provide a given service.
-/* .IP \fBmax_idle\fR
-/*	Limit the time in seconds that a child process waits between
-/*	service requests.
-/* .IP \fBmax_use\fR
-/*	Limit the number of service requests handled by a child process.
-/* .IP \fBservice_throttle_time\fR
-/*	Time to avoid forking a server that appears to be broken.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
+/*	The directory with Postfix support programs and daemon programs.
+/* .IP "\fBdebugger_command (empty)\fR"
+/*	The external command to execute when a Postfix daemon program is
+/*	invoked with the -D option.
+/* .IP "\fBinet_interfaces (all)\fR"
+/*	The network interface addresses that this mail system receives mail
+/*	on.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
+/* .IP "\fBmail_owner (postfix)\fR"
+/*	The UNIX system account that owns the Postfix queue and most Postfix
+/*	daemon processes.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* FILES
-/*	/etc/postfix/main.cf: global configuration file.
-/*	/etc/postfix/master.cf: master process configuration file.
-/*	/var/spool/postfix/pid/master.pid: master lock file.
+/*	/etc/postfix/main.cf, global configuration file.
+/*	/etc/postfix/master.cf, master server configuration file.
+/*	/var/spool/postfix/pid/master.pid, master lock file.
 /* SEE ALSO
-/*	qmgr(8) queue manager
-/*	pickup(8) local mail pickup
-/*	syslogd(8) system logging
+/*	qmgr(8), queue manager
+/*	verify(8), address verification
+/*	postconf(5), configuration parameters
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -264,7 +281,14 @@ int     main(int argc, char **argv)
 	if (open("/dev/null", O_RDWR, 0) != fd)
 	    msg_fatal("open /dev/null: %m");
     }
-    setsid();
+
+    /*
+     * Run in a separate process group, so that "postfix stop" can terminate
+     * all MTA processes cleanly. Give up if we can't separate from our
+     * parent process. We're not supposed to blow away the parent.
+     */
+    if (setsid() == -1)
+	msg_fatal("unable to set session and process group ID: %m");
 
     /*
      * Make some room for plumbing with file descriptors. XXX This breaks
@@ -323,8 +347,8 @@ int     main(int argc, char **argv)
     clean_env(import_env->argv);
     argv_free(import_env);
 
-    if ((inherited_limit = get_file_limit()) < (off_t) INT_MAX)
-	set_file_limit(INT_MAX);
+    if ((inherited_limit = get_file_limit()) < 0)
+	set_file_limit(OFF_T_MAX);
 
     if (chdir(var_queue_dir))
 	msg_fatal("chdir %s: %m", var_queue_dir);

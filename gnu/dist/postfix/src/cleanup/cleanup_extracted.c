@@ -9,7 +9,7 @@
 /*	void	cleanup_extracted(state, type, buf, len)
 /*	CLEANUP_STATE *state;
 /*	int	type;
-/*	char	*buf;
+/*	const char *buf;
 /*	int	len;
 /* DESCRIPTION
 /*	This module processes message records with information extracted
@@ -43,23 +43,23 @@
 #include <sys_defs.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 /* Utility library. */
 
 #include <msg.h>
 #include <vstring.h>
 #include <vstream.h>
-#include <argv.h>
 #include <mymalloc.h>
 #include <nvtable.h>
 
 /* Global library. */
 
 #include <cleanup_user.h>
+#include <qmgr_user.h>
 #include <record.h>
 #include <rec_type.h>
 #include <mail_params.h>
-#include <ext_prop.h>
 #include <mail_proto.h>
 
 /* Application-specific. */
@@ -68,13 +68,14 @@
 
 #define STR(x)	vstring_str(x)
 
-static void cleanup_extracted_process(CLEANUP_STATE *, int, char *, int);
+static void cleanup_extracted_process(CLEANUP_STATE *, int, const char *, int);
+static void cleanup_extracted_finish(CLEANUP_STATE *);
 
 /* cleanup_extracted - initialize extracted segment */
 
-void    cleanup_extracted(CLEANUP_STATE *state, int type, char *buf, int len)
+void    cleanup_extracted(CLEANUP_STATE *state, int type,
+			          const char *buf, int len)
 {
-    const char *encoding;
 
     /*
      * Start the extracted segment.
@@ -82,148 +83,129 @@ void    cleanup_extracted(CLEANUP_STATE *state, int type, char *buf, int len)
     cleanup_out_string(state, REC_TYPE_XTRA, "");
 
     /*
-     * Put the optional content filter before the mandatory Return-Receipt-To
-     * and Errors-To so that the queue manager will pick up the filter name
-     * before starting deliveries.
-     */
-    if (state->filter != 0)
-	cleanup_out_string(state, REC_TYPE_FILT, state->filter);
-
-    /*
-     * Older Postfix versions didn't emit encoding information, so this
-     * record can only be optional. Putting this before the mandatory
-     * Return-Receipt-To and Errors-To ensures that the queue manager will
-     * pick up the content encoding before starting deliveries.
-     */
-    if ((encoding = nvtable_find(state->attr, MAIL_ATTR_ENCODING)) != 0)
-	cleanup_out_format(state, REC_TYPE_ATTR, "%s=%s",
-			   MAIL_ATTR_ENCODING, encoding);
-
-    /*
-     * Always emit Return-Receipt-To and Errors-To records, and always emit
-     * them ahead of extracted recipients, so that the queue manager does not
-     * waste lots of time searching through large numbers of recipient
-     * addresses.
-     */
-    cleanup_out_string(state, REC_TYPE_RRTO, state->return_receipt ?
-		       state->return_receipt : "");
-
-    cleanup_out_string(state, REC_TYPE_ERTO, state->errors_to ?
-		       state->errors_to : state->sender);
-
-    /*
-     * Pass control to the routine that processes the extracted segment.
+     * Pass control to the actual envelope processing routine.
      */
     state->action = cleanup_extracted_process;
     cleanup_extracted_process(state, type, buf, len);
 }
 
-/* cleanup_extracted_process - process extracted segment */
+/* cleanup_extracted_process - process one extracted envelope record */
 
-static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf, int len)
+void    cleanup_extracted_process(CLEANUP_STATE *state, int type,
+				          const char *buf, int len)
 {
-    char   *myname = "cleanup_extracted_process";
-    VSTRING *clean_addr;
-    ARGV   *rcpt;
-    char  **cpp;
+    const char *encoding;
+    const char generated_by_cleanup[] = {
+	REC_TYPE_FILT, REC_TYPE_RDR, REC_TYPE_ATTR,
+	REC_TYPE_RRTO, REC_TYPE_ERTO, 0,
+    };
+
+    if (msg_verbose)
+	msg_info("extracted envelope %c %.*s", type, len, buf);
+
+    if (strchr(REC_TYPE_EXTRACT, type) == 0) {
+	msg_warn("%s: message rejected: "
+		 "unexpected record type %d in extracted envelope",
+		 state->queue_id, type);
+	state->errs |= CLEANUP_STAT_BAD;
+	return;
+    }
 
     /*
-     * Weird condition for consistency with cleanup_envelope.c
+     * On the transition from non-recipient records to recipient records,
+     * emit optional information from header/body content.
      */
-    if (type != REC_TYPE_RCPT) {
-	if (state->orig_rcpt != 0) {
-	    if (type != REC_TYPE_DONE)
-		msg_warn("%s: out-of-order original recipient record <%.200s>",
-			 state->queue_id, buf);
-	    myfree(state->orig_rcpt);
-	    state->orig_rcpt = 0;
-	}
+    if ((state->flags & CLEANUP_FLAG_INRCPT) == 0
+	&& strchr(REC_TYPE_EXT_RECIPIENT, type) != 0) {
+	if (state->filter != 0)
+	    cleanup_out_string(state, REC_TYPE_FILT, state->filter);
+	if (state->redirect != 0)
+	    cleanup_out_string(state, REC_TYPE_RDR, state->redirect);
+	if ((encoding = nvtable_find(state->attr, MAIL_ATTR_ENCODING)) != 0)
+	    cleanup_out_format(state, REC_TYPE_ATTR, "%s=%s",
+			       MAIL_ATTR_ENCODING, encoding);
+	if (state->return_receipt)
+	    cleanup_out_string(state, REC_TYPE_RRTO, state->return_receipt);
+	if (state->errors_to)
+	    cleanup_out_string(state, REC_TYPE_ERTO, state->errors_to);
+	state->flags |= CLEANUP_FLAG_INRCPT;
     }
+
+    /*
+     * Extracted envelope recipient record processing.
+     */
     if (type == REC_TYPE_RCPT) {
-	clean_addr = vstring_alloc(100);
+	if (state->sender == 0) {		/* protect showq */
+	    msg_warn("%s: message rejected: envelope recipient precedes sender",
+		     state->queue_id);
+	    state->errs |= CLEANUP_STAT_BAD;
+	    return;
+	}
 	if (state->orig_rcpt == 0)
 	    state->orig_rcpt = mystrdup(buf);
-	cleanup_rewrite_internal(clean_addr, *buf ? buf : var_empty_addr);
-	if (cleanup_rcpt_canon_maps)
-	    cleanup_map11_internal(state, clean_addr, cleanup_rcpt_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-	if (cleanup_comm_canon_maps)
-	    cleanup_map11_internal(state, clean_addr, cleanup_comm_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-	if (cleanup_masq_domains
-	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
-	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
-	cleanup_out_recipient(state, state->orig_rcpt, STR(clean_addr));
-	if (state->recip == 0)
-	    state->recip = mystrdup(STR(clean_addr));
-	vstring_free(clean_addr);
+	cleanup_addr_recipient(state, buf);
 	myfree(state->orig_rcpt);
 	state->orig_rcpt = 0;
 	return;
-    } else if (type == REC_TYPE_DONE) {
+    }
+    if (type == REC_TYPE_DONE) {
+	if (state->orig_rcpt != 0) {
+	    myfree(state->orig_rcpt);
+	    state->orig_rcpt = 0;
+	}
 	return;
-    } else if (type == REC_TYPE_ORCP) {
+    }
+    if (state->orig_rcpt != 0) {
+	/* REC_TYPE_ORCP must be followed by REC_TYPE_RCPT or REC_TYPE DONE. */
+	msg_warn("%s: ignoring out-of-order original recipient record <%.200s>",
+		 state->queue_id, buf);
+	myfree(state->orig_rcpt);
+	state->orig_rcpt = 0;
+    }
+    if (type == REC_TYPE_ORCP) {
 	state->orig_rcpt = mystrdup(buf);
 	return;
     }
-    if (type != REC_TYPE_END) {
-	cleanup_out(state, type, buf, len);
+    if (type == REC_TYPE_END) {
+	state->flags &= ~CLEANUP_FLAG_INRCPT;
+	state->flags |= CLEANUP_FLAG_END_SEEN;
+	cleanup_extracted_finish(state);
 	return;
     }
 
     /*
-     * Optionally account for missing recipient envelope records.
-     * 
-     * Don't extract recipients when some header was too long. We have
-     * incomplete information.
-     * 
-     * XXX Code duplication from cleanup_envelope.c. This should be in one
-     * place.
+     * Extracted envelope non-recipient record processing.
      */
-    if (state->recip == 0 && (state->errs & CLEANUP_STAT_HOVFL) == 0) {
-	rcpt = (state->resent[0] ? state->resent_recip : state->recipients);
-	if (rcpt->argc >= var_extra_rcpt_limit) {
-	    state->errs |= CLEANUP_STAT_ROVFL;
-	} else {
-	    clean_addr = vstring_alloc(100);
-	    if (*var_always_bcc && rcpt->argv[0]) {
-		cleanup_rewrite_internal(clean_addr, var_always_bcc);
-		if (cleanup_rcpt_canon_maps)
-		    cleanup_map11_internal(state, clean_addr, cleanup_rcpt_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-		if (cleanup_comm_canon_maps)
-		    cleanup_map11_internal(state, clean_addr, cleanup_comm_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-		argv_add(rcpt, STR(clean_addr), (char *) 0);
-	    }
-	    argv_terminate(rcpt);
-
-	    /*
-	     * Recipients extracted from message headers already have
-	     * undergone recipient address rewriting (see cleanup_message.c),
-	     * but still may need address masquerading.
-	     */
-	    for (cpp = rcpt->argv; CLEANUP_OUT_OK(state) && *cpp; cpp++) {
-		if (cleanup_masq_domains
-		    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT)) {
-		    vstring_strcpy(clean_addr, *cpp);
-		    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
-		    cleanup_out_recipient(state, STR(clean_addr),
-					  STR(clean_addr));	/* XXX */
-		} else
-		    cleanup_out_recipient(state, *cpp, *cpp);	/* XXX */
-	    }
-	    if (rcpt->argv[0])
-		state->recip = mystrdup(rcpt->argv[0]);
-	    vstring_free(clean_addr);
-	}
+    if (state->flags & CLEANUP_FLAG_INRCPT)
+	/* Tell qmgr that recipient records are mixed with other information. */
+	state->qmgr_opts |= QMGR_READ_FLAG_MIXED_RCPT_OTHER;
+    if (strchr(generated_by_cleanup, type) != 0) {
+	/* Use our own header/body info instead. */
+	return;
+    } else {
+	/* Pass on other non-recipient record. */
+	cleanup_out(state, type, buf, len);
+	return;
     }
+}
+
+/* cleanup_extracted_finish - process one extracted envelope record */
+
+void    cleanup_extracted_finish(CLEANUP_STATE *state)
+{
+    const char myname[] = "cleanup_extracted_finish";
+
+    /*
+     * On the way out, add the optional automatic BCC recipient.
+     */
+    if ((state->flags & CLEANUP_FLAG_BCC_OK)
+	&& state->recip != 0 && *var_always_bcc)
+	cleanup_addr_bcc(state, var_always_bcc);
 
     /*
      * Terminate the extracted segment.
      */
     cleanup_out_string(state, REC_TYPE_END, "");
-    state->end_seen = 1;
 
     /*
      * vstream_fseek() would flush the buffer anyway, but the code just reads
@@ -243,24 +225,13 @@ static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf,
 
     /*
      * Update the preliminary message size and count fields with the actual
-     * values.  For forward compatibility, we put the info into one record
-     * (so that it is possible to switch back to an older Postfix version).
+     * values.
      */
     if (vstream_fseek(state->dst, 0L, SEEK_SET) < 0)
 	msg_fatal("%s: vstream_fseek %s: %m", myname, cleanup_path);
     cleanup_out_format(state, REC_TYPE_SIZE, REC_TYPE_SIZE_FORMAT,
 	    (REC_TYPE_SIZE_CAST1) (state->xtra_offset - state->data_offset),
 		       (REC_TYPE_SIZE_CAST2) state->data_offset,
-		       (REC_TYPE_SIZE_CAST3) state->rcpt_count);
-
-    /*
-     * Update the preliminary start-of-content marker with the actual value.
-     * For forward compatibility, we keep this information until the end of
-     * the year 2002 (so that it is possible to switch back to an older
-     * Postfix version).
-     */
-    if (vstream_fseek(state->dst, state->mesg_offset, SEEK_SET) < 0)
-	msg_fatal("%s: vstream_fseek %s: %m", myname, cleanup_path);
-    cleanup_out_format(state, REC_TYPE_MESG, REC_TYPE_MESG_FORMAT,
-		       (REC_TYPE_MESG_CAST) state->xtra_offset);
+		       (REC_TYPE_SIZE_CAST3) state->rcpt_count,
+		       (REC_TYPE_SIZE_CAST4) state->qmgr_opts);
 }

@@ -27,6 +27,9 @@
 /*
 /*	This option implements the traditional \fBsendmail -q\fR command,
 /*	by contacting the Postfix \fBqmgr\fR(8) daemon.
+/*
+/*	Warning: flushing undeliverable mail frequently will result in
+/*	poor delivery performance of all other mail.
 /* .IP \fB-p\fR
 /*	Produce a traditional sendmail-style queue listing.
 /*	This option implements the traditional \fBmailq\fR command,
@@ -69,43 +72,72 @@
 /* .ad
 /* .fi
 /* .IP MAIL_CONFIG
-/*	Directory with the \fBmain.cf\fR file.
-/*
-/*	In order to avoid exploitation of set-group ID privileges, it is not
-/*	possible to specify arbitrary directory names.
-/*
-/*	A non-standard directory is allowed only if the name is listed in the
-/*	standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
-/*	configuration parameter value.
-/*
-/*	Only the superuser is allowed to specify arbitrary directory names.
-/* FILES
-/*	/var/spool/postfix, mail queue
-/*	/etc/postfix, configuration files
+/*	Directory with the \fBmain.cf\fR file. In order to avoid exploitation
+/*	of set-group ID privileges, a non-standard directory is allowed only
+/*	if:
+/* .RS
+/* .IP \(bu
+/*	The name is listed in the standard \fBmain.cf\fR file with the
+/*	\fBalternate_config_directories\fR configuration parameter.
+/* .IP \(bu
+/*	The command is invoked by the super-user.
+/* .RE
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/* .IP \fBimport_environment\fR
-/*	List of names of environment parameters that can be imported
-/*	from non-Postfix processes.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue. This is also the root
-/*	directory of Postfix daemons that run chrooted.
-/* .IP \fBfast_flush_domains\fR
-/*	List of domains that will receive "fast flush" service (default: all
-/*	domains that this system is willing to relay mail to). This list
-/*	specifies the domains that Postfix accepts in the SMTP \fBETRN\fR
-/*	request and in the \fBsendmail -qR\fR command.
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program.
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBalternate_config_directories (empty)\fR"
+/*	A list of non-default Postfix configuration directories that may
+/*	be specified with "-c config_directory" on the command line, or
+/*	via the MAIL_CONFIG environment parameter.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBcommand_directory (see 'postconf -d' output)\fR"
+/*	The location of all postfix administrative commands.
+/* .IP "\fBfast_flush_domains ($relay_domains)\fR"
+/*	Optional list of destinations that are eligible for per-destination
+/*	logfiles with mail that is queued to those destinations.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .IP "\fBtrigger_timeout (10s)\fR"
+/*	The time limit for sending a trigger to a Postfix daemon (for
+/*	example, the pickup(8) or qmgr(8) daemon).
+/* FILES
+/*	/var/spool/postfix, mail queue
 /* SEE ALSO
-/*	sendmail(1) sendmail-compatible user interface
-/*	postsuper(1) privileged queue operations
-/*	qmgr(8) queue manager
-/*	showq(8) list mail queue
-/*	flush(8) fast flush service
+/*	qmgr(8), queue manager
+/*	showq(8), list mail queue
+/*	flush(8), fast flush service
+/*	sendmail(1), Sendmail-compatible user interface
+/*	postsuper(1), privileged queue operations
+/* README FILES
+/* .ad
+/* .fi
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/* .na
+/* .nf
+/*	ETRN_README, Postfix ETRN howto
 /* LICENSE
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/* .ad
+/* .fi
+/*	The postqueue command was introduced with Postfix version 1.1.
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -264,6 +296,8 @@ static void flush_site(const char *site)
 {
     int     status;
 
+    flush_init();
+
     switch (status = flush_send(site)) {
     case FLUSH_STAT_OK:
 	exit(0);
@@ -323,7 +357,7 @@ int     main(int argc, char **argv)
      * extract configuration information. Set up signal handlers so that we
      * can clean up incomplete output.
      */
-    if ((slash = strrchr(argv[0], '/')) != 0)
+    if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(mail_task("postqueue"), LOG_PID, LOG_FACILITY);

@@ -16,6 +16,11 @@
 /*	ARGV	*argvp;
 /*	char	*arg;
 /*
+/*	void	argv_addn(argvp, arg, arg_len, ..., ARGV_END)
+/*	ARGV	*argvp;
+/*	char	*arg;
+/*	int	arg_len;
+/*
 /*	void	argv_terminate(argvp);
 /*	ARGV	*argvp;
 /* DESCRIPTION
@@ -36,6 +41,9 @@
 /*	specified string array. The array is null terminated.
 /*	Terminate the argument list with a null pointer. The manifest
 /*	constant ARGV_END provides a convenient notation for this.
+/*
+/*	argv_addn() is like argv_add(), but each string is followed
+/*	by a string length argument.
 /*
 /*	argv_free() releases storage for a string array, and conveniently
 /*	returns a null pointer.
@@ -66,6 +74,7 @@
 /* Application-specific. */
 
 #include "mymalloc.h"
+#include "msg.h"
 #include "argv.h"
 
 /* argv_free - destroy string array */
@@ -86,16 +95,31 @@ ARGV   *argv_free(ARGV *argvp)
 ARGV   *argv_alloc(int len)
 {
     ARGV   *argvp;
+    int     sane_len;
 
     /*
      * Make sure that always argvp->argc < argvp->len.
      */
     argvp = (ARGV *) mymalloc(sizeof(*argvp));
-    argvp->len = (len < 2 ? 2 : len);
-    argvp->argv = (char **) mymalloc((argvp->len + 1) * sizeof(char *));
+    argvp->len = 0;
+    sane_len = (len < 2 ? 2 : len);
+    argvp->argv = (char **) mymalloc((sane_len + 1) * sizeof(char *));
+    argvp->len = sane_len;
     argvp->argc = 0;
     argvp->argv[0] = 0;
     return (argvp);
+}
+
+/* argv_extend - extend array */
+
+static void argv_extend(ARGV *argvp)
+{
+    int     new_len;
+
+    new_len = argvp->len * 2;
+    argvp->argv = (char **)
+	myrealloc((char *) argvp->argv, (new_len + 1) * sizeof(char *));
+    argvp->len = new_len;
 }
 
 /* argv_add - add string to vector */
@@ -108,15 +132,36 @@ void    argv_add(ARGV *argvp,...)
     /*
      * Make sure that always argvp->argc < argvp->len.
      */
+#define ARGV_SPACE_LEFT(a) ((a)->len - (a)->argc - 1)
+
     va_start(ap, argvp);
     while ((arg = va_arg(ap, char *)) != 0) {
-	if (argvp->argc + 1 >= argvp->len) {
-	    argvp->len *= 2;
-	    argvp->argv = (char **)
-		myrealloc((char *) argvp->argv,
-			  (argvp->len + 1) * sizeof(char *));
-	}
+	if (ARGV_SPACE_LEFT(argvp) <= 0)
+	    argv_extend(argvp);
 	argvp->argv[argvp->argc++] = mystrdup(arg);
+    }
+    va_end(ap);
+    argvp->argv[argvp->argc] = 0;
+}
+
+/* argv_addn - add string to vector */
+
+void    argv_addn(ARGV *argvp,...)
+{
+    char   *arg;
+    int     len;
+    va_list ap;
+
+    /*
+     * Make sure that always argvp->argc < argvp->len.
+     */
+    va_start(ap, argvp);
+    while ((arg = va_arg(ap, char *)) != 0) {
+	if ((len = va_arg(ap, int)) < 0)
+	    msg_panic("argv_addn: bad string length %d", len);
+	if (ARGV_SPACE_LEFT(argvp) <= 0)
+	    argv_extend(argvp);
+	argvp->argv[argvp->argc++] = mystrndup(arg, len);
     }
     va_end(ap);
     argvp->argv[argvp->argc] = 0;

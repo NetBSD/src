@@ -126,6 +126,10 @@ int     header_token(HEADER_TOKEN *token, int token_len,
 
     /*
      * Main parsing loop.
+     * 
+     * XXX What was the reason to continue parsing when user_terminator is
+     * specified? Perhaps this was needed at some intermediate stage of
+     * development?
      */
     while ((ch = *cp) != 0 && (user_terminator != 0 || tok_count < token_len)) {
 	cp++;
@@ -176,11 +180,14 @@ int     header_token(HEADER_TOKEN *token, int token_len,
 		if (ch == '"')
 		    break;
 		if (ch == '\n') {		/* unfold */
-		    len = LEN(token_buffer);
-		    while (len > 0 && IS_SPACE_TAB_CR_LF(STR(token_buffer)[len - 1]))
-			len--;
-		    if (len < LEN(token_buffer))
-			vstring_truncate(token_buffer, len);
+		    if (tok_count < token_len) {
+			len = LEN(token_buffer);
+			while (len > 0
+			  && IS_SPACE_TAB_CR_LF(STR(token_buffer)[len - 1]))
+			    len--;
+			if (len < LEN(token_buffer))
+			    vstring_truncate(token_buffer, len);
+		    }
 		    continue;
 		}
 		if (ch == '\\') {

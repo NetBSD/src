@@ -11,7 +11,7 @@
 /*	struct sockaddr	*buf;
 /*	SOCKADDR_SIZE *len;
 /* DESCRIPTION
-/*	sane_connect() implements the accept(2) socket call, and maps
+/*	sane_connect() implements the connect(2) socket call, and maps
 /*	known harmless error results to EAGAIN.
 /* BUGS
 /*	Bizarre systems may have other harmless error results. Such

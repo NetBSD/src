@@ -14,8 +14,9 @@
 /*
 /*	The LMTP client updates the queue file and marks recipients
 /*	as finished, or it informs the queue manager that delivery should
-/*	be tried again at a later time. Delivery problem reports are sent
-/*	to the \fBbounce\fR(8) or \fBdefer\fR(8) daemon as appropriate.
+/*	be tried again at a later time. Delivery status reports are sent
+/*	to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
+/*	appropriate.
 /*
 /*	The LMTP client connects to the destination specified in the message
 /*	delivery request. The destination, usually specified in the Postfix
@@ -60,90 +61,68 @@
 /*	Depending on the setting of the \fBnotify_classes\fR parameter,
 /*	the postmaster is notified of bounces, protocol problems, and of
 /*	other trouble.
-/* BUGS
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH Miscellaneous
+/*	Changes to \fBmain.cf\fR are picked up automatically, as lmtp(8)
+/*	processes run for only a limited amount of time. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* COMPATIBILITY CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBdebug_peer_level\fR
-/*	Verbose logging level increment for hosts that match a
-/*	pattern in the \fBdebug_peer_list\fR parameter.
-/* .IP \fBdebug_peer_list\fR
-/*	List of domain or network patterns. When a remote host matches
-/*	a pattern, increase the verbose logging level by the amount
-/*	specified in the \fBdebug_peer_level\fR parameter.
-/* .IP \fBerror_notice_recipient\fR
-/*	Recipient of protocol/policy/resource/software error notices.
-/* .IP \fBnotify_classes\fR
-/*	When this parameter includes the \fBprotocol\fR class, send mail to the
-/*	postmaster with transcripts of LMTP sessions with protocol errors.
-/* .IP \fBlmtp_skip_quit_response\fR
-/*	Do not wait for the server response after sending QUIT.
-/* .IP \fBlmtp_tcp_port\fR
-/*	The TCP port to be used when connecting to a LMTP server.  Used as
-/*	backup if the \fBlmtp\fR service is not found in \fBservices\fR(4).
-/* .SH "Authentication controls"
-/* .IP \fBlmtp_sasl_auth_enable\fR
-/*	Enable per-session authentication as per RFC 2554 (SASL).
-/*	By default, Postfix is built without SASL support.
-/* .IP \fBlmtp_sasl_password_maps\fR
-/*	Lookup tables with per-host or domain \fIname\fR:\fIpassword\fR entries.
-/*	No entry for a host means no attempt to authenticate.
-/* .IP \fBlmtp_sasl_security_options\fR
-/*	Zero or more of the following.
-/* .RS
-/* .IP \fBnoplaintext\fR
-/*	Disallow authentication methods that use plaintext passwords.
-/* .IP \fBnoactive\fR
-/*	Disallow authentication methods that are vulnerable to non-dictionary
-/*	active attacks.
-/* .IP \fBnodictionary\fR
-/*	Disallow authentication methods that are vulnerable to passive
-/*	dictionary attack.
-/* .IP \fBnoanonymous\fR
-/*	Disallow anonymous logins.
-/* .RE
-/* .SH "Resource controls"
+/* .IP "\fBlmtp_skip_quit_response (no)\fR"
+/*	Wait for the response to the LMTP QUIT command.
+/* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBlmtp_cache_connection\fR
-/*	Should we cache the connection to the LMTP server? The effectiveness
-/*	of cached connections will be determined by the number of LMTP servers
-/*	in use, and the concurrency limit specified for the LMTP client.
-/*	Cached connections are closed under any of the following conditions:
-/* .RS
-/* .IP \(bu
-/*	The LMTP client idle time limit is reached. This limit is specified
-/*	with the Postfix \fBmax_idle\fR configuration parameter.
-/* .IP \(bu
-/*	A delivery request specifies a different destination than the one
-/*	currently cached.
-/* .IP \(bu
-/*	The per-process limit on the number of delivery requests is reached.
-/*	This limit is specified with the Postfix \fBmax_use\fR configuration
-/*	parameter.
-/* .IP \(bu
-/*	Upon the onset of another delivery request, the LMTP server associated
-/*	with the current session does not respond to the \fBRSET\fR command.
-/* .RE
-/* .IP \fItransport_\fBdestination_concurrency_limit\fR
+/* .IP "\fBdebug_peer_level (2)\fR"
+/*	The increment in verbose logging level when a remote client or
+/*	server matches a pattern in the debug_peer_list parameter.
+/* .IP "\fBdebug_peer_list (empty)\fR"
+/*	Optional list of remote client or server hostname or network
+/*	address patterns that cause the verbose logging level to increase
+/*	by the amount specified in $debug_peer_level.
+/* .IP "\fBerror_notice_recipient (postmaster)\fR"
+/*	The recipient of postmaster notifications about mail delivery
+/*	problems that are caused by policy, resource, software or protocol
+/*	errors.
+/* .IP "\fBnotify_classes (resource, software)\fR"
+/*	The list of error classes that are reported to the postmaster.
+/* EXTERNAL CONTENT INSPECTION CONTROLS
+/* .ad
+/* .fi
+/*	Available in Postfix version 2.1 and later:
+/* .IP "\fBlmtp_send_xforward_command (no)\fR"
+/*	Send an XFORWARD command to the LMTP server when the LMTP LHLO
+/*	server response announces XFORWARD support.
+/* SASL AUTHENTICATION CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBlmtp_sasl_auth_enable (no)\fR"
+/*	Enable SASL authentication in the Postfix LMTP client.
+/* .IP "\fBlmtp_sasl_password_maps (empty)\fR"
+/*	Optional LMTP client lookup tables with one username:password entry
+/*	per host or domain.
+/* .IP "\fBlmtp_sasl_security_options (noplaintext, noanonymous)\fR"
+/*	What authentication mechanisms the Postfix LMTP client is allowed
+/*	to use.
+/* RESOURCE AND RATE CONTROLS
+/* .ad
+/* .fi
+/*	In the text below, \fItransport\fR is the name
+/*	of the service as specified in the \fBmaster.cf\fR file.
+/* .IP "\fBlmtp_cache_connection (yes)\fR"
+/*	Keep Postfix LMTP client connections open for up to $max_idle
+/*	seconds.
+/* .IP "\fItransport_\fBdestination_concurrency_limit ($default_destination_concurrency_limit)\fR"
 /*	Limit the number of parallel deliveries to the same destination
-/*	via this mail delivery transport. \fItransport\fR is the name
-/*	of the service as specified in the \fBmaster.cf\fR file.
-/*	The default limit is taken from the
-/*	\fBdefault_destination_concurrency_limit\fR parameter.
-/* .IP \fItransport_\fBdestination_recipient_limit\fR
+/*	via this mail delivery transport.
+/* .IP "\fItransport_\fBdestination_recipient_limit ($default_destination_recipient_limit)\fR"
 /*	Limit the number of recipients per message delivery via this mail
-/*	delivery transport. \fItransport\fR is the name
-/*	of the service as specified in the \fBmaster.cf\fR file.
-/*	The default limit is taken from the
-/*	\fBdefault_destination_recipient_limit\fR parameter.
+/*	delivery transport.
 /*
 /*	This parameter becomes significant if the LMTP client is used
 /*	for local delivery.  Some LMTP servers can optimize delivery of
@@ -155,49 +134,84 @@
 /*	make the machine vulnerable to running out of resources if messages
 /*	are encountered with an inordinate number of recipients.  Exercise
 /*	care when setting this parameter.
-/* .SH "Timeout controls"
+/* .IP "\fBlmtp_connect_timeout (0s)\fR"
+/*	The LMTP client time limit for completing a TCP connection, or
+/*	zero (use the operating system built-in time limit).
+/* .IP "\fBlmtp_lhlo_timeout (300s)\fR"
+/*	The LMTP client time limit for receiving the LMTP greeting
+/*	banner.
+/* .IP "\fBlmtp_xforward_timeout (300s)\fR"
+/*	The LMTP client time limit for sending the XFORWARD command, and
+/*	for receiving the server response.
+/* .IP "\fBlmtp_mail_timeout (300s)\fR"
+/*	The LMTP client time limit for sending the MAIL FROM command, and
+/*	for receiving the server response.
+/* .IP "\fBlmtp_rcpt_timeout (300s)\fR"
+/*	The LMTP client time limit for sending the RCPT TO command, and
+/*	for receiving the server response.
+/* .IP "\fBlmtp_data_init_timeout (120s)\fR"
+/*	The LMTP client time limit for sending the LMTP DATA command, and
+/*	for receiving the server response.
+/* .IP "\fBlmtp_data_xfer_timeout (180s)\fR"
+/*	The LMTP client time limit for sending the LMTP message content.
+/* .IP "\fBlmtp_data_done_timeout (600s)\fR"
+/*	The LMTP client time limit for sending the LMTP ".", and for
+/*	receiving the server response.
+/* .IP "\fBlmtp_rset_timeout (120s)\fR"
+/*	The LMTP client time limit for sending the RSET command, and for
+/*	receiving the server response.
+/* .IP "\fBlmtp_quit_timeout (300s)\fR"
+/*	The LMTP client time limit for sending the QUIT command, and for
+/*	receiving the server response.
+/* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
-/* .PP
-/*	The default time unit is seconds; an explicit time unit can
-/*	be specified by appending a one-letter suffix to the value:
-/*	s (seconds), m (minutes), h (hours), d (days) or w (weeks).
-/* .IP \fBlmtp_connect_timeout\fR
-/*	Timeout for opening a connection to the LMTP server.
-/*	If no connection can be made within the deadline, the message
-/*	is deferred.
-/* .IP \fBlmtp_lhlo_timeout\fR
-/*	Timeout for sending the \fBLHLO\fR command, and for
-/*	receiving the server response.
-/* .IP \fBlmtp_mail_timeout\fR
-/*	Timeout for sending the \fBMAIL FROM\fR command, and for
-/*	receiving the server response.
-/* .IP \fBlmtp_rcpt_timeout\fR
-/*	Timeout for sending the \fBRCPT TO\fR command, and for
-/*	receiving the server response.
-/* .IP \fBlmtp_data_init_timeout\fR
-/*	Timeout for sending the \fBDATA\fR command, and for
-/*	receiving the server response.
-/* .IP \fBlmtp_data_xfer_timeout\fR
-/*	Timeout for sending the message content.
-/* .IP \fBlmtp_data_done_timeout\fR
-/*	Timeout for sending the "\fB.\fR" command, and for
-/*	receiving the server response. When no response is received, a
-/*	warning is logged that the mail may be delivered multiple times.
-/* .IP \fBlmtp_rset_timeout\fR
-/*	Timeout for sending the \fBRSET\fR command, and for
-/*	receiving the server response.
-/* .IP \fBlmtp_quit_timeout\fR
-/*	Timeout for sending the \fBQUIT\fR command, and for
-/*	receiving the server response.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBdisable_dns_lookups (no)\fR"
+/*	Disable DNS lookups in the Postfix SMTP and LMTP clients.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBlmtp_tcp_port (24)\fR"
+/*	The default TCP port that the Postfix LMTP client connects to.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
-/*	bounce(8) non-delivery status reports
-/*	local(8) local mail delivery
-/*	master(8) process manager
-/*	qmgr(8) queue manager
-/*	services(4) Internet services and aliases
-/*	spawn(8) auxiliary command spawner
-/*	syslogd(8) system logging
+/*	bounce(8), delivery status reports
+/*	qmgr(8), queue manager
+/*	postconf(5), configuration parameters
+/*	services(4), Internet services and aliases
+/*	master(8), process manager
+/*	syslogd(8), system logging
+/* README FILES
+/* .ad
+/* .fi
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/* .na
+/* .nf
+/*	LMTP_README, Postfix LMTP client howto
+/*	VIRTUAL_README, virtual delivery agent howto
 /* LICENSE
 /* .ad
 /* .fi
@@ -245,6 +259,7 @@
 #include <mail_conf.h>
 #include <debug_peer.h>
 #include <mail_error.h>
+#include <flush_clnt.h>
 
 /* Single server skeleton. */
 
@@ -263,6 +278,7 @@ int     var_lmtp_tcp_port;
 int     var_lmtp_conn_tmout;
 int     var_lmtp_rset_tmout;
 int     var_lmtp_lhlo_tmout;
+int     var_lmtp_xfwd_tmout;
 int     var_lmtp_mail_tmout;
 int     var_lmtp_rcpt_tmout;
 int     var_lmtp_data0_tmout;
@@ -276,6 +292,7 @@ char   *var_error_rcpt;
 char   *var_lmtp_sasl_opts;
 char   *var_lmtp_sasl_passwd;
 bool    var_lmtp_sasl_enable;
+bool    var_lmtp_send_xforward;
 
  /*
   * Global variables.
@@ -417,10 +434,14 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	lmtp_chat_notify(state);
 
     /*
-     * Disconnect if we're not cacheing connections. The pipelined protocol
-     * state machine knows if it should have sent a QUIT command.
+     * Disconnect if we're not caching connections. The pipelined protocol
+     * state machine knows if it should have sent a QUIT command. Do not
+     * cache a broken connection.
      */
-    if (state->session != 0 && !var_lmtp_cache_conn)
+    if (state->session != 0
+	&& (!var_lmtp_cache_conn
+	    || vstream_ferror(state->session->stream)
+	    || vstream_feof(state->session->stream)))
 	state->session = lmtp_session_free(state->session);
 
     /*
@@ -486,6 +507,11 @@ static void pre_init(char *unused_name, char **unused_argv)
 	msg_warn("%s is true, but SASL support is not compiled in",
 		 VAR_LMTP_SASL_ENABLE);
 #endif
+
+    /*
+     * flush client.
+     */
+    flush_init();
 }
 
 /* cleanup - close any open connections, etc. */
@@ -510,8 +536,10 @@ static void cleanup(void)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("table has changed -- exiting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	cleanup();
 	exit(0);
     }
@@ -536,6 +564,7 @@ int     main(int argc, char **argv)
 	VAR_LMTP_CONN_TMOUT, DEF_LMTP_CONN_TMOUT, &var_lmtp_conn_tmout, 0, 0,
 	VAR_LMTP_RSET_TMOUT, DEF_LMTP_RSET_TMOUT, &var_lmtp_rset_tmout, 1, 0,
 	VAR_LMTP_LHLO_TMOUT, DEF_LMTP_LHLO_TMOUT, &var_lmtp_lhlo_tmout, 1, 0,
+	VAR_LMTP_XFWD_TMOUT, DEF_LMTP_XFWD_TMOUT, &var_lmtp_xfwd_tmout, 1, 0,
 	VAR_LMTP_MAIL_TMOUT, DEF_LMTP_MAIL_TMOUT, &var_lmtp_mail_tmout, 1, 0,
 	VAR_LMTP_RCPT_TMOUT, DEF_LMTP_RCPT_TMOUT, &var_lmtp_rcpt_tmout, 1, 0,
 	VAR_LMTP_DATA0_TMOUT, DEF_LMTP_DATA0_TMOUT, &var_lmtp_data0_tmout, 1, 0,
@@ -548,6 +577,7 @@ int     main(int argc, char **argv)
 	VAR_LMTP_CACHE_CONN, DEF_LMTP_CACHE_CONN, &var_lmtp_cache_conn,
 	VAR_LMTP_SKIP_QUIT_RESP, DEF_LMTP_SKIP_QUIT_RESP, &var_lmtp_skip_quit_resp,
 	VAR_LMTP_SASL_ENABLE, DEF_LMTP_SASL_ENABLE, &var_lmtp_sasl_enable,
+	VAR_LMTP_SEND_XFORWARD, DEF_LMTP_SEND_XFORWARD, &var_lmtp_send_xforward,
 	0,
     };
 

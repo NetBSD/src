@@ -37,7 +37,6 @@
 
 #include <mymalloc.h>
 #include <vstring.h>
-#include <argv.h>
 #include <htable.h>
 
 /* Global library. */
@@ -72,26 +71,23 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->return_receipt = 0;
     state->errors_to = 0;
     state->flags = 0;
+    state->qmgr_opts = 0;
     state->errs = 0;
     state->err_mask = 0;
     state->headers_seen = 0;
     state->hop_count = 0;
-    state->recipients = argv_alloc(2);
-    state->resent_recip = argv_alloc(2);
     state->resent = "";
     state->dups = been_here_init(var_dup_filter_limit, BH_FLAG_FOLD);
-    state->warn_time = 0;
     state->action = cleanup_envelope;
-    state->mesg_offset = -1;
     state->data_offset = -1;
     state->xtra_offset = -1;
-    state->end_seen = 0;
     state->rcpt_count = 0;
     state->reason = 0;
     state->attr = nvtable_create(10);
     state->mime_state = 0;
     state->mime_errs = 0;
     state->filter = 0;
+    state->redirect = 0;
     return (state);
 }
 
@@ -117,8 +113,6 @@ void    cleanup_state_free(CLEANUP_STATE *state)
 	myfree(state->return_receipt);
     if (state->errors_to)
 	myfree(state->errors_to);
-    argv_free(state->recipients);
-    argv_free(state->resent_recip);
     if (state->queue_name)
 	myfree(state->queue_name);
     if (state->queue_id)
@@ -131,5 +125,7 @@ void    cleanup_state_free(CLEANUP_STATE *state)
 	mime_state_free(state->mime_state);
     if (state->filter)
 	myfree(state->filter);
+    if (state->redirect)
+	myfree(state->redirect);
     myfree((char *) state);
 }

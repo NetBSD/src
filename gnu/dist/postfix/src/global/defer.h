@@ -21,14 +21,16 @@
   * Global library.
   */
 #include <bounce.h>
+#include <deliver_request.h>
 
  /*
   * External interface.
   */
-extern int PRINTFLIKE(7, 8) defer_append(int, const char *, const char *,
-				         const char *, const char *, time_t,
+extern int PRINTFLIKE(8, 9) defer_append(int, const char *,
+					         const char *, const char *,
+					         long, const char *, time_t,
 					         const char *,...);
-extern int vdefer_append(int, const char *, const char *, const char *,
+extern int vdefer_append(int, const char *, const char *, const char *, long,
 		               const char *, time_t, const char *, va_list);
 extern int defer_flush(int, const char *, const char *, const char *, const char *);
 

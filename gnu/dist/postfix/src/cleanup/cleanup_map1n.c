@@ -55,6 +55,7 @@
 
 /* Global library. */
 
+#include <mail_params.h>
 #include <mail_addr_map.h>
 #include <cleanup_user.h>
 #include <quote_822_local.h>
@@ -93,13 +94,11 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
      * pointer.
      */
 #define UPDATE(ptr,new)	{ myfree(ptr); ptr = mystrdup(new); }
-#define MAX_RECURSION 1000
-#define MAX_EXPANSION 1000
 #define STR	vstring_str
 #define RETURN(x) { been_here_free(been_here); return (x); }
 
     for (arg = 0; arg < argv->argc; arg++) {
-	if (argv->argc > MAX_EXPANSION) {
+	if (argv->argc > var_virt_expan_limit) {
 	    msg_warn("%s: unreasonable %s map expansion size for %s",
 		     state->queue_id, maps->title, addr);
 	    break;
@@ -111,7 +110,7 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 	     */
 	    if (been_here_check_fixed(been_here, argv->argv[arg]) != 0)
 		break;
-	    if (count >= MAX_RECURSION) {
+	    if (count >= var_virt_recur_limit) {
 		msg_warn("%s: unreasonable %s map nesting for %s",
 			 state->queue_id, maps->title, addr);
 		break;

@@ -29,11 +29,56 @@
 /*	The \fBshowq\fR daemon runs at a fixed low privilege; consequently,
 /*	it cannot extract information from queue files in the
 /*	\fBmaildrop\fR directory.
+/* CONFIGURATION PARAMETERS
+/* .ad
+/* .fi
+/*	Changes to \fBmain.cf\fR are picked up automatically as showq(8)
+/*	processes run for only a limited amount of time. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBduplicate_filter_limit (1000)\fR"
+/*	The maximal number of addresses remembered by the address
+/*	duplicate filter for aliases(5) or virtual(5) alias expansion, or
+/*	for showq(8) queue displays.
+/* .IP "\fBempty_address_recipient (MAILER-DAEMON)\fR"
+/*	The recipient of mail addressed to the null address.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* FILES
+/*	/var/spool/postfix, queue directories
 /* SEE ALSO
-/*	cleanup(8) canonicalize and enqueue mail
-/*	pickup(8) local mail pickup service
-/*	qmgr(8) mail being delivered, delayed mail
-/*	syslogd(8) system logging
+/*	pickup(8), local mail pickup service
+/*	cleanup(8), canonicalize and enqueue mail
+/*	qmgr(8), queue manager
+/*	postconf(5), configuration parameters
+/*	master(8), process manager
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -94,7 +139,7 @@ int     var_dup_filter_limit;
 char   *var_empty_addr;
 
 #define STRING_FORMAT	"%-10s %8s %-20s %s\n"
-#define DATA_FORMAT	"%-10s%c%8ld %20.20s %s\n"
+#define SENDER_FORMAT	"%-11s%8ld %20.20s %s\n"
 #define DROP_FORMAT	"%-10s%c%8ld %20.20s (maildrop queue, sender UID %u)\n"
 
 static void showq_reasons(VSTREAM *, BOUNCE_LOG *, HTABLE *);
@@ -104,7 +149,7 @@ static void showq_reasons(VSTREAM *, BOUNCE_LOG *, HTABLE *);
 /* showq_report - report status of sender and recipients */
 
 static void showq_report(VSTREAM *client, char *queue, char *id,
-			         VSTREAM *qfile, long size)
+			         VSTREAM *qfile, long size, time_t mtime)
 {
     VSTRING *buf = vstring_alloc(100);
     VSTRING *printable_quoted_addr = vstring_alloc(100);
@@ -116,7 +161,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
     HTABLE *dup_filter = 0;
     char    status = (strcmp(queue, MAIL_QUEUE_ACTIVE) == 0 ? '*' :
 		      strcmp(queue, MAIL_QUEUE_HOLD) == 0 ? '!' : ' ');
-    long    offset;
+    int     msg_size_ok = 0;
 
     /*
      * XXX addresses in defer logfiles are in printable quoted form, while
@@ -124,25 +169,38 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
      * may change once we replace the present ad-hoc bounce/defer logfile
      * format by one that is transparent for control etc. characters. See
      * also: bounce/bounce_append_service.c.
+     * 
+     * XXX With Postfix <= 2.0, "postsuper -r" results in obsolete size records
+     * from previous cleanup runs. Skip the obsolete size records.
      */
     while (!vstream_ferror(client) && (rec_type = rec_get(qfile, buf, 0)) > 0) {
 	start = vstring_str(buf);
+	if (msg_verbose)
+	    msg_info("record %c %s", rec_type, printable(start, '?'));
 	switch (rec_type) {
 	case REC_TYPE_TIME:
 	    arrival_time = atol(start);
 	    break;
 	case REC_TYPE_SIZE:
-	    if ((msg_size = atol(start)) <= 0)
-		msg_size = size;
+	    if (msg_size == 0) {
+		if ((msg_size_ok = ((msg_size = atol(start)) > 0)) == 0) {
+		    msg_warn("%s: malformed size record: %.100s",
+			     id, printable(start, '?'));
+		    msg_size = size;
+		}
+	    }
 	    break;
 	case REC_TYPE_FROM:
 	    if (*start == 0)
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
 	    printable(STR(printable_quoted_addr), '?');
-	    vstream_fprintf(client, DATA_FORMAT, id, status,
+	    /* quote_822_local() saves buf, so we can reuse its space. */
+	    vstring_sprintf(buf, "%s%c", id, status);
+	    vstream_fprintf(client, SENDER_FORMAT, STR(buf),
 			  msg_size > 0 ? msg_size : size, arrival_time > 0 ?
-			    asctime(localtime(&arrival_time)) : "??",
+			    asctime(localtime(&arrival_time)) :
+			    asctime(localtime(&mtime)),
 			    STR(printable_quoted_addr));
 	    break;
 	case REC_TYPE_RCPT:
@@ -156,8 +214,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 				"", "", "", STR(printable_quoted_addr));
 	    break;
 	case REC_TYPE_MESG:
-	    if ((offset = atol(start)) > 0
-		&& vstream_fseek(qfile, offset, SEEK_SET) < 0)
+	    if (msg_size_ok && vstream_fseek(qfile, msg_size, SEEK_CUR) < 0)
 		msg_fatal("seek file %s: %m", VSTREAM_PATH(qfile));
 	    break;
 	case REC_TYPE_END:
@@ -244,8 +301,8 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 
     static struct queue_info queue_info[] = {
 	MAIL_QUEUE_MAILDROP, scan_dir_next,
-	MAIL_QUEUE_INCOMING, mail_scan_dir_next,
 	MAIL_QUEUE_ACTIVE, mail_scan_dir_next,
+	MAIL_QUEUE_INCOMING, mail_scan_dir_next,
 	MAIL_QUEUE_DEFERRED, mail_scan_dir_next,
 	MAIL_QUEUE_HOLD, mail_scan_dir_next,
 	0,
@@ -293,7 +350,8 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 		    vstream_fprintf(client, "\n");
 		if ((qfile = mail_queue_open(qp->name, id, O_RDONLY, 0)) != 0) {
 		    queue_size += st.st_size;
-		    showq_report(client, qp->name, id, qfile, (long) st.st_size);
+		    showq_report(client, qp->name, id, qfile, (long) st.st_size,
+				 st.st_mtime);
 		    if (vstream_fclose(qfile))
 			msg_warn("close file %s %s: %m", qp->name, id);
 		} else if (strcmp(qp->name, MAIL_QUEUE_MAILDROP) == 0) {

@@ -132,12 +132,15 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
     if (STREQ(state.msg_attr.local, MAIL_ADDR_MAIL_DAEMON)
 	|| STREQ(state.msg_attr.local, MAIL_ADDR_POSTMASTER)) {
 	msg_warn("required alias not found: %s", state.msg_attr.local);
-	return (sent(SENT_ATTR(state.msg_attr), "discarded"));
+	return (sent(BOUNCE_FLAGS(state.request),
+		     SENT_ATTR(state.msg_attr),
+		     "discarded"));
     }
 
     /*
      * Bounce the message when no luser relay is specified.
      */
-    return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+    return (bounce_append(BOUNCE_FLAGS(state.request),
+			  BOUNCE_ATTR(state.msg_attr),
 			  "unknown user: \"%s\"", state.msg_attr.local));
 }

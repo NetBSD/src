@@ -70,11 +70,12 @@
 char   *mvect_alloc(MVECT *vect, int elsize, int nelm,
                void (*init_fn) (char *, int), void (*wipe_fn) (char *, int))
 {
-    vect->nelm = nelm;
-    vect->elsize = elsize;
     vect->init_fn = init_fn;
     vect->wipe_fn = wipe_fn;
-    vect->ptr = mymalloc(vect->elsize * vect->nelm);
+    vect->nelm = 0;
+    vect->ptr = mymalloc(elsize * nelm);
+    vect->nelm = nelm;
+    vect->elsize = elsize;
     if (vect->init_fn)
 	vect->init_fn(vect->ptr, vect->nelm);
     return (vect->ptr);
@@ -86,12 +87,14 @@ char   *mvect_realloc(MVECT *vect, int nelm)
 {
     int     old_len = vect->nelm;
     int     incr = nelm - old_len;
+    int     new_nelm;
 
     if (incr > 0) {
 	if (incr < old_len)
 	    incr = old_len;
-	vect->nelm += incr;
-	vect->ptr = myrealloc(vect->ptr, vect->elsize * vect->nelm);
+	new_nelm = vect->nelm + incr;
+	vect->ptr = myrealloc(vect->ptr, vect->elsize * new_nelm);
+	vect->nelm = new_nelm;
 	if (vect->init_fn)
 	    vect->init_fn(vect->ptr + old_len * vect->elsize, incr);
     }

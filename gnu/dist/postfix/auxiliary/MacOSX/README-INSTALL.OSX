@@ -5,6 +5,10 @@ Let's start with the important warning:
 
 DO NOT USE THE MULTIPLE USERS APPLICATION TO CREATE THE POSTFIX USER!
 
+NOTE: Mac OS X as of version 10.3 comes with Postfix as the standard mailer
+and it is supported in Server Admin on Mac OS X 10.3 Server . The instructions
+below therefore only apply for Mac OS X 10.2.8.
+
 NOTE: As of 29 September 2002, these instructions and the scripts have changed
 to make the solution more robust for Apple updates.
 

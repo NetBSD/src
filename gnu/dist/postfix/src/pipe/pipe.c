@@ -17,8 +17,9 @@
 /*
 /*	The \fBpipe\fR daemon updates queue files and marks recipients
 /*	as finished, or it informs the queue manager that delivery should
-/*	be tried again at a later time. Delivery problem reports are sent
-/*	to the \fBbounce\fR(8) or \fBdefer\fR(8) daemon as appropriate.
+/*	be tried again at a later time. Delivery status reports are sent
+/*	to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
+/*	appropriate.
 /* SINGLE-RECIPIENT DELIVERY
 /* .ad
 /* .fi
@@ -184,43 +185,72 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
-/*	a configuration change.
-/* .SH Miscellaneous
-/* .ad
-/* .fi
-/* .IP \fBexport_environment\fR
-/*	List of names of environment parameters that can be exported
-/*	to non-Postfix processes.
-/* .IP \fBmail_owner\fR
-/*	The process privileges used while not running an external command.
-/* .SH "Resource controls"
+/*	Changes to \fBmain.cf\fR are picked up automatically as pipe(8)
+/*	processes run for only a limited amount of time. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
 /*	In the text below, \fItransport\fR is the first field in a
 /*	\fBmaster.cf\fR entry.
-/* .IP \fItransport\fB_destination_concurrency_limit\fR
+/* .IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
 /*	Limit the number of parallel deliveries to the same destination,
-/*	for delivery via the named \fItransport\fR. The default limit is
-/*	taken from the \fBdefault_destination_concurrency_limit\fR parameter.
+/*	for delivery via the named \fItransport\fR.
 /*	The limit is enforced by the Postfix queue manager.
-/* .IP \fItransport\fB_destination_recipient_limit\fR
+/* .IP "\fItransport\fB_destination_recipient_limit ($default_destination_recipient_limit)\fR"
 /*	Limit the number of recipients per message delivery, for delivery
-/*	via the named \fItransport\fR. The default limit is taken from
-/*	the \fBdefault_destination_recipient_limit\fR parameter.
+/*	via the named \fItransport\fR.
 /*	The limit is enforced by the Postfix queue manager.
-/* .IP \fItransport\fB_time_limit\fR
+/* .IP "\fItransport\fB_time_limit ($command_time_limit)\fR"
 /*	Limit the time for delivery to external command, for delivery via
-/*	the named \fBtransport\fR. The default limit is taken from the
-/*	\fBcommand_time_limit\fR parameter.
+/*	the named \fItransport\fR.
 /*	The limit is enforced by the pipe delivery agent.
+/* MISCELLANEOUS CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBexport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment variables that a Postfix process will export
+/*	to non-Postfix processes.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBmail_owner (postfix)\fR"
+/*	The UNIX system account that owns the Postfix queue and most Postfix
+/*	daemon processes.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBrecipient_delimiter (empty)\fR"
+/*	The separator between user names and address extensions (user+foo).
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
-/*	bounce(8) non-delivery status reports
-/*	master(8) process manager
-/*	qmgr(8) queue manager
-/*	syslogd(8) system logging
+/*	qmgr(8), queue manager
+/*	bounce(8), delivery status reports
+/*	postconf(5), configuration parameters
+/*	master(8), process manager
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -279,6 +309,7 @@
 #include <split_addr.h>
 #include <off_cvt.h>
 #include <quote_822_local.h>
+#include <flush_clnt.h>
 
 /* Single server skeleton. */
 
@@ -289,6 +320,9 @@
  /*
   * The mini symbol table name and keys used for expanding macros in
   * command-line arguments.
+  * 
+  * XXX Update  the parse_callback() routine when something gets added here,
+  * even when the macro is not recipient dependent.
   */
 #define PIPE_DICT_TABLE		"pipe_command"	/* table name */
 #define PIPE_DICT_NEXTHOP	"nexthop"	/* key */
@@ -307,7 +341,6 @@
 #define PIPE_FLAG_USER		(1<<1)
 #define PIPE_FLAG_EXTENSION	(1<<2)
 #define PIPE_FLAG_MAILBOX	(1<<3)
-#define PIPE_FLAG_SIZE		(1<<4)
 
  /*
   * Additional flags. These are colocated with mail_copy() flags. Allow some
@@ -350,6 +383,14 @@ typedef struct {
 } PIPE_ATTR;
 
  /*
+  * Structure for command-line parameter macro expansion.
+  */
+typedef struct {
+    const char *service;		/* for warnings */
+    int     expand_flag;		/* callback result */
+} PIPE_STATE;
+
+ /*
   * Silly little macros.
   */
 #define STR	vstring_str
@@ -358,20 +399,38 @@ typedef struct {
 
 static int parse_callback(int type, VSTRING *buf, char *context)
 {
-    int    *expand_flag = (int *) context;
+    PIPE_STATE *state = (PIPE_STATE *) context;
+    struct cmd_flags {
+	const char *name;
+	int     flags;
+    };
+    static struct cmd_flags cmd_flags[] = {
+	PIPE_DICT_NEXTHOP, 0,
+	PIPE_DICT_RCPT, PIPE_FLAG_RCPT,
+	PIPE_DICT_SENDER, 0,
+	PIPE_DICT_USER, PIPE_FLAG_USER,
+	PIPE_DICT_EXTENSION, PIPE_FLAG_EXTENSION,
+	PIPE_DICT_MAILBOX, PIPE_FLAG_MAILBOX,
+	PIPE_DICT_SIZE, 0,
+	0, 0,
+    };
+    struct cmd_flags *p;
 
     /*
      * See if this command-line argument references a special macro.
      */
     if (type == MAC_PARSE_VARNAME) {
-	if (strcmp(vstring_str(buf), PIPE_DICT_RCPT) == 0)
-	    *expand_flag |= PIPE_FLAG_RCPT;
-	else if (strcmp(vstring_str(buf), PIPE_DICT_USER) == 0)
-	    *expand_flag |= PIPE_FLAG_USER;
-	else if (strcmp(vstring_str(buf), PIPE_DICT_EXTENSION) == 0)
-	    *expand_flag |= PIPE_FLAG_EXTENSION;
-	else if (strcmp(vstring_str(buf), PIPE_DICT_MAILBOX) == 0)
-	    *expand_flag |= PIPE_FLAG_MAILBOX;
+	for (p = cmd_flags; /* see below */ ; p++) {
+	    if (p->name == 0) {
+		msg_warn("file %s/%s: service %s: unknown macro name: \"%s\"",
+			 var_config_dir, MASTER_CONF_FILE,
+			 state->service, vstring_str(buf));
+		return (MAC_PARSE_ERROR);
+	    } else if (strcmp(vstring_str(buf), p->name) == 0) {
+		state->expand_flag |= p->flags;
+		return (0);
+	    }
+	}
     }
     return (0);
 }
@@ -413,12 +472,13 @@ static void morph_recipient(VSTRING *buf, const char *address, int flags)
 
 /* expand_argv - expand macros in the argument vector */
 
-static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
+static ARGV *expand_argv(const char *service, char **argv,
+			         RECIPIENT_LIST *rcpt_list, int flags)
 {
     VSTRING *buf = vstring_alloc(100);
     ARGV   *result;
     char  **cpp;
-    int     expand_flag;
+    PIPE_STATE state;
     int     i;
     char   *ext;
 
@@ -436,12 +496,15 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
      * would screw up mail addresses that contain $ characters.
      */
 #define NO	0
+#define EARLY_RETURN(x) { argv_free(result); vstring_free(buf); return (x); }
 
     result = argv_alloc(1);
     for (cpp = argv; *cpp; cpp++) {
-	expand_flag = 0;
-	mac_parse(*cpp, parse_callback, (char *) &expand_flag);
-	if (expand_flag == 0) {			/* no $recipient etc. */
+	state.service = service;
+	state.expand_flag = 0;
+	if (mac_parse(*cpp, parse_callback, (char *) &state) & MAC_PARSE_ERROR)
+	    EARLY_RETURN(0);
+	if (state.expand_flag == 0) {		/* no $recipient etc. */
 	    argv_add(result, dict_eval(PIPE_DICT_TABLE, *cpp, NO), ARGV_END);
 	} else {				/* contains $recipient etc. */
 	    for (i = 0; i < rcpt_list->len; i++) {
@@ -449,7 +512,7 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
 		/*
 		 * This argument contains $recipient.
 		 */
-		if (expand_flag & PIPE_FLAG_RCPT) {
+		if (state.expand_flag & PIPE_FLAG_RCPT) {
 		    morph_recipient(buf, rcpt_list->info[i].address, flags);
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_RCPT, STR(buf));
 		}
@@ -466,7 +529,7 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
 		 * skipping empty user parts will also prevent other
 		 * expansions of this specific command-line argument.
 		 */
-		if (expand_flag & PIPE_FLAG_USER) {
+		if (state.expand_flag & PIPE_FLAG_USER) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
 				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
@@ -484,7 +547,7 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
 		 * extension: anything between the leftmost extension
 		 * delimiter and the rightmost @. The extension may be blank.
 		 */
-		if (expand_flag & PIPE_FLAG_EXTENSION) {
+		if (state.expand_flag & PIPE_FLAG_EXTENSION) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
 				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
@@ -500,7 +563,7 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
 		 * This argument contains $mailbox. Extract the mailbox name:
 		 * anything to the left of the rightmost @.
 		 */
-		if (expand_flag & PIPE_FLAG_MAILBOX) {
+		if (state.expand_flag & PIPE_FLAG_MAILBOX) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
 				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
@@ -666,17 +729,19 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
      * Sanity checks. Verify that every member has an acceptable value.
      */
     if (user == 0)
-	msg_fatal("missing user= attribute");
+	msg_fatal("missing user= command-line attribute");
     if (attr->command == 0)
-	msg_fatal("missing argv= attribute");
+	msg_fatal("missing argv= command-line attribute");
     if (attr->uid == 0)
-	msg_fatal("request to deliver as root");
+	msg_fatal("user= command-line attribute specifies root privileges");
     if (attr->uid == var_owner_uid)
-	msg_fatal("request to deliver as mail system owner");
+	msg_fatal("user= command-line attribute specifies mail system owner %s",
+		  var_mail_owner);
     if (attr->gid == 0)
-	msg_fatal("request to use privileged group id %ld", (long) attr->gid);
+	msg_fatal("user= command-line attribute specifies privileged group id 0");
     if (attr->gid == var_owner_gid)
-	msg_fatal("request to use mail system owner group id %ld", (long) attr->gid);
+	msg_fatal("user= command-line attribute specifies mail system owner %s group id %ld",
+		  var_mail_owner, (long) attr->gid);
 
     /*
      * Give the poor tester a clue of what is going on.
@@ -706,18 +771,21 @@ static int eval_command_status(int command_status, char *service,
     case PIPE_STAT_OK:
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
-	    sent(request->queue_id, rcpt->orig_addr, rcpt->address, service,
-		 request->arrival_time, "%s", request->nexthop);
-	    if (request->flags & DEL_REQ_FLAG_SUCCESS)
+	    status = sent(DEL_REQ_TRACE_FLAGS(request->flags),
+			  request->queue_id, rcpt->orig_addr,
+			  rcpt->address, rcpt->offset, service,
+			  request->arrival_time, "%s", request->nexthop);
+	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
 		deliver_completed(src, rcpt->offset);
+	    result |= status;
 	}
 	break;
     case PIPE_STAT_BOUNCE:
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
-	    status = bounce_append(BOUNCE_FLAG_KEEP,
+	    status = bounce_append(DEL_REQ_TRACE_FLAGS(request->flags),
 				   request->queue_id, rcpt->orig_addr,
-				   rcpt->address, service,
+				   rcpt->address, rcpt->offset, service,
 				   request->arrival_time, "%s", why);
 	    if (status == 0)
 		deliver_completed(src, rcpt->offset);
@@ -727,9 +795,9 @@ static int eval_command_status(int command_status, char *service,
     case PIPE_STAT_DEFER:
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
-	    result |= defer_append(BOUNCE_FLAG_KEEP,
+	    result |= defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
 				   request->queue_id, rcpt->orig_addr,
-				   rcpt->address, service,
+				   rcpt->address, rcpt->offset, service,
 				   request->arrival_time, "%s", why);
 	}
 	break;
@@ -838,6 +906,30 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     }
 
     /*
+     * Don't deliver a trace-only request.
+     */
+    if (DEL_REQ_TRACE_ONLY(request->flags)) {
+	RECIPIENT *rcpt;
+	int     status;
+	int     n;
+
+	deliver_status = 0;
+	for (n = 0; n < request->rcpt_list.len; n++) {
+	    rcpt = request->rcpt_list.info + n;
+	    status = sent(DEL_REQ_TRACE_FLAGS(request->flags),
+			  request->queue_id, rcpt->orig_addr,
+			  rcpt->address, rcpt->offset, service,
+			  request->arrival_time,
+			  "delivers to command: %s", attr.command[0]);
+	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
+		deliver_completed(request->fp, rcpt->offset);
+	    deliver_status |= status;
+	}
+	DELIVER_MSG_CLEANUP();
+	return (deliver_status);
+    }
+
+    /*
      * Deliver. Set the nexthop and sender variables, and expand the command
      * argument vector. Recipients will be expanded on the fly. XXX Rewrite
      * envelope and header addresses according to transport-specific
@@ -861,7 +953,15 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     vstring_sprintf(buf, "%ld", (long) request->data_size);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_SIZE, STR(buf));
     vstring_free(buf);
-    expanded_argv = expand_argv(attr.command, rcpt_list, attr.flags);
+
+    if ((expanded_argv = expand_argv(service, attr.command,
+				     rcpt_list, attr.flags)) == 0) {
+	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
+					     request, request->fp,
+					     "mailer configuration error");
+	DELIVER_MSG_CLEANUP();
+	return (deliver_status);
+    }
     export_env = argv_split(var_export_environ, ", \t\r\n");
 
     command_status = pipe_command(request->fp, why,
@@ -914,8 +1014,10 @@ static void pipe_service(VSTREAM *client_stream, char *service, char **argv)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("table has changed -- exiting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	exit(0);
     }
 }
@@ -925,6 +1027,13 @@ static void pre_accept(char *unused_name, char **unused_argv)
 static void drop_privileges(char *unused_name, char **unused_argv)
 {
     set_eugid(var_owner_uid, var_owner_gid);
+}
+
+/* pre_init - initialize */
+
+static void pre_init(char *unused_name, char **unused_argv)
+{
+    flush_init();
 }
 
 /* main - pass control to the single-threaded skeleton */
@@ -938,6 +1047,7 @@ int     main(int argc, char **argv)
 
     single_server_main(argc, argv, pipe_service,
 		       MAIL_SERVER_TIME_TABLE, time_table,
+		       MAIL_SERVER_PRE_INIT, pre_init,
 		       MAIL_SERVER_POST_INIT, drop_privileges,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
 		       0);

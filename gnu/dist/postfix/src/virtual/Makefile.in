@@ -3,9 +3,6 @@ SRCS	= virtual.c mailbox.c recipient.c deliver_attr.c maildir.c unknown.c
 OBJS	= virtual.o mailbox.o recipient.o deliver_attr.o maildir.o unknown.o
 HDRS	= virtual.h
 TESTSRC	=
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 PROG	= virtual
@@ -83,15 +80,15 @@ mailbox.o: ../../include/mbox_open.h
 mailbox.o: ../../include/safe_open.h
 mailbox.o: ../../include/defer.h
 mailbox.o: ../../include/bounce.h
+mailbox.o: ../../include/deliver_request.h
+mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/sent.h
 mailbox.o: ../../include/mail_params.h
-mailbox.o: ../../include/virtual8_maps.h
+mailbox.o: ../../include/mail_addr_find.h
 mailbox.o: ../../include/maps.h
 mailbox.o: ../../include/dict.h
 mailbox.o: ../../include/argv.h
 mailbox.o: virtual.h
-mailbox.o: ../../include/deliver_request.h
-mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/mbox_conf.h
 maildir.o: maildir.c
 maildir.o: ../../include/sys_defs.h
@@ -107,12 +104,12 @@ maildir.o: ../../include/get_hostname.h
 maildir.o: ../../include/sane_fsops.h
 maildir.o: ../../include/mail_copy.h
 maildir.o: ../../include/bounce.h
+maildir.o: ../../include/deliver_request.h
+maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/defer.h
 maildir.o: ../../include/sent.h
 maildir.o: ../../include/mail_params.h
 maildir.o: virtual.h
-maildir.o: ../../include/deliver_request.h
-maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/maps.h
 maildir.o: ../../include/dict.h
 maildir.o: ../../include/argv.h
@@ -125,10 +122,10 @@ recipient.o: ../../include/stringops.h
 recipient.o: ../../include/vstring.h
 recipient.o: ../../include/vbuf.h
 recipient.o: ../../include/bounce.h
-recipient.o: virtual.h
-recipient.o: ../../include/vstream.h
 recipient.o: ../../include/deliver_request.h
+recipient.o: ../../include/vstream.h
 recipient.o: ../../include/recipient_list.h
+recipient.o: virtual.h
 recipient.o: ../../include/maps.h
 recipient.o: ../../include/dict.h
 recipient.o: ../../include/argv.h
@@ -137,12 +134,12 @@ unknown.o: unknown.c
 unknown.o: ../../include/sys_defs.h
 unknown.o: ../../include/msg.h
 unknown.o: ../../include/bounce.h
-unknown.o: virtual.h
-unknown.o: ../../include/vstream.h
-unknown.o: ../../include/vbuf.h
-unknown.o: ../../include/vstring.h
 unknown.o: ../../include/deliver_request.h
+unknown.o: ../../include/vstring.h
+unknown.o: ../../include/vbuf.h
+unknown.o: ../../include/vstream.h
 unknown.o: ../../include/recipient_list.h
+unknown.o: virtual.h
 unknown.o: ../../include/maps.h
 unknown.o: ../../include/dict.h
 unknown.o: ../../include/argv.h
@@ -163,8 +160,9 @@ virtual.o: ../../include/deliver_request.h
 virtual.o: ../../include/deliver_completed.h
 virtual.o: ../../include/mail_params.h
 virtual.o: ../../include/mail_conf.h
-virtual.o: ../../include/virtual8_maps.h
+virtual.o: ../../include/mail_addr_find.h
 virtual.o: ../../include/maps.h
+virtual.o: ../../include/flush_clnt.h
 virtual.o: ../../include/mail_server.h
 virtual.o: virtual.h
 virtual.o: ../../include/mbox_conf.h

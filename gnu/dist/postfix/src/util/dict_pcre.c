@@ -73,6 +73,7 @@
 typedef struct {
     char   *regexp;			/* regular expression */
     int     options;			/* options */
+    int     match;			/* positive or negative match */
 } DICT_PCRE_REGEXP;
 
 typedef struct {
@@ -95,12 +96,14 @@ typedef struct {
     pcre   *pattern;			/* compiled pattern */
     pcre_extra *hints;			/* hints to speed pattern execution */
     char   *replacement;		/* replacement string */
+    int     match;			/* positive or negative match */
 } DICT_PCRE_MATCH_RULE;
 
 typedef struct {
     DICT_PCRE_RULE rule;		/* generic members */
     pcre   *pattern;			/* compiled pattern */
     pcre_extra *hints;			/* hints to speed pattern execution */
+    int     match;			/* positive or negative match */
 } DICT_PCRE_IF_RULE;
 
  /*
@@ -132,6 +135,7 @@ typedef struct {
     const char *mapname;		/* name of regexp map */
     int     lineno;			/* where in file */
     int     flags;			/* dict_flags */
+    size_t  max_sub;			/* Largest $n seen */
 } DICT_PCRE_PRESCAN_CONTEXT;
 
  /*
@@ -251,12 +255,22 @@ static const char *dict_pcre_lookup(DICT *dict, const char *lookup_string)
 				     lookup_string, lookup_len,
 				     NULL_STARTOFFSET, NULL_EXEC_OPTIONS,
 				     ctxt.offsets, PCRE_MAX_CAPTURE * 3);
-	    if (ctxt.matches == PCRE_ERROR_NOMATCH)
-		continue;
-	    if (ctxt.matches <= 0) {
+
+	    if (ctxt.matches > 0) {
+		if (!match_rule->match)
+		    continue;			/* Negative rule matched */
+	    } else if (ctxt.matches == PCRE_ERROR_NOMATCH) {
+		if (match_rule->match)
+		    continue;			/* Positive rule did not
+						 * match */
+	    } else {
 		dict_pcre_exec_error(dict->name, rule->lineno, ctxt.matches);
-		continue;
+		continue;			/* pcre_exec failed */
 	    }
+
+	    /* Negative rules can't have any substitutions */
+	    if (!match_rule->match)
+		return match_rule->replacement;
 
 	    /*
 	     * We've got a match. Perform substitution on replacement string.
@@ -289,11 +303,17 @@ static const char *dict_pcre_lookup(DICT *dict, const char *lookup_string)
 				     lookup_string, lookup_len,
 				     NULL_STARTOFFSET, NULL_EXEC_OPTIONS,
 				     ctxt.offsets, PCRE_MAX_CAPTURE * 3);
-	    if (ctxt.matches == PCRE_ERROR_NOMATCH)
-		continue;
-	    if (ctxt.matches <= 0) {
+
+	    if (ctxt.matches > 0) {
+		if (!if_rule->match)
+		    continue;			/* Negative rule matched */
+	    } else if (ctxt.matches == PCRE_ERROR_NOMATCH) {
+		if (if_rule->match)
+		    continue;			/* Positive rule did not
+						 * match */
+	    } else {
 		dict_pcre_exec_error(dict->name, rule->lineno, ctxt.matches);
-		continue;
+		continue;			/* pcre_exec failed */
 	    }
 	    nesting++;
 	    continue;
@@ -359,6 +379,25 @@ static int dict_pcre_get_pattern(const char *mapname, int lineno, char **bufp,
     char   *p = *bufp;
     char    re_delimiter;
 
+    /*
+     * Process negation operators.
+     */
+    pattern->match = 1;
+    while (*p == '!') {
+	pattern->match = !pattern->match;
+	p++;
+    }
+
+    /*
+     * Grr...aceful handling of whitespace after '!'.
+     */
+    while (*p && ISSPACE(*p))
+	p++;
+    if (*p == 0) {
+	msg_warn("pcre map %s, line %d: no regexp: skipping this rule",
+		 mapname, lineno);
+	return (0);
+    }
     re_delimiter = *p++;
     pattern->regexp = p;
 
@@ -433,11 +472,10 @@ static int dict_pcre_prescan(int type, VSTRING *buf, char *context)
     if (type == MAC_PARSE_VARNAME) {
 	if (ctxt->flags & DICT_FLAG_NO_REGSUB) {
 	    msg_warn("pcre map %s, line %d: "
-		      "regular expression substitution is not allowed",
-		      ctxt->mapname, ctxt->lineno);
+		     "regular expression substitution is not allowed",
+		     ctxt->mapname, ctxt->lineno);
 	    return (MAC_PARSE_ERROR);
 	}
-
 	if (!alldig(vstring_str(buf))) {
 	    msg_warn("pcre map %s, line %d: non-numeric replacement index \"%s\"",
 		     ctxt->mapname, ctxt->lineno, vstring_str(buf));
@@ -449,6 +487,8 @@ static int dict_pcre_prescan(int type, VSTRING *buf, char *context)
 		     ctxt->mapname, ctxt->lineno, vstring_str(buf));
 	    return (MAC_PARSE_ERROR);
 	}
+	if (n > ctxt->max_sub)
+	    ctxt->max_sub = n;
     }
     return (MAC_PARSE_OK);
 }
@@ -536,11 +576,21 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	prescan_context.mapname = mapname;
 	prescan_context.lineno = lineno;
 	prescan_context.flags = dict_flags;
+	prescan_context.max_sub = 0;
 
 	if (mac_parse(p, dict_pcre_prescan, (char *) &prescan_context)
 	    & MAC_PARSE_ERROR) {
 	    msg_warn("pcre map %s, line %d: bad replacement syntax: "
 		     "skipping this rule", mapname, lineno);
+	    return (0);
+	}
+
+	/*
+	 * Substring replacement not possible with negative regexps.
+	 */
+	if (prescan_context.max_sub > 0 && regexp.match == 0) {
+	    msg_warn("pcre map %s, line %d: $number found in negative match "
+		   "replacement text: skipping this rule", mapname, lineno);
 	    return (0);
 	}
 
@@ -556,6 +606,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	match_rule = (DICT_PCRE_MATCH_RULE *)
 	    dict_pcre_rule_alloc(DICT_PCRE_OP_MATCH, nesting, lineno,
 				 sizeof(DICT_PCRE_MATCH_RULE));
+	match_rule->match = regexp.match;
 	match_rule->replacement = mystrdup(p);
 	match_rule->pattern = engine.pattern;
 	match_rule->hints = engine.hints;
@@ -583,6 +634,8 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	/*
 	 * Warn about out-of-place text.
 	 */
+	while (*p && ISSPACE(*p))
+	    ++p;
 	if (*p)
 	    msg_warn("pcre map %s, line %d: ignoring extra text after IF",
 		     mapname, lineno);
@@ -599,6 +652,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	if_rule = (DICT_PCRE_IF_RULE *)
 	    dict_pcre_rule_alloc(DICT_PCRE_OP_IF, nesting, lineno,
 				 sizeof(DICT_PCRE_IF_RULE));
+	if_rule->match = regexp.match;
 	if_rule->pattern = engine.pattern;
 	if_rule->hints = engine.hints;
 	return ((DICT_PCRE_RULE *) if_rule);
@@ -624,6 +678,8 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	/*
 	 * Warn about out-of-place text.
 	 */
+	while (*p && ISSPACE(*p))
+	    ++p;
 	if (*p)
 	    msg_warn("pcre map %s, line %d: ignoring extra text after ENDIF",
 		     mapname, lineno);

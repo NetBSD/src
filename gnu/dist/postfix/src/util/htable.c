@@ -331,3 +331,40 @@ HTABLE_INFO **htable_list(HTABLE *table)
     list[count] = 0;
     return (list);
 }
+
+#ifdef TEST
+#include <vstring_vstream.h>
+#include <myrand.h>
+
+int main(int unused_argc, char **unused_argv)
+{
+    VSTRING *buf = vstring_alloc(10);
+    int     count = 0;
+    HTABLE *hash;
+    HTABLE_INFO **ht_info;
+    HTABLE_INFO **ht;
+    HTABLE_INFO *info;
+    int     i;
+    int     r;
+
+    /*
+     * Load a large number of strings and delete them in a random order.
+     */
+    hash = htable_create(10);
+    while (vstring_get(buf, VSTREAM_IN) != VSTREAM_EOF)
+	htable_enter(hash, vstring_str(buf), (void *) count++);
+    ht_info = htable_list(hash);
+    for (i = 0; i < hash->used; i++) {
+	r = myrand() % hash->used;
+	info = ht_info[i];
+	ht_info[i] = ht_info[r];
+	ht_info[r] = info;
+    }
+    for (ht = ht_info; *ht; ht++)
+	htable_delete(hash, ht[0]->key, (void (*) (char *)) 0);
+    if (hash->used > 0)
+	msg_panic("%d entries not deleted", hash->used);
+    return (0);
+}
+
+#endif

@@ -22,6 +22,10 @@
 /*		long arrival_time;
 /*		RECIPIENT_LIST rcpt_list;
 /*		char	*hop_status;
+/*		char	*client_name;
+/*		char	*client_addr;
+/*		char	*client_proto;
+/*		char	*client_helo;
 /* .in -5
 /*	} DELIVER_REQUEST;
 /*
@@ -175,6 +179,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     static VSTRING *address;
     static VSTRING *errors_to;
     static VSTRING *return_receipt;
+    static VSTRING *client_name;
+    static VSTRING *client_addr;
+    static VSTRING *client_proto;
+    static VSTRING *client_helo;
     long    offset;
 
     /*
@@ -191,6 +199,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 	address = vstring_alloc(10);
 	errors_to = vstring_alloc(10);
 	return_receipt = vstring_alloc(10);
+	client_name = vstring_alloc(10);
+	client_addr = vstring_alloc(10);
+	client_proto = vstring_alloc(10);
+	client_helo = vstring_alloc(10);
     }
 
     /*
@@ -209,7 +221,11 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 		  ATTR_TYPE_STR, MAIL_ATTR_ERRTO, errors_to,
 		  ATTR_TYPE_STR, MAIL_ATTR_RRCPT, return_receipt,
 		  ATTR_TYPE_LONG, MAIL_ATTR_TIME, &request->arrival_time,
-		  ATTR_TYPE_END) != 11) {
+		  ATTR_TYPE_STR, MAIL_ATTR_CLIENT_NAME, client_name,
+		  ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, client_addr,
+		  ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, client_proto,
+		  ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, client_helo,
+		  ATTR_TYPE_END) != 15) {
 	msg_warn("%s: error receiving common attributes", myname);
 	return (-1);
     }
@@ -224,6 +240,10 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     request->sender = mystrdup(vstring_str(address));
     request->errors_to = mystrdup(vstring_str(errors_to));
     request->return_receipt = mystrdup(vstring_str(return_receipt));
+    request->client_name = mystrdup(vstring_str(client_name));
+    request->client_addr = mystrdup(vstring_str(client_addr));
+    request->client_proto = mystrdup(vstring_str(client_proto));
+    request->client_helo = mystrdup(vstring_str(client_helo));
 
     /*
      * Extract the recipient offset and address list. Skip over any
@@ -298,6 +318,10 @@ static DELIVER_REQUEST *deliver_request_alloc(void)
     request->data_size = 0;
     recipient_list_init(&request->rcpt_list);
     request->hop_status = 0;
+    request->client_name = 0;
+    request->client_addr = 0;
+    request->client_proto = 0;
+    request->client_helo = 0;
     return (request);
 }
 
@@ -324,6 +348,14 @@ static void deliver_request_free(DELIVER_REQUEST *request)
     recipient_list_free(&request->rcpt_list);
     if (request->hop_status)
 	myfree(request->hop_status);
+    if (request->client_name)
+	myfree(request->client_name);
+    if (request->client_addr)
+	myfree(request->client_addr);
+    if (request->client_proto)
+	myfree(request->client_proto);
+    if (request->client_helo)
+	myfree(request->client_helo);
     myfree((char *) request);
 }
 

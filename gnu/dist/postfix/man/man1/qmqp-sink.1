@@ -1,11 +1,11 @@
-.TH QMQP-SINK 8 
+.TH QMQP-SINK 1 
 .ad
 .fi
 .SH NAME
 qmqp-sink
 \-
 multi-threaded QMQP test server
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 .fi
@@ -17,13 +17,13 @@ multi-threaded QMQP test server
 .SH DESCRIPTION
 .ad
 .fi
-\fIqmqp-sink\fR listens on the named host (or address) and port.
+\fBqmqp-sink\fR listens on the named host (or address) and port.
 It receives messages from the network and throws them away.
 The purpose is to measure QMQP client performance, not protocol
 compliance.
 Connections can be accepted on IPV4 endpoints or UNIX-domain sockets.
 IPV4 is the default.
-This program is the complement of the \fIqmqp-source\fR program.
+This program is the complement of the \fBqmqp-source\fR(1) program.
 .IP \fB-c\fR
 Display a running counter that is updated whenever a delivery
 is completed.
@@ -33,17 +33,17 @@ conversation.
 .IP "\fB-x \fItime\fR
 Terminate after \fItime\fR seconds. This is to facilitate memory
 leak testing.
-.SH SEE ALSO
+.SH "SEE ALSO"
 .na
 .nf
-qmqp-source, QMQP test message generator
-.SH LICENSE
+qmqp-source(1), QMQP message generator
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

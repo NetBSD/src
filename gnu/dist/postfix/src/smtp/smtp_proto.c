@@ -84,6 +84,7 @@
 #include <mymalloc.h>
 #include <iostuff.h>
 #include <split_at.h>
+#include <name_code.h>
 
 /* Global library. */
 
@@ -92,10 +93,8 @@
 #include <mail_queue.h>
 #include <recipient_list.h>
 #include <deliver_request.h>
-#include <deliver_completed.h>
 #include <defer.h>
 #include <bounce.h>
-#include <sent.h>
 #include <record.h>
 #include <rec_type.h>
 #include <off_cvt.h>
@@ -123,24 +122,30 @@
   * SMTP_STATE_DOT) must have smaller numerical values than the non-sending
   * states (SMTP_STATE_ABORT .. SMTP_STATE_LAST).
   */
-#define SMTP_STATE_MAIL		0
-#define SMTP_STATE_RCPT		1
-#define SMTP_STATE_DATA		2
-#define SMTP_STATE_DOT		3
-#define SMTP_STATE_ABORT	4
-#define SMTP_STATE_QUIT		5
-#define SMTP_STATE_LAST		6
+#define SMTP_STATE_XFORWARD_NAME_ADDR 0
+#define SMTP_STATE_XFORWARD_PROTO_HELO 1
+#define SMTP_STATE_MAIL		2
+#define SMTP_STATE_RCPT		3
+#define SMTP_STATE_DATA		4
+#define SMTP_STATE_DOT		5
+#define SMTP_STATE_ABORT	6
+#define SMTP_STATE_QUIT		7
+#define SMTP_STATE_LAST		8
 
 int    *xfer_timeouts[SMTP_STATE_LAST] = {
+    &var_smtp_xfwd_tmout,		/* name/addr */
+    &var_smtp_xfwd_tmout,		/* helo/proto */
     &var_smtp_mail_tmout,
     &var_smtp_rcpt_tmout,
     &var_smtp_data0_tmout,
     &var_smtp_data2_tmout,
-    &var_smtp_quit_tmout,
+    &var_smtp_rset_tmout,
     &var_smtp_quit_tmout,
 };
 
 char   *xfer_states[SMTP_STATE_LAST] = {
+    "sending XFORWARD name/address",
+    "sending XFORWARD protocol/helo_name",
     "sending MAIL FROM",
     "sending RCPT TO",
     "sending DATA command",
@@ -150,6 +155,8 @@ char   *xfer_states[SMTP_STATE_LAST] = {
 };
 
 char   *xfer_request[SMTP_STATE_LAST] = {
+    "XFORWARD name/address command",
+    "XFORWARD helo/protocol command",
     "MAIL FROM command",
     "RCPT TO command",
     "DATA command",
@@ -160,7 +167,7 @@ char   *xfer_request[SMTP_STATE_LAST] = {
 
 /* smtp_helo - perform initial handshake with SMTP server */
 
-int     smtp_helo(SMTP_STATE *state)
+int     smtp_helo(SMTP_STATE *state, int misc_flags)
 {
     SMTP_SESSION *session = state->session;
     DELIVER_REQUEST *request = state->request;
@@ -170,21 +177,37 @@ int     smtp_helo(SMTP_STATE *state)
     char   *words;
     char   *word;
     int     n;
+    static NAME_CODE xforward_features[] = {
+	XFORWARD_NAME, SMTP_FEATURE_XFORWARD_NAME,
+	XFORWARD_ADDR, SMTP_FEATURE_XFORWARD_ADDR,
+	XFORWARD_PROTO, SMTP_FEATURE_XFORWARD_PROTO,
+	XFORWARD_HELO, SMTP_FEATURE_XFORWARD_HELO,
+	0, 0,
+    };
 
     /*
      * Prepare for disaster.
      */
     smtp_timeout_setup(state->session->stream, var_smtp_helo_tmout);
     if ((except = vstream_setjmp(state->session->stream)) != 0)
-	return (smtp_stream_except(state, except, "sending HELO"));
+	return (smtp_stream_except(state, except,
+				   "receiving the initial SMTP greeting"));
 
     /*
      * Read and parse the server's SMTP greeting banner.
      */
-    if (((resp = smtp_chat_resp(state))->code / 100) != 2)
+    switch ((resp = smtp_chat_resp(state))->code / 100) {
+    case 2:
+	break;
+    case 5:
+	if (var_smtp_skip_5xx_greeting)
+	    resp->code = 400;
+    default:
 	return (smtp_site_fail(state, resp->code,
 			       "host %s refused to talk to me: %s",
-			 session->namaddr, translit(resp->str, "\n", " ")));
+			       session->namaddr,
+			       translit(resp->str, "\n", " ")));
+    }
 
     /*
      * XXX Some PIX firewall versions require flush before ".<CR><LF>" so it
@@ -204,8 +227,9 @@ int     smtp_helo(SMTP_STATE *state)
     (void) mystrtok(&words, "- \t\n");
     for (n = 0; (word = mystrtok(&words, " \t\n")) != 0; n++) {
 	if (n == 0 && strcasecmp(word, var_myhostname) == 0) {
-	    msg_warn("host %s greeted me with my own hostname %s",
-		     session->namaddr, var_myhostname);
+	    if (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
+		msg_warn("host %s greeted me with my own hostname %s",
+			 session->namaddr, var_myhostname);
 	} else if (strcasecmp(word, "ESMTP") == 0)
 	    state->features |= SMTP_FEATURE_ESMTP;
     }
@@ -250,6 +274,10 @@ int     smtp_helo(SMTP_STATE *state)
 		state->features |= SMTP_FEATURE_8BITMIME;
 	    else if (strcasecmp(word, "PIPELINING") == 0)
 		state->features |= SMTP_FEATURE_PIPELINING;
+	    else if (strcasecmp(word, "XFORWARD") == 0)
+		while ((word = mystrtok(&words, " \t")) != 0)
+		    state->features |= name_code(xforward_features,
+						 NAME_CODE_FLAG_NONE, word);
 	    else if (strcasecmp(word, "SIZE") == 0) {
 		state->features |= SMTP_FEATURE_SIZE;
 		if ((word = mystrtok(&words, " \t")) != 0) {
@@ -265,11 +293,13 @@ int     smtp_helo(SMTP_STATE *state)
 		smtp_sasl_helo_auth(state, words);
 #endif
 	    else if (strcasecmp(word, var_myhostname) == 0) {
-		msg_warn("host %s replied to HELO/EHLO with my own hostname %s",
-			 session->namaddr, var_myhostname);
-		return (smtp_site_fail(state, session->best ? 550 : 450,
-				       "mail for %s loops back to myself",
-				       request->nexthop));
+		if (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT) {
+		    msg_warn("host %s replied to HELO/EHLO with my own hostname %s",
+			     session->namaddr, var_myhostname);
+		    return (smtp_site_fail(state, session->best ? 550 : 450,
+					 "mail for %s loops back to myself",
+					   request->nexthop));
+		}
 	    }
 	}
     }
@@ -358,28 +388,30 @@ int     smtp_xfer(SMTP_STATE *state)
     SMTP_RESP *resp;
     RECIPIENT *rcpt;
     VSTRING *next_command = vstring_alloc(100);
-    int     next_state;
-    int     next_rcpt;
-    int     send_state;
-    int     recv_state;
-    int     send_rcpt;
-    int     recv_rcpt;
-    int     nrcpt;
+    NOCLOBBER int next_state;
+    NOCLOBBER int next_rcpt;
+    NOCLOBBER int send_state;
+    NOCLOBBER int recv_state;
+    NOCLOBBER int send_rcpt;
+    NOCLOBBER int recv_rcpt;
+    NOCLOBBER int nrcpt;
     int     except;
     int     rec_type;
-    int     prev_type = 0;
-    int     sndbufsize;
-    int     sndbuffree;
+    NOCLOBBER int prev_type = 0;
+    int     sndbufsize = 0;
+    NOCLOBBER int sndbuffree;
     SOCKOPT_SIZE optlen = sizeof(sndbufsize);
-    int     mail_from_rejected;
-    int     downgrading;
+    NOCLOBBER int mail_from_rejected;
+    NOCLOBBER int downgrading;
     int     mime_errs;
+    int     send_name_addr;
+    NOCLOBBER int send_proto_helo;
 
     /*
      * Macros for readability.
      */
 #define REWRITE_ADDRESS(dst, mid, src) do { \
-	if (*(src)) { \
+	if (*(src) && var_smtp_quote_821_env) { \
 	    quote_821_local(mid, src); \
 	    smtp_unalias_addr(dst, vstring_str(mid)); \
 	} else { \
@@ -388,7 +420,7 @@ int     smtp_xfer(SMTP_STATE *state)
     } while (0)
 
 #define QUOTE_ADDRESS(dst, src) do { \
-	if (*(src)) { \
+	if (*(src) && var_smtp_quote_821_env) { \
 	    quote_821_local(dst, src); \
 	} else { \
 	    vstring_strcpy(dst, src); \
@@ -410,6 +442,16 @@ int     smtp_xfer(SMTP_STATE *state)
 
 #define SENDING_MAIL \
 	(recv_state <= SMTP_STATE_DOT)
+
+    /*
+     * Sanity check. Recipients should be unmarked at this point.
+     */
+    if (SMTP_RCPT_LEFT(state) <= 0)
+	msg_panic("smtp_xfer: bad recipient count: %d",
+		  SMTP_RCPT_LEFT(state));
+    if (SMTP_RCPT_ISMARKED(request->rcpt_list.info))
+	msg_panic("smtp_xfer: bad recipient status: %d",
+		  request->rcpt_list.info->status);
 
     /*
      * See if we should even try to send this message at all. This code sits
@@ -443,6 +485,12 @@ int     smtp_xfer(SMTP_STATE *state)
 	    msg_fatal("%s: getsockopt: %m", myname);
 	if (sndbufsize > VSTREAM_BUFSIZE)
 	    sndbufsize = VSTREAM_BUFSIZE;
+	if (sndbufsize == 0) {
+	    sndbufsize = VSTREAM_BUFSIZE;
+	    if (setsockopt(vstream_fileno(state->session->stream), SOL_SOCKET,
+			   SO_SNDBUF, (char *) &sndbufsize, optlen) < 0)
+		msg_fatal("%s: setsockopt: %m", myname);
+	}
 	if (msg_verbose)
 	    msg_info("Using ESMTP PIPELINING, TCP send buffer size is %d",
 		     sndbufsize);
@@ -466,9 +514,29 @@ int     smtp_xfer(SMTP_STATE *state)
      * receiver detects a serious problem (MAIL FROM rejected, all RCPT TO
      * commands rejected, DATA rejected) it forces the sender to abort the
      * SMTP dialog with RSET and QUIT.
+     * 
+     * Use the XFORWARD command to forward client attributes only when a minimal
+     * amount of information is available.
      */
     nrcpt = 0;
-    recv_state = send_state = SMTP_STATE_MAIL;
+    send_name_addr =
+	var_smtp_send_xforward
+	&& (((state->features & SMTP_FEATURE_XFORWARD_NAME)
+	     && DEL_REQ_ATTR_AVAIL(request->client_name))
+	    || ((state->features & SMTP_FEATURE_XFORWARD_ADDR)
+		&& DEL_REQ_ATTR_AVAIL(request->client_addr)));
+    send_proto_helo =
+	var_smtp_send_xforward
+	&& (((state->features & SMTP_FEATURE_XFORWARD_PROTO)
+	     && DEL_REQ_ATTR_AVAIL(request->client_proto))
+	    || ((state->features & SMTP_FEATURE_XFORWARD_HELO)
+		&& DEL_REQ_ATTR_AVAIL(request->client_helo)));
+    if (send_name_addr)
+	recv_state = send_state = SMTP_STATE_XFORWARD_NAME_ADDR;
+    else if (send_proto_helo)
+	recv_state = send_state = SMTP_STATE_XFORWARD_PROTO_HELO;
+    else
+	recv_state = send_state = SMTP_STATE_MAIL;
     next_rcpt = send_rcpt = recv_rcpt = 0;
     mail_from_rejected = 0;
 
@@ -484,6 +552,40 @@ int     smtp_xfer(SMTP_STATE *state)
 	     */
 	default:
 	    msg_panic("%s: bad sender state %d", myname, send_state);
+
+	    /*
+	     * Build the XFORWARD command. With properly sanitized
+	     * information, the command length stays within the 512 byte
+	     * command line length limit.
+	     */
+	case SMTP_STATE_XFORWARD_NAME_ADDR:
+	    vstring_strcpy(next_command, XFORWARD_CMD);
+	    if (state->features & SMTP_FEATURE_XFORWARD_NAME)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_NAME, DEL_REQ_ATTR_AVAIL(request->client_name) ?
+			       request->client_name : XFORWARD_UNAVAILABLE);
+	    if (state->features & SMTP_FEATURE_XFORWARD_ADDR)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_ADDR, DEL_REQ_ATTR_AVAIL(request->client_addr) ?
+			       request->client_addr : XFORWARD_UNAVAILABLE);
+	    if (send_proto_helo)
+		next_state = SMTP_STATE_XFORWARD_PROTO_HELO;
+	    else
+		next_state = SMTP_STATE_MAIL;
+	    break;
+
+	case SMTP_STATE_XFORWARD_PROTO_HELO:
+	    vstring_strcpy(next_command, XFORWARD_CMD);
+	    if (state->features & SMTP_FEATURE_XFORWARD_PROTO)
+		vstring_sprintf_append(next_command, " %s=%s",
+		 XFORWARD_PROTO, DEL_REQ_ATTR_AVAIL(request->client_proto) ?
+			      request->client_proto : XFORWARD_UNAVAILABLE);
+	    if (state->features & SMTP_FEATURE_XFORWARD_HELO)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_HELO, DEL_REQ_ATTR_AVAIL(request->client_helo) ?
+			       request->client_helo : XFORWARD_UNAVAILABLE);
+	    next_state = SMTP_STATE_MAIL;
+	    break;
 
 	    /*
 	     * Build the MAIL FROM command.
@@ -504,6 +606,16 @@ int     smtp_xfer(SMTP_STATE *state)
 		    msg_warn("%s: unknown content encoding: %s",
 			     request->queue_id, request->encoding);
 	    }
+
+	    /*
+	     * We authenticate the local MTA only, but not the sender.
+	     */
+#ifdef USE_SASL_AUTH
+	    if (var_smtp_sasl_enable
+		&& (state->features & SMTP_FEATURE_AUTH)
+		&& state->sasl_passwd)
+		vstring_strcat(next_command, " AUTH=<>");
+#endif
 	    next_state = SMTP_STATE_RCPT;
 	    break;
 
@@ -516,8 +628,9 @@ int     smtp_xfer(SMTP_STATE *state)
 	    QUOTE_ADDRESS(state->scratch, rcpt->address);
 	    vstring_sprintf(next_command, "RCPT TO:<%s>",
 			    vstring_str(state->scratch));
-	    if ((next_rcpt = send_rcpt + 1) == request->rcpt_list.len)
-		next_state = SMTP_STATE_DATA;
+	    if ((next_rcpt = send_rcpt + 1) == SMTP_RCPT_LEFT(state))
+		next_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+		    SMTP_STATE_ABORT : SMTP_STATE_DATA;
 	    break;
 
 	    /*
@@ -538,11 +651,15 @@ int     smtp_xfer(SMTP_STATE *state)
 	    break;
 
 	    /*
-	     * Can't happen. The SMTP_STATE_ABORT sender state is entered by
-	     * the receiver and is left before the bottom of the main loop.
+	     * The SMTP_STATE_ABORT sender state is entered by sender when it
+	     * has verified all recipients; or it is entered the receiver
+	     * when all recipients are rejected and is then left before the
+	     * bottom of the main loop.
 	     */
 	case SMTP_STATE_ABORT:
-	    msg_panic("%s: sender abort state", myname);
+	    vstring_strcpy(next_command, "RSET");
+	    next_state = SMTP_STATE_QUIT;
+	    break;
 
 	    /*
 	     * Build the QUIT command before we have seen the "." or RSET
@@ -579,7 +696,7 @@ int     smtp_xfer(SMTP_STATE *state)
 		/*
 		 * Sanity check.
 		 */
-		if (recv_state < SMTP_STATE_MAIL
+		if (recv_state < SMTP_STATE_XFORWARD_NAME_ADDR
 		    || recv_state > SMTP_STATE_QUIT)
 		    msg_panic("%s: bad receiver state %d (sender state %d)",
 			      myname, recv_state, send_state);
@@ -599,6 +716,30 @@ int     smtp_xfer(SMTP_STATE *state)
 		 * Process the response.
 		 */
 		switch (recv_state) {
+
+		    /*
+		     * Process the XFORWARD response.
+		     */
+		case SMTP_STATE_XFORWARD_NAME_ADDR:
+		    if (resp->code / 100 != 2)
+			msg_warn("host %s said: %s (in reply to %s)",
+				 session->namaddr,
+				 translit(resp->str, "\n", " "),
+			       xfer_request[SMTP_STATE_XFORWARD_NAME_ADDR]);
+		    if (send_proto_helo)
+			recv_state = SMTP_STATE_XFORWARD_PROTO_HELO;
+		    else
+			recv_state = SMTP_STATE_MAIL;
+		    break;
+
+		case SMTP_STATE_XFORWARD_PROTO_HELO:
+		    if (resp->code / 100 != 2)
+			msg_warn("host %s said: %s (in reply to %s)",
+				 session->namaddr,
+				 translit(resp->str, "\n", " "),
+			      xfer_request[SMTP_STATE_XFORWARD_PROTO_HELO]);
+		    recv_state = SMTP_STATE_MAIL;
+		    break;
 
 		    /*
 		     * Process the MAIL FROM response. When the server
@@ -635,20 +776,24 @@ int     smtp_xfer(SMTP_STATE *state)
 			if (resp->code == 552)
 			    resp->code = 452;
 #endif
+			rcpt = request->rcpt_list.info + recv_rcpt;
 			if (resp->code / 100 == 2) {
 			    ++nrcpt;
+			    /* If trace-only, mark the recipient done. */
+			    if (DEL_REQ_TRACE_ONLY(request->flags))
+				smtp_rcpt_done(state, resp->str, rcpt);
 			} else {
-			    rcpt = request->rcpt_list.info + recv_rcpt;
 			    smtp_rcpt_fail(state, resp->code, rcpt,
 					"host %s said: %s (in reply to %s)",
 					   session->namaddr,
 					   translit(resp->str, "\n", " "),
 					   xfer_request[SMTP_STATE_RCPT]);
-			    rcpt->offset = 0;	/* in case deferred */
 			}
 		    }
-		    if (++recv_rcpt == request->rcpt_list.len)
-			recv_state = SMTP_STATE_DATA;
+		    /* If trace-only, send RSET instead of DATA. */
+		    if (++recv_rcpt == SMTP_RCPT_LEFT(state))
+			recv_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+			    SMTP_STATE_ABORT : SMTP_STATE_DATA;
 		    break;
 
 		    /*
@@ -689,16 +834,8 @@ int     smtp_xfer(SMTP_STATE *state)
 			} else {
 			    for (nrcpt = 0; nrcpt < recv_rcpt; nrcpt++) {
 				rcpt = request->rcpt_list.info + nrcpt;
-				if (rcpt->offset) {
-				    sent(request->queue_id, rcpt->orig_addr,
-					 rcpt->address,
-					 session->namaddr,
-					 request->arrival_time, "%s",
-					 resp->str);
-				    if (request->flags & DEL_REQ_FLAG_SUCCESS)
-					deliver_completed(state->src, rcpt->offset);
-				    rcpt->offset = 0;
-				}
+				if (!SMTP_RCPT_ISMARKED(rcpt))
+				    smtp_rcpt_done(state, resp->str, rcpt);
 			    }
 			}
 		    }
@@ -800,7 +937,8 @@ int     smtp_xfer(SMTP_STATE *state)
 					  vstring_str(state->scratch),
 					  VSTRING_LEN(state->scratch));
 		    if (mime_errs) {
-			smtp_mesg_fail(state, 554, "MIME 7-bit conversion failed: %s",
+			smtp_mesg_fail(state, 554,
+				       "MIME 7-bit conversion failed: %s",
 				       mime_state_error(mime_errs));
 			RETURN(0);
 		    }
@@ -851,6 +989,5 @@ int     smtp_xfer(SMTP_STATE *state)
 	send_state = next_state;
 	send_rcpt = next_rcpt;
     }
-
     RETURN(0);
 }

@@ -1,14 +1,13 @@
 SHELL	= /bin/sh
 SRCS	= smtpd.c smtpd_token.c smtpd_check.c smtpd_chat.c smtpd_state.c \
-	smtpd_peer.c smtpd_sasl_proto.c smtpd_sasl_glue.c
+	smtpd_peer.c smtpd_sasl_proto.c smtpd_sasl_glue.c smtpd_proxy.c \
+	smtpd_xforward.c
 OBJS	= smtpd.o smtpd_token.o smtpd_check.o smtpd_chat.o smtpd_state.o \
-	smtpd_peer.o smtpd_sasl_proto.o smtpd_sasl_glue.o
+	smtpd_peer.o smtpd_sasl_proto.o smtpd_sasl_glue.o smtpd_proxy.o \
+	smtpd_xforward.o
 HDRS	= smtpd_token.h smtpd_check.h smtpd_chat.h smtpd_sasl_proto.h \
-	smtpd_sasl_glue.h
+	smtpd_sasl_glue.h smtpd_proxy.h
 TESTSRC	= smtpd_token_test.c
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= smtpd_token smtpd_check
@@ -31,7 +30,7 @@ update: ../../libexec/$(PROG)
 ../../libexec/$(PROG): $(PROG)
 	cp $(PROG) ../../libexec
 
-SMTPD_CHECK_OBJ = smtpd_state.o smtpd_peer.o
+SMTPD_CHECK_OBJ = smtpd_state.o smtpd_peer.o smtpd_xforward.o
 
 smtpd_token: smtpd_token.c $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIBS) $(SYSLIBS)
@@ -121,11 +120,13 @@ smtpd.o: ../../include/valid_hostname.h
 smtpd.o: ../../include/dict.h
 smtpd.o: ../../include/argv.h
 smtpd.o: ../../include/watchdog.h
+smtpd.o: ../../include/iostuff.h
+smtpd.o: ../../include/split_at.h
+smtpd.o: ../../include/name_code.h
 smtpd.o: ../../include/mail_params.h
 smtpd.o: ../../include/record.h
 smtpd.o: ../../include/rec_type.h
 smtpd.o: ../../include/mail_proto.h
-smtpd.o: ../../include/iostuff.h
 smtpd.o: ../../include/attr.h
 smtpd.o: ../../include/cleanup_user.h
 smtpd.o: ../../include/mail_date.h
@@ -147,6 +148,7 @@ smtpd.o: ../../include/quote_822_local.h
 smtpd.o: ../../include/quote_flags.h
 smtpd.o: ../../include/lex_822.h
 smtpd.o: ../../include/namadr_list.h
+smtpd.o: ../../include/input_transp.h
 smtpd.o: ../../include/mail_server.h
 smtpd.o: smtpd_token.h
 smtpd.o: smtpd.h
@@ -154,6 +156,7 @@ smtpd.o: smtpd_check.h
 smtpd.o: smtpd_chat.h
 smtpd.o: smtpd_sasl_proto.h
 smtpd.o: smtpd_sasl_glue.h
+smtpd.o: smtpd_proxy.h
 smtpd_chat.o: smtpd_chat.c
 smtpd_chat.o: ../../include/sys_defs.h
 smtpd_chat.o: ../../include/msg.h
@@ -196,6 +199,8 @@ smtpd_check.o: ../../include/htable.h
 smtpd_check.o: ../../include/ctable.h
 smtpd_check.o: ../../include/mac_expand.h
 smtpd_check.o: ../../include/mac_parse.h
+smtpd_check.o: ../../include/attr_clnt.h
+smtpd_check.o: ../../include/attr.h
 smtpd_check.o: ../../include/dns.h
 smtpd_check.o: ../../include/string_list.h
 smtpd_check.o: ../../include/match_list.h
@@ -220,8 +225,12 @@ smtpd_check.o: ../../include/record.h
 smtpd_check.o: ../../include/rec_type.h
 smtpd_check.o: ../../include/mail_proto.h
 smtpd_check.o: ../../include/iostuff.h
-smtpd_check.o: ../../include/attr.h
 smtpd_check.o: ../../include/mail_addr.h
+smtpd_check.o: ../../include/verify_clnt.h
+smtpd_check.o: ../../include/deliver_request.h
+smtpd_check.o: ../../include/recipient_list.h
+smtpd_check.o: ../../include/input_transp.h
+smtpd_check.o: ../../include/is_header.h
 smtpd_check.o: smtpd.h
 smtpd_check.o: ../../include/mail_stream.h
 smtpd_check.o: smtpd_sasl_glue.h
@@ -234,10 +243,35 @@ smtpd_peer.o: ../../include/valid_hostname.h
 smtpd_peer.o: ../../include/stringops.h
 smtpd_peer.o: ../../include/vstring.h
 smtpd_peer.o: ../../include/vbuf.h
-smtpd_peer.o: smtpd.h
+smtpd_peer.o: ../../include/mail_proto.h
 smtpd_peer.o: ../../include/vstream.h
+smtpd_peer.o: ../../include/iostuff.h
+smtpd_peer.o: ../../include/attr.h
+smtpd_peer.o: smtpd.h
 smtpd_peer.o: ../../include/argv.h
 smtpd_peer.o: ../../include/mail_stream.h
+smtpd_proxy.o: smtpd_proxy.c
+smtpd_proxy.o: ../../include/sys_defs.h
+smtpd_proxy.o: ../../include/msg.h
+smtpd_proxy.o: ../../include/vstream.h
+smtpd_proxy.o: ../../include/vbuf.h
+smtpd_proxy.o: ../../include/vstring.h
+smtpd_proxy.o: ../../include/stringops.h
+smtpd_proxy.o: ../../include/connect.h
+smtpd_proxy.o: ../../include/iostuff.h
+smtpd_proxy.o: ../../include/name_code.h
+smtpd_proxy.o: ../../include/mail_error.h
+smtpd_proxy.o: ../../include/name_mask.h
+smtpd_proxy.o: ../../include/smtp_stream.h
+smtpd_proxy.o: ../../include/cleanup_user.h
+smtpd_proxy.o: ../../include/mail_params.h
+smtpd_proxy.o: ../../include/rec_type.h
+smtpd_proxy.o: ../../include/mail_proto.h
+smtpd_proxy.o: ../../include/attr.h
+smtpd_proxy.o: smtpd.h
+smtpd_proxy.o: ../../include/argv.h
+smtpd_proxy.o: ../../include/mail_stream.h
+smtpd_proxy.o: smtpd_proxy.h
 smtpd_sasl_glue.o: smtpd_sasl_glue.c
 smtpd_sasl_glue.o: ../../include/sys_defs.h
 smtpd_sasl_glue.o: ../../include/msg.h
@@ -260,16 +294,17 @@ smtpd_sasl_proto.o: smtpd_sasl_proto.c
 smtpd_sasl_proto.o: ../../include/sys_defs.h
 smtpd_sasl_proto.o: ../../include/msg.h
 smtpd_sasl_proto.o: ../../include/mymalloc.h
+smtpd_sasl_proto.o: ../../include/stringops.h
+smtpd_sasl_proto.o: ../../include/vstring.h
+smtpd_sasl_proto.o: ../../include/vbuf.h
 smtpd_sasl_proto.o: ../../include/mail_params.h
 smtpd_sasl_proto.o: ../../include/mail_proto.h
 smtpd_sasl_proto.o: ../../include/vstream.h
-smtpd_sasl_proto.o: ../../include/vbuf.h
 smtpd_sasl_proto.o: ../../include/iostuff.h
 smtpd_sasl_proto.o: ../../include/attr.h
 smtpd_sasl_proto.o: ../../include/mail_error.h
 smtpd_sasl_proto.o: ../../include/name_mask.h
 smtpd_sasl_proto.o: smtpd.h
-smtpd_sasl_proto.o: ../../include/vstring.h
 smtpd_sasl_proto.o: ../../include/argv.h
 smtpd_sasl_proto.o: ../../include/mail_stream.h
 smtpd_sasl_proto.o: smtpd_token.h
@@ -303,3 +338,16 @@ smtpd_token.o: ../../include/mvect.h
 smtpd_token.o: smtpd_token.h
 smtpd_token.o: ../../include/vstring.h
 smtpd_token.o: ../../include/vbuf.h
+smtpd_xforward.o: smtpd_xforward.c
+smtpd_xforward.o: ../../include/sys_defs.h
+smtpd_xforward.o: ../../include/mymalloc.h
+smtpd_xforward.o: ../../include/msg.h
+smtpd_xforward.o: ../../include/mail_proto.h
+smtpd_xforward.o: ../../include/vstream.h
+smtpd_xforward.o: ../../include/vbuf.h
+smtpd_xforward.o: ../../include/iostuff.h
+smtpd_xforward.o: ../../include/attr.h
+smtpd_xforward.o: smtpd.h
+smtpd_xforward.o: ../../include/vstring.h
+smtpd_xforward.o: ../../include/argv.h
+smtpd_xforward.o: ../../include/mail_stream.h

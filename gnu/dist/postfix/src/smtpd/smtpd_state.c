@@ -85,13 +85,15 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->history = 0;
     state->reason = 0;
     state->sender = 0;
+    state->verp_delims = 0;
     state->recipient = 0;
     state->etrn_name = 0;
-    state->protocol = MAIL_PROTO_SMTP;
+    state->protocol = mystrdup(MAIL_PROTO_SMTP);
     state->where = SMTPD_AFTER_CONNECT;
     state->recursion = 0;
     state->msg_size = 0;
     state->junk_cmds = 0;
+    state->rcpt_overshoot = 0;
     state->defer_if_permit_client = 0;
     state->defer_if_permit_helo = 0;
     state->defer_if_permit_sender = 0;
@@ -99,18 +101,33 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->defer_if_permit.reason = 0;
     state->discard = 0;
     state->expand_buf = 0;
+    state->prepend = 0;
+    state->proxy = 0;
+    state->proxy_buffer = 0;
+    state->proxy_mail = 0;
+    state->proxy_xforward_features = 0;
+    state->saved_filter = 0;
+    state->saved_redirect = 0;
+    state->saved_flags = 0;
+    state->instance = vstring_alloc(10);
+    state->seqno = 0;
 
 #ifdef USE_SASL_AUTH
     if (SMTPD_STAND_ALONE(state))
 	var_smtpd_sasl_enable = 0;
     if (var_smtpd_sasl_enable)
-	smtpd_sasl_connect(state);
+	smtpd_sasl_connect(state, VAR_SMTPD_SASL_OPTS, var_smtpd_sasl_opts);
 #endif
 
     /*
      * Initialize peer information.
      */
     smtpd_peer_init(state);
+
+    /*
+     * Initialize xforward information.
+     */
+    smtpd_xforward_init(state);
 
     /*
      * Initialize the conversation history.
@@ -130,13 +147,24 @@ void    smtpd_state_reset(SMTPD_STATE *state)
      */
     if (state->buffer)
 	vstring_free(state->buffer);
+    if (state->protocol)
+	myfree(state->protocol);
     smtpd_peer_reset(state);
+
+    /*
+     * Buffers that are created on the fly and that may be shared among mail
+     * deliveries within the same SMTP session.
+     */
     if (state->defer_if_permit.reason)
 	vstring_free(state->defer_if_permit.reason);
     if (state->defer_if_reject.reason)
 	vstring_free(state->defer_if_reject.reason);
     if (state->expand_buf)
 	vstring_free(state->expand_buf);
+    if (state->proxy_buffer)
+	vstring_free(state->proxy_buffer);
+    if (state->instance)
+	vstring_free(state->instance);
 
 #ifdef USE_SASL_AUTH
     if (var_smtpd_sasl_enable)

@@ -114,7 +114,7 @@ int     lmtp_sasl_helo_login(LMTP_STATE *state)
      * required, and assume that an authentication error is recoverable.
      */
     if (lmtp_sasl_passwd_lookup(state) != 0) {
-	lmtp_sasl_start(state);
+	lmtp_sasl_start(state, VAR_LMTP_SASL_OPTS, var_lmtp_sasl_opts);
 	if (lmtp_sasl_authenticate(state, why) <= 0)
 	    ret = lmtp_site_fail(state, 450, "Authentication failed: %s",
 				 vstring_str(why));

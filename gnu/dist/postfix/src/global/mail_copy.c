@@ -126,7 +126,7 @@ int     mail_copy(const char *sender,
     char   *myname = "mail_copy";
     VSTRING *buf;
     char   *bp;
-    long    orig_length;
+    off_t   orig_length;
     int     read_error;
     int     write_error;
     int     corrupt_error = 0;
@@ -139,7 +139,7 @@ int     mail_copy(const char *sender,
      */
 #ifndef NO_TRUNCATE
     if ((flags & MAIL_COPY_TOFILE) != 0)
-	if ((orig_length = vstream_fseek(dst, 0L, SEEK_END)) < 0)
+	if ((orig_length = vstream_fseek(dst, (off_t) 0, SEEK_END)) < 0)
 	    msg_fatal("seek file %s: %m", VSTREAM_PATH(dst));
 #endif
     buf = vstring_alloc(100);
@@ -165,8 +165,15 @@ int     mail_copy(const char *sender,
     if (flags & MAIL_COPY_ORIG_RCPT) {
 	if (orig_rcpt == 0)
 	    msg_panic("%s: null orig_rcpt", myname);
-	quote_822_local(buf, orig_rcpt);
-	vstream_fprintf(dst, "X-Original-To: %s%s", vstring_str(buf), eol);
+
+	/*
+	 * An empty original recipient record almost certainly means that
+	 * original recipient processing was disabled.
+	 */
+	if (*orig_rcpt) {
+	    quote_822_local(buf, orig_rcpt);
+	    vstream_fprintf(dst, "X-Original-To: %s%s", vstring_str(buf), eol);
+	}
     }
     if (flags & MAIL_COPY_DELIVERED) {
 	if (delivered == 0)
@@ -242,7 +249,7 @@ int     mail_copy(const char *sender,
 #ifndef NO_TRUNCATE
     if ((flags & MAIL_COPY_TOFILE) != 0)
 	if (corrupt_error || read_error || write_error)
-	    ftruncate(vstream_fileno(dst), (off_t) orig_length);
+	    ftruncate(vstream_fileno(dst), orig_length);
 #endif
     write_error |= vstream_fclose(dst);
     if (why && read_error)

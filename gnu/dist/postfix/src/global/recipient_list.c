@@ -11,6 +11,7 @@
 /*		long    offset;
 /*		char   *orig_addr;
 /*		char   *address;
+/*		int	status;
 /* .in -4
 /*	} RECIPIENT;
 /*
@@ -36,6 +37,9 @@
 /*	This module maintains lists of recipient structures. Each
 /*	recipient is characterized by a destination address and
 /*	by the queue file offset of its delivery status record.
+/*	The per-recipient status is initialized to zero, and exists
+/*	solely for the convenience of the application. It is not used
+/*	by the recipient_list module itself.
 /*
 /*	recipient_list_init() creates an empty recipient structure list.
 /*	The list argument is initialized such that it can be given to
@@ -95,14 +99,18 @@ void    recipient_list_init(RECIPIENT_LIST *list)
 void    recipient_list_add(RECIPIENT_LIST *list, long offset,
 			           const char *orig_rcpt, const char *rcpt)
 {
+    int     new_avail;
+
     if (list->len >= list->avail) {
-	list->avail *= 2;
+	new_avail = list->avail * 2;
 	list->info = (RECIPIENT *)
-	    myrealloc((char *) list->info, list->avail * sizeof(RECIPIENT));
+	    myrealloc((char *) list->info, new_avail * sizeof(RECIPIENT));
+	list->avail = new_avail;
     }
     list->info[list->len].orig_addr = mystrdup(orig_rcpt);
     list->info[list->len].address = mystrdup(rcpt);
     list->info[list->len].offset = offset;
+    list->info[list->len].status = 0;
     list->len++;
 }
 

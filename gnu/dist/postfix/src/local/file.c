@@ -111,8 +111,16 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * Do we allow delivery to files?
      */
     if ((local_file_deliver_mask & state.msg_attr.exp_type) == 0)
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	return (bounce_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
 			      "mail to file is restricted"));
+
+    /*
+     * Don't deliver trace-only requests.
+     */
+    if (DEL_REQ_TRACE_ONLY(state.request->flags))
+	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr),
+		     "delivers to file: %s", path));
 
     /*
      * DELIVERY RIGHTS
@@ -175,11 +183,13 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     } else if (mail_copy_status != 0) {
 	deliver_status = (errno == EAGAIN || errno == ENOSPC || errno == ESTALE ?
 			  defer_append : bounce_append)
-	    (BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr),
 	     "cannot append message to destination file %s: %s",
 	     path, STR(why));
     } else {
-	deliver_status = sent(SENT_ATTR(state.msg_attr), "%s", path);
+	deliver_status = sent(BOUNCE_FLAGS(state.request),
+			      SENT_ATTR(state.msg_attr),
+			      "delivered to file: %s", path);
     }
 
     /*

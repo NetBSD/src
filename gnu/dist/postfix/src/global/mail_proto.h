@@ -15,6 +15,7 @@
   * System library.
   */
 #include <stdarg.h>
+#include <string.h>
 
  /*
   * Utility library.
@@ -49,6 +50,8 @@
 #define MAIL_SERVICE_SHOWQ	"showq"
 #define MAIL_SERVICE_ERROR	"error"
 #define MAIL_SERVICE_FLUSH	"flush"
+#define MAIL_SERVICE_VERIFY	"verify"
+#define MAIL_SERVICE_TRACE	"trace"
 #define MAIL_SERVICE_RELAY	"relay"
 #define MAIL_SERVICE_PROXYMAP	"proxymap"
 
@@ -107,9 +110,16 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ADDR		"address"
 #define MAIL_ATTR_TRANSPORT	"transport"
 #define MAIL_ATTR_NEXTHOP	"nexthop"
+#define MAIL_ATTR_TRACE_FLAGS	"trace_flags"
+#define MAIL_ATTR_ADDR_STATUS	"recipient_status"
+#define MAIL_ATTR_ACTION	"action"
 #define MAIL_ATTR_TABLE		"table"
 #define MAIL_ATTR_KEY		"key"
 #define MAIL_ATTR_VALUE		"value"
+#define MAIL_ATTR_INSTANCE	"instance"
+#define MAIL_ATTR_SASL_METHOD	"sasl_method"
+#define MAIL_ATTR_SASL_USERNAME	"sasl_username"
+#define MAIL_ATTR_SASL_SENDER	"sasl_sender"
 
  /*
   * Suffixes for sender_name, sender_domain etc.
@@ -140,9 +150,31 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_CLIENT_ADDR	"client_address"	/* client address */
 #define MAIL_ATTR_HELO_NAME	"helo_name"	/* SMTP helo name */
 #define MAIL_ATTR_PROTO_NAME	"protocol_name"	/* SMTP/ESMTP/QMQP/... */
+#define MAIL_ATTR_PROTO_STATE	"protocol_state"	/* MAIL/RCPT/... */
 #define MAIL_ATTR_ORIGIN	"message_origin"	/* hostname[address] */
 #define MAIL_ATTR_ORG_NONE	"unknown"	/* origin unknown */
 #define MAIL_ATTR_ORG_LOCAL	"local"	/* local submission */
+
+ /*
+  * XCLIENT/XFORWARD in SMTP.
+  */
+#define XCLIENT_CMD		"XCLIENT"	/* XCLIENT command */
+#define XCLIENT_NAME		"NAME"		/* client name */
+#define XCLIENT_ADDR		"ADDR"		/* client address */
+#define XCLIENT_PROTO		"PROTO"		/* client protocol */
+#define XCLIENT_HELO		"HELO"		/* client helo */
+
+#define XCLIENT_UNAVAILABLE	"[UNAVAILABLE]"	/* permanently unavailable */
+#define XCLIENT_TEMPORARY	"[TEMPUNAVAIL]"	/* temporarily unavailable */
+
+#define XFORWARD_CMD		"XFORWARD"	/* XFORWARD command */
+#define XFORWARD_NAME		"NAME"		/* client name */
+#define XFORWARD_ADDR		"ADDR"		/* client address */
+#define XFORWARD_PROTO		"PROTO"		/* client protocol */
+#define XFORWARD_HELO		"HELO"		/* client helo */
+#define XFORWARD_IDENT		"IDENT"		/* message identifier */
+
+#define XFORWARD_UNAVAILABLE	"[UNAVAILABLE]"	/* attribute unavailable */
 
 /* LICENSE
 /* .ad

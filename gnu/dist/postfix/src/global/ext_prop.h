@@ -20,7 +20,7 @@
 #define EXT_PROP_FORWARD	(1<<3)
 #define EXT_PROP_INCLUDE	(1<<4)
 
-extern int ext_prop_mask(const char *);
+extern int ext_prop_mask(const char *, const char *);
 
 /* LICENSE
 /* .ad

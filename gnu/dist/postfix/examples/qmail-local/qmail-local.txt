@@ -1,0 +1,16 @@
+From: Ron Bickers <rbickers@logicetc.com>
+
+For the archives (or for comment):
+
+I now have mailbox_command = /usr/local/libexec/postqmail-local and
+postqmail-local looks like this (minus some mailer wrapping):
+
+  #!/bin/sh
+  export PATH=$PATH:/usr/local/bin:/var/qmail/bin
+  tail +2 | seekablepipe qmail-local -- \
+    "$USER" "$HOME" "$LOCAL" "${EXTENSION:+-}" "$EXTENSION"
+    "$DOMAIN""$SENDER" ./Maildir/
+  e=$?
+  (($e == 111)) && exit 75
+  (($e == 100)) && exit 77
+  exit $e

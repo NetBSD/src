@@ -255,7 +255,7 @@ static int dict_dbm_delete(DICT *dict, const char *name)
 
 /* traverse the dictionary */
 
-static int dict_dbm_sequence(DICT *dict, const int function,
+static int dict_dbm_sequence(DICT *dict, int function,
 			             const char **key, const char **value)
 {
     char   *myname = "dict_dbm_sequence";

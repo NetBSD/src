@@ -1,15 +1,20 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - canonical(5) </title>
+</head> <body> <pre>
 CANONICAL(5)                                         CANONICAL(5)
 
 <b>NAME</b>
        canonical - format of Postfix canonical table
 
 <b>SYNOPSIS</b>
-       <b>postmap</b> <b>/etc/postfix/canonical</b>
+       <b>postmap /etc/postfix/canonical</b>
 
-       <b>postmap</b> <b>-q</b> <b>"</b><i>string</i><b>"</b> <b>/etc/postfix/canonical</b>
+       <b>postmap -q "</b><i>string</i><b>" /etc/postfix/canonical</b>
 
-       <b>postmap</b> <b>-q</b> <b>-</b> <b>/etc/postfix/canonical</b> &lt;<i>inputfile</i>
+       <b>postmap -q - /etc/postfix/canonical</b> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
        The  optional <b>canonical</b> table specifies an address mapping
@@ -20,7 +25,7 @@ CANONICAL(5)                                         CANONICAL(5)
        that  serves  as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
        result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
        fast  searching  by  the  mail system. Execute the command
-       <b>postmap</b> <b>/etc/postfix/canonical</b> in  order  to  rebuild  the
+       <b>postmap /etc/postfix/canonical</b> in  order  to  rebuild  the
        indexed file after changing the text file.
 
        When  the  table  is provided via other means such as NIS,
@@ -29,8 +34,10 @@ CANONICAL(5)                                         CANONICAL(5)
 
        Alternatively,  the  table  can  be provided as a regular-
        expression map where patterns are given as regular expres-
-       sions.  In  that  case, the lookups are done in a slightly
-       different way as described below.
+       sions,  or lookups can be directed to TCP-based server. In
+       that case, the lookups are done in  a  slightly  different
+       way  as  described below under "REGULAR EXPRESSION TABLES"
+       and "TCP-BASED TABLES".
 
        The  <b>canonical</b>  mapping  affects   both   message   header
        addresses (i.e. addresses that appear inside messages) and
@@ -48,10 +55,10 @@ CANONICAL(5)                                         CANONICAL(5)
        The  <b>canonical</b>  mapping  is  not to be confused with local
        aliasing.  Use the <a href="aliases.5.html"><b>aliases</b>(5)</a> map for that purpose.
 
-<b>TABLE</b> <b>FORMAT</b>
+<b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
-       <i>pattern</i> <i>result</i>
+       <i>pattern result</i>
               When  <i>pattern</i> matches a mail address, replace it by
               the corresponding <i>result</i>.
 
@@ -69,7 +76,7 @@ CANONICAL(5)                                         CANONICAL(5)
        networked  tables  such  as NIS, LDAP or SQL, patterns are
        tried in the order as listed below:
 
-       <i>user</i>@<i>domain</i> <i>address</i>
+       <i>user</i>@<i>domain address</i>
               <i>user</i>@<i>domain</i> is replaced by <i>address</i>. This  form  has
               the highest precedence.
 
@@ -78,33 +85,37 @@ CANONICAL(5)                                         CANONICAL(5)
               duce  <i>Firstname.Lastname</i>  style  addresses, but see
               below for a simpler solution.
 
-       <i>user</i> <i>address</i>
+       <i>user address</i>
               <i>user</i>@<i>site</i> is replaced by <i>address</i> when <i>site</i> is equal
-              to  $<b>myorigin</b>,  when  <i>site</i> is listed in $<b>mydestina-</b>
-              <b>tion</b>, or when it is listed in $<b>inet</b><i>_</i><b>interfaces</b>.
+              to  $<b><a href="postconf.5.html#myorigin">myorigin</a></b>,  when  <i>site</i> is listed in $<b><a href="postconf.5.html#mydestination">mydestina</a>-</b>
+              <b><a href="postconf.5.html#mydestination">tion</a></b>, or when it is listed in  $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>  or
+              $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
-              This form is useful for replacing  login  names  by
+              This  form  is  useful for replacing login names by
               <i>Firstname.Lastname</i>.
 
-       @<i>domain</i> <i>address</i>
-              Every  address  in  <i>domain</i>  is replaced by <i>address</i>.
+       @<i>domain address</i>
+              Every address in <i>domain</i>  is  replaced  by  <i>address</i>.
               This form has the lowest precedence.
 
-       In all the above forms, when <i>address</i> has the form  @<i>other-</i>
+       In  all the above forms, when <i>address</i> has the form @<i>other-</i>
        <i>domain</i>, the result is the same user in <i>otherdomain</i>.
 
-<b>ADDRESS</b> <b>EXTENSION</b>
+<b>ADDRESS EXTENSION</b>
        When a mail address localpart contains the optional recip-
-       ient delimiter (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order
+       ient  delimiter  (e.g., <i>user+foo</i>@<i>domain</i>), the lookup order
        becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and
-       @<i>domain</i>.  An unmatched address extension (<i>+foo</i>) is  propa-
+       @<i>domain</i>.
+
+       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls
+       whether an unmatched address extension  (<i>+foo</i>)  is  propa-
        gated to the result of table lookup.
 
-<b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
+<b>REGULAR EXPRESSION TABLES</b>
        This  section  describes how the table lookups change when
        the table is given in the form of regular expressions. For
        a  description  of regular expression lookup table syntax,
-       see <a href="regexp_table.5.html"><b>regexp</b><i>_</i><b>table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre</b><i>_</i><b>table</b>(5)</a>.
+       see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
        Each pattern is a regular expression that  is  applied  to
        the entire address being looked up. Thus, <i>user@domain</i> mail
@@ -120,66 +131,94 @@ CANONICAL(5)                                         CANONICAL(5)
        the  additional feature that parenthesized substrings from
        the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
+<b>TCP-BASED TABLES</b>
+       This section describes how the table lookups  change  when
+       lookups are directed to a TCP-based server. For a descrip-
+       tion  of  the  TCP  client/server  lookup  protocol,   see
+       <b>tcp_table</b>(5).   This  feature  is not available in Postfix
+       version 2.1.
+
+       Each lookup operation uses the entire address once.  Thus,
+       <i>user@domain</i>  mail  addresses  are not broken up into their
+       <i>user</i> and <i>@domain</i> constituent parts, nor is <i>user+foo</i> broken
+       up into <i>user</i> and <i>foo</i>.
+
+       Results are the same as with indexed file lookups.
+
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The  table format does not understand quoting conventions.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
-       command after a configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       The following <b>main.cf</b> parameters are especially  relevant.
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-       <b>canonical</b><i>_</i><b>maps</b>
+       <b><a href="postconf.5.html#canonical_maps">canonical_maps</a></b>
               List of canonical mapping tables.
 
-       <b>recipient</b><i>_</i><b>canonical</b><i>_</i><b>maps</b>
+       <b><a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a></b>
               Address  mapping  lookup  table  for  envelope  and
               header recipient addresses.
 
-       <b>sender</b><i>_</i><b>canonical</b><i>_</i><b>maps</b>
+       <b><a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a></b>
               Address  mapping  lookup  table  for  envelope  and
               header sender addresses.
 
+       <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>
+              A list of address rewriting  or  forwarding  mecha-
+              nisms  that propagate an address extension from the
+              original address to the result.   Specify  zero  or
+              more  of  <b>canonical</b>,  <b>virtual</b>,  <b>alias</b>,  <b>forward</b>, or
+              <b>include</b>.
+
        Other parameters of interest:
 
-       <b>inet</b><i>_</i><b>interfaces</b>
+       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
               The network interface addresses  that  this  system
               receives mail on.  You need to stop and start Post-
               fix when this parameter changes.
 
-       <b>masquerade</b><i>_</i><b>classes</b>
-              List of address classes  subject  to  masquerading:
-              zero  or  more of <b>envelope</b><i>_</i><b>sender</b>, <b>envelope</b><i>_</i><b>recipi-</b>
-              <b>ent</b>, <b>header</b><i>_</i><b>sender</b>, <b>header</b><i>_</i><b>recipient</b>.
+       <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>
+              Other interfaces that this machine receives mail on
+              by way of a proxy agent or network address transla-
+              tor.
 
-       <b>masquerade</b><i>_</i><b>domains</b>
+       <b><a href="postconf.5.html#masquerade_classes">masquerade_classes</a></b>
+              List of address classes  subject  to  masquerading:
+              zero  or  more of <b>envelope_sender</b>, <b>envelope_recipi-</b>
+              <b>ent</b>, <b>header_sender</b>, <b>header_recipient</b>.
+
+       <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a></b>
               List of domains that hide  their  subdomain  struc-
               ture.
 
-       <b>masquerade</b><i>_</i><b>exceptions</b>
+       <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a></b>
               List  of user names that are not subject to address
               masquerading.
 
-       <b>mydestination</b>
+       <b><a href="postconf.5.html#mydestination">mydestination</a></b>
               List of domains that  this  mail  system  considers
               local.
 
-       <b>myorigin</b>
+       <b><a href="postconf.5.html#myorigin">myorigin</a></b>
               The domain that is appended to locally-posted mail.
 
-       <b>owner</b><i>_</i><b>request</b><i>_</i><b>special</b>
+       <b><a href="postconf.5.html#owner_request_special">owner_request_special</a></b>
               Give special treatment to <b>owner-</b><i>xxx</i> and <i>xxx</i><b>-request</b>
               addresses.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="cleanup.8.html">cleanup(8)</a> canonicalize and enqueue mail
-       <a href="postmap.1.html">postmap(1)</a> create mapping table
-       <a href="virtual.5.html">virtual(5)</a> virtual domain mapping
-       <a href="pcre_table.5.html">pcre_table(5)</a> format of PCRE tables
-       <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
+<b>SEE ALSO</b>
+       <a href="cleanup.8.html">cleanup(8)</a>, canonicalize and enqueue mail
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="virtual.5.html">virtual(5)</a>, virtual aliasing
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
+       <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

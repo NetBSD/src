@@ -28,8 +28,10 @@
 # 
 #        Alternatively,  the  table  can  be provided as a regular-
 #        expression map where patterns are given as regular expres-
-#        sions.  In  that  case, the lookups are done in a slightly
-#        different way as described below.
+#        sions,  or lookups can be directed to TCP-based server. In
+#        that case, the lookups are done in  a  slightly  different
+#        way  as  described below under "REGULAR EXPRESSION TABLES"
+#        and "TCP-BASED TABLES".
 # 
 #        The  canonical  mapping  affects   both   message   header
 #        addresses (i.e. addresses that appear inside messages) and
@@ -80,23 +82,27 @@
 #        user address
 #               user@site is replaced by address when site is equal
 #               to  $myorigin,  when  site is listed in $mydestina-
-#               tion, or when it is listed in $inet_interfaces.
+#               tion, or when it is listed in  $inet_interfaces  or
+#               $proxy_interfaces.
 # 
-#               This form is useful for replacing  login  names  by
+#               This  form  is  useful for replacing login names by
 #               Firstname.Lastname.
 # 
 #        @domain address
-#               Every  address  in  domain  is replaced by address.
+#               Every address in domain  is  replaced  by  address.
 #               This form has the lowest precedence.
 # 
-#        In all the above forms, when address has the form  @other-
+#        In  all the above forms, when address has the form @other-
 #        domain, the result is the same user in otherdomain.
 # 
 # ADDRESS EXTENSION
 #        When a mail address localpart contains the optional recip-
-#        ient delimiter (e.g., user+foo@domain), the  lookup  order
+#        ient  delimiter  (e.g., user+foo@domain), the lookup order
 #        becomes: user+foo@domain, user@domain, user+foo, user, and
-#        @domain.  An unmatched address extension (+foo) is  propa-
+#        @domain.
+# 
+#        The   propagate_unmatched_extensions   parameter  controls
+#        whether an unmatched address extension  (+foo)  is  propa-
 #        gated to the result of table lookup.
 # 
 # REGULAR EXPRESSION TABLES
@@ -119,14 +125,27 @@
 #        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
+# TCP-BASED TABLES
+#        This section describes how the table lookups  change  when
+#        lookups are directed to a TCP-based server. For a descrip-
+#        tion  of  the  TCP  client/server  lookup  protocol,   see
+#        tcp_table(5).   This  feature  is not available in Postfix
+#        version 2.1.
+# 
+#        Each lookup operation uses the entire address once.  Thus,
+#        user@domain  mail  addresses  are not broken up into their
+#        user and @domain constituent parts, nor is user+foo broken
+#        up into user and foo.
+# 
+#        Results are the same as with indexed file lookups.
+# 
 # BUGS
-#        The table format does not understand quoting  conventions.
+#        The  table format does not understand quoting conventions.
 # 
 # CONFIGURATION PARAMETERS
-#        The  following  main.cf parameters are especially relevant
-#        to this topic. See the Postfix  main.cf  file  for  syntax
-#        details  and  for  default  values. Use the postfix reload
-#        command after a configuration change.
+#        The following main.cf parameters are especially  relevant.
+#        The  text  below  provides  only  a parameter summary. See
+#        postconf(5) for more details including examples.
 # 
 #        canonical_maps
 #               List of canonical mapping tables.
@@ -139,12 +158,24 @@
 #               Address  mapping  lookup  table  for  envelope  and
 #               header sender addresses.
 # 
+#        propagate_unmatched_extensions
+#               A list of address rewriting  or  forwarding  mecha-
+#               nisms  that propagate an address extension from the
+#               original address to the result.   Specify  zero  or
+#               more  of  canonical,  virtual,  alias,  forward, or
+#               include.
+# 
 #        Other parameters of interest:
 # 
 #        inet_interfaces
 #               The network interface addresses  that  this  system
 #               receives mail on.  You need to stop and start Post-
 #               fix when this parameter changes.
+# 
+#        proxy_interfaces
+#               Other interfaces that this machine receives mail on
+#               by way of a proxy agent or network address transla-
+#               tor.
 # 
 #        masquerade_classes
 #               List of address classes  subject  to  masquerading:
@@ -171,14 +202,19 @@
 #               addresses.
 # 
 # SEE ALSO
-#        cleanup(8) canonicalize and enqueue mail
-#        postmap(1) create mapping table
-#        virtual(5) virtual domain mapping
-#        pcre_table(5) format of PCRE tables
-#        regexp_table(5) format of POSIX regular expression tables
+#        cleanup(8), canonicalize and enqueue mail
+#        postmap(1), Postfix lookup table manager
+#        postconf(5), configuration parameters
+#        virtual(5), virtual aliasing
+# 
+# README FILES
+#        Use  "postconf  readme_directory" or "postconf html_direc-
+#        tory" to locate this information.
+#        DATABASE_README, Postfix lookup table overview
+#        ADDRESS_REWRITING_README, address rewriting guide
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

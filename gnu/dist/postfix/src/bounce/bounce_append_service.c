@@ -6,9 +6,14 @@
 /* SYNOPSIS
 /*	#include "bounce_service.h"
 /*
-/*	int     bounce_append_service(queue_id, recipient, why)
+/*	int     bounce_append_service(flags, queue_id, orig_rcpt, recipient,
+/*					status, action, why)
+/*	int	flags;
 /*	char	*queue_id;
+/*	char	*orig_rcpt;
 /*	char	*recipient;
+/*	char	*status;
+/*	char	*action;
 /*	char	*why;
 /* DESCRIPTION
 /*	This module implements the server side of the bounce_append()
@@ -39,6 +44,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -48,9 +57,11 @@
 
 /* Global library. */
 
+#include <mail_params.h>
 #include <mail_queue.h>
 #include <quote_822_local.h>
 #include <deliver_flock.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -58,8 +69,10 @@
 
 /* bounce_append_service - append bounce log */
 
-int     bounce_append_service(char *service, char *queue_id,
-			              char *recipient, char *why)
+int     bounce_append_service(int unused_flags, char *service, char *queue_id,
+			              char *orig_rcpt, char *recipient,
+			              long offset, char *status, char *action,
+			              char *why)
 {
     VSTRING *in_buf = vstring_alloc(100);
     VSTRING *out_buf = vstring_alloc(100);
@@ -97,17 +110,32 @@ int     bounce_append_service(char *service, char *queue_id,
      * may change once we replace the present ad-hoc bounce/defer logfile
      * format by one that is transparent for control etc. characters. See
      * also: showq/showq.c.
+     * 
+     * While migrating from old format to new format, allow backwards
+     * compatibility by writing an old-style record before the new-style
+     * records.
      */
     if ((orig_length = vstream_fseek(log, 0L, SEEK_END)) < 0)
 	msg_fatal("seek file %s %s: %m", service, queue_id);
 
-    if (*recipient)
-	vstream_fprintf(log, "<%s>: ",
-	   printable(vstring_str(quote_822_local(in_buf, recipient)), '?'));
-    else
-	vstream_fprintf(log, "<>: ");
-    vstream_fputs(printable(why, '?'), log);
-    vstream_fputs("\n\n", log);
+    vstream_fputs("\n", log);
+    if (var_oldlog_compat) {
+	vstream_fprintf(log, "<%s>: %s\n", *recipient == 0 ? "" :
+	    printable(vstring_str(quote_822_local(in_buf, recipient)), '?'),
+			printable(why, '?'));
+    }
+    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_RECIP, *recipient ?
+	   printable(vstring_str(quote_822_local(in_buf, recipient)), '?') :
+		    "<>");
+    if (*orig_rcpt && strcasecmp(recipient, orig_rcpt) != 0)
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_ORCPT,
+	   printable(vstring_str(quote_822_local(in_buf, orig_rcpt)), '?'));
+    if (offset > 0)
+	vstream_fprintf(log, "%s=%ld\n", MAIL_ATTR_OFFSET, offset);
+    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_STATUS, printable(status, '?'));
+    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_ACTION, printable(action, '?'));
+    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_WHY, printable(why, '?'));
+    vstream_fputs("\n", log);
 
     if (vstream_fflush(log) != 0 || fsync(vstream_fileno(log)) < 0) {
 #ifndef NO_TRUNCATE

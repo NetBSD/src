@@ -11,11 +11,6 @@
 /*	const char *map_names;
 /*	int	flags;
 /*
-/*	MAPS	*maps_append(maps, map_name, dict_handle)
-/*	MAPS	*maps;
-/*	const char *map_name;
-/*	DICT	*dict_handle;
-/*
 /*	const char *maps_find(maps, key, flags)
 /*	MAPS	*maps;
 /*	const char *key;
@@ -36,10 +31,6 @@
 /*	The result is a handle that must be specified along with all
 /*	other maps_xxx() operations.
 /*	See dict_open(3) for a description of flags.
-/*
-/*	maps_append() appends a dictionary to an existing handle
-/*	under the given name. If dict_handle is a null pointer,
-/*	the named dictionary is opened on the fly.
 /*
 /*	maps_find() searches the specified list of dictionaries
 /*	in the specified order for the named key. The result is in
@@ -65,7 +56,7 @@
 /*	sensitive.
 /* DIAGNOSTICS
 /*	Panic: inappropriate use; fatal errors: out of memory, unable
-/*	to open database.
+/*	to open database. Warnings: null string lookup result.
 /*
 /*	maps_find() returns a null pointer when the requested
 /*	information was not found. The global \fIdict_errno\fR
@@ -113,13 +104,16 @@
 
 /* maps_create - initialize */
 
-MAPS   *maps_create(const char *title, const char *map_names, int flags)
+MAPS   *maps_create(const char *title, const char *map_names, int dict_flags)
 {
+    const char *myname = "maps_create";
     char   *temp;
     char   *bufp;
     static char sep[] = " \t,\r\n";
     MAPS   *maps;
     char   *map_type_name;
+    VSTRING *map_type_name_flags;
+    DICT   *dict;
 
     /*
      * Initialize.
@@ -127,7 +121,6 @@ MAPS   *maps_create(const char *title, const char *map_names, int flags)
     maps = (MAPS *) mymalloc(sizeof(*maps));
     maps->title = mystrdup(title);
     maps->argv = argv_alloc(2);
-    maps->flags = flags;
 
     /*
      * For each specified type:name pair, either register a new dictionary,
@@ -135,29 +128,24 @@ MAPS   *maps_create(const char *title, const char *map_names, int flags)
      */
     if (*map_names) {
 	bufp = temp = mystrdup(map_names);
-	while ((map_type_name = mystrtok(&bufp, sep)) != 0)
-	    maps_append(maps, map_type_name, dict_handle(map_type_name));
+	map_type_name_flags = vstring_alloc(10);
+
+#define OPEN_FLAGS	O_RDONLY
+
+	while ((map_type_name = mystrtok(&bufp, sep)) != 0) {
+	    vstring_sprintf(map_type_name_flags, "%s(%o,%o)",
+			    map_type_name, OPEN_FLAGS, dict_flags);
+	    if ((dict = dict_handle(vstring_str(map_type_name_flags))) == 0)
+		dict = dict_open(map_type_name, OPEN_FLAGS, dict_flags);
+	    if ((dict->flags & dict_flags) != dict_flags)
+		msg_panic("%s: map %s has flags 0%o, want flags 0%o",
+			  myname, map_type_name, dict->flags, dict_flags);
+	    dict_register(vstring_str(map_type_name_flags), dict);
+	    argv_add(maps->argv, vstring_str(map_type_name_flags), ARGV_END);
+	}
 	myfree(temp);
+	vstring_free(map_type_name_flags);
     }
-    return (maps);
-}
-
-/* maps_append - append dictionary */
-
-MAPS   *maps_append(MAPS *maps, const char *map_type_name, DICT *dict)
-{
-    char   *myname = "maps_append";
-
-    if (msg_verbose)
-	msg_info("%s: %s", myname, map_type_name);
-    if (dict == 0)
-	dict = dict_open(map_type_name, O_RDONLY, maps->flags);
-    if ((dict->flags & maps->flags) != maps->flags)
-	msg_warn("%s: map %s has flags 0%o, want flags 0%o",
-		 myname, map_type_name, dict->flags, maps->flags);
-    dict_register(map_type_name, dict);
-    argv_add(maps->argv, map_type_name, ARGV_END);
-    argv_terminate(maps->argv);
     return (maps);
 }
 
@@ -183,6 +171,14 @@ const char *maps_find(MAPS *maps, const char *name, int flags)
 	if (flags != 0 && (dict->flags & flags) == 0)
 	    continue;
 	if ((expansion = dict_get(dict, name)) != 0) {
+	    if (*expansion == 0) {
+		msg_warn("%s lookup of %s returns an empty string result",
+			 maps->title, name);
+		msg_warn("%s should return NO RESULT in case of NOT FOUND",
+			 maps->title);
+		dict_errno = DICT_ERR_RETRY;
+		return (0);
+	    }
 	    if (msg_verbose)
 		msg_info("%s: %s: %s: %s = %s", myname, maps->title,
 			 *map_name, name, expansion);

@@ -1,0 +1,110 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - smtp-sink(1) </title>
+</head> <body> <pre>
+SMTP-SINK(1)                                         SMTP-SINK(1)
+
+<b>NAME</b>
+       smtp-sink - multi-threaded SMTP/LMTP test server
+
+<b>SYNOPSIS</b>
+       <b>smtp-sink</b> [<i>options</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
+
+       <b>smtp-sink</b> [<i>options</i>] <b>unix:</b><i>pathname backlog</i>
+
+<b>DESCRIPTION</b>
+       <b>smtp-sink</b> listens on the named host (or address) and port.
+       It takes SMTP messages from the network  and  throws  them
+       away.   The  purpose is to measure client performance, not
+       protocol compliance.
+
+       Connections can be accepted on  IPV4  endpoints  or  UNIX-
+       domain sockets.  IPV4 is the default.  This program is the
+       complement of the <a href="smtp-source.1.html"><b>smtp-source</b>(1)</a> program.
+
+       Arguments:
+
+       <b>-a</b>     Do not announce SASL authentication support.
+
+       <b>-c</b>     Display a running counter that is updated  whenever
+              an SMTP QUIT command is executed.
+
+       <b>-C</b>     Disable XCLIENT support.
+
+       <b>-e</b>     Do not announce ESMTP support.
+
+       <b>-f</b> <i>command,command,...</i>
+              Reject  the  specified  commands  with a hard (5xx)
+              error code.
+
+       <b>-F</b>     Disable XFORWARD support.
+
+       <b>-h</b>     Use <i>hostname</i> in the  SMTP  greeting,  in  the  HELO
+              response,  and  in  the  EHLO response. The default
+              hostname is "smtp-sink".
+
+       <b>-L</b>     Enable LMTP instead of SMTP.
+
+       <b>-n</b> <i>count</i>
+              Terminate after <i>count</i> sessions. This is for testing
+              purposes.
+
+       <b>-p</b>     Do  not announce support for ESMTP command pipelin-
+              ing.
+
+       <b>-P</b>     Change the server greeting so that  it  appears  to
+              come through a CISCO PIX system. Implies <b>-e</b>.
+
+       <b>-q</b> <i>command,command,...</i>
+              Disconnect  (without  replying) after receiving one
+              of the specified commands.
+
+       <b>-r</b> <i>command,command,...</i>
+              Reject the specified commands  with  a  soft  (4xx)
+              error code.
+
+       <b>-s</b> <i>command,command,...</i>
+              Log  the  named  commands  to syslogd.  Examples of
+              commands that can be logged are HELO,  EHLO,  LHLO,
+              MAIL,  RCPT,  VRFY,  RSET, NOOP, and QUIT. Separate
+              command names by white space  or  commas,  and  use
+              quotes  to protect white space from the shell. Com-
+              mand names are case-insensitive.
+
+       <b>-v</b>     Show the SMTP conversations.
+
+       <b>-w</b> <i>delay</i>
+              Wait <i>delay</i> seconds before responding to a DATA com-
+              mand.
+
+       <b>-8</b>     Do not announce 8BITMIME support.
+
+       [<b>inet:</b>][<i>host</i>]:<i>port</i>
+              Listen  on  network  interface  <i>host</i>  (default: any
+              interface) TCP port <i>port</i>. Both <i>host</i> and <i>port</i> may be
+              specified in numeric or symbolic form.
+
+       <b>unix:</b><i>pathname</i>
+              Listen on the UNIX-domain socket at <i>pathname</i>.
+
+       <i>backlog</i>
+              The  maximum  length  the  queue of pending connec-
+              tions, as defined by the listen(2) call.
+
+<b>SEE ALSO</b>
+       <a href="smtp-source.1.html">smtp-source(1)</a>, SMTP/LMTP message generator
+
+<b>LICENSE</b>
+       The Secure Mailer license must be  distributed  with  this
+       software.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                     SMTP-SINK(1)
+</pre> </body> </html>

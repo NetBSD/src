@@ -111,7 +111,7 @@
 /*	of at least "len" bytes. The minimal length is 1. The result
 /*	is a null-terminated string of length zero.
 /*
-/*	vstring_ctl() gives additional control over vstring behavior.
+/*	vstring_ctl() gives additional control over VSTRING behavior.
 /*	The function takes a VSTRING pointer and a list of zero
 /*	or more (name,value) pairs. The expected value type
 /*	depends on the specified name. The value name codes are:
@@ -253,6 +253,7 @@
 static void vstring_extend(VBUF *bp, int incr)
 {
     unsigned used = bp->ptr - bp->data;
+    int     new_len;
 
     /*
      * Note: vp->vbuf.len is the current buffer size (both on entry and on
@@ -261,8 +262,9 @@ static void vstring_extend(VBUF *bp, int incr)
      * strings we might want to abandon the length doubling strategy, and go
      * to fixed increments.
      */
-    bp->len += (bp->len > incr ? bp->len : incr);
-    bp->data = (unsigned char *) myrealloc((char *) bp->data, bp->len);
+    new_len = bp->len + (bp->len > incr ? bp->len : incr);
+    bp->data = (unsigned char *) myrealloc((char *) bp->data, new_len);
+    bp->len = new_len;
     bp->ptr = bp->data + used;
     bp->cnt = bp->len - used;
 }
@@ -305,6 +307,7 @@ VSTRING *vstring_alloc(int len)
 	msg_panic("vstring_alloc: bad length %d", len);
     vp = (VSTRING *) mymalloc(sizeof(*vp));
     vp->vbuf.flags = 0;
+    vp->vbuf.len = 0;
     vp->vbuf.data = (unsigned char *) mymalloc(len);
     vp->vbuf.len = len;
     VSTRING_RESET(vp);

@@ -2,6 +2,8 @@
 ./dict_open: warning: regexp map dict_regexp.map, line 5: ignoring extra text after ENDIF
 ./dict_open: warning: regexp map dict_regexp.map, line 9: using empty replacement string
 ./dict_open: warning: regexp map dict_regexp.map, line 10: out of range replacement index "5": skipping this rule
+./dict_open: warning: regexp map dict_regexp.map, line 17: $number found in negative match replacement text: skipping this rule
+./dict_open: warning: regexp map dict_regexp.map, line 22: no regexp: skipping this rule
 true: not found
 true1=1
 true2: not found
@@ -15,3 +17,7 @@ aa=a!b
 1235=(1)(2)(3)
 1234=(1)(2)(3)(4)
 123=(1)(2)(3)
+bar/find: not found
+bar/whynot=Don't have a liquor license
+bar/elbereth=(elbereth)
+say/elbereth: not found

@@ -1,15 +1,15 @@
 /*++
 /* NAME
-/*	smtp-source 8
+/*	smtp-source 1
 /* SUMMARY
-/*	multi-threaded SMTP test generator
+/*	multi-threaded SMTP/LMTP test generator
 /* SYNOPSIS
 /* .fi
 /*	\fBsmtp-source\fR [\fIoptions\fR] [\fBinet:\fR]\fIhost\fR[:\fIport\fR]
 /*
 /*	\fBsmtp-source\fR [\fIoptions\fR] \fBunix:\fIpathname\fR
 /* DESCRIPTION
-/*	smtp-source connects to the named \fIhost\fR and TCP \fIport\fR
+/*	\fBsmtp-source\fR connects to the named \fIhost\fR and TCP \fIport\fR
 /*	(default: port 25)
 /*	and sends one or more messages to it, either sequentially
 /*	or in parallel. The program speaks either SMTP (default) or
@@ -62,6 +62,8 @@
 /*	Connect to the UNIX-domain socket at \fIpathname\fR.
 /* BUGS
 /*	No SMTP command pipelining support.
+/* SEE ALSO
+/*	smtp-sink(1), SMTP/LMTP message dump
 /* LICENSE
 /* .ad
 /* .fi
@@ -215,6 +217,7 @@ static void command(VSTREAM *stream, char *fmt,...)
     va_start(ap, fmt);
     smtp_vprintf(stream, fmt, ap);
     va_end(ap);
+    smtp_flush(stream);
 }
 
 /* socket_error - look up and reset the last socket error */
@@ -399,6 +402,7 @@ static void fail_connect(SESSION *session)
 static void start_connect(SESSION *session)
 {
     int     fd;
+    struct linger linger;
 
     /*
      * Some systems don't set the socket error when connect() fails early
@@ -409,6 +413,11 @@ static void start_connect(SESSION *session)
     if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
 	msg_fatal("socket: %m");
     (void) non_blocking(fd, NON_BLOCKING);
+    linger.l_onoff = 1;
+    linger.l_linger = 0;
+    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &linger,
+		   sizeof(linger)) < 0)
+	msg_warn("setsockopt SO_LINGER %d: %m", linger.l_linger);
     session->stream = vstream_fdopen(fd, O_RDWR);
     event_enable_write(fd, connect_done, (char *) session);
     smtp_timeout_setup(session->stream, var_timeout);
@@ -471,7 +480,7 @@ static void read_banner(int unused_event, char *context)
 static void send_helo(SESSION *session)
 {
     int     except;
-    char   *protocol = (talk_lmtp ? "LHLO" : "HELO");
+    char   *NOCLOBBER protocol = (talk_lmtp ? "LHLO" : "HELO");
 
     /*
      * Send the standard greeting with our hostname
@@ -652,7 +661,6 @@ static void data_done(int unused_event, char *context)
 	    mydate = mail_date(time((time_t *) 0));
 	    mypid = getpid();
 	}
-#if SMTP_PRINTF_NO_LONGER_FLUSHES
 	smtp_printf(session->stream, "From: <%s>", sender);
 	smtp_printf(session->stream, "To: <%s>", recipient);
 	smtp_printf(session->stream, "Date: %s", mydate);
@@ -660,16 +668,6 @@ static void data_done(int unused_event, char *context)
 		    mypid, vstream_fileno(session->stream), message_count, var_myhostname);
 	if (subject)
 	    smtp_printf(session->stream, "Subject: %s", subject);
-#else
-	vstream_fprintf(session->stream, "From: <%s>\r\n", sender);
-	vstream_fprintf(session->stream, "To: <%s>\r\n", recipient);
-	vstream_fprintf(session->stream, "Date: %s\r\n", mydate);
-	vstream_fprintf(session->stream, "Message-Id: <%04x.%04x.%04x@%s>\r\n",
-		      mypid, vstream_fileno(session->stream), message_count,
-			var_myhostname);
-	if (subject)
-	    vstream_fprintf(session->stream, "Subject: %s\r\n", subject);
-#endif
 	smtp_fputs("", 0, session->stream);
     }
 
@@ -798,7 +796,7 @@ int     main(int argc, char **argv)
 	    break;
 	case 'C':
 	    if ((connect_count = atoi(optarg)) <= 0)
-		usage(argv[0]);
+		msg_fatal("bad connection count: %s", optarg);
 	    break;
 	case 'd':
 	    disconnect = 0;
@@ -808,7 +806,7 @@ int     main(int argc, char **argv)
 	    break;
 	case 'l':
 	    if ((message_length = atoi(optarg)) <= 0)
-		usage(argv[0]);
+		msg_fatal("bad message length: %s", optarg);
 	    message_data = mymalloc(message_length);
 	    memset(message_data, 'X', message_length);
 	    for (i = 80; i < message_length; i += 80) {
@@ -822,7 +820,7 @@ int     main(int argc, char **argv)
 	    break;
 	case 'm':
 	    if ((message_count = atoi(optarg)) <= 0)
-		usage(argv[0]);
+		msg_fatal("bad message count: %s", optarg);
 	    break;
 	case 'o':
 	    send_helo_first = 0;
@@ -830,15 +828,17 @@ int     main(int argc, char **argv)
 	    break;
 	case 'r':
 	    if ((recipients = atoi(optarg)) <= 0)
-		usage(argv[0]);
+		msg_fatal("bad recipient count: %s", optarg);
 	    break;
 	case 'R':
-	    if (fixed_delay > 0 || (random_delay = atoi(optarg)) <= 0)
-		usage(argv[0]);
+	    if (fixed_delay > 0)
+		msg_fatal("do not use -w and -R options at the same time");
+	    if ((random_delay = atoi(optarg)) <= 0)
+		msg_fatal("bad random delay: %s", optarg);
 	    break;
 	case 's':
 	    if ((sessions = atoi(optarg)) <= 0)
-		usage(argv[0]);
+		msg_fatal("bad session count: %s", optarg);
 	    break;
 	case 'S':
 	    subject = optarg;
@@ -850,8 +850,10 @@ int     main(int argc, char **argv)
 	    msg_verbose++;
 	    break;
 	case 'w':
-	    if (random_delay > 0 || (fixed_delay = atoi(optarg)) <= 0)
-		usage(argv[0]);
+	    if (random_delay > 0)
+		msg_fatal("do not use -w and -R options at the same time");
+	    if ((fixed_delay = atoi(optarg)) <= 0)
+		msg_fatal("bad fixed delay: %s", optarg);
 	    break;
 	default:
 	    usage(argv[0]);

@@ -14,6 +14,7 @@
  /*
   * External interface.
   */
+extern void flush_init(void);
 extern int flush_add(const char *, const char *);
 extern int flush_send(const char *);
 extern int flush_refresh(void);

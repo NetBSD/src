@@ -31,6 +31,7 @@
 
 extern void smtp_timeout_setup(VSTREAM *, int);
 extern void PRINTFLIKE(2, 3) smtp_printf(VSTREAM *, const char *,...);
+extern void smtp_flush(VSTREAM *);
 extern int smtp_get(VSTRING *, VSTREAM *, int);
 extern void smtp_fputs(const char *, int len, VSTREAM *);
 extern void smtp_fwrite(const char *, int len, VSTREAM *);

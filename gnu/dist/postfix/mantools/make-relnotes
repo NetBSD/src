@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+# Transform RELEASE_NOTES, split into "leader", and "major changes",
+# split into major categories, and prepend dates to paragraphs.
+#
+# Input format: the leader text is copied verbatim; each paragraph
+# starts with [class, class] where a class specifies one or more
+# categories that the change should be listed under.
+# 
+# Output format: each category is printed with a little header and
+# each paragraph is tagged with [Incompat yyyymmdd] or with [Feature
+# yyyymmdd].
+
+%leader = (); %body = ();
+$append_to = \%leader;
+
+while (<>) {
+
+    if (/^Incompatible changes with/) {
+	die "No date found: $_" unless /(\d\d\d\d\d\d\d\d)/;
+	$append_to = \%body;
+	$prefix = "[Incompat $1] ";
+	while (<>) {
+	    last if /^====/;
+	}
+	next;
+    }
+
+    if (/^Major changes with/) {
+	die "No date found: $_" unless /(\d\d\d\d\d\d\d\d)/;
+	$append_to = \%body;
+	$prefix = "[Feature $1] ";
+	while (<>) {
+	    last if /^====/;
+	}
+	next;
+    }
+
+    if (/^\s*\n/) {
+	if ($paragraph) {
+	    for $class (@classes) {
+		${$append_to}{$class} .= $prefix . $paragraph . $_;
+	    }
+	    $paragraph = "";
+	}
+    } else {
+	if ($paragraph eq "") {
+	    if ($append_to eq \%leader) {
+		@classes = ("default");
+		$paragraph = $_;
+	    } else {
+		die "No [class] at start of paragraph: $_" 
+		    unless /^\[([^]]+)\]\s*(.*)/s;
+		$paragraph = $2;
+		($junk = $1) =~ s/\s*,\s*/,/g;
+		$junk =~ s/^\s+//;
+		$junk =~ s/\s+$//;
+		#print "junk >$junk<\n";
+		@classes = split(/,+/, $junk);
+		#print "[", join(', ', @classes), "] ", $paragraph;
+	    }
+	} else {
+	    $paragraph .= $_;
+	}
+    }
+}
+
+if ($paragraph) {
+    for $class (@classes) {
+	${$append_to}{$class} .= $prefix . $paragraph . $_;
+    }
+}
+
+print $leader{"default"}; 
+
+for $class (sort keys %body) {
+    print "Major changes - $class\n";
+    print "----------------------\n\n";
+    print $body{$class};
+}

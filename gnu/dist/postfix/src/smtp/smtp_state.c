@@ -1,6 +1,6 @@
 /*++
 /* NAME
-/*	smtp_state 8
+/*	smtp_state 3
 /* SUMMARY
 /*	initialize/cleanup shared state
 /* SYNOPSIS

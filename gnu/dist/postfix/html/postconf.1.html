@@ -1,13 +1,18 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - postconf(1) </title>
+</head> <body> <pre>
 POSTCONF(1)                                           POSTCONF(1)
 
 <b>NAME</b>
        postconf - Postfix configuration utility
 
 <b>SYNOPSIS</b>
-       <b>postconf</b> [<b>-dhmlnv</b>] [<b>-c</b> <i>config_dir</i>] [<i>parameter</i> <i>...</i>]
+       <b>postconf</b> [<b>-dhmlnv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<i>parameter ...</i>]
 
-       <b>postconf</b> [<b>-ev</b>] [<b>-c</b> <i>config_dir</i>] [<i>parameter=value</i> <i>...</i>]
+       <b>postconf</b> [<b>-ev</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<i>parameter=value ...</i>]
 
 <b>DESCRIPTION</b>
        The  <b>postconf</b> command prints the actual value of <i>parameter</i>
@@ -17,7 +22,7 @@ POSTCONF(1)                                           POSTCONF(1)
 
        Options:
 
-       <b>-c</b> <i>config_dir</i>
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
               The <b>main.cf</b> configuration  file  is  in  the  named
               directory  instead  of  the  default  configuration
               directory.
@@ -62,6 +67,10 @@ POSTCONF(1)                                           POSTCONF(1)
                      available only on systems with  support  for
                      Berkeley DB databases.
 
+              <b>cidr</b>   A  table  that associates values with Class-
+                     less Inter-Domain Routing  (CIDR)  patterns.
+                     This is described in <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a>.
+
               <b>dbm</b>    An indexed file type based on hashing.  This
                      is available only on  systems  with  support
                      for DBM databases.
@@ -78,32 +87,42 @@ POSTCONF(1)                                           POSTCONF(1)
 
               <b>ldap</b> (read-only)
                      Perform lookups  using  the  LDAP  protocol.
-                     This is described in an LDAP_README file.
+                     This is described in <a href="ldap_table.5.html"><b>ldap_table</b>(5)</a>.
 
               <b>mysql</b> (read-only)
                      Perform  lookups  using  the MYSQL protocol.
-                     This is described in a MYSQL_README file.
+                     This is described in <a href="mysql_table.5.html"><b>mysql_table</b>(5)</a>.
 
               <b>pcre</b> (read-only)
                      A lookup table based on Perl Compatible Reg-
                      ular   Expressions.   The   file  format  is
-                     described in <a href="pcre_table.5.html"><b>pcre</b><i>_</i><b>table</b>(5)</a>.
+                     described in <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
+
+              <b>pgsql</b> (read-only)
+                     Perform lookups using the PostgreSQL  proto-
+                     col. This is described in <a href="pgsql_table.5.html"><b>pgsql_table</b>(5)</a>.
 
               <b>proxy</b> (read-only)
-                     A lookup table that is implemented  via  the
-                     Postfix  <a href="proxymap.8.html"><b>proxymap</b>(8)</a> service. The table name
+                     A  lookup  table that is implemented via the
+                     Postfix <a href="proxymap.8.html"><b>proxymap</b>(8)</a> service. The table  name
                      syntax is <i>type</i><b>:</b><i>name</i>.
 
               <b>regexp</b> (read-only)
                      A lookup table based on regular expressions.
-                     The   file   format  is  described  in  <a href="regexp_table.5.html"><b>reg-</b>
-                     <b>exp</b><i>_</i><b>table</b>(5)</a>.
+                     The  file  format  is  described   in   <a href="regexp_table.5.html"><b>reg-</b></a>
+                     <a href="regexp_table.5.html"><b>exp_table</b>(5)</a>.
 
               <b>static</b> (read-only)
-                     A table that  always  returns  its  name  as
-                     lookup  result.  For  example, <b>static:foobar</b>
-                     always returns the string <b>foobar</b>  as  lookup
+                     A  table  that  always  returns  its name as
+                     lookup result.  For  example,  <b>static:foobar</b>
+                     always  returns  the string <b>foobar</b> as lookup
                      result.
+
+              <b>tcp</b> (read-only)
+                     Perform lookups using a simple request-reply
+                     protocol  that is described in tcp_table(5).
+                     This feature is not  included  with  Postfix
+                     2.1.
 
               <b>unix</b> (read-only)
                      A  limited way to query the UNIX authentica-
@@ -125,7 +144,9 @@ POSTCONF(1)                                           POSTCONF(1)
        Other  table  types may exist depending on how Postfix was
        built.
 
-       <b>-n</b>     Print non-default parameter settings only.
+       <b>-n</b>     Print parameter settings that are not left at their
+              built-in default value, because they are explicitly
+              specified in main.cf.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
               tiple  <b>-v</b>  options  make  the software increasingly
@@ -135,8 +156,28 @@ POSTCONF(1)                                           POSTCONF(1)
        Problems are reported to the standard error stream.
 
 <b>ENVIRONMENT</b>
-       <b>MAIL</b><i>_</i><b>CONFIG</b>
+       <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
+
+<b>CONFIGURATION PARAMETERS</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to this program.
+
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
+
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+<b>FILES</b>
+       /etc/postfix/main.cf, Postfix configuration parameters
+
+<b>SEE ALSO</b>
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this

@@ -79,7 +79,6 @@ static VSTRING *last_result;
 
 VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
 {
-    char   *myname = "rewrite_clnt";
     VSTREAM *stream;
 
     /*
@@ -103,6 +102,8 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
 
     /*
      * Peek at the cache.
+     * 
+     * XXX Must be made "rule" specific.
      */
     if (strcmp(addr, STR(last_addr)) == 0) {
 	vstring_strcpy(result, STR(last_result));
@@ -119,30 +120,32 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
      */
     if (rewrite_clnt_stream == 0)
 	rewrite_clnt_stream = clnt_stream_create(MAIL_CLASS_PRIVATE,
-				  var_rewrite_service, var_ipc_idle_limit);
+						 var_rewrite_service,
+						 var_ipc_idle_limit,
+						 var_ipc_ttl_limit);
 
     for (;;) {
 	stream = clnt_stream_access(rewrite_clnt_stream);
+	errno = 0;
 	if (attr_print(stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_STR, MAIL_ATTR_REQ, REWRITE_ADDR,
 		       ATTR_TYPE_STR, MAIL_ATTR_RULE, rule,
 		       ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
-		       ATTR_TYPE_END),
-	    vstream_fflush(stream)) {
+		       ATTR_TYPE_END) != 0
+	    || vstream_fflush(stream)
+	    || attr_scan(stream, ATTR_FLAG_STRICT,
+			 ATTR_TYPE_STR, MAIL_ATTR_ADDR, result,
+			 ATTR_TYPE_END) != 1) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
-		msg_warn("%s: bad write: %m", myname);
-	} else if (attr_scan(stream, ATTR_FLAG_STRICT,
-			     ATTR_TYPE_STR, MAIL_ATTR_ADDR, result,
-			     ATTR_TYPE_END) != 1) {
-	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
-		msg_warn("%s: bad read: %m", myname);
+		msg_warn("problem talking to service %s: %m",
+			 var_rewrite_service);
 	} else {
 	    if (msg_verbose)
 		msg_info("rewrite_clnt: %s: %s -> %s",
 			 rule, addr, vstring_str(result));
 	    break;
 	}
-	sleep(10);				/* XXX make configurable */
+	sleep(1);				/* XXX make configurable */
 	clnt_stream_recover(rewrite_clnt_stream);
     }
 
@@ -179,6 +182,7 @@ VSTRING *rewrite_clnt_internal(const char *ruleset, const char *addr, VSTRING *r
 #include <stdlib.h>
 #include <string.h>
 #include <msg_vstream.h>
+#include <split_at.h>
 #include <vstring_vstream.h>
 #include <mail_conf.h>
 #include <mail_params.h>
@@ -193,7 +197,7 @@ static void rewrite(char *rule, char *addr, VSTRING *reply)
     rewrite_clnt(rule, addr, reply);
     vstream_printf("%-10s %s\n", "rule", rule);
     vstream_printf("%-10s %s\n", "address", addr);
-    vstream_printf("%-10s %s\n", "result", STR(reply));
+    vstream_printf("%-10s %s\n\n", "result", STR(reply));
     vstream_fflush(VSTREAM_OUT);
 }
 
@@ -234,8 +238,8 @@ int     main(int argc, char **argv)
 	VSTRING *buffer = vstring_alloc(1);
 
 	while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
-	    if ((rule = strtok(STR(buffer), " \t,")) == 0
-		|| (addr = strtok((char *) 0, " \t,")) == 0)
+	    if ((addr = split_at(STR(buffer), ' ')) == 0
+		|| *(rule = STR(buffer)) == 0)
 		usage(argv[0]);
 	    rewrite(rule, addr, reply);
 	}

@@ -12,14 +12,14 @@
 /*	\fBnewaliases\fR
 /*	\fBsendmail -I\fR
 /* DESCRIPTION
-/*	The \fBsendmail\fR program implements the Postfix to Sendmail
+/*	The Postfix \fBsendmail\fR command implements the Postfix to Sendmail
 /*	compatibility interface.
 /*	For the sake of compatibility with existing applications, some
 /*	Sendmail command-line options are recognized but silently ignored.
 /*
-/*	By default, \fBsendmail\fR reads a message from standard input
+/*	By default, Postfix \fBsendmail\fR reads a message from standard input
 /*	until EOF or until it reads a line with only a \fB.\fR character,
-/*	and arranges for delivery.  \fBsendmail\fR relies on the
+/*	and arranges for delivery.  Postfix \fBsendmail\fR relies on the
 /*	\fBpostdrop\fR(1) command to create a queue file in the \fBmaildrop\fR
 /*	directory.
 /*
@@ -55,48 +55,12 @@
 /*	whether or not a message is an initial submission.
 /* .IP "\fB-B \fIbody_type\fR"
 /*	The message body MIME type: \fB7BIT\fR or \fB8BITMIME\fR.
-/* .IP "\fB-C \fIconfig_file\fR (ignored :-)"
-/*	The path name of the \fBsendmail.cf\fR file. Postfix configuration
-/*	files are kept in \fB/etc/postfix\fR.
-/* .IP "\fB-F \fIfull_name\fR
-/*	Set the sender full name. This is used only with messages that
-/*	have no \fBFrom:\fR message header.
-/* .IP "\fB-G\fR (ignored)"
-/*	Gateway (relay) submission, as opposed to initial user submission.
-/* .IP \fB-I\fR
-/*	Initialize alias database. See the \fBnewaliases\fR
-/*	command above.
-/* .IP "\fB-L \fIlabel\fR (ignored)"
-/*	The logging label. Use the \fBsyslog_name\fR configuration
-/*	parameter instead.
-/* .IP "\fB-N \fIdsn\fR (ignored)"
-/*	Delivery status notification control. Currently, Postfix does
-/*	not implement \fBDSN\fR.
-/* .IP "\fB-R \fIreturn_limit\fR (ignored)"
-/*	Limit the size of bounced mail. Use the \fBbounce_size_limit\fR
-/*	configuration parameter instead.
-/* .IP "\fB-X \fIlog_file\fR (ignored)"
-/*	Log mailer traffic. Use the \fBdebug_peer_list\fR and
-/*	\fBdebug_peer_level\fR configuration parameters instead.
-/* .IP "\fB-U\fR (ignored)"
-/*	Initial user submission.
-/* .IP \fB-V\fR
-/*	Variable Envelope Return Path. Given an envelope sender address
-/*	of the form \fIowner-listname\fR@\fIorigin\fR, each recipient
-/*	\fIuser\fR@\fIdomain\fR receives mail with a personalized envelope
-/*	sender address.
-/* .sp
-/*	By default, the personalized envelope sender address is
-/*	\fIowner-listname\fB+\fIuser\fB=\fIdomain\fR@\fIorigin\fR. The default
-/*	\fB+\fR and \fB=\fR characters are configurable with the
-/*	\fBdefault_verp_delimiters\fR configuration parameter.
-/* .IP \fB-V\fIxy\fR
-/*	As \fB-V\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
-/*	characters, instead of the characters specified with the
-/*	\fBdefault_verp_delimiters\fR configuration parameter.
 /* .IP \fB-bd\fR
 /*	Go into daemon mode. This mode of operation is implemented by
 /*	executing the \fBpostfix start\fR command.
+/* .IP "\fB-bh\fR (ignored)"
+/* .IP "\fB-bH\fR (ignored)"
+/*	Postfix has no persistent host status database.
 /* .IP \fB-bi\fR
 /*	Initialize alias database. See the \fBnewaliases\fR
 /*	command above.
@@ -108,24 +72,47 @@
 /* .IP \fB-bs\fR
 /*	Stand-alone SMTP server mode. Read SMTP commands from
 /*	standard input, and write responses to standard output.
-/*	In stand-alone SMTP server mode, UCE restrictions and
+/*	In stand-alone SMTP server mode, mail relaying and other
 /*	access controls are disabled by default. To enable them,
 /*	run the process as the \fBmail_owner\fR user.
 /* .sp
 /*	This mode of operation is implemented by running the
 /*	\fBsmtpd\fR(8) daemon.
+/* .IP \fB-bv\fR
+/*	Do not collect or deliver a message. Instead, send an email
+/*	report after verifying each recipient address.  This is useful
+/*	for testing address rewriting and routing configurations.
+/* .sp
+/*	This feature is available in Postfix version 2.1 and later.
+/* .IP "\fB-C \fIconfig_file\fR (ignored)"
+/*	The path name of the \fBsendmail.cf\fR file. Postfix configuration
+/*	files are kept in the \fB/etc/postfix\fR directory.
+/* .IP "\fB-F \fIfull_name\fR
+/*	Set the sender full name. This is used only with messages that
+/*	have no \fBFrom:\fR message header.
 /* .IP "\fB-f \fIsender\fR"
 /*	Set the envelope sender address. This is the address where
 /*	delivery problems are sent to, unless the message contains an
 /*	\fBErrors-To:\fR message header.
+/* .IP "\fB-G\fR (ignored)"
+/*	Gateway (relay) submission, as opposed to initial user submission.
 /* .IP "\fB-h \fIhop_count\fR (ignored)"
 /*	Hop count limit. Use the \fBhopcount_limit\fR configuration
 /*	parameter instead.
+/* .IP \fB-I\fR
+/*	Initialize alias database. See the \fBnewaliases\fR
+/*	command above.
 /* .IP "\fB-i\fR"
 /*	When reading a message from standard input, don\'t treat a line
 /*	with only a \fB.\fR character as the end of input.
+/* .IP "\fB-L \fIlabel\fR (ignored)"
+/*	The logging label. Use the \fBsyslog_name\fR configuration
+/*	parameter instead.
 /* .IP "\fB-m\fR (ignored)"
 /*	Backwards compatibility.
+/* .IP "\fB-N \fIdsn\fR (ignored)"
+/*	Delivery status notification control. Currently, Postfix does
+/*	not implement \fBDSN\fR.
 /* .IP "\fB-n\fR (ignored)"
 /*	Backwards compatibility.
 /* .IP "\fB-oA\fIalias_database\fR"
@@ -148,9 +135,15 @@
 /*	Set the envelope sender address. This is the address where
 /*	delivery problems are sent to, unless the message contains an
 /*	\fBErrors-To:\fR message header.
+/* .IP "\fB-R \fIreturn_limit\fR (ignored)"
+/*	Limit the size of bounced mail. Use the \fBbounce_size_limit\fR
+/*	configuration parameter instead.
 /* .IP \fB-q\fR
 /*	Attempt to deliver all queued mail. This is implemented by
 /*	executing the \fBpostqueue\fR(1) command.
+/*
+/*	Warning: flushing undeliverable mail frequently will result in
+/*	poor delivery performance of all other mail.
 /* .IP "\fB-q\fIinterval\fR (ignored)"
 /*	The interval between queue runs. Use the \fBqueue_run_delay\fR
 /*	configuration parameter instead.
@@ -165,13 +158,37 @@
 /*	This command is not implemented. Use the slower \fBsendmail -q\fR
 /*	command instead.
 /* .IP \fB-t\fR
-/*	Extract recipients from message headers. This requires that no
-/*	recipients be specified on the command line.
+/*	Extract recipients from message headers. These are added to any
+/*	recipients specified on the command line.
+/*
+/*	With Postfix versions prior to 2.1, this option requires that
+/*	no recipient addresses are specified on the command line.
+/* .IP "\fB-U\fR (ignored)"
+/*	Initial user submission.
+/* .IP \fB-V\fR
+/*	Variable Envelope Return Path. Given an envelope sender address
+/*	of the form \fIowner-listname\fR@\fIorigin\fR, each recipient
+/*	\fIuser\fR@\fIdomain\fR receives mail with a personalized envelope
+/*	sender address.
+/* .sp
+/*	By default, the personalized envelope sender address is
+/*	\fIowner-listname\fB+\fIuser\fB=\fIdomain\fR@\fIorigin\fR. The default
+/*	\fB+\fR and \fB=\fR characters are configurable with the
+/*	\fBdefault_verp_delimiters\fR configuration parameter.
+/* .sp
+/*	This feature is available in Postfix version 1.1 and later.
+/* .IP \fB-V\fIxy\fR
+/*	As \fB-V\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
+/*	characters, instead of the characters specified with the
+/*	\fBdefault_verp_delimiters\fR configuration parameter.
 /* .IP \fB-v\fR
-/*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
-/*	options make the software increasingly verbose. For compatibility
-/*	with mailx and other mail submission software, a single \fB-v\fR
-/*	option produces no output.
+/*	Send an email report of the first delivery attempt (Postfix
+/*	versions 2.1 and later). Mail delivery
+/*	always happens in the background. When multiple \fB-v\fR
+/*	options are given, enable verbose logging for debugging purposes.
+/* .IP "\fB-X \fIlog_file\fR (ignored)"
+/*	Log mailer traffic. Use the \fBdebug_peer_list\fR and
+/*	\fBdebug_peer_level\fR configuration parameters instead.
 /* SECURITY
 /* .ad
 /* .fi
@@ -192,71 +209,114 @@
 /* .IP \fBMAIL_DEBUG\fR
 /*	Enable debugging with an external command, as specified with the
 /*	\fBdebugger_command\fR configuration parameter.
-/* FILES
-/*	/var/spool/postfix, mail queue
-/*	/etc/postfix, configuration files
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	See the Postfix \fBmain.cf\fR file for syntax details and for
-/*	default values. Use the \fBpostfix reload\fR command after a
-/*	configuration change.
-/* .IP \fBalias_database\fR
-/*	Default alias database(s) for \fBnewaliases\fR. The default value
-/*	for this parameter is system-specific.
-/* .IP \fBbounce_size_limit\fR
-/*	The amount of original message context that is sent along
-/*	with a non-delivery notification.
-/* .IP \fBdefault_database_type\fR
-/*	Default alias etc. database type. On many UNIX systems the
-/*	default type is either \fBdbm\fR or \fBhash\fR.
-/* .IP \fBdebugger_command\fR
-/*	Command that is executed after a Postfix daemon has initialized.
-/* .IP \fBdebug_peer_level\fR
-/*	Increment in verbose logging level when a remote host matches a
-/*	pattern in the \fBdebug_peer_list\fR parameter.
-/* .IP \fBdebug_peer_list\fR
-/*	List of domain or network patterns. When a remote host matches
-/*	a pattern, increase the verbose logging level by the amount
-/*	specified in the \fBdebug_peer_level\fR parameter.
-/* .IP \fBdefault_verp_delimiters\fR
-/*	The VERP delimiter characters that are used when the \fB-V\fR
-/*	command line option is specified without delimiter characters.
-/* .IP \fBfast_flush_domains\fR
-/*	List of domains that will receive "fast flush" service (default: all
-/*	domains that this system is willing to relay mail to). This list
-/*	specifies the domains that Postfix accepts in the SMTP \fBETRN\fR
-/*	request and in the \fBsendmail -qR\fR command.
-/* .IP \fBfork_attempts\fR
-/*	Number of attempts to \fBfork\fR() a process before giving up.
-/* .IP \fBfork_delay\fR
-/*	Delay in seconds between successive \fBfork\fR() attempts.
-/* .IP \fBhopcount_limit\fR
-/*	Limit the number of \fBReceived:\fR message headers.
-/* .IP \fBmail_owner\fR
-/*	The owner of the mail queue and of most Postfix processes.
-/* .IP \fBcommand_directory\fR
-/*	Directory with Postfix support commands.
-/* .IP \fBdaemon_directory\fR
-/*	Directory with Postfix daemon programs.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue. This is also the root
-/*	directory of Postfix daemons that run chrooted.
-/* .IP \fBqueue_run_delay\fR
-/*	The time between successive scans of the deferred queue.
-/* .IP \fBverp_delimiter_filter\fR
-/*	The characters that Postfix accepts as VERP delimiter characters.
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program.
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* TROUBLE SHOOTING CONTROLS
+/* .ad
+/* .fi
+/*	The DEBUG_README file gives examples of how to trouble shoot a
+/*	Postfix system.
+/* .IP "\fBdebugger_command (empty)\fR"
+/*	The external command to execute when a Postfix daemon program is
+/*	invoked with the -D option.
+/* .IP "\fBdebug_peer_level (2)\fR"
+/*	The increment in verbose logging level when a remote client or
+/*	server matches a pattern in the debug_peer_list parameter.
+/* .IP "\fBdebug_peer_list (empty)\fR"
+/*	Optional list of remote client or server hostname or network
+/*	address patterns that cause the verbose logging level to increase
+/*	by the amount specified in $debug_peer_level.
+/* RESOURCE AND RATE CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBbounce_size_limit (50000)\fR"
+/*	The maximal amount of original message text that is sent in a
+/*	non-delivery notification.
+/* .IP "\fBfork_attempts (5)\fR"
+/*	The maximal number of attempts to fork() a child process.
+/* .IP "\fBfork_delay (1s)\fR"
+/*	The delay between attempts to fork() a child process.
+/* .IP "\fBhopcount_limit (50)\fR"
+/*	The maximal number of Received:  message headers that is allowed
+/*	in the primary message headers.
+/* .IP "\fBqueue_run_delay (1000s)\fR"
+/*	The time between deferred queue scans by the queue manager.
+/* FAST FLUSH CONTROLS
+/* .ad
+/* .fi
+/*	The ETRN_README file describes configuration and operation
+/*	details for the Postfix "fast flush" service.
+/* .IP "\fBfast_flush_domains ($relay_domains)\fR"
+/*	Optional list of destinations that are eligible for per-destination
+/*	logfiles with mail that is queued to those destinations.
+/* VERP CONTROLS
+/* .ad
+/* .fi
+/*	The VERP_README file describes configuration and operation
+/*	details of Postfix support for variable envelope return
+/*	path addresses.
+/* .IP "\fBdefault_verp_delimiters (+=)\fR"
+/*	The two default VERP delimiter characters.
+/* .IP "\fBverp_delimiter_filter (-=+)\fR"
+/*	The characters Postfix accepts as VERP delimiter characters on the
+/*	Postfix sendmail(1) command line and in SMTP commands.
+/* MISCELLANEOUS CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBalias_database (see 'postconf -d' output)\fR"
+/*	The alias databases for local(8) delivery that are updated with
+/*	"\fBnewaliases\fR" or with "\fBsendmail -bi\fR".
+/* .IP "\fBcommand_directory (see 'postconf -d' output)\fR"
+/*	The location of all postfix administrative commands.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
+/*	The directory with Postfix support programs and daemon programs.
+/* .IP "\fBdefault_database_type (see 'postconf -d' output)\fR"
+/*	The default database type for use in newaliases(1), postalias(1)
+/*	and postmap(1) commands.
+/* .IP "\fBdelay_warning_time (0h)\fR"
+/*	The time after which the sender receives the message headers of
+/*	mail that is still queued.
+/* .IP "\fBmail_owner (postfix)\fR"
+/*	The UNIX system account that owns the Postfix queue and most Postfix
+/*	daemon processes.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .IP "\fBtrigger_timeout (10s)\fR"
+/*	The time limit for sending a trigger to a Postfix daemon (for
+/*	example, the pickup(8) or qmgr(8) daemon).
+/* FILES
+/*	/var/spool/postfix, mail queue
+/*	/etc/postfix, configuration files
 /* SEE ALSO
-/*	pickup(8) mail pickup daemon
-/*	postsuper(1) queue maintenance
-/*	postalias(1) maintain alias database
-/*	postdrop(1) mail posting utility
-/*	postfix(1) mail system control
-/*	postqueue(1) mail queue control
-/*	qmgr(8) queue manager
-/*	smtpd(8) SMTP server
-/*	flush(8) fast flush service
-/*	syslogd(8) system logging
+/*	pickup(8), mail pickup daemon
+/*	qmgr(8), queue manager
+/*	smtpd(8), SMTP server
+/*	flush(8), fast flush service
+/*	postsuper(1), queue maintenance
+/*	postalias(1), create/update/query alias database
+/*	postdrop(1), mail posting utility
+/*	postfix(1), mail system control
+/*	postqueue(1), mail queue control
+/*	syslogd(8), system logging
+/* README_FILES
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/*	DEBUG_README, Postfix debugging howto
+/*	ETRN_README, Postfix ETRN howto
+/*	VERP_README, Postfix VERP howto
 /* LICENSE
 /* .ad
 /* .fi
@@ -301,6 +361,7 @@
 #include <stringops.h>
 #include <set_ugid.h>
 #include <connect.h>
+#include <split_at.h>
 
 /* Global library. */
 
@@ -319,6 +380,9 @@
 #include <mail_flush.h>
 #include <mail_stream.h>
 #include <verp_sender.h>
+#include <deliver_request.h>
+#include <mime_state.h>
+#include <header_opts.h>
 
 /* Application-specific. */
 
@@ -331,11 +395,13 @@
 #define SM_MODE_DAEMON		4	/* daemon mode */
 #define SM_MODE_USER		5	/* user (stand-alone) mode */
 #define SM_MODE_FLUSHQ		6	/* user (stand-alone) mode */
+#define SM_MODE_IGNORE		7	/* ignore this mode */
 
  /*
-  * Flag parade.
+  * Flag parade. Flags 8-15 are reserved for delivery request trace flags.
   */
 #define SM_FLAG_AEOF	(1<<0)		/* archaic EOF */
+#define SM_FLAG_XRCPT	(1<<1)		/* extract recipients from headers */
 
 #define SM_FLAG_DEFAULT	(SM_FLAG_AEOF)
 
@@ -345,9 +411,86 @@
 char   *verp_delims;
 
  /*
+  * Callback context for extracting recipients.
+  */
+typedef struct SM_STATE {
+    VSTREAM *dst;			/* output stream */
+    ARGV   *recipients;			/* recipients from regular headers */
+    ARGV   *resent_recip;		/* recipients from resent headers */
+    int     resent;			/* resent flag */
+    const char *saved_sender;		/* for error messages */
+    uid_t   uid;			/* for error messages */
+    VSTRING *temp;			/* scratch buffer */
+} SM_STATE;
+
+ /*
   * Silly little macros (SLMs).
   */
 #define STR	vstring_str
+
+/* output_text - output partial or complete text line */
+
+static void output_text(void *context, int rec_type, const char *buf, int len,
+			        off_t unused_offset)
+{
+    SM_STATE *state = (SM_STATE *) context;
+
+    if (rec_put(state->dst, rec_type, buf, len) < 0)
+	msg_fatal_status(EX_TEMPFAIL,
+			 "%s(%ld): error writing queue file: %m",
+			 state->saved_sender, (long) state->uid);
+}
+
+/* output_header - output one message header */
+
+static void output_header(void *context, int header_class,
+			          HEADER_OPTS *header_info,
+			          VSTRING *buf, off_t offset)
+{
+    SM_STATE *state = (SM_STATE *) context;
+    TOK822 *tree;
+    TOK822 **addr_list;
+    TOK822 **tpp;
+    ARGV   *rcpt;
+    char   *start;
+    char   *line;
+    char   *next_line;
+
+    /*
+     * Parse the header line, and save copies of recipient addresses in the
+     * appropriate place.
+     */
+    if (header_class == MIME_HDR_PRIMARY
+	&& header_info
+	&& (header_info->flags & HDR_OPT_RECIP)
+	&& (header_info->flags & HDR_OPT_EXTRACT)
+	&& (state->resent == 0 || (header_info->flags & HDR_OPT_RR))) {
+	if (header_info->flags & HDR_OPT_RR) {
+	    rcpt = state->resent_recip;
+	    if (state->resent == 0)
+		state->resent = 1;
+	} else
+	    rcpt = state->recipients;
+	tree = tok822_parse(vstring_str(buf) + strlen(header_info->name) + 1);
+	addr_list = tok822_grep(tree, TOK822_ADDR);
+	for (tpp = addr_list; *tpp; tpp++) {
+	    tok822_internalize(state->temp, tpp[0]->head, TOK822_STR_DEFL);
+	    argv_add(rcpt, vstring_str(state->temp), (char *) 0);
+	}
+	myfree((char *) addr_list);
+	tok822_free_tree(tree);
+    }
+
+    /*
+     * Pipe the unmodified message header through the header line folding
+     * routine.
+     */
+    for (line = start = STR(buf); line; line = next_line) {
+	next_line = split_at(line, '\n');
+	output_text(context, REC_TYPE_NORM, line, next_line ?
+		    next_line - line - 1 : strlen(line), offset);
+    }
+}
 
 /* enqueue - post one message */
 
@@ -372,6 +515,9 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     int     status;
     int     naddr;
     int     prev_type;
+    MIME_STATE *mime_state = 0;
+    SM_STATE state;
+    int     mime_errs;
 
     /*
      * Initialize.
@@ -443,6 +589,9 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 			 "-V option requires non-null sender address");
     if (encoding)
 	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s", MAIL_ATTR_ENCODING, encoding);
+    if (DEL_REQ_TRACE_FLAGS(flags))
+	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%d", MAIL_ATTR_TRACE_FLAGS,
+		    DEL_REQ_TRACE_FLAGS(flags));
     if (verp_delims)
 	rec_fputs(dst, REC_TYPE_VERP, verp_delims);
     if (recipients) {
@@ -470,42 +619,114 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
      * delivered intact via SMTP. Strip leading From_ lines. For the benefit
      * of UUCP environments, also get rid of leading >>>From_ lines.
      */
-    rec_fprintf(dst, REC_TYPE_MESG, REC_TYPE_MESG_FORMAT, 0L);
-    skip_from_ = 1;
-    strip_cr = STRIP_CR_DUNNO;
-    for (prev_type = 0; (type = rec_streamlf_get(VSTREAM_IN, buf, var_line_limit))
-	 != REC_TYPE_EOF; prev_type = type) {
-	if (strip_cr == STRIP_CR_DUNNO && type == REC_TYPE_NORM) {
-	    if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
-		strip_cr = STRIP_CR_DO;
-	    else
-		strip_cr = STRIP_CR_DONT;
-	}
-	if (skip_from_) {
-	    if (type == REC_TYPE_NORM) {
-		start = vstring_str(buf);
-		if (strncmp(start + strspn(start, ">"), "From ", 5) == 0)
-		    continue;
+    rec_fputs(dst, REC_TYPE_MESG, "");
+    if (DEL_REQ_TRACE_ONLY(flags) != 0) {
+	rec_fprintf(dst, REC_TYPE_NORM, "Subject: probe");
+	if (recipients) {
+	    rec_fprintf(dst, REC_TYPE_NORM, "To:");
+	    for (cpp = recipients; *cpp != 0; cpp++) {
+		rec_fprintf(dst, REC_TYPE_NORM, "	%s%s",
+			    *cpp, cpp[1] ? "," : "");
 	    }
-	    skip_from_ = 0;
 	}
-	if (strip_cr == STRIP_CR_DO && type == REC_TYPE_NORM)
-	    if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
-		vstring_truncate(buf, VSTRING_LEN(buf) - 1);
-	if ((flags & SM_FLAG_AEOF) && prev_type != REC_TYPE_CONT
-	    && VSTRING_LEN(buf) == 1 && *STR(buf) == '.')
-	    break;
-	if (REC_PUT_BUF(dst, type, buf) < 0)
-	    msg_fatal_status(EX_TEMPFAIL,
-			     "%s(%ld): error writing queue file: %m",
-			     saved_sender, (long) uid);
+    } else {
+
+	/*
+	 * Initialize the MIME processor and set up the callback context.
+	 */
+	if (flags & SM_FLAG_XRCPT) {
+	    state.dst = dst;
+	    state.recipients = argv_alloc(2);
+	    state.resent_recip = argv_alloc(2);
+	    state.resent = 0;
+	    state.saved_sender = saved_sender;
+	    state.uid = uid;
+	    state.temp = vstring_alloc(10);
+	    mime_state = mime_state_alloc(MIME_OPT_DISABLE_MIME
+					  | MIME_OPT_REPORT_TRUNC_HEADER,
+					  output_header,
+					  (MIME_STATE_ANY_END) 0,
+					  output_text,
+					  (MIME_STATE_ANY_END) 0,
+					  (MIME_STATE_ERR_PRINT) 0,
+					  (void *) &state);
+	}
+
+	/*
+	 * Process header/body lines.
+	 */
+	skip_from_ = 1;
+	strip_cr = STRIP_CR_DUNNO;
+	for (prev_type = 0; (type = rec_streamlf_get(VSTREAM_IN, buf, var_line_limit))
+	     != REC_TYPE_EOF; prev_type = type) {
+	    if (strip_cr == STRIP_CR_DUNNO && type == REC_TYPE_NORM) {
+		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
+		    strip_cr = STRIP_CR_DO;
+		else
+		    strip_cr = STRIP_CR_DONT;
+	    }
+	    if (skip_from_) {
+		if (type == REC_TYPE_NORM) {
+		    start = vstring_str(buf);
+		    if (strncmp(start + strspn(start, ">"), "From ", 5) == 0)
+			continue;
+		}
+		skip_from_ = 0;
+	    }
+	    if (strip_cr == STRIP_CR_DO && type == REC_TYPE_NORM)
+		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
+		    vstring_truncate(buf, VSTRING_LEN(buf) - 1);
+	    if ((flags & SM_FLAG_AEOF) && prev_type != REC_TYPE_CONT
+		&& VSTRING_LEN(buf) == 1 && *STR(buf) == '.')
+		break;
+	    if (mime_state) {
+		mime_errs = mime_state_update(mime_state, type, STR(buf),
+					      VSTRING_LEN(buf));
+		if (mime_errs)
+		    msg_fatal_status(EX_DATAERR,
+				"%s(%ld): unable to extract recipients: %s",
+				     saved_sender, (long) uid,
+				     mime_state_error(mime_errs));
+	    } else {
+		if (REC_PUT_BUF(dst, type, buf) < 0)
+		    msg_fatal_status(EX_TEMPFAIL,
+				     "%s(%ld): error writing queue file: %m",
+				     saved_sender, (long) uid);
+	    }
+	}
     }
 
     /*
-     * Append an empty section for information extracted from message
-     * headers. Header parsing is done by the cleanup service.
+     * Finish MIME processing. We need a final mime_state_update() call in
+     * order to flush text that is still buffered. That can happen when the
+     * last line did not end in newline.
+     */
+    if (mime_state) {
+	mime_errs = mime_state_update(mime_state, REC_TYPE_EOF, "", 0);
+	if (mime_errs)
+	    msg_fatal_status(EX_DATAERR,
+			     "%s(%ld): unable to extract recipients: %s",
+			     saved_sender, (long) uid,
+			     mime_state_error(mime_errs));
+	mime_state = mime_state_free(mime_state);
+    }
+
+    /*
+     * Append recipient addresses that were extracted from message headers.
      */
     rec_fputs(dst, REC_TYPE_XTRA, "");
+    if (flags & SM_FLAG_XRCPT) {
+	for (cpp = state.resent ? state.resent_recip->argv :
+	     state.recipients->argv; *cpp; cpp++) {
+	    if (rec_put(dst, REC_TYPE_RCPT, *cpp, strlen(*cpp)) < 0)
+		msg_fatal_status(EX_TEMPFAIL,
+				 "%s(%ld): error writing queue file: %m",
+				 saved_sender, (long) uid);
+	}
+	argv_free(state.recipients);
+	argv_free(state.resent_recip);
+	vstring_free(state.temp);
+    }
 
     /*
      * Identify the end of the queue file.
@@ -528,6 +749,15 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 			 (long) uid, cleanup_strerror(status));
 
     /*
+     * Don't leave them in the dark.
+     */
+    if (DEL_REQ_TRACE_FLAGS(flags)) {
+	vstream_printf("Mail Delivery Status Report will be mailed to <%s>.\n",
+		       saved_sender);
+	vstream_fflush(VSTREAM_OUT);
+    }
+
+    /*
      * Cleanup. Not really necessary as we're about to exit, but good for
      * debugging purposes.
      */
@@ -542,7 +772,6 @@ int     main(int argc, char **argv)
     static char *full_name = 0;		/* sendmail -F */
     struct stat st;
     char   *slash;
-    int     extract_recipients = 0;	/* sendmail -t, almost */
     char   *sender = 0;			/* sendmail -f */
     int     c;
     int     fd;
@@ -569,7 +798,7 @@ int     main(int argc, char **argv)
     for (fd = 0; fd < 3; fd++)
 	if (fstat(fd, &st) == -1
 	    && (close(fd), open("/dev/null", O_RDWR, 0)) != fd)
-	    msg_fatal_status(EX_UNAVAILABLE, "open /dev/null: %m");
+	    msg_fatal_status(EX_OSERR, "open /dev/null: %m");
 
     /*
      * The CDE desktop calendar manager leaks a parent file descriptor into
@@ -594,7 +823,7 @@ int     main(int argc, char **argv)
      * extract configuration information. Set up signal handlers so that we
      * can clean up incomplete output.
      */
-    if ((slash = strrchr(argv[0], '/')) != 0)
+    if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
@@ -616,6 +845,7 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
+
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);
 
@@ -703,6 +933,10 @@ int     main(int argc, char **argv)
 		    msg_warn("ignoring -q option in daemon mode");
 		mode = SM_MODE_DAEMON;
 		break;
+	    case 'h':				/* print host status */
+	    case 'H':				/* flush host status */
+		mode = SM_MODE_IGNORE;
+		break;
 	    case 'i':				/* newaliases */
 		mode = SM_MODE_NEWALIAS;
 		break;
@@ -714,6 +948,9 @@ int     main(int argc, char **argv)
 		break;
 	    case 's':				/* stand-alone mode */
 		mode = SM_MODE_USER;
+		break;
+	    case 'v':				/* expand recipients */
+		flags |= DEL_REQ_FLAG_EXPAND;
 		break;
 	    }
 	    break;
@@ -762,7 +999,7 @@ int     main(int argc, char **argv)
 	    }
 	    break;
 	case 't':
-	    extract_recipients = 1;
+	    flags |= SM_FLAG_XRCPT;
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -773,24 +1010,22 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Workaround: produce no output when verbose delivery is requested in
-     * mail.rc.
-     */
-    if (msg_verbose > 0)
-	msg_verbose--;
-
-    /*
      * Look for conflicting options and arguments.
      */
-    if (extract_recipients && mode != SM_MODE_ENQUEUE)
+    if ((flags & SM_FLAG_XRCPT) && mode != SM_MODE_ENQUEUE)
 	msg_fatal_status(EX_USAGE, "-t can be used only in delivery mode");
 
     if (site_to_flush && mode != SM_MODE_ENQUEUE)
 	msg_fatal_status(EX_USAGE, "-qR can be used only in delivery mode");
 
-    if (extract_recipients && argv[OPTIND])
-	msg_fatal_status(EX_USAGE,
-			 "cannot handle command-line recipients with -t");
+    /*
+     * The -v option plays double duty. One requests verbose delivery, more
+     * than one requests verbose logging.
+     */
+    if (msg_verbose == 1 && mode == SM_MODE_ENQUEUE) {
+	msg_verbose = 0;
+	flags |= DEL_REQ_FLAG_RECORD;
+    }
 
     /*
      * Start processing. Everything is delegated to external commands.
@@ -875,6 +1110,9 @@ int     main(int argc, char **argv)
 	    argv_add(ext_argv, "-v", (char *) 0);
 	argv_terminate(ext_argv);
 	mail_run_replace(var_daemon_dir, ext_argv->argv);
+	/* NOTREACHED */
+    case SM_MODE_IGNORE:
+	exit(0);
 	/* NOTREACHED */
     }
 }

@@ -5,7 +5,7 @@
 relocated
 \-
 format of Postfix relocated table
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 \fBpostmap /etc/postfix/relocated\fR
@@ -26,11 +26,13 @@ When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular-expression
-map where patterns are given as regular expressions. In that case,
-the lookups are done in a slightly different way as described below.
+map where patterns are given as regular expressions, or lookups
+can be directed to TCP-based server. In that case, the lookups are
+done in a slightly different way as described below under
+"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
 
 Table lookups are case insensitive.
-.SH TABLE FORMAT
+.SH "TABLE FORMAT"
 .na
 .nf
 .ad
@@ -59,11 +61,11 @@ other forms.
 .IP \fIuser\fR
 Matches \fIuser\fR@\fIsite\fR when \fIsite\fR is $\fBmyorigin\fR,
 when \fIsite\fR is listed in $\fBmydestination\fR, or when \fIsite\fR
-is listed in $\fBinet_interfaces\fR.
+is listed in $\fBinet_interfaces\fR or $\fBproxy_interfaces\fR.
 .IP @\fIdomain\fR
 Matches every address in \fIdomain\fR. This form has the lowest
 precedence.
-.SH ADDRESS EXTENSION
+.SH "ADDRESS EXTENSION"
 .na
 .nf
 .fi
@@ -72,15 +74,17 @@ When a mail address localpart contains the optional recipient delimiter
 (e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
 \fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIuser+foo\fR,
 \fIuser\fR, and @\fIdomain\fR.
-.SH REGULAR EXPRESSION TABLES
+.SH "REGULAR EXPRESSION TABLES"
 .na
 .nf
 .ad
 .fi
 This section describes how the table lookups change when the table
-is given in the form of regular expressions. For a description of
-regular expression lookup table syntax, see \fBregexp_table\fR(5)
-or \fBpcre_table\fR(5).
+is given in the form of regular expressions or when lookups are
+directed to a TCP-based server. For a description of regular
+expression lookup table syntax, see \fBregexp_table\fR(5) or
+\fBpcre_table\fR(5). For a description of the TCP client/server
+table lookup protocol, see \fBtcp_table\fR(5).
 
 Each pattern is a regular expression that is applied to the entire
 address being looked up. Thus, \fIuser@domain\fR mail addresses are not
@@ -93,19 +97,34 @@ pattern is found that matches the search string.
 Results are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
-.SH BUGS
-.ad
-.fi
-The table format does not understand quoting conventions.
-.SH CONFIGURATION PARAMETERS
+.SH "TCP-BASED TABLES"
 .na
 .nf
 .ad
 .fi
-The following \fBmain.cf\fR parameters are especially relevant to
-this topic. See the Postfix \fBmain.cf\fR file for syntax details
-and for default values. Use the \fBpostfix reload\fR command after
-a configuration change.
+This section describes how the table lookups change when lookups
+are directed to a TCP-based server. For a description of the TCP
+client/server lookup protocol, see \fBtcp_table\fR(5).
+This feature is not available in Postfix version 2.1.
+
+Each lookup operation uses the entire address once.  Thus,
+\fIuser@domain\fR mail addresses are not broken up into their
+\fIuser\fR and \fI@domain\fR constituent parts, nor is
+\fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
+
+Results are the same as with indexed file lookups.
+.SH BUGS
+.ad
+.fi
+The table format does not understand quoting conventions.
+.SH "CONFIGURATION PARAMETERS"
+.na
+.nf
+.ad
+.fi
+The following \fBmain.cf\fR parameters are especially relevant.
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
 .IP \fBrelocated_maps\fR
 List of lookup tables for relocated users or sites.
 .PP
@@ -117,19 +136,33 @@ You need to stop and start Postfix when this parameter changes.
 List of domains that this mail system considers local.
 .IP \fBmyorigin\fR
 The domain that is appended to locally-posted mail.
-.SH SEE ALSO
+.IP \fBproxy_interfaces\fR
+Other interfaces that this machine receives mail on by way of a
+proxy agent or network address translator.
+.SH "SEE ALSO"
 .na
 .nf
-postmap(1) create lookup table
-pcre_table(5) format of PCRE tables
-regexp_table(5) format of POSIX regular expression tables
-.SH LICENSE
+trivial-rewrite(8), address resolver
+postmap(1), Postfix lookup table manager
+postconf(5), configuration parameters
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or
+"\fBpostconf html_directory\fR" to locate this information.
+.na
+.nf
+DATABASE_README, Postfix lookup table overview
+ADDRESS_REWRITING_README, address rewriting guide
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

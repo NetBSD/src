@@ -5,7 +5,7 @@
 postconf
 \-
 Postfix configuration utility
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 .fi
@@ -62,6 +62,9 @@ syntax depends on the lookup table type.
 A sorted, balanced tree structure.
 This is available only on systems with support for Berkeley DB
 databases.
+.IP \fBcidr\fR
+A table that associates values with Classless Inter-Domain Routing
+(CIDR) patterns. This is described in \fBcidr_table\fR(5).
 .IP \fBdbm\fR
 An indexed file type based on hashing.
 This is available only on systems with support for DBM databases.
@@ -75,13 +78,16 @@ This is available only on systems with support for Berkeley DB
 databases.
 .IP "\fBldap\fR (read-only)"
 Perform lookups using the LDAP protocol. This is described
-in an LDAP_README file.
+in \fBldap_table\fR(5).
 .IP "\fBmysql\fR (read-only)"
 Perform lookups using the MYSQL protocol. This is described
-in a MYSQL_README file.
+in \fBmysql_table\fR(5).
 .IP "\fBpcre\fR (read-only)"
 A lookup table based on Perl Compatible Regular Expressions. The
 file format is described in \fBpcre_table\fR(5).
+.IP "\fBpgsql\fR (read-only)"
+Perform lookups using the PostgreSQL protocol. This is described
+in \fBpgsql_table\fR(5).
 .IP "\fBproxy\fR (read-only)"
 A lookup table that is implemented via the Postfix
 \fBproxymap\fR(8) service. The table name syntax is
@@ -93,6 +99,10 @@ described in \fBregexp_table\fR(5).
 A table that always returns its name as lookup result. For example,
 \fBstatic:foobar\fR always returns the string \fBfoobar\fR as lookup
 result.
+.IP "\fBtcp\fR (read-only)"
+Perform lookups using a simple request-reply protocol that is
+described in tcp_table(5).
+This feature is not included with Postfix 2.1.
 .IP "\fBunix\fR (read-only)"
 A limited way to query the UNIX authentication database. The
 following tables are implemented:
@@ -108,7 +118,8 @@ The result is a group file entry in group(5) format.
 .sp
 Other table types may exist depending on how Postfix was built.
 .IP \fB-n\fR
-Print non-default parameter settings only.
+Print parameter settings that are not left at their built-in
+default value, because they are explicitly specified in main.cf.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
@@ -116,20 +127,51 @@ options make the software increasingly verbose.
 .ad
 .fi
 Problems are reported to the standard error stream.
-.SH ENVIRONMENT
+.SH "ENVIRONMENT"
 .na
 .nf
 .ad
 .fi
 .IP \fBMAIL_CONFIG\fR
 Directory with Postfix configuration files.
-.SH LICENSE
+.SH "CONFIGURATION PARAMETERS"
+.na
+.nf
+.ad
+.fi
+The following \fBmain.cf\fR parameters are especially relevant to
+this program.
+
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
+.IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+The default location of the Postfix main.cf and master.cf
+configuration files.
+.SH "FILES"
+.na
+.nf
+/etc/postfix/main.cf, Postfix configuration parameters
+.SH "SEE ALSO"
+.na
+.nf
+postconf(5), configuration parameters
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or
+"\fBpostconf html_directory\fR" to locate this information.
+.na
+.nf
+DATABASE_README, Postfix lookup table overview
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

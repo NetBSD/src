@@ -3,9 +3,6 @@ SRCS	= trivial-rewrite.c rewrite.c resolve.c transport.c
 OBJS	= trivial-rewrite.o rewrite.o resolve.o transport.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 LIB	= 
@@ -155,3 +152,4 @@ trivial-rewrite.o: ../../include/mail_addr.h
 trivial-rewrite.o: ../../include/mail_server.h
 trivial-rewrite.o: trivial-rewrite.h
 trivial-rewrite.o: transport.h
+trivial-rewrite.o: ../../include/maps.h

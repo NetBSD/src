@@ -1,0 +1,282 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Backscatter Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Backscatter Howto</h1>
+
+<hr>
+
+<h2>Overview </h2>
+
+This document describes features that require Postfix version 2.0
+or later.
+
+<p> Topics covered in this document: </p>
+
+<ul>
+
+<li><a href="#wtf">What is backscatter mail?</a>
+
+<li><a href="#random">How do I block backscatter mail to random
+recipient addresses?</a>
+
+<li><a href="#real">How do I block backscatter mail to real
+recipient addresses?</a>
+
+<ul>
+
+<li><a href="#forged_helo">Blocking backscatter mail with forged
+HELO information</a>
+
+<li><a href="#forged_sender">Blocking backscatter mail with forged
+sender information</a>
+
+<li><a href="#forged_other">Blocking backscatter mail with other
+forged information</a>
+
+<li><a href="#scanner">Blocking backscatter mail from virus
+scanners</a>
+
+</ul>
+
+</ul>
+
+<h2><a name="wtf">What is backscatter mail?</a></h2>
+
+<p> When a spammer or worm sends mail with forged sender addresses,
+innocent sites are flooded with undeliverable mail notifications.
+This is called backscatter mail, and if your system is flooded then
+you will find out soon enough.  </p>
+
+<h2><a name="random">How do I block backscatter mail to random
+recipient addresses?</a></h2>
+
+<p> If your machine receives backscatter mail to random addresses,
+configure Postfix to reject all mail for non-existent recipients
+as described in the LOCAL_RECIPIENT_README and
+STANDARD_CONFIGURATION_README documentation.  </p>
+
+<p> If your machine runs Postfix 2.0 and earlier, disable the "pause
+before reject" feature in the SMTP server. If your system is under
+stress then it should not waste time. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    # Not needed with Postfix 2.1 and later.
+    smtpd_error_sleep_time = 0
+</pre>
+</blockquote>
+
+<h2><a name="real">How do I block backscatter mail to real
+recipient addresses?</a></h2>
+
+<p> When backscatter mail passes the "unknown recipient" barrier,
+there still is no need to despair.  Many mail systems are kind
+enough to attach the message headers of the undeliverable mail in
+the non-delivery notification. These message headers contain
+information that you can use to recognize and block forged mail.
+</p>
+
+<h3><a name="forged_helo">Blocking backscatter mail with forged
+HELO information</a></h3>
+
+<p> Although my email address is "wietse@porcupine.org", all my
+mail systems announce themselves with the SMTP HELO command as
+"hostname.porcupine.org".  Thus, if returned mail has a Received:
+message header like this: </p>
+
+<blockquote>
+<pre>
+Received: from porcupine.org ...
+</pre>
+</blockquote>
+
+<p> Then I know that this is almost certainly forged mail.  Mail
+that is really sent by my systems looks like this:  </p>
+
+<blockquote>
+<pre>
+Received: from hostname.porcupine.org ...
+</pre>
+</blockquote>
+
+<p> For the same reason the following message headers are very likely
+to be the result of forgery:</p>
+
+<blockquote>
+<pre>
+Received: from host.example.com ([1.2.3.4] helo=porcupine.org) ...
+Received: from [1.2.3.4] (port=12345 helo=porcupine.org) ...
+Received: from host.example.com (HELO porcupine.org) ...
+Received: from host.example.com (EHLO porcupine.org) ...
+</pre>
+</blockquote>
+
+<p> To block such backscatter I use header_checks and body_checks
+patterns like this: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    header_checks = regexp:/etc/postfix/header_checks
+    body_checks = regexp:/etc/postfix/body_checks
+
+/etc/postfix/header_checks:
+    /^Received: +from +(porcupine\.org) +/
+        reject forged client name in Received: header: $1
+    /^Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
+        reject forged client name in Received: header: $2
+
+/etc/postfix/body_checks:
+    /^[&gt; ]*Received: +from +(porcupine\.org) /
+        reject forged client name in Received: header: $1
+    /^[&gt; ]*Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
+        reject forged client name in Received: header: $2
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The example is simplified for educational purposes.  In
+reality my patterns list multiple domain names, as
+"<tt>(domain|domain|...)</tt>".  </p>
+
+<li> <p> The "<tt>\.</tt>" matches "<tt>.</tt>" literally. Without
+the "<tt>\</tt>", the "<tt>.</tt>" would match any character. </p>
+
+<li> <p> The "<tt>\(</tt>" and "<tt>\)</tt>" match "<tt>(</tt>"
+and "<tt>)</tt>" literally. Without the "<tt>\</tt>", the "<tt>(</tt>"
+and "<tt>)</tt>" would be grouping operators.  </p>
+
+</ul>
+
+<p><strong>Caveats</strong></p>
+
+<p> Netscape Messenger (and reportedly, Mozilla) sends a HELO name
+that is identical to the sender address domain part. If you have
+such clients then the above patterns would block legitimate email.
+</p>
+
+<p> My network has only one such machine, and to prevent its mail
+from being blocked I have configured it to send mail as
+user@hostname.porcupine.org. On the Postfix server, a canonical
+mapping translates this temporary address into user@porcupine.org.
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    canonical_maps = hash:/etc/postfix/canonical
+
+/etc/postfix/canonical:
+    @hostname.porcupine.org @porcupine.org
+</pre>
+</blockquote>
+
+<p> This is of course practical only when you have very few systems
+that send HELO commands like this, and when you never have to send
+mail to a user on such a host. </p>
+
+<p> An alternative would be to remove the hostname with address
+masquerading, as described in the ADDRESS_REWRITING_README document.
+</p>
+
+<h3><a name="forged_sender">Blocking backscatter mail with forged
+sender information</a></h3>
+
+Like many people I still have a few email addresses in domains that
+I used in the past. Mail for those addresses is forwarded to my
+current address.  Most of the backscatter mail that I get claims
+to be sent from these addresses.  Such mail is obviously forged
+and is very easy to stop.
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    header_checks = regexp:/etc/postfix/header_checks
+    body_checks = regexp:/etc/postfix/body_checks
+
+/etc/postfix/header_checks:
+    /^(From|Return-Path):.*[[:&lt;:]](user@domain\.tld)[[:&gt;:]]/ 
+        reject forged sender address in $1: message header: $2
+
+/etc/postfix/body_checks:
+    /^[&gt; ]*(From|Return-Path):.*[[:&lt;:]](user@domain\.tld)[[:&gt;:]]/ 
+        reject forged sender address in $1: message header: $2
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The example is simplified for educational purposes.  In
+reality, my patterns list multiple email addresses as
+"<tt>(user1@domain1\.tld|user2@domain2\.tld)</tt>".  </p>
+
+<li> <p> The <tt>[[:&lt;:]]</tt> matches the beginning of a word,
+and the <tt>[[:&gt;:]]</tt> matches the end. </p>
+
+<li> <p> The "<tt>\.</tt>" matches "<tt>.</tt>" literally. Without
+the "<tt>\</tt>", the "<tt>.</tt>" would match any character. </p>
+
+</ul>
+
+<h3><a name="forged_other">Blocking backscatter mail with other
+forged information</a></h3>
+
+<p> Another sign of forgery can be found in the IP address that is
+recorded in Received: headers next to your HELO host or domain name.
+This information must be used with care, though. Some mail servers
+are behind a network address translator and never see the true
+client IP address.  </p>
+
+<h3><a name="scanner">Blocking backscatter mail from virus
+scanners</a></h3>
+
+<p> With all the easily recognizable forgeries eliminated, there
+is one category of backscatter mail that remains, and that is
+notifications from virus scanner software. Unfortunately, some
+virus scanning software doesn't know that viruses forge sender
+addresses. To make matters worse, the software also doesn't know
+how to report a mail delivery problem, so that we cannot use the
+above techniques to recognize forgeries.  </p>
+
+<p> Recognizing virus scanner mail is an error prone process,
+because there is a lot of variation in report formats.  The following
+is only a small example of message header patterns.  For a large
+collection of header and body patterns that recognize virus
+notification email, see http://www.dkuug.dk/keld/virus/.  </p>
+
+<blockquote>
+<pre>
+/etc/postfix/header_checks:
+    /^Subject: *Your email contains VIRUSES/ DISCARD virus notification
+    /^Content-Disposition:.*VIRUS1_DETECTED_AND_REMOVED/
+        DISCARD virus notification
+    /^Content-Disposition:.*VirusWarning.txt/ DISCARD virus notification
+</pre>
+</blockquote>
+
+<p> A plea to virus or spam scanner operators: please do not make
+the problem worse by sending return mail to forged sender addresses.
+You're only harassing innocent people.  </p>
+
+</body>
+
+</html>

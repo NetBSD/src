@@ -5,7 +5,7 @@
 postkick
 \-
 kick a Postfix service
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 .fi
@@ -41,7 +41,7 @@ A string. The list of valid requests is service-specific.
 .fi
 Problems and transactions are logged to the standard error
 stream.
-.SH ENVIRONMENT
+.SH "ENVIRONMENT"
 .na
 .nf
 .ad
@@ -50,29 +50,41 @@ stream.
 Directory with Postfix configuration files.
 .IP \fBMAIL_VERBOSE\fR
 Enable verbose logging for debugging purposes.
-.SH CONFIGURATION PARAMETERS
+.SH "CONFIGURATION PARAMETERS"
 .na
 .nf
 .ad
 .fi
 The following \fBmain.cf\fR parameters are especially relevant to
-this program. See the Postfix \fBmain.cf\fR file for syntax details
-and for default values.
-.IP \fBqueue_directory\fR
-Location of the Postfix queue, and of the local IPC communication
-endpoints.
-.SH SEE ALSO
+this program.
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
+.IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+The default location of the Postfix main.cf and master.cf
+configuration files.
+.IP "\fBapplication_event_drain_time (100s)\fR"
+How long the postkick(1) command waits for a request to enter the
+server's input buffer before giving up.
+.IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+The location of the Postfix top-level queue directory.
+.SH "FILES"
 .na
 .nf
-qmgr(8) queue manager trigger protocol
-pickup(8) local pickup daemon
-.SH LICENSE
+/var/spool/postfix/private, private class endpoints
+/var/spool/postfix/public, public class endpoints
+.SH "SEE ALSO"
+.na
+.nf
+qmgr(8), queue manager trigger protocol
+pickup(8), local pickup daemon
+postconf(5), configuration parameters
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

@@ -25,12 +25,12 @@
 /*	uid_t	var_default_uid;
 /*	gid_t	var_default_gid;
 /*	char	*var_config_dir;
-/*	char	*var_program_dir;
 /*	char	*var_daemon_dir;
 /*	char	*var_command_dir;
 /*	char	*var_queue_dir;
 /*	int	var_use_limit;
 /*	int	var_idle_limit;
+/*	int	var_event_drain;
 /*	int	var_bundle_rcpt;
 /*	char	*var_procname;
 /*	int	var_pid;
@@ -47,6 +47,7 @@
 /*	char	*var_mail_release;
 /*	char	*var_mail_version;
 /*	int	var_ipc_idle_limit;
+/*	int	var_ipc_ttl_limit;
 /*	char	*var_db_type;
 /*	char	*var_hash_queue_names;
 /*	int	var_hash_queue_depth;
@@ -86,6 +87,8 @@
 /*	char   *var_showq_service;
 /*	char   *var_error_service;
 /*	char   *var_flush_service;
+/*	char   *var_verify_service;
+/*	char   *var_trace_service;
 /*	int	var_db_create_buf;
 /*	int	var_db_read_buf;
 /*	int	var_mime_maxdepth;
@@ -98,6 +101,8 @@
 /*	int     var_strict_7bit_hdrs;
 /*	int     var_strict_8bit_body;
 /*	int     var_strict_encoding;
+/*	int     var_verify_neg_cache;
+/*	int	var_oldlog_compat;
 /*
 /*	void	mail_params_init()
 /* DESCRIPTION
@@ -179,11 +184,11 @@ char   *var_default_privs;
 uid_t   var_default_uid;
 gid_t   var_default_gid;
 char   *var_config_dir;
-char   *var_program_dir;
 char   *var_daemon_dir;
 char   *var_command_dir;
 char   *var_queue_dir;
 int     var_use_limit;
+int     var_event_drain;
 int     var_idle_limit;
 int     var_bundle_rcpt;
 char   *var_procname;
@@ -201,6 +206,7 @@ int     var_message_limit;
 char   *var_mail_release;
 char   *var_mail_version;
 int     var_ipc_idle_limit;
+int     var_ipc_ttl_limit;
 char   *var_db_type;
 char   *var_hash_queue_names;
 int     var_hash_queue_depth;
@@ -240,6 +246,8 @@ char   *var_rewrite_service;
 char   *var_showq_service;
 char   *var_error_service;
 char   *var_flush_service;
+char   *var_verify_service;
+char   *var_trace_service;
 int     var_db_create_buf;
 int     var_db_read_buf;
 int     var_mime_maxdepth;
@@ -252,6 +260,8 @@ int     var_strict_8bitmime;
 int     var_strict_7bit_hdrs;
 int     var_strict_8bit_body;
 int     var_strict_encoding;
+int     var_verify_neg_cache;
+int     var_oldlog_compat;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -433,7 +443,6 @@ void    mail_params_init()
 	VAR_MYDEST, DEF_MYDEST, &var_mydest, 0, 0,
 	VAR_MYORIGIN, DEF_MYORIGIN, &var_myorigin, 1, 0,
 	VAR_RELAYHOST, DEF_RELAYHOST, &var_relayhost, 0, 0,
-	VAR_PROGRAM_DIR, DEF_PROGRAM_DIR, &var_program_dir, 1, 0,
 	VAR_DAEMON_DIR, DEF_DAEMON_DIR, &var_daemon_dir, 1, 0,
 	VAR_COMMAND_DIR, DEF_COMMAND_DIR, &var_command_dir, 1, 0,
 	VAR_QUEUE_DIR, DEF_QUEUE_DIR, &var_queue_dir, 1, 0,
@@ -467,10 +476,12 @@ void    mail_params_init()
 	VAR_SHOWQ_SERVICE, DEF_SHOWQ_SERVICE, &var_showq_service, 1, 0,
 	VAR_ERROR_SERVICE, DEF_ERROR_SERVICE, &var_error_service, 1, 0,
 	VAR_FLUSH_SERVICE, DEF_FLUSH_SERVICE, &var_flush_service, 1, 0,
+	VAR_VERIFY_SERVICE, DEF_VERIFY_SERVICE, &var_verify_service, 1, 0,
+	VAR_TRACE_SERVICE, DEF_TRACE_SERVICE, &var_trace_service, 1, 0,
 	0,
     };
     static CONFIG_STR_FN_TABLE function_str_defaults_2[] = {
-	VAR_MYNETWORKS, mynetworks, &var_mynetworks, 1, 0,
+	VAR_MYNETWORKS, mynetworks, &var_mynetworks, 0, 0,
 	0,
     };
     static CONFIG_INT_TABLE other_int_defaults[] = {
@@ -492,9 +503,11 @@ void    mail_params_init()
 	0,
     };
     static CONFIG_TIME_TABLE time_defaults[] = {
+	VAR_EVENT_DRAIN, DEF_EVENT_DRAIN, &var_event_drain, 1, 0,
 	VAR_MAX_IDLE, DEF_MAX_IDLE, &var_idle_limit, 1, 0,
 	VAR_IPC_TIMEOUT, DEF_IPC_TIMEOUT, &var_ipc_timeout, 1, 0,
 	VAR_IPC_IDLE, DEF_IPC_IDLE, &var_ipc_idle_limit, 1, 0,
+	VAR_IPC_TTL, DEF_IPC_TTL, &var_ipc_ttl_limit, 1, 0,
 	VAR_TRIGGER_TIMEOUT, DEF_TRIGGER_TIMEOUT, &var_trigger_timeout, 1, 0,
 	VAR_FORK_DELAY, DEF_FORK_DELAY, &var_fork_delay, 1, 0,
 	VAR_FLOCK_DELAY, DEF_FLOCK_DELAY, &var_flock_delay, 1, 0,
@@ -513,6 +526,8 @@ void    mail_params_init()
 	VAR_STRICT_ENCODING, DEF_STRICT_ENCODING, &var_strict_encoding,
 	VAR_DISABLE_MIME_INPUT, DEF_DISABLE_MIME_INPUT, &var_disable_mime_input,
 	VAR_DISABLE_MIME_OCONV, DEF_DISABLE_MIME_OCONV, &var_disable_mime_oconv,
+	VAR_VERIFY_NEG_CACHE, DEF_VERIFY_NEG_CACHE, &var_verify_neg_cache,
+	VAR_OLDLOG_COMPAT, DEF_OLDLOG_COMPAT, &var_oldlog_compat,
 	VAR_HELPFUL_WARNINGS, DEF_HELPFUL_WARNINGS, &var_helpful_warnings,
 	0,
     };
@@ -590,7 +605,19 @@ void    mail_params_init()
      * I have seen this happen just too often.
      */
     if (strcasecmp(var_myhostname, var_relayhost) == 0)
-	msg_fatal("myhostname == relayhost");
+	msg_fatal("%s and %s parameter settings must not be identical: %s",
+		  VAR_MYHOSTNAME, VAR_RELAYHOST, var_myhostname);
+
+    /*
+     * XXX These should be caught by a proper parameter parsing algorithm.
+     */
+    if (var_myorigin[strcspn(var_myorigin, ", \t\r\n")])
+	msg_fatal("%s parameter setting must not contain multiple values: %s",
+		  VAR_MYORIGIN, var_myorigin);
+
+    if (var_relayhost[strcspn(var_relayhost, ", \t\r\n")])
+	msg_fatal("%s parameter setting must not contain multiple values: %s",
+		  VAR_RELAYHOST, var_relayhost);
 
     /*
      * One more sanity check.

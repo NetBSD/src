@@ -9,9 +9,6 @@ OBJS	= alias.o command.o delivered.o dotforward.o file.o forward.o \
 	local_expand.o
 HDRS	= local.h
 TESTSRC	=
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 PROG	= local
@@ -76,15 +73,16 @@ alias.o: ../../include/mymalloc.h
 alias.o: ../../include/mail_params.h
 alias.o: ../../include/defer.h
 alias.o: ../../include/bounce.h
+alias.o: ../../include/deliver_request.h
+alias.o: ../../include/recipient_list.h
 alias.o: ../../include/maps.h
 alias.o: ../../include/mypwd.h
 alias.o: ../../include/canon_addr.h
+alias.o: ../../include/sent.h
 alias.o: local.h
 alias.o: ../../include/been_here.h
 alias.o: ../../include/tok822.h
 alias.o: ../../include/resolve_clnt.h
-alias.o: ../../include/deliver_request.h
-alias.o: ../../include/recipient_list.h
 alias.o: ../../include/mbox_conf.h
 biff_notify.o: biff_notify.c
 biff_notify.o: ../../include/sys_defs.h
@@ -100,6 +98,8 @@ command.o: ../../include/vstream.h
 command.o: ../../include/argv.h
 command.o: ../../include/defer.h
 command.o: ../../include/bounce.h
+command.o: ../../include/deliver_request.h
+command.o: ../../include/recipient_list.h
 command.o: ../../include/sent.h
 command.o: ../../include/been_here.h
 command.o: ../../include/mail_params.h
@@ -108,8 +108,6 @@ command.o: ../../include/mail_copy.h
 command.o: local.h
 command.o: ../../include/tok822.h
 command.o: ../../include/resolve_clnt.h
-command.o: ../../include/deliver_request.h
-command.o: ../../include/recipient_list.h
 command.o: ../../include/mbox_conf.h
 command.o: ../../include/maps.h
 command.o: ../../include/dict.h
@@ -171,15 +169,16 @@ dotforward.o: ../../include/mac_expand.h
 dotforward.o: ../../include/mac_parse.h
 dotforward.o: ../../include/mypwd.h
 dotforward.o: ../../include/bounce.h
+dotforward.o: ../../include/deliver_request.h
+dotforward.o: ../../include/recipient_list.h
 dotforward.o: ../../include/been_here.h
 dotforward.o: ../../include/mail_params.h
 dotforward.o: ../../include/mail_conf.h
 dotforward.o: ../../include/ext_prop.h
+dotforward.o: ../../include/sent.h
 dotforward.o: local.h
 dotforward.o: ../../include/tok822.h
 dotforward.o: ../../include/resolve_clnt.h
-dotforward.o: ../../include/deliver_request.h
-dotforward.o: ../../include/recipient_list.h
 dotforward.o: ../../include/mbox_conf.h
 dotforward.o: ../../include/argv.h
 dotforward.o: ../../include/maps.h
@@ -196,6 +195,8 @@ file.o: ../../include/myflock.h
 file.o: ../../include/set_eugid.h
 file.o: ../../include/mail_copy.h
 file.o: ../../include/bounce.h
+file.o: ../../include/deliver_request.h
+file.o: ../../include/recipient_list.h
 file.o: ../../include/defer.h
 file.o: ../../include/sent.h
 file.o: ../../include/been_here.h
@@ -207,8 +208,6 @@ file.o: ../../include/safe_open.h
 file.o: local.h
 file.o: ../../include/tok822.h
 file.o: ../../include/resolve_clnt.h
-file.o: ../../include/deliver_request.h
-file.o: ../../include/recipient_list.h
 file.o: ../../include/maps.h
 file.o: ../../include/dict.h
 forward.o: forward.c
@@ -227,6 +226,8 @@ forward.o: ../../include/mail_proto.h
 forward.o: ../../include/attr.h
 forward.o: ../../include/cleanup_user.h
 forward.o: ../../include/sent.h
+forward.o: ../../include/deliver_request.h
+forward.o: ../../include/recipient_list.h
 forward.o: ../../include/record.h
 forward.o: ../../include/rec_type.h
 forward.o: ../../include/mark_corrupt.h
@@ -236,8 +237,6 @@ forward.o: local.h
 forward.o: ../../include/been_here.h
 forward.o: ../../include/tok822.h
 forward.o: ../../include/resolve_clnt.h
-forward.o: ../../include/deliver_request.h
-forward.o: ../../include/recipient_list.h
 forward.o: ../../include/mbox_conf.h
 forward.o: ../../include/maps.h
 forward.o: ../../include/dict.h
@@ -253,16 +252,17 @@ include.o: ../../include/stat_as.h
 include.o: ../../include/iostuff.h
 include.o: ../../include/mypwd.h
 include.o: ../../include/bounce.h
+include.o: ../../include/deliver_request.h
+include.o: ../../include/vstring.h
+include.o: ../../include/recipient_list.h
 include.o: ../../include/defer.h
 include.o: ../../include/been_here.h
 include.o: ../../include/mail_params.h
 include.o: ../../include/ext_prop.h
+include.o: ../../include/sent.h
 include.o: local.h
-include.o: ../../include/vstring.h
 include.o: ../../include/tok822.h
 include.o: ../../include/resolve_clnt.h
-include.o: ../../include/deliver_request.h
-include.o: ../../include/recipient_list.h
 include.o: ../../include/mbox_conf.h
 include.o: ../../include/argv.h
 include.o: ../../include/maps.h
@@ -273,16 +273,17 @@ indirect.o: ../../include/msg.h
 indirect.o: ../../include/htable.h
 indirect.o: ../../include/mail_params.h
 indirect.o: ../../include/bounce.h
+indirect.o: ../../include/deliver_request.h
+indirect.o: ../../include/vstring.h
+indirect.o: ../../include/vbuf.h
+indirect.o: ../../include/vstream.h
+indirect.o: ../../include/recipient_list.h
 indirect.o: ../../include/defer.h
 indirect.o: ../../include/been_here.h
+indirect.o: ../../include/sent.h
 indirect.o: local.h
-indirect.o: ../../include/vstream.h
-indirect.o: ../../include/vbuf.h
-indirect.o: ../../include/vstring.h
 indirect.o: ../../include/tok822.h
 indirect.o: ../../include/resolve_clnt.h
-indirect.o: ../../include/deliver_request.h
-indirect.o: ../../include/recipient_list.h
 indirect.o: ../../include/mbox_conf.h
 indirect.o: ../../include/argv.h
 indirect.o: ../../include/maps.h
@@ -309,6 +310,7 @@ local.o: ../../include/mail_conf.h
 local.o: ../../include/been_here.h
 local.o: ../../include/ext_prop.h
 local.o: ../../include/maps.h
+local.o: ../../include/flush_clnt.h
 local.o: ../../include/mail_server.h
 local.o: local.h
 local.o: ../../include/tok822.h
@@ -346,13 +348,13 @@ mailbox.o: ../../include/set_eugid.h
 mailbox.o: ../../include/mail_copy.h
 mailbox.o: ../../include/defer.h
 mailbox.o: ../../include/bounce.h
+mailbox.o: ../../include/deliver_request.h
+mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/sent.h
 mailbox.o: ../../include/mypwd.h
 mailbox.o: ../../include/been_here.h
 mailbox.o: ../../include/mail_params.h
 mailbox.o: ../../include/deliver_pass.h
-mailbox.o: ../../include/deliver_request.h
-mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/mail_proto.h
 mailbox.o: ../../include/iostuff.h
 mailbox.o: ../../include/attr.h
@@ -380,6 +382,8 @@ maildir.o: ../../include/get_hostname.h
 maildir.o: ../../include/sane_fsops.h
 maildir.o: ../../include/mail_copy.h
 maildir.o: ../../include/bounce.h
+maildir.o: ../../include/deliver_request.h
+maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/defer.h
 maildir.o: ../../include/sent.h
 maildir.o: ../../include/mail_params.h
@@ -388,8 +392,6 @@ maildir.o: ../../include/htable.h
 maildir.o: ../../include/been_here.h
 maildir.o: ../../include/tok822.h
 maildir.o: ../../include/resolve_clnt.h
-maildir.o: ../../include/deliver_request.h
-maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/mbox_conf.h
 maildir.o: ../../include/argv.h
 maildir.o: ../../include/maps.h
@@ -408,6 +410,8 @@ recipient.o: ../../include/vstream.h
 recipient.o: ../../include/argv.h
 recipient.o: ../../include/stat_as.h
 recipient.o: ../../include/bounce.h
+recipient.o: ../../include/deliver_request.h
+recipient.o: ../../include/recipient_list.h
 recipient.o: ../../include/defer.h
 recipient.o: ../../include/mail_params.h
 recipient.o: ../../include/split_addr.h
@@ -419,8 +423,6 @@ recipient.o: local.h
 recipient.o: ../../include/been_here.h
 recipient.o: ../../include/tok822.h
 recipient.o: ../../include/resolve_clnt.h
-recipient.o: ../../include/deliver_request.h
-recipient.o: ../../include/recipient_list.h
 recipient.o: ../../include/mbox_conf.h
 recipient.o: ../../include/maps.h
 resolve.o: resolve.c
@@ -439,10 +441,10 @@ resolve.o: ../../include/tok822.h
 resolve.o: ../../include/mail_params.h
 resolve.o: ../../include/defer.h
 resolve.o: ../../include/bounce.h
-resolve.o: local.h
-resolve.o: ../../include/been_here.h
 resolve.o: ../../include/deliver_request.h
 resolve.o: ../../include/recipient_list.h
+resolve.o: local.h
+resolve.o: ../../include/been_here.h
 resolve.o: ../../include/mbox_conf.h
 resolve.o: ../../include/argv.h
 resolve.o: ../../include/maps.h
@@ -462,11 +464,11 @@ token.o: ../../include/tok822.h
 token.o: ../../include/resolve_clnt.h
 token.o: ../../include/mail_params.h
 token.o: ../../include/bounce.h
+token.o: ../../include/deliver_request.h
+token.o: ../../include/recipient_list.h
 token.o: ../../include/defer.h
 token.o: local.h
 token.o: ../../include/been_here.h
-token.o: ../../include/deliver_request.h
-token.o: ../../include/recipient_list.h
 token.o: ../../include/mbox_conf.h
 token.o: ../../include/argv.h
 token.o: ../../include/maps.h
@@ -485,14 +487,14 @@ unknown.o: ../../include/vstream.h
 unknown.o: ../../include/iostuff.h
 unknown.o: ../../include/attr.h
 unknown.o: ../../include/bounce.h
+unknown.o: ../../include/deliver_request.h
+unknown.o: ../../include/recipient_list.h
 unknown.o: ../../include/mail_addr.h
 unknown.o: ../../include/sent.h
 unknown.o: local.h
 unknown.o: ../../include/htable.h
 unknown.o: ../../include/tok822.h
 unknown.o: ../../include/resolve_clnt.h
-unknown.o: ../../include/deliver_request.h
-unknown.o: ../../include/recipient_list.h
 unknown.o: ../../include/mbox_conf.h
 unknown.o: ../../include/argv.h
 unknown.o: ../../include/maps.h

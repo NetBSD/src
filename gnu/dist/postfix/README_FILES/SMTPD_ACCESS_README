@@ -1,0 +1,259 @@
+PPoossttffiixx SSMMTTPP rreellaayy aanndd aacccceessss ccoonnttrrooll
+
+-------------------------------------------------------------------------------
+
+IInnttrroodduuccttiioonn
+
+The Postfix SMTP server receives mail from the network and is exposed to the
+big bad world of junk email and viruses. This document introduces the built-in
+and external methods that control what SMTP mail Postfix will accept, what
+mistakes to avoid, and how to test your configuration.
+
+Topics covered in this document:
+
+  * Relay control, junk mail control, and per-user policies
+  * Restrictions that apply to all SMTP mail
+  * Getting selective with SMTP access restriction lists
+  * Delayed evaluation of SMTP access restriction lists
+  * Dangerous use of smtpd_recipient_restrictions
+  * SMTP access rule testing
+
+RReellaayy ccoonnttrrooll,, jjuunnkk mmaaiill ccoonnttrrooll,, aanndd ppeerr--uusseerr ppoolliicciieess
+
+In a distant past, the Internet was a friendly environment. Mail servers
+happily forwarded mail on behalf of anyone towards any destination. On today's
+Internet, spammers abuse servers that forward mail from arbitrary systems, and
+abused systems end up on anti-spammer blacklists. See, for example, the
+information on http://www.mail-abuse.org/ and other websites.
+
+By default, Postfix has a moderately restrictive approach to mail relaying.
+Postfix forwards mail only from clients in trusted networks, or to domains that
+are configured as authorized relay destinations. For a description of the
+default policy, see the smtpd_recipient_restrictions parameter in the postconf
+(5) manual page, and the information that is referenced from there.
+
+Most of the Postfix SMTP server access controls are targeted at stopping junk
+email.
+
+  * Protocol oriented: some SMTP server access controls block mail by being
+    very strict with respect to the SMTP protocol; these catch poorly
+    implemented and/or poorly configured junk email software, as well as email
+    worms that come with their own non-standard SMTP client implementations.
+    Protocol-oriented access controls become less useful over time as spammers
+    and worm writers learn to read RFC documents.
+
+  * Blacklist oriented: some SMTP server access controls query blacklists with
+    known to be bad sites such as open mail relays, open web proxies, and home
+    computers that have been compromised and that are under remote control by
+    criminals. The effectiveness of these blacklists depends on how complete
+    and how up to date they are.
+
+  * Threshold oriented: some SMTP server access controls attempt to raise the
+    bar by either making the client do more work (greylisting) or by asking for
+    a second opinion (SPF and sender/recipient address verification). The
+    greylisting and SPF policies are implemented externally, and are the
+    subject of the SMTPD_POLICY_README document. Sender/recipient address
+    verification is the subject of the ADDRESS_VERIFICATION_README document.
+
+Unfortunately, all junk mail controls have the possibility of falsely rejecting
+legitimate mail. This can be a problem for sites with many different types of
+users. For some users it is unacceptable when any junk email slips through,
+while for other users the world comes to an end when a single legitimate email
+message is blocked. Because there is no single policy that is "right" for all
+users, Postfix supports different SMTP access restrictions for different users.
+This is described in the RESTRICTION_CLASS_README document.
+
+RReessttrriiccttiioonnss tthhaatt aappppllyy ttoo aallll SSMMTTPP mmaaiill
+
+Besides the restrictions that can be made configurable per client or per user
+as described in the next section, Postfix implements a few restrictions that
+apply to all SMTP mail.
+
+  * The built-in header_checks and body_checks content restrictions, as
+    described in the BUILTIN_FILTER_README document. This happens while Postfix
+    receives mail, before it is stored in the incoming queue.
+
+  * The external before-queue content restrictions, as described in the
+    SMTPD_PROXY_README document. This happens while Postfix receives mail,
+    before it is stored in the incoming queue.
+
+  * Requiring that the client sends the HELO or EHLO command before sending the
+    MAIL FROM or ETRN command. This may cause problems with home-grown
+    applications that send mail. For this reason, the requirement is disabled
+    by default ("smtpd_helo_required = no").
+
+  * Disallowing illegal syntax in MAIL FROM or RCPT TO commands. This may cause
+    problems with home-grown applications that send mail, and with ancient PC
+    mail clients. For this reason, the requirement is disabled by default
+    ("strict_rfc821_envelopes = no").
+
+      o Disallowing RFC 822 address syntax (example: "MAIL FROM: the dude
+        <dude@example.com>").
+
+      o Disallowing addresses that are not enclosed with <> (example: "MAIL
+        FROM: dude@example.com").
+
+  * Rejecting mail from a non-existent sender address. This form of egress
+    filtering helps to slow down worms and other malware, but may cause
+    problems with home-grown software that sends out mail software with an
+    unreplyable address. For this reason the requirement is disabled by default
+    ("smtpd_reject_unlisted_sender = no").
+
+  * Rejecting mail for a non-existent recipient address. This form of ingress
+    filtering helps to keep the mail queue free of undeliverable MAILER-DAEMON
+    messages. This requirement is enabled by default
+    ("smtpd_reject_unlisted_recipient = yes").
+
+GGeettttiinngg sseelleeccttiivvee wwiitthh SSMMTTPP aacccceessss rreessttrriiccttiioonn lliissttss
+
+Postfix allows you to specify lists of access restrictions for each stage of
+the SMTP conversation. Individual restrictions are described in the postconf(5)
+manual page.
+
+Examples of simple restriction lists are:
+
+/etc/postfix/main.cf:
+    # Allow connections from trusted networks only.
+    smtpd_client_restrictions = permit_mynetworks, reject
+
+    # Don't talk to mail systems that don't know their own hostname.
+    smtpd_helo_restrictions = reject_unknown_hostname
+
+    # Don't accept mail from domains that don't exist.
+    smtpd_sender_restrictions = reject_unknown_sender_domain
+
+    # Whitelisting: local clients may specify any destination. Others may not.
+    smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+
+Each restriction list is evaluated from left to right until some restriction
+produces a result of PERMIT, REJECT or DEFER (try again later). The end of the
+list is equivalent to a PERMIT result. By placing a PERMIT restriction before a
+REJECT restriction you can make exceptions for specific clients or users. This
+is called whitelisting; the last example above allows mail from local networks
+but otherwise rejects mail to arbitrary destinations.
+
+The table below summarizes the purpose of each SMTP access restriction list.
+All lists use the exact same syntax; they differ only in the time of evaluation
+and in the effect of a REJECT or DEFER result.
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |RReessttrriiccttiioonn lliisstt nnaammee       |SSttaattuuss  |EEffffeecctt ooff RREEJJEECCTT oorr DDEEFFEERR rreessuulltt|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_client_restrictions   |Optional|Reject all client commands      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_helo_restrictions     |Optional|Reject HELO/EHLO information    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_sender_restrictions   |Optional|Reject MAIL FROM information    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_recipient_restrictions|Required|Reject RCPT TO information      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_data_restrictions     |Optional|Reject DATA command             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_etrn_restrictions     |Optional|Reject ETRN command             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+DDeellaayyeedd eevvaalluuaattiioonn ooff SSMMTTPP aacccceessss rreessttrriiccttiioonn lliissttss
+
+Early Postfix versions evaluated SMTP access restrictions lists as early as
+possible. The client restriction list was evaluated before Postfix sent the
+"220 $myhostname..." greeting banner to the SMTP client, the helo restriction
+list was evaluated before Postfix replied to the HELO (EHLO) command, the
+sender restriction list was evaluated before Postfix replied to the MAIL FROM
+command, and so on. This approach turned out to be difficult to use.
+
+Current Postfix versions postpone the evaluation of client, helo and sender
+restriction lists until the RCPT TO or ETRN command. This behavior is
+controlled by the smtpd_delay_reject parameter. Restriction lists are still
+evaluated in the proper order of (client, helo, etrn) or (client, helo, sender,
+recipient, data) restrictions. When a restriction list (example: client)
+evaluates to REJECT or DEFER the other restriction lists (example: helo,
+sender, etc.) are skipped.
+
+Around the time that smtpd_delay_reject was introduced, Postfix was also
+changed to support mixed restriction lists that combine information about the
+client, helo, sender and recipient or etrn command.
+
+Benefits of delayed restriction evaluation, and of restriction mixing:
+
+  * Some SMTP clients do not expect a negative reply early in the SMTP session.
+    When the bad news is postponed until the RCPT TO reply, the client goes
+    away as it is supposed to, instead of hanging around until a timeout
+    happens, or worse, going into an endless connect-reject-connect loop.
+
+  * Postfix can log more useful information. For example, when Postfix rejects
+    a client name or address and delays the action until the RCPT TO command,
+    it can log the sender and the recipient address. This is more useful than
+    logging only the client hostname and IP address and not knowing whose mail
+    was being blocked.
+
+  * Mixing is needed for complex whitelisting policies. For example, in order
+    to reject local sender addresses in mail from non-local clients, you need
+    to be able to mix restrictions on client information with restrictions on
+    sender information in the same restriction list. Without this ability, many
+    per-user access restrictions would be impossible to express.
+
+DDaannggeerroouuss uussee ooff ssmmttppdd__rreecciippiieenntt__rreessttrriiccttiioonnss
+
+By now the reader may wonder why we need smtpd client, helo or sender
+restrictions, when their evaluation is postponed until the RCPT TO or ETRN
+command. Some people recommend placing ALL the access restrictions in the
+smtpd_recipient_restrictions list. Unfortunately, this can result in too
+permissive access. How is this possible?
+
+The purpose of the smtpd_recipient_restrictions feature is to control how
+Postfix replies to the RCPT TO command. If the restriction list evaluates to
+REJECT or DEFER, the recipient address is rejected; no surprises here. If the
+result is PERMIT, then the recipient address is accepted. And this is where
+surprises can happen.
+
+Here is an example that shows when a PERMIT result can result in too much
+access permission:
+
+1 /etc/postfix/main.cf:
+2     smtpd_recipient_restrictions =
+3         permit_mynetworks
+4         check_helo_access hash:/etc/postfix/helo_access
+5         reject_unknown_hostname
+6         reject_unauth_destination
+7
+8 /etc/postfix/helo_access:
+9     localhost.localdomain PERMIT
+
+Line 5 rejects mail from hosts that don't specify a proper hostname in the HELO
+command. Lines 4 and 9 make an exception to allow mail from some machine that
+announces itself with "HELO localhost.localdomain".
+
+The problem with this configuration is that smtpd_recipient_restrictions
+evaluates to PERMIT for EVERY host that announces itself as
+"localhost.localdomain", making Postfix an open relay for all such hosts.
+
+In order to avoid surprises like these with smtpd_recipient_restrictions, you
+should place non-recipient restrictions AFTER the reject_unauth_destination
+restriction, not before. In the above example, the HELO based restrictions
+should be placed AFTER reject_unauth_destination, or better, the HELO based
+restrictions should be placed under smtpd_helo_restrictions where they can do
+no harm.
+
+SSMMTTPP aacccceessss rruullee tteessttiinngg
+
+Postfix has several features that aid in SMTP access rule testing:
+
+soft_bounce
+    This is a safety net that changes SMTP server REJECT actions into DEFER
+    (try again later) actions. This keeps mail queued that would otherwise be
+    returned to the sender. Specify "soft_bounce = yes" in the main.cf file to
+    prevent the Postfix SMTP server from rejecting mail permanently, by
+    changing all 5xx SMTP reply codes into 4xx.
+
+warn_if_reject
+    This is a different safety net that changes SMTP server REJECT actions into
+    warnings. Instead of rejecting a command, Postfix logs what it would
+    reject. Specify "warn_if_reject" in an SMTP access restriction list, before
+    the restriction that you want to test without actually rejecting mail.
+
+XCLIENT
+    With this Postfix 2.1 feature, authorized SMTP clients can impersonate
+    other systems, so that you can do realistic SMTP access rule tests.
+    Examples of how to impersonate other systems for access rule testing are
+    given at the end of the XCLIENT_README document.
+

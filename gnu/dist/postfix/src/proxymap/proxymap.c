@@ -7,7 +7,7 @@
 /*	\fBproxymap\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The \fBproxymap\fR server provides read-only table
-/*	lookup service to Postfix client processes. The purpose
+/*	lookup service to Postfix processes. The purpose
 /*	of the service is:
 /* .IP \(bu
 /*	To overcome chroot restrictions. For example, a chrooted SMTP
@@ -33,45 +33,31 @@
 /*	proxymap server processes.
 /* .PP
 /*	The proxymap server implements the following requests:
-/* .IP "\fBPROXY_REQ_OPEN\fI maptype:mapname flags\fR"
+/* .IP "\fBopen\fR \fImaptype:mapname flags\fR"
 /*	Open the table with type \fImaptype\fR and name \fImapname\fR,
-/*	as controlled by \fIflags\fR.
-/*	The reply is the request completion status code (below) and the
-/*	map type dependent flags.
-/* .IP "\fBPROXY_REQ_LOOKUP\fI maptype:mapname flags key\fR"
+/*	as controlled by \fIflags\fR. The reply includes the \fImaptype\fR
+/*	dependent flags (to distinguish a fixed string table from regular
+/*	a expression table).
+/* .IP "\fBlookup\fR \fImaptype:mapname flags key\fR"
 /*	Look up the data stored under the requested key.
 /*	The reply is the request completion status code (below) and
 /*	the lookup result value.
 /*	The \fImaptype:mapname\fR and \fIflags\fR are the same
-/*	as with the \fBPROXY_REQ_OPEN\fR request.
+/*	as with the \fBopen\fR request.
 /* .PP
-/*	There is no close command, nor are tables implicitly closed
-/*	when a client disconnects. One of the purposes of the proxymap
-/*	server is to share tables among multiple client processes.
-/*
-/*	The request completion status code is one of:
-/* .IP \fBPROXY_STAT_OK\fR
-/*	The specified table was opened, or the requested entry was found.
-/* .IP \fBPROXY_STAT_NOKEY\fR
-/*	The requested table entry was not found.
-/* .IP \fBPROXY_STAT_BAD\fR
-/*	The request was rejected (bad request parameter value).
-/* .IP \fBPROXY_STAT_RETRY\fR
-/*	The lookup request could not be completed.
-/* .IP \fBPROXY_STAT_DENY\fR
-/*	The specified table was not approved for access via the
-/*	proxymap service.
+/*	There is no \fBclose\fR command, nor are tables implicitly closed
+/*	when a client disconnects. The purpose is to share tables among
+/*	multiple client processes.
 /* SERVER PROCESS MANAGEMENT
 /* .ad
 /* .fi
-/*	The proxymap servers run under control by the Postfix master
+/*	\fBproxymap\fR servers run under control by the Postfix \fBmaster\fR
 /*	server.  Each server can handle multiple simultaneous connections.
-/*	When all servers are busy while a client connects, the master
-/*	creates a new proxymap server process, provided that the proxymap
-/*	server process limit is not exceeded.
-/*	Each proxymap server terminates after serving
-/*	at least \fB$max_use\fR clients or after \fB$max_idle\fR seconds
-/*	of idle time.
+/*	When all servers are busy while a client connects, the \fBmaster\fR
+/*	creates a new \fBproxymap\fR server process, provided that the
+/*	process limit is not exceeded.
+/*	Each server terminates after serving at least \fB$max_use\fR clients
+/*	or after \fB$max_idle\fR seconds of idle time.
 /* SECURITY
 /* .ad
 /* .fi
@@ -93,20 +79,41 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following main.cf parameters are especially relevant
-/*	to this program. Use the \fBpostfix reload\fR command
-/*	after a configuration change.
-/* .IP \fBproxy_read_maps\fR
-/*	A list of zero or more parameter values that may contain
-/*	references to Postfix lookup tables. Only table references
-/*	that begin with \fBproxy:\fR are approved for read-only
-/*	access via the proxymap server.
-/* SEE ALSO
-/*	dict_proxy(3) proxy map client
+/*	On busy mail systems a long time may pass before proxymap(8) relevant
+/*	changes to \fBmain.cf\fR are picked up. Use the command
+/*	"\fBpostfix reload\fR" to speed up a change.
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBmax_idle (100s)\fR"
+/*	The maximum amount of time that an idle Postfix daemon process
+/*	waits for the next service request before exiting.
+/* .IP "\fBmax_use (100)\fR"
+/*	The maximal number of connection requests before a Postfix daemon
+/*	process terminates.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBproxy_read_maps (see 'postconf -d' output)\fR"
+/*	The lookup tables that the proxymap(8) server is allowed to access.
 /* LICENSE
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/* .ad
+/* .fi
+/*	The proxymap service was introduced with Postfix 2.0.
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -385,8 +392,10 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("some lookup table has changed -- restarting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	exit(0);
     }
 }

@@ -1,6 +1,6 @@
 /*++
 /* NAME
-/*	qmqp-sink 8
+/*	qmqp-sink 1
 /* SUMMARY
 /*	multi-threaded QMQP test server
 /* SYNOPSIS
@@ -11,13 +11,13 @@
 /*	\fBqmqp-sink\fR [\fB-cv\fR] [\fB-x \fItime\fR]
 /*	\fBunix:\fR\fIpathname\fR \fIbacklog\fR
 /* DESCRIPTION
-/*	\fIqmqp-sink\fR listens on the named host (or address) and port.
+/*	\fBqmqp-sink\fR listens on the named host (or address) and port.
 /*	It receives messages from the network and throws them away.
 /*	The purpose is to measure QMQP client performance, not protocol
 /*	compliance.
 /*	Connections can be accepted on IPV4 endpoints or UNIX-domain sockets.
 /*	IPV4 is the default.
-/*	This program is the complement of the \fIqmqp-source\fR program.
+/*	This program is the complement of the \fBqmqp-source\fR(1) program.
 /* .IP \fB-c\fR
 /*	Display a running counter that is updated whenever a delivery
 /*	is completed.
@@ -28,7 +28,7 @@
 /*	Terminate after \fItime\fR seconds. This is to facilitate memory
 /*	leak testing.
 /* SEE ALSO
-/*	qmqp-source, QMQP test message generator
+/*	qmqp-source(1), QMQP message generator
 /* LICENSE
 /* .ad
 /* .fi

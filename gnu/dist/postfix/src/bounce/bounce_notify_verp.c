@@ -6,8 +6,9 @@
 /* SYNOPSIS
 /*	#include "bounce_service.h"
 /*
-/*	int     bounce_notify_verp(service, queue_name, queue_id, sender,
-/*					verp_delims, flush)
+/*	int     bounce_notify_verp(flags, service, queue_name, queue_id, sender,
+/*					verp_delims)
+/*	int	flags;
 /*	char	*queue_name;
 /*	char	*queue_id;
 /*	char	*sender;
@@ -15,8 +16,8 @@
 /*	int	flush;
 /* DESCRIPTION
 /*	This module implements the server side of the bounce_notify()
-/*	(send bounce message) request. If flush is zero, the logfile
-/*	is not removed, and a warning is sent instead of a bounce.
+/*	(send bounce message) request. The logfile
+/*	is removed after and a warning is posted.
 /*	The bounce recipient address is encoded in VERP format.
 /*	This routine must be used for single bounces only.
 /*
@@ -70,6 +71,7 @@
 #include <mail_addr.h>
 #include <mail_error.h>
 #include <verp_sender.h>
+#include <bounce.h>
 
 /* Application-specific. */
 
@@ -79,10 +81,9 @@
 
 /* bounce_notify_verp - send a bounce */
 
-int     bounce_notify_verp(char *service, char *queue_name,
+int     bounce_notify_verp(int flags, char *service, char *queue_name,
 			           char *queue_id, char *encoding,
-				   char *recipient,
-			           char *verp_delims, int flush)
+			           char *recipient, char *verp_delims)
 {
     char   *myname = "bounce_notify_verp";
     BOUNCE_INFO *bounce_info;
@@ -107,10 +108,10 @@ int     bounce_notify_verp(char *service, char *queue_name,
      * Initialize. Open queue file, bounce log, etc.
      */
     bounce_info = bounce_mail_init(service, queue_name, queue_id,
-				   encoding, flush);
+				   encoding, BOUNCE_MSG_FAIL);
 
 #define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
-#define NULL_CLEANUP_FLAGS	0
+#define NULL_TRACE_FLAGS	0
 #define BOUNCE_HEADERS		1
 #define BOUNCE_ALL		0
 
@@ -126,7 +127,8 @@ int     bounce_notify_verp(char *service, char *queue_name,
 	verp_sender(verp_buf, verp_delims, recipient,
 		    bounce_info->log_handle->recipient);
 	if ((bounce = post_mail_fopen_nowait(NULL_SENDER, STR(verp_buf),
-					     NULL_CLEANUP_FLAGS)) != 0) {
+					     CLEANUP_FLAG_MASK_INTERNAL,
+					     NULL_TRACE_FLAGS)) != 0) {
 
 	    /*
 	     * Send the bounce message header, some boilerplate text that
@@ -138,8 +140,7 @@ int     bounce_notify_verp(char *service, char *queue_name,
 		&& bounce_recipient_log(bounce, bounce_info) == 0
 		&& bounce_header_dsn(bounce, bounce_info) == 0
 		&& bounce_recipient_dsn(bounce, bounce_info) == 0)
-		bounce_original(bounce, bounce_info, flush ?
-				BOUNCE_ALL : BOUNCE_HEADERS);
+		bounce_original(bounce, bounce_info, BOUNCE_ALL);
 	    bounce_status = post_mail_fclose(bounce);
 	} else
 	    bounce_status = 1;
@@ -152,9 +153,10 @@ int     bounce_notify_verp(char *service, char *queue_name,
 	    break;
 
 	/*
-	 * Mark this recipient as done.
+	 * Optionally, mark this recipient as done.
 	 */
-	bounce_log_delrcpt(bounce_info->log_handle);
+	if (flags & BOUNCE_FLAG_DELRCPT)
+	    bounce_delrcpt_one(bounce_info);
 
 	/*
 	 * Optionally, send a postmaster notice.
@@ -162,10 +164,9 @@ int     bounce_notify_verp(char *service, char *queue_name,
 	 * This postmaster notice is not critical, so if it fails don't
 	 * retransmit the bounce that we just generated, just log a warning.
 	 */
-#define WANT_IF_BOUNCE (flush == 1 && (notify_mask & MAIL_ERROR_BOUNCE))
-#define WANT_IF_DELAY  (flush == 0 && (notify_mask & MAIL_ERROR_DELAY))
+#define WANT_IF_BOUNCE ((notify_mask & MAIL_ERROR_BOUNCE))
 
-	if (WANT_IF_BOUNCE || WANT_IF_DELAY) {
+	if (WANT_IF_BOUNCE) {
 
 	    /*
 	     * Send the text with reason for the bounce, and the headers of
@@ -174,10 +175,11 @@ int     bounce_notify_verp(char *service, char *queue_name,
 	     * don't retransmit the bounce that we just generated, just log a
 	     * warning.
 	     */
-	    postmaster = flush ? var_bounce_rcpt : var_delay_rcpt;
+	    postmaster = var_bounce_rcpt;
 	    if ((bounce = post_mail_fopen_nowait(mail_addr_double_bounce(),
 						 postmaster,
-						 NULL_CLEANUP_FLAGS)) != 0) {
+						 CLEANUP_FLAG_MASK_INTERNAL,
+						 NULL_TRACE_FLAGS)) != 0) {
 		if (bounce_header(bounce, bounce_info, postmaster) == 0
 		    && bounce_recipient_log(bounce, bounce_info) == 0
 		    && bounce_header_dsn(bounce, bounce_info) == 0
@@ -198,7 +200,7 @@ int     bounce_notify_verp(char *service, char *queue_name,
      * the bounce was posted successfully, and only if we are bouncing for
      * real, not just warning.
      */
-    if (flush != 0 && bounce_status == 0 && mail_queue_remove(service, queue_id)
+    if (bounce_status == 0 && mail_queue_remove(service, queue_id)
 	&& errno != ENOENT)
 	msg_fatal("remove %s %s: %m", service, queue_id);
 

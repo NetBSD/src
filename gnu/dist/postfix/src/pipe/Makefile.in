@@ -3,9 +3,6 @@ SRCS	= pipe.c
 OBJS	= pipe.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
@@ -86,4 +83,5 @@ pipe.o: ../../include/split_addr.h
 pipe.o: ../../include/off_cvt.h
 pipe.o: ../../include/quote_822_local.h
 pipe.o: ../../include/quote_flags.h
+pipe.o: ../../include/flush_clnt.h
 pipe.o: ../../include/mail_server.h

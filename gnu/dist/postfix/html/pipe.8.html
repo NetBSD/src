@@ -1,4 +1,9 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - pipe(8) </title>
+</head> <body> <pre>
 PIPE(8)                                                   PIPE(8)
 
 <b>NAME</b>
@@ -20,11 +25,11 @@ PIPE(8)                                                   PIPE(8)
 
        The  <b>pipe</b>  daemon updates queue files and marks recipients
        as finished, or it informs the queue manager that delivery
-       should  be  tried  again at a later time. Delivery problem
-       reports are sent to the <a href="bounce.8.html"><b>bounce</b>(8)</a> or  <a href="defer.8.html"><b>defer</b>(8)</a>  daemon  as
-       appropriate.
+       should  be  tried  again  at a later time. Delivery status
+       reports are sent to the <a href="bounce.8.html"><b>bounce</b>(8)</a>,  <a href="defer.8.html"><b>defer</b>(8)</a>  or  <a href="trace.8.html"><b>trace</b>(8)</a>
+       daemon as appropriate.
 
-<b>SINGLE-RECIPIENT</b> <b>DELIVERY</b>
+<b>SINGLE-RECIPIENT DELIVERY</b>
        Some external commands cannot handle more than one recipi-
        ent per delivery request. Examples of such transports  are
        pagers, fax machines, and so on.
@@ -32,13 +37,13 @@ PIPE(8)                                                   PIPE(8)
        To  prevent  Postfix  from sending multiple recipients per
        delivery request, specify
 
-           <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b> <b>=</b> <b>1</b>
+           <i>transport</i><b>_destination_recipient_limit = 1</b>
 
        in the Postfix <b>main.cf</b> file, where <i>transport</i> is  the  name
        in the first column of the Postfix <b>master.cf</b> entry for the
        pipe-based delivery transport.
 
-<b>COMMAND</b> <b>ATTRIBUTE</b> <b>SYNTAX</b>
+<b>COMMAND ATTRIBUTE SYNTAX</b>
        The external command attributes are given in the <b>master.cf</b>
        file at the end of a service definition.  The syntax is as
        follows:
@@ -54,17 +59,17 @@ PIPE(8)                                                   PIPE(8)
 
               <b>D</b>      Prepend a "<b>Delivered-To:</b> <i>recipient</i>"  message
                      header  with the envelope recipient address.
-                     Note: for this to work, the <i>transport_</i><b>desti-</b>
-                     <b>nation</b><i>_</i><b>recipient</b><i>_</i><b>limit</b> must be 1.
+                     Note: for this to work, the <i>transport</i><b>_desti-</b>
+                     <b>nation_recipient_limit</b> must be 1.
 
-              <b>F</b>      Prepend  a "<b>From</b> <i>sender</i> <i>time_stamp</i>" envelope
+              <b>F</b>      Prepend  a "<b>From</b> <i>sender time</i><b>_</b><i>stamp</i>" envelope
                      header to  the  message  content.   This  is
                      expected by, for example, <b>UUCP</b> software.
 
               <b>O</b>      Prepend  an  "<b>X-Original-To:</b> <i>recipient</i>" mes-
                      sage header with the  recipient  address  as
                      given  to  Postfix.  Note: for this to work,
-                     the    <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
+                     the    <i>transport</i><b>_destination_recipient_limit</b>
                      must be 1.
 
               <b>R</b>      Prepend  a  <b>Return-Path:</b> message header with
@@ -116,10 +121,10 @@ PIPE(8)                                                   PIPE(8)
        <b>eol=string</b> (optional, default: <b>\n</b>)
               The output record delimiter.  Typically  one  would
               use  either <b>\r\n</b> or <b>\n</b>. The usual C-style backslash
-              escape sequences are recognized: <b>\a</b> <b>\b</b> <b>\f</b> <b>\n</b> <b>\r</b>  <b>\t</b>
-              <b>\v</b> <b>\</b><i>octal</i> and <b>\\</b>.
+              escape sequences are recognized: <b>\a \b \f \n \r  \t</b>
+              <b>\v \</b><i>octal</i> and <b>\\</b>.
 
-       <b>size</b>=<i>size_limit</i> (optional)
+       <b>size</b>=<i>size</i><b>_</b><i>limit</i> (optional)
               Messages greater in size than this limit (in bytes)
               will be bounced back to the sender.
 
@@ -221,51 +226,96 @@ PIPE(8)                                                   PIPE(8)
        cute external commands as the specified user. It is there-
        fore security sensitive.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
-       command after a configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       Changes to <b>main.cf</b> are picked up automatically as  <a href="pipe.8.html">pipe(8)</a>
+       processes  run  for only a limited amount of time. Use the
+       command "<b>postfix reload</b>" to speed up a change.
 
-<b>Miscellaneous</b>
-       <b>export</b><i>_</i><b>environment</b>
-              List of names of environment parameters that can be
-              exported to non-Postfix processes.
+       The text below provides  only  a  parameter  summary.  See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-       <b>mail</b><i>_</i><b>owner</b>
-              The process privileges used while  not  running  an
-              external command.
-
-<b>Resource</b> <b>controls</b>
+<b>RESOURCE AND RATE CONTROLS</b>
        In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
        <b>ter.cf</b> entry.
 
-       <i>transport_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
+       <i>transport</i><b>_destination_concurrency_limit ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
+       <b><a href="postconf.5.html#default_destination_concurrency_limit">tion_concurrency_limit</a>)</b>
               Limit the number of parallel deliveries to the same
               destination,  for delivery via the named <i>transport</i>.
-              The default limit is taken from the  <b>default</b><i>_</i><b>desti-</b>
-              <b>nation</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>  parameter.   The limit is
-              enforced by the Postfix queue manager.
+              The limit is enforced by the Postfix queue manager.
 
-       <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit the number of recipients per  message  deliv-
-              ery,  for  delivery  via  the  named <i>transport</i>. The
-              default limit is taken  from  the  <b>default</b><i>_</i><b>destina-</b>
-              <b>tion</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>   parameter.    The  limit  is
-              enforced by the Postfix queue manager.
+       <i>transport</i><b>_destination_recipient_limit   ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
+       <b><a href="postconf.5.html#default_destination_recipient_limit">tion_recipient_limit</a>)</b>
+              Limit  the  number of recipients per message deliv-
+              ery, for delivery via  the  named  <i>transport</i>.   The
+              limit is enforced by the Postfix queue manager.
 
-       <i>transport_</i><b>time</b><i>_</i><b>limit</b>
-              Limit the time for delivery  to  external  command,
-              for  delivery  via the named <b>transport</b>. The default
-              limit is taken from the <b>command</b><i>_</i><b>time</b><i>_</i><b>limit</b>  parame-
-              ter.   The  limit  is enforced by the pipe delivery
-              agent.
+       <i>transport</i><b>_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+              Limit  the  time  for delivery to external command,
+              for delivery via the named <i>transport</i>.  The limit is
+              enforced by the pipe delivery agent.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="bounce.8.html">bounce(8)</a> non-delivery status reports
-       <a href="master.8.html">master(8)</a> process manager
-       <a href="qmgr.8.html">qmgr(8)</a> queue manager
-       syslogd(8) system logging
+<b>MISCELLANEOUS CONTROLS</b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The  default  location  of  the Postfix main.cf and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
+              built-in watchdog timer.
+
+       <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
+              The list of environment variables  that  a  Postfix
+              process will export to non-Postfix processes.
+
+       <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
+              The time limit for sending or receiving information
+              over an internal communication channel.
+
+       <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
+              The UNIX system account that owns the Postfix queue
+              and most Postfix daemon processes.
+
+       <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits for the next  service  request
+              before exiting.
+
+       <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
+              The  maximal number of connection requests before a
+              Postfix daemon process terminates.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The process ID of a Postfix command or daemon  pro-
+              cess.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The  process  name  of  a Postfix command or daemon
+              process.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The location of the Postfix top-level queue  direc-
+              tory.
+
+       <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
+              The separator between user names and address exten-
+              sions (user+foo).
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+<b>SEE ALSO</b>
+       <a href="qmgr.8.html">qmgr(8)</a>, queue manager
+       <a href="bounce.8.html">bounce(8)</a>, delivery status reports
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="master.8.html">master(8)</a>, process manager
+       syslogd(8), system logging
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this

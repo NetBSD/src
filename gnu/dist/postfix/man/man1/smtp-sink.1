@@ -1,11 +1,11 @@
-.TH SMTP-SINK 8 
+.TH SMTP-SINK 1 
 .ad
 .fi
 .SH NAME
 smtp-sink
 \-
 multi-threaded SMTP/LMTP test server
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 .fi
@@ -16,32 +16,46 @@ multi-threaded SMTP/LMTP test server
 .SH DESCRIPTION
 .ad
 .fi
-\fIsmtp-sink\fR listens on the named host (or address) and port.
+\fBsmtp-sink\fR listens on the named host (or address) and port.
 It takes SMTP messages from the network and throws them away.
-The purpose is to measure SMTP client performance, not protocol
+The purpose is to measure client performance, not protocol
 compliance.
+
 Connections can be accepted on IPV4 endpoints or UNIX-domain sockets.
 IPV4 is the default.
-This program is the complement of the \fIsmtp-source\fR program.
+This program is the complement of the \fBsmtp-source\fR(1) program.
 
 Arguments:
+.IP \fB-a\fR
+Do not announce SASL authentication support.
 .IP \fB-c\fR
 Display a running counter that is updated whenever an SMTP
 QUIT command is executed.
+.IP \fB-C\fR
+Disable XCLIENT support.
 .IP \fB-e\fR
-Disable ESMTP support.
+Do not announce ESMTP support.
+.IP "\fB-f \fIcommand,command,...\fR"
+Reject the specified commands with a hard (5xx) error code.
+.IP \fB-F\fR
+Disable XFORWARD support.
 .IP \fB-h\fI hostname\fR
 Use \fIhostname\fR in the SMTP greeting, in the HELO response,
 and in the EHLO response. The default hostname is "smtp-sink".
 .IP \fB-L\fR
-Enable LMTP rather than SMTP.
+Enable LMTP instead of SMTP.
 .IP "\fB-n \fIcount\fR"
 Terminate after \fIcount\fR sessions. This is for testing purposes.
 .IP \fB-p\fR
-Disable ESMTP command pipelining.
+Do not announce support for ESMTP command pipelining.
 .IP \fB-P\fR
 Change the server greeting so that it appears to come through
-a CISCO PIX system.
+a CISCO PIX system. Implies \fB-e\fR.
+.IP "\fB-q \fIcommand,command,...\fR"
+Disconnect (without replying) after receiving one of the
+specified commands.
+.IP "\fB-r \fIcommand,command,...\fR"
+Reject the specified commands with a soft (4xx) error code.
 .IP "\fB-s \fIcommand,command,...\fR"
 Log the named commands to syslogd.
 Examples of commands that can be logged are HELO, EHLO, LHLO, MAIL,
@@ -53,7 +67,7 @@ Show the SMTP conversations.
 .IP "\fB-w \fIdelay\fR"
 Wait \fIdelay\fR seconds before responding to a DATA command.
 .IP \fB-8\fR
-Disable 8BITMIME support.
+Do not announce 8BITMIME support.
 .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
 Listen on network interface \fIhost\fR (default: any interface)
 TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be
@@ -63,17 +77,17 @@ Listen on the UNIX-domain socket at \fIpathname\fR.
 .IP \fIbacklog\fR
 The maximum length the queue of pending connections,
 as defined by the listen(2) call.
-.SH SEE ALSO
+.SH "SEE ALSO"
 .na
 .nf
-smtp-source, SMTP/LMTP test message generator
-.SH LICENSE
+smtp-source(1), SMTP/LMTP message generator
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

@@ -1,52 +1,52 @@
-MAIN 0	subject: primary subject
+MAIN 0	|subject: primary subject
 mime_state: header_token: multipart / mumble
 mime_state: header_token: boundary = abcd ef
 mime_state: PUSH boundary abcd ef
-MAIN 71	content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd 
+MAIN 71	|content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd 
  ef" mumble
 HEADER END
-BODY N 0	
-BODY N 1	abcdef prolog
-BODY N 15	
-BODY N 16	--abcd ef
+BODY N 0	|
+BODY N 1	|abcdef prolog
+BODY N 15	|
+BODY N 16	|--abcd ef
 mime_state: header_token: message / rfc822
-MULT 0	content-type: message/rfc822; mumble
-BODY N 0	
-NEST 0	subject: nested subject
+MULT 0	|content-type: message/rfc822; mumble
+BODY N 0	|
+NEST 0	|subject: nested subject
 mime_state: header_token: multipart / mumble
 mime_state: header_token: boundary = pqrs
 mime_state: PUSH boundary pqrs
-NEST 57	content-type: multipart/mumble; boundary(comment)="pqrs"
+NEST 57	|content-type: multipart/mumble; boundary(comment)="pqrs"
 mime_state: header_token: base64  
-NEST 91	content-transfer-encoding: base64
+NEST 91	|content-transfer-encoding: base64
 mime_state: warning: invalid message/* or multipart/* encoding domain: base64
-BODY N 0	
-BODY N 1	pqrs prolog
-BODY N 13	
-BODY N 14	--pqrs
-MULT 0	header: pqrs part 01
-BODY N 0	
-BODY N 1	body pqrs part 01
-BODY N 19	
-BODY N 20	--pqrs
-MULT 0	header: pqrs part 02
-BODY N 0	
-BODY N 1	body pqrs part 02
-BODY N 19	
-BODY N 20	--bogus-boundary
-BODY N 37	header: wietse
-BODY N 52	
-BODY N 53	body asdasads
-BODY N 67	
+BODY N 0	|
+BODY N 1	|pqrs prolog
+BODY N 13	|
+BODY N 14	|--pqrs
+MULT 0	|header: pqrs part 01
+BODY N 0	|
+BODY N 1	|body pqrs part 01
+BODY N 19	|
+BODY N 20	|--pqrs
+MULT 0	|header: pqrs part 02
+BODY N 0	|
+BODY N 1	|body pqrs part 02
+BODY N 19	|
+BODY N 20	|--bogus-boundary
+BODY N 37	|header: wietse
+BODY N 52	|
+BODY N 53	|body asdasads
+BODY N 67	|
 mime_state: POP boundary pqrs
-BODY N 68	--abcd ef
-MULT 0	header: abcdef part 02
-BODY N 0	
-BODY N 1	body abcdef part 02
-BODY N 21	
+BODY N 68	|--abcd ef
+MULT 0	|header: abcdef part 02
+BODY N 0	|
+BODY N 1	|body abcdef part 02
+BODY N 21	|
 mime_state: POP boundary abcd ef
-BODY N 0	--abcd ef--
-BODY N 12	
-BODY N 13	epilog
+BODY N 0	|--abcd ef--
+BODY N 12	|
+BODY N 13	|epilog
 BODY END
 mime_state: warning: improper message/* or multipart/* encoding domain

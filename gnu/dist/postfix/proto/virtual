@@ -42,8 +42,10 @@
 #	or SQL, the same lookups are done as for ordinary indexed files.
 #
 #	Alternatively, the table can be provided as a regular-expression
-#	map where patterns are given as regular expressions. In that case,
-#	the lookups are done in a slightly different way as described below.
+#	map where patterns are given as regular expressions, or lookups
+#	can be directed to TCP-based server. In that case, the lookups are
+#	done in a slightly different way as described below under
+#	"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
 # TABLE FORMAT
 # .ad
 # .fi
@@ -67,7 +69,8 @@
 # .IP "\fIuser address, address, ...\fR"
 #	Mail for \fIuser\fR@\fIsite\fR is redirected to \fIaddress\fR when
 #	\fIsite\fR is equal to $\fBmyorigin\fR, when \fIsite\fR is listed in
-#	$\fRmydestination\fR, or when it is listed in $\fIinet_interfaces\fR.
+#	$\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR
+#	or $\fBproxy_interfaces\fR.
 #	.sp
 #	This functionality overlaps with functionality of the local
 #	\fIaliases\fR(5) database. The difference is that \fBvirtual\fR
@@ -85,8 +88,11 @@
 #	When a mail address localpart contains the optional recipient delimiter
 #	(e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
 #	\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIuser+foo\fR,
-#	\fIuser\fR, and @\fIdomain\fR.  An unmatched address extension
-#	(\fI+foo\fR) is propagated to the result of table lookup.
+#	\fIuser\fR, and @\fIdomain\fR.
+#
+#	The \fBpropagate_unmatched_extensions\fR parameter controls whether
+#	an unmatched address extension (\fI+foo\fR) is propagated to the
+#	result of table lookup.
 # VIRTUAL ALIAS DOMAINS
 # .ad
 # .fi
@@ -163,6 +169,20 @@
 #	Results are the same as with indexed file lookups, with
 #	the additional feature that parenthesized substrings from the
 #	pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
+# TCP-BASED TABLES
+# .ad
+# .fi
+#	This section describes how the table lookups change when lookups
+#	are directed to a TCP-based server. For a description of the TCP
+#	client/server lookup protocol, see \fBtcp_table\fR(5).
+#	This feature is not available in Postfix version 2.1.
+#
+#	Each lookup operation uses the entire address once.  Thus,
+#	\fIuser@domain\fR mail addresses are not broken up into their
+#	\fIuser\fR and \fI@domain\fR constituent parts, nor is
+#	\fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
+#
+#	Results are the same as with indexed file lookups.
 # BUGS
 #	The table format does not understand quoting conventions.
 # CONFIGURATION PARAMETERS
@@ -177,6 +197,11 @@
 # .IP \fBvirtual_alias_domains\fR
 #	List of virtual alias domains. This uses the same syntax
 #	as the \fBmydestination\fR parameter.
+# .IP \fBpropagate_unmatched_extensions\fR
+#	A list of address rewriting or forwarding mechanisms that propagate   
+#	an address extension from the original address to the result.     
+#	Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,
+#	\fBforward\fR, or \fBinclude\fR.
 # .PP
 #	Other parameters of interest:
 # .IP \fBinet_interfaces\fR
@@ -189,11 +214,24 @@
 # .IP \fBowner_request_special\fR
 #	Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
 #	addresses.
+# .IP \fBproxy_interfaces\fR
+#	Other interfaces that this machine receives mail on by way of a
+#	proxy agent or network address translator.
 # SEE ALSO
-#	cleanup(8) canonicalize and enqueue mail
-#	postmap(1) create mapping table
-#	regexp_table(5) POSIX regular expression table format
-#	pcre_table(5) Perl Compatible Regular Expression table format
+#	cleanup(8), canonicalize and enqueue mail
+#	postmap(1), Postfix lookup table manager
+#	postconf(5), configuration parameters
+#	canonical(5), canonical address mapping
+# README FILES
+# .ad
+# .fi
+#	Use "\fBpostconf readme_directory\fR" or
+#	"\fBpostconf html_directory\fR" to locate this information.
+# .na
+# .nf
+#	DATABASE_README, Postfix lookup table overview
+#	ADDRESS_REWRITING_README, address rewriting guide
+#	VIRTUAL_README, domain hosting guide
 # LICENSE
 # .ad
 # .fi
@@ -204,5 +242,3 @@
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
 #--
-
-# By default, this file is not used.  See sample-virtual.cf

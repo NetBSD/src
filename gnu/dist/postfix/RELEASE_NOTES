@@ -1,937 +1,578 @@
-==============================================================
-NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
-==============================================================
-Before upgrading from Postfix 1.1 you must stop Postfix ("postfix
-stop").  Some internal protocols have changed.  No mail will be
-lost if you fail to stop and restart Postfix, but Postfix won't be
-able to receive any new mail, either.
-==============================================================
-NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
-==============================================================
+In the text below, incompatible changes are labeled with the Postfix
+snapshot that introduced the change. If you upgrade from a later
+Postfix version, then you do not have to worry about that particular
+incompatibility.
 
-In the text below, changes are labeled with the Postfix snapshot
-that introduced the change, and whether the change introduced a
-feature, an incompatibility, or whether the feature is obsolete.
-If you upgrade from a later Postfix version, then you do not have
-to worry about incompatibilities introduced in earlier versions.
+The official Postfix release is called 2.1.x where 2=major release
+number, 1=minor release number, x=patchlevel.  Snapshot releases
+are called 2.2-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  The mail_release_date configuration parameter
+contains the release date (both for official release and snapshot
+release).  Patches are issued for the official release and change
+the patchlevel and the release date. Patches are never issued for
+snapshot releases.
 
-Official Postfix releases are called a.b.c where a=major release
-number, b=minor release number, c=patchlevel.  Snapshot releases
-are now called a.b.c-yyyymmdd where yyyymmdd is the release date
-(yyyy=year, mm=month, dd=day).  The mail_release_date configuration
-parameter contains the release date (both for official release and
-snapshot release).  Patches change the patchlevel and the release
-date. Snapshots change only the release date, unless they include
-the same bugfixes as a patch release.
+Major changes - critical
+------------------------
 
-Incompatible changes with Postfix version 2.0.8 (released 20030415)
-===================================================================
+If you run Postfix 1.x or earlier then you must stop Postfix before
+upgrading. This is because the master-child protocols have changed,
+and very little will work with the old master daemon process.
 
-Too many people mess up their net/mask patterns, causing open
-mail relay problems. Postfix processes now abort when given a
-net/mask pattern with a non-zero host portion (for example,
+[Incompat 20021119] You can upgrade Postfix 2.0 without stopping.
+After upgrading an existing Postfix 2.0 system you must use "postfix
+reload".  Some internal protocols have changed, but the master-child
+protocols are the same as with Postfix 2.0.
+
+[Incompat 20021119] The Postfix upgrade procedure will add two new
+services to your master.cf file: "trace" and "verify". These servers
+can run inside a chroot jail, have no interaction with users, and
+don't talk to the network.  If Postfix complains that "trace" and
+"verify" are not found, you made the error of copying your old
+Postfix configuration files over the new ones. Execute "postfix
+upgrade-configuration" to repair the Postfix configuration files.
+
+[Incompat 20040331] Support for the non-standard Errors-To:  message
+header is removed.  This also helps to stop potential attacks that
+rely on bouncing mail to a destination that is not directly reachable
+by the attacker. Specify "enable_errors_to = yes" to get the old
+behavior.
+
+Queue files written by Postfix 2.1 may contain information that
+is incompatible with older Postfix versions:
+
+[Incompat 20040120] Queue files creates with "sendmail -v" are no
+longer compatible with Postfix versions 2.0 and earlier. A new
+record type, "killed", was introduced in order to avoid repeated
+mail delivery reports from mail that could not be delivered due to
+a temporary error condition.
+
+[Incompat 20030125] This release adds a new queue file record type
+for the address specified in "REDIRECT user@domain" actions in
+access maps or header/body_checks. Queue files with these records
+will be rejected by older Postfix versions.
+
+[Feature 20040120] The new queue manager nqmgr has become the
+default qmgr queue manager. For a limited time the old queue manager
+remains available under the name oqmgr. The name nqmgr still works
+but will cause a warning to be logged.
+
+[Incompat 20040413] The Postfix SMTP server no longer accepts mail
+from or to an address ending in "@", including address forms that
+rewrite into an address that ends in "@"). Specify "resolve_null_domain
+= yes" to get the old behavior.
+
+[Incompat 20031226] Postfix no longer allows mail addresses with
+bare numeric IP addresses (user@1.2.3.4).  This is not configurable.
+The form user@[ipaddress] is still allowed.
+
+[Incompat 20031226] Bounce messages now have a separate queue life
+time.  This is controlled by the bounce_queue_lifetime parameter.
+
+Major changes - build environment
+---------------------------------
+
+[Incompat 20030112] The Postfix build procedure now uses the
+pcre-config utility (part of PCRE version 3) to find out the
+pathnames of the PCRE include file and object library, instead of
+probing /usr/include and/or /usr/lib. To build with PCRE version
+2 support you will have to specify pathnames as described in
+PCRE_README. To build without PCRE support, specify:  make Makefiles
+CCARGS="-DNO_PRCE".
+
+Major changes - documentation
+-----------------------------
+
+[Feature 20040331] Complete documentation rewrite. All parameters
+are now described in postconf(5), and all commands and daemons are
+shown in their proper context in the OVERVIEW document.
+- All documents come as HTML and ASCII text.
+- All HTML documents have hyperlinks for every parameter name,
+  for every Postfix manual page, and for every README file.  
+- All documents specify what feature is available in what release. 
+- The sample-*.cf configuration files no longer exist. The information
+  is now available in HTML documents, README files and UNIX man pages).
+- The mumble_table example configuration files no longer exist.
+
+[Incompat 20040413] The LMTP, Cyrus and Qmail related README files will
+not be included in the Postfix version 2.1 distribution. They will
+be made available via http://www.postfix.org/, and in Postfix 2.2
+snapshots.
+
+[Feature 20040413] You can install documentation in HTML format
+besides the README files.  Installation of README files is now
+optional.
+
+Major changes - access control
+------------------------------
+
+[Feature 20031215] Easier debugging of SMTPD access restrictions.
+The SMTP command "xclient name=xxx addr=yyy" changes Postfix's idea
+of the remote client name and address, so that you can pretend to
+connect from anywhere on the Internet.  Use of this command is
+restricted to clients that match the list of names or addresses
+specified with the smtpd_authorized_xclient_hosts parameter.  By
+default, XCLIENT is not accepted from anywhere.  More details are
+in the XCLIENT_README file.
+
+[Feature 20030715] Support for multi-valued RBL lookup results.
+For example, specify "reject_rbl_client foo.bar.tld=127.0.0.3" to
+reject clients that are listed with a "127.0.0.3" address record.
+More information is in the postconf(5) manual page.
+
+[Feature 20030917] New "check_{helo,sender,recipient}_{ns,mx}_access
+type:table" restrictions that apply the specified access table to
+the NS or MX hosts of the host/domain given in HELO, EHLO, MAIL
+FROM or RCPT TO commands. More information is in the postconf(5)
+manual page.
+
+This can be used to block mail from so-called spammer havens (all
+domains that are served by the same DNS server, all domains that
+resolve to the same MX host), from sender addresses that resolve
+to Verisign's wild-card mail responder, or from domains that claim
+to have mail servers in reserved networks such as 127.0.0.1.
+
+Note: OK actions are not allowed for security reasons.  Instead of
+OK, use DUNNO in order to exclude specific hosts from blacklists.
+If an OK result is found for an NS or MX host, Postfix rejects the
+SMTP command with "451 Server configuration error".
+
+[Feature 20040413] Support for a "WARN text..." feature in SMTPD
+access tables, just like the WARN feature in header/body_checks.
+
+[Feature 20040122] New "PREPEND headername: headervalue" action in
+Postfix access maps. Primarily intended for tagging mail by for
+example, an external SMTPD policy server. See access(5).
+
+[Feature 20040124] New "PREPEND text" action in Postfix header/body_checks
+maps. This action prepends a header or body line immediately before
+the line that triggers the action. See header_checks(5) for details.
+
+[Feature 20030125] New "REDIRECT user@domain" action for access
+maps and header/body_checks that overrides all the originally
+specified recipients of a message.  Wietse would never recommend
+that people use this to redirect (bounced) SPAM to the beneficiaries
+of an advertisement campaign. See access(5) and header_checks(5).
+
+[Feature 20031215] The reject_sender_login_mismatch feature (used
+with SASL authenticated logins) is now implemented in terms of more
+basic restrictions:  reject_unauth_sender_login_mismatch (reject
+mail when $sender_login_maps lists an owner for the sender address
+but the SMTP client is not SASL authenticated) and
+reject_auth_sender_login_mismatch (reject mail when the sender
+address is not owned by the SASL authenticated user). The
+sender_login_maps now support multiple owners per sender address.
+See postconf(5) for details.
+
+Major changes - address verification
+------------------------------------
+
+[Feature 20021119] Address verification blocks mail from or to
+addresses that are not deliverable.  This is turned on with the
+reject_unverified_sender UCE restriction. Addresses are verified
+by probing, that is, by sending mail that is not actually delivered
+(SMTP interruptus).  Detailed information is in the
+ADDRESS_VERIFICATION_README file.
+
+Address verification can follow a different route than ordinary
+mail, typically to avoid sending probes to a relay host.  To make
+this possible, the address resolver supports multiple personalities.
+For more detail see the ADDRESS_VERIFICATION_README file.
+
+New "sendmail -bv" option.  Postfix probes the specified recipient
+addresses without actually delivering mail, and sends back an email
+delivery report.  This is useful for testing address rewriting and
+address routing, and shows the final envelope and header addresses.
+This feature currently does not access or update the sender address
+verification database.
+
+Major changes - content inspection
+----------------------------------
+
+[Feature 20030704] The Postfix SMTP server can be configured to
+send all mail into a real-time content filter that inspects mail
+BEFORE it is queued.  See the SMTPD_PROXY_README file for details.
+
+[Feature 20031022] Improved logging by Postfix daemons behind an
+SMTP-based proxy filter. The logging now shows the remote client
+name and address, instead of localhost[127.0.0.1].  This uses the
+new SMTP command "XFORWARD addr=client-address name=client-hostname",
+which specifies remote client information for logging purposes.
+This command is restricted to clients that match the list of names
+or addresses specified with the smtpd_authorized_xforward_hosts
+parameter. By default, XFORWARD is not accepted from anywhere.
+For an example, see the SMTPD_PROXY_README file.
+
+[Feature 20030706] New receive_override_options parameter that
+eliminates the need for different cleanup service instances before
+and after an external content filter. One parameter controls what
+happens before or after the content filter: rejecting unknown
+recipients, canonical mapping, virtual alias expansion, masquerading,
+automatic BCC recipients and header/body checks. See postconf(5)
+for the fine details.
+
+[Feature 20040124] New "PREPEND text" action in Postfix header/body_checks
+maps. This action prepends a header or body line immediately before
+the line that triggers the action. See header_checks(5) for details.
+
+[Feature 20030125] New "REDIRECT user@domain" action for access maps
+and header/body_checks that overrides all the originally specified
+recipients of a message.  Wietse would never recommend that people
+use this to redirect (bounced) SPAM to the beneficiaries of an
+advertisement campaign. See header_checks(5) and access(5).
+
+[Incompat 20030915] In header/body_checks actions, the OK action
+is being phased out, and the DUNNO action is being phased in. Both
+actions still work and do the same thing, but hopefully DUNNO causes
+less confusion. See header_checks(5) for details.
+
+Major changes - policy delegation
+---------------------------------
+
+[Feature 20030715] Support for SMTP access policy delegation to an
+external server.  Greylisting and SPF are provided as examples.
+See the SMTPD_POLICY_README file for further information.
+
+Major changes - client rate limiting
+------------------------------------
+
+Note: this feature is not included with Postfix 2.1, but it is
+documented is here so that the information will not be lost.
+
+[Feature 20031111] Preliminary defense against SMTP clients that
+hammer an SMTP server with too many connections.  By default, the
+number of simultaneous connections per client is limited to half
+the default process limit, and no limit is imposed on the number
+of successive connections per time unit that a client is allowed
+to make.
+
+The new anvil server maintains the connection statistics, and logs
+the maximum connection count and connection rate per client every
+anvil_status_update_time seconds (10 minutes), or when it terminates
+(when there is no work to be done, or when "postfix reload" was
+issued). Once you have an idea what the numbers look like, you can
+clamp down the limits for your system.
+
+The relevant main.cf configuration parameters are: smtpd_client-
+connection_count_limit for the number of simultaneous connections
+per client, and smtpd_client_connection_rate_limit for the number
+of successive connections per unit time and client. The time unit
+is specified with the anvil_rate_time_unit parameter, and is one
+minute by default.
+
+When Postfix rejects a client, it sends a 450 status code and
+disconnects, and logs a warning with the client name/address and
+the service name from master.cf. You can, for example, capture this
+information with a logfile watching program that updates a firewall
+rule (such a watcher program is not included with Postfix).
+
+To avoid rejecting authorized hosts, the smtpd_client_connection-
+limit_exceptions parameter takes a list of network/netmask expressions,
+hostnames or .domain names that are excluded from these restrictions.
+By default, all clients in $mynetworks are excluded; you will
+probably want to use a more restrictive setting.
+
+For further information, see:  smtpd(8) and anvil(8).
+
+Major changes - configuration management
+----------------------------------------
+
+[Feature 20040413] New postfix(1) command features: 
+
+- "postfix set-permissions" corrects Postfix file and directory
+   permissions and allows you to change mail_owner or setgid_group
+   settings after Postfix is installed.
+
+- "postfix upgrade-configuration" fixes Postfix systems after people
+   copy over their old configuration files after installing a new
+   Postfix system.
+
+See postfix(1) for details.
+
+[Incompat 20040120] The format of the postfix-files file has changed.
+There is a new type for hard links. With hard or symbolic link
+entries, the first field is now the destination pathname and the
+"owner" field is now the origin pathname, while "group" and
+"permissions" are ignored.
+
+Major changes - core functionality
+----------------------------------
+
+[Feature 20030704] New enable_original_recipient parameter (default:
+yes) to control whether Postfix keeps track of original recipient
+address information.  If this is turned off Postfix produces no
+X-Original-To: headers and ignores the original recipient when
+eliminating duplicates after virtual alias expansion. Code by Victor
+Duchovni.
+
+[Feature 20030417] Automatic BCC recipients depending on sender or
+recipient address.  The configuration parameters in question are
+"sender_bcc_maps" and "recipient_bcc_maps". See postconf(5).
+
+[Incompat 20030415] Too many people mess up their net/mask patterns,
+causing open mail relay problems. Postfix processes now abort when
+given a net/mask pattern with a non-zero host portion (for example,
 168.100.189.2/28), and suggest to specify the proper net/mask
 pattern instead (for example, 168.100.189.0/28).
 
-Major changes with Postfix version 2.0.8 (released 20030415)
-============================================================
+[Feature 20030415] Workaround for file system clock drift that
+caused Postfix to ignore new mail (this could happen with file
+systems mounted from a server).  Postfix now logs a warning and
+proceeds with only slightly reduced performance, instead of ignoring
+new mail.
 
-Workaround for file system clock drift that caused Postfix to ignore
-new mail (this could happen with file systems mounted from a server).
-Postfix now logs a warning and proceeds with only slightly reduced
-performance, instead of ignoring new mail.
+Major changes - database support
+--------------------------------
 
-Incompatible changes with Postfix version 2.0.6 (released 20030305)
-===================================================================
+Liviu Daia took the lead in a revision of the LDAP, MySQL and
+PostgreSQL clients.  Credits also go to Victor Duchovni and to
+Lamont Jones.
 
-Postfix truncates non-address information in message address headers
-(comments, etc.) to 250 characters per address, in order to protect
-vulnerable Sendmail systems against exploitation of a remote buffer
-overflow problem (CERT advisory CA-2003-07).
+[Feature 20030915] LDAP parameters can now be defined in external
+files.  Specify the LDAP maps in main.cf as
+	ldap:/path/to/ldap.cf
+and write the LDAP parameters in /path/to/ldap.cf, without the
+"ldapsource_" prefix.  This makes it possible to securely store
+bind passwords for plain auth outside of main.cf (which must be
+world readable).  The old syntax still works, for backwards
+compatibility. 
 
-Incompatible changes with Postfix version 2.0.5 (released 20030301)
-===================================================================
+[Feature 20030915] Support for LDAP URLs in the LDAP parameter
+"server_host", if Postfix is linked against OpenLDAP.  LDAP hosts,
+ports, and connection protocols to be used as LDAP sources can be
+specified as a blank-separated list of LDAP URLs in "server_host".
+As with OpenLDAP, specifying a port in a LDAP URL overrides
+"server_port".  Examples:
+    server_host = ldap://ldap.itd.umich.edu
+    server_host = ldaps://ldap.itd.umich.edu:636
+    server_host = ldapi://%2Fsome%2Fpath
 
-The smtpd_hard_error_limit and smtpd_soft_error_limit values now
-behave as documented, that is, smtpd_hard_error_limit=1 causes
-Postfix to disconnect upon the first client error. Previously,
+[Feature 20030915] The LDAP SSL scheme ldaps:// is available if
+OpenLDAP was compiled with SSL support.  New parameters "tls_ca_cert_dir",
+"tls_ca_cert_file", "tls_cert", "tls_key", "tls_require_cert",
+"tls_random_file", "tls_cipher_suite" control the certificates,
+source of random numbers, and cipher suites used for SSL connections.
+See LDAP_README for further information.
+
+[Feature 20030915] Support for STARTTLS command in LDAP, if Postfix
+is linked against OpenLDAP and OpenLDAP was compiled with SSL
+support.  STARTTLS is controlled by the "start_tls" parameter.
+The above parameters for certificates, source of random numbers,
+and cipher suites also apply.  See LDAP_README for further information.
+
+[Incompat 20030704] Support for client side LDAP caching is gone.
+OpenLDAP 2.1.13 and later no longer support it, and the feature
+never worked well.  Postfix now ignores cache controlling parameters
+in an LDAP configuration file and logs a warning.
+
+[Feature 20030415] PostgreSQL table lookups. Specify "pgsql:/file/name"
+where "/file/name" defines the database. See "man pgsql_table" for
+examples, and the PGSQL_README file for general information.
+
+Major changes - internals
+-------------------------
+
+[Incompat 20040120] The format of the postfix-files file has changed.
+There is a new type for hard links. With hard or symbolic link
+entries, the first field is now the destination pathname and the
+"owner" field is now the origin pathname, while "group" and
+"permissions" are ignored.
+
+[Incompat 20040120] The LDAP and SQL client source code is moved
+to the global directory in order to eliminate reversed dependencies.
+
+[Feature 20030606] Complete rewrite of the queue file record reading
+loops in the pickup, cleanup and in the queue manager daemons. This
+code had deteriorated over time.  The new code eliminates an old
+problem where the queue manager had to read most queue file records
+twice in the case of an alias/include file expansion with more than
+qmgr_message_recipient_limit recipients.
+
+[Feature 20030125] Code cleanup up of queue manager internals.
+Queue names are no longer mixed up with the next-hop destination,
+and the address resolver loop is now easier to understand.
+
+[Feature 20030104] Multi-server daemons (servers that accept
+simultaneous connections from multiple clients) will now stop
+accepting new connections after serving $max_use clients. This
+allows multi-server daemons to automatically restart even on busy
+mail systems.
+
+[Feature 20030104] Clients of multi-server daemons such as
+trivial-rewrite and the new proxymap service now automatically
+disconnect after $ipc_ttl seconds of activity (default: 1000s).
+This allows multi-server daemons to automatically restart even on
+busy mail systems.
+
+[Incompat 20021119] The file format of bounce/defer logfiles has
+changed from the old one-line ad-hoc format to a more structured
+multi-line format. For backwards compatibility, Postfix now creates
+bounce/defer logfile entries that contain both the old and the new
+format, so that you can go back to an older Postfix release without
+losing information.  Old Postfix versions will warn about malformed
+logfile entries, but should work properly. To disable backwards
+compatibility specify "backwards_bounce_logfile_compatibility =
+no" in main.cf.
+
+[Feature 20021119] Both "sendmail -bv" and "sendmail -v" use the
+new "trace" daemon that is automatically added to master.cf when
+you upgrade.
+
+Major changes - logging
+-----------------------
+
+[Incompat 20040413] The postmap and postalias commands now report
+errors to syslogd in addition to reporting them to the standard
+error output. This makes logfile analysis easier.
+
+[Incompat 20031203] Many SMTPD "reject" logfile entries now show
+NOQUEUE instead of a queue ID.  This is because Postfix no longer
+creates a queue file before the SMTP server has received a valid
+recipient.
+
+Major changes - lookup table support
+------------------------------------
+
+[Feature 20030704] New CIDR-based lookup table, remotely based on
+code by Jozsef Kadlecsik.  For details and examples, see "man
+cidr_table".
+
+[Feature 20030704] The TCP-based table lookup protocol is finished.
+For details and examples, see "man tcp_table". This will allow you
+to implement your own greylisting, or to do your own open proxy
+tests before accepting mail. This table will not be included with
+Postfix 2.1 because the protocol is obsoleted by the policy delegation
+(see elsewhere in this document) which does a much better job.
+
+[Feature 20030704] Support for !/pattern/ (negative matches) in
+PCRE lookup tables by Victor Duchovni. See "man pcre_table" and
+"man regexp_table" for more.
+
+Major changes - resource control
+--------------------------------
+
+[Incompat 20031022] The Postfix SMTP server no longer accepts mail
+when the amount of free queue space is less than 1.5 times the
+message_size_limit value.
+
+Major changes - security
+------------------------
+
+[Incompat 20040413] The Postfix SMTP server no longer accepts mail
+from or to an address ending in "@", including address forms that
+rewrite into an address that ends in "@"). Specify "resolve_null_domain
+= yes" to get the old behavior.
+
+[Incompat 20040331] Support for the non-standard Errors-To:  message
+header is removed.  This also helps to stop potential attacks that
+rely on bouncing mail to a destination that is not directly reachable
+by the attacker. Specify ""enable_errors_to = yes" to get the old
+behavior.
+
+[Incompat 20040331] Tarpit delays are reduced. The Postfix SMTP
+server no longer delays responses until the client has made
+$smtpd_soft_error_limit errors, and the delay is fixed at
+$smtpd_error_sleep_time seconds.  Postfix still disconnects after
+$smtpd_hard_error_limit errors.
+
+[Incompat 20040120] The SMTP server can reject non-existent sender
+addresses in a local, virtual or relay domain; specify
+"reject_unlisted_sender=yes" in order to require that a sender
+address passes the same "user unknown" test as a recipient would
+have to pass. This is optional in Postfix 2.1, likely to be turned
+on by default in Postfix 2.2.
+
+[Incompat 20031226] Postfix no longer allows mail addresses with
+bare numeric IP addresses (user@1.2.3.4).  This is not configurable.
+The form user@[ipaddress] is still allowed.
+
+[Incompat 20030305] Postfix truncates non-address information in message
+address headers (comments, etc.) to 250 characters per address, in
+order to protect vulnerable Sendmail systems against exploitation
+of a remote buffer overflow problem (CERT advisory CA-2003-07).
+
+[Incompat 20030227] The smtpd_hard_error_limit and smtpd_soft_error_limit
+values now behave as documented, that is, smtpd_hard_error_limit=1
+causes Postfix to disconnect upon the first client error. Previously,
 there was an off-by-one error causing Postfix to change behavior
 after smtpd_hard/soft_error_limit+1 errors.
 
-Incompatible changes with Postfix version 2.0.4 (released 20030219)
-===================================================================
+Major changes - smtp client
+---------------------------
+
+[Incompat 20031223] The SMTP client now tries to connect to an
+alternate MX address when a delivery attempt fails **after the
+initial SMTP handshake**.  This includes both broken connections
+and 4XX SMTP replies.  To get the old behavior, specify
+"smtp_mx_session_limit = 1" in main.cf.
+
+[Feature 20031223] The SMTP client now tries to connect to an
+alternate MX address when a delivery attempt fails after the
+initial SMTP handshake.  This includes both broken connections
+and 4XX SMTP replies.
+
+As a benefit, fallback_relay now works as promised, not just for
+sessions that fail during the initial handshake.
+
+The new SMTP client connection management is controlled by two new
+configuration parameters:
+
+- smtp_mx_address_limit (default unlimited): the number of MX (mail
+  exchanger) IP addresses that can result from mail exchanger
+  lookups.
+
+- smtp_mx_session_limit (default 2):  the number of SMTP sessions
+  per delivery request before giving up or delivering to a fall-back
+  relay, ignoring IP addresses that fail to complete the SMTP
+  initial handshake.
+
+[Incompat 20031022] Postfix no longer retries delivery when no MX
+host has a valid A record, for compatibility with many other MTAs.
+This change is made in anticipation of a possible Verisign "wild-card
+MX record without A record" for unregistered domains. To get the
+old behavior, specify "smtp_defer_if_no_mx_address_found = yes".
+
+[Incompat 20031022] The Postfix SMTP client no longer looks in
+/etc/hosts by default.  To get the old behavior, specify
+"smtp_host_lookup = dns, native".
+
+[Feature 20030417] Support for sending mail to hosts not in the
+DNS, without having to turn off DNS lookups. The "smtp_host_lookup"
+parameter controls how the Postfix SMTP client looks up hosts.  In
+order to use /etc/hosts besides DNS, specify "smtp_host_lookup =
+dns, native". The default is to use DNS only.
+
+Major changes - user interface
+------------------------------
+
+[Incompat 20040418] The non-delivery report format has changed.
+The "sorry" message and the DSN formatted report now include the
+original recipient address, when that address is different from
+the final recipient address.  This makes it easier to diagnose some
+mail delivery problems that happen after mail forwarding.
+
+[Incompat 20031223] In mailq (queue listing) output, there no longer
+is space between a short queue ID and the "*" (delivery in progress)
+or ! (mail on hold) status indicator. This makes the output easier
+to parse.
+
+[Incompat 20030417] "sendmail -t" no longer complains when recipients
+are given on the command line. Instead, it now adds recipients from
+headers to the recipients from the command-line.
+
+[Incompat 20030126] The maildir file naming algorithm has changed
+according to an updated version of http://cr.yp.to/proto/maildir.html.
+The name is now TIME.VdevIinum.HOST
+
+[Incompat 20021119] The behavior of "sendmail -v" has changed. One
+-v option now produces one email report with the status of each
+recipient.  Multiple -v options behave as before: turn on verbose
+logging in the sendmail and postdrop commands.
+
+[Feature 20021119] New "sendmail -bv" option.  Postfix probes the
+specified recipient addresses without actually delivering mail,
+and sends back an email delivery report.  This is useful for testing
+address rewriting and address routing of both envelope and header
+addresses. This feature currently does not access or update the
+sender address verification database.
 
-The maildir file naming algorithm has changed in accordance with
-an updated version of http://cr.yp.to/proto/maildir.html. The name
-is now TIME.VdevIinum.HOST
-
-Incompatible changes with Postfix version 2.0.3 (released 20030124)
-===================================================================
-
-The maildir file naming algorithm has changed. Pending a usable
-version of http://cr.yp.to/proto/maildir.html, the name is now
-TIME.DEV_INUM.HOST.
-
-Incompatible changes with Postfix version 2.0.1 (released 20030112)
-===================================================================
-
-If you upgrade from Postfix 1.1 you need to restart Postfix.
-
-If you upgrade from Postfix 2.0 you need to "reload" Postfix.
-
-Version 2.0.1 introduces the proxymap service for centralized table
-lookup. The upgrade procedure adds the proxymap service to the
-master.cf file.  If you see errors about problems contacting the
-proxymap service, then you did not properly upgrade Postfix.
-
-The Postfix SMTP server now by default looks up the UNIX passwd
-file via the new proxymap service, in order to make chrooted
-operation easier.
-
-The Postfix build procedure now uses the pcre-config utility (part
-of PCRE version 3) to find out the pathnames of the PCRE include
-file and object library, instead of probing /usr/include and/or
-/usr/lib. To build with PCRE version 2 support you will have to
-specify pathnames as described in PCRE_README. To build without
-PCRE support, specify:  make Makefiles CCARGS="-DNO_PRCE".
-
-Major changes with Postfix version 2.0.1 (released 20030112)
-============================================================
-
-This release introduces the proxymap service for Postfix lookup
-table access. This can be used to overcome chroot restrictions in
-the Postfix SMTP server (specify proxy:unix:passwd.byname for
-password file lookup through the proxymap server) and can be used
-to consolidate the number of open tables by sharing one open table
-among multiple processes (specify proxy:mysql:/file/name to avoid
-"too many connections" conditions). The proxy_read_maps parameter
-specifies what maps are approved for access via the proxy service
-(only map references starting with "proxy:" are considered approved).
-
-Major changes with Postfix version 2.0.0 (released 20021222, 20021223)
-======================================================================
-
-First comes the bad news - things that may break when you upgrade
-from Postfix 1.1. Then comes the good news - things that evolved
-in snapshots over the past year.
-
-For the release notes of Postfix 1.1 and earlier, see the
-RELEASE_NOTES-1.1 file.
-
-Unknown Recipients are now rejected by default
-==============================================
-
-[Incompatibility 20021209] The Postfix SMTP server now rejects mail
-for $mydestination domain recipients that it does not know about.
-This keeps undeliverable mail out of your queue.
-
-[Incompatibility 20021209] To avoid losing mail when upgrading from
-Postfix 1.1, you need to review the LOCAL_RECIPIENT_README file if
-one of the following is true:
-
-- You define $mydestination domain recipients in files other than
-  /etc/passwd or /etc/aliases.  For example, you define $mydestination
-  domain recipients in the $virtual_mailbox_maps files.
-- You run the Postfix SMTP server chrooted (see master.cf).
-- You redefined the local delivery agent in master.cf.
-- You redefined the "local_transport" setting in main.cf.
-- You use the mailbox_transport feature of the Postfix local delivery agent.
-- You use the fallback_transport feature of the Postfix local delivery agent.
-- You use the luser_relay feature of the Postfix local delivery agent.
-
-Name change of virtual domain tables
-====================================
-
-This release introduces separation of lookup tables for addresses
-and for domain names of virtual domains.
-
-[Incompat 20021209] the virtual_maps parameter is replaced by
-virtual_alias_maps (for address lookups) and virtual_alias_domains
-(for the names of what were formerly called "Postfix-style virtual
-domains").
-
-  For backwards compatibility with Postfix version 1.1, the new
-  virtual_alias_maps parameter defaults to $virtual_maps, and the
-  new virtual_alias_domains parameter defaults to $virtual_alias_maps.
-  This means that you can still keep all information about a domain
-  in one file, just like before.
-
-For details, see the virtual(5) and sample-virtual.cf files.
-
-[Incompat 20021209] the virtual_mailbox_maps parameter now has a
-companion parameter called virtual_mailbox_domains (for the names
-of domains served by the virtual delivery agent). virtual_mailbox_maps
-is now used for address lookups only.
-
-  For backwards compatibility with Postfix version 1.1,, the new
-  virtual_mailbox_domains parameter defaults to $virtual_mailbox_maps.
-  This means that you can still keep all information about a domain
-  in one file, just like before.
-
-For details, see the VIRTUAL_README file.
-
-[Incompat 20021209] If you use the "advanced content filter"
-technique, you MUST NOT override the virtual aliases and virtual
-mailbox settings in the SMTP server that receives mail from the
-content filter, or else mail for virtual recipients will be rejected
-with "User unknown".
-
-For details, see the FILTER_README file.
-
-Incompatible queue file format changes
-======================================
-
-[Incompat 20020527] Queue files created with the header/body_checks
-"FILTER" feature are not compatible with "postqueue -r" (move queue
-files back to the maildrop directory) of previous Postfix releases.
-
-[Incompat 20020512] Postfix queue files contain records that are
-incompatible with "postqueue -r" on all Postfix versions prior to
-1.1 and release candidates. This happens whenever the sender
-specifies MIME body type information via the SMTP `MAIL FROM'
-command, via the `sendmail -B' command line option, or via the
-Content-Transfer-Encoding:  message header.
-
-[Incompat 20020512] Postfix queue files may contain records that
-are incompatible with "postqueue -r" on previous 1.1 Postfix versions
-and release candidates. This happens whenever the sender specifies
-the MIME body type only via the Content-Transfer-Encoding:  message
-header, and not via `MAIL FROM' or `sendmail -B'.
-
-Features that are going away
-============================
-
-[Obsolete 20021209] Sendmail-style virtual domains are no longer
-documented.  This part of Postfix was too confusing.
-
-[Obsolete 20021209] The "reject_maps_rbl" restriction is going
-away. The SMTP server now logs a warning and suggests using the
-more flexible "reject_rbl_client" feature instead.
-
-[Obsolete 20021209] The "check_relay_domains" restriction is going
-away.  The SMTP server logs a warning and suggests using the more
-robust "reject_unauth_destination" instead. This means that Postfix
-by default no longer grants relay permissions on the basis of the
-client hostname, and that relay clients must be authorized via
-other means such as permit_mynetworks.
-
-[Obsolete 20020917] In regexp lookup tables, the form /pattern1/!/pattern2/
-is going away. Use the cleaner and more flexible "if !/pattern2/..endif"
-form.  The old form still exists but is no longer documented, and
-causes a warning (suggesting to use the new format) to be logged.
-For details, see "man regexp_table".
-
-[Obsolete 20020819] The qmgr_site_hog_factor feature is gone (this
-would defer mail delivery for sites that occupy too much space in
-the active queue, and be a real performance drain due to excessive
-disk I/O).  The new qmgr_clog_warn_time feature (see below) provides
-more useful suggestions for dealing with Postfix congestion.
-
-[Obsolete 20020819] The "permit_naked_ip_address" restriction on
-HELO command syntax is unsafe when used with most smtpd_XXX_restrictions
-and will go away. Postfix logs a warning, suggesting to use
-"permit_mynetworks" instead.
-
-MIME support
-============
-
-[Feature 20020527] Postfix now has real MIME support. This improves
-content filtering efficiency and accuracy, and improves inter-operability
-with mail systems that cannot receive 8-bit mail. See conf/sample-mime.cf
-for details.
-
-[Feature 20020527] Postfix header_checks now properly recognize
-MIME headers in attachments. This is much more efficient than
-previous versions that recognized MIME headers via body_checks.
-MIME headers are now processed one multi-line header at a time,
-instead of one body line at a time.  To get the old behavior,
-specify "disable_mime_input_processing = yes".  More details in
-conf/sample-filter.cf.
-
-[Feature 20020527] Postfix now has three classes of header patterns:
-header_checks (for primary message headers except MIME headers),
-mime_header_checks (for MIME headers), and nested_header_checks
-(for headers of attached email messages except MIME headers).  By
-default, all headers are matched with header_checks.
-
-[Feature 20020527] The Postfix SMTP client will now convert 8BITMIME
-mail to 7BIT when delivering to an SMTP server that does not announce
-8BITMIME support.  To disable, specify "disable_mime_output_conversion
-= yes". However, this conversion is required by RFC standards.
-
-[Feature 20020528] Postfix can enforce specific aspects of the MIME
-standards while receiving mail.
-
-* Specify "strict_7bit_headers = yes" to disallow 8-bit characters
-  in message headers.  These are always illegal.
-
-* Specify "strict_8bitmime_body = yes" to block mail with 8-bit
-  content that is not properly labeled as 8-bit MIME. This blocks
-  mail from poorly written mail software, including (bounces from
-  qmail, bounces from Postfix before snapshot 20020514, and Majordomo
-  approval requests) that contain valid 8BITMIME mail.
-
-* Specify "strict_8bitmime = yes" to turn on both strict_7bit_headers
-  and strict_8bitmime_body.
-
-* Specify "strict_mime_encoding_domain = yes" to block mail from
-  poorly written mail software. More details in conf/sample-mime.cf.
-
-[Incompat 20020527] Postfix now rejects mail if the MIME multipart
-structure is nested more than mime_nesting_limit levels (default:
-100) when MIME input processing is enabled while receiving mail, or
-when Postfix is performing 8BITMIME to 7BIT conversion while
-delivering mail.
-
-[Incompat 20020527] Postfix now recognizes "name :" as a valid
-message header, but normalizes it to "name:" for consistency
-(actually, there is so much code in Postfix that would break with
-"name :" that there is little choice, except to not recognize "name
-:" headers).
-
-[Incompat 20020512] Postfix queue files contain records that are
-incompatible with "postqueue -r" on all Postfix versions prior to
-1.1 and release candidates. This happens whenever the sender
-specifies MIME body type information via the SMTP `MAIL FROM'
-command, via the `sendmail -B' command line option, or via the
-Content-Transfer-Encoding:  message header.
-
-[Incompat 20020512] Postfix queue files may contain records that
-are incompatible with "postqueue -r" on previous 1.1 Postfix versions
-and release candidates. This happens whenever the sender specifies
-the MIME body type only via the Content-Transfer-Encoding:  message
-header, and not via `MAIL FROM' or `sendmail -B'.
-
-[Feature 20020512] The Postfix SMTP and LMTP clients now properly
-pass on the MIME body type information (7BIT or 8BITMIME), provided
-that the sender properly specifies MIME body type information via
-the SMTP MAIL FROM command, via the sendmail -B command line option,
-or via MIME message headers. This includes mail that is returned
-as undeliverable.
-
-Improved performance
-====================
-
-[Incompat 20021209] The default queue directory hash_queue_depth
-setting is reduced to 1 level of subdirectories per Postfix queue.
-This improves "mailq" performance on most systems, but can result
-in poorer worst-case performance on systems with lots of mail in
-the queue.
-
-[Incompat 20021209] The Postfix SMTP client no longer expands CNAMEs
-in MAIL FROM or RCPT TO addresses (as permitted by RFC 2821). This
-eliminates one DNS lookup per sender and recipient, and can make
-a dramatic difference when sending mailing list mail via a relayhost.
-
-[Incompat 20021209] The Postfix installation procedure no longer
-sets the "chattr +S" bit on Linux queue directories. Wietse has
-gotten too annoyed with naive reviewers who complain about performance
-without having a clue of what they are comparing.
-
-[Feature 20021209] On mail gateway systems, separation of inbound
-mail relay traffic from outbound traffic. This eliminates a problem
-where inbound mail deliveries could become resource starved in the
-presence of a high volume of outbound mail.
-
-[Feature 20021013] The body_checks_size_limit parameter limits the
-amount of text per message body segment (or attachment, if you
-prefer to use that term) that is subjected to body_checks inspection.
-The default limit is 50 kbytes. This speeds up the processing of
-mail with large attachments.
-
-[Feature 20020917] Speedups of regexp table lookups by optimizing
-for the $number substitutions that are actually present in the
-right-hand side.  Based on a suggestion by Liviu Daia.
-
-[Feature 20020917] Speedups of regexp and pcre tables, using
-IF..ENDIF support. Based on an idea by Bert Driehuis.  To protect
-a block of patterns, use:
-
-    if /pattern1/
-    /pattern2/	result2
-    /pattern3/	result3
-    endif
-
-IF..ENDIF can nest. Don't specify blanks at the beginning of lines
-inside IF..ENDIF, because lines beginning with whitespace are
-appended to the previous line. More details about the syntax are
-given in the pcre_table(5) and regexp_table(5) manual pages.
-
-[Feature 20020717] The default timeout for establishing an SMTP
-connection has been reduced to 30 seconds, because many system
-TCP/IP stacks have an atrociously large default timeout value.
-
-[Feature 20020505] Finer control over Berkeley DB memory usage,
-The parameter "berkeley_db_create_buffer_size" (default:  16 MBytes)
-specifies the buffer size for the postmap and postalias commands.
-The parameter "berkeley_db_read_buffer_size" (default:  128 kBytes)
-specifies the buffer size for all other applications.  Specify
-"berkeley_db_read_buffer_size = 1048576" to get the old read buffer
-size. Contributed by Victor Duchovni. For more information, see
-the last paragraphs of the DB_README file.
-
-[Incompat 20021211] The default process limit is doubled from 50
-to 100. The default limits on the number of active queue files or
-recipients are doubled from 10000 to 20000. The default concurrency
-for parallel delivery to the same destination is doubled from 10
-to 20.
-
-Improved compatibility
-======================
-
-[Feature 20020527] The Postfix SMTP client will now convert 8BITMIME
-mail to 7BIT when delivering to an SMTP server that does not announce
-8BITMIME support.  To disable, specify "disable_mime_output_conversion
-= yes". However, this conversion is required by RFC standards.
-
-[Feature 20020512] The Postfix SMTP and LMTP clients now properly
-pass on the MIME body type information (7BIT or 8BITMIME), provided
-that the sender properly specifies MIME body type information via
-the SMTP MAIL FROM command, via the sendmail -B command line option,
-or via MIME message headers. This includes mail that is returned
-as undeliverable.
-
-[Incompat 20020326] The Postfix SMTP client now breaks message
-header or body lines that are longer than $smtp_line_length_limit
-characters (default:  990). Earlier Postfix versions broke lines
-at $line_length_limit characters (default: 2048). Postfix versions
-before 20010611 did not break long lines at all.  Reportedly, some
-mail servers refuse to receive mail with lines that exceed the 1000
-character limit that is specified by the SMTP standard.
-
-[Incompat 20020326] The Postfix SMTP client now breaks long message
-header or body lines by inserting <CR> <LF> <SPACE>.  Earlier
-Postfix versions broke long lines by inserting <CR> <LF> only. This
-broke MIME encapsulation, causing MIME attachments to "disappear"
-with Postfix versions after 20010611.
-
-[Incompat 20020326] Postfix now discards text when a logical message
-header exceeds $header_size_limit characters (default: 102400).
-Earlier Postfix versions would place excess text, and all following
-text, in the message body. The same thing was done when a physical
-header line exceeded $line_length_limit characters (default: 2048).
-Both behaviors broke MIME encapsulation, causing MIME attachments
-to "disappear" with all previous Postfix versions.
-
-[Incompat 20021015] The Postfix LMTP client no longer lowercases email
-addresses in MAIL FROM and RCPT TO commands.
-
-[Incompat 20021013] The default Linux kernel lock style for mailbox
-delivery is changed from flock() to fcntl(). This has no impact if
-your system uses procmail for local delivery, if you use maildir-style
-mailboxes, or when mailbox access software locks mailboxes with
-username.lock files (which is usually the case with non-maildir
-mailboxes).
-
-Address classes
-===============
-
-[Feature 20021209] This release introduces the concept of address
-domain classes, each having its own default mail delivery transport:
-
-  Destination matches      Default transport       Default name
-  ==============================================================
-  $mydestination or
-     $inet_interfaces      $local_transport        local
-  $virtual_alias_domains   (not applicable)        (not applicable)
-  $virtual_mailbox_domains $virtual_transport      virtual
-  $relay_domains           $relay_transport        relay
-  other                    $default_transport      smtp
-
-The benefits of these changes are:
-
-- You no longer need to specify all the virtual(8) domains in the
-  Postfix transport map. The virtual(8) delivery agent has
-  become a first-class citizen just like local(8) or smtp(8).
-
-- On mail gateway systems, separation of inbound mail relay traffic
-  from outbound traffic. This eliminates a problem where inbound
-  mail deliveries could become resource starved in the presence of
-  a high volume of outbound mail.
-
-- The SMTP server rejects unknown recipients in a more consistent
-  manner than was possible with previous Postfix versions.
-
-See the ADDRESS_CLASS_README file for a description of address
-classes, their benefits, and their incompatibilities.
-
-New relay transport in master.cf
-================================
-
-[Incompat 20021209] Postfix no longer defaults to the "smtp"
-transport for all non-local destinations.  In particular, Postfix
-now uses the "relay" mail delivery transport for delivery to domains
-matching $relay_domains.  This may affect your defer_transports
-settings.
-
-On mail gateway systems, this allows us to separate inbound mail
-relay traffic from outbound traffic, and thereby eliminate a problem
-where inbound mail deliveries could become resource starved in the
-presence of a high volume of outbound mail.
-
-[Incompat 20021209] This release adds a new "relay" service to the
-Postfix master.cf file. This is a clone of the "smtp" service.  If
-your Postfix is unable to connect to the "relay" service then you
-have not properly followed the installation procedure.
-
-Revision of RBL blacklisting code
-=================================
-
-[Feature 20020923] Complete rewrite of the RBL blacklisting code.
-The names of RBL restrictions are now based on a suggestion that
-was made by Liviu Daia in October 2001. See conf/sample-smtpd.cf
-or html/uce.html for details.
-
-[Feature 20020923] "reject_rbl_client rbl.domain.tld" for client
-IP address blacklisting. Based on code by LaMont Jones.  The old
-"reject_maps_rbl" is now implemented as a wrapper around the
-reject_rbl_client code, and logs a warning that "reject_maps_rbl"
-is going away. To upgrade, specify "reject_rbl_client domainname"
-once for each domain name that is listed in maps_rbl_domains.
-
-[Feature 20020923] "reject_rhsbl_sender rbl.domain.tld" for sender
-domain blacklisting. Also: reject_rhsbl_client and reject_rhsbl_recipient
-for client and recipient domain blacklisting.
-
-[Feature 20020923] "rbl_reply_maps" configuration parameter for
-lookup tables with template responses per RBL server. Based on code
-by LaMont Jones.  If no reply template is found the default template
-is used as specified with the default_rbl_reply configuration
-parameter.  The template responses support $name expansion of
-client, helo, sender, recipient and RBL related attributes.
-
-[Incompat 20020923] The default RBL "reject" server reply now
-includes an indication of *what* is being rejected: Client host,
-Helo command, Sender address, or Recipient address. This also
-changes the logfile format.
-
-[Feature 20020923] "smtpd_expansion_filter" configuration parameter
-to control what characters are allowed in the expansion of template
-RBL reply $name macros. Characters outside the allowed set are
-replaced by "_".
-
-More sophisticated handling of UCE-related DNS lookup errors
-============================================================
-
-[Feature 20020906] More sophisticated handling of UCE-related DNS
-lookup errors.  These cause Postfix to not give up so easily, so
-that some deliveries will not have to be deferred after all.
-
-[Feature 20020906] The SMTP server sets a defer_if_permit flag when
-an UCE reject restriction fails due to a temporary (DNS) problem,
-to prevent unwanted mail from slipping through.  The defer_if_permit
-flag is tested at the end of the ETRN and recipient restrictions.
-
-[Feature 20020906] A similar flag, defer_if_reject, is maintained
-to prevent mail from being rejected because a whitelist operation
-(such as permit_mx_backup) fails due to a temporary (DNS) problem.
-
-[Feature 20020906] The permit_mx_backup restriction is made more
-strict. With older versions, some DNS failures would cause mail to
-be accepted anyway, and some DNS failures would cause mail to be
-rejected by later restrictions in the same restriction list.  The
-improved version will defer delivery when Postfix could make the
-wrong decision.
-
-- After DNS lookup failure, permit_mx_backup will now accept the
-request if a subsequent restriction would cause the request to be
-accepted anyway, and will defer the request if a subsequent
-restriction would cause the request to be rejected.
-
-- After DNS lookup failure, reject_unknown_hostname (the hostname
-given in HELO/EHLO commands) reject_unknown_sender_domain and
-reject_unknown_recipient_domain will now reject the request if a
-subsequent restriction would cause the request to be rejected
-anyway, and will defer the request if a subsequent restriction
-would cause the request to be accepted.
-
-[Feature 20020906] Specify "smtpd_data_restrictions =
-reject_unauth_pipelining" to block mail from SMTP clients that send
-message content before Postfix has replied to the SMTP DATA command.
-
-Other UCE related changes
-=========================
-
-[Feature 20020717] The SMTP server reject_unknown_{sender,recipient}_domain
-etc.  restrictions now also attempt to look up AAAA (IPV6 address)
-records.
-
-[Incompat 20020513] In order to allow user@domain@domain addresses
-from untrusted systems, specify "allow_untrusted_routing = yes" in
-main.cf.  This opens opportunities for mail relay attacks when
-Postfix provides backup MX service for Sendmail systems.
-
-[Incompat 20020514] For safety reasons, the permit_mx_backup
-restriction no longer accepts mail for user@domain@domain. To
-recover the old behavior, specify "allow_untrusted_routing = yes"
-and live with the risk of becoming a relay victim.
-
-[Incompat 20020509] The Postfix SMTP server no longer honors OK
-access rules for user@domain@postfix-style.virtual.domain, to close
-a relaying loophole with postfix-style virtual domains that have
-@domain.name catch-all patterns.
-
-[Incompat 20020201] In Postfix SMTPD access tables, Postfix now
-uses <> as the default lookup key for the null address, in order
-to work around bugs in some Berkeley DB implementations. This
-behavior is controlled with the smtpd_null_access_lookup_key
-configuration parameter.
-
-Changes in transport table lookups
-==================================
-
-[Feature 20020610] user@domain address lookups in the transport
-map.  This feature also understands address extensions.  Transport
-maps still support lookup keys in the form of domain names, but
-only with non-regexp tables.  Specify mailer-daemon@my.host.name
-in order to match the null address. More in the transport(5) manual
-page.
-
-[Feature 20020505] Friendlier behavior of Postfix transport tables.
-There is a new "*" wildcard pattern that always matches.  The
-meaning of null delivery transport AND nexhop information field
-has changed to "do not modify": use the information that would be
-used if the transport table did not exist. This change makes it
-easier to route intranet mail (everything under my.domain) directly:
-you no longer need to specify explicit "local" transport table
-entries for every domain name that resolves to the local machine.
-For more information, including examples, see the updated transport(5)
-manual page.
-
-[Incompat 20020610] Regexp/PCRE-based transport maps now see the
-entire recipient address instead of only the destination domain
-name.
-
-[Incompat 20020505, 20021215] The meaning of null delivery transport
-and nexhop fields has changed incompatibly.
-
-- A null delivery transport AND nexthop information field means
-"do not modify": use the delivery transport or nexthop information
-that would be used if no transport table did not exist.
-
-- The delivery transport is not changed with a null delivery
-transport field and non-null nexthop field.
-
-- The nexthop is reset to the recipient domain with a non-null
-transport field and a null nexthop information field.
-
-Address manipulation changes
-============================
-
-[Incompat 20020717] Postfix no longer strips multiple '.' characters
-from the end of an email address or domain name. Only one '.' is
-tolerated.
-
-[Feature 20020717] The masquerade_domains feature now supports
-exceptions.  Prepend a ! character to a domain name in order to
-not strip its subdomain structure.  More information in
-conf/sample-rewrite.cf.
-
-[Feature 20020717] The Postfix virtual delivery agent supports
-catch-all entries (@domain.tld) in lookup tables. These match users
-that do not have a specific user@domain.tld entry. The virtual
-delivery agent now ignores address extensions (user+foo@domain.tld)
-when searching its lookup tables, but displays the extensions in
-Delivered-To:  message headers.
-
-[Feature 20020610] user@domain address lookups in the transport
-map.  This feature also understands address extensions.  Transport
-maps still support lookup keys in the form of domain names, but
-only with non-regexp tables.  Specify mailer-daemon@my.host.name
-in order to match the null address. More in the transport(5) manual
-page.
-
-[Incompat 20020610] Regexp/PCRE-based transport maps now see the
-entire recipient address instead of only the destination domain
-name.
-
-[Incompat 20020513] In order to allow user@domain@domain addresses
-from untrusted systems, specify "allow_untrusted_routing = yes" in
-main.cf.  This opens opportunities for mail relay attacks when
-Postfix provides backup MX service for Sendmail systems.
-
-[Incompat 20020509] The Postfix SMTP server no longer honors OK
-access rules for user@domain@postfix-style.virtual.domain, to close
-a relaying loophole with postfix-style virtual domains that have
-@domain.name catch-all patterns.
-
-[Incompat 20020509] The appearance of user@domain1@domain2 addresses
-has changed.  In mail headers, such addresses are now properly
-quoted as "user@domain1"@domain2. As a side effect, this quoted
-form is now also expected on the left-hand side of virtual and
-canonical lookup tables, but only by some of the Postfix components.
-For now, it is better not to use user@domain1@domain2 address forms
-on the left-hand side of lookup tables.
-
-Regular expression and PCRE related changes
-===========================================
-
-[Feature 20021209] Regular expression maps are now allowed with
-local delivery agent alias tables and with all virtual delivery
-agent lookup tables.  However, regular expression substitution of
-$1 etc.  is still forbidden for security reasons.
-
-[Obsolete 20020917] In regexp lookup tables, the form /pattern1/!/pattern2/
-is going away. Use the cleaner and more flexible "if !/pattern2/..endif"
-form.  The old form still exists but is no longer documented, and
-causes a warning (suggesting to use the new format) to be logged.
-
-[Incompat 20020610] Regexp/PCRE-based transport maps now see the
-entire recipient address instead of only the destination domain
-name.
-
-[Incompat 20020528] With PCRE pattern matching, the `.' metacharacter
-now matches all characters including newline characters. This makes
-PCRE pattern matching more convenient to use with multi-line message
-headers, and also makes PCRE more compatible with regexp pattern
-matching.  The pcre_table(5) manual page has been greatly revised.
-
-New mail "HOLD" action and "hold" queue
-=======================================
-
-[Feature 20020819] New "hold" queue for mail that should not be
-delivered.  "postsuper -h" puts mail on hold, and "postsuper -H"
-releases mail, moving mail that was "on hold" to the deferred queue.
-
-[Feature 20020821] HOLD and DISCARD actions in SMTPD access tables.
-As with the header/body version of the same, these actions apply
-to all recipients of the same queue file.
-
-[Feature 20020819] New header/body HOLD action that causes mail to
-be placed on the "hold" queue. Presently, all you can do with mail
-"on hold" is to examine it with postcat, to take it "off hold" with
-"postsuper -H", or to destroy it with "postsuper -d". See
-conf/sample-filter.cf.
-
-[Incompat 20020819] In mailq output, the queue ID is followed by
-the ! character when the message is in the "hold" queue (see below).
-This may break programs that process mailq output.
-
-Content filtering
-=================
-
-[Feature 20020823] Selective content filtering. In in SMTPD access
-tables, specify "FILTER transport:nexthop" for mail that needs
-filtering. More info about content filtering is in the Postfix
-FILTER_README file.  This feature overrides the main.cf content_filter
-setting. Presently, this applies to all the recipients of a queue
-file.
-
-[Feature 20020527] Selective content filtering. In header/body_check
-patterns, specify "FILTER transport:nexthop" for mail that needs
-filtering. This requires different cleanup servers before and after
-the filter, with header/body checks turned off in the second cleanup
-server.  More info about content filtering is in the Postfix
-FILTER_README file.  This feature overrides the main.cf content_filter
-setting. Presently, this applies to all the recipients of a queue
-file.
-
-[Feature 20020527] Postfix now has real MIME support. This improves
-content filtering efficiency and accuracy, and improves inter-operability
-with mail systems that cannot receive 8-bit mail. See conf/sample-mime.cf
-for details.
-
-[Feature 20020527] Postfix header_checks now properly recognize
-MIME headers in attachments. This is much more efficient than
-previous versions that recognized MIME headers via body_checks.
-MIME headers are now processed one multi-line header at a time,
-instead of one body line at a time.  To get the old behavior,
-specify "disable_mime_input_processing = yes".  More details in
-conf/sample-filter.cf.
-
-[Feature 20020527] Postfix now has three classes of header patterns:
-header_checks (for primary message headers except MIME headers),
-mime_header_checks (for MIME headers), and nested_header_checks
-(for headers of attached email messages except MIME headers).  By
-default, all headers are matched with header_checks.
-
-[Feature 20021013] The body_checks_size_limit parameter limits the
-amount of text per message body segment (or attachment, if you
-prefer to use that term) that is subjected to body_checks inspection.
-The default limit is 50 kbytes. This speeds up the processing of
-mail with large attachments.
-
-[Feature 20020917] Speedups of regexp table lookups by optimizing
-for the $number substitutions that are actually present in the
-right-hand side.  Based on a suggestion by Liviu Daia.
-
-[Feature 20020917] Speedups of regexp and pcre tables, using
-IF..ENDIF support. Based on an idea by Bert Driehuis.  To protect
-a block of patterns, use:
-
-    if /pattern1/
-    /pattern2/	result2
-    /pattern3/	result3
-    endif
-
-IF..ENDIF can nest. Don't specify blanks at the beginning of lines
-inside IF..ENDIF, because lines beginning with whitespace are
-appended to the previous line. More details about the syntax are
-given in the pcre_table(5) and regexp_table(5) manual pages.
-
-Postmap/postalias/newaliases changes
-====================================
-
-[Incompat 20020505] The postalias command now copies the source
-file read permissions to the result file when creating a table for
-the first time. Until now, the result file was created with default
-read permissions.  This change makes postalias more similar to
-postmap.
-
-[Incompat 20020505] The postalias and postmap commands now drop
-super-user privileges when processing a non-root source file. The
-file is now processed as the source file owner, and the owner must
-therefore have permission to update the result file. Specify the
-"-o" flag to get the old behavior (process non-root files with root
-privileges).
-
-[Incompat 20020122] When the postmap command creates a non-existent
-result file, the new file inherits the group/other read permissions
-of the source file.
-
-Assorted changes
-================
-
-[Feature 20021028] The local(8) and virtual(8) delivery agents now record
-the original recipient address in the X-Original-To: message header.
-This header can also be emitted by the pipe(8) delivery agent.
-
-[Incompat 20021028] With "domain in one mailbox", one message with
-multiple recipients is no longer delivered only once. It is now
-delivered as one copy for each original recipient, with the original
-recipient address listed in the X-Original-To: message header.
-
-[Feature 20021024] New proxy_interfaces parameter, for sites behind a
-network address translation gateway or other type of proxy. You
-should specify all the proxy network addresses here, to avoid avoid
-mail delivery loops.
-
-[Feature 20021013] Updated MacOS X support by Gerben Wierda. See
-the auxiliary/MacOSX directory.
-
-[Incompat 20021013] Subtle change in ${name?result} macro expansions:
-the expansion no longer happens when $name is an empty string. This
-probably makes more sense than the old behavior.
-
-[Incompat 20020917] The relayhost setting now behaves as documented,
-i.e. you can no longer specify multiple destinations.
-
-[Incompatibility 20021219] The use of the XVERP extension in the
-SMTP MAIL FROM command is now restricted to SMTP clients that match
-the hostnames, domains or networks listed with the authorized_verp_clients
-parameter (default:  $mynetworks).
-
-[Feature 20020819] When the Postfix local delivery agent detects
-a mail delivery loop (usually the result of mis-configured mail
-pickup software), the undeliverable mail is now sent to the mailing
-list owner instead of the envelope sender address (usually the
-original poster who has no guilt, and who cannot fix the problem).
-
-[Warning 20020819] The Postfix queue manager now warns when mail
-for some destination is piling up in the active queue, and suggests
-a variety of remedies to speed up delivery (increase per-destination
-concurrency limit, increase active queue size, use a separate
-delivery transport, increase per-transport process limit).  The
-qmgr_clog_warn_time parameter controls the time between warnings.
-To disable these warnings, specify "qmgr_clog_warn_time = 0".
-
-[Warning 20020717] The Postfix SMTP client now logs a warning when
-the same domain is listed in main.cf:mydestination as well as a
-Postfix-style virtual map. Such a mis-configuration may cause mail
-for users to be rejected with "user unknown".
-
-[Feature 20020331] A new smtp_helo_name parameter that specifies
-the hostname to be used in HELO or EHLO commands; this can be more
-convenient than changing the myhostname parameter setting.
-
-[Feature 20020331] Choice between multiple instances of internal
-services:  bounce, cleanup, defer, error, flush, pickup, queue,
-rewrite, showq.  This allows you to use different cleanup server
-settings for different SMTP server instances.  For example, specify
-in the master.cf file:
-
-    localhost:10025 ... smtpd -o cleanup_service_name=cleanup2 ...
-    cleanup2        ... cleanup -o header_checks= body_checks= ...
-
-Logfile format changes
-======================
-
-[Incompat 20021209] The Postfix SMTP client no longer expands CNAMEs
-in MAIL FROM addresses (as permitted by RFC 2821) before logging
-the recipient address.
-
-[Incompat 20021028] The Postfix SMTP server UCE reject etc. logging
-now includes the queue ID, the mail protocol (SMTP or ESMTP), and
-the hostname that was received with the HELO or EHLO command, if
-available.
-
-[Incompat 20021028] The Postfix header/body_checks logging now
-includes the mail protocol (SMTP, ESMTP, QMQP) and the hostname
-that was received with the SMTP HELO or EHLO command, if available.
-
-[Incompat 20021028] The Postfix status=sent/bounced/deferred logging
-now shows the original recipient address (as received before any
-address rewriting or aliasing).  The original recipient address is
-logged only when it differs from the final recipient address.
-
-[Incompat 20020923] The default RBL "reject" server reply now
-includes an indication of *what* is being rejected: Client host,
-Helo command, Sender address, or Recipient address. This also
-changes the logfile format.
-
-LDAP related changes
-====================
-
-[Incompat 20020819] LDAP API version 1 is no longer supported. The
-memory allocation and deallocation strategy has changed too much
-to maintain both version 1 and 2 at the same time.
-
-[Feature 20020513] Updated LDAP client module with better handling
-of dead LDAP servers, and with configurable filtering of query
-results.
-
-SASL related changes
-====================
-
-[Incompat 20020819] The smtpd_sasl_local_domain setting now defaults
-to the null string, rather than $myhostname. This seems to work
-better with Cyrus SASL version 2. This change may cause incompatibility
-with the saslpasswd2 command.
-
-[Feature 20020331] Support for the Cyrus SASL version 2 library,
-contributed by Jason Hoos. This adds some new functionality that
-was not available in Cyrus SASL version 1, and provides bit-rot
-insurance for the time when Cyrus SASL version 1 eventually stops
-working.
-
-Berkeley DB related changes
-===========================
-
-[Feature 20020505] Finer control over Berkeley DB memory usage,
-The parameter "berkeley_db_create_buffer_size" (default:  16 MBytes)
-specifies the buffer size for the postmap and postalias commands.
-The parameter "berkeley_db_read_buffer_size" (default:  256 kBytes)
-specifies the buffer size for all other applications.  Specify
-"berkeley_db_read_buffer_size = 1048576" to get the old read buffer
-size. For more information, see the last paragraphs of the DB_README
-file.
-
-[Incompat 20020201] In Postfix SMTPD access tables, Postfix now
-uses <> as the default lookup key for the null address, in order
-to work around bugs in some Berkeley DB implementations. This
-behavior is controlled with the smtpd_null_access_lookup_key
-configuration parameter.
-
-[Incompat 20020201] Postfix now detects if the run-time Berkeley
-DB library routines do not match the major version number of the
-compile-time include file that was used for compiling Postfix. The
-software issues a warning and aborts in case of a discrepancy. If
-it didn't, the software was certain to crash with a segmentation
-violation.
-
-Assorted workarounds
-====================
-
-[Incompat 20020201] On SCO 3.2 UNIX, the input rate flow control
-is now turned off by default, because of limitations in the SCO
-UNIX kernel.

@@ -68,6 +68,7 @@
 #include <been_here.h>
 #include <mail_params.h>
 #include <ext_prop.h>
+#include <sent.h>
 
 /* Application-specific. */
 
@@ -106,16 +107,20 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * enabled.
      */
     if (*path != '/')
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	return (bounce_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
 			      ":include:%s uses a relative path", path));
     if (stat_as(path, &st, usr_attr.uid, usr_attr.gid) < 0)
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
-			      "unable to lookup file %s: %m", path));
+	return (bounce_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
+			      "unable to lookup include file %s: %m", path));
     if (S_ISREG(st.st_mode) == 0)
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	return (bounce_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
 			      "not a regular include file: %s", path));
     if (st.st_mode & S_IWOTH)
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	return (bounce_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
 			      "world writable include file: %s", path));
 
     /*
@@ -141,7 +146,8 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     if (usr_attr.uid == 0) {
 	if ((file_pwd = mypwuid(st.st_uid)) == 0) {
 	    msg_warn("cannot find username for uid %ld", (long) st.st_uid);
-	    return (defer_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	    return (defer_append(BOUNCE_FLAGS(state.request),
+				 BOUNCE_ATTR(state.msg_attr),
 			     "%s: cannot find :include: file owner", path));
 	}
 	if (file_pwd->pw_uid != 0)
@@ -177,7 +183,8 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 				vstream_fdopen(fd,O_RDONLY) : 0)
 
     if ((fp = FOPEN_AS(path, usr_attr.uid, usr_attr.gid)) == 0) {
-	status = bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	status = bounce_append(BOUNCE_FLAGS(state.request),
+			       BOUNCE_ATTR(state.msg_attr),
 			       "cannot open include file %s: %m", path);
     } else {
 	if ((local_ext_prop_mask & EXT_PROP_INCLUDE) == 0)

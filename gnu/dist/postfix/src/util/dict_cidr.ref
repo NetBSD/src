@@ -1,0 +1,13 @@
+./dict_open: warning: cidr map dict_cidr.map, line 5: net/mask pattern "172.16.1.3/21" with non-null host portion: skipping this rule
+./dict_open: warning: specify "172.16.0.0/21" if this is really what you want
+./dict_open: warning: cidr map dict_cidr.map, line 6: bad net/mask pattern: "172.16.1.3/33": skipping this rule
+./dict_open: warning: cidr map dict_cidr.map, line 7: bad net/mask pattern: "172.999.0.0/21": skipping this rule
+./dict_open: warning: cidr map dict_cidr.map, line 8: bad address pattern: "172.16.1.999": skipping this rule
+./dict_open: warning: cidr map dict_cidr.map, line 9: no lookup result: skipping this rule
+172.16.0.0=554 match bad netblock 172.16.0.0/21
+172.16.0.1=554 match bad netblock 172.16.0.0/21
+172.16.7.255=554 match bad netblock 172.16.0.0/21
+172.16.8.1=554 match bad netblock 172.16.8.0/21
+172.16.17.1=554 match bad netblock 172.16.0.0/16
+172.17.1.1=554 match bad naked address
+172.17.1.2: not found

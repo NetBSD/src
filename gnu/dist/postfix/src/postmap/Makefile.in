@@ -3,9 +3,6 @@ SRCS	= postmap.c
 OBJS	= postmap.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= 
@@ -87,6 +84,7 @@ postmap.o: ../../include/vstring.h
 postmap.o: ../../include/vbuf.h
 postmap.o: ../../include/vstream.h
 postmap.o: ../../include/msg_vstream.h
+postmap.o: ../../include/msg_syslog.h
 postmap.o: ../../include/readlline.h
 postmap.o: ../../include/stringops.h
 postmap.o: ../../include/split_at.h
@@ -98,3 +96,4 @@ postmap.o: ../../include/mail_params.h
 postmap.o: ../../include/mkmap.h
 postmap.o: ../../include/dict.h
 postmap.o: ../../include/argv.h
+postmap.o: ../../include/mail_task.h

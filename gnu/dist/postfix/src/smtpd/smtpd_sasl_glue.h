@@ -12,7 +12,7 @@
   * SASL protocol interface
   */
 extern void smtpd_sasl_initialize(void);
-extern void smtpd_sasl_connect(SMTPD_STATE *);
+extern void smtpd_sasl_connect(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_disconnect(SMTPD_STATE *);
 extern char *smtpd_sasl_authenticate(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_logout(SMTPD_STATE *);

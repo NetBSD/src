@@ -1,0 +1,241 @@
+PPoossttffiixx LLooookkuupp TTaabbllee OOvveerrvviieeww
+
+-------------------------------------------------------------------------------
+
+OOvveerrvviieeww
+
+This document covers the following topics:
+
+  * The Postfix lookup table model
+  * Postfix lists versus tables
+  * Preparing Postfix for LDAP or SQL lookups
+  * Maintaining Postfix lookup table files
+  * Updating Berkeley DB files safely
+  * Postfix lookup table types
+
+TThhee PPoossttffiixx llooookkuupp ttaabbllee mmooddeell
+
+Postfix uses lookup tables to store and look up information for access control,
+address rewriting and even for content filtering. All Postfix lookup tables are
+specified as "type:table", where "type" is one of the database types described
+under "Postfix lookup table types" at the end of this document, and where
+"table" is the lookup table name. The Postfix documentation uses the terms
+"database" and "lookup table" for the same thing.
+
+Examples of lookup tables that appear often in the Postfix documentation:
+
+    /etc/postfix/main.cf:
+        alias_maps = hash:/etc/postfix/aliases            (local aliasing)
+        header_checks = regexp:/etc/postfix/header_checks (content filtering)
+        transport_maps = hash:/etc/postfix/transport      (routing table)
+        virtual_alias_maps = hash:/etc/postfix/virtual    (address rewriting)
+
+All Postfix lookup tables store information as (key, value) pairs. This
+interface may seem simplistic at first, but it turns out to be very powerful.
+The (key, value) query interface completely hides the complexities of LDAP or
+SQL from Postfix. This is a good example of connecting complex systems with
+simple interfaces.
+
+Benefits of the Postfix (key, value) query interface:
+
+  * You can implement Postfix lookup tables first with local Berkeley DB files
+    and then switch to LDAP or MySQL without any impact on the Postfix
+    configuration itself, as described under "Preparing Postfix for LDAP or SQL
+    lookups" below.
+  * You can use Berkeley DB files with fixed lookup strings for simple address
+    rewriting operations and you can use regular expression tables for the more
+    complicated work.
+
+PPoossttffiixx lliissttss vveerrssuuss ttaabblleess
+
+Most Postfix lookup tables are used to look up information. Examples are
+address rewriting (the lookup string is the old address, and the result is the
+new address) or access control (the lookup string is the client, sender or
+recipient, and the result is an action such as "reject").
+
+With some tables, however, Postfix needs to know only if the lookup key exists.
+The lookup result itself is not used. Examples are the local_recipient_maps
+that determine what local recipients Postfix accepts in mail from the network,
+the mydestination parameter that specifies what domains Postfix delivers
+locally, or the mynetworks parameter that specifies the IP addresses of trusted
+clients or client networks. Technically, these are lists, not tables. Despite
+the difference, Postfix lists are described here because they use the same
+underlying infrastructure as Postfix lookup tables.
+
+PPrreeppaarriinngg PPoossttffiixx ffoorr LLDDAAPP oorr SSQQLL llooookkuuppss
+
+LDAP and SQL are complex systems. Trying to set up both Postfix and LDAP or SQL
+at the same time is definitely not a good idea. You can save yourself a lot of
+time by implementing Postfix first with local files such as Berkeley DB. Local
+files have few surprises, and are easy to debug with the postmap(1) command:
+
+    % ppoossttmmaapp --qq iinnffoo@@eexxaammppllee..ccoomm hhaasshh:://eettcc//ppoossttffiixx//vviirrttuuaall
+
+Once you have local files working properly you can follow the instructions in
+ldap_table(5), mysql_table(5) or pgsql_table(5) and replace local file lookups
+with LDAP or SQL lookups. When you do this, you should use the postmap(1)
+command again, to verify that database lookups still produce the exact same
+results as local file lookup:
+
+    % ppoossttmmaapp --qq iinnffoo@@eexxaammppllee..ccoomm llddaapp:://eettcc//ppoossttffiixx//vviirrttuuaall..ccff
+
+Be sure to exercise all the partial address or parent domain queries that are
+documented under "table search order" in the relevant manual page: access(5),
+canonical(5), virtual(5), transport(5), or under the relevant configuration
+parameter: mynetworks, relay_domains, parent_domain_matches_subdomains.
+
+MMaaiinnttaaiinniinngg PPoossttffiixx llooookkuupp ttaabbllee ffiilleess
+
+When you make changes to a database while the mail system is running, it would
+be desirable if Postfix avoids reading information while that information is
+being changed. It would also be nice if you can change a database without
+having to execute "postfix reload", in order to force Postfix to use the new
+information. Each time you do "postfix reload" Postfix loses a lot of
+performance.
+
+  * If you change a network database such as LDAP, NIS or SQL, there is no need
+    to execute "postfix reload". The LDAP, NIS or SQL server takes care of
+    read/write access conflicts and gives the new data to Postfix once that
+    data is available.
+
+  * If you change a regexp: or pcre: file then Postfix may or may not pick up
+    the file changes immediately. This is because a Postfix process reads the
+    entire file into memory once and never examines the file again.
+
+      o If the file is used by a short-running process such as smtpd(8),
+        cleanup(8) or local(8), there is no need to execute "postfix reload"
+        after making a change.
+
+      o If the file is being used by a long-running process such as trivial-
+        rewrite(8) on a busy server it may be necessary to execute "postfix
+        reload".
+
+  * If you change a local file based database such as DBM or Berkeley DB, there
+    is no need to execute "postfix reload". Postfix uses file locking to avoid
+    read/write access conflicts, and whenever a Postfix daemon process notices
+    that a file has changed it will terminate before handling the next client
+    request, so that a new process can initialize with the new database.
+
+UUppddaattiinngg BBeerrkkeelleeyy DDBB ffiilleess ssaaffeellyy
+
+Although Postfix uses file locking to avoid access conflicts while updating
+Berkeley DB or other local database files, you still have a problem when the
+update fails because the disk is full or because something else happens. This
+is because commands such as postmap(1) or postalias(1) overwrite existing
+files. If the update fails in the middle then you have no usable database, and
+Postfix will stop working.
+
+With multi-file databases such as DBM, there is no simple solution. With
+Berkeley DB and other "one file" databases, it is possible to add some extra
+robustness by using "mv" to REPLACE an existing database file instead of
+overwriting it:
+
+    # ppoossttmmaapp aacccceessss..iinn &&&& mmvv aacccceessss..iinn..ddbb aacccceessss..ddbb
+
+This converts the input file "access.in" into the output file "access.in.db",
+and replaces the file "access.db" only when the postmap(1) command was
+successful. Of course typing such commands becomes boring quickly, and this is
+why people use "make" instead, as shown below. User input is shown in bold
+font.
+
+    # ccaatt MMaakkeeffiillee
+    all: aliases.db access.db virtual.db ...etcetera...
+
+    # Note 1: commands are specified after a TAB character.
+    # Note 2: use postalias(1) for local aliases, postmap(1) for the rest.
+    aliases.db: aliases.in
+    	postalias aliases.in
+    	mv aliases.in.db aliases.db
+
+    access.db: access.in
+    	postmap access.in
+    	mv access.in.db access.db
+
+    virtual.db: virtual.in
+    	postmap virtual.in
+    	mv virtual.in.db virtual.db
+
+    ...etcetera...
+    # vvii aacccceessss..iinn
+    ...editing session not shown...
+    # mmaakkee
+    postmap access.in
+    mv access.in.db access.db
+    #
+
+The "make" command updates only the files that have changed. In case of error,
+the "make" command will stop and will not invoke the "mv" command, so that
+Postfix will keep using the existing database file as if nothing happened.
+
+PPoossttffiixx llooookkuupp ttaabbllee ttyyppeess
+
+To find out what database types your Postfix system supports, use the "postconf
+-m" command. Here is a list of database types that are often supported:
+
+    bbttrreeee
+        A sorted, balanced tree structure. This is available only on systems
+        with support for Berkeley DB databases. Database files are created with
+        the postmap(1) or postalias(1) command. The lookup table name as used
+        in "btree:table" is the database file name without the ".db" suffix.
+    cciiddrr
+        A table that associates values with Classless Inter-Domain Routing
+        (CIDR) patterns. The table format is described in cidr_table(5).
+    ddbbmm
+        An indexed file type based on hashing. This is available only on
+        systems with support for DBM databases. Database files are created with
+        the postmap(1) or postalias(1) command. The lookup table name as used
+        in "dbm:table" is the database file name without the ".dir" or ".pag"
+        suffix.
+    eennvviirroonn
+        The UNIX process environment array. The lookup key is the variable
+        name. The lookup table name in "environ:table" is ignored.
+    hhaasshh
+        An indexed file type based on hashing. This is available only on
+        systems with support for Berkeley DB databases. Database files are
+        created with the postmap(1) or postalias(1) command. The database name
+        as used in "hash:table" is the database file name without the ".db"
+        suffix.
+    llddaapp (read-only)
+        Perform lookups using the LDAP protocol. Configuration details are
+        given in the ldap_table(5).
+    mmyyssqqll (read-only)
+        Perform MySQL database lookups. Configuration details are given in
+        mysql_table(5).
+    ppccrree (read-only)
+        A lookup table based on Perl Compatible Regular Expressions. The file
+        format is described in pcre_table(5). The lookup table name as used in
+        "pcre:table" is the name of the regular expression file.
+    ppggssqqll (read-only)
+        Perform PostgreSQL database lookups. Configuration details are given in
+        pgsql_table(5).
+    pprrooxxyy (read-only)
+        Access information via the Postfix proxymap(8) service. The lookup
+        table name syntax is "proxy:type:table".
+    rreeggeexxpp (read-only)
+        A lookup table based on regular expressions. The file format is
+        described in regexp_table(5). The lookup table name as used in "regexp:
+        table" is the name of the regular expression file.
+    ssttaattiicc (read-only)
+        Always returns its lookup table name as lookup result. For example, the
+        lookup table "static:foobar" always returns the string "foobar" as
+        lookup result.
+    ttccpp
+        Access information through a TCP/IP server. The protocol is described
+        in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
+        specifies a symbolic hostname or a numeric IP address, and "port"
+        specifies a symbolic service name or a numeric port number. This
+        protocol is not available in Postfix version 2.1.
+    uunniixx (read-only)
+        A limited way to query the UNIX authentication database. The following
+        tables are implemented:
+        uunniixx::ppaasssswwdd..bbyynnaammee
+            The table is the UNIX password database. The key is a login name.
+            The result is a password file entry in passwd(5) format.
+        uunniixx::ggrroouupp..bbyynnaammee
+            The table is the UNIX group database. The key is a group name. The
+            result is a group file entry in group(5) format.
+
+Other lookup table types may be available depending on how Postfix was built.
+With some Postfix distributions the list is dynamically extensible as support
+for lookup tables is dynamically linked into Postfix.
+

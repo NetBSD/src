@@ -3,11 +3,11 @@ WARN    = -Wmissing-prototypes -Wformat
 OPTS	= 'CC=$(CC)'
 DIRS	= src/util src/global src/dns src/master src/postfix src/smtpstone \
 	src/sendmail src/error src/pickup src/cleanup src/smtpd src/local \
-	src/lmtp src/trivial-rewrite src/qmgr src/smtp src/bounce src/pipe \
-	src/showq src/postalias src/postcat src/postconf src/postdrop \
+	src/lmtp src/trivial-rewrite src/qmgr src/oqmgr src/smtp src/bounce \
+	src/pipe src/showq src/postalias src/postcat src/postconf src/postdrop \
 	src/postkick src/postlock src/postlog src/postmap src/postqueue \
-	src/postsuper src/nqmgr src/qmqpd src/spawn src/flush src/virtual \
-	src/proxymap
+	src/postsuper src/qmqpd src/spawn src/flush src/verify \
+	src/virtual src/proxymap
 MANDIRS	= proto man html
 
 default: update
@@ -18,6 +18,9 @@ makefiles Makefiles:
 	 $(MAKE) -f Makefile.in Makefile MAKELEVEL=) || exit 1; \
 	done;
 	rm -f Makefile; (set -e; $(SHELL) makedefs && cat Makefile.in) >Makefile
+	(echo "# Do not edit -- this file documents how Postfix was built for your machine."; $(SHELL) makedefs) >makedefs.tmp
+	set +e; if cmp makedefs.tmp conf/makedefs.out; then rm makedefs.tmp; \
+	else mv makedefs.tmp conf/makedefs.out; fi >/dev/null 2>/dev/null
 
 update printfck tests:
 	set -e; for i in $(DIRS); do \

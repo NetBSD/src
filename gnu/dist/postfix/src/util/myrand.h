@@ -14,6 +14,10 @@
  /*
   * External interface.
   */
+#ifndef RAND_MAX
+#define RAND_MAX 0x7fffffff
+#endif
+
 extern void mysrand(int);
 extern int myrand(void);
 

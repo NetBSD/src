@@ -6,10 +6,11 @@
 /* SYNOPSIS
 /*	#include <clnt_stream.h>
 /*
-/*	CLNT_STREAM *clnt_stream_create(class, service, timeout)
+/*	CLNT_STREAM *clnt_stream_create(class, service, timeout, ttl)
 /*	const char *class;
 /*	const char *service;
 /*	int	timeout;
+/*	int	ttl;
 /*
 /*	VSTREAM	*clnt_stream_access(clnt_stream)
 /*	CLNT_STREAM *clnt_stream;
@@ -22,6 +23,7 @@
 /* DESCRIPTION
 /*	This module maintains local IPC client endpoints that automatically
 /*	disconnect after a being idle for a configurable amount of time,
+/*	that disconnect after a configurable time to live,
 /*	and that transparently handle most server-initiated disconnects.
 /*	Server disconnect is detected by read-selecting the client endpoint.
 /*	The code assumes that the server has disconnected when the endpoint
@@ -36,6 +38,17 @@
 /*	that happened in the middle of an I/O operation.
 /*
 /*	clnt_stream_free() destroys of the specified client endpoint.
+/*
+/*	Arguments:
+/* .IP class
+/*	The service class, private or public.
+/* .IP service
+/*	The service endpoint name. The name is limited to local IPC
+/*	over sockets or equivalent.
+/* .IP timeout
+/*	Idle time after which the client disconnects.
+/* .IP ttl
+/*	Upper bound on the time that a connection is allowed to persist.
 /* DIAGNOSTICS
 /*	Warnings: communication failure. Fatal error: mail system is down,
 /*	out of memory.
@@ -79,6 +92,7 @@
 struct CLNT_STREAM {
     VSTREAM *vstream;			/* buffered I/O */
     int     timeout;			/* time before client disconnect */
+    int     ttl;			/* time before client disconnect */
     char   *class;			/* server class */
     char   *service;			/* server name */
 };
@@ -101,6 +115,26 @@ static void clnt_stream_event(int unused_event, char *context)
     clnt_stream_close(clnt_stream);
 }
 
+/* clnt_stream_ttl_event - client-side expiration */
+
+static void clnt_stream_ttl_event(int event, char *context)
+{
+
+    /*
+     * XXX This function is needed only because event_request_timer() cannot
+     * distinguish between requests that specify the same call-back routine
+     * and call-back context. The fix is obvious: specify a request ID along
+     * with the call-back routine, but there is too much code that would have
+     * to be changed.
+     * 
+     * XXX Should we be concerned that an overly agressive optimizer will
+     * eliminate this function and replace calls to clnt_stream_ttl_event()
+     * by direct calls to clnt_stream_event()? It should not, because there
+     * exists code that takes the address of both functions.
+     */
+    clnt_stream_event(event, context);
+}
+
 /* clnt_stream_open - connect to service */
 
 static void clnt_stream_open(CLNT_STREAM *clnt_stream)
@@ -116,6 +150,10 @@ static void clnt_stream_open(CLNT_STREAM *clnt_stream)
      * Schedule a read event so that we can clean up when the remote side
      * disconnects, and schedule a timer event so that we can cleanup an idle
      * connection. Note that both events are handled by the same routine.
+     * 
+     * Finally, schedule an event to force disconnection even when the
+     * connection is not idle. This is to prevent one client from clinging on
+     * to a server forever.
      */
     clnt_stream->vstream = mail_connect_wait(clnt_stream->class,
 					     clnt_stream->service);
@@ -124,6 +162,8 @@ static void clnt_stream_open(CLNT_STREAM *clnt_stream)
 		      (char *) clnt_stream);
     event_request_timer(clnt_stream_event, (char *) clnt_stream,
 			clnt_stream->timeout);
+    event_request_timer(clnt_stream_ttl_event, (char *) clnt_stream,
+			clnt_stream->ttl);
 }
 
 /* clnt_stream_close - disconnect from service */
@@ -144,6 +184,7 @@ static void clnt_stream_close(CLNT_STREAM *clnt_stream)
 	msg_info("%s stream disconnect", clnt_stream->service);
     event_disable_readwrite(vstream_fileno(clnt_stream->vstream));
     event_cancel_timer(clnt_stream_event, (char *) clnt_stream);
+    event_cancel_timer(clnt_stream_ttl_event, (char *) clnt_stream);
     (void) vstream_fclose(clnt_stream->vstream);
     clnt_stream->vstream = 0;
 }
@@ -167,8 +208,13 @@ VSTREAM *clnt_stream_access(CLNT_STREAM *clnt_stream)
 
     /*
      * Open a stream or restart the idle timer.
+     * 
+     * Important! Do not restart the TTL timer!
      */
     if (clnt_stream->vstream == 0) {
+	clnt_stream_open(clnt_stream);
+    } else if (readable(vstream_fileno(clnt_stream->vstream))) {
+	clnt_stream_close(clnt_stream);
 	clnt_stream_open(clnt_stream);
     } else {
 	event_request_timer(clnt_stream_event, (char *) clnt_stream,
@@ -180,7 +226,7 @@ VSTREAM *clnt_stream_access(CLNT_STREAM *clnt_stream)
 /* clnt_stream_create - create client stream connection */
 
 CLNT_STREAM *clnt_stream_create(const char *class, const char *service,
-				        int timeout)
+				        int timeout, int ttl)
 {
     CLNT_STREAM *clnt_stream;
 
@@ -190,6 +236,7 @@ CLNT_STREAM *clnt_stream_create(const char *class, const char *service,
     clnt_stream = (CLNT_STREAM *) mymalloc(sizeof(*clnt_stream));
     clnt_stream->vstream = 0;
     clnt_stream->timeout = timeout;
+    clnt_stream->ttl = ttl;
     clnt_stream->class = mystrdup(class);
     clnt_stream->service = mystrdup(service);
     return (clnt_stream);

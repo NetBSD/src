@@ -3,9 +3,6 @@ SRCS	= smtp-source.c smtp-sink.c qmqp-source.c qmqp-sink.c
 OBJS	= smtp-source.o smtp-sink.o qmqp-source.o qmqp-sink.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= 

@@ -6,7 +6,7 @@
 >>> smtpd_delay_reject 0
 OK
 >>> #
->>> # Test the nex access map features
+>>> # Test the new access map features
 >>> #
 >>> sender_restrictions hash:./smtpd_check_access
 OK

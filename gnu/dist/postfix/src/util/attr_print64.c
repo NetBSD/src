@@ -6,7 +6,7 @@
 /* SYNOPSIS
 /*	#include <attr.h>
 /*
-/*	int	attr_print64(fp, flags, type, name, ...)
+/*	int	attr_print64(fp, flags, type, name, ..., ATTR_TYPE_END)
 /*	VSTREAM	fp;
 /*	int	flags;
 /*	int	type;
@@ -18,9 +18,8 @@
 /*	va_list	ap;
 /* DESCRIPTION
 /*	attr_print64() takes zero or more (name, value) simple attributes
-/*	or (name, count, value) list attributes, and converts its input
-/*	to a byte stream that can be recovered with attr_scan64(). The stream
-/*	is not flushed.
+/*	and converts its input to a byte stream that can be recovered with
+/*	attr_scan64(). The stream is not flushed.
 /*
 /*	attr_vprint64() provides an alternate interface that is convenient
 /*	for calling from within variadoc functions.
@@ -53,8 +52,9 @@
 /*	This argument is followed by an attribute name and a null-terminated
 /*	string.
 /* .IP "ATTR_TYPE_HASH (HTABLE *)"
-/*	The content of the hash table is sent as a sequence of string-valued
-/*	attributes with names equal to the hash table lookup key.
+/* .IP "ATTR_TYPE_NAMEVAL (NVTABLE *)"
+/*	The content of the table is sent as a sequence of string-valued
+/*	attributes with names equal to the table lookup keys.
 /* .IP ATTR_TYPE_END
 /*	This terminates the attribute list.
 /* .RE
@@ -160,6 +160,7 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
 	    int_val = va_arg(ap, int);
 	    VSTREAM_PUTC(':', fp);
 	    attr_print64_num(fp, (unsigned) int_val);
+	    VSTREAM_PUTC('\n', fp);
 	    if (msg_verbose)
 		msg_info("send attr %s = %u", attr_name, int_val);
 	    break;
@@ -169,6 +170,7 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
 	    long_val = va_arg(ap, long);
 	    VSTREAM_PUTC(':', fp);
 	    attr_print64_long_num(fp, (unsigned long) long_val);
+	    VSTREAM_PUTC('\n', fp);
 	    if (msg_verbose)
 		msg_info("send attr %s = %lu", attr_name, long_val);
 	    break;
@@ -178,6 +180,7 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
 	    str_val = va_arg(ap, char *);
 	    VSTREAM_PUTC(':', fp);
 	    attr_print64_str(fp, str_val, strlen(str_val));
+	    VSTREAM_PUTC('\n', fp);
 	    if (msg_verbose)
 		msg_info("send attr %s = %s", attr_name, str_val);
 	    break;
@@ -187,18 +190,16 @@ int     attr_vprint64(VSTREAM *fp, int flags, va_list ap)
 		attr_print64_str(fp, ht[0]->key, strlen(ht[0]->key));
 		VSTREAM_PUTC(':', fp);
 		attr_print64_str(fp, ht[0]->value, strlen(ht[0]->value));
+		VSTREAM_PUTC('\n', fp);
 		if (msg_verbose)
 		    msg_info("send attr name %s value %s",
 			     ht[0]->key, ht[0]->value);
-		if (ht[1] != 0)
-		    VSTREAM_PUTC('\n', fp);
 	    }
 	    myfree((char *) ht_info_list);
 	    break;
 	default:
 	    msg_panic("%s: unknown type code: %d", myname, attr_type);
 	}
-	VSTREAM_PUTC('\n', fp);
     }
     if ((flags & ATTR_FLAG_MORE) == 0)
 	VSTREAM_PUTC('\n', fp);
