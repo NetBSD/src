@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.210 2005/02/27 15:29:37 perry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.211 2005/03/19 22:00:27 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
+ *	NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -100,6 +100,7 @@
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
+#define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft Corporation */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
 #define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
@@ -390,6 +391,10 @@
 /* Melco Products */
 #define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
+
+/* Microsoft Products */
+#define	PCMCIA_CIS_MICROSOFT_MN_520	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MICROSOFT_MN_520	0x0001
 
 /* Motorola Products */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
