@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.15 2005/01/10 22:01:37 kent Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.16 2005/01/11 03:45:17 kent Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.15 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.16 2005/01/11 03:45:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,10 @@ static int	cs4231_ebus_round_blocksize(void *, int, int,
 					    const audio_params_t *);
 static int	cs4231_ebus_trigger_output(void *, void *, void *, int,
 					   void (*)(void *), void *,
-					   struct audio_params *);
+					   const audio_params_t *);
 static int	cs4231_ebus_trigger_input(void *, void *, void *, int,
 					  void (*)(void *), void *,
-					  struct audio_params *);
+					  const audio_params_t *);
 static int	cs4231_ebus_halt_output(void *);
 static int	cs4231_ebus_halt_input(void *);
 
@@ -123,7 +123,7 @@ static int	cs4231_ebus_trigger_transfer(struct cs4231_softc *,
 			struct cs_transfer *,
 			bus_space_tag_t, bus_space_handle_t,
 			int, void *, void *, int, void (*)(void *), void *,
-			struct audio_params *);
+			const audio_params_t *);
 static void	cs4231_ebus_dma_advance(struct cs_transfer *,
 					bus_space_tag_t, bus_space_handle_t);
 static int	cs4231_ebus_dma_intr(struct cs_transfer *,
@@ -307,7 +307,7 @@ cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
 	int blksize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	u_int32_t csr;
 	bus_addr_t dmaaddr;
@@ -347,7 +347,7 @@ cs4231_ebus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
@@ -378,7 +378,7 @@ cs4231_ebus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
