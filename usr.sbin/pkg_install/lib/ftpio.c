@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20 2000/06/18 01:29:17 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.1 2000/07/13 03:17:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20 2000/06/18 01:29:17 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.1 2000/07/13 03:17:59 hubertf Exp $");
 #endif
 
 /*
@@ -520,7 +520,6 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		 * in findmatchingname() */
 		while (fgets(filename, sizeof(buf), f)) {
 			filename[strlen(filename)-1] = '\0';
-fprintf(stderr, "HF: pkg='%s', filename='%s'\n", pkg, filename);
 			if (pmatch(pkg, filename)) {
 				matches++;
 
