@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.95 2000/01/04 06:30:04 chopps Exp $
+#	$NetBSD: files.isa,v 1.96 2000/02/24 18:49:06 ad Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -101,6 +101,11 @@ file	dev/isa/esp_isa.c		esp_isa
 # device declaration in sys/conf/files
 attach	bha at isa with bha_isa: isadma
 file	dev/isa/bha_isa.c		bha_isa
+
+# DPT SmartCache/SmartRAID III/IV ISA family
+# device declaration in sys/conf/files
+attach	dpt at isa with dpt_isa: isadma
+file	dev/isa/dpt_isa.c		dpt_isa
 
 # Seagate ST0[12] ICs
 device	sea: scsi, isadma
