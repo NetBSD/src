@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.98 2002/06/02 18:40:44 jmcneill Exp $
+# $NetBSD: mi,v 1.99 2002/06/03 01:45:15 jmcneill Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -104,7 +104,7 @@
 ./etc/rc.d/lkm3				etc-sys-rc
 ./etc/rc.d/local			etc-sys-rc
 ./etc/rc.d/lpd				etc-lpr-rc
-./etc/rc.d/mixerctl			etc-sys-rc
+./etc/rc.d/mixerctl			etc-audio-rc
 ./etc/rc.d/mopd				etc-bootserver-rc
 ./etc/rc.d/motd				etc-sys-rc
 ./etc/rc.d/mountall			etc-sys-rc
