@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.55 2002/01/31 20:15:14 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.56 2002/03/20 00:23:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.55 2002/01/31 20:15:14 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.56 2002/03/20 00:23:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.55 2002/01/31 20:15:14 christos Exp $");
 #include <netinet6/pim6_var.h>
 #endif /* INET6 */
 
+#include "../../sys/compat/linux/common/linux_exec.h"
+
 #ifdef IPSEC
 #include <net/route.h>
 #include <netinet6/ipsec.h>
@@ -123,6 +125,9 @@ struct ctlname debugname[CTL_DEBUG_MAXID];
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
+struct ctlname emulname[] = CTL_EMUL_NAMES;
+struct ctlname vendorname[] = { { 0, 0 } };
+
 /* this one is dummy, it's used only for '-a' or '-A' */
 struct ctlname procname[] = { {0, 0}, {"curproc", CTLTYPE_NODE} };
 
@@ -149,6 +154,9 @@ struct list secondlevel[] = {
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
 	{ ddbname, DDBCTL_MAXID },	/* CTL_DDB_NAMES */
 	{ procname, 2 },		/* dummy name */
+	{ vendorname, 0 },		/* CTL_VENDOR_NAMES */
+	{ emulname, EMUL_MAXID },	/* CTL_EMUL_NAMES */
+
 	{ 0, 0},
 };
 
@@ -177,15 +185,24 @@ static int sysctl_inet(char *, char **, int[], int, int *);
 #ifdef INET6
 static int sysctl_inet6(char *, char **, int[], int, int *);
 #endif
-#ifdef IPSEC
-static int sysctl_key(char *, char **, int[], int, int *);
-#endif
 static int sysctl_vfs(char *, char **, int[], int, int *);
-static int sysctl_vfsgen(char *, char **, int[], int, int *);
-static int sysctl_mbuf(char *, char **, int[], int, int *);
-static int sysctl_pipe(char *, char **, int[], int, int *);
 static int sysctl_proc(char *, char **, int[], int, int *);
-static int sysctl_tkstat(char *, char **, int[], int, int *);
+static int sysctl_3rd(struct list *, char *, char **, int[], int, int *);
+
+#ifdef IPSEC
+struct ctlname keynames[] = KEYCTL_NAMES;
+struct list keyvars = { keynames, KEYCTL_MAXID };
+#endif /*IPSEC*/
+struct ctlname vfsgenname[] = CTL_VFSGENCTL_NAMES;
+struct list vfsgenvars = { vfsgenname, VFSGEN_MAXID };
+struct ctlname mbufnames[] = CTL_MBUF_NAMES;
+struct list mbufvars = { mbufnames, MBUF_MAXID };
+struct ctlname pipenames[] = CTL_PIPE_NAMES;
+struct list pipevars = { pipenames, KERN_PIPE_MAXID };
+struct ctlname tkstatnames[] = KERN_TKSTAT_NAMES;
+struct list tkstatvars = { tkstatnames, KERN_TKSTAT_MAXID };
+
+static int sysctl_linux(char *, char **, int[], int, int *);
 static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
@@ -378,7 +395,8 @@ parse(char *string, int flags)
 			USEAPP(string, "ntpdc -c kerninfo");
 			return;
 		case KERN_MBUF:
-			len = sysctl_mbuf(string, &bufp, mib, flags, &type);
+			len = sysctl_3rd(&mbufvars, string, &bufp, mib, flags,
+			    &type);
 			if (len < 0)
 				return;
 			break;
@@ -392,12 +410,14 @@ parse(char *string, int flags)
 			special |= CONSDEV;
 			break;
 		case KERN_PIPE:
-			len = sysctl_pipe(string, &bufp, mib, flags, &type);
+			len = sysctl_3rd(&pipevars, string, &bufp, mib, flags,
+			    &type);
 			if (len < 0)
 				return;
 			break;
 		case KERN_TKSTAT:
-			len = sysctl_tkstat(string, &bufp, mib, flags, &type);
+			len = sysctl_3rd(&tkstatvars, string, &bufp, mib, flags,
+			    &type);
 			if (len < 0)
 				return;
 			break;
@@ -447,7 +467,8 @@ parse(char *string, int flags)
 #endif /* INET6 */
 #ifdef IPSEC
 		else if (mib[1] == PF_KEY) {
-			len = sysctl_key(string, &bufp, mib, flags, &type);
+			len = sysctl_3rd(&keyvars, string, &bufp, mib, flags,
+			    &type);
 			if (len >= 0)
 				break;
 			return;
@@ -475,9 +496,13 @@ parse(char *string, int flags)
 		break;
 
 	case CTL_VFS:
-		if (mib[1] == VFS_GENERIC)
-			len = sysctl_vfsgen(string, &bufp, mib, flags, &type);
-		else
+		if (mib[1] == VFS_GENERIC) {
+			len = sysctl_3rd(&vfsgenvars, string, &bufp, mib, flags,
+			    &type);
+			/* Don't bother with VFS_CONF. */
+			if (mib[2] == VFS_CONF)
+				len = -1;
+		} else
 			len = sysctl_vfs(string, &bufp, mib, flags, &type);
 		if (len < 0)
 			return;
@@ -495,6 +520,18 @@ parse(char *string, int flags)
 		break;
 	case CTL_PROC:
 		len = sysctl_proc(string, &bufp, mib, flags, &type);
+		if (len < 0)
+			return;
+		break;
+	case CTL_EMUL:
+		switch (mib[1]) {
+		case EMUL_LINUX:
+		    len = sysctl_linux(string, &bufp, mib, flags, &type);
+		    break;
+		default:
+		    warnx("Illegal emul level value: %d", mib[0]);
+		    break;
+		}
 		if (len < 0)
 			return;
 		break;
@@ -884,31 +921,6 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 }
 #endif /* INET6 */
 
-#ifdef IPSEC
-struct ctlname keynames[] = KEYCTL_NAMES;
-struct list keylist = { keynames, KEYCTL_MAXID };
-
-/*
- * handle key requests
- */
-static int
-sysctl_key(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	struct list *lp;
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, &keylist);
-		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, &keylist)) == -1)
-		return (-1);
-	mib[2] = indx;
-	lp = &keylist;
-	*typep = lp->list[indx].ctl_type;
-	return 3;
-}
-#endif /*IPSEC*/
 
 struct ctlname ffsname[] = FFS_NAMES;
 struct ctlname nfsname[] = NFS_NAMES;
@@ -961,16 +973,13 @@ sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 	return (3);
 }
 
-struct ctlname vfsgenname[] = CTL_VFSGENCTL_NAMES;
-struct list vfsgenvars = { vfsgenname, VFSGEN_MAXID };
-
 /*
- * handle vfs.generic requests
+ * handle 3rd level requests.
  */
 static int
-sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
+sysctl_3rd(struct list *lp, char *string, char **bufpp, int mib[], int flags,
+    int *typep)
 {
-	struct list *lp = &vfsgenvars;
 	int indx;
 
 	if (*bufpp == NULL) {
@@ -978,9 +987,6 @@ sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	}
 	if ((indx = findname(string, "third", bufpp, lp)) == -1)
-		return (-1);
-	/* Don't bother with VFS_CONF. */
-	if (indx == VFS_CONF)
 		return (-1);
 	mib[2] = indx;
 	*typep = lp->list[indx].ctl_type;
@@ -1059,70 +1065,37 @@ sysctl_proc(char *string, char **bufpp, int mib[], int flags, int *typep)
 	return(5);
 }
 
-struct ctlname mbufnames[] = CTL_MBUF_NAMES;
-struct list mbufvars = { mbufnames, MBUF_MAXID };
-/*
- * handle kern.mbuf requests
- */
-static int
-sysctl_mbuf(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	struct list *lp = &mbufvars;
-	int indx;
+struct ctlname linuxnames[] = EMUL_LINUX_NAMES;
+struct list linuxvars = { linuxnames, EMUL_LINUX_MAXID };
+struct ctlname linuxkernnames[] = EMUL_LINUX_KERN_NAMES;
+struct list linuxkernvars = { linuxkernnames, EMUL_LINUX_KERN_MAXID };
 
+static int
+sysctl_linux(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp = &linuxvars;
+	int indx;
+	char name[BUFSIZ], *cp;
+
+	printf("zoot\n");
 	if (*bufpp == NULL) {
-		listall(string, lp);
+		(void)strcpy(name, string);
+		cp = &name[strlen(name)];
+		*cp++ = '.';
+		(void)strcpy(cp, "kern");
+		listall(name, &linuxkernvars);
 		return (-1);
 	}
 	if ((indx = findname(string, "third", bufpp, lp)) == -1)
 		return (-1);
 	mib[2] = indx;
+	lp = &linuxkernvars;
 	*typep = lp->list[indx].ctl_type;
-	return (3);
-}
-
-struct ctlname pipenames[] = CTL_PIPE_NAMES;
-struct list pipevars = { pipenames, KERN_PIPE_MAXID };
-/*
- * handle kern.pipe requests
- */
-static int
-sysctl_pipe(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	struct list *lp = &pipevars;
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, lp);
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
 		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, lp)) == -1)
-		return (-1);
-	mib[2] = indx;
+	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
-	return (3);
-}
-
-struct ctlname tkstatnames[] = KERN_TKSTAT_NAMES;
-struct list tkstatvars = { tkstatnames, KERN_TKSTAT_MAXID };
-/*
- * handle kern.tkstat requests
- */
-static int
-sysctl_tkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	struct list *lp = &tkstatvars;
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, lp)) == -1)
-		return (-1);
-	mib[2] = indx;
-	*typep = lp->list[indx].ctl_type;
-	return (3);
+	return (4);
 }
 
 /*
