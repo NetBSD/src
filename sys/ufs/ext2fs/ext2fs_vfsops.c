@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.62 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.63 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.62 2003/10/05 17:48:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.63 2003/10/14 14:02:56 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -295,7 +295,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 			if (error)
 				return (error);
 		}
-		if (fs->e2fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+		if (fs->e2fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.

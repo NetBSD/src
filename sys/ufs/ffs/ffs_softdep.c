@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.51 2003/09/07 11:55:43 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.52 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.51 2003/09/07 11:55:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.52 2003/10/14 14:02:56 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -827,7 +827,7 @@ softdep_flushfiles(oldmnt, flags, p)
 	 * activity can keep us busy forever, so we just fail with EBUSY.
 	 */
 	if (loopcnt == 0) {
-		if (oldmnt->mnt_flag & MNT_UNMOUNT)
+		if (oldmnt->mnt_iflag & IMNT_UNMOUNT)
 			panic("softdep_flushfiles: looping");
 		error = EBUSY;
 	}

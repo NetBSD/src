@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.206 2003/09/14 11:09:48 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.207 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.206 2003/09/14 11:09:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.207 2003/10/14 14:02:56 dbj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -295,7 +295,7 @@ vfs_busy(mp, flags, interlkp)
 {
 	int lkflags;
 
-	while (mp->mnt_flag & MNT_UNMOUNT) {
+	while (mp->mnt_iflag & IMNT_UNMOUNT) {
 		int gone;
 		
 		if (flags & LK_NOWAIT)
@@ -317,7 +317,7 @@ vfs_busy(mp, flags, interlkp)
 		mp->mnt_wcnt++;
 		tsleep((caddr_t)mp, PVFS, "vfs_busy", 0);
 		mp->mnt_wcnt--;
-		gone = mp->mnt_flag & MNT_GONE;
+		gone = mp->mnt_iflag & IMNT_GONE;
 		
 		if (mp->mnt_wcnt == 0)
 			wakeup(&mp->mnt_wcnt);
@@ -657,7 +657,7 @@ insmntque(vp, mp)
 
 #ifdef DIAGNOSTIC
 	if ((mp != NULL) &&
-	    (mp->mnt_flag & MNT_UNMOUNT) &&
+	    (mp->mnt_iflag & IMNT_UNMOUNT) &&
 	    !(mp->mnt_flag & MNT_SOFTDEP) &&
 	    vp->v_tag != VT_VFS) {
 		panic("insmntque into dying filesystem");
