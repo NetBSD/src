@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.19 2002/02/25 22:44:56 simonb Exp $	*/
+/*	$NetBSD: svc.h,v 1.20 2002/11/08 00:10:44 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,6 +42,8 @@
 #define _RPC_SVC_H_
 #include <sys/cdefs.h>
 
+#include <rpc/rpc_com.h>
+
 /*
  * This interface must manage two items concerning remote procedure calling:
  *
@@ -69,6 +71,8 @@
  */
 #define SVCGET_VERSQUIET	1
 #define SVCSET_VERSQUIET	2
+#define SVCGET_CONNMAXREC	3
+#define SVCSET_CONNMAXREC	4
 
 
 enum xprt_stat {
