@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.3 2000/02/03 03:21:54 cgd Exp $	*/
+/*	$NetBSD: winprintf.c,v 1.1 2000/02/03 19:46:22 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,9 +38,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdarg.h>
-
-#include "../../../../lib/libsa/printf.c"
-
 
 int 
 win_printf(LPWSTR lpszFmt, ...)
