@@ -5,7 +5,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp 
+ *	NetBSD: vnode_if.sh,v 1.10 1997/01/22 06:51:59 mikel Exp 
  */
 
 /*
@@ -40,6 +40,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _SYS_VNODE_IF_H_
+#define _SYS_VNODE_IF_H_
 
 extern struct vnodeop_desc vop_default_desc;
 
@@ -1031,3 +1034,5 @@ static __inline int VOP_BWRITE(bp)
 }
 
 /* End of special cases. */
+
+#endif /* !_SYS_VNODE_IF_H_ */
