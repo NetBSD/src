@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.16 1998/03/08 18:53:17 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.17 1998/03/21 21:38:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,7 +148,7 @@ cg4match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	int mid, p4id, peekval;
+	int mid, p4id, peekval, tmp;
 	void *p4reg;
 
 	/* No default address support. */
@@ -165,47 +165,59 @@ cg4match(parent, cf, args)
 		return (0);
 
 	/*
-	 * Make sure something is there, and if so,
-	 * see if it looks like a P4 register.
-	 */
-	p4reg = bus_tmapin(ca->ca_bustype, ca->ca_paddr);
-	peekval = peek_long(p4reg);
-	p4id = (peekval == -1) ?
-		P4_NOTFOUND : fb_pfour_id(p4reg);
-	bus_tmapout(p4reg);
-	if (peekval == -1)
-		return (0);
-
-	/*
 	 * The config flag 0x10 if set means we are
-	 * looking for a Type A (3/110) which has
-	 * AMD RAMDACs in control space.
+	 * looking for a Type A board (3/110).
 	 */
-#ifdef	_SUN3_
 	if (cf->cf_flags & 0x10) {
+#ifdef	_SUN3_
+		/* Type A: Check for AMD RAMDACs in control space. */
 		if (bus_peek(BUS_OBIO, CG4A_OBIO_CMAP, 1) == -1)
 			return (0);
-		/* OK, assume it really is a Type A. */
+		/* Check for the overlay plane. */
+		tmp = ca->ca_paddr + CG4A_OFF_OVERLAY;
+		if (bus_peek(ca->ca_bustype, tmp, 1) == -1)
+			return (0);
+		/* OK, it looks like a Type A. */
 		return (1);
-	}
+#else	/* SUN3 */
+		/* Only the Sun3/110 ever has a type A. */
+		return (0);
 #endif	/* SUN3 */
+	}
 
 	/*
-	 * OK, we are expecting a "Type B" CG4, and
-	 * there may or may not be a P4 register.
+	 * From here on, it is a type B or nothing.
+	 * The config flag 0x20 if set means there
+	 * is no P4 register.  (bus error)
 	 */
-	switch (p4id) {
-	case P4_ID_COLOR8P1:
-	case P4_NOTFOUND:
-		return (1);
-	default:
+	if ((cf->cf_flags & 0x20) == 0) {
+		p4reg = bus_tmapin(ca->ca_bustype, ca->ca_paddr);
+		peekval = peek_long(p4reg);
+		p4id = (peekval == -1) ?
+			P4_NOTFOUND : fb_pfour_id(p4reg);
+		bus_tmapout(p4reg);
+		if (peekval == -1)
+			return (0);
+		if (p4id != P4_ID_COLOR8P1) {
 #ifdef	DEBUG
-		printf("cgfour at 0x%x match p4id=0x%x fails\n",
-			   ca->ca_paddr, p4id & 0xFF);
+			printf("cgfour at 0x%x match p4id=0x%x fails\n",
+				   ca->ca_paddr, p4id & 0xFF);
 #endif
+			return (0);
+		}
 	}
 
-	return (0);
+	/*
+	 * Check for CMAP hardware and overlay plane.
+	 */
+	tmp = ca->ca_paddr + CG4B_OFF_CMAP;
+	if (bus_peek(ca->ca_bustype, tmp, 4) == -1)
+		return (0);
+	tmp = ca->ca_paddr + CG4B_OFF_OVERLAY;
+	if (bus_peek(ca->ca_bustype, tmp, 1) == -1)
+		return (0);
+
+	return (1);
 }
 
 /*
@@ -220,8 +232,7 @@ cg4attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-	void *p4reg;
-	int p4id, tmp;
+	int tmp;
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN4COLOR;
@@ -234,8 +245,6 @@ cg4attach(parent, self, args)
 	fb->fb_private = sc;
 	fb->fb_name  = sc->sc_dev.dv_xname;
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
-
-	p4reg = NULL;
 
 	/*
 	 * The config flag 0x10 if set means we are
@@ -261,18 +270,15 @@ cg4attach(parent, self, args)
 		sc->sc_pa_overlay = ca->ca_paddr + CG4B_OFF_OVERLAY;
 		sc->sc_pa_enable  = ca->ca_paddr + CG4B_OFF_ENABLE;
 		sc->sc_pa_pixmap  = ca->ca_paddr + CG4B_OFF_PIXMAP;
-		tmp               = ca->ca_paddr + CG4B_OFF_CMAP,
+		tmp               = ca->ca_paddr + CG4B_OFF_CMAP;
 		sc->sc_va_cmap = bus_mapin(ca->ca_bustype, tmp,
 		                           sizeof(struct bt_regs));
 		cg4b_init(sc);
+	}
 
-		/* Does it have a P4 register? */
-		p4reg = bus_mapin(ca->ca_bustype, ca->ca_paddr, 4);
-		p4id = fb_pfour_id(p4reg);
-		if (p4id != P4_NOTFOUND)
-			fb->fb_pfour = p4reg;
-		else
-			bus_mapout(p4reg, 4);
+	if ((fb->fb_flags & 0x20) == 0) {
+		/* It is supposed to have a P4 register. */
+		fb->fb_pfour = bus_mapin(ca->ca_bustype, ca->ca_paddr, 4);
 	}
 
 	/*
