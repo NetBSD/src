@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.19 1995/03/18 14:58:32 cgd Exp $	*/
+/*	$NetBSD: mountd.c,v 1.20 1995/03/21 18:48:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.19 1995/03/18 14:58:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.20 1995/03/21 18:48:50 mycroft Exp $";
 #endif
 #endif not lint
 
@@ -318,7 +318,8 @@ mntsrv(rqstp, transp)
 	u_long saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
-	int bad = ENOENT, omask, defset;
+	int bad = ENOENT, defset;
+	sigset_t sigset, osigset;
 
 	saddr = transp->xp_raddr.sin_addr.s_addr;
 	sport = ntohs(transp->xp_raddr.sin_port);
@@ -355,7 +356,9 @@ mntsrv(rqstp, transp)
 		}
 
 		/* Check in the exports list */
-		omask = sigblock(sigmask(SIGHUP));
+		sigemptyset(&sigset);
+		sigaddset(&sigset, SIGHUP);
+		sigprocmask(SIG_BLOCK, &sigset, &osigset);
 		ep = ex_search(&fsb.f_fsid);
 		defset = 0;
 		if (ep && (chk_host(ep->ex_defdir, saddr, &defset) ||
@@ -371,7 +374,7 @@ mntsrv(rqstp, transp)
 				if (!svc_sendreply(transp, xdr_long,
 				    (caddr_t)&bad))
 					syslog(LOG_ERR, "Can't send reply");
-				sigsetmask(omask);
+				sigprocmask(SIG_SETMASK, &osigset, NULL);
 				return;
 			}
 			if (!svc_sendreply(transp, xdr_fhs, (caddr_t)&nfh))
@@ -391,7 +394,7 @@ mntsrv(rqstp, transp)
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
 				syslog(LOG_ERR, "Can't send reply");
 		}
-		sigsetmask(omask);
+		sigprocmask(SIG_SETMASK, &osigset, NULL);
 		return;
 	case RPCMNT_DUMP:
 		if (!svc_sendreply(transp, xdr_mlist, (caddr_t)NULL))
@@ -498,9 +501,12 @@ xdr_explist(xdrsp, cp)
 {
 	struct exportlist *ep;
 	int false = 0;
-	int omask, putdef;
+	int putdef;
+	sigset_t sigset, osigset;
 
-	omask = sigblock(sigmask(SIGHUP));
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	ep = exphead;
 	while (ep) {
 		putdef = 0;
@@ -512,12 +518,12 @@ xdr_explist(xdrsp, cp)
 			goto errout;
 		ep = ep->ex_next;
 	}
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &osigset, NULL);
 	if (!xdr_bool(xdrsp, &false))
 		return (0);
 	return (1);
 errout:
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &osigset, NULL);
 	return (0);
 }
 

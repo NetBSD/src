@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.6 1995/03/18 14:55:07 cgd Exp $	*/
+/*	$NetBSD: tape.c,v 1.7 1995/03/21 18:48:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.6 1995/03/18 14:55:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.7 1995/03/21 18:48:47 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -746,6 +746,7 @@ doslave(cmd, slave_number)
 {
 	register int nread;
 	int nextslave, size, wrote, eot_count;
+	sigset_t sigset;
 
 	/*
 	 * Need our own seek pointer.
@@ -826,8 +827,9 @@ doslave(cmd, slave_number)
 		 */
 		if (size < 0) {
 			(void) kill(master, SIGUSR1);
+			sigemptyset(&sigset);
 			for (;;)
-				(void) sigpause(0);
+				sigsuspend(&sigset);
 		} else {
 			/*
 			 * pass size of write back to master
