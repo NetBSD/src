@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.486 2002/10/04 08:44:08 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.487 2002/10/04 18:42:34 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.486 2002/10/04 08:44:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.487 2002/10/04 18:42:34 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -323,6 +323,19 @@ static const char * const i386_intel_brand[] = {
 	"Pentium 4"	    /* Intel (R) Pentium (R) 4 processor */
 };
 
+/*
+ * AMD processors don't have Brand IDs, so we need these names for probe.
+ */
+static const char * const amd_brand[] = {
+	"",
+	"Duron",	/* AMD Duron(tm) */
+	"MP",		/* AMD Athlon(tm) MP */
+	"XP",		/* AMD Athlon(tm) XP */
+	"4"		/* AMD Athlon(tm) 4 */
+};
+
+static char amd_brand_name[48];
+
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
@@ -331,6 +344,8 @@ void cyrix6x86_cpu_setup __P((struct cpu_info *));
 void winchip_cpu_setup __P((struct cpu_info *));
 void amd_family5_setup __P((struct cpu_info *));
 void transmeta_cpu_setup __P((struct cpu_info *));
+
+static void amd_family6_probe __P((struct cpu_info *));
 
 static void transmeta_cpu_info __P((struct cpu_info *));
 static void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
@@ -815,14 +830,13 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, "Athlon Model 6 (Palomino)",
-				"Athlon Model 7 (Morgan)", 0, 0, 0, 0,
+				0, "Athlon", "Duron", "Athlon", 0, 0, 0,
 				0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
+			amd_family6_probe,
 			amd_cpuid_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -1170,6 +1184,30 @@ cpu_probe_features(struct cpu_info *ci)
 	(*cpup->cpu_family[i].cpu_probe)(ci);
 }
 
+void
+amd_family6_probe(struct cpu_info *ci)
+{
+	u_int32_t eax;
+	u_int32_t dummy1, dummy2, dummy3;
+	u_int32_t brand[12];
+	char *p;
+	int i;
+
+	CPUID(0x80000000, eax, dummy1, dummy2, dummy3);
+	if (eax < 0x80000004)
+		return;
+	
+	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
+	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
+	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+
+	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
+		if ((p = strstr((char *)brand, amd_brand[i])) != NULL) {
+			ci->ci_brand_id = i;
+			strcpy(amd_brand_name, p);
+			break;
+		}
+}
 
 void
 amd_family5_setup(struct cpu_info *ci)
@@ -1668,6 +1706,19 @@ identifycpu(struct cpu_info *ci)
 			    model >= 8 && ci->ci_brand_id &&
 			    ci->ci_brand_id < 8)
 				brand = i386_intel_brand[ci->ci_brand_id];
+			
+			if (vendor == CPUVENDOR_AMD && family == 6 &&
+			    model >= 6) {
+				if (ci->ci_brand_id == 1)
+					/* 
+					 * It's Duron. We override the 
+					 * name, since it might have been 
+					 * misidentified as Athlon.
+					 */
+					name = amd_brand[ci->ci_brand_id];
+				else
+					brand = amd_brand_name;
+			}
 		}
 	}
 
