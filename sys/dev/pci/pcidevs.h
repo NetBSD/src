@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.268 2000/09/27 02:15:30 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.269 2000/10/03 02:59:05 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.262 2000/09/27 02:14:54 augustss Exp 
+ *	NetBSD: pcidevs,v 1.263 2000/10/03 02:58:30 thorpej Exp 
  */
 
 /*
@@ -675,6 +675,7 @@
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* ADMtek AL981 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* ADMtek AN985 10/100 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
