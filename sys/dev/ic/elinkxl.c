@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.6 1999/03/25 23:18:32 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.7 1999/03/29 11:11:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -643,7 +643,7 @@ ex_mchash(addr)
 
 	for (i = 0; i < 6; i++) {
 		c = addr[i];
-		for (j = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
 			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
 			crc <<= 1;
 			c >>= 1;
