@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.2 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.3 2001/08/02 04:30:01 shin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,8 +72,12 @@ struct tx39ir_softc {
 	tx_chipset_tag_t sc_tc;
 };
 
+#ifdef TX39IRDEBUG
 static void	tx39ir_dump(struct tx39ir_softc *);
+#endif
+#if not_required_yet
 static int	tx39ir_intr(void *);
+#endif
 
 struct cfattach tx39ir_ca = {
 	sizeof(struct tx39ir_softc), tx39ir_match, tx39ir_attach
@@ -125,6 +129,7 @@ tx39ir_attach(struct device *parent, struct device *self, void *aux)
 #endif	
 }
 
+#ifdef TX39IRDEBUG
 void
 tx39ir_dump(struct tx39ir_softc *sc)
 {
@@ -143,9 +148,12 @@ tx39ir_dump(struct tx39ir_softc *sc)
 #undef	ISSETPRINT
 	printf("baudval %d\n", TX39_IRCTRL1_BAUDVAL(reg));
 }
+#endif
 
+#if not_required_yet
 int
 tx39ir_intr(void *arg)
 {
 	return (0);
 }
+#endif
