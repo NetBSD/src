@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.9 1999/01/06 05:54:38 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.10 1999/01/06 07:16:56 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -178,11 +178,11 @@ extern int VIA2;
 #define RBVDepthMask	0x07	/* Depth in bits */
 #define RBVMonitorMask	0x38	/* Type numbers */
 #define RBVOff		0x40	/* Monitor turned off */
-#define RBVMonIDNone	0x38	/* No monitor connected */
-#define RBVMonID15BWP	0x08	/* BW portrait */
-#define RBVMonIDRGB	0x10	/* color monitor */
+#define RBVMonIDBWP	0x08	/* 15 inch BW portrait */
+#define RBVMonIDRGB12	0x10	/* 12 inch color */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
-#define RBVMonIDBW	0x30	/* No internal video (?) */
+#define RBVMonIDStd	0x30	/* 12 inch BW or 13 inch color */
+#define RBVMonIDNone	0x38	/* No monitor connected */
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via2_reg(r) (*(Via2Base+(r)))
