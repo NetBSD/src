@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.7 1994/10/20 04:47:51 cgd Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.8 1994/11/23 22:34:58 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1032,45 +1032,4 @@ sun_sysconf(p, uap, retval)
 		return EINVAL;
 	}
 	return 0;
-}
-
-#define SUN_RLIMIT_NOFILE	6	/* Other RLIMIT_* are the same */
-#define SUN_RLIM_NLIMITS	7
-
-struct sun_getrlimit_args {
-	int	which;
-	struct	orlimit *rlp;
-};
-
-sun_getrlimit(p, uap, retval)
-	struct proc *p;
-	struct sun_getrlimit_args *uap;
-	register_t *retval;
-{
-	if (uap->which >= SUN_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (uap->which == SUN_RLIMIT_NOFILE)
-		uap->which = RLIMIT_NOFILE;
-
-	return ogetrlimit(p, uap, retval);
-}
-
-struct sun_setrlimit_args {
-	int	which;
-	struct	orlimit *rlp;
-};
-
-sun_setrlimit(p, uap, retval)
-	struct proc *p;
-	struct sun_getrlimit_args *uap;
-	register_t *retval;
-{
-	if (uap->which >= SUN_RLIM_NLIMITS)
-		return EINVAL;
-
-	if (uap->which == SUN_RLIMIT_NOFILE)
-		uap->which = RLIMIT_NOFILE;
-
-	return osetrlimit(p, uap, retval);
 }
