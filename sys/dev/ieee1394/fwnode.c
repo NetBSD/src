@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.3 2001/05/03 04:41:34 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.4 2001/05/11 06:09:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,13 +112,14 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee1394_abuf *ab;
 	
 	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
+	memset(ab, 0, sizeof(struct ieee1394_abuf));
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
 	ab->ab_data[0] = 0;
 	
 	sc->sc_sc1394.sc1394_node_id = fwa->nodeid;
 	memcpy(sc->sc_sc1394.sc1394_guid, fwa->uid, 8);
-	sc->sc1394_input = fwa->input;
-	sc->sc1394_output = fwa->output;
+	sc->sc1394_read = fwa->read;
+	sc->sc1394_write = fwa->write;
 	sc->sc1394_inreg = fwa->inreg;
 	
 	TAILQ_INIT(&sc->sc_configrom_root);
@@ -134,13 +135,13 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_sc1394.sc1394_guid[2], sc->sc_sc1394.sc1394_guid[3],
 	    sc->sc_sc1394.sc1394_guid[4], sc->sc_sc1394.sc1394_guid[5],
 	    sc->sc_sc1394.sc1394_guid[6], sc->sc_sc1394.sc1394_guid[7]);
-	ab->ab_node = (struct ieee1394_softc *)sc;
+	ab->ab_req = (struct ieee1394_softc *)sc;
 	ab->ab_csr = CSR_BASE + CSR_CONFIG_ROM;
 	ab->ab_length = 4;
 	ab->ab_retlen = 0;
 	ab->ab_cbarg = (void *)1;
 	ab->ab_cb = fwnode_configrom_input;
-	sc->sc1394_input(ab);
+	sc->sc1394_read(ab);
 }
 
 int
@@ -215,7 +216,7 @@ fwnode_detach(struct device *self, int flags)
 static void
 fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 {
-	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_node;
+	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
 	int i, len, infolen, crclen, newlen, offset, complete, val, *dirs;
 	int numdirs, *tdirs;
 	u_int32_t *t;
@@ -287,13 +288,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		
 		sc->sc_sc1394.sc1394_configrom = ab->ab_data;
 		sc->sc_sc1394.sc1394_configrom_len = 0;
-		memset(ab->ab_data, 0x00, crclen);
+		memset(ab->ab_data, 0, crclen);
 		ab->ab_csr = CSR_BASE + CSR_CONFIG_ROM;
 		ab->ab_length = newlen;
 		ab->ab_retlen = 0;
 		ab->ab_cbarg = (void *)2;
 		ab->ab_cb = fwnode_configrom_input;
-		sc->sc1394_input(ab);
+		sc->sc1394_read(ab);
 		return;
 		
 		/*
@@ -450,13 +451,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		ab->ab_data = malloc(newlen, M_1394DATA, M_WAITOK);
 		sc->sc_sc1394.sc1394_configrom = ab->ab_data;
 		sc->sc_sc1394.sc1394_configrom_len = 0;
-		memset(ab->ab_data, 0x00, newlen);
+		memset(ab->ab_data, 0, newlen);
 		ab->ab_csr = CSR_BASE + CSR_CONFIG_ROM;
 		ab->ab_length = newlen;
 		ab->ab_retlen = 0;
 		ab->ab_cbarg = (void *)2;
 		ab->ab_cb = fwnode_configrom_input;
-		sc->sc1394_input(ab);
+		sc->sc1394_read(ab);
 		return;
 	}
 	free(ab, M_1394DATA);
@@ -1017,7 +1018,7 @@ sbp2_init(struct fwnode_softc *sc, struct fwnode_device_cap *devcap)
 	
 	loc *= 4;
 	ab->ab_length = 8;
-	ab->ab_node = (struct ieee1394_softc *)sc;
+	ab->ab_req = (struct ieee1394_softc *)sc;
 	ab->ab_retlen = 0;
 	ab->ab_cb = NULL;
 	ab->ab_cbarg = NULL;
@@ -1033,17 +1034,17 @@ sbp2_init(struct fwnode_softc *sc, struct fwnode_device_cap *devcap)
 	ab2->ab_csr = 0x0000400000000000;
 	ab2->ab_cb = sbp2_login;
 	ab2->ab_cbarg = devcap;
-	ab2->ab_node = (struct ieee1394_softc *)sc;
+	ab2->ab_req = (struct ieee1394_softc *)sc;
 	
 	sc->sc1394_inreg(ab2, FALSE);
-	sc->sc1394_output(ab);
+	sc->sc1394_write(ab);
 	return;
 }
 
 static void
 sbp2_login(struct ieee1394_abuf *ab, int rcode)
 {
-	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_node;
+	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
 	/*    struct fwnode_device_cap *devcap = ab->ab_cbarg;*/
 	struct ieee1394_abuf *statab, *respab;
 	
@@ -1069,7 +1070,7 @@ sbp2_login(struct ieee1394_abuf *ab, int rcode)
 	statab->ab_csr = 0x0000400000000030;
 	statab->ab_cb = sbp2_login_resp;
 	statab->ab_cbarg = ab->ab_cbarg;
-	statab->ab_node = ab->ab_node;
+	statab->ab_req = ab->ab_req;
 	
 	sc->sc1394_inreg(statab, TRUE);
 	
@@ -1080,7 +1081,7 @@ sbp2_login(struct ieee1394_abuf *ab, int rcode)
 	respab->ab_csr = 0x0000400000000020;
 	respab->ab_cb = sbp2_login_resp;
 	respab->ab_cbarg = ab->ab_cbarg;
-	respab->ab_node = ab->ab_node;
+	respab->ab_req = ab->ab_req;
 	
 	sc->sc1394_inreg(respab, TRUE);
 	
@@ -1097,7 +1098,7 @@ sbp2_login(struct ieee1394_abuf *ab, int rcode)
 	ab->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
 	ab->ab_length = 32;
 	
-	sc->sc1394_output(ab);
+	sc->sc1394_write(ab);
 }
 
 static void
