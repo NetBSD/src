@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2002/05/11 08:56:39 takemura Exp $
+# $NetBSD: GENERIC,v 1.126 2002/05/11 14:10:04 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.126 $"
 
 maxusers	16
 
@@ -138,10 +138,10 @@ apmdev0	at hpcapm0			# APM
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
-mqvideo0 at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
+mqvideo*	at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
 hpcfb*		at	mqvideo?
 
-ite8181video0 at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
+ite8181video*	at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
 hpcfb*		at	ite8181video?
 
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_430
@@ -451,6 +451,9 @@ vrpiu* at vrc4173bcu? addr 0x0a0 size 0x20 addr2 0x0c0 size2 0x20 unit VRPIU	# V
 # PCI USB controllers
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 #options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
+
+# miscellaneous PCI devices
+mqvideo*	at pci? dev ? function ?	# MQ200 video
 
 # PCMCIA bus support
 pcmcia* at plumpcmcia? controller ? socket ?
