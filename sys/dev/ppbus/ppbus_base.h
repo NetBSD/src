@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_base.h,v 1.3 2004/01/28 17:58:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -135,8 +135,6 @@ struct ppbus_status {
 #define PPBUS_FOREVER   -1
 
 
-#ifdef _KERNEL
-
 /* PPBUS interface functions (includes parport interface) */
 int ppbus_scan_bus(struct device *);
 void ppbus_pnp_detect(struct device *);
@@ -161,7 +159,4 @@ int ppbus_dma_free(struct device *, caddr_t *, bus_addr_t *, bus_size_t);
 int ppbus_add_handler(struct device *, void (*)(void *), void *);
 int ppbus_remove_handler(struct device *, void (*)(void *)); 
 
-#endif /* _KERNEL */
-
 #endif /* __PPBUS_BASE_H */
-
