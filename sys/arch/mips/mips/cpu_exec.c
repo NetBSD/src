@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.34 2002/10/05 22:34:02 chs Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.35 2003/01/17 23:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,13 +125,13 @@ cpu_exec_aout_makecmds(p, epp)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(p, epp, stack)
-	struct proc *p;
+cpu_exec_ecoff_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-	struct frame *f = (struct frame *)p->p_md.md_regs;
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
 }

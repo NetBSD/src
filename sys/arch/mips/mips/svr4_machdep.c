@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.3 2002/04/06 18:03:17 manu Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.4 2003/01/17 23:36:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h> 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h> 
  

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2002/11/03 02:29:40 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -201,8 +202,8 @@ cachectl1(req, addr, len, p)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

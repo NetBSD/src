@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2002/12/17 12:04:29 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70 2003/01/17 23:36:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
 #define	cpu_number()	(0)
+#define	cpu_proc_fork(p1, p2)
 #endif /* !_LOCORE */
 
 /*
@@ -359,10 +360,10 @@ extern int want_resched;		/* resched() was called */
 /*
  * Misc prototypes and variable declarations.
  */
-struct proc;
+struct lwp;
 struct user;
 
-extern struct proc *fpcurproc;	/* the current FPU owner */
+extern struct lwp *fpcurlwp;	/* the current FPU owner */
 extern struct pcb *curpcb;	/* the current running pcb */
 extern struct segtab *segbase;	/* current segtab base */
 
@@ -374,8 +375,8 @@ int	kdbpeek(vaddr_t);
 void	dumpsys(void);
 int	savectx(struct user *);
 void	mips_init_msgbuf(void);
-void	savefpregs(struct proc *);
-void	loadfpregs(struct proc *);
+void	savefpregs(struct lwp *);
+void	loadfpregs(struct lwp *);
 
 /* locore*.S */
 int	badaddr(void *, size_t);

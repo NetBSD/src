@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 2002/09/25 22:21:11 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2003/01/17 23:13:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2002/09/25 22:21:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2003/01/17 23:13:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2002/09/25 22:21:11 thorpej Exp $")
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
@@ -246,6 +247,9 @@ cpu_startup()
 	char pbuf[9];
 	extern void greeting __P((void));
 
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
+
 	/*
 	 * Initialize the kernel crash dump header.
 	 */
@@ -374,12 +378,12 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	register struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	extern int fputype;
 
 	frame->f_sr = PSL_USERSET;
@@ -394,7 +398,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -402,9 +406,9 @@ setregs(p, pack, stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
 }
 
 void
@@ -478,8 +482,8 @@ cpu_reboot(howto, bootstr)
 	extern void doboot __P((void));
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
-		savectx(&curproc->p_addr->u_pcb);
+	if (curlwp && curlwp->l_addr)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is hold, just halt. */
 	if (cold) {

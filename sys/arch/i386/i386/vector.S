@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.4 2002/12/04 23:13:09 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.5 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -757,7 +757,7 @@ calltrap:
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING()
+	CHECK_ASTPENDING(%eax)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -765,7 +765,7 @@ calltrap:
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	1f
-5:	CLEAR_ASTPENDING()
+5:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_C_LABEL(trap)

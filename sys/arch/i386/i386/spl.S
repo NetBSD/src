@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2003/01/07 09:57:01 itohy Exp $	*/
+/*	$NetBSD: spl.S,v 1.6 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:	CHECK_ASTPENDING()
+5:	CHECK_ASTPENDING(%eax)
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -158,7 +158,7 @@ IDTVEC(doreti)
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	3f
-4:	CLEAR_ASTPENDING()
+4:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */

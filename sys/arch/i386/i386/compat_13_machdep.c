@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:10:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl E
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef VM86
@@ -53,14 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl E
 #endif
 
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;
@@ -75,7 +77,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
@@ -84,7 +86,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(l, context.sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif

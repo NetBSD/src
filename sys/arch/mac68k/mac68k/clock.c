@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.40 2003/01/17 23:21:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,6 +80,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
@@ -259,7 +260,7 @@ profclock(pclk)
 	 * If this process is being profiled record the tick.
 	 */
 	if (USERMODE(pclk->ps)) {
-		if (p->p_stats.p_prof.pr_scale)
+		if (curproc->p_stats.p_prof.pr_scale)
 			addupc_task(&curproc, pclk->pc, 1);
 	}
 	/*

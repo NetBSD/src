@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2002/08/25 20:21:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2003/01/17 22:58:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2002/08/25 20:21:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2003/01/17 22:58:53 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -412,13 +412,13 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		ddb_init(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
-	 * Alloc u pages for proc0 stealing KSEG0 memory.
+	 * Alloc u pages for lwp0 stealing KSEG0 memory.
 	 */
-	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
+	lwp0.l_addr = proc0paddr = (struct user *)kernend;
+	lwp0.l_md.md_regs =
 	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
 	memset(kernend, 0, UPAGES * PAGE_SIZE);
-	curpcb = &proc0.p_addr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += UPAGES * PAGE_SIZE;
@@ -625,7 +625,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 #ifdef DEBUG

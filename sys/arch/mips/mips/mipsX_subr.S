@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.10 2002/11/12 14:00:41 nisimura Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.11 2003/01/17 23:36:15 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -664,7 +664,7 @@ END(MIPSX(KernGenException))
  * Handle an exception from user mode.
  * Save user context atop the kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->p_md.md_regs.
+ * curlwp->p_md.md_regs.
  */
 NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	.set	noat
@@ -740,7 +740,10 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)
+	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
+	nop
+	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
+	nop
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
@@ -828,7 +831,7 @@ END(MIPSX(UserGenException))
  * mipsN_SystemCall
  *
  * Save user context in u_pcb, then call syscall() to process a system call.
- * The context can be manipulated alternatively via curproc->p_md.md_regs;
+ * The context can be manipulated alternatively via curlwp->p_md.md_regs;
  */
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
@@ -844,7 +847,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
-	lw	a0, _C_LABEL(curproc)		# 1st arg is curproc
+	lw	a0, _C_LABEL(curlwp)		# 1st arg is curlwp
 	mfhi	v1
 	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
 	#REG_S	t1, FRAME_T1(k1)
@@ -881,6 +884,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	sw	t0, FRAME_PPL(k1)
 	.set noat
 #endif
+	lw	t0, L_PROC(a0)			# curlwp->l_proc (used below)
 	addu	sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -889,7 +893,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
@@ -906,8 +910,9 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)
-	lw	t0, P_MD_ASTPENDING(t0)
+	lw	t0, _C_LABEL(curlwp)
+	lw	t0, L_PROC(t0)
+	lw	t0, P_MD_ASTPENDING(t0)	# curlwp->l_proc->p_md.md_astpending
 	beq	t0, zero, 1f
 	nop
 /*
@@ -1243,8 +1248,9 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop					# 3 nop hazard
 	nop
 	nop
-	lw	v0, _C_LABEL(curproc)
+	lw	v0, _C_LABEL(curlwp)
 	addu	a1, sp, CALLFRAME_SIZ
+	lw	v0, L_PROC(v0)
  #	REG_L	a0, FRAME_SR(a1)
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
@@ -1959,16 +1965,16 @@ LEAF(MIPSX(proc_trampoline))
 END(MIPSX(proc_trampoline))
 
 /*
- * void mipsN_cpu_switch_resume(struct proc *newproc)
+ * void mipsN_cpu_switch_resume(struct lwp *newlwp)
  *
  * Wiredown the USPACE of newproc in TLB entry#0.  Check whether target
  * USPACE is already in another place of TLB before that, and make
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
-	lw	a2, P_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	v0, P_ADDR(a0)			# va = p->p_addr
+	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
+	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
+	lw	v0, L_ADDR(a0)			# va = l->l_addr
 	li	s0, MIPS_KSEG2_START
 	blt	v0, s0, resume
 	nop
