@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.15 1997/08/06 23:06:04 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.16 1997/08/07 23:59:23 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -14,9 +14,17 @@
 #include <compat/ossaudio/ossaudio.h>
 #include <compat/ossaudio/ossaudiovar.h>
 
+#ifdef AUDIO_DEBUG
+#define DPRINTF(x) if (ossdebug) printf x
+int ossdebug = 0;
+#else
+#define DPRINTF(x)
+#endif
+
 static struct audiodevinfo *getdevinfo __P((struct file *, struct proc *));
 
 static void setblocksize __P((struct file *, struct audio_info *, struct proc *));
+
 
 int
 oss_ioctl_audio(p, uap, retval)
@@ -35,6 +43,7 @@ oss_ioctl_audio(p, uap, retval)
 	struct audio_offset tmpoffs;
 	struct oss_audio_buf_info bufinfo;
 	struct oss_count_info cntinfo;
+	struct audio_encoding tmpenc;
 	int idat, idata;
 	int error;
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -52,6 +61,7 @@ oss_ioctl_audio(p, uap, retval)
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
+	DPRINTF(("oss_sys_ioctl: com=%08lx\n", com));
 	switch (com) {
 	case OSS_SNDCTL_DSP_RESET:
 		error = ioctlf(fp, AUDIO_FLUSH, (caddr_t)0, p);
@@ -71,7 +81,11 @@ oss_ioctl_audio(p, uap, retval)
 			return error;
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = idat;
-		(void) ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		error = ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_SPEED %d = %d\n",
+			 idat, error));
+		if (error)
+			return error;
 		/* fall into ... */
 	case OSS_SOUND_PCM_READ_RATE:
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
@@ -271,7 +285,56 @@ oss_ioctl_audio(p, uap, retval)
 			return error;
 		break;
 	case OSS_SNDCTL_DSP_GETFMTS:
-		idat = OSS_AFMT_MU_LAW | OSS_AFMT_U8 | OSS_AFMT_S16_LE;
+		for(idat = 0, tmpenc.index = 0; 
+		    ioctlf(fp, AUDIO_GETENC, (caddr_t)&tmpenc, p) == 0; 
+		    tmpenc.index++) {
+			if (tmpenc.flags & AUDIO_ENCODINGFLAG_EMULATED)
+				continue; /* Don't report emulated modes */
+			switch(tmpenc.encoding) {
+			case AUDIO_ENCODING_ULAW:
+				idat |= OSS_AFMT_MU_LAW;
+				break;
+			case AUDIO_ENCODING_ALAW:
+				idat |= OSS_AFMT_A_LAW;
+				break;
+			case AUDIO_ENCODING_SLINEAR:
+				idat |= OSS_AFMT_S8;
+				break;
+			case AUDIO_ENCODING_SLINEAR_LE:
+				if (tmpenc.precision == 16)
+					idat |= OSS_AFMT_S16_LE;
+				else
+					idat |= OSS_AFMT_S8;
+				break;
+			case AUDIO_ENCODING_SLINEAR_BE:
+				if (tmpenc.precision == 16)
+					idat |= OSS_AFMT_S16_BE;
+				else
+					idat |= OSS_AFMT_S8;
+				break;
+			case AUDIO_ENCODING_ULINEAR:
+				idat |= OSS_AFMT_U8;
+				break;
+			case AUDIO_ENCODING_ULINEAR_LE:
+				if (tmpenc.precision == 16)
+					idat |= OSS_AFMT_U16_LE;
+				else
+					idat |= OSS_AFMT_U8;
+				break;
+			case AUDIO_ENCODING_ULINEAR_BE:
+				if (tmpenc.precision == 16)
+					idat |= OSS_AFMT_U16_BE;
+				else
+					idat |= OSS_AFMT_U8;
+				break;
+			case AUDIO_ENCODING_ADPCM:
+				idat |= OSS_AFMT_IMA_ADPCM;
+				break;
+			default:
+				break;
+			}
+		}
+		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETFMTS = %x\n", idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
@@ -286,6 +349,9 @@ oss_ioctl_audio(p, uap, retval)
 		bufinfo.fragments = /* XXX */
 		bufinfo.fragstotal = tmpinfo.buffersize / bufinfo.fragsize;
 		bufinfo.bytes = tmpinfo.buffersize;
+		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETxSPACE = %d %d %d %d\n",
+			 bufinfo.fragsize, bufinfo.fragments, 
+			 bufinfo.fragstotal, bufinfo.bytes));
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error)
 			return error;
@@ -301,6 +367,7 @@ oss_ioctl_audio(p, uap, retval)
 			idat |= OSS_DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= OSS_DSP_CAP_MMAP;
+		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETCAPS = %x\n", idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
