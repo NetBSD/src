@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.39.2.2 1997/11/17 16:43:14 mrg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.39.2.3 1997/12/01 20:06:36 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.39.2.2 1997/11/17 16:43:14 mrg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.39.2.3 1997/12/01 20:06:36 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
 
-int	main __P((int, char *[], char **));
+int	main __P((int, char *[]));
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	klogin __P((struct passwd *, char *, char *, char *));
@@ -221,10 +221,9 @@ curdir()
 }
 
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
 	char *argv[];
-	char **envp;
 {
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
@@ -362,6 +361,7 @@ main(argc, argv, envp)
 	(void) gethostname(hostname, sizeof(hostname));
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
 	(void) setjmp(errcatch);
+	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
 	for (;;)
 		(void) yyparse();
 	/* NOTREACHED */
@@ -684,7 +684,8 @@ skip:
 			break;
 	endusershell();
 	if (cp == NULL && guest == 0) {
-		reply(530, "User %s may not use FTP.", pw->pw_name);
+		reply(530, "User %s may not use FTP (invalid shell).",
+		      pw->pw_name);
 		if (logging)
 			syslog(LOG_NOTICE,
 			    "FTP LOGIN REFUSED FROM %s, %s",
@@ -994,7 +995,9 @@ dataconn(name, size, mode)
 		struct sockaddr_in from;
 		int s, fromlen = sizeof(from);
 
+		(void) alarm(curclass.timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
+		(void) alarm(0);
 		if (s < 0) {
 			reply(425, "Can't open data connection.");
 			(void) close(pdata);
