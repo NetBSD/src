@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.12 1997/01/26 01:56:20 mark Exp $ */
+/*	$NetBSD: cpu.h,v 1.13 1997/02/04 06:10:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,8 +60,12 @@
  * This reduces the overheads of LDR/STR aborts and no correction is required.
  */
 
-#if (defined(CPU_ARM7) || defined(CPU_ARM7500)) && !defined(CPU_LATE_ABORT)
+#if defined(CPU_ARM7) && !defined(CPU_LATE_ABORT)
 #error "option CPU_LATE_ABORT is required for ARM7 configurations"
+#endif
+
+#if defined(CPU_ARM7500) && !defined(CPU_ARM7)
+#error "option CPU_ARM7 is required with CPU_ARM7500"
 #endif
 
 #ifdef CPU_ARM7500
@@ -75,21 +79,6 @@
 #error "CPU options CPU_SA110 and CPU_ARM7500 are not compatible"
 #endif
 #endif /* CPU_ARM7500 */
-
-#ifdef CPU_SA110
-#ifdef CPU_ARM6
-#error "CPU options CPU_SA110 and CPU_ARM6 are not compatible"
-#endif
-#ifdef CPU_ARM7
-#error "CPU options CPU_SA110 and CPU_ARM7 are not compatible"
-#endif
-#ifdef CPU_ARM8
-#error "CPU options CPU_SA110 and CPU_ARM8 are not compatible"
-#endif
-#ifdef CPU_LATE_ABORT
-#error "cpu options CPU_SA110 and CPU_LATE_ABORT are not compatible"
-#endif
-#endif	/* CPU_SA110 */
 
 #define COPY_SIGCODE    /* copy sigcode above user stack in exec */
  
@@ -137,7 +126,7 @@
 #define ID_ARM700		0x00007000
 #define ID_ARM710		0x00007100
 #define ID_ARM810		0x00008100
-#define ID_SARM110		0x0000a100
+#define ID_SA110		0x0000a100
 #define CPU_ID_REVISION_MASK	0x0000000f
 
 #define CPU_CONTROL_MMU_ENABLE	0x0001
@@ -230,7 +219,6 @@
 #define cpu_wait(p)	/* nothing */
 
 #ifndef _LOCORE
-void tlbflush __P((void));
 void need_resched __P((void));
 void need_proftick __P((struct proc *p));
 
@@ -243,7 +231,7 @@ extern int current_intr_depth;
  */
 
 #define signotify(p)            setsoftast()
-    
+
 #endif /* !_ARM32_CPU_H_ */
 
 /* End of cpu.h */
