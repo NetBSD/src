@@ -1,3 +1,4 @@
+/*	$NetBSD: rtld.c,v 1.39 1995/10/09 00:11:26 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.38 1995/10/08 23:43:30 pk Exp $
  */
 
 #include <sys/param.h>
