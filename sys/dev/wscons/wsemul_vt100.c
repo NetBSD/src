@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.17 2002/01/12 16:41:02 tsutsui Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.17.10.1 2003/06/16 14:09:14 grant Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.17 2002/01/12 16:41:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.17.10.1 2003/06/16 14:09:14 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		newstate = VT100_EMUL_STATE_CSI;
 		break;
 	    case '7': /* DECSC */
+		edp->flags |= VTFL_SAVEDCURS;
 		edp->savedcursor_row = edp->crow;
 		edp->savedcursor_col = edp->ccol;
 		edp->savedattr = edp->curattr;
@@ -455,6 +456,8 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		edp->savedchartab1 = edp->chartab1;
 		break;
 	    case '8': /* DECRC */
+		if ((edp->flags & VTFL_SAVEDCURS) == 0)
+			break;
 		edp->crow = edp->savedcursor_row;
 		edp->ccol = edp->savedcursor_col;
 		edp->curattr = edp->savedattr;
