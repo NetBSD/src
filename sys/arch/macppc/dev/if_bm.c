@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.11 2000/08/28 11:27:44 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.12 2000/10/17 15:57:51 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -490,7 +490,7 @@ bmac_rint(v)
 		if ((status & DBDMA_CNTRL_ACTIVE) == 0)	/* 0x9440 | 0x8440 */
 			continue;
 		count = dbdma_ld16(&cmd->d_count);
-		datalen = count - resid;
+		datalen = count - resid - 2;		/* 2 == framelen */
 		if (datalen < sizeof(struct ether_header)) {
 			printf("%s: short packet len = %d\n",
 				ifp->if_xname, datalen);
@@ -498,6 +498,10 @@ bmac_rint(v)
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
 		data = sc->sc_rxbuf + BMAC_BUFLEN * i;
+
+		/* XXX Sometimes bmac reads one extra byte. */
+		if (datalen == ETHER_MAX_LEN + 1)
+			datalen--;
 		m = bmac_get(sc, data, datalen);
 
 		if (m == NULL) {
@@ -668,6 +672,7 @@ bmac_get(sc, pkt, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
+	m->m_flags |= M_HASFCS;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
