@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 1999/04/23 19:10:54 ross Exp $	*/
+/*	$NetBSD: md.c,v 1.15 1999/06/18 05:08:57 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,18 +142,7 @@ int	md_post_newfs (void)
 
 int	md_copy_filesystem (void)
 {
-	if (target_already_root()) {
-		return 0;
-	}
-
-	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog(0, 0, "Warning: unexpected error",
-		"pax -X -r -w -pe / /mnt") != 0)
-		return 1;
-
-	/* Copy next-stage profile into target /.profile. */
-	return cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return 0;
 }
 
 int md_make_bsd_partitions (void)
