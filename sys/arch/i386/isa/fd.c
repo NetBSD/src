@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.93 1996/08/31 05:10:03 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.94 1996/10/09 16:10:14 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -413,10 +413,11 @@ fdprobe(parent, match, aux)
 		printf("\n");
 	}
 #endif
-	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
-		return 0;
 	/* turn off motor */
 	bus_io_write_1(bc, ioh, fdout, FDO_FRST);
+
+	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
+		return 0;
 
 	return 1;
 }
