@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.67 1997/08/23 19:18:37 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.68 1997/10/20 22:52:48 scottr Exp $
 #
 # GENERIC
 
@@ -117,4 +117,5 @@ pseudo-device	md		1
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl
-#pseudo-device	ipfilter
+pseudo-device	ipfilter
+#pseudo-device	rnd			# /dev/random and in-kernel generator
