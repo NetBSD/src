@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2003/04/26 14:10:12 ragge Exp $
+# $NetBSD: GENERIC,v 1.16 2003/08/31 01:27:18 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp700/conf/std.hp700"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -190,7 +190,7 @@ mem*	at mainbus0		# /dev/*mem and memory controller
 #power*	at mainbus0		# power/fail manager (iv 2)
 
 # STI graphics
-sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] graphics
+#sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] graphics
 
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter (LSI PN??? )
@@ -237,7 +237,7 @@ eisa*	at mongoose?
 #vga0		at isa?
 #vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-wsdisplay*	at sti?
+#wsdisplay*	at sti?
 #wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 #wskbd*		at pckbd? console ?
@@ -291,7 +291,7 @@ osiop*	at gsc? flags 0x00000		# NCR 53c710
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
-ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
 dpt*	at eisa? slot ?			# DPT EATA SCSI
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
@@ -314,27 +314,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-#scsibus* at adv?
-#scsibus* at adw?
-#scsibus* at aha?
-scsibus* at ahb?
-scsibus* at ahc?
-#scsibus* at aic?
-scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at esp?
-#scsibus* at iha?
-#scsibus* at iopsp?
-#scsibus* at isp?
-#scsibus* at mly?
-#scsibus* at nca?
-scsibus* at osiop?
-#scsibus* at pcscp?
-#scsibus* at sea?
-#scsibus* at siop?
-#scsibus* at trm?
-#scsibus* at uha?
-#scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
