@@ -16,6 +16,13 @@
 static int nspins = NSPINS;
 
 void
+pthread_lockinit(pt_spin_t *lock)
+{
+
+	__cpu_simple_lock_init(lock);
+}
+
+void
 pthread_spinlock(pthread_t thread, pt_spin_t *lock)
 {
 	int count, ret;
