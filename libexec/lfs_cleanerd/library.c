@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.28 2002/06/14 00:58:40 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.29 2002/06/14 05:21:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.28 2002/06/14 00:58:40 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.29 2002/06/14 05:21:21 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ get_rawblock(FS_INFO *fsp, char *buf, size_t size, ufs_daddr_t daddr)
 		syslog(LOG_ERR, "%s", rdev);
 		exit(1);
 	}
-	return pread(dev_fd, buf, size, fsbtob(&fsp->fi_lfs, daddr));
+	return pread(dev_fd, buf, size, fsbtob(&fsp->fi_lfs, (off_t)daddr));
 }
 
 /*
@@ -199,8 +199,10 @@ get_dinode (FS_INFO *fsp, ino_t ino)
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_inode = ino;
 	bi.bi_lbn = LFS_UNUSED_LBN; /* We want the inode */
-	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, &bi, 1) < 0)
+	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, &bi, 1) < 0) {
+		syslog(LOG_WARNING, "lfs_bmapv: %m");
 		return NULL;
+	}
 	if (bi.bi_daddr <= 0)
 		return NULL;
 
@@ -214,12 +216,13 @@ get_dinode (FS_INFO *fsp, ino_t ino)
 		exit(1);
 	}
 	dib = (struct dinode *)malloc(lfsp->lfs_ibsize);
-	pread(dev_fd, dib, lfsp->lfs_ibsize, fsbtob(lfsp, bi.bi_daddr));
+	pread(dev_fd, dib, lfsp->lfs_ibsize, fsbtob(lfsp, (off_t)bi.bi_daddr));
 	for (dip = dib; dip != dib + lfsp->lfs_inopb; ++dip)
 		if (dip->di_u.inumber == ino)
 			break;
 	if (dip == dib + lfsp->lfs_inopb) {
 		free(dib);
+		syslog(LOG_WARNING, "dinode %d not found at fsb 0x%x", ino, bi.bi_daddr);
 		return NULL;
 	}
         dino = *dip; /* structure copy */
