@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.48 2001/01/09 17:30:29 abs Exp $
+#	$NetBSD: security,v 1.49 2001/02/11 09:55:09 jdolecek Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -32,6 +32,10 @@ fi
 
 if [ -z "$max_loginlen" ];then
     max_loginlen=8
+fi
+
+if [ -z "$max_grouplen" ]; then
+    max_grouplen=8
 fi
 
 ERR=secure1.$$
@@ -148,7 +152,7 @@ fi
 #
 if checkyesno check_group; then
 	GRP=/etc/group
-	awk -F: '{
+	awk -F: -v "len=$max_grouplen" '{
 		if ($0 ~ /^[	 ]*$/) {
 			printf "Line %d is a blank line.\n", NR;
 			next;
@@ -161,8 +165,8 @@ if checkyesno check_group; then
 		if ($1 !~ /^[A-za-z0-9]*$/)
 			printf "Group %s has non-alphanumeric characters.\n",
 			    $1;
-		if (length($1) > 8)
-			printf "Group %s has more than 8 characters.\n", $1;
+		if (length($1) > len)
+			printf "Group %s has more than "len" characters.\n", $1;
 		if ($3 !~ /[0-9]*/)
 			printf "Login %s has a negative group id.\n", $1;
 	}' < $GRP > $OUTPUT
