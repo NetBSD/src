@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.14 2000/03/05 06:12:19 lukem Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.15 2000/05/20 02:20:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.14 2000/03/05 06:12:19 lukem Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.15 2000/05/20 02:20:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,7 @@ static int fd = -1;
  * after login, but before logout).
  */
 void
-logwtmp(line, name, host)
-	const char *line, *name, *host;
+logwtmp(const char *line, const char *name, const char *host)
 {
 	struct utmp ut;
 	struct stat buf;

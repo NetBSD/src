@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.87 2000/03/05 06:12:19 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.88 2000/05/20 02:20:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.87 2000/03/05 06:12:19 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.88 2000/05/20 02:20:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,11 +165,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.87 2000/03/05 06:12:19 lukem Exp $");
 #include "pathnames.h"
 #include "version.h"
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 int	data;
 jmp_buf	urgcatch;
@@ -211,34 +207,31 @@ int	swaitint = SWAITINT;
 		    	curclass.type == CLASS_REAL   ? "REAL"   : \
 			"<unknown>"
 
-static void	 ack __P((const char *));
-static int	 bind_pasv_addr __P((void));
-static int	 checkuser __P((const char *, const char *, int, int, char **));
-static int	 checkaccess __P((const char *));
-static FILE	*dataconn __P((const char *, off_t, const char *));
-static void	 dolog __P((struct sockaddr *));
-static void	 end_login __P((void));
-static FILE	*getdatasock __P((const char *));
-static char	*gunique __P((const char *));
-static void	 lostconn __P((int));
-static void	 myoob __P((int));
-static int	 receive_data __P((FILE *, FILE *));
-static void	 replydirname __P((const char *, const char *));
-static int	 send_data __P((FILE *, FILE *, off_t, int));
-static struct passwd *
-		 sgetpwnam __P((const char *));
+static void	 ack(const char *);
+static int	 bind_pasv_addr(void);
+static int	 checkuser(const char *, const char *, int, int, char **);
+static int	 checkaccess(const char *);
+static FILE	*dataconn(const char *, off_t, const char *);
+static void	 dolog(struct sockaddr *);
+static void	 end_login(void);
+static FILE	*getdatasock(const char *);
+static char	*gunique(const char *);
+static void	 lostconn(int);
+static void	 myoob(int);
+static int	 receive_data(FILE *, FILE *);
+static void	 replydirname(const char *, const char *);
+static int	 send_data(FILE *, FILE *, off_t, int);
+static struct passwd *sgetpwnam(const char *);
 
-int	main __P((int, char *[]));
+int	main(int, char *[]);
 
 #if defined(KERBEROS) || defined(KERBEROS5)
-int	klogin __P((struct passwd *, char *, char *, char *));
-void	kdestroy __P((void));
+int	klogin(struct passwd *, char *, char *, char *);
+void	kdestroy(void);
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int		addrlen, ch, on = 1, tos, keepalive;
 #ifdef KERBEROS5
@@ -448,8 +441,7 @@ main(argc, argv)
 }
 
 static void
-lostconn(signo)
-	int signo;
+lostconn(int signo)
 {
 
 	if (debug)
@@ -463,8 +455,7 @@ lostconn(signo)
  * (e.g., globbing).
  */
 static struct passwd *
-sgetpwnam(name)
-	const char *name;
+sgetpwnam(const char *name)
 {
 	static struct passwd save;
 	struct passwd *p;
@@ -504,8 +495,7 @@ static char curname[10];	/* current USER name */
  * _PATH_FTPUSERS to allow people such as root and uucp to be avoided.
  */
 void
-user(name)
-	const char *name;
+user(const char *name)
 {
 	if (logged_in) {
 		switch (curclass.type) {
@@ -593,10 +583,8 @@ user(name)
  * NOTE: needs struct passwd *pw setup before use.
  */
 int
-checkuser(fname, name, def, nofile, retclass)
-	const char *fname, *name;
-	int def, nofile;
-	char **retclass;
+checkuser(const char *fname, const char *name, int def, int nofile,
+	    char **retclass)
 {
 	FILE	*fd;
 	int	 retval;
@@ -721,8 +709,7 @@ checkuser(fname, name, def, nofile, retclass)
  * NOTE: needs struct passwd *pw setup (for checkuser())
  */
 int
-checkaccess(name)
-	const char *name;
+checkaccess(const char *name)
 {
 
 	return (checkuser(_PATH_FTPUSERS, name, 1, 0, NULL));
@@ -733,7 +720,7 @@ checkaccess(name)
  * used when USER command is given or login fails.
  */
 static void
-end_login()
+end_login(void)
 {
 
 	(void) seteuid((uid_t)0);
@@ -749,8 +736,7 @@ end_login()
 }
 
 void
-pass(passwd)
-	const char *passwd;
+pass(const char *passwd)
 {
 	int		 rval;
 	const char	*cp, *shell, *home;
@@ -997,13 +983,11 @@ skip:
 }
 
 void
-retrieve(argv, name)
-	char *argv[];
-	const char *name;
+retrieve(char *argv[], const char *name)
 {
 	FILE *fin = NULL, *dout;
 	struct stat st;
-	int (*closefunc) __P((FILE *)) = NULL;
+	int (*closefunc)(FILE *) = NULL;
 	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
 	const char *dispname;
@@ -1131,13 +1115,11 @@ done:
 }
 
 void
-store(name, mode, unique)
-	const char *name, *mode;
-	int unique;
+store(const char *name, const char *mode, int unique)
 {
 	FILE *fout, *din;
 	struct stat st;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc)(FILE *);
 	struct timeval start, finish, td, *tdp;
 	char *desc;
 
@@ -1209,8 +1191,7 @@ done:
 }
 
 static FILE *
-getdatasock(mode)
-	const char *mode;
+getdatasock(const char *mode)
 {
 	int on = 1, s, t, tries;
 
@@ -1257,10 +1238,7 @@ bad:
 }
 
 static FILE *
-dataconn(name, size, mode)
-	const char *name;
-	off_t size;
-	const char *mode;
+dataconn(const char *name, off_t size, const char *mode)
 {
 	char sizebuf[32];
 	FILE *file;
@@ -1354,10 +1332,7 @@ dataconn(name, size, mode)
  * NB: Form isn't handled.
  */
 static int
-send_data(instr, outstr, blksize, isdata)
-	FILE *instr, *outstr;
-	off_t blksize;
-	int isdata;
+send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 {
 	int	 c, filefd, netfd, rval;
 	char	*buf;
@@ -1507,8 +1482,7 @@ cleanup_send_data:
  * N.B.: Form isn't handled.
  */
 static int
-receive_data(instr, outstr)
-	FILE *instr, *outstr;
+receive_data(FILE *instr, FILE *outstr)
 {
 	int	c, bare_lfs, netfd, filefd, rval;
 	char	buf[BUFSIZ];
@@ -1652,8 +1626,7 @@ cleanup_recv_data:
 }
 
 void
-statfilecmd(filename)
-	const char *filename;
+statfilecmd(const char *filename)
 {
 	FILE *fin;
 	int c;
@@ -1688,7 +1661,7 @@ statfilecmd(filename)
 }
 
 void
-statcmd()
+statcmd(void)
 {
 	union sockunion *su = NULL;
 	static char ntop_buf[INET6_ADDRSTRLEN];
@@ -1932,8 +1905,7 @@ epsvonly:;
 }
 
 void
-fatal(s)
-	const char *s;
+fatal(const char *s)
 {
 
 	reply(451, "Error in server: %s\n", s);
@@ -1943,22 +1915,12 @@ fatal(s)
 }
 
 void
-#ifdef __STDC__
 reply(int n, const char *fmt, ...)
-#else
-reply(n, fmt, va_alist)
-	int n;
-	char *fmt;
-        va_dcl
-#endif
 {
 	off_t b;
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	b = 0;
 	b += printf("%d ", n);
 	b += vprintf(fmt, ap);
@@ -1973,22 +1935,12 @@ reply(n, fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 lreply(int n, const char *fmt, ...)
-#else
-lreply(n, fmt, va_alist)
-	int n;
-	char *fmt;
-        va_dcl
-#endif
 {
 	off_t b;
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	b = 0;
 	switch (n) {
 		case 0:
@@ -2011,16 +1963,14 @@ lreply(n, fmt, va_alist)
 }
 
 static void
-ack(s)
-	const char *s;
+ack(const char *s)
 {
 
 	reply(250, "%s command successful.", s);
 }
 
 void
-delete(name)
-	const char *name;
+delete(const char *name)
 {
 	char *p = NULL;
 
@@ -2033,8 +1983,7 @@ delete(name)
 }
 
 void
-cwd(path)
-	const char *path;
+cwd(const char *path)
 {
 
 	if (chdir(path) < 0)
@@ -2046,8 +1995,7 @@ cwd(path)
 }
 
 static void
-replydirname(name, message)
-	const char *name, *message;
+replydirname(const char *name, const char *message)
 {
 	char npath[MAXPATHLEN];
 	int i;
@@ -2062,8 +2010,7 @@ replydirname(name, message)
 }
 
 void
-makedir(name)
-	const char *name;
+makedir(const char *name)
 {
 	char *p = NULL;
 
@@ -2076,8 +2023,7 @@ makedir(name)
 }
 
 void
-removedir(name)
-	const char *name;
+removedir(const char *name)
 {
 	char *p = NULL;
 
@@ -2090,7 +2036,7 @@ removedir(name)
 }
 
 void
-pwd()
+pwd(void)
 {
 	char path[MAXPATHLEN];
 
@@ -2102,8 +2048,7 @@ pwd()
 }
 
 char *
-renamefrom(name)
-	char *name;
+renamefrom(const char *name)
 {
 	struct stat st;
 
@@ -2116,8 +2061,7 @@ renamefrom(name)
 }
 
 void
-renamecmd(from, to)
-	const char *from, *to;
+renamecmd(const char *from, const char *to)
 {
 	char *p = NULL;
 
@@ -2130,8 +2074,7 @@ renamecmd(from, to)
 }
 
 static void
-dolog(who)
-	struct sockaddr *who;
+dolog(struct sockaddr *who)
 {
 	getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost), NULL,0,0);
 #ifdef HASSETPROCTITLE
@@ -2148,8 +2091,7 @@ dolog(who)
  * and exit with supplied status.
  */
 void
-dologout(status)
-	int status;
+dologout(int status)
 {
 	/*
 	* Prevent reception of SIGURG from resulting in a resumption
@@ -2172,8 +2114,7 @@ dologout(status)
 }
 
 static void
-myoob(signo)
-	int signo;
+myoob(int signo)
 {
 	char *cp;
 
@@ -2204,7 +2145,7 @@ myoob(signo)
 }
 
 static int
-bind_pasv_addr()
+bind_pasv_addr(void)
 {
 	static int passiveport;
 	int port, len;
@@ -2247,7 +2188,7 @@ bind_pasv_addr()
  *	with Rick Adams on 25 Jan 89.
  */
 void
-passive()
+passive(void)
 {
 	int len;
 	char *p, *a;
@@ -2394,8 +2335,7 @@ long_passive(char *cmd, int pf)
  * the mktemp(3)/mkstemp(3) changes.
  */
 static char *
-gunique(local)
-	const char *local;
+gunique(const char *local)
 {
 	static char new[MAXPATHLEN];
 	struct stat st;
@@ -2424,9 +2364,7 @@ gunique(local)
  * Format and send reply containing system error number.
  */
 void
-perror_reply(code, string)
-	int code;
-	const char *string;
+perror_reply(int code, const char *string)
 {
 	int save_errno;
 
@@ -2441,8 +2379,7 @@ static char *onefile[] = {
 };
 
 void
-send_file_list(whichf)
-	const char *whichf;
+send_file_list(const char *whichf)
 {
 	struct stat st;
 	DIR *dirp = NULL;
@@ -2600,8 +2537,7 @@ out:
 }
 
 char *
-conffilename(s)
-	const char *s;
+conffilename(const char *s)
 {
 	static char filename[MAXPATHLEN];
 
@@ -2623,13 +2559,8 @@ conffilename(s)
  */
 
 void
-logcmd(command, bytes, file1, file2, elapsed, error)
-	const char		*command;
-	off_t			 bytes;
-	const char		*file1;
-	const char		*file2;
-	const struct timeval	*elapsed;
-	const char		*error;
+logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
+	const struct timeval *elapsed, const char *error)
 {
 	char	buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
 	const char *p;
@@ -2674,8 +2605,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 }
 
 char *
-xstrdup(s)
-	const char *s;
+xstrdup(const char *s)
 {
 	char *new = strdup(s);
 

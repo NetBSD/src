@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.45 2000/03/05 06:12:19 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.46 2000/05/20 02:20:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.45 2000/03/05 06:12:19 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.46 2000/05/20 02:20:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1468,19 +1468,17 @@ struct tab sitetab[] = {
 	{ NULL,    0,     0,	0, 0,	0 }
 };
 
-static	void	 	help __P((struct tab *, char *));
-static	struct tab     *lookup __P((struct tab *, const char *));
-static	void		opts __P((const char *));
-static	void		sizecmd __P((char *));
-static	void		toolong __P((int));
-static	int		yylex __P((void));
+static	void	 	help(struct tab *, const char *);
+static	struct tab     *lookup(struct tab *, const char *);
+static	void		opts(const char *);
+static	void		sizecmd(char *);
+static	void		toolong(int);
+static	int		yylex(void);
 
 extern int epsvall;
 
 static struct tab *
-lookup(p, cmd)
-	struct tab *p;
-	const char *cmd;
+lookup(struct tab *p, const char *cmd)
 {
 
 	for (; p->name != NULL; p++)
@@ -1495,10 +1493,7 @@ lookup(p, cmd)
  * getline - a hacked up version of fgets to ignore TELNET escape codes.
  */
 char *
-getline(s, n, iop)
-	char *s;
-	int n;
-	FILE *iop;
+getline(char *s, int n, FILE *iop)
 {
 	off_t b;
 	int c;
@@ -1585,8 +1580,7 @@ getline(s, n, iop)
 }
 
 static void
-toolong(signo)
-	int signo;
+toolong(int signo)
 {
 
 	reply(421,
@@ -1599,7 +1593,7 @@ toolong(signo)
 }
 
 static int
-yylex()
+yylex(void)
 {
 	static int cpos, state;
 	char *cp, *cp2;
@@ -1835,8 +1829,7 @@ yylex()
 
 /* ARGSUSED */
 void
-yyerror(s)
-	char *s;
+yyerror(char *s)
 {
 	char *cp;
 
@@ -1849,9 +1842,7 @@ yyerror(s)
 }
 
 static void
-help(ctab, s)
-	struct tab *ctab;
-	char *s;
+help(struct tab *ctab, const char *s)
 {
 	struct tab *c;
 	int width, NCMDS;
@@ -1934,8 +1925,7 @@ help(ctab, s)
 }
 
 static void
-sizecmd(filename)
-	char *filename;
+sizecmd(char *filename)
 {
 	switch (type) {
 	case TYPE_L:
@@ -1978,8 +1968,7 @@ sizecmd(filename)
 }
 
 static void
-opts(command)
-	const char *command;
+opts(const char *command)
 {
 	struct tab *c;
 	char *ep;
