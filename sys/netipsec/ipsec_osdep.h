@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.8 2004/03/02 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.9 2004/03/16 22:37:46 jonathan Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -318,15 +318,9 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #endif	/* __FreeBSD__ */
 
 #ifdef __NetBSD__
-#ifndef notyet
-#  define PCB_T		struct inpcb_hdr
-#  define PCB_FAMILY(p)	((p)->inph_af)
-#  define PCB_SOCKET(p)	((p)->inph_socket)
-#else
-#  define PCB_T		struct inpcb
-#  define PCB_FAMILY(p)	((p)->inp_head.inph_af)
-#  define PCB_SOCKET(p)	((p)->inp_socket)
-#endif 
+#define PCB_T		struct inpcb_hdr
+#define PCB_FAMILY(p)	((p)->inph_af)
+#define PCB_SOCKET(p)	((p)->inph_socket)
 
 #define PCB_TO_IN4PCB(p) ((struct inpcb *)(p))
 #define PCB_TO_IN6PCB(p) ((struct in6pcb *)(p))
