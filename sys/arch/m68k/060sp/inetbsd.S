@@ -1,5 +1,6 @@
+/*
 #
-# $NetBSD: inetbsd.S,v 1.3 1997/07/28 19:01:13 is Exp $
+# $NetBSD: inetbsd.S,v 1.3.30.1 2001/04/24 22:31:52 he Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -55,7 +56,9 @@
 # _060_real_lock_page()		#
 # _060_real_unlock_page()	#
 #################################
+*/
 
+/*
 #
 # _060_isp_done():
 #
@@ -69,10 +72,11 @@
 # To simply continue execution at the next instruction, just
 # do an "rte".
 #
-	.global	_060_isp_done
-_060_isp_done:
+*/
+ASENTRY_NOPROFILE(_060_isp_done)
 	rte
 
+/*
 #
 # _060_real_chk():
 #
@@ -82,11 +86,12 @@ _060_isp_done:
 # a CHK exception stack frame from the Unimplemented Integer Instrcution
 # stack frame and branches to this routine.
 #
-	.global	_060_real_chk
-_060_real_chk:
-	tstb	sp@		|# is tracing enabled?
+*/
+ASENTRY_NOPROFILE(_060_real_chk)
+	tstb	%sp@			|# is tracing enabled?
 	bpls	real_chk_end		|# no
 
+/*
 #
 #	    CHK FRAME		   TRACE FRAME
 #	*****************	*****************
@@ -100,12 +105,14 @@ _060_real_chk:
 #	*      SR	*	*      SR	*
 #	*****************	*****************
 #
-	moveb	#0x24,sp@(0x7)		|# set trace vecno
-	bral	_060_real_trace
+*/
+	moveb	#0x24,%sp@(0x7)		|# set trace vecno
+	bral	_ASM_LABEL(_060_real_trace)
 
 real_chk_end:
-	jmp	_chkinst
+	jmp	_C_LABEL(chkinst)
 
+/*
 #
 # _060_real_divbyzero:
 #
@@ -120,11 +127,12 @@ real_chk_end:
 # then it create a Trace exception stack frame from the "chk" exception
 # stack frame and branches to the _real_trace() entry point.
 # 
-	.global	_060_real_divbyzero
-_060_real_divbyzero:
-	tstb	sp@			|# is tracing enabled?
+*/
+ASENTRY_NOPROFILE(_060_real_divbyzero)
+	tstb	%sp@			|# is tracing enabled?
 	bpls	real_divbyzero_end	|# no
 
+/*
 #
 #	 DIVBYZERO FRAME	   TRACE FRAME
 #	*****************	*****************
@@ -138,14 +146,16 @@ _060_real_divbyzero:
 #	*      SR	*	*      SR	*
 #	*****************	*****************
 #
-	moveb	#0x24,sp@(0x7)		|# set trace vecno
-	bral	_060_real_trace
+*/
+	moveb	#0x24,%sp@(0x7)		|# set trace vecno
+	bral	_ASM_LABEL(_060_real_trace)
 
 real_divbyzero_end:
-	jmp	_zerodiv
+	jmp	_C_LABEL(zerodiv)
 
-###########################
+|###########################
 
+/*
 #
 # _060_real_cas():
 #
@@ -153,10 +163,11 @@ real_divbyzero_end:
 # If the implementation provided by the 68060ISP is sufficient,
 # then this routine simply re-enters the package through _isp_cas.
 #
-	.global	_060_real_cas
-_060_real_cas:
-	bral	_I_CALL_TOP+0x80+0x08
+*/
+ASENTRY_NOPROFILE(_060_real_cas)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x08
 
+/*
 #
 # _060_real_cas2():
 #
@@ -164,10 +175,11 @@ _060_real_cas:
 # If the implementation provided by the 68060ISP is sufficient,
 # then this routine simply re-enters the package through _isp_cas2.
 #
-	.global	_060_real_cas2
-_060_real_cas2:
-	bral	_I_CALL_TOP+0x80+0x10
+*/
+ASENTRY_NOPROFILE(_060_real_cas2)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x10
 
+/*
 #
 # _060_lock_page():
 #
@@ -185,11 +197,12 @@ _060_real_cas2:
 # Expected outputs:
 #	d0 = 0 -> success| non-zero -> failure
 #
-	.global	_060_real_lock_page
-_060_real_lock_page:
-	clrl	d0
+*/
+ASENTRY_NOPROFILE(_060_real_lock_page)
+	clrl	%d0
 	rts
 
+/*
 #
 # _060_unlock_page():
 #
@@ -202,90 +215,86 @@ _060_real_lock_page:
 #	d0 = `xxxxxxff -> supervisor| `xxxxxx00 -> user
 #	d1 = `xxxxxxff -> longword| `xxxxxx00 -> word
 #
-	.global	_060_real_unlock_page
-_060_real_unlock_page:
-	clrl	d0
+*/
+ASENTRY_NOPROFILE(_060_real_unlock_page)
+	clrl	%d0
 	rts
 
-############################################################################
-
+|############################################################################
+/*
 ##################################
 # (2) EXAMPLE PACKAGE ENTRY CODE #
 ##################################
+*/
 
-	.global	_060_isp_unimp
-_060_isp_unimp:
-	bral	_I_CALL_TOP+0x80+0x00
+ASENTRY_NOPROFILE(_060_isp_unimp)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x00
 
-	.global	_060_isp_cas
-_060_isp_cas:
-	bral	_I_CALL_TOP+0x80+0x08
+ASENTRY_NOPROFILE(_060_isp_cas)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x08
 
-	.global	_060_isp_cas2
-_060_isp_cas2:
-	bral	_I_CALL_TOP+0x80+0x10
+ASENTRY_NOPROFILE(_060_isp_cas2)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x10
 
-	.global	_060_isp_cas_finish
-_060_isp_cas_finish:
-	bral	_I_CALL_TOP+0x80+0x18
+ASENTRY_NOPROFILE(_060_isp_cas_finish)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x18
 
-	.global	_060_isp_cas2_finish
-_060_isp_cas2_finish:
-	bral	_I_CALL_TOP+0x80+0x20
+ASENTRY_NOPROFILE(_060_isp_cas2_finish)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x20
 
-	.global	_060_isp_cas_inrange
-_060_isp_cas_inrange:
-	bral	_I_CALL_TOP+0x80+0x28
+ASENTRY_NOPROFILE(_060_isp_cas_inrange)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x28
 
-	.global	_060_isp_cas_terminate
-_060_isp_cas_terminate:
-	bral	_I_CALL_TOP+0x80+0x30
+ASENTRY_NOPROFILE(_060_isp_cas_terminate)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x30
 
-	.global	_060_isp_cas_restart
-_060_isp_cas_restart:
-	bral	_I_CALL_TOP+0x80+0x38
+ASENTRY_NOPROFILE(_060_isp_cas_restart)
+	bral	_C_LABEL(I_CALL_TOP)+0x80+0x38
 
-############################################################################
+|############################################################################
 
+/*
 ################################
 # (3) EXAMPLE CALL-OUT SECTION #
 ################################
 
 # The size of this section MUST be 128 bytes!!!
+*/
 
-	.global	_I_CALL_TOP
-_I_CALL_TOP:
-	.long	_060_real_chk-_I_CALL_TOP
-	.long	_060_real_divbyzero-_I_CALL_TOP
-	.long	_060_real_trace-_I_CALL_TOP
-	.long	_060_real_access-_I_CALL_TOP
-	.long	_060_isp_done-_I_CALL_TOP
+GLOBAL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_chk)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_divbyzero)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_trace)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_access)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_isp_done)-_C_LABEL(I_CALL_TOP)
 
-	.long	_060_real_cas-_I_CALL_TOP
-	.long	_060_real_cas2-_I_CALL_TOP
-	.long	_060_real_lock_page-_I_CALL_TOP
-	.long	_060_real_unlock_page-_I_CALL_TOP
+	.long	_ASM_LABEL(_060_real_cas)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_cas2)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_lock_page)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_unlock_page)-_C_LABEL(I_CALL_TOP)
 
 	.long	0x00000000,0x00000000,0x00000000,0x00000000
 	.long	0x00000000,0x00000000,0x00000000
 
-	.long	_060_imem_read-_I_CALL_TOP
-	.long	_060_dmem_read-_I_CALL_TOP
-	.long	_060_dmem_write-_I_CALL_TOP
-	.long	_060_imem_read_word-_I_CALL_TOP
-	.long	_060_imem_read_long-_I_CALL_TOP
-	.long	_060_dmem_read_byte-_I_CALL_TOP
-	.long	_060_dmem_read_word-_I_CALL_TOP
-	.long	_060_dmem_read_long-_I_CALL_TOP
-	.long	_060_dmem_write_byte-_I_CALL_TOP
-	.long	_060_dmem_write_word-_I_CALL_TOP
-	.long	_060_dmem_write_long-_I_CALL_TOP
+	.long	_ASM_LABEL(_060_imem_read)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_imem_read_word)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_imem_read_long)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_byte)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_word)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_long)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_byte)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_word)-_C_LABEL(I_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_long)-_C_LABEL(I_CALL_TOP)
 
 	.long	0x00000000
 	.long	0x00000000,0x00000000,0x00000000,0x00000000
 
+/*
 ############################################################################
 
 # 060 INTEGER KERNEL PACKAGE MUST GO HERE!!!
+*/
 
-	.include	"isp.S"
+#include "isp.S"
