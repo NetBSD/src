@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4 1996/07/03 03:31:54 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5 1998/12/15 21:33:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: malloc.c,v 1.4 1996/07/03 03:31:54 thorpej Exp $";
+__RCSID("$NetBSD: malloc.c,v 1.5 1998/12/15 21:33:00 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,16 +71,6 @@ static char *rcsid = "$NetBSD: malloc.c,v 1.4 1996/07/03 03:31:54 thorpej Exp $"
 #endif
 
 #define	NULL 0
-
-static void morecore();
-static int findbucket();
-
-/*
- * Pre-allocate mmap'ed pages
- */
-#define	NPOOLPAGES	(32*1024/pagesz)
-static caddr_t		pagepool_start, pagepool_end;
-static int		morepages();
 
 /*
  * The overhead on a block is at least 4 bytes.  When free, this space
@@ -117,13 +108,21 @@ union	overhead {
 #endif
 
 /*
+ * Pre-allocate mmap'ed pages
+ */
+#define	NPOOLPAGES	(32*1024/pagesz)
+static caddr_t		pagepool_start, pagepool_end;
+static int		morepages __P((int));
+static void		morecore __P((int));
+static int		findbucket __P((union overhead *, int));
+
+/*
  * nextf[i] is the pointer to the next free block of size 2^(i+3).  The
  * smallest allocatable block is 8 bytes.  The overhead information
  * precedes the data area returned to the user.
  */
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
-extern	char *sbrk();
 
 static	int pagesz;			/* page size */
 static	int pagebucket;			/* page size bucket */
@@ -247,10 +246,7 @@ morecore(bucket)
   	int amt;			/* amount to allocate */
   	int nblks;			/* how many blocks we get */
 
-	/*
-	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
-	 * 2^30 bytes on a VAX, I think) or for a negative arg.
-	 */
+	/* Map bucket number to size */
 	sz = 1 << (bucket + 3);
 #ifdef DEBUG
 	ASSERT(sz > 0);
@@ -395,7 +391,7 @@ realloc(cp, nbytes)
  * header starts at ``freep''.  If srchlen is -1 search the whole list.
  * Return bucket number, or -1 if not found.
  */
-static
+static int
 findbucket(freep, srchlen)
 	union overhead *freep;
 	int srchlen;
@@ -473,7 +469,8 @@ int	n;
 	if ((pagepool_start = mmap(0, n * pagesz,
 			PROT_READ|PROT_WRITE,
 			MAP_ANON|MAP_COPY, fd, 0)) == (caddr_t)-1) {
-		xprintf("Cannot map anonymous memory");
+		char *str = "ld.so: malloc: cannot map pages\n";
+		(void)write(2, str, strlen(str));
 		return 0;
 	}
 	pagepool_end = pagepool_start + n * pagesz;
