@@ -507,7 +507,7 @@ do_recursion (frame)
     if (frame->flags == R_SKIP_ALL)
 	return (0);
 
-    should_readlock = noexec ? 0 : frame->readlock;
+    should_readlock = nolock ? 0 : frame->readlock;
 
     /* The fact that locks are not active here is what makes us fail to have
        the
@@ -549,7 +549,7 @@ do_recursion (frame)
      */
     if (server_active
 	/* If there are writelocks around, we cannot pause here.  */
-	&& (should_readlock || noexec))
+	&& (should_readlock || nolock))
 	server_pause_check();
 #endif
 
