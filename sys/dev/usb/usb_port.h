@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.17 2000/01/16 09:34:18 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.18 2000/01/16 09:42:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 #define UHCI_DEBUG 1
 #define UHUB_DEBUG 1
 #define ULPT_DEBUG 1
+#define UCOM_DEBUG 1
+#define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
 #endif
 
@@ -157,6 +159,9 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UHCI_DEBUG 1
 #define UHUB_DEBUG 1
 #define ULPT_DEBUG 1
+#define UCOM_DEBUG 1
+#define UMODEM_DEBUG 1
+#define UAUDIO_DEBUG 1
 #endif
 
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
