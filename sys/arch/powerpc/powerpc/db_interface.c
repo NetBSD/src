@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2001/06/13 06:01:50 simonb Exp $ */
+/*	$NetBSD: db_interface.c,v 1.11 2001/06/22 11:40:41 simonb Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -9,6 +9,8 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+
+#include <dev/cons.h>
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
@@ -24,6 +26,8 @@
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
+
+int	db_active = 0;
 
 extern label_t *db_recover;
 
@@ -104,7 +108,11 @@ kdb_trap(type, v)
 	DDB_REGS->pid = frame->pid;
 #endif
 
+	db_active++;
+	cnpollc(1);
 	db_trap(T_BREAKPOINT, 0);
+	cnpollc(0);
+	db_active--;
 
 	bcopy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
 	frame->srr0 = DDB_REGS->iar;
