@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.4 2002/06/18 23:38:54 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.5 2002/06/19 00:56:53 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[acorn26]:\n[atari]:\n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .It
 .To 2 General
 .Em General
@@ -282,25 +282,25 @@ an example.
 What you need.
 .(bullet
 The distribution sets (in this example, they are on CD).
-.\" .if !r_pmax \{\
 .if !\n[pmax]:\n[sgimips] \{\
 .It
 .ie r_alpha Two floppy disks.
 .el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
-.el .ie \n[acorn26]:\n[macppc]:\n[sparc] Some form of bootable media, described above.
+.el .ie \n[acorn26]:\n[macppc]:\n[sparc]:\n[walnut] \{\
+Some form of bootable media, described above.
+.\}
 .el .ie r_atari \{\
 A floppy disk containing a suitable boot.fs and a floppy with the
 sysinst.fs image. See the "prepare" section about obtaining those.
-.\} \" r_atari
-.el One 1.44 MB 3.5" floppy.
-.\} \" ! r_pmax
+.\} .el One 1.44 MB 3.5" floppy.
+.\} \" !\n[pmax]:\n[sgimips]
 .if r_i386 \{\
 .It
 A PC with a 386 or newer processor.
 .\} \" r_i386
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[i386]:\n[macppc] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[i386]:\n[macppc]:\n[walnut] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
 .if r_acorn26 8 MB
@@ -310,6 +310,7 @@ a harddisk and a minimum of
 .if r_macppc 8 MB
 .if r_mvme68k 4 MB
 .if r_news68k 4 MB
+.if r_newsmips 16 MB
 .if r_pmax 8 MB
 .if r_sparc 4 MB
 .if r_sgimips 16 MB
@@ -323,6 +324,7 @@ The harddisk should have at least
 .if r_macppc 200
 .if r_mvme68k 100
 .if r_news68k 100
+.if r_newsmips 200
 .if r_pmax 200
 .if r_sparc 200
 .if r_sgimips 200
@@ -336,7 +338,7 @@ main memory in your system. If you wish to install
 the X Window System as well, you will need at least
 60 MB more.
 .bullet)
-.if \n[alpha]:\n[i386]:\n[news68k] \{\
+.if \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips] \{\
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
@@ -363,6 +365,7 @@ for the second diskette.
 .\}
 .if r_alpha .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
 .if r_news68k .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.if r_newsmips .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
 .Sq Ic a .
@@ -375,19 +378,15 @@ system, you would type something like:
 .Pp
 .Dl # Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a"
 .Pp
-.\} \" \n[alpha]:\n[i386]:\[news68k]
+.\} \" \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips]
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.ie \n[acorn26]:\n[atari]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
 Boot the system as described above.  You
 should be at the
 .Ic sysinst
 main menu.
-.\} \" \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]
-.ie r_atari \{\
-Boot the system as described in the "Booting the installer" section above.
-The main menu will be displayed.
 .\}
 .el \{\
 Insert the
@@ -408,6 +407,16 @@ Type
 Type
 .Pp
 .Dl \&NEWS\*> Ic "bo fh"
+.Pp
+.\}
+.if r_newsmips \{\
+Type
+.Pp
+.Dl \&\*> Ic "bo fd" (in case of NWS-5000)
+.Pp
+or
+.Pp
+.Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
 The main menu will be displayed.
@@ -509,16 +518,15 @@ Further information can be found on
 .To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
-.
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
-.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
+.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
 .Pp
 Boot the system as described in the previous section.
 .Pp
@@ -526,7 +534,7 @@ You may want to read the
 boot messages, to notice your disk's name and capacity. Its name
 will be something like
 .Li sd0
-.if \n[acorn26]:\n[macppc] \{\
+.if \n[acorn26]:\n[macppc]:\n[walnut] \{\
 or
 .Li wd0
 .\}
@@ -540,7 +548,7 @@ You will also need to know the name, to tell
 on which disk
 to install.
 The most important thing to know is that
-.if \n[acorn26]:\n[macppc] \{\
+.if \n[acorn26]:\n[macppc]:\n[walnut] \{\
 .Li wd0
 is
 .Nx 's
@@ -641,18 +649,18 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" ! \n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
 it is installed, you should first go to the 
-.Me Utility menu
-, and select the
+.Me Utility menu ,
+and select the
 .Me Configure network 
 option.
 If you only want to temporarily
@@ -1186,11 +1194,11 @@ on an HFS or HFS+ partition.
 .(pcmcia
 .
 Load a kernel tar file (i.e. the
-.Pa kern.tgz
+.Pa kern-GENERIC.tgz
 set file)
 on to your hard disk, for example by mounting the
 hard disk first, copying the
-.Pa kern.tgz
+.Pa kern-GENERIC.tgz
 file from floppy and unpacking it. Example:
 .Pp
 .Dl # Ic "mount /dev/wd0a /mnt"

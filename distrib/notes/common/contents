@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.5 2002/06/18 23:32:29 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.6 2002/06/19 00:56:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,16 +53,24 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.gz -compact
+.if !\n[atari]:\n[walnut] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.\}
 .if r_hpcmips \{\
 This kernel runs on Vr41xx and TX3922 CPU only.
 .\}
 .
 .if r_sgimips \{\
 This kernel will boot on O2 and similar machines.
+.\}
+.
+.if r_acorn26 \{\
+.			It Pa netbsd.FOURMEG.gz
+A somewhat smaller kernel, intended to be usable on systems with
+four megabytes of RAM.
 .\}
 .
 .if r_amiga \{\
@@ -72,10 +80,24 @@ using loadbsd for installation on memory-tight systems. This is the
 same kernel as present on the miniroot.
 .\}
 .
-.if r_acorn26 \{\
-.			It Pa netbsd.FOURMEG.gz
-A somewhat smaller kernel, intended to be usable on systems with
-four megabytes of RAM.
+.if r_atari \{\
+.			It Pa netbsd-ATARITT.gz
+A kernel specifically tuned for the Atari TT030.
+.			It Pa netbsd-BOOT.gz
+A kernel for both the Falcon and TT030. It is kept pretty small, so you
+can use it to boot the system for installation on memory-tight systems.
+This is the kernel supplied on the boot.fs floppy.
+.			It Pa netbsd-BOOTX.gz
+Same as the BOOT kernel, but it has slightly more features. You can run X11
+with it.
+.			It Pa netbsd-FALCON.gz
+A kernel specifically tuned for the Atari Falcon.
+.			It Pa netbsd-HADES.gz
+A kernel specifically tuned for the Hades.
+.			It Pa netbsd-MILAN-ISAIDE.gz
+A kernel specifically tuned for the MILAN using IDE in ISA mode.
+.			It Pa netbsd-MILAN-PCIIDE.gz
+A kernel specifically tuned for the MILAN using IDE in PCI mode.
 .\}
 .
 .if r_hpcmips \{\
@@ -153,6 +175,23 @@ A kernel similar to GENERIC, but will boot on an Indy and similar machines.
 GENERIC targeted for being bootable on Indigo 2 and similar machines.
 .\}
 .
+.if r_walnut \{\
+.			It Pa netbsd-WALNUT.gz
+A gzipped
+.Nx
+kernel (in ELF format) containing code for everything supported
+in this release.
+.			It Pa netbsd.img-WALNUT.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd.INSTALL.gz
+A gzipped 
+.Nx
+kernel (ELF format) containing code for everything supported in this
+release.  It also includes a RAM-disk installer with sysinst.
+.			It Pa netbsd.INSTALL.img.gz
+Same as the above, but in the format expected by the firmware.
+.\}
+.
 .		tag)
 .		It Pa sets/
 \*M binary distribution sets;
@@ -192,12 +231,12 @@ no need to
 this image.
 .\}
 .
-.if \n[amiga]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun2]:\n[sun3] \{\
+.if \n[amiga]:\n[atari]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun2]:\n[sun3] \{\
 .		It Pa miniroot/
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[mvme68k]:\n[macppc]:\n[sgimips] \{\
+.if !\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[walnut] \{\
 .		It Pa misc/
 .
 .if r_alpha \{\
@@ -373,6 +412,7 @@ everything described below.
 .if r_macppc .Em 17.1 MB gzipped, 46.2 MB uncompressed
 .if r_mvme68k .Em 15.9 MB gzipped, 37.5 MB uncompressed
 .if r_news68k .Em 15.6 MB gzipped, 41.3 MB uncompressed
+.if r_newsmips .Em 21.5 MB gzipped, 69.8 MB uncompressed
 .if r_next68k .Em 15.1 MB gzipped, 46.0 MB uncompressed
 .if r_pc532 .Em 15.9 MB gzipped, 37.9 MB uncompressed
 .if r_pmax .Em 19.0 MB gzipped, 61.2 MB uncompressed
@@ -381,6 +421,7 @@ everything described below.
 .if r_sun2 .Em 51.9 MB gzipped, 116.0 MB uncompressed
 .if r_sun3 .Em 14.5 MB gzipped, 38.1 MB uncompressed
 .if r_vax .Em 15.5 MB gzipped, 36.0 MB uncompressed
+.if r_walnut .Em 19.7 MB gzipped, ??.? MB uncompressed
 .if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
 .
 .It Sy comp
@@ -406,6 +447,7 @@ system call and library manual pages.
 .if r_macppc .Em 14.4 MB gzipped, 55.4 MB uncompressed
 .if r_mvme68k .Em 12.8 MB gzipped, 48.1 MB uncompressed
 .if r_news68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_newsmips .Em 16.2 MB gzipped, 72.5 MB uncompressed
 .if r_next68k .Em 14.3 MB gzipped, 55.1 MB uncompressed
 .if r_pc532 .Em 11.6 MB gzipped, 37.7 MB uncompressed
 .if r_pmax .Em 13.4 MB gzipped, 57.2 MB uncompressed
@@ -414,6 +456,7 @@ system call and library manual pages.
 .if r_sun2 .Em 12.5 MB gzipped, 45.1 MB uncompressed
 .if r_sun3 .Em 9.5 MB gzipped, 32.5 MB uncompressed
 .if r_vax .Em 11.9 MB gzipped, 37.9 MB uncompressed
+.if r_walnut .Em 16.9 MB gzipped, ??.? MB uncompressed
 .if r_x68k .Em 9.4 MB gzipped, 31.8 MB uncompressed
 .
 .It Sy etc
@@ -438,6 +481,7 @@ This set includes the games and their manual pages.
 .if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
 .if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
 .if r_mips .Em 3.0 MB gzipped, 7.9 MB uncompressed
+.if r_newsmips .Em 2.9 MB gzipped, 7.7 MB uncompressed
 .if r_pc532 .Em 2.9 MB gzipped, 7.2 MB uncompressed
 .if r_powerpc .Em 3.0 MB gzipped, 7.2 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
@@ -446,6 +490,7 @@ This set includes the games and their manual pages.
 .if r_sun2 .Em 5.4 MB gzipped, 12.2 MB uncompressed
 .if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
+.if !\n[atari]:\n[walnut] \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -466,6 +511,7 @@ install this distribution set.
 .if r_macppc .Em 1.3 MB gzipped, 3.1 MB uncompressed
 .if r_mvme68k .Em 0.7 MB gzipped, 1.6 MB uncompressed
 .if r_news68k .Em 0.9 MB gzipped, 1.9 MB uncompressed
+.if r_newsmips .Em 1.1 MB gzipped, 2.9 MB uncompressed
 .if r_pc532 .Em 0.6 MB gzipped, 1.2 MB uncompressed
 .if r_pmax .Em 1.1 MB gzipped, 2.7 MB uncompressed
 .if r_sparc .Em 1.2 MB gzipped, 2.8 MB uncompressed
@@ -473,6 +519,33 @@ install this distribution set.
 .if r_sun2 .Em 0.4 MB gzipped, 0.9 MB uncompressed
 .if r_vax .Em 0.7 MB gzipped, 1.4 MB uncompressed
 .if r_x68k .Em 0.9 MB gzipped, 2.1 MB uncompressed
+.\}
+.if r_atari \{\
+.It Sy kern-BOOT,kern-HADES,kern-MILAN-ISAIDE and kern-MILAN-PCIIDE
+These sets contain a
+.Nx*M
+\*V
+kernel, named
+.Pa /netbsd .
+.No You Em must
+install the kernel that matches your hardware.
+.br
+.\}
+.if r_walnut \{\
+.It Sy kern-WALNUT
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+You
+.Em must
+install this distribution set.
+.br
+.Em 3.3 MB gzipped, 7.6 MB uncompressed
+.\}
 .
 .It Sy man
 This set includes all of the manual pages for the
@@ -506,6 +579,7 @@ all related programs, and their manual pages.
 .if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
 .if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
 .if r_mips .Em 1.3 MB gzipped, 5.6 MB uncompressed
+.if r_newsmips .Em 1.8 MB gzipped, 7.1 MB uncompressed
 .if r_pc532 .Em 1.3 MB gzipped, 4.6 MB uncompressed
 .if r_powerpc .Em 1.2 MB gzipped, 4.6 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
@@ -752,7 +826,7 @@ in the
 subdirectory of the
 .Nx \*V
 distribution tree. These kernels are generally named something like
-.Pa netbsd.BOOT.gz
+.Pa netbsd-BOOT.gz
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
