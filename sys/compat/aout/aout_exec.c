@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.5 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.6 2000/12/01 19:12:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,4 +68,8 @@ struct emul emul_netbsd_aout = {
 #endif
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_HAS_SYS___syscall,
 };
