@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.10 1999/09/20 02:35:44 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.11 1999/09/25 22:29:21 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -366,6 +366,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 				laddr, 1) != 0) {
 			break;
 		}
+		/* invert u bit to convert EUI64 to RFC2373 interface ID. */
+		ia->ia_addr.sin6_addr.s6_addr8[8] ^= 0x02;
 	}
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
