@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.145 2000/06/30 17:10:15 itojun Exp $
+#	$NetBSD: GENERIC,v 1.146 2000/07/05 04:07:24 sommerfeld Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.145 $"
+#ident 		"GENERIC-$Revision: 1.146 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -67,7 +67,7 @@ options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 2000/06/30 17:10:15 itojun Exp $
+#	$NetBSD: GENERIC,v 1.36 2000/07/05 04:07:24 sommerfeld Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.35 $"
+#ident		"GENERIC-$Revision: 1.36 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,7 +87,7 @@ options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

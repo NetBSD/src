@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.72 2000/06/15 18:16:10 abs Exp $
+#	$NetBSD: DISKLESS,v 1.73 2000/07/05 04:07:25 sommerfeld Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -88,7 +88,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
