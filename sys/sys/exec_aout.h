@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.26 2001/06/27 19:58:52 fredette Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.27 2001/08/16 05:06:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -84,6 +84,7 @@ struct exec {
 #define	MID_VAX		150	/* vax */
 #define	MID_SPARC64	151	/* LP64 sparc */
 #define	MID_X86_64	152	/* AMD x86-64 */
+#define	MID_M88K	153	/* m88k BSD core dumps */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
 #define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
