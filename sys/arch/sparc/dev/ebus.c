@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.3 2002/02/08 13:10:42 uwe Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.4 2002/02/18 04:50:57 uwe Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -70,10 +70,28 @@ int ebus_debug = 0;
 
 #include <dev/ofw/ofw_pci.h>
 
-/* XXX: convert to use shared <dev/ebus/ebusreg.h> */
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
+
+struct ebus_softc {
+	struct device			sc_dev;
+	struct device			*sc_parent;	/* PCI bus */
+
+	int				sc_node;	/* PROM node */
+
+	bus_space_tag_t			sc_bustag;	/* mem tag from pci */
+	bus_dma_tag_t			sc_dmatag;	/* XXX */
+
+	bus_space_tag_t			sc_childbustag;	/* EBus tag */
+
+	/* 
+	 * "reg" contains exactly the info we'd get by processing
+	 * "ranges", so don't bother with "ranges" and use "reg" directly.
+	 */
+	struct ofw_pci_register		*sc_reg;
+	int				sc_nreg;
+};
 
 int	ebus_match(struct device *, struct cfdata *, void *);
 void	ebus_attach(struct device *, struct device *, void *);
@@ -96,6 +114,10 @@ static int	_ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
 			      bus_size_t, int, vaddr_t, bus_space_handle_t *);
 static void	*ebus_intr_establish(bus_space_tag_t, int, int, int,
 				     int (*)(void *), void *);
+
+static bus_space_tag_t	ebus_alloc_bus_tag(struct ebus_softc *);
+static bus_dma_tag_t	ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
+
 
 /*
  * Working around PROM bogosity.
@@ -290,10 +312,23 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	err = PROM_getprop(node, "reg", sizeof(struct ebus_reg),
+	err = PROM_getprop(node, "reg", sizeof(struct ebus_regs),
 			   &ea->ea_nreg, (void **)&ea->ea_reg);
 	if (err != 0)
 		return (err);
+
+	/*
+	 * On Ultra the bar is the _offset_ of the BAR in PCI config
+	 * space but in (some?) ms-IIep systems (e.g. Krups) it's the
+	 * _number_ of the BAR - e.g. BAR1 is represented by 1 in
+	 * Krups PROM, while on Ultra it's 0x14.  Fix it here.
+	 */
+	for (n = 0; n < ea->ea_nreg; ++n)
+	    if (ea->ea_reg[n].hi < PCI_MAPREG_START) {
+		ea->ea_reg[n].hi = PCI_MAPREG_START
+		    + ea->ea_reg[n].hi * sizeof(pcireg_t);
+	    }
+
 
 	err = PROM_getprop(node, "address", sizeof(u_int32_t),
 			   &ea->ea_nvaddr, (void **)&ea->ea_vaddr);
@@ -348,8 +383,8 @@ ebus_print(aux, p)
 	if (p)
 		printf("%s at %s", ea->ea_name, p);
 	for (i = 0; i < ea->ea_nreg; ++i)
-		printf("%s bar %d offset 0x%x", i == 0 ? "" : ",",
-		       ea->ea_reg[i].bar, ea->ea_reg[i].offset);
+		printf("%s bar %x offset 0x%x", i == 0 ? "" : ",",
+		       ea->ea_reg[i].hi, ea->ea_reg[i].lo);
 	for (i = 0; i < ea->ea_nintr; ++i)
 		printf(" line %d", ea->ea_intr[i]);
 	return (UNCONF);
@@ -440,15 +475,12 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 		 (int)bar, (u_int32_t)offset, (u_int32_t)size,
 		 flags, (void *)vaddr));
 
-	/* EBus only has two BARs */
-	if (bar != 0 && bar != 1) {
+	/* EBus has only two BARs */
+	if (PCI_MAPREG_NUM(bar) > 1) {
 		DPRINTF(EDB_BUSMAP,
 			("\n_ebus_bus_map: impossible bar\n"));
 		return (EINVAL);
 	}
-
-	/* XXX: krups: change bar number to the offset in config space */
-	bar = PCI_MAPREG_START + bar * sizeof(pcireg_t);
 
 	/*
 	 * Almost all of the interesting ebus children are mapped by
