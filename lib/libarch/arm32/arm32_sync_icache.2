@@ -28,30 +28,40 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: arm32_sync_icache.2,v 1.1 1996/10/15 23:01:41 mark Exp $
+.\"	$NetBSD: arm32_sync_icache.2,v 1.2 1997/02/10 03:20:48 mark Exp $
 .\"
 .Dd October 14, 1996
 .Dt ARM32_SYNC_ICACHE 2
 .Os NetBSD
 .Sh NAME
 .Nm arm32_sync_icache
-.Nd flush the cpu instruction cache
+.Nd clean the cpu data cache and flush the cpu instruction cache
 .Sh SYNOPSIS
 .Fd #include <machine/sysarch.h>
 .Ft int
-.Fn arm32_sync_icache
+.Fn arm32_sync_icache "u_int addr" "int len"
 .Sh DESCRIPTION
 .Fn arm32_sync_icache
 will make sure that all the entries in the processor instruction cache
-are synchorised with main memory.
-Some ARM processors (StrongARM) have separate instruction and data
-caches thus following modification of the text area of a process the
-contents of main memory and the contents of the instruction cache may
-differ. On such processors
+are synchorised with main memory and that any data in a write back cache
+has been cleaned.
+Some ARM processors (e.g SA110) have separate instruction and data
+caches thus any dynamically generated or modified code needs to be
+written back from any data caches to main memory and the instruction
+cache needs to be synchronised with main memory.
+.Pp
+On such processors
 .Fn arm32_sync_icache
-will invalidate the processor instruction cache to force reloading from
-main memory. On processors that have a shared instruction and data cache
+will clean the data cache and invalidate the processor instruction cache
+to force reloading from main memory. On processors that have a shared
+instruction and data cache and have a write through cache (.e.g ARM6)
 no action needs to be taken.
+.Pp
+The routine takes a start address
+.Fa addr
+and a length
+.Fa len
+to describe the area of memory that needs to be cleaned and synchronised.
 .Sh ERRORS
 .Fn arm32_sync_icache
 will never fail so will always return 0.

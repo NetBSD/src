@@ -1,4 +1,4 @@
-/* $NetBSD: arm32_sync_icache.c,v 1.1 1996/10/15 23:01:41 mark Exp $ */
+/* $NetBSD: arm32_sync_icache.c,v 1.2 1997/02/10 03:20:49 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -38,7 +38,14 @@
 #include <machine/sysarch.h>
 
 int
-arm32_sync_icache()
+arm32_sync_icache(addr, len)
+	u_int addr;
+	int len;
 {
-	return sysarch(ARM32_SYNC_ICACHE, 0);
+	struct arm32_sync_icache_args p;
+
+	p.addr = addr;
+	p.len = len;
+
+	return sysarch(ARM32_SYNC_ICACHE, &p);
 }
