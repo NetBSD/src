@@ -1,4 +1,4 @@
-.\" $NetBSD: pppoectl.8,v 1.1 2001/12/10 17:22:09 martin Exp $
+.\" $NetBSD: pppoectl.8,v 1.2 2001/12/10 23:57:48 wiz Exp $
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
 .\"
@@ -25,17 +25,17 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.1 2001/12/10 17:22:09 martin Exp $
+.\" $Id: pppoectl.8,v 1.2 2001/12/10 23:57:48 wiz Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
-.Dd March 26, 2001
+.Dd December 11, 2001
 .Os
 .Dt PPPOECTL 8
 .Sh NAME
 .Nm pppoectl ,
 .Nm ispppcontrol
-.Nd display or set parameters for an pppoe or isdn ppp (isp) interface
+.Nd "display or set parameters for an pppoe or isdn ppp (isp) interface"
 .Sh SYNOPSIS
 .Nm
 .Op Fl v
@@ -60,15 +60,15 @@ option, which takes the name of the ethernet interface as its argument.
 .Bl -tag -width indent
 .It Fl e
 specifies the ethernet interface used to communicate with the
-access concentrator (typically via an DSL modem).
+access concentrator (typically via a DSL modem).
 .It Fl a
 specifies the name of the access concentrator.
 .It Fl s
 specifies the name of the service connected to.
 .El
 .Pp
-Both the access concentrator name and the service name are typically
-not specified.
+Typically, not both the access concentrator name and the service name are
+specified.
 .Pp
 The
 .Xr i4bisppp 4
@@ -87,7 +87,7 @@ is being called, at least the parameter
 .Ar ifname
 needs to be specified, naming the interface for which the settings
 are to be performed or displayed.  Use
-.Xr ifconfig 8 ,
+.Xr ifconfig 8
 or
 .Xr netstat 1
 to see which interfaces are available.
@@ -131,9 +131,9 @@ with the parameter
 .Ql down .
 .Pp
 The currently supported parameters include:
-.Bl -tag -offset indent -width indent
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxxx
 .It Ar authproto Ns \&= Ns Em protoname
-Set both, his and my authentication protocol to
+Set both his and my authentication protocol to
 .Em protoname .
 The protocol name can be one of
 .Ql chap ,
@@ -199,7 +199,8 @@ mode.
 .It Ar lcp-timeout Ns \&= Ns Em timeout-value
 Allows to change the value of the LCP timeout. The default value of the
 LCP timeout is currently set to 3 seconds which is too high for some
-remote PPP implentations. The timeout-value must specified in milliseconds.
+remote PPP implementations. The timeout-value must be specified in
+milliseconds.
 .It Ar enable-vj
 Enable negotiation of Van Jacobsen header compression.
 .It Ar disable-vj
@@ -241,12 +242,12 @@ that could have been used to bring the interface into the state shown
 by the previous example.
 .Pp
 The following example is the complete sequence of commands to bring
-an PPPoE connection up:
+a PPPoE connection up:
 .Bd -literal
 # Need ethernet interface UP (or it won't send any packets)
 ifconfig ne0 up
 
-# Let pppoe0 use ne0 as it's ethernet interface
+# Let pppoe0 use ne0 as its ethernet interface
 pppoectl -e ne0 pppoe0
 
 # Configure authentication
@@ -256,12 +257,11 @@ pppoectl pppoe0 \\
   myauthsecret=YYYYY \\
   hisauthproto=none
 
-# Configure the pppoe0 interface itself. This addresses are magic
+# Configure the pppoe0 interface itself. These addresses are magic,
 # meaning we don't care about either address and let the remote
 # ppp choose them.
 ifconfig pppoe0 0.0.0.0 0.0.0.1 up
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr i4bisppp 4 ,
@@ -303,6 +303,4 @@ utility which appeared in
 The program was written by
 .ie t J\(:org Wunsch,
 .el Joerg Wunsch,
-Dresden, and modified for PPPoE support by
-.ie t Martin Husemann
-.el Martin Husemann.
+Dresden, and modified for PPPoE support by Martin Husemann.
