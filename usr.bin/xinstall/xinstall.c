@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.61 2001/11/23 16:14:51 simonb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.62 2001/11/23 18:14:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.61 2001/11/23 16:14:51 simonb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.62 2001/11/23 18:14:51 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,6 +347,7 @@ do_link(char *from_name, char *to_name)
 	if (dorename) {
 		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
 		    xdirname(to_name));
+		/* This usage is safe. The linker will bitch anyway. */
 		if (mktemp(tmpl) == NULL)
 			err(1, "%s", tmpl);
 		ret = link(from_name, tmpl);
@@ -374,6 +375,7 @@ do_symlink(char *from_name, char *to_name)
 	if (dorename) {
 		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
 		    xdirname(to_name));
+		/* This usage is safe. The linker will bitch anyway. */
 		if (mktemp(tmpl) == NULL)
 			err(1, "%s", tmpl);
 
