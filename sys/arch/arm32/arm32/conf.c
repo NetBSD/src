@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1997/10/18 04:47:57 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1998/06/12 23:59:22 tv Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -150,6 +150,12 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "vidcvideo.h"
 #include "ipfilter.h"
 #include "rnd.h"
+#include "profiler.h"
+#include "ofcons.h"
+#include "ofrom.h"
+#include "ofrtc.h"			/* XXX not used for anything?! */
+#include "scr.h"
+#include "pc.h"
 
 /* Character devices */
 
@@ -158,12 +164,16 @@ struct cdevsw cdevsw[] = {
 	cdev_swap_init(1, sw),          /*  1: /dev/drum (swap pseudo-device) */
 	cdev_cn_init(1, cn),            /*  2: virtual console */
 	cdev_ctty_init(1,ctty),         /*  3: controlling terminal */
-#if     defined(RISCPC) || defined(RC7500)
-	cdev_physcon_init(NVT, physcon),  /*  4: RPC console */
-#else	/* RISCPC || RC7500 */
-	cdev_lkm_dummy(),		/*  4: */
-#endif	/* RISCPC || RC7500 */
-        cdev_log_init(1,log),           /*  5: /dev/klog */
+#if	(defined(RISCPC) || defined(RC7500))
+	cdev_physcon_init(NVT, physcon),/*  4: RPC console */
+#elif	defined(SHARK) && (NPC > 0)
+	cdev_pc_init(1,pc),		/*  4: PC console */
+#elif	(defined(OFWGENCFG) || defined(SHARK))
+	cdev_tty_init(NOFCONS,ofcons_),	/*  4: Openfirmware console */
+#else
+	cdev_notdef(),			/* 4: */
+#endif
+	cdev_log_init(1,log),           /*  5: /dev/klog */
 	cdev_ptc_init(NPTY,ptc),        /*  6: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),        /*  8: parallel printer */
@@ -179,7 +189,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NMD, md),        /* 18: memory disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
 	cdev_lkm_dummy(),		/* 20: */
- 	cdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
+	cdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
 	cdev_lkm_dummy(),		/* 22: */
 	cdev_lkm_dummy(),		/* 23: */
 	cdev_disk_init(NSD,sd),	    	/* 24: SCSI disk */
@@ -191,8 +201,8 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 30: */
 	cdev_lkm_dummy(),		/* 31: */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 32: Berkeley packet filter */
-        cdev_bpftun_init(NTUN,tun),     /* 33: network tunnel */
-        cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
+	cdev_bpftun_init(NTUN,tun),     /* 33: network tunnel */
+	cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(NVIDCVIDEO,vidcvideo),	/* 37: vidcvideo device */
@@ -207,11 +217,19 @@ struct cdevsw cdevsw[] = {
 	cdev_ipf_init(NIPFILTER,ipl),	/* 46: ip-filter device */
 	cdev_lkm_dummy(),		/* 47: */
 	cdev_lkm_dummy(),		/* 48: */
-	cdev_lkm_dummy(),		/* 49: */
+	cdev_mm_init(NOFROM, ofrom),	/* 49: ofrom */
+#ifdef SHARK /* XXX */
+	cdev_tty_init(NSCR,scr),        /*  50: Smart card reader  */
+#else
 	cdev_lkm_dummy(),		/* 50: */
-	cdev_lkm_dummy(),		/* 51: */
+#endif
+	cdev_notdef(),			/* 51: */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
+#ifdef	SHARK
+	cdev_prof_init(NPROFILER, prof), /* 53: fiq Profiler*/
+#else
 	cdev_lkm_dummy(),		/* 53: */
+#endif
 	cdev_lkm_dummy(),		/* 54: */
 	cdev_lkm_dummy(),		/* 55: */
 };
@@ -343,15 +361,20 @@ chrtoblk(dev)
 
 cons_decl(rpcconsole);
 cons_decl(com);   
+cons_decl(ofcons_);
+cons_decl(pc);
 
 struct consdev constab[] = {
-#if (NVT + NRPC > 0)
-	cons_init(rpcconsole),
-#endif
-#ifdef notyet
 #if (NCOM > 0)
 	cons_init(com),
 #endif
+#if (NVT + NRPC > 0)
+	cons_init(rpcconsole),
+#elif (NOFCONS > 0)			/* XXX should work together */
+	cons_init(ofcons_),
+#endif
+#if (NPC > 0)
+	cons_init(pc),
 #endif
 	{ 0 },
 };
