@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.118 2003/05/13 06:33:40 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.119 2003/05/13 06:48:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.118 2003/05/13 06:33:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.119 2003/05/13 06:48:56 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -141,6 +141,8 @@ static int  wi_set_tim(struct ieee80211com *, int, int);
 static int  wi_scan_ap(struct wi_softc *);
 static void wi_scan_result(struct wi_softc *, int, int);
 
+static void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
+
 static inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 {
@@ -154,9 +156,12 @@ int wi_debug = 0;
 
 #define	DPRINTF(X)	if (wi_debug) printf X
 #define	DPRINTF2(X)	if (wi_debug > 1) printf X
+#define	IFF_DUMPPKTS(_ifp) \
+	(((_ifp)->if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
 #else
 #define	DPRINTF(X)
 #define	DPRINTF2(X)
+#define	IFF_DUMPPKTS(_ifp)	0
 #endif
 
 #define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO)
@@ -860,6 +865,8 @@ wi_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
+		if (IFF_DUMPPKTS(ifp))
+			wi_dump_pkt(&frmhdr, ni, -1);
 		fid = sc->sc_txd[cur].d_fid;
 		off = sizeof(frmhdr);
 		if (wi_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0 ||
@@ -2377,4 +2384,23 @@ wi_scan_result(struct wi_softc *sc, int fid, int cnt)
 	/* Done scanning */
 	sc->sc_scan_timer = 0;
 	DPRINTF(("wi_scan_result: scan complete: ap %d\n", naps));
+}
+
+static void
+wi_dump_pkt(struct wi_frame *wh, struct ieee80211_node *ni, int rssi)
+{
+	ieee80211_dump_pkt((u_int8_t *) &wh->wi_whdr, sizeof(wh->wi_whdr),
+	    ni ? ni->ni_rates[ni->ni_txrate] & IEEE80211_RATE_VAL : -1, rssi);
+	printf(" status 0x%x rx_tstamp1 %u rx_tstamp0 0x%u rx_silence %u\n",
+		le16toh(wh->wi_status), le16toh(wh->wi_rx_tstamp1),
+		le16toh(wh->wi_rx_tstamp0), wh->wi_rx_silence);
+	printf(" rx_signal %u rx_rate %u rx_flow %u\n",
+		wh->wi_rx_signal, wh->wi_rx_rate, wh->wi_rx_flow);
+	printf(" tx_rtry %u tx_rate %u tx_ctl 0x%x dat_len %u\n",
+		wh->wi_tx_rtry, wh->wi_tx_rate,
+		le16toh(wh->wi_tx_ctl), le16toh(wh->wi_dat_len));
+	printf(" ehdr dst %s src %s type 0x%x\n",
+		ether_sprintf(wh->wi_ehdr.ether_dhost),
+		ether_sprintf(wh->wi_ehdr.ether_shost),
+		wh->wi_ehdr.ether_type);
 }
