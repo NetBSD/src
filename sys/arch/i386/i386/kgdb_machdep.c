@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2000/10/06 18:37:39 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.10 2000/11/14 22:55:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ kgdb_acc(va, len)
 			va = (va & PG_LGFRAME) + NBPD;
 		else
 #endif
-			va += NBPG;
+			va += PAGE_SIZE;
 	} while (va < last_va);
 
 	return (1);

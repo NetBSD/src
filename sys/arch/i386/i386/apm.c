@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.53 2000/08/13 22:26:27 augustss Exp $ */
+/*	$NetBSD: apm.c,v 1.54 2000/11/14 22:55:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -959,7 +959,7 @@ apmattach(parent, self, aux)
 	struct bioscallregs regs;
 	int error, apm_data_seg_ok;
 	u_int okbases[] = { 0, biosbasemem*1024 };
-	u_int oklimits[] = { NBPG, IOM_END};
+	u_int oklimits[] = { PAGE_SIZE, IOM_END};
 	u_int i;
 #ifdef APMDEBUG
 	char bits[128];

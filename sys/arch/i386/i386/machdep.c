@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.413 2000/11/13 16:40:40 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.414 2000/11/14 22:55:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -327,8 +327,8 @@ cpu_startup()
 
 	/* msgbuf_paddr was init'd in pmap */
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
+		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -435,7 +435,7 @@ cpu_startup()
 	 */
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 #if NBIOSCALL > 0
@@ -444,9 +444,9 @@ cpu_startup()
 	 * in case someone tries to fake it out...
 	 */
 #ifdef DIAGNOSTIC
-	if (biostramp_image_size > NBPG)
+	if (biostramp_image_size > PAGE_SIZE)
 	    panic("biostramp_image_size too big: %x vs. %x\n",
-		  biostramp_image_size, NBPG);
+		  biostramp_image_size, PAGE_SIZE);
 #endif
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
@@ -512,7 +512,7 @@ i386_bufinit()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			/*
@@ -1462,7 +1462,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1509,7 +1509,7 @@ cpu_dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+#define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
 
 vaddr_t
@@ -1772,14 +1772,6 @@ init386(first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-#if NBIOSCALL > 0
-	avail_start = 3*NBPG;	/* save us a page for trampoline code and
-				   one additional PT page! */
-#else
-	avail_start = NBPG;	/* BIOS leaves data in low memory */
-				/* and VM system doesn't work with phys 0 */
-#endif
-
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
@@ -1790,6 +1782,14 @@ init386(first_avail)
 	 */
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
+
+#if NBIOSCALL > 0
+	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
+				      one additional PT page! */
+#else
+	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
+				 /* and VM system doesn't work with phys 0 */
+#endif
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -2109,9 +2109,9 @@ init386(first_avail)
 
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
-	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*NBPG,
+	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
+	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
@@ -2403,7 +2403,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	memset((caddr_t)PTD, 0, NBPG);
+	memset((caddr_t)PTD, 0, PAGE_SIZE);
 	pmap_update(); 
 #endif
 
