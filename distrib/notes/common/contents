@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.97.2.9 2004/11/29 06:05:41 jmc Exp $
+.\"	$NetBSD: contents,v 1.97.2.10 2005/03/22 00:52:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ kernel containing code for everything supported in this release.
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} .\" hpcmips
-.\} .\" !atari/mac68k/sgimips/evgppc
+.\} .\" !atari/mac68k/sgimips/evbppc
 .if \n[macppc]:\n[sparc]:\n[i386]:\n[amd64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
