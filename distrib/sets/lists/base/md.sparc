@@ -1,7 +1,11 @@
-# $NetBSD: md.sparc,v 1.64 2002/10/09 01:22:39 thorpej Exp $
+# $NetBSD: md.sparc,v 1.65 2002/11/27 11:58:23 pk Exp $
+./lib/libsparc_v8.so.0		base-sys-shlib
+./lib/libsparc_v8.so.0.0	base-sys-shlib
 ./sbin/edlabel			base-sysutil-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
+./usr/lib/libsparc_v8.so.0	base-sys-shlib
+./usr/lib/libsparc_v8.so.0.0	base-sys-shlib
 ./usr/libexec/ld.so		base-sys-shlib
 ./usr/mdec/binstall		base-sysutil-bin
 ./usr/mdec/boot			base-sysutil-bin
