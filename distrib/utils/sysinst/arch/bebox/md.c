@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2003/05/07 10:20:20 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.30 2003/05/18 07:48:28 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 
 int mbr_present;
 int c1024_resp;
-mbr_partition_t mbr;
+mbr_sector_t mbr;
 
 /* prototypes */
 
