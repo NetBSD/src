@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.21 2003/02/24 10:10:00 dsl Exp $	*/
+/*	$NetBSD: netstat.c,v 1.22 2003/05/17 21:03:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.21 2003/02/24 10:10:00 dsl Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.22 2003/05/17 21:03:21 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -602,9 +602,9 @@ inetname(struct in_addr in)
 		}
 	}
 	if (in.s_addr == INADDR_ANY)
-		strncpy(line, "*", sizeof(line) - 1);
+		strlcpy(line, "*", sizeof(line));
 	else if (cp)
-		strncpy(line, cp, sizeof(line) - 1);
+		strlcpy(line, cp, sizeof(line));
 	else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
@@ -613,7 +613,6 @@ inetname(struct in_addr in)
 		    C(in.s_addr >> 8), C(in.s_addr));
 #undef C
 	}
-	line[sizeof(line) - 1] = '\0';
 	return (line);
 }
 
