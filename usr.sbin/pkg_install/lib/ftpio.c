@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.51 2003/06/23 16:46:57 tacha Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.52 2003/07/14 06:17:56 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.51 2003/06/23 16:46:57 tacha Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.52 2003/07/14 06:17:56 itojun Exp $");
 #endif
 
 /*
@@ -548,7 +548,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	char best[FILENAME_MAX];
 	int tfd;
 
-	strcpy(tmpname, "/var/tmp/pkg.XXXXXX");
+	strlcpy(tmpname, "/var/tmp/pkg.XXXXXX", sizeof(tmpname));
 	tfd=mkstemp(tmpname);
 	if (tfd == -1) {
 		warnx("Cannot generate temp file for ftp(1)'s nlist output");
