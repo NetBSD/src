@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2003/06/26 06:30:19 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.66 2003/07/16 12:57:57 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -45,26 +45,44 @@ SUBDIR+=	fgen
 
 .endif	# ! NOSUBDIR					# }
 
-.if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
-realall install: _warn
+check_MKTOOLS: .PHONY .NOTMAIN
 .if ${MKTOOLS:Uyes} == "no"
-_warn:
 	@echo '*** WARNING: "MKTOOLS" is set to "no"; this will prevent building and'
 	@echo '*** updating your host toolchain.  This should be used only as a'
 	@echo '*** temporary workaround for toolchain problems, as it will result'
 	@echo '*** in version skew and build errors over time!'
-.else
-_warn:
 .endif
+
+.if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"	# {
+realall install: check_MKTOOLS
 
 .for dir in ${SUBDIR:N.WAIT}
 all-${dir} depend-${dir} dependall-${dir} install-${dir}:
 	@true
 .endfor
-.endif
+.endif							# }
 
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
+
+.if exists(PREVIOUSTOOLDIR)
+PREVIOUSTOOLDIR!=	cat PREVIOUSTOOLDIR
+.else
+PREVIOUSTOOLDIR=	
+.endif
+
+CLEANFILES+=	PREVIOUSTOOLDIR
+
+realall:
+.if (${PREVIOUSTOOLDIR} != ${TOOLDIR})
+	@echo "*** WARNING: TOOLDIR has moved?"
+	@echo "*** PREVIOUSTOOLDIR '${PREVIOUSTOOLDIR}'"
+	@echo "***     !=  TOOLDIR '${TOOLDIR}'"
+	@echo "*** Cleaning mis-matched tools"
+	rm -f PREVIOUSTOOLDIR
+	${MAKE} cleandir
+.endif
+	echo ${TOOLDIR} > PREVIOUSTOOLDIR
 
 # For each .WAIT point, make sure the immediately preceding target is
 # installed before building anything after that point.
@@ -111,6 +129,3 @@ depend-${d} all-${d} dependall-${d}: ${_deps}
 # stash current name in case the next entry is .WAIT
 _prev:=		${d}
 .endfor
-
-cleantools:
-	rm -r -f tools.${HOST_OSTYPE}
