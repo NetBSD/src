@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1998/08/15 03:51:30 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1998/09/28 09:33:12 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,6 @@ cdev_decl(fd);
 cdev_decl(wt);
 cdev_decl(scd);
 #include "pc.h"
-#include "vt.h"
 cdev_decl(pc);
 cdev_decl(sd);
 cdev_decl(st);
@@ -213,7 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFDC,fd),	/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
-	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
+	cdev_pc_init(NPC,pc),		/* 12: PC console */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
