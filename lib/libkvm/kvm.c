@@ -33,15 +33,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
-static char rcsid[] = "$Id: kvm.c,v 1.7 1993/05/20 11:53:04 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.8 1993/06/01 01:35:01 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
-
-/*
- *  Updated for 386BSD 0.1 by David Greenman (davidg%implode@percy.rain.com)
- *     and Paul Kranenburg (pk@cs.few.eur.nl)
- *  20-Aug-1992
- */
-
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -49,6 +42,7 @@ static char rcsid[] = "$Id: kvm.c,v 1.7 1993/05/20 11:53:04 cgd Exp $";
 #include <sys/ioctl.h>
 #include <sys/kinfo.h>
 #include <sys/tty.h>
+#include <sys/exec.h>
 #include <machine/vmparam.h>
 #include <fcntl.h>
 #include <nlist.h>
@@ -120,9 +114,6 @@ static	int	Syssize;
 #endif
 static	int	dmmin, dmmax;
 static	int	pcbpf;
-static	int	argaddr0;	/* XXX */
-static	int	argaddr1;
-static	int	swaddr;
 static	int	nswap;
 static	char	*tmp;
 #if defined(hp300)
@@ -673,11 +664,6 @@ kvm_freeprocs()
 	}
 }
 
-#ifdef i386
-/* See also ./sys/kern/kern_execve.c */
-#define ARGSIZE		(roundup(ARG_MAX, NBPG))
-#endif
-
 #ifdef NEWVM
 struct user *
 kvm_getu(p)
@@ -696,7 +682,6 @@ kvm_getu(p)
 		return (NULL);
 	}
 
-	argaddr0 = argaddr1 = swaddr = 0;
 	if ((p->p_flag & SLOAD) == 0) {
 		vm_offset_t	maddr;
 
@@ -752,65 +737,9 @@ kvm_getu(p)
 		up += CLBYTES;
 	}
 	pcbpf = (int) btop(p->p_addr);	/* what should this be really? */
-	/*
-	 * Conjure up a physical address for the arguments.
-	 */
-#ifdef hp300
-	if (kp->kp_eproc.e_vm.vm_pmap.pm_ptab) {
-		struct pte pte[CLSIZE*2];
 
-		klseek(kmem,
-		    (long)&kp->kp_eproc.e_vm.vm_pmap.pm_ptab
-		    [btoc(USRSTACK-CLBYTES*2)], 0);
-		if (read(kmem, (char *)&pte, sizeof(pte)) == sizeof(pte)) {
-#if CLBYTES < 2048
-			argaddr0 = ctob(pftoc(pte[CLSIZE*0].pg_pfnum));
-#endif
-			argaddr1 = ctob(pftoc(pte[CLSIZE*1].pg_pfnum));
-		}
-	}
-#endif
 	kp->kp_eproc.e_vm.vm_rssize =
 	    kp->kp_eproc.e_vm.vm_pmap.pm_stats.resident_count; /* XXX */
-
-	vaddr = (u_int)kp->kp_eproc.e_vm.vm_maxsaddr + MAXSSIZ - ARGSIZE;
-
-#ifdef i386
-	if (kp->kp_eproc.e_vm.vm_pmap.pm_pdir) {
-		struct pde pde;
-
-		klseek(kmem,
-		(long)(&kp->kp_eproc.e_vm.vm_pmap.pm_pdir[pdei(vaddr)]), 0);
-
-		if (read(kmem, (char *)&pde, sizeof pde) == sizeof pde
-				&& pde.pd_v) {
-
-			struct pte pte;
-
-			if (lseek(mem, (long)ctob(pde.pd_pfnum) +
-					(ptei(vaddr) * sizeof pte), 0) == -1)
-				seterr("kvm_getu: lseek");
-			if (read(mem, (char *)&pte, sizeof pte) == sizeof pte) {
-				if (pte.pg_v) {
-					argaddr1 = (long)ctob(pte.pg_pfnum);
-				} else {
-					goto hard;
-				}
-			} else {
-				seterr("kvm_getu: read");
-			}
-		} else {
-			goto hard;
-		}
-	}
-#endif	/* i386 */
-
-hard:
-	if (vatosw(p, vaddr, &argaddr1, &swb)) {
-		if (argaddr1 == 0 && swb.size >= ARGSIZE)
-			swaddr = swb.offset;
-	}
-
 	return(&user.user);
 }
 #else
@@ -883,135 +812,141 @@ kvm_getu(p)
 }
 #endif
 
+int
+kvm_procread(p, addr, buf, len)
+	const struct proc *p;
+	const unsigned addr, buf, len;
+{
+	register struct kinfo_proc *kp = (struct kinfo_proc *) p;
+	struct swapblk swb;
+	vm_offset_t swaddr = 0, memaddr = 0;
+	unsigned real_len;
+
+	real_len = len < (CLBYTES - (addr & CLOFSET)) ? len : (CLBYTES - (addr & CLOFSET));
+
+#if defined(hp300)
+	/*
+	 * XXX DANGER WILL ROBINSON -- i have *no* idea to what extent this
+	 * works... -- cgd
+	 */
+	BREAK HERE!!!
+#endif
+#if defined(i386)
+        if (kp->kp_eproc.e_vm.vm_pmap.pm_pdir) {
+                struct pde pde;
+
+                klseek(kmem,
+                (long)(&kp->kp_eproc.e_vm.vm_pmap.pm_pdir[pdei(addr)]), 0);
+
+                if (read(kmem, (char *)&pde, sizeof pde) == sizeof pde
+                                && pde.pd_v) {
+
+                        struct pte pte;
+
+                        if (lseek(mem, (long)ctob(pde.pd_pfnum) +
+                                        (ptei(addr) * sizeof pte), 0) == -1)
+                                seterr("kvm_procread: lseek");
+                        if (read(mem, (char *)&pte, sizeof pte) == sizeof pte) {
+                                if (pte.pg_v) {
+                                        memaddr = (long)ctob(pte.pg_pfnum) +
+							(addr % (1 << PGSHIFT));
+                                }
+                        } else {
+                                seterr("kvm_procread: read");
+                        }
+                }
+        }
+#endif  /* i386 */
+	
+	swb.size = 0; /* XXX */
+        if (memaddr == 0 && vatosw(p, addr & ~CLOFSET, &memaddr, &swb)) {
+		if (memaddr != 0) {
+			memaddr += addr & CLOFSET;
+		} else {
+			swaddr += addr & CLOFSET;
+			swb.size -= addr & CLOFSET;
+	                if (swb.size >= real_len)
+				swaddr = swb.offset;
+		}
+        }
+
+	if (memaddr) {
+		if (lseek(mem, memaddr, 0) == -1)
+			seterr("kvm_getu: lseek");
+		real_len = read(mem, (char *)buf, real_len);
+		if (real_len == -1) {
+			real_len = 0;
+			seterr("kvm_procread: read");
+		}
+	} else if (swaddr) {
+		if (lseek(swap, swaddr, 0) == -1)
+			seterr("kvm_getu: lseek");
+		real_len = read(swap, (char *)buf, real_len);
+		if (real_len == -1) {
+			real_len = 0;
+			seterr("kvm_procread: read");
+		}
+	} else
+		real_len = 0;
+
+	return real_len;
+}
+
+int
+kvm_procreadstr(p, addr, buf, len)
+        const struct proc *p;
+        const unsigned addr, buf;
+	unsigned len;
+{
+	int	done;
+	char	a, *bp = (char *) buf;
+
+	/* XXX -- should be optimized */
+
+	done = 0;
+	while (len && kvm_procread(p, addr+done, &a, 1) == 1) {
+		*bp++ = a;
+		if (a == '\0')
+			return done;
+		done++;
+		len--;
+	}
+	return done;
+}
+
 char *
 kvm_getargs(p, up)
 	const struct proc *p;
 	const struct user *up;
 {
-#ifdef i386
-	/* See also ./sys/kern/kern_execve.c */
-	static char cmdbuf[ARGSIZE];
-	static union {
-		char	argc[ARGSIZE];
-		int	argi[ARGSIZE/sizeof (int)];
-	} argspac;
-#else
-	static char cmdbuf[CLBYTES*2];
-	static union {
-		char	argc[CLBYTES*2];
-		int	argi[CLBYTES*2/sizeof (int)];
-	} argspac;
-#endif
-	register char *cp;
-	register int *ip;
-	char c;
-	int nbad;
-#ifndef NEWVM
-	struct dblock db;
-#endif
-	const char *file;
-	int stkoff = 0;
+	static char cmdbuf[ARG_MAX + sizeof(p->p_comm) + 5];
+	register char *cp, *acp;
+	int left, rv;
+	struct ps_strings arginfo;
 
-#if defined(NEWVM) && defined(hp300)
-	stkoff = 20;			/* XXX for sigcode */
-#endif
 	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
 		goto retucomm;
-	if ((p->p_flag & SLOAD) == 0 || argaddr1 == 0) {
-#ifdef NEWVM
-		if (swaddr == 0)
-			goto retucomm;	/* XXX for now */
-#ifdef i386
-		(void) lseek(swap, swaddr, 0);
-		if (read(swap, &argspac.argc[0], ARGSIZE) != ARGSIZE)
-			goto bad;
-#else
-		if (argaddr0) {
-			lseek(swap, (long)argaddr0, 0);
-			if (read(swap, (char *)&argspac, CLBYTES) != CLBYTES)
-				goto bad;
+
+	if (kvm_procread(p, PS_STRINGS, &arginfo, sizeof(arginfo)) !=
+		sizeof(arginfo))
+		goto bad;
+
+	cp = cmdbuf;
+	acp = arginfo.ps_argvstr;
+	left = ARG_MAX + 1;
+	while (arginfo.ps_nargvstr--) {
+		if ((rv = kvm_procreadstr(p, acp, cp, left)) >= 0) {
+			acp += rv + 1;
+			left -= rv + 1;
+			cp += rv;
+			*cp++ = ' ';
+			*cp = '\0';
 		} else
-			bzero(&argspac, CLBYTES);
-		lseek(swap, (long)argaddr1, 0);
-		if (read(swap, &argspac.argc[CLBYTES], CLBYTES) != CLBYTES)
 			goto bad;
-#endif
-#else
-		if (swap < 0 || p->p_ssize == 0)
-			goto retucomm;
-		vstodb(0, CLSIZE, &up->u_smap, &db, 1);
-		(void) lseek(swap, (long)dtob(db.db_base), 0);
-		if (read(swap, (char *)&argspac.argc[CLBYTES], CLBYTES)
-			!= CLBYTES)
-			goto bad;
-		vstodb(1, CLSIZE, &up->u_smap, &db, 1);
-		(void) lseek(swap, (long)dtob(db.db_base), 0);
-		if (read(swap, (char *)&argspac.argc[0], CLBYTES) != CLBYTES)
-			goto bad;
-		file = swapf;
-#endif
-	} else {
-#ifdef i386
-		lseek(mem, (long)argaddr1, 0);
-		if (read(mem, &argspac.argc[0], ARGSIZE) != ARGSIZE)
-			goto bad;
-#else
-		if (argaddr0) {
-			lseek(mem, (long)argaddr0, 0);
-			if (read(mem, (char *)&argspac, CLBYTES) != CLBYTES)
-				goto bad;
-		} else
-			bzero(&argspac, CLBYTES);
-		lseek(mem, (long)argaddr1, 0);
-		if (read(mem, &argspac.argc[CLBYTES], CLBYTES) != CLBYTES)
-			goto bad;
-#endif
-		file = (char *) memf;
 	}
+	cp-- ; *cp = '\0';
 
-	nbad = 0;
-#ifdef i386
-	ip = &argspac.argi[(ARGSIZE-ARG_MAX)/sizeof (int)];
-
-	for (cp = (char *)ip; cp < &argspac.argc[ARGSIZE-stkoff]; cp++) {
-#else
-	ip = &argspac.argi[CLBYTES*2/sizeof (int)];
-	ip -= 2;                /* last arg word and .long 0 */
-	ip -= stkoff / sizeof (int);
-	while (*--ip) {
-		if (ip == argspac.argi)
-			goto retucomm;
-	}
-	*(char *)ip = ' ';
-	ip++;
-
-	for (cp = (char *)ip; cp < &argspac.argc[CLBYTES*2-stkoff]; cp++) {
-#endif
-		c = *cp;
-		if (c == 0) {	/* convert null between arguments to space */
-			*cp = ' ';
-			if (*(cp+1) == 0) break;	/* if null argument follows then no more args */
-			}
-		else if (c < ' ' || c > 0176) {
-			if (++nbad >= 5*(0+1)) {	/* eflg -> 0 XXX */ /* limit number of bad chars to 5 */
-				*cp++ = '?';
-				break;
-			}
-			*cp = '?';
-		}
-		else if (0 == 0 && c == '=') {		/* eflg -> 0 XXX */
-			while (*--cp != ' ')
-				if (cp <= (char *)ip)
-					break;
-			break;
-		}
-	}
-	*cp = 0;
-	while (*--cp == ' ')
-		*cp = 0;
-	cp = (char *)ip;
-	(void) strcpy(cmdbuf, cp);
-	if (cp[0] == '-' || cp[0] == '?' || cp[0] <= ' ') {
+	if (cmdbuf[0] == '-' || cmdbuf[0] == '?' || cmdbuf[0] <= ' ') {
 		(void) strcat(cmdbuf, " (");
 		(void) strncat(cmdbuf, p->p_comm, sizeof(p->p_comm));
 		(void) strcat(cmdbuf, ")");
@@ -1019,15 +954,53 @@ kvm_getargs(p, up)
 	return (cmdbuf);
 
 bad:
-	seterr("error locating command name for pid %d from %s",
-	    p->p_pid, file);
+	seterr("error locating command name for pid %d", p->p_pid);
 retucomm:
-	(void) strcpy(cmdbuf, " (");
+	(void) strcpy(cmdbuf, "(");
 	(void) strncat(cmdbuf, p->p_comm, sizeof (p->p_comm));
 	(void) strcat(cmdbuf, ")");
 	return (cmdbuf);
 }
 
+char *
+kvm_getenv(p, up)
+	const struct proc *p;
+	const struct user *up;
+{
+	static char envbuf[ARG_MAX + 1];
+	register char *cp, *acp;
+	int left, rv;
+	struct ps_strings arginfo;
+
+	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
+		goto retemptyenv;
+
+	if (kvm_procread(p, PS_STRINGS, &arginfo, sizeof(arginfo)) !=
+		sizeof(arginfo))
+		goto bad;
+
+	cp = envbuf;
+	acp = arginfo.ps_envstr;
+	left = ARG_MAX + 1;
+	while (arginfo.ps_nenvstr--) {
+		if ((rv = kvm_procreadstr(p, acp, cp, left)) >= 0) {
+			acp += rv + 1;
+			left -= rv + 1;
+			cp += rv;
+			*cp++ = ' ';
+			*cp = '\0';
+		} else
+			goto bad;
+	}
+	cp-- ; *cp = '\0';
+	return (envbuf);
+
+bad:
+	seterr("error locating environment for pid %d", p->p_pid);
+retemptyenv:
+	envbuf[0] = '\0';
+	return (envbuf);
+}
 
 static
 getkvars()
