@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.60 2004/07/09 02:14:40 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.61 2004/08/04 18:53:55 drochner Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.60 2004/07/09 02:14:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.61 2004/08/04 18:53:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.60 2004/07/09 02:14:40 mycroft Exp $");
 
 #include <dev/isa/essvar.h>
 #include <dev/isa/essreg.h>
+
+#include "joy_ess.h"
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (essdebug) printf x
@@ -872,7 +874,7 @@ essmatch(sc)
 irq_not1888:
 	/* XXX should we check IRQs as well? */
 
-	return (1);
+	return (2); /* beat "sb" */
 }
 
 
@@ -881,8 +883,9 @@ irq_not1888:
  * pseudo-device driver.
  */
 void
-essattach(sc)
+essattach(sc, enablejoy)
 	struct ess_softc *sc;
+	int enablejoy;
 {
 	struct audio_attach_args arg;
 	struct audio_params pparams, rparams;
@@ -1031,6 +1034,19 @@ essattach(sc)
 	arg.hwif = 0;
 	arg.hdl = 0;
 	(void)config_found(&sc->sc_dev, &arg, audioprint);
+
+#if NJOY_ESS > 0
+	if (sc->sc_model == ESS_1888 && enablejoy) {
+		unsigned char m40;
+
+		m40 = ess_read_mix_reg(sc, 0x40);
+		m40 |= 2;
+		ess_write_mix_reg(sc, 0x40, m40);
+
+		arg.type = AUDIODEV_TYPE_AUX;
+		(void)config_found(&sc->sc_dev, &arg, audioprint);
+	}
+#endif
 
 #ifdef AUDIO_DEBUG
 	if (essdebug > 0)
