@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.12 2002/10/09 20:27:35 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.13 2002/10/12 11:39:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -377,6 +377,31 @@ Lsw2:
 	or	r2, r63, r28		/* Save new proc in r28 */
 	blink	tr0, r18
 	or	r28, r63, r2		/* new proc to r2 */
+
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 */
+	pta/l	2f, tr0
+	ld.l	r2, P_NRAS, r0
+	beq/l	r2, r63, tr0		/* Skip if no RAS registered for proc */
+	LEAF(_C_LABEL(ras_lookup), r0)
+	ptabs/l	r0, tr0
+	LDPTR	r2, P_ADDR, r3		/* Fetch new process' pcb */
+	LDPTR	r2, P_MD_REGS, r29	/* Fetch pointer to trapframe */
+	ld.q	r29, TF_SPC, r3		/* Fetch user-space program-counter */
+#ifndef _LP64
+	add.l	r3, r63, r3		/* Sign-extend for ILP32 ABI */
+#endif
+	blink	tr0, r18		/* r2 = ras_lookup(newproc, spc) */
+	pta/l	2f, tr0
+#ifndef _LP64
+	add.l	r2, r63, r3		/* Sign-extend result for ILP32 ABI */
+#else
+	or	r2, r63, r3
+#endif
+	or	r28, r63, r2		/* Restore new proc to r2 */
+	beqi/l	r3, -1, tr0		/* Jump if no need to restart */
+	st.q	r29, TF_SPC, r3		/* Otherwise, reset the process' PC */
 
 2:
 	LDPTR	r2, P_ADDR, r3		/* Fetch new process' pcb */
