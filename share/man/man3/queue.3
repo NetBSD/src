@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.22 2002/02/13 08:17:29 ross Exp $
+.\"	$NetBSD: queue.3,v 1.23 2002/06/01 06:08:07 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd July 19, 2000
+.Dd June 1, 2002
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@
 .Fn SLIST_INSERT_AFTER "TYPE *listelm" "TYPE *elm" "SLIST_ENTRY NAME"
 .Fn SLIST_INSERT_HEAD "SLIST_HEAD *head" "TYPE *elm" "SLIST_ENTRY NAME"
 .Fn SLIST_REMOVE "SLIST_HEAD *head" "TYPE *elm" "TYPE" "SLIST_ENTRY NAME"
-.Fn SLIST_REMOVE_HEAD "TYPE *elm" "SLIST_ENTRY NAME"
+.Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Ft int
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Ft TYPE *
@@ -430,9 +430,7 @@ returns the next element in the list.
 .Pp
 The macro
 .Nm SLIST_REMOVE_HEAD
-removes the element
-.Fa elm
-from the head of the list.
+removes the first element from the head of the list.
 For optimum efficiency,
 elements being removed from the head of the list should explicitly use
 this macro instead of the generic
@@ -680,7 +678,9 @@ after the element
 .Pp
 The macro
 .Nm SIMPLEQ_REMOVE_HEAD
-removes the first element from the simple queue.
+removes all the elements up to and including
+.Fa elm
+from the simple queue.
 .Pp
 The macro
 .Nm SIMPLEQ_EMPTY
