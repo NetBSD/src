@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13 1995/08/04 03:22:09 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.14 1995/08/09 03:23:57 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -109,7 +109,6 @@ pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t kstpa, kptpa, vidpa, iiopa, nbpa, rompa;
 	vm_offset_t kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	caddr_t oldROMBase;
 	int i;
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
@@ -406,17 +405,8 @@ pmap_bootstrap(nextpa, firstpa)
 	IOBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
 			(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
 
-	mac68k_set_io_offsets(IOBase);
-
-	oldROMBase = ROMBase;
 	ROMBase = (char *)mac68k_ptob(nptpages*NPTEPG -
 					(ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
-
-	if (mac68k_machine.do_graybars)
-		printf("Moving ROMBase from 0x%x to 0x%x.\n",
-			oldROMBase, ROMBase);
-
-	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	NuBusBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
 						(NBMAPSIZE + VIDMAPSIZE));
@@ -555,9 +545,12 @@ bootstrap_mac68k(tc)
 	extern u_long	videoaddr, boothowto;
 	u_long		newvideoaddr = 0;
 	vm_offset_t	nextpa;
+	caddr_t		oldROMBase;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");
+
+	oldROMBase = ROMBase;
 
 	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
 
@@ -609,8 +602,15 @@ bootstrap_mac68k(tc)
 	}
 
 	if (mac68k_machine.do_graybars)
+		printf("Moving ROMBase from 0x%x to 0x%x.\n",
+			oldROMBase, ROMBase);
+
+	mrg_fixupROMBase(oldROMBase, ROMBase);
+
+	if (mac68k_machine.do_graybars)
 		printf("Video address 0x%x -> 0x%x.\n",
 			videoaddr, newvideoaddr);
 
+	mac68k_set_io_offsets(IOBase);
 	videoaddr = newvideoaddr;
 }
