@@ -1,4 +1,4 @@
-	$NetBSD: README.VMEbus-RAM,v 1.1 1997/10/12 15:45:12 scw Exp $
+	$NetBSD: README.VMEbus-RAM,v 1.2 1997/11/01 19:18:39 scw Exp $
 
 NetBSD/mvme68k port: VMEbus RAM card configuration
 
@@ -61,20 +61,6 @@ onboard RAM and will not attempt to use any VMEbus RAM.
 
 Some extra notes on VMEbus RAM cards
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Most VMEbus RAM cards support parity checking in some form or another.
-This can cause problems with the kernel. It's fairly normal for a card
-to only initialise the parity bit on write accesses. This means that
-the card can generate lots of parity errors following power-up. What's
-happening is that NetBSD doesn't zero the RAM's contents on boot-up
-so there's stale (and probably incorrect) parity data in the card.
-
-If this happens with your card, try block-filling the card with zero
-from the 147Bug> prompt (see the 'BF' command) before booting NetBSD.
-If that cures the problem, see if there's a jumper on the RAM card to
-disable parity checking. If not, you might have no choice but to block-
-fill the memory following a power-up.
-
 
 So... You've got your nice shiny VMEbus RAM card up and running with
 NetBSD, and you're wondering why your system runs slower than it did
