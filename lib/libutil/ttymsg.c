@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.10 1998/08/10 02:47:35 perry Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.11 1998/09/27 00:00:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.10 1998/08/10 02:47:35 perry Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.11 1998/09/27 00:00:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,7 @@ ttymsg(iov, iovcnt, line, tmout)
 	static char errbuf[1024];
 	int cnt, fd, left, wret;
 	struct iovec localiov[6];
+	sigset_t nset;
 	int forked = 0;
 
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
@@ -147,7 +148,8 @@ ttymsg(iov, iovcnt, line, tmout)
 			/* wait at most tmout seconds */
 			(void) signal(SIGALRM, SIG_DFL);
 			(void) signal(SIGTERM, SIG_DFL); /* XXX */
-			(void) sigsetmask(0);
+			sigfillset(&nset);
+			(void) sigprocmask(SIG_UNBLOCK, &nset, NULL);
 			(void) alarm((u_int)tmout);
 			(void) fcntl(fd, O_NONBLOCK, &off);
 			continue;
