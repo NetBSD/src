@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.7 1998/12/18 20:28:54 sommerfe Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.7.2.1 1999/04/29 21:37:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.7 1998/12/18 20:28:54 sommerfe Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.7.2.1 1999/04/29 21:37:19 perry Exp $");
 #endif
 #endif
 
@@ -470,7 +470,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 		int sum = up->uh_sum;
 		if (sum == 0) {
 			(void)printf(" [no cksum]");
-		} else if (TTEST2(up->uh_sport, length)) {
+		} else if (TTEST2(cp[0], length)) {
 			sum = udp_cksum(ip, up, length);
 			if (sum != 0)
 				(void)printf(" [bad udp cksum %x!]", sum);
