@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.18 2003/09/06 03:25:29 itojun Exp $
+# 	$NetBSD: INSTALL,v 1.19 2003/10/24 15:58:31 tsutsui Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -30,6 +30,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	COMPAT_13		# NetBSD 1.3 binary compatibility
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 
 # Filesystems
 file-system	FFS		# Berkeley Fast Filesystem
