@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.4 2001/10/05 14:25:15 pooka Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.5 2001/11/13 06:58:17 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.5 2001/11/13 06:58:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

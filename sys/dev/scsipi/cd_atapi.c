@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.16 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.17 2001/11/13 06:56:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -45,6 +45,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.17 2001/11/13 06:56:39 lukem Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.37 2001/07/18 18:27:08 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.38 2001/11/13 06:56:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -57,6 +57,9 @@
  * functions which can't be performed through the ifconfig interface.
  * Normal operation does not require any special userland program.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.38 2001/11/13 06:56:39 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
