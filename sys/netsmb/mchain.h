@@ -50,7 +50,7 @@
 struct mbuf;
 struct mbchain;
 
-typedef int mb_copy_t(struct mbchain *mbp, const caddr_t src, caddr_t dst, int len);
+typedef int mb_copy_t(struct mbchain *mbp, const caddr_t src, caddr_t dst, size_t len);
 
 struct mbchain {
 	struct mbuf *	mb_top;		/* head of mbufs chain */
