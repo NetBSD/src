@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.32 2001/01/12 19:26:49 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.33 2001/01/12 19:38:46 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -1338,7 +1338,7 @@ stripioctl(ifp, cmd, data)
 
 /*
  * Set a radio into starmode.
- * XXX must be called at spltty() or higher (e.g., splimp()
+ * Must be called at spltty().
  */
 void
 strip_resetradio(sc, tp)
