@@ -1,5 +1,5 @@
-#	$Id: files.pmax,v 1.56.2.1 1998/10/15 01:30:23 nisimura Exp $
-#	$NetBSD: files.pmax,v 1.56.2.1 1998/10/15 01:30:23 nisimura Exp $
+#	$Id: files.pmax,v 1.56.2.2 1998/10/19 02:15:21 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.2 1998/10/19 02:15:21 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -73,6 +73,7 @@ device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at ibus with mcclock_ibus
 file	arch/pmax/pmax/clock.c
+file	dev/clock_subr.c
 file	arch/pmax/pmax/mcclock.c	mcclock
 file	dev/dec/mcclock.c		mcclock
 file	dev/dec/mcclock_pad32.c		mcclock
@@ -161,7 +162,7 @@ file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/sysconf.c
 
 file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
-file	arch/pmax/pmax/memset.c		# XXX temporary hack XXX
+#file	arch/pmax/pmax/memset.c		# XXX temporary hack XXX
 
 # Console code.
 file	dev/cons.c
