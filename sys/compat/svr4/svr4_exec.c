@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.45 2001/06/18 02:00:54 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.46 2001/09/18 19:36:41 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <compat/svr4/svr4_syscall.h>
 #include <compat/svr4/svr4_errno.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_exec.h>
 
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
@@ -69,6 +70,7 @@ const struct emul emul_svr4 = {
 	trapsignal,
 	svr4_sigcode,
 	svr4_esigcode,
+	svr4_setregs,
 	NULL,
 	NULL,
 	NULL,
