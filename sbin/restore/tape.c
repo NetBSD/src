@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.21 1996/11/30 18:04:48 cgd Exp $	*/
+/*	$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.21 1996/11/30 18:04:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ setup()
 		fprintf(stderr, "cannot stat .: %s\n", strerror(errno));
 		exit(1);
 	}
-	if (stbuf.st_blksize > 0 && stbuf.st_blksize <= MAXBSIZE)
+	if (stbuf.st_blksize >= TP_BSIZE && stbuf.st_blksize <= MAXBSIZE)
 		fssize = stbuf.st_blksize;
 	if (((fssize - 1) & fssize) != 0) {
 		fprintf(stderr, "bad block size %d\n", fssize);
