@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.6 1998/02/22 12:55:45 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.7 1998/03/30 02:24:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lookup.c,v 1.6 1998/02/22 12:55:45 christos Exp $");
+__RCSID("$NetBSD: lookup.c,v 1.7 1998/03/30 02:24:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,11 +53,11 @@ nltype *
 nllookup( address )
     unsigned long	address;
 {
-    register long	low;
-    register long	middle;
-    register long	high;
+    long	low;
+    long	middle;
+    long	high;
 #ifdef DEBUG
-	register int	probes;
+	int	probes;
 
 	probes = 0;
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.4 1998/02/22 12:55:45 christos Exp $	*/
+/*	$NetBSD: pmax.c,v 1.5 1998/03/30 02:25:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pmax.c,v 1.4 1998/02/22 12:55:45 christos Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.5 1998/03/30 02:25:00 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,11 +83,11 @@ findcall(parentp, p_lowpc, p_highpc)
 	unsigned long	p_lowpc;
 	unsigned long	p_highpc;
 {
-	register u_long pc;
+	u_long pc;
 	nltype *childp;
 	unsigned long destpc;
-	register long op;
-	register int off;
+	long op;
+	int off;
 
 	if (textspace == 0)
 		return;

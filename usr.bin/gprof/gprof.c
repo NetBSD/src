@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.c,v 1.10 1998/02/22 12:55:44 christos Exp $	*/
+/*	$NetBSD: gprof.c,v 1.11 1998/03/30 02:24:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: gprof.c,v 1.10 1998/02/22 12:55:44 christos Exp $");
+__RCSID("$NetBSD: gprof.c,v 1.11 1998/03/30 02:24:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ getnfile()
     fclose(nfile);
 #ifdef DEBUG
 	if ( debug & AOUTDEBUG ) {
-	    register int j;
+	    int j;
 
 	    for (j = 0; j < nname; j++){
 		printf("[getnfile] 0X%08x\t%s\n", nl[j].value, nl[j].name);
@@ -282,7 +282,7 @@ void
 getsymtab(nfile)
     FILE	*nfile;
 {
-    register long	i;
+    long		i;
     int			askfor;
     struct nlist	nbuf;
 
@@ -489,8 +489,8 @@ void
 dumpsum( sumfile )
     char *sumfile;
 {
-    register nltype *nlp;
-    register arctype *arcp;
+    nltype *nlp;
+    arctype *arcp;
     struct rawarc arc;
     FILE *sfile;
 
@@ -553,7 +553,7 @@ void
 readsamples(pfile)
     FILE	*pfile;
 {
-    register i;
+    int i;
     UNIT	sample;
     
     if (samples == 0) {
@@ -613,11 +613,11 @@ readsamples(pfile)
 void
 asgnsamples()
 {
-    register int	j;
+    int			j;
     UNIT		ccnt;
     double		time;
     unsigned long	pcl, pch;
-    register int	i;
+    int			i;
     unsigned long	overlap;
     unsigned long	svalue0, svalue1;
 
@@ -705,7 +705,7 @@ max(a, b)
 void
 alignentries()
 {
-    register struct nl	*nlp;
+    struct nl		*nlp;
     unsigned long	bucket_of_entry;
     unsigned long	bucket_of_code;
 
