@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 1996/12/31 06:32:17 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 1997/01/20 04:30:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,9 +132,8 @@ int mmupid = -1;
 void	trap __P((int, unsigned, register unsigned, struct frame));
 void	syscall __P((register_t, struct frame));
 
-static inline void userret __P((register struct proc *,
-				register struct frame *,
-				u_quad_t, u_int, int));
+static inline void userret __P((struct proc *p, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
@@ -193,7 +192,7 @@ again:
 		extern int psratio;
 		
 		addupc_task(p, fp->f_pc,
-				(int)(p->p_sticks - oticks) * psratio);
+		    (int)(p->p_sticks - oticks) * psratio);
 	}
 #if defined(M68040)
 	/*
@@ -254,7 +253,8 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
-	}
+	} else
+		sticks = 0;
 
 	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
@@ -582,7 +582,8 @@ copyfault:
 		break;
 	    }
 	}
-	if (i) trapsignal(p, i, ucode);
+	if (i)
+		trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 out:
