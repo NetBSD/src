@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.106 2004/01/09 06:26:15 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.107 2004/01/09 19:01:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.106 2004/01/09 06:26:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.107 2004/01/09 19:01:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && smallmem)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, 0, name, pa);
+		pool_init(pp, size, 0, 0, PR_IMMEDRELEASE, name, pa);
 		pool_setlowat(pp, 1);
 	}
 
@@ -475,7 +475,6 @@ buf_mrelease(caddr_t addr, size_t size)
 {
 
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
-	pool_reclaim(&bmempools[buf_mempoolidx(size)]);
 }
 
 
