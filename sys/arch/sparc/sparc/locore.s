@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.168 2002/12/08 16:16:59 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.169 2002/12/09 16:13:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2440,7 +2440,7 @@ softintr_common:
 	std	%l2, [%sp + CCFSZ + 8]
 	inc	%o0
 	st	%o0, [%l4 + %l5]
-	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
+	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
