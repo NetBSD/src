@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.9 2002/01/18 10:48:41 lukem Exp $
+# $NetBSD: syslogd,v 1.10 2002/02/20 01:49:59 lukem Exp $
 #
 
 # PROVIDE: syslogd
@@ -46,7 +46,7 @@ syslogd_precmd()
 	#
 	if [ -s $_sockfile ]; then
 		echo "/var/run/log" >> $_sockfile
-		_flags="-P $_sockfile"
+		_flags="-P $_sockfile $_flags"
 	fi
 
 	return 0
