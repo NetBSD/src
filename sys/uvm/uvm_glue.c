@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.1 2001/03/05 22:50:10 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.2 2001/03/19 20:46:57 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -608,13 +608,6 @@ uvm_swapout(l)
 	 * This can include saving floating point state, etc.
 	 */
 	cpu_swapout(l);
-
-	/*
-	 * Unwire the to-be-swapped process's user struct and kernel stack.
-	 */
-	addr = (vaddr_t)l->l_addr;
-	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
-	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/*
 	 * Mark it as (potentially) swapped out.
