@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 2001/08/17 00:14:38 bjh21 Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 2001/11/08 22:23:59 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 extern	void		_start(void);
 	void		___start(int, char *[], char *[], struct ps_strings *,
-				const Obj_Entry *, void (*)());
+				const Obj_Entry *, void (*)(void));
 
 __asm("
 	.text
@@ -70,7 +70,7 @@ __start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 2001/08/17 00:14:38 bjh21 Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 2001/11/08 22:23:59 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -82,11 +82,12 @@ ___start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
  	environ = envp;
 	__ps_strings = ps_strings;
 
-	if ((ap = argv[0]))
+	if ((ap = argv[0])) {
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else
 			++__progname;
+	}
 
 #ifdef	DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
