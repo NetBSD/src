@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.111 2000/11/28 05:12:29 thorpej Exp $
+#	$NetBSD: files.pci,v 1.112 2000/12/14 04:11:25 onoe Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -379,3 +379,7 @@ file dev/pci/viaenv.c	viaenv needs-flag
 device	hifn {}
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
+
+# Aironet PC4500/PC4800
+attach	an at pci with an_pci
+file	dev/pci/if_an_pci.c		an_pci
