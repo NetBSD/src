@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.5 1998/06/24 06:46:24 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.6 1998/06/24 14:44:52 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,6 +228,13 @@ static void process_help (struct menudesc *m, int num)
 	int again;
         int winin;
 
+	/* Is there help? */
+	if (!help) {
+		mbeep();
+		return;
+	}
+
+	/* Display the help information. */
         do {
 		if (lineoff < curoff) {
 			help = m->helpstr;
