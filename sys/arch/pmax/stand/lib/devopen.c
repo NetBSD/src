@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 1999/04/01 05:52:39 simonb Exp $	*/
+/*	$NetBSD: devopen.c,v 1.11 1999/04/11 04:26:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ devopen(f, fname, file)
 	cp = fname;
 	ncp = namebuf;
 
-	/* look for a string like '5/rz0/vmunix' or '5/rz3f/vmunix */
+	/* look for a string like '5/rz0/netbsd' or '5/rz3f/netbsd */
 	if ((c = *cp) >= '0' && c <= '9') {
 		ctlr = c - '0';
 		/* skip the '/' */
@@ -89,7 +89,7 @@ devopen(f, fname, file)
 			cp++;
 		}
 	} else {
-		/* expect a string like 'rz(0,0,0)vmunix' */
+		/* expect a string like 'rz(0,0,0)netbsd' */
 		while ((c = *cp) != '\0') {
 			if (c == '(') {
 				cp++;
@@ -130,7 +130,7 @@ devopen(f, fname, file)
 #ifdef LIBSA_SINGLE_DEVICE
 	rc = DEV_OPEN(dp)(f, ctlr, unit, part);
 #else
-#ifdef SMALL
+#ifdef BOOTRZ	/* First stage disk boot loader only knows rz devices */
 	if (strcmp (namebuf, "rz")) {
 		printf ("Unknown device: %s\n", namebuf);
 		return ENXIO;
