@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.8 1997/10/17 05:58:29 lukem Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.9 1997/11/20 10:35:15 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.8 1997/10/17 05:58:29 lukem Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.9 1997/11/20 10:35:15 veego Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -91,7 +91,7 @@ main(ac, av)
 	char	rawdata = 0, testmode = 0;
 	char	*grfdevice = 0;
 	char	*modefile = 0;
-	char	buf[_POSIX2_LINE_MAX], obuf[_POSIX2_LINE_MAX];
+	char	buf[_POSIX2_LINE_MAX];
 	char	*cps[31];
 	char	*p;
 	char	*errortext;
@@ -137,6 +137,7 @@ main(ac, av)
 			return (1);
 		}
 		while (fgets(buf, sizeof(buf), fp)) {
+			char *obuf, tbuf[_POSIX2_LINE_MAX], *tbuf2;
 			/*
 			 * check for end-of-section, comments, strip off trailing
 			 * spaces and newline character.
@@ -149,7 +150,21 @@ main(ac, av)
 				continue;
 			*++p = '\0';
 
-			sprintf(obuf, "%s", buf);
+			obuf = buf;
+			tbuf2 = tbuf;
+			while ((*tbuf2 = *obuf) != '\0') {
+				if (*tbuf2 == '#') {
+					*tbuf2 = '\0';
+					break;
+				}
+				if (isupper(*tbuf2)) {
+					*tbuf2 = tolower(*tbuf2);
+				}
+				obuf++;
+				tbuf2++;
+			}
+			obuf = tbuf;
+
 			lineno = lineno + 1;
 
 			for (i = 0, *cps = strtok(buf, " \b\t\r\n");
