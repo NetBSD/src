@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.7 2000/03/14 05:31:16 nisimura Exp $
+# $NetBSD: TCWSCONS,v 1.8 2000/03/16 08:42:40 nisimura Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers 32
 
@@ -103,10 +103,12 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # Raster console options
-#options 	FONT_BOLD8x16		# Font for fb devices
-#options 	FONT_LUCIDA16x29	# Font for px devices
-options 	FONT_GALLANT12x22
-#options 	FONT_QVSS8x15
+options		FONT_GALLANT12x22
+#options 	FONT_LUCIDA16x29
+#options	FONT_BOLD8x16		# XXX not supported by HX
+#options	FONT_VT220L8x10		# XXX not supported by HX
+#options	FONT_VT220L8x8		# XXX not supported by HX
+#options 	FONT_QVSS8x15		# XXX not supported by HX
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
