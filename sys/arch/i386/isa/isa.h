@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.5 1993/10/09 22:18:54 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.6 1993/10/15 03:06:53 mycroft Exp $
  */
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/cdefs.h>
 
 void sysbeep __P((int, int));
-unsigned kbd_8042cmd __P((int));
 #endif
 
 
@@ -61,6 +60,8 @@ unsigned kbd_8042cmd __P((int));
 #define	IO_DMA1		0x000		/* DMA Controller #1 */
 #define IO_DMAPG	0x080		/* DMA Page Registers */
 #define	IO_DMA2		0x0C0		/* DMA Controller #2 */
+
+#define	IO_TIMER1	0x040		/* Timer #1 */
 
 #define	IO_RTC		0x070		/* Real-Time Clock */
 #define IO_NMI		IO_RTC		/* NMI Control */
