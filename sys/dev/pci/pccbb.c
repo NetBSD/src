@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.15 2000/01/23 00:10:03 augustss Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.16 2000/01/23 04:02:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -34,7 +34,7 @@
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-//#define CBB_DEBUG
+/* #define CBB_DEBUG */
 
 /*
 #define CB_PCMCIA_POLL
@@ -1020,10 +1020,7 @@ pccbb_pcmcia_write(ph, reg, val)
      int reg;
      u_int8_t val;
 {
-printf("pccbb_pcmcia_write t=%x h=%x r=%d v=%x\n", ph->ph_bus_t, (u_int)ph->ph_bus_h,PCCBB_PCMCIA_OFFSET + reg, val);
   bus_space_write_1(ph->ph_bus_t, ph->ph_bus_h, PCCBB_PCMCIA_OFFSET + reg, val);
-
-  return;
 }
 
 
