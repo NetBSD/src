@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.9 1996/11/11 23:54:18 gwr Exp $	*/
+/*	$NetBSD: scan.l,v 1.10 1996/11/12 17:42:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,14 @@ with		{ return WITH; }
 [1-9][0-9]* {
 		yylval.val = strtol(yytext, NULL, 10);
 		return NUMBER;
+	}
+\n/[ \t] {
+		/*
+		 * Note: newline followed by whitespace is always a
+		 * continuation of the previous line, so do NOT
+		 * return a token in this case.
+		 */
+		yyline++;
 	}
 \n	{
 		yyline++;
