@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.3 1998/03/30 04:15:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/01 01:50:02 tv Exp $
 
 PROG=	cpp
 BINDIR=	/usr/libexec
@@ -20,5 +20,7 @@ FILESMODE=${BINMODE}
 
 MAN=	cccp.1
 MLINKS=	cccp.1 cpp.1 cccp.1 gcpp.1
+
+.PATH: $(.OBJDIR)
 
 .include <bsd.prog.mk>

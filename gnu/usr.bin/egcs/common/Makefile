@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/01 01:50:02 tv Exp $
+
+# XXX: seems to need to be first in the path; this may not be necessary
+.PATH: $(.OBJDIR)
 
 .include "../Makefile.inc"
 
