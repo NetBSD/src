@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.5 1995/12/20 02:00:23 jonathan Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.6 1995/12/21 09:28:36 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,10 +40,11 @@
  *
  */
 
-#define	PT_GETREGS	(PT_FIRSTMACH + 0)
-#define	PT_SETREGS	(PT_FIRSTMACH + 1)
+/*#define	PT_STEP		(PT_FIRSTMACH + 0)*/
+#define	PT_GETREGS	(PT_FIRSTMACH + 1)
+#define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
 #ifdef notyet
-#define	PT_GETFPREGS	(PT_FIRSTMACH + 2)
-#define	PT_SETFPREGS	(PT_FIRSTMACH + 3)
+#define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
+#define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 #endif
