@@ -219,7 +219,7 @@ special_statement
 
 	/* include */
 include_statement
-	:	INCLUDE QUOTEDSTRING
+	:	INCLUDE QUOTEDSTRING EOS
 		{
 			char path[MAXPATHLEN];
 
@@ -229,7 +229,6 @@ include_statement
 			if (yycf_switch_buffer(path) != 0)
 				return -1;
 		}
-		EOS
 	;
 
 	/* self infomation */
