@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.7 2001/10/24 14:07:32 augustss Exp $ */
+/* $NetBSD: wsevent.c,v 1.8 2001/10/25 14:46:41 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.7 2001/10/24 14:07:32 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.8 2001/10/25 14:46:41 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,30 +121,6 @@ wsevent_fini(struct wseventvar *ev)
 
 	free(ev->q, M_DEVBUF);
 	ev->q = NULL;
-}
-
-/*
- * Allocate a wseventvar.
- */
-struct wseventvar *
-wsevent_alloc(void)
-{
-	struct wseventvar *ev;
-
-	ev = malloc(sizeof(*ev), M_DEVBUF, M_WAITOK);
-	memset(ev, 0, sizeof *ev);
-	wsevent_init(ev);
-	return (ev);
-}
-
-/*
- * Deallocate a wseventvar.
- */
-void
-wsevent_free(struct wseventvar *ev)
-{
-	wsevent_fini(ev);
-	free(ev, M_DEVBUF);
 }
 
 /*
