@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.11 1999/06/28 13:32:43 simonb Exp $	*/
+/*	$NetBSD: initscr.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.11 1999/06/28 13:32:43 simonb Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
 #endif
 #endif	/* not lint */
 
@@ -92,6 +92,8 @@ initscr()
 	}
 
 	__init_getch(sp);
+
+	__init_acs();
 
 	__set_stophandler();
 
