@@ -1,5 +1,0 @@
-#	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.m68k,v 1.5 1993/12/19 07:32:22 mycroft Exp $
-
-CFLAGS+=	-DPIC
-SRCS+=		tc-m68k.c atof-ieee.c
