@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2001/05/02 15:33:14 matt Exp $ */
+/*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -131,6 +131,8 @@ Xmain(void)
 	}
 	skip = 1;
 	printf("\n");
+	if (setjmp(jbuf))
+		askname = 1;
 
 	/* First try to autoboot */
 	if (askname == 0) {
@@ -142,7 +144,8 @@ Xmain(void)
 			if (!filelist[fileindex].quiet)
 				printf("> boot %s\n", filelist[fileindex].name);
 			marks[MARK_START] = 0;
-			err = loadfile(filelist[fileindex].name, marks, LOAD_KERNEL|COUNT_KERNEL);
+			err = loadfile(filelist[fileindex].name, marks,
+			    LOAD_KERNEL|COUNT_KERNEL);
 			if (err == 0) {
 				machdep_start((char *)marks[MARK_ENTRY],
 						      marks[MARK_NSYM],
