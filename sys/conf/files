@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130 1997/07/28 22:48:59 jonathan Exp $
+#	$NetBSD: files,v 1.130.2.1 1997/07/30 07:26:13 marc Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -86,6 +86,17 @@ file	dev/ic/am7990.c		le
 # 8390-family Ethernet controllers
 define	dp8390nic
 file	dev/ic/dp8390.c		dp8390nic
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+device	ed: ether, ifnet, arp
+# XXX this should be moved to dev/ic
+file	dev/isa/if_ed.c			ed
+
+# 8250/16[45]50-based "com" ports
+device	com: tty
+# XXX this should be moved to dev/ic
+file	dev/isa/com.c		com needs-flag
 
 # NCR 5380 SCSI Bus Controller
 define	ncr5380sbc

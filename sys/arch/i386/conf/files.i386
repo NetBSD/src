@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.85 1997/07/06 04:09:45 thorpej Exp $
+#	$NetBSD: files.i386,v 1.85.2.1 1997/07/30 07:23:04 marc Exp $
 #
 # new style config file for i386 architecture
 #
@@ -41,6 +41,12 @@ include "../../../scsi/files.scsi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
+
+#
+# Machine-independent PCMCIA drivers
+#
+
+include "../../../dev/pcmcia/files.pcmcia"
 
 # Memory Disk for install floppy
 file arch/i386/i386/md_root.c	memory_disk_hooks

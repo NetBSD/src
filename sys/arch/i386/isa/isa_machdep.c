@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22.4.1 1997/07/30 07:23:05 marc Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -353,6 +353,69 @@ fakeintr(arg)
 }
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+
+void
+isa_intr_alloc(ic, mask, type, irq)
+	isa_chipset_tag_t ic;
+	int mask;
+	int type;
+	int *irq;
+{
+	int i, tmp, bestirq, count;
+	struct intrhand **p, *q;
+
+	if (type == IST_NONE)
+		panic("intr_alloc: bogus type");
+
+	bestirq = -1;
+	count = -1;
+
+	/* some interrupts should never be dynamically allocated */
+	mask &= 0xDEF8;
+
+	/* XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	   the right answer is to do "breadth-first" searching of devices. */
+	mask &= 0xEFBF;
+
+	for (i=0; i<ICU_LEN; i++) {
+		if (!LEGAL_IRQ(i) || !(mask & (1<<i)))
+			continue;
+
+		switch(intrtype[i]) {
+		case IST_NONE:
+			/* if nothing's using the irq, just return it */
+			*irq = i;
+			return;
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (type != intrtype[i])
+				continue;
+			/* if the irq is shareable, count the number of other
+			   handlers, and if it's smaller than the last irq like
+			   this, remember it */
+			for (p = &intrhand[i], tmp = 0;
+			     (q = *p) != NULL;
+			     p = &q->ih_next, tmp++)
+				;
+			if ((bestirq == -1) ||
+			    (count > tmp)) {
+				bestirq = i;
+				count = tmp;
+			}
+			break;
+		case IST_PULSE:
+			/* this just isn't shareable */
+			continue;
+		}
+	}
+
+	if (bestirq == -1)
+		panic("intr_alloc: no irqs available");
+
+	*irq = bestirq;
+
+	return;
+}
 
 /*
  * Set up an interrupt handler to start being called.
