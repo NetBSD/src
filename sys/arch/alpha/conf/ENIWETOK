@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.24 2000/05/23 02:04:29 thorpej Exp $
+# $NetBSD: ENIWETOK,v 1.25 2000/05/25 16:33:14 mycroft Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -67,6 +67,8 @@ options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43
