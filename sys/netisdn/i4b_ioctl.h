@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.6 2002/03/25 12:07:34 martin Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.7 2002/03/30 07:08:13 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -74,6 +74,7 @@
  *	max length of some strings
  *---------------------------------------------------------------------------*/
 #define TELNO_MAX	41  /* max length of a telephone number (+ '\0')  */
+#define	SUBADDR_MAX	22  /* max length of subaddres IE		  */
 #define DISPLAY_MAX	91  /* max length of display information (+ '\0') */
 #define DATETIME_MAX	21  /* max length of datetime information (+ '\0')*/
 
@@ -243,6 +244,9 @@ typedef struct {
 #define  PRS_NNINTERW 3		/* number not available due to interworking */
 #define  PRS_RESERVED 4		/* reserved				*/
 	char		display[DISPLAY_MAX];	/* content of display IE*/
+	u_int8_t	src_subaddr[SUBADDR_MAX];
+	u_int8_t	dest_subaddr[SUBADDR_MAX];
+	u_int8_t	type_plan;
 } msg_connect_ind_t;
 
 /*---------------------------------------------------------------------------*
