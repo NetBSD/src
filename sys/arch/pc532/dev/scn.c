@@ -31,12 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.4 1994/02/23 07:59:05 phil Exp $
+ *	$Id: scn.c,v 1.5 1994/03/08 19:48:19 phil Exp $
  */
 
 #include "scn.h"
 
 #if NSCN > 0
+
+/* #define KERN_MORE */
 
 /* The pc532 has 4 duarts! */
 #define NLINES 8
@@ -62,6 +64,8 @@
 #include "device.h"
 #include "scnreg.h"
 
+#include <dev/cons.h>
+
 #include "../pc532/icu.h"
 #include "sl.h"
 
@@ -76,7 +80,7 @@ int	scnsoftCAR;
 int	scn_active;
 /* int	nlines = NLINES; */
 int	scnconsole = SCN_CONSOLE;
-int	scnconsinit;
+int	scnconsinit = 0;
 int	scndefaultrate = TTYDEF_SPEED;
 int	scnmajor;
 
@@ -117,7 +121,8 @@ struct speedtab scnspeedtab[] = {
 	}
 
 /* Unit is 0-7. Other parts of the minor number are things like
-   hardware cts/rts handshaking. */
+   hardware cts/rts handshaking.  (XXX how?) */
+
 #define UNIT(x)	(minor(x) & 0x7)
 
 /* Which uart is the device on? */
@@ -252,8 +257,15 @@ scnprobe(dev)
 struct pc532_device *dev;
 {
   int unit = UNIT(dev->pd_unit);
+
   /* Should do more ???? */
-  if (unit < NLINES) {
+
+  if (unit >= NLINES) {
+ 
+    return(0);  /* dev is "not working." */
+
+  } else {
+
     switch (unit) {
 	case 0:
 	case 1:  PL_tty |= SPL_UART0; break;
@@ -267,14 +279,16 @@ struct pc532_device *dev;
 	case 6:
 	case 7:  PL_tty |= SPL_UART3; break;
     }
+
+    /* Set processor levels */
+
     PL_zero |= PL_tty;
 #if NSL > 0
     PL_net |= PL_tty;
     PL_tty |= PL_net;
 #endif
-    return(1);  /* if dev is "working." */
-  } else {
-    return(0);  /* if dev is "not working." */
+
+    return(1);  /* dev is "working." */
   }
 }
 
@@ -491,11 +505,14 @@ scnclose(dev, flag, mode, p)
 		DELAY (10);
 		WR_ADR (u_char, rs->opset_port, DTR_BIT << rs->a_or_b);
 	}
-	if ((tp->t_state&TS_ISOPEN) == 0) {
-		ttyclose(tp);
-		ttyfree(tp);
-		scn_tty[unit] = (struct tty *)NULL;
-	}
+
+	ttyclose(tp);
+
+#if 0 /* this is broken. */
+	ttyfree(tp);
+	scn_tty[unit] = (struct tty *)NULL;
+#endif
+
 	return(0);
 }
  
@@ -660,132 +677,6 @@ scnintr(int uart_no)
 }
 
 
-#if 0
-386 comintr body. --------------
-	register com;
-	register u_char code;
-	register struct tty *tp;
-
-	unit--;
-	com = com_addr[unit];
-	while (1) {
-		code = inb(com+com_iir);
-		switch (code & IIR_IMASK) {
-		case IIR_NOPEND:
-			return (1);
-		case IIR_RXTOUT:
-		case IIR_RXRDY:
-			tp = com_tty[unit];
-/*
- * Process received bytes.  Inline for speed...
- */
-#ifdef KGDB
-#define	RCVBYTE() \
-			code = inb(com+com_data); \
-			if ((tp->t_state & TS_ISOPEN) == 0) { \
-				if (kgdb_dev == makedev(commajor, unit+1) && \
-				    code == FRAME_END) \
-					kgdb_connect(0); /* trap into kgdb */ \
-			} else \
-				(*linesw[tp->t_line].l_rint)(code, tp)
-#else
-#define	RCVBYTE() \
-			code = inb(com+com_data); \
-			if (tp->t_state & TS_ISOPEN) \
-				(*linesw[tp->t_line].l_rint)(code, tp)
-#endif
-
-			RCVBYTE();
-
-			if (com_hasfifo & (1 << unit))
-				while ((code = inb(com+com_lsr)) & LSR_RCV_MASK) {
-					if (code == LSR_RXRDY) {
-						RCVBYTE();
-					} else
-						comeint(unit, code, com);
-				}
-			break;
-		case IIR_TXRDY:
-			tp = com_tty[unit];
-			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				comstart(tp);
-			break;
-		case IIR_RLS:
-			comeint(unit, inb(com+com_lsr), com);
-			break;
-		default:
-			if (code & IIR_NOPEND)
-				return (1);
-			log(LOG_WARNING, "com%d: weird interrupt: 0x%x\n",
-			    unit, code);
-			/* fall through */
-		case IIR_MLSC:
-			commint(unit, com);
-			break;
-		}
-	}
-}
-
-
-comeint(unit, stat, com)
-	register int unit, stat;
-	register com;
-{
-	register struct tty *tp;
-	register int c;
-
-	tp = com_tty[unit];
-	c = inb(com+com_data);
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-#ifdef KGDB
-		/* we don't care about parity errors */
-		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
-		    kgdb_dev == makedev(commajor, unit+1) && c == FRAME_END)
-			kgdb_connect(0); /* trap into kgdb */
-#endif
-		return;
-	}
-	if (stat & (LSR_BI | LSR_FE))
-		c |= TTY_FE;
-	else if (stat & LSR_PE)
-		c |= TTY_PE;
-	else if (stat & LSR_OE) {			/* 30 Aug 92*/
- 		c |= TTY_PE;	/* Ought to have it's own define... */
- 		log(LOG_WARNING, "com%d: silo overflow\n", unit);
- 	}
-	(*linesw[tp->t_line].l_rint)(c, tp);
-}
-
-commint(unit, com)
-	register int unit;
-	register com;
-{
-	register struct tty *tp;
-	register int stat;
-
-	tp = com_tty[unit];
-	stat = inb(com+com_msr);
-	if ((stat & MSR_DDCD) && (comsoftCAR & (1 << unit)) == 0) {
-		if (stat & MSR_DCD)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
-			outb(com+com_mcr,
-				inb(com+com_mcr) & ~(MCR_DTR | MCR_RTS) | MCR_IENABLE);
-	} else if ((stat & MSR_DCTS) && (tp->t_state & TS_ISOPEN) &&
-		   (tp->t_flags & CRTSCTS)) {
-		/* the line is up and we want to do rts/cts flow control */
-		if (stat & MSR_CTS) {
-			tp->t_state &=~ TS_TTSTOP;
-			ttstart(tp);
-		} else
-			tp->t_state |= TS_TTSTOP;
-	}
-}
-#endif
-
 scnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
@@ -798,6 +689,7 @@ scnioctl(dev, cmd, data, flag, p)
 	register struct rs232_s *rs = &line[unit];
 	register scn;
 	register int error;
+
  
 	tp = scn_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -807,6 +699,7 @@ scnioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
+printf ("scnioctl %d\n", cmd);
 	switch (cmd) {
 
 	case TIOCSBRK:
@@ -846,6 +739,7 @@ scnioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
+		printf ("scn.c: bad ioctl 0x%x\n", cmd);
 		return (ENOTTY);
 	}
 	return (0);
@@ -962,29 +856,17 @@ scnstop(tp, flag)
 scncnprobe(cp)
 	struct consdev *cp;
 {
-#if 0
-	int unit;
-
 	/* locate the major number */
 	for (scnmajor = 0; scnmajor < nchrdev; scnmajor++)
 		if (cdevsw[scnmajor].d_open == scnopen)
 			break;
 
-	/* XXX: ick */
-	unit = CONUNIT;
-	scn_addr[CONUNIT] = CONADDR;
-
 	/* make sure hardware exists?  XXX */
 
 	/* initialize required fields */
-	cp->cn_dev = makedev(scnmajor, unit+1);
-	cp->cn_tp = scn_tty[unit];
-#ifdef	SCNCONSOLE
-	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
-#else
+	cp->cn_dev = makedev(scnmajor, SCN_CONSOLE);
 	cp->cn_pri = CN_NORMAL;
-#endif
-#endif
+	return 1;
 }
 
 scncninit(cp)
@@ -1024,66 +906,7 @@ scninit(unit, rate)
 #endif
 }
 
-scncngetc(dev)
-{
 #if 0
-	register scn = scn_addr[UNIT(dev)];
-	short stat;
-	int c, s;
-
-#ifdef lint
-	stat = dev; if (stat) return(0);
-#endif
-	s = splhigh();
-	while (((stat = inb(com+com_lsr)) & LSR_RXRDY) == 0)
-		;
-	c = inb(com+com_data);
-	stat = inb(com+com_iir);
-	splx(s);
-	return(c);
-#endif
-}
-
-/*
- * Console kernel output character routine.
- */
-scncnputc(dev, c)
-	dev_t dev;
-	register int c;
-{
-#if 0
-	register com = com_addr[UNIT(dev)];
-	register int timo;
-	short stat;
-	int s = splhigh();
-
-#ifdef lint
-	stat = dev; if (stat) return;
-#endif
-#ifdef KGDB
-	if (dev != kgdb_dev)
-#endif
-	if (comconsinit == 0) {
-		(void) cominit(UNIT(dev), comdefaultrate);
-		comconsinit = 1;
-	}
-	/* wait for any pending transmission to finish */
-	timo = 50000;
-	while (((stat = inb(com+com_lsr)) & LSR_TXRDY) == 0 && --timo)
-		;
-	outb(com+com_data, c);
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (((stat = inb(com+com_lsr)) & LSR_TXRDY) == 0 && --timo)
-		;
-	/* clear any interrupts generated by this transmission */
-	stat = inb(com+com_iir);
-	splx(s);
-#endif
-}
-
-
- 
 int
 scnselect(dev, rw, p)
  	dev_t dev;
@@ -1117,5 +940,65 @@ scnselect(dev, rw, p)
  	splx(s);
  	return (1);
 }
- 
+#endif
+
+
+/* So the kernel can write in unmapped mode! */
+int _mapped = 0;
+
+/*
+ * Console kernel input character routine.
+ */
+
+char
+scncngetc(dev_t dev)
+{
+   char c;
+   int x=splhigh();
+   while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_RX_RDY));
+   c = RD_ADR(u_char, SCN_CON_MAP_DATA);
+   splx(x);
+   return c;
+}
+
+/*
+ * Console kernel output character routine.
+ */
+
+/* A simple kernel level "more" for debugging output. */
+#ifdef KERN_MORE
+int ___lines = 0;
+#endif
+
+scncnputc (dev_t dev, char c)
+{
+  int x = splhigh();
+
+  if (c == '\n') cnputc('\r');
+  if (_mapped) {
+    while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_TX_RDY));
+    WR_ADR (u_char, SCN_CON_MAP_DATA, c);
+    while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_TX_RDY));
+    RD_ADR(u_char, SCN_CON_MAP_ISR);  
+  } else {
+    while (0 == (RD_ADR (u_char, SCN_CON_STAT) & SR_TX_RDY));
+    WR_ADR (u_char, SCN_CON_DATA, c);
+    while (0 == (RD_ADR (u_char, SCN_CON_STAT) & SR_TX_RDY));
+    RD_ADR(u_char, SCN_CON_ISR);  
+  }
+#ifdef KERN_MORE
+  if (c == '\n' && ___lines >= 0)
+    {
+     if (++___lines == 22) {
+	___lines = 0;
+	scnputc(dev,'m');scnputc(dev,'o');scnputc(dev,'r');scnputc(dev,'e');
+	scnputc(dev,':');scnputc(dev,' ');
+	scncngetc();
+	scnputc(dev,'\n');
+     }
+  }
+#endif
+  splx(x);
+}
+
 #endif

@@ -1079,6 +1079,25 @@ sysarch(p, uap, retval)
 	return ENOSYS;
 }
 
+/*
+ * consinit:
+ * initialize the system console.
+ * XXX - shouldn't deal with this cons_initted thing, but then,
+ * it shouldn't be called from init386 either.
+ */
+static int cons_initted;
+
+void
+consinit()
+{
+	if (!cons_initted) {
+		cninit();
+		cons_initted = 1;
+	}
+}
+
+/* DEBUG routine */
+
 void dump_qs()
 {  int ix;
    struct proc *ptr;
