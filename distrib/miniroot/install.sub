@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.3 1996/05/20 00:32:25 pk Exp $
+#	$NetBSD: install.sub,v 1.4 1996/05/21 00:11:08 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,8 +78,17 @@ cutword () {
 # read a line of data, return Nth element.
 	local _a
 	local _n
+	local _oifs
+
+	# optional field separator
+	_oifs="$IFS"
+	case "$1" in
+	-t?*) IFS=${1#-t}; shift;;
+	esac
+
 	_n=$1
 	read _a; set -- $_a
+	IFS="$_oifs"
 	if [ "$1" = "" ]; then return; fi
 	eval echo \$$_n
 }
@@ -87,7 +96,16 @@ cutword () {
 cutlast () {
 # read a line of data, return last element. Equiv. of awk '{print $NF}'.
 	local _a
+	local _oifs
+
+	# optional field separator
+	_oifs="$IFS"
+	case "$1" in
+	-t?*) IFS=${1#-t}; shift;;
+	esac
+
 	read _a; set -- $_a
+	IFS="$_oifs"
 	if [ "$1" = "" ]; then return; fi
 	if [ "$#" -gt 10 ]; then shift 10; fi
 	eval echo \$$#
@@ -937,10 +955,11 @@ mount_fs()
 	_fstab=$1
 
 	( while read line; do
-		_dev=`echo $line | cutword 1`
-		_mp=`echo $line | cutword 2`
-		_fstype=`echo $line | cutword 3`
-		_opt=`echo $line | cutword 4`
+		set -- $line
+		_dev=$1
+		_mp=$2
+		_fstype=$3
+		_opt=$4
 
 		# If not the root filesystem, make sure the mount
 		# point is present.
