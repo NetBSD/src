@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.17 2004/06/02 21:13:42 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.18 2004/06/02 21:15:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.17 2004/06/02 21:13:42 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.18 2004/06/02 21:15:42 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -916,6 +916,13 @@ td_map_lwps(td_proc_t *proc)
 	val = READ(proc, proc->maxlwpsaddr, &nlwps, sizeof(nlwps));
 	if (val != 0)
 		return val;
+
+	if (nlwps < 1)
+		nlwps = 1; /* always at least one LWP */
+
+	PTQ_FOREACH(thread, &proc->threads, list) {
+		thread->lwp = -1;
+	}
 
 	for (i = 1; i <= nlwps; i++) {
 		/*
