@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.179 2003/08/24 17:52:38 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.180 2003/10/26 08:05:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -78,6 +78,8 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
 #include "opt_lockdebug.h"
 
 #include "assym.h"
@@ -92,6 +94,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/asm.h>
+#include <sys/syscall.h>
 
 #include "ksyms.h"
 
@@ -6608,6 +6611,7 @@ ENTRY(cache_flush_phys)
 	retl
 	 nop
 
+#ifdef COMPAT_16
 #ifdef _LP64
 /*
  * XXXXX Still needs lotsa cleanup after sendsig is complete and offsets are known
@@ -6719,7 +6723,7 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 	membar	#Sync
 
-	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
+	restore	%g0, SYS_compat_16___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, BIAS + 128 + 8, %o0! compute scp
 !	andn	%o0, 0x0f, %o0
 	t	ST_SYSCALL		! sigreturn(scp)
@@ -6734,11 +6738,12 @@ _C_LABEL(esigcode):
 
 #define SIGCODE_NAME		sigcode
 #define ESIGCODE_NAME		esigcode
-#define SIGRETURN_NAME		SYS___sigreturn14
+#define SIGRETURN_NAME		SYS_compat_16___sigreturn14
 #define EXIT_NAME		SYS_exit
 
 #include "sigcode32.s"
 
+#endif
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.13 2003/10/21 12:08:11 kleink Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.14 2003/10/26 08:05:27 christos Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.13 2003/10/21 12:08:11 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.14 2003/10/26 08:05:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -159,11 +159,9 @@ sunos32_setregs(l, pack, stack)
 }
 
 void
-sunos32_sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;	/* XXX */
 	struct proc *p = l->l_proc;
 	struct sunos32_sigframe *fp;
@@ -212,7 +210,7 @@ sunos32_sendsig(sig, mask, code)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = (u_int32_t)code;
+	sf.sf_code = (u_int32_t)ksi->ksi_trap;
 	scp = &fp->sf_sc;
 	if ((u_long)scp >= 0x100000000)
 		printf("sunos32_sendsig: sf_scp overflow %p > 0x100000000\n", scp);

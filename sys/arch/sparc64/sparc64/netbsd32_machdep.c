@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.39 2003/10/21 01:54:23 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.40 2003/10/26 08:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.39 2003/10/21 01:54:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.40 2003/10/26 08:05:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -163,8 +163,9 @@ extern int sigdebug;
 #endif
 
 void
-netbsd32_sendsig(int sig, const sigset_t *mask, u_long code)
+netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct sparc32_sigframe *fp;
@@ -205,7 +206,7 @@ netbsd32_sendsig(int sig, const sigset_t *mask, u_long code)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = (u_int)code;
+	sf.sf_code = (u_int)ksi->ksi_trap;
 #if defined(COMPAT_SUNOS) || defined(LKM)
 	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
