@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.c	8.5 (Berkeley) 3/21/94
- *	$Id: pmap.c,v 1.12 1994/05/23 06:15:17 mycroft Exp $
+ *	from: @(#)pmap.c	8.6 (Berkeley) 5/27/94
+ *	$Id: pmap.c,v 1.13 1994/05/27 17:20:34 mycroft Exp $
  */
 
 /*
@@ -2267,7 +2267,7 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((vm_offset_t)pmap->pm_stab, PG_CCB, 0);
+			pmap_changebit((vm_offset_t)pmap->pm_stpa, PG_CCB, 0);
 			pmap->pm_stfree = protostfree;
 		}
 #endif
