@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.131 2003/09/23 09:19:23 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.132 2003/09/23 16:27:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.131 2003/09/23 09:19:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.132 2003/09/23 16:27:10 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -451,7 +451,7 @@ wdc_channel_attach(chp)
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
 			    wd_cyl_lo, 0xa5);
 			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			        wd_error == 0x58) ||
+			        wd_error) == 0x58 ||
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 				wd_cyl_lo) != 0xa5) {
 				WDCDEBUG_PRINT(("%s:%d:%d: register "
