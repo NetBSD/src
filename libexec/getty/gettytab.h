@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gettytab.h	5.5 (Berkeley) 3/27/91
- *	$Id: gettytab.h,v 1.3 1994/03/23 03:36:03 cgd Exp $
+ *	$Id: gettytab.h,v 1.4 1994/04/16 03:45:25 cgd Exp $
  */
 
 /*
@@ -134,6 +134,7 @@ struct gettyflags {
 #define AB	gettyflags[19].value
 #define DX	gettyflags[20].value
 #define	NP	gettyflags[21].value
+#define	MD	gettyflags[22].value
 
 int	getent();
 long	getnum();

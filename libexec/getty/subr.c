@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: subr.c,v 1.4 1994/03/09 05:00:01 cgd Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.5 1994/04/16 03:45:29 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -236,6 +236,9 @@ setflags(n)
 
 	if (DX)
 		f |= DECCTQ;
+
+	if (MD)
+		f |= MDMBUF;
 
 	return (f);
 }
