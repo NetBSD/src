@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.12 1998/05/17 16:51:41 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.13 1998/05/17 17:16:32 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -95,8 +95,11 @@ static	FILE	*newlog = NULL;
 static	char	*logfile = NULL;
 static	int	donehup = 0;
 static	void	usage __P((char *));
+#if 0	/* XXX unused */
 static	void	handlehup __P((void));
+#endif
 static	void	flushlogs __P((char *, FILE *));
+static	void	logopts __P((int, char *));
 static	void	print_log __P((int, FILE *, char *, int));
 static	void	print_ipflog __P((FILE *, char *, int));
 static	void	print_natlog __P((FILE *, char *, int));
@@ -125,6 +128,7 @@ int	main __P((int, char *[]));
 #endif
 
 
+#if 0	/* XXX unused */
 static void handlehup()
 {
 	FILE	*fp;
@@ -133,6 +137,7 @@ static void handlehup()
 	if (logfile && (fp = fopen(logfile, "a")))
 		newlog = fp;
 }
+#endif
 
 
 static int read_log(fd, lenp, buf, bufsize, log)
@@ -423,7 +428,7 @@ int	logtype, blen;
 		blen -= psize;
 		buf += psize;
 	}
-finishbuf:
+
 	if (bp)
 		free(bp);
 	return;
