@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1995/09/02 05:04:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 1995/09/23 17:40:54 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -39,7 +39,7 @@ LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
 
-BOOTS=	pboot netboot dboot dcopy tboot tcopy cat #ls
+BOOTS=	pboot netboot sys_inst dboot dcopy tboot tcopy cat #ls
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
@@ -81,13 +81,25 @@ cat:	srt0.o cat.o conf.o ${LIBS}
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
+# installation
+sys_inst: srt0.o sys_inst.o clock.o instconf.o inst_netio.o tgets.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o sys_inst.o clock.o instconf.o inst_netio.o tgets.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
+
+instconf.o: ${.CURDIR}/conf.c
+	${CC} ${CFLAGS} -DSYS_INST -c ${.CURDIR}/conf.c -o $@
+
+inst_netio.o: ${.CURDIR}/netio.c
+	${CC} ${CFLAGS} -DSYS_INST -c ${.CURDIR}/netio.c -o $@
+
 # bootable from network
 
 netboot:	srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS}
 	${LD} -N -T ${RELOC} -e begin srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
-	
+
 netconf.o: ${.CURDIR}/conf.c
 	${CC} ${CFLAGS} -DNETBOOT -c ${.CURDIR}/conf.c -o $@
 
@@ -139,6 +151,7 @@ clean::
 install: mkboot installboot ${ALL}
 	./mkboot pboot netbsdboot.lif
 	./mkboot netboot netboot.lif
+	./mkboot sys_inst sys_inst.lif
 	./mkboot dboot diskboot.lif
 	./mkboot tboot tcopy tapeboot.lif
 	install -c -o bin -g bin -m 555 installboot ${DESTDIR}/usr/mdec
@@ -151,6 +164,7 @@ install: mkboot installboot ${ALL}
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
 	install -d -m 755 -o bin -g bin ${DESTDIR}/usr/mdec/rbootd
 	install -c -o bin -g bin -m 444 netboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
+	install -c -o bin -g bin -m 444 sys_inst.lif ${DESTDIR}/usr/mdec/rbootd/SYS_INST
 	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
 #	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
