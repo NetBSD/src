@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.23 2002/07/10 20:19:46 wiz Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.24 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -317,7 +317,6 @@ int candorcs;			/* -R flag */
 int dorcs = FALSE;
 #endif
 
-char *clienthost;		/* host name of client */
 int nchildren;			/* number of children that exist */
 char *prefix;			/* collection pathname prefix */
 char *release;			/* collection release name */
@@ -820,7 +819,7 @@ srvsetup(void)
 			int hostok = FALSE;
 			/* get stat info before open */
 			if (stat(buf, &sbuf) == -1)
-				(void) bzero((char *) &sbuf, sizeof(sbuf));
+				(void) bzero(&sbuf, sizeof(sbuf));
 
 			if ((f = fopen(buf, "r")) != NULL) {
 				struct stat fsbuf;
@@ -1029,7 +1028,7 @@ docrypt(void)
 		if (link_nofollow(1) != -1) {
 			/* get stat info before open */
 			if (stat(buf, &sbuf) == -1)
-				(void) bzero((char *) &sbuf, sizeof(sbuf));
+				(void) bzero(&sbuf, sizeof(sbuf));
 
 			if ((f = fopen(buf, "r")) != NULL) {
 				struct stat fsbuf;
@@ -1505,7 +1504,7 @@ Hfree(HASH ** table)
 			table[i] = h->Hnext;
 			if (h->Hname)
 				free(h->Hname);
-			free((char *) h);
+			free(h);
 		}
 }
 
@@ -1783,7 +1782,7 @@ char *
 fmttime(time_t time)
 {
 	static char buf[STRINGLENGTH];
-	int len;
+	unsigned int len;
 
 	(void) strcpy(buf, ctime(&time));
 	len = strlen(buf + 4) - 6;
