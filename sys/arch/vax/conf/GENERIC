@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.37 1998/10/06 04:04:30 matt Exp $
+#	$NetBSD: GENERIC,v 1.38 1998/10/18 18:49:04 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -91,7 +91,9 @@ vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
 
 # Devices connected at VAXBI
 cpu0		at bi? node?	# KA820/KA825 cpu
+cpu*		at bi? node?
 mem*		at bi? node?	# Memory subsystems
+uba*		at bi? node?	# DWBUA BI-Unibus adapter
 #ni*		at bi? node?	# DEBNA/DEBNT ethernet adapter
 kdb*		at bi? node?	# KDB50 MSCP disk ctlr
 mscpbus*	at kdb?
