@@ -1,6 +1,6 @@
-#	$NetBSD: disktab,v 1.1 1998/06/26 12:06:39 tsubai Exp $
+#	$NetBSD: disktab,v 1.2 1999/01/13 10:51:07 tsubai Exp $
 #
-# Disk geometry and partition layout tables. 
+# Disk geometry and partition layout tables.
 # Key:
 #	dt	controller type
 #	ty	type of disk (fixed, removeable, simulated)
@@ -31,9 +31,9 @@
 #
 
 floppyinstfs|NetBSD floppy install filesystem:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#16:nc#128:\
-	:pa#4096:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pc#4096:oc#0:
+	:ty=floppy:se#512:nt#2:rm#300:ns#16:nc#96:\
+	:pa#3072:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#3072:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
