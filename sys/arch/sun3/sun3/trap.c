@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 1998/06/09 19:58:50 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 1998/06/25 21:19:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,6 +43,7 @@
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

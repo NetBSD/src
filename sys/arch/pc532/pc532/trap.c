@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1998/04/11 17:44:11 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 1998/06/25 21:19:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -44,6 +44,7 @@
  * 532 Trap and System call handling
  */
 
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 

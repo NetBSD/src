@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 1998/05/27 15:53:30 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 1998/06/25 21:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -45,6 +45,7 @@
 
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_cputype.h"

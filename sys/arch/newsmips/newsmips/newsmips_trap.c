@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.4 1998/06/08 20:35:15 tsubai Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.5 1998/06/25 21:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
