@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.97 1996/09/20 22:33:25 cgd Exp $
+#	$NetBSD: files,v 1.98 1996/09/24 17:43:35 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -52,6 +52,10 @@ file	dev/ic/ncr5380sbc.c	ncr5380sbc
 define	pdq
 file	dev/ic/pdq.c		pdq
 file	dev/ic/pdq_ifsubr.c	pdq
+
+# Cyclades Cyclom-8/16/32 
+device	cy: tty
+file	dev/ic/cy.c		cy needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
