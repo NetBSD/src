@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1996/04/18 00:25:18 cgd Exp $ */
+/*	$NetBSD: if_le.c,v 1.6 1996/04/22 02:28:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -84,6 +84,12 @@ struct	cfdriver le_cd = {
 };
 
 void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
 
 integrate void
 lewrcsr(sc, port, val)

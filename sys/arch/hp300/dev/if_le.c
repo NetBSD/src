@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.28 1996/04/18 00:25:15 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.29 1996/04/22 02:30:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -88,6 +88,12 @@ struct	driver ledriver = {
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
 
 integrate void
 lewrcsr(sc, port, val)
