@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.16 1994/05/08 05:53:19 chopps Exp $
+ *	$Id: ite_cc.c,v 1.17 1994/05/25 11:33:05 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -435,7 +435,7 @@ cursor32(struct ite_softc *ip, int flag)
 	 * draw the cursor
 	 */
 
-	ip->cursorx = MIN(ip->curx, ip->cols-1);
+	ip->cursorx = min(ip->curx, ip->cols-1);
 	ip->cursory = ip->cury;
 	cstart = 0;
 	cend = ip->ftheight-1; 

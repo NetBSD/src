@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.17 1994/05/25 07:58:24 chopps Exp $
+ *	$Id: amiga_init.c,v 1.18 1994/05/25 11:32:38 chopps Exp $
  */
 
 
@@ -755,8 +755,8 @@ kernel_reload_write(uio)
       int c;
 
       /* Continue loading in the kernel image.  */
-      c = MIN(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
-      c = MIN(c, MAXPHYS);
+      c = min(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
+      c = min(c, MAXPHYS);
       error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio);
 
       if (error == 0)

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: advnops.c,v 1.3 1994/05/16 05:03:56 chopps Exp $
+ *	$Id: advnops.c,v 1.4 1994/05/25 11:34:15 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -202,7 +202,7 @@ adosfs_read(vp, uio, ioflag, ucp)
 		size = amp->bsize;
 		lbn = uio->uio_offset / size;
 		on = uio->uio_offset % size;
-		n = MIN((unsigned)(size - on), uio->uio_resid);
+		n = min((u_int)(size - on), uio->uio_resid);
 		diff = ap->fsize - uio->uio_offset;
 		/* 
 		 * check for EOF
@@ -218,7 +218,7 @@ adosfs_read(vp, uio, ioflag, ucp)
 		 */
 		error = bread(vp, lbn, size, NOCRED, &bp);
 		vp->v_lastr = lbn;
-		n = MIN(n, size - bp->b_resid);
+		n = min(n, (u_int)size - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			goto reterr;
