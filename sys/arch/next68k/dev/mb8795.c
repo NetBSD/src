@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.7 1998/07/19 21:41:16 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.8 1998/12/19 09:31:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -223,13 +223,11 @@ mb8795_config(sc)
 	sc->sc_tx_mb_head = NULL;
 	sc->sc_tx_loaded = 0;
 
-	sc->sc_tx_nd->nd_chaining_flag = 0;
 	sc->sc_tx_nd->nd_shutdown_cb = mb8795_txdma_shutdown;
 	sc->sc_tx_nd->nd_continue_cb = mb8795_txdma_continue;
 	sc->sc_tx_nd->nd_completed_cb = mb8795_txdma_completed;
 	sc->sc_tx_nd->nd_cb_arg = sc;
 
-	sc->sc_rx_nd->nd_chaining_flag = 1;
 	sc->sc_rx_nd->nd_shutdown_cb = mb8795_rxdma_shutdown;
 	sc->sc_rx_nd->nd_continue_cb = mb8795_rxdma_continue;
 	sc->sc_rx_nd->nd_completed_cb = mb8795_rxdma_completed;
@@ -820,10 +818,9 @@ mb8795_start(ifp)
     sc->sc_tx_mb_head = NULL;
     return;
   }
-	sc->sc_tx_loaded++;
 
 #ifdef DIAGNOSTIC
-	if (sc->sc_tx_loaded != 1) {
+	if (sc->sc_tx_loaded != 0) {
 			panic("%s: sc->sc_tx_loaded is %d",sc->sc_dev.dv_xname,
 					sc->sc_tx_loaded);
 	}
@@ -949,13 +946,7 @@ mb8795_rxdma_shutdown(arg)
 {
 	struct mb8795_softc *sc = arg;
 
-	printf("%s: mb8795_rxdma_shutdown(), resetting the interface\n",
-			sc->sc_dev.dv_xname);
-
-  /* we might want to just reset the DMA here instead,
-	 * but this will do.
-	 */
-	mb8795_init(sc);
+	panic("%s: mb8795_rxdma_shutdown() unexpected", sc->sc_dev.dv_xname);
 }
 
 
@@ -1060,14 +1051,21 @@ mb8795_txdma_continue(arg)
 	void *arg;
 {
 	struct mb8795_softc *sc = arg;
-	bus_dmamap_t map = sc->sc_tx_dmamap;
+	bus_dmamap_t map;
 
   DPRINTF(("%s: mb8795_txdma_continue()\n",sc->sc_dev.dv_xname));
 
+	if (sc->sc_tx_loaded) {
+		map = NULL;
+	} else {
+		map = sc->sc_tx_dmamap;
+		sc->sc_tx_loaded++;
+	}
+
 #ifdef DIAGNOSTIC
 	if (sc->sc_tx_loaded != 1) {
-			panic("%s: sc->sc_tx_loaded is %d",sc->sc_dev.dv_xname,
-					sc->sc_tx_loaded);
+		panic("%s: sc->sc_tx_loaded is %d",sc->sc_dev.dv_xname,
+				sc->sc_tx_loaded);
 	}
 #endif
 
