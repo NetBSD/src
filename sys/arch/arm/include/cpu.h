@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2002/04/03 23:33:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2002/04/12 18:50:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -74,10 +74,10 @@
  */
 
 #ifndef _LKM
-#include "opt_cputypes.h"
 #include "opt_lockdebug.h"
 #endif /* !_LKM */
 
+#include <arm/cpuconf.h>
 
 #include <machine/intr.h>
 #ifndef _LOCORE

@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.4 2001/12/20 01:20:29 thorpej Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.5 2002/04/12 18:50:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,10 +42,6 @@
 
 #ifndef _HPCARM_IRQHANDLER_H_
 #define _HPCARM_IRQHANDLER_H_
-
-#if defined(_KERNEL_OPT)
-#include "opt_cputypes.h"
-#endif
 
 #ifndef _LOCORE
 #include <sys/types.h>

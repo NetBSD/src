@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.13 2002/03/24 15:49:39 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.14 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -46,12 +46,11 @@
 
 #define FAST_FPE
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.13 2002/03/24 15:49:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.14 2002/04/12 18:50:31 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>

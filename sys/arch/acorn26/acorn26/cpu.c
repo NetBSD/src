@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -41,13 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 #include <sys/user.h>
 #include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
+#include <arm/cpuconf.h>
 #include <arm/undefined.h>
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 
 #include <arch/acorn26/acorn26/cpuvar.h>
-
-#include "opt_cputypes.h"
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.34 2002/04/10 22:30:44 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.35 2002/04/12 18:50:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -47,8 +47,6 @@
  * Updated for new bootloader 22/10/00
  */
 
-
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
@@ -57,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.34 2002/04/10 22:30:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.35 2002/04/12 18:50:30 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -80,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.34 2002/04/10 22:30:44 thorpej Exp
 #include <machine/cpu.h>
 #include <machine/io.h>
 #include <machine/intr.h>
+#include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
 #include <machine/vconsole.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -96,14 +96,13 @@
  * referenced/modified emulation.
  */
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "arcvideo.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -112,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
+
+#include <arm/cpuconf.h>
 
 #include <machine/intr.h>
 #include <machine/machdep.h>
