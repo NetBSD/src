@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.79 2003/03/21 17:23:23 drochner Exp $	*/
+/*	$NetBSD: scc.c,v 1.80 2003/06/29 09:56:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.79 2003/03/21 17:23:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.80 2003/06/29 09:56:29 simonb Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -616,10 +616,10 @@ sccreset(sc)
 }
 
 int
-sccopen(dev, flag, mode, p)
+sccopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
@@ -697,10 +697,10 @@ bad:
 
 /*ARGSUSED*/
 int
-sccclose(dev, flag, mode, p)
+sccclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	struct tty *tp;
@@ -748,17 +748,17 @@ sccwrite(dev, uio, flag)
 }
 
 int
-sccpoll(dev, events, p)
+sccpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -777,12 +777,12 @@ scctty(dev)
 
 /*ARGSUSED*/
 int
-sccioctl(dev, cmd, data, flag, p)
+sccioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
@@ -792,11 +792,11 @@ sccioctl(dev, cmd, data, flag, p)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[line];
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
