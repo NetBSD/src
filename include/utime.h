@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.h,v 1.3 1994/10/26 00:56:39 cgd Exp $	*/
+/*	$NetBSD: utime.h,v 1.4 1996/06/11 02:14:05 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,12 +38,13 @@
 #ifndef	_UTIME_H_
 #define	_UTIME_H_
 
+#include <sys/cdefs.h>
+#include <sys/types.h>
+
 struct utimbuf {
 	time_t actime;		/* Access time */
 	time_t modtime;		/* Modification time */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int utime __P((const char *, const struct utimbuf *));
