@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.57 2002/09/18 02:44:00 lukem Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.58 2002/09/20 10:39:53 martti Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 maxusers	32		# estimated number of users
 
@@ -147,6 +147,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.17 2002/09/18 02:44:04 lukem Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.18 2002/09/20 10:39:56 martti Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.17 $"
+#ident 		"GENERIC_TINY-$Revision: 1.18 $"
 
 maxusers	4
 
@@ -94,6 +94,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	NFS_BOOT_BOOTPARAM

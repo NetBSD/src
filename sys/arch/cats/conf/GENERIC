@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2002/09/18 02:43:56 lukem Exp $
+# $NetBSD: GENERIC,v 1.31 2002/09/20 10:39:50 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -90,6 +90,7 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP

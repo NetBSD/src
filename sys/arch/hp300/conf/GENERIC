@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2002/09/18 02:43:58 lukem Exp $
+# $NetBSD: GENERIC,v 1.83 2002/09/20 10:39:51 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32		# estimated number of users
 
@@ -132,6 +132,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware

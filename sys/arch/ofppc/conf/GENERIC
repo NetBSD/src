@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2002/09/18 02:44:05 lukem Exp $
+# $NetBSD: GENERIC,v 1.56 2002/09/20 10:39:57 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	32
 
@@ -117,6 +117,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NMBCLUSTERS=1024
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
