@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.4 2000/10/30 20:56:59 jdolecek Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.5 2002/09/21 18:43:34 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -58,6 +58,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <filecorefs/filecore_mount.h>
 
@@ -67,6 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
@@ -149,6 +151,11 @@ mount_filecore(argc, argv)
 
 	if (mount(MOUNT_FILECORE, dir, mntflags, &args) < 0)
 		err(1, "%s on %s", dev, dir);
+	if (mntflags & MNT_GETARGS) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), FILECOREMNT_BITS, args.flags);
+		printf("uid=%d, gid=%d, flags=%s\n", args.uid, args.gid, buf);
+	}
 	exit(0);
 }
 

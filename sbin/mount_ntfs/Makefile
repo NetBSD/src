@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/08/19 10:16:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/21 18:43:36 christos Exp $
 #
 #	Id: Makefile,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp 
 #
@@ -12,5 +12,8 @@ MAN=	mount_ntfs.8
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+= -I${MOUNT}
 .PATH:	${MOUNT}
+
+DPADD+=${LIBUTIL}
+LDADD+=-lutil
 
 .include <bsd.prog.mk>

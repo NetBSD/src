@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.13 2002/09/21 18:43:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.13 2002/09/21 18:43:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -66,6 +67,7 @@ __RCSID("$NetBSD: mount_procfs.c,v 1.12 2001/01/17 00:09:54 fvdl Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ "linux", 0, PROCFSMNT_LINUXCOMPAT, 1},
 	{ NULL }
 };
@@ -113,6 +115,11 @@ mount_procfs(argc, argv)
 
 	if (mount(MOUNT_PROCFS, argv[1], mntflags, &args))
 		err(1, "procfs on %s", argv[1]);
+	if (mntflags & MNT_GETARGS) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), PROCFSMNT_BITS, args.flags);
+		printf("version=%d, flags=%s\n", args.version, buf);
+	}
 	exit(0);
 }
 

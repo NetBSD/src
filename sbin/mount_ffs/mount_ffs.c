@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.12 2000/10/30 20:56:59 jdolecek Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.13 2002/09/21 18:43:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.12 2000/10/30 20:56:59 jdolecek Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.13 2002/09/21 18:43:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ static const struct mntopt mopts[] = {
 	MOPT_NODEVMTIME,
 	MOPT_FORCE,
 	MOPT_SOFTDEP,
+	MOPT_GETARGS,
 	{ NULL }
 };
 

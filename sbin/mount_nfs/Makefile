@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/08/19 10:16:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2002/09/21 18:43:36 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -14,9 +14,12 @@ CPPFLAGS+= -DNFS -I${MOUNT}
 .if defined(notdef)			# XXX no kernel kerb NFS support!
 .if defined(KERBEROS)
 CPPFLAGS+=-DNFSKERB
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES} ${LIBUTIL}
+LDADD+=	-lkrb -ldes -lutil
 .endif
+.else
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
 .endif
 
 .include <bsd.prog.mk>

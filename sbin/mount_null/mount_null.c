@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.8 2000/10/30 20:57:00 jdolecek Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.9 2002/09/21 18:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_null.c,v 1.8 2000/10/30 20:57:00 jdolecek Exp $");
+__RCSID("$NetBSD: mount_null.c,v 1.9 2002/09/21 18:43:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: mount_null.c,v 1.8 2000/10/30 20:57:00 jdolecek Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 

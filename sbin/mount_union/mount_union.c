@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.7 2000/10/30 20:57:01 jdolecek Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.8 2002/09/21 18:43:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.7 2000/10/30 20:57:01 jdolecek Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.8 2002/09/21 18:43:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,13 @@ __RCSID("$NetBSD: mount_union.c,v 1.7 2000/10/30 20:57:01 jdolecek Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "mntopts.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
@@ -129,6 +131,11 @@ mount_union(argc, argv)
 
 	if (mount(MOUNT_UNION, argv[1], mntflags, &args))
 		err(1, "%s on %s", target, argv[1]);
+	if (mntflags & MNT_GETARGS) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), UNMNT_BITS, args.mntflags);
+		printf("flags=%s\n", buf);
+	}
 	exit(0);
 }
 

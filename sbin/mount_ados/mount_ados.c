@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.13 2001/02/22 21:34:57 is Exp $ */
+/* $NetBSD: mount_ados.c,v 1.14 2002/09/21 18:43:33 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.13 2001/02/22 21:34:57 is Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.14 2002/09/21 18:43:33 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: mount_ados.c,v 1.13 2001/02/22 21:34:57 is Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
@@ -154,10 +155,14 @@ mount_ados(argc, argv)
 	mntflags |= MNT_RDONLY;
 	args.export.ex_flags = MNT_EXRDONLY;
 
-	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) >= 0)
-		exit (0);
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) == -1)
+		err(1, "%s on %s", dev, dir);
 
-	err(1, "%s on %s", dev, dir);
+	if (mntflags & MNT_GETARGS)
+		printf("uid=%d, gid=%d, mask=%d\n", args.uid, args.gid,
+		    args.mask);
+
+	exit (0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.9 2000/06/15 22:36:07 fvdl Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.10 2002/09/21 18:43:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,6 +62,7 @@ struct mntopt {
 #define MOPT_FORCE		{ "force",	1, MNT_FORCE, 0 }
 #define MOPT_UPDATE		{ "update",	0, MNT_UPDATE, 0 }
 #define MOPT_RELOAD		{ "reload",	0, MNT_RELOAD, 0 }
+#define MOPT_GETARGS		{ "getargs",	0, MNT_GETARGS,	0 }
 
 /* Support for old-style "ro", "rw" flags. */
 #define MOPT_RO			{ "ro",		0, MNT_RDONLY, 0 }
