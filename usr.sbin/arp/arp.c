@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $ */
+/*	$NetBSD: arp.c,v 1.35 2002/11/08 03:40:28 rafal Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $");
+__RCSID("$NetBSD: arp.c,v 1.35 2002/11/08 03:40:28 rafal Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 
 int	delete __P((const char *, const char *));
 void	dump __P((u_long));
@@ -101,10 +102,7 @@ void	usage __P((void));
 static int pid;
 static int aflag, nflag, vflag;
 static int s = -1;
-static int is = -1;
-
-static struct ifconf ifc;
-static char ifconfbuf[8192];
+static struct ifaddrs* ifaddrs = NULL;
 
 int
 main(argc, argv)
@@ -663,48 +661,24 @@ getifname(ifindex, ifname)
 	u_int16_t ifindex;
 	char* ifname;
 {
-	int i, idx, siz;
-	char ifrbuf[8192];
-	struct ifreq ifreq, *ifr;
+	int i;
+	struct ifaddrs *addr;
 	const struct sockaddr_dl *sdl = NULL;
 
-	if (is < 0) {
-		is = socket(PF_INET, SOCK_DGRAM, 0);
-		if (is < 0)
-			err(1, "socket");
-
-		ifc.ifc_len = sizeof(ifconfbuf);
-		ifc.ifc_buf = ifconfbuf;
-
-		if (ioctl(is, SIOCGIFCONF, &ifc) < 0) {
-			close(is);
-			err(1, "SIOCGIFCONF");
-			is = -1;
-		}
+	if (ifaddrs == NULL) {
+		i = getifaddrs(&ifaddrs);
+		if (i != 0)
+			err(1, "getifaddrs");
 	}
 
-	ifr = ifc.ifc_req;
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
-		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		siz = sizeof(ifr->ifr_name) +
-			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifr->ifr_addr.sa_len
-				: sizeof(struct sockaddr));
-		i += siz;
-		/* avoid alignment issue */
-		if (sizeof(ifrbuf) < siz)
-			errx(1, "ifr too big");
-
-		memcpy(ifrbuf, ifr, siz);
-		ifr = (struct ifreq *)ifrbuf;
-
-		if (ifr->ifr_addr.sa_family != AF_LINK)
+	for (addr = ifaddrs; addr; addr = addr->ifa_next) {
+		if (addr->ifa_addr == NULL || 
+		    addr->ifa_addr->sa_family != AF_LINK)
 			continue;
 
-		sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
+		sdl = (const struct sockaddr_dl *) addr->ifa_addr;
 		if (sdl && sdl->sdl_index == ifindex) {
-			(void) strncpy(ifname, ifr->ifr_name, IFNAMSIZ);
+			(void) strncpy(ifname, addr->ifa_name, IFNAMSIZ);
 			return 0;
 		}
 	}
