@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2002/06/17 15:07:06 itojun Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2002/06/18 17:25:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -594,8 +594,10 @@ readdisklabel(dev, strat, lp, osdep)
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
 			msg = read_dos_label(dev, strat, lp, osdep);
+#if 0
 			if (!msg)
 				osdep->cd_start = 0;
+#endif
 		} else {
 			msg = "no disk label -- NetBSD or Macintosh";
 			osdep->cd_start = 0;	/* XXX for now */
