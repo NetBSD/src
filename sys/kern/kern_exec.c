@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.128 2000/12/01 19:41:49 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.129 2000/12/07 16:14:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -270,8 +270,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				exec_maxhdrsz = execsw[i].es_hdrsz;
 	}
 
-	/* init the namei data to point the file user's program name */
-	/* XXX cgd 960926: why do this here?  most will be clobbered. */
+	/*
+	 * Init the namei data to point the file user's program name.
+	 * This is done here rather than in check_exec(), so that it's
+	 * possible to override this settings if any of makecmd/probe
+	 * functions call check_exec() recursively - for example,
+	 * see exec_script_makecmds().
+	 */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
