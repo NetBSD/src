@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.7 1997/09/17 18:50:24 drochner Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.8 1999/05/07 16:19:28 drochner Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -49,6 +49,9 @@
 #include <machine/stdarg.h>
 
 #include <netif/netif_small.h>
+
+#include <lib/libkern/libkern.h>
+
 #include "dev_net.h"
 
 #ifdef SUPPORT_BOOTP
