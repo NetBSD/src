@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.3 2001/11/11 01:02:58 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.4 2001/11/14 00:08:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -173,33 +173,12 @@ Lsa110_cache_clean_size:
 #define	SA1_CACHE_CLEAN_EPILOGUE					\
 	SA1_CACHE_CLEAN_UNBLOCK
 
-ENTRY(sa110_cache_cleanID)
+ENTRY_NP(sa110_cache_syncI)
+ENTRY_NP(sa110_cache_purgeID)
+	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
+ENTRY_NP(sa110_cache_cleanID)
+ENTRY_NP(sa110_cache_purgeD)
 ENTRY(sa110_cache_cleanD)
-	SA1_CACHE_CLEAN_PROLOGUE
-
-1:	ldr	r2, [r0], #32
-	subs	r1, r1, #32
-	bne	1b
-
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-
-	SA1_CACHE_CLEAN_EPILOGUE
-	mov	pc, lr
-
-ENTRY(sa110_cache_purgeID)
-	SA1_CACHE_CLEAN_PROLOGUE
-
-1:	ldr	r2, [r0], #32
-	subs	r1, r1, #32
-	bne	1b
-
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
-
-	SA1_CACHE_CLEAN_EPILOGUE
-	mov	pc, lr
-
-ENTRY(sa110_cache_purgeD)
 	SA1_CACHE_CLEAN_PROLOGUE
 
 1:	ldr	r2, [r0], #32
@@ -227,18 +206,7 @@ ENTRY(sa110_cache_purgeD_E)
 /*
  * Soft functions
  */
-ENTRY(sa110_cache_syncI)
-	SA1_CACHE_CLEAN_PROLOGUE
-
-1:	ldr	r2, [r0], #32
-	subs	r1, r1, #32
-	bne	1b
-
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
-
-	SA1_CACHE_CLEAN_EPILOGUE
-	mov	pc, lr
+/* sa110_cache_syncI is identical to sa110_cache_purgeID */
 
 ENTRY(sa110_cache_cleanID_rng)
 ENTRY(sa110_cache_cleanD_rng)
