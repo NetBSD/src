@@ -1,4 +1,4 @@
-/*	$NetBSD: ypcat.c,v 1.7 1997/07/18 06:16:30 thorpej Exp $	*/
+/*	$NetBSD: ypcat.c,v 1.7.2.1 1997/11/28 09:21:17 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.7 1997/07/18 06:16:30 thorpej Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.7.2.1 1997/11/28 09:21:17 mellon Exp $");
 #endif
 
 #include <sys/param.h>
@@ -157,8 +157,10 @@ printit(instatus, inkey, inkeylen, inval, invallen, indata)
 	if (instatus != YP_TRUE)
 		return instatus;
 	if (key)
-		printf("%*.*s ", inkeylen, inkeylen, inkey);
-	printf("%*.*s\n", invallen, invallen, inval);
+		printf("%*.*s", inkeylen, inkeylen, inkey);
+	if (invallen)
+		printf("%s%*.*s", (key ? " " : ""), invallen, invallen, inval);
+	printf("\n");
 	return 0;
 }
 
