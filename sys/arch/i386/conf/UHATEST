@@ -1,7 +1,7 @@
 #
 # SCSITEST -- Generic ISA machine -- scsi test kernel -ultrastore 14f adapter
 #
-#	$Id: UHATEST,v 1.13 1993/06/06 04:15:41 cgd Exp $
+#	$Id: UHATEST,v 1.14 1993/08/30 07:08:05 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,6 +9,7 @@ cpu		"I486_CPU"
 ident		UHATEST
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,ISOFS,NFSSERVER,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -58,7 +59,3 @@ pseudo-device	ether
 pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	4
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

@@ -1,7 +1,7 @@
 #
 # GENERICAHBBT -- Generic machine w/ahb and bt drivers -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.21 1993/08/29 01:54:23 mycroft Exp $
+#	$Id: GENERICAHBBT,v 1.22 1993/08/30 07:07:59 deraadt Exp $
 #
 
 machine		"i386"
@@ -10,6 +10,7 @@ cpu		"I486_CPU"
 ident		GENERICAHBBT
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,ISOFS,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -87,7 +88,3 @@ pseudo-device	loop
 pseudo-device	pty	32
 pseudo-device	sl	1
 pseudo-device	speaker
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
