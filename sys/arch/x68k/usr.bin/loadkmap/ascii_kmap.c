@@ -1,14 +1,11 @@
-/*	$NetBSD: ascii_kmap.c,v 1.3 2003/07/15 01:44:54 lukem Exp $	*/
+/*	$NetBSD: ascii_kmap.c,v 1.4 2003/08/28 09:47:07 isaki Exp $	*/
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ascii_kmap.c,v 1.3 2003/07/15 01:44:54 lukem Exp $");
+__RCSID("$NetBSD: ascii_kmap.c,v 1.4 2003/08/28 09:47:07 isaki Exp $");
 
 #include "kbdmap.h"
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: ascii_kmap.c,v 1.3 2003/07/15 01:44:54 lukem Exp $");
-
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
    (later at least..) */
