@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 2002/09/25 22:21:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177 2002/11/03 15:39:39 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2002/09/25 22:21:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2002/11/03 15:39:39 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2002/09/25 22:21:02 thorpej Exp $"
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 
