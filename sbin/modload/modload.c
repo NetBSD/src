@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.48 2004/09/07 13:20:41 jrf Exp $	*/
+/*	$NetBSD: modload.c,v 1.49 2004/10/27 19:36:31 peter Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.48 2004/09/07 13:20:41 jrf Exp $");
+__RCSID("$NetBSD: modload.c,v 1.49 2004/10/27 19:36:31 peter Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ prelink(const char *kernel,
 	switch (system(cmd)) {
 	case 0:				/* SUCCESS! */
 		break;
-	case 1:				/* uninformitive error */
+	case 1:				/* uninformative error */
 		/*
 		 * Someone needs to fix the return values from the NetBSD
 		 * ld program -- it's totally uninformative.
