@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.196 2000/02/08 16:24:01 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.197 2000/02/16 04:29:32 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.191 2000/02/08 16:22:37 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.192 2000/02/16 04:29:20 soren Exp 
  */
 
 /*
@@ -3206,6 +3206,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America Info Systems",
 	    "Host Bridge/Controller",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
+	    0,
+	    "Toshiba America Info Systems",
+	    "ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,

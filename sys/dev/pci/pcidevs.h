@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.198 2000/02/08 16:24:00 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.199 2000/02/16 04:29:32 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.191 2000/02/08 16:22:37 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.192 2000/02/16 04:29:20 soren Exp 
  */
 
 /*
@@ -1337,6 +1337,7 @@
 
 /* Toshiba America Info Systems products */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
+#define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95B	0x060a		/* ToPIC95B CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 CardBus-PCI Bridge */
