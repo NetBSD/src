@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.489 2004/10/08 03:02:19 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.490 2004/10/08 03:04:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7694,7 +7694,7 @@ share/tmac/doc-common				patched by hand
 sys/compat/linux/common/linux_ipc.c		1.29
 sys/kern/sysv_shm.c				1.78
 sys/sys/shm.h					1.36-1.37
-sys/compat/linux/arch/alpha/syscalls.master	1.47
+sys/compat/linux/arch/alpha/syscalls.master	1.47-1.48
 sys/compat/linux/arch/alpha/linux_syscall.h	regen
 sys/compat/linux/arch/alpha/linux_syscallargs.h	regen
 sys/compat/linux/arch/alpha/linux_syscalls.c	regen
