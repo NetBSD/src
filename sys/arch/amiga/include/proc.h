@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10 1994/10/26 02:06:27 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.11 1997/06/07 08:27:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -46,7 +46,6 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */
 #define MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
 				   undo when system call returns
 				   ERESTART. */
