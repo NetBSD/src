@@ -1,8 +1,7 @@
-/*	$NetBSD: common.h,v 1.9 1999/02/09 05:15:45 sommerfe Exp $	*/
+/*	$NetBSD: common.h,v 1.10 2002/03/08 21:57:33 kristerw Exp $	*/
 
 #define DEBUGGING
 
-#define VOIDUSED 7
 #include "config.h"
 
 /* shut lint up about the following when return value ignored */
@@ -156,27 +155,6 @@ EXT char end_defined[128];		/* #endif xyzzy */
 EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
 
 #include <errno.h>
-#ifndef errno
-extern int errno;
-#endif
-
-#ifndef __STDC__
-FILE *popen();
-char *malloc();
-char *realloc();
-long atol();
-char *getenv();
-char *strcpy();
-char *strcat();
-char *rindex();
-#if 0				/* This can cause a prototype conflict.  */
-#ifdef CHARSPRINTF
-char *sprintf();
-#else
-int sprintf();
-#endif
-#endif
-#endif
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
@@ -185,5 +163,4 @@ int sprintf();
 #define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
 
-void my_exit __P((int)) __attribute__((__noreturn__));
-char *basename __P((char *));
+void my_exit(int) __attribute__((__noreturn__));

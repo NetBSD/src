@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.9 2002/03/06 12:01:04 ragge Exp $	*/
+/*	$NetBSD: patch.c,v 1.10 2002/03/08 21:57:33 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.9 2002/03/06 12:01:04 ragge Exp $");
+__RCSID("$NetBSD: patch.c,v 1.10 2002/03/08 21:57:33 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -40,25 +40,23 @@ __RCSID("$NetBSD: patch.c,v 1.9 2002/03/06 12:01:04 ragge Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-int main __P((int, char **));
-
 /* procedures */
-static void reinitialize_almost_everything __P((void));
-static char *nextarg __P((void));
-struct option;
-static int optcmp __P((const void *, const void *));
-static char decode_long_option __P((char *));
-static void get_some_switches __P((void));
-static LINENUM locate_hunk __P((LINENUM));
-static void abort_hunk __P((void));
-static void apply_hunk __P((LINENUM));
-static void init_output __P((char *));
-static void init_reject __P((char *));
-static void copy_till __P((Reg1 LINENUM));
-static void spew_output __P((void));
-static void dump_line __P((LINENUM));
-static bool patch_match __P((LINENUM, LINENUM, LINENUM));
-static bool similar __P((Reg1 char *, Reg2 char *, Reg3 int));
+static void reinitialize_almost_everything(void);
+static char *nextarg(void);
+static int optcmp(const void *, const void *);
+static char decode_long_option(char *);
+static void get_some_switches(void);
+static LINENUM locate_hunk(LINENUM);
+static void abort_hunk(void);
+static void apply_hunk(LINENUM);
+static void init_output(char *);
+static void init_reject(char *);
+static void copy_till(LINENUM);
+static void spew_output(void);
+static void dump_line(LINENUM);
+static bool patch_match(LINENUM, LINENUM, LINENUM);
+static bool similar(char *, char *, int);
+int main(int, char *[]);
 
 /* TRUE if -E was specified on command line.  */
 static int remove_empty_files = FALSE;
@@ -69,9 +67,7 @@ static int reverse_flag_specified = FALSE;
 /* Apply a set of diffs as appropriate. */
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char *argv[])
 {
     LINENUM where = 0;
     LINENUM newwhere;
@@ -354,7 +350,7 @@ char **argv;
 /* Prepare to find the next patch to do in the patch file. */
 
 static void
-reinitialize_almost_everything()
+reinitialize_almost_everything(void)
 {
     re_patch();
     re_input();
@@ -392,7 +388,7 @@ reinitialize_almost_everything()
 }
 
 static char *
-nextarg()
+nextarg(void)
 {
     if (!--Argc)
 	fatal2("missing argument after `%s'\n", *Argv);
@@ -407,8 +403,7 @@ struct option {
 };
 
 static int
-optcmp(va, vb)
-    const void *va, *vb;
+optcmp(const void *va, const void *vb)
 {
     const struct option *a = va, *b = vb;
     return strcmp (a->long_opt, b->long_opt);
@@ -417,8 +412,7 @@ optcmp(va, vb)
 /* Decode Long options beginning with "--" to their short equivalents. */
 
 static char
-decode_long_option(opt)
-    char *opt;
+decode_long_option(char *opt)
 {
     /*
      * This table must be sorted on the first field.  We also decode
@@ -465,9 +459,9 @@ decode_long_option(opt)
 /* Process switches and filenames up to next '+' or end of list. */
 
 static void
-get_some_switches()
+get_some_switches(void)
 {
-    Reg1 char *s;
+    char *s;
 
     rejname[0] = '\0';
     Argc_last = Argc;
@@ -608,15 +602,14 @@ Options:\n\
 /* Attempt to find the right place to apply this hunk of patch. */
 
 static LINENUM
-locate_hunk(fuzz)
-LINENUM fuzz;
+locate_hunk(LINENUM fuzz)
 {
-    Reg1 LINENUM first_guess = pch_first() + last_offset;
-    Reg2 LINENUM offset;
+    LINENUM first_guess = pch_first() + last_offset;
+    LINENUM offset;
     LINENUM pat_lines = pch_ptrn_lines();
-    Reg3 LINENUM max_pos_offset = input_lines - first_guess
+    LINENUM max_pos_offset = input_lines - first_guess
 				- pat_lines + 1; 
-    Reg4 LINENUM max_neg_offset = first_guess - last_frozen_line - 1
+    LINENUM max_neg_offset = first_guess - last_frozen_line - 1
 				+ pch_context();
 
     if (!pat_lines)			/* null range matches always */
@@ -626,8 +619,8 @@ LINENUM fuzz;
     if (first_guess <= input_lines && patch_match(first_guess, Nulline, fuzz))
 	return first_guess;
     for (offset = 1; ; offset++) {
-	Reg5 bool check_after = (offset <= max_pos_offset);
-	Reg6 bool check_before = (offset <= max_neg_offset);
+	bool check_after = (offset <= max_pos_offset);
+	bool check_before = (offset <= max_neg_offset);
 
 	if (check_after && patch_match(first_guess, offset, fuzz)) {
 #ifdef DEBUGGING
@@ -653,10 +646,10 @@ LINENUM fuzz;
 /* We did not find the pattern, dump out the hunk so they can handle it. */
 
 static void
-abort_hunk()
+abort_hunk(void)
 {
-    Reg1 LINENUM i;
-    Reg2 LINENUM pat_end = pch_end();
+    LINENUM i;
+    LINENUM pat_end = pch_end();
     /* add in last_offset to guess the same as the previous successful hunk */
     LINENUM oldfirst = pch_first() + last_offset;
     LINENUM newfirst = pch_newfirst() + last_offset;
@@ -699,19 +692,18 @@ abort_hunk()
 /* We found where to apply it (we hope), so do it. */
 
 static void
-apply_hunk(where)
-LINENUM where;
+apply_hunk(LINENUM where)
 {
-    Reg1 LINENUM old = 1;
-    Reg2 LINENUM lastline = pch_ptrn_lines();
-    Reg3 LINENUM new = lastline+1;
+    LINENUM old = 1;
+    LINENUM lastline = pch_ptrn_lines();
+    LINENUM new = lastline+1;
 #define OUTSIDE 0
 #define IN_IFNDEF 1
 #define IN_IFDEF 2
 #define IN_ELSE 3
-    Reg4 int def_state = OUTSIDE;
-    Reg5 bool R_do_defines = do_defines;
-    Reg6 LINENUM pat_end = pch_end();
+    int def_state = OUTSIDE;
+    bool R_do_defines = do_defines;
+    LINENUM pat_end = pch_end();
 
     where--;
     while (pch_char(new) == '=' || pch_char(new) == '\n')
@@ -819,8 +811,7 @@ LINENUM where;
 /* Open the new file. */
 
 static void
-init_output(name)
-char *name;
+init_output(char *name)
 {
     ofp = fopen(name, "w");
     if (ofp == Nullfp)
@@ -830,8 +821,7 @@ char *name;
 /* Open a file to put hunks we can't locate. */
 
 static void
-init_reject(name)
-char *name;
+init_reject(char *name)
 {
     rejfp = fopen(name, "w");
     if (rejfp == Nullfp)
@@ -841,10 +831,9 @@ char *name;
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 static void
-copy_till(lastline)
-Reg1 LINENUM lastline;
+copy_till(LINENUM lastline)
 {
-    Reg2 LINENUM R_last_frozen_line = last_frozen_line;
+    LINENUM R_last_frozen_line = last_frozen_line;
 
     if (R_last_frozen_line > lastline)
 	fatal1("misordered hunks! output would be garbled\n");
@@ -857,7 +846,7 @@ Reg1 LINENUM lastline;
 /* Finish copying the input file to the output file. */
 
 static void
-spew_output()
+spew_output(void)
 {
 #ifdef DEBUGGING
     if (debug & 256)
@@ -872,11 +861,10 @@ spew_output()
 /* Copy one line from input to output. */
 
 static void
-dump_line(line)
-LINENUM line;
+dump_line(LINENUM line)
 {
-    Reg1 char *s;
-    Reg2 char R_newline = '\n';
+    char *s;
+    char R_newline = '\n';
 
     /* Note: string is not null terminated. */
     for (s=ifetch(line, 0); putc(*s, ofp) != R_newline; s++) ;
@@ -885,14 +873,11 @@ LINENUM line;
 /* Does the patch pattern match at line base+offset? */
 
 static bool
-patch_match(base, offset, fuzz)
-LINENUM base;
-LINENUM offset;
-LINENUM fuzz;
+patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 {
-    Reg1 LINENUM pline = 1 + fuzz;
-    Reg2 LINENUM iline;
-    Reg3 LINENUM pat_lines = pch_ptrn_lines() - fuzz;
+    LINENUM pline = 1 + fuzz;
+    LINENUM iline;
+    LINENUM pat_lines = pch_ptrn_lines() - fuzz;
 
     for (iline=base+offset+fuzz; pline <= pat_lines; pline++,iline++) {
 	if (canonicalize) {
@@ -912,10 +897,7 @@ LINENUM fuzz;
 /* Do two lines match with canonicalized white space? */
 
 static bool
-similar(a,b,len)
-Reg1 char *a;
-Reg2 char *b;
-Reg3 int len;
+similar(char *a, char *b, int len)
 {
     while (len) {
 	if (isspace((unsigned char)*b)) {/* whitespace (or \n) to match? */
@@ -940,8 +922,7 @@ Reg3 int len;
 /* Exit with cleanup. */
 
 void
-my_exit(status)
-int status;
+my_exit(int status)
 {
     Unlink(TMPINNAME);
     if (!toutkeep) {

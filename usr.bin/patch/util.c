@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.8 2000/10/11 14:46:15 is Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2002/03/08 21:57:33 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.8 2000/10/11 14:46:15 is Exp $");
+__RCSID("$NetBSD: util.c,v 1.9 2002/03/08 21:57:33 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -22,13 +22,12 @@ __RCSID("$NetBSD: util.c,v 1.8 2000/10/11 14:46:15 is Exp $");
 /* Rename a file, copying it if necessary. */
 
 int
-move_file(from,to)
-char *from, *to;
+move_file(char *from, char *to)
 {
     char bakname[512];
-    Reg1 char *s;
-    Reg2 int i;
-    Reg3 int fromfd;
+    char *s;
+    int i;
+    int fromfd;
 
     /* to stdout? */
 
@@ -93,8 +92,8 @@ char *from, *to;
 	    /* Maybe `to' is a symlink into a different file system.
 	       Copying replaces the symlink with a file; using rename
 	       would be better.  */
-	    Reg4 int tofd;
-	    Reg5 int bakfd;
+	    int tofd;
+	    int bakfd;
 
 	    bakfd = creat(bakname, 0666);
 	    if (bakfd < 0) {
@@ -118,7 +117,7 @@ char *from, *to;
 	say3("Moving %s to %s.\n", from, to);
 #endif
     if (link(from, to) < 0) {		/* different file system? */
-	Reg4 int tofd;
+	int tofd;
 	
 	tofd = creat(to, 0666);
 	if (tofd < 0) {
@@ -142,12 +141,11 @@ char *from, *to;
 /* Copy a file. */
 
 void
-copy_file(from,to)
-char *from, *to;
+copy_file(char *from, char *to)
 {
-    Reg3 int tofd;
-    Reg2 int fromfd;
-    Reg1 int i;
+    int tofd;
+    int fromfd;
+    int i;
     
     tofd = creat(to, 0666);
     if (tofd < 0)
@@ -165,11 +163,10 @@ char *from, *to;
 /* Allocate a unique area for a string. */
 
 char *
-savestr(s)
-Reg1 char *s;
+savestr(char *s)
 {
-    Reg3 char *rv;
-    Reg2 char *t;
+    char *rv;
+    char *t;
 
     if (!s)
 	s = "Oops";
@@ -342,8 +339,7 @@ ask(va_alist)
 /* How to handle certain events when not in a critical region. */
 
 void
-set_signals(reset)
-int reset;
+set_signals(int reset)
 {
 #ifndef lint
 #ifdef VOIDSIG
@@ -378,25 +374,21 @@ int reset;
 void
 ignore_signals()
 {
-#ifndef lint
     Signal(SIGHUP, SIG_IGN);
     Signal(SIGINT, SIG_IGN);
-#endif
 }
 
 /* Make sure we'll have the directories to create a file.
    If `striplast' is TRUE, ignore the last element of `filename'.  */
 
 void
-makedirs(filename,striplast)
-Reg1 char *filename;
-bool striplast;
+makedirs(char *filename, bool striplast)
 {
     char tmpbuf[256];
-    Reg2 char *s = tmpbuf;
+    char *s = tmpbuf;
     char *dirv[20];		/* Point to the NULs between elements.  */
-    Reg3 int i;
-    Reg4 int dirvp = 0;		/* Number of finished entries in dirv. */
+    int i;
+    int dirvp = 0;		/* Number of finished entries in dirv. */
 
     /* Copy `filename' into `tmpbuf' with a NUL instead of a slash
        between the directories.  */
@@ -436,14 +428,11 @@ bool striplast;
 /* Make filenames more reasonable. */
 
 char *
-fetchname(at,strip_leading,assume_exists)
-char *at;
-int strip_leading;
-int assume_exists;
+fetchname(char *at, int strip_leading, int assume_exists)
 {
     char *fullname;
     char *name;
-    Reg1 char *t;
+    char *t;
     char tmpbuf[200];
     int sleading = strip_leading;
 
