@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.16 1999/09/09 09:34:25 kleink Exp $	*/
+/*	$NetBSD: xlint.c,v 1.17 2000/03/22 01:09:34 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.16 1999/09/09 09:34:25 kleink Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.17 2000/03/22 01:09:34 garbled Exp $");
 #endif
 
 #include <sys/param.h>
@@ -98,8 +98,10 @@ static	char	**libs;
 /* search path for libraries */
 static	char	**libsrchpath;
 
+static  char	*libexec_path;
+
 /* flags */
-static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag;
+static	int	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag;
 
 /* print the commands executed to run the stages of compilation */
 static	int	Vflag;
@@ -290,7 +292,7 @@ usage()
     "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
 	(void)fprintf(stderr,
     "       %s [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n", __progname);
-	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] file ...\n");
+	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] file ...\n");
 	terminate(-1);
 }
 
@@ -364,7 +366,7 @@ main(argc, argv)
 		argv += optind;
 		optind = 0;
 
-		c = getopt(argc, argv, "abcd:eghil:no:prstuvxzC:D:FHI:L:U:V");
+		c = getopt(argc, argv, "abcd:eghil:no:prstuvxzB:C:D:FHI:L:U:V");
 
 		switch (c) {
 
@@ -483,6 +485,11 @@ main(argc, argv)
 			appcstrg(&l2flags, "-H");
 			break;
 
+		case 'B':
+			Bflag = 1;
+			libexec_path = xstrdup(optarg);
+			break;
+
 		case 'V':
 			Vflag = 1;
 			break;
@@ -594,8 +601,12 @@ fname(name, last)
 
 	/* run cc */
 
-	path = xmalloc(strlen(PATH_USRBIN) + sizeof ("/cc"));
-	(void)sprintf(path, "%s/cc", PATH_USRBIN);
+	if (getenv("CC") == NULL) {
+		path = xmalloc(strlen(PATH_USRBIN) + sizeof ("/cc"));
+		(void)sprintf(path, "%s/cc", PATH_USRBIN);
+	} else {
+		path = strdup(getenv("CC"));
+	}
 
 	appcstrg(&args, path);
 	applst(&args, cflags);
@@ -618,8 +629,13 @@ fname(name, last)
 
 	/* run lint1 */
 
-	path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint1"));
-	(void)sprintf(path, "%s/lint1", PATH_LIBEXEC);
+	if (!Bflag) {
+		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint1"));
+		(void)sprintf(path, "%s/lint1", PATH_LIBEXEC);
+	} else {
+		path = xmalloc(strlen(libexec_path) + sizeof ("/lint1"));
+		(void)sprintf(path, "%s/lint1", libexec_path);
+	}
 
 	appcstrg(&args, path);
 	applst(&args, l1flags);
@@ -746,8 +762,13 @@ lint2()
 
 	args = xcalloc(1, sizeof (char *));
 
-	path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint2"));
-	(void)sprintf(path, "%s/lint2", PATH_LIBEXEC);
+	if (!Bflag) {
+		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint2"));
+		(void)sprintf(path, "%s/lint2", PATH_LIBEXEC);
+	} else {
+		path = xmalloc(strlen(libexec_path) + sizeof ("/lint2"));
+		(void)sprintf(path, "%s/lint2", libexec_path);
+	}		
 	
 	appcstrg(&args, path);
 	applst(&args, l2flags);
