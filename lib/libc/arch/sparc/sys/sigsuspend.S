@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.2 1997/07/16 14:38:03 christos Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.3 1998/09/29 05:55:50 christos Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 	.asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.2 1997/07/16 14:38:03 christos Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.3 1998/09/29 05:55:50 christos Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -51,6 +51,6 @@
 
 ENTRY(sigsuspend)
 	ld	[%o0], %o0		! indirect to mask argument
-	mov	SYS_sigsuspend, %g1
+	mov	SYS_compat_13_sigsuspend13, %g1
 	t	ST_SYSCALL
 	ERROR()				! always terminates with EINTR
