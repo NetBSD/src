@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.16 1994/05/21 08:33:37 cgd Exp $
+ *	$Id: config.h,v 1.17 1994/06/24 14:22:15 hpeyerl Exp $
  */
 
 /*
@@ -73,11 +73,17 @@ struct file_list {
 			dev_t	fus_rootdev;
 			dev_t	fus_dumpdev;
 		} fus;
+		struct {		/* when component dev specification */
+			dev_t	fup_compdev;
+			int	fup_compinfo;
+		} fup;
 	} fun;
 #define	f_swapdev	fun.fuw.fuw_swapdev
 #define	f_swapsize	fun.fuw.fuw_swapsize
 #define	f_rootdev	fun.fus.fus_rootdev
 #define	f_dumpdev	fun.fus.fus_dumpdev
+#define f_compdev	fun.fup.fup_compdev
+#define f_compinfo	fun.fup.fup_compinfo
 };
 
 /*
@@ -89,6 +95,8 @@ struct file_list {
 #define	PROFILING	4
 #define	SYSTEMSPEC	5
 #define	SWAPSPEC	6
+#define COMPDEVICE	7
+#define COMPSPEC	8
 
 /*
  * Attributes (flags).
@@ -191,6 +199,7 @@ int	seen_vba;
 #if MACHINE_I386
 int	seen_isa;
 #endif
+int	seen_cd;
 
 struct	device *connect();
 struct	device *dtab;
@@ -200,7 +209,7 @@ char	*devtoname();
 char	errbuf[80];
 int	yyline;
 
-struct	file_list *ftab, *conf_list, **confp;
+struct	file_list *ftab, *conf_list, **confp, *comp_list, **compp;
 
 int	zone, hadtz;
 int	dst;
