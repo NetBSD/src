@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ffs.c	5.4 (Berkeley) 5/17/90";*/
-static char *rcsid = "$Id: ffs.c,v 1.3 1993/08/26 00:51:38 jtc Exp $";
+static char *rcsid = "$Id: ffs.c,v 1.4 1995/06/15 00:07:20 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -41,6 +41,7 @@ static char *rcsid = "$Id: ffs.c,v 1.3 1993/08/26 00:51:38 jtc Exp $";
 /*
  * ffs -- vax ffs instruction
  */
+int
 ffs(mask)
 	register int mask;
 {

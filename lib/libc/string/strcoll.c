@@ -36,15 +36,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcoll.c	5.2 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strcoll.c,v 1.3 1993/08/26 00:51:48 jtc Exp $";
+static char *rcsid = "$Id: strcoll.c,v 1.4 1995/06/15 00:07:44 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
 #include <string.h>
 
 /*
  * Compare strings according to LC_COLLATE category of current locale.
  */
+int
 strcoll(s1, s2)
 	const char *s1, *s2;
 {

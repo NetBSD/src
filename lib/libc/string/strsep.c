@@ -31,14 +31,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <string.h>
-#include <stdio.h>
-
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static const char sccsid[] = "from: @(#)strsep.c	5.4 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strsep.c,v 1.3 1993/08/26 00:51:58 jtc Exp $";
+static char *rcsid = "$Id: strsep.c,v 1.4 1995/06/15 00:08:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
+
+#include <string.h>
 
 /*
  * Get next token from string *stringp, where tokens are nonempty
