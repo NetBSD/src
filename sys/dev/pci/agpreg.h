@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.3 2003/06/09 12:16:42 ichiro Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.4 2003/06/14 11:40:20 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -64,8 +64,11 @@
 # define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessEN */
 # define NBXCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
 
+/* Error Status for i8XX Chipset */
+#define	AGP_INTEL_I8XX_ERRSTS	0xc8
+
 /* Common register */
-#define AGP_INTEL_STS		0x90
+#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
 #define AGP_INTEL_AGPCMD	0xa8
 # define AGPCMD_SBA		(1U << 9)
 # define AGPCMD_AGPEN		(1U << 8)

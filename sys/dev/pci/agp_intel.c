@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.7 2003/06/09 12:16:42 ichiro Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.8 2003/06/14 11:40:20 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.7 2003/06/09 12:16:42 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.8 2003/06/14 11:40:20 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,11 @@ struct agp_intel_softc {
 	struct agp_gatt		*gatt;
 	struct pci_attach_args	vga_pa;	/* child device */
 	int			chiptype;
-#define	CHIP_I845	0x0
-#define	CHIP_I840	0x1
-#define	CHIP_I443	0x2
+#define	CHIP_INTEL	0x0
+#define	CHIP_I443	0x1
+#define	CHIP_I840	0x2
+#define	CHIP_I845	0x3
+#define	CHIP_I850	0x4
 					/* Chip type */	
 };
 
@@ -139,14 +141,18 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		isc->chiptype = CHIP_I845;
 		break;
 	case PCI_PRODUCT_INTEL_82840_AGP:
-	case PCI_PRODUCT_INTEL_82850_AGP:
 		isc->chiptype = CHIP_I840;
+		break;
+	case PCI_PRODUCT_INTEL_82850_AGP:
+		isc->chiptype = CHIP_I850;
 		break;
 	case PCI_PRODUCT_INTEL_82443LX_AGP:
 	case PCI_PRODUCT_INTEL_82443BX_AGP:
 	case PCI_PRODUCT_INTEL_82443GX_AGP:
 		isc->chiptype = CHIP_I443;
 		break;
+	default:
+		isc->chiptype = CHIP_INTEL;
 	}
 
 	isc->initial_aperture = AGP_GET_APERTURE(sc);
@@ -171,43 +177,60 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	/* Install the gatt. */
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ATTBASE,
 	    gatt->ag_physical);
+
+	/* Enable the GLTB and setup the control register. */
+	switch (isc->chiptype) {
+	case CHIP_I443:
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+		    AGPCTRL_AGPRSE | AGPCTRL_GTLB);
+
+	default:
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+		    pci_read_config(dev, AGP_INTEL_AGPCTRL) | AGPCTRL_GTLB);
+	}
 	
 	/* Enable things, clear errors etc. */
 	switch (isc->chiptype) {
 	case CHIP_I845:
 		{
-		pci_conf_write(sc->as_pc, sc->as_tag,
-			AGP_INTEL_AGPCTRL, AGPCTRL_GTLB);
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCMD,
 			AGPCMD_SBA | AGPCMD_AGPEN | AGPCMD_RATE_4X);
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I845_AGPMISC,					AGPMISC_AAGN);
 		break;
 		}
 	case CHIP_I840:
+	case CHIP_I850:
 		{
-		pci_conf_write(sc->as_pc, sc->as_tag,
-			AGP_INTEL_AGPCTRL, AGPCTRL_GTLB);
+#if XXX
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCMD,
 			AGPCMD_SBA | AGPCMD_AGPEN | AGPCMD_RATE_4X);
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I840_MCHCFG,					MCHCFG_AAGN);
+#endif
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I840_MCHCFG,
+			MCHCFG_AAGN);
 		break;
 		}
-	case CHIP_I443:
+	default:
 		{
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
-			AGPCTRL_AGPRSE | AGPCTRL_GTLB);
 		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG);
 		reg &= ~NBXCFG_APAE;
 		reg |=  NBXCFG_AAGN;
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG, reg);
-
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_STS);
-		reg &= ~0x00ff0000;
-		reg |= (7 << 16); /* XXX */
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_STS, reg);
-
-		break;
 		}
+	}
+
+	/* Clear Error status */
+	switch (type) {
+	case CHIP_I840:
+		pci_write_config(dev, AGP_INTEL_I8XX_ERRSTS, 0xc000);
+		break;
+
+	case CHIP_I845:
+	case CHIP_I850:
+		pci_write_config(dev, AGP_INTEL_I8XX_ERRSTS, 0x00ff);
+		break;
+
+	default:
+		pci_write_config(dev, AGP_INTEL_ERRSTS, 0x70);
 	}
 
 	return 0;
@@ -311,6 +334,7 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	struct agp_intel_softc *isc = sc->as_chipc;
 
 	switch (isc->chiptype) {
+        case CHIP_I850:
         case CHIP_I845:
         case CHIP_I840:
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
