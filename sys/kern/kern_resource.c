@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.68 2003/01/18 10:06:29 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.69 2003/03/05 11:44:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.68 2003/01/18 10:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.69 2003/03/05 11:44:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ calcru(p, up, sp, ip)
 	struct timeval *ip;
 {
 	u_quad_t u, st, ut, it, tot;
-	long sec, usec;
+	unsigned long sec, usec;
 	int s;
 	struct timeval tv;
 	struct lwp *l;
@@ -400,15 +400,6 @@ calcru(p, up, sp, ip)
 	ut = p->p_uticks;
 	it = p->p_iticks;
 	splx(s);
-
-	tot = st + ut + it;
-	if (tot == 0) {
-		up->tv_sec = up->tv_usec = 0;
-		sp->tv_sec = sp->tv_usec = 0;
-		if (ip != NULL)
-			ip->tv_sec = ip->tv_usec = 0;
-		return;
-	}
 
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;
@@ -430,10 +421,28 @@ calcru(p, up, sp, ip)
 			microtime(&tv);
 			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
 			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
-			
-			break;
 		}
 	}
+
+	tot = st + ut + it;
+	if (tot == 0) {
+		/* No ticks, so can't use to share time out, split 50-50 */
+		if (usec > 1000000 && (sec & 1)) {
+			usec -= 1000000;
+			sec++;
+		} else {
+			if (sec & 1) {
+				usec += 1000000;
+				sec--;
+			}
+		}
+		up->tv_sec = sp->tv_sec = sec / 2;
+		up->tv_usec = sp->tv_usec = usec / 2;
+		if (ip != NULL)
+			ip->tv_sec = ip->tv_usec = 0;
+		return;
+	}
+
 	u = (u_quad_t) sec * 1000000 + usec;
 	st = (u * st) / tot;
 	sp->tv_sec = st / 1000000;
