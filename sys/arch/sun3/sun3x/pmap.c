@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.9 1997/02/16 19:38:08 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1997/02/19 04:17:32 jeremy Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -174,9 +174,9 @@ int pmap_debug = 0;
 #else	/********** Stuff below is defined if NOT debugging **************/
 
 #define	INLINE	inline
-define DPRINT(args)  /* nada */
+#define DPRINT(args)  /* nada */
 
-#endif
+#endif	/* PMAP_DEBUG */
 /*********************** END OF DEBUGGING DEFINITIONS ********************/
 
 /*** Management Structure - Memory Layout
