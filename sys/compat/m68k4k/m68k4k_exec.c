@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.13 2003/06/29 22:29:33 fvdl Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.14 2003/08/08 18:57:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.13 2003/06/29 22:29:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.14 2003/08/08 18:57:06 christos Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -159,7 +159,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -198,7 +198,7 @@ exec_m68k4k_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -242,5 +242,5 @@ exec_m68k4k_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }

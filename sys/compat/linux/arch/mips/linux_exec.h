@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.8 2002/11/21 15:32:32 jdolecek Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.9 2003/08/08 18:57:05 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -63,5 +63,7 @@
 
 #define LINUX_ELF_AUX_ARGSIZ \
     ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))))
+
+#define linux_exec_setup_stack(a, b)	exec_setup_stack(a, b)
 
 #endif /* !_MIPS_LINUX_EXEC_H */
