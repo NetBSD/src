@@ -155,6 +155,11 @@ struct mips_got_info
 #define STUB_LI16 0x34180000	/* ori t8,zero,0 */
 #define MIPS_FUNCTION_STUB_SIZE (16)
 
+#if 0
+/* We no longer try to identify particular sections for the .dynsym
+   section.  When we do, we wind up crashing if there are other random
+   sections with relocations.  */
+
 /* Names of sections which appear in the .dynsym section in an Irix 5
    executable.  */
 
@@ -168,7 +173,6 @@ static const char * const mips_elf_dynsym_sec_names[] =
   ".sdata",
   ".sbss",
   ".bss",
-  ".gcc_except_table",
   NULL
 };
 
@@ -179,6 +183,8 @@ static const char * const mips_elf_dynsym_sec_names[] =
    text segment.  */
 
 #define MIPS_TEXT_DYNSYM_SECNO (3)
+
+#endif /* 0 */
 
 /* The names of the runtime procedure table symbols used on Irix 5.  */
 
@@ -2311,7 +2317,10 @@ _bfd_mips_elf_fake_sections (abfd, hdr, sec)
 	       || strcmp (name, ".dynstr") == 0))
     {
       hdr->sh_entsize = 0;
+#if 0
+      /* This isn't how the Irix 6 linker behaves.  */
       hdr->sh_info = SIZEOF_MIPS_DYNSYM_SECNAMES;
+#endif
     }
   else if (strcmp (name, ".got") == 0
 	   || strcmp (name, ".sdata") == 0
@@ -3170,8 +3179,11 @@ struct mips_elf_link_hash_entry
 struct mips_elf_link_hash_table
 {
   struct elf_link_hash_table root;
+#if 0
+  /* We no longer use this.  */
   /* String section indices for the dynamic section symbols.  */
   bfd_size_type dynsym_sec_strindex[SIZEOF_MIPS_DYNSYM_SECNAMES];
+#endif
   /* The number of .rtproc entries.  */
   bfd_size_type procedure_count;
   /* The size of the .compact_rel section (if SGI_COMPAT).  */
@@ -3256,7 +3268,6 @@ mips_elf_link_hash_table_create (abfd)
      bfd *abfd;
 {
   struct mips_elf_link_hash_table *ret;
-  unsigned int i;
 
   ret = ((struct mips_elf_link_hash_table *)
 	 bfd_alloc (abfd, sizeof (struct mips_elf_link_hash_table)));
@@ -3270,8 +3281,11 @@ mips_elf_link_hash_table_create (abfd)
       return NULL;
     }
 
+#if 0
+  /* We no longer use this.  */
   for (i = 0; i < SIZEOF_MIPS_DYNSYM_SECNAMES; i++)
     ret->dynsym_sec_strindex[i] = (bfd_size_type) -1;
+#endif
   ret->procedure_count = 0;
   ret->compact_rel_size = 0;
   ret->use_rld_obj_head = false;
@@ -6551,15 +6565,20 @@ mips_elf_size_dynamic_sections (output_bfd, info)
      That means we must increment the dynamic symbol index of every
      other dynamic symbol.  */
   {
-    const char * const *namep;
     unsigned int c, i;
-    bfd_size_type strindex;
-    struct bfd_strtab_hash *dynstr;
     struct mips_got_info *g;
 
     c = 0;
     if (elf_hash_table (info)->dynamic_sections_created)
       {
+#if 0
+	/* We no longer try to restrict the set of sections which get
+           dynamic symbol table entries, since it fails if we have
+           other random sections which need dynamic relocations.  */
+	const char * const *namep;
+	bfd_size_type strindex;
+	struct bfd_strtab_hash *dynstr;
+
 	if (SGI_COMPAT (output_bfd))
 	  {
 	    c = SIZEOF_MIPS_DYNSYM_SECNAMES - 1;
@@ -6587,6 +6606,7 @@ mips_elf_size_dynamic_sections (output_bfd, info)
 	      }
 	  }
 	else
+#endif /* 0 */
 	  {
 	    c = bfd_count_sections (output_bfd);
 	    elf_link_hash_traverse (elf_hash_table (info),
@@ -6943,8 +6963,11 @@ mips_elf_finish_dynamic_sections (output_bfd, info)
 	      break;
 
 	    case DT_MIPS_UNREFEXTNO:
-	      /* XXX FIXME: */
+#if 0
 	      dyn.d_un.d_val = SIZEOF_MIPS_DYNSYM_SECNAMES;
+#else
+	      dyn.d_un.d_val = bfd_count_sections (output_bfd);
+#endif
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
@@ -6982,12 +7005,7 @@ mips_elf_finish_dynamic_sections (output_bfd, info)
   {
     asection *sdynsym;
     asection *s;
-    unsigned int i;
-    bfd_vma last;
     Elf_Internal_Sym sym;
-    long dindx;
-    const char *name;
-    const char * const * namep = mips_elf_dynsym_sec_names;
     Elf32_compact_rel cpt;
 
     /* Set up the section symbols for the output sections. SGI sets
@@ -6996,6 +7014,16 @@ mips_elf_finish_dynamic_sections (output_bfd, info)
     sdynsym = bfd_get_section_by_name (dynobj, ".dynsym");
     if (sdynsym != NULL)
       {
+#if 0
+	const char *name;
+	const char * const * namep = mips_elf_dynsym_sec_names;
+	unsigned int i;
+	bfd_vma last;
+	long dindx;
+
+	/* We no longer try to restrict the set of sections which get
+           dynamic symbol table entries, since it fails if we have
+           other random sections which need dynamic relocations.  */
 	if (SGI_COMPAT (output_bfd))
 	  {
 	    sym.st_size = 0;
@@ -7038,6 +7066,7 @@ mips_elf_finish_dynamic_sections (output_bfd, info)
 	      SIZEOF_MIPS_DYNSYM_SECNAMES;
 	  }
 	else
+#endif /* 0 */
 	  {
 	    sym.st_size = 0;
 	    sym.st_name = 0;
