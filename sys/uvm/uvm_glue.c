@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.80 2004/05/02 13:04:57 pk Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.81 2004/05/12 20:09:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.80 2004/05/02 13:04:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.81 2004/05/12 20:09:51 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -598,6 +598,7 @@ uvm_swapout_threads()
 	outpri = outpri2 = 0;
 	proclist_lock_read();
 	LIST_FOREACH(l, &alllwp, l_list) {
+		KASSERT(l->l_proc != NULL);
 		if (!swappable(l))
 			continue;
 		switch (l->l_stat) {

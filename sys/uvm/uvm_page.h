@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.37 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.38 2004/05/12 20:09:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -304,6 +304,7 @@ static int vm_physseg_find(paddr_t, int *);
 
 #define uvm_lock_pageq()	simple_lock(&uvm.pageqlock)
 #define uvm_unlock_pageq()	simple_unlock(&uvm.pageqlock)
+#define	UVM_LOCK_ASSERT_PAGEQ()	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock))
 
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.54 2004/04/25 16:42:44 simonb Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.55 2004/05/12 20:09:50 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.54 2004/04/25 16:42:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.55 2004/05/12 20:09:50 yamt Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -301,6 +301,7 @@ amap_extend(entry, addsize, flags)
 	 */
 
 	amap_lock(amap);
+	KASSERT(amap_refs(amap) == 1); /* amap can't be shared */
 	AMAP_B2SLOT(slotmapped, entry->end - entry->start); /* slots mapped */
 	AMAP_B2SLOT(slotadd, addsize);			/* slots to add */
 	if (flags & AMAP_EXTEND_FORWARDS) {
