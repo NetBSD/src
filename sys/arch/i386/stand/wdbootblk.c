@@ -1,3 +1,5 @@
+/*	$NetBSD: wdbootblk.c,v 1.3 1994/10/27 04:22:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wdbootblk.c	7.1 (Berkeley) 4/28/91
- *	$Id: wdbootblk.c,v 1.2 1993/05/22 08:02:27 cgd Exp $
+ *	@(#)wdbootblk.c	7.1 (Berkeley) 4/28/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: db_interface.c,v 1.14 1994/10/27 04:15:15 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -23,8 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.13 1994/10/09 15:02:08 mycroft Exp $
+ *	db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
  */
 
 /*

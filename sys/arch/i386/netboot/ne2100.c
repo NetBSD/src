@@ -1,3 +1,5 @@
+/*	$NetBSD: ne2100.c,v 1.3 1994/10/27 04:21:20 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
@@ -5,8 +7,6 @@
  * A very simple network driver for NE2100 boards that polls.
  *
  * Copyright (c) 1992 by Leendert van Doorn
- *
- *	$Id: ne2100.c,v 1.2 1993/08/02 17:52:59 mycroft Exp $
  */
 
 #include "assert.h"

@@ -1,4 +1,4 @@
-/*	$Id: start.s,v 1.3 1993/10/26 15:52:59 brezak Exp $ */
+/*	$NetBSD: start.s,v 1.4 1994/10/27 04:21:25 cgd Exp $	*/
 
 #include "asm.h"
 

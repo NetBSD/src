@@ -1,3 +1,5 @@
+$NetBSD: Keyboard.VT,v 1.2 1994/10/27 04:19:16 cgd Exp $
+
 ================================================================================
 #                                                                              #
 #	Function key mapping for the "more VT220" - like layout                #

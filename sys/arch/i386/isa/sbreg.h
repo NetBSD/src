@@ -1,3 +1,5 @@
+/*	$NetBSD: sbreg.h,v 1.4 1994/10/27 04:18:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
- *	$Id: sbreg.h,v 1.3 1994/09/16 23:48:22 mycroft Exp $
+ *	Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
  */
 
 /*

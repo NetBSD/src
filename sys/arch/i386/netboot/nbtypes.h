@@ -1,3 +1,5 @@
+/*	$NetBSD: nbtypes.h,v 1.4 1994/10/27 04:21:19 cgd Exp $	*/
+
 /*
  * source in this file came from
  * various 386BSD system header files.
@@ -34,8 +36,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: nbtypes.h,v 1.3 1993/10/26 15:52:59 brezak Exp $
  */
 
 #ifndef __nbtypes_h_

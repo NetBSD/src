@@ -1,3 +1,5 @@
+/*	$NetBSD: vector.s,v 1.22 1994/10/27 04:18:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
  *
@@ -25,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: vector.s,v 1.21 1994/10/09 18:10:55 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>

@@ -1,11 +1,11 @@
+/*	$NetBSD: genprom.c,v 1.3 1994/10/27 04:21:13 cgd Exp $	*/
+
 /*
  * Read a binary image of a bios extension, generate the
  * appropriate block count and checksum and write them
  * into the rom image (replacing 2nd and 5th bytes)
  * The binary image should be sized before being filtered
  * through this routine.
- *
- *	$Id: genprom.c,v 1.2 1993/08/02 17:52:54 mycroft Exp $
  */
 
 #include <stdio.h>

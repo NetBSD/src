@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.58 1994/10/27 04:15:49 cgd Exp $	*/
+
 #undef DEBUG
 #define DEBUG
 /*-
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.57 1994/10/26 18:45:40 mycroft Exp $
+ *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
 
 /*

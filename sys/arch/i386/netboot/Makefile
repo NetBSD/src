@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/10/26 15:52:55 brezak Exp $
+#	$NetBSD: Makefile,v 1.4 1994/10/27 04:20:59 cgd Exp $
 
 # uncomment one of these as appropriate for the board being used
 #ETH_OBJ = ne2100.o

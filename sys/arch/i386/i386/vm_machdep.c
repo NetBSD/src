@@ -1,3 +1,5 @@
+/*	$NetBSD: vm_machdep.c,v 1.36 1994/10/27 04:15:51 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.35 1994/10/09 15:02:15 mycroft Exp $
+ *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: sys.c,v 1.12 1994/10/27 04:14:41 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: sys.c,v 1.11 1994/07/21 20:25:17 mycroft Exp $
  */
 
 #include "boot.h"

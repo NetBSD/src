@@ -1,3 +1,5 @@
+/*	$NetBSD: tftp.c,v 1.3 1994/10/27 04:21:26 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
@@ -5,8 +7,6 @@
  * Trivial File Transfer Protocol (see RFC 783).
  *
  * Copyright (c) 1992 by Leendert van Doorn
- *
- *	$Id: tftp.c,v 1.2 1993/08/02 17:53:04 mycroft Exp $
  */
 
 #include "proto.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: kbd.c,v 1.3 1994/10/27 04:21:15 cgd Exp $	*/
+
 /* netboot
  *
  * source in this file came from
@@ -38,7 +40,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbd.c	7.4 (Berkeley) 5/4/91
- *	$Id: kbd.c,v 1.2 1994/02/15 15:10:22 mycroft Exp $
  */
 
 #include "proto.h"

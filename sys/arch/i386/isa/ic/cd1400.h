@@ -1,3 +1,5 @@
+/*	$NetBSD: cd1400.h,v 1.2 1994/10/27 04:18:37 cgd Exp $	*/
+
 /*
  * cyclades cyclom-y serial driver
  *	Andrew Herbert <andrew@werple.apana.org.au>, 17 August 1993

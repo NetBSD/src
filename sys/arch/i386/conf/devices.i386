@@ -1,6 +1,6 @@
-# This file tells what major numbers the various possible swap devices have.
+#	$NetBSD: devices.i386,v 1.8 1994/10/27 04:15:02 cgd Exp $
 #
-#	$Id: devices.i386,v 1.7 1994/08/16 19:20:14 mycroft Exp $
+# This file tells what major numbers the various possible swap devices have.
 #
 wd	0
 dk	1

@@ -1,9 +1,9 @@
+/*	$NetBSD: msdos.h,v 1.3 1994/10/27 04:16:37 cgd Exp $	*/
+
 /*
  * msdos common header file
  * [obtained from mtools -wfj]
  * how to decipher DOS disk structures in coexisting with DOS
- *
- *	$Id: msdos.h,v 1.2 1993/05/22 08:00:50 cgd Exp $
  */
 
 #define MSECTOR_SIZE	512		/* MSDOS sector size in bytes */

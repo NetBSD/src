@@ -1,7 +1,7 @@
+/*	$NetBSD: bootp.c,v 1.3 1994/10/27 04:21:08 cgd Exp $	*/
+
 /*
  * bootp functions
- *
- *	$Id: bootp.c,v 1.2 1993/08/02 17:52:51 mycroft Exp $
  */
 
 int BootpGetInfo(ipaddr_t *ip_servaddr, ipaddr_t *ip_myaddr, ipaddr_t *ip_gateway, char *file_name) {

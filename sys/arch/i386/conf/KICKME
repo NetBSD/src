@@ -1,7 +1,6 @@
+#	$NetBSD: KICKME,v 1.15 1994/10/27 04:14:53 cgd Exp $
 #
 # KICKME -- 486Cx-33 development machine.
-#
-#	$Id: KICKME,v 1.14 1994/10/25 21:31:39 cgd Exp $
 #
 
 machine		"i386"

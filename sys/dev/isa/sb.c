@@ -1,3 +1,5 @@
+/*	$NetBSD: sb.c,v 1.10 1994/10/27 04:18:12 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: sb.c,v 1.9 1994/04/24 01:30:01 mycroft Exp $
  */
 
 #include <sys/param.h>

@@ -1,9 +1,9 @@
+/*	$NetBSD: math_emu.h,v 1.4 1994/10/27 04:15:30 cgd Exp $	*/
+
 /*
  * linux/include/linux/math_emu.h
  *
  * (C) 1991 Linus Torvalds
- *
- *	$Id: math_emu.h,v 1.3 1994/01/11 17:37:28 mycroft Exp $
  */
 #ifndef _LINUX_MATH_EMU_H
 #define _LINUX_MATH_EMU_H

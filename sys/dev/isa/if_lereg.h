@@ -1,3 +1,5 @@
+/*	$NetBSD: if_lereg.h,v 1.3 1994/10/27 04:17:42 cgd Exp $	*/
+
 /*
  * LANCE Ethernet driver header file
  *
@@ -9,8 +11,6 @@
  *   circumstances is the author responsible for the proper functioning
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
- *
- *	$Id: if_lereg.h,v 1.2 1994/07/05 21:20:22 mycroft Exp $
  */
 
 /* Declarations specific to this driver */

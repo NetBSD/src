@@ -1,3 +1,5 @@
+/*	$NetBSD: spkr.c,v 1.16 1994/10/27 04:18:15 cgd Exp $	*/
+
 /*
  * spkr.c -- device driver for console speaker on 80386
  *
@@ -5,8 +7,6 @@
  *      modified for 386bsd by Andrew A. Chernov <ache@astral.msk.su>
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
- *
- *	$Id: spkr.c,v 1.15 1994/06/16 01:08:27 mycroft Exp $
  */
 
 #include "speaker.h"
