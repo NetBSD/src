@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.7 1996/03/18 22:33:41 thorpej Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.8 1996/05/05 04:32:08 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_m68k.c,v 1.7 1996/03/18 22:33:41 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_m68k.c,v 1.8 1996/05/05 04:32:08 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,7 +114,7 @@ _kvm_vatop(kd, sta, va, pa)
 		return((off_t)0);
 	}
 	offset = va & PGOFSET;
-	cpu_kh = kd->cpu_hdr;
+	cpu_kh = kd->cpu_data;
 	/*
 	 * If we are initializing (kernel segment table pointer not yet set)
 	 * then return pa == va to avoid infinite recursion.
@@ -202,5 +202,32 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	return (_kvm_vatop(kd, (u_long)kd->cpu_hdr->sysseg_pa, va, pa));
+	register cpu_kcore_hdr_t *cpu_kh;
+
+	cpu_kh = kd->cpu_data;
+	return (_kvm_vatop(kd, (u_long)cpu_kh->sysseg_pa, va, pa));
+}
+
+/*
+ * Translate a physical address to a file-offset in the crash-dump.
+ */
+off_t
+_kvm_pa2off(kd, pa)
+	kvm_t	*kd;
+	u_long	pa;
+{
+	off_t		off;
+	phys_ram_seg_t	*rsp;
+	register cpu_kcore_hdr_t *cpu_kh;
+
+	cpu_kh = kd->cpu_data;
+	off = 0;
+	for (rsp = cpu_kh->ram_segs; rsp->size; rsp++) {
+		if (pa >= rsp->start && pa < rsp->start + rsp->size) {
+			pa -= rsp->start;
+			break;
+		}
+		off += rsp->size;
+	}
+	return(kd->dump_off + off + pa)
 }
