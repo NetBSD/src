@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2001/07/09 00:30:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -89,7 +89,7 @@
 /* For sysctl(3). */
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
-char cpu_model[] = "SGI";
+char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
 
 struct sgi_intrhand intrtab[NINTR];
 
@@ -209,6 +209,7 @@ mach_init(argc, argv, envp)
 	 * Initialize ARCS.  This will set up the bootstrap console.
 	 */
 	arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000));
+	strcpy(cpu_model, arcbios_system_identifier);
 
 	/*
 	 * Now set up the real console.
