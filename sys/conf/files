@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.598 2003/02/10 15:20:04 atatat Exp $
+#	$NetBSD: files,v 1.599 2003/02/18 12:18:28 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -103,7 +103,6 @@ include "netiso/files.netiso"
 include "netnatm/files.netnatm"
 include "netns/files.netns"
 
-defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -923,7 +922,6 @@ defpseudo vnd:		disk
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudo md:		disk
-defpseudo netsmb
 
 defpseudo pty:		tty
 defpseudo tb:		tty
@@ -1182,17 +1180,6 @@ file	netinet/ip_ecn.c		ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre
 file	netinet6/in6_gif.c		gif & inet6
-file	netsmb/iconv.c			netsmb
-file	netsmb/smb_conn.c		netsmb	needs-count
-file	netsmb/smb_crypt.c		netsmb	needs-count
-file	netsmb/smb_dev.c		netsmb	needs-count
-file	netsmb/smb_iod.c		netsmb	needs-count
-file	netsmb/smb_rq.c			netsmb	needs-count
-file	netsmb/smb_smb.c		netsmb	needs-count
-file	netsmb/smb_subr.c		netsmb	needs-count
-file	netsmb/smb_trantcp.c		netsmb	needs-count
-file	netsmb/smb_usr.c		netsmb	needs-count
-file	netsmb/subr_mchain.c		netsmb
 
 file	uvm/uvm_amap.c
 file	uvm/uvm_anon.c
