@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.98 2002/10/04 04:23:20 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.99 2002/10/07 11:01:52 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.98 2002/10/04 04:23:20 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.99 2002/10/07 11:01:52 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1193,7 +1193,8 @@ wi_info_intr(struct wi_softc *sc)
 		switch (le16toh(stat)) {
 		case CONNECTED:
 			sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
-			if (ic->ic_state == IEEE80211_S_RUN)
+			if (ic->ic_state == IEEE80211_S_RUN &&
+			    ic->ic_opmode != IEEE80211_M_IBSS)
 				break;
 			/* FALLTHROUGH */
 		case AP_CHANGE:
