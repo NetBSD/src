@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.77 2003/06/15 16:14:46 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.78 2003/06/17 04:17:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.77 2003/06/15 16:14:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.78 2003/06/17 04:17:37 simonb Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -568,13 +568,13 @@ genfs_getpages(void *v)
 	    ((endoffset - startoffset) >> PAGE_SHIFT);
 	if (pgs_size > sizeof(pgs_onstack)) {
 		pgs = malloc(pgs_size, M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (pgs == NULL) {
+			simple_unlock(&uobj->vmobjlock);
+			return (ENOMEM);
+		}
 	} else {
 		pgs = pgs_onstack;
 		memset(pgs, 0, pgs_size);
-	}
-	if (pgs == NULL) {
-		simple_unlock(&uobj->vmobjlock);
-		return (ENOMEM);
 	}
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
