@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.21 1996/02/19 15:41:38 pk Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.22 1996/04/07 16:38:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,20 @@
 
 extern struct sysent ultrix_sysent[];
 extern char *ultrix_syscallnames[];
-extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+
+/*
+ * Select the appropriate setregs callback for the target architecture.
+ */
+#ifdef mips
+#define ULTRIX_EXEC_SETREGS cpu_exec_ecoff_setregs
+#endif /* mips */
+
+#ifdef vax
+#define ULTRIX_EXEC_SETREGS setregs
+#endif /* mips */
+
+
+extern void ULTRIX_EXEC_SETREGS __P((struct proc *, struct exec_package *,
 					u_long, register_t *));
 extern char sigcode[], esigcode[];
 
@@ -111,7 +124,7 @@ struct emul emul_ultrix = {
 	ultrix_syscallnames,
 	0,
 	copyargs,
-	cpu_exec_ecoff_setregs,
+	ULTRIX_EXEC_SETREGS,
 	sigcode,
 	esigcode,
 };
@@ -238,15 +251,6 @@ async_daemon(p, v, retval)
 }
 #endif /* NFSCLIENT */
 
-#if 0
-/* XXX: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
-struct dirent {
-	u_long	d_fileno;		/* file number of entry */
-	u_short	d_reclen;		/* length of this record */
-	u_short	d_namlen;		/* length of string in d_name */
-	char	d_name[255 + 1];	/* name must be no longer than this */
-};
-#endif
 
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
