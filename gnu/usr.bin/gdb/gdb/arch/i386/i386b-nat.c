@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.4 1994/12/06 03:30:59 mycroft Exp $
+	$Id: i386b-nat.c,v 1.5 1994/12/06 03:41:39 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -315,10 +315,12 @@ struct pcb *pcb;
 	supply_register(7, &regs[0]);
 	for (i = 0, regno = 8; regno < 10; regno++)
 		supply_register(regno, &i);
+#if 0
 	i = 0x08;
 	supply_register(10, &i);
 	i = 0x10;
 	supply_register(11, &i);
+#endif
 	/* XXX 80387 registers? */
 }
 
