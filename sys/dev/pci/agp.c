@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.6 2001/09/15 00:52:15 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.7 2001/09/15 01:32:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -106,18 +106,30 @@ static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
 
+#include "agp_ali.h"
+#include "agp_amd.h"
+#include "agp_i810.h"
+#include "agp_intel.h"
+#include "agp_sis.h"
+#include "agp_via.h"
+
 const struct agp_product {
 	uint32_t	ap_vendor;
 	uint32_t	ap_product;
 	int		(*ap_match)(const struct pci_attach_args *);
 	int		(*ap_attach)(struct device *, struct device *, void *);
 } agp_products[] = {
+#if NAGP_ALI > 0
 	{ PCI_VENDOR_ALI,	-1,
 	  NULL,			agp_ali_attach },
+#endif
 
+#if NAGP_AMD > 0
 	{ PCI_VENDOR_AMD,	-1,
 	  agp_amd_match,	agp_amd_attach },
+#endif
 
+#if NAGP_I810 > 0
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_MCH,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_DC100_MCH,
@@ -126,15 +138,22 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82815_FULL_HUB,
 	  NULL,			agp_i810_attach },
+#endif
 
+#if NAGP_INTEL > 0
 	{ PCI_VENDOR_INTEL,	-1,
 	  NULL,			agp_intel_attach },
+#endif
 
+#if NAGP_SIS > 0
 	{ PCI_VENDOR_SIS,	-1,
 	  NULL,			agp_sis_attach },
+#endif
 
+#if NAGP_VIA > 0
 	{ PCI_VENDOR_VIATECH,	-1,
 	  NULL,			agp_via_attach },
+#endif
 
 	{ 0,			0,
 	  NULL,			NULL },
