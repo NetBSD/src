@@ -1,18 +1,12 @@
 /*
  * cvt_pt.c
  *
- *	Covert partition type.	$Revision: 1.1.1.1 $
+ *	Covert partition type.	$Revision: 1.2 $
  *
  *	Copyright (c)  1999, Eryk Vershen
  * 
  * History:
- * $Log: cvt_pt.c,v $
- * Revision 1.1.1.1  2002/07/09 05:49:05  dbj
- * import pdisk utility from Eryk Vershen:
- *   http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
- * this is the utility provided by mklinux and osX to manipulate
- * the Apple Partition map.
- *
+ * Log: cvt_pt.c,v
  * Revision 1.2  2000/05/16 13:56:11  eryk
  * Minor fixes
  *
