@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.61 2001/05/29 21:28:14 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.62 2001/06/12 13:20:29 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 #include <net/netisr.h>
 
+#include "opt_ddb.h"
 #include "opt_cputype.h"
 #include "opt_emulate.h"
 #include "opt_multiprocessor.h"
@@ -359,7 +360,14 @@ TRAPCALL(ddbtrap, T_KDBTRAP)
 
 SCBENTRY(hardclock)
 	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
-	pushr	$0x3f
+#ifdef DDB
+	tstl	0x80000100		# rpb wait element
+	beql	1f			# set, jmp to debugger
+	pushl	$0
+	pushl	$T_KDBTRAP
+	jbr	Xtrap
+#endif
+1:	pushr	$0x3f
 	incl	_C_LABEL(clock_intrcnt)+EV_COUNT	# count the number of clock interrupts
 	adwc	$0,_C_LABEL(clock_intrcnt)+EV_COUNT+4
 #if VAX46 || VAXANY
