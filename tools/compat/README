@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.11 2004/06/22 01:51:22 jmc Exp $
+$NetBSD: README,v 1.12 2005/04/05 00:21:22 jmc Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -33,6 +33,8 @@ LINUX:
 
 * Tested on Redhat Linux 8.0 (i686) in Fall 2003. Requires no special settings.
 
+* Tested on Redhat ES3 and AS3 in spring of 2004. Requires no special settings.
+
 * The gcc (and libstdc++, if needed) package must be installed, along
   with the typical system development packages (glibc-devel, etc.).
 
@@ -44,11 +46,11 @@ LINUX:
 =====
 
 MACOS
-  Probably requires a case sensitive filesystem such as UFS
+  Requires a case sensitive filesystem such as UFS
 
 * Tested on 10.2.8 with Dec 2002 Developer Tools
     - may require a fix to /usr/bin/join, netbsd's join should work fine
-* Tested on 10.3 with xcode 1.0
+* Tested on 10.3 with xcode 1.5
     - compiles fine out of the box
 
 =====
