@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)un.h	7.7 (Berkeley) 6/28/90
- *	$Id: un.h,v 1.4 1993/06/27 05:59:12 andrew Exp $
+ *	$Id: un.h,v 1.5 1994/05/04 09:08:33 mycroft Exp $
  */
 
 #ifndef _SYS_UN_H_
@@ -53,13 +53,17 @@ struct	sockaddr_un {
 int	uipc_usrreq __P((struct socket *so, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *control));
 int	unp_attach __P((struct socket *so));
-int	unp_detach __P((struct unpcb *unp));
 int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
 int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
 int	unp_connect2 __P((struct socket *so, struct socket *so2));
-void	unp_disconnect __P((struct unpcb *unp));
-void	unp_mark __P((struct file *fp));
+int	unp_detach __P((struct unpcb *unp));
 void	unp_discard __P((struct file *fp));
+void	unp_disconnect __P((struct unpcb *unp));
+void	unp_drop __P((struct unpcb *unp, int errno));
+void	unp_gc __P((void));
+void	unp_mark __P((struct file *fp));
+void	unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
+void	unp_shutdown __P((struct unpcb *unp));
 #else
 
 /* actual length of an initialized sockaddr_un */
