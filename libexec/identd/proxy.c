@@ -1,4 +1,4 @@
-/*	$NetBSD: proxy.c,v 1.4 1997/10/08 07:07:55 mrg Exp $	*/
+/*	$NetBSD: proxy.c,v 1.5 1998/07/15 07:31:57 msaitoh Exp $	*/
 
 /*
 ** proxy.c                         This file implements the proxy() call.
@@ -11,21 +11,20 @@
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
 
-#include <sys/types.h>
-#include <sys/time.h>
-
-#include <netinet/in.h>
-
-#ifdef INCLUDE_PROXY
-#include <ident.h>
-#endif
-
 #include <stdio.h>
 #include <errno.h>
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+
 #include "identd.h"
 
+#ifdef INCLUDE_PROXY
 int proxy __P((struct in_addr *, struct in_addr *, int, int, struct timeval *));
+#else
+int proxy __P((void *, void *, int, int, void *));
+#endif
 
 /*
 ** This function should establish a connection to a remote IDENT
@@ -36,18 +35,30 @@ int proxy __P((struct in_addr *, struct in_addr *, int, int, struct timeval *));
 ** Query Transmit and Query Receive)?
 */
 int proxy(laddr, faddr, lport, fport, timeout)
-  struct in_addr *laddr;
-  struct in_addr *faddr;
-  int lport;
-  int fport;
-  struct timeval *timeout;
+#ifdef INCLUDE_PROXY
+    struct in_addr *laddr;
+    struct in_addr *faddr;
+#else
+    void *laddr, *faddr;
+#endif
+    int lport;
+    int fport;
+#ifdef INCLUDE_PROXY
+    struct timeval *timeout;
+#else
+    void *timeout;
+#endif
 {
 #ifndef INCLUDE_PROXY
-  printf("%d , %d : ERROR : %s\r\n",
-	 lport, fport,
-	 unknown_flag ? "UNKNOWN-ERROR" : "X-NOT-YET-IMPLEMENTED");
-  
-  return -1;
+    /* Just here to make the compiler shut up! */
+    laddr = faddr = NULL;
+    timeout = NULL;
+	
+    printf("%d , %d : ERROR : %s\r\n",
+	   lport, fport,
+	   unknown_flag ? "UNKNOWN-ERROR" : "X-NOT-YET-IMPLEMENTED");
+    
+    return -1;
 #else
   id_t *idp;
   char *answer;
