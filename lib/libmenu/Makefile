@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.1.1.1 1999/11/23 11:12:34 blymn Exp $
+#	$Id: Makefile,v 1.2 1999/11/24 12:17:11 kleink Exp $
 #
 
-CPPFLAGS+=-I${.CURDIR} -DEXPOSE_PRIVATES
+CPPFLAGS+=-I${.CURDIR} -D__LIBMENU_EXPOSE_PRIVATES__
 LIB=	menu
 SRCS=	menu.c item.c userptr.c internals.c driver.c post.c attributes.c
 MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \

@@ -1,4 +1,4 @@
-/*      $Id: eti.h,v 1.1.1.1 1999/11/23 11:12:34 blymn Exp $ */
+/*      $Id: eti.h,v 1.2 1999/11/24 12:17:11 kleink Exp $ */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef ETI_H
-#define ETI_H
+#ifndef	_ETI_H_
+#define	_ETI_H_
 
 /* common return codes for libmenu and libpanel functions */
 
@@ -45,4 +45,4 @@
 #define E_NOT_CONNECTED   (-11)
 #define E_REQUEST_DENIED  (-12)
 
-#endif
+#endif /* !_ETI_H_ */
