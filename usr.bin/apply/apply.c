@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: apply.c,v 1.14 2005/01/12 14:35:56 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: apply.c,v 1.14 2005/01/12 14:35:56 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,14 +52,12 @@ __RCSID("$NetBSD: apply.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-void	usage __P((void));
-int	shell_system __P((const char *));
+int	main (int, char **);
+void	usage (void);
+int	shell_system (const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
 	char *c, *cmd, *p, *q, *nc;
@@ -197,8 +195,7 @@ main(argc, argv)
  *	variable as the shell to execute.
  */
 int
-shell_system(command)
-	const char *command;
+shell_system(const char *command)
 {
 	static char *name, *shell;
 	int status;
@@ -208,7 +205,7 @@ shell_system(command)
 
 	if (shell == NULL) {
 		if ((shell = getenv("SHELL")) == NULL)
-			shell = _PATH_BSHELL;
+			(const char *)shell = _PATH_BSHELL;
 		if ((name = strrchr(shell, '/')) == NULL)
 			name = shell;
 		else
@@ -237,7 +234,7 @@ shell_system(command)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
