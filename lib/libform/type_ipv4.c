@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.7 2003/03/09 00:57:19 lukem Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.8 2003/04/17 03:25:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv4.c,v 1.7 2003/03/09 00:57:19 lukem Exp $");
+__RCSID("$NetBSD: type_ipv4.c,v 1.8 2003/04/17 03:25:56 lukem Exp $");
 
 #include <string.h>
 #include <stdlib.h>
@@ -110,6 +110,7 @@ ipv4_check_field(FIELD *field, char *args)
 
 		
 	case FORMI_HEX:
+		errno = 0;
 		hex_val = strtoul(buf, NULL, 16);
 		if ((hex_val == ULONG_MAX) && (errno == ERANGE))
 			goto FAIL;
