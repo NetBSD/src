@@ -3,11 +3,13 @@
 ./usr/lkm/adosfs.o
 ./usr/mdec/installboot
 ./usr/mdec/xxboot
+./usr/mdec/fdboot
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
 ./usr/sbin/videomode
 ./usr/share/keymaps/amiga/din.map
+./usr/share/keymaps/amiga/es.map
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
