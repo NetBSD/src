@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.39.2.2 2004/08/25 21:40:36 he Exp $
+.\"	$NetBSD: xfer,v 1.39.2.3 2004/08/30 08:15:19 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -597,6 +597,24 @@ Proceed to the instruction on installation.
 .
 .if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It Em MS-DOS floppy
+.Nx
+doesn't include split sets to keep the distribution size down.
+They can be created on a seperate machine using the
+.Xr split 1
+command, running e.g.
+.Ic split -b 235k base.tgz base.
+to split the
+.Pa base.tgz
+file from
+.Pa \*M/binary/sets
+into files named
+.Pa base.aa ,
+.Pa base.ab ,
+and so on. Repeat this for all
+.Pa set_name.tgz
+files, splitting them into
+.Pa set_name. Ns Ar xx
+files. 
 Count the number of
 .Pa set_name. Ns Ar xx
 files that make up the
