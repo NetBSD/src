@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.9 1994/01/05 07:51:34 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.10 1994/01/05 08:00:09 cgd Exp $
  */
 
 /*
@@ -660,7 +660,7 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 #endif
 		struct proc *p;
 
-		p = allproc;
+		p = (struct proc *) allproc;
 
 #define PROCFS_XFILES	1	/* number of other entries, like "curproc" */
 		pcnt = PROCFS_XFILES;
