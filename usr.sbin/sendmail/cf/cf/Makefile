@@ -21,7 +21,7 @@ ALL=	cs-hidden.cf cs-exposed.cf \
 	osf1-cs-exposed.cf osf1-cs-hidden.cf \
 	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
 	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
-	python.cf sun-lamp.cf boat-anchor.cf trinity.cf\
+	python.cf \
 	clientproto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
