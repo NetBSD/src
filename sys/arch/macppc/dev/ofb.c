@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.7 1999/02/02 16:48:17 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.8 1999/02/19 14:02:33 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -143,7 +143,7 @@ ofbattach(parent, self, aux)
 		dc = &ofb_console_dc;
 		sc->nscreens = 1;
 	} else {
-		int node;
+		int node, i, screenbytes;
 
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(dc, sizeof(struct ofb_devconfig));
@@ -153,6 +153,13 @@ ofbattach(parent, self, aux)
 			return;
 		}
 		ofb_common_init(node, dc);
+
+		/* Set colormap to black on white. */
+		OF_call_method_1("color!", dc->dc_ih, 4, 0, 0, 0, 0xff);
+		OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 0);
+		screenbytes = dc->dc_height * dc->dc_linebytes;
+		for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
+			*(u_int32_t *)(dc->dc_paddr + i) = 0;
 	}
 	sc->sc_dc = dc;
 
@@ -160,8 +167,6 @@ ofbattach(parent, self, aux)
 		printf(": cannot map framebuffer\n");
 		return;
 	}
-	dc->dc_raster.pixels = mapiodev(dc->dc_paddr,
-				dc->dc_linebytes * dc->dc_height);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s\n", devinfo);
@@ -185,10 +190,6 @@ ofb_common_init(node, dc)
 	struct rcons *rcp;
 	int i;
 	int addr, width, height, linebytes, depth;
-	u_int regs[5];
-
-	OF_getprop(node, "assigned-addresses", regs, sizeof(regs));
-	addr = regs[2] & 0xf0000000;
 
 	if (dc->dc_ih == 0) {
 		char name[64];
@@ -198,9 +199,7 @@ ofb_common_init(node, dc)
 		dc->dc_ih = OF_open(name);
 	}
 
-	/*
-	 * /chaos/control don't have "width", "height", ...
-	 */
+	/* XXX /chaos/control doesn't have "width", "height", ... */
 	width = height = -1;
 	if (OF_getprop(node, "width", &width, sizeof(width)) != 4)
 		OF_interpret("screen-width", 1, &width);
@@ -214,15 +213,9 @@ ofb_common_init(node, dc)
 		return;
 
 	OF_interpret("frame-buffer-adr", 1, &addr);
-	if (addr == 0)
+	if (addr == 0 || addr == -1)
 		return;
 	dc->dc_paddr = addr;	/* PA of the frame buffer */
-
-	/* Set colormap to black on white. */
-	OF_call_method_1("color!", dc->dc_ih, 4, 0, 0, 0, 0xff);
-	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 0);
-	for (i = 0; i < height * linebytes; i += sizeof(u_int32_t))
-		*(u_int32_t *)(addr + i) = 0;
 
 	/* initialize the raster */
 	rap = &dc->dc_raster;
@@ -239,6 +232,15 @@ ofb_common_init(node, dc)
 	rcp->rc_crowp = &rcp->rc_crow;
 	rcp->rc_ccolp = &rcp->rc_ccol;
 	rcons_init(rcp, 128, 128);
+
+	/* If screen is smaller than 1024x768, use small font. */
+	if ((width < 1024 || height < 768) && copy_rom_font() == 0) {
+		rcp->rc_xorigin = 2;
+		rcp->rc_yorigin = 4;
+
+		OF_interpret("#lines", 1, &dc->dc_rcons.rc_maxrow);
+		OF_interpret("#columns", 1, &dc->dc_rcons.rc_maxcol);
+	}
 
 	ofb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
 	ofb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
@@ -363,7 +365,7 @@ ofb_cnattach()
 {
 	struct ofb_devconfig *dc = &ofb_console_dc;
 	long defattr;
-	int crow;
+	int crow = 0, i, screenbytes;
 	int chosen, stdout, node;
 	char cmd[32];
 
@@ -373,17 +375,80 @@ ofb_cnattach()
 	dc->dc_ih = stdout;
 
 	ofb_common_init(node, dc);
-#if 0
+	screenbytes = dc->dc_height * dc->dc_linebytes;
+
+	/* Set colormap to black on white. */
+	OF_call_method_1("color!", dc->dc_ih, 4, 0, 0, 0, 0xff);
+	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 0xf0);
+	for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
+		*(u_int32_t *)(dc->dc_paddr + i) ^= 0xffffffff;
+	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 0);
+
 	/* get current cursor position */
 	OF_interpret("line#", 1, &crow);
 
 	/* move (rom monitor) cursor to the lowest line */
 	sprintf(cmd, "%x to line#", ofb_stdscreen.nrows - 1);
 	OF_interpret(cmd, 0);
-#endif
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&ofb_stdscreen, &dc->dc_rcons, 0, 0, defattr);
 
+	if (dc->dc_width >= 1024 && dc->dc_height >= 768) {
+		for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
+			*(u_int32_t *)(dc->dc_paddr + i) = 0;
+		crow = 0;
+	}
+
+	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&ofb_stdscreen, &dc->dc_rcons, 0, crow, defattr);
+
+	return 0;
+}
+
+int
+copy_rom_font()
+{
+	int i, j;
+	u_char *romfont;
+	int char_width, char_height;
+	int chosen, mmu, m, e;
+
+	extern struct raster_font gallant19;		/* XXX */
+
+	/* Get ROM FONT address. */
+	OF_interpret("font-adr", 1, &romfont);
+	if (romfont == NULL)
+		return -1;
+
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "mmu", &mmu, 4);
+
+	/*
+	 * Convert to physcal address.  We cannot access to Open Firmware's
+	 * virtual address space.
+	 */
+	OF_call_method("translate", mmu, 1, 3, romfont, &romfont, &m, &e);
+ 
+	/* Get character size */
+	OF_interpret("char-width", 1, &char_width);
+	OF_interpret("char-height", 1, &char_height);
+
+	/* XXX but we cannot use malloc here... */
+	gallant19.width = char_width;
+	gallant19.height = char_height;
+	gallant19.ascent = 0;
+
+	for (i = 32; i < 128; i++) {
+		u_int *p;
+
+		if (gallant19.chars[i].r == NULL)
+			continue;
+
+		gallant19.chars[i].r->width = char_width;
+		gallant19.chars[i].r->height = char_height;
+		p = gallant19.chars[i].r->pixels;
+
+		for (j = 0; j < char_height; j++)
+			*p++ = romfont[(i - 32) * char_height + j] << 24;
+	}
 	return 0;
 }
 
