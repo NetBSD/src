@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/12/30 14:54:39 sommerfeld Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/05/10 19:07:39 windsor Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,3 @@ LDADD+=	-L${LIBAUDIO} -laudio
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
-
-COPTS+= -g
