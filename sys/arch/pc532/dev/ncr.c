@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ncr.c,v 1.8 1994/05/17 17:29:36 phil Exp $
+ * $Id: ncr.c,v 1.9 1994/07/10 17:21:56 phil Exp $
  *
  */
 
@@ -49,9 +49,9 @@ static int ncr_debug=1;
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsi_debug.h"
+#include "../../scsi/scsiconf.h"
 
 #include <machine/icu.h>
 
