@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.15 1998/08/27 18:03:45 ross Exp $	*/
+/*	$NetBSD: create.c,v 1.16 1998/08/30 03:20:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.15 1998/08/27 18:03:45 ross Exp $");
+__RCSID("$NetBSD: create.c,v 1.16 1998/08/30 03:20:09 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,11 +235,12 @@ statd(t, parent, puid, pgid, pmode)
 	(void)printf("/set type=file");
 	if (keys & F_GID)
 		(void)printf(" gid=%u", savegid);
-	if (keys & F_GNAME)
+	if (keys & F_GNAME) {
 		if ((gr = getgrgid(savegid)) != NULL)
 			(void)printf(" gname=%s", gr->gr_name);
 		else
 			(void)printf(" gid=%u", savegid);
+	}
 	if (keys & F_UNAME) {
 		if ((pw = getpwuid(saveuid)) != NULL)
 			(void)printf(" uname=%s", pw->pw_name);
