@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.23 2000/01/22 22:19:21 mycroft Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -6,15 +6,13 @@
 */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#ifndef NOID
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.23 2000/01/22 22:19:21 mycroft Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $");
 #endif
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#endif /* LIBC_SCCS and not lint */
 
 /*
 ** Leap second handling from Bradley White (bww@k.gp.cs.cmu.edu).
