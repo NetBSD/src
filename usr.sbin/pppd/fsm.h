@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.3 1993/11/10 01:34:07 paulus Exp $
+ * $Id: fsm.h,v 1.4 1994/05/08 12:16:18 paulus Exp $
  */
 
 /*
@@ -35,11 +35,6 @@
 #define TERMREQ		5	/* Termination Request */
 #define TERMACK		6	/* Termination Ack */
 #define CODEREJ		7	/* Code Reject */
-#define PROTREJ		8	/* Protocol Reject */
-#define ECHOREQ		9	/* Echo Request */
-#define ECHOREP		10	/* Echo Reply */
-#define DISCREQ		11	/* Discard Request */
-#define KEEPALIVE	12	/* Keepalive */
 
 
 /*

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.4 1994/01/25 05:58:02 paulus Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.5 1994/05/08 12:16:13 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -106,6 +106,7 @@ void check_access __ARGS((FILE *, char *));
 
 static int  login __ARGS((char *, char *, char **, int *));
 static void logout __ARGS((void));
+static int  null_login __ARGS((int));
 static int  get_upap_passwd __ARGS((void));
 static int  have_upap_secret __ARGS((void));
 static int  have_chap_secret __ARGS((char *, char *));
@@ -135,11 +136,18 @@ link_terminated(unit)
 {
     if (logged_in)
 	logout();
-    if (lcp_wantoptions[unit].restart) {
-	lcp_lowerdown(unit);
-	lcp_lowerup(unit);
-    } else
-	EXIT(unit);
+    phase = PHASE_DEAD;
+    syslog(LOG_NOTICE, "Connection terminated.");
+}
+
+/*
+ * LCP has gone down; it will either die or try to re-establish.
+ */
+void
+link_down(unit)
+    int unit;
+{
+    phase = PHASE_TERMINATE;
 }
 
 /*
@@ -157,14 +165,19 @@ link_established(unit)
 
     if (auth_required && !(go->neg_chap || go->neg_upap)) {
 	/*
-	 * We wanted the peer to authenticate himself, and he refused:
-	 * tell him to go away.
+	 * We wanted the peer to authenticate itself, and it refused:
+	 * treat it as though it authenticated with PAP using a username
+	 * of "" and a password of "".  If that's not OK, boot it out.
 	 */
-	syslog(LOG_WARNING, "peer refused to authenticate");
-	lcp_close(unit);
-	return;
+	if (wo->neg_upap && !null_login(unit)) {
+	    syslog(LOG_WARNING, "peer refused to authenticate");
+	    lcp_close(unit);
+	    phase = PHASE_TERMINATE;
+	    return;
+	}
     }
 
+    phase = PHASE_AUTHENTICATE;
     auth = 0;
     if (go->neg_chap) {
 	ChapAuthPeer(unit, our_name, go->chap_mdtype);
@@ -182,8 +195,10 @@ link_established(unit)
     }
     auth_pending[unit] = auth;
 
-    if (!auth)
+    if (!auth) {
+	phase = PHASE_NETWORK;
 	ipcp_open(unit);
+    }
 }
 
 /*
@@ -197,6 +212,7 @@ auth_peer_fail(unit, protocol)
      * Authentication failure: take the link down
      */
     lcp_close(unit);
+    phase = PHASE_TERMINATE;
 }
 
 /*
@@ -225,8 +241,10 @@ auth_peer_success(unit, protocol)
      * If there is no more authentication still to be done,
      * proceed to the network phase.
      */
-    if ((auth_pending[unit] &= ~bit) == 0)
+    if ((auth_pending[unit] &= ~bit) == 0) {
+	phase = PHASE_NETWORK;
 	ipcp_open(unit);
+    }
 }
 
 /*
@@ -268,8 +286,10 @@ auth_withpeer_success(unit, protocol)
      * If there is no more authentication still being done,
      * proceed to the network phase.
      */
-    if ((auth_pending[unit] &= ~bit) == 0)
+    if ((auth_pending[unit] &= ~bit) == 0) {
+	phase = PHASE_NETWORK;
 	ipcp_open(unit);
+    }
 }
 
 
@@ -482,6 +502,46 @@ logout()
 	tty++;
     logwtmp(tty, "", "");		/* Wipe out wtmp logout entry */
     logged_in = FALSE;
+}
+
+
+/*
+ * null_login - Check if a username of "" and a password of "" are
+ * acceptable, and iff so, set the list of acceptable IP addresses
+ * and return 1.
+ */
+static int
+null_login(unit)
+    int unit;
+{
+    char *filename;
+    FILE *f;
+    int i, ret;
+    struct wordlist *addrs;
+    char secret[MAXWORDLEN];
+
+    /*
+     * Open the file of upap secrets and scan for a suitable secret.
+     * We don't accept a wildcard client.
+     */
+    filename = _PATH_UPAPFILE;
+    addrs = NULL;
+    f = fopen(filename, "r");
+    if (f == NULL)
+	return 0;
+    check_access(f, filename);
+
+    i = scan_authfile(f, "", our_name, secret, &addrs, filename);
+    ret = i >= 0 && (i & NONWILD_CLIENT) != 0 && secret[0] == 0;
+
+    if (ret) {
+	if (addresses[unit] != NULL)
+	    free_wordlist(addresses[unit]);
+	addresses[unit] = addrs;
+    }
+
+    fclose(f);
+    return ret;
 }
 
 

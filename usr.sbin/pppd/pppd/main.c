@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.8 1994/01/25 05:58:05 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 1994/05/08 12:16:24 paulus Exp $";
 #endif
 
 #define SETSID
@@ -30,6 +30,7 @@ static char rcsid[] = "$Id: main.c,v 1.8 1994/01/25 05:58:05 paulus Exp $";
 #include <syslog.h>
 #include <netdb.h>
 #include <utmp.h>
+#include <sys/wait.h>
 
 /*
  * If REQ_SYSOPTIONS is defined to 1, pppd will not run unless
@@ -37,10 +38,6 @@ static char rcsid[] = "$Id: main.c,v 1.8 1994/01/25 05:58:05 paulus Exp $";
  */
 #ifndef	REQ_SYSOPTIONS
 #define REQ_SYSOPTIONS	0
-#endif
-
-#ifdef STREAMS
-#undef SGTTY
 #endif
 
 #ifdef SGTTY
@@ -115,6 +112,8 @@ int default_device = TRUE;	/* use default device (stdin/out) */
 int fd;				/* Device file descriptor */
 int s;				/* Socket file descriptor */
 
+int phase;			/* where the link is at */
+
 #ifdef SGTTY
 static struct sgttyb initsgttyb;	/* Initial TTY sgttyb */
 #else
@@ -129,14 +128,18 @@ u_char outpacket_buf[MTU+DLLHEADERLEN]; /* buffer for outgoing packet */
 static u_char inpacket_buf[MTU+DLLHEADERLEN]; /* buffer for incoming packet */
 
 int hungup;			/* terminal has been hung up */
+static int n_children;		/* # child processes still running */
 
 /* configured variables */
 
 int debug = 0;		        /* Debug flag */
+int kdebugflag = 0;		/* Kernel debugging flag */
 char user[MAXNAMELEN];		/* username for PAP */
 char passwd[MAXSECRETLEN];	/* password for PAP */
 char *connector = NULL;		/* "connect" command */
-int inspeed = 0;		/* Input/Output speed */
+char *disconnector = NULL;	/* "disconnect" command */
+int inspeed = 0;		/* Input/Output speed requested */
+int baud_rate;			/* bits/sec currently used */
 u_long netmask = 0;		/* netmask to use on ppp interface */
 int crtscts = 0;		/* use h/w flow control */
 int nodetach = 0;		/* don't fork */
@@ -147,6 +150,7 @@ int proxyarp = 0;		/* set entry in arp table */
 int persist = 0;		/* re-initiate on termination */
 int answer = 0;			/* wait for incoming call */
 int uselogin = 0;		/* check PAP info against /etc/passwd */
+int lockflag = 0;		/* lock the serial device */
 
 
 /* prototypes */
@@ -159,13 +163,16 @@ static void incdebug __ARGS((int));
 static void nodebug __ARGS((int));
 void establish_ppp __ARGS((void));
 
+void reap_kids __ARGS((void));
 void cleanup __ARGS((int, caddr_t));
 void die __ARGS((int));
-void dumpbuffer __ARGS((unsigned char *, int, int));
+void novm __ARGS((char *));
 
-#ifdef	STREAMS
-extern	char	*ttyname __ARGS((int));
-#endif
+void log_packet __ARGS((u_char *, int, char *));
+void format_packet __ARGS((u_char *, int,
+			   void (*) (void *, char *, ...), void *));
+void pr_log __ARGS((void *, char *, ...));
+
 extern	char	*getlogin __ARGS((void));
 
 /*
@@ -177,13 +184,16 @@ static struct protent {
     void (*init)();
     void (*input)();
     void (*protrej)();
+    int  (*printpkt)();
+    char *name;
 } prottbl[] = {
-    { LCP, lcp_init, lcp_input, lcp_protrej },
-    { IPCP, ipcp_init, ipcp_input, ipcp_protrej },
-    { UPAP, upap_init, upap_input, upap_protrej },
-    { CHAP, ChapInit, ChapInput, ChapProtocolReject },
+    { LCP, lcp_init, lcp_input, lcp_protrej, lcp_printpkt, "LCP" },
+    { IPCP, ipcp_init, ipcp_input, ipcp_protrej, ipcp_printpkt, "IPCP" },
+    { UPAP, upap_init, upap_input, upap_protrej, upap_printpkt, "PAP" },
+    { CHAP, ChapInit, ChapInput, ChapProtocolReject, ChapPrintPkt, "CHAP" },
 };
 
+#define N_PROTO		(sizeof(prottbl) / sizeof(prottbl[0]))
 
 main(argc, argv)
     int argc;
@@ -195,28 +205,8 @@ main(argc, argv)
     FILE *pidfile;
     char *p;
 
-    /*
-     * Initialize syslog system and magic number package.
-     */
-#if BSD >= 43 || defined(sun)
-    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
-    setlogmask(LOG_UPTO(LOG_INFO));
-#else
-    openlog("pppd", LOG_PID);
-#define LOG_UPTO(x) (x)
-#define setlogmask(x) (x)
-#endif
-
-#ifdef STREAMS
-    p = ttyname(fileno(stdin));
-    if (p)
-	strcpy(devname, p);
-#endif
-  
-    magic_init();
-
     if (gethostname(hostname, MAXNAMELEN) < 0 ) {
-	syslog(LOG_ERR, "couldn't get hostname: %m");
+	perror("couldn't get hostname");
 	die(1);
     }
     hostname[MAXNAMELEN-1] = 0;
@@ -233,7 +223,7 @@ main(argc, argv)
      * the system options file, the user's options file, and the command
      * line arguments.
      */
-    for (i = 0; i < sizeof (prottbl) / sizeof (struct protent); i++)
+    for (i = 0; i < N_PROTO; i++)
 	(*prottbl[i].init)(0);
   
     progname = *argv;
@@ -244,6 +234,20 @@ main(argc, argv)
 	die(1);
     check_auth_options();
     setipdefault();
+
+    if (lockflag && !default_device)
+	if (lock(devname) < 0)
+	    die(1);
+
+    /*
+     * Initialize syslog system and magic number package.
+     */
+    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
+    setlogmask(LOG_UPTO(LOG_INFO));
+    if (debug)
+	setlogmask(LOG_UPTO(LOG_DEBUG));
+
+    magic_init();
 
     p = getlogin();
     if (p == NULL)
@@ -314,9 +318,6 @@ main(argc, argv)
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGALRM);
     sigaddset(&mask, SIGIO);
-#ifdef	STREAMS
-    sigaddset(&mask, SIGPOLL);
-#endif
 
 #define SIGNAL(s, handler)	{ \
 	sv.sv_handler = handler; \
@@ -333,9 +334,6 @@ main(argc, argv)
     SIGNAL(SIGTERM, term);		/* Terminate */
     SIGNAL(SIGALRM, alrm);		/* Timeout */
     SIGNAL(SIGIO, io);			/* Input available */
-#ifdef	STREAMS
-    SIGNAL(SIGPOLL, io);		/* Input available */
-#endif
 
     signal(SIGUSR1, incdebug);		/* Increment debug flag */
     signal(SIGUSR2, nodebug);		/* Reset debug flag */
@@ -345,9 +343,6 @@ main(argc, argv)
      */
     sigemptyset(&mask);
     sigaddset(&mask, SIGIO);
-#ifdef	STREAMS
-    sigaddset(&mask, SIGPOLL);
-#endif
     sigprocmask(SIG_BLOCK, &mask, NULL);
 
     /*
@@ -359,18 +354,20 @@ main(argc, argv)
     }
     hungup = 0;
 
+#ifdef TIOCSCTTY
     /* set device to be controlling tty */
     if (!default_device && ioctl(fd, TIOCSCTTY) < 0) {
 	syslog(LOG_ERR, "ioctl(TIOCSCTTY): %m");
 	die(1);
     }
-
-    /* set line speed, flow control, etc. */
-    set_up_tty(fd);
+#endif /* TIOCSCTTY */
 
     /* run connection script */
     if (connector) {
-	syslog(LOG_INFO, "Connecting with <%s>", connector);
+	MAINDEBUG((LOG_INFO, "Connecting with <%s>", connector));
+
+	/* set line speed, flow control, etc.; set CLOCAL for now */
+	set_up_tty(fd, 1);
 
 	/* drop dtr to hang up in case modem is off hook */
 	if (!default_device && modem) {
@@ -379,7 +376,7 @@ main(argc, argv)
 	    setdtr(fd, TRUE);
 	}
 
-	if (set_up_connection(connector, fd, fd) < 0) {
+	if (device_script(connector, fd, fd) < 0) {
 	    syslog(LOG_ERR, "could not set up connection");
 	    setdtr(fd, FALSE);
 	    die(1);
@@ -389,6 +386,9 @@ main(argc, argv)
 	sleep(1);		/* give it time to set up its terminal */
     }
   
+    /* set line speed, flow control, etc.; clear CLOCAL if modem option */
+    set_up_tty(fd, 0);
+
     /* set up the serial device as a ppp interface */
     establish_ppp();
 
@@ -448,11 +448,26 @@ main(argc, argv)
      */
     syslog(LOG_NOTICE, "Connect: %s <--> %s", ifname, devname);
     sigprocmask(SIG_BLOCK, &mask, NULL); /* Block signals now */
-    lcp_lowerup(0);			/* XXX Well, sort of... */
-    lcp_open(0);			/* Start protocol */
-    for (;;) {
-	sigpause(0);			/* Wait for next signal */
+    lcp_lowerup(0);		/* XXX Well, sort of... */
+    lcp_open(0);		/* Start protocol */
+    for (phase = PHASE_ESTABLISH; phase != PHASE_DEAD; ) {
+	sigpause(0);		/* Wait for next signal */
+	reap_kids();		/* Don't leave dead kids lying around */
     }
+
+    /*
+     * Run disconnector script, if requested
+     */
+    if (disconnector) {
+	if (device_script(disconnector, fd, fd) < 0) {
+	    syslog(LOG_WARNING, "disconnect script failed");
+	    die(1);
+	}
+
+	syslog(LOG_INFO, "Disconnected...");
+    }
+
+    quit();
 }
 
 #if B9600 == 9600
@@ -461,6 +476,7 @@ main(argc, argv)
  * (so we can ask for any speed).
  */
 #define translate_speed(bps)	(bps)
+#define baud_rate_of(speed)	(speed)
 
 #else
 /*
@@ -555,14 +571,32 @@ translate_speed(bps)
     syslog(LOG_WARNING, "speed %d not supported", bps);
     return 0;
 }
+
+/*
+ * Translate from a speed_t to bits/second.
+ */
+int
+baud_rate_of(speed)
+    int speed;
+{
+    struct speed *speedp;
+
+    if (speed == 0)
+	return 0;
+    for (speedp = speeds; speedp->speed_int; speedp++)
+	if (speed == speedp->speed_val)
+	    return speedp->speed_int;
+    return 0;
+}
 #endif
 
 /*
  * set_up_tty: Set up the serial port on `fd' for 8 bits, no parity,
- * at the requested speed, etc.
+ * at the requested speed, etc.  If `local' is true, set CLOCAL
+ * regardless of whether the modem option was specified.
  */
-set_up_tty(fd)
-    int fd;
+set_up_tty(fd, local)
+    int fd, local;
 {
 #ifndef SGTTY
     int speed;
@@ -576,11 +610,16 @@ set_up_tty(fd)
     if (!restore_term)
 	inittermios = tios;
 
+#ifdef CRTSCTS
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL | CRTSCTS);
-    tios.c_cflag |= CS8 | CREAD | HUPCL;
     if (crtscts)
 	tios.c_cflag |= CRTSCTS;
-    if (!modem)
+#else
+    tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
+#endif	/* CRTSCTS */
+
+    tios.c_cflag |= CS8 | CREAD | HUPCL;
+    if (local || !modem)
 	tios.c_cflag |= CLOCAL;
     tios.c_iflag = IGNBRK | IGNPAR;
     tios.c_oflag = 0;
@@ -591,12 +630,15 @@ set_up_tty(fd)
     if (speed) {
 	cfsetospeed(&tios, speed);
 	cfsetispeed(&tios, speed);
+    } else {
+	speed = cfgetospeed(&tios);
     }
 
     if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
 	syslog(LOG_ERR, "tcsetattr: %m");
 	die(1);
     }
+
 #else	/* SGTTY */
     int speed;
     struct sgttyb sgttyb;
@@ -616,13 +658,29 @@ set_up_tty(fd)
     speed = translate_speed(inspeed);
     if (speed)
 	sgttyb.sg_ispeed = speed;
+    else
+	speed = sgttyb.sg_ispeed;
 
     if (ioctl(fd, TIOCSETP, &sgttyb) < 0) {
 	syslog(LOG_ERR, "ioctl(TIOCSETP): %m");
 	die(1);
     }
 #endif
+
+    baud_rate = baud_rate_of(speed);
     restore_term = TRUE;
+}
+
+/*
+ * setdtr - control the DTR line on the serial port.
+ * This is called from die(), so it shouldn't call die().
+ */
+setdtr(fd, on)
+int fd, on;
+{
+    int modembits = TIOCM_DTR;
+
+    ioctl(fd, (on? TIOCMBIS: TIOCMBIC), &modembits);
 }
 
 
@@ -656,23 +714,23 @@ cleanup(status, arg)
     int status;
     caddr_t arg;
 {
-    if (fd != 0) {
+    if (fd >= 0) {
 	/* drop dtr to hang up */
 	if (modem)
 	    setdtr(fd, FALSE);
 
 	if (fcntl(fd, F_SETFL, initfdflags) < 0)
-	    syslog(LOG_ERR, "fcntl(F_SETFL, fdflags): %m");
+	    syslog(LOG_WARNING, "fcntl(F_SETFL, fdflags): %m");
 
 	disestablish_ppp();
 
 	if (restore_term) {
 #ifndef SGTTY
 	    if (tcsetattr(fd, TCSAFLUSH, &inittermios) < 0)
-		syslog(LOG_ERR, "tcsetattr: %m");
+		syslog(LOG_WARNING, "tcsetattr: %m");
 #else
 	    if (ioctl(fd, TIOCSETP, &initsgttyb) < 0)
-		syslog(LOG_ERR, "ioctl(TIOCSETP): %m");
+		syslog(LOG_WARNING, "ioctl(TIOCSETP): %m");
 #endif
 	}
 
@@ -683,6 +741,9 @@ cleanup(status, arg)
     if (pidfilename[0] != 0 && unlink(pidfilename) < 0) 
 	syslog(LOG_WARNING, "unable to unlink pid file: %m");
     pidfilename[0] = 0;
+
+    if (lockflag && !default_device)
+	unlock();
 }
 
 
@@ -739,7 +800,7 @@ timeout(func, arg, time)
 	itv.it_interval.tv_sec = itv.it_interval.tv_usec =
 	    itv.it_value.tv_usec = 0;
 	itv.it_value.tv_sec = callout->c_time;
-	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds.",
+	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds in timeout.",
 		   itv.it_value.tv_sec));
 	if (setitimer(ITIMER_REAL, &itv, NULL)) {
 	    syslog(LOG_ERR, "setitimer(ITIMER_REAL): %m");
@@ -795,7 +856,7 @@ untimeout(func, arg)
 	itv.it_interval.tv_sec = itv.it_interval.tv_usec =
 	    itv.it_value.tv_usec = 0;
 	itv.it_value.tv_sec = callout ? callout->c_time : 0;
-	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds.",
+	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds in untimeout.",
 		   itv.it_value.tv_sec));
 	if (setitimer(ITIMER_REAL, &itv, NULL)) {
 	    syslog(LOG_ERR, "setitimer(ITIMER_REAL): %m");
@@ -912,23 +973,23 @@ alrm(sig, code, scp, addr)
     char *addr;
 {
     struct itimerval itv;
-    struct callout *freep;
+    struct callout *freep, *list, *last;
 
     MAINDEBUG((LOG_DEBUG, "Alarm"));
 
+    if (callout == NULL)
+	return;
     /*
-     * Call and free first scheduled timeout and any that were scheduled
-     * for the same time.
+     * Get the first scheduled timeout and any that were scheduled
+     * for the same time as a list, and remove them all from callout
+     * list.
      */
-    while (callout) {
-	freep = callout;	/* Remove entry before calling */
-	callout = freep->c_next;
-	(*freep->c_func)(freep->c_arg);
-	(void) free((char *) freep);
-	if (callout && callout->c_time)
-	    break;
-    }
-  
+    list = last = callout;
+    while (last->c_next != NULL && last->c_next->c_time == 0)
+	last = last->c_next;
+    callout = last->c_next;
+    last->c_next = NULL;
+
     /*
      * Set a new itimer if there are more timeouts scheduled.
      */
@@ -936,7 +997,7 @@ alrm(sig, code, scp, addr)
 	itv.it_interval.tv_sec = itv.it_interval.tv_usec = 0;
 	itv.it_value.tv_usec = 0;
 	itv.it_value.tv_sec = callout->c_time;
-	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds.",
+	MAINDEBUG((LOG_DEBUG, "Setting itimer for %d seconds in alrm.",
 		   itv.it_value.tv_sec));
 	if (setitimer(ITIMER_REAL, &itv, NULL)) {
 	    syslog(LOG_ERR, "setitimer(ITIMER_REAL): %m");
@@ -947,6 +1008,17 @@ alrm(sig, code, scp, addr)
 	    die(1);
 	}
     }
+
+    /*
+     * Now call all the timeout routines scheduled for this time.
+     */
+    while (list) {
+	(*list->c_func)(list->c_arg);
+	freep = list;
+	list = list->c_next;
+	(void) free((char *) freep);
+    }
+  
 }
 
 
@@ -1000,9 +1072,12 @@ io(sig, code, scp, addr)
 	    return;
 
 	if (len == 0) {
-	    syslog(LOG_ERR, "End of file on fd!");
+	    syslog(LOG_WARNING, "End of file on fd!");
 	    die(1);
 	}
+
+	if (debug /*&& (debugflags & DBG_INPACKET)*/)
+	    log_packet(p, len, "rcvd ");
 
 	if (len < DLLHEADERLEN) {
 	    MAINDEBUG((LOG_INFO, "io(): Received short packet."));
@@ -1019,8 +1094,6 @@ io(sig, code, scp, addr)
 	if (protocol != LCP && lcp_fsm[0].state != OPENED) {
 	    MAINDEBUG((LOG_INFO,
 		       "io(): Received non-LCP packet when LCP not open."));
-	    if (debug)
-		dumpbuffer(inpacket_buf, len + DLLHEADERLEN, LOG_INFO);
 	    return;
 	}
 
@@ -1098,10 +1171,11 @@ nodebug(sig)
 
 
 /*
- * set_up_connection - run a program to initialize the serial connector
+ * device_script - run a program to connect or disconnect the
+ * serial device.
  */
 int
-set_up_connection(program, in, out)
+device_script(program, in, out)
     char *program;
     int in, out;
 {
@@ -1115,12 +1189,12 @@ set_up_connection(program, in, out)
     sigprocmask(SIG_BLOCK, &mask, &mask);
 
     pid = fork();
-  
+
     if (pid < 0) {
 	syslog(LOG_ERR, "fork: %m");
 	die(1);
     }
-  
+
     if (pid == 0) {
 	setreuid(getuid(), getuid());
 	setregid(getgid(), getgid());
@@ -1133,10 +1207,10 @@ set_up_connection(program, in, out)
 	/* NOTREACHED */
     }
 
-    while (waitpid(pid, &status, 0) != pid) {
+    while (waitpid(pid, &status, 0) < 0) {
 	if (errno == EINTR)
 	    continue;
-	syslog(LOG_ERR, "waiting for connection process: %m");
+	syslog(LOG_ERR, "waiting for (dis)connection process: %m");
 	die(1);
     }
     sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -1146,82 +1220,154 @@ set_up_connection(program, in, out)
 
 
 /*
- * Return user specified netmask. A value of zero means no netmask has
- * been set. 
+ * run-program - execute a program with given arguments,
+ * but don't wait for it.
+ * If the program can't be executed, logs an error unless
+ * must_exist is 0 and the program file doesn't exist.
  */
-/* ARGSUSED */
-u_long
-GetMask(addr)
-    u_long addr;
+int
+run_program(prog, args, must_exist)
+    char *prog;
+    char **args;
+    int must_exist;
 {
-    return(netmask);
+    int pid;
+
+    pid = fork();
+    if (pid == -1) {
+	syslog(LOG_ERR, "can't fork to run %s: %m", prog);
+	return -1;
+    }
+    if (pid == 0) {
+	execv(prog, args);
+	if (must_exist || errno != ENOENT)
+	    syslog(LOG_WARNING, "can't execute %s: %m", prog);
+	_exit(-1);
+    }
+    MAINDEBUG((LOG_DEBUG, "Script %s started; pid = %d", prog, pid));
+    ++n_children;
+    return 0;
 }
 
+
 /*
- * dumpbuffer - print contents of a buffer in hex to standard output.
+ * reap_kids - get status from any dead child processes,
+ * and log a message for abnormal terminations.
  */
 void
-dumpbuffer(buffer, size, level)
-    unsigned char *buffer;
-    int size;
-    int level;
+reap_kids()
 {
-    register int i;
-    char line[256], *p;
+    int pid, status;
 
-    printf("%d bytes:\n", size);
-    while (size > 0)
-    {
-	p = line;
-	sprintf(p, "%08lx: ", buffer);
-	p += 10;
-		
-	for (i = 0; i < 8; i++, p += 3)
-	    if (size - i <= 0)
-		sprintf(p, "xx ");
-	    else
-		sprintf(p, "%02x ", buffer[i]);
-
-	for (i = 0; i < 8; i++)
-	    if (size - i <= 0)
-		*p++ = 'x';
-	    else
-		*p++ = (' ' <= buffer[i] && buffer[i] <= '~') ?
-		    buffer[i] : '.';
-
-	*p++ = 0;
-	buffer += 8;
-	size -= 8;
-
-/*	syslog(level, "%s\n", line); */
-	printf("%s\n", line);
-	fflush(stdout);
+    if (n_children == 0)
+	return;
+    if ((pid = waitpid(-1, &status, WNOHANG)) == -1) {
+	if (errno != ECHILD)
+	    syslog(LOG_ERR, "waitpid: %m");
+	return;
+    }
+    if (pid > 0) {
+	--n_children;
+	if (WIFSIGNALED(status)) {
+	    syslog(LOG_WARNING, "child process %d terminated with signal %d",
+		   pid, WTERMSIG(status));
+	}
     }
 }
 
 
 /*
- * setdtr - control the DTR line on the serial port.
- * This is called from die(), so it shouldn't call die().
+ * log_packet - format a packet and log it.
  */
-setdtr(fd, on)
-int fd, on;
-{
-    int modembits = TIOCM_DTR;
 
-    ioctl(fd, (on? TIOCMBIS: TIOCMBIC), &modembits);
+char line[256];			/* line to be logged accumulated here */
+char *linep;
+
+void
+log_packet(p, len, prefix)
+    u_char *p;
+    int len;
+    char *prefix;
+{
+    strcpy(line, prefix);
+    linep = line + strlen(line);
+    format_packet(p, len, pr_log, NULL);
+    if (linep != line)
+	syslog(LOG_DEBUG, "%s", line);
 }
 
+/*
+ * format_packet - make a readable representation of a packet,
+ * calling `printer(arg, format, ...)' to output it.
+ */
+void
+format_packet(p, len, printer, arg)
+    u_char *p;
+    int len;
+    void (*printer) __ARGS((void *, char *, ...));
+    void *arg;
+{
+    int i, n;
+    u_short proto;
+    u_char x;
+
+    if (len >= DLLHEADERLEN && p[0] == ALLSTATIONS && p[1] == UI) {
+	p += 2;
+	GETSHORT(proto, p);
+	len -= DLLHEADERLEN;
+	for (i = 0; i < N_PROTO; ++i)
+	    if (proto == prottbl[i].protocol)
+		break;
+	if (i < N_PROTO) {
+	    printer(arg, "[%s", prottbl[i].name);
+	    n = (*prottbl[i].printpkt)(p, len, printer, arg);
+	    printer(arg, "]");
+	    p += n;
+	    len -= n;
+	} else {
+	    printer(arg, "[proto=0x%x]", proto);
+	}
+    }
+
+    for (; len > 0; --len) {
+	GETCHAR(x, p);
+	printer(arg, " %.2x", x);
+    }
+}
+
+#ifdef __STDC__
+#include <stdarg.h>
+
+void
+pr_log(void *arg, char *fmt, ...)
+{
+    int n;
+    va_list pvar;
+    char buf[256];
+
+    va_start(pvar, fmt);
+    vsprintf(buf, fmt, pvar);
+    va_end(pvar);
+
+    n = strlen(buf);
+    if (linep + n + 1 > line + sizeof(line)) {
+	syslog(LOG_DEBUG, "%s", line);
+	linep = line;
+    }
+    strcpy(linep, buf);
+    linep += n;
+}
+
+#else /* __STDC__ */
 #include <varargs.h>
 
-char line[256];
-char *p;
-
-logf(level, fmt, va_alist)
-int level;
+void
+pr_log(arg, fmt, va_alist)
+void *arg;
 char *fmt;
 va_dcl
 {
+    int n;
     va_list pvar;
     char buf[256];
 
@@ -1229,15 +1375,43 @@ va_dcl
     vsprintf(buf, fmt, pvar);
     va_end(pvar);
 
-    p = line + strlen(line);
-    strcat(p, buf);
-
-    if (buf[strlen(buf)-1] == '\n') {
-	syslog(level, "%s", line);
-	line[0] = 0;
+    n = strlen(buf);
+    if (linep + n + 1 > line + sizeof(line)) {
+	syslog(LOG_DEBUG, "%s", line);
+	linep = line;
     }
+    strcpy(linep, buf);
+    linep += n;
+}
+#endif
+
+/*
+ * print_string - print a readable representation of a string using
+ * printer.
+ */
+void
+print_string(p, len, printer, arg)
+    char *p;
+    int len;
+    void (*printer) __ARGS((void *, char *, ...));
+    void *arg;
+{
+    int c;
+
+    printer(arg, "\"");
+    for (; len > 0; --len) {
+	c = *p++;
+	if (' ' <= c && c <= '~')
+	    printer(arg, "%c", c);
+	else
+	    printer(arg, "\\%.3o", c);
+    }
+    printer(arg, "\"");
 }
 
+/*
+ * novm - log an error message saying we ran out of memory, and die.
+ */
 void
 novm(msg)
     char *msg;

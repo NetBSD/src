@@ -1,6 +1,5 @@
 /*
  * chap.h - Cryptographic Handshake Authentication Protocol definitions.
- *          based on November 1991 draft of PPP Authentication RFC
  *
  * Copyright (c) 1991 Gregory M. Christy
  * All rights reserved.
@@ -16,13 +15,13 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.h,v 1.3 1993/11/10 01:34:02 paulus Exp $
+ * $Id: chap.h,v 1.4 1994/05/08 12:16:16 paulus Exp $
  */
 
 #ifndef __CHAP_INCLUDE__
 
 /* Code + ID + length */
-#define CHAP_HEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
+#define CHAP_HEADERLEN		4
 
 /*
  * CHAP codes.
@@ -106,6 +105,8 @@ void ChapLowerUp __ARGS((int));
 void ChapLowerDown __ARGS((int));
 void ChapInput __ARGS((int, u_char *, int));
 void ChapProtocolReject __ARGS((int));
+int  ChapPrintPkt __ARGS((u_char *, int,
+			  void (*) __ARGS((void *, char *, ...)), void *));
 
 #define __CHAP_INCLUDE__
 #endif /* __CHAP_INCLUDE__ */

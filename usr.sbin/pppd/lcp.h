@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.h,v 1.3 1993/11/10 01:34:17 paulus Exp $
+ * $Id: lcp.h,v 1.4 1994/05/08 12:16:23 paulus Exp $
  */
 
 /*
@@ -27,10 +27,16 @@
 #define CI_AUTHTYPE	3	/* Authentication Type */
 #define CI_QUALITY	4	/* Quality Protocol */
 #define CI_MAGICNUMBER	5	/* Magic Number */
-#define CI_KEEPALIVE	6	/* Keep Alive Parameters - OBSOLETE */
 #define CI_PCOMPRESSION	7	/* Protocol Field Compression */
 #define CI_ACCOMPRESSION 8	/* Address/Control Field Compression */
 
+/*
+ * LCP-specific packet types.
+ */
+#define PROTREJ		8	/* Protocol Reject */
+#define ECHOREQ		9	/* Echo Request */
+#define ECHOREP		10	/* Echo Reply */
+#define DISCREQ		11	/* Discard Request */
 
 /*
  * The state of options is described by an lcp_options structure.
@@ -60,6 +66,7 @@ extern lcp_options lcp_wantoptions[];
 extern lcp_options lcp_gotoptions[];
 extern lcp_options lcp_allowoptions[];
 extern lcp_options lcp_hisoptions[];
+extern u_long xmit_accm[][8];
 
 #define DEFMRU	1500		/* Try for this */
 #define MINMRU	128		/* No MRUs below this */
@@ -73,6 +80,8 @@ void lcp_lowerdown __ARGS((int));
 void lcp_input __ARGS((int, u_char *, int));
 void lcp_protrej __ARGS((int));
 void lcp_sprotrej __ARGS((int, u_char *, int));
+int  lcp_printpkt __ARGS((u_char *, int,
+			  void (*) __ARGS((void *, char *, ...)), void *));
 
 extern int lcp_warnloops;	/* Warn about a loopback this often */
 #define DEFWARNLOOPS	10	/* Default value for above */
