@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.33 1997/07/06 12:38:30 fvdl Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.34 1998/02/19 00:55:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -47,6 +47,8 @@
  *	pageouts
  *	fix credential use (uses current process credentials now)
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
