@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.17 2000/11/07 06:43:37 lukem Exp $
+.\" $NetBSD: pkg_delete.1,v 1.18 2001/01/07 01:39:21 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -78,10 +78,25 @@ If the
 flag is given, one or more (absolute) filenames may be specified and
 the Package Database will be consulted for the package to which the
 given file belongs. These packages are then deinstalled.
-.It Fl v
-Turn on verbose output.
+.It Fl d
+Remove empty directories created by file cleanup.  By default, only
+files/directories explicitly listed in a package's contents (either as
+normal files/directories or with the
+.Cm @dirrm
+directive) will be removed at deinstallation time.  This option tells
+.Nm
+to also remove any directories that were emptied as a result of removing
+the package.  
 .It Fl D
 If a deinstallation script exists for a given package, do not execute it.
+.It Fl f
+Force removal of the package, even if a dependency is recorded or the
+deinstall or require script fails.
+.It Fl F
+Any pkg-name given will be interpreted as pathname which is
+subsequently transformed in a (real) package name via the Package
+Database. That way, packges can be deleted by giving a filename
+instead of the package-name. 
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
@@ -109,25 +124,9 @@ option, this does a recursive delete. The
 option deletes the given package and any packages required by
 it, unless some other package still needs them. This can be used
 to delete a package and all the packages it needs. 
-.It Fl d
-Remove empty directories created by file cleanup.  By default, only
-files/directories explicitly listed in a package's contents (either as
-normal files/directories or with the
-.Cm @dirrm
-directive) will be removed at deinstallation time.  This option tells
-.Nm
-to also remove any directories that were emptied as a result of removing
-the package.  
-.It Fl F
-Any pkg-name given will be interpreted as pathname which is
-subsequently transformed in a (real) package name via the Package
-Database. That way, packges can be deleted by giving a filename
-instead of the package-name. 
-.It Fl f
-Force removal of the package, even if a dependency is recorded or the
-deinstall or require script fails.
+.It Fl v
+Turn on verbose output.
 .El
-
 .Pp
 .Sh TECHNICAL DETAILS
 .Nm
