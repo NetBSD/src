@@ -1,7 +1,7 @@
 /* proto.h: Prototype function definitions for "external" functions. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,13 +38,11 @@
 #endif
 
 /* Include the standard library header files. */
-#ifndef NO_UNISTD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifndef NO_STDLIB
-#ifdef __STDC__
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 #endif
 
 /* Define the _PROTOTYPE macro if it is needed. */
@@ -69,7 +67,7 @@ _PROTOTYPE(void assign, (int c_code));
 
 /* From util.c */
 _PROTOTYPE(char *strcopyof, (char *str));
-_PROTOTYPE(arg_list *nextarg, (arg_list *args, int val));
+_PROTOTYPE(arg_list *nextarg, (arg_list *args, int val, int is_var));
 _PROTOTYPE(char *arg_str, (arg_list *args));
 _PROTOTYPE(char *call_str, (arg_list *args));
 _PROTOTYPE(void free_args, (arg_list *args));
@@ -118,12 +116,18 @@ _PROTOTYPE(long num2long, (bc_num num));
 _PROTOTYPE(int bc_compare, (bc_num n1, bc_num n2));
 _PROTOTYPE(char is_zero, (bc_num num));
 _PROTOTYPE(char is_neg, (bc_num num));
-_PROTOTYPE(void bc_add, (bc_num n1, bc_num n2, bc_num *result));
-_PROTOTYPE(void bc_sub, (bc_num n1, bc_num n2, bc_num *result));
+_PROTOTYPE(void bc_add, (bc_num n1, bc_num n2, bc_num *result, int scale_min));
+_PROTOTYPE(void bc_sub, (bc_num n1, bc_num n2, bc_num *result, int scale_min));
 _PROTOTYPE(void bc_multiply, (bc_num n1, bc_num n2, bc_num *prod, int scale));
 _PROTOTYPE(int bc_divide, (bc_num n1, bc_num n2, bc_num *quot, int scale));
-_PROTOTYPE(int bc_modulo, (bc_num num1, bc_num num2, bc_num *result, int scale));
-_PROTOTYPE(void bc_raise, (bc_num num1, bc_num num2, bc_num *result, int scale));
+_PROTOTYPE(int bc_modulo,
+	    (bc_num num1, bc_num num2, bc_num *result, int scale));
+_PROTOTYPE(int bc_divmod,
+	    (bc_num num1, bc_num num2, bc_num *quot, bc_num *rem, int scale));
+_PROTOTYPE(int bc_raisemod,
+	    (bc_num base, bc_num expo, bc_num mod, bc_num *result, int scale));
+_PROTOTYPE(void bc_raise,
+		(bc_num num1, bc_num num2, bc_num *result, int scale));
 _PROTOTYPE(int bc_sqrt, (bc_num *num, int scale));
 _PROTOTYPE(void out_long, (long val, int size, int space,
 			   void (*out_char)(int)));
@@ -162,5 +166,6 @@ _PROTOTYPE(int yyparse, (void));
 _PROTOTYPE(int yylex, (void)); 
 
 /* Other things... */
+#ifndef HAVE_UNISTD_H
 _PROTOTYPE (int getopt, (int, char *[], CONST char *));
-
+#endif

@@ -1,7 +1,7 @@
 /* storage.c:  Code and data storage manipulations.  This includes labels. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,6 +56,9 @@ init_storage ()
   i_base = 10;
   o_base = 10;
   scale  = 0;
+#ifdef READLINE
+  n_history = -1;	/* no limit. */
+#endif
   c_code = FALSE;
   init_numbers();
 }
@@ -454,7 +457,7 @@ store_var (var_name)
   long temp;
   char toobig;
 
-  if (var_name > 2)
+  if (var_name > 3)
     {
       /* It is a simple variable. */
       var_ptr = get_var (var_name);
@@ -484,6 +487,11 @@ store_var (var_name)
 	      rt_warn ("negative scale, set to 0");
 	      temp = 0;
 	      break;
+#ifdef READLINE
+	    case 3:
+	      temp = -1;
+	      break;
+#endif
 	    }
 	}
       else
@@ -536,6 +544,25 @@ store_var (var_name)
 	    }
 	  else
 	    scale = (int) temp;
+	  break;
+
+#ifdef READLINE
+	case 3:
+	  if (toobig)
+	    {
+	      temp = -1;
+	      rt_warn ("history too large, set to unlimited");
+	      unstifle_history ();
+	    }
+	  else
+	    {
+	      n_history = temp;
+	      if (temp == -1)
+		unstifle_history ();
+	      else
+		stifle_history (n_history);
+	    }
+#endif
 	}
     }
 }
@@ -602,6 +629,14 @@ load_var (var_name)
       push_copy (_zero_);
       int2num (&ex_stack->s_num, scale);
       break;
+
+#ifdef READLINE
+    case 3:
+      /* Special variable history. */
+      push_copy (_zero_);
+      int2num (&ex_stack->s_num, n_history);
+      break;
+#endif
 
     default:
       /* It is a simple variable. */
@@ -674,10 +709,23 @@ decr_var (var_name)
 	rt_warn ("scale can not be negative in -- ");
       break;
 
+#ifdef READLINE
+    case 3: /* history */
+      n_history--;
+      if (n_history > 0)
+	stifle_history (n_history);
+      else
+	{
+	  n_history = -1;
+	  rt_warn ("history is negative, set to unlimited");
+	  unstifle_history ();
+	}
+#endif
+
     default: /* It is a simple variable. */
       var_ptr = get_var (var_name);
       if (var_ptr != NULL)
-	bc_sub (var_ptr->v_value,_one_,&var_ptr->v_value);
+	bc_sub (var_ptr->v_value,_one_,&var_ptr->v_value, 0);
     }
 }
 
@@ -704,7 +752,7 @@ decr_array (var_name)
       if (num_ptr != NULL)
 	{
 	  pop ();
-	  bc_sub (*num_ptr, _one_, num_ptr);
+	  bc_sub (*num_ptr, _one_, num_ptr, 0);
 	}
     }
 }
@@ -743,10 +791,23 @@ incr_var (var_name)
 	rt_warn ("Scale too big in ++");
       break;
 
+#ifdef READLINE
+    case 3: /* history */
+      n_history++;
+      if (n_history > 0)
+	stifle_history (n_history);
+      else
+	{
+	  n_history = -1;
+	  rt_warn ("history set to unlimited");
+	  unstifle_history ();
+	}
+#endif
+
     default:  /* It is a simple variable. */
       var_ptr = get_var (var_name);
       if (var_ptr != NULL)
-	bc_add (var_ptr->v_value, _one_, &var_ptr->v_value);
+	bc_add (var_ptr->v_value, _one_, &var_ptr->v_value, 0);
 
     }
 }
@@ -773,7 +834,7 @@ incr_array (var_name)
       if (num_ptr != NULL)
 	{
 	  pop ();
-	  bc_add (*num_ptr, _one_, num_ptr);
+	  bc_add (*num_ptr, _one_, num_ptr, 0);
 	}
     }
 }
@@ -882,6 +943,44 @@ pop_vars (list)
     }
 }
 
+/* COPY_NODE: Copies an array node for a call by value parameter. */
+bc_array_node *
+copy_tree (ary_node, depth)
+     bc_array_node *ary_node;
+     int depth;
+{
+  bc_array_node *res = (bc_array_node *) bc_malloc (sizeof(bc_array_node));
+  int i;
+
+  if (depth > 1)
+    for (i=0; i<NODE_SIZE; i++)
+      if (ary_node->n_items.n_down[i] != NULL)
+	res->n_items.n_down[i] =
+	  copy_tree (ary_node->n_items.n_down[i], depth - 1);
+      else
+	res->n_items.n_down[i] = NULL;
+  else
+    for (i=0; i<NODE_SIZE; i++)
+      if (ary_node->n_items.n_num[i] != NULL)
+	res->n_items.n_num[i] = copy_num (ary_node->n_items.n_num[i]);
+      else
+	res->n_items.n_num[i] = NULL;
+  return res;
+}
+
+/* COPY_ARRAY: Copies an array for a call by value array parameter. 
+   ARY is the pointer to the bc_array structure. */
+
+bc_array *
+copy_array (ary)
+     bc_array *ary;
+{
+  bc_array *res = (bc_array *) bc_malloc (sizeof(bc_array));
+  res->a_depth = ary->a_depth;
+  res->a_tree = copy_tree (ary->a_tree, ary->a_depth);
+  return (res);
+}
+
 
 /* A call is being made to FUNC.  The call types are at PC.  Process
    the parameters by doing an auto on the parameter variable and then
@@ -936,8 +1035,16 @@ process_params (pc, func)
 		else
 		  a_src = arrays[ix];
 		a_dest = arrays[ix1];
-		a_dest->a_param = TRUE;
-		a_dest->a_value = a_src->a_value;
+		if (params->arg_is_var)
+		  {
+		    a_dest->a_param = TRUE;
+		    a_dest->a_value = a_src->a_value;
+		  }
+		else
+		  {
+		    a_dest->a_param = FALSE;
+		    a_dest->a_value = copy_array (a_src->a_value);
+		  }
 	      }
 	    else
 	      {
