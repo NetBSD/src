@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.9 2005/03/16 00:38:27 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.10 2005/03/16 00:39:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.9 2005/03/16 00:38:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10 2005/03/16 00:39:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -173,44 +173,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.9 2005/03/16 00:38:27 yamt Exp $");
 
 /* SACK block pool. */
 POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl", NULL);
-
-void
-tcp_update_sack_list(struct tcpcb *tp)
-{
-	int i = 0;
-	struct ipqent *tiqe = NULL;
-
-	if (!TCP_SACK_ENABLED(tp) || (tp->t_flags & TF_SIGNATURE)) {
-		/* Can't SACK this connection. */
-		return;
-	}
-
-	/*
-	 * If possible, tack on the D-SACK block. (RFC2883)
-	 */
-	if (tp->rcv_sack_flags & TCPSACK_HAVED) {
-		tp->rcv_sack_block[0].left = tp->rcv_dsack_block.left;
-		tp->rcv_sack_block[0].right = tp->rcv_dsack_block.right;
-		i++;
-	}
-
-	/*
-	 * Build up a list of holes in the TCP space.  Note that
-	 * the first SACK block is always the most recent segment
-	 * received.
-	 */
-	TAILQ_FOREACH(tiqe, &tp->timeq, ipqe_timeq) {
-		tp->rcv_sack_block[i].left = tiqe->ipqe_seq;
-		tp->rcv_sack_block[i].right = tiqe->ipqe_seq + tiqe->ipqe_len;
-		i++;
-		if (i >= TCP_SACK_MAX) {
-			break;
-		}
-	}
-
-	/* If we can SACK, do so. */
-	tp->rcv_sack_num = i;
-}
 
 void
 tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
@@ -554,12 +516,24 @@ tcp_sack_adjust(struct tcpcb *tp)
 }
 
 int
-tcp_sack_optlen(struct tcpcb *tp)
+tcp_sack_numblks(const struct tcpcb *tp)
 {
+	int numblks;
 
-	if (!TCP_SACK_ENABLED(tp) || tp->rcv_sack_num == 0) {
+	if (!TCP_SACK_ENABLED(tp)) {
 		return 0;
 	}
 
-	return tp->rcv_sack_num * 8 + 2 + 2;
+	numblks = (((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) ? 1 : 0) +
+	    tp->t_segqlen;
+
+	if (numblks == 0) {
+		return 0;
+	}
+
+	if (numblks > TCP_SACK_MAX) {
+		numblks = TCP_SACK_MAX;
+	}
+
+	return numblks;
 }
