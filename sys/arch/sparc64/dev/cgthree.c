@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.5 1999/05/23 02:45:19 eeh Exp $ */
+/*	$NetBSD: cgthree.c,v 1.6 1999/06/05 05:05:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ cgthreematch(parent, cf, aux)
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
 	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 4) != -1);
+	return (probeget(ASI_PRIMARY, ra->ra_vaddr, 4) != -1);
 }
 
 /*
