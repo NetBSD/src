@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.27 1996/10/13 03:20:03 christos Exp $	*/
+/*	$NetBSD: mms.c,v 1.28 1997/10/19 19:17:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -39,7 +39,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>
 
@@ -57,9 +57,11 @@ struct mms_softc {		/* driver status information */
 	struct device sc_dev;
 	void *sc_ih;
 
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	MMS_OPEN	0x01	/* device is open */
 #define	MMS_ASLP	0x02	/* waiting for mouse data */
@@ -87,18 +89,30 @@ mmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+	int rv = 0;
 
-	/* Read identification register to see if present */
-	if (inb(iobase + MMS_IDENT) != 0xde)
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return 0;
 
-	/* Seems it was there; reset. */
-	outb(iobase + MMS_ADDR, 0x87);
+	if (bus_space_map(iot, ia->ia_iobase, MMS_NPORTS, 0, &ioh))
+		return 0;
 
+	/* Read identification register to see if present */
+	if (bus_space_read_1(iot, ioh, MMS_IDENT) != 0xde)
+		goto out;
+
+	/* Seems it was there; reset. */
+	bus_space_write_1(iot, ioh, MMS_ADDR, 0x87);
+
+	rv = 1;
 	ia->ia_iosize = MMS_NPORTS;
 	ia->ia_msize = 0;
-	return 1;
+ out:
+	bus_space_unmap(iot, ioh, MMS_NPORTS);
+	return rv;
 }
 
 void
@@ -108,12 +122,19 @@ mmsattach(parent, self, aux)
 {
 	struct mms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 
 	printf("\n");
 
+	if (bus_space_map(iot, ia->ia_iobase, MMS_NPORTS, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	/* Other initialization was done by mmsprobe. */
-	sc->sc_iobase = iobase;
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
 	sc->sc_state = 0;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
@@ -147,8 +168,8 @@ mmsopen(dev, flag, mode, p)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	outb(sc->sc_iobase + MMS_ADDR, 0x07);
-	outb(sc->sc_iobase + MMS_DATA, 0x09);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MMS_ADDR, 0x07);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MMS_DATA, 0x09);
 
 	return 0;
 }
@@ -163,7 +184,7 @@ mmsclose(dev, flag, mode, p)
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	outb(sc->sc_iobase + MMS_ADDR, 0x87);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MMS_ADDR, 0x87);
 
 	sc->sc_state &= ~MMS_OPEN;
 
@@ -278,35 +299,36 @@ mmsintr(arg)
 	void *arg;
 {
 	struct mms_softc *sc = arg;
-	int iobase = sc->sc_iobase;
 	u_char buttons, changed, status;
 	char dx, dy;
 	u_char buffer[5];
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if ((sc->sc_state & MMS_OPEN) == 0)
 		/* Interrupts are not expected. */
 		return 0;
 
 	/* Freeze InPort registers (disabling interrupts). */
-	outb(iobase + MMS_ADDR, 0x07);
-	outb(iobase + MMS_DATA, 0x29);
+	bus_space_write_1(iot, ioh, MMS_ADDR, 0x07);
+	bus_space_write_1(iot, ioh, MMS_DATA, 0x29);
 
-	outb(iobase + MMS_ADDR, 0x00);
-	status = inb(iobase + MMS_DATA);
+	bus_space_write_1(iot, ioh, MMS_ADDR, 0x00);
+	status = bus_space_read_1(iot, ioh, MMS_DATA);
 
 	if (status & 0x40) {
-		outb(iobase + MMS_ADDR, 1);
-		dx = inb(iobase + MMS_DATA);
+		bus_space_write_1(iot, ioh, MMS_ADDR, 1);
+		dx = bus_space_read_1(iot, ioh, MMS_DATA);
 		dx = (dx == -128) ? -127 : dx;
-		outb(iobase + MMS_ADDR, 2);
-		dy = inb(iobase + MMS_DATA);
+		bus_space_write_1(iot, ioh, MMS_ADDR, 2);
+		dy = bus_space_read_1(iot, ioh, MMS_DATA);
 		dy = (dy == -128) ? 127 : -dy;
 	} else
 		dx = dy = 0;
 
 	/* Unfreeze InPort registers (reenabling interrupts). */
-	outb(iobase + MMS_ADDR, 0x07);
-	outb(iobase + MMS_DATA, 0x09);
+	bus_space_write_1(iot, ioh, MMS_ADDR, 0x07);
+	bus_space_write_1(iot, ioh, MMS_DATA, 0x09);
 
 	buttons = status & BUTSTATMASK;
 	changed = status & BUTCHNGMASK;
