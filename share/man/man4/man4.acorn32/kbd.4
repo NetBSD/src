@@ -27,20 +27,17 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: podulebus.4,v 1.7 2001/04/11 18:54:01 wiz Exp $
+.\"	$NetBSD: kbd.4,v 1.1 2003/04/17 10:16:13 wiz Exp $
 .\"
 .Dd April 6, 1999
-.Dt PODULEBUS 4 arm32
+.Dt KBD 4 acorn32
 .Os
 .Sh NAME
-.Nm podulebus
-.Nd RiscPC podule bus device
+.Nm kbd
+.Nd raw keyboard driver interface
 .Sh SYNOPSIS
-.Cd "podulebus0 at root"
+.Cd "kbd0 at mainbus? base 0x00000000"
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to the RiscPC podule bus. It is only used
-by the autoconfiguration system to location devices attached to the podulebus.
-.Sh SEE ALSO
-.Xr mainbus 4
+interface provides raw I/O to the keyboard device.
