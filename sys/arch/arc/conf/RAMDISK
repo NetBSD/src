@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.30 2002/05/26 18:13:56 jdolecek Exp $
+#	$NetBSD: RAMDISK,v 1.31 2003/01/22 21:16:33 jdolecek Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -9,7 +9,7 @@ include		"arch/arc/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=4608	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4660	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os -mmemcpy"	# generates smaller code than -O2, -O1
 
