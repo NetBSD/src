@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.34 1999/03/16 13:06:35 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.35 1999/03/16 13:24:27 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -270,14 +270,15 @@ ess_printsc(sc)
 	       (int)sc->sc_open, sc->sc_iobase, sc->out_port,
 	       sc->in_port, sc->spkr_state ? "on" : "off");
 
-	printf("record: dmachan %d irq %d nintr %lu intr %p arg %p\n",
+	printf("audio1: dmachan %d irq %d nintr %lu intr %p arg %p\n",
 	       sc->sc_audio1.drq, sc->sc_audio1.irq, sc->sc_audio1.nintr,
 	       sc->sc_audio1.intr, sc->sc_audio1.arg);
 
-	if (sc->sc_model != ESS_1788)
-		printf("play: dmachan %d irq %d nintr %lu intr %p arg %p\n",
+	if (sc->sc_model != ESS_1788) {
+		printf("audio2: dmachan %d irq %d nintr %lu intr %p arg %p\n",
 		       sc->sc_audio2.drq, sc->sc_audio2.irq, sc->sc_audio2.nintr,
 		       sc->sc_audio2.intr, sc->sc_audio2.arg);
+	}
 
 	printf("gain:");
 	for (i = 0; i < sc->ndevs; i++)
