@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.31 2001/07/13 20:30:21 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.32 2001/07/18 05:46:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.31 2001/07/13 20:30:21 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.32 2001/07/18 05:46:43 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ typedef struct {
 	int nsegs;      /* number of segments */
 	struct seglist **segs; /* segment numbers, costs, etc */
 	int nb;         /* total number of blocks */
-	BLOCK_INFO *ba; /* accumulated block_infos */
+	BLOCK_INFO_15 *ba; /* accumulated block_infos */
 	caddr_t *buf;   /* segment buffers */
 } SEGS_AND_BLOCKS;
 
@@ -111,8 +111,8 @@ typedef struct {
 /* function prototypes for system calls; not sure where they should go */
 int	 lfs_segwait(fsid_t *, struct timeval *);
 int	 lfs_segclean(fsid_t *, u_long);
-int	 lfs_bmapv(fsid_t *, BLOCK_INFO *, int);
-int	 lfs_markv(fsid_t *, BLOCK_INFO *, int);
+int	 lfs_bmapv(fsid_t *, BLOCK_INFO_15 *, int);
+int	 lfs_markv(fsid_t *, BLOCK_INFO_15 *, int);
 
 /* function prototypes */
 int	 bi_tossold(const void *, const void *, const void *);
@@ -650,7 +650,7 @@ int
 add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 {
 	int id = slp->sl_id;
-	BLOCK_INFO *tba, *_bip;
+	BLOCK_INFO_15 *tba, *_bip;
 	SEGUSE *sp;
 	struct lfs *lfsp;
 	struct tossstruct t;
@@ -714,7 +714,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	/* Now toss any blocks not in the current segment */
 	t.lfs = lfsp;
 	t.seg = id;
-	toss(tba, &num_blocks, sizeof(BLOCK_INFO), bi_tossold, &t);
+	toss(tba, &num_blocks, sizeof(BLOCK_INFO_15), bi_tossold, &t);
 	/* Check if last element should be tossed */
 	if (num_blocks && bi_tossold(&t, tba + num_blocks - 1, NULL))
 		--num_blocks;
@@ -728,17 +728,24 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	/* XXX KS - check for misplaced blocks */
 	for(i=0; i<num_blocks; i++) {
 		if(tba[i].bi_daddr
-		   && ((char *)(tba[i].bi_bp) - seg_buf) != fsbtob(lfsp, tba[i].bi_daddr - seg_addr)
+		   && tba[i].bi_daddr != (long)seg_addr +
+				btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)
 		   && dtosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
 		{
-			if(debug > 1) {
-				syslog(LOG_DEBUG, "seg %d, ino %d lbn %d, 0x%x != 0x%lx (fixed)",
-					id,
-				       tba[i].bi_inode,
-				       tba[i].bi_lbn,
-				       tba[i].bi_daddr,
-				       (long)seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
-			}
+			syslog(LOG_ERR, "bi_daddr = 0x%x = %db; %p - %p = %d",
+				tba[i].bi_daddr,
+				fsbtob(lfsp, tba[i].bi_daddr - seg_addr),
+				tba[i].bi_bp, seg_buf,
+				((char *)(tba[i].bi_bp) - seg_buf));
+			syslog(LOG_ERR, "seg %d (0x%x), ino %d lbn %d, 0x%x != 0x%lx",
+			       id, seg_addr,
+			       tba[i].bi_inode,
+			       tba[i].bi_lbn,
+			       tba[i].bi_daddr,
+			       (long)seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
+			error = EFAULT;
+			goto out;
+
 			/*
 			 * XXX KS - have to be careful here about Inodes;
 			 * if lfs_bmapv shows them somewhere else in the
@@ -822,8 +829,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	}
 
 	/* Add these blocks to the accumulated list */
-	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
-	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO));
+	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO_15));
+	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO_15));
 	sbp->nb += num_blocks;
 
 	free(tba);
@@ -848,7 +855,7 @@ int
 clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 {
 	int maxblocks, clean_blocks;
-	BLOCK_INFO *bp;
+	BLOCK_INFO_15 *bp;
 	int i, error;
 	double util;
 
@@ -895,8 +902,8 @@ bi_tossold(const void *client, const void *a, const void *b)
 
 	t = (struct tossstruct *)client;
 
-	return (((BLOCK_INFO *)a)->bi_daddr == LFS_UNUSED_DADDR ||
-	    dtosn(t->lfs, ((BLOCK_INFO *)a)->bi_daddr) != t->seg);
+	return (((BLOCK_INFO_15 *)a)->bi_daddr == LFS_UNUSED_DADDR ||
+	    dtosn(t->lfs, ((BLOCK_INFO_15 *)a)->bi_daddr) != t->seg);
 }
 
 void
