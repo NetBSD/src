@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.1 2001/12/17 21:39:52 fredette Exp $
+.\"	$NetBSD: upgrade,v 1.2 2002/05/08 04:13:15 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ Install a new boot block:
 .Dl # Ic "cd /usr/mdec"
 .Dl # Ic "cp -p \&./ufsboot /mnt/ufsboot"
 .Dl # Ic "sync ; sleep 1 ; sync"
-.Dl # Ic "\&./installboot -v /ufsboot bootxx /dev/rsd0a"
+.Dl # Ic "/usr/sbin/installboot -v /dev/rsd0a bootxx /ufsboot"
 .It
 Sync the file systems:
 .Pp
