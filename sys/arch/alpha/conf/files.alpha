@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.65 1998/03/12 06:04:14 thorpej Exp $
+# $NetBSD: files.alpha,v 1.66 1998/03/24 05:15:07 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -22,6 +22,7 @@ defopt	AVALON_A12	# Avalon:	A12T1, A12M Parallel Supercomputer
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
+defopt	ZS_IOASIC_DMA
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
@@ -155,6 +156,16 @@ file	arch/alpha/tc/sfb.c		sfb
 device	scc: tty
 attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
+
+# 8530 UARTs using the MI 8530 driver   
+device	zsc { channel = -1 }
+attach	zsc at ioasic with zsc_ioasic
+file	arch/alpha/tc/zs_ioasic.c	zsc_ioasic
+file	dev/ic/z8530sc.c		zsc
+
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c		zstty		needs-flag
 
 # the TCDS ASIC
 device	tcds { slot = -1 }
