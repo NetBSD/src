@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.8 1999/12/04 14:23:36 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.9 1999/12/09 02:15:27 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -62,6 +62,11 @@
 #include <hpcmips/vr/vripvar.h>
 #endif
 
+#include "vrbcu.h"
+#if NVRBCU > 0
+#include <hpcmips/vr/bcuvar.h>
+#endif
+
 #include "vrdsu.h"
 #if NVRDSU > 0
 #include <hpcmips/vr/vrdsuvar.h>
@@ -105,10 +110,6 @@ void    vr_fb_init __P((caddr_t*));
 int     vr_mem_init __P((caddr_t));
 void	vr_reboot __P((int howto, char *bootstr));
 
-char	*vrbcu_vrip_getcpuname __P((void));
-int	vrbcu_vrip_getcpumajor __P((void));
-int	vrbcu_vrip_getcpuminor __P((void));
-
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
 
@@ -143,10 +144,14 @@ vr_init()
 	platform.mem_init = vr_mem_init;
 	platform.reboot = vr_reboot;
 
+#if NVRBCU > 0
 	sprintf(cpu_model, "NEC %s rev%d.%d", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
 		vrbcu_vrip_getcpuminor());
+#else
+	sprintf(cpu_model, "NEC VR41xx");
+#endif
 }
 
 int
