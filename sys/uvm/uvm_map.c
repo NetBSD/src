@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.153 2004/01/29 12:06:02 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.154 2004/01/29 12:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.153 2004/01/29 12:06:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.154 2004/01/29 12:07:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -527,7 +527,7 @@ uvm_map_init(void)
 	/*
 	 * initialize the global lock for kernel map entry.
 	 *
-	 * XXX is it worth to have per-map lock instead?
+	 * XXX is it worth it to have per-map locks instead?
 	 */
 
 	simple_lock_init(&uvm.kentry_lock);
@@ -698,7 +698,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	 * for pager_map, allocate the new entry first to avoid sleeping
 	 * for memory while we have the map locked.
 	 *
-	 * besides, because we allocates entries for in-kernel maps
+	 * because we allocate entries for in-kernel maps
 	 * a bit differently (cf. uvm_kmapent_alloc/free), we need to
 	 * allocate them before locking the map.
 	 */
@@ -1155,7 +1155,7 @@ nomerge:
 			map->first_free = new_entry;
 
 		/*
-		 * note the entry was consumed.
+		 * note that the entry was consumed.
 		 */
 		*new_entryp = NULL;
 	}
@@ -4032,7 +4032,7 @@ again:
 	splx(s);
 
 	/*
-	 * return second entry.
+	 * return the second entry.
 	 */
 
 	entry = &ukh->ukh_entries[1];
