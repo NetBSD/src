@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.114 2001/04/30 04:26:19 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.115 2001/05/02 16:05:07 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -104,6 +104,8 @@ char		cpu_model[100];
 caddr_t		msgbufaddr;
 int		physmem;
 int		dumpsize = 0;
+int		*symtab_start;
+int		symtab_nsyms;
 
 #define	IOMAPSZ	100
 static	struct map iomap[IOMAPSZ];
@@ -300,7 +302,10 @@ consinit()
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		if (symtab_start != NULL)
+			ddb_init(symtab_nsyms, symtab_start, esym);
+		else
+			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef DEBUG
 	if (sizeof(struct user) > REDZONEADDR)
