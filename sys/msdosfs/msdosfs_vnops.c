@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.42 1995/11/29 18:28:54 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.43 1995/12/01 07:26:58 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -61,6 +61,7 @@
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/malloc.h>
 #include <sys/dir.h>		/* defines dirent structure */
+#include <sys/lockf.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/direntry.h>
@@ -1806,8 +1807,10 @@ msdosfs_advlock(ap)
 		int a_flags;
 	} */ *ap;
 {
+	register struct denode *dep = VTODE(ap->a_vp);
 
-	return (EINVAL);		/* we don't do locking yet */
+	return (lf_advlock(&dep->de_lockf, dep->de_FileSize, ap->a_id, ap->a_op,
+	    ap->a_fl, ap->a_flags));
 }
 
 int
