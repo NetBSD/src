@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.18 1997/03/21 16:58:49 mycroft Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.19 1997/04/02 21:23:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,6 +73,11 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
+#endif
+
+#ifdef NETATALK
+#include <netatalk/at.h>
+#include <netatalk/at_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -167,6 +172,12 @@ looutput(ifp, m, dst, rt)
 	case AF_ISO:
 		ifq = &clnlintrq;
 		isr = NETISR_ISO;
+		break;
+#endif
+#ifdef NETATALK
+	case AF_APPLETALK:
+	        ifq = &atintrq2;
+		isr = NETISR_ATALK;
 		break;
 #endif
 	default:
