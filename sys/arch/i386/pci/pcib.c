@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.17 1998/08/05 02:11:00 perry Exp $	*/
+/*	$NetBSD: pcib.c,v 1.18 1998/08/07 10:15:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ pcibmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
+#if 0
 	/*
 	 * Match all known PCI-ISA bridges.
 	 */
@@ -114,6 +115,12 @@ pcibmatch(parent, match, aux)
 			return (1);
 		}
 		break;
+	}
+#endif
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
+		return (1);
 	}
 
 	return (0);
