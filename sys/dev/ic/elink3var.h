@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.19 1998/11/04 00:29:29 fvdl Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.20 1998/11/17 20:25:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -111,3 +111,6 @@ void	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
 
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));
+
+int	epenable __P((struct ep_softc *));
+void	epdisable __P((struct ep_softc *));

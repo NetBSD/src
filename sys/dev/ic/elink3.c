@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.48 1998/11/16 19:13:31 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.49 1998/11/17 20:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,9 +205,6 @@ void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
 void	epsetmedia __P((struct ep_softc *));
-
-int	epenable __P((struct ep_softc *));
-void	epdisable __P((struct ep_softc *));
 
 /* ifmedia callbacks */
 int	ep_media_change __P((struct ifnet *ifp));

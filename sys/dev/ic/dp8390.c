@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.14 1998/11/12 13:18:26 mycroft Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.15 1998/11/17 20:25:00 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -69,9 +69,6 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 			    struct mbuf *, int));
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
-
-int	dp8390_enable __P((struct dp8390_softc *));
-void	dp8390_disable __P((struct dp8390_softc *));
 
 int	dp8390_mediachange __P((struct ifnet *));
 void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
