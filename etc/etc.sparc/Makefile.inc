@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 2003/07/10 10:34:18 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2003/12/14 12:17:44 martin Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -26,8 +26,10 @@ INSTALLATION_SYMLINKS=	\
 # Install miniroot images and auxiliary scripts to the release tree
 #
 snap_md_post:
-	# install boot image in netboot directory
+	# install boot images in netboot directory
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot.net \
+	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/bootjs.elf \
 	    ${RELEASEDIR}/${MACHINE}/installation/netboot
 
 	# install links to boot and installation utilities for various media
