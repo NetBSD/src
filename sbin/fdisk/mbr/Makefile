@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/06/17 15:25:45 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2002/11/23 23:45:52 fvdl Exp $
 
 MAN=	mbr.8
 MLINKS=	mbr.8 bootselect.8
@@ -16,9 +16,14 @@ LDFLAGS+= -e start
 LDFLAGS+= -e _start -N
 .endif
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE} == "i386" || ${MACHINE} == "x86_64"
 PROG=	mbr
 SRCS=	mbr.S
+
+.if ${MACHINE} == "x86_64"
+LDFLAGS+=  -m elf_i386
+AFLAGS+=   -m32
+.endif
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
