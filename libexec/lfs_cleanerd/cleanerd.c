@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.18.4.3 2001/02/03 20:43:48 he Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.18.4.4 2001/02/03 21:42:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.18.4.3 2001/02/03 20:43:48 he Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.18.4.4 2001/02/03 21:42:00 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: cleanerd.c,v 1.18.4.3 2001/02/03 20:43:48 he Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
+#include <errno.h>
 
 #include <syslog.h>
 
@@ -122,6 +124,7 @@ int	 clean_segments __P((FS_INFO *, SEGS_AND_BLOCKS *));
 unsigned long	 cost_benefit __P((FS_INFO *, SEGUSE *));
 int	 cost_compare __P((const void *, const void *));
 void	 sig_report __P((int));
+void	 just_exit __P((int));
 int	 main __P((int, char *[]));
 
 /*
@@ -167,7 +170,7 @@ cost_benefit(fsp, su)
 		 * priority = ((seg_size - live) * age) / (seg_size + live)
 		 */
 		if (live < 0 || live > seg_size(lfsp)) {
-                        syslog(LOG_NOTICE,"bad segusage count: %ld", live);
+			syslog(LOG_NOTICE,"bad segusage count: %ld", live);
 			live = 0;
 		}
 		return (lblkno(lfsp, seg_size(lfsp) - live) * age)
@@ -191,6 +194,8 @@ main(argc, argv)
 	char *fs_name;			/* name of filesystem to clean */
 	time_t now, lasttime;
 	int loopcount;
+	char *pidname;                  /* Name of pid file base */
+	char *cp;
 
 	cmd_err = debug = do_quit = 0;
 	clean_opts = 0;
@@ -247,7 +252,7 @@ main(argc, argv)
 		err(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
 
-        /* should we become a daemon, chdir to / & close fd's */
+	/* should we become a daemon, chdir to / & close fd's */
 	if (debug == 0) {
 		if (daemon(0, 0) == -1)
 			err(1, "lfs_cleanerd: couldn't become a daemon!");
@@ -259,7 +264,22 @@ main(argc, argv)
 				fs_name);
 			exit(1);
 		}
-		if(childpid != 0) {
+		if(childpid == 0) {
+			/* Record child's pid */
+			pidname = malloc(strlen(fs_name) + 16);
+			sprintf(pidname, "lfs_cleanerd:s:%s", fs_name);
+			while((cp = strchr(pidname, '/')) != NULL)
+				*cp = '|';
+			pidfile(pidname);
+		} else {
+			/* Record parent's pid */
+			pidname = malloc(strlen(fs_name) + 16);
+			sprintf(pidname, "lfs_cleanerd:m:%s", fs_name);
+			while((cp = strchr(pidname, '/')) != NULL)
+				*cp = '|';
+			pidfile(pidname);
+			signal(SIGINT, just_exit);
+
 			wait(NULL);
 			/* If the child is looping, give up */
 			++loopcount;
@@ -279,11 +299,11 @@ main(argc, argv)
 			}
 			goto loop;
 		}
-                openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
-        } else {
-                openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID|LOG_PERROR,
-                        LOG_DAEMON);
-        }
+		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
+	} else {
+		openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID|LOG_PERROR,
+			LOG_DAEMON);
+	}
 
 	signal(SIGINT, sig_report);
 	signal(SIGUSR1, sig_report);
@@ -309,12 +329,12 @@ main(argc, argv)
 			continue;
 
 		fsid = lstatfsp->f_fsid;
-                if(debug > 1)
-                    syslog(LOG_DEBUG,"Cleaner going to sleep.");
+		if(debug > 1)
+			syslog(LOG_DEBUG,"Cleaner going to sleep.");
 		if (lfs_segwait(&fsid, &timeout) < 0)
 			syslog(LOG_WARNING,"lfs_segwait returned error.");
-                if(debug > 1)
-                    syslog(LOG_DEBUG,"Cleaner waking up.");
+		if(debug > 1)
+			syslog(LOG_DEBUG,"Cleaner waking up.");
 	}
 }
 
@@ -332,7 +352,7 @@ clean_loop(fsp, nsegs, options)
 	u_long db_per_seg;
 
 	lfsp = &fsp->fi_lfs;
-        /*
+	/*
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
@@ -345,13 +365,13 @@ clean_loop(fsp, nsegs, options)
 	 */
 	now = time((time_t *)NULL);
 
-        if(debug > 1) {
+	if(debug > 1) {
 		syslog(LOG_DEBUG, "db_per_seg = %lu bfree = %u avail = %d,"
 		       " bfree = %u, ", db_per_seg, fsp->fi_cip->bfree,
 		       fsp->fi_cip->avail, fsp->fi_cip->bfree);
 		syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
 		       fsp->fi_cip->clean, max_free_segs);
-        }
+	}
 
 	if ((fsp->fi_cip->bfree - fsp->fi_cip->avail > db_per_seg &&
 	     fsp->fi_cip->avail < (long)db_per_seg &&
@@ -360,7 +380,7 @@ clean_loop(fsp, nsegs, options)
 	     (fsp->fi_cip->clean <= lfsp->lfs_minfreeseg ||
 	      fsp->fi_cip->clean < max_free_segs * BUSY_LIM)))
 	{
-                if(debug)
+		if(debug)
 			syslog(LOG_DEBUG, "Cleaner Running  at %s"
 			       " (%d of %lu segments available, avail = %d,"
 			       " bfree = %u)",
@@ -409,13 +429,13 @@ clean_loop(fsp, nsegs, options)
 		if (loadavg[ONE_MIN] < load_threshold
 		    && fsp->fi_cip->clean < max_free_segs * IDLE_LIM)
 		{
-                        if(debug)
+			if (debug)
 				syslog(LOG_DEBUG, "Cleaner Running  at %s "
 				       "(system load %.1f, %d of %lu segments available)",
 					ctime(&now), loadavg[ONE_MIN],
 					fsp->fi_cip->clean, max_free_segs);
 		        clean_fs(fsp, cost_benefit, nsegs, options);
-			if(do_quit) {
+			if (do_quit) {
 				if(debug)
 					syslog(LOG_INFO,"Cleaner shutting down");
 				exit(0);
@@ -423,7 +443,7 @@ clean_loop(fsp, nsegs, options)
 			return (1);
 		}
 	}
-        if(debug > 1) {
+	if (debug > 1) {
 		if (fsp->fi_cip->bfree - fsp->fi_cip->avail <= db_per_seg)
 			syslog(LOG_DEBUG, "condition 1 false");
 		if (fsp->fi_cip->avail >= (long)db_per_seg)
@@ -473,7 +493,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 			syslog(LOG_DEBUG,"Wiping empty segment %ld",sp->sl_id);
 		if(lfs_segclean(fsidp, sp->sl_id) < 0)
 			syslog(LOG_NOTICE,"lfs_segclean failed empty segment %ld: %m", sp->sl_id);
-                ++cleaner_stats.segs_empty;
+		++cleaner_stats.segs_empty;
 		sp++;
 		i--;
 	}
@@ -491,9 +511,9 @@ clean_fs(fsp, cost_func, nsegs, options)
 	if(fsp->fi_cip->clean < nsegs)
 		nsegs = fsp->fi_cip->clean;
 
-        if(debug > 1)
-            syslog(LOG_DEBUG, "clean_fs: found %ld segments to clean in %s",
-                   i, fsp->fi_statfsp->f_mntonname);
+	if (debug > 1)
+		syslog(LOG_DEBUG, "clean_fs: found %ld segments to clean in %s",
+			i, fsp->fi_statfsp->f_mntonname);
 
 	if (i) {
 		sbp = (SEGS_AND_BLOCKS *)malloc(sizeof(SEGS_AND_BLOCKS));
@@ -508,7 +528,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 				if (add_segment(fsp, sp, sbp) < 0) {
 					syslog(LOG_NOTICE,"add_segment failed"
 					       " segment %ld: %m", sp->sl_id);
-					if (sbp->nsegs == 0)
+					if (sbp->nsegs == 0 && errno != ENOENT)
 						continue;
 					else
 						break;
@@ -524,7 +544,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 				if (add_segment(fsp, sp, sbp) != 0) {
 					syslog(LOG_NOTICE,"add_segment failed"
 					       " segment %ld: %m", sp->sl_id);
-					if (sbp->nsegs == 0)
+					if (sbp->nsegs == 0 && errno != ENOENT)
 						continue;
 					else
 						break;
@@ -594,8 +614,8 @@ choose_segments(fsp, seglist, cost_func)
 
 	lfsp = &fsp->fi_lfs;
 
-        if(debug > 1)
-            syslog(LOG_DEBUG,"Entering choose_segments");
+	if (debug > 1)
+		syslog(LOG_DEBUG,"Entering choose_segments");
 	dump_super(lfsp);
 	dump_cleaner_info(fsp->fi_cip);
 
@@ -605,13 +625,13 @@ choose_segments(fsp, seglist, cost_func)
 			fflush(stdout);
 		}
 		sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, i);
-                if(debug > 2)
-                    PRINT_SEGUSE(sup, i);
+		if (debug > 2)
+			PRINT_SEGUSE(sup, i);
 		if (!(sup->su_flags & SEGUSE_DIRTY) ||
 		    sup->su_flags & SEGUSE_ACTIVE)
 			continue;
-                if(debug > 2)
-                    syslog(LOG_DEBUG, "\tchoosing segment %d", i);
+		if (debug > 2)
+			syslog(LOG_DEBUG, "\tchoosing segment %d", i);
 		sp->sl_cost = (*cost_func)(fsp, sup);
 		sp->sl_id = i;
 		sp->sl_bytes = sup->su_nbytes;
@@ -632,8 +652,8 @@ choose_segments(fsp, seglist, cost_func)
 			       seglist[i].sl_bytes, seglist[i].sl_cost);
 		}
 
-        if(debug > 1)
-            syslog(LOG_DEBUG,"Returning %d segments", nsegs);
+	if (debug > 1)
+		syslog(LOG_DEBUG,"Returning %d segments", nsegs);
 
 	return (nsegs);
 }
@@ -655,10 +675,12 @@ add_segment(fsp, slp, sbp)
 	struct tossstruct t;
 	struct dinode *dip;
 	caddr_t seg_buf;
+	caddr_t cmp_buf, cmp_dp;
+	size_t size;
 	daddr_t seg_addr;
 	int num_blocks, i, j, error;
 	int seg_isempty=0;
-        unsigned long *lp;
+	unsigned long *lp;
 
 	lfsp = &fsp->fi_lfs;
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
@@ -666,8 +688,8 @@ add_segment(fsp, slp, sbp)
 	error = 0;
 	tba = NULL;
 
-        syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
-                   (unsigned long)sp->su_nbytes);
+	syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
+		(unsigned long)sp->su_nbytes);
 
 	/* XXX could add debugging to verify that segment is really empty */
 	if (sp->su_nbytes == 0) {
@@ -697,8 +719,8 @@ add_segment(fsp, slp, sbp)
 	}
 	cleaner_stats.blocks_read += fsp->fi_lfs.lfs_ssize;
 
-        if(debug > 1)
-            syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
+	if (debug > 1)
+		syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
 
 	/* get the current disk address of blocks contained by the segment */
 	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, tba,
@@ -777,15 +799,42 @@ add_segment(fsp, slp, sbp)
 		else
 			slp->sl_bytes += tba[i].bi_size;
 
-        if(debug > 1) {
-            syslog(LOG_DEBUG, "after bmapv still have %d blocks", num_blocks);
-            if (num_blocks)
-                syslog(LOG_DEBUG, "BLOCK INFOS");
-            for (_bip = tba, i=0; i < num_blocks; ++_bip, ++i) {
-                PRINT_BINFO(_bip);
-                lp = (u_long *)_bip->bi_bp;
-            }
-        }
+	if(debug > 1) {
+		syslog(LOG_DEBUG, "after bmapv still have %d blocks",
+			num_blocks);
+		if (num_blocks)
+			syslog(LOG_DEBUG, "BLOCK INFOS");
+		for (_bip = tba, i=0; i < num_blocks; ++_bip, ++i) {
+			PRINT_BINFO(_bip);
+			lp = (u_long *)_bip->bi_bp;
+		}
+	}
+
+	/* Compress segment buffer, if necessary */
+	if (!do_mmap && slp->sl_bytes < seg_size(lfsp) / 2) {
+		if (debug > 1)
+			syslog(LOG_DEBUG, "compressing: %d < %d",
+				(int)slp->sl_bytes, seg_size(lfsp) / 2);
+		cmp_buf = malloc(slp->sl_bytes); /* XXX could do in-place */
+		if (cmp_buf == NULL) {
+			if (debug)
+				syslog(LOG_DEBUG, "can't compress segment: %m");
+		} else {
+			cmp_dp = cmp_buf;
+			for (i = 0; i < num_blocks; i++) {
+				if(tba[i].bi_lbn == LFS_UNUSED_LBN)
+					size = sizeof(struct dinode);
+				else
+					size = tba[i].bi_size;
+				memcpy(cmp_dp, tba[i].bi_bp, size);
+				tba[i].bi_bp = cmp_dp;
+				cmp_dp += size;
+			}
+			free(seg_buf);
+			seg_buf = cmp_buf;
+			sbp->buf[sbp->nsegs - 1] = seg_buf;
+		}
+	}
 
 	/* Add these blocks to the accumulated list */
 	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
@@ -799,8 +848,6 @@ add_segment(fsp, slp, sbp)
 	--sbp->nsegs;
 	if (tba)
 		free(tba);
-	if (sbp->ba)
-		free(sbp->ba);
 	if (error) {
 		sp->su_flags |= SEGUSE_ERROR;
 		++cleaner_stats.segs_error;
@@ -840,9 +887,9 @@ clean_segments(fsp, sbp)
 				       bp, clean_blocks)) < 0) {
 			syslog(LOG_WARNING,"clean_segment: lfs_markv failed: %m");
 			++cleaner_stats.segs_error;
+			if (errno == ENOENT) break;
 		}
-		else
-			sbp->nb -= clean_blocks;
+		sbp->nb -= clean_blocks;
 	}
 
 	/* Clean up */
@@ -903,4 +950,11 @@ sig_report(sig)
 	}
 	if (sig == SIGINT)
 		exit(0);
+}
+
+void
+just_exit(sig)
+	int sig;
+{
+	exit(0);
 }
