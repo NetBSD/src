@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: umount.c,v 1.10 1995/01/30 16:36:47 mycroft Exp $";
+static char *rcsid = "$Id: umount.c,v 1.11 1995/01/30 17:03:15 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -343,21 +343,19 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 0, nextcp = fslist; *nextcp != NULL; ++nextcp)
-		if (*nextcp == ',')
-			i++;
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+		++nextcp;
 
 	/* Build an array of that many types. */
-	if ((av = typelist = malloc((i + 2) * sizeof(char *))) == NULL)
+	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
 		err(1, NULL);
-	for (i = 0; fslist != NULL; fslist = nextcp, ++i) {
-		if ((nextcp = strchr(fslist, ',')) != NULL)
-			*nextcp++ = '\0';
-		/* Note that we're keeping pointers into the input string. */
-		av[i] = fslist;
+	av[0] = fslist;
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+		*nextcp = '\0';
+		av[i] = ++nextcp;
 	}
 	/* Terminate the array. */
-	av[i++] = NULL;
+	av[i] = NULL;
 }
 
 int
