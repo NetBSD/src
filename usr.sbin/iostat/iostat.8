@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.12 1997/10/17 09:03:53 lukem Exp $
+.\"	$NetBSD: iostat.8,v 1.13 1998/08/25 08:05:47 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd Jan 18, 1996
+.Dd August 25, 1998
 .Dt IOSTAT 8
 .Os NetBSD 1.1
 .Sh NAME
@@ -43,7 +43,7 @@
 statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl CdDIT
+.Op Fl CdDITx
 .Op Fl c Ar count
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -67,6 +67,13 @@ option causes
 .Nm
 to print raw, unaveraged values.
 .Pp
+Only the last disk option specified
+.Fl ( d ,
+.Fl D ,
+or
+.Fl x )
+is used.
+.Pp
 The options are as follows:
 .Bl -tag -width flag
 .It Fl c
@@ -82,17 +89,18 @@ If no
 interval is specified, the default is 1 second.
 .It Fl C
 Show cpu statistics.  This is enabled by default unless the
-.Fl d, 
-.Fl D,
-or 
-.Fl T
+.Fl d ,
+.Fl D ,
+.Fl T ,
+or
+.Fl x
 flags are used.
 .It Fl d
 Show disk statistics.  This is the default.  Displays kilobytes per
-transfer, number of transfers, and megabytes transfered.  Use of this
+transfer, number of transfers, and megabytes transferred.  Use of this
 flag disables display of cpu and tty statistics.
 .It Fl D
-Show alternative disk statistics.  Displays kilobytes transfered, number of 
+Show alternative disk statistics.  Displays kilobytes transferred, number of
 transfers, and time spent in transfers.  Use of this flag disables the
 default display.
 .It Fl I
@@ -106,8 +114,8 @@ Extract the name list from the specified system instead of the default
 .Dq Pa /netbsd .
 .It Fl T
 Show tty statistics.  This is enabled by default unless the
-.Fl C, 
-.Fl d,
+.Fl C ,
+.Fl d ,
 or 
 .Fl D
 flags are used.
@@ -118,6 +126,13 @@ seconds between each display.
 If no repeat
 .Ar count
 is specified, the default is infinity.
+.It Fl x
+Show extended disk statisics.
+Each disk is displayed on a line of its own with all available
+statistics.
+This option overrides all other display options, and all
+disks are displayed regardless of whether specific disks
+are provided as arguments.
 .El
 .Pp
 .Nm
@@ -151,8 +166,8 @@ Megabytes transferred per second
 .Pp
 .El
 The alternative display format, (selected with
-.Fl D
-), presents the following values.
+.Fl D ) ,
+presents the following values.
 .Bl -tag -width indent -compact
 .It KB
 Kilobytes transferred
@@ -191,3 +206,11 @@ Default memory file.
 .Pp
 The sections starting with ``Interpreting system activity'' in
 .%T "Installing and Operating 4.3BSD" .
+.Sh HISTORY
+.Nm
+appeared in
+.At v6 .
+The
+.Fl x
+option was added in
+.Nx 1.4 .

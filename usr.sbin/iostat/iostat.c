@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.14 1998/07/19 17:48:15 drochner Exp $	*/
+/*	$NetBSD: iostat.c,v 1.15 1998/08/25 08:05:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.14 1998/07/19 17:48:15 drochner Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.15 1998/08/25 08:05:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,15 +104,18 @@ int		hz, reps, interval;
 static int	todo = 0;
 
 #define ISSET(x, a)	((x) & (a))
-#define SHOW_CPU	0x0001
-#define SHOW_TTY	0x0002
-#define SHOW_STATS_1	0x0004
-#define SHOW_STATS_2	0x0008
-#define SHOW_TOTALS	0x0080
+#define SHOW_CPU	1<<0
+#define SHOW_TTY	1<<1
+#define SHOW_STATS_1	1<<2
+#define SHOW_STATS_2	1<<3
+#define SHOW_STATS_X	1<<4
+#define SHOW_TOTALS	1<<7
+#define SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X)
 
 static void cpustats __P((void));
 static void disk_stats __P((double));
 static void disk_stats2 __P((double));
+static void disk_statsx __P((double));
 static void header __P((int));
 static void usage __P((void));
 static void display __P((void));
@@ -133,7 +136,7 @@ main(argc, argv)
 	gid_t egid = getegid();
 	setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
+	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
 		switch(ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
@@ -143,9 +146,11 @@ main(argc, argv)
 			todo |= SHOW_CPU;
 			break;
 		case 'd':
+			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_1;
 			break;
 		case 'D':
+			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_2;
 			break;
 		case 'I':
@@ -164,6 +169,10 @@ main(argc, argv)
 			if ((interval = atoi(optarg)) <= 0)
 				errx(1, "interval <= 0.");
 			break;
+		case 'x':
+			todo &= ~SHOW_STATS_ALL;
+			todo |= SHOW_STATS_X;
+			break;
 		case '?':
 		default:
 			usage();
@@ -171,8 +180,12 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!ISSET(todo, SHOW_CPU | SHOW_TTY | SHOW_STATS_1 | SHOW_STATS_2))
+	if (!ISSET(todo, SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL))
 		todo |= SHOW_CPU | SHOW_TTY | SHOW_STATS_1;
+	if (ISSET(todo, SHOW_STATS_X)) {
+		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL);
+		todo |= SHOW_STATS_X;
+	}
 
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
@@ -215,40 +228,48 @@ header(signo)
 {
 	int i;
 
-	/* Main Headers. */
+	if (ISSET(todo, SHOW_STATS_X))
+		return;
+
+					/* Main Headers. */
 	if (ISSET(todo, SHOW_TTY))
 		(void)printf("      tty");
 
 	if (ISSET(todo, SHOW_STATS_1))
-	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
-			(void)printf("            %3.3s ", cur.dk_name[i]);
+		for (i = 0; i < dk_ndrive; i++)
+			if (cur.dk_select[i])
+				(void)printf(
+				    "            %3.3s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_STATS_2))
-	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
-			(void)printf("           %3.3s ", cur.dk_name[i]);
+		for (i = 0; i < dk_ndrive; i++)
+			if (cur.dk_select[i])
+				(void)printf(
+				    "           %3.3s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf("            cpu");
+
 	printf("\n");
 
-	/* Sub-Headers. */
+					/* Sub-Headers. */
 	if (ISSET(todo, SHOW_TTY))
 		printf(" tin tout");
 
-	if (ISSET(todo, SHOW_STATS_1))
-	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
-			if (ISSET(todo, SHOW_TOTALS))
-				(void)printf("  KB/t xfr MB   ");
-			else
-				(void)printf("  KB/t t/s MB/s ");
+	if (ISSET(todo, SHOW_STATS_1)) {
+		for (i = 0; i < dk_ndrive; i++)
+			if (cur.dk_select[i]) {
+				if (ISSET(todo, SHOW_TOTALS))
+					(void)printf("  KB/t xfr MB   ");
+				else
+					(void)printf("  KB/t t/s MB/s ");
+			}
+	}
 
 	if (ISSET(todo, SHOW_STATS_2))
-	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
-			(void)printf("   KB xfr time ");
+		for (i = 0; i < dk_ndrive; i++)
+			if (cur.dk_select[i])
+				(void)printf("   KB xfr time ");
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
@@ -266,21 +287,21 @@ disk_stats(etime)
 		if (!cur.dk_select[dn])
 			continue;
 
-		/* average Kbytes per transfer. */
+					/* average Kbytes per transfer. */
 		if (cur.dk_xfer[dn])
 			mbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
 		else
 			mbps = 0.0;
 		(void)printf(" %5.2f", mbps); 
 
-		/* average transfers per second. */
+					/* average transfers per second. */
 		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
 
-		/* time busy in disk activity */
+					/* time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
 			((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-		/* Megabytes per second. */
+					/* Megabytes per second. */
 		if (atime != 0.0)
 			mbps = cur.dk_bytes[dn] / (double)(1024 * 1024);
 		else 
@@ -300,16 +321,54 @@ disk_stats2(etime)
 		if (!cur.dk_select[dn])
 			continue;
 
-		/* average kbytes per second. */
+					/* average kbytes per second. */
 		(void)printf(" %4.0f", cur.dk_bytes[dn] / (1024.0) / etime);
 
-		/* average transfers per second. */
+					/* average transfers per second. */
 		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
 
-		/* average time busy in disk activity. */
+					/* average time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
 			((double)cur.dk_time[dn].tv_usec / (double)1000000);
 		(void)printf(" %4.2f ", atime / etime);
+	}
+}
+
+static void
+disk_statsx(etime)
+	double etime;
+{
+	int dn;
+	double atime, kbps;
+
+	if (ISSET(todo, SHOW_TOTALS))
+		(void)printf("device       KB/t      xfr     time       MB");
+	else
+		(void)printf("device       KB/t      t/s     time     MB/s");
+
+	for (dn = 0; dn < dk_ndrive; ++dn) {
+		(void)printf("\n");
+		(void)printf("%-8.8s", cur.dk_name[dn]);
+
+					/* average Kbytes per transfer */
+		if (cur.dk_xfer[dn])
+			kbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
+		else
+			kbps = 0.0;
+		(void)printf(" %8.2f", kbps); 
+
+					/* average transfers (per second) */
+		(void)printf(" %8.0f", cur.dk_xfer[dn] / etime);
+
+					/* time busy in disk activity */
+		atime = (double)cur.dk_time[dn].tv_sec +
+			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		(void)printf(" %8.2f", atime / etime);
+
+					/* average megabytes (per second) */
+		(void)printf(" %8.0f",
+		    cur.dk_bytes[dn] / (1024.0 * 1024) / etime);
+
 	}
 }
 
@@ -324,7 +383,7 @@ cpustats()
 		time += cur.cp_time[state];
 	if (!time)
 		time = 1.0;
-	/* States are generally never 100% and can use %3.0f. */
+			/* States are generally never 100% and can use %3.0f. */
 	for (state = 0; state < CPUSTATES; ++state)
 		printf("%3.0f", 100. * cur.cp_time[state] / time);
 }
@@ -351,7 +410,7 @@ display()
 	}
 	if (etime == 0.0)
 		etime = 1.0;
-	/* Convert to seconds. */
+					/* Convert to seconds. */
 	etime /= (float)hz;
 
 	/* If we're showing totals only, then don't divide by the
@@ -368,6 +427,9 @@ display()
 
 	if (ISSET(todo, SHOW_STATS_2))
 		disk_stats2(etime);
+
+	if (ISSET(todo, SHOW_STATS_X))
+		disk_statsx(etime);
 
 	if (ISSET(todo, SHOW_CPU))
 		cpustats();
