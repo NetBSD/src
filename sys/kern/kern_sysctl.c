@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.130 2003/03/05 11:46:49 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.131 2003/03/06 20:33:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.130 2003/03/05 11:46:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.131 2003/03/06 20:33:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -692,15 +692,31 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, ctob(physmem)));
-	case HW_PHYSPAGES:
-		return (sysctl_rdquad(oldp, oldlenp, newp, physmem));
-	case HW_USERMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp,
-		    ctob(physmem - uvmexp.wired)));
-	case HW_USERPAGES:
+	    {
+		u_int rval;
+
+		if ((u_int)physmem > (UINT_MAX / PAGE_SIZE))
+			rval = UINT_MAX;
+		else
+			rval = physmem * PAGE_SIZE;
+		return (sysctl_rdint(oldp, oldlenp, newp, rval));
+	    }
+	case HW_PHYSMEM64:
 		return (sysctl_rdquad(oldp, oldlenp, newp,
-		    physmem - uvmexp.wired));
+		    (u_quad_t)physmem * PAGE_SIZE));
+	case HW_USERMEM:
+	    {
+		u_int rval;
+
+		if ((u_int)(physmem - uvmexp.wired) > (UINT_MAX / PAGE_SIZE))
+			rval = UINT_MAX;
+		else
+			rval = (physmem - uvmexp.wired) * PAGE_SIZE;
+		return (sysctl_rdint(oldp, oldlenp, newp, rval));
+	    }
+	case HW_USERMEM64:
+		return (sysctl_rdquad(oldp, oldlenp, newp,
+		    (u_quad_t)(physmem - uvmexp.wired) * PAGE_SIZE));
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
