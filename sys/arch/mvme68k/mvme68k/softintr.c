@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.2.2 2000/07/22 15:53:25 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.2.3 2000/07/29 20:43:20 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/sched.h>
 #include <sys/vmmeter.h>
 
+#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -55,7 +56,7 @@
 
 #include <mvme68k/mvme68k/isr.h>
 
-
+void netintr __P((void));
 struct mvme68k_soft_intrhand	*softnet_intrhand;
 struct mvme68k_soft_intrhand	*softclock_intrhand;
 
