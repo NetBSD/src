@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.2 2000/06/03 20:26:05 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.3 2000/06/05 05:58:46 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.2 2000/06/03 20:26:05 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.3 2000/06/05 05:58:46 thorpej Exp $");
 #endif
 #endif
 
@@ -101,11 +101,6 @@ struct cf_conn {  /* kept in xprt->xp_p1 for actual connection */
 	char verf_body[MAX_AUTH_BYTES];
 };
 
-struct credmsg {
-	struct cmsghdr cm;
-	char creds[SOCKCREDSIZE(NGROUPS)];
-};
-
 /*
  * Usage:
  *	xprt = svc_vc_create(sock, send_buf_size, recv_buf_size);
@@ -133,7 +128,7 @@ svc_vc_create(fd, sendsize, recvsize)
 	struct __rpc_sockinfo si;
 	struct sockaddr_storage sslocal;
 	socklen_t slen;
-	int one;
+	int one = 1;
 
 	r = (struct cf_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
@@ -405,8 +400,9 @@ read_vc(xprtp, buf, len)
 	struct sockaddr *sa;
 	struct msghdr msg;
 	struct cmsghdr *cmp;
-	struct credmsg crmsg;
+	void *crmsg = NULL;
 	struct sockcred *sc;
+	socklen_t crmsgsize;
 
 	xprt = (SVCXPRT *)(void *)xprtp;
 	_DIAGASSERT(xprt != NULL);
@@ -416,10 +412,20 @@ read_vc(xprtp, buf, len)
 	sa = (struct sockaddr *)xprt->xp_rtaddr.buf;
 	if (sa->sa_family == AF_LOCAL && xprt->xp_p2 == NULL) {
 		memset(&msg, 0, sizeof msg);
-		msg.msg_control = (caddr_t)&crmsg;
-		msg.msg_controllen = sizeof crmsg;
+		crmsgsize = CMSG_SPACE(SOCKCREDSIZE(NGROUPS));
+		crmsg = malloc(crmsgsize);
+		if (crmsg == NULL)
+			goto fatal_err;
+		memset(crmsg, 0, crmsgsize);
+
+		msg.msg_control = crmsg;
+		msg.msg_controllen = crmsgsize;
 
 		if (recvmsg(sock, &msg, 0) < 0)
+			goto fatal_err;
+
+		if (msg.msg_controllen == 0 ||
+		    (msg.msg_flags & MSG_CTRUNC) != 0)
 			goto fatal_err;
 
 		cmp = CMSG_FIRSTHDR(&msg);
@@ -434,6 +440,8 @@ read_vc(xprtp, buf, len)
 			goto fatal_err;
 
 		memcpy(xprt->xp_p2, sc, SOCKCREDSIZE(sc->sc_ngroups));
+		free(crmsg);
+		crmsg = NULL;
 	}
 		
 	do {
@@ -457,6 +465,8 @@ read_vc(xprtp, buf, len)
 		return (len);
 
 fatal_err:
+	if (crmsg != NULL)
+		free(crmsg);
 	((struct cf_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
 	return (-1);
 }
