@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.15 2002/10/02 16:02:39 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.16 2003/01/01 02:31:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -220,7 +220,7 @@ void *auxp;
 const char *pnp;
 {
 	if(pnp)
-		printf("ite at %s", pnp);
+		aprint_normal("ite at %s", pnp);
 	return(UNCONF);
 }
 

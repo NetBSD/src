@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.16 2002/10/02 16:02:40 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.17 2003/01/01 02:31:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -244,13 +244,13 @@ intio_print(aux, name)
 	struct intio_attach_args *ia = aux;
 
 /*	if (ia->ia_addr > 0)	*/
-		printf (" addr 0x%06x", ia->ia_addr);
+		aprint_normal (" addr 0x%06x", ia->ia_addr);
 	if (ia->ia_intr > 0)
-		printf (" intr 0x%02x", ia->ia_intr);
+		aprint_normal (" intr 0x%02x", ia->ia_intr);
 	if (ia->ia_dma >= 0) {
-		printf (" using DMA ch%d", ia->ia_dma);
+		aprint_normal (" using DMA ch%d", ia->ia_dma);
 		if (ia->ia_dmaintr > 0)
-			printf (" intr 0x%02x and 0x%02x",
+			aprint_normal (" intr 0x%02x and 0x%02x",
 				ia->ia_dmaintr, ia->ia_dmaintr+1);
 	}
 
