@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.21 2002/05/26 14:45:44 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.22 2002/06/09 02:45:26 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.21 2002/05/26 14:45:44 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.22 2002/06/09 02:45:26 itojun Exp $");
 #endif
 #endif
 
@@ -1298,7 +1298,7 @@ inetname(sa)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strlcpy(domain, cp + 1, sizeof(domain));
 		else
 			domain[0] = 0;
@@ -1307,7 +1307,7 @@ inetname(sa)
 	if (!nflag) {
 		if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
 		    NI_NAMEREQD) == 0) {
-			if ((cp = index(line, '.')) &&
+			if ((cp = strchr(line, '.')) &&
 			    !strcmp(cp + 1, domain))
 				*cp = 0;
 			cp = line;
