@@ -36,13 +36,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
- *	$Id: pmap.h,v 1.4 1994/05/23 06:21:40 mycroft Exp $
+ *	$Id: pmap.h,v 1.5 1994/09/09 23:56:16 mycroft Exp $
  */
 
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_
+#ifndef	_HP300_PMAP_H_
+#define	_HP300_PMAP_H_
 
-#define HP_PAGE_SIZE	NBPG
+#include <machine/pte.h>
+
 #if defined(HP380)
 #define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
@@ -56,11 +57,11 @@
  * Pmap stuff
  */
 struct pmap {
-	struct pte		*pm_ptab;	/* KVA of page table */
-	struct ste		*pm_stab;	/* KVA of segment table */
+	pt_entry_t		*pm_ptab;	/* KVA of page table */
+	st_entry_t		*pm_stab;	/* KVA of segment table */
 	int			pm_stchanged;	/* ST changed */
 	int			pm_stfree;	/* 040: free lev2 blocks */
-	struct ste		*pm_stpa;	/* 040: ST phys addr */
+	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -69,12 +70,6 @@ struct pmap {
 };
 
 typedef struct pmap	*pmap_t;
-
-extern struct pmap	kernel_pmap_store;
-
-#define kernel_pmap	(&kernel_pmap_store)
-#define	active_pmap(pm) \
-	((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * On the 040 we keep track of which level 2 blocks are already in use
@@ -96,7 +91,7 @@ extern struct pmap	kernel_pmap_store;
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
-	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
+	if ((pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = hp300_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
@@ -106,35 +101,60 @@ extern struct pmap	kernel_pmap_store;
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * mappings of that page.  An entry is a pv_entry, the list is pv_table.
  */
-typedef struct pv_entry {
+struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
-	struct ste	*pv_ptste;	/* non-zero if VA maps a PT page */
+	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
-} *pv_entry_t;
+};
 
 #define	PV_CI		0x01	/* header: all entries are cache inhibited */
 #define PV_PTPAGE	0x02	/* header: entry maps a page table page */
+
+struct pv_page;
+
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+/*
+ * This is basically:
+ * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ */
+#define	NPVPPG	170
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 #ifdef	KERNEL
 #if defined(HP320) || defined(HP350)
 #define	HAVEVAC				/* include cheezy VAC support */
 #endif
 
-pv_entry_t	pv_table;		/* array of entries, one per page */
+extern struct pmap	kernel_pmap_store;
 
-#define pa_index(pa)		atop(pa - vm_first_phys)
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
+#define kernel_pmap	(&kernel_pmap_store)
+#define	active_pmap(pm) \
+	((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
+
+extern struct pv_entry	*pv_table;	/* array of entries, one per page */
+
+#define pmap_page_index(pa)		atop(pa - vm_first_phys)
+#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-extern	struct pte *Sysmap;
-extern	char *vmmap;			/* map for mem, dumps, etc. */
+extern pt_entry_t	*Sysmap;
+extern char		*vmmap;		/* map for mem, dumps, etc. */
 #endif /* KERNEL */
 
-#endif /* _PMAP_MACHINE_ */
+#endif /* !_HP300_PMAP_H_ */
