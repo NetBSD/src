@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.3 1997/03/10 07:06:17 scottr Exp $
+.\"	$NetBSD: rc.conf.5,v 1.4 1997/03/17 01:22:49 cjs Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -51,11 +51,20 @@ that
 .Nm
 must be valid shell commands.
 .Pp
-Unless specified otherwise below, the variables of the from
-daemon_flags are set to the flags to be passed to the program,
-or "NO" if the program is not to be executed.
+Listed below are the
+.Sy daemon_flags
+variables that may be set, the values that each may be set to,
+a brief description of what each daemon does, and a reference to
+each daemon's manual page. Most 
+.Sy daemon_flags
+variables have three values: a list of parameters to pass on the
+command line, "DEFAULT" for a reasonable default set of parameters,
+or "NO" if the daemon is not to be run at all. Some programs don't
+take a set of flags, and may only be set to "YES" or "NO".
+The arguments passed if "DEFAULT" is chosen are listed in
+.Nm
+itself.
 .Pp
-The following variables are used:
 .Bl -tag -width bootparamd_flags
 .It Sy syslog_flags
 Typically set to "" if system logging is to be performed by
@@ -80,6 +89,11 @@ is used, or "NO".
 Typically set to "" if
 .Xr rbootd 8
 is used, or "NO".
+.It Sy mopd_flags
+Parameters, DEFAULT or NO.
+DEC MOP protocol daemon; used for booting VAX and other DEC machines.
+See
+.Xr mopd 8 .
 .It Sy sendmail_flags
 Typically set to "-bd -q30" if
 .Xr sendmail 8
