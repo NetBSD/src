@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.101 1998/12/09 23:57:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.102 1998/12/18 21:08:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.96 1998/12/09 23:57:35 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.97 1998/12/18 21:08:19 thorpej Exp 
  */
 
 /*
@@ -2522,6 +2522,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
+	    0,
+	    "Yamaha",
+	    "724 Audio",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
