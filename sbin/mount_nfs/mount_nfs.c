@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.13 1996/05/23 22:52:49 fvdl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.14 1996/10/27 21:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.13 1996/05/23 22:52:49 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.14 1996/10/27 21:18:04 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.13 1996/05/23 22:52:49 fvdl Exp 
 #include "mntopts.h"
 
 #define	ALTF_BG		0x1
-#define ALTF_NOCONN	0x2
+#define ALTF_CONN	0x2
 #define ALTF_DUMBTIMR	0x4
 #define ALTF_INTR	0x8
 #define ALTF_KERB	0x10
@@ -112,7 +112,7 @@ const struct mntopt mopts[] = {
 	MOPT_FORCE,
 	MOPT_UPDATE,
 	{ "bg", 0, ALTF_BG, 1 },
-	{ "conn", 1, ALTF_NOCONN, 1 },
+	{ "conn", 0, ALTF_CONN, 1 },
 	{ "dumbtimer", 0, ALTF_DUMBTIMR, 1 },
 	{ "intr", 0, ALTF_INTR, 1 },
 #ifdef NFSKERB
@@ -140,7 +140,7 @@ struct nfs_args nfsdefargs = {
 	0,
 	(u_char *)0,
 	0,
-	NFSMNT_NFSV3,
+	NFSMNT_NFSV3|NFSMNT_NOCONN,
 	NFS_WSIZE,
 	NFS_RSIZE,
 	NFS_READDIRSIZE,
@@ -226,7 +226,7 @@ main(argc, argv)
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:U")) != EOF)
+	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:U")) != EOF)
 		switch (c) {
 		case '3':
 			if (force2)
@@ -251,6 +251,9 @@ main(argc, argv)
 			break;
 		case 'c':
 			nfsargsp->flags |= NFSMNT_NOCONN;
+			break;
+		case 'C':
+			nfsargsp->flags &= ~NFSMNT_NOCONN;
 			break;
 		case 'D':
 			num = strtol(optarg, &p, 10);
@@ -307,8 +310,8 @@ main(argc, argv)
 			getmntopts(optarg, mopts, &mntflags, &altflags);
 			if(altflags & ALTF_BG)
 				opflags |= BGRND;
-			if(altflags & ALTF_NOCONN)
-				nfsargsp->flags |= NFSMNT_NOCONN;
+			if(altflags & ALTF_CONN)
+				nfsargsp->flags &= ~NFSMNT_NOCONN;
 			if(altflags & ALTF_DUMBTIMR)
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			if(altflags & ALTF_INTR)
@@ -790,7 +793,7 @@ __dead void
 usage()
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-"[-23bcdiKklMPqsT] [-a maxreadahead] [-D deadthresh]",
+"[-23bcCdiKklMPqsT] [-a maxreadahead] [-D deadthresh]",
 "\t[-g maxgroups] [-L leaseterm] [-m realm] [-o options] [-R retrycnt]",
 "\t[-r readsize] [-t timeout] [-w writesize] [-x retrans]",
 "\trhost:path node");
