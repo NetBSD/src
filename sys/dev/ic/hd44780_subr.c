@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.2 2005/01/08 20:17:22 joff Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.3 2005/01/09 15:43:56 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.2 2005/01/08 20:17:22 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.3 2005/01/09 15:43:56 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.2 2005/01/08 20:17:22 joff Exp $"
 #include <dev/ic/hd44780reg.h>
 #include <dev/ic/hd44780_subr.h>
 
-static void	hd44780_init(struct hd44780_chip *);
-
 /*
  * Finish device attach. sc_writereg, sc_readreg and sc_flags must be properly
  * initialized prior to this call.
@@ -58,6 +56,7 @@ void
 hd44780_attach_subr(sc)
 	struct hd44780_chip *sc;
 {
+	int err = 0;
 	/* Putc/getc are supposed to be set by platform-dependent code. */
 	if ((sc->sc_writereg == NULL) || (sc->sc_readreg == NULL))
 		sc->sc_dev_ok = 0;
@@ -69,24 +68,25 @@ hd44780_attach_subr(sc)
 		sc->sc_dev_ok = 0;
 
 	if (sc->sc_dev_ok) {
-		if ((sc->sc_flags & HD_UP) == 0)
-			hd44780_init(sc);
+		if ((sc->sc_flags & HD_UP) == 0) 
+			err = hd44780_init(sc);
+		if (err != 0)
+			printf("%s: not responding or unconnected\n", sc->sc_dev->dv_xname);
 
-		/* Turn display on and clear it. */
-		hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
-		hd44780_ir_write(sc, cmd_clear());
 	}
 }
 
 /*
  * Initialize 4-bit or 8-bit connected device.
  */
-static void
+int
 hd44780_init(sc)
 	struct hd44780_chip *sc;
 {
-	u_int8_t cmd;
+	u_int8_t cmd, dat;
 
+	sc->sc_flags &= ~(HD_TIMEDOUT|HD_UP);
+	sc->sc_dev_ok = 1;
 	cmd = cmd_init(sc->sc_flags & HD_8BIT);
 	hd44780_ir_write(sc, cmd);
 	delay(HD_TIMEOUT_LONG);
@@ -107,6 +107,28 @@ hd44780_init(sc)
 	hd44780_ir_write(sc, cmd_dispctl(0, 0, 0));
 	hd44780_ir_write(sc, cmd_clear());
 	hd44780_ir_write(sc, cmd_modset(1, 0));
+
+	if (sc->sc_flags & HD_TIMEDOUT) {
+		sc->sc_flags &= ~HD_UP;
+		return EIO;
+	} 
+
+	/* Turn display on and clear it. */
+	hd44780_ir_write(sc, cmd_clear());
+	hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
+
+	/* Attempt a simple probe for presence */
+	hd44780_ir_write(sc, cmd_ddramset(0x5));
+	hd44780_ir_write(sc, cmd_shift(0, 1));
+	hd44780_busy_wait(sc);
+	if ((dat = hd44780_ir_read(sc) & 0x7f) != 0x6) {
+		sc->sc_dev_ok = 0;
+		sc->sc_flags &= ~HD_UP;
+		return EIO;
+	}
+	hd44780_ir_write(sc, cmd_ddramset(0));
+
+	return 0;
 }
 
 /*
@@ -163,13 +185,7 @@ hd44780_ioctl_subr(sc, cmd, data)
 
 		/* Reset the LCD. */
 		case HLCD_RESET:
-			hd44780_ir_write(sc, cmd_init(sc->sc_flags & HD_8BIT));
-			hd44780_ir_write(sc, cmd_init(sc->sc_flags & HD_8BIT));
-			hd44780_ir_write(sc, cmd_init(sc->sc_flags & HD_8BIT));
-			hd44780_ir_write(sc, cmd_init(sc->sc_flags & HD_8BIT));
-			hd44780_ir_write(sc, cmd_modset(1, 0));
-			hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
-			hd44780_ir_write(sc, cmd_clear());
+			error = hd44780_init(sc);
 			break;
 
 		/* Get the current cursor position. */
@@ -237,6 +253,9 @@ hd44780_ioctl_subr(sc, cmd, data)
 		default:
 			error = EINVAL;
 	}
+
+	if (sc->sc_flags & HD_TIMEDOUT)
+		error = EIO;
 
 	return error;
 }
@@ -308,6 +327,23 @@ hd44780_ddram_redraw(sc, io)
 		hd44780_dr_write(sc, io->buf[i]);
 }
 
+void
+hd44780_busy_wait(sc)
+	struct hd44780_chip *sc;
+{
+	int nloops = 100;
+
+	if (sc->sc_flags & HD_TIMEDOUT)
+		return;
+
+	while(nloops-- && (hd44780_ir_read(sc) & BUSY_FLAG) == BUSY_FLAG);
+
+	if (nloops == 0) {
+		sc->sc_flags |= HD_TIMEDOUT;
+		sc->sc_dev_ok = 0;
+	}
+}
+
 #if defined(HD44780_STD_WIDE)
 /*
  * Standard 8-bit version of 'sc_writereg' (8-bit port, 8-bit access)
@@ -320,6 +356,9 @@ hd44780_writereg(sc, reg, cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
+
+	if (sc->sc_dev_ok == 0)
+		return;
 
 	if (reg == 0)
 		ioh = sc->sc_ioir; 
@@ -341,6 +380,9 @@ hd44780_readreg(sc, reg)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
 
+	if (sc->sc_dev_ok == 0)
+		return;
+
 	if (reg == 0)
 		ioh = sc->sc_ioir; 
 	else
@@ -361,6 +403,9 @@ hd44780_writereg(sc, reg, cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
+
+	if (sc->sc_dev_ok == 0)
+		return;
 
 	if (reg == 0)
 		ioh = sc->sc_ioir; 
@@ -384,6 +429,9 @@ hd44780_readreg(sc, reg)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
 	u_int8_t rd, dat;
+
+	if (sc->sc_dev_ok == 0)
+		return;
 
 	if (reg == 0)
 		ioh = sc->sc_ioir; 
