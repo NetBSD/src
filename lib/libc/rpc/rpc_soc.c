@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.7 2001/01/04 14:42:20 lukem Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.7.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -90,7 +90,7 @@ __weak_alias(registerrpc,_registerrpc)
 __weak_alias(clnt_broadcast,_clnt_broadcast)
 #endif
 
-#ifdef __REENT
+#ifdef _REENTRANT
 extern mutex_t	rpcsoc_lock;
 #endif
 
@@ -375,7 +375,7 @@ registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
  * All the following clnt_broadcast stuff is convulated; it supports
  * the earlier calling style of the callback function
  */
-#ifdef __REENT
+#ifdef _REENTRANT
 static thread_key_t	clnt_broadcast_key;
 #endif
 static resultproc_t	clnt_broadcast_result_main;
@@ -392,6 +392,9 @@ rpc_wrap_bcast(resultp, addr, nconf)
 	struct netconfig *nconf; /* Netconf of the transport */
 {
 	resultproc_t clnt_broadcast_result;
+#ifdef _REENTRANT
+	extern int __isthreaded;
+#endif
 
 	_DIAGASSERT(resultp != NULL);
 	_DIAGASSERT(addr != NULL);
@@ -399,18 +402,28 @@ rpc_wrap_bcast(resultp, addr, nconf)
 
 	if (strcmp(nconf->nc_netid, "udp"))
 		return (FALSE);
-#ifdef __REENT
-	if (_thr_main())
+#ifdef _REENTRANT
+	if (__isthreaded == 0)
 		clnt_broadcast_result = clnt_broadcast_result_main;
 	else
-		thr_getspecific(clnt_broadcast_key,
-			(void **) &clnt_broadcast_result);
+		clnt_broadcast_result = thr_getspecific(clnt_broadcast_key);
 #else
 	clnt_broadcast_result = clnt_broadcast_result_main;
 #endif
 	return (*clnt_broadcast_result)(resultp,
 				(struct sockaddr_in *)addr->buf);
 }
+
+#ifdef _REENTRANT
+static once_t clnt_broadcast_once = ONCE_INITIALIZER;
+
+static void
+clnt_broadcast_setup(void)
+{
+
+	thr_keycreate(&clnt_broadcast_key, free);
+}
+#endif
 
 /*
  * Broadcasts on UDP transport. Obsoleted by rpc_broadcast().
@@ -426,20 +439,13 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	caddr_t		resultsp;	/* pointer to results */
 	resultproc_t	eachresult;	/* call with each result obtained */
 {
-#ifdef __REENT
-	extern mutex_t tsd_lock;
-#endif
+#ifdef _REENTRANT
+	extern int __isthreaded;
 
-#ifdef __REENT
-	if (_thr_main())
+	if (__isthreaded == 0)
 		clnt_broadcast_result_main = eachresult;
 	else {
-		if (clnt_broadcast_key == 0) {
-			mutex_lock(&tsd_lock);
-			if (clnt_broadcast_key == 0)
-				thr_keycreate(&clnt_broadcast_key, free);
-			mutex_unlock(&tsd_lock);
-		}
+		thr_once(&clnt_broadcast_once, clnt_broadcast_setup);
 		thr_setspecific(clnt_broadcast_key, (void *) eachresult);
 	}
 #else

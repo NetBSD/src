@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.6 2001/01/25 22:50:57 jdolecek Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.6.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,6 +40,7 @@
  */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -220,6 +221,20 @@ getnettype(nettype)
  * For the given nettype (tcp or udp only), return the first structure found.
  * This should be freed by calling freenetconfigent()
  */
+
+#ifdef _REENTRANT
+static thread_key_t tcp_key, udp_key;
+static once_t __rpc_getconfigp_once = ONCE_INITIALIZER;
+
+static void
+__rpc_getconfigp_setup(void)
+{
+
+	thr_keycreate(&tcp_key, free);
+	thr_keycreate(&udp_key, free);
+}
+#endif
+
 struct netconfig *
 __rpc_getconfip(nettype)
 	const char *nettype;
@@ -230,29 +245,16 @@ __rpc_getconfip(nettype)
 	static char *netid_tcp_main;
 	static char *netid_udp_main;
 	struct netconfig *dummy;
-#ifdef __REENT
-	int main_thread;
-	static thread_key_t tcp_key, udp_key;
-	extern mutex_t tsd_lock;
+#ifdef _REENTRANT
+	extern int __isthreaded;
 
-	if ((main_thread = _thr_main())) {
+	if (__isthreaded == 0) {
 		netid_udp = netid_udp_main;
 		netid_tcp = netid_tcp_main;
 	} else {
-		if (tcp_key == 0) {
-			mutex_lock(&tsd_lock);
-			if (tcp_key == 0)
-				thr_keycreate(&tcp_key, free);
-			mutex_unlock(&tsd_lock);
-		}
-		thr_getspecific(tcp_key, (void **) &netid_tcp);
-		if (udp_key == 0) {
-			mutex_lock(&tsd_lock);
-			if (udp_key == 0)
-				thr_keycreate(&udp_key, free);
-			mutex_unlock(&tsd_lock);
-		}
-		thr_getspecific(udp_key, (void **) &netid_udp);
+		thr_once(&__rpc_getconfigp_once, __rpc_getconfigp_setup);
+		netid_tcp = thr_getspecific(tcp_key);
+		netid_udp = thr_getspecific(udp_key);
 	}
 #else
 	netid_udp = netid_udp_main;
@@ -273,8 +275,8 @@ __rpc_getconfip(nettype)
 			if (strcmp(nconf->nc_protofmly, NC_INET) == 0) {
 				if (strcmp(nconf->nc_proto, NC_TCP) == 0) {
 					netid_tcp = strdup(nconf->nc_netid);
-#ifdef __REENT
-					if (main_thread)
+#ifdef _REENTRANT
+					if (__isthreaded == 0)
 						netid_tcp_main = netid_tcp;
 					else
 						thr_setspecific(tcp_key,
@@ -285,8 +287,8 @@ __rpc_getconfip(nettype)
 				} else
 				if (strcmp(nconf->nc_proto, NC_UDP) == 0) {
 					netid_udp = strdup(nconf->nc_netid);
-#ifdef __REENT
-					if (main_thread)
+#ifdef _REENTRANT
+					if (__isthreaded == 0)
 						netid_udp_main = netid_udp;
 					else
 						thr_setspecific(udp_key,
