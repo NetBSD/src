@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2000/11/19 14:14:32 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.172 2000/11/19 14:23:35 tsutsui Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.172 $"
 
 maxusers 32
 
@@ -177,11 +177,11 @@ tsp*	at	tsc?
 #ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?  
-#sableio* at	ttwopci? bus ?  
-#com*	at	sableio? port ? 
-#lpt*	at	sableio? port ? 
-#pckbc*	at	sableio? port ? 
+#ttwopci* at	ttwoga? hose ?
+#sableio* at	ttwopci? bus ?
+#com*	at	sableio? port ?
+#lpt*	at	sableio? port ?
+#pckbc*	at	sableio? port ?
 #fdc*	at	sableio? port ?
 
 # PCI bus support
