@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.1 1999/11/15 06:16:56 simonb Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.2 1999/11/15 10:54:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.1 1999/11/15 06:16:56 simonb Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.2 1999/11/15 10:54:40 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: bufcache.c,v 1.1 1999/11/15 06:16:56 simonb Exp $");
 #include <nlist.h>
 #include <paths.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -137,7 +138,7 @@ void
 labelbufcache()
 {
 	mvwprintw(wnd, 0, 0, "There are %d buffers using %d kBytes of memory.",
-	    nbuf, bufpages * CLBYTES / 1024);
+	    nbuf, bufpages * CLSIZE * sysconf(_SC_PAGESIZE) / 1024);
 	wclrtoeol(wnd);
 	wmove(wnd, 1, 0);
 	wclrtoeol(wnd);
