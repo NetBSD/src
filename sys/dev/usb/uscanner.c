@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.2 2000/09/23 05:05:31 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.3 2000/09/23 20:24:47 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -76,7 +76,7 @@ int	uscannerdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-/* table of scanners that may work with this driver */
+/* Table of scanners that may work with this driver. */
 static const struct scanner_id {
 	uint16_t	vendor;
 	uint16_t	product;
