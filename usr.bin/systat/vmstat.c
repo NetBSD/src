@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.53 2003/08/07 11:16:01 agc Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.54 2003/08/30 12:57:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.53 2003/08/07 11:16:01 agc Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.54 2003/08/30 12:57:03 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -772,7 +772,7 @@ copyinfo(struct Info *from, struct Info *to)
 	intrcnt = to->intrcnt;
 	evcnt = to->evcnt;
 	*to = *from;
-	memmove(to->intrcnt = intrcnt, from->intrcnt, nintr * sizeof (int));
+	memmove(to->intrcnt = intrcnt, from->intrcnt, nintr * sizeof *intrcnt);
 	memmove(to->evcnt = evcnt, from->evcnt, nevcnt * sizeof *evcnt);
 }
 
