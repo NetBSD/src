@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.4 1993/09/29 15:24:14 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.5 1993/09/30 17:33:00 mycroft Exp $
  */
 
 #include "param.h"
@@ -51,7 +51,11 @@
 #define	LMS_BSIZE	1024	/* buffer size */
 
 struct lms_softc {		/* Driver status information */
-	struct ringbuf {	/* Input queue */
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
+
+	struct	ringbuf {	/* Input queue */
 		int rb_count, rb_first, rb_last;
 		char rb_data[LMS_BSIZE];
 	} sc_q;
@@ -132,6 +136,8 @@ lmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
+	printf(": Logitech mouse\n");
+
 	/* XXXX isa_establishintr */
 }
 
@@ -145,7 +151,7 @@ lmsopen(dev, flag)
 
 	if (unit >= lmscd.cd_ndevs)
 		return ENXIO;
-	sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	sc = lmscd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -169,7 +175,7 @@ lmsclose(dev, flag)
 	int flag;
 {
 	int	unit = LMSUNIT(dev);
-	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	struct	lms_softc *sc = lmscd.cd_devs[unit];
 
 	/* disable interrupts */
 	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
@@ -186,7 +192,7 @@ lmsread(dev, uio, flag)
 	int flag;
 {
 	int	unit = LMSUNIT(dev);
-	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	struct	lms_softc *sc = lmscd.cd_devs[unit];
 	int	s;
 	int	error;
 	size_t	length;
@@ -250,7 +256,7 @@ lmsioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	int	unit = LMSUNIT(dev);
-	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	struct	lms_softc *sc = lmscd.cd_devs[unit];
 	struct	mouseinfo info;
 	int	s;
 	int	error;
@@ -376,7 +382,7 @@ lmsselect(dev, rw, p)
 	struct proc *p;
 {
 	int	unit = LMSUNIT(dev);
-	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	struct	lms_softc *sc = lmscd.cd_devs[unit];
 	int	s;
 	int	ret;
 

@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.2 1993/09/29 05:20:26 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.3 1993/09/30 17:33:01 mycroft Exp $
  */
 
 /*
@@ -83,6 +83,10 @@ int lptdebug = 1;
 #endif
 
 struct lpt_softc {
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
+
 	size_t	sc_count;
 	struct	buf *sc_inbuf;
 	u_char	*sc_cp ;
@@ -249,7 +253,7 @@ lptopen(dev, flag)
 
 	if (unit >= lptcd.cd_ndevs)
 		return ENXIO;
-	sc = (struct lpt_softc *)lptcd.cd_devs[unit];
+	sc = lptcd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -342,7 +346,7 @@ lptclose(dev, flag)
 	int flag;
 {
 	int	unit = LPTUNIT(minor(dev));
-	struct	lpt_softc *sc = (struct lpt_softc *)lptcd.cd_devs[unit];
+	struct	lpt_softc *sc = lptcd.cd_devs[unit];
 	u_short	iobase = sc->sc_iobase;
 	int	error;
 
@@ -419,7 +423,7 @@ lptwrite(dev, uio)
 	struct uio *uio;
 {
 	int	unit = LPTUNIT(minor(dev));
-	struct	lpt_softc *sc = (struct lpt_softc *)lptcd.cd_devs[unit];
+	struct	lpt_softc *sc = lptcd.cd_devs[unit];
 	size_t	n;
 	int	error = 0;
 

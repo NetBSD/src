@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.2 1993/09/24 08:49:02 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.3 1993/09/30 17:32:58 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -395,7 +395,7 @@ fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
 	int	fdu = FDUNIT(minor(bp->b_dev));
-	struct	fd_softc *fd = (struct fd_softc *)&fdcd.cd_devs[fdu];
+	struct	fd_softc *fd = fdcd.cd_devs[fdu];
 	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 	struct	fd_type *type = fd->sc_type;
 	register struct buf *dp;
@@ -543,7 +543,7 @@ Fdopen(dev, flags)
 	if (fdu >= fdcd.cd_ndevs)
 		return ENXIO;
 
-	fd = (struct fd_softc *)fdcd.cd_devs[fdu];
+	fd = fdcd.cd_devs[fdu];
 	if (!fd)
 		return ENXIO;
 
@@ -567,7 +567,7 @@ fdclose(dev, flags)
 	int flags;
 {
  	int fdu = FDUNIT(minor(dev));
-	struct fd_softc *fd = (struct fd_softc *)fdcd.cd_devs[fdu];
+	struct fd_softc *fd = fdcd.cd_devs[fdu];
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
@@ -922,55 +922,47 @@ fdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct fd_softc *fd = (struct fd_softc *)fdcd.cd_devs[FDUNIT(minor(dev))];
+	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(minor(dev))];
 	struct fd_type *type;
-	char buffer[DEV_BSIZE];
-	struct disklabel *dl;
+	struct disklabel buffer;
 	int error = 0;
 
 	switch (cmd)
 	{
 	    case DIOCGDINFO:
-		bzero(buffer, sizeof(buffer));
-		dl = (struct disklabel *)buffer;
-		dl->d_secsize = FDC_BSIZE;
+		bzero(&buffer, sizeof(buffer));
+		buffer.d_secsize = FDC_BSIZE;
 		
 		type = fd->sc_type;
-		dl->d_secpercyl = type->size / type->tracks;
-		dl->d_type = DTYPE_FLOPPY;
+		buffer.d_secpercyl = type->size / type->tracks;
+		buffer.d_type = DTYPE_FLOPPY;
 
-		if (readdisklabel(dev, fdstrategy, dl, NULL) == NULL)
-			error = 0;
-		else
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL) {
 			error = EINVAL;
+			break;
+		}
 
-		*(struct disklabel *)addr = *dl;
-		break;
-
-	    case DIOCSDINFO:
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
+		*(struct disklabel *)addr = buffer;
 		break;
 
 	    case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
+		/* XXX do something */
 		break;
 
+	    case DIOCSDINFO:
 	    case DIOCWDINFO:
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
 			break;
 		}
 
-		dl = (struct disklabel *)addr;
-
-		error = setdisklabel((struct disklabel *)buffer, dl, 0, NULL);
+		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
 		if (error)
 			break;
 
-		error = writedisklabel(dev, fdstrategy,
-				       (struct disklabel *)buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
 		break;
 
 	    default:
