@@ -1,4 +1,4 @@
-.\"	$NetBSD: time.1,v 1.6 1996/12/18 23:18:57 pk Exp $
+.\"	$NetBSD: time.1,v 1.7 1997/10/20 03:28:20 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,12 +40,12 @@
 .Nm time
 .Nd time command execution
 .Sh SYNOPSIS
-.Nm time
+.Nm
 .Op Fl lp
 .Ar utility
 .Sh DESCRIPTION
 The
-.Nm time
+.Nm
 utility
 executes and
 times
@@ -53,7 +53,7 @@ times
 After the
 .Ar utility
 finishes,
-.Nm time
+.Nm
 writes the total time elapsed,
 the time consumed by system overhead,
 and the time used to execute 
@@ -75,7 +75,7 @@ The output is formatted as specified by
 The
 .Xr csh 1
 has its own and syntactically different builtin version of
-.Nm time.
+.Nm "" .
 The utility described here
 is available as
 .Pa /usr/bin/time
@@ -84,12 +84,12 @@ to
 users.
 .Sh DIAGNOSTICS
 The
-.Nm time
+.Nm
 utility shall exit with one of the following values:
 .Bl -tag -width indent
 .It 1-125
 An error occurred in the 
-.Nm time
+.Nm
 utility.
 .It 126
 The 
@@ -102,7 +102,7 @@ could not be found.
 .El
 .Pp
 Otherwise, the exit status of 
-.Nm time 
+.Nm
 shall be that of 
 .Ar utility .
 .Sh SEE ALSO
