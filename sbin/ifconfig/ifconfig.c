@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.131 2002/09/22 15:29:23 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.132 2002/09/23 00:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.131 2002/09/22 15:29:23 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.132 2002/09/23 00:10:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1638,7 +1638,7 @@ ieee80211_status()
 		return;
 	memcpy(ea.ether_addr_octet, bssid.i_bssid,
 	    sizeof(ea.ether_addr_octet));
-	printf("\tbssid %s chan %d", ether_ntoa(&ea), channel.i_channel);
+	printf("\tbssid %s chan %d\n", ether_ntoa(&ea), channel.i_channel);
 }
 
 void
