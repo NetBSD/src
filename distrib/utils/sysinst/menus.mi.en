@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.37 2000/01/04 08:33:52 itojun Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.38 2000/01/05 01:50:45 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -325,29 +325,65 @@ menu localdirbad, title "What do you want to do?";
 
 menu namesrv6, title "  Select IPv6 DNS server";
 	option "paradise.v6.kame.net", exit, action
-		{ strncpy(net_namesvr6, "3ffe:501:4819::42",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:501:4819::42",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "kiwi.itojun.org", exit, action
-		{ strncpy(net_namesvr6, "3ffe:501:410:100:5254:ff:feda:48bf",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:501:410:100:5254:ff:feda:48bf",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "sh1.iijlab.net", exit, action
-		{ strncpy(net_namesvr6, "3ffe:507:0:1:260:97ff:fe07:69ea",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:507:0:1:260:97ff:fe07:69ea",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "ns1.v6.intec.co.jp", exit, action 
-		{ strncpy(net_namesvr6, "3ffe:508:0:1::53",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:508:0:1::53",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "nttv6.net", exit, action
-		{ strncpy(net_namesvr6, "3ffe:1800:1000::1",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:1800:1000::1",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "light.imasy.or.jp", exit, action
-		{ strncpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
+		{
+#ifdef INET6
+		  strncpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
 		      sizeof(net_namesvr6));
-		  yesno = 1; }; 
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
 	option "other ", exit, action
 		{ yesno = 0; };
 
