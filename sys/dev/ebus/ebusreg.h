@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.1 2001/09/07 15:50:49 mrg Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.2 2002/02/18 03:43:29 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -28,8 +28,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SPARC64_DEV_EBUSREG_H_
-#define _SPARC64_DEV_EBUSREG_H_
+#ifndef _DEV_EBUS_EBUSREG_H_
+#define _DEV_EBUS_EBUSREG_H_
 
 /*
  * SPARC `ebus'
@@ -52,23 +52,43 @@
  * as other UltraSPARC and some SPARC systems), and other various
  * internal devices found on traditional SPARC systems such as the
  * `power', `flashprom', etc., devices.  Other machines with this
- * device include the JavaStation10.
+ * device include microSPARC-IIep based systems, e.g. JavaStation10.
  *
  * The ebus uses an interrupt mapping scheme similar to PCI, though
  * the actual structures are different.
  */
 
 /*
- * ebus PROM structures
+ * EBus PROM structures.  There's no official OFW binding for EBus,
+ * so ms-IIep PROMs deviate from de-facto standard used on Ultra's.
+ *
+ * EBus address is represented in PROM by 2 cells: bar and offset.
+ * "bar" specifies the EBus BAR register used to translate the
+ * "offset" into PCI address space.
+ * 
+ * On Ultra the bar is the _offset_ of the BAR in PCI config space but
+ * in (some?) ms-IIep systems (e.g. Krups) it's the _number_ of the
+ * BAR - e.g. BAR1 is represented by 1 in Krups PROM, while on Ultra
+ * it's 0x14.
  */
 
 struct ebus_regs {
-	u_int32_t	hi;		/* high bits of physaddr */ 
+	u_int32_t	hi;		/* high bits of physaddr */
 	u_int32_t	lo;
 	u_int32_t	size;
 };
 
+/*
+ * XXX: uwe: on sparc32 it's not really a paddr, so this name is
+ * misleading.  Since I don't have a sparc64 to test on, I keep this
+ * old define here and add what I think is a correct one below.
+ * sparc64 code should be switched to use the new one and the old one
+ * (and this comment) shall be removed.
+ */
 #define	EBUS_PADDR_FROM_REG(reg)	((((paddr_t)((reg)->hi)) << 32UL) | ((paddr_t)(reg)->lo))
+
+#define	EBUS_ADDR_FROM_REG(reg)		BUS_ADDR((reg)->hi, (reg)->lo)
+
 
 struct ebus_ranges {
 	u_int32_t	child_hi;	/* child high phys addr */
@@ -79,6 +99,8 @@ struct ebus_ranges {
 	u_int32_t	size;
 };
 
+
+/* NB: ms-IIep PROMs lack these interrupt-related properties */
 struct ebus_interrupt_map {
 	u_int32_t	hi;		/* high phys addr mask */
 	u_int32_t	lo;		/* low phys addr mask */
@@ -93,4 +115,68 @@ struct ebus_interrupt_map_mask {
 	u_int32_t	intr;		/* interrupt */
 };
 
-#endif /* _SPARC64_DEV_EBUSREG_H_ */
+
+/*
+ * DMA controller registers.
+ * 
+ * The "next" registers are at the same locations.
+ * Which one you write to depends on EN_NEXT bit in the DCSR.
+ */
+#define EBUS_DMAC_DCSR	0	/* control/status register */
+#define EBUS_DMAC_DACR	4	/* address count register */
+#define EBUS_DMAC_DNAR	4	/* next address register */
+#define EBUS_DMAC_DBCR	8	/* byte count register */
+#define EBUS_DMAC_DNBR	8	/* next byte register */
+
+/* same registers as struct */
+struct ebus_dmac_reg {
+	u_int32_t dcsr;		/* control/status register */
+	u_int32_t dacr;		/* address count register */
+	u_int32_t dbcr;		/* byte count register */
+};
+
+/*
+ * DCSR bits (PCIO manual, Table 7-23, pp 134-135)
+ * 
+ * On Reset all the register bits except ID will be 0 and CYC_PENDING
+ * will reflect the status of any pending requests.
+ */
+#define EBDMA_INT_PEND		0x00000001 /* interrupt pending */
+#define EBDMA_ERR_PEND		0x00000002 /* error pending */
+#define EBDMA_DRAIN		0x00000004 /* fifo's being drained to memory */
+#define EBDMA_INT_EN		0x00000010 /* enable interrupts */
+#define EBDMA_RESET		0x00000080 /* reset - write 0 to clear */
+#define EBDMA_WRITE		0x00000100 /* 0: mem->dev, 1: dev->mem */
+#define EBDMA_EN_DMA		0x00000200 /* enable DMA */
+#define EBDMA_CYC_PEND		0x00000400 /* DMA cycle pending 
+					      - not safe to clear reset */
+#define EBDMA_DIAG_RD_DONE	0x00000800 /* DIAG mode: DMA read completed */
+#define EBDMA_DIAG_WR_DONE	0x00001000 /* DIAG mode: DMA write completed */
+#define EBDMA_EN_CNT		0x00002000 /* enable byte counter */
+#define EBDMA_TC		0x00004000 /* terminal count
+					      - write 1 to clear */
+#define EBDMA_DIS_CSR_DRN	0x00010000 /* disable fifo draining
+					      on slave writes to CSR */
+#define EBDMA_BURST_SIZE_MASK	0x000c0000 /* burst sizes: */
+#define EBDMA_BURST_SIZE_4	    0x00000000 /* 00 -  4 words */
+#define EBDMA_BURST_SIZE_8	    0x00040000 /* 01 -  8 words */
+#define EBDMA_BURST_SIZE_1	    0x00080000 /* 10 -  1 word  */
+#define EBDMA_BURST_SIZE_16	    0x000c0000 /* 11 - 16 words */
+#define EBDMA_DIAG_EN		0x00100000 /* enable diag mode */
+#define EBDMA_DIS_ERR_PEND	0x00400000 /* disable stop/interrupt
+					      on error pedning */
+#define EBDMA_TCI_DIS		0x00800000 /* disable interrupt on TC */
+#define EBDMA_EN_NEXT		0x01000000 /* enable next address autoload
+					      (must set EN_CNT too) */
+#define EBDMA_DMA_ON		0x02000000 /* DMA is able to respond */
+#define EBDMA_A_LOADED		0x04000000 /* DACR loaded
+					      (directly or from DNAR) */
+#define EBDMA_NA_LOADED		0x08000000 /* DNAR loaded */
+#define EBDMA_ID_MASK		0xf0000000 /* Device ID = 0xC */
+
+#define EBUS_DCSR_BITS \
+    "\20\34NA_LOADED\33A_LOADED\32DMA_ON\31EN_NEXT\30TCI_DIS\27DIS_ERR_PEND" \
+    "\25DIAG_EN\21DIS_CSR_DRN\17TC\16EN_CNT\15DIAG_WR_DONE\14DIAG_RD_DONE"   \
+    "\13CYC_PEND\12EN_DMA\11WRITE\10RESET\6INT_EN\3DRAIN\2ERR_PEND\1INT_PEND"
+
+#endif /* _DEV_EBUS_EBUSREG_H_ */
