@@ -1,8 +1,8 @@
-#	$NetBSD: TODO,v 1.17 1999/03/31 00:44:48 fvdl Exp $
+#	$NetBSD: TODO,v 1.18 1999/05/05 01:21:37 simonb Exp $
 
 Things to do ....  in no specific order.
 
-	-  On upgrade, remove /usr/include/machine and the machine-
+	-- On upgrade, remove /usr/include/machine and the machine-
 	   dependent name e.g. /usr/include/i386.  On 1.3, machine
 	   is a directory and e.g. i386 is a symlink, whereas in 1.4
 	   the reverse is true.  Without this fix, extraction of base
@@ -83,6 +83,10 @@ Things to do ....  in no specific order.
         -- Set current time and date.
 
 	-- Configure NTP servers, set NTP in rc.conf
+
+	-- On i386 (and others) allow for storing localtime in the RTC.
+	   Need to patch kernel variable with offset from UTC.  Any
+	   other kernel variables we might want to patch as well???
 
         -- A little more clean-up of the run_prog suite so things worke
            nicely for all ports.
