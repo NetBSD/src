@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.9 2002/01/14 13:32:47 tsutsui Exp $	*/
+/*	$NetBSD: event.c,v 1.10 2002/10/21 15:22:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9 2002/01/14 13:32:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.10 2002/10/21 15:22:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9 2002/01/14 13:32:47 tsutsui Exp $");
 #include <sys/select.h>
 #include <sys/poll.h>
 
-#include <machine/vuid_event.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 
 int (*ev_out32_hook) __P((struct firm_event *, int, struct uio *));
