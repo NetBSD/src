@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.8 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9 2003/12/04 16:56:01 drochner Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -382,6 +382,8 @@ convert_isc_if(isc_interface_t *isc_if, struct interface *itf, u_short port) {
 		memcpy(&(((struct sockaddr_in6 *)&itf->sin)->sin6_addr),
 		       &(isc_if->address.type.in6),
 		       sizeof(struct in6_addr));
+		((struct sockaddr_in6 *)&itf->sin)->sin6_scope_id =
+			isc_if->address.zone;
 		((struct sockaddr_in6 *)&itf->sin)->sin6_port = port;
 
 		itf->mask.ss_family = itf->sin.ss_family;
@@ -772,6 +774,8 @@ io_multicast_add(
 		memset((char *)&mreq6, 0, sizeof(mreq6));
 		memset((char *)&inter_list[i], 0, sizeof(struct interface));
 		sin6p->sin6_family = AF_INET6;
+		sin6p->sin6_scope_id =
+				((struct sockaddr_in6*)&addr)->sin6_scope_id;
 		sin6p->sin6_addr = iaddr6;
 		sin6p->sin6_port = htons(NTP_PORT);
 
@@ -812,7 +816,10 @@ io_multicast_add(
 		 * enable reception of multicast packets
 		 */
 		mreq6.ipv6mr_multiaddr = iaddr6;
-		mreq6.ipv6mr_interface = 0;
+		if (IN6_IS_ADDR_MC_LINKLOCAL(&iaddr6))
+			mreq6.ipv6mr_interface = sin6p->sin6_scope_id;
+		else
+			mreq6.ipv6mr_interface = 0;
 		if(setsockopt(inter_list[i].fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 		   (char *)&mreq6, sizeof(mreq6)) == -1)
 			netsyslog(LOG_ERR,
@@ -1903,8 +1910,11 @@ findinterface(
 	saddr.ss_family = addr->ss_family;
 	if(addr->ss_family == AF_INET)
 		memcpy(&((struct sockaddr_in*)&saddr)->sin_addr, &((struct sockaddr_in*)addr)->sin_addr, sizeof(struct in_addr));
-	else if(addr->ss_family == AF_INET6)
+	else if(addr->ss_family == AF_INET6) {
 		memcpy(&((struct sockaddr_in6*)&saddr)->sin6_addr, &((struct sockaddr_in6*)addr)->sin6_addr, sizeof(struct in6_addr));
+		((struct sockaddr_in6*)&saddr)->sin6_scope_id =
+			((struct sockaddr_in6*)addr)->sin6_scope_id;
+	}
 	((struct sockaddr_in*)&saddr)->sin_port = htons(2000);
 	s = socket(addr->ss_family, SOCK_DGRAM, 0);
 	if (s == INVALID_SOCKET)
