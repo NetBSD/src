@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.1 2001/08/06 12:12:36 ad Exp $	*/
+/*	$NetBSD: iopl.c,v 1.2 2001/08/06 12:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -367,8 +367,8 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Set the pre-padding and "orphan" limits.  This is to ensure that
-	 * for received packets, the L2 payload will be aligned on a 32-bit
-	 * boundary, and the L1 header won't be split between buckets. 
+	 * for received packets, the L3 payload will be aligned on a 32-bit
+	 * boundary, and the L2 header won't be split between buckets. 
 	 *
 	 * While here, enable error reporting for transmits.  We're not
 	 * interested in most errors (e.g. excessive collisions), but others
