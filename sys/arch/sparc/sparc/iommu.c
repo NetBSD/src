@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.78 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.79 2004/03/28 19:35:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.78 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.79 2004/03/28 19:35:13 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -624,7 +624,10 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		(void) pmap_extract(pmap, va, &pa);
+		if (!pmap_extract(pmap, va, &pa)) {
+			iommu_dmamap_unload(t, map);
+			return (EFAULT);
+		}
 
 		iommu_enter(sc, dva, pa);
 
