@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.114 1997/10/18 23:11:45 is Exp $	*/
+/*	$NetBSD: com.c,v 1.115 1997/10/19 11:45:33 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -71,6 +71,12 @@
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  */
+
+#include "rnd.h"
+#if NRND > 0 && defined(RND_COM)
+#include <sys/rnd.h>
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -453,6 +459,11 @@ com_attach_subr(sc)
 
 #ifdef __GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, comsoft, sc);
+#endif
+
+#if NRND > 0 && defined(RND_COM)
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_TTY);
 #endif
 }
 
@@ -1607,6 +1618,11 @@ comintr(arg)
 	}
 #endif
 #endif
+
+#if NRND > 0 && defined(RND_COM)
+	rnd_add_uint32(&sc->rnd_source, iir | lsr);
+#endif
+
 	return (1);
 }
 
