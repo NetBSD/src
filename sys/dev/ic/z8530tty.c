@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.23 1997/11/01 17:12:54 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.24 1997/11/01 17:57:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -202,7 +202,7 @@ static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zstty_softc *zst, int onoff));
 static int	zshwiflow __P((struct tty *, int));
-static void zs_hwiflow __P((struct zstty_softc *, int));
+static void zs_hwiflow __P((struct zstty_softc *));
 
 /*
  * zstty_match: how is this zs channel configured?
@@ -454,8 +454,8 @@ zsopen(dev, flags, mode, p)
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput;
 		zs_iflush(cs);
-		/* Turn on RTS. */
-		zs_hwiflow(zst, 0);
+		zst->zst_rx_blocked = 0;
+		zs_hwiflow(zst);
 	}
 	error = 0;
 
@@ -517,7 +517,8 @@ zsclose(dev, flags, mode, p)
 	ttyclose(tp);
 
 	/* If we were asserting flow control, then deassert it. */
-	zs_hwiflow(zst, 1);
+	zst->zst_rx_blocked = 1;
+	zs_hwiflow(zst);
 	/* Clear any break condition set with TIOCSBRK. */
 	zs_break(cs, 0);
 	/*
@@ -928,23 +929,18 @@ zs_modem(zst, onoff)
 	int onoff;
 {
 	struct zs_chanstate *cs;
-	int s, clr, set;
+	int s;
 
 	cs = zst->zst_cs;
 	if (cs->cs_wr5_dtr == 0)
 		return;
 
-	if (onoff) {
-		clr = 0;
-		set = cs->cs_wr5_dtr;
-	} else {
-		clr = cs->cs_wr5_dtr;
-		set = 0;
-	}
-
 	s = splzs();
-	cs->cs_preg[5] &= ~clr;
-	cs->cs_preg[5] |= set;
+	if (onoff)
+		cs->cs_preg[5] |= cs->cs_wr5_dtr;
+	else
+		cs->cs_preg[5] &= ~cs->cs_wr5_dtr;
+
 	if (cs->cs_heldchange == 0) {
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
@@ -962,12 +958,12 @@ zs_modem(zst, onoff)
  * Try to block or unblock input using hardware flow-control.
  * This is called by kern/tty.c if MDMBUF|CRTSCTS is set, and
  * if this function returns non-zero, the TS_TBLOCK flag will
- * be set or cleared according to the "stop" arg passed.
+ * be set or cleared according to the "block" arg passed.
  */
 int
-zshwiflow(tp, stop)
+zshwiflow(tp, block)
 	struct tty *tp;
-	int stop;
+	int block;
 {
 	register struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
@@ -975,29 +971,21 @@ zshwiflow(tp, stop)
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
-
-	/* Can not do this without some bit assigned as RTS. */
 	if (cs->cs_wr5_rts == 0)
 		return (0);
 
 	s = splzs();
-	if (stop) {
-		/*
-		 * The tty layer is asking us to block input.
-		 * If we already did it, just return TRUE.
-		 */
-		if (zst->zst_rx_blocked)
-			goto out;
-		zst->zst_rx_blocked = 1;
+	if (block) {
+		if (!zst->zst_rx_blocked) {
+			zst->zst_rx_blocked = 1;
+			zs_hwiflow(zst);
+		}
 	} else {
-		/*
-		 * The tty layer is asking us to resume input.
-		 * The input ring is always empty by now.
-		 */
-		zst->zst_rx_blocked = 0;
+		if (zst->zst_rx_blocked) {
+			zst->zst_rx_blocked = 0;
+			zs_hwiflow(zst);
+		}
 	}
-	zs_hwiflow(zst, stop);
- out:
 	splx(s);
 	return 1;
 }
@@ -1007,40 +995,23 @@ zshwiflow(tp, stop)
  * called at splzs
  */
 static void
-zs_hwiflow(zst, stop)
+zs_hwiflow(zst)
 	register struct zstty_softc *zst;
-	int stop;
 {
 	register struct zs_chanstate *cs;
-	register int clr, set;
 
 	cs = zst->zst_cs;
-
 	if (cs->cs_wr5_rts == 0)
 		return;
 
-	if (stop) {
-		/* Block input (Lower RTS) */
-		clr = cs->cs_wr5_rts;
-		set = 0;
+	if (zst->zst_rx_blocked) {
+		cs->cs_preg[5] &= ~cs->cs_wr5_rts;
+		cs->cs_creg[5] &= ~cs->cs_wr5_rts;
 	} else {
-		/* Unblock input (Raise RTS) */
-		clr = 0;
-		set = cs->cs_wr5_rts;
+		cs->cs_preg[5] |= cs->cs_wr5_rts;
+		cs->cs_creg[5] |= cs->cs_wr5_rts;
 	}
-
-	cs->cs_preg[5] &= ~clr;
-	cs->cs_preg[5] |= set;
-	if (cs->cs_heldchange == 0) {
-		if (zst->zst_tx_busy) {
-			zst->zst_heldtbc = zst->zst_tbc;
-			zst->zst_tbc = 0;
-			cs->cs_heldchange = (1<<5);
-		} else {
-			cs->cs_creg[5] = cs->cs_preg[5];
-			zs_write_reg(cs, 5, cs->cs_creg[5]);
-		}
-	}
+	zs_write_reg(cs, 5, cs->cs_creg[5]);
 }
 
 
@@ -1116,7 +1087,7 @@ nextchar:
 		cc += zstty_rbuf_size;
 	if ((cc > zst->zst_rbhiwat) && (zst->zst_rx_blocked == 0)) {
 		zst->zst_rx_blocked = 1;
-		zs_hwiflow(zst, 1);
+		zs_hwiflow(zst);
 	}
 
 	/* Ask for softint() call. */
@@ -1318,7 +1289,7 @@ zstty_softint(cs)
 	if (zst->zst_rx_blocked && ((tp->t_state & TS_TBLOCK) == 0)) {
 		t = splzs();
 		zst->zst_rx_blocked = 0;
-		zs_hwiflow(zst, 0);	/* unblock input */
+		zs_hwiflow(zst);
 		splx(t);
 	}
 
