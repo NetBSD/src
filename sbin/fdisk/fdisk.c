@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.42 2000/07/06 17:22:43 thorpej Exp $ */
+/*	$NetBSD: fdisk.c,v 1.43 2000/12/19 15:44:27 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.42 2000/07/06 17:22:43 thorpej Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.43 2000/12/19 15:44:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ unsigned char bootcode[8192];	/* maximum size of bootcode */
 unsigned char tempcode[8192];
 int bootsize;		/* actual size of bootcode */
 
-
+
 static char reserved[] = "reserved";
 
 struct part_type {
@@ -259,49 +259,47 @@ struct part_type {
 	{0xFF, "Xenix Bad Block Table"},
 };
 
-void	usage __P((void));
-void	print_s0 __P((int));
-void	print_part __P((int));
-int	read_boot __P((char *, char *, size_t));
-void	init_sector0 __P((int, int));
-void	intuit_translated_geometry __P((void));
-void	get_geometry __P((void));
-void	get_diskname __P((char *, char *, size_t));
-int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
-		       quad_t));
-int	try_sectors __P((quad_t, quad_t, quad_t, quad_t, quad_t));
-void	change_part __P((int, int, int, int));
-void	print_params __P((void));
-void	change_active __P((int));
-void	get_params_to_use __P((void));
-void	dos __P((int, unsigned char *, unsigned char *, unsigned char *));
-int	open_disk __P((int));
-int	read_disk __P((int, void *));
-int	write_disk __P((int, void *));
-int	get_params __P((void));
-int	read_s0 __P((void));
-int	write_s0 __P((void));
-int	yesno __P((char *));
-void	decimal __P((char *, int *));
-int	type_match __P((const void *, const void *));
-char	*get_type __P((int));
-int	get_mapping __P((int, int *, int *, int *, long *));
+void	usage(void);
+void	print_s0(int);
+void	print_part(int);
+int	read_boot(const char *, void *, size_t);
+void	init_sector0(int, int);
+void	intuit_translated_geometry(void);
+void	get_geometry(void);
+void	get_diskname(char *, char *, size_t);
+int	try_heads(quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
+		       quad_t);
+int	try_sectors(quad_t, quad_t, quad_t, quad_t, quad_t);
+void	change_part(int, int, int, int);
+void	print_params(void);
+void	change_active(int);
+void	get_params_to_use(void);
+void	dos(int, unsigned char *, unsigned char *, unsigned char *);
+int	open_disk(int);
+int	read_disk(int, void *);
+int	write_disk(int, void *);
+int	get_params(void);
+int	read_s0(void);
+int	write_s0(void);
+int	yesno(const char *);
+void	decimal(const char *, int *);
+int	type_match(const void *, const void *);
+const char *get_type(int);
+int	get_mapping(int, int *, int *, int *, unsigned long *);
 #ifdef __i386__
-void	configure_bootsel __P((void));
+void	configure_bootsel(void);
 #endif
 
-static inline unsigned short getshort __P((void *));
-static inline void putshort __P((void *p, unsigned short));
-static inline unsigned long getlong __P((void *));
-static inline void putlong __P((void *,	unsigned long));
+static unsigned short getshort(void *);
+static void putshort(void *p, unsigned short);
+static unsigned long getlong(void *);
+static void putlong(void *, unsigned long);
 
 
-int	main __P((int, char **));
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	int part;
@@ -448,8 +446,9 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
+
 	(void)fprintf(stderr, "usage: fdisk [-aiufBS] [-0|-1|-2|-3] "
 			      "[-b cylinders/heads/sectors]\n"
 			      "             [-s id/start/size] [-c bootcode] "
@@ -458,8 +457,7 @@ usage()
 }
 
 void
-print_s0(which)
-	int which;
+print_s0(int which)
 {
 	int part;
 
@@ -476,19 +474,16 @@ print_s0(which)
 		print_part(which);
 }
 
-static inline unsigned short
-getshort(p)
-	void *p;
+static unsigned short
+getshort(void *p)
 {
 	unsigned char *cp = p;
 
 	return cp[0] | (cp[1] << 8);
 }
 
-static inline void
-putshort(p, l)
-	void *p;
-	unsigned short l;
+static void
+putshort(void *p, unsigned short l)
 {
 	unsigned char *cp = p;
 
@@ -496,19 +491,16 @@ putshort(p, l)
 	*cp++ = l >> 8;
 }
 
-static inline unsigned long
-getlong(p)
-	void *p;
+static unsigned long
+getlong(void *p)
 {
 	unsigned char *cp = p;
 
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
-static inline void
-putlong(p, l)
-	void *p;
-	unsigned long l;
+static void
+putlong(void *p, unsigned long l)
 {
 	unsigned char *cp = p;
 
@@ -519,8 +511,7 @@ putlong(p, l)
 }
 
 void
-print_part(part)
-	int part;
+print_part(int part)
 {
 	struct mbr_partition *partp;
 	int empty;
@@ -567,10 +558,7 @@ print_part(part)
 }
 
 int
-read_boot(name, buf, len)
-	char *name;
-	char *buf;
-	size_t len;
+read_boot(const char *name, void *buf, size_t len)
 {
 	int bfd, ret;
 	struct stat st;
@@ -599,8 +587,7 @@ read_boot(name, buf, len)
 }
 
 void
-init_sector0(start, dopart)
-	int start, dopart;
+init_sector0(int start, int dopart)
 {
 	int i;
 
@@ -622,10 +609,7 @@ init_sector0(start, dopart)
 #ifdef __i386__
 
 void	    
-get_diskname(fullname, diskname, size)
-	char *fullname; 
-	char *diskname;
-	size_t size;    
+get_diskname(char *fullname, char *diskname, size_t size)
 {	       
 	char *p;
 	char *p2;
@@ -671,7 +655,7 @@ get_diskname(fullname, diskname, size)
 }
 
 void
-get_geometry()
+get_geometry(void)
 {
 	int mib[2], i;
 	size_t len;
@@ -714,7 +698,7 @@ get_geometry()
 }
 
 void
-configure_bootsel()
+configure_bootsel(void)
 {
 	struct mbr_bootsel *mbs =
 	    (struct mbr_bootsel *)&mboot.bootinst[MBR_BOOTSELOFF];
@@ -909,7 +893,7 @@ done:
  * the BIOS geometry (which in turn requires modifications to the i386
  * boot loader to pass in the BIOS geometry for each disk). */
 void
-intuit_translated_geometry()
+intuit_translated_geometry(void)
 {
 
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
@@ -982,9 +966,8 @@ intuit_translated_geometry()
  * absolute sectors for a given entry, or return -1 if it isn't present.
  * Note: for simplicity, the returned sector is 0-based. */
 int
-get_mapping(i, cylinder, head, sector, absolute)
-	int i, *cylinder, *head, *sector;
-	long *absolute;
+get_mapping(int i, int *cylinder, int *head, int *sector,
+    unsigned long *absolute)
 {
 	struct mbr_partition *part = &mboot.parts[i / 2];
 
@@ -1006,8 +989,7 @@ get_mapping(i, cylinder, head, sector, absolute)
 }
 
 void
-change_part(part, csysid, cstart, csize)
-	int part, csysid, cstart, csize;
+change_part(int part, int csysid, int cstart, int csize)
 {
 	struct mbr_partition *partp;
 
@@ -1103,7 +1085,7 @@ change_part(part, csysid, cstart, csize)
 }
 
 void
-print_params()
+print_params(void)
 {
 
 	if (sh_flag) {
@@ -1124,8 +1106,7 @@ print_params()
 }
 
 void
-change_active(which)
-	int which;
+change_active(int which)
 {
 	struct mbr_partition *partp;
 	int part;
@@ -1159,8 +1140,9 @@ change_active(which)
 }
 
 void
-get_params_to_use()
+get_params_to_use(void)
 {
+
 	if (b_flag) {
 		dos_cylinders = b_cyl;
 		dos_heads = b_head;
@@ -1185,9 +1167,8 @@ get_params_to_use()
 * Change real numbers into strange dos numbers	*
 \***********************************************/
 void
-dos(sector, cylinderp, headp, sectorp)
-	int sector;
-	unsigned char *cylinderp, *headp, *sectorp;
+dos(int sector, unsigned char *cylinderp, unsigned char *headp,
+    unsigned char *sectorp)
 {
 	int cylinder, head;
 	int biosmaxsec;
@@ -1210,9 +1191,9 @@ dos(sector, cylinderp, headp, sectorp)
 
 #if 0
 void
-checkcyl(cyl)
-	int cyl;
+checkcyl(int cyl)
 {
+
 	if (cyl >= MAXCYL)
 		warnx("partition start beyond BIOS limit");
 }
@@ -1221,8 +1202,7 @@ checkcyl(cyl)
 int fd;
 
 int
-open_disk(u_flag)
-	int u_flag;
+open_disk(int u_flag)
 {
 	static char namebuf[MAXPATHLEN + 1];
 	struct stat st;
@@ -1252,9 +1232,7 @@ open_disk(u_flag)
 }
 
 int
-read_disk(sector, buf)
-	int sector;
-	void *buf;
+read_disk(int sector, void *buf)
 {
 
 	if (lseek(fd, (off_t)(sector * 512), 0) == -1)
@@ -1263,9 +1241,7 @@ read_disk(sector, buf)
 }
 
 int
-write_disk(sector, buf)
-	int sector;
-	void *buf;
+write_disk(int sector, void *buf)
 {
 
 	if (lseek(fd, (off_t)(sector * 512), 0) == -1)
@@ -1274,7 +1250,7 @@ write_disk(sector, buf)
 }
 
 int
-get_params()
+get_params(void)
 {
 
 	if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
@@ -1295,7 +1271,7 @@ get_params()
 }
 
 int
-read_s0()
+read_s0(void)
 {
 
 	if (read_disk(0, mboot.bootinst) == -1) {
@@ -1310,7 +1286,7 @@ read_s0()
 }
 
 int
-write_s0()
+write_s0(void)
 {
 	int flag, i;
 
@@ -1339,8 +1315,7 @@ write_s0()
 }
 
 int
-yesno(str)
-	char *str;
+yesno(const char *str)
 {
 	int ch, first;
 
@@ -1353,9 +1328,7 @@ yesno(str)
 }
 
 void
-decimal(str, num)
-	char *str;
-	int *num;
+decimal(const char *str, int *num)
 {
 	int acc = 0;
 	char *cp;
@@ -1386,8 +1359,7 @@ decimal(str, num)
 }
 
 int
-type_match(key, item)
-	const void *key, *item;
+type_match(const void *key, const void *item)
 {
 	const int *typep = key;
 	const struct part_type *ptr = item;
@@ -1399,9 +1371,8 @@ type_match(key, item)
 	return (0);
 }
 
-char *
-get_type(type)
-	int type;
+const char *
+get_type(int type)
 {
 	struct part_type *ptr;
 
