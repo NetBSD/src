@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.72 1996/12/10 21:06:29 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.73 1996/12/14 10:50:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -187,6 +187,7 @@ scsibusattach(parent, self, aux)
 		    M_DEVBUF, M_NOWAIT);
 		if (sb->sc_link[i] == NULL)
 			panic("scsibusattach: can't allocate lun links");
+		bzero(sb->sc_link[i], nbytes);
 	}
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 2
