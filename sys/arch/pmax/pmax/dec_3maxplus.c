@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.43 2001/04/12 19:24:05 thorpej Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.44 2001/08/22 06:59:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43 2001/04/12 19:24:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.44 2001/08/22 06:59:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
-		intrcnt[HARDCLOCK]++;
+		pmax_clock_evcnt.ev_count++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
