@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.13 2002/07/13 20:01:13 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.14 2002/07/13 20:14:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.13 2002/07/13 20:01:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.14 2002/07/13 20:14:34 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -693,10 +693,12 @@ rf_DispatchDAG(
 		RF_ETIMER_START(dag->tracerec->timer);
 	}
 #if DEBUG
+#if RF_DEBUG_VALIDATE_DAG
 	if (rf_engineDebug || rf_validateDAGDebug) {
 		if (rf_ValidateDAG(dag))
 			RF_PANIC();
 	}
+#endif
 #endif
 	if (rf_engineDebug) {
 		printf("raid%d: Entering DispatchDAG\n", raidPtr->raidid);

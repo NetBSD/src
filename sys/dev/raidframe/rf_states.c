@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.16 2001/11/13 07:11:17 lukem Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.17 2002/07/13 20:14:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.16 2001/11/13 07:11:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.17 2002/07/13 20:14:34 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -440,9 +440,11 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 	RF_ETIMER_START(timer);
 	/* SelectAlgorithm returns one or more dags */
 	selectStatus = rf_SelectAlgorithm(desc, desc->flags | RF_DAG_SUPPRESS_LOCKS);
+#if RF_DEBUG_VALIDATE_DAG
 	if (rf_printDAGsDebug)
 		for (i = 0; i < desc->numStripes; i++)
 			rf_PrintDAGList(desc->dagArray[i].dags);
+#endif /* RF_DEBUG_VALIDATE_DAG */
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	/* update time to create all dags */

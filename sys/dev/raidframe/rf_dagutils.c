@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.12 2002/07/13 19:59:26 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.13 2002/07/13 20:14:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.12 2002/07/13 19:59:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.13 2002/07/13 20:14:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -58,12 +58,14 @@ RF_RedFuncs_t rf_xorRecoveryFuncs = {
 	rf_RecoveryXorFunc, "Recovery Xr",
 rf_RecoveryXorFunc, "Recovery Xr"};
 
+#if RF_DEBUG_VALIDATE_DAG
 static void rf_RecurPrintDAG(RF_DagNode_t *, int, int);
 static void rf_PrintDAG(RF_DagHeader_t *);
 static int rf_ValidateBranch(RF_DagNode_t *, int *, int *,
 			     RF_DagNode_t **, int);
 static void rf_ValidateBranchVisitedBits(RF_DagNode_t *, int, int);
 static void rf_ValidateVisitedBits(RF_DagHeader_t *);
+#endif /* RF_DEBUG_VALIDATE_DAG */
 
 /******************************************************************************
  *
@@ -275,6 +277,7 @@ rf_AllocBuffer(
 	    (char *), allocList);
 	return ((void *) p);
 }
+#if RF_DEBUG_VALIDATE_DAG
 /******************************************************************************
  *
  * debug routines
@@ -734,6 +737,7 @@ validate_dag_bad:
 	return (retcode);
 }
 
+#endif /* RF_DEBUG_VALIDATE_DAG */
 
 /******************************************************************************
  *
