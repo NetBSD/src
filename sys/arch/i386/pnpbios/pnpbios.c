@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.13 2000/04/22 06:38:24 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.14 2000/04/26 20:33:46 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
  * Copyright (c) 1999
@@ -65,6 +65,12 @@
 #define	DPRINTF(x) printf x
 #else
 #define	DPRINTF(x)
+#endif
+
+#ifdef PNPBIOSEVENTSDEBUG
+#define	EDPRINTF(x) printf x
+#else
+#define	EDPRINTF(x)
 #endif
 
 struct pnpbios_softc {
@@ -290,10 +296,8 @@ pnpbios_attach(parent, self, aux)
 		sc->sc_evaddr = pnpbios_mapit(evaddrp, NBPG,
 			VM_PROT_READ | VM_PROT_WRITE);
 		if (!sc->sc_evaddr)
-			printf("pnpbios: couldn't map event flag 0x%08x\n",
-			    evaddrp);
-		DPRINTF(("pnpbios: event flag vaddr 0x%08x\n",
-		    (int)sc->sc_evaddr));
+			printf("%s: couldn't map event flag 0x%08x\n",
+			    sc->sc_dev.dv_xname, evaddrp);
 	}
 #endif
 #ifdef PNPBIOSVERBOSE
@@ -332,6 +336,24 @@ pnpbios_attach(parent, self, aux)
 	printf(": nodes %d, max len %d\n", num, size);
 	buf = malloc(size, M_DEVBUF, M_NOWAIT);
 
+#ifdef PNPBIOSEVENTS
+	EDPRINTF(("%s: event flag vaddr 0x%08x\n", sc->sc_dev.dv_xname,
+	    (int)sc->sc_evaddr));
+#endif
+
+	res = pnpbios_getdockinfo(&di);
+	if (res == PNP_RC_SYSTEM_NOT_DOCKED)
+		printf("%s: not docked\n", sc->sc_dev.dv_xname);
+	else if (res)
+		EDPRINTF(("%s: dockinfo fails 0x%02x\n",
+		    sc->sc_dev.dv_xname, res));
+	else {
+		char idstr[8];
+		pnpbios_id_to_string(di.di_id, idstr);
+		printf("%s: dock id %s serial number %d capabilities 0x%04x\n",
+		    sc->sc_dev.dv_xname, idstr, di.di_serial, di.di_cap);
+	}
+
 	idx = 0;
 	for (i = 0; i < num && idx != 0xff; i++) {
 		int node = idx;
@@ -353,19 +375,6 @@ pnpbios_attach(parent, self, aux)
 
 	free(buf, M_DEVBUF);
 
-#ifdef PNPBIOSVERBOSE
-	res = pnpbios_getdockinfo(&di);
-	if (res == PNP_RC_SYSTEM_NOT_DOCKED)
-		printf("%s: not docked\n", sc->sc_dev.dv_xname);
-	else if (res)
-		DPRINTF(("pnpbios: dockinfo fails 0x%02x\n", res));
-	else {
-		char idstr[8];
-		pnpbios_id_to_string(di.di_id, idstr);
-		printf("%s: dock id %s serial number %d capabilities 0x%04x\n",
-		    sc->sc_dev.dv_xname, idstr, di.di_serial, di.di_cap);
-	}
-#endif
 #ifdef PNPBIOSEVENTS
 	/* if we have an event mechnism queue a thread to deal with them */
 	/* XXX need to update with irq if we do that */
@@ -1311,7 +1320,7 @@ pnpbios_event_thread(arg)
 	else {
 		poll = hz;
 		rv = pnpbios_sendmessage(PNP_CM_PNP_OS_ACTIVE);
-		DPRINTF(("pnpbios: os active returns 0x%02x\n", rv));
+		EDPRINTF(("pnpbios: os active returns 0x%02x\n", rv));
 	}
 
 	config_pending_decr();
@@ -1324,50 +1333,52 @@ pnpbios_event_thread(arg)
 			    "pnpbiosevent", 0);
 		else if (((evflag = *sc->sc_evaddr) & 0x01) == 0) {
 			if (evflag)
-				DPRINTF(("pnpbios: evflags 0x%02x\n", evflag));
+				EDPRINTF(("pnpbios: evflags 0x%02x\n", evflag));
 			(void)tsleep(pnpbios_event_thread, PWAIT,
 			    "pnpbiosevent", poll);
 			continue;
 		} else {
-			DPRINTF(("pnpbios: evflags 0x%02x\n", evflag));
+			EDPRINTF(("pnpbios: evflags 0x%02x\n", evflag));
 		}
 start:
 		if ((rv = pnpbios_getevent(&event))) {
-			DPRINTF(("pnpbios: getevent rc: 0x%02x\n", rv));
+			EDPRINTF(("pnpbios: getevent rc: 0x%02x\n", rv));
 #ifdef DIAGNOSTIC
 			if (rv != PNP_RC_EVENTS_NOT_PENDING)
-				printf("pnpbios: getevent failed: %d\n", rv);
+				printf("%s: getevent failed: %d\n",
+				    sc->sc_dev.dv_xname, rv);
 #endif
 			continue;
 		}
 		switch (event) {
 		case PNP_EID_ABOUT_TO_CHANGE_CONFIG:
-			DPRINTF(("pnpbios: about to change event\n"));
+			EDPRINTF(("pnpbios: about to change event\n"));
 			break;
 		case PNP_EID_DOCK_CHANGED:
-			DPRINTF(("pnpbios: dock changed event\n"));
+			EDPRINTF(("pnpbios: dock changed event\n"));
 			break;
 		case PNP_EID_SYSTEM_DEVICE_CHANGED:
-			DPRINTF(("pnpbios: system device changed event\n"));
+			EDPRINTF(("pnpbios: system device changed event\n"));
 			break;
 		case PNP_EID_CONFIG_CHANGE_FAILED:
-			DPRINTF(("pnpbios: config changed event\n"));
+			EDPRINTF(("pnpbios: config changed event\n"));
 			break;
 		case PNP_EID_UNKNOWN_SYSTEM_EVENT:
 #ifdef DIAGNOSTIC
-			printf("pnpbios: \"unknown system event\"\n");
+			printf("%s: \"unknown system event\"\n",
+			    sc->sc_dev.dv_xname);
 #endif
 			break;
 		default:
 #ifdef DIAGNOSTIC
 #ifdef PNPBIOSVERBOSE
 			if (event & PNP_EID_OEM_DEFINED_BIT)
-				printf("pnpbios: vendor defined event 0x%04x\n",
-				    event);
+				printf("%s: vendor defined event 0x%04x\n",
+				    sc->sc_dev.dv_xname, event);
 			else
 #endif
-				printf("pnpbios: unkown event 0x%04x\n",
-				    event);
+				printf("%s: unkown event 0x%04x\n",
+				    sc->sc_dev.dv_xname, event);
 #endif
 			break;
 		}
