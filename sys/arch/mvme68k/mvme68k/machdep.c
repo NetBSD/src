@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1999/02/20 00:12:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -194,6 +194,12 @@ int	mem_cluster_cnt;
  */
 int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 82;	/* assume some reasonable value to start */
+
+/*
+ * Define 'scsi_nosync = 0x00' to enable sync SCSI mode.
+ */
+u_long      scsi_nosync  = 0;
+int         shift_nosync = 0;
 
 /* Machine-dependent initialization routines. */
 void	mvme68k_init __P((void));

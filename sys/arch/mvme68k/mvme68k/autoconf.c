@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1998/10/10 19:46:29 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1999/02/20 00:12:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,7 @@ static	char *mainbusdevs_162[] = {
 
 #if defined(MVME167) || defined(MVME177)
 static	char *mainbusdevs_1x7[] = {	/* includes 166, 177 */
-	"pcctwo", "sram", NULL
+	"pcctwo", "vmechip", "sram", NULL
 };
 #endif
 

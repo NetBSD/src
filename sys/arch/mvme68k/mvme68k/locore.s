@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1999/02/15 21:05:26 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1999/02/20 00:12:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -295,6 +295,17 @@ Lis167:
 	lsll	#8,d0
 	RELOC(myea, a0)
 	movl	d0,a0@
+
+	/*
+	 * Disable all interrupts from VMEchip2. This is especially
+	 * useful when the kernel doesn't have the VMEchip2 driver
+	 * configured. If we didn't do this, then we're at the mercy
+	 * of whatever VMEchip2 interrupts the ROM set up. For example,
+	 * hitting the ABORT switch could kill the system...
+	 */
+	movl	0xfff40088,d0
+	andl	#0xff7fffff,d0		| Clear 'MIEN'
+	movl	d0,0xfff40088
 
 	/*
 	 * Fix up the physical addresses of the MVME167's onboard

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.3 1999/02/20 00:11:59 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct pcctwo {
     volatile u_char	lanc_icr;	/* LANC Interrupt Control Register */
     volatile u_char	lanc_berr_sr;	/* LANC Bus Error Interrupt Ctrl Reg */
     volatile u_char	scsi_err_sr;	/* SCSI Error Status Register */
-    volatile u_short	resvd5;
+    volatile u_char 	resvd5[2];
     volatile u_char	scsi_icr;	/* SCSI Interrupt Control Register */
     volatile u_char	prt_ack_icr;	/* Printer ACK Interrupt Control Reg */
     volatile u_char	prt_fault_icr;	/* Printer FAULT Interrupt Ctrl Reg */
@@ -110,7 +110,7 @@ struct pcctwo {
     volatile u_char	prt_ctrl;	/* Printer Port Control Register */
     volatile u_short	chip_speed;	/* Chip Speed Register */
     volatile u_short	prt_data;	/* Printer Data Register */
-    volatile u_short	resvd7;
+    volatile u_char 	resvd7[2];
     volatile u_char	irq_level;	/* Interrupt Priority Level Register */
     volatile u_char	irq_mask;	/* Interrupt Mask Register */
 };
@@ -216,6 +216,7 @@ extern struct pcctwo *sys_pcctwo;
 #define PCCTWO_ERR_SR_EXT	(1u<<2)	/* External (VMEbus) Error */
 #define PCCTWO_ERR_SR_PRTY	(1u<<3)	/* DRAM Parity Error */
 #define PCCTWO_ERR_SR_RTRY	(1u<<4)	/* Retry Required */
+#define PCCTWO_ERR_SR_MASK	0x0Eu
 
 
 /*
