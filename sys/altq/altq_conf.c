@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.3 2000/12/14 18:07:30 thorpej Exp $	*/
 /*	$KAME: altq_conf.c,v 1.10 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef ALTQ
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
 #if (__FreeBSD__ != 2)
@@ -464,5 +463,3 @@ altq_module_handler(mod, cmd, arg)
 }
 	
 #endif  /* ALTQ_KLD */
-
-#endif /* ALTQ */
