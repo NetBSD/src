@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.79 2004/02/06 15:36:53 itohy Exp $
+#	$NetBSD: special,v 1.79.2.1 2004/04/27 17:58:26 jdc Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -150,6 +150,7 @@
 ./etc/rc.d/dhcrelay		type=file mode=0555
 ./etc/rc.d/dmesg		type=file mode=0555
 ./etc/rc.d/downinterfaces	type=file mode=0555
+./etc/rc.d/fixsb		type=file mode=0555
 ./etc/rc.d/fsck			type=file mode=0555
 ./etc/rc.d/identd		type=file mode=0555
 ./etc/rc.d/inetd		type=file mode=0555
