@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.3 2002/10/25 18:03:03 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.4 2002/10/25 18:57:06 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -90,11 +90,11 @@ struct mach64_softc {
 #define sc_regbase	sc_bars[2].vb_base
 #define sc_regsize	sc_bars[2].vb_size
 
+	bus_space_tag_t sc_regt;
 	bus_space_tag_t sc_memt;
+	bus_space_handle_t sc_regh;
 	bus_space_handle_t sc_memh;
 
-	u_long aperbase;
-	size_t apersize;
 	size_t memsize;
 	int memtype;
 
@@ -383,28 +383,28 @@ static inline u_int32_t
 regr(struct mach64_softc *sc, u_int32_t index)
 {
 
-	return bus_space_read_4(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index);
+	return bus_space_read_4(sc->sc_regt, sc->sc_regh, index);
 }
 
 static inline u_int8_t
 regrb(struct mach64_softc *sc, u_int32_t index)
 {
 	
-	return bus_space_read_1(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index);
+	return bus_space_read_1(sc->sc_regt, sc->sc_regh, index);
 }
 
 static inline void
 regw(struct mach64_softc *sc, u_int32_t index, u_int32_t data)
 {
 
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index, data);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, index, data);
 }
 
 static inline void
 regwb(struct mach64_softc *sc, u_int32_t index, u_int8_t data)
 {
 
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, MACH64_REG_OFF + index, data);
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, index, data);
 }
 
 static inline void
@@ -482,18 +482,10 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 	mach64_init(sc);
 
-	sc->aperbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-	sc->apersize = sc->sc_apersize;
-
-#if _BYTE_ORDER == _BIG_ENDIAN
-	sc->aperbase += 0x800000;
-	sc->apersize -= 0x800000;
-#endif
-
 	printf("%s: %d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int)(sc->apersize / (1024 * 1024)),
-	    (u_int)sc->aperbase, (u_int)(MACH64_REG_SIZE / 1024), 
-	    (u_int)MACH64_REG_OFF);
+	    sc->sc_dev.dv_xname, (u_int)(sc->sc_apersize / (1024 * 1024)),
+	    (u_int)sc->sc_aperbase, (u_int)(sc->sc_regsize / 1024), 
+	    (u_int)sc->sc_regbase);
 
 	if (mach64_chip_id == PCI_PRODUCT_ATI_MACH64_CT ||
 	    ((mach64_chip_id == PCI_PRODUCT_ATI_MACH64_VT || 
@@ -526,7 +518,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	    (sc->mem_freq * sc->ref_div);
 	sc->ramdac_freq = mach64_get_max_ramdac(sc);
 	printf("%s: %ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
-	    sc->sc_dev.dv_xname, sc->memsize, 
+	    sc->sc_dev.dv_xname, (u_long)sc->memsize, 
 	    mach64_memtype_names[sc->memtype],
 	    sc->mem_freq / 1000, sc->mem_freq % 1000,
 	    sc->ramdac_freq / 1000);
@@ -565,7 +557,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	    sc->bits_per_pixel);
 
 	mach64_rasops_info.ri_depth = sc->bits_per_pixel;
-	mach64_rasops_info.ri_bits = (void *)sc->aperbase;
+	mach64_rasops_info.ri_bits = (void *)sc->sc_aperbase;
 	mach64_rasops_info.ri_width = default_mode.hdisplay;
 	mach64_rasops_info.ri_height = default_mode.vdisplay;
 	mach64_rasops_info.ri_stride = mach64_rasops_info.ri_width;
@@ -588,11 +580,10 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 #else
 	console = 1;
 #endif
-
 	if (console)
 		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_rasops_info, 
 		    0, 0, defattr);
-	
+
 	aa.console = console;
 	aa.scrdata = &mach64_screenlist;
 	aa.accessops = &mach64_accessops;
@@ -642,10 +633,22 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 void
 mach64_init(struct mach64_softc *sc)
 {
+
 	if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 		panic("%s: failed to map aperture", sc->sc_dev.dv_xname);
 	}
+	sc->sc_aperbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+
+	sc->sc_regt = sc->sc_memt;
+	bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
+	    sc->sc_regsize, &sc->sc_regh);
+	sc->sc_regbase = sc->sc_aperbase + 0x7ffc00;
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+	sc->sc_aperbase += 0x800000;
+	sc->sc_apersize -= 0x800000;
+#endif
 
 	sc->nscreens = 0;
 	LIST_INIT(&sc->screens);
