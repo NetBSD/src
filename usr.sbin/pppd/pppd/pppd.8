@@ -1,4 +1,4 @@
-.\" $NetBSD: pppd.8,v 1.39 2003/03/31 01:00:13 perry Exp $
+.\" $NetBSD: pppd.8,v 1.40 2004/02/22 11:34:16 lukem Exp $
 .\"
 .\" manual page [] for pppd 2.4
 .\" Id: pppd.8,v 1.57 2001/03/12 22:49:25 paulus Exp
@@ -177,7 +177,7 @@ the peer, instead of exiting, as it would without this option.
 Set the local and/or remote interface IP addresses.  Either one may be
 omitted.  The IP addresses can be specified with a host name or in
 decimal dot notation (e.g. 150.234.56.78).  The default local
-address is the (first) IP address of the system (unless the
+address is the (first) IP address of the hostname of the system (unless the
 \fInoipdefault\fR
 option is given).  The remote address will be obtained from the peer
 if not specified in any option.  Thus, in simple cases, this option is
