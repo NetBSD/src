@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.5 1995/02/27 05:55:04 cgd Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.6 1997/07/13 19:36:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: ttyslot.c,v 1.5 1995/02/27 05:55:04 cgd Exp $";
+__RCSID("$NetBSD: ttyslot.c,v 1.6 1997/07/13 19:36:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +58,12 @@ ttyslot()
 
 	setttyent();
 	for (cnt = 0; cnt < 3; ++cnt) 
-		if (name = ttyname(cnt)) {
-			if (p = strrchr(name, '/')) 
+		if ((name = ttyname(cnt)) != NULL) {
+			if ((p = strrchr(name, '/')) != NULL)
 				++p;
 			else
 				p = name;
-			for (slot = 1; ttyp = getttyent(); ++slot)
+			for (slot = 1; (ttyp = getttyent()) != NULL; ++slot)
 				if (!strcmp(ttyp->ty_name, p)) {
 					endttyent();
 					return(slot);
