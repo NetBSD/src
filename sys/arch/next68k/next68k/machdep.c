@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2000/05/29 22:10:43 deberg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2000/05/30 15:35:00 deberg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -929,11 +929,11 @@ straytrap(pc, evec)
 	/* XXX kgdb/ddb entry? */
 }
 
-#if 0
 /* XXX should change the interface, and make one badaddr() function */
 
 int	*nofault;
 
+#if 0
 int
 badaddr(addr, nbytes)
 	caddr_t addr;
