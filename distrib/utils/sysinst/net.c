@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.39 1999/04/07 05:18:49 simonb Exp $	*/
+/*	$NetBSD: net.c,v 1.40 1999/04/07 13:09:55 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,6 +100,10 @@ const char* target_prefix __P((void));
  *      and reserved characters used for their reserved purposes may be
  *      used unencoded within a URL.
  *
+ * The encoded URL _does_not_ start with a '/'.  A '/' is inserted
+ * between the hostname and the pathname components when the complete
+ * URL is constructed.
+ *
  */
 
 #define RFC1738_SAFE				"$-_.+!*'(),"
@@ -114,6 +118,9 @@ url_encode(char *dst, const char *src, size_t len,
 
 	if (safe_chars == NULL)
 		safe_chars = "";
+	/* Remove any initial '/'s if present */
+	while (*src == '/')
+		src++;
 	while (--len > 0 && *src != '\0') {
 		if (isalnum(*src) || strchr(safe_chars, *src)) {
 			*p++ = *src++;
