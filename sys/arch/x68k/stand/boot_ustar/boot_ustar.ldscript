@@ -1,0 +1,49 @@
+OUTPUT_FORMAT("a.out-m68k-netbsd", "a.out-m68k-netbsd",
+	      "a.out-m68k-netbsd")
+OUTPUT_ARCH(m68k)
+ENTRY(start)
+SEARCH_DIR(/usr/lib);
+/*__DYNAMIC = 0; */
+PROVIDE (__stack = 0);
+SECTIONS
+{
+  . = 0x00002000;
+  .text :
+  {
+    CREATE_OBJECT_SYMBOLS
+    *(.text)
+    *(.rodata)
+    /* The next six sections are for SunOS dynamic linking.  The order
+       is important.  */
+    *(.dynrel)
+    *(.hash)
+    *(.dynsym)
+    *(.dynstr)
+    *(.rules)
+    *(.need)
+    etext = .;
+    _etext = .;
+  }
+/*  . = ALIGN(0x2000); */
+  .data :
+  {
+    /* The first three sections are for SunOS dynamic linking.  */
+    *(.dynamic)
+    *(.got)
+    *(.plt)
+    *(.data)
+    *(.linux-dynamic) /* For Linux dynamic linking.  */
+    CONSTRUCTORS
+    edata  =  .;
+    _edata  =  .;
+  }
+  .bss :
+  {
+    __bss_start = .;
+   *(.bss)
+   *(COMMON)
+   end = ALIGN(4) ;
+   _end = ALIGN(4) ;
+  }
+  /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) }
+}
