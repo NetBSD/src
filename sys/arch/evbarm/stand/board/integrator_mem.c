@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_mem.c,v 1.1 2002/04/18 05:30:45 thorpej Exp $	*/
+/*	$NetBSD: integrator_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -83,8 +83,8 @@ mem_init(void)
 	}
 
 	/* Start is always 0. */
-	heap = size - 0x30000;
+	heap = size - HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n", 0, size - 1, heap);
-	setheap((void *)heap, (void *)size);
+	setheap((void *)heap, (void *)(size - 1));
 }
