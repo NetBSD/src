@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.9 2003/08/21 01:57:24 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.10 2003/08/22 07:13:20 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,6 +99,15 @@ to the list of files in
 .Ar package
 that should ignored when adding or removing the package from
 .Ar view .
+.It Fl k Ar pkg_dbdir_dflt
+Set
+.Ar pkg_dbdir_dflt
+as the package database directory for the default (empty) view.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR_DFLT ,
+otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl V
 Print the version number and exit.
 .It Fl v
@@ -143,11 +152,13 @@ Delete the listed packages from
 .Sh ENVIRONMENT
 .Bl -tag -width indent
 .It Ev PKG_DBDIR_DFLT
-The package database directory for the default view,
-.Pa /var/db/pkg ,
-can be overridden by specifying an alternative directory in the
+If the
+.Fl k
+flag isn't given, then the value of the environment variable
 .Ev PKG_DBDIR_DFLT
-environment variable.
+is the package database directory for the default view,
+otherwise it defaults to 
+.Pa /var/db/pkg .
 .It Ev PLIST_IGNORE_FILES
 This can be used to specify files in
 .Ar package
