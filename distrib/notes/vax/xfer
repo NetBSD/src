@@ -1,0 +1,87 @@
+Installation is supported from several media types, including:
+	* Tape
+	* NFS
+	* Floppy
+	* FTP
+
+Note that installing on a "bare" machine requires some bootable
+device; either a tape or floppy drive or Sun-compatible NFS server
+with MOP capabilities. (Yes, NetBSD/vax uses the same netboot
+principles as Sun's does).
+
+The procedure for transferring the distribution sets onto
+installation media depends on the type of media. The most is up to
+you, depending what you want to install, but preferred are to do
+the installation over network as soon as the miniroot is installed.
+
+* Creating boot tapes:
+
+Fetch the two files from .../NetBSD-1.3/vax/tk50. Write them onto
+the tape, first file1 and then file2. Under Ultrix this is done
+just like this:
+
+	mt -f /dev/rmt0h rewind
+	dd if=tk50-file1-1.3 of=/dev/nrmt0h
+	dd if=tk50-file2-1.3 of=/dev/rmt0h
+	mt -f /dev/rmt0h rewoffl
+
+Under NetBSD this is done the same way, except for the tape name:
+
+	mt -f /dev/rmt8 rewind
+	dd if=tk50-file1-1.3 of=/dev/nrmt8
+	dd if=tk50-file2-1.3 of=/dev/rmt8
+	mt -f /dev/rmt8 rewoffl
+
+Of course, if you have another tape unit than 0 you have to use
+the corresponding unit number.
+
+If you are using any other OS to create bootable tapes, remember that
+the blocksize _must_ be 512 for the file to be bootable! Otherwise it
+just won't work.
+
+* Creating boot floppies:
+
+Fetch the files from .../NetBSD-1.3/vax/rx{50,33} depending of which 
+floppy you have. There are three or seven files depending of the
+density of your floppies. Then just write the floppies using dd (under
+Unix, if you are creating floppies from DOS use some nice utility
+for that). There are one bootable floppy and a splitted miniroot image.
+
+* Booting from NFS server:
+
+All VAXen that can boot over network uses MOP, a DEC protocol.
+To be able to use MOP, a MOP daemon must be present on one of
+the machines on the local network. The boot principle is:
+	* The VS2000 broadcast a wish to load an image.
+	* A mopd answers and send the boot program to the VAX.
+	* The boot program does rarp requests, mounts the root filesystem
+	    and loads the kernel.
+	* The kernel is loaded and starts executing.
+
+If your machine has a disk and network connection, it may be
+convenient for you to install NetBSD over the network.  This
+involves temporarily booting your machine over NFS, just long enough
+so you can initialize its disk.  This method requires that you have
+access to an NFS server on your network so you can configure it to
+support diskless boot for your machine.  Configuring the NFS server
+is normally a task for a system administrator, and is not trivial.
+
+If you are using a NetBSD system as the boot-server, have a look at
+the diskless(8) manual page for guidelines on how to proceed with
+this.  If the server runs another operating system, consult the
+documentation that came with it (i.e. add_client(8) on SunOS).
+
+You also must install a MOP loader. If you are booting from another
+NetBSD machine, MOP are included in the distribution, otherwise you
+may have to install a MOP loader. A loader can be found at
+ftp.stacken.kth.se:/pub/OS/NetBSD/mopd. Fetch the latest and read the
+installation instructions.
+
+The file that should be loaded are called boot and are located in
+.../NetBSD-1.3/vax/install. If you are not using the mopd written
+by Mats O Jansson (as the NetBSD are) then you should get the file
+boot.mopformat instead.
+
+The miniroot to start from is the one called miniroot.tar.gz located
+also in the install directory. Fetch it, unzip and untar it wherever
+you have your root filesystem.
