@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.25 1995/04/10 16:54:10 mycroft Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.26 1995/06/26 14:40:11 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -393,17 +393,7 @@ vm_page_startup(start, end)
 		m->flags = 0;
 		m->object = NULL;
 		m->phys_addr = pa;
-#ifdef atari				/* XXX should use MACHINE_NONCONTIG */
-		if (pmap_isvalidphys(m->phys_addr)) {
-			TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
-		} else {
-			/* perhaps iomem needs it's own type, or dev pager? */
-			m->flags |= PG_FICTITIOUS | PG_BUSY;
-			cnt.v_free_count--;
-		}
-#else /* atari */
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
-#endif /* atari */
 		m++;
 		pa += PAGE_SIZE;
 	}
