@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.14 1995/02/08 14:14:26 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.15 1995/02/08 14:19:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -38,8 +38,12 @@
  * SUCH DAMAGE.
  */
 
-#ifdef sun3
+#include <sys/errno.h>
+#include <machine/asm.h>
+
 #include "assym.s"
+
+#ifdef sun3
 #define	USER_SFC	moveq #FC_USERD,d1;	movec d1,sfc
 #define	KERNEL_SFC	moveq #FC_CONTROL,d1;	movec d1,sfc
 #define	USER_DFC	moveq #FC_USERD,d1;	movec d1,dfc
