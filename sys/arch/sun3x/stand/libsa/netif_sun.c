@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.6 1997/09/05 04:47:43 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.7 1997/10/12 21:08:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,11 +60,10 @@
 #include "promdev.h"
 
 /*
- * XXX - Should not be defined here.  There is no guarante
- * all PROM versions will put this at the same address.
+ * This is the address of a copy of the IDPROM that the
+ * PROM monitor has in its "globram" structure.
  */
-#define	IDPROM_BASE	0xFEF047D8 /* XXX */
-
+#define	IDPROM_BASE	(MONDATA + 0x4a6)
 
 #define	PKT_BUF_SIZE 2048
 
@@ -86,23 +85,14 @@ static struct devdata {
 	char dd_myea[6];
 } prom_dd;
 
-static struct idprom _idprom;
-
-
 void
 _getether(ea)
 	u_char *ea;
 {
-	u_char *src, *dst;
-	int len, x;
+	struct idprom *idp;
 
-	if (_idprom.idp_format == 0) {
-		dst = (char*)&_idprom;
-		src = (char*)IDPROM_BASE;
-		len = IDPROM_SIZE;
-		bcopy(src, dst, len);
-	}
-	MACPY(_idprom.idp_etheraddr, ea);
+	idp = (struct idprom *) IDPROM_BASE;
+	MACPY(idp->idp_etheraddr, ea);
 }
 
 
