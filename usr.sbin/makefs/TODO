@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1.1.1 2001/10/26 07:41:07 lukem Exp $
+$NetBSD: TODO,v 1.2 2001/10/28 13:12:50 lukem Exp $
 
 todo:
 
@@ -7,6 +7,9 @@ todo:
 - testing
 
 - even more testing
+
+- add support for converting a tar file (instead of a directory tree);
+  suggested by kpneal@pobox.com
 
 
 outstanding bugs:
