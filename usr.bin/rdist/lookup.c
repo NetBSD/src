@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lookup.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lookup.c,v 1.2 1993/08/01 18:09:43 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
+static char *rcsid = "$Id: lookup.c,v 1.3 1994/03/07 05:05:33 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -54,6 +54,7 @@ static struct syment *hashtab[HASHSIZE];
 /*
  * Define a variable from a command line argument.
  */
+void
 define(name)
 	char *name;
 {
