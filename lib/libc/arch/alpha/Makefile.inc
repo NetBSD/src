@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/12/22 11:41:01 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/06/21 01:42:48 jtc Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 bzero.S htonl.S htons.S ntohl.S ntohs.S \
@@ -15,41 +15,33 @@ CLEANFILES+=	__divqu.S __divq.S __divlu.S __divl.S
 CLEANFILES+=	__remqu.S __remq.S __remlu.S __reml.S
 
 __divqu.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__divqu')define(OP,\`div')define(S,\`false')"; \
-	 echo "define(WORDSIZE,64)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__divqu -DOP=div -DS=false -DWORDSIZE=64 \
+		${.ALLSRC} > ${.TARGET}
 
 __divq.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__divq')define(OP,\`div')define(S,\`true')"; \
-	 echo "define(WORDSIZE,64)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__divq -DOP=div -DS=true -DWORDSIZE=64 \
+		${.ALLSRC} > ${.TARGET}
 
 __divlu.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__divlu')define(OP,\`div')define(S,\`false')"; \
-	 echo "define(WORDSIZE,32)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__divlu -DOP=div -DS=false -DWORDSIZE=32 \
+		${.ALLSRC} > ${.TARGET}
 
 __divl.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__divl')define(OP,\`div')define(S,\`true')"; \
-	 echo "define(WORDSIZE,32)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__divl -DOP=div -DS=true -DWORDSIZE=32 \
+		${.ALLSRC} > ${.TARGET}
 
 __remqu.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__remqu')define(OP,\`rem')define(S,\`false')"; \
-	 echo "define(WORDSIZE,64)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__remqu -DOP=rem -DS=false -DWORDSIZE=64 \
+		${.ALLSRC} > ${.TARGET}
 
 __remq.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__remq')define(OP,\`rem')define(S,\`true')"; \
-	 echo "define(WORDSIZE,64)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__remq -DOP=rem -DS=true -DWORDSIZE=64 \
+		${.ALLSRC} > ${.TARGET}
 
 __remlu.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__remlu')define(OP,\`rem')define(S,\`false')"; \
-	 echo "define(WORDSIZE,32)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__remlu -DOP=rem -DS=false -DWORDSIZE=32 \
+		${.ALLSRC} > ${.TARGET}
 
 __reml.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
-	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`__reml')define(OP,\`rem')define(S,\`true')"; \
-	 echo "define(WORDSIZE,32)"; cat ${.ALLSRC}) | m4 > ${.TARGET}
+	m4 -DNAME=__reml -DOP=rem -DS=true -DWORDSIZE=32 \
+		${.ALLSRC} > ${.TARGET}
