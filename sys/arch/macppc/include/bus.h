@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1998/05/15 10:15:52 tsubai Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1998/07/17 18:38:10 tsubai Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*
@@ -64,15 +64,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERMAC_BUS_H_
-#define _POWERMAC_BUS_H_
+#ifndef _MACPPC_BUS_H_
+#define _MACPPC_BUS_H_
 
 #include <machine/pio.h>
 
 /*
  * Values for the PowerMac bus space tag, not to be used directly by MI code.
  */
-/* #define POWERMAC_BUS_REVERSE	1 */
+/* #define MACPPC_BUS_REVERSE	1 */
 
 /*
  * Bus access types.
@@ -684,7 +684,7 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    bus_size_t len, int flags));
  *
- * Note: the powermac does not currently require barriers, but we must
+ * Note: the macppc does not currently require barriers, but we must
  * provide the flags to MI code.
  */
 #define bus_space_barrier(t, h, o, l, f)	\
@@ -720,8 +720,8 @@ struct uio;
 #define BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-typedef struct powermac_bus_dma_tag	*bus_dma_tag_t;
-typedef struct powermac_bus_dmamap	*bus_dmamap_t;
+typedef struct macppc_bus_dma_tag	*bus_dma_tag_t;
+typedef struct macppc_bus_dmamap	*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -729,11 +729,11 @@ typedef struct powermac_bus_dmamap	*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct powermac_bus_dma_segment {
+struct macppc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 };
-typedef struct powermac_bus_dma_segment	bus_dma_segment_t;
+typedef struct macppc_bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -742,8 +742,16 @@ typedef struct powermac_bus_dma_segment	bus_dma_segment_t;
  *	DMA for a given bus.
  */
 
-struct powermac_bus_dma_tag {
-	void	*_cookie;		/* cookie used in the guts */
+struct macppc_bus_dma_tag {
+	/*
+	 * The `bounce threshold' is checked while we are loading
+	 * the DMA map.  If the physical address of the segment
+	 * exceeds the threshold, an error will be returned.  The
+	 * caller can then take whatever action is necessary to
+	 * bounce the transfer.  If this value is 0, it will be
+	 * ignored.
+	 */
+	bus_addr_t _bounce_thresh;
 
 	/*
 	 * DMA mapping methods.
@@ -811,7 +819,7 @@ struct powermac_bus_dma_tag {
  *
  *	Describes a DMA mapping.
  */
-struct powermac_bus_dmamap {
+struct macppc_bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use my machine-independent code.
 	 */
@@ -831,7 +839,7 @@ struct powermac_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _POWERMAC_BUS_DMA_PRIVATE
+#ifdef _MACPPC_BUS_DMA_PRIVATE
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
@@ -863,6 +871,6 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vm_offset_t low, vm_offset_t high));
-#endif /* _POWERMAC_BUS_DMA_PRIVATE */
+#endif /* _MACPPC_BUS_DMA_PRIVATE */
 
-#endif /* _POWERMAC_BUS_H_ */
+#endif /* _MACPPC_BUS_H_ */
