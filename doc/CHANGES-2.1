@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.22 2005/02/14 19:09:38 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.23 2005/02/23 16:27:42 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -608,3 +608,33 @@ distrib/sets/lists/xserver/md.sgimips		1.8
 
 	Correct set lists for sgimips.
 	[rtr, ticket #993]
+
+usr.bin/vi/vi/v_txt.c				1.12
+usr.bin/vi/ex/version.h				1.17
+
+	Move a line of code which was "obviously" misplaced.  Fixes
+	a core dump when auto-completing file names and at least
+	one of the file names is larger than the screen width.
+	Fixes PR#28382.  Bump version.
+	[aymeric, ticket #1000]
+
+sys/dev/pci/if_wm.c				1.85
+
+	Also toggle the second port's Ethernet address lsb on the
+	WM_T_82546_3, so the two ports get different MAC addresses.
+	[thorpej, ticket #1001]
+
+usr.sbin/ifwatchd/ifwatchd.c			1.20
+usr.sbin/ifwatchd/ifwatchd.8			1.21-1.23
+
+	In the initial interface scan at start time, query the link
+	status of the interfaces and call the CARRIER script if a link
+	is already there.  Fixes PR#26830.
+	[martin, ticket #1003]
+
+sys/dev/dmover/dmover_io.c			1.14
+sys/kern/kern_systrace.c			1.41
+
+	Fix the fcntl entry points; ``cmd'' is a command, not the
+	flags themselves.
+	[thorpej, ticket #1008]
