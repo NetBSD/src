@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.126 2000/11/02 00:52:15 pk Exp $ */
+/*	$NetBSD: st.c,v 1.127 2000/11/02 00:56:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1626,12 +1626,6 @@ st_read_block_limits(st, flags)
 	struct scsi_block_limits_data block_limits;
 	struct scsipi_link *sc_link = st->sc_link;
 	int error;
-
-	/*
-	 * First check if we have it all loaded
-	 */
-	if ((sc_link->flags & SDEV_MEDIA_LOADED))
-		return (0);
 
 	/*
 	 * do a 'Read Block Limits'
