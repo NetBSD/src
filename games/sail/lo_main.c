@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.8 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.9 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.8 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.9 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,11 +47,13 @@ __RCSID("$NetBSD: lo_main.c,v 1.8 2001/01/01 21:57:38 jwise Exp $");
  *
  * -l force a long listing (print out real usernames)
  */
-#include <sys/types.h>
-#include <stdlib.h>
+
+#include <stdio.h>
 #include <pwd.h>
 #include "extern.h"
 #include "pathnames.h"
+
+int	lo_main(void);
 
 const char *const title[] = {
 	"Admiral", "Commodore", "Captain", "Captain",
