@@ -48,8 +48,10 @@ struct file_list {
 	u_char	f_type;			/* see below */
 	u_char	f_flags;		/* see below */
 	u_char  f_was_driver;	 /* to handle un-included pseudo-drivers*/
+	u_char  f_needs_count;	 /* to handle un-included pseudo-drivers*/
 	char	*f_special;		/* special make rule if present */
 	char	*f_needs;
+	char	*f_countname;
 	/*
 	 * Random values:
 	 *	swap space parameters for swap areas

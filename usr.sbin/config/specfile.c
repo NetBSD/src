@@ -17,6 +17,7 @@
 #define EXPR_GROUP           11
 #define T_LEFTPAREN          12
 #define T_RIGHTPAREN         13
+#define T_NEEDS_COUNT	     14
 
 #define is_paren(x) ((x == '(') || (x == ')'))
 struct file_keyword {
@@ -30,7 +31,8 @@ struct file_keyword {
     "or",                      T_OR,
     "not",                     T_NOT,
     "requires",                T_REQUIRES,
-    "standard",                T_STANDARD
+    "standard",                T_STANDARD,
+    "needs-count",	       T_NEEDS_COUNT,
     };
 
 extern struct file_list *fltail_lookup(),*new_fent(),*fl_lookup();
@@ -405,7 +407,7 @@ read_file(filename, fatal_on_open, override)
     for (;;) {
 	char *str, *kf_name, *read_ahead,*compile_with;
 	extern char *get_word(),*get_quoted_word();
-	int token, optional,driver,config_depend, is_dup,filetype;
+	int token, optional,driver,needs_count,config_depend, is_dup,filetype;
 	struct name_expr *depends_on,*requires;
 	struct file_list *tp,*tmp, *fl,*pf;	
 	enum {BEFORE_FILENAME,BEFORE_SPEC,BEFORE_DEPENDS,PAST_DEPENDS,
@@ -430,7 +432,7 @@ read_file(filename, fatal_on_open, override)
 	}
 	parse_state = BEFORE_FILENAME;
 	kf_name = read_ahead = compile_with = NULL;
-	optional= driver = config_depend = filetype =0;
+	optional= driver = config_depend = filetype = needs_count = 0;
 	depends_on = requires = NULL;
 	is_dup = 0;
 	while ((str != NULL) && (str != (char *)EOF)) {
@@ -471,6 +473,7 @@ read_file(filename, fatal_on_open, override)
 		}
 		case T_DEVICE_DRIVER: {
 		    driver = 1;
+		    needs_count = 0;
 		    break;
 		}
 		case T_REQUIRES: {
@@ -479,6 +482,10 @@ read_file(filename, fatal_on_open, override)
 			parse_err("'requires' but no expression");
 		    str = read_ahead;			
 		    continue;
+		    break;
+		}
+		case T_NEEDS_COUNT: {
+		    if (!driver) needs_count = 1;
 		    break;
 		}
 		default:
@@ -510,18 +517,26 @@ read_file(filename, fatal_on_open, override)
 	if (!optional) {
 	    if (driver)
 		parse_err("'standard' incompatible with 'device-driver'");
-	    if (depends_on)
+	    if (depends_on && !needs_count)
 		parse_err("'standard' can't have dependencies");
 	}
 	else if (!depends_on) 
 	    parse_err("'optional' requires dependency specification");
-	if (driver && !is_simple(depends_on))
-	    parse_err("device-driver's must have a singular name");
-	if (driver && eq("profiling-routine", depends_on->name))
-	    parse_err("not a valid device-driver name");
+	if (driver) {
+	    if (!is_simple(depends_on))
+		parse_err("device-driver's must have a singular name");
+	    if (eq("profiling-routine", depends_on->name))
+		parse_err("not a valid device-driver name");
+	}
+	if (needs_count) {
+	    if (!is_simple(depends_on))
+		parse_err("needs-count's must have a singular name");
+	    if (eq("profiling-routine", depends_on->name))
+		parse_err("not a valid name for needs-count");
+	}
 	if (is_simple(depends_on) &&
 	    eq("profiling-routine", depends_on->name)) filetype = PROFILING;
-	else if (depend_check(depends_on,0)) filetype = NORMAL;
+	else if (!optional || depend_check(depends_on,0)) filetype = NORMAL;
 	else filetype = INVISIBLE;
 
 	if (filetype == NORMAL && requires && !depend_check(requires,0)) {
@@ -536,8 +551,13 @@ read_file(filename, fatal_on_open, override)
 	tp->f_type = filetype;
 	if (driver)
 	    tp->f_needs = depends_on->name;
-	else tp->f_needs = NULL; /* memory leak */
+	else tp->f_needs = NULL; /* memory leak if doesn't need count */
+	if (needs_count)
+	    tp->f_countname = depends_on->name;
+	else
+	    tp->f_countname = NULL;
 	tp->f_was_driver = driver;
+	tp->f_needs_count = needs_count;
 	tp->f_special = compile_with;
 	tp->f_flags = 0;
 	tp->f_flags |= (config_depend ? CONFIGDEP : 0);
