@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.8 1999/12/01 23:22:59 augustss Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.9 2000/01/22 15:09:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -90,7 +90,7 @@ int	wskbddevprint __P((void *, const char *));
  */
 void	wskbd_input __P((struct device *kbddev, u_int type, int value));
 /* for WSDISPLAY_COMPAT_RAWKBD */
-void	wskbd_rawinput __P((struct device *, char *, int));
+void	wskbd_rawinput __P((struct device *, u_char *, int));
 
 /*
  * Console interface.
