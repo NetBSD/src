@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)pwcache.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: pwcache.c,v 1.2 1993/08/01 18:31:46 mycroft Exp $";
+static char rcsid[] = "$Id: pwcache.c,v 1.3 1994/01/19 21:15:46 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ group_from_gid(gid, nogroup)
 {
 	static struct ncache {
 		gid_t	gid;
-		char	name[UT_NAMESIZE];
+		char	name[UT_NAMESIZE + 1];
 	} c_gid[NCACHE];
 	static char nbuf[15];		/* 32 bits == 10 digits */
 	register struct group *gr;
