@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.21 1999/11/29 20:09:55 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.21 1999/11/29 20:09:55 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $");
 #endif
 #endif
 
@@ -261,6 +261,13 @@ pkg_perform(lpkg_head_t *pkgs)
 		}
 		if (Verbose && !PlistOnly)
 			printf(".\n");
+	}
+
+	/* If a SrcDir override is set, add it now */
+	if (SrcDir) {
+		if (Verbose && !PlistOnly)
+			printf("Using SrcDir value of %s\n", SrcDir);
+		add_plist(&plist, PLIST_SRC, SrcDir);
 	}
 
 	/* Slurp in the packing list */

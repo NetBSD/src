@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.20 1999/11/29 20:09:55 hubertf Exp $
+.\" $NetBSD: pkg_create.1,v 1.21 1999/12/20 03:25:58 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -61,6 +61,9 @@
 .Op Fl k Ar dscript
 .Ek
 .Bk -words
+.Op Fl L Ar SrcDir
+.Ek
+.Bk -words
 .Op Fl m Ar mtreefile
 .Ek
 .Bk -words
@@ -119,6 +122,9 @@ This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgcfl
 directives in the packing list (see PACKING LIST DETAILS section below).
+.It Fl L Ar SrcDir
+This sets the package's @src directive; see below for a description
+of what this does.
 .It Fl D Ar displayfile
 Display the file after installing the package. Useful for things like
 legal notices on almost-free software, etc.
