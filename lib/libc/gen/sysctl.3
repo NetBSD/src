@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.73 2001/02/07 08:59:47 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.74 2001/02/08 16:07:39 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1072,6 +1072,7 @@ is used when we have verified ICMPv6 too big messages.
 .Li icmp6.mtudisc_lowat
 is used when we have unverified ICMPv6 too big messages.
 Verification is performed by using address/port pairs kept in connected pcbs.
+Negative value disables the upper limit.
 .It Li icmp6.nd6_debug
 If set to non-zero, kernel IPv6 neighbor discovery code will generate
 debugging messages.
