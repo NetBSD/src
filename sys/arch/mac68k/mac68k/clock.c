@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1997/08/11 22:53:44 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 1997/09/03 06:14:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,7 +168,7 @@ disablertclock()
 u_long
 clkread()
 {
-	register int high, high2, low;
+	int high, high2, low;
 
 	high = via_reg(VIA1, vT1CH);
 	low = via_reg(VIA1, vT1C);
@@ -264,7 +264,7 @@ profclock(pclk)
 	 */
 	else
 		if (profiling < 2) {
-			register int s = pclk->pc - s_lowpc;
+			int s = pclk->pc - s_lowpc;
 
 			if (s < s_textsize)
 				kcount[s / (HISTFRACTION * sizeof(*kcount))]++;
@@ -416,7 +416,7 @@ resettodr()
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
 #define	LARGE_DELAY	0x40000		/* About 335 msec */
 
-unsigned	delay_factor = DELAY_CALIBRATE;
+u_int		delay_factor = DELAY_CALIBRATE;
 volatile int	delay_flag = 1;
 
 /*
@@ -432,7 +432,7 @@ void
 delay(usec)
 	unsigned usec;
 {
-	register unsigned int cycles;
+	volatile unsigned int cycles;
 
 	if (usec > LARGE_DELAY)
 		cycles = (usec >> 7) * delay_factor;
@@ -451,7 +451,7 @@ static unsigned
 dummy_delay(usec)
 	unsigned usec;
 {
-	register unsigned int cycles;
+	volatile unsigned int cycles;
 
 	if (usec > LARGE_DELAY)
 		cycles = (usec >> 7) * delay_factor;
@@ -521,8 +521,4 @@ mac68k_calibrate_delay()
 
 	/* Reset the delay_flag for normal use */
 	delay_flag = 1;
-
-#ifdef DEBUG
-	printf("delay calibrated, factor = %d\n", delay_factor);
-#endif
 }
