@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.325 2004/07/10 13:16:41 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.326 2004/07/10 13:38:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5271,4 +5271,24 @@ share/man/man5/mk.conf.5			1.19-1.20
 	to describe them... Bump date.
 	Add missing .YorN
 	[junyoung, ticket #627]
+
+gnu/dist/gcc/gcc/config/i386/netbsd-elf.h	1.4
+
+	Generate .stabs per default, should fix PR toolchain/25094.
+	[christos, ticket #621]
+
+sys/dev/sbus/be.c				1.43
+
+	Fix incorrect diagnostic.
+	[martin, ticket #628]
+
+sys/dev/usb/if_url.c				1.10
+sys/dev/usb/usbdevs				1.377-1.378
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+sys/dev/usb/uvisor.c				1.26
+
+	GREENHOUSE2_USBKR100 -> REALTEK_RTL8150L, per PR 20425.
+	Add another Zire device, from PR 25929.
+	[mycroft, ticket #629]
 
