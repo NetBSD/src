@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.18 2003/08/02 14:45:08 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.19 2003/08/25 09:12:45 cb Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.18 2003/08/02 14:45:08 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.19 2003/08/25 09:12:45 cb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ struct intercept_syscall {
 	char emulation[16];
 
 	short (*cb)(int, pid_t, int, const char *, int, const char *, void *,
-	    int, struct intercept_tlq *, void *);
+	    int, struct intercept_replace *, struct intercept_tlq *, void *);
 	void *cb_arg;
 
 	struct intercept_tlq tls;
@@ -184,7 +184,7 @@ intercept_sccb_cbarg(char *emulation, char *name)
 int
 intercept_register_sccb(char *emulation, char *name,
     short (*cb)(int, pid_t, int, const char *, int, const char *, void *, int,
-	struct intercept_tlq *, void *),
+	struct intercept_replace *, struct intercept_tlq *, void *),
     void *cbarg)
 {
 	struct intercept_syscall *tmp;
@@ -511,7 +511,7 @@ intercept_replace_init(struct intercept_replace *repl)
 
 int
 intercept_replace_add(struct intercept_replace *repl, int off,
-    u_char *addr, size_t len)
+    u_char *addr, size_t len, u_int flags)
 {
 	int ind = repl->num;
 
@@ -521,6 +521,7 @@ intercept_replace_add(struct intercept_replace *repl, int off,
 	repl->ind[ind] = off;
 	repl->address[ind] = addr;
 	repl->len[ind] = len;
+	repl->flags[ind] = flags;
 
 	repl->num++;
 
@@ -528,12 +529,13 @@ intercept_replace_add(struct intercept_replace *repl, int off,
 }
 
 int
-intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
+intercept_replace(int fd, pid_t pid, u_int16_t seqnr,
+    struct intercept_replace *repl)
 {
 	if (repl->num == 0)
 		return (0);
 
-	return (intercept.replace(fd, pid, repl));
+	return (intercept.replace(fd, pid, seqnr, repl));
 }
 
 char *
@@ -762,10 +764,23 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 				break;
 		}
 
-		if (!ic_abort)
+		if (!ic_abort) {
+			struct intercept_replace repl;
+
+			intercept_replace_init(&repl);
+
 			action = (*sc->cb)(fd, pid, policynr, name, code,
-			    emulation, args, argsize, &sc->tls, sc->cb_arg);
-		else
+			    emulation, args, argsize, &repl,
+			    &sc->tls, sc->cb_arg);
+
+			if (action < ICPOLICY_NEVER) {
+				/* If we can not rewrite the arguments,
+				 * system call fails.
+				 */
+				if (intercept_replace(fd, pid, seqnr, &repl) == -1)
+					action = ICPOLICY_NEVER;
+			}
+		} else
 			action = ICPOLICY_NEVER;
 	} else if (intercept_gencb != NULL)
 		action = (*intercept_gencb)(fd, pid, policynr, name, code,
