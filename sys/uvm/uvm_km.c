@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.6 1998/02/10 14:12:14 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.7 1998/02/24 15:58:09 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -77,6 +77,76 @@
  * uvm_km.c: handle kernel memory allocation and management
  */
 
+/*
+ * overview of kernel memory management:
+ *
+ * the kernel virtual address space is mapped by "kernel_map."   kernel_map
+ * starts at VM_MIN_KERNEL_ADDRESS and goes to VM_MAX_KERNEL_ADDRESS.
+ * note that VM_MIN_KERNEL_ADDRESS is equal to vm_map_min(kernel_map).
+ *
+ * the kernel_map has several "submaps."   submaps can only appear in 
+ * the kernel_map (user processes can't use them).   submaps "take over"
+ * the management of a sub-range of the kernel's address space.  submaps
+ * are typically allocated at boot time and are never released.   kernel
+ * virtual address space that is mapped by a submap is locked by the 
+ * submap's lock -- not the kernel_map's lock.
+ *
+ * thus, the useful feature of submaps is that they allow us to break
+ * up the locking and protection of the kernel address space into smaller
+ * chunks.
+ *
+ * the vm system has several standard kernel submaps, including:
+ *   kmem_map => contains only wired kernel memory for the kernel
+ *		malloc.   *** access to kmem_map must be protected
+ *		by splimp() because we are allowed to call malloc()
+ *		at interrupt time ***
+ *   mb_map => memory for large mbufs,  *** protected by splimp ***
+ *   pager_map => used to map "buf" structures into kernel space
+ *   exec_map => used during exec to handle exec args
+ *   etc...
+ *
+ * the kernel allocates its private memory out of special uvm_objects whose
+ * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
+ * are "special" and never die).   all kernel objects should be thought of
+ * as large, fixed-sized, sparsely populated uvm_objects.   each kernel 
+ * object is equal to the size of kernel virtual address space (i.e. the
+ * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
+ *
+ * most kernel private memory lives in kernel_object.   the only exception
+ * to this is for memory that belongs to submaps that must be protected
+ * by splimp().    each of these submaps has their own private kernel 
+ * object (e.g. kmem_object, mb_object).
+ *
+ * note that just because a kernel object spans the entire kernel virutal
+ * address space doesn't mean that it has to be mapped into the entire space.
+ * large chunks of a kernel object's space go unused either because 
+ * that area of kernel VM is unmapped, or there is some other type of 
+ * object mapped into that range (e.g. a vnode).    for submap's kernel
+ * objects, the only part of the object that can ever be populated is the
+ * offsets that are managed by the submap.
+ *
+ * note that the "offset" in a kernel object is always the kernel virtual
+ * address minus the VM_MIN_KERNEL_ADDRESS (aka vm_map_min(kernel_map)).
+ * example:
+ *   suppose VM_MIN_KERNEL_ADDRESS is 0xf8000000 and the kernel does a
+ *   uvm_km_alloc(kernel_map, PAGE_SIZE) [allocate 1 wired down page in the
+ *   kernel map].    if uvm_km_alloc returns virtual address 0xf8235000,
+ *   then that means that the page at offset 0x235000 in kernel_object is
+ *   mapped at 0xf8235000.   
+ *
+ * note that the offsets in kmem_object and mb_object also follow this
+ * rule.   this means that the offsets for kmem_object must fall in the
+ * range of [vm_map_min(kmem_object) - vm_map_min(kernel_map)] to
+ * [vm_map_max(kmem_object) - vm_map_min(kernel_map)], so the offsets
+ * in those objects will typically not start at zero.
+ *
+ * kernel object have one other special property: when the kernel virtual
+ * memory mapping them is unmapped, the backing memory in the object is
+ * freed right away.   this is done with the uvm_km_pgremove() function.
+ * this has to be done because there is no backing store for kernel pages
+ * and no need to save them after they are no longer referenced.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -124,6 +194,7 @@ static struct uvm_pagerops km_pager = {
  * => currently we do not support pageout to the swap area, so this
  *    pager is very simple.    eventually we may want an anonymous 
  *    object pager which will do paging.
+ * => XXXCDC: this pager should be phased out in favor of the aobj pager
  */
 
 
@@ -342,7 +413,7 @@ vm_offset_t start, end;
   uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
-  /* kmem_object: for malloc'd memory (always wired) */
+  /* kmem_object: for malloc'd memory (always wired, protected by splimp) */
   simple_lock_init(&kmem_object_store.vmobjlock);
   kmem_object_store.pgops = &km_pager;
   TAILQ_INIT(&kmem_object_store.memq);
@@ -351,7 +422,7 @@ vm_offset_t start, end;
 					/* we are special.  we never die */
   uvmexp.kmem_object = &kmem_object_store;
 
-  /* mb_object: for mbuf memory (always wired) */
+  /* mb_object: for mbuf memory (always wired, protected by splimp) */
   simple_lock_init(&mb_object_store.vmobjlock);
   mb_object_store.pgops = &km_pager;
   TAILQ_INIT(&mb_object_store.memq);
@@ -361,7 +432,8 @@ vm_offset_t start, end;
   uvmexp.mb_object = &mb_object_store;
 
   /*
-   * init the map and reserve kernel space before installing.
+   * init the map and reserve allready allocated kernel space 
+   * before installing.
    */
 
   uvm_map_setup(&kernel_map_store, base, end, FALSE);
@@ -612,7 +684,7 @@ int flags;
    * recover object offset from virtual address
    */
 
-  offset = kva - vm_map_min(map);
+  offset = kva - vm_map_min(kernel_map);
   UVMHIST_LOG(maphist, "  kva=0x%x, offset=0x%x", kva, offset,0,0);
 
   /*
@@ -748,7 +820,7 @@ boolean_t zeroit;
    * recover object offset from virtual address
    */
 
-  offset = kva - vm_map_min(map);
+  offset = kva - vm_map_min(kernel_map);
   UVMHIST_LOG(maphist,"  kva=0x%x, offset=0x%x", kva, offset,0,0);
 
   /*
