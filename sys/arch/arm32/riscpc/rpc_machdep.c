@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.18 1998/08/28 17:15:45 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.19 1998/08/28 20:04:35 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -764,7 +764,7 @@ initarm(bootconf)
 	(var) = physical_freestart;		\
 	physical_freestart += ((np) * NBPG);	\
 	free_pages -= (np);			\
-	bzero((char *)(var), ((np) * NBPG));
+	bzero((char *)(var) - physical_start, ((np) * NBPG));
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
@@ -980,6 +980,10 @@ initarm(bootconf)
 	bcopy((char *)KERNEL_TEXT_BASE, (char *)0x00000000, kerneldatasize);
 
 	/* Switch tables */
+#ifdef VERBOSE_INIT_ARM
+	printf("switching to new L1 page table\n");
+#endif
+
 	setttb(kernel_l1pt.physical);
 
 	/*
