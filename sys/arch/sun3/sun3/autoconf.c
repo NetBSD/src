@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1995/09/26 04:02:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.2.1 1996/02/12 04:55:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -269,7 +269,7 @@ bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
 	int off, pa, pgs, pmt;
-	vm_offset_t va;
+	vm_offset_t va, retval;
 
 	if (bustype & ~3)
 		return (NULL);
@@ -286,9 +286,19 @@ bus_mapin(bustype, paddr, sz)
 	va = kmem_alloc_wait(kernel_map, sz);
 	if (va == 0)
 		panic("bus_mapin");
+	retval = va + off;
 
 	/* Map it to the specified bus. */
+#if 0	/* XXX */
+	/* This has a problem with wrap-around... */
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+#else
+	do {
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		va += NBPG;
+		pa += NBPG;
+	} while ((sz -= NBPG) > 0);
+#endif
 
-	return ((char*)(va + off));
+	return ((char*)retval);
 }	
