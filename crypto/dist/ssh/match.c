@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.5 2001/04/10 07:13:57 itojun Exp $	*/
+/*	$NetBSD: match.c,v 1.1.1.6 2001/09/27 02:00:44 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: match.c,v 1.12 2001/03/10 17:51:04 markus Exp $");
+RCSID("$OpenBSD: match.c,v 1.14 2001/06/27 04:48:53 markus Exp $");
 
 #include "match.h"
 #include "xmalloc.h"
@@ -163,7 +163,56 @@ match_hostname(const char *host, const char *pattern, u_int len)
 	return got_positive;
 }
 
+/*
+ * returns 0 if we get a negative match for the hostname or the ip
+ * or if we get no match at all.  returns 1 otherwise.
+ */
+int
+match_host_and_ip(const char *host, const char *ipaddr,
+    const char *patterns)
+{
+	int mhost, mip;
 
+	/* negative ipaddr match */
+	if ((mip = match_hostname(ipaddr, patterns, strlen(patterns))) == -1)
+		return 0;
+	/* negative hostname match */
+	if ((mhost = match_hostname(host, patterns, strlen(patterns))) == -1)
+		return 0;
+	/* no match at all */
+	if (mhost == 0 && mip == 0)
+		return 0;
+	return 1;
+}
+
+/*
+ * match user, user@host_or_ip, user@host_or_ip_list against pattern
+ */
+int
+match_user(const char *user, const char *host, const char *ipaddr,
+    const char *pattern)
+{
+	char *p, *pat;
+	int ret;
+
+	if ((p = strchr(pattern,'@')) == NULL)
+		return match_pattern(user, pattern);
+
+	pat = xstrdup(pattern);
+	p = strchr(pat, '@');
+	*p++ = '\0';
+
+	if ((ret = match_pattern(user, pat)) == 1)
+		ret = match_host_and_ip(host, ipaddr, p);
+	xfree(pat);
+
+	return ret;
+}
+
+/*
+ * Returns first item from client-list that is also supported by server-list,
+ * caller must xfree() returned string.
+ */
 #define	MAX_PROP	20
 #define	SEP	","
 char *

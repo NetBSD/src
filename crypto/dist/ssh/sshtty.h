@@ -1,5 +1,5 @@
-/*	$NetBSD: sshtty.h,v 1.1.1.1 2001/05/15 15:02:41 itojun Exp $	*/
-/* $OpenBSD: sshtty.h,v 1.1 2001/04/14 16:33:20 stevesk Exp $ */
+/*	$NetBSD: sshtty.h,v 1.1.1.2 2001/09/27 02:01:02 itojun Exp $	*/
+/* $OpenBSD: sshtty.h,v 1.2 2001/06/26 17:27:25 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,26 +41,9 @@
 
 #include <termios.h>
 
-/*
- * Accessor function indicating whether we are in raw mode.  Set by
- * enter_raw_mode() and leave_raw_mode().
- */
-int in_raw_mode(void);
-
-/*
- * Return terminal modes, as saved by enter_raw_mode().
- */
+int	 in_raw_mode(void);
 struct termios get_saved_tio(void);
-
-/*
- * Returns the user's terminal to normal mode if it had been
- * put in raw mode.
- */
-void leave_raw_mode(void);
-
-/*
- * Puts the user's terminal in raw mode.
- */
-void enter_raw_mode(void);
+void	 leave_raw_mode(void);
+void	 enter_raw_mode(void);
 
 #endif
