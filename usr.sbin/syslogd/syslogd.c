@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.10 2004/11/16 22:08:59 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.11 2004/11/16 22:20:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.10 2004/11/16 22:08:59 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.11 2004/11/16 22:20:56 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,8 +862,22 @@ logmsg(int pri, char *msg, char *from, int flags)
 		}
 
 		/* skip messages with the incorrect program name */
-		if (f->f_program != NULL && strcmp(prog, f->f_program) != 0)
-			continue;
+		if (f->f_program != NULL) {
+			switch (f->f_program[0]) {
+			case '+':
+				if (strcmp(prog, f->f_program + 1) != 0)
+					continue;
+				break;
+			case '-':
+				if (strcmp(prog, f->f_program + 1) == 0)
+					continue;
+				break;
+			default:
+				if (strcmp(prog, f->f_program) != 0)
+					continue;
+				break;
+			}
+		}
 
 		if (f->f_type == F_CONSOLE && (flags & IGN_CONS))
 			continue;

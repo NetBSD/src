@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.4 2004/11/15 17:16:10 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.5 2004/11/16 22:20:56 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,15 +127,28 @@ program from the host
 .Pp
 A
 .Em program
-specification is a line beginning with
+specification of the form
+.Ql #!+prog
+or
+.Ql !+prog
+will cause subsequent blocks to be applied to messages logged by the
+specified program.
+A
+.Em program
+specification of the form
+.Ql #!-prog
+or
+.Ql !-prog
+will cause subsequent blocks to be applied to messages logged by programs
+other than the one specified.
+A
+.Em program
+specification of the form
 .Ql #!prog
 or
 .Ql !prog
-(the former is for compatbility with older versions of
-.Xr syslogd 8 ,
-which will interpret the tag as a comment)
-and will cause subsequent blocks to be applied to messages logged by
-the specified program.
+is equivalent to
+.Ql !+prog .
 The special specifcation
 .Ql !*
 will cause subsequent blocks to apply to all programs.
