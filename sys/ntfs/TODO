@@ -35,3 +35,5 @@ NTFS - list of things to do in no particular order:
 - implement writing into resident attributes, so it would be possible
    to write into "small" files (<30KB) too
 	(from Semen Ustimenko <semenu@FreeBSD.org>)
+
+- support mount update 
