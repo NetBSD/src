@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.7 1999/07/23 09:01:09 veego Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.8 1999/07/23 18:40:27 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.7 1999/07/23 09:01:09 veego Exp $
+ * $Id: m_netbsd13.c,v 1.8 1999/07/23 18:40:27 christos Exp $
  */
 #define UVM
 
@@ -139,9 +139,11 @@ static char header[] =
 
 char *state_abbrev[] =
 {
-    "", "start", "run\0\0\0", "sleep", "stop", "dying", "zomb"
+    "", "start", "run\0\0\0", "sleep", "stop", "zomb"
+#ifdef SDEAD
+    , "dead"
+#endif
 };
-
 
 static kvm_t *kd;
 
@@ -479,7 +481,10 @@ get_process_info(si, sel, compare)
 	{
 	    total_procs++;
 	    process_states[(unsigned char) PP(pp, p_stat)]++;
-	    if ((PP(pp, p_stat) != SZOMB && PP(pp, p_stat) != SDEAD) &&
+	    if (PP(pp, p_stat) != SZOMB &&
+#ifdef SDEAD
+		PP(pp, p_stat) != SDEAD &&
+#endif
 		(show_idle || (PP(pp, p_pctcpu) != 0) || 
 		 (PP(pp, p_stat) == SRUN)) &&
 		(!show_uid || EP(pp, e_pcred.p_ruid) == (uid_t)sel->uid))
@@ -694,8 +699,11 @@ static int sorted_state[] = {
     4,	/* "run"	SRUN	*/
     3,	/* "sleep"	SSLEEP	*/
     3,	/* "stop"	SSTOP	*/
-    2,	/* "dying"	SDEAD	*/
+#ifdef SDEAD
+    2,	/* "dead"	SDEAD	*/
+#endif
     1,	/* "zomb"	SZOMB	*/
+
 };
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
