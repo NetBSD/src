@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.6 2000/12/15 00:37:43 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.7 2000/12/15 03:23:37 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -163,3 +163,17 @@ sys/dev/pci/pccbb.c				1.47,1.49
 
   Turn off power on shutdown, except on ToPIC (TI 113X) bridges on
   shutdown to avoid hangs on some systems.
+
+distrib/notes/sparc64/hardware			1.6
+distrib/notes/sparc64/install			1.5
+
+  Recommend minimum 32MB.  The pciide cdroms work on secondary channel,
+  but disks do not.  Also, add ``Install from Solaris'' instructions.
+
+distrib/sparc/ramdisk/dot.profile		1.15
+
+  Look for ``instfs.tgz'' in the $MACHINE subdir on cdrom first.
+
+sys/arch/pmax/pmax/autoconf.c			1.55
+
+  Fix netbooting on the 2100/3100.  Fixes PR#11212.
