@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.22 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.23 2004/12/21 11:33:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.22 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.23 2004/12/21 11:33:04 fvdl Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -803,7 +803,7 @@ static void mp_cfg_pci_intr (entry, redir)
 		mp_cfg_special_intr(entry, redir);
 		return;
 	}
-	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+	*redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 
 	switch (mpstrig) {
 	case MPS_INTTR_DEF:
@@ -843,7 +843,7 @@ static void mp_cfg_eisa_intr (entry, redir)
 		mp_cfg_special_intr(entry, redir);
 		return;
 	}
-	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+	*redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 
 	switch (mpstrig) {
 	case MPS_INTTR_LEVEL:
@@ -895,7 +895,7 @@ static void mp_cfg_isa_intr (entry, redir)
 		mp_cfg_special_intr(entry, redir);
 		return;
 	}
-	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+	*redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 
 	switch (mpstrig) {
 	case MPS_INTTR_LEVEL:
