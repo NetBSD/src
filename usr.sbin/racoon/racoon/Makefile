@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/07/24 14:22:01 itojun Exp $
+#	$NetBSD: Makefile,v 1.19 2003/10/19 06:09:17 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SRCS=	main.c session.c isakmp.c handler.c \
 	gssapi.c \
 	pfkey.c admin.c ipsec_doi.c oakley.c grabmyaddr.c \
 	policy.c localconf.c remoteconf.c crypto_openssl.c algorithm.c \
-	y.tab.y cftoken.l strnames.c \
+	cfparse.y cftoken.l strnames.c \
 	vmbuf.c plog.c logger.c schedule.c str2val.c misc.c sockmisc.c \
 	proposal.c sainfo.c vendorid.c safefile.c backupsa.c \
 	dnssec.c getcertsbyname.c
@@ -71,9 +71,7 @@ CPPFLAGS+=-DHAVE_SIGNING_C=1 -DHAVE_OPENSSL_PEM_H=1 -DHAVE_OPENSSL_X509_H=1 \
 #LDSTATIC= -static
 #.endif
 
-CLEANFILES+=	y.tab.y
-y.tab.y: cfparse.y
-	cp $> $@
+CPPFLAGS.cftoken.c=	-DHAVE_CFPARSE_H
 
 .include <bsd.prog.mk>
 
