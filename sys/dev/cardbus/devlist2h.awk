@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 1999/10/15 06:07:22 haya Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2001/02/07 10:05:37 haya Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -158,6 +158,15 @@ $1 == "product" {
 END {
 	# print out the match tables
 
+	printf("\n") > dfile
+	printf("struct cardbus_knowndev {\n") > dfile
+	printf("\tu_int32_t vendorid;\n") > dfile
+	printf("\tu_int32_t deviceid;\n") > dfile
+	printf("\tint flags;\n") > dfile
+	printf("\tchar *vendorname;\n") > dfile
+	printf("\tchar *devicename;\n") > dfile
+	printf("};\n\n") > dfile
+	printf("#define CARDBUS_KNOWNDEV_NOPROD 0x01\n") > dfile
 	printf("\n") > dfile
 
 	printf("struct cardbus_knowndev cardbus_knowndevs[] = {\n") > dfile
