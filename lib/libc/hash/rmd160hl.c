@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160hl.c,v 1.5 2001/01/04 03:56:17 lukem Exp $	*/
+/*	$NetBSD: rmd160hl.c,v 1.5.2.1 2002/04/25 04:01:42 nathanw Exp $	*/
 
 /* rmd160hl.c
  * ----------------------------------------------------------------------------
@@ -11,10 +11,14 @@
  * from OpenBSD: rmd160hl.c,v 1.2 1999/08/17 09:13:12 millert Exp $
  */  
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160hl.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
+__RCSID("$NetBSD: rmd160hl.c,v 1.5.2.1 2002/04/25 04:01:42 nathanw Exp $");
 #endif	/* not lint */
+#endif
 
 #include <sys/types.h>
 
@@ -27,6 +31,8 @@ __RCSID("$NetBSD: rmd160hl.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#if !HAVE_RMD160_H
 
 #if defined(__weak_alias)
 __weak_alias(RMD160End,_RMD160End)
@@ -93,3 +99,5 @@ RMD160Data(const u_char *data, size_t len, char *buf)
     RMD160Update(&ctx, data, len);
     return(RMD160End(&ctx, buf));
 }
+
+#endif /* HAVE_RMD160_H */

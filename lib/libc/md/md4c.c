@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.9 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: md4c.c,v 1.9.6.1 2002/04/25 04:01:44 nathanw Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -35,6 +35,12 @@
 #include <assert.h>
 #include <md4.h>
 #include <string.h>
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_MD4_H
 
 typedef unsigned char *POINTER;
 typedef u_int16_t UINT2;
@@ -310,3 +316,5 @@ Decode(output, input, len)
 		output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
 		    (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
 }
+
+#endif /* HAVE_MD4_H */

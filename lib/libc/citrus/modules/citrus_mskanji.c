@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.1.2.2 2002/03/22 20:42:03 nathanw Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.1.2.2 2002/03/22 20:42:03 nathanw Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -104,14 +104,10 @@ typedef struct {
 		_MSKanjiState	s_mbsrtowcs;
 		_MSKanjiState	s_wcrtomb;
 		_MSKanjiState	s_wcsrtombs;
-		_MSKanjiState	s_wcstombs;
 		_MSKanjiState	s_wctomb;
 	} states;
 } _MSKanjiCTypeInfo;
 
-#define	_TO_EI(_cl_)			((_MSKanjiEncodingInfo *)(_cl_))
-#define	_TO_CEI(_cl_)			((_MSKanjiCTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_MSKanjiState *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_cei_, _func_)	(_cei_)->states.s_##_func_
 
@@ -119,8 +115,9 @@ typedef struct {
 #define _ENCODING_INFO			_MSKanjiEncodingInfo
 #define _CTYPE_INFO			_MSKanjiCTypeInfo
 #define _ENCODING_STATE			_MSKanjiState
-#define _ENCODING_MB_CUR_MAX(_cl_)	2
+#define _ENCODING_MB_CUR_MAX(_ei_)	2
 #define _ENCODING_IS_STATE_DEPENDENT	0
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
 
 static int

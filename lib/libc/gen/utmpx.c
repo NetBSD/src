@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.3.2.2 2002/03/08 21:35:20 nathanw Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3.2.3 2002/04/25 04:01:42 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.3.2.2 2002/03/08 21:35:20 nathanw Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3.2.3 2002/04/25 04:01:42 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.3.2.2 2002/03/08 21:35:20 nathanw Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <vis.h>
+#include <utmp.h>
 #include <utmpx.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -89,8 +90,9 @@ getutxent()
 		struct stat st;
 
 		if ((fp = fopen(utfile, "r+")) == NULL)
-			if ((fp = fopen(utfile, "r")) == NULL)
-				goto fail;
+			if ((fp = fopen(utfile, "w+")) == NULL)
+				if ((fp = fopen(utfile, "r")) == NULL)
+					goto fail;
 
 		/* get file size in order to check if new file */
 		if (fstat(fileno(fp), &st) == -1)
@@ -101,11 +103,11 @@ getutxent()
 			(void)memset(&ut, 0, sizeof(ut));
 			ut.ut_type = SIGNATURE;
 			(void)memcpy(ut.ut_user, vers, sizeof(vers));
-			if (fwrite(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+			if (fwrite(&ut, sizeof(ut), 1, fp) != 1)
 				goto failclose;
 		} else {
 			/* old file, read signature record */
-			if (fread(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+			if (fread(&ut, sizeof(ut), 1, fp) != 1)
 				goto failclose;
 			if (memcmp(ut.ut_user, vers, sizeof(vers)) != 0 ||
 			    ut.ut_type != SIGNATURE)
@@ -113,7 +115,7 @@ getutxent()
 		}
 	}
 
-	if (fread(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+	if (fread(&ut, sizeof(ut), 1, fp) != 1)
 		goto fail;
 
 	return &ut;
@@ -307,4 +309,30 @@ utmpxname(const char *fname)
 	(void)strcpy(utfile, fname);
 	endutxent();
 	return 1;
+}
+
+
+void
+getutmp(const struct utmpx *ux, struct utmp *u)
+{
+	(void)memcpy(u->ut_name, ux->ut_name, sizeof(u->ut_name));
+	(void)memcpy(u->ut_line, ux->ut_line, sizeof(u->ut_line));
+	(void)memcpy(u->ut_host, ux->ut_host, sizeof(u->ut_host));
+	u->ut_time = ux->ut_tv.tv_sec;
+}
+
+void
+getutmpx(const struct utmp *u, struct utmpx *ux)
+{
+	(void)memcpy(ux->ut_name, u->ut_name, sizeof(u->ut_name));
+	(void)memcpy(ux->ut_line, u->ut_line, sizeof(u->ut_line));
+	(void)memcpy(ux->ut_host, u->ut_host, sizeof(u->ut_host));
+	ux->ut_tv.tv_sec = u->ut_time;
+	ux->ut_tv.tv_usec = 0;
+	(void)memset(&ux->ut_ss, 0, sizeof(ux->ut_ss));
+	ux->ut_pid = 0;
+	ux->ut_type = USER_PROCESS;
+	ux->ut_session = 0;
+	ux->ut_exit.e_termination = 0;
+	ux->ut_exit.e_exit = 0;
 }

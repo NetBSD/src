@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.1.2.2 2002/03/22 20:42:02 nathanw Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.1.2.2 2002/03/22 20:42:02 nathanw Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -97,7 +97,6 @@ typedef struct {
 		_EUCTWState	s_mbsrtowcs;
 		_EUCTWState	s_wcrtomb;
 		_EUCTWState	s_wcsrtombs;
-		_EUCTWState	s_wcstombs;
 		_EUCTWState	s_wctomb;
 	} states;
 } _EUCTWCTypeInfo;
@@ -105,9 +104,6 @@ typedef struct {
 #define	_SS2	0x008e
 #define	_SS3	0x008f
 
-#define	_TO_EI(_cl_)			((_EUCTWEncodingInfo *)(_cl_))
-#define _TO_CEI(_cl_)			((_EUCTWCTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_EUCTWState *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_cei_, _func_)	(_cei_)->states.s_##_func_
 
@@ -115,8 +111,9 @@ typedef struct {
 #define _ENCODING_INFO			_EUCTWEncodingInfo
 #define _CTYPE_INFO			_EUCTWCTypeInfo
 #define _ENCODING_STATE			_EUCTWState
-#define _ENCODING_MB_CUR_MAX(_cl_)	4
+#define _ENCODING_MB_CUR_MAX(_ei_)	4
 #define _ENCODING_IS_STATE_DEPENDENT	0
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
 static __inline int
 _citrus_EUCTW_cs(u_int c)

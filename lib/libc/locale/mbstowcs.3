@@ -1,4 +1,4 @@
-.\" $NetBSD: mbstowcs.3,v 1.2.2.2 2002/03/22 20:42:17 nathanw Exp $
+.\" $NetBSD: mbstowcs.3,v 1.2.2.3 2002/04/25 04:01:43 nathanw Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -84,10 +84,7 @@ The
 .Fn mbstowcs
 returns:
 .Bl -tag -width 012345678901
-.It 0
-.Fa s
-points a null byte (\'\\0\').
-.It positive
+.It 0 or positive
 Number of elements stored to the array pointed by
 .Fa pwcs .
 There is no cases that the value returned is greater than

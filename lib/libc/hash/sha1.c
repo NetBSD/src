@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.6.2.1 2001/10/08 20:19:43 nathanw Exp $	*/
+/*	$NetBSD: sha1.c,v 1.6.2.2 2002/04/25 04:01:43 nathanw Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -19,16 +19,22 @@
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/param.h>
+#include <sys/sha1.h>
 #include <sys/systm.h>
 #define _DIAGASSERT(x)	(void)0
 #else
 #include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
+#include <sha1.h>
 #include <string.h>
 #endif
 
-#include <sys/sha1.h>
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_SHA1_H
 
 /*
  * XXX Kludge until there is resolution regarding mem*() functions
@@ -277,3 +283,5 @@ void SHA1Final(digest, context)
 		((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
 }
+
+#endif /* HAVE_SHA1_H */

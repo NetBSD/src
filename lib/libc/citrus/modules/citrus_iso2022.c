@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.1.2.2 2002/03/22 20:42:03 nathanw Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.1.2.2 2002/03/22 20:42:03 nathanw Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -90,7 +90,9 @@ typedef struct {
 		singlegr:3;
 	char ch[7];	/* longest escape sequence (ESC & V ESC $ ( F) */
 	int chlen;
-} _ISO2022State __attribute__((__packed__));
+	int flags;
+#define _ISO2022STATE_FLAG_INITIALIZED	1
+} _ISO2022State;
 
 typedef struct {
 	_ISO2022Charset	*recommend[4];
@@ -125,14 +127,10 @@ typedef struct {
 		_ISO2022State	s_mbsrtowcs;
 		_ISO2022State	s_wcrtomb;
 		_ISO2022State	s_wcsrtombs;
-		_ISO2022State	s_wcstombs;
 		_ISO2022State	s_wctomb;
 	} states;
 } _ISO2022CTypeInfo;
 
-#define	_TO_EI(_cl_)			((_ISO2022EncodingInfo *)(_cl_))
-#define	_TO_CEI(_cl_)			((_ISO2022CTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_ISO2022State *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_cei_, _func_)	(_cei_)->states.s_##_func_
 
@@ -140,8 +138,10 @@ typedef struct {
 #define _ENCODING_INFO			_ISO2022EncodingInfo
 #define _CTYPE_INFO			_ISO2022CTypeInfo
 #define _ENCODING_STATE			_ISO2022State
-#define _ENCODING_MB_CUR_MAX(_cl_)	MB_LEN_MAX
+#define _ENCODING_MB_CUR_MAX(_ei_)	MB_LEN_MAX
 #define _ENCODING_IS_STATE_DEPENDENT	1
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	\
+    (!((_ps_)->flags & _ISO2022STATE_FLAG_INITIALIZED))
 
 
 #define _ISO2022INVALID (wchar_t)-1
@@ -418,6 +418,7 @@ _citrus_ISO2022_init_state(_ISO2022EncodingInfo * __restrict ei,
 		}
 	}
 	s->singlegl = s->singlegr = -1;
+	s->flags |= _ISO2022STATE_FLAG_INITIALIZED;
 }
 
 static __inline void

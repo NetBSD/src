@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.8.2.3 2002/03/22 20:42:33 nathanw Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.8.2.4 2002/04/25 04:01:46 nathanw Exp $	*/
 /*	$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $	*/
 
 /*
@@ -30,13 +30,25 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.8.2.3 2002/03/22 20:42:33 nathanw Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.8.2.4 2002/04/25 04:01:46 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _LIBC
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+
+#ifdef _LIBC
+# ifdef __weak_alias
+__weak_alias(strlcat, _strlcat)
+# endif
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #if !HAVE_STRLCAT
 /*
@@ -47,7 +59,11 @@ __RCSID("$NetBSD: strlcat.c,v 1.8.2.3 2002/03/22 20:42:33 nathanw Exp $");
  * If retval >= siz, truncation occurred.
  */
 size_t
+#ifdef _LIBC
+_strlcat(dst, src, siz)
+#else
 strlcat(dst, src, siz)
+#endif
 	char *dst;
 	const char *src;
 	size_t siz;

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.51 2000/12/24 03:45:04 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.51.2.1 2002/04/25 04:01:46 nathanw Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -13,6 +13,9 @@ SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c \
 	wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c wcsstr.c wcswidth.c \
 	wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c
+
+# namespace protection wrappers
+SRCS+=	_strlcat.c _strlcpy.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:

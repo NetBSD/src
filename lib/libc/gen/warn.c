@@ -1,4 +1,4 @@
-/*	$NetBSD: warn.c,v 1.4.10.2 2002/03/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: warn.c,v 1.4.10.3 2002/04/25 04:01:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warn.c,v 1.4.10.2 2002/03/22 20:42:14 nathanw Exp $");
+__RCSID("$NetBSD: warn.c,v 1.4.10.3 2002/04/25 04:01:42 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ _warn(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	const char *fmt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.5.2.2 2002/03/11 21:07:51 nathanw Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.5.2.3 2002/04/25 04:07:11 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,11 +80,11 @@
  * entries using routines described in getutxent(3).
  */
 
-#define ut_name ut_user
+#define ut_user ut_name
 #define ut_xtime ut_tv.tv_sec
 
 struct utmpx {
-	char ut_user[_UTX_USERSIZE];	/* login name */
+	char ut_name[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
 	char ut_line[_UTX_LINESIZE];	/* tty name */
 	char ut_host[_UTX_HOSTSIZE];	/* host name */
@@ -123,6 +123,8 @@ void updwtmpx(const char *, const struct utmpx *);
 int lastlogxname(const char *);
 struct lastlogx *getlastlogxuid(uid_t);
 void updlastlogx(const char *, struct lastlogx *);
+void getutmp(const struct utmpx *, struct utmp *);
+void getutmpx(const struct utmp *, struct utmpx *);
 
 int utmpxname(const char *);
 

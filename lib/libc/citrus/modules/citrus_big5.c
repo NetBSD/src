@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.1.2.2 2002/03/22 20:42:02 nathanw Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.1.2.2 2002/03/22 20:42:02 nathanw Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.1.2.3 2002/04/25 04:01:40 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -105,14 +105,10 @@ typedef struct {
 		_BIG5State	s_mbsrtowcs;
 		_BIG5State	s_wcrtomb;
 		_BIG5State	s_wcsrtombs;
-		_BIG5State	s_wcstombs;
 		_BIG5State	s_wctomb;
 	} states;
 } _BIG5CTypeInfo;
 
-#define _TO_EI(_cl_)			((_BIG5EncodingInfo *)(_cl_))
-#define	_TO_CEI(_cl_)			((_BIG5CTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_BIG5State *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_cei_, _func_)	(_cei_)->states.s_##_func_
 
@@ -120,8 +116,9 @@ typedef struct {
 #define _ENCODING_INFO			_BIG5EncodingInfo
 #define _CTYPE_INFO			_BIG5CTypeInfo
 #define _ENCODING_STATE			_BIG5State
-#define _ENCODING_MB_CUR_MAX(_cl_)	2
+#define _ENCODING_MB_CUR_MAX(_ei_)	2
 #define _ENCODING_IS_STATE_DEPENDENT	0
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19.6.4 2002/03/22 21:36:12 nathanw Exp $	*/
+/*	$NetBSD: vis.c,v 1.19.6.5 2002/04/25 04:01:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19.6.4 2002/03/22 21:36:12 nathanw Exp $");
+__RCSID("$NetBSD: vis.c,v 1.19.6.5 2002/04/25 04:01:42 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: vis.c,v 1.19.6.4 2002/03/22 21:36:12 nathanw Exp $");
 
 #include <assert.h>
 #include <vis.h>
+#include <stdlib.h>
 
 #ifdef __weak_alias
 __weak_alias(strsvis,_strsvis)
@@ -70,20 +71,43 @@ __weak_alias(vis,_vis)
 #define isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 #define iswhite(c)	(c == ' ' || c == '\t' || c == '\n')
 #define issafe(c)	(c == '\b' || c == BELL || c == '\r')
+#define xtoa(c)		"0123456789abcdef"[c]
 
 #define MAXEXTRAS       5
 
 
-#define MAKEEXTRALIST(flag, extra)					      \
+#define MAKEEXTRALIST(flag, extra, orig)				      \
 do {									      \
-	char *pextra = extra;						      \
-	if (flag & VIS_SP) *pextra++ = ' ';				      \
-	if (flag & VIS_TAB) *pextra++ = '\t';				      \
-	if (flag & VIS_NL) *pextra++ = '\n';				      \
-	if ((flag & VIS_NOSLASH) == 0) *pextra++ = '\\';		      \
-	*pextra = '\0';							      \
+	const char *o = orig;						      \
+	char *e;						      	      \
+	while (*o++)							      \
+		continue;						      \
+	extra = alloca((size_t)((o - orig) + MAXEXTRAS));	      	      \
+	for (o = orig, e = extra; (*e++ = *o++) != '\0';)		      \
+		continue;						      \
+	e--;								      \
+	if (flag & VIS_SP) *e++ = ' ';				      	      \
+	if (flag & VIS_TAB) *e++ = '\t';				      \
+	if (flag & VIS_NL) *e++ = '\n';				      	      \
+	if ((flag & VIS_NOSLASH) == 0) *e++ = '\\';		      	      \
+	*e = '\0';							      \
 } while (/*CONSTCOND*/0)
 
+
+/*
+ * This is HVIS, the macro of vis used to HTTP style (RFC 1808)
+ */
+#define HVIS(dst, c, flag, nextc, extra)				      \
+do 									      \
+	if (!isascii(c) || !isalnum(c) || strchr("$-_.+!*'(),", c) != NULL) { \
+		*dst++ = '%';						      \
+		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);		      \
+		*dst++ = xtoa((unsigned int)c & 0xf);			      \
+	} else {							      \
+		SVIS(dst, c, flag, nextc, extra);			      \
+	}								      \
+while (/*CONSTCOND*/0)
+	
 /*
  * This is SVIS, the central macro of vis.
  * dst:	      Pointer to the destination buffer
@@ -171,10 +195,14 @@ svis(dst, c, flag, nextc, extra)
 	int c, flag, nextc;
 	const char *extra;
 {
+	char *nextra;
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(extra != NULL);
-
-	SVIS(dst, c, flag, nextc, extra);
+	MAKEEXTRALIST(flag, nextra, extra);
+	if (flag & VIS_HTTPSTYLE)
+		HVIS(dst, c, flag, nextc, nextra);
+	else
+		SVIS(dst, c, flag, nextc, nextra);
 	*dst = '\0';
 	return(dst);
 }
@@ -204,13 +232,19 @@ strsvis(dst, src, flag, extra)
 {
 	char c;
 	char *start;
+	char *nextra;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(extra != NULL);
-
-	for (start = dst; (c = *src++) != '\0'; /* empty */)
-	    SVIS(dst, c, flag, *src, extra);
+	MAKEEXTRALIST(flag, nextra, extra);
+	if (flag & VIS_HTTPSTYLE) {
+		for (start = dst; (c = *src++) != '\0'; /* empty */)
+			HVIS(dst, c, flag, *src, nextra);
+	} else {
+		for (start = dst; (c = *src++) != '\0'; /* empty */)
+			SVIS(dst, c, flag, *src, nextra);
+	}
 	*dst = '\0';
 	return (dst - start);
 }
@@ -226,14 +260,23 @@ strsvisx(dst, src, len, flag, extra)
 {
 	char c;
 	char *start;
+	char *nextra;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(extra != NULL);
+	MAKEEXTRALIST(flag, nextra, extra);
 
-	for (start = dst; len > 0; len--) {
-		c = *src++;
-		SVIS(dst, c, flag, len ? *src : '\0', extra);
+	if (flag & VIS_HTTPSTYLE) {
+		for (start = dst; len > 0; len--) {
+			c = *src++;
+			HVIS(dst, c, flag, len ? *src : '\0', nextra);
+		}
+	} else {
+		for (start = dst; len > 0; len--) {
+			c = *src++;
+			SVIS(dst, c, flag, len ? *src : '\0', nextra);
+		}
 	}
 	*dst = '\0';
 	return (dst - start);
@@ -249,12 +292,15 @@ vis(dst, c, flag, nextc)
 	int c, flag, nextc;
 	
 {
-	char extra[MAXEXTRAS];
+	char *extra;
 
 	_DIAGASSERT(dst != NULL);
 
-	MAKEEXTRALIST(flag, extra);
-	SVIS(dst, c, flag, nextc, extra);
+	MAKEEXTRALIST(flag, extra, "");
+	if (flag & VIS_HTTPSTYLE)
+	    HVIS(dst, c, flag, nextc, extra);
+	else
+	    SVIS(dst, c, flag, nextc, extra);
 	*dst = '\0';
 	return (dst);
 }
@@ -276,9 +322,9 @@ strvis(dst, src, flag)
 	const char *src;
 	int flag;
 {
-	char extra[MAXEXTRAS];
+	char *extra;
 
-	MAKEEXTRALIST(flag, extra);
+	MAKEEXTRALIST(flag, extra, "");
 	return (strsvis(dst, src, flag, extra));
 }
 
@@ -290,9 +336,9 @@ strvisx(dst, src, len, flag)
 	size_t len;
 	int flag;
 {
-	char extra[MAXEXTRAS];
+	char *extra;
 
-	MAKEEXTRALIST(flag, extra);
+	MAKEEXTRALIST(flag, extra, "");
 	return (strsvisx(dst, src, len, flag, extra));
 }
 #endif

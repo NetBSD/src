@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.13.2.4 2002/03/22 20:42:42 nathanw Exp $
+.\"	$NetBSD: ptrace.2,v 1.13.2.5 2002/04/25 04:01:46 nathanw Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -202,10 +202,10 @@ is the length of the I/O request.  The
 field specifies which type of I/O operation to perform.  Possible
 values are:
 .Bl -tag -width 18n
-.It PIOD_OP_READ_D
-.It PIOD_OP_WRITE_D
-.It PIOD_OP_READ_I
-.It PIOD_OP_WRITE_I
+.It PIOD_READ_D
+.It PIOD_WRITE_D
+.It PIOD_READ_I
+.It PIOD_WRITE_I
 .El
 .Pp
 See the description of
