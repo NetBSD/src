@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.76.2.8 2002/06/20 03:50:37 nathanw Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.76.2.9 2002/10/18 02:45:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.76.2.8 2002/06/20 03:50:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.76.2.9 2002/10/18 02:45:57 nathanw Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -1178,6 +1178,10 @@ ufs_mkdir(void *v)
 	struct dirtemplate	dirtemplate;
 	struct direct		newdir;
 	int			error, dmode, blkoff;
+	int dirblksiz = DIRBLKSIZ;
+	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	}
 
 	dvp = ap->a_dvp;
 	vap = ap->a_vap;
@@ -1240,6 +1244,7 @@ ufs_mkdir(void *v)
 	 * Initialize directory with "." and ".." from static template.
 	 */
 	dirtemplate = mastertemplate;
+	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
 	dirtemplate.dot_ino = ufs_rw32(ip->i_number,
 	    UFS_MPNEEDSWAP(dvp->v_mount));
 	dirtemplate.dotdot_ino = ufs_rw32(dp->i_number,
@@ -1261,10 +1266,10 @@ ufs_mkdir(void *v)
 		} else
 			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
 	}
-	if ((error = VOP_BALLOC(tvp, (off_t)0, DIRBLKSIZ, cnp->cn_cred,
+	if ((error = VOP_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
-	ip->i_ffs_size = DIRBLKSIZ;
+	ip->i_ffs_size = dirblksiz;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_ffs_size);
 	memcpy((caddr_t)bp->b_data, (caddr_t)&dirtemplate, sizeof dirtemplate);
@@ -1275,11 +1280,11 @@ ufs_mkdir(void *v)
 		 * block does not have to ensure that the block is
 		 * written before the inode.
 		 */
-		blkoff = DIRBLKSIZ;
+		blkoff = dirblksiz;
 		while (blkoff < bp->b_bcount) {
 			((struct direct *)
-			  (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
-			blkoff += DIRBLKSIZ;
+			  (bp->b_data + blkoff))->d_reclen = dirblksiz;
+			blkoff += dirblksiz;
 		}
 	}
 	/*
@@ -1491,12 +1496,16 @@ ufs_readdir(void *v)
 	int		error;
 	size_t		count, lost;
 	off_t		off;
+	int dirblksiz = DIRBLKSIZ;
+	if (UFS_MPISAPPLEUFS(ap->a_vp->v_mount)) {
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	}
 
 	uio = ap->a_uio;
 	off = uio->uio_offset;
 	count = uio->uio_resid;
 	/* Make sure we don't return partial entries. */
-	count -= (uio->uio_offset + count) & (DIRBLKSIZ -1);
+	count -= (uio->uio_offset + count) & (dirblksiz -1);
 	if (count <= 0)
 		return (EINVAL);
 	lost = uio->uio_resid - count;

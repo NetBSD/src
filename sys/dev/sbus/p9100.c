@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2.2.7 2002/09/17 21:21:06 nathanw Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.2.8 2002/10/18 02:44:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.2.7 2002/09/17 21:21:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.2.8 2002/10/18 02:44:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,8 @@ static void	p9100_sbus_attach(struct device *, struct device *, void *);
 static void	p9100unblank(struct device *);
 static void	p9100_shutdown(void *);
 
-struct cfattach pnozz_ca = {
-	sizeof(struct p9100_softc), p9100_sbus_match, p9100_sbus_attach
-};
+CFATTACH_DECL(pnozz, sizeof(struct p9100_softc),
+    p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
 
 extern struct cfdriver pnozz_cd;
 

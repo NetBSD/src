@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.8 2000/11/27 08:40:02 chs Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.8.2.1 2002/10/18 02:45:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,6 +54,11 @@ struct mfs_args {
 };
 
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
+#endif
+
 struct buf;
 struct inode;
 struct nameidata;
@@ -94,6 +99,7 @@ struct ufsmount {
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
+#define UFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
 
 /*
  * Flags describing the state of quotas.
@@ -103,6 +109,12 @@ struct ufsmount {
 
 /* Convert mount ptr to ufsmount ptr. */
 #define VFSTOUFS(mp)	((struct ufsmount *)((mp)->mnt_data))
+
+#ifdef APPLE_UFS
+#define UFS_MPISAPPLEUFS(mp)	(VFSTOUFS(mp)->um_flags & UFS_ISAPPLEUFS)
+#else
+#define UFS_MPISAPPLEUFS(mp)	(0)
+#endif
 
 /*
  * Macros to access file system parameters in the ufsmount structure.

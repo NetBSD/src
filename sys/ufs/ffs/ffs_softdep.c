@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.2.11 2002/08/27 23:48:28 nathanw Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.12 2002/10/18 02:45:49 nathanw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.11 2002/08/27 23:48:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.12 2002/10/18 02:45:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1498,7 +1498,7 @@ allocdirect_merge(adphead, newadp, oldadp)
 	    newadp->ad_oldsize != oldadp->ad_newsize ||
 	    newadp->ad_lbn >= NDADDR)
 		panic("allocdirect_merge: ob %d != nb %d || lbn %d >= %d ||\n"
-		      "osize %lu != nsize %lu\n",
+		      "osize %lu != nsize %lu",
 		    newadp->ad_oldblkno, oldadp->ad_newblkno,
 		    (int)newadp->ad_lbn, NDADDR,
 		    (unsigned long)newadp->ad_oldsize,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.5.2.2 2001/11/14 19:15:47 nathanw Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.5.2.3 2002/10/18 02:43:46 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.5.2.2 2001/11/14 19:15:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.5.2.3 2002/10/18 02:43:46 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -261,7 +261,6 @@ rf_ConfigureDeclusteredPQ(
 	 * problems */
 
 	layoutPtr->dataSectorsPerStripe = (k - 2) * layoutPtr->sectorsPerStripeUnit;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = k - 2;
 	layoutPtr->numParityCol = 2;
 

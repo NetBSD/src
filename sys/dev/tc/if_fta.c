@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.17.2.2 2001/11/14 19:16:10 nathanw Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.17.2.3 2002/10/18 02:44:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.17.2.2 2001/11/14 19:16:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.17.2.3 2002/10/18 02:44:25 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -120,4 +120,5 @@ pdq_tc_attach(
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
 }
 
-struct cfattach fta_ca = { sizeof(pdq_softc_t), pdq_tc_match, pdq_tc_attach };
+CFATTACH_DECL(fta, sizeof(pdq_softc_t),
+    pdq_tc_match, pdq_tc_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.4.2.6 2002/08/01 02:45:30 nathanw Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.4.2.7 2002/10/18 02:43:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.2.6 2002/08/01 02:45:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.2.7 2002/10/18 02:43:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,8 @@ int	vga_pci_match(struct device *, struct cfdata *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 static int vga_pci_lookup_quirks(struct pci_attach_args *);
 
-struct cfattach vga_pci_ca = {
-	sizeof(struct vga_pci_softc), 
-	vga_pci_match, 
-	vga_pci_attach,
-};
+CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
+    vga_pci_match, vga_pci_attach, NULL, NULL);
 
 int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	vga_pci_mmap(void *, off_t, int);

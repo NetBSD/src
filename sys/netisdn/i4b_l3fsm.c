@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.2.2.6 2002/06/20 03:49:38 nathanw Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.2.2.7 2002/10/18 02:45:28 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.2.2.6 2002/06/20 03:49:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.2.2.7 2002/10/18 02:45:28 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -238,17 +238,17 @@ void next_l3state(call_desc_t *cd, int event)
 	int currstate, newstate;
 
 	if(event > N_EVENTS)
-		panic("i4b_l3fsm.c: event > N_EVENTS\n");
+		panic("i4b_l3fsm.c: event > N_EVENTS");
 
 	currstate = cd->Q931state;
 
 	if(currstate > N_STATES)
-		panic("i4b_l3fsm.c: currstate > N_STATES\n");	
+		panic("i4b_l3fsm.c: currstate > N_STATES");	
 
 	newstate = l3state_tab[event][currstate].newstate;
 
 	if(newstate > N_STATES)
-		panic("i4b_l3fsm.c: newstate > N_STATES\n");	
+		panic("i4b_l3fsm.c: newstate > N_STATES");	
 	
 	NDBGL3(L3_F_MSG, "L3 FSM event [%s]: [%s => %s]",
 				l3event_text[event],

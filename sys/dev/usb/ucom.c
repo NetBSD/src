@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.8 2002/09/17 21:21:31 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.9 2002/10/18 02:44:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.8 2002/09/17 21:21:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.9 2002/10/18 02:44:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,6 @@ ucom_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -1146,5 +1145,5 @@ ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->ucomcf_portno != UCOM_UNK_PORTNO &&
 	    cf->ucomcf_portno != uca->portno)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

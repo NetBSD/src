@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.13 2002/09/17 21:24:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.14 2002/10/18 02:46:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.13 2002/09/17 21:24:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.14 2002/10/18 02:46:01 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1046,7 +1046,7 @@ swap_off(p, sdp)
 	uvmexp.swpages -= sdp->swd_npages;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
-		panic("swap_off: swapdev not in list\n");
+		panic("swap_off: swapdev not in list");
 	swaplist_trim();
 	simple_unlock(&uvm.swap_data_lock);
 

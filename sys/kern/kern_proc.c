@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.10 2002/09/17 21:22:07 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.11 2002/10/18 02:44:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.10 2002/09/17 21:22:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.11 2002/10/18 02:44:53 nathanw Exp $");
 
 #include "opt_kstack.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -681,7 +680,7 @@ kstack_check_magic(const struct proc *p)
 
 	if (stackleft <= 0) {
 		panic("magic on the top of kernel stack changed for pid %u: "
-		    "maybe kernel stack overflow\n", p->p_pid);
+		    "maybe kernel stack overflow", p->p_pid);
 	}
 }
 #endif /* KSTACK_CHECK_MAGIC */

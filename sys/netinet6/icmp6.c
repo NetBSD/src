@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.59.2.10 2002/09/17 21:23:15 nathanw Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.59.2.11 2002/10/18 02:45:21 nathanw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.59.2.10 2002/09/17 21:23:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.59.2.11 2002/10/18 02:45:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -532,7 +532,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
@@ -546,7 +545,6 @@ icmp6_input(mp, offp, proto)
 		 * intermediate extension headers.
 		 */
 		goto deliver;
-		break;
 
 	case ICMP6_TIME_EXCEEDED:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_timeexceed);
@@ -561,7 +559,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PARAM_PROB:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_paramprob);
@@ -577,7 +574,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_ECHO_REQUEST:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echo);
@@ -2683,7 +2679,7 @@ icmp6_redirect_output(m0, rt)
 	 * and truncates if not.
 	 */
 	if (m0->m_next || m0->m_pkthdr.len != m0->m_len)
-		panic("assumption failed in %s:%d\n", __FILE__, __LINE__);
+		panic("assumption failed in %s:%d", __FILE__, __LINE__);
 
 	if (len - sizeof(*nd_opt_rh) < m0->m_pkthdr.len) {
 		/* not enough room, truncate */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.33.2.11 2002/09/17 21:23:28 nathanw Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.33.2.12 2002/10/18 02:45:24 nathanw Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.33.2.11 2002/09/17 21:23:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.33.2.12 2002/10/18 02:45:24 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -348,7 +348,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
-		panic("ipsec4_getpolicybysock: NULL pointer was passed.\n");
+		panic("ipsec4_getpolicybysock: NULL pointer was passed.");
 
 	switch (so->so_proto->pr_domain->dom_family) {
 	case AF_INET:
@@ -360,12 +360,12 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		break;
 #endif
 	default:
-		panic("ipsec4_getpolicybysock: unsupported address family\n");
+		panic("ipsec4_getpolicybysock: unsupported address family");
 	}
 
 #ifdef DIAGNOSTIC
 	if (pcbsp == NULL)
-		panic("ipsec4_getpolicybysock: pcbsp is NULL.\n");
+		panic("ipsec4_getpolicybysock: pcbsp is NULL.");
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -385,12 +385,12 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		currsp = pcbsp->sp_out;
 		break;
 	default:
-		panic("ipsec4_getpolicybysock: illegal direction.\n");
+		panic("ipsec4_getpolicybysock: illegal direction.");
 	}
 
 	/* sanity check */
 	if (currsp == NULL)
-		panic("ipsec4_getpolicybysock: currsp is NULL.\n");
+		panic("ipsec4_getpolicybysock: currsp is NULL.");
 
 	/* when privilieged socket */
 	if (pcbsp->priv) {
@@ -499,7 +499,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
-		panic("ipsec4_getpolicybyaddr: NULL pointer was passed.\n");
+		panic("ipsec4_getpolicybyaddr: NULL pointer was passed.");
 
 	/* get a policy entry matched with the packet */
     {
@@ -557,18 +557,18 @@ ipsec6_getpolicybysock(m, dir, so, error)
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
-		panic("ipsec6_getpolicybysock: NULL pointer was passed.\n");
+		panic("ipsec6_getpolicybysock: NULL pointer was passed.");
 
 #ifdef DIAGNOSTIC
 	if (so->so_proto->pr_domain->dom_family != AF_INET6)
-		panic("ipsec6_getpolicybysock: socket domain != inet6\n");
+		panic("ipsec6_getpolicybysock: socket domain != inet6");
 #endif
 
 	pcbsp = sotoin6pcb(so)->in6p_sp;
 
 #ifdef DIAGNOSTIC
 	if (pcbsp == NULL)
-		panic("ipsec6_getpolicybysock: pcbsp is NULL.\n");
+		panic("ipsec6_getpolicybysock: pcbsp is NULL.");
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -588,12 +588,12 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		currsp = pcbsp->sp_out;
 		break;
 	default:
-		panic("ipsec6_getpolicybysock: illegal direction.\n");
+		panic("ipsec6_getpolicybysock: illegal direction.");
 	}
 
 	/* sanity check */
 	if (currsp == NULL)
-		panic("ipsec6_getpolicybysock: currsp is NULL.\n");
+		panic("ipsec6_getpolicybysock: currsp is NULL.");
 
 	/* when privilieged socket */
 	if (pcbsp->priv) {
@@ -709,7 +709,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
-		panic("ipsec6_getpolicybyaddr: NULL pointer was passed.\n");
+		panic("ipsec6_getpolicybyaddr: NULL pointer was passed.");
 
 	/* get a policy entry matched with the packet */
     {
@@ -764,7 +764,7 @@ ipsec_setspidx_mbuf(spidx, family, m, needport)
 
 	/* sanity check */
 	if (spidx == NULL || m == NULL)
-		panic("ipsec_setspidx_mbuf: NULL pointer was passed.\n");
+		panic("ipsec_setspidx_mbuf: NULL pointer was passed.");
 
 	bzero(spidx, sizeof(*spidx));
 
@@ -799,7 +799,7 @@ ipsec_setspidx(m, spidx, needport)
 	int error;
 
 	if (m == NULL)
-		panic("ipsec_setspidx: m == 0 passed.\n");
+		panic("ipsec_setspidx: m == 0 passed.");
 
 	bzero(spidx, sizeof(*spidx));
 
@@ -884,9 +884,9 @@ ipsec4_get_ulp(m, spidx, needport)
 
 	/* sanity check */
 	if (m == NULL)
-		panic("ipsec4_get_ulp: NULL pointer was passed.\n");
+		panic("ipsec4_get_ulp: NULL pointer was passed.");
 	if (m->m_pkthdr.len < sizeof(ip))
-		panic("ipsec4_get_ulp: too short\n");
+		panic("ipsec4_get_ulp: too short");
 
 	/* set default */
 	spidx->ul_proto = IPSEC_ULPROTO_ANY;
@@ -991,7 +991,7 @@ ipsec6_get_ulp(m, spidx, needport)
 
 	/* sanity check */
 	if (m == NULL)
-		panic("ipsec6_get_ulp: NULL pointer was passed.\n");
+		panic("ipsec6_get_ulp: NULL pointer was passed.");
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
 		printf("ipsec6_get_ulp:\n"); kdebug_mbuf(m));
@@ -1107,7 +1107,7 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 
 	/* sanity check. */
 	if (so == NULL || pcb_sp == NULL)
-		panic("ipsec_init_pcbpolicy: NULL pointer was passed.\n");
+		panic("ipsec_init_pcbpolicy: NULL pointer was passed.");
 
 	if (!initialized) {
 		if ((in = key_newsp()) == NULL)
@@ -1395,7 +1395,7 @@ ipsec4_get_policy(inp, request, len, mp)
 	if (inp == NULL || request == NULL || mp == NULL)
 		return EINVAL;
 	if (inp->inp_sp == NULL)
-		panic("policy in PCB is NULL\n");
+		panic("policy in PCB is NULL");
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (struct sadb_x_policy *)request;
@@ -1424,7 +1424,7 @@ ipsec4_delete_pcbpolicy(inp)
 {
 	/* sanity check. */
 	if (inp == NULL)
-		panic("ipsec4_delete_pcbpolicy: NULL pointer was passed.\n");
+		panic("ipsec4_delete_pcbpolicy: NULL pointer was passed.");
 
 	if (inp->inp_sp == NULL)
 		return 0;
@@ -1498,7 +1498,7 @@ ipsec6_get_policy(in6p, request, len, mp)
 	if (in6p == NULL || request == NULL || mp == NULL)
 		return EINVAL;
 	if (in6p->in6p_sp == NULL)
-		panic("policy in PCB is NULL\n");
+		panic("policy in PCB is NULL");
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (struct sadb_x_policy *)request;
@@ -1526,7 +1526,7 @@ ipsec6_delete_pcbpolicy(in6p)
 {
 	/* sanity check. */
 	if (in6p == NULL)
-		panic("ipsec6_delete_pcbpolicy: NULL pointer was passed.\n");
+		panic("ipsec6_delete_pcbpolicy: NULL pointer was passed.");
 
 	if (in6p->in6p_sp == NULL)
 		return 0;
@@ -1564,7 +1564,7 @@ ipsec_get_reqlevel(isr, af)
 
 	/* sanity check */
 	if (isr == NULL || isr->sp == NULL)
-		panic("ipsec_get_reqlevel: NULL pointer is passed.\n");
+		panic("ipsec_get_reqlevel: NULL pointer is passed.");
 
 	/* set default level */
 	switch (af) {
@@ -1585,7 +1585,7 @@ ipsec_get_reqlevel(isr, af)
 		break;
 #endif /* INET6 */
 	default:
-		panic("key_get_reqlevel: Unknown family. %d\n",
+		panic("key_get_reqlevel: Unknown family. %d",
 			((struct sockaddr *)&isr->sp->spidx->src)->sa_family);
 	}
 
@@ -1627,7 +1627,7 @@ ipsec_get_reqlevel(isr, af)
 		break;
 
 	default:
-		panic("ipsec_get_reqlevel: Illegal IPsec level %u\n",
+		panic("ipsec_get_reqlevel: Illegal IPsec level %u",
 			isr->level);
 	}
 
@@ -1666,7 +1666,7 @@ ipsec_in_reject(sp, m)
 
 	case IPSEC_POLICY_ENTRUST:
 	default:
-		panic("ipsec_in_reject: Invalid policy found. %d\n", sp->policy);
+		panic("ipsec_in_reject: Invalid policy found. %d", sp->policy);
 	}
 
 	need_auth = 0;
@@ -1851,7 +1851,7 @@ ipsec_hdrsiz(sp)
 
 	case IPSEC_POLICY_ENTRUST:
 	default:
-		panic("ipsec_hdrsiz: Invalid policy found. %d\n", sp->policy);
+		panic("ipsec_hdrsiz: Invalid policy found. %d", sp->policy);
 	}
 
 	siz = 0;
@@ -2204,7 +2204,7 @@ ipsec_chkreplay(seq, sav)
 
 	/* sanity check */
 	if (sav == NULL)
-		panic("ipsec_chkreplay: NULL pointer was passed.\n");
+		panic("ipsec_chkreplay: NULL pointer was passed.");
 
 	replay = sav->replay;
 
@@ -2263,7 +2263,7 @@ ipsec_updatereplay(seq, sav)
 
 	/* sanity check */
 	if (sav == NULL)
-		panic("ipsec_chkreplay: NULL pointer was passed.\n");
+		panic("ipsec_chkreplay: NULL pointer was passed.");
 
 	replay = sav->replay;
 
@@ -2437,7 +2437,7 @@ ipsec_logsastr(sav)
 	/* validity check */
 	if (((struct sockaddr *)&sav->sah->saidx.src)->sa_family
 			!= ((struct sockaddr *)&sav->sah->saidx.dst)->sa_family)
-		panic("ipsec_logsastr: family mismatched.\n");
+		panic("ipsec_logsastr: family mismatched.");
 
 	p = buf;
 	snprintf(buf, sizeof(buf), "SA(SPI=%u ", (u_int32_t)ntohl(sav->spi));

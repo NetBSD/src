@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11.2.5 2002/09/17 21:21:07 nathanw Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.2.6 2002/10/18 02:44:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.5 2002/09/17 21:21:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.6 2002/10/18 02:44:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,8 @@ struct stp4020_socket {
 #define STP4020_SOCKET_BUSY	0x0001
 #define STP4020_SOCKET_SHUTDOWN	0x0002
 	int		sock;		/* Socket number (0 or 1) */
+	int		sbus_intno;	/* Do we use first (0) or second (1)
+					   interrupt? */
 	bus_space_tag_t	tag;		/* socket control space */
 	bus_space_handle_t	regs;	/* 			*/
 	struct device	*pcmcia;	/* Associated PCMCIA device */
@@ -134,14 +136,12 @@ struct stp4020_softc {
 static int	stp4020print	__P((void *, const char *));
 static int	stp4020match	__P((struct device *, struct cfdata *, void *));
 static void	stp4020attach	__P((struct device *, struct device *, void *));
-static int	stp4020_iointr	__P((void *));
-static int	stp4020_statintr __P((void *));
+static int	stp4020_intr	__P((void *));
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay);
 
-struct cfattach nell_ca = {
-	sizeof(struct stp4020_softc), stp4020match, stp4020attach
-};
+CFATTACH_DECL(nell, sizeof(struct stp4020_softc),
+    stp4020match, stp4020attach, NULL, NULL);
 
 #ifdef STP4020_DEBUG
 static void	stp4020_dump_regs __P((struct stp4020_socket *));
@@ -281,10 +281,13 @@ stp4020attach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_softc *sc = (void *)self;
 	int node, rev;
-	int i;
+	int i, sbus_intno;
 	bus_space_handle_t bh;
 
 	node = sa->sa_node;
+
+	/* lsb of our config flags decides which interrupt we use */
+	sbus_intno = sc->sc_dev.dv_cfdata->cf_flags & 1;
 
 	/* Transfer bus tags */
 	sc->sc_bustag = sa->sa_bustag;
@@ -293,6 +296,8 @@ stp4020attach(parent, self, aux)
 	/* Set up per-socket static initialization */
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
 	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
+	sc->sc_socks[0].sbus_intno =
+		sc->sc_socks[1].sbus_intno = sbus_intno;
 
 	if (sa->sa_nreg < 8) {
 		printf("%s: only %d register sets\n",
@@ -349,17 +354,11 @@ stp4020attach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	/*
-	 * We get to use two SBus interrupt levels.
-	 * The higher level we use for status change interrupts;
-	 * the lower level for PC card I/O.
-	 */
-	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].oi_pri,
-				   IPL_NONE, 0, stp4020_statintr, sc);
-
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].oi_pri,
-				   IPL_NONE, 0, stp4020_iointr, sc);
+	/* We only use one interrupt level. */
+	if (sa->sa_nintr > sbus_intno) {
+		bus_intr_establish(sa->sa_bustag,
+		    sa->sa_intr[sbus_intno].oi_pri,
+		    IPL_NONE, 0, stp4020_intr, sc);
 	}
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &
@@ -427,9 +426,12 @@ stp4020_attach_socket(h, speed)
 
 	/*
 	 * Enable socket status change interrupts.
-	 * We use SB_INT[1] for status change interrupts.
+	 * We only use one common interrupt for status change
+	 * and IO, to avoid locking issues.
 	 */
-	v = STP4020_ICR0_ALL_STATUS_IE | STP4020_ICR0_SCILVL_SB1;
+	v = STP4020_ICR0_ALL_STATUS_IE
+	    | (h->sbus_intno ? STP4020_ICR0_SCILVL_SB1
+			     : STP4020_ICR0_SCILVL_SB0);
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Get live status bits from ISR0 */
@@ -524,23 +526,24 @@ stp4020_queue_event(sc, sock, event)
 }
 
 int
-stp4020_statintr(arg)
+stp4020_intr(arg)
 	void *arg;
 {
 	struct stp4020_softc *sc = arg;
-	int i, r = 0;
+	int i, r = 0, cd_change = 0;
 
 	/*
 	 * Check each socket for pending requests.
 	 */
 	for (i = 0 ; i < STP4020_NSOCK; i++) {
 		struct stp4020_socket *h;
-		int v, cd_change = 0;
+		int v;
 
 		h = &sc->sc_socks[i];
-
-		/* Read socket's ISR0 for the interrupt status bits */
 		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
+
+		/* Ack all interrupts at once */
+		stp4020_wr_sockctl(h, STP4020_ISR0_IDX, STP4020_ISR0_ALL_STATUS_IRQ);
 
 #ifdef STP4020_DEBUG
 		if (stp4020_debug != 0) {
@@ -550,9 +553,6 @@ stp4020_statintr(arg)
 			printf("stp4020_statintr: ISR0=%s\n", bits);
 		}
 #endif
-
-		/* Ack all interrupts at once */
-		stp4020_wr_sockctl(h, STP4020_ISR0_IDX, STP4020_ISR0_ALL_STATUS_IRQ);
 
 		if ((v & STP4020_ISR0_CDCHG) != 0) {
 			/*
@@ -573,6 +573,34 @@ stp4020_statintr(arg)
 						STP4020_EVENT_REMOVAL);
 					h->flags &= ~STP4020_SOCKET_BUSY;
 				}
+			}
+		}
+		
+		if ((v & STP4020_ISR0_IOINT) != 0) {
+			/* we can not deny this is ours, no matter what the
+			   card driver says. */
+			r = 1;
+
+			/* ack interrupt */
+			stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
+
+			/* It's a card interrupt */
+			if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
+				printf("stp4020[%d]: spurious interrupt?\n",
+					h->sock);
+				continue;
+			}
+			/* Call card handler, if any */
+			if (h->intrhandler != NULL) {
+				/*
+				 * Called without handling of it's requested
+				 * protection level (h->ipl), since we have
+				 * no general queuing mechanism available
+				 * right now and we know for sure we are
+				 * running at a higher protection level
+				 * right now.
+				 */
+				(*h->intrhandler)(h->intrarg);
 			}
 		}
 
@@ -604,56 +632,6 @@ stp4020_statintr(arg)
 		if ((v & STP4020_ISR0_PCTO) != 0) {
 			DPRINTF(("stp4020[%d]: Card access timeout\n", h->sock));
 			r = 1;
-		}
-
-	}
-
-	return (r);
-}
-
-int
-stp4020_iointr(arg)
-	void *arg;
-{
-	struct stp4020_softc *sc = arg;
-	int i, r = 0;
-
-	/*
-	 * Check each socket for pending requests.
-	 */
-	for (i = 0 ; i < STP4020_NSOCK; i++) {
-		struct stp4020_socket *h;
-		int v;
-
-		h = &sc->sc_socks[i];
-		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
-
-		if ((v & STP4020_ISR0_IOINT) != 0) {
-			/* we can not deny this is ours, no matter what the
-			   card driver says. */
-			r = 1;
-
-			/* ack interrupt */
-			stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
-
-			/* It's a card interrupt */
-			if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
-				printf("stp4020[%d]: spurious interrupt?\n",
-					h->sock);
-				continue;
-			}
-			/* Call card handler, if any */
-			if (h->intrhandler != NULL) {
-				/*
-				 * Called without handling of it's requested
-				 * protection level (h->ipl), since we have
-				 * no general queuing mechanism available
-				 * right now and we know for sure we are
-				 * running at a higher protection level
-				 * right now.
-				 */
-				(*h->intrhandler)(h->intrarg);
-			}
 		}
 
 	}
@@ -891,12 +869,13 @@ stp4020_chip_socket_enable(pch)
 	if (pcmcia_card_gettype(h->pcmcia) == PCMCIA_IFTYPE_IO) {
 		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE);
 		v |= STP4020_ICR0_IFTYPE_IO|STP4020_ICR0_IOIE
-		    |STP4020_ICR0_IOILVL_SB0|STP4020_ICR0_SPKREN;
+		    |STP4020_ICR0_SPKREN;
+		v |= h->sbus_intno ? STP4020_ICR0_IOILVL_SB1
+				   : STP4020_ICR0_IOILVL_SB0;
 		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
 	} else {
 		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE
-		    |STP4020_ICR0_SPKREN|STP4020_ICR0_IOILVL_SB0
-		    |STP4020_ICR0_IOILVL_SB1|STP4020_ICR0_SPKREN);
+		    |STP4020_ICR0_SPKREN);
 		v |= STP4020_ICR0_IFTYPE_MEM;
 		DPRINTF(("%s: configuring card for MEM ONLY useage\n", h->sc->sc_dev.dv_xname));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.15 2002/09/17 21:22:11 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.16 2002/10/18 02:44:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.15 2002/09/17 21:22:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.16 2002/10/18 02:44:53 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -469,7 +469,7 @@ void
 shutdownhook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&shutdownhook_list, vhook);
+	hook_disestablish(&shutdownhook_list, vhook);
 }
 
 /*
@@ -520,7 +520,7 @@ void
 mountroothook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&mountroothook_list, vhook);
+	hook_disestablish(&mountroothook_list, vhook);
 }
 
 void
@@ -1160,8 +1160,8 @@ parsedisk(str, len, defpart, devp)
  *	bytes		result
  *	-----		------
  *	99999		`99999 B'
- *	100000		`97 KB'
- *	66715648	`65152 KB'
+ *	100000		`97 kB'
+ *	66715648	`65152 kB'
  *	252215296	`240 MB'
  */
 int
@@ -1172,9 +1172,8 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	const char	*suffix;
 	int 		divisor;
 {
-		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
-	static const char prefixes[] = " KMGTPE";
-
+       	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
+	const char *prefixes;
 	int		r;
 	u_int64_t	max;
 	size_t		i, suffixlen;
@@ -1184,14 +1183,23 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	if (len > 0)
 		buf[0] = '\0';
 	suffixlen = strlen(suffix);
-			/* check if enough room for `x y' + suffix + `\0' */
+	/* check if enough room for `x y' + suffix + `\0' */
 	if (len < 4 + suffixlen)
 		return (-1);
+
+	if (divisor == 1024) {
+		/*
+		 * binary multiplies
+		 * XXX IEC 60027-2 recommends Ki, Mi, Gi...
+		 */
+		prefixes = " KMGTPE";
+	} else
+		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
 	max = 1;
 	for (i = 0; i < len - suffixlen - 3; i++)
 		max *= 10;
-	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
+	for (i = 0; bytes >= max && prefixes[i + 1]; i++)
 		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53.2.6 2002/09/17 21:21:36 nathanw Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.2.7 2002/10/18 02:44:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.6 2002/09/17 21:21:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.7 2002/10/18 02:44:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,7 +726,6 @@ usb_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

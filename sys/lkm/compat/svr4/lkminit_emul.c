@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.4.2.1 2001/11/14 19:16:56 nathanw Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.4.2.2 2002/10/18 02:45:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.4.2.1 2001/11/14 19:16:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.4.2.2 2002/10/18 02:45:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -87,7 +87,7 @@ svr4_init(lkmtp, cmd)
 	extern void IDTVEC(svr4_fasttrap) __P((void));
 
 	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
-		SEL_UPL);
+		SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 #endif
 
 	return (0);
@@ -101,7 +101,7 @@ svr4_done(struct lkm_table *lkmtp, int cmd)
 	 * if some userland code would use the gate after the LKM is unloaded?
 	 */
 	setgate(&idt[0xd2].gd, NULL, 0, SDT_SYS386TGT,
-		SEL_UPL);
+		SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.16 2002/09/17 21:22:01 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.17 2002/10/18 02:44:51 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.16 2002/09/17 21:22:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.17 2002/10/18 02:44:51 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -155,6 +155,8 @@ const struct emul emul_netbsd = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };
 
 #ifdef LKM
@@ -522,13 +524,13 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (char *) pack.ep_taddr;
+	vm->vm_taddr = (caddr_t) pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (char *) pack.ep_daddr;
+	vm->vm_daddr = (caddr_t) pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
-	vm->vm_minsaddr = (char *) pack.ep_minsaddr;
+	vm->vm_maxsaddr = (caddr_t) pack.ep_maxsaddr;
+	vm->vm_minsaddr = (caddr_t) pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -604,7 +606,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		goto exec_abort;
 	}
 
-	/* copy out the process's signal trapoline code */
+	/* copy out the process's signal trampoline code */
 	if (szsigcode) {
 		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
@@ -1074,7 +1076,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		panic("execw[] entry with unknown priority %d found\n",
+		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
 #endif
 		break;
@@ -1106,7 +1108,7 @@ exec_init(int init_boot)
 		}
 #ifdef DIAGNOSTIC
 		if (i == 0)
-			panic("no emulations found in execsw_builtin[]\n");
+			panic("no emulations found in execsw_builtin[]");
 #endif
 	}
 

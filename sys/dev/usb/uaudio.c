@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.41.2.7 2002/06/20 03:46:53 nathanw Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.41.2.8 2002/10/18 02:44:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.41.2.7 2002/06/20 03:46:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.41.2.8 2002/10/18 02:44:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2352,8 +2352,8 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_dying)
 		return (EIO);
 
-	if ((mode == AUMODE_RECORD && sc->sc_recchan.pipe != NULL)
-	    || (mode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
+	if ((usemode == AUMODE_RECORD && sc->sc_recchan.pipe != NULL)
+	    || (usemode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
 		return (EBUSY);
 
 	if (usemode & AUMODE_PLAY && sc->sc_playchan.altidx != -1)

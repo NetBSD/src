@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.2.2.2 2002/01/08 00:32:10 nathanw Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.2.2.3 2002/10/18 02:44:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
+
 #include "locators.h"
 #define uhidevcf_reportid cf_loc[UHIDBUSCF_REPORTID]
 #define UHIDEV_UNK_REPORTID UHIDBUSCF_REPORTID_DEFAULT
@@ -69,6 +75,9 @@ struct uhidev {
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
+#if NRND > 0
+        rndsource_element_t     rnd_source;
+#endif
 };
 
 struct uhidev_attach_arg {

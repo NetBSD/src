@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.24 2002/10/03 23:49:30 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.25 2002/10/18 02:45:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -124,6 +124,7 @@ struct emul {
 					/* Emulation specific sysctl */
 	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
 				void *, size_t, struct proc *p));
+	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
 
 /* 
@@ -405,9 +406,22 @@ void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p, struct proc *q);
 int	leavepgrp(struct proc *p);
 void	yield(void);
+void	preempt(struct lwp *);
+void	mi_switch(struct lwp *, struct lwp *);
+struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
-void	resetprocpriority(struct proc *);
+#ifndef remrunqueue
+void	remrunqueue(struct lwp *);
+#endif
+#ifndef setrunqueue
+void	setrunqueue(struct lwp *);
+#endif
+#ifndef nextrunqueue
+struct proc *nextrunqueue(void);
+#endif
+void	resetpriority(struct proc *);
+void	setrunnable(struct lwp *);
 void	suspendsched(void);
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
@@ -421,6 +435,12 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
+#ifndef cpu_switch
+void	cpu_switch(struct proc *, struct proc *);
+#endif
+#ifndef cpu_idle
+void	cpu_idle(void);
+#endif
 void	cpu_exit(struct lwp *, int);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.6.2.4 2002/08/01 02:45:56 nathanw Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.6.2.5 2002/10/18 02:44:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.6.2.4 2002/08/01 02:45:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.6.2.5 2002/10/18 02:44:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,6 @@ uftdi_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)

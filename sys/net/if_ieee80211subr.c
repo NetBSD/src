@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.10 2002/09/17 21:22:49 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.11 2002/10/18 02:45:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.10 2002/09/17 21:22:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.11 2002/10/18 02:45:11 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -82,24 +82,26 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.10 2002/09/17 21:22:49 na
 #ifdef IEEE80211_DEBUG
 int ieee80211_debug = 0;
 #define	DPRINTF(X)	if (ieee80211_debug) printf X
+#define	DPRINTF2(X)	if (ieee80211_debug>1) printf X
 #else
 #define	DPRINTF(X)
+#define	DPRINTF2(X)
 #endif
 
 static int ieee80211_send_prreq(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_prresp(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_auth(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_deauth(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_asreq(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_asresp(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 static int ieee80211_send_disassoc(struct ieee80211com *,
-    struct ieee80211_bss *, int, int);
+    struct ieee80211_node *, int, int);
 
 static void ieee80211_recv_beacon(struct ieee80211com *,
     struct mbuf *, int, u_int32_t);
@@ -138,6 +140,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
 #endif
 	ieee80211_crc_init();
+	ic->ic_iv = arc4random();
 	memcpy(ic->ic_chan_active, ic->ic_chan_avail,
 	    sizeof(ic->ic_chan_active));
 	if (isclr(ic->ic_chan_active, ic->ic_ibss_chan)) {
@@ -148,10 +151,11 @@ ieee80211_ifattach(struct ifnet *ifp)
 			}
 		}
 	}
+	ic->ic_des_chan = IEEE80211_CHAN_ANY;
 	ic->ic_fixed_rate = -1;
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;	/* default sleep */
-	TAILQ_INIT(&ic->ic_scan);
+	TAILQ_INIT(&ic->ic_node);
 	rate = 0;
 	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
 		if (ic->ic_sup_rates[i] != 0)
@@ -215,20 +219,25 @@ ieee80211_ifdetach(struct ifnet *ifp)
 		free(ic->ic_wep_ctx, M_DEVBUF);
 		ic->ic_wep_ctx = NULL;
 	}
-	ieee80211_free_scan(ifp);
+	ieee80211_free_allnodes(ic);
 	ether_ifdetach(ifp);
+	splx(s);
 }
 
 void
 ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
+	struct ether_header *eh;
 	void (*rh)(struct ieee80211com *, struct mbuf *, int, u_int);
+	struct mbuf *m1;
+	int error, len;
 	u_int8_t dir, subtype;
 	u_int8_t *bssid;
 	u_int16_t rxseq;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/* trim CRC here for WEP can find its own CRC at the end of packet. */
 	if (m->m_flags & M_HASFCS) {
@@ -248,70 +257,61 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 
 	if (ic->ic_state != IEEE80211_S_SCAN) {
-		if ((ic->ic_flags & IEEE80211_F_ADHOC) ||
-		    (ic->ic_flags & IEEE80211_F_HOSTAP)) {
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_STA:
+			ni = &ic->ic_bss;
+			if (!IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid)) {
+				DPRINTF2(("ieee80211_input: other bss %s\n",
+				    ether_sprintf(wh->i_addr2)));
+				/* not interested in */
+				goto out;
+			}
+			break;
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
+		case IEEE80211_M_HOSTAP:
 			if (dir == IEEE80211_FC1_DIR_NODS)
 				bssid = wh->i_addr3;
 			else
 				bssid = wh->i_addr1;
-			if (memcmp(bssid, ic->ic_bss.bs_bssid,
-			    IEEE80211_ADDR_LEN) != 0 &&
-			    memcmp(bssid, ifp->if_broadcastaddr,
-			    IEEE80211_ADDR_LEN) != 0) {
+			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss.ni_bssid) &&
+			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr)) {
 				/* not interested in */
-				DPRINTF(("ieee80211_input: other bss %s\n",
+				DPRINTF2(("ieee80211_input: other bss %s\n",
 				    ether_sprintf(wh->i_addr3)));
 				goto out;
 			}
-			TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-				if (memcmp(wh->i_addr2, bs->bs_macaddr,
-				    IEEE80211_ADDR_LEN) == 0)
-					break;
-			}
-			if (bs == NULL) {
-				DPRINTF(("ieee80211_input: unknown src %s\n",
+			ni = ieee80211_find_node(ic, wh->i_addr2);
+			if (ni == NULL) {
+				DPRINTF2(("ieee80211_input: unknown src %s\n",
 				    ether_sprintf(wh->i_addr2)));
-				bs = &ic->ic_bss;	/* XXX allocate? */
+				ni = &ic->ic_bss;	/* XXX allocate? */
 			}
-		} else {
-			bs = &ic->ic_bss;
-			if (memcmp(wh->i_addr2, bs->bs_bssid,
-			    IEEE80211_ADDR_LEN) != 0) {
-				DPRINTF(("ieee80211_input: other bss %s\n",
-				    ether_sprintf(wh->i_addr2)));
-				/* not interested in */
-				goto out;
-			}
+			break;
 		}
-		bs->bs_rssi = rssi;
-		bs->bs_rstamp = rstamp;
-		rxseq = bs->bs_rxseq;
-		bs->bs_rxseq =
+		ni->ni_rssi = rssi;
+		ni->ni_rstamp = rstamp;
+		rxseq = ni->ni_rxseq;
+		ni->ni_rxseq =
 		    le16toh(*(u_int16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
 		/* TODO: fragment */
 		if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
-		    rxseq == bs->bs_rxseq) {
+		    rxseq == ni->ni_rxseq) {
 			/* duplicate, silently discarded */
 			goto out;
 		}
-		bs->bs_inact = 0;
+		ni->ni_inact = 0;
 	}
 
 	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
 	case IEEE80211_FC0_TYPE_DATA:
-		if (ic->ic_flags & IEEE80211_F_ADHOC) {
-			if (dir != IEEE80211_FC1_DIR_NODS)
-				goto out;
-		} else if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-			if (dir != IEEE80211_FC1_DIR_TODS)
-				goto out;
-		} else {
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_STA:
 			if (dir != IEEE80211_FC1_DIR_FROMDS)
 				goto out;
 			if ((ifp->if_flags & IFF_SIMPLEX) &&
-			    (wh->i_addr1[1] & 0x01) != 0 &&
-			    memcmp(wh->i_addr3, ic->ic_myaddr,
-			    IEEE80211_ADDR_LEN) == 0) {
+			    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+			    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
 				/*
 				 * In IEEE802.11 network, multicast packet
 				 * sent from me is broadcasted from AP.
@@ -320,6 +320,40 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 				 */
 				goto out;
 			}
+			break;
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
+			if (dir != IEEE80211_FC1_DIR_NODS)
+				goto out;
+			break;
+		case IEEE80211_M_HOSTAP:
+			if (dir != IEEE80211_FC1_DIR_TODS)
+				goto out;
+			/* check if source STA is associated */
+			ni = ieee80211_find_node(ic, wh->i_addr2);
+			if (ni == NULL) {
+				DPRINTF(("ieee80211_input: "
+				    "data from unknown src %s\n",
+				    ether_sprintf(wh->i_addr2)));
+				if ((ni = ieee80211_alloc_node(ic, wh->i_addr2,
+				    1)) != NULL) {
+					IEEE80211_SEND_MGMT(ic, ni,
+					    IEEE80211_FC0_SUBTYPE_DEAUTH,
+					    IEEE80211_REASON_NOT_AUTHED);
+					ieee80211_free_node(ic, ni);
+				}
+				goto err;
+			}
+			if (ni->ni_associd == 0) {
+				DPRINTF(("ieee80211_input: "
+				    "data from unassoc src %s\n",
+				    ether_sprintf(wh->i_addr2)));
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DISASSOC,
+				    IEEE80211_REASON_NOT_ASSOCED);
+				goto err;
+			}
+			break;
 		}
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			if (ic->ic_flags & IEEE80211_F_WEPON) {
@@ -338,17 +372,60 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL)
 			goto err;
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
 		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, m);
+
+		/* perform as a bridge within the AP */
+		m1 = NULL;
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			eh = mtod(m, struct ether_header *);
+			if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+				m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+				if (m1 == NULL)
+					ifp->if_oerrors++;
+				else
+					m1->m_flags |= M_MCAST;
+			} else {
+				ni = ieee80211_find_node(ic, eh->ether_dhost);
+				if (ni != NULL && ni->ni_associd != 0) {
+					m1 = m;
+					m = NULL;
+				}
+			}
+			if (m1 != NULL) {
+#ifdef ALTQ
+				if (ALTQ_IS_ENABLED(&ifp->if_snd))
+					altq_etherclassify(&ifp->if_snd, m1,
+					    &pktattr);
+#endif
+				len = m1->m_pkthdr.len;
+				IFQ_ENQUEUE(&ifp->if_snd, m1, &pktattr, error);
+				if (error)
+					ifp->if_oerrors++;
+				else {
+					if (m != NULL)
+						ifp->if_omcasts++;
+					ifp->if_obytes += len;
+				}
+			}
+		}
+		if (m != NULL) {
+#if NBPFILTER > 0
+			/*
+			 * If we forward packet into transmitter of the AP,
+			 * we don't need to duplicate for DLT_EN10MB.
+			 */
+			if (ifp->if_bpf && m1 == NULL)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
+			(*ifp->if_input)(ifp, m);
+		}
 		return;
 
 	case IEEE80211_FC0_TYPE_MGT:
 		if (dir != IEEE80211_FC1_DIR_NODS)
 			goto err;
+		if (ic->ic_opmode == IEEE80211_M_AHDEMO)
+			goto out;
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 		/* drop frames without interest */
@@ -357,7 +434,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 				goto out;
 		} else {
-			if (!(ic->ic_flags & IEEE80211_F_ADHOC) &&
+			if (ic->ic_opmode != IEEE80211_M_IBSS &&
 			    subtype == IEEE80211_FC0_SUBTYPE_BEACON)
 				goto out;
 		}
@@ -372,7 +449,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 					doprint = 1;
 				break;
 			case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-				if (ic->ic_flags & IEEE80211_F_ADHOC)
+				if (ic->ic_opmode == IEEE80211_M_IBSS)
 					doprint = 1;
 				break;
 			default:
@@ -418,15 +495,15 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 }
 
 int
-ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_bss *bs,
+ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
     struct mbuf *m, int type)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
 
-	if (bs == NULL)
-		bs = &ic->ic_bss;
-	bs->bs_inact = 0;
+	if (ni == NULL)
+		ni = &ic->ic_bss;
+	ni->ni_inact = 0;
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
@@ -435,22 +512,25 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_bss *bs,
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 	*(u_int16_t *)wh->i_dur = 0;
 	*(u_int16_t *)wh->i_seq =
-	    htole16(bs->bs_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-	bs->bs_txseq++;
-	memcpy(wh->i_addr1, bs->bs_macaddr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr2, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr3, bs->bs_bssid, IEEE80211_ADDR_LEN);
+	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
+	ni->ni_txseq++;
+	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */
-		if ((ic->ic_flags & IEEE80211_F_ADHOC) ||
+		if (ic->ic_opmode == IEEE80211_M_IBSS ||
+#ifdef IEEE80211_DEBUG
+		    ieee80211_debug > 1 ||
+#endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			printf("%s: sending %s to %s\n", ifp->if_xname,
 			    ieee80211_mgt_subtype_name[
 			    (type & IEEE80211_FC0_SUBTYPE_MASK)
 			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-			    ether_sprintf(bs->bs_macaddr));
+			    ether_sprintf(ni->ni_macaddr));
 	}
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
@@ -465,7 +545,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	struct ether_header eh;
 	struct ieee80211_frame *wh;
 	struct llc *llc;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 
 	if (m->m_len < sizeof(struct ether_header)) {
 		m = m_pullup(m, sizeof(struct ether_header));
@@ -474,23 +554,15 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	}
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
 
-	if ((eh.ether_dhost[0] & 0x01) == 0 &&
-	    ((ic->ic_flags & IEEE80211_F_ADHOC) ||
-	     (ic->ic_flags & IEEE80211_F_HOSTAP))) {
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(bs->bs_macaddr, eh.ether_dhost,
-			    IEEE80211_ADDR_LEN) == 0)
-				break;
-		}
-		if (bs == NULL ||
-		    ((ic->ic_flags & IEEE80211_F_HOSTAP) &&
-		    bs->bs_associd == 0)) {
-			m_freem(m);
-			return NULL;
-		}
+	if (!IEEE80211_IS_MULTICAST(eh.ether_dhost) &&
+	    (ic->ic_opmode == IEEE80211_M_IBSS ||
+	     ic->ic_opmode == IEEE80211_M_HOSTAP)) {
+		ni = ieee80211_find_node(ic, eh.ether_dhost);
+		if (ni == NULL)
+			ni = &ic->ic_bss;	/*XXX*/
 	} else
-		bs = &ic->ic_bss;
-	bs->bs_inact = 0;
+		ni = &ic->ic_bss;
+	ni->ni_inact = 0;
 
 	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));
 	llc = mtod(m, struct llc *);
@@ -507,23 +579,28 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
 	*(u_int16_t *)wh->i_dur = 0;
 	*(u_int16_t *)wh->i_seq =
-	    htole16(bs->bs_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-	bs->bs_txseq++;
-	if (ic->ic_flags & IEEE80211_F_ADHOC) {
-		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-		memcpy(wh->i_addr1, eh.ether_dhost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr2, eh.ether_shost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr3, bs->bs_bssid, IEEE80211_ADDR_LEN);
-	} else if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
-		memcpy(wh->i_addr1, eh.ether_dhost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr2, bs->bs_bssid, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr3, eh.ether_shost, IEEE80211_ADDR_LEN);
-	} else {
+	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
+	ni->ni_txseq++;
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
-		memcpy(wh->i_addr1, bs->bs_bssid, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr2, eh.ether_shost, IEEE80211_ADDR_LEN);
-		memcpy(wh->i_addr3, eh.ether_dhost, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_bssid);
+		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
+		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_dhost);
+		break;
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
+		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
+		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
+		IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+		break;
+	case IEEE80211_M_HOSTAP:
+		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
+		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
+		IEEE80211_ADDR_COPY(wh->i_addr2, ni->ni_bssid);
+		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_shost);
+		break;
 	}
 	return m;
 }
@@ -553,18 +630,19 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	switch (wh.i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
-		memcpy(eh->ether_dhost, wh.i_addr1, IEEE80211_ADDR_LEN);
-		memcpy(eh->ether_shost, wh.i_addr2, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(eh->ether_dhost, wh.i_addr1);
+		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
-		memcpy(eh->ether_dhost, wh.i_addr3, IEEE80211_ADDR_LEN);
-		memcpy(eh->ether_shost, wh.i_addr2, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(eh->ether_dhost, wh.i_addr3);
+		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
-		memcpy(eh->ether_dhost, wh.i_addr1, IEEE80211_ADDR_LEN);
-		memcpy(eh->ether_shost, wh.i_addr3, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(eh->ether_dhost, wh.i_addr1);
+		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr3);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
+		/* not yet supported */
 		DPRINTF(("ieee80211_decap: DS to DS\n"));
 		m_freem(m);
 		return NULL;
@@ -633,7 +711,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey *nwkey;
 	struct ieee80211_power *power;
+	struct ieee80211_bssid *bssid;
+	struct ieee80211_channel *chan;
 	struct ieee80211_wepkey keys[IEEE80211_WEP_NKID];
+	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
 
 	switch (cmd) {
 	case SIOCS80211NWID:
@@ -657,22 +740,16 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			memcpy(nwid.i_nwid, ic->ic_des_essid, nwid.i_len);
 			break;
 		default:
-			nwid.i_len = ic->ic_bss.bs_esslen;
-			memcpy(nwid.i_nwid, ic->ic_bss.bs_essid, nwid.i_len);
+			nwid.i_len = ic->ic_bss.ni_esslen;
+			memcpy(nwid.i_nwid, ic->ic_bss.ni_essid, nwid.i_len);
 			break;
 		}
 		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
 		break;
 	case SIOCS80211NWKEY:
 		nwkey = (struct ieee80211_nwkey *)data;
-		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN) {
-			if (ic->ic_flags & IEEE80211_F_WEPON) {
-				error = ENETRESET;
-				ic->ic_flags &= ~IEEE80211_F_WEPON;
-			}
-			break;
-		}
-		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0) {
+		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0 &&
+		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
 			error = EINVAL;
 			break;
 		}
@@ -698,12 +775,17 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (i < 0 || i >= IEEE80211_WEP_NKID ||
 		    keys[i].wk_len == 0 ||
 		    (keys[i].wk_len == -1 && ic->ic_nw_keys[i].wk_len == 0)) {
-			error = EINVAL;
-			break;
-		}
+			if (nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
+				error = EINVAL;
+				break;
+			}
+		} else
+			ic->ic_wep_txkey = i;
 		/* save the key */
-		ic->ic_flags |= IEEE80211_F_WEPON;
-		ic->ic_wep_txkey = i;
+		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN)
+			ic->ic_flags &= ~IEEE80211_F_WEPON;
+		else
+			ic->ic_flags |= IEEE80211_F_WEPON;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			if (keys[i].wk_len < 0)
 				continue;
@@ -755,6 +837,91 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		power = (struct ieee80211_power *)data;
 		power->i_enabled = (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0;
 		power->i_maxsleep = ic->ic_lintval;
+		break;
+	case SIOCS80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		if (IEEE80211_ADDR_EQ(bssid->i_bssid, empty_macaddr))
+			ic->ic_flags &= ~IEEE80211_F_DESBSSID;
+		else {
+			ic->ic_flags |= IEEE80211_F_DESBSSID;
+			IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
+		}
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			break;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			error = ENETRESET;
+			break;
+		default:
+			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
+			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid,
+			    ic->ic_bss.ni_bssid))
+				error = ENETRESET;
+			break;
+		}
+		break;
+	case SIOCG80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_myaddr);
+			else if (ic->ic_flags & IEEE80211_F_DESBSSID)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_des_bssid);
+			else
+				memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+			break;
+		default:
+			IEEE80211_ADDR_COPY(bssid->i_bssid,
+			    ic->ic_bss.ni_bssid);
+			break;
+		}
+		break;
+	case SIOCS80211CHANNEL:
+		chan = (struct ieee80211_channel *)data;
+		if (chan->i_channel == IEEE80211_CHAN_ANY)
+			ic->ic_des_chan = IEEE80211_CHAN_ANY;
+		else if (chan->i_channel > IEEE80211_CHAN_MAX ||
+		    isclr(ic->ic_chan_active, chan->i_channel)) {
+			error = EINVAL;
+			break;
+		} else
+			ic->ic_ibss_chan = ic->ic_des_chan = chan->i_channel;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			error = ENETRESET;
+			break;
+		default:
+			if (ic->ic_opmode == IEEE80211_M_STA) {
+				if (ic->ic_des_chan != IEEE80211_CHAN_ANY &&
+				    ic->ic_bss.ni_chan != ic->ic_des_chan)
+					error = ENETRESET;
+			} else {
+				if (ic->ic_bss.ni_chan != ic->ic_ibss_chan)
+					error = ENETRESET;
+			}
+			break;
+		}
+		break;
+	case SIOCG80211CHANNEL:
+		chan = (struct ieee80211_channel *)data;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_STA)
+				chan->i_channel = ic->ic_des_chan;
+			else
+				chan->i_channel = ic->ic_ibss_chan;
+			break;
+		default:
+			chan->i_channel = ic->ic_bss.ni_chan;
+			break;
+		}
 		break;
 	case SIOCGIFGENERIC:
 		error = ieee80211_cfgget(ifp, cmd, data);
@@ -861,7 +1028,7 @@ void
 ieee80211_watchdog(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_bss *bs, *nextbs;
+	struct ieee80211_node *ni, *nextbs;
 
 	if (ic->ic_scan_timer) {
 		if (--ic->ic_scan_timer == 0) {
@@ -875,26 +1042,25 @@ ieee80211_watchdog(struct ifnet *ifp)
 	}
 	if (ic->ic_inact_timer) {
 		if (--ic->ic_inact_timer == 0) {
-			for (bs = TAILQ_FIRST(&ic->ic_scan); bs != NULL; ) {
-				if (++bs->bs_inact <= IEEE80211_INACT_MAX) {
-					bs = TAILQ_NEXT(bs, bs_list);
+			for (ni = TAILQ_FIRST(&ic->ic_node); ni != NULL; ) {
+				if (++ni->ni_inact <= IEEE80211_INACT_MAX) {
+					ni = TAILQ_NEXT(ni, ni_list);
 					continue;
 				}
 				if (ifp->if_flags & IFF_DEBUG)
 					printf("%s: station %s deauthenticate"
 					    " (reason %d)\n",
 					    ifp->if_xname,
-					    ether_sprintf(bs->bs_macaddr),
+					    ether_sprintf(ni->ni_macaddr),
 					    IEEE80211_REASON_AUTH_EXPIRE);
-				nextbs = TAILQ_NEXT(bs, bs_list);
-				IEEE80211_SEND_MGMT(ic, bs,
+				nextbs = TAILQ_NEXT(ni, ni_list);
+				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_AUTH_EXPIRE);
-				TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
-				free(bs, M_DEVBUF);
-				bs = nextbs;
+				ieee80211_free_node(ic, ni);
+				ni = nextbs;
 			}
-			if (!TAILQ_EMPTY(&ic->ic_scan))
+			if (!TAILQ_EMPTY(&ic->ic_node))
 				ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 		}
 	}
@@ -909,19 +1075,19 @@ ieee80211_next_scan(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 	int chan;
 
-	chan = ic->ic_bss.bs_chan;
+	chan = ic->ic_bss.ni_chan;
 	for (;;) {
 		chan = (chan + 1) % (IEEE80211_CHAN_MAX + 1);
 		if (isset(ic->ic_chan_active, chan))
 			break;
-		if (chan == ic->ic_bss.bs_chan) {
+		if (chan == ic->ic_bss.ni_chan) {
 			DPRINTF(("ieee80211_next_scan: no chan available\n"));
 			return;
 		}
 	}
 	DPRINTF(("ieee80211_next_scan: chan %d->%d\n",
-	    ic->ic_bss.bs_chan, chan));
-	ic->ic_bss.bs_chan = chan;
+	    ic->ic_bss.ni_chan, chan));
+	ic->ic_bss.ni_chan = chan;
 	ieee80211_new_state(ifp, IEEE80211_S_SCAN, -1);
 }
 
@@ -929,45 +1095,44 @@ void
 ieee80211_end_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_bss *bs, *nextbs, *selbs;
+	struct ieee80211_node *ni, *nextbs, *selbs;
 	void *p;
 	u_int8_t rate;
 	int i, fail;
 
-	bs = TAILQ_FIRST(&ic->ic_scan);
-	if (bs == NULL) {
+	ni = TAILQ_FIRST(&ic->ic_node);
+	if (ni == NULL) {
 		DPRINTF(("ieee80211_end_scan: no scan candidate\n"));
   notfound:
-		if ((ic->ic_flags & IEEE80211_F_ADHOC) &&
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
 		    ic->ic_des_esslen != 0) {
-			bs = &ic->ic_bss;
+			ni = &ic->ic_bss;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: creating ibss\n", ifp->if_xname);
 			ic->ic_flags |= IEEE80211_F_SIBSS;
-			bs->bs_nrate = 0;
+			ni->ni_nrate = 0;
 			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
 				if (ic->ic_sup_rates[i])
-					bs->bs_rates[bs->bs_nrate++] =
+					ni->ni_rates[ni->ni_nrate++] =
 					    ic->ic_sup_rates[i];
 			}
-			memcpy(bs->bs_macaddr, ic->ic_myaddr,
-			    IEEE80211_ADDR_LEN);
-			memcpy(bs->bs_bssid, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-			bs->bs_bssid[0] |= 0x02;	/* local bit for IBSS */
-			bs->bs_esslen = ic->ic_des_esslen;
-			memcpy(bs->bs_essid, ic->ic_des_essid, bs->bs_esslen);
-			bs->bs_rssi = 0;
-			bs->bs_rstamp = 0;
-			memset(bs->bs_tstamp, 0, sizeof(bs->bs_tstamp));
-			bs->bs_intval = ic->ic_lintval;
-			bs->bs_capinfo = IEEE80211_CAPINFO_IBSS;
+			IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_myaddr);
+			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
+			ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
+			ni->ni_esslen = ic->ic_des_esslen;
+			memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
+			ni->ni_rssi = 0;
+			ni->ni_rstamp = 0;
+			memset(ni->ni_tstamp, 0, sizeof(ni->ni_tstamp));
+			ni->ni_intval = ic->ic_lintval;
+			ni->ni_capinfo = IEEE80211_CAPINFO_IBSS;
 			if (ic->ic_flags & IEEE80211_F_WEPON)
-				bs->bs_capinfo |= IEEE80211_CAPINFO_PRIVACY;
-			bs->bs_chan = ic->ic_ibss_chan;
-			if (ic->ic_flags & IEEE80211_F_FH) {
-				bs->bs_fhdwell = 200;	/* XXX */
-				bs->bs_fhindex = 1;
+				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
+			ni->ni_chan = ic->ic_ibss_chan;
+			if (ic->ic_phytype == IEEE80211_T_FH) {
+				ni->ni_fhdwell = 200;	/* XXX */
+				ni->ni_fhindex = 1;
 			}
 			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
 			return;
@@ -983,84 +1148,89 @@ ieee80211_end_scan(struct ifnet *ifp)
 	}
 	selbs = NULL;
 	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s:\tmacaddr          bssid        chan  rssi rate flag  wep  essid\n",
+		printf("%s:\tmacaddr          bssid         chan  rssi rate flag  wep  essid\n",
 		    ifp->if_xname);
-	for (; bs != NULL; bs = nextbs) {
-		nextbs = TAILQ_NEXT(bs, bs_list);
-		if (bs->bs_fails) {
+	for (; ni != NULL; ni = nextbs) {
+		nextbs = TAILQ_NEXT(ni, ni_list);
+		if (ni->ni_fails) {
 			/*
 			 * The configuration of the access points may change
 			 * during my scan.  So delete the entry for the AP
 			 * and retry to associate if there is another beacon.
 			 */
-			if (bs->bs_fails++ > 2) {
-				TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
-				free(bs, M_DEVBUF);
-			}
+			if (ni->ni_fails++ > 2)
+				ieee80211_free_node(ic, ni);
 			continue;
 		}
 		fail = 0;
-		if (isclr(ic->ic_chan_active, bs->bs_chan))
+		if (isclr(ic->ic_chan_active, ni->ni_chan))
 			fail |= 0x01;
-		if (ic->ic_flags & IEEE80211_F_ADHOC) {
-			if ((bs->bs_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
+		if (ic->ic_des_chan != IEEE80211_CHAN_ANY &&
+		    ni->ni_chan != ic->ic_des_chan)
+			fail |= 0x01;
+		if (ic->ic_opmode == IEEE80211_M_IBSS) {
+			if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
 				fail |= 0x02;
 		} else {
-			if ((bs->bs_capinfo & IEEE80211_CAPINFO_ESS) == 0)
+			if ((ni->ni_capinfo & IEEE80211_CAPINFO_ESS) == 0)
 				fail |= 0x02;
 		}
 		if (ic->ic_flags & IEEE80211_F_WEPON) {
-			if ((bs->bs_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
+			if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
 				fail |= 0x04;
 		} else {
-			if (bs->bs_capinfo & IEEE80211_CAPINFO_PRIVACY)
+			if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
 				fail |= 0x04;
 		}
-		rate = ieee80211_fix_rate(ic, bs, IEEE80211_F_DONEGO);
+		rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
 		if (rate & IEEE80211_RATE_BASIC)
 			fail |= 0x08;
 		if (ic->ic_des_esslen != 0 &&
-		    (bs->bs_esslen != ic->ic_des_esslen ||
-		     memcmp(bs->bs_essid, ic->ic_des_essid,
+		    (ni->ni_esslen != ic->ic_des_esslen ||
+		     memcmp(ni->ni_essid, ic->ic_des_essid,
 		     ic->ic_des_esslen != 0)))
 			fail |= 0x10;
+		if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
+		    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
+			fail |= 0x20;
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf(" %c %s", fail ? '-' : '+',
-			    ether_sprintf(bs->bs_macaddr));
-			printf(" %s", ether_sprintf(bs->bs_bssid));
-			printf(" %3d%c", bs->bs_chan, fail & 0x01 ? '!' : ' ');
-			printf(" %+4d", bs->bs_rssi);
+			    ether_sprintf(ni->ni_macaddr));
+			printf(" %s%c", ether_sprintf(ni->ni_bssid),
+			    fail & 0x20 ? '!' : ' ');
+			printf(" %3d%c", ni->ni_chan, fail & 0x01 ? '!' : ' ');
+			printf(" %+4d", ni->ni_rssi);
 			printf(" %2dM%c", (rate & IEEE80211_RATE_VAL) / 2,
 			    fail & 0x08 ? '!' : ' ');
 			printf(" %4s%c",
-			    (bs->bs_capinfo & IEEE80211_CAPINFO_ESS) ? "ess" :
-			    (bs->bs_capinfo & IEEE80211_CAPINFO_IBSS) ? "ibss" :
+			    (ni->ni_capinfo & IEEE80211_CAPINFO_ESS) ? "ess" :
+			    (ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) ? "ibss" :
 			    "????",
 			    fail & 0x02 ? '!' : ' ');
 			printf(" %3s%c ",
-			    (bs->bs_capinfo & IEEE80211_CAPINFO_PRIVACY) ?
+			    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) ?
 			    "wep" : "no",
 			    fail & 0x04 ? '!' : ' ');
-			ieee80211_print_essid(bs->bs_essid, bs->bs_esslen);
+			ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
 			printf("%s\n", fail & 0x10 ? "!" : "");
 		}
 		if (!fail) {
-			if (selbs == NULL || bs->bs_rssi > selbs->bs_rssi)
-				selbs = bs;
+			if (selbs == NULL || ni->ni_rssi > selbs->ni_rssi)
+				selbs = ni;
 		}
 	}
 	if (selbs == NULL)
 		goto notfound;
-	p = ic->ic_bss.bs_private;
+	p = ic->ic_bss.ni_private;
 	ic->ic_bss = *selbs;
-	ic->ic_bss.bs_private = p;
-	if (p != NULL && ic->ic_bss_privlen)
-		memcpy(p, selbs->bs_private, ic->ic_bss_privlen);
-	if (ic->ic_flags & IEEE80211_F_ADHOC) {
+	ic->ic_bss.ni_private = p;
+	if (p != NULL && ic->ic_node_privlen)
+		memcpy(p, selbs->ni_private, ic->ic_node_privlen);
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		ieee80211_fix_rate(ic, &ic->ic_bss, IEEE80211_F_DOFRATE |
 		    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-		if (ic->ic_bss.bs_nrate == 0) {
-			selbs->bs_fails++;
+		if (ic->ic_bss.ni_nrate == 0) {
+			selbs->ni_fails++;
 			goto notfound;
 		}
 		ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
@@ -1068,45 +1238,81 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ieee80211_new_state(ifp, IEEE80211_S_AUTH, -1);
 }
 
-struct ieee80211_bss *
-ieee80211_alloc_bss(struct ieee80211com *ic, int copy)
+struct ieee80211_node *
+ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 {
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
+	int hash;
+	int s;
 
-	bs = malloc(sizeof(struct ieee80211_bss) + ic->ic_bss_privlen,
+	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_node_privlen,
 	    M_DEVBUF, M_NOWAIT);
-	if (bs == NULL)
+	if (ni == NULL)
 		return NULL;
 	if (copy)
-		memcpy(bs, &ic->ic_bss, sizeof(struct ieee80211_bss));
+		memcpy(ni, &ic->ic_bss, sizeof(struct ieee80211_node));
 	else
-		memset(bs, 0, sizeof(struct ieee80211_bss));
-	if (ic->ic_bss_privlen) {
-		bs->bs_private = &bs[1];
-		memset(bs->bs_private, 0, ic->ic_bss_privlen);
+		memset(ni, 0, sizeof(struct ieee80211_node));
+	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
+	if (ic->ic_node_privlen) {
+		ni->ni_private = &ni[1];
+		memset(ni->ni_private, 0, ic->ic_node_privlen);
+	} else
+		ni->ni_private = NULL;
+
+	hash = IEEE80211_NODE_HASH(macaddr);
+	s = splnet();
+	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
+	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
+	splx(s);
+	ic->ic_inact_timer = IEEE80211_INACT_WAIT;
+	return ni;
+}
+
+struct ieee80211_node *
+ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
+{
+	struct ieee80211_node *ni;
+	int hash;
+	int s;
+
+	hash = IEEE80211_NODE_HASH(macaddr);
+	s = splnet();
+	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
+		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr))
+			break;
 	}
-	TAILQ_INSERT_TAIL(&ic->ic_scan, bs, bs_list);
-	if ((ic->ic_flags & IEEE80211_F_HOSTAP) ||
-	    (ic->ic_flags & IEEE80211_F_ADHOC))
-		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
-	return bs;
+	splx(s);
+	return ni;
 }
 
 void
-ieee80211_free_scan(struct ifnet *ifp)
+ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_bss *bs;
+	int s;
 
-	while ((bs = TAILQ_FIRST(&ic->ic_scan)) != NULL) {
-		TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
-		free(bs, M_DEVBUF);
-	}
-	ic->ic_inact_timer = 0;
+	s = splnet();
+	if (ic->ic_node_free != NULL)
+		(*ic->ic_node_free)(ic, ni);
+	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
+	LIST_REMOVE(ni, ni_hash);
+	splx(s);
+	free(ni, M_DEVBUF);
+	if (TAILQ_EMPTY(&ic->ic_node))
+		ic->ic_inact_timer = 0;
+}
+
+void
+ieee80211_free_allnodes(struct ieee80211com *ic)
+{
+	struct ieee80211_node *ni;
+
+	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
+		ieee80211_free_node(ic, ni);  
 }
 
 int
-ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_bss *bs, int flags)
+ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags)
 {
 	int i, j, ignore, error;
 	int okrate, badrate;
@@ -1114,19 +1320,19 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_bss *bs, int flags)
 
 	error = 0;
 	okrate = badrate = 0;
-	for (i = 0; i < bs->bs_nrate; ) {
+	for (i = 0; i < ni->ni_nrate; ) {
 		ignore = 0;
 		if (flags & IEEE80211_F_DOSORT) {
-			for (j = i + 1; j < bs->bs_nrate; j++) {
-				if ((bs->bs_rates[i] & IEEE80211_RATE_VAL) >
-				    (bs->bs_rates[j] & IEEE80211_RATE_VAL)) {
-					r = bs->bs_rates[i];
-					bs->bs_rates[i] = bs->bs_rates[j];
-					bs->bs_rates[j] = r;
+			for (j = i + 1; j < ni->ni_nrate; j++) {
+				if ((ni->ni_rates[i] & IEEE80211_RATE_VAL) >
+				    (ni->ni_rates[j] & IEEE80211_RATE_VAL)) {
+					r = ni->ni_rates[i];
+					ni->ni_rates[i] = ni->ni_rates[j];
+					ni->ni_rates[j] = r;
 				}
 			}
 		}
-		r = bs->bs_rates[i] & IEEE80211_RATE_VAL;
+		r = ni->ni_rates[i] & IEEE80211_RATE_VAL;
 		badrate = r;
 		if (flags & IEEE80211_F_DOFRATE) {
 			if (ic->ic_fixed_rate >= 0 &&
@@ -1141,22 +1347,22 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_bss *bs, int flags)
 					break;
 			}
 			if (j == IEEE80211_RATE_SIZE) {
-				if (bs->bs_rates[i] & IEEE80211_RATE_BASIC)
+				if (ni->ni_rates[i] & IEEE80211_RATE_BASIC)
 					error++;
 				ignore++;
 			}
 		}
 		if (flags & IEEE80211_F_DODEL) {
 			if (ignore) {
-				bs->bs_nrate--;
-				for (j = i; j < bs->bs_nrate; j++)
-					bs->bs_rates[j] = bs->bs_rates[j + 1];
-				bs->bs_rates[j] = 0;
+				ni->ni_nrate--;
+				for (j = i; j < ni->ni_nrate; j++)
+					ni->ni_rates[j] = ni->ni_rates[j + 1];
+				ni->ni_rates[j] = 0;
 				continue;
 			}
 		}
 		if (!ignore)
-			okrate = bs->bs_rates[i];
+			okrate = ni->ni_rates[i];
 		i++;
 	}
 	if (okrate == 0 || error != 0)
@@ -1165,7 +1371,7 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_bss *bs, int flags)
 }
 
 static int
-ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int dummy)
 {
 	int i, ret;
@@ -1197,18 +1403,18 @@ ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_bss *bs,
 	frm += i;
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
-	ret = ieee80211_mgmt_output(&ic->ic_if, bs, m, type);
+	ret = ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 	ic->ic_mgt_timer = IEEE80211_TRANS_WAIT;
 	return ret;
 }
 
 static int
-ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_bss *bs0,
+ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_node *bs0,
     int type, int dummy)
 {
 	struct mbuf *m;
 	u_int8_t *frm;
-	struct ieee80211_bss *bs = &ic->ic_bss;
+	struct ieee80211_node *ni = &ic->ic_bss;
 	u_int16_t capinfo;
 
 	/*
@@ -1228,9 +1434,9 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_bss *bs0,
 
 	memset(frm, 0, 8);	/* timestamp should be filled later */
 	frm += 8;
-	*(u_int16_t *)frm = htole16(bs->bs_intval);
+	*(u_int16_t *)frm = htole16(ni->ni_intval);
 	frm += 2;
-	if (ic->ic_flags & IEEE80211_F_ADHOC)
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo = IEEE80211_CAPINFO_IBSS;
 	else
 		capinfo = IEEE80211_CAPINFO_ESS;
@@ -1239,18 +1445,18 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_bss *bs0,
 	*(u_int16_t *)frm = htole16(capinfo);
 	frm += 2;
 	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = bs->bs_esslen;
-	memcpy(frm, bs->bs_essid, bs->bs_esslen);
-	frm += bs->bs_esslen;
+	*frm++ = ni->ni_esslen;
+	memcpy(frm, ni->ni_essid, ni->ni_esslen);
+	frm += ni->ni_esslen;
 	*frm++ = IEEE80211_ELEMID_RATES;
-	*frm++ = bs->bs_nrate;
-	memcpy(frm, bs->bs_rates, bs->bs_nrate);
-	frm += bs->bs_nrate;
-	if (ic->ic_flags & IEEE80211_F_ADHOC) {
+	*frm++ = ni->ni_nrate;
+	memcpy(frm, ni->ni_rates, ni->ni_nrate);
+	frm += ni->ni_nrate;
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 		*frm++ = 2;
 		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
-	} else {
+	} else {	/* IEEE80211_M_HOSTAP */
 		/* TODO: TIM */
 		*frm++ = IEEE80211_ELEMID_TIM;
 		*frm++ = 4;	/* length */
@@ -1266,7 +1472,7 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_bss *bs0,
 }
 
 static int
-ieee80211_send_auth(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int seq)
 {
 	struct mbuf *m;
@@ -1283,15 +1489,14 @@ ieee80211_send_auth(struct ieee80211com *ic, struct ieee80211_bss *bs,
 	frm[0] = htole16(IEEE80211_AUTH_ALG_OPEN);
 	frm[1] = htole16(seq);
 	frm[2] = 0;			/* status */
-	ret = ieee80211_mgmt_output(&ic->ic_if, bs, m, type);
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) != 0 &&
-	    (ic->ic_flags & IEEE80211_F_HOSTAP) != 0)
+	ret = ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
+	if (ic->ic_opmode == IEEE80211_M_STA)
 		ic->ic_mgt_timer = IEEE80211_TRANS_WAIT;
 	return ret;
 }
 
 static int
-ieee80211_send_deauth(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int reason)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -1299,18 +1504,18 @@ ieee80211_send_deauth(struct ieee80211com *ic, struct ieee80211_bss *bs,
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: station %s deauthenticate (reason %d)\n",
-		    ifp->if_xname, ether_sprintf(bs->bs_macaddr), reason);
+		    ifp->if_xname, ether_sprintf(ni->ni_macaddr), reason);
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
 	MH_ALIGN(m, 2);
 	m->m_pkthdr.len = m->m_len = 2;
 	*mtod(m, u_int16_t *) = htole16(reason);
-	return ieee80211_mgmt_output(&ic->ic_if, bs, m, type);
+	return ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 }
 
 static int
-ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int dummy)
 {
 	struct mbuf *m;
@@ -1333,9 +1538,9 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_bss *bs,
 	frm = mtod(m, u_int8_t *);
 
 	capinfo = 0;
-	if (ic->ic_flags & IEEE80211_F_ADHOC)
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo |= IEEE80211_CAPINFO_IBSS;
-	else
+	else		/* IEEE80211_M_STA */
 		capinfo |= IEEE80211_CAPINFO_ESS;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
@@ -1346,30 +1551,30 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_bss *bs,
 	frm += 2;
 
 	if (type == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
-		memcpy(frm, ic->ic_bss.bs_bssid, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(frm, ic->ic_bss.ni_bssid);
 		frm += IEEE80211_ADDR_LEN;
 	}
 
 	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = bs->bs_esslen;
-	memcpy(frm, bs->bs_essid, bs->bs_esslen);
-	frm += bs->bs_esslen;
+	*frm++ = ni->ni_esslen;
+	memcpy(frm, ni->ni_essid, ni->ni_esslen);
+	frm += ni->ni_esslen;
 
 	*frm++ = IEEE80211_ELEMID_RATES;
 	rates = frm++;	/* update later */
 	for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-		if (bs->bs_rates[i] != 0)
-			*frm++ = bs->bs_rates[i];
+		if (ni->ni_rates[i] != 0)
+			*frm++ = ni->ni_rates[i];
 	}
 	*rates = frm - (rates + 1);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-	ret = ieee80211_mgmt_output(&ic->ic_if, bs, m, type);
+	ret = ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 	ic->ic_mgt_timer = IEEE80211_TRANS_WAIT;
 	return ret;
 }
 
 static int
-ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int status)
 {
 	struct mbuf *m;
@@ -1399,29 +1604,29 @@ ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_bss *bs,
 	*(u_int16_t *)frm = htole16(status);
 	frm += 2;
 
-	if (status == IEEE80211_STATUS_SUCCESS && bs != NULL)
-		*(u_int16_t *)frm = htole16(bs->bs_associd);
+	if (status == IEEE80211_STATUS_SUCCESS && ni != NULL)
+		*(u_int16_t *)frm = htole16(ni->ni_associd);
 	else
 		*(u_int16_t *)frm = htole16(0);
 	frm += 2;
 
 	*frm++ = IEEE80211_ELEMID_RATES;
 	rates = frm++;	/* update later */
-	if (bs != NULL)
-		r = bs->bs_rates;
+	if (ni != NULL)
+		r = ni->ni_rates;
 	else
-		r = ic->ic_bss.bs_rates;
+		r = ic->ic_bss.ni_rates;
 	for (i = 0; i < IEEE80211_RATE_SIZE; i++, r++) {
 		if (*r != 0)
 			*frm++ = *r;
 	}
 	*rates = frm - (rates + 1);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-	return ieee80211_mgmt_output(&ic->ic_if, bs, m, type);
+	return ieee80211_mgmt_output(&ic->ic_if, ni, m, type);
 }
 
 static int
-ieee80211_send_disassoc(struct ieee80211com *ic, struct ieee80211_bss *bs,
+ieee80211_send_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
     int type, int reason)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -1429,14 +1634,14 @@ ieee80211_send_disassoc(struct ieee80211com *ic, struct ieee80211_bss *bs,
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: station %s disassociate (reason %d)\n",
-		    ifp->if_xname, ether_sprintf(bs->bs_macaddr), reason);
+		    ifp->if_xname, ether_sprintf(ni->ni_macaddr), reason);
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
 	MH_ALIGN(m, 2);
 	m->m_pkthdr.len = m->m_len = 2;
 	*mtod(m, u_int16_t *) = htole16(reason);
-	return ieee80211_mgmt_output(&ic->ic_if, bs, m,
+	return ieee80211_mgmt_output(&ic->ic_if, ni, m,
 	    IEEE80211_FC0_SUBTYPE_DISASSOC);
 }
 
@@ -1445,12 +1650,12 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	u_int8_t *frm, *efrm, *tstamp, *bintval, *capinfo, *ssid, *rates;
 	u_int8_t chan, fhindex;
 	u_int16_t fhdwell;
 
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0 &&
+	if (ic->ic_opmode != IEEE80211_M_IBSS &&
 	    ic->ic_state != IEEE80211_S_SCAN) {
 		/* XXX: may be useful for background scan */
 		return;
@@ -1472,7 +1677,7 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	bintval = frm;	frm += 2;
 	capinfo = frm;	frm += 2;
 	ssid = rates = NULL;
-	chan = ic->ic_bss.bs_chan;
+	chan = ic->ic_bss.ni_chan;
 	fhdwell = 0;
 	fhindex = 0;
 	while (frm < efrm) {
@@ -1484,14 +1689,14 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 			rates = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
-			if (ic->ic_flags & IEEE80211_F_FH) {
+			if (ic->ic_phytype == IEEE80211_T_FH) {
 				fhdwell = (frm[3] << 8) | frm[2];
 				chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
 				fhindex = frm[6];
 			}
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
-			if (ic->ic_flags & IEEE80211_F_DS)
+			if (ic->ic_phytype == IEEE80211_T_DS)
 				chan = frm[2];
 			break;
 		}
@@ -1507,55 +1712,50 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		    ssid[1], ether_sprintf(wh->i_addr2)));
 		return;
 	}
-	TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-		if (memcmp(bs->bs_macaddr, wh->i_addr2,
-		    IEEE80211_ADDR_LEN) == 0 &&
-		    memcmp(bs->bs_bssid, wh->i_addr3,
-		    IEEE80211_ADDR_LEN) == 0)
-			break;
-	}
+	ni = ieee80211_find_node(ic, wh->i_addr2);
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_debug &&
-	    (ieee80211_debug > 1 || bs == NULL ||
+	    (ieee80211_debug > 1 || ni == NULL ||
 	    ic->ic_state == IEEE80211_S_SCAN)) {
 		printf("ieee80211_recv_prreq: %sbeacon ",
-		    (bs == NULL ? "new " : ""));
+		    (ni == NULL ? "new " : ""));
 		ieee80211_print_essid(ssid + 2, ssid[1]);
 		printf(" from %s\n", ether_sprintf(wh->i_addr2));
 	}
 #endif
-	if (bs == NULL) {
-		if ((bs = ieee80211_alloc_bss(ic, 0)) == NULL)
+	if (ni == NULL) {
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 0)) == NULL)
 			return;
-		memcpy(bs->bs_macaddr, wh->i_addr2, IEEE80211_ADDR_LEN);
-		memcpy(bs->bs_bssid, wh->i_addr3, IEEE80211_ADDR_LEN);
-		bs->bs_esslen = ssid[1];
-		memset(bs->bs_essid, 0, sizeof(bs->bs_essid));
-		memcpy(bs->bs_essid, ssid + 2, ssid[1]);
-	} else if (ssid[1] != 0) {
-		/*
-		 * Update ESSID at probe response to adopt hidden AP by
-		 * Lucent/Cisco, which announces null ESSID in beacon.
-		 */
-		if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
-			bs->bs_esslen = ssid[1];
-			memset(bs->bs_essid, 0, sizeof(bs->bs_essid));
-			memcpy(bs->bs_essid, ssid + 2, ssid[1]);
+		ni->ni_esslen = ssid[1];
+		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
+		memcpy(ni->ni_essid, ssid + 2, ssid[1]);
+	} else {
+		if (ssid[1] != 0) {
+			/*
+			 * Update ESSID at probe response to adopt hidden AP by
+			 * Lucent/Cisco, which announces null ESSID in beacon.
+			 */
+			if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+			    IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
+				ni->ni_esslen = ssid[1];
+				memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
+				memcpy(ni->ni_essid, ssid + 2, ssid[1]);
+			}
 		}
 	}
-	memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
-	bs->bs_nrate = rates[1];
-	memcpy(bs->bs_rates, rates + 2, bs->bs_nrate);
-	ieee80211_fix_rate(ic, bs, IEEE80211_F_DOSORT);
-	bs->bs_rssi = rssi;
-	bs->bs_rstamp = rstamp;
-	memcpy(bs->bs_tstamp, tstamp, sizeof(bs->bs_tstamp));
-	bs->bs_intval = le16toh(*(u_int16_t *)bintval);
-	bs->bs_capinfo = le16toh(*(u_int16_t *)capinfo);
-	bs->bs_chan = chan;
-	bs->bs_fhdwell = fhdwell;
-	bs->bs_fhindex = fhindex;
+	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
+	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
+	ni->ni_nrate = rates[1];
+	memcpy(ni->ni_rates, rates + 2, ni->ni_nrate);
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOSORT);
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
+	ni->ni_intval = le16toh(*(u_int16_t *)bintval);
+	ni->ni_capinfo = le16toh(*(u_int16_t *)capinfo);
+	ni->ni_chan = chan;
+	ni->ni_fhdwell = fhdwell;
+	ni->ni_fhindex = fhindex;
 	if (ic->ic_state == IEEE80211_S_SCAN && ic->ic_scan_timer == 0)
 		ieee80211_end_scan(&ic->ic_if);
 }
@@ -1565,13 +1765,12 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	u_int8_t *frm, *efrm, *ssid, *rates;
 	u_int8_t rate;
 	int allocbs;
 
-	if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0 &&
-	    (ic->ic_flags & IEEE80211_F_HOSTAP) == 0)
+	if (ic->ic_opmode == IEEE80211_M_STA)
 		return;
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
@@ -1602,8 +1801,8 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	if (ssid[1] != 0 &&
-	    (ssid[1] != ic->ic_bss.bs_esslen ||
-	    memcmp(ssid + 2, ic->ic_bss.bs_essid, ic->ic_bss.bs_esslen) != 0)) {
+	    (ssid[1] != ic->ic_bss.ni_esslen ||
+	    memcmp(ssid + 2, ic->ic_bss.ni_essid, ic->ic_bss.ni_esslen) != 0)) {
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_debug) {
 			printf("ieee80211_recv_prreq: ssid unmatch ");
@@ -1614,40 +1813,31 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 
-	TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-		if (memcmp(bs->bs_macaddr, wh->i_addr2,
-		    IEEE80211_ADDR_LEN) == 0)
-			break;
-	}
-	if (bs == NULL) {
-		if ((bs = ieee80211_alloc_bss(ic, 1)) == NULL)
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+	if (ni == NULL) {
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 1)) == NULL)
 			return;
 		DPRINTF(("ieee80211_recv_prreq: new req from %s\n",
 		    ether_sprintf(wh->i_addr2)));
-		memcpy(bs->bs_macaddr, wh->i_addr2, IEEE80211_ADDR_LEN);
 		allocbs = 1;
 	} else
 		allocbs = 0;
-	memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
-	bs->bs_nrate = rates[1];
-	memcpy(bs->bs_rates, rates + 2, bs->bs_nrate);
-	bs->bs_rssi = rssi;
-	bs->bs_rstamp = rstamp;
-	rate = ieee80211_fix_rate(ic, bs, IEEE80211_F_DOSORT |
+	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
+	ni->ni_nrate = rates[1];
+	memcpy(ni->ni_rates, rates + 2, ni->ni_nrate);
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+	rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DOSORT |
 	    IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (rate & IEEE80211_RATE_BASIC) {
 		DPRINTF(("ieee80211_recv_prreq: rate negotiation failed: %s\n",
 		    ether_sprintf(wh->i_addr2)));
 	} else {
-		IEEE80211_SEND_MGMT(ic, bs, IEEE80211_FC0_SUBTYPE_PROBE_RESP,
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_PROBE_RESP,
 		    0);
 	}
-	if (allocbs && (ic->ic_flags & IEEE80211_F_HOSTAP)) {
-		TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
-		free(bs, M_DEVBUF);
-		if (TAILQ_EMPTY(&ic->ic_scan))
-			ic->ic_inact_timer = 0;
-	}
+	if (allocbs && (ic->ic_opmode == IEEE80211_M_HOSTAP))
+		ieee80211_free_node(ic, ni);
 }
 
 static void
@@ -1656,7 +1846,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	u_int8_t *frm, *efrm;
 	u_int16_t algo, seq, status;
 	int allocbs;
@@ -1685,54 +1875,54 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		    algo, ether_sprintf(wh->i_addr2)));
 		return;
 	}
-	if (ic->ic_flags & IEEE80211_F_ADHOC) {
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
 			return;
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-		return;
-	}
-	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
+		break;
+
+	case IEEE80211_M_AHDEMO:
+		/* should not come here */
+		break;
+
+	case IEEE80211_M_HOSTAP:
 		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
 			return;
 		allocbs = 0;
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(bs->bs_macaddr, wh->i_addr2,
-			    IEEE80211_ADDR_LEN) == 0)
-				break;
-		}
-		if (bs == NULL) {
-			if ((bs = ieee80211_alloc_bss(ic, 0)) == NULL)
+		ni = ieee80211_find_node(ic, wh->i_addr2);
+		if (ni == NULL) {
+			ni = ieee80211_alloc_node(ic, wh->i_addr2, 0);
+			if (ni == NULL)
 				return;
-			memcpy(bs->bs_macaddr, wh->i_addr2, IEEE80211_ADDR_LEN);
-			memcpy(bs->bs_bssid, ic->ic_bss.bs_bssid,
-			    IEEE80211_ADDR_LEN);
+			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss.ni_bssid);
 			allocbs = 1;
 		}
-		IEEE80211_SEND_MGMT(ic, bs, IEEE80211_FC0_SUBTYPE_AUTH, 2);
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_AUTH, 2);
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: station %s %s authenticated\n",
 			    ifp->if_xname,
 			    (allocbs ? "newly" : "already"),
-			    ether_sprintf(bs->bs_macaddr));
-		return;
-	}
-	if (ic->ic_state != IEEE80211_S_AUTH || seq != 2)
-		return;
-	if (status != 0) {
-		printf("%s: authentication failed (reason %d) for %s\n",
-		    ic->ic_if.if_xname, status, ether_sprintf(wh->i_addr3));
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(bs->bs_macaddr, wh->i_addr2,
-			    IEEE80211_ADDR_LEN) == 0) {
-				bs->bs_fails++;
-				break;
-			}
+			    ether_sprintf(ni->ni_macaddr));
+		break;
+
+	case IEEE80211_M_STA:
+		if (ic->ic_state != IEEE80211_S_AUTH || seq != 2)
+			return;
+		if (status != 0) {
+			printf("%s: authentication failed (reason %d) for %s\n",
+			    ic->ic_if.if_xname, status,
+			    ether_sprintf(wh->i_addr3));
+			ni = ieee80211_find_node(ic, wh->i_addr2);
+			if (ni != NULL)
+				ni->ni_fails++;
+			return;
 		}
-		return;
+		ieee80211_new_state(&ic->ic_if, IEEE80211_S_ASSOC,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
 	}
-	ieee80211_new_state(&ic->ic_if, IEEE80211_S_ASSOC,
-	    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 }
 
 static void
@@ -1741,12 +1931,12 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs = &ic->ic_bss;
+	struct ieee80211_node *ni = &ic->ic_bss;
 	u_int8_t *frm, *efrm, *ssid, *rates;
 	u_int16_t capinfo, bintval;
 	int reassoc, resp, newassoc;
 
-	if ((ic->ic_flags & IEEE80211_F_HOSTAP) == 0 ||
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
 	    (ic->ic_state != IEEE80211_S_RUN))
 		return;
 
@@ -1775,7 +1965,7 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 
-	if (memcmp(wh->i_addr3, ic->ic_bss.bs_bssid, IEEE80211_ADDR_LEN) != 0) {
+	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss.ni_bssid)) {
 		DPRINTF(("ieee80211_recv_asreq: ignore other bss from %s\n",
 		    ether_sprintf(wh->i_addr2)));
 		return;
@@ -1806,8 +1996,8 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		    ssid[1], ether_sprintf(wh->i_addr2)));
 		return;
 	}
-	if (ssid[1] != ic->ic_bss.bs_esslen ||
-	    memcmp(ssid + 2, ic->ic_bss.bs_essid, ssid[1]) != 0) {
+	if (ssid[1] != ic->ic_bss.ni_esslen ||
+	    memcmp(ssid + 2, ic->ic_bss.ni_essid, ssid[1]) != 0) {
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_debug) {
 			printf("ieee80211_recv_asreq: ssid unmatch ");
@@ -1817,48 +2007,56 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 #endif
 		return;
 	}
-	TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-		if (memcmp(bs->bs_macaddr, wh->i_addr2,
-		    IEEE80211_ADDR_LEN) == 0)
-			break;
-	}
-	if (bs == NULL)
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+	if (ni == NULL) {
+		DPRINTF(("ieee80211_recv_asreq: not authenticated for %s\n",
+		    ether_sprintf(wh->i_addr2)));
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 1)) == NULL)
+			return;
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_ASSOC_NOT_AUTHED);
+		ieee80211_free_node(ic, ni);
 		return;
+	}
 	if ((capinfo & IEEE80211_CAPINFO_ESS) == 0 ||
 	    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
 	    ((ic->ic_flags & IEEE80211_F_WEPON) ?
 	     IEEE80211_CAPINFO_PRIVACY : 0)) {
-		bs->bs_associd = 0;
-		IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_CAPINFO);
+		DPRINTF(("ieee80211_recv_asreq: capability unmatch %x for %s\n",
+		    capinfo, ether_sprintf(wh->i_addr2)));
+		ni->ni_associd = 0;
+		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_CAPINFO);
 		return;
 	}
-	memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
-	bs->bs_nrate = rates[1];
-	memcpy(bs->bs_rates, rates + 2, bs->bs_nrate);
-	ieee80211_fix_rate(ic, bs, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
+	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
+	ni->ni_nrate = rates[1];
+	memcpy(ni->ni_rates, rates + 2, ni->ni_nrate);
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (bs->bs_nrate == 0) {
-		bs->bs_associd = 0;
-		IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_BASIC_RATE);
+	if (ni->ni_nrate == 0) {
+		DPRINTF(("ieee80211_recv_asreq: rate unmatch for %s\n",
+		    ether_sprintf(wh->i_addr2)));
+		ni->ni_associd = 0;
+		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
 		return;
 	}
-	bs->bs_rssi = rssi;
-	bs->bs_rstamp = rstamp;
-	bs->bs_intval = bintval;
-	bs->bs_capinfo = capinfo;
-	bs->bs_chan = ic->ic_bss.bs_chan;
-	bs->bs_fhdwell = ic->ic_bss.bs_fhdwell;
-	bs->bs_fhindex = ic->ic_bss.bs_fhindex;
-	if (bs->bs_associd == 0) {
-		bs->bs_associd = 0xc000 | ic->ic_bss.bs_associd++;
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+	ni->ni_intval = bintval;
+	ni->ni_capinfo = capinfo;
+	ni->ni_chan = ic->ic_bss.ni_chan;
+	ni->ni_fhdwell = ic->ic_bss.ni_fhdwell;
+	ni->ni_fhindex = ic->ic_bss.ni_fhindex;
+	if (ni->ni_associd == 0) {
+		ni->ni_associd = 0xc000 | ic->ic_bss.ni_associd++;
 		newassoc = 1;
 	} else
 		newassoc = 0;
-	IEEE80211_SEND_MGMT(ic, bs, resp, IEEE80211_STATUS_SUCCESS);
+	IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: station %s %s associated\n",
 		    ifp->if_xname, (newassoc ? "newly" : "already"),
-		    ether_sprintf(bs->bs_macaddr));
+		    ether_sprintf(ni->ni_macaddr));
 }
 
 static void
@@ -1867,12 +2065,11 @@ ieee80211_recv_asresp(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs = &ic->ic_bss;
+	struct ieee80211_node *ni = &ic->ic_bss;
 	u_int8_t *frm, *efrm, *rates;
 	int status;
 
-	if ((ic->ic_flags & IEEE80211_F_HOSTAP) ||
-	    (ic->ic_flags & IEEE80211_F_ADHOC) ||
+	if (ic->ic_opmode != IEEE80211_M_STA ||
 	    ic->ic_state != IEEE80211_S_ASSOC)
 		return;
 
@@ -1892,7 +2089,7 @@ ieee80211_recv_asresp(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 
-	bs->bs_capinfo = le16toh(*(u_int16_t *)frm);
+	ni->ni_capinfo = le16toh(*(u_int16_t *)frm);
 	frm += 2;
 
 	status = le16toh(*(u_int16_t *)frm);
@@ -1900,25 +2097,21 @@ ieee80211_recv_asresp(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	if (status != 0) {
 		printf("%s: association failed (reason %d) for %s\n",
 		    ifp->if_xname, status, ether_sprintf(wh->i_addr3));
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(bs->bs_macaddr, wh->i_addr2,
-			    IEEE80211_ADDR_LEN) == 0) {
-				bs->bs_fails++;
-				break;
-			}
-		}
+		ni = ieee80211_find_node(ic, wh->i_addr2);
+		if (ni != NULL)
+			ni->ni_fails++;
 		return;
 	}
-	bs->bs_associd = le16toh(*(u_int16_t *)frm);
+	ni->ni_associd = le16toh(*(u_int16_t *)frm);
 	frm += 2;
 	rates = frm;
 
-	memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
-	bs->bs_nrate = rates[1];
-	memcpy(bs->bs_rates, rates + 2, bs->bs_nrate);
-	ieee80211_fix_rate(ic, bs, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
+	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
+	ni->ni_nrate = rates[1];
+	memcpy(ni->ni_rates, rates + 2, ni->ni_nrate);
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (bs->bs_nrate == 0)
+	if (ni->ni_nrate == 0)
 		return;
 	ieee80211_new_state(ifp, IEEE80211_S_RUN,
 	    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
@@ -1930,7 +2123,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	u_int8_t *frm, *efrm;
 	u_int16_t reason;
 
@@ -1947,23 +2140,23 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	reason = le16toh(*(u_int16_t *)frm);
-	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(wh->i_addr2, bs->bs_macaddr,
-			    IEEE80211_ADDR_LEN) == 0) {
-				if (ifp->if_flags & IFF_DEBUG)
-					printf("%s: station %s disassociated"
-					    " by peer (reason %d)\n",
-					    ifp->if_xname,
-					    ether_sprintf(bs->bs_macaddr),
-					    reason);
-				bs->bs_associd = 0;
-				break;
-			}
-		}
-	} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_ASSOC,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+	case IEEE80211_M_HOSTAP:
+		if ((ni = ieee80211_find_node(ic, wh->i_addr2)) != NULL) {
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: station %s disassociated"
+				    " by peer (reason %d)\n", ifp->if_xname,
+				    ether_sprintf(ni->ni_macaddr), reason);
+			ni->ni_associd = 0;
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 static void
@@ -1972,7 +2165,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 	u_int8_t *frm, *efrm;
 	u_int16_t reason;
 
@@ -1989,33 +2182,30 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	reason = le16toh(*(u_int16_t *)frm);
-	if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-			if (memcmp(wh->i_addr2, bs->bs_macaddr,
-			    IEEE80211_ADDR_LEN) == 0) {
-				if (ifp->if_flags & IFF_DEBUG)
-					printf("%s: station %s deauthenticated"
-					    " by peer (reason %d)\n",
-					    ifp->if_xname,
-					    ether_sprintf(bs->bs_macaddr),
-					    reason);
-				TAILQ_REMOVE(&ic->ic_scan, bs, bs_list);
-				free(bs, M_DEVBUF);
-				if (TAILQ_EMPTY(&ic->ic_scan))
-					ic->ic_inact_timer = 0;
-				break;
-			}
-		}
-	} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+	case IEEE80211_M_HOSTAP:
+		if ((ni = ieee80211_find_node(ic, wh->i_addr2)) != NULL) {
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: station %s deauthenticated"
+				    " by peer (reason %d)\n", ifp->if_xname,
+				    ether_sprintf(ni->ni_macaddr), reason);
+			ieee80211_free_node(ic, ni);
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 int
 ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_bss *bs = &ic->ic_bss;
+	struct ieee80211_node *ni = &ic->ic_bss;
 	int i, error, ostate;
 #ifdef IEEE80211_DEBUG
 	static const char *stname[] = 
@@ -2041,30 +2231,42 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		case IEEE80211_S_INIT:
 			break;
 		case IEEE80211_S_RUN:
-			if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-				TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-					if (bs->bs_associd == 0)
+			switch (ic->ic_opmode) {
+			case IEEE80211_M_STA:
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DISASSOC,
+				    IEEE80211_REASON_ASSOC_LEAVE);
+				break;
+			case IEEE80211_M_HOSTAP:
+				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
+					if (ni->ni_associd == 0)
 						continue;
-					IEEE80211_SEND_MGMT(ic, bs,
+					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DISASSOC,
 					    IEEE80211_REASON_ASSOC_LEAVE);
 				}
-			} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
-				IEEE80211_SEND_MGMT(ic, bs,
-				    IEEE80211_FC0_SUBTYPE_DISASSOC,
-				    IEEE80211_REASON_ASSOC_LEAVE);
+				break;
+			default:
+				break;
+			}
 			/* FALLTHRU */
 		case IEEE80211_S_ASSOC:
-			if (ic->ic_flags & IEEE80211_F_HOSTAP) {
-				TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-					IEEE80211_SEND_MGMT(ic, bs,
+			switch (ic->ic_opmode) {
+			case IEEE80211_M_STA:
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DEAUTH,
+				    IEEE80211_REASON_AUTH_LEAVE);
+				break;
+			case IEEE80211_M_HOSTAP:
+				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
+					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
 					    IEEE80211_REASON_AUTH_LEAVE);
 				}
-			} else if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0)
-				IEEE80211_SEND_MGMT(ic, bs,
-				    IEEE80211_FC0_SUBTYPE_DEAUTH,
-				    IEEE80211_REASON_AUTH_LEAVE);
+				break;
+			default:
+				break;
+			}
 			/* FALLTHRU */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
@@ -2075,33 +2277,32 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 				free(ic->ic_wep_ctx, M_DEVBUF);
 				ic->ic_wep_ctx = NULL;
 			}
-			ieee80211_free_scan(ifp);  
+			ieee80211_free_allnodes(ic);
 			break;
 		}
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-		bs = &ic->ic_bss;
+		ni = &ic->ic_bss;
 		/* initialize bss for probe request */
-		memcpy(bs->bs_macaddr, ifp->if_broadcastaddr,
-		    IEEE80211_ADDR_LEN);
-		memcpy(bs->bs_bssid, ifp->if_broadcastaddr, IEEE80211_ADDR_LEN);
-		bs->bs_nrate = 0;
-		memset(bs->bs_rates, 0, IEEE80211_RATE_SIZE);
+		IEEE80211_ADDR_COPY(ni->ni_macaddr, ifp->if_broadcastaddr);
+		IEEE80211_ADDR_COPY(ni->ni_bssid, ifp->if_broadcastaddr);
+		ni->ni_nrate = 0;
+		memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
 		for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
 			if (ic->ic_sup_rates[i] != 0)
-				bs->bs_rates[bs->bs_nrate++] =
+				ni->ni_rates[ni->ni_nrate++] =
 				    ic->ic_sup_rates[i];
 		}
-		bs->bs_associd = 0;
-		bs->bs_rstamp = 0;
+		ni->ni_associd = 0;
+		ni->ni_rstamp = 0;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			ic->ic_flags |= IEEE80211_F_ASCAN;
 			ic->ic_scan_timer = IEEE80211_ASCAN_WAIT;
 			/* use lowest rate */
-			bs->bs_txrate = 0;
-			IEEE80211_SEND_MGMT(ic, bs,
+			ni->ni_txrate = 0;
+			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
 			break;
 		case IEEE80211_S_SCAN:
@@ -2110,7 +2311,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 				if (ic->ic_scan_timer == 0)
 					ic->ic_scan_timer =
 					    IEEE80211_ASCAN_WAIT;
-				IEEE80211_SEND_MGMT(ic, bs,
+				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
 			} else {
 				if (ic->ic_scan_timer == 0)
@@ -2125,19 +2326,15 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 				printf("%s: no recent beacons from %s;"
 				    " rescanning\n",
 				    ifp->if_xname,
-				    ether_sprintf(ic->ic_bss.bs_bssid));
-			ieee80211_free_scan(ifp);
+				    ether_sprintf(ic->ic_bss.ni_bssid));
+			ieee80211_free_allnodes(ic);
 			/* FALLTHRU */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_ASSOC:
 			/* timeout restart scan */
-			TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
-				if (memcmp(ic->ic_bss.bs_macaddr,
-				    bs->bs_macaddr, IEEE80211_ADDR_LEN) == 0) {
-					bs->bs_fails++;
-					break;
-				}
-			}
+			ni = ieee80211_find_node(ic, ic->ic_bss.ni_macaddr);
+			if (ni != NULL)
+				ni->ni_fails++;
 			ic->ic_flags |= IEEE80211_F_ASCAN;
 			ic->ic_scan_timer = IEEE80211_ASCAN_WAIT;
 			IEEE80211_SEND_MGMT(ic, &ic->ic_bss,
@@ -2151,7 +2348,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			DPRINTF(("ieee80211_new_state: invalid transition\n"));
 			break;
 		case IEEE80211_S_SCAN:
-			IEEE80211_SEND_MGMT(ic, bs,
+			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_AUTH, 1);
 			break;
 		case IEEE80211_S_AUTH:
@@ -2159,7 +2356,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			switch (mgt) {
 			case IEEE80211_FC0_SUBTYPE_AUTH:
 				/* ??? */
-				IEEE80211_SEND_MGMT(ic, bs,
+				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_AUTH, 2);
 				break;
 			case IEEE80211_FC0_SUBTYPE_DEAUTH:
@@ -2170,13 +2367,13 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		case IEEE80211_S_RUN:
 			switch (mgt) {
 			case IEEE80211_FC0_SUBTYPE_AUTH:
-				IEEE80211_SEND_MGMT(ic, bs,
+				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_AUTH, 2);
 				ic->ic_state = ostate;	/* stay RUN */
 				break;
 			case IEEE80211_FC0_SUBTYPE_DEAUTH:
 				/* try to reauth */
-				IEEE80211_SEND_MGMT(ic, bs,
+				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_AUTH, 1);
 				break;
 			}
@@ -2191,11 +2388,11 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			DPRINTF(("ieee80211_new_state: invalid transition\n"));
 			break;
 		case IEEE80211_S_AUTH:
-			IEEE80211_SEND_MGMT(ic, bs,
+			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 0);
 			break;
 		case IEEE80211_S_RUN:
-			IEEE80211_SEND_MGMT(ic, bs,
+			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 1);
 			break;
 		}
@@ -2211,19 +2408,18 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		case IEEE80211_S_ASSOC:		/* infra mode */
 			if (ifp->if_flags & IFF_DEBUG) {
 				printf("%s: ", ifp->if_xname);
-				if ((ic->ic_flags & IEEE80211_F_ADHOC) ||
-				    (ic->ic_flags & IEEE80211_F_HOSTAP))
-					printf("synchronized ");
-				else
+				if (ic->ic_opmode == IEEE80211_M_STA)
 					printf("associated ");
+				else
+					printf("synchronized ");
 				printf("with %s ssid ",
-				    ether_sprintf(ic->ic_bss.bs_bssid));
-				ieee80211_print_essid(ic->ic_bss.bs_essid,
-				    ic->ic_bss.bs_esslen);
-				printf(" channel %d\n", ic->ic_bss.bs_chan);
+				    ether_sprintf(ic->ic_bss.ni_bssid));
+				ieee80211_print_essid(ic->ic_bss.ni_essid,
+				    ic->ic_bss.ni_esslen);
+				printf(" channel %d\n", ic->ic_bss.ni_chan);
 			}
 			/* start with highest negotiated rate */
-			ic->ic_bss.bs_txrate = ic->ic_bss.bs_nrate - 1;
+			ic->ic_bss.ni_txrate = ic->ic_bss.ni_nrate - 1;
 			ic->ic_mgt_timer = 0;
 			(*ifp->if_start)(ifp);
 			break;
@@ -2239,7 +2435,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	struct ieee80211com *ic = (void *)ifp;
 	struct mbuf *m, *n, *n0;
 	struct ieee80211_frame *wh;
-	int left, len, moff, noff, kid;
+	int i, left, len, moff, noff, kid;
 	u_int32_t iv, crc;
 	u_int8_t *ivp;
 	void *ctx;
@@ -2282,18 +2478,21 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	if (txflag) {
 		kid = ic->ic_wep_txkey;
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
+                iv = ic->ic_iv;
 		/*
-		 * XXX
-		 * IV must not duplicate during the lifetime of the key.
-		 * But no mechanism to renew keys is defined in IEEE 802.11
-		 * WEP.  And IV may be duplicated between other stations
-		 * because of the session key itself is shared.
-		 * So we use pseudo random IV here, though it is not the
-		 * best way.
+		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
+		 * (B, 255, N) with 3 <= B < 8
 		 */
-		iv = random();
+		if (iv >= 0x03ff00 &&
+		    (iv & 0xf8ff00) == 0x00ff00)
+			iv += 0x000100;
+		ic->ic_iv = iv + 1;
+		/* put iv in little endian to prepare 802.11i */
 		ivp = mtod(n, u_int8_t *) + noff;
-		memcpy(ivp, (caddr_t)&iv, IEEE80211_WEP_IVLEN);
+		for (i = 0; i < IEEE80211_WEP_IVLEN; i++) {
+			ivp[i] = iv & 0xff;
+			iv >>= 8;
+		}
 		ivp[IEEE80211_WEP_IVLEN] = kid << 6;	/* pad and keyid */
 		noff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
 	} else {
@@ -2443,29 +2642,37 @@ ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len)
 /*
  * convert IEEE80211 rate value to ifmedia subtype.
  * ieee80211 rate is in unit of 0.5Mbps.
- * phytype is IEEE80211_F_FH or IEEE80211_F_DS.
  */
 
 int
-ieee80211_rate2media(int rate, int phytype)
+ieee80211_rate2media(int rate, enum ieee80211_phytype phytype)
 {
 	int mword;
 
 	mword = 0;
 	switch (phytype) {
-	case IEEE80211_F_FH:
+	case IEEE80211_T_FH:
 		switch (rate & IEEE80211_RATE_VAL) {
+		case 0:
+			mword = IFM_AUTO;
+			break;
 		case 2:
 			mword = IFM_IEEE80211_FH1;
 			break;
 		case 4:
 			mword = IFM_IEEE80211_FH2;
 			break;
+		default:
+			mword = IFM_NONE;
+			break;
 		}
 		break;
 
-	case IEEE80211_F_DS:
+	case IEEE80211_T_DS:
 		switch (rate & IEEE80211_RATE_VAL) {
+		case 0:
+			mword = IFM_AUTO;
+			break;
 		case 2:
 			mword = IFM_IEEE80211_DS1;
 			break;
@@ -2478,19 +2685,27 @@ ieee80211_rate2media(int rate, int phytype)
 		case 22:
 			mword = IFM_IEEE80211_DS11;
 			break;
+		default:
+			mword = IFM_NONE;
+			break;
 		}
+		break;
+
+	default:
+		mword = IFM_MANUAL;
+		break;
 	}
 	return mword;
 }
 
 int
-ieee80211_media2rate(int mword, int phytype)
+ieee80211_media2rate(int mword, enum ieee80211_phytype phytype)
 {
 	int rate;
 
 	rate = 0;
 	switch (phytype) {
-	case IEEE80211_F_FH:
+	case IEEE80211_T_FH:
 		switch (IFM_SUBTYPE(mword)) {
 		case IFM_IEEE80211_FH1:
 			rate = 2;
@@ -2501,7 +2716,7 @@ ieee80211_media2rate(int mword, int phytype)
 		}
 		break;
 
-	case IEEE80211_F_DS:
+	case IEEE80211_T_DS:
 		switch (IFM_SUBTYPE(mword)) {
 		case IFM_IEEE80211_DS1:
 			rate = 2;
@@ -2516,6 +2731,10 @@ ieee80211_media2rate(int mword, int phytype)
 			rate = 22;
 			break;
 		}
+		break;
+
+	default:
+		break;
 	}
 	return rate;
 }
@@ -2535,7 +2754,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct wi_req wreq;
 	struct wi_ltv_keys *keys;
 	struct wi_apinfo *ap;
-	struct ieee80211_bss *bs;
+	struct ieee80211_node *ni;
 #ifdef WICACHE
 	struct wi_sigcache wsc;
 #endif /* WICACHE */
@@ -2559,10 +2778,10 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 			wreq.wi_len = 1;
 			break;
 		}
-		wreq.wi_val[0] = htole16(ic->ic_bss.bs_esslen);
-		memcpy(&wreq.wi_val[1], ic->ic_bss.bs_essid,
-		    ic->ic_bss.bs_esslen);
-		wreq.wi_len = (1 + ic->ic_bss.bs_esslen + 1) / 2;
+		wreq.wi_val[0] = htole16(ic->ic_bss.ni_esslen);
+		memcpy(&wreq.wi_val[1], ic->ic_bss.ni_essid,
+		    ic->ic_bss.ni_esslen);
+		wreq.wi_len = (1 + ic->ic_bss.ni_esslen + 1) / 2;
 		break;
 	case WI_RID_OWN_SSID:
 	case WI_RID_DESIRED_SSID:
@@ -2572,8 +2791,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_CURRENT_BSSID:
 		if (ic->ic_state == IEEE80211_S_RUN)
-			memcpy(wreq.wi_val, ic->ic_bss.bs_bssid,
-			    IEEE80211_ADDR_LEN);
+			IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_bss.ni_bssid);
 		else
 			memset(wreq.wi_val, 0, IEEE80211_ADDR_LEN);
 		wreq.wi_len = IEEE80211_ADDR_LEN / 2;
@@ -2584,7 +2802,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * Since channel 0 is not available for DS, channel 1
 		 * is assigned to LSB on WaveLAN.
 		 */
-		if (ic->ic_flags & IEEE80211_F_DS)
+		if (ic->ic_phytype == IEEE80211_T_DS)
 			i = 1;
 		else
 			i = 0;
@@ -2600,12 +2818,12 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_CURRENT_CHAN:
-		wreq.wi_val[0] = htole16(ic->ic_bss.bs_chan);
+		wreq.wi_val[0] = htole16(ic->ic_bss.ni_chan);
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_COMMS_QUALITY:
 		wreq.wi_val[0] = 0;				/* quality */
-		wreq.wi_val[1] = htole16(ic->ic_bss.bs_rssi);	/* signal */
+		wreq.wi_val[1] = htole16(ic->ic_bss.ni_rssi);	/* signal */
 		wreq.wi_val[2] = 0;				/* noise */
 		wreq.wi_len = 3;
 		break;
@@ -2614,12 +2832,11 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_PORTTYPE:
-		wreq.wi_val[0] =
-		    htole16((ic->ic_flags & IEEE80211_F_ADHOC) ? 4 : 1);
+		wreq.wi_val[0] = htole16(ic->ic_opmode);
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_MAC_NODE:
-		memcpy(wreq.wi_val, ic->ic_myaddr, IEEE80211_ADDR_LEN);
+		IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_myaddr);
 		wreq.wi_len = IEEE80211_ADDR_LEN / 2;
 		break;
 	case WI_RID_TX_RATE:
@@ -2633,7 +2850,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_CUR_TX_RATE:
 		wreq.wi_val[0] = htole16(
-		    (ic->ic_bss.bs_rates[ic->ic_bss.bs_txrate] &
+		    (ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate] &
 		    IEEE80211_RATE_VAL) / 2);
 		wreq.wi_len = 1;
 		break;
@@ -2667,8 +2884,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		wreq.wi_val[0] = htole16(ic->ic_lintval);
 		wreq.wi_len = 1;
 		break;
-	case WI_RID_OWN_BEACON_INT:
-		wreq.wi_val[0] = htole16(ic->ic_bss.bs_intval);
+	case WI_RID_CUR_BEACON_INT:
+		wreq.wi_val[0] = htole16(ic->ic_bss.ni_intval);
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_WEP_AVAIL:
@@ -2714,31 +2931,45 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* XXX: should be implemented in lower drivers */
 		break;
 	case WI_RID_READ_APS:
-		for (i = 0; i < IEEE80211_PSCAN_WAIT; i++) {
-			tsleep((caddr_t)ic, PWAIT | PCATCH, "i80211", hz);
-			if (ic->ic_state != IEEE80211_S_SCAN ||
-			    (ic->ic_flags & IEEE80211_F_SCANAP) == 0 ||
-			    (ic->ic_flags & IEEE80211_F_ASCAN) == 0)
-				break;
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
+			for (i = 0; i < IEEE80211_PSCAN_WAIT; i++) {
+				tsleep((caddr_t)ic, PWAIT | PCATCH, "i80211",
+				    hz);
+				if (ic->ic_state != IEEE80211_S_SCAN ||
+				    (ic->ic_flags & IEEE80211_F_SCANAP) == 0 ||
+				    (ic->ic_flags & IEEE80211_F_ASCAN) == 0)
+					break;
+			}
+			ic->ic_flags &= ~IEEE80211_F_SCANAP;
+			memcpy(ic->ic_chan_active, ic->ic_chan_avail,
+			    sizeof(ic->ic_chan_active));
 		}
-		ic->ic_flags &= ~IEEE80211_F_SCANAP;
 		i = 0;
 		ap = (void *)((char *)wreq.wi_val + sizeof(i));
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
+		TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 			if ((caddr_t)(ap + 1) > (caddr_t)(&wreq + 1))
 				break;
 			memset(ap, 0, sizeof(*ap));
-			memcpy(ap->bssid, bs->bs_bssid, IEEE80211_ADDR_LEN);
-			ap->channel = bs->bs_chan;
-			ap->signal = bs->bs_rssi;
-			ap->namelen = bs->bs_esslen;
-			if (bs->bs_esslen)
-				memcpy(ap->name, bs->bs_essid, bs->bs_esslen);
-			ap->capinfo = bs->bs_capinfo;
-			ap->interval = bs->bs_intval;
-			for (j = 0; j < bs->bs_nrate; j++) {
-				if (bs->bs_rates[j] & IEEE80211_RATE_BASIC) {
-					ap->rate = (bs->bs_rates[j] &
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+				IEEE80211_ADDR_COPY(ap->bssid, ni->ni_macaddr);
+				ap->namelen = ic->ic_des_esslen;
+				if (ic->ic_des_esslen)
+					memcpy(ap->name, ic->ic_des_essid,
+					    ic->ic_des_esslen);
+			} else {
+				IEEE80211_ADDR_COPY(ap->bssid, ni->ni_bssid);
+				ap->namelen = ni->ni_esslen;
+				if (ni->ni_esslen)
+					memcpy(ap->name, ni->ni_essid,
+					    ni->ni_esslen);
+			}
+			ap->channel = ni->ni_chan;
+			ap->signal = ni->ni_rssi;
+			ap->capinfo = ni->ni_capinfo;
+			ap->interval = ni->ni_intval;
+			for (j = 0; j < ni->ni_nrate; j++) {
+				if (ni->ni_rates[j] & IEEE80211_RATE_BASIC) {
+					ap->rate = (ni->ni_rates[j] &
 					    IEEE80211_RATE_VAL) * 5; /* XXX */
 				}
 			}
@@ -2751,12 +2982,12 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef WICACHE
 	case WI_RID_READ_CACHE:
 		i = 0;
-		TAILQ_FOREACH(bs, &ic->ic_scan, bs_list) {
+		TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 			if (i == MAXCACHE)
 				break;
-			memcpy(wsc.macsrc, bs->bs_macaddr, IEEE80211_ADDR_LEN);
+			IEEE80211_ADDR_COPY(wsc.macsrc, ni->ni_macaddr);
 			memset(&wsc.ipsrc, 0, sizeof(wsc.ipsrc));
-			wsc.signal = bs->rssi;
+			wsc.signal = ni->rssi;
 			wsc.noise = 0;
 			wsc.quality = 0;
 			memcpy((caddr_t)wreq.wi_val + sizeof(wsc) * i,
@@ -2819,7 +3050,9 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (wreq.wi_len != 1)
 			return EINVAL;
 		i = le16toh(wreq.wi_val[0]);
-		if (isclr(ic->ic_chan_active, i))
+		if (i < 0 ||
+		    i > IEEE80211_CHAN_MAX ||
+		    isclr(ic->ic_chan_active, i))
 			return EINVAL;
 		ic->ic_ibss_chan = i;
 		if (ic->ic_flags & IEEE80211_F_SIBSS)
@@ -2848,25 +3081,36 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (wreq.wi_len != 1)
 			return EINVAL;
 		switch (le16toh(wreq.wi_val[0])) {
-		case 1:
-			if (ic->ic_flags & IEEE80211_F_ADHOC) {
-				ic->ic_flags &= ~IEEE80211_F_ADHOC;
-				error = ENETRESET;
-			}
+		case IEEE80211_M_STA:
 			break;
-		case 2:
-			if ((ic->ic_flags & IEEE80211_F_ADHOC) == 0) {
-				ic->ic_flags |= IEEE80211_F_ADHOC;
-				error = ENETRESET;
-			}
+		case IEEE80211_M_IBSS:
+			if (!(ic->ic_flags & IEEE80211_F_HASIBSS))
+				return EINVAL;
+			break;
+		case IEEE80211_M_AHDEMO:
+			if (ic->ic_phytype != IEEE80211_T_DS ||
+			    !(ic->ic_flags & IEEE80211_F_HASAHDEMO))
+				return EINVAL;
+			break;
+		case IEEE80211_M_HOSTAP:
+			if (!(ic->ic_flags & IEEE80211_F_HASHOSTAP))
+				return EINVAL;
 			break;
 		default:
 			return EINVAL;
 		}
+		if (le16toh(wreq.wi_val[0]) != ic->ic_opmode) {
+			ic->ic_opmode = le16toh(wreq.wi_val[0]);
+			error = ENETRESET;
+		}
 		break;
 	case WI_RID_MAC_NODE:
-		/* XXX: should be implemented? */
-		return EPERM;
+		if (wreq.wi_len != IEEE80211_ADDR_LEN / 2)
+			return EINVAL;
+		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), wreq.wi_val);
+		/* if_init will copy lladdr into ic_myaddr */
+		error = ENETRESET;
+		break;
 	case WI_RID_TX_RATE:
 		if (wreq.wi_len != 1)
 			return EINVAL;
@@ -2902,7 +3146,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 				return EINVAL;
 			if ((ic->ic_flags & IEEE80211_F_IBSSON) == 0) {
 				ic->ic_flags |= IEEE80211_F_IBSSON;
-				if ((ic->ic_flags & IEEE80211_F_ADHOC) &&
+				if (ic->ic_opmode == IEEE80211_M_IBSS &&
 				    ic->ic_state == IEEE80211_S_SCAN)
 					error = ENETRESET;
 			}
@@ -2958,7 +3202,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ic->ic_flags & IEEE80211_F_PMGTON)
 			error = ENETRESET;
 		break;
-	case WI_RID_OWN_BEACON_INT:
+	case WI_RID_CUR_BEACON_INT:
 		return EPERM;
 	case WI_RID_WEP_AVAIL:
 		return EPERM;
@@ -3026,6 +3270,8 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = EPERM;
 		break;
 	case WI_RID_SCAN_APS:
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			break;
 		wreq.wi_len -= 2;	/* XXX: tx rate? */
 		/* FALLTHRU */
 	case WI_RID_CHANNEL_LIST:
@@ -3034,7 +3280,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * Since channel 0 is not available for DS, channel 1
 		 * is assigned to LSB on WaveLAN.
 		 */
-		if (ic->ic_flags & IEEE80211_F_DS)
+		if (ic->ic_phytype == IEEE80211_T_DS)
 			i = 1;
 		else
 			i = 0;
@@ -3064,8 +3310,8 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 					break;
 				}
 		}
-		if (isclr(chanlist, ic->ic_bss.bs_chan))
-			ic->ic_bss.bs_chan = ic->ic_ibss_chan;
+		if (isclr(chanlist, ic->ic_bss.ni_chan))
+			ic->ic_bss.ni_chan = ic->ic_ibss_chan;
 		if (wreq.wi_type == WI_RID_CHANNEL_LIST)
 			error = ENETRESET;
 		else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.21 2002/09/17 22:13:27 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.22 2002/10/18 02:44:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.21 2002/09/17 22:13:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.22 2002/10/18 02:44:53 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -812,7 +812,7 @@ preempt(struct lwp *newl)
  * Returns 1 if another process was actually run.
  */
 int
-mi_switch(struct lwp *l, struct lwp *new)
+mi_switch(struct lwp *l, struct lwp *newl)
 {
 	struct schedstate_percpu *spc;
 	struct rlimit *rlim;
@@ -850,7 +850,7 @@ mi_switch(struct lwp *l, struct lwp *new)
 
 	/*
 	 * Compute the amount of time during which the current
-	 * process was running, and add that to its total so far.
+	 * process was running.
 	 */
 	microtime(&tv);
 	u = p->p_rtime.tv_usec + 
@@ -910,14 +910,14 @@ mi_switch(struct lwp *l, struct lwp *new)
 #endif
 
 	/*
-	 * Pick a new current process and switch to it.  When we
+	 * Switch to the new current process.  When we
 	 * run again, we'll return back here.
 	 */
 	uvmexp.swtch++;
-	if (new == NULL) {
-		retval = cpu_switch(l);
+	if (newl == NULL) {
+		retval = cpu_switch(l, NULL);
 	} else {
-		cpu_preempt(l, new);
+		cpu_preempt(l, newl);
 		retval = 0;
 	}
 
@@ -1113,7 +1113,7 @@ suspendsched()
 	 */
 	proclist_lock_read();
 	SCHED_LOCK(s);
-	for (l = LIST_FIRST(&alllwp); l != NULL; l = LIST_NEXT(l, l_list)) {
+	LIST_FOREACH(l, &alllwp, p_list) {
 		if ((l->l_proc->p_flag & P_SYSTEM) != 0)
 			continue;
 
@@ -1140,4 +1140,52 @@ suspendsched()
 	proclist_unlock_read();
 }
 
+/*
+ * Low-level routines to access the run queue.  Optimised assembler
+ * routines can override these.
+ */
 
+#ifndef __HAVE_MD_RUNQUEUE
+
+void
+setrunqueue(struct lwp *l)
+{
+	struct lwphd *rq;
+	struct lwp *prev;
+	int whichq;
+
+#ifdef DIAGNOSTIC
+	if (l->l_back != NULL || l->l_wchan != NULL || l->l_stat != LSRUN)
+		panic("setrunqueue");
+#endif
+	whichq = l->l_priority / 4;
+	sched_whichqs |= (1<<whichq);
+	rq = &sched_qs[whichq];
+	prev = rq->ph_rlink;
+	l->l_forw = (struct lwp *)rq;
+	rq->ph_rlink = l;
+	prev->l_forw = l;
+	l->l_back = prev;
+}
+
+void
+remrunqueue(struct lwp *l)
+{
+	struct lwp *prev, *next;;
+	int whichq;
+
+	whichq = p->p_priority / 4;
+#ifdef DIAGNOSTIC
+	if (((sched_whichqs & (1<<whichq)) == 0))
+		panic("remrunqueue");
+#endif
+	prev = l->l_back;
+	l->l_back = NULL;
+	next = l->l_forw;
+	prev->l_forw = next;
+	next->l_back = prev;
+	if (prev == next)
+		sched_whichqs &= ~(1<<whichq);
+}
+
+#endif

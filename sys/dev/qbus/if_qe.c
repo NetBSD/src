@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.46.2.3 2002/06/20 03:46:23 nathanw Exp $ */
+/*      $NetBSD: if_qe.c,v 1.46.2.4 2002/10/18 02:43:39 nathanw Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.46.2.3 2002/06/20 03:46:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.46.2.4 2002/10/18 02:43:39 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -114,9 +114,8 @@ static	int	qe_add_rxbuf(struct qe_softc *, int);
 static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
 
-struct	cfattach qe_ca = {
-	sizeof(struct qe_softc), qematch, qeattach
-};
+CFATTACH_DECL(qe, sizeof(struct qe_softc),
+    qematch, qeattach, NULL, NULL);
 
 #define	QE_WCSR(csr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
@@ -710,7 +709,7 @@ qe_add_rxbuf(struct qe_softc *sc, int i)
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
 	if (error)
-		panic("%s: can't load rx DMA map %d, error = %d\n",
+		panic("%s: can't load rx DMA map %d, error = %d",
 		    sc->sc_dev.dv_xname, i, error);
 	sc->sc_rxmbuf[i] = m;
 

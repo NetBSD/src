@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.16 2002/09/17 21:21:15 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.17 2002/10/18 02:44:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.16 2002/09/17 21:21:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.17 2002/10/18 02:44:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.16 2002/09/17 21:21:15 nathanw 
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
+#include <sys/queue.h>
+#include <sys/lock.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -81,6 +83,15 @@ const struct scsipi_periphsw scsi_probe_dev = {
 	NULL,
 };
 
+struct scsi_initq {
+	struct scsipi_channel *sc_channel;
+	TAILQ_ENTRY(scsi_initq) scsi_initq;
+};
+
+static TAILQ_HEAD(, scsi_initq) scsi_initq_head = 
+    TAILQ_HEAD_INITIALIZER(scsi_initq_head);
+static struct simplelock scsibus_interlock = SIMPLELOCK_INITIALIZER;
+
 int	scsi_probe_device __P((struct scsibus_softc *, int, int));
 
 int	scsibusmatch __P((struct device *, struct cfdata *, void *));
@@ -90,10 +101,8 @@ int	scsibusdetach __P((struct device *, int flags));
 
 int	scsibussubmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach scsibus_ca = {
-	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
-	    scsibusdetach, scsibusactivate,
-};
+CFATTACH_DECL(scsibus, sizeof(struct scsibus_softc),
+    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate);
 
 extern struct cfdriver scsibus_cd;
 
@@ -107,7 +116,7 @@ const struct cdevsw scsibus_cdevsw = {
 };
 
 int	scsibusprint __P((void *, const char *));
-void	scsibus_config_interrupts __P((struct device *));
+void	scsibus_config __P((struct scsipi_channel *, void *));
 
 const struct scsipi_bustype scsi_bustype = {
 	SCSIPI_BUSTYPE_SCSI,
@@ -161,47 +170,75 @@ scsibusattach(parent, self, aux)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = aux;
+	struct scsi_initq *scsi_initq;
 
 	sc->sc_channel = chan;
 	chan->chan_name = sc->sc_dev.dv_xname;
 
+	printf(": %d target%s, %d lun%s per target\n",
+	    chan->chan_ntargets,
+	    chan->chan_ntargets == 1 ? "" : "s",
+	    chan->chan_nluns,
+	    chan->chan_nluns == 1 ? "" : "s");
+
 	/* Initialize the channel structure first */
+	chan->chan_init_cb = scsibus_config;
+	chan->chan_init_cb_arg = sc;
+	
+	scsi_initq = malloc(sizeof(struct scsi_initq), M_DEVBUF, M_WAITOK);
+	scsi_initq->sc_channel = chan;
+	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
+        config_pending_incr();
 	if (scsipi_channel_init(chan)) {
 		printf(": failed to init channel\n");
 		return;
 	}
 
-	printf(": %d targets, %d luns per target\n",
-	    chan->chan_ntargets, chan->chan_nluns);
-
-
-	/*
-	 * Defer configuration of the children until interrupts
-	 * are enabled.
-	 */
-	config_interrupts(self, scsibus_config_interrupts);
 }
 
 void
-scsibus_config_interrupts(self)
-	struct device *self;
+scsibus_config(chan, arg)
+	struct scsipi_channel *chan;
+	void *arg;
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = arg;
+	struct scsi_initq *scsi_initq;
 
 #ifndef SCSI_DELAY
 #define SCSI_DELAY 2
 #endif
 
-	if ((sc->sc_channel->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
+	/* Make sure the devices probe in scsibus order to avoid jitter. */
+	simple_lock(&scsibus_interlock);
+	for (;;) {
+		scsi_initq = TAILQ_FIRST(&scsi_initq_head);
+		if (scsi_initq->sc_channel == chan)
+			break;
+		ltsleep(&scsi_initq_head, PRIBIO, "scsi_initq", 0, 
+		    &scsibus_interlock);
+	}
+
+	simple_unlock(&scsibus_interlock);
+
+	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
 	    SCSI_DELAY > 0) {
 		printf("%s: waiting %d seconds for devices to settle...\n",
-		    self->dv_xname, SCSI_DELAY);
+		    sc->sc_dev.dv_xname, SCSI_DELAY);
 		/* ...an identifier we know no one will use... */
-		(void) tsleep(scsibus_config_interrupts, PRIBIO,
+		(void) tsleep(scsibus_config, PRIBIO,
 		    "scsidly", SCSI_DELAY * hz);
 	}
 
 	scsi_probe_bus(sc, -1, -1);
+
+	simple_lock(&scsibus_interlock);
+	TAILQ_REMOVE(&scsi_initq_head, scsi_initq, scsi_initq);
+	simple_unlock(&scsibus_interlock);
+
+	free(scsi_initq, M_DEVBUF);
+	wakeup(&scsi_initq_head);
+
+	config_pending_decr();
 }
 
 int
@@ -219,7 +256,7 @@ scsibussubmatch(parent, cf, aux)
 	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
 	    cf->cf_loc[SCSIBUSCF_LUN] != periph->periph_lun)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -361,7 +398,7 @@ scsibusprint(aux, pnp)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_inquiry_pattern *inqbuf;
 	u_int8_t type;
-	const char *dtype, *qtype;
+	const char *dtype;
 	char vendor[33], product[65], revision[17];
 	int target, lun;
 
@@ -374,39 +411,15 @@ scsibusprint(aux, pnp)
 	lun = sa->sa_periph->periph_lun;
 	type = inqbuf->type & SID_TYPE;
 
-	/*
-	 * Figure out basic device type and qualifier.
-	 */
-	dtype = 0;
-	switch (inqbuf->type & SID_QUAL) {
-	case SID_QUAL_LU_PRESENT:
-		qtype = "";
-		break;
-
-	case SID_QUAL_LU_NOTPRESENT:
-		qtype = " offline";
-		break;
-
-	case SID_QUAL_reserved:
-	case SID_QUAL_LU_NOT_SUPP:
-		panic("scsibusprint: impossible qualifier");
-
-	default:
-		qtype = "";
-		dtype = "vendor-unique";
-		break;
-	}
-	if (dtype == NULL)
-		dtype = scsipi_dtype(type);
+	dtype = scsipi_dtype(type);
 
 	scsipi_strvis(vendor, 33, inqbuf->vendor, 8);
 	scsipi_strvis(product, 65, inqbuf->product, 16);
 	scsipi_strvis(revision, 17, inqbuf->revision, 4);
 
-	printf(" target %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
-	    target, lun, vendor, product, revision,
-	    sa->scsipi_info.scsi_version & SID_ANSII, type, dtype,
-	    inqbuf->removable ? "removable" : "fixed", qtype);
+	printf(" target %d lun %d: <%s, %s, %s> %s %s",
+	    target, lun, vendor, product, revision, dtype,
+	    inqbuf->removable ? "removable" : "fixed");
 
 	return (UNCONF);
 }

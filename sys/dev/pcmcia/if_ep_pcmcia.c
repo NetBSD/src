@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.33.6.5 2002/06/20 03:46:06 nathanw Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.33.6.6 2002/10/18 02:43:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.33.6.5 2002/06/20 03:46:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.33.6.6 2002/10/18 02:43:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,8 @@ struct ep_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-struct cfattach ep_pcmcia_ca = {
-	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach,
-	    ep_pcmcia_detach, ep_activate
-};
+CFATTACH_DECL(ep_pcmcia, sizeof(struct ep_pcmcia_softc),
+    ep_pcmcia_match, ep_pcmcia_attach, ep_pcmcia_detach, ep_activate);
 
 const struct ep_pcmcia_product {
 	struct pcmcia_product epp_product;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.5.6.4 2002/09/17 21:20:56 nathanw Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.5.6.5 2002/10/18 02:43:53 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.5.6.4 2002/09/17 21:20:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.5.6.5 2002/10/18 02:43:53 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -91,7 +91,6 @@ rf_ConfigureRAID1(
 	raidPtr->totalSectors = layoutPtr->stripeUnitsPerDisk * (raidPtr->numCol / 2) * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk * (raidPtr->numCol / 2);
 	layoutPtr->dataSectorsPerStripe = layoutPtr->sectorsPerStripeUnit;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = 1;
 	layoutPtr->numParityCol = 1;
 	return (0);
@@ -281,7 +280,7 @@ rf_VerifyParityRAID1(
     RF_RaidAccessFlags_t flags)
 {
 	int     nbytes, bcount, stripeWidth, ret, i, j, nbad, *bbufs;
-	RF_DagNode_t *blockNode, *unblockNode, *wrBlock;
+	RF_DagNode_t *blockNode, *wrBlock;
 	RF_DagHeader_t *rd_dag_h, *wr_dag_h;
 	RF_AccessStripeMapHeader_t *asm_h;
 	RF_AllocListElem_t *allocList;
@@ -338,7 +337,6 @@ rf_VerifyParityRAID1(
 	if (rd_dag_h == NULL)
 		goto done;
 	blockNode = rd_dag_h->succedents[0];
-	unblockNode = blockNode->succedents[0]->succedents[0];
 
 	/*
          * Map the access to physical disk addresses (PDAs)- this will
@@ -564,7 +562,6 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 {
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;
-	RF_RaidLayout_t *layoutPtr;
 	int     retcode, created;
 	RF_CallbackDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
@@ -575,13 +572,12 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 	created = 0;
 
 	raidPtr = rbuf->raidPtr;
-	layoutPtr = &raidPtr->Layout;
 	reconCtrlPtr = raidPtr->reconControl[rbuf->row];
 
 	RF_ASSERT(rbuf);
 	RF_ASSERT(rbuf->col != reconCtrlPtr->fcol);
 
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 reconbuffer submission r%d c%d psid %ld ru%d (failed offset %ld)\n",
 		       raidPtr->raidid, rbuf->row, rbuf->col, 
@@ -613,7 +609,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 
 	t = NULL;
 	if (keep_it) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: keeping rbuf\n", 
 			       raidPtr->raidid);
@@ -622,7 +618,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 		t = rbuf;
 	} else {
 		if (use_committed) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 			if (rf_reconbufferDebug) {
 				printf("raid%d: RAID1 rbuf submission: using committed rbuf\n", raidPtr->raidid);
 			}
@@ -633,7 +629,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 			t->next = NULL;
 		} else
 			if (reconCtrlPtr->floatingRbufs) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 				if (rf_reconbufferDebug) {
 					printf("raid%d: RAID1 rbuf submission: using floating rbuf\n", raidPtr->raidid);
 				}
@@ -644,7 +640,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 			}
 	}
 	if (t == NULL) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: waiting for rbuf\n", raidPtr->raidid);
 		}
@@ -706,7 +702,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->row, rbuf->parityStripeID);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 rbuf submission: returning %d\n", 
 		       raidPtr->raidid, retcode);

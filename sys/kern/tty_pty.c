@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55.2.8 2002/09/17 21:22:24 nathanw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55.2.9 2002/10/18 02:44:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.8 2002/09/17 21:22:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.9 2002/10/18 02:44:56 nathanw Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -226,6 +226,7 @@ check_pty(dev)
 	if (!pt_softc[minor(dev)]) {
 		MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
 			M_DEVBUF, M_WAITOK);
+		memset(pti, 0, sizeof(struct pt_softc));
 
 	 	pti->pt_tty = ttymalloc();
 

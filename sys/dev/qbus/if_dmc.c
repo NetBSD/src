@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.1.2.4 2002/04/01 07:47:02 nathanw Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.1.2.5 2002/10/18 02:43:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.1.2.4 2002/04/01 07:47:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.1.2.5 2002/10/18 02:43:38 nathanw Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -187,9 +187,8 @@ static  int dmcoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *);
 static  void dmcreset(struct device *);
 
-struct	cfattach dmc_ca = {
-	sizeof(struct dmc_softc), dmcmatch, dmcattach
-};
+CFATTACH_DECL(dmc, sizeof(struct dmc_softc),
+    dmcmatch, dmcattach, NULL, NULL);
 
 /* flags */
 #define DMC_RUNNING	0x01		/* device initialized */

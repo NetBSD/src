@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.39.2.9 2002/09/17 21:20:48 nathanw Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.39.2.10 2002/10/18 02:43:48 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.9 2002/09/17 21:20:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.10 2002/10/18 02:43:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.9 2002/09/17 21:20:48 nathanw E
 #include "rf_kintf.h"
 
 #include <sys/buf.h>
+
+#ifndef RF_ACCESS_DEBUG
+#define RF_ACCESS_DEBUG 0
+#endif
 
 /* rad == RF_RaidAccessDesc_t */
 static RF_FreeList_t *rf_rad_freelist;
@@ -181,32 +185,7 @@ rf_BootRaidframe()
 	globalShutdown = NULL;
 	return (0);
 }
-/*
- * This function is really just for debugging user-level stuff: it
- * frees up all memory, other RAIDframe resources which might otherwise
- * be kept around. This is used with systems like "sentinel" to detect
- * memory leaks.
- */
-int 
-rf_UnbootRaidframe()
-{
-	int     rc;
 
-	RF_LOCK_LKMGR_MUTEX(configureMutex);
-	if (configureCount) {
-		RF_UNLOCK_LKMGR_MUTEX(configureMutex);
-		return (EBUSY);
-	}
-	raidframe_booted = 0;
-	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
-	rc = rf_lkmgr_mutex_destroy(&configureMutex);
-	if (rc) {
-		RF_ERRORMSG3("Unable to destroy mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		RF_PANIC();
-	}
-	return (0);
-}
 /*
  * Called whenever an array is shutdown
  */
@@ -229,8 +208,10 @@ rf_UnconfigureArray()
 	         * We must wait until now, because the AllocList module
 	         * uses the DebugMem module.
 	         */
+#if RF_DEBUG_MEM
 		if (rf_memDebug)
 			rf_print_unfreed();
+#endif
 	}
 	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 }
@@ -420,6 +401,9 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		raidPtr->status[i] = rf_rs_optimal;
 		raidPtr->reconControl[i] = NULL;
 	}
+
+	TAILQ_INIT(&(raidPtr->iodone));
+	simple_lock_init(&(raidPtr->iodone_lock));
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
@@ -652,6 +636,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 
 	raidAddress += rf_raidSectorOffset;
 
+#if RF_ACCESS_DEBUG
 	if (rf_accessDebug) {
 
 		printf("logBytes is: %d %d %d\n", raidPtr->raidid,
@@ -665,6 +650,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		    (int) rf_RaidAddressToByte(raidPtr, numBlocks),
 		    (long) bufPtr);
 	}
+#endif
 	if (raidAddress + numBlocks > raidPtr->totalSectors) {
 
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
@@ -748,14 +734,15 @@ rf_FailDisk(
  * access_suspend_mutex should be locked upon calling this
  */
 void 
-rf_SignalQuiescenceLock(raidPtr, reconDesc)
+rf_SignalQuiescenceLock(raidPtr)
 	RF_Raid_t *raidPtr;
-	RF_RaidReconDesc_t *reconDesc;
 {
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug) {
 		printf("raid%d: Signalling quiescence lock\n", 
 		       raidPtr->raidid);
 	}
+#endif
 	raidPtr->access_suspend_release = 1;
 
 	if (raidPtr->waiting_for_quiescence) {
@@ -767,9 +754,10 @@ int
 rf_SuspendNewRequestsAndWait(raidPtr)
 	RF_Raid_t *raidPtr;
 {
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
 		printf("raid%d: Suspending new reqs\n", raidPtr->raidid);
-
+#endif
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended++;
 	raidPtr->waiting_for_quiescence = (raidPtr->accs_in_flight == 0) ? 0 : 1;
@@ -795,8 +783,10 @@ rf_ResumeNewRequests(raidPtr)
 {
 	RF_CallbackDesc_t *t, *cb;
 
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
 		printf("Resuming new reqs\n");
+#endif
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended--;
@@ -997,6 +987,7 @@ rf_print_panic_message(line,file)
 		line, file);
 }
 
+#ifdef RAID_DIAGNOSTIC
 void
 rf_print_assert_panic_message(line,file,condition)
 	int line;
@@ -1007,6 +998,7 @@ rf_print_assert_panic_message(line,file,condition)
 		"raidframe error at line %d file %s (failed asserting %s)\n",
 		line, file, condition);
 }
+#endif
 
 void
 rf_print_unable_to_init_mutex(file,line,rc)

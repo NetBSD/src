@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6.6.7 2002/09/17 21:20:46 nathanw Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6.6.8 2002/10/18 02:43:45 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.6.6.7 2002/09/17 21:20:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.6.6.8 2002/10/18 02:43:45 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -174,23 +174,6 @@ rf_FreeDAG(dag_h)
 	}
 }
 
-RF_PropHeader_t *
-rf_MakePropListEntry(
-    RF_DagHeader_t * dag_h,
-    int resultNum,
-    int paramNum,
-    RF_PropHeader_t * next,
-    RF_AllocListElem_t * allocList)
-{
-	RF_PropHeader_t *p;
-
-	RF_CallocAndAdd(p, 1, sizeof(RF_PropHeader_t),
-	    (RF_PropHeader_t *), allocList);
-	p->resultNum = resultNum;
-	p->paramNum = paramNum;
-	p->next = next;
-	return (p);
-}
 
 static RF_FreeList_t *rf_dagh_freelist;
 
@@ -342,7 +325,7 @@ rf_PrintNodeInfoString(RF_DagNode_t * node)
 	}
 	printf("?\n");
 }
-
+#ifdef DEBUG
 static void 
 rf_RecurPrintDAG(node, depth, unvisited)
 	RF_DagNode_t *node;
@@ -429,6 +412,7 @@ rf_PrintDAG(dag_h)
 			rf_RecurPrintDAG(dag_h->succedents[i], 1, unvisited);
 	}
 }
+#endif
 /* assigns node numbers */
 int 
 rf_AssignNodeNums(RF_DagHeader_t * dag_h)
@@ -1249,7 +1233,6 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	RF_PhysDiskAddr_t *mirror_pda = (RF_PhysDiskAddr_t *) node->params[4].p;
 	RF_PhysDiskAddr_t *tmp_pda;
 	RF_RaidDisk_t **disks = raidPtr->Disks;
-	RF_DiskQueue_t **dqs = raidPtr->Queues, *dataQueue, *mirrorQueue;
 	int     usemirror;
 
 	/* return the [row col] of the disk with the shortest queue */
@@ -1257,8 +1240,6 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	colData = data_pda->col;
 	rowMirror = mirror_pda->row;
 	colMirror = mirror_pda->col;
-	dataQueue = &(dqs[rowData][colData]);
-	mirrorQueue = &(dqs[rowMirror][colMirror]);
 
 	usemirror = 0;
 	if (RF_DEAD_DISK(disks[rowMirror][colMirror].status)) {

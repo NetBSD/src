@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17.2.9 2002/09/17 21:23:24 nathanw Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.10 2002/10/18 02:45:23 nathanw Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.9 2002/09/17 21:23:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.10 2002/10/18 02:45:23 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -281,20 +281,15 @@ mrt6_ioctl(cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	int error = 0;
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 		return (get_sg_cnt((struct sioc_sg_req6 *)data));
-		break;		/* for safety */
 	case SIOCGETMIFCNT_IN6:
 		return (get_mif6_cnt((struct sioc_mif_req6 *)data));
-		break;		/* for safety */
 	default:
 		return (EINVAL);
-		break;
 	}
-	return error;
 }
 
 /*

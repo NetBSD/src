@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.2.2.5 2002/09/17 21:20:43 nathanw Exp $ */
+/*	$NetBSD: ts.c,v 1.2.2.6 2002/10/18 02:43:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.5 2002/09/17 21:20:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.6 2002/10/18 02:43:40 nathanw Exp $");
 
 #undef	TSDEBUG
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.5 2002/09/17 21:20:43 nathanw Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -169,9 +168,8 @@ static	int tsmatch(struct device *, struct cfdata *, void *);
 static	void tsattach(struct device *, struct device *, void *);
 static	int tsready(struct uba_unit *);
 
-struct	cfattach ts_ca = {
-	sizeof(struct ts_softc), tsmatch, tsattach
-};
+CFATTACH_DECL(ts, sizeof(struct ts_softc),
+    tsmatch, tsattach, NULL, NULL);
 
 dev_type_open(tsopen);
 dev_type_close(tsclose);

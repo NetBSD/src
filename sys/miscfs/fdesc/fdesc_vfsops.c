@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.32.2.5 2002/08/01 02:46:30 nathanw Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.32.2.6 2002/10/18 02:45:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.32.2.5 2002/08/01 02:46:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.32.2.6 2002/10/18 02:45:03 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -95,6 +95,8 @@ fdesc_mount(mp, path, data, ndp, p)
 	struct fdescmount *fmp;
 	struct vnode *rvp;
 
+	if (mp->mnt_flag & MNT_GETARGS)
+		return 0;
 	/*
 	 * Update is a no-op
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.28.2.4 2002/06/20 03:49:29 nathanw Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.28.2.5 2002/10/18 02:45:25 nathanw Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.28.2.4 2002/06/20 03:49:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.28.2.5 2002/10/18 02:45:25 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1016,7 +1016,6 @@ nd6_ifptomac(ifp)
 	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 		return LLADDR(ifp->if_sadl);
-		break;
 	default:
 		return NULL;
 	}

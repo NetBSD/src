@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.h,v 1.3.20.1 2001/10/22 20:41:32 nathanw Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.3.20.2 2002/10/18 02:43:42 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,15 +45,15 @@ struct RF_AllocListElem_s {
 	int     numPointers;
 	RF_AllocListElem_t *next;
 };
-#define rf_MakeAllocList(_ptr_) _ptr_ = rf_real_MakeAllocList(1);
-#define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_), 1)
+#define rf_MakeAllocList(_ptr_) _ptr_ = rf_real_MakeAllocList();
+#define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_))
 
 int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
 
 #if RF_UTILITY == 0
-void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size, int lockflag);
+void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size);
 void    rf_FreeAllocList(RF_AllocListElem_t * l);
-RF_AllocListElem_t *rf_real_MakeAllocList(int lockflag);
+RF_AllocListElem_t *rf_real_MakeAllocList(void);
 #endif				/* RF_UTILITY == 0 */
 
 #endif				/* !_RF__RF_ALLOCLIST_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.25.2.5 2002/08/01 02:46:32 nathanw Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.25.2.6 2002/10/18 02:45:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.25.2.5 2002/08/01 02:46:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.25.2.6 2002/10/18 02:45:05 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,14 @@ portal_mount(mp, path, data, ndp, p)
 	size_t size;
 	int error;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		fmp = VFSTOPORTAL(mp);
+		if (fmp == NULL)
+			return EIO;
+		args.pa_config = NULL;
+		args.pa_socket = 0;	/* XXX */
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 * Update is a no-op
 	 */

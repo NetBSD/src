@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.21.2.4 2002/09/17 21:20:41 nathanw Exp $	*/
+/*	$NetBSD: qd.c,v 1.21.2.5 2002/10/18 02:43:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.21.2.4 2002/09/17 21:20:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.21.2.5 2002/10/18 02:43:39 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -537,9 +537,8 @@ qdcninit(cndev)
 } /* qdcninit */
 
 /* see <sys/device.h> */
-struct cfattach qd_ca = {
-	sizeof(struct qd_softc), qd_match, qd_attach
-};
+CFATTACH_DECL(qd, sizeof(struct qd_softc),
+    qd_match, qd_attach, NULL, NULL);
 
 #define	QD_RCSR(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)

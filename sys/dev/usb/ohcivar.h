@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.27.2.2 2002/01/08 00:32:06 nathanw Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.27.2.3 2002/10/18 02:44:29 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -105,7 +105,10 @@ typedef struct ohci_softc {
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
+
+#ifdef USB_USE_SOFTINTR
 	char sc_softwake;
+#endif /* USB_USE_SOFTINTR */
 
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;

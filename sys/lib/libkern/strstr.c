@@ -1,8 +1,11 @@
-/*	$NetBSD: clist.h,v 1.8 1997/01/22 07:09:07 mikel Exp $	*/
+/*	$NetBSD: strstr.c,v 1.2.2.2 2002/10/18 02:44:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,22 +34,44 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)clist.h	8.1 (Berkeley) 6/4/93
  */
 
-#ifndef _SYS_CLIST_H_
-#define _SYS_CLIST_H_
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: strstr.c,v 1.2.2.2 2002/10/18 02:44:59 nathanw Exp $");
+#endif
+#endif /* LIBC_SCCS and not lint */
 
-struct cblock {
-	struct cblock *c_next;		/* next cblock in queue */
-	char c_quote[CBQSIZE];		/* quoted characters */
-	char c_info[CBSIZE];		/* characters */
-};
-
-#ifdef _KERNEL
-extern	struct cblock *cfree, *cfreelist;
-extern	int cfreecount, nclist;
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <string.h>
+#else
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
 #endif
 
-#endif /* !_SYS_CLIST_H_ */
+/*
+ * Find the first occurrence of find in s.
+ */
+char *
+strstr(s, find)
+	const char *s, *find;
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != 0) {
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == 0)
+					return (char *)0;
+			} while (sc != c);
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	/* LINTED interface specification */
+	return ((char *)s);
+}

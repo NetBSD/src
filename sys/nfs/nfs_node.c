@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.11 2002/07/15 20:44:35 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.12 2002/10/18 02:45:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.11 2002/07/15 20:44:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.12 2002/10/18 02:45:34 nathanw Exp $");
 
 #include "opt_nfs.h"
 
@@ -279,9 +279,6 @@ nfs_reclaim(v)
 
 	LIST_REMOVE(np, n_hash);
 
-	/*
-	 * For nqnfs, take it off the timer queue as required.
-	 */
 	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}

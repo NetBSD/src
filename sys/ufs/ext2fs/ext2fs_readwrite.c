@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.5 2002/04/01 07:49:14 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.6 2002/10/18 02:45:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.16.2.5 2002/04/01 07:49:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.16.2.6 2002/10/18 02:45:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,13 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.16.2.5 2002/04/01 07:49:14 na
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
@@ -272,7 +272,7 @@ ext2fs_write(v)
 			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
-			error = ext2fs_balloc_range(vp, uio->uio_offset,
+			error = ufs_balloc_range(vp, uio->uio_offset,
 			    bytelen, ap->a_cred, 0);
 			if (error) {
 				break;

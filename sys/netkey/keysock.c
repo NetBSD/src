@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11.2.6 2002/09/17 21:23:44 nathanw Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.2.7 2002/10/18 02:45:30 nathanw Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.6 2002/09/17 21:23:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.7 2002/10/18 02:45:30 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -148,7 +148,7 @@ key_output(m, va_alist)
 	va_end(ap);
 
 	if (m == 0)
-		panic("key_output: NULL pointer was passed.\n");
+		panic("key_output: NULL pointer was passed.");
 
 	pfkeystat.out_total++;
 	pfkeystat.out_bytes += m->m_pkthdr.len;
@@ -250,9 +250,9 @@ key_sendup_mbuf(so, m, target)
 	int error = 0;
 
 	if (m == NULL)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed.");
 	if (so == NULL && target == KEY_SENDUP_ONE)
-		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+		panic("key_sendup_mbuf: NULL pointer was passed.");
 
 	pfkeystat.in_total++;
 	pfkeystat.in_bytes += m->m_pkthdr.len;

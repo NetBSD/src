@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.13 2002/09/17 21:23:23 nathanw Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.14 2002/10/18 02:45:23 nathanw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.13 2002/09/17 21:23:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.14 2002/10/18 02:45:23 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1359,8 +1359,6 @@ ip6_nexthdr(m, off, proto, nxtp)
 	default:
 		return -1;
 	}
-
-	return -1;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3.2.4 2002/04/01 07:47:09 nathanw Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.3.2.5 2002/10/18 02:44:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.3.2.4 2002/04/01 07:47:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.3.2.5 2002/10/18 02:44:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,8 @@ struct cgsix_sbus_softc {
 	struct sbusdev bss_sd;
 };
 
-struct cfattach cgsix_sbus_ca = {
-	sizeof(struct cgsix_sbus_softc), cgsixmatch, cgsixattach
-};
-
+CFATTACH_DECL(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
+    cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
  * Match a cgsix.
@@ -96,7 +94,7 @@ cgsixmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.13.2.3 2002/04/01 07:47:12 nathanw Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.13.2.4 2002/10/18 02:44:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.13.2.3 2002/04/01 07:47:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.13.2.4 2002/10/18 02:44:07 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,9 +111,8 @@ void	lesetaui __P((struct lance_softc *));
 int	lemediachange __P((struct lance_softc *));
 void	lemediastatus __P((struct lance_softc *, struct ifmediareq *));
 
-struct cfattach le_ledma_ca = {
-	sizeof(struct le_softc), lematch_ledma, leattach_ledma
-};
+CFATTACH_DECL(le_ledma, sizeof(struct le_softc),
+    lematch_ledma, leattach_ledma, NULL, NULL);
 
 extern struct cfdriver le_cd;
 
@@ -338,7 +337,7 @@ lematch_ledma(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 

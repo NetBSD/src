@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.32.2.5 2001/11/14 19:18:54 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.32.2.6 2002/10/18 02:45:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.32.2.5 2001/11/14 19:18:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.32.2.6 2002/10/18 02:45:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.32.2.5 2001/11/14 19:18:54 nathan
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>

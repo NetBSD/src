@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.24.2.7 2002/07/12 01:40:44 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.24.2.8 2002/10/18 02:45:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -220,6 +220,7 @@ struct vm_map {
 #define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 #define	VM_MAP_BUSY		0x08		/* rw: map is busy */
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
+#define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 
 /* XXX: number of kernel maps and entries to statically allocate */
 

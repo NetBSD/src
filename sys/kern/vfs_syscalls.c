@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.12 2002/09/17 21:22:31 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.13 2002/10/18 02:44:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.12 2002/09/17 21:22:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.13 2002/10/18 02:44:57 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -133,7 +133,8 @@ sys_mount(l, v, retval)
 	struct nameidata nd;
 	struct vfsops *vfs;
 
-	if (dovfsusermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 	/*
 	 * Get vnode to be covered
@@ -148,7 +149,7 @@ sys_mount(l, v, retval)
 	 * lock this vnode again, so make the lock resursive.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
-	if (SCARG(uap, flags) & MNT_UPDATE) {
+	if (SCARG(uap, flags) & (MNT_UPDATE | MNT_GETARGS)) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
 			return (EINVAL);
@@ -168,22 +169,24 @@ sys_mount(l, v, retval)
 		/*
 		 * In "highly secure" mode, don't let the caller do anything
 		 * but downgrade a filesystem from read-write to read-only.
-		 * (see also below; MNT_UPDATE is required.)
+		 * (see also below; MNT_UPDATE or MNT_GETARGS is required.)
 		 */
 		if (securelevel >= 2 &&
-		    (SCARG(uap, flags) !=
+		    SCARG(uap, flags) != MNT_GETARGS &&
+		    SCARG(uap, flags) !=
 		    (mp->mnt_flag | MNT_RDONLY |
-		    MNT_RELOAD | MNT_FORCE | MNT_UPDATE))) {
+		    MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
 			vput(vp);
 			return (EPERM);
 		}
-		mp->mnt_flag |=
-		    SCARG(uap, flags) & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
+		mp->mnt_flag |= SCARG(uap, flags) &
+		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
 		/*
 		 * Only root, or the user that did the original mount is
 		 * permitted to update it.
 		 */
-		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
+		if ((mp->mnt_flag & MNT_GETARGS) == 0 &&
+		    mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 			vput(vp);
 			return (error);
@@ -310,13 +313,14 @@ update:
 	 * Mount the filesystem.
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
-		mp->mnt_flag &=~
-		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
-		if (error)
+		if (error || (mp->mnt_flag & MNT_GETARGS))
 			mp->mnt_flag = flag;
+		mp->mnt_flag &=~
+		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR |
+		     MNT_GETARGS);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 			if (mp->mnt_syncer == NULL)
 				error = vfs_allocate_syncvnode(mp);

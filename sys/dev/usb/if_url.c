@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.2.2.4 2002/08/01 02:45:55 nathanw Exp $	*/
+/*	$NetBSD: if_url.c,v 1.2.2.5 2002/10/18 02:44:28 nathanw Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2.2.4 2002/08/01 02:45:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2.2.5 2002/10/18 02:44:28 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -976,7 +976,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ifp->if_opackets++;
 
-	m_free(c->url_mbuf);
+	m_freem(c->url_mbuf);
 	c->url_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)

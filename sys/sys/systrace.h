@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.2.2.3 2002/08/01 02:47:01 nathanw Exp $	*/
+/*	$NetBSD: systrace.h,v 1.2.2.4 2002/10/18 02:45:43 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -35,11 +35,17 @@
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
+#include <sys/lock.h>
 
 #define SYSTR_EMULEN	8	/* sync with sys proc */
 
 struct str_msg_emul {
 	char emul[SYSTR_EMULEN];
+};
+
+struct str_msg_ugid {
+	uid_t uid;
+	gid_t gid;
 };
 
 #define SYSTR_MAX_POLICIES	64
@@ -63,6 +69,7 @@ struct str_msg_child {
 #define SYSTR_MSG_RES	2
 #define SYSTR_MSG_EMUL	3
 #define SYSTR_MSG_CHILD	4
+#define SYSTR_MSG_UGID	5
 
 #define SYSTR_MSG_NOPROCESS(x) \
 	((x)->msg.msg_type == SYSTR_MSG_CHILD)
@@ -74,6 +81,7 @@ struct str_message {
 	int16_t msg_policy;
 	union {
 		struct str_msg_emul msg_emul;
+		struct str_msg_ugid msg_ugid;
 		struct str_msg_ask msg_ask;
 		struct str_msg_child msg_child;
 	} msg_data;
@@ -83,6 +91,8 @@ struct systrace_answer {
 	pid_t stra_pid;
 	u_int16_t stra_seqnr;
 	int16_t reserved;
+ 	uid_t stra_seteuid;	/* elevated privileges for system call */
+ 	uid_t stra_setegid;
 	int32_t stra_policy;
 	int32_t stra_error;
 	int32_t stra_flags;
@@ -146,6 +156,8 @@ struct systrace_replace {
 #define SYSTR_POLICY_NEVER	2
 
 #define SYSTR_FLAGS_RESULT	0x001
+#define SYSTR_FLAGS_SETEUID	0x002
+#define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
 /* XXX: these shouldn't be here. */

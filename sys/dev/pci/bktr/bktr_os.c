@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.18.2.7 2002/09/17 21:20:33 nathanw Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.18.2.8 2002/10/18 02:43:24 nathanw Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.18.2.7 2002/09/17 21:20:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.18.2.8 2002/10/18 02:43:24 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1330,9 +1330,8 @@ static int      bktr_probe __P((struct device *, struct cfdata *, void *));
 #endif
 static void     bktr_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bktr_ca = {
-        sizeof(struct bktr_softc), bktr_probe, bktr_attach
-};
+CFATTACH_DECL(bktr, sizeof(struct bktr_softc),
+    bktr_probe, bktr_attach, NULL, NULL);
 
 #if defined(__NetBSD__)
 extern struct cfdriver bktr_cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37.2.9 2002/08/01 02:46:15 nathanw Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.10 2002/10/18 02:44:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -124,10 +124,8 @@ struct wskbd_keyrepeat_data {
 
 #define	WSKBDIO_SETKEYREPEAT	_IOW('W', 7, struct wskbd_keyrepeat_data)
 #define	WSKBDIO_GETKEYREPEAT	_IOR('W', 8, struct wskbd_keyrepeat_data)
-#define	WSKBDIO_SETDEFAULTKEYREPEAT \
-	    _IOW('W', 9, struct wskbd_keyrepeat_data)
-#define	WSKBDIO_GETDEFAULTKEYREPEAT \
-	    _IOR('W', 10, struct wskbd_keyrepeat_data)
+#define	WSKBDIO_SETDEFAULTKEYREPEAT _IOW('W', 9, struct wskbd_keyrepeat_data)
+#define	WSKBDIO_GETDEFAULTKEYREPEAT _IOR('W', 10, struct wskbd_keyrepeat_data)
 
 /* Get/set keyboard leds */
 #define		WSKBD_LED_CAPS		0x01
@@ -312,9 +310,11 @@ struct wsdisplay_cursor {
 #define		WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
 #define		WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
 
+
+
 /*
  * XXX WARNING
- * XXX The following definitions are very preliminary and are likely
+ * XXX The following wsdisplay definitions are very preliminary and are likely
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
@@ -394,7 +394,11 @@ struct wsdisplay_char {
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
 
-/* Mux ioctls (96 - 127) */
+
+/*
+ * Mux ioctls (96 - 127)
+ */
+
 #define WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
 #define WSMUX_INJECTEVENT WSMUXIO_INJECTEVENT /* XXX compat */
 

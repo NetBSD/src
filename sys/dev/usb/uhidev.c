@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.3.2.4 2002/08/01 02:45:58 nathanw Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3.2.5 2002/10/18 02:44:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,6 +235,11 @@ USB_ATTACH(uhidev)
 					USB_ATTACH_ERROR_RETURN;
 				}
 #endif
+#if NRND > 0
+				rnd_attach_source(&dev->rnd_source, 
+						  USBDEVNAME(dev->sc_dev), 
+						  RND_TYPE_TTY, 0);
+#endif
 			}
 		}
 	}
@@ -282,7 +287,7 @@ uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
 	else
 		uha->matchlvl = 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -294,7 +299,6 @@ uhidev_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		rv = 0;
@@ -325,6 +329,9 @@ USB_DETACH(uhidev)
 	rv = 0;
 	for (i = 0; i < sc->sc_nrepid; i++) {
 		if (sc->sc_subdevs[i] != NULL) {
+#if NRND > 0
+			rnd_detach_source(&sc->sc_subdevs[i]->rnd_source);
+#endif
 			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
 			sc->sc_subdevs[i] = NULL;
 		}
@@ -387,6 +394,9 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (scd->sc_in_rep_size != cc)
 		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
 		       scd->sc_in_rep_size, cc);
+#endif
+#if NRND > 0
+	rnd_add_uint32(&scd->rnd_source, (uintptr_t)(sc->sc_ibuf));
 #endif
 	scd->sc_intr(scd, p, cc);
 }

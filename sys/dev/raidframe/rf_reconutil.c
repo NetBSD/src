@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.3.20.3 2002/09/17 21:20:59 nathanw Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.3.20.4 2002/10/18 02:43:57 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.20.3 2002/09/17 21:20:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.20.4 2002/10/18 02:43:57 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,7 +71,10 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	/* make and zero the global reconstruction structure and the per-disk
 	 * structure */
 	RF_Calloc(reconCtrlPtr, 1, sizeof(RF_ReconCtrl_t), (RF_ReconCtrl_t *));
-	RF_Calloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol, sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));	/* this zeros it */
+
+	/* note: this zeros the perDiskInfo */
+	RF_Calloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol, 
+		  sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));
 	reconCtrlPtr->reconDesc = reconDesc;
 	reconCtrlPtr->fcol = fcol;
 	reconCtrlPtr->spareRow = srow;
@@ -84,9 +87,8 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 		reconCtrlPtr->perDiskInfo[i].reconCtrl = reconCtrlPtr;
 		reconCtrlPtr->perDiskInfo[i].row = frow;
 		reconCtrlPtr->perDiskInfo[i].col = i;
-		reconCtrlPtr->perDiskInfo[i].curPSID = -1;	/* make it appear as if
-								 * we just finished an
-								 * RU */
+		/* make it appear as if we just finished an RU */
+		reconCtrlPtr->perDiskInfo[i].curPSID = -1;	
 		reconCtrlPtr->perDiskInfo[i].ru_count = RUsPerPU - 1;
 	}
 
@@ -145,7 +147,8 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		rbuf = rf_MakeReconBuffer(raidPtr, frow, fcol, RF_RBUF_TYPE_FLOATING);
+		rbuf = rf_MakeReconBuffer(raidPtr, frow, fcol, 
+					  RF_RBUF_TYPE_FLOATING);
 		rbuf->next = reconCtrlPtr->floatingRbufs;
 		reconCtrlPtr->floatingRbufs = rbuf;
 	}
@@ -183,7 +186,8 @@ rf_FreeReconControl(raidPtr, row)
 	rf_cond_destroy(&reconCtrlPtr->eq_cond);
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
-	RF_Free(reconCtrlPtr->perDiskInfo, raidPtr->numCol * sizeof(RF_PerDiskReconCtrl_t));
+	RF_Free(reconCtrlPtr->perDiskInfo, 
+		raidPtr->numCol * sizeof(RF_PerDiskReconCtrl_t));
 	RF_Free(reconCtrlPtr, sizeof(*reconCtrlPtr));
 }
 
@@ -257,13 +261,15 @@ rf_FreeReconBuffer(rbuf)
 	RF_ReconBuffer_t *rbuf;
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
-	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
+	u_int   recon_buffer_size;
+
+	recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
 
 	RF_Free(rbuf->buffer, recon_buffer_size);
 	RF_Free(rbuf, sizeof(*rbuf));
 }
 
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 /******************************************************************************
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/
@@ -310,19 +316,23 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 		RF_UNLOCK_MUTEX(pssTable[i].mutex);
 	}
 
-	for (rbuf = raidPtr->reconControl[frow]->floatingRbufs; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->floatingRbufs; rbuf; 
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->committedRbufs; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->committedRbufs; rbuf; 
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->fullBufferList; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->fullBufferList; rbuf; 
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf; rbuf = rbuf->next) {
+	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf; 
+	     rbuf = rbuf->next) {
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.13 2002/09/17 21:23:59 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.14 2002/10/18 02:45:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.13 2002/09/17 21:23:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.14 2002/10/18 02:45:50 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -190,6 +190,14 @@ ffs_mount(mp, path, data, ndp, p)
 	int error, flags, update;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
@@ -499,7 +507,45 @@ ffs_reload(mountp, cred, p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	free(newfs, M_UFSMNT);
+
+	/* Recheck for apple UFS filesystem */
+	VFSTOUFS(mountp)->um_flags &= ~UFS_ISAPPLEUFS;
+	/* First check to see if this is tagged as an Apple UFS filesystem
+	 * in the disklabel
+	 */
+	if ((VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) == 0) &&
+		(dpart.part->p_fstype == FS_APPLEUFS)) {
+		VFSTOUFS(mountp)->um_flags |= UFS_ISAPPLEUFS;
+	}
+#ifdef APPLE_UFS
+	else {
+		/* Manually look for an apple ufs label, and if a valid one
+		 * is found, then treat it like an Apple UFS filesystem anyway
+		 */
+		error = bread(devvp, (ufs_daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+			APPLEUFS_LABEL_SIZE, cred, &bp);
+		if (error) {
+			brelse(bp);
+			return (error);
+		}
+		error = ffs_appleufs_validate(fs->fs_fsmnt,
+			(struct appleufslabel *)bp->b_data,NULL);
+		if (error == 0) {
+			VFSTOUFS(mountp)->um_flags |= UFS_ISAPPLEUFS;
+		}
+		brelse(bp);
+		bp = NULL;
+	}
+#else
+	if (VFSTOUFS(mountp)->um_flags & UFS_ISAPPLEUFS)
+		return (EIO);
+#endif
+
 	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	if (UFS_MPISAPPLEUFS(mountp)) {
+		/* see comment about NeXT below */
+		mountp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+	}
 	ffs_oldfscompat(fs);
 		/* An old fsck may have zeroed these fields, so recheck them. */
 	if (fs->fs_avgfilesize <= 0)
@@ -715,6 +761,37 @@ ffs_mountfs(devvp, mp, p)
 	brelse(bp);
 	bp = NULL;
 
+	/* First check to see if this is tagged as an Apple UFS filesystem
+	 * in the disklabel
+	 */
+	if ((VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) == 0) &&
+		(dpart.part->p_fstype == FS_APPLEUFS)) {
+		ump->um_flags |= UFS_ISAPPLEUFS;
+	}
+#ifdef APPLE_UFS
+	else {
+		/* Manually look for an apple ufs label, and if a valid one
+		 * is found, then treat it like an Apple UFS filesystem anyway
+		 */
+		error = bread(devvp, (ufs_daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+			APPLEUFS_LABEL_SIZE, cred, &bp);
+		if (error)
+			goto out;
+		error = ffs_appleufs_validate(fs->fs_fsmnt,
+			(struct appleufslabel *)bp->b_data,NULL);
+		if (error == 0) {
+			ump->um_flags |= UFS_ISAPPLEUFS;
+		}
+		brelse(bp);
+		bp = NULL;
+	}
+#else
+	if (ump->um_flags & UFS_ISAPPLEUFS) {
+		error = EINVAL;
+		goto out;
+	}
+#endif
+
 	/*
 	 * verify that we can access the last block in the fs
 	 * if we're mounting read/write.
@@ -785,6 +862,14 @@ ffs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	if (UFS_MPISAPPLEUFS(mp)) {
+		/* NeXT used to keep short symlinks in the inode even
+		 * when using FS_42INODEFMT.  In that case fs->fs_maxsymlinklen
+		 * is probably -1, but we still need to be able to identify
+		 * short symlinks.
+		 */
+		mp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+	}
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;

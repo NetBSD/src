@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.15.4.7 2002/02/28 04:14:24 nathanw Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.15.4.8 2002/10/18 02:44:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.7 2002/02/28 04:14:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.8 2002/10/18 02:44:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.7 2002/02/28 04:14:24 nathanw Exp
 int	sd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_scsibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_scsibus_ca = {
-	sizeof(struct sd_softc), sd_scsibus_match, sd_scsibus_attach,
-	sddetach, sdactivate,
-};
+CFATTACH_DECL(sd_scsibus, sizeof(struct sd_softc),
+    sd_scsibus_match, sd_scsibus_attach, sddetach, sdactivate);
 
 struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
 	{T_DIRECT, T_FIXED,
@@ -322,6 +320,8 @@ fake_it:
 	 * different. but we have to put SOMETHING here..)
 	 */
 	sectors = scsipi_size(sd->sc_periph, flags);
+	if (sectors == 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 	dp->blksize = 512;
 	dp->disksize = sectors;
 	/* Try calling driver's method for figuring out geometry. */

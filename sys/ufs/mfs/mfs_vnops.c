@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.2.6 2002/08/01 02:47:06 nathanw Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.2.7 2002/10/18 02:45:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.6 2002/08/01 02:47:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.7 2002/10/18 02:45:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.6 2002/08/01 02:47:06 nathanw E
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/map.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.4.6.1 2001/11/14 19:15:52 nathanw Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.4.6.2 2002/10/18 02:43:54 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.4.6.1 2001/11/14 19:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.4.6.2 2002/10/18 02:43:54 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -80,7 +80,6 @@ rf_ConfigureRAID4(
 
 	/* fill in the remaining layout parameters */
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = raidPtr->numCol - 1;
 	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numParityCol = 1;

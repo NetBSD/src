@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.10 2002/07/16 14:06:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.11 2002/10/18 02:46:01 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.10 2002/07/16 14:06:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.11 2002/10/18 02:46:01 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -325,7 +325,8 @@ uvm_aio_aiodone(bp)
 		uvm_lock_pageq();
 	} else if (error) {
 		if (pg->uobject != NULL) {
-			swslot = uao_find_swslot(pg->uobject, pg->offset);
+			swslot = uao_find_swslot(pg->uobject,
+			    pg->offset >> PAGE_SHIFT);
 		} else {
 			swslot = pg->uanon->an_swslot;
 		}

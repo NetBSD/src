@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.49.2.4 2002/08/01 02:45:58 nathanw Exp $	*/
+/*	$NetBSD: uhub.c,v 1.49.2.5 2002/10/18 02:44:33 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.2.4 2002/08/01 02:45:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.2.5 2002/10/18 02:44:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +102,8 @@ Static bus_child_detached_t uhub_child_detached;
 USB_DECLARE_DRIVER(uhub);
 
 /* Create the driver instance for the hub connected to hub case */
-struct cfattach uhub_uhub_ca = {
-	sizeof(struct uhub_softc), uhub_match, uhub_attach,
-	uhub_detach, uhub_activate
-};
+CFATTACH_DECL(uhub_uhub, sizeof(struct uhub_softc),
+    uhub_match, uhub_attach, uhub_detach, uhub_activate);
 #elif defined(__FreeBSD__)
 USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));
@@ -497,7 +495,6 @@ uhub_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (hub == NULL) /* malfunctioning hub */

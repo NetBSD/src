@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.12.2.6 2002/08/27 23:47:04 nathanw Exp $ */
+/*	$NetBSD: qec.c,v 1.12.2.7 2002/10/18 02:44:10 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.6 2002/08/27 23:47:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.7 2002/10/18 02:44:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,8 @@ static void *qec_intr_establish __P((
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*arg*/
 
-struct cfattach qec_ca = {
-	sizeof(struct qec_softc), qecmatch, qecattach
-};
+CFATTACH_DECL(qec, sizeof(struct qec_softc),
+    qecmatch, qecattach, NULL, NULL);
 
 int
 qecprint(aux, busname)
@@ -101,7 +100,7 @@ qecmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

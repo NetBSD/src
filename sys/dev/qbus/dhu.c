@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.9 2002/09/17 21:20:40 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.10 2002/10/18 02:43:37 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.9 2002/09/17 21:20:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.10 2002/10/18 02:43:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -148,9 +147,8 @@ static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
 static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
 
-struct	cfattach dhu_ca = {
-	sizeof(struct dhu_softc), dhu_match, dhu_attach
-};
+CFATTACH_DECL(dhu, sizeof(struct dhu_softc),
+    dhu_match, dhu_attach, NULL, NULL);
 
 dev_type_open(dhuopen);
 dev_type_close(dhuclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.50.2.12 2002/08/01 02:47:09 nathanw Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.50.2.13 2002/10/18 02:46:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.50.2.12 2002/08/01 02:47:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.50.2.13 2002/10/18 02:46:00 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -656,7 +656,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
-		panic("uvm_page_physload: bad free list %d\n", free_list);
+		panic("uvm_page_physload: bad free list %d", free_list);
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
 
@@ -1215,7 +1215,7 @@ uvm_pagefree(pg)
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
 	    pg->uanon == (void *)0xdeadbeef) {
-		panic("uvm_pagefree: freeing free page %p\n", pg);
+		panic("uvm_pagefree: freeing free page %p", pg);
 	}
 #endif
 

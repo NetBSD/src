@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.49.2.8 2002/09/17 21:21:46 nathanw Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.49.2.9 2002/10/18 02:44:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.49.2.8 2002/09/17 21:21:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.49.2.9 2002/10/18 02:44:44 nathanw Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -143,17 +143,11 @@ static void wsdisplay_emul_attach(struct device *, struct device *, void *);
 static int wsdisplay_noemul_match(struct device *, struct cfdata *, void *);
 static void wsdisplay_noemul_attach(struct device *, struct device *, void *);
 
-struct cfattach wsdisplay_emul_ca = {
-	sizeof (struct wsdisplay_softc),
-	wsdisplay_emul_match,
-	wsdisplay_emul_attach,
-};
- 
-struct cfattach wsdisplay_noemul_ca = {
-	sizeof (struct wsdisplay_softc),
-	wsdisplay_noemul_match,
-	wsdisplay_noemul_attach,
-};
+CFATTACH_DECL(wsdisplay_emul, sizeof (struct wsdisplay_softc),
+    wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
+
+CFATTACH_DECL(wsdisplay_noemul, sizeof (struct wsdisplay_softc),
+    wsdisplay_noemul_match, wsdisplay_noemul_attach, NULL, NULL);
  
 dev_type_open(wsdisplayopen);
 dev_type_close(wsdisplayclose);
@@ -582,7 +576,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (mux == NULL)
-		panic("wsdisplay_common_attach: no memory\n");
+		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
 	mux->sc_base.me_dispdv = &sc->sc_dv;
 	printf(" kbdmux %d", kbdmux);

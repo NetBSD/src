@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.10.6.1 2001/11/14 19:16:29 nathanw Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.10.6.2 2002/10/18 02:44:48 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.10.6.1 2001/11/14 19:16:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.10.6.2 2002/10/18 02:44:48 nathanw Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -62,7 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.10.6.1 2001/11/14 19:16:29 nathanw
 
 int ipkdbpanic = 0;
 
+#ifndef IPKDBKEY
+#error You must specify the IPKDBKEY option to use IPKDB.
+#else
 static char *ipkdbkey = IPKDBKEY;
+#endif
 
 static struct ipkdb_if ipkdb_if;
 

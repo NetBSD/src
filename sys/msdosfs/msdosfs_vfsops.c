@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.11 2002/09/17 21:22:43 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.12 2002/10/18 02:45:07 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.11 2002/09/17 21:22:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.12 2002/10/18 02:45:07 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -246,6 +246,18 @@ msdosfs_mount(mp, path, data, ndp, p)
 	int error, flags;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		pmp = VFSTOMSDOSFS(mp);
+		if (pmp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.uid = pmp->pm_uid;
+		args.gid = pmp->pm_gid;
+		args.mask = pmp->pm_mask;
+		args.flags = pmp->pm_flags;
+		vfs_showexport(mp, &args.export, &pmp->pm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args));
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45.2.6 2002/04/01 07:48:04 nathanw Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.7 2002/10/18 02:44:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.6 2002/04/01 07:48:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.7 2002/10/18 02:44:58 nathanw Exp $");
 
 #include "fs_union.h"
 
@@ -65,7 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.6 2002/04/01 07:48:04 nathanw E
 #include <miscfs/union/union.h>
 #endif
 
-static int  vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));
+static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+static int vn_write(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+static int vn_closefile(struct file *fp, struct proc *p);
+static int vn_poll(struct file *fp, int events, struct proc *p);
+static int vn_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p);
+static int vn_statfile(struct file *fp, struct stat *sb, struct proc *p);
+static int vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
@@ -207,6 +215,24 @@ vn_markexec(vp)
 		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag |= VEXECMAP;
+}
+
+/*
+ * Mark a vnode as being the text of a process.
+ * Fail if the vnode is currently writable.
+ */
+int
+vn_marktext(vp)
+	struct vnode *vp;
+{
+
+	if (vp->v_writecount != 0) {
+		KASSERT((vp->v_flag & VTEXT) == 0);
+		return (ETXTBSY);
+	}
+	vp->v_flag |= VTEXT;
+	vn_markexec(vp);
+	return (0);
 }
 
 /*
@@ -374,7 +400,7 @@ unionread:
 /*
  * File table vnode read routine.
  */
-int
+static int
 vn_read(fp, offset, uio, cred, flags)
 	struct file *fp;
 	off_t *offset;
@@ -405,7 +431,7 @@ vn_read(fp, offset, uio, cred, flags)
 /*
  * File table vnode write routine.
  */
-int
+static int
 vn_write(fp, offset, uio, cred, flags)
 	struct file *fp;
 	off_t *offset;
@@ -457,12 +483,11 @@ vn_statfile(fp, sb, p)
 }
 
 int
-vn_stat(fdata, sb, p)
-	void *fdata;
+vn_stat(vp, sb, p)
+	struct vnode *vp;
 	struct stat *sb;
 	struct proc *p;
 {
-	struct vnode *vp = fdata;
 	struct vattr va;
 	int error;
 	mode_t mode;
@@ -520,7 +545,7 @@ vn_stat(fdata, sb, p)
 /*
  * File table vnode fcntl routine.
  */
-int
+static int
 vn_fcntl(fp, com, data, p)
 	struct file *fp;
 	u_int com;
@@ -539,7 +564,7 @@ vn_fcntl(fp, com, data, p)
 /*
  * File table vnode ioctl routine.
  */
-int
+static int
 vn_ioctl(fp, com, data, p)
 	struct file *fp;
 	u_long com;
@@ -585,7 +610,7 @@ vn_ioctl(fp, com, data, p)
 /*
  * File table vnode poll routine.
  */
-int
+static int
 vn_poll(fp, events, p)
 	struct file *fp;
 	int events;
@@ -631,7 +656,7 @@ vn_lock(vp, flags)
 /*
  * File table vnode close routine.
  */
-int
+static int
 vn_closefile(fp, p)
 	struct file *fp;
 	struct proc *p;

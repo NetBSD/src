@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.1.4.4 2002/01/08 00:32:01 nathanw Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.1.4.5 2002/10/18 02:44:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.1.4.4 2002/01/08 00:32:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.1.4.5 2002/10/18 02:44:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,8 @@ struct asc_softc {
 static int  asc_tcds_match  __P((struct device *, struct cfdata *, void *));
 static void asc_tcds_attach __P((struct device *, struct device *, void *));
 
-/* Linkup to the rest of the kernel */
-struct cfattach asc_tcds_ca = {
-	sizeof(struct asc_softc), asc_tcds_match, asc_tcds_attach
-};
+CFATTACH_DECL(asc_tcds, sizeof(struct asc_softc),
+    asc_tcds_match, asc_tcds_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.8.2.2 2001/11/14 19:15:43 nathanw Exp $	*/
+/*	$NetBSD: if_de.c,v 1.8.2.3 2002/10/18 02:43:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.8.2.2 2001/11/14 19:15:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.8.2.3 2002/10/18 02:43:38 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -155,9 +155,8 @@ static	void derecv(struct de_softc *);
 static	void deintr(void *);
 static	void deshutdown(void *);
 
-struct	cfattach de_ca = {
-	sizeof(struct de_softc), dematch, deattach
-};
+CFATTACH_DECL(de, sizeof(struct de_softc),
+    dematch, deattach, NULL, NULL);
 
 #define DE_WCSR(csr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
