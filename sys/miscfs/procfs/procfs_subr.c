@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.17 1997/05/05 07:14:00 mycroft Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.18 1997/05/05 07:35:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -46,6 +46,8 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/stat.h>
+
 #include <miscfs/procfs/procfs.h>
 
 static struct pfsnode *pfshead;
