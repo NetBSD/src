@@ -1,4 +1,4 @@
-# $NetBSD: locale.alias,v 1.1 2004/07/21 19:02:17 tshiozak Exp $
+# $NetBSD: locale.alias,v 1.2 2004/09/10 15:12:51 ian Exp $
 
 #
 # Locale aliases
@@ -87,3 +87,6 @@ zh_TW.UTF-8/LC_MESSAGES		/FORCE
 
 # Pig locale
 Pig				/FORCE
+
+# Preexisting alias for zh_TW.Big5
+zh_TW.BIG5			zh_TW.Big5
