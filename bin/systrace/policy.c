@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.6 2002/09/17 05:07:21 itojun Exp $	*/
+/*	$NetBSD: policy.c,v 1.7 2002/09/23 04:35:41 itojun Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,12 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.6 2002/09/17 05:07:21 itojun Exp $");
+__RCSID("$NetBSD: policy.c,v 1.7 2002/09/23 04:35:41 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
+#include <dirent.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,6 +107,8 @@ static char policydir[MAXPATHLEN];
 static char *groupnames[NGROUPS_MAX];
 static int ngroups;
 
+struct tmplqueue templates;
+
 void
 systrace_setupdir(char *path)
 {
@@ -162,8 +165,10 @@ systrace_initpolicy(char *file, char *path)
 		}
 	}
 
-	if (userpolicy)
+	if (userpolicy) {
 		systrace_setupdir(path);
+		systrace_templatedir();
+	}
 
 	if (file != NULL)
 		return (systrace_readpolicy(file));
@@ -324,6 +329,152 @@ systrace_addpolicy(const char *name)
 	}
 
 	return (systrace_readpolicy(file));
+}
+
+/* 
+ * Reads policy templates from the template directory.
+ * These policies can be inserted during interactive policy
+ * generation.
+ */
+
+int
+systrace_templatedir(void)
+{
+	char filename[MAXPATHLEN];
+	DIR *dir = NULL;
+	struct stat sb;
+	struct dirent *dp;
+	struct template *template;
+	int off;
+
+	TAILQ_INIT(&templates);
+
+	if (userpolicy) {
+		if (strlcpy(filename, policydir, sizeof(filename)) >=
+		    sizeof(filename))
+			goto error;
+		if (strlcat(filename, "/templates", sizeof(filename)) >=
+		    sizeof(filename))
+			goto error;
+
+		/* Check if template directory exists */
+		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+			dir = opendir(filename);
+	}
+
+	/* Read global policy */
+	if (dir == NULL) {
+		strlcpy(filename, POLICY_PATH, sizeof(filename));
+		strlcat(filename, "/templates", sizeof(filename));
+		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+			dir = opendir(filename);
+		if (dir == NULL)
+			return (-1);
+	}
+
+	if (strlcat(filename, "/", sizeof(filename)) >= sizeof(filename))
+		goto error;
+	off = strlen(filename);
+
+	while ((dp = readdir(dir)) != NULL) {
+		filename[off] = '\0';
+		if (strlcat(filename, dp->d_name, sizeof(filename)) >=
+		    sizeof(filename))
+			goto error;
+
+		if (stat(filename, &sb) == -1 || !(sb.st_mode & S_IFREG))
+			continue;
+
+		template = systrace_readtemplate(filename, NULL, NULL);
+		if (template == NULL)
+			continue;
+
+		TAILQ_INSERT_TAIL(&templates, template, next);
+	}
+	closedir(dir);
+
+	return (0);
+
+ error:
+	errx(1, "%s: template name too long", __func__);
+}
+
+struct template *
+systrace_readtemplate(char *filename, struct policy *policy,
+    struct template *template)
+{
+	FILE *fp;
+	char line[_POSIX2_LINE_MAX], *p;
+	char *emulation, *name, *description;
+	int linenumber = 0;
+	
+	if ((fp = fopen(filename, "r")) == NULL)
+		return (NULL);
+
+	while (fgets(line, sizeof(line), fp)) {
+		linenumber++;
+
+		if ((p = systrace_policyline(line)) == NULL) {
+			fprintf(stderr, "%s:%d: input line too long.\n",
+			    filename, linenumber);
+			template = NULL;
+			goto out;
+		}
+
+		if (strlen(p) == 0)
+			continue;
+
+		if (!strncasecmp(p, "Template: ", 10)) {
+			p += 10;
+			name = strsep(&p, ",");
+			if (p == NULL)
+				goto error;
+			if (strncasecmp(p, " Emulation: ", 12))
+				goto error;
+			p += 12;
+			emulation = strsep(&p, ", ");
+			if (p == NULL)
+				goto error;
+			if (strncasecmp(p, " Description: ", 14))
+				goto error;
+			p += 14;
+			description = p;
+
+			if (template != NULL)
+				continue;
+			
+			template = calloc(1, sizeof(struct template));
+			if (template == NULL)
+				err(1, "calloc");
+
+			template->filename = strdup(filename);
+			template->name = strdup(name);
+			template->emulation = strdup(emulation);
+			template->description = strdup(description);
+
+			if (template->filename == NULL ||
+			    template->name == NULL ||
+			    template->emulation == NULL ||
+			    template->description == NULL)
+				err(1, "strdup");
+
+			continue;
+		}
+
+		if (policy == NULL)
+			return (template);
+
+		if (systrace_policyprocess(policy, p) == -1)
+			goto error;
+	}
+
+ out:
+	fclose(fp);
+	return (template);
+
+ error:
+	fprintf(stderr, "%s:%d: syntax error.\n", filename, linenumber);
+	goto out;
 }
 
 int
