@@ -1,4 +1,4 @@
-.\" $NetBSD: userinfo.8,v 1.2.4.1 2000/10/20 20:00:34 tv Exp $ */
+.\" $NetBSD: userinfo.8,v 1.2.4.2 2002/06/26 17:21:05 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .Dd November 30, 1999
 .Dt USERINFO 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm userinfo
 .Nd displays user information
@@ -70,7 +70,8 @@ utility exits 0 if the user name or uid exists, and non-zero if it does not.
 .It Pa /etc/usermgmt.conf
 .El
 .Sh SEE ALSO
-.Xr passwd 5
+.Xr passwd 5 ,
+.Xr usermgmt.conf 5
 .Sh HISTORY
 The
 .Nm
@@ -79,7 +80,7 @@ utility first appeared in
 It is based on the
 .Ar addnerd
 package by the same author.
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
