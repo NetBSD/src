@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.13 1996/04/15 23:45:29 jtc Exp $	*/
+/*	$NetBSD: err.c,v 1.14 1997/07/13 18:55:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: err.c,v 1.13 1996/04/15 23:45:29 jtc Exp $";
+__RCSID("$NetBSD: err.c,v 1.14 1997/07/13 18:55:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <err.h>
 
 #ifdef __STDC__
