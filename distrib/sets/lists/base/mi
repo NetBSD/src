@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.10 2000/08/17 14:17:16 thorpej Exp $
+# $NetBSD: mi,v 1.169.2.11 2000/09/29 05:48:36 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -331,6 +331,7 @@
 ./usr/bin/rusers
 ./usr/bin/rwall
 ./usr/bin/rwho
+./usr/bin/scp
 ./usr/bin/script
 ./usr/bin/sdiff
 ./usr/bin/sed
@@ -343,8 +344,13 @@
 ./usr/bin/skeyaudit
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
+./usr/bin/slogin
 ./usr/bin/sort
 ./usr/bin/split
+./usr/bin/ssh
+./usr/bin/ssh-add
+./usr/bin/ssh-keygen
+./usr/bin/ssh-agent
 ./usr/bin/string2key
 ./usr/bin/su
 ./usr/bin/sum
@@ -702,6 +708,7 @@
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
+./usr/sbin/sshd
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
 ./usr/sbin/sup
