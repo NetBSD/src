@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.529 2004/11/12 06:41:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.530 2004/11/12 06:43:00 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8031,3 +8031,10 @@ libexec/talkd/process.c				1.11
 	Talk daemon does not find additional ttys for  particular user if 
 	the first tty is not writable.
 	[jklos, ticket #960]
+
+etc/ssh/ssh_known_hosts				1.3
+
+	- .isc.netbsd.org aliases are gone
+	- zathras is gone, alias releng to www
+
+	[soren, ticket #962]
