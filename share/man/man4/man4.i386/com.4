@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.7 1999/11/14 17:02:21 augustss Exp $
+.\"	$NetBSD: com.4,v 1.8 2000/03/23 19:48:30 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -67,8 +67,15 @@ Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
 19200, 38400, 57600, or 115200, or any other baud rate which is a factor
 of 115200.
+.Pp
+The ttyXX devices are traditional dialin devices; the dtyXX devices are
+used for dialout.  (See
+.Xr tty 4 . )
 .Sh FILES
-.Bl -tag -width Pa
+.Bl -tag -width Pa -compact
+.It Pa /dev/dty00
+.It Pa /dev/dty01
+.It Pa /dev/dty02
 .It Pa /dev/tty00
 .It Pa /dev/tty01
 .It Pa /dev/tty02
