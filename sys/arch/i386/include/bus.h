@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.28 2000/04/17 17:24:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,6 +193,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define bus_space_free(t, h, s)						\
 	i386_memio_free((t), (h), (s))
+
+/*
+ *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h) \
+	((t) == I386_BUS_SPACE_MEM ? (void *)(h) : (void *)0)
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.37 2000/03/15 16:44:48 drochner Exp $ */
+/* $NetBSD: bus.h,v 1.38 2000/04/17 17:30:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -143,6 +143,9 @@ struct alpha_bus_space {
 			    bus_addr_t *, bus_space_handle_t *));
 	void		(*abs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
+
+	/* get kernel virtual address */
+	void *		(*abs_vaddr) __P((void *, bus_space_handle_t));
 
 	/* barrier */
 	void		(*abs_barrier) __P((void *, bus_space_handle_t,
@@ -327,6 +330,11 @@ do {									\
 #define	bus_space_free(t, h, s)						\
 	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
 
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define bus_space_vaddr(t, h) \
+	(*(t)->abs_vaddr)((t)->abs_cookie, (h))
 
 /*
  * Bus barrier operations.
