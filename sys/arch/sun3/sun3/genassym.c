@@ -66,6 +66,8 @@ main()
 				/* 68k isms */
     printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
+    printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
+    printf("#define\tSPL1 %d\n", PSL_S | PSL_IPL1);
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
 
 				/* sun3 control space isms */
@@ -82,6 +84,11 @@ main()
 				/* errno-isms */
     printf("#define\tEFAULT %d\n",        EFAULT);
     printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
+
+                                /* trap constants */
+    printf("#define\tT_SSIR %d\n", T_SSIR);
+    printf("#define\tT_ASTFLT %d\n", T_ASTFLT);
+    
     /*
      * unix structure-isms
      */

@@ -105,7 +105,7 @@ pcbflag:
  */
 ENTRY(swtch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
-	lea	tmpstk,sp		| goto a tmp stack
+/*	lea	tmpstk,sp		| goto a tmp stack*/
 	jra	_swtch
 
 /*
@@ -208,7 +208,7 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
+/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -237,8 +237,8 @@ Lswnofpsave:
 	jeq	Lbadsw			| panic
 #endif
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-	tstl	a0@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip
+/*	tstl	a0@(PM_STCHG)		| pmap->st_changed?
+	jeq	Lswnochg		| no, skip */
 	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
@@ -270,7 +270,7 @@ Lskipoff:
 #ifdef notdef
 	movw	#PSL_HIGHIPL,sr		| go crit while changing PTEs
 #endif
-	lea	tmpstk,sp		| now goto a tmp stack for NMI
+/*	lea	tmpstk,sp		| now goto a tmp stack for NMI*/
 	movl	d0,a0			| address of new context
 	movl	_Umap,a2		| address of PTEs for kstack
 	moveq	#UPAGES-1,d0		| sizeof kstack
@@ -306,7 +306,7 @@ Lnocache1:
 	movl	a1@(PCB_USTP),a0@(MMUUSTP) | context switch
 #endif
 Lcxswdone:
-	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
+/*	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map*/
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -349,7 +349,7 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
+/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -367,4 +367,42 @@ Lsvnofpsave:
 	movl	sp@,a1@			| write return pc at (relocated) sp@
 Lsavedone:
 	moveq	#0,d0			| return 0
+	rts
+
+/*
+ * update profiling information for the user
+ * addupc(pc, &u.u_prof, ticks)
+ */
+ENTRY(addupc)
+	movl	a2,sp@-			| scratch register
+	movl	sp@(12),a2		| get &u.u_prof
+	movl	sp@(8),d0		| get user pc
+	subl	a2@(8),d0		| pc -= pr->pr_off
+	jlt	Lauexit			| less than 0, skip it
+	movl	a2@(12),d1		| get pr->pr_scale
+	lsrl	#1,d0			| pc /= 2
+	lsrl	#1,d1			| scale /= 2
+	mulul	d1,d0			| pc /= scale
+	moveq	#14,d1
+	lsrl	d1,d0			| pc >>= 14
+	bclr	#0,d0			| pc &= ~1
+	cmpl	a2@(4),d0		| too big for buffer?
+	jge	Lauexit			| yes, screw it
+	addl	a2@,d0			| no, add base
+	movl	d0,sp@-			| push address
+	jbsr	_fusword		| grab old value
+	movl	sp@+,a0			| grab address back
+	cmpl	#-1,d0			| access ok
+	jeq	Lauerror		| no, skip out
+	addw	sp@(18),d0		| add tick to current value
+	movl	d0,sp@-			| push value
+	movl	a0,sp@-			| push address
+	jbsr	_susword		| write back new value
+	addql	#8,sp			| pop params
+	tstl	d0			| fault?
+	jeq	Lauexit			| no, all done
+Lauerror:
+	clrl	a2@(12)			| clear scale (turn off prof)
+Lauexit:
+	movl	sp@+,a2			| restore scratch reg
 	rts

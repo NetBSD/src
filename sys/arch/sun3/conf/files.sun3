@@ -10,6 +10,7 @@ arch/sun3/sun3/pmap.c		standard
 arch/sun3/sun3/stub.c		standard
 arch/sun3/sun3/sun3_startup.c	standard
 arch/sun3/sun3/swapgeneric.c	standard
+arch/sun3/sun3/trap.c		standard
 arch/sun3/sun3/vector.c		standard
 arch/sun3/sun3/vm_machdep.c	standard
 arch/sun3/dev/idprom.c		optional idprom device-driver

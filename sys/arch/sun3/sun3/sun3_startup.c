@@ -20,13 +20,10 @@ unsigned int *old_vector_table;
 
 static struct idprom identity_prom;
 
-int msgbufmapped = 0;
-struct msgbuf *msgbufp = NULL;
-
-extern vm_offset_t tmp_vpages[];
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
+
 
 static void initialize_vector_table()
 {
@@ -57,59 +54,57 @@ int idprom_fetch(idp, version)
     return 0;
 }
 
+void sun3_context_equiv()
+{
+    unsigned int i, sme;
+    int x;
+    vm_offset_t va;
+
+    for (x = 1; x < NCONTEXT; x++) {
+	for (va = 0; va < (vm_offset_t) (NBSG * NSEGMAP); va += NBSG) {
+	    sme = get_segmap(va);
+	    mon_setcxsegmap(x, va, sme);
+	}
+    }
+}
+
 #define build_pte(pa, flags) ((pa >>PGSHIFT) | PG_SYSTEM | PG_VALID | flags)
 
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
-    vm_offset_t pte_proto, temp_seg, va, eva, sva, pte;
-    extern char start, etext[], end[];
+    vm_offset_t va, eva, sva, pte;
+    extern char start[], etext[], end[];
     unsigned char sme;
     int valid;
 
     pmeg_init();
 
-    virtual_avail = sun3_round_page(end);
-    virtual_end = sun3_round_page(VM_MAX_KERNEL_ADDRESS);
+    va = (vm_offset_t) start;
+    while (va < (vm_offset_t) end) {
+	sme = get_segmap(va);
+	if (sme == SEGINV)
+	    panic("stealing pages for kernel text/data/etc");
+	pmeg_steal(sme);
+	va = sun3_round_seg(va);
+    }
+    
+    virtual_avail = sun3_round_seg(end); /* start a new segment */
+    virtual_end = VM_MAX_KERNEL_ADDRESS;
 
+    va = sun3_round_page(end);
+    while (va < virtual_avail) {
+	set_pte(va, PG_INVAL);
+	va += NBPG;
+    }
+    
     if (romp->romvecVersion >=1)
 	monitor_memory = *romp->memorySize - *romp->memoryAvail;
 
     mon_printf("%d bytes stolen by monitor\n", monitor_memory);
     
-    avail_start = virtual_avail - KERNBASE; /* XXX */
+    avail_start = sun3_round_page(end) - KERNBASE; /* XXX */
     avail_end = sun3_trunc_page(*romp->memoryAvail);
-
-    /* msgbuf */
-    avail_end -= NBPG;
-    pte_proto = build_pte(avail_end, PG_NC|PG_WRITE);
-    set_pte(virtual_avail, pte_proto);
-    msgbufp = (struct msgbuf *) virtual_avail;
-    virtual_avail += NBPG;
-    msgbufmapped = 1;
-
-    /*
-     * vpages array:
-     *   just some virtual addresses for temporary mappings
-     *   in the pmap modue
-     */
-
-    tmp_vpages[0] = virtual_avail;
-    virtual_avail += NBPG;
-    tmp_vpages[1] = virtual_avail;
-    virtual_avail += NBPG;
-
-    /*
-     * we need to kill off a segment to handle the stupid non-contexted
-     * pmeg 
-     *
-     */
-
-    temp_seg = sun3_round_seg(virtual_avail);
-    mon_printf("%d virtual bytes lost allocating temporary segment for pmap\n",
-	       temp_seg - virtual_avail); 
-    virtual_avail = temp_seg + NBSG;
-    set_temp_seg_addr(temp_seg);
 
     /*
      * preserve/protect monitor: 
@@ -174,9 +169,37 @@ void sun3_vm_init()
     mon_printf("physical memory end:\t %d\n", avail_end);
 
     /*
-     * leave protecting kernel and all that for post pmap_bootstrap()
-     * so we can use pmap_protect()
+     * unmap user virtual segments
      */
+
+    va = 0;
+    while (va < KERNBASE) {	/* starts and ends on segment boundries */
+	set_segmap(va, SEGINV);
+	va += NBSG;
+    }
+
+    /*
+     * unmap kernel virtual space (only segments.  if it squished ptes, bad
+     * things might happen.
+     */
+
+    /* this only works because both are seg bounds*/
+    va = virtual_avail;
+    while (va < virtual_end) {	
+	set_segmap(va, SEGINV);
+	va = sun3_round_seg(va);
+    }
+    
+    for (va = virtual_avail; va < virtual_end; ) {
+	sva = sun3_trunc_seg(va);
+	if (va == sva) {
+	    set_segmap(va, SEGINV);
+	    va += NBSG;
+	    continue;
+	}
+	va += NBSG;
+    }
+    sun3_context_equiv();
 }
 
 void sun3_verify_hardware()
