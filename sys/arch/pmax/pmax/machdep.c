@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1996/05/29 06:25:04 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1996/06/15 08:57:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -182,6 +182,7 @@ void	kn01_enable_intr  __P ((u_int slotno,
 #ifdef DS5000_240
 int	kn03_intr();
 #endif
+
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
 int	(*Mach_splbio)() = splhigh;
 int	(*Mach_splnet)() = splhigh;
@@ -191,21 +192,21 @@ int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 extern	volatile struct chiptime *Mach_clock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
+
 #ifdef DS5000_240
 u_long	kn03_tc3_imask;
 extern u_long latched_cycle_cnt;
 #endif
+
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 static	void asic_init();
 extern	void RemconsInit();
 
-#ifdef DS5000
-
-#if 1 /*def DS5000_200*/
+#ifdef DS5000_200
 void	kn02_enable_intr __P ((u_int slotno,
 			       int (*handler) __P((intr_arg_t sc)),
 			       intr_arg_t sc, int onoff));
-#endif /*def DS5000_200*/
+#endif /*DS5000_200*/
 
 #ifdef DS5000_100
 void	kmin_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
@@ -222,8 +223,10 @@ void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			       intr_arg_t sc, int onoff));
 #endif /*DS5000_240*/
 
+#if defined(DS5000_200) || defined(DS5000_25) || defined(DS5000_100) || \
+    defined(DS5000_240)
 volatile u_int *Mach_reset_addr;
-#endif /* DS5000 */
+#endif /* DS5000_200 || DS5000_25 || DS5000_100 || DS5000_240 */
 
 
 /*
@@ -450,7 +453,7 @@ mach_init(argc, argv, code, cv)
 		break;
 #endif /* DS5100 */
 
-#ifdef DS5000
+#ifdef DS5000_200
 	case DS_3MAX:	/* DS5000/200 3max */
 		{
 		volatile int *csr_addr =
@@ -482,6 +485,7 @@ mach_init(argc, argv, code, cv)
 		}
 		strcpy(cpu_model, "5000/200");
 		break;
+#endif /* DS5000_200 */
 
 #ifdef DS5000_100
 	case DS_3MIN:	/* DS5000/1xx 3min */
@@ -525,7 +529,6 @@ mach_init(argc, argv, code, cv)
 
 		strcpy(cpu_model, "5000/1xx");
 		break;
-
 #endif /* ds5000_100 */
 
 #ifdef DS5000_25
@@ -603,7 +606,6 @@ mach_init(argc, argv, code, cv)
 		strcpy(cpu_model, "5000/240");
 		break;
 #endif /* DS5000_240 */
-#endif /* DS5000 */
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
@@ -1328,8 +1330,8 @@ initcpu()
 	register volatile struct chiptime *c;
 	int i;
 
-#if defined(DS_5000) || defined(DS5000_25) || defined(DS5000_100) || \
-    defined(DS_5000_240)
+#if defined(DS5000_200) || defined(DS5000_25) || defined(DS5000_100) || \
+    defined(DS5000_240)
 	/* Reset after bus errors during probe */
 	if (Mach_reset_addr) {
 		*Mach_reset_addr = 0;
@@ -1461,7 +1463,7 @@ kn01_enable_intr(slotno, handler, sc, on)
 #endif /* DS3100 */
 
 
-#ifdef DS5000
+#ifdef DS5000_200
 
 /*
  * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
@@ -1504,7 +1506,9 @@ kn02_enable_intr(slotno, handler, sc, on)
 		*p_csr = csr & ~slotno;
 	splx(s);
 }
+#endif /*DS5000_200*/
 
+#ifdef DS5000_100
 /*
  *	Object:
  *		kmin_enable_intr		EXPORTED function
@@ -1608,7 +1612,10 @@ kmin_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+#endif /*DS5000_100*/
 
+
+#ifdef DS5000_25
 /*
  *	Object:
  *		xine_enable_intr		EXPORTED function
@@ -1674,6 +1681,7 @@ xine_enable_intr(slotno, handler, sc, on)
 	}
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = xine_tc3_imask;
 }
+#endif /*DS5000_25*/
 
 #ifdef DS5000_240
 void
@@ -1778,4 +1786,3 @@ asic_init(isa_maxine)
 	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
 	(*decoder) = 0x00000000e;
 }
-#endif /* DS5000 */
