@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.10 1998/05/22 09:26:33 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.11 1998/11/29 15:09:10 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,16 +44,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
-#include <machine/sid.h>
 #include <machine/pmap.h>
-#include <machine/nexus.h>
-#include <machine/uvax.h>
 #include <machine/ka630.h>
 #include <machine/clock.h>
-#include <vax/vax/gencons.h>
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
@@ -143,30 +137,24 @@ ka630_mchk(cmcf)
 void
 ka630_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vaddr_t avail_start, virtual_avail;
 	extern	int clk_adrshift, clk_tweak;
 	int	junk;
 
 	/*
-	 * MicroVAX II: get 10 pages from top of memory,
-	 * map in Qbus map registers, cpu and clock registers.
+	 * MicroVAX II: map in cpu and clock registers.
 	 */
-	avail_end -= 10;
-
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(0x400000));
-	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
-	    VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(uvaxIIcpu_ptr, 1);
-	pmap_map((vm_offset_t)uvaxIIcpu_ptr, (vm_offset_t)UVAXIICPU,
-	    (vm_offset_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map((vaddr_t)uvaxIIcpu_ptr, (vaddr_t)UVAXIICPU,
+	    (vaddr_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	clk_adrshift = 0;	/* Addressed at short's... */
 	clk_tweak = 0;		/* ...and no shifting */
 	MAPVIRT(clk_page, 1);
-	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA630CLK,
-	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map((vaddr_t)clk_page, (vaddr_t)KA630CLK,
+	    (vaddr_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * Enable memory parity error detection and clear error bits.
