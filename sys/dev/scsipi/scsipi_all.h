@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.13 2000/05/14 18:20:11 dante Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.14 2000/05/14 19:52:34 dante Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -215,7 +215,7 @@ struct scsipi_inquiry_data {
 /*57*/	u_int8_t flags4;
 #define	SID_IUS		0x01
 #define	SID_QAS		0x02
-#define	SID_Cloacking	0x0C
+#define	SID_Clocking	0x0C
 #define  SIDV_CLOCKING_ST_ONLY	0x00
 #define  SIDV_CLOCKING_DT_ONLY	0x04
 #define  SIDV_CLOCKING_SD_DT	0x0C
