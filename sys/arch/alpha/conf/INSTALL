@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.50 2001/02/04 17:05:16 ad Exp $
+# $NetBSD: INSTALL,v 1.51 2001/02/12 12:32:23 minoura Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -281,7 +281,7 @@ fd*	at	fdc? drive ?
 
 # Hardware RAID devices
 ld*	at	cac? unit ?
-ld*	at	mlx? unix ?
+ld*	at	mlx? unit ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?
