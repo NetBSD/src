@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.71.2.4 2002/04/24 21:42:30 nathanw Exp $	*/
+/*	$NetBSD: print.c,v 1.71.2.5 2002/07/26 00:03:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.71.2.4 2002/04/24 21:42:30 nathanw Exp $");
+__RCSID("$NetBSD: print.c,v 1.71.2.5 2002/07/26 00:03:22 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -417,6 +417,10 @@ state(arg, ve, mode)
 		is_zombie = 1;
 		break;
 
+	case LSSUSPENDED:
+		*cp = 'U';
+		break;
+
 	default:
 		*cp = '?';
 	}
@@ -441,12 +445,12 @@ state(arg, ve, mode)
 		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
-	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
-		*cp++ = '+';
 	if (flag & P_SA)
 		*cp++ = 'a';
 	else if (k->p_nlwps > 1)
 		*cp++ = 'l';
+	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
+		*cp++ = '+';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);
 }
@@ -492,6 +496,10 @@ lstate(arg, ve, mode)
 	case LSDEAD:
 		*cp = 'Z';
 		is_zombie = 1;
+		break;
+
+	case LSSUSPENDED:
+		*cp = 'U';
 		break;
 
 	default:
