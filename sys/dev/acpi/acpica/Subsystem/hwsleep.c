@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.10 2003/12/21 07:51:18 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.11 2003/12/21 10:27:23 kochi Exp $");
 
 #include "acpi.h"
 
@@ -266,6 +266,28 @@ AcpiEnterSleepStatePrep (
     }
 
     /* Set the system indicators to show the desired sleep state. */
+
+    switch (SleepState)
+    {
+    case ACPI_STATE_S0:
+        /* _SST 1: Working */
+        Arg.Integer.Value = 1;
+        break;
+    case ACPI_STATE_S1:
+    case ACPI_STATE_S2:
+    case ACPI_STATE_S3:
+        /* _SST 3: Sleeping. Used to indicate system state S1, S2 or S3. */
+        Arg.Integer.Value = 3;
+        break;
+    case ACPI_STATE_S4:
+        /* _SST 4: Sleeping with context saved to non-volatile storage. */
+        Arg.Integer.Value = 4;
+        break;
+    case ACPI_STATE_S5:
+        /* _SST 0: No system state indication. Indicator off. */
+        Arg.Integer.Value = 0;
+        break;
+    }
 
     Status = AcpiEvaluateObject (NULL, "\\_SI._SST", &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
@@ -558,7 +580,8 @@ AcpiLeaveSleepState (
 
     /* Ignore any errors from these methods */
 
-    Arg.Integer.Value = 0;
+    /* _SST 2: Waking */
+    Arg.Integer.Value = 2;
     Status = AcpiEvaluateObject (NULL, "\\_SI._SST", &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
@@ -589,5 +612,14 @@ AcpiLeaveSleepState (
     /* Enable BM arbitration */
 
     Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 0, ACPI_MTX_LOCK);
+
+    /* _SST 1: Working */
+    Arg.Integer.Value = 1;
+    Status = AcpiEvaluateObject (NULL, "\\_SI._SST", &ArgList, NULL);
+    if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
+    {
+        ACPI_REPORT_ERROR (("Method _SST failed, %s\n", AcpiFormatException (Status)));
+    }
+
     return_ACPI_STATUS (Status);
 }
