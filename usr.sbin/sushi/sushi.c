@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.12 2002/08/13 18:21:25 pooka Exp $       */
+/*      $NetBSD: sushi.c,v 1.13 2002/11/25 09:11:35 jdc Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ main(int argc, char **argv)
 	cdkscreen = initCDKScreen(stdscr);
 
 	ioctl(0, TIOCGWINSZ, &ws);
+
+	use_default_colors();
 
 	initCDKColor();
 	raw();
