@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.5 1994/11/20 20:53:58 deraadt Exp $ */
+/*	$NetBSD: auxreg.c,v 1.6 1994/11/23 07:02:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch __P((struct device *, struct cfdata *, void *));
+static int auxregmatch __P((struct device *, void *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
 struct cfdriver auxregcd =
     { 0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device) };
@@ -85,12 +85,12 @@ blink(zero)
  * The OPENPROM calls this "auxiliary-io".
  */
 static int
-auxregmatch(parent, cf, aux)
+auxregmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *aux, *vcf;
 {
 	register struct confargs *ca = aux;
+	struct cfdata *cf = vcf;
 
 	if (cputyp==CPU_SUN4)
 		return (0);

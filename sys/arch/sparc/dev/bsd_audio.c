@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.6 1994/11/20 20:51:52 deraadt Exp $ */
+/*	$NetBSD: bsd_audio.c,v 1.7 1994/11/23 07:02:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -266,8 +266,8 @@ audioattach(dev)
 #define AUDIO_SET_SWINTR ienab_bis(IE_L6)
 
 /* autoconfiguration driver */
-void	audioattach(struct device *, struct device *, void *);
-int	audiomatch(struct device *, struct cfdata *, void *);
+void	audioattach __P((struct device *, struct device *, void *));
+int	audiomatch __P((struct device *, void *, void *));
 struct	cfdriver audiocd =
     { NULL, "audio", audiomatch, audioattach,
       DV_DULL, sizeof(struct audio_softc) };
@@ -275,11 +275,11 @@ struct	cfdriver audiocd =
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
 
 int
-audiomatch(parent, cf, aux)
+audiomatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

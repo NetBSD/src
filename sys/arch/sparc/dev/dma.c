@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.5 1994/11/20 20:52:05 deraadt Exp $ */
+/*	$NetBSD: dma.c,v 1.6 1994/11/23 07:02:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -54,7 +54,7 @@
 
 int dmaprint		__P((void *, char *));
 void dmaattach		__P((struct device *, struct device *, void *));
-int dmamatch		__P((struct device *, struct cfdata *, void *));
+int dmamatch		__P((struct device *, void *, void *));
 void dma_reset		__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
@@ -85,11 +85,11 @@ dmaprint(aux, name)
 }
 
 int
-dmamatch(parent, cf, aux)
+dmamatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
