@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 1999/10/18 03:22:14 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2 1999/10/18 03:22:14 itohy Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,14 +60,14 @@
 
 ENTRY(__setjmp14)
 	/* Get signal stack info.  Note overlay of ss_sp and ss_size! */
-	subl	#12,sp		/* sizeof(stack_t) */
+	lea	sp@(-12),sp	/* sizeof(stack_t) */
 	clrl	sp@		/* ss = NULL */
 	movl	sp,sp@(4)	/* oss = stack_t on stack */
-	jbsr	_C_LABEL(__sigaltstack14)
+	jbsr	PIC_PLT(_C_LABEL(__sigaltstack14))
 
 	movl	sp@(8),d0	/* ss_flags */
 	andl	#1,d0		/* extract SS_ONSTACK */
-	addl	#12,sp		/* pop stack_t */
+	lea	sp@(12),sp	/* pop stack_t */
 
 	/* Get pointer to jmp_buf; a sigcontext is at the beginning. */
 	movl	sp@(4),a0
@@ -78,7 +78,7 @@ ENTRY(__setjmp14)
 	pea	a0@(28)		/* oset = &sc.sc_mask */
 	movl	#0,sp@-		/* set = NULL */
 	movl	#0,sp@-		/* action = 0 <ignored> */
-	jbsr	_C_LABEL(__sigprocmask14)
+	jbsr	PIC_PLT(_C_LABEL(__sigprocmask14))
 	addl	#12,sp
 
 	lea	sp@(4),a1	/* adjust SP since we won't rts */
@@ -104,8 +104,8 @@ ENTRY(__longjmp14)
 ok:
 	moveml	a0@(44),#0x3CFC	/* restore non-scratch regs */
 	movl	a0,sp@-		/* let sigreturn */
-	jbsr	_C_LABEL(__sigreturn14) /* finish for us */
+	jbsr	PIC_PLT(_C_LABEL(__sigreturn14)) /* finish for us */
 
 botch:
-	jbsr	_C_LABEL(longjmperror)
+	jbsr	PIC_PLT(_C_LABEL(longjmperror))
 	stop	#0
