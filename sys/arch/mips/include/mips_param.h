@@ -1,4 +1,10 @@
-/*	$NetBSD: mips_param.h,v 1.2 1997/02/28 02:24:41 jonathan Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.3 1997/06/08 10:46:04 jonathan Exp $	*/
+
+/*
+ * Architecture name.
+ */
+#define	_MACHINE_ARCH	mips
+#define	MACHINE_ARCH	"mips"
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
