@@ -1,4 +1,4 @@
-/* $NetBSD: idtest.c,v 1.3 2003/11/29 00:11:18 simonb Exp $ */
+/* $NetBSD: idtest.c,v 1.4 2003/12/10 05:22:18 itojun Exp $ */
 
 /* If defined, abort at first short period and only test REGRESS times. */
 #define	REGRESS		10000000		/* should be enough... */
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define	PERIOD		12000
+#define	PERIOD		30000
 
 uint64_t last[65536];
 
