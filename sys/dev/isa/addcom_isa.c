@@ -1,6 +1,7 @@
-/*	$NetBSD: addcom_isa.c,v 1.1 2000/04/21 17:48:30 explorer Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
+ * Copyright (c) 2000 Michael Graff.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
@@ -39,9 +40,9 @@
  * interrupt.
  *
  * An interrupt status register exists at 0x240, according to the
- * skimpy documentation supplied, but it isn't clear that the address
- * of this register changes if the card base address changes.
- * The code assumes it will, this needs to be tested.
+ * skimpy documentation supplied.  It doesn't change depending on
+ * io base address, so only one of these cards can ever be used at
+ * a time.
  *
  * This card is different from the boca or other cards in that ports
  * 0..5 are from addresses 0x108..0x137, and 6..7 are from 0x200..0x20f,
@@ -70,10 +71,11 @@
 #define	NSLAVES	8
 
 /*
- * These may be bogus... XXXMLG
+ * Grr.  This card always uses 0x420 for the status register, regardless
+ * of io base address.
  */
-#define STATUS_OFFSET	0x138		/* offset from board base address */
-#define	STATUS_SIZE	8		/* 8 bytes reserved for irq status */
+#define STATUS_IOADDR	0x420
+#define	STATUS_SIZE	8		/* May be bogus... */
 
 struct addcom_softc {
 	struct device sc_dev;
@@ -187,6 +189,12 @@ addcomattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
+	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
+			  0, &sc->sc_statusioh)) {
+		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = sc->sc_iobase
 			+ slave_iobases[i]
@@ -198,12 +206,6 @@ addcomattach(struct device *parent, struct device *self, void *aux)
 			       sc->sc_dev.dv_xname, i);
 			return;
 		}
-	}
-
-	if (bus_space_map(iot, sc->sc_iobase + STATUS_OFFSET, STATUS_SIZE,
-			  0, &sc->sc_statusioh)) {
-		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
-		return;
 	}
 
 	for (i = 0; i < NSLAVES; i++) {
