@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: 8003.c,v 1.11 2002/03/10 23:47:39 assar Exp $"
-        "$NetBSD: 8003.c,v 1.6 2003/05/15 20:44:15 lha Exp $");
+__RCSID("$Heimdal: 8003.c,v 1.12 2002/10/31 14:38:49 joda Exp $"
+        "$NetBSD: 8003.c,v 1.7 2003/05/15 21:36:39 lha Exp $");
 
 static krb5_error_code
 encode_om_uint32(OM_uint32 n, u_char *p)

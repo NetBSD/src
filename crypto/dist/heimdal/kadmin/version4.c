@@ -41,8 +41,8 @@
 #include <krb_err.h>
 #include <kadm_err.h>
 
-__RCSID("$Heimdal: version4.c,v 1.26 2002/09/10 15:20:46 joda Exp $"
-        "$NetBSD: version4.c,v 1.3 2003/05/15 20:44:11 lha Exp $");
+__RCSID("$Heimdal: version4.c,v 1.29 2002/10/29 10:33:23 joda Exp $"
+        "$NetBSD: version4.c,v 1.4 2003/05/15 21:36:34 lha Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2

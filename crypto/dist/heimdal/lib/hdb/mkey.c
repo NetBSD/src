@@ -36,8 +36,8 @@
 #define O_BINARY 0
 #endif
 
-__RCSID("$Heimdal: mkey.c,v 1.14 2002/08/16 18:59:49 assar Exp $"
-        "$NetBSD: mkey.c,v 1.5 2003/05/15 20:44:17 lha Exp $");
+__RCSID("$Heimdal: mkey.c,v 1.15 2003/03/28 02:01:33 lha Exp $"
+        "$NetBSD: mkey.c,v 1.6 2003/05/15 21:36:46 lha Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;

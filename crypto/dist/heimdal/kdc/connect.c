@@ -33,8 +33,8 @@
 
 #include "kdc_locl.h"
 
-__RCSID("$Heimdal: connect.c,v 1.86 2002/08/12 13:29:48 joda Exp $"
-        "$NetBSD: connect.c,v 1.10 2003/05/15 20:44:12 lha Exp $");
+__RCSID("$Heimdal: connect.c,v 1.90 2003/02/18 15:39:10 lha Exp $"
+        "$NetBSD: connect.c,v 1.11 2003/05/15 21:36:36 lha Exp $");
 
 /*
  * a tuple describing on what to listen
