@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.9 1996/08/31 21:15:07 mycroft Exp $	*/
+/*	$NetBSD: gram.y,v 1.10 1996/11/02 01:00:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,9 +138,9 @@ static	void	setmaxpartitions __P((int));
  */
 Configuration:
 	dirs hdrs machine_spec		/* "machine foo" from machine descr. */
-	dev_defs dev_eof		/* ../../conf/devices */
-	dev_defs dev_eof		/* devices.foo */
-	maxpart_spec dev_defs dev_eof	/* ../../conf/devices */
+	dev_defs dev_eof		/* sys/conf/files */
+	dev_defs dev_eof		/* sys/arch/${MACHINE_ARCH}/... */
+	maxpart_spec dev_defs dev_eof	/* sys/arch/${MACHINE}/... */
 	specs;				/* rest of machine description */
 
 dirs:
