@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.3 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.3.2.1 1999/09/21 04:58:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.3 1999/01/10 21:54:39 ezk Exp 
+ * Id: xutil.c,v 1.5 1999/08/24 21:31:10 ezk Exp 
  *
  */
 
@@ -50,7 +50,12 @@
 #include <am_defs.h>
 #include <amu.h>
 
-FILE *logfp = stderr;		/* Log errors to stderr initially */
+/*
+ * Logfp is the default logging device, and is initialized to stderr by
+ * default in dplog/plog below, and in
+ * amd/amfs_program.c:amfs_program_exec().
+ */
+FILE *logfp = NULL;
 
 static char *am_progname = "unknown";	/* "amd" */
 static char am_hostname[MAXHOSTNAMELEN + 1] = "unknown"; /* Hostname */
@@ -274,34 +279,38 @@ checkup_mem(void)
 
 /*
  * Take a log format string and expand occurrences of %m
- * with the current error code taken from errno.
+ * with the current error code taken from errno.  Make sure
+ * 'e' never gets longer than maxlen characters.
  */
 static void
-expand_error(char *f, char *e)
+expand_error(char *f, char *e, int maxlen)
 {
   extern int sys_nerr;
-  char *p;
+  char *p, *q;
   int error = errno;
+  int len = 0;
 
-  for (p = f; (*e = *p); e++, p++) {
+  for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
-#ifdef HAVE_STRERROR
-      strcpy(e, strerror(error));
-#else
       const char *errstr;
+#ifdef HAVE_STRERROR
+      errstr = strerror(error);
+#else
       if (error < 0 || error >= sys_nerr)
 	errstr = NULL;
       else
 	errstr = sys_errlist[error];
-      if (errstr)
-	strcpy(e, errstr);
-      else
-	sprintf(e, "Error %d", error);
 #endif
-      e += strlen(e) - 1;
+      if (errstr)
+	strcpy(q, errstr);
+      else
+	sprintf(q, "Error %d", error);
+      len += strlen(q) - 1;
+      q += strlen(q) - 1;
       p++;
     }
   }
+  e[maxlen-1] = '\0';		/* null terminate, to be sure */
 }
 
 
@@ -373,6 +382,9 @@ dplog(char *fmt, ...)
 {
   va_list ap;
 
+  if (!logfp)
+    logfp = stderr;		/* initialize before possible first use */
+
   va_start(ap, fmt);
   real_plog(XLOG_DEBUG, fmt, ap);
   va_end(ap);
@@ -384,6 +396,9 @@ void
 plog(int lvl, char *fmt, ...)
 {
   va_list ap;
+
+  if (!logfp)
+    logfp = stderr;		/* initialize before possible first use */
 
   va_start(ap, fmt);
   real_plog(lvl, fmt, ap);
@@ -407,9 +422,15 @@ real_plog(int lvl, char *fmt, va_list vargs)
   checkup_mem();
 #endif /* DEBUG_MEM */
 
-  expand_error(fmt, efmt);
+  expand_error(fmt, efmt, 1024);
 
+  /*
+   * XXX: ptr is 1024 bytes long.  It is possible to write into it
+   * more than 1024 bytes, if efmt is already large, and vargs expand
+   * as well.
+   */
   vsprintf(ptr, efmt, vargs);
+  msg[1023] = '\0';		/* null terminate, to be sure */
 
   ptr += strlen(ptr);
   if (ptr[-1] == '\n')
