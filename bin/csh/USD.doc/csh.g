@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.g,v 1.3 1995/03/21 09:03:42 cgd Exp $
+.\"	$NetBSD: csh.g,v 1.4 2003/02/05 00:02:24 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1596,7 +1596,7 @@ The
 .I time
 command can be used to measure the amount of \s-2CPU\s0
 and real time consumed by a specified command as well
-as the amount of disk i/o, memory utilized, and number
+as the amount of disk i/o, memory used, and number
 of page faults and swaps taken by the command (2.1, 2.8).
 .IP tset
 The

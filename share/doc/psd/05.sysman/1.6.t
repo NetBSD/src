@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.6.t,v 1.2 1998/01/09 06:54:45 perry Exp $
+.\"	$NetBSD: 1.6.t,v 1.3 2003/02/05 00:02:27 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ Only the super-user may lower priorities.
 .PP
 The
 .Fn getrusage
-call returns information describing the resources utilized by the
+call returns information describing the resources used by the
 current process (RUSAGE_SELF),
 or all its terminated descendent processes (RUSAGE_CHILDREN):
 .DS

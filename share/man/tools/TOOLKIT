@@ -90,7 +90,7 @@ The following describes these 14 procedures:
     Missing `.so' entries are written to the files _n_e_e_d_s_o[_1-_8].
 
 5.  ckspell
-    Utilizes _s_p_e_l_l to check for spelling errors in manual
+    Uses _s_p_e_l_l to check for spelling errors in manual
     entries.  Produces file _s_p._e_r_r_s containing a section-by-
     section list of errors.  Uses file /_u_s_r/_m_a_n/_t_o_o_l_s/_s_p._i_g_n_o_r_e
     to eliminate strings that appear often in the manual and are
@@ -122,7 +122,7 @@ The following describes these 14 procedures:
     (see `ckso' above).
 
 10. mroff
-    Utilizes the _m_a_n command to _t_r_o_f_f and typeset manual entries.
+    Uses the _m_a_n command to _t_r_o_f_f and typeset manual entries.
     The `-p' (yes, `-p'!) option is used to produce entries in a
     6x9 inch format, as opposed to the default 8.5x11.  Produces
     files _m_l_o_g[_1-_8] containing logs of the files that were

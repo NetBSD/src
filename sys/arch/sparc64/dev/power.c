@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.4 2002/10/02 16:02:18 thorpej Exp $ */
+/*	$NetBSD: power.c,v 1.5 2003/02/05 00:02:36 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,7 +61,7 @@ extern struct cfdriver power_cd;
  * machines. This allows the machine to remove power automatically when
  * shutdown or halted or whatever.
  *
- * XXX: this capability is not utilized in the current kernel.
+ * XXX: this capability is not used in the current kernel.
  */
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.42 2003/01/28 08:34:17 mrg Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.43 2003/02/05 00:02:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.42 2003/01/28 08:34:17 mrg Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.43 2003/02/05 00:02:25 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -587,7 +587,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 /*
  * Segment with the highest priority get sorted to the beginning of the
  * list.  This sort assumes that empty segments always have a higher
- * cost/benefit than any utilized segment.
+ * cost/benefit than any used segment.
  */
 int
 cost_compare(const void *a, const void *b)

@@ -1,4 +1,4 @@
-/*	$NetBSD: privs.h,v 1.5 2002/07/10 23:16:34 wiz Exp $	*/
+/*	$NetBSD: privs.h,v 1.6 2003/02/05 00:02:39 perry Exp $	*/
 
 /* 
  *  privs.h - header for privileged operations 
@@ -34,7 +34,7 @@
 
 /* Relinquish privileges temporarily for a setuid or setgid program
  * with the option of getting them back later.  This is done by
- * utilizing POSIX saved user and groups ids.  Call RELINQUISH_PRIVS once
+ * using POSIX saved user and groups ids.  Call RELINQUISH_PRIVS once
  * at the beginning of the main program.  This will cause all operatons
  * to be executed with the real userid.  When you need the privileges
  * of the setuid/setgid invocation, call PRIV_START; when you no longer

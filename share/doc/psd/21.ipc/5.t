@@ -1,4 +1,4 @@
-.\"	$NetBSD: 5.t,v 1.2 1998/01/09 06:55:14 perry Exp $
+.\"	$NetBSD: 5.t,v 1.3 2003/02/05 00:02:27 perry Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 A number of facilities have yet to be discussed.  For most users
 of the IPC the mechanisms already
 described will suffice in constructing distributed
-applications.  However, others will find the need to utilize some
+applications.  However, others will find the need to use some
 of the features which we consider in this section.
 .NH 2
 Out of band data

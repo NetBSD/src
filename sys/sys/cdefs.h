@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.47 2003/01/18 18:05:56 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.48 2003/02/05 00:02:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -242,7 +242,7 @@
  * code blocks can be reordered such that the predicted path
  * sees a more linear flow, thus improving cache behavior, etc.
  *
- * The following two macros provide us with a way to utilize this
+ * The following two macros provide us with a way to use this
  * compiler feature.  Use __predict_true() if you expect the expression
  * to evaluate to true, and __predict_false() if you expect the
  * expression to evaluate to false.

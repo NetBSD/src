@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.t,v 1.2 1998/01/09 06:55:41 perry Exp $
+.\"	$NetBSD: 2.t,v 1.3 2003/02/05 00:02:28 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,7 @@ to acknowledge a transfer results in retransmission of
 the data.  Sequencing may be handled by tagging
 each message handed to the network layer by a
 \fIsequence number\fP and maintaining
-state at the endpoints of communication to utilize
+state at the endpoints of communication to use
 received sequence numbers in reordering data which
 arrives out of order.
 .PP

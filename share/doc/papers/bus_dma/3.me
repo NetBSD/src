@@ -1,4 +1,4 @@
-.\"	$NetBSD: 3.me,v 1.1 1998/07/15 00:34:54 thorpej Exp $
+.\"	$NetBSD: 3.me,v 1.2 2003/02/05 00:02:26 perry Exp $
 .\"
 .\" Copyright (c) 1998 Jason R. Thorpe.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ are also four placeholder flags, \fBBUS_DMA_BUS1\fR through
 \fBBUS_DMA_BUS4\fR.  These flags are reserved for the individual
 bus layers, which may need to define special semantics specific to
 that bus.  An example of this is the ability of VESA local bus
-devices to utilize 32-bit DMA addresses; while the kernel considers
+devices to use 32-bit DMA addresses; while the kernel considers
 such devices to be logically connected to the ISA bus, they are not
 limited to the addressing constraints of other ISA devices.
 The placeholder flags allow such special cases to be handled on

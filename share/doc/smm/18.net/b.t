@@ -1,4 +1,4 @@
-.\"	$NetBSD: b.t,v 1.2 1998/01/09 06:55:49 perry Exp $
+.\"	$NetBSD: b.t,v 1.3 2003/02/05 00:02:29 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ processes which wish to take advantage of some protocol
 feature not directly accessible through the normal interface, or 
 for the development of new protocols built atop existing lower level
 protocols.  For example, a new version of TCP might be developed at the
-user level by utilizing a raw IP socket for delivery of packets.
+user level by using a raw IP socket for delivery of packets.
 The raw IP socket interface attempts to provide an identical interface
 to the one a protocol would have if it were resident in the kernel.
 .PP

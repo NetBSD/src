@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.19 2003/01/31 05:00:25 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.20 2003/02/05 00:02:30 perry Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -1902,7 +1902,7 @@ static const tulip_boardsw_t tulip_2114x_isv_boardsw = {
 /* 
  * At least in some versions of the driver, all 2114x are mapped to
  * tulip_21140_eb_boardsw, so this isn't necessarily going to be
- * utilized. But for possible later use, provide this as a clone of
+ * used. But for possible later use, provide this as a clone of
  * the dec evalboard configuration. The Avalon card should look the
  * same to the software as the eval card, with the exception of the
  * srom format in the early production units.
