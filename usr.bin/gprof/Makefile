@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.25 1998/11/07 17:52:19 jonathan Exp $
+#	$NetBSD: Makefile,v 1.26 1999/02/03 00:17:35 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/29/93
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
-.if (${OBJECT_FMT} == "a.out") || (${MACHINE_ARCH} == "mips")
+.if ((${OBJECT_FMT} == "a.out") && \
+     (${MACHINE_ARCH} != "i386")) || \
+    (${MACHINE_ARCH} == "mips")
 PROG=	gprof
 .endif
 
