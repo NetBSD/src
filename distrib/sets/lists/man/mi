@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.767 2005/03/09 05:24:38 atatat Exp $
+# $NetBSD: mi,v 1.768 2005/03/15 15:02:51 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1970,7 +1970,7 @@
 ./usr/share/man/cat8/pam_securetty.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_self.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_skey.0			man-sysutil-catman	pam,.cat
-./usr/share/man/cat8/pam_ssh.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_ssh.0			man-sysutil-catman	crypto,pam,.cat
 ./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman	.cat
@@ -4172,7 +4172,7 @@
 ./usr/share/man/man8/pam_securetty.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_self.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_skey.8			man-sysutil-man		.man,pam
-./usr/share/man/man8/pam_ssh.8			man-sysutil-man		.man,pam
+./usr/share/man/man8/pam_ssh.8			man-sysutil-man		crypto,.man,pam
 ./usr/share/man/man8/pam_unix.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/pc532/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/pc532/bim.8		man-sysutil-man		.man
