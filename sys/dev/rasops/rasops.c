@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.5 1999/04/29 02:49:40 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.6 1999/05/09 17:50:27 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.5 1999/04/29 02:49:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.6 1999/05/09 17:50:27 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -842,7 +842,18 @@ rasops_erasecols(cookie, row, col, num, attr)
 	
 	/* Don't bother using the full loop for <= 32 pels */
 	if (num <= 32) {
-		if (((num | ri->ri_xscale) & 1) == 0) {
+		if (((num | ri->ri_xscale) & 3) == 0) {
+			/* Word aligned blt */
+			num >>= 2;
+
+			while (height--) {
+				dp = rp;
+				DELTA(rp, ri->ri_stride, int32_t *);
+		
+				for (cnt = num; cnt; cnt--)
+					*dp++ = clr;
+			}
+		} else if (((num | ri->ri_xscale) & 1) == 0) {
 			/* 
 			 * Halfword aligned blt. This is needed so the
 			 * 15/16 bit ops can use this function. 
@@ -857,17 +868,6 @@ rasops_erasecols(cookie, row, col, num, attr)
 					*(int16_t *)dp = clr;
 					DELTA(dp, 2, int32_t *);
 				}
-			}
-		} else if (((num | ri->ri_xscale) & 3) == 0) {
-			/* Word aligned blt */
-			num >>= 2;
-
-			while (height--) {
-				dp = rp;
-				DELTA(rp, ri->ri_stride, int32_t *);
-		
-				for (cnt = num; cnt; cnt--)
-					*dp++ = clr;
 			}
 		} else {
 			while (height--) {
