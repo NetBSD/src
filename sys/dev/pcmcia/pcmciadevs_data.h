@@ -1,12 +1,11 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.111 2001/01/20 08:50:30 taca Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.112 2001/01/20 17:04:03 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.111 2001/01/20 01:56:16 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.113 2001/01/20 17:03:32 thorpej Exp 
  */
-/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
