@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.102 1998/11/22 13:51:04 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.103 1998/11/24 15:24:53 tsubai Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -91,7 +91,6 @@ PMAP_NEW?=	yes
 # The PowerPC port is incomplete.
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
-NOPIC=
 .endif
 
 # Data-driven table using make variables to control how 
