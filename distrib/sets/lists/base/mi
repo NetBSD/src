@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243 2001/04/04 13:13:59 wiz Exp $
+# $NetBSD: mi,v 1.244 2001/04/05 21:48:15 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -136,6 +136,7 @@
 ./sbin/swapctl		base-sysutil-root
 ./sbin/swapon		base-sysutil-root
 ./sbin/sysctl		base-sysutil-root
+./sbin/tbrconfig	base-router-root
 ./sbin/ttyflags		base-sysutil-root
 ./sbin/tunefs		base-sysutil-root
 ./sbin/umount		base-sysutil-root
@@ -744,7 +745,6 @@
 ./usr/sbin/supscan		base-sup-bin
 ./usr/sbin/sushi		base-sysutil-bin
 ./usr/sbin/syslogd		base-sysutil-bin
-./usr/sbin/tbrconfig		base-router-bin
 ./usr/sbin/tcpdchk		base-netutil-bin
 ./usr/sbin/tcpdmatch		base-netutil-bin
 ./usr/sbin/tcpdump		base-netutil-bin
