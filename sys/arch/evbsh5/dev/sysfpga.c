@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.12 2002/10/14 14:19:29 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.13 2002/10/22 14:17:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -503,11 +503,10 @@ sysfpga_intr_dispatch(const struct sysfpga_ihandler *ih, int level, int hnum)
 struct evcnt *
 sysfpga_intr_evcnt(int group, int inum)
 {
-	struct sysfpga_softc *sc = sysfpga_sc;
 	struct evcnt *ev = NULL;
 
 	KDASSERT(group < SYSFPGA_NGROUPS);
-	KDASSERT(sc->sc_ih[group] != NULL);
+	KDASSERT(sysfpga_sc->sc_ih[group] != NULL);
 
 	switch (group) {
 	case SYSFPGA_IGROUP_SUPERIO:
