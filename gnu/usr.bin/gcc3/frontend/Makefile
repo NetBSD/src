@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2003/08/01 17:03:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/18 19:48:15 skrll Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
-NOPIC=		# defined
 NOPROFILE=	# defined
+
+# For ../Makefile.inc and bsd.own.mk
+.include <bsd.init.mk>
 
 LIB=		frontend
 
@@ -17,6 +19,9 @@ CPPFLAGS+=	-I${.CURDIR} -I${GCCARCH} -I${BACKENDOBJ} -I. \
 HOST_CPPFLAGS+=	-I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 DPSRCS+=	multilib.h specs.h
+
+MKPIC:=		no
+MKPICLIB:=	no
 
 .include <bsd.lib.mk>
 
