@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.117 1999/03/19 06:40:11 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118 1999/03/25 03:29:06 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.112 1999/03/19 06:39:32 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp 
  */
 
 /*
@@ -1472,6 +1472,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "KTI",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_HSSI,
+	    0,
+	    "LAN Media Corporation",
+	    "HSSI Interface",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS3,
+	    0,
+	    "LAN Media Corporation",
+	    "DS3 Interface",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_SSI,
+	    0,
+	    "LAN Media Corporation",
+	    "SSI",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -5449,6 +5467,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "STB Systems (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LMC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "LAN Media Corporation",
 	    NULL,
 	},
 	{
