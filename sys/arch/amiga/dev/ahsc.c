@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.21 1998/08/21 19:13:27 is Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.22 1998/09/04 22:00:27 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
+#include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
@@ -112,8 +113,15 @@ ahscattach(pdp, dp, auxp)
 {
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc;
+	struct cfdev *cdp, *ecdp;
+
+	ecdp = &cfdev[ncfdev];
 	
-	printf("\n");
+	for (cdp = cfdev; cdp < ecdp; cdp++) {
+		if (cdp->rom.manid == 8738 && 
+		    cdp->rom.prodid == 35)
+				break;
+	}
 
 	sc = (struct sbic_softc *)dp;
 	sc->sc_cregs = rp = ztwomap(0xdd0000);
@@ -133,9 +141,15 @@ ahscattach(pdp, dp, auxp)
 	 */
 	sc->sc_dmamask = 0;
 
-	/* XXX todo: make this variable for Apollo-3060 boards */
-	sc->sc_sbic.sbic_asr_p =  ((volatile unsigned char *)rp + 0x41);
-	sc->sc_sbic.sbic_value_p =  ((volatile unsigned char *)rp + 0x43);
+	if (cdp < ecdp) {
+		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x43);
+		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x47);
+		printf(": modified for Apollo cpu board\n");
+	} else {
+		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x41);
+		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x43);
+		printf("\n");
+	}
 
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
