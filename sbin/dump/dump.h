@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.37 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: dump.h,v 1.38 2004/03/15 01:06:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -119,13 +119,16 @@ extern int	tapeno;		/* current tape number */
 extern int	is_ufs2;
 
 time_t	tstart_writing;	/* when started writing the first tape block */
+time_t	tstart_volume;	/* when started writing the current volume */
 int	xferrate;	/* averaged transfer rate of all volumes */
 char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
 extern long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 int needswap;	/* file system in swapped byte order */
-/* some inline functs to help the byte-swapping mess */
+
+
+/* some inline functions to help the byte-swapping mess */
 static __inline u_int16_t iswap16(u_int16_t);
 static __inline u_int32_t iswap32(u_int32_t);
 static __inline u_int64_t iswap64(u_int64_t);
