@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.4 1998/04/09 17:16:57 hannken Exp $ */
+/* $NetBSD: wskbd.c,v 1.5 1998/05/23 01:06:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.4 1998/04/09 17:16:57 hannken Exp $";
+    "$NetBSD: wskbd.c,v 1.5 1998/05/23 01:06:36 thorpej Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,6 +107,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+
+#include "wskbd.h"
 
 struct wskbd_internal {
 	int	t_keydesc_len;
@@ -194,7 +196,9 @@ struct cfattach wskbd_ca = {
 	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
 };
 
+#if NWSKBD > 0
 extern struct cfdriver wskbd_cd;
+#endif
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
 #define	WSKBD_DEFAULT_BELL_PITCH	1500	/* 1500Hz */
@@ -473,6 +477,7 @@ wskbdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+#if NWSKBD > 0
 	struct wskbd_softc *sc;
 	int unit;
 
@@ -492,6 +497,9 @@ wskbdopen(dev, flags, mode, p)
 	/* XXX ENABLE THE DEVICE IF NOT CONSOLE? */
 
 	return (0);
+#else
+	return (ENXIO);
+#endif /* NWSKBD > 0 */
 }
 
 int
@@ -500,6 +508,7 @@ wskbdclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+#if NWSKBD > 0
 	struct wskbd_softc *sc;
 	int unit;
 
@@ -513,6 +522,7 @@ wskbdclose(dev, flags, mode, p)
 	sc->sc_ready = 0;			/* stop accepting events */
 	wsevent_fini(&sc->sc_events);
 	sc->sc_events.io = NULL;
+#endif /* NWSKBD > 0 */
 	return (0);
 }
 
@@ -522,6 +532,7 @@ wskbdread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+#if NWSKBD > 0
 	struct wskbd_softc *sc;
 	int unit;
 
@@ -531,6 +542,9 @@ wskbdread(dev, uio, flags)
 		return (ENXIO);
 
 	return (wsevent_read(&sc->sc_events, uio, flags));
+#else
+	return (ENXIO);
+#endif /* NWSKBD > 0 */
 }
 
 int
@@ -541,6 +555,7 @@ wskbdioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+#if NWSKBD > 0
 	struct wskbd_softc *sc;
 	int unit, error;
 
@@ -572,6 +587,9 @@ wskbdioctl(dev, cmd, data, flag, p)
 	 */
 	error = wskbd_displayioctl((struct device *)sc, cmd, data, flag, p);
 	return (error != -1 ? error : ENOTTY);
+#else
+	return (ENXIO);
+#endif /* NWSKBD > 0 */
 }
 
 /*
@@ -758,9 +776,13 @@ wskbdpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+#if NWSKBD > 0
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	return (wsevent_poll(&sc->sc_events, events, p));
+#else
+	return (0);
+#endif /* NWSKBD > 0 */
 }
 
 int
