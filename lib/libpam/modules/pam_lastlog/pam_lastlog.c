@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.3 2005/02/01 17:54:48 christos Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.4 2005/02/04 15:11:35 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.3 2005/02/01 17:54:48 christos Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.4 2005/02/04 15:11:35 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -92,6 +92,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	struct passwd *pwd;
 	struct timeval now;
 	const char *user, *rhost, *tty;
+	const void *vrhost, *vtty, *vss;
 	const struct sockaddr_storage *ss;
 	int pam_err;
 
@@ -104,20 +105,20 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	PAM_LOG("Got user: %s", user);
 
-	pam_err = pam_get_item(pamh, PAM_RHOST,
-	    (const void **)(void *)&rhost);
+	pam_err = pam_get_item(pamh, PAM_RHOST, &vrhost);
 	if (pam_err != PAM_SUCCESS)
 		goto err;
+	rhost = (const char *)vrhost;
 
-	pam_err = pam_get_item(pamh, PAM_SOCKADDR,
-	    (const void **)(void *)&ss);
+	pam_err = pam_get_item(pamh, PAM_SOCKADDR, &vss);
 	if (pam_err != PAM_SUCCESS)
 		goto err;
+	ss = (const struct sockaddr_storage *)vss;
 
-	pam_err = pam_get_item(pamh, PAM_TTY,
-	    (const void **)(void *)&tty);
+	pam_err = pam_get_item(pamh, PAM_TTY, &vtty);
 	if (pam_err != PAM_SUCCESS)
 		goto err;
+	tty = (const char *)vtty;
 
 	if (tty == NULL) {
 		pam_err = PAM_SERVICE_ERR;
@@ -152,11 +153,13 @@ PAM_EXTERN int
 pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-        const char *tty;
+	const void *vtty;
+	const char *tty;
 
-        pam_get_item(pamh, PAM_TTY, (const void **)(void *)&tty);
-	if (tty == NULL)
+	pam_get_item(pamh, PAM_TTY, &vtty);
+	if (vtty == NULL)
 		return PAM_SERVICE_ERR;
+	tty = (const char *)vtty;
 
 	if (strncmp(tty, _PATH_DEV, strlen(_PATH_DEV)) == 0)
 		tty = tty + strlen(_PATH_DEV);
