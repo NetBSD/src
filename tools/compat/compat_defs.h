@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.18 2002/09/14 04:30:27 thorpej Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.19 2002/09/30 00:39:21 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -410,6 +410,13 @@ char *alloca ();
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
+#endif
+
+/* HP-UX has MAP_ANONYMOUS but not MAP_ANON */
+#ifndef MAP_ANON
+#ifdef MAP_ANONYMOUS
+#define MAP_ANON MAP_ANONYMOUS
+#endif
 #endif
 
 /* <sys/param.h> */
