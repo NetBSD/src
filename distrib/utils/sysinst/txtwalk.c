@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.2 1998/06/20 13:05:51 mrg Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.3 1998/09/17 05:57:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,7 +151,7 @@ process(this, line)
 #endif
 		/* Process the stuff. */
 		switch (this.todo[0]) {
-		case 'a':
+		case 'a':  /* Assign data */
 			p = this.todo;
 			j = 0;
 			while (*p && *p != '$')
@@ -179,7 +179,7 @@ process(this, line)
 				j++;
 			}
 			break;
-		case 'c':
+		case 'c':  /* Call a function with data. */
 			(*this.func)(found, numfound);
 			break;
 		}
@@ -212,12 +212,12 @@ finddata(this, line, found, numfound )
 			if (!*fmt)
 				return 0;
 			switch (*fmt) {
-			case '%':
+			case '%':  /* The char %. */
 				if (*line != '%')
 					return 0;
 				line++;
 				break;
-			case 'i':
+			case 'i':  /* Ignore characters */
 				if (!fmt[1])
 					return 1;
 				if (fmt[1] == ' ')
@@ -227,7 +227,7 @@ finddata(this, line, found, numfound )
 					while (*line && *line != fmt[1])
 						line++;
 				break;
-			case 'd':
+			case 'd':  /* Nextoken should be an integer. */
 				if (!isdigit(*line))
 					return 0;
 				found[*numfound].what = INT;
@@ -235,7 +235,7 @@ finddata(this, line, found, numfound )
 				while (*line && isdigit(*line))
 					line++;
 				break;
-			case 's':
+			case 's':  /* Matches a 'space' separated string. */
 				len = 0;
 				while (line[len] && !isspace(line[len])
 				    && line[len] != fmt[1])
