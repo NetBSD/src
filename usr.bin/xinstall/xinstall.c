@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.32 1999/01/26 01:34:25 hubertf Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.33 1999/02/04 11:56:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.32 1999/01/26 01:34:25 hubertf Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.33 1999/02/04 11:56:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ __RCSID("$NetBSD: xinstall.c,v 1.32 1999/01/26 01:34:25 hubertf Exp $");
 
 struct passwd *pp;
 struct group *gp;
-int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0;
+int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0,
+    dorename = 0;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
@@ -112,7 +113,7 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:psS:")) != -1)
+	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:prsS:")) != -1)
 		switch((char)ch) {
 		case 'B':
 			suffix = optarg;
@@ -173,6 +174,9 @@ main(argc, argv)
 			break;
 		case 'p':
 			dopreserve = 1;
+			break;
+		case 'r':
+			dorename = 1;
 			break;
 		case 'S':
 			stripArgs = (char*)malloc(sizeof(char)*(strlen(optarg)+1));
@@ -330,7 +334,7 @@ install(from_name, to_name, fset, flags)
 {
 	struct stat from_sb, to_sb;
 	int devnull, from_fd, to_fd, serrno;
-	char *p;
+	char *p, tmpl[MAXPATHLEN], *oto_name;
 
 	/* If try to install NULL file to a directory, fails. */
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
@@ -359,10 +363,29 @@ install(from_name, to_name, fset, flags)
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
-	if (dobackup)
-		backup(to_name);
-	else
-		(void)unlink(to_name);
+	if (dorename) {
+		char *ptr, c, *dir;
+
+		if ((ptr = strrchr(to_name, '/')) != NULL) {
+			c = *++ptr;
+			*ptr = '\0';
+			dir = to_name;
+		} else {
+			dir = tmpl;
+			*dir = '\0';
+		}
+		(void)snprintf(tmpl, sizeof(tmpl), "%sinst.XXXXXX", dir);
+		if (ptr)
+			*ptr = c;
+		oto_name = to_name;
+		to_name = tmpl;
+
+	} else {
+		if (dobackup)
+			backup(to_name);
+		else
+			(void)unlink(to_name);
+	}
 
 	if (dolink) {
 		makelink(from_name, to_name);
@@ -370,9 +393,14 @@ install(from_name, to_name, fset, flags)
 	}
 
 	/* Create target. */
-	if ((to_fd = open(to_name,
-	    O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
-		err(1, "%s", to_name);
+	if (dorename) {
+		if ((to_fd = mkstemp(to_name)) == -1)
+			err(1, "%s", to_name);
+	} else {
+		if ((to_fd = open(to_name,
+		    O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
+			err(1, "%s", to_name);
+	}
 	if (!devnull) {
 		if ((from_fd = open(from_name, O_RDONLY, 0)) < 0) {
 			(void)unlink(to_name);
@@ -432,6 +460,11 @@ install(from_name, to_name, fset, flags)
 	}
 
 	(void)close(to_fd);
+
+	if (dorename)
+		if (rename(to_name, oto_name) == -1)
+			err(1, "%s: rename", to_name);
+
 	if (!docopy && !devnull && unlink(from_name))
 		err(1, "%s", from_name);
 }
