@@ -88,6 +88,14 @@
 #include "pcvt_hdr.h"		/* global include */
 #include "pcvt_cons.h"		/* NetBSD only */
 
+/* consistency check: pcvt can't coexist with pckbc, vga or pcdisplay */
+#include "pckbc.h"
+#include "vga.h"
+#include "pcdisplay.h"
+#if (NPCKBC > 0) || (NVGA > 0) || (NPCDISPLAY > 0)
+#error "pcvt and (pckbc or vga or pcdisplay) can't coexist"
+#endif
+
 #ifdef NOTDEF
 unsigned	__debug = 0; /*0xffe */;
 static		__color;
