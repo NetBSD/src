@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.10 2002/05/13 02:58:17 itojun Exp $	*/
+/*	$NetBSD: auth.h,v 1.10.2.1 2002/05/28 19:27:35 tv Exp $	*/
 /*	$OpenBSD: auth.h,v 1.36 2002/05/12 23:53:45 djm Exp $	*/
 
 /*
@@ -169,6 +169,11 @@ Key	*get_hostkey_by_index(int);
 Key	*get_hostkey_by_type(int);
 int	 get_hostkey_index(Key *);
 int	 ssh1_session_key(BIGNUM *);
+
+/* debug messages during authentication */
+void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+void	 auth_debug_send(void);
+void	 auth_debug_reset(void);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
