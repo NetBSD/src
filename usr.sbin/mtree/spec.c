@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.11 1997/10/17 11:46:55 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.12 1998/09/23 19:46:00 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.11 1997/10/17 11:46:55 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.12 1998/09/23 19:46:00 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,6 +209,7 @@ set(t, ip)
 			if ((m = setmode(val)) == NULL)
 				err("invalid file mode %s", val);
 			ip->st_mode = getmode(m, 0);
+			free(m);
 			break;
 		case F_NLINK:
 			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
