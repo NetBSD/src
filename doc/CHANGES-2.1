@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.36 2005/03/16 19:51:11 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.37 2005/03/16 19:54:14 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -850,4 +850,9 @@ sys/dev/ata/ata_wdc.c				1.78
 	controller driver). We want to downgrade to PIO mode if DMA isn't
 	functionnal.
 	[bouyer, ticket #1325]
+
+sys/dev/tc/px.c					1.22
+
+	Fix a 3 year old error which caused px_init() to fail. Fixes PR 28798.
+	[mhitch, ticket #1063]
 
