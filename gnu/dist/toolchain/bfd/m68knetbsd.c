@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_IS_BIG_ENDIAN_P
 
 /* Our m68k ports use either 4K or 8K pages, but object files always
-   assume 8K page alignment so they will work on all m68k machines. */
+   assume 8K page alignment so they will work on all m68k machines.  */
 #define TARGET_PAGE_SIZE	0x2000
 
 #define DEFAULT_ARCH	bfd_arch_m68k

@@ -1,5 +1,5 @@
 /* tc-w65.c -- Assemble code for the W65816
-   Copyright (C) 1995, 1998 Free Software Foundation.
+   Copyright (C) 1995, 1998, 2000 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,10 +18,7 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-/*
-   Written By Steve Chamberlain
-   sac@cygnus.com
- */
+/* Written By Steve Chamberlain <sac@cygnus.com>.  */
 
 #include <stdio.h>
 #include "as.h"
@@ -37,10 +34,10 @@ const char line_comment_chars[] = "!#";
 
 /* This table describes all the machine specific pseudo-ops the assembler
    has to support.  The fields are:
+
    pseudo-op name without dot
    function to call to execute this pseudo-op
-   Integer arg to pass to the function
- */
+   Integer arg to pass to the function  */
 
 #define OP_BCC	0x90
 #define OP_BCS	0xB0
@@ -54,8 +51,8 @@ const char line_comment_chars[] = "!#";
 #define OP_BVS	0x70
 
 void s_longa ();
-const pseudo_typeS md_pseudo_table[] =
-{
+
+const pseudo_typeS md_pseudo_table[] = {
   {"int", cons, 2},
   {"word", cons, 2},
   {"longa", s_longa, 0},
@@ -63,31 +60,27 @@ const pseudo_typeS md_pseudo_table[] =
   {0, 0, 0}
 };
 
-
 void cons ();
 void s_align_bytes ();
 
-
-/*int md_reloc_size; */
+#if 0
+int md_reloc_size;
+#endif
 
 static int relax;		/* set if -relax seen */
 
 const char EXP_CHARS[] = "eE";
 
-/* Chars that mean this number is a floating point constant */
+/* Chars that mean this number is a floating point constant.  */
 /* As in 0f12.456 */
 /* or    0d1.2345e12 */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
-
-
-static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
+/* Opcode mnemonics */
+static struct hash_control *opcode_hash_control;
 
 int M;				/* M flag */
 int X;				/* X flag */
-
-
-
 
 #define C(a,b) ENCODE_RELAX(a,b)
 #define ENCODE_RELAX(what,length) (((what) << 2) + (length))
@@ -110,11 +103,9 @@ int X;				/* X flag */
 
 relax_typeS md_relax_table[C (END, 0)];
 
-/*
-   This function is called once, at assembler startup time.  This should
-   set up all the tables, etc that the MD part of the assembler needs
- */
-
+/* This function is called once, at assembler startup time.  This
+   should set up all the tables, etc that the MD part of the assembler
+   needs.  */
 
 void
 s_longa (xmode)
@@ -136,6 +127,7 @@ s_longa (xmode)
     as_bad (_("need on or off."));
   demand_empty_rest_of_line ();
 }
+
 void
 md_begin ()
 {
@@ -145,7 +137,7 @@ md_begin ()
 
   opcode_hash_control = hash_new ();
 
-  /* Insert unique names into hash table */
+  /* Insert unique names into hash table.  */
   for (opcode = optable; opcode->name; opcode++)
     {
       if (strcmp (prev_name, opcode->name))
@@ -156,11 +148,10 @@ md_begin ()
       else
 	{
 	  /* Make all the opcodes with the same name point to the same
-	     string */
+	     string.  */
 	  opcode->name = prev_name;
 	}
     }
-
 
   /* Initialize the relax table.  We use a local variable to avoid
      warnings about modifying a supposedly const data structure.  */
@@ -191,7 +182,6 @@ md_begin ()
 static expressionS immediate;	/* absolute expression */
 static expressionS immediate1;	/* absolute expression */
 
-
 static symbolS *
 dot ()
 {
@@ -210,6 +200,7 @@ dot ()
 int expr_size;
 int expr_shift;
 int tc_cons_reloc;
+
 void
 w65_expression (dest, bytes)
      expressionS *dest;
@@ -241,8 +232,8 @@ w65_expression (dest, bytes)
 }
 
 int amode;
-static
-char *
+
+static char *
 parse_exp (s, bytes)
      char *s;
      int bytes;
@@ -260,15 +251,14 @@ parse_exp (s, bytes)
   return new;
 }
 
-
-static
-char *
+static char *
 get_operands (info, ptr)
      struct opinfo *info;
      char *ptr;
 {
   register int override_len = 0;
   register int bytes = 0;
+
   while (*ptr == ' ')
     ptr++;
 
@@ -429,7 +419,8 @@ get_operands (info, ptr)
 		  bytes = 2;
 		}
 	    }
-	  else if (ptr[0] == 's' && ptr[1] == ')' && ptr[2] == ',' && ptr[3] == 'y')
+	  else if (ptr[0] == 's' && ptr[1] == ')'
+		   && ptr[2] == ',' && ptr[3] == 'y')
 	    {
 	      amode = ADDR_STACK_REL_INDX_IDX;
 	      bytes = 1;
@@ -460,7 +451,6 @@ get_operands (info, ptr)
 
 	    }
 	}
-
     }
   else if (ptr[0] == '[')
     {
@@ -476,17 +466,16 @@ get_operands (info, ptr)
 	    }
 	  else
 	    {
-	      if (info->code == O_jmp) 
+	      if (info->code == O_jmp)
 		{
-		bytes = 2;
-		amode = ADDR_ABS_IND_LONG;
-	      } 
-	      else 
-{
-		bytes = 1;
-	      
-		amode = ADDR_DIR_IND_LONG;
-	      }
+		  bytes = 2;
+		  amode = ADDR_ABS_IND_LONG;
+		}
+	      else
+		{
+		  bytes = 1;
+		  amode = ADDR_DIR_IND_LONG;
+		}
 	    }
 	}
     }
@@ -576,9 +565,9 @@ get_operands (info, ptr)
 	{
 	case 0:
 	  if (amode == ADDR_DIR)
-	tc_cons_reloc = R_W65_DP;
+	    tc_cons_reloc = R_W65_DP;
 	  else
-tc_cons_reloc = R_W65_ABS8;
+	    tc_cons_reloc = R_W65_ABS8;
 	  break;
 	case 1:
 	  tc_cons_reloc = R_W65_ABS8S8;
@@ -607,11 +596,9 @@ tc_cons_reloc = R_W65_ABS8;
 
 /* Passed a pointer to a list of opcodes which use different
    addressing modes, return the opcode which matches the opcodes
-   provided
- */
+   provided.  */
 
-static
-struct opinfo *
+static struct opinfo *
 get_specific (opcode)
      struct opinfo *opcode;
 {
@@ -640,12 +627,10 @@ check (operand, low, high)
   return operand->X_add_number;
 }
 
+static int log2[] = { 0, 0, 1, 0, 2 };
 
-static int log2[] =
-{0, 0, 1, 0, 2};
+/* Now we know what sort of opcodes it is, let's build the bytes.  */
 
-/* Now we know what sort of opcodes it is, lets build the bytes -
- */
 static void
 build_Mytes (opcode)
      struct opinfo *opcode;
@@ -662,7 +647,8 @@ build_Mytes (opcode)
   else if (opcode->amode == ADDR_PC_REL)
     {
       int type;
-      /* This is a relaxable insn, so we do some special handling */
+
+      /* This is a relaxable insn, so we do some special handling.  */
       type = opcode->val == OP_BRA ? UNCOND_BRANCH : COND_BRANCH;
       output = frag_var (rs_machine_dependent,
 			 md_relax_table[C (type, WORD_DISP)].rlx_length,
@@ -679,21 +665,17 @@ build_Mytes (opcode)
 	  GETINFO (size, type, pcrel);
 	}
 
-      /* If something special was done in the
-	 expression modify the reloc type */
+      /* If something special was done in the expression modify the
+	 reloc type.  */
       if (tc_cons_reloc)
-	{
-	  type = tc_cons_reloc;
-	}
+	type = tc_cons_reloc;
 
-
-
-      /* 1 byte for the opcode + the bytes for the addrmode */
+      /* 1 byte for the opcode + the bytes for the addrmode.  */
       output = frag_more (size + 1);
 
       if (opcode->amode == ADDR_BLOCK_MOVE)
 	{
-	  /* Two relocs for this one */
+	  /* Two relocs for this one.  */
 	  fix_new_exp (frag_now,
 		       output + 1 - frag_now->fr_literal,
 		       1,
@@ -724,10 +706,9 @@ build_Mytes (opcode)
   output[0] = opcode->val;
 }
 
-/* This is the guts of the machine-dependent assembler.  STR points to a
-   machine dependent instruction.  This function is supposed to emit
-   the frags/bytes it assembles to.
- */
+/* This is the guts of the machine-dependent assembler.  STR points to
+   a machine dependent instruction.  This function is supposed to emit
+   the frags/bytes it assembles to.  */
 
 void
 md_assemble (str)
@@ -769,8 +750,7 @@ md_assemble (str)
 
   if (opcode == 0)
     {
-      /* Couldn't find an opcode which matched the operands */
-
+      /* Couldn't find an opcode which matched the operands.  */
 
       char *where = frag_more (1);
 
@@ -783,36 +763,36 @@ md_assemble (str)
   build_Mytes (opcode);
 }
 
-
 void
-DEFUN (tc_crawl_symbol_chain, (headers),
-       object_headers * headers)
+tc_crawl_symbol_chain (headers)
+     object_headers *headers;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 symbolS *
-DEFUN (md_undefined_symbol, (name),
-       char *name)
+md_undefined_symbol (name)
+     char *name;
 {
   return 0;
 }
 
 void
-DEFUN (tc_headers_hook, (headers),
-       object_headers * headers)
+tc_headers_hook (headers)
+     object_headers *headers;
 {
   printf (_("call to tc_headers_hook \n"));
 }
 
-/* Various routines to kill one day */
-/* Equal to MAX_PRECISION in atof-ieee.c */
+/* Various routines to kill one day.  */
+/* Equal to MAX_PRECISION in atof-ieee.c.  */
 #define MAX_LITTLENUMS 6
 
-/* Turn a string in input_line_pointer into a floating point constant of type
-   type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
- */
+/* Turn a string in input_line_pointer into a floating point constant
+   of type TYPE, and store the appropriate bytes in *LITP.  The number
+   of LITTLENUMS emitted is stored in *SIZEP.  An error message is
+   returned, or NULL on OK.  */
+
 char *
 md_atof (type, litP, sizeP)
      char type;
@@ -869,10 +849,9 @@ md_atof (type, litP, sizeP)
 }
 
 int
-md_parse_option (c,a)
-    int c;
-    char *a;
-
+md_parse_option (c, a)
+     int c;
+     char *a;
 {
   return 1;
 }
@@ -884,9 +863,9 @@ tc_Nout_fix_to_chars ()
   abort ();
 }
 
-/*
-called after relaxing, change the frags so they know how big they are
-*/
+/* Called after relaxing, change the frags so they know how big they
+   are.  */
+
 void
 md_convert_frag (headers, seg, fragP)
      object_headers *headers;
@@ -895,7 +874,8 @@ md_convert_frag (headers, seg, fragP)
 {
   int disp_size = 0;
   int inst_size = 0;
-  unsigned char *buffer = (unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+  unsigned char *buffer =
+    (unsigned char *) (fragP->fr_fix + fragP->fr_literal);
 
   switch (fragP->fr_subtype)
     {
@@ -905,7 +885,7 @@ md_convert_frag (headers, seg, fragP)
       inst_size = 1;
       break;
 
-      /* cond branches to a known 16 bit displacement */
+      /* Conditional branches to a known 16 bit displacement.  */
     case C (COND_BRANCH, WORD_DISP):
       switch (buffer[0])
 	{
@@ -931,7 +911,7 @@ md_convert_frag (headers, seg, fragP)
 	}
       break;
     case C (UNCOND_BRANCH, WORD_DISP):
-      /* Unconditional branches to a known 16 bit displacement */
+      /* Unconditional branches to a known 16 bit displacement.  */
 
       switch (buffer[0])
 	{
@@ -944,7 +924,7 @@ md_convert_frag (headers, seg, fragP)
 	  abort ();
 	}
       break;
-      /* got to create a branch over a reloc here */
+      /* Got to create a branch over a reloc here.  */
     case C (COND_BRANCH, UNDEF_WORD_DISP):
       buffer[0] ^= 0x20;	/* invert test */
       buffer[1] = 3;
@@ -982,8 +962,9 @@ md_convert_frag (headers, seg, fragP)
     }
   if (inst_size)
     {
-      /* Get the address of the end of the instruction */
-      int next_inst = fragP->fr_fix + fragP->fr_address + disp_size + inst_size;
+      /* Get the address of the end of the instruction.  */
+      int next_inst = (fragP->fr_fix + fragP->fr_address
+		       + disp_size + inst_size);
       int targ_addr = (S_GET_VALUE (fragP->fr_symbol) +
 		       fragP->fr_offset);
       int disp = targ_addr - next_inst;
@@ -994,15 +975,13 @@ md_convert_frag (headers, seg, fragP)
     }
 }
 
-
 valueT
-DEFUN (md_section_align, (seg, size),
-       segT seg AND
-       valueT size)
+md_section_align (seg, size)
+     segT seg;
+     valueT size;
 {
   return ((size + (1 << section_alignment[(int) seg]) - 1)
 	  & (-1 << section_alignment[(int) seg]));
-
 }
 
 void
@@ -1081,7 +1060,7 @@ md_pcrel_from (fixP)
 
 void
 tc_coff_symbol_emit_hook (x)
-    symbolS *x;
+     symbolS *x;
 {
 }
 
@@ -1161,14 +1140,9 @@ tc_coff_sizemachdep (frag)
   return md_relax_table[frag->fr_subtype].rlx_length;
 }
 
+/* Called just before address relaxation, return the length by which a
+   fragment must grow to reach it's destination.  */
 
-
-
-
-/*
-called just before address relaxation, return the length
-by which a fragment must grow to reach it's destination
-*/
 int
 md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
@@ -1182,17 +1156,18 @@ md_estimate_size_before_relax (fragP, segment_type)
       abort ();
     case C (COND_BRANCH, UNDEF_BYTE_DISP):
     case C (UNCOND_BRANCH, UNDEF_BYTE_DISP):
-      /* used to be a branch to somewhere which was unknown */
+      /* Used to be a branch to somewhere which was unknown.  */
       if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
 	  /* Got a symbol and it's defined in this segment, become byte
-	 sized - maybe it will fix up */
+	     sized - maybe it will fix up.  */
 	  fragP->fr_subtype = C (what, BYTE_DISP);
 	  fragP->fr_var = md_relax_table[C (what, BYTE_DISP)].rlx_length;
 	}
       else
 	{
-	  /* Its got a segment, but its not ours, so it will always be long */
+	  /* Its got a segment, but its not ours, so it will always be
+             long.  */
 	  fragP->fr_subtype = C (what, UNDEF_WORD_DISP);
 	  fragP->fr_var = md_relax_table[C (what, WORD_DISP)].rlx_length;
 	  return md_relax_table[C (what, WORD_DISP)].rlx_length;
@@ -1200,8 +1175,6 @@ md_estimate_size_before_relax (fragP, segment_type)
     }
   return fragP->fr_var;
 }
-
-
 
 CONST char *md_shortopts = "";
 struct option md_longopts[] = {
@@ -1213,7 +1186,6 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-
 }
 
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);

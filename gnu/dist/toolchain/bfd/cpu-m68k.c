@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 {  32, 32, 8, bfd_arch_m68k, name, "m68k",print,2,d,bfd_default_compatible,bfd_default_scan, next, }
 
 static const bfd_arch_info_type arch_info_struct[] =
-{ 
+{
   N(bfd_mach_m68000, "m68k:68000", false, &arch_info_struct[1]),
   N(bfd_mach_m68008, "m68k:68008", false, &arch_info_struct[2]),
   N(bfd_mach_m68010, "m68k:68010", false, &arch_info_struct[3]),
