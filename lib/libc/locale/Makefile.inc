@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.33 2001/01/25 01:25:05 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2001/01/25 09:21:57 itojun Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -19,14 +19,14 @@ SRCS+=	multibyte_sb.c iswctype_sb.c
 CPPFLAGS+=-UWITH_RUNE
 .else
 # citrus multibyte locale support
+# we have quirk for libc.a - see the last part of lib/libc/Makefile
 CPPFLAGS+=-DWITH_RUNE
+MODULE_SHLIB_MAJOR!=	. ${.CURDIR}/../runemodule/shlib_version ; echo $$major
+CPPFLAGS+=-DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
+	-D_PATH_LOCALEMODULE=\"/usr/lib/runemodule\"
 SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c iswctype.c \
 	multibyte.c rune.c runeglue.c runenone.c runetable.c setrunelocale.c
-# workaround: build singlebyte setlocale() for libc.a, multibyte for libc.so
-#MODULE_SHLIB_MAJOR!=	. ${.CURDIR}/../runemodule/shlib_version; echo $$major
-#CPICFLAGS+=	-DDLRUNE -DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
-#		-D_PATH_LOCALEMODULE=\"/usr/lib/runemodule\"
-# to be dynamically loaded
+# to be dynamically loaded - see lib/runemodule
 #SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf2.c utf8.c
 .endif
 MAN+=	iswalnum.3 towlower.3
