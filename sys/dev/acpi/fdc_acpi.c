@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.11 2003/09/25 01:12:43 mycroft Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.12 2003/09/25 19:06:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.11 2003/09/25 01:12:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.12 2003/09/25 19:06:19 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -234,7 +234,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 
-	config_interrupts(self, fdcattach);
+	fdcattach(fdc);
 }
 
 static int
