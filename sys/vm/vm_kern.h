@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_kern.h,v 1.5 1994/01/08 05:26:13 mycroft Exp $
+ *	$Id: vm_kern.h,v 1.6 1994/01/13 04:25:01 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -84,7 +84,7 @@ void		kmem_init __P((vm_offset_t, vm_offset_t));
 vm_map_t	kernel_map;
 vm_map_t	mb_map;
 vm_map_t	kmem_map;
-/* vm_map_t	exec_map;  -- not used - cgd */
+vm_map_t	exec_map;
 vm_map_t	phys_map;
 vm_map_t	buffer_map;
 
