@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.6 1998/08/28 01:55:43 mrg Exp $
+#	$NetBSD: disktab,v 1.7 1999/01/10 13:23:37 mrg Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -24,9 +24,9 @@ miniroot:\
 
 # psuedo-geometry like floppy below, only slightly slarger
 instfs|NetBSD floppy install filesystem:\
-        :ty=floppy:se#512:nt#2:rm#300:ns#18:nc#88:\
-	:pa#3168:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pc#3168:oc#0:
+        :ty=floppy:se#512:nt#2:rm#300:ns#18:nc#92:\
+	:pa#3312:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#3312:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
