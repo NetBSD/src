@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.35 2001/02/16 23:28:44 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.36 2002/02/12 22:22:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.35 2001/02/16 23:28:44 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.36 2002/02/12 22:22:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: kdump.c,v 1.35 2001/02/16 23:28:44 manu Exp $");
 
 #include <sys/syscall.h>
 
-int timestamp, decimal, fancy = 1, tail, maxdata;
+int timestamp, decimal, plain, tail, maxdata;
 const char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 int emul_changed = 0;
@@ -138,7 +138,7 @@ main(argc, argv)
 			maxdata = atoi(optarg);
 			break;
 		case 'n':
-			fancy = 0;
+			plain++;
 			break;
 		case 'R':
 			timestamp = 2;	/* relative timestamp */
@@ -317,7 +317,7 @@ ktrsyscall(ktr)
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argsize) {
 		char c = '(';
-		if (fancy) {
+		if (!plain) {
 			if (ktr->ktr_code == SYS_ioctl) {
 				char *cp;
 				if (decimal)
@@ -381,14 +381,14 @@ ktrsysret(ktr)
 		revelant = current;
 	emul_changed = 0;
 
-	if (code >= revelant->nsysnames || code < 0)
+	if (code >= revelant->nsysnames || code < 0 || plain > 1)
 		(void)printf("[%d] ", code);
 	else
 		(void)printf("%s ", revelant->sysnames[code]);
 
 	switch (error) {
 	case 0:
-		if (fancy) {
+		if (!plain) {
 			(void)printf("%ld", (long)ret);
 			if (ret < 0 || ret > 9)
 				(void)printf("/%#lx", (long)ret);
@@ -447,7 +447,7 @@ normal:
 
 	default:
 		(void)printf("-1 errno %d", e);
-		if (fancy)
+		if (!plain)
 			(void)printf(" %s", strerror(i));
 	}
 }
@@ -492,7 +492,7 @@ ktrgenio(ktr, len)
 	if (screenwidth == 0) {
 		struct winsize ws;
 
-		if (fancy && ioctl(fileno(stderr), TIOCGWINSZ, &ws) != -1 &&
+		if (!plain && ioctl(fileno(stderr), TIOCGWINSZ, &ws) != -1 &&
 		    ws.ws_col > 8)
 			screenwidth = ws.ws_col;
 		else
