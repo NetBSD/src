@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.1 2000/06/09 05:33:05 soda Exp $	*/
+/*	$NetBSD: necpb.c,v 1.2 2000/06/17 07:25:57 soda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,6 +125,12 @@ extern struct cfdriver necpb_cd;
 
 static struct necpb_intrhand	*necpb_inttbl[4];
 
+/* There can be only one. */
+int necpbfound;
+struct necpb_config necpb_configuration;
+static long necpb_mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(10) / sizeof(long)];
+static long necpb_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(10) / sizeof(long)];
+
 int
 necpbmatch(parent, match, aux)
 	struct device *parent;
@@ -136,7 +142,67 @@ necpbmatch(parent, match, aux)
 	if (strcmp(ca->ca_name, necpb_cd.cd_name) != 0)
 		return (0);
 
+	if (necpbfound)
+		return (0);
+
 	return (1);
+}
+
+/*
+ * Set up the chipset's function pointers.
+ */
+void
+necpb_init(ncp)
+	struct necpb_config *ncp;
+{
+	pcitag_t tag;
+	pcireg_t csr;
+
+	if (ncp->nc_initialized)
+		return;
+
+	arc_large_bus_space_init(&ncp->nc_memt, "necpcimem",
+	    RD94_P_PCI_MEM, 0, RD94_S_PCI_MEM);
+	arc_bus_space_init_extent(&ncp->nc_memt, (caddr_t)necpb_mem_ex_storage,
+	    sizeof(necpb_mem_ex_storage));
+
+	arc_bus_space_init(&ncp->nc_iot, "necpciio",
+	    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
+	arc_bus_space_init_extent(&ncp->nc_iot, (caddr_t)necpb_io_ex_storage,
+	    sizeof(necpb_io_ex_storage));
+
+	jazz_bus_dma_tag_init(&ncp->nc_dmat);
+
+	ncp->nc_pc.pc_attach_hook = necpb_attach_hook;
+	ncp->nc_pc.pc_bus_maxdevs = necpb_bus_maxdevs;
+	ncp->nc_pc.pc_make_tag = necpb_make_tag;
+	ncp->nc_pc.pc_conf_read = necpb_conf_read;
+	ncp->nc_pc.pc_conf_write = necpb_conf_write;
+	ncp->nc_pc.pc_intr_map = necpb_intr_map;
+	ncp->nc_pc.pc_intr_string = necpb_intr_string;
+	ncp->nc_pc.pc_intr_establish = necpb_intr_establish;
+	ncp->nc_pc.pc_intr_disestablish = necpb_intr_disestablish;
+
+	/* XXX: enable all mem/io/busmaster */
+	tag = necpb_make_tag(&ncp->nc_pc, 0, 3, 0);
+	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE;
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	tag = necpb_make_tag(&ncp->nc_pc, 0, 4, 0);
+	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE;
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	tag = necpb_make_tag(&ncp->nc_pc, 0, 5, 0);
+	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE;
+	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	ncp->nc_initialized = 1;
 }
 
 void
@@ -148,27 +214,12 @@ necpbattach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	int i;
 
+	necpbfound = 1;
+
 	printf("\n");
 
-	arc_large_bus_space_init(&sc->sc_memt, "necpcimem",
-	    RD94_P_PCI_MEM, 0, RD94_S_PCI_MEM);
-	arc_bus_space_init_extent(&sc->sc_memt, NULL, 0);
-
-	arc_bus_space_init(&sc->sc_iot, "necpciio",
-	    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
-	arc_bus_space_init_extent(&sc->sc_iot, NULL, 0);
-
-	jazz_bus_dma_tag_init(&sc->sc_dmat);
-
-	sc->sc_pc.pc_attach_hook = necpb_attach_hook;
-	sc->sc_pc.pc_bus_maxdevs = necpb_bus_maxdevs;
-	sc->sc_pc.pc_make_tag = necpb_make_tag;
-	sc->sc_pc.pc_conf_read = necpb_conf_read;
-	sc->sc_pc.pc_conf_write = necpb_conf_write;
-	sc->sc_pc.pc_intr_map = necpb_intr_map;
-	sc->sc_pc.pc_intr_string = necpb_intr_string;
-	sc->sc_pc.pc_intr_establish = necpb_intr_establish;
-	sc->sc_pc.pc_intr_disestablish = necpb_intr_disestablish;
+	sc->sc_ncp = &necpb_configuration;
+	necpb_init(sc->sc_ncp);
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
 
@@ -178,10 +229,10 @@ necpbattach(parent, self, aux)
 	set_intr(MIPS_INT_MASK_2, necpb_intr, 3);
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = &sc->sc_iot;
-	pba.pba_memt = &sc->sc_memt;
-	pba.pba_dmat = &sc->sc_dmat;
-	pba.pba_pc = &sc->sc_pc;
+	pba.pba_iot = &sc->sc_ncp->nc_iot;
+	pba.pba_memt = &sc->sc_ncp->nc_memt;
+	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
+	pba.pba_pc = &sc->sc_ncp->nc_pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 
@@ -206,28 +257,6 @@ necpb_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
-	pci_chipset_tag_t pc = pba->pba_pc;
-	pcitag_t tag;
-	pcireg_t csr;
-
-	/* XXX: enable all mem/io/busmaster */
-	tag = necpb_make_tag(pc, 0, 3, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-	tag = necpb_make_tag(pc, 0, 4, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-	tag = necpb_make_tag(pc, 0, 5, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 }
 
 int

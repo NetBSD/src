@@ -1,4 +1,4 @@
-/*	$NetBSD: necpbvar.h,v 1.1 2000/06/09 05:33:06 soda Exp $	*/
+/*	$NetBSD: necpbvar.h,v 1.2 2000/06/17 07:25:57 soda Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -26,12 +26,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct necpb_config {
+	int	nc_initialized;
+	struct arc_bus_space nc_memt;
+	struct arc_bus_space nc_iot;
+	struct arc_bus_dma_tag nc_dmat;
+	struct arc_pci_chipset nc_pc;
+};
+
 struct necpb_softc {
 	struct device sc_dev;
-	struct arc_bus_space sc_memt;
-	struct arc_bus_space sc_iot;
-	struct arc_bus_dma_tag sc_dmat;
-	struct arc_pci_chipset sc_pc;
+	struct necpb_config *sc_ncp;
 };
 
 struct necpb_intrhand {
@@ -40,3 +45,8 @@ struct necpb_intrhand {
 	struct	necpb_intrhand *ih_next;
 	int	ih_intn;
 };
+
+void	necpb_init __P((struct necpb_config *ncp));
+
+/* for console initialization */
+extern struct necpb_config necpb_configuration;
