@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prep,v 1.5 2001/05/29 02:20:25 mrg Exp $
+#	$NetBSD: Makefile.prep,v 1.6 2001/06/01 04:20:05 simonb Exp $
 #
 # Makefile for NetBSD
 #
@@ -160,11 +160,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${PREP}/prep/locore.s \
+SRCS=	${PREP}/prep/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PREP}/prep/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PREP}/prep/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -188,7 +188,7 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${PREP}/prep/locore.s assym.h
+locore.o: ${PREP}/prep/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
