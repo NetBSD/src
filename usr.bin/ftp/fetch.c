@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.9 1997/05/23 18:42:36 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.10 1997/05/23 18:54:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.9 1997/05/23 18:42:36 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.10 1997/05/23 18:54:18 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -208,9 +208,9 @@ url_get(origline, proxyenv)
 	 * status of "200". Proxy requests don't want leading /.
 	 */
 	if (!proxy)
-		printf("Requesting %s:%d/%s\n", line, ntohs(port), path);
+		printf("Requesting %s\n", origline);
 	else
-		printf("Requesting %s (via %s)\n", line, proxyenv);
+		printf("Requesting %s (via %s)\n", origline, proxyenv);
 	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\n\n",
 	    proxy ? "" : "/", path);
 	buflen = strlen(buf);
@@ -334,6 +334,7 @@ url_get(origline, proxyenv)
 	close(out);
 	if (proxy)
 		free(proxy);
+	free(line);
 	return (0);
 
 improper:
@@ -343,6 +344,7 @@ cleanup_url_get:
 		close(s);
 	if (proxy)
 		free(proxy);
+	free(line);
 	return (-1);
 }
 
