@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.36 2003/04/02 10:39:27 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.37 2003/04/06 17:23:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.36 2003/04/02 10:39:27 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.37 2003/04/06 17:23:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,4 +642,17 @@ inoinfo(ino_t inum)
 	if (iloff >= ilp->il_numalloced)
 		return (&unallocated);
 	return (&ilp->il_stat[iloff]);
+}
+
+void
+sb_oldfscompat_write(struct fs *fs)
+{
+	if (fs->fs_magic != FS_UFS1_MAGIC)
+		return;
+
+	fs->fs_old_time = fs->fs_time;
+	fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
+	fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
+	fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
+	fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
 }
