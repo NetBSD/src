@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.34 2000/05/19 16:00:52 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.35 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.34 2000/05/19 16:00:52 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.35 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -107,7 +107,7 @@ wnoutrefresh(WINDOW *win)
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
 		    *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
-		if ((wlp->flags & (__FORCEPAINT | __ISDIRTY)) == 0)
+		if ((wlp->flags & __ISDIRTY) == 0)
 			continue;
 		vlp = __virtscr->lines[wy + win->begy];
 
@@ -131,10 +131,6 @@ wnoutrefresh(WINDOW *win)
 			}
 
 			/* Set flags on "__virtscr" and unset on "win". */
-			if (wlp->flags & __FORCEPAINT) {
-				vlp->flags |= __FORCEPAINT;
-				wlp->flags &= ~__FORCEPAINT;
-			}
 			if (wlp->flags & __ISPASTEOL)
 				vlp->flags |= __ISPASTEOL;
 			else
@@ -272,8 +268,7 @@ doupdate(void)
 		 * in the window are dirty.
 		 */
 		for (wy = 0, dnum = 0; wy < win->maxy; wy++)
-			if (win->lines[wy]->flags &
-			    (__ISDIRTY | __FORCEPAINT))
+			if (win->lines[wy]->flags & __ISDIRTY)
 				dnum++;
 		if (!__noqch && dnum > (int) win->maxy / 4)
 			quickch();
@@ -318,7 +313,7 @@ doupdate(void)
 #endif
 		if (!curwin)
 			curscr->lines[wy]->hash = wlp->hash;
-		if (wlp->flags & (__ISDIRTY | __FORCEPAINT)) {
+		if (wlp->flags & __ISDIRTY) {
 			if (makech(wy) == ERR)
 				return (ERR);
 			else {
@@ -374,10 +369,9 @@ makech(wy)
 	WINDOW	*win;
 	static __LDATA blank = {' ', 0, ' ', 0};
 	__LDATA *nsp, *csp, *cp, *cep;
-	u_int	force;
 	int	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx;
-	char	*ce, cm_buff[1024];
+	char	*ce;
 	attr_t	lspc;		/* Last space colour */
 	attr_t	off, on;
 
@@ -413,8 +407,6 @@ makech(wy)
 		csp = &curscr->lines[wy]->line[wx];
 
 	nsp = &win->lines[wy]->line[wx];
-	force = win->lines[wy]->flags & __FORCEPAINT;
-	win->lines[wy]->flags &= ~__FORCEPAINT;
 	if (CE && !curwin) {
 		cp = &win->lines[wy]->line[win->maxx - 1];
 		lspc = cp->attr & __COLOR;
@@ -428,18 +420,8 @@ makech(wy)
 	else
 		ce = NULL;
 
-	if (force) {
-		if (CM) {
-			t_goto(NULL, CM, lx, ly, cm_buff, 1023);
-			tputs(cm_buff, 0, __cputchar);
-		} else {
-			tputs(HO, 0, __cputchar);
-			__mvcur(0, 0, ly, lx, 1);
-		}
-	}
-
 	while (wx <= lch) {
-		if (!force && memcmp(nsp, csp, sizeof(__LDATA)) == 0) {
+		if (memcmp(nsp, csp, sizeof(__LDATA)) == 0) {
 			if (wx <= lch) {
 				while (wx <= lch &&
 				    memcmp(nsp, csp, sizeof(__LDATA)) == 0) {
@@ -455,14 +437,12 @@ makech(wy)
 		domvcur(ly, lx, wy, wx);
 
 #ifdef DEBUG
-		__CTRACE("makech: 1: wx = %d, ly= %d, lx = %d, newy = %d, newx = %d, force =%d\n",
-		    wx, ly, lx, wy, wx, force);
+		__CTRACE("makech: 1: wx = %d, ly= %d, lx = %d, newy = %d, newx = %d\n",
+		    wx, ly, lx, wy, wx);
 #endif
 		ly = wy;
 		lx = wx;
-		while ((force || memcmp(nsp, csp, sizeof(__LDATA)) != 0)
-		    && wx <= lch) {
-
+		while (memcmp(nsp, csp, sizeof(__LDATA)) != 0 && wx <= lch) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
 				/* Check for clear to end-of-line. */
@@ -729,12 +709,11 @@ quickch(void)
 	 * Find how many lines from the top of the screen are unchanged.
 	 */
 	for (top = 0; top < __virtscr->maxy; top++)
-		if (__virtscr->lines[top]->flags & __FORCEPAINT ||
-		    (__virtscr->lines[top]->flags & __ISDIRTY &&
-		     (__virtscr->lines[top]->hash != curscr->lines[top]->hash
-		      || memcmp(__virtscr->lines[top]->line,
+		if (__virtscr->lines[top]->flags & __ISDIRTY &&
+		    (__virtscr->lines[top]->hash != curscr->lines[top]->hash ||
+		     memcmp(__virtscr->lines[top]->line,
 			  curscr->lines[top]->line,
-			  (size_t) __virtscr->maxx * __LDATASIZE) != 0)))
+			  (size_t) __virtscr->maxx * __LDATASIZE) != 0))
 			break;
 		else
 			__virtscr->lines[top]->flags &= ~__ISDIRTY;
@@ -742,12 +721,11 @@ quickch(void)
 	 * Find how many lines from bottom of screen are unchanged.
 	 */
 	for (bot = __virtscr->maxy - 1; bot >= 0; bot--)
-		if (__virtscr->lines[bot]->flags & __FORCEPAINT ||
-		    (__virtscr->lines[bot]->flags & __ISDIRTY &&
-		     (__virtscr->lines[bot]->hash != curscr->lines[bot]->hash
-		      || memcmp(__virtscr->lines[bot]->line,
+		if (__virtscr->lines[bot]->flags & __ISDIRTY &&
+		    (__virtscr->lines[bot]->hash != curscr->lines[bot]->hash ||
+		     memcmp(__virtscr->lines[bot]->line,
 			  curscr->lines[bot]->line,
-			  (size_t) __virtscr->maxx * __LDATASIZE) != 0)))
+			  (size_t) __virtscr->maxx * __LDATASIZE) != 0))
 			break;
 		else
 			__virtscr->lines[bot]->flags &= ~__ISDIRTY;
@@ -801,10 +779,8 @@ quickch(void)
 			    starts++) {
 				for (curw = startw, curs = starts;
 				    curs < starts + bsize; curw++, curs++)
-					if (__virtscr->lines[curw]->flags &
-					    __FORCEPAINT ||
-					    __virtscr->lines[curw]->hash !=
-						curscr->lines[curs]->hash)
+					if (__virtscr->lines[curw]->hash !=
+					    curscr->lines[curs]->hash)
 						break;
 				if (curs != starts + bsize)
 					continue;
@@ -939,18 +915,18 @@ done:
 					__CTRACE("-- blanked out: dirty\n");
 #endif
 					clp->hash = blank_hash;
-					__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1, 0);
+					__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1);
 				} else {
 #ifdef DEBUG
 					__CTRACE(" -- blank line already: dirty\n");
 #endif
-					__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1, 0);
+					__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1);
 				}
 			} else {
 #ifdef DEBUG
 				__CTRACE(" -- dirty\n");
 #endif
-				__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1, 0);
+				__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1);
 			}
 		if (target == cur_period) {
 			i = target + 1;

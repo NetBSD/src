@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.14 2000/04/18 22:45:24 jdc Exp $	*/
+/*	$NetBSD: erase.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.14 2000/04/18 22:45:24 jdc Exp $");
+__RCSID("$NetBSD: erase.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,8 +92,7 @@ werase(WINDOW *win)
 				sp->battr = win->battr;
 			}
 		if (minx != -1)
-			__touchline(win, y, minx, maxx - win->lines[y]->line,
-			    0);
+			__touchline(win, y, minx, maxx - win->lines[y]->line);
 	}
 	wmove(win, 0, 0);
 	return (OK);
