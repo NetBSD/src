@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.29 2002/03/17 19:40:32 atatat Exp $	*/
+/*	$NetBSD: pccons.c,v 1.29.4.1 2002/05/17 14:00:14 gehenna Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -97,8 +97,6 @@ static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 static pccons_keymap_t scan_codes[KB_NUM_KEYS];/* keyboard translation table */
 int pc_xmode = 0;
 
-cdev_decl(pc);
-
 /*
  *  Keyboard output queue.
  */
@@ -142,6 +140,20 @@ int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
 extern struct cfdriver pc_cd;
+
+dev_type_open(pcopen);
+dev_type_close(pcclose);
+dev_type_read(pcread);
+dev_type_write(pcwrite);
+dev_type_ioctl(pcioctl);
+dev_type_tty(pctty);
+dev_type_poll(pcpoll);
+dev_type_mmap(pcmmap);
+
+const struct cdevsw pc_cdevsw = {
+	pcopen, pcclose, pcread, pcwrite, pcioctl,
+	nostop, pctty, pcpoll, pcmmap, D_TTY
+};
 
 #define	CHR		2
 
@@ -805,13 +817,6 @@ out:
 	splx(s);
 }
 
-void
-pcstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-}
-
 /* ARGSUSED */
 void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
 	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
@@ -831,9 +836,7 @@ void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
 	pc_context_init(crt_iot, crt_memt, kbd_iot, config);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == pcopen)
-			break;
+	maj = cdevsw_lookup_major(&pc_cdevsw);
 	pccons.cn_dev = makedev(maj, 0);
 
 	cn_tab = &pccons;
