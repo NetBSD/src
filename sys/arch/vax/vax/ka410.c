@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.4 1997/02/19 10:04:12 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.5 1997/03/22 23:02:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -104,10 +104,19 @@ ka410_conf(parent, self, aux)
 {
 	extern char cpu_model[];
 
-	if (vax_confdata & 0x80)	/* MSB in CFGTST */
-		strcpy(cpu_model,"MicroVAX 2000");
-	else
-		strcpy(cpu_model,"VAXstation 2000");
+	switch (vax_cputype) {
+	case VAX_TYP_UV2:
+		if (vax_confdata & 0x80)	/* MSB in CFGTST */
+			strcpy(cpu_model,"MicroVAX 2000");
+		else
+			strcpy(cpu_model,"VAXstation 2000");
+		break;
+
+	case VAX_TYP_CVAX:
+		/* if (((vax_siedata >> 8) & 0xff) == 2) */
+		strcpy(cpu_model,"MicroVAX 3100 (KA41)");
+		/* ka41_cache_enable(); */
+	}
 
 	printf(": %s\n", cpu_model);
 }

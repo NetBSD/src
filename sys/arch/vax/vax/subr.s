@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.17 1997/03/15 16:14:23 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.18 1997/03/22 23:02:13 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -189,7 +189,7 @@ _copystr:	.word 0x7c
         movl    12(ap),r2       # len
 	movl	16(ap),r3	# copied
 
-#if VAX630 || VAX650 || VAX410 || VAX420
+#if VAX630 || VAX650 || VAX410
         movl    r4, r1          # (3) string address == r1
         movl    r2, r0          # (2) string length == r0
         jeql    Llocc_out       # forget zero length strings

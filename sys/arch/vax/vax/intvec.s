@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.21 1997/03/15 16:14:24 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.22 1997/03/22 23:02:07 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -378,7 +378,7 @@ _sret:	movl	(sp)+, fp
 sbifltmsg:
 	.asciz	"SBI fault",0
 
-#if VAX630 || VAX650 || VAX410 || VAX420
+#if VAX630 || VAX650 || VAX410
 /*
  * Table of emulated Microvax instructions supported by emulate.s.
  * Use noemulate to convert unimplemented ones to reserved instruction faults.
@@ -443,7 +443,7 @@ _emtable:
 	.align	2
 	.globl	emulate
 emulate:
-#if VAX630 || VAX650 || VAX410 || VAX420
+#if VAX630 || VAX650 || VAX410
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
 	cvtbl	(sp),r10		# get opcode
