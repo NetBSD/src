@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 1999/01/13 09:25:59 abs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 1999/03/24 23:16:00 dbj Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -110,7 +110,8 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t firstpa;
 {
 	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
-        paddr_t evpa, vpa;
+        paddr_t emonopa, monopa;
+        paddr_t ecolorpa, colorpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -131,12 +132,17 @@ pmap_bootstrap(nextpa, firstpa)
 	 *
 	 *	eiiopa		page following
 	 *			internal IO space
+         *
+         *      monopa          mono fb PT pages        MONOSIZE pages
+         *   
+         *      emonopa         page following
+         *                      mono fb pages
 	 *
-	 *	vpa 		video fb
-	 *			PT pages VIDEOSIZE pages
-	 *	evpa		page following
-	 *
-	 *
+         *      colorpa         color fb PT pages       COLORSIZE pages
+         *   
+         *      ecolorpa        page following
+         *                      color fb pages
+         *
 	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
 	 *   is the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
@@ -158,13 +164,16 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + VIDEOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + MONOMAPSIZE + COLORMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	eiiopa = nextpa;		/* just a reference for later */
 	iiopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
 	
-	evpa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
-	vpa = evpa - VIDEOMAPSIZE * sizeof(pt_entry_t);
+	emonopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
+	monopa = emonopa - MONOMAPSIZE * sizeof(pt_entry_t);
+
+	ecolorpa = emonopa - MONOMAPSIZE * sizeof(pt_entry_t);
+	colorpa = emonopa - COLORMAPSIZE * sizeof(pt_entry_t);
 
 	kptmpa = nextpa;
 	nextpa += NBPG;
@@ -380,10 +389,19 @@ pmap_bootstrap(nextpa, firstpa)
 		protopte += NBPG;
 	}
 
-	/* validate the video fb space PTEs */
-	pte = (u_int *)vpa;
-	epte = (u_int *)evpa;
-	protopte = VIDEOBASE | PG_RW | PG_CI | PG_V;
+	/* validate the mono fb space PTEs */
+	pte = (u_int *)monopa;
+	epte = (u_int *)emonopa;
+	protopte = MONOBASE | PG_RW | PG_CI | PG_V;
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
+	}
+
+	/* validate the color fb space PTEs */
+	pte = (u_int *)colorpa;
+	epte = (u_int *)ecolorpa;
+	protopte = COLORBASE | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -410,13 +428,23 @@ pmap_bootstrap(nextpa, firstpa)
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 
 	/*
-	 * videobase, videolimit: base and end of video fb space.
-	 * VIDEOMAPSIZE pages prior to external IO space at end of static
+	 * colorbase, colorlimit: base and end of color fb space.
+	 * COLORMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(videobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - VIDEOMAPSIZE);
-	RELOC(videolimit, char *) =
+	RELOC(colorbase, char *) =
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE - COLORMAPSIZE);
+	RELOC(colorlimit, char *) =
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+
+	/*
+	 * monobase, monolimit: base and end of mono fb space.
+	 * MONOMAPSIZE pages prior to external IO space at end of static
+	 * kernel page table.
+	 */
+	RELOC(monobase, char *) =
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+	RELOC(monolimit, char *) =
 		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
 
 	/*

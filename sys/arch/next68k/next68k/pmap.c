@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1999/03/24 05:51:07 mrg Exp $        */
+/*	$NetBSD: pmap.c,v 1.9 1999/03/24 23:16:00 dbj Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -385,8 +385,15 @@ pmap_init()
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
-	addr = (vaddr_t) videobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(VIDEOMAPSIZE),
+	addr = (vaddr_t) monobase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
+				NULL, UVM_UNKNOWN_OFFSET,
+				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+		goto bogons;
+	addr = (vaddr_t) colorbase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
 				NULL, UVM_UNKNOWN_OFFSET,
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.9 1999/01/31 18:12:14 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.10 1999/03/24 23:15:59 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -101,6 +101,7 @@ u_char rom_boot_arg[20];
 u_char rom_boot_info[20];
 u_char rom_boot_file[20];
 u_char rom_bootfile[MG_boot_how-MG_bootfile];
+char rom_machine_type;
 
 u_char *rom_return_sp;
 u_int rom_mon_stack;
@@ -171,6 +172,8 @@ next68k_bootargs(args)
 			msize1  = 0x100000;
 			ROM_PUTS("Unrecognized machine_type\r\n");
 		}
+
+		RELOC(rom_machine_type, char) = MONRELOC(char, MG_machine_type);
 
     for (i=0;i<N_SIMM;i++) {
 			

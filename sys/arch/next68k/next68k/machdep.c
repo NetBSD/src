@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1999/03/24 05:51:07 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1999/03/24 23:15:59 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <sys/file.h>
 #include <sys/clist.h>
 #include <sys/callout.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -88,9 +89,17 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
+
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -100,6 +109,17 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <next68k/next68k/seglist.h>
+
+#include "nextkbd.h"
+#if (NNEXTKBD > 0)
+#include <next68k/dev/nextkbdvar.h>
+#endif
+
+#include "nextdisplay.h"
+#if (NNEXTDISPLAY > 0)
+#include <next68k/dev/nextdisplayvar.h>
+#endif
+
 #include <next68k/next68k/nextrom.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */

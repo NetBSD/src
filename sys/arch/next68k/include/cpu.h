@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1999/02/26 22:37:58 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1999/03/24 23:15:58 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,8 +120,10 @@ int	want_resched;	/* resched() was called */
 #ifdef _KERNEL
 extern	volatile char *intiobase;
 extern  volatile char *intiolimit;
-extern	volatile char *videobase;
-extern  volatile char *videolimit;
+extern	volatile char *monobase;
+extern  volatile char *monolimit;
+extern	volatile char *colorbase;
+extern  volatile char *colorlimit;
 extern	void (*vectab[]) __P((void));
 
 struct frame;
@@ -368,8 +370,10 @@ void	child_return __P((void *));
 
 #define	INTIOBASE	(0x02000000)
 #define	INTIOTOP	(0x02120000)
-#define VIDEOBASE       (0x0b000000)
-#define VIDEOTOP        (0x0b03a800)
+#define MONOBASE        (0x0b000000)
+#define MONOTOP         (0x0b03a800)
+#define COLORBASE	(0x06000000)
+#define COLORTOP	(0x061D4000)
                                      
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"
@@ -390,12 +394,20 @@ void	child_return __P((void *));
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
 
-/* video fb space */
-#define	ISVIDEOVA(va) \
-	((char *)(va) >= videobase && (char *)(va) < videolimit)
-#define	VIDEOV(pa)	((int)(pa)-VIDEOBASE+(int)videobase)
-#define	VIDEOP(va)	((int)(va)-(int)videobase+VIDEOBASE)
-#define	VIDEOPOFF(pa)	((int)(pa)-VIDEOBASE)
-#define	VIDEOMAPSIZE	btoc(VIDEOTOP-VIDEOBASE)	/* who cares */
+/* mono fb space */
+#define	ISMONOVA(va) \
+	((char *)(va) >= monobase && (char *)(va) < monolimit)
+#define	MONOV(pa)	((int)(pa)-MONOBASE+(int)monobase)
+#define	MONOP(va)	((int)(va)-(int)monobase+MONOBASE)
+#define	MONOPOFF(pa)	((int)(pa)-MONOBASE)
+#define	MONOMAPSIZE	btoc(MONOTOP-MONOBASE)	/* who cares */
+
+/* color fb space */
+#define	ISCOLORVA(va) \
+	((char *)(va) >= colorbase && (char *)(va) < colorlimit)
+#define	COLORV(pa)	((int)(pa)-COLORBASE+(int)colorbase)
+#define	COLORP(va)	((int)(va)-(int)colorbase+COLORBASE)
+#define	COLORPOFF(pa)	((int)(pa)-COLORBASE)
+#define	COLORMAPSIZE	btoc(COLORTOP-COLORBASE)	/* who cares */
 
 #endif	/* _CPU_MACHINE_ */
