@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.8 2001/12/04 11:51:39 is Exp $
+#	$NetBSD: files.amigappc,v 1.9 2002/04/22 09:41:20 augustss Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -72,11 +72,11 @@ attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
 # audio
-device	aucc: audio
+device	aucc: audiobus
 attach	aucc at mainbus
 file	arch/amiga/dev/aucc.c		aucc needs-flag
 
-device	melody: audio, tms320av110
+device	melody: audiobus, tms320av110
 attach	melody at zbus
 file	arch/amiga/dev/melody.c		melody
 
