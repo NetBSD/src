@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.216 2000/04/19 07:52:33 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.217 2000/04/22 18:07:19 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.209 2000/04/19 07:51:20 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp 
  */
 
 /*
@@ -819,6 +819,8 @@
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 
 /* C-Media products */
+#define	PCI_PRODUCT_CMEDIA_CMI8338A	0x0100		/* CMI8338A PCI Audio Device */
+#define	PCI_PRODUCT_CMEDIA_CMI8338B	0x0101		/* CMI8338B PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_CMI8738	0x0111		/* CMI8738/C3DX PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_HSP56	0x0211		/* HSP56 Audiomodem Riser */
 
