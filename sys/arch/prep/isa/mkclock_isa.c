@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.7 2004/03/01 23:49:12 kleink Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.7 2004/03/01 23:49:12 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,20 +91,20 @@ mkclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	found = 0;
 
 	if (ia->ia_nio < 1 ||
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x74))
 		return (0);
 
         if (ia->ia_niomem > 0 &&
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT)) 
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM)) 
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
 		return (0);
 										
 	if (ia->ia_ndrq > 0 &&
-	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
+	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
 		return (0); 
 
 	if (res->VitalProductData.NvramSize != MK48T18_CLKSZ)
