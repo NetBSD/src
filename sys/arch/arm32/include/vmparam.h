@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2001/11/11 00:32:02 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2001/11/11 16:44:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,6 +38,8 @@
 
 /* for pt_entry_t definition */
 #include <machine/pte.h>
+
+#include <arm/arm32/vmparam.h>
 
 #define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
