@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.46 2003/01/18 08:44:27 thorpej Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.47 2003/05/16 14:36:35 itojun Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.46 2003/01/18 08:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.47 2003/05/16 14:36:35 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ bsd_to_svr4_xstat(st, st4)
 	st4->st_ctim.tv_nsec = st->st_ctimespec.tv_nsec;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
-	strcpy(st4->st_fstype, "unknown");
+	strlcpy(st4->st_fstype, "unknown", sizeof(st4->st_fstype));
 }
 
 
@@ -166,7 +166,7 @@ bsd_to_svr4_stat64(st, st4)
 	st4->st_ctim.tv_nsec = st->st_ctimespec.tv_nsec;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
-	strcpy(st4->st_fstype, "unknown");
+	strlcpy(st4->st_fstype, "unknown", sizeof(st4->st_fstype));
 }
 
 
