@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 2001/01/19 01:41:36 shin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19 2001/05/06 12:50:45 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -63,12 +63,6 @@ db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
  * Machine register set.
  */
 struct mips_saved_state *db_cur_exc_frame = 0;
-
-/*
- *  forward declarations
- */
-int print_exception_frame __P((struct mips_saved_state *fp,
-			       unsigned epc));
 
 /*XXX*/
 void stacktrace_subr __P((int a0, int a1, int a2, int a3,
