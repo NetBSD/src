@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.5 1999/08/13 03:41:57 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.6 1999/08/14 21:44:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -139,7 +139,7 @@ rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
 	RF_ReconMapListElem_t *p, *pt;
 
 	RF_LOCK_MUTEX(mapPtr->mutex);
-	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk && stopSector > startSector);
+	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk && stopSector >= startSector);
 
 	while (startSector <= stopSector) {
 		i = startSector / mapPtr->sectorsPerReconUnit;
