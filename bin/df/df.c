@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.30 1998/07/28 05:31:24 mycroft Exp $	*/
+/*	$NetBSD: df.c,v 1.31 1998/10/08 02:10:36 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.30 1998/07/28 05:31:24 mycroft Exp $");
+__RCSID("$NetBSD: df.c,v 1.31 1998/10/08 02:10:36 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,12 +349,12 @@ prtstat(sfsp, maxwidth)
 	    fsbtoblk(used, sfsp->f_bsize, blocksize),
 	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf(" %6s",
-	    availblks == 0 ? full : strpct((ulong)used, (ulong)availblks, 0));
+	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
 		(void)printf(" %7ld %7ld %6s ", used, sfsp->f_ffree,
-		   inodes == 0 ? full : strpct((ulong)used, (ulong)inodes, 0));
+		   inodes == 0 ? full : strpct((u_long)used, (u_long)inodes, 0));
 	} else 
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
