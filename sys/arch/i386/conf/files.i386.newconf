@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.43 1995/03/22 15:10:04 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.44 1995/03/24 22:47:39 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -160,9 +160,9 @@ file	dev/isa/if_le.c			le
 
 define	sbdsp
 file	arch/i386/isa/sbdsp.c		sbdsp
-device	sb at isa: audio, sbdsp
+device	sb at isa: audio, dma, sbdsp
 file	arch/i386/isa/sb.c		sb needs-flag
-device	pas at isa: audio, sbdsp
+device	pas at isa: audio, dma, sbdsp
 file	arch/i386/isa/pas.c		pas needs-flag
 
 define	ad1848
@@ -170,9 +170,9 @@ file	arch/i386/isa/ad1848.c		ad1848
 device	pss at isa {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
-device	sp at pss: audio, ad1848
+device	sp at pss: audio, dma, ad1848
 file	arch/i386/isa/pss.c		pss needs-flag
-device	wss at isa: audio, ad1848
+device	wss at isa: audio, dma, ad1848
 file	arch/i386/isa/wss.c		wss needs-flag
 
 device	spkr at isa: tty
@@ -192,6 +192,9 @@ file	arch/i386/pci/pci_machdep.c	pci
 
 device	ncr at pci: scsi
 file	dev/pci/ncr.c			ncr
+
+device	de at pci: ether, ifnet
+file	dev/pci/if_de.c			de
 
 #
 # Compatibility modules
