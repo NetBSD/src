@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.6 1995/04/17 15:48:24 cgd Exp $	*/
+/*	$NetBSD: pas.c,v 1.7 1995/05/08 22:02:01 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.6 1995/04/17 15:48:24 cgd Exp $
  */
 /*
  * Todo:

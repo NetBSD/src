@@ -1,4 +1,4 @@
-/*	$NetBSD: wssreg.h,v 1.1 1995/02/21 02:28:43 brezak Exp $	*/
+/*	$NetBSD: wssreg.h,v 1.2 1995/05/08 22:02:35 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: wssreg.h,v 1.1 1995/02/21 02:28:43 brezak Exp $
  */
 /*
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved

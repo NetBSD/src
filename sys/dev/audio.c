@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.7 1995/05/08 17:42:07 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.8 1995/05/08 22:01:34 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.7 1995/05/08 17:42:07 brezak Exp $
  */
 
 /*
@@ -62,6 +61,7 @@
  * - Allow opens for READ and WRITE (one open each)
  * - Setup for single isr for full-duplex
  * - Add SIGIO generation for changes in the mixer device
+ * - Fixup SunOS compat for mixer device changes in ioctl.
  */
 
 #include "audio.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.1 1995/02/21 02:26:41 brezak Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.2 1995/05/08 22:01:57 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848reg.h,v 1.1 1995/02/21 02:26:41 brezak Exp $
  */
 /*
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved
