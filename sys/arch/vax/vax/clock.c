@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2000/01/19 02:52:21 msaitoh Exp $	 */
+/*	$NetBSD: clock.c,v 1.31 2000/01/27 17:06:55 bouyer Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include "opt_vax8500.h"
 #include "opt_vax8200.h"
 #include "opt_vax46.h"
+#include "opt_vax630.h"
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));

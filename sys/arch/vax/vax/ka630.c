@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.18 2000/01/27 17:06:55 bouyer Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#include "opt_vax630.h"
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
