@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.24 1998/07/06 11:44:49 mrg Exp $	*/
+/*	$NetBSD: su.c,v 1.25 1998/07/26 15:24:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.24 1998/07/06 11:44:49 mrg Exp $");
+__RCSID("$NetBSD: su.c,v 1.25 1998/07/26 15:24:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ static int koktologin __P((char *, char *, char *));
 
 int main __P((int, char **));
 
-static int chshell __P((char *));
+static int chshell __P((const char *));
 static char *ontty __P((void));
 
 
@@ -324,9 +324,9 @@ badlogin:
 
 static int
 chshell(sh)
-	char *sh;
+	const char *sh;
 {
-	char *cp;
+	const char *cp;
 
 	while ((cp = getusershell()) != NULL)
 		if (!strcmp(cp, sh))
