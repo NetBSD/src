@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2003/04/06 16:12:39 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2003/04/10 17:05:25 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,7 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
+    {"kern-ADI_BRH",		0, "Kernel       : "},
     {"kern-INTEGRATOR",		0, "Kernel       : "},
     {"kern-IQ80310",		0, "Kernel       : "},
     {"kern-IQ80321",		0, "Kernel       : "},
@@ -82,11 +83,12 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On shark, we allow "wd" IDE disks and "sd" scsi disks.
+ * We allow "wd" (IDE disks), "sd" (SCSI disks), and "ld" (logical disks
+ * on RAID controllers).
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", NULL}
+= {"wd", "sd", "ld", NULL}
 #endif
 ;
 
