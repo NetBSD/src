@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.5 1999/09/09 21:52:11 tron Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.6 2001/01/20 02:24:16 thorpej Exp $	*/
 
 /*
  * cy_var.h
@@ -100,6 +100,6 @@ struct cy_softc {
 #endif
 };
 
-int cy_find __P((struct cy_softc *));
-void cy_attach __P((struct device *, struct device *, void *));
-int cy_intr __P((void *));
+int	cy_find(struct cy_softc *);
+void	cy_attach(struct device *, struct device *, void *);
+int	cy_intr(void *);
