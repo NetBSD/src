@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.18 2000/05/19 04:03:33 thorpej Exp $	*/
+/*	$NetBSD: rnd.c,v 1.19 2000/06/05 23:42:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@
 #include <sys/vnode.h>
 #include <sys/pool.h>
 
+#ifdef __HAVE_CPU_TIMESTAMP
+#include <machine/rnd.h>
+#endif
+
 #ifdef RND_DEBUG
 #define DPRINTF(l,x)      if (rnd_debug & (l)) printf x
 int     rnd_debug = 0;
@@ -99,7 +103,8 @@ typedef struct _rnd_sample_t {
 } rnd_sample_t;
 
 /*
- * the event queue.  Fields are altered at an interrupt level.
+ * The event queue.  Fields are altered at an interrupt level.
+ * All accesses must be protected at splhigh().
  */
 volatile int			rnd_timeout_pending;
 SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
@@ -116,13 +121,17 @@ struct selinfo rnd_selq;
 volatile u_int32_t  rnd_status;
 
 /*
- * Memory pool.
+ * Memory pool; accessed only at splhigh().
  */
 struct pool rnd_mempool;
 
 /*
- * our random pool.  This is defined here rather than using the general
- * purpose one defined in rndpool.c
+ * Our random pool.  This is defined here rather than using the general
+ * purpose one defined in rndpool.c.
+ *
+ * Samples are collected and queued at splhigh() into a separate queue
+ * (rnd_samples, see above), and processed in a timeout routine; therefore,
+ * all other accesses to the random pool must be at splsoftclock() as well.
  */
 rndpool_t   rnd_pool;
 
@@ -166,17 +175,20 @@ static inline u_int32_t
 rnd_timestamp()
 {
 	struct timeval	tv;
-	u_int32_t	t;
 
+#ifdef __HAVE_CPU_TIMESTAMP
+	if (cpu_hastimestamp())
+		return cpu_timestamp();
+#endif
 	microtime(&tv);
 
-	t = tv.tv_sec * 1000000 + tv.tv_usec;
-
-	return t;
+	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 /*
  * Check to see if there are readers waiting on us.  If so, kick them.
+ *
+ * Must be called at splsoftclock().
  */
 static inline void
 rnd_wakeup_readers()
@@ -500,6 +512,15 @@ rndioctl(dev, cmd, addr, flag, p)
 
 		break;
 
+	case RNDGETPOOLSTAT:
+		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (ret);
+
+		s = splsoftclock();
+		rndpool_get_stats(&rnd_pool, addr, sizeof(rndpoolstat_t));
+		splx(s);
+		break;
+		
 	case RNDGETSRCNUM:
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
@@ -531,6 +552,11 @@ rndioctl(dev, cmd, addr, flag, p)
 		for (count = 0 ; count < rst->count && rse != NULL ; count++) {
 			bcopy(&rse->data, &rst->source[count],
 			      sizeof(rndsource_t));
+			/* Zero out information which may leak */
+			rst->source[count].last_time = 0;
+			rst->source[count].last_delta = 0;
+			rst->source[count].last_delta2 = 0;
+			rst->source[count].state = 0;
 			rse = rse->list.le_next;
 		}
 
@@ -814,16 +840,22 @@ rnd_add_uint32(rs, val)
 	rnd_sample_t   *state;
 	u_int32_t	ts;
 
+	/*
+	 * If we are not collecting any data at all, just return.
+	 */
 	if (rs == NULL)
 		return;
 
 	rst = &rs->data;
 
-	/*
-	 * If we are not collecting any data at all, just return.
-	 */
 	if (rst->flags & RND_FLAG_NO_COLLECT)
 		return;
+
+	/*
+	 * Pick the timestamp as soon as possible to avoid
+	 * entropy overestimation.
+	 */
+	ts = rnd_timestamp();
 
 	/*
 	 * If the sample buffer is NULL, try to allocate one here.  If this
@@ -838,10 +870,10 @@ rnd_add_uint32(rs, val)
 	}
 
 	/*
-	 * Pick the timestamp.  If we are estimating entropy on this source,
+	 * If we are estimating entropy on this source,
 	 * calculate differentials.
 	 */
-	ts = rnd_timestamp();
+
 	if ((rst->flags & RND_FLAG_NO_ESTIMATE) == 0)
 		state->entropy += rnd_estimate_entropy(rst, ts);
 
@@ -856,31 +888,33 @@ rnd_add_uint32(rs, val)
 		return;
 
 	/*
-	 * State arrays are full.  Queue the state on the processing queue,
-	 * and if the timeout isn't going, make it go.
+	 * State arrays are full.  Queue this chunk on the processing queue.
 	 */
 	s = splhigh();
 	SIMPLEQ_INSERT_HEAD(&rnd_samples, state, next);
 	rst->state = NULL;
 
+	/*
+	 * If the timeout isn't pending, have it run in the near future.
+	 */
 	if (rnd_timeout_pending == 0) {
 		rnd_timeout_pending = 1;
 		callout_reset(&rnd_callout, 1, rnd_timeout, NULL);
 	}
-
 	splx(s);
 
 	/*
 	 * To get here we have to have queued the state up, and therefore
-	 * we need a new state buffer.  If we can, allocate one now.  Note
-	 * that NULL pointers are not checked for here.
+	 * we need a new state buffer.  If we can, allocate one now;
+	 * if we don't get it, it doesn't matter; we'll try again on
+	 * the next random event.
 	 */
 	rst->state = rnd_sample_allocate_isr(rst);
 }
 
 /*
  * timeout, run to process the events in the ring buffer.  Only one of these
- * can possibly be running at a time, and we are run at splsoftclock().
+ * can possibly be running at a time, run at splsoftclock().
  */
 static void
 rnd_timeout(arg)
@@ -888,13 +922,20 @@ rnd_timeout(arg)
 {
 	rnd_sample_t   *sample;
 	rndsource_t    *source;
+	int s;
+	u_int32_t	entropy;
 
+	/*
+	 * sample queue is protected at splhigh(); go there briefly to dequeue.
+	 */
+	s = splhigh();
 	rnd_timeout_pending = 0;
 
 	sample = SIMPLEQ_FIRST(&rnd_samples);
 	while (sample != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&rnd_samples, sample, next);
-
+		splx(s);
+		
 		source = sample->source;
 
 		/*
@@ -902,27 +943,28 @@ rnd_timeout(arg)
 		 * was disabled before we were called, but after the entry
 		 * was queued.
 		 */
-		if ((source->flags & RND_FLAG_NO_COLLECT)
-		    == RND_FLAG_NO_COLLECT)
-			goto loop;
-
-		rndpool_add_data(&rnd_pool, sample->values,
-				 RND_SAMPLE_COUNT * 4, 0);
-
-		if ((source->flags & RND_FLAG_NO_ESTIMATE) == 0)
-			rndpool_add_data(&rnd_pool, sample->ts,
-					 RND_SAMPLE_COUNT * 4,
-					 sample->entropy);
-		else
-			rndpool_add_data(&rnd_pool, sample->ts,
+		if ((source->flags & RND_FLAG_NO_COLLECT) == 0) {
+			rndpool_add_data(&rnd_pool, sample->values,
 					 RND_SAMPLE_COUNT * 4, 0);
 
-		source->total += sample->entropy;
+			entropy = sample->entropy;
+			if (source->flags & RND_FLAG_NO_ESTIMATE)
+				entropy = 0;		  
 
-	loop:
+			rndpool_add_data(&rnd_pool, sample->ts,
+					 RND_SAMPLE_COUNT * 4,
+					 entropy);
+
+			source->total += sample->entropy;
+		}
+
 		rnd_sample_free(sample);
+
+		/* Go back to splhigh to dequeue the next one.. */
+		s = splhigh();
 		sample = SIMPLEQ_FIRST(&rnd_samples);
 	}
+	splx(s);
 
 	/*
 	 * wake up any potential readers waiting.
@@ -940,10 +982,6 @@ rnd_extract_data(p, len, flags)
 	int retval;
 
 	s = splsoftclock();
-
-#if RND_USE_EXTRACT_TIME
-	rndpool_add_uint32(&rnd_pool, rnd_timestamp(), 0);
-#endif
 
 	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 
