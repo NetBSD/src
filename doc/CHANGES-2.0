@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.320 2004/07/09 18:32:48 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.321 2004/07/10 03:58:14 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5174,3 +5174,7 @@ sys/arch/alpha/pci/pci_kn300.c			1.25-1.26
 	Verified by Chuck Silvers.
 	[mhitch, tickets #622 and #623]
 
+sys/arch/i386/conf/GENERIC			1.6188
+
+	Remove accidently added UMASS_DEBUG.
+	[abs, ticket #608]
