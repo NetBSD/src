@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.7 1998/12/08 15:18:45 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.8 1998/12/09 00:18:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,6 +215,8 @@ usbd_set_protocol(iface, report)
 
 	DPRINTFN(4, ("usbd_set_protocol: iface=%p, report=%d, endpt=%d\n",
 		     iface, report, id->bInterfaceNumber));
+	if (!id)
+		return (USBD_IOERROR);
 	r = usbd_interface2device_handle(iface, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -242,6 +244,8 @@ usbd_set_report(iface, type, id, data, len)
 	usbd_status r;
 
 	DPRINTFN(4, ("usbd_set_report: len=%d\n", len));
+	if (!ifd)
+		return (USBD_IOERROR);
 	r = usbd_interface2device_handle(iface, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -269,6 +273,8 @@ usbd_set_report_async(iface, type, id, data, len)
 	usbd_status r;
 
 	DPRINTFN(4, ("usbd_set_report_async: len=%d\n", len));
+	if (!ifd)
+		return (USBD_IOERROR);
 	r = usbd_interface2device_handle(iface, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -296,6 +302,8 @@ usbd_get_report(iface, type, id, data, len)
 	usbd_status r;
 
 	DPRINTFN(4, ("usbd_set_report: len=%d\n", len));
+	if (!id)
+		return (USBD_IOERROR);
 	r = usbd_interface2device_handle(iface, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -321,6 +329,8 @@ usbd_set_idle(iface, duration, id)
 	usbd_status r;
 
 	DPRINTFN(4, ("usbd_set_idle: %d %d\n", duration, id));
+	if (!ifd)
+		return (USBD_IOERROR);
 	r = usbd_interface2device_handle(iface, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -363,6 +373,8 @@ usbd_get_hid_descriptor(ifc)
 	char *p, *end;
 	usbd_status r;
 
+	if (!idesc)
+		return (0);
 	r = usbd_interface2device_handle(ifc, &dev);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (0);

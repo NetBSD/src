@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.13 1998/12/02 22:54:52 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.14 1998/12/09 00:18:11 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,8 @@ ukbd_match(parent, match, aux)
 	if (!uaa->iface)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id->bInterfaceClass != UCLASS_HID || 
+	if (!id ||
+	    id->bInterfaceClass != UCLASS_HID || 
 	    id->bInterfaceSubClass != USUBCLASS_BOOT ||
 	    id->bInterfaceProtocol != UPROTO_BOOT_KEYBOARD)
 		return (UMATCH_NONE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.5 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.6 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,44 +265,13 @@ usbioctl(dev, cmd, data, flag, p)
 		struct usb_device_info *di = (void *)data;
 		int addr = di->addr;
 		usbd_device_handle dev;
-		struct usbd_port *p;
-		int i, r, s;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
 		dev = sc->sc_bus->devices[addr];
 		if (dev == 0)
 			return (ENXIO);
-		di->config = dev->config;
-		usbd_devinfo_vp(dev, di->product, di->vendor);
-		usbd_printBCD(di->revision, UGETW(dev->ddesc.bcdDevice));
-		di->class = dev->ddesc.bDeviceClass;
-		di->power = dev->self_powered ? 0 : dev->power;
-		di->lowspeed = dev->lowspeed;
-		if (dev->hub) {
-			for (i = 0; 
-			     i < sizeof(di->ports) / sizeof(di->ports[0]) &&
-				     i < dev->hub->hubdesc.bNbrPorts;
-			     i++) {
-				p = &dev->hub->ports[i];
-				if (p->device)
-					r = p->device->address;
-				else {
-					s = UGETW(p->status.wPortStatus);
-					if (s & UPS_PORT_ENABLED)
-						r = USB_PORT_ENABLED;
-					else if (s & UPS_SUSPEND)
-						r = USB_PORT_SUSPENDED;
-					else if (s & UPS_PORT_POWER)
-						r = USB_PORT_POWERED;
-					else
-						r = USB_PORT_DISABLED;
-				}
-				di->ports[i] = r;
-			}
-			di->nports = dev->hub->hubdesc.bNbrPorts;
-		} else
-			di->nports = 0;
+		usbd_fill_deviceinfo(dev, di);
 		break;
 	}
 
