@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.3 2001/09/07 15:57:41 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.4 2001/09/07 21:16:03 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -120,7 +120,7 @@ struct kfilter {
 };
 
 		/* System defined filters */
-static struct kfilter sys_kfilters[] = {
+static const struct kfilter sys_kfilters[] = {
 	{ "EVFILT_READ",	EVFILT_READ,	&file_filtops },
 	{ "EVFILT_WRITE",	EVFILT_WRITE,	&file_filtops },
 	{ "EVFILT_AIO",		EVFILT_AIO,	NULL },
@@ -134,9 +134,6 @@ static struct kfilter sys_kfilters[] = {
 static struct kfilter	*user_kfilters;		/* array */
 static int		user_kfilterc;		/* current offset */
 static int		user_kfiltermaxc;	/* max size so far */
-
-static struct kfilter *kfilter_byname(const char *);
-static struct kfilter *kfilter_byfilter(uint32_t);
 
 /*
  * kqueue_init:
@@ -156,37 +153,50 @@ kqueue_init(void)
 /*
  * Find kfilter entry by name, or NULL if not found.
  */
-static struct kfilter *
-kfilter_byname(const char *name)
+static const struct kfilter *
+kfilter_byname_sys(const char *name)
 {
-	struct kfilter *kfilter;
 	int i;
 
-	kfilter = sys_kfilters;		/* first look in system kfilters */
-	while (kfilter != NULL) {
-		for (i = 0; kfilter[i].name != NULL; i++) {
-					/* search for matching name */
-			if (kfilter[i].name[0] != '\0' &&
-			    (strcmp(name, kfilter[i].name) == 0))
-				return (&kfilter[i]);
-		}
-					/* swap to user kfilters */
-		if (kfilter == sys_kfilters)
-			kfilter = user_kfilters;
-		else
-			kfilter = NULL;
+	for (i = 0; sys_kfilters[i].name != NULL; i++) {
+		if (strcmp(name, sys_kfilters[i].name) == 0)
+			return (&sys_kfilters[i]);
 	}
 	return (NULL);
+}
+
+static struct kfilter *
+kfilter_byname_user(const char *name)
+{
+	int i;
+
+	for (i = 0; user_kfilters[i].name != NULL; i++) {
+		if (user_kfilters[i].name != '\0' &&
+		    strcmp(name, user_kfilters[i].name) == 0)
+			return (&user_kfilters[i]);
+	}
+	return (NULL);
+}
+
+static const struct kfilter *
+kfilter_byname(const char *name)
+{
+	const struct kfilter *kfilter;
+
+	if ((kfilter = kfilter_byname_sys(name)) != NULL)
+		return (kfilter);
+
+	return (kfilter_byname_user(name));
 }
 
 /*
  * Find kfilter entry by filter id, or NULL if not found.
  * Assumes entries are indexed in filter id order, for speed.
  */
-static struct kfilter *
+static const struct kfilter *
 kfilter_byfilter(uint32_t filter)
 {
-	struct kfilter *kfilter;
+	const struct kfilter *kfilter;
 
 	if (filter < EVFILT_SYSCOUNT)	/* it's a system filter */
 		kfilter = &sys_kfilters[filter];
@@ -213,9 +223,8 @@ kfilter_register(const char *name, struct filterops *filtops, int *retfilter)
 
 	if (name == NULL || name[0] == '\0' || filtops == NULL)
 		return (EINVAL);	/* invalid args */
-	kfilter = kfilter_byname(name);
-	if (kfilter != NULL)		/* already exists */
-		return (EEXIST);
+	if (kfilter_byname(name) != NULL)
+		return (EEXIST);	/* already exists */
 	if (user_kfilterc > 0xffffffff - EVFILT_SYSCOUNT)
 		return (EINVAL);	/* too many */
 
@@ -271,11 +280,13 @@ kfilter_unregister(const char *name)
 
 	if (name == NULL || name[0] == '\0')
 		return (EINVAL);	/* invalid name */
-	kfilter = kfilter_byname(name);
+
+	if (kfilter_byname_sys(name) != NULL)
+		return (EINVAL);	/* can't detach system filters */
+
+	kfilter = kfilter_byname_user(name);
 	if (kfilter == NULL)		/* not found */
 		return (ENOENT);
-	if (kfilter->filter < EVFILT_SYSCOUNT)
-		return (EINVAL);	/* can't detach system filters */
 
 	if (kfilter->name[0] != '\0') {
 		free(kfilter->name, M_KEVENT);
@@ -560,8 +571,8 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 int
 kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 {
+	const struct kfilter *kfilter;
 	struct filedesc	*fdp;
-	struct kfilter	*kfilter;
 	struct file	*fp;
 	struct knote	*kn;
 	int		s, error;
@@ -875,7 +886,7 @@ static int
 kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 {
 	struct kfilter_mapping	*km;
-	struct kfilter		*kfilter;
+	const struct kfilter	*kfilter;
 	char			*name;
 	int			error;
 
