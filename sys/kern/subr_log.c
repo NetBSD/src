@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.18 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.19 2000/05/28 18:17:07 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -220,7 +220,7 @@ logwakeup()
 	if (logsoftc.sc_state & LOG_ASYNC) {
 		if (logsoftc.sc_pgid < 0)
 			gsignal(-logsoftc.sc_pgid, SIGIO); 
-		else if ((p = pfind(logsoftc.sc_pgid)) != NULL)
+		else if (p && (p = pfind(logsoftc.sc_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
 	if (logsoftc.sc_state & LOG_RDWAIT) {
