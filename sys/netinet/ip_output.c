@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.29 1996/02/26 23:17:12 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.29.4.1 1996/12/11 02:00:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -398,7 +398,7 @@ done:
 		RTFREE(ro->ro_rt);
 	return (error);
 bad:
-	m_freem(m0);
+	m_freem(m);
 	goto done;
 }
 
