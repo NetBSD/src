@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_DES
-#error DES is disabled.
-#endif
 
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.
