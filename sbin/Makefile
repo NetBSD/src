@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2000/11/16 08:07:55 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.73 2001/02/14 14:21:08 minoura Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -21,7 +21,7 @@ SUBDIR+= mount_portal
 # we only dive into those subdirs for make obj/clean - some arch's floppies
 # compile individual mount_* and hence need the obj dirs to allow shared
 # source tree
-.if make(obj) || make(clean) || make(distclean)
+.if make(obj) || make(clean) || make(distclean) || make(cleandir)
 SUBDIR+= mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_filecore \
 	   mount_ffs mount_kernfs mount_lfs mount_msdos mount_nfs 	\
 	   mount_ntfs mount_null mount_overlay mount_procfs mount_umap	\
