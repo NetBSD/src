@@ -1,8 +1,8 @@
-/*	$NetBSD: pmap.c,v 1.56 1996/04/01 21:09:39 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.57 1996/05/16 14:30:54 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,7 +31,6 @@
  *	Harvard University.
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
- *      This product includes software developed by Harvard University.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -316,6 +315,8 @@ u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 
 u_int	*kernel_iopte_table;		/* 64k of storage for iommu */
 u_int 	kernel_iopte_table_pa;
+
+static 	int cant_cache_pagetables = 0;	/* 1 if page tables are uncachable */
 #endif
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
@@ -3500,6 +3501,7 @@ pmap_bootstrap4m(void)
 	    (lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB)) {
 
 		int bytes, numpages;
+		cant_cache_pagetables = 1;
 
 #define DO_THE_MATH(math)						\
 	bytes = (math);							\
@@ -3742,6 +3744,8 @@ pmap_pinit(pm)
 		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
 		urp = malloc(SRMMU_L1SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
+		if (cant_cache_pagetables)
+			kvm_uncache(urp, ((SRMMU_L1SIZE*sizeof(int))+NBPG-1)/NBPG);
 
 #ifdef DEBUG
 		if ((u_int) urp % (SRMMU_L1SIZE * sizeof(int)))
@@ -5714,6 +5718,8 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 			free(tblp,M_VMPMAP);
 			goto rgretry;
 		}
+		if (cant_cache_pagetables)
+			kvm_uncache(tblp, (size+NBPG-1)/NBPG);
 
 		rp->rg_seg_ptps = (int *)tblp;
 		qzero(tblp, size);
@@ -5734,6 +5740,8 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free(pte, M_VMPMAP);
 			goto sretry;
 		}
+		if (cant_cache_pagetables)
+			kvm_uncache((caddr_t)pte, (size+NBPG-1)/NBPG);
 
 		qzero((caddr_t)pte, size);
 		sp->sg_pte = pte;
