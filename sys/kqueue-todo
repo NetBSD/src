@@ -1,6 +1,7 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.2 2001/09/07 19:52:36 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.3 2001/09/07 22:15:34 thorpej Exp $
 
-items todo from bill sommerfeld:
+items todo from bill sommerfeld/thorpej:
+	- resolve si_klist (NetBSD) vs. si_note (FreeBSD)
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
