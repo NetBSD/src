@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2002/07/11 17:56:31 mycroft Exp $
+# $NetBSD: GENERIC,v 1.60 2002/07/11 18:07:22 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -185,7 +185,7 @@ zstty0	at zsc0 channel 0	# ttya
 zstty1	at zsc0 channel 1	# ttyb
 
 # SCSI bus support
-#scsibus* at scsi?
+scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
