@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 2001/12/31 14:16:01 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.4 2001/12/31 14:16:01 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.5 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -73,9 +73,9 @@ set_term(SCREEN *new)
 		old_screen->NONL = __NONL;
 		old_screen->UPPERCASE = __UPPERCASE;
 	}
-	
+
 	_cursesi_screen = new;
-	
+
 	__echoit = new->echoit;
         __pfast = new->pfast;
 	__rawmode = new->rawmode;
@@ -90,7 +90,7 @@ set_term(SCREEN *new)
 	__UPPERCASE = new->UPPERCASE;
 
 	_cursesi_resetterm(new);
-	
+
 	__winlistp = new->winlistp;
 
 	curscr = new->curscr;
@@ -121,7 +121,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	sp = type;
 	if ((type == NULL) && (sp = getenv("TERM")) == NULL)
 		return NULL;
-	
+
 	if ((new_screen = (SCREEN *) malloc(sizeof(SCREEN))) == NULL)
 		return NULL;
 
@@ -137,7 +137,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->curscr = NULL;
 	new_screen->__virtscr = NULL;
 	new_screen->curwin = 0;
-	
+
 	if (_cursesi_gettmode(new_screen) == ERR)
 		goto error_exit;
 
@@ -147,7 +147,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	/* Need either homing or cursor motion for refreshes */
 	if (!new_screen->tc_ho && !new_screen->tc_cm)
 		goto error_exit;
-	
+
 	new_screen->winlistp = NULL;
 
 	if ((new_screen->curscr = __newwin(new_screen, new_screen->LINES,
@@ -184,7 +184,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	if (_cursesi_screen == NULL || _cursesi_screen->endwin) {
 		set_term(new_screen);
 	}
-	
+
 #ifdef DEBUG
 	__CTRACE("newterm: LINES = %d, COLS = %d\n", LINES, COLS);
 #endif
@@ -223,7 +223,7 @@ delscreen(SCREEN *screen)
 		free(list);
 		list = np;
 	}
-	
+
 	  /* free the storage of the keymaps */
 	_cursesi_free_keymap(screen->base_keymap);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.27 2001/12/31 14:23:12 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.28 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.27 2001/12/31 14:23:12 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.28 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -114,7 +114,7 @@ _cursesi_gettmode(SCREEN *screen)
 
 	screen->baset = screen->orig_termios;
 	screen->baset.c_oflag &= ~OXTABS;
-	
+
 	screen->GT = 0;	/* historical. was used before we wired OXTABS off */
 	screen->NONL = (screen->baset.c_oflag & ONLCR) == 0;
 

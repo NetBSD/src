@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: insch.c,v 1.16 2002/01/02 10:38:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: insch.c,v 1.16 2002/01/02 10:38:28 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -78,7 +78,7 @@ mvwinsch(WINDOW *win, int y, int x, chtype ch)
 {
 	if (wmove(win, y, x) == ERR)
 		return ERR;
-	
+
 	return winsch(stdscr, ch);
 }
 

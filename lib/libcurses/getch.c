@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.35 2001/12/02 09:14:21 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.36 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.35 2001/12/02 09:14:21 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.36 2002/01/02 10:38:27 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -301,7 +301,7 @@ _cursesi_free_keymap(keymap_t *map)
 	for (i = 0; i < map->count; i += KEYMAP_ALLOC_CHUNK) {
 		free(map->key[i]);
 	}
-	
+
 	free(map->key);
 	free(map);
 }
@@ -500,7 +500,7 @@ new_key(void)
 {
 	key_entry_t *new_one;
 	int i;
-	
+
 	if ((new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t)))
 	    == NULL) {
 		perror("inkey: Cannot allocate new key entry chunk");
@@ -511,7 +511,7 @@ new_key(void)
 		new_one[i].type = 0;
 		new_one[i].value.next = NULL;
 	}
-	
+
 	return new_one;
 }
 

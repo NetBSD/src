@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.27 2001/12/11 11:18:17 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.28 2002/01/02 10:38:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.27 2001/12/11 11:18:17 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.28 2002/01/02 10:38:28 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -62,7 +62,7 @@ derwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
 	if (orig == NULL)
 		return ERR;
-	
+
 	return subwin(orig, nlines, ncols, orig->begy + by, orig->begx + bx);
 }
 
@@ -83,7 +83,7 @@ dupwin(WINDOW *win)
 	return new_one;
 }
 
-	
+
 /*
  * newwin --
  *	Allocate space for and set up defaults for a new window.

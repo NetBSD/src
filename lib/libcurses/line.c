@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.3 2001/06/13 10:45:57 wiz Exp $	*/
+/*	$NetBSD: line.c,v 1.4 2002/01/02 10:38:28 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.3 2001/06/13 10:45:57 wiz Exp $");
+__RCSID("$NetBSD: line.c,v 1.4 2002/01/02 10:38:28 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -85,7 +85,7 @@ whline(WINDOW *win, chtype ch, int count)
 
 	n = min(count, win->maxx - win->curx);
 	ocurx = win->curx;
-	
+
 	if (!(ch & __CHARTEXT))
 		ch |= ACS_HLINE;
 	for (i = 0; i < n; i++)

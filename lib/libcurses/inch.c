@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.4 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: inch.c,v 1.5 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inch.c,v 1.4 2000/04/24 14:09:43 blymn Exp $");
+__RCSID("$NetBSD: inch.c,v 1.5 2002/01/02 10:38:27 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -75,7 +75,7 @@ mvwinch(WINDOW *win, int y, int x)
 {
 	if (wmove(win, y, x) == ERR)
 		return ERR;
-	
+
 	return winch(win);
 }
 

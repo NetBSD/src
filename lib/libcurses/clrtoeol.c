@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.15 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.15 2002/01/02 10:38:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -58,7 +58,7 @@ clrtoeol(void)
 }
 
 #endif
-	
+
 /*
  * wclrtoeol --
  *	Clear up to the end of line.
