@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.3 2000/12/12 05:11:16 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.4 2000/12/12 05:34:02 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ static struct an_pcmcia_product {
 } an_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4800,
 	  PCMCIA_CIS_AIRONET_PC4800,	PCMCIA_STR_AIRONET_PC4800 },
+	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4500,
+	  PCMCIA_CIS_AIRONET_PC4500,	PCMCIA_STR_AIRONET_PC4500 },
 	{ 0,				0,
 	  { NULL, NULL, NULL, NULL },	NULL }
 };
