@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.18 1993/06/16 02:57:17 mycroft Exp $
+ *	$Id: isa.c,v 1.19 1993/06/16 02:59:42 mycroft Exp $
  */
 
 /*
@@ -647,8 +647,8 @@ void sysbeep(int pitch, int period)
 	 	*/
 		disable_intr();
 		outb(TIMER_MODE, TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DEV(pitch)%256);
-		outb(TIMER_CNTR2, TIMER_DEV(pitch)/256);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch)%256);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch)/256);
 		outb(0x61, inb(0x61) | 3);	/* enable counter 2 */
 		enable_intr();
 	}
