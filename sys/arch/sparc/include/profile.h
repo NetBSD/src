@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.9 1998/07/01 20:55:45 tv Exp $ */
+/*	$NetBSD: profile.h,v 1.10 1999/02/07 20:21:09 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef ELF
+#ifdef __ELF__
 #define _MCOUNT_SYM "_mcount"
 #else
 #define _MCOUNT_SYM "__mcount"
