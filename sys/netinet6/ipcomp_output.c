@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.9 2000/02/06 12:49:46 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.10 2000/05/19 04:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -397,7 +397,7 @@ ipcomp4_output(m, isr)
 		ipseclog((LOG_DEBUG, "ipcomp4_output: first mbuf too short\n"));
 		ipsecstat.out_inval++;
 		m_freem(m);
-		return NULL;
+		return 0;
 	}
 	ip = mtod(m, struct ip *);
 	/* XXX assumes that m->m_next points to payload */
@@ -417,7 +417,7 @@ ipcomp6_output(m, nexthdrp, md, isr)
 		ipseclog((LOG_DEBUG, "ipcomp6_output: first mbuf too short\n"));
 		ipsec6stat.out_inval++;
 		m_freem(m);
-		return NULL;
+		return 0;
 	}
 	return ipcomp_output(m, nexthdrp, md, isr, AF_INET6);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.44 2000/05/10 16:47:01 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.45 2000/05/19 04:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1649,7 +1649,7 @@ lfs_supercallback(bp)
 	struct lfs *fs;
 
 	fs = (struct lfs *)bp->b_saveaddr;
-	fs->lfs_sbactive=NULL;
+	fs->lfs_sbactive = 0;
 	wakeup(&fs->lfs_sbactive);
 #endif
 	lfs_freebuf(bp);

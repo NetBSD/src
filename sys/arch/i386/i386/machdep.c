@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.384 2000/05/11 16:38:11 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.385 2000/05/19 04:34:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ cpu_startup()
 	 * Initialize error message buffer (et end of core).
 	 */
 	msgbuf_vaddr = uvm_km_valloc(kernel_map, i386_round_page(MSGBUFSIZE));
-	if (msgbuf_vaddr == NULL)
+	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
 	/* msgbuf_paddr was init'd in pmap */
