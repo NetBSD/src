@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1997/03/15 18:09:46 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 1997/06/05 19:38:16 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,19 +54,7 @@
  */
 #include <machine/psl.h>
 
-#define _debug_spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
-		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
-		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&s)>>8)); \
-        _spl_r; \
-})
-
-#define _spl_no_check(s) \
+#define _spl(s) \
 ({ \
         register int _spl_r; \
 \
@@ -75,11 +63,15 @@
         _spl_r; \
 })
 
-#if defined (DEBUG)
-#define _spl _debug_spl
-#else
-#define _spl _spl_no_check
-#endif
+#define	_splraise(s) \
+({ \
+	register int _spl_r; \
+\
+	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : ); \
+	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL)) \
+		__asm __volatile ("movew %0,sr;" : : "di" (s)); \
+	_spl_r; \
+})
 
 /* spl0 requires checking for software interrupts */
 #define spl1()	_spl(PSL_S|PSL_IPL1)
@@ -93,21 +85,19 @@
 #define splnone()	spl0()
 #define splsoftclock()	spl1()
 #define splsoftnet()	spl1()
-#define splbio()	spl3()
-#define splnet()	spl3()
-/*
- * lowered to spl4 to allow for serial input into
- * private ringbuffer inspite of spltty
- */
-#define spltty()	spl4()
-#define splimp()	spl4()
+
+#define splbio()	_splraise(PSL_S|PSL_IPL3)
+#define splnet()	_splraise(PSL_S|PSL_IPL3)
+#define spltty()	_splraise(PSL_S|PSL_IPL4)
+#define splimp()	_splraise(PSL_S|PSL_IPL4)
+
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splvm()		spl6()
 #define splhigh()	spl7()
 #define splsched()	spl7()
 
-#define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
+#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
 int spl0 __P((void));
