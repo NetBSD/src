@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/11/12 23:16:37 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/19 18:10:40 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -31,8 +31,14 @@ BINDIR=		/usr/libexec
 scan.c: cgram.h
 
 CLEANFILES+=	${MAN}
-${MAN}:		makeman ${PROG}
-	sh ${.ALLSRC} -m >${.TARGET}
+
+.if ${USETOOLS} == "yes"
+LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
+.endif
+LINT1?=		./${PROG}
+
+${MAN}:		makeman ${LINT1:C/^\.\///} Makefile
+	sh ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
