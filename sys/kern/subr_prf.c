@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.24 1996/03/30 22:25:18 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -54,7 +54,6 @@
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/cpu.h>
 
 #include <dev/cons.h>
 

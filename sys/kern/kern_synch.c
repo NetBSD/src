@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.36 1996/03/30 22:23:25 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -51,7 +51,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/cpu.h>
 
 #include <machine/cpu.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.11 1996/03/16 23:17:18 christos Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,10 +44,10 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
-#include <sys/cpu.h>
+
+#include <vm/vm.h>
 
 #ifdef DEBUG
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 int doreallocblks = 0;
 struct ctldebug debug13 = { "doreallocblks", &doreallocblks };
