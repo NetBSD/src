@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.30 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.30.4.1 1999/04/23 14:52:32 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -99,8 +99,10 @@ static u_int8_t		asc_wave_tab[0x800];
 
 static int	asc_ring_bell __P((void *, int, int, int));
 static void	asc_stop_bell __P((void *));
+#if __notyet__
 static void	asc_intr_enable __P((void));
 static void	asc_intr __P((void *));
+#endif
 
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
@@ -186,9 +188,10 @@ ascattach(parent, self, aux)
 	printf("\n");
 
 	mac68k_set_bell_callback(asc_ring_bell, sc);
-
+#if __notyet__
 	via2_register_irq(VIA2_ASC, asc_intr, sc);
 	asc_intr_enable();
+#endif
 }
 
 int
@@ -363,6 +366,7 @@ asc_stop_bell(arg)
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 0);
 }
 
+#if __notyet__
 static void
 asc_intr_enable()
 {
@@ -389,3 +393,4 @@ asc_intr(arg)
 		printf("asc_intr(%p)\n", sc);
 #endif
 }
+#endif
