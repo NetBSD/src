@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.4 1993/07/07 12:06:32 cgd Exp $
+ *	$Id: nfs_bio.c,v 1.5 1993/07/13 10:04:26 cgd Exp $
  */
 
 #include "param.h"
@@ -265,7 +265,7 @@ again:
 			brelse(bp);
 			return error;
 		}
-		if (bp->b_wcred == NOCRED) {
+		if (bp->b_wcred == NOCRED && cred != NOCRED) {
 			crhold(cred);
 			bp->b_wcred = cred;
 		}
