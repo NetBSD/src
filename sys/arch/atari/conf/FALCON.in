@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON.in,v 1.4 2001/04/10 06:28:38 leo Exp $
+#	$NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
 #
 # ATARI-FALCON
 #
@@ -43,7 +43,7 @@ wd*		at wdc? channel ? drive ?
 atapibus* at wdc? channel ?
 
 # ATAPI devices
-cd*    at atapibus? drive ?	# ATAPI CD-ROM drives
+cd*	at atapibus? drive ?	# ATAPI CD-ROM drives
 
 # SCSI devices
 sd* 	at scsibus? target ? lun ?	# SCSI disk drives
