@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.6.4 2002/10/18 02:39:44 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.6.5 2002/12/16 16:20:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -198,6 +198,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf;
 	struct switchframe *sf;
 	vaddr_t spbase;
+#ifdef KSTACK_DEBUG
+	vaddr_t fptop;
+#endif
 
 #ifdef SH3
 	/*
@@ -217,6 +220,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	}
 #endif /* SH4 */
 
+	l->l_md.md_pcb = pcb;
+
 	/* set up the kernel stack pointer */
 	spbase = (vaddr_t)l->l_addr + NBPG;
 #ifdef P1_STACK
@@ -224,15 +229,30 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	/*
 	 * wbinv u-area to avoid cache-aliasing, since kernel stack
 	 * is accessed from P1 instead of P3.
-	 *
-	 * XXX Is this needed here?
 	 */
 	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_dcache_wbinv_range((vaddr_t)l2->l_addr, USPACE);
+		sh_dcache_wbinv_range((vaddr_t)l->l_addr, USPACE);
 	spbase = P1ADDR(spbase);
 #else /* P1_STACK */
-	/* Don't need to set up u-area PTEs again. */
+	/* Prepare u-area PTEs */
+#ifdef SH3
+	if (CPU_IS_SH3)
+		sh3_switch_setup(l);
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)
+		sh4_switch_setup(l);
+#endif
 #endif /* P1_STACK */
+
+#ifdef KSTACK_DEBUG
+	/* Fill magic number for tracking */
+	fptop = (vaddr_t)pcb + NBPG;
+	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
+	    NBPG - sizeof(struct user));
+	memset((char *)spbase, 0xa5, (USPACE - NBPG));
+	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
+#endif /* KSTACK_DEBUG */
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;
