@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.3 1997/10/09 21:20:39 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.4 1998/03/19 17:16:33 tv Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.3 1997/10/09 21:20:39 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.4 1998/03/19 17:16:33 tv Exp $");
 #endif
 #endif
 
@@ -499,6 +499,12 @@ static struct syslog_names log_fac[] = {
 #endif
 #ifdef LOG_CRON
     { "cron", LOG_CRON },
+#endif
+#ifdef LOG_AUTHPRIV
+    { "authpriv", LOG_AUTHPRIV },
+#endif
+#ifdef LOG_FTP
+    { "ftp", LOG_FTP },
 #endif
 #ifdef LOG_LOCAL0
     { "local0", LOG_LOCAL0 },
