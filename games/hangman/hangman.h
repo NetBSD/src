@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.10 1999/09/17 20:45:49 jsm Exp $	*/
+/*	$NetBSD: hangman.h,v 1.11 2002/01/20 00:42:51 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -73,6 +73,7 @@ extern char Word[], Known[];
 extern const char *const Noose_pict[];
 
 extern int Errors, Wordnum;
+extern unsigned int Minlen;
 
 extern double Average;
 
