@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 1997/01/12 12:38:56 ragge Exp $
+#	$NetBSD: GENERIC,v 1.21 1997/01/31 02:10:33 thorpej Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -15,9 +15,6 @@ options         "VAX650"	# MV III, 3600, 3800, 3900
 options		"VAX410"	# VS 2000
 options		"VAX43"		# VS 3100/76
 
-# Kernel identification
-options         GENERIC
-
 # Max users on system; this is just a hint
 maxusers	8
 
@@ -31,18 +28,20 @@ options		DIAGNOSTIC
 options         INET
 
 # All supported filesystem types
-options		FFS,QUOTA
-options		LFS
-options		MFS
-options		NFSCLIENT
-options		NFSSERVER
-options		FDESC
+file-system 	FFS
+file-system 	LFS
+file-system 	MFS
+file-system 	NFS
+file-system 	FDESC
+file-system 	KERNFS
+file-system 	NULLFS
+file-system 	PROCFS
+file-system 	UMAPFS
+file-system 	UNION
+
+options		QUOTA
 options		FIFO
-options		KERNFS
-options		NULLFS
-options		PROCFS
-options		UMAPFS
-options		UNION
+options		NFSSERVER
 
 # System V shared memory & semaphores support.
 options		SYSVMSG
@@ -64,7 +63,7 @@ options		TCP_COMPAT_42
 options		LKM
 
 # Kernel(s) to compile
-config          netbsd          swap generic
+config          netbsd root on ? type ?
 
 backplane0	at root
 
