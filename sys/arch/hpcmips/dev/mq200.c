@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.13 2001/03/25 13:06:53 takemura Exp $	*/
+/*	$NetBSD: mq200.c,v 1.14 2001/03/26 09:40:45 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -65,9 +65,9 @@ static int	mq200_fbinit __P((struct hpcfb_fbconf *));
 static int	mq200_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t	mq200_mmap __P((void *, off_t offset, int));
 static void	mq200_update_powerstate __P((struct mq200_softc *, int));
-void	mq200_get_backlight __P((struct mq200_softc *));
-void	mq200_init_brightness __P((struct mq200_softc *));
-void	mq200_init_contrast __P((struct mq200_softc *));
+void	mq200_init_backlight __P((struct mq200_softc *, int));
+void	mq200_init_brightness __P((struct mq200_softc *, int));
+void	mq200_init_contrast __P((struct mq200_softc *, int));
 void	mq200_set_brightness __P((struct mq200_softc *, int));
 void	mq200_set_contrast __P((struct mq200_softc *, int));
 
@@ -200,11 +200,10 @@ mq200_attach(sc)
 			sc->sc_dev.dv_xname);
 
 	/* initialize backlight brightness and lcd contrast */
-	sc->sc_brightness = sc->sc_contrast =
-	sc->sc_max_brightness = sc->sc_max_contrast = -1;
-	mq200_init_brightness(sc);
-	mq200_init_contrast(sc);
-	mq200_get_backlight(sc);
+	sc->sc_lcd_inited = 0;
+	mq200_init_brightness(sc, 1);
+	mq200_init_contrast(sc, 1);
+	mq200_init_backlight(sc, 1);
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("mq200_attach: can't init fb console");
@@ -503,48 +502,48 @@ mq200_ioctl(v, cmd, data, flag, p)
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF("ioctl: GETPARAM:BACKLIGHT call\n");
-			if (sc->sc_max_brightness == -1)
-				mq200_init_brightness(sc);
-			mq200_get_backlight(sc);
+			VPRINTF("ioctl: GET:BACKLIGHT\n");
+			mq200_init_brightness(sc, 0);
+			mq200_init_backlight(sc, 0);
+			VPRINTF("ioctl: GET:(real)BACKLIGHT %d\n",
+				 (sc->sc_powerstate&PWRSTAT_BACKLIGHT)? 1: 0);
 			dispparam->min = 0;
 			dispparam->max = 1;
 			if (sc->sc_max_brightness > 0)
 				dispparam->curval = sc->sc_brightness > 0? 1: 0;
 			else
 				dispparam->curval =
-				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1 : 0;
-			VPRINTF("ioctl: GETPARAM:BACKLIGHT:%d\n",
-				dispparam->curval);
+				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1: 0;
+			VPRINTF("ioctl: GET:BACKLIGHT:%d(%s)\n",
+				dispparam->curval,
+				sc->sc_max_brightness > 0? "brightness": "light");
 			return 0;
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF("ioctl: GETPARAM:CONTRAST call\n");
-			if (sc->sc_max_contrast == -1)
-				mq200_init_contrast(sc);
+			VPRINTF("ioctl: GET:CONTRAST\n");
+			mq200_init_contrast(sc, 0);
 			if (sc->sc_max_contrast > 0) {
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_contrast;
 				dispparam->curval = sc->sc_contrast;
-				VPRINTF("ioctl: GETPARAM:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast);
+				VPRINTF("ioctl: GET:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast);
 				return 0;
 			} else {
-				VPRINTF("ioctl: GETPARAM:CONTRAST ret\n");
+				VPRINTF("ioctl: GET:CONTRAST EINVAL\n");
 				return (EINVAL);
 			}
 			break;	
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF("ioctl: GETPARAM:BRIGHTNESS call\n");
-			if (sc->sc_max_brightness == -1)
-				mq200_init_brightness(sc);
+			VPRINTF("ioctl: GET:BRIGHTNESS\n");
+			mq200_init_brightness(sc, 0);
 			if (sc->sc_max_brightness > 0) {
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_brightness;
 				dispparam->curval = sc->sc_brightness;
-				VPRINTF("ioctl: GETPARAM:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness);
+				VPRINTF("ioctl: GET:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness);
 				return 0;
 			} else {
-				VPRINTF("ioctl: GETPARAM:BRIGHTNESS ret\n");
+				VPRINTF("ioctl: GET:BRIGHTNESS EINVAL\n");
 				return (EINVAL);
 			}
 			return (EINVAL);
@@ -557,13 +556,12 @@ mq200_ioctl(v, cmd, data, flag, p)
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF("ioctl: SETPARAM:BACKLIGHT call\n");
+			VPRINTF("ioctl: SET:BACKLIGHT\n");
 			if (dispparam->curval < 0 ||
 			    1 < dispparam->curval)
 				return (EINVAL);
-			if (sc->sc_max_brightness == -1)
-				mq200_init_brightness(sc);
-			VPRINTF("ioctl: SETPARAM:max brightness=%d\n", sc->sc_max_brightness);
+			mq200_init_brightness(sc, 0);
+			VPRINTF("ioctl: SET:max brightness=%d\n", sc->sc_max_brightness);
 			if (sc->sc_max_brightness > 0) { /* dimmer */
 				if (dispparam->curval == 0){
 					sc->sc_brightness_save = sc->sc_brightness;
@@ -573,51 +571,50 @@ mq200_ioctl(v, cmd, data, flag, p)
 						sc->sc_brightness_save = sc->sc_max_brightness;
 					mq200_set_brightness(sc, sc->sc_brightness_save);
 				}
-				VPRINTF("ioctl: SETPARAM:BACKLIGHT: brightness=%d\n", sc->sc_brightness);
+				VPRINTF("ioctl: SET:BACKLIGHT: brightness=%d\n", sc->sc_brightness);
 			} else { /* off */
 				if (dispparam->curval == 0)
 					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
 				else
 					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-				VPRINTF("ioctl: SETPARAM:BACKLIGHT: powerstate %d\n",
+				VPRINTF("ioctl: SET:BACKLIGHT: powerstate %d\n",
 						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0);
 				mq200_update_powerstate(sc, PWRSTAT_BACKLIGHT);
-				VPRINTF("ioctl: SETPARAM:BACKLIGHT:%d\n",
+				VPRINTF("ioctl: SET:BACKLIGHT:%d\n",
 					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0);
 			}
 			return 0;
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF("ioctl: SETPARAM:CONTRAST call\n");
-			if (sc->sc_max_contrast == -1)
-				mq200_init_contrast(sc);
+			VPRINTF("ioctl: SET:CONTRAST\n");
+			mq200_init_contrast(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_contrast < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_contrast > 0) {
 				int org = sc->sc_contrast;
 				mq200_set_contrast(sc, dispparam->curval);	
+				VPRINTF("ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast);
 				VPRINTF("ioctl: SETPARAM:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast);
 				return 0;
 			} else {
-				VPRINTF("ioctl: SETPARAM:CONTRAST ret\n");
+				VPRINTF("ioctl: SET:CONTRAST EINVAL\n");
 				return (EINVAL);
 			}
 			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF("ioctl: SETPARAM:BRIGHTNESS call\n");
-			if (sc->sc_max_brightness == -1)
-				mq200_init_brightness(sc);
+			VPRINTF("ioctl: SET:BRIGHTNESS\n");
+			mq200_init_brightness(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_brightness < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_brightness > 0) {
 				int org = sc->sc_brightness;
 				mq200_set_brightness(sc, dispparam->curval);	
-				VPRINTF("ioctl: SETPARAM:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness);
+				VPRINTF("ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness);
 				return 0;
 			} else {
-				VPRINTF("ioctl: SETPARAM:BRIGHTNESS ret\n");
+				VPRINTF("ioctl: SET:BRIGHTNESS EINVAL\n");
 				return (EINVAL);
 			}
 			break;
@@ -694,59 +691,125 @@ mq200_mmap(ctx, offset, prot)
 
 
 void
-mq200_get_backlight(sc)
+mq200_init_backlight(sc, inattach)
 	struct mq200_softc *sc;
+	int inattach;
 {
 	int val = -1;
 
+	if (sc->sc_lcd_inited&BACKLIGHT_INITED)
+		return;
+
 	if (config_hook_call(CONFIG_HOOK_GET, 
 	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		/* we can get real light state */
+		VPRINTF("init_backlight: real backlight=%d\n", val);
 		if (val == 0)
 			sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
 		else
 			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-	} else /* assume backlight is on */
+		sc->sc_lcd_inited |= BACKLIGHT_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real light state in attach time
+		   because light device not yet attached.
+		   we will retry in !inattach.
+		   temporary assume light is on.
+		 */
 		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+	} else {
+		/* we cannot get real light state, so work by myself state */
+		sc->sc_lcd_inited |= BACKLIGHT_INITED;
+	}
 }
 
 void
-mq200_init_brightness(sc)
+mq200_init_brightness(sc, inattach)
 	struct mq200_softc *sc;
+	int inattach;
 {
 	int val = -1;
+
+	if (sc->sc_lcd_inited&BRIGHTNESS_INITED)
+		return;
 
 	VPRINTF("init_brightness\n");
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
-		sc->sc_brightness_save = sc->sc_brightness = val;
-	}
-	val = -1;
-	if (config_hook_call(CONFIG_HOOK_GET, 
 	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+		/* we can get real brightness max */
+		VPRINTF("init_brightness: real brightness max=%d\n", val);
 		sc->sc_max_brightness = val;
+		val = -1;
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+			/* we can get real brightness */
+			VPRINTF("init_brightness: real brightness=%d\n", val);
+			sc->sc_brightness_save = sc->sc_brightness = val;
+		} else {
+			sc->sc_brightness_save =
+			sc->sc_brightness = sc->sc_max_brightness;
+		}
+		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real brightness in attach time
+		   because brightness device not yet attached.
+		   we will retry in !inattach.
+		 */
+		sc->sc_max_brightness = -1;
+		sc->sc_brightness = -1;
+		sc->sc_brightness_save = -1;
+	} else {
+		/* we cannot get real brightness */
+		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	}
+
 	return;
 }
 
 
 void
-mq200_init_contrast(sc)
+mq200_init_contrast(sc, inattach)
 	struct mq200_softc *sc;
+	int inattach;
 {
 	int val = -1;
 
+	if (sc->sc_lcd_inited&CONTRAST_INITED)
+		return;
+
 	VPRINTF("init_contrast\n");
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST, &val) != -1) {
-		sc->sc_contrast = val;
-	}
-	val = -1;
-	if (config_hook_call(CONFIG_HOOK_GET, 
 	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+		/* we can get real contrast max */
+		VPRINTF("init_contrast: real contrast max=%d\n", val);
 		sc->sc_max_contrast = val;
+		val = -1;
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_CONTRAST, &val) != -1) {
+			/* we can get real contrast */
+			VPRINTF("init_contrast: real contrast=%d\n", val);
+			sc->sc_contrast = val;
+		} else {
+			sc->sc_contrast = sc->sc_max_contrast;
+		}
+		sc->sc_lcd_inited |= CONTRAST_INITED;
+	} else if (inattach) {
+		/* 
+		   we cannot get real contrast in attach time
+		   because contrast device not yet attached.
+		   we will retry in !inattach.
+		 */
+		sc->sc_max_contrast = -1;
+		sc->sc_contrast = -1;
+	} else {
+		/* we cannot get real contrast */
+		sc->sc_lcd_inited |= CONTRAST_INITED;
 	}
+
 	return;
 }
+
 
 void
 mq200_set_brightness(sc, val)
