@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1997/05/04 01:49:14 mjacob Exp $
+# $NetBSD: Makefile,v 1.6 1997/05/04 01:53:01 mjacob Exp $
 
 # Makefile for alpha tags file and boot blocks
 
@@ -8,7 +8,7 @@ NOMAN=	noman
 SUBDIR=	stand
 
 TALPHA=	../alpha/tags
-SA0=	../alpha/alpha/pmap.old.h ../alpha/alpha/pmap.old.c
+SA0=	../alpha/include/pmap.old.h ../alpha/alpha/pmap.old.c
 SA1=	../alpha/alpha/*.[ch]
 SALPHA=	${SA0} ${SA1} ../alpha/include/*.h ../alpha/pci/*.[ch] \
 	../alpha/tlsb/*.[ch] ../alpha/tc/*.[ch]
@@ -19,7 +19,7 @@ DALPHA=	tc include
 .include "../../kern/Make.tags.inc"
 
 tags:	FRC
-	-ctags -wdtf ${TALPHA} ${COMM} ${SALPHA}
+	-ctags -wdtf ${TALPHA} ${SALPHA} ${COMM} 
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AALPHA} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TALPHA}
