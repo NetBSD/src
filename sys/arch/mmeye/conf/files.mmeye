@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.10 2002/03/24 18:14:28 uch Exp $
+#	$NetBSD: files.mmeye,v 1.11 2002/03/27 10:44:39 uch Exp $
 #
 # config file for mmeye
 
@@ -9,7 +9,6 @@ maxusers 2 16 64
 
 file	arch/mmeye/mmeye/conf.c
 file	arch/mmeye/mmeye/machdep.c
-file	arch/mmeye/mmeye/procfs_machdep.c	procfs
 file	arch/mmeye/mmeye/autoconf.c
 file	arch/mmeye/mmeye/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c			disk
