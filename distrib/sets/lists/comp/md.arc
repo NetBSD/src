@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.11 2001/04/15 17:14:26 kleink Exp $
+# $NetBSD: md.arc,v 1.12 2002/03/23 01:34:54 oster Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/arc/bswap.h		comp-c-include
 ./usr/include/arc/cdefs.h		comp-c-include
 ./usr/include/arc/cpu.h			comp-c-include
-./usr/include/arc/cpuregs.h		comp-c-include
 ./usr/include/arc/disklabel.h		comp-c-include
 ./usr/include/arc/display.h		comp-c-include
 ./usr/include/arc/ecoff_machdep.h	comp-c-include
