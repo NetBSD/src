@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.45 1999/05/30 21:43:19 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.46 1999/06/01 03:24:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -98,6 +98,7 @@
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_NUVOLINK	0x010B
 #define    NUBUS_DRHW_ASANTE_LC	0x010F
 #define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_TECHWORKS	0x0112
@@ -299,4 +300,6 @@ char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot, int rsrc));
 char	*nubus_get_card_name __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot));
+#ifdef DEBUG
 void	nubus_scan_slot __P((bus_space_tag_t, int));
+#endif
