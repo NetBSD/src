@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.46 2001/06/06 23:12:49 scottr Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.47 2001/06/16 08:25:20 veego Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -165,7 +165,7 @@ menu edfspart, title "Change what?", exit, y=14;
 	option "Bsize/Fsize", action 
 		{	char buf[40]; int i;
 
-			if (!PI_ISBSDFS(&bsdlabel[i])) {
+			if (!PI_ISBSDFS(&bsdlabel[editpart])) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
 				process_menu (MENU_ok);
 				return FALSE;
