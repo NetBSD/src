@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.6 1995/05/18 15:27:31 mycroft Exp $	*/
+/*	$NetBSD: fmt.c,v 1.7 1995/05/18 15:35:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: fmt.c,v 1.6 1995/05/18 15:27:31 mycroft Exp $";
+static char rcsid[] = "$NetBSD: fmt.c,v 1.7 1995/05/18 15:35:59 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,8 @@ fmt_argv(argv, cmd, maxlen)
 	len = strlen(ap);
 	if ((cp = malloc(len + maxlen + 3)) == NULL)
 		return (NULL);
-	if (ap[0] == '\0' || strncmp(cmdpart(argv[0]), cmd, maxlen) != 0)
+	if (cmd &&
+	    (ap[0] == '\0' || strncmp(cmdpart(argv[0]), cmd, maxlen) != 0))
 		sprintf(cp, "%s(%.*s)", ap, maxlen, cmd);
 	else {
 		bcopy(ap, cp, len);
