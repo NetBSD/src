@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mille.h	5.5 (Berkeley) 6/1/90
- *	$Id: mille.h,v 1.3 1993/08/10 02:48:47 mycroft Exp $
+ *	from: @(#)mille.h	8.1 (Berkeley) 5/31/93
+ *	$Id: mille.h,v 1.4 1994/05/12 17:39:34 jtc Exp $
  */
 
 # include	<sys/types.h>
