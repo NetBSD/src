@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)string.h	5.10 (Berkeley) 3/9/91
- *	$Id: string.h,v 1.3 1993/10/11 18:43:45 jtc Exp $
+ *	$Id: string.h,v 1.4 1994/05/21 09:42:34 cgd Exp $
  */
 
 #ifndef _STRING_H_
 #define	_STRING_H_
 #include <machine/ansi.h>
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 #ifndef	NULL
