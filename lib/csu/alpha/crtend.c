@@ -1,7 +1,6 @@
-/*	$NetBSD: crtend.c,v 1.5 1998/05/06 20:45:54 ross Exp $	*/
+/*	$NetBSD: crtend.c,v 1.6 1998/05/06 20:58:34 cgd Exp $	*/
 
 #include <sys/cdefs.h>
-#include "crt.h"
 
 static void (*__CTOR_LIST__[1]) __P((void))
     __attribute__((__unused__))
