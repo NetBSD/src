@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.2.1 1997/01/14 21:26:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.2 1997/01/22 18:04:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,6 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
 
-void findroot __P((void));
 void dumpconf __P((void)); 	/* XXX */
 
 void xconsinit __P((void));	/* XXX console-init continuation */
@@ -223,7 +222,7 @@ findroot(devpp, partp)
 		    dp->sd_ctlr == controller &&
 		    dp->sd_driver->d_name[0] == pmax_nam2blk[i].d_name[0] &&
 		    dp->sd_driver->d_name[1] == pmax_nam2blk[i].d_name[1]) {
-			*devpp = sd->sd_devp;
+			*devpp = dp->sd_devp;
 			*partp = part;
 			return;
 		}
@@ -250,19 +249,21 @@ makebootdev(cp)
 		else
 			part = 0;
 		cp += 2;
-		for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]);
+		for (majdev = 0; majdev < sizeof(pmax_nam2blk)/sizeof(pmax_nam2blk[0]);
 		    majdev++) {
-			if (cp[0] == devname[majdev][0] &&
-			    cp[1] == devname[majdev][1]) {
-				bootdev = MAKEBOOTDEV(majdev, 0, 0, unit, part);
+			if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
+			    cp[1] == pmax_nam2blk[majdev].d_name[1]) {
+				bootdev = MAKEBOOTDEV(
+				    pmax_nam2blk[majdev].d_maj, 0, 0,
+				    unit, part);
 				return;
 			}
 		}
 		goto defdev;
 	}
-	for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]); majdev++)
-		if (cp[0] == devname[majdev][0] &&
-		    cp[1] == devname[majdev][1] &&
+	for (majdev = 0; majdev < sizeof(pmax_nam2blk)/sizeof(pmax_nam2blk[0]); majdev++)
+		if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
+		    cp[1] == pmax_nam2blk[majdev].d_name[1] &&
 		    cp[2] == '(')
 			goto fndmaj;
 defdev:
@@ -270,6 +271,7 @@ defdev:
 	return;
 
 fndmaj:
+	majdev = pmax_nam2blk[majdev].d_maj;
 	for (ctrl = 0, cp += 3; *cp >= '0' && *cp <= '9'; )
 		ctrl = ctrl * 10 + *cp++ - '0';
 	if (*cp == ',')
