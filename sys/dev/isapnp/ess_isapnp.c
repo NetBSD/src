@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.11 2004/08/04 18:55:06 drochner Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.12 2005/01/13 15:14:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.11 2004/08/04 18:55:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.12 2005/01/13 15:14:03 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.11 2004/08/04 18:55:06 drochner Exp
 #include <dev/isa/essreg.h>
 #include <dev/isa/essvar.h>
 
-int	ess_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	ess_isapnp_attach __P((struct device *, struct device *, void *));
+int	ess_isapnp_match(struct device *, struct cfdata *, void *);
+void	ess_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
     ess_isapnp_match, ess_isapnp_attach, NULL, NULL);
@@ -75,17 +75,14 @@ CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
  * Probe for the ess hardware.
  */
 int
-ess_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ess_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_ess_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
 
 
@@ -94,13 +91,13 @@ ess_isapnp_match(parent, match, aux)
  * pseudo-device driver.
  */
 void
-ess_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ess_softc *sc = (struct ess_softc *)self;
-	struct isapnp_attach_args *ipa = aux;
+	struct ess_softc *sc;
+	struct isapnp_attach_args *ipa;
 
+	sc = (struct ess_softc *)self;
+	ipa = aux;
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
