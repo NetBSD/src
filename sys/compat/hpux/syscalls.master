@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.1 1994/01/07 00:44:10 mycroft Exp $
+ 	$Id: syscalls.master,v 1.2 1994/05/17 10:36:03 cgd Exp $
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
 
@@ -21,7 +21,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 
 0	STD	0 nosys
-1	STD	1 rexit exit
+1	STD	1 exit
 2	STD	0 fork
 3	STD	3 hpux_read
 4	STD	3 hpux_write
@@ -53,7 +53,7 @@
 30	COMPAT	2 hpux_utime
 31	COMPAT	2 hpux_stty
 32	COMPAT	2 hpux_gtty
-33	STD	2 saccess access
+33	STD	2 access
 34	COMPAT	1 hpux_nice
 35	COMPAT	1 hpux_ftime
 36	STD	0 sync
@@ -132,7 +132,7 @@
 109	STD	1 hpux_sigblock 
 110	STD	1 hpux_sigsetmask
 111	STD	1 hpux_sigpause
-112	STD	2 sigstack
+112	STD	2 osigstack
 113	STD	0 nosys
 114	STD	0 nosys
 115	STD	0 nosys
@@ -272,11 +272,11 @@
 229	STD	0 notimp async_daemon
 230	STD	3 notimp nfs_fcntl
 231	STD	4 getdirentries
-232	STD	2 getdomainname
+232	STD	2 ogetdomainname
 233	STD	2 notimp nfs_getfh
 234	STD	4 notimp vfsmount
 235	STD	1 notimp nfs_svc
-236	STD	2 setdomainname
+236	STD	2 osetdomainname
 237	STD	0 notimp statfs
 238	STD	0 notimp fstatfs
 239	STD	3 hpux_sigaction
