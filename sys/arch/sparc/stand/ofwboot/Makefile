@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/09/22 03:34:20 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/04 18:54:35 thorpej Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -16,6 +16,7 @@ SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
+CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64
 #CPPFLAGS+=	-DNETIF_DEBUG 
 
 MKMAN=		no
