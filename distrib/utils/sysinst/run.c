@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.21 1999/06/22 00:43:57 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.22 1999/07/04 21:32:48 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ extern int errno;
 /*
  * local prototypes 
  */
-char* va_prog_cmdstr __P((char *cmd, va_list ap));
+char* va_prog_cmdstr __P((const char *cmd, va_list ap));
 int launch_subwin __P((WINDOW *actionwin, char **args, struct winsize win, int display));
 int log_flip __P((void));
 int script_flip __P((void));
@@ -237,7 +237,7 @@ do_system(execstr)
  *  XXX return result is in a static buffer.
  */
 char *
-va_prog_cmdstr(char *cmd, va_list ap)
+va_prog_cmdstr(const char *cmd, va_list ap)
 {
 	static char command[STRSIZE];
 
@@ -419,7 +419,7 @@ loop:
  */
 
 int
-run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
+run_prog(int fatal, int display, const char *errmsg, const char *cmd, ...)
 {
 	va_list ap;
 	struct winsize win;

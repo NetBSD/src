@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.46 1999/06/22 18:47:07 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.47 1999/07/04 21:32:49 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -718,8 +718,8 @@ cleanup_dist(name)
  */
 int
 get_and_unpack_sets(success_msg, failure_msg)
-	int success_msg;
-	int failure_msg;
+	msg success_msg;
+	msg failure_msg;
 {
 
 	/* Ensure mountpoint for distribution files exists in current root. */
