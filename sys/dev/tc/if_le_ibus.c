@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.2 1996/05/20 03:43:15 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.3 1996/05/20 23:19:16 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -12,8 +12,8 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  *
- *
  * This driver was contributed by Jonathan Stone.
+ */
 
 /*
  * LANCE on Decstation kn01/kn220(?) baseboard.
@@ -38,8 +38,9 @@
 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
-#include <pmax/pmax/kn01.h>
 #include <machine/autoconf.h>
+#include <pmax/pmax/kn01.h>
+#include <pmax/pmax/kn01var.h>
 
 extern struct cfdriver mainbus_cd;	/* should be in header but where? */
 
@@ -64,8 +65,6 @@ le_pmax_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct tc_attach_args *d = aux;
-
 	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 	  	struct confargs *d = aux;
 		if (strcmp("lance", d->ca_name) == 0)
