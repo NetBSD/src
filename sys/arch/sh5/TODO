@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7 2002/10/22 13:11:06 scw Exp $
+$NetBSD: TODO,v 1.8 2002/10/23 13:37:05 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,7 +53,7 @@ DONE.	libkern needs sh5-specific optimised versions of key functions.
 
 DONE.	Test the whole lot using a 64-bit kernel/userland.
 
-9.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
+DONE.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
 
 10.	Stress-testing of just about everything. ;-)
 
