@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.2 2000/06/08 23:25:05 bjh21 Exp $ */
+/* $NetBSD: profile.h,v 1.3 2001/04/26 22:09:57 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -36,6 +36,14 @@
  * pushes a trapframe. Pity we cannot insert assembly before the function
  * prologue.
  */
+/*
+ * The prologue for the function being profiled will include:
+ *
+ *	mov	ip, lr
+ *	bl	__mcount
+ *
+ * We arrange to preserve all registers, and return with lr restored.
+ */
 #define	MCOUNT								\
 	__asm__(".text");						\
 	__asm__(".align	0");						\
@@ -45,7 +53,7 @@
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm__("stmfd	sp!, {r0-r3, lr}");				\
+	__asm__("stmfd	sp!, {r0-r3, ip, lr}");				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -64,13 +72,13 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm__("ldmfd	sp!, {r0-r3, pc}^");
+	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
 /*
  * Note that we assume splhigh() and splx() cannot call mcount()
  * recursively.
  */
-#define	MCOUNT_ENTER	int_off()
-#define	MCOUNT_EXIT	int_on()
+#define	MCOUNT_ENTER	s = splhigh()
+#define	MCOUNT_EXIT	splx(s)
 #endif /* _KERNEL */
