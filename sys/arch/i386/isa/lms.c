@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.19 1995/04/17 12:07:17 cgd Exp $	*/
+/*	$NetBSD: lms.c,v 1.20 1995/10/05 22:06:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -119,7 +119,7 @@ lmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_PULSE, ISA_IPL_NONE,
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_PULSE, ISA_IPL_TTY,
 	    lmsintr, sc);
 }
 
