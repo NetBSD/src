@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id: config.c,v 1.1.1.1.2.2 2001/04/05 23:32:07 he Exp $");
+RCSID("$Id: config.c,v 1.1.1.1.2.3 2003/03/31 23:45:35 itojun Exp $");
 
 static char *config_file;	/* location of kdc config file */
 
@@ -67,6 +67,7 @@ krb5_addresses explicit_addresses;
 #ifdef KRB4
 char *v4_realm;
 int enable_v4 = -1;
+int enable_v4_cross_realm = -1;
 int enable_524 = -1;
 #endif
 #ifdef KASERVER
@@ -103,6 +104,10 @@ static struct getargs args[] = {
     },
     {	"524",		0, 	arg_negative_flag, &enable_524,
 	"don't respond to 524 requests" 
+    },
+    {	"kerberos4-cross-realm",	0, 	arg_flag,
+	&enable_v4_cross_realm,
+	"respond to kerberos 4 requests from foreign realms" 
     },
     { 
 	"v4-realm",	'r',	arg_string, &v4_realm, 
@@ -306,6 +311,12 @@ configure(int argc, char **argv)
     if(enable_524 == -1)
 	enable_524 = krb5_config_get_bool_default(context, cf, enable_v4, 
 						  "kdc", "enable-524", NULL);
+    if(enable_v4_cross_realm == -1)
+ 	enable_v4_cross_realm =
+ 	    krb5_config_get_bool_default(context, NULL,
+ 					 FALSE, "kdc", 
+ 					 "enable-kerberos4-cross-realm",
+ 					 NULL);
 #endif
 
     if(enable_http == -1)
@@ -327,8 +338,11 @@ configure(int argc, char **argv)
 				    "kdc",
 				    "v4-realm",
 				    NULL);
-	if(p)
+	if(p != NULL) {
 	    v4_realm = strdup(p);
+	    if (v4_realm == NULL)
+		krb5_errx(context, 1, "out of memory");
+	}
     }
 #endif
 #ifdef KASERVER
@@ -359,6 +373,8 @@ configure(int argc, char **argv)
 #ifdef KRB4
     if(v4_realm == NULL){
 	v4_realm = malloc(40); /* REALM_SZ */
+	if (v4_realm == NULL)
+	    krb5_errx(context, 1, "out of memory");
 	krb_get_lrealm(v4_realm, 1);
     }
 #endif

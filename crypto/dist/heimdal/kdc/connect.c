@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.1.1.1.2.3 2001/04/05 23:26:23 he Exp $");
+RCSID("$Id: connect.c,v 1.1.1.1.2.4 2003/03/31 23:45:35 itojun Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -238,7 +238,7 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     krb5_error_code ret;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-    int sa_size;
+    int sa_size = sizeof(__ss);
 
     init_descr (d);
 
