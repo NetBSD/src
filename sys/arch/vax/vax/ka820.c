@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.3 1996/10/13 03:35:51 christos Exp $	*/
+/*	$NetBSD: ka820.c,v 1.3.6.1 1997/03/12 21:20:29 is Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -67,6 +67,21 @@ void *bi_nodebase;	/* virtual base address for all possible bi nodes */
 
 static int ka820_match __P((struct device *, void *, void *));
 static void ka820_attach __P((struct device *, struct device *, void*));
+
+struct	cpu_dep ka820_calls = {
+	ka820_steal_pages,
+	generic_clock,
+	ka820_mchk,
+	ka820_memerr,
+	NULL,
+	ka820_clkread,
+	ka820_clkwrite,
+	3,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 struct cfattach cpu_bi_ca = {
 	sizeof(struct device), ka820_match, ka820_attach

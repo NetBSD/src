@@ -1,8 +1,6 @@
-#	$NetBSD: DEFAULT,v 1.9 1997/01/31 01:57:08 thorpej Exp $
+#	$NetBSD: DEFAULT,v 1.9.2.1 1997/03/12 21:15:24 is Exp $
 #
 # DEFAULT: default install kernel
-#	Only has scn0-5 are configured.
-#	Instead of scn6/7 the lpt0/1 devices get into the kernel.
 #
 
 include	"arch/pc532/conf/std.pc532"
@@ -14,53 +12,37 @@ maxusers	8			# estimated number of users
 options		KTRACE			# system call tracing, a la ktrace(1)
 
 #options	ACCOUNTING		# process accounting
-options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	SHMMAXPGS=1024
-#options	LKM			# loadable kernel modules
+options		LKM			# loadable kernel modules
+options		PFIL_HOOKS		# pfil(9) packet filter hooks
 
 # compatibility options
-#options 	COMPAT_09		# NetBSD 0.9,
-#options 	COMPAT_10		# NetBSD 1.0,
-options 	COMPAT_11
-options 	COMPAT_12
+options 	COMPAT_11		# NetBSD 1.1,
+options 	COMPAT_12		# NetBSD 1.2,
 options 	COMPAT_43		# and 4.3BSD
 #options 	TCP_COMPAT_42		# TCP bug compatibility with 4.2BSD
 
 # file system options
-file-system 	FFS			# Berkeley fast file system
-#file-system	LFS			# log-structered file system
-file-system 	MFS			# memory file system; uses RAM and swap
-file-system 	MSDOSFS			# MS-DOS file system
-file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
-file-system 	NULLFS			# loopback file system
-#file-system	UMAPFS			# NULLFS + uid and gid remapping
-file-system 	UNION			# union file system
-#file-system	PORTAL			# /portal
-file-system 	FDESC			# /dev/fd
-file-system 	KERNFS			# /kern
-file-system 	PROCFS			# /proc
-file-system 	NFS			# Network File System client
+file-system	FFS			# Berkeley fast file system
+file-system	NULLFS			# loopback file system
+file-system	UNION			# union file system
+file-system	NFS			# Network File System client
 
+options		FIFO			# fifos; recommended
+options		NFSSERVER		# Network File System server
 #options	QUOTA			# file system quotas
-#options	NFSSERVER		# Network File System server
 
 # networking options
 #options	GATEWAY			# packet forwarding
 options		INET			# IP + ICMP + TCP + UDP
-#options	NS			# XNS
-#options	ISO,TPIP		# OSI
-#options	EON			# OSI tunneling over IP
-#options	CCITT,LLC,HDLC		# X.25
 options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
 options		CPU30MHZ		# necessary for fast machines
 options		CONSOLE_SPEED=B9600	# default console baud rate
 options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
-options		PLIP			# PLIP driver in dev/lpt.c
 options		DEV_RTC			# RTC driver in pc532/mem.c
-options		NO_INLINE_SPLX		# don't inline splx calls
 
 config		netbsd	root on ? type ?
 
@@ -76,3 +58,4 @@ pseudo-device	bpfilter 4		# packet filter
 pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# network tunneling
+pseudo-device	ccd 4			# Concatenated Disk Driver

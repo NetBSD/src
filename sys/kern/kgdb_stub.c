@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1996/10/13 03:30:42 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.2.2.2 1997/03/12 21:23:45 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,9 +49,12 @@
  */
 
 #include <sys/param.h>
-#include <vm/vm.h>
-#include "kgdb.h"
+#include <sys/systm.h>
+#include <sys/kgdb.h>
 
+/* #define	DEBUG_KGDB XXX */
+
+/* XXX: Maybe these should be in the MD files? */
 #ifndef KGDBDEV
 #define KGDBDEV -1
 #endif
@@ -64,9 +67,10 @@ int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
+label_t *kgdb_recover = 0;
 
 static void kgdb_copy __P((void *, void *, int));
-static void kgdb_zero __P((void *, int));
+/* static void kgdb_zero __P((void *, int)); */
 static void kgdb_send __P((u_char *));
 static int kgdb_recv __P((u_char *, int));
 static int digit2i __P((u_char));
@@ -82,22 +86,8 @@ static void *kgdb_ioarg;
 static u_char buffer[KGDB_BUFLEN];
 static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
-#define ROUND_PAGE(x) ((((vm_offset_t)(x)) + PGOFSET) & ~PGOFSET)
 #define GETC()	((*kgdb_getc)(kgdb_ioarg))
 #define PUTC(c)	((*kgdb_putc)(kgdb_ioarg, c))
-#define PUTESC(c) do { \
-	if (c == FRAME_END) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_END; \
-	} else if (c == FRAME_ESCAPE) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_ESCAPE; \
-	} else if (c == FRAME_START) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_START; \
-	} \
-	PUTC(c); \
-} while (0)
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
@@ -114,6 +104,7 @@ kgdb_copy(vsrc, vdst, len)
 		*dst++ = *src++;
 }
 
+#if 0
 /* ditto for bzero */
 static void
 kgdb_zero(vptr, len)
@@ -125,6 +116,7 @@ kgdb_zero(vptr, len)
 	while (--len >= 0)
 		*ptr++ = (char) 0;
 }
+#endif
 
 /*
  * Convert a hex digit into an integer.
@@ -234,10 +226,13 @@ kgdb_send(bp)
 	u_char *p;
 	u_char csum, c;
 
+#ifdef	DEBUG_KGDB
+	printf("kgdb_send: %s\n", bp);
+#endif
 	do {
 		p = bp;
 		PUTC(KGDB_START);
-		for (csum = 0; c = *p; p++) {
+		for (csum = 0; (c = *p); p++) {
 			PUTC(c);
 			csum += c;
 		}
@@ -295,6 +290,9 @@ kgdb_recv(bp, maxlen)
 		}
 		PUTC(KGDB_BADP);
 	} while (1);
+#ifdef	DEBUG_KGDB
+	printf("kgdb_recv: %s\n", bp);
+#endif
 	return(len);
 }
 
@@ -314,46 +312,20 @@ kgdb_attach(getfn, putfn, ioarg)
 }
 
 /*
- * Trap into kgdb to wait for debugger to connect,
- * noting on the console why nothing else is going on.
- */
-void
-kgdb_connect(verbose)
-	int verbose;
-{
-
-	if (kgdb_dev < 0 || kgdb_getc == NULL)
-		return;
-
-	if (verbose)
-		printf("kgdb waiting...");
-	Debugger();
-	if (verbose)
-		printf("connected.\n");
-}
-
-/*
- * Decide what to do on panic.
- * (This is called by panic, like Debugger())
- */
-void
-kgdb_panic()
-{
-	if (kgdb_dev >= 0 && kgdb_getc != NULL && kgdb_debug_panic)
-		kgdb_connect(kgdb_active == 0);
-}
-
-/*
  * This function does all command procesing for interfacing to
- * a remote gdb.
+ * a remote gdb.  Note that the error codes are ignored by gdb
+ * at present, but might eventually become meaningful. (XXX)
+ * It might makes sense to use POSIX errno values, because
+ * that is what the gdb/remote.c functions want to return.
  */
 int
 kgdb_trap(type, regs)
 	int type;
 	db_regs_t *regs;
 {
-	size_t len;
+	label_t jmpbuf;
 	vm_offset_t addr;
+	size_t len;
 	u_char *p;
 
 	if (kgdb_dev < 0 || kgdb_getc == NULL) {
@@ -361,15 +333,44 @@ kgdb_trap(type, regs)
 		return (0);
 	}
 
+	/* Detect and recover from unexpected traps. */
+	if (kgdb_recover != 0) {
+		printf("kgdb: caught trap 0x%x at %p\n",
+			   type, (void*)PC_REGS(regs));
+		kgdb_send("E0E"); /* 14==EFAULT */
+		longjmp(kgdb_recover);
+	}
+
+	/*
+	 * The first entry to this function is normally through
+	 * a breakpoint trap in kgdb_connect(), in which case we
+	 * must advance past the breakpoint because gdb will not.
+	 *
+	 * Machines vary as to where they leave the PC after a
+	 * breakpoint trap.  Those that leave the PC set to the
+	 * address of the trap instruction (i.e. pc532) will not
+	 * define FIXUP_PC_AFTER_BREAK(), and therefore will just
+	 * advance the PC.  On machines that leave the PC set to
+	 * the instruction after the trap, FIXUP_PC_AFTER_BREAK
+	 * will be defined to back-up the PC, so that after the
+	 * "first-time" part of the if statement below has run,
+	 * the PC will be the same as it was on entry.
+	 *
+	 * On the first entry here, we expect that gdb is not yet
+	 * listening to us, so just enter the interaction loop.
+	 * After the debugger is "active" (connected) it will be
+	 * waiting for a "signaled" message from us.
+	 */
 	if (kgdb_active == 0) {
 		if (!IS_BREAKPOINT_TRAP(type, 0)) {
 			/* No debugger active -- let trap handle this. */
 			return (0);
 		}
-#ifdef FIXUP_PC_AFTER_BREAK
-#error "FIXUP_PC_AFTER_BREAK" has to be modified to take an argument
-		FIXUP_PC_AFTER_BREAK(regs):
+		/* Make the PC point at the breakpoint... */
+#ifdef	FIXUP_PC_AFTER_BREAK
+		FIXUP_PC_AFTER_BREAK(regs);
 #endif
+		/* ... and then advance past it. */
 		PC_REGS(regs) += BKPT_SIZE;
 		kgdb_active = 1;
 	} else {
@@ -377,9 +378,15 @@ kgdb_trap(type, regs)
 		sprintf(buffer, "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}
+
 	/* Stick frame regs into our reg cache. */
 	kgdb_getregs(regs, gdb_regs);
 
+	/*
+	 * Interact with gdb until it lets us go.
+	 * If we cause a trap, resume here.
+	 */
+	(void) setjmp((kgdb_recover = &jmpbuf));
 	for (;;) {
 		kgdb_recv(buffer, sizeof(buffer));
 		switch (buffer[0]) {
@@ -401,7 +408,7 @@ kgdb_trap(type, regs)
 			continue;
 
 		case KGDB_REG_R:
-			mem2hex(buffer, (u_char *)gdb_regs, sizeof(gdb_regs));
+			mem2hex(buffer, gdb_regs, sizeof(gdb_regs));
 			kgdb_send(buffer);
 			continue;
 
@@ -474,7 +481,7 @@ kgdb_trap(type, regs)
 			kgdb_active = 0;
 			printf("kgdb detached\n");
 			db_clear_single_step(regs);
-			return(1);
+			goto out;
 
 		case KGDB_CONT:
 			if (buffer[1]) {
@@ -487,7 +494,7 @@ kgdb_trap(type, regs)
 				PC_REGS(regs) = addr;
 			}
 			db_clear_single_step(regs);
-			return(1);
+			goto out;
 
 		case KGDB_STEP:
 			if (buffer[1]) {
@@ -500,8 +507,10 @@ kgdb_trap(type, regs)
 				PC_REGS(regs) = addr;
 			}
 			db_set_single_step(regs);
-			return(1);
+			goto out;
 		}
 	}
+ out:
+	kgdb_recover = 0;
 	return (1);
 }

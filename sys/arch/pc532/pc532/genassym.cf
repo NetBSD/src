@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/01/30 09:38:56 matthias Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.1 1997/03/12 21:16:44 is Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -38,6 +38,9 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
+#type	long
+#asmtype	i
+
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
@@ -71,9 +74,9 @@ define	P_WCHAN 		offsetof(struct proc, p_wchan)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_PID			offsetof(struct proc, p_pid)
-			
+
 define	V_INTR			offsetof(struct vmmeter, v_intr)
-			
+
 define	PCB_ONSTACK		offsetof(struct pcb, pcb_onstack)
 define	PCB_FSR 		offsetof(struct pcb, pcb_fsr)
 define	PCB_KSP 		offsetof(struct pcb, pcb_ksp)
@@ -93,7 +96,7 @@ define	REGS_USP		offsetof(struct reg, r_sp)
 define	REGS_FP 		offsetof(struct reg, r_fp)
 define	REGS_SB 		offsetof(struct reg, r_sb)
 define	REGS_PSR		offsetof(struct reg, r_psr)
-			
+
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC 		offsetof(struct sigframe, sf_sc)
 

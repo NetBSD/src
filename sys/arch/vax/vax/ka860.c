@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.6 1996/10/13 03:35:53 christos Exp $	*/
+/*	$NetBSD: ka860.c,v 1.6.6.1 1997/03/12 21:20:34 is Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
+#include <machine/clock.h>
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/ioa.h>
@@ -53,7 +54,6 @@
 
 struct	ioa *ioa; 
 
-/* XXX These are in autoconf.c also */
 void	ka86_conf __P((struct device *, struct device *, void *));
 void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
 void	ka86_memerr __P((void));
@@ -61,6 +61,21 @@ int	ka86_mchk __P((caddr_t));
 void	ka86_steal_pages __P((void));
 
 void	crlattach __P((void));
+
+struct	cpu_dep	ka860_calls = {
+	ka86_steal_pages,
+	generic_clock,
+	ka86_mchk,
+	ka86_memerr,
+	ka86_conf,
+	generic_clkread,
+	generic_clkwrite,
+	6,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 /*
  * 8600 memory register (MERG) bit definitions

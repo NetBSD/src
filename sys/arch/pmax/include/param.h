@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1996/05/20 10:50:52 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.17.8.1 1997/03/12 21:17:50 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,9 +88,16 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* enough for whole Ethernet packet */
-#define	MCLSHIFT	10
+
+#ifndef MCLSHIFT
+
+# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)
+
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	2048		/* map size, max cluster allocation */

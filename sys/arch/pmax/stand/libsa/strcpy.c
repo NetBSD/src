@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.c,v 1.6 1996/09/30 01:14:43 jonathan Exp $	*/
+/*	$NetBSD: strcpy.c,v 1.6.6.1 1997/03/12 21:18:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <arch/pmax/stand/dec_prom.h>
+#undef strcpy
 
 char *
 strcpy(s1, s2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1996/12/23 08:36:05 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.43.4.1 1997/03/12 21:17:00 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -82,12 +82,11 @@
 	.data
 
 	.globl	_cold, _esym, _bootdev, _boothowto, __have_fpu
-	.globl	_proc0paddr, _PTDpaddr
+	.globl	_proc0paddr
 _cold:		.long	1	/* cold till we are not */
 _esym:		.long	0	/* pointer to end of symbols */
 __have_fpu:	.long	0	/* Have we an FPU installed? */
 _proc0paddr:	.long	0
-_PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
 	.globl	_kernel_text
 	.set	_kernel_text,(KERNBASE + 0x2000)
@@ -1036,6 +1035,12 @@ _ENTRY(interrupt)
 	bne	1f
 	cmpqd	0,_sirpending(pc)
 	beq	1f
+	/*
+	 * r3 contains imask[IPL_ZERO] and IR_SOFT is
+	 * not set in imask[IPL_ZERO]. So the following
+	 * instruction just does a
+	 * 	r0 = r3 | (1 << IR_SOFT).
+	 */
 	addr	1 << IR_SOFT(r3),r0
 	movd	r0,_Cur_pl(pc)
 	movw	r0,@ICU_ADR+IMSK
