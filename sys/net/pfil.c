@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.16 2000/11/11 00:52:36 thorpej Exp $	*/
+/*	$NetBSD: pfil.c,v 1.17 2000/12/22 20:01:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -84,8 +84,8 @@ pfil_head_register(struct pfil_head *ph)
 
 	for (lph = LIST_FIRST(&pfil_head_list); lph != NULL;
 	     lph = LIST_NEXT(lph, ph_list)) {
-		if (lph->ph_key == ph->ph_key &&
-		    lph->ph_dlt == ph->ph_dlt)
+		if (ph->ph_type == lph->ph_type &&
+		    ph->ph_un.phu_val == lph->ph_un.phu_val)
 			return EEXIST;
 	}
 
@@ -113,13 +113,14 @@ pfil_head_unregister(struct pfil_head *pfh)
  * pfil_head_get() returns the pfil_head for a given key/dlt.
  */
 struct pfil_head *
-pfil_head_get(void *key, int dlt)
+pfil_head_get(int type, u_long val)
 {
 	struct pfil_head *ph;
 
 	for (ph = LIST_FIRST(&pfil_head_list); ph != NULL;
 	     ph = LIST_NEXT(ph, ph_list)) {
-		if (ph->ph_key == key && ph->ph_dlt == dlt)
+		if (ph->ph_type == type &&
+		    ph->ph_un.phu_val == val)
 			break;
 	}
 
