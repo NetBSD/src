@@ -1,3 +1,68 @@
+
+                     NEWS about less
+
+======================================================================
+
+  For the latest news about less, see the "less" Web page:
+      http://members.aol.com/marknudel/less 
+  You can also download the latest version of less there.
+
+======================================================================
+
+
+	Major changes between "less" versions 291 and 321
+
+* Command line at bottom of screen now scrolls, so it can be longer 
+  than the screen width.
+
+* New commands ESC-] and ESC-[ scroll the display horizontally.
+
+* New command ESC-SPACE scrolls forward a full screen, even if it
+  hits end-of-file.
+
+* Alternate modifiers for search commands: ^N is same as !,
+  ^F is same as @, and ^E is same as *.
+
+* New modifier for search commands: ^K means highlight the matches
+  currently on-screen, but don't move to the first match.
+
+* New modifier for search commands: ^R means don't use regular
+  expressions in the search.
+
+* Environment variable LESSKEY gives name of default lesskey file.
+
+* Environment variable LESSSECURE will force less to run in
+  "secure" mode.
+
+* Command line argument "--" signals that the rest of the arguments
+  are files (not option flags).
+
+* Help file (less.hlp) is no longer installed.  Help text is now 
+  embedded in the less executable itself.
+
+* Added -Ph to change the prompt for the help text.
+  Added -Ps to change the default short prompt (same as plain -P).
+
+* Ported to the Borland C compiler for MS-DOS.
+
+* Ported to Windows 95 & Windows NT.
+
+* Ported to OS-9.
+
+* Ported to GNU Hurd.
+
+======================================================================
+
+
+	Major changes between "less" versions 290 and 291
+
+* Less environment variables can be specified in lesskey files.
+
+* Fixed MS-DOS build.
+
+======================================================================
+
+
 	Major changes between "less" versions 278 and 290
 
 * Accepts GNU-style options "--help" and "--version".

@@ -1,3 +1,5 @@
+/*	$NetBSD: regexp.h,v 1.1.1.2 1997/04/22 13:45:52 mrg Exp $	*/
+
 /*
  * Definitions etc. for regexp(3) routines.
  *

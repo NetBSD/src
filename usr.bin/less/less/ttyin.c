@@ -1,5 +1,7 @@
+/*	$NetBSD: ttyin.c,v 1.1.1.2 1997/04/22 13:45:39 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +32,11 @@
  */
 
 #include "less.h"
+#if MSDOS_COMPILER==WIN32C
+#include "windows.h"
+extern char WIN32getch();
+static DWORD console_mode;
+#endif
 
 static int tty;
 
@@ -39,7 +46,20 @@ static int tty;
 	public void
 open_getchr()
 {
-#if MSOFTC || OS2
+#if MSDOS_COMPILER==WIN32C
+	/* Need this to let child processes inherit our console handle */
+	SECURITY_ATTRIBUTES sa;
+	memset(&sa, 0, sizeof(SECURITY_ATTRIBUTES));
+	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sa.bInheritHandle = TRUE;
+	tty = (int) CreateFile("CONIN$", GENERIC_READ, 
+			FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, 
+			OPEN_EXISTING, 0L, NULL);
+	GetConsoleMode((HANDLE)tty, &console_mode);
+	/* Make sure we get Ctrl+C events. */
+	SetConsoleMode((HANDLE)tty, 0); /* doesn't work for some reason --jdp */
+#else
+#if MSDOS_COMPILER || OS2
 	extern int fd0;
 	/*
 	 * Open a new handle to CON: in binary mode 
@@ -59,6 +79,19 @@ open_getchr()
 	if (tty < 0)
 		tty = 2;
 #endif
+#endif
+}
+
+/*
+ * Close the keyboard.
+ */
+	public void
+close_getchr()
+{
+#if MSDOS_COMPILER==WIN32C
+	SetConsoleMode((HANDLE)tty, console_mode);
+	CloseHandle((HANDLE)tty);
+#endif
 }
 
 /*
@@ -72,23 +105,43 @@ getchr()
 
 	do
 	{
-#if MSOFTC
+#if MSDOS_COMPILER
 		/*
 		 * In raw read, we don't see ^C so look here for it.
 		 */
 		flush();
+#if MSDOS_COMPILER==WIN32C
+		c = WIN32getch(tty);
+#else
 		c = getch();
+#endif
 		result = 1;
 		if (c == '\003')
 			return (READ_INTR);
 #else
 #if OS2
+	{
+		static int scan = -1;
 		flush();
-		while (_read_kbd(0, 0, 0) != -1)
-			continue;
-		if ((c = _read_kbd(0, 1, 0)) == -1)
-			return (READ_INTR);
+		if (scan >= 0)
+		{
+			c = scan;
+			scan = -1;
+		} else
+		{
+			if ((c = _read_kbd(0, 1, 0)) == -1)
+				return (READ_INTR);
+			if (c == '\0')
+			{
+				/*
+				 * Zero is usually followed by another byte,
+				 * since certain keys send two bytes.
+				 */
+				scan = _read_kbd(0, 0, 0);
+			}
+		}
 		result = 1;
+	}
 #else
 		result = iread(tty, &c, sizeof(char));
 		if (result == READ_INTR)

@@ -1,10 +1,11 @@
+/*	$NetBSD: funcs.h,v 1.1.1.2 1997/04/22 13:45:46 mrg Exp $	*/
+
 	public void strtcpy ();
 	public char * save ();
 	public VOID_POINTER ecalloc ();
 	public char * skipsp ();
 	public void quit ();
 	public void raw_mode ();
-	public void scrsize ();
 	public void scrsize ();
 	public void get_editkeys ();
 	public void get_term ();
@@ -14,8 +15,8 @@
 	public void add_line ();
 	public void lower_left ();
 	public void goto_line ();
-	public void bell ();
 	public void vbell ();
+	public void bell ();
 	public void clear ();
 	public void clear_eol ();
 	public void clear_bot ();
@@ -29,6 +30,7 @@
 	public void bl_exit ();
 	public void backspace ();
 	public void putbs ();
+	public char WIN32getch ();
 	public void match_brac ();
 	public void ch_ungetchar ();
 	public void end_logfile ();
@@ -52,12 +54,13 @@
 	public int control_char ();
 	public char * prchar ();
 	public void cmd_reset ();
+	public void clear_cmd ();
+	public void cmd_putstr ();
 	public int len_cmdbuf ();
 	public void set_mlist ();
 	public void cmd_accept ();
 	public int cmd_char ();
 	public int cmd_int ();
-	public void cmd_putstr ();
 	public char * get_cmdbuf ();
 	public int in_mca ();
 	public void dispversion ();
@@ -68,9 +71,11 @@
 	public void init_cmds ();
 	public void add_fcmd_table ();
 	public void add_ecmd_table ();
+	public void add_var_table ();
 	public int cmd_search ();
 	public int fcmd_decode ();
 	public int ecmd_decode ();
+	public char * lgetenv ();
 	public int lesskey ();
 	public void add_hometable ();
 	public int editchar ();
@@ -85,23 +90,25 @@
 	public int edit_next ();
 	public int edit_prev ();
 	public int edit_index ();
+	public void reedit_ifile ();
 	public int edit_stdin ();
 	public void cat_file ();
 	public void use_logfile ();
 	public char * homefile ();
-	public char * find_helpfile ();
 	public char * fexpand ();
 	public char * fcomplete ();
 	public int bin_file ();
-	public char * glob ();
+	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
-	public char * glob ();
+	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
-	public char * glob ();
+	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
+	public char * bad_file ();
+	public POSITION filesize ();
 	public char * bad_file ();
 	public POSITION filesize ();
 	public char * bad_file ();
@@ -111,7 +118,6 @@
 	public void forward ();
 	public void backward ();
 	public int get_back_scroll ();
-	public void help ();
 	public void del_ifile ();
 	public IFILE next_ifile ();
 	public IFILE prev_ifile ();
@@ -185,10 +191,14 @@
 	public long get_time ();
 	public char * errno_message ();
 	public int percentage ();
+	public POSITION percent_pos ();
+	public int  os9_signal ();
+	public int  isatty ();
 	public void put_line ();
 	public void flush ();
 	public int putchr ();
 	public void putstr ();
+	public void get_return ();
 	public void error ();
 	public void ierror ();
 	public int query ();
@@ -221,4 +231,5 @@
 	public void findtag ();
 	public POSITION tagsearch ();
 	public void open_getchr ();
+	public void close_getchr ();
 	public int getchr ();

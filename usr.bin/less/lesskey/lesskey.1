@@ -1,4 +1,4 @@
-.TH LESSKEY 1
+.TH LESSKEY 1 "Version 321: 18 Jul 96"
 .SH NAME
 lesskey \- specify key bindings for less
 .SH SYNOPSIS
@@ -11,15 +11,54 @@ is used to specify a set of key bindings to be used by
 .I less.
 The input file is a text file which describes the key bindings,
 If the input file is "-", standard input is read.
-If no input file is specified, $HOME/.lesskey is read.
+If no input file is specified, a standard filename is used
+as the name of the input file, which depends on the system being used:
+On Unix systems, $HOME/.lesskey is used;
+on MS-DOS systems, $HOME/_lesskey is used;
+and on OS/2 systems $HOME/lesskey.ini is used,
+or $INIT/lesskey.ini if $HOME is undefined.
 The output file is a binary file which is used by 
 .I less.
-If no output file is specified, $HOME/.less is written.
+If no output file is specified, 
+and the environment variable LESSKEY is set,
+the value of LESSKEY is used as the name of the output file.
+Otherwise, a standard filename is used as the name of the output file,
+which depends on the system being used:
+On Unix and OS-9 systems, $HOME/.less is used;
+on MS-DOS systems, $HOME/_less is used;
+and on OS/2 systems, $HOME/less.ini is used,
+or $INIT/less.ini if $HOME is undefined.
 If the output file already exists,
 .I lesskey
 will overwrite it.
 .PP
-The input file consists of lines of the form:
+The -V option causes
+.I lesskey
+to print its version number and immediately exit.  
+If -V is present, other options and arguments are ignored.
+.PP
+The input file consists of one or more
+.I sections.
+Each section starts with a line that identifies the type of section.
+Possible sections are:
+.IP #command
+Defines new command keys.
+.IP #line-edit
+Defines new line-editing keys.
+.IP #env
+Defines environment variables.
+.PP
+Blank lines and lines which start with a pound sign (#) are ignored,
+except for the special section header lines.
+
+.SH "COMMAND SECTION"
+The command section begins with the line
+.sp
+#command
+.sp
+If the command section is the first section in the file,
+this line may be omitted.
+The command section consists of lines of the form:
 .sp
 	\fIstring\fP <whitespace> \fIaction\fP [extra-string] <newline>
 .sp
@@ -37,7 +76,6 @@ A backslash followed by any other character indicates that character is
 to be taken literally.
 Characters which must be preceded by backslash include
 caret, space, tab and the backslash itself.
-Blank lines and lines which start with a pound sign (#) are ignored.
 .PP
 An action may be followed by an "extra" string.
 When such a command is entered while running
@@ -48,17 +86,13 @@ string is parsed, just as if it were typed in to
 This feature can be used in certain cases to extend
 the functionality of a command.
 For example, see the "{" and ":t" commands in the example below.
-.PP
-The -V flag causes
-.I lesskey
-to print its version number and immediately exit.  
-Other flags and arguments are ignored.
 
 .SH EXAMPLE
 The following input file describes the set of
 default command keys used by less:
 .sp
 .nf
+	#command
 	\er		forw-line 
 	\en		forw-line 
 	e		forw-line 
@@ -84,9 +118,12 @@ default command keys used by less:
 	b		back-screen 
 	^B		back-screen 
 	\eev		back-screen 
+	\ee\e40		forw-screen-force
 	z		forw-window 
 	w		back-window 
 	F		forw-forever 
+	\ee[		left-scroll
+	\ee]		right-scroll
 	R		repaint-flush 
 	r		repaint 
 	^R		repaint 
@@ -118,7 +155,7 @@ default command keys used by less:
 	\een		repeat-search-all 
 	N		reverse-search 
 	\eeN		reverse-search-all 
-	\eu		undo-hilite
+	\eeu		undo-hilite
 	m		set-mark 
 	'		goto-mark 
 	^X^X		goto-mark 
@@ -164,7 +201,6 @@ adding this control line to the input file:
 .sp
 This will cause all default commands to be ignored.
 The #stop line should be the last line in that section of the file.
-(Another section, introduced by #line-edit, may follow the #stop line.)
 .PP
 Be aware that #stop can be dangerous.  
 Since all default commands are disabled, 
@@ -172,15 +208,15 @@ you must provide sufficient commands before the #stop line
 to enable all necessary actions.
 For example, failure to provide a "quit" command can lead to frustration.
 
-.SH "LINE EDITING"
-New key bindings may be specified for the line editing commands,
-in a manner similar to the way key bindings for 
-ordinary commands are specified.
-This control line marks the beginning of a section of line-editing commands:
+.SH "LINE EDITING SECTION"
+The line-editing section begins with the line:
 .sp
 #line-edit
 .sp
-Following this line is a list of keys and actions,
+This section specifies new key bindings for the line editing commands,
+in a manner similar to the way key bindings for 
+ordinary commands are specified in the #command section.
+The line-editing section consists of a list of keys and actions,
 one per line as in the example below.
 
 .SH EXAMPLE
@@ -209,8 +245,51 @@ default line-editing keys used by less:
 .fi
 .sp
 
+.SH "LESS ENVIRONMENT VARIABLES"
+The environment variable section begins with the line
+.sp
+#env
+.sp
+Following this line is a list of environment variable assignments.
+Each line consists of an environment variable name, an equals sign (=)
+and the value to be assigned to the environment variable.
+White space before and after the equals sign is ignored.
+Variables assigned in this way are visible only to
+.I less.
+If a variable is specified in the system environment and also in a
+lesskey file, the value in the lesskey file takes precedence.
+Although the lesskey file can be used to override variables set in the
+environment, the main purpose of assigning variables in the lesskey file
+is simply to have all 
+.I less
+configuration information stored in one file.
+
+.SH EXAMPLE
+The following input file sets the -i option whenever 
+.I less
+is run, and specifies the character set to be "latin1":
+.sp
+.nf
+	#env
+	LESS = -i
+	LESSCHARSET = latin1
+.fi
+.sp
+
 .SH "SEE ALSO"
 less(1)
 
+.SH WARNINGS
+It is not possible to specify special keys, such as uparrow, 
+in a keyboard-independent manner.
+The only way to specify such keys is to specify the escape sequence
+which a particular keyboard sends when such a keys is pressed.
+.PP
+On MS-DOS and OS/2 systems, certain keys send a sequence of characters
+which start with a NUL character (0).
+This NUL character should be represented as \e340 in a lesskey file.
+
 .SH COPYRIGHT
 Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+.br
+Comments to: markn@3do.com

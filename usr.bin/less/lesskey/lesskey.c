@@ -1,5 +1,7 @@
+/*	$NetBSD: lesskey.c,v 1.1.1.2 1997/04/22 13:45:56 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,8 +65,12 @@
  *
  *	Blank lines and lines which start with # are ignored, 
  *	except for the special control lines:
+ *		#command	Signals the beginning of the command
+ *				keys section.
  *		#line-edit	Signals the beginning of the line-editing
  *				keys section.
+ *		#env		Signals the beginning of the environment
+ *				variable section.
  *		#stop		Stops command parsing in less;
  *				causes all default keys to be disabled.
  *
@@ -125,6 +131,7 @@ struct cmdname cmdnames[] =
 	"forw-line",		A_F_LINE,
 	"forw-line-force",	A_FF_LINE,
 	"forw-screen",		A_F_SCREEN,
+	"forw-screen-force",	A_FF_SCREEN,
 	"forw-scroll",		A_F_SCROLL,
 	"forw-search",		A_F_SEARCH,
 	"forw-window",		A_F_WINDOW,
@@ -134,6 +141,7 @@ struct cmdname cmdnames[] =
 	"help",			A_HELP,
 	"index-file",		A_INDEX_FILE,
 	"invalid",		A_UINVALID,
+	"left-scroll",		A_LSHIFT,
 	"next-file",		A_NEXT_FILE,
 	"noaction",		A_NOACTION,
 	"percent",		A_PERCENT,
@@ -146,6 +154,7 @@ struct cmdname cmdnames[] =
 	"repeat-search-all",	A_T_AGAIN_SEARCH,
 	"reverse-search",	A_REVERSE_SEARCH,
 	"reverse-search-all",	A_T_REVERSE_SEARCH,
+	"right-scroll",		A_RSHIFT,
 	"set-mark",		A_SETMARK,
 	"shell",		A_SHELL,
 	"status",		A_STAT,
@@ -190,6 +199,7 @@ struct table
 
 struct table cmdtable;
 struct table edittable;
+struct table vartable;
 struct table *currtable = &cmdtable;
 
 char fileheader[] = {
@@ -205,6 +215,7 @@ char filetrailer[] = {
 };
 char cmdsection[1] =	{ CMD_SECTION };
 char editsection[1] =	{ EDIT_SECTION };
+char varsection[1] =	{ VAR_SECTION };
 char endsection[1] =	{ END_SECTION };
 
 char *infile = NULL;
@@ -224,11 +235,7 @@ mkpathname(dirname, filename)
 
 	pathname = calloc(strlen(dirname) + strlen(filename) + 2, sizeof(char));
 	strcpy(pathname, dirname);
-#if MSOFTC || OS2
-	strcat(pathname, "\\");
-#else
-	strcat(pathname, "/");
-#endif
+	strcat(pathname, PATHNAME_SEP);
 	strcat(pathname, filename);
 	return (pathname);
 }
@@ -308,6 +315,9 @@ init_tables()
 
 	edittable.names = editnames;
 	edittable.pbuffer = edittable.buffer;
+
+	vartable.names = NULL;
+	vartable.pbuffer = vartable.buffer;
 }
 
 /*
@@ -450,6 +460,11 @@ control_line(s)
 		currtable = &cmdtable;
 		return (1);
 	}
+	if (PREFIX(s, "#env"))
+	{
+		currtable = &vartable;
+		return (1);
+	}
 	if (PREFIX(s, "#stop"))
 	{
 		add_cmd_char('\0');
@@ -528,32 +543,14 @@ error(s)
 }
 
 
-/*
- * Parse a line from the lesskey file.
- */
 	void
-parse_line(line)
-	char *line;
-{
+parse_cmdline(p)
 	char *p;
+{
 	int cmdlen;
 	char *actname;
 	int action;
 	int c;
-
-	/*
-	 * See if it is a control line.
-	 */
-	if (control_line(line))
-		return;
-	/*
-	 * Skip leading white space.
-	 * Replace the final newline with a null byte.
-	 * Ignore blank lines and comments.
-	 */
-	p = clean_line(line);
-	if (*p == '\0')
-		return;
 
 	/*
 	 * Parse the command string and store it in the current table.
@@ -614,6 +611,69 @@ parse_line(line)
 	}
 }
 
+	void
+parse_varline(p)
+	char *p;
+{
+	int c;
+
+	do
+	{
+		c = tchar(&p);
+		add_cmd_char(c);
+	} while (*p != ' ' && *p != '\t' && *p != '=' && *p != '\0');
+	/*
+	 * Terminate the variable name with a null byte.
+	 */
+	add_cmd_char('\0');
+
+	p = skipsp(p);
+	if (*p++ != '=')
+	{
+		error("missing =");
+		return;
+	}
+
+	add_cmd_char(EV_OK|A_EXTRA);
+
+	p = skipsp(p);
+	while (*p != '\0')
+	{
+		c = tchar(&p);
+		add_cmd_char(c);
+	}
+	add_cmd_char('\0');
+}
+
+/*
+ * Parse a line from the lesskey file.
+ */
+	void
+parse_line(line)
+	char *line;
+{
+	char *p;
+
+	/*
+	 * See if it is a control line.
+	 */
+	if (control_line(line))
+		return;
+	/*
+	 * Skip leading white space.
+	 * Replace the final newline with a null byte.
+	 * Ignore blank lines and comments.
+	 */
+	p = clean_line(line);
+	if (*p == '\0')
+		return;
+
+	if (currtable == &vartable)
+		parse_varline(p);
+	else
+		parse_cmdline(p);
+}
+
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -635,8 +695,12 @@ main(argc, argv)
 		desc = stdin;
 	else if ((desc = fopen(infile, "r")) == NULL)
 	{
+#if HAVE_PERROR
 		perror(infile);
-		exit(1);
+#else
+		fprintf(stderr, "Cannot open %s\n", infile);
+#endif
+		usage();
 	}
 
 	/*
@@ -661,10 +725,16 @@ main(argc, argv)
 	}
 
 	if (outfile == NULL)
+		outfile = getenv("LESSKEY");
+	if (outfile == NULL)
 		outfile = homefile(LESSKEYFILE);
 	if ((out = fopen(outfile, "wb")) == NULL)
 	{
+#if HAVE_PERROR
 		perror(outfile);
+#else
+		fprintf(stderr, "Cannot open %s\n", outfile);
+#endif
 		exit(1);
 	}
 
@@ -679,6 +749,11 @@ main(argc, argv)
 	fputbytes(out, editsection, sizeof(editsection));
 	fputint(out, edittable.pbuffer - edittable.buffer);
 	fputbytes(out, (char *)edittable.buffer, edittable.pbuffer-edittable.buffer);
+
+	/* Environment variable section */
+	fputbytes(out, varsection, sizeof(varsection)); 
+	fputint(out, vartable.pbuffer - vartable.buffer);
+	fputbytes(out, (char *)vartable.buffer, vartable.pbuffer-vartable.buffer);
 
 	/* File trailer */
 	fputbytes(out, endsection, sizeof(endsection));

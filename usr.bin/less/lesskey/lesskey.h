@@ -1,3 +1,5 @@
+/*	$NetBSD: lesskey.h,v 1.1.1.2 1997/04/22 13:45:56 mrg Exp $	*/
+
 /*
  * Format of a lesskey file:
  *
@@ -18,6 +20,7 @@
 
 #define	CMD_SECTION		'c'
 #define	EDIT_SECTION		'e'
+#define	VAR_SECTION		'v'
 #define	END_SECTION		'x'
 
 #define	C0_END_LESSKEY_MAGIC	'E'

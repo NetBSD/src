@@ -1,5 +1,7 @@
+/*	$NetBSD: signal.c,v 1.1.1.2 1997/04/22 13:45:52 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,9 +61,9 @@ u_interrupt(type)
 	int type;
 {
 #if OS2
-	SIGNAL(SIGINT, SIG_ACK);
+	LSIGNAL(SIGINT, SIG_ACK);
 #endif
-	SIGNAL(SIGINT, u_interrupt);
+	LSIGNAL(SIGINT, u_interrupt);
 	sigs |= S_INTERRUPT;
 	if (reading)
 		intread();
@@ -76,7 +78,7 @@ u_interrupt(type)
 stop(type)
 	int type;
 {
-	SIGNAL(SIGTSTP, stop);
+	LSIGNAL(SIGTSTP, stop);
 	sigs |= S_STOP;
 	if (reading)
 		intread();
@@ -92,7 +94,7 @@ stop(type)
 winch(type)
 	int type;
 {
-	SIGNAL(SIGWINCH, winch);
+	LSIGNAL(SIGWINCH, winch);
 	sigs |= S_WINCH;
 	if (reading)
 		intread();
@@ -107,7 +109,7 @@ winch(type)
 winch(type)
 	int type;
 {
-	SIGNAL(SIGWIND, winch);
+	LSIGNAL(SIGWIND, winch);
 	sigs |= S_WINCH;
 	if (reading)
 		intread();
@@ -127,15 +129,15 @@ init_signals(on)
 		/*
 		 * Set signal handlers.
 		 */
-		(void) SIGNAL(SIGINT, u_interrupt);
+		(void) LSIGNAL(SIGINT, u_interrupt);
 #ifdef SIGTSTP
-		(void) SIGNAL(SIGTSTP, stop);
+		(void) LSIGNAL(SIGTSTP, stop);
 #endif
 #ifdef SIGWINCH
-		(void) SIGNAL(SIGWINCH, winch);
+		(void) LSIGNAL(SIGWINCH, winch);
 #else
 #ifdef SIGWIND
-		(void) SIGNAL(SIGWIND, winch);
+		(void) LSIGNAL(SIGWIND, winch);
 #endif
 #endif
 	} else
@@ -143,15 +145,15 @@ init_signals(on)
 		/*
 		 * Restore signals to defaults.
 		 */
-		(void) SIGNAL(SIGINT, SIG_DFL);
+		(void) LSIGNAL(SIGINT, SIG_DFL);
 #ifdef SIGTSTP
-		(void) SIGNAL(SIGTSTP, SIG_DFL);
+		(void) LSIGNAL(SIGTSTP, SIG_DFL);
 #endif
 #ifdef SIGWINCH
-		(void) SIGNAL(SIGWINCH, SIG_IGN);
+		(void) LSIGNAL(SIGWINCH, SIG_IGN);
 #endif
 #ifdef SIGWIND
-		(void) SIGNAL(SIGWIND, SIG_IGN);
+		(void) LSIGNAL(SIGWIND, SIG_IGN);
 #endif
 	}
 }
@@ -176,16 +178,16 @@ psignals()
 		 * Clean up the terminal.
 		 */
 #ifdef SIGTTOU
-		SIGNAL(SIGTTOU, SIG_IGN);
+		LSIGNAL(SIGTTOU, SIG_IGN);
 #endif
 		clear_bot();
 		deinit();
 		flush();
 		raw_mode(0);
 #ifdef SIGTTOU
-		SIGNAL(SIGTTOU, SIG_DFL);
+		LSIGNAL(SIGTTOU, SIG_DFL);
 #endif
-		SIGNAL(SIGTSTP, SIG_DFL);
+		LSIGNAL(SIGTSTP, SIG_DFL);
 		kill(getpid(), SIGTSTP);
 		/*
 		 * ... Bye bye. ...
@@ -193,7 +195,7 @@ psignals()
 		 * Reset the terminal and arrange to repaint the
 		 * screen when we get back to the main command loop.
 		 */
-		SIGNAL(SIGTSTP, stop);
+		LSIGNAL(SIGTSTP, stop);
 		raw_mode(1);
 		init();
 		screen_trashed = 1;

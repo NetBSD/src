@@ -1,5 +1,7 @@
+/*	$NetBSD: version.c,v 1.1.1.2 1997/04/22 13:45:53 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -507,7 +509,47 @@ v289   3/9/95	Fix adj_hilite bug when line gets processed by
 		hilite_line more than once.
 v290   3/9/95	Make configure automatically.  Fix Sequent problem
 		with incompatible sigsetmask().
-
+		Posted to prep.ai.mit.edu
+-----------------------------------------------------------------
+v291   3/21/95	Add #env to lesskey.  Fix MS-DOS build.
+		Posted to simtel.
+-----------------------------------------------------------------
+v292   4/24/95	Add MS-DOS support for Borland C.
+		Fix arrow keys in MS-DOS versions.
+v293   4/28/95	Add auto-versioning stuff to make dist.
+v294   5/12/95	Fix Borland build.
+v295   1/20/96	Fix search on squished file; add /@@.
+v296   1/23/96	Allow cmdbuf larger than screen width.
+v297   1/24/96	Don't call termcap if tgetent fails; 
+		add #defines for buffers.
+v298   1/24/96	Change @@ to ^K.  
+		Add alternate search modifiers ^N, ^F, ^E.
+v299   1/25/96	Fix percent overflow in jump_percent (thanks to Brent Wiese);
+		don't send "ti" after shell command till RETURN pressed.
+v300   1/25/96	Change -U to print tabs as ^I.
+v301   1/30/96	Make hilites work in cmd F output.
+v302   1/31/96	Fix cmd F to notice window-change signals.
+v303   1/31/96	Add ESC-SPACE command.
+v304   2/1/96	Add ^R search modifier; add LESSSECURE.
+v305   2/2/96	Workaround Linux /proc kernel bug; add LESSKEY.
+v306   3/16/96	Minor fixes.
+v307   3/25/96	Allow cmd line arg "--"; fix DOS & OS/2 defines.h.
+v308   4/4/96	Port to OS-9 (thanks to Boisy Pitre); fix -d.
+v309   4/9/96	Fix OS-9 version; fix tags bug with "$".
+v310   4/10/96	Get rid of HELPFILE.
+v311   4/22/96	Add Windows32 support; merge doscreen.c into screen.c.
+v312   4/24/96	Don't quit after "cannot reopen" error.
+v313   4/25/96	Added horizontal scrolling.
+v314   4/26/96	Modified -e to quit on reaching end of a squished file.
+v315   4/26/96	Fix "!;TAB" bug.
+v316   5/2/96	Make "|a" when (a < curr screen) go to end of curr screen.
+v317   5/14/96	Various fixes for the MS-DOS and OS/2 builds.
+		Added ## and %% handling for filenames
+v318   5/29/96	Port to OS-9 Microware compiler; minor fixes 
+		(thanks to Martin Gregorie).
+v319   7/8/96	Fix Windows port (thanks to Jeff Paquette).
+v320   7/11/96	Final fixes for Windows port.
+v321   7/18/96	Minor fixes.
 */
 
-char version[] = "290";
+char version[] = "321";
