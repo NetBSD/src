@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.402 2000/11/14 23:37:21 matt Exp $
+#	$NetBSD: files,v 1.403 2000/11/15 21:14:14 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -828,9 +828,9 @@ file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi | netatalk | token |
 					    wlan | vlan
-file net/if_faith.c			faith			needs-count
+file net/if_faith.c			faith			needs-flag
 file net/if_fddisubr.c			fddi			needs-flag
-file net/if_gif.c			gif			needs-count
+file net/if_gif.c			gif			needs-flag
 file net/if_gre.c			gre			needs-count	
 file net/if_hippisubr.c                 hippi                   needs-flag
 file net/if_ieee1394subr.c		ieee1394
