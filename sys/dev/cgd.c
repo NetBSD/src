@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.19 2004/08/23 05:38:15 thorpej Exp $ */
+/* $NetBSD: cgd.c,v 1.20 2004/10/04 11:12:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.19 2004/08/23 05:38:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.20 2004/10/04 11:12:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -368,9 +368,9 @@ cgdiodone(struct buf *nbp)
 	KDASSERT(cs);
 
 	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
-	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %ld resid %ld\n",
+	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %d resid %d\n",
 	    obp, obp->b_bcount, obp->b_resid));
-	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %ld\n",
+	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %d\n",
 	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
 	    nbp->b_bcount));
 	if (nbp->b_flags & B_ERROR) {
