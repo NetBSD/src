@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1999/04/01 00:17:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1999/05/01 10:37:57 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,7 +73,9 @@ configure()
 {
 	int node, reg[5];
 
-	node = OF_finddevice("/pci/mac-io");
+	node = OF_finddevice("mac-io");
+	if (node == -1)
+		node = OF_finddevice("/pci/mac-io");
 	if (node != -1 &&
 	    OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) != -1) {
 		interrupt_reg = mapiodev(reg[2], NBPG);
