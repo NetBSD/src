@@ -200,10 +200,8 @@ void cpu_startup()
      * Allocate a submap for exec arguments.  This map effectively
      * limits the number of processes exec'ing at any time.
      */
-#if 0				/* XXX not currently used */
     exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 			     16*NCARGS, TRUE);
-#endif
 
     /*
      * Allocate a submap for physio
