@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.9 2002/05/19 22:29:57 bjh21 Exp $
+$NetBSD: podules,v 1.10 2002/05/22 22:43:15 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -69,118 +69,78 @@ manufacturer	MCS		0x0063	MCS
 manufacturer	EESOX		0x0064	EESOX
 
 /*
- * List of known podules.  Grouped by vendor.
+ * List of known podules.
  */
 
-podule	ACORN		ETHER3XXX	0x0000	Ether3 (NOROM)
-podule	ACORN		SCSI		0x0002	SCSI 1 interface
-podule	ACORN		ETHER1		0x0003	ether 1 interface
-podule	ACORN		ROMRAM		0x0005	ROM/RAM podule
-podule	ACORN		BBCIO		0x0006	BBC IO interface
-podule	ACORN		ST506		0x000b	ST506 HD interface
-podule	ACORN		MIDI		0x0013	MIDI interface
-podule	ACORN		USERMIDI	0x003F	User Port/MIDI interface
-podule	ACORN		ETHER2		0x0061	ether 2 interface
-podule	ACORN		ETHERI		0x0139	EtherI interface
-
-podule	CCONCEPTS	ROMRAM		0x0005	ROM/RAM podule
-podule	CCONCEPTS	FAXPACK		0x0007	FaxPack modem
-podule	CCONCEPTS	LASERDIRECT	0x0014	laser direct (Canon LBP-4)
-
-podule	ARMADILLO	A448		0x0016	A448 sound sampler
-
-/* From an Issue 2.0 ColourCard (others may differ) */
-podule	WILDVISION	COLOURCARD	0x0050	ColourCard
-podule	WILDVISION	HAWKV9		0x0052	hawk v9 mark2
-podule	WILDVISION	SOUNDSAMPLER	0x0054	Sound Sampler
-podule	WILDVISION	CENTRONICS	0x006f	Bi-directional Centronics
-podule	WILDVISION	SCANLIGHTV256	0x00cb	scanlight video 256
-podule	WILDVISION	EAGLEM2		0x00cc	eagle M2
-podule	WILDVISION	LARKA16		0x00ce	lark A16
-podule	WILDVISION	MIDIMAX		0x0200	MIDI max
-
-podule	HCCS		IDESCSI		0x0022	IDE or SCSI interface
-podule	HCCS		ULTIMATE	0x0063	Ultimate micropodule carrier
-
-podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
-
-podule	ATOMWIDE2	SERIAL		0x0090	multiport serial interface
-
-podule	LINGENUITY	SCSI		0x0095	16 bit SCSI interface
-podule	LINGENUITY	SCSISHARE	0x0096	16 bit SCSIShare interface
-podule	LINGENUITY	SCSI8		0x0040	8 bit SCSI interface
-podule	LINGENUITY	SCSI8SHARE	0x008c	8 bit SCSIShare interface
-
-podule	IRLAM		24I16		0x00e6	24i16 digitiser
-podule	IRLAM		MMETHERV	0x1234	Multi-media/EtherV
-podule	IRLAM		ETHERN		0x5678	EtherN interface
-
+podule	ACORN_SCSI		0x0002	Acorn SCSI interface
+podule	ETHER1			0x0003	Ether1 interface
+podule	ROMRAM			0x0005	ROM/RAM podule
+podule	BBCIO			0x0006	BBC I/O podule
+podule	FAXPACK			0x0007	FaxPack modem
+podule	ST506			0x000b	ST506 HD interface
+podule	ACORN_MIDI		0x0013	MIDI interface
+podule	LASERDIRECT		0x0014	LaserDirect (Canon LBP-4)
+podule	A448			0x0016	A448 sound sampler
+podule	HCCS_IDESCSI		0x0022	HCCS IDE or SCSI interface
+podule	CUMANA_SCSI2		0x003a	SCSI II interface
+podule	ACORN_USERMIDI		0x003f	User Port/MIDI interface
+podule	LINGENUITY_SCSI8	0x0040	8 bit SCSI interface
+podule	ARXE_SCSI		0x0041	16 bit SCSI interface
+podule	COLOURCARD		0x0050	ColourCard
+podule	HAWKV9			0x0052	Hawk v9 mark2
+podule	WILDVISION_SOUNDSAMPLER	0x0054	Wild Vision Sound Sampler
+podule	DTSOFT_IDE		0x0055	IDE interface
 /* XXX ID 0x0058 is used by Oak ClassNet (EtherO) Ethernet cards */
-podule	OAK		SCSI		0x0058	16 bit SCSI interface
-
-podule	BEEBUG		IDE8		0x0097	8 bit IDE
-
-podule	SJ		NEXUS		0x0064	Nexus interface (Podule)
-podule	SJ		NEXUSNS		0x008F	Nexus interface (A3020 netslot)
-
-podule	MORLEY		SCSI		0x0067	SCSI interface
-podule	MORLEY		USERANALOGUE	0x006d	User and Analogue ports
-
-podule	HCCS2		USERANALOGUE	0x006e	User and Analogue ports
-
-podule	VTI		SCSI		0x008d	SCSI interface
-
-podule	DTSOFT		IDE		0x0055	IDE interface
-
-podule	CUMANA		SCSI2		0x003a	SCSI II interface
-podule	CUMANA		SCSI1		0x00a0	SCSI I interface
-podule	CUMANA		SLCD		0x00dd	CDFS & SLCD expansion card
-
-podule	ICS		IDE		0x00ae	IDE Interface
-
-podule	SERIALPORT	DUALSERIAL	0x00b9	Serial interface
-
-podule	ARXE		SCSI		0x0041	16 bit SCSI interface
-
-podule	ALEPH1		PCCARD		0x00ea	PC card
-
-/* i-cubed's own cards */
-podule	ICUBED		ETHERLAN100	0x00cf	EtherLan 100-series
-podule	ICUBED		ETHERLAN200	0x00bd	EtherLan 200-series
-podule	ICUBED		ETHERLAN500	0x00d4	EtherLan 500-series
-podule	ICUBED		ETHERLAN600	0x00ec	EtherLan 600-series
-podule	ICUBED		ETHERLAN700	0x012f	EtherLan 700-series
-/* cards made by i-cubed for Acorn */
-podule	ICUBED		ETHERLAN100AEH	0x011c	AEH77 (EtherLan 102)
-podule	ICUBED		ETHERLAN200AEH	0x011d	AEH79 (EtherLan 210)
-podule	ICUBED		ETHERLAN600AEH	0x011e	AEH62/78/99 (EtherLan 602)
-podule	ICUBED		ETHERLAN500AEH	0x011f	AEH75 (EtherLan 512)
-podule	ICUBED		ETHERLAN700AEH	0x012e	AEH98 (EtherLan 700-series)
-/* XXX Not listed by Design IT. */
-podule	ICUBED		ETHERLAN100XXX	0x00c4	EtherLan 100???
-
-podule	BRINI		PORT		0x0000	BriniPort intelligent I/O interface
-podule	BRINI		LINK		0x00df	BriniLink transputer link adapter
-
-podule	ANT		ETHER3		0x00a4	ether 3/5 interface
-podule	ANT		ETHERB		0x00e4	ether B network slot interface
-podule	ANT		ETHERM		0x00d8	ether M dual interface NIC
-
-podule	CASTLE		SCSI16		0x00f6  8 or 16 bit SCSI2 interface
-podule	CASTLE		SCSI16SHARE	0x00f3  8 or 16 bit SCSI2Share interface
-podule	CASTLE		ETHERSCSI	0x00f5  EtherSCSI
-podule	CASTLE		ETHERSCSISHARE	0x00f4  8 or 16 bit SCSI2Share interface, possibly with Ethernet
-podule	CASTLE		SCSI32		0x012b  32 bit SCSI2 + DMA interface
-
-podule	ALSYSTEMS	SCSI		0x0107	SCSI II host adapter
-
-podule	SIMTEC		IDE8		0x0130	8 bit IDE interface
-podule	SIMTEC		IDE		0x0131	16 bit IDE interface
-
-podule	YES		RAPIDE		0x0114	RapIDE32 interface
-
-/* MCS also call themselves ACE (Acorn Computer Entertainment) */
-podule	MCS		SCSI		0x0125	Connect32 SCSI II interface
-podule	MCS		MIDICONNECT	0x0133	Midi-Connect
-
-podule	EESOX		SCSI		0x008c	EESOX SCSI II interface
+podule	OAK_SCSI		0x0058	16 bit SCSI interface
+podule	ETHER2			0x0061	Ether2 interface
+podule	ULTIMATE		0x0063	Ultimate micropodule carrier
+podule	WILDVISION_CENTRONICS	0x006f	Bi-directional Centronics
+podule	NEXUS			0x0064	Nexus interface (Podule)
+podule	MORLEY_SCSI		0x0067	SCSI interface
+podule	MORLEY_USERANALOGUE	0x006d	User and Analogue ports
+podule	HCCS_USERANALOGUE	0x006e	User and Analogue ports
+podule	LINGENUITY_SCSI8SHARE	0x008c	8 bit SCSIShare interface
+podule	VTI_SCSI		0x008d	SCSI interface
+podule	NEXUSNS			0x008f	Nexus interface (A3020 netslot)
+podule	ATOMWIDE_SERIAL		0x0090	multiport serial interface
+podule	LINGENUITY_SCSI		0x0095	16 bit SCSI interface
+podule	LINGENUITY_SCSISHARE	0x0096	16 bit SCSIShare interface
+podule	BEEBUG_IDE8		0x0097	8 bit IDE
+podule	CUMANA_SCSI1		0x00a0	SCSI I interface
+podule	ETHER3			0x00a4	Ether3/Ether5 interface
+podule	ICS_IDE			0x00ae	IDE Interface
+podule	SERIALPORT_DUALSERIAL	0x00b9	Serial interface
+podule	ETHERLAN200		0x00bd	EtherLan 200-series
+podule	SCANLIGHTV256		0x00cb	ScanLight Video 256
+podule	EAGLEM2			0x00cc	Eagle M2
+podule	LARKA16			0x00ce	Lark A16
+podule	ETHERLAN100		0x00cf	EtherLan 100-series
+podule	ETHERLAN500		0x00d4	EtherLan 500-series
+podule	ETHERM			0x00d8	EtherM dual interface NIC
+podule	CUMANA_SLCD		0x00dd	CDFS & SLCD expansion card
+podule	BRINILINK		0x00df	BriniLink transputer link adapter
+podule	ETHERB			0x00e4	EtherB network slot interface
+podule	24I16			0x00e6	24i16 digitiser
+podule	PCCARD			0x00ea	PC card
+podule	ETHERLAN600		0x00ec	EtherLan 600-series
+podule	CASTLE_SCSI16SHARE	0x00f3  8 or 16 bit SCSI2Share interface
+podule	CASTLE_ETHERSCSISHARE	0x00f4  8 or 16 bit SCSI2Share interface, possibly with Ethernet
+podule	CASTLE_ETHERSCSI	0x00f5  EtherSCSI
+podule	CASTLE_SCSI16		0x00f6  8 or 16 bit SCSI2 interface
+podule	ALSYSTEMS_SCSI		0x0107	SCSI II host adapter
+podule	RAPIDE			0x0114	RapIDE32 interface
+podule	ETHERLAN100AEH		0x011c	AEH77 (EtherLan 102)
+podule	ETHERLAN200AEH		0x011d	AEH79 (EtherLan 210)
+podule	ETHERLAN600AEH		0x011e	AEH62/78/99 (EtherLan 602)
+podule	ETHERLAN500AEH		0x011f	AEH75 (EtherLan 512)
+podule	CONNECT32		0x0125	Connect32 SCSI II interface
+podule	CASTLE_SCSI32		0x012b  32 bit SCSI2 + DMA interface
+podule	ETHERLAN700AEH		0x012e	AEH98 (EtherLan 700-series)
+podule	ETHERLAN700		0x012f	EtherLan 700-series
+podule	SIMTEC_IDE8		0x0130	8 bit IDE interface
+podule	SIMTEC_IDE		0x0131	16 bit IDE interface
+podule	MIDICONNECT		0x0133	Midi-Connect
+podule	ETHERI			0x0139	EtherI interface
+podule	MIDIMAX			0x0200	MIDI max
+podule	MMETHERV		0x1234	Multi-media/EtherV
+podule	ETHERN			0x5678	EtherN interface

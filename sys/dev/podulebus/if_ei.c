@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.4 2001/12/21 22:33:28 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.5 2002/05/22 22:43:14 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.4 2001/12/21 22:33:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.5 2002/05/22 22:43:14 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -108,7 +108,7 @@ ei_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
-	return IS_PODULE(pa, MANUFACTURER_ACORN, PODULE_ACORN_ETHER1);
+	return pa->pa_product == PODULE_ETHER1;
 }
 
 static void
