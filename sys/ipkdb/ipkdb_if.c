@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_if.c,v 1.6 1997/06/26 07:21:46 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_if.c,v 1.7 1998/01/13 02:26:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
@@ -54,10 +54,6 @@ void	ipkdb_attach __P((struct device *, struct device *, void *));
 static void	ipkdbrcpy __P((struct ipkdb_if * , void *, void *, int));
 static void	ipkdbwcpy __P((struct ipkdb_if * , void *, void *, int));
 static int	ipkdbread __P((struct ipkdb_if *));
-
-struct cfdriver ipkdbif_cd = {
-	NULL, "ipkdb", DV_DULL
-};
 
 /* For the config system the device doesn't exist */
 int

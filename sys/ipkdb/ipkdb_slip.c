@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_slip.c,v 1.3 1997/06/26 07:21:48 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_slip.c,v 1.4 1998/01/13 02:26:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,10 +48,6 @@
 #define	FRAME_ESCAPE		0xdb		/* Frame Esc */
 #define	TRANS_FRAME_END		0xdc		/* transposed frame end */
 #define	TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
-
-struct cfdriver ipkdbslip_cd = {
-	NULL, "ipkdb", DV_DULL
-};
 
 static int
 ipkdbrcv(kip, buf, poll)
