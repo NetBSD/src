@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.66 2003/01/17 23:10:32 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.67 2003/07/27 14:14:44 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.66 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.67 2003/07/27 14:14:44 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -577,8 +577,8 @@ svr4_fasttrap(frame)
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
-			frame.tf_edx = ((u_int32_t *) &tm)[0];
-			frame.tf_eax = ((u_int32_t *) &tm)[1];
+			frame.tf_edx = ((u_int32_t *)(void *) &tm)[0];
+			frame.tf_eax = ((u_int32_t *)(void *) &tm)[1];
 		}
 		break;
 
@@ -607,8 +607,8 @@ svr4_fasttrap(frame)
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
-			frame.tf_edx = ((u_int32_t *) &tm)[0];
-			frame.tf_eax = ((u_int32_t *) &tm)[1];
+			frame.tf_edx = ((u_int32_t *)(void *) &tm)[0];
+			frame.tf_eax = ((u_int32_t *)(void *) &tm)[1];
 		}
 		break;
 
