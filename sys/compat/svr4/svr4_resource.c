@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.3 1998/12/13 18:00:52 christos Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.4 1999/09/07 18:20:19 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_resource.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 
