@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.13 2002/09/13 14:59:24 christos Exp $ */
+/* $NetBSD: emit1.c,v 1.13.2.1 2004/06/22 07:18:49 tron Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.13 2002/09/13 14:59:24 christos Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.13.2.1 2004/06/22 07:18:49 tron Exp $");
 #endif
 
 #include <ctype.h>
