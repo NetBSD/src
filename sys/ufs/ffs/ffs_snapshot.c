@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.2 2004/05/26 11:17:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.3 2004/05/31 13:28:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -563,6 +563,16 @@ out1:
 		error = expunge_ufs1(vp, ip, copy_fs, mapacct_ufs1, BLK_SNAP);
 	else
 		error = expunge_ufs2(vp, ip, copy_fs, mapacct_ufs2, BLK_SNAP);
+	/*
+	 * All block address modifications are done. Invalidate and free
+	 * all pages on the snapshot vnode. Those coming from read ahead
+	 * are no longer valid.
+	 */
+	if (!error) {
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+	}
 	if (error) {
 		fs->fs_snapinum[snaploc] = 0;
 		FREE(snapblklist, M_UFSMNT);
