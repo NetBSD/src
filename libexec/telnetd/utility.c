@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.21 2002/09/20 19:13:24 mycroft Exp $	*/
+/*	$NetBSD: utility.c,v 1.22 2003/05/09 20:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.21 2002/09/20 19:13:24 mycroft Exp $");
+__RCSID("$NetBSD: utility.c,v 1.22 2003/05/09 20:43:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -506,7 +506,7 @@ putf(cp, where)
 			break;
 
 		case 'v':
-			puts(utsinfo.version);
+			putstr(utsinfo.version);
                         break;
 		}
 		cp++;
