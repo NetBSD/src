@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.153 2004/04/29 04:22:49 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.154 2004/04/29 04:27:06 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1539,3 +1539,16 @@ sys/netinet/tcp_input.c				1.204
 	When a packet is received that overlaps the left side of the window,
 	check for RST *before* trimming data and adjust its sequence number.
 	[matt, ticket #213]
+
+sys/dev/scsipi/scsipi_base.c			1.105
+
+	Revert part of 1.102:
+	Don't decrease/check xs_retries when the device report "Power On, 
+	Reset, or Bus Device Reset" sense condition, just retry the command. 
+	The initial bus reset would cause the first TEST_UNIT_READY to report 
+	this condition, and as xs_retries is set to 0 when XS_CTL_DISCOVERY 
+	is set, it would report an error instead of being retried, causing 
+	the disk probe to report "drive offline" instead of the geometry and 
+	capacity. Checking/decreasing xs_retries on the bus reset reported 
+	by the adapter is enouth to avoid the problem reported by rev 1.102.
+	[bouyer, ticket #214]
