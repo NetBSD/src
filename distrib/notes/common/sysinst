@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.30 2002/03/21 23:26:03 ross Exp $
+.\"	$NetBSD: sysinst,v 1.31 2002/03/29 22:49:32 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -396,6 +396,7 @@ Type
 The main menu will be displayed.
 .\} \" ! r_pmax
 .(disp
+.ne 10
 . cs \n(.f 22
   .***********************************************.
   * NetBSD-1.5.1 Install System                   *
