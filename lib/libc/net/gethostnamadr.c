@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.16 1996/10/18 00:10:18 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.17 1996/12/20 19:41:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.16 1996/10/18 00:10:18 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.17 1996/12/20 19:41:30 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,7 @@ static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.16 1996/10/18 00:10:18 mrg E
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -478,7 +479,7 @@ again:
 
 struct hostent *
 _gethtbyname(name)
-	char *name;
+	const char *name;
 {
 	register struct hostent *p;
 	register char **cp;
