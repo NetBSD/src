@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.115 2002/11/07 00:22:29 manu Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.116 2002/11/09 09:03:56 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.115 2002/11/07 00:22:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.116 2002/11/09 09:03:56 manu Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -914,8 +914,12 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #else
 	for (i = 0; i < nexecs_builtin; i++) {
 	    e = execsw_builtin[i].es_emul;
-	    if (e == NULL || strcmp(ename, e->e_name) != 0 ||
-		e->e_sysctl != NULL)
+	    /*
+	     * In order to match e.g. e->e_name "irix o32" with ename "irix", 
+	     * we limit the comparison to the length of ename.
+	     */
+	    if (e == NULL || strncmp(ename, e->e_name, strlen(ename)) != 0 ||
+		e->e_sysctl == NULL)
 		continue;
 
 	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.59 2002/11/03 07:06:06 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.60 2002/11/09 09:03:59 manu Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.59 2002/11/03 07:06:06 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.60 2002/11/09 09:03:59 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.59 2002/11/03 07:06:06 simonb Exp $");
 #endif /* INET6 */
 
 #include "../../sys/compat/linux/common/linux_exec.h"
+#include "../../sys/compat/irix/irix_sysctl.h"
 
 #ifdef IPSEC
 #include <net/route.h>
@@ -203,6 +204,7 @@ struct ctlname tkstatnames[] = KERN_TKSTAT_NAMES;
 struct list tkstatvars = { tkstatnames, KERN_TKSTAT_MAXID };
 
 static int sysctl_linux(char *, char **, int[], int, int *);
+static int sysctl_irix(char *, char **, int[], int, int *);
 static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
@@ -533,6 +535,9 @@ parse(char *string, int flags)
 		break;
 	case CTL_EMUL:
 		switch (mib[1]) {
+		case EMUL_IRIX:
+		    len = sysctl_irix(string, &bufp, mib, flags, &type);
+		    break;
 		case EMUL_LINUX:
 		    len = sysctl_linux(string, &bufp, mib, flags, &type);
 		    break;
@@ -1101,6 +1106,38 @@ sysctl_linux(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	lp = &linuxkernvars;
+	*typep = lp->list[indx].ctl_type;
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return (-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (4);
+}
+
+struct ctlname irixnames[] = EMUL_IRIX_NAMES;
+struct list irixvars = { irixnames, EMUL_IRIX_MAXID };
+struct ctlname irixkernnames[] = EMUL_IRIX_KERN_NAMES;
+struct list irixkernvars = { irixkernnames, EMUL_IRIX_KERN_MAXID };
+
+static int
+sysctl_irix(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp = &irixvars;
+	int indx;
+	char name[BUFSIZ], *cp;
+
+	if (*bufpp == NULL) {
+		(void)strcpy(name, string);
+		cp = &name[strlen(name)];
+		*cp++ = '.';
+		(void)strcpy(cp, "kern");
+		listall(name, &irixkernvars);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	mib[2] = indx;
+	lp = &irixkernvars;
 	*typep = lp->list[indx].ctl_type;
 	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
 		return (-1);
