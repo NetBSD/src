@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.1 2000/07/27 14:38:46 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.2 2000/07/31 13:21:45 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -188,11 +188,20 @@ cpu0	at mainbus0
 
 #sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
-psycho*	at mainbus0				# Darwin, Ultra5
+psycho0	at mainbus0				# Darwin, Ultra5	
+psycho*	at mainbus0				# U2P
+pci0	at psycho0
 pci*	at psycho?
 pci*	at simba?
 simba*	at pci? dev ? function ?		# `APB' support.
 ebus*	at pci?					# ebus devices
+
+
+# Ultra5/10/AXi
+simba0	at pci0 dev 1 function 0
+pci1	at simba0
+simba1	at pci0 dev 1 function 1
+pci2	at simba1
 
 #### Standard system devices -- all required for a given architecture
 
@@ -348,9 +357,9 @@ pseudo-device	vnd	4
 #le*		at lebuffer?				# SBus
 
 ## Happy Meal Ethernet
-#hme*		at sbus0 slot ? offset ?
-hme0		at pci?	dev 1 function 1		# U5/U10 on-board
+#hme*		at sbus? slot ? offset ?
 hme*		at pci?	dev ? function ?		# network "hme" compatible
+hme0		at pci2	dev 1 function 1		# U5/U10 on-board
 
 ## qec/be, qec/hme
 #qec*		at sbus? slot ? offset ?
@@ -451,4 +460,4 @@ pseudo-device	pty		64	# pseudo-ttys (for network, etc.)
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-#pseudo-device	rnd
+pseudo-device	rnd
