@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.1 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.2 2004/05/26 11:17:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -2086,43 +2086,39 @@ writevnblk(vp, data, lbn)
 static inline ufs2_daddr_t
 db_get(struct inode *ip, int loc)
 {
-	int ns = UFS_IPNEEDSWAP(ip);
-
 	if (ip->i_ump->um_fstype == UFS1)
-		return ufs_rw32(ip->i_ffs1_db[loc], ns);
+		return ufs_rw32(ip->i_ffs1_db[loc], UFS_IPNEEDSWAP(ip));
 	else
-		return ufs_rw64(ip->i_ffs2_db[loc], ns);
+		return ufs_rw64(ip->i_ffs2_db[loc], UFS_IPNEEDSWAP(ip));
 }
 
 static inline void
 db_assign(struct inode *ip, int loc, ufs2_daddr_t val)
 {
-	int ns = UFS_IPNEEDSWAP(ip);
-
 	if (ip->i_ump->um_fstype == UFS1)
-		ip->i_ffs1_db[loc] = ufs_rw32(val, ns);
+		ip->i_ffs1_db[loc] = ufs_rw32(val, UFS_IPNEEDSWAP(ip));
 	else
-		ip->i_ffs2_db[loc] = ufs_rw64(val, ns);
+		ip->i_ffs2_db[loc] = ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }
 
 static inline ufs2_daddr_t
 idb_get(struct inode *ip, caddr_t buf, int loc)
 {
-	int ns = UFS_IPNEEDSWAP(ip);
-
 	if (ip->i_ump->um_fstype == UFS1)
-		return ufs_rw32(((ufs1_daddr_t *)(buf))[loc], ns);
+		return ufs_rw32(((ufs1_daddr_t *)(buf))[loc],
+		    UFS_IPNEEDSWAP(ip));
 	else
-		return ufs_rw64(((ufs2_daddr_t *)(buf))[loc], ns);
+		return ufs_rw64(((ufs2_daddr_t *)(buf))[loc],
+		    UFS_IPNEEDSWAP(ip));
 }
 
 static inline void
 idb_assign(struct inode *ip, caddr_t buf, int loc, ufs2_daddr_t val)
 {
-	int ns = UFS_IPNEEDSWAP(ip);
-
 	if (ip->i_ump->um_fstype == UFS1)
-		((ufs1_daddr_t *)(buf))[loc] = ufs_rw32(val, ns);
+		((ufs1_daddr_t *)(buf))[loc] =
+		    ufs_rw32(val, UFS_IPNEEDSWAP(ip));
 	else
-		((ufs2_daddr_t *)(buf))[loc] = ufs_rw64(val, ns);
+		((ufs2_daddr_t *)(buf))[loc] =
+		    ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }
