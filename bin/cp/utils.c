@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.15 1998/08/19 01:29:11 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.16 1998/10/08 17:43:24 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.15 1998/08/19 01:29:11 thorpej Exp $");
+__RCSID("$NetBSD: utils.c,v 1.16 1998/10/08 17:43:24 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,23 @@ __RCSID("$NetBSD: utils.c,v 1.15 1998/08/19 01:29:11 thorpej Exp $");
 #include <unistd.h>
 
 #include "extern.h"
+
+int
+set_utimes(file, fs)
+	const char * file;
+	struct stat * fs;
+{
+    static struct timeval tv[2];
+
+    TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
+    TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
+
+    if (utimes(file, tv)) {
+	warn("utimes: %s", file);
+	return (1);
+    }
+    return (0);
+}
 
 int
 copy_file(entp, dne)
@@ -96,10 +113,21 @@ copy_file(entp, dne)
 				return (0);
 			}
 		}
+		/* overwrite existing destination file name */
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
 		    fs->st_mode & ~(S_ISUID | S_ISGID));
+
+	if (to_fd == -1 && fflag) {
+		/*
+		 * attempt to remove existing destination file name and
+		 * create a new file
+		 */
+		(void)unlink(to.p_path);
+		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
+			     fs->st_mode & ~(S_ISUID | S_ISGID));
+	}
 
 	if (to_fd == -1) {
 		warn("%s", to.p_path);
@@ -110,41 +138,47 @@ copy_file(entp, dne)
 	rval = 0;
 
 	/*
-	 * Mmap and write if less than 8M (the limit is so we don't totally
-	 * trash memory on big files.  This is really a minor hack, but it
-	 * wins some CPU back.
+	 * There's no reason to do anything other than close the file
+	 * now if it's empty, so let's not bother.
 	 */
+	if (fs->st_size > 0) {
+		/*
+		 * Mmap and write if less than 8M (the limit is so we don't totally
+		 * trash memory on big files).  This is really a minor hack, but it
+		 * wins some CPU back.
+		 */
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
-	if (fs->st_size <= 8 * 1048576) {
-		if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
-		    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1) {
-			warn("%s", entp->fts_path);
-			rval = 1;
-		} else {
-			if (write(to_fd, p, fs->st_size) != fs->st_size) {
-				warn("%s", to.p_path);
+		if (fs->st_size <= 8 * 1048576) {
+			if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
+			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1) {
+				warn("%s", entp->fts_path);
 				rval = 1;
+			} else {
+				if (write(to_fd, p, fs->st_size) != fs->st_size) {
+					warn("%s", to.p_path);
+					rval = 1;
+				}
+				/* Some systems don't unmap on close(2). */
+				if (munmap(p, fs->st_size) < 0) {
+					warn("%s", entp->fts_path);
+					rval = 1;
+				}
 			}
-			/* Some systems don't unmap on close(2). */
-			if (munmap(p, fs->st_size) < 0) {
+		} else
+#endif
+		{
+			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
+				wcount = write(to_fd, buf, rcount);
+				if (rcount != wcount || wcount == -1) {
+					warn("%s", to.p_path);
+					rval = 1;
+					break;
+				}
+			}
+			if (rcount < 0) {
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
-		}
-	} else
-#endif
-	{
-		while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
-			wcount = write(to_fd, buf, rcount);
-			if (rcount != wcount || wcount == -1) {
-				warn("%s", to.p_path);
-				rval = 1;
-				break;
-			}
-		}
-		if (rcount < 0) {
-			warn("%s", entp->fts_path);
-			rval = 1;
 		}
 	}
 
@@ -176,6 +210,10 @@ copy_file(entp, dne)
 	if (close(to_fd)) {
 		warn("%s", to.p_path);
 		rval = 1;
+	}
+	/* set the mod/access times now after close of the fd */
+	if (pflag && set_utimes(to.p_path, fs)) { 
+	    rval = 1;
 	}
 	return (rval);
 }
@@ -237,24 +275,26 @@ copy_special(from_stat, exists)
 }
 
 
+/*
+ * Function: setfile
+ *
+ * Purpose:
+ *   Set the owner/group/permissions for the "to" file to the information
+ *   in the stat structure.  If fd is zero, also call set_utimes() to set
+ *   the mod/access times.  If fd is non-zero, the caller must do a utimes
+ *   itself after close(fd).
+ */
 int
 setfile(fs, fd)
 	struct stat *fs;
 	int fd;
 {
-	static struct timeval tv[2];
 	int rval, islink;
 
 	rval = 0;
 	islink = S_ISLNK(fs->st_mode);
 	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (fd ? futimes(fd, tv) : lutimes(to.p_path, tv)) {
-		warn("utimes: %s", to.p_path);
-		rval = 1;
-	}
 	/*
 	 * Changing the ownership probably won't succeed, unless we're root
 	 * or POSIX_CHOWN_RESTRICTED is not set.  Set uid/gid before setting
@@ -291,6 +331,9 @@ setfile(fs, fd)
 				rval = 1;
 			}
 	}
+	/* if fd is non-zero, caller must call set_utimes() after close() */
+	if (fd == 0 && set_utimes(to.p_path, fs))
+	    rval = 1;
 	return (rval);
 }
 
@@ -298,8 +341,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "%s\n%s\n",
-	    "usage: cp [-R [-H | -L | -P]] [-fip] src target",
-	    "       cp [-R [-H | -L | -P]] [-fip] src1 ... srcN directory");
+	    "usage: cp [-R [-H | -L | -P]] [-f | -i] [-p] src target",
+	    "       cp [-R [-H | -L | -P]] [-f | -i] [-p] src1 ... srcN directory");
 	exit(1);
 	/* NOTREACHED */
 }
