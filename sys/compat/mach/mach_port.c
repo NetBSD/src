@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.22 2002/12/27 19:57:47 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.23 2002/12/30 12:41:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.22 2002/12/27 19:57:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.23 2002/12/30 12:41:52 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -373,7 +373,7 @@ mach_port_move_member(args)
 		
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 	/* If it was already in a port set, remove it */
-	if (mrr->mr_sethead != NULL)
+	if (mrr->mr_sethead != mrr)
 		LIST_REMOVE(mrr, mr_setlist);
 
 	/* Insert it into the new port set */
@@ -480,7 +480,7 @@ mach_right_get(mp, p, type)
 	mr->mr_port = mp;
 	mr->mr_p = p;
 	mr->mr_type = type;
-	mr->mr_sethead = NULL;
+	mr->mr_sethead = mr; 
 	mr->mr_refcount = 1;
 
 	LIST_INIT(&mr->mr_set); /* Usefull only for a right on a port set */
