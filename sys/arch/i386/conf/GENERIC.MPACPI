@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.17 2005/01/18 10:28:00 scw Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.18 2005/01/31 16:54:34 hannken Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -1168,6 +1168,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 
 # Vinum
 # pseudo-device	vinum		8	# Vinum

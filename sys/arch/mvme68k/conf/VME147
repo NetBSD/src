@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.45 2004/11/10 17:54:05 christos Exp $
+#	$NetBSD: VME147,v 1.46 2005/01/31 16:55:00 hannken Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -64,6 +64,7 @@ pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	pty
 pseudo-device	vnd 2
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem
 

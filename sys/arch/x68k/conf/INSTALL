@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.62 2005/01/18 07:27:20 chs Exp $
+#	$NetBSD: INSTALL,v 1.63 2005/01/31 16:55:30 hannken Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.62 $"
+#ident 		"INSTALL-$Revision: 1.63 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -341,3 +341,4 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+#pseudo-device	fss		4	# file system snapshot device

@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.35 2004/12/08 13:30:10 reinoud Exp $
+#	$NetBSD: NC_WSCONS,v 1.36 2005/01/31 16:54:32 hannken Exp $
 #
 #	NC - with wscons
 #
@@ -300,6 +300,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	fss	4		# file system snapshot device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem
