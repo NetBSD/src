@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.5 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.4 1993/08/01 18:24:01 mycroft Exp $
+ *	from: @(#)pathnames.h	8.1 (Berkeley) 6/5/93
+ *	$Id: pathnames.h,v 1.5 1994/09/17 00:10:10 mycroft Exp $
  */
 
 #include <paths.h>
