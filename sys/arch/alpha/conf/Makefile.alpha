@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.8 1995/11/23 02:35:16 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.9 1996/02/02 02:34:09 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -113,15 +113,15 @@ clean::
 
 
 locore.o: ${ALPHA}/alpha/locore.s ${ALPHA}/alpha/pal.s \
-	  ${ALPHA}/alpha/prom_disp.s ${ALPHA}/include/intrcnt.h assym.s
+	  ${ALPHA}/alpha/prom_disp.s ${ALPHA}/include/intrcnt.h assym.h
 	${NORMAL_S_C}
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-./assym.s: assym.s
-assym.s: genassym
-	./genassym >assym.s
+./assym.h: assym.h
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: genassym.o
 	${CC} -o $@ genassym.o
@@ -131,7 +131,7 @@ genassym.o: ${ALPHA}/alpha/genassym.c
 
 SRCS= ${CFILES} ${ALPHA}/alpha/genassym.c ioconf.c param.c vnode_if.c
 depend: .depend
-.depend: ${SRCS} assym.s
+.depend: ${SRCS} assym.h
 	mkdep ${COPTS} ${SRCS}
 	mkdep -a -p ${COPTS} ${ALPHA}/alpha/genassym.c
 

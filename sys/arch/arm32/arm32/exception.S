@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.1 1996/01/31 23:15:48 mark Exp $ */
+/* $NetBSD: exception.S,v 1.2 1996/02/02 02:35:38 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,11 +45,11 @@
  *
  * Based on kate/display/abort.s
  *
- *    $Id: exception.S,v 1.1 1996/01/31 23:15:48 mark Exp $
+ *    $Id: exception.S,v 1.2 1996/02/02 02:35:38 mycroft Exp $
  */
 
 #include <machine/cpu.h>
-#include "assym.s"
+#include "assym.h"
 
 /*
  * PUSHFRAME - macro to push a trap frame on the stack in the current mode

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.4 1996/02/01 22:31:51 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.5 1996/02/02 02:37:02 mycroft Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -118,22 +118,22 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: assym.s ${MVME68K}/mvme68k/vectors.s ${MVME68K}/mvme68k/locore.s 
+locore.o: assym.h ${MVME68K}/mvme68k/vectors.s ${MVME68K}/mvme68k/locore.s 
 locore.o: ${MVME68K}/include/trap.h ${MVME68K}/include/psl.h ${MVME68K}/include/pte.h
 locore.o: ${MVME68K}/include/cpu.h
 	${CPP} -D_LOCORE ${COPTS} ${MVME68K}/mvme68k/locore.s | ${AS} -o locore.o
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-assym.s: genassym
-	./genassym > assym.s
+assym.h: genassym
+	./genassym > assym.h
 
 genassym: ${MVME68K}/mvme68k/genassym.c Makefile
 	cc ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dmvme68k -o genassym \
 	    ${MVME68K}/mvme68k/genassym.c
 
-depend: assym.s param.c vnode_if.h
+depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${MVME68K}/mvme68k/genassym.c
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1 1996/01/31 23:15:39 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.2 1996/02/02 02:35:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,10 +43,10 @@
  * Created      : 15/10/94
  * Last updated : 02/01/95
  *
- *    $Id: cpuswitch.S,v 1.1 1996/01/31 23:15:39 mark Exp $
+ *    $Id: cpuswitch.S,v 1.2 1996/02/02 02:35:34 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/param.h>
 #include <machine/cpu.h>
 
