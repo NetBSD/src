@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.16 2001/10/03 00:04:51 augustss Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.17 2001/11/13 07:56:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.17 2001/11/13 07:56:40 lukem Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
