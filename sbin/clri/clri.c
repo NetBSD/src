@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.18 2004/03/27 12:53:53 dsl Exp $	*/
+/*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.18 2004/03/27 12:53:53 dsl Exp $");
+__RCSID("$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,12 +69,8 @@ static off_t sblock_try[] = SBLOCKSEARCH;
 off_t sblockloc;
 
 
-int	main __P((int, char *[]));
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct fs *sbp;
 	struct ufs1_dinode *ip1;
