@@ -109,7 +109,7 @@ isc_result_t trace_begin (const char *filename,
 		return ISC_R_INVALIDARG;
 	}
 
-	traceoutfile = open (filename, O_CREAT | O_WRONLY, 0644);
+	traceoutfile = open (filename, O_CREAT | O_WRONLY | O_EXCL, 0644);
 	if (traceoutfile < 0) {
 		log_error ("%s(%d): trace_begin: %s: %m",
 			   file, line, filename);
