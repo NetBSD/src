@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.2.4 1997/11/24 02:04:06 perry Exp $
+#	$NetBSD: Makefile,v 1.78.2.5 1997/12/15 06:11:25 mellon Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -78,6 +78,8 @@ distribution: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 444 NetBSD.dist \
 		    ${DESTDIR}/etc/mtree; \
 		${INSTALL} -c -o root -g wheel -m 444 BSD.pkg.dist \
+		    ${DESTDIR}/etc/mtree; \
+		${INSTALL} -c -o root -g wheel -m 444 BSD.x11.dist \
 		    ${DESTDIR}/etc/mtree)
 	(cd namedb; \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
