@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.1 1998/12/24 04:51:59 marc Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.2 1998/12/25 00:54:46 marc Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -108,6 +108,7 @@ void pcmcia_check_cis_quirks(sc)
 	struct pcmcia_function *pf, *pf_next, *pf_last;
 	struct pcmcia_config_entry *cfe, *cfe_next;
 
+	pf = NULL;
 	pf_last = NULL;
 
 	for (i=0; i<n_pcmcia_cis_quirks; i++) {
