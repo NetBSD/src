@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.245 2000/07/08 00:53:40 enami Exp $
+#	$NetBSD: mi,v 1.246 2000/07/08 14:17:46 kleink Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1895,8 +1895,10 @@
 ./usr/share/man/cat3/fropen.0	comp-c-catman
 ./usr/share/man/cat3/fscanf.0	comp-c-catman
 ./usr/share/man/cat3/fseek.0	comp-c-catman
+./usr/share/man/cat3/fseeko.0	comp-c-catman
 ./usr/share/man/cat3/fsetpos.0	comp-c-catman
 ./usr/share/man/cat3/ftell.0	comp-c-catman
+./usr/share/man/cat3/ftello.0	comp-c-catman
 ./usr/share/man/cat3/ftime.0	comp-c-catman
 ./usr/share/man/cat3/ftok.0	comp-c-catman
 ./usr/share/man/cat3/fts.0	comp-c-catman
@@ -3511,8 +3513,10 @@
 ./usr/share/man/man3/fropen.3		comp-c-man
 ./usr/share/man/man3/fscanf.3		comp-c-man
 ./usr/share/man/man3/fseek.3		comp-c-man
+./usr/share/man/man3/fseeko.3		comp-c-man
 ./usr/share/man/man3/fsetpos.3		comp-c-man
 ./usr/share/man/man3/ftell.3		comp-c-man
+./usr/share/man/man3/ftello.3		comp-c-man
 ./usr/share/man/man3/ftime.3		comp-c-man
 ./usr/share/man/man3/ftok.3		comp-c-man
 ./usr/share/man/man3/fts.3		comp-c-man
