@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 1999/01/21 11:58:00 pk Exp $
+#	$NetBSD: Makefile,v 1.32 1999/04/09 16:00:17 kleink Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -17,7 +17,7 @@ CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DNUMBOOT=1
 .endif
 
-# recognize old partition ID for a while
+# these have additional requirements on the alignment of a partition
 .if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
 	|| (${MACHINE} == "sun3")
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
