@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.50 2001/09/28 11:59:55 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.51 2001/10/14 19:06:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -378,17 +378,17 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
-	
+
 	ip = VTOI(vp);
 	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
 	/* Zero out the direct and indirect block addresses. */
 	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
-	
+
 	/* Set a new generation number for this inode. */
 	if (new_gen)
 		ip->i_ffs_gen = new_gen;
-	
+
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
@@ -396,7 +396,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
 	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
-	
+
+	uvm_vnp_setsize(vp, 0);
 	*vpp = vp;
 #if 1
 	if(!(vp->v_flag & VDIROP)) {
@@ -404,7 +405,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 		++lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
-	
+
 	if(!(ip->i_flag & IN_ADIROP))
 		++fs->lfs_nadirop;
 	ip->i_flag |= IN_ADIROP;
