@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.8 1997/01/09 20:23:13 tls Exp $	*/
+/*	$NetBSD: uname.c,v 1.9 1997/10/20 02:16:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: uname.c,v 1.8 1997/01/09 20:23:13 tls Exp $";
+__RCSID("$NetBSD: uname.c,v 1.9 1997/10/20 02:16:39 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,7 +42,8 @@ static char rcsid[] = "$NetBSD: uname.c,v 1.8 1997/01/09 20:23:13 tls Exp $";
 #include <sys/utsname.h>
 #include <err.h>
 
-static void usage();
+int	main __P((int, char **));
+static void usage __P((void));
 
 #define	PRINT_SYSNAME	0x01
 #define	PRINT_NODENAME	0x02
@@ -98,7 +100,7 @@ main(argc, argv)
 	}
 
 	if (uname(&u)) {
-		err(1, NULL);
+		err(1, "uname");
 		/* NOTREACHED */
 	}
 
