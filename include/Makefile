@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.26 1993/10/09 23:28:14 cgd Exp $
+#	$Id: Makefile,v 1.27 1993/10/17 00:51:30 pk Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -13,7 +13,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 	math.h memory.h mpool.h ndbm.h netdb.h nlist.h paths.h pwd.h ranlib.h \
 	regexp.h resolv.h setjmp.h sgtty.h stab.h stdarg.h stddef.h stdio.h \
 	stdlib.h string.h strings.h struct.h sysexits.h time.h ttyent.h \
-	tzfile.h unistd.h utime.h utmp.h varargs.h vis.h malloc.h
+	tzfile.h unistd.h utime.h utmp.h varargs.h vis.h malloc.h link.h
 
 MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
