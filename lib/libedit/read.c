@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.27 2003/09/13 04:18:00 mycroft Exp $	*/
+/*	$NetBSD: read.c,v 1.28 2003/09/26 17:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.27 2003/09/13 04:18:00 mycroft Exp $");
+__RCSID("$NetBSD: read.c,v 1.28 2003/09/26 17:44:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -352,6 +352,32 @@ el_getc(EditLine *el, char *cp)
 	return (num_read);
 }
 
+protected void
+read_prepare(EditLine *el)
+{
+	if (el->el_flags & HANDLE_SIGNALS)
+		sig_set(el);
+	if (el->el_flags & NO_TTY)
+		return;
+	if ((el->el_flags & (UNBUFFERED|EDIT_DISABLED)) == UNBUFFERED)
+		tty_rawmode(el);
+
+	/* This is relatively cheap, and things go terribly wrong if
+	   we have the wrong size. */
+	el_resize(el);
+	re_clear_display(el);	/* reset the display stuff */
+	ch_reset(el);
+	re_refresh(el);		/* print the prompt */
+}
+
+protected void
+read_finish(EditLine *el)
+{
+	if ((el->el_flags & UNBUFFERED) == 0)
+		(void) tty_cookedmode(el);
+	if (el->el_flags & HANDLE_SIGNALS)
+		sig_clr(el);
+}
 
 public const char *
 el_gets(EditLine *el, int *nread)
@@ -360,12 +386,10 @@ el_gets(EditLine *el, int *nread)
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
 	char ch;
+	int crlf = 0;
 #ifdef FIONREAD
 	c_macro_t *ma = &el->el_chared.c_macro;
 #endif /* FIONREAD */
-
-	if (el->el_flags & HANDLE_SIGNALS)
-		sig_set(el);
 
 	if (el->el_flags & NO_TTY) {
 		char *cp = el->el_line.buffer;
@@ -380,6 +404,8 @@ el_gets(EditLine *el, int *nread)
 				cp = &el->el_line.buffer[idx];
 			}
 			cp++;
+			if (el->el_flags & UNBUFFERED)
+				break;
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
 		}
@@ -391,12 +417,6 @@ el_gets(EditLine *el, int *nread)
 		return (el->el_line.buffer);
 	}
 
-	/* This is relatively cheap, and things go terribly wrong if
-	   we have the wrong size. */
-	el_resize(el);
-
-	re_clear_display(el);	/* reset the display stuff */
-	ch_reset(el);
 
 #ifdef FIONREAD
 	if (el->el_tty.t_mode == EX_IO && ma->level < 0) {
@@ -413,7 +433,8 @@ el_gets(EditLine *el, int *nread)
 	}
 #endif /* FIONREAD */
 
-	re_refresh(el);		/* print the prompt */
+	if ((el->el_flags & UNBUFFERED) == 0)
+		read_prepare(el);
 
 	if (el->el_flags & EDIT_DISABLED) {
 		char *cp = el->el_line.buffer;
@@ -432,7 +453,10 @@ el_gets(EditLine *el, int *nread)
 			if (*cp == 4)	/* ought to be stty eof */
 				break;
 			cp++;
-			if (cp[-1] == '\r' || cp[-1] == '\n')
+			crlf = cp[-1] == '\r' || cp[-1] == '\n';
+			if (el->el_flags & UNBUFFERED)
+				break;
+			if (crlf)
 				break;
 		}
 
@@ -559,14 +583,19 @@ el_gets(EditLine *el, int *nread)
 		el->el_state.argument = 1;
 		el->el_state.doingarg = 0;
 		el->el_chared.c_vcmd.action = NOP;
+		if (el->el_flags & UNBUFFERED)
+			break;
 	}
 
 	term__flush();		/* flush any buffered output */
 	/* make sure the tty is set up correctly */
-	(void) tty_cookedmode(el);
-	if (el->el_flags & HANDLE_SIGNALS)
-		sig_clr(el);
-	if (nread)
-		*nread = num;
+	if ((el->el_flags & UNBUFFERED) == 0) {
+		read_finish(el);
+		if (nread)
+			*nread = num;
+	} else {
+		if (nread)
+			*nread = el->el_line.lastchar - el->el_line.buffer;
+	}
 	return (num ? el->el_line.buffer : NULL);
 }
