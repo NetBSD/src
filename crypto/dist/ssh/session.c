@@ -395,11 +395,15 @@ do_authenticated(struct passwd * pw)
 				tgt.data = packet_get_string(&tgtlen);
 				tgt.length = tgtlen;
 
+				temporarily_use_uid(pw->pw_uid);
+
 				if (!auth_krb5_tgt(ssh_krb_user, &tgt,
 				    tkt_client))
 					verbose("Kerberos 5 TGT refused for %.100s", ssh_krb_user);
 				else
 					success = 1;
+
+				restore_uid();
 
 				xfree(tgt.data);
 			}
