@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.20 2001/12/15 13:23:22 soren Exp $ */
+/* $NetBSD: pckbc.c,v 1.21 2001/12/18 15:50:23 soren Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.20 2001/12/15 13:23:22 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.21 2001/12/18 15:50:23 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,13 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.20 2001/12/15 13:23:22 soren Exp $");
 #include "rnd.h"
 #include "locators.h"
 
-/* XXX for pcconskbd_cnattach() prototype */
-#ifdef __BROKEN_HAS_PCCONS
-#include <machine/pccons.h>
-#endif
-
+#ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbc */
 #include "pckbd.h"
-
+#else /* ie: only md drivers attach to pckbc */
+#define NPCKBD 0
+#endif
 #if (NPCKBD > 0)
 #include <dev/pckbc/pckbdvar.h>
 #endif
@@ -945,10 +943,6 @@ pckbcintr(vsc)
 
 	for(;;) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
-#if 0
-/* XXX soren XXX */
-printf("pckbcintr %x\n", stat);
-#endif
 		if (!(stat & KBS_DIB))
 			break;
 
@@ -1034,13 +1028,16 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 		res = pckbd_cnattach(&pckbc_consdata, slot);
 #else
 		/*
-		 * XXX This should be removed when all of the old
-		 * PC-style console drivers have gone away.
+		 * XXX This should be replaced with the `notyet' case
+		 * XXX when all of the old PC-style console drivers
+		 * XXX have gone away.  When that happens, all of
+		 * XXX the pckbc_machdep_cnattach() should be purged,
+		 * XXX as well.
 		 */
-#ifdef __BROKEN_HAS_PCCONS
-		res = pcconskbd_cnattach(&pckbc_consdata, slot);
-#else
+#ifdef notyet
 		res = ENXIO;
+#else
+		res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
 #endif
 #endif /* NPCKBD > 0 */
 	}
