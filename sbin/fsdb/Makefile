@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/11 15:47:55 veego Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/13 13:35:30 veego Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	fsdb
@@ -10,7 +10,7 @@ SRCS+= ffs_subr.c ffs_tables.c
 SRCS+= fsutil.c
 
 FSCK=	${.CURDIR}/../fsck
-FSCK_FFS=${.CURDIR}/../fsck_ffs -I.
+FSCK_FFS=${.CURDIR}/../fsck_ffs
 CPPFLAGS+= -I${FSCK} -I${FSCK_FFS}
 .PATH:	${FSCK} ${FSCK_FFS} ${.CURDIR}/../../sys/ufs/ffs
 
