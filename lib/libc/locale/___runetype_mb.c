@@ -1,4 +1,4 @@
-/*	$NetBSD: ___runetype_mb.c,v 1.1 2000/12/21 12:13:28 itojun Exp $	*/
+/*	$NetBSD: ___runetype_mb.c,v 1.2 2000/12/21 17:25:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,6 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: ___runetype_mb.c,v 1.2 2000/12/21 17:25:32 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
 #include "rune.h"
