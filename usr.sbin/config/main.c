@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.95 2004/06/27 02:59:46 heas Exp $	*/
+/*	$NetBSD: main.c,v 1.96 2004/10/29 20:40:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1419,7 +1419,8 @@ static const char *
 strtolower(const char *name)
 {
 	const char *n;
-	char *p, c, low[500];
+	char *p, low[500];
+	unsigned char c;
 
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
