@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunitvar.h,v 1.1 2002/08/23 18:00:47 thorpej Exp $	*/
+/*	$NetBSD: cpuunitvar.h,v 1.2 2002/08/23 21:49:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@ struct cpuunit_attach_args {
 	int cpua_node;
 	int cpua_device_id;
 	bus_space_tag_t cpua_bustag;
-	bus_dma_tag_t cpua_dmatag;
 };
 
 #endif /* _SPARC_CPUUNITVAR_H_ */
