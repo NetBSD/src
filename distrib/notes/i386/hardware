@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.58 1999/11/30 13:04:43 itojun Exp $	
+.\"	$NetBSD: hardware,v 1.59 2000/01/02 18:44:07 itojun Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -180,8 +180,8 @@ Supported devices include:
 		3COM 3C319 TokenLink Velocity [+]
 	Wireless network adapters:
 		AT\*&T/Lucent WaveLan IEEE (802.11) PCMCIA cards
-		BayStack 650 802.11FH PCMIA cards [+]
-		NetWave AirSurfer PCMCIA cards [+]
+		BayStack 650 802.11FH PCMIA cards [*] [+]
+		NetWave AirSurfer PCMCIA cards [*] [+]
 	High Speed Serial:
 		LAN Media Corporation SSI/LMC10000 (up to 10Mbps) [*] [+]
 		LAN Media Corporation HSSI/LMC5200 [*] [+]
