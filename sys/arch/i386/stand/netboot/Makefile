@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.24 2001/12/12 01:49:45 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2002/02/17 20:03:12 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
-BASE= netboot
+BASE= netboot_${USE_NETIF}
 PROG= ${BASE}.rom
 NOMAN=	# defined
 NEWVERSWHAT=	"Network Boot"
+STARTFILE=	${ROMSTART}
+RELOC=		0x90000
+
+.PATH.c: ${.CURDIR}/../netboot/
 
 SRCS= main.c devopen.c conf.c dev_net.c exec.c
-
-CLEANFILES+= ${ROMSTART} ${BASE}.bin ${BASE}.sym
 
 #CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DNET_DEBUG
@@ -31,42 +33,9 @@ CFLAGS+= -Wall
 #ROM_SIZE= 16384
 ROM_SIZE= 32768
 
-RELOC= 90000
-CPPFLAGS+= -DBOOTROM -DRELOC=0x$(RELOC)
+CPPFLAGS+= -DBOOTROM -DRELOC=${RELOC}
 
 .PATH: ${.CURDIR}/../lib/netif
-
-#USE_NETIF= 3c509
-
-#USE_NETIF= 3c590 #handles 3c900 TPO / combo and 3c905 TX too
-# uncomment next and one of the following to make a PCI expansion ROM for 3com
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_CLASS=0x020000
-#CPPFLAGS+= -DPCI_DID=0x5900 # 3c590
-#CPPFLAGS+= -DPCI_DID=0x9000 # 3c900 TPO
-#CPPFLAGS+= -DPCI_DID=0x9001 # 3c900 combo
-#CPPFLAGS+= -DPCI_DID=0x9050 # 3c905 TX
-
-USE_NETIF= 3c90xb
-# uncomment next and one of the following to make a PCI expansion ROM for 3com
-CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_CLASS=0x020000
-#CPPFLAGS+= -DPCI_DID=0x9005 # 3c900b combo
-#CPPFLAGS+= -DPCI_DID=0x9055 # 3c905b TX
-CPPFLAGS+= -DPCI_DID=0x9058 # 3c905b combo
-
-#USE_NETIF= pcnet_pci
-# uncomment the following to make a PCI expansion ROM for PCNET-PCI
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x1022 -DPCI_DID=0x2000 -DPCI_CLASS=0x020000
-#USE_NETIF= pcnet_isapnp #boot device passing to kernel broken
-
-#USE_NETIF= wd80x3 #and uncomment at least one of the two following lines
-#CPPFLAGS+= -DSUPPORT_WD80X3
-#CPPFLAGS+= -DSUPPORT_SMC_ULTRA
-
-#USE_NETIF= i82557
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x8086 -DPCI_DID=0x1229 -DPCI_CLASS=0x020000
-
-#USE_NETIF= ne2000
-#CPPFLAGS+= -DBASEREG=0x300
 
 .include "../lib/netif/Makefile.inc"
 
@@ -77,7 +46,7 @@ SAMISCCPPFLAGS+= -DNFS_NOSYMLINK -DUDP_NO_CKSUM
 #I386MISCCPPFLAGS+= -DSUPPORT_SERIAL -DDIRECT_SERIAL -DCOMCONS_KEYPRESS
 I386MISCMAKEFLAGS= I386_INCLUDE_DISK=no I386_INCLUDE_BUS=yes
 
-VERSIONFILE= ${.CURDIR}/version
+VERSIONFILE= ${.CURDIR}/../netboot/version
 
 .include "../Makefile.booters"
 
