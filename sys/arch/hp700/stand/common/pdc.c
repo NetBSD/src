@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.3 2003/10/21 12:26:27 itohy Exp $	*/
+/*	$NetBSD: pdc.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -131,7 +131,7 @@ pdc_init(void)
  * the (negative) error condition, or zero if at "EOF".
  */
 int
-iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, 
+iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct hppa_dev *dp = devdata;
@@ -382,7 +382,7 @@ pdc_findev(int unit, int class)
 
 		/* read i/o entry code */
 		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
-			  	IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
+				IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("IODC_READ: %d\n", err);
@@ -406,15 +406,15 @@ pdc_findev(int unit, int class)
 static __inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
-        int loop;
+	int loop;
 
-        for (; c_count--; c_base += c_stride)
-                for (loop = c_loop; loop--; )
+	for (; c_count--; c_base += c_stride)
+		for (loop = c_loop; loop--; )
 			if (data)
 				fdce(0, c_base);
 			else
 				fice(0, c_base);
-        
+
 }
 
 /*
@@ -424,37 +424,36 @@ fall(int c_base, int c_count, int c_loop, int c_stride, int data)
  */
 struct pdc_cache pdc_cacheinfo PDC_ALIGNMENT;
 
-void 
+void
 fcacheall(void)
 {
 	int err;
 
-        if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
+	if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
 #ifdef DEBUG
 		if (debug)
 			printf("fcacheall: PDC_CACHE failed (%d).\n", err);
 #endif
 		return;
-        }
+	}
 #if PDCDEBUG
 	if (debug)
 		printf("pdc_cache:\nic={%u,%x,%x,%u,%u,%u}\n"
 		       "dc={%u,%x,%x,%u,%u,%u}\n",
-		       pdc_cacheinfo.ic_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
-		       pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_stride, 
+		       pdc_cacheinfo.ic_size, *(u_int*)&pdc_cacheinfo.ic_conf,
+		       pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_stride,
 		       pdc_cacheinfo.ic_count, pdc_cacheinfo.ic_loop,
-		       pdc_cacheinfo.dc_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
-		       pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_stride, 
+		       pdc_cacheinfo.dc_size, *(u_int*)&pdc_cacheinfo.ic_conf,
+		       pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_stride,
 		       pdc_cacheinfo.dc_count, pdc_cacheinfo.dc_loop);
 #endif
-        /*
-         * Flush the instruction, then data cache.
-         */
-        fall(pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
+	/*
+	 * Flush the instruction, then data cache.
+	 */
+	fall(pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
 	     pdc_cacheinfo.ic_loop, pdc_cacheinfo.ic_stride, 0);
 	sync_caches();
-        fall(pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
+	fall(pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
 	     pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
 	sync_caches();
 }
-
