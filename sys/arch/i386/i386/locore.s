@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.248 2001/09/18 06:29:08 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.249 2001/09/21 14:12:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -161,12 +161,12 @@
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es		; \
+	movw	%ax,%ds		; \
+	movw	%ax,%es		; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movl	%ax,%fs		; \
-	movl	%ax,%gs		; \
+	movw	%ax,%fs		; \
+	movw	%ax,%gs		; \
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
@@ -329,8 +329,8 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%eax,%eax
-	movl	%ax,%fs
-	movl	%ax,%gs
+	movw	%ax,%fs
+	movw	%ax,%gs
 	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
@@ -712,7 +712,7 @@ begin:
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
 	pushl	%ebx
-	call	%esi
+	call	*%esi
 	addl	$4,%esp
 	INTRFASTEXIT
 	/* NOTREACHED */
@@ -729,7 +729,7 @@ NENTRY(proc_trampoline)
  */
 /* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
-	call	SIGF_HANDLER(%esp)
+	call	*SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax
@@ -1613,9 +1613,9 @@ NENTRY(lgdt)
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
-	movl	%ax,%ss
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
@@ -2046,8 +2046,8 @@ ENTRY(switch_exit)
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
+	movw	%cx,%fs
+	movw	%cx,%gs
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2251,17 +2251,17 @@ NENTRY(resume_iret)
 NENTRY(resume_pop_ds)
 	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%es
+	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
 	pushl	%fs
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%fs
+	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
 	pushl	%gs	
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%gs
+	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */
 NENTRY(resume_pop_gs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
@@ -2420,7 +2420,7 @@ syscall1:
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */
 	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
-	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
+	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.s,v 1.5 2001/05/21 06:13:12 perry Exp $ */
+/*	$NetBSD: bioscall.s,v 1.6 2001/09/21 14:12:50 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,21 +69,21 @@ _C_LABEL(biostramp_image_size):
 NENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
-	
+
 	movl	%cr3,%eax		/* save PTDB register */
 	pushl	%eax
-	
+
 	movl	_C_LABEL(PTDpaddr),%eax	/* install proc0 PTD */
 	movl	%eax,%cr3
 
-	movl $(BIOSTRAMP_BASE),%eax	/* address of trampoline area */
-	pushl 12(%ebp)
-	pushl 8(%ebp)
-	call %eax			/* machdep.c initializes it */
-	addl $8,%esp			/* clear args from stack */
-		
-	popl %eax
-	movl %eax,%cr3			/* restore PTDB register */
-	
+	movl	$(BIOSTRAMP_BASE),%eax	/* address of trampoline area */
+	pushl	12(%ebp)
+	pushl	8(%ebp)
+	call	*%eax			/* machdep.c initializes it */
+	addl	$8,%esp			/* clear args from stack */
+
+	popl	%eax
+	movl	%eax,%cr3			/* restore PTDB register */
+
 	leave
 	ret
