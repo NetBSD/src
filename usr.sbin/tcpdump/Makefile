@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/03/01 15:13:31 itojun Exp $	
+#	$NetBSD: Makefile,v 1.22 2001/04/14 12:31:34 martin Exp $	
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
@@ -20,7 +20,7 @@ print-raw.c print-ppp.c print-pim.c print-ospf.c print-null.c print-ntp.c \
 print-nfs.c print-netbios.c print-llc.c print-krb.c print-isoclns.c print-ipx.c \
 print-ip.c print-igrp.c print-icmp.c print-gre.c print-fddi.c print-ether.c \
 print-egp.c print-dvmrp.c print-domain.c print-decnet.c print-bootp.c print-atm.c \
-print-chdlc.c print-token.c \
+print-chdlc.c print-token.c print-pppoe.c \
 print-atalk.c print-arp.c parsenfsfh.c machdep.c gmt2local.c bpf_dump.c \
 addrtoname.c print-mobile.c print-arcnet.c
 SRCS+=	print-ah.c print-esp.c print-frag6.c print-icmp6.c print-ip6.c \
