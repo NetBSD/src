@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2001/03/21 03:16:38 atatat Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2002/03/31 14:30:21 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,10 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/cdefs.h>
 
