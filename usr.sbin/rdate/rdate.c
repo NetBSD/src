@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $	*/
+/*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,7 +38,7 @@
  *	midnight January 1st 1900.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $";
 #endif/* lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ main(argc, argv)
 		if (slidetime)
 		    (void) fprintf(stdout, 
 				   "%s: adjust local clock by %d seconds\n",
-				   adjustment);
+				   __progname, adjustment);
 	}
 	return 0;
 }
