@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.3 2002/11/10 21:53:40 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.1 2002/11/10 21:53:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,29 +37,72 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.3 2002/11/10 21:53:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.1 2002/11/10 21:53:41 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_host.h>
-#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_task.h>
-#include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_syscallargs.h>
 
-struct mach_subsystem_namemap mach_namemap[] = {
-	{ 200, mach_host_info, "host_info" },
-	{ 202, mach_host_page_size,"host_page_size" },
-	{ 206, mach_host_get_clock_service, "host_get_clock_service" },
-	{ 3204, mach_port_allocate, "port_allocate" },
-	{ 3206, mach_port_deallocate, "port_deallocate" },
-	{ 3404, mach_ports_lookup, "ports_lookup" },
-	{ 3409, mach_task_get_special_port, "task_get_special_port" },
-	{ 3802, mach_vm_deallocate, "vm_deallocate" },
-	{ 3812, mach_vm_map, "vm_map" },
-	{ 0, NULL, NULL },
-};
+
+int 
+mach_task_get_special_port(p, msgh)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+{
+	mach_task_get_special_port_request_t req;
+	mach_task_get_special_port_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	bzero(&rep, sizeof(rep));
+	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
+	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = 3509; /* XXX why? */
+	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
+	rep.rep_special_port.name = 0x90f; /* XXX why? */
+	rep.rep_special_port.disposition = 0x11; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_size = 8; /* XXX why? */
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
+
+int 
+mach_ports_lookup(p, msgh)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+{
+	mach_ports_lookup_request_t req;
+	mach_ports_lookup_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	bzero(&rep, sizeof(rep));
+	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
+	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = 3504; /* XXX why? */
+	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
+	rep.rep_init_port_set.address = (void *)0x8000; /* XXX why? */
+	rep.rep_init_port_set.count = 3; /* XXX why ? */
+	rep.rep_init_port_set.copy = 2; /* XXX why ? */
+	rep.rep_init_port_set.disposition = 0x11; /* XXX why? */
+	rep.rep_init_port_set.type = 2; /* XXX why? */
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
 
 

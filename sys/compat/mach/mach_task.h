@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_types.h,v 1.5 2002/11/10 21:53:41 manu Exp $	 */
+/*	$NetBSD: mach_task.h,v 1.1 2002/11/10 21:53:41 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,50 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_TYPES_H_
-#define	_MACH_TYPES_H_
+#ifndef	_MACH_TASK_H_
+#define	_MACH_TASK_H_
 
-typedef int mach_port_t;
-typedef int mach_port_name_t;
-typedef int mach_kern_return_t;
-typedef int mach_clock_res_t;
-typedef int mach_clock_id_t;
-typedef int mach_boolean_t;
-typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
-typedef int mach_absolute_time_t;
-typedef int mach_integer_t;
-typedef int mach_cpu_type_t;
-typedef int mach_cpu_subtype_t;
-typedef int mach_port_right_t;
-typedef int mach_vm_address_t;
-typedef int mach_vm_inherit_t;
-typedef int mach_vm_prot_t;
-typedef unsigned int mach_natural_t;
-typedef unsigned int mach_vm_size_t;
-typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
+/* task_get_special_port */ 
 
 typedef struct {
-	u_int32_t	numer;
-	u_int32_t	denom;
-} mach_timebase_info_t;
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	int req_which_port;
+} mach_task_get_special_port_request_t;
 
 typedef struct {
-	u_int8_t       mig_vers;
-	u_int8_t       if_vers;
-	u_int8_t       reserved1;
-	u_int8_t       mig_encoding;
-	u_int8_t       int_rep;
-	u_int8_t       char_rep; 
-	u_int8_t       float_rep;
-	u_int8_t       reserved2;
-} mach_ndr_record_t;
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_msgh_body;
+	mach_msg_port_descriptor_t rep_special_port;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_get_special_port_reply_t;
 
-#ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif /* DEBUG_MACH */
+/* mach_ports_lookup */
 
-#endif /* !_MACH_TYPES_H_ */
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_ports_lookup_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_msgh_body;
+	mach_msg_ool_ports_descriptor_t rep_init_port_set;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_init_port_set_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_ports_lookup_reply_t;
+
+int mach_task_get_special_port __P((struct proc *, mach_msg_header_t *));
+int mach_ports_lookup __P((struct proc *, mach_msg_header_t *));
+
+#endif /* _MACH_TASK_H_ */
