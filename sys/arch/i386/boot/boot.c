@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.30 1996/06/18 06:06:38 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.31 1996/06/18 07:47:02 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -80,7 +80,7 @@ void
 boot(drive)
 	int drive;
 {
-	int loadflags, currname = 0;
+	int loadflags;
 	char *t;
 		
 	printf("\n"
@@ -90,27 +90,23 @@ boot(drive)
 		argv[8] = memsize(1),
 		version);
 	gateA20(1);
-loadstart:
-	/***************************************************************\
-	* As a default set it to the first partition of the first	*
-	* floppy or hard drive						*
-	\***************************************************************/
-	part = 0;
-	unit = drive&0x7f;
-	maj = (drive&0x80 ? 0 : 2);		/* a good first bet */
+	for (;;) {
+		/***************************************************************\
+		* As a default set it to the first partition of the first	*
+		* floppy or hard drive						*
+		\***************************************************************/
+		maj = (drive & 0x80 ? 0 : 2);	/* a good first bet */
+		unit = drive & 0x7f;
+		part = 0;
 
-	name = names[currname++];
-
-	loadflags = 0;
-	if (currname == NUMNAMES)
-		currname = 0;
-	getbootdev(&loadflags);
-	if (openrd()) {
-		printf("Can't find %s\n", name);
-		goto loadstart;
+		loadflags = 0;
+		getbootdev(&loadflags);
+		if (openrd()) {
+			printf("Can't find %s\n", name);
+			continue;
+		}
+		loadprog(loadflags);
 	}
-	loadprog(loadflags);
-	goto loadstart;
 }
 
 static void
@@ -279,14 +275,20 @@ static void
 getbootdev(howto)
 	int *howto;
 {
+	static int currname = 0;
 	static char namebuf[100]; /* don't allocate on stack! */
-	char c, *ptr = namebuf;
+	char c, *ptr;
+
+	name = names[currname];
+
 	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] :- ",
 	    devs[maj], unit, 'a'+part, name);
 #ifdef CHECKSUM
 	cflag = 0;
 #endif
-	if (awaitkey(PROMPTWAIT) && gets(namebuf)) {
+	if (awaitkey(PROMPTWAIT)) {
+		gets(namebuf);
+		ptr = namebuf;
 		while (c = *ptr) {
 			while (c == ' ')
 				c = *++ptr;
@@ -316,6 +318,9 @@ getbootdev(howto)
 					*ptr++ = 0;
 			}
 		}
-	} else
+	} else {
 		putchar('\n');
+		if (++currname == NUMNAMES)
+			currname = 0;
+	}
 }
