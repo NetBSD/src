@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.6 1999/04/06 11:53:00 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.7 1999/05/19 12:39:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -162,7 +162,7 @@ forw(n, pos, force, only_last, nblank)
 					clear();
 				home();
 			}
-		} else if (more_mode == 0)
+		} else
 		{
 			clear_bot();
 		}
@@ -177,7 +177,7 @@ forw(n, pos, force, only_last, nblank)
 			pos_clear();
 			add_forw_pos(pos);
 			force = 1;
-			if (top_scroll && more_mode == 0)
+			if (top_scroll)
 			{
 				if (top_scroll == OPT_ONPLUS)
 					clear();
