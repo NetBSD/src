@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.16 2002/02/13 15:15:23 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.17 2002/10/11 10:57:51 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.16 2002/02/13 15:15:23 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.17 2002/10/11 10:57:51 darrenr Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -333,7 +333,7 @@ opts(const char *command)
 		return;
 	}
 	if (! CMD_IMPLEMENTED(c)) {
-		reply(501, "%s command not implemented.", c->name);
+		reply(502, "%s command not implemented.", c->name);
 		return;
 	}
 	if (! CMD_HAS_OPTIONS(c)) {
