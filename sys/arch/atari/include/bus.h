@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1998/01/16 09:17:48 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 1998/03/10 11:43:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -44,12 +44,6 @@ typedef u_long bus_io_size_t;
  */
 typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
-
-/*
- * DMA methods (currently unused)
- */
-typedef void	*bus_dma_tag_t;
-typedef void	*bus_dmamap_t;
 
 /*
  * Access methods for bus resources and address space.
@@ -456,5 +450,100 @@ bus_space_set_region_8(t, h, o, v, c)
 	for (; c; o += 8, c--)
 		bus_space_write_8(t, h, o, v);
 }
+
+/*
+ * Flags used in various bus DMA methods.
+ */
+#define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
+#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x20
+#define	BUS_DMA_BUS3		0x40
+#define	BUS_DMA_BUS4		0x80
+
+/* Forwards needed by prototypes below. */
+struct mbuf;
+struct uio;
+
+/*
+ * Operations performed by bus_dmamap_sync().
+ */
+#define	BUS_DMASYNC_PREREAD	0x01	/* pre-read synchronization */
+#define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
+#define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
+#define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
+
+/*
+ * Tag values:
+ */
+#define	BUS_ISA_DMA_TAG		0x00
+#define	BUS_PCI_DMA_TAG		0x01
+
+typedef int				bus_dma_tag_t;
+typedef struct atari_bus_dmamap		*bus_dmamap_t;
+
+/*
+ *	bus_dma_segment_t
+ *
+ *	Describes a single contiguous DMA transaction.  Values
+ *	are suitable for programming into DMA registers.
+ */
+struct atari_bus_dma_segment {
+	bus_addr_t	ds_addr;	/* DMA address */
+	bus_size_t	ds_len;		/* length of transfer */
+};
+typedef struct atari_bus_dma_segment	bus_dma_segment_t;
+
+/*
+ *	bus_dmamap_t
+ *
+ *	Describes a DMA mapping.
+ */
+struct atari_bus_dmamap {
+	/*
+	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 */
+	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
+	int		_dm_segcnt;	/* number of segs this map can map */
+	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_boundary;	/* don't cross this */
+	int		_dm_flags;	/* misc. flags */
+
+	/*
+	 * PUBLIC MEMBERS: these are used by machine-independent code.
+	 */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
+	int		dm_nsegs;	/* # valid segments in mapping */
+	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
+};
+
+int	bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *));
+void	bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+int	bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int));
+int	bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int));
+int	bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int));
+int	bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int));
+void	bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int));
+
+int	bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+void	bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs));
+int	bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags));
+void	bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
+	    size_t size));
+int	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, int off, int prot, int flags));
 
 #endif /* _ATARI_BUS_H_ */
