@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.36 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.37 1999/07/25 06:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -335,7 +335,7 @@ sys_fktrace(curp, v, retval)
 	 * Clear all uses of the tracefile
 	 */
 	if (KTROP(ops) == KTROP_CLEARFILE) {
-		proclist_lock_read(0);
+		proclist_lock_read();
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 			if (p->p_tracep == fp) {
 				if (ktrcanset(curp, p))
@@ -442,7 +442,7 @@ sys_ktrace(curp, v, retval)
 	 * Clear all uses of the tracefile
 	 */
 	if (KTROP(ops) == KTROP_CLEARFILE) {
-		proclist_lock_read(0);
+		proclist_lock_read();
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 			if (p->p_tracep == vp &&
 			    !ktrops(curp, p, KTROP_CLEAR, ~0, vp))
@@ -621,7 +621,7 @@ ktrwrite(p, v, kth)
 	 */
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_tracep == v)
 			ktrderef(p);

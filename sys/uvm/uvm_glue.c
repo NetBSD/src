@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.28 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29 1999/07/25 06:30:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -447,7 +447,7 @@ loop:
 #endif
 	pp = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 
 		/* is it a runnable swapped out process? */
@@ -548,7 +548,7 @@ uvm_swapout_threads()
 	 */
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (!swappable(p))
 			continue;

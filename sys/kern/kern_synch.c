@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.61 1999/07/22 21:08:32 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.62 1999/07/25 06:30:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -186,7 +186,7 @@ schedcpu(arg)
 	register unsigned int newcpu;
 
 	wakeup((caddr_t)&lbolt);
-	proclist_lock_read(LK_NOWAIT);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		/*
 		 * Increment time in/out of memory and sleep time

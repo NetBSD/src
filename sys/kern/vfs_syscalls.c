@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.143 1999/07/22 23:00:27 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.144 1999/07/25 06:30:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -362,7 +362,7 @@ checkdirs(olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		cwdi = p->p_cwdi;
 		if (cwdi->cwdi_cdir == olddp) {

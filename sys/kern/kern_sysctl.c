@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.49 1999/07/22 21:08:32 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.50 1999/07/25 06:30:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -726,7 +726,7 @@ sysctl_doproc(name, namelen, where, sizep)
 	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
 		return (EINVAL);
 
-	proclist_lock_read(0);
+	proclist_lock_read();
 
 	pd = proclists;
 again:

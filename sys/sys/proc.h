@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.80 1999/07/22 21:08:32 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.81 1999/07/25 06:30:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -375,7 +375,7 @@ void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
 int	proc_isunder __P((struct proc *, struct proc*));
 
-void	proclist_lock_read __P((int));
+void	proclist_lock_read __P((void));
 void	proclist_unlock_read __P((void));
 int	proclist_lock_write __P((void));
 void	proclist_unlock_write __P((int));
