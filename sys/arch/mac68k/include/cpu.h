@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2002/03/04 16:58:37 shiba Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70 2002/04/10 04:38:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
  */
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
+#include <m68k/cacheops.h>
 
 /*
  * Get interrupt glue.
@@ -327,25 +328,6 @@ u_int	get_mapping __P((void));
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
-#if defined(M68040)
-void	DCFA __P((void));
-void	DCFP __P((paddr_t));
-void	DCFL __P((paddr_t));
-void	DCPL __P((paddr_t));
-void	DCPP __P((paddr_t));
-void	ICPL __P((paddr_t));
-void	ICPP __P((paddr_t));
-#endif
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));

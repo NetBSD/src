@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.51 2001/08/20 12:20:05 wiz Exp $	*/
+/*	$NetBSD: nubus.c,v 1.52 2002/04/10 04:38:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -38,7 +38,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/vmparam.h>
 #include <machine/param.h>
 #include <machine/cpu.h>
@@ -100,6 +99,7 @@ nubus_attach(parent, self, aux)
 	void *aux;
 {
 	struct nubus_attach_args na_args;
+	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) mba;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	nubus_slot fmtblock;
@@ -114,7 +114,8 @@ nubus_attach(parent, self, aux)
 
 	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
 		na_args.slot = i;
-		na_args.na_tag = bst = MAC68K_BUS_SPACE_MEM;
+		na_args.na_tag = bst = mba->mba_bst;
+		na_args.na_dmat = mba->mba_dmat;
 
 		if (bus_space_map(bst,
 		    NUBUS_SLOT2PA(na_args.slot), NBMEMSIZE, 0, &bsh)) {
