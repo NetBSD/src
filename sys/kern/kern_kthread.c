@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.1 1998/11/11 22:44:24 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.2 1998/11/14 00:08:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/wait.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -124,4 +126,47 @@ kthread_exit(ecode)
 	 * XXX of worms right now.
 	 */
 	for (;;);
+}
+
+struct kthread_q {
+	SIMPLEQ_ENTRY(kthread_q) kq_q;
+	void (*kq_func) __P((void *));
+	void *kq_arg;
+};
+
+SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
+
+/*
+ * Defer the creation of a kernel thread.  Once the standard kernel threads
+ * and processes have been created, this queue will be run to callback to
+ * the caller to create threads for e.g. file systems and device drivers.
+ */
+void
+kthread_create_deferred(func, arg)
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct kthread_q *kq;
+
+	kq = malloc(sizeof(*kq), M_TEMP, M_NOWAIT);
+	if (kq == NULL)
+		panic("unable to allocate kthread_q");
+	memset(kq, 0, sizeof(*kq));
+
+	kq->kq_func = func;
+	kq->kq_arg = arg;
+
+	SIMPLEQ_INSERT_TAIL(&kthread_q, kq, kq_q);
+}
+
+void
+kthread_run_deferred_queue()
+{
+	struct kthread_q *kq;
+
+	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq, kq_q);
+		(*kq->kq_func)(kq->kq_arg);
+		free(kq, M_TEMP);
+	}
 }

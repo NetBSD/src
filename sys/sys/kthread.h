@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.1 1998/11/11 22:44:25 thorpej Exp $	*/
+/*	$NetBSD: kthread.h,v 1.2 1998/11/14 00:08:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 int	kthread_create __P((void (*)(void *), void *, struct proc **,
 	    const char *, ...))
 	    __attribute__((__format__(__printf__,4,5)));
+void	kthread_create_deferred __P((void (*)(void *), void *));
+void	kthread_run_deferred_queue __P((void));
 void	kthread_exit __P((int)) __attribute__((__noreturn__));
 #endif /* _KERNEL */
 
