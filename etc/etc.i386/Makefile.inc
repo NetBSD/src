@@ -1,20 +1,28 @@
-#	$NetBSD: Makefile.inc,v 1.21.2.3 2000/10/01 21:53:31 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.4 2000/10/10 12:21:19 fvdl Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
 
 # These are packaged and distributed
-EXTRA_KERNELS+= GENERIC_TINY
+EXTRA_KERNELS+= GENERIC_TINY GENERIC_LAPTOP
 
 # These are for use by the bootfloppy construction tools
-BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY
+BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP
+EXTRA_KERNEL_SETS=tiny laptop
 INSTALLATION_DIRS += installation/misc
 
 # mkisofs arguments to generate bootable iso image
 MKISOFS_FLAGS+=	-b installation/floppy/boot-big.fs
 
+# Tar up extra kernel sets.
 # Build the boot floppies and install them
 snap_md_post:
+.for kernel in ${EXTRA_KERNEL_SETS}
+	uppername=`echo ${kernel} | tr 'a-z' 'A-Z'` && \
+		cd ${KERNOBJDIR}/GENERIC_$$uppername &&     \
+		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern-${kernel}.tgz
+.endfor
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
