@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.51 2003/12/20 03:31:56 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.51.2.1 2004/08/11 19:54:26 jmc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.51 2003/12/20 03:31:56 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.51.2.1 2004/08/11 19:54:26 jmc Exp $");
 #endif
 #endif
 
@@ -97,16 +97,36 @@ pkg_do(char *pkg)
 				/*
 				 * Apply a crude heuristic to see how much space the package will
 				 * take up once it's unpacked.  I've noticed that most packages
-				 * compress an average of 75%, but we're only unpacking the + files so
-				 * be very optimistic.
+				 * compress an average of 75%, but we're only unpacking the + files
+				 * needed so be very optimistic.
 				 */
+				char flist[sizeof(ALL_FNAMES)];
+
+				/* Determine which +-files to unpack - not all may be present! */
+				strcat(flist, CONTENTS_FNAME); strcat(flist, " ");
+				strcat(flist, COMMENT_FNAME); strcat(flist, " ");
+				strcat(flist, DESC_FNAME); strcat(flist, " ");
+				if (Flags & SHOW_MTREE)		{ strcat(flist, MTREE_FNAME); 		strcat(flist, " "); }
+				if (Flags & SHOW_BUILD_VERSION)	{ strcat(flist, BUILD_VERSION_FNAME);	strcat(flist, " "); }
+				if (Flags & SHOW_BUILD_INFO)	{ strcat(flist, BUILD_INFO_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_PKG_SIZE)	{ strcat(flist, SIZE_PKG_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_ALL_SIZE)	{ strcat(flist, SIZE_ALL_FNAME); 	strcat(flist, " "); }
+#if 0
+				if (Flags & SHOW_REQBY)		{ strcat(flist, REQUIRED_BY_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_DISPLAY)	{ strcat(flist, DISPLAY_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_INSTALL)	{ strcat(flist, INSTALL_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_DEINSTALL)	{ strcat(flist, DEINSTALL_FNAME); 	strcat(flist, " "); }
+				if (Flags & SHOW_REQUIRE)	{ strcat(flist, REQUIRE_FNAME); 	strcat(flist, " "); }
+				/* PRESERVE_FNAME? */
+#endif				
+
 				if (stat(fname, &sb) == FAIL) {
 					warnx("can't stat package file '%s'", fname);
 					code = 1;
 					goto bail;
 				}
 				Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
-				if (unpack(fname, ALL_FNAMES)) {
+				if (unpack(fname, flist)) {
 					warnx("error during unpacking, no info for '%s' available", pkg);
 					code = 1;
 					goto bail;
