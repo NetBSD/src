@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.44 1997/09/30 17:30:29 phil Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.45 1997/10/13 09:53:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.44 1997/09/30 17:30:29 phil Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.45 1997/10/13 09:53:26 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -874,7 +874,11 @@ makedisktab(f, lp)
 				    pp->p_fsize * pp->p_frag);
 				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
 				break;
-
+			case FS_EX2FS:
+				(void) fprintf(f, "b%c#%d:", c,
+					pp->p_fsize * pp->p_frag);
+				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
+				break;
 			default:
 				break;
 			}
@@ -956,9 +960,9 @@ display(f, lp)
 				(void) fprintf(f, "  %c: %8d %8d  ", 'a' + i,
 				   pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
-				(void) fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
+				(void) fprintf(f, "%10.10s", fstypenames[pp->p_fstype]);
 			else
-				(void) fprintf(f, "%8d", pp->p_fstype);
+				(void) fprintf(f, "%10d", pp->p_fstype);
 			switch (pp->p_fstype) {
 
 			case FS_UNUSED:				/* XXX */
@@ -972,12 +976,17 @@ display(f, lp)
 				    pp->p_cpg);
 				break;
 
+			case FS_EX2FS:
+				(void) fprintf(f, "    %5d %5d       ",
+				    pp->p_fsize, pp->p_fsize * pp->p_frag);
+				break;
+
 			default:
-				(void) fprintf(f, "%20.20s", "");
+				(void) fprintf(f, "%22.22s", "");
 				break;
 			}
 			if (lp->d_secpercyl != 0) {
-				(void) fprintf(f, "\t# (Cyl. %4d",
+				(void) fprintf(f, "  # (Cyl. %4d",
 				    pp->p_offset / lp->d_secpercyl);
 				if (pp->p_offset % lp->d_secpercyl)
 				    putc('*', f);
@@ -1369,13 +1378,29 @@ getasciilabel(f, lp)
 				errors++;
 			} else
 				pp->p_offset = v;
-			cp = tp, tp = word(cp);
+			/* can't use word() here because of blanks in fstypenames[] */
+			cp = tp; 
 			cpp = fstypenames;
-			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++)
-				if ((s = *cpp) && !strcmp(s, cp)) {
+			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++) {
+				s = *cpp;
+				if (s == NULL ||
+					(cp[strlen(s)] != ' ' && cp[strlen(s)] != '\t' &&
+					 cp[strlen(s)] != '\0'))
+					continue;
+				if (!memcmp(s, cp, strlen(s))) {
 					pp->p_fstype = cpp - fstypenames;
+					tp += strlen(s);
+					if (*tp == '\0')
+						tp = NULL;
+					else {
+						tp += strspn(tp, " \t");
+						if (*tp == '\0')
+							tp = NULL;
+					}
 					goto gottype;
 				}
+			}
+			tp = word(cp);
 			if (isdigit(*cp))
 				v = atoi(cp);
 			else
@@ -1405,7 +1430,13 @@ getasciilabel(f, lp)
 				pp->p_frag = v / pp->p_fsize;
 				NXTNUM(pp->p_cpg);
 				break;
-
+			case FS_EX2FS:
+				NXTNUM(pp->p_fsize);
+				if (pp->p_fsize == 0)
+					break;
+				NXTNUM(v);
+				pp->p_frag = v / pp->p_fsize;
+				break;
 			default:
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.6 1997/09/18 22:20:36 enami Exp $	*/
+/*	$NetBSD: interact.c,v 1.7 1997/10/13 09:53:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.6 1997/09/18 22:20:36 enami Exp $");
+__RCSID("$NetBSD: interact.c,v 1.7 1997/10/13 09:53:29 bouyer Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -340,7 +340,7 @@ deffstypename(buf, i)
 	char *buf;
 	int i;
 {
-	if (i < 0 || i >= DKMAXTYPES)
+	if (i < 0 || i >= FSMAXTYPES)
 		i = 0;
 	(void) strcpy(buf, fstypenames[i]);
 }
@@ -352,7 +352,7 @@ getfstypename(buf)
 {
 	int i;
 
-	for (i = 0; i < DKMAXTYPES; i++)
+	for (i = 0; i < FSMAXTYPES; i++)
 		if (strcmp(buf, fstypenames[i]) == 0)
 			return i;
 	return -1;
