@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.38 2002/11/17 04:14:00 itojun Exp $
+# $NetBSD: postinstall,v 1.39 2002/11/22 15:51:42 thorpej Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -573,7 +573,8 @@ do_postfix()
 #
 #	obsolete
 #
-additem obsolete "obsolete file sets"
+# XXX Not yet -- problems with SYS_INCLUDES=symlinks
+#additem obsolete "obsolete file sets"
 do_obsolete()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
