@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.65 2003/02/04 15:46:39 jdolecek Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.66 2003/02/04 15:50:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.65 2003/02/04 15:46:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.66 2003/02/04 15:50:06 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1198,7 +1198,7 @@ itimerfire(struct ptimer *pt)
 			if ((p->p_timers->pts_fired & i) == 0) {
 				pt->pt_poverruns = pt->pt_overruns;
 				pt->pt_overruns = 0;
-				p->p_timers->pts_fired |= 1 << i;
+				p->p_timers->pts_fired |= i;
 			} else
 				pt->pt_overruns++;
 		} else {
