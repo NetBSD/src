@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.2 2000/11/13 22:46:34 tv Exp $
+#	$NetBSD: Makefile,v 1.4.4.3 2001/01/28 15:53:10 he Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,6 @@ depend-dig depend-dnskeygen depend-dnsquery depend-host depend-named \
 depend-named-xfer depend-ndc: depend-named
 all-named-xfer all-ndc: all-named
 
-VER= 8.2.2-P7
+VER= 8.2.3
 
 .include <bsd.subdir.mk>
