@@ -492,6 +492,8 @@
 ./usr/sbin/ypbind
 ./usr/sbin/yppoll
 ./usr/sbin/ypset
+./usr/sbin/zdump
+./usr/sbin/zic
 ./usr/share
 ./usr/share/calendar
 ./usr/share/calendar/calendar.birthday
