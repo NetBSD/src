@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.163 2003/12/30 16:40:12 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.164 2003/12/30 17:18:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.163 2003/12/30 16:40:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.164 2003/12/30 17:18:11 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -190,30 +190,16 @@ struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
  * - try an ATA command on the master.
  */
 
-void
-atabusconfig(struct atabus_softc *atabus_sc)
+static void
+wdc_drvprobe(struct channel_softc *chp)
 {
-	struct channel_softc *chp = atabus_sc->sc_chan;
-	int i, error, need_delref = 0;
 	struct ataparams params;
-	struct atabus_initq *atabus_initq = NULL;
 	u_int8_t st0 = 0, st1 = 0;
+	int i, error;
 
-	if ((error = wdc_addref(chp)) != 0) {
-		aprint_error("%s: unable to enable controller\n",
-		    chp->wdc->sc_dev.dv_xname);
-		goto out;
-	}
-	need_delref = 1;
-
-	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_DRVPROBE) != 0) {
-		if ((*chp->wdc->drv_probe)(chp) == 0) {
-			/* If no drives, abort attach here. */
-			goto out;
-		}
-	} else if (wdcprobe1(chp, 0) == 0) {
-		/* If no drives, abort attach here. */
-		goto out;
+	if (wdcprobe1(chp, 0) == 0) {
+		/* No drives, abort the attach here. */
+		return;
 	}
 
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
@@ -241,7 +227,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			== 0 ||
 		    (st1 & WDCS_DRDY)))
 			break;
-		tsleep(&atabus_sc, PRIBIO, "atadrdy", 1);
+		tsleep(&params, PRIBIO, "atadrdy", 1);
 	}
 	if ((st0 & WDCS_DRDY) == 0)
 		chp->ch_drive[0].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
@@ -274,17 +260,17 @@ atabusconfig(struct atabus_softc *atabus_sc)
 
 		/* Shortcut in case we've been shutdown */
 		if (chp->ch_flags & WDCF_SHUTDOWN)
-			goto out;
+			return;
 
 		/* issue an identify, to try to detect ghosts */
 		error = ata_get_params(&chp->ch_drive[i],
 		    AT_WAIT | AT_POLL, &params);
 		if (error != CMD_OK) {
-			tsleep(&atabus_sc, PRIBIO, "atacnf", mstohz(1000));
+			tsleep(&params, PRIBIO, "atacnf", mstohz(1000));
 
 			/* Shortcut in case we've been shutdown */
 			if (chp->ch_flags & WDCF_SHUTDOWN)
-				goto out;
+				return;
 
 			error = ata_get_params(&chp->ch_drive[i],
 			    AT_WAIT | AT_POLL, &params);
@@ -349,6 +335,24 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			}
 		}
 	}
+}
+
+void
+atabusconfig(struct atabus_softc *atabus_sc)
+{
+	struct channel_softc *chp = atabus_sc->sc_chan;
+	int i, error, need_delref = 0;
+	struct atabus_initq *atabus_initq = NULL;
+
+	if ((error = wdc_addref(chp)) != 0) {
+		aprint_error("%s: unable to enable controller\n",
+		    chp->wdc->sc_dev.dv_xname);
+		goto out;
+	}
+	need_delref = 1;
+
+	/* Probe for the drives. */
+	(*chp->wdc->drv_probe)(chp);
 
 	WDCDEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
@@ -357,6 +361,10 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	/* If no drives, abort here */
 	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
+		goto out;
+
+	/* Shortcut in case we've been shutdown */
+	if (chp->ch_flags & WDCF_SHUTDOWN)
 		goto out;
 
 	/* Make sure the devices probe in atabus order to avoid jitter. */
@@ -650,6 +658,8 @@ wdcattach(struct channel_softc *chp)
 
 	/* initialise global data */
 	callout_init(&chp->ch_callout);
+	if (chp->wdc->drv_probe == NULL)
+		chp->wdc->drv_probe = wdc_drvprobe;
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
