@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.20 2000/08/03 20:41:05 thorpej Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.21 2000/09/19 22:00:01 fvdl Exp $	*/
 
 /*
  * 
@@ -808,7 +808,7 @@ coda_fsync(v)
     }
 
     if (convp)
-    	VOP_FSYNC(convp, cred, MNT_WAIT, p);
+    	VOP_FSYNC(convp, cred, MNT_WAIT, 0, 0, p);
 
     /*
      * We can expect fsync on any vnode at all if venus is pruging it.
