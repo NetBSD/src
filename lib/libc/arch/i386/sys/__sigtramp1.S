@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:36 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2003/09/12 12:42:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,6 @@ NENTRY(__sigtramp_sigcontext_1)
 	leal	12(%esp),%eax	/* get pointer to sigcontext */
 	movl	%eax,4(%esp)	/* put it in the argument slot */
 				/* fake return address already there */
-	SYSTRAP(__sigreturn14)	/* do sigreturn */
+	SYSTRAP(compat_16___sigreturn14) /* do sigreturn */
 	movl	%eax,4(%esp)	/* error code */
 	SYSTRAP(exit)		/* exit */
