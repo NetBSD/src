@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.23 1994/08/12 08:11:16 pk Exp $
+ *	$Id: rtld.c,v 1.24 1994/10/26 20:21:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -166,6 +166,8 @@ static struct nzlist	*lookup __P((char *, struct so_map **, int));
 static inline struct rt_symbol	*lookup_rts __P((char *));
 static struct rt_symbol	*enter_rts __P((char *, long, int, caddr_t,
 						long, struct so_map *));
+static void		maphints __P((void));
+static void		unmaphints __P((void));
 
 static inline int
 strcmp (register const char *s1, register const char *s2)
@@ -292,6 +294,9 @@ struct _dynamic		*dp;
 		if (link_map_head)
 			ddp->dd_sym_loaded = 1;
 	}
+
+	/* Close the hints file */
+	unmaphints();
 
 	/* Close our file descriptor */
 	(void)close(crtp->crt_ldfd);
@@ -948,6 +953,8 @@ xprintf(" BINDER: %s located at = %#x in %s\n", sym, addr, src_map->som_path);
 }
 
 
+static int			hfd;
+static long			hsize;
 static struct hints_header	*hheader;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
@@ -958,49 +965,61 @@ static char			*hstrtab;
 maphints()
 {
 	caddr_t		addr;
-	long		msize;
-	int		fd;
 
-	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
+	if ((hfd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
 		hheader = (struct hints_header *)-1;
 		return;
 	}
 
-	msize = PAGSIZ;
-	addr = mmap(0, msize, PROT_READ, MAP_COPY, fd, 0);
+	hsize = PAGSIZ;
+	addr = mmap(0, hsize, PROT_READ, MAP_COPY, hfd, 0);
 
 	if (addr == (caddr_t)-1) {
+		close(hfd);
 		hheader = (struct hints_header *)-1;
 		return;
 	}
 
 	hheader = (struct hints_header *)addr;
 	if (HH_BADMAG(*hheader)) {
-		munmap(addr, msize);
+		munmap(addr, hsize);
+		close(hfd);
 		hheader = (struct hints_header *)-1;
 		return;
 	}
 
 	if (hheader->hh_version != LD_HINTS_VERSION_1) {
-		munmap(addr, msize);
+		munmap(addr, hsize);
+		close(hfd);
 		hheader = (struct hints_header *)-1;
 		return;
 	}
 
-	if (hheader->hh_ehints > msize) {
-		if (mmap(addr+msize, hheader->hh_ehints - msize,
+	if (hheader->hh_ehints > hsize) {
+		if (mmap(addr+hsize, hheader->hh_ehints - hsize,
 				PROT_READ, MAP_COPY|MAP_FIXED,
-				fd, msize) != (caddr_t)(addr+msize)) {
+				hfd, hsize) != (caddr_t)(addr+hsize)) {
 
-			munmap((caddr_t)hheader, msize);
+			munmap((caddr_t)hheader, hsize);
+			close(hfd);
 			hheader = (struct hints_header *)-1;
 			return;
 		}
 	}
-	close(fd);
 
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
+}
+
+	static void
+unmaphints()
+{
+
+	if (HINTS_VALID) {
+		munmap((caddr_t)hheader, hsize);
+		close(hfd);
+		hheader = NULL;
+	}
 }
 
 	int
