@@ -28,7 +28,6 @@
 ./usr/include/i386/joystick.h
 ./usr/include/i386/kcore.h
 ./usr/include/i386/limits.h
-./usr/include/i386/linux_machdep.h
 ./usr/include/i386/mouse.h
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h
