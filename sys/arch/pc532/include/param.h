@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2001/05/30 12:28:49 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.27 2002/02/26 15:13:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,23 +97,21 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#ifndef	MSIZE
 #define	MSIZE		256		/* size of an mbuf */
-#endif	/* MSIZE */
 
-#ifndef	MCLSHIFT
+#ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif

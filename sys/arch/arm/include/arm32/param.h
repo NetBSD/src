@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2002/02/22 06:41:48 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2002/02/26 15:13:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -61,7 +61,6 @@
 #endif
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
