@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	5.33 (Berkeley) 2/22/91";*/
-static char rcsid[] = "$Id: setup.c,v 1.4 1993/08/01 18:27:11 mycroft Exp $";
+static char rcsid[] = "$Id: setup.c,v 1.5 1993/10/01 01:45:31 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -368,6 +368,7 @@ readsb(listerr)
 	altsblock.fs_cgrotor = sblock.fs_cgrotor;
 	altsblock.fs_fmod = sblock.fs_fmod;
 	altsblock.fs_clean = sblock.fs_clean;
+	altsblock.fs_state = sblock.fs_state;
 	altsblock.fs_ronly = sblock.fs_ronly;
 	altsblock.fs_flags = sblock.fs_flags;
 	altsblock.fs_maxcontig = sblock.fs_maxcontig;

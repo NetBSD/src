@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1993/08/01 18:27:23 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1993/10/01 01:45:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,6 +169,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
+	int clean;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -180,54 +181,66 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
 		return (0);
 	}
+
 	/*
-	 * 1: scan inodes tallying blocks used
+	 * 0: check whether file system is already clean
 	 */
-	if (preen == 0) {
-		printf("** Last Mounted on %s\n", sblock.fs_fsmnt);
-		if (hotroot)
-			printf("** Root file system\n");
-		printf("** Phase 1 - Check Blocks and Sizes\n");
+	clean = preen && (sblock.fs_state == FSOKAY) && sblock.fs_clean;
+
+	if (clean) {
+		printf("** filesystem clean -- skipping checks\n");
+	} else {
+		/*
+		 * 1: scan inodes tallying blocks used
+		 */
+		if (preen == 0) {
+			printf("** Last Mounted on %s\n", sblock.fs_fsmnt);
+			if (hotroot)
+				printf("** Root file system\n");
+			printf("** Phase 1 - Check Blocks and Sizes\n");
+		}
+		pass1();
+
+		/*
+		 * 1b: locate first references to duplicates, if any
+		 */
+		if (duplist) {
+			if (preen)
+				pfatal("INTERNAL ERROR: dups with -p");
+			printf("** Phase 1b - Rescan For More DUPS\n");
+			pass1b();
+		}
+
+		/*
+		 * 2: traverse directories from root to mark all connected
+		 * directories
+		 */
+		if (preen == 0)
+			printf("** Phase 2 - Check Pathnames\n");
+		pass2();
+
+		/*
+		 * 3: scan inodes looking for disconnected directories
+		 */
+		if (preen == 0)
+			printf("** Phase 3 - Check Connectivity\n");
+		pass3();
+
+		/*
+		 * 4: scan inodes looking for disconnected files; check
+		 * reference counts
+		 */
+		if (preen == 0)
+			printf("** Phase 4 - Check Reference Counts\n");
+		pass4();
+
+		/*
+		 * 5: check and repair resource counts in cylinder groups
+		 */
+		if (preen == 0)
+			printf("** Phase 5 - Check Cyl groups\n");
+		pass5();
 	}
-	pass1();
-
-	/*
-	 * 1b: locate first references to duplicates, if any
-	 */
-	if (duplist) {
-		if (preen)
-			pfatal("INTERNAL ERROR: dups with -p");
-		printf("** Phase 1b - Rescan For More DUPS\n");
-		pass1b();
-	}
-
-	/*
-	 * 2: traverse directories from root to mark all connected directories
-	 */
-	if (preen == 0)
-		printf("** Phase 2 - Check Pathnames\n");
-	pass2();
-
-	/*
-	 * 3: scan inodes looking for disconnected directories
-	 */
-	if (preen == 0)
-		printf("** Phase 3 - Check Connectivity\n");
-	pass3();
-
-	/*
-	 * 4: scan inodes looking for disconnected files; check reference counts
-	 */
-	if (preen == 0)
-		printf("** Phase 4 - Check Reference Counts\n");
-	pass4();
-
-	/*
-	 * 5: check and repair resource counts in cylinder groups
-	 */
-	if (preen == 0)
-		printf("** Phase 5 - Check Cyl groups\n");
-	pass5();
 
 	/*
 	 * print out summary statistics
@@ -264,6 +277,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	zlnhead = (struct zlncnt *)0;
 	duplist = (struct dups *)0;
 	inocleanup();
+	if (!clean) {
+		sblock.fs_state = FSOKAY;
+		sblock.fs_clean = FSCLEANED;
+		fsmodified = 1;
+	}
 	if (fsmodified) {
 		(void)time(&sblock.fs_time);
 		sbdirty();
