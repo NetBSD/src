@@ -1,3 +1,5 @@
+/*	$NetBSD: cpuregs.h,v 1.4 1994/10/26 21:09:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)machConst.h	8.1 (Berkeley) 6/10/93
- *      $Id: cpuregs.h,v 1.3 1994/05/27 09:01:23 glass Exp $
+ *	@(#)machConst.h	8.1 (Berkeley) 6/10/93
  *
  * machConst.h --
  *
@@ -54,7 +55,6 @@
  *	v 1.2 89/08/15 18:28:21 rab Exp  SPRITE (DECWRL)
  * from: Header: /sprite/src/kernel/vm/ds3100.md/RCS/vmPmaxConst.h,
  *	v 9.1 89/09/18 17:33:00 shirriff Exp  SPRITE (DECWRL)
- * $Id: cpuregs.h,v 1.3 1994/05/27 09:01:23 glass Exp $
  */
 
 #ifndef _MACHCONST

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_le.c,v 1.8 1994/10/26 21:09:07 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_le.c	8.2 (Berkeley) 11/16/93
- *      $Id: if_le.c,v 1.7 1994/08/17 01:33:15 deraadt Exp $
+ *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
 #include <le.h>

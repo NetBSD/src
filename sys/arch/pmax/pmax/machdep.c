@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.15 1994/10/26 21:10:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -36,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.14 1994/10/20 05:34:08 cgd Exp $
+ *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */

@@ -1,3 +1,5 @@
+/*	$NetBSD: dc7085cons.h,v 1.4 1994/10/26 21:09:36 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dc7085cons.h	8.1 (Berkeley) 6/10/93
- *      $Id: dc7085cons.h,v 1.3 1994/05/27 09:00:37 glass Exp $
+ *	@(#)dc7085cons.h	8.1 (Berkeley) 6/10/93
  *
  * dc7085.h --
  *
@@ -51,7 +52,6 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/dc7085.h,
  *      
  *	v 1.4 89/08/15 19:52:46 rab Exp  SPRITE (DECWRL)
- * $Id: dc7085cons.h,v 1.3 1994/05/27 09:00:37 glass Exp $
  */
 
 #ifndef _DC7085

@@ -1,5 +1,5 @@
-#	from: @(#)README	8.1 (Berkeley) 6/10/93
-#	$Id: README,v 1.3 1994/05/27 08:59:49 glass Exp $
+#	$NetBSD: README,v 1.4 1994/10/26 21:09:27 cgd Exp $
+#	@(#)README	8.1 (Berkeley) 6/10/93
 
 The scripts needed to build a boot tape for 4.2 and beyond
 live here.  Before trying anything look at the scripts 

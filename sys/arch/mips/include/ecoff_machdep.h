@@ -1,3 +1,5 @@
+/*	$NetBSD: ecoff_machdep.h,v 1.3 1994/10/26 21:09:38 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: ecoff_machdep.h,v 1.2 1994/05/28 20:21:34 glass Exp $
  */
 
 #define ECOFF_LDPGSZ 4096

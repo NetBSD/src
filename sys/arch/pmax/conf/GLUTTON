@@ -1,8 +1,8 @@
+#	$NetBSD: GLUTTON,v 1.3 1994/10/26 21:08:44 cgd Exp $
 #
 # GLUTTON - Adam's test DS3100
 #
-#	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: GLUTTON,v 1.2 1994/06/15 05:18:28 glass Exp $
+#	@(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
 #
 machine		pmax
 
