@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.5 2002/01/31 15:00:56 reinoud Exp $
+# $NetBSD: ad.arm,v 1.6 2002/03/30 06:29:00 thorpej Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -56,7 +56,8 @@
 ./usr/include/arm/types.h		comp-c-include
 ./usr/include/arm/varargs.h		comp-c-include
 ./usr/include/ieeefp.h			comp-c-include
-./usr/lib/libarm32.a			comp-c-lib
-./usr/lib/libarm32_p.a			comp-c-lib
-./usr/lib/libarm32_pic.a		comp-c-lib
-./usr/libdata/lint/llib-larm32.ln	comp-c-lintlib
+./usr/lib/libarm.a			comp-c-lib
+./usr/lib/libarm.so			comp-c-lib
+./usr/lib/libarm_p.a			comp-c-lib
+./usr/lib/libarm_pic.a			comp-c-lib
+./usr/libdata/lint/llib-larm.ln		comp-c-lintlib

@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.2 2001/11/26 20:53:07 thorpej Exp $
+# $NetBSD: md.netwinder,v 1.3 2002/03/30 06:29:00 thorpej Exp $
 ./usr/include/netwinder			comp-c-include
 ./usr/include/netwinder/_G_config.h	comp-c-include
 ./usr/include/netwinder/ansi.h		comp-c-include
@@ -44,4 +44,3 @@
 ./usr/include/netwinder/types.h		comp-c-include
 ./usr/include/netwinder/varargs.h	comp-c-include
 ./usr/include/netwinder/vmparam.h	comp-c-include
-./usr/lib/libarm32.so			comp-c-lib
