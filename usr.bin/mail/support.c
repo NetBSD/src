@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.5 2002/03/05 19:25:16 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.6 2002/03/05 19:26:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.5 2002/03/05 19:25:16 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.6 2002/03/05 19:26:42 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,9 +216,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
  */
 
 char*
-ishfield(linebuf, colon, field)
-	char linebuf[], field[];
-	char *colon;
+ishfield(char linebuf[], char *colon, char field[])
 {
 	char *cp = colon;
 
