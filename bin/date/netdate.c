@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.12 1997/11/05 21:20:52 cgd Exp $	*/
+/*	$NetBSD: netdate.c,v 1.13 1998/01/10 00:27:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.12 1997/11/05 21:20:52 cgd Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.13 1998/01/10 00:27:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ netsettime(tval)
 	struct sockaddr_in sin, dest, from;
 	fd_set ready;
 	long waittime;
-	int s, length, port, timed_ack, found, err;
+	int s, length, on, timed_ack, found, err;
 	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
@@ -101,23 +101,20 @@ netsettime(tval)
 		return (retval = 2);
 	}
 
+	on = IP_PORTRANGE_LOW;
+	if (setsockopt(s, IPPROTO_IP, IP_PORTRANGE, &on, sizeof(on)) < 0) {
+		warn("setsockopt");
+		goto bad;
+	}
+
 	(void)memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = AF_INET;
-	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
-		sin.sin_port = htons((u_short)port);
-		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
-			break;
-		if (errno == EADDRINUSE)
-			continue;
-		if (errno != EADDRNOTAVAIL)
-			warn("bind");
+	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		warn("bind");
 		goto bad;
 	}
-	if (port == IPPORT_RESERVED / 2) {
-		warnx("all ports in use");
-		goto bad;
-	}
+
 	msg.tsp_type = TSP_SETDATE;
 	msg.tsp_vers = TSPVERSION;
 	if (gethostname(hostname, sizeof(hostname))) {
