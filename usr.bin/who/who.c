@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.5 1997/07/23 20:08:03 kleink Exp $	*/
+/*	$NetBSD: who.c,v 1.6 1997/10/20 03:20:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.5 1997/07/23 20:08:03 kleink Exp $");
+__RCSID("$NetBSD: who.c,v 1.6 1997/10/20 03:20:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,13 +156,13 @@ who_am_i(ufp)
 {
 	struct utmp usr;
 	struct passwd *pw;
-	register char *p;
+	char *p;
 	char *t;
 
 	/* search through the utmp and find an entry for this tty */
 	if ((p = ttyname(0)) != NULL) {
 		/* strip any directory component */
-		if ((t = rindex(p, '/')) != NULL)
+		if ((t = strrchr(p, '/')) != NULL)
 			p = t + 1;
 		while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
 			if (usr.ut_name && !strcmp(usr.ut_line, p)) {
