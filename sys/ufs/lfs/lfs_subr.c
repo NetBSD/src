@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.4.1 2001/06/27 03:49:40 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.4.2 2001/06/29 03:56:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,8 +90,7 @@
  * remaining space in the directory.
  */
 int
-lfs_blkatoff(v)
-	void *v;
+lfs_blkatoff(void *v)
 {
 	struct vop_blkatoff_args /* {
 		struct vnode *a_vp;
@@ -127,9 +126,7 @@ lfs_blkatoff(v)
  *	Single thread the segment writer.
  */
 void
-lfs_seglock(fs, flags)
-	struct lfs *fs;
-	unsigned long flags;
+lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
 	int s;
@@ -171,8 +168,7 @@ lfs_seglock(fs, flags)
  *	Single thread the segment writer.
  */
 void
-lfs_segunlock(fs)
-	struct lfs *fs;
+lfs_segunlock(struct lfs *fs)
 {
 	struct segment *sp;
 	unsigned long sync, ckp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9.2.1 2001/06/27 03:49:43 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.9.2.2 2001/06/29 03:56:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9.2.1 2001/06/27 03:49:43 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.2.2 2001/06/29 03:56:46 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: print.c,v 1.9.2.1 2001/06/27 03:49:43 perseant Exp $");
 #include "clean.h"
 
 extern int debug;
-extern u_long cksum __P((void *, size_t));	/* XXX */
+extern u_long cksum(void *, size_t);	/* XXX */
 
 /*
  * Print out a summary block; return number of blocks in segment; 0
@@ -67,12 +67,7 @@ extern u_long cksum __P((void *, size_t));	/* XXX */
  */
 
 int
-dump_summary(lfsp, sp, flags, iaddrp, addr)
-	struct lfs *lfsp;
-	SEGSUM *sp;
-	u_long flags;
-	daddr_t **iaddrp;
-	daddr_t addr;
+dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr_t addr)
 {
 	int i, j, blk, numblocks, accino=0;
 	daddr_t *dp, ddp, *idp;
@@ -189,8 +184,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 }
 
 void
-dump_cleaner_info(ipage)
-	void *ipage;
+dump_cleaner_info(void *ipage)
 {
 	CLEANERINFO *cip;
 
@@ -203,8 +197,7 @@ dump_cleaner_info(ipage)
 }
 
 void
-dump_super(lfsp)
-	struct lfs *lfsp;
+dump_super(struct lfs *lfsp)
 {
 	int i;
 

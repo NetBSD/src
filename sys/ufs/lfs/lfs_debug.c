@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.11.4.1 2001/06/27 03:49:39 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.11.4.2 2001/06/29 03:56:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -83,8 +83,7 @@
 #include <ufs/lfs/lfs_extern.h>
 
 void 
-lfs_dump_super(lfsp)
-	struct lfs *lfsp;
+lfs_dump_super(struct lfs *lfsp)
 {
 	int i;
 	
@@ -150,8 +149,7 @@ lfs_dump_super(lfsp)
 }
 
 void
-lfs_dump_dinode(dip)
-	struct dinode *dip;
+lfs_dump_dinode(struct dinode *dip)
 {
 	int i;
 	
@@ -235,11 +233,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 }
 
 void
-lfs_check_bpp(fs, sp, file, line)
-	struct lfs *fs;
-	struct segment *sp;
-	char *file;
-	int line;
+lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 {
 	daddr_t blkno;
 	struct buf **bpp;
