@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.142 2001/06/18 02:00:55 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.143 2001/07/15 20:49:40 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -61,6 +61,12 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#ifdef DEBUG_EXEC
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif /* DEBUG_EXEC */
 
 /*
  * Exec function switch:
@@ -496,16 +502,18 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(p, vcp);
-#ifdef DEBUG
+#ifdef DEBUG_EXEC
 		if (error) {
-			if (i > 0)
-				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
-				       vcp[-1].ev_addr, vcp[-1].ev_len,
-				       vcp[-1].ev_offset);
-			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
-			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+			int j;
+			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
+			for (j = 0; j <= i; j++)
+				uprintf(
+			    "vmcmd[%d] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
+				    j, vp[j].ev_addr, vp[j].ev_len,
+				    vp[j].ev_offset, vp[j].ev_prot,
+				    vp[j].ev_flags);
 		}
-#endif
+#endif /* DEBUG_EXEC */
 		if (vcp->ev_flags & VMCMD_BASE)
 			base_vcp = vcp;
 	}
@@ -515,9 +523,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* if an error happened, deallocate and punt */
 	if (error) {
-#ifdef DEBUG
-		printf("execve: vmcmd %i failed: %d\n", i-1, error);
-#endif
+		DPRINTF(("execve: vmcmd %i failed: %d\n", i - 1, error));
 		goto exec_abort;
 	}
 
@@ -528,9 +534,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
 	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
-#ifdef DEBUG
-		printf("execve: copyargs failed\n");
-#endif
+		DPRINTF(("execve: copyargs failed\n"));
 		goto exec_abort;
 	}
 
@@ -544,10 +548,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
-#ifdef DEBUG
-		printf("execve: ps_strings copyout %p->%p size %ld failed\n",
-		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo));
-#endif
+		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
+		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo)));
 		goto exec_abort;
 	}
 
@@ -556,9 +558,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode)) {
-#ifdef DEBUG
-			printf("execve: sig trampoline copyout failed\n");
-#endif
+			DPRINTF(("execve: sig trampoline copyout failed\n"));
 			goto exec_abort;
 		}
 #ifdef PMAP_NEED_PROCWR
