@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.27 1998/05/22 17:47:21 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.28 1998/08/01 01:35:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/syslog.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/pool.h>
 #include <sys/socket.h>
 #include <net/if.h>
 
@@ -56,6 +57,9 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
+struct	pool mbpool;		/* mbuf pool */
+struct	pool mclpool;		/* mbuf cluster pool */
 
 struct mbuf *mbutl;
 struct mbstat mbstat;
@@ -67,66 +71,49 @@ int	max_datalen;
 
 extern	vm_map_t mb_map;
 
+void	*mclpool_alloc __P((unsigned long, int, int));
+void	mclpool_release __P((void *, unsigned long, int));
+
+/*
+ * Initialize the mbuf allcator.  Note, this cannot allocate any
+ * memory itself; we are called before mb_map has been allocated.
+ */
 void
 mbinit()
 {
-	int s;
 
-	mclfree = NULL;
-	s = splimp();
-	if (m_clalloc(max(4096/CLBYTES, 1), M_DONTWAIT) == 0)
-		goto bad;
-	splx(s);
-	return;
-bad:
-	panic("mbinit");
+	/* XXX malloc types! */
+	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
+	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", 0, mclpool_alloc,
+	    mclpool_release, 0);
 }
 
-/*
- * Allocate some number of mbuf clusters
- * and place on cluster free list.
- * Must be called at splimp.
- */
-/* ARGSUSED */
-int
-m_clalloc(ncl, nowait)
-	int ncl;
-	int nowait;
+void *
+mclpool_alloc(sz, flags, mtype)
+	unsigned long sz;
+	int flags;
+	int mtype;
 {
-	static volatile struct timeval lastlogged;
-	struct timeval curtime, logdiff;
-	caddr_t p;
-	int i;
-	int npg, s;
 
-	npg = ncl * CLSIZE;
 #if defined(UVM)
-	p = (caddr_t)uvm_km_kmemalloc(mb_map, uvmexp.mb_object, ctob(npg),
-	    (nowait == M_DONTWAIT) ? UVM_KMF_NOWAIT : 0);
+	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object));
 #else
-	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), nowait == 0);
+	return ((void *)kmem_alloc_poolpage1(mb_map));
 #endif
-	if (p == NULL) {
-		s = splclock();
-		curtime = time;
-		splx(s);
-		timersub(&curtime, &lastlogged, &logdiff);
-		if (logdiff.tv_sec >= 60) {
-			lastlogged = curtime;
-			log(LOG_ERR, "mb_map full\n");
-		}
-		m_reclaim();
-		return (mclfree != NULL);
-	}
-	ncl = ncl * CLBYTES / MCLBYTES;
-	for (i = 0; i < ncl; i++) {
-		((union mcluster *)p)->mcl_next = mclfree;
-		mclfree = (union mcluster *)p;
-		p += MCLBYTES;
-		mbstat.m_clfree++;
-	}
-	mbstat.m_clusters += ncl;
-	return (1);
+}
+
+void
+mclpool_release(v, sz, mtype)
+	void *v;
+	unsigned long sz;
+	int mtype;
+{
+
+#if defined(UVM)
+	uvm_km_free_poolpage1(mb_map, (vm_offset_t)v);
+#else
+	kmem_free_poolpage1(mb_map, (vm_offset_t)v);
+#endif
 }
 
 /*
