@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.41.4.1 1997/11/28 19:55:12 mellon Exp $	*/
+/*	$NetBSD: asc.c,v 1.41.4.2 1998/10/31 01:51:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -830,6 +830,7 @@ asc_intr(sc)
 	register script_t *scpt;
 	register int ss, ir, status;
 	register unsigned char cmd_was;
+	static int ill_cmd_count = 0;			/* XXX */
 
 	/* collect ephemeral information */
 	status = regs->asc_status;
@@ -906,7 +907,8 @@ again:
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
 		case SCSI_PHASE_DATAI:
-			if ((asc->script - asc_scripts) == SCRIPT_GET_STATUS) {
+			if ((asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN) {
 			    	/*
 			    	 * From the Mach driver:
 			    	 * After a reconnect and restart dma in, we
@@ -1054,11 +1056,8 @@ again:
 				state->script = asc->script;
 		} else if (state->flags & DMA_IN) {
 			if (len) {
-#ifdef DEBUG
-				printf("asc_intr: 1: bn %d len %d (fifo %d)\n",
-					asc_debug_bn, len, fifo); /* XXX */
-#endif
-				goto abort;
+				printf("asc_intr: 1: len %d (fifo %d)\n",
+					len, fifo); /* XXX */
 			}
 			/* setup state to resume to */
 			if (state->flags & DMA_IN_PROGRESS) {
@@ -1201,6 +1200,30 @@ again:
 		/* Should process reselect? */
 	}
 
+	/* check for illegal command */
+	if (ir & ASC_INT_ILL) {
+#ifdef ASC_DIAGNOSTIC
+		printf("asc_intr: Illegal command status %x ir %x cmd %x ? %x\n",
+		    status, ir, regs->asc_cmd, asc_scripts[SCRIPT_MSG_IN].command);
+#endif
+		/*
+		 * On a 5000/200, I see this frequently when using an RD52
+		 * CDROM.  The 53c94 doesn't seem to get the Message Accept
+		 * command, and generates an "Illegal Command" interrupt.
+		 * Re-issuing the Message Accept at this point seems to keep
+		 * things going.  Don't allow this too many times in a row,
+		 * just to make sure we don't get hung up.  mhitch
+		 */
+		if (ill_cmd_count++ != 3) {			/* XXX */
+			regs->asc_cmd = ASC_CMD_MSG_ACPT;	/* XXX */
+			readback(regs->asc_cmd);		/* XXX */
+			goto done;				/* XXX */
+		}						/* XXX */
+		printf("asc_intr: Illegal command tgt %d\n", asc->target);
+		goto abort;	/* XXX */
+	}
+	ill_cmd_count = 0;					/* XXX */
+
 	/* check for reselect */
 	if (ir & ASC_INT_RESEL) {
 		unsigned fifo, id, msg;
@@ -1224,6 +1247,11 @@ again:
 		else
 			asc_logp[-1].msg = msg;
 #endif
+		/*
+		 * TC may have been initialized during a selection attempt.
+		 * Clear it to prevent possible confusion later.
+		 */
+		ASC_TC_PUT(regs,0);	/* ensure TC clear */
 		asc->state = ASC_STATE_BUSY;
 		asc->target = id;
 		state = &asc->st[id];
