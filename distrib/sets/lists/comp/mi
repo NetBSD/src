@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.199 2000/03/14 08:44:54 shin Exp $
+#	$NetBSD: mi,v 1.200 2000/03/15 16:02:25 tron Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -90,7 +90,8 @@
 ./usr/include/dev/ic/ahavar.h	comp-c-include
 ./usr/include/dev/ic/aic6360reg.h	comp-c-include
 ./usr/include/dev/ic/aic6360var.h	comp-c-include
-./usr/include/dev/ic/aic7xxxreg.h	comp-c-include
+./usr/include/dev/ic/aic77xxreg.h	comp-c-include
+./usr/include/dev/ic/aic77xxvar.h	comp-c-include
 ./usr/include/dev/ic/aic7xxxvar.h	comp-c-include
 ./usr/include/dev/ic/am7930reg.h	comp-c-include
 ./usr/include/dev/ic/am7990reg.h	comp-c-include
