@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49 2001/09/24 01:48:15 chs Exp $	   */
+/*	$NetBSD: pmap.h,v 1.50 2002/02/24 01:04:26 matt Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -162,14 +162,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #define pmap_reference(pmap)		(pmap)->ref_count++
 
 /* These can be done as efficient inline macros */
-#define pmap_copy_page(src, dst)				\
-	__asm__("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
-	    movc3 $4096,(r0),(r1)"				\
-	    :: "r"(src),"r"(dst):"r0","r1","r2","r3","r4","r5");
+#define pmap_copy_page(src, dst)			\
+	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+		"addl3 $0x80000000,%1,%%r1;"		\
+		"movc3 $4096,(%%r0),(%%r1)"		\
+	    :: "r"(src), "r"(dst)			\
+	    : "r0","r1","r2","r3","r4","r5");
 
-#define pmap_zero_page(phys)					\
-	__asm__("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$4096,(r0)" \
-	    :: "r"(phys): "r0","r1","r2","r3","r4","r5");
+#define pmap_zero_page(phys)				\
+	__asm__("addl3 $0x80000000,%0,%%r0;"		\
+		"movc5 $0,(%%r0),$0,$4096,(%%r0)"	\
+	    :: "r"(phys)				\
+	    : "r0","r1","r2","r3","r4","r5");
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));

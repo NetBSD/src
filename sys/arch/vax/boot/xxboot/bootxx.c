@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.14 2000/11/09 01:54:20 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.15 2002/02/24 01:04:26 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -343,7 +343,11 @@ hpread(int bn)
 	/*
 	 * Avoid four subroutine calls by using hardware division.
 	 */
-	asm("clrl r1;movl %3,r0;ediv %4,r0,%0,%1;movl %1,r0;ediv %5,r0,%2,%1"
+	asm("clrl %%r1;"
+	    "movl %3,%%r0;"
+	    "ediv %4,%%r0,%0,%1;"
+	    "movl %1,%%r0;"
+	    "ediv %5,%%r0,%2,%1"
 	    : "=g"(cn),"=g"(sn),"=g"(tn)
 	    : "g"(bn),"g"(dp->d_secpercyl),"g"(dp->d_nsectors)
 	    : "r0","r1","cc");

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.1 2002/02/23 23:48:03 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.2 2002/02/24 01:04:27 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -170,28 +170,28 @@ SCBENTRY(mcheck)
 	bneq	L4		# Yes.
 
 	pushr	$0x7f
-	pushab	24(sp)
-	movl	_C_LABEL(dep_call),r6	# CPU dependent mchk handling
-	calls	$1,*MCHK(r6)
-	tstl	r0		# If not machine check, try memory error
+	pushab	24(%sp)
+	movl	_C_LABEL(dep_call),%r6	# CPU dependent mchk handling
+	calls	$1,*MCHK(%r6)
+	tstl	%r0		# If not machine check, try memory error
 	beql	1f
-	calls	$0,*MEMERR(r6)
+	calls	$0,*MEMERR(%r6)
 	pushab	2f
 	calls	$1,_C_LABEL(panic)
 2:	.asciz	"mchk"
 1:	popr	$0x7f
-	addl2	(sp)+,sp
+	addl2	(%sp)+,%sp
 
 	rei
 
-L4:	addl2	(sp)+,sp	# remove info pushed on stack
+L4:	addl2	(%sp)+,%sp	# remove info pushed on stack
 	pushr	$0x3f		# save regs for clobbering
-	movl	_C_LABEL(dep_call),r0	# get cpu-specific mchk handler
-	tstl	BADADDR(r0)	# any handler available?
+	movl	_C_LABEL(dep_call),%r0	# get cpu-specific mchk handler
+	tstl	BADADDR(%r0)	# any handler available?
 	bneq	4f		# yep, call it
 	popr	$0x3f		# nope, restore regs
 	brb	0f		# continue
-4:	calls	$0,*BADADDR(r0)	# call machine-specific handler
+4:	calls	$0,*BADADDR(%r0)	# call machine-specific handler
 	popr	$0x3f		# restore regs
 	brb	2f
 
@@ -208,7 +208,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	brb	2f
 
 3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-2:	movl	_C_LABEL(memtest),(sp)	# REI to new adress
+2:	movl	_C_LABEL(memtest),(%sp)	# REI to new adress
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
@@ -234,29 +234,29 @@ SCBENTRY(privinflt)	# Privileged/unimplemented instruction
  */
 SCBENTRY(transl_v)		# 20: Translation violation
 	pushr	$0x3f
-	pushl	28(sp)
-	pushl	28(sp)
+	pushl	28(%sp)
+	pushl	28(%sp)
 	calls	$2,_C_LABEL(pmap_simulref)
-	tstl	r0
+	tstl	%r0
 	bneq	1f
 	popr	$0x3f
-	addl2	$8,sp
+	addl2	$8,%sp
 	rei
 1:	popr	$0x3f
 	brb	Xaccess_v
 
 SCBENTRY(access_v)			# 24: Access cntrl viol fault
-	blbs	(sp), ptelen
+	blbs	(%sp), ptelen
 	pushl	$T_ACCFLT
-	bbc	$1,4(sp),1f
-	bisl2	$T_PTEFETCH,(sp)
-1:	bbc	$2,4(sp),2f
-	bisl2	$T_WRITE,(sp)
-2:	movl	(sp), 4(sp)
-	addl2	$4, sp
+	bbc	$1,4(%sp),1f
+	bisl2	$T_PTEFETCH,(%sp)
+1:	bbc	$2,4(%sp),2f
+	bisl2	$T_WRITE,(%sp)
+2:	movl	(%sp), 4(%sp)
+	addl2	$4, %sp
 	jbr	Xtrap
 
-ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
+ptelen: movl	$T_PTELEN, (%sp)		# PTE must expand (or send segv)
 	jbr	Xtrap;
 
 TRAPCALL(tracep, T_TRCTRAP)
@@ -267,24 +267,24 @@ TRAPARGC(arithflt, T_ARITHFLT)
 SCBENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
 	pushr	$0xfff
-	mfpr	$PR_USP, -(sp)
-	pushl	ap
-	pushl	fp
-	pushl	sp		# pointer to syscall frame; defined in trap.h
+	mfpr	$PR_USP, -(%sp)
+	pushl	%ap
+	pushl	%fp
+	pushl	%sp		# pointer to syscall frame; defined in trap.h
 	calls	$1, _C_LABEL(syscall)
-	movl	(sp)+, fp
-	movl	(sp)+, ap
-	mtpr	(sp)+, $PR_USP
+	movl	(%sp)+, %fp
+	movl	(%sp)+, %ap
+	mtpr	(%sp)+, $PR_USP
 	popr	$0xfff
-	addl2	$8, sp
+	addl2	$8, %sp
 	mtpr	$IPL_HIGH, $PR_IPL	# Be sure we can REI
 	rei
 
 
 SCBENTRY(cmrerr)
 	PUSHR
-	movl	_C_LABEL(dep_call),r0
-	calls	$0,*MEMERR(r0)
+	movl	_C_LABEL(dep_call),%r0
+	calls	$0,*MEMERR(%r0)
 	POPR
 	rei
 
@@ -296,7 +296,7 @@ TRAPCALL(astintr, T_ASTFLT)
 
 SCBENTRY(softclock)
 	PUSHR
-	movab	_C_LABEL(softclock_head),r0
+	movab	_C_LABEL(softclock_head),%r0
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softclock_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softclock_intrcnt)+EV_COUNT+4
@@ -317,7 +317,7 @@ SCBENTRY(softnet)
 
 #undef DONETISR
 
-2:	movab	_C_LABEL(softnet_head),r0
+2:	movab	_C_LABEL(softnet_head),%r0
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softnet_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softnet_intrcnt)+EV_COUNT+4
@@ -326,7 +326,7 @@ SCBENTRY(softnet)
 
 SCBENTRY(softserial)
 	PUSHR
-	movab	_C_LABEL(softserial_head),r0
+	movab	_C_LABEL(softserial_head),%r0
 	jsb	softintr_dispatch
 	incl	_C_LABEL(softserial_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softserial_intrcnt)+EV_COUNT+4
@@ -336,22 +336,22 @@ SCBENTRY(softserial)
 	.align	2
 softintr_dispatch:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	pushl	r0
+	pushl	%r0
 	calls	$0,_C_LABEL(krnlock)
-	movl	(sp)+,r0
+	movl	(%sp)+,%r0
 #endif
-	movl	SHD_INTRS(r0), r0	# anything to do? (get first handler)
+	movl	SHD_INTRS(%r0), %r0	# anything to do? (get first handler)
 	beql	3f			# nope return
-	pushl	r7			# we need to use r7 so save it
-	movl	r0, r7			# move first item to r7
-1:	tstl	SH_PENDING(r7)		# need call this one?
+	pushl	%r7			# we need to use %r7 so save it
+	movl	%r0, %r7			# move first item to %r7
+1:	tstl	SH_PENDING(%r7)		# need call this one?
 	bneq	2f			# nope, go to next one
-	clrl	SH_PENDING(r7)		# clear pending flag
-	pushl	SH_ARG(r7)		# push function argument
-	calls	$1, *SH_FUNC(r7)	# call function
-2:	movl	SH_NEXT(r7), r7		# get next handler
+	clrl	SH_PENDING(%r7)		# clear pending flag
+	pushl	SH_ARG(%r7)		# push function argument
+	calls	$1, *SH_FUNC(%r7)	# call function
+2:	movl	SH_NEXT(%r7), %r7		# get next handler
 	bneq	1b			# if not null, process it
-	movl	(sp)+, r7		# done, restore r7
+	movl	(%sp)+, %r7		# done, restore %r7
 3:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(krnunlock)
@@ -375,11 +375,11 @@ SCBENTRY(hardclock)
 #if VAX46 || VAXANY
 	cmpl	_C_LABEL(vax_boardtype),$VAX_BTYP_46
 	bneq	1f
-	movl	_C_LABEL(ka46_cpu),r0
-	clrl	VC_DIAGTIMM(r0)
+	movl	_C_LABEL(ka46_cpu),%r0
+	clrl	VC_DIAGTIMM(%r0)
 #endif
-1:	pushl	sp
-	addl2	$24,(sp)
+1:	pushl	%sp
+	addl2	$24,(%sp)
 	calls	$1,_C_LABEL(hardclock)
 #if NLEDS
 	calls	$0,_C_LABEL(leds_intr)
@@ -396,17 +396,17 @@ SCBENTRY(hardclock)
  */
 	.globl	_C_LABEL(sret)
 Xtrap:	pushr	$0xfff
-	mfpr	$PR_USP, -(sp)
-	pushl	ap
-	pushl	fp
-	pushl	sp
+	mfpr	$PR_USP, -(%sp)
+	pushl	%ap
+	pushl	%fp
+	pushl	%sp
 	calls	$1, _C_LABEL(trap)
 _C_LABEL(sret):
-	movl	(sp)+, fp
-	movl	(sp)+, ap
-	mtpr	(sp)+, $PR_USP
+	movl	(%sp)+, %fp
+	movl	(%sp)+, %ap
+	mtpr	(%sp)+, $PR_USP
 	popr	$0xfff
-	addl2	$8, sp
+	addl2	$8, %sp
 	mtpr	$IPL_HIGH, $PR_IPL	# Be sure we can REI
 	rei
 
@@ -458,58 +458,58 @@ _C_LABEL(emtable):
 /*
  * The following is called with the stack set up as follows:
  *
- *	  (sp): Opcode
- *	 4(sp): Instruction PC
- *	 8(sp): Operand 1
- *	12(sp): Operand 2
- *	16(sp): Operand 3
- *	20(sp): Operand 4
- *	24(sp): Operand 5
- *	28(sp): Operand 6
- *	32(sp): Operand 7 (unused)
- *	36(sp): Operand 8 (unused)
- *	40(sp): Return PC
- *	44(sp): Return PSL
- *	48(sp): TOS before instruction
+ *	  (%sp): Opcode
+ *	 4(%sp): Instruction PC
+ *	 8(%sp): Operand 1
+ *	12(%sp): Operand 2
+ *	16(%sp): Operand 3
+ *	20(%sp): Operand 4
+ *	24(%sp): Operand 5
+ *	28(%sp): Operand 6
+ *	32(%sp): Operand 7 (unused)
+ *	36(%sp): Operand 8 (unused)
+ *	40(%sp): Return PC
+ *	44(%sp): Return PSL
+ *	48(%sp): TOS before instruction
  *
  * Each individual routine is called with the stack set up as follows:
  *
- *	  (sp): Return address of trap handler
- *	 4(sp): Opcode (will get return PSL)
- *	 8(sp): Instruction PC
- *	12(sp): Operand 1
- *	16(sp): Operand 2
- *	20(sp): Operand 3
- *	24(sp): Operand 4
- *	28(sp): Operand 5
- *	32(sp): Operand 6
- *	36(sp): saved register 11
- *	40(sp): saved register 10
- *	44(sp): Return PC
- *	48(sp): Return PSL
- *	52(sp): TOS before instruction
+ *	  (%sp): Return address of trap handler
+ *	 4(%sp): Opcode (will get return PSL)
+ *	 8(%sp): Instruction PC
+ *	12(%sp): Operand 1
+ *	16(%sp): Operand 2
+ *	20(%sp): Operand 3
+ *	24(%sp): Operand 4
+ *	28(%sp): Operand 5
+ *	32(%sp): Operand 6
+ *	36(%sp): saved register 11
+ *	40(%sp): saved register 10
+ *	44(%sp): Return PC
+ *	48(%sp): Return PSL
+ *	52(%sp): TOS before instruction
  *	See the VAX Architecture Reference Manual, Section B-5 for more
  *	information.
  */
 
 SCBENTRY(emulate)
 #ifndef NO_INSN_EMULATE
-	movl	r11,32(sp)		# save register r11 in unused operand
-	movl	r10,36(sp)		# save register r10 in unused operand
-	cvtbl	(sp),r10		# get opcode
-	addl2	$8,r10			# shift negative opcodes
-	subl3	r10,$0x43,r11		# forget it if opcode is out of range
+	movl	%r11,32(%sp)		# save register %r11 in unused operand
+	movl	%r10,36(%sp)		# save register %r10 in unused operand
+	cvtbl	(%sp),%r10		# get opcode
+	addl2	$8,%r10			# shift negative opcodes
+	subl3	%r10,$0x43,%r11		# forget it if opcode is out of range
 	bcs	noemulate
-	movl	_C_LABEL(emtable)[r10],r10
+	movl	_C_LABEL(emtable)[%r10],%r10
 				# call appropriate emulation routine
-	jsb	(r10)		# routines put return values into regs 0-5
-	movl	32(sp),r11		# restore register r11
-	movl	36(sp),r10		# restore register r10
-	insv	(sp),$0,$4,44(sp)	# and condition codes in Opcode spot
-	addl2	$40,sp			# adjust stack for return
+	jsb	(%r10)		# routines put return values into regs 0-5
+	movl	32(%sp),%r11		# restore register %r11
+	movl	36(%sp),%r10		# restore register %r10
+	insv	(%sp),$0,$4,44(%sp)	# and condition codes in Opcode spot
+	addl2	$40,%sp			# adjust stack for return
 	rei
 noemulate:
-	addl2	$48,sp			# adjust stack for
+	addl2	$48,%sp			# adjust stack for
 #endif
 	.word	0xffff			# "reserved instruction fault"
 
