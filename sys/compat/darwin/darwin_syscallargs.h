@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.7 2002/11/17 02:48:12 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.8 2002/11/23 02:18:53 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -26,6 +26,15 @@
 			x datum;					\
 		} be;							\
 	}
+
+struct darwin_sys___sysctl_args {
+	syscallarg(int *) name;
+	syscallarg(u_int) namelen;
+	syscallarg(void *) oldp;
+	syscallarg(size_t *) oldlenp;
+	syscallarg(void *) newp;
+	syscallarg(size_t) newlen;
+};
 
 struct darwin_sys_load_shared_file_args {
 	syscallarg(char *) filename;
@@ -219,7 +228,7 @@ int	sys_mmap(struct proc *, void *, register_t *);
 int	compat_43_sys_lseek(struct proc *, void *, register_t *);
 int	freebsd_sys_truncate(struct proc *, void *, register_t *);
 int	sys_ftruncate(struct proc *, void *, register_t *);
-int	sys___sysctl(struct proc *, void *, register_t *);
+int	darwin_sys___sysctl(struct proc *, void *, register_t *);
 int	sys_mlock(struct proc *, void *, register_t *);
 int	sys_munlock(struct proc *, void *, register_t *);
 int	sys_undelete(struct proc *, void *, register_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.7 2002/11/17 02:48:12 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.8 2002/11/23 02:18:55 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.7 2002/11/17 02:48:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.8 2002/11/23 02:18:55 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -465,8 +465,8 @@ struct sysent darwin_sysent[] = {
 	    freebsd_sys_truncate },		/* 200 = truncate */
 	{ 3, s(struct sys_ftruncate_args), 0,
 	    sys_ftruncate },			/* 201 = ftruncate */
-	{ 6, s(struct sys___sysctl_args), 0,
-	    sys___sysctl },			/* 202 = __sysctl */
+	{ 6, s(struct darwin_sys___sysctl_args), 0,
+	    darwin_sys___sysctl },		/* 202 = __sysctl */
 	{ 2, s(struct sys_mlock_args), 0,
 	    sys_mlock },			/* 203 = mlock */
 	{ 2, s(struct sys_munlock_args), 0,
