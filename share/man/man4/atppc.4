@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.13 2004/01/30 15:48:38 wiz Exp $
+.\"	$NetBSD: atppc.4,v 1.14 2004/01/30 19:06:36 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 28, 2004
+.Dd January 30, 2004
 .Dt ATPPC 4
 .Os
 .Sh NAME
@@ -50,7 +50,10 @@ This driver attaches where the traditional
 .Xr lpt 4
 driver would ordinarily.
 It provides the data transport and chip set manipulation needed by
-higher driver layers.
+higher driver layers, such as
+.Xr ppbus 4
+and
+.Xr lpt 4 .
 This driver is designed to be one of many possible implementations
 supporting machine independent parallel device support via
 .Xr ppbus 4 .
@@ -73,21 +76,9 @@ supports the following data transfer modes: Centronics Compatible
 (Standard), Nibble, Byte (PS2), Fast Centronics, ECP, and EPP.
 Standard and Fast Centronics modes are write only, Nibble and Byte
 modes are read only, and ECP and EPP modes are bidirectional.
-.Ss Supported Devices
-.Nm
-supports only generic chip sets on the ISA bus.
-The original
-.Fx
-.Nm ppc
-driver included support for other chip sets, but this driver is
-still under development.
-Generic chip sets configured by other means besides ISA are also
-not supported, but are being planned.
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
 .Xr acpi 4 ,
 .Xr i386/pnpbios 4 ,
 .Xr isa 4 ,
@@ -114,10 +105,11 @@ The information has been updated for the
 .Nx
 port by Gary Thorpe.
 .Sh BUGS
-.Bl -item
-.It
-Only standard, FAST, and ECP mode writes are tested.
-Nibble reads also tested.
-.It
-Only generic chip sets are currently supported.
-.El
+Original
+.Fx
+included support for some specific chip sets, specifically
+detection of some nonstandard device I/O locations on ISA
+bus.
+This support was not ported over to
+.Nx
+version of the driver yet.
