@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1994/10/26 21:10:13 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1994/11/24 17:50:49 dean Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -229,7 +229,30 @@ swapconf()
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	'r','z',	/* 0 = rz */
+	  0, 0,		/*  0 = 4.4bsd rz */
+	  0, 0,		/*  1 = vax ht */
+	  0, 0,		/*  2 = ?? */
+	'r','k',	/*  3 = rk */
+	  0, 0,		/*  4 = sw */
+	't','m',	/*  5 = tm */
+	't','s',	/*  6 = ts */
+	'm','t',	/*  7 = mt */
+	'r','t',	/*  8 = rt*/
+	 0,  0,		/*  9 = ?? */
+	'u','t',	/* 10 = ut */
+	'i','d',	/* 11 = 11/725 idc */
+	'r','x',	/* 12 = rx */
+	'u','u',	/* 13 = uu */
+	'r','l',	/* 14 = rl */
+	't','u',	/* 15 = tmscp */
+	'c','s',	/* 16 = cs */
+	'm','d',	/* 17 = md */
+	's','t',	/* 18 = st */
+	's','d',	/* 19 = sd */
+	't','z',	/* 20 = tz */
+	'r','z',	/* 21 = rz */
+	 0,  0,		/* 22 = ?? */
+	'r','a',	/* 23 = ra */
 };
 
 #define	PARTITIONMASK	0x7
