@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.8 1997/10/17 06:49:16 mikel Exp $	*/
+/*	$NetBSD: apropos.c,v 1.9 1997/10/20 02:11:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.8 1997/10/17 06:49:16 mikel Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.9 1997/10/20 02:11:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
 			    NULL, &pg) != 0)
 				err(1, "glob");
-			for (p = pg.gl_pathv; *p; p++)
+			for (p = pg.gl_pathv; pg.gl_pathc && *p; p++)
 				apropos(argv, *p, 0);
 			globfree(&pg);
 		}
