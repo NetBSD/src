@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.27 1997/03/13 18:19:35 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.28 1997/03/13 18:36:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.27 1997/03/13 18:19:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.28 1997/03/13 18:36:37 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ main(argc, argv, envp)
 			ctrl = sep->se_fd;
 		(void) sigblock(SIGBLOCK);
 		pid = 0;
-#ifdef LIBWRAP
+#ifdef LIBWRAP_INTERNAL
 		dofork = 1;
 #else
 		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
@@ -553,6 +553,10 @@ main(argc, argv, envp)
 		sigsetmask(0L);
 		if (pid == 0) {
 #ifdef LIBWRAP
+#ifndef LIBWRAP_INTERNAL
+		    if (sep->se_bi != 0)
+#endif
+		    {
 			request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
 			    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl,
 			    NULL);
@@ -579,6 +583,7 @@ main(argc, argv, envp)
 				    "connection from %.500s, service %s (%s)",
 				    eval_client(&req), service, sep->se_proto);
 			}
+		    }
 #endif /* LIBWRAP */
 			if (sep->se_bi) {
 				(*sep->se_bi->bi_fn)(ctrl, sep);
