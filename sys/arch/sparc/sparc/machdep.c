@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.12 1993/11/10 14:36:07 deraadt Exp $
+ * $Id: machdep.c,v 1.13 1993/11/26 11:26:23 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -452,7 +452,7 @@ sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		addr = USRSTACK - sizeof(struct ps_strings) - szsigcode;
+		addr = (int)PS_STRINGS - szsigcode;
 		tf->tf_global[1] = (int)catcher;
 	}
 	tf->tf_pc = addr;
