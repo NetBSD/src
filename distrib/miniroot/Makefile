@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2001/10/10 05:13:54 enami Exp $
+#	$NetBSD: Makefile,v 1.39 2001/10/13 06:15:18 jmc Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -35,6 +35,7 @@ ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 			-o root -g wheel -m ${NONBINMODE} 
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 .ifndef DESTDIR
 all:
@@ -49,7 +50,7 @@ all: ${CBIN}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
 	mount -o async ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
 	    KERNOBJDIR=${KERNOBJDIR} \

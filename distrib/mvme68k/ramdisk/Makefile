@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/11/24 21:58:36 scw Exp $
+#	$NetBSD: Makefile,v 1.11 2001/10/13 06:15:18 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,6 +21,7 @@ VND_CDEV=       /dev/${VND}c
 VND_CRDEV=      /dev/r${VND}c
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 # These are all the parameters for the root fs: (384K)
 # NOTE: If you change NBLKS, you *must* also edit the
@@ -40,7 +41,7 @@ ${IMAGE}:	${TREE} ${LISTS} ${CBIN}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	newfs -B be -m 0 -o space -i 2048 ${VND_CRDEV} ${DISKTYPE}
 	mount ${VND_CDEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${TREE} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${.CURDIR}/${LISTS}
