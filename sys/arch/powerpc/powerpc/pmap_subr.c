@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.7 2002/11/13 21:08:50 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.8 2003/02/03 17:10:11 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,8 +46,8 @@
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-#ifdef PPC_MPC6XX
-#include <powerpc/mpc6xx/vmparam.h>
+#ifdef PPC_OEA
+#include <powerpc/oea/vmparam.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
 #endif
@@ -67,7 +67,7 @@ struct evcnt pmap_evcnt_copied_pages =
 struct evcnt pmap_evcnt_idlezeroed_pages =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
 	"pages idle zeroed");
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 extern struct evcnt pmap_evcnt_exec_uncached_zero_page;
 extern struct evcnt pmap_evcnt_exec_uncached_copy_page;
 #endif
@@ -104,7 +104,7 @@ pmap_zero_page(paddr_t pa)
 	size_t linewidth;
 	register_t msr;
 
-#if defined(PPC_MPC6XX)
+#if defined(PPC_OEA)
 	{
 		/*
 		 * If we are zeroing this page, we must clear the EXEC-ness
@@ -134,12 +134,12 @@ pmap_zero_page(paddr_t pa)
 	/*
 	 * Turn off data relocation (DMMU off).
 	 */
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	if (pa >= SEGMENT_LENGTH) {
 #endif
 		msr = MFMSR();
 		MTMSR(msr & ~PSL_DR);
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	}
 #endif
 
@@ -166,7 +166,7 @@ pmap_zero_page(paddr_t pa)
 	/*
 	 * Restore data relocation (DMMU on).
 	 */
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	if (pa >= SEGMENT_LENGTH)
 #endif
 		MTMSR(msr);
@@ -183,7 +183,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	register_t msr;
 	size_t i;
 
-#if defined(PPC_MPC6XX)
+#if defined(PPC_OEA)
 	{
 		/*
 		 * If we are copying to the destination page, we must clear
@@ -211,7 +211,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	}
 #endif
 
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	if (src < SEGMENT_LENGTH && dst < SEGMENT_LENGTH) {
 		/*
 		 * Copy the page (memcpy is optimized, right? :)
@@ -254,7 +254,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	register_t msr;
 	size_t i;
 
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	if (pa + len <= SEGMENT_LENGTH) {
 		__syncicache((void *)pa, len);
 		return;
@@ -310,7 +310,7 @@ pmap_pageidlezero(paddr_t pa)
 	boolean_t rv = TRUE;
 	int i;
 
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	if (pa < SEGMENT_LENGTH) {
 		for (i = 0; i < NBPG / sizeof(dp[0]); i++) {
 			if (sched_whichqs != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2003/01/22 21:44:55 kleink Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,10 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MPC6XX_PMAP_H_
-#define	_MPC6XX_PMAP_H_
+#ifndef	_POWERPC_OEA_PMAP_H_
+#define	_POWERPC_OEA_PMAP_H_
 
-#include <powerpc/mpc6xx/pte.h>
+#include <powerpc/oea/pte.h>
 
 /*
  * Segment registers
@@ -127,4 +127,4 @@ vtophys(vaddr_t va)
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
-#endif	/* _MPC6XX_PMAP_H_ */
+#endif	/* _POWERPC_OEA_PMAP_H_ */

@@ -1,11 +1,11 @@
-#	$NetBSD: std.prep,v 1.5 2003/02/02 20:43:25 matt Exp $
+#	$NetBSD: std.prep,v 1.6 2003/02/03 17:10:12 matt Exp $
 #
 # standard, required NetBSD/prep 'options'
 
 machine		prep powerpc
 
-options 	PPC_MPC6XX
-makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+options 	PPC_OEA
+makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	EXEC_ELF32	# exec ELF binaries

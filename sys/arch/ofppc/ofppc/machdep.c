@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2003/01/22 21:55:16 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2003/02/03 17:09:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,7 +113,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Initialize the bat registers
 	 */
-	mpc6xx_batinit(0);
+	oea_batinit(0);
 
 	/*
 	 * Initialize the platform structure.  This may add entries
@@ -125,7 +125,7 @@ initppc(startkernel, endkernel, args)
 	OF_set_callback(callback);
 #endif
 
-	mpc6xx_init(NULL);
+	oea_init(NULL);
 
 	/*
 	 * Now that translation is enabled (and we can access bus space),
@@ -175,7 +175,7 @@ void
 cpu_startup()
 {
 
-	mpc6xx_startup(NULL);
+	oea_startup(NULL);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -288,7 +288,7 @@ cpu_reboot(howto, what)
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
 	if (what && *what) {

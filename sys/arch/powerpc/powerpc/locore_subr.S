@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.8 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.9 2003/02/03 17:10:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ ASENTRY(Idle)
 
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* reenable ints again */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
@@ -113,18 +113,18 @@ ASENTRY(Idle)
 	add.	9,9,9
 	ble	1f
 
-#if defined(PPC_MPC6XX)
+#if defined(PPC_OEA)
 	sync
 	oris	3,3,PSL_POW@h		/* enter power saving mode */
 	mtmsr	3
 	isync
-#endif /* PPC_MPC6XX */
+#endif /* PPC_OEA */
 
 1:
 #if defined(PPC_IBM4XX)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
@@ -221,7 +221,7 @@ ENTRY_NOPROFILE(cpu_switch)
 #if defined(PPC_IBM4XX)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
@@ -288,7 +288,7 @@ switch_common:
 
 #if defined(PPC_IBM4XX)
 	li	10,0			/* no SR for 4xx CPUs */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
 #endif
 	mfcr	11			/* save cr */
@@ -322,7 +322,7 @@ switch_exited:
 	 * Don't have to do anything here; TLB PID gets updated on
 	 * return from trap.
 	 */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mtsr	USER_SR,10		/* get saved USER_SR */
 	isync
 #endif
@@ -338,7 +338,7 @@ switch_return:
 
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* interrupts are okay again */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* interrupts are okay again */
 	mtmsr	3
@@ -360,7 +360,7 @@ switch_return:
 	mr	3,30			/* restore return value */
 	b	0b			/* reload */
 1:
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mr	3,30			/* restore return value */
 #endif
 
@@ -437,7 +437,7 @@ ENTRY(cpu_switchto)
 #if defined(PPC_IBM4XX)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
