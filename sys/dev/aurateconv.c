@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.9.4.1 2004/12/29 17:53:48 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.9.4.2 2004/12/29 18:39:23 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.1 2004/12/29 17:53:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.2 2004/12/29 18:39:23 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -162,8 +162,10 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 	if (max_used <= 0)
 		max_used = frame_dst;
 	/* calculate required input size for output max_used bytes */
-	m = max_used / (frame_dst * this->to.sample_rate)
-		* (frame_src * this->from.sample_rate);
+	m = max_used / frame_dst;
+	m *= this->from.sample_rate;
+	m /= this->to.sample_rate;
+	m *= frame_src;
 	if (m <= 0)
 		m = frame_src;
 
