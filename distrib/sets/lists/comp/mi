@@ -87,7 +87,6 @@
 ./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
-./usr/include/dev/ic/z8530var.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
@@ -121,6 +120,7 @@
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/md.h
 ./usr/include/dev/microcode/aic7xxx
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
 ./usr/include/dev/mulaw.h
@@ -545,8 +545,13 @@
 ./usr/include/netinet/in_systm.h
 ./usr/include/netinet/in_var.h
 ./usr/include/netinet/ip.h
+./usr/include/netinet/ip_compat.h
+./usr/include/netinet/ip_fil.h
+./usr/include/netinet/ip_frag.h
 ./usr/include/netinet/ip_icmp.h
 ./usr/include/netinet/ip_mroute.h
+./usr/include/netinet/ip_nat.h
+./usr/include/netinet/ip_state.h
 ./usr/include/netinet/ip_var.h
 ./usr/include/netinet/tcp.h
 ./usr/include/netinet/tcp_debug.h
@@ -1360,6 +1365,7 @@
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
 ./usr/share/man/cat3/hosts_access.0
+./usr/share/man/cat3/hosts_ctl.0
 ./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htonl.0
 ./usr/share/man/cat3/htons.0
@@ -1393,6 +1399,7 @@
 ./usr/share/man/cat3/isinf.0
 ./usr/share/man/cat3/islower.0
 ./usr/share/man/cat3/isnan.0
+./usr/share/man/cat3/iso_addr.0
 ./usr/share/man/cat3/isprint.0
 ./usr/share/man/cat3/ispunct.0
 ./usr/share/man/cat3/isspace.0
@@ -1530,6 +1537,8 @@
 ./usr/share/man/cat3/remainder.0
 ./usr/share/man/cat3/remove.0
 ./usr/share/man/cat3/remque.0
+./usr/share/man/cat3/request_init.0
+./usr/share/man/cat3/request_set.0
 ./usr/share/man/cat3/res_init.0
 ./usr/share/man/cat3/res_mkquery.0
 ./usr/share/man/cat3/res_query.0

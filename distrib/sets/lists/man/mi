@@ -314,6 +314,7 @@
 ./usr/share/man/cat4/termios.0
 ./usr/share/man/cat4/tp.0
 ./usr/share/man/cat4/tty.0
+./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/uk.0
 ./usr/share/man/cat4/unix.0
@@ -326,6 +327,7 @@
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
+./usr/share/man/cat5/daily.conf.0
 ./usr/share/man/cat5/dhcpd.conf.0
 ./usr/share/man/cat5/dir.0
 ./usr/share/man/cat5/dirent.0
@@ -340,14 +342,20 @@
 ./usr/share/man/cat5/group.0
 ./usr/share/man/cat5/hosts.0
 ./usr/share/man/cat5/hosts_access.0
+./usr/share/man/cat5/hosts.allow.0
+./usr/share/man/cat5/hosts.deny.0
 ./usr/share/man/cat5/hosts_options.0
-./usr/share/man/cat5/inetd.0
+./usr/share/man/cat5/ifaliases.0
+./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/lastlog.0
+./usr/share/man/cat5/ld.so.conf.0
 ./usr/share/man/cat5/link.0
+./usr/share/man/cat5/lkm.conf.0
 ./usr/share/man/cat5/magic.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
+./usr/share/man/cat5/monthly.conf.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/netgroup.0
@@ -358,11 +366,13 @@
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
+./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/securenet.0
+./usr/share/man/cat5/security.conf.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/stab.0
@@ -375,6 +385,7 @@
 ./usr/share/man/cat5/utmp.0
 ./usr/share/man/cat5/uuencode.0
 ./usr/share/man/cat5/vgrindefs.0
+./usr/share/man/cat5/weekly.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat7/ascii.0
@@ -452,6 +463,8 @@
 ./usr/share/man/cat8/makedbm.0
 ./usr/share/man/cat8/makemap.0
 ./usr/share/man/cat8/map-mbone.0
+./usr/share/man/cat8/mdconfig.0
+./usr/share/man/cat8/mdsetimage.0
 ./usr/share/man/cat8/mfs.0
 ./usr/share/man/cat8/mk-amd-map.0
 ./usr/share/man/cat8/mknetid.0
@@ -499,6 +512,7 @@
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
+./usr/share/man/cat8/praliases.0
 ./usr/share/man/cat8/pstat.0
 ./usr/share/man/cat8/pwd_mkdb.0
 ./usr/share/man/cat8/quot.0
@@ -509,9 +523,7 @@
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
 ./usr/share/man/cat8/rdate.0
-./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdisc.0
-./usr/share/man/cat8/rdsetimage.0
 ./usr/share/man/cat8/rdump.0
 ./usr/share/man/cat8/reboot.0
 ./usr/share/man/cat8/renice.0
@@ -590,6 +602,7 @@
 ./usr/share/man/cat9/access.0
 ./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
+./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/copy.0
 ./usr/share/man/cat9/copyin.0
 ./usr/share/man/cat9/copyinstr.0
@@ -598,6 +611,7 @@
 ./usr/share/man/cat9/copystr.0
 ./usr/share/man/cat9/cpu_switch.0
 ./usr/share/man/cat9/ctxsw.0
+./usr/share/man/cat9/disklabel.0
 ./usr/share/man/cat9/disk.0
 ./usr/share/man/cat9/disk_attach.0
 ./usr/share/man/cat9/disk_busy.0
@@ -637,8 +651,10 @@
 ./usr/share/man/cat9/pgsignal.0
 ./usr/share/man/cat9/physio.0
 ./usr/share/man/cat9/psignal.0
+./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/runtime.0
+./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
 ./usr/share/man/cat9/shutdownhook_establish.0
 ./usr/share/man/cat9/sleep.0
@@ -657,3 +673,4 @@
 ./usr/share/man/cat9/vslock.0
 ./usr/share/man/cat9/vsunlock.0
 ./usr/share/man/cat9/wakeup.0
+./usr/share/man/cat9/writedisklabel.0
