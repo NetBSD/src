@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.9 1999/03/07 10:14:09 mycroft Exp $
+.\" $NetBSD: at.1,v 1.10 1999/03/09 02:41:39 ross Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
@@ -219,6 +219,7 @@ shows completed but not yet deleted jobs in the queue.  Otherwise
 shows the time the job will be executed.
 .It Fl c
 Cats the jobs listed on the command line to standard output.
+.El
 .Sh FILES
 .Bl -tag -width /var/at/.lockfile -compact
 .It Pa /var/at/jobs
@@ -233,6 +234,7 @@ Allow permission control
 Deny permission control
 .It Pa /var/at/.lockfile
 Job-creation lock file.
+.El
 .Sh SEE ALSO
 .Xr cron 8 ,
 .Xr nice 1 ,
@@ -240,7 +242,6 @@ Job-creation lock file.
 .Xr sh 1 ,
 .Xr sendmail 8 ,
 .Xr atrun 8 .
-.El
 .Sh BUGS
 .Pp
 If the file
