@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 1997/03/21 14:30:20 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.35 1997/03/22 19:17:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -787,7 +787,7 @@ viking_hotfix(sc)
 	struct cpu_softc *sc;
 {
 	/* Test if we're directly on the MBus */
-	if (!(lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB)) {
+	if (!(lda(SRMMU_PCR, ASI_SRMMU) & VIKING_PCR_MB)) {
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
@@ -816,9 +816,9 @@ viking_mmu_enable()
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	if (cpuinfo.mxcc)
-		pcr |= SRMMU_PCR_TC;
+		pcr |= VIKING_PCR_TC;
 	else
-		pcr &= ~SRMMU_PCR_TC;
+		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }
 
@@ -852,8 +852,13 @@ cpumatch_hypersparc(sc, mp, node)
 void
 hypersparc_mmu_enable()
 {
-	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	sta(SRMMU_PCR, ASI_SRMMU, (pcr | SRMMU_PCR_C) & ~SRMMU_PCR_CE);
+	int pcr;
+
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	pcr |= HYPERSPARC_PCR_C;
+	pcr &= ~HYPERSPARC_PCR_CE;
+
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }
 
 /* Cypress 605 */
