@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.7 2001/10/22 07:06:20 mrg Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ cs4231_attach_ebus(parent, self, aux)
 		bh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	} else {
 		if (ebus_bus_map(ea->ea_bustag, 0,
-				 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+				 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 				 ea->ea_regs[0].size,
 				 BUS_SPACE_MAP_LINEAR,
 				 0, &bh) != 0) {
