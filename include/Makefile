@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.21 1993/08/01 05:41:49 mycroft Exp $
+#	$Id: Makefile,v 1.22 1993/08/15 23:31:16 mycroft Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -30,7 +30,9 @@ NOOBJ=	noobj
 SYS_INCLUDE=	copies
 .endif
 
-install: beforeinstall _PROGSUBDIR ${SYS_INCLUDE}
+afterinstall: ${SYS_INCLUDE}
+
+realinstall:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
