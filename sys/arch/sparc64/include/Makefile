@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/09/19 16:46:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14.8.1 2002/03/19 02:32:06 thorpej Exp $
 
 KDIR=	/sys/arch/sparc64/include
 INCSDIR= /usr/include/sparc64
@@ -13,10 +13,10 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kbd.h kbio.h kcore.h \
 	limits.h lock.h \
-	math.h \
+	math.h mutex_impl.h \
 	oldmon.h openpromio.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h reloc.h remote-sl.h \
+	reg.h reloc.h remote-sl.h rwlock_impl.h \
 	setjmp.h signal.h stdarg.h svr4_machdep.h \
 	trap.h types.h \
 	varargs.h vmparam.h vuid_event.h \

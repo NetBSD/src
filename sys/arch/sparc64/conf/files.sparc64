@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.58 2002/01/21 21:57:05 jdolecek Exp $
+#	$NetBSD: files.sparc64,v 1.58.4.1 2002/03/19 02:32:05 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -198,6 +198,7 @@ file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
+file	arch/sparc64/sparc64/lock_stubs.s
 file	arch/sparc64/sparc64/locore2.c
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/process_machdep.c
