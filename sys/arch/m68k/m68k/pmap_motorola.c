@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.7 2003/09/27 20:01:59 cl Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.8 2003/10/27 02:03:10 cl Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.7 2003/09/27 20:01:59 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.8 2003/10/27 02:03:10 cl Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -1678,6 +1678,10 @@ pmap_extract(pmap, va, pap)
 	boolean_t rv = FALSE;
 	paddr_t pa;
 	u_int pte;
+
+#ifdef DEBUG
+	pa = 0;	/* XXX: gcc */
+#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
