@@ -27,7 +27,7 @@
  *	i4b - mbuf handling support routines
  *	--------------------------------------
  *
- *	$Id: i4b_mbuf.h,v 1.1.1.1 2001/01/05 12:49:52 martin Exp $
+ *	$Id: i4b_mbuf.h,v 1.2 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -40,7 +40,7 @@
 
 /* layer 1 / layer 2 comunication: 3rd ph_data_req parameter */
 #define MBUF_DONTFREE	0
-#define MBUF_FREE	1	
+#define MBUF_FREE	1
 
 #define IF_QEMPTY(ifq)	((ifq)->ifq_len == 0)
 

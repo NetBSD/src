@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.13 2004/01/10 16:23:36 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.14 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.13 2004/01/10 16:23:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.14 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -75,7 +75,7 @@ softdep_mount(devvp, mp, fs, cred)
 	return (0);
 }
 
-void 
+void
 softdep_initialize()
 {
 
@@ -109,7 +109,7 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 	panic("softdep_setup_blkmapdep called");
 }
 
-void 
+void
 softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	struct inode *ip;
 	daddr_t lbn;
@@ -119,7 +119,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	long oldsize;
 	struct buf *bp;
 {
-	
+
 	panic("softdep_setup_allocdirect called");
 }
 
@@ -155,7 +155,7 @@ softdep_setup_freeblocks(ip, length, flags)
 	off_t length;
 	int flags;
 {
-	
+
 	panic("softdep_setup_freeblocks called");
 }
 
@@ -179,7 +179,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	panic("softdep_setup_directory_add called");
 }
 
-void 
+void
 softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 	struct inode *dp;
 	caddr_t base;
@@ -191,18 +191,18 @@ softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 	panic("softdep_change_directoryentry_offset called");
 }
 
-void 
+void
 softdep_setup_remove(bp, dp, ip, isrmdir)
 	struct buf *bp;
 	struct inode *dp;
 	struct inode *ip;
 	int isrmdir;
 {
-	
+
 	panic("softdep_setup_remove called");
 }
 
-void 
+void
 softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 	struct buf *bp;
 	struct inode *dp;
@@ -222,7 +222,7 @@ softdep_change_linkcnt(ip)
 	panic("softdep_change_linkcnt called");
 }
 
-void 
+void
 softdep_load_inodeblock(ip)
 	struct inode *ip;
 {
@@ -230,7 +230,7 @@ softdep_load_inodeblock(ip)
 	panic("softdep_load_inodeblock called");
 }
 
-void 
+void
 softdep_update_inodeblock(ip, bp, waitfor)
 	struct inode *ip;
 	struct buf *bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.39 2005/01/19 16:22:19 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.40 2005/02/26 22:39:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -353,7 +353,7 @@
 			*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);		\
 		}								\
 		}
-				
+
 
 #define	nfsm_strsiz(s,m) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
@@ -390,7 +390,7 @@
 		mb = mreq = nfsm_reqh((n),(a),(s),&bpos)
 
 #define nfsm_reqdone	m_freem(mrep); \
-		nfsmout: 
+		nfsmout:
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 #define nfsm_padlen(a)	(nfsm_rndup(a) - (a))
