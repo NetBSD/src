@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 1999/04/29 16:22:03 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 1999/09/06 21:50:47 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -954,7 +954,7 @@ Lunshadow:
 /* flush TLB and turn on caches */
 
 	
-	jbsr	_TBIA			| invalidate TLB
+	jbsr	__TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
 	tstl	d5
 	jeq	Lcacheon
@@ -1392,7 +1392,7 @@ ENTRY(copyseg)
 	movl	_CMAP2,a0
 	movl	_CADDR2,sp@-			| destination kernel VA
 	movl	d0,a0@				| load in page table
-	jbsr	_TBIS				| invalidate any old mapping
+	jbsr	__TBIS				| invalidate any old mapping
 	addql	#4,sp
 	movl	_CADDR2,a1			| destination addr
 	movl	sp@(4),a0			| source addr
@@ -1409,7 +1409,6 @@ Lcpydone:
 /*
  * Invalidate entire TLB.
  */
-ENTRY(TBIA)
 __TBIA:
 	cmpl	#MMU_68040,_mmutype
 	jeq	Ltbia040
@@ -1435,7 +1434,7 @@ Ltbiano60:
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-ENTRY(TBIS)
+__TBIS:
 #ifdef DEBUG
 	tstl	fulltflush			| being conservative?
 	jne	__TBIA				| yes, flush entire TLB
@@ -1468,178 +1467,6 @@ Ltbis040:
 Ltbisno60:
 #endif
 	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	fulltflush			| being conservative?
-	jne	__TBIA				| yes, flush everything
-#endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbias040
-	tstl	_mmutype
-	jpl	Lmc68851c			| 68851?
-	pflush #4,#4				| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr				| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4				| flush supervisor TLB entries
-	rts
-Ltbias040:
-| 68040 cannot specify supervisor/user on pflusha, so we flush all
-	.word	0xf518				| pflusha
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
-	jne	Ltbiasno60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0			| and clear all btc entries
-	movc	d0,cacr
-Ltbiasno60:
-#endif
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	fulltflush			| being conservative?
-	jne	__TBIA				| yes, flush everything
-#endif
-	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbiau040
-	tstl	_mmutype
-	jpl	Lmc68851d			| 68851?
-	pflush	#0,#4				| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr				| invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4				| flush user TLB entries
-	rts
-Ltbiau040:
-| 68040 cannot specify supervisor/user on pflusha, so we flush all
-	.word	0xf518				| pflusha
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
-	jne	Ltbiauno60
-	movc	cacr,d0
-	orl	#IC60_CUBC,d0			| but only user btc entries
-	movc	d0,cacr
-Ltbiauno60:
-#endif
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-ENTRY(ICPA)
-#if defined(M68030) || defined(M68020)
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype
-	jeq	Licia040
-#endif
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr				| invalidate i-cache
-	rts
-Licia040:
-#endif
-#if defined(M68040) || defined(M68060) 
-	.word	0xf498				| cinva ic, clears btc on 060
-	rts
-#endif
-
-/*
- * Invalidate data cache.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciax
-	.word	0xf478				| cpusha dc
-Ldciax:
-	rts
-
-ENTRY(DCIS)
-__DCIS:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldcisx
-	.word	0xf478				| cpusha dc
-	nop
-Ldcisx:
-	rts
-
-ENTRY(DCIU)
-__DCIU:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciux
-	.word	0xf478				| cpusha dc
-Ldciux:
-	rts
-
-| Invalid single cache line
-ENTRY(DCIAS)
-__DCIAS:
-	cmpl	#MMU_68040,_mmutype
-	jne	Ldciasx
-	movl	sp@(4),a0
-	.word	0xf468				| cpushl dc,a0@
-Ldciasx:
-	rts
-#if defined(M68040) || defined(M68060)
-ENTRY(ICPL)	/* invalidate instruction physical cache line */
-	movl    sp@(4),a0			| address
-	.word   0xf488				| cinvl ic,a0@
-	rts
-ENTRY(ICPP)	/* invalidate instruction physical cache page */
-	movl    sp@(4),a0			| address
-	.word   0xf490				| cinvp ic,a0@
-	rts
-ENTRY(DCPL)	/* invalidate data physical cache line */
-	movl    sp@(4),a0			| address
-	.word   0xf448				| cinvl dc,a0@
-	rts
-ENTRY(DCPP)	/* invalidate data physical cache page */
-	movl    sp@(4),a0			| address
-	.word   0xf450				| cinvp dc,a0@
-	rts
-ENTRY(DCPA)	/* invalidate data physical all */
-	.word   0xf458				| cinva dc
-	rts
-ENTRY(DCFL)	/* data cache flush line */
-	movl    sp@(4),a0			| address
-	.word   0xf468				| cpushl dc,a0@
-	rts
-ENTRY(DCFP)	/* data cache flush page */
-	movl    sp@(4),a0			| address
-	.word   0xf470				| cpushp dc,a0@
-	rts
-#endif	/* M68040 */
-
-ENTRY(PCIA)
-#if defined(M68030) || defined(M68030)
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype
-	jeq	Lpcia040
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr				| invalidate on-chip d-cache
-	rts
-#endif
-#if defined(M68040) || defined(M68060)
-ENTRY(DCFA)
-Lpcia040:
-	.word	0xf478				| cpusha dc
-	rts
-#endif
 
 ENTRY(ecacheon)
 	rts
