@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: update.c,v 1.4 1994/03/27 09:27:38 cgd Exp $";
+static char rcsid[] = "$Id: update.c,v 1.5 2001/01/05 03:54:35 lukem Exp $";
 #endif /* not lint */
 
 /* JF implement the 'r' 'u' and 'A' options for tar. */
@@ -229,7 +229,7 @@ append_file (p)
       count = read (fd, start->charptr, bufsiz);
       if (count < 0)
 	{
-	  msg_perror ("read error at byte %qd reading %d bytes in file %s", statbuf.st_size - bytes_left, bufsiz, p);
+	  msg_perror ("read error at byte %lld reading %d bytes in file %s", (long long)(statbuf.st_size - bytes_left), bufsiz, p);
 	  exit (EX_ARGSBAD);	/* FOO */
 	}
       bytes_left -= count;
