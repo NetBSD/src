@@ -57,7 +57,7 @@ HDRS	= been_here.h bounce.h canon_addr.h cleanup_user.h clnt_stream.h \
 	rewrite_clnt.h sent.h smtp_stream.h split_addr.h string_list.h \
 	sys_exits.h timed_ipc.h tok822.h xtext.h bounce_log.h flush_clnt.h \
 	mbox_conf.h mbox_open.h abounce.h qmqp_proto.h verp_sender.h \
-	match_parent_style.h
+	match_parent_style.h quote_flags.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
@@ -579,6 +579,7 @@ mail_copy.o: ../../include/vstring.h
 mail_copy.o: ../../include/vstring_vstream.h
 mail_copy.o: ../../include/stringops.h
 mail_copy.o: quote_822_local.h
+mail_copy.o: quote_flags.h
 mail_copy.o: record.h
 mail_copy.o: rec_type.h
 mail_copy.o: mail_queue.h
@@ -884,11 +885,13 @@ quote_821_local.o: ../../include/sys_defs.h
 quote_821_local.o: ../../include/vstring.h
 quote_821_local.o: ../../include/vbuf.h
 quote_821_local.o: quote_821_local.h
+quote_821_local.o: quote_flags.h
 quote_822_local.o: quote_822_local.c
 quote_822_local.o: ../../include/sys_defs.h
 quote_822_local.o: ../../include/vstring.h
 quote_822_local.o: ../../include/vbuf.h
 quote_822_local.o: quote_822_local.h
+quote_822_local.o: quote_flags.h
 rec2stream.o: rec2stream.c
 rec2stream.o: ../../include/sys_defs.h
 rec2stream.o: ../../include/vstring.h
@@ -968,6 +971,7 @@ rewrite_clnt.o: ../../include/vstring_vstream.h
 rewrite_clnt.o: ../../include/events.h
 rewrite_clnt.o: ../../include/iostuff.h
 rewrite_clnt.o: quote_822_local.h
+rewrite_clnt.o: quote_flags.h
 rewrite_clnt.o: mail_proto.h
 rewrite_clnt.o: ../../include/attr.h
 rewrite_clnt.o: mail_params.h
@@ -1036,6 +1040,8 @@ tok822_parse.o: ../../include/sys_defs.h
 tok822_parse.o: ../../include/vstring.h
 tok822_parse.o: ../../include/vbuf.h
 tok822_parse.o: ../../include/msg.h
+tok822_parse.o: quote_822_local.h
+tok822_parse.o: quote_flags.h
 tok822_parse.o: tok822.h
 tok822_parse.o: resolve_clnt.h
 tok822_resolve.o: tok822_resolve.c
