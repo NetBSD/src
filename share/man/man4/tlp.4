@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlp.4,v 1.7 2001/06/11 01:13:28 wiz Exp $
+.\"	$NetBSD: tlp.4,v 1.8 2001/06/30 16:55:03 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,8 +99,8 @@ driver supports the following chips:
 .Em DECchip 21040
 -- This is the original Tulip Ethernet chip.  It supports 10Mb/s speeds
 over a built-in serial interface.  The serial interface has support for
-10baseT and AUI media.  The AUI port may be connected to 10base5 AUI
-or 10base2 BNC connectors, or both, selected by a gang jumper on the
+10BASE-T and AUI media.  The AUI port may be connected to 10BASE5 AUI
+or 10BASE2 BNC connectors, or both, selected by a gang jumper on the
 board.  Some boards connect the BNC connector to an external serial
 interface.  The driver has no way of knowing this, but the external
 serial interface may be selected with the
@@ -126,7 +126,7 @@ and
 -- This is the second chip in the Tulip family, dubbed
 .Dq Tulip Plus .
 It supports 10Mb/s speeds over a built-in serial interface.  The serial
-interface has support for 10baseT, 10base5 AUI, and 10base2 BNC media.
+interface has support for 10BASE-T, 10BASE5 AUI, and 10BASE2 BNC media.
 The serial interface also includes support for IEEE 802.3u NWay over
 the 10baseT interface, for negotiation of duplex mode with the link
 partner.
@@ -136,19 +136,19 @@ Boards that include this chip include the DEC DE-450 and some SMC boards.
 .Em DECchip 21140 and 21140A
 -- This is the third chip in the Tulip family, dubbed
 .Dq FasterNet .
-It supports 10Mb/s speeds with a built-in 10baseT encoder/decoder,
-and 100Mb/s speeds with a built-in 100base PCS function.  Support
-for 100baseTX and 100baseT4 is provided by a built-in scrambler.
-Support for 100baseFX is possible with an appropriate PMD connected
-to the 100base PCS.  The 21140 and 21140A also support 10Mb/s and
+It supports 10Mb/s speeds with a built-in 10BASE-T encoder/decoder,
+and 100Mb/s speeds with a built-in 100BASE PCS function.  Support
+for 100BASE-TX and 100BASE-T4 is provided by a built-in scrambler.
+Support for 100BASE-FX is possible with an appropriate PMD connected
+to the 100BASE PCS.  The 21140 and 21140A also support 10Mb/s and
 100Mb/s speeds over an MII interface connected to one or more PHYs.
 .Pp
 The 21140 and 21140A include a general purpose I/O facility, which
 may be used to toggle relays on the board.  This facility is often
 used to reset individual board modules (e.g. the MII bus), select
 the output path of the chip (e.g. connect the UTP port on the board
-to the PHY, built-in 10baseT ENDEC, or built-in 100baseT PMD), or
-detect link status (by reading an output pin on the 100baseT magnetics).
+to the PHY, built-in 10BASE-T ENDEC, or built-in 100BASE-T PMD), or
+detect link status (by reading an output pin on the 100BASE-T magnetics).
 .Pp
 The 21140 and 21140A use a standardized data structure located in
 the SROM to describe how the chip should be programmed for various
@@ -168,22 +168,22 @@ identical, with only minor differences related to available technology
 at time of manufacture.  Both chips include support for 10Mb/s speeds
 over a built-in serial interface, and support for 10Mb/s and 100Mb/s
 speeds over an MII interface connected to one or more PHYs.  The
-serial interface includes support for 10baseT, 10base5 AUI, and
-10base2 BNC media, as well as support for IEEE 802.3u NWay over
-the 10baseT interface, for negotiation of duplex mode and link
+serial interface includes support for 10BASE-T, 10BASE5 AUI, and
+10BASE2 BNC media, as well as support for IEEE 802.3u NWay over
+the 10BASE-T interface, for negotiation of duplex mode and link
 speed with the link partner.
 .Pp
 The 21143 adds support for 100Mb/s speeds with a built-in
-PCS function.  Support for 100baseTX and 100baseT4 is provided by
-a built-in scrambler.  Support for 100baseFX is possible with an
-appropriate PMD connected to the 100base PCS.
+PCS function.  Support for 100BASE-TX and 100BASE-T4 is provided by
+a built-in scrambler.  Support for 100BASE-FX is possible with an
+appropriate PMD connected to the 100BASE PCS.
 .Pp
 The 21142 and 21143 include a general purpose I/O facility, which
 may be used to toggle relays on the board.  This facility is often
 used to reset individual board modules (e.g. the MII bus), select
 the output path of the chip (e.g. connect the UTP port on the board
-to the PHY, built-in serial interface, or built-in 100baseT PMD), or
-detect link status (by reading an output pin on the 100baseT magnetics).
+to the PHY, built-in serial interface, or built-in 100BASE-T PMD), or
+detect link status (by reading an output pin on the 100BASE-T magnetics).
 .Pp
 The 21142 and 21143 use a standardized data structure located in
 the SROM to describe how the chip should be programmed for various
@@ -206,9 +206,9 @@ card.
 were some of the first commonly-available Tulip clones,
 appearing on low-cost boards when it became difficult for board
 vendors to obtain DECchip 21140A parts.  They include support for
-10Mb/s speeds over a built-in 10baseT encoder/decoder, and 100Mb/s
-speeds over a built-in PCS function.  Support for 100baseTX and
-100baseT4 is provided by a built-in scrambler and transceiver
+10Mb/s speeds over a built-in 10BASE-T encoder/decoder, and 100Mb/s
+speeds over a built-in PCS function.  Support for 100BASE-TX and
+100BASE-T4 is provided by a built-in scrambler and transceiver
 module.  The transceiver module also includes support for NWay,
 for negotiating duplex mode and link speed with the link partner.
 These chips also include support for 10Mb/s and 100Mb/s speeds over
