@@ -1,4 +1,4 @@
-/*	$NetBSD: maxine.h,v 1.6 1998/06/22 09:37:41 jonathan Exp $	*/
+/*	$NetBSD: maxine.h,v 1.7 1999/03/25 01:17:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,21 +39,21 @@
  *	@(#)maxine.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -70,13 +70,13 @@
  * Revision 2.3  92/04/01  15:14:52  rpd
  * 	Defined pseudo slot for mappable timer.
  * 	[92/03/11  02:37:41  af]
- * 
+ *
  * Revision 2.2  92/03/02  18:34:28  rpd
  * 	Created, from the DEC specs:
  * 	"MAXine System Module Functional Specification"  Revision 1.2
  * 	Workstation Systems Engineering, Palo Alto, CA. July 15, 1991.
  * 	[92/01/17            af]
- * 
+ *
  */
 /*
  *	File: maxine.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.11 1999/03/03 06:46:02 simonb Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.12 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.11 1999/03/03 06:46:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.12 1999/03/25 01:17:52 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.11 1999/03/03 06:46:02 simonb Exp
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h> 
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn03.h>
@@ -109,11 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.11 1999/03/03 06:46:02 simonb Exp
 void		dec_3maxplus_init __P((void));
 void		dec_3maxplus_os_init __P((void));
 void		dec_3maxplus_bus_reset __P((void));
-void		dec_3maxplus_enable_intr 
+void		dec_3maxplus_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
 
-int		dec_3maxplus_intr __P((u_int mask, u_int pc, 
+int		dec_3maxplus_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 
 void		dec_3maxplus_cons_init __P((void));
@@ -130,7 +130,7 @@ void	dec_3maxplus_tc_reset __P((void));		/* XXX unused? */
 
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_3maxplus_init()
@@ -314,7 +314,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = 
+	register volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(KN03_REG_IMSK);
@@ -378,7 +378,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 			asc_dma_intr();
 #endif
 		}
-	
+
 	/*
 	 * XXX
 	 * DMA and non-DMA  interrupts from the IOCTl asic all use the
@@ -403,14 +403,14 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 			(tc_slot_info[KN03_SCC0_SLOT].sc);
 			intrcnt[SERIAL0_INTR]++;
 		}
-	
+
 		if ((intr & KN03_INTR_SCC_1) &&
 			tc_slot_info[KN03_SCC1_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
 			(tc_slot_info[KN03_SCC1_SLOT].sc);
 			intrcnt[SERIAL1_INTR]++;
 		}
-	
+
 		if ((intr & KN03_INTR_TC_0) &&
 			tc_slot_info[0].intr) {
 			(*(tc_slot_info[0].intr))
@@ -443,7 +443,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 		else if (intr & KN03_INTR_TC_2)
 			printf ("can't handle tc2 interrupt\n");
 #endif /*DIAGNOSTIC*/
-	
+
 		if ((intr & KN03_INTR_LANCE) &&
 			tc_slot_info[KN03_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KN03_LANCE_SLOT].intr))

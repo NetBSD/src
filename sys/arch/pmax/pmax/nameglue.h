@@ -1,7 +1,7 @@
-/*	$NetBSD: nameglue.h,v 1.4 1997/06/22 07:42:41 jonathan Exp $	*/
+/*	$NetBSD: nameglue.h,v 1.5 1999/03/25 01:17:53 simonb Exp $	*/
 
 /*
- * Use macros to glue names for "machine-independent" functions 
+ * Use macros to glue names for "machine-independent" functions
  *  (e.g., from new-config code modelled after DEC Alpha drivers)
  * to old-style pmax names.
  *
@@ -17,7 +17,7 @@
 #define MAGIC_READ \
 		 MachEmptyWriteBuffer()	/*XXX*/ /*FIXME*/
 
-/* 
+/*
  * memory barrier
  */
 #define MB() \

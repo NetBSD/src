@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.25 1998/09/26 20:59:42 drochner Exp $ */
+/* $NetBSD: clock.c,v 1.26 1999/03/25 01:17:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 1998/09/26 20:59:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 1999/03/25 01:17:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,7 +162,7 @@ setstatclockrate(newhz)
 	/* nothing we can do */
 }
 
-/*  
+/*
  * Experiments (and  passing years) show that Decstation PROMS
  * assume the kernel uses the clock chip as a time-of-year clock.
  * The PROM assumes the clock is always set to 1972 or 1973, and contains

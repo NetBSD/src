@@ -1,4 +1,4 @@
-/*	$NetBSD: turbochannel.h,v 1.8 1996/05/19 01:44:45 jonathan Exp $	*/
+/*	$NetBSD: turbochannel.h,v 1.9 1999/03/25 01:17:53 simonb Exp $	*/
 
 
 /*-
@@ -40,21 +40,21 @@
  *	@(#)turbochannel.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -137,5 +137,5 @@ extern	tc_option_t	tc_slot_info[];
 extern	void (*tc_slot_hand_fill) __P((tc_option_t *));
 extern	void	(*tc_enable_interrupt)  __P ((u_int slotno,
 					      int (*handler) __P ((void *)),
-					      void *sc, int onoff)); 
+					      void *sc, int onoff));
 #endif /* _KERNEL */

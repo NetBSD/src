@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 1999/03/24 05:51:09 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 1999/03/25 01:17:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ extern	paddr_t kvtophys __P((vaddr_t));	/* XXX */
 struct pmax_bus_dma_tag pmax_default_bus_dma_tag = {
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
-	_bus_dmamap_load,   
+	_bus_dmamap_load,
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
@@ -544,17 +544,17 @@ _bus_dmamap_sync(t, map, offset, len, ops)
  */
 int
 _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t; 
+	bus_dma_tag_t t;
 	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
-	int flags; 
+	int flags;
 {
 	extern paddr_t avail_start, avail_end;
 	vaddr_t curaddr, lastaddr;
 	psize_t high;
-	vm_page_t m;    
+	vm_page_t m;
 	struct pglist mlist;
 	int curseg, error;
 
@@ -647,7 +647,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
-	caddr_t *kvap;  
+	caddr_t *kvap;
 	int flags;
 {
 	vaddr_t va;

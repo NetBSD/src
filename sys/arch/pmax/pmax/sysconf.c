@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.3 1999/03/15 11:41:25 nisimura Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.4 1999/03/25 01:17:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -131,7 +131,7 @@ platform_not_configured()
 	    systype);
 	printf("Please build a kernel with \"options %s\" and reboot.\n",
 	    sysinit[systype].option);
-	printf("\n");   
+	printf("\n");
 	panic("platform not configured\n");
 }
 
