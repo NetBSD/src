@@ -81,6 +81,7 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
+#include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 
 #define	SEA_SCB_MAX	32	/* allow maximally 8 scsi control blocks */
