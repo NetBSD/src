@@ -820,12 +820,16 @@ pccnpollc(Dev_t dev, int on)
 {
 	kbd_polling = on;
 	if (!on) {
+		register int s;
+
 		/*
 		 * If disabling polling, make sure there are no bytes left in
 		 * the FIFO, holding up the interrupt line.  Otherwise we
 		 * won't get any further interrupts.
 		 */
+		s = spltty();
 		pcrint();
+		splx(s);
 	}
 }
 
