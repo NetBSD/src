@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setruid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setruid.c,v 1.6 1994/07/21 17:13:39 jtc Exp $";
+static char *rcsid = "$Id: setruid.c,v 1.6.8.1 1997/03/06 16:21:59 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,5 +49,5 @@ setruid(ruid)
 	int ruid;
 #endif
 {
-	return (__setreuid(ruid, -1));
+	return (setreuid(ruid, -1));
 }
