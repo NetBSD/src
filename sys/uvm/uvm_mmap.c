@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.34 1999/07/14 21:06:30 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.35 1999/07/17 21:35:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -981,7 +981,7 @@ sys_mlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -1028,7 +1028,7 @@ sys_munlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -1260,7 +1260,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 				goto bad;
 			}
 			retval = uvm_map_pageable(map, *addr, *addr + size,
-			    FALSE, TRUE);
+			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {
 				/* unmap the region! */
 				(void) uvm_unmap(map, *addr, *addr + size);
