@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.7 2001/01/21 14:00:32 takemura Exp $	*/
+/*	$NetBSD: mq200.c,v 1.8 2001/02/15 09:17:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -115,9 +115,27 @@ mq200_attach(sc)
 	struct hpcfb_attach_args ha;
 	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
-	regval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MQ200_PC08R);
-	printf(": MQ200 Rev.%02lx video controller\n", regval & 0xff);
+	printf(": ");
+	if (mq200_fbinit(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
 
+	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
+	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_fbconf.hf_baseaddr -
+	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
+	DPRINTF(("hf_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
+	DPRINTF(("hf_offset=%lx\n", sc->sc_fbconf.hf_offset));
+
+	regval = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MQ200_PC08R);
+	printf("MQ200 Rev.%02lx video controller", regval & 0xff);
+	if (console) {
+		printf(", console");
+	}
+	printf("\n");
+        printf("%s: framebuffer address: 0x%08lx\n",
+		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	
 	/* Add a power hook to power saving */
 	sc->sc_powerstate = MQ200_POWERSTATE_D0;
 	sc->sc_powerhook = powerhook_establish(mq200_power, sc);
@@ -133,17 +151,6 @@ mq200_attach(sc)
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
 			sc->sc_dev.dv_xname);
-
-	if (mq200_fbinit(&sc->sc_fbconf) != 0) {
-		/* just return so that hpcfb will not be attached */
-		return;
-	}
-	
-	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
-	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_fbconf.hf_baseaddr -
-	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
-	DPRINTF(("hf_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
-	DPRINTF(("hf_offset=%lx\n", sc->sc_fbconf.hf_offset));
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("mq200_attach: can't init fb console");
