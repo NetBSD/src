@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.23 2004/10/28 07:07:41 yamt Exp $	*/
+/*	$NetBSD: rl.c,v 1.24 2005/02/26 12:45:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -39,11 +39,11 @@
  *	Do overlapping seeks on multiple drives
  *
  * Implementation comments:
- *	
+ *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.23 2004/10/28 07:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.24 2005/02/26 12:45:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,7 +211,7 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	 * The RL11 can only have one transfer going at a time, 
+	 * The RL11 can only have one transfer going at a time,
 	 * and max transfer size is one track, so only one dmamap
 	 * is needed.
 	 */
@@ -404,17 +404,17 @@ rlstrategy(struct buf *bp)
 {
 	struct disklabel *lp;
 	struct rlc_softc *sc;
-        struct rl_softc *rc;
-        int unit, s, err;
-        /*
-         * Make sure this is a reasonable drive to use.
-         */
-        unit = DISKUNIT(bp->b_dev);
-        if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
-                bp->b_error = ENXIO;
-                bp->b_flags |= B_ERROR;
-                goto done;
-        }
+	struct rl_softc *rc;
+	int unit, s, err;
+	/*
+	 * Make sure this is a reasonable drive to use.
+	 */
+	unit = DISKUNIT(bp->b_dev);
+	if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
 	if (rc->rc_state != DK_OPEN) /* How did we end up here at all? */
 		panic("rlstrategy: state impossible");
 
@@ -513,7 +513,7 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case DIOCAWEDGE:
 	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
+		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -522,10 +522,10 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
+		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -534,10 +534,10 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
+		struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&rc->rc_disk, dkwl, p));
 	    }
@@ -631,7 +631,7 @@ rlcintr(void *arg)
 }
 
 /*
- * Start routine. First position the disk to the given position, 
+ * Start routine. First position the disk to the given position,
  * then start reading/writing. An optimization would be to be able
  * to handle overlapping seeks between disks.
  */

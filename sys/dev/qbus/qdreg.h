@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.6 2003/08/07 16:31:16 agc Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.7 2005/02/26 12:45:06 simonb Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -61,7 +61,7 @@
 
 /* ADDER status and interrupt enable registers [1], [2], [3] */
 
-#define DISABLE 		0x0000
+#define DISABLE			0x0000
 #define PAUSE_COMPLETE		0x0001
 #define FRAME_SYNC		0x0002
 #define INIT_COMPLETE		0x0004
@@ -70,13 +70,13 @@
 #define ADDRESS_COMPLETE	0x0010
 #define RX_READY		0x0020
 #define TX_READY		0x0040
-#define ID_SCROLL_READY 	0x0080
+#define ID_SCROLL_READY		0x0080
 
 #define TOP_CLIP		0x0100
 #define BOTTOM_CLIP		0x0200
 #define LEFT_CLIP		0x0400
 #define RIGHT_CLIP		0x0800
-#define NO_CLIP 		0x1000
+#define NO_CLIP			0x1000
 #define VSYNC			0x2000
 
 /* ADDER command register [8], [10] */
@@ -93,7 +93,7 @@
 #define S1E			0x0800
 #define S2E			0x1000
 #define VIPER_Z_LOAD		0x01A0
-#define ID_LOAD 		0x0100
+#define ID_LOAD			0x0100
 #define CANCEL			0x0000
 #define LF_R1			0x0000
 #define LF_R2			0x0010
@@ -114,7 +114,7 @@
 
 /* ADDER source 2 size register */
 
-#define NO_TILE 		0x0080
+#define NO_TILE			0x0080
 
 /* External registers base addresses */
 
@@ -123,7 +123,7 @@
 
 /* VIPER registers */
 
-#define RESOLUTION_MODE 	0x0080
+#define RESOLUTION_MODE		0x0080
 #define MEMORY_BUS_WIDTH	0x0081
 #define PLANE_ADDRESS		0x0083
 #define LU_FUNCTION_R1		0x0084
@@ -147,7 +147,7 @@
 
 /* VIPER scroll registers */
 
-#define SCROLL_CONSTANT 	0x0082
+#define SCROLL_CONSTANT		0x0082
 #define SCROLL_FILL		0x008b
 #define SCROLL_FILL_Z		0x0008
 #define LEFT_SCROLL_MASK	0x008c
@@ -164,8 +164,8 @@
 #define ID			0x0010
 #define NO_ID			0x0000
 #define WAIT			0x0020
-#define NO_WAIT 		0x0000
-#define BAR_SHIFT_DELAY 	WAIT
+#define NO_WAIT			0x0000
+#define BAR_SHIFT_DELAY		WAIT
 #define NO_BAR_SHIFT_DELAY	NO_WAIT
 
 
@@ -175,7 +175,7 @@
 #define LF_D_XOR_S		0x0006
 #define LF_SOURCE		0x000A
 #define LF_D_OR_S		0x000E
-#define LF_ONES 		0x000F
+#define LF_ONES			0x000F
 #define INV_M1_M2		0x0030
 #define FULL_SRC_RESOLUTION	0X00C0 /* makes second pass like first pass */
 
@@ -254,28 +254,28 @@
 	    u_short y_index_new;		/* new y index */
 	    u_short x_index_old;		/* old x index */
 	    u_short y_index_old;		/* old y index */
-	    u_short x_clip_min; 	/* left clipping boundary */
-	    u_short x_clip_max; 	/* right clipping boundary */
-	    u_short y_clip_min; 	/* upper clipping boundary */
-	    u_short y_clip_max; 	/* lower clipping boundary */
+	    u_short x_clip_min;		/* left clipping boundary */
+	    u_short x_clip_max;		/* right clipping boundary */
+	    u_short y_clip_min;		/* upper clipping boundary */
+	    u_short y_clip_max;		/* lower clipping boundary */
 	    u_short spare2;		/* spare address (another!) */
 
 	    /* rasterop control registers */
 
 	    u_short source_1_dx;	/* source #1 x vector */
 	    u_short source_1_dy;	/* source #1 y vector*/
-	    u_short source_1_x; 	/* source #1 x origin */
-	    u_short source_1_y; 	/* source #1 y origin */
+	    u_short source_1_x;		/* source #1 x origin */
+	    u_short source_1_y;		/* source #1 y origin */
 	    u_short destination_x;	/* destination x origin */
 	    u_short destination_y;	/* destination y origin */
 	    u_short fast_dest_dx;	/* destination x fast vector */
 	    u_short fast_dest_dy;	/* destination y fast vector */
 	    u_short slow_dest_dx;	/* destination x slow vector */
 	    u_short slow_dest_dy;	/* destination y slow vector */
-	    u_short fast_scale; 	/* scale factor for fast vector */
-	    u_short slow_scale; 	/* scale factor for slow vector */
-	    u_short source_2_x; 	/* source #2 x origin */
-	    u_short source_2_y; 	/* source #2 y origin */
+	    u_short fast_scale;		/* scale factor for fast vector */
+	    u_short slow_scale;		/* scale factor for slow vector */
+	    u_short source_2_x;		/* source #2 x origin */
+	    u_short source_2_y;		/* source #2 y origin */
 	    u_short source_2_size;	/* source #2 height & width */
 	    u_short error_1;		/* error regs (?) */
 	    u_short error_2;
@@ -305,10 +305,10 @@
 	/* command definitions */
 
 #define EN_RCV		0x01
-#define DIS_RCV 	0x02
+#define DIS_RCV		0x02
 #define EN_XMT		0x04
-#define DIS_XMT 	0x08
-#define RESET_M 	0x10
+#define DIS_XMT		0x08
+#define RESET_M		0x10
 #define RESET_RCV	0x20
 #define RESET_XMT	0x30
 #define RESET_ERR	0x40
@@ -330,10 +330,10 @@
 
 	/* status register bit definitions */
 
-#define RCV_RDY 	0x01
+#define RCV_RDY		0x01
 #define FIFO_FULL	0x02
-#define XMT_RDY 	0x04
-#define XMT_EMT 	0x08
+#define XMT_RDY		0x04
+#define XMT_EMT		0x08
 #define OVER_ERR	0x10
 #define ERR_PARITY	0x20
 #define FRAME_ERR	0x40
@@ -346,24 +346,24 @@
 
 	    short modeA;		/* ch.A mode reg (read/write) */
 	    short statusA;		/* ch.A status reg (read) */
-#define clkselA statusA 		/* ch.A clock slect reg (write) */
-	    short cmdA; 		/* ch.A command reg (write) */
+#define clkselA statusA			/* ch.A clock slect reg (write) */
+	    short cmdA;			/* ch.A command reg (write) */
 	    short dataA;		/* rcv/xmt data ch.A (read/write) */
 	    short inchng;		/* input change state reg (read) */
 #define auxctl inchng			/* auxiliary control reg (write) */
 	    short istatus;		/* interrupt status reg (read) */
 #define imask istatus			/* interrupt mask reg (write) */
-	    short CThi; 		/* counter/timer hi byte (read) */
+	    short CThi;			/* counter/timer hi byte (read) */
 #define CTRhi CThi			/* counter/timer hi reg (write) */
-	    short CTlo; 		/* counter/timer lo byte (read) */
+	    short CTlo;			/* counter/timer lo byte (read) */
 #define CTRlo CTlo			/* counter/timer lo reg (write) */
 
 	    /* channel B - pointing device */
 
 	    short modeB;		/* ch.B mode reg (read/write) */
 	    short statusB;		/* ch.B status reg (read) */
-#define clkselB statusB 		/* ch.B clock select reg (write) */
-	    short cmdB; 		/* ch.B command reg (write) */
+#define clkselB statusB			/* ch.B clock select reg (write) */
+	    short cmdB;			/* ch.B command reg (write) */
 	    short dataB;		/* ch.B rcv/xmt data (read/write) */
 	    short rsrvd;
 	    short inport;		/* input port (read) */
