@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.145 2004/03/24 15:34:51 atatat Exp $	 */
+/* $NetBSD: machdep.c,v 1.146 2004/04/24 04:56:59 atatat Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2004/04/24 04:56:59 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -298,9 +298,9 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "console_device", NULL,
+		       CTLTYPE_STRUCT, "booted_device", NULL,
 		       sysctl_machdep_booted_device, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
 	/*
 	 * I don't think CPU_BOOTED_KERNEL is available to the kernel.
 	 */
