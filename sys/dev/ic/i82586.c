@@ -1,11 +1,11 @@
-/*	$NetBSD: i82586.c,v 1.16 1998/08/15 03:02:45 mycroft Exp $	*/
+/*	$NetBSD: i82586.c,v 1.17 1998/08/15 04:16:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,6 @@
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
  *  Agricultural College.
  * Copyright (c) 1992, 1993, Garrett A. Wollman.
