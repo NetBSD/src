@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.195 1998/06/24 20:58:44 sommerfe Exp $
+#	$NetBSD: files,v 1.196 1998/06/25 21:05:50 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -13,8 +13,6 @@ defopt	UCONSOLE
 defopt	DEVPAGER
 defopt	SWAPPAGER
 defopt	VNODEPAGER
-
-# defopt	FIFO		# No longer optional
 
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
