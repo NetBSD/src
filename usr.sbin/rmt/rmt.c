@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.4 1994/03/30 02:33:23 cgd Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.5 1995/04/09 19:02:54 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -97,7 +97,8 @@ top:
 			(void) close(tape);
 		getstring(device); getstring(mode);
 		DEBUG2("rmtd: O %s %s\n", device, mode);
-		tape = open(device, atoi(mode));
+		tape = open(device, atoi(mode),
+		    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
 		if (tape < 0)
 			goto ioerror;
 		goto respond;
