@@ -1,9 +1,7 @@
-#	$NetBSD: shlib_version,v 1.34 2003/12/04 21:26:09 jdc Exp $
+#	$NetBSD: shlib_version,v 1.35 2004/03/22 18:57:58 jdc Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
+#	Remember to increment the major numbers of both libform and libmenu
+#	when the libcurses major number increments.
 #
-#	Note - when the major number is next incremented :
-#		1) remove the function can_change_colors
-#		2) change the attribute bits of  __LDATA to support more
-#		   colors and change to macros to match
-major=5
-minor=11
+major=6
+minor=0
