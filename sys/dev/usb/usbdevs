@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.191 2001/10/25 11:17:18 augustss Exp $
+$NetBSD: usbdevs,v 1.192 2001/10/25 13:43:30 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -733,6 +733,7 @@ product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
 product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
+product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 
 /* Lucent products */
