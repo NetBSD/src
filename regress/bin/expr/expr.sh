@@ -11,6 +11,13 @@ function test_expr {
 	
 # These will get eval'd so escape any meta characters
 
+# Test overflow cases
+test_expr '4611686018427387904 + 4611686018427387903' '9223372036854775807'
+test_expr '4611686018427387904 + 4611686018427387904' "expr: integer overflow or underflow occurred for operation '4611686018427387904 + 4611686018427387904'"
+test_expr '4611686018427387904 - -4611686018427387904' "expr: integer overflow or underflow occurred for operation '4611686018427387904 - -4611686018427387904'"
+test_expr '-4611686018427387904 - 4611686018427387903' '-9223372036854775807'
+test_expr '-4611686018427387904 - 4611686018427387905' "expr: integer overflow or underflow occurred for operation '-4611686018427387904 - 4611686018427387905'"
+
 # Test from gtk-- configure that cause problems on old expr
 test_expr '3 \> 3 \| 3 = 3 \& 4 \> 4 \| 3 = 3 \& 4 = 4 \& 5 \>= 5' '1'
 test_expr '3 \> 3 \| 3 = 3 \& 4 \> 4 \| 3 = 3 \& 4 = 4 \& 5 \>= 6' '0'
