@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46.2.2 2000/07/14 15:33:02 minoura Exp $
+#	$NetBSD: GENERIC,v 1.46.2.3 2000/08/11 20:18:10 mason Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.46.2.2 $"
+#ident 		"GENERIC-$Revision: 1.46.2.3 $"
 
 maxusers	8
 
@@ -309,7 +309,7 @@ pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		16	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		64	# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
