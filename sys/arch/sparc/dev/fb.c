@@ -42,7 +42,7 @@
  *	@(#)fb.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: fb.c,v 1.7 92/11/26 01:12:48 torek Exp 
- * $Id: fb.c,v 1.2 1993/10/11 02:36:40 deraadt Exp $
+ * $Id: fb.c,v 1.3 1994/11/02 04:55:56 deraadt Exp $
  */
 
 /*
@@ -102,7 +102,7 @@ fbclose(dev, flags, mode, p)
 int
 fbioctl(dev, cmd, data, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;

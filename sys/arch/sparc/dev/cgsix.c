@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.8 1994/10/15 08:57:20 deraadt Exp $
+ * $Id: cgsix.c,v 1.9 1994/11/02 04:55:51 deraadt Exp $
  */
 
 /*
@@ -279,7 +279,7 @@ cgsixclose(dev, flags, mode, p)
 int
 cgsixioctl(dev, cmd, data, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 	int flags;
 	struct proc *p;

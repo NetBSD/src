@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.2 1994/10/30 18:43:21 deraadt Exp $
+ *	$Id: if_ie.c,v 1.3 1994/11/02 04:55:59 deraadt Exp $
  */
 
 /*
@@ -288,7 +288,7 @@ static void ie_vmerun __P((struct ie_softc *));
 int iewatchdog __P(( /* short */ ));
 int ieintr __P((void *));
 int ieinit __P((struct ie_softc * sc));
-int ieioctl __P((struct ifnet * ifp, int command, caddr_t data));
+int ieioctl __P((struct ifnet * ifp, u_long command, caddr_t data));
 int iestart __P((struct ifnet * ifp));
 void iereset __P((struct ie_softc *));
 static void ie_readframe __P((struct ie_softc * sc, int bufno));
@@ -1825,7 +1825,7 @@ iestop(sc)
 int
 ieioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int     cmd;
+	u_long	cmd;
 	caddr_t data;
 {
 	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];

@@ -42,7 +42,7 @@
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bwtwo.c,v 1.14 92/11/26 02:28:04 torek Exp 
- * $Id: bwtwo.c,v 1.5 1994/10/15 05:48:50 deraadt Exp $
+ * $Id: bwtwo.c,v 1.6 1994/11/02 04:55:50 deraadt Exp $
  */
 
 /*
@@ -189,7 +189,7 @@ bwtwoclose(dev, flags, mode, p)
 int
 bwtwoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;

@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.8 1994/05/13 20:09:00 deraadt Exp $
+ * $Id: cons.c,v 1.9 1994/11/02 04:55:54 deraadt Exp $
  */
 
 /*
@@ -222,7 +222,7 @@ cnwrite(dev, uio, flag)
 
 cnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
