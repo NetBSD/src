@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <err.h>
+#include <errno.h>
 
 #include <netsmb/netbios.h>
 #include <netsmb/smb_lib.h>
@@ -69,8 +70,10 @@ int
 smb_lib_init(void)
 {
 	int error;
+#if __FreeBSD_version > 400000
 	int kv;
 	size_t kvlen = sizeof(kv);
+#endif
 
 	if (smblib_initialized)
 		return 0;
@@ -179,6 +182,10 @@ smb_open_rcfile(void)
 void *
 smb_dumptree(void)
 {
+#ifdef __NetBSD__
+	/* XXX not supported on NetBSD */
+	return NULL;
+#else
 	size_t len;
 	void *p;
 	int error;
@@ -207,6 +214,7 @@ smb_dumptree(void)
 		return NULL;
 	}
 	return p;
+#endif /* __NetBSD__ */
 }
 
 char *

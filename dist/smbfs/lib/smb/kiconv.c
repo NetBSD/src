@@ -32,11 +32,12 @@
  * from: Id: kiconv.c,v 1.3 2001/08/22 03:31:36 bp Exp 
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/iconv.h>
 #include <sys/sysctl.h>
 #include <ctype.h>
 #include <errno.h>
+#include <netsmb/iconv.h>
 
 #ifdef APPLE
 #include <sys/types.h>
@@ -46,6 +47,10 @@ extern uid_t real_uid, eff_uid;
 int
 kiconv_add_xlat_table(const char *to, const char *from, const u_char *table)
 {
+#ifdef __NetBSD__
+	/* XXX not supported on NetBSD (yet) */
+	return (0);
+#else
 	struct iconv_add_in din;
 	struct iconv_add_out dout;
 	int olen;
@@ -71,5 +76,6 @@ kiconv_add_xlat_table(const char *to, const char *from, const u_char *table)
 		return errno;
 #endif
 	return 0;
+#endif
 }
 
