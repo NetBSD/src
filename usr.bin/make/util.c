@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $	*/
+/*	$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $");
+__RCSID("$NetBSD: util.c,v 1.31 2002/03/12 20:15:15 christos Exp $");
 #endif
 #endif
 
@@ -173,6 +173,7 @@ killpg(pid, sig)
     return kill(-pid, sig);
 }
 
+#ifndef __hpux__
 void
 srandom(seed)
     long seed;
@@ -185,6 +186,7 @@ random()
 {
     return lrand48();
 }
+#endif
 
 /* turn into bsd signals */
 void (*
@@ -206,6 +208,7 @@ signal(s, a)) __P((int))
     return (osv.sv_handler);
 }
 
+#ifndef __hpux__
 int
 utimes(file, tvp)
     char *file;
@@ -217,6 +220,7 @@ utimes(file, tvp)
     t.modtime = tvp[1].tv_sec;
     return(utime(file, &t));
 }
+#endif
 
 #if !defined(BSD) && !defined(d_fileno)
 # define d_fileno d_ino
