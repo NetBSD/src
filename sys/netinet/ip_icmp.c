@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.38 1999/07/09 22:57:18 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.39 2000/01/25 17:07:56 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -125,6 +125,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
+#include <netinet/in_pcb.h>
 #include <netinet/icmp_var.h>
 
 #ifdef IPSEC
@@ -535,6 +536,7 @@ icmp_reflect(m)
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct in_ifaddr *ia;
 	register struct ifaddr *ifa;
+	struct sockaddr_in *sin = 0;
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -548,51 +550,106 @@ icmp_reflect(m)
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
 	/*
-	 * If the incoming packet was addressed directly to us,
-	 * use dst as the src for the reply.  Otherwise (broadcast
-	 * or anonymous), use the address which corresponds
-	 * to the incoming interface.
+	 * If the incoming packet was addressed directly to us, use
+	 * dst as the src for the reply.  Otherwise (broadcast or
+	 * anonymous), use an address which corresponds to the
+	 * incoming interface, with a preference for the address which
+	 * corresponds to the route to the destination of the ICMP.
 	 */
+
+	/* Look for packet addressed to us */
 	INADDR_TO_IA(t, ia);
+
+	/* look for packet sent to broadcast address */
 	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
 		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
-			ia = ifatoia(ifa);
-			if (in_hosteq(t, ia->ia_broadaddr.sin_addr))
+			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
+				ia = ifatoia(ifa);
 				break;
+			}
 		}
 	}
 
+	if (ia)
+		sin = &ia->ia_addr;
+
 	icmpdst.sin_addr = t;
-	if (ia == (struct in_ifaddr *)0)
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-		    m->m_pkthdr.rcvif));
+
+	/* if the packet is addressed somewhere else, compute the
+	   source address for packets routed back to the source, and
+	   use that, if it's an address on the interface which
+	   received the packet */
+	if (sin == (struct sockaddr_in *)0) {
+		struct sockaddr_in sin_dst;
+		struct route icmproute;
+		int errornum;
+
+		sin_dst.sin_family = AF_INET;
+		sin_dst.sin_len = sizeof(struct sockaddr_in);
+		sin_dst.sin_addr = ip->ip_dst;
+		bzero(&icmproute, sizeof(icmproute));
+		errornum = 0;
+		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
+		/* errornum is never used */
+		if (icmproute.ro_rt)
+			RTFREE(icmproute.ro_rt);
+		/* check to make sure sin is a source address on rcvif */
+		if (sin) {
+			t = sin->sin_addr;
+			sin = (struct sockaddr_in *)0;
+			INADDR_TO_IA(t, ia);
+			while (ia) {
+				if (ia->ia_ifp == m->m_pkthdr.rcvif) {
+					sin = &ia->ia_addr;
+					break;
+				}
+				NEXT_IA_WITH_SAME_ADDR(ia);
+			}
+		}
+	}
+
+	/* if it was not addressed to us, but the route doesn't go out
+	   the source interface, pick an address on the source
+	   interface.  This can happen when routing is asymmetric, or
+	   when the incoming packet was encapsulated */
+	if (sin == (struct sockaddr_in *)0) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
+		     ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+			sin = &(ifatoia(ifa)->ia_addr);
+			break;
+		}
+	}
+
 	/*
 	 * The following happens if the packet was not addressed to us,
 	 * and was received on an interface with no IP address:
 	 * We find the first AF_INET address on the first non-loopback
 	 * interface.
 	 */
-	if (ia == (struct in_ifaddr *)0)
+	if (sin == (struct sockaddr_in *)0)
 		for (ia = in_ifaddr.tqh_first; ia != NULL;
 		    ia = ia->ia_list.tqe_next) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
+			sin = &ia->ia_addr;
 			break;
 		}
+
 	/*
 	 * If we still didn't find an address, punt.  We could have an
 	 * interface up (and receiving packets) with no address.
 	 */
-	if (ia == (struct in_ifaddr *)0) {
+	if (sin == (struct sockaddr_in *)0) {
 		m_freem(m);
 		goto done;
 	}
 
-	t = ia->ia_addr.sin_addr;
-	ip->ip_src = t;
+	ip->ip_src = sin->sin_addr;
 	ip->ip_ttl = MAXTTL;
 
 	if (optlen > 0) {
