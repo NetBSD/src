@@ -1,3 +1,5 @@
+/*      $NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $      */
+
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmdtab.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: cmdtab.c,v 1.5 1994/08/29 03:09:08 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
+#else
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>

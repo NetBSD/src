@@ -1,3 +1,5 @@
+/*      $NetBSD: domacro.c,v 1.5 1995/09/08 01:06:14 tls Exp $      */
+
 /*
  * Copyright (c) 1985, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)domacro.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: domacro.c,v 1.4 1994/08/29 03:09:09 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: domacro.c,v 1.5 1995/09/08 01:06:14 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <ctype.h>

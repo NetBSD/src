@@ -38,8 +38,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 4/3/94";*/
-static char *rcsid = "$Id: main.c,v 1.7 1994/12/24 16:42:19 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
+#else
+static char rcsid[] = "$NetBSD: main.c,v 1.8 1995/09/08 01:06:36 tls Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -58,7 +61,6 @@ static char *rcsid = "$Id: main.c,v 1.7 1994/12/24 16:42:19 cgd Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "ftp_var.h"
@@ -79,7 +81,7 @@ main(argc, argv)
 	interactive = 1;
 	autologin = 1;
 
-	while ((ch = getopt(argc, argv, "dgintv")) != -1) {
+	while ((ch = getopt(argc, argv, "dgintv")) != EOF) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;

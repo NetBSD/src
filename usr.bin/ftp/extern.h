@@ -1,3 +1,5 @@
+/*      $NetBSD: extern.h,v 1.4 1995/09/08 01:06:19 tls Exp $      */
+
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.2 (Berkeley) 4/3/94
- *	$Id: extern.h,v 1.3 1994/08/29 03:09:10 mycroft Exp $
+ *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
 struct timeval;

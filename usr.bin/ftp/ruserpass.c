@@ -1,3 +1,5 @@
+/*      $NetBSD: ruserpass.c,v 1.6 1995/09/08 01:06:43 tls Exp $      */
+
 /*
  * Copyright (c) 1985, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ruserpass.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: ruserpass.c,v 1.5 1994/09/17 00:51:10 mycroft Exp $";
+static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -145,7 +146,7 @@ next:
 				}
 			break;
 		case PASSWD:
-			if ((*aname == 0 || strcmp(*aname, "anonymous")) &&
+			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&
 			    fstat(fileno(cfile), &stb) >= 0 &&
 			    (stb.st_mode & 077) != 0) {
 	warnx("Error: .netrc file is readable by others.");

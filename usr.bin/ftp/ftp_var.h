@@ -1,3 +1,5 @@
+/*      $NetBSD: ftp_var.h,v 1.6 1995/09/08 01:06:32 tls Exp $      */
+
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ftp_var.h	8.3 (Berkeley) 4/2/94
- *	$Id: ftp_var.h,v 1.5 1994/08/29 03:09:17 mycroft Exp $
+ *	@(#)ftp_var.h	8.4 (Berkeley) 10/9/94
  */
 
 /*
