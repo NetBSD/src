@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.6 1996/05/13 23:29:39 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.6.4.1 1996/05/28 20:06:26 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ _catopen(name, oflag)
 	/* absolute or relative path? */
 	if (strchr (name, '/')) {
 		if (stat (name, &st)) {
-			return (nl_catd) 0;
+			return (nl_catd) -1;
 		}
 		path = name;
 	} else {
@@ -113,21 +113,21 @@ _catopen(name, oflag)
 			}
 		}
 
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 	}
 
 load_msgcat:
 	if ((fd = open (path, O_RDONLY)) == -1)
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 
 	if (fstat(fd, &st) != 0) {
 		close (fd);
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 	}
 
 	if ((catd = malloc (sizeof (*catd))) == 0) {
 		close (fd);
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 	}
 
 	catd->__data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, 0);
@@ -135,7 +135,7 @@ load_msgcat:
 
 	if (catd->__data == (void *) -1) {
 		free (catd);
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 	}
 	catd->__size = st.st_size;
 
@@ -143,7 +143,7 @@ load_msgcat:
 	if (ntohl(cat_hdr->__magic) != _NLS_MAGIC) {
 		free (catd);
 		close (fd);
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 	}
 
 	return catd;
