@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	8.4 (Berkeley) 10/18/94";*/
-static char *rcsid = "$Id: utilities.c,v 1.7 1994/12/28 02:21:55 mycroft Exp $";
+static char *rcsid = "$Id: utilities.c,v 1.8 1995/02/20 19:43:58 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -430,6 +430,6 @@ panic(fmt, va_alist)
 	if (reply("abort") == GOOD) {
 		if (reply("dump core") == GOOD)
 			abort();
-		done(1);
+		exit(1);
 	}
 }
