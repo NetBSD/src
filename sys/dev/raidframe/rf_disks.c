@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.19 2000/02/24 03:48:41 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.20 2000/02/25 19:56:32 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -415,6 +415,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	int force;
 	RF_AutoConfig_t *ac;
 	int parity_good;
+	int mod_counter;
 
 #if DEBUG
 	printf("Starting autoconfiguration of RAID set...\n");
@@ -429,6 +430,29 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 
 	/* assume the parity will be fine.. */
 	parity_good = RF_RAID_CLEAN;
+
+	/* Check for mod_counters that are too low */
+	mod_counter = -1;
+	ac = auto_config;
+	while(ac!=NULL) {
+		if (ac->clabel->mod_counter > mod_counter) {
+			mod_counter = ac->clabel->mod_counter;
+		}
+		ac = ac->next;
+	}
+	if (mod_counter == -1) {
+		/* mod_counters were all negative!?!?!? 
+		   Ok, we can deal with that. */
+#if 0
+		ac = auto_config;
+		while(ac!=NULL) {
+			if (ac->clabel->mod_counter > mod_counter) {
+				mod_counter = ac->clabel->mod_counter;
+			}
+			ac = ac->next;
+		}
+#endif
+	}
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
@@ -452,6 +476,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 					printf("Found: %s at %d,%d\n",
 					       ac->devname,r,c);
 #endif
+					
 					break;
 				}
 				ac=ac->next;
@@ -500,13 +525,27 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				   for all components, guaranteed */
 				raidPtr->serial_number = 
 					ac->clabel->serial_number;
-
-				if (ac->clabel->clean != RF_RAID_CLEAN) {
-					parity_good = RF_RAID_DIRTY;
+				/* check the last time the label
+				   was modified */
+				if (ac->clabel->mod_counter !=
+				    mod_counter) {
+					/* Even though we've filled in all
+					   of the above, we don't trust
+					   this component since it's 
+					   modification counter is not
+					   in sync with the rest, and we really
+					   consider it to be failed.  */
+					disks[r][c].status = rf_ds_failed;
+					numFailuresThisRow++;
+				} else {
+					if (ac->clabel->clean != 
+					    RF_RAID_CLEAN) {
+						parity_good = RF_RAID_DIRTY;
+					}
 				}
-
 			} else {
-				/* Didn't find it!! Component must be dead */
+				/* Didn't find it at all!! 
+				   Component must really be dead */
 				disks[r][c].status = rf_ds_failed;
 				numFailuresThisRow++;
 			}
@@ -517,6 +556,8 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 		if (numFailuresThisRow > 0)
 			raidPtr->status[r] = rf_rs_degraded;
 	}
+
+	raidPtr->mod_counter = mod_counter;
 
 	/* note the state of the parity, if any */
 	raidPtr->parity_good = parity_good;
