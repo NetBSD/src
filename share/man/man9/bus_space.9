@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.12 2000/05/27 01:55:42 soren Exp $
+.\" $NetBSD: bus_space.9,v 1.12.4.1 2000/08/06 00:30:17 briggs Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,10 +54,22 @@
 .Nm bus_space_read_multi_2 ,
 .Nm bus_space_read_multi_4 ,
 .Nm bus_space_read_multi_8 ,
+.Nm bus_space_read_multi_stream_1 ,
+.Nm bus_space_read_multi_stream_2 ,
+.Nm bus_space_read_multi_stream_4 ,
+.Nm bus_space_read_multi_stream_8 ,
 .Nm bus_space_read_region_1 ,
 .Nm bus_space_read_region_2 ,
 .Nm bus_space_read_region_4 ,
 .Nm bus_space_read_region_8 ,
+.Nm bus_space_read_region_stream_1 ,
+.Nm bus_space_read_region_stream_2 ,
+.Nm bus_space_read_region_stream_4 ,
+.Nm bus_space_read_region_stream_8 ,
+.Nm bus_space_read_stream_1 ,
+.Nm bus_space_read_stream_2 ,
+.Nm bus_space_read_stream_4 ,
+.Nm bus_space_read_stream_8 ,
 .Nm bus_space_set_region_1 ,
 .Nm bus_space_set_region_2 ,
 .Nm bus_space_set_region_4 ,
@@ -73,10 +85,22 @@
 .Nm bus_space_write_multi_2 ,
 .Nm bus_space_write_multi_4 ,
 .Nm bus_space_write_multi_8 ,
+.Nm bus_space_write_multi_stream_1 ,
+.Nm bus_space_write_multi_stream_2 ,
+.Nm bus_space_write_multi_stream_4 ,
+.Nm bus_space_write_multi_stream_8 ,
 .Nm bus_space_write_region_1 ,
 .Nm bus_space_write_region_2 ,
 .Nm bus_space_write_region_4 ,
 .Nm bus_space_write_region_8
+.Nm bus_space_write_region_stream_1 ,
+.Nm bus_space_write_region_stream_2 ,
+.Nm bus_space_write_region_stream_4 ,
+.Nm bus_space_write_region_stream_8 ,
+.Nm bus_space_write_stream_1 ,
+.Nm bus_space_write_stream_2 ,
+.Nm bus_space_write_stream_4 ,
+.Nm bus_space_write_stream_8 ,
 .Nd bus space manipulation functions
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
@@ -144,6 +168,22 @@
 "bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
 "bus_size_t count"
 .Ft void
+.Fn bus_space_read_region_stream_1 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_region_stream_2 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_region_stream_4 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_region_stream_8 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_size_t count"
+.Ft void
 .Fn bus_space_write_region_1 "bus_space_tag_t space" \
 "bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
 "bus_size_t count"
@@ -157,6 +197,22 @@
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_8 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_region_stream_1 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_region_stream_2 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_region_stream_4 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_region_stream_8 "bus_space_tag_t space" \
 "bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
 "bus_size_t count"
 .Ft void
@@ -208,6 +264,22 @@
 "bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
 "bus_size_t count"
 .Ft void
+.Fn bus_space_read_multi_stream_1 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_multi_stream_2 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_multi_stream_4 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_read_multi_stream_8 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_size_t count"
+.Ft void
 .Fn bus_space_write_multi_1 "bus_space_tag_t space" \
 "bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
 "bus_size_t count"
@@ -221,6 +293,22 @@
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_8 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_multi_stream_1 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_multi_stream_2 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_multi_stream_4 "bus_space_tag_t space" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
+"bus_size_t count"
+.Ft void
+.Fn bus_space_write_multi_stream_8 "bus_space_tag_t space" \
 "bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
 "bus_size_t count"
 .Sh DESCRIPTION
@@ -338,6 +426,9 @@ operation which is not immediately fatal.  Functions which return
 void or which return data read from bus space (i.e., functions which
 don't obviously return an error code) do not fail.  They could only fail
 if given invalid arguments, and in that case their behaviour is undefined.
+Functions which take a count of bytes have undefined results if the specified
+.Fa count
+is zero.
 .Pp
 .Sh TYPES
 Several types are defined in
@@ -1169,6 +1260,47 @@ These functions will never fail.  If they would fail (e.g. because of an
 argument error), that indicates a software bug which should cause a
 panic.  In that case, they will never return.
 .El
+.Pp
+.Sh STREAM FUNCTIONS
+.Pp
+Most of the 
+.Nm
+functions imply a host byte-order and a bus byte-order and take care of
+any translation for the caller.  In some cases, however, hardware may
+map a FIFO or some other memory region for which the caller may want to
+use multi-word, yet untranslated access.  Access to these types of memory
+regions should be with the
+.Fn bus_space_*_stream_N
+functions.
+.Pp
+.Bl -ohang -compact
+.It Fn bus_space_read_stream_1 "space" "handle" "offset"
+.It Fn bus_space_read_stream_2 "space" "handle" "offset"
+.It Fn bus_space_read_stream_4 "space" "handle" "offset"
+.It Fn bus_space_read_stream_8 "space" "handle" "offset"
+.It Fn bus_space_read_multi_stream_1 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_multi_stream_2 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_multi_stream_4 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_multi_stream_8 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_region_stream_1 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_region_stream_2 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_region_stream_4 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_read_region_stream_8 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_stream_1 "space" "handle" "offset" "value"
+.It Fn bus_space_write_stream_2 "space" "handle" "offset" "value"
+.It Fn bus_space_write_stream_4 "space" "handle" "offset" "value"
+.It Fn bus_space_write_stream_8 "space" "handle" "offset" "value"
+.It Fn bus_space_write_multi_stream_1 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_multi_stream_2 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_multi_stream_4 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_multi_stream_8 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_region_stream_1 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_region_stream_2 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_region_stream_4 "space" "handle" "offset" "datap" "count"
+.It Fn bus_space_write_region_stream_8 "space" "handle" "offset" "datap" "count"
+.Pp
+These functions are defined just as their non-stream counterparts,
+except that they provide no byte-order translation.
 .Pp
 .Sh EXPECTED CHANGES TO THE BUS_SPACE FUNCTIONS
 .Pp
