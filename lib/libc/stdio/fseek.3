@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.14 2000/07/08 13:59:24 kleink Exp $
+.\"	$NetBSD: fseek.3,v 1.15 2000/07/08 14:13:05 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,13 +54,13 @@
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft int
-.Fn fseek "FILE *stream" "long offset" "int whence"
+.Fn fseek "FILE *stream" "long int offset" "int whence"
 .Ft int
 .Fn fseeko "FILE *stream" "off_t offset" "int whence"
-.Ft long
+.Ft long int
 .Fn ftell "FILE *stream"
 .Ft off_t
-.Fn ftell "FILE *stream"
+.Fn ftello "FILE *stream"
 .Ft void
 .Fn rewind "FILE *stream"
 .Ft int
@@ -95,11 +95,27 @@ any effects of the
 function on the same stream.
 .Pp
 The
+.Fn fseeko
+function is identical to the
+.Fn fseek
+function except that the
+.Fa offset
+argument is of type
+.Fa off_t .
+.Pp
+The
 .Fn ftell
 function
 obtains the current value of the file position indicator for the
 stream pointed to by
 .Fa stream .
+.Pp
+The
+.Fn ftello
+function is identical to the
+.Fn ftell
+function except that the return value is of type
+.Fa off_t .
 .Pp
 The
 .Fn rewind
@@ -121,9 +137,11 @@ and
 .Fn fsetpos
 functions
 are alternative interfaces equivalent to
-.Fn ftell
-and
+.Fn ftell ,
+.Fn ftello ,
 .Fn fseek
+and
+.Fn fseeko
 (with whence set to
 .Dv SEEK_SET
 ), setting and storing the current value of
@@ -174,14 +192,28 @@ was not
 .Dv SEEK_END ,
 or
 .Dv SEEK_CUR .
+.\" .It Bq Er EOVERFLOW
+.\" For
+.\" .Fn ftell ,
+.\" the current file offset cannot be represented correctly in an object of type
+.\" .Fa long .
+.\" .Pp
+.\" For
+.\" .Fn fseek ,
+.\" the resulting file offset would be a value which cannot be represented
+.\" correctly in an object of type
+.\" .Fa long.
 .El
 .Pp
 The function
 .Fn fgetpos ,
 .Fn fseek ,
+.Fn fseeko ,
 .Fn fsetpos ,
-and 
-.Fn ftell
+.Fn ftell ,
+.Fn ftello ,
+and
+.Fn rewind
 may also fail and set
 .Va errno
 for any of the errors specified for the routines
