@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	SEGMENT_SIZE	4096
 
 #define	DEFAULT_ARCH	bfd_arch_ns32k
-#define MACHTYPE_OK(mtype) ((mtype) == M_532_NETBSD || (mtype) == M_UNKNOWN)
+#define	DEFAULT_MID 	M_532_NETBSD
 
 #define MY(OP) CAT(pc532netbsd_,OP)
 
