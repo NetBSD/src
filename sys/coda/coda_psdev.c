@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.6 1998/09/26 15:24:46 tv Exp $	*/
 
 /*
  * 
@@ -52,6 +52,11 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.6  1998/09/26 15:24:46  tv
+ * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
+ * sanity checks and should not turn on any messages not already printed
+ * without it.
+ *
  * Revision 1.5  1998/09/25 15:01:13  rvb
  * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
  * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
@@ -632,12 +637,12 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	    if (error == 0)
 	    	break;
 	    else if (error == EWOULDBLOCK) {
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
 #endif
     	    } else if (sigismember(&p->p_siglist, SIGIO)) {
 		    sigaddset(&p->p_sigmask, SIGIO);
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 #endif
 	    } else {
@@ -645,7 +650,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		    tmp = p->p_siglist;		/* array assignment */
 		    sigminusset(&p->p_sigmask, &tmp);
 
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
 		    printf("coda_call: tsleep returns %d, cnt %d\n", error, i);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x, mask %x.%x.%x.%x\n",
 			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
@@ -678,9 +683,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 
 	    else if (!(vmp->vm_flags & VM_READ)) { 
 		/* Interrupted before venus read it. */
-#ifdef	DIAGNOSTIC
-		if (1)
-#else
+#ifndef	DEBUG
 		if (codadebug)
 #endif
 		    myprintf(("interrupted before read: op = %d.%d, flags = %x\n",
@@ -696,9 +699,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		struct coda_in_hdr *dog;
 		struct vmsg *svmp;
 		
-#ifdef	DIAGNOSTIC
-		if (1)
-#else
+#ifndef	DEBUG
 		if (codadebug)
 #endif
 		    myprintf(("Sending Venus a signal: op = %d.%d, flags = %x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.5 1998/09/25 15:01:12 rvb Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.6 1998/09/26 15:24:46 tv Exp $	*/
 
 /*
  * 
@@ -47,6 +47,11 @@
 /*
  * HISTORY
  * $Log: coda_namecache.c,v $
+ * Revision 1.6  1998/09/26 15:24:46  tv
+ * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
+ * sanity checks and should not turn on any messages not already printed
+ * without it.
+ *
  * Revision 1.5  1998/09/25 15:01:12  rvb
  * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
  * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
@@ -287,7 +292,7 @@ coda_nc_init(void)
     
     bzero(&coda_nc_stat, (sizeof(struct coda_nc_statistics)));
 
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
     printf("CODA NAME CACHE: CACHE %d, HASH TBL %d\n", CODA_NC_CACHESIZE, CODA_NC_HASHSIZE);
 #endif
     CODA_ALLOC(coda_nc_heap, struct coda_cache *, TOTAL_CACHE_SIZE);
