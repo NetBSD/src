@@ -1,10 +1,8 @@
-# $NetBSD: shl.mi,v 1.35 2003/07/16 19:39:06 itojun Exp $
-./usr/lib/libasn1_pic.a		comp-c-piclib
+# $NetBSD: shl.mi,v 1.36 2003/12/11 09:46:27 dyoung Exp $
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a	comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libcdk_pic.a		comp-c-piclib
-./usr/lib/libcom_err_pic.a	comp-c-piclib
 ./usr/lib/libcompat_pic.a	comp-c-piclib
 ./usr/lib/libcrypt_pic.a	comp-c-piclib
 ./usr/lib/libcrypto_pic.a	comp-c-piclib
@@ -14,18 +12,8 @@
 ./usr/lib/libevent_pic.a	comp-c-piclib
 ./usr/lib/libform_pic.a		comp-c-piclib
 ./usr/lib/libgnumalloc_pic.a	comp-c-piclib
-./usr/lib/libgssapi_pic.a	comp-c-piclib
-./usr/lib/libhdb_pic.a		comp-c-piclib
 ./usr/lib/libintl_pic.a		comp-c-piclib
 ./usr/lib/libipsec_pic.a	comp-c-piclib
-./usr/lib/libkadm5clnt_pic.a	comp-c-piclib
-./usr/lib/libkadm5srv_pic.a	comp-c-piclib
-./usr/lib/libkadm_pic.a		comp-c-piclib
-./usr/lib/libkafs_pic.a		comp-c-piclib
-./usr/lib/libkdb_pic.a		comp-c-piclib
-./usr/lib/libkrb5_pic.a		comp-c-piclib
-./usr/lib/libkrb_pic.a		comp-c-piclib
-./usr/lib/libkstream_pic.a	comp-c-piclib
 ./usr/lib/libkvm_pic.a		comp-c-piclib
 ./usr/lib/libm_pic.a		comp-c-piclib
 ./usr/lib/libmagic_pic.a	comp-c-piclib
@@ -37,11 +25,8 @@
 ./usr/lib/libpthread_dbg_pic.a	comp-c-piclib
 ./usr/lib/libpthread_pic.a	comp-c-piclib
 ./usr/lib/libresolv_pic.a	comp-c-piclib
-./usr/lib/libroken_pic.a	comp-c-piclib
 ./usr/lib/librt_pic.a		comp-c-piclib
 ./usr/lib/libskey_pic.a		comp-c-piclib
-./usr/lib/libsl_pic.a		comp-c-piclib
-./usr/lib/libss_pic.a		comp-c-piclib
 ./usr/lib/libssl_pic.a		comp-c-piclib
 ./usr/lib/libtermcap_pic.a	comp-c-piclib
 ./usr/lib/libtermlib_pic.a	comp-c-piclib

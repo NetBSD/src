@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.442 2003/12/10 11:40:11 hannken Exp $
+# $NetBSD: mi,v 1.443 2003/12/11 09:46:26 dyoung Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -361,7 +361,6 @@
 ./usr/bin/colrm		base-util-bin
 ./usr/bin/column	base-util-bin
 ./usr/bin/comm		base-util-bin
-./usr/bin/compile_et	base-krb5-bin
 ./usr/bin/compress	base-util-bin
 ./usr/bin/cpio		base-util-bin
 ./usr/bin/cpp		base-util-bin
@@ -423,11 +422,7 @@
 ./usr/bin/ipcs		base-util-bin
 ./usr/bin/join		base-util-bin
 ./usr/bin/jot		base-util-bin
-./usr/bin/kdestroy	base-krb5-bin
 ./usr/bin/kdump		base-debug-bin
-./usr/bin/kinit		base-krb5-bin
-./usr/bin/klist		base-krb5-bin
-./usr/bin/kpasswd	base-krb5-bin
 ./usr/bin/ktrace	base-debug-bin
 ./usr/bin/ktruss	base-debug-bin
 ./usr/bin/lam		base-util-bin
@@ -464,7 +459,6 @@
 ./usr/bin/mesg		base-util-bin
 ./usr/bin/midiplay	base-audio-bin
 ./usr/bin/mixerctl	base-audio-bin
-./usr/bin/mk_cmds	base-krb5-bin
 ./usr/bin/mkcsmapper	base-util-bin
 ./usr/bin/mkdep		base-c-bin
 ./usr/bin/mkesdb	base-util-bin
@@ -552,7 +546,6 @@
 ./usr/bin/ssh-keygen	base-secsh-bin
 ./usr/bin/ssh-keyscan	base-secsh-bin
 ./usr/bin/stat		base-util-bin
-./usr/bin/string2key	base-krb5-bin
 ./usr/bin/su		base-util-bin
 ./usr/bin/sum		base-util-bin
 ./usr/bin/sysstat	base-util-bin
@@ -677,10 +670,7 @@
 ./usr/libexec/ftpd		base-netutil-bin
 ./usr/libexec/getNAME		base-man-bin
 ./usr/libexec/getty		base-sysutil-bin
-./usr/libexec/hpropd		base-krb5-bin
 ./usr/libexec/identd		base-netutil-bin
-./usr/libexec/kadmind		base-krb5-bin
-./usr/libexec/kpasswdd		base-krb5-bin
 ./usr/libexec/lfs_cleanerd	base-sysutil-bin
 ./usr/libexec/locate.bigram	base-sysutil-bin
 ./usr/libexec/locate.code	base-sysutil-bin
@@ -782,7 +772,6 @@
 ./usr/sbin/groupinfo		base-sysutil-bin
 ./usr/sbin/groupmod		base-sysutil-bin
 ./usr/sbin/hlfsd		base-amd-bin
-./usr/sbin/hprop		base-krb5-bin
 ./usr/sbin/ifmcstat		base-netutil-bin
 ./usr/sbin/ifwatchd		base-netutil-bin
 ./usr/sbin/inetd		base-netutil-bin
@@ -803,10 +792,6 @@
 ./usr/sbin/isdntel		base-isdn-bin
 ./usr/sbin/isdntelctl		base-isdn-bin
 ./usr/sbin/isdntrace		base-isdn-bin
-./usr/sbin/kadmin		base-krb5-bin
-./usr/sbin/kdc			base-krb5-bin
-./usr/sbin/kstash		base-krb5-bin
-./usr/sbin/ktutil		base-krb5-bin
 ./usr/sbin/lastlogin		base-sysutil-bin
 ./usr/sbin/link			base-sysutil-bin
 ./usr/sbin/linkfarm		base-pkgutil-bin

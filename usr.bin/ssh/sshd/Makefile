@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/08/23 23:03:45 lha Exp $
+#	$NetBSD: Makefile,v 1.20 2003/12/11 09:46:27 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -17,16 +17,17 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	kexdhs.c kexgexs.c
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+=-I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	auth-krb5.c auth2-krb5.c
-LDADD+=	-lkrb5 -lkafs -lasn1
-DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
+LDADD+=	-lkrb5 -lasn1
+DPADD+=	${LIBKRB5} ${LIBASN1}
 
 .if ${MKKERBEROS4} != "no"
-CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
+CPPFLAGS+=-DKRB4 -DAFS
 SRCS+=	auth-krb4.c
-LDADD+=	-lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+=	-lkrb -ldes -lkafs
+DPADD+=	${LIBKRB} ${LIBDES} ${LIBKAFS}
 .endif
 
 LDADD+=	-lcom_err -lroken

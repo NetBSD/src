@@ -1,0 +1,9 @@
+./usr/share/info/kth-krb.info			man-krb4-info
+./usr/share/man/cat5/krb.conf.0			man-krb4-catman
+./usr/share/man/cat5/krb.equiv.0		man-krb4-catman
+./usr/share/man/cat5/krb.extra.0		man-krb4-catman
+./usr/share/man/cat5/krb.realms.0		man-krb4-catman
+./usr/share/man/man5/krb.conf.5			man-krb4-man
+./usr/share/man/man5/krb.equiv.5		man-krb4-man
+./usr/share/man/man5/krb.extra.5		man-krb4-man
+./usr/share/man/man5/krb.realms.5		man-krb4-man
