@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.15 2003/02/25 10:35:46 wiz Exp $
+.\"	$NetBSD: m4.1,v 1.16 2003/06/26 18:14:21 wiz Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
@@ -32,7 +32,7 @@ Macro calls have the form name(argument1[, argument2, ..., argumentN]).
 .Pp
 There cannot be any space following the macro name and the open
 parenthesis
-.Pq Ql ( .
+.Pq Sq ( .
 If the macro name is not followed by an open
 parenthesis it is processed with no arguments.
 .Pp
@@ -42,7 +42,7 @@ valid macro names match the pattern
 .Dq [a-zA-Z_][a-zA-Z0-9_]* .
 .Pp
 In arguments to macros, leading unquoted space, tab, and newline
-.Pq Ql \en
+.Pq Sq \en
 characters are ignored.
 To quote strings, use left and right single
 quotes (e.g.,
@@ -71,14 +71,14 @@ to the include path.
 Prefixes all
 .Nm
 builtin macros with the string
-.Ql m4_ .
+.Dq m4_ .
 This changes the macro names
-.Ql dnl
+.Dq dnl
 to
-.Ql m4_dnl ,
-.Ql index
+.Dq m4_dnl ,
+.Dq index
 to
-.Ql m4_index ,
+.Dq m4_index ,
 and so forth.
 .It Fl "U" Ns Ar "name"
 Undefine the symbol
@@ -119,8 +119,7 @@ and the number of diversions is unlimited.
 .It Fl o Ar trfile
 Specify the tracing output file for
 .Fl t ;
-tracing defaults to printing to
-.Ql stderr .
+tracing defaults to printing to stderr.
 .It Fl t Ar macro
 Turn tracing on for
 .Ar macro .
@@ -136,7 +135,7 @@ Calls a built-in by its name, overriding possible redefinitions.
 .It Ic changecom
 Change the start and end comment sequences.
 The default is the pound sign
-.Pq Ql #
+.Pq Sq #
 and the newline character.
 With no arguments comments are turned off.
 The maximum length for a comment marker is five characters.
@@ -152,22 +151,22 @@ The argument must be a valid numeric string.
 Define a new macro named by the first argument to have the
 value of the second argument.
 Each occurrence of
-.Ql $n
+.Dq $n
 (where
 .Ar n
 is 0 through 9) is replaced by the
 .Ar n Ns 'th
 argument.
-.Ql $0
+.Dq $0
 is the name of the calling macro.
 Undefined arguments are replaced by a null string.
-.Ql $#
+.Dq $#
 is replaced by the number of arguments;
-.Ql $*
+.Dq $*
 is replaced by all arguments comma separated;
-.Ql $@
+.Dq $@
 is the same as
-.Ql $*
+.Dq $*
 but all arguments are quoted against further expansion.
 .It Ic defn
 Returns the quoted definition for each argument.
@@ -277,12 +276,12 @@ included.
 .It Ic patsubst
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
-.Pq Ql \*[Am]
+.Pq Sq \*[Am]
 is replaced by the string matching the regular expression.
 The string
-.Ql \e# ,
+.Dq \e# ,
 where
-.Ql #
+.Sq #
 is a digit, is replaced by the corresponding back-reference.
 .It Ic popdef
 Restores the
