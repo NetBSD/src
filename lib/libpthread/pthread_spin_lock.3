@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_lock.3,v 1.3 2003/07/04 08:41:26 wiz Exp $
+.\" $NetBSD: pthread_spin_lock.3,v 1.4 2003/07/04 10:19:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,14 +47,15 @@ function acquires a spin lock on
 .Fa lock
 provided that
 .Fa lock
-is not presently held. If the lock cannot be
+is not presently held.
+If the lock cannot be
 immediately acquired, the calling thread repeatedly retries until it can
 acquire the lock.
 .Pp
 The
 .Fn pthread_spin_trylock
 function performs the same action, but does not block if the lock
-cannot be immediately obtained (i.e. the lock is held).
+cannot be immediately obtained (i.e., the lock is held).
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_spin_lock

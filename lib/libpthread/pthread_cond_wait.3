@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.4 2003/07/04 08:41:25 wiz Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.5 2003/07/04 10:19:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,8 +81,8 @@ The waiting thread unblocks after another thread calls
 .Xr pthread_cond_signal 3 ,
 or
 .Xr pthread_cond_broadcast 3
-with the same condition variable. The current thread holds the lock
-on
+with the same condition variable.
+The current thread holds the lock on
 .Fa mutex
 upon return from the
 .Fa pthread_cond_wait
