@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.6 2000/03/30 11:01:13 jdolecek Exp $	*/
+/*	$NetBSD: fight.c,v 1.7 2000/04/27 00:30:53 jdc Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -396,7 +396,7 @@ monsthits()
 			/* takes some of the player's strength */
 			inflict = ROLL(1.0, (Circle - 1.0) / 2.0);
 			inflict = MIN(Player.p_strength, inflict);
-			mvprintw(Lines++, 0, "%s sapped %0.f of your strength!",
+			mvprintw(Lines++, 0, "%s sapped %.0f of your strength!",
 			    Enemyname, inflict);
 			Player.p_strength -= inflict;
 			Player.p_might -= inflict;

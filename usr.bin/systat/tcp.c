@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.3 2000/01/13 12:39:05 ad Exp $	*/
+/*	$NetBSD: tcp.c,v 1.4 2000/04/27 00:30:51 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.3 2000/01/13 12:39:05 ad Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.4 2000/04/27 00:30:51 jdc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: tcp.c,v 1.3 2000/01/13 12:39:05 ad Exp $");
 
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str)
-#define SHOW(row, col, stat)	mvwprintw(wnd, row, col, "%9lu", curstat.stat)
+#define SHOW(row, col, stat)	mvwprintw(wnd, row, col, "%9qu", curstat.stat)
 
 static struct tcpstat curstat, oldstat;
 
