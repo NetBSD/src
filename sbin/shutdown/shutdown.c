@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.15 1997/09/16 12:57:45 lukem Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.15 1997/09/16 12:57:45 lukem Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.16 1997/10/01 02:24:29 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	char *p, *endp;
 	struct passwd *pw;
 	int arglen, ch, len, readstdin;
