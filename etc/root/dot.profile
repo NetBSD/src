@@ -1,6 +1,7 @@
-#	$NetBSD: dot.profile,v 1.7 1997/10/28 03:33:23 mrg Exp $
+#	$NetBSD: dot.profile,v 1.8 1998/01/17 19:36:40 thorpej Exp $
 
-PATH=/sbin:/usr/sbin:/bin:/usr/bin
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
+PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
 export PATH
 
 BLOCKSIZE=1k
