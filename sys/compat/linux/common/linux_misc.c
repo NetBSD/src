@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.80 2000/12/22 22:58:58 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.81 2000/12/27 22:01:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -910,6 +910,153 @@ linux_sys_setregid16(p, v, retval)
 
 	return sys_setregid(p, &bsa, retval);
 }
+
+int
+linux_sys_setresuid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setresuid16_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+		syscallarg(uid_t) suid;
+	} */ *uap = v;
+	struct linux_sys_setresuid16_args lsa;
+
+	SCARG(&lsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, ruid);
+	SCARG(&lsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, euid);
+	SCARG(&lsa, suid) = ((linux_uid_t)SCARG(uap, suid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, suid);
+
+	return linux_sys_setresuid(p, &lsa, retval);
+}
+
+int
+linux_sys_setresgid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setresgid16_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+		syscallarg(gid_t) sgid;
+	} */ *uap = v;
+	struct linux_sys_setresgid16_args lsa;
+
+	SCARG(&lsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, rgid);
+	SCARG(&lsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, egid);
+	SCARG(&lsa, sgid) = ((linux_gid_t)SCARG(uap, sgid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, sgid);
+
+	return linux_sys_setresgid(p, &lsa, retval);
+}
+
+int
+linux_sys_getgroups16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getgroups16_args /* {
+		syscallarg(int) gidsetsize;
+		syscallarg(linux_gid_t *) gidset;
+	} */ *uap = v;
+	caddr_t sg; 
+	int n, error, i;
+	struct sys_getgroups_args bsa;
+	gid_t *bset, *kbset;
+	linux_gid_t *lset;
+	struct pcred *pc = p->p_cred;
+
+	n = SCARG(uap, gidsetsize);
+	if (n < 0)
+		return EINVAL;
+	error = 0;
+	bset = kbset = NULL;
+	lset = NULL;
+	if (n > 0) {
+		n = min(pc->pc_ucred->cr_ngroups, n);
+		sg = stackgap_init(p->p_emul);
+		bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
+		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
+		if (bset == NULL || kbset == NULL || lset == NULL)
+			return ENOMEM;
+		SCARG(&bsa, gidsetsize) = n;
+		SCARG(&bsa, gidset) = bset;
+		error = sys_getgroups(p, &bsa, retval);
+		if (error != 0)
+			goto out;
+		error = copyin(bset, kbset, n * sizeof (gid_t));
+		if (error != 0)
+			goto out;
+		for (i = 0; i < n; i++)
+			lset[i] = (linux_gid_t)kbset[i];
+		error = copyout(lset, SCARG(uap, gidset),
+		    n * sizeof (linux_gid_t));
+	} else
+		*retval = pc->pc_ucred->cr_ngroups;
+out:
+	if (kbset != NULL)
+		free(kbset, M_TEMP);
+	if (lset != NULL)
+		free(lset, M_TEMP);
+	return error;
+}
+
+int
+linux_sys_setgroups16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setgroups16_args /* {
+		syscallarg(int) gidsetsize;
+		syscallarg(linux_gid_t *) gidset;
+	} */ *uap = v;
+	caddr_t sg;
+	int n;
+	int error, i;
+	struct sys_setgroups_args bsa;
+	gid_t *bset, *kbset;
+	linux_gid_t *lset;
+
+	n = SCARG(uap, gidsetsize);
+	if (n < 0 || n > NGROUPS)
+		return EINVAL;
+	sg = stackgap_init(p->p_emul);
+	bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
+	kbset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
+	if (lset == NULL || bset == NULL)
+		return ENOMEM;
+	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
+	if (error != 0)
+		goto out;
+	for (i = 0; i < n; i++)
+		kbset[i] = (gid_t)lset[i];
+	error = copyout(kbset, bset, n * sizeof (gid_t));
+	if (error != 0)
+		goto out;
+	SCARG(&bsa, gidsetsize) = n;
+	SCARG(&bsa, gidset) = bset;
+	error = sys_setgroups(p, &bsa, retval);
+	
+out:
+	if (lset != NULL)
+		free(lset, M_TEMP);
+	if (kbset != NULL)
+		free(kbset, M_TEMP);
+
+	return error;
+}
+
 #endif /* __i386__ || __m68k__ */
 
 /*
@@ -1072,64 +1219,6 @@ linux_sys_getresuid(p, v, retval)
 
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
 }
-
-#if defined(__i386__) || defined(__m68k__)
-/*
- * XXX fix these for 0xffff == -1 for old Linux uids return case.
- */
-int
-linux_sys_setuid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_setuid(p, v, retval);
-}
-
-int
-linux_sys_getuid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_getuid(p, v, retval);
-}
-int
-linux_sys_setgid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_setgid(p, v, retval);
-}
-
-int
-linux_sys_getgid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_getgid(p, v, retval);
-}
-
-int
-linux_sys_geteuid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_geteuid(p, v, retval);
-}
-
-int
-linux_sys_getegid16(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys_getegid(p, v, retval);
-}
-#endif /* __i386__ || __m68k__ */
 
 int
 linux_sys_ptrace(p, v, retval)
