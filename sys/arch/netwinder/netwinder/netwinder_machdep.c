@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.6.2.8 2002/10/10 18:34:26 jdolecek Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6.2.9 2002/10/18 10:55:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -59,6 +59,8 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+
+#include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
 #define	_ARM32_BUS_DMA_PRIVATE
@@ -158,8 +160,6 @@ void consinit		__P((void));
 
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
-
-void isa_netwinder_init __P((u_int iobase, u_int membase));
 
 void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
@@ -340,7 +340,7 @@ struct l1_sec_map {
 };
 
 /*
- * u_int initarm(void);
+ * u_int initarm(...);
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -354,7 +354,7 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(void)
+initarm(void *arg)
 {
 	int loop;
 	int loop1;
@@ -883,7 +883,7 @@ consinit(void)
 
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
-	isa_netwinder_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
+	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
 	footbridge_pci_bs_tag_init();

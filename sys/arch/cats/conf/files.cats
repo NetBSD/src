@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7.2.7 2002/10/10 18:32:13 jdolecek Exp $
+#	$NetBSD: files.cats,v 1.7.2.8 2002/10/18 10:54:59 jdolecek Exp $
 #
 # CATS-specific configuration info
 #
@@ -72,7 +72,7 @@ file	arch/arm/footbridge/isa/isa_io.c		isa
 file	arch/arm/footbridge/isa/isa_io_asm.S		isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
-file	arch/cats/isa/isa_machdep.c			isa
+file	arch/arm/footbridge/isa/isa_machdep.c		isa
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
