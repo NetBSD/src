@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.48 2001/06/17 08:27:57 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.49 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.48 2001/06/17 08:27:57 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.49 2001/06/19 12:59:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ main(argc, argv)
 			if (getfname(*argv))
 				checkfile = 1;
 		}
-		if (!checkfile)	/* file(s) specified, but none accessable */
+		if (!checkfile)	/* file(s) specified, but none accessible */
 			exit(1);
 	}
 

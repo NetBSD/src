@@ -1,4 +1,4 @@
-/*	$NetBSD: ci.c,v 1.3 1997/10/18 07:15:16 lukem Exp $	*/
+/*	$NetBSD: ci.c,v 1.4 2001/06/19 12:59:18 wiz Exp $	*/
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -61,7 +61,7 @@
  * 07-Mar-83  Dave McKeown (dmm) at Carnegie-Mellon University
  *	(Slight alterations by Steve Shafer.)
  *	Made cidepth a global, used for recursive and nested calls to
- *	ci(), and accessable to the user.  Added '@x' command, similar
+ *	ci(), and accessible to the user.  Added '@x' command, similar
  *	to '^x' except that the previous command interpreter name is
  *	remembered and after 'x' is executed, the previous command
  *	interpreter is reinvoked.  Users who plan to use this feature

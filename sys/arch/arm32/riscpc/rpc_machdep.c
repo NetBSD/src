@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.46 2001/04/09 19:22:42 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.47 2001/06/19 12:59:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -512,7 +512,7 @@ initarm_new_bootloader(bootconf)
 	 *
 	 * This means that the kernel is mapped suitably for continuing
 	 * execution, all I/O is mapped 1:1 virtual to physical and
-	 * physical memory is accessable.
+	 * physical memory is accessible.
 	 *
 	 * The initarm() has the responcibility for creating the kernel
 	 * page tables.

@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.4 1998/01/05 20:51:37 perry Exp $
+#	$NetBSD: history,v 1.5 2001/06/19 12:59:14 wiz Exp $
 
 3135	- fixed mode selection on boot
 	- page up/down, insert and delete now generate the correct codes in
@@ -364,7 +364,7 @@
 13/01/96
 	- undefined mode r13 added to the pcb structure
 	- new version of the ARM fpe built
-	- ARM FPE now has core deactivate routine accessable
+	- ARM FPE now has core deactivate routine accessible
 	- Call back from ARM FPE added on instruction completion
 	- cpu_switch() now switches UND32 mode r13
 	- cpu_fork() now sets up UND32 mode r13 in pcb
