@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.3 2003/01/23 23:52:38 thorpej Exp $	*/
+/*	$NetBSD: ksem.h,v 1.4 2003/09/30 20:37:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -31,8 +31,11 @@
 
 #include <sys/cdefs.h>
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+void ksem_init(void);
+#endif
 
+#ifdef _LIBC
 __BEGIN_DECLS
 int _ksem_close(semid_t);
 int _ksem_destroy(semid_t);
@@ -44,11 +47,6 @@ int _ksem_trywait(semid_t);
 int _ksem_unlink(const char *);
 int _ksem_wait(semid_t);
 __END_DECLS
-
-#else
-
-void ksem_init(void);
-
-#endif /* !_KERNEL */
+#endif /* _LIBC */
 
 #endif /* _SYS_KSEM_H_ */
