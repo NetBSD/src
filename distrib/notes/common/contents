@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.15 1999/05/04 03:32:55 simonb Exp $
+.\"	$NetBSD: contents,v 1.16 1999/05/19 05:48:27 gwr Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -235,11 +235,14 @@ Statically-linked versions of gzip (GNU gzip) and gtar (GNU tar).
 .\"============================================ SUN3 INSTALLATION SUBTREE
 .
 .if \n[sun3] \{\
-.\}
-.
-.\"============================================ SUN3X INSTALLATION SUBTREE
-.
-.if \n[sun3x] \{\
+.	Bl -tag -compact -width miniroot/
+.		It Pa miniroot/
+Sun3 miniroot boot-image.
+.		It Pa netboot/
+Server boot-file image for diskless machines.
+.		It Pa tapeboot/
+Scripts and boot block for making a boot tape.
+.	El
 .\}
 .
 .\"============================================ VAX INSTALLATION SUBTREE
@@ -496,7 +499,7 @@ This set includes the games and their manual pages.
 .
 .\" garden variety kern set description
 .
-.if !\n[arm32]:\n[atari]:\n[mac68k] \{\
+.if !\n[arm32]:\n[atari]:\n[mac68k]:\n[sun3] \{\
 .Pp
 .It Sy kern
 This set contains a NetBSD/\*m \*V
@@ -1043,6 +1046,24 @@ program so statically-linked SunOS versions of gzip (GNU gzip) and
 gtar (GNU tar) are provided in
 .		Pa sparc/installation/misc .
 .	Note)
+.\}
+.
+.if r_sun3 \{\
+.Pp
+There is a collection of Sun3 and Sun3X kernels in the
+.Pa sun3/binary/kernels
+subdirectory of the
+.Nx \*V
+distribution.  The ones named
+.Pa netbsd-ramdisk*.gz
+contain a root file system image and should only be used for the
+initial installation.  The others are included for convenience.
+(Most people will want to use
+.Pa netbsd-generic.gz
+or
+.Pa netbsd-generic3x.gz
+as appropriate.)  Please note that these kernels are simply gzipped
+and are not in tar archives.
 .\}
 .
 .
