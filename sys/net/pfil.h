@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.13 2000/04/19 04:46:23 itojun Exp $	*/
+/*	$NetBSD: pfil.h,v 1.14 2000/11/11 00:52:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -32,6 +32,7 @@
 #define _NET_PFIL_H_
 
 #include <sys/queue.h>
+#include <net/bpf.h>
 
 struct mbuf;
 struct ifnet;
@@ -42,8 +43,8 @@ struct ifnet;
  */
 struct packet_filter_hook {
         TAILQ_ENTRY(packet_filter_hook) pfil_link;
-        int	(*pfil_func) __P((void *, int, struct ifnet *, int,
-				  struct mbuf **));
+	int	(*pfil_func)(void *, struct mbuf **, struct ifnet *, int);
+	void	*pfil_arg;
 	int	pfil_flags;
 };
 
@@ -57,15 +58,36 @@ typedef	TAILQ_HEAD(pfil_list, packet_filter_hook) pfil_list_t;
 struct pfil_head {
 	pfil_list_t	ph_in;
 	pfil_list_t	ph_out;
-	int		ph_init;
+	void		*ph_key;
+	int		ph_dlt;
+	LIST_ENTRY(pfil_head) ph_list;
 };
 typedef struct pfil_head pfil_head_t;
 
-struct packet_filter_hook *pfil_hook_get __P((int, struct pfil_head *));
-int	pfil_add_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
-int	pfil_remove_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
+int	pfil_run_hooks(struct pfil_head *, struct mbuf **, struct ifnet *,
+	    int);
+
+int	pfil_add_hook(int (*func)(void *, struct mbuf **,
+	    struct ifnet *, int), void *, int, struct pfil_head *);
+int	pfil_remove_hook(int (*func)(void *, struct mbuf **,
+	    struct ifnet *, int), void *, int, struct pfil_head *);
+
+int	pfil_head_register(struct pfil_head *);
+int	pfil_head_unregister(struct pfil_head *);
+
+struct pfil_head *pfil_head_get(void *, int);
+
+static __inline struct packet_filter_hook *
+pfil_hook_get(int dir, struct pfil_head *ph)
+{
+
+	if (dir == PFIL_IN)
+		return (TAILQ_FIRST(&ph->ph_in));
+	else if (dir == PFIL_OUT)
+		return (TAILQ_FIRST(&ph->ph_out));
+	else
+		return (NULL);
+}
 
 /* XXX */
 #if defined(_KERNEL) && !defined(_LKM)

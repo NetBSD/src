@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.28 2000/10/23 03:45:25 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.29 2000/11/11 00:52:39 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
@@ -140,6 +140,10 @@ ip6_fw_chk_t *ip6_fw_chk_ptr;
 ip6_fw_ctl_t *ip6_fw_ctl_ptr;
 #endif
 
+#ifdef PFIL_HOOKS
+struct pfil_head inet6_pfil_hook;
+#endif
+
 struct ip6stat ip6stat;
 
 static void ip6_init2 __P((void *));
@@ -181,6 +185,16 @@ ip6_init()
 	ip6_flow_seq = random() ^ tv.tv_usec;
 
 	ip6_init2((void *)0);
+
+#ifdef PFIL_HOOKS
+	/* Register our Packet Filter hook. */
+	inet6_pfil_hook.ph_key = (void *)(u_long) AF_INET6;
+	inet6_pfil_hook.ph_dlt = DLT_RAW;
+	i = pfil_head_register(&inet6_pfil_hook);
+	if (i != 0)
+		printf("ip6_init: WARNING: unable to register pfil hook, "
+		    "error %d\n", i);
+#endif /* PFIL_HOOKS */
 }
 
 static void
@@ -232,11 +246,6 @@ ip6_input(m)
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
-#ifdef	PFIL_HOOKS
-	struct packet_filter_hook *pfh;
-	struct mbuf *m0;
-	int rv;
-#endif	/* PFIL_HOOKS */
 
 #ifdef IPSEC
 	/*
@@ -303,19 +312,12 @@ ip6_input(m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	m0 = m;
-	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
-	for (; pfh; pfh = pfh->pfil_link.tqe_next)
-		if (pfh->pfil_func) {
-			rv = pfh->pfil_func(ip6, sizeof(*ip6),
-					    m->m_pkthdr.rcvif, 0, &m0);
-			if (rv)
-				return;
-			m = m0;
-			if (m == NULL)
-				return;
-			ip6 = mtod(m, struct ip6_hdr *);
-		}
+	if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+			   PFIL_IN) != 0)
+		return;
+	if (m == NULL)
+		return;
+	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* PFIL_HOOKS */
 
 
