@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.10 2002/11/21 18:12:15 wiz Exp $
+.\"     $NetBSD: newbtconf.8,v 1.11 2002/12/16 10:32:16 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -189,10 +189,10 @@ net_interfaces=NO
 Of course other networking services, such as NTP, routed, etc, are all
 expected to be
 .Dq NO .
-In general, the only settings which should be
+In general, the only setting that should be
 .Dq YES
-are syslogd and update, with perhaps cron (if your cron scripts don't
-need the network) and screenblank/wscons (if applicable).
+is syslogd, and perhaps cron (if your cron scripts don't
+need the network) or screenblank/wscons (if applicable).
 Other actions such as deleting any NFS mounts from
 .Pa /etc/etc.nonet/fstab
 would also need to be undertaken.
