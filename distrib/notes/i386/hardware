@@ -1,8 +1,9 @@
-.\"	$NetBSD: hardware,v 1.71.2.1 2000/06/27 15:03:45 bouyer Exp $	
+.\"	$NetBSD: hardware,v 1.71.2.2 2000/07/03 22:26:35 thorpej Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors. It
-does NOT support MCA systems, such as some IBM PS/2 systems. The
+with 386-family processors, with or without math coprocessors. Support
+for MCA systems (such as some IBM PS/2 systems) is present, but
+still very experimental and needs special setup. The
 minimal configuration is said to require 4M of RAM and 50M of disk
 space, though we do not know of anyone running with a system quite
 this minimal today. To install the entire system requires much more
@@ -36,6 +37,7 @@ Supported devices include:
 		are supported as well.
 	SCSI host adapters
 		Adaptec AHA-154xA, -B, -C, and -CF 
+		Adaptec AHA-1640 cards (MCA variant of AHA-1540) [m]
 		Adaptec AHA-174x
 		Adaptec AIC-6260 and AIC-6360 based boards, including
 			the Adaptec AHA-152x, Adaptec APA-1460 (PCMCIA),
@@ -91,10 +93,10 @@ Supported devices include:
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters NetBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
-		information.)
+		information.) [m]
 	Serial ports:
-		8250/16450-based ports
-		16550/16650/16750-based ports
+		8250/16450-based ports [m]
+		16550/16650/16750-based ports [m]
 		AST-style 4-port serial cards [*]
 		BOCA 8-port serial cards [*] 
 		BOCA 6-port (ioat) serial cards [*] 
@@ -103,7 +105,7 @@ Supported devices include:
 		Cyclades Cyclom-Y serial cards [*] [+]
 		Addonics FlexPort 8S 8-port serial cards [*]
 		PCI universal communication cards
-	Parallel ports. [*] [+]
+	Parallel ports. [*] [+] [m]
 	Ethernet adapters:
 		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
 			Novell NE1500T
@@ -180,7 +182,7 @@ Supported devices include:
 		IBM Token-Ring Network PC Adapter II [+]
 		IBM Token-Ring Network Adapter/A [+]
 		IBM Token-Ring Network 16/4 Adapter [+]
-		IBM Token-Ring Network 16/4 Adapter/A [+]
+		IBM Token-Ring Network 16/4 Adapter/A [+] [m]
 		IBM 16/4 ISA Adapter [+]
 		IBM Auto 16/4 Token-Ring ISA Adapter [+]
 		3COM 3C619 TokenLink [+]
@@ -210,7 +212,7 @@ Supported devices include:
 	Mice:
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
-		"PS/2"-style mice [*] [+]
+		"PS/2"-style mice [*] [+] [m]
 		Serial mice (no kernel support necessary)
 	Sound Cards:
 		SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
@@ -270,6 +272,10 @@ although it is not in the kernels which are on the distribution floppies.
 Support for devices marked with "[b]" requires BIOS support for PCI-PCI
 bridging on your motherboard.  Most reasonably modern Pentium motherboards
 have this support, or can acquire it via a BIOS upgrade.
+.Pp
+Devices marked with [m] are supported also by MCA-enabled kernels, such as
+one compiled from PS2 configuration file. Support for MCA is NOT in
+the "generic" or installation kernels at this moment.
 .Pp
 Hardware the we do NOT currently support, but get many questions
 about:
