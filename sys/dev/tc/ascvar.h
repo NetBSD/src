@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.1 1996/09/25 21:07:56 jonathan Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.2 1997/07/28 19:39:27 mhitch Exp $	*/
 
 
 /*
@@ -11,7 +11,6 @@ typedef struct scsi_state {
 	int	statusByte;	/* status byte returned during STATUS_PHASE */
 	int	error;		/* errno to pass back to device driver */
 	u_char	*dmaBufAddr;	/* DMA buffer address */
-	u_int	dmaBufSize;	/* DMA buffer size */
 	int	dmalen;		/* amount to transfer in this chunk */
 	int	dmaresid;	/* amount not transfered if chunk suspended */
 	int	buflen;		/* total remaining amount of data to transfer */
@@ -44,7 +43,6 @@ struct asc_softc {
 	struct device sc_dev;			/* us as a device */
 	asc_regmap_t	*regs;		/* chip address */
 	volatile int	*dmar;		/* DMA address register address */
-	u_char		*buff;		/* RAM buffer address (uncached) */
 	int		sc_id;		/* SCSI ID of this interface */
 	int		myidmask;	/* ~(1 << myid) */
 	int		state;		/* current SCSI connection state */
@@ -53,9 +51,9 @@ struct asc_softc {
 	ScsiCmd		*cmd[ASC_NCMD];	/* active command indexed by SCSI ID */
 	State		st[ASC_NCMD];	/* state info for each active command */
 	/* Start dma routine */
-	void  (*dma_start) __P((struct asc_softc *asc,
+	int  (*dma_start) __P((struct asc_softc *asc,
 				struct scsi_state *state,
-				caddr_t cp, int flag));
+				caddr_t cp, int flag, int len, int off));
 	/* End dma routine */
 	void	(*dma_end) __P((struct asc_softc *asc,
 				struct scsi_state *state, int flag));
@@ -82,7 +80,7 @@ typedef struct asc_softc *asc_softc_t;
 #define ASC_SPEED_25_MHZ	250
 #define ASC_SPEED_12_5_MHZ	125
 
-void	ascattach __P((struct asc_softc *asc, int dmabufsiz, int bus_speed));
+void	ascattach __P((struct asc_softc *asc, int bus_speed));
 int	asc_intr __P ((void *asc));
 
 /*
