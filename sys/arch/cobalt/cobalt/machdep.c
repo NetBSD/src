@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2000/06/27 18:10:04 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2000/07/14 18:35:38 jeffs Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -471,8 +471,6 @@ cpu_intr_establish(level, ipl, func, arg)
 
 	return (void *)-1;
 }
-
-void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 void
 cpu_intr(status, cause, pc, ipending)
