@@ -42,7 +42,7 @@
  *	@(#)types.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: types.h,v 1.5 92/11/26 02:00:07 torek Exp  (LBL)
- * $Id: types.h,v 1.1 1993/10/02 10:23:31 deraadt Exp $
+ * $Id: types.h,v 1.2 1994/05/24 02:17:47 deraadt Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -58,14 +58,14 @@ typedef struct label_t {
 } label_t;
 #endif
 
-typedef	u_long	vm_offset_t;
-typedef	u_long	vm_size_t;
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
 
 /*
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
-typedef	signed char		   int8_t;
+typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
