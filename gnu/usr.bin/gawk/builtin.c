@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: builtin.c,v 1.2 1993/08/02 17:29:28 mycroft Exp $";
+static char rcsid[] = "$Id: builtin.c,v 1.3 1993/11/13 02:26:27 jtc Exp $";
 #endif /* not lint */
 
 #include "awk.h"
@@ -66,14 +66,20 @@ double (*Log)() = log;
 #define Ceil(n) ceil(n)
 #endif
 
+#if __STDC__
+static void
+efwrite(void *ptr, size_t size, size_t count, FILE *fp,
+	char *from, struct redirect *rp,int flush)
+#else
 static void
 efwrite(ptr, size, count, fp, from, rp, flush)
 void *ptr;
-unsigned size, count;
+size_t size, count;
 FILE *fp;
 char *from;
 struct redirect *rp;
 int flush;
+#endif
 {
 	errno = 0;
 	if (fwrite(ptr, size, count, fp) != count)
@@ -120,7 +126,7 @@ NODE *tree;
 {
 	NODE *s1, *s2;
 	register char *p1, *p2;
-	register int l1, l2;
+	register size_t l1, l2;
 	long ret;
 
 
@@ -187,7 +193,7 @@ do_length(tree)
 NODE *tree;
 {
 	NODE *tmp;
-	int len;
+	size_t len;
 
 	tmp = tree_eval(tree->lnode);
 	len = force_string(tmp)->stlen;
@@ -227,7 +233,7 @@ NODE *tree;
       ofre+=osiz;\
       osiz*=2;\
     }\
-    memcpy(obuf+olen,s,(l));\
+    memcpy(obuf+olen,s,(size_t)(l));\
     olen+=(l);\
     ofre-=(l);\
   }
@@ -254,7 +260,7 @@ NODE *tree;
 	NODE *r;
 	int toofew = 0;
 	char *obuf;
-	int osiz, ofre, olen;
+	size_t osiz, ofre, olen;
 	static char chbuf[] = "0123456789abcdef";
 	static char sp[] = " ";
 	char *s0, *s1;
@@ -278,7 +284,7 @@ NODE *tree;
 	char *pr_str;
 	int ucasehex = 0;
 	char signchar = 0;
-	int len;
+	size_t len;
 
 
 	emalloc(obuf, char *, 120, "do_sprintf");
@@ -394,14 +400,14 @@ retry:
 	dopr_string:
 			if (fw > prec && !lj) {
 				while (fw > prec) {
-					bchunk(sp, 1);
+					bchunk(fill, 1);
 					fw--;
 				}
 			}
 			bchunk(pr_str, (int) prec);
 			if (fw > prec) {
 				while (fw > prec) {
-					bchunk(sp, 1);
+					bchunk(fill, 1);
 					fw--;
 				}
 			}
@@ -657,6 +663,7 @@ NODE *tree;
 	NODE *r;
 	register int indx;
 	size_t length;
+	int is_long;
 
 	t1 = tree_eval(tree->lnode);
 	t2 = tree_eval(tree->rnode->lnode);
@@ -672,12 +679,16 @@ NODE *tree;
 	t1 = force_string(t1);
 	if (indx < 0)
 		indx = 0;
-	if (indx >= t1->stlen || length <= 0) {
+	if (indx >= t1->stlen || (long) length <= 0) {
 		free_temp(t1);
 		return Nnull_string;
 	}
-	if (indx + length > t1->stlen || LONG_MAX - indx < length)
+	if ((is_long = (indx + length > t1->stlen)) || LONG_MAX - indx < length) {
 		length = t1->stlen - indx;
+		if (do_lint && is_long)
+			warning("substr: length %d at position %d exceeds length of first argument",
+				length, indx+1);
+	}
 	r =  tmp_string(t1->stptr + indx, length);
 	free_temp(t1);
 	return r;
@@ -691,7 +702,6 @@ NODE *tree;
 	struct tm *tm;
 	time_t fclock;
 	char buf[100];
-	int ret;
 
 	t1 = force_string(tree_eval(tree->lnode));
 
@@ -704,9 +714,7 @@ NODE *tree;
 	}
 	tm = localtime(&fclock);
 
-	ret = strftime(buf, 100, t1->stptr, tm);
-
-	return tmp_string(buf, ret);
+	return tmp_string(buf, strftime(buf, 100, t1->stptr, tm));
 }
 
 NODE *
@@ -726,13 +734,36 @@ NODE *tree;
 	NODE *tmp;
 	int ret = 0;
 	char *cmd;
+	char save;
 
-	(void) flush_io ();	/* so output is synchronous with gawk's */
+	(void) flush_io ();     /* so output is synchronous with gawk's */
 	tmp = tree_eval(tree->lnode);
 	cmd = force_string(tmp)->stptr;
+
 	if (cmd && *cmd) {
+		/* insure arg to system is zero-terminated */
+
+		/*
+		 * From: David Trueman <emory!cs.dal.ca!david>
+		 * To: arnold@cc.gatech.edu (Arnold Robbins)
+		 * Date: 	Wed, 3 Nov 1993 12:49:41 -0400
+		 * 
+		 * It may not be necessary to save the character, but
+		 * I'm not sure.  It would normally be the field
+		 * separator.  If the parse has not yet gone beyond
+		 * that, it could mess up (although I doubt it).  If
+		 * FIELDWIDTHS is being used, it might be the first
+		 * character of the next field.  Unless someone wants
+		 * to check it out exhaustively, I suggest saving it
+		 * for now...
+		 */
+		save = cmd[tmp->stlen];
+		cmd[tmp->stlen] = '\0';
+
 		ret = system(cmd);
 		ret = (ret >> 8) & 0xff;
+
+		cmd[tmp->stlen] = save;
 	}
 	free_temp(tmp);
 	return tmp_number((AWKNUM) ret);
@@ -778,12 +809,12 @@ register NODE *tree;
 		if (tree) {
 			s = OFS;
 			if (OFSlen)
-				efwrite(s, sizeof(char), OFSlen, fp, "print", rp, 0);
+				efwrite(s, sizeof(char), (size_t)OFSlen, fp, "print", rp, 0);
 		}
 	}
 	s = ORS;
 	if (ORSlen)
-		efwrite(s, sizeof(char), ORSlen, fp, "print", rp, 1);
+		efwrite(s, sizeof(char), (size_t)ORSlen, fp, "print", rp, 1);
 }
 
 NODE *
@@ -941,15 +972,15 @@ int global;
 	register char *scan;
 	register char *bp, *cp;
 	char *buf;
-	int buflen;
+	size_t buflen;
 	register char *matchend;
-	register int len;
+	register size_t len;
 	char *matchstart;
 	char *text;
-	int textlen;
+	size_t textlen;
 	char *repl;
 	char *replend;
-	int repllen;
+	size_t repllen;
 	int sofar;
 	int ampersands;
 	int matches = 0;
@@ -971,9 +1002,10 @@ int global;
 	tmp = tree->lnode;
 	t = force_string(tree_eval(tmp));
 
+	/* XXX - fix this in 2.16 */
 	/* do the search early to avoid work on non-match */
 	if (research(rp, t->stptr, 0, t->stlen, 1) == -1 ||
-	    (RESTART(rp, t->stptr) > t->stlen) && (matches = 1)) {
+	    ((RESTART(rp, t->stptr) > t->stlen) && (matches = 1))) {
 		free_temp(t);
 		return tmp_number((AWKNUM) matches);
 	}
@@ -1010,7 +1042,7 @@ int global;
 		if (*scan == '&') {
 			repllen--;
 			ampersands++;
-		} else if (*scan == '\\' && (*(scan+1) == '&' || *(scan+1) == '\\')) {
+		} else if (*scan == '\\' && *(scan+1) == '&') {
 			repllen--;
 			scan++;
 		}
@@ -1029,7 +1061,7 @@ int global;
 		len = matchstart - text + repllen
 		      + ampersands * (matchend - matchstart);
 		sofar = bp - buf;
-		while (buflen - sofar - len - 1 < 0) {
+		while ((long)(buflen - sofar - len - 1) < 0) {
 			buflen *= 2;
 			erealloc(buf, char *, buflen, "do_sub");
 			bp = buf + sofar;
@@ -1040,7 +1072,7 @@ int global;
 			if (*scan == '&')
 				for (cp = matchstart; cp < matchend; cp++)
 					*bp++ = *cp;
-			else if (*scan == '\\' && (*(scan+1) == '&' || *(scan+1) == '\\')) {
+			else if (*scan == '\\' && *(scan+1) == '&') {
 				scan++;
 				*bp++ = *scan;
 			} else
@@ -1051,7 +1083,7 @@ int global;
 		}
 		textlen = text + textlen - matchend;
 		text = matchend;
-		if (!global || textlen <= 0 ||
+		if (!global || (long)textlen <= 0 ||
 		    research(rp, t->stptr, text-t->stptr, textlen, 1) == -1)
 			break;
 	}
