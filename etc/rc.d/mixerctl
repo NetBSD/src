@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mixerctl,v 1.5 2002/10/12 11:29:29 kent Exp $
+# $NetBSD: mixerctl,v 1.6 2003/08/18 13:04:10 tron Exp $
 #
 
 # PROVIDE: mixerctl
@@ -20,7 +20,7 @@ mixerctl_start()
 		for mix in $mixerctl_mixers; do
 			if [ -s /var/db/${mix}.conf ]; then
 				echo -n " $mix"
-				/usr/bin/mixerctl -f /dev/$mix -n -w \
+				/usr/bin/mixerctl -d /dev/$mix -n -w \
 					`/bin/cat /var/db/${mix}.conf`
 			fi
 		done
@@ -40,7 +40,7 @@ mixerctl_stop()
 		echo -n "Saving mixer settings:"
 		for mix in $mixerctl_mixers; do
 			echo -n " $mix"
-			/usr/bin/mixerctl -f /dev/$mix -a > /var/db/${mix}.conf
+			/usr/bin/mixerctl -d /dev/$mix -a > /var/db/${mix}.conf
 		done
 		echo "."
 	fi
