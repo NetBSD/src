@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.1 1997/10/14 10:54:35 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.2 1997/10/17 00:12:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -61,7 +61,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
 #ifdef SYSVMSG
@@ -243,9 +242,6 @@ extern u_int spl_mask;
 extern u_int current_mask;
 extern u_int arm700bugcount;
 
-extern int userret_count0;
-extern int userret_count1;
-
 void
 cpu_reboot(howto, bootstr)
 	int howto;
@@ -262,9 +258,6 @@ cpu_reboot(howto, bootstr)
 /*	if (curpcb)
 		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
 #endif	/* DIAGNOSTIC */
-
-	printf("userret_count0=%d\n", userret_count0);
-	printf("userret_count1=%d\n", userret_count1);
 
 #if NHYDRABUS > 0
 	/*
