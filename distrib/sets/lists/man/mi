@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.3 2002/06/26 16:58:46 tv Exp $
+# $NetBSD: mi,v 1.478.2.4 2002/06/30 08:13:30 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1234,7 +1234,6 @@
 ./usr/share/man/cat8/algor/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/boot.0		man-sys-catman
-./usr/share/man/cat8/alpha/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/alpha/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/mkbootimage.0	man-sysutil-catman
 ./usr/share/man/cat8/alpha/setnetbootinfo.0	man-sysutil-catman
@@ -1639,11 +1638,9 @@
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/binstall.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/boot.0		man-sys-catman
-./usr/share/man/cat8/sparc/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/sparc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/tadpolectl.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc64/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/sparc64/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/sparc64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/spawn.0			man-postfix-catman
 ./usr/share/man/cat8/spray.0			man-netutil-catman
@@ -1660,7 +1657,6 @@
 ./usr/share/man/cat8/sun2/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/boot.0		man-sys-catman
-./usr/share/man/cat8/sun3/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/sun3/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/supfilesrv.0		man-sup-catman
 ./usr/share/man/cat8/supscan.0			man-sup-catman
@@ -1704,7 +1700,6 @@
 ./usr/share/man/cat8/vax/crash.0		man-sys-catman
 ./usr/share/man/cat8/vax/drtest.0		man-sys-catman
 ./usr/share/man/cat8/vax/format.0		man-sys-catman
-./usr/share/man/cat8/vax/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/vax/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
 ./usr/share/man/cat8/virtual.0			man-sysutil-catman
@@ -2945,7 +2940,6 @@
 ./usr/share/man/man8/algor/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/alpha/boot.8		man-sys-man
-./usr/share/man/man8/alpha/installboot.8	man-sysutil-man
 ./usr/share/man/man8/alpha/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/mkbootimage.8	man-sysutil-man
 ./usr/share/man/man8/alpha/setnetbootinfo.8	man-sysutil-man
@@ -3350,11 +3344,9 @@
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/sparc/binstall.8		man-sys-man
 ./usr/share/man/man8/sparc/boot.8		man-sys-man
-./usr/share/man/man8/sparc/installboot.8	man-sysutil-man
 ./usr/share/man/man8/sparc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/sparc/tadpolectl.8		man-sysutil-man
 ./usr/share/man/man8/sparc64/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/sparc64/installboot.8	man-sysutil-man
 ./usr/share/man/man8/sparc64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/spawn.8			man-postfix-man
 ./usr/share/man/man8/spray.8			man-netutil-man
@@ -3371,7 +3363,6 @@
 ./usr/share/man/man8/sun2/makedev.8		man-sysutil-man
 ./usr/share/man/man8/sun3/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/sun3/boot.8		man-sys-man
-./usr/share/man/man8/sun3/installboot.8		man-sysutil-man
 ./usr/share/man/man8/sun3/makedev.8		man-sysutil-man
 ./usr/share/man/man8/supfilesrv.8		man-sup-man
 ./usr/share/man/man8/supscan.8			man-sup-man
@@ -3415,7 +3406,6 @@
 ./usr/share/man/man8/vax/crash.8		man-sys-man
 ./usr/share/man/man8/vax/drtest.8		man-sys-man
 ./usr/share/man/man8/vax/format.8		man-sys-man
-./usr/share/man/man8/vax/installboot.8		man-sysutil-man
 ./usr/share/man/man8/vax/makedev.8		man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/virtual.8			man-sysutil-man
