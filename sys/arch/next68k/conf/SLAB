@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.19 2003/09/22 14:11:28 cl Exp $
+# $NetBSD: SLAB,v 1.20 2003/09/30 03:57:37 mycroft Exp $
 #
 # deberg's development machine
 #
@@ -16,6 +16,7 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
+options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
