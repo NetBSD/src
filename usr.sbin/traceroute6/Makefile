@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.2 1999/07/03 06:26:26 itojun Exp $
+# $NetBSD: Makefile,v 1.3 2000/02/25 08:52:04 mycroft Exp $
 
 PROG=	traceroute6
 MAN=	traceroute6.8
 
-BINOWN=	root
-BINGRP=	bin
 BINMODE=4555
+BINOWN=	root
 
 CPPFLAGS+=-DINET6 -DIPSEC
 LDADD+=	-lipsec
