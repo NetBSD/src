@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.9 1998/08/17 02:55:39 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/08/18 13:31:50 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
 
 .include <bsd.own.mk>
+
+# gcc has files with a "rs6000" prefix for powerpc
+GNU_ARCH.powerpc=rs6000
 
 DIST=		${.CURDIR}/../../../dist/gcc
 COMMON=		${.CURDIR}/../common
