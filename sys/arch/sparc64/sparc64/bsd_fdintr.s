@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.2 2000/04/15 03:08:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -34,10 +34,10 @@
 #ifndef FDC_C_HANDLER
 #include "assym.h"
 #include <sparc64/sparc64/intreg.h>
-#include <sparc64/sparc64/auxreg.h>
 #include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/fdreg.h>
 #include <sparc64/dev/fdvar.h>
+#include <sparc64/dev/auxioreg.h>
 #include <machine/asm.h>
 /* XXX this goes in a header file -- currently, it's hidden in locore.s */
 #define INTREG_ADDR 0xf8002000
@@ -149,7 +149,7 @@ nextc:
 	sethi	%hi(_C_LABEL(auxio_reg)), %l6
 	ld	[%l6 + %lo(_C_LABEL(auxio_reg))], %l6
 	ldub	[%l6], %l7
-	or	%l7, AUXIO_MB1|AUXIO_FTC, %l7
+	or	%l7, AUXIO_LED_MB1|AUXIO_LED_FTC, %l7
 	stb	%l7, [%l6]
 
 	! we have some time to kill; anticipate on upcoming
@@ -159,8 +159,8 @@ nextc:
 	st	%l7, [R_fdc + FDC_NSTAT]	! fdc->sc_nstat = -1;
 
 	ldub	[%l6], %l7
-	andn	%l7, AUXIO_FTC, %l7
-	or	%l7, AUXIO_MB1, %l7
+	andn	%l7, AUXIO_LED_FTC, %l7
+	or	%l7, AUXIO_LED_MB1, %l7
 	stb	%l7, [%l6]
 	b	resultphase1
 	 nop
