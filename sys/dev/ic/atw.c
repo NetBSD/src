@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.48 2004/07/15 06:37:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.48 2004/07/15 06:37:22 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3042,14 +3042,16 @@ atw_txintr(struct atw_softc *sc)
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		ATW_CDTXSYNC(sc, txs->txs_lastdesc,
-		    txs->txs_ndescs,
+		ATW_CDTXSYNC(sc, txs->txs_lastdesc, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef ATW_DEBUG
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
 			int i;
 			printf("    txsoft %p transmit chain:\n", txs);
+			ATW_CDTXSYNC(sc, txs->txs_firstdesc,
+			    txs->txs_ndescs - 1,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			for (i = txs->txs_firstdesc;; i = ATW_NEXTTX(i)) {
 				printf("     descriptor %d:\n", i);
 				printf("       at_status:   0x%08x\n",
