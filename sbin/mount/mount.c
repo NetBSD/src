@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.41 1997/11/23 03:53:24 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.42 1998/05/06 02:36:35 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.41 1997/11/23 03:53:24 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.42 1998/05/06 02:36:35 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ main(argc, argv)
 	FILE *mountdfp;
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
+	char *mountopts, *fstypename;
 
 	all = forceall = init_flags = 0;
 	options = NULL;
@@ -212,13 +213,15 @@ main(argc, argv)
 				errx(1,
 				    "unknown special file or file system %s.",
 				    *argv);
-			if ((fs = getfsfile(mntbuf->f_mntonname)) != NULL)
+			if ((fs = getfsfile(mntbuf->f_mntonname)) != NULL) {
 				mntfromname = fs->fs_spec;
-			else
+				/* ignore the fstab file options.  */
+				fs->fs_mntops = NULL;
+			} else
 				mntfromname = mntbuf->f_mntfromname;
-			/* If it's an update, ignore the fstab file options. */
-			fs->fs_mntops = NULL;
-			mntonname = mntbuf->f_mntonname;
+			mntonname  = mntbuf->f_mntonname;
+			fstypename = mntbuf->f_fstypename;
+			mountopts  = NULL;
 		} else {
 			if ((fs = getfsfile(*argv)) == NULL &&
 			    (fs = getfsspec(*argv)) == NULL)
@@ -229,10 +232,12 @@ main(argc, argv)
 				errx(1, "%s has unknown file system type.",
 				    *argv);
 			mntfromname = fs->fs_spec;
-			mntonname = fs->fs_file;
+			mntonname   = fs->fs_file;
+			fstypename  = fs->fs_vfstype;
+			mountopts   = fs->fs_mntops;
 		}
-		rval = mountfs(fs->fs_vfstype, mntfromname,
-		    mntonname, init_flags, options, fs->fs_mntops, 0);
+		rval = mountfs(fstypename, mntfromname,
+		    mntonname, init_flags, options, mountopts, 0);
 		break;
 	case 2:
 		/*
