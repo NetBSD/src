@@ -1,11 +1,18 @@
 /*
- * Copyright (c) 1988, Julian Onions.
+ * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
+ * Nottingham University 1987.
  *
  * This source may be freely distributed, however I would be interested
  * in any changes that are made.
  *
+ * This driver takes packets off the IP i/f and hands them up to a
+ * user process to have it's wicked way with. This driver has it's
+ * roots in a similar driver written by Phil Cockcroft (formerly) at
+ * UCL. This driver is based much more on read/write/select mode of
+ * operation though.
+ * 
  * from: $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
- * $Id: if_tun.h,v 1.1 1993/11/14 20:07:23 deraadt Exp $
+ * $Id: if_tun.h,v 1.2 1993/12/13 05:06:35 deraadt Exp $
  */
 
 #ifndef _NET_IF_TUN_H_
@@ -26,6 +33,9 @@ struct tun_softc {
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
+#if NBPFILTER > 0
+	caddr_t		tun_bpf;
+#endif
 };
 
 /* Maximum packet size */
