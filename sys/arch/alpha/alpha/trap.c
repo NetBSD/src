@@ -1,7 +1,7 @@
-/* $NetBSD: trap.c,v 1.74 2001/07/12 23:35:43 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.75 2001/07/14 05:10:38 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2001/07/12 23:35:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2001/07/14 05:10:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2001/07/12 23:35:43 thorpej Exp $");
 
 static int unaligned_fixup(u_long, u_long, u_long, struct proc *);
 static int handle_opdec(struct proc *p, u_int64_t *ucodep);
+
+struct evcnt fpevent_use;
+struct evcnt fpevent_reuse;
 
 /*
  * Initialize the trap vectors for the current processor.
@@ -146,6 +149,15 @@ trap_init(void)
 	 */
 	alpha_pal_wrmces(alpha_pal_rdmces() & 
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+
+	/*
+	 * If this is the primary processor, initialize some trap
+	 * event counters.
+	 */
+	evcnt_attach_dynamic(&fpevent_use, EVCNT_TYPE_MISC, NULL,
+	    "FP", "proc use");
+	evcnt_attach_dynamic(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
+	    "FP", "proc re-use");
 }
 
 static void
@@ -194,6 +206,8 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 	    framep->tf_regs[FRAME_PC]);
 	printf("CPU %lu    ra         = 0x%lx\n", cpu_id,
 	    framep->tf_regs[FRAME_RA]);
+	printf("CPU %lu    pv         = 0x%lx\n", cpu_id,
+	    framep->tf_regs[FRAME_T12]);
 	printf("CPU %lu    curproc    = %p\n", cpu_id, curproc);
 	if (curproc != NULL)
 		printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
@@ -568,7 +582,20 @@ alpha_enable_fp(struct proc *p, int check)
 
 	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 
-	p->p_md.md_flags |= MDP_FPUSED;
+	/*
+	 * Instrument FP usage -- if a process had not previously
+	 * used FP, mark it as having used FP for the first time,
+	 * and count this event.
+	 *
+	 * If a process has used FP, count a "used FP, and took
+	 * a trap to use it again" event.
+	 */
+	if ((p->p_md.md_flags & MDP_FPUSED) == 0) {
+		atomic_add_ulong(&fpevent_use.ev_count, 1);
+		p->p_md.md_flags |= MDP_FPUSED;
+	} else
+		atomic_add_ulong(&fpevent_reuse.ev_count, 1);
+
 	alpha_pal_wrfen(1);
 	restorefpstate(&p->p_addr->u_pcb.pcb_fp);
 }
