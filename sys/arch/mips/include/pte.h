@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5.12.1 1998/11/19 06:44:50 nisimura Exp $	*/
+/*	$NetBSD: pte.h,v 1.5.12.2 1998/11/19 06:47:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ typedef union pt_entry {
 #define	mips_pg_nv_bit()	(MIPS1_PG_NV)	/* same on mips1 and mips3 */
 
 
-int pmap_is_page_ro(pmap_t, vm_offset_t, int);
+int pmap_is_page_ro(pmap_t, vaddr_t, int);
 
 
 /* MIPS1-only */
