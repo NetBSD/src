@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.6.1 1999/05/06 02:23:56 perry Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.6.2 1999/05/06 19:38:31 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,8 +49,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-void pci_init();
-
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -88,7 +86,8 @@ mainbus_attach(parent, self, aux)
 	ca.ca_name = "cpu";
 	config_found(self, &ca, NULL);
 
-	pci_init();
+	/* Now can map PCI configuration space registers. */
+	pci_init(1);
 
 	for (n = 0; n < 2; n++) {
 		if (pci_bridges[n].addr) {
