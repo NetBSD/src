@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.62.2.1 1998/06/10 22:20:30 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.62.2.2 1998/07/14 22:21:26 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1725,7 +1725,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 		free(sodp);
 		return NULL;
 	}
-	if ((mode & RTLD_GLOBAL) != 0)
+	if ((mode & RTLD_LOCAL) == 0)
 		LM_PRIVATE(smp)->spd_flags |= _RTLD_GLOBAL;
 
 	if (LM_PRIVATE(smp)->spd_refcount++ > 0) {
