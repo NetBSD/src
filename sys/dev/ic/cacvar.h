@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.3 2000/04/26 15:58:01 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.4 2000/05/04 17:27:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@ struct cac_softc {
 	paddr_t			sc_ccbs_paddr;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;	
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;
-	SIMPLEQ_ENTRY(cac_softc) sc_chain;
 };
 
 struct cac_attach_args {
