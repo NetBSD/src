@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.57 2003/08/22 22:05:11 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.58 2003/09/04 09:17:09 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.57 2003/08/22 22:05:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.58 2003/09/04 09:17:09 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -106,17 +106,15 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.57 2003/08/22 22:05:11 itojun Exp 
  * Per RFC 768, August, 1980.
  */
 
-struct	in6pcb udb6;
-struct	in6pcb *udp6_last_in6pcb = &udb6;
+extern struct inpcbtable udbtable;
 struct	udp6stat udp6stat;
 
-static	void udp6_detach __P((struct in6pcb *));
 static	void udp6_notify __P((struct in6pcb *, int));
 
 void
 udp6_init()
 {
-	udb6.in6p_next = udb6.in6p_prev = &udb6;
+	/* initialization done in udp_input() due to initialization order */
 }
 
 /*
@@ -209,7 +207,7 @@ udp6_ctlinput(cmd, sa, d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&udb6, &sa6->sin6_addr,
+			if (in6_pcblookup_connect(&udbtable, &sa6->sin6_addr,
 			    uh.uh_dport, (struct in6_addr *)&sa6_src->sin6_addr,
 			    uh.uh_sport, 0))
 				valid++;
@@ -221,8 +219,8 @@ udp6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local address (= s)
 			 * is really ours.
 			 */
-			else if (in6_pcblookup_bind(&udb6, &sa6->sin6_addr,
-						    uh.uh_dport, 0))
+			else if (in6_pcblookup_bind(&udbtable, &sa6->sin6_addr,
+			    uh.uh_dport, 0))
 				valid++;
 #endif
 
@@ -244,12 +242,12 @@ udp6_ctlinput(cmd, sa, d)
 			 */
 		}
 
-		(void) in6_pcbnotify(&udb6, sa, uh.uh_dport,
+		(void) in6_pcbnotify(&udbtable, sa, uh.uh_dport,
 		    (struct sockaddr *)sa6_src, uh.uh_sport, cmd, cmdarg,
 		    notify);
 	} else {
-		(void) in6_pcbnotify(&udb6, sa, 0, (struct sockaddr *)sa6_src,
-		    0, cmd, cmdarg, notify);
+		(void) in6_pcbnotify(&udbtable, sa, 0,
+		    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 	}
 }
 
@@ -282,9 +280,9 @@ udp6_usrreq(so, req, m, addr6, control, p)
 				   (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
-		in6_pcbpurgeif0(&udb6, (struct ifnet *)control);
+		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&udb6, (struct ifnet *)control);
+		in6_pcbpurgeif(&udbtable, (struct ifnet *)control);
 		return (0);
 	}
 
@@ -305,7 +303,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 			break;
 		}
 		s = splsoftnet();
-		error = in6_pcballoc(so, &udb6);
+		error = in6_pcballoc(so, &udbtable);
 		splx(s);
 		if (error)
 			break;
@@ -317,7 +315,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_DETACH:
-		udp6_detach(in6p);
+		in6_pcbdetach(in6p);
 		break;
 
 	case PRU_BIND:
@@ -365,6 +363,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		bzero((caddr_t)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
 		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
+		in6_pcbstate(in6p, IN6P_BOUND);		/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
@@ -376,7 +375,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		udp6_detach(in6p);
+		in6_pcbdetach(in6p);
 		break;
 
 	case PRU_SOCKADDR:
@@ -415,18 +414,6 @@ release:
 	if (m)
 		m_freem(m);
 	return (error);
-}
-
-static void
-udp6_detach(in6p)
-	struct in6pcb *in6p;
-{
-	int s = splsoftnet();
-
-	if (in6p == udp6_last_in6pcb)
-		udp6_last_in6pcb = &udb6;
-	in6_pcbdetach(in6p);
-	splx(s);
 }
 
 int

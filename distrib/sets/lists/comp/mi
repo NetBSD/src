@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.608 2003/08/26 17:37:48 wiz Exp $
+#	$NetBSD: mi,v 1.609 2003/09/04 09:17:10 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -423,6 +423,7 @@
 ./usr/include/netinet/in.h		comp-c-include
 ./usr/include/netinet/in_gif.h		comp-c-include
 ./usr/include/netinet/in_pcb.h		comp-c-include
+./usr/include/netinet/in_pcb_hdr.h	comp-c-include
 ./usr/include/netinet/in_systm.h	comp-c-include
 ./usr/include/netinet/in_var.h		comp-c-include
 ./usr/include/netinet/ip.h		comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.104 2003/08/07 16:33:20 agc Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.105 2003/09/04 09:17:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -634,9 +634,6 @@ struct	tcpstat {
 
 #ifdef _KERNEL
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-#ifdef INET6
-extern	struct in6pcb tcb6;
-#endif
 extern	struct tcpstat tcpstat;	/* tcp statistics */
 extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
@@ -722,9 +719,6 @@ struct tcpcb *
 void	 tcp_dooptions __P((struct tcpcb *,
 	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
-#ifdef INET6
-void	 tcp6_drain __P((void));
-#endif
 void	 tcp_established __P((struct tcpcb *));
 void	 tcp_init __P((void));
 #ifdef INET6

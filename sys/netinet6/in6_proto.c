@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.50 2003/08/14 07:57:41 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.51 2003/09/04 09:17:07 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.50 2003/08/14 07:57:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.51 2003/09/04 09:17:07 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,9 +146,9 @@ struct ip6protosw inet6sw[] = {
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
-  0,		0,		0,		tcp6_drain,
+  0,		0,		0,		0,
 #else
-  tcp_init,	0,		tcp_slowtimo,	tcp6_drain,
+  tcp_init,	0,		tcp_slowtimo,	0,
 #endif
   tcp_sysctl,
 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.108 2003/08/22 22:00:38 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.109 2003/09/04 09:17:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.108 2003/08/22 22:00:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.109 2003/09/04 09:17:03 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -195,9 +195,7 @@ void
 udp_init()
 {
 
-#ifdef INET
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
-#endif
 
 #ifdef UDP_CSUM_COUNTERS
 	evcnt_attach_static(&udp_hwcsum_bad);
@@ -582,6 +580,7 @@ udp4_realinput(src, dst, m, off)
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in_addr *src4, *dst4;
+	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 
 	rcvcnt = 0;
@@ -620,7 +619,11 @@ udp4_realinput(src, dst, m, off)
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+			inp = (struct inpcb *)inph;
+			if (inp->inp_af != AF_INET)
+				continue;
+
 			if (inp->inp_lport != *dport)
 				continue;
 			if (!in_nullhost(inp->inp_laddr)) {
@@ -683,6 +686,7 @@ udp6_realinput(af, src, dst, m, off)
 	int rcvcnt;
 	struct in6_addr src6, dst6;
 	const struct in_addr *dst4;
+	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 
 	rcvcnt = 0;
@@ -724,8 +728,11 @@ udp6_realinput(af, src, dst, m, off)
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		for (in6p = udb6.in6p_next; in6p != &udb6;
-		     in6p = in6p->in6p_next) {
+		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+			in6p = (struct in6pcb *)inph;
+			if (in6p->in6p_af != AF_INET6)
+				continue;
+
 			if (in6p->in6p_lport != dport)
 				continue;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
@@ -766,11 +773,11 @@ udp6_realinput(af, src, dst, m, off)
 		/*
 		 * Locate pcb for datagram.
 		 */
-		in6p = in6_pcblookup_connect(&udb6, &src6, sport,
+		in6p = in6_pcblookup_connect(&udbtable, &src6, sport,
 		    &dst6, dport, 0);
 		if (in6p == 0) {
 			++udpstat.udps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&udb6, &dst6, dport, 0);
+			in6p = in6_pcblookup_bind(&udbtable, &dst6, dport, 0);
 			if (in6p == 0)
 				return rcvcnt;
 		}
