@@ -3,7 +3,8 @@ PROG=           cc
 SRCS=           gcc.c version.c obstack.c
 MAN1=		gcc.0 g++.0
 BINDIR=		/usr/bin
-CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common
+CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
+                 -I$(.CURDIR)/.. -I$(.CURDIR)/../$(MACHINE)
 
 LINKS+=	${DESTDIR}${BINDIR}/cc ${DESTDIR}${BINDIR}/gcc
 LINKS+=	${DESTDIR}${BINDIR}/g++ ${DESTDIR}${BINDIR}/c++
@@ -13,6 +14,5 @@ MLINKS=	gcc.1 cc.1  g++.1 c++.1
 
 afterinstall:
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-		$(.CURDIR)/g++.script $(DESTDIR)/usr/bin/g++
-
+		$(.CURDIR)/g++.script $(DESTDIR)$(BINDIR)/g++
 .include <bsd.prog.mk>

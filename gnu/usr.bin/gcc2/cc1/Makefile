@@ -5,8 +5,9 @@ SRCS=		c-parse.c c-lang.c  c-lex.c c-pragma.c c-decl.c \
 		c-typeck.c c-convert.c c-aux-info.c c-iterate.c \
 		$(COMMON_SRC)
 	
-CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common
+CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common \
+                -I$(.CURDIR)/.. -I$(.CURDIR)/../$(MACHINE)
 YFLAGS=
 NOMAN=		noman
-.PATH:		$(.CURDIR)/../common
+.PATH:		$(.CURDIR)/../common $(.CURDIR)/../$(MACHINE)
 .include <bsd.prog.mk>
