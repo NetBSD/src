@@ -4,22 +4,13 @@
 #ifndef _LIB_PTHREAD_H
 #define _LIB_PTHREAD_H
 
-#include "sched.h"
+
 #include <sys/time.h>	/* For timespec */
-
-struct pthread_st;
-struct pthread_attr_st;
-struct pthread_mutex_st;
-struct pthread_mutexattr_st;
-struct pthread_cond_st;
-struct pthread_condattr_st;
-
-typedef struct pthread_st *pthread_t;
-typedef struct pthread_attr_st *pthread_attr_t;
-typedef struct pthread_mutex_st *pthread_mutex_t;
-typedef struct pthread_mutexattr_st *pthread_mutexattr_t;
-typedef struct pthread_cond_st *pthread_cond_t;
-typedef struct pthread_condattr_st *pthread_condattr_t;
+#include <signal.h>	/* For sigset_t. XXX perhaps pthread_sigmask should
+			 * be in signal.h instead of here.
+			 */
+#include "pthread_types.h"
+#include "sched.h"
 
 int	pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
 	    void *(*startfunc)(void *), void *arg);
@@ -62,7 +53,6 @@ int	pthread_condattr_getpshared(const pthread_condattr_t *attr,
 	    int *pshared);
 int	pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
 
-#define PTHREAD_MUTEX_INITIALIZER	xxxxx
 #define PTHREAD_COND_INITIALIZER	xxxxx
 
 #define	PTHREAD_CREATE_JOINABLE	0
