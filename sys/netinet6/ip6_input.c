@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.61 2003/05/14 06:47:41 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.62 2003/05/14 14:34:14 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.61 2003/05/14 06:47:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.62 2003/05/14 14:34:14 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -149,6 +149,7 @@ struct ip6stat ip6stat;
 static void ip6_init2 __P((void *));
 
 static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
+static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
@@ -1075,17 +1076,18 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 			struct ip6_hbh *hbh;
 			int hbhlen;
+			struct mbuf *ext;
 
-			IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
-				sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
-			if (hbh == NULL) {
+			ext = ip6_pullexthdr(m, sizeof(struct ip6_hdr),
+			    ip6->ip6_nxt);
+			if (ext == NULL) {
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
+			hbh = mtod(ext, struct ip6_hbh *);
 			hbhlen = (hbh->ip6h_len + 1) << 3;
-			IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
-				sizeof(struct ip6_hdr), hbhlen);
-			if (hbh == NULL) {
+			if (hbhlen != ext->m_len) {
+				m_freem(ext);
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
@@ -1100,6 +1102,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					      IPV6_HOPOPTS, IPPROTO_IPV6);
 			if (*mp)
 				mp = &(*mp)->m_next;
+			m_freem(ext);
 		}
 	}
 
@@ -1116,28 +1119,43 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		 * the chain of ancillary data.
 		 */
 		while (1) {	/* is explicit loop prevention necessary? */
-			struct ip6_ext *ip6e;
+			struct ip6_ext *ip6e = NULL;
 			int elen;
+			struct mbuf *ext = NULL;
 
-			IP6_EXTHDR_GET(ip6e, struct ip6_ext *, m, off,
-				sizeof(struct ip6_ext));
-			if (ip6e == NULL) {
+			/*
+			 * if it is not an extension header, don't try to
+			 * pull it from the chain.
+			 */
+			switch (nxt) {
+			case IPPROTO_DSTOPTS:
+			case IPPROTO_ROUTING:
+			case IPPROTO_HOPOPTS:
+			case IPPROTO_AH: /* is it possible? */
+				break;
+			default:
+				goto loopend;
+			}
+
+			ext = ip6_pullexthdr(m, off, nxt);
+			if (ext == NULL) {
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
+			ip6e = mtod(ext, struct ip6_ext *);
 			if (nxt == IPPROTO_AH)
 				elen = (ip6e->ip6e_len + 2) << 2;
 			else
 				elen = (ip6e->ip6e_len + 1) << 3;
-			IP6_EXTHDR_GET(ip6e, struct ip6_ext *, m, off, elen);
-			if (ip6e == NULL) {
+			if (elen != ext->m_len) {
+				m_freem(ext);
 				ip6stat.ip6s_tooshort++;
 				return;
 			}
 			KASSERT(IP6_HDR_ALIGNED_P(ip6e));
 
 			switch (nxt) {
-		        case IPPROTO_DSTOPTS:
+			case IPPROTO_DSTOPTS:
 				if (!in6p->in6p_flags & IN6P_DSTOPTS)
 					break;
 
@@ -1167,36 +1185,86 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					mp = &(*mp)->m_next;
 				break;
 
-			case IPPROTO_UDP:
-			case IPPROTO_TCP:
-			case IPPROTO_ICMPV6:
-			default:
-				/*
-				 * stop search if we encounter an upper
-				 * layer protocol headers.
-				 */
-				goto loopend;
-
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_AH: /* is it possible? */
 				break;
+
+			default:
+				/*
+			 	 * other cases have been filtered in the above.
+				 * none will visit this case.  here we supply
+				 * the code just in case (nxt overwritten or
+				 * other cases).
+				 */
+				m_freem(ext);
+				goto loopend;
+
 			}
 
 			/* proceed with the next header. */
 			off += elen;
 			nxt = ip6e->ip6e_nxt;
+			ip6e = NULL;
+			m_freem(ext);
+			ext = NULL;
 		}
 	  loopend:
-		;
+	  	;
 	}
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
-		/* to be done */
-	}
-	if ((in6p->in6p_flags & IN6P_DSTOPTS) && privileged) {
-		/* to be done */
-	}
-	/* IN6P_RTHDR - to be done */
+}
 
+/*
+ * pull single extension header from mbuf chain.  returns single mbuf that
+ * contains the result, or NULL on error.
+ */
+static struct mbuf *
+ip6_pullexthdr(m, off, nxt)
+	struct mbuf *m;
+	size_t off;
+	int nxt;
+{
+	struct ip6_ext ip6e;
+	size_t elen;
+	struct mbuf *n;
+
+#ifdef DIAGNOSTIC
+	switch (nxt) {
+	case IPPROTO_DSTOPTS:
+	case IPPROTO_ROUTING:
+	case IPPROTO_HOPOPTS:
+	case IPPROTO_AH: /* is it possible? */
+		break;
+	default:
+		printf("ip6_pullexthdr: invalid nxt=%d\n", nxt);
+	}
+#endif
+
+	m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+	if (nxt == IPPROTO_AH)
+		elen = (ip6e.ip6e_len + 2) << 2;
+	else
+		elen = (ip6e.ip6e_len + 1) << 3;
+
+	MGET(n, M_DONTWAIT, MT_DATA);
+	if (n && elen >= MLEN) {
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_free(n);
+			n = NULL;
+		}
+	}
+	if (!n)
+		return NULL;
+
+	n->m_len = 0;
+	if (elen >= M_TRAILINGSPACE(n)) {
+		m_free(n);
+		return NULL;
+	}
+
+	m_copydata(m, off, elen, mtod(n, caddr_t));
+	n->m_len = elen;
+	return n;
 }
 
 /*
