@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.16 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1994/03/09 04:59:59 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1994/03/17 13:55:48 pk Exp $";
 #endif /* not lint */
 
 #define USE_OLD_TTY
@@ -200,7 +200,7 @@ main(argc, argv)
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();
-		ioctl(0, TIOCFLUSH, 0);		/* clear out the crap */
+		ioctl(0, TIOCFLUSH, &off);	/* clear out the crap */
 		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 		if (IS)
