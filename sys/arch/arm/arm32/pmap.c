@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2003/02/21 00:23:03 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2003/01/17 22:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2003/02/21 00:23:03 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -264,11 +264,11 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
  */
 
 static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
-static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
+static struct pv_entry	*pmap_alloc_pv(struct pmap *, unsigned int);
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, unsigned int);
 static void		 pmap_enter_pv(struct vm_page *,
 				       struct pv_entry *, struct pmap *,
 				       vaddr_t, struct vm_page *, unsigned int);
@@ -292,7 +292,7 @@ struct l1pt {
 	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
 	struct pglist		pt_plist;	/* Allocated page list */
 	vaddr_t			pt_va;		/* Allocated virtual address */
-	int			pt_flags;	/* Flags */ 
+	unsigned int		pt_flags;	/* Flags */ 
 };
 #define	PTFLAG_STATIC		0x01		/* Statically allocated */
 #define	PTFLAG_KPT		0x02		/* Kernel pt's are mapped */
@@ -324,12 +324,12 @@ extern pv_addr_t systempage;
 /* Variables used by the L1 page table queue code */
 SIMPLEQ_HEAD(l1pt_queue, l1pt);
 static struct l1pt_queue l1pt_static_queue; /* head of our static l1 queue */
-static int l1pt_static_queue_count;	    /* items in the static l1 queue */
-static int l1pt_static_create_count;	    /* static l1 items created */
+static u_int l1pt_static_queue_count;	    /* items in the static l1 queue */
+static u_int l1pt_static_create_count;	    /* static l1 items created */
 static struct l1pt_queue l1pt_queue;	    /* head of our l1 queue */
-static int l1pt_queue_count;		    /* items in the l1 queue */
-static int l1pt_create_count;		    /* stat - L1's create count */
-static int l1pt_reuse_count;		    /* stat - L1's reused count */
+static u_int l1pt_queue_count;		    /* items in the l1 queue */
+static u_int l1pt_create_count;		    /* stat - L1's create count */
+static u_int l1pt_reuse_count;		    /* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
 void pmap_pinit(struct pmap *);
@@ -341,7 +341,7 @@ extern void bcopy_page(vaddr_t, vaddr_t);
 
 struct l1pt *pmap_alloc_l1pt(void);
 static __inline void pmap_map_in_l1(struct pmap *pmap, vaddr_t va,
-     				    vaddr_t l2pa, int);
+     				    vaddr_t l2pa, unsigned int);
 
 static pt_entry_t *pmap_map_ptes(struct pmap *);
 static void 	   pmap_unmap_ptes(struct pmap *);
@@ -358,10 +358,10 @@ static void pmap_vac_me_user(struct pmap *, struct vm_page *,
  */
 
 struct pv_entry {
-	struct pv_entry *pv_next;       /* next pv_entry */
-	struct pmap     *pv_pmap;        /* pmap where mapping lies */
-	vaddr_t         pv_va;          /* virtual address for mapping */
-	int             pv_flags;       /* flags */
+	struct pv_entry *pv_next;	/* next pv_entry */
+	struct pmap     *pv_pmap;	/* pmap where mapping lies */
+	vaddr_t         pv_va;		/* virtual address for mapping */
+	unsigned int    pv_flags;	/* flags */
 	struct vm_page	*pv_ptp;	/* vm_page for the ptp */
 };
 
@@ -375,7 +375,7 @@ struct pv_entry {
 struct pv_page_info {
 	TAILQ_ENTRY(pv_page) pvpi_list;
 	struct pv_entry *pvpi_pvfree;
-	int pvpi_nfree;
+	unsigned int pvpi_nfree;
 };
 
 /*
@@ -476,7 +476,7 @@ do {									\
  */
 
 __inline static struct pv_entry *
-pmap_alloc_pv(struct pmap *pmap, int mode)
+pmap_alloc_pv(struct pmap *pmap, unsigned int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -529,7 +529,7 @@ pmap_alloc_pv(struct pmap *pmap, int mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(struct pmap *pmap, int mode)
+pmap_alloc_pvpage(struct pmap *pmap, unsigned int mode)
 {
 	struct vm_page *pg;
 	struct pv_page *pvpage;
@@ -935,7 +935,7 @@ pmap_modify_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg,
 #define	PMAP_PTP_CACHEABLE	0x02
 
 static __inline void
-pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, int flags)
+pmap_map_in_l1(struct pmap *pmap, vaddr_t va, paddr_t l2pa, unsigned int flags)
 {
 	vaddr_t ptva;
 
@@ -1501,8 +1501,8 @@ pmap_allocpagedir(struct pmap *pmap)
 void
 pmap_pinit(struct pmap *pmap)
 {
-	int backoff = 6;
-	int retry = 10;
+	unsigned int backoff = 6;
+	unsigned int retry = 10;
 
 	PDEBUG(0, printf("pmap_pinit(%p)\n", pmap));
 
@@ -1585,7 +1585,7 @@ void
 pmap_destroy(struct pmap *pmap)
 {
 	struct vm_page *page;
-	int count;
+	unsigned int count;
 
 	if (pmap == NULL)
 		return;
@@ -1755,7 +1755,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 {
 	struct pmap *pmap;
 	struct pv_entry *npv;
-	int cache_needs_cleaning = 0;
+	boolean_t cache_needs_cleaning = FALSE;
 	vaddr_t page_to_clean = 0;
 
 	if (pv == NULL) {
@@ -1792,7 +1792,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 				break;
 			} else
 				page_to_clean = npv->pv_va;
-			cache_needs_cleaning = 1;
+			cache_needs_cleaning = TRUE;
 		}
 	}
 
@@ -2417,7 +2417,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				cleanlist[cleanlist_idx].va = sva;
 				cleanlist_idx++;
 			} else if (cleanlist_idx == PMAP_REMOVE_CLEAN_LIST_SIZE) {
-				int cnt;
+				unsigned int cnt;
 
 				/* Nuke everything if needed. */
 				if (pmap_active) {
@@ -2606,7 +2606,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *pte = NULL, *ptes;
 	struct vm_page *pg;
-	int flush = 0;
+	boolean_t flush = FALSE;
 
 	PDEBUG(0, printf("pmap_protect: pmap=%p %08lx->%08lx %x\n",
 	    pmap, sva, eva, prot));
@@ -2667,7 +2667,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			goto next;
 		}
 
-		flush = 1;
+		flush = TRUE;
 
 		pg = PHYS_TO_VM_PAGE(pmap_pte_pa(pte));
 
@@ -2717,7 +2717,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
 	struct pv_entry *pve;
-	int error, nflags;
+	int error;
+	unsigned int nflags;
 	struct vm_page *ptp = NULL;
 
 	NPDEBUG(PDB_ENTER, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, flags=%08x, wired = %d\n",
@@ -3869,7 +3870,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	pt_entry_t *pte, fl;
 	vsize_t resid;  
-	int i;
+	u_int i;
 
 	resid = (size + (NBPG - 1)) & ~(NBPG - 1);
 
