@@ -1,4 +1,4 @@
-/* $NetBSD: events.c,v 1.2 2002/07/02 12:41:26 christos Exp $ */
+/* $NetBSD: events.c,v 1.3 2002/07/04 20:50:29 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: events.c,v 1.2 2002/07/02 12:41:26 christos Exp $");
+__RCSID("$NetBSD: events.c,v 1.3 2002/07/04 20:50:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: events.c,v 1.2 2002/07/02 12:41:26 christos Exp $");
 #include <sys/types.h>
 #include <sys/tty.h>
 #include <dev/wscons/wsconsio.h>
- 
+
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
