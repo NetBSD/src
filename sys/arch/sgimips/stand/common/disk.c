@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.3 2003/08/07 16:29:27 agc Exp $	*/
+/*	$NetBSD: disk.c,v 1.4 2003/11/11 06:42:15 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,14 +104,14 @@ diskstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 int
 diskopen(struct open_file *f, ...)
 {
-	int ctlr, unit, part;
+	int part;
 
 	struct disk_softc *sc;
 	struct disklabel *lp;
 #ifdef arc
 	char *msg, buf[DEV_BSIZE];
 #endif
-	int i, cnt;
+	int i;
 	char *device;
 	va_list ap;
 
