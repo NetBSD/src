@@ -2468,7 +2468,7 @@ fi
 fi
 
 for ac_header in sys/endian.h sys/sysmacros.h sys/syslimits.h \
-	features.h malloc.h stddef.h stdint.h
+	features.h malloc.h stddef.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:2474: checking for $ac_header" >&5
@@ -2517,7 +2517,7 @@ fi
 done
 
 for ac_header in machine/bswap.h sys/cdefs.h sys/featuretest.h \
-	err.h inttypes.h libgen.h paths.h util.h
+	err.h inttypes.h libgen.h paths.h stdint.h util.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:2523: checking for $ac_header" >&5
