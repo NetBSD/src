@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.2 2001/11/09 20:58:58 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.3 2001/12/01 02:04:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
 void	iq80310_calibrate_delay(void);
 
 void	iq80310_7seg(char, char);
+void	iq80310_7seg_snake(void);
 
 void	iq80310_pci_init(pci_chipset_tag_t, void *);
 

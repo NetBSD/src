@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.5 2001/11/26 18:01:05 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.6 2001/12/01 02:04:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -331,11 +331,15 @@ int
 clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
+	static int snakefreq;
 
 	timer_disable(TIMER_ENABLE_INTEN);
 	timer_enable(TIMER_ENABLE_INTEN);
 
 	hardclock(frame);
+
+	if ((snakefreq++ & 15) == 0)
+		iq80310_7seg_snake();
 
 	return (1);
 }
