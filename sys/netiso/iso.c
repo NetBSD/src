@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.34 2004/04/18 18:54:04 matt Exp $	*/
+/*	$NetBSD: iso.c,v 1.35 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.34 2004/04/18 18:54:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35 2004/04/19 05:16:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ int             iso_interfaces = 0;	/* number of external interfaces */
  * NOTES:
  */
 int
-iso_addrmatch1(isoaa, isoab)
-	struct iso_addr *isoaa, *isoab;	/* addresses to check */
+iso_addrmatch1(const struct iso_addr *isoaa, const struct iso_addr *isoab)
 {
 	u_int           compare_len;
 
@@ -141,7 +140,7 @@ iso_addrmatch1(isoaa, isoab)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
 		int             i;
-		char           *a, *b;
+		const char           *a, *b;
 
 		a = isoaa->isoa_genaddr;
 		b = isoab->isoa_genaddr;
@@ -173,8 +172,8 @@ iso_addrmatch1(isoaa, isoab)
  * NOTES:
  */
 int
-iso_addrmatch(sisoa, sisob)
-	struct sockaddr_iso *sisoa, *sisob;	/* addresses to check */
+iso_addrmatch(const struct sockaddr_iso *sisoa,
+	const struct sockaddr_iso *sisob)
 {
 	return (iso_addrmatch1(&sisoa->siso_addr, &sisob->siso_addr));
 }
@@ -192,8 +191,8 @@ iso_addrmatch(sisoa, sisob)
  * NOTES:
  */
 int
-iso_netmatch(sisoa, sisob)
-	struct sockaddr_iso *sisoa, *sisob;
+iso_netmatch(const struct sockaddr_iso *sisoa,
+	const struct sockaddr_iso *sisob)
 {
 	u_char          bufa[sizeof(struct sockaddr_iso)];
 	u_char          bufb[sizeof(struct sockaddr_iso)];
@@ -230,9 +229,7 @@ iso_netmatch(sisoa, sisob)
  *			quantities.
  */
 u_long
-iso_hashchar(buf, len)
-	caddr_t buf;	/* buffer to pack from */
-	int    len;	/* length of buffer */
+iso_hashchar(caddr_t buf, int len)
 {
 	u_long h = 0;
 	int    i;
@@ -283,11 +280,11 @@ iso_hashchar(buf, len)
  * NOTES:
  */
 void
-iso_hash(siso, hp)
-	struct sockaddr_iso *siso;	/* address to perform hash on */
-	struct afhash  *hp;	/* RETURN: hash info here */
+iso_hash(
+	struct sockaddr_iso *siso,	/* address to perform hash on */
+	struct afhash  *hp)	/* RETURN: hash info here */
 {
-	u_long          buf[sizeof(struct sockaddr_iso) + 1 / 4];
+	u_long buf[sizeof(struct sockaddr_iso) / 4 + 1];
 	int    bufsize;
 
 
@@ -334,9 +331,9 @@ iso_hash(siso, hp)
  * NOTES:		Buf is assumed to be big enough
  */
 u_int
-iso_netof(isoa, buf)
-	struct iso_addr *isoa;	/* address */
-	caddr_t         buf;	/* RESULT: network portion of address here */
+iso_netof(
+	struct iso_addr *isoa,	/* address */
+	caddr_t         buf)	/* RESULT: network portion of address here */
 {
 	u_int           len = 1;/* length of afi */
 
@@ -443,12 +440,8 @@ iso_netof(isoa, buf)
  */
 /* ARGSUSED */
 int
-iso_control(so, cmd, data, ifp, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
-	struct ifnet *ifp;
-	struct proc *p;
+iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+	struct proc *p)
 {
 	struct iso_ifreq *ifr = (struct iso_ifreq *) data;
 	struct iso_ifaddr *ia = 0;
@@ -573,9 +566,7 @@ iso_control(so, cmd, data, ifp, p)
 }
 
 void
-iso_purgeaddr(ifa, ifp)
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
+iso_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 {
 	struct iso_ifaddr *ia = (void *) ifa;
 
@@ -587,8 +578,7 @@ iso_purgeaddr(ifa, ifp)
 }
 
 void
-iso_purgeif(ifp)
-	struct ifnet *ifp;
+iso_purgeif(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -604,9 +594,7 @@ iso_purgeif(ifp)
  * Delete any existing route for an interface.
  */
 void
-iso_ifscrub(ifp, ia)
-	struct ifnet *ifp;
-	struct iso_ifaddr *ia;
+iso_ifscrub(struct ifnet *ifp, struct iso_ifaddr *ia)
 {
 	int             nsellength = ia->ia_addr.siso_tlen;
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
@@ -628,11 +616,8 @@ iso_ifscrub(ifp, ia)
  * and routing table entry.
  */
 int
-iso_ifinit(ifp, ia, siso, scrub)
-	struct ifnet *ifp;
-	struct iso_ifaddr *ia;
-	struct sockaddr_iso *siso;
-	int scrub;
+iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
+	int scrub)
 {
 	struct sockaddr_iso oldaddr;
 	int             s = splnet(), error, nsellength;
@@ -689,8 +674,7 @@ iso_ifinit(ifp, ia, siso, scrub)
 #ifdef notdef
 
 struct ifaddr  *
-iso_ifwithidi(addr)
-	struct sockaddr *addr;
+iso_ifwithidi(struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -763,8 +747,7 @@ iso_ifwithidi(addr)
  *
  */
 int
-iso_ck_addr(isoa)
-	struct iso_addr *isoa;	/* address to check */
+iso_ck_addr(struct iso_addr *isoa)
 {
 	return (isoa->isoa_len <= 20);
 
@@ -789,9 +772,9 @@ iso_ck_addr(isoa)
  *			if the addr is not t37, the idis must be compared.
  */
 int
-iso_eqtype(isoaa, isoab)
-	struct iso_addr *isoaa;	/* first addr to check */
-	struct iso_addr *isoab;	/* other addr to check */
+iso_eqtype(
+	struct iso_addr *isoaa,	/* first addr to check */
+	struct iso_addr *isoab)	/* other addr to check */
 {
 	if (isoaa->isoa_afi == isoab->isoa_afi) {
 		if (isoaa->isoa_afi == AFI_37)
@@ -815,8 +798,7 @@ iso_eqtype(isoaa, isoab)
  * NOTES:
  */
 struct iso_ifaddr *
-iso_localifa(siso)
-	struct sockaddr_iso *siso;
+iso_localifa(struct sockaddr_iso *siso)
 {
 	struct iso_ifaddr *ia;
 	char  *cp1, *cp2, *cp3;
@@ -871,11 +853,11 @@ next:		;
  *				rclnp_ctloutput and cons_ctloutput.
  */
 int
-iso_nlctloutput(cmd, optname, pcb, m)
-	int             cmd;	/* command:set or get */
-	int             optname;/* option of interest */
-	caddr_t         pcb;	/* nl pcb */
-	struct mbuf    *m;	/* data for set, buffer for get */
+iso_nlctloutput(
+	int             cmd,		/* command:set or get */
+	int             optname,	/* option of interest */
+	caddr_t         pcb,		/* nl pcb */
+	struct mbuf    *m)		/* data for set, buffer for get */
 {
 #ifdef TPCONS
 	struct isopcb  *isop = (struct isopcb *) pcb;
@@ -947,8 +929,7 @@ iso_nlctloutput(cmd, optname, pcb, m)
  *
  */
 void
-dump_isoaddr(s)
-	struct sockaddr_iso *s;
+dump_isoaddr(struct sockaddr_iso *s)
 {
 	if (s->siso_family == AF_ISO) {
 		printf("ISO address: suffixlen %d, %s\n",

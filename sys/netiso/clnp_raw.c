@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.20 2004/04/18 18:54:03 matt Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.21 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.20 2004/04/18 18:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.21 2004/04/19 05:16:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.20 2004/04/18 18:54:03 matt Exp $");
 #include <machine/stdarg.h>
 
 struct sockproto rclnp_proto = {PF_ISO, 0};
+
 /*
  * FUNCTION:		rclnp_input
  *
@@ -144,13 +145,7 @@ rclnp_input(m, va_alist)
  * NOTES:
  */
 int
-#if __STDC__
 rclnp_output(struct mbuf *m0, ...)
-#else
-rclnp_output(m0, va_alist)
-	struct mbuf    *m0;	/* packet to send */
-	va_dcl
-#endif
 {
 	struct socket  *so;	/* socket to send from */
 	struct rawisopcb *rp;	/* ptr to raw cb */
@@ -206,12 +201,12 @@ rclnp_output(m0, va_alist)
  * NOTES:
  */
 int
-rclnp_ctloutput(op, so, level, optname, m)
-	int             op;	/* type of operation */
-	struct socket  *so;	/* ptr to socket */
-	int             level;	/* level of option */
-	int             optname;/* name of option */
-	struct mbuf   **m;	/* ptr to ptr to option data */
+rclnp_ctloutput(
+	int             op,	/* type of operation */
+	struct socket  *so,	/* ptr to socket */
+	int             level,	/* level of option */
+	int             optname,/* name of option */
+	struct mbuf   **m)	/* ptr to ptr to option data */
 {
 	int             error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);	/* raw cb ptr */
@@ -297,11 +292,8 @@ rclnp_ctloutput(op, so, level, optname, m)
 
 /* ARGSUSED */
 int
-clnp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	int    error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);
