@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/09/24 18:28:21 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2001/05/19 18:15:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -46,6 +46,10 @@
 
 #include <libi386.h>
 #include "devopen.h"
+
+#ifdef SUPPORT_PS2
+#include <biosmca.h>
+#endif
 
 int errno;
 extern int boot_biosdev;
@@ -232,6 +236,10 @@ main()
 	initio(SUPPORT_SERIAL);
 #else
 	initio(CONSDEV_PC);
+#endif
+
+#ifdef SUPPORT_PS2
+	biosmca();
 #endif
 	gateA20();
 

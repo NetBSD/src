@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.15 2000/02/22 07:45:04 dbj Exp $	 */
+/*	$NetBSD: exec.c,v 1.16 2001/05/19 18:15:14 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -58,6 +58,9 @@
 #include "loadfile.h"
 #include "libi386.h"
 #include "bootinfo.h"
+#ifdef SUPPORT_PS2
+#include "biosmca.h"
+#endif
 
 #ifdef COMPAT_OLDBOOT
 static int dev2major __P((char *, int *));
@@ -67,13 +70,23 @@ dev2major(devname, major)
 	char           *devname;
 	int            *major;
 {
-	static char    *devices[] = {"wd", "", "fd", "", "sd"};
-#define NUMDEVICES (sizeof(devices)/sizeof(char *))
+	static const struct {
+		const char *name;
+		int maj;
+	} devices[] = {
+		{ "wd", 0  },
+		{ "fd", 2  },
+		{ "sd", 4  },
+#ifdef SUPPORT_PS2
+		{ "ed", 20 },
+#endif
+	};
+#define NUMDEVICES (sizeof(devices)/sizeof(devices[0]))
 	int             i;
 
 	for (i = 0; i < NUMDEVICES; i++)
-		if (!strcmp(devname, devices[i])) {
-			*major = i;
+		if (!strcmp(devname, devices[i].name)) {
+			*major = devices[i].maj;
 			return (0);
 		}
 	return (-1);
@@ -166,10 +179,21 @@ exec_netbsd(file, loadaddr, boothowto)
 			/* generic BIOS disk, have to guess type */
 			struct open_file *f = &files[fd];	/* XXX */
 
-			if (biosdisk_gettype(f) == DTYPE_SCSI)
+			switch (biosdisk_gettype(f)) {
+			case DTYPE_SCSI:
 				devname = "sd";
-			else
+				break;
+#ifdef SUPPORT_PS2
+			case DTYPE_ESDI:
+				if (biosmca_ps2model) {
+					devname = "ed";
+					break;
+				}
+#endif
+			default:
 				devname = "wd";
+				break;
+			}
 
 			/*
 			 * The old boot block performed the following
