@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.7 1999/08/27 20:00:24 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.8 1999/09/17 20:07:20 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <machine/trap.h>
 #include <machine/scb.h>

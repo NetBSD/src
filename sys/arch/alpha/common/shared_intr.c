@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.6 1998/08/01 18:52:36 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,17 +33,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.6 1998/08/01 18:52:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
 #include <machine/intr.h>
-
-extern int cold;
 
 static const char *intr_typename __P((int));
 

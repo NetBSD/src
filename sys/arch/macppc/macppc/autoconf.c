@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1999/09/15 18:10:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1999/09/17 20:04:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,8 +50,6 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-extern int cold;
-
 void findroot __P((void));
 int OF_interpret __P((char *cmd, int nreturns, ...));
 
@@ -93,7 +91,6 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	(void)spl0();
-	cold = 0;
 
 	/*
 	 * Now allow hardware interrupts.

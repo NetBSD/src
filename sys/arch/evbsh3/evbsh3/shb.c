@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.2 1999/09/16 21:22:40 msaitoh Exp $	*/
+/*	$NetBSD: shb.c,v 1.3 1999/09/17 19:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -307,7 +307,6 @@ shb_intr_establish(irq, type, level, ih_fun, ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
-	extern int cold;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
