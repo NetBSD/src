@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.34 1997/02/26 22:29:09 gwr Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35 1997/03/01 09:50:40 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -67,10 +67,12 @@ static int ncr_match __P((struct device *, struct cfdata *, void *));
  *
  * bit     0: disable disconnect/reconnect
  * bit     1: disable use of interrupts
+ * bit     2: reset scsi bus in ncr_attach
  * bits 8-15: disable parity (per target)
  */
 #define NCR_DISABLE_RESELECT	1
 #define NCR_DISABLE_INTERRUPTS	2
+#define NCR_RESET_BUS		4
 
 /*
  * Make the default options patchable with gdb.
@@ -183,7 +185,9 @@ ncr_attach(parent, self, aux)
 	 *  Initialize the SCSI controller itself.
 	 */
 	ncr5380_init(sc);
-	ncr5380_reset_scsibus(sc);
+	if (flags & NCR_RESET_BUS)
+		ncr5380_reset_scsibus(sc);
+
 	config_found(self, &(sc->sc_link), scsiprint);
 }
 
