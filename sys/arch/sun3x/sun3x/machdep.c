@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1997/09/11 23:02:24 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1997/09/12 07:00:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -395,8 +395,22 @@ setregs(p, pack, stack)
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
 
 	tf->tf_pc = pack->ep_entry & ~1;
-	tf->tf_regs[SP] = stack;
+	tf->tf_regs[D0] = 0;
+	tf->tf_regs[D1] = 0;
+	tf->tf_regs[D2] = 0;
+	tf->tf_regs[D3] = 0;
+	tf->tf_regs[D4] = 0;
+	tf->tf_regs[D5] = 0;
+	tf->tf_regs[D6] = 0;
+	tf->tf_regs[D7] = 0;
+	tf->tf_regs[A0] = 0;
+	tf->tf_regs[A1] = 0;
 	tf->tf_regs[A2] = (int)PS_STRINGS;
+	tf->tf_regs[A3] = 0;
+	tf->tf_regs[A4] = 0;
+	tf->tf_regs[A5] = 0;
+	tf->tf_regs[A6] = 0;
+	tf->tf_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -404,7 +418,6 @@ setregs(p, pack, stack)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 
 	p->p_md.md_flags = 0;
-	/* XXX - HPUX sigcode hack would go here... */
 }
 
 /*
