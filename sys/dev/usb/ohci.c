@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.66 2000/01/28 10:19:48 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.67 2000/01/28 13:32:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1058,6 +1058,9 @@ char *ohci_cc_strs[] = {
 	"DATA_UNDERRUN",
 	"BUFFER_OVERRUN",
 	"BUFFER_UNDERRUN",
+	"reserved",
+	"reserved",
+	"NOT_ACCESSED",
 	"NOT_ACCESSED",
 };
 #endif
