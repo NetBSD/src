@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.34 2004/05/25 21:38:11 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.35 2004/07/08 21:33:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.34 2004/05/25 21:38:11 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.35 2004/07/08 21:33:45 kleink Exp $");
 
 #include "mpu.h"
 
@@ -61,6 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.34 2004/05/25 21:38:11 kleink Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+/*
+ * XXX Work around the 24-bit implementation limit of the Audio 1 DMA
+ * XXX engine by allocating through the ISA DMA tag.
+ */
+#if defined(amd64) || defined(i386)
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
+#endif
+#endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) printf x
@@ -1587,13 +1598,24 @@ eso_allocm(hdl, direction, size, type, flags)
 	else
 		boundary = 0x100000;
 
+	/*
+	 * XXX Work around allocation problems for Audio 1, which
+	 * XXX implements the 24 low address bits only, with
+	 * XXX machine-specific DMA tag use.
+	 */
 #ifdef alpha
 	/*
-	 * XXX For Audio 1, which implements the 24 low address bits only,
-	 * XXX force allocation through the (ISA) SGMAP.
+	 * XXX Force allocation through the (ISA) SGMAP.
 	 */
 	if (direction == AUMODE_RECORD)
 		ed->ed_dmat = alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_ISA);
+	else
+#elif defined(amd64) || defined(i386)
+	/*
+	 * XXX Force allocation through the ISA DMA tag.
+	 */
+	if (direction == AUMODE_RECORD)
+		ed->ed_dmat = &isa_bus_dma_tag;
 	else
 #endif
 		ed->ed_dmat = sc->sc_dmat;
@@ -1715,6 +1737,8 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
+	DPRINTF(("%s: dmaaddr %lx\n",
+	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 	
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
@@ -1802,6 +1826,8 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
+	DPRINTF(("%s: dmaaddr %lx\n",
+	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
