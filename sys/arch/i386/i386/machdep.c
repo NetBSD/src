@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.547 2003/12/30 12:33:22 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.548 2004/01/28 10:48:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.547 2003/12/30 12:33:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.548 2004/01/28 10:48:55 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1089,7 +1089,7 @@ setregs(l, pack, stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
@@ -2129,7 +2129,7 @@ cpu_getmcontext(l, mcp, flags)
 	*flags |= _UC_CPU;
 
 	/* Save floating point register context, if any. */
-	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 #if NNPX > 0
 		/*
 		 * If this process is the current FP owner, dump its
@@ -2252,7 +2252,7 @@ cpu_setmcontext(l, mcp, flags)
 			}
 		}
 		/* If not set already. */
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 #if 0
 		/* Apparently unused. */
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.28 2004/01/28 10:48:55 yamt Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.28 2004/01/28 10:48:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,14 +97,14 @@ math_emulate(info, ksi)
 		panic("math emulator called from supervisor mode");
 
 	/* ever used fp? */
-	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		if (i386_use_fxsave)
 			cw = l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw;
 		else
 			cw = l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw;
 		fninit();
 		I387.cwd = cw;
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	if (I387.cwd & I387.swd & 0x3f)
