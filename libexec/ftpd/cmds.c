@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.1 2000/07/13 01:06:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.1 2000/07/13 01:06:35 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -528,28 +528,38 @@ ack(const char *s)
 /*
  * Encode len bytes starting at clear using base64 encoding into encoded,
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
- * If nulterm is non-zero, terminate with \0 else pad to len with `='.
+ * If nulterm is non-zero, terminate with \0 otherwise pad to 3 byte boundary
+ * with `='.
  */
 static void
 base64_encode(const char *clear, size_t len, char *encoded, int nulterm)
 {
-	static const char enc[] =
+	static const char base64[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	char	*cp;
+	const char *c;
+	char	*e, termchar;
 	int	 i;
 
-	cp = encoded;
-	for (i = 0; i < len; i += 3) {
-		*(cp++) = enc[((clear[i + 0] >> 2))];
-		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
-			    | ((clear[i + 1] >> 4) & 0x0f)];
-		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
-			    | ((clear[i + 2] >> 6) & 0x03)];
-		*(cp++) = enc[((clear[i + 2]     ) & 0x3f)];
+			/* determine whether to pad with '=' or NUL terminate */
+	termchar = nulterm ? '\0' : '=';
+	c = clear;
+	e = encoded;
+			/* convert all but last 2 bytes */
+	for (i = len; i > 2; i -= 3, c += 3) {
+		*e++ = base64[(c[0] >> 2) & 0x3f];
+		*e++ = base64[((c[0] << 4) & 0x30) | ((c[1] >> 4) & 0x0f)];
+		*e++ = base64[((c[1] << 2) & 0x3c) | ((c[2] >> 6) & 0x03)];
+		*e++ = base64[(c[2]) & 0x3f];
 	}
-	*cp = '\0';
-	while (i-- > len)
-		*(--cp) = nulterm ? '\0' : '=';
+			/* handle slop at end */
+	if (i > 0) {
+		*e++ = base64[(c[0] >> 2) & 0x3f];
+		*e++ = base64[((c[0] << 4) & 0x30) |
+		     (i > 1 ? ((c[1] >> 4) & 0x0f) : 0)];
+		*e++ = (i > 1) ? base64[(c[1] << 2) & 0x3c] : termchar;
+		*e++ = termchar;
+	}
+	*e = '\0';
 }
 
 static void
@@ -740,12 +750,15 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 static void
 fact_unique(const char *fact, FILE *fd, factelem *fe)
 {
-	char obuf[(MAX(sizeof(dev_t),sizeof(ino_t)) + 2) * 4 / 3 + 2];
+	char obuf[(sizeof(dev_t) + sizeof(ino_t) + 2) * 4 / 3 + 2];
+	char tbuf[sizeof(dev_t) + sizeof(ino_t)];
 
-	base64_encode((char *)&(fe->stat->st_dev), sizeof(dev_t), obuf, 1);
-	cprintf(fd, "%s=%s", fact, obuf);
-	base64_encode((char *)&(fe->stat->st_ino), sizeof(ino_t), obuf, 1);
-	cprintf(fd, "%s;", obuf);
+	memcpy(tbuf,
+	    (char *)&(fe->stat->st_dev), sizeof(dev_t));
+	memcpy(tbuf + sizeof(dev_t),
+	    (char *)&(fe->stat->st_ino), sizeof(ino_t));
+	base64_encode(tbuf, sizeof(dev_t) + sizeof(ino_t), obuf, 1);
+	cprintf(fd, "%s=%s;", fact, obuf);
 }
 
 static int
