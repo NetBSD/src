@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.8 1995/02/21 07:38:37 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.9 1995/04/22 13:50:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -140,10 +140,10 @@ exec(path, loadaddr, howto)
 #undef round_to_size
 
 	/* and note the end address of all this	*/
-	printf(" total=0x%x", (u_int)addr);
+	printf(" total=0x%lx", (u_long)addr);
 
-	x.a_entry += (int)loadaddr;
-	printf(" start=0x%x\n", x.a_entry);
+	x.a_entry += (long)loadaddr;
+	printf(" start=0x%lx\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
         printf("ssym=0x%x esym=0x%x\n", ssym, esym);
