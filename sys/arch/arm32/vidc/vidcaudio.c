@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.27 1999/01/01 12:45:12 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.28 1999/01/09 21:18:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -404,7 +404,8 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 			cc = NBPG;
 		}
 	}
-	vidcaudio_dma_program((vm_offset_t)p, (vm_offset_t)(p+cc), intr, arg);
+	vidcaudio_dma_program((vm_offset_t)p, (vm_offset_t)((char *)p+cc),
+	    intr, arg);
 	return 0;
 }
 
