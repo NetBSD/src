@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.10 2004/02/19 05:19:52 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.11 2004/05/16 02:34:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -441,9 +441,10 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_OLD_FCRTL 0x0168	/* Flow Control Rx Threshold Lo (OLD) */
 #define	WMREG_FCRTH	0x2168	/* Flow Control Rx Threhsold Hi */
 #define	FCRTL_DFLT	0x00004000
+#define	FCRTL_XONE	0x80000000	/* Enable XON frame transmission */
 
 #define	WMREG_FCTTV	0x0170	/* Flow Control Transmit Timer Value */
-#define	FCTTV_DFLT	0x00000100
+#define	FCTTV_DFLT	0x00000600
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
@@ -534,3 +535,9 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
 #define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
+
+#define	WMREG_XONRXC	0x4048	/* XON Rx Count - R/clr */
+#define	WMREG_XONTXC	0x404c	/* XON Tx Count - R/clr */
+#define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
+#define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
+#define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
