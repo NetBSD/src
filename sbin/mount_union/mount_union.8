@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_union.8,v 1.13 2003/02/25 10:35:05 wiz Exp $
+.\"	$NetBSD: mount_union.8,v 1.14 2003/05/07 05:19:44 fair Exp $
 .\"
 .\" Copyright (c) 1994
 .\" The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)mount_union.8	8.7 (Berkeley) 5/1/95
 .\"
-.Dd May 1, 1995
+.Dd May 6, 2003
 .Dt MOUNT_UNION 8
 .Os
 .Sh NAME
@@ -51,8 +51,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command
-attaches
+command attaches
 .Ar directory
 above
 .Ar uniondir
@@ -93,6 +92,10 @@ Hide the lower layer completely in the same way as mounting with
 To enforce filesystem security, the user mounting the filesystem
 must be superuser or else have write permission on the mounted-on
 directory.
+In addition, the
+.Em vfs.generic.usermount
+.Xr sysctl 3
+variable must be set to 1 to permit file system mounting by ordinary users.
 .Pp
 Filenames are looked up in the upper layer and then in the
 lower layer.
@@ -102,8 +105,9 @@ in the upper layer, then a
 directory will be created in the upper layer.
 It will be owned by the user who originally did the union mount,
 with mode
-.Dq rwxrwxrwx
-(0777) modified by the umask in effect at that time.
+.Qq rwxrwxrwx
+.Pq 0777
+modified by the umask in effect at that time.
 .Pp
 If a file exists in the upper layer then there is no way to access
 a file with the same name in the lower layer.
@@ -151,7 +155,9 @@ mount -t cd9660 -o ro /dev/cd0a /usr/src
 mount -t union /var/obj /usr/src
 .Ed
 .Pp
-mount the CD-ROM drive
+mount the
+.Tn CD-ROM
+drive
 .Pa /dev/cd0a
 on
 .Pa /usr/src
@@ -160,7 +166,8 @@ and then attaches
 on top.
 For most purposes the effect of this is to make the
 source tree appear writable
-even though it is stored on a CD-ROM.
+even though it is stored on a
+.Tn CD-ROM .
 .Pp
 The command
 .Bd -literal -offset indent
@@ -183,7 +190,8 @@ accessible via
 .Xr fstab 5 ,
 .Xr fsck_ffs 8 ,
 .Xr mount 8 ,
-.Xr mount_null 8
+.Xr mount_null 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
@@ -196,7 +204,7 @@ objects can be done.
 An attempt to mount a union directory under one which does not
 have whiteout support will return
 .Dv EOPNOTSUPP
-(``Operation not supported'').
+.Pq Qq Operation not supported .
 Whiteout support can be added to an existing FFS filesystem
 by using the
 .Fl c
