@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.78 1999/06/06 19:44:55 christos Exp $
+.\"	$NetBSD: options.4,v 1.79 1999/06/06 19:48:24 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1289,7 +1289,9 @@ is known to have problems in certain motherboard implementations.
 .It Cd options CYRIX_CACHE_REALLY_WORKS
 Relevant only to the Cyrix 486DLC cpu. This option is used to turn on
 the cache in write-back mode. It is not turned on by default because it
-is known to have problems in certain motherboard implementations.
+is known to have problems in certain motherboard implementations. In order
+for this option to take effect, option
+.Em CYRIX_CACHE_WORKS must also be specified.
 .El
 .Ss m68k-specific Options
 .Bl -ohang
