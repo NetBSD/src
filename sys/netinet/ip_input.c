@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.147 2002/04/18 22:33:21 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.148 2002/05/07 02:59:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.147 2002/04/18 22:33:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.148 2002/05/07 02:59:38 matt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -858,7 +858,7 @@ ip_reass(ipqe, fp)
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
-		LIST_INIT(&fp->ipq_fragq);
+		TAILQ_INIT(&fp->ipq_fragq);
 		fp->ipq_src = ipqe->ipqe_ip->ip_src;
 		fp->ipq_dst = ipqe->ipqe_ip->ip_dst;
 		p = NULL;
@@ -868,8 +868,8 @@ ip_reass(ipqe, fp)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
-	    p = q, q = LIST_NEXT(q, ipqe_q))
+	for (p = NULL, q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = TAILQ_NEXT(q, ipqe_q))
 		if (q->ipqe_ip->ip_off > ipqe->ipqe_ip->ip_off)
 			break;
 
@@ -904,9 +904,9 @@ ip_reass(ipqe, fp)
 			m_adj(q->ipqe_m, i);
 			break;
 		}
-		nq = LIST_NEXT(q, ipqe_q);
+		nq = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
-		LIST_REMOVE(q, ipqe_q);
+		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 	}
 
@@ -916,13 +916,13 @@ insert:
 	 * check for complete reassembly.
 	 */
 	if (p == NULL) {
-		LIST_INSERT_HEAD(&fp->ipq_fragq, ipqe, ipqe_q);
+		TAILQ_INSERT_HEAD(&fp->ipq_fragq, ipqe, ipqe_q);
 	} else {
-		LIST_INSERT_AFTER(p, ipqe, ipqe_q);
+		TAILQ_INSERT_AFTER(&fp->ipq_fragq, p, ipqe, ipqe_q);
 	}
 	next = 0;
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
-	    p = q, q = LIST_NEXT(q, ipqe_q)) {
+	for (p = NULL, q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = TAILQ_NEXT(q, ipqe_q)) {
 		if (q->ipqe_ip->ip_off != next)
 			return (0);
 		next += q->ipqe_ip->ip_len;
@@ -934,7 +934,7 @@ insert:
 	 * Reassembly is complete.  Check for a bogus message size and
 	 * concatenate fragments.
 	 */
-	q = LIST_FIRST(&fp->ipq_fragq);
+	q = TAILQ_FIRST(&fp->ipq_fragq);
 	ip = q->ipqe_ip;
 	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
 		ipstat.ips_toolong++;
@@ -945,11 +945,11 @@ insert:
 	t = m->m_next;
 	m->m_next = 0;
 	m_cat(m, t);
-	nq = LIST_NEXT(q, ipqe_q);
+	nq = TAILQ_NEXT(q, ipqe_q);
 	pool_put(&ipqent_pool, q);
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
-		nq = LIST_NEXT(q, ipqe_q);
+		nq = TAILQ_NEXT(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 		m_cat(m, t);
 	}
@@ -996,10 +996,10 @@ ip_freef(fp)
 
 	IPQ_LOCK_CHECK();
 
-	for (q = LIST_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
-		p = LIST_NEXT(q, ipqe_q);
+	for (q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
+		p = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
-		LIST_REMOVE(q, ipqe_q);
+		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 	}
 	LIST_REMOVE(fp, ipq_q);
