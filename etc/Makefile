@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2000/06/02 22:54:08 fvdl Exp $
+#	$NetBSD: Makefile,v 1.152 2000/06/03 23:53:17 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -98,6 +98,10 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 BIN1+=	ld.so.conf
 .elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
 BIN1+=	etc.${MACHINE_ARCH}/ld.so.conf
+.endif
+
+.if exists(etc.${MACHINE_ARCH}/ttyaction)
+BIN1+=	etc.${MACHINE_ARCH}/ttyaction
 .endif
 
 # IPv6
