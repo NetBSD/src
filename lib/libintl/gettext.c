@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.14 2003/03/09 01:02:34 lukem Exp $	*/
+/*	$NetBSD: gettext.c,v 1.15 2004/01/02 12:10:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.14 2003/03/09 01:02:34 lukem Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.15 2004/01/02 12:10:48 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -597,7 +597,7 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 			goto fail;
 		if (strlcat(buf, db->path, sizeof(buf)) >= sizeof(buf))
 			goto fail;
-		strcpy(db->path, buf);
+		strlcpy(db->path, buf, sizeof(db->path));
 	}
 
 	/* don't bother looking it up if the values are the same */
