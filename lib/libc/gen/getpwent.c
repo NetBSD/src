@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.37 1999/01/20 13:12:07 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.38 1999/01/21 12:42:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.37 1999/01/20 13:12:07 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.38 1999/01/21 12:42:06 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -445,6 +445,7 @@ _dns_getpw(rv, cb_data, ap)
 	const char	 *name;
 	uid_t		  uid;
 	int		  search;
+	char		 *map;
 	char		**hp;
 
 
@@ -453,21 +454,24 @@ _dns_getpw(rv, cb_data, ap)
 	case _PW_KEYBYNUM:
 		snprintf(line, sizeof(line) - 1, "passwd-%u", _pw_hesnum);
 		_pw_hesnum++;
+		map = "passwd";
 		break;
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
 		strncpy(line, name, sizeof(line));
+		map = "passwd";
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
 		snprintf(line, sizeof(line), "%u", (unsigned int)uid);
+		map = "uid";
 		break;
 	default:
 		abort();
 	}
 	line[sizeof(line) - 1] = '\0';
 
-	hp = hes_resolve(line, "passwd");
+	hp = hes_resolve(line, map);
 	if (hp == NULL) {
 		switch (hes_error()) {
 		case HES_ER_NOTFOUND:
