@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/10 19:56:26 christos Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/07 07:34:48 lukem Exp $
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I.
 
@@ -21,5 +21,8 @@ siglist.out: config.h sh.h siglist.in siglist.sh
 emacs.out: emacs.c
 	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
 	mv tmpemacs.out emacs.out
+
+emacs.o:	emacs.out
+trap.o:		siglist.out
 
 .include <bsd.prog.mk>
