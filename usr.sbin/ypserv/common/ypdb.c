@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.4 1997/10/13 03:42:30 lukem Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.4.2.1 1997/11/28 09:30:41 mellon Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.4 1997/10/13 03:42:30 lukem Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.4.2.1 1997/11/28 09:30:41 mellon Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: ypdb.c,v 1.4 1997/10/13 03:42:30 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <rpcsvc/yp.h>
 
 #include "ypdb.h"
 
@@ -211,6 +213,8 @@ ypdb_store(db, key, content, flags)
 	datum key, content;
 	int flags;
 {
+	if (key.dsize > YPMAXRECORD || content.dsize > YPMAXRECORD)
+		return -1;
 	return ((db->put)(db, (DBT *)&key, (DBT *)&content,
 	    (flags == YPDB_INSERT) ? R_NOOVERWRITE : 0));
 }
