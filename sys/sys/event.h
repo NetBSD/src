@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.7 2002/06/26 20:42:48 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.8 2002/09/19 07:18:32 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -56,7 +56,7 @@ struct kevent {
 	uint32_t	filter;		/* filter for event */
 	uint32_t	flags;		/* action flags for kqueue */
 	uint32_t	fflags;		/* filter flag value */
-	uintptr_t	data;		/* filter data value */
+	intptr_t	data;		/* filter data value */
 	void		*udata;		/* opaque user data identifier */
 };
 
