@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.3 1999/04/27 03:19:44 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.4 1999/04/27 05:38:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -112,7 +112,7 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
 	case ECOFF_OBJECT_TYPE_SHARABLE:
 		/* can't exec a shared library! */
-#if 1
+#if 0
 		uprintf("can't execute OSF/1 shared libraries\n");
 #endif
 		error = ENOEXEC;
@@ -127,20 +127,30 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 		error = 0;
 		break;
 	}
+
+	if (error) {
+		free(epp->ep_emul_arg, M_TEMP);
+		epp->ep_emul_arg = NULL;
+		kill_vmcmds(&epp->ep_vmcmds);		/* if any */
+	}
+
 	return (error);
 }
 
 static int
 osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 {
-#if 1
-	uprintf("OSF/1 dynamically linked binaries not yet supported\n");
-	return ENOEXEC;
-#else
 	struct osf1_exec_emul_arg *emul_arg = epp->ep_emul_arg;
+	struct ecoff_exechdr ldr_exechdr;
+	struct nameidata nd;
+	struct vnode *ldr_vp;
 	const char *pathbuf;
+        size_t resid;  
 	int error;
 
+	/*
+	 * locate the loader
+	 */
 	error = emul_find(p, NULL, osf1_emul_path,
 	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
 	/* includes /emul/osf1 if appropriate */
@@ -149,10 +159,107 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	if (!error)
 		free((char *)pathbuf, M_TEMP);
 
+#if 0
 	uprintf("loader is %s\n", emul_arg->loader_name);
-
-	return ENOEXEC;
 #endif
+
+	/*
+	 * open the loader, see if it's an ECOFF executable,
+	 * make sure the object type is amenable, then arrange to
+	 * load it up.
+	 */
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
+	    emul_arg->loader_name, p);
+	if ((error = namei(&nd)) != 0)
+		goto bad;
+	ldr_vp = nd.ni_vp;
+
+	/*
+	 * Basic access checks.  Reject if:
+	 *	not a regular file
+	 *	exec not allowed on binary
+	 *	exec not allowed on mount point
+	 */
+	if (ldr_vp->v_type != VREG) {
+		error = EACCES;
+		goto badunlock;
+	}
+
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_ucred, p)) != 0)
+		goto badunlock;
+
+        if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {
+                error = EACCES;
+                goto badunlock;
+        }
+
+	/* 
+	 * If loader's mount point disallows set-id execution,
+	 * disable set-id.
+	 */
+        if (ldr_vp->v_mount->mnt_flag & MNT_NOSUID)
+                epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
+
+	VOP_UNLOCK(ldr_vp, 0);
+
+	/*
+	 * read the header, and make sure we got all of it.
+	 */
+        if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
+	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
+	    &resid, p)) != 0)
+                goto bad;
+        if (resid != 0) {
+                error = ENOEXEC;
+                goto bad;
+	}
+
+	/*
+	 * Check the magic.  We expect it to be the native Alpha ECOFF
+	 * (Digital UNIX) magic number.  Also make sure it's not a shared
+	 * lib or dynamically linked executable.
+	 */
+	if (ldr_exechdr.f.f_magic != ECOFF_MAGIC_ALPHA) {
+		error = ENOEXEC;
+		goto bad;
+	}
+        switch (ldr_exechdr.f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
+        case ECOFF_OBJECT_TYPE_SHARABLE:
+        case ECOFF_OBJECT_TYPE_CALL_SHARED:
+		/* can't exec shared lib or dynamically linked executable. */
+		error = ENOEXEC;
+		goto bad;
+	}
+
+	switch (ldr_exechdr.a.magic) {
+	case ECOFF_OMAGIC:
+		error = exec_ecoff_prep_omagic(p, epp, &ldr_exechdr, ldr_vp);
+		break;
+	case ECOFF_NMAGIC:
+		error = exec_ecoff_prep_nmagic(p, epp, &ldr_exechdr, ldr_vp);
+		break;
+	case ECOFF_ZMAGIC:
+		error = exec_ecoff_prep_zmagic(p, epp, &ldr_exechdr, ldr_vp);
+		break;
+	default:
+		error = ENOEXEC;
+	}
+	if (error)
+		goto bad;
+
+	/* finally, set up the stack. */
+	error = exec_ecoff_setup_stack(p, epp);
+	if (error)
+		goto bad;
+
+	vrele(ldr_vp);
+	return (0);
+
+badunlock:
+	VOP_UNLOCK(ldr_vp, 0);
+bad:
+	vrele(ldr_vp);
+	return (error);
 }
 
 /*
@@ -220,7 +327,7 @@ osf1_copyargs(pack, arginfo, stack, argp)
 	stack = (caddr_t)stack + len;
 
 out:
-	FREE(pack->ep_emul_arg, M_TEMP);
+	free(pack->ep_emul_arg, M_TEMP);
 	pack->ep_emul_arg = NULL;
 	return stack;
 
