@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.530 2003/02/02 03:47:13 taca Exp $
+#	$NetBSD: mi,v 1.531 2003/02/04 01:23:52 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3229,6 +3229,8 @@
 ./usr/share/man/cat8/cvsbug.0		comp-cvs-catman
 ./usr/share/man/cat8/kgmon.0		comp-sysutil-catman
 ./usr/share/man/cat8/verify_krb5_conf.0		comp-sysutil-catman
+./usr/share/man/cat9/CALLOUT_INITIALIZER.0	comp-sys-catman
+./usr/share/man/cat9/CALLOUT_INITIALIZER_SETFUNC.0	comp-sys-catman
 ./usr/share/man/cat9/CARDBUS_PRODUCT.0		comp-sys-catman
 ./usr/share/man/cat9/CARDBUS_VENDOR.0		comp-sys-catman
 ./usr/share/man/cat9/Cardbus_conf_read.0		comp-sys-catman
@@ -3423,11 +3425,11 @@
 ./usr/share/man/cat9/cache_purgevfs.0		comp-sys-catman
 ./usr/share/man/cat9/cache_revlookup.0		comp-sys-catman
 ./usr/share/man/cat9/callout.0		comp-sys-catman
-./usr/share/man/cat9/callout_active.0	comp-sys-catman
-./usr/share/man/cat9/callout_deactivate.0	comp-sys-catman
 ./usr/share/man/cat9/callout_init.0	comp-sys-catman
 ./usr/share/man/cat9/callout_pending.0	comp-sys-catman
 ./usr/share/man/cat9/callout_reset.0	comp-sys-catman
+./usr/share/man/cat9/callout_schedule.0	comp-sys-catman
+./usr/share/man/cat9/callout_setfunc.0	comp-sys-catman
 ./usr/share/man/cat9/callout_stop.0	comp-sys-catman
 ./usr/share/man/cat9/cardbus.0		comp-sys-catman
 ./usr/share/man/cat9/cardbus_attach_card.0		comp-sys-catman
@@ -6266,6 +6268,8 @@
 ./usr/share/man/man8/cvsbug.8		comp-cvs-man
 ./usr/share/man/man8/kgmon.8		comp-sysutil-man
 ./usr/share/man/man8/verify_krb5_conf.8		comp-sysutil-man
+./usr/share/man/man9/CALLOUT_INITIALIZER.9	comp-sys-man
+./usr/share/man/man9/CALLOUT_INITIALIZER_SETFUNC.9	comp-sys-man
 ./usr/share/man/man9/CARDBUS_PRODUCT.9		comp-sys-man
 ./usr/share/man/man9/CARDBUS_VENDOR.9		comp-sys-man
 ./usr/share/man/man9/Cardbus_conf_read.9		comp-sys-man
@@ -6460,11 +6464,11 @@
 ./usr/share/man/man9/cache_purgevfs.9		comp-sys-man
 ./usr/share/man/man9/cache_revlookup.9		comp-sys-man
 ./usr/share/man/man9/callout.9		comp-sys-man
-./usr/share/man/man9/callout_active.9	comp-sys-man
-./usr/share/man/man9/callout_deactivate.9	comp-sys-man
 ./usr/share/man/man9/callout_init.9	comp-sys-man
 ./usr/share/man/man9/callout_pending.9	comp-sys-man
 ./usr/share/man/man9/callout_reset.9	comp-sys-man
+./usr/share/man/man9/callout_schedule.9	comp-sys-man
+./usr/share/man/man9/callout_setfunc.9	comp-sys-man
 ./usr/share/man/man9/callout_stop.9	comp-sys-man
 ./usr/share/man/man9/cardbus.9		comp-sys-man
 ./usr/share/man/man9/cardbus_attach_card.9		comp-sys-man
