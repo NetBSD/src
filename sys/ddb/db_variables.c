@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.6 1994/06/29 06:31:23 cgd Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.7 1994/10/09 08:56:28 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -73,7 +73,7 @@ db_find_variable(varp)
 	    }
 	}
 	db_error("Unknown variable\n");
-	return (0);
+	/*NOTREACHED*/
 }
 
 int
@@ -140,11 +140,11 @@ db_set_cmd()
 	t = db_read_token();
 	if (t != tDOLLAR) {
 	    db_error("Unknown variable\n");
-	    return;
+	    /*NOTREACHED*/
 	}
 	if (!db_find_variable(&vp)) {
 	    db_error("Unknown variable\n");
-	    return;
+	    /*NOTREACHED*/
 	}
 
 	t = db_read_token();
@@ -153,10 +153,11 @@ db_set_cmd()
 
 	if (!db_expression(&value)) {
 	    db_error("No value\n");
-	    return;
+	    /*NOTREACHED*/
 	}
 	if (db_read_token() != tEOL) {
 	    db_error("?\n");
+	    /*NOTREACHED*/
 	}
 
 	db_write_variable(vp, &value);
