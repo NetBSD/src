@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.56 1994/10/26 17:52:22 mycroft Exp $
+ *	$Id: trap.c,v 1.57 1994/10/26 18:45:40 mycroft Exp $
  */
 
 /*
@@ -174,7 +174,6 @@ trap(frame)
 	}
 #endif
 
-	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
 
 	if ((p = curproc) == 0)
