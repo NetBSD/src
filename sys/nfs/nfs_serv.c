@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.52 1999/12/05 01:43:06 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.53 2000/03/30 02:42:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,7 +92,6 @@ extern enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
-extern struct nfs_public nfs_pub;
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
 
 /*
