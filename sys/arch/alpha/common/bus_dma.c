@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.39 2000/06/29 09:02:56 mrg Exp $ */
+/* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2000/06/29 09:02:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+		if (map->_dm_maxsegsz < sgsize)
+			sgsize = map->_dm_maxsegsz;
 
 		/*
 		 * Make sure we don't cross any boundaries.
