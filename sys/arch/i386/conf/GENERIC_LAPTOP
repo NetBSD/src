@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.16 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.17 2001/07/08 16:36:11 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -132,7 +132,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
