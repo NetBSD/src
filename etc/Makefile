@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.198 2001/12/07 02:30:22 jmc Exp $
+#	$NetBSD: Makefile,v 1.199 2001/12/12 00:07:46 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -31,6 +31,10 @@
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
+# setting NOOBJ prevents "make obj" from doing anything;
+# an objdir would break the installation stuff below
+NOOBJ=		# defined
+
 # do this before bsd.own.mk so we get correct KERNSRCDIR
 .include "../Makefile.inc"
 
@@ -50,10 +54,6 @@ MKISOFS_FLAGS+= -J -l \
 		-r -T -v \
 		-P "The NetBSD Project" \
 		-m "${RELEASEDIR}/installation/cdrom"
-
-# setting NOOBJ prevents "make obj" from doing anything;
-# an objdir would break the installation stuff below
-MKOBJ=	no
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".
