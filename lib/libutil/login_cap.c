@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.c,v 1.3 2000/01/14 02:14:42 mjl Exp $ */
+/* $NetBSD: login_cap.c,v 1.4 2000/02/04 02:17:16 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -59,6 +60,7 @@ static	u_quad_t multiply __P((u_quad_t, u_quad_t));
 static	u_quad_t strtolimit __P((char *, char **, int));
 static	u_quad_t strtosize __P((char *, char **, int));
 static	int gsetrl __P((login_cap_t *, int, char *, int type));
+static	int setuserenv __P((login_cap_t *));
 
 login_cap_t *
 login_getclass(class)
@@ -121,6 +123,13 @@ login_getclass(class)
 		return (0);
 	}
 	return (lc);
+}
+
+login_cap_t *
+login_getpwclass(pwd)
+	const struct passwd *pwd;
+{
+	return login_getclass(pwd ? pwd->pw_class : NULL);
 }
 
 char *
@@ -432,6 +441,60 @@ gsetrl(lc, what, name, type)
 	return (0);
 }
 
+static int
+setuserenv(lc)
+	login_cap_t *lc;
+{
+	char *stop = ", \t";
+	int i, count;
+	char *ptr;
+	char **res;
+	char *str = login_getcapstr(lc, "setenv", NULL, NULL);
+		  
+	if(str == NULL || *str == '\0')
+		return 0;
+	
+	/* count the sub-strings */
+	for (i = 1, ptr = str; *ptr; i++) {
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			ptr++;
+		}
+
+	/* allocate ptr array and string */
+	count = i;
+	res = malloc( count * sizeof(char *) + strlen(str) + 1 );
+
+	if(!res)
+		return -1;
+	
+	ptr = (char *)res + count * sizeof(char *);
+	strcpy(ptr, str);
+
+	/* split string */
+	for (i = 0; *ptr && i < count; i++) {
+		res[i] = ptr;
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			*ptr++ = '\0';
+		}
+	
+	res[i] = NULL;
+
+	for (i = 0; i < count && res[i]; i++) {
+		if (*res[i] != '\0') {
+			if ((ptr = strchr(res[i], '=')))
+				*ptr++ = '\0';
+			else 
+				ptr = "";
+			setenv(res[i], ptr, 1);
+		}
+	}
+	
+	return 0;
+}
+
+
 int
 setclasscontext(class, flags)
 	char *class;
@@ -520,6 +583,9 @@ setusercontext(lc, pwd, uid, flags)
 			login_close(flc);
 			return (-1);
 		}
+
+	if (flags & LOGIN_SETENV)
+		setuserenv(lc);
 
 	if (flags & LOGIN_SETPATH)
 		setuserpath(lc, pwd ? pwd->pw_dir : "");
