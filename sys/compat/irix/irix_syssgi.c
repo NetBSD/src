@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.37 2003/07/29 16:18:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.37 2003/07/29 16:18:54 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -355,7 +355,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		 * If not, we will have to perform a relocation
 		 */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
-		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)&uaddr, 
+		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)(void *)&uaddr,
 		    NULL, 0, 0, UVM_FLAG_FIXED);
 		if (ret == NULL)
 			need_relocation = 1;
@@ -377,7 +377,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 
 		/* Find a free place for the sections */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
-		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)&uaddr, 
+		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)(void *)&uaddr,
 			NULL, 0, kph->p_align, 0);
 
 		if (ret == NULL) {
