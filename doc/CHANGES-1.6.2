@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.8 2003/06/02 15:09:38 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.9 2003/06/02 15:23:52 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -159,4 +159,32 @@ lib/libc/citrus/citrus_none.c			1.6-1.7
 	- add a comment about it.
 	Fix rest of PR 18269 by wurlitzer.
 	[yamt, ticket #1202]
+
+sbin/fdisk/fdisk.c				1.55
+
+	Add partition type 0xaf for Apple HFS.
+	[jdarrow, ticket #1205]
+
+sbin/fdisk/fdisk.c				1.56
+
+	Make the -l flage more useful, by actually printing the systype number
+	alongside the sysid string (instead of just the array index of the
+	struct part_type they are found in).
+	Now fdisk -l shows the familiar 169 for NetBSD, 165 for FreeBSD or
+	386BSD or old NetBSD, and other possibly-familiar (131 for Linux
+	native,	015 for Ext. Partition - LBA) values in with their correct
+	numbers.
+	[jdarrow, ticket #1206]
+
+sys/uvm/uvm_bio.c				1.27
+
+	For PMAP_CACHE_VIVT platforms, make UBC_RELEASE_UNMAP evaluate to TRUE,
+	and add a comment explaining why.
+	[thorpej, ticket #1207]
+
+usr.sbin/rtadvd/rtadvd.c			1.27-1.28
+
+	Add missing ND option length validation.  from kame
+	correct use of sizeof
+	[itojun, ticket #1212]
 
