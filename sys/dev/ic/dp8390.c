@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3 1997/04/30 19:16:23 scottr Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3.4.1 1997/08/27 23:30:42 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -70,6 +70,8 @@ static int		dp8390_test_mem __P((struct dp8390_softc *));
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
+
+int	dp8390_debug = 0;
 
 /*
  * Do bus-independent setup.
@@ -671,10 +673,12 @@ dp8390_intr(arg, slot)
 				if (isr & ED_ISR_RXE) {
 					++ifp->if_ierrors;
 #ifdef DEBUG
-					printf("%s: receive error %x\n",
-					    sc->sc_dev.dv_xname,
-					    NIC_GET(regt, regh,
-						ED_P0_RSR));
+					if (dp8390_debug) {
+						printf("%s: receive error %x\n",
+						    sc->sc_dev.dv_xname,
+						    NIC_GET(regt, regh,
+							ED_P0_RSR));
+					}
 #endif
 				}
 

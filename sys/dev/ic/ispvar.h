@@ -1,4 +1,4 @@
-/*	$NetBSD: ispvar.h,v 1.5.4.1 1997/08/23 07:12:59 thorpej Exp $	*/
+/*	$NetBSD: ispvar.h,v 1.5.4.2 1997/08/27 23:30:47 thorpej Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
@@ -46,9 +46,9 @@ struct ispmdvec {
 	void		(*dv_wr_reg) __P((struct ispsoftc *, int, u_int16_t));
 	int		(*dv_mbxdma) __P((struct ispsoftc *));
 	int		(*dv_dmaset) __P((struct ispsoftc *,
-		struct scsi_xfer *, ispreq_t *, u_int8_t *, u_int8_t));
+		struct scsipi_xfer *, ispreq_t *, u_int8_t *, u_int8_t));
 	void		(*dv_dmaclr)
-		__P((struct ispsoftc *, struct scsi_xfer *, u_int32_t));
+		__P((struct ispsoftc *, struct scsipi_xfer *, u_int32_t));
 	void		(*dv_reset0) __P((struct ispsoftc *));
 	void		(*dv_reset1) __P((struct ispsoftc *));
 	void		(*dv_dregs) __P((struct ispsoftc *));
@@ -159,7 +159,7 @@ struct ispsoftc {
 	struct device		isp_dev;
 	struct ispmdvec *	isp_mdvec;
 #define	isp_name	isp_dev.dv_xname
-	struct scsi_link	isp_link;
+	struct scsipi_link	isp_link;
 	u_int8_t		isp_state;
 	int8_t			isp_dblev;
 	u_int16_t		isp_fwrev;
@@ -182,13 +182,13 @@ struct ispsoftc {
 	/*
 	 * Sheer laziness, but it gets us around the problem
 	 * where we don't have a clean way of remembering
-	 * which scsi_xfer is bound to which ISP queue entry.
+	 * which scsipi_xfer is bound to which ISP queue entry.
 	 *
 	 * There are other more clever ways to do this, but,
 	 * jeez, so I blow a couple of KB per host adapter...
 	 * and it *is* faster.
 	 */
-	volatile struct scsi_xfer *isp_xflist[MAXISPREQUEST];
+	volatile struct scsipi_xfer *isp_xflist[MAXISPREQUEST];
 
 	/*
 	 * request/result queues

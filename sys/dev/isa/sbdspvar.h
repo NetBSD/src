@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.26.2.1 1997/08/23 07:13:32 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.26.2.2 1997/08/27 23:31:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -54,7 +54,23 @@
 #define SB_INPUT_CLASS	15
 #define SB_EQUALIZATION_CLASS 16
 
-#define SB_NDEVS	17
+#define SB_CD_IN_MUTE	17
+#define SB_MIC_IN_MUTE	18
+#define SB_LINE_IN_MUTE	19
+#define SB_MIDI_IN_MUTE	20
+
+#define SB_CD_SWAP	21
+#define SB_MIC_SWAP	22
+#define SB_LINE_SWAP	23
+#define SB_MIDI_SWAP	24
+
+#define SB_CD_OUT_MUTE	25
+#define SB_MIC_OUT_MUTE	26
+#define SB_LINE_OUT_MUTE 27
+
+#define SB_NDEVS	28
+
+#define SB_IS_IN_MUTE(x) ((x) < SB_CD_SWAP)
 
 /*
  * Software state, per SoundBlaster card.
@@ -90,6 +106,7 @@ struct sbdsp_softc {
 	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
 #define SB_LEFT 0
 #define SB_RIGHT 1
+#define SB_LR 0
 	
 	u_int	out_port;		/* output port */
 	u_int	in_mask;		/* input ports */
@@ -169,7 +186,7 @@ int	sbdsp_get_out_gain __P((void *));
 int	sbdsp_set_monitor_gain __P((void *, u_int));
 int	sbdsp_get_monitor_gain __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int	sbdsp_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	sbdsp_round_blocksize __P((void *, int));
 int	sbdsp_set_out_port __P((void *, int));
 int	sbdsp_get_out_port __P((void *));

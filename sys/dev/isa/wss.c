@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.29.2.1 1997/08/23 07:13:34 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.29.2.2 1997/08/27 23:32:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -220,6 +220,12 @@ wssprobe(parent, match, aux)
 {
     struct wss_softc probesc, *sc = &probesc;
 
+    bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
+#else
+    sc->sc_dev.dv_cfdata = match;
+#endif
     if (wssfind(parent, sc, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
         ad1848_unmap(&sc->sc_ad1848);
@@ -322,13 +328,13 @@ wssattach(parent, self, aux)
     int version;
     
     if (!wssfind(parent, sc, ia)) {
-        printf("wssattach: wssfind failed\n");
+        printf("%s: wssfind failed\n", sc->sc_dev.dv_xname);
         return;
     }
 
     madattach(sc);
 
-    sc->sc_ad1848.sc_recdrq = ia->ia_drq;
+    sc->sc_ad1848.sc_recdrq = sc->sc_ad1848.mode > 1 && ia->ia_drq2 != -1 ? ia->ia_drq2 : ia->ia_drq;
     sc->sc_ad1848.sc_isa = parent;
 
 #ifdef NEWCONFIG

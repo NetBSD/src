@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.44.4.1 1997/08/23 07:12:51 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.44.4.2 1997/08/27 23:29:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -765,8 +765,10 @@ vndioctl(dev, cmd, data, flag, p)
 			 * Size must be at least 2048 DEV_BSIZE blocks
 			 * (1M) in order to use this geometry.
 			 */
-			if (vnd->sc_size < (32 * 64))
+			if (vnd->sc_size < (32 * 64)) {
+				vndunlock(vnd);
 				return (EINVAL);
+			}
 
 			vnd->sc_geom.vng_secsize = DEV_BSIZE;
 			vnd->sc_geom.vng_nsectors = 32;
