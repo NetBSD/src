@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.1 1999/02/19 19:22:52 drochner Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.2 1999/03/10 10:37:38 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -63,7 +63,7 @@ static struct ex_dpd sndbuf;
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define PCIBUSNO 1
-#define PCIDEVNO 6
+#define PCIDEVNO 4
 static pcihdl_t mytag = PCI_MODE1_ENABLE | (PCIBUSNO << 16) | (PCIDEVNO << 11);
 
 extern caddr_t mapmem __P((int, int));
@@ -91,6 +91,15 @@ void *dmamem; /* virtual */
 static int iobase;
 static u_char myethaddr[6];
 int ether_medium;
+
+static struct {
+	int did;
+	int mii;
+} excards[] = {
+	{0x9005, 0}, /* 3c900b Combo */
+	{0x9055, 1}, /* 3c905b TP */
+	{-1}
+}, *excard;
 
 static struct mtabentry {
 	int address_cfg; /* configured connector */
@@ -249,14 +258,42 @@ setcfg:
 	CSR_WRITE_2(ELINK_W3_INTERNAL_CONFIG + 2, config1);
 }
 
+static void
+ex_probemedia()
+{
+	int i, j;
+	struct mtabentry *m;
+
+	/* test for presence of connectors */
+	GO_WINDOW(3);
+	i = CSR_READ_1(ELINK_W3_RESET_OPTIONS);
+	j = (CSR_READ_2(ELINK_W3_INTERNAL_CONFIG + 2) & CONFIG_MEDIAMASK)
+		>> CONFIG_MEDIAMASK_SHIFT;
+	GO_WINDOW(0);
+
+	for(ether_medium = 0, m = mediatab;
+	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
+	    ether_medium++, m++) {
+		if (j == m->address_cfg) {
+			if (!(i & m->config_bit)) {
+				printf("%s not present\n", m->name);
+				goto bad;
+			}
+			printf("using %s\n", m->name);
+			return;
+		}
+	}
+	printf("unknown connector\n");
+bad:
+	ether_medium = -1;
+}
+
 int
 EtherInit(myadr)
 	unsigned char *myadr;
 {
 	u_int32_t pcicsr;
 	u_int16_t val;
-	int i, j;
-	struct mtabentry *m;
 	volatile struct ex_upd *upd;
 #ifndef _STANDALONE
 	u_int32_t id;
@@ -266,19 +303,22 @@ EtherInit(myadr)
 		printf("pcicheck failed\n");
 		return (0);
 	}
-#ifdef _STANDALONE
-	if (pcifinddev(0x10b7, 0x9005, &mytag)) {
-		printf("no ex\n");
-		return (0);
-	}
-#else
+#ifndef _STANDALONE
 	pcicfgread(&mytag, 0, &id);
-	if (id != 0x900510b7) {
-		printf("no ex\n");
-		return (0);
-	}
 #endif
+	for (excard = &excards[0]; excard->did != -1; excard++) {
+#ifdef _STANDALONE
+		if (pcifinddev(0x10b7, excard->did, &mytag))
+			goto found;
+#else
+		if (id == (0x10b7 | (excard->did << 16)))
+			goto found;
+#endif
+	}
+	printf("no ex\n");
+	return (0);
 
+found:
 	pcicfgread(&mytag, 0x10, &iobase);
 	iobase &= ~3;
 
@@ -297,29 +337,14 @@ EtherInit(myadr)
 
 	ex_reset();
 
-	/* test for presence of connectors */
-	GO_WINDOW(3);
-	i = CSR_READ_1(ELINK_W3_RESET_OPTIONS);
-	j = (CSR_READ_2(ELINK_W3_INTERNAL_CONFIG + 2) & CONFIG_MEDIAMASK)
-		>> CONFIG_MEDIAMASK_SHIFT;
-	GO_WINDOW(0);
-
-	for(ether_medium = 0, m = mediatab;
-	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
-	    ether_medium++, m++) {
-		if (j == m->address_cfg) {
-			if (!(i & m->config_bit)) {
-				printf("%s not present\n", m->name);
-				return (0);
-			}
-			printf("using %s\n", m->name);
-			goto ok;
-		}
+	if (excard->mii)
+		ether_medium = ETHERMEDIUM_MII;
+	else {
+		ex_probemedia();
+		if (ether_medium < 0)
+			return (0);
 	}
-	printf("unknown connector\n");
-	return (0);
 
-ok:
 	val = ex_read_eeprom(EEPROM_OEM_ADDR0);
 	myethaddr[0] = val >> 8;
 	myethaddr[1] = val & 0xff;
