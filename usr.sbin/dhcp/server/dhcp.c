@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.9 1999/03/05 17:43:47 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.10 1999/03/26 17:49:26 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -463,7 +463,8 @@ void nak_lease (packet, cip)
 
 	/* Set up the option buffer... */
 	outgoing.packet_length =
-		cons_options (packet, outgoing.raw, options, 0, 0, 0);
+		cons_options (packet, outgoing.raw, 0, options, 0, 0, 0,
+			      (u_int8_t *)0, 0);
 
 /*	memset (&raw.ciaddr, 0, sizeof raw.ciaddr);*/
 	raw.siaddr = packet -> interface -> primary_address;
@@ -803,6 +804,30 @@ void ack_lease (packet, lease, offer, when)
 	state -> hops = packet -> raw -> hops;
 	state -> offer = offer;
 
+	/* Get the Maximum Message Size option from the packet, if one
+	   was sent. */
+	if (packet -> options [DHO_DHCP_MAX_MESSAGE_SIZE].data &&
+	    (packet -> options [DHO_DHCP_MAX_MESSAGE_SIZE].len >=
+	     sizeof (u_int16_t)))
+		state -> max_message_size =
+			getUShort (packet -> options
+				   [DHO_DHCP_MAX_MESSAGE_SIZE].data);
+
+	/* Save the parameter request list if there is one. */
+	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
+	if (packet -> options [i].data) {
+		state -> prl = dmalloc (packet -> options [i].len,
+					"ack_lease: prl");
+		if (!state -> prl)
+			warn ("no memory for parameter request list");
+		else {
+			memcpy (state -> prl,
+				packet -> options [i].data,
+				packet -> options [i].len);
+			state -> prl_len = packet -> options [i].len;
+		}
+	}
+
 	/* Figure out what options to send to the client: */
 
 	/* Start out with the subnet options... */
@@ -1110,7 +1135,9 @@ void dhcp_reply (lease)
 
 	/* Insert such options as will fit into the buffer. */
 	packet_length = cons_options ((struct packet *)0, &raw,
-				      state -> options, bufs, nulltp, bootpp);
+				      state -> max_message_size,
+				      state -> options, bufs, nulltp, bootpp,
+				      state -> prl, state -> prl_len);
 
 	/* Having done the cons_options(), we can release the tree_cache
 	   entries. */
@@ -1186,35 +1213,45 @@ void dhcp_reply (lease)
 			result = send_packet (fallback_interface,
 					      (struct packet *)0,
 					      &raw, packet_length,
-					      raw.siaddr, &to, &hto);
+					      raw.siaddr,
+					      &to, (struct hardware *)0);
 
 			free_lease_state (state, "dhcp_reply fallback 1");
 			lease -> state = (struct lease_state *)0;
 			return;
 		}
 
-	/* If it comes from a client that already knows its address and
-	   is not requesting a broadcast response, sent it directly to
-	   that client. */
-	} else if (raw.ciaddr.s_addr && state -> offer == DHCPACK &&
-		   !(raw.flags & htons (BOOTP_BROADCAST)) &&
-		   can_unicast_without_arp ()) {
-		to.sin_addr = state -> ciaddr;
-		to.sin_port = remote_port; /* XXX */
+	/* If the client is RENEWING, unicast to the client using the
+	   regular IP stack. */
+	} else if (raw.ciaddr.s_addr && state -> offer == DHCPACK) {
+		to.sin_addr = raw.ciaddr;
+		to.sin_port = remote_port;
 
 		if (fallback_interface) {
 			result = send_packet (fallback_interface,
 					      (struct packet *)0,
 					      &raw, packet_length,
-					      raw.siaddr, &to, &hto);
-			free_lease_state (state, "dhcp_reply fallback 1");
+					      raw.siaddr, &to,
+					      (struct hardware *)0);
+			free_lease_state (state,
+					  "dhcp_reply fallback 2");
 			lease -> state = (struct lease_state *)0;
 			return;
 		}
+
+	/* If it comes from a client that already knows its address
+	   and is not requesting a broadcast response, and we can
+	   unicast to a client without using the ARP protocol, sent it
+	   directly to that client. */
+	} else if (!(raw.flags & htons (BOOTP_BROADCAST)) &&
+		   can_unicast_without_arp ()) {
+		to.sin_addr = raw.yiaddr;
+		to.sin_port = remote_port;
+
+	/* Otherwise, broadcast it on the local network. */
 	} else {
-		/* Otherwise, broadcast it on the local network. */
 		to.sin_addr.s_addr = htonl (INADDR_BROADCAST);
-		to.sin_port = remote_port; /* XXX */
+		to.sin_port = remote_port;
 	}
 
 	memcpy (&from, state -> from.iabuf, sizeof from);

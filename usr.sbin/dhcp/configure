@@ -7,6 +7,8 @@ machine=`uname -m`
 
 if [ "$sysname" = "" ]; then
   case $uname in
+    AIX)
+      sysname=aix;;
     Rhapsody)
       sysname=rhapsody;;
     ULTRIX)
@@ -58,6 +60,7 @@ if [ "$sysname" = "" ]; then
   echo "configuration that isn't supported or hasn't been tested."
   echo
   echo "Supported configurations are:"
+  echo "   aix		AIX 4.1.5.0"
   echo "   ultrix	ULTRIX 4.2A or higher"
   echo "   bsdos	BSDI BSD/OS 2.1"
   echo "   alphaosf	DEC Alpha OSF/1"
