@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS R3000 jal-svr4pic
-#as: -mips1 -KPIC -mcpu=r3000
+#as: -mips1 -KPIC -mtune=r3000
 
 # Test the jal macro with -KPIC.
 
@@ -43,4 +43,5 @@ Disassembly of section .text:
 0+006c <[^>]*> nop
 0+0070 <[^>]*> lw	gp,0\(sp\)
 0+0074 <[^>]*> b	0+0000 <text_label>
+0+0078 <[^>]*> nop
 	...

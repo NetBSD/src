@@ -22,9 +22,6 @@ foo:
 	pld	[r1, #0x789]
 	pld	[r2, r3]
 	pld	[r4, -r5, lsl #5]
-	pld	[r6], #-0x456
-	pld	[r7], +r8
-	pld	[r9], -r10, RRX
 
 	ldrd	r0, [r1]
 	ldreqd	r2, [r3, #0x78]

@@ -1,6 +1,7 @@
 #undef vms
 /* vms.h -- Header file for VMS (Alpha and Vax) support.
-   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
 

@@ -2111,12 +2111,10 @@ if [istarget h8300*-*-*] then {
     # Test the basic h8300 instruction parser
     do_h8300_add_sub
     do_h8300_logical
-    do_h8300_cbranch
     do_h8300_bitops1
     do_h8300_bitops2
     do_h8300_bitops3
     do_h8300_bitops4
-    do_h8300_branch
     do_h8300_compare
     do_h8300_decimal
     do_h8300_incdec
@@ -2130,12 +2128,10 @@ if [istarget h8300*-*-*] then {
     # Now test the h8300h instruction parser
     do_h8300h_add_sub
     do_h8300h_logical
-    do_h8300h_cbranch
     do_h8300h_bitops1
     do_h8300h_bitops2
     do_h8300h_bitops3
     do_h8300h_bitops4
-    do_h8300h_branch
     do_h8300h_compare
     do_h8300h_decimal
     do_h8300h_incdec
@@ -2151,12 +2147,10 @@ if [istarget h8300*-*-*] then {
     # Now test the h8300s instruction parser
     do_h8300s_add_sub
     do_h8300s_logical
-    do_h8300s_cbranch
     do_h8300s_bitops1
     do_h8300s_bitops2
     do_h8300s_bitops3
     do_h8300s_bitops4
-    do_h8300s_branch
     do_h8300s_compare
     do_h8300s_decimal
     do_h8300s_incdec
@@ -2178,6 +2172,5 @@ if [istarget h8300*-*-*] then {
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
     set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*]]
 
-    run_dump_test "ffxx1"
     gas_test "cmpsi2.s" "" "" "cmpsi2.s"
 }

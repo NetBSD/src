@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright 1991, 1993, 1994, 1996, 1999, 2000
+/* Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001
    Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
@@ -26,10 +26,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  */
 
 
-#include <ctype.h>
 #include "bfd.h"
 #include "sysdep.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "bfdlink.h"
 
 #include "ld.h"
@@ -40,6 +40,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "ldlang.h"
 #include "ldfile.h"
 #include "ldemul.h"
+
+static void gld960_before_parse PARAMS ((void));
+static void gld960_set_output_arch PARAMS ((void));
+static char *gld960_choose_target PARAMS ((int, char **));
+static char *gld960_get_script PARAMS ((int *));
 
 #ifdef GNU960
 
@@ -91,8 +96,7 @@ gld960_set_output_arch()
 
       s = concat ("i960:", ldfile_output_machine_name, (char *) NULL);
       for (s1 = s; *s1 != '\0'; s1++)
-	if (isupper ((unsigned char) *s1))
-	  *s1 = tolower ((unsigned char) *s1);
+	*s1 = TOLOWER (*s1);
       ldfile_set_output_arch (s);
       free (s);
     }
@@ -101,7 +105,9 @@ gld960_set_output_arch()
 }
 
 static char *
-gld960_choose_target()
+gld960_choose_target (argc, argv)
+     int argc ATTRIBUTE_UNUSED;
+     char **argv ATTRIBUTE_UNUSED;
 {
 #ifdef GNU960
 
@@ -198,6 +204,7 @@ struct ld_emulation_xfer_struct ld_gld960coff_emulation =
   NULL,	/* unrecognized file */
   NULL,	/* list options */
   NULL,	/* recognized file */
-  NULL 	/* find_potential_libraries */
+  NULL,	/* find_potential_libraries */
+  NULL	/* new_vers_pattern */
 };
 EOF

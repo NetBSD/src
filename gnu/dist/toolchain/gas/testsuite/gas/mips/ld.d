@@ -1,5 +1,5 @@
 #objdump: -dr --prefix-addresses -mmips:4000
-#as: -mcpu=r4000
+#as: -march=r4000
 #name: MIPS ld
 
 # Test the ld macro.
@@ -628,12 +628,12 @@ Disassembly of section .text:
 0+05d0 <[^>]*> sw	a1,4\(zero\)
 0+05d4 <[^>]*> lui	a0,[-0-9x]+
 [ 	]*5d4: [A-Z0-9_]*HI[A-Z0-9_]*	.bss.*
-0+05d8 <[^>]*> daddu	a0,a0,a1
+0+05d8 <[^>]*> addu	a0,a0,a1
 0+05dc <[^>]*> ld	a0,[-0-9]+\(a0\)
 [ 	]*5dc: [A-Z0-9_]*LO[A-Z0-9_]*	.bss.*
 0+05e0 <[^>]*> lui	at,[-0-9x]+
 [ 	]*5e0: [A-Z0-9_]*HI[A-Z0-9_]*	.sbss.*
-0+05e4 <[^>]*> daddu	at,at,a1
+0+05e4 <[^>]*> addu	at,at,a1
 0+05e8 <[^>]*> sd	a0,[-0-9]+\(at\)
 [ 	]*5e8: [A-Z0-9_]*LO[A-Z0-9_]*	.sbss.*
 0+05ec <[^>]*> nop

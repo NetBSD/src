@@ -1,5 +1,5 @@
-#   Copyright 1993, 1994, 1995, 1996, 1997, 2000
-#   Free Software Foundation, Inc.
+# Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -110,54 +110,4 @@ proc default_binutils_assemble { source object } {
 	perror "$source: assembly failed"
 	return 0
     }
-}
-
-if ![info exists target_assemble] {
-#
-# Stolen from dejagnu/lib/target.exp--please remove after 1/1/98.
-#
-uplevel #0 {
-    proc target_assemble { source destfile flags } {
-	return [default_target_assemble $source $destfile $flags];
-    }
-
-    proc default_target_assemble { source destfile flags } {
-	global AS_FOR_TARGET;
-	global ASFLAGS_FOR_TARGET;
-
-	if [info exists AS_FOR_TARGET] {
-	    set AS "$AS_FOR_TARGET";
-	} else {
-	    if ![board_info target exists assembler] {
-		set AS [find_gas];
-	    } else {
-		set AS [board_info target assembler];
-	    }
-	}
-
-	if [info exists ASFLAGS_FOR_TARGET] {
-	    append flags " $ASFLAGS_FOR_TARGET";
-	}
-
-	if [is_remote host] {
-	    set source [remote_download host $source];
-	    set dest "a.out"
-	} else {
-	    set dest $destfile
-	}
-	set status [remote_exec host "$AS $source $flags -o $dest"]
-	if [is_remote host] {
-	    remote_upload host $dest $destfile
-	}
-
-	set comp_output [prune_warnings [lindex $status 1]];
-	if { [lindex $status 0] != 0 } {
-	    verbose -log "assembler exited with status [lindex $status 0]";
-	}
-	if { [lindex $status 1] != "" } {
-	    verbose -log "assembler output is:\n[lindex $status 1]" 2;
-	}
-	return ${comp_output};
-}
-}
 }

@@ -6,11 +6,11 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <notstart>:
+0+ <notstart>:
    0:	0000[ ]+	bcc ( 0x2|\.\+2)
 	\.\.\.
 
-00000004 <start>:
+0+4 <start>:
 [	 ]+4:[	 ]+@IR+4356@[ 	]+@OC@\.b r3,r5
 [	 ]+6:[	 ]+@IR+55d6@[ 	]+@OC@\.w r5,r13
 [	 ]+8:[	 ]+@IR+6a16@[ 	]+@OC@\.d r10,r1
@@ -77,8 +77,8 @@ Disassembly of section \.text:
 [	 ]+fc:[	 ]+@IM+6f1e@ 9822 0000[ 	]+@OC@\.d (0x2298|2298 <end\+0x1b20>),r1
 [	 ]+102:[	 ]+@IM+6f1e@ ac72 2a00[ 	]+@OC@\.d (0x2a72ac|2a72ac <two701867\+0x13881>),r1
 [	 ]+108:[	 ]+@IM+6f1e@ d5c5 d6ff[ 	]+@OC@\.d 0xffd6c5d5,r1
-[	 ]+10e:[	 ]+@IM+6f1e@ acce c09e[ 	]+@OC@\.d (0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>),r1
-[	 ]+114:[	 ]+@IM+6f1e@ 5331 3f81[ 	]+@OC@\.d (0x813f3153|813f3153 <const_int_m32\+0x52a6819e>),r1
+[	 ]+10e:[	 ]+@IM+6f1e@ acce c09e[ 	]+@OC@\.d [^,]+,r1
+[	 ]+114:[	 ]+@IM+6f1e@ 5331 3f81[ 	]+@OC@\.d [^,]+,r1
 [	 ]+11a:[	 ]+@IM+6f1e@ b5af 982e[ 	]+@OC@\.d (0x2e98afb5|2e98afb5 <const_int_m32>),r1
 [	 ]+120:[	 ]+@IM+6f1e@ 2b45 941b[ 	]+@OC@\.d (0x1b94452b|1b94452b <const_int_32>),r1
 [	 ]+126:[	 ]+@IM+6fde@ 2a00 0000[ 	]+@OC@\.d (0x2a|2a <start\+0x26>),r13
@@ -184,10 +184,10 @@ Disassembly of section \.text:
 [	 ]+2f4:[	 ]+6f2d 0180 0000 @IM+5dda@[	 ]+@OC@\.w \[r2\+(32769|8001 <three2767\+0x2>)\],r13
 [	 ]+2fc:[	 ]+5f2d 0180 @IM+5dda@[ 	]+@OC@\.w \[r2-32767\],r13
 [	 ]+302:[	 ]+5f2d 0080 @IM+5dda@[ 	]+@OC@\.w \[r2-32768\],r13
-[	 ]+308:[	 ]+6f2d ff7f ffff @IM+555a@[	 ]+@OC@\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+308:[	 ]+6f2d ff7f ffff @IM+555a@[	 ]+@OC@\.w \[r2\+[^]]+\],r5
 [	 ]+310:[	 ]+5f2d 0180 @IM+5dda@[ 	]+@OC@\.w \[r2-32767\],r13
 [	 ]+316:[	 ]+5f2d 0080 @IM+5dda@[ 	]+@OC@\.w \[r2-32768\],r13
-[	 ]+31c:[	 ]+6f2d ff7f ffff @IM+555a@[	 ]+@OC@\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+31c:[	 ]+6f2d ff7f ffff @IM+555a@[	 ]+@OC@\.w \[r2\+[^]]+\],r5
 [	 ]+324:[	 ]+6f2d ffff 0000 @IM+555a@[	 ]+@OC@\.w \[r2\+(65535|ffff <six5535>)\],r5
 [	 ]+32c:[	 ]+6f2d 0000 0000 @IM+555a@[	 ]+@OC@\.w \[r2\+0( <notstart>)?\],r5
 [ 	]+32e:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -211,10 +211,10 @@ Disassembly of section \.text:
 [	 ]+388:[	 ]+5f2d 68dd @IM+611a@[ 	]+@OC@\.d \[r2-8856\],r1
 [	 ]+38e:[	 ]+5f2d 9822 @IM+611a@[ 	]+@OC@\.d \[r2\+8856\],r1
 [	 ]+394:[	 ]+6f2d ac72 2a00 @IM+611a@[	 ]+@OC@\.d \[r2\+(2781868|2a72ac <two701867\+0x13881>)\],r1
-[	 ]+39c:[	 ]+6f2d d5c5 d6ff @IM+611a@[	 ]+@OC@\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r1
-[	 ]+3a4:[	 ]+6f2d acce c09e @IM+611a@[	 ]+@OC@\.d \[r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\],r1
-[	 ]+3ac:[	 ]+6f2d 5331 3f81 @IM+611a@[	 ]+@OC@\.d \[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
-[	 ]+3b4:[	 ]+6f2d 5331 3f81 @IM+611a@[	 ]+@OC@\.d \[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
+[	 ]+39c:[	 ]+6f2d d5c5 d6ff @IM+611a@[	 ]+@OC@\.d \[r2\+[^]]+\],r1
+[	 ]+3a4:[	 ]+6f2d acce c09e @IM+611a@[	 ]+@OC@\.d \[r2\+[^]]+\],r1
+[	 ]+3ac:[	 ]+6f2d 5331 3f81 @IM+611a@[	 ]+@OC@\.d \[r2\+[^]]+\],r1
+[	 ]+3b4:[	 ]+6f2d 5331 3f81 @IM+611a@[	 ]+@OC@\.d \[r2\+[^]]+\],r1
 [	 ]+3bc:[	 ]+6f2d b5af 982e @IM+611a@[	 ]+@OC@\.d \[r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\],r1
 [	 ]+3c4:[	 ]+6f2d 2b45 941b @IM+611a@[	 ]+@OC@\.d \[r2\+(0x1b94452b|1b94452b <const_int_32>)\],r1
 [	 ]+3cc:[	 ]+2a21 @IM+6dda@[ 	]+@OC@\.d \[r2\+42\],r13
@@ -231,15 +231,15 @@ Disassembly of section \.text:
 [	 ]+3fe:[	 ]+6f2d 0180 0000 @IM+655a@[	 ]+@OC@\.d \[r2\+(32769|8001 <three2767\+0x2>)\],r5
 [	 ]+406:[	 ]+5f2d 0180 @IM+655a@[ 	]+@OC@\.d \[r2-32767\],r5
 [	 ]+40c:[	 ]+5f2d 0080 @IM+6dda@[ 	]+@OC@\.d \[r2-32768\],r13
-[	 ]+412:[	 ]+6f2d ff7f ffff @IM+6dda@[	 ]+@OC@\.d \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+412:[	 ]+6f2d ff7f ffff @IM+6dda@[	 ]+@OC@\.d \[r2\+[^]]+\],r13
 [	 ]+41a:[	 ]+5f2d 0180 @IM+655a@[ 	]+@OC@\.d \[r2-32767\],r5
 [	 ]+420:[	 ]+5f2d 0080 @IM+6dda@[ 	]+@OC@\.d \[r2-32768\],r13
-[	 ]+426:[	 ]+6f2d ff7f ffff @IM+6dda@[	 ]+@OC@\.d \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+426:[	 ]+6f2d ff7f ffff @IM+6dda@[	 ]+@OC@\.d \[r2\+[^]]+\],r13
 [	 ]+42e:[	 ]+6f2d ffff 0000 @IM+655a@[	 ]+@OC@\.d \[r2\+(65535|ffff <six5535>)\],r5
 [	 ]+436:[	 ]+6f2d 0000 0100 @IM+6dda@[	 ]+@OC@\.d \[r2\+(65536|10000 <six5535\+0x1>)\],r13
 [	 ]+43e:[	 ]+6f2d 2b3a 2900 @IM+655a@[	 ]+@OC@\.d \[r2\+(2701867|293a2b <two701867>)\],r5
-[	 ]+446:[	 ]+6f2d d5c5 d6ff @IM+655a@[	 ]+@OC@\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
-[	 ]+44e:[	 ]+6f2d d5c5 d6ff @IM+655a@[	 ]+@OC@\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
+[	 ]+446:[	 ]+6f2d d5c5 d6ff @IM+655a@[	 ]+@OC@\.d \[r2\+[^]]+\],r5
+[	 ]+44e:[	 ]+6f2d d5c5 d6ff @IM+655a@[	 ]+@OC@\.d \[r2\+[^]]+\],r5
 [	 ]+456:[	 ]+6f2d 0000 0000 @IM+655a@[	 ]+@OC@\.d \[r2\+0( <notstart>)?\],r5
 [ 	]+458:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+45e:[	 ]+4205 @IM+4c5e@[ 	]+@OC@.b \[r12=r2\+r0.b\],r5
@@ -327,10 +327,10 @@ Disassembly of section \.text:
 [	 ]+5c6:[	 ]+6f2d 0180 0000 @IM+5cde@[	 ]+@OC@.w \[r12=r2\+(32769|8001 <three2767\+0x2>)\],r13
 [	 ]+5ce:[	 ]+5f2d 0180 @IM+5cde@[ 	]+@OC@.w \[r12=r2-32767\],r13
 [	 ]+5d4:[	 ]+5f2d 0080 @IM+5cde@[ 	]+@OC@.w \[r12=r2-32768\],r13
-[	 ]+5da:[	 ]+6f2d ff7f ffff @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+5da:[	 ]+6f2d ff7f ffff @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+[^]]+\],r5
 [	 ]+5e2:[	 ]+5f2d 0180 @IM+5cde@[ 	]+@OC@.w \[r12=r2-32767\],r13
 [	 ]+5e8:[	 ]+5f2d 0080 @IM+5cde@[ 	]+@OC@.w \[r12=r2-32768\],r13
-[	 ]+5ee:[	 ]+6f2d ff7f ffff @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+5ee:[	 ]+6f2d ff7f ffff @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+[^]]+\],r5
 [	 ]+5f6:[	 ]+6f2d ffff 0000 @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+(65535|ffff <six5535>)\],r5
 [	 ]+5fe:[	 ]+6f2d 0000 0000 @IM+5c5e@[	 ]+@OC@.w \[r12=r2\+0( <notstart>)?\],r5
 [ 	]+600:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -354,10 +354,10 @@ Disassembly of section \.text:
 [	 ]+65a:[	 ]+5f2d 68dd @IM+6c1e@[ 	]+@OC@.d \[r12=r2-8856\],r1
 [	 ]+660:[	 ]+5f2d 9822 @IM+6c1e@[ 	]+@OC@.d \[r12=r2\+8856\],r1
 [	 ]+666:[	 ]+6f2d ac72 2a00 @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(2781868|2a72ac <two701867\+0x13881>)\],r1
-[	 ]+66e:[	 ]+6f2d d5c5 d6ff @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r1
-[	 ]+676:[	 ]+6f2d acce c09e @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\],r1
-[	 ]+67e:[	 ]+6f2d 5331 3f81 @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
-[	 ]+686:[	 ]+6f2d 5331 3f81 @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
+[	 ]+66e:[	 ]+6f2d d5c5 d6ff @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r1
+[	 ]+676:[	 ]+6f2d acce c09e @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r1
+[	 ]+67e:[	 ]+6f2d 5331 3f81 @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r1
+[	 ]+686:[	 ]+6f2d 5331 3f81 @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r1
 [	 ]+68e:[	 ]+6f2d b5af 982e @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\],r1
 [	 ]+696:[	 ]+6f2d 2b45 941b @IM+6c1e@[	 ]+@OC@.d \[r12=r2\+(0x1b94452b|1b94452b <const_int_32>)\],r1
 [	 ]+69e:[	 ]+2a21 @IM+6cde@[ 	]+@OC@.d \[r12=r2\+42\],r13
@@ -374,15 +374,15 @@ Disassembly of section \.text:
 [	 ]+6d0:[	 ]+6f2d 0180 0000 @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+(32769|8001 <three2767\+0x2>)\],r5
 [	 ]+6d8:[	 ]+5f2d 0180 @IM+6c5e@[ 	]+@OC@.d \[r12=r2-32767\],r5
 [	 ]+6de:[	 ]+5f2d 0080 @IM+6cde@[ 	]+@OC@.d \[r12=r2-32768\],r13
-[	 ]+6e4:[	 ]+6f2d ff7f ffff @IM+6cde@[	 ]+@OC@.d \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+6e4:[	 ]+6f2d ff7f ffff @IM+6cde@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r13
 [	 ]+6ec:[	 ]+5f2d 0180 @IM+6c5e@[ 	]+@OC@.d \[r12=r2-32767\],r5
 [	 ]+6f2:[	 ]+5f2d 0080 @IM+6cde@[ 	]+@OC@.d \[r12=r2-32768\],r13
-[	 ]+6f8:[	 ]+6f2d ff7f ffff @IM+6cde@[	 ]+@OC@.d \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+6f8:[	 ]+6f2d ff7f ffff @IM+6cde@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r13
 [	 ]+700:[	 ]+6f2d ffff 0000 @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+(65535|ffff <six5535>)\],r5
 [	 ]+708:[	 ]+6f2d 0000 0100 @IM+6cde@[	 ]+@OC@.d \[r12=r2\+(65536|10000 <six5535\+0x1>)\],r13
 [	 ]+710:[	 ]+6f2d 2b3a 2900 @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+(2701867|293a2b <two701867>)\],r5
-[	 ]+718:[	 ]+6f2d d5c5 d6ff @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
-[	 ]+720:[	 ]+6f2d d5c5 d6ff @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
+[	 ]+718:[	 ]+6f2d d5c5 d6ff @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r5
+[	 ]+720:[	 ]+6f2d d5c5 d6ff @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+[^]]+\],r5
 [	 ]+728:[	 ]+6f2d 0000 0000 @IM+6c5e@[	 ]+@OC@.d \[r12=r2\+0( <notstart>)?\],r5
 [ 	]+72a:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+730:[	 ]+7309 @IM+455a@[ 	]+@OC@.b \[\[r3\]\],r5
@@ -403,4 +403,3 @@ Disassembly of section \.text:
 [ 	]+76a:[ 	]+(R_CRIS_)?32[ 	]+.text
 [	 ]+770:[	 ]+7f0d 0000 0000 @IM+677a@[	 ]+@OC@.d \[(0x0|0 <notstart>)\],r7
 [ 	]+772:[ 	]+(R_CRIS_)?32[ 	]+.text
-

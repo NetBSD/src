@@ -28,7 +28,9 @@ if ![isnative] then {return}
 
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
-if { ![istarget i?86-*-sysv4*] \
+if { ![istarget hppa*64*-*-hpux*] \
+     && ![istarget hppa*-*-linux*] \
+     && ![istarget i?86-*-sysv4*] \
      && ![istarget i?86-*-unixware] \
      && ![istarget i?86-*-elf*] \
      && ![istarget i?86-*-linux*] \
@@ -195,6 +197,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	# overriding.
 	setup_xfail "*-*-sunos4*"
 	setup_xfail "ia64-*-linux*"
+	setup_xfail "alpha*-*-linux*"
 	shared_test shnp "shared (non PIC)" mainnp.o sh1np.o sh2np.o shared
 
 	# Test ELF shared library relocations with a non-zero load
@@ -205,6 +208,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	setup_xfail "*-*-linux*libc1"
 	setup_xfail "powerpc-*-linux*"
 	setup_xfail "ia64-*-linux*"
+	setup_xfail "alpha*-*-linux*"
 	setup_xfail "mips*-*-linux*"
 	shared_test shnp "shared (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o shared \
@@ -246,6 +250,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    # overriding.
 	    setup_xfail "*-*-sunos4*"
 	    setup_xfail "ia64-*-linux*"
+	    setup_xfail "alpha*-*-linux*"
 	    shared_test shmpnp "shared (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o shared
 	}
     } else {

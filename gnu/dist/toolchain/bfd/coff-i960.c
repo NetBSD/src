@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 960 COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -48,8 +48,8 @@ static boolean coff_i960_adjust_symndx
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (3)
 #define COFF_ALIGN_IN_SECTION_HEADER 1
 
-#define GET_SCNHDR_ALIGN bfd_h_get_32
-#define PUT_SCNHDR_ALIGN bfd_h_put_32
+#define GET_SCNHDR_ALIGN H_GET_32
+#define PUT_SCNHDR_ALIGN H_PUT_32
 
 /* The i960 does not support an MMU, so COFF_PAGE_SIZE can be
    arbitrarily small.  */
@@ -156,7 +156,8 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
 	     sym and auxents untouched, so the delta between the two
 	     is the offset of the bal entry point.  */
 	  word = ((word +  olf)  & BAL_MASK) | BAL;
-  	  bfd_put_32 (abfd, word, (bfd_byte *) data + reloc_entry->address);
+  	  bfd_put_32 (abfd, (bfd_vma) word,
+		      (bfd_byte *) data + reloc_entry->address);
   	}
 	result = bfd_reloc_ok;
 	break;
@@ -251,9 +252,8 @@ coff_i960_relocate (abfd, reloc_entry, symbol, data, input_section,
 
       if (coff_section_data (output_bfd, osec) == NULL)
 	{
-	  osec->used_by_bfd =
-	    ((PTR) bfd_zalloc (abfd,
-			       sizeof (struct coff_section_tdata)));
+	  bfd_size_type amt = sizeof (struct coff_section_tdata);
+	  osec->used_by_bfd = (PTR) bfd_zalloc (abfd, amt);
 	  if (osec->used_by_bfd == NULL)
 	    return bfd_reloc_overflow;
 	}
@@ -350,7 +350,7 @@ coff_i960_start_final_link (abfd, info)
 
       bfd_coff_swap_sym_out (abfd, (PTR) &isym, (PTR) esym);
 
-      if (bfd_write (esym, symesz, 1, abfd) != symesz)
+      if (bfd_bwrite (esym, symesz, abfd) != symesz)
 	{
 	  free (esym);
 	  return false;
@@ -519,9 +519,8 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 				    + (rel->r_vaddr - input_section->vma)));
 		word = ((word + olf - val) & BAL_MASK) | BAL;
 		bfd_put_32 (input_bfd,
-			    word,
-			    (contents
-			     + (rel->r_vaddr - input_section->vma)));
+			    (bfd_vma) word,
+			    contents + (rel->r_vaddr - input_section->vma));
 		done = true;
 	      }
 	      break;

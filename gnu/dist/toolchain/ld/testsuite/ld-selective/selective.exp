@@ -1,16 +1,16 @@
 # Expect script for LD selective linking tests
-#   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+#   Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
@@ -18,6 +18,13 @@
 # Written by Catherine Moore (clm@cygnus.com)
 # Make sure that constructors are handled correctly.
 
+
+# AOUT based ports do not support selective linking
+if {[istarget "*-*-*aout*"] \
+    || [istarget "*-*-*bout*"] \
+    || [istarget "vax-*-ultrix*"]} {
+    return
+}
 
 # COFF based ports do not support selective linking
 if {[istarget "*-*-coff"]} {
@@ -27,8 +34,8 @@ if {[istarget "*-*-pe"]} {
     return
 }
 
-# selective linking is not yet implemented for 68hc11/68hc12
-if {[istarget "m6811-*-*"] || [istarget "m6812-*-*"]} {
+# Alpha does not support selective linking
+if {[istarget "alpha*-*-*"]} {
     return
 }
 
@@ -43,17 +50,25 @@ if {[istarget "m6811-*-*"] || [istarget "m6812-*-*"]} {
 #
 # FIXME: Instead of table, read settings from each source-file.
 set seltests {
-  {selective1 C 1.c {} {} {dropme1 dropme2} {}}
-  {selective2 C 2.c {} {} {foo} {mips*-*}}
-  {selective3 C 2.c {-u foo} {foo} {{foo 0}} {mips*-*}}
-  {selective4 C++ 3.cc {} {start foo__1A foo__1B} {bar__1A} {mips*-*}}
-  {selective5 C++ 4.cc {} {} {foo__1B foo__1A} {mips*-*}}
-  {selective6 C++ 5.cc {} {} {foo__1B foo__1A dropme1__Fv dropme2__Fv} {*-*-*}}
+  {selective1 C   1.c  {}       {}    {dropme1 dropme2} {alpha*-*}}
+  {selective2 C   2.c  {}       {}    {foo} {alpha*-* mips*-*}}
+  {selective3 C   2.c  {-u foo} {foo} {{foo 0}} {mips*-*}}
+  {selective4 C++ 3.cc {}       {start a A::foo() B::foo()} {A::bar()} {alpha*-*  mips*-*}}
+  {selective5 C++ 4.cc {}       {start a A::bar()} {A::foo() B::foo()} {alpha*-*  mips*-*}}
+  {selective6 C++ 5.cc {}       {start a A::bar()}
+    {A::foo() B::foo() dropme1() dropme2()} {*-*-*}}
 }
 
 set cflags "-w -O -ffunction-sections -fdata-sections"
 set cxxflags "-fvtable-gc -fno-exceptions -fno-rtti"
 set ldflags "--gc-sections -Bstatic"
+
+if [istarget sh64*-*-elf] {
+    # This is what gcc passes to ld by default, plus switch to the
+    # "usual" ELF _start (shelf32 normally uses just `start' for COFF
+    # compatibility)
+    set ldflags "-e _start -mshelf32 $ldflags"
+}
 
 # If we don't have g++ for the target, mark all tests as untested.
 if { [which $CXX] == 0 } {
@@ -92,14 +107,27 @@ foreach testitem $seltests {
     # leave as is.
     if { ![ld_compile "$CC $testflags" $srcdir/$subdir/$testfile $objfile] } {
 	unresolved $testname
-	return
+	continue
     }
 
     # V850 targets need libgcc.a
+    # FIXME: This does not work with installed toolchains!
     if [istarget v850*-*-elf] {
 	set objfile "$objfile -L ../gcc -lgcc"
     }
-    
+
+    # ARM targets need libgcc.a in THUMB mode so that __call_via_r3 is provided
+    # FIXME: This does not work with installed toolchains!
+    if {[istarget arm-*-*] || [istarget xscale-*-*]} {
+	set objfile "$objfile -L ../gcc -lgcc"
+    }
+
+    # HPPA linux targets need libgcc.a for millicode routines ($$dyncall).
+    if [istarget hppa*-*-linux*] {
+    	catch "exec $CC -print-libgcc-file-name" libgcc
+	set objfile "$objfile $libgcc"
+    }
+
     # m6811/m6812 code has references to soft registers.
     if {[istarget m6811-*-*] || [istarget m6812-*-*]} {
 	set objfile "$objfile --defsym _.frame=0 --defsym _.d1=0"
@@ -111,12 +139,19 @@ foreach testitem $seltests {
 	continue
     }
 
-    if ![ld_nm $nm $ldfile] {
+    if ![ld_nm $nm --demangle $ldfile] {
 	unresolved $testname
 	continue
     }
 
-    # Check each mandated symbol and optionally mandated values. 
+    # Must make V2 demangled names look like V3
+    foreach nm_output_key [array names nm_output] {
+	if [regsub \\(void\\) $nm_output_key () new_nm_output_key] {
+	    set nm_output($new_nm_output_key) nm_output($nm_output_key)
+	}
+    }
+
+    # Check each mandated symbol and optionally mandated values.
     foreach mustsym $mustsyms {
 	if { [llength [concat $mustsym]] == 1 } {
 	    if { ![info exists nm_output($mustsym)] } {
@@ -176,4 +211,3 @@ foreach testitem $seltests {
 	pass $testname
     }
 }
-

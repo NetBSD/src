@@ -63,8 +63,8 @@
 #define OBJ_COFF_SECTION_HEADER_HAS_ALIGNMENT
 #define OBJ_COFF_MAX_AUXENTRIES			(2)
 #define TC_COUNT_RELOC(FIXP)			(!(FIXP)->fx_done)
-#define TC_COFF_FIX2RTYPE(FIXP)			tc_coff_fix2rtype(FIXP)
-#define TC_COFF_SIZEMACHDEP(FRAGP)		tc_coff_sizemachdep(FRAGP)
+#define TC_COFF_FIX2RTYPE(FIXP)			tc_coff_fix2rtype (FIXP)
+#define TC_COFF_SIZEMACHDEP(FRAGP)		tc_coff_sizemachdep (FRAGP)
 #define TC_COFF_SET_MACHINE(HDRS)		tc_headers_hook (HDRS)
 extern void tc_headers_hook ();
 extern short tc_coff_fix2rtype ();

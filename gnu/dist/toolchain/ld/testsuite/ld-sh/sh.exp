@@ -25,6 +25,11 @@ if ![istarget sh*-*-*] {
     return
 }
 
+if [istarget sh64-*-elf] {
+    # relaxing not supported on sh64 yet.
+    return
+}
+
 set testsimple "SH simple relaxing"
 
 if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
@@ -32,7 +37,7 @@ if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
 } else { if ![ld_simple_link $ld tmpdir/sh1 "-relax tmpdir/sh1.o"] {
     fail $testsimple
 } else {
-    if ![ld_nm $nm tmpdir/sh1] {
+    if ![ld_nm $nm "" tmpdir/sh1] {
 	unresolved $testsimple
     } else {
 	if {![info exists nm_output(bar)] \
@@ -56,7 +61,14 @@ if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
 
 set testsrec "SH relaxing to S-records"
 
-if ![ld_simple_link $ld tmpdir/sh1.s1 "-relax --oformat srec tmpdir/sh1.o"] {
+if [istarget sh*-linux-gnu] {
+    # This target needs the explicit entry address.
+    catch "exec $objdump -x tmpdir/sh1 | grep start\\ address | sed s/start\\ address//" entry_addr
+    set srec_relax_arg "-Ttext $entry_addr -relax --oformat srec tmpdir/sh1.o"
+} else {
+    set srec_relax_arg "-relax --oformat srec tmpdir/sh1.o"
+}
+if ![ld_simple_link $ld tmpdir/sh1.s1 $srec_relax_arg ] {
     fail $testsrec
 } else {
     # The file name is embedded in the S-records, so create both
@@ -104,8 +116,15 @@ if { [which $CC] == 0 } {
     return
 }
 
-if {![ld_assemble $as "-relax $srcdir/$subdir/start.s" tmpdir/start.o] \
-     || ![ld_compile $CC "-O -mrelax $srcdir/$subdir/sh2.c" tmpdir/sh2.o]} {
+if [istarget sh*-linux-gnu] {
+    exec sed -e s/_main/main/ -e s/_trap/trap/ -e s/_stack/stack/ \
+	    < $srcdir/$subdir/start.s >tmpdir/start.s
+} else {
+    exec cp $srcdir/$subdir/start.s tmpdir/start.s
+}
+
+if {![ld_assemble $as "-relax tmpdir/start.s" tmpdir/start.o] \
+    || ![ld_compile $CC "-O -mrelax $srcdir/$subdir/sh2.c" tmpdir/sh2.o]} {
     unresolved $testlink
     unresolved $testjsr
     unresolved $testrun

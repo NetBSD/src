@@ -1,4 +1,4 @@
-This is gprof.info, produced by makeinfo version 4.0 from gprof.texi.
+This is gprof.info, produced by makeinfo version 4.2 from gprof.texi.
 
 START-INFO-DIR-ENTRY
 * gprof: (gprof).                Profiling your program's execution
@@ -6,15 +6,15 @@ END-INFO-DIR-ENTRY
 
    This file documents the gprof profiler of the GNU system.
 
-   Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
-Inc.
+   Copyright (C) 1988, 92, 97, 98, 99, 2000, 2001 Free Software
+Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 
 File: gprof.info,  Node: Line-by-line,  Next: Annotated Source,  Prev: Call Graph,  Up: Output
@@ -486,8 +486,8 @@ file format.
    The new file format is defined in header file `gmon_out.h'.  It
 consists of a header containing the magic cookie and a version number,
 as well as some spare bytes available for future extensions.  All data
-in a profile data file is in the native format of the host on which the
-profile was collected.  GNU `gprof' adapts automatically to the
+in a profile data file is in the native format of the target for which
+the profile was collected.  GNU `gprof' adapts automatically to the
 byte-order in use.
 
    In the new file format, the header is followed by a sequence of

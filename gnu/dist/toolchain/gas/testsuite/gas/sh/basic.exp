@@ -1,4 +1,4 @@
-# Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+# Copyright (C) 1995, 1996, 1997, 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,11 @@
 # DejaGnu@cygnus.com
 
 # Written by Cygnus Support.
+
+if [istarget "sh*-*-linux-gnu"] {
+    global ASFLAGS
+    set ASFLAGS "$ASFLAGS -big"
+}
 
 proc do_fp {} {
     set testname "fp.s: floating point tests (sh3e)"
@@ -83,4 +88,19 @@ proc do_fp {} {
 if [istarget sh*-*-*] then {
     # Test the basic instruction parser.
     do_fp
+
+    # coff is missing information about the machine type, so everything is
+    # dumped as sh4.
+    if {[istarget sh*-*coff] || [istarget sh*-hms]} then {
+	run_dump_test "pcrel-coff"
+    } else {
+	# Test DSP instructions
+	run_dump_test "dsp"
+
+	run_dump_test "pcrel"
+    }
+
+    if {[istarget sh*-*elf] || [istarget sh*-linux*]} then {
+	run_dump_test "pic"
+    }
 }

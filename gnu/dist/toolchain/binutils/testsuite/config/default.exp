@@ -69,6 +69,10 @@ if ![info exists READELFFLAGS] then {
     set READELFFLAGS ""
 }
 
+if ![info exists WINDRES] then {
+    set WINDRES [findfile $base_dir/windres]
+}
+
 if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}
 
 # Make a symlink from tmpdir/gas/as and tmpdir/gas/ld to the assembler

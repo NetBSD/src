@@ -1,29 +1,50 @@
 /*
- * Copyright (c) 1983, 2001 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993, 2001
+ *      The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that: (1) source distributions retain this entire copyright
- * notice and comment, and (2) distributions including binaries display
- * the following acknowledgement:  ``This product includes software
- * developed by the University of California, Berkeley and its contributors''
- * in the documentation or other materials provided with the distribution
- * and in all advertising materials mentioning features or use of this
- * software. Neither the name of the University nor the names of its
- * contributors may be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 #include "libiberty.h"
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "call_graph.h"
 #include "cg_arcs.h"
 #include "cg_dfn.h"
 #include "cg_print.h"
 #include "utils.h"
 #include "sym_ids.h"
+
+static int cmp_topo PARAMS ((const PTR, const PTR));
+static void propagate_time PARAMS ((Sym *));
+static void cycle_time PARAMS ((void));
+static void cycle_link PARAMS ((void));
+static void inherit_flags PARAMS ((Sym *));
+static void propagate_flags PARAMS ((Sym **));
+static int cmp_total PARAMS ((const PTR, const PTR));
 
 Sym *cycle_header;
 unsigned int num_cycles;
@@ -35,7 +56,9 @@ unsigned int numarcs;
  * range covered by CHILD.
  */
 Arc *
-DEFUN (arc_lookup, (parent, child), Sym * parent AND Sym * child)
+arc_lookup (parent, child)
+     Sym *parent;
+     Sym *child;
 {
   Arc *arc;
 
@@ -64,8 +87,10 @@ DEFUN (arc_lookup, (parent, child), Sym * parent AND Sym * child)
  * Add (or just increment) an arc:
  */
 void
-DEFUN (arc_add, (parent, child, count),
-       Sym * parent AND Sym * child AND unsigned long count)
+arc_add (parent, child, count)
+     Sym *parent;
+     Sym *child;
+     unsigned long count;
 {
   static unsigned int maxarcs = 0;
   Arc *arc, **newarcs;
@@ -131,7 +156,9 @@ DEFUN (arc_add, (parent, child, count),
 
 
 static int
-DEFUN (cmp_topo, (lp, rp), const PTR lp AND const PTR rp)
+cmp_topo (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -141,7 +168,8 @@ DEFUN (cmp_topo, (lp, rp), const PTR lp AND const PTR rp)
 
 
 static void
-DEFUN (propagate_time, (parent), Sym * parent)
+propagate_time (parent)
+     Sym *parent;
 {
   Arc *arc;
   Sym *child;
@@ -225,7 +253,7 @@ DEFUN (propagate_time, (parent), Sym * parent)
  * its members.
  */
 static void
-DEFUN_VOID (cycle_time)
+cycle_time ()
 {
   Sym *member, *cyc;
 
@@ -249,7 +277,7 @@ DEFUN_VOID (cycle_time)
 
 
 static void
-DEFUN_VOID (cycle_link)
+cycle_link ()
 {
   Sym *sym, *cyc, *member;
   Arc *arc;
@@ -288,7 +316,7 @@ DEFUN_VOID (cycle_link)
       ++num;
       ++cyc;
       sym_init (cyc);
-      cyc->cg.print_flag = TRUE;	/* should this be printed? */
+      cyc->cg.print_flag = true;	/* should this be printed? */
       cyc->cg.top_order = DFN_NAN;	/* graph call chain top-sort order */
       cyc->cg.cyc.num = num;	/* internal number of cycle on */
       cyc->cg.cyc.head = cyc;	/* pointer to head of cycle */
@@ -337,7 +365,8 @@ DEFUN_VOID (cycle_link)
  * fractions from parents.
  */
 static void
-DEFUN (inherit_flags, (child), Sym * child)
+inherit_flags (child)
+     Sym *child;
 {
   Sym *head, *parent, *member;
   Arc *arc;
@@ -346,7 +375,7 @@ DEFUN (inherit_flags, (child), Sym * child)
   if (child == head)
     {
       /* just a regular child, check its parents: */
-      child->cg.print_flag = FALSE;
+      child->cg.print_flag = false;
       child->cg.prop.fract = 0.0;
       for (arc = child->cg.parents; arc; arc = arc->next_parent)
 	{
@@ -374,7 +403,7 @@ DEFUN (inherit_flags, (child), Sym * child)
        * Its a member of a cycle, look at all parents from outside
        * the cycle.
        */
-      head->cg.print_flag = FALSE;
+      head->cg.print_flag = false;
       head->cg.prop.fract = 0.0;
       for (member = head->cg.cyc.next; member; member = member->cg.cyc.next)
 	{
@@ -415,7 +444,8 @@ DEFUN (inherit_flags, (child), Sym * child)
  * and while we're here, sum time for functions.
  */
 static void
-DEFUN (propagate_flags, (symbols), Sym ** symbols)
+propagate_flags (symbols)
+     Sym **symbols;
 {
   int index;
   Sym *old_head, *child;
@@ -451,7 +481,7 @@ DEFUN (propagate_flags, (symbols), Sym ** symbols)
 	      || (syms[INCL_GRAPH].len == 0
 		  && !sym_lookup (&syms[EXCL_GRAPH], child->addr)))
 	    {
-	      child->cg.print_flag = TRUE;
+	      child->cg.print_flag = true;
 	    }
 	}
       else
@@ -464,7 +494,7 @@ DEFUN (propagate_flags, (symbols), Sym ** symbols)
 	  if (!sym_lookup (&syms[INCL_GRAPH], child->addr)
 	      && sym_lookup (&syms[EXCL_GRAPH], child->addr))
 	    {
-	      child->cg.print_flag = FALSE;
+	      child->cg.print_flag = false;
 	    }
 	}
       if (child->cg.prop.fract == 0.0)
@@ -515,7 +545,9 @@ DEFUN (propagate_flags, (symbols), Sym ** symbols)
  * first.  All else being equal, compare by names.
  */
 static int
-DEFUN (cmp_total, (lp, rp), const PTR lp AND const PTR rp)
+cmp_total (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -572,7 +604,7 @@ DEFUN (cmp_total, (lp, rp), const PTR lp AND const PTR rp)
  * time bottom up and flags top down.
  */
 Sym **
-DEFUN_VOID (cg_assemble)
+cg_assemble ()
 {
   Sym *parent, **time_sorted_syms, **top_sorted_syms;
   unsigned int index;
@@ -600,7 +632,7 @@ DEFUN_VOID (cg_assemble)
       parent->cg.prop.fract = 0.0;
       parent->cg.prop.self = 0.0;
       parent->cg.prop.child = 0.0;
-      parent->cg.print_flag = FALSE;
+      parent->cg.print_flag = false;
       parent->cg.top_order = DFN_NAN;
       parent->cg.cyc.num = 0;
       parent->cg.cyc.head = parent;

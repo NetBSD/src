@@ -1,6 +1,6 @@
 /* This file is tc-mcore.h
 
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -59,8 +59,6 @@ extern const struct relax_type md_relax_table[];
 /* Want the section information too...  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
 
-#define MD_APPLY_FIX3  /* We want the segment as well.  */
-
 #ifdef  OBJ_COFF
 
 #define TARGET_FORMAT	(target_big_endian ? "pe-mcore-big" : "pe-mcore-little")
@@ -115,7 +113,6 @@ extern void      md_create_short_jump
 extern void      md_create_long_jump
   PARAMS ((char *, addressT, addressT, fragS *, symbolS *));
 extern void      md_convert_frag               PARAMS ((bfd *, segT, fragS *));
-extern int       md_apply_fix3                 PARAMS ((fixS *, valueT *, segT));
 extern void      md_operand                    PARAMS ((expressionS *));
 extern int       md_estimate_size_before_relax PARAMS ((fragS *, segT));
 extern void      md_number_to_chars            PARAMS ((char *, valueT, int));

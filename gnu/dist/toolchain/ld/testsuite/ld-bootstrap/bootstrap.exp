@@ -32,7 +32,8 @@ if ![isnative] {
 # really test -r.  Use ld1 to link a fresh ld, ld2.  Use ld2 to link a
 # new ld, ld3.  ld2 and ld3 should be identical.
 
-foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} {
+foreach flags {"" "strip" "--static" "--traditional-format"
+	       "--no-keep-memory" "--relax"} {
     set do_strip "no"
     if {"$flags" == "strip"} { 
 	set testname "bootstrap with $flags"
@@ -43,6 +44,12 @@ foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} 
     } else {
 	set testname "bootstrap"
     }}
+
+    # --static is meaningless and --relax is incompatible with -r.
+    set partial_flags "$flags"
+    if { "$flags" == "--static" || "$flags" == "--relax" } {
+	set partial_flags ""
+    }
 
     # This test can only be run if we have the ld build directory,
     # since we need the object files.
@@ -58,7 +65,7 @@ foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} 
 	continue
     }
 
-    if ![ld_relocate $ld tmpdir/ld-partial.o "$flags $OFILES"] {
+    if ![ld_relocate $ld tmpdir/ld-partial.o "$partial_flags $OFILES"] {
 	fail $testname
 	continue
     }
@@ -66,18 +73,11 @@ foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} 
     # On AIX, you need to specify an import list when using --static.
     # You only want the import list when creating the final
     # executable.
-    if [istarget "*-*-aix*"] {
+    if { [istarget "*-*-aix*"] 
+         && ![istarget "ia64-*-aix*"]} {
 	if {"$flags" == "--static"} {
 	    set flags "--static -bI:/lib/syscalls.exp"
 	}
-    }
-
-    # On FreeBSD, running static ELF binaries requires that they have their
-    # EI_OSABI set to a supported value.  There is no longer a fallback
-    # interpretation.
-    if {"$flags" == "--static"} {
-	setup_xfail "*-*-freebsd4*"
-	setup_xfail "*-*-freebsd5*"
     }
 
     # On Irix 5, linking with --static only works if all the files are
@@ -134,9 +134,24 @@ foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} 
 	}
     }
 
-    send_log "cmp tmpdir/ld2 tmpdir/ld3\n"
-    verbose "cmp tmpdir/ld2 tmpdir/ld3"
-    catch "exec cmp tmpdir/ld2 tmpdir/ld3" exec_output
+    send_log "compare (tail of) tmpdir/ld2 tmpdir/ld3\n"
+    verbose  "compare (tail of) tmpdir/ld2 tmpdir/ld3"
+    if {[istarget "*-*-pe"]
+	|| [istarget "*-*-wince"]} {
+        # Trim off the date present in PE binaries by only looking
+        #   at the ends of the files
+        # Although this works, a way to set the date would be better.
+        # Removing or zeroing the date stamp in the binary produced by
+        # the linker is not possible as it is required by the target OS.
+        exec tail +140 tmpdir/ld2 >tmpdir/ld2tail
+        exec tail +140 tmpdir/ld3 >tmpdir/ld3tail
+        catch "exec cmp tmpdir/ld2tail tmpdir/ld3tail" exec_output
+        exec rm tmpdir/ld2tail tmpdir/ld3tail
+    } else {
+        send_log "cmp tmpdir/ld2 tmpdir/ld3\n"
+        verbose  "cmp tmpdir/ld2 tmpdir/ld3"
+        catch "exec cmp tmpdir/ld2 tmpdir/ld3" exec_output
+    }
     set exec_output [prune_warnings $exec_output]
 
     if [string match "" $exec_output] then {

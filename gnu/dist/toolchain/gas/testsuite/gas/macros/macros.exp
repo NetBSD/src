@@ -26,10 +26,14 @@ case $target_triplet in {
     }
 }
 
-if { ![istarget hppa*-*-*] || [istarget *-*-linux*] } {
+if { ![istarget hppa*-*-*] || [istarget *-*-linux*]} {
     # FIXME: Due to macro mishandling of ONLY_STANDARD_ESCAPES.
     setup_xfail cris-*-*
-    setup_xfail avr-*-*
+    setup_xfail powerpc-*-aix*
     setup_xfail sh*-*-*
+    setup_xfail z8k*-*-*
+    setup_xfail h8300*-*-*
+    # FIXME: Due to difference in what "consecutive octets" means.
+    setup_xfail *c54x*-*-*
     run_dump_test strings
 }
