@@ -1,11 +1,9 @@
-/* $NetBSD: fiq.S,v 1.1 1996/01/31 23:15:55 mark Exp $ */
+/* $NetBSD: fiq.S,v 1.2 1996/05/06 00:21:05 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
- *
- * This code is derived from software written for Brini by Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,15 +15,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL HTE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -41,9 +39,6 @@
  * Low level fiq handlers
  *
  * Created      : 27/09/94
- * Last updated : 28/11/94
- *
- *    $Id: fiq.S,v 1.1 1996/01/31 23:15:55 mark Exp $
  */
 
 #include <machine/cpu.h>
@@ -52,27 +47,72 @@ sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+	.text
+
+/*
+ * if NOFDFIQLOOPS is defined only 1 byte is transferred per
+ * FIQ. The new default behaviour is to keep looping
+ * until there are no FD FIQ's pending.
+ */
 
 	.global	_floppy_read_fiq
 	.global	_floppy_read_fiq_end
 
+/*
+ * These registers needs to be consistent with fd
+ * driver's assignment.
+ *
+ *	r8  - scratch
+ *	r9  - IOMD_FIQRQ
+ *	r10 - transfer size
+ *	r11 - data address
+ *	r12 - floppy controller DACK address (+ 0x18000 for TC)
+ *	r13 - scratch (loop counter)
+ */
+
 _floppy_read_fiq:
-	subs	r11, r11, #0x00000001
-	addeq	r13, r13, #0x00018000
-	ldrb	r10, [r13]
-	strb	r10, [r12], #0x0001
+	subs	r10, r10, #0x00000001
+	addeq	r12, r12, #0x00018000
+	ldrb	r8, [r12]
+	strb	r8, [r11], #0x0001
+#ifndef NOFDFIQLOOPS
+	subeqs	pc, lr, #0x00000004
+	ldrb	r8, [r9]
+	tst	r8, #0x01
+	addne	r13, r13, #0x00000001
+	bne	_floppy_read_fiq
+#endif
 	subs	pc, lr, #0x00000004
 _floppy_read_fiq_end:
 
 	.global	_floppy_write_fiq
 	.global	_floppy_write_fiq_end
 
-_floppy_write_fiq:
-	subs	r11, r11, #0x00000001
-	addeq	r13, r13, #0x00018000
-	ldrb	r10, [r12], #0x0001
-	strb	r10, [r13]
-	subs	pc, lr, #0x00000004
+/*
+ * These registers needs to be consistent with fd
+ * driver's assignment.
+ *
+ *	r8  - scratch
+ *	r9  - IOMD_FIQRQ
+ *	r10 - transfer size
+ *	r11 - data address
+ *	r12 - floppy controller DACK address (+ 0x18000 for TC)
+ *	r13 - scratch (loop counter)
+ */
 
+_floppy_write_fiq:
+	subs	r10, r10, #0x00000001
+	addeq	r12, r12, #0x00018000
+	ldrb	r8, [r11], #0x0001
+	strb	r8, [r12]
+#ifndef NOFDFIQLOOPS
+	subeqs	pc, lr, #0x00000004
+	ldrb	r8, [r9]
+	tst	r8, #0x01
+	addne	r13, r13, #0x00000001
+	bne	_floppy_write_fiq
+#endif
+	subs	pc, lr, #0x00000004
 _floppy_write_fiq_end:
+
+/* End of fiq.S */
