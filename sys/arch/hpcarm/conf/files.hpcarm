@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.3 2001/02/24 19:43:51 reinoud Exp $
+#	$NetBSD: files.hpcarm,v 1.4 2001/02/24 21:43:02 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -22,16 +22,6 @@ defopt	PMAP_DEBUG
 defopt	XSERVER
 
 define todservice {}
-
-device	mainbus { [base = -1], [dack = -1], [irq = -1] }
-attach	mainbus at root
-file	arch/arm/mainbus/mainbus.c		mainbus & arm32
-file	arch/arm/mainbus/mainbus_io.c		mainbus & arm32
-file	arch/arm/mainbus/mainbus_io_asm.S	mainbus & arm32
-
-device	cpu
-attach	cpu at mainbus
-file	arch/arm/mainbus/cpu.c			cpu & arm32 needs-flag
 
 # Memory disk driver
 file	arch/hpcarm/dev/md_hooks.c		md & memory_disk_hooks

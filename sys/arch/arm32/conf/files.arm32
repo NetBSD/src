@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.93 2001/02/24 19:43:50 reinoud Exp $
+#	$NetBSD: files.arm32,v 1.94 2001/02/24 21:43:01 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -32,16 +32,6 @@ defopt	EBSA285
 defopt	FOOTBRIDGE
 
 define todservice {}
-
-device	mainbus { [base = -1], [dack = -1], [irq = -1] }
-attach	mainbus at root
-file	arch/arm/mainbus/mainbus.c		mainbus & arm32
-file	arch/arm/mainbus/mainbus_io.c		mainbus & arm32
-file	arch/arm/mainbus/mainbus_io_asm.S	mainbus & arm32
-
-device	cpu
-attach	cpu at mainbus
-file	arch/arm/mainbus/cpu.c			cpu & arm32 needs-flag 
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
