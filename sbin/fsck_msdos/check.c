@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1 1996/05/14 17:39:29 ws Exp $	*/
+/*	$NetBSD: check.c,v 1.2 1996/05/25 17:09:43 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: check.c,v 1.1 1996/05/14 17:39:29 ws Exp $";
+static char rcsid[] = "$NetBSD: check.c,v 1.2 1996/05/25 17:09:43 ws Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -125,9 +125,11 @@ checkfilesys(fname)
 	if (!preen)
 		printf("** Phase 3 - Checking Directories\n");
 	
-	rootDir = malloc(sizeof(struct dosDirEntry));
+	if (!(rootDir = malloc(sizeof(struct dosDirEntry)))) {
+		perror("No space for root directory");
+		return 8;
+	}
 	memset(rootDir, 0, sizeof(struct dosDirEntry));
-	rootDir->fullpath = strdup("/");
 	if (resetDosDirSection(&boot)&FSFATAL) {
 		close(dosfs);
 		return 8;
