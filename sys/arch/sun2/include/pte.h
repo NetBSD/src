@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2001/03/29 04:58:52 fredette Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2001/06/08 18:00:51 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,11 +144,23 @@
 
 #define PG_MOD_SHIFT 20
 
+/*
+ * At first glance, the need for two page types for the VME
+ * bus on the sun2 isn't obvious - it's a single 16 bit wide
+ * bus with 24 address lines, with the A16 devices simply
+ * found starting at addresses 0xff0000.  No problem - use
+ * only one page type.  But the sun2 VM page frame is only 12 
+ * bits wide, with 11 bit wide page offsets, meaning only 23 
+ * address bits, not enough to cover the entire VME bus.  So
+ * we have two page types, with the low bit of the page type
+ * representing the 24th VME bus address bit.
+ */
 #define OBMEM	0
 #define OBIO 	1
-#define MBMEM	2	/* on the 2/120, VME_D16 on the 2/50 */
-#define VME_D16	2
-#define MBIO	3	/* on the 2/120, ??? on the 2/50 */
+#define MBMEM	2	/* on the 2/120 */
+#define VME0	2	/* on the 2/50 (VME addresses [0..0x7fffff]) */
+#define MBIO	3	/* on the 2/120 */
+#define VME8	3	/* on the 2/50 (VME addresses [0x800000..0xffffff]) */
 #define PG_TYPE_SHIFT 22
 
 #define PG_INVAL   0x0
@@ -160,9 +172,10 @@
 #define	PGT_MASK	MAKE_PGTYPE(3)
 #define	PGT_OBMEM	MAKE_PGTYPE(OBMEM)		/* onboard memory */
 #define	PGT_OBIO	MAKE_PGTYPE(OBIO)		/* onboard I/O */
-#define	PGT_MBMEM	MAKE_PGTYPE(MBMEM)	/* Multibus memory on the 2/120, VME_D16 on the 2/50 */
-#define	PGT_VME_D16	MAKE_PGTYPE(VME_D16)	/* VMEbus 16-bit data */
-#define	PGT_MBIO	MAKE_PGTYPE(MBIO)	/* Multibus I/O on the 2/120, ??? on the 2/50 */
+#define	PGT_MBMEM	MAKE_PGTYPE(MBMEM)	/* on the 2/120 */
+#define	PGT_VME0	MAKE_PGTYPE(VME0)	/* on the 2/50 */
+#define	PGT_MBIO	MAKE_PGTYPE(MBIO)	/* on the 2/120 */
+#define	PGT_VME8	MAKE_PGTYPE(VME8)	/* on the 2/50 */
 
 #define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
 
