@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75 1998/09/26 20:13:56 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.76 1998/09/30 18:38:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,7 +96,6 @@ int	ncpu;
 struct	cpu_info *cpus[_MAXNCPU];
 #define CPU_MID2CPUNO(mid) ((mid) - 8)
 
-struct proc	*fpproc;
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 1998/09/17 02:26:26 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.131 1998/09/30 18:38:57 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -511,10 +511,13 @@ setregs(p, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (p == cpuinfo.fpproc) {
 			savefpstate(fs);
-			fpproc = NULL;
-		}
+			cpuinfo.fpproc = NULL;
+		} else if (p->p_md.md_fpumid != -1)
+			panic("setreg: own FPU on module %d; fix this",
+				p->p_md.md_fpumid);
+		p->p_md.md_fpumid = -1;
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
 	}
