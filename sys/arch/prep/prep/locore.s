@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2000/11/16 05:38:33 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2000/12/04 17:05:51 tsubai Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -62,6 +62,9 @@
 #define	HID0_ICFI	(1<<11)
 #define	HID0_DCE	(1<<14)
 #define	HID0_ICE	(1<<15)
+
+#define	INTSTK	(8*1024)	/* 8K interrupt stack */
+#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
