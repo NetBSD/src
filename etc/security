@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.90 2004/04/09 17:33:35 kim Exp $
+#	$NetBSD: security,v 1.91 2004/07/23 06:12:16 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -49,16 +49,17 @@ if ! cd "$SECUREDIR"; then
 	exit 1
 fi
 
-ERR=secure1.$$
-TMP1=secure2.$$
-TMP2=secure3.$$
-MPBYUID=secure4.$$
-MPBYPATH=secure5.$$
-LIST=secure6.$$
-OUTPUT=secure7.$$
-LABELS=secure8.$$
-PKGS=secure9.$$
-CHANGEFILES=secure10.$$
+ERR=err.$$
+TMP1=tmp1.$$
+TMP2=tmp2.$$
+MPBYUID=mpbyuid.$$
+MPBYPATH=mpbypath.$$
+LIST=list.$$
+OUTPUT=output.$$
+LABELS=labels.$$
+PKGS=pkgs.$$
+CHANGEFILES=changefiles.$$
+SPECIALSPEC=specialspec.$$
 
 
 # migrate_file old new
@@ -169,8 +170,11 @@ backup_and_diff()
 
 # These are used several times.
 #
-awk -F: '!/^+/ { print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
+awk -F: '!/^\+/ { print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
 awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPBYPATH
+for file in $special_files; do
+	[ -s $file ] && cat $file
+done | mtree -CM -k all > $SPECIALSPEC || exit 1
 
 
 # Check the master password file syntax.
@@ -756,10 +760,7 @@ if checkyesno check_mtree; then
 	else
 		check_mtree_flags=""
 	fi
-	for file in $special_files; do
-		[ ! -s $file ] && continue
-		mtree -e -l -p / $check_mtree_flags -f $file
-	done 3>&1 >$OUTPUT 2>&3 |
+	mtree -e -l -p / $check_mtree_flags -f $SPECIALSPEC 3>&1 >$OUTPUT 2>&3 |
 		grep -v '^mtree: dev/tty: Device not configured$' >&2
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
@@ -834,11 +835,8 @@ fi
 # Any changes cause the files to rotate.
 #
 if checkyesno check_changelist ; then
-	for file in $special_files; do
-		[ ! -s $file ] && continue
-		mtree -D -k type -f $file -E exclude |
-		    sed '/^type=file/!d ; s/type=file \.//'
-	done > $CHANGEFILES
+	mtree -D -k type -f $SPECIALSPEC -E exclude |
+	    sed '/^type=file/!d ; s/type=file \.//' | unvis > $CHANGEFILES
 
 	(
 		# Add other files which might dynamically exist:
@@ -884,11 +882,8 @@ fi
 # differences and we don't want to do that for these files
 #
 echo $MP > $TMP1			# always add /etc/master.passwd
-for file in $special_files; do
-	[ ! -s $file ] && continue
-	mtree -D -k type -f $file -I nodiff |
-	    sed '/^type=file/!d ; s/type=file \.//'
-done >> $TMP1
+mtree -D -k type -f $SPECIALSPEC -I nodiff |
+    sed '/^type=file/!d ; s/type=file \.//' | unvis >> $TMP1
 grep -v '^$' $TMP1 | sort -u > $TMP2
 
 while read file; do
