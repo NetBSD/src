@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.52 1994/09/18 18:32:51 deraadt Exp $	*/
+/*	$NetBSD: tty.c,v 1.53 1994/10/12 13:38:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1295,7 +1295,6 @@ loop:	lflag = tp->t_lflag;
 			 * Also, use plain wakeup() not ttwakeup().
 			 */
 			slp = (long) (((u_long)slp * hz) + 999999) / 1000000;
-			timeout(wakeup, (caddr_t)qp, slp);
 			goto sleep;
 		}
 	} else if ((qp = &tp->t_canq)->c_cc <= 0) {
@@ -1310,21 +1309,15 @@ sleep:
 		carrier = ISSET(tp->t_state, TS_CARR_ON) ||
 		    ISSET(tp->t_cflag, CLOCAL);
 		if (!carrier && ISSET(tp->t_state, TS_ISOPEN)) {
-			if (slp)
-				untimeout(wakeup, (caddr_t)qp);
 			splx(s);
 			return (0);	/* EOF */
 		}
 		if (flag & IO_NDELAY) {
-			if (slp)
-				untimeout(wakeup, (caddr_t)qp);
 			splx(s);
 			return (EWOULDBLOCK);
 		}
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-		    carrier ? ttyin : ttopen, 0);
-		if (slp)
-			untimeout(wakeup, (caddr_t)qp);
+		    carrier ? ttyin : ttopen, slp);
 		splx(s);
 		if (error)
 			return (error);
