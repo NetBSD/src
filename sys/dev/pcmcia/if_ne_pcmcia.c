@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.1 1997/10/14 01:18:45 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.2 1997/10/14 01:59:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@ int ne_pcmcia_match __P((struct device *, void *, void *));
 int ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 #endif
 void ne_pcmcia_attach __P((struct device *, struct device *, void *));
+
+int	ne_pcmcia_enable __P((struct dp8390_softc *));
+void	ne_pcmcia_disable __P((struct dp8390_softc *));
 
 struct ne_pcmcia_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -318,6 +321,10 @@ ne_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
+	/* Set up power management hooks. */
+	dsc->sc_enable = ne_pcmcia_enable;
+	dsc->sc_disable = ne_pcmcia_disable;
+
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
@@ -403,4 +410,24 @@ ne_pcmcia_attach(parent, self, aux)
 	if (psc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt\n",
 		    dsc->sc_dev.dv_xname);
+
+	pcmcia_function_disable(pa->pf);
+}
+
+int
+ne_pcmcia_enable(dsc)
+	struct dp8390_softc *dsc;
+{
+	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
+
+	return (pcmcia_function_enable(psc->sc_pf));
+}
+
+void
+ne_pcmcia_disable(dsc)
+	struct dp8390_softc *dsc;
+{
+	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
+
+	pcmcia_function_disable(psc->sc_pf);
 }

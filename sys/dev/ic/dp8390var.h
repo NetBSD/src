@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.2.4.1 1997/10/14 00:59:13 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.2.4.2 1997/10/14 01:59:15 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -55,6 +55,8 @@ struct dp8390_softc {
 
 	u_int8_t sc_enaddr[6];	/* storage for MAC address */
 
+	int	sc_enabled;	/* boolean; power enabled on interface */
+
 	int	(*test_mem) __P((struct dp8390_softc *));
 	void	(*init_card) __P((struct dp8390_softc *));
 	void	(*read_hdr) __P((struct dp8390_softc *,
@@ -63,6 +65,9 @@ struct dp8390_softc {
 	int	(*ring_copy) __P((struct dp8390_softc *,
 		    int, caddr_t, u_short));
 	int	(*write_mbuf) __P((struct dp8390_softc *, struct mbuf *, int));
+
+	int	(*sc_enable) __P((struct dp8390_softc *));
+	void	(*sc_disable) __P((struct dp8390_softc *));
 };
 
 /*
