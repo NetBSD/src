@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/04/07 13:18:36 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1998/04/10 15:05:48 tv Exp $
 
 .PATH: ${.CURDIR}/../../../dist/gcc/cp ${.CURDIR}/../../../dist/gcc/cp/inc
 LIB=	gcc
@@ -33,6 +33,10 @@ CXXFLAGS+=	-I${DIST}/cp/inc
 LIB2OBJS+=	_eh.o
 INCS=		exception new new.h typeinfo
 INCSDIR=	/usr/include/g++
+
+# XXX Workaround the .cc -> (NULL) extension rule
+.cc:
+	@true
 .endif
 
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
