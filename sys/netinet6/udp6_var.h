@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.5 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.6 2000/01/06 15:46:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,7 +85,6 @@ struct	udp6stat {
 	u_quad_t udp6s_opackets;	/* total output packets */
 };
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
 /*
  * Names for UDP sysctl objects
  */
@@ -104,32 +103,6 @@ struct	udp6stat {
 	&udp6_sendspace, \
 	&udp6_recvspace, \
 }
-#endif /*__FreeBSD__||__NetBSD__*/
-#ifdef __bsdi__
-/*
- * Names for UDP sysctl objects
- */
-#define UDP6CTL_SENDMAX		2	/* default send buffer */
-#define UDP6CTL_RECVSPACE	3	/* default recv buffer */
-#define UDP6CTL_STATS		4	/* statistics */
-#define UDP6CTL_MAXID		5
-
-#define UDP6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "sendmax", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-}
-
-#define UDP6CTL_VARS { \
-	0, \
-	0, \
-	&udp6_sendspace, \
-	&udp6_recvspace, \
-	0, \
-}
-#endif /*__bsdi__*/
 
 #ifdef _KERNEL
 struct	in6pcb udb6;
@@ -141,14 +114,9 @@ int	udp6_input __P((struct mbuf **, int *, int));
 int	udp6_output __P((struct in6pcb *,
 			 struct mbuf *, struct mbuf *, struct mbuf *));
 int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 int	udp6_usrreq __P((struct socket *,
 			 int, struct mbuf *, struct mbuf *, struct mbuf *,
 			 struct proc *));
-#else
-int	udp6_usrreq __P((struct socket *,
-			 int, struct mbuf *, struct mbuf *, struct mbuf *));
-#endif
 #endif /* _KERNEL */
 
 #endif /*_NETINET6_UDP6_VAR_H_*/

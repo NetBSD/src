@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.5 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.6 2000/01/06 15:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,11 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-#include "opt_ip6fw.h"
-#include "opt_inet.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -55,10 +50,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #include <netinet6/nd6.h>
-
-#ifdef __OpenBSD__ /*KAME IPSEC*/
-#undef IPSEC
-#endif
 
 #ifdef IPSEC_IPV6FWD
 #include <netinet6/ipsec.h>
@@ -100,9 +91,7 @@ ip6_forward(m, srcrt)
 #ifdef IPSEC_IPV6FWD
 	struct secpolicy *sp = NULL;
 #endif
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 #ifdef IPSEC_IPV6FWD
 	/*
@@ -297,12 +286,7 @@ ip6_forward(m, srcrt)
 				ip6_forward_rt.ro_rt = 0;
 			}
 			/* this probably fails but give it a try again */
-#ifdef __FreeBSD__
-			rtalloc_ign((struct route *)&ip6_forward_rt,
-				    RTF_PRCLONING);
-#else
 			rtalloc((struct route *)&ip6_forward_rt);
-#endif
 		}
 		
 		if (ip6_forward_rt.ro_rt == 0) {
@@ -326,11 +310,7 @@ ip6_forward(m, srcrt)
 		dst->sin6_family = AF_INET6;
 		dst->sin6_addr = ip6->ip6_dst;
 
-#ifdef __FreeBSD__
-  		rtalloc_ign((struct route *)&ip6_forward_rt, RTF_PRCLONING);
-#else
 		rtalloc((struct route *)&ip6_forward_rt);
-#endif
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */

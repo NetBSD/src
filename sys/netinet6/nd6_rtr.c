@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.7 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.8 2000/01/06 15:46:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,9 +38,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -80,16 +78,7 @@ static void in6_init_address_ltimes __P((struct nd_prefix *ndpr,
 
 static int rt6_deleteroute __P((struct radix_node *, void *));
 
-#if 0
-extern struct timeval time;
-#endif
 extern int nd6_recalc_reachtm_interval;
-
-#if 0
-static u_char bmask [] = {
-	0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe,
-};
-#endif
 
 struct ifnet *nd6_defifp;
 int nd6_defifindex;
@@ -217,9 +206,7 @@ nd6_ra_input(m, off, icmp6len)
     {
 	struct nd_defrouter dr0;
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
@@ -411,11 +398,7 @@ defrouter_addreq(new)
 	gate.sin6_addr = new->rtaddr;
 
 #if 1
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	(void)rtrequest(RTM_ADD, (struct sockaddr *)&def,
 		(struct sockaddr *)&gate, (struct sockaddr *)&mask,
 		RTF_GATEWAY, NULL);
@@ -428,16 +411,8 @@ defrouter_addreq(new)
 	if ((rnh = rt_tables[AF_INET6]) == 0)
 		return;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
-#ifdef __NetBSD__
 	rt = pool_get(&rtentry_pool, PR_NOWAIT);
-#else
-	R_Malloc(rt, struct rtentry *, sizeof(*rt));
-#endif
 	if (!rt)
 		goto bad;
 	Bzero(rt, sizeof(*rt));
@@ -604,11 +579,7 @@ defrtrlist_del(dr)
 void
 defrouter_select()
 {
-#ifdef __NetBSD__
 	int s = splsoftnet();
-#else
-	int s = splnet();
-#endif
 	struct nd_defrouter *dr, anydr;
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
@@ -678,11 +649,7 @@ defrtrlist_update(new)
 	struct nd_defrouter *new;
 {
 	struct nd_defrouter *dr, *n;
-#ifdef __NetBSD__
 	int s = splsoftnet();
-#else
-	int s = splnet();
-#endif
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
@@ -812,11 +779,7 @@ prelist_add(pr, dr)
 
 	/* xxx ND_OPT_PI_FLAG_ONLINK processing */
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
 	splx(s);
@@ -834,11 +797,7 @@ prelist_remove(pr)
 	struct nd_pfxrouter *pfr, *next;
 	int s;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
 	splx(s);
@@ -868,11 +827,7 @@ prelist_update(new, dr, m)
 {
 	struct in6_ifaddr *ia6 = NULL;
 	struct nd_prefix *pr;
-#ifdef __NetBSD__
 	int s = splsoftnet();
-#else
-	int s = splnet();
-#endif
 	int error = 0;
 	int auth;
 	struct in6_addrlifetime *lt6;
@@ -1358,10 +1313,8 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		int error;	/* not used */
 		struct in6_addr sol6;
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		/* Restore saved multicast addresses(if any). */
 		in6_restoremkludge(ia, ifp);
-#endif
 
 		/* join solicited node multicast address */
 		bzero(&sol6, sizeof(sol6));
@@ -1447,9 +1400,7 @@ in6_ifdel(ifp, in6)
 			return -1;
 	}
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	in6_savemkludge(oia);
-#endif
 	IFAFREE((&oia->ia_ifa));
 /* xxx
 	rtrequest(RTM_DELETE,
@@ -1465,9 +1416,7 @@ in6_ifdel(ifp, in6)
 int
 in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	/* check if preferred lifetime > valid lifetime */
 	if (ndpr->ndpr_pltime > ndpr->ndpr_vltime) {
@@ -1493,9 +1442,7 @@ in6_init_address_ltimes(struct nd_prefix *new,
 			struct in6_addrlifetime *lt6,
 			int update_vltime)
 {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	/* Valid lifetime must not be updated unless explicitly specified. */
 	if (update_vltime) {
@@ -1607,4 +1554,3 @@ nd6_setdefaultiface(ifindex)
 
 	return(error);
 }
-	
