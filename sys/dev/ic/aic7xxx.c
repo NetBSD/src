@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.19 1996/12/10 21:27:58 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.20 1997/02/20 05:15:50 mikel Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -646,6 +646,10 @@ ahc_attach(ahc)
 #elif defined(__NetBSD__)
 	ahc->sc_link.adapter_target = ahc->our_id;
 	ahc->sc_link.channel = 0;
+	/*
+	 * Set up max_target.
+	 */
+	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
 	ahc->sc_link.adapter = &ahc_switch;
@@ -704,11 +708,6 @@ ahc_attach(ahc)
 		scbus = NULL;	/* Upper-level SCSI code owns this now */
 	}
 #elif defined(__NetBSD__)
-	/*
-	 * Set up max_target.
-	 */
-	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
-
 	/*
 	 * ask the adapter what subunits are present
 	 */
