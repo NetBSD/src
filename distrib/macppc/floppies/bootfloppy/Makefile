@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 2002/03/30 07:45:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2002/03/31 02:15:42 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.kernobj.mk>
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../../../Makefile.inc"
 
 IMAGE=		boot.fs
 DISKSIZE=	2880
