@@ -1,4 +1,4 @@
-.\" $NetBSD: ppbus.4,v 1.7 2004/01/28 17:26:45 jdolecek Exp $
+.\" $NetBSD: ppbus.4,v 1.8 2004/01/28 17:31:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Nicolas Souchu
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Cd "options DEBUG_1284"
 .Pp
 .Cd "lpt* at ppbus?"
-.Cd "lp* at ppbus?"
+.Cd "plip* at ppbus?"
 .Cd "ppi* at ppbus?"
 .Cd "pps* at ppbus?"
 .\" Cd "lpbb* at ppbus?"
@@ -416,3 +416,6 @@ manual page.
 The information has been updated for the
 .Nx
 port by Gary Thorpe.
+.Sh BUGS
+.Nm
+framework is still experimental and not enabled by default yet.
