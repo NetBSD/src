@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.5 2004/01/23 02:39:49 jonathan Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.6 2004/03/02 02:22:56 thorpej Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.5 2004/01/23 02:39:49 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.6 2004/03/02 02:22:56 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -305,15 +305,6 @@ esp6_ctlinput(cmd, sa, d)
 	}
 }
 #endif /* INET6 */
-
-
-/*FIXME: placebo for invalpcbcacheall. Fast-IPsec has no pcb cache? */
-
-void	ipsec_invalpcbcacheall(void);
-void
-ipsec_invalpcbcacheall(void)
-{
-}
 
 static int
 sysctl_fast_ipsec(SYSCTLFN_ARGS)

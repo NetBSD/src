@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.6 2004/01/20 22:55:14 jonathan Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.7 2004/03/02 02:22:56 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -117,7 +117,28 @@ struct inpcbpolicy {
 	struct secpolicy *sp_in;
 	struct secpolicy *sp_out;
 	int priv;			/* privileged socket ? */
+
+#ifdef __NetBSD__
+	/* cached policy */
+	struct {
+		struct secpolicy *cachesp;
+		struct secpolicyindex cacheidx;
+		int cachehint;		/* processing requirement hint: */
+#define	IPSEC_PCBHINT_MAYBE	0	/* IPsec processing maybe required */
+#define	IPSEC_PCBHINT_YES	1	/* IPsec processing is required */
+#define	IPSEC_PCBHINT_NO	2	/* IPsec processing not required */
+		u_int cachegen;		/* spdgen when cache filled */
+	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
+	int sp_cacheflags;
+#define	IPSEC_PCBSP_CONNECTED	1
+#endif /* __NetBSD__ */
 };
+
+#ifdef __NetBSD__
+#define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
+	((inpp)->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&	\
+	 (inpp)->sp_cache[(dir)].cachegen == ipsec_spdgen)
+#endif /* __NetBSD__ */
 
 /* SP acquiring list table. */
 struct secspacq {
@@ -212,6 +233,11 @@ struct ipsecstat {
 	u_quad_t out_esphist[256];
 	u_quad_t out_ahhist[256];
 	u_quad_t out_comphist[256];
+
+#ifdef __NetBSD__
+	u_quad_t spdcachelookup;
+	u_quad_t spdcachemiss;
+#endif /* __NetBSD__ */
 };
 
 /* statistics for ipsec processing */
@@ -234,6 +260,11 @@ struct newipsecstat {
 	u_int32_t ips_input_front;
 	u_int32_t ips_input_middle;
 	u_int32_t ips_input_end;
+
+#ifdef __NetBSD__
+	u_quad_t ips_spdcache_lookup;
+	u_quad_t ips_spdcache_miss;
+#endif /* __NetBSD__ */
 };
 
 /*
@@ -333,6 +364,14 @@ extern int crypto_support;
 /* for openbsd compatibility */
 #define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
 
+#ifdef __NetBSD__
+extern void ipsec_pcbconn __P((struct inpcbpolicy *));
+extern void ipsec_pcbdisconn __P((struct inpcbpolicy *));
+extern void ipsec_invalpcbcacheall __P((void));
+
+extern u_int ipsec_spdgen;
+#endif /* __NetBSD__ */
+
 struct tdb_ident;
 extern struct secpolicy *ipsec_getpolicy __P((struct tdb_ident*, u_int));
 struct inpcb;
@@ -354,8 +393,6 @@ ipsec_copy_pcbpolicy(struct inpcbpolicy *old, struct inpcbpolicy *new)
   /*XXX do nothing */
   return (0);
 }
-
-
 
 struct inpcb;
 #define	ipsec_init_pcbpolicy ipsec_init_policy

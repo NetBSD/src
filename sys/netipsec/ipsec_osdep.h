@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.7 2004/03/01 23:28:02 thorpej Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.8 2004/03/02 02:22:56 thorpej Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -294,6 +294,9 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * PCB_FAMILY(p): given a "generic" pcb_t p, returns the protocol
  *	family (AF_INET, AF_INET6) of the unperlying inpcb/in6pcb.
  *
+ * PCB_SOCKET(p): given a "generic" pcb_t p, returns the associated
+ *	socket pointer
+ *
  * PCB_TO_IN4PCB(p): given generic pcb_t *p, returns a struct inpcb *
  * PCB_TO_IN6PCB(p): given generic pcb_t *p, returns a struct in6pcb *
  *
@@ -303,6 +306,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #ifdef __FreeBSD__
 #define PCB_T		struct inpcb
 #define PCB_FAMILY(p)	((p)->inp_socket->so_proto->pr_domain->dom_family)
+#define	PCB_SOCKET(p)	((p)->inp_socket)
 
 /* Convert generic pcb to IPv4/IPv6 pcb */
 #define PCB_TO_IN4PCB(p) (p)
@@ -317,9 +321,11 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #ifndef notyet
 #  define PCB_T		struct inpcb_hdr
 #  define PCB_FAMILY(p)	((p)->inph_af)
+#  define PCB_SOCKET(p)	((p)->inph_socket)
 #else
 #  define PCB_T		struct inpcb
 #  define PCB_FAMILY(p)	((p)->inp_head.inph_af)
+#  define PCB_SOCKET(p)	((p)->inp_socket)
 #endif 
 
 #define PCB_TO_IN4PCB(p) ((struct inpcb *)(p))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.8 2004/03/02 00:50:57 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.8 2004/03/02 00:50:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $");
 
 /*
  * IPsec controller part.
@@ -118,6 +118,17 @@ int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 int ip4_esp_randpad = -1;
+
+#ifdef __NetBSD__
+u_int ipsec_spdgen = 1;		/* SPD generation # */
+
+static struct secpolicy *ipsec_checkpcbcache __P((struct mbuf *,
+	struct inpcbpolicy *, int));
+static int ipsec_fillpcbcache __P((struct inpcbpolicy *, struct mbuf *,
+	struct secpolicy *, int));
+static int ipsec_invalpcbcache __P((struct inpcbpolicy *, int));
+#endif /* __NetBSD__ */
+
 /*
  * Crypto support requirements:
  *
@@ -218,6 +229,175 @@ static int ipsec_get_policy __P((struct secpolicy *pcb_sp, struct mbuf **mp));
 static void vshiftl __P((unsigned char *, int, int));
 static size_t ipsec_hdrsiz __P((struct secpolicy *));
 
+#ifdef __NetBSD__
+/*
+ * Try to validate and use cached policy on a PCB.
+ */
+static struct secpolicy *
+ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
+{
+	struct secpolicyindex spidx;
+
+	switch (dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
+	case IPSEC_DIR_ANY:
+		break;
+	default:
+		return NULL;
+	}
+#ifdef DIAGNOSTIC
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
+		panic("dir too big in ipsec_checkpcbcache");
+#endif
+	/* SPD table change invalidate all the caches. */
+	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
+	if (!pcbsp->sp_cache[dir].cachesp)
+		return NULL;
+	if (pcbsp->sp_cache[dir].cachesp->state != IPSEC_SPSTATE_ALIVE) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
+	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
+		if (!pcbsp->sp_cache[dir].cachesp)
+			return NULL;
+		if (ipsec_setspidx(m, &spidx, 1) != 0)
+			return NULL;
+		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
+			 sizeof(spidx))) {
+			if (!key_cmpspidx_withmask(&pcbsp->sp_cache[dir].cachesp->spidx,
+			    &spidx))
+				return NULL;
+			pcbsp->sp_cache[dir].cacheidx = spidx;
+		}
+	} else {
+		/*
+		 * The pcb is connected, and the L4 code is sure that:
+		 * - outgoing side uses inp_[lf]addr
+		 * - incoming side looks up policy after inpcb lookup
+		 * and address pair is know to be stable.  We do not need
+		 * to generate spidx again, nor check the address match again.
+		 *
+		 * For IPv4/v6 SOCK_STREAM sockets, this assumptions holds
+		 * and there are calls to ipsec_pcbconn() from in_pcbconnect().
+		 */
+	}
+
+	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	pcbsp->sp_cache[dir].cachesp->refcnt++;
+	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
+		pcbsp->sp_cache[dir].cachesp->refcnt,
+		pcbsp->sp_cache[dir].cachesp));
+	return pcbsp->sp_cache[dir].cachesp;
+}
+
+static int
+ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
+    struct secpolicy *sp, int dir)
+{
+
+	if (sp != NULL && sp->policy == IPSEC_POLICY_ENTRUST)
+		panic("ipsec_fillpcbcache: ENTRUST");
+
+	switch (dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
+		break;
+	default:
+		return EINVAL;
+	}
+#ifdef DIAGNOSTIC
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
+		panic("dir too big in ipsec_fillpcbcache");
+#endif
+
+	if (pcbsp->sp_cache[dir].cachesp)
+		KEY_FREESP(&pcbsp->sp_cache[dir].cachesp);
+	pcbsp->sp_cache[dir].cachesp = NULL;
+	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_MAYBE;
+	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
+		return EINVAL;
+	}
+	pcbsp->sp_cache[dir].cachesp = sp;
+	if (pcbsp->sp_cache[dir].cachesp) {
+		pcbsp->sp_cache[dir].cachesp->refcnt++;
+		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+			printf("DP ipsec_fillpcbcache cause refcnt++:%d SP:%p\n",
+			pcbsp->sp_cache[dir].cachesp->refcnt,
+			pcbsp->sp_cache[dir].cachesp));
+
+		/*
+		 * If the PCB is connected, we can remember a hint to
+		 * possibly short-circuit IPsec processing in other places.
+		 */
+		if (pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) {
+			switch (pcbsp->sp_cache[dir].cachesp->policy) {
+			case IPSEC_POLICY_NONE:
+			case IPSEC_POLICY_BYPASS:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_NO;
+				break;
+			default:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_YES;
+			}
+		}
+	}
+	pcbsp->sp_cache[dir].cachegen = ipsec_spdgen;
+
+	return 0;
+}
+
+static int
+ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
+{
+	int i;
+
+	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
+		if (dir != IPSEC_DIR_ANY && i != dir)
+			continue;
+		if (pcbsp->sp_cache[i].cachesp)
+			KEY_FREESP(&pcbsp->sp_cache[i].cachesp);
+		pcbsp->sp_cache[i].cachesp = NULL;
+		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
+		pcbsp->sp_cache[i].cachegen = 0;
+		bzero(&pcbsp->sp_cache[i].cacheidx,
+		      sizeof(pcbsp->sp_cache[i].cacheidx));
+	}
+	return 0;
+}
+
+void
+ipsec_pcbconn(struct inpcbpolicy *pcbsp)
+{
+
+	pcbsp->sp_cacheflags |= IPSEC_PCBSP_CONNECTED;
+	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
+}
+
+void
+ipsec_pcbdisconn(struct inpcbpolicy *pcbsp)
+{
+
+	pcbsp->sp_cacheflags &= ~IPSEC_PCBSP_CONNECTED;
+	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
+}
+
+void
+ipsec_invalpcbcacheall(void)
+{
+
+	if (ipsec_spdgen == UINT_MAX)
+		ipsec_spdgen = 1;
+	else
+		ipsec_spdgen++;
+}
+#endif /* __NetBSD__ */
+
 /*
  * Return a held reference to the default SP.
  */
@@ -304,13 +484,24 @@ ipsec_getpolicybysock(m, dir, inp, error)
 	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
 		("ipsec_getpolicybysock: invalid direction %u", dir));
 
-	IPSEC_ASSERT(inp->inp_socket != NULL,
+	IPSEC_ASSERT(PCB_SOCKET(inp) != NULL,
 	    ("ipsec_getppolicybysock: null socket\n"));
 
 	/* XXX FIXME inpcb/in6pcb  vs socket*/
 	af = PCB_FAMILY(inp);
 	IPSEC_ASSERT(af == AF_INET || af == AF_INET6,
 		("ipsec_getpolicybysock: unexpected protocol family %u", af));
+
+#ifdef __NetBSD__
+	/* If we have a cached entry, and if it is still valid, use it. */
+	ipsecstat.ips_spdcache_lookup++;
+	currsp = ipsec_checkpcbcache(m, /*inpcb_hdr*/inp->inph_sp, dir);
+	if (currsp) {
+		*error = 0;
+		return currsp;
+	}
+	ipsecstat.ips_spdcache_miss++;
+#endif /* __NetBSD__ */
 
 	switch (af) {
 	case AF_INET: {
@@ -404,6 +595,9 @@ ipsec_getpolicybysock(m, dir, inp, error)
 		printf("DP ipsec_getpolicybysock (priv %u policy %u) allocates "
 		       "SP:%p (refcnt %u)\n", pcbsp->priv, currsp->policy,
 		       sp, sp->refcnt));
+#ifdef __NetBSD__
+	ipsec_fillpcbcache(pcbsp, m, sp, dir);
+#endif /* __NetBSD__ */
 	return sp;
 }
 
