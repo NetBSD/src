@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.114 2004/03/25 00:23:49 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.115 2004/03/25 19:36:26 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1004,6 +1004,10 @@ typedef void *sysctlfn;
 
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));
+int	sysctlbyname __P((const char *, void *, size_t *, void *, size_t));
+int	sysctlgetmibinfo __P((const char *, int *, u_int *,
+			      char *, size_t *, struct sysctlnode **, int));
+int	sysctlnametomib __P((const char *, int *, size_t *));
 __END_DECLS
 
 #endif	/* !_KERNEL */
