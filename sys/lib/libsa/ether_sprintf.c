@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.17 2003/03/12 16:46:31 drochner Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.1 2003/03/12 16:46:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -47,87 +47,29 @@
 #include <string.h>
 #endif
 
-#include <net/if.h>
-#include <net/if_ether.h>
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
 #include "stand.h"
 #include "net.h"
 
-/* Caller must leave room for ethernet header in front!! */
-ssize_t
-sendether(d, pkt, len, dea, etype)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	u_char *dea;
-	int etype;
-{
-	ssize_t n;
-	struct ether_header *eh;
-
-#ifdef ETHER_DEBUG
- 	if (debug)
-		printf("sendether: called\n");
-#endif
-
-	eh = (struct ether_header *)pkt - 1;
-	len += sizeof(*eh);
-
-	MACPY(d->myea, eh->ether_shost);		/* by byte */
-	MACPY(dea, eh->ether_dhost);			/* by byte */
-	eh->ether_type = htons(etype);
-
-	n = netif_put(d, eh, len);
-	if (n == -1 || n < sizeof(*eh))
-		return (-1);
-
-	n -= sizeof(*eh);
-	return (n);
-}
-
 /*
- * Get a packet of any Ethernet type, with our address or
- * the broadcast address.  Save the Ether type in arg 5.
- * NOTE: Caller must leave room for the Ether header.
+ * Convert Ethernet address to printable (loggable) representation.
  */
-ssize_t
-readether(d, pkt, len, tleft, etype)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	time_t tleft;
-	u_int16_t *etype;
+static char digits[] = "0123456789abcdef";
+char *
+ether_sprintf(ap)
+        u_char *ap;
 {
-	ssize_t n;
-	struct ether_header *eh;
+	int i;
+	static char etherbuf[18];
+	char *cp = etherbuf;
 
-#ifdef ETHER_DEBUG
- 	if (debug)
-		printf("readether: called\n");
-#endif
-
-	eh = (struct ether_header *)pkt - 1;
-	len += sizeof(*eh);
-
-	n = netif_get(d, eh, len, tleft);
-	if (n == -1 || n < sizeof(*eh))
-		return (-1);
-
-	/* Validate Ethernet address. */
-	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
-	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
-#ifdef ETHER_DEBUG
-		if (debug)
-			printf("readether: not ours (ea=%s)\n",
-			    ether_sprintf(eh->ether_dhost));
-#endif
-		return (-1);
+	for (i = 0; i < 6; i++) {
+		*cp++ = digits[*ap >> 4];
+		*cp++ = digits[*ap++ & 0xf];
+		*cp++ = ':';
 	}
-	*etype = ntohs(eh->ether_type);
-
-	n -= sizeof(*eh);
-	return (n);
+	*--cp = 0;
+	return (etherbuf);
 }
