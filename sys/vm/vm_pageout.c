@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.8 1994/01/07 18:14:07 mycroft Exp $
+ *	$Id: vm_pageout.c,v 1.9 1994/01/07 22:23:31 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -389,8 +389,7 @@ vm_pageout()
 
 	simple_lock(&vm_pages_needed_lock);
 	while (TRUE) {
-		thread_sleep((int) &vm_pages_needed, &vm_pages_needed_lock,
-			     FALSE);
+		thread_sleep((int) &vm_pages_needed, &vm_pages_needed_lock);
 		cnt.v_scan++;
 		vm_pageout_scan();
 		vm_pager_sync();

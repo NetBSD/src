@@ -519,14 +519,10 @@ thread_block()
 	splx(s);
 }
 
-thread_sleep(event, lock, ruptible)
+thread_sleep(event, lock)
 	int event;
 	simple_lock_t lock;
-	boolean_t ruptible;
 {
-#ifdef lint
-	ruptible++;
-#endif
 	int s = splhigh();
 
 	curproc->p_thread = event;
