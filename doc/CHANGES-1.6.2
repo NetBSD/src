@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.204 2003/10/21 22:51:07 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.205 2003/10/22 03:44:27 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2559,3 +2559,11 @@ distrib/notes/macppc/prep.OPENFIRMWARE		1.4
 	mkhybrid deprecated, describe mkisofs.
 	Update Toast instructions for Toast 5 instead of Toast 4.
 	[mbw, ticket #1519]
+
+sys/compat/linux/common/linux_socket.c		1.47-1.48
+
+	Make credentials work on the i386 by passing the original msg 
+	structure.  Add a cast appease gcc3.3.
+	[tv, ticket #1425]
+
+
