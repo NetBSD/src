@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: catopen.3,v 1.2 1994/11/18 15:36:16 jtc Exp $
+.\"	$Id: catopen.3,v 1.3 1994/12/23 13:04:39 cgd Exp $
 .\"
 .Dd May 29, 1994
 .Dt CATOPEN 3
@@ -37,11 +37,11 @@
 .Sh SYNOPSIS
 .Fd #include <nl_types.h>
 .Ft nl_catd
-.Fn catopen "char *name" "int oflag"
+.Fn catopen "const char *name" "int oflag"
 .Sh DESCRIPTION
-.The 
-.Fn catopen function
-opens the message catalog specified by
+The 
+.Fn catopen
+function opens the message catalog specified by
 .Fa name 
 and returns a message catalog descriptor.
 If
