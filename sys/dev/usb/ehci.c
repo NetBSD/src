@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.1 2000/12/24 06:39:02 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.2 2000/12/24 06:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 /*
  * USB Enhanced Host Controller Driver.
  *
+ * EHCI 0.95 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r095.pdf
  *
  * This is just a stub.
@@ -69,7 +70,6 @@
 #define DPRINTF(x)	if (ehcidebug) printf x
 #define DPRINTFN(n,x)	if (ehcidebug>(n)) printf x
 int ehcidebug = 0;
-int ehcinoloop = 0;
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
 #else
 #define DPRINTF(x)
