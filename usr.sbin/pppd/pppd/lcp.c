@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.21 2000/07/16 22:10:13 tron Exp $	*/
+/*	$NetBSD: lcp.c,v 1.22 2000/09/23 22:39:36 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: lcp.c,v 1.47 1999/12/23 01:27:28 paulus Exp "
+#define RCSID	"Id: lcp.c,v 1.55 2000/04/29 12:32:09 paulus Exp "
 #else
-__RCSID("$NetBSD: lcp.c,v 1.21 2000/07/16 22:10:13 tron Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.22 2000/09/23 22:39:36 christos Exp $");
 #endif
 #endif
 
@@ -52,8 +52,13 @@ static const char rcsid[] = RCSID;
 int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
 bool	lax_recv = 0;		/* accept control chars in asyncmap */
+bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
 
 static int setescape __P((char **));
+
+#ifdef HAVE_MULTILINK
+static int setendpoint __P((char **));
+#endif /* HAVE_MULTILINK */
 
 static option_t lcp_option_list[] = {
     /* LCP options */
@@ -102,7 +107,7 @@ static option_t lcp_option_list[] = {
       "Set passive mode", 1 },
     { "silent", o_bool, &lcp_wantoptions[0].silent,
       "Set silent mode", 1 },
-    { "escape", o_special, setescape,
+    { "escape", o_special, (void *)setescape,
       "List of character codes to escape on transmission" },
     { "lcp-echo-failure", o_int, &lcp_echo_fails,
       "Set number of consecutive echo failures to indicate link failure" },
@@ -118,6 +123,21 @@ static option_t lcp_option_list[] = {
       "Set limit on number of LCP configure-naks" },
     { "receive-all", o_bool, &lax_recv,
       "Accept all received control characters", 1 },
+#ifdef HAVE_MULTILINK
+    { "mrru", o_int, &lcp_wantoptions[0].mrru,
+      "Maximum received packet size for multilink bundle",
+      0, &lcp_wantoptions[0].neg_mrru },
+    { "mpshortseq", o_bool, &lcp_wantoptions[0].neg_ssnhf,
+      "Use short sequence numbers in multilink headers",
+      OPT_A2COPY | 1, &lcp_allowoptions[0].neg_ssnhf },
+    { "nompshortseq", o_bool, &lcp_wantoptions[0].neg_ssnhf,
+      "Don't use short sequence numbers in multilink headers",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_ssnhf },
+    { "endpoint", o_special, setendpoint,
+      "Endpoint discriminator for multilink" },
+#endif /* HAVE_MULTILINK */
+    { "noendpoint", o_bool, &noendpoint,
+      "Don't send or accept multilink endpoint discriminator", 1 },
     {NULL}
 };
 
@@ -127,7 +147,7 @@ lcp_options lcp_wantoptions[NUM_PPP];	/* Options that we want to request */
 lcp_options lcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
 lcp_options lcp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
-u_int32_t xmit_accm[NUM_PPP][8];		/* extended transmit ACCM */
+u_int32_t xmit_accm[NUM_PPP][8];	/* extended transmit ACCM */
 
 static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static int lcp_echo_number   = 0;	/* ID number of next echo frame */
@@ -261,6 +281,20 @@ setescape(argv)
     return ret;
 }
 
+#ifdef HAVE_MULTILINK
+static int
+setendpoint(argv)
+    char **argv;
+{
+    if (str_to_epdisc(&lcp_wantoptions[0].endpoint, *argv)) {
+	lcp_wantoptions[0].neg_endpoint = 1;
+	return 1;
+    }
+    option_error("Can't parse '%s' as an endpoint discriminator", *argv);
+    return 0;
+}
+#endif /* HAVE_MULTILINK */
+
 /*
  * lcp_init - Initialize LCP.
  */
@@ -278,41 +312,31 @@ lcp_init(unit)
 
     fsm_init(f);
 
-    wo->passive = 0;
-    wo->silent = 0;
-    wo->restart = 0;			/* Set to 1 in kernels or multi-line
-					   implementations */
+    BZERO(wo, sizeof(*wo));
     wo->neg_mru = 1;
     wo->mru = DEFMRU;
     wo->neg_asyncmap = 1;
-    wo->asyncmap = 0;
-    wo->neg_chap = 0;			/* Set to 1 on server */
-    wo->neg_upap = 0;			/* Set to 1 on server */
     wo->chap_mdtype = CHAP_DIGEST_MD5;
     wo->neg_magicnumber = 1;
     wo->neg_pcompression = 1;
     wo->neg_accompression = 1;
-    wo->neg_lqr = 0;			/* no LQR implementation yet */
-    wo->neg_cbcp = 0;
 
+    BZERO(ao, sizeof(*ao));
     ao->neg_mru = 1;
     ao->mru = MAXMRU;
     ao->neg_asyncmap = 1;
-    ao->asyncmap = 0;
     ao->neg_chap = 1;
     ao->chap_mdtype = CHAP_DIGEST_MD5;
     ao->neg_upap = 1;
     ao->neg_magicnumber = 1;
     ao->neg_pcompression = 1;
     ao->neg_accompression = 1;
-    ao->neg_lqr = 0;			/* no LQR implementation yet */
 #ifdef CBCP_SUPPORT
     ao->neg_cbcp = 1;
-#else
-    ao->neg_cbcp = 0;
 #endif
+    ao->neg_endpoint = 1;
 
-    memset(xmit_accm[unit], 0, sizeof(xmit_accm[0]));
+    BZERO(xmit_accm[unit], sizeof(xmit_accm[0]));
     xmit_accm[unit][3] = 0x60000000;
 }
 
@@ -541,9 +565,20 @@ static void
 lcp_resetci(f)
     fsm *f;
 {
-    lcp_wantoptions[f->unit].magicnumber = magic();
-    lcp_wantoptions[f->unit].numloops = 0;
-    lcp_gotoptions[f->unit] = lcp_wantoptions[f->unit];
+    lcp_options *wo = &lcp_wantoptions[f->unit];
+    lcp_options *go = &lcp_gotoptions[f->unit];
+    lcp_options *ao = &lcp_allowoptions[f->unit];
+
+    wo->magicnumber = magic();
+    wo->numloops = 0;
+    *go = *wo;
+    if (!multilink) {
+	go->neg_mrru = 0;
+	go->neg_ssnhf = 0;
+	go->neg_endpoint = 0;
+    }
+    if (noendpoint)
+	ao->neg_endpoint = 0;
     peer_mru[f->unit] = PPP_MRU;
     auth_reset(f->unit);
 }
@@ -576,7 +611,10 @@ lcp_cilen(f)
 	    LENCICBCP(go->neg_cbcp) +
 	    LENCILONG(go->neg_magicnumber) +
 	    LENCIVOID(go->neg_pcompression) +
-	    LENCIVOID(go->neg_accompression));
+	    LENCIVOID(go->neg_accompression) +
+	    LENCISHORT(go->neg_mrru) +
+	    LENCIVOID(go->neg_ssnhf) +
+	    (go->neg_endpoint? CILEN_CHAR + go->endpoint.length: 0));
 }
 
 
@@ -629,6 +667,15 @@ lcp_addci(f, ucp, lenp)
 	PUTCHAR(CILEN_CHAR, ucp); \
 	PUTCHAR(val, ucp); \
     }
+#define ADDCIENDP(opt, neg, class, val, len) \
+    if (neg) { \
+	int i; \
+	PUTCHAR(opt, ucp); \
+	PUTCHAR(CILEN_CHAR + len, ucp); \
+	PUTCHAR(class, ucp); \
+	for (i = 0; i < len; ++i) \
+	    PUTCHAR(val[i], ucp); \
+    }
 
     ADDCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
     ADDCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
@@ -640,6 +687,10 @@ lcp_addci(f, ucp, lenp)
     ADDCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ADDCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
     ADDCIVOID(CI_ACCOMPRESSION, go->neg_accompression);
+    ADDCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
+    ADDCIVOID(CI_SSNHF, go->neg_ssnhf);
+    ADDCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
+	      go->endpoint.value, go->endpoint.length);
 
     if (ucp - start_ucp != *lenp) {
 	/* this should never happen, because peer_mtu should be 1500 */
@@ -753,6 +804,25 @@ lcp_ackci(f, p, len)
 	if (cilong != val) \
 	  goto bad; \
     }
+#define ACKCIENDP(opt, neg, class, val, vlen) \
+    if (neg) { \
+	int i; \
+	if ((len -= CILEN_CHAR + vlen) < 0) \
+	    goto bad; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_CHAR + vlen || \
+	    citype != opt) \
+	    goto bad; \
+	GETCHAR(cichar, p); \
+	if (cichar != class) \
+	    goto bad; \
+	for (i = 0; i < vlen; ++i) { \
+	    GETCHAR(cichar, p); \
+	    if (cichar != val[i]) \
+		goto bad; \
+	} \
+    }
 
     ACKCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
     ACKCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
@@ -764,6 +834,10 @@ lcp_ackci(f, p, len)
     ACKCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ACKCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
     ACKCIVOID(CI_ACCOMPRESSION, go->neg_accompression);
+    ACKCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
+    ACKCIVOID(CI_SSNHF, go->neg_ssnhf);
+    ACKCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
+	      go->endpoint.value, go->endpoint.length);
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -810,7 +884,7 @@ lcp_nakci(f, p, len)
      * Check packet length and CI length at each step.
      * If we find any deviations, then this packet is bad.
      */
-#define NAKCIVOID(opt, neg, code) \
+#define NAKCIVOID(opt, neg) \
     if (go->neg && \
 	len >= CILEN_VOID && \
 	p[1] == CILEN_VOID && \
@@ -818,7 +892,7 @@ lcp_nakci(f, p, len)
 	len -= CILEN_VOID; \
 	INCPTR(CILEN_VOID, p); \
 	no.neg = 1; \
-	code \
+	try.neg = 0; \
     }
 #define NAKCICHAP(opt, neg, code) \
     if (go->neg && \
@@ -876,6 +950,17 @@ lcp_nakci(f, p, len)
 	GETLONG(cilong, p); \
 	no.neg = 1; \
 	code \
+    }
+#define NAKCIENDP(opt, neg) \
+    if (go->neg && \
+	len >= CILEN_CHAR && \
+	p[0] == opt && \
+	p[1] >= CILEN_CHAR && \
+	p[1] <= len) { \
+	len -= p[1]; \
+	INCPTR(p[1], p); \
+	no.neg = 1; \
+	try.neg = 0; \
     }
 
     /*
@@ -994,12 +1079,31 @@ lcp_nakci(f, p, len)
      * address/control compression requests; they should send
      * a Reject instead.  If they send a Nak, treat it as a Reject.
      */
-    NAKCIVOID(CI_PCOMPRESSION, neg_pcompression,
-	      try.neg_pcompression = 0;
-	      );
-    NAKCIVOID(CI_ACCOMPRESSION, neg_accompression,
-	      try.neg_accompression = 0;
-	      );
+    NAKCIVOID(CI_PCOMPRESSION, neg_pcompression);
+    NAKCIVOID(CI_ACCOMPRESSION, neg_accompression);
+
+    /*
+     * Nak for MRRU option - accept their value if it is smaller
+     * than the one we want.
+     */
+    if (go->neg_mrru) {
+	NAKCISHORT(CI_MRRU, neg_mrru,
+		   if (cishort <= wo->mrru)
+		       try.mrru = cishort;
+		   );
+    }
+
+    /*
+     * Nak for short sequence numbers shouldn't be sent, treat it
+     * like a reject.
+     */
+    NAKCIVOID(CI_SSNHF, neg_ssnhf);
+
+    /*
+     * Nak of the endpoint discriminator option is not permitted,
+     * treat it like a reject.
+     */
+    NAKCIENDP(CI_EPDISC, neg_endpoint);
 
     /*
      * There may be remaining CIs, if the peer is requesting negotiation
@@ -1030,8 +1134,10 @@ lcp_nakci(f, p, len)
 		|| no.neg_mru || cilen != CILEN_SHORT)
 		goto bad;
 	    GETSHORT(cishort, p);
-	    if (cishort < DEFMRU)
+	    if (cishort < DEFMRU) {
+		try.neg_mru = 1;
 		try.mru = cishort;
+	    }
 	    break;
 	case CI_ASYNCMAP:
 	    if ((go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF)
@@ -1059,6 +1165,19 @@ lcp_nakci(f, p, len)
 	    break;
 	case CI_QUALITY:
 	    if (go->neg_lqr || no.neg_lqr || cilen != CILEN_LQR)
+		goto bad;
+	    break;
+	case CI_MRRU:
+	    if (go->neg_mrru || no.neg_mrru || cilen != CILEN_SHORT)
+		goto bad;
+	    break;
+	case CI_SSNHF:
+	    if (go->neg_ssnhf || no.neg_ssnhf || cilen != CILEN_VOID)
+		goto bad;
+	    try.neg_ssnhf = 1;
+	    break;
+	case CI_EPDISC:
+	    if (go->neg_endpoint || no.neg_endpoint || cilen < CILEN_CHAR)
 		goto bad;
 	    break;
 	}
@@ -1194,6 +1313,24 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
     }
+#define REJCIENDP(opt, neg, class, val, vlen) \
+    if (go->neg && \
+	len >= CILEN_CHAR + vlen && \
+	p[0] == opt && \
+	p[1] == CILEN_CHAR + vlen) { \
+	int i; \
+	len -= CILEN_CHAR + vlen; \
+	INCPTR(2, p); \
+	GETCHAR(cichar, p); \
+	if (cichar != class) \
+	    goto bad; \
+	for (i = 0; i < vlen; ++i) { \
+	    GETCHAR(cichar, p); \
+	    if (cichar != val[i]) \
+		goto bad; \
+	} \
+	try.neg = 0; \
+    }
 
     REJCISHORT(CI_MRU, neg_mru, go->mru);
     REJCILONG(CI_ASYNCMAP, neg_asyncmap, go->asyncmap);
@@ -1206,6 +1343,10 @@ lcp_rejci(f, p, len)
     REJCILONG(CI_MAGICNUMBER, neg_magicnumber, go->magicnumber);
     REJCIVOID(CI_PCOMPRESSION, neg_pcompression);
     REJCIVOID(CI_ACCOMPRESSION, neg_accompression);
+    REJCISHORT(CI_MRRU, neg_mrru, go->mrru);
+    REJCIVOID(CI_SSNHF, neg_ssnhf);
+    REJCIENDP(CI_EPDISC, neg_endpoint, go->endpoint.class,
+	      go->endpoint.value, go->endpoint.length);
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -1488,6 +1629,44 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    ho->neg_accompression = 1;
 	    break;
 
+	case CI_MRRU:
+	    if (!ao->neg_mrru || !multilink ||
+		cilen != CILEN_SHORT) {
+		orc = CONFREJ;
+		break;
+	    }
+
+	    GETSHORT(cishort, p);
+	    /* possibly should insist on a minimum/maximum MRRU here */
+	    ho->neg_mrru = 1;
+	    ho->mrru = cishort;
+	    break;
+
+	case CI_SSNHF:
+	    if (!ao->neg_ssnhf || !multilink ||
+		cilen != CILEN_VOID) {
+		orc = CONFREJ;
+		break;
+	    }
+	    ho->neg_ssnhf = 1;
+	    break;
+
+	case CI_EPDISC:
+	    if (!ao->neg_endpoint ||
+		cilen < CILEN_CHAR ||
+		cilen > CILEN_CHAR + MAX_ENDP_LEN) {
+		orc = CONFREJ;
+		break;
+	    }
+	    GETCHAR(cichar, p);
+	    cilen -= CILEN_CHAR;
+	    ho->neg_endpoint = 1;
+	    ho->endpoint.class = cichar;
+	    ho->endpoint.length = cilen;
+	    BCOPY(p, ho->endpoint.value, cilen);
+	    INCPTR(cilen, p);
+	    break;
+
 	default:
 	    LCPDEBUG(("lcp_reqci: rcvd unknown option %d", citype));
 	    orc = CONFREJ;
@@ -1645,7 +1824,7 @@ lcp_printpkt(p, plen, printer, arg)
     void (*printer) __P((void *, char *, ...));
     void *arg;
 {
-    int code, id, len, olen;
+    int code, id, len, olen, i;
     u_char *pstart, *optend;
     u_short cishort;
     u_int32_t cilong;
@@ -1774,6 +1953,38 @@ lcp_printpkt(p, plen, printer, arg)
 		    printer(arg, "accomp");
 		}
 		break;
+	    case CI_MRRU:
+		if (olen == CILEN_SHORT) {
+		    p += 2;
+		    GETSHORT(cishort, p);
+		    printer(arg, "mrru %d", cishort);
+		}
+		break;
+	    case CI_SSNHF:
+		if (olen == CILEN_VOID) {
+		    p += 2;
+		    printer(arg, "ssnhf");
+		}
+		break;
+	    case CI_EPDISC:
+#ifdef HAVE_MULTILINK
+		if (olen >= CILEN_CHAR) {
+		    struct epdisc epd;
+		    p += 2;
+		    GETCHAR(epd.class, p);
+		    epd.length = olen - CILEN_CHAR;
+		    if (epd.length > MAX_ENDP_LEN)
+			epd.length = MAX_ENDP_LEN;
+		    if (epd.length > 0) {
+			BCOPY(p, epd.value, epd.length);
+			p += epd.length;
+		    }
+		    printer(arg, "endpoint [%s]", epdisc_to_str(&epd));
+		}
+#else
+		printer(arg, "endpoint");
+#endif
+		break;
 	    }
 	    while (p < optend) {
 		GETCHAR(code, p);
@@ -1787,7 +1998,7 @@ lcp_printpkt(p, plen, printer, arg)
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    print_string(p, len, printer, arg);
+	    print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
@@ -1806,9 +2017,13 @@ lcp_printpkt(p, plen, printer, arg)
     }
 
     /* print the rest of the bytes in the packet */
-    for (; len > 0; --len) {
+    for (i = 0; i < len && i < 32; ++i) {
 	GETCHAR(code, p);
 	printer(arg, " %.2x", code);
+    }
+    if (i < len) {
+	printer(arg, " ...");
+	p += len - i;
     }
 
     return p - pstart;

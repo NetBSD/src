@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.1.1.1 2000/09/23 22:14:54 christos Exp $	*/
+/*	$NetBSD: tdb.c,v 1.2 2000/09/23 22:39:39 christos Exp $	*/
 
 /* 
  * Database functions
@@ -77,6 +77,12 @@ struct list_struct {
 
 /* a null data record - useful for error returns */
 static TDB_DATA null_data;
+
+static int tdb_update __P((TDB_CONTEXT *, TDB_DATA, TDB_DATA));
+#ifdef notyet
+static int tdb_lockchain __P((TDB_CONTEXT *, TDB_DATA));
+static int tdb_unlockchain __P((TDB_CONTEXT *, TDB_DATA));
+#endif
 
 /* a byte range locking function - return 0 on success
    this functions locks/unlocks 1 byte at the specified offset */
@@ -612,7 +618,7 @@ char *tdb_error(TDB_CONTEXT *tdb)
    is <= the old data size and the key exists.
    on failure return -1
 */
-int tdb_update(TDB_CONTEXT *tdb, TDB_DATA key, TDB_DATA dbuf)
+static int tdb_update(TDB_CONTEXT *tdb, TDB_DATA key, TDB_DATA dbuf)
 {
 	unsigned hash;
 	struct list_struct rec;
@@ -1255,9 +1261,10 @@ int tdb_writeunlock(TDB_CONTEXT *tdb)
 	return tdb_unlock(tdb, -1);
 }
 
+#ifdef notyet
 /* lock one hash chain. This is meant to be used to reduce locking
    contention - it cannot guarantee how many records will be locked */
-int tdb_lockchain(TDB_CONTEXT *tdb, TDB_DATA key)
+static int tdb_lockchain(TDB_CONTEXT *tdb, TDB_DATA key)
 {
         if (tdb == NULL) {
 #ifdef TDB_DEBUG
@@ -1271,7 +1278,7 @@ int tdb_lockchain(TDB_CONTEXT *tdb, TDB_DATA key)
 
 
 /* unlock one hash chain */
-int tdb_unlockchain(TDB_CONTEXT *tdb, TDB_DATA key)
+static int tdb_unlockchain(TDB_CONTEXT *tdb, TDB_DATA key)
 {
         if (tdb == NULL) {
 #ifdef TDB_DEBUG
@@ -1282,3 +1289,4 @@ int tdb_unlockchain(TDB_CONTEXT *tdb, TDB_DATA key)
 
 	return tdb_unlock(tdb, BUCKET(tdb_hash(&key)));
 }
+#endif

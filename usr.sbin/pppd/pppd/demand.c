@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.9 1999/08/25 02:07:42 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.10 2000/09/23 22:39:34 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: demand.c,v 1.12 1999/08/13 06:46:12 paulus Exp "
+#define RCSID	"Id: demand.c,v 1.13 2000/04/15 01:27:11 masputra Exp "
 #else
-__RCSID("$NetBSD: demand.c,v 1.9 1999/08/25 02:07:42 christos Exp $");
+__RCSID("$NetBSD: demand.c,v 1.10 2000/09/23 22:39:34 christos Exp $");
 #endif
 #endif
 
@@ -228,7 +228,7 @@ loop_chars(p, n)
 	    if (!escape_flag && !flush_flag
 		&& framelen > 2 && fcs == PPP_GOODFCS) {
 		framelen -= 2;
-		if (loop_frame(frame, framelen))
+		if (loop_frame((unsigned char *)frame, framelen))
 		    rv = 1;
 	    }
 	    framelen = 0;
