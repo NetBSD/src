@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: uname.c,v 1.5 1994/01/29 01:43:43 jtc Exp $";
+static char rcsid[] = "$Id: uname.c,v 1.6 1994/02/06 05:27:40 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,12 +40,12 @@ static char rcsid[] = "$Id: uname.c,v 1.5 1994/01/29 01:43:43 jtc Exp $";
 
 static void usage();
 
-#define PRINT_SYSNAME	0x01
-#define PRINT_NODENAME	0x02
-#define PRINT_RELEASE	0x04
-#define PRINT_VERSION	0x08
-#define PRINT_MACHINE	0x10
-#define PRINT_ALL	0x1f
+#define	PRINT_SYSNAME	0x01
+#define	PRINT_NODENAME	0x02
+#define	PRINT_RELEASE	0x04
+#define	PRINT_VERSION	0x08
+#define	PRINT_MACHINE	0x10
+#define	PRINT_ALL	0x1f
 
 int
 main(argc, argv) 
@@ -62,22 +62,22 @@ main(argc, argv)
 	while ((c = getopt(argc,argv,"amnrsv")) != -1 ) {
 		switch ( c ) {
 		case 'a':
-			print_mask = PRINT_ALL;
+			print_mask |= PRINT_ALL;
 			break;
 		case 'm':
-			print_mask = PRINT_MACHINE;
+			print_mask |= PRINT_MACHINE;
 			break;
 		case 'n':
-			print_mask = PRINT_NODENAME;
+			print_mask |= PRINT_NODENAME;
 			break;
 		case 'r': 
-			print_mask = PRINT_RELEASE;
+			print_mask |= PRINT_RELEASE;
 			break;
 		case 's': 
-			print_mask = PRINT_SYSNAME;
+			print_mask |= PRINT_SYSNAME;
 			break;
 		case 'v':
-			print_mask = PRINT_VERSION;
+			print_mask |= PRINT_VERSION;
 			break;
 		default:
 			usage();
