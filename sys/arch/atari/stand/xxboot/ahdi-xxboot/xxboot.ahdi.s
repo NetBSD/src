@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.ahdi.s,v 1.4 1997/01/08 12:57:22 leo Exp $	*/
+/*	$NetBSD: xxboot.ahdi.s,v 1.5 2001/09/05 19:48:13 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -32,11 +32,19 @@
 
 #include "xxboot.h"
 
+#ifdef __ELF__
+	.globl	_start, main, fill, end
+
+	.text
+
+_start:	bras	main
+#else
 	.globl	start, main, fill, end
 
 	.text
 
 start:	bras	main
+#endif
 /*
  * Fake gemdos-fs bootsector, to keep TOS away.
  */
@@ -61,129 +69,129 @@ start:	bras	main
  * d7: ACSI target		a3: pointer to readsector()
  * a4: pointer to `start'	a5: pointer to back-to-ROM
  */
-main:	movml	d3-d7/a3-a5,sp@-
-	lea	pc@(regsav),a0
-	movl	sp,a0@
+main:	movml	%d3-%d7/%a3-%a5,%sp@-
+	lea	%pc@(regsav),%a0
+	movl	%sp,%a0@
 
-	movw	#-1,sp@-
-	movw	#Kbshift,sp@-
+	movw	#-1,%sp@-
+	movw	#Kbshift,%sp@-
 	trap	#BIOS
-	addql	#4,sp
-	subql	#1,d0
-	movl	d0,a5			| autoboot flag
+	addql	#4,%sp
+	subql	#1,%d0
+	movl	%d0,%a5			| autoboot flag
 
-	lea	pc@(m_bot),a6
-	movl	_membot:w,d3
-	lea	MAXBOT,a4
-	cmpl	a4,d3
+	lea	%pc@(m_bot),%a6
+	movl	_membot:w,%d3
+	lea	MAXBOT,%a4
+	cmpl	%a4,%d3
 	bhis	exit			| membot > MAXBOT
 
-	lea	pc@(m_top),a6
-	movl	_memtop:w,d3
-	cmpl	#MINTOP,d3
+	lea	%pc@(m_top),%a6
+	movl	_memtop:w,%d3
+	cmpl	#MINTOP,%d3
 	blts	exit			| memtop < MINTOP
 
-	andw	#-4,d3
-	movl	d3,a0
-	movl	sp,a0@-
-	movl	a0,sp			| set new stack
+	andw	#-4,%d3
+	movl	%d3,%a0
+	movl	%sp,%a0@-
+	movl	%a0,%sp			| set new stack
 /*
  * Load secondary boot loader and disklabel.
  */
-	movml	a4/a5,sp@-
-	movq	#NSEC,d3		| # of sectors
-	addql	#1,d6			| first sector
+	movml	%a4/%a5,%sp@-
+	movq	#NSEC,%d3		| # of sectors
+	addql	#1,%d6			| first sector
 	bsr	rds1
-	lea	pc@(m_rds),a6
-	movml	sp@+,a4/a5
+	lea	%pc@(m_rds),%a6
+	movml	%sp@+,%a4/%a5
 	bnes	0f			| I/O error
 /*
  * int bootxx(readsector, disklabel, autoboot)
  */
-	pea	a5@			| autoboot
-	pea	a4@(LBLST-MAXBOT)	| disklabel
-	pea	pc@(rds2)		| readsector
-	jsr	a4@(BXXST-MAXBOT)
-	lea	pc@(m_sbl),a6		| NetBSD not booted
-	lea	sp@(12),sp
+	pea	%a5@			| autoboot
+	pea	%a4@(LBLST-MAXBOT)	| disklabel
+	pea	%pc@(rds2)		| readsector
+	jsr	%a4@(BXXST-MAXBOT)
+	lea	%pc@(m_sbl),%a6		| NetBSD not booted
+	lea	%sp@(12),%sp
 
-0:	movl	sp@,sp			| restore BIOS stack
-	movl	d0,d3
+0:	movl	%sp@,%sp			| restore BIOS stack
+	movl	%d0,%d3
 	bmis	exit
-	movml	sp@+,d3-d7/a3-a5
-	movl	d0,d5			| new boot preference
-	jmp	a4@(-0x200)
+	movml	%sp@+,%d3-%d7/%a3-%a5
+	movl	%d0,%d5			| new boot preference
+	jmp	%a4@(-0x200)
 
 exit:	bsrs	puts			| display error
-	lea	pc@(m_key),a6
+	lea	%pc@(m_key),%a6
 	bsrs	puts			| wait for key
-	movml	sp@+,d3-d7/a3-a5
-	jmp	a5@
+	movml	%sp@+,%d3-%d7/%a3-%a5
+	jmp	%a5@
 
 /*
  * puts (in: a6, d3)
  */
-0:	cmpw	#35,d0		| '#'
+0:	cmpw	#35,%d0		| '#'
 	bnes	1f
 	bsrs	puti
 	bras	puts
-1:	cmpw	#64,d0		| '@'
+1:	cmpw	#64,%d0		| '@'
 	bnes	2f
-	movw	#2,sp@-
-	movw	#Bconin,sp@-
+	movw	#2,%sp@-
+	movw	#Bconin,%sp@-
 	trap	#BIOS
-	addql	#4,sp
+	addql	#4,%sp
 	bras	puts
 2:	bsrs	putc
-puts:	movq	#0,d0
-	movb	a6@+,d0
+puts:	movq	#0,%d0
+	movb	%a6@+,%d0
 	bnes	0b
 	rts
 
-puti:	swap	d3
+puti:	swap	%d3
 	bsrs	0f
-	swap	d3
-0:	rorw	#8,d3
+	swap	%d3
+0:	rorw	#8,%d3
 	bsrs	1f
-	rorw	#8,d3
-1:	rorb	#4,d3
+	rorw	#8,%d3
+1:	rorb	#4,%d3
 	bsrs	2f
-	rorb	#4,d3
-2:	movw	d3,d0
-	andw	#15,d0
-	addw	#48,d0
-	cmpw	#58,d0
+	rorb	#4,%d3
+2:	movw	%d3,%d0
+	andw	#15,%d0
+	addw	#48,%d0
+	cmpw	#58,%d0
 	bcss	putc
-	addw	#39,d0
-putc:	movw	d0,sp@-
-	movw	#2,sp@-
-	movw	#Bconout,sp@-
+	addw	#39,%d0
+putc:	movw	%d0,%sp@-
+	movw	#2,%sp@-
+	movw	#Bconout,%sp@-
 	trap	#BIOS
-	addql	#6,sp
+	addql	#6,%sp
 	rts
 /*
  * int readsec (void *buffer, u_int offset, u_int count);
  */
-rds2:	movml	d2-d7/a2-a6,sp@-
-	movl	pc@(regsav),a0
-	movml	a0@,d3-d7/a3-a5
-	movl	sp@(48),a4		| buffer
-	movl	sp@(52),d6		| offset
-	movl	sp@(56),d3		| count
+rds2:	movml	%d2-%d7/%a2-%a6,%sp@-
+	movl	%pc@(regsav),%a0
+	movml	%a0@,%d3-%d7/%a3-%a5
+	movl	%sp@(48),%a4		| buffer
+	movl	%sp@(52),%d6		| offset
+	movl	%sp@(56),%d3		| count
 	bsrs	rds1
-	movml	sp@+,d2-d7/a2-a6
+	movml	%sp@+,%d2-%d7/%a2-%a6
 	rts
 
-rds1:	movl	#255,d5
-	cmpl	d5,d3
+rds1:	movl	#255,%d5
+	cmpl	%d5,%d3
 	bccs	0f
-	movl	d3,d5
-0:	jsr	a3@
-	tstl	d0
+	movl	%d3,%d5
+0:	jsr	%a3@
+	tstl	%d0
 	bnes	1f
-	addl	#(255*512),a4
-	addl	d5,d6
-	subl	d5,d3
+	addl	#(255*512),%a4
+	addl	%d5,%d6
+	subl	%d5,%d3
 	bnes	rds1
 1:	rts
 
