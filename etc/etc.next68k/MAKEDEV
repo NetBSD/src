@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.24 2002/02/02 20:58:50 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.25 2002/02/25 07:35:10 atatat Exp $
 #
 ###########################################################################
 #
@@ -304,7 +304,7 @@ pty*)
 		if [ $jn -ge 16 ]; then
 			skip=$(($class * 30 + 256 - 16))
 		fi
-		unit=$(($class * 62 + $jn + $skip))
+		unit=$(($class * 16 + $jn + $skip))
 		mknod tty$name$j c 4 $unit
 		mknod pty$name$j c 5 $unit
 		jn=$(($jn + 1))
