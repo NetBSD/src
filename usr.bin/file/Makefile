@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1996/10/18 06:14:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 1997/01/09 20:18:47 tls Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	bin

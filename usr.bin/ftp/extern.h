@@ -1,4 +1,4 @@
-/*      $NetBSD: extern.h,v 1.8 1996/12/29 04:05:30 lukem Exp $      */
+/*	$NetBSD: extern.h,v 1.9 1997/01/09 20:19:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.

@@ -1,3 +1,5 @@
+/*	$NetBSD: indent_codes.h,v 1.3 1997/01/09 20:20:12 tls Exp $	*/
+
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980 The Regents of the University of California.
@@ -33,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)indent_codes.h	5.7 (Berkeley) 6/1/90
- *	$Id: indent_codes.h,v 1.2 1993/08/01 18:14:35 mycroft Exp $
+ *	$NetBSD: indent_codes.h,v 1.3 1997/01/09 20:20:12 tls Exp $
  */
 
 #define newline		1

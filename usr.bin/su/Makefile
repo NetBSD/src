@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.9 1997/01/09 20:21:40 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
-#	$Id: Makefile,v 1.8 1997/01/09 11:43:05 tls Exp $
 
 PROG=	su
 BINOWN=	root

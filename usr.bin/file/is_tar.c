@@ -1,3 +1,5 @@
+/*	$NetBSD: is_tar.c,v 1.6 1997/01/09 20:18:55 tls Exp $	*/
+
 /*
  * is_tar() -- figure out whether file is a tar archive.
  *
@@ -5,7 +7,7 @@
  * Pubic Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
  * @(#)list.c 1.18 9/23/86 Public Domain - gnu
- * $Id: is_tar.c,v 1.5 1995/04/28 19:23:54 christos Exp $
+ * $NetBSD: is_tar.c,v 1.6 1997/01/09 20:18:55 tls Exp $
  *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.

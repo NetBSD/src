@@ -1,3 +1,5 @@
+/*	$NetBSD: print.c,v 1.9 1997/01/09 20:18:59 tls Exp $	*/
+
 /*
  * print.c - debugging printout routines
  *
@@ -40,7 +42,7 @@
 
 #ifndef lint
 static char *moduleid =
-	"@(#)$Id: print.c,v 1.8 1995/04/30 19:39:40 christos Exp $";
+	"@(#)$NetBSD: print.c,v 1.9 1997/01/09 20:18:59 tls Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))

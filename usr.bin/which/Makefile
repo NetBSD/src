@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.5 1997/01/09 20:23:23 tls Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.4 1996/10/18 06:24:43 thorpej Exp $
 
 MAN=	which.1
 

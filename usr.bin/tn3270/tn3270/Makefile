@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1996/06/14 17:24:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.16 1997/01/09 20:22:37 tls Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition

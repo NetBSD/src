@@ -1,3 +1,5 @@
+/*	$NetBSD: sprint.c,v 1.5 1997/01/09 20:19:24 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$Id: sprint.c,v 1.4 1996/11/21 06:01:51 lukem Exp $";
+static char rcsid[] = "$NetBSD: sprint.c,v 1.5 1997/01/09 20:19:24 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: rusers.c,v 1.12 1997/01/09 20:21:18 tls Exp $	*/
+
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -27,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.11 1996/03/21 18:00:35 jtc Exp $";
+static char rcsid[] = "$NetBSD: rusers.c,v 1.12 1997/01/09 20:21:18 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

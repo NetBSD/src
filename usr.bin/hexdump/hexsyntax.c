@@ -1,3 +1,5 @@
+/*	$NetBSD: hexsyntax.c,v 1.3 1997/01/09 20:19:56 tls Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$Id: hexsyntax.c,v 1.2 1993/08/01 18:14:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hexsyntax.c,v 1.3 1997/01/09 20:19:56 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: hexdump.h,v 1.3 1997/01/09 20:19:55 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hexdump.h	5.4 (Berkeley) 6/1/90
- *	$Id: hexdump.h,v 1.2 1993/08/01 18:14:51 mycroft Exp $
+ *	$NetBSD: hexdump.h,v 1.3 1997/01/09 20:19:55 tls Exp $
  */
 
 typedef struct _pr {
