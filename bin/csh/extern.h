@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1995/03/21 09:02:53 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1995/03/21 14:51:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -298,8 +298,6 @@ void	prusage __P((struct rusage *, struct rusage *,
 	    struct timeval *, struct timeval *));
 void	ruadd __P((struct rusage *, struct rusage *));
 void	settimes __P((void));
-void	tvadd __P((struct timeval *, struct timeval *));
-void	tvsub __P((struct timeval *, struct timeval *, struct timeval *));
 void	pcsecs __P((long));
 void	psecs __P((long));
 
