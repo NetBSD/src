@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
+/*	$NetBSD: sockio.h,v 1.6 1997/03/17 02:56:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -77,6 +77,9 @@
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
 #define	SIOCGETSGCNT	_IOWR('u', 52, struct sioc_sg_req) /* sg pkt cnt */
+
+#define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
+#define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
