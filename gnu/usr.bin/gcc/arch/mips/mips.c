@@ -3357,8 +3357,9 @@ override_options ()
   if (getenv ("GCC_SIGINFO") != (char *)0)
     {
       struct sigaction action;
+      /*action.sa_mask = 0;*/
+      bzero(&action, sizeof(action));
       action.sa_handler = siginfo;
-      action.sa_mask = 0;
       action.sa_flags = SA_RESTART;
       sigaction (SIGINFO, &action, (struct sigaction *)0);
     }
