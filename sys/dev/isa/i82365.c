@@ -16,7 +16,7 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/pcmcia/pcmciareg.h>
-#include <dev/pcmcia/pcmciachip.h>
+#include <dev/pcmcia/pcmciavar.h>
 
 #include <dev/ic/i82365reg.h>
 
@@ -67,6 +67,9 @@ struct pcic_softc {
     /* this needs to be large enough to hold PCIC_MEM_PAGES bits */
     int subregionmask;
 
+    /* used by memory window mapping functions */
+    bus_addr_t membase;
+
     int irq;
     void *ih;
 
@@ -105,22 +108,20 @@ int pcic_intr __P((void *arg));
 int pcic_intr_socket __P((struct pcic_handle *));
 
 int pcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t, 
-			     bus_space_tag_t *, bus_space_handle_t *,
-			     pcmcia_mem_handle_t *, bus_size_t *));
-void pcic_chip_mem_free __P((pcmcia_chipset_handle_t, bus_size_t,
-			     bus_space_tag_t, bus_space_handle_t,
-			     pcmcia_mem_handle_t));
-int pcic_chip_mem_map __P((pcmcia_chipset_handle_t, int,
-			   bus_size_t, bus_space_tag_t, bus_space_handle_t,
-			   u_long, u_long *, int *));
+			     struct pcmcia_mem_handle *));
+void pcic_chip_mem_free __P((pcmcia_chipset_handle_t,
+			     struct pcmcia_mem_handle *));
+int pcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
+			   bus_size_t, struct pcmcia_mem_handle *,
+			   bus_addr_t *, int *));
 void pcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int pcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-			    bus_space_tag_t *, bus_space_handle_t *));
-void pcic_chip_io_free __P((pcmcia_chipset_handle_t, bus_size_t,
-			    bus_space_tag_t, bus_space_handle_t));
-int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_size_t,
-			  bus_space_tag_t, bus_space_handle_t, int *));
+			    struct pcmcia_io_handle *));
+void pcic_chip_io_free __P((pcmcia_chipset_handle_t,
+			    struct pcmcia_io_handle *));
+int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
+			  struct pcmcia_io_handle *, int *));
 void pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
 void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t, u_int16_t, int,
@@ -368,6 +369,8 @@ pcic_attach(parent, self, aux)
     sc->ioh = ioh;
     sc->memt = memt;
     sc->memh = memh;
+
+    sc->membase = ia->ia_maddr;
 
     /* now check for each controller/socket */
 
@@ -812,34 +815,35 @@ pcic_detach_card(h)
     pcic_write(h, PCIC_INTR, 0);
 }
 
-int pcic_chip_mem_alloc(pch, size, memt, memh, mhandle, realsize)
+int pcic_chip_mem_alloc(pch, size, pcmhp)
      pcmcia_chipset_handle_t pch;
      bus_size_t size;
-     bus_space_tag_t *memt;
-     bus_space_handle_t *memh;
-     pcmcia_mem_handle_t *mhandle;
-     bus_size_t *realsize;
+     struct pcmcia_mem_handle *pcmhp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
-    int i, mask;
+    bus_space_handle_t memh;
+    bus_addr_t addr;
+    bus_size_t sizepg;
+    int i, mask, mhandle;
 
     /* out of sc->memh, allocate as many pages as necessary */
 
-    size += (PCIC_MEM_ALIGN-1);
-    size /= PCIC_MEM_ALIGN;
+    /* convert size to PCIC pages */
+    sizepg = (size + (PCIC_MEM_ALIGN - 1)) / PCIC_MEM_ALIGN;
 
-    /* size is now in pages */
+    mask = (1 << sizepg) - 1;
 
-    mask = (1<<size)-1;
-
-    for (i=0; i<(PCIC_MEM_PAGES+1-size); i++) {
+    addr = 0;		/* XXX gcc -Wuninitialized */
+    mhandle = 0;	/* XXX gcc -Wuninitialized */
+    for (i=0; i<(PCIC_MEM_PAGES+1-sizepg); i++) {
 	if ((h->sc->subregionmask & (mask<<i)) == (mask<<i)) {
 	    if (bus_space_subregion(h->sc->memt, h->sc->memh,
 				    i*PCIC_MEM_PAGESIZE,
-				    size*PCIC_MEM_PAGESIZE, memh))
+				    sizepg*PCIC_MEM_PAGESIZE, &memh))
 		return(1);
-	    *mhandle = mask<<i;
-	    h->sc->subregionmask &= ~(*mhandle);
+	    mhandle = mask << i;
+	    addr = h->sc->membase + (i * PCIC_MEM_PAGESIZE);
+	    h->sc->subregionmask &= ~(mhandle);
 	    break;
 	}
     }
@@ -847,27 +851,26 @@ int pcic_chip_mem_alloc(pch, size, memt, memh, mhandle, realsize)
     if (i == (PCIC_MEM_PAGES+1-size))
 	return(1);
 
-    DPRINTF(("pcic_chip_mem_alloc paddr %lx+%lx at vaddr %lx\n",
-	     (u_long) pmap_extract(pmap_kernel(), (vm_offset_t) *memh),
-	     (u_long) (size-1), (u_long) *memh));
+    DPRINTF(("pcic_chip_mem_alloc bus addr 0x%lx+0x%lx\n", (u_long)addr,
+             (u_long)size));
 
-    *memt = h->sc->memt;
-    if (realsize)
-	*realsize = size*PCIC_MEM_PAGESIZE;
+    pcmhp->memt = h->sc->memt;
+    pcmhp->memh = memh;
+    pcmhp->addr = addr;
+    pcmhp->size = size;
+    pcmhp->mhandle = mhandle;
+    pcmhp->realsize = sizepg * PCIC_MEM_PAGESIZE;
 
     return(0);
 }
 
-void pcic_chip_mem_free(pch, size, memt, memh, mhandle)
+void pcic_chip_mem_free(pch, pcmhp)
      pcmcia_chipset_handle_t pch;
-     bus_size_t size;
-     bus_space_tag_t memt;
-     bus_space_handle_t memh;
-     pcmcia_mem_handle_t mhandle;
+     struct pcmcia_mem_handle *pcmhp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
 
-    h->sc->subregionmask |= mhandle;
+    h->sc->subregionmask |= pcmhp->mhandle;
 }
 
 static struct mem_map_index_st {
@@ -926,19 +929,18 @@ static struct mem_map_index_st {
     },
 };
 
-int pcic_chip_mem_map(pch, kind, size, memt, memh, card_addr, offset, window)
+int pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
      pcmcia_chipset_handle_t pch;
      int kind;
+     bus_addr_t card_addr;
      bus_size_t size;
-     bus_space_tag_t memt;
-     bus_space_handle_t memh;
-     u_long card_addr;
-     u_long *offset;
-     int *window;
+     struct pcmcia_mem_handle *pcmhp;
+     bus_addr_t *offsetp;
+     int *windowp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
     int reg;
-    vm_offset_t physaddr;
+    bus_addr_t busaddr;
     long card_offset;
     int i, win;
 
@@ -954,15 +956,14 @@ int pcic_chip_mem_map(pch, kind, size, memt, memh, card_addr, offset, window)
     if (win == -1)
 	return(1);
 
-    *window = win;
+    *windowp = win;
 
     /* XXX this is pretty gross */
 
-    if (h->sc->memt != memt)
+    if (h->sc->memt != pcmhp->memt)
 	panic("pcic_chip_mem_map memt is bogus");
 
-    /* convert the memh to a physical address */
-    physaddr = pmap_extract(pmap_kernel(), (vm_offset_t) memh);
+    busaddr = pcmhp->addr;
 
     /* compute the address offset to the pcmcia address space for the
        pcic.  this is intentionally signed.  The masks and shifts
@@ -970,22 +971,23 @@ int pcic_chip_mem_map(pch, kind, size, memt, memh, card_addr, offset, window)
        making sure the address is aligned, and return the alignment
        offset.  */
 
-    *offset = card_addr % PCIC_MEM_ALIGN;
-    card_addr -= *offset;
+    *offsetp = card_addr % PCIC_MEM_ALIGN;
+    card_addr -= *offsetp;
 
-    DPRINTF(("pcic_chip_mem_map window %d sys %lx+%lx+%lx at card addr %lx\n",
-	     win, physaddr, *offset, size, card_addr));
+    DPRINTF(("pcic_chip_mem_map window %d bus %lx+%lx+%lx at card addr %lx\n",
+	     win, (u_long)busaddr, (u_long)*offsetp, (u_long)size,
+	     (u_long)card_addr));
 
     /* include the offset in the size, and decrement size by one,
        since the hw wants start/stop */
-    size += *offset - 1;
+    size += *offsetp - 1;
 
-    card_offset = (((long) card_addr) - ((long) physaddr));
+    card_offset = (((long) card_addr) - ((long) busaddr));
 
     pcic_write(h, mem_map_index[win].sysmem_start_lsb,
-	       (physaddr >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
+	       (busaddr >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
     pcic_write(h, mem_map_index[win].sysmem_start_msb,
-	       ((physaddr >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
+	       ((busaddr >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
 		PCIC_SYSMEM_ADDRX_START_MSB_ADDR_MASK));
 
 #if 0
@@ -994,9 +996,9 @@ int pcic_chip_mem_map(pch, kind, size, memt, memh, card_addr, offset, window)
 #endif
 
     pcic_write(h, mem_map_index[win].sysmem_stop_lsb,
-	       ((physaddr + size) >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
+	       ((busaddr + size) >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
     pcic_write(h, mem_map_index[win].sysmem_stop_msb,
-	       (((physaddr + size) >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
+	       (((busaddr + size) >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
 		PCIC_SYSMEM_ADDRX_STOP_MSB_ADDR_MASK) |
 	       PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT2);
 
@@ -1046,19 +1048,21 @@ void pcic_chip_mem_unmap(pch, window)
     reg &= ~mem_map_index[window].memenable;
     pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
-    h->memalloc &= ~(1<<window);
+    h->memalloc &= ~(1 << window);
 }
 
 
-int pcic_chip_io_alloc(pch, start, size, iot, ioh)
+int pcic_chip_io_alloc(pch, start, size, pcihp)
      pcmcia_chipset_handle_t pch;
      bus_addr_t start;
      bus_size_t size;
-     bus_space_tag_t *iot;
-     bus_space_handle_t *ioh;
+     struct pcmcia_io_handle *pcihp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
+    bus_space_tag_t iot;
+    bus_space_handle_t ioh;
     bus_addr_t ioaddr;
+    int flags = 0;
 
     /* 
      * Allocate some arbitrary I/O space.  XXX There really should be a
@@ -1068,31 +1072,44 @@ int pcic_chip_io_alloc(pch, start, size, iot, ioh)
     /* XXX mycroft recommends this I/O space range.  I should put this
        in a header somewhere */
 
-    *iot = h->sc->iot;
+    iot = h->sc->iot;
 
     if (start) {
-	if (bus_space_map(h->sc->iot, start, size, 0, ioh))
+	ioaddr = start;
+	if (bus_space_map(iot, start, size, 0, &ioh))
 	    return(1);
 	DPRINTF(("pcic_chip_io_alloc map port %lx+%lx\n",
-		 (u_long) start, (u_long) size));
+		 (u_long) ioaddr, (u_long) size));
     } else {
-	if (bus_space_alloc(h->sc->iot, 0x400, 0xfff, size, size, 
-			    EX_NOBOUNDARY, 0, &ioaddr, ioh))
+	flags |= PCMCIA_IO_ALLOCATED;
+	if (bus_space_alloc(iot, 0x400, 0xfff, size, size, 
+			    0, 0, &ioaddr, &ioh))
 	    return(1);
 	DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
 		 (u_long) ioaddr, (u_long) size));
     }
 
+    pcihp->iot = iot;
+    pcihp->ioh = ioh;
+    pcihp->addr = ioaddr;
+    pcihp->size = size;
+    pcihp->flags = flags;
+
     return(0);
 }
 
-void pcic_chip_io_free(pch, size, iot, ioh)
+void pcic_chip_io_free(pch, pcihp)
      pcmcia_chipset_handle_t pch;
-     bus_size_t size;
-     bus_space_tag_t iot;
-     bus_space_handle_t ioh;
+     struct pcmcia_io_handle *pcihp;
 {
-    bus_space_free(iot, ioh, size);
+    bus_space_tag_t iot = pcihp->iot;
+    bus_space_handle_t ioh = pcihp->ioh;
+    bus_size_t size = pcihp->size;
+
+    if (pcihp->flags & PCMCIA_IO_ALLOCATED)
+	bus_space_free(iot, ioh, size);
+    else
+	bus_space_unmap(iot, ioh, size);
 }
 
 
@@ -1130,17 +1147,20 @@ static struct io_map_index_st {
     },
 };
 
-int pcic_chip_io_map(pch, width, size, iot, ioh, window)
+int pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
      pcmcia_chipset_handle_t pch;
      int width;
+     bus_addr_t offset;
      bus_size_t size;
-     bus_space_tag_t iot;
-     bus_space_handle_t ioh;
-     int *window;
+     struct pcmcia_io_handle *pcihp;
+     int *windowp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
+    bus_addr_t ioaddr = pcihp->addr + offset;
     int reg;
     int i, win;
+
+    /* XXX Sanity check offset/size. */
 
     win = -1;
     for (i=0; i<(sizeof(io_map_index)/sizeof(io_map_index[0])); i++) {
@@ -1154,22 +1174,23 @@ int pcic_chip_io_map(pch, width, size, iot, ioh, window)
     if (win == -1)
 	return(1);
 
-    *window = win;
+    *windowp = win;
 
     /* XXX this is pretty gross */
 
-    if (h->sc->iot != iot)
+    if (h->sc->iot != pcihp->iot)
 	panic("pcic_chip_io_map iot is bogus");
 
     DPRINTF(("pcic_chip_io_map window %d %s port %lx+%lx\n",
 	     win, (width == PCMCIA_WIDTH_IO8)?"io8":"io16",
-	     (u_long) ioh, (u_long) size));
+	     (u_long) ioaddr, (u_long) size));
 
-    pcic_write(h, io_map_index[win].start_lsb, ioh & 0xff);
-    pcic_write(h, io_map_index[win].start_msb, (ioh >> 8) & 0xff);
+    pcic_write(h, io_map_index[win].start_lsb, ioaddr & 0xff);
+    pcic_write(h, io_map_index[win].start_msb, (ioaddr >> 8) & 0xff);
 
-    pcic_write(h, io_map_index[win].stop_lsb, (ioh + size - 1) & 0xff);
-    pcic_write(h, io_map_index[win].stop_msb, ((ioh + size - 1) >> 8) & 0xff);
+    pcic_write(h, io_map_index[win].stop_lsb, (ioaddr + size - 1) & 0xff);
+    pcic_write(h, io_map_index[win].stop_msb,
+    	       ((ioaddr + size - 1) >> 8) & 0xff);
 
     reg = pcic_read(h, PCIC_IOCTL);
     reg &= ~io_map_index[win].ioctlmask;
@@ -1200,7 +1221,7 @@ void pcic_chip_io_unmap(pch, window)
     reg &= ~io_map_index[window].ioenable;
     pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
-    h->ioalloc &= ~(1<<window);
+    h->ioalloc &= ~(1 << window);
 }
 
 void *
