@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.20 1999/10/22 21:10:12 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.21 2000/01/24 02:40:35 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,7 +75,7 @@ int	vsbus_search	__P((struct device *, struct cfdata *, void *));
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
 
-struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
 	0,
 	0,
@@ -97,6 +97,8 @@ struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+extern struct vax_bus_space vax_mem_bus_space;
+
 struct	vsbus_softc {
 	struct	device sc_dev;
 #if 0
@@ -106,11 +108,14 @@ struct	vsbus_softc {
 	u_char	*sc_intclr;	/* Clear interrupt register */
 	u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
+	struct vax_bus_dma_tag sc_dmatag;
 };
 
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
 };
+
+uint32_t *vsbus_iomap;
 
 int
 vsbus_print(aux, name)
@@ -145,6 +150,8 @@ vsbus_attach(parent, self, aux)
 
 	printf("\n");
 
+	sc->sc_dmatag = vsbus_bus_dma_tag;
+
 	switch (vax_boardtype) {
 	case VAX_BTYP_49:
 		temp = vax_map_physmem(0x25c00000, 1);
@@ -152,6 +159,10 @@ vsbus_attach(parent, self, aux)
 		sc->sc_intclr = (char *)temp + 12;
 		sc->sc_intmsk = (char *)temp + 8;
 		break;
+
+	case VAX_BTYP_48:
+	case VAX_BTYP_46:
+		/* FALL THROUGH */
 
 	default:
 		temp = vax_map_physmem(VS_REGS, 1);
@@ -194,7 +205,8 @@ vsbus_search(parent, cf, aux)
 
 	va.va_paddr = cf->cf_loc[0];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
-	va.va_dmat = &vsbus_bus_dma_tag;
+	va.va_dmat = &sc->sc_dmatag;
+	va.va_iot = &vax_mem_bus_space;
 
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
@@ -220,7 +232,6 @@ vsbus_search(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 
-	scb_vecalloc(vec, va.va_ivec, cf->cf_unit, SCB_ISTACK);
 	va.va_br = br;
 	va.va_cvec = vec;
 

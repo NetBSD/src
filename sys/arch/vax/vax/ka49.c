@@ -43,8 +43,8 @@ static	void	ka49_memerr __P((void));
 static	int	ka49_mchk __P((caddr_t));
 static	void	ka49_halt __P((void));
 static	void	ka49_reboot __P((int));
-static	void	ka49_softmem __P((int));
-static	void	ka49_hardmem __P((int));
+static	void	ka49_softmem __P((void *));
+static	void	ka49_hardmem __P((void *));
 static	void	ka49_steal_pages __P((void));
 static	void	ka49_cache_enable __P((void));
 static	void	ka49_halt __P((void));
@@ -87,6 +87,7 @@ ka49_conf()
  */
 void
 ka49_hardmem(arg)
+	void *arg;
 {
 	if (cold == 0)
 		printf("Hard memory error\n");
@@ -95,6 +96,7 @@ ka49_hardmem(arg)
 
 void
 ka49_softmem(arg)
+	void *arg;
 {
 	if (cold == 0)
 		printf("Soft memory error\n");

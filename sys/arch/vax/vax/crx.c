@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.3 1999/02/15 07:07:43 ragge Exp $	*/
+/*	$NetBSD: crx.c,v 1.4 2000/01/24 02:40:33 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -236,10 +236,9 @@ crxrw(dev, uio, flags)
 	return (error);
 }
 
-void	crxintr __P((int));
 void
 crxintr(arg)
-	int arg;
+	void *arg;
 {
 	register struct rx50state *rs = &rx50state;
 

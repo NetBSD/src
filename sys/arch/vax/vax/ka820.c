@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.18 2000/01/24 02:40:34 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -70,10 +70,11 @@
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 
-static	int ka820_match __P((struct device *, struct cfdata *, void *));
-static	void ka820_attach __P((struct device *, struct device *, void*));
-static	void rxcdintr __P((int));
-void crxintr __P((int));
+static int ka820_match __P((struct device *, struct cfdata *, void *));
+static void ka820_attach __P((struct device *, struct device *, void*));
+static void ka820_memerr __P((void));
+static int ka820_mchk __P((caddr_t));
+static void rxcdintr __P((void *));
 
 struct	cpu_dep ka820_calls = {
 	0,
@@ -97,7 +98,7 @@ char bootram[KA820_BRPAGES * VAX_NBPG];
 char eeprom[KA820_EEPAGES * VAX_NBPG];
 #endif
 
-int
+static int
 ka820_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -118,7 +119,7 @@ ka820_match(parent, cf, aux)
 	return 1;
 }
 
-void
+static void
 ka820_attach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
@@ -148,14 +149,14 @@ ka820_attach(parent, self, aux)
 	    BICSR_SEIE | BICSR_HEIE);
 
 	/* XXX - should be done somewhere else */
-	scb_vecalloc(SCB_RX50, crxintr, 0, SCB_ISTACK);
+	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK);
 
 	clk_adrshift = 0;	/* clk regs are addressed at short's */
 	clk_tweak = 1; 		/* ...but not exactly in each short */
 	clk_page = (short *)vax_map_physmem((paddr_t)KA820_CLOCKADDR, 1);
 
 	/* Steal the interrupt vectors that are unique for us */
-	scb_vecalloc(KA820_INT_RXCD, rxcdintr, 0, SCB_ISTACK);
+	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK);
 
 	rx50device_ptr = (void *)vax_map_physmem(KA820_RX50ADDR, 1);
 	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
@@ -268,7 +269,7 @@ ms820_attach(parent, self, aux)
 	MEMWR(MSREG_CSR2, MS2_RDSERR | MS2_HIERR | MS2_CRDERR | MS2_ADRSERR);
 }
 
-void
+static void
 ka820_memerr()
 {
 	struct mem_bi_softc *sc;
@@ -341,7 +342,7 @@ struct mc8200frame {
 	int	mc82_psl;		/* current psl */
 };
 
-int
+static int
 ka820_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -374,9 +375,9 @@ ka820_mchk(cmcf)
 /*
  * Receive a character from logical console.
  */
-void
+static void
 rxcdintr(arg)
-	int arg;
+	void *arg;
 {
 	register int c = mfpr(PR_RXCD);
 

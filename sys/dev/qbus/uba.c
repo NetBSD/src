@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.48 1999/06/20 17:56:29 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.49 2000/01/24 02:40:30 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -198,7 +198,6 @@ ubasearch(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 		
-	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 #define	RESETSIXE	128
@@ -216,6 +215,7 @@ ubasearch(parent, cf, aux)
 			    cf->cf_unit);
 		}
 	}
+
 	ua.ua_br = br;
 	ua.ua_cvec = vec;
 	ua.ua_iaddr = cf->cf_loc[0];
@@ -245,4 +245,17 @@ ubaprint(aux, uba)
 	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
 	    ua->ua_cvec & 511, ua->ua_br);
 	return UNCONF;
+}
+
+/*
+ * Move to machdep eventually
+ */
+void
+uba_intr_establish(icookie, vec, ifunc, iarg)
+	void *icookie;
+	int vec;
+	void (*ifunc)(void *iarg);
+	void *iarg;
+{
+	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK);
 }
