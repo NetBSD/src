@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/09/25 19:21:19 is Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2001/12/17 05:57:33 mhitch Exp $
 
-VND=		vnd0c
+VND=		vnd0
 IMAGESIZE?=	8192 # 512 byte blocks
 NEWFSOPTS?=	-c 64 -B be
 DISKTYPE?=	miniroot
