@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.11 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: ims332.c,v 1.12 2000/01/10 03:24:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -40,18 +40,16 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.11 1999/12/09 00:16:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.12 2000/01/10 03:24:32 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/errno.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/ims332.h>
-
 
 #define	assert_ims332_reset_bit(r)	*r &= ~0x40
 #define	deassert_ims332_reset_bit(r)	*r |=  0x40

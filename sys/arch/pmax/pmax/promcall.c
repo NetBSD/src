@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.4 1999/11/30 00:54:43 simonb Exp $	*/
+/*	$NetBSD: promcall.c,v 1.5 2000/01/10 03:24:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,17 +43,18 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.4 1999/11/30 00:54:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.5 2000/01/10 03:24:40 simonb Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
+
 #include <dev/cons.h>
 
+#include <machine/dec_prom.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
-#include <machine/dec_prom.h>
 
 static int  romgetc __P((dev_t));
 static void romputc __P((dev_t, int));

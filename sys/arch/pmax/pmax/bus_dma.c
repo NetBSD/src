@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2000/01/09 03:55:54 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,20 +39,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
-
-#include <machine/cpu.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <mips/locore.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>

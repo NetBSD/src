@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.36 2000/01/09 03:55:29 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.37 2000/01/10 03:24:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,25 +85,18 @@
 
 #if NCFB > 0
 #include <sys/param.h>
-#include <sys/systm.h>					/* printf() */
-#include <sys/errno.h>
+#include <sys/systm.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 
-#include <mips/cpuregs.h>		/* mips cached->uncached */
+#include <machine/autoconf.h>
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */
-
 #include <pmax/dev/bt459.h>
+#include <pmax/dev/cfbvar.h>
 #include <pmax/dev/fbreg.h>
-
-#include <machine/autoconf.h>
-
-
-#define PMAX	/* enable /dev/pm compatibility */
 
 /*
  * These need to be mapped into user space.
@@ -113,7 +106,7 @@ static struct pmax_fbtty	cfbfb;
 
 /*
  * Method table for standard framebuffer operations on a CFB.
- * The  CFB uses a Brooktree bt479 ramdac.
+ * The CFB uses a Brooktree bt479 ramdac.
  */
 struct fbdriver cfb_driver = {
 	bt459_video_on,
