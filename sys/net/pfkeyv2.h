@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.11 2000/10/03 22:46:21 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.12 2001/08/02 12:10:14 itojun Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ struct sadb_x_sa2 {
   u_int8_t sadb_x_sa2_mode;
   u_int8_t sadb_x_sa2_reserved1;
   u_int16_t sadb_x_sa2_reserved2;
-  u_int32_t sadb_x_sa2_reserved3;
+  u_int32_t sadb_x_sa2_sequence;
   u_int32_t sadb_x_sa2_reqid;
 };
 
@@ -287,7 +287,7 @@ struct sadb_x_ipsecrequest {
 #define SADB_SATYPE_RIPV2	7
 #define SADB_SATYPE_MIP		8
 #define SADB_X_SATYPE_IPCOMP	9
-#define SADB_X_SATYPE_POLICY	10
+/*#define SADB_X_SATYPE_POLICY	10	obsolete, do not reuse */
 #define SADB_SATYPE_MAX		11
 
 #define SADB_SASTATE_LARVAL   0
