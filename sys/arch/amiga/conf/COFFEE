@@ -1,7 +1,7 @@
-#	$NetBSD: GENERIC,v 1.33 1995/03/02 03:30:43 chopps Exp $
+#	$NetBSD: COFFEE,v 1.1 1995/03/02 03:30:26 chopps Exp $
 
 #
-# GENERIC AMIGA
+# COFFEE - GENERIC but with GATEWAY
 #
 # This configuration file contains all possible options
 #
@@ -33,7 +33,7 @@ options		INET		# IP networking support (Required)
 #options	CCITT		# CCITT X.25
 #options	NS		# Xerox XNS
 #options	EON		# ISO CLNL over IP
-#options	GATEWAY		# Packet forwarding
+options		GATEWAY		# Packet forwarding
 #options	DIRECTED_BROADCAST	# Broadcast across subnets
 #options	NSIP		# XNS over IP
 
@@ -91,7 +91,7 @@ options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 # Misc. debuging options
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
-#options	DEBUG		# Add debugging statements
+options		DEBUG		# Add debugging statements
 options		DDB		# Kernel debugger
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
@@ -181,7 +181,7 @@ pseudo-device	ppp			# ppp
 pseudo-device	view 10			# views
 pseudo-device	pty 16			# pseudo terminals
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter 2		# berkeley packet filters
-#pseudo-device	tun 2
+pseudo-device	bpfilter 2		# berkeley packet filters
+pseudo-device	tun 2
 
 config	netbsd swap on generic
