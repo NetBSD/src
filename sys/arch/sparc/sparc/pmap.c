@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 1997/03/22 19:17:09 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.76 1997/03/25 23:04:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3803,7 +3803,8 @@ pmap_remove(pm, va, endva)
 		nva = VSTOVA(vr, vs + 1);
 		if (nva == 0 || nva > endva)
 			nva = endva;
-		(*rm)(pm, va, nva, vr, vs);
+		if (pm->pm_regmap[vr].rg_nsegmap != 0)
+			(*rm)(pm, va, nva, vr, vs);
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
@@ -4232,6 +4233,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	sp = &rp->rg_segmap[vs];
 	if ((nleft = sp->sg_npte) == 0)
 		return;
+
 	if (sp->sg_pte == NULL)
 		panic("pmap_rmu: no pages");
 
