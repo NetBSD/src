@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.1 2003/09/07 11:24:35 yamt Exp $
+.\"	$NetBSD: pool_cache.9,v 1.2 2003/09/07 14:10:34 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -166,7 +166,7 @@ will be returned via it.
 will be passed to
 .Fn pool_get
 function of the backing
-.Xr pool
+.Xr pool 9
 and the object constructor specified when the pool cache is created by
 .Fn pool_cache_init .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,5 +228,5 @@ subsystem is implemented within the file
 .Pa sys/kern/subr_pool.c .
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr pool 9 ,
-.Xr malloc 9
+.Xr malloc 9 ,
+.Xr pool 9
