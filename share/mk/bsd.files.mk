@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.8 1999/02/11 13:25:42 tv Exp $
+#	$NetBSD: bsd.files.mk,v 1.8.2.1 1999/09/10 22:50:46 he Exp $
 
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
@@ -25,7 +25,7 @@ filesinstall:: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: .MADE
 .endif
 
