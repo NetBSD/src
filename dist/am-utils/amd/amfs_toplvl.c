@@ -1,7 +1,5 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.1.1.2 2000/11/19 23:43:35 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_toplvl.c,v 1.7 2000/02/07 08:34:50 ezk Exp
+ * $Id: amfs_toplvl.c,v 1.1.1.3 2001/05/13 17:34:07 veego Exp $
  *
  */
 
@@ -311,7 +309,7 @@ amfs_toplvl_mount(am_node *mp)
   error = mount_amfs_toplvl(mf->mf_mount, opts);
   if (error) {
     errno = error;
-    plog(XLOG_FATAL, "mount_amfs_toplvl: %m");
+    plog(XLOG_FATAL, "amfs_toplvl_mount: mount_amfs_toplvl failed: %m");
     return error;
   }
   return 0;

@@ -314,7 +314,7 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
@@ -329,14 +329,22 @@ fsi_dict.o: fsi_dict.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	fsi_data.h fsinfo.h
-fsi_util.o: fsi_util.c ../config.h ../include/am_defs.h \
+fsi_gram.o: fsi_gram.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	fsi_data.h fsinfo.h
+fsi_lex.o: fsi_lex.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
+	../include/am_compat.h ../include/am_xdr_func.h fsi_data.h \
+	fsinfo.h fsi_gram.h
 fsinfo.o: fsinfo.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h fsi_data.h \
 	fsinfo.h fsi_gram.h
+fsi_util.o: fsi_util.c ../config.h ../include/am_defs.h \
+	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
+	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
+	fsi_data.h fsinfo.h
 wr_atab.o: wr_atab.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h fsi_data.h \

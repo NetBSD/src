@@ -1,7 +1,5 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.2 2000/11/19 23:43:31 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_ops.c,v 1.6.2.1 2000/06/02 10:58:35 ezk Exp
+ * $Id: am_ops.c,v 1.1.1.3 2001/05/13 17:34:03 veego Exp $
  *
  */
 
@@ -322,7 +320,7 @@ merge_opts(const char *opts1, const char *opts2)
   mntent_t mnt2;		/* place holder for opts2 */
   char *newstr;			/* new string to return (malloc'ed) */
   char *tmpstr;			/* temp */
-  char *eq;			/* pointer to '=' within temp */
+  char *eq;			/* pointer to whatever follows '=' within temp */
   char oneopt[80];		/* one option w/o value if any */
   char *revoneopt;		/* reverse of oneopt */
   int len = strlen(opts1) + strlen(opts2) + 2; /* space for "," and NULL */
@@ -340,8 +338,8 @@ merge_opts(const char *opts1, const char *opts2)
     strncpy(oneopt, tmpstr, 80);
     oneopt[79] = '\0';
     /* if option has a value such as rsize=1024, chop the value part */
-    if ((eq = strchr(oneopt, '=')))
-      eq[1] = '\0';
+    if ((eq = haseq(oneopt)))
+      *eq = '\0';
     /* find reverse option of oneopt */
     revoneopt = reverse_option(oneopt);
     /* if option orits reverse exist in opts2, ignore it */

@@ -1,7 +1,5 @@
-/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.2 2000/11/19 23:43:03 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_linux.h,v 1.5 2000/02/16 13:52:59 ezk Exp
+ * $Id: nfs_prot_linux.h,v 1.1.1.3 2001/05/13 17:33:49 veego Exp $
  *
  */
 
@@ -57,6 +55,17 @@
  * file system for which the module isn't named as the file system mount
  * name.
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+# ifndef MS_BIND
+#  define MS_BIND 4096
+# endif /* not MS_BIND */
+
+# ifndef MNTTYPE_LOFS
+#  define MNTTYPE_LOFS "bind"
+# endif /* not MNTTYPE_LOFS */
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0) */
+
 #ifndef MNTTYPE_ISO9660
 # define MNTTYPE_ISO9660 "iso9660"
 #endif /* MNTTYPE_ISO9660 */
@@ -233,12 +242,8 @@ struct auto_args {
 };
 
 /*
- * This is truly screwed up, yet there is no other even *somewhat* easy way to do it...
- * struct nfs_mount_data uses struct nfs_fh, which we get from rpcsvc/nfs_prot.h,
- * and which is *different* from the struct nfs_fh in linux/nfs.h! Yet we need
- * rpcsvc/nfs_prot.h for its many definitions et al. So, in order not to end up
- * with a structure that is different from what the kernel expects, we define our
- * own here...
+ * We use our own definitions here, because the definitions in the
+ * kernel change the API (though not the ABI) *way* too often.
  */
 #undef nfs_args_t
 struct nfs2_fh {
@@ -251,23 +256,23 @@ struct nfs3_fh {
 };
 
 struct nfs_args {
-  int             version;                /* 1 */
-  int             fd;                     /* 1 */
-  struct nfs2_fh  old_root;               /* 1 */
-  int             flags;                  /* 1 */
-  int             rsize;                  /* 1 */
-  int             wsize;                  /* 1 */
-  int             timeo;                  /* 1 */
-  int             retrans;                /* 1 */
-  int             acregmin;               /* 1 */
-  int             acregmax;               /* 1 */
-  int             acdirmin;               /* 1 */
-  int             acdirmax;               /* 1 */
-  struct sockaddr_in addr;                /* 1 */
-  char            hostname[256];          /* 1 */
-  int             namlen;                 /* 2 */
-  unsigned int    bsize;                  /* 3 */
-  struct nfs3_fh  root;                   /* 4 */
+  int			version;	/* 1 */
+  int			fd;		/* 1 */
+  struct nfs2_fh	old_root;	/* 1 */
+  int			flags;		/* 1 */
+  int			rsize;		/* 1 */
+  int			wsize;		/* 1 */
+  int			timeo;		/* 1 */
+  int			retrans;	/* 1 */
+  int			acregmin;	/* 1 */
+  int			acregmax;	/* 1 */
+  int			acdirmin;	/* 1 */
+  int			acdirmax;	/* 1 */
+  struct sockaddr_in	addr;		/* 1 */
+  char			hostname[256];	/* 1 */
+  int			namlen;		/* 2 */
+  unsigned int		bsize;		/* 3 */
+  struct nfs3_fh	root;		/* 4 */
 };
 typedef struct nfs_args nfs_args_t;
 
@@ -367,5 +372,9 @@ extern bool_t xdr_umntres(XDR *, umntres *);
 
 /* turn off this (b/c of hlfsd) */
 #undef HAVE_RPC_AUTH_DES_H
+
+/* use a private mapper from errno's to NFS errors */
+extern int linux_nfs_error(int e);
+#define nfs_error(e)	linux_nfs_error(e)
 
 #endif /* not _AMU_NFS_PROT_H */

@@ -573,6 +573,9 @@ $logopen = 0;
 # Important!! This directory should be local.  Folks will be responsible
 # for finding this out for themselves.
 #
+if (!defined($MAILDIR) || $MAILDIR eq "") {
+    die "MAILDIR must be defined\n";
+}
 chdir ( $MAILDIR ) || die "Cannot change to $MAILDIR (`x' bit not set?)";
 
 #

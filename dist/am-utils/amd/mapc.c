@@ -1,7 +1,5 @@
-/*	$NetBSD: mapc.c,v 1.1.1.2 2000/11/19 23:43:39 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mapc.c,v 1.7.2.1 2000/06/09 18:18:32 ro Exp
+ * $Id: mapc.c,v 1.1.1.3 2001/05/13 17:34:10 veego Exp $
  *
  */
 
@@ -586,7 +584,7 @@ mapc_create(char *map, char *opt, const char *type)
 	 mt < maptypes + sizeof(maptypes) / sizeof(maptypes[0]);
 	 mt++) {
       if (STREQ(type, mt->name)) {
-	plog(XLOG_INFO, "initializing amd conf map %s of type %s", map, type);
+	plog(XLOG_INFO, "initializing amd.conf map %s of type %s", map, type);
 	if ((*mt->init) (m, map, &modify) == 0) {
 	  break;
 	} else {

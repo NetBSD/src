@@ -1,7 +1,5 @@
-/*	$NetBSD: info_nis.c,v 1.1.1.2 2000/11/19 23:43:44 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: info_nis.c,v 1.6 2000/01/12 16:44:19 ezk Exp
+ * $Id: info_nis.c,v 1.1.1.3 2001/05/13 17:34:14 veego Exp $
  *
  */
 
@@ -323,7 +321,7 @@ nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
     return ENOENT;
 
   default:
-    plog(XLOG_ERROR, "%s: %s", map, yperr_string(res));
+    plog(XLOG_ERROR, "nis_search: %s: %s", map, yperr_string(res));
     return EIO;
   }
 }

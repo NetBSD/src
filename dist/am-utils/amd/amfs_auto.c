@@ -1,7 +1,5 @@
-/*	$NetBSD: amfs_auto.c,v 1.1.1.2 2000/11/19 23:43:34 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_auto.c,v 1.9.2.2 2000/05/30 04:10:48 ezk Exp
+ * $Id: amfs_auto.c,v 1.1.1.3 2001/05/13 17:34:04 veego Exp $
  *
  */
 
@@ -69,7 +67,7 @@
 /****************************************************************************
  *** FORWARD DEFINITIONS                                                  ***
  ****************************************************************************/
-static int amfs_auto_bgmount(struct continuation * cp, int mpe);
+static int amfs_auto_bgmount(struct continuation *cp, int mpe);
 static int amfs_auto_mount(am_node *mp);
 static int amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count, int fully_browsable);
 static void amfs_auto_umounted(am_node *mp);
@@ -503,7 +501,7 @@ For each location:
 endfor
  */
 static int
-amfs_auto_bgmount(struct continuation * cp, int mpe)
+amfs_auto_bgmount(struct continuation *cp, int mpe)
 {
   mntfs *mf = cp->mp->am_mnt;	/* Current mntfs */
   mntfs *mf_retry = 0;		/* First mntfs which needed retrying */
@@ -605,7 +603,7 @@ amfs_auto_bgmount(struct continuation * cp, int mpe)
 	mp->am_link = strdup(link_dir);
       } else {
 	/*
-	 * try getting fs option from continuation, not mountpoint!
+	 * Try getting fs option from continuation, not mountpoint!
 	 * Don't try logging the string from mf, since it may be bad!
 	 */
 	if (cp->fs_opts.opt_fs != mf->mf_fo->opt_fs)
@@ -669,8 +667,6 @@ amfs_auto_bgmount(struct continuation * cp, int mpe)
 	mk_fattr(mp, NFDIR);
       else
 	mk_fattr(mp, NFLNK);
-
-      mp->am_fattr.na_fileid = mp->am_gen;
 
       if (p->fs_init)
 	this_error = (*p->fs_init) (mf);
@@ -1122,7 +1118,7 @@ amfs_auto_lookuppn(am_node *mp, char *fname, int *error_return, int op)
      */
     rvec = strsplit(dfl, ' ', '\"');
 
-    if (gopt.flags & CFM_ENABLE_DEFAULT_SELECTORS) {
+    if (gopt.flags & CFM_SELECTORS_IN_DEFAULTS) {
       /*
        * Pick whichever first entry matched the list of selectors.
        * Strip the selectors from the string, and assign to dfl the
@@ -1168,7 +1164,7 @@ amfs_auto_lookuppn(am_node *mp, char *fname, int *error_return, int op)
       /*
        * Log error if there were other values
        */
-      if (!(gopt.flags & CFM_ENABLE_DEFAULT_SELECTORS) && rvec[1]) {
+      if (!(gopt.flags & CFM_SELECTORS_IN_DEFAULTS) && rvec[1]) {
 # ifdef DEBUG
 	dlog("/defaults chopped into %s", dfl);
 # endif /* DEBUG */

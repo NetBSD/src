@@ -366,20 +366,20 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-amq.o: amq.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amq.h
 amq_clnt.o: amq_clnt.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amq.h
+amq.o: amq.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
+	../include/am_compat.h ../include/am_xdr_func.h amq.h
 amq_xdr.o: amq_xdr.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h amq.h
