@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.35 2000/04/15 16:49:35 simonb Exp $	*/
+/*	$NetBSD: param.c,v 1.36 2000/09/24 18:45:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -43,6 +43,7 @@
 #include "opt_rtc_offset.h"
 #include "opt_sb_max.h"
 #include "opt_sysv.h"
+#include "opt_sysvparam.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.393 2000/09/23 17:17:11 sommerfeld Exp $
+#	$NetBSD: files,v 1.394 2000/09/24 18:45:37 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -15,6 +15,7 @@ defopt	UCONSOLE
 defopt	MULTIPROCESSOR
 
 defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
+defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
