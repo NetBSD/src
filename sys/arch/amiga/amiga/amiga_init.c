@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.21 1994/06/21 04:06:45 chopps Exp $
+ *	$Id: amiga_init.c,v 1.22 1994/06/29 13:12:43 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,10 @@ extern u_int	Sysseg1;
 extern u_int	virtual_avail;
 
 extern char *esym;
+
+#ifdef GRF_AGA
+extern u_long aga_enable;
+#endif
 
 /*
  * some addresses used in locore
@@ -114,10 +118,11 @@ alloc_z2mem(amount)
  */
 
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr)
+start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
+	u_int AGA_mode;
 {
 	extern char end[];
 	extern void etext();
@@ -137,6 +142,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr)
 	machineid = id;
 	chipmem_end = cphysize;
 	esym = esym_addr;
+#ifdef GRF_AGA
+	if (AGA_mode)
+		aga_enable |= 1;
+#endif
 
 	/* 
 	 * the kernel ends at end(), plus the cfdev structures we placed 
@@ -878,7 +887,12 @@ kernel_reload_write(uio)
 		kernel_reload(kernel_image,
 		    kernel_load_ofs + kernel_image_magic_size(),
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
-		    boot_cphysize, kernel_symbol_esym, eclockfreq);
+		    boot_cphysize, kernel_symbol_esym, eclockfreq,
+#ifdef GRF_AGA
+		    aga_enable);
+#else
+		    0);
+#endif
 		/*NOTREACHED*/
 	case 3:		/* done loading kernel symbol table */
 		c = *((u_long *)(kernel_image + kernel_load_ofs - 4));

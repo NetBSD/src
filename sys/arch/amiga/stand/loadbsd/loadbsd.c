@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: loadbsd.c,v 1.13 1994/06/23 05:28:04 chopps Exp $
+ *	$Id: loadbsd.c,v 1.14 1994/06/29 13:13:11 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -91,8 +91,10 @@ void warnx __P((const char *, ...));
  *	2.6	06/05/94 - Added -c option to override machine type.
  *	2.7	06/15/94 - Pass E clock frequency.
  *	2.8	06/22/94 - Fix supervisor stack usage.
+ *	2.9	06/26/94 - Use PAL flag for E clock freq on pre 2.0 WB
+ *		Added AGA enable parameter
  */
-static const char _version[] = "$VER: LoadBSD 2.8 (22.6.94)";
+static const char _version[] = "$VER: LoadBSD 2.9 (26.6.94)";
 
 /*
  * Kernel parameter passing version
@@ -118,6 +120,7 @@ struct boot_memlist *kmemlist;
 void get_mem_config __P((void **, u_long *, u_long *));
 void get_cpuid __P((void));
 void get_eclock __P((void));
+void get_AGA __P((void));
 void usage __P((void));
 void verbose_usage __P((void));
 void Version __P((void));
@@ -133,6 +136,7 @@ int reqmemsz;
 int S_flag;
 u_long cpuid;
 long eclock_freq;
+long AGA_mode;
 char *program_name;
 char *kname;
 struct ExpansionBase *ExpansionBase;
@@ -164,7 +168,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "abc:Dkm:ptSV")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbc:Dhkm:ptSV")) != EOF) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -197,6 +201,9 @@ main(argc, argv)
 		case 'c':
 			cpuid = atoi(optarg) << 16;
 			break;
+		case 'A':
+			AGA_mode = 1;
+			break;
 		case 'h':
 			verbose_usage();
 		default:
@@ -222,6 +229,7 @@ main(argc, argv)
 	get_mem_config(&fmem, &fmemsz, &cmemsz);
 	get_cpuid();
 	get_eclock();
+	get_AGA();
 
 	textsz = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
 	esym = NULL;
@@ -317,9 +325,9 @@ main(argc, argv)
 	/*
 	 * XXX AGA startup - may need more
 	 */
-	LoadView(NULL);
+	LoadView(NULL);		/* Don't do this if AGA_mode? */
 	startit(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
-	    cpuid, eclock_freq);
+	    cpuid, eclock_freq, AGA_mode);
 	/*NOTREACHED*/
 }
 
@@ -471,7 +479,19 @@ void
 get_eclock()
 {
 	/* Fix for 1.3 startups? */
-	eclock_freq = SysBase->ex_EClockFrequency;
+	if (SysBase->LibNode.lib_Version > 36)
+		eclock_freq = SysBase->ex_EClockFrequency;
+	else
+		eclock_freq = (GfxBase->DisplayFlags & PAL) ?
+		    709379 : 715909;
+}
+
+void
+get_AGA()
+{
+	/*
+	 * Determine if an AGA mode is active
+	 */
 }
 
 
@@ -494,15 +514,18 @@ start_super:
 	| a0:  fastmem-start
 	| d0:  fastmem-size
 	| d1:  chipmem-size
+	| d3:  AGA mode enable
 	| d4:  E clock frequency
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
 	| a4:  esym location
 	| All other registers zeroed for possible future requirements.
 
+	lea	pc@(_startit-.+2),sp	| make sure we have a good stack ***
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
-	movel	a3@(12),sp		| entry point in stack pointer
+|	movel	a3@(12),sp		| entry point in stack pointer
+	movel	a3@(12),sp@-		| push entry point		***
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
@@ -510,6 +533,7 @@ start_super:
 	movel	a3@(32),a4		| esym
 	movel	a3@(36),d5		| cpuid
 	movel	a3@(40),d4		| E clock frequency
+	movel	a3@(44),d3		| AGA mode enable
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
@@ -552,14 +576,14 @@ L0:
 
 
 	moveq	#0,d2			| zero out unused registers
-	moveq	#0,d3			| (might make future compatibility
-	moveq	#0,d6			|  would have known contents)
-	movel	d6,a1
+	moveq	#0,d6			| (might make future compatibility
+	movel	d6,a1			|  would have known contents)
 	movel	d6,a2
 	movel	d6,a3
 	movel	d6,a5
 	movel	d6,a6
-	jmp	sp@			| jump to kernel entry point
+|	jmp	sp@			| jump to kernel entry point
+	rts				| enter kernel at address on stack ***
 
 
 | A do-nothing MMU root pointer (includes the following long as well)
@@ -573,7 +597,7 @@ zero:	.long	0
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-abkptDSV] [-c machine] [-m mem] kernel\n",
+	fprintf(stderr, "usage: %s [-abkptADSV] [-c machine] [-m mem] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -606,6 +630,7 @@ OPTIONS
 \t    exits without actually starting NetBSD.
 \t-S  Include kernel symbol table.
 \t-D  Enter debugger
+\t-A  Use AGA display mode, if available.
 \t-V  Version of loadbsd program.
 HISTORY
 \tThis version supports Kernel version 720 +\n",

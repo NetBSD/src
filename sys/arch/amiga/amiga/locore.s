@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.30 1994/06/22 16:19:58 chopps Exp $
+ *	$Id: locore.s,v 1.31 1994/06/29 13:12:45 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -788,6 +788,7 @@ start:
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
+	movl	d3,sp@			| pass AGA mode
 	movl	a4,sp@-			| pass address of _esym
 	movl	d1,sp@-			| pass chipmem-size
 	movl	d0,sp@-			| pass fastmem-size
@@ -2175,6 +2176,7 @@ Lreload1:
 	movel	sp@(24),d1
 	movel	sp@(28),a4		| esym
 	movel	sp@(32),d4		| eclockfreq
+	movel	sp@(36),d3		| AGA mode
 
 	movel	sp@(12),a6		| find entrypoint (a6)
 
@@ -2196,14 +2198,13 @@ Lreload_copy:
 	pmove	a3@,srp			| Really, really, turn off MMU
 	jra	Lreload2
 Lreload040:
-	movl	#0,d3
-	.word	0x4e7b,0x3003	| movc d3,TC
-	.word	0x4e7b,0x3806	| movc d3,URP
-	.word	0x4e7b,0x3807	| movc d3,SRP
+	movl	#0,d2
+	.word	0x4e7b,0x2003	| movc d2,TC
+	.word	0x4e7b,0x2806	| movc d2,URP
+	.word	0x4e7b,0x2807	| movc d2,SRP
 Lreload2:
 
 	moveq	#0,d2			| clear unused registers
-	moveq	#0,d3
 	moveq	#0,d6
 	subl	a1,a1
 	subl	a2,a2

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_reg.h,v 1.2 1994/03/27 06:23:37 chopps Exp $
+ *	$Id: grfabs_reg.h,v 1.3 1994/06/29 13:13:08 chopps Exp $
  */
 
 #if ! defined (_GRFABS_REG_H)
@@ -118,11 +118,13 @@ struct bitmap {
 enum bitmap_flag_bits {
     BMB_CLEAR,			  /* init only. */
     BMB_INTERLEAVED,		  /* init/read. */
+    BMB_ALIGN64,		  /* init/read. */
 };
 
 enum bitmap_flags {
     BMF_CLEAR = 1 << BMB_CLEAR,			  /* init only. */
     BMF_INTERLEAVED = 1 << BMB_INTERLEAVED,	  /* init/read. */
+    BMF_ALIGN64 = 1 << BMB_ALIGN64		  /* init/read. */
 };
 
 /* Use these macros to find misc. sizes of actual bitmap */

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccglb.c,v 1.3 1994/03/27 06:23:32 chopps Exp $
+ *	$Id: grfabs_ccglb.c,v 1.4 1994/06/29 13:13:05 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -43,6 +43,9 @@ monitor_t *cc_monitor;
 cop_t std_copper_list[] = {
     { CI_WAIT (0, 12), 0xfffe },
 #if defined (GRF_ECS)
+#if defined (GRF_AGA)
+    { R_FMODE, 0x0000 },
+#endif
     { R_BEAMCON0, 0x0000 },
     { R_BPLCON3, 0x0020 },			  /* enable border blank */
 #endif
@@ -85,6 +88,212 @@ int std_copper_list_len = sizeof (std_copper_list) / sizeof (cop_t);
 int std_copper_list_size = sizeof (std_copper_list);
 
 
+#ifdef GRF_AGA
+cop_t aga_copper_list[] = {
+    { CI_WAIT (0, 12), 0xfffe },
+    { R_FMODE, 0x0000 },
+    { R_HTOTAL, 0x0071 },
+    { R_HBSTRT, 0x0008 },
+    { R_HBSTOP, 0x001c },
+    { R_HSSTRT, 0x000c },
+    { R_HSSTOP, 0x001e },
+    { R_HCENTER, 0x0046 },
+    { R_VSSTRT, 0x0001 },
+    { R_VSSTOP, 0x0003 },
+    { R_VBSTRT, 0x0000 },
+    { R_VBSTOP, 0x000f },
+    { R_VTOTAL, 0x020c },
+    { R_BEAMCON0, 0x0000 },
+     /* colors - bank 0 high */
+    { R_BPLCON3, 0x0020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 0 low */
+    { R_BPLCON3, 0x0220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 1 high */
+    { R_BPLCON3, 0x2020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 1 low */
+    { R_BPLCON3, 0x2220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 2 high */
+    { R_BPLCON3, 0x4020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 2 low */
+    { R_BPLCON3, 0x4220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 3 high */
+    { R_BPLCON3, 0x6020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 3 low */
+    { R_BPLCON3, 0x6220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 4 high */
+    { R_BPLCON3, 0x8020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 4 low */
+    { R_BPLCON3, 0x8220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 5 high */
+    { R_BPLCON3, 0xa020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 5 low */
+    { R_BPLCON3, 0xa220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 6 high */
+    { R_BPLCON3, 0xc020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 6 low */
+    { R_BPLCON3, 0xc220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 7 high */
+    { R_BPLCON3, 0xe020 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - bank 7 low */
+    { R_BPLCON3, 0xe220 },
+    { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
+    { R_COLOR04, 0x000f },    { R_COLOR05, 0x0f0f },    { R_COLOR06, 0x00ff },    { R_COLOR07, 0x0fff },
+    { R_COLOR08, 0x0620 },    { R_COLOR09, 0x0e50 },    { R_COLOR0A, 0x09f1 },    { R_COLOR0B, 0x0eb0 },
+    { R_COLOR0C, 0x055f },    { R_COLOR0D, 0x092f },    { R_COLOR0E, 0x00f8 },    { R_COLOR0F, 0x0ccc },
+    { R_COLOR10, 0x0e44 },    { R_COLOR11, 0x0e44 },    { R_COLOR12, 0x0000 },    { R_COLOR13, 0x0eec },
+    { R_COLOR14, 0x0444 },    { R_COLOR15, 0x0555 },    { R_COLOR16, 0x0666 },    { R_COLOR17, 0x0777 },
+    { R_COLOR18, 0x0888 },    { R_COLOR19, 0x0999 },    { R_COLOR1A, 0x0aaa },    { R_COLOR1B, 0x0bbb },
+    { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
+    /* colors - whew! */
+    { R_BPLCON3, 0x0020 },			  /* enable border blank */
+    /* bit plane pointers */
+    { R_BPL0PTH, 0x0000 },    { R_BPL0PTL, 0x0000 },
+    { R_BPL1PTH, 0x0000 },    { R_BPL1PTL, 0x0000 },
+    { R_BPL2PTH, 0x0000 },    { R_BPL2PTL, 0x0000 },
+    { R_BPL3PTH, 0x0000 },    { R_BPL3PTL, 0x0000 },
+    { R_BPL4PTH, 0x0000 },    { R_BPL4PTL, 0x0000 },
+    { R_BPL5PTH, 0x0000 },    { R_BPL5PTL, 0x0000 },
+    { R_BPL6PTH, 0x0000 },    { R_BPL6PTL, 0x0000 },
+    { R_BPL7PTH, 0x0000 },    { R_BPL7PTL, 0x0000 },
+    /* view specific stuff. */
+    { R_BPL1MOD, 0x0000 },
+    { R_BPL2MOD, 0x0000 },
+    { R_DIWSTRT, 0xffff },
+    { R_BPLCON0, 0x0000 },
+    { R_DIWSTOP, 0x0000 },
+    { R_DIWHIGH, 0x0000 },
+    { R_DDFSTRT, 0x0000 },
+    { R_DDFSTOP, 0x0000 },
+    { R_BPLCON1, 0x0000 },
+    { R_COP1LCH, 0x0000 },    { R_COP1LCL, 0x0000 },
+    { 0xffff, 0xfffe },       { 0xffff, 0xfffe }  /* COPEND, COPEND */
+};
+
+/* AGA custom chips copper list. */
+int aga_copper_list_len = sizeof (aga_copper_list) / sizeof (cop_t);
+int aga_copper_list_size = sizeof (aga_copper_list);
+#endif
+
 #if defined (GRF_A2024)
 cop_t std_dlace_copper_list[] = {
     { CI_WAIT(0,12), 0xfffe },				  /* WAIT (0, 12) */
@@ -119,6 +328,9 @@ cop_t std_dlace_copper_list[] = {
     { R_BPL1PTH, 0x0000 },    { R_BPL1PTL, 0x0000 },
     { R_BPL2PTH, 0x0000 },    { R_BPL2PTL, 0x0000 },
     { R_BPL3PTH, 0x0000 },    { R_BPL3PTL, 0x0000 },
+#if defined (GRF_AGA)
+    { R_FMODE, 0x0000},
+#endif
     { R_COP1LCH, 0x0000 },    { R_COP1LCL, 0x0000 },
     { 0xffff, 0xfffe },       { 0xffff, 0xfffe }  /* COPEND, COPEND */
 };
@@ -169,6 +381,9 @@ cop_t std_a2024_copper_list[] = {
     { R_BPL3PTH, 0x0000 }, { R_BPL3PTL, 0x0000 }, 
 #if defined (GRF_ECS)
     { R_DIWHIGH, 0x2000 },
+#if defined (GRF_AGA)
+    { R_FMODE, 0x0000},
+#endif
 #endif
     { R_COP1LCH, 0x0000 }, { R_COP1LCL, 0x0000 },
     { 0xffff, 0xfffe }, { 0xffff, 0xfffe }  /* COPEND, COPEND */
@@ -221,6 +436,9 @@ cop_t std_pal_a2024_copper_list[] = {
     { R_BPL3PTH, 0x0000 }, { R_BPL3PTL, 0x0000 }, 
 #if defined (GRF_ECS)
     { R_DIWHIGH, 0x2100 },
+#if defined (GRF_AGA)
+    { R_FMODE, 0x0000},
+#endif
 #endif
     { R_COP1LCH, 0x0000 }, { R_COP1LCL, 0x0000 },
     { 0xffff, 0xfffe }, { 0xffff, 0xfffe }  /* COPEND, COPEND */
