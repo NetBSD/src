@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1999/02/05 21:40:49 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1999/02/24 16:45:13 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.17 1999/02/05 21:40:49 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.18 1999/02/24 16:45:13 explorer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,10 @@ __RCSID("$NetBSD: conf.c,v 1.17 1999/02/05 21:40:49 lukem Exp $");
 #include <string.h>
 #include <stringlist.h>
 #include <syslog.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>
+#endif
 
 #include "extern.h"
 #include "pathnames.h"
