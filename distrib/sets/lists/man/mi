@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.539 2003/01/05 23:42:57 jmcneill Exp $
+# $NetBSD: mi,v 1.540 2003/01/21 12:44:36 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1240,6 +1240,7 @@
 ./usr/share/man/cat5/ttys.0			man-sys-catman
 ./usr/share/man/cat5/types.0			man-c-catman
 ./usr/share/man/cat5/tzfile.0			man-sys-catman
+./usr/share/man/cat5/ucontext.0			man-sys-catman
 ./usr/share/man/cat5/usermgmt.conf.0		man-sys-catman
 ./usr/share/man/cat5/utmp.0			man-sys-catman
 ./usr/share/man/cat5/utmpx.0			man-sys-catman
@@ -3016,6 +3017,7 @@
 ./usr/share/man/man5/ttys.5			man-sys-man
 ./usr/share/man/man5/types.5			man-c-man
 ./usr/share/man/man5/tzfile.5			man-sys-man
+./usr/share/man/man5/ucontext.5			man-sys-man
 ./usr/share/man/man5/usermgmt.conf.5		man-sys-man
 ./usr/share/man/man5/utmp.5			man-sys-man
 ./usr/share/man/man5/utmpx.5			man-sys-man
