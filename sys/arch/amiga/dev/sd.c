@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.8 1994/02/13 21:10:59 chopps Exp $
+ *	$Id: sd.c,v 1.9 1994/02/14 10:26:36 chopps Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.8 1994/02/13 21:10:59 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.9 1994/02/14 10:26:36 chopps Exp $";
 #endif
 
 #include <sys/types.h>
@@ -509,7 +509,10 @@ no_rdb:
 		       ad->amiga_unit:  scsi-unit
 		       part:		partition (A) */
 
-		    bootdev = MAKEBOOTDEV (4, 0, ad->amiga_ctlr, ad->amiga_unit, part);
+		    if (rootdev == NODEV)
+		      bootdev = MAKEBOOTOADEV (4, 0, ad->amiga_ctlr, ad->amiga_unit, part);
+		    else
+		      bootdev = rootdev;
 #ifdef DEBUG
 		    if (sddebug & SDB_BOOTDEV)
 		      printf ("sdinit: setting bootdev to 0x%08x\n", bootdev);
