@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_com.h,v 1.2 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: rpc_com.h,v 1.3 2000/12/10 04:10:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -71,8 +71,6 @@ int __rpc_seman2socktype __P((int));
 int __rpc_socktype2seman __P((int));
 void *rpc_nullproc __P((CLIENT *));
 int __rpc_sockisbound __P((int));
-
-void _seterr_reply __P((struct rpc_msg *, struct rpc_err *));
 
 struct netbuf *__rpcb_findaddr __P((rpcprog_t, rpcvers_t,
 				    const struct netconfig *,
