@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.49 2003/04/29 01:07:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.50 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2003/04/29 01:07:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2003/05/23 00:57:24 ichiro Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -231,6 +231,13 @@ static const char * const pxa2x0_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char * const ixp425_steppings[16] = {
+	"step 0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
@@ -323,6 +330,13 @@ const struct cpuidtab cpuids[] = {
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
+
+	{ CPU_ID_IXP425_533,	CPU_CLASS_XSCALE,	"IXP425 533MHz",
+	  ixp425_steppings },
+	{ CPU_ID_IXP425_400,	CPU_CLASS_XSCALE,	"IXP425 400MHz",
+	  ixp425_steppings },
+	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
+	  ixp425_steppings },
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },
@@ -500,7 +514,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_SA1:
 #endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;
