@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6 2000/06/02 23:11:06 fvdl Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.1 2001/08/08 16:18:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
@@ -87,10 +87,7 @@
  * stubs.
  */
 
-/* FIXME: Using _REENT during integration testing.  It should be changed
-   to _REENTRANT once pthread engine is available */
-
-#ifdef _REENT
+#ifdef _REENTRANT
 
 #include <pthread.h>
 
@@ -107,6 +104,7 @@
 #define cond_wait(c, m)		pthread_cond_wait(c, m)
 #define cond_init(c, a, p)	pthread_cond_init(c, a)
 
+#if 0
 #define rwlock_t		pthread_rwlock_t
 #define RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
 
@@ -114,7 +112,16 @@
 #define rwlock_rdlock(l)	pthread_rwlock_rdlock(l)
 #define rwlock_wrlock(l)	pthread_rwlock_wrlock(l)
 #define rwlock_unlock(l)	pthread_rwlock_unlock(l)
+#else
+#define rwlock_t		pthread_mutex_t
+#define RWLOCK_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
+#define rwlock_init(l, a)	pthread_mutex_init(l, a)
+#define rwlock_rdlock(l)	pthread_mutex_lock(l)
+#define rwlock_wrlock(l)	pthread_mutex_lock(l)
+#define rwlock_unlock(l)	pthread_mutex_unlock(l)
+
+#endif
 #define thread_key_t		pthread_key_t
 #define thr_keycreate(k, d)	pthread_key_create(k, d)
 #define thr_setspecific(k, p)	pthread_setspecific(k, p)
@@ -127,6 +134,9 @@
 #define FLOCKFILE(fp)		flockfile(fp)
 #define FUNLOCKFILE(fp)		funlockfile(fp)
 
+#define once_t			pthread_once_t
+#define ONCE_INITIALIZER	PTHREAD_ONCE_INIT
+#define thr_once(o,f)		pthread_once(o,f)
 #else
 
 #define mutex_init(m, a)	
@@ -153,5 +163,9 @@
 
 #define FLOCKFILE(fp)		
 #define FUNLOCKFILE(fp)		
+
+#define once_t
+#define ONCE_INITIALIZER
+#define thr_once(o,f)
 
 #endif
