@@ -1,4 +1,4 @@
-.\"	$NetBSD: lo.4,v 1.8 2004/12/04 16:47:10 peter Exp $
+.\"	$NetBSD: lo.4,v 1.9 2004/12/04 17:03:04 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd December 4, 2004
 .Dt LO 4
 .Os
 .Sh NAME
@@ -40,36 +40,35 @@
 .Sh DESCRIPTION
 The
 .Nm loop
-interface is a software loopback mechanism which may be
-used for performance analysis, software testing, and/or local
-communication.
+interface is a software loopback mechanism which may be used for
+performance analysis, software testing, and/or local communication.
 As with other network interfaces, the loopback interface must have
-network addresses assigned for each address family with which it is to be used.
-These addresses
-may be set or changed with the
+network addresses assigned for each address family with which it
+is to be used.
+These addresses may be set or changed with the
 .Dv SIOCSIFADDR
 .Xr ioctl 2 .
-The loopback interface should be the last interface configured,
-as protocols may use the order of configuration as an indication of priority.
+The loopback interface should be the last interface configured, as
+protocols may use the order of configuration as an indication of
+priority.
 The loopback should
 .Em never
-be configured first unless no hardware
-interfaces exist.
+be configured first unless no hardware interfaces exist.
 .Pp
 The loopback interface
 .Nm lo0
-is created at boottime, it always exists and cannot be destroyed with
+is created at boottime, it always exists and cannot be destroyed
+with
 .Xr ifconfig 8 .
 Additional loopback interfaces can be created by using the
 .Xr ifconfig 8
-.Sq create
+.Cm create
 command.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It lo%d: can't handle af%d .
-The interface was handed
-a message with addresses formatted in an unsuitable address
-family; the packet was dropped.
+The interface was handed a message with addresses formatted in an
+unsuitable address family; the packet was dropped.
 .El
 .Sh SEE ALSO
 .Xr inet 4 ,
