@@ -55,7 +55,6 @@ struct env387
     unsigned char regs[8][10];
   };
 
-#ifdef PT_GETXMMREGS
 struct xmmctx
   {
     unsigned short control;
@@ -82,7 +81,6 @@ struct xmmctx
       } sseregs[8];
     unsigned char r4[16 * 14];
   };
-#endif /* PT_GETXMMREGS */
 
 static void
 supply_regs (regs)
@@ -376,10 +374,55 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   supply_387regs (&core_reg->freg);
 }
 
-/*
- * kernel_u_size() is not helpful on NetBSD because
- * the "u" struct is NOT in the core dump file.
- */
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  struct reg intreg;
+  struct env387 freg;
+  struct xmmctx xmm;
+
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (intreg))
+        warning ("Wrong size register set in core file.");
+      else
+        {
+          memcpy (&intreg, core_reg_sect, sizeof (intreg));
+          supply_regs (&intreg);
+        }
+      break;
+
+    case 2:  /* Floating point registers */
+      if (core_reg_size != sizeof (freg))
+        warning ("Wrong size FP register set in core file.");
+      else
+        {
+          memcpy (&freg, core_reg_sect, sizeof (freg));
+          supply_387regs (&freg);
+        }
+      break;
+
+    case 3:  /* "Extended" floating point registers.  This is gdb-speak
+                for SSE/SSE2.  */
+      if (core_reg_size != sizeof (xmm))
+        warning ("Wrong size XMM register set in core file.");
+      else
+        {
+          memcpy (&xmm, core_reg_sect, sizeof (xmm));
+          supply_xmmregs (&xmm);
+        }
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
+}
 
 #ifdef FETCH_KCORE_REGISTERS
 /*
@@ -430,8 +473,18 @@ static struct core_fns i386nbsd_core_fns =
   NULL					/* next */
 };
 
+static struct core_fns i386nbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
+  NULL					/* next */
+};
+
 void
 _initialize_i386nbsd_nat ()
 {
   add_core_fns (&i386nbsd_core_fns);
+  add_core_fns (&i386nbsd_elfcore_fns);
 }
