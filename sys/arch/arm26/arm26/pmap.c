@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33 2001/10/13 14:23:31 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.34 2001/11/16 13:47:06 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2001/10/13 14:23:31 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2001/11/16 13:47:06 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -759,7 +759,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	pmap_remove(pmap_kernel(), va, va+len);
 }
 
-boolean_t
+inline boolean_t
 pmap_is_modified(page)
 	struct vm_page *page;
 {
@@ -771,7 +771,7 @@ pmap_is_modified(page)
 	return (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
 }
 
-boolean_t
+inline boolean_t
 pmap_is_referenced(page)
 	struct vm_page *page;
 {
@@ -812,8 +812,10 @@ pmap_clear_modify(struct vm_page *page)
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_modified(page);
-	pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
-	pmap_update_page(ppn);
+	if (rv) {
+		pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
+		pmap_update_page(ppn);
+	}
 	return rv;
 }
 
@@ -827,8 +829,10 @@ pmap_clear_reference(struct vm_page *page)
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_referenced(page);
-	pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
-	pmap_update_page(ppn);
+	if (rv) {
+		pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
+		pmap_update_page(ppn);
+	}
 	return rv;
 }
 
@@ -1069,6 +1073,8 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 
 #ifdef DDB
 #include <ddb/db_output.h>
+
+void pmap_dump(struct pmap *);
 
 void
 pmap_dump(struct pmap *pmap)
