@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.28 1997/08/27 11:24:12 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.28.4.1 1998/05/08 06:32:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -362,9 +362,12 @@ sii_Reset(sc, reset)
 	 */
 	regs->csr = SII_HPM;
 	/*
-	 * SII is always ID 7.
+	 * Set host adapter ID (6 for PMIN/PMAX, 7 for everything else)
 	 */
-	regs->id = SII_ID_IO | 7;
+	if (systype == DS_PMAX)
+		regs->id = SII_ID_IO | 6;
+	else
+		regs->id = SII_ID_IO | 7;
 	/*
 	 * Enable SII to drive the SCSI bus.
 	 */
