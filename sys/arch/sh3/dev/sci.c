@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.20 2002/02/24 19:35:42 uch Exp $ */
+/* $NetBSD: sci.c,v 1.21 2002/03/17 19:40:49 atatat Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -826,11 +826,11 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -858,7 +858,7 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

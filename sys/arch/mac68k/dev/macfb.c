@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.5 2000/10/22 05:05:39 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.6 2002/03/17 19:40:43 atatat Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -288,10 +288,10 @@ macfb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 	case WSDISPLAYIO_SVIDEO:
 		/* NONE of these operations are supported. */
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static paddr_t

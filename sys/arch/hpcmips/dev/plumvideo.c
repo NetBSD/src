@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.25 2002/03/06 15:01:05 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.26 2002/03/17 19:40:40 atatat Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

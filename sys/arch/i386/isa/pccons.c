@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.151 2002/01/07 21:47:02 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.152 2002/03/17 19:40:42 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.151 2002/01/07 21:47:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.152 2002/03/17 19:40:42 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -995,10 +995,11 @@ pcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1053,7 +1054,7 @@ pcioctl(dev, cmd, data, flag, p)
 #endif
  	}
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.28 2002/02/25 14:58:09 ad Exp $ */
+/*	$NetBSD: smg.c,v 1.29 2002/03/17 19:40:52 atatat Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -503,7 +503,7 @@ smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 	return 0;
 }

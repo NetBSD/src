@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.16 2002/03/13 04:36:49 yamt Exp $ */
+/* $NetBSD: psm.c,v 1.17 2002/03/17 19:41:00 atatat Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.16 2002/03/13 04:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.17 2002/03/17 19:41:00 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ pms_ioctl(v, cmd, data, flag, p)
 		break;
 		
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.7 2001/08/26 02:47:36 matt Exp $	*/
+/*	$NetBSD: pfb.c,v 1.8 2002/03/17 19:40:36 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -218,7 +218,7 @@ pfb_ioctl(v, cmd, data, flag, p)
 		wdf->cmsize = 256;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.23 2001/11/13 07:11:24 lukem Exp $	*/
+/*	$NetBSD: qd.c,v 1.24 2002/03/17 19:41:01 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.23 2001/11/13 07:11:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.24 2002/03/17 19:41:01 atatat Exp $");
 
 #include "opt_ddb.h"
 
@@ -1496,13 +1496,10 @@ qdioctl(dev, cmd, datap, flags, p)
 			error = 
 			   
 		   (*tp->t_linesw->l_ioctl)(tp, cmd, datap, flags, p);
-			if (error >= 0) {
+			if (error != EPASSTHROUGH) {
 				return(error);
 			}
-			error = ttioctl(tp, cmd, datap, flags, p);
-			if (error >= 0) {
-				return(error);
-			}
+			return ttioctl(tp, cmd, datap, flags, p);
 		}
 		break;
 	}

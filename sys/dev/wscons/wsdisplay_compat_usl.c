@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.17 2001/11/13 06:17:46 lukem Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.18 2002/03/17 19:41:05 atatat Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.17 2001/11/13 06:17:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.18 2002/03/17 19:41:05 atatat Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -343,7 +343,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 #endif
 
 	    default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 
 	return (0);
@@ -425,7 +425,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return (0);
 
 	    default:
-		return (-1);
+		return (EPASSTHROUGH);
 
 	    /*
 	     * the following are converted to wsdisplay ioctls
@@ -506,7 +506,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 
 	res = wsdisplay_internal_ioctl(sc, scr, req, arg, flag, p);
-	if (res)
+	if (res != EPASSTHROUGH)
 		return (res);
 
 	switch (cmd) {

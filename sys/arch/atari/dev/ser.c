@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: ser.c,v 1.15 2002/03/17 19:40:35 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -577,11 +577,11 @@ serioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -617,7 +617,7 @@ serioctl(dev, cmd, data, flag, p)
 	case TIOCMBIC:
 	case TIOCMGET:
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 #ifdef SER_DEBUG

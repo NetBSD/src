@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.18 2002/03/17 19:40:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.18 2002/03/17 19:40:56 atatat Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $";
+    "$NetBSD: hpcfb.c,v 1.18 2002/03/17 19:40:56 atatat Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	return (ENOTTY); /* Inappropriate ioctl for device */
+	return (EPASSTHROUGH); /* Inappropriate ioctl for device */
 }
 
 paddr_t

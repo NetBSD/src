@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.3 2001/11/13 07:48:48 lukem Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.4 2002/03/17 19:41:00 atatat Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.3 2001/11/13 07:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.4 2002/03/17 19:41:00 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -161,7 +161,7 @@ pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, caddr_t data,
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 	return (0);
