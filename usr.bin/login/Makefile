@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/12 14:07:38 mycroft Exp $
+#	$NetBSD: Makefile,v 1.19 1997/10/19 03:44:25 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
-WARNS?= 1
 PROG=	login
 SRCS=	login.c
 DPADD+=	${LIBUTIL} ${LIBCRYPT}
