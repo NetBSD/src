@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75.8.1 2002/05/28 19:24:57 tv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.75.8.2 2002/06/05 03:52:52 lukem Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.8.1 2002/05/28 19:24:57 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.8.2 2002/06/05 03:52:52 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1209,13 +1209,10 @@ icmp6_mtudisc_update(ip6cp, validated)
 	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
 	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
 
-	if (rt && (rt->rt_flags & RTF_HOST)
-	    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) {
-		if (mtu < IPV6_MMTU) {
-				/* xxx */
-			rt->rt_rmx.rmx_locks |= RTV_MTU;
-		} else if (mtu < rt->rt_ifp->if_mtu &&
-			   rt->rt_rmx.rmx_mtu > mtu) {
+	if (rt && (rt->rt_flags & RTF_HOST) &&
+	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
+	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
+		if (mtu < rt->rt_ifp->if_mtu) {
 			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
@@ -2925,8 +2922,8 @@ icmp6_mtudisc_timeout(rt, r)
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu;
+		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
+			rt->rt_rmx.rmx_mtu = 0;
 	}
 }
 
