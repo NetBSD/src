@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.73 2002/10/11 21:55:48 provos Exp $
+$NetBSD: UPDATING,v 1.74 2002/11/20 04:36:43 jschauma Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -29,6 +29,14 @@ Recent changes:
 	Several changes have been made to the autoconfiguration
 	framework.  Users must update and reinstall usr.sbin/config
 	before building a new kernel.
+
+20021001:
+	The i386mp branch has been merged.  To compile a kernel, users
+	will need to add the option 'cpu* at mainbus?' to their configuration
+	file.  Multiprocessor kernels will need
+	ioapic*		at mainbus? apid ?
+	options		MULTIPROCESSOR
+	options		COM_MPLOCK
 
 20020922:
 	MKDYNAMICROOT=yes enabled by default, which means that
