@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.6 1997/01/30 09:16:54 tls Exp $
+.\"	$NetBSD: options.4,v 1.7 1997/01/30 10:44:23 tls Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -379,6 +379,21 @@ Augments the system to permit the use of
 style FIFOs (i.e.
 .Dq named pipes
 ). This option is recommended.
+.It Cd options NVNODE=integer
+This option sets the size of the cache used by the name-to-inode translation
+routines, (a.k.a. the
+.Fn namei
+cache, though called by many other names in the kernel source).  By default,
+this cache has NPROC (set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
+A reasonable way to derive a value of NVNODE, should you notice a large
+number of namei cache misses with a tool such as
+.Xr systat 1 ,
+is to examine your system's current computed value with
+.Xr sysctl 1 ,
+(which calls this parameter "kern.maxvnodes") and to increase this value
+until either the namei cache hit rate improves or it is determined that
+your system does not benefit substantially from an increase in the size of
+the namei cache.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
