@@ -29,7 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "solib.h"      /* Support for shared libraries. */
 
-/* make structure definitions match up with those expected in solib.c */
+#ifndef SVR4_SHARED_LIBS
+/* The NetBSD link.h structure definitions have different names
+   than the SunOS version, but the structures are very similar,
+   so we can use solib.c by defining the SunOS names.  */
 #define link_object	sod
 #define lo_name		sod_name
 #define lo_library	sod_library
@@ -81,3 +84,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ldd		d_debug
 #define ld_un		d_un
 #define ld_2		d_sdt
+
+#endif /* SVR4_SHARED_LIBS */
