@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.59 2000/10/02 03:54:10 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.60 2000/10/04 02:51:18 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -76,6 +76,8 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include "ppp.h"
+#include "opt_inet.h"
+
 #if NPPP > 0
 
 #ifdef INET
