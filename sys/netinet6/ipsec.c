@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.84 2003/10/02 10:01:11 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.85 2003/10/03 08:46:15 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84 2003/10/02 10:01:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.85 2003/10/03 08:46:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1109,22 +1109,14 @@ ipsec6_setspidx_ipaddr(m, spidx)
 	bzero(sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &sin6->sin6_addr, sizeof(ip6->ip6_src));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-		sin6->sin6_addr.s6_addr16[1] = 0;
-		sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
-	}
+	in6_recoverscope(sin6, &ip6->ip6_src, NULL);
 	spidx->prefs = sizeof(struct in6_addr) << 3;
 
 	sin6 = (struct sockaddr_in6 *)&spidx->dst;
 	bzero(sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &sin6->sin6_addr, sizeof(ip6->ip6_dst));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-		sin6->sin6_addr.s6_addr16[1] = 0;
-		sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
-	}
+	in6_recoverscope(sin6, &ip6->ip6_dst, NULL);
 	spidx->prefd = sizeof(struct in6_addr) << 3;
 
 	return 0;
@@ -2198,10 +2190,8 @@ ipsec6_encapsulate(m, sav)
 	ovbcopy((caddr_t)ip6, (caddr_t)oip6, sizeof(struct ip6_hdr));
 
 	/* Fake link-local scope-class addresses */
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_src))
-		oip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_dst))
-		oip6->ip6_dst.s6_addr16[1] = 0;
+	in6_clearscope(&oip6->ip6_src);
+	in6_clearscope(&oip6->ip6_dst);
 
 	/* construct new IPv6 header. see RFC 2401 5.1.2.2 */
 	/* ECN consideration. */
@@ -2212,16 +2202,10 @@ ipsec6_encapsulate(m, sav)
 		/* ip6->ip6_plen will be updated in ip6_output() */
 	}
 	ip6->ip6_nxt = IPPROTO_IPV6;
-	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.src)->sin6_addr,
-	    &ip6->ip6_src, sizeof(ip6->ip6_src));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] =
-		    htons(((struct sockaddr_in6 *)&sav->sah->saidx.src)->sin6_scope_id) & 0xffff;
-	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_addr,
-	    &ip6->ip6_dst, sizeof(ip6->ip6_dst));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] =
-		    htons(((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_scope_id) & 0xffff;
+	in6_embedscope(&ip6->ip6_src,
+	    (struct sockaddr_in6 *)&sav->sah->saidx.src, NULL, NULL);
+	in6_embedscope(&ip6->ip6_dst, 
+	    (struct sockaddr_in6 *)&sav->sah->saidx.dst, NULL, NULL);
 	ip6->ip6_hlim = IPV6_DEFHLIM;
 
 	/* XXX Should ip6_src be updated later ? */
@@ -2814,26 +2798,14 @@ ipsec6_checksa(isr, state, tunnel)
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
-		bcopy(&ip6->ip6_src, &sin6->sin6_addr,
-			sizeof(ip6->ip6_src));
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-			/* fix scope id for comparing SPD */
-			sin6->sin6_addr.s6_addr16[1] = 0;
-			sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
-		}
+		in6_recoverscope(sin6, &ip6->ip6_src, NULL);
 	}
 	sin6 = (struct sockaddr_in6 *)&saidx.dst;
 	if (sin6->sin6_len == 0 || tunnel) {
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
-		bcopy(&ip6->ip6_dst, &sin6->sin6_addr,
-			sizeof(ip6->ip6_dst));
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-			/* fix scope id for comparing SPD */
-			sin6->sin6_addr.s6_addr16[1] = 0;
-			sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
-		}
+		in6_recoverscope(sin6, &ip6->ip6_dst, NULL);
 	}
 
 	return key_checkrequest(isr, &saidx);
@@ -3313,9 +3285,7 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:
 		sin6 = ((struct sockaddr_in6 *)&sav->sah->saidx.dst);
-		in6 = sin6->sin6_addr;
-		if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
-			in6.s6_addr16[1] = htons(sin6->sin6_scope_id) & 0xffff;
+		in6_embedscope(&in6, sin6, NULL, NULL);
 		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &in6))
 			return 0;
 		break;
