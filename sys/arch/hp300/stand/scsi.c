@@ -1,4 +1,10 @@
-/*	$NetBSD: scsi.c,v 1.5 1994/10/26 07:27:56 cgd Exp $	*/
+/*	$NetBSD: scsi.c,v 1.6 1996/12/17 09:21:42 thorpej Exp $	*/
+
+/*
+ * This is reported to fix some odd failures when disklabeling
+ * SCSI disks in SYS_INST.
+ */
+#define SLOWSCSI
 
 /*
  * Copyright (c) 1988 University of Utah.
