@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 1995/02/01 21:51:48 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.5 1995/02/09 10:34:41 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -41,9 +41,53 @@
 
 #include <machine/db_machdep.h>
 #include <ddb/db_command.h>
+#include <ddb/db_variables.h>
 #include <machine/bsd_openprom.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
+
+static int nil;
+
+struct db_variable db_regs[] = {
+	{ "psr", (int *)&DDB_TF->tf_psr, FCN_NULL, },
+	{ "pc", (int *)&DDB_TF->tf_pc, FCN_NULL, },
+	{ "npc", (int *)&DDB_TF->tf_npc, FCN_NULL, },
+	{ "y", (int *)&DDB_TF->tf_y, FCN_NULL, },
+	{ "wim", (int *)&DDB_TF->tf_global[0], FCN_NULL, }, /* see reg.h */
+	{ "g0", (int *)&nil, FCN_NULL, },
+	{ "g1", (int *)&DDB_TF->tf_global[1], FCN_NULL, },
+	{ "g2", (int *)&DDB_TF->tf_global[2], FCN_NULL, },
+	{ "g3", (int *)&DDB_TF->tf_global[3], FCN_NULL, },
+	{ "g4", (int *)&DDB_TF->tf_global[4], FCN_NULL, },
+	{ "g5", (int *)&DDB_TF->tf_global[5], FCN_NULL, },
+	{ "g6", (int *)&DDB_TF->tf_global[6], FCN_NULL, },
+	{ "g7", (int *)&DDB_TF->tf_global[7], FCN_NULL, },
+	{ "o0", (int *)&DDB_TF->tf_out[0], FCN_NULL, },
+	{ "o1", (int *)&DDB_TF->tf_out[1], FCN_NULL, },
+	{ "o2", (int *)&DDB_TF->tf_out[2], FCN_NULL, },
+	{ "o3", (int *)&DDB_TF->tf_out[3], FCN_NULL, },
+	{ "o4", (int *)&DDB_TF->tf_out[4], FCN_NULL, },
+	{ "o5", (int *)&DDB_TF->tf_out[5], FCN_NULL, },
+	{ "o6", (int *)&DDB_TF->tf_out[6], FCN_NULL, },
+	{ "o7", (int *)&DDB_TF->tf_out[7], FCN_NULL, },
+	{ "l0", (int *)&DDB_FR->fr_local[0], FCN_NULL, },
+	{ "l1", (int *)&DDB_FR->fr_local[1], FCN_NULL, },
+	{ "l2", (int *)&DDB_FR->fr_local[2], FCN_NULL, },
+	{ "l3", (int *)&DDB_FR->fr_local[3], FCN_NULL, },
+	{ "l4", (int *)&DDB_FR->fr_local[4], FCN_NULL, },
+	{ "l5", (int *)&DDB_FR->fr_local[5], FCN_NULL, },
+	{ "l6", (int *)&DDB_FR->fr_local[6], FCN_NULL, },
+	{ "l7", (int *)&DDB_FR->fr_local[7], FCN_NULL, },
+	{ "i0", (int *)&DDB_FR->fr_arg[0], FCN_NULL, },
+	{ "i1", (int *)&DDB_FR->fr_arg[1], FCN_NULL, },
+	{ "i2", (int *)&DDB_FR->fr_arg[2], FCN_NULL, },
+	{ "i3", (int *)&DDB_FR->fr_arg[3], FCN_NULL, },
+	{ "i4", (int *)&DDB_FR->fr_arg[4], FCN_NULL, },
+	{ "i5", (int *)&DDB_FR->fr_arg[5], FCN_NULL, },
+	{ "i6", (int *)&DDB_FR->fr_arg[6], FCN_NULL, },
+	{ "i7", (int *)&DDB_FR->fr_arg[7], FCN_NULL, },
+};
+struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern jmp_buf	*db_recover;
 
@@ -54,21 +98,21 @@ extern char *trap_type[];
 /*
  * Received keyboard interrupt sequence.
  */
-kdb_kbd_trap(regs)
-	struct sparc_saved_state *regs;
+kdb_kbd_trap(tf)
+	struct trapframe *tf;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, 0, regs);
+		kdb_trap(-1, 0, tf);
 	}
 }
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
-kdb_trap(type, regs)
+kdb_trap(type, tf)
 	int	type;
-	register struct sparc_saved_state *regs;
+	register struct trapframe *tf;
 {
 
 	switch (type) {
@@ -85,7 +129,8 @@ kdb_trap(type, regs)
 
 	/* Should switch to kdb`s own stack here. */
 
-	ddb_regs = *regs;
+	ddb_regs.ddb_tf = *tf;
+	ddb_regs.ddb_fr = *(struct frame *)tf->tf_out[6];
 
 	db_active++;
 	cnpollc(TRUE);
@@ -93,7 +138,8 @@ kdb_trap(type, regs)
 	cnpollc(FALSE);
 	db_active--;
 
-	*regs = ddb_regs;
+	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
+	*tf = ddb_regs.ddb_tf;
 
 	return (1);
 }
