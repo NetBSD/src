@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.29 2000/03/23 07:01:28 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.30 2000/07/12 21:15:33 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -128,7 +128,7 @@ struct ahb_probe_data {
 };
 
 void	ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
-void	ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
+void	ahb_send_immed __P((struct ahb_softc *, u_int32_t, struct ahb_ecb *));
 int	ahbintr __P((void *));
 void	ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
@@ -334,7 +334,7 @@ ahb_send_mbox(sc, opcode, ecb)
 void
 ahb_send_immed(sc, cmd, ecb)
 	struct ahb_softc *sc;
-	u_long cmd;
+	u_int32_t cmd;
 	struct ahb_ecb *ecb;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -374,7 +374,7 @@ ahbintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ahb_ecb *ecb;
 	u_char ahbstat;
-	u_long mboxval;
+	u_int32_t mboxval;
 
 #ifdef	AHBDEBUG
 	printf("%s: ahbintr ", sc->sc_dev.dv_xname);
