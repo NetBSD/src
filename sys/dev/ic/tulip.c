@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.69 2000/06/28 17:13:05 mrg Exp $	*/
+/*	$NetBSD: tulip.c,v 1.70 2000/07/04 04:18:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2555,25 +2555,8 @@ tlp_filter_setup(sc)
 	 * writing OPMODE will start the transmit and receive processes
 	 * in motion.
 	 */
-	if (ifp->if_flags & IFF_RUNNING) {
-		/*
-		 * Actually, some chips seem to need a really hard
-		 * kick in the head for this to work.  The genuine
-		 * DEC chips can just be idled, but some of the
-		 * clones seem to REALLY want a reset here.  Doing
-		 * the reset will end up here again, but with
-		 * IFF_RUNNING cleared.
-		 */
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_82C168:
-		case TULIP_CHIP_82C169:
-			tlp_init(sc);
-			return;
-
-		default:
-			tlp_idle(sc, OPMODE_ST|OPMODE_SR);
-		}
-	}
+	if (ifp->if_flags & IFF_RUNNING)
+		tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
 	sc->sc_opmode &= ~(OPMODE_PR|OPMODE_PM);
 
