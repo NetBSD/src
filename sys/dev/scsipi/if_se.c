@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.35 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.36 2001/07/18 18:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -348,7 +348,7 @@ seattach(parent, self, aux)
 	se_get_addr(sc, myaddr);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = se_ifstart;
 	ifp->if_ioctl = se_ioctl;
@@ -454,7 +454,7 @@ se_ifstart(ifp)
 	/* Chain; copy into linear buffer we allocated at attach time. */
 	cp = sc->sc_tbuf;
 	for (m = m0; m != NULL; ) {
-		bcopy(mtod(m, u_char *), cp, m->m_len);
+		memcpy(cp, mtod(m, u_char *), m->m_len);
 		cp += m->m_len;
 		MFREE(m, m0);
 		m = m0;
@@ -620,7 +620,7 @@ se_get(sc, data, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		bcopy(data, mtod(m, caddr_t), len);
+		memcpy(mtod(m, caddr_t), data, len);
 		data += len;
 
 		totlen -= len;
@@ -1017,8 +1017,8 @@ se_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ETHER_ADDR_LEN);
 			/* Set new address. */
 
 			error = se_init(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.14 2001/07/18 18:21:06 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.15 2001/07/18 18:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -238,7 +238,7 @@ mustek_set_params(ss, sio)
 
 	/* change ss_softc to the new values, but save ro-variables */
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
-	bcopy(sio, &ss->sio, sizeof(struct scan_io));
+	memcpy(&ss->sio, sio, sizeof(struct scan_io));
 
 	mustek_compute_sizes(ss);
 

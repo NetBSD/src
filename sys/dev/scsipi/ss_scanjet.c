@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.23 2001/07/18 18:21:06 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.24 2001/07/18 18:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -209,7 +209,7 @@ scanjet_set_params(ss, sio)
 
 	/* change ss_softc to the new values, but save ro-variables */
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
-	bcopy(sio, &ss->sio, sizeof(struct scan_io));
+	memcpy(&ss->sio, sio, sizeof(struct scan_io));
 
 	error = scanjet_set_window(ss);
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.152 2001/07/18 18:21:04 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.153 2001/07/18 18:25:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1059,7 +1059,7 @@ cdioctl(dev, cmd, addr, flag, p)
 #endif
 		} else
 			th.len = ntohs(th.len);
-		bcopy(&th, addr, sizeof(th));
+		memcpy(addr, &th, sizeof(th));
 		return (0);
 	}
 	case CDIOREADTOCENTRYS: {

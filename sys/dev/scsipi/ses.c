@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.10 2001/07/18 18:21:06 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.11 2001/07/18 18:25:41 thorpej Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -125,7 +125,7 @@ static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
 #define	SES_MALLOC(amt)		malloc(amt, M_DEVBUF, M_NOWAIT)
 #define	SES_FREE(ptr, amt)	free(ptr, M_DEVBUF)
 #define	MEMZERO(dest, amt)	memset(dest, 0, amt)
-#define	MEMCPY(dest, src, amt)	bcopy(src, dest, amt)
+#define	MEMCPY(dest, src, amt)	memcpy(dest, src, amt)
 #define	RECEIVE_DIAGNOSTIC	0x1c
 #define	SEND_DIAGNOSTIC		0x1d
 #define	WRITE_BUFFER		0x3b
@@ -511,7 +511,7 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 	if (cdbl > sizeof (struct scsipi_generic)) {
 		cdbl = sizeof (struct scsipi_generic);
 	}
-	bcopy(cdb, &sgen, cdbl);
+	memcpy(&sgen, cdb, cdbl);
 #ifndef	SCSIDEBUG
 	flg |= XS_CTL_SILENT;
 #endif

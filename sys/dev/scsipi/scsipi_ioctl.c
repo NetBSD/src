@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.39 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.40 2001/07/18 18:25:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ scsipi_user_done(xs)
 		SC_DEBUG(periph, SCSIPI_DB3, ("have short sense\n"));
 		screq->senselen_used = min(sizeof(xs->sense.atapi_sense),
 		    SENSEBUFLEN);
-		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
+		memcpy(screq->sense, &xs->sense.scsi_sense, screq->senselen);
 		screq->retsts = SCCMD_UNKNOWN; /* XXX need a shortsense here */
 		break;
 	case XS_DRIVER_STUFFUP:
