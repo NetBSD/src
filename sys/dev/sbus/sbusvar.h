@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.12 2001/09/24 23:49:34 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.13 2002/02/03 05:53:28 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _SBUS_VAR_H
 #define _SBUS_VAR_H
+
+#if defined(_KERNEL_OPT) && (defined(__sparc__) || defined(__sparc64__))
+#include "opt_sparc_arch.h"
+#endif
 
 struct sbus_softc;
 
