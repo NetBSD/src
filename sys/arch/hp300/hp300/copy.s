@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -42,7 +43,6 @@
  * Things that might help:
  *	- unroll the longword copy loop (might not be good for a 68020)
  *	- longword align when possible (only on the 68020)
- *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(copyin)
 	movl	sp@(12),d0	/* check count */
@@ -50,7 +50,7 @@ ENTRY(copyin)
 #ifdef MAPPEDCOPY
 	.globl	_mappedcopysize,_mappedcopyin
 	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
-	jcc	_mappedcopyin		| yes, go do it the new way
+	bcc	_mappedcopyin		| yes, go do it the new way
 #endif
 	movl	d2,sp@-
 	movl	_curpcb,a0	/* set fault handler */
@@ -59,30 +59,36 @@ ENTRY(copyin)
 	movl	sp@(12),a1	/* dest address */
 	movl	a0,d1
 	btst	#0,d1		/* src address odd? */
-	jeq	cieven		/* no, skip alignment */
+	beq	cieven		/* no, skip alignment */
 	movsb	a0@+,d2		/* yes, copy a byte */
 	movb	d2,a1@+
 	subql	#1,d0		/* adjust count */
-	jeq	cidone		/* count 0, all done  */
+	beq	cidone		/* count 0, all done  */
 cieven:
 	movl	a1,d1
 	btst	#0,d1		/* dest address odd? */
-	jne	cibloop		/* yes, no hope for alignment, copy bytes */
+	bne	cibytes		/* yes, no hope for alignment, copy bytes */
 	movl	d0,d1		/* no, both even */
 	lsrl	#2,d1		/* convert count to longword count */
-	jeq	cibloop		/* count 0, skip longword loop */
+	beq	cibytes		/* count 0, skip longword loop */
+	subql	#1,d1		/* predecrement for dbf */
 cilloop:
 	movsl	a0@+,d2		/* copy a longword */
 	movl	d2,a1@+
-	subql	#1,d1		/* adjust count */
-	jne	cilloop		/* still more, keep copying */
+	dbf	d1,cilloop	/* decrement low word of count */
+	subil	#0x10000,d1	/* decrement high word of count */
+	bcc	cilloop
 	andl	#3,d0		/* what remains */
-	jeq	cidone		/* nothing, all done */
+	beq	cidone		/* nothing, all done */
+cibytes:
+	subql	#1,d0		/* predecrement for dbf */
 cibloop:
 	movsb	a0@+,d2		/* copy a byte */
 	movb	d2,a1@+
-	subql	#1,d0		/* adjust count */
-	jne	cibloop		/* still more, keep going */
+	dbf	d0,cibloop	/* decrement low word of count */
+	subil	#0x10000,d0	/* decrement high word of count */
+	bcc	cibloop
+	clrl	d0		/* no error */
 cidone:
 	movl	_curpcb,a0	/* clear fault handler */
 	clrl	a0@(PCB_ONFAULT)
@@ -100,7 +106,6 @@ cifault:
  * Things that might help:
  *	- unroll the longword copy loop (might not be good for a 68020)
  *	- longword align when possible (only on the 68020)
- *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(copyout)
 	movl	sp@(12),d0	/* check count */
@@ -108,7 +113,7 @@ ENTRY(copyout)
 #ifdef MAPPEDCOPY
 	.globl	_mappedcopysize,_mappedcopyout
 	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
-	jcc	_mappedcopyout		| yes, go do it the new way
+	bcc	_mappedcopyout		| yes, go do it the new way
 #endif
 	movl	d2,sp@-
 	movl	_curpcb,a0	/* set fault handler */
@@ -117,30 +122,36 @@ ENTRY(copyout)
 	movl	sp@(12),a1	/* dest address */
 	movl	a0,d1
 	btst	#0,d1		/* src address odd? */
-	jeq	coeven		/* no, skip alignment */
+	beq	coeven		/* no, skip alignment */
 	movb	a0@+,d2		/* yes, copy a byte */
 	movsb	d2,a1@+
 	subql	#1,d0		/* adjust count */
-	jeq	codone		/* count 0, all done  */
+	beq	codone		/* count 0, all done  */
 coeven:
 	movl	a1,d1
 	btst	#0,d1		/* dest address odd? */
-	jne	cobloop		/* yes, no hope for alignment, copy bytes */
+	bne	cobytes		/* yes, no hope for alignment, copy bytes */
 	movl	d0,d1		/* no, both even */
 	lsrl	#2,d1		/* convert count to longword count */
-	jeq	cobloop		/* count 0, skip longword loop */
+	beq	cobytes		/* count 0, skip longword loop */
+	subql	#1,d1		/* predecrement for dbf */
 colloop:
 	movl	a0@+,d2		/* copy a longword */
 	movsl	d2,a1@+
-	subql	#1,d1		/* adjust count */
-	jne	colloop		/* still more, keep copying */
+	dbf	d1,colloop	/* decrement low word of count */
+	subil	#0x10000,d1	/* decrement high word of count */
+	bcc	colloop
 	andl	#3,d0		/* what remains */
-	jeq	codone		/* nothing, all done */
+	beq	codone		/* nothing, all done */
+cobytes:
+	subql	#1,d0		/* predecrement for dbf */
 cobloop:
 	movb	a0@+,d2		/* copy a byte */
 	movsb	d2,a1@+
-	subql	#1,d0		/* adjust count */
-	jne	cobloop		/* still more, keep going */
+	dbf	d0,cobloop	/* decrement low word of count */
+	subil	#0x10000,d0	/* decrement high word of count */
+	bcc	cobloop
+	clrl	d0		/* no error */
 codone:
 	movl	_curpcb,a0	/* clear fault handler */
 	clrl	a0@(PCB_ONFAULT)
@@ -156,24 +167,23 @@ ENTRY(copystr)
 	movl	sp@(8),a1	/* a1 = toaddr */
 	clrl	d0
 	movl	sp@(12),d1	/* count */
-	jeq	csdone		/* nothing to do */
+	beq	csdone		/* nothing to do */
+	subql	#1,d1		/* predecrement for dbeq */
 csloop:
 	movb	a0@+,a1@+	/* copy a byte */
-	jeq	csdone		/* copied null, exit */
-	subql	#1,d1		/* adjust count */
-	jne	csloop		/* more room, keep going */
+	dbeq	d1,csloop	/* decrement low word of count */
+	beq	csdone		/* copied null, exit */
+	subil	#0x10000,d1	/* decrement high word of count */
+	bcc	csloop		/* more room, keep going */
 	moveq	#ENAMETOOLONG,d0 /* ran out of space */
 csdone:
 	tstl	sp@(16)		/* length desired? */
-	jeq	csexit
+	beq	csexit
 	subl	sp@(4),a0	/* yes, calculate length copied */
 	movl	sp@(16),a1	/* return location */
 	movl	a0,a1@
 csexit:
 	rts
-csfault:
-	moveq	#EFAULT,d0
-	jra	csdone
 
 ENTRY(copyinstr)
 	movl	_curpcb,a0	/* set fault handler */
@@ -182,17 +192,19 @@ ENTRY(copyinstr)
 	movl	sp@(8),a1	/* a1 = toaddr */
 	clrl	d0
 	movl	sp@(12),d1	/* count */
-	jeq	cisdone		/* nothing to do */
+	beq	cisdone		/* nothing to do */
+	subql	#1,d1		/* predecrement for dbeq */
 cisloop:
 	movsb	a0@+,d0		/* copy a byte */
 	movb	d0,a1@+
-	jeq	cisdone		/* copied null, exit */
-	subql	#1,d1		/* adjust count */
-	jne	cisloop		/* more room, keep going */
+	dbeq	d1,cisloop	/* decrement low word of count */
+	beq	cisdone		/* copied null, exit */
+	subil	#0x10000,d1	/* decrement high word of count */
+	bcc	cisloop		/* more room, keep going */
 	moveq	#ENAMETOOLONG,d0 /* ran out of space */
 cisdone:
 	tstl	sp@(16)		/* length desired? */
-	jeq	cisexit
+	beq	cisexit
 	subl	sp@(4),a0	/* yes, calculate length copied */
 	movl	sp@(16),a1	/* return location */
 	movl	a0,a1@
@@ -211,17 +223,19 @@ ENTRY(copyoutstr)
 	movl	sp@(8),a1	/* a1 = toaddr */
 	clrl	d0
 	movl	sp@(12),d1	/* count */
-	jeq	cosdone		/* nothing to do */
+	beq	cosdone		/* nothing to do */
+	subql	#1,d1		/* predecrement for dbeq */
 cosloop:
 	movb	a0@+,d0		/* copy a byte */
 	movsb	d0,a1@+
-	jeq	cosdone		/* copied null, exit */
-	subql	#1,d1		/* adjust count */
-	jne	cosloop		/* more room, keep going */
+	dbeq	d1,cosloop	/* decrement low word of count */
+	beq	cosdone		/* copied null, exit */
+	subil	#0x10000,d1	/* decrement high word of count */
+	bcc	cosloop		/* more room, keep going */
 	moveq	#ENAMETOOLONG,d0 /* ran out of space */
 cosdone:
 	tstl	sp@(16)		/* length desired? */
-	jeq	cosexit
+	beq	cosexit
 	subl	sp@(4),a0	/* yes, calculate length copied */
 	movl	sp@(16),a1	/* return location */
 	movl	a0,a1@
