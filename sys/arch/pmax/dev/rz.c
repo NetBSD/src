@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.24 1997/06/15 17:17:07 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.25 1997/06/16 23:52:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,8 +65,6 @@
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
-
-#include <machine/pte.h>
 
 #include <sys/conf.h>
 #include <machine/conf.h>
