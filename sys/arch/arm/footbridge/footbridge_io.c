@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.8 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.9 2003/04/01 23:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.8 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.9 2003/04/01 23:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,8 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 	while (startpa < endpa) {
 		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + startpa,
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
-		va += NBPG;
-		startpa += NBPG;
+		va += PAGE_SIZE;
+		startpa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 

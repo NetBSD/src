@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2003/04/01 23:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -297,7 +297,7 @@ cpu_swapout(l)
 	if (vector_page < KERNEL_BASE) {
 		/* Free the system page mapping */
 		pmap_remove(p->p_vmspace->vm_map.pmap, vector_page,
-		    vector_page + NBPG);
+		    vector_page + PAGE_SIZE);
 		pmap_update(p->p_vmspace->vm_map.pmap);
 	}
 #endif
@@ -307,7 +307,7 @@ cpu_swapout(l)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of NBPG.
+ * and size must be a multiple of PAGE_SIZE.
  */
 
 void
@@ -318,7 +318,7 @@ pagemove(from, to, size)
 	pt_entry_t *fpte, *tpte;
 	size_t ptecnt = size >> PAGE_SHIFT;
 
-	if (size % NBPG)
+	if (size % PAGE_SIZE)
 		panic("pagemove: size=%08lx", (u_long) size);
 
 #ifdef PMAP_DEBUG
@@ -342,7 +342,7 @@ pagemove(from, to, size)
 	while (size > 0) {
 		*tpte++ = *fpte;
 		*fpte++ = 0;
-		size -= NBPG;
+		size -= PAGE_SIZE;
 	}
 	PTE_SYNC_RANGE(vtopte((vaddr_t)from), ptecnt);
 	PTE_SYNC_RANGE(vtopte((vaddr_t)to), ptecnt);

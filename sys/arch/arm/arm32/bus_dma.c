@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2003/03/27 19:42:30 mycroft Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27 2003/04/01 23:21:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -692,7 +692,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 #ifdef DEBUG_DMA
 			printf("wiring p%lx to v%lx", addr, va);
 #endif	/* DEBUG_DMA */
@@ -710,7 +710,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
-				cpu_dcache_wbinv_range(va, NBPG);
+				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep &= ~L2_S_CACHE_MASK;
@@ -879,7 +879,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
