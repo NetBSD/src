@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.23 2000/11/14 11:06:20 abs Exp $
+.\"	$NetBSD: fdisk.8,v 1.24 2000/12/18 23:42:40 lukem Exp $
 .\"
-.Dd April 4, 1993
+.Dd December 19, 2000
 .Dt FDISK 8
 .\" .Os BSD 4
 .Sh NAME
@@ -24,7 +24,7 @@
 .Bk -words
 .Op Ar device
 .Ek
-.Sh PROLOGUE
+.Sh DESCRIPTION
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
 Sector 0 of the disk must contain boot code, a partition table, and a
@@ -103,19 +103,6 @@ the beginning or ending address of a partition.
 these numbers are calculated using BIOS's understanding of the disk geometry
 and saved in the bootblock.
 .Pp
-The flags
-.Fl a ,
-.Fl i 
-or
-.Fl u
-are used to indicate that the partition data is to be updated.
-The
-.Nm
-program will enter a conversational mode.
-This mode is designed not to change any data unless you explicitly tell it to;
-.Nm
-selects defaults for its questions to guarantee that behavior.
-.Pp
 At the start the
 .Nm
 program will determine whether the disk sector 0 is valid as a boot sector.
@@ -125,17 +112,19 @@ If not,
 will initialize the boot code as well as the partition table.
 During this, all four partitions will be marked empty.
 .Pp
-If the 
+The flags
+.Fl a ,
+.Fl i 
+or
 .Fl u
-flag is used, it displays each partition and asks if you want to edit it.
-If you reply affirmatively,
-it will step through each field showing the old value
-and asking for a new one.
-When you are done with a partition,
+are used to indicate that the partition data is to be updated.
+The
 .Nm
-will display the information again and ask if it is correct.
+program will enter an interactive conversational mode.
+This mode is designed not to change any data unless you explicitly tell it to;
 .Nm
-will then procede to the next entry.
+selects defaults for its questions to guarantee that behavior.
+.Pp
 .Pp
 Getting the
 .Em cylinder ,
@@ -147,17 +136,6 @@ So by default,
 they will be calculated for you;
 you can specify them if you choose.
 .Pp
-After all the partitions are processed,
-if the 
-.Fl a
-flag was given, you are given the option to change the
-.Em active
-partition.
-To change only the
-.Em active
-partition, you can use only the
-.Fl a .
-.Pp
 Finally,
 when all the data for the first sector has been accumulated,
 .Nm
@@ -166,76 +144,98 @@ Only if you reply affirmatively to this question will
 .Nm
 write anything to the disk.
 .Pp
-The
-.Fl i
-explicitly requests initialization of the master boot code
-(similar to what
-.Nm fdisk /mbr
-does under MSDOS), 
-even if the magic number in the first sector is ok. 
-The partition table is left alone by this (but see above).
+Available options:
 .Pp
-You can use
-.Fl c
-to specify the filename that
-.Nm
-should read the bootcode from.  The default is to read from
-.Em /usr/mdec/mbr
-if run on an i386, and leave the bootcode empty for other
-machines.
-.Pp
-The
-.Fl B
-flag can be used to install/update the bootselect code on i386
-platforms.
-.Pp
-The flags
-.Fl 0 ,
-.Fl 1 ,
-.Fl 2 
+.Bl -tag -width Ds
+.It Fl 0
+Update partition slot 0.
+.It Fl 1
+Update partition slot 1.
+.It Fl 2
+Update partition slot 2.
+.It Fl 3
+Update partition slot 3.
+.It Fl a
+Change the active partition.
+In interactive mode this question will be asked after the partitions
+have been processed.
+.It Fl b Ar cylinders/heads/sectors
+Specify the BIOS parameters for
+.Ar cylinders ,
+.Ar heads
 and
-.Fl 3
-allow the user to selectively update or set to active a specific
-partition.
-.Pp
-The
-.Fl s
-flag allows the user to specify the partition type, start and
-size from the command line.  This flag requires the use of the
-partition selection flag.
-.Pp
-The
-.Fl b
-flag allows the user to specify the BIOS parameters for
-cylinders, heads and sectors.  It is used only in conjunction with the
+.Ar sectors .
+It is used only in conjunction with the
 .Fl u
 flag.
-.Pp
-The
-.Fl f
-flag makes
+.It Fl B
+Install or update the bootselect code on an i386 machine.
+.It Fl c Ar bootcode
+Specify the filename that
 .Nm
-work in a non-interactive mode.  In this mode, you can only change the
-disk parameters by using the 
+should read the bootcode from.
+The default is to read from
+.Pa /usr/mdec/mbr
+if run on an i386 machine, and leave the bootcode empty for other
+machines.
+.It Fl f
+Run
+.Nm
+in a non-interactive mode.
+In this mode, you can only change the disk parameters by using the 
 .Fl b
-flag.  This is provided only so scripts or other programs may
-use fdisk as part of an automatic installation process.  Using the
+flag.
+This is provided only so scripts or other programs may use
+.Nm
+as part of an automatic installation process.
+Using the
 .Fl f
 flag with
 .Fl u
 makes it impossible to specify the starting and ending
-.Em cylinder ,
-.Em head
+.Ar cylinder ,
+.Ar head
 and 
-.Em sector
-fields.  They will be automatically computed using the BIOS geometry.
-.Pp
-The
-.Fl S
-flag used with no other flags prints a series of 
-.Nm /bin/sh
-commands for setting variables to the partition information.  This
-is used for the install script.
+.Ar sector
+fields.
+They will be automatically computed using the BIOS geometry.
+.It Fl i
+Explicitly request initialization of the master boot code
+(similar to what
+.Nm fdisk /mbr
+does under
+.Tn MSDOS ) ,
+even if the magic number in the first sector is ok. 
+The partition table is left alone by this (but see above).
+.It Fl s Ar id/start/size
+Specify the partition
+.Ar id ,
+.Ar start
+and
+.Ar size .
+This flag requires the use of a partition selection flag
+.Po
+.Fl 0 ,
+.Fl 1 ,
+.Fl 2 ,
+or
+.Fl 3
+.Pc
+.It Fl S
+When used with no other flags print a series of 
+.Pa /bin/sh
+commands for setting variables to the partition information.
+This is used by the installation scripts.
+.It Fl u
+Display each partition in turn and interactively ask if you want to edit it.
+If you reply affirmatively, it will step through each field showing the old
+value and asking for a new one.
+When you are done with a partition,
+.Nm
+will display the information again and ask if it is correct.
+.Nm
+will then proceed to the next entry.
+.El
 .Sh NOTES
 The automatic calculation of the starting cylinder and
 other parameters uses
