@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 1997/06/18 02:25:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.32 1997/07/07 17:11:03 christos Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -6,7 +6,7 @@
 
 SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getproto.c getprotoent.c getprotoname.c getservbyname.c \
-	getservbyport.c getservent.c herror.c inet_addr.c inet_lnaof.c \
+	getservbyport.c getservent.c herror.c inet_lnaof.c \
 	inet_makeaddr.c inet_net_ntop.c inet_net_pton.c inet_neta.c \
 	inet_ntop.c inet_pton.c inet_netof.c inet_network.c inet_ntoa.c \
 	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
