@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.19 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.20 2003/11/15 17:44:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -211,33 +211,30 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_inherit_reply_t;
 
-/* 
- * vm_make_memory_entry 
- * XXX req_pad1 and req_pad2 do not seem to exist in Mach header files
- * but they actually appear on the traces. Probably a placeholder for 
- * an upcoming 64 bit version.
+/*
+ * vm_make_memory_entry_64 
+ * It is a bit difficult to see the difference between 32 bits
+ * and 64 bits size and offset in Mach header files (the
+ * difference seems to be only experimental)
  */
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
 	mach_msg_port_descriptor_t req_parent_entry;
 	mach_ndr_record_t req_ndr;
-	int req_pad1; 
-	mach_vm_size_t req_size;
-	int req_pad2;
-	mach_vm_offset_t req_offset;
+	mach_vm_size_64_t req_size;
+	mach_vm_offset_64_t req_offset;
 	mach_vm_prot_t req_perm;
-} mach_vm_make_memory_entry_request_t;
+} mach_vm_make_memory_entry_64_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_obj_handle;
 	mach_ndr_record_t rep_ndr;
-	int rep_pad1;
-	mach_vm_size_t rep_size;
+	mach_vm_size_64_t rep_size;
 	mach_msg_trailer_t rep_trailer;
-} mach_vm_make_memory_entry_reply_t;
+} mach_vm_make_memory_entry_64_reply_t;
 
 /* vm_region */
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makemachservices.sh,v 1.1 2003/11/13 13:40:39 manu Exp $
+#	$NetBSD: makemachservices.sh,v 1.2 2003/11/15 17:44:39 manu Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,6 +93,10 @@ BEGIN{
 }
 (intable && $2 == "UNIMPL") {
 	printf("	{%d, NULL, \"%s\", 0, 0},\n", \
+	    $1, $3, $3, $3, $3) > table;
+}
+(intable && $2 == "OBSOL") {
+	printf("	{%d, NULL, \"obsolete %s\", 0, 0},\n", \
 	    $1, $3, $3, $3, $3) > table;
 }
 END {

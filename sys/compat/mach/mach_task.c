@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.32 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.33 2003/11/15 17:44:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.32 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.33 2003/11/15 17:44:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -497,11 +497,11 @@ mach_task_suspend(args)
 	mach_task_suspend_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *lp;
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct proc *p;
 	struct mach_emuldata *med;
-	int s;
 
 	/* XXX more permission checks nescessary here? */
 	mn = req->req_msgh.msgh_remote_port;
@@ -516,16 +516,21 @@ mach_task_suspend(args)
 	med = p->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
 		
-	if (p->p_stat == SACTIVE) {
-		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
-		p->p_stat = SSTOP;
-		l->l_stat = LSSTOP;
-		p->p_nrlwps--;
-		mi_switch(l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
+	LIST_FOREACH(lp, &p->p_lwps, l_sibling) {
+		switch(lp->l_stat) {
+		case LSONPROC:
+		case LSRUN:
+		case LSSLEEP:
+		case LSSUSPENDED:
+		case LSZOMB:
+		case LSDEAD:
+			break;
+		default:
+			return mach_msg_error(args, 0);	
+			break;
+		}
 	}
+	proc_stop(p);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -551,7 +556,6 @@ mach_task_resume(args)
 	struct mach_right *mr;
 	struct proc *p;
 	struct mach_emuldata *med;
-	int s;
 
 	/* XXX more permission checks nescessary here? */
 	mn = req->req_msgh.msgh_remote_port;
@@ -565,17 +569,14 @@ mach_task_resume(args)
 	p = (struct proc *)mr->mr_port->mp_data;
 	med = p->p_emuldata;
 	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
+#if 0
 	if (med->med_suspend > 0)
 		return mach_msg_error(args, 0); /* XXX error code */
+#endif
 		
 	/* XXX We should also wake up the stopped thread... */
-	if (p->p_stat == SSTOP) {
-		sigminusset(&stopsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
-		p->p_stat = SACTIVE;
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
-	}
+	printf("resuming pid %d\n", p->p_pid);
+	(void)proc_unstop(p);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
