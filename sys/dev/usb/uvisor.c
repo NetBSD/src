@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.14.8.2 2002/07/15 10:36:23 gehenna Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.14.8.3 2002/08/29 05:23:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.14.8.2 2002/07/15 10:36:23 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.14.8.3 2002/08/29 05:23:01 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, 0 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M500 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M505 }, PALM4 },
+	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M515 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M125 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, 0 },

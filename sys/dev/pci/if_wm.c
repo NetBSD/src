@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.2.1 2002/07/15 10:35:38 gehenna Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.2.2 2002/08/29 05:22:40 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,13 +40,6 @@
  *
  * TODO (in order of importance):
  *
- *	- Fix TCP/UDP checksums.
- *		Status: Several successful transmissions with offloaded
- *		checksums occur.  After several successful transmissions,
- *		the chip goes catatonic.  The watchdog timer fires, which
- *		resets the chip, and gets things moving again, until the
- *		cycle repeats.
- *
  *	- Make GMII work on the i82543.
  *
  *	- Fix hw VLAN assist.
@@ -56,6 +49,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +64,10 @@
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h> 
@@ -114,7 +112,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
  * 256 hardware descriptors in the ring.  We tell the upper layers
- * that they can queue a lot of packets, and we go ahead and mange
+ * that they can queue a lot of packets, and we go ahead and manage
  * up to 64 of them at a time.  We allow up to 16 DMA segments per
  * packet.
  */
@@ -277,6 +275,10 @@ struct wm_softc {
 	int sc_tbi_anstate;		/* autonegotiation state */
 
 	int sc_mchash_type;		/* multicast filter offset */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 #define	WM_RXCHAIN_RESET(sc)						\
@@ -303,6 +305,7 @@ do {									\
 
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -474,6 +477,30 @@ const struct wm_product {
 	  "Intel i82544GC (LOM) 1000BASE-T Ethernet",
 	  WM_T_82544,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM,
+	  "Intel i82540EM 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_COPPER,
+	  "Intel i82545EM 1000BASE-T Ethernet",
+	  WM_T_82545,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
+	  "Intel i82546EB 1000BASE-T Ethernet",
+	  WM_T_82546,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_FIBER,
+	  "Intel i82545EM 1000BASE-X Ethernet",
+	  WM_T_82545,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_FIBER,
+	  "Intel i82546EB 1000BASE-X Ethernet",
+	  WM_T_82546,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM_LOM,
+	  "Intel i82540EM (LOM) 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -572,6 +599,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
+	 * Some chips require a handshake to access the EEPROM.
+	 */
+	if (sc->sc_type >= WM_T_82540)
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+
+	/*
 	 * Map the device.
 	 */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_PCI_MMBA);
@@ -653,7 +686,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct wm_control_data), (caddr_t *)&sc->sc_control_data,
-	    BUS_DMA_COHERENT)) != 0) {
+	    0)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
@@ -717,6 +750,15 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	enaddr[3] = myea[1] >> 8;
 	enaddr[4] = myea[2] & 0xff;
 	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Toggle the LSB of the MAC address on the second port
+	 * of the i82546.
+	 */
+	if (sc->sc_type == WM_T_82546) {
+		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
+			enaddr[5] ^= 1;
+	}
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -837,6 +879,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 #ifdef WM_EVENT_COUNTERS
 	/* Attach event counters. */
@@ -1222,6 +1268,7 @@ wm_start(struct ifnet *ifp)
 			 * Note: we currently only use 32-bit DMA
 			 * addresses.
 			 */
+			sc->sc_txdescs[nexttx].wtx_addr.wa_high = 0;
 			sc->sc_txdescs[nexttx].wtx_addr.wa_low =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].wtx_cmdlen = cksumcmd |
@@ -1394,6 +1441,11 @@ wm_intr(void *arg)
 		if ((icr & sc->sc_icr) == 0)
 			break;
 
+#if 0 /*NRND > 0*/
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, icr);
+#endif
+
 		handled = 1;
 
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
@@ -1456,7 +1508,7 @@ wm_txintr(struct wm_softc *sc)
 
 	/*
 	 * Go through the Tx list and free mbufs for those
-	 * frams which have been transmitted.
+	 * frames which have been transmitted.
 	 */
 	for (i = sc->sc_txsdirty; sc->sc_txsfree != WM_TXQUEUELEN;
 	     i = WM_NEXTTXS(i), sc->sc_txsfree++) {
@@ -1470,8 +1522,11 @@ wm_txintr(struct wm_softc *sc)
 
 		status = le32toh(sc->sc_txdescs[
 		    txs->txs_lastdesc].wtx_fields.wtxu_bits);
-		if ((status & WTX_ST_DD) == 0)
+		if ((status & WTX_ST_DD) == 0) {
+			WM_CDTXSYNC(sc, txs->txs_lastdesc, 1,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: job %d done: descs %d..%d\n",
@@ -1554,6 +1609,7 @@ wm_rxintr(struct wm_softc *sc)
 			/*
 			 * We have processed all of the receive descriptors.
 			 */
+			WM_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			break;
 		}
 
@@ -2136,18 +2192,53 @@ void
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg;
-	int i, x;
+	int i, x, addrbits = 6;
 
 	for (i = 0; i < wordcnt; i++) {
-		/* Send CHIP SELECT for one clock tick. */
-		CSR_WRITE(sc, WMREG_EECD, EECD_CS);
+		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
+			reg = CSR_READ(sc, WMREG_EECD);
+
+			/* Get number of address bits. */
+			if (reg & EECD_EE_SIZE)
+				addrbits = 8;
+
+			/* Request EEPROM access. */
+			reg |= EECD_EE_REQ;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+
+			/* ..and wait for it to be granted. */
+			for (x = 0; x < 100; x++) {
+				reg = CSR_READ(sc, WMREG_EECD);
+				if (reg & EECD_EE_GNT)
+					break;
+				delay(5);
+			}
+			if ((reg & EECD_EE_GNT) == 0) {
+				printf("%s: could not acquire EEPROM GNT\n",
+				    sc->sc_dev.dv_xname);
+				*data = 0xffff;
+				reg &= ~EECD_EE_REQ;
+				CSR_WRITE(sc, WMREG_EECD, reg);
+				continue;
+			}
+		} else
+			reg = 0;
+
+		/* Clear SK and DI. */
+		reg &= ~(EECD_SK | EECD_DI);
+		CSR_WRITE(sc, WMREG_EECD, reg);
+
+		/* Set CHIP SELECT. */
+		reg |= EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
 		delay(2);
 
 		/* Shift in the READ command. */
 		for (x = 3; x > 0; x--) {
-			reg = EECD_CS;
 			if (UWIRE_OPC_READ & (1 << (x - 1)))
 				reg |= EECD_DI;
+			else
+				reg &= ~EECD_DI;
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			delay(2);
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2157,10 +2248,11 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Shift in address. */
-		for (x = 6; x > 0; x--) {
-			reg = EECD_CS; 
+		for (x = addrbits; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EECD_DI;
+			else
+				reg &= ~EECD_DI;
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			delay(2);
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2170,7 +2262,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Shift out the data. */
-		reg = EECD_CS;
+		reg &= ~EECD_DI;
 		data[i] = 0;
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2182,7 +2274,15 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Clear CHIP SELECT. */
-		CSR_WRITE(sc, WMREG_EECD, 0);
+		reg &= ~EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+
+		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
+			/* Release the EEPROM. */
+			reg &= ~EECD_EE_REQ;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+		}
 	}
 }
 

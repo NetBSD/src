@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.38.8.1 2002/05/16 11:41:21 gehenna Exp $	*/
+/*	$NetBSD: ss.c,v 1.38.8.2 2002/08/29 05:22:55 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.38.8.1 2002/05/16 11:41:21 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.38.8.2 2002/08/29 05:22:55 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,11 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
+	 * Set up the buf queue for this device
+	 */
+	bufq_alloc(&ss->buf_queue, BUFQ_FCFS);
+
+	/*
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
@@ -169,10 +174,6 @@ ssattach(struct device *parent, struct device *self, void *aux)
 		/* XXX add code to restart a SCSI2 scanner, if any */
 	}
 
-	/*
-	 * Set up the buf queue for this device
-	 */
-	BUFQ_INIT(&ss->buf_queue);
 	ss->flags &= ~SSF_AUTOCONF;
 }
 
@@ -189,13 +190,14 @@ ssdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_FIRST(&ss->buf_queue)) != NULL) {
-		BUFQ_REMOVE(&ss->buf_queue, bp);
+	while ((bp = BUFQ_GET(&ss->buf_queue)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&ss->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(ss->sc_periph);
@@ -439,7 +441,7 @@ ssstrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_INSERT_TAIL(&ss->buf_queue, bp);
+	BUFQ_PUT(&ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -496,9 +498,8 @@ ssstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_FIRST(&ss->buf_queue)) == NULL)
+		if ((bp = BUFQ_GET(&ss->buf_queue)) == NULL)
 			return;
-		BUFQ_REMOVE(&ss->buf_queue, bp);
 
 		if (ss->special && ss->special->read) {
 			(ss->special->read)(ss, bp);

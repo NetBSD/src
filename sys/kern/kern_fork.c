@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.88.8.2 2002/07/15 10:36:31 gehenna Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.88.8.3 2002/08/29 05:23:07 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.88.8.2 2002/07/15 10:36:31 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.88.8.3 2002/08/29 05:23:07 gehenna Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.88.8.2 2002/07/15 10:36:31 gehenna E
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -374,6 +375,13 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
 
+	LIST_INIT(&p2->p_raslist);
+	p2->p_nras = 0;
+	simple_lock_init(&p2->p_raslock);
+#if defined(__HAVE_RAS)
+	ras_fork(p1, p2);
+#endif
+
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
 	if (p2->p_textvp)
@@ -381,6 +389,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (flags & FORK_SHAREFILES)
 		fdshare(p1, p2);
+	else if (flags & FORK_CLEANFILES)
+		p2->p_fd = fdinit(p1);
 	else
 		p2->p_fd = fdcopy(p1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.30.8.2 2002/06/08 09:09:04 gehenna Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.30.8.3 2002/08/29 05:22:37 gehenna Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.2 2002/06/08 09:09:04 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.3 2002/08/29 05:22:37 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -278,7 +278,7 @@ raclose(dev, flags, fmt, p)
 #if notyet
 	if (ra->ra_openpart == 0) {
 		s = spluba();
-		while (BUFQ_FIRST(&udautab[unit]) != NULL)
+		while (BUFQ_PEEK(&udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
@@ -298,6 +298,8 @@ rastrategy(bp)
 {
 	int unit;
 	struct ra_softc *ra;
+	int b;
+
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -311,6 +313,10 @@ rastrategy(bp)
 	 * If drive is open `raw' or reading label, let it at it.
 	 */
 	if (ra->ra_state == DK_RDLABEL) {
+	        /* Make some statistics... /bqt */
+	        b = splbio();
+	        disk_busy(&ra->ra_disk);
+		splx(b);
 		mscp_strategy(bp, ra->ra_dev.dv_parent);
 		return;
 	}
@@ -332,8 +338,9 @@ rastrategy(bp)
 		goto done;
 
 	/* Make some statistics... /bqt */
-	ra->ra_disk.dk_xfer++;
-	ra->ra_disk.dk_bytes += bp->b_bcount;
+	b = splbio();
+	disk_busy(&ra->ra_disk);
+	splx(b);
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
@@ -683,6 +690,7 @@ rxstrategy(bp)
 {
 	int unit;
 	struct rx_softc *rx;
+	int b;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -712,8 +720,9 @@ rxstrategy(bp)
 	}
 
 	/* Make some statistics... /bqt */
-	rx->ra_disk.dk_xfer++;
-	rx->ra_disk.dk_bytes += bp->b_bcount;
+	b = splbio();
+	disk_busy(&rx->ra_disk);
+	splx(b);
 	mscp_strategy(bp, rx->ra_dev.dv_parent);
 	return;
 
@@ -855,6 +864,14 @@ rriodone(usc, bp)
 	struct device *usc;
 	struct buf *bp;
 {
+	struct ra_softc *ra;
+	int unit;
+
+	/* We assume that this is a reasonable drive. ra_strategy should
+	   already have verified it. Thus, no checks here... /bqt */
+	unit = DISKUNIT(bp->b_dev);
+	ra = ra_cd.cd_devs[unit];
+	disk_unbusy(&ra->ra_disk, bp->b_bcount);
 
 	biodone(bp);
 }

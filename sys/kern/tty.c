@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.138.2.1 2002/05/16 04:12:25 gehenna Exp $	*/
+/*	$NetBSD: tty.c,v 1.138.2.2 2002/08/29 05:23:14 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.138.2.1 2002/05/16 04:12:25 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.138.2.2 2002/08/29 05:23:14 gehenna Exp $");
 
 #include "opt_uconsole.h"
 
@@ -926,7 +926,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSETD: {		/* set line discipline */
 		int t = *(int *)data;
 
-		if ((u_int)t >= nlinesw)
+		if (t < 0)
+			return (EINVAL);
+		if (t >= nlinesw)
 			return (ENXIO);
 		lp = linesw[t];
 		goto setldisc;
@@ -994,6 +996,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		    (tp->t_session != p->p_session)))
 			return (EPERM);
+
+		if (tp->t_session)
+			SESSRELE(tp->t_session);
+
 		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
@@ -1548,7 +1554,8 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 {
 	u_char		*cp;
 	struct proc	*p;
-	int		cc, ce, i, hiwat, cnt, error, s;
+	int		cc, ce, i, hiwat, error, s;
+	size_t		cnt;
 	u_char		obuf[OBUFSIZ];
 
 	cp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.220.8.3 2002/07/20 11:35:06 gehenna Exp $ */
+/*	$NetBSD: wd.c,v 1.220.8.4 2002/08/29 05:22:21 gehenna Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.8.3 2002/07/20 11:35:06 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.8.4 2002/08/29 05:22:21 gehenna Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -280,7 +280,7 @@ wdattach(parent, self, aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
-	bufq_init(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
@@ -426,6 +426,8 @@ wddetach(self, flags)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&sc->sc_q);
 
 	splx(s);
 

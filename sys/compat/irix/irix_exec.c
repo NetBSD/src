@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.14.2.2 2002/06/20 16:41:00 gehenna Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.14.2.3 2002/08/29 05:22:11 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14.2.2 2002/06/20 16:41:00 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14.2.3 2002/08/29 05:22:11 gehenna Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14.2.2 2002/06/20 16:41:00 gehenna E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lock.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14.2.2 2002/06/20 16:41:00 gehenna E
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
+#include <compat/irix/irix_usema.h>
 
 extern const int native_to_svr4_signo[];
 
@@ -254,9 +256,14 @@ irix_e_proc_init(p, vmspace)
 	struct proc *p;
 	struct vmspace *vmspace;
 {
+	struct irix_emuldata *ied;
+
 	if (!p->p_emuldata)
-		MALLOC(p->p_emuldata, void *, sizeof(struct irix_emuldata),
-			M_EMULDATA, M_WAITOK | M_ZERO);
+		p->p_emuldata = malloc(sizeof(struct irix_emuldata), 
+		    M_EMULDATA, M_WAITOK | M_ZERO);
+
+	ied = p->p_emuldata;
+	ied->ied_p = p;
 }  
 
 /* 
@@ -275,7 +282,7 @@ irix_e_proc_exec(p, epp)
 	error = irix_prda_init(p);
 #ifdef DEBUG_IRIX
 	if (error != 0)
-		printf("irix_e_proc_init(): PRDA map failed ");
+		printf("irix_e_proc_exec(): PRDA map failed ");
 #endif
 }
 
@@ -288,18 +295,69 @@ irix_e_proc_exit(p)
 {
 	struct proc *pp;
 	struct irix_emuldata *ied;
+	struct irix_share_group *isg;
 
+	/* 
+	 * Send SIGHUP to child process as requested using prctl(2)
+	 */
+	proclist_lock_read();
 	LIST_FOREACH(pp, &allproc, p_list) {
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
 			continue;
 
 		ied = (struct irix_emuldata *)(pp->p_emuldata);
-		if (ied->ied_pptr == p)
+		if (ied->ied_termchild && pp->p_pptr == p)
 			psignal(pp, native_to_svr4_signo[SIGHUP]);
 	}
+	proclist_unlock_read();
 
-	FREE(p->p_emuldata, M_EMULDATA);
+	/*
+	 * Remove the process from share group processes list, if revelant.
+	 */
+	ied = (struct irix_emuldata *)(p->p_emuldata);
+
+	if ((isg = ied->ied_share_group) != NULL) {
+		lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		LIST_REMOVE(ied, ied_sglist);
+		isg->isg_refcount--;
+	
+		if (isg->isg_refcount == 0) {
+			/* 
+		 	 * This was the last process in the share group.
+			 * Call irix_usema_exit_cleanup() to free in-kernel 
+			 * structures hold by the share group through
+			 * the irix_usync_cntl system call. 
+			 */
+			irix_usema_exit_cleanup(p, NULL);
+			 /* 
+			  * Free the share group structure (no need to free
+			  * the lock since we destroy it now).
+			  */
+			free(isg, M_EMULDATA);
+			ied->ied_share_group = NULL;
+		} else {
+			/* 
+			 * There are other processes remaining in the share
+			 * group. Call irix_usema_exit_cleanup() to set the 
+			 * first of them as the owner of the structures 
+			 * hold in the kernel by the share group.
+			 */
+			irix_usema_exit_cleanup(p, 
+			    LIST_FIRST(&isg->isg_head)->ied_p);
+			lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		}
+	
+	} else {
+		/* 
+		 * The process is not part of a share group. Call 
+		 * irix_usema_exit_cleanup() to free in-kernel structures hold 
+		 * by the process through the irix_usync_cntl system call.
+		 */
+		irix_usema_exit_cleanup(p, NULL);
+	}
+
+	free(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
 }
 

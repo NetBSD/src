@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.155.2.1 2002/05/16 11:40:54 gehenna Exp $ */
+/*	$NetBSD: st.c,v 1.155.2.2 2002/08/29 05:22:55 gehenna Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.155.2.1 2002/05/16 11:40:54 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.155.2.2 2002/08/29 05:22:55 gehenna Exp $");
 
 #include "opt_scsi.h"
 
@@ -368,6 +368,11 @@ stattach(parent, st, aux)
 	st->flags = ST_INIT_FLAGS;
 
 	/*
+	 * Set up the buf queue for this device
+	 */
+	bufq_alloc(&st->buf_queue, BUFQ_FCFS);
+
+	/*
 	 * Check if the drive is a known criminal and take
 	 * Any steps needed to bring it into line
 	 */
@@ -391,11 +396,6 @@ stattach(parent, st, aux)
 		printf(" blocks, write-%s\n",
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
-
-	/*
-	 * Set up the buf queue for this device
-	 */
-	BUFQ_INIT(&st->buf_queue);
 
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
@@ -440,13 +440,14 @@ stdetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_FIRST(&st->buf_queue)) != NULL) {
-		BUFQ_REMOVE(&st->buf_queue, bp);
+	while ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&st->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(st->sc_periph);
@@ -1130,7 +1131,7 @@ ststrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_INSERT_TAIL(&st->buf_queue, bp);
+	BUFQ_PUT(&st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1188,9 +1189,8 @@ ststart(periph)
 			return;
 		}
 
-		if ((bp = BUFQ_FIRST(&st->buf_queue)) == NULL)
+		if ((bp = BUFQ_GET(&st->buf_queue)) == NULL)
 			return;
-		BUFQ_REMOVE(&st->buf_queue, bp);
 
 		/*
 		 * If the device has been unmounted by the user

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.51.2.1 2002/05/30 14:47:12 gehenna Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.51.2.2 2002/08/29 05:22:52 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.51.2.1 2002/05/30 14:47:12 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.51.2.2 2002/08/29 05:22:52 gehenna Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -368,8 +368,10 @@ wdc_atapi_scsipi_request(chan, req, arg)
 		 * 2 bytes. It's a bug to request such transfers for ATAPI
 		 * but as the request can come from userland, we have to
 		 * protect against it.
+		 * Also some devices seems to not handle DMA xfers of less than
+		 * 4 bytes.
 		 */
-		if (sc_xfer->datalen & 0x01)
+		if (sc_xfer->datalen < 4 || (sc_xfer->datalen & 0x01))
 			xfer->c_flags |= C_FORCEPIO;
 
 		xfer->cmd = sc_xfer;
@@ -941,7 +943,7 @@ wdc_atapi_phase_complete(xfer)
 			}
 		} else {
 			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
-				/* 10ms not enouth, try again in 1 tick */
+				/* 10ms not enough, try again in 1 tick */
 				if (xfer->c_dscpoll++ > 
 				    mstohz(sc_xfer->timeout)) {
 					printf("%s:%d:%d: wait_for_dsc "

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.3 2001/11/13 06:28:55 lukem Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.3.8.1 2002/08/29 05:22:56 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.3 2001/11/13 06:28:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.3.8.1 2002/08/29 05:22:56 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -236,7 +236,10 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case WDOGIOC_GTICKLER:
-		*(pid_t *)data = smw->smw_tickler;
+		if ((smw = sysmon_armed_wdog) != NULL)
+			*(pid_t *)data = smw->smw_tickler;
+		else
+			error = ESRCH;
 		break;
 
 	case WDOGIOC_GWDOGS:

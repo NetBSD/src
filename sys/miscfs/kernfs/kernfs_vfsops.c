@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.43.8.1 2002/05/16 04:04:27 gehenna Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.43.8.2 2002/08/29 05:23:22 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.43.8.1 2002/05/16 04:04:27 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.43.8.2 2002/08/29 05:23:22 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -157,7 +157,7 @@ kernfs_mount(mp, path, data, ndp, p)
 #endif
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);

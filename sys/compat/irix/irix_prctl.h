@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.2.2.1 2002/06/20 16:41:02 gehenna Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.2.2.2 2002/08/29 05:22:12 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,13 @@
 
 #ifndef _IRIX_PRCTL_H_
 #define _IRIX_PRCTL_H_
+
+/* IRIX share group structure */
+struct irix_share_group {
+	LIST_HEAD(isg_head, irix_emuldata) isg_head;	/* list head */
+	struct lock isg_lock;				/* list lock */ 
+	int isg_refcount;
+};
 
 int irix_prda_init __P((struct proc *));
 int irix_sync_saddr_syscall __P((struct proc *, void *, register_t *,

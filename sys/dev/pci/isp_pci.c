@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.79.2.2 2002/06/20 16:33:38 gehenna Exp $ */
+/* $NetBSD: isp_pci.c,v 1.79.2.3 2002/08/29 05:22:40 gehenna Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.79.2.2 2002/06/20 16:33:38 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.79.2.3 2002/08/29 05:22:40 gehenna Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -747,11 +747,23 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	case ISPR2HST_MBX_OK:
 	case ISPR2HST_MBX_FAIL:
 	case ISPR2HST_ASYNC_EVENT:
-	case ISPR2HST_RIO_16:
-	case ISPR2HST_FPOST:
-	case ISPR2HST_FPOST_CTIO:
 		*isrp = r2hisr & 0xffff;
 		*mbox0p = (r2hisr >> 16);
+		*semap = 1;
+		return (1);
+	case ISPR2HST_RIO_16:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_RIO1;
+		*semap = 1;
+		return (1);
+	case ISPR2HST_FPOST:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_CMD_CMPLT;
+		*semap = 1;
+		return (1);
+	case ISPR2HST_FPOST_CTIO:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_CTIO_DONE;
 		*semap = 1;
 		return (1);
 	case ISPR2HST_RSPQ_UPDATE:
@@ -1024,6 +1036,7 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
 	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
+		isp_prt(isp, ISP_LOGWARN, "unable to load dma (%d)", error);
 		XS_SETERR(xs, HBA_BOTCH);
 		if (error == EAGAIN || error == ENOMEM)
 			return (CMD_EAGAIN);
@@ -1071,7 +1084,7 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 		onxti = nxti;
 		nxti = ISP_NXT_QENTRY(onxti, RQUEST_QUEUE_LEN(isp));
 		if (nxti == optr) {
-			isp_prt(isp, ISP_LOGDEBUG0, "Request Queue Overflow++");
+			isp_prt(isp, /* ISP_LOGDEBUG0 */ ISP_LOGERR, "Request Queue Overflow++");
 			bus_dmamap_unload(isp->isp_dmatag, dmap);
 			XS_SETERR(xs, HBA_BOTCH);
 			return (CMD_EAGAIN);

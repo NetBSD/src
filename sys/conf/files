@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.527.2.4 2002/07/15 10:35:06 gehenna Exp $
+#	$NetBSD: files,v 1.527.2.5 2002/08/29 05:22:17 gehenna Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -16,7 +16,7 @@ defflag				UCONSOLE
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
-defflag				SOSEND_LOAN
+defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 
 defflag				MULTIPROCESSOR
 
@@ -147,6 +147,10 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 
+# Support for hardware performance monitoring counters
+#
+defflag	opt_perfctrs.h		PERFCTRS
+
 # device classes
 #
 devclass disk
@@ -164,6 +168,7 @@ define	scsi		{[channel = -1]}
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	irbus		{ }
+define	btbus		{ }
 define	radiodev	{ }
 
 # audio device attributes
@@ -189,6 +194,11 @@ attach	irframe at irbus
 # Consumer Ir driver
 device	cir
 attach	cir at irbus
+
+# Bluetooth host controller driver
+define	bthcidrv
+device	bthci { } : bthcidrv
+attach	bthci at btbus
 
 # raster operations attributes
 #
@@ -255,6 +265,11 @@ include "dev/mii/files.mii"
 # RAIDframe
 #
 include "dev/raidframe/files.raidframe"
+
+#
+# Hardware-assisted data mover API
+#
+include "dev/dmover/files.dmover"
 
 #
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -410,8 +425,10 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-device wi: arp, wlan, ifnet
+#device wi: arp, wlan, ifnet
+device wi: arp, ifnet
 file	dev/ic/wi.c			wi
+file	dev/ic/wi_hostap.c		wi
 
 # 3Com Etherlink-III Ethernet controller
 #
@@ -810,6 +827,11 @@ file	dev/usb/ohci.c			ohci			needs-flag
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
 
+# SL811HS/T USB controller
+defflag	opt_slhci.h	SLHCI_DEBUG	
+device	slhci: usbus
+file	dev/ic/sl811hs.c		slhci			needs-flag
+
 # radio devices, attaches to radio hardware driver
 device	radio
 attach	radio at radiodev
@@ -982,6 +1004,8 @@ file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
+file	dev/bluetooth/bluetooth.c	bthcidrv
+file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/i2c/i2c_bus.c		i2c
@@ -1034,6 +1058,7 @@ file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
+file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sig.c
 file	kern/kern_subr.c
@@ -1056,6 +1081,7 @@ file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			!pipe_socketpair
+file	kern/sys_pmc.c
 file	kern/sys_process.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.3.10.1 2002/08/29 05:22:13 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <sys/exec_aout.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
-#include <sys/systm.h>
 
 /*
  * From Linux's include/asm-mips/elf.h
@@ -91,12 +90,12 @@ typedef struct {
 #ifdef _KERNEL
 __BEGIN_DECLS
 #ifdef EXEC_ELF32
-int linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *, 
-    char **, void *)); 
+int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *)); 
 #endif
 #ifdef EXEC_ELF64
-int linux_elf64_copyargs __P((struct exec_package *, struct ps_strings *, 
-    char **, void *)); 
+int linux_elf64_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *)); 
 #endif
 __END_DECLS
 #endif /* _KERNEL */

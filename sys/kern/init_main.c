@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199.6.2 2002/06/20 16:02:18 gehenna Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.6.3 2002/08/29 05:23:05 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.2 2002/06/20 16:02:18 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.3 2002/08/29 05:23:05 gehenna Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -116,6 +116,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.2 2002/06/20 16:02:18 gehenna 
 
 #include <uvm/uvm.h>
 
+#include <dev/cons.h>
+
 #include <net/if.h>
 #include <net/raw_cb.h>
 
@@ -168,7 +170,8 @@ main(void)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
-	int i, s, error;
+	int s, error;
+	u_int i;
 	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
@@ -573,8 +576,10 @@ start_init(void *arg)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	const char **pathp, *path, *slash;
+	const char *path, *slash;
 	char *ucp, **uap, *arg0, *arg1 = NULL;
+	char ipath[129];
+	int ipx, len;
 
 	/*
 	 * Now in process 1.
@@ -607,7 +612,28 @@ start_init(void *arg)
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
 
-	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
+	ipx = 0;
+	while (1) {
+		if (boothowto & RB_ASKNAME) {
+			printf("init path");
+			if (initpaths[ipx])
+				printf(" (default %s)", initpaths[ipx]);
+			printf(": ");
+			len = cngetsn(ipath, sizeof(ipath)-1);
+			if (len == 0) {
+				if (initpaths[ipx])
+					path = initpaths[ipx++];
+				else
+					continue;
+			} else {
+				ipath[len] = '\0';
+				path = ipath;
+			}
+		} else {
+			if ((path = initpaths[ipx++]) == NULL)
+				break;
+		}
+
 		ucp = (char *)(addr + PAGE_SIZE);
 
 		/*
@@ -647,6 +673,9 @@ start_init(void *arg)
 		i = strlen(path) + 1;
 #ifdef DEBUG
 		printf("init: copying out path `%s' %d\n", path, i);
+#else
+		if (boothowto & RB_ASKNAME || path != initpaths[0])
+			printf("init: trying %s\n", path);
 #endif
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
@@ -681,8 +710,7 @@ start_init(void *arg)
 			KERNEL_PROC_UNLOCK(p);
 			return;
 		}
-		if (error != ENOENT)
-			printf("exec %s: error %d\n", path, error);
+		printf("exec %s: error %d\n", path, error);
 	}
 	printf("init: not found\n");
 	panic("no init");

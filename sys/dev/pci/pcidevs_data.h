@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.427.2.3 2002/07/15 10:35:42 gehenna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.427.2.4 2002/08/29 05:22:42 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.453 2002/07/12 22:26:32 enami Exp 
+ *	NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp 
  */
 
 /*
@@ -1028,6 +1028,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD768 USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 AC97 Audio",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
@@ -2080,6 +2086,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "USB0673",
 	},
 	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_680,
+	    0,
+	    "CMD Technology",
+	    "SiI0680",
+	},
+	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
 	    0,
 	    "C-Media Electronics Inc",
@@ -2578,6 +2590,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PERC 3/Di",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
 	    0,
 	    "Dell Computer",
@@ -2603,6 +2621,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 	    0,
 	    "Dell Computer",
 	    "PERC 3/Di",
@@ -2804,6 +2840,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "O2 Micro Inc",
 	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6912/OZ6972 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -3014,6 +3056,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "HiNT",
 	    "HB1 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB4,
+	    0,
+	    "HiNT",
+	    "HB4 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
@@ -3502,6 +3550,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82806AA PCI64 Hub Advanced Programmable Interrupt Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADI_BECC,
+	    0,
+	    "Intel",
+	    "ADI i80200 Big Endian Companion Chip",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IXP1200,
 	    0,
 	    "Intel",
@@ -3820,6 +3874,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801BA Hub-to-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB,
+	    0,
+	    "Intel",
+	    "82801E SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC,
 	    0,
 	    "Intel",
@@ -3878,6 +3950,60 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801CAM LPC Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
+	    0,
+	    "Intel",
+	    "82801DB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
+	    0,
+	    "Intel",
+	    "82801DB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
+	    0,
+	    "Intel",
+	    "82801DB AC97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD,
+	    0,
+	    "Intel",
+	    "82801DB AC97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE,
+	    0,
+	    "Intel",
+	    "82801DB IDE Controller (UltraATA/100)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
+	    0,
+	    "Intel",
+	    "82801DB USB EHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
@@ -3986,6 +4112,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "E7500 MCH HI_C vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,
+	    0,
+	    "Intel",
+	    "82845G/GL DRAM Controller / Host-Hub I/F Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_AGP,
+	    0,
+	    "Intel",
+	    "82845G/GL Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD,
+	    0,
+	    "Intel",
+	    "82845G/GL Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
@@ -4496,6 +4640,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lucent Technologies",
 	    "USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
+	    0,
+	    "Lucent Technologies",
+	    "FW322/323 IEEE 1394 OHCI Controller",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -5182,6 +5332,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Quadro2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce MCP AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
 	    0,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
@@ -5284,6 +5440,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "9060ES PCI bus controller",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9656,
+	    0,
+	    "PLX Technology",
+	    "9656 I/O Accelerator",
+	},
+	{
 	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP,
 	    0,
 	    "Powerhouse Systems",
@@ -5348,6 +5510,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Promise Technology",
 	    "Ultra133/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2,
+	    0,
+	    "Promise Technology",
+	    "Ultra133TX2/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
+	    0,
+	    "Promise Technology",
+	    "Ultra133TX2v2/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
@@ -5950,6 +6124,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 735 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 745 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
 	    "Silicon Integrated System",
@@ -5984,6 +6164,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7012 AC-97 Sound",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
@@ -6404,6 +6590,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2050,
+	    0,
+	    "Texas Instruments",
+	    "PCI2050 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
