@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.4 2003/03/01 22:55:02 fvdl Exp $
+#	$NetBSD: files.x86,v 1.5 2003/03/12 00:09:51 thorpej Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
@@ -9,7 +9,8 @@ defflag                 MTRR
 define  mainbus { [apid = -1] }
 
 file	arch/x86/x86/apic.c		ioapic | lapic
-file	arch/x86/x86/bus_machdep.c
+file	arch/x86/x86/bus_dma.c
+file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
