@@ -1,3 +1,4 @@
+/* NetBSD $Id: cd9660_lookup.c,v 1.3 1994/06/27 19:41:02 cgd Exp $ */
 /*-
  * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	from: @(#)cd9660_lookup.c	8.2 (Berkeley) 1/23/94
- *	$Id: cd9660_lookup.c,v 1.2 1994/06/14 23:54:44 mycroft Exp $
+ *	@(#)cd9660_lookup.c	8.2 (Berkeley) 1/23/94
  */
 
 #include <sys/param.h>

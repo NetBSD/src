@@ -1,7 +1,8 @@
+/* NetBSD $Id: cons.h,v 1.5 1994/06/27 19:49:47 cgd Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cons.h 1.1 90/07/09
- *	from: @(#)cons.h	7.3 (Berkeley) 11/2/90
- *	$Id: cons.h,v 1.4 1993/08/01 19:24:42 mycroft Exp $
+ * from: Utah $Hdr: cons.h 1.6 92/01/21$
+ *
+ *	@(#)cons.h	8.1 (Berkeley) 6/10/93
  */
 
 struct consdev {
