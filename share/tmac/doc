@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.17 1999/03/07 03:34:37 mycroft Exp $
+.\"	$NetBSD: doc,v 1.18 1999/03/09 06:31:00 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,10 +35,44 @@
 .\"
 .\" .mdoc-parse - attempt to parse troff request arguments
 .\"     %beginstrip%
+.
 .if \n(.g \{\
-.cp 0
-.ftr C CR
+.
+.	cp 0
+.	ftr C CR
+.	de reset
+.		while \\n(.$ \{\
+.			ds \\$1
+.			shift
+.		\}
+..
+.	de init
+.		while \\n(.$ \{\
+.			nr \\$1 0
+.			shift
+.		\}
+..
+.	de Pushwarn
+.		nr Pushwarn_save \\n[.warn]
+.		warn 0
+..
+.	de Popwarn
+.		warn \\n[Pushwarn_save]
+..
+.
 .\}
+.
+.\" initializations added so all groff warnings can be enabled
+.	nr am 0
+.	ds gP
+.	ds n1
+.	nr dZ 0
+.	nr oM 0
+.	nr mL 0
+.	\" Commented Xt debugging is seen below. Is use-before-set a problem??
+.	nr Xt 0
+.	if \n(.g .init C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
+.\" warning initializations end
 .if t \{\
 .       so /usr/share/tmac/tmac.doc-ditroff
 .\}
@@ -241,19 +275,25 @@
 .pB
 .aY
 ..
+.
 .\" NS aY macro - clean up arg vector
 .de aY
-.rm C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
-.rm A0 A1 A2 A3 A4 A5 A6 A7 A8 A9
-.rm S1 S2 S3 S4 S5 S6 S7 S8 S9
+.ie \n(.g .reset C0 C1 C2 C3 C4 C5 C6 C7 C8 C9 A0 A1 A2 A3 A4 A5 A6 A7 A8 A9\
+                 S1 S2 S3 S4 S5 S6 S7 S8 S9\" no tabs!!
+.el \{\
+.	rm C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
+.	rm A0 A1 A2 A3 A4 A5 A6 A7 A8 A9
+.	rm S1 S2 S3 S4 S5 S6 S7 S8 S9
+.\}
 .nr aC 0
 .nr aP 0
 ..
+.aY
 .\" NS pB macro - test for end of vector (eol) (print b1 buffer or divert)
 .de pB
 .ie \\n(dZ==1 \{\
 .	if \\n(oM==1 \{\&\\*(b1
-.		rm S0
+.		ds S0
 .		ds b1
 .	\}
 .	if \\n(oM==0 \{\
@@ -262,7 +302,7 @@
 .\}
 .el \{\
 .	ie \\n(oM==0 \{\&\\*(b1
-.		rm S0
+.		ds S0
 .		ds b1
 .	\}
 .	el \{\
@@ -786,7 +826,7 @@
 .					ie \\n(nS>1 .br
 .					el \{\
 .						if \\n(iS==0 \{\
-.							sw \\$1
+.							sW \\$1
 .					nr iS ((\\n(sWu+1)*\\n(fW)u
 .						\}
 .					\}
@@ -1366,7 +1406,8 @@
 .	\}
 .	if "\\*(A\\n(aP"off" \{\
 .		ds sV
-.		rm S0 S1 S2 S3 S4 S5 S6 S7 S8 S9
+.		ie \n(.g .reset S0 S1 S2 S3 S4 S5 S6 S7 S8 S9
+.		el .rm S0 S1 S2 S3 S4 S5 S6 S7 S8 S9
 .		nr sM 0
 .	\}
 .	ie \\n(aC>\\n(aP \{\
@@ -1387,6 +1428,7 @@
 .	nr aT 2
 .\}
 .el \{\
+.	Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\$1>2 \{\
 .			nr aT \\n(z\\$1
@@ -1399,6 +1441,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
+.	Popwarn
 .\}
 ..
 .de aU
@@ -1406,6 +1449,7 @@
 .aW \\$1
 .ie \\n(sW>2:(\A'\\*(A\\$1'==0) .nr aT 2
 .el \{\
+.	Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\*(A\\$1>2 \{\
 .			nr aT \\n(z\\*(A\\$1
@@ -1418,6 +1462,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
+.	Popwarn
 .\}
 ..
 .\}
@@ -1428,6 +1473,7 @@
 .	nr aT 2
 .\}
 .el \{\
+.	Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\$1>2 \{\
 .			nr aT \\n(z\\$1
@@ -1440,6 +1486,7 @@
 .		\}
 .		el .nr aT 2
 .	\}
+.	Popwarn
 .\}
 ..
 .de aU
@@ -1447,6 +1494,7 @@
 .aW \\$1
 .ie \\n(sW>2 .nr aT 2
 .el \{\
+.	Pushwarn
 .	if \\n(sW==1 \{\
 .		ie \\n(z\\*(A\\$1>2 \{\
 .			nr aT \\n(z\\*(A\\$1
@@ -1459,12 +1507,10 @@
 .		\}
 .		el .nr aT 2
 .	\}
+.	Popwarn
 .\}
 ..
 .\}
-.\" NS s1 macro - set spacing for class type 1
-.\" NS s2 macro - set spacing for class type 2
-.\" NS s3 macro - set spacing for class type 3
 .\" NS s1 macro - set spacing for class type 1
 .\" NS s2 macro - set spacing for class type 2
 .\" NS s3 macro - set spacing for class type 3
@@ -1478,14 +1524,14 @@
 .de s1
 .if \\n(\\*(A\\n(aC==3 \{\
 .	nr xX \\n(aC-1
-.	rm S\\n(xX
+.	ds S\\n(xX
 .	ds S\\n(aC \\*(sV
 .\}
 .if \\n(\\*(A\\n(aC==2 \{\
 .	nr xX \\n(aC-1
 .\" this kludge can probably go away, but need to double check first
 .	ie "\\*(A\\n(aC"Nb" .ds S\\n(xX \\*(hV
-.	el .rm S\\n(xX
+.	el .ds S\\n(xX
 .\}
 ..
 .de s2
@@ -1494,7 +1540,7 @@
 .de s3
 .if \\n(aC>1 \{\
 .	nr xX \\n(aC-1
-.	rm S\\n(xX
+.	ds S\\n(xX
 .\}
 .ds S\\n(aC \\*(sV
 ..
@@ -2374,7 +2420,7 @@
 .ie \\n(aC>=\\n(aP  \{\
 .	if "\\*(A\\n(aP"Ta" \{\
 .		nr jJ \\n(aP-1
-.		rm S\\n(jJ
+.		ds S\\n(jJ
 .		rr jJ
 .	\}
 .	c\\n(C\\n(aP
@@ -2388,7 +2434,7 @@
 .	ie \\n(aC>=\\n(aP \{\
 .		if "\\*(A\\n(aP"Ta" \{\
 .			nr jJ \\n(aP-1
-.			rm S\\n(jJ
+.			ds S\\n(jJ
 .			rr jJ
 .		\}
 .		as b1 \\t
@@ -2396,7 +2442,7 @@
 .	\}
 .	el \{\
 .		as b1 \\t\\c
-.		rm S\\n(aP
+.		ds S\\n(aP
 .		pB
 .		aY
 .\" .		ds b1
@@ -3521,6 +3567,6 @@ File:
 .rn em e@
 .de em
 .	tm End-macro (.em) respecification is not allowed. (#\\n(.c)
-.	tm Should this have been .Em ...?
+.	ab Should this have been .Em ...?
 ..
 .
