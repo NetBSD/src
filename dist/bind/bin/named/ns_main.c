@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.2 1999/11/20 19:14:00 veego Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.3 1999/11/20 20:48:27 veego Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -896,7 +896,7 @@ stream_getlen(evContext lev, void *uap, int fd, int bytes) {
 	if (evRead(lev, sp->s_rfd, &iov, 1, stream_getmsg, sp, &sp->evID_r)
 	    == -1)
 		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
-			 (void *)sp->s_rfd, strerror(errno));
+			 sp->s_rfd, strerror(errno));
 	sp->flags |= STREAM_READ_EV;
 }
 
@@ -1960,7 +1960,7 @@ sq_done(struct qstream *sp) {
 	if (evRead(ev, sp->s_rfd, &iov, 1, stream_getlen, sp, &sp->evID_r) ==
 	    -1)
 		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
-			 (void *)sp->s_rfd, strerror(errno));
+			 sp->s_rfd, strerror(errno));
 	sp->flags |= STREAM_READ_EV;
 }
 
