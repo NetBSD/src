@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.16.2.6 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.16.2.7 2005/02/24 17:22:33 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.6 2004/12/18 09:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.7 2005/02/24 17:22:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,8 +726,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct lwp *l)
 {
 	const struct kfilter *kfilter;
 	struct filedesc	*fdp;
-	struct knote	*kn;
 	struct file	*fp;
+	struct knote	*kn;
 	int		s, error;
 
 	fdp = kq->kq_fdp;

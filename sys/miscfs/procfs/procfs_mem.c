@@ -1,3 +1,4 @@
+/*	$NetBSD: procfs_mem.c,v 1.33.2.5 2005/02/24 17:22:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -77,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.33.2.4 2004/09/21 13:36:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.33.2.5 2005/02/24 17:22:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
