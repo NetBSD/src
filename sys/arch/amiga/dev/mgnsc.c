@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.13 1995/08/18 15:28:01 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.14 1995/09/16 16:11:22 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -111,10 +111,10 @@ mgnscattach(pdp, dp, auxp)
 	sc->sc_siopp = rp = zap->va + 0x8000;
 
 	/*
-	 * DCNTL = 25.01->37.5MHZ / SCLK/1.5
 	 * CTEST7 = TT1
 	 */
-	sc->sc_clock_freq = 0x0240;
+	sc->sc_clock_freq = 33;		/* Clock = 33Mhz */
+	sc->sc_ctest7 = 0x02;		/* TT1 */
 
 	alloc_sicallback();
 
@@ -188,3 +188,15 @@ mgnsc_dmaintr(sc)
 	add_sicallback (siopintr, sc, NULL);
 	return (1);
 }
+
+#ifdef DEBUG
+void
+mgnsc_dump()
+{
+	int i;
+
+	for (i = 0; i < mgnsccd.cd_ndevs; ++i)
+		if (mgnsccd.cd_devs[i])
+			siop_dump(mgnsccd.cd_devs[i]);
+}
+#endif
