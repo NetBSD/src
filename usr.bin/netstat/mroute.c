@@ -1,3 +1,5 @@
+/*	$NetBSD: mroute.c,v 1.9 1995/10/03 21:42:42 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989 Stephen Deering
  * Copyright (c) 1992, 1993
@@ -35,7 +37,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mroute.c	8.1 (Berkeley) 6/6/93
- *	$Id: mroute.c,v 1.8 1995/06/12 03:49:45 mycroft Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: netstat.h,v 1.5 1995/10/03 21:42:45 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
- *	$Id: netstat.h,v 1.4 1995/07/03 03:25:19 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
