@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 1999/01/06 04:11:31 nisimura Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 1999/01/15 01:23:12 castor Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,8 @@
 
 #include <sys/types.h>
 #include <vm/vm_param.h>		/* XXX boolean_t */
+
+#include <mips/mips_opcode.h>
 
 #include <machine/param.h>
 #include <mips/db_machdep.h>
@@ -75,9 +77,10 @@ extern void stacktrace_subr __P((int a0, int a1, int a2, int a3,
  */
 void db_mips_stack_trace __P((int count, vaddr_t stackp,
     vaddr_t the_pc, vaddr_t the_ra, int flags, vaddr_t kstackp));
+int	db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep, 
+    int db_var_fun));
 
-
-#define DB_SETF_REGS FCN_NULL
+#define DB_SETF_REGS db_mips_variable_func
 #define DBREGS_REG()
 
 struct db_variable db_regs[] = {
@@ -121,8 +124,6 @@ struct db_variable db_regs[] = {
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-
-
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
@@ -130,15 +131,83 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
+#ifndef DDB_TRACE
 	stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1], 
 			ddb_regs.f_regs[A2], ddb_regs.f_regs[A3],
 			ddb_regs.f_regs[PC],
 			ddb_regs.f_regs[SP],
-			ddb_regs.f_regs[S8],	/* non-virtual fame pointer */
+			ddb_regs.f_regs[S8],	/* non-virtual frame pointer */
 			ddb_regs.f_regs[RA],
 			db_printf);
-}
+#else
+/*
+ * Imcomplete but practically useful stack backtrace.
+ * Fails to work when nested exception path steps across a LEAF
+ * function because below can not detected the return address.
+ */
+#define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
+#define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
+#define	MIPS_ERET	0x12345678	/* instruction code for eret */
+	unsigned va, pc, ra, sp, func;
+	int insn;
+	InstFmt i;
+	int stacksize;
+	db_addr_t offset;
+	char *name;
+	extern char verylocore[];
 
+	pc = ddb_regs.f_regs[PC];
+	sp = ddb_regs.f_regs[SP];
+	ra = 0;
+	do {
+		va = pc;
+		do {
+			va -= sizeof(int);
+			insn = *(int *)va;
+			if (insn == MIPS_ERET)
+				goto mips3_eret;
+		} while (insn != MIPS_JR_RA && insn != MIPS_JR_K0);
+		va += sizeof(int);
+	mips3_eret:
+		va += sizeof(int);
+		while (*(int *)va == 0x00000000)
+			va += sizeof(int);
+		func = va;
+		stacksize = 0;
+		do {
+			i.word = *(int *)va;
+			if (i.IType.op == OP_SW
+			    && i.IType.rs == SP
+			    && i.IType.rt == RA)
+				ra = *(int *)(sp + (short)i.IType.imm);
+			if (i.IType.op == OP_ADDIU
+			    && i.IType.rs == SP
+			    && i.IType.rt == SP)
+				stacksize = -(short)i.IType.imm;
+			va += sizeof(int);
+		} while (va < pc);
+		if (ra == 0)
+			ra = ddb_regs.f_regs[RA]; /* LEAF made the exception */
+
+		db_find_sym_and_offset(func, &name, &offset);
+		if (name == 0)
+			name = "?";
+		db_printf("%s()+0x%x, called by %p, stack size %d\n",
+			name, pc - func, (void *)ra, stacksize);
+
+		if (ra == pc) {
+			db_printf("--loop?--\n");
+			return;
+		}
+		sp += stacksize;
+		pc = ra;
+	} while (pc > (unsigned)verylocore);
+	if (pc < 0x80000000)
+		db_printf("-- user process --\n");
+	else
+		db_printf("-- kernel entry --\n");
+#endif
+}
 
 void
 db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
@@ -150,3 +219,19 @@ db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
 	return;
 }
 
+
+int 
+db_mips_variable_func (struct db_variable *vp,
+	db_expr_t *valuep,
+	int db_var_fcn)
+{
+	switch (db_var_fcn) {
+	case DB_VAR_GET:
+		*valuep = *(mips_reg_t *) vp->valuep;
+		break;
+	case DB_VAR_SET:
+		*(mips_reg_t *) vp->valuep = *valuep;
+		break;
+	}
+	return 0;
+}
