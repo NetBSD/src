@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/03/28 14:03:36 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2000/01/19 16:30:02 tsutsui Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -17,7 +17,7 @@ SCRIPTSMODE=	555
 SCRIPTS=	installboot.sh
 MKMAN=		no
 
-STRIP?=	strip
+STRIPPROG?=	strip
 
 SRCS=	xxboot.S bootufs.c unzip.c
 .PATH:	${.CURDIR}/gunzip
@@ -56,7 +56,7 @@ $(BOOT): $(OBJS)
 			bc` -gt 0 ];\
 	then	echo '$(BOOT): text+data is too large'; exit 1; fi
 	@cp $(BOOT).x s.x
-	@$(STRIP) s.x
+	@$(STRIPPROG) s.x
 	@dd bs=32 skip=1 count=256 if=s.x of=$(BOOT) 2>/dev/null
 	@rm s.x
 
