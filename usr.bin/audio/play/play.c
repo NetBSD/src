@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.9 1999/04/13 07:21:45 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.10 1999/05/17 02:03:36 jtk Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -90,6 +90,7 @@ main(argc, argv)
 			decode_int(optarg, &channels);
 			if (channels < 0)
 				errx(1, "channels must be positive");
+			break;
 		case 'C':
 			ctldev = optarg;
 			break;
