@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.19 1995/03/18 14:56:24 cgd Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.20 1995/05/19 20:17:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.19 1995/03/18 14:56:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.20 1995/05/19 20:17:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -644,20 +644,19 @@ in_getaddr(s, which)
 	register struct sockaddr_in *sin = sintab[which];
 	struct hostent *hp;
 	struct netent *np;
-	int val;
 
 	sin->sin_len = sizeof(*sin);
 	if (which != MASK)
 		sin->sin_family = AF_INET;
 
-	if ((val = inet_addr(s)) != -1)
-		sin->sin_addr.s_addr = val;
-	else if (hp = gethostbyname(s))
-		memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-	else if (np = getnetbyname(s))
-		sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
-	else
-		errx(1, "%s: bad value", s);
+	if (inet_aton(s, &sin->sin_addr) == 0) {
+		if (hp = gethostbyname(s))
+			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
+		else if (np = getnetbyname(s))
+			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
+		else
+			errx(1, "%s: bad value", s);
+	}
 }
 
 /*
