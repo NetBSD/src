@@ -1,10 +1,10 @@
-#	$NetBSD: files.sgimips,v 1.32 2004/01/12 12:15:05 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.33 2004/01/18 00:55:26 sekiya Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-defflag	opt_machtypes.h		IP2X IP32
+defflag	opt_machtypes.h		IP1X IP2X IP32
 
 device mainbus {[addr = -1]}
 attach mainbus at root
@@ -72,9 +72,8 @@ file 	dev/ic/z8530sc.c			zsc
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
 
-file arch/sgimips/sgimips/ip2x.c		ip2x
 file arch/sgimips/sgimips/ip22_cache.S		ip2x
-file arch/sgimips/sgimips/ip32.c		ip32
+file arch/sgimips/sgimips/int.c			ip1x | ip2x
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
 file arch/sgimips/sgimips/clock.c
