@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.4 2003/02/02 20:43:19 matt Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.5 2003/02/24 08:06:43 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -118,13 +118,6 @@ GLOBAL(intrcnt)
 GLOBAL(eintrcnt)
 
 /*
- * File-scope for locore.S
- */
-	.data
-idle_u:
-	.long	0			/* fake uarea during idle after exit */
-
-/*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
  */
@@ -183,10 +176,18 @@ __start_cpu0:
 	tlbia
 	sync
 	isync
-
-/* compute end of kernel memory */
+/* get start of bss */
+	lis	3,_C_LABEL(_edata)-4@ha
+	addi	3,3,_C_LABEL(_edata)-4@l
+/* get end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
+/* zero bss */
+	li	4,0
+2:	stwu	4,4(3)
+	cmpw	3,8
+	bne+	2b
+
 #if defined(DDB)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
 	lis	7,_C_LABEL(startsym)@ha
