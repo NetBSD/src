@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/27 01:04:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1999/03/19 22:54:40 thorpej Exp $
 
-.include "${.CURDIR}/../Makefile.csu.aout"
+.include "${.CURDIR}/../common_aout/Makefile.inc"
