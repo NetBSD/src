@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.20 1997/10/19 10:25:52 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.20.2.1 1998/11/24 06:04:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20 1997/10/19 10:25:52 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.1 1998/11/24 06:04:27 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20 1997/10/19 10:25:52 jonathan Exp $
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/dev/rconsvar.h>
 
 #include <machine/pmioctl.h>
 
@@ -133,9 +134,6 @@ extern int	pmax_boardtype;		/* Mother board type */
  * Console I/O is redirected to the appropriate device, either a screen and
  * keyboard, a serial port, or the "virtual" console.
  */
-
-extern struct consdev *cn_tab;	/* Console I/O table... */
-extern void rcons_vputc __P((dev_t, int));	/* XXX */
 
 struct consdev cd = {
 	(void (*)(struct consdev *))0,		/* probe */
@@ -240,6 +238,7 @@ consinit()
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
 			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
+			cd.cn_dev = makedev(RCONSDEV, 0);
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
@@ -249,7 +248,7 @@ consinit()
 	    case DS_MAXINE:
 #if NDTOP > 0
 		if (kbd == 3) {
-			cd.cn_dev = makedev(DTOPDEV, 0);
+			cd.cn_dev = makedev(RCONSDEV, 0);
 			cd.cn_getc = dtopKBDGetc;
 		} else
 #endif /* NDTOP */
@@ -287,6 +286,10 @@ consinit()
 			goto remcons;
 		break;
 
+	    /*
+	     * No configured baseboard video found, or 
+	     * no configured baseboard keyboard found. Fallback to serial.
+	     */
 	    default:
 		goto remcons;
 	    };
@@ -297,12 +300,13 @@ consinit()
 	     */
 #if NTC>0
 	    if (tc_findconsole(crt)) {
+
 			cd.cn_pri = CN_NORMAL;
-#ifdef RCONS_HACK
-/* FIXME */		cd.cn_putc = v_putc;
-			cd.cn_dev = makedev (RCONSDEV, 0);
-#endif /* RCONS_HACK */
-			cd.cn_putc = rcons_vputc;	/*XXX*/
+			/*
+			 * send console output to rcons output, with
+			 * input from cn_dev as computed above.
+			 */
+	      		rcons_indev(&cd);
 			return;
 	    } else
 #endif
