@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.152 1999/02/03 23:22:11 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.153 1999/02/03 23:57:27 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -137,6 +137,8 @@ void	com_loadchannelregs __P((struct com_softc *));
 void	com_hwiflow	__P((struct com_softc *));
 void	com_break	__P((struct com_softc *, int));
 void	com_modem	__P((struct com_softc *, int));
+void	tiocm_to_com	__P((struct com_softc *, int, int));
+int	com_to_tiocm	__P((struct com_softc *));
 void	com_iflush	__P((struct com_softc *));
 
 int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
@@ -193,8 +195,6 @@ static int ppscap =
 	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
 #endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
-
-static u_char tiocm_xxx2mcr __P((int));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
@@ -948,19 +948,6 @@ comtty(dev)
 	return (tp);
 }
 
-static u_char
-tiocm_xxx2mcr(data)
-	int data;
-{
-	u_char m = 0;
-
-	if (ISSET(data, TIOCM_DTR))
-		SET(m, MCR_DTR);
-	if (ISSET(data, TIOCM_RTS))
-		SET(m, MCR_RTS);
-	return m;
-}
- 
 int
 comioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -1018,42 +1005,14 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCMSET:
-		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
-		/*FALLTHROUGH*/
-
 	case TIOCMBIS:
-		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
-		break;
-
 	case TIOCMBIC:
-		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+		tiocm_to_com(sc, cmd, *(int *)data);
 		break;
 
-	case TIOCMGET: {
-		u_char m;
-		int bits = 0;
-
-		m = sc->sc_mcr;
-		if (ISSET(m, MCR_DTR))
-			SET(bits, TIOCM_DTR);
-		if (ISSET(m, MCR_RTS))
-			SET(bits, TIOCM_RTS);
-		m = sc->sc_msr;
-		if (ISSET(m, MSR_DCD))
-			SET(bits, TIOCM_CD);
-		if (ISSET(m, MSR_CTS))
-			SET(bits, TIOCM_CTS);
-		if (ISSET(m, MSR_DSR))
-			SET(bits, TIOCM_DSR);
-		if (ISSET(m, MSR_RI | MSR_TERI))
-			SET(bits, TIOCM_RI);
-		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_ier))
-			SET(bits, TIOCM_LE);
-		*(int *)data = bits;
+	case TIOCMGET:
+		*(int *)data = com_to_tiocm(sc);
 		break;
-	}
 
 	case PPS_CREATE:
 		break;
@@ -1221,6 +1180,9 @@ com_modem(sc, onoff)
 	int onoff;
 {
 
+	if (sc->sc_mcr_dtr == 0)
+		return;
+
 	if (onoff)
 		SET(sc->sc_mcr, sc->sc_mcr_dtr);
 	else
@@ -1234,6 +1196,73 @@ com_modem(sc, onoff)
 		} else
 			com_loadchannelregs(sc);
 	}
+}
+
+void
+tiocm_to_com(sc, how, ttybits)
+	struct com_softc *sc;
+	int how, ttybits;
+{
+	u_char combits;
+
+	combits = 0;
+	if (ISSET(ttybits, TIOCM_DTR))
+		SET(combits, MCR_DTR);
+	if (ISSET(ttybits, TIOCM_RTS))
+		SET(combits, MCR_RTS);
+ 
+	switch (how) {
+	case TIOCMBIC:
+		CLR(sc->sc_mcr, combits);
+		break;
+
+	case TIOCMBIS:
+		SET(sc->sc_mcr, combits);
+		break;
+
+	case TIOCMSET:
+		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
+		SET(sc->sc_mcr, combits);
+		break;
+	}
+
+	if (!sc->sc_heldchange) {
+		if (sc->sc_tx_busy) {
+			sc->sc_heldtbc = sc->sc_tbc;
+			sc->sc_tbc = 0;
+			sc->sc_heldchange = 1;
+		} else
+			com_loadchannelregs(sc);
+	}
+}
+
+int
+com_to_tiocm(sc)
+	struct com_softc *sc;
+{
+	u_char combits;
+	int ttybits = 0;
+
+	combits = sc->sc_mcr;
+	if (ISSET(combits, MCR_DTR))
+		SET(ttybits, TIOCM_DTR);
+	if (ISSET(combits, MCR_RTS))
+		SET(ttybits, TIOCM_RTS);
+
+	combits = sc->sc_msr;
+	if (ISSET(combits, MSR_DCD))
+		SET(ttybits, TIOCM_CD);
+	if (ISSET(combits, MSR_CTS))
+		SET(ttybits, TIOCM_CTS);
+	if (ISSET(combits, MSR_DSR))
+		SET(ttybits, TIOCM_DSR);
+	if (ISSET(combits, MSR_RI | MSR_TERI))
+		SET(ttybits, TIOCM_RI);
+
+	if (sc->sc_ier != 0)
+		SET(ttybits, TIOCM_LE);
+
+	return (ttybits);
 }
 
 static u_char
