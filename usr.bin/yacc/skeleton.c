@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $";
+static char rcsid[] = "$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,12 @@ static char rcsid[] = "$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $"
 
 char *banner[] =
 {
+    "#include <sys/cdefs.h>",
     "#ifndef lint",
     "#if 0",
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
-    "static char yyrcsid[] = \"$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $\";",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $\");",
     "#endif",
     "#endif",
     "#include <stdlib.h>",
@@ -132,6 +133,8 @@ char *header[] =
 char *body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
+    "int yyparse __P((void));",
+    "static int yygrowstack __P((void));",
     "static int yygrowstack()",
     "{",
     "    int newsize, i;",
@@ -227,14 +230,10 @@ char *body[] =
     "        goto yyreduce;",
     "    }",
     "    if (yyerrflag) goto yyinrecovery;",
-    "#ifdef lint",
     "    goto yynewerror;",
-    "#endif",
     "yynewerror:",
     "    yyerror(\"syntax error\");",
-    "#ifdef lint",
     "    goto yyerrlab;",
-    "#endif",
     "yyerrlab:",
     "    ++yynerrs;",
     "yyinrecovery:",
