@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.61 1997/03/27 07:52:25 mikel Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.62 1997/04/03 21:08:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -463,11 +463,10 @@ killpg1(cp, signum, pgid, all)
 		}
 		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    p->p_stat == SZOMB ||
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
 			nfound++;
-			if (signum)
+			if (signum && p->p_stat != SZOMB)
 				psignal(p, signum);
 		}
 	}
