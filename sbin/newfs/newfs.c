@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.56 2002/01/18 08:37:08 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.57 2002/02/16 19:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.56 2002/01/18 08:37:08 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.57 2002/02/16 19:39:30 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -555,8 +555,15 @@ main(int argc, char *argv[])
 			pp = &lp->d_partitions[*cp - 'a'];
 		if (pp->p_size == 0)
 			errx(1, "`%c' partition is unavailable", *cp);
+#if 0
+		/*
+		 * While one might think this test is useful, newfs
+		 * has historically allowed this operation, and some
+		 * people make use of this feature.
+		 */
 		if (pp->p_fstype != FS_BSDFFS)
 			errx(1, "`%c' partition type is not `4.2BSD'", *cp);
+#endif
 	}	/* !Fflag && !mfs */
 
 	if (fssize == 0)
@@ -773,6 +780,8 @@ rewritelabel(char *s, volatile int fd, struct disklabel *lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (ioctl(fd, DIOCWDINFO, (char *)lp) < 0) {
+		if (errno == ESRCH)
+			return;
 		warn("ioctl (WDINFO)");
 		errx(1, "%s: can't rewrite disk label", s);
 	}
