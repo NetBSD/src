@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.7 1999/12/13 09:09:34 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.8 1999/12/15 05:22:37 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -138,10 +138,49 @@ _rtld_add_paths(path_p, pathstr, dodebug)
 }
 
 
-static struct {
+struct sysctldesc {
 	const char *name;
 	int type;
-} ctl_machdep[] = CTL_MACHDEP_NAMES;
+};
+
+struct list {
+	const struct sysctldesc *ctl;
+	int numentries;
+};
+
+static struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+static struct sysctldesc ctl_toplvl[] = CTL_NAMES;
+
+struct list toplevel[] = {
+	{ 0, 0 },
+	{ ctl_toplvl, CTL_MAXID },
+	{ 0, -1 },
+};
+
+struct list secondlevel[] = {
+	{ 0, 0 },			/* CTL_UNSPEC */
+	{ 0, KERN_MAXID },		/* CTL_KERN */
+	{ 0, VM_MAXID },		/* CTL_VM */
+	{ 0, VFS_MAXID },		/* CTL_VFS */
+	{ 0, NET_MAXID },		/* CTL_NET */
+	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
+	{ 0, HW_MAXID },		/* CTL_HW */
+#ifdef CTL_MACHDEP_NAMES
+	{ ctl_machdep, CPU_MAXID },	/* CTL_MACHDEP */
+#else
+	{ 0, 0 },			/* CTL_MACHDEP */
+#endif
+	{ 0, USER_MAXID },		/* CTL_USER_NAMES */
+	{ 0, DDBCTL_MAXID },		/* CTL_DDB_NAMES */
+	{ 0, 2 },			/* dummy name */
+	{ 0, -1 },
+};
+
+struct list *lists[] = {
+	toplevel,
+	secondlevel,
+	0
+};
 
 #define CTL_MACHDEP_SIZE (sizeof(ctl_machdep) / sizeof(ctl_machdep[0]))
 
@@ -158,7 +197,7 @@ _rtld_process_mapping(lib_p, bp, dodebug)
 	static const char WS[] = " \t\n";
 	Library_Xform *hwptr = NULL;
 	char *ptr, *key, *lib, *l;
-	int i, j;
+	int i, j, k;
 	
 	if (dodebug)
 		dbg((" processing mapping \"%s\"", bp));
@@ -181,19 +220,38 @@ _rtld_process_mapping(lib_p, bp, dodebug)
 	if (dodebug)
 		dbg((" sysctl \"%s\"", ptr));
 
-	for (i = 1; i < CTL_MACHDEP_SIZE; i++)
-		if (strcmp(ctl_machdep[i].name, ptr) == 0)
-			break;
+	for (i = 0; (l = strsep(&ptr, ".")) != NULL; i++) {
 
-	if (i == CTL_MACHDEP_SIZE) {
-		warnx("unknown sysctl variable name `%s'", ptr);
-		goto cleanup;
+		if (lists[i] == NULL || i >= RTLD_MAX_CTL) {
+			warnx("sysctl nesting too deep");
+			goto cleanup;
+		}
+
+		for (j = 1; lists[i][j].numentries != -1; j++) {
+
+			if (lists[i][j].ctl == NULL)
+				continue;
+
+			for (k = 1; k < lists[i][j].numentries; k++) {
+				if (strcmp(lists[i][j].ctl[k].name, l) == 0)
+					break;
+			}
+
+			if (lists[i][j].numentries == -1) {
+				warnx("unknown sysctl variable name `%s'", l);
+				goto cleanup;
+			}
+
+			hwptr->ctl[hwptr->ctlmax] = k;
+			hwptr->ctltype[hwptr->ctlmax++] =
+			    lists[i][j].ctl[k].type;
+		}
 	}
 
-	hwptr->ctl = i;
-	hwptr->ctltype = ctl_machdep[i].type;
 	if (dodebug)
-		dbg((" sysctl \"%d\"", i));
+		for (i = 0; i < hwptr->ctlmax; i++)
+			dbg((" sysctl %d, %d", hwptr->ctl[i],
+			    hwptr->ctltype[i]));
 
 	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
 		if (i == RTLD_MAX_ENTRY) {

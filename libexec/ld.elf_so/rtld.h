@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.21 1999/12/13 09:09:35 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.22 1999/12/15 05:22:37 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -113,11 +113,13 @@ typedef struct _rtld_search_path_t {
 
 #define RTLD_MAX_ENTRY 10
 #define RTLD_MAX_LIBRARY 4
+#define RTLD_MAX_CTL 2
 typedef struct _rtld_library_xform_t {
 	struct _rtld_library_xform_t *next;
 	char *name;
-	int   ctl;
-	int   ctltype;
+	int ctl[RTLD_MAX_CTL];
+	int ctltype[RTLD_MAX_CTL];
+	int ctlmax;
 	struct {
 		char *value;
 		char *library[RTLD_MAX_LIBRARY];
