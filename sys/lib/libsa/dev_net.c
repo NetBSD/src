@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.9 1997/06/26 19:11:35 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.10 1997/07/22 17:50:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include "if_ether.h"
 #include <netinet/in_systm.h>
 
 #include "stand.h"
