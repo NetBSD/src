@@ -16306,34 +16306,26 @@ Just change one instruction."
 %
 Speaking of the philosophy involved in moving humanity into space:
 
-Furniture will be a largely obsolete concept. Take for example the dresser
-my mom bought for me when I was a kid. I still have it, and by the
-standards of its era, it's an admirable household fixture. It is a massive
-construction of maple wood, expertly joined with cunningly fit pieces,
-fitted and glued with the strength of iron. It is set with massive brass
-fixtures, and looks today -- discounting the dust -- as new as the day it
-was purchased, a quarter century ago. So far, so good; a fine piece of
-furniture, you might say. But let's look at it objectively, as a machine,
-as an object with a purpose. Here sit a hundred pounds of hardwood with
-a compressive strength of 1500 psi, jointed by an expert craftsman into
-a rigid box that would easily support a bull elephant. And what is the
-sole purpose of this massive crate, this monument to a dead tree? -- it
-holds my socks.
+Furniture will be a largely obsolete concept.  Take for example the dresser my
+mom bought for me when I was a kid.  I still have it, and by the standards of
+its era, it's an admirable household fixture.  It is a massive construction of
+maple wood, expertly joined with cunningly fit pieces, fitted and glued with
+the strength of iron.  It is set with massive brass fixtures, and looks today
+-- discounting the dust -- as new as the day it was purchased, a quarter
+century ago.  So far, so good; a fine piece of furniture, you might say.  But
+let's look at it objectively, as a machine, as an object with a purpose.  Here
+sit a hundred pounds of hardwood with a compressive strength of 1500 psi,
+jointed by an expert craftsman into a rigid box that would easily support a
+bull elephant.  And what is the sole purpose of this massive crate, this
+monument to a dead tree? -- it holds my socks.
 
-Not only is it blind engineering overkill of epic proportions, it is also
-an environmental disaster. The home to generations of squirrels, a
-sentinel post for falcons, an autumnal banner of golden glory, a living
-creature, was chopped down to enshrine some underwear. This, my friends,
-is no way to run a planet.
+Not only is it blind engineering overkill of epic proportions, it is also an
+environmental disaster.  The home to generations of squirrels, a sentinel post
+for falcons, an autumnal banner of golden glory, a living creature, was chopped
+down to enshrine some underwear.  This, my friends, is no way to run a planet.
 	        -- Marshall T. Savage, from The Millennial Project:
 		   Colonizing the Galaxy -- In Eight Easy Steps
 %
-        Letter to the Editor
-        CROSSTALK, Journal of Defense Software Engineering
-
-The mention of "a feast of spaghetti code" ("Computer Collectives", CrossTalk,
-April/May 1992) prompted this response:
-
 Nearly every software professional has heard the term spaghetti code as a
 pejorative description for complicated, difficult to understand, and impossible
 to maintain, software.  However, many people may not know the other two 
@@ -16352,9 +16344,5 @@ without significantly affecting other components.
 
 We need to go beyond the condemnation of spaghetti code to the active
 encouragement of ravioli code.
-
-                                                Raymond J. Rubey
-                                                SoftTech, Inc.
-                                                3100 Presidential Drive
-                                                Fairborn, OH  45324
-                                                Voice:  513-429-8291
+		-- Raymond J. Rubey, in a letter to the editor of Crosstalk
+		   magazine
