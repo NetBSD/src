@@ -1,14 +1,12 @@
-/*	$NetBSD: rquotad.c,v 1.18 2002/06/05 23:22:38 itojun Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.19 2002/06/09 17:10:44 bouyer Exp $	*/
 
 /*
- * by Manuel Bouyer (bouyer@ensta.fr)
- * 
- * There is no copyright, you can use it as you want.
+ * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.18 2002/06/05 23:22:38 itojun Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.19 2002/06/09 17:10:44 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
