@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.84 2004/03/27 12:44:08 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.85 2004/03/27 12:59:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.84 2004/03/27 12:44:08 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.85 2004/03/27 12:59:25 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1283,7 +1283,7 @@ putimeval(void *arg, VARENT *ve, int mode)
 				fmtlen = iwidth(secs) + 6 + 1;
 			else
 				/* hh:mm:ss.ss */
-				fmtlen = iwidth((secs + 1) / 3600)
+				fmtlen = iwidth((secs + 1) / SECSPERHOUR)
 					+ 2 + 1 + 2 + 1 + 2 + 1;
 			if (fmtlen > v->width)
 				v->width = fmtlen;
@@ -1300,10 +1300,10 @@ putimeval(void *arg, VARENT *ve, int mode)
 			usec -= 1000000;
 			secs++;
 		}
-		m = secs / 60u;
-		secs -= m * 60u;
-		h = m / 60u;
-		m -= h * 60u;
+		m = secs / SECSPERMIN;
+		secs -= m * SECSPERMIN;
+		h = m / MINSPERHOUR;
+		m -= h * MINSPERHOUR;
 		(void)printf( "%*u:%.2u:%.2lu.%.2lu", v->width - 9, h, m, secs,
 		    usec / 10000u );
 	}
