@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.81 2001/09/21 23:54:57 elric Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.82 2001/10/14 00:32:33 chs Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -3347,6 +3347,8 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
 			if (!(txs->xs_control & XS_CTL_POLL)) {
 				callout_reset(&scbp->xs->xs_callout,
+				    (scbp->xs->timeout > 1000000) ?
+				    (scbp->xs->timeout / 1000) * hz : 
 				    (scbp->xs->timeout * hz) / 1000,
 				    ahc_timeout, scbp);
 			}
@@ -4063,7 +4065,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	scb->flags |= SCB_ACTIVE;
 
 	if (!(xs->xs_control & XS_CTL_POLL))
-		callout_reset(&scb->xs->xs_callout, (xs->timeout * hz) / 1000,
+		callout_reset(&scb->xs->xs_callout, xs->timeout > 1000000 ?
+		    (xs->timeout / 1000) * hz : (xs->timeout * hz) / 1000,
 		    ahc_timeout, scb);
 
 	if ((scb->flags & SCB_TARGET_IMMEDIATE) != 0) {
@@ -4682,6 +4685,8 @@ bus_reset:
 				newtimeout = MAX(active_scb->xs->timeout,
 						 scb->xs->timeout);
 				callout_reset(&scb->xs->xs_callout,
+				    newtimeout > 1000000 ?
+				    (newtimeout / 1000) * hz :
 				    (newtimeout * hz) / 1000,
 				    ahc_timeout, scb);
 				splx(s);
