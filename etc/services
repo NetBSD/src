@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.46 2000/10/01 03:02:46 simonb Exp $
+#	$NetBSD: services,v 1.47 2000/10/05 15:19:58 itojun Exp $
 #
 # Network services, Internet style
 #
@@ -124,6 +124,8 @@ ldap		389/tcp			# Lightweight Directory Access Protocol
 ldap		389/udp			# Lightweight Directory Access Protocol
 isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
 isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
+ripng		521/tcp			# RIP for IPv6
+ripng		521/udp			# RIP for IPv6
 
 #
 # UNIX specific services
