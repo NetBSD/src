@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 1995/01/10 19:05:10 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 1995/03/26 20:24:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -135,7 +135,7 @@ struct	sigaction {
 #define	SIG_SETMASK	3	/* set specified signal set */
 
 #ifndef _POSIX_SOURCE
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 #endif
 typedef	void (*sig_t) __P((int));	/* type of signal function */

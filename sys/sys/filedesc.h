@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.10 1994/12/03 15:45:10 mycroft Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.11 1995/03/26 20:24:14 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,7 +89,7 @@ struct filedesc0 {
  */
 #define OFILESIZE (sizeof(struct file *) + sizeof(char))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Kernel global variables and routines.
  */

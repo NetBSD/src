@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.5 1994/06/29 06:38:49 cgd Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -121,7 +121,7 @@ char *tcptimers[] =
 		(tv) = (tvmax); \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */

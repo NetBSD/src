@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.19 1994/06/29 06:44:34 cgd Exp $	*/
+/*	$NetBSD: malloc.h,v 1.20 1995/03/26 20:24:20 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -236,7 +236,7 @@ struct kmembuckets {
 	long	kb_couldfree;	/* over high water mark and could free */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	MINALLOCSIZE	(1 << MINBUCKET)
 #define	BUCKETINDX(size) \
 	(size) <= (MINALLOCSIZE * 128) \
@@ -324,5 +324,5 @@ extern char *kmembase;
 extern struct kmembuckets bucket[];
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

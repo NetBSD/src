@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.12 1995/03/06 19:06:11 glass Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.13 1995/03/26 20:32:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,7 +68,7 @@ struct	ether_header {
 #define	ETHERMTU	1500
 #define	ETHERMIN	(60-14)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Macro to map an IP multicast address to an Ethernet multicast address.
  * The high-order 25 bits of the Ethernet address are statically assigned,

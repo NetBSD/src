@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.19 1995/01/26 17:56:22 mycroft Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.20 1995/03/26 20:24:35 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -51,7 +51,7 @@
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 struct reg;
@@ -80,7 +80,7 @@ int	process_write_regs __P((struct proc *p, struct reg *regs));
 #define FIX_SSTEP(p)
 #endif
 
-#else /* !KERNEL */
+#else /* !_KERNEL */
 
 #include <sys/cdefs.h>
 
@@ -88,6 +88,6 @@ __BEGIN_DECLS
 int	ptrace __P((int _request, pid_t _pid, caddr_t _addr, int _data));
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif	/* !_SYS_PTRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1995/02/01 06:28:48 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.18 1995/03/26 20:24:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,7 +75,7 @@
 #define MAXHOSTNAMELEN	256		/* max hostname size */
 
 /* More types and definitions used throughout the kernel. */
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -183,7 +183,7 @@
 #define powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: clist.h,v 1.6 1994/06/29 06:43:45 cgd Exp $	*/
+/*	$NetBSD: clist.h,v 1.7 1995/03/26 20:23:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@ struct cblock {
 	char c_info[CBSIZE];		/* characters */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct cblock *cfree, *cfreelist;
 extern	int cfreecount, nclist;
 #endif

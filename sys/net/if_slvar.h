@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.14 1994/10/30 21:48:56 cgd Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.15 1995/03/26 20:30:14 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ struct sl_softc {
 #define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void	slattach __P((void));
 void	slclose __P((struct tty *));
 void	slinput __P((int, struct tty *));
@@ -83,4 +83,4 @@ int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
 void	slstart __P((struct tty *));
 int	sltioctl __P((struct tty *, u_long, caddr_t, int));
-#endif /* KERNEL */
+#endif /* _KERNEL */

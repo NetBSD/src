@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.9 1994/06/29 06:45:12 cgd Exp $	*/
+/*	$NetBSD: select.h,v 1.10 1995/03/26 20:24:38 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ struct selinfo {
 };
 #define	SI_COLL	0x0001		/* collision occurred */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct proc;
 
 void	selrecord __P((struct proc *selector, struct selinfo *));

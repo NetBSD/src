@@ -1,4 +1,4 @@
-/*	$NetBSD: times.h,v 1.7 1994/06/29 06:45:47 cgd Exp $	*/
+/*	$NetBSD: times.h,v 1.8 1995/03/26 20:24:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,7 +57,7 @@ struct tms {
 	clock_t tms_cstime;	/* System CPU time of terminated child procs */
 };
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

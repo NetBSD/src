@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 1994/12/08 06:43:32 jtc Exp $	*/
+/*	$NetBSD: types.h,v 1.21 1995/03/26 20:24:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -83,7 +83,7 @@ typedef	u_int32_t	uid_t;		/* user id */
  * casting the second parameter of lseek to off_t will get the correct
  * version of lseek.
  */
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 off_t	 lseek __P((int, off_t, int));
@@ -147,7 +147,7 @@ typedef	struct fd_set {
 #define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
 
-#if defined(__STDC__) && defined(KERNEL)
+#if defined(__STDC__) && defined(_KERNEL)
 /*
  * Forward structure declarations for function prototypes.  We include the
  * common structures that cross subsystem boundaries here; others are mostly

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.5 1994/06/29 06:44:06 cgd Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.6 1995/03/26 20:24:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -98,7 +98,7 @@ struct ecoff_scnhdr {		/* needed for size info */
         (ECOFF_ROUND(value, (eap->ea_magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
          ECOFF_SEGMENT_ALIGNMENT(eap))))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */

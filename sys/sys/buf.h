@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.17 1995/03/02 06:48:47 cgd Exp $	*/
+/*	$NetBSD: buf.h,v 1.18 1995/03/26 20:23:54 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -142,7 +142,7 @@ struct cluster_save {
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	nbuf;			/* The number of buffer headers */
 struct	buf *buf;		/* The buffer headers. */
 char	*buffers;		/* The buffer contents. */

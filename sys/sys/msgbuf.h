@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.7 1994/06/29 06:44:45 cgd Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.8 1995/03/26 20:24:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -43,6 +43,6 @@ struct	msgbuf {
 	long	msg_bufr;		/* read pointer */
 	char	msg_bufc[MSG_BSIZE];	/* buffer */
 };
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	msgbuf *msgbufp;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.9 1994/07/26 18:57:02 cgd Exp $	*/
+/*	$NetBSD: netisr.h,v 1.10 1995/03/26 20:30:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -63,7 +63,7 @@
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 
 #ifndef LOCORE
-#ifdef KERNEL
+#ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.14 1995/03/21 13:14:07 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.15 1995/03/26 20:24:53 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -128,11 +128,11 @@ struct clockinfo {
 	int	profhz;		/* profiling clock frequency */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
-#else /* !KERNEL */
+#else /* !_KERNEL */
 #include <time.h>
 
 #ifndef _POSIX_SOURCE
@@ -148,6 +148,6 @@ int	utimes __P((const char *, const struct timeval *));
 __END_DECLS
 #endif /* !POSIX */
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_TIME_H_ */

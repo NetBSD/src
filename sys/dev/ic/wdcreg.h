@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.11 1994/11/23 07:56:52 mycroft Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.12 1995/03/26 20:28:55 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -119,7 +119,7 @@
 #define	WDSD_LBA	0x40	/* logical block addressing */
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * read parameters command returns this:
  */

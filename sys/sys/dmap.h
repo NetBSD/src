@@ -1,4 +1,4 @@
-/*	$NetBSD: dmap.h,v 1.6 1994/06/29 06:44:00 cgd Exp $	*/
+/*	$NetBSD: dmap.h,v 1.7 1995/03/26 20:24:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -49,7 +49,7 @@ struct dmap {
 	swblk_t dm_alloc;	/* amount of physical swap space allocated */
 	swblk_t dm_map[NDMAP];	/* first disk block number in each chunk */
 };
-#ifdef KERNEL
+#ifdef _KERNEL
 struct dmap zdmap;
 int dmmin, dmmax, dmtext;
 #endif

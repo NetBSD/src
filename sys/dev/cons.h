@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.8 1995/03/24 15:29:49 cgd Exp $	*/
+/*	$NetBSD: cons.h,v 1.9 1995/03/26 20:28:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@ struct consdev {
 /* XXX */
 #define	CONSMAJOR	0
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.15 1994/12/21 20:02:57 mycroft Exp $	*/
+/*	$NetBSD: stat.h,v 1.16 1995/03/26 20:24:48 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,7 +168,7 @@ struct stat {
 #define	SF_IMMUTABLE	0x00020000	/* file may not be changed */
 #define	SF_APPEND	0x00040000	/* writes to file may only append */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Shorthand abbreviations of above.
  */
@@ -178,7 +178,7 @@ struct stat {
 #endif
 #endif
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.10 1994/11/15 04:32:23 mycroft Exp $	*/
+/*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,7 @@
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
@@ -91,4 +91,4 @@ int	munlock __P((caddr_t, size_t));
 int	madvise __P((caddr_t, size_t, int));
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */

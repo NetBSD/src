@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.13 1994/12/05 08:53:12 mycroft Exp $	*/
+/*	$NetBSD: ipc.h,v 1.14 1995/03/26 20:24:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,14 +77,14 @@ struct ipc_perm {
 #define	IPC_SET		1	/* set options */
 #define	IPC_STAT	2	/* get options */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* Macros to convert between ipc ids and array indices or sequence ids */
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

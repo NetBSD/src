@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.9 1994/06/29 06:38:54 cgd Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.10 1995/03/26 20:32:39 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -233,7 +233,7 @@ struct	tcpstat {
 	u_long	tcps_pcbcachemiss;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	inpcb tcb;		/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_long	tcp_now;		/* for RFC 1323 timestamps */

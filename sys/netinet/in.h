@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.12 1994/06/29 06:38:03 cgd Exp $	*/
+/*	$NetBSD: in.h,v 1.13 1995/03/26 20:32:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -114,7 +114,7 @@ struct in_addr {
 #define	INADDR_ANY		(u_long)0x00000000
 #define	INADDR_LOOPBACK		(u_long)0x7f000001
 #define	INADDR_BROADCAST	(u_long)0xffffffff	/* must be masked */
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	INADDR_NONE		0xffffffff		/* -1 return */
 #endif
 
@@ -234,7 +234,7 @@ struct ip_mreq {
 }
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	 in_broadcast __P((struct in_addr, struct ifnet *));
 int	 in_canforward __P((struct in_addr));
 int	 in_cksum __P((struct mbuf *, int));

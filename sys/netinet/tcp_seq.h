@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.5 1994/06/29 06:38:44 cgd Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.6 1995/03/26 20:32:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,6 +59,6 @@
 
 #define	TCP_ISSINCR	(125*1024)	/* increment for tcp_iss each second */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 tcp_seq	tcp_iss;		/* tcp initial send seq # */
 #endif

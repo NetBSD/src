@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.12 1995/01/08 22:53:31 cgd Exp $	*/
+/*	$NetBSD: resource.h,v 1.13 1995/03/26 20:24:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -109,7 +109,7 @@ struct loadavg {
 	long	fscale;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct loadavg averunnable;
 
 #else
@@ -123,5 +123,5 @@ int	setpriority __P((int, int, int));
 int	setrlimit __P((int, const struct rlimit *));
 __END_DECLS
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 #endif	/* !_SYS_RESOURCE_H_ */

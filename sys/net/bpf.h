@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.9 1995/03/06 10:56:06 mycroft Exp $	*/
+/*	$NetBSD: bpf.h,v 1.10 1995/03/26 20:30:06 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -141,7 +141,7 @@ struct bpf_hdr {
  * will insist on inserting padding; hence, sizeof(struct bpf_hdr) won't work.
  * Only the kernel needs to know about it; applications use bh_hdrlen.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #define SIZEOF_BPF_HDR 18
 #endif
 
@@ -232,7 +232,7 @@ struct bpf_insn {
 #define BPF_STMT(code, k) { (u_short)(code), 0, 0, k }
 #define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	 bpf_validate __P((struct bpf_insn *, int));
 int	 bpfopen __P((dev_t, int));
 int	 bpfclose __P((dev_t, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.3 1994/07/02 06:03:49 hpeyerl Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.4 1995/03/26 20:28:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,6 +101,6 @@ struct ccdiinfo {
 	char	ii_index[NCCDISKS];/* ordered list of components in range */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct ccddevice ccddevice[];
 #endif

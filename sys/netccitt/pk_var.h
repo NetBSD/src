@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.5 1994/06/29 06:37:43 cgd Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.6 1995/03/26 20:33:45 jtc Exp $	*/
 
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
@@ -223,7 +223,7 @@ struct mbuf_cache {
 	struct	mbuf **mbc_cache;
 };
 
-#if defined(KERNEL) && defined(CCITT)
+#if defined(_KERNEL) && defined(CCITT)
 extern struct pkcb_q pkcb_q;
 struct	pklcd *pk_listenhead;
 struct	pklcd *pk_attach();

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.8 1994/06/29 06:45:38 cgd Exp $	*/
+/*	$NetBSD: syslog.h,v 1.9 1995/03/26 20:24:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -143,7 +143,7 @@ CODE facilitynames[] = {
 };
 #endif
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	LOG_PRINTF	-1	/* pseudo-priority to indicate use of printf */
 #endif
 
@@ -166,7 +166,7 @@ CODE facilitynames[] = {
 #define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
 #define	LOG_PERROR	0x20	/* log to stderr as well */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 /*
  * Don't use va_list in the vsyslog() prototype.   Va_list is typedef'd in two
@@ -186,10 +186,10 @@ void	syslog __P((int, const char *, ...));
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
 __END_DECLS
 
-#else /* !KERNEL */
+#else /* !_KERNEL */
 
 void	logpri __P((int));
 void	log __P((int, const char *, ...));
 void	addlog __P((const char *, ...));
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */

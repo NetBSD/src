@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.6 1994/10/20 04:29:00 cgd Exp $	*/
+/*	$NetBSD: sem.h,v 1.7 1995/03/26 20:24:40 jtc Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -63,7 +63,7 @@ union semun {
 #define SETVAL	8	/* Set the value of semval to arg.val {ALTER} */
 #define SETALL	9	/* Set semvals from arg.array {ALTER} */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Kernel implementation stuff
  */
@@ -160,9 +160,9 @@ int	*semu;			/* undo structure pool */
  */
 #define	SEM_CONFIG_FREEZE	0	/* Freeze the semaphore facility. */
 #define	SEM_CONFIG_THAW		1	/* Thaw the semaphore facility. */
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -172,6 +172,6 @@ int semget __P((key_t, int, int));
 int semop __P((int, struct sembuf *, u_int));
 int semconfig __P((int));
 __END_DECLS
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */
