@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 2000/07/24 06:30:34 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 2000/07/24 07:40:40 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4384,7 +4384,7 @@ sparc_intr_retry:
 	tst	%o2
 	tnz	%icc, 1; nop
 1:
-	set	EINTSTACK, %o2
+	set	EINTSTACK-STKB, %o2
 	cmp	%sp, %o2
 	bleu	0f
 
@@ -7418,7 +7418,43 @@ idle:
 	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,a,pt	%o3, Lsw_scan
 	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
-	ba,a,pt	%icc, 1b
+	
+	! Check uvm.page_idle_zero
+	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
+	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	brz,pn	%o3, 1b
+	 nop
+#if 1		/* Don't enable the zeroing code just yet. */
+	ba,a,pt %icc, 1b
+	nop
+#endif
+	/*
+	 * We must preserve several global registers across the call
+	 * to uvm_pageidlezero().  Use the %ix registers for this, but
+	 * since we might still be running in our our caller's frame
+	 * (if we came here from cpu_switch()), we need to setup a
+	 * frame first.
+	 */
+	save	%sp, -CCFSZ, %sp
+	mov	%g1, %i0
+	mov	%g2, %i1
+	mov	%g4, %i2
+	mov	%g6, %i3
+	mov	%g7, %i4
+
+	! zero some pages
+	call	_C_LABEL(uvm_pageidlezero)
+	 nop
+
+	! restore global registers again which are now
+	! clobbered by uvm_pageidlezero()
+	mov	%i0, %g1
+	mov	%i1, %g2
+	mov	%i2, %g4
+	mov	%i3, %g6
+	mov	%i4, %g7
+	ba,pt	%icc, 1b
+	 restore
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -8454,7 +8490,7 @@ ENTRY(pmap_zero_page)
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
 	 set	INTSTACK, %l4
@@ -8753,7 +8789,7 @@ ENTRY(pmap_copy_page)
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
 	 set	INTSTACK, %l4
@@ -9611,7 +9647,7 @@ Lbzero_longs:
 3:
 	stx	%o2, [%o0]		! Do 1 longword at a time
 	deccc	8, %o1
-	bge,pt	%xcc, 3b
+	brgez,pt	%o1, 3b
 	 inc	8, %o0
 
 	/*
@@ -9708,7 +9744,7 @@ Lbzero_block:
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
 	 set	INTSTACK, %l4
@@ -9749,15 +9785,15 @@ Lbzero_block:
 	btst	1, %fp
 	bnz,pt	%icc, 3f				! 64-bit stack?
 	 nop
-	stw	%i2, [%fp + 0x28]			! Flush this puppy to RAM
+	stw	%i2, [%sp + 0x8]			! Flush this puppy to RAM
 	membar	#StoreLoad
-	ld	[%fp + 0x28], %f0
+	ld	[%sp + 0x8], %f0
 	ba,pt	%icc, 4f
 	 fmovsa	%icc, %f0, %f1
 3:
-	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
+	stx	%i2, [%sp + BIAS + 0x8]		! Flush this puppy to RAM
 	membar	#StoreLoad
-	ldd	[%fp + BIAS + 0x50], %f0
+	ldd	[%sp + BIAS + 0x8], %f0
 4:
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
