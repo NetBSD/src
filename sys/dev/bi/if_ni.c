@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8 2000/12/14 07:02:53 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.9 2001/04/12 20:38:25 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -344,7 +344,7 @@ niattach(parent, self, aux)
 #if NBPG < 4096
 #error pagesize too small
 #endif
-	s = splimp();
+	s = splvm();
 	/* Set up message free queue */
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
 	for (i = 0; i < NMSGBUF; i++) {
