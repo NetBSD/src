@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: wdc.c,v 1.3 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ wdc_read_block(sc, wd_c)
 }
 
 /*
- * Send a command to the device (CHS and LBA adressing).
+ * Send a command to the device (CHS and LBA addressing).
  */
 int
 wdccommand(sc, wd_c)

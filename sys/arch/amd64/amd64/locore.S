@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -614,7 +614,7 @@ longmode_hi:
 
 	movq	$NKL4_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
-	addq	%r8, %rbx			# new, virtual adress of PML4
+	addq	%r8, %rbx			# new, virtual address of PML4
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
