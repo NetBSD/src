@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.19 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.19 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -179,7 +179,7 @@ gbox_intio_match(parent, match, aux)
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
 
-	if (strcmp("fb      ",ia->ia_modname) != 0)
+	if (strcmp("fb",ia->ia_modname) != 0)
 		return (0);
 
 	if (badaddr((caddr_t)ia->ia_addr))
