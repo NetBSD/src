@@ -1,4 +1,4 @@
-/*	$NetBSD: param3x.h,v 1.11.4.1 1998/01/27 02:10:28 gwr Exp $	*/
+/*	$NetBSD: param3x.h,v 1.11.4.2 1998/02/04 21:02:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  */
 
 /*
- * Machine dependent constants for the Sun3x series.
+ * Machine dependent constants for the Sun3X series.
  */
 
 #define	KERNBASE	0xF8000000	/* start of kernel virtual */
@@ -53,6 +53,5 @@
 #define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 
-#define	MAXBSIZE	0x8000		/* max FS block size - XXX */
+#define	MAXBSIZE	0x8000		/* max FS block size */
 
-#define	UPAGES		2		/* pages of u-area */

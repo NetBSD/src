@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.47.4.1 1998/01/27 00:50:16 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.47.4.2 1998/02/04 21:02:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,15 @@
 
 #define MSGBUFOFF	0x200
 #define MSGBUFSIZE	(NBPG - MSGBUFOFF)
+
+/* This is needed by ps (actually USPACE). */
+#define	UPAGES		2		/* pages of u-area */
+
+/*
+ * This value is used by ps to mask down kernel pointers.
+ * Show 7 hex digits so it will work on both 3 and 3X.
+ */
+#define _KVA_MASK ((1<<28)-1)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef	_SUN3_

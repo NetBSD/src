@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.47.4.1 1998/01/27 02:10:26 gwr Exp $	*/
+/*	$NetBSD: param3.h,v 1.47.4.2 1998/02/04 21:02:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +53,5 @@
 #define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 
-#define	MAXBSIZE	0x8000		/* max FS block size - XXX */
-
-#define	UPAGES		2		/* pages of u-area */
+#define	MAXBSIZE	0x8000		/* max FS block size */
 
