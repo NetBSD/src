@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.44 1998/08/17 00:49:02 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.45 1998/10/20 22:26:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,9 +74,13 @@ struct scsibus_softc {
 	struct device sc_dev;
 	struct scsipi_link *adapter_link; /* prototype supplied by adapter */
 	struct scsipi_link ***sc_link;		/* dynamically allocated */
+	int	sc_flags;
 	int	sc_maxtarget;
 	u_int8_t moreluns;
 };
+
+/* sc_flags */
+#define	SCSIBUSF_OPEN	0x00000001	/* bus is open */
 
 #define SCSI_OP_TARGET	0x0001
 #define	SCSI_OP_RESET	0x0002
