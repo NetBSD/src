@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.20 2000/03/22 18:34:43 garbled Exp $
+.\"	$NetBSD: install.1,v 1.21 2000/07/27 03:48:08 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -243,12 +243,11 @@ Otherwise, a value of 1 is returned.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev STRIP
-The location for the
-.Xr strip 1
-binary to be used when stripping files with the
+The program used to trip installed binaries when the
 .Fl s
-option.  Defaults to
-.Pa /usr/bin/strip .
+option is used.  If unspecified,
+.Pa /usr/bin/strip
+is used.
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,
