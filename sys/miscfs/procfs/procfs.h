@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.14 1995/10/09 11:18:51 mycroft Exp $	*/
+/*	$NetBSD: procfs.h,v 1.15 1996/02/09 18:47:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -145,11 +145,9 @@ int	procfs_ioctl __P((struct vop_ioctl_args *));
 #define procfs_fsync ((int (*) __P((struct vop_fsync_args *))) procfs_badop)
 #define procfs_seek ((int (*) __P((struct vop_seek_args *))) procfs_badop)
 #define procfs_remove ((int (*) __P((struct vop_remove_args *))) procfs_badop)
-#define procfs_link ((int (*) __P((struct vop_link_args *))) procfs_badop)
 #define procfs_rename ((int (*) __P((struct vop_rename_args *))) procfs_badop)
 #define procfs_mkdir ((int (*) __P((struct vop_mkdir_args *))) procfs_badop)
 #define procfs_rmdir ((int (*) __P((struct vop_rmdir_args *))) procfs_badop)
-#define procfs_symlink ((int (*) __P((struct vop_symlink_args *))) procfs_badop)
 int	procfs_readdir __P((struct vop_readdir_args *));
 int	procfs_readlink __P((struct vop_readlink_args *));
 int	procfs_abortop __P((struct vop_abortop_args *));
