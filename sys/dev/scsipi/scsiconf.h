@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.22 1995/07/24 06:56:22 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.23 1995/07/24 07:08:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -91,10 +91,10 @@ typedef	int			boolean;
  * these statically allocated.
  */
 struct scsi_adapter {
-/* 4*/	int		(*scsi_cmd)();
-/* 8*/	u_int		(*scsi_minphys) __P((struct buf *));
-/*12*/	int		(*open_target_lu)();
-/*16*/	int		(*close_target_lu)();
+	int		(*scsi_cmd)();
+	u_int		(*scsi_minphys) __P((struct buf *));
+	int		(*open_target_lu)();
+	int		(*close_target_lu)();
 };
 
 /*
@@ -111,10 +111,10 @@ struct scsi_adapter {
  * of these statically allocated.
  */
 struct scsi_device {
-/*  4*/	int	(*err_handler)(); /* returns -1 to say err processing complete */
-/*  8*/	void	(*start)();
-/* 12*/	int	(*async)();
-/* 16*/	int	(*done)();	/* returns -1 to say done processing complete */
+	int	(*err_handler)(); /* returns -1 to say err processing done */
+	void	(*start)();
+	int	(*async)();
+	int	(*done)();	/* returns -1 to say done processing done */
 };
 
 /*
@@ -124,28 +124,28 @@ struct scsi_device {
  * as well.
  */
 struct scsi_link {
-/*  1*/	u_int8_t scsibus;		/* the Nth scsibus */
-/*  2*/	u_int8_t target;		/* targ of this dev */
-/*  3*/	u_int8_t lun;			/* lun of this dev */
-/*  4*/	u_int8_t adapter_target;	/* what are we on the scsi bus */
-/*  5*/	u_int8_t openings;		/* available operations */
-/*  6*/	u_int8_t active;		/* operations in progress */
-/*  7*/	u_int8_t flags;			/* flags that all devices have */
+	u_int8_t scsibus;		/* the Nth scsibus */
+	u_int8_t target;		/* targ of this dev */
+	u_int8_t lun;			/* lun of this dev */
+	u_int8_t adapter_target;	/* what are we on the scsi bus */
+	u_int8_t openings;		/* available operations */
+	u_int8_t active;		/* operations in progress */
+	u_int8_t flags;			/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x01	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
 #define	SDEV_DBX		0xf0	/* debuging flags (scsi_debug.h) */	
-/*  8*/	u_int8_t quirks;		/* per-device oddities */
+	u_int8_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
-/* 12*/	struct	scsi_device *device;	/* device entry points etc. */
-/* 16*/	void	*device_softc;		/* needed for call to foo_start */
-/* 20*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
-/* 24*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-};
+	struct	scsi_device *device;	/* device entry points etc. */
+	void	*device_softc;		/* needed for call to foo_start */
+	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
+	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
+}	
 
 /*
  * This describes matching information for scsi_inqmatch().  The more things
@@ -190,26 +190,26 @@ struct scsibus_attach_args {
  * (via the scsi_link structure)
  */
 struct scsi_xfer {
-/* 4*/	LIST_ENTRY(scsi_xfer) free_list;
-/*12*/	int	flags;
-/*16*/	struct	scsi_link *sc_link;	/* all about our device and adapter */
-/*20*/	int	retries;		/* the number of times to retry */
-/*24*/	int	timeout;		/* in milliseconds */
-/*28*/	struct	scsi_generic *cmd;	/* The scsi command to execute */
-/*32*/	int	cmdlen;			/* how long it is */
-/*36*/	u_char	*data;			/* dma address OR a uio address */
-/*40*/	int	datalen;		/* data len (blank if uio)    */
-/*44*/	int	resid;			/* how much buffer was not touched */
-/*48*/	int	error;			/* an error value	*/
-/*52*/	struct	buf *bp;		/* If we need to associate with a buf */
-/*84*/	struct	scsi_sense_data	sense; /* 32 bytes*/
+	LIST_ENTRY(scsi_xfer) free_list;
+	int	flags;
+	struct	scsi_link *sc_link;	/* all about our device and adapter */
+	int	retries;		/* the number of times to retry */
+	int	timeout;		/* in milliseconds */
+	struct	scsi_generic *cmd;	/* The scsi command to execute */
+	int	cmdlen;			/* how long it is */
+	u_char	*data;			/* dma address OR a uio address */
+	int	datalen;		/* data len (blank if uio)    */
+	int	resid;			/* how much buffer was not touched */
+	int	error;			/* an error value	*/
+	struct	buf *bp;		/* If we need to associate with a buf */
+	struct	scsi_sense_data	sense; /* 32 bytes*/
 	/*
 	 * Believe it or not, Some targets fall on the ground with
 	 * anything but a certain sense length.
 	 */
-/*88*/	int	req_sense_length;	/* Explicit request sense length */
-/*92*/	u_int8_t status;		/* SCSI status */
-/*104*/	struct	scsi_generic cmdstore;	/* stash the command in here */
+	int	req_sense_length;	/* Explicit request sense length */
+	u_int8_t status;		/* SCSI status */
+	struct	scsi_generic cmdstore;	/* stash the command in here */
 };
 
 /*
