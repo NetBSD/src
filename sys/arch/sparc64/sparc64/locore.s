@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 2001/07/11 23:02:56 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 2001/07/16 18:59:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -4066,6 +4066,21 @@ interrupt_vector:
 	DLFLUSH(%g5, %g6)
 	LDPTR	[%g5], %g5		! We have a pointer to the handler
 	DLFLUSH2(%g6)
+#if DEBUG
+	brnz,pt %g5, 1f
+	 nop
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	mov	%g2, %o1
+
+	LOAD_ASCIZ(%o0, "interrupt_vector: vector %lx NULL\r\n")
+	GLOBTOLOC
+	call	prom_printf
+	 clr	%g4
+	LOCTOGLOB
+	restore
+	 nop
+1:	
+#endif
 #ifdef DEBUG
 	tst	%g5
 	tz	56
@@ -9396,7 +9411,7 @@ ENTRY(bcopy) /* src, dest, size */
 #endif
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
-	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
+!	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
 	 cmp	%o2, 256
 
 	mov	%o1, %o5	! Save memcpy return value
@@ -9422,7 +9437,7 @@ Lbcopy_start:
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
-#if 1
+#if 0
 	! If it is big enough, use VIS instructions
 	bge	Lbcopy_block
 	 nop
@@ -9435,99 +9450,99 @@ Lbcopy_fancy:
 
 	save	%sp, -CC64FSZ, %sp
 	
-	mov	%i0, %o0
-	mov	%i1, %o1
+	mov	%i0, %l0
+	mov	%i1, %l1
 	
-	mov	%i2, %o2
-	btst	1, %o1
+	mov	%i2, %l2
+	btst	1, %l1
 	
 	bz,pt	%icc, 4f
-	 btst	2, %o1
-	ldub	[%o0], %o4				! Load 1st byte
+	 btst	2, %l1
+	ldub	[%l0], %l4				! Load 1st byte
 	
-	deccc	1, %o2
+	deccc	1, %l2
 	ble,pn	%xcc, Lbcopy_finish			! XXXX
-	 inc	1, %o0
+	 inc	1, %l0
 	
-	stb	%o4, [%o1]				! Store 1st byte
-	inc	1, %o1					! Update address
-	btst	2, %o1
+	stb	%l4, [%l1]				! Store 1st byte
+	inc	1, %l1					! Update address
+	btst	2, %l1
 4:	
 	bz,pt	%icc, 4f
 	
-	 btst	1, %o0
+	 btst	1, %l0
 	bz,a	1f
-	 lduh	[%o0], %o4				! Load short
+	 lduh	[%l0], %l4				! Load short
 
-	ldub	[%o0], %o4				! Load bytes
+	ldub	[%l0], %l4				! Load bytes
 	
-	ldub	[%o0+1], %o3
-	sllx	%o4, 8, %o4
-	or	%o3, %o4, %o4
+	ldub	[%l0+1], %l3
+	sllx	%l4, 8, %l4
+	or	%l3, %l4, %l4
 	
 1:	
-	deccc	2, %o2
+	deccc	2, %l2
 	ble,pn	%xcc, Lbcopy_finish			! XXXX
-	 inc	2, %o0
-	sth	%o4, [%o1]				! Store 1st short
+	 inc	2, %l0
+	sth	%l4, [%l1]				! Store 1st short
 	
-	inc	2, %o1
+	inc	2, %l1
 4:
-	btst	4, %o1
+	btst	4, %l1
 	bz,pt	%xcc, 4f
 	
-	 btst	3, %o0
+	 btst	3, %l0
 	bz,a,pt	%xcc, 1f
-	 lduw	[%o0], %o4				! Load word -1
+	 lduw	[%l0], %l4				! Load word -1
 
-	btst	1, %o0
+	btst	1, %l0
 	bz,a,pt	%icc, 2f
-	 lduh	[%o0], %o4
+	 lduh	[%l0], %l4
 	
-	ldub	[%o0], %o4
+	ldub	[%l0], %l4
 	
-	lduh	[%o0+1], %o3
-	sllx	%o4, 16, %o4
-	or	%o4, %o3, %o4
+	lduh	[%l0+1], %l3
+	sllx	%l4, 16, %l4
+	or	%l4, %l3, %l4
 	
-	ldub	[%o0+3], %o3
-	sllx	%o4, 8, %o4
+	ldub	[%l0+3], %l3
+	sllx	%l4, 8, %l4
 	ba,pt	%icc, 1f
-	 or	%o4, %o3, %o4
+	 or	%l4, %l3, %l4
 	
 2:
-	lduh	[%o0+2], %o3
-	sllx	%o4, 16, %o4
-	or	%o4, %o3, %o4
+	lduh	[%l0+2], %l3
+	sllx	%l4, 16, %l4
+	or	%l4, %l3, %l4
 	
 1:	
-	deccc	4, %o2
+	deccc	4, %l2
 	ble,pn	%xcc, Lbcopy_finish		! XXXX
-	 inc	4, %o0
+	 inc	4, %l0
 	
-	st	%o4, [%o1]				! Store word
-	inc	4, %o1
+	st	%l4, [%l1]				! Store word
+	inc	4, %l1
 4:
 	!!
 	!! We are now 32-bit aligned in the dest.
 	!!
-Lbcopy__common:	
+Lbcopy_common:	
 
-	and	%o0, 7, %o4				! Shift amount
-	andn	%o0, 7, %o0				! Source addr
+	and	%l0, 7, %l4				! Shift amount
+	andn	%l0, 7, %l0				! Source addr
 	
-	brz,pt	%o4, Lbcopy_noshift8			! No shift version...
+	brz,pt	%l4, Lbcopy_noshift8			! No shift version...
 
-	 sllx	%o4, 3, %o4				! In bits
-	mov	8<<3, %o3
+	 sllx	%l4, 3, %l4				! In bits
+	mov	8<<3, %l3
 	
-	ldx	[%o0], %l0				! Load word -1
-	sub	%o3, %o4, %o3				! Reverse shift
-	deccc	16*8, %o2				! Have enough room?
+	ldx	[%l0], %o0				! Load word -1
+	sub	%l3, %l4, %l3				! Reverse shift
+	deccc	12*8, %l2				! Have enough room?
 	
-	sllx	%l0, %o4, %l0
+	sllx	%o0, %l4, %o0
 	bl,pn	%xcc, 2f
-	 and	%o3, 0x38, %o3
+	 and	%l3, 0x38, %l3
 Lbcopy_unrolled8:
 
 	/*
@@ -9536,249 +9551,216 @@ Lbcopy_unrolled8:
 	 * 3 dependent operations on the data.
 	 */ 
 
-!	ldx	[%o0+0*8], %l0				! Already done
-!	sllx	%l0, %o4, %l0				! Already done
-	ldx	[%o0+1*8], %l1
-	ldx	[%o0+2*8], %l2
-	ldx	[%o0+3*8], %l3
-	ldx	[%o0+4*8], %l4
-	ldx	[%o0+5*8], %l5
-	ldx	[%o0+6*8], %l6
+!	ldx	[%l0+0*8], %o0				! Already done
+!	sllx	%o0, %l4, %o0				! Already done
+	ldx	[%l0+1*8], %o1
+	ldx	[%l0+2*8], %o2
+	ldx	[%l0+3*8], %o3
+	ldx	[%l0+4*8], %o4
 	ba,pt	%icc, 1f
-	 ldx	[%o0+7*8], %l7
+	 ldx	[%l0+5*8], %o5
 	.align	8
 1:
-	srlx	%l1, %o3, %g1
-	inc	8*8, %o0
+	srlx	%o1, %l3, %g1
+	inc	8*8, %l0
 	
-	sllx	%l1, %o4, %l1
-	or	%g1, %l0, %o5
-	ldx	[%o0+0*8], %l0
+	sllx	%o1, %l4, %o1
+	or	%g1, %o0, %g6
+	ldx	[%l0+0*8], %o0
 	
-	stx	%o5, [%o1+0*8]
-	srlx	%l2, %o3, %g1
+	stx	%g6, [%l1+0*8]
+	srlx	%o2, %l3, %g1
 
-	sllx	%l2, %o4, %l2
-	or	%g1, %l1, %o5
-	ldx	[%o0+1*8], %l1
+	sllx	%o2, %l4, %o2
+	or	%g1, %o1, %g6
+	ldx	[%l0+1*8], %o1
 	
-	stx	%o5, [%o1+1*8]
-	srlx	%l3, %o3, %g1
+	stx	%g6, [%l1+1*8]
+	srlx	%o3, %l3, %g1
 	
-	sllx	%l3, %o4, %l3
-	or	%g1, %l2, %o5
-	ldx	[%o0+2*8], %l2
+	sllx	%o3, %l4, %o3
+	or	%g1, %o2, %g6
+	ldx	[%l0+2*8], %o2
 	
-	stx	%o5, [%o1+2*8]
-	srlx	%l4, %o3, %g1
+	stx	%g6, [%l1+2*8]
+	srlx	%o4, %l3, %g1
 	
-	sllx	%l4, %o4, %l4	
-	or	%g1, %l3, %o5
-	ldx	[%o0+3*8], %l3
+	sllx	%o4, %l4, %o4	
+	or	%g1, %o3, %g6
+	ldx	[%l0+3*8], %o3
 	
-	stx	%o5, [%o1+3*8]
-	srlx	%l5, %o3, %g1
+	stx	%g6, [%l1+3*8]
+	srlx	%o5, %l3, %g1
 	
-	sllx	%l5, %o4, %l5
-	or	%g1, %l4, %o5
-	ldx	[%o0+4*8], %l4
+	sllx	%o5, %l4, %o5
+	or	%g1, %o4, %g6
+	ldx	[%l0+4*8], %o4
+
+	stx	%g6, [%l1+4*8]
+	srlx	%o0, %l3, %g1
+	deccc	6*8, %l2				! Have enough room?
+
+	sllx	%o0, %l4, %o0				! Next loop
+	or	%g1, %o5, %g6
+	ldx	[%l0+5*8], %o5
 	
-	stx	%o5, [%o1+4*8]
-	srlx	%l6, %o3, %g1
-	
-	sllx	%l6, %o4, %l6
-	or	%g1, %l5, %o5
-	ldx	[%o0+5*8], %l5
-	
-	stx	%o5, [%o1+5*8]
-	srlx	%l7, %o3, %g1
-	
-	sllx	%l7, %o4, %l7
-	or	%g1, %l6, %o5
-	ldx	[%o0+6*8], %l6
-	
-	stx	%o5, [%o1+6*8]
-	srlx	%l0, %o3, %g1
-	deccc	8*8, %o2				! Have enough room?
-	
-	sllx	%l0, %o4, %l0				! Next loop
-	or	%g1, %l7, %o5
-	ldx	[%o0+7*8], %l7
-	
-	stx	%o5, [%o1+7*8]
+	stx	%g6, [%l1+5*8]
 	bge,pt	%xcc, 1b
-	 inc	8*8, %o1
+	 inc	6*8, %l1
 
 Lbcopy_unrolled8_cleanup:	
 	!!
 	!! Finished 8 byte block, unload the regs.
 	!! 
-	srlx	%l1, %o3, %g1
-	inc	7*8, %o0
+	srlx	%o1, %l3, %g1
+	inc	5*8, %l0
 	
-	sllx	%l1, %o4, %l1
-	or	%g1, %l0, %o5
+	sllx	%o1, %l4, %o1
+	or	%g1, %o0, %g6
 		
-	stx	%o5, [%o1+0*8]
-	srlx	%l2, %o3, %g1
+	stx	%g6, [%l1+0*8]
+	srlx	%o2, %l3, %g1
 	
-	sllx	%l2, %o4, %l2
-	or	%g1, %l1, %o5
+	sllx	%o2, %l4, %o2
+	or	%g1, %o1, %g6
 		
-	stx	%o5, [%o1+1*8]
-	srlx	%l3, %o3, %g1
+	stx	%g6, [%l1+1*8]
+	srlx	%o3, %l3, %g1
 	
-	sllx	%l3, %o4, %l3
-	or	%g1, %l2, %o5
+	sllx	%o3, %l4, %o3
+	or	%g1, %o2, %g6
 		
-	stx	%o5, [%o1+2*8]
-	srlx	%l4, %o3, %g1
+	stx	%g6, [%l1+2*8]
+	srlx	%o4, %l3, %g1
 	
-	sllx	%l4, %o4, %l4	
-	or	%g1, %l3, %o5
+	sllx	%o4, %l4, %o4	
+	or	%g1, %o3, %g6
 		
-	stx	%o5, [%o1+3*8]
-	srlx	%l5, %o3, %g1
+	stx	%g6, [%l1+3*8]
+	srlx	%o5, %l3, %g1
 	
-	sllx	%l5, %o4, %l5
-	or	%g1, %l4, %o5
+	sllx	%o5, %l4, %o5
+	or	%g1, %o4, %g6
 		
-	stx	%o5, [%o1+4*8]
-	srlx	%l6, %o3, %g1
+	stx	%g6, [%l1+4*8]
+	inc	5*8, %l1
 	
-	sllx	%l6, %o4, %l6
-	or	%g1, %l5, %o5
-		
-	stx	%o5, [%o1+5*8]
-	srlx	%l7, %o3, %g1
-	
-	sllx	%l7, %o4, %l7
-	or	%g1, %l6, %o5
-		
-	stx	%o5, [%o1+6*8]
-	inc	7*8, %o1
-	
-	mov	%l7, %l0				! Save our unused data
-	dec	7*8, %o2
+	mov	%o5, %o0				! Save our unused data
+	dec	5*8, %l2
 2:
-	inccc	16*8, %o2
+	inccc	16*8, %l2
 	bz,pn	%icc, Lbcopy_complete
 	
 	!! Unrolled 8 times
 Lbcopy_aligned8:	
-!	ldx	[%o0], %l0				! Already done
-!	sllx	%l0, %o4, %l0				! Shift high word
+!	ldx	[%l0], %o0				! Already done
+!	sllx	%o0, %l4, %o0				! Shift high word
 	
-	 deccc	8, %o2					! Pre-decrement
+	 deccc	8, %l2					! Pre-decrement
 	bl,pn	%xcc, Lbcopy_finish
 1:
-	ldx	[%o0+8], %l1				! Load word 0
-	inc	8, %o0
+	ldx	[%l0+8], %o1				! Load word 0
+	inc	8, %l0
 	
-	srlx	%l1, %o3, %o5
-	or	%o5, %l0, %o5				! Combine
+	srlx	%o1, %l3, %g6
+	or	%g6, %o0, %g6				! Combine
 	
-	stx	%o5, [%o1]				! Store result
-	 inc	8, %o1
+	stx	%g6, [%l1]				! Store result
+	 inc	8, %l1
 	
-	deccc	8, %o2
+	deccc	8, %l2
 	bge,pn	%xcc, 1b
-	 sllx	%l1, %o4, %l0	
+	 sllx	%o1, %l4, %o0	
 
-	btst	7, %o2					! Done?
+	btst	7, %l2					! Done?
 	bz,pt	%xcc, Lbcopy_complete
 
 	!!
-	!! Loadup the last dregs into %l0 and shift it into place
+	!! Loadup the last dregs into %o0 and shift it into place
 	!! 
-	 srlx	%o3, 3, %o5				! # bytes in %l0
-	dec	8, %o5					!  - 8
+	 srlx	%l3, 3, %g6				! # bytes in %o0
+	dec	8, %g6					!  - 8
 	!! n-8 - (by - 8) -> n - by
-	subcc	%o2, %o5, %g0				! # bytes we need
+	subcc	%l2, %g6, %g0				! # bytes we need
 	ble,pt	%icc, Lbcopy_finish
 	 nop
-	ldx	[%o0+8], %l1				! Need another word
-	srlx	%l1, %o3, %l1
+	ldx	[%l0+8], %o1				! Need another word
+	srlx	%o1, %l3, %o1
 	ba,pt	%icc, Lbcopy_finish
-	 or	%l0, %l1, %l0				! All loaded up.
+	 or	%o0, %o1, %o0				! All loaded up.
 	
 Lbcopy_noshift8:
-	deccc	8*8, %o2				! Have enough room?
+	deccc	6*8, %l2				! Have enough room?
 	bl,pn	%xcc, 2f
 	 nop
 	ba,pt	%icc, 1f
 	 nop
 	.align	32
 1:	
-	ldx	[%o0+0*8], %l0
-	ldx	[%o0+1*8], %l1
-	ldx	[%o0+2*8], %l2
-	ldx	[%o0+3*8], %l3
-	stx	%l0, [%o1+0*8]
-	stx	%l1, [%o1+1*8]
-	stx	%l2, [%o1+2*8]
-	stx	%l3, [%o1+3*8]
+	ldx	[%l0+0*8], %o0
+	ldx	[%l0+1*8], %o1
+	ldx	[%l0+2*8], %o2
+	stx	%o0, [%l1+0*8]
+	stx	%o1, [%l1+1*8]
+	stx	%o2, [%l1+2*8]
 
 	
-	ldx	[%o0+4*8], %l4
-	ldx	[%o0+5*8], %l5
-	ldx	[%o0+6*8], %l6
-	ldx	[%o0+7*8], %l7
-	inc	8*8, %o0
-	stx	%l4, [%o1+4*8]
-	stx	%l5, [%o1+5*8]
-	deccc	8*8, %o2
-	stx	%l6, [%o1+6*8]
-	stx	%l7, [%o1+7*8]
-	stx	%l2, [%o1+2*8]
+	ldx	[%l0+3*8], %o3
+	ldx	[%l0+4*8], %o4
+	ldx	[%l0+5*8], %o5
+	inc	6*8, %l0
+	stx	%o3, [%l1+3*8]
+	stx	%o4, [%l1+4*8]
+	deccc	6*8, %l2
+	stx	%o5, [%l1+5*8]
 	bge,pt	%xcc, 1b
-	 inc	8*8, %o1
+	 inc	6*8, %l1
 2:
-	inc	8*8, %o2
+	inc	6*8, %l2
 1:	
-	deccc	8, %o2
+	deccc	8, %l2
 	bl,pn	%icc, 1f				! < 0 --> sub word
 	 nop
-	ldx	[%o0], %o5
-	inc	8, %o0
-	stx	%o5, [%o1]
+	ldx	[%l0], %g6
+	inc	8, %l0
+	stx	%g6, [%l1]
 	bg,pt	%icc, 1b				! Exactly 0 --> done
-	 inc	8, %o1
+	 inc	8, %l1
 1:
-	btst	7, %o2					! Done?
+	btst	7, %l2					! Done?
 	bz,pt	%xcc, Lbcopy_complete
-	 clr	%o4
-	ldx	[%o0], %l0
+	 clr	%l4
+	ldx	[%l0], %o0
 Lbcopy_finish:
 	
-	brz,pn	%o2, 2f					! 100% complete?
-	 cmp	%o2, 8					! Exactly 8 bytes?
+	brz,pn	%l2, 2f					! 100% complete?
+	 cmp	%l2, 8					! Exactly 8 bytes?
 	bz,a,pn	%xcc, 2f
-	 stx	%l0, [%o1]
+	 stx	%o0, [%l1]
 
-	btst	4, %o2					! Word store?
+	btst	4, %l2					! Word store?
 	bz	%xcc, 1f
-	 srlx	%l0, 32, %o5				! Shift high word down
-	stw	%o5, [%o1]
-	inc	4, %o1
-	mov	%l0, %o5				! Operate on the low bits
+	 srlx	%o0, 32, %g6				! Shift high word down
+	stw	%g6, [%l1]
+	inc	4, %l1
+	mov	%o0, %g6				! Operate on the low bits
 1:
-	btst	2, %o2
-	mov	%o5, %l0
+	btst	2, %l2
+	mov	%g6, %o0
 	bz	1f
-	 srlx	%l0, 16, %o5
+	 srlx	%o0, 16, %g6
 	
-	sth	%o5, [%o1]				! Store short
-	inc	2, %o1
-	mov	%l0, %o5				! Operate on low bytes
+	sth	%g6, [%l1]				! Store short
+	inc	2, %l1
+	mov	%o0, %g6				! Operate on low bytes
 1:
-	mov	%o5, %l0
-	btst	1, %o2					! Byte aligned?
+	mov	%g6, %o0
+	btst	1, %l2					! Byte aligned?
 	bz	2f
-	 srlx	%l0, 8, %o5
+	 srlx	%o0, 8, %g6
 
-	stb	%o5, [%o1]				! Store last byte
-	inc	1, %o1					! Update address
+	stb	%g6, [%l1]				! Store last byte
+	inc	1, %l1					! Update address
 2:	
 Lbcopy_complete:
 #if 0
@@ -9803,8 +9785,8 @@ Lbcopy_complete:
 	 nop
 
 1:
-	set	block_disable, %o0
-	stx	%o0, [%o0]
+	set	block_disable, %l0
+	stx	%l0, [%l0]
 	
 	set	0f, %o0
 	call	prom_printf
@@ -11125,7 +11107,7 @@ Lbzero_internal:
 	 dec	8, %o1			! Fixup count -8
 2:
 	!! Now we're 64-bit aligned
-#if 1
+#if 0
 	/*
 	 * Userland tests indicate it is *slower* to use block
 	 * stores to clear memory.
