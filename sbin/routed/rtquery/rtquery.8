@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtquery.8,v 1.9 1997/10/11 02:55:20 enami Exp $
+.\"	$NetBSD: rtquery.8,v 1.10 1998/04/29 09:49:14 fair Exp $
 .\"
 .Dd June 1, 1996
 .Dt RTQUERY 8
@@ -26,7 +26,8 @@ for its routing table by sending a
 .Em request
 or
 .Em poll
-command.  The routing information in any routing
+command.
+The routing information in any routing
 .Em response
 packets returned is displayed numerically and symbolically.
 .Pp
@@ -102,9 +103,9 @@ is likely to ignore these debugging requests.
 .El
 .Bl -tag -width Ds -offset indent-two
 .It Em on=tracefile
-turn tracing on into the specified file.  That file must usually
-have been specified when the daemon was started or be the same
-as a fixed name, often
+turn tracing on into the specified file.
+That file must usually have been specified when the daemon was
+started or be the same as a fixed name, often
 .Pa /etc/routed.trace .
 .It Em more
 increases the debugging level.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.12 1998/03/23 05:00:15 fair Exp $
+.\"	$NetBSD: shutdown.8,v 1.13 1998/04/29 09:49:14 fair Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -119,7 +119,8 @@ or a future time in one of two formats:
 or
 .Ar [[[[[cc]yy]mm]dd]hh]mm ,
 where the century, year, month, day, and hour may be defaulted
-to the current system values.  The first form brings the system down
+to the current system values.
+The first form brings the system down
 .Ar number
 minutes from the current time; the second brings the system down at the
 absolute time specified.
@@ -142,16 +143,15 @@ from the standard input.
 .Pp
 At intervals, becoming more frequent as apocalypse approaches
 and starting at ten hours before shutdown, warning messages are displayed
-on the terminals of all users logged in.  Five minutes before
-shutdown, or immediately if shutdown is in less than 5 minutes,
-logins are disabled by creating
+on the terminals of all users logged in.
+Five minutes before shutdown, or immediately if shutdown is in less
+than 5 minutes, logins are disabled by creating
 .Pa /etc/nologin
-and copying the
-warning message there.  If this file exists when a user attempts to
-log in,
+and copying the warning message there.
+If this file exists when a user attempts to log in,
 .Xr login 1
-prints its contents and exits.  The file is
-removed just before
+prints its contents and exits.
+The file is removed just before
 .Nm
 exits.
 .Pp
@@ -159,15 +159,12 @@ At shutdown time a message is written in the system log, containing the
 time of shutdown, who initiated the shutdown and the reason.
 A terminate
 signal is then sent to
-.Xr init
-to bring the system down to single-user state (depending on above
-options).
-The time of the shutdown and the warning message
-are placed in
+.Xr init 8
+to bring the system down to single-user state (depending on above options).
+The time of the shutdown and the warning message are placed in
 .Pa /etc/nologin
-and should be used to
-inform the users about when the system will be back up
-and why it is going down (or anything else).
+and should be used to inform the users about when the system will
+be back up and why it is going down (or anything else).
 .Sh FILES
 .Bl -tag -width /etc/nologin -compact
 .It Pa /etc/nologin

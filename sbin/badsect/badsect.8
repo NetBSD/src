@@ -1,4 +1,4 @@
-.\"	$NetBSD: badsect.8,v 1.10 1997/09/15 00:49:56 lukem Exp $
+.\"	$NetBSD: badsect.8,v 1.11 1998/04/29 09:49:10 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,9 @@
 .Ar bbdir sector ...
 .Sh DESCRIPTION
 .Nm
-makes a file to contain a bad sector.  Normally, bad sectors
-are made inaccessible by the standard formatter, which provides
-a forwarding table for bad sectors to the driver; see
+makes a file to contain a bad sector.
+Normally, bad sectors are made inaccessible by the standard formatter,
+which provides a forwarding table for bad sectors to the driver; see
 .Xr bad144 8
 for details.
 If a driver supports the bad blocking standard it is much preferable to
@@ -66,7 +66,7 @@ currently requires the running of the standard
 formatter.
 Thus to deal with a newly bad block
 or on disks where the drivers
-do not support the bad-blocking standard 
+do not support the bad-blocking standard
 .Nm
 may be used to good effect.
 .Pp
@@ -75,22 +75,25 @@ is used on a quiet file system in the following way:
 First mount the file system, and change to its root directory.
 Make a directory
 .Li BAD
-there.  Run
+there.
+Run
 .Nm
 giving as argument the
 .Ar BAD
 directory followed by
 all the bad sectors you wish to add.
-(The sector numbers must be relative to the beginning of
+The sector numbers must be relative to the beginning of
 the file system, but this is not hard as the system reports
-relative sector numbers in its console error messages.)
+relative sector numbers in its console error messages.
 Then change back to the root directory, unmount the file system
 and run
 .Xr fsck 8
-on the file system.  The bad sectors should show up in two files
-or in the bad sector files and the free list.  Have
-.Xr fsck
-remove files containing the offending bad sectors, but 
+on the file system.
+The bad sectors should show up in two files
+or in the bad sector files and the free list.
+Have
+.Xr fsck 8
+remove files containing the offending bad sectors, but
 .Em do not
 have it remove the
 .Pa BAD/ Ns Em nnnnn
@@ -105,12 +108,12 @@ works by giving the specified sector numbers in a
 system call,
 creating an illegal file whose first block address is the block containing
 bad sector and whose name is the bad sector number.
-When it is discovered by 
-.Xr fsck
+When it is discovered by
+.Xr fsck 8
 it will ask
 .Dq Li "HOLD BAD BLOCK ?"
-A positive response will cause 
-.Xr fsck
+A positive response will cause
+.Xr fsck 8
 to convert the inode to a regular file containing the bad block.
 .Sh SEE ALSO
 .Xr bad144 8 ,
