@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_fallback.c,v 1.1 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.c,v 1.2 2003/06/27 14:52:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.1 2003/03/05 20:18:15 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.2 2003/06/27 14:52:25 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,11 @@ _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
 			     int c, wint_t * __restrict wcresult)
 {
 	char mb;
-	mbstate_t state;
+	/*
+	 * what we need is _PRIVSIZE
+	 * and we know that it's smaller than sizeof(mbstate_t).
+	 */
+	char pspriv[sizeof(mbstate_t)];
 	wchar_t wc;
 	size_t nr;
 	int err;
@@ -65,9 +69,9 @@ _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
 		return 0;
 	}
 
-	memset(&state, 0, sizeof(state));
+	memset(&pspriv, 0, sizeof(pspriv));
 	mb = (char)(unsigned)c;
-	err = _citrus_ctype_mbrtowc(cc, &wc, &mb, 1, (void *)&state, &nr);
+	err = _citrus_ctype_mbrtowc(cc, &wc, &mb, 1, (void *)&pspriv, &nr);
 	if (!err && (nr == 0 || nr == 1))
 		*wcresult = wc;
 	else
@@ -80,7 +84,11 @@ int
 _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
 			     wint_t wc, int * __restrict cresult)
 {
-	mbstate_t state;
+	/*
+	 * what we need is _PRIVSIZE
+	 * and we know that it's smaller than sizeof(mbstate_t).
+	 */
+	char pspriv[sizeof(mbstate_t)];
 	char buf[MB_LEN_MAX];
 	size_t nr;
 	int err;
@@ -91,8 +99,8 @@ _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
 		*cresult = EOF;
 		return 0;
 	}
-	memset(&state, 0, sizeof(state));
-	err = _citrus_ctype_wcrtomb(cc, buf, (wchar_t)wc, (void *)&state, &nr);
+	memset(&pspriv, 0, sizeof(pspriv));
+	err = _citrus_ctype_wcrtomb(cc, buf, (wchar_t)wc, (void *)&pspriv, &nr);
 	if (!err && nr == 1)
 		*cresult = buf[0];
 	else
