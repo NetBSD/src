@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2001/10/02 21:31:01 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2001/11/28 05:03:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -711,11 +711,12 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
 	struct nvlist *nv;
 
 	/*
-	 * If a defopt'ed option was enabled but without an explicit
-	 * value, supply a default value of 1, as for non-defopt
-	 * options (where cc treats -DBAR as -DBAR=1.) 
+	 * If a defopt'ed or defflag'ed option was enabled but without
+	  * an explicit value (always the case for defflag), supply a
+	  * default value of 1, as for non-defopt options (where cc
+	  * treats -DBAR as -DBAR=1.) 
 	 */
-	if (OPT_DEFOPT(name) && value == NULL)
+	if ((OPT_DEFOPT(name) || OPT_DEFFLAG(name)) && value == NULL)
 		value = "1";
 
 	/* assume it will work */
