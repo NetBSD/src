@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.22 1999/11/30 19:31:05 thorpej Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.23 2000/02/11 19:22:54 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -107,13 +107,15 @@ typedef int	boolean_t;
 #define	VM_METER	1		/* struct vmmeter */
 #define	VM_LOADAVG	2		/* struct loadavg */
 #define VM_UVMEXP	3		/* struct uvmexp */
-#define	VM_MAXID	4		/* number of valid vm ids */
+#define	VM_NKMEMPAGES	4		/* kmem_map pages */
+#define	VM_MAXID	5		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
 	{ "vmmeter", CTLTYPE_STRUCT }, \
 	{ "loadavg", CTLTYPE_STRUCT }, \
 	{ "uvmexp", CTLTYPE_STRUCT }, \
+	{ "nkmempages", CTLTYPE_INT }, \
 }
 
 

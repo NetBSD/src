@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.85 2000/02/06 16:47:57 eeh Exp $	*/
+/*	$NetBSD: proc.h,v 1.86 2000/02/11 19:22:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -382,7 +382,6 @@ void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
 int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *,
 	    struct proc **));
-void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
 void	cpu_switch __P((struct proc *));
