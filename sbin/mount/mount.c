@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.32.2.1 1997/10/31 21:20:38 mellon Exp $	*/
+/*	$NetBSD: mount.c,v 1.32.2.2 1997/11/02 00:17:34 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.32.2.1 1997/10/31 21:20:38 mellon Exp $");
+__RCSID("$NetBSD: mount.c,v 1.32.2.2 1997/11/02 00:17:34 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,9 +300,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		NULL
 	};
 	const char **argv, **edir;
-	struct statfs sf;
+	struct statfs *sfp, sf;
 	pid_t pid;
-	int argc, i, status, maxargc;
+	int argc, numfs, i, status, maxargc;
 	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN],
 	    mntpath[MAXPATHLEN];
 
@@ -330,19 +330,25 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	if (!strcmp(name, "/"))
 		flags |= MNT_UPDATE;
 	else if (skipmounted) {
-		if (statfs(name, &sf) < 0) {
-			warn("statfs %s", name);
+		if ((numfs = getmntinfo(&sfp, MNT_WAIT)) == 0) {
+			warn("getmntinfo");
 			return (1);
 		}
-		/* XXX can't check f_mntfromname, thanks to mfs, union, etc. */
-		if (strncmp(name, sf.f_mntonname, MNAMELEN) == 0 &&
-		    strncmp(vfstype, sf.f_fstypename, MFSNAMELEN) == 0) {
-			if (verbose)
-				(void)printf("%s on %s type %.*s: %s\n",
-				    sf.f_mntfromname, sf.f_mntonname,
-			            MFSNAMELEN, sf.f_fstypename,
-				    "already mounted");
-			return (0);
+		for(i = 0; i < numfs; i++) {
+			/* XXX can't check f_mntfromname,
+			 thanks to mfs, union, etc. */
+			if (strncmp(name, sfp[i].f_mntonname, MNAMELEN) == 0 &&
+			    strncmp(vfstype, sfp[i].f_fstypename,
+				    MFSNAMELEN) == 0) {
+				if (verbose)
+					(void)printf("%s on %s type %.*s: %s\n",
+						     sfp[i].f_mntfromname,
+						     sfp[i].f_mntonname,
+						     MFSNAMELEN,
+						     sfp[i].f_fstypename,
+						     "already mounted");
+				return (0);
+			}
 		}
 	}
 	if (flags & MNT_FORCE)
@@ -374,7 +380,6 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
-		return (0);
 	}
 
 	switch (pid = vfork()) {
