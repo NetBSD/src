@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.4 1997/07/21 14:17:52 jtc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.5 1997/11/02 16:48:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
 #define authunix_create_default _authunix_create_default
+#define basename		_basename
 #define bindresvport		_bindresvport
 #define bm_comp			_bm_comp
 #define bm_exec			_bm_exec
@@ -112,6 +113,7 @@
 #define dbm_store		_dbm_store
 #define dbopen			_dbopen
 #define devname			_devname
+#define dirname			_dirname
 #define drand48			_drand48
 #define endfsent		_endfsent
 #define endgrent		_endgrent

@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.81 1997/10/21 00:56:42 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.82 1997/11/02 16:48:27 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	_errno.c alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
-	ctype_.c daemon.c devname.c disklabel.c err.c errx.c errlist.c \
-	errno.c execl.c execle.c execlp.c execv.c execvp.c fnmatch.c fstab.c \
-	ftok.c __fts13.c fts.c getbsize.c getcap.c \
+SRCS+=	_errno.c alarm.c assert.c basename.c clock.c closedir.c confstr.c \
+	ctermid.c ctype_.c daemon.c devname.c dirname.c disklabel.c err.c \
+	errx.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	fnmatch.c fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c \
 	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c __glob13.c \
