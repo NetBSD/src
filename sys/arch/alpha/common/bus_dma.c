@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.42 2001/01/03 21:27:07 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.43 2001/01/03 21:39:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2001/01/03 21:27:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2001/01/03 21:39:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2001/01/03 21:27:07 thorpej Exp $")
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-int	_bus_dmamap_load_buffer_direct_common(bus_dma_tag_t,
+int	_bus_dmamap_load_buffer_direct(bus_dma_tag_t,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
 	    paddr_t *, int *, int);
 
@@ -126,7 +126,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
+_bus_dmamap_load_buffer_direct(bus_dma_tag_t t, bus_dmamap_t map,
     void *buf, size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
@@ -245,7 +245,7 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		return (EINVAL);
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen,
+	error = _bus_dmamap_load_buffer_direct(t, map, buf, buflen,
 	    p, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
@@ -279,7 +279,7 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf_direct_common: no packet header");
+		panic("_bus_dmamap_load_mbuf_direct: no packet header");
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
@@ -289,7 +289,7 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		error = _bus_dmamap_load_buffer_direct(t, map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
@@ -332,7 +332,8 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 		p = uio->uio_procp;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
-			panic("_bus_dmamap_load_direct_common: USERSPACE but no proc");
+			panic("_bus_dmamap_load_uio_direct: "
+			    "USERSPACE but no proc");
 #endif
 	}
 
@@ -347,7 +348,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
 		addr = (caddr_t)iov[i].iov_base;
 
-		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		error = _bus_dmamap_load_buffer_direct(t, map,
 		    addr, minlen, p, flags, &lastaddr, &seg, first);
 		first = 0;
 
