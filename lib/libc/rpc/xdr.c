@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.15 1998/03/30 01:15:21 mrg Exp $	*/
+/*	$NetBSD: xdr.c,v 1.16 1998/07/26 12:37:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.15 1998/03/30 01:15:21 mrg Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.16 1998/07/26 12:37:18 mycroft Exp $");
 #endif
 #endif
 
@@ -636,7 +636,7 @@ xdr_union(xdrs, dscmp, unp, choices, dfault)
 	XDR *xdrs;
 	enum_t *dscmp;		/* enum to decide which arm to work on */
 	char *unp;		/* the union itself */
-	struct xdr_discrim *choices;	/* [value, xdr proc] for each arm */
+	const struct xdr_discrim *choices;	/* [value, xdr proc] for each arm */
 	xdrproc_t dfault;	/* default xdr routine */
 {
 	enum_t dscm;
