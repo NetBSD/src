@@ -326,6 +326,14 @@ parse_config (cvsroot)
 		goto error_return;
 	    }
 	}
+	else if (strcmp (line, "tag") == 0) {
+	    RCS_citag = strdup(p);
+	    if (RCS_citag == NULL) {
+		error (0, 0, "%s: no memory for local tag '%s'",
+		       infopath, p);
+		goto error_return;
+	    }
+	}
 	else if (strcmp (line, "PreservePermissions") == 0)
 	{
 	    if (strcmp (p, "no") == 0)

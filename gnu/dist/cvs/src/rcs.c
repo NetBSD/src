@@ -3707,7 +3707,7 @@ struct rcs_keyword
     size_t len;
 };
 #define KEYWORD_INIT(s) (s), sizeof (s) - 1
-static const struct rcs_keyword keywords[] =
+static struct rcs_keyword keywords[] =
 {
     { KEYWORD_INIT ("Author") },
     { KEYWORD_INIT ("Date") },
@@ -3720,9 +3720,7 @@ static const struct rcs_keyword keywords[] =
     { KEYWORD_INIT ("Revision") },
     { KEYWORD_INIT ("Source") },
     { KEYWORD_INIT ("State") },
-#ifdef LOCALID
-    { KEYWORD_INIT (LOCALID) },
-#endif
+    { NULL, 0 },
     { NULL, 0 }
 };
 enum keyword
@@ -3873,6 +3871,11 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 	*retbuf = buf;
 	*retlen = len;
 	return;
+    }
+
+    if (RCS_citag != NULL) {
+	keywords[KEYWORD_LOCALID].string = RCS_citag;
+	keywords[KEYWORD_LOCALID].len = strlen(RCS_citag);
     }
 
     /* If we are using -kkvl, dig out the locker information if any.  */
