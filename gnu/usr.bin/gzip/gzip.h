@@ -55,7 +55,8 @@ typedef unsigned long  ulg;
 #define COMPRESSED  1
 #define PACKED      2
 #define LZHED       3
-/* methods 4 to 7 reserved */
+/* methods 4 to 6 reserved */
+#define BZIP2ED     7
 #define DEFLATED    8
 #define MAX_METHODS 9
 extern int method;         /* compression method */
@@ -157,6 +158,7 @@ typedef int file_t;     /* Do not use stdio */
 #define	OLD_GZIP_MAGIC "\037\236" /* Magic header for gzip 0.5 = freeze 1.x */
 #define	LZH_MAGIC      "\037\240" /* Magic header for SCO LZH Compress files*/
 #define PKZIP_MAGIC    "\120\113\003\004" /* Magic header for pkzip files */
+#define BZIP2_MAGIC    "\102\132\150" /* Magic header for bzip2 files */
 
 /* gzip flag byte */
 #define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
@@ -271,6 +273,9 @@ extern int unpack     OF((int in, int out));
 
 	/* in unlzh.c */
 extern int unlzh      OF((int in, int out));
+
+	/* in unbzip2.c */
+extern int unbzip2    OF((int in, int out));
 
 	/* in gzip.c */
 RETSIGTYPE abort_gzip OF((void));

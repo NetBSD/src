@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.3 1998/03/06 18:17:13 tv Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.4 1999/07/25 07:06:06 simonb Exp $";
 #endif
 
 #include <ctype.h>
@@ -1278,6 +1278,14 @@ local int get_method(in)
 	/* check_zipfile may get ofname from the local header */
 	last_member = 1;
 
+    } else if (memcmp(magic, BZIP2_MAGIC, 2) == 0 && inptr == 2
+	    && memcmp((char*)inbuf, BZIP2_MAGIC, 3) == 0
+	    && (inbuf[3] >= '0' && inbuf[3] <= '9')) {
+        inptr = 0;
+	work = unbzip2;
+	method = BZIP2ED;
+	last_member = 1;
+
     } else if (memcmp(magic, PACK_MAGIC, 2) == 0) {
 	work = unpack;
 	method = PACKED;
@@ -1327,7 +1335,8 @@ local void do_list(ifd, method)
         "compr",  /* 1 */
         "pack ",  /* 2 */
         "lzh  ",  /* 3 */
-        "", "", "", "", /* 4 to 7 reserved */
+        "", "", "", /* 4 to 6 reserved */
+	"bzip2",
         "defla"}; /* 8 */
     char *date;
 
