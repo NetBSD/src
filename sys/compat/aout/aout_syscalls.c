@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_syscalls.c,v 1.7 2000/01/08 17:03:23 tron Exp $	*/
+/*	$NetBSD: aout_syscalls.c,v 1.8 2000/01/31 15:53:46 christos Exp $	*/
 
 /*
  * System call names.
@@ -407,9 +407,9 @@ char *aout_syscallnames[] = {
 	"fhstat",			/* 299 = fhstat */
 	"fhstatfs",			/* 300 = fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-	"__semctl13",			/* 301 = __semctl13 */
+	"____semctl13",			/* 301 = ____semctl13 */
 #else
-	"#301 (excluded __semctl13)",		/* 301 = excluded __semctl13 */
+	"#301 (excluded ____semctl13)",		/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
 	"__msgctl13",			/* 302 = __msgctl13 */
