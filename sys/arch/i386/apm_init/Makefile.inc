@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1996/09/09 11:31:40 jtk Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1996/09/09 11:34:01 jtk Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -18,7 +18,7 @@ APMDEPS= \
 	${I386}/include/specialreg.h \
 	${I386}/include/psl.h
 
-${APMINC}:	${APMDEPS} ${APMDST} assym.h Makefile
+${APMINC}:	${APMDEPS} ${APMDST} assym.h apm.h
 	@echo making sure the apm grappling hook is up to date...
 	@(cd ${APMDST} && ${MAKE} -f ${APMDIR}/Makefile \
 	  APMCC="${CC}" \
