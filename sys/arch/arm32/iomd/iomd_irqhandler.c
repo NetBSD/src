@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.21 1998/09/05 04:04:24 mark Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.22 1999/01/22 06:59:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -217,11 +217,21 @@ irq_claim(irq, handler)
 		 */
 		ptr = irqhandlers[irq];
 		if (ptr) {
+			int max_level;
+
 			level = ptr->ih_level - 1;
+			max_level = ptr->ih_level - 1;
 			while (ptr) {
 				if (ptr->ih_level - 1 < level)
 					level = ptr->ih_level - 1;
+				else if (ptr->ih_level - 1 > max_level)
+					max_level = ptr->ih_level - 1;
 				ptr = ptr->ih_next;
+			}
+			/* Clear out any levels that we cannot now allow */
+			while (max_level >=0 && max_level > level) {
+				irqmasks[max_level] &= ~(1 << irq);
+				--max_level;
 			}
 			while (level >= 0) {
 				irqmasks[level] |= (1 << irq);
