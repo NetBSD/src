@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.30 1994/11/04 07:26:49 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.31 1994/11/04 08:24:25 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -66,7 +66,7 @@ device	isa at root {[port = -1], [size = 0],
 		     [irq = -1], [drq = -1]}
 device	eisa at root {[slot = -1],
 		      [iomem = -1], [iosiz = 0],
-		      [irq = -1], [drq = -1]}
+		      [irq = -1]}
 device	pci at root {[bus = -1], [dev = -1]}
 #device	mca at root {...}
 
