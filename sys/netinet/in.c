@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.31 1996/09/07 04:55:16 mrg Exp $	*/
+/*	$NetBSD: in.c,v 1.32 1996/09/09 14:51:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -172,7 +172,7 @@ in_control(so, cmd, data, ifp, p)
 		if (ifra->ifra_addr.sin_family == AF_INET)
 			for (; ia != 0; ia = ia->ia_list.tqe_next) {
 				if (ia->ia_ifp == ifp  &&
-				    SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
+				    in_hosteq(ia->ia_addr.sin_addr, ifra->ifra_addr.sin_addr))
 					break;
 			}
 		if (cmd == SIOCDIFADDR && ia == 0)
@@ -285,7 +285,7 @@ in_control(so, cmd, data, ifp, p)
 			if (ifra->ifra_addr.sin_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
 				hostIsNew = 0;
-			} else if (SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
+			} else if (in_hosteq(ia->ia_addr.sin_addr, ifra->ifra_addr.sin_addr))
 				hostIsNew = 0;
 		}
 		if (ifra->ifra_mask.sin_len) {
@@ -362,6 +362,9 @@ in_ifinit(ifp, ia, sin, scrub)
 	struct sockaddr_in oldaddr;
 	int s = splimp(), flags = RTF_UP, error;
 
+	/*
+	 * Set up new addresses.
+	 */
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 	/*
@@ -370,11 +373,8 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * and to validate the address if necessary.
 	 */
 	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
-		splx(s);
-		ia->ia_addr = oldaddr;
-		return (error);
-	}
+	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia)))
+		goto bad;
 	splx(s);
 	if (scrub) {
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
@@ -417,7 +417,8 @@ in_ifinit(ifp, ia, sin, scrub)
 			return (0);
 		flags |= RTF_HOST;
 	}
-	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, flags)) == 0)
+	error = rtinit(&ia->ia_ifa, (int)RTM_ADD, flags);
+	if (!error)
 		ia->ia_flags |= IFA_ROUTE;
 	/*
 	 * If the interface supports multicast, join the "all hosts"
@@ -430,8 +431,11 @@ in_ifinit(ifp, ia, sin, scrub)
 		in_addmulti(&addr, ifp);
 	}
 	return (error);
+bad:
+	splx(s);
+	ia->ia_addr = oldaddr;
+	return (error);
 }
-
 
 /*
  * Return 1 if the address might be a local broadcast address.
@@ -444,7 +448,7 @@ in_broadcast(in, ifp)
 	register struct ifaddr *ifa;
 
 	if (in.s_addr == INADDR_BROADCAST ||
-	    in.s_addr == INADDR_ANY)
+	    in_nullhost(in))
 		return 1;
 	if ((ifp->if_flags & IFF_BROADCAST) == 0)
 		return 0;
@@ -455,8 +459,8 @@ in_broadcast(in, ifp)
 #define ia (ifatoia(ifa))
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-		     in.s_addr == ia->ia_netbroadcast.s_addr ||
+		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
+		     in_hosteq(in, ia->ia_netbroadcast) ||
 		     /*
 		      * Check for old-style (host 0) broadcast.
 		      */

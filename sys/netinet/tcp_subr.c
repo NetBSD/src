@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.23 1996/09/09 14:51:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -78,7 +78,7 @@ void
 tcp_init()
 {
 
-	tcp_iss = 1;		/* wrong */
+	tcp_iss = 1;		/* XXX wrong */
 	in_pcbinit(&tcbtable, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
@@ -215,7 +215,7 @@ tcp_newtcpcb(inp)
 	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
 	if (tp == NULL)
 		return ((struct tcpcb *)0);
-	bzero((char *) tp, sizeof(struct tcpcb));
+	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
 	tp->t_maxseg = tcp_mssdflt;
 
@@ -292,7 +292,7 @@ tcp_close(tp)
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
 	    (rt = inp->inp_route.ro_rt) &&
-	    satosin(rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
+	    !in_nullhost(satosin(rt_key(rt))->sin_addr)) {
 		register u_long i = 0;
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
@@ -426,10 +426,11 @@ tcp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
-		    th->th_sport, errno, notify);
+		in_pcbnotify(&tcbtable, satosin(sa)->sin_addr, th->th_dport,
+		    ip->ip_src, th->th_sport, errno, notify);
 	} else
-		in_pcbnotifyall(&tcbtable, sa, errno, notify);
+		in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
+		    notify);
 	return NULL;
 }
 

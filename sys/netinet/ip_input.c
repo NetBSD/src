@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.34 1996/09/08 15:49:43 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.35 1996/09/09 14:51:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -117,6 +117,7 @@ static	struct ip_srcrt {
 } ip_srcrt;
 
 static void save_rte __P((u_char *, struct in_addr));
+
 /*
  * IP initialization: fill in IP protocol switch table.
  * All protocols not implemented in kernel go to raw IP protocol handler.
@@ -158,7 +159,7 @@ ipintr()
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
 	struct ipqent *ipqe;
-	int hlen = 0, mff, s;
+	int hlen = 0, mff, len, s;
 #ifdef PACKET_FILTER
 	struct packet_filter_hook *pfh;
 	struct mbuf *m0;
@@ -216,12 +217,9 @@ next:
 	 * Convert fields to host representation.
 	 */
 	NTOHS(ip->ip_len);
-	if (ip->ip_len < hlen) {
-		ipstat.ips_badlen++;
-		goto bad;
-	}
 	NTOHS(ip->ip_id);
 	NTOHS(ip->ip_off);
+	len = ip->ip_len;
 
 	/*
 	 * Check that the amount of data in the buffers
@@ -229,16 +227,16 @@ next:
 	 * Trim mbufs if longer than we expect.
 	 * Drop packet if shorter than we expect.
 	 */
-	if (m->m_pkthdr.len < ip->ip_len) {
+	if (m->m_pkthdr.len < len) {
 		ipstat.ips_tooshort++;
 		goto bad;
 	}
-	if (m->m_pkthdr.len > ip->ip_len) {
+	if (m->m_pkthdr.len > len) {
 		if (m->m_len == m->m_pkthdr.len) {
-			m->m_len = ip->ip_len;
-			m->m_pkthdr.len = ip->ip_len;
+			m->m_len = len;
+			m->m_pkthdr.len = len;
 		} else
-			m_adj(m, ip->ip_len - m->m_pkthdr.len);
+			m_adj(m, len - m->m_pkthdr.len);
 	}
 
 #ifdef PACKET_FILTER
@@ -268,13 +266,13 @@ next:
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (ip->ip_dst.s_addr == ia->ia_addr.sin_addr.s_addr)
+		if (in_hosteq(ip->ip_dst, ia->ia_addr.sin_addr))
 			goto ours;
 		if (((ip_directedbcast == 0) || (ip_directedbcast &&
 		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
-			if (ip->ip_dst.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-			    ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr ||
+			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
+			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
 			    /*
 			     * Look for all-0's host part (old broadcast addr),
 			     * either for subnet or net.
@@ -341,7 +339,7 @@ next:
 		goto ours;
 	}
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
-	    ip->ip_dst.s_addr == INADDR_ANY)
+	    in_nullhost(ip->ip_dst))
 		goto ours;
 
 	/*
@@ -376,8 +374,8 @@ ours:
 		 */
 		for (fp = ipq.lh_first; fp != NULL; fp = fp->ipq_q.le_next)
 			if (ip->ip_id == fp->ipq_id &&
-			    ip->ip_src.s_addr == fp->ipq_src.s_addr &&
-			    ip->ip_dst.s_addr == fp->ipq_dst.s_addr &&
+			    in_hosteq(ip->ip_src, fp->ipq_src) &&
+			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
 			    ip->ip_p == fp->ipq_p)
 				goto found;
 		fp = 0;
@@ -866,7 +864,7 @@ ip_rtaddr(dst)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || dst.s_addr != sin->sin_addr.s_addr) {
+	if (ipforward_rt.ro_rt == 0 || !in_hosteq(dst, sin->sin_addr)) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
@@ -1041,7 +1039,7 @@ ip_forward(m, srcrt)
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
 		printf("forward: src %x dst %x ttl %x\n",
-		       ip->ip_src.s_addr, ip->ip_dst.s_addr, ip->ip_ttl);
+		    ip->ip_src.s_addr, ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
@@ -1057,13 +1055,13 @@ ip_forward(m, srcrt)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
-	    ip->ip_dst.s_addr != sin->sin_addr.s_addr) {
+	    !in_hosteq(ip->ip_dst, sin->sin_addr)) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
 		}
 		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
+		sin->sin_len = sizeof(struct sockaddr_in);
 		sin->sin_addr = ip->ip_dst;
 
 		rtalloc(&ipforward_rt);
@@ -1090,7 +1088,7 @@ ip_forward(m, srcrt)
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
-	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
+	    !in_nullhost(satosin(rt_key(rt))->sin_addr) &&
 	    ipsendredirects && !srcrt) {
 		if (rt->rt_ifa &&
 		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
@@ -1104,7 +1102,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		        printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
+		    	printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
 #endif
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.24 1996/09/09 14:51:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -354,18 +354,18 @@ findpcb:
 		++tcpstat.tcps_pcbhashmiss;
 		inp = in_pcblookup(&tcbtable, ti->ti_src, ti->ti_sport,
 		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
-		/*
-		 * If the state is CLOSED (i.e., TCB does not exist) then
-		 * all data in the incoming segment is discarded.
-		 * If the TCB exists but is in CLOSED state, it is embryonic,
-		 * but should either do a listen or a connect soon.
-		 */
 		if (inp == 0) {
 			++tcpstat.tcps_noport;
 			goto dropwithreset;
 		}
 	}
 
+	/*
+	 * If the state is CLOSED (i.e., TCB does not exist) then
+	 * all data in the incoming segment is discarded.
+	 * If the TCB exists but is in CLOSED state, it is embryonic,
+	 * but should either do a listen or a connect soon.
+	 */
 	tp = intotcpcb(inp);
 	if (tp == 0)
 		goto dropwithreset;
@@ -597,7 +597,7 @@ findpcb:
 		sin->sin_port = ti->ti_sport;
 		bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
 		laddr = inp->inp_laddr;
-		if (inp->inp_laddr.s_addr == INADDR_ANY)
+		if (in_nullhost(laddr))
 			inp->inp_laddr = ti->ti_dst;
 		if (in_pcbconnect(inp, am)) {
 			inp->inp_laddr = laddr;
@@ -746,8 +746,10 @@ trimthenstep6:
 			ti->ti_seq++;
 			if (ti->ti_urp > 1) 
 				ti->ti_urp--;
-			else
+			else {
 				tiflags &= ~TH_URG;
+				ti->ti_urp = 0;
+			}
 			todrop--;
 		}
 		if (todrop >= ti->ti_len) {
@@ -1549,7 +1551,7 @@ tcp_mss(tp, offer)
 
 	if ((rt = ro->ro_rt) == (struct rtentry *)0) {
 		/* No route yet, so try to acquire one */
-		if (inp->inp_faddr.s_addr != INADDR_ANY) {
+		if (!in_nullhost(inp->inp_faddr)) {
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
