@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.60 1998/08/04 22:40:17 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.61 1998/08/14 16:50:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 1998/08/04 22:40:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 1998/08/14 16:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,10 +248,10 @@ pt_entry_t	*VPT;
 
 struct pmap	kernel_pmap_store;
 
-vm_offset_t    	avail_start;	/* PA of first available physical page */
-vm_offset_t	avail_end;	/* PA of last available physical page */
-vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+paddr_t    	avail_start;	/* PA of first available physical page */
+paddr_t		avail_end;	/* PA of last available physical page */
+vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
+vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
@@ -405,11 +405,11 @@ struct simplelock pmap_all_pmaps_slock;
 
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
-static __inline struct pv_head *pa_to_pvh __P((vm_offset_t));
+static __inline struct pv_head *pa_to_pvh __P((paddr_t));
 
 static __inline struct pv_head *
 pa_to_pvh(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int bank, pg;
 
@@ -421,9 +421,9 @@ pa_to_pvh(pa)
  * Internal routines
  */
 void	alpha_protection_init __P((void));
-boolean_t pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *,
+boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
 	    boolean_t));
-void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
+void	pmap_changebit __P((paddr_t, u_long, boolean_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
 
@@ -438,13 +438,13 @@ void	pmap_ptpage_free __P((pmap_t, pt_entry_t *));
 /*
  * PV table management functions.
  */
-void	pmap_pv_enter __P((pmap_t, vm_offset_t, vm_offset_t, boolean_t));
-void	pmap_pv_remove __P((pmap_t, vm_offset_t, vm_offset_t, boolean_t));
+void	pmap_pv_enter __P((pmap_t, paddr_t, vaddr_t, boolean_t));
+void	pmap_pv_remove __P((pmap_t, paddr_t, vaddr_t, boolean_t));
 struct	pv_entry *pmap_pv_alloc __P((void));
 void	pmap_pv_free __P((struct pv_entry *));
 void	pmap_pv_collect __P((void));
 #ifdef DEBUG
-void	pmap_pv_dump __P((vm_offset_t));
+void	pmap_pv_dump __P((paddr_t));
 #endif
 
 /*
@@ -455,8 +455,8 @@ void	pmap_asn_alloc __P((pmap_t));
 /*
  * Misc. functions.
  */
-vm_offset_t pmap_physpage_alloc __P((int));
-void	pmap_physpage_free __P((vm_offset_t));
+paddr_t	pmap_physpage_alloc __P((int));
+void	pmap_physpage_free __P((paddr_t));
 int	pmap_physpage_addref __P((void *));
 int	pmap_physpage_delref __P((void *));
 
@@ -543,7 +543,7 @@ do {									\
 	PMAP_ACTIVATE_ASN_SANITY(pmap);					\
 									\
 	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
-	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)(pmap)->pm_lev1map) >> PGSHIFT; \
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
 	(p)->p_addr->u_pcb.pcb_hw.apcb_asn = (pmap)->pm_asn;		\
 									\
 	if ((p) == curproc) {						\
@@ -643,10 +643,10 @@ do {									\
  */
 void
 pmap_bootstrap(ptaddr, maxasn)
-	vm_offset_t ptaddr;
+	paddr_t ptaddr;
 	u_int maxasn;
 {
-	vm_size_t lev2mapsize, lev3mapsize;
+	vsize_t lev2mapsize, lev3mapsize;
 	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
 	int i;
@@ -744,7 +744,7 @@ pmap_bootstrap(ptaddr, maxasn)
 
 	/* Map all of the level 2 pte pages */
 	for (i = 0; i < howmany(lev2mapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)lev2map) +
+		pte = (ALPHA_K0SEG_TO_PHYS(((vaddr_t)lev2map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		kernel_lev1map[l1pte_index(VM_MIN_KERNEL_ADDRESS +
@@ -752,7 +752,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	}
 
 	/* Map the virtual page table */
-	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map) >> PGSHIFT)
+	pte = (ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT)
 	    << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	kernel_lev1map[l1pte_index(VPTBASE)] = pte;
@@ -763,7 +763,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	 */
 	/* Map all of the level 3 pte pages */
 	for (i = 0; i < howmany(lev3mapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)lev3map) +
+		pte = (ALPHA_K0SEG_TO_PHYS(((vaddr_t)lev3map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
@@ -830,7 +830,7 @@ pmap_bootstrap(ptaddr, maxasn)
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
-	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map) >> PGSHIFT;
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
 	proc0.p_addr->u_pcb.pcb_hw.apcb_asn = pmap_kernel()->pm_asn;
 
 	/*
@@ -877,13 +877,14 @@ pmap_uses_prom_console()
  *
  *	Note: no locking is necessary in this function.
  */
-vm_offset_t
+vaddr_t
 pmap_steal_memory(size, vstartp, vendp)
-	vm_size_t size;
-	vm_offset_t *vstartp, *vendp;
+	vsize_t size;
+	vaddr_t *vstartp, *vendp;
 {
 	int bank, npgs, x;
-	vm_offset_t pa, va;
+	vaddr_t va;
+	paddr_t pa;
 
 	size = round_page(size);
 	npgs = atop(size);
@@ -954,7 +955,7 @@ pmap_steal_memory(size, vstartp, vendp)
 void
 pmap_init()
 {
-	vm_size_t	s;
+	vsize_t		s;
 	int		bank;
 	struct pv_head	*pvh;
 
@@ -1020,7 +1021,7 @@ pmap_create()
 #else /* ! PMAP_NEW */
 pmap_t
 pmap_create(size)
-	vm_size_t	size;
+	vsize_t		size;
 #endif /* PMAP_NEW */
 {
 	pmap_t pmap;
@@ -1196,7 +1197,7 @@ pmap_reference(pmap)
 void
 pmap_remove(pmap, sva, eva)
 	pmap_t pmap;
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	boolean_t needisync = FALSE;
@@ -1262,7 +1263,7 @@ pmap_page_protect(pg, prot)
 #else
 void
 pmap_page_protect(pa, prot)
-	vm_offset_t	pa;
+	paddr_t		pa;
 	vm_prot_t	prot;
 #endif /* PMAP_NEW */
 {
@@ -1271,7 +1272,7 @@ pmap_page_protect(pa, prot)
 	int s;
 	boolean_t needisync = FALSE;
 #if defined(PMAP_NEW)
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
@@ -1370,7 +1371,7 @@ pmap_page_protect(pa, prot)
 void
 pmap_protect(pmap, sva, eva, prot)
 	pmap_t	pmap;
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte, bits;
@@ -1454,13 +1455,14 @@ pmap_protect(pmap, sva, eva, prot)
 void
 pmap_enter(pmap, va, pa, prot, wired)
 	pmap_t pmap;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
 {
 	boolean_t managed;
 	pt_entry_t *pte, npte;
-	vm_offset_t opa;
+	paddr_t opa;
 	boolean_t tflush = TRUE;
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
 	boolean_t needisync;
@@ -1711,8 +1713,8 @@ pmap_enter(pmap, va, pa, prot, wired)
  */
 void
 pmap_kenter_pa(va, pa, prot)
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t prot;
 {
 	pt_entry_t *pte, npte;
@@ -1764,7 +1766,7 @@ pmap_kenter_pa(va, pa, prot)
  */
 void
 pmap_kenter_pgs(va, pgs, npgs)
-	vm_offset_t va;
+	vaddr_t va;
 	vm_page_t *pgs;
 	int npgs;
 {
@@ -1790,8 +1792,8 @@ pmap_kenter_pgs(va, pgs, npgs)
  */
 void
 pmap_kremove(va, size)
-	vm_offset_t va;
-	vm_size_t size;
+	vaddr_t va;
+	vsize_t size;
 {
 	pt_entry_t *pte;
 	boolean_t needisync = FALSE;
@@ -1829,8 +1831,8 @@ pmap_kremove(va, size)
  */
 void
 pmap_change_wiring(pmap, va, wired)
-	pmap_t	pmap;
-	vm_offset_t	va;
+	pmap_t		pmap;
+	vaddr_t		va;
 	boolean_t	wired;
 {
 	pt_entry_t *pte;
@@ -1887,13 +1889,13 @@ pmap_change_wiring(pmap, va, wired)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-vm_offset_t
+paddr_t
 pmap_extract(pmap, va)
 	pmap_t	pmap;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1939,9 +1941,9 @@ void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	pmap_t		dst_pmap;
 	pmap_t		src_pmap;
-	vm_offset_t	dst_addr;
-	vm_size_t	len;
-	vm_offset_t	src_addr;
+	vaddr_t		dst_addr;
+	vsize_t		len;
+	vaddr_t		src_addr;
 {
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2081,7 +2083,7 @@ pmap_deactivate(p)
  */
 void
 pmap_zero_page(phys)
-	vm_offset_t phys;
+	paddr_t phys;
 {
 	caddr_t p;
 
@@ -2104,7 +2106,7 @@ pmap_zero_page(phys)
  */
 void
 pmap_copy_page(src, dst)
-	vm_offset_t src, dst;
+	paddr_t src, dst;
 {
 	caddr_t s, d;
 
@@ -2132,7 +2134,7 @@ pmap_copy_page(src, dst)
 void
 pmap_pageable(pmap, sva, eva, pageable)
 	pmap_t		pmap;
-	vm_offset_t	sva, eva;
+	vaddr_t		sva, eva;
 	boolean_t	pageable;
 {
 
@@ -2154,7 +2156,7 @@ pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
 
 #ifdef DEBUG
@@ -2181,7 +2183,7 @@ pmap_clear_modify(pg)
 #else /* ! PMAP_NEW */
 void
 pmap_clear_modify(pa)
-	vm_offset_t	pa;
+	paddr_t	pa;
 {
 	struct pv_head *pvh;
 
@@ -2218,7 +2220,7 @@ pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv = FALSE;
 
 #ifdef DEBUG
@@ -2245,7 +2247,7 @@ pmap_clear_reference(pg)
 #else /* ! PMAP_NEW */
 void
 pmap_clear_reference(pa)
-	vm_offset_t	pa;
+	paddr_t	pa;
 {
 	struct pv_head *pvh;
 
@@ -2283,7 +2285,7 @@ pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
@@ -2300,7 +2302,7 @@ pmap_is_referenced(pg)
 #else /* ! PMAP_NEW */
 boolean_t
 pmap_is_referenced(pa)
-	vm_offset_t	pa;
+	paddr_t	pa;
 {
 	struct pv_head *pvh;
 	boolean_t rv;
@@ -2333,7 +2335,7 @@ pmap_is_modified(pg)
 	struct vm_page *pg;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
@@ -2350,7 +2352,7 @@ pmap_is_modified(pg)
 #else /* ! PMAP_NEW */
 boolean_t
 pmap_is_modified(pa)
-	vm_offset_t	pa;
+	paddr_t	pa;
 {
 	struct pv_head *pvh;
 	boolean_t rv;
@@ -2380,7 +2382,7 @@ pmap_is_modified(pa)
  *
  *	Note: no locking is necessary in this function.
  */
-vm_offset_t
+paddr_t
 pmap_phys_address(ppn)
 	int ppn;
 {
@@ -2465,11 +2467,11 @@ alpha_protection_init()
 boolean_t
 pmap_remove_mapping(pmap, va, pte, dolock)
 	pmap_t pmap;
-	vm_offset_t va;
+	vaddr_t va;
 	pt_entry_t *pte;
 	boolean_t dolock;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 	int s;
 	boolean_t onpv;
 	boolean_t hadasm;
@@ -2549,7 +2551,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 			 * behind our back to shortcut to the VA's PTE.
 			 */
 			PMAP_INVALIDATE_TLB(pmap,
-			    (vm_offset_t)(&VPT[VPT_INDEX(va)]), FALSE,
+			    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
 			    PMAP_ISACTIVE(pmap));
 
 			/*
@@ -2614,14 +2616,14 @@ pmap_remove_mapping(pmap, va, pte, dolock)
  */
 void
 pmap_changebit(pa, bit, setem)
-	vm_offset_t pa;
+	paddr_t pa;
 	u_long bit;
 	boolean_t setem;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
 	pt_entry_t *pte, npte;
-	vm_offset_t va;
+	vaddr_t va;
 	boolean_t hadasm, isactive;
 	boolean_t needisync = FALSE;
 	int s;
@@ -2651,7 +2653,7 @@ pmap_changebit(pa, bit, setem)
 			if (va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
 #else
-			extern vm_offset_t pager_sva, pager_eva;
+			extern vaddr_t pager_sva, pager_eva;
 
 			if (va >= pager_sva && va < pager_eva)
 				continue;
@@ -2688,12 +2690,12 @@ pmap_changebit(pa, bit, setem)
 void
 pmap_emulate_reference(p, v, user, write)
 	struct proc *p;
-	vm_offset_t v;
+	vaddr_t v;
 	int user;
 	int write;
 {
 	pt_entry_t faultoff, *pte;
-	vm_offset_t pa;
+	paddr_t pa;
 	struct pv_head *pvh;
 	boolean_t didlock = FALSE;
 
@@ -2821,7 +2823,7 @@ pmap_emulate_reference(p, v, user, write)
  */
 void
 pmap_pv_dump(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
@@ -2857,12 +2859,12 @@ pmap_pv_dump(pa)
  *
  *	Note: no locking is necessary in this function.
  */
-vm_offset_t
+paddr_t
 vtophys(vaddr)
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 {
 	pt_entry_t *pte;
-	vm_offset_t paddr = 0;
+	paddr_t paddr = 0;
 
 	if (vaddr < ALPHA_K0SEG_BASE)
 		printf("vtophys: invalid vaddr 0x%lx", vaddr);
@@ -2891,7 +2893,8 @@ vtophys(vaddr)
 void
 pmap_pv_enter(pmap, pa, va, dolock)
 	pmap_t pmap;
-	vm_offset_t pa, va;
+	paddr_t pa;
+	vaddr_t va;
 	boolean_t dolock;
 {
 	struct pv_head *pvh;
@@ -2941,7 +2944,8 @@ pmap_pv_enter(pmap, pa, va, dolock)
 void
 pmap_pv_remove(pmap, pa, va, dolock)
 	pmap_t pmap;
-	vm_offset_t pa, va;
+	paddr_t pa;
+	vaddr_t va;
 	boolean_t dolock;
 {
 	struct pv_head *pvh;
@@ -2984,7 +2988,7 @@ pmap_pv_remove(pmap, pa, va, dolock)
 struct pv_entry *
 pmap_pv_alloc()
 {
-	vm_offset_t pvppa;
+	paddr_t pvppa;
 	struct pv_page *pvp;
 	struct pv_entry *pv;
 	int i;
@@ -3030,7 +3034,7 @@ void
 pmap_pv_free(pv)
 	struct pv_entry *pv;
 {
-	vm_offset_t pvppa;
+	paddr_t pvppa;
 	struct pv_page *pvp;
 	int nfree;
 
@@ -3046,7 +3050,7 @@ pmap_pv_free(pv)
 		 */
 		pv_nfree -= pmap_npvppg - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
+		pvppa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pvp);
 		pmap_physpage_free(pvppa);
 	} else {
 		if (nfree == 1)
@@ -3072,7 +3076,7 @@ pmap_pv_collect()
 	struct pv_page *pvp, *npvp;
 	struct pv_head *pvh;
 	struct pv_entry *pv, *nextpv, *newpv;
-	vm_offset_t pvppa;
+	paddr_t pvppa;
 	int s;
 
 	TAILQ_INIT(&pv_page_collectlist);
@@ -3160,7 +3164,7 @@ pmap_pv_collect()
 	 */
 	for (pvp = TAILQ_FIRST(&pv_page_collectlist); pvp != NULL; pvp = npvp) {
 		npvp = TAILQ_NEXT(pvp, pvp_pgi.pgi_list);
-		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
+		pvppa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pvp);
 		pmap_physpage_free(pvppa);
 	}
 }
@@ -3173,13 +3177,13 @@ pmap_pv_collect()
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
-vm_offset_t
+paddr_t
 pmap_physpage_alloc(usage)
 	int usage;
 {
 	struct vm_page *pg;
 	struct pv_head *pvh;
-	vm_offset_t pa;
+	paddr_t pa;
 	pmap_t pmap;
 	int try;
 
@@ -3247,7 +3251,7 @@ pmap_physpage_alloc(usage)
  */
 void
 pmap_physpage_free(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	struct pv_head *pvh;
 	struct vm_page *pg;
@@ -3284,7 +3288,7 @@ pmap_physpage_addref(kva)
 	void *kva;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa;
+	paddr_t pa;
 	int rval;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
@@ -3312,7 +3316,7 @@ pmap_physpage_delref(kva)
 	void *kva;
 {
 	struct pv_head *pvh;
-	vm_offset_t pa;
+	paddr_t pa;
 	int rval;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
@@ -3362,7 +3366,7 @@ void
 pmap_lev1map_create(pmap)
 	pmap_t pmap;
 {
-	vm_offset_t ptpa;
+	paddr_t ptpa;
 	pt_entry_t pte;
 	int i;
 
@@ -3415,14 +3419,14 @@ void
 pmap_lev1map_destroy(pmap)
 	pmap_t pmap;
 {
-	vm_offset_t ptpa;
+	paddr_t ptpa;
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
 		panic("pmap_lev1map_destroy: got kernel pmap");
 #endif
 
-	ptpa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pmap->pm_lev1map);
+	ptpa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap->pm_lev1map);
 
 	/*
 	 * Go back to referencing the global kernel_lev1map.
@@ -3471,7 +3475,7 @@ pmap_ptpage_alloc(pmap, pte, usage)
 	pt_entry_t *pte;
 	int usage;
 {
-	vm_offset_t ptpa;
+	paddr_t ptpa;
 
 	/*
 	 * Allocate the page table page.
@@ -3499,7 +3503,7 @@ pmap_ptpage_free(pmap, pte)
 	pmap_t pmap;
 	pt_entry_t *pte;
 {
-	vm_offset_t ptpa;
+	paddr_t ptpa;
 
 	/*
 	 * Extract the physical address of the page from the PTE

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.3 1998/07/04 22:18:13 jonathan Exp $ */
+/* $NetBSD: db_interface.c,v 1.4 1998/08/14 16:50:00 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.3 1998/07/04 22:18:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 1998/08/14 16:50:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -221,7 +221,7 @@ ddb_trap(a0, a1, a2, entry, regs)
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -237,7 +237,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {

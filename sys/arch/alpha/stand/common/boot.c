@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.9 1998/08/07 10:38:37 drochner Exp $ */
+/* $NetBSD: boot.c,v 1.10 1998/08/14 16:50:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,9 +62,9 @@ struct bootinfo_v1 bootinfo_v1;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
-vm_offset_t ffp_save, ptbr_save;
+paddr_t ffp_save, ptbr_save;
 
-extern vm_offset_t ssym, esym;
+extern vaddr_t ssym, esym;
 
 int debug;
 

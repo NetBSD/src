@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.10 1998/06/06 01:31:46 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.11 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.10 1998/06/06 01:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.11 1998/08/14 16:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.10 1998/06/06 01:31:46 thorpej Ex
  * This can cause machine checks if there is not a spill page after the
  * last page of the DMA (thus avoiding hitting an invalid SGMAP PTE).
  */
-vm_offset_t	alpha_sgmap_prefetch_spill_page_va;
+vaddr_t		alpha_sgmap_prefetch_spill_page_va;
 bus_addr_t	alpha_sgmap_prefetch_spill_page_pa;
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.26 1998/08/14 16:50:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.26 1998/08/14 16:50:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,7 +199,7 @@ tcds_dma_intr(sc)
 		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud0);
 		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
 			addr = (u_int32_t *)
-			    ((vm_offset_t)*sc->sc_dmaaddr & ~0x3);
+			    ((paddr_t)*sc->sc_dmaaddr & ~0x3);
 			dudmask = 0;
 			if (dud & TCDS_DUD0_VALID00)
 				panic("tcds_dma: dud0 byte 0 valid");

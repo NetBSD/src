@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.9 1998/06/24 01:04:26 ross Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct sgmap_log_entry {
 	int	sl_ptecnt;		/* pte count */
 };
 
-extern	vm_offset_t alpha_sgmap_prefetch_spill_page_va;
+extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;
 extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
 
 void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,

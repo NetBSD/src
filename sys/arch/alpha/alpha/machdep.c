@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.139 1998/08/04 22:40:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.140 1998/08/14 16:50:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 1998/08/04 22:40:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1998/08/14 16:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,9 +292,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	struct mddt_cluster *memc;
 	int i, mddtweird;
 	struct vm_physseg *vps;
-	vm_offset_t kernstart, kernend;
-	vm_offset_t kernstartpfn, kernendpfn, pfn0, pfn1;
-	vm_size_t size;
+	vaddr_t kernstart, kernend;
+	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
+	vsize_t size;
 	char *p;
 	caddr_t v;
 	char *bootinfo_msg;
@@ -491,9 +491,9 @@ nobootinfo:
 #ifdef DDB
 	ksym_start = (void *)bootinfo.ssym;
 	ksym_end   = (void *)bootinfo.esym;
-	kernend = (vm_offset_t)round_page(ksym_end);
+	kernend = (vaddr_t)round_page(ksym_end);
 #else
-	kernend = (vm_offset_t)round_page(_end);
+	kernend = (vaddr_t)round_page(_end);
 #endif
 
 	kernstartpfn = atop(ALPHA_K0SEG_TO_PHYS(kernstart));
@@ -781,7 +781,7 @@ nobootinfo:
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vm_size_t)allocsys(0);
+	size = (vsize_t)allocsys(0);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
 	if ((allocsys(v) - v) != size)
 		panic("alpha_init: table size inconsistency");
@@ -798,7 +798,7 @@ nobootinfo:
 	 * address.
 	 */
 	proc0.p_md.md_pcbpaddr =
-	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vm_offset_t)&proc0paddr->u_pcb);
+	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vaddr_t)&proc0paddr->u_pcb);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
@@ -1030,8 +1030,8 @@ cpu_startup()
 {
 	register unsigned i;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #if defined(DEBUG)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -1045,7 +1045,7 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	printf("real mem = %lu (%lu reserved for PROM, %lu used by NetBSD)\n",
-	    ((vm_offset_t) totalphysmem << (vm_offset_t) PAGE_SHIFT),
+	    ((psize_t) totalphysmem << (psize_t) PAGE_SHIFT),
 	    ptoa(resvmem), ptoa(physmem));
 	if (unusedmem)
 		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
@@ -1060,16 +1060,16 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 	    &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif /* UVM */
@@ -1077,8 +1077,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -1087,7 +1087,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -1105,8 +1105,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else /* ! UVM */
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -1115,7 +1115,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -1148,10 +1148,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
@@ -1403,7 +1403,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map);
+	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map);
 	cpuhdrp->page_size = PAGE_SIZE;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
@@ -2262,11 +2262,11 @@ alpha_pa_access(pa)
 }
 
 /* XXX XXX BEGIN XXX XXX */
-vm_offset_t alpha_XXX_dmamap_or;				/* XXX */
+paddr_t alpha_XXX_dmamap_or;					/* XXX */
 								/* XXX */
-vm_offset_t							/* XXX */
+paddr_t								/* XXX */
 alpha_XXX_dmamap(v)						/* XXX */
-	vm_offset_t v;						/* XXX */
+	vaddr_t v;						/* XXX */
 {								/* XXX */
 								/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.36 1998/07/28 18:34:52 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.37 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 1998/07/28 18:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 1998/08/14 16:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ cpu_fork(p1, p2)
 	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
-	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+	p2->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -173,7 +173,7 @@ cpu_fork(p1, p2)
 	 * write the kernel stack.  "Ouch!")
 	 */
 	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p2, (vm_offset_t)up + i * PAGE_SIZE,
+		pmap_emulate_reference(p2, (vaddr_t)up + i * PAGE_SIZE,
 		    0, 1);
 
 	/*
@@ -287,7 +287,7 @@ cpu_swapin(p)
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
-	p->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+	p->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -296,7 +296,7 @@ cpu_swapin(p)
 	 * write the kernel stack.  "Ouch!")
 	 */
 	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p, (vm_offset_t)up + i * PAGE_SIZE,
+		pmap_emulate_reference(p, (vaddr_t)up + i * PAGE_SIZE,
 		    0, 1);
 }
 
@@ -349,8 +349,8 @@ pagemove(from, to, size)
 		VPT[tidx] = VPT[fidx];
 		VPT[fidx] = 0;
 
-		ALPHA_TBIS((vm_offset_t)from);
-		ALPHA_TBIS((vm_offset_t)to);
+		ALPHA_TBIS((vaddr_t)from);
+		ALPHA_TBIS((vaddr_t)to);
 
 		todo -= NBPG;
 		from += NBPG;
@@ -381,16 +381,17 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off, pa;
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
 	struct proc *p;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
@@ -417,14 +418,14 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 #if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.22 1998/07/24 20:32:07 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.23 1998/08/14 16:50:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ extern struct pmap	kernel_pmap_store;
 typedef struct pv_entry {
 	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 } *pv_entry_t;
 
 /*
@@ -196,11 +196,11 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 #define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
 
-vm_offset_t vtophys __P((vm_offset_t));
+paddr_t vtophys __P((vaddr_t));
 
 /* Machine-specific functions. */
-void	pmap_bootstrap __P((vm_offset_t ptaddr, u_int maxasn));
-void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
+void	pmap_bootstrap __P((paddr_t ptaddr, u_int maxasn));
+void	pmap_emulate_reference __P((struct proc *p, vaddr_t v,
 		int user, int write));
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int	pmap_uses_prom_console __P((void));
@@ -232,16 +232,16 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vm_offset_t, pt_entry_t *));
-static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vm_offset_t, pt_entry_t *));
+static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vaddr_t, pt_entry_t *));
+static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vaddr_t, pt_entry_t *));
 
 #define	pmap_l1pte(pmap, v)						\
-	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
+	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
 
 static __inline pt_entry_t *
 pmap_l2pte(pmap, v, l1pte)
 	pmap_t pmap;
-	vm_offset_t v;
+	vaddr_t v;
 	pt_entry_t *l1pte;
 {
 	pt_entry_t *lev2map;
@@ -259,7 +259,7 @@ pmap_l2pte(pmap, v, l1pte)
 static __inline pt_entry_t *
 pmap_l3pte(pmap, v, l2pte)
 	pmap_t pmap;
-	vm_offset_t v;
+	vaddr_t v;
 	pt_entry_t *l2pte;
 {
 	pt_entry_t *l1pte, *lev2map, *lev3map;

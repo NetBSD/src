@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.11 1998/07/08 04:35:24 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.12 1998/08/14 16:50:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
  * to the exec code.
  */
 #define	USRTEXT		CLBYTES
-#define	USRSTACK	((vm_offset_t)0x0000000200000000)	/* 8G */
+#define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -137,11 +137,11 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)ALPHA_USEG_BASE)	     /* 0 */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)(ALPHA_USEG_END + 1L)) /* 4T */
+#define VM_MIN_ADDRESS		((vaddr_t)ALPHA_USEG_BASE)	    /* 0 */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)(ALPHA_USEG_END + 1L))    /* 4T */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_BASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_END)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_BASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define _VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -160,7 +160,7 @@ extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
 #endif /* _KERNEL */
 
 /* some Alpha-specific constants */
-#define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
+#define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */
 
 /* Use new non-contiguous physical memory code. */
 #define	MACHINE_NEW_NONCONTIG

@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.24 1998/08/01 21:12:32 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.25 1998/08/14 16:50:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,16 +123,16 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PTEMASK		(NPTEPG - 1)
 
 #define	l3pte_index(va)	\
-	(((vm_offset_t)(va) >> PAGE_SHIFT) & PTEMASK)
+	(((vaddr_t)(va) >> PAGE_SHIFT) & PTEMASK)
 
 #define	l2pte_index(va)	\
-	(((vm_offset_t)(va) >> (PAGE_SHIFT + NPTEPG_SHIFT)) & PTEMASK)
+	(((vaddr_t)(va) >> (PAGE_SHIFT + NPTEPG_SHIFT)) & PTEMASK)
 
 #define	l1pte_index(va) \
-	(((vm_offset_t)(va) >> (PAGE_SHIFT + 2 * NPTEPG_SHIFT)) & PTEMASK)
+	(((vaddr_t)(va) >> (PAGE_SHIFT + 2 * NPTEPG_SHIFT)) & PTEMASK)
 
 #define	VPT_INDEX(va)	\
-	(((vm_offset_t)(va) >> PAGE_SHIFT) & ((1 << 3 * NPTEPG_SHIFT) - 1))
+	(((vaddr_t)(va) >> PAGE_SHIFT) & ((1 << 3 * NPTEPG_SHIFT) - 1))
 
 /* Space mapped by one level 1 PTE */
 #define	ALPHA_L1SEG_SIZE	(1L << ((2 * NPTEPG_SHIFT) + PAGE_SHIFT))
