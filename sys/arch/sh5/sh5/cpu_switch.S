@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.8 2002/09/04 14:04:28 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.9 2002/09/10 12:06:49 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -139,8 +139,10 @@
 	FPSV(pcb,PCB_CTX_FPREGS_DR40,dr40,dr42,dr44,dr46)		      ;\
 	FPSV(pcb,PCB_CTX_FPREGS_DR48,dr48,dr50,dr52,dr54)		      ;\
 	FPSV(pcb,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)		      ;\
-	fgetscr	fr0							      ;\
+	fmov.dq	dr0, r0			/* Save dr0 temporarily */	      ;\
+	fgetscr	fr0			/* Always save FPSCR */		      ;\
 	fst.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
+	fmov.qd	r0, dr0			/* Restore dr0 */		      ;\
 99:
 
 
@@ -196,10 +198,12 @@
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0				      ;\
 	andi	r0, 1, r0						      ;\
 	bne/u	r0, r63, tr0		/* Skip FP restore if FPU disabled */ ;\
+	fmov.dq	dr0, r0			/* Save dr0 temporarily */	      ;\
+	fld.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
+	fputscr	fr0			/* Always restore the FPSCR */	      ;\
+	fmov.qd	r0, dr0			/* Restore dr0 */		      ;\
 	andi	mdf, MDP_FPSAVED, r0	/* Skip if FP state wasn't saved */   ;\
 	beq/u	r0, r63, tr0						      ;\
-	fld.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
-	fputscr	fr0							      ;\
 	FPRS(pcb,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)			      ;\
 	FPRS(pcb,PCB_CTX_FPREGS_DR8,dr8,dr10,dr12,dr14)			      ;\
 	FPRS(pcb,PCB_CTX_FPREGS_DR16,dr16,dr18,dr20,dr22)		      ;\
@@ -402,6 +406,19 @@ Lsw2:
 
 	LDPTR	r0, CI_CURPCB, r0	/* Fetch curpcb */
 	ld.q	r0, PCB_CTX_SR, r0	/* Fetch saved status register */
+
+#ifdef DEBUG
+	pta/l	5f, tr0
+	LDC32(SH5_CONREG_SR_BL, r1)
+	and	r0, r1, r1
+	beq/l	r1, r63, tr0
+	LEAF(_C_LABEL(panic), r0)
+	ptabs/l	r0, tr0
+	LEA(Lbadsw3_panic, r2)
+	blink	tr0, r63
+5:
+#endif
+
 	putcon	r0, sr			/* Restore interrupt mask */
 	ptabs/l	r18, tr0
 	movi	1, r2			/* Non-zero return value */
@@ -417,7 +434,9 @@ Lbadsw:
 Lbadsw_panic:
 	.asciz	"cpu_switch: bad switch!"
 Lbadsw2_panic:
-	.asciz	"cpu_switch: switch with SR.BL set!"
+	.asciz	"cpu_switch: switch with SR.BL set in outgoing context!"
+Lbadsw3_panic:
+	.asciz	"cpu_switch: switch with SR.BL set in incoming context!"
 
 
 /******************************************************************************
@@ -499,8 +518,10 @@ ENTRY(sh5_fpsave)
 	FPSV(r3,PCB_CTX_FPREGS_DR40,dr40,dr42,dr44,dr46)
 	FPSV(r3,PCB_CTX_FPREGS_DR48,dr48,dr50,dr52,dr54)
 	FPSV(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
-	fgetscr	fr0
+	fmov.dq	dr0, r0			/* Save dr0 temporarily */
+	fgetscr	fr0			/* Always save FPSCR */
 	fst.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
+	fmov.qd	r0, dr0			/* Restore dr0 */
 	blink	tr1, r63
 
 
@@ -517,6 +538,10 @@ ENTRY(sh5_fprestore)
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0
 	andi	r0, 1, r0
 	bne/u	r0, r63, tr1		/* Skip FP save if FPU disabled */
+	fmov.dq	dr0, r0			/* Save dr0 temporarily */
+	fld.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
+	fputscr	fr0			/* Always restore FPSCR */
+	fmov.qd	r0, dr0			/* Restore dr0 */
 	FPRS(r3,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)
 	FPRS(r3,PCB_CTX_FPREGS_DR8,dr8,dr10,dr12,dr14)
 	FPRS(r3,PCB_CTX_FPREGS_DR16,dr16,dr18,dr20,dr22)
@@ -525,6 +550,4 @@ ENTRY(sh5_fprestore)
 	FPRS(r3,PCB_CTX_FPREGS_DR40,dr40,dr42,dr44,dr46)
 	FPRS(r3,PCB_CTX_FPREGS_DR48,dr48,dr50,dr52,dr54)
 	FPRS(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
-	fgetscr	fr0
-	fst.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
 	blink	tr1, r63
