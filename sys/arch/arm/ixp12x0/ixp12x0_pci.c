@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.5 2003/03/25 06:12:47 igy Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.6 2003/09/15 05:07:29 ichiro Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.5 2003/03/25 06:12:47 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.6 2003/09/15 05:07:29 ichiro Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -189,17 +189,15 @@ ixp12x0_pci_conf_setup(v, sc, tag, offset)
 
 	if (bus == 0) { 
 		/* configuration type 0 */
-#if 1
 		addr = (vaddr_t) bus_space_vaddr(sc->sc_iot, sc->sc_conf0_ioh) +
-			((1 << (device + 10)) | (offset & 0xff));
-#else
-		addr = (vaddr_t) bus_space_vaddr(sc->sc_iot, sc->sc_conf0_ioh) +
-			(0xc00000 | (1 << (device)) << 11 | (offset & 0xff));
-#endif
-		return addr;
+			((1 << (device + 10)) | (offset & ~3));
 	} else {
-		return (vaddr_t) - 1;
+		/* configuration type 1 */
+		addr = (vaddr_t) bus_space_vaddr(sc->sc_iot, sc->sc_conf1_ioh) +
+			((bus << 16) | (device << 11) |
+			 (function << 8) | (offset & ~3) | 1);
 	}
+		return addr;
 }
 
 pcireg_t
