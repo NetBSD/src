@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemp.c,v 1.8 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: mkstemp.c,v 1.9 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,9 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkstemp.c,v 1.8 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: mkstemp.c,v 1.9 2005/02/09 21:35:47 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #if HAVE_NBTOOL_CONFIG_H
 #define	GETTEMP		gettemp
@@ -55,6 +57,10 @@ __RCSID("$NetBSD: mkstemp.c,v 1.8 2003/10/27 00:12:42 lukem Exp $");
 #include "reentrant.h"
 #include "local.h"
 #define	GETTEMP		__gettemp
+#endif
+
+#ifdef __weak_alias
+__weak_alias(mkstemp,_mkstemp)
 #endif
 
 int

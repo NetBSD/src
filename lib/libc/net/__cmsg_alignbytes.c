@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.5 2004/01/29 08:25:28 itojun Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.6 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,9 +38,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.5 2004/01/29 08:25:28 itojun Exp $");
+__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.6 2005/02/09 21:35:46 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>

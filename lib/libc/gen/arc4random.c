@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.6 2005/02/09 12:09:08 kleink Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.7 2005/02/09 21:35:46 kleink Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -25,6 +25,7 @@
  * RC4 is a registered trademark of RSA Laboratories.
  */
 
+#include "namespace.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,6 +33,10 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
+
+#ifdef __weak_alias
+__weak_alias(arc4random,_arc4random)
+#endif
 
 #ifdef __GNUC__
 #define inline __inline

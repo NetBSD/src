@@ -1,8 +1,11 @@
+/*	$NetBSD: hmac_sha1.c,v 1.2 2005/02/09 21:35:46 kleink Exp $	*/
+
 /*
  * hmac_sha1 - using HMAC from RFC 2104
  */
 
-#include "sha1.h"
+#include "namespace.h"
+#include <sha1.h>
 
 #define HMAC_HASH SHA1
 #define HMAC_FUNC hmac_sha1

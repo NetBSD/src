@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.97 2005/01/06 15:10:45 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.98 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #define adjtime			_adjtime
 #define alarm			_alarm
 #define alphasort		_alphasort
+#define arc4random		_arc4random
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define atoll			_atoll
@@ -167,6 +168,7 @@
 #define endnetconfig		_endnetconfig
 #define endnetent		_endnetent
 #define endnetgrent		_endnetgrent
+#define endnetpath		_endnetpath
 #define endprotoent		_endprotoent
 #define endprotoent_r		_endprotoent_r
 #define endpwent		_endpwent
@@ -188,6 +190,7 @@
 #define execvp			_execvp
 #define fdopen			_fdopen
 #define fgetln			_fgetln
+#define fhstatvfs		_fhstatvfs
 #define flockfile		_flockfile
 #define ftrylockfile		_ftrylockfile
 #define funlockfile		_funlockfile
@@ -202,6 +205,7 @@
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
+#define fstatvfs		_fstatvfs
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -346,6 +350,7 @@
 #define lrand48			_lrand48
 #define lseek			_lseek
 #define mergesort		_mergesort
+#define mkstemp			_mkstemp
 #define mmap			_mmap
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
@@ -447,6 +452,7 @@
 #define setusershell		_setusershell
 #define shm_open		_shm_open
 #define shm_unlink		_shm_unlink
+#define shquote			_shquote
 #define siginterrupt		_siginterrupt
 #define signal			_signal
 #define sl_add			_sl_add
@@ -459,6 +465,7 @@
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
+#define statvfs			_statvfs
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
 #define strncasecmp		_strncasecmp
@@ -511,6 +518,7 @@
 #define sysctlgetmibinfo	_sysctlgetmibinfo
 #define sysctlnametomib		_sysctlnametomib
 #define syslog			_syslog
+#define taddr2uaddr		_taddr2uaddr
 #define tcdrain			_tcdrain
 #define tcflow			_tcflow
 #define tcflush			_tcflush
@@ -532,6 +540,7 @@
 #define tzname			_tzname
 #define tzset			_tzset
 #define tzsetwall		_tzsetwall
+#define uaddr2taddr		_uaddr2taddr
 #define ualarm			_ualarm
 #define uname			_uname
 #define unsetenv		_unsetenv
@@ -539,6 +548,8 @@
 #define user_from_uid		_user_from_uid
 #define usleep			_usleep
 #define utime			_utime
+#define uuid_create_nil		_uuid_create_nil
+#define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
 #define vis			_vis
 #define vsnprintf		_vsnprintf
@@ -546,6 +557,7 @@
 #define wait			_wait
 #define wait3			_wait3
 #define waitpid			_waitpid
+#define wcwidth			_wcwidth
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
 #define xdr_authunix_parms	_xdr_authunix_parms
