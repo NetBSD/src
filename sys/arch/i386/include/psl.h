@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.23 1996/01/07 02:08:28 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.24 1996/01/07 02:40:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -110,7 +110,7 @@ splraise(ncpl)
 	register int ncpl;
 {
 	register int ocpl = cpl;
-	cpl |= ncpl;
+	cpl = ocpl | ncpl;
 	return (ocpl);
 }
 
