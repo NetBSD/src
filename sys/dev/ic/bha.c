@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.14.4.1 1997/10/28 23:44:53 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.14.4.2 1997/11/04 06:04:39 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -138,6 +138,8 @@ int bha_scsi_cmd __P((struct scsipi_xfer *));
 int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void bha_timeout __P((void *arg));
 int bha_create_ccbs __P((struct bha_softc *, void *, size_t, int));
+void bha_enqueue __P((struct bha_softc *, struct scsipi_xfer *, int));
+struct scsipi_xfer *bha_dequeue __P((struct bha_softc *));
 
 struct scsipi_adapter bha_switch = {
 	bha_scsi_cmd,
@@ -163,6 +165,47 @@ struct cfdriver bha_cd = {
 
 /* XXX Should put this in a better place. */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+
+/*
+ * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
+ * to avoid having to allocate additional resources (since we're used
+ * only during resource shortages anyhow.
+ */
+void
+bha_enqueue(sc, xs, infront)
+	struct bha_softc *sc;
+	struct scsipi_xfer *xs;
+	int infront;
+{
+
+	if (infront || sc->sc_queue.lh_first == NULL) {
+		if (sc->sc_queue.lh_first == NULL)
+			sc->sc_queuelast = xs;
+		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
+		return;
+	}
+
+	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
+	sc->sc_queuelast = xs;
+}
+
+/*
+ * Pull a scsipi_xfer off the front of the software queue.
+ */
+struct scsipi_xfer *
+bha_dequeue(sc)
+	struct bha_softc *sc;
+{
+	struct scsipi_xfer *xs;
+
+	xs = sc->sc_queue.lh_first;
+	LIST_REMOVE(xs, free_list);
+
+	if (sc->sc_queue.lh_first == NULL)
+		sc->sc_queuelast = NULL;
+
+	return (xs);
+}
 
 /*
  * bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
@@ -324,6 +367,7 @@ bha_attach(sc, bpd)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
+	LIST_INIT(&sc->sc_queue);
 
 	bha_inquire_setup_information(sc);
 
@@ -877,6 +921,17 @@ bha_done(sc, ccb)
 	bha_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+
+	/*
+	 * If there are queue entries in the software queue, try to
+	 * run the first one.  We should be more or less guaranteed
+	 * to succeed, since we just freed a CCB.
+	 *
+	 * NOTE: bha_scsi_cmd() relies on our calling it with
+	 * the first entry in the queue.
+	 */
+	if ((xs = sc->sc_queue.lh_first) != NULL)
+		(void) bha_scsi_cmd(xs);
 }
 
 /*
@@ -1326,8 +1381,48 @@ bha_scsi_cmd(xs)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct bha_ccb *ccb;
 	int error, seg, flags, s;
+	int fromqueue = 0, dontqueue = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
+
+	s = splbio();		/* protect the queue */
+
+	/*
+	 * If we're running the queue from bha_done(), we've been
+	 * called with the first queue entry as our argument.
+	 */
+	if (xs == sc->sc_queue.lh_first) {
+		xs = bha_dequeue(sc);
+		fromqueue = 1;
+		goto get_ccb;
+	}
+
+	/* Polled requests can't be queued for later. */
+	dontqueue = xs->flags & SCSI_POLL;
+
+	/*
+	 * If there are jobs in the queue, run them first.
+	 */
+	if (sc->sc_queue.lh_first != NULL) {
+		/*
+		 * If we can't queue, we have to abort, since
+		 * we have to preserve order.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Swap with the first queue entry.
+		 */
+		bha_enqueue(sc, xs, 0);
+		xs = bha_dequeue(sc);
+		fromqueue = 1;
+	}
+
+ get_ccb:
 	/*
 	 * get a ccb to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -1335,9 +1430,26 @@ bha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = bha_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
+		/*
+		 * If we can't queue, we lose.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Stuff ourselves into the queue, in front
+		 * if we came off in the first place.
+		 */
+		bha_enqueue(sc, xs, fromqueue);
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	splx(s);		/* done playing with the queue */
+
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
