@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 2001/11/17 23:51:03 gmcgarry Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 2001/12/03 05:52:13 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
 #include <dev/clock_subr.h>
 
 #include <hp300/hp300/clockreg.h>
-#include <arch/hp300/hp300/clockvar.h>
+#include <hp300/hp300/clockvar.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
