@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.21 1997/06/06 10:51:49 pk Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.22 1997/11/20 04:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -608,7 +608,7 @@ m_split(m0, len0, wait)
 	int len0, wait;
 {
 	register struct mbuf *m, *n;
-	unsigned len = len0, remain;
+	unsigned len = len0, remain, len_save;
 
 	for (m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
@@ -621,6 +621,7 @@ m_split(m0, len0, wait)
 			return (0);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
+		len_save = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
 		if (m->m_flags & M_EXT)
 			goto extpacket;
@@ -630,6 +631,7 @@ m_split(m0, len0, wait)
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == 0) {
 				(void) m_free(n);
+				m0->m_pkthdr.len = len_save;
 				return (0);
 			} else
 				return (n);
