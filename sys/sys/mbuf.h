@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.77 2003/03/02 22:35:32 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.78 2003/03/19 00:23:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -505,9 +505,9 @@ do {									\
 		 * code where it is safe to invoke the free routine	\
 		 * without the mbuf to perform bookkeeping.		\
 		 */							\
-		splx(_ms_);						\
 		(*((m)->m_ext.ext_free))(NULL, (m)->m_ext.ext_buf,	\
 		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg);		\
+		splx(_ms_);						\
 	} else {							\
 		splx(_ms_);						\
 		free((m)->m_ext.ext_buf, (m)->m_ext.ext_type);		\
