@@ -1,7 +1,7 @@
-/*	$NetBSD: platid.c,v 1.4 2000/12/28 07:10:14 sato Exp $	*/
+/*	$NetBSD: platid.c,v 1.1 2001/01/28 02:52:21 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,16 @@
  * SUCH DAMAGE.
  *
  */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <machine/platid.h>
+
+platid_t platid_unknown = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
+platid_t platid_wild = {{ PLATID_WILD, PLATID_WILD }};
+platid_t platid = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
 
 void
 platid_ntoh(platid_t *pid)
@@ -45,14 +51,12 @@ platid_ntoh(platid_t *pid)
 	pid->dw.dw1 = ntohl(pid->dw.dw1);
 }
 
-
 void
 platid_hton(platid_t *pid)
 {
 	pid->dw.dw0 = htonl(pid->dw.dw0);
 	pid->dw.dw1 = htonl(pid->dw.dw1);
 }
-
 
 void
 platid_dump(char *name, void* pxx)
@@ -67,31 +71,26 @@ platid_dump(char *name, void* pxx)
 	printf("\n");
 }
 
-
-platid_t platid_unknown = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
-platid_t platid_wild = {{ PLATID_WILD, PLATID_WILD }};
-platid_t platid = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
-
-
 int
 platid_match(platid_t *platid, platid_mask_t *mask)
 {
 	return platid_match_sub(platid, mask, 0);
 }
 
-
 int
 platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 {
 	int match_count;
 
-#define PLATID_MATCH(mbr) \
-	if (platid->s.mbr != mask->s.mbr && \
-	    mask->s.mbr != platid_wild.s.mbr && \
-	    !(platid->s.mbr == platid_unknown.s.mbr && unknown_is_match)) { \
-		return (0); \
-	} else if (platid->s.mbr == mask->s.mbr) \
-		match_count++;
+#define PLATID_MATCH(mbr)						\
+	if (platid->s.mbr != mask->s.mbr &&				\
+	    mask->s.mbr != platid_wild.s.mbr &&				\
+	    !(platid->s.mbr == platid_unknown.s.mbr &&			\
+	     unknown_is_match)) {					\
+		return (0);						\
+	} else if (platid->s.mbr == mask->s.mbr) {			\
+		match_count++;						\
+	}
 
 	match_count = 1;
 	PLATID_MATCH(cpu_submodel);
@@ -109,7 +108,7 @@ platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 #undef PLATID_MATCH
 }
 
-char*
+tchar*
 platid_name(platid_t *platid)
 {
 	int match_level;
@@ -127,7 +126,7 @@ platid_name(platid_t *platid)
 	if (0 < match_level)
 		return (match->name);
 	else
-		return ("UNKNOWN");
+		return (TEXT("UNKNOWN"));
 }
 
 struct platid_data *

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_test.c,v 1.2 2000/12/28 07:10:15 sato Exp $	*/
+/*	$NetBSD: platid_test.c,v 1.1 2001/01/28 02:52:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999

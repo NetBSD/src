@@ -1,7 +1,7 @@
-/*	$NetBSD: config_hook.c,v 1.3 2000/08/10 08:27:54 jeffs Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.1 2001/01/28 02:52:17 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
