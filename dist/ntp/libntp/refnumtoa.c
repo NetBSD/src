@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * refnumtoa - return asciized refclock addresses stored in local array space
@@ -11,23 +11,28 @@
 
 char *
 refnumtoa(
-	u_int32 num
+	struct sockaddr_storage* num
 	)
 {
 	register u_int32 netnum;
 	register char *buf;
 	register const char *rclock;
-	
-	netnum = ntohl(num);
-	
+
 	LIB_GETBUF(buf);
 
-	rclock = clockname((int)((u_long)netnum >> 8) & 0xff);
+	if(num->ss_family == AF_INET) {
+		netnum = ntohl(((struct sockaddr_in*)num)->sin_addr.s_addr);
+		rclock = clockname((int)((u_long)netnum >> 8) & 0xff);
 
-	if (rclock != NULL)
-	    (void)sprintf(buf, "%s(%lu)", rclock, (u_long)netnum & 0xff);
-	else
-	    (void)sprintf(buf, "REFCLK(%lu,%lu)",
-			  ((u_long)netnum >> 8) & 0xff, (u_long)netnum & 0xff);
+		if (rclock != NULL)
+		    (void)sprintf(buf, "%s(%lu)", rclock, (u_long)netnum & 0xff);
+		else
+	    	(void)sprintf(buf, "REFCLK(%lu,%lu)",
+				  ((u_long)netnum >> 8) & 0xff, (u_long)netnum & 0xff);
+
+	}
+	else {
+		(void)sprintf(buf, "refclock address type not implemented yet, use IPv4 refclock address.");
+	}
 	return buf;
 }

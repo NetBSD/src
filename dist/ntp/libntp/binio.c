@@ -1,4 +1,4 @@
-/*	$NetBSD: binio.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: binio.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libntp/binio.c,v 4.2 1999/02/21 12:17:34 kardel RELEASE_19990228_A
@@ -29,8 +29,8 @@ put_lsb_short(
 	long val
 	)
 {
-  *((*bufpp)++) =  val       & 0xFF;
-  *((*bufpp)++) = (val >> 8) & 0xFF;
+  *((*bufpp)++) = (unsigned char) (val        & 0xFF);
+  *((*bufpp)++) = (unsigned char) ((val >> 8) & 0xFF);
 }
 
 long
@@ -54,10 +54,10 @@ put_lsb_long(
 	long val
 	)
 {
-  *((*bufpp)++) =  val        & 0xFF;
-  *((*bufpp)++) = (val >> 8)  & 0xFF;
-  *((*bufpp)++) = (val >> 16) & 0xFF;
-  *((*bufpp)++) = (val >> 24) & 0xFF;
+  *((*bufpp)++) = (unsigned char)(val         & 0xFF);
+  *((*bufpp)++) = (unsigned char)((val >> 8)  & 0xFF);
+  *((*bufpp)++) = (unsigned char)((val >> 16) & 0xFF);
+  *((*bufpp)++) = (unsigned char)((val >> 24) & 0xFF);
 }
 
 long
@@ -79,8 +79,8 @@ put_msb_short(
 	long val
 	)
 {
-  *((*bufpp)++) = (val >> 8) & 0xFF;
-  *((*bufpp)++) =  val       & 0xFF;
+  *((*bufpp)++) = (unsigned char)((val >> 8) & 0xFF);
+  *((*bufpp)++) = (unsigned char)( val       & 0xFF);
 }
 
 long
@@ -104,10 +104,10 @@ put_msb_long(
 	long val
 	)
 {
-  *((*bufpp)++) = (val >> 24) & 0xFF;
-  *((*bufpp)++) = (val >> 16) & 0xFF;
-  *((*bufpp)++) = (val >> 8 ) & 0xFF;
-  *((*bufpp)++) =  val        & 0xFF;
+  *((*bufpp)++) = (unsigned char)((val >> 24) & 0xFF);
+  *((*bufpp)++) = (unsigned char)((val >> 16) & 0xFF);
+  *((*bufpp)++) = (unsigned char)((val >> 8 ) & 0xFF);
+  *((*bufpp)++) = (unsigned char)( val        & 0xFF);
 }
 
 /*

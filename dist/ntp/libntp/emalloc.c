@@ -1,12 +1,12 @@
-/*	$NetBSD: emalloc.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: emalloc.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
  */
 #include "ntp_types.h"
 #include "ntp_malloc.h"
-#include "ntp_stdlib.h"
 #include "ntp_syslog.h"
+#include "ntp_stdlib.h"
 
 #if defined SYS_WINNT && defined DEBUG
 #include <crtdbg.h>
@@ -24,7 +24,7 @@ debug_emalloc(
 	char *mem;
 
 	if ((mem = (char *)_malloc_dbg(size, _NORMAL_BLOCK, filename, line)) == 0) {
-		msyslog(LOG_ERR, "No more memory!");
+		msyslog(LOG_ERR, "Exiting: No more memory!");
 		exit(1);
 	}
 	return mem;
@@ -40,7 +40,7 @@ emalloc(
 	char *mem;
 
 	if ((mem = (char *)malloc(size)) == 0) {
-		msyslog(LOG_ERR, "No more memory!");
+		msyslog(LOG_ERR, "Exiting: No more memory!");
 		exit(1);
 	}
 	return mem;
