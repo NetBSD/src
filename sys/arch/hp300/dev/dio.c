@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.4 1997/03/31 07:30:41 scottr Exp $	*/
+/*	$NetBSD: dio.c,v 1.5 1997/04/04 09:53:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -263,7 +263,9 @@ dio_devinfo(da, buf, buflen)
 	char *buf;
 	size_t buflen;
 {
+#ifdef DIOVERBOSE
 	int i;
+#endif
 
 	bzero(buf, buflen);
 
