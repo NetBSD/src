@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.12 2001/10/15 22:11:12 bjh21 Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.13 2003/01/10 20:01:12 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,6 +140,7 @@ write_msg_file ()
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
 		"#include <stdarg.h>\n"
+		"#include <stdint.h>\n"
 		"#include <curses.h>\n"
 		"\n"
 		"typedef const char *msg;\n"
@@ -153,11 +154,11 @@ write_msg_file ()
 		"void msg_display(msg msg_no,...);\n"
 		"void msg_display_add(msg msg_no,...);\n"
 		"void msg_prompt (msg msg_no, const char *def,"
-			" char *val, int max_chars, ...);\n"
+			" char *val, size_t max_chars, ...);\n"
 		"void msg_prompt_add (msg msg_no, const char *def,"
-			" char *val, int max_chars, ...);\n"
+			" char *val, size_t max_chars, ...);\n"
 		"void msg_prompt_noecho (msg msg_no, const char *def,"
-			" char *val, int max_chars, ...);\n"
+			" char *val, size_t max_chars, ...);\n"
 		"void msg_table_add(msg msg_no,...);\n"
 		"\n"
 		"/* Message names */\n"
