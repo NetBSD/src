@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.21 2001/06/13 02:50:25 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.22 2001/09/10 14:25:12 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.21 2001/06/13 02:50:25 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.22 2001/09/10 14:25:12 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,9 +205,9 @@ ip6protopr(off, name)
 		}
 		if (Aflag) {
 			if (istcp)
-				printf("%8p ", in6pcb.in6p_ppcb);
+				printf("%8lx ", (u_long) in6pcb.in6p_ppcb);
 			else
-				printf("%8p ", next);
+				printf("%8lx ", (u_long) next);
 		}
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
