@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.170 1998/08/07 00:00:56 augustss Exp $
+#	$NetBSD: GENERIC,v 1.171 1998/08/10 01:54:59 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -443,6 +443,7 @@ guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 
 # ISA audio devices
 aria0	at isa? port 0x290 irq 10 		# Aria
