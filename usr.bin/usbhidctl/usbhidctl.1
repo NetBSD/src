@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidctl.1,v 1.11 2001/10/22 22:03:49 augustss Exp $
+.\" $NetBSD: usbhidctl.1,v 1.12 2001/10/22 23:51:12 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,17 +178,17 @@ control as usage 2 under page 0xffff, in the
 collection.  The following can be used to switch this LED off:
 .Dl usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
 .Sh SEE ALSO
+.Xr usbhidaction 1 ,
 .Xr usb 3 ,
 .Xr uhid 4 ,
-.Xr usb 4 ,
-.Xr usbhidaction 1
-.Sh AUTHOR
-David Sainty <David.Sainty@dtsp.co.nz>
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Nx 1.4 .
+.Sh AUTHORS
+.An David Sainty Aq David.Sainty@dtsp.co.nz
 .Sh BUGS
 Some USB HID devices report multiple items with exactly the same usage
 identifiers.  The current naming scheme does not provide the means to specify
