@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.49 2001/05/21 23:21:27 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.50 2001/05/21 23:58:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -697,9 +697,8 @@ fxp_start(struct ifnet *ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct fxp_cb_tx *txd;
+	struct fxp_txdesc *txd;
 	struct fxp_txsoft *txs;
-	struct fxp_tbdlist *tbd;
 	bus_dmamap_t dmamap;
 	int error, lasttx, nexttx, opending, seg;
 
@@ -739,7 +738,6 @@ fxp_start(struct ifnet *ifp)
 		 */
 		nexttx = FXP_NEXTTX(sc->sc_txlast);
 		txd = FXP_CDTX(sc, nexttx);
-		tbd = FXP_CDTBD(sc, nexttx);
 		txs = FXP_DSTX(sc, nexttx);
 		dmamap = txs->txs_dmamap;
 
@@ -785,13 +783,11 @@ fxp_start(struct ifnet *ifp)
 
 		/* Initialize the fraglist. */
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-			tbd->tbd_d[seg].tb_addr =
+			txd->txd_tbd[seg].tb_addr =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
-			tbd->tbd_d[seg].tb_size =
+			txd->txd_tbd[seg].tb_size =
 			    htole32(dmamap->dm_segs[seg].ds_len);
 		}
-
-		FXP_CDTBDSYNC(sc, nexttx, BUS_DMASYNC_PREWRITE);
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -806,11 +802,11 @@ fxp_start(struct ifnet *ifp)
 		 * Initialize the transmit descriptor.
 		 */
 		/* BIG_ENDIAN: no need to swap to store 0 */
-		txd->cb_status = 0;
-		txd->cb_command =
+		txd->txd_txcb.cb_status = 0;
+		txd->txd_txcb.cb_command =
 		    htole16(FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF);
-		txd->tx_threshold = tx_threshold;
-		txd->tbd_number = dmamap->dm_nsegs;
+		txd->txd_txcb.tx_threshold = tx_threshold;
+		txd->txd_txcb.tbd_number = dmamap->dm_nsegs;
 
 		FXP_CDTXSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -846,7 +842,7 @@ fxp_start(struct ifnet *ifp)
 		 * processing once the last packet we've enqueued
 		 * has been transmitted.
 		 */
-		FXP_CDTX(sc, sc->sc_txlast)->cb_command |=
+		FXP_CDTX(sc, sc->sc_txlast)->txd_txcb.cb_command |=
 		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -857,7 +853,8 @@ fxp_start(struct ifnet *ifp)
 		 */
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		FXP_CDTX(sc, lasttx)->cb_command &= htole16(~FXP_CB_COMMAND_S);
+		FXP_CDTX(sc, lasttx)->txd_txcb.cb_command &=
+		    htole16(~FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -881,7 +878,7 @@ fxp_intr(void *arg)
 	struct fxp_softc *sc = arg;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct fxp_cb_tx *txd;
+	struct fxp_txdesc *txd;
 	struct fxp_txsoft *txs;
 	struct mbuf *m, *m0;
 	bus_dmamap_t rxmap;
@@ -1036,12 +1033,10 @@ fxp_intr(void *arg)
 				FXP_CDTXSYNC(sc, i,
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-				txstat = le16toh(txd->cb_status);
+				txstat = le16toh(txd->txd_txcb.cb_status);
 
 				if ((txstat & FXP_CB_STATUS_C) == 0)
 					break;
-
-				FXP_CDTBDSYNC(sc, i, BUS_DMASYNC_POSTWRITE);
 
 				bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 				    0, txs->txs_dmamap->dm_mapsize,
@@ -1287,7 +1282,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
-	struct fxp_cb_tx *txd;
+	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
 	int i, prm, save_bf, allm, error = 0;
 
@@ -1452,11 +1447,12 @@ fxp_init(struct ifnet *ifp)
 	 */
 	for (i = 0; i < FXP_NTXCB; i++) {
 		txd = FXP_CDTX(sc, i);
-		memset(txd, 0, sizeof(struct fxp_cb_tx));
-		txd->cb_command =
+		memset(txd, 0, sizeof(*txd));
+		txd->txd_txcb.cb_command =
 		    htole16(FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S);
-		txd->tbd_array_addr = htole32(FXP_CDTBDADDR(sc, i));
-		txd->link_addr = htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(i)));
+		txd->txd_txcb.tbd_array_addr = htole32(FXP_CDTBDADDR(sc, i));
+		txd->txd_txcb.link_addr =
+		    htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(i)));
 		FXP_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txpending = 0;
