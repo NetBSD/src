@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.178 2000/08/21 02:11:56 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.179 2000/08/22 17:28:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -205,6 +205,8 @@ main(void)
 	consinit();
 	printf("%s", copyright);
 
+	KERNEL_LOCK_INIT();
+
 	uvm_init();
 
 	/* Do machine-dependent initialization. */
@@ -343,6 +345,9 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+
+	/* Lock the kernel on behalf of proc0. */
+	KERNEL_PROC_LOCK(p);
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -666,8 +671,10 @@ start_init(void *arg)
 		 * other than it doesn't exist, complain.
 		 */
 		error = sys_execve(p, &args, retval);
-		if (error == 0 || error == EJUSTRETURN)
+		if (error == 0 || error == EJUSTRETURN) {
+			KERNEL_PROC_UNLOCK(p);
 			return;
+		}
 		if (error != ENOENT)
 			printf("exec %s: error %d\n", path, error);
 	}
