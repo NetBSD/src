@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.12 1999/04/03 22:56:22 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.13 1999/04/11 22:40:20 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -234,8 +234,10 @@ edit_mbr(partition)
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
 		for (i = 0; i<4; i++)
-			if (part[i].mbrp_flag != 0)
+			if (part[i].mbrp_flag != 0) {
 				activepart = i;
+				part[i].mbrp_flag = 0;
+			}
 		do {
 			process_menu (MENU_editparttable);
 			numbsd = 0;
@@ -302,9 +304,6 @@ edit_mbr(partition)
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
-
-	if (usefull) 
-	  swapadj = bsec;
 
 	return 1;
 }

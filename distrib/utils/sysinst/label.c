@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: label.c,v 1.11 1999/04/11 22:40:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10 1999/04/09 10:24:38 bouyer Exp $");
+__RCSID("$NetBSD: label.c,v 1.11 1999/04/11 22:40:20 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ static int boringpart __P((partinfo *lp, int i, int rawpart, int bsdpart));
 int	checklabel __P((partinfo *lp, int nparts, int rawpart, int bsdpart,
 		    int *bad1, int *bad2));
 void	translate_partinfo __P((partinfo *lp, struct partition *pp));
+void	atofsb __P((const char *, int *, int *));
 
 
 /*
@@ -346,4 +347,132 @@ incorelabel(dkname, lp)
 	}
 
 	return (0);
+}
+
+/* Ask for a partition offser, check bounds and does the needed roudups */
+int
+getpartoff(msg_no, defpartstart)
+	int msg_no;
+	int defpartstart;
+{
+	char isize[20];
+	int i, localsizemult;
+
+	while (1) {
+		snprintf (isize, 20, "%d", (defpartstart)/sizemult);
+		msg_prompt_add(msg_no, (defpartstart > 0) ? isize : NULL,
+		    isize, 20);
+		atofsb(isize, &i, &localsizemult);
+		if (i < 0)
+			continue;
+		/* round to cylinder size if localsizemult != 1 */
+		i = NUMSEC(i/localsizemult, localsizemult, dlcylsize);
+		/* Adjust to start of slice if needed */
+		if ((i < ptstart && (ptstart - i) < localsizemult) ||
+		    (i > ptstart && (i - ptstart) < localsizemult)) {
+			i = ptstart;
+		}
+		if (i > fsdsize) {
+			msg_display(MSG_startoutsidedisk);
+			continue;
+		}
+		return i;
+	}
+	/* NOTREACHED */
+}
+
+
+/* Ask for a partition size, check bounds and does the needed roudups */
+int
+getpartsize(msg_no, partstart, defpartsize)
+	int msg_no;
+	int partstart;
+	int defpartsize;
+{
+	char isize[20];
+	int i, partend, localsizemult;
+	int fsptend = ptstart + fsptsize;
+
+	while (1) {
+		snprintf (isize, 20, "%d", (defpartsize)/sizemult);
+		msg_prompt_add (msg_no, (defpartsize != 0) ? isize : 0,
+		    isize, 20);
+		atofsb(isize, &i, &localsizemult);
+		if (i < 0)
+			continue;
+		/*
+		 * partend is aligned to a cylinder if localsizemult
+		 * is not 1 sector
+		 */
+		partend = NUMSEC((partstart + i) / localsizemult,
+		    localsizemult, dlcylsize);
+		/* Align to end-of-disk or end-of-slice if close enouth */
+		if (fsdsize > partend && (fsdsize - partend) < localsizemult)
+			partend = fsdsize;
+		if (fsptend > partend && (fsptend - partend) < localsizemult)
+			partend = fsptend;
+		/* sanity checks */
+		if (partend > fsdsize) {
+			partend = fsdsize;
+			msg_display(MSG_endoutsidedisk,
+			    (partend - partstart) / sizemult, multname);
+			process_menu(MENU_ok);
+		}
+		/* return value */
+		return (partend - partstart);
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * convert a string to a number of sectors, with a possible unit
+ * 150M = 150 Megabytes
+ * 2000c = 2000 cylinders
+ * 150256s = 150256 sectors
+ * Without units, use the default (sizemult)
+ * returns the number of sectors, and the unit used (for roudups).
+ */
+
+void
+atofsb(str, val, localsizemult)
+	const char *str;
+	int *val;
+	int *localsizemult;
+{
+	int i;
+
+	*localsizemult = sizemult;
+	if (str[0] == '\0') {
+		*val = -1;
+		return;
+	}
+	*val = 0;
+	for (i = 0; str[i] != '\0'; i++) {
+		if (str[i] >= '0' && str[i] <= '9') {
+			*val = (*val) * 10 + str[i] - '0';
+			continue;
+		}
+		if (str[i + 1] != '\0') {
+			/* A non-digit caracter, not at the end */
+			*val = -1;
+			return;
+		}
+		if (str[i] == 'M') {
+			*localsizemult = MEG / sectorsize;
+			break;
+		}
+		if (str[i] == 'c') {
+			*localsizemult = dlcylsize;
+			break;
+		}
+		if (str[i] == 's') {
+			*localsizemult = 1;
+			break;
+		}
+		/* not a known unit */
+		*val = -1;
+		return;
+	}
+	*val = (*val) * (*localsizemult);
+	return;
 }

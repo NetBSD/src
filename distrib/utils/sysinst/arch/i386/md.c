@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 1999/04/09 10:24:40 bouyer Exp $ */
+/*	$NetBSD: md.c,v 1.23 1999/04/11 22:40:23 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,10 +149,9 @@ md_post_newfs(void)
 {
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	run_prog(0, 1, NULL, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
-		  "/dev/r%sa", diskdev);
-	/* Failing to install boot block is not a fatal error ... */
-	return 0;
+	return run_prog(0, 1, NULL,
+	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
+	    diskdev);
 }
 
 int
@@ -189,7 +188,6 @@ md_make_bsd_partitions(void)
 	int part;
 	int maxpart = getmaxpartitions();
 	int remain;
-	char isize[20];
 
 editlab:
 	/* Ask for layout type -- standard or special */
@@ -232,6 +230,15 @@ editlab:
 	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
 		partstart = ptstart;
 
+		/* check that we have enouth space */
+		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
+		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
+			   MEG/sectorsize, dlcylsize);
+		if ( i > fsptsize) {
+			msg_display(MSG_disktoosmall);
+			process_menu(MENU_ok);
+			goto custom;
+		}
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -247,7 +254,7 @@ editlab:
 		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -260,11 +267,10 @@ editlab:
 		bsdlabel[E].pi_bsize = 8192;
 		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
-
 		break;
 
 	case 3: /* custom: ask user for all sizes */
-		ask_sizemult();
+custom:		ask_sizemult();
 		partstart = ptstart;
 		remain = fsptsize;
 
@@ -272,10 +278,10 @@ editlab:
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt (MSG_askfsroot, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		if (partsize > remain)
+			partsize = remain;
+		msg_display(MSG_askfsroot1, remain/sizemult, multname);
+		partsize = getpartsize(MSG_askfsroot2, partstart, partsize);
 		bsdlabel[A].pi_offset = partstart;
 		bsdlabel[A].pi_size = partsize;
 		bsdlabel[A].pi_bsize = 8192;
@@ -288,11 +294,11 @@ editlab:
 		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
-		snprintf(isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+			   dlcylsize) - partstart;
+		if (partsize > remain)
+			partsize = remain;
+		msg_display(MSG_askfsswap1, remain/sizemult, multname);
+		partsize = getpartsize(MSG_askfsswap2, partstart, partsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -303,12 +309,10 @@ editlab:
 		if (remain > 0)
 			msg_display (MSG_otherparts);
 		while (remain > 0 && part <= H) {
-			partsize = remain;
-			snprintf (isize, 20, "%d", partsize/sizemult);
-			msg_prompt_add (MSG_askfspart, isize, isize, 20,
-					diskdev, partname[part],
-					remain/sizemult, multname);
-			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			msg_display_add(MSG_askfspart1, diskdev,
+			    partname[part], remain/sizemult, multname);
+			partsize = getpartsize(MSG_askfspart2, partstart,
+			    remain);
 			if (partsize > 0) {
 				if (remain - partsize < sizemult)
 					partsize = remain;

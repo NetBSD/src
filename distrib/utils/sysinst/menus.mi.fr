@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.14 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.15 1999/04/11 22:40:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,10 +73,8 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	option "Quitter le programme d'installation", exit;
 
 menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
-#if 0
-	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; 
-	option "testfalse", action { run_prog(0, 0, "%s: kaput", "/bin/false"); }; 
-#endif
+	/* option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
+	/* option "testfalse", action { run_prog(0, 0, "%s: kaput", "/bin/false"); }; */
 	option "Exécuter /bin/sh",
 		action (endwin) { system("/bin/sh"); };
 	option "Configuration du réseau",
@@ -136,17 +134,10 @@ menu edfspart, title "  Changer quoi? ", exit, y=15;
 	};
 	option "type de FS", sub menu  selfskind;
 	option "Offset/taille", action  
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_offset, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+		{	int start, size;
+			start = getpartoff(MSG_offset, 0);
+			size = getpartsize(MSG_size, start, 0);
 			if (size == -1)
-				size = dlsize - start;
-			if (editpart == 1 && 
-			    bsdlabel[editpart].pi_fstype == FS_SWAP)
-				size -= swapadj;
-			if (start + size > dlsize)
 				size = dlsize - start;
 			bsdlabel[editpart].pi_offset = start;
 			bsdlabel[editpart].pi_size = size;

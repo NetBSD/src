@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 1999/04/09 10:44:00 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.28 1999/04/11 22:40:27 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -233,7 +233,7 @@ int	md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -273,11 +273,11 @@ int	md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.14 1999/04/09 10:24:39 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.15 1999/04/11 22:40:21 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,6 +125,11 @@ message badname
 Les disques suivants sont disponibles : %s
 \nSur quel disque voulez vous installer NetBSD ?}
 
+message disktoosmall
+{Votre disque est trop petit pour une installation standard. Vous devez entrer
+vous-même la taille des partitions.
+}
+
 message pleasemountroot
 {Le système de fichiers racine n'est pas monté. SVP, montez le.
 
@@ -198,6 +203,15 @@ est plus efficace de choisir des tailles de partitions multiples de la
 taille d'un cylindre, qui est %d secteurs.
 }
 
+message startoutsidedisk
+{La valeur que vous avez spécifiée est en dehors du disque
+}
+
+message endoutsidedisk
+{Avec cette valeur, la fin de la partition est en dehors du disque.
+La taille de la partition a été tronquée à %d %s.
+}
+
 message fspart
 {Vos partitions NetBSD sont les suivantes (taille et offset en %s) :
 }
@@ -245,8 +259,9 @@ message nomount
 point de montage.
 }
 
-message donewfs
-{Création des nouveaux systèmes de fichiers sur toutes les partitions 4.2BSD.\n}
+message mountfail
+{Le montage de %s sur %s a échoué.
+}
 
 message dotar
 {Installation des programmes d'ammorcage et fichiers de configuration ...\n}
@@ -569,10 +584,6 @@ message netnotup
 {Il y'a eu un problème lors de la configuration de votre réseau. Ou votre
 serveur de noms, ou bien votre gateway ne peuvent être atteint par un ping
 Voulez vous configurer de nouveau votre réseau ? (Non arrêtera l'installation)
-}
-
-message extracting
-{Extraction du fichier %s ...
 }
 
 message makedev

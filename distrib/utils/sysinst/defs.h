@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.38 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: defs.h,v 1.39 1999/04/11 22:40:19 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,8 +154,6 @@ EXTERN int partsize;
 
 /* set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
-EXTERN int swapadj INIT(0);
-
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
@@ -248,6 +246,8 @@ int	savenewlabel __P((partinfo *lp, int nparts));
 int	incorelabel __P((const char *dkname, partinfo *lp));
 int	edit_and_check_label __P((partinfo *lp, int nparts,
 				  int rawpart, int bsdpart));
+int	getpartoff __P((int msg_no, int partstart));
+int	getpartsize __P((int msg_no, int partstart, int defpartsize));
 
 /* from install.c */
 void	do_install __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.41 1999/04/09 10:24:39 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.42 1999/04/11 22:40:21 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -408,6 +408,8 @@ get_via_ftp()
 	strncat(ftp_dir, machine, STRSIZE - strlen(ftp_dir));
 	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
 	process_menu(MENU_ftpsource);
+
+	msg_clear();
 	
 	list = dist_list;
 	while (list->name) {
