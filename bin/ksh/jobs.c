@@ -462,9 +462,9 @@ exchild(t, flags, close_fd)
 		last_proc = p;
 	} else {
 #ifdef NEED_PGRP_SYNC
-		if (j_sync_open) {
-			closepipe(j_sync_pipe);
+		if (j_sync_open) {	/* should never happen */
 			j_sync_open = 0;
+			closepipe(j_sync_pipe);
 		}
 		/* don't do the sync pipe business if there is no pipeline */
 		if (flags & XPIPEO) {
@@ -527,19 +527,31 @@ exchild(t, flags, close_fd)
 	if (Flag(FMONITOR) && !(flags&XXCOM)) {
 		int	dotty = 0;
 # ifdef NEED_PGRP_SYNC
-		int	dosync = 0;
+		int	first_child_sync = 0;
 # endif /* NEED_PGRP_SYNC */
 
+# ifdef NEED_PGRP_SYNC
+		if (j_sync_open) {
+			/*
+			 * The Parent closes 0, keeps 1 open 'til the whole
+			 * pipeline is started.  The First child closes 1,
+			 * keeps 0 open (reads from it).  The remaining
+			 * children just have to close 1 (parent has already
+			 * closeed 0).
+			 */
+			if (j->pgrp == 0) { /* First process */
+				close(j_sync_pipe[ischild]);
+				j_sync_pipe[ischild] = -1;
+				first_child_sync = ischild;
+			} else if (ischild) {
+				j_sync_open = 0;
+				closepipe(j_sync_pipe);
+			}
+		}
+# endif /* NEED_PGRP_SYNC */
 		if (j->pgrp == 0) {	/* First process */
 			j->pgrp = p->pid;
 			dotty = 1;
-# ifdef NEED_PGRP_SYNC
-			if (j_sync_open) {
-				close(j_sync_pipe[ischild]);
-				j_sync_pipe[ischild] = -1;
-				dosync = ischild;
-			}
-# endif /* NEED_PGRP_SYNC */
 		}
 
 		/* set pgrp in both parent and child to deal with race
@@ -556,13 +568,11 @@ exchild(t, flags, close_fd)
 			tcsetpgrp(tty_fd, j->pgrp);
 # endif /* TTY_PGRP */
 # ifdef NEED_PGRP_SYNC
-		if (ischild && j_sync_open) {
-			if (dosync) {
-				char c;
-				while (read(j_sync_pipe[0], &c, 1) == -1
-				       && errno == EINTR)
-					;
-			}
+		if (first_child_sync) {
+			char c;
+			while (read(j_sync_pipe[0], &c, 1) == -1
+			       && errno == EINTR)
+				;
 			close(j_sync_pipe[0]);
 			j_sync_open = 0;
 		}
@@ -1119,14 +1129,14 @@ j_startjob(j)
 
 #ifdef NEED_PGRP_SYNC
 	if (j_sync_open) {
-		closepipe(j_sync_pipe);
 		j_sync_open = 0;
+		closepipe(j_sync_pipe);
 	}
 #endif /* NEED_PGRP_SYNC */
 #ifdef JOB_SIGS
 	if (held_sigchld) {
 		held_sigchld = 0;
-		/* Don't call j_sigchild() as it may remove job... */
+		/* Don't call j_sigchld() as it may remove job... */
 		kill(procpid, SIGCHLD);
 	}
 #endif /* JOB_SIGS */
@@ -1342,7 +1352,7 @@ found:
 
 /*
  * Called only when a process in j has exited/stopped (ie, called only
- * from j_sigchild()).  If no processes are running, the job status
+ * from j_sigchld()).  If no processes are running, the job status
  * and state are updated, asynchronous job notification is done and,
  * if unneeded, the job is removed.
  *
