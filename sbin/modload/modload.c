@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.44 2004/02/12 21:10:39 kleink Exp $	*/
+/*	$NetBSD: modload.c,v 1.45 2004/03/19 12:04:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.44 2004/02/12 21:10:39 kleink Exp $");
+__RCSID("$NetBSD: modload.c,v 1.45 2004/03/19 12:04:37 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,9 +54,6 @@ __RCSID("$NetBSD: modload.c,v 1.44 2004/02/12 21:10:39 kleink Exp $");
 #include <unistd.h>
 #include <nlist.h>
 #include "pathnames.h"
-
-#define	TRUE 1
-#define	FALSE 0
 
 #include "modload.h"
 
