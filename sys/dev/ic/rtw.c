@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.27 2004/12/27 09:40:18 mycroft Exp $ */
+/* $NetBSD: rtw.c,v 1.28 2004/12/27 10:17:38 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.27 2004/12/27 09:40:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.28 2004/12/27 10:17:38 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -1464,17 +1464,16 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
 {
 	uint32_t hstat;
 	int data_retry, rts_retry;
-	struct rtw_txdesc *htx0, *htxn;
+	struct rtw_txdesc *htxn;
 	const char *condstring;
 
 	rtw_txbuf_release(sc->sc_dmat, &sc->sc_ic, stx);
 
 	htc->htc_nfree += ndesc;
 
-	htx0 = &htc->htc_desc[stx->stx_first];
 	htxn = &htc->htc_desc[stx->stx_last];
 
-	hstat = le32toh(htx0->htx_stat);
+	hstat = le32toh(htxn->htx_stat);
 	rts_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_RTSRETRY_MASK);
 	data_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_DRC_MASK);
 
