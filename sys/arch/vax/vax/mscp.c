@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.3 1994/10/26 08:03:16 cgd Exp $	*/
+/*	$NetBSD: mscp.c,v 1.4 1995/07/05 08:31:38 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -633,15 +633,13 @@ mscp_requeue(mi)
 	 * Clear the controller chain.  Mark everything un-busy; we
 	 * will soon fix any that are in fact busy.
 	 */
-	printf("mscp_requeue\n");
-	asm("halt");
-/* XXX	mi->mi_tab->b_actf = NULL;
+	mi->mi_tab->b_actf = NULL;
 	mi->mi_tab->b_active = 0;
 	for (unit = 0, dp = md->md_utab; unit < md->md_nunits; unit++, dp++) {
 		ui = md->md_dinfo[unit];
 		if (ui == NULL || !ui->ui_alive || ui->ui_ctlr != mi->mi_ctlr)
 			continue;	/* not ours */
-/* XXX		dp->b_forw = NULL;
+		dp->b_hash.le_next = NULL;
 		dp->b_active = 0;
 	}
 
@@ -650,16 +648,15 @@ mscp_requeue(mi)
 	 * Note that these must be put at the front of the drive queue,
 	 * lest we reorder I/O operations.
 	 */
-	asm("halt");
-/* XXX	for (bp = mi->mi_wtab.av_back; bp != &mi->mi_wtab; bp = nextbp) {
-		nextbp = bp->av_back;
+	for (bp = *mi->mi_wtab.b_actb; bp != &mi->mi_wtab; bp = nextbp) {
+		nextbp = *bp->b_actb;
 		dp = &md->md_utab[minor(bp->b_dev) >> md->md_unitshift];
-		bp->av_forw = dp->b_actf;
+		bp->b_actf = dp->b_actf;
 		if (dp->b_actf == NULL)
-			dp->b_actl = bp;
+			dp->b_actb = bp;
 		dp->b_actf = bp;
 	}
-	mi->mi_wtab.av_forw = mi->mi_wtab.av_back = &mi->mi_wtab;
+	mi->mi_wtab.b_actf = *mi->mi_wtab.b_actb = &mi->mi_wtab;
 
 	/*
 	 * Scan for drives waiting for on line or status responses,
@@ -674,8 +671,7 @@ mscp_requeue(mi)
 		if ((ui->ui_flags & UNIT_REQUEUE) == 0 && dp->b_actf == NULL)
 			continue;
 		ui->ui_flags &= ~UNIT_REQUEUE;
-		asm("halt");
-/* XXX		MSCP_APPEND(dp, mi->mi_tab, b_forw); */
+		MSCP_APPEND(dp, mi->mi_tab, b_hash.le_next);
 
 		dp->b_active = 1;
 		mi->mi_tab->b_active = 1;
