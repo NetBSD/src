@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.6 2002/02/08 01:38:49 ross Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.7 2002/04/10 23:35:07 martin Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.6 2002/02/08 01:38:49 ross Exp $
+.\"	$Id: isdnd.rc.5,v 1.7 2002/04/10 23:35:07 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -295,6 +295,23 @@ It is used to have a chance to accept an incoming call on the phone before
 the answering machine starts to run. The minimum value for the alert parameter
 is 5 seconds and the maximum parameter allowed is 180 seconds.
 (optional)
+.It Li autoupdown
+For network interfaces using ISDN as a transport medium it does not make
+sense to mark the interfaces UP before running
+.Nm isdnd .
+Typicaly this interfaces are configured, but marked down, in the respective
+.Pa ifconfig.*
+file. When starting,
+.Nm isdnd
+recognizes this interfaces (configured with some address, marked down, and
+having a matching config entry) and marks them up. On shutdown,
+.Nm isdnd
+marks all interfaces changed at startup DOWN again.
+.Pp
+In rare circumstances you might not want this automatic handling. 
+In this cases add a
+.Em autoupdown=no
+line to the config file entry.
 .It Li b1protocol
 The B channel layer 1 protocol used for this connection. The keyword is mandatory.
 The currently configurable values are:
