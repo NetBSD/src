@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2000/12/02 16:43:51 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.25 2000/12/09 05:27:29 mycroft Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,11 +57,11 @@
 ; UNIMPL osf_*   = osf functions implemented in linux, not here.
 ;
 
-if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
-endif
+#endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -81,6 +81,8 @@ endif
 ;#include <compat/linux/common/linux_machdep.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+%%
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
