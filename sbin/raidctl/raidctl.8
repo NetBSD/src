@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.12 2000/01/22 14:48:43 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.13 2000/02/24 23:52:46 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,6 +71,10 @@
 .Op Fl v 
 .Fl a Ar component Ar dev
 .Nm ""
+.Op Fl v
+.Fl A Op yes | no | root
+.Ar dev
+.Nm ""
 .Op Fl v 
 .Fl B Ar dev 
 .Nm ""
@@ -137,6 +141,22 @@ Add
 .Ar component
 as a hot spare for the device 
 .Ar dev .
+.It Fl A Ic yes Ar dev
+Make the RAID set auto-configurable.  The RAID set will be
+automatically configured at boot 
+.Ar before
+the root filesystem is
+mounted.  Note that all components of the set must be of type RAID in the
+disklabel.
+.It Fl A Ic no Ar dev
+Turn off auto-configuration for the RAID set.
+.It Fl A Ic root Ar dev
+Make the RAID set auto-configurable, and also mark the set as being
+eligible to be the root partition.  A RAID set configured this way
+will 
+.Ar override
+the use of the boot disk as the root device.  All components of the
+set must be of type RAID in the disklabel.
 .It Fl B Ar dev
 Initiate a copyback of reconstructed data from a spare disk to 
 its original disk.  This is performed after a component has failed, 
@@ -181,7 +201,9 @@ Initialize the component labels on each component of the device.
 is used as one of the keys in determining whether a
 particular set of components belong to the same RAID set.  While not
 strictly enforced, different serial numbers should be used for
-different RAID sets.
+different RAID sets.  This step 
+.Ar MUST
+be performed when a new RAID set is created.
 .It Fl p Ar dev
 Check the status of the parity on the RAID set.  Displays a status
 message, and returns successfully if the parity is up-to-date.
@@ -373,7 +395,22 @@ of the options for
 and that they understand how the component reconstruction process
 works.  While this example is not created as a tutorial, the steps
 shown here can be easily duplicated using four equal-sized partitions
-from any number of disks (including all four from a single disk).  
+from any number of disks (including all four from a single disk).
+.Pp
+The first step to configuring a RAID set is to mark the components
+that will be used for that set.  This is typically done by using
+.Xr disklabel 8 
+to create partitions of type
+.Dv FS_BSDFFS or
+.Dv FS_RAID .
+The type 
+.Dv FS_RAID 
+is reserved for RAIDframe use, and is required for features such as
+auto-configuration.  A typical disklabel entry for a RAID component
+might look like:
+.Bd -unfilled -offset indent
+f:  1800000  200495     RAID              # (Cyl.  405*- 4041*)
+.Ed
 .Pp
 The primary uses of 
 .Nm ""
@@ -472,7 +509,12 @@ raidctl -i raid0
 .Ed
 .Pp
 Initializing the parity in this way may also be required after an
-unclean shutdown.  Once the parity is known to be correct, 
+unclean shutdown.  Since it is the parity that provides the
+'redundancy' part of RAID, it is critical that the parity is correct
+as much as possible.  If the parity is not correct, then there is no
+guarantee that data will not be lost if a component fails.
+.Pp
+Once the parity is known to be correct, 
 it is then safe to perform
 .Xr disklabel 8 ,
 .Xr newfs 8 ,
