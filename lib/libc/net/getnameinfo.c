@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.24 2001/01/04 03:57:58 lukem Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25 2001/01/25 22:50:56 jdolecek Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.24 2001/01/04 03:57:58 lukem Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25 2001/01/25 22:50:56 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,7 +69,7 @@ __weak_alias(getnameinfo,_getnameinfo)
 #define YES 1
 #define NO  0
 
-static struct afd {
+static const struct afd {
 	int a_af;
 	int a_addrlen;
 	int a_socklen;
@@ -115,7 +115,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	size_t servlen;
 	int flags;
 {
-	struct afd *afd;
+	const struct afd *afd;
 	struct servent *sp;
 	struct hostent *hp;
 	u_short port;

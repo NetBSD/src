@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.5 2001/01/04 14:57:17 lukem Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.6 2001/01/25 22:50:56 jdolecek Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -98,7 +98,7 @@ __weak_alias(nc_sperror,_nc_sperror)
  */
 #define NC_NOLOOKUP	"-"
 
-static char *_nc_errors[] = {
+static const char * const _nc_errors[] = {
 	"Netconfig database not found",
 	"Not enough memory",
 	"Not initialized",
@@ -601,7 +601,7 @@ parse_ncp(stringp, ncp)
 char *
 nc_sperror()
 {
-	char *message;
+	const char *message;
 
 	switch(nc_error) {
 	case NC_NONETCONFIG:
@@ -619,7 +619,8 @@ nc_sperror()
 	default:
 		message = "Unknown network selection error";
 	}
-	return (message);
+	/* LINTED const castaway */
+	return ((char *)message);
 }
 
 /*
