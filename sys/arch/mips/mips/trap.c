@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 2000/05/30 18:12:47 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.135 2000/05/31 01:11:58 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2000/05/30 18:12:47 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2000/05/31 01:11:58 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -674,12 +674,11 @@ trap(status, cause, vaddr, opc, frame)
 		f = (struct frame *)p->p_md.md_regs;
 		savefpregs(fpcurproc);  		/* yield FPA */
 		loadfpregs(p);          		/* load FPA */
+		fpcurproc = p;
 		p->p_md.md_flags |= MDP_FPUSED;
 		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
 		}
-#endif /* !SOFTFLOAT */
-		fpcurproc = p;
-#ifdef SOFTFLOAT
+#else
 		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 #endif
 		userret(p, opc, sticks);
