@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.4.3 1999/07/11 05:43:57 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.4.4 1999/07/31 18:47:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1231,6 +1231,7 @@ nfs_getpages(v)
 		int a_advice;
 		int a_flags;
 	} */ *ap = v;
+
 	int i, error, npages;
 	struct uio uio;
 	struct iovec iov;
@@ -1239,12 +1240,13 @@ nfs_getpages(v)
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	vaddr_t offset;
+	vaddr_t offset = ap->a_offset;
+	off_t eof;
 	vm_page_t pgs[2]; /* XXX tmp hack: 4k page 8k rsize */
 	int cidx, vidx;
 
 	UVMHIST_FUNC("nfs_getpages"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)ap->a_offset, 0,0);
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
 #ifdef DIAGNOSTIC
 	if (ap->a_centeridx < 0 || ap->a_centeridx >= *ap->a_count) {
@@ -1253,12 +1255,23 @@ nfs_getpages(v)
 	}
 #endif
 
+	eof = vp->v_uvm.u_size;
+	if (offset >= eof) {
+		if ((ap->a_flags & PGO_LOCKED) == 0) {
+			simple_unlock(&uobj->vmobjlock);
+		}
+		UVMHIST_LOG(ubchist, "off 0x%x past EOF 0x%x",
+			    offset, eof,0,0);
+		return EINVAL;
+	}
+
+
 	if (ap->a_flags & PGO_LOCKED) {
-		uvn_findpages(uobj, ap->a_offset, ap->a_count, ap->a_m,
+		uvn_findpages(uobj, offset, ap->a_count, ap->a_m,
 			      UFP_NOWAIT|UFP_NOALLOC);
 
 		/* XXX PGO_ALLPAGES? */
-		return VM_PAGER_OK;
+		return 0;
 	}
 
 	/* vnode is VOP_LOCKed, uobj is locked */
@@ -1273,15 +1286,15 @@ nfs_getpages(v)
 	 */
 
 	npages = 1;
-	uvn_findpages(uobj, ap->a_offset + (ap->a_centeridx << PAGE_SHIFT),
+	uvn_findpages(uobj, offset + (ap->a_centeridx << PAGE_SHIFT),
 		      &npages, &ap->a_m[ap->a_centeridx], UFP_NOALLOC);
 	if (npages == 1) {
 		simple_unlock(&uobj->vmobjlock);
-		return VM_PAGER_OK;
+		return 0;
 	}
 
 	npages = nmp->nm_rsize >> PAGE_SHIFT;
-	offset = ap->a_offset & ~(nmp->nm_rsize - 1);
+	offset &= ~(nmp->nm_rsize - 1);
 	cidx = ap->a_centeridx + ((ap->a_offset - offset) >> PAGE_SHIFT);
 	UVMHIST_LOG(ubchist, "npages %d offset 0x%lx cidx %d",
 		    npages, offset, cidx,0);
@@ -1298,27 +1311,10 @@ nfs_getpages(v)
 #endif
 
 	/*
-	 * if the entire page is past the end of the file,
-	 * just zero it and return.
-	 */
-	if (offset >= vp->v_uvm.u_size) {
-		UVMHIST_LOG(ubchist, "off 0x%x past EOF 0x%x, zeroed page",
-			    offset, vp->v_uvm.u_size,0,0);
-
-		while (vidx < npages) {
-			uvm_pagezero(pgs[vidx++]);
-		}
-		return VM_PAGER_OK;
-	}
-
-	/*
 	 * read at last part of the page.
 	 */
 
 	kva = uvm_pagermapin(&pgs[vidx], npages, M_WAITOK);
-	if (kva == 0) {
-		return VM_PAGER_AGAIN;
-	}
 
 	uio.uio_iov = &iov;
 	iov.iov_len = 0;
@@ -1379,7 +1375,7 @@ nfs_getpages(v)
 		panic("nfs_getpages: returning null page?");
 	}
 #endif
-	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+	return error;
 }
 
 /*
@@ -1413,9 +1409,6 @@ nfs_putpages(v)
 
 	m = ap->a_m[0];
 	kva = uvm_pagermapin(ap->a_m, ap->a_count, M_WAITOK);
-	if (kva == 0) {
-		return VM_PAGER_AGAIN;
-	}
 
 	iosize = min(PAGE_SIZE, vp->v_uvm.u_size - m->offset);
 
@@ -1436,5 +1429,5 @@ nfs_putpages(v)
 
 	uvm_pagermapout(kva, ap->a_count);
 
-	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+	return error;
 }
