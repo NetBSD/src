@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.23 2001/02/02 06:11:53 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.24 2001/02/04 17:36:08 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -678,7 +678,7 @@ softintr(ipl)
 void
 macppc_openpic_init()
 {
-	openpic_init(macppc_openpic_base);
+	openpic_init(macppc_openpic_base, ICU_LEN);
 
 	install_extint(ext_intr_openpic);
 }
