@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kvm_mkdb.c,v 1.7 1994/06/11 07:57:40 mycroft Exp $";
+static char *rcsid = "$Id: kvm_mkdb.c,v 1.7.2.1 1994/08/30 02:39:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,15 @@ static char *rcsid = "$Id: kvm_mkdb.c,v 1.7 1994/06/11 07:57:40 mycroft Exp $";
 #include "extern.h"
 
 static void usage __P((void));
+
+HASHINFO openinfo = {
+	4096,		/* bsize */
+	128,		/* ffactor */
+	1024,		/* nelem */
+	2048 * 1024,	/* cachesize */
+	NULL,		/* hash() */
+	0		/* lorder */
+};
 
 int
 main(argc, argv)
@@ -93,7 +102,7 @@ main(argc, argv)
 	    _PATH_VARDB, nlistname);
 	(void)umask(0);
 	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, NULL);
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);
 	if (db == NULL)
 		err(1, "%s", dbtemp);
 	create_knlist(nlistpath, db);

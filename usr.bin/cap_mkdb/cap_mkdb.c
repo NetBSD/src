@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +33,13 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1992 The Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cap_mkdb.c	5.6 (Berkeley) 3/8/93";*/
-static char rcsid[] = "$Id: cap_mkdb.c,v 1.2 1993/08/01 18:18:08 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)cap_mkdb.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: cap_mkdb.c,v 1.2.2.1 1994/08/30 02:38:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,15 @@ void	 usage __P((void));
 DB *capdbp;
 int verbose;
 char *capdb, *capname, buf[8 * 1024];
+
+HASHINFO openinfo = {
+	4096,		/* bsize */
+	16,		/* ffactor */
+	256,		/* nelem */
+	2048 * 1024,	/* cachesize */
+	NULL,		/* hash() */
+	0		/* lorder */
+};
 
 /*
  * Mkcapdb creates a capability hash database for quick retrieval of capability
@@ -104,8 +113,8 @@ main(argc, argv)
 	(void)snprintf(buf, sizeof(buf), "%s.db", capname ? capname : *argv);
 	if ((capname = strdup(buf)) == NULL)
 		err(1, "");
-	if ((capdbp = dbopen(capname,
-	    O_CREAT | O_TRUNC | O_RDWR, DEFFILEMODE, DB_HASH, NULL)) == NULL)
+	if ((capdbp = dbopen(capname, O_CREAT | O_TRUNC | O_RDWR,
+	    DEFFILEMODE, DB_HASH, &openinfo)) == NULL)
 		err(1, "%s", buf);
 
 	if (atexit(dounlink))
