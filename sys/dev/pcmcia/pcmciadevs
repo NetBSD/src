@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp $
+$NetBSD: pcmciadevs,v 1.63 1999/12/23 19:45:56 augustss Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor LUCENT			0x0156	Lucent Technologies
 vendor DAYNA			0x0194	Dayna Corporation
+vendor WEBGEAR			0x01a6	WebGear
 vendor BAY			0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
@@ -176,9 +177,13 @@ product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Lucent WaveLAN/IEEE */
-product LUCENT WAVELAN_IEEE	0x0002	WaveLAN/IEEE
+product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 
-product BAY STACK_650	0x804	BayStack 650 Wireless LAN
+/* Bey Networks */
+product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
+
+/* WebGear */
+product WEBGEAR WLAN		0x0000 WLAN Adapter
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
