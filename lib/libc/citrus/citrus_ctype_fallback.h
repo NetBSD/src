@@ -1,4 +1,4 @@
-/*	$NetBSD: wctob.c,v 1.4 2003/03/04 13:27:12 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.h,v 1.1 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -26,35 +26,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wctob.c,v 1.4 2003/03/04 13:27:12 yamt Exp $");
-#endif /* LIBC_SCCS and not lint */
+#ifndef _CITRUS_CTYPE_FALLBACK_H_
+#define _CITRUS_CTYPE_FALLBACK_H_
 
-#include "namespace.h"
+/* fallback functions for 0x00000002 */
+int _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict,
+				 int, wint_t * __restrict);
+int _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict,
+				 wint_t, int * __restrict);
 
-#include <assert.h>
-#include <wchar.h>
-#include <stdio.h>
-#include <limits.h>
-#include <string.h>
-
-/*
- * convert a wide character to a corresponding single byte character.
- */
-int
-wctob(wc)
-	wint_t wc;
-{
-	char mb[MB_LEN_MAX];
-	mbstate_t mbs;
-
-	if (wc==WEOF)
-		return (EOF);
-
-	memset(&mbs, 0, sizeof(mbs));
-	if (wcrtomb(mb, wc, &mbs) != 1)
-		return (EOF);
-
-	return ((int)(unsigned char)mb[0]);
-}
+#endif

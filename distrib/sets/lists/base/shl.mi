@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.202 2003/03/04 00:31:40 nathanw Exp $
+# $NetBSD: shl.mi,v 1.203 2003/03/05 20:18:14 tshiozak Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.96			base-sys-shlib
 ./lib/libcrypt.so.0.1			base-sys-shlib
@@ -12,12 +12,12 @@
 ./lib/libtermlib.so.0.5			base-sys-shlib
 ./lib/libutil.so.7.1			base-sys-shlib
 ./lib/libz.so.0.3			base-sys-shlib
-./usr/lib/i18n/libBIG5.so.4.0		base-i18n-shlib
-./usr/lib/i18n/libEUC.so.4.0		base-i18n-shlib
-./usr/lib/i18n/libEUCTW.so.4.0		base-i18n-shlib
-./usr/lib/i18n/libISO2022.so.4.0	base-i18n-shlib
-./usr/lib/i18n/libMSKanji.so.4.0	base-i18n-shlib
-./usr/lib/i18n/libUTF8.so.4.0		base-i18n-shlib
+./usr/lib/i18n/libBIG5.so.4.1		base-i18n-shlib
+./usr/lib/i18n/libEUC.so.4.1		base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so.4.1		base-i18n-shlib
+./usr/lib/i18n/libISO2022.so.4.1	base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so.4.1	base-i18n-shlib
+./usr/lib/i18n/libUTF8.so.4.1		base-i18n-shlib
 ./usr/lib/libamu.so.2.1			base-amd-shlib
 ./usr/lib/libasn1.so.6.1		base-krb5-shlib
 ./usr/lib/libbz2.so.1.0			base-sys-shlib
