@@ -73,12 +73,13 @@ main(argc, argv)
 	struct utmp utmp;
 	FILE *fp;
 	char *p, *ttymsg();
+	struct passwd *pep = getpwnam("nobody");
 
 	while ((ch = getopt(argc, argv, "n")) != EOF)
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */
-			if (geteuid() == 0)
+			if (geteuid() == 0 || (pep && getuid() == pep->pw_uid))
 				nobanner = 1;
 			break;
 		case '?':
