@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.19 1997/09/26 19:53:07 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.20 1997/09/29 03:53:40 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.39 1997/07/14 03:53:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.19 1997/09/26 19:53:07 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.20 1997/09/29 03:53:40 christos Exp $");
 #endif
 #endif
 
@@ -166,7 +166,7 @@ static int setescape __P((char **));
 static int setmru __P((char **));
 static int setmtu __P((char **));
 #ifdef CBCP_SUPPORT
-static int setcbcp __P((char *));
+static int setcbcp __P((char **));
 #endif
 static int nomru __P((char **));
 static int nopcomp __P((char **));
