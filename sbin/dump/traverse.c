@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.12 1995/06/07 17:15:57 cgd Exp $	*/
+/*	$NetBSD: traverse.c,v 1.13 1995/06/11 05:16:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: traverse.c,v 1.12 1995/06/07 17:15:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: traverse.c,v 1.13 1995/06/11 05:16:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,8 +121,13 @@ blockest(dp)
 }
 
 /* Auxiliary macro to pick up files changed since previous dump. */
+#ifdef FS_44INODEFMT
+#define	CHANGEDSINCE(dp, t) \
+	((dp)->di_mtime.ts_sec >= (t) || (dp)->di_ctime.ts_sec >= (t))
+#else
 #define	CHANGEDSINCE(dp, t) \
 	((dp)->di_mtime >= (t) || (dp)->di_ctime >= (t))
+#endif
 
 /* The WANTTODUMP macro decides whether a file should be dumped. */
 #ifdef UF_NODUMP
