@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.11 2003/08/05 13:35:27 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.12 2003/08/10 14:51:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -119,13 +119,19 @@ menu selfsize, title MSG_Select_file_system_fragment_size, y=11, x=40;
 	option "16384", exit, action { set_fsize(arg, 16384); };
 	option "32768", exit, action { set_fsize(arg, 32768); };
 
-menu mountoptions, title MSG_toggle, y=6, x= 20, exitstring MSG_unchanged;
+menu mountoptions, title MSG_toggle, y=5, x=30, exitstring MSG_unchanged;
 	option "async", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_ASYNC; };
 	option "noatime", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_NOATIME; };
+	option "nodev", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_NODEV; };
 	option "nodevmtime", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_NODEVMTIME; };
+	option "noexec", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_NOEXEC; };
+	option "nosuid", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_NOSUID; };
 	option "softdep", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_SOFTDEP; };
 
