@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10.6.2 2002/06/21 21:26:32 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10.6.3 2002/07/05 02:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -417,16 +417,10 @@ _L.SYS___sigreturn14:	.long	SYS___sigreturn14
  * upcallcode:
  *	Scheduler activation upcall trampoline.
  *
- * r4-r7 are the first 4 upcall arguments.  The rest of the arguments
- * are on the stack in the right places.  Pointer to the upcall routine
- * follows args.
+ * The kernel invokes the upcall directly.  This is used only to exit
+ * if the upcall returns (which is an error).
  */
 NENTRY(upcallcode)
-	mov.l	@(SAF_UPCALL,r15), r0	/* fetch upcall routine.. */
-	jsr	@r0			/* ..and call it! */
-	 nop
-
-	/* Returned?!  Die! */
 	mov.l	_L.SYS_exit, r0
 	trapa	#0x80
 

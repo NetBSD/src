@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.4 2002/06/24 22:07:22 nathanw Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.5 2002/07/05 02:43:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -389,7 +389,6 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	frame.sa_interrupted = ninterrupted;
 #endif
 	frame.sa_arg = ap;
-	frame.sa_upcall = upcall;
 
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
@@ -403,7 +402,8 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_r6 = nevents;
 	tf->tf_r7 = ninterrupted;
 
-	tf->tf_spc = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
+	tf->tf_spc = (int) upcall;
+	tf->tf_pr = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
 	    ((caddr_t)upcallcode - (caddr_t)sigcode));
 	tf->tf_r15 = (int) sf;
 }
