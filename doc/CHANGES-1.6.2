@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.88 2003/06/30 03:15:40 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.89 2003/06/30 03:19:04 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1000,3 +1000,17 @@ sys/net/if_bridgevar.h				1.3 (via patch)
 	cost of an interface. Display the interface path cost with the others
 	STP parameters.
 	[bouyer, ticket #1355]
+
+sys/net/if_ether.h				1.30
+sys/net/if_ethersubr.c				1.106
+
+	Make promiscous mode work on vlans: introduce a new link-layer m_flag
+	M_PROMISC. In ether_input(), flag packets comming from an interface in
+	promiscous mode which are not for us M_PROMISC instead of droping them.
+	Drop M_PROMISC packets which are not passed to vlan_input(). M_PROMISC
+	packets passed to vlan_input() will be looped back to ether_input()
+	the M_PROMISC flag will be handled appropriately.
+	Clear M_PROMISC before giving the packet to bridge, as bridge has its
+	own checks for local MAC addresses.
+	This also makes bridges on vlan working.
+	[bouyer, ticket #1356]
