@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.26 2002/08/11 12:16:27 tron Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.27 2002/09/26 16:53:27 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.26 2002/08/11 12:16:27 tron Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.27 2002/09/26 16:53:27 onoe Exp $");
 #endif
 
 struct wi_table {
@@ -641,7 +641,7 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t",
 	    't', "TX rate" },
 	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
-	{ WI_RID_OWN_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t"},
+	{ WI_RID_CUR_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t"},
 	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t",
 	    'd', "maximum data length" },
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t",
