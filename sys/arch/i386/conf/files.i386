@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.164 2000/08/10 21:21:02 soda Exp $
+#	$NetBSD: files.i386,v 1.165 2000/08/21 07:39:45 itohy Exp $
 #
 # new style config file for i386 architecture
 #
@@ -327,7 +327,7 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
@@ -358,7 +358,7 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# TCIC pcmcia contoller
+# TCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
@@ -369,7 +369,7 @@ defopt	TCIC_ISA_INTR_ALLOC_MASK
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
 
-# TCIC pcmcia contoller
+# TCIC pcmcia controller
 attach	tcic at isa with tcic_isa
 file	dev/isa/tcic2_isa.c		tcic_isa
 
