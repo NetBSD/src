@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)true.1	6.4 (Berkeley) 6/27/91
-.\"	$Id: true.1,v 1.2 1993/08/01 07:27:26 mycroft Exp $
+.\"	$Id: true.1,v 1.3 1993/08/28 03:45:10 jtc Exp $
 .\"
 .Dd June 27, 1991
 .Dt TRUE 1
@@ -44,20 +44,15 @@
 .Sh SYNOPSIS
 .Nm true
 .Sh DESCRIPTION
-.Nm True
-is normally used in a Bourne shell script.
-.Nm True
-tests for the appropriate status "false" before running 
-(or failing to run) a list of commands.  
+The
+.Nm true
+utility always returns with exit code zero.
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr sh 1 ,
 .Xr false 1
-.Sh DIAGNOSTICS
-The
-.Nm true
-utility always returns with exit code zero.
 .Sh STANDARDS
 The
 .Nm true
-function is expected to be POSIX 1003.2 compatible.
+utility conforms to 
+.St -p1003.2-92 .
