@@ -24,7 +24,7 @@
    pair.  This needs better error-handling.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: app.c,v 1.5 1994/05/25 17:10:38 pk Exp $";
+static char rcsid[] = "$Id: app.c,v 1.6 1994/08/24 20:12:01 pk Exp $";
 #endif
 
 #include <stdio.h>
@@ -58,7 +58,7 @@ static const char symbol_chars[] =
 #define IS_LINE_COMMENT(c)		(lex[c] == LEX_IS_LINE_COMMENT_START)
 #define	IS_NEWLINE(c)			(lex[c] == LEX_IS_NEWLINE)
 
-static int process_escape (int);
+static int process_escape PARAMS ((int));
 
 /* FIXME-soon: The entire lexer/parser thingy should be
    built statically at compile time rather than dynamically
