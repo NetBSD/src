@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.5 1997/10/29 21:33:16 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.6 1997/10/29 22:48:43 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -52,6 +52,52 @@
 
 #include <dev/ic/i82365reg.h>
 #include <dev/ic/i82365var.h>
+
+/*****************************************************************************
+ * Configurable parameters.
+ *****************************************************************************/
+
+#include "opt_pcic_isa_alloc_iobase.h"
+#include "opt_pcic_isa_alloc_iosize.h"
+#include "opt_pcic_isa_intr_alloc_mask.h"
+
+/*
+ * Default I/O allocation range.  If both are set to non-zero, these
+ * values will be used instead.  Otherwise, the code attempts to probe
+ * the bus width.  Systems with 10 address bits should use 0x300 and 0xff.
+ * Systems with 12 address bits (most) should use 0x400 and 0xbff.
+ */
+
+#ifndef PCIC_ISA_ALLOC_IOBASE
+#define	PCIC_ISA_ALLOC_IOBASE		0
+#endif
+
+#ifndef PCIC_ISA_ALLOC_IOSIZE
+#define	PCIC_ISA_ALLOC_IOSIZE		0
+#endif
+
+int	pcic_isa_alloc_iobase = PCIC_ISA_ALLOC_IOBASE;
+int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
+
+/*
+ * Default IRQ allocation bitmask.  This defines the range of allowable
+ * IRQs for PCMCIA slots.  Useful if order of probing would screw up other
+ * devices, or if PCIC hardware/cards have trouble with certain interrupt
+ * lines.
+ *
+ * We disable IRQ 10 by default, since some common laptops (namely, the
+ * NEC Versa series) reserve IRQ 10 for the docking station SCSI interface.
+ */
+
+#ifndef PCIC_ISA_INTR_ALLOC_MASK
+#define	PCIC_ISA_INTR_ALLOC_MASK	0xfbff
+#endif
+
+int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
+
+/*****************************************************************************
+ * End of configurable parameters.
+ *****************************************************************************/
 
 #ifdef PCICISADEBUG
 int	pcicisa_debug = 0 /* XXX */ ;
@@ -162,17 +208,6 @@ pcic_isa_probe(parent, match, aux)
 	return (1);
 }
 
-#ifndef PCIC_ISA_ALLOC_IOBASE
-#define	PCIC_ISA_ALLOC_IOBASE 0
-#endif
-
-#ifndef PCIC_ISA_ALLOC_IOSIZE
-#define	PCIC_ISA_ALLOC_IOSIZE 0
-#endif
-
-int	pcic_isa_alloc_iobase = PCIC_ISA_ALLOC_IOBASE;
-int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
-
 void
 pcic_isa_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -218,9 +253,13 @@ pcic_isa_attach(parent, self, aux)
 	 */
 
 	if ((sc->irq = ia->ia_irq) == IRQUNK) {
-		/* XXX CHECK RETURN VALUE */
-		(void) isa_intr_alloc(ic, PCIC_CSC_INTR_IRQ_VALIDMASK,
-		    IST_EDGE, &sc->irq);
+		if (isa_intr_alloc(ic,
+		    PCIC_CSC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask,
+		    IST_EDGE, &sc->irq)) {
+			printf("\n%s: can't allocate interrupt\n",
+			    sc->dev.dv_xname);
+			return;
+		}
 		printf(": using irq %d", sc->irq);
 	}
 	printf("\n");
@@ -300,24 +339,13 @@ pcic_isa_attach(parent, self, aux)
 	}
 	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 	    pcic_intr, sc);
+	if (sc->ih == NULL) {
+		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
+		return;
+	}
 
 	pcic_attach_sockets(sc);
 }
-
-/*
- * allow patching or kernel option file override of available IRQs. Useful if
- * order of probing would screw up other devices, or if PCIC hardware/cards
- * have trouble with certain interrupt lines.
- *
- * We disable IRQ 10 by default, since some common laptops (namely, the
- * NEC Versa series) reserve IRQ 10 for the docking station SCSI interface.
- */
-
-#ifndef PCIC_INTR_ALLOC_MASK
-#define	PCIC_INTR_ALLOC_MASK	0xfbff
-#endif
-
-int	pcic_intr_alloc_mask = PCIC_INTR_ALLOC_MASK;
 
 void *
 pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
@@ -340,7 +368,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 		ist = IST_LEVEL;
 
 	if (isa_intr_alloc(h->sc->intr_est,
-	    PCIC_INTR_IRQ_VALIDMASK & pcic_intr_alloc_mask, ist, &irq))
+	    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask, ist, &irq))
 		return (NULL);
 	if ((ih = isa_intr_establish(h->sc->intr_est, irq, ist, ipl,
 	    fct, arg)) == NULL)
