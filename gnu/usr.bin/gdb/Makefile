@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 1997/10/25 10:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.12 1998/02/14 20:58:23 mycroft Exp $
 
 PROG=	gdb
 
@@ -15,9 +15,8 @@ TARGET_ARCH?=$(MACHINE_ARCH)
 # CPPFLAGS=-g
 
 # Find out where libreadline.a lives.
-RL_CURDIR=$(TOP)/lib/readline
-RL_OBJDIR!=cd $(RL_CURDIR); $(MAKE) echo_objdir
-LIBREADLINE=$(RL_OBJDIR)/libreadline.a
+LIBREADLINE!=cd ${TOP}/lib/readline; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libreadline.a\n" | ${MAKE} -s -f-
 
 # Note: nm.h, tm.h are in $(.OBJDIR),
 # and config.h, xm.h are in $(.CURDIR)
