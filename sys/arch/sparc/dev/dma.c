@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.26 1996/05/16 21:45:35 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.27 1996/05/17 22:54:40 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -130,7 +130,7 @@ dmaattach(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
-#if defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M)
 	int node;
 	struct confargs oca;
 	char *name;
@@ -229,6 +229,9 @@ dmaattach(parent, self, aux)
 
 	sc->sc_node = ca->ca_ra.ra_node;
 #if defined(SUN4C) || defined(SUN4M)
+	if (CPU_ISSUN4)
+		goto espsearch;
+
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
@@ -254,7 +257,8 @@ dmaattach(parent, self, aux)
 	} while ((node = nextsibling(node)) != 0); else
 #endif /* SUN4C || SUN4M */
 
-	if (strcmp(ca->ca_ra.ra_bp->name, "dma") == 0) {
+	if (strcmp(ca->ca_ra.ra_name, "dma") == 0) {
+espsearch:
 		/*
 		 * find the ESP by poking around the esp device structures
 		 *
