@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.1 1997/10/19 16:03:11 oki Exp $
+#	$NetBSD: INSTALL,v 1.1.2.1 1998/10/13 21:23:14 cgd Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -52,7 +52,7 @@ file-system 	FFS			# Berkeley fast file system
 file-system 	MFS			# memory file system; uses RAM and swap
 file-system 	NFS			# Network File System client
 file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
-#file-system 	MSDOSFS			# MS-DOS FAT file system
+file-system 	MSDOSFS			# MS-DOS FAT file system
 file-system 	KERNFS			# kernel file system; recommended
 
 options 	FASTLINKS		# fast symbolic links in FFS
@@ -62,7 +62,6 @@ options 	INET			# Internet protocols
 
 # Options specific to this host.
 #options 	INSECURE		# Disable kernel security.
-options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPU_EMULATE		# software fpu emulation
 options 	M060SP			# int/fp emulation for MC68060
 options 	FPSP			# floating point emulation for MC68040
