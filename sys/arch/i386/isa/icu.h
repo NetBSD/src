@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.7.2.4 1993/10/09 08:45:28 mycroft Exp $
+ *	$Id: icu.h,v 1.7.2.5 1993/10/31 23:44:56 mycroft Exp $
  */
 
 /*
@@ -45,12 +45,12 @@
 /*
  * Interrupt "level" mechanism variables, masks, and macros
  */
-extern	unsigned imen;		/* interrupt mask enable */
+extern	int imask;		/* interrupt mask enable */
 
-#define	intr_enable(s)	do {imen &= ~(s); SET_ICUS();} while (0)
-#define	intr_disable(s)	do {imen |= (s); SET_ICUS();} while (0)
-#define SET_ICUS()	do {outb(IO_ICU1 + 1, imen); \
-			    outb(IO_ICU2 + 1, imen >> 8);} while (0)
+#define	intr_enable(s)	do {imask &= ~(s); SET_ICUS();} while (0)
+#define	intr_disable(s)	do {imask |= (s); SET_ICUS();} while (0)
+#define SET_ICUS()	do {outb(IO_ICU1 + 1, imask); \
+			    outb(IO_ICU2 + 1, imask >> 8);} while (0)
 #endif
 
 /*
@@ -82,7 +82,7 @@ extern	unsigned imen;		/* interrupt mask enable */
 /*
  * Interrupt Control offset into Interrupt descriptor table (IDT)
  */
-#define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
+#define	ICU_OFFSET	0x40		/* 0-31 are processor exceptions */
 #define	ICU_LEN		NIRQ		/* 32-47 are ISA interrupts */
 
 #define	ICU_EOI		0x20		/* end of interrupt */
