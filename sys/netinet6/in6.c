@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.18 2000/02/24 12:43:49 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.19 2000/02/24 12:59:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -405,10 +405,8 @@ in6_len2mask(mask, len)
 		mask->s6_addr8[i] = (0xff00 >> (len % 8)) & 0xff;
 }
 
-int	in6_interfaces;		/* number of external internet interfaces */
-
 #define ifa2ia6(ifa)	((struct in6_ifaddr *)(ifa))
-#define ia62ifa(ia6)	(&(((ia6)->ia_ifa))
+#define ia62ifa(ia6)	(&((ia6)->ia_ifa))
 
 int
 in6_control(so, cmd, data, ifp, p)
@@ -558,9 +556,6 @@ in6_control(so, cmd, data, ifp, p)
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 			    ifa_list);
 			IFAREF(&ia->ia_ifa);
-
-			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-				in6_interfaces++;	/*XXX*/
 		}
 
 		if (cmd == SIOCAIFADDR_IN6) {
