@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.6 1999/07/26 23:26:14 augustss Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.7 1999/07/28 20:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,10 +357,17 @@ ntfs_strategy(ap)
 	struct ntfsmount *ntmp = ip->i_mp;
 	int error;
 
+#ifdef __FreeBSD__
 	dprintf(("ntfs_strategy: offset: %d, blkno: %d, lblkno: %d\n",
 		(u_int32_t)bp->b_offset,(u_int32_t)bp->b_blkno,
 		(u_int32_t)bp->b_lblkno));
-	dprintf(("strategy: bcount: %d flags: 0x%x\n", 
+#else
+	dprintf(("ntfs_strategy: blkno: %d, lblkno: %d\n",
+		(u_int32_t)bp->b_blkno,
+		(u_int32_t)bp->b_lblkno));
+#endif
+
+	dprintf(("strategy: bcount: %d flags: 0x%lx\n", 
 		(u_int32_t)bp->b_bcount,bp->b_flags));
 
 	if (bp->b_flags & B_READ) {
