@@ -37,34 +37,9 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)sm_inter.x 1.7 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)sm_inter.x	2.2 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: sm_inter.x,v 1.2 1996/09/26 23:45:29 thorpej Exp $";
+%static char rcsid[] = "$NetBSD: sm_inter.x,v 1.3 1996/12/02 06:51:11 mikel Exp $";
 %#endif /* not lint */
 #endif
-
-program SM_PROG { 
-	version SM_VERS  {
-		/* res_stat = stat_succ if status monitor agrees to monitor */
-		/* res_stat = stat_fail if status monitor cannot monitor */
-		/* if res_stat == stat_succ, state = state number of site sm_name */
-		struct sm_stat_res			 SM_STAT(struct sm_name) = 1;
-
-		/* res_stat = stat_succ if status monitor agrees to monitor */
-		/* res_stat = stat_fail if status monitor cannot monitor */
-		/* stat consists of state number of local site */
-		struct sm_stat_res			 SM_MON(struct mon) = 2;
-
-		/* stat consists of state number of local site */
-		struct sm_stat				 SM_UNMON(struct mon_id) = 3;
-
-		/* stat consists of state number of local site */
-		struct sm_stat				 SM_UNMON_ALL(struct my_id) = 4;
-
-		void					 SM_SIMU_CRASH(void) = 5;
-
-		void					 SM_NOTIFY(struct stat_chge) = 6;
-
-	} = 1;
-} = 100024;
 
 const	SM_MAXSTRLEN = 1024;
 
@@ -124,3 +99,28 @@ struct status {
 	int state;
 	opaque priv[16];		/* stored private information */
 };
+
+program SM_PROG { 
+	version SM_VERS  {
+		/* res_stat = stat_succ if status monitor agrees to monitor */
+		/* res_stat = stat_fail if status monitor cannot monitor */
+		/* if res_stat == stat_succ, state = state number of site sm_name */
+		struct sm_stat_res			 SM_STAT(struct sm_name) = 1;
+
+		/* res_stat = stat_succ if status monitor agrees to monitor */
+		/* res_stat = stat_fail if status monitor cannot monitor */
+		/* stat consists of state number of local site */
+		struct sm_stat_res			 SM_MON(struct mon) = 2;
+
+		/* stat consists of state number of local site */
+		struct sm_stat				 SM_UNMON(struct mon_id) = 3;
+
+		/* stat consists of state number of local site */
+		struct sm_stat				 SM_UNMON_ALL(struct my_id) = 4;
+
+		void					 SM_SIMU_CRASH(void) = 5;
+
+		void					 SM_NOTIFY(struct stat_chge) = 6;
+
+	} = 1;
+} = 100024;
