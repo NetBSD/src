@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.45 2003/05/25 14:00:13 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.46 2003/06/14 19:14:52 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -137,6 +137,9 @@ file	arch/arc/isa/isadma_bounce.c	arcsisabr
 device	tyneisabr {} : isabus, isabr	# PLATFORM_DESKTECH_TYNE
 attach	tyneisabr at mainbus
 file	arch/arc/dti/tyneisabr.c	tyneisabr
+
+# ISA Plug 'n Play devices
+file	arch/arc/isa/isapnp_machdep.c	isapnp
 
 #
 #	NEC RISCstation PCI host bridge
