@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1994/10/26 21:10:43 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1995/01/18 06:51:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -798,6 +798,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		panic("trap");
 	}
+	p->p_md.md_regs [PC] = pc;
+	p->p_md.md_regs [CAUSE] = causeReg;
+	p->p_md.md_regs [BADVADDR] = vadr;
 	trapsignal(p, i, ucode);
 out:
 	/*
@@ -1047,7 +1050,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 	*imaskp = old_mask;
 
 	if (mask & MACH_INT_MASK_4)
-		(*callv->halt)((int *)0, 0);
+		(*callv->_halt)((int *)0, 0);
 	if (mask & MACH_INT_MASK_3) {
 		intr = *intrp;
 		/* masked interrupts are still observable */
@@ -1138,7 +1141,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 	*imaskp = old_mask;
 
 	if (mask & MACH_INT_MASK_4)
-		(*callv->halt)((int *)0, 0);
+		(*callv->_halt)((int *)0, 0);
 
 	/* handle clock interrupts ASAP */
 	if (mask & MACH_INT_MASK_1) {
@@ -1155,6 +1158,11 @@ xine_intr(mask, pc, statusReg, causeReg)
 		/* masked interrupts are still observable */
 		intr &= old_mask;
 
+		if ((intr & XINE_INTR_SCC_0) &&
+			tc_slot_info[XINE_SCC0_SLOT].intr)
+			(*(tc_slot_info[XINE_SCC0_SLOT].intr))
+			(tc_slot_info[XINE_SCC0_SLOT].unit);
+	
 		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
 			*intrp &= ~XINE_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
@@ -1168,11 +1176,6 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_LANCE_READ_E)
 			*intrp &= ~XINE_INTR_LANCE_READ_E;
 
-		if ((intr & XINE_INTR_SCC_0) &&
-			tc_slot_info[XINE_SCC0_SLOT].intr)
-			(*(tc_slot_info[XINE_SCC0_SLOT].intr))
-			(tc_slot_info[XINE_SCC0_SLOT].unit);
-	
 		if ((intr & XINE_INTR_DTOP_RX) &&
 			tc_slot_info[XINE_DTOP_SLOT].intr)
 			(*(tc_slot_info[XINE_DTOP_SLOT].intr))
