@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.8 1997/04/13 14:21:11 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -88,37 +88,43 @@ sn_obio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-        struct sn_softc	*sc = (void *)self;
-	u_int8_t	myaddr[ETHER_ADDR_LEN];
-	int		i;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	struct sn_softc	*sc = (void *)self;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
+	int i;
 
-        sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+	sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 	sc->snr_dcr2 = 0;
 
-        switch (current_mac_model->machineid) {
-        case MACH_MACQ700: case MACH_MACQ900: case MACH_MACQ950:
-	case MACH_MACQ800: case MACH_MACQ650: case MACH_MACC650:
-	case MACH_MACC610: case MACH_MACQ610:
+	switch (current_mac_model->machineid) {
+	case MACH_MACC610:
+	case MACH_MACC650:
+	case MACH_MACQ610:
+	case MACH_MACQ650:
+	case MACH_MACQ700:
+	case MACH_MACQ800:
+	case MACH_MACQ900:
+	case MACH_MACQ950:
 		sc->snr_dcr |= DCR_EXBUS | DCR_DW32;
 		sc->bitmode = 1;
 		break;
 
-        case MACH_MACPB500:
-                sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW16;
+	case MACH_MACPB500:
+		sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW16;
 		sc->bitmode = 0;
-                break;
+		break;
 
 	default:
 		printf(": unsupported machine type\n");
 		return;
-        }
+	}
 
 	sc->sc_regt = oa->oa_tag;
 
-	if (bus_space_map(sc->sc_regt, SONIC_REG_BASE, SN_REGSIZE,
-				0, &sc->sc_regh)) {
-		panic(": failed to map space for SONIC regs.\n");
+	if (bus_space_map(sc->sc_regt,
+	    SONIC_REG_BASE, SN_REGSIZE, 0, &sc->sc_regh)) {
+		printf(": failed to map space for SONIC regs.\n");
+		return;
 	}
 
 	sc->slotno = 9;
@@ -128,13 +134,11 @@ sn_obio_attach(parent, self, aux)
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
 	}
 
-	if (sn_obio_getaddr(sc, myaddr)) {
-		printf(": failed to get MAC address.  Trying kludge.\n");
-		if (sn_obio_getaddr_kludge(sc, myaddr)) {
-			printf("Kludge failed, too.  Attachment failing.\n");
-			bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
-			return;
-		}
+	if (sn_obio_getaddr(sc, myaddr) &&
+	    sn_obio_getaddr_kludge(sc, myaddr)) { /* XXX kludge for PB */
+		printf(": failed to get MAC address.\n");
+		bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
+		return;
 	}
 
 	/* snsetup returns 1 if something fails */
@@ -151,15 +155,17 @@ sn_obio_getaddr(sc, lladdr)
 	struct sn_softc	*sc;
 	u_int8_t *lladdr;
 {
-	bus_space_handle_t	bsh;
+	bus_space_handle_t bsh;
 
 	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, NBPG, 0, &bsh)) {
-		panic("failed to map space to read SONIC address.\n");
+		printf(": failed to map space to read SONIC address.\n%s",
+		    sc->sc_dev.dv_xname);
+		return (-1);
 	}
 
 	if (!bus_probe(sc->sc_regt, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_regt, bsh, NBPG);
-		return -1;
+		return (-1);
 	}
 
 	sn_get_enaddr(sc->sc_regt, bsh, 0, lladdr);
@@ -176,9 +182,9 @@ sn_obio_getaddr(sc, lladdr)
 static int
 sn_obio_getaddr_kludge(sc, lladdr)
 	struct sn_softc	*sc;
-	u_int8_t	*lladdr;
+	u_int8_t *lladdr;
 {
-	int			i, ors=0;
+	int i, ors = 0;
 
 	/* Shut down NIC */
 	NIC_PUT(sc, SNR_CR, CR_RST);
@@ -210,6 +216,8 @@ sn_obio_getaddr_kludge(sc, lladdr)
 	NIC_PUT(sc, SNR_CR, 0);
 	wbflush();
 
-	if (ors == 0) return -1;
+	if (ors == 0)
+		return -1;
+
 	return 0;
 }
