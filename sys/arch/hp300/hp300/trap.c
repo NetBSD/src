@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2000/06/06 18:52:35 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 2000/06/27 04:18:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,6 @@
 #include <machine/intr.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <uvm/uvm_extern.h>
 
