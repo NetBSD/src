@@ -1,29 +1,20 @@
-# test of the menu system
+#	$NetBSD: Makefile,v 1.2 1997/10/11 11:46:49 mycroft Exp $
 
-.if exists(../obj/menuc)
-MENUC=MENUDEF=.. ../obj/menuc
-.elif exists(../menuc)
-MENUC=MENUDEF=.. ../menuc
-.else
-MENUC=menuc
-.endif
+MENUC!=cd $(.CURDIR)/..; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/menuc\n" | ${MAKE} -s -f-
+${MENUC}:
+	cd ${.CURDIR}/..; ${MAKE}
 
-PROG=testm
+PROG=	testm
+SRCS=	menu_defs.c main.c
+WARNS=	1
+LDADD+=	-lcurses -ltermcap
+DPADD+=	${LIBCURSES} ${LIBTERMCAP}
+NOMAN=	noman
 
-SRCS=menu_defs.c main.c
+CLEANFILES+= menu_defs.c menu_defs.h
 
-LDADD=-lcurses -ltermcap
-
-COPTS=-g
-
-NOMAN=y
-
-WARNS=1
-
-CLEANFILES= menu_defs.c menu_defs.h
+menu_defs.c menu_defs.h: menus.mc ${MENUC}
+	MENUDEF=${.CURDIR}/.. ${MENUC} ${.CURDIR}/menus.mc
 
 .include <bsd.prog.mk>
-
-menu_defs.c menu_defs.h: menus.mc
-	${MENUC} menus.mc
-
