@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.18 2000/04/13 10:11:15 joda Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -112,6 +112,9 @@ typedef u_int16_t cardbus_product_id_t;
 #define	CARDBUS_CLASS_PROCESSOR			0x0b
 #define	CARDBUS_CLASS_SERIALBUS			0x0c
 #define	CARDBUS_CLASS_UNDEFINED			0xff
+
+/* 0x07 serial bus subclasses */
+#define	CARDBUS_SUBCLASS_COMMUNICATIONS_SERIAL	0x00
 
 /* 0x0c serial bus subclasses */
 #define	CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE	0x00
