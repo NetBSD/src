@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.25 2002/11/04 06:24:41 itohy Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.26 2002/11/10 03:24:51 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.25 2002/11/04 06:24:41 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.26 2002/11/10 03:24:51 thorpej Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -71,13 +71,13 @@ static int	db_find_variable(const struct db_variable **);
 
 /* XXX must all be ints for sysctl. */
 const struct db_variable db_vars[] = {
-	{ "radix",	(long *)&db_radix,	db_rw_internal_variable },
-	{ "maxoff",	(long *)&db_maxoff,	db_rw_internal_variable },
-	{ "maxwidth",	(long *)&db_max_width,	db_rw_internal_variable },
-	{ "tabstops",	(long *)&db_tab_stop_width, db_rw_internal_variable },
-	{ "lines",	(long *)&db_max_line,	db_rw_internal_variable },
-	{ "onpanic",	(long *)&db_onpanic,	db_rw_internal_variable },
-	{ "fromconsole", (long *)&db_fromconsole, db_rw_internal_variable },
+	{ "radix",	(void *)&db_radix,	db_rw_internal_variable },
+	{ "maxoff",	(void *)&db_maxoff,	db_rw_internal_variable },
+	{ "maxwidth",	(void *)&db_max_width,	db_rw_internal_variable },
+	{ "tabstops",	(void *)&db_tab_stop_width, db_rw_internal_variable },
+	{ "lines",	(void *)&db_max_line,	db_rw_internal_variable },
+	{ "onpanic",	(void *)&db_onpanic,	db_rw_internal_variable },
+	{ "fromconsole", (void *)&db_fromconsole, db_rw_internal_variable },
 };
 const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
