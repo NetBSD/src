@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.25 2002/10/26 17:06:08 grant Exp $	*/
+/*	$NetBSD: inet6.c,v 1.26 2003/03/22 15:18:36 jdolecek Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.25 2002/10/26 17:06:08 grant Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.26 2003/03/22 15:18:36 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -1170,7 +1170,7 @@ do {\
 		GETSERVBYPORT6(port, proto, sp);
 	if (sp || port == 0)
 		snprintf(cp, sizeof(line) - (cp - line),
-		    "%.8s", sp ? sp->s_name : "*");
+		    "%s", sp ? sp->s_name : "*");
 	else
 		snprintf(cp, sizeof(line) - (cp - line),
 		    "%d", ntohs((u_short)port));
