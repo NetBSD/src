@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.14 2003/05/19 21:02:31 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.15 2003/05/21 17:57:21 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.14 2003/05/19 21:02:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.15 2003/05/21 17:57:21 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ sa_newcachelwp(struct lwp *l)
 	if (__predict_false(uaddr == 0)) {
 		return (ENOMEM);
 	} else {
-		newlwp(l, p, uaddr, inmem, 0, NULL, NULL, child_return, 0, &l2);
+		newlwp(l, p, uaddr, inmem, 0, NULL, 0, child_return, 0, &l2);
 		/* We don't want this LWP on the process's main LWP list, but
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
