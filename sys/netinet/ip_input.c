@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.95 2000/01/31 14:18:54 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.96 2000/02/01 00:07:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -995,11 +995,9 @@ ip_dooptions(m)
 			 */
 			bcopy((caddr_t)(cp + off), (caddr_t)&ipaddr.sin_addr,
 			    sizeof(ipaddr.sin_addr));
-			if (opt == IPOPT_SSRR) {
-#define	INA	struct in_ifaddr *
-#define	SA	struct sockaddr *
-			    ia = (INA)ifa_ifwithladdr((SA)&ipaddr);
-			} else
+			if (opt == IPOPT_SSRR)
+				ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)));
+			else
 				ia = ip_rtaddr(ipaddr.sin_addr);
 			if (ia == 0) {
 				type = ICMP_UNREACH;
@@ -1033,8 +1031,9 @@ ip_dooptions(m)
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
 			 */
-			if ((ia = (INA)ifa_ifwithaddr((SA)&ipaddr)) == 0 &&
-			    (ia = ip_rtaddr(ipaddr.sin_addr)) == 0) {
+			if ((ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr))))
+			    == NULL &&
+			    (ia = ip_rtaddr(ipaddr.sin_addr)) == NULL) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_HOST;
 				goto bad;
@@ -1065,8 +1064,8 @@ ip_dooptions(m)
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
 				ipaddr.sin_addr = dst;
-				ia = (INA)ifaof_ifpforaddr((SA)&ipaddr,
-							    m->m_pkthdr.rcvif);
+				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
+				    m->m_pkthdr.rcvif));
 				if (ia == 0)
 					continue;
 				bcopy((caddr_t)&ia->ia_addr.sin_addr,
@@ -1080,7 +1079,8 @@ ip_dooptions(m)
 					goto bad;
 				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
-				if (ifa_ifwithaddr((SA)&ipaddr) == 0)
+				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
+				    == NULL)
 					continue;
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
