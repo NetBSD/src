@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.1.1.1.2.7 2000/11/03 18:45:15 tv Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.1.1.1.2.8 2001/12/09 18:30:18 he Exp $	*/
 /*	$KAME: esp_core.c,v 1.50 2000/11/02 12:27:38 itojun Exp $	*/
 
 /*
@@ -512,7 +512,8 @@ esp_cast128_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc));
+	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
+		_KEYLEN(sav->key_enc));
 	return 0;
 }
 
