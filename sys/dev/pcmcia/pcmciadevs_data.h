@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.82 2000/03/18 15:01:33 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.83 2000/03/20 18:39:52 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.83 2000/03/18 15:00:31 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.84 2000/03/20 18:39:32 tron Exp 
  */
 
 /*-
@@ -582,6 +582,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DE-660"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,
+	    PCMCIA_CIS_RPTI_EP400,
+	    0,
+	    "RPTI",
+	    "RPTI EP400"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP401,
