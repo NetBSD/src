@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.317 2001/03/31 09:08:07 minoura Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.318 2001/04/09 11:52:28 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp 
+ *	NetBSD: pcidevs,v 1.314 2001/04/09 11:51:30 ad Exp 
  */
 
 /*
@@ -4748,6 +4748,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	    "DC-690C",
+	},
+	{
+	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC315,
+	    0,
+	    "Tekram Technology (2nd PCI Vendor ID)",
+	    "DC-315/DC-395",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
