@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2003/02/11 17:25:14 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 2003/05/01 23:02:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -329,7 +329,7 @@ zshard(arg)
 		setsoftint(zs_sir);
 	}
 
-	return (rval);
+	return rval;
 }
 
 /*
@@ -365,7 +365,7 @@ zs_get_speed(cs)
 
 	tconst = zs_read_reg(cs, 12);
 	tconst |= zs_read_reg(cs, 13) << 8;
-	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
+	return TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 }
 #endif
 
@@ -380,7 +380,7 @@ zs_set_speed(cs, bps)
 	int tconst, real_bps;
 
 	if (bps == 0)
-		return (0);
+		return 0;
 
 #ifdef	DIAGNOSTIC
 	if (cs->cs_brg_clk == 0)
@@ -389,20 +389,20 @@ zs_set_speed(cs, bps)
 
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
 	if (tconst < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Convert back to make sure we can do it. */
 	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 
 	/* XXX - Allow some tolerance here? */
 	if (real_bps != bps)
-		return (EINVAL);
+		return EINVAL;
 
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
 
 	/* Caller will stuff the pending registers. */
-	return (0);
+	return 0;
 }
 
 int
@@ -443,7 +443,7 @@ zs_set_modes(cs, cflag)
 	splx(s);
 
 	/* Caller will stuff the pending registers. */
-	return (0);
+	return 0;
 }
 
 
@@ -470,6 +470,7 @@ zs_write_reg(cs, reg, val)
 	struct zs_chanstate *cs;
 	u_char reg, val;
 {
+
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
 	*cs->cs_reg_csr = val;
@@ -492,6 +493,7 @@ zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
+
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
@@ -512,6 +514,7 @@ zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
+
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
 }
@@ -520,6 +523,7 @@ void
 zs_abort(cs)
 	struct zs_chanstate *cs;
 {
+
 #ifdef DDB
 	Debugger();
 #endif
@@ -640,6 +644,7 @@ static int
 zscngetc(dev)
 	dev_t dev;
 {
+
 	return zs_getc((void *)zs_conschan);
 }
 
@@ -648,5 +653,6 @@ zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
+
 	zs_putc((void *)zs_conschan, c);
 }
