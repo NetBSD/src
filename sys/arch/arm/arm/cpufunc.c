@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.56 2003/04/18 10:45:23 scw Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.57 2003/04/21 04:33:30 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1961,7 +1961,7 @@ xscale_setup(args)
 	/* Make sure write coalescing is turned on */
 	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
 		: "=r" (auxctl));
-#if XSCALE_NO_COALESCE_WRITES
+#ifdef XSCALE_NO_COALESCE_WRITES
 	auxctl |= XSCALE_AUXCTL_K;
 #else
 	auxctl &= ~XSCALE_AUXCTL_K;
