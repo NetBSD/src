@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.16 1997/01/20 16:55:35 scottr Exp $
+#	$NetBSD: LAGER,v 1.17 1997/03/12 18:33:11 thorpej Exp $
 #
 # LAGER (hpeyerl's hp380)
 #
@@ -45,7 +45,7 @@ options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
 #options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
 options		COMPAT_HPUX
-#options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
+options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 options		USELEDS
 
 config		netbsd root on sd0 swap on sd0b and sd1b
