@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.7 2002/08/13 05:25:39 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.8 2002/08/13 05:43:24 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -297,7 +297,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int error, i, nseg;
 
-	sc->sc_st = galaxy_make_bus_space_tag(0, 0);
+	sc->sc_st = ibm4xx_make_bus_space_tag(0, 0);
 	sc->sc_sh = oaa->opb_addr;
 	sc->sc_dmat = oaa->opb_dmat;
 

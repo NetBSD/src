@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_pbus.c,v 1.1 2002/08/12 02:06:22 simonb Exp $ */
+/* $NetBSD: pckbc_pbus.c,v 1.2 2002/08/13 05:43:25 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -92,7 +92,7 @@ pckbc_pbus_attach(struct device *parent, struct device *self, void *aux)
 	struct pbus_attach_args *paa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
-	bus_space_tag_t iot = galaxy_make_bus_space_tag(0, 0);
+	bus_space_tag_t iot = ibm4xx_make_bus_space_tag(0, 0);
 	u_long addr = paa->pb_addr;
 	
 	/*

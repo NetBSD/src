@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.5 2002/08/13 05:25:40 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.6 2002/08/13 05:43:25 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
 
-static bus_space_tag_t	pcicfg_iot = galaxy_make_bus_space_tag(0, 0);
+static bus_space_tag_t	pcicfg_iot = ibm4xx_make_bus_space_tag(0, 0);
 static bus_space_handle_t pcicfg_ioh = 0;
 
 #define PCI0_MEM_BASE	0x80000000
@@ -62,7 +62,7 @@ static void setup_pcicfg_window(void)
  * Setup proper Local<->PCI mapping
  * PCI memory window: 256M @ PCI0MEMBASE with direct memory translation
  */
-void galaxy_setup_pci(void)
+void ibm4xx_setup_pci(void)
 {
 	pcitag_t tag;
 
@@ -94,7 +94,7 @@ void galaxy_setup_pci(void)
 	pci_conf_write(0, tag, PCIC_PTM2BAR, 0);
 }
 
-void galaxy_show_pci_map(void)
+void ibm4xx_show_pci_map(void)
 {
 	paddr_t la, lm, pl, ph;
 	pcitag_t tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2002/07/05 18:45:24 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2002/08/13 05:43:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GALAXY_INTR_H_
-#define _GALAXY_INTR_H_
+#ifndef _WALNUT_INTR_H_
+#define _WALNUT_INTR_H_
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */
@@ -205,5 +205,4 @@ void softnet(void);
 void softserial(void);
 
 #endif /* !_LOCORE */
-
-#endif /* !_GALAXY_INTR_H_ */
+#endif /* !_WALNUT_INTR_H_ */

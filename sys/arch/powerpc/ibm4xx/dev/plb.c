@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.1 2002/08/12 02:06:20 simonb Exp $ */
+/* $NetBSD: plb.c,v 1.2 2002/08/13 05:43:25 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
@@ -128,16 +128,16 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; plb_devs[i].plb_name != NULL; i++) {
 		paa.plb_name = plb_devs[i].plb_name;
-		paa.plb_bt = galaxy_make_bus_space_tag(0, 0);
-		paa.plb_dmat = &galaxy_default_bus_dma_tag;
+		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
 		paa.plb_name = local_plb_devs->plb_name;
-		paa.plb_bt = galaxy_make_bus_space_tag(0, 0);
-		paa.plb_dmat = &galaxy_default_bus_dma_tag;
+		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 		local_plb_devs++;
