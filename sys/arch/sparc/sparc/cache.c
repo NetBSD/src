@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.51 2000/06/05 20:38:24 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.52 2000/06/06 20:08:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -856,9 +856,9 @@ viking_pcache_flush_page(pa, invalidate_only)
 		 * V:  line valid bit
 		 */
 
-#define VIKING_DCACHETAG_S	0000010000000000UL	/* line valid bit */
-#define VIKING_DCACHETAG_D	0001000000000000UL	/* line dirty bit */
-#define VIKING_DCACHETAG_V	0100000000000000UL	/* line shared bit */
+#define VIKING_DCACHETAG_S	0x0000010000000000UL	/* line valid bit */
+#define VIKING_DCACHETAG_D	0x0001000000000000UL	/* line dirty bit */
+#define VIKING_DCACHETAG_V	0x0100000000000000UL	/* line shared bit */
 
 		for (set = 0; set < 128; set++) {
 			/* Set set number and access type */
