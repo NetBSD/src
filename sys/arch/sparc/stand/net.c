@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1 1995/09/16 23:20:33 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.2 1995/09/18 21:31:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,8 +60,6 @@
 #include "netif.h"
 #include "bootparam.h"
 
-u_int32_t	myip, rootip, gateip, mask;
-u_char		bcea[6] = BA;	/* for arp.c, rarp.c */
 char		rootpath[FNAME_SIZE];
 
 int	netdev_sock = -1;
@@ -80,12 +78,15 @@ net_open(pd)
 	/* On first open, do netif open, mount, etc. */
 	if (open_count == 0) {
 		/* Find network interface. */
-		if ((netdev_sock = netif_open(pd)) < 0)
-			return (ENXIO);
+		if ((netdev_sock = netif_open(pd)) < 0) {
+			error = errno;
+			goto bad;
+		}
 		if ((error = net_mountroot()) != 0)
-			return (error);
+			goto bad;
 	}
 	open_count++;
+bad:
 	return (error);
 }
 
@@ -118,36 +119,38 @@ net_mountroot()
 	/* Get boot info using RARP and Sun bootparams. */
 
 	/* Get our IP address.  (rarp.c) */
-	if ((myip = rarp_getipaddress(netdev_sock)) == 0)
-		return (EIO);
-	printf("boot: client IP address: %s\n", intoa(myip));
+	if (rarp_getipaddress(netdev_sock) == -1)
+		return errno;
+
+	printf("boot: client IP address: %s\n", inet_ntoa(myip));
 
 	/* Get our hostname, server IP address. */
 	if (bp_whoami(netdev_sock))
-		return (EIO);
+		return (errno);
+
 	printf("boot: client name: %s\n", hostname);
 
 	/* Get the root pathname. */
 	if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
-		return (EIO);
+		return (errno);
 
 #else
 
 	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
 	bootp(netdev_sock);
 
-	printf("Using IP address: %s\n", intoa(myip));
+	printf("Using IP address: %s\n", inet_ntoa(myip));
 
-	printf("myip: %s (%s)", hostname, intoa(myip));
+	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
 	if (gateip)
-		printf(", gateip: %s", intoa(gateip));
-	if (mask)
-		printf(", mask: %s", intoa(mask));
+		printf(", gateip: %s", inet_ntoa(gateip));
+	if (netmask)
+		printf(", netmask: %s", intoa(netmask));
 	printf("\n");
 
 #endif
 
-	printf("root addr=%s path=%s\n", intoa(rootip), rootpath);
+	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
 
 	/* Get the NFS file handle (mount). */
 	return nfs_mount(netdev_sock, rootip, rootpath);
