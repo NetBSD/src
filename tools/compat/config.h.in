@@ -1,9 +1,11 @@
-/*	$NetBSD: config.h.in,v 1.17 2002/04/23 00:13:50 bjh21 Exp $	*/
+/*	$NetBSD: config.h.in,v 1.18 2002/04/24 19:41:58 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
 
 /* Values set by "configure" based on available functions in the host. */
+
+#undef PATH_BSHELL
 
 #undef HAVE_ALLOCA_H
 #undef HAVE_DIRENT_H
