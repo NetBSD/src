@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.9 2000/12/24 01:50:29 wiz Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.10 2000/12/24 01:54:20 wiz Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.9 2000/12/24 01:50:29 wiz Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.10 2000/12/24 01:54:20 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -105,6 +105,7 @@ static struct typetab {
 	{ MBR_PTYPE_FAT32, FS_MSDOS },
 	{ MBR_PTYPE_FAT32L, FS_MSDOS },
 	{ MBR_PTYPE_FAT16L, FS_MSDOS },
+	{ MBR_PTYPE_NTFS, FS_NTFS },
 	{ MBR_PTYPE_LNXEXT2, FS_EX2FS },
 	{ 0, 0 }
 };
