@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:11:38 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -49,5 +49,4 @@ do-${dir:S/\//-/g}:
 .endfor
 
 
-.include <bsd.obj.mk>
 .include <bsd.subdir.mk>
