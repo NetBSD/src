@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.85 2001/01/07 23:29:12 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.86 2001/01/08 21:40:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -5550,6 +5550,42 @@ tlp_al981_tmsw_init(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
+}
+
+/*
+ * ADMtek AN983/985 media switch.  Only has internal PHY, but
+ * on an SIO-like interface.  Unfortunately, we can't use the
+ * standard SIO media switch, because the AN985 "ghosts" the
+ * singly PHY at every address.
+ */
+void	tlp_an985_tmsw_init __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_an985_mediasw = {
+	tlp_an985_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
+};
+
+void
+tlp_an985_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
