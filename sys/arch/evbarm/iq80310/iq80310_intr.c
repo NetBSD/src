@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.13 2002/06/26 01:06:44 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.14 2002/08/04 17:52:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -496,12 +496,16 @@ iq80310_intr_dispatch(struct clockframe *frame)
 
 		current_spl_level = pcpl;
 
+#if 0 /* XXX */
 		if (rv == 0)
 			printf("Stray interrupt: IRQ %d\n", irq);
+#endif
 	}
 
+#if 0 /* XXX */
 	if (stray)
 		printf("Stray external interrupt\n");
+#endif
 
 	/* Check for pendings soft intrs. */
 	if ((ipending & ~IRQ_BITS) & ~current_spl_level) {
