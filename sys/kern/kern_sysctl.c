@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.48 1999/07/22 18:13:37 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.49 1999/07/22 21:08:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -726,6 +726,8 @@ sysctl_doproc(name, namelen, where, sizep)
 	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
 		return (EINVAL);
 
+	proclist_lock_read(0);
+
 	pd = proclists;
 again:
 	for (p = LIST_FIRST(pd->pd_list); p != NULL;
@@ -788,6 +790,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
+	proclist_unlock_read();
 
 	if (where != NULL) {
 		*sizep = (caddr_t)dp - where;
