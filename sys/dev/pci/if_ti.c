@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.47.4.2 2004/05/26 14:00:59 tron Exp $ */
+/* $NetBSD: if_ti.c,v 1.47.4.3 2004/05/26 14:02:31 tron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.4.2 2004/05/26 14:00:59 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.4.3 2004/05/26 14:02:31 tron Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -387,9 +387,16 @@ static void ti_mem(sc, addr, len, buf)
 			    TI_WINDOW + (segptr & (TI_WINLEN - 1)), 0,
 			    segsize / 4);
 		} else {
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+			bus_space_write_region_stream_4(sc->ti_btag,
+			    sc->ti_bhandle,
+			    TI_WINDOW + (segptr & (TI_WINLEN - 1)),
+			    (u_int32_t *)ptr, segsize / 4);
+#else
 			bus_space_write_region_4(sc->ti_btag, sc->ti_bhandle,
 			    TI_WINDOW + (segptr & (TI_WINLEN - 1)),
 			    (u_int32_t *)ptr, segsize / 4);
+#endif
 			ptr += segsize;
 		}
 		segptr += segsize;
