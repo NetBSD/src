@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.13 2001/07/19 18:55:38 fvdl Exp $ */
+/* $NetBSD: loadfile.c,v 1.14 2001/07/31 19:20:29 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -274,10 +274,9 @@ elf_exec(fd, elf, marks, flags)
 {
 	Elf_Shdr *shp;
 	Elf_Off off;
-	int i;
+	int i, j;
 	size_t sz;
 	int first;
-	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
 
@@ -372,20 +371,24 @@ elf_exec(fd, elf, marks, flags)
 		maxp += roundup(sz, sizeof(long));
 
 		/*
-		 * Now load the symbol sections themselves.  Make sure the
-		 * sections are aligned. Don't bother with string tables if
-		 * there are no symbol sections.
+		 * Now load the symbol sections themselves.  Make sure
+		 * the sections are aligned. Don't bother with any
+		 * string table that isn't referenced by a symbol
+		 * table.
 		 */
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
 
-		for (havesyms = i = 0; i < elf->e_shnum; i++)
-			if (shp[i].sh_type == SHT_SYMTAB)
-				havesyms = 1;
-
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			if (shp[i].sh_type == SHT_SYMTAB ||
-			    shp[i].sh_type == SHT_STRTAB) {
-				if (havesyms && (flags & LOAD_SYM)) {
+			switch (shp[i].sh_type) {
+			case SHT_STRTAB:
+				for (j = 0; j < elf->e_shnum; j++)
+					if (shp[j].sh_type == SHT_SYMTAB &&
+					    shp[j].sh_link == i)
+						goto havesym;
+				break;
+			havesym:
+			case SHT_SYMTAB:
+				if (flags & LOAD_SYM) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));
 					if (lseek(fd, shp[i].sh_offset,
@@ -412,7 +415,7 @@ elf_exec(fd, elf, marks, flags)
 			BCOPY(shp, shpp, sz);
 			FREE(shp, sz);
 
-			if (havesyms && first == 0)
+			if (first == 0)
 				PROGRESS(("]"));
 		}
 	}
