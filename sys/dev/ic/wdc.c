@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.23 1998/04/28 18:36:07 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.24 1998/06/04 02:27:33 enami Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -487,7 +487,8 @@ wdc_ata_start(wdc, xfer)
 		    xfer->c_bcount, xfer->c_blkno));
 	} else {
 		WDDEBUG_PRINT((" %d)%x", xfer->c_skip,
-		    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_altsts)));
+		    bus_space_read_1(wdc->sc_auxiot, wdc->sc_auxioh,
+			wd_aux_altsts)));
 	}
 
 	/*
@@ -607,7 +608,8 @@ wdc_ata_start(wdc, xfer)
 
 		WDDEBUG_PRINT(("sector %lu cylin %lu head %lu addr %p sts %x\n",
 		    sector, cylin, head, xfer->databuf,
-		    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_altsts)));
+		    bus_space_read_1(wdc->sc_auxiot, wdc->sc_auxioh,
+			wd_aux_altsts)));
 
 	} else if (xfer->c_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
