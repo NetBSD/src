@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2001/12/05 23:42:37 atatat Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2001/12/17 15:39:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 #include "config.h"
 #include "sem.h"
 
@@ -96,6 +97,14 @@ static	int	hasparent(struct devi *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
 void	defopt(struct hashtab *ht, const char *fname,
 	     struct nvlist *opts, struct nvlist *deps);
+
+#define LOGCONFIG_LARGE "INCLUDE_CONFIG_FILE"
+#define LOGCONFIG_SMALL "INCLUDE_JUST_CONFIG"
+
+static	void	logconfig_start(void);
+static	void	logconfig_end(void);
+static	FILE	*cfg;
+static	struct timespec cfgtime;
 
 int badfilename(const char *fname);
 
@@ -227,8 +236,10 @@ usage:
 	/*
 	 * Parse config file (including machine definitions).
 	 */
+	logconfig_start();
 	if (yyparse())
 		stop();
+	logconfig_end();
 
 	/*
 	 * Deal with option dependencies.
@@ -988,4 +999,144 @@ mkident(void)
 	(void)fclose(fp);
 
 	return (0);
+}
+
+void
+logconfig_start(void)
+{
+	extern FILE *yyin;
+	char line[1024];
+	struct stat st;
+	int fd;
+
+	if (yyin == NULL || fstat(fileno(yyin), &st) == -1)
+		return;
+	cfgtime = st.st_mtimespec;
+
+	snprintf(line, sizeof(line), "config.tmp.XXXXXX");
+	if ((fd = mkstemp(line)) == -1 ||
+	    (cfg = fdopen(fd, "r+")) == NULL) {
+		if (fd != -1) {
+			unlink(line);
+			close(fd);
+		}
+		cfg = NULL;
+		return;
+	}
+	unlink(line);
+
+	(void)fprintf(cfg, "#include \"opt_config.h\"\n");
+	(void)fprintf(cfg, "\n");
+	(void)fprintf(cfg, "/*\n");
+	(void)fprintf(cfg, " * Add either (or both) of\n");
+	(void)fprintf(cfg, " *\n");
+	(void)fprintf(cfg, " *\toptions %s\n", LOGCONFIG_LARGE);
+	(void)fprintf(cfg, " *\toptions %s\n", LOGCONFIG_SMALL);
+	(void)fprintf(cfg, " *\n");
+	(void)fprintf(cfg,
+	    " * to your kernel config file to embed it in the resulting\n");
+	(void)fprintf(cfg,
+	    " * kernel.  The latter option does not include files that are\n");
+	(void)fprintf(cfg,
+	    " * included (recursively) by your config file.  The embedded\n");
+	(void)fprintf(cfg,
+	    " * data be extracted by using the command:\n");
+	(void)fprintf(cfg, " *\n");
+	(void)fprintf(cfg,
+	    " *\tstrings netbsd | sed -n 's/^_CFG_//p' | unvis\n");
+	(void)fprintf(cfg, " */\n");
+	(void)fprintf(cfg, "\n");
+	(void)fprintf(cfg, "#ifdef CONFIG_FILE\n");
+	(void)fprintf(cfg, "#if defined(%s) || defined(%s)\n\n",
+	    LOGCONFIG_LARGE, LOGCONFIG_SMALL);
+	(void)fprintf(cfg,
+	    "static const char config[] __attribute__((__unused__)) =\n\n");
+
+	(void)fprintf(cfg, "#ifdef %s\n\n", LOGCONFIG_LARGE);
+	(void)fprintf(cfg, "\"_CFG_### START CONFIG FILE \\\"%s\\\"\\n\"\n\n",
+	    conffile);
+	(void)fprintf(cfg, "#endif /* %s */\n\n", LOGCONFIG_LARGE);
+
+	(void)fprintf(cfg, "\"");
+	logconfig_include(yyin, NULL);
+	(void)fprintf(cfg, "\"\n\n");
+
+	(void)fprintf(cfg, "#ifdef %s\n\n", LOGCONFIG_LARGE);
+	(void)fprintf(cfg, "\"_CFG_### END CONFIG FILE \\\"%s\\\"\n", conffile);
+
+	rewind(yyin);
+}
+
+void
+logconfig_include(FILE *cf, const char *filename)
+{
+	char line[1024], in[2048], *out;
+	struct stat st;
+
+	if (!cfg)
+		return;
+
+	if (fstat(fileno(cf), &st) == -1)
+		return;
+	if (cfgtime.tv_sec < st.st_mtimespec.tv_sec ||
+	    (cfgtime.tv_sec == st.st_mtimespec.tv_sec &&
+	    cfgtime.tv_nsec < st.st_mtimespec.tv_nsec))
+		cfgtime = st.st_mtimespec;
+
+	if (filename)
+		(void)fprintf(cfg, "_CFG_### (included from \\\"%s\\\")\n",
+		    filename);
+	while (fgets(line, sizeof(line), cf) != NULL) {
+		(void)fprintf(cfg, "_CFG_");
+		if (filename)
+			(void)fprintf(cfg, "###> ");
+		strvis(in, line, VIS_TAB);
+		for (out = in; *out; out++)
+			switch (*out) {
+			case '"': case '\\':
+				(void)fputc('\\', cfg);
+			default:
+				(void)fputc(*out, cfg);
+				break;
+			}
+	}
+	if (filename)
+		(void)fprintf(cfg, "_CFG_### (end include \\\"%s\\\")\n",
+		    filename);
+
+	rewind(cf);
+}
+
+void
+logconfig_end(void)
+{
+	char line[1024];
+	FILE *fp;
+	struct stat st;
+
+	if (!cfg)
+		return;
+
+	(void)fprintf(cfg, "\"\n");
+	(void)fprintf(cfg, "#endif /* %s */\n", LOGCONFIG_LARGE);
+	(void)fprintf(cfg, ";\n");
+	(void)fprintf(cfg, "#endif /* %s || %s */\n",
+	    LOGCONFIG_LARGE, LOGCONFIG_SMALL);
+	(void)fprintf(cfg, "#endif /* CONFIG_FILE */\n");
+	rewind(cfg);
+
+	if (stat("config_file.h", &st) != -1) {
+		if (cfgtime.tv_sec < st.st_mtimespec.tv_sec ||
+		    (cfgtime.tv_sec == st.st_mtimespec.tv_sec &&
+		    cfgtime.tv_nsec < st.st_mtimespec.tv_nsec)) {
+			fclose(cfg);
+			return;
+		}
+	}
+
+	fp = fopen("config_file.h", "w");
+	while (fgets(line, sizeof(line), cfg) != NULL)
+		fputs(line, fp);
+	fclose(fp);
+	fclose(cfg);
 }
