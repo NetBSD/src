@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.20 2001/05/30 12:04:54 mrg Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.21 2001/08/05 22:20:44 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.41 2001/01/23 04:42:30 itojun Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ struct ipsecstat {
 #define IPSECCTL_DEF_ESP_NETLEV		4	/* int; ESP tunnel mode */
 #define IPSECCTL_DEF_AH_TRANSLEV	5	/* int; AH transport mode */
 #define IPSECCTL_DEF_AH_NETLEV		6	/* int; AH tunnel mode */
-#if 0	/*obsolete, do not reuse*/
+#if 0	/* obsolete, do not reuse */
 #define IPSECCTL_INBOUND_CALL_IKE	7
 #endif
 #define	IPSECCTL_AH_CLEARTOS		8
@@ -303,7 +303,7 @@ extern struct secpolicy *ipsec6_getpolicybysock
 	__P((struct mbuf *, u_int, struct socket *, int *));
 extern struct secpolicy *ipsec6_getpolicybyaddr
 	__P((struct mbuf *, u_int, int, int *));
-#endif /*INET6*/
+#endif /* INET6 */
 
 struct inpcb;
 #ifdef INET6
