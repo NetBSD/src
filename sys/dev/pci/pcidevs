@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.26 2002/06/06 19:44:09 he Exp $
+$NetBSD: pcidevs,v 1.236.2.27 2004/04/07 07:12:44 jmc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1233,6 +1233,11 @@ product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
+product NS SC1100_ISA	0x0510	SC1100 PCI-ISA bridge
+product NS SC1100_ACPI	0x0511	SC1100 SMI/ACPI
+product NS SC1100_IDE	0x0512	SC1100 PCI IDE
+product NS SC1100_AUDIO	0x0513	SC1100 XpressAUDIO
+product NS SC1100_XBUS	0x0515	SC1100 X-Bus
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
