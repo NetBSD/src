@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2003/08/19 10:53:06 ragge Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2003/09/26 22:46:01 nathanw Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -28,11 +28,6 @@
 
 #ifndef _PDP10_LOCK_H_
 #define _PDP10_LOCK_H_
-
-typedef __volatile int		__cpu_simple_lock_t;
-
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
 
 void __cpu_simple_lock_init(__cpu_simple_lock_t *alp);
 void __cpu_simple_lock(__cpu_simple_lock_t *alp);
