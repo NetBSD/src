@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1998/10/01 00:29:52 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.11.6.1 1999/05/16 22:38:11 scottr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -35,6 +35,8 @@
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
 #
 
+include "opt_compat_svr4.h"
+
 include	<sys/param.h>
 include	<sys/buf.h>
 include	<sys/map.h>
@@ -46,8 +48,11 @@ include	<sys/user.h>
 
 include	<vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
+
+ifdef COMPAT_SVR4
+include <compat/svr4/svr4_syscall.h>
+include <compat/svr4/svr4_ucontext.h>
 endif
 
 include	<machine/cpu.h>
@@ -104,15 +109,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_SWTCH 		offsetof(struct vmmeter, v_swtch)
-define	V_TRAP			offsetof(struct vmmeter, v_trap)
-define	V_SYSCALL		offsetof(struct vmmeter, v_syscall)
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-define	V_SOFT			offsetof(struct vmmeter, v_soft)
-endif
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
@@ -167,3 +164,12 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 define	ENOENT			ENOENT
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
+
+# SVR4 binary compatibility
+ifdef COMPAT_SVR4
+define SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
+define SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
+define SVR4_SYS_context		SVR4_SYS_context
+define SVR4_SYS_exit		SVR4_SYS_exit
+define SVR4_SETCONTEXT		SVR4_SETCONTEXT
+endif
