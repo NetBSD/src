@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.17 1999/06/08 00:46:38 nisimura Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.18 2000/02/03 16:16:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
 #define	_MIPS_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 typedef _BSD_VA_LIST_	va_list;
 
@@ -62,6 +63,13 @@ typedef _BSD_VA_LIST_	va_list;
 	    (ap) += (sizeof(T) <= sizeof(int)				\
 		? sizeof(int) : ((long)(ap) & 4) + sizeof(T))		\
  	))[-1])
+#endif
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src)						\
+	((dest) = (src))
 #endif
 
 #define	va_end(ap)

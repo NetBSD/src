@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.9 1999/05/03 16:30:31 christos Exp $ */
+/* $NetBSD: stdarg.h,v 1.10 2000/02/03 16:16:06 kleink Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,6 +39,7 @@
 #define	_ALPHA_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 #ifdef __lint__
 #define	__builtin_saveregs()		(0)
@@ -62,6 +63,13 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_arg(ap, type)						\
 	(*(type *)((ap).__offset += __va_size(type),			\
 		   (ap).__base + (ap).__offset + __va_arg_offset(ap, type)))
+
+#if !defined(_ANSI_SOURCE) &&						\
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src)						\
+	((dest) = (src))
+#endif
 
 #define	va_end(ap)	
 
