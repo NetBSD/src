@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/07/15 02:43:52 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2003/07/18 19:20:56 thorpej Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2003/07/15 02:43:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2003/07/18 19:20:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,7 +54,6 @@ static volatile u_long lasttb;
 static todr_chip_handle_t clock_handle;
 
 void decr_intr __P((struct clockframe *)); /* Called from trap_subr.S */
-void clock_rtc_config(todr_chip_handle_t);
 
 void
 decr_intr(frame)
