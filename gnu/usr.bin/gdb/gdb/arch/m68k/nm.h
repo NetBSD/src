@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.1 1994/01/28 12:41:52 pk Exp $
+	$Id: nm.h,v 1.2 1994/02/04 19:50:49 mycroft Exp $
 */
 
 #define PTRACE_ARG3_TYPE        caddr_t
@@ -25,7 +25,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 /* This is BSD 4.3 or something like it.  */
 
 /* Get kernel u area address at run-time using BSD style nlist ().  */
-#define KERNEL_U_ADDR_BSD
+#define KERNEL_U_ADDR USRSTACK
 
 /* This is a piece of magic that is given a register number REGNO
    and as BLOCKEND the address in the system of the end of the user structure
