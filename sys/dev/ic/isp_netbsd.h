@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.1 1998/07/15 19:44:04 mjacob Exp $	*/
-/* $Id: isp_netbsd.h,v 1.1 1998/07/15 19:44:04 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.2 1998/07/18 21:04:46 mjacob Exp $	*/
+/* $Id: isp_netbsd.h,v 1.2 1998/07/18 21:04:46 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -62,7 +62,8 @@
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 
-#define	ISP_VERSION_STRING	"Version 0.94 Wed Jul 15 12:04:59 PDT 1998"
+#define	ISP_PLATFORM_VERSION_MAJOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	95
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
