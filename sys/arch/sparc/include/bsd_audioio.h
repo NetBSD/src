@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audioio.h,v 1.2 1994/11/20 20:52:53 deraadt Exp $ */
+/*	$NetBSD: bsd_audioio.h,v 1.3 1995/03/04 09:58:45 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -86,6 +86,7 @@ struct audio_info {
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
 	u_int	backlog;	/* samples of output backlog to gen. */
+	u_int	mode;
 };
 typedef struct audio_info audio_info_t;
 
