@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.6 1996/04/02 21:45:25 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.7 1996/04/26 21:12:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -191,6 +191,15 @@
  */
 
 #define cpu_wait(p)	/* nothing */
+
+#ifndef _LOCORE
+void cpu_swapin __P((struct proc *p));
+void cpu_swapout __P((struct proc *p));
+void tlbflush __P(());
+void need_resched __P(());
+void need_proftick __P((struct proc *p));
+void cpu_set_kpc __P((struct proc *p, void *pc));
+#endif
 
 /*
  * Notify the current process (p) that it has a signal pending,
