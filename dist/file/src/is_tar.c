@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.3 2003/10/27 16:14:22 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -53,9 +53,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: is_tar.c,v 1.22 2003/03/27 19:09:45 christos Exp")
+FILE_RCSID("@(#)Id: is_tar.c,v 1.23 2003/10/14 19:29:55 christos Exp")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.3 2003/10/27 16:14:22 pooka Exp $");
 #endif
 #endif
 
@@ -110,7 +110,7 @@ is_tar(const unsigned char *buf, size_t nbytes)
 	p = header->charptr;
 	for (i = sizeof(union record); --i >= 0;) {
 		/*
-		 * We can't use unsigned char here because of old compilers,
+		 * We cannot use unsigned char here because of old compilers,
 		 * e.g. V7.
 		 */
 		sum += 0xFF & *p++;
