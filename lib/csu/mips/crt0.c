@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:37 perry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 1998/02/07 20:44:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -7,7 +7,7 @@
  * Modifications for NetBSD/mips:
  *
  *	Jonathan Stone
- *	Jason R. Thorpe, Mumerical Aerospace Simulation Facility,
+ *	Jason R. Thorpe, Numerical Aerospace Simulation Facility,
  *	    NASA Ames Research Center
  *
  * Redistribution and use in source and binary forms, with or without
@@ -227,7 +227,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:37 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.7 1998/02/07 20:44:40 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
