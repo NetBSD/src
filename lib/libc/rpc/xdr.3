@@ -1,5 +1,5 @@
 .\"	@(#)xdr.3n	2.2 88/08/03 4.0 RPCSRC; from 1.16 88/03/14 SMI
-.\"	$NetBSD: xdr.3,v 1.4 1999/03/04 02:59:43 lukem Exp $
+.\"	$NetBSD: xdr.3,v 1.5 1999/12/01 19:00:23 thorpej Exp $
 .\"
 .TH XDR 3 "16 February 1988"
 .SH NAME
@@ -14,9 +14,11 @@ xdr_enum,
 xdr_float,
 xdr_free,
 xdr_getpos,
+xdr_hyper,
 xdr_inline,
 xdr_int,
 xdr_long,
+xdr_longlong_t,
 xdrmem_create,
 xdr_opaque,
 xdr_pointer,
@@ -30,7 +32,9 @@ xdr_short,
 xdrstdio_create,
 xdr_string,
 xdr_u_char,
+xdr_u_hyper,
 xdr_u_long,
+xdr_u_longlong_t,
 xdr_u_short,
 xdr_union,
 xdr_vector,
@@ -263,6 +267,21 @@ stream instances need not guarantee this.
 .ft B
 .nf
 .sp .5
+xdr_hyper(xdrs, llp)
+\s-1XDR\s0 *xdrs;
+longlong_t *llp;
+.fi
+.ft R
+.IP
+A filter primitive that translates between ANSI C long long integers
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.br
+.if t .ne 7
+.LP
+.ft B
+.nf
+.sp .5
 .br
 long *
 xdr_inline(xdrs, len)
@@ -323,6 +342,21 @@ integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .br
 .if t .ne 12
+.LP
+.ft B
+.nf
+.sp .5
+xdr_longlong_t(xdrs, llp)
+\s-1XDR\s0 *xdrs;
+longlong_t *llp;
+.fi
+.ft R
+.IP
+A filter primitive that translates between ANSI C long long integers
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.br
+.if t .ne 7
 .LP
 .ft B
 .nf
@@ -679,6 +713,21 @@ This routine returns one if it succeeds, zero otherwise.
 .ft B
 .nf
 .sp .5
+xdr_u_hyper(xdrs, ullp)
+\s-1XDR\s0 *xdrs;
+u_longlong_t *ullp;
+.fi
+.ft R
+.IP
+A filter primitive that translates between unsigned ANSI C long long integers
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.br
+.if t .ne 7
+.LP
+.ft B
+.nf
+.sp .5
 xdr_u_int(xdrs, up)
 \s-1XDR\s0 *xdrs;
 unsigned *up;
@@ -704,6 +753,21 @@ unsigned long *ulp;
 A filter primitive that translates between C
 .B "unsigned long"
 integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+.br
+.if t .ne 7
+.LP
+.ft B
+.nf
+.sp .5
+xdr_u_longlong_t(xdrs, ullp)
+\s-1XDR\s0 *xdrs;
+u_longlong_t *ullp;
+.fi
+.ft R
+.IP
+A filter primitive that translates between unsigned ANSI C long long integers
+and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .br
 .if t .ne 7
