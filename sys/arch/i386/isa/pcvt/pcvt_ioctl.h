@@ -459,7 +459,6 @@ struct pcvtinfo {			/* compile time option values */
 #define CONF_INHIBIT_NUMLOCK	0x00200000
 #define CONF_META_ESC		0x00400000
 #define CONF_NOFASTSCROLL	0x00800000
-#define CONF_SLOW_INTERRUPT	0x01000000
 #define CONF_KBD_FIFO		0x02000000
 #define CONF_NO_LED_UPDATE	0x04000000
 };

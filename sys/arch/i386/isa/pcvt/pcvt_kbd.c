@@ -957,7 +957,7 @@ sgetc(int noblock)
 	u_char		key;
 	u_short		type;
 
-#if PCVT_KBD_FIFO && PCVT_SLOW_INTERRUPT
+#if PCVT_KBD_FIFO
 	int		s;
 #endif
 
@@ -997,9 +997,9 @@ loop:
 		else			/* source = keyboard fifo */
 		{
 			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++];
-			PCVT_DISABLE_INTR();
+			s = spltty();
 			pcvt_kbd_count--;
-			PCVT_ENABLE_INTR();
+			splx(s);
 			if (pcvt_kbd_rptr >= PCVT_KBD_FIFO_SZ)
 				pcvt_kbd_rptr = 0;
 		}
@@ -1274,9 +1274,9 @@ no_mouse_event:
 		else			/* source = keyboard fifo */
 		{
 			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++]; /* yes, get it ! */
-			PCVT_DISABLE_INTR();
+			s = spltty();
 			pcvt_kbd_count--;
-			PCVT_ENABLE_INTR();
+			splx(s);
 			if (pcvt_kbd_rptr >= PCVT_KBD_FIFO_SZ)
 				pcvt_kbd_rptr = 0;
 		}

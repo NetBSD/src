@@ -151,19 +151,6 @@
 #include <sys/devconf.h>
 #endif
 
-/* setup irq disable function to use */
-
-#if !(PCVT_SLOW_INTERRUPT) && (PCVT_NETBSD > 9)
-# define PCVT_DISABLE_INTR()	disable_intr()
-# define PCVT_ENABLE_INTR()	enable_intr()
-# undef PCVT_SLOW_INTERRUPT
-#else
-# define PCVT_DISABLE_INTR()	s = spltty()
-# define PCVT_ENABLE_INTR()	splx(s)
-# undef PCVT_SLOW_INTERRUPT
-# define PCVT_SLOW_INTERRUPT 1
-#endif
-
 /* perform option consistency checks */
 
 #if defined PCVT_FREEBSD && PCVT_FREEBSD == 1
