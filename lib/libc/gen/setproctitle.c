@@ -1,4 +1,4 @@
-/* $NetBSD: setproctitle.c,v 1.17 2000/06/14 17:25:06 cgd Exp $ */
+/* $NetBSD: setproctitle.c,v 1.18 2000/06/29 06:31:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,15 +36,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.17 2000/06/14 17:25:06 cgd Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.18 2000/06/29 06:31:44 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
