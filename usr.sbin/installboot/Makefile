@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/10/27 16:51:05 cl Exp $
+#	$NetBSD: Makefile,v 1.26 2003/10/28 08:21:26 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,5 +15,10 @@ WARNS?=	3
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
+
+# XXX
+.if ${MACHINE_ARCH} == "m68000"
+COPTS.ffs.c=	-O0
+.endif
 
 .include <bsd.prog.mk>
