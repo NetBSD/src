@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.48 2002/09/25 06:43:20 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.49 2002/09/29 17:55:14 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -417,7 +417,6 @@ typedef	struct	iplog	{
 	u_32_t	ipl_magic;
 	u_int	ipl_count;
 	struct timeval ipl_time;
-	u_long	ipl_usec;
 	size_t	ipl_dsize;
 	struct	iplog	*ipl_next;
 } iplog_t;
