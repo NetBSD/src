@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.9 1997/10/18 19:51:10 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.10 1999/04/05 19:19:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -471,6 +471,7 @@ mustek_read(ss, bp)
 	struct mustek_read_cmd cmd;
 	struct scsipi_link *sc_link = ss->sc_link;
 	u_long lines_to_read;
+	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: start\n"));
 
@@ -487,14 +488,20 @@ mustek_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (scsipi_command(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
-	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		printf("%s: not queued\n", ss->sc_dev.dv_xname);
-	else {
+	    SCSI_NOSLEEP | SCSI_DATA_IN);
+	if (error) {
+		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
+		    error);
+	} else {
 		ss->sio.scan_lines -= lines_to_read;
+		if (ss->sio.scan_lines < 0)
+			ss->sio.scan_lines = 0;
 		ss->sio.scan_window_size -= bp->b_bcount;
+		if (ss->sio.scan_window_size < 0)
+			ss->sio.scan_window_size = 0;
 	}
 
 	return (0);
