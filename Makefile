@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2002/09/21 08:19:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.189 2002/11/12 14:33:48 itohy Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -51,7 +51,7 @@
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
-#   do-ld.elf_so:    builds and installs prerequisites from libexec/ld.elf_so
+#   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
 
 .if ${.MAKEFLAGS:M${.CURDIR}/share/mk} == ""
@@ -140,7 +140,7 @@ BUILDTARGETS+=	do-distrib-dirs
 .if !defined(NOINCLUDES)
 BUILDTARGETS+=	includes
 .endif
-BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.elf_so do-build
+BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.so do-build
 
 # Enforce proper ordering of some rules.
 
@@ -208,9 +208,14 @@ do-${dir:S/\//-/}:
 .endfor
 .endfor
 
-do-ld.elf_so:
+do-ld.so:
 .for targ in dependall install
+.if (${OBJECT_FMT} == "a.out")
+	(cd ${.CURDIR}/libexec/ld.aout_so && ${MAKE} ${targ})
+.endif
+.if (${OBJECT_FMT} == "ELF")
 	(cd ${.CURDIR}/libexec/ld.elf_so && ${MAKE} ${targ})
+.endif
 .endfor
 
 do-build:

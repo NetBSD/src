@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.39 2002/08/19 13:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.40 2002/11/12 14:33:49 itohy Exp $
 
-.include <bsd.own.mk>
+.include <bsd.own.mk>			# for OBJECT_FMT definition
+.include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 .if (${OBJECT_FMT} == "a.out")
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c md.c vfprintf.c
+BINDIR=	${SHLINKINSTALLDIR}
+
 CLIB=	${NETBSDSRCDIR}/lib/libc
 CLIBOBJ!=cd ${CLIB} && ${PRINTOBJDIR}
 PICFLAG=-fpic -fno-function-cse
@@ -11,6 +14,9 @@ CPPFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS \
 	  -I${CLIB}/include -I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR)
 .if defined(DEBUG)
 CPPFLAGS+=-DDEBUG
+.endif
+.if ${SHLIBINSTALLDIR} != ${LIBDIR}
+CPPFLAGS+=-DSTANDARD_SEARCH_DIRS=\"${SHLIBINSTALLDIR}\",\"${LIBDIR}\"
 .endif
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic -L${CLIBOBJ}
@@ -27,6 +33,11 @@ $(PROG):
 
 .S.o:
 	${CPP} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET} -
+
+.if ${SHLINKINSTALLDIR} != "/usr/libexec"
+SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
+.endif
+
 .elif (${OBJECT_FMT} == "ELF" && \
        (${MACHINE_ARCH} == "arm" || \
         ${MACHINE_ARCH} == "i386" || \
