@@ -10,7 +10,7 @@ YACC=	yacc
 LFLAGS+= -I
 LDADD=	-lm -ly -ll
 
-CFLAGS+= -I ${.CURDIR}/obj -I ${.CURDIR} -g
+CFLAGS+= -I. -g
 
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison

@@ -12,7 +12,7 @@ LDADD=	-lm -ly -ll
 NOMAN=
 NOSHARED=	no shared linkage
 
-CFLAGS+= -I ${.CURDIR}/obj -I ${.CURDIR} #-g
+CFLAGS+= -I. #-g
 
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison
