@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.13 1994/11/05 03:19:19 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14 1994/11/08 23:09:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,14 +38,16 @@
  *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
  */
 
-#ifndef _I386_PCB_H_
-#define _I386_PCB_H_
-
 /*
  * Intel 386 process control block
  */
-#include "machine/tss.h"
-#include "machine/npx.h"
+
+#ifndef _I386_PCB_H_
+#define _I386_PCB_H_
+
+#include <machine/segments.h>
+#include <machine/tss.h>
+#include <machine/npx.h>
 
 struct pcb {
 	struct	i386tss pcb_tss;
