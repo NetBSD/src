@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.118 2000/10/05 01:17:20 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.119 2000/10/31 23:39:25 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1306,6 +1306,100 @@ FPReturn:
 #endif
 END(MachFPInterrupt)
 #endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
+
+LEAF(mips_pagecopy)
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	li	a2, NBPG >> 5
+
+1:	lw	t0, 0(a1)
+	lw	t4, 16(a1)
+	subu	a2, 1
+	lw	t1, 4(a1)
+	lw	t2, 8(a1)
+	lw	t3, 12(a1)
+	lw	t5, 20(a1)
+	lw	t6, 24(a1)
+	lw	t7, 28(a1)
+
+	sw	t0, 0(a0)
+	sw	t4, 16(a0)
+	addu	a1, 32
+	sw	t1, 4(a0)
+	sw	t2, 8(a0)
+	sw	t3, 12(a0)
+	sw	t5, 20(a0)
+	sw	t6, 24(a0)
+	sw	t7, 28(a0)
+	bgtz	a2,1b
+	addu	a0, 32
+#else
+	li	a2, NBPG >> 6
+
+	REG_PROLOGUE
+1:	ld	t0, 0(a1)
+	ld	t4, 32(a1)
+	ld	t2, 16(a1)
+	ld	t6, 48(a1)
+	subu	a2, 1
+	ld	t1, 8(a1)
+	ld	t3, 24(a1)
+	ld	t5, 40(a1)
+	ld	t7, 56(a1)
+
+	sd	t0, 0(a0)
+	sd	t4, 32(a0)
+	sd	t2, 16(a0)
+	sd	t6, 48(a0)
+	addu	a1, 64
+	sd	t1, 8(a0)
+	sd	t3, 24(a0)
+	sd	t5, 40(a0)
+	sd	t7, 56(a0)
+	bgtz	a2,1b
+	addu	a0, 64
+	REG_EPILOGUE
+#endif
+
+	j	ra
+	nop
+END(mips_pagecopy)
+
+LEAF(mips_pagezero)
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	li	a1, NBPG >> 5
+
+1:	sw	zero, 0(a0)
+	sw	zero, 16(a0)			# try to miss cache first
+	subu	a1, 1
+	sw	zero, 4(a0)
+	sw	zero, 8(a0)
+	sw	zero, 12(a0)
+	sw	zero, 20(a0)
+	sw	zero, 24(a0)
+	sw	zero, 28(a0)
+	bgtz	a1,1b
+	addu	a0, 32
+#else
+	li	a1, NBPG >> 6
+
+	REG_PROLOGUE
+1:	sd	zero, 0(a0)			# try to miss cache first
+	sd	zero, 32(a0)
+	subu	a1, 1
+	sd	zero, 16(a0)
+	sd	zero, 48(a0)
+	sd	zero, 8(a0)			# fill in cache lines
+	sd	zero, 40(a0)
+	sd	zero, 24(a0)
+	sd	zero, 56(a0)
+	REG_EPILOGUE
+	bgtz	a1,1b
+	addu	a0, 64
+#endif
+
+	j	ra
+	nop
+END(mips_pagezero)
 
 
 #ifndef DDB_TRACE
