@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.33 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.34 2004/03/21 06:16:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.33 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.34 2004/03/21 06:16:49 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -451,6 +451,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	RF_DiskQueueData_t *p;
 
 	p = pool_get(&rf_pools.dqd, PR_WAITOK);
+	memset(p, 0, sizeof(RF_DiskQueueData_t));
 	p->bp = pool_get(&bufpool, PR_NOWAIT); /* XXX: make up our minds here.
 						  WAITOK, or NOWAIT?? */
 
