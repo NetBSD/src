@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.32 1996/05/23 17:03:31 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.33 1996/05/23 17:05:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -412,7 +412,6 @@ udp_output(m, va_alist)
 	va_dcl
 #endif
 {
-	struct mbuf *control;
 	register struct inpcb *inp;
 	register struct udpiphdr *ui;
 	register int len = m->m_pkthdr.len;
@@ -420,12 +419,8 @@ udp_output(m, va_alist)
 	va_list ap;
 
 	va_start(ap, m);
-	control = va_arg(ap, struct mbuf *);
 	inp = va_arg(ap, struct inpcb *);
 	va_end(ap);
-
-	if (control)
-		m_freem(control);		/* XXX */
 
 	/*
 	 * Calculate data length and get a mbuf
@@ -592,7 +587,7 @@ udp_usrreq(so, req, m, nam, control, p)
 				goto die;
 			}
 		}
-		error = udp_output(m, control, inp);
+		error = udp_output(m, inp);
 		if (nam) {
 			in_pcbdisconnect(inp);
 			inp->inp_laddr = laddr;
