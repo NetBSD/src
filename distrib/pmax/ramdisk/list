@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.12 2002/04/13 13:39:26 lukem Exp $
+#	$NetBSD: list,v 1.13 2002/04/26 15:50:44 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -64,11 +64,11 @@ COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
 COPY	${DESTDIR}/usr/mdec/boot.pmax		usr/mdec/boot.pmax
 
 # various files that we need in /etc for the install
-COPY	${_SRC_TOP_}/etc/group			etc/group
-COPY	${_SRC_TOP_}/etc/master.passwd		etc/master.passwd
-COPY	${_SRC_TOP_}/etc/protocols		etc/protocols
-COPY	${_SRC_TOP_}/etc/netconfig		etc/netconfig
-COPY	${_SRC_TOP_}/etc/services		etc/services
+COPY	${NETBSDSRCDIR}/etc/group		etc/group
+COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
+COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/etc/services		etc/services
 
 # and the common installation tools
 COPY	${DISTRIBDIR}/miniroot/termcap.rcons	usr/share/misc/termcap

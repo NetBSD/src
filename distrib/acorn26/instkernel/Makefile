@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/25 22:33:50 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/26 15:50:22 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -17,9 +17,9 @@ MAKEDEVTARGETS=	ramdisk
 PARSELISTENV=	PWD_MKDB=${PWD_MKDB:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile termcap.vt100 \
-		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
-		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
-		${_SRC_TOP_}/etc/services
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/services
 
 MDSETTARGETS=	INSTALL		ramdisk.fs	-
 MDSETDIR=	installation/misc

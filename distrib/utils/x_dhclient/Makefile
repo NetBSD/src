@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 2002/04/14 23:44:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/26 15:50:49 lukem Exp $
 
 NOMAN=
 .include <bsd.own.mk>
 
-RSRCDIR=	${_SRC_TOP_}/dist/dhcp
+RSRCDIR=	${NETBSDSRCDIR}/dist/dhcp
 
 .PATH:		${RSRCDIR}/client
 
