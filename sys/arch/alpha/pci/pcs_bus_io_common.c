@@ -1,0 +1,255 @@
+/*	$NetBSD: pcs_bus_io_common.c,v 1.1 1996/04/12 04:34:59 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
+ * All rights reserved.
+ *
+ * Author: Chris G. Demetriou
+ * 
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
+
+/*
+ * Common PCI Chipset "bus I/O" functions, for chipsets which have to
+ * deal with only a single PCI interface chip in a machine.
+ *
+ * uses:
+ *	CHIP		name of the 'chip' it's being compiled for.
+ *	CHIP_IO_BASE	Sparse I/O space base to use.
+ */
+
+#define	__C(A,B)	__CONCAT(A,B)
+
+int		__C(CHIP,_io_map) __P((void *, bus_io_addr_t, bus_io_size_t,
+		    bus_io_handle_t *));
+void		__C(CHIP,_io_unmap) __P((void *, bus_io_handle_t,
+		    bus_io_size_t));
+u_int8_t	__C(CHIP,_io_read_1) __P((void *, bus_io_handle_t,
+		    bus_io_size_t));
+u_int16_t	__C(CHIP,_io_read_2) __P((void *, bus_io_handle_t,
+		    bus_io_size_t));
+u_int32_t	__C(CHIP,_io_read_4) __P((void *, bus_io_handle_t,
+		    bus_io_size_t));
+u_int64_t	__C(CHIP,_io_read_8) __P((void *, bus_io_handle_t,
+		    bus_io_size_t));
+void		__C(CHIP,_io_write_1) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int8_t));
+void		__C(CHIP,_io_write_2) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int16_t));
+void		__C(CHIP,_io_write_4) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int32_t));
+void		__C(CHIP,_io_write_8) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int64_t));
+
+void
+__C(CHIP,_bus_io_init)(bc, iov)
+	bus_chipset_tag_t bc;
+	void *iov;
+{
+
+	bc->bc_i_v = iov;
+
+	bc->bc_i_map = __C(CHIP,_io_map);
+	bc->bc_i_unmap = __C(CHIP,_io_unmap);
+
+	bc->bc_ir1 = __C(CHIP,_io_read_1);
+	bc->bc_ir2 = __C(CHIP,_io_read_2);
+	bc->bc_ir4 = __C(CHIP,_io_read_4);
+	bc->bc_ir8 = __C(CHIP,_io_read_8);
+
+	bc->bc_iw1 = __C(CHIP,_io_write_1);
+	bc->bc_iw2 = __C(CHIP,_io_write_2);
+	bc->bc_iw4 = __C(CHIP,_io_write_4);
+	bc->bc_iw8 = __C(CHIP,_io_write_8);
+}
+
+int
+__C(CHIP,_io_map)(v, ioaddr, iosize, iohp)
+	void *v;
+	bus_io_addr_t ioaddr;
+	bus_io_size_t iosize;
+	bus_io_handle_t *iohp;
+{
+
+	*iohp = (phystok0seg(CHIP_IO_BASE) >> 5) + ioaddr;
+	return (0);
+}
+
+void
+__C(CHIP,_io_unmap)(v, ioh, iosize)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t iosize;
+{
+
+	/* XXX nothing to do. */
+}
+
+u_int8_t
+__C(CHIP,_io_read_1)(v, ioh, off)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register u_int8_t rval;
+	register int offset;
+
+	wbflush();
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+	port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+	val = *port;
+	rval = ((val) >> (8 * offset)) & 0xff;
+
+	return rval;
+}
+
+u_int16_t
+__C(CHIP,_io_read_2)(v, ioh, off)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register u_int16_t rval;
+	register int offset;
+
+	wbflush();
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+	port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+	val = *port;
+	rval = ((val) >> (8 * offset)) & 0xffff;
+
+	return rval;
+}
+
+u_int32_t
+__C(CHIP,_io_read_4)(v, ioh, off)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register u_int32_t rval;
+	register int offset;
+
+	wbflush();
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+	port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+	val = *port;
+#if 0
+	rval = ((val) >> (8 * offset)) & 0xffffffff;
+#else
+	rval = val;
+#endif
+
+	return rval;
+}
+
+u_int64_t
+__C(CHIP,_io_read_8)(v, ioh, off)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+{
+
+	/* XXX XXX XXX */
+	panic("%s not implemented\n", __STRING(__C(CHIP,_io_read_8)));
+}
+
+void
+__C(CHIP,_io_write_1)(v, ioh, off, val)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+	u_int8_t val;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+        nval = val << (8 * offset);
+        port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+        *port = nval;
+        wbflush();
+}
+
+void
+__C(CHIP,_io_write_2)(v, ioh, off, val)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+	u_int16_t val;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+        nval = val << (8 * offset);
+        port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+        *port = nval;
+        wbflush();
+}
+
+void
+__C(CHIP,_io_write_4)(v, ioh, off, val)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+	u_int32_t val;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	tmpioh = ioh + off;
+	offset = tmpioh & 3;
+        nval = val /*<< (8 * offset)*/;
+        port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+        *port = nval;
+        wbflush();
+}
+
+void
+__C(CHIP,_io_write_8)(v, ioh, off, val)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off;
+	u_int64_t val;
+{
+
+	/* XXX XXX XXX */
+	panic("%s not implemented\n", __STRING(__C(CHIP,_io_write_8)));
+	wbflush();
+}
