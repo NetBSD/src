@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.22 2001/09/10 21:19:28 chris Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.23 2001/09/11 20:37:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,8 +107,7 @@ bus_tmapin(bustype, pa)
 	tmp_vpages_inuse++;
 
 	pgva = tmp_vpages[1];
-	pmap_enter(pmap_kernel(), pgva, pa,
-	           (VM_PROT_READ|VM_PROT_WRITE), PMAP_WIRED);
+	pmap_kenter_pa(pgva, pa, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	splx(s);
 
@@ -126,7 +125,7 @@ void bus_tmapout(vp)
 		return;
 
 	s = splvm();
-	pmap_remove(pmap_kernel(), pgva, pgva + NBPG);
+	pmap_kremove(pgva, NBPG);
 	pmap_update(pmap_kernel());
 	--tmp_vpages_inuse;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.22 2001/09/10 21:19:28 chris Exp $	*/
+/*	$NetBSD: dvma.c,v 1.23 2001/09/11 20:37:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -238,8 +238,7 @@ dvma_mapin(kmem_va, len, canwait)
 #endif	/* DEBUG */
 
 		iommu_enter((tva & IOMMU_VA_MASK), pa);
-		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
-			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(tva, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
 
@@ -267,18 +266,8 @@ dvma_mapout(dvma_addr, len)
 	len = round_page(len + off);
 
 	iommu_remove((kva & IOMMU_VA_MASK), len);
-
-	/*
-	 * XXX - don't call pmap_remove() with DVMA space yet.
-	 * XXX   It cannot (currently) handle the removal
-	 * XXX   of address ranges which do not participate in the
-	 * XXX   PV system by virtue of their _virtual_ addresses.
-	 * XXX   DVMA is one of these special address spaces.
-	 */
-#ifdef	DVMA_ON_PVLIST
-	pmap_remove(pmap_kernel(), kva, kva + len);
+	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
-#endif	/* DVMA_ON_PVLIST */
 
 	s = splvm();
 	rmfree(dvmamap, btoc(len), btoc(kva));
