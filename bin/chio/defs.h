@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.4 2001/09/13 10:00:44 wiz Exp $ */
+/* $NetBSD: defs.h,v 1.5 2002/03/09 19:32:03 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct changer_command {
 	const char	*cc_name;	/* command name */
 	const char	*cc_args;	/* usage string */
 					/* command handler */
-	int		(*cc_handler) __P((const char *, int, char **));
+	int		(*cc_handler)(const char *, int, char **);
 };
 
 struct special_word {
