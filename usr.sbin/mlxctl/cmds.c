@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.2 2001/02/15 01:59:54 simonb Exp $	*/
+/*	$NetBSD: cmds.c,v 1.3 2001/02/15 02:32:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.2 2001/02/15 01:59:54 simonb Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.3 2001/02/15 02:32:26 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -118,7 +118,6 @@ struct {
 static void
 cmd_status0(struct mlx_disk *md)
 {
-	const char *statusfmt;
 	int result;
  
 	result = md->hwunit;
@@ -127,26 +126,24 @@ cmd_status0(struct mlx_disk *md)
 
 	switch(result) {
 	case MLX_SYSD_ONLINE:
-		statusfmt = "%s: online\n";
+		printf("%s: online\n", md->name);
 		break;
 
 	case MLX_SYSD_CRITICAL:
-		statusfmt = "%s: critical\n";
+		printf("%s: critical\n", md->name);
 		if (!rstatus)
 			rstatus = 1;
 		break;
 
 	case MLX_SYSD_OFFLINE:
-		statusfmt = "%s: offline\n";
+		printf("%s: offline\n", md->name);
 		rstatus = 2;
 		break;
 
 	default:
-		statusfmt = "%s: unknown status 0x%02x\n";
+		printf("%s: unknown status 0x%02x\n", md->name, result);
 		break;
 	}
-
-	printf(statusfmt, md->name, result);
 
 	/* Rebuild/check in progress on this drive? */
 	if (rs.rs_drive == md->hwunit &&
