@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bitstring.3	5.4 (Berkeley) 4/19/91
-.\"	$Id: bitstring.3,v 1.2 1993/08/01 07:37:14 mycroft Exp $
+.\"	$Id: bitstring.3,v 1.3 1993/08/25 22:25:05 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt BITSTRING 3
@@ -113,11 +113,11 @@ in the bit string
 The
 .Fn bit_test
 macro
-evaluates to zero if the zero-based numbered bit
+evaluates to non-zero if the zero-based numbered bit
 .Fa bit
 of bit string
 .Fa name
-is set, and non-zero otherwise.
+is set, and zero otherwise.
 .Pp
 The
 .Fn bit_ffs
