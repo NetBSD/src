@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
+.\"	$NetBSD: chflags.1,v 1.5 1997/04/22 05:54:13 mikel Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ in the files instead of just the files themselves.
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
 .Bd -literal -offset indent compact
-arch	set the archived flag
+arch	set the archived flag (super-user only)
 opaque	set the opaque flag (owner or super-user only)
 nodump	set the nodump flag (owner or super-user only)
 sappnd	set the system append-only flag (super-user only)
