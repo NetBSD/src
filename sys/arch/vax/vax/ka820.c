@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.5 1997/04/18 18:49:34 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.6 1997/07/17 02:22:31 jtk Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -59,6 +59,8 @@
 
 #include <arch/vax/bi/bireg.h>
 #include <arch/vax/bi/bivar.h>
+
+#include "locators.h"
 
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
@@ -161,7 +163,8 @@ ka820_match(parent, match, aux)
 	if (ba->ba_nodenr != mastercpu)
 		return 0;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_nodenr)
+	if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
+	    cf->cf_loc[BICF_NODE] != ba->ba_nodenr)
 		return 0;
 
 	return 1;
@@ -260,7 +263,8 @@ ms820_match(parent, match, aux)
 	if (ba->ba_node->biic.bi_dtype != BIDT_MS820)
 		return 0;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_nodenr)
+	if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
+	    cf->cf_loc[BICF_NODE] != ba->ba_nodenr)
 		return 0;
 
 	return 1;

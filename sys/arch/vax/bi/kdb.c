@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.6 1997/07/06 22:38:30 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.7 1997/07/17 02:22:24 jtk Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,6 +63,8 @@
 #include <vax/mscp/mscpvar.h>
 #include <vax/mscp/mscpreg.h>
 
+#include "locators.h"
+
 #define     b_forw  b_hash.le_next
 /*
  * Software status, per controller.
@@ -126,7 +128,8 @@ kdbmatch(parent, match, aux)
         if (ba->ba_node->biic.bi_dtype != BIDT_KDB50)
                 return 0;
 
-        if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_nodenr)
+        if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
+	    cf->cf_loc[BICF_NODE] != ba->ba_nodenr)
                 return 0;
 
         return 1;

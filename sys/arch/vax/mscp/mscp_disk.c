@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.13 1997/06/24 01:12:40 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.14 1997/07/17 02:22:27 jtk Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -67,6 +67,8 @@
 
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
+
+#include "locators.h"
 
 /*
  * Drive status, per drive
@@ -155,7 +157,8 @@ ramatch(parent, match, aux)
 
 	if ((da->da_typ & MSCPBUS_DISK) == 0)
 		return 0;
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != mp->mscp_unit)
+	if (cf->cf_loc[MSCPBUSCF_DRIVE] != MSCPBUSCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[MSCPBUSCF_DRIVE] != mp->mscp_unit)
 		return 0;
 	return 1;
 }
