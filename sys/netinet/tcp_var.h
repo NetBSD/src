@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.59 1999/04/29 03:54:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.60 1999/05/23 20:33:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -455,7 +455,8 @@ struct	tcpstat {
 #define	TCPCTL_KEEPCNT		19	/* keepalive count */
 #define	TCPCTL_SLOWHZ		20	/* PR_SLOWHZ (read-only) */
 #define	TCPCTL_NEWRENO		21	/* NewReno Congestion Control */
-#define	TCPCTL_MAXID		22
+#define TCPCTL_LOG_REFUSED	22	/* Log refused connections */
+#define	TCPCTL_MAXID		23
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -480,6 +481,7 @@ struct	tcpstat {
 	{ "keepcnt",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
 	{ "newreno",	CTLTYPE_INT }, \
+	{ "log_refused",CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -501,6 +503,7 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
+extern	int tcp_log_refused;	/* log refused connections */
 
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
@@ -529,6 +532,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_keepcnt },			\
 	{ 1, 1, 0, PR_SLOWHZ },			\
 	{ 1, 0, &tcp_do_newreno },		\
+	{ 1, 0, &tcp_log_refused },		\
 }
 
 int	 tcp_attach __P((struct socket *));

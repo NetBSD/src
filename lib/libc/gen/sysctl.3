@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.34 1999/03/09 19:45:09 erh Exp $
+.\"	$NetBSD: sysctl.3,v 1.35 1999/05/23 20:33:51 ad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -564,6 +564,7 @@ The currently defined protocols and names are:
 .It tcp keepcnt	integer	yes
 .It tcp	slowhz	integer	no
 .It tcp	newreno	integer	yes
+.It tcp	log_refused	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -685,6 +686,8 @@ must be divided by the tcp.slowhz value to get times in seconds.)
 .It Li tcp.newreno
 Returns 1 if the use of J. Hoe's NewReno congestion control algorithm is
 enabled.  This algorithm improves the start-up behavior of TCP connections.
+.It Li tcp.log_refused
+When set to 1, all refused TCP connections to the host are logged.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
