@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.47 2005/03/21 14:10:29 tron Exp $
+#	$NetBSD: bsd.x11.mk,v 1.48 2005/03/26 10:31:51 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -73,7 +73,8 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "macppc"	|| \
-    ${MACHINE} == "sgimips"
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "sparc64"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module
 .endif
