@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.3 1996/11/30 20:34:58 is Exp $
+# $NetBSD: Makefile,v 1.4 1997/05/19 21:18:58 is Exp $
 
-SUBDIR=binpatch loadkmap boot
+SUBDIR=binpatch loadkmap bootblock
 
 .include <bsd.subdir.mk>
