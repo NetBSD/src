@@ -1,5 +1,5 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.15 1994/03/24 16:01:24 jtc Exp $
+#	$Id: sys.mk,v 1.16 1994/03/27 01:42:35 cgd Exp $
 
 unix=		We run UNIX.
 
@@ -179,3 +179,7 @@ YACC.y=		${YACC} ${YFLAGS}
 .sh:
 	rm -f ${.TARGET}
 	cp ${.IMPSRC} ${.TARGET}
+
+# should only be done in 'bsd make' environments, i.e. where using bsd.xxx.mk
+# file, but that's somewhat more difficult...
+.include <bsd.own.mk>
