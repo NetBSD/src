@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.9 2000/02/17 03:12:23 itohy Exp $	*/
+/*	$NetBSD: cpio.c,v 1.10 2001/01/04 15:39:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.9 2000/02/17 03:12:23 itohy Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.10 2001/01/04 15:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ rd_ln_nm(arcn)
 		tty_warn(1, "Cpio link name length is invalid: %lu",
 		    arcn->sb.st_size);
 #		else
-		tty_warn(1, "Cpio link name length is invalid: %qu",
+		tty_warn(1, "Cpio link name length is invalid: %llu",
 		    (unsigned long long) arcn->sb.st_size);
 #		endif
 		return(-1);
