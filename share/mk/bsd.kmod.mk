@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.48 2002/02/11 21:14:59 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.49 2002/02/28 15:55:50 pk Exp $
 
 .include <bsd.init.mk>
 
@@ -26,7 +26,7 @@ MAN?=		${KMOD}.4
 
 ##### Build rules
 realall:	machine-links ${PROG}
-.ORDER:		machine-links ${PROG}
+.ORDER:		machine-links ${OBJS}
 
 ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
