@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.1 1999/02/12 10:51:28 drochner Exp $	*/
+/*	$NetBSD: panic.c,v 1.2 1999/04/28 13:24:12 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -43,14 +43,15 @@ panic(fmt /*, va_alist */)
 	char *fmt;
 #endif
 {
-    extern void closeall __P((void));
     va_list ap;
+#ifndef LIBSA_NO_CLOSE
     static int paniced;
     
     if (!paniced) {
         paniced = 1;
         closeall();
     }
+#endif
 
 #ifdef __STDC__
     va_start(ap, fmt);
