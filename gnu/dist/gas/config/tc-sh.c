@@ -39,6 +39,9 @@ static void s_uses PARAMS ((int));
 static void sh_count_relocs PARAMS ((bfd *, segT, PTR));
 static void sh_frob_section PARAMS ((bfd *, segT, PTR));
 
+static void little PARAMS ((int));
+static void big PARAMS ((int));
+
 /* This table describes all the machine specific pseudo-ops the assembler
    has to support.  The fields are:
    pseudo-op name without dot
@@ -51,9 +54,24 @@ void s_align_bytes ();
 static void s_uacons PARAMS ((int));
 
 static void
+big (ignore)
+     int ignore;
+{
+  if (! target_big_endian)
+    as_bad ("directive .big encountered when option -big required");
+
+  /* Stop further messages.  */
+  target_big_endian = 1;
+}
+
+static void
 little (ignore)
      int ignore;
 {
+  if (target_big_endian)
+    as_bad ("directive .little encountered when option -little required");
+
+  /* Stop further messages.  */
   target_big_endian = 0;
 }
 
@@ -61,6 +79,7 @@ const pseudo_typeS md_pseudo_table[] =
 {
   {"int", cons, 4},
   {"word", cons, 2},
+  {"big", big, 0},
   {"form", listing_psize, 0},
   {"little", little, 0},
   {"heading", listing_title, 0},
@@ -1205,10 +1224,12 @@ CONST char *md_shortopts = "";
 struct option md_longopts[] = {
 
 #define OPTION_RELAX  (OPTION_MD_BASE)
-#define OPTION_LITTLE (OPTION_MD_BASE + 1)
+#define OPTION_BIG (OPTION_MD_BASE + 1)
+#define OPTION_LITTLE (OPTION_BIG + 1)
 #define OPTION_SMALL (OPTION_LITTLE + 1)
 
   {"relax", no_argument, NULL, OPTION_RELAX},
+  {"big", no_argument, NULL, OPTION_BIG},
   {"little", no_argument, NULL, OPTION_LITTLE},
   {"small", no_argument, NULL, OPTION_SMALL},
   {NULL, no_argument, NULL, 0}
@@ -1224,6 +1245,10 @@ md_parse_option (c, arg)
     {
     case OPTION_RELAX:
       sh_relax = 1;
+      break;
+
+    case OPTION_BIG:
+      target_big_endian = 1;
       break;
 
     case OPTION_LITTLE:
@@ -1248,6 +1273,7 @@ md_show_usage (stream)
   fprintf(stream, "\
 SH options:\n\
 -little			generate little endian code\n\
+-big			generate big endian code\n\
 -relax			alter jump instructions for long displacements\n\
 -small			align sections to 4 byte boundaries, not 16\n");
 }
