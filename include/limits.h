@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
+/*	$NetBSD: limits.h,v 1.8 1996/10/21 05:10:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,7 +49,7 @@
 #define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		255
 #define _POSIX_PIPE_BUF		512
-#define _POSIX_SSIZE_MAX	32727
+#define _POSIX_SSIZE_MAX	32767
 #define _POSIX_STREAM_MAX	8
 #define _POSIX_TZNAME_MAX	3
 
