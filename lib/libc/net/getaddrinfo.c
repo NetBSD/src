@@ -1,5 +1,5 @@
-/*	$NetBSD: getaddrinfo.c,v 1.44 2000/07/07 08:03:38 itohy Exp $	*/
-/*	$KAME: getaddrinfo.c,v 1.22 2000/07/05 02:31:36 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.45 2000/07/09 04:23:49 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.24 2000/07/09 04:19:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.44 2000/07/07 08:03:38 itohy Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.45 2000/07/09 04:23:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -341,13 +341,14 @@ static int
 str_isnumber(p)
 	const char *p;
 {
-	const u_char *q = (const u_char *)p;
-	while (*q) {
-		if (!isdigit(*q))
-			return NO;
-		q++;
-	}
-	return YES;
+	char *ep;
+
+	ep = NULL;
+	(void)strtoul(p, &ep, 10);
+	if (ep && *ep == '\0')
+		return YES;
+	else
+		return NO;
 }
 
 int
