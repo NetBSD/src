@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.6 2004/03/25 15:00:24 salo Exp $	*/
+/*	$NetBSD: file.c,v 1.7 2004/03/30 10:12:33 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -68,6 +68,10 @@
 #if defined(__FreeBSD_version) && __FreeBSD_version < 500000
 #undef HAVE_WCHAR_H
 #endif
+/* XXX: wchar in NetBSD 1.5 is somewhat plain */
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ < 106000000
+#undef HAVE_WCHAR_H
+#endif
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
 #endif
@@ -86,7 +90,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.92 2004/03/22 21:34:39 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.6 2004/03/25 15:00:24 salo Exp $");
+__RCSID("$NetBSD: file.c,v 1.7 2004/03/30 10:12:33 pooka Exp $");
 #endif
 #endif	/* lint */
 
