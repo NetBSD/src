@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.4 1995/03/23 08:35:55 cgd Exp $	*/
+/*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: primes.c,v 1.4 1995/03/23 08:35:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -308,10 +308,10 @@ primes(start, stop)
 		do {
 			/* determine the factor's initial sieve point */
 			q = (char *)(start%factor); /* temp storage for mod */
-			if ((int)q & 0x1) {
-				q = &table[(factor-(int)q)/2];
+			if ((long)q & 0x1) {
+				q = &table[(factor-(long)q)/2];
 			} else {
-				q = &table[q ? factor-((int)q/2) : 0];
+				q = &table[q ? factor-((long)q/2) : 0];
 			}
 			/* sive for our current factor */
 			for ( ; q < tab_lim; q += factor) {

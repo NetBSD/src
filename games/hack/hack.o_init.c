@@ -3,13 +3,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.o_init.c,v 1.3 1995/03/23 08:31:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.o_init.c,v 1.4 1995/04/24 12:23:27 cgd Exp $";
 #endif /* not lint */
 
 #include	"config.h"		/* for typedefs */
 #include	"def.objects.h"
 #include	"hack.onames.h"		/* for LAST_GEM */
-extern char *index();
+#include	<string.h>
 
 int
 letindex(let) register char let; {

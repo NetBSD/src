@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.3 1995/03/23 08:34:39 cgd Exp $	*/
+/*	$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getinp.c,v 1.3 1995/03/23 08:34:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $";
 #endif
 #endif /* not lint */
 
 # include	<stdio.h>
+# include	<string.h>
 # include	<ctype.h>
 
 # define	reg	register

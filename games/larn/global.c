@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: global.c,v 1.3 1995/03/23 08:33:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: global.c,v 1.4 1995/04/24 12:23:52 cgd Exp $";
 #endif /* not lint */
 
 /*	global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,6 +23,7 @@ static char rcsid[] = "$NetBSD: global.c,v 1.3 1995/03/23 08:33:26 cgd Exp $";
  */
 
 #include "header.h"
+#include <string.h>
 extern int score[],srcount,dropflag;
 extern int random;/*	the random number seed			*/
 extern short playerx,playery,lastnum;

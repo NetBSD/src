@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.3 1995/04/22 10:58:46 cgd Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dumpgame.c,v 1.3 1995/04/22 10:58:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ int	fd1;
 	register int		fd;
 	register struct dump	*d;
 	register int		i;
-	int			junk;
+	long			junk;
 
 	fd = fd1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.3 1995/04/22 08:34:38 cgd Exp $	*/
+/*	$NetBSD: snake.h,v 1.4 1995/04/24 12:25:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,6 +36,7 @@
  */
 
 # include <stdio.h>
+# include <string.h>
 # include <assert.h>
 # include <sys/types.h>
 # include <sgtty.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1995/03/21 15:05:06 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1995/04/24 12:21:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.2 1995/03/21 15:05:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/24 12:21:52 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ char	**argv;
 
 				tflag = 0;		/* error! */
 				writel (noteach);
-				exit();
+				exit(1);
 			} else  {			/* if not rules, then
 							 * instructions */
 				writel (need);

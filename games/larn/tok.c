@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: tok.c,v 1.3 1995/03/23 08:34:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: tok.c,v 1.4 1995/04/24 12:24:14 cgd Exp $";
 #endif /* not lint */
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -11,6 +11,7 @@ static char rcsid[] = "$NetBSD: tok.c,v 1.3 1995/03/23 08:34:23 cgd Exp $";
 #include <sys/ioctl.h>
 #endif SYSV
 #include "header.h"
+#include <string.h>
 
 static char lastok=0;
 int yrepcount=0,dayplay=0;
