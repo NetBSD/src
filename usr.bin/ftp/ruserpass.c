@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.15 1997/11/01 14:37:03 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.16 1998/05/20 00:55:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.15 1997/11/01 14:37:03 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.16 1998/05/20 00:55:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ next:
 		while ((t = token()) && t != MACH && t != DEFAULT) switch(t) {
 
 		case LOGIN:
-			if (token())
+			if (token()) {
 				if (*aname == NULL) {
 					*aname = strdup(tokval);
 					if (*aname == NULL)
@@ -156,6 +156,7 @@ next:
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
+			}
 			break;
 		case PASSWD:
 			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&
