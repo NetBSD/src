@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.78 1997/07/16 06:22:07 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.79 1997/10/16 23:04:38 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -17,7 +17,7 @@ SRCS+=	_errno.c alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
 	sigsetops.c sleep.c stringlist.c sysconf.c sysctl.c syslog.c telldir.c \
-	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
+	time.c times.c tolower_.c ttyname.c ttyslot.c toupper_.c \
 	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
 	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
 
@@ -43,7 +43,7 @@ MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 \
-	time.3 times.3 timezone.3 toascii.3 \
+	time.3 times.3 toascii.3 \
 	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
 	usleep.3 utime.3 valloc.3 vis.3
 
