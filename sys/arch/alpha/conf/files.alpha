@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.88 1998/08/11 18:52:52 thorpej Exp $
+# $NetBSD: files.alpha,v 1.89 1998/09/13 01:51:30 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -429,6 +429,9 @@ file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a
 file	arch/alpha/alpha/db_disasm.c		ddb
 file	arch/alpha/alpha/db_interface.c		ddb
 file	arch/alpha/alpha/db_trace.c		ddb
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
