@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2003/02/26 06:03:40 uwe Exp $
+#	$NetBSD: Makefile,v 1.61 2003/03/25 13:11:53 scw Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -14,6 +14,7 @@ M= ${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
      (${MACHINE_ARCH} == "powerpc") ||					\
      (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") ||	\
+     (${MACHINE_ARCH} == "sh5eb") || (${MACHINE_ARCH} == "sh5el") ||	\
      (${MACHINE_ARCH} == "sparc") ||					\
      (${MACHINE_ARCH} == "sparc64") ||					\
      (${MACHINE_ARCH} == "x86_64") ||					\
