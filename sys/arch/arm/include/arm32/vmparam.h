@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2002/03/23 19:38:30 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.4.1 2002/12/07 20:42:10 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -111,6 +111,12 @@ struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
+#ifdef PMAP_ALIAS_DEBUG
+	u_int ro_mappings;
+	u_int rw_mappings;
+	u_int kro_mappings;
+	u_int krw_mappings;
+#endif /* PMAP_ALIAS_DEBUG */
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
