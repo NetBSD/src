@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.13 1996/02/09 18:59:39 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.14 1996/02/20 23:56:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -223,10 +223,9 @@ malloc(size, type, flags)
 	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (*lp == WEIRD_ADDR)
 			continue;
-		printf("%s %d of object %p size %d %s %s (%p != %p)\n",
+		printf("%s %d of object %p size %d %s %s (0x%x != 0x%x)\n",
 			"Data modified on freelist: word", lp - (int32_t *)va,
-			va, size, "previous type", savedtype, (void *)*lp,
-			(void *) WEIRD_ADDR);
+			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
 		break;
 	}
 
