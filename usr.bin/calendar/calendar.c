@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.33 2004/11/30 01:54:17 jwise Exp $	*/
+/*	$NetBSD: calendar.c,v 1.34 2004/11/30 10:39:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.33 2004/11/30 01:54:17 jwise Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.34 2004/11/30 10:39:53 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ main(argc, argv)
 	int ch;
 	const char *caldir;
 
-	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != -1)
+	while ((ch = getopt(argc, argv, "-ad:f:l:w:x")) != -1)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
@@ -537,7 +537,7 @@ getmmdd(struct tm *tp, char *ds)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-a] [-d MMDD[[YY]YY]"
+	(void)fprintf(stderr, "usage: %s [-ax] [-d MMDD[[YY]YY]"
 	    " [-f fname] [-l days] [-w days]\n", getprogname());
 	exit(1);
 }
