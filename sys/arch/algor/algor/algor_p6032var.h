@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.3 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032var.h,v 1.1 2001/06/22 06:02:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,58 +36,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+#include <machine/bus.h>
+#include <dev/pci/pcivar.h>
+#include <dev/isa/isavar.h>
 
-#include <sys/param.h>
+#include <mips/bonito/bonitovar.h>
 
-#include <machine/autoconf.h>
+struct p6032_config {
+	struct bonito_config ac_bonito;
 
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h>
-#endif
+	struct algor_bus_space ac_iot;
+	struct algor_bus_space ac_memt;
 
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
-#include <algor/algor/algor_p6032reg.h>
-#endif
+	struct algor_bus_dma_tag ac_pci_dmat;
+	struct algor_bus_dma_tag ac_isa_dmat;
 
-#if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	HD2532_STRIDE		4
-#define	HD2532_NFLASH_OFFSET	0x80
-#define	HD2532_CRAM	(HD2532_NFLASH_OFFSET + (0x18 * HD2532_STRIDE))
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P6032_HDSP2532_BASE + HD2532_CRAM)
-#define	LED(x)		((x) * HD2532_STRIDE)
-#endif
+	struct algor_pci_chipset ac_pc;
+	struct algor_isa_chipset ac_ic;
 
-/*
- * led_display:
- *
- *	Set the LED display to the characters provided.
- */
-void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
-{
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
+	struct extent *ac_io_ex;
+	struct extent *ac_mem_ex;
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
-#if defined(ALGOR_P6032)	/* XXX Should support these */
-	leds[LED(4)] = ' ';
-	leds[LED(5)] = ' ';
-	leds[LED(6)] = ' ';
-	leds[LED(7)] = ' ';
-#endif
-}
+	int	ac_mallocsafe;
+};
+
+#define	P6032_IRQ_GPIN0		0
+#define	P6032_IRQ_GPIN1		1
+#define	P6032_IRQ_GPIN2		2
+#define	P6032_IRQ_GPIN3		3
+#define	P6032_IRQ_GPIN4		4
+#define	P6032_IRQ_GPIN5		5
+#define	P6032_IRQ_GPIO0		6
+#define	P6032_IRQ_GPIO1		7
+#define	P6032_IRQ_GPIO2		8
+#define	P6032_IRQ_GPIO3		9 
+#define	P6032_IRQ_MAX		9
+
+#define	P6032_IRQ_ISANMI	P6032_IRQ_GPIN0
+#define	P6032_IRQ_ISABRIDGE	P6032_IRQ_GPIN1
+
+#ifdef _KERNEL
+extern struct p6032_config p6032_configuration;
+
+void	algor_p6032_bus_io_init(bus_space_tag_t, void *);
+void	algor_p6032_bus_mem_init(bus_space_tag_t, void *);
+
+void	algor_p6032_dma_init(struct p6032_config *);
+
+void	algor_p6032_intr_init(struct p6032_config *);
+
+void	algor_p6032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
+void	algor_p6032_cal_timer(bus_space_tag_t, bus_space_handle_t);
+#endif /* _KERNEL */

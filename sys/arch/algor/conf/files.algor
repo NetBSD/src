@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.4 2001/06/14 16:14:37 thorpej Exp $
+#	$NetBSD: files.algor,v 1.5 2001/06/22 06:02:55 thorpej Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -27,6 +27,11 @@ file	arch/algor/algor/algor_p5064_bus_io.c	algor_p5064
 file	arch/algor/algor/algor_p5064_bus_mem.c	algor_p5064
 file	arch/algor/algor/algor_p5064_dma.c	algor_p5064
 file	arch/algor/algor/algor_p5064_intr.c	algor_p5064
+
+file	arch/algor/algor/algor_p6032_bus_io.c	algor_p6032
+file	arch/algor/algor/algor_p6032_bus_mem.c	algor_p6032
+file	arch/algor/algor/algor_p6032_dma.c	algor_p6032
+file	arch/algor/algor/algor_p6032_intr.c	algor_p6032
 
 file	arch/algor/algor/autoconf.c
 file	arch/algor/algor/bus_dma.c
@@ -117,6 +122,13 @@ file	arch/algor/pci/vtpbc.c			vtpbc
 
 attach	vtpbc at mainbus with vtpbc_mainbus
 file	arch/algor/dev/vtpbc_mainbus.c		vtpbc_mainbus
+
+device	bonito: pcibus
+file	arch/mips/bonito/bonito_pci.c		bonito
+#file	arch/mips/bonito/bonito_dma.c		bonito
+
+attach	bonito at mainbus with bonito_mainbus
+file	arch/algor/dev/bonito_mainbus.c		bonito_mainbus
 
 device	pcib: isabus
 attach	pcib at pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.3 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_dma.c,v 1.1 2001/06/22 06:02:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,58 +36,69 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+/*
+ * Platform-specific DMA support for the Algorithmics P-6032.
+ */
 
 #include <sys/param.h>
 
-#include <machine/autoconf.h>
+#define	_ALGOR_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h>
-#endif
-
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
 #include <algor/algor/algor_p6032reg.h>
-#endif
+#include <algor/algor/algor_p6032var.h>
 
-#if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	HD2532_STRIDE		4
-#define	HD2532_NFLASH_OFFSET	0x80
-#define	HD2532_CRAM	(HD2532_NFLASH_OFFSET + (0x18 * HD2532_STRIDE))
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P6032_HDSP2532_BASE + HD2532_CRAM)
-#define	LED(x)		((x) * HD2532_STRIDE)
-#endif
+#include <dev/isa/isavar.h>
 
-/*
- * led_display:
- *
- *	Set the LED display to the characters provided.
- */
 void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
+algor_p6032_dma_init(struct p6032_config *acp)
 {
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
+	bus_dma_tag_t t;
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
-#if defined(ALGOR_P6032)	/* XXX Should support these */
-	leds[LED(4)] = ' ';
-	leds[LED(5)] = ' ';
-	leds[LED(6)] = ' ';
-	leds[LED(7)] = ' ';
-#endif
+	/*
+	 * Initialize the DMA tag used for PCI DMA.
+	 */
+	t = &acp->ac_pci_dmat;
+	t->_cookie = acp;
+	t->_wbase = P6032_DMA_PCI_PCIBASE;
+	t->_physbase = P6032_DMA_PCI_PHYSBASE;
+	t->_wsize = P6032_DMA_PCI_SIZE;
+	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_destroy = _bus_dmamap_destroy;
+	t->_dmamap_load = _bus_dmamap_load;
+	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	t->_dmamap_load_uio = _bus_dmamap_load_uio;
+	t->_dmamap_load_raw = _bus_dmamap_load_raw;
+	t->_dmamap_unload = _bus_dmamap_unload;
+	t->_dmamap_sync = _bus_dmamap_sync;
+
+	t->_dmamem_alloc = _bus_dmamem_alloc;
+	t->_dmamem_free = _bus_dmamem_free;
+	t->_dmamem_map = _bus_dmamem_map;
+	t->_dmamem_unmap = _bus_dmamem_unmap;
+	t->_dmamem_mmap = _bus_dmamem_mmap;
+
+	/*
+	 * Initialize the DMA tag usd for ISA DMA.
+	 */
+	t = &acp->ac_isa_dmat;
+	t->_cookie = acp;
+	t->_wbase = P6032_DMA_ISA_PCIBASE;
+	t->_physbase = P6032_DMA_ISA_PHYSBASE;
+	t->_wsize = P6032_DMA_ISA_SIZE;
+
+	t->_dmamap_create = isadma_bounce_dmamap_create;
+	t->_dmamap_destroy = isadma_bounce_dmamap_destroy;
+	t->_dmamap_load = isadma_bounce_dmamap_load;
+	t->_dmamap_load_mbuf = isadma_bounce_dmamap_load_mbuf;
+	t->_dmamap_load_uio = isadma_bounce_dmamap_load_uio;
+	t->_dmamap_load_raw = isadma_bounce_dmamap_load_raw;
+	t->_dmamap_unload = isadma_bounce_dmamap_unload;
+	t->_dmamap_sync = isadma_bounce_dmamap_sync;
+
+	t->_dmamem_alloc = isadma_bounce_dmamem_alloc;
+	t->_dmamem_free = _bus_dmamem_free;
+	t->_dmamem_map = _bus_dmamem_map;
+	t->_dmamem_unmap = _bus_dmamem_unmap;
+	t->_dmamem_mmap = _bus_dmamem_mmap;
 }

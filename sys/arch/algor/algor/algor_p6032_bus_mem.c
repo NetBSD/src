@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.3 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_bus_mem.c,v 1.1 2001/06/22 06:02:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,58 +36,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+/*
+ * Platform-specific PCI bus memory support for the Algorithmics P-6032.
+ */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
 
-#include <machine/autoconf.h>
+#include <uvm/uvm_extern.h>
 
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h>
-#endif
+#include <machine/locore.h>
 
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
 #include <algor/algor/algor_p6032reg.h>
-#endif
+#include <algor/algor/algor_p6032var.h>
 
-#if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	HD2532_STRIDE		4
-#define	HD2532_NFLASH_OFFSET	0x80
-#define	HD2532_CRAM	(HD2532_NFLASH_OFFSET + (0x18 * HD2532_STRIDE))
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P6032_HDSP2532_BASE + HD2532_CRAM)
-#define	LED(x)		((x) * HD2532_STRIDE)
-#endif
+#define	CHIP		algor_p6032
+
+#define	CHIP_EX_MALLOC_SAFE(v)	(((struct p6032_config *)(v))->ac_mallocsafe)
+#define	CHIP_MEM_EXTENT(v)	(((struct p6032_config *)(v))->ac_mem_ex)
 
 /*
- * led_display:
- *
- *	Set the LED display to the characters provided.
+ * There are actually 3 PCILO memory windows, but PMON configures them
+ * so that they map PCI memory space contiguously.
  */
-void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
-{
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
-#if defined(ALGOR_P6032)	/* XXX Should support these */
-	leds[LED(4)] = ' ';
-	leds[LED(5)] = ' ';
-	leds[LED(6)] = ' ';
-	leds[LED(7)] = ' ';
+/* MEM region 1 */
+#define	CHIP_MEM_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_MEM_W1_BUS_END(v)		0x0bffffffUL
+#define	CHIP_MEM_W1_SYS_START(v)	((u_long)BONITO_PCILO_BASE)
+#define	CHIP_MEM_W1_SYS_END(v)		((u_long)BONITO_PCILO_BASE + \
+					 0x0bffffffUL)
+
+#if 0 /* XXX Should implement access to this via TLB or 64-bit KSEG */
+/* MEM region 2 */
+#define	CHIP_MEM_W2_BUS_START(v)	0x20000000UL
+#define	CHIP_MEM_W2_BUS_END(v)		0xffffffffUL
+#define	CHIP_MEM_W2_SYS_START(v)	((u_long)BONITO_PCIHI_BASE)
+#define	CHIP_MEM_W2_SYS_END(v)		((u_long)BONITO_PCIHI_BASE + \
+					 0xe0000000UL)
 #endif
-}
+
+#include <algor/pci/pci_alignstride_bus_mem_chipdep.c>

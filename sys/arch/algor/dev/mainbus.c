@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2001/06/01 16:00:04 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2001/06/22 06:02:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,6 +108,18 @@ struct mainbusdev mainbusdevs[] = {
 };
 #endif /* ALGOR_P5064 */
 
+#if defined(ALGOR_P6032)
+#include <algor/algor/algor_p6032reg.h>
+#include <algor/algor/algor_p6032var.h>
+
+struct mainbusdev mainbusdevs[] = {
+	{ "cpu",		-1,			-1 },
+	{ "bonito",		BONITO_REG_BASE,	-1 },
+
+	{ NULL,			0,			0 },
+};
+#endif /* ALGOR_P6032 */
+
 int
 mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -156,7 +168,17 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	pc = &p5064_configuration.ac_pc;
-#endif /* ALGOR_P4032 || ALGOR_P5064 */
+#elif defined(ALGOR_P6032)
+	/*
+	 * Reserve the bottom 64K of the I/O spcae for ISA devices.
+	 */
+	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", 0x01000000, 0x0affffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+
+	pc = &p6032_configuration.ac_pc;
+#endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
 	pci_configure_bus(pc, ioext, memext, NULL);
 	extent_destroy(ioext);
@@ -166,6 +188,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if defined(ALGOR_P4032)
 	st = &p4032_configuration.ac_lociot;
 #elif defined(ALGOR_P5064)
+	st = NULL;
+#elif defined(ALGOR_P6032)
 	st = NULL;
 #endif
 
