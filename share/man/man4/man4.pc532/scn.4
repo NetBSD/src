@@ -1,4 +1,4 @@
-.\"	$NetBSD: scn.4,v 1.4 1999/04/06 20:24:43 pk Exp $
+.\"	$NetBSD: scn.4,v 1.5 2001/07/08 17:22:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Philip L. Budne.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ However, because the BRG table has two separate columns of 16 speeds,
 and the table in use is shared between the input and output sides of
 the two channels, not all speeds are available at all times.
 The Counter/Timer will be used, when available to generate additional,
-arbitrary speeds upto 57600 bps but only one C/T is present in each DUART.
+arbitrary speeds up to 57600 bps but only one C/T is present in each DUART.
 .Pp
 The SC26C92 DUART adds two additional BRG modes (each containing two
 16 entry tables with two columns) supporting additional speeds of 450,
@@ -125,7 +125,7 @@ Keep information on latency from time of character input
 in special rxintr routine to time of soft interrupt.
 .It Cd options CONSOLE_SPEED=Bnnn
 .br
-Sets console speed independant of default speed for other ttys.
+Sets console speed independent of default speed for other ttys.
 .It Cd options SCNDEF_CFLAG="CREAD+CS8+HUPCL"
 .br
 Sets default flags for scn tty lines.

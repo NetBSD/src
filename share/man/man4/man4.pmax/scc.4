@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.6 1999/04/06 20:24:50 pk Exp $
+.\"	$NetBSD: scc.4,v 1.7 2001/07/08 17:22:54 wiz Exp $
 .\"
 .Dd August 6, 1996
 .Dt SCC 4 pmax
@@ -42,7 +42,7 @@ Zilog 8530 Serial Communications Controller interface
 .Sh DESCRIPTION
 The
 .Nm
-driver provies support for the Zilog 8530 Serial Communcations
+driver provides support for the Zilog 8530 Serial Communications
 Controller (SCC) via the IOCTL ASIC on DECstation 5000 models
 in the /100, /20, and /240 series.
 Each SCC device has two serial ports.
@@ -71,13 +71,13 @@ On machines with one port like
 .Tn "Personal DECstations" ,
 the single device is
 .Pa ttya .
-On the 
-.Tn "5000/1xx" 
+On the
+.Tn "5000/1xx"
 and
 .Tn "5000/2xx" ,
 the first serial port (default serial console) is
 .Pa ttyc
-and the second port is 
+and the second port is
 .Pa ttya .
 .Sh HISTORY
 The
@@ -98,7 +98,7 @@ tries to hide the hardware mapping, but
 does not.
 Users wanting to use
 .Tn "Ultrix"
-compatible tty names 
+compatible tty names
 .Pa /dev/tty0
 and
 .Pa /dev/tty1

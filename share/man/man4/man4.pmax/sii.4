@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sii.4,v 1.7 2000/07/05 16:13:52 msaitoh Exp $
+.\"	$NetBSD: sii.4,v 1.8 2001/07/08 17:22:54 wiz Exp $
 .\"
 .Dd August 6, 1996
 .Dt SII 4 pmax
@@ -49,7 +49,7 @@ the DECstation 2100, 3100, and 5100, and in the VAXstation 3100.
 The
 .Nm
 is a medium-performance implementation of the SCSI-I common command set
-supporting synchronous and asychronous SCSI devices.
+supporting synchronous and asynchronous SCSI devices.
 .Pp
 The SII cabling is unusual: the bulkhead connector is very similar
 to a standard submicro wide SCSI-II connector, but has the other gender.
@@ -81,8 +81,8 @@ higher-level layer, and the
 .Nm rz
 and
 .Nm tz
-devices, which first appeared in 
-.Bx 4.4 /pmax.
+devices, which first appeared in
+.Bx 4.4 /pmax .
 It should be re-written to support the
 .Nm scsibus
 machine-independent higher-level SCSI layer and the
