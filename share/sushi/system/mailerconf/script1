@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script1,v 1.3 2004/03/09 21:36:37 garbled Exp $
+# $NetBSD: script1,v 1.4 2005/01/18 18:12:55 peter Exp $
 
 BIGLIST="exim postfix-current sendmail88"
 MAILERCONF="/etc/mailer.conf"
@@ -33,8 +33,7 @@ fi
 for i in $BIGLIST
 do
 	pkg_info -e $i >/dev/null
-	if [ "$?" = "0" ]; then
+	if [ $? -eq 0 ]; then
 		echo "$i"
 	fi
 done
-

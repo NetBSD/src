@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script,v 1.2 2004/03/09 21:36:37 garbled Exp $
+# $NetBSD: script,v 1.3 2005/01/18 18:12:56 peter Exp $
 
 BACKUPDIR="/var/sushi"
 CONFFILE="/etc/usermgmt.conf"
@@ -19,8 +19,12 @@ if [ ! -f $CONFFILE ]; then
 	chmod 644 $CONFFILE
 fi
 
-# backup
+# create a backup
 cp -p $CONFFILE $BACKUP
+if [ $? -ne 0 ]; then
+	echo "Can't create a backup"
+	exit 1
+fi
 
 BIGLIST="group class base_dir skel_dir shell inactive expire preserve \
 password range"
@@ -48,7 +52,7 @@ if [ $? -eq 0 ]; then
 	echo ""
 	cat $CONFFILE
 else
-	echo "Failed"
+	echo "Failed to write a new $CONFFILE"
 fi
 
 rm -f $BACKUP.new
