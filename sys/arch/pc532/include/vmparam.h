@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 1998/09/02 19:17:23 matthias Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 1999/01/15 07:43:48 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -147,6 +147,12 @@
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xF8000000)
 /* APTDPTDI << PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF800000)
+
+/* XXX max. amount of KVM to be used by buffers. */
+#ifndef VM_MAX_KERNEL_BUF
+#define VM_MAX_KERNEL_BUF \
+	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
