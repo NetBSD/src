@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2002/10/17 11:53:33 scw Exp $	*/
+/*	$NetBSD: memset.S,v 1.2 2002/10/19 08:53:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,6 +58,7 @@ ENTRY(memset)
 #endif
 	mshflo.b r3, r3, r3
 	ptabs/u	r18, tr0
+	beq/u	r4, r63, tr0		/* Bail now if "bytes" is zero */
 	andi	r2, 7, r0
 	pta/u	Laligned, tr1
 	mperm.w	r3, r63, r3
