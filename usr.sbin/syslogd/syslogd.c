@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.53 2002/05/25 14:46:01 wiz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.54 2002/06/09 19:59:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.53 2002/05/25 14:46:01 wiz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.54 2002/06/09 19:59:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1013,11 +1013,7 @@ cvthname(struct sockaddr_storage *f)
 {
 	int error;
 	char *p;
-#ifdef KAME_SCOPEID
-	const int niflag = NI_DGRAM | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_DGRAM;
-#endif
 	static char host[NI_MAXHOST], ip[NI_MAXHOST];
 
 	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
