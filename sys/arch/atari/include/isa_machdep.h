@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 2000/02/07 22:07:29 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8 2000/06/01 00:04:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ typedef struct atari_isa_chipset *isa_chipset_tag_t;
 typedef struct	{
 	int		slot;	/* 1/2, determines interrupt line	*/
 	int		ipl;	/* ipl requested			*/
-	int		(*ifunc) __P((void *));	/* function to call	*/
+	int		(*ifunc)(void *);	/* function to call	*/
 	void		*iarg;	/* argument for 'ifunc'			*/
 	struct intrhand	*ihand;	/* save this for disestablishing	*/
 } isa_intr_info_t;
@@ -93,12 +93,12 @@ typedef struct	{
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
-void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
-	    int level, int (*)(void *), void *ih_arg));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
+void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*)(void *), void *ih_arg);
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))

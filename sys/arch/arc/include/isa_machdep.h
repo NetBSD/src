@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2000/01/23 21:01:56 soda Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 2000/06/01 00:04:52 cgd Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -47,11 +47,11 @@ typedef struct arc_isa_bus *isa_chipset_tag_t;
 struct arc_isa_bus {
         void    *ic_data;
 
-        void    (*ic_attach_hook) __P((struct device *, struct device *,
-                    struct isabus_attach_args *));
-        void    *(*ic_intr_establish) __P((isa_chipset_tag_t, int, int, int,
-                    int (*)(void *), void *));
-        void    (*ic_intr_disestablish) __P((isa_chipset_tag_t, void *));
+        void    (*ic_attach_hook)(struct device *, struct device *,
+                    struct isabus_attach_args *);
+        void    *(*ic_intr_establish)(isa_chipset_tag_t, int, int, int,
+                    int (*)(void *), void *);
+        void    (*ic_intr_disestablish)(isa_chipset_tag_t, void *);
 };
 
 
@@ -65,8 +65,8 @@ struct arc_isa_bus {
 #define isa_intr_disestablish(c, h)                                     \
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
 
-void sysbeepstop __P((void *));
-void sysbeep __P((int, int));
+void sysbeepstop(void *);
+void sysbeep(int, int);
 
 
 /*
@@ -75,7 +75,7 @@ void sysbeep __P((int, int));
 
 struct intrhand {
 	struct	intrhand *ih_next;
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void    *ih_arg;
 	u_long  ih_count;
 	int     ih_level;

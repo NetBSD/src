@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2000/02/29 15:21:30 nonaka Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2000/06/01 00:04:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,11 +109,11 @@ struct isabus_attach_args;	/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg);
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
@@ -239,6 +239,6 @@ extern paddr_t isaphysmem;
 /*
  * Miscellanous functions.
  */
-void isabeep __P((int, int));		/* beep with the system speaker */
+void isabeep(int, int);		/* beep with the system speaker */
 
 #endif /* _PREP_ISA_MACHDEP_H_ XXX */

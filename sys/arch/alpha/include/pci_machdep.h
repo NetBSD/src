@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4 2000/06/01 00:04:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -49,27 +49,27 @@ struct pci_attach_args;
  */
 struct alpha_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook) __P((struct device *,
-			    struct device *, struct pcibus_attach_args *));
-	int		(*pc_bus_maxdevs) __P((void *, int));
-	pcitag_t	(*pc_make_tag) __P((void *, int, int, int));
-	pcireg_t	(*pc_conf_read) __P((void *, pcitag_t, int));
-	void		(*pc_conf_write) __P((void *, pcitag_t, int, pcireg_t));
+	void		(*pc_attach_hook)(struct device *,
+			    struct device *, struct pcibus_attach_args *);
+	int		(*pc_bus_maxdevs)(void *, int);
+	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
+	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
-			    pci_intr_handle_t *));
-	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
-	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *));
-	void		(*pc_intr_disestablish) __P((void *, void *));
+	int		(*pc_intr_map)(void *, pcitag_t, int, int,
+			    pci_intr_handle_t *);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
+			    int, int (*)(void *), void *);
+	void		(*pc_intr_disestablish)(void *, void *);
 
 	/* alpha-specific */
-	void		(*pc_decompose_tag) __P((void *, pcitag_t, int *,
-			    int *, int *));
-	void		*(*pc_pciide_compat_intr_establish) __P((void *,
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
+	void		*(*pc_pciide_compat_intr_establish)(void *,
 			    struct device *, struct pci_attach_args *, int,
-			    int (*)(void *), void *));
+			    int (*)(void *), void *);
 };
 
 /*
@@ -98,8 +98,8 @@ struct alpha_pci_chipset {
  * alpha-specific PCI functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
-	    pci_chipset_tag_t, int, int, int));
+void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, int, int, int);
 #define	alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
