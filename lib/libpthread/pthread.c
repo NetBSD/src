@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.17 2003/04/23 19:35:47 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.18 2003/04/28 17:46:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.17 2003/04/23 19:35:47 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.18 2003/04/28 17:46:30 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -147,7 +147,6 @@ pthread_init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 
 	/* Start subsystems */
-	pthread__alarm_init();
 	pthread__signal_init();
 	PTHREAD_MD_INIT
 #ifdef PTHREAD__DEBUG
@@ -191,6 +190,13 @@ pthread__start(void)
 	int i, ret;
 
 	self = pthread__self(); /* should be the "main()" thread */
+
+	/*
+	 * Per-process timers are cleared by fork(); despite the
+	 * various restrictions on fork() and threads, it's legal to
+	 * fork() before creating any threads. 
+	 */
+	pthread__alarm_init();
 
 	pthread_atfork(NULL, NULL, pthread__child_callback);
 
