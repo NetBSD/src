@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.7 2003/08/25 17:50:29 uwe Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.8 2003/11/13 03:09:29 chs Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.7 2003/08/25 17:50:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.8 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,14 +83,8 @@ bt_getcmap(p, cm, cmsize, uspace)
 		return (EINVAL);
 
 	if (uspace) {
-		/* Check user buffers for appropriate access */
-		if (!uvm_useracc(p->red, count, B_WRITE) ||
-		    !uvm_useracc(p->green, count, B_WRITE) ||
-		    !uvm_useracc(p->blue, count, B_WRITE))
-			return (EFAULT);
-
 		/* Allocate temporary buffer for color values */
-		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		cbuf = malloc(3 * count * sizeof(char), M_TEMP, M_WAITOK);
 		r = cbuf;
 		g = r + count;
 		b = g + count;
@@ -148,14 +142,8 @@ bt_putcmap(p, cm, cmsize, uspace)
 		return (EINVAL);
 
 	if (uspace) {
-		/* Check user buffers for appropriate access */
-		if (!uvm_useracc(p->red, count, B_READ) ||
-		    !uvm_useracc(p->green, count, B_READ) ||
-		    !uvm_useracc(p->blue, count, B_READ))
-			return (EFAULT);
-
 		/* Allocate temporary buffer for color values */
-		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		cbuf = malloc(3 * count * sizeof(char), M_TEMP, M_WAITOK);
 		r = cbuf;
 		g = r + count;
 		b = g + count;

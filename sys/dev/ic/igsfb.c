@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.16 2003/11/07 15:02:28 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.17 2003/11/13 03:09:29 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.16 2003/11/07 15:02:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.17 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,25 +756,31 @@ igsfb_set_cmap(dc, p)
 	const struct wsdisplay_cmap *p;
 {
 	u_int index, count;
+	uint8_t r[IGS_CMAP_SIZE];
+	uint8_t g[IGS_CMAP_SIZE];
+	uint8_t b[IGS_CMAP_SIZE];
+	int error;
 
 	index = p->index;
 	count = p->count;
-
 	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
+	error = copyin(p->red, &r[index], count);
+	if (error)
+		return error;
+	error = copyin(p->green, &g[index], count);
+	if (error)
+		return error;
+	error = copyin(p->blue, &b[index], count);
+	if (error)
+		return error;
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-
-	copyin(p->red, &dc->dc_cmap.r[index], count);
-	copyin(p->green, &dc->dc_cmap.g[index], count);
-	copyin(p->blue, &dc->dc_cmap.b[index], count);
+	memcpy(&dc->dc_cmap.r[index], &r[index], count);
+	memcpy(&dc->dc_cmap.g[index], &g[index], count);
+	memcpy(&dc->dc_cmap.b[index], &b[index], count);
 
 	/* propagate changes to the device */
 	igsfb_update_cmap(dc, index, count);
-
 	return (0);
 }
 
@@ -896,23 +902,28 @@ igsfb_set_cursor(dc, p)
 	struct igs_hwcursor *cc;
 	struct wsdisplay_curpos pos, hot;
 	u_int v, index, count, icount, iwidth;
+	uint8_t r[2], g[2], b[2], image[512], mask[512];
+	int error;
 
 	cc = &dc->dc_cursor;
 	v = p->which;
+	index = count = icount = iwidth = 0;	/* XXX: gcc */
 
-	index =  count = icount = iwidth = 0;	/* XXX: gcc */
-
-	/* verify that the new cursor colormap is valid */
+	/* copy in the new cursor colormap */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
-
-		if (!uvm_useracc(p->cmap.red, count, B_READ)
-		    || !uvm_useracc(p->cmap.green, count, B_READ)
-		    || !uvm_useracc(p->cmap.blue, count, B_READ))
-			return (EFAULT);
+		error = copyin(p->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.blue, &b[index], count);
+		if (error)
+			return error;
 	}
 
 	/* verify that the new cursor data are valid */
@@ -923,9 +934,12 @@ igsfb_set_cursor(dc, p)
 
 		iwidth = (p->size.x + 7) >> 3; /* bytes per scan line */
 		icount = iwidth * p->size.y;
-		if (!uvm_useracc(p->image, icount, B_READ)
-		    || !uvm_useracc(p->mask, icount, B_READ))
-			return (EFAULT);
+		error = copyin(p->image, image, icount);
+		if (error)
+			return error;
+		error = copyin(p->mask, mask, icount);
+		if (error)
+			return error;
 	}
 
 	/* enforce that the position is within screen bounds */
@@ -957,28 +971,23 @@ igsfb_set_cursor(dc, p)
 			nhot->y = nsize->y - 1;
 	}
 
-
-	/* arguments verified, copy data to the driver's cursor info */
+	/* copy data to the driver's cursor info */
 	if (v & WSDISPLAY_CURSOR_DOCUR)
 		dc->dc_curenb = p->enable;
-
 	if (v & WSDISPLAY_CURSOR_DOPOS)
 		cc->cc_pos = pos; /* local copy, possibly corrected */
-
 	if (v & WSDISPLAY_CURSOR_DOHOT)
 		cc->cc_hot = hot; /* local copy, possibly corrected */
-
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		copyin(p->cmap.red, &cc->cc_color[index], count);
-		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
-		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
+		memcpy(&cc->cc_color[index], &r[index], count);
+		memcpy(&cc->cc_color[index + 2], &g[index], count);
+		memcpy(&cc->cc_color[index + 4], &b[index], count);
 	}
-
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int trailing_bits;
 
-		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_mask, icount);
+		memcpy(cc->cc_image, image, icount);
+		memcpy(cc->cc_mask, mask, icount);
 		cc->cc_size = p->size;
 
 		/* clear trailing bits in the "partial" mask bytes */

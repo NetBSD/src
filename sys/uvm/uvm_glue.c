@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.72 2003/11/03 04:39:11 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.73 2003/11/13 03:09:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.72 2003/11/03 04:39:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.73 2003/11/13 03:09:30 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -141,33 +141,6 @@ uvm_kernacc(addr, len, rw)
 	if (!readbuffers && rv && (eaddr > (vaddr_t)buffers &&
 			     saddr < (vaddr_t)buffers + MAXBSIZE * nbuf))
 		rv = FALSE;
-	return(rv);
-}
-
-/*
- * uvm_useracc: can the user access it?
- *
- * - called from physio() and sys___sysctl().
- */
-
-boolean_t
-uvm_useracc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
-{
-	struct vm_map *map;
-	boolean_t rv;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
-
-	/* XXX curproc */
-	map = &curproc->p_vmspace->vm_map;
-
-	vm_map_lock_read(map);
-	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
-	    round_page((vaddr_t)addr + len), prot);
-	vm_map_unlock_read(map);
-
 	return(rv);
 }
 
