@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.62.6.1 2002/03/22 18:29:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62.6.1 2002/03/22 18:29:52 eeh Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Ex
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/properties.h>
 #include <machine/limits.h>
 
 #include "opt_userconf.h"
@@ -103,6 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62 2002/02/15 11:18:26 simonb Ex
 /*
  * Autoconfiguration subroutines.
  */
+
+static struct device *dev_create(struct device *, ssize_t, int);
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -122,7 +125,9 @@ struct matchinfo {
 };
 
 static char *number(char *, int);
-static void mapply(struct matchinfo *, struct cfdata *);
+static void mapply(struct matchinfo *, struct cfdata *, struct device *);
+static void locset(struct device *, struct cfdata *);
+static void locrm(struct device *, struct cfdata *);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
@@ -146,6 +151,9 @@ struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 
 __volatile int config_pending;		/* semaphore for mountroot */
 
+/* device properties database */
+static propdb_t devpropdb;
+
 /*
  * Configure the system's hardware.
  */
@@ -156,6 +164,8 @@ configure(void)
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&alldevs); 
+
+	devpropdb = propdb_create("devprop");
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -186,26 +196,72 @@ configure(void)
 }
 
 /*
+ * Set locators as properties on device node.
+ */
+static void
+locset(struct device *d, struct cfdata *cf)
+{
+	int i;
+	int type = PROP_CONST|PROP_INT;
+	char buf[32];
+
+	for (i=0; cf->cf_locnames[i]; i++) {
+		sprintf(buf, "loc-%s", cf->cf_locnames[i]);
+		dev_setprop(d, buf, &cf->cf_loc[i], 
+			    sizeof(int), type, (!cold));
+	}
+}
+
+/*
+ * Remove locator properties from device node.
+ */
+static void
+locrm(struct device *d, struct cfdata *cf)
+{
+	int i;
+	char buf[32];
+
+	for (i=0; cf->cf_locnames[i]; i++) {
+		sprintf(buf, "loc-%s", cf->cf_locnames[i]);
+		dev_delprop(d, buf);
+	}
+}
+
+/*
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
  */
 static void
-mapply(struct matchinfo *m, struct cfdata *cf)
+mapply(struct matchinfo *m, struct cfdata *cf, struct device *child)
 {
 	int pri;
+	void *aux = m->aux;
 
+	if ((ssize_t)cf->cf_attach->ca_devsize < 0) {
+		/* New-style device driver */
+		if (!child)
+			panic("mapply: no device for new-style driver\n");
+		locset(child, cf);
+		child->dv_private = aux;
+		aux = child;
+	}
 	if (m->fn != NULL)
+		/* Someday the submatch function should use properties too. */
 		pri = (*m->fn)(m->parent, cf, m->aux);
 	else {
 	        if (cf->cf_attach->ca_match == NULL) {
 			panic("mapply: no match function for '%s' device\n",
 			    cf->cf_driver->cd_name);
 		}
-		pri = (*cf->cf_attach->ca_match)(m->parent, cf, m->aux);
+		pri = (*cf->cf_attach->ca_match)(m->parent, cf, aux);
 	}
 	if (pri > m->pri) {
 		m->match = cf;
 		m->pri = pri;
+	}
+	if (child) {
+		locrm(child, cf);
+		child->dv_private = NULL;
 	}
 }
 
@@ -221,7 +277,8 @@ mapply(struct matchinfo *m, struct cfdata *cf)
  * can be ignored).
  */
 struct cfdata *
-config_search(cfmatch_t fn, struct device *parent, void *aux)
+config_search_ad(cfmatch_t fn, struct device *parent, void *aux,
+		 struct device *child)
 {
 	struct cfdata *cf;
 	short *p;
@@ -232,6 +289,7 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
+
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		/*
 		 * Skip cf if no longer eligible, otherwise scan through
@@ -241,7 +299,7 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
-				mapply(&m, cf);
+				mapply(&m, cf, child);
 	}
 	return (m.match);
 }
@@ -251,7 +309,8 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
  * This is much like config_search, but there is no parent.
  */
 struct cfdata *
-config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
+config_rootsearch_ad(cfmatch_t fn, const char *rootname, void *aux, 
+		     struct device *root)
 {
 	struct cfdata *cf;
 	short *p;
@@ -270,7 +329,7 @@ config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 	for (p = cfroots; *p >= 0; p++) {
 		cf = &cfdata[*p];
 		if (strcmp(cf->cf_driver->cd_name, rootname) == 0)
-			mapply(&m, cf);
+			mapply(&m, cf, root);
 	}
 	return (m.match);
 }
@@ -286,13 +345,18 @@ static const char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(struct device *parent, void *aux, cfprint_t print,
-    cfmatch_t submatch)
+config_found_sad(struct device *parent, void *aux, cfprint_t print,
+    cfmatch_t submatch, struct device *d)
 {
 	struct cfdata *cf;
 
-	if ((cf = config_search(submatch, parent, aux)) != NULL)
-		return (config_attach(parent, cf, aux, print));
+	/* 
+	 * Creating the dummy device here is really optional.  But
+	 * it allows old-style bus drivers to attach new-style children.
+	 */
+	if (!d) d = dev_create(ROOT, 0, cold ? M_NOWAIT : M_WAITOK);
+	if ((cf = config_search_ad(submatch, parent, aux, d)) != NULL)
+		return (config_attach_ad(parent, cf, aux, print, d));
 	if (print)
 		printf("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	return (NULL);
@@ -305,9 +369,11 @@ struct device *
 config_rootfound(const char *rootname, void *aux)
 {
 	struct cfdata *cf;
+	struct device *root;
 
-	if ((cf = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
-		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
+	root = dev_create(ROOT, 0, cold ? M_NOWAIT : M_WAITOK);
+	if ((cf = config_rootsearch_ad((cfmatch_t)NULL, rootname, aux, root)) != NULL)
+		return (config_attach_ad(ROOT, cf, aux, (cfprint_t)NULL, root));
 	printf("root device %s not configured\n", rootname);
 	return (NULL);
 }
@@ -324,6 +390,30 @@ number(char *ep, int n)
 	}
 	*--ep = n + '0';
 	return (ep);
+}
+
+/*
+ * Allocate an empty device node.  If `parent' is provided then the
+ * new node is attached to the tree under `parent'.  If `size'
+ * is provided, then the new device node is allocated to be that
+ * size.
+ */
+static struct device *
+dev_create(struct device *parent, ssize_t size, int wait) {
+	struct device * dev;
+
+	/* get memory for all device vars */
+	if (size == 0) 
+		size = sizeof(struct device);
+	dev = (struct device *)malloc(size, M_DEVBUF, wait);
+	if (!dev)
+	    panic("dev_create: memory allocation for device failed");
+	memset(dev, 0, size);
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+	dev->dv_class = DV_EMPTY;
+	if (parent)
+		dev->dv_parent = parent;
+	return (dev);
 }
 
 /*
@@ -366,21 +456,22 @@ config_makeroom(int n, struct cfdriver *cd)
  * Attach a found device.  Allocates memory for device variables.
  */
 struct device *
-config_attach(struct device *parent, struct cfdata *cf, void *aux,
-	cfprint_t print)
+config_attach_ad(struct device *parent, struct cfdata *cf, void *aux,
+	cfprint_t print, struct device *propdev)
 {
 	struct device *dev;
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
+	ssize_t softsize;
 	const char *xunit;
 	int myunit;
 	char num[10];
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
-	if (ca->ca_devsize < sizeof(struct device))
-		panic("config_attach");
+	softsize = ca->ca_devsize;
+
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
 	if (cf->cf_fstate == FSTATE_STAR) {
 		for (myunit = cf->cf_unit; myunit < cd->cd_ndevs; myunit++)
@@ -410,19 +501,47 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (!dev)
-	    panic("config_attach: memory allocation for device softc failed");
-	memset(dev, 0, ca->ca_devsize);
-	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+	if (softsize < 0) {
+		/* New-style device */
+		if (propdev) {
+			/* Great, we can use the propdev. */
+			dev = propdev;
+		} else {
+			dev = dev_create(parent, 0, cold ? M_NOWAIT : M_WAITOK);
+			if (!dev)
+				panic("config_attach: memory allocation for device failed");
+		}
+		if (softsize < 0) softsize = -softsize;
+		if (softsize < sizeof(struct device)) panic("config_attach");
+		dev->dv_private = malloc(softsize, M_DEVBUF,
+					 cold ? M_NOWAIT : M_WAITOK);
+		if (!dev->dv_private)
+			panic("config_attach: memory allocation for device softc failed");
+		memset(dev->dv_private, 0, softsize);
+		dev->dv_flags |= DVF_SOFTC;
+	} else {
+		dev = (struct device *)malloc(softsize, M_DEVBUF,
+					      cold ? M_NOWAIT : M_WAITOK);
+		if (!dev)
+			panic("config_attach: memory allocation for device softc failed");
+		memset(dev, 0, softsize);
+		TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+		dev->dv_private = dev;		/* Point private to ourself... */
+	}
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_unit = myunit;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
+	if (propdev && propdev != dev) {
+		/* Inherit (steal) properties from dummy device */
+		dev_copyprops(propdev, dev, (!cold));
+		dev_delprop(propdev, NULL);
+		/* destroy propdev */
+		config_detach(propdev, 0);
+	}
 
 	if (parent == ROOT)
 		printf("%s (root)", dev->dv_xname);
@@ -482,6 +601,20 @@ config_detach(struct device *dev, int flags)
 #endif
 	int rv = 0, i;
 
+	if (dev->dv_class == DV_EMPTY) {
+		/*
+		 * The device is a dummy that never fully attached.
+		 * Simply remove it from the global list and free it.
+		 */
+		TAILQ_REMOVE(&alldevs, dev, dv_list);
+		dev_delprop(dev, NULL);
+		if (dev->dv_flags & DVF_SOFTC)
+			/* Separately allocated softc */
+			free(dev->dv_private, M_DEVBUF);
+		free(dev, M_DEVBUF);
+		return (0);
+	}
+	
 	cf = dev->dv_cfdata;
 #ifdef DIAGNOSTIC
 	if (cf->cf_fstate != FSTATE_FOUND && cf->cf_fstate != FSTATE_STAR)
@@ -489,7 +622,7 @@ config_detach(struct device *dev, int flags)
 #endif
 	ca = cf->cf_attach;
 	cd = cf->cf_driver;
-
+	
 	/*
 	 * Ensure the device is deactivated.  If the device doesn't
 	 * have an activation entry point, we allow DVF_ACTIVE to
@@ -498,7 +631,7 @@ config_detach(struct device *dev, int flags)
 	 */
 	if (ca->ca_activate != NULL)
 		rv = config_deactivate(dev);
-
+	
 	/*
 	 * Try to detach the device.  If that's not possible, then
 	 * we either panic() (for the forced but failed case), or
@@ -515,13 +648,13 @@ config_detach(struct device *dev, int flags)
 			return (rv);
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
-			    dev->dv_xname, rv);
+			      dev->dv_xname, rv);
 	}
-
+	
 	/*
 	 * The device has now been successfully detached.
 	 */
-
+	
 #ifdef DIAGNOSTIC
 	/*
 	 * Sanity: If you're successfully detached, you should have no
@@ -530,15 +663,15 @@ config_detach(struct device *dev, int flags)
 	 * the list.)
 	 */
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
-	    d = TAILQ_NEXT(d, dv_list)) {
+	     d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev) {
 			printf("config_detach: detached device %s"
-			    " has children %s\n", dev->dv_xname, d->dv_xname);
+			       " has children %s\n", dev->dv_xname, d->dv_xname);
 			panic("config_detach");
 		}
 	}
 #endif
-
+	
 	/*
 	 * Mark cfdata to show that the unit can be reused, if possible.
 	 */
@@ -569,9 +702,15 @@ config_detach(struct device *dev, int flags)
 	/*
 	 * Remove from cfdriver's array, tell the world, and free softc.
 	 */
-	cd->cd_devs[dev->dv_unit] = NULL;
-	if ((flags & DETACH_QUIET) == 0)
-		printf("%s detached\n", dev->dv_xname);
+	if (cd) {
+		cd->cd_devs[dev->dv_unit] = NULL;
+		if ((flags & DETACH_QUIET) == 0)
+			printf("%s detached\n", dev->dv_xname);
+	}
+	dev_delprop(dev, NULL);
+	if (dev->dv_flags & DVF_SOFTC)
+		/* Separately allocated softc */
+		free(dev->dv_private, M_DEVBUF);
 	free(dev, M_DEVBUF);
 
 	/*
@@ -787,6 +926,90 @@ evcnt_detach(struct evcnt *ev)
 {
 
 	TAILQ_REMOVE(&allevents, ev, ev_list);
+}
+
+/*
+ * Device property management routines.
+ */
+#ifdef DEBUG
+int devprop_debug = 0;
+#endif
+
+/*
+ * Create a dummy device you can attach properties to.
+ */
+struct device *
+dev_config_create(struct device *parent, int wait)
+{
+	struct device *dev;
+
+	dev = dev_create(parent, 0, wait ? M_WAITOK : M_NOWAIT);
+	return (dev);
+}
+
+
+int 
+dev_setprop(struct device *dev, const char *name, void *val, 
+			size_t len, int type, int wait)
+{
+#ifdef DEBUG
+	if (devprop_debug)
+		printf("dev_setprop(%p, %s, %p %s, %ld, %x, %d)\n", 
+		       dev, name, val, (PROP_TYPE(type) == PROP_STRING) ? 
+		       (char *)val : "", len, type, wait);
+#endif
+
+	return (prop_set(devpropdb, dev, name, val, len, type, wait));
+}
+
+size_t 
+dev_getprop(struct device *dev, const char *name, void *val, 
+			size_t len, int *type, int search)
+{
+	ssize_t rv;
+
+#ifdef DEBUG
+	if (devprop_debug) {
+		printf("dev_getprop(%p, %s, %p, %ld, %p, %d)\n", 
+		       dev, name, val, len, type, search);
+	}
+#endif
+	rv = prop_get(devpropdb, dev, name, val, len, type);
+	if (rv == -1) {
+		/* Not found -- try md_getprop */
+		rv = dev_mdgetprop(dev->dv_parent, name, val,
+			len, type);
+	}
+	if ((rv == -1) && search) {
+		if (dev->dv_parent)
+			/* Tail recursion -- there should be no stack growth. */
+			return (dev_getprop(dev->dv_parent, name,
+					    val, len, type, search));
+	}
+#ifdef DEBUG
+	if (devprop_debug && (rv == -1)) {
+		printf("%s no found\n", name);
+	}
+#endif
+	return (rv);
+}
+
+int 
+dev_delprop(struct device *dev, const char *name)
+{
+
+#ifdef DEBUG_N
+	if (devprop_debug)
+		printf("dev_delprop(%p, %s, %x)\n", dev, name);
+#endif
+	return (prop_delete(devpropdb, dev, name));
+}
+
+
+int 
+dev_copyprops(struct device *src, struct device *dest, int wait)
+{
+	return (prop_copy(devpropdb, src, dest, wait));
 }
 
 #ifdef DDB
