@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.18 1999/02/18 22:31:32 mycroft Exp $
+$NetBSD: isapnpdevs,v 1.19 1999/02/24 15:37:34 rh Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ devcompat	wdc	PNP0600		Western Digital Compatible Controller
  * wss
  */
 devlogic	wss	CSC0000		Windows Sound System
+devlogic	wss	CSCA800		Terratec EWS64 CoDec
 devlogic	wss	ASB1611		AdLib NSC 16 PNP
 
 /*
