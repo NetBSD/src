@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.45 1994/02/23 20:15:28 mycroft Exp $
+ *	$Id: pccons.c,v 1.46 1994/02/23 22:20:40 mycroft Exp $
  */
 
 /*
@@ -315,11 +315,21 @@ pcprobe(dev)
 	}
 
 	/* Reset the keyboard. */
-	if (!kbd_cmd(KBC_RESET, 1))
+	if (!kbd_cmd(KBC_RESET, 1)) {
 		printf("pcprobe: reset error 1\n");
+		goto lose;
+	}
 	while ((inb(KBSTATP) & KBS_DIB) == 0);
-	if (inb(KBDATAP) != KBR_RSTDONE)
+	if (inb(KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error 2\n");
+		goto lose;
+	}
+
+lose:
+	/*
+	 * Technically, we should probably fail the probe.  But we'll be nice
+	 * and allow keyboard-less machines to boot with the console.
+	 */
 
 	return 16;
 }
