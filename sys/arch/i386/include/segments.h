@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.8 1994/11/05 03:20:36 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.9 1994/11/08 23:09:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990 William F. Jolitz
@@ -43,6 +43,9 @@
  * 386 Segmentation Data Structures and definitions
  *	William F. Jolitz (william@ernie.berkeley.edu) 6/20/1989
  */
+
+#ifndef _I386_SEGMENTS_H_
+#define _I386_SEGMENTS_H_
 
 #if __GNUC__ >= 2
 #pragma pack(1)
@@ -234,3 +237,5 @@ void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *)
 #if __GNUC__ >= 2
 #pragma pack(4)
 #endif
+
+#endif /* _I386_SEGMENTS_H_ */
