@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.4 1998/06/21 23:23:40 tv Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.5 1998/06/24 18:49:12 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,31 +41,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
 #include <sys/buf.h>
-#include <sys/map.h>
 #include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
 #include <vm/vm.h>
-#include <sys/sysctl.h>
-#include <sys/syscallargs.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -75,7 +55,6 @@
 
 #include <vm/vm_kern.h>
 
-#include <machine/signal.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
@@ -83,10 +62,8 @@
 #include <machine/pio.h>
 #include <machine/pte.h>
 #include <machine/undefined.h>
-#include <machine/rtc.h>
 
 #include "ipkdb.h"
-#include "md.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
@@ -112,24 +89,18 @@ extern pv_addr_t kernelstack;
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 extern u_int undefined_handler_address;
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-extern int bufpages;
 
 /*
  *  Imported routines
  */
+extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
-#ifdef PMAP_DEBUG
-extern void pmap_debug	__P((int level));
-#endif
+extern void consinit		__P((void));
 #ifdef	DDB
 extern void db_machine_init     __P((void));
 #endif
-extern u_long strtoul		__P((const char *s, char **ptr, int base));
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 
@@ -140,12 +111,9 @@ void	ofbus_attach __P((struct device *, struct device *, void *));
 BootConfig bootconfig;
 char *boot_path;
 char *boot_args;
-int debug_flags;
-int max_processes;
-int cpu_cache;
-#if NMD > 0
-u_int memory_disc_size;
-#endif
+#ifndef PMAP_STATIC_L1S
+int max_processes = 64;			/* Default number */
+#endif	/* !PMAP_STATIC_L1S */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 
@@ -165,7 +133,7 @@ u_int cpu_reset_address = 0;
  * cleaning between the two banks.
  * The cache cleaning code requires requires 2 banks aligned
  * on total size boundry so the banks can be alternated by
- * eorring the size bit (assumes the bank size is a power of 2)
+ * xorring the size bit (assumes the bank size is a power of 2)
  */
 extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
@@ -179,18 +147,19 @@ struct cfattach ofbus_root_ca = {
  *  Exported routines
  */
 /* Move to header file? */
-extern void boot		__P((int, char *));
+extern void cpu_reboot		__P((int, char *));
 extern vm_offset_t initarm	__P((ofw_handle_t));
-extern void consinit		__P((void));
-extern void process_kernel_args	__P((void));
 extern void ofrootfound		__P((void));
+
+/* Local routines */
+static void process_kernel_args	__P((void));
 
 
 /**************************************************************/
 
 
 /*
- * void boot(int howto, char *bootstr)
+ * void cpu_reboot(int howto, char *bootstr)
  *
  * Reboots the system, in evsent of:
  *   - reboot system call
@@ -199,13 +168,13 @@ extern void ofrootfound		__P((void));
 
 void
 cpu_reboot(howto, bootstr)
-    int howto;
-    char *bootstr;
+	int howto;
+	char *bootstr;
 {
-    /* Just call OFW common routine. */
-    ofw_boot(howto, bootstr);
+	/* Just call OFW common routine. */
+	ofw_boot(howto, bootstr);
 
-    OF_boot("not reached -- stupid compiler");
+	OF_boot("not reached -- stupid compiler");
 }
 
 /*
@@ -226,105 +195,107 @@ cpu_reboot(howto, bootstr)
  */
 vm_offset_t
 initarm(ofw_handle)
-    ofw_handle_t ofw_handle;
+	ofw_handle_t ofw_handle;
 {
-  vm_offset_t  pclean;
-  vm_offset_t  isa_io_physaddr, isa_mem_physaddr;
-  vm_offset_t  isa_io_virtaddr, isa_mem_virtaddr;
-  vm_offset_t  isadmaphysbufs;
-  fiqhandler_t fiqhandler;
-  extern void  shark_fiq     __P((void));
-  extern void  shark_fiq_end __P((void));
+	vm_offset_t  pclean;
+	vm_offset_t  isa_io_physaddr, isa_mem_physaddr;
+	vm_offset_t  isa_io_virtaddr, isa_mem_virtaddr;
+	vm_offset_t  isadmaphysbufs;
+	fiqhandler_t fiqhandler;
+	extern void  shark_fiq     __P((void));
+	extern void  shark_fiq_end __P((void));
 
-    /* Don't want to get hit with interrupts 'til we're ready. */
-    (void)disable_interrupts(I32_bit | F32_bit);
+	/* Don't want to get hit with interrupts 'til we're ready. */
+	(void)disable_interrupts(I32_bit | F32_bit);
 
-    set_cpufuncs();
+	set_cpufuncs();
 
-    /* XXX - set these somewhere else? -JJK */
-    max_processes = 64;
-    debug_flags = 0;
-    boothowto = 0;
-    cpu_cache =	0x3;	    /* IC_ENABLE | DC_ENABLE | WBUF_ENABLE */
+	/* XXX - set these somewhere else? -JJK */
+	boothowto = 0;
 
-    /* Init the OFW interface. */
-    /* MUST do this before invoking any OFW client services! */
-    ofw_init(ofw_handle);
+	/* Init the OFW interface. */
+	/* MUST do this before invoking any OFW client services! */
+	ofw_init(ofw_handle);
 
-    /* Configure ISA stuff: must be done before consinit */
-    ofw_configisa(&isa_io_physaddr, &isa_mem_physaddr);
+	/* Configure ISA stuff: must be done before consinit */
+	ofw_configisa(&isa_io_physaddr, &isa_mem_physaddr);
 
-    /* Map-in ISA I/O and memory space. */
-    /* XXX - this should be done in the isa-bus attach routine! -JJK */
-    isa_mem_virtaddr = ofw_map(isa_mem_physaddr, NBPD, 0);
-    isa_io_virtaddr  = ofw_map(isa_io_physaddr,  NBPD, 0);
+	/* Map-in ISA I/O and memory space. */
+	/* XXX - this should be done in the isa-bus attach routine! -JJK */
+	isa_mem_virtaddr = ofw_map(isa_mem_physaddr, NBPD, 0);
+	isa_io_virtaddr  = ofw_map(isa_io_physaddr,  NBPD, 0);
 
-    /* Set-up the ISA system: must be done before consinit */
-    isa_init(isa_io_virtaddr, isa_mem_virtaddr);
+	/* Set-up the ISA system: must be done before consinit */
+	isa_init(isa_io_virtaddr, isa_mem_virtaddr);
   
-    /* Initialize the console (which will call into OFW). */
-    /* This will allow us to see panic messages and other printf output. */
-    consinit();
+	/* Initialize the console (which will call into OFW). */
+	/* This will allow us to see panic messages and other printf output. */
+	consinit();
 
-    /* Get boot info and process it. */
-    ofw_getbootinfo(&boot_path, &boot_args);
-    process_kernel_args();
+	/* Get boot info and process it. */
+	ofw_getbootinfo(&boot_path, &boot_args);
+	process_kernel_args();
 
-    ofw_configisadma(&isadmaphysbufs);
-    isaphysmem = ofw_map(isadmaphysbufs, 
-			 (DMA_BOUNCE * NBPG + DMA_LARGE_BUFFER_SIZE), 0);
+	ofw_configisadma(&isadmaphysbufs);
+	isaphysmem = ofw_map(isadmaphysbufs, 
+	    (DMA_BOUNCE * NBPG + DMA_LARGE_BUFFER_SIZE), 0);
 
-    /* allocate a cache clean space */
-    if ((pclean = ofw_getcleaninfo()) != -1) {
-      sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2, PT_B | PT_C);
-      sa110_cache_clean_size = 0x4000;
-    }
+	/* allocate a cache clean space */
+	if ((pclean = ofw_getcleaninfo()) != -1) {
+		sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2,
+		     PT_B | PT_C);
+		sa110_cache_clean_size = 0x4000;
+	}
 
-    /* Configure memory. */
-    ofw_configmem();
+	/* Configure memory. */
+	ofw_configmem();
 
-    /* Set-up stacks. */
-    {
-	/* The kernel stack for SVC mode will be updated on return from this routine. */
+	/*
+	 * Set-up stacks.
+	 * The kernel stack for SVC mode will be updated on return
+	 * from this routine.
+	 */
 	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
 	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
 	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
-    }
 
-    /* Set-up exception handlers. */
-    {
-	/* Take control of selected vectors from OFW. */
-	/* We take:  undefined, swi, pre-fetch abort, data abort, addrexc,
-                     irq, fiq
-	   OFW retains:  reset
-        */
+	/* Set-up exception handlers. */
+
+	/*
+	 * Take control of selected vectors from OFW.
+	 * We take: undefined, swi, pre-fetch abort, data abort, addrexc,
+         * 	    irq, fiq
+	 * OFW retains:  reset
+         */
 	{
-	    int our_vecnums[] = {1, 2, 3, 4, 5, 6, 7};
-	    unsigned int *vectors = (unsigned int *)0;
-	    extern unsigned int page0[];
-	    int i;
+		int our_vecnums[] = {1, 2, 3, 4, 5, 6, 7};
+		unsigned int *vectors = (unsigned int *)0;
+		extern unsigned int page0[];
+		int i;
 
-	    for (i = 0; i < (sizeof(our_vecnums) / sizeof(int)); i++) {
-		int vecnum = our_vecnums[i];
+		for (i = 0; i < (sizeof(our_vecnums) / sizeof(int)); i++) {
+			int vecnum = our_vecnums[i];
 
-		/* Copy both the instruction and the data word for the vector. */
-		/* The latter is needed to support branching arbitrarily far. */
-		vectors[vecnum] = page0[vecnum];
-		vectors[vecnum+8] = page0[vecnum+8];
-	    }
+			/* Copy both the instruction and the data word
+			 * for the vector.
+			 * The latter is needed to support branching
+			 * arbitrarily far.
+			 */
+			vectors[vecnum] = page0[vecnum];
+			vectors[vecnum + 8] = page0[vecnum + 8];
+		}
 
-	    cpu_cache_syncI();
+		/* Sync the first 16 words of memory */
+		cpu_cache_syncI_rng(0, 64);
 	}
 
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address =
-	  (u_int)undefinedinstruction_bounce;	/* why is this needed? -JJK */
-	cpu_cache_syncI();			/* XXX - Is this really needed */
+	    (u_int)undefinedinstruction_bounce;	/* why is this needed? -JJK */
 
 	/* Initialise the undefined instruction handlers. */
 	undefined_init();
-	cpu_cache_syncI();			/* XXX - Is this really needed */
 
 	/* Now for the SHARK-specific part of the FIQ set-up */
 	fiqhandler.fh_func = shark_fiq;
@@ -337,26 +308,25 @@ initarm(ofw_handle)
 	fiqhandler.fh_r12  = 0; /* scratch */
 	fiqhandler.fh_r13  = 0; /* must set a stack when r9 is set! */
 
-	if (fiq_claim(&fiqhandler)) panic("Cannot claim FIQ vector.\n");
-
-    }
+	if (fiq_claim(&fiqhandler))
+		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB
-    printf("ddb: ");
-    db_machine_init();
-  {
-    struct exec *kernexec = (struct exec *)KERNEL_BASE;
-    extern int end;
-    extern char *esym;
+	printf("ddb: ");
+	db_machine_init();
+	{
+		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		extern int end;
+		extern char *esym;
 
-    ddb_init(kernexec->a_syms, &end, esym);
-  }
-    if (boothowto & RB_KDB)
-	Debugger();
+		ddb_init(kernexec->a_syms, &end, esym);
+	}
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 
-    /* Return the new stackbase. */
-    return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
+	/* Return the new stackbase. */
+	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
 }
 
 
@@ -365,145 +335,37 @@ initarm(ofw_handle)
  *
  *  Note that this routine must NOT trash boot_args, as
  *  it is scanned by later routines.
- *
- *  There ought to be a routine in machdep.c that does
- *  the generic bits of this. -JJK
  */
-void
+static void
 process_kernel_args(void)
 {
-
+#ifdef RB_QUIET
+	int bool;
+#endif
+	
 #if defined(RB_QUIET) && defined(BOOT_QUIETLY)
-    boothowto |= RB_QUIET;
+	boothowto |= RB_QUIET;
 #endif
 
-    /* Check for MI args. */
-    {
-	char *p, *q;
-
-	for (q = boot_args;  *q && (p = strstr(q, "-")) != NULL; q = p) {
-	    /*
-	     * Be sure the arguments are surrounded by space or NUL
-	     */
-	    if(p > boot_args && p[-1] != ' ') {
-		p++;
-		continue;
-	    }
-	    if(*++p == '\0')
-		break;
-	    if(p[1] == ' ' || p[1] == '\0') {
-		switch (*p) {
-		    case 's':
-			boothowto |= RB_SINGLE;
-			break;
-		    case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-		    case 'k':
-			boothowto |= RB_KDB;
-			break;
-		    default:
-			break;
-		}
-	    }
-	}
-    }
-
-    /* Check for arm-specific args. */
-    {
-	char *args = boot_args, *ptr;
-
-	if ((ptr = strstr(args, "nocache")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[7] == ' ' || ptr[7] == '\0'))
-		    cpu_cache &= ~1;
-	}
-
-	if ((ptr = strstr(args, "nowritebuf")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[10] == ' ' || ptr[10] == '\0'))
-		    cpu_cache &= ~2;
-	}
-
-	if ((ptr = strstr(args, "fpaclk2")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[7] == ' ' || ptr[7] == '\0'))
-		    cpu_cache |= 4;
-	}
-
-	if ((ptr = strstr(args, "icache")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[6] == ' ' || ptr[6] == '\0'))
-		    cpu_cache |= 8;
-	}
-
-	if ((ptr = strstr(args, "dcache")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[6] == ' ' || ptr[6] == '\0'))
-		    cpu_cache |= 16;
-	}
-
-	ptr = strstr(args, "maxproc=");
-	if (ptr && (ptr > boot_args || ptr[-1] == ' ')) {
-	    max_processes = (int)strtoul(ptr + 8, NULL, 10);
-	    if (max_processes < 16)
-		max_processes = 16;
-	    /* Limit is PDSIZE * (maxprocess+1) <= 4MB */
-	    if (max_processes > 255)
-		max_processes = 255;
-	}
-
-#if NMD > 0
-	ptr = strstr(args, "memorydisc=");
-	if (!ptr)
-	    ptr = strstr(args, "memorydisk=");
-	if (ptr && (ptr > boot_args || ptr[-1] == ' ')) {
-	    memory_disc_size = (u_int)strtoul(ptr + 11, NULL, 10);
-	    memory_disc_size *= 1024;
-	    if (memory_disc_size < 32*1024)
-		memory_disc_size = 32*1024;
-	    if (memory_disc_size > 2048*1024)
-		memory_disc_size = 2048*1024;
-	}
-#endif
-
-	if ((ptr = strstr(args, "single")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[6] == ' ' || ptr[6] == '\0'))
-		    boothowto |= RB_SINGLE;
-	}
-
-	if ((ptr = strstr(args, "kdb")) != NULL) {
-	    if((ptr > boot_args || ptr[-1] == ' ') &&
-	       (ptr[3] == ' ' || ptr[3] == '\0'))
-		    boothowto |= RB_KDB;
-	}
-
-#ifdef PMAP_DEBUG
-	ptr = strstr(args, "pmapdebug=");
-	if (ptr && (ptr > boot_args || ptr[-1] == ' ')) {
-	    pmap_debug_level = (int)strtoul(ptr + 10, NULL, 10);
-	    pmap_debug(pmap_debug_level);
-	    debug_flags |= 0x01;
-	}
-#endif
-
-	ptr = strstr(args, "nbuf=");
-	if (ptr && (ptr > boot_args || ptr[-1] == ' '))
-	    bufpages = (int)strtoul(ptr + 5, NULL, 10);
+	/* Process all the generic ARM boot options */
+	parse_mi_bootargs(boot_args);
 
 #ifdef RB_QUIET
-	if (strstr(args, "noquiet"))
-	    boothowto &= ~RB_QUIET;
-	else if (strstr(args, "quiet"))
-	    boothowto |= RB_QUIET;
+	if (get_bootconf_option(args, "noquiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
+		if (!bool)
+			boothowto |= RB_QUIET;
+		else
+			boothowto &= ~RB_QUIET;
+	}
+	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
+		if (bool)
+			boothowto |= RB_QUIET;
+		else
+			boothowto &= ~RB_QUIET;
+	}
 #endif
-    }
 
-    /* Check for ofwgencfg-specific args. */
-    {
-	/* None at the moment. */
-    }
+	/* Check for ofwgencfg-specific args here. */
 }
 
 
@@ -515,13 +377,13 @@ process_kernel_args(void)
 void
 ofrootfound(void)
 {
-    int node;
-    struct ofbus_attach_args aa;
+	int node;
+	struct ofbus_attach_args aa;
 
-    if (!(node = OF_peer(0)))
-	panic("No OFW root");
-    aa.oba_busname = "ofw";
-    aa.oba_phandle = node;
-    if (!config_rootfound("ofbus", &aa))
-	panic("ofw root ofbus not configured");
+	if (!(node = OF_peer(0)))
+		panic("No OFW root");
+	aa.oba_busname = "ofw";
+	aa.oba_phandle = node;
+	if (!config_rootfound("ofbus", &aa))
+		panic("ofw root ofbus not configured");
 }
