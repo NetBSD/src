@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.95 2001/11/10 04:53:47 sato Exp $
+# 	$NetBSD: GENERIC,v 1.96 2001/11/13 17:54:49 augustss Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	10
 
@@ -376,7 +376,7 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device   rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	md		1	# memory disk device (ramdisk)
 
 #pseudo-device	raid		4	# RAIDframe disk driver

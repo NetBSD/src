@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.27 2001/07/08 16:32:14 abs Exp $
+#	$NetBSD: PICA,v 1.28 2001/11/13 17:54:47 augustss Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -213,4 +213,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

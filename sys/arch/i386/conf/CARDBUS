@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.43 2001/11/06 01:57:06 enami Exp $
+#	$NetBSD: CARDBUS,v 1.44 2001/11/13 17:54:50 augustss Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.43 $"
+#ident		"CARDBUS-$Revision: 1.44 $"
 
 maxusers	32		# estimated number of users
 
@@ -953,4 +953,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux

@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.14 2001/07/08 16:32:13 abs Exp $
+#	$NetBSD: M403,v 1.15 2001/11/13 17:54:47 augustss Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -211,4 +211,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

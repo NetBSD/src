@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.53 2001/11/05 01:23:17 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.54 2001/11/13 17:54:46 augustss Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.53 $"
+#ident		"GENERIC-$Revision: 1.54 $"
 
 maxusers	32		# estimated number of users
 
@@ -380,4 +380,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

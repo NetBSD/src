@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.30 2001/09/12 21:05:37 manu Exp $
+#	$NetBSD: GENERIC,v 1.31 2001/11/13 17:54:52 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.30 $"
+#ident		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -439,4 +439,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux

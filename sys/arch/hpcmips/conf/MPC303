@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.1 2001/06/13 07:32:48 enami Exp $
+# 	$NetBSD: MPC303,v 1.2 2001/11/13 17:54:49 augustss Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	10
 
@@ -419,7 +419,7 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device   rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support

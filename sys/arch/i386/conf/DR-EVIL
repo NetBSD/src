@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.32 2001/11/04 09:00:38 yamt Exp $
+#	$NetBSD: DR-EVIL,v 1.33 2001/11/13 17:54:50 augustss Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -840,4 +840,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
-pseudo-device	wsmux		4
+pseudo-device	wsmux
