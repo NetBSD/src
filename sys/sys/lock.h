@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 1998/02/05 08:00:40 mrg Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 1998/02/07 02:14:05 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -50,6 +50,12 @@
  */
 struct simplelock {
 	int lock_data;
+#ifdef LOCKDEBUG
+	const char *lock_file;
+	int lock_line;
+	const char *unlock_file;
+	int unlock_line;
+#endif
 };
 #if defined(UVM) /* XXXCDC: kill typedefs later? */
 typedef struct simplelock       simple_lock_data_t;
