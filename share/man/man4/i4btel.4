@@ -1,3 +1,4 @@
+.\" $NetBSD: i4btel.4,v 1.3 2001/04/09 13:12:55 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4btel.4,v 1.2 2001/04/04 10:06:45 wiz Exp $
+.\"	$Id: i4btel.4,v 1.3 2001/04/09 13:12:55 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -56,7 +57,7 @@ receive responses about the state of the dial out progress and status.
 This commands may change in the future, for details see the file
 .Em i4b_tel_ioctl.h
 and the
-.Xr isdnphone 1
+.Xr isdntel 8
 utility.
 .Pp
 The telephony data stream comes out of the line in a bit-reversed format,
@@ -125,11 +126,11 @@ USER --> A-law/u-law --> bitreversing --> ISDN-line
 A-Law and u-Law are specified in ITU Recommendation G.711.
 .Sh SEE ALSO
 .Xr g711conv 1 ,
-.Xr isdnphone 1 ,
 .Xr isdnd.rc 5 ,
 .Xr isdnd 8 ,
+.Xr isdntel 8 ,
 .Xr isdntelctl 8
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 device driver and this manpage were written by
