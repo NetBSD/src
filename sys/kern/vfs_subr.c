@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.134 2000/08/12 16:43:01 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.135 2000/08/19 17:25:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,11 +146,11 @@ struct vfs_list_head vfs_list =			/* vfs list */
 
 struct nfs_public nfs_pub;			/* publicly exported FS */
 
-struct simplelock mountlist_slock;
-static struct simplelock mntid_slock;
-struct simplelock mntvnode_slock;
-struct simplelock vnode_free_list_slock;
-struct simplelock spechash_slock;
+struct simplelock mountlist_slock = SIMPLELOCK_INITIALIZER;
+static struct simplelock mntid_slock = SIMPLELOCK_INITIALIZER;
+struct simplelock mntvnode_slock = SIMPLELOCK_INITIALIZER;
+struct simplelock vnode_free_list_slock = SIMPLELOCK_INITIALIZER;
+struct simplelock spechash_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * These define the root filesystem and device.
