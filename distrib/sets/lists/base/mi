@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.237 2001/03/18 10:03:52 veego Exp $
+# $NetBSD: mi,v 1.238 2001/03/20 18:49:49 atatat Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -278,6 +278,8 @@
 ./usr/bin/mailx		base-mail-bin
 ./usr/bin/make		base-util-bin
 ./usr/bin/man		base-man-bin
+./usr/bin/md2		base-util-bin
+./usr/bin/md4		base-util-bin
 ./usr/bin/md5		base-util-bin
 ./usr/bin/merge		base-util-bin
 ./usr/bin/mesg		base-util-bin
@@ -327,6 +329,7 @@
 ./usr/bin/rev		base-util-bin
 ./usr/bin/rlog		base-rcs-bin
 ./usr/bin/rlogin	base-netutil-bin
+./usr/bin/rmd160	base-util-bin
 ./usr/bin/rpcinfo	base-netutil-bin
 ./usr/bin/rs		base-util-bin
 ./usr/bin/rsh		base-netutil-bin
@@ -341,6 +344,7 @@
 ./usr/bin/sed		base-util-bin
 ./usr/bin/send-pr	base-gnats-bin
 ./usr/bin/sftp		base-secsh-bin
+./usr/bin/sha1		base-util-bin
 ./usr/bin/shar		base-util-bin
 ./usr/bin/shlock	base-util-bin
 ./usr/bin/showmount	base-nfsclient-bin
