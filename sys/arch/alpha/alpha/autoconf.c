@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.16.2.3 1997/06/01 04:11:06 cgd Exp $ */
+/* $NetBSD: autoconf.c,v 1.16.2.4 1997/06/07 04:42:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.3 1997/06/01 04:11:06 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.4 1997/06/07 04:42:47 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,13 @@ configure()
 
 	parse_prom_bootdev();
 
-	(void)splhigh();
+	/*
+	 * Disable interrupts during autoconfiguration.  splhigh() won't
+	 * work, because it simply _raises_ the IPL, so if machine checks
+	 * are disabled, they'll stay disabled.  Machine checks are needed
+	 * during autoconfig.
+	 */
+	(void)alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();

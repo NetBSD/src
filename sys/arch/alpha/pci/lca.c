@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.13.2.3 1997/06/01 04:13:17 cgd Exp $ */
+/* $NetBSD: lca.c,v 1.13.2.4 1997/06/07 04:43:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.13.2.3 1997/06/01 04:13:17 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.13.2.4 1997/06/07 04:43:27 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,6 @@ lca_init(lcp, mallocsafe)
 {
 
 	/*
-	 * Can't set up SGMAP data here; can be called before malloc().
-	 */
-
-	/*
 	 * The LCA HAE register is WRITE-ONLY, so we can't tell where
 	 * the second sparse window is actually mapped.  Therefore,
 	 * we have to guess where it is.  This seems to be the normal
@@ -141,48 +137,12 @@ lca_init(lcp, mallocsafe)
 	 *
 	 *	IOC_CONF set to ZERO.
 	 */
-	REGVAL(LCA_IOC_CONF) = 0;
+	REGVAL64(LCA_IOC_CONF) = 0;
 
-	/* Turn off DMA window enables in Window Base Registers */
-/*	REGVAL(LCA_IOC_W_BASE0) = 0;
-	REGVAL(LCA_IOC_W_BASE1) = 0; */
-	alpha_mb();
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	lca_dma_init(lcp);
 
 	lcp->lc_initted = 1;
 }
-
-#ifdef notdef
-void
-lca_init_sgmap(lcp)
-	struct lca_config *lcp;
-{
-
-	/* XXX */
-	lcp->lc_sgmap = malloc(1024 * 8, M_DEVBUF, M_WAITOK);
-	bzero(lcp->lc_sgmap, 1024 * 8);		/* clear all entries. */
-
-	REGVAL(LCA_IOC_W_BASE0) = 0;
-	alpha_mb();
-
-	/* Set up Translated Base Register 1; translate to sybBus addr 0. */
-	/* check size against APEC XXX JH */
-	REGVAL(LCA_IOC_T_BASE_0) = vtophys(lcp->lc_sgmap) >> 1;
-
-	/* Set up PCI mask register 1; map 8MB space. */
-	REGVAL(LCA_IOC_W_MASK0) = 0x00700000;
-
-	/* Enable window 1; from PCI address 8MB, direct mapped. */
-	REGVAL(LCA_IOC_W_BASE0) = 0x300800000;
-	alpha_mb();
-}
-#endif
 
 void
 lcaattach(parent, self, aux)
@@ -199,13 +159,11 @@ lcaattach(parent, self, aux)
 
 	/*
 	 * set up the chipset's info; done once at console init time
-	 * (maybe), but doesn't hurt to do twice.
+	 * (maybe), but we must do it twice to take care of things
+	 * that need to use memory allocation.
 	 */
 	lcp = sc->sc_lcp = &lca_configuration;
 	lca_init(lcp, 1);
-#ifdef notdef
-	lca_init_sgmap(lcp);
-#endif
 
 	/* XXX print chipset information */
 	printf("\n");
@@ -224,6 +182,7 @@ lcaattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = lcp->lc_iot;
 	pba.pba_memt = lcp->lc_memt;
+	pba.pba_dmat = &lcp->lc_dmat_direct;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
