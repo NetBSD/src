@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 1995/09/16 23:20:25 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.13 1995/09/17 00:50:54 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -58,13 +58,14 @@ char			*strtab;
 int			strtablen;
 char			fbuf[80], dbuf[128];
 
+typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
+
 void	loadfile __P((int, caddr_t));
 
 main()
 {
 	int	io;
 	char	*file;
-	register void (*entry)__P((caddr_t)) = (void (*)__P((caddr_t)))LOADADDR;
 
 	prom_init();
 
@@ -94,9 +95,6 @@ main()
 	printf("Booting %s @ 0x%x\n", file, LOADADDR);
 	loadfile(io, LOADADDR);
 
-	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
-	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
-		 0, 0, 0, esym, DDB_MAGIC);
 	_rtt();
 }
 
@@ -105,6 +103,7 @@ loadfile(io, addr)
 	register int	io;
 	register caddr_t addr;
 {
+	register entry_t entry = (entry_t)LOADADDR;
 	struct exec x;
 	int i;
 
@@ -116,7 +115,7 @@ loadfile(io, addr)
 	}
 	printf("%d", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC) {
-		entry = (void (*)())(addr+sizeof(struct exec));
+		entry = (entry_t)(addr+sizeof(struct exec));
 		addr += sizeof(struct exec);
 	}
 	if (read(io, (char *)addr, x.a_text) != x.a_text)
@@ -165,6 +164,10 @@ loadfile(io, addr)
 	}
 	printf("=0x%x\n", addr);
 	close(io);
+
+	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
+	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
+		 0, 0, 0, esym, DDB_MAGIC);
 	return;
 
 shread:

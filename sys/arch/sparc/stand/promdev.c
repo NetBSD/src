@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.11 1995/09/16 23:20:35 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.12 1995/09/17 00:50:58 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -302,9 +302,9 @@ obp_close(f)
 		net_close(pd);
 #endif
 	if (promvec->pv_romvec_vers >= 2)
-		(void)(*promvec->pv_v2devops.v2_open)(fd);
+		(void)(*promvec->pv_v2devops.v2_close)(fd);
 	else
-		(void)(*promvec->pv_v0devops.v0_open)(fd);
+		(void)(*promvec->pv_v0devops.v0_close)(fd);
 	return 0;
 }
 
