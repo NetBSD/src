@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.8 2001/11/30 15:54:33 fredette Exp $
+# $NetBSD: RAMDISK,v 1.9 2001/12/15 22:22:13 fredette Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -66,7 +66,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
@@ -125,10 +125,10 @@ zs0	at obio0 addr 0x002000	# 2/120, 2/170
 zs0	at obio0 addr 0x7f2000	# 2/50
 zs1	at obmem0 addr 0x780000	# 2/120, 2/170
 zs1	at obio0 addr 0x7f1800	# 2/50
-zs2	at mbmem0 addr 0x080800	# 2/120, 2/170 (first sc SCSI)
-zs3	at mbmem0 addr 0x081000	# 2/120, 2/170 (first sc SCSI)
-zs4	at mbmem0 addr 0x084800	# 2/120, 2/170 (second sc SCSI)
-zs5	at mbmem0 addr 0x085000	# 2/120, 2/170 (second sc SCSI)
+#zs2	at mbmem0 addr 0x080800	# 2/120, 2/170 (first sc SCSI)
+#zs3	at mbmem0 addr 0x081000	# 2/120, 2/170 (first sc SCSI)
+#zs4	at mbmem0 addr 0x084800	# 2/120, 2/170 (second sc SCSI)
+#zs5	at mbmem0 addr 0x085000	# 2/120, 2/170 (second sc SCSI)
 zstty*	at zs? channel ?	# ttya
 kbd0	at zstty?		# keyboard
 #ms0	at zstty?		# mouse
