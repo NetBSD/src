@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.65 1997/08/11 22:53:32 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.66 1997/11/02 00:29:56 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
