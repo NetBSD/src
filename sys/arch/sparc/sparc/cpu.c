@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69 1998/09/16 13:36:23 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.70 1998/09/20 19:37:50 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -490,13 +490,18 @@ void viking_mmu_enable __P((void));
 void swift_mmu_enable __P((void));
 void hypersparc_mmu_enable __P((void));
 
-void srmmu_get_fltstatus __P((void));
-void ms1_get_fltstatus __P((void));
-void viking_get_fltstatus __P((void));
-void swift_get_fltstatus __P((void));
-void turbosparc_get_fltstatus __P((void));
-void hypersparc_get_fltstatus __P((void));
-void cypress_get_fltstatus __P((void));
+void srmmu_get_syncflt __P((void));
+void ms1_get_syncflt __P((void));
+void viking_get_syncflt __P((void));
+void swift_get_syncflt __P((void));
+void turbosparc_get_syncflt __P((void));
+void hypersparc_get_syncflt __P((void));
+void cypress_get_syncflt __P((void));
+
+int srmmu_get_asyncflt __P((u_int *, u_int *));
+int hypersparc_get_asyncflt __P((u_int *, u_int *));
+int cypress_get_asyncflt __P((u_int *, u_int *));
+int no_asyncflt_regs __P((u_int *, u_int *));
 
 struct module_info module_unknown = {
 	CPUTYP_UNKNOWN,
@@ -527,7 +532,8 @@ struct module_info module_sun4 = {
 	0,
 	sun4_cache_enable,
 	0,			/* ncontext set in `match' function */
-	0,			/* get fault regs: unused */
+	0,			/* get_syncflt(); unused in sun4c */
+	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
 	sun4_vcache_flush_page,
 	sun4_vcache_flush_segment,
@@ -651,7 +657,8 @@ struct module_info module_sun4c = {
 	0,
 	sun4_cache_enable,
 	0,			/* ncontext set in `match' function */
-	0,
+	0,			/* get_syncflt(); unused in sun4c */
+	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
 	sun4_vcache_flush_page,
 	sun4_vcache_flush_segment,
@@ -847,7 +854,8 @@ struct module_info module_ms1 = {
 	ms1_mmu_enable,
 	ms1_cache_enable,
 	64,
-	ms1_get_fltstatus,
+	ms1_get_syncflt,
+	no_asyncflt_regs,
 	ms1_cache_flush,
 	noop_vcache_flush_page,
 	noop_vcache_flush_segment,
@@ -873,7 +881,8 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	0,
 	swift_cache_enable,
 	256,
-	srmmu_get_fltstatus,
+	srmmu_get_syncflt,
+	srmmu_get_asyncflt,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
@@ -894,7 +903,8 @@ struct module_info module_swift = {		/* UNTESTED */
 	0,
 	swift_cache_enable,
 	256,
-	swift_get_fltstatus,
+	swift_get_syncflt,
+	no_asyncflt_regs,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
@@ -930,7 +940,8 @@ struct module_info module_viking = {		/* UNTESTED */
 	viking_mmu_enable,
 	viking_cache_enable,
 	4096,
-	viking_get_fltstatus,
+	viking_get_syncflt,
+	no_asyncflt_regs,
 	/* supersparcs use cached DVMA, no need to flush */
 	noop_cache_flush,
 	noop_vcache_flush_page,
@@ -1010,7 +1021,8 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	hypersparc_mmu_enable,
 	hypersparc_cache_enable,
 	4096,
-	hypersparc_get_fltstatus,
+	hypersparc_get_syncflt,
+	hypersparc_get_asyncflt,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
@@ -1057,7 +1069,8 @@ struct module_info module_cypress = {		/* UNTESTED */
 	0,
 	cypress_cache_enable,
 	4096,
-	cypress_get_fltstatus,
+	cypress_get_syncflt,
+	cypress_get_asyncflt,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
@@ -1078,7 +1091,8 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	0,
 	turbosparc_cache_enable,
 	256,
-	turbosparc_get_fltstatus,
+	turbosparc_get_syncflt,
+	no_asyncflt_regs,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
@@ -1115,7 +1129,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->hotfix = 0;
 	sc->mmu_enable = 0;
 	sc->cache_enable = 0;
-	sc->get_faultstatus = 0;
+	sc->get_syncflt = 0;
 	sc->cache_flush = 0;
 	sc->vcache_flush_page = 0;
 	sc->vcache_flush_segment = 0;
@@ -1299,7 +1313,8 @@ getcpuinfo(sc, node)
 		MPCOPY(hotfix);
 		MPCOPY(mmu_enable);
 		MPCOPY(cache_enable);
-		MPCOPY(get_faultstatus);
+		MPCOPY(get_syncflt);
+		MPCOPY(get_asyncflt);
 		MPCOPY(cache_flush);
 		MPCOPY(vcache_flush_page);
 		MPCOPY(vcache_flush_segment);
