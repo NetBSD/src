@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrusage.2,v 1.14 2003/01/18 11:33:05 thorpej Exp $
+.\"	$NetBSD: getrusage.2,v 1.15 2003/02/04 23:07:33 perry Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Fn getrusage "int who" "struct rusage *rusage"
 .Sh DESCRIPTION
 .Fn getrusage
-returns information describing the resources utilized by the current
+returns information describing the resources used by the current
 process, or all its terminated child processes.
 The
 .Fa who
@@ -90,7 +90,7 @@ the total amount of time spent executing in user mode.
 the total amount of time spent in the system executing on behalf
 of the process(es).
 .It Fa ru_maxrss
-the maximum resident set size utilized (in kilobytes).
+the maximum resident set size used (in kilobytes).
 .It Fa ru_ixrss
 an \*(lqintegral\*(rq value indicating the amount of memory used
 by the text segment
