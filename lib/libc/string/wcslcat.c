@@ -1,5 +1,5 @@
-/*	$NetBSD: wcslcpy.c,v 1.1 2000/12/22 05:21:41 itojun Exp $	*/
-/*	from OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 	*/
+/*	$NetBSD: wcslcat.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
+/*	from OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp 	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcslcpy.c,v 1.1 2000/12/22 05:21:41 itojun Exp $");
+__RCSID("$NetBSD: wcslcat.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -38,12 +38,14 @@ __RCSID("$NetBSD: wcslcpy.c,v 1.1 2000/12/22 05:21:41 itojun Exp $");
 #include <wchar.h>
 
 /*
- * Copy src to string dst of size siz.  At most siz-1 characters
+ * Appends src to string dst of size siz (unlike wcsncat, siz is the
+ * full size of dst, not space left).  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns wcslen(src); if retval >= siz, truncation occurred.
+ * Returns wcslen(initial dst) + wcslen(src); if retval >= siz,
+ * truncation occurred.
  */
 size_t
-wcslcpy(dst, src, siz)
+wcslcat(dst, src, siz)
 	wchar_t *dst;
 	const wchar_t *src;
 	size_t siz;
@@ -51,25 +53,27 @@ wcslcpy(dst, src, siz)
 	register wchar_t *d = dst;
 	register const wchar_t *s = src;
 	register size_t n = siz;
+	size_t dlen;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
 
-	/* Copy as many bytes as will fit */
-	if (n != 0 && --n != 0) {
-		do {
-			if ((*d++ = *s++) == 0)
-				break;
-		} while (--n != 0);
-	}
+	/* Find the end of dst and adjust bytes left but don't go past end */
+	while (*d != '\0' && n-- != 0)
+		d++;
+	dlen = d - dst;
+	n = siz - dlen;
 
-	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
-		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
-		while (*s++)
-			;
+	if (n == 0)
+		return(dlen + wcslen(s));
+	while (*s != '\0') {
+		if (n != 1) {
+			*d++ = *s;
+			n--;
+		}
+		s++;
 	}
+	*d = '\0';
 
-	return(s - src - 1);	/* count does not include NUL */
+	return(dlen + (s - src));	/* count does not include NUL */
 }
