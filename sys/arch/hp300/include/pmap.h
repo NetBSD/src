@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1998/08/20 08:33:48 kleink Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1999/02/02 21:06:55 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -151,5 +151,10 @@ extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+#ifdef M68K_MMU_HP
+void	pmap_prefer __P((vaddr_t, vaddr_t *));
+#define	PMAP_PREFER(foff, vap)	pmap_prefer((foff), (vap))
+#endif
 
 #endif /* !_HP300_PMAP_H_ */
