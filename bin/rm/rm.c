@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rm.c	8.5 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: rm.c,v 1.16 1994/11/02 16:17:14 jtc Exp $";
+/*static char sccsid[] = "from: @(#)rm.c	8.7 (Berkeley) 10/18/94";*/
+static char *rcsid = "$Id: rm.c,v 1.17 1994/12/28 01:37:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static char *rcsid = "$Id: rm.c,v 1.16 1994/11/02 16:17:14 jtc Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int dflag, eval, fflag, iflag, Pflag, stdin_ok;
+int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
 
 int	check __P((char *, char *, struct stat *));
 void	checkdot __P((char **));
@@ -81,7 +81,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRr")) != -1)
+	while ((ch = getopt(argc, argv, "dfiPRrW")) != -1)
 		switch(ch) {
 		case 'd':
 			dflag = 1;
@@ -100,6 +100,9 @@ main(argc, argv)
 		case 'R':
 		case 'r':			/* Compatibility. */
 			rflag = 1;
+			break;
+		case 'W':
+			Wflag = 1;
 			break;
 		case '?':
 		default:
@@ -132,6 +135,7 @@ rm_tree(argv)
 	FTS *fts;
 	FTSENT *p;
 	int needstat;
+	int flags;
 
 	/*
 	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
@@ -145,9 +149,12 @@ rm_tree(argv)
 	 */
 #define	SKIPPED	1
 
-	if (!(fts = fts_open(argv,
-	    needstat ? FTS_PHYSICAL : FTS_PHYSICAL|FTS_NOSTAT,
-	    (int (*)())NULL)))
+	flags = FTS_PHYSICAL;
+	if (!needstat)
+		flags |= FTS_NOSTAT;
+	if (Wflag)
+		flags |= FTS_WHITEOUT;
+	if (!(fts = fts_open(argv, flags, (int (*)())NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
@@ -197,10 +204,20 @@ rm_tree(argv)
 		 * able to remove it.  Don't print out the un{read,search}able
 		 * message unless the remove fails.
 		 */
-		if (p->fts_info == FTS_DP || p->fts_info == FTS_DNR) {
+		switch (p->fts_info) {
+		case FTS_DP:
+		case FTS_DNR:
 			if (!rmdir(p->fts_accpath) || fflag && errno == ENOENT)
 				continue;
-		} else {
+			break;
+
+		case FTS_W:
+			if (!undelete(p->fts_accpath) ||
+			    fflag && errno == ENOENT)
+				continue;
+			break;
+
+		default:
 			if (Pflag)
 				rm_overwrite(p->fts_accpath, NULL);
 			if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
@@ -228,20 +245,31 @@ rm_file(argv)
 	while ((f = *argv++) != NULL) {
 		/* Assume if can't stat the file, can't unlink it. */
 		if (lstat(f, &sb)) {
-			if (!fflag || errno != ENOENT) {
-				warn("%s", f);
-				eval = 1;
+			if (Wflag) {
+				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
+			} else {
+				if (!fflag || errno != ENOENT) {
+					warn("%s", f);
+					eval = 1;
+				}
+				continue;
 			}
+		} else if (Wflag) {
+			warnx("%s: %s", f, strerror(EEXIST));
+			eval = 1;
 			continue;
 		}
+
 		if (S_ISDIR(sb.st_mode) && !dflag) {
 			warnx("%s: is a directory", f);
 			eval = 1;
 			continue;
 		}
-		if (!fflag && !check(f, f, &sb))
+		if (!fflag && !S_ISWHT(sb.st_mode) && !check(f, f, &sb))
 			continue;
-		if (S_ISDIR(sb.st_mode))
+		if (S_ISWHT(sb.st_mode))
+			rval = undelete(f);
+		else if (S_ISDIR(sb.st_mode))
 			rval = rmdir(f);
 		else {
 			if (Pflag)
@@ -344,7 +372,6 @@ check(path, name, sp)
 	return (first == 'y' || first == 'Y');
 }
 
-
 /*
  * POSIX.2 requires that if "." or ".." are specified as the basename
  * portion of an operand, a diagnostic message be written to standard
@@ -353,7 +380,6 @@ check(path, name, sp)
  * Since POSIX.2 defines basename as the final portion of a path after
  * trailing slashes have been removed, we'll remove them here.
  */
-
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || (a)[1] == '.' && !(a)[2]))
 void
 checkdot(argv)
@@ -391,6 +417,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: rm [-dfiPRr] file ...\n");
+	(void)fprintf(stderr, "usage: rm [-dfiPRrW] file ...\n");
 	exit(1);
 }
