@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.11 1997/10/16 06:52:52 mikel Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.12 1997/10/20 02:12:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.11 1997/10/16 06:52:52 mikel Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.12 1997/10/20 02:12:17 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,8 +183,6 @@ main(argc, argv)
 	struct sockaddr_in from;
 	int on = 1, fromlen;
 	register int ch;
-	extern char *optarg;
-	extern int optind;
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 	int tos = -1;
 #endif
