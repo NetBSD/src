@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.41 2003/11/13 02:44:01 chs Exp $	*/
+/*	$NetBSD: pool.h,v 1.42 2004/01/09 19:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ struct pool {
 #define PR_LOGGING	0x80
 #define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
+#define PR_IMMEDRELEASE	0x400	/* immediate release of complete pages */
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing

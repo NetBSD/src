@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.89 2003/12/29 16:04:58 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.90 2004/01/09 19:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.89 2003/12/29 16:04:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.90 2004/01/09 19:00:16 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -937,7 +937,10 @@ pool_do_put(struct pool *pp, void *v)
 	 * If this page is now empty, do one of two things:
 	 *
 	 *	(1) If we have more pages than the page high water mark,
-	 *	    free the page back to the system.
+	 *	    or if we are flagged as immediately freeing back idle
+	 *	    pages, free the page back to the system.  ONLY CONSIDER
+	 *	    FREEING BACK A PAGE IF WE HAVE MORE THAN OUR MINIMUM PAGE
+	 *	    CLAIM.
 	 *
 	 *	(2) Otherwise, move the page to the empty page list.
 	 *
@@ -946,8 +949,10 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_npages > pp->pr_maxpages ||
-		    (pp->pr_alloc->pa_flags & PA_WANT) != 0) {
+		if (pp->pr_npages > pp->pr_minpages &&
+		    (pp->pr_npages > pp->pr_maxpages ||
+		     (pp->pr_roflags & PR_IMMEDRELEASE) != 0 ||
+		     (pp->pr_alloc->pa_flags & PA_WANT) != 0)) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
