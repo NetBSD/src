@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.12 1998/07/07 03:36:53 mrg Exp $	*/
+/*	$NetBSD: lp.h,v 1.12.2.1 2000/10/19 17:05:16 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -108,7 +108,8 @@ char	*checkremote __P((void));
 int      chk __P((char *));
 void     displayq __P((int));
 void     dump __P((char *, char *, int));
-void	 fatal __P((const char *, ...));
+void	 fatal __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 int	 getline __P((FILE *));
 int	 getport __P((char *, int));
 int	 getq __P((struct queue *(*[])));
