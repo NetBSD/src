@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.5 1993/06/16 21:04:00 mycroft Exp $
+ *	$Id: asm.h,v 1.6 1993/06/16 21:13:23 mycroft Exp $
  */
 
 #ifndef _SYS_ASM_H_
@@ -50,7 +50,7 @@
 #else
 # define _BEGIN_ENTRY	.text; .align 2
 # define _END_ENTRY
-#else
+#endif
 
 #ifdef STDC
 # define _ENTRY(x)	.globl _ ## x; _ ## x:
