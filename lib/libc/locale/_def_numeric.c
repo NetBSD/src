@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _LOCALE_PRIVATE
+#include <sys/localedef.h>
 #include <locale.h>
 
 const _NumericLocale _DefaultNumericLocale = 
