@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: sysctl,v 1.2 2000/04/08 23:02:54 tsarna Exp $
 #
 
 # PROVIDE: sysctl
-# REQUIRE: root mountcritremote
+# REQUIRE: root ipnat
 
 . /etc/rc.subr
 . /etc/rc.conf
@@ -15,25 +15,9 @@ stop_cmd=":"
 
 sysctl_start()
 {
-	#	if $defcorename is set, change it here.
-	#
-	if [ -n "$defcorename" ]; then
-		echo -n "Setting default core name template: "
-		sysctl -w kern.defcorename=$defcorename
-	fi
-
-	#	if $securelevel is set, change it here, else if it is 0,
-	#	change it to 1 here, before we start login services.
-	#
-	if [ -n "$securelevel" ]; then
-		echo -n "Setting securelevel: "
-		sysctl -w kern.securelevel=$securelevel
-	else
-		securelevel=`sysctl -n kern.securelevel`
-		if [ x"$securelevel" = x0 ]; then
-			echo -n "Setting securelevel: "
-			sysctl -w kern.securelevel=1
-		fi
+	if [ -r /etc/sysctl.conf ]; then
+		echo "Setting sysctl variables:"
+		sysctl -f /etc/sysctl.conf
 	fi
 }
 
