@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.29.2.2 1999/04/09 04:50:48 chs Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.29.2.3 1999/05/30 15:43:24 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -142,8 +142,6 @@ struct vm_page {
 					 * to modify: [O _and_ P] */
 /* XXX make type MD */
   u_char		valid;		/* partial-page valid bits */
-  daddr_t		blkno;		/* disk-address for page */
-
 
 #else
   u_short		version;	/* version count [O] */
