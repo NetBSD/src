@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1996/06/07 01:39:16 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2000/05/26 03:10:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,9 +35,9 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-struct proc;
+struct kinfo_proc2;
 void	fmt_puts __P((char *, int *));
 void	fmt_putc __P((int, int *));
 void	pr_attime __P((time_t *, time_t *));
 void	pr_idle __P((time_t));
-int	proc_compare __P((struct proc *, struct proc *));
+int	proc_compare __P((struct kinfo_proc2 *, struct kinfo_proc2 *));

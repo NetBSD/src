@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.8 2000/05/26 00:44:27 thorpej Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.9 2000/05/26 03:10:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: proc_compare.c,v 1.8 2000/05/26 00:44:27 thorpej Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.9 2000/05/26 03:10:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include "extern.h"
 
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: proc_compare.c,v 1.8 2000/05/26 00:44:27 thorpej Exp $");
 
 int
 proc_compare(p1, p2)
-	struct proc *p1, *p2;
+	struct kinfo_proc2 *p1, *p2;
 {
 
 	if (p1 == NULL)
