@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fmod.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: fmod.3,v 1.3 1993/08/14 13:42:46 mycroft Exp $
+.\"	$Id: fmod.3,v 1.4 1995/04/14 18:40:11 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt FMOD 3
@@ -42,6 +42,8 @@
 .Fd #include <math.h>
 .Ft double
 .Fn fmod "double x" "double y"
+.Ft float
+.Fn fmodf "float x" "float y"
 .Sh DESCRIPTION
 The
 .Fn fmod
@@ -49,8 +51,10 @@ function computes the floating-point remainder of
 .Fa x Ns / Fa y .
 .Sh RETURN VALUES
 The
-.Fn fmod
-function returns the value
+.Fn fmod 
+and 
+.Fn fmodf
+functions return the value
 .Sm off
 .Fa x - Em i * Fa y ,
 .Sm on
