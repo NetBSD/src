@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.22 2003/09/30 06:23:43 lukem Exp $
+#	$NetBSD: checkflist,v 1.23 2003/10/26 14:21:49 dmcmahill Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -87,7 +87,7 @@ sh makeflist $xargs $dargs > $SDIR/flist
 
 (
 	cd $DESTDIR
-	find $origin \( -type d -o -type f -o -type l \)
+	find $origin \( -type d -o -type f -o -type l \) -print
 ) | (
 	while read line; do
 		case "$line" in
