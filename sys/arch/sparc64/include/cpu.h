@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1998/11/11 06:43:51 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.5 1998/11/24 12:49:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -220,6 +220,7 @@ int	xldcontrolb __P((caddr_t, struct pcb *));
 void	copywords __P((const void *, void *, size_t));
 void	qcopy __P((const void *, void *, size_t));
 void	qzero __P((void *, size_t));
+void	switchtoctx __P((int));
 /* locore2.c */
 void	remrq __P((struct proc *));
 /* trap.c */
@@ -246,6 +247,9 @@ void kgdb_panic __P((void));
 /* iommu.c */
 void	iommu_enter __P((u_int, u_int));
 void	iommu_remove __P((u_int, u_int));
+/* emul.c */
+int	fixalign __P((struct proc *, struct trapframe *));
+int	emulinstr __P((vaddr_t, struct trapframe *));
 
 /*
  *
