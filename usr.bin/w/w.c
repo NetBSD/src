@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.66 2004/12/22 17:20:30 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.67 2005/01/08 05:08:53 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.66 2004/12/22 17:20:30 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.67 2005/01/08 05:08:53 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,6 @@ char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN + 1];
 int maxname = 8, maxline = 3, maxhost = 16;
 
-#define HOSTWIDTH 35
 /*
  * One of these per active utmp entry.
  */
@@ -139,7 +138,6 @@ main(int argc, char **argv)
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	time_t then;
-	int hostwidth;
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
@@ -316,25 +314,26 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (wflag || maxhost < HOSTWIDTH)
-		hostwidth = maxhost;
-	else
-		hostwidth = HOSTWIDTH;
-
-	argwidth = printf("%-*s TTY     %-*s %*s  IDLE WHAT\n",
-	    maxname, "USER", hostwidth, "FROM",
-	    7 /* "dddhhXm" */, "LOGIN@");
-	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
-
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
 		ttywidth = 79;
 	else
 		ttywidth = ws.ws_col - 1;
+
+	if (!wflag && maxhost > (ttywidth / 2))
+		maxhost = ttywidth / 2;
+
+	argwidth = printf("%-*s TTY     %-*s %*s  IDLE WHAT\n",
+	    maxname, "USER", maxhost, "FROM",
+	    7 /* "dddhhXm" */, "LOGIN@");
+	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
 	argwidth = ttywidth - argwidth;
 	if (argwidth < 4)
 		argwidth = 8;
+	if (wflag)
+		argwidth = -1;
+
 	/* sort by idle time */
 	if (sortidle && ehead != NULL) {
 		struct entry *from = ehead, *save;
@@ -421,7 +420,7 @@ main(int argc, char **argv)
 		}
 		(void)printf("%-*s %-7.7s %-*.*s ",
 		    maxname, kp->p_login, ep->line,
-		    hostwidth, hostwidth, *p ? p : "-");
+		    maxhost, maxhost, *p ? p : "-");
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
 		pr_idle(ep->idle);
@@ -440,7 +439,7 @@ pr_args(struct kinfo_proc2 *kp)
 	if (kp == 0)
 		goto nothing;
 	left = argwidth;
-	argv = kvm_getargv2(kd, kp, argwidth);
+	argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
 	if (argv == 0) {
 		if (kp->p_comm == 0) {
 			goto nothing;
