@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.7 1997/10/18 13:21:42 lukem Exp $
+.\"	$NetBSD: du.1,v 1.8 1998/02/15 17:08:17 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl s
-.Op Fl ckx
+.Op Fl ckrx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -78,6 +78,9 @@ blocks.
 Partial numbers of blocks are rounded up.
 .It Fl c
 Display the grand total after all the arguments have been processed.
+.It Fl r
+Generate warning messages about directories that cannot be read.
+This is the default behaviour.
 .It Fl s
 Display only the grand total for the specified files.
 .It Fl x
