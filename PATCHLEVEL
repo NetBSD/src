@@ -70,3 +70,28 @@ sense buffer.
 [ kernel/amiga ] Fix spurious interrupt in ARCnet driver.
 
 [ kernel/generic ] Fix infinite loop bug in shutdown code.
+
+[ pppd(8) ] Read TTY-specific options and fix pid file deletion bug.
+
+[ kernel/generic ] Only build ufs_quota.o if ``quota'' option is in config.
+
+[ sendmail ] Updated to 8.8.4.
+
+[ kernel/generic ] Fix possible overrun bugs in networking code.
+
+[ kernel/i386 ] Added vmstat -i counters.
+
+[ kernel/generic ] Remove possible overrun bugs in error printing code.
+
+[ dump/restore ] Make dump and restore work on alpha, fix bug restoring
+	images when current directory is on NFS.
+
+[ kernel/sparc ] Fix bug in Sun4m ethernet driver that caused each received
+	packet to generate two interrupts rather than one.
+
+[ distrib/mac68k ] Include new hardware and updated install notes.
+
+[ kernel/generic ] Fix ``traceroute host 7000'' bug that crashed kernel.
+
+[ distrib/atari ] Add description of HDX usage when preparing a bootable 
+	AHDI partition.
