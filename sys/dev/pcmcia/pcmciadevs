@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.151 2001/12/04 18:46:30 christos Exp $
+$NetBSD: pcmciadevs,v 1.152 2001/12/16 05:42:46 ichiro Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -186,6 +186,7 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 /* Fujutsu Products */
 product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
 product FUJITSU LA10S		0x1003 Fujitsu Compact Flash Ethernet
+product FUJITSU ITCFJ182A	0x1018 Fujitsu J182A Compact Flash Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
 
 /* IBM Products */
