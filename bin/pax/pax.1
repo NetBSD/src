@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.35 2002/10/16 21:47:14 christos Exp $
+.\"	$NetBSD: pax.1,v 1.36 2002/10/16 21:49:08 christos Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -794,13 +794,6 @@ The extended tar interchange format specified in the
 standard.
 The default blocksize for this format is 10240 bytes.
 Pathnames stored by this format must be 250 characters or less in length.
-.It Fl -force-local
-Do not interpret filenames that contain a `:' as remote files.
-.It Fl -insecure
-Normally
-.Nm
-ignores filenames that contain `..' as a path component. With this option,
-files that contain `..' can be processed.
 .El
 .Pp
 .Nm
@@ -1087,6 +1080,13 @@ This option is the same as the
 .Fl u
 option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
+.It Fl -force-local
+Do not interpret filenames that contain a `:' as remote files.
+.It Fl -insecure
+Normally
+.Nm
+ignores filenames that contain `..' as a path component. With this option,
+files that contain `..' can be processed.
 .El
 .Pp
 The options that operate on the names of files or archive members
