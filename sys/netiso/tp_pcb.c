@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.9 1995/08/16 00:38:56 mycroft Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.10 1995/08/17 02:57:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -606,7 +606,7 @@ register struct tp_pcb *tpcb;
 	/* xx_pcballoc sets so_pcb */
 	error = tpcb->tp_nlproto->nlp_pcballoc(so, tpcb->tp_nlproto->nlp_pcblist);
 	tpcb->tp_npcb = so->so_pcb;
-	so->so_pcb = (caddr_t)tpcb;
+	so->so_pcb = tpcb;
 	return (error);
 }
 /*
@@ -651,7 +651,7 @@ tp_attach(so, protocol)
 		tptrace(TPPTmisc, "tp_attach:dom so", dom, so, 0, 0);
 	ENDTRACE
 
-	if (so->so_pcb != NULL) { 
+	if (so->so_pcb != 0) { 
 		return EISCONN;	/* socket already part of a connection*/
 	}
 

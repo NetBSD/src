@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.22 1995/08/12 23:59:34 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.23 1995/08/17 02:57:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -82,7 +82,7 @@ in_pcballoc(so, table)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
-	so->so_pcb = (caddr_t)inp;
+	so->so_pcb = inp;
 	return (0);
 }
 
