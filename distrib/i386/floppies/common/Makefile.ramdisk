@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.12 2002/03/28 02:57:29 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.13 2002/03/28 04:33:22 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -22,24 +22,19 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${_SRC_TOP_}/etc/services
 PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
-
 .if defined(USE_SYSINST)
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 .endif
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
 
 
 realall: ${IMAGE}
 
 release:
-
-
-# Use stubs to eliminate some large stuff from libc
-HACKSRC=${DISTRIBDIR}/utils/libhack
-.include "${HACKSRC}/Makefile.inc"
-
-# This is listed in ramdiskbin.conf but is built here.
-${CRUNCHBIN}: libhack.o
-
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
