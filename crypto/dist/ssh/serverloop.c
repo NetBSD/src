@@ -1,5 +1,3 @@
-/*	$NetBSD: serverloop.c,v 1.1.1.2 2001/01/14 04:50:38 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,29 +34,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: serverloop.c,v 1.39 2000/12/27 14:19:21 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: serverloop.c,v 1.1.1.2 2001/01/14 04:50:38 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: serverloop.c,v 1.45 2001/02/04 15:32:25 stevesk Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
 #include "packet.h"
 #include "buffer.h"
+#include "log.h"
 #include "servconf.h"
 #include "pty.h"
 #include "channels.h"
-
 #include "compat.h"
+#include "ssh1.h"
 #include "ssh2.h"
+#include "auth.h"
 #include "session.h"
 #include "dispatch.h"
 #include "auth-options.h"
-#include "auth.h"
+#include "serverloop.h"
+#include "misc.h"
 
 extern ServerOptions options;
 
@@ -79,7 +73,6 @@ static int fderr_eof = 0;	/* EOF encountered readung from fderr. */
 static int connection_in;	/* Connection to client (input). */
 static int connection_out;	/* Connection to client (output). */
 static u_int buffer_high;/* "Soft" max buffer size. */
-static int max_fd;		/* Max file descriptor number for select(). */
 
 /*
  * This SIGCHLD kludge is used to detect when the child exits.  The server
@@ -92,7 +85,7 @@ static volatile int child_wait_status;	/* Status from wait(). */
 
 void	server_init_dispatch(void);
 
-static void
+void
 sigchld_handler(int sig)
 {
 	int save_errno = errno;
@@ -111,7 +104,7 @@ sigchld_handler(int sig)
 	signal(SIGCHLD, sigchld_handler);
 	errno = save_errno;
 }
-static void
+void
 sigchld_handler2(int sig)
 {
 	int save_errno = errno;
@@ -125,8 +118,8 @@ sigchld_handler2(int sig)
  * Make packets from buffered stderr data, and buffer it for sending
  * to the client.
  */
-static void
-make_packets_from_stderr_data(void)
+void
+make_packets_from_stderr_data()
 {
 	int len;
 
@@ -154,8 +147,8 @@ make_packets_from_stderr_data(void)
  * Make packets from buffered stdout data, and buffer it for sending to the
  * client.
  */
-static void
-make_packets_from_stdout_data(void)
+void
+make_packets_from_stdout_data()
 {
 	int len;
 
@@ -169,7 +162,7 @@ make_packets_from_stdout_data(void)
 		} else {
 			/* Keep the packets at reasonable size. */
 			if (len > packet_get_maxsize())
-				len = packet_get_maxsize();	
+				len = packet_get_maxsize();
 		}
 		packet_start(SSH_SMSG_STDOUT_DATA);
 		packet_put_string(buffer_ptr(&stdout_buffer), len);
@@ -185,9 +178,9 @@ make_packets_from_stdout_data(void)
  * have data or can accept data.  Optionally, a maximum time can be specified
  * for the duration of the wait (0 = infinite).
  */
-static void
-wait_until_can_do_something(fd_set * readset, fd_set * writeset,
-			    u_int max_time_milliseconds)
+void
+wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
+    u_int max_time_milliseconds)
 {
 	struct timeval tv, *tvp;
 	int ret;
@@ -195,14 +188,13 @@ wait_until_can_do_something(fd_set * readset, fd_set * writeset,
 	/* When select fails we restart from here. */
 retry_select:
 
-	/* Initialize select() masks. */
-	FD_ZERO(readset);
-	FD_ZERO(writeset);
+	/* Allocate and update select() masks for channel descriptors. */
+	channel_prepare_select(readsetp, writesetp, maxfdp);
 
 	if (compat20) {
 		/* wrong: bad condition XXX */
 		if (channel_not_very_much_buffered_data())
-			FD_SET(connection_in, readset);
+			FD_SET(connection_in, *readsetp);
 	} else {
 		/*
 		 * Read packets from the client unless we have too much
@@ -210,37 +202,31 @@ retry_select:
 		 */
 		if (buffer_len(&stdin_buffer) < buffer_high &&
 		    channel_not_very_much_buffered_data())
-			FD_SET(connection_in, readset);
+			FD_SET(connection_in, *readsetp);
 		/*
 		 * If there is not too much data already buffered going to
 		 * the client, try to get some more data from the program.
 		 */
 		if (packet_not_very_much_data_to_write()) {
 			if (!fdout_eof)
-				FD_SET(fdout, readset);
+				FD_SET(fdout, *readsetp);
 			if (!fderr_eof)
-				FD_SET(fderr, readset);
+				FD_SET(fderr, *readsetp);
 		}
 		/*
 		 * If we have buffered data, try to write some of that data
 		 * to the program.
 		 */
 		if (fdin != -1 && buffer_len(&stdin_buffer) > 0)
-			FD_SET(fdin, writeset);
+			FD_SET(fdin, *writesetp);
 	}
-	/* Set masks for channel descriptors. */
-	channel_prepare_select(readset, writeset);
 
 	/*
 	 * If we have buffered packet data going to the client, mark that
 	 * descriptor.
 	 */
 	if (packet_have_data_to_write())
-		FD_SET(connection_out, writeset);
-
-	/* Update the maximum descriptor number if appropriate. */
-	if (channel_max_fd() > max_fd)
-		max_fd = channel_max_fd();
+		FD_SET(connection_out, *writesetp);
 
 	/*
 	 * If child has terminated and there is enough buffer space to read
@@ -261,7 +247,7 @@ retry_select:
 		debug2("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
 
 	/* Wait for something to happen, or the timeout to expire. */
-	ret = select(max_fd + 1, readset, writeset, NULL, tvp);
+	ret = select((*maxfdp)+1, *readsetp, *writesetp, NULL, tvp);
 
 	if (ret < 0) {
 		if (errno != EINTR)
@@ -275,7 +261,7 @@ retry_select:
  * Processes input from the client and the program.  Input data is stored
  * in buffers and processed later.
  */
-static void
+void
 process_input(fd_set * readset)
 {
 	int len;
@@ -328,7 +314,7 @@ process_input(fd_set * readset)
 /*
  * Sends data from internal buffers to client program stdin.
  */
-static void
+void
 process_output(fd_set * writeset)
 {
 	int len;
@@ -365,8 +351,8 @@ process_output(fd_set * writeset)
  * Wait until all buffered output has been sent to the client.
  * This is used when the program terminates.
  */
-static void
-drain_output(void)
+void
+drain_output()
 {
 	/* Send any buffered stdout data to the client. */
 	if (buffer_len(&stdout_buffer) > 0) {
@@ -390,8 +376,8 @@ drain_output(void)
 	packet_write_wait();
 }
 
-static void
-process_buffered_input_packets(void)
+void
+process_buffered_input_packets()
 {
 	dispatch_run(DISPATCH_NONBLOCK, NULL, NULL);
 }
@@ -406,7 +392,8 @@ process_buffered_input_packets(void)
 void
 server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 {
-	fd_set readset, writeset;
+	fd_set *readset = NULL, *writeset = NULL;
+	int max_fd;
 	int wait_status;	/* Status returned by wait(). */
 	pid_t wait_pid;		/* pid returned by wait(). */
 	int waiting_termination = 0;	/* Have displayed waiting close message. */
@@ -446,15 +433,11 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		buffer_high = 64 * 1024;
 
 	/* Initialize max_fd to the maximum of the known file descriptors. */
-	max_fd = fdin;
-	if (fdout > max_fd)
-		max_fd = fdout;
-	if (fderr != -1 && fderr > max_fd)
-		max_fd = fderr;
-	if (connection_in > max_fd)
-		max_fd = connection_in;
-	if (connection_out > max_fd)
-		max_fd = connection_out;
+	max_fd = MAX(fdin, fdout);
+	if (fderr != -1)
+		max_fd = MAX(max_fd, fderr);
+	max_fd = MAX(max_fd, connection_in);
+	max_fd = MAX(max_fd, connection_out);
 
 	/* Initialize Initialize buffers. */
 	buffer_init(&stdin_buffer);
@@ -541,18 +524,22 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 			}
 		}
 		/* Sleep in select() until we can do something. */
-		wait_until_can_do_something(&readset, &writeset,
-					    max_time_milliseconds);
+		wait_until_can_do_something(&readset, &writeset, &max_fd,
+		    max_time_milliseconds);
 
 		/* Process any channel events. */
-		channel_after_select(&readset, &writeset);
+		channel_after_select(readset, writeset);
 
 		/* Process input from the client and from program stdout/stderr. */
-		process_input(&readset);
+		process_input(readset);
 
 		/* Process output to the client and to program stdin. */
-		process_output(&writeset);
+		process_output(writeset);
 	}
+	if (readset)
+		xfree(readset);
+	if (writeset)
+		xfree(writeset);
 
 	/* Cleanup and termination code. */
 
@@ -643,7 +630,8 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 void
 server_loop2(void)
 {
-	fd_set readset, writeset;
+	fd_set *readset = NULL, *writeset = NULL;
+	int max_fd;
 	int had_channel = 0;
 	int status;
 	pid_t pid;
@@ -654,9 +642,9 @@ server_loop2(void)
 	child_terminated = 0;
 	connection_in = packet_get_connection_in();
 	connection_out = packet_get_connection_out();
-	max_fd = connection_in;
-	if (connection_out > max_fd)
-		max_fd = connection_out;
+
+	max_fd = MAX(connection_in, connection_out);
+
 	server_init_dispatch();
 
 	for (;;) {
@@ -669,23 +657,28 @@ server_loop2(void)
 		}
 		if (packet_not_very_much_data_to_write())
 			channel_output_poll();
-		wait_until_can_do_something(&readset, &writeset, 0);
+		wait_until_can_do_something(&readset, &writeset, &max_fd, 0);
 		if (child_terminated) {
 			while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 				session_close_by_pid(pid, status);
 			child_terminated = 0;
 		}
-		channel_after_select(&readset, &writeset);
-		process_input(&readset);
-		process_output(&writeset);
+		channel_after_select(readset, writeset);
+		process_input(readset);
+		process_output(writeset);
 	}
+	if (readset)
+		xfree(readset);
+	if (writeset)
+		xfree(writeset);
+
 	signal(SIGCHLD, SIG_DFL);
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 		session_close_by_pid(pid, status);
 	channel_stop_listening();
 }
 
-static void
+void
 server_input_stdin_data(int type, int plen, void *ctxt)
 {
 	char *data;
@@ -702,7 +695,7 @@ server_input_stdin_data(int type, int plen, void *ctxt)
 	xfree(data);
 }
 
-static void
+void
 server_input_eof(int type, int plen, void *ctxt)
 {
 	/*
@@ -715,7 +708,7 @@ server_input_eof(int type, int plen, void *ctxt)
 	stdin_eof = 1;
 }
 
-static void
+void
 server_input_window_size(int type, int plen, void *ctxt)
 {
 	int row = packet_get_int();
@@ -729,7 +722,7 @@ server_input_window_size(int type, int plen, void *ctxt)
 		pty_change_window_size(fdin, row, col, xpixel, ypixel);
 }
 
-static Channel *
+Channel *
 server_request_direct_tcpip(char *ctype)
 {
 	int sock, newch;
@@ -762,7 +755,7 @@ server_request_direct_tcpip(char *ctype)
 	return (newch >= 0) ? channel_lookup(newch) : NULL;
 }
 
-static Channel *
+Channel *
 server_request_session(char *ctype)
 {
 	int newch;
@@ -790,7 +783,7 @@ server_request_session(char *ctype)
 	return NULL;
 }
 
-static void
+void
 server_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
@@ -837,7 +830,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 	xfree(ctype);
 }
 
-static void 
+void
 server_input_global_request(int type, int plen, void *ctxt)
 {
 	char *rtype;
@@ -847,7 +840,7 @@ server_input_global_request(int type, int plen, void *ctxt)
 	rtype = packet_get_string(NULL);
 	want_reply = packet_get_char();
 	debug("server_input_global_request: rtype %s want_reply %d", rtype, want_reply);
-	
+
 	if (strcmp(rtype, "tcpip-forward") == 0) {
 		struct passwd *pw;
 		char *listen_address;
@@ -869,12 +862,11 @@ server_input_global_request(int type, int plen, void *ctxt)
 			packet_send_debug("Server has disabled port forwarding.");
 		} else {
 			/* Start listening on the port */
-			channel_request_forwarding(
+			success = channel_request_forwarding(
 			    listen_address, listen_port,
 			    /*unspec host_to_connect*/ "<unspec host>",
 			    /*unspec port_to_connect*/ 0,
 			    options.gateway_ports, /*remote*/ 1);
-			success = 1;
 		}
 		xfree(listen_address);
 	}
@@ -887,8 +879,8 @@ server_input_global_request(int type, int plen, void *ctxt)
 	xfree(rtype);
 }
 
-static void
-server_init_dispatch_20(void)
+void
+server_init_dispatch_20()
 {
 	debug("server_init_dispatch_20");
 	dispatch_init(&dispatch_protocol_error);
@@ -903,8 +895,8 @@ server_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
 }
-static void
-server_init_dispatch_13(void)
+void
+server_init_dispatch_13()
 {
 	debug("server_init_dispatch_13");
 	dispatch_init(NULL);
@@ -918,8 +910,8 @@ server_init_dispatch_13(void)
 	dispatch_set(SSH_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH_MSG_PORT_OPEN, &channel_input_port_open);
 }
-static void
-server_init_dispatch_15(void)
+void
+server_init_dispatch_15()
 {
 	server_init_dispatch_13();
 	debug("server_init_dispatch_15");

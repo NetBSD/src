@@ -1,5 +1,3 @@
-/*	$NetBSD: auth-krb4.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $	*/
-
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -24,18 +22,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from: OpenBSD: auth-krb4.c,v 1.20 2000/12/19 23:17:54 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth-krb4.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: auth-krb4.c,v 1.23 2001/01/22 08:15:00 markus Exp $");
+
+#include "ssh.h"
+#include "ssh1.h"
 #include "packet.h"
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
 #include "servconf.h"
+#include "auth.h"
+
+#ifdef AFS
+#include "radix.h"
+#endif
 
 #ifdef KRB4
 char *ticket = NULL;

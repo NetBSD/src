@@ -1,5 +1,3 @@
-/*	$NetBSD: mpaux.h,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: mpaux.h,v 1.9 2000/12/19 23:17:57 markus Exp */
+/* RCSID("$OpenBSD: mpaux.h,v 1.9 2000/12/19 23:17:57 markus Exp $"); */
 
 #ifndef MPAUX_H
 #define MPAUX_H

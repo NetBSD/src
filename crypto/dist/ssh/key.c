@@ -1,5 +1,3 @@
-/*	$NetBSD: key.c,v 1.1.1.2 2001/01/14 04:50:22 itojun Exp $	*/
-
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,24 +31,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * read_bignum():
- * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
- */
-
-/* from OpenBSD: key.c,v 1.13 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: key.c,v 1.1.1.2 2001/01/14 04:50:22 itojun Exp $");
-#endif
-
 #include "includes.h"
-#include "ssh.h"
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
+RCSID("$OpenBSD: key.c,v 1.17 2001/02/04 15:32:24 stevesk Exp $");
+
 #include <openssl/evp.h>
+
 #include "xmalloc.h"
 #include "key.h"
 #include "rsa.h"
@@ -59,6 +44,7 @@ __RCSID("$NetBSD: key.c,v 1.1.1.2 2001/01/14 04:50:22 itojun Exp $");
 #include "uuencode.h"
 #include "buffer.h"
 #include "bufaux.h"
+#include "log.h"
 
 Key *
 key_new(int type)
@@ -227,7 +213,7 @@ key_fingerprint(Key *k)
  * last processed (and maybe modified) character.  Note that this may modify
  * the buffer containing the number.
  */
-static int
+int
 read_bignum(char **cpp, BIGNUM * value)
 {
 	char *cp = *cpp;
@@ -263,7 +249,7 @@ read_bignum(char **cpp, BIGNUM * value)
 	*cpp = cp;
 	return 1;
 }
-static int
+int
 write_bignum(FILE *f, BIGNUM *num)
 {
 	char *buf = BN_bn2dec(num);
@@ -272,7 +258,7 @@ write_bignum(FILE *f, BIGNUM *num)
 		return 0;
 	}
 	fprintf(f, " %s", buf);
-	free(buf);
+	xfree(buf);
 	return 1;
 }
 
@@ -463,26 +449,26 @@ key_size(Key *k){
 	return 0;
 }
 
-static RSA *
+RSA *
 rsa_generate_private_key(u_int bits)
 {
-        RSA *private;
-        private = RSA_generate_key(bits, 35, NULL, NULL);
-        if (private == NULL)
-                fatal("rsa_generate_private_key: key generation failed.");
-        return private;
+	RSA *private;
+	private = RSA_generate_key(bits, 35, NULL, NULL);
+	if (private == NULL)
+		fatal("rsa_generate_private_key: key generation failed.");
+	return private;
 }
 
-static DSA*
+DSA*
 dsa_generate_private_key(u_int bits)
 {
 	DSA *private = DSA_generate_parameters(bits, NULL, 0, NULL, NULL, NULL, NULL);
 	if (private == NULL)
 		fatal("dsa_generate_private_key: DSA_generate_parameters failed");
 	if (!DSA_generate_key(private))
-                fatal("dsa_generate_private_key: DSA_generate_key failed.");
-        if (private == NULL)
-                fatal("dsa_generate_private_key: NULL.");
+		fatal("dsa_generate_private_key: DSA_generate_key failed.");
+	if (private == NULL)
+		fatal("dsa_generate_private_key: NULL.");
 	return private;
 }
 
@@ -491,7 +477,7 @@ key_generate(int type, u_int bits)
 {
 	Key *k = key_new(KEY_UNSPEC);
 	switch (type) {
-        case KEY_DSA:
+	case KEY_DSA:
 		k->dsa = dsa_generate_private_key(bits);
 		break;
 	case KEY_RSA:
@@ -499,9 +485,9 @@ key_generate(int type, u_int bits)
 		k->rsa = rsa_generate_private_key(bits);
 		break;
 	default:
-                fatal("key_generate: unknown type %d", type);
+		fatal("key_generate: unknown type %d", type);
 	}
-        k->type = type;
+	k->type = type;
 	return k;
 }
 
@@ -510,7 +496,7 @@ key_from_private(Key *k)
 {
 	Key *n = NULL;
 	switch (k->type) {
-        case KEY_DSA:
+	case KEY_DSA:
 		n = key_new(k->type);
 		BN_copy(n->dsa->p, k->dsa->p);
 		BN_copy(n->dsa->q, k->dsa->q);
@@ -524,7 +510,7 @@ key_from_private(Key *k)
 		BN_copy(n->rsa->e, k->rsa->e);
 		break;
 	default:
-                fatal("key_from_private: unknown type %d", k->type);
+		fatal("key_from_private: unknown type %d", k->type);
 		break;
 	}
 	return n;
@@ -567,8 +553,8 @@ key_from_blob(char *blob, int blen)
 	switch(type){
 	case KEY_RSA:
 		key = key_new(type);
-		buffer_get_bignum2(&b, key->rsa->n);
 		buffer_get_bignum2(&b, key->rsa->e);
+		buffer_get_bignum2(&b, key->rsa->n);
 #ifdef DEBUG_PK
 		RSA_print_fp(stderr, key->rsa, 8);
 #endif
@@ -620,8 +606,8 @@ key_to_blob(Key *key, u_char **blobp, u_int *lenp)
 		break;
 	case KEY_RSA:
 		buffer_put_cstring(&b, key_ssh_name(key));
-		buffer_put_bignum2(&b, key->rsa->n);
 		buffer_put_bignum2(&b, key->rsa->e);
+		buffer_put_bignum2(&b, key->rsa->n);
 		break;
 	default:
 		error("key_to_blob: illegal key type %d", key->type);
