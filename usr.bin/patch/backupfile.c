@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.11 2003/07/08 01:55:35 kristerw Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.12 2003/07/12 13:47:43 itojun Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.11 2003/07/08 01:55:35 kristerw Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.12 2003/07/12 13:47:43 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -214,7 +214,7 @@ dirname(const char *path)
 	  length = slash - path + 1;
 	}
   newpath = xmalloc(length + 1);
-  strncpy (newpath, path, length);
+  strncpy(newpath, path, length);
   newpath[length] = 0;
   return newpath;
 }
