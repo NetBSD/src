@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.51 2000/01/19 16:30:01 tsutsui Exp $
+#	$NetBSD: Makefile.vax,v 1.52 2000/01/24 20:36:18 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -178,6 +178,8 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+
+dependall: depend all
 
 
 # depend on root or device configuration
