@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 1999/09/06 21:50:47 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.111 1999/09/17 19:59:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1878,9 +1878,7 @@ _fputype:
 	.long	FPU_NONE
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
-	.globl	_cold
-_cold:
-	.long	1		| cold start flag
+
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0		| KVA of proc0 u-area

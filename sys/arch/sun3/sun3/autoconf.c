@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 1999/09/15 18:10:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.54 1999/09/17 20:07:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,9 +63,6 @@
 #error "Must have exactly one of: SUN3 and SUN3X options"
 #endif
 
-/* Want compile-time initialization here. */
-int cold = 1;
-
 /*
  * Do general device autoconfiguration,
  * then choose root device (etc.)
@@ -85,7 +82,6 @@ cpu_configure()
 	 */
 	printf("enabling interrupts\n");
 	(void)spl0();
-	cold = 0;
 }
 
 /*

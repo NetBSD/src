@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 1999/09/15 18:10:35 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66 1999/09/17 19:59:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -47,7 +47,6 @@ void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
 
-int cold;	/* 1 if still booting */
 #include <sys/kernel.h>
 
 u_long boot_partition;
@@ -103,7 +102,6 @@ cpu_configure()
 #else
 	splx(s);
 #endif
-	cold = 0;
 #ifdef DEBUG_KERNEL_START
 	printf("survived configure...\n");
 #endif

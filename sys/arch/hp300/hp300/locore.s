@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.98 1999/08/01 21:32:17 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.99 1999/09/17 19:59:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1931,9 +1931,6 @@ GLOBAL(prototc)
 
 GLOBAL(internalhpib)
 	.long	1		| has internal HP-IB, default to yes
-
-GLOBAL(cold)
-	.long	1		| cold start flag
 
 GLOBAL(want_resched)
 	.long	0

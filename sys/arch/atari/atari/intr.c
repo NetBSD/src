@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 1999/09/17 19:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
@@ -118,7 +119,6 @@ intr_establish(vector, type, pri, ih_fun, ih_arg)
         int		pri;
         hw_ifun_t	ih_fun;
 {
-	extern int	cold;
 	struct intrhand	*ih, *cur_vec;
 	ih_list_t	*vec_list;
 	u_long		*hard_vec;

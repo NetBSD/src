@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.35 1999/09/15 18:10:35 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.36 1999/09/17 19:59:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 1999/09/15 18:10:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 1999/09/17 19:59:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
-	cold = 0;
 
 	/*
 	 * Note that bootstrapping is finished, and set the HWRPB up  

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1999/09/15 18:10:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 1999/09/17 20:07:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -73,9 +73,9 @@ cpu_configure()
 		panic("mainbus not configured");
 
 	/*
-	 * We're ready to start up. Clear CPU and soft cold start flags.
+	 * We're ready to start up. Clear CPU cold start flag.
+	 * Soft cold-start flag will be cleared in configure().
 	 */
-	cold = 0;
 	if (dep_call->cpu_clrf) 
 		(*dep_call->cpu_clrf)();
 }

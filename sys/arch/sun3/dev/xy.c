@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.22 1998/07/23 23:48:33 gwr Exp $	*/
+/*	$NetBSD: xy.c,v 1.23 1999/09/17 20:07:18 thorpej Exp $	*/
 
 /*
  *
@@ -532,7 +532,6 @@ xy_init(xy)
 	struct dkbad *dkb;
 	void *dvmabuf;
 	int err, spt, mb, blk, lcv, fullmode, newstate;
-	extern int cold;
 
 	xyc = xy->parent;
 	xy->state = XY_DRIVE_ATTACHING;

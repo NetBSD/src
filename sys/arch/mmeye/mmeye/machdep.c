@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1999/09/16 21:20:20 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1999/09/17 20:04:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -593,7 +593,6 @@ sys___sigreturn14(p, v, retval)
 }
 
 int waittime = -1;
-int cold = 1;
 struct pcb dumppcb;
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 1999/09/15 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49 1999/09/17 19:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -133,13 +133,6 @@
 
 #include <hp300/dev/hpibvar.h>
 #include <hp300/dev/scsivar.h>
-
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	cold;		    /* if 1, still working on cold-start */
 
 /* XXX must be allocated statically because of early console init */
 struct	map extiomap[EIOMAPSIZE/16];
@@ -287,8 +280,6 @@ cpu_configure()
 	(void)spl0();
 
 	intr_printlevels();
-
-	cold = 0;
 }
 
 /**********************************************************************

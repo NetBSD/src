@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.51 1999/04/24 08:01:13 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.52 1999/09/17 20:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.51 1999/04/24 08:01:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52 1999/09/17 20:04:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -292,7 +292,6 @@ void	scc_alphaintr __P((int));
  * console variables, for using serial console while still cold and
  * autoconfig has not attached the scc device.
  */
-extern  int cold;
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {

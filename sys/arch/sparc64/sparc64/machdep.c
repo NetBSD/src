@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1999/07/08 18:11:00 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.50 1999/09/17 20:07:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
@@ -688,7 +689,6 @@ cpu_reboot(howto, user_boot_string)
 {
 	int i;
 	static char str[128];
-	extern int cold;
 
 	/* If system is cold, just halt. */
 	if (cold) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.21 1999/09/07 13:53:36 simonb Exp $	*/
+/*	$NetBSD: tz.c,v 1.22 1999/09/17 20:04:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
@@ -478,7 +479,6 @@ tzdone(unit, error, resid, status)
 	struct tz_softc *sc = &tz_softc[unit];
 	struct buf *bp = sc->sc_tab.b_actf;
 	struct buf *dp;
-	extern int cold;
 
 	if (bp == NULL) {
 		printf("tz%d: bp == NULL\n", unit);

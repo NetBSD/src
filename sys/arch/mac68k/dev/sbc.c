@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.38 1998/11/19 21:46:24 thorpej Exp $	*/
+/*	$NetBSD: sbc.c,v 1.39 1999/09/17 20:04:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -183,7 +183,6 @@ sbc_irq_intr(p)
 	struct ncr5380_softc *ncr_sc = p;
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int claimed = 0;
-	extern int cold;
 
 	/* How we ever arrive here without IRQ set is a mystery... */
 	if (*ncr_sc->sci_csr & SCI_CSR_INT) {

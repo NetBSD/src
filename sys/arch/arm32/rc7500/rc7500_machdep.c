@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.24 1999/05/27 09:08:09 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.25 1999/09/17 19:59:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -51,6 +51,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
@@ -156,8 +157,6 @@ extern int pmap_debug_level;
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
-
-extern int cold;
 
 /* Prototypes */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1999/09/15 18:10:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1999/09/17 20:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,6 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold = 1;	/* if 1, still working on cold-start */
 int	cpuspeed = 10;	/* approx # instr per usec. */
 
 extern int initcpu __P((void));		/*XXX*/
@@ -109,8 +108,6 @@ cpu_configure()
 		panic("no mainbus found");
 
 	initcpu();
-
-	cold = 0;
 }
 
 void

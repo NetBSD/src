@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.15 1999/01/01 12:45:12 mark Exp $	*/
+/*	$NetBSD: console.c,v 1.16 1999/09/17 19:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -56,6 +56,7 @@
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
+#include <sys/kernel.h>
 
 #include <dev/cons.h>
 
@@ -995,7 +996,6 @@ rpcconsolecnputc(dev, character)
 	dev_t dev;
 	char character;
 {
-	extern int cold;
 
 	if (rpc_buf_ptr==RPC_BUF_LEN)
 		RPC_BUF_FLUSH

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 1999/08/01 21:38:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 1999/09/17 20:04:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1860,9 +1860,6 @@ GLOBAL(protorp)
 
 GLOBAL(prototc)
 	.long	0		| prototype translation control
-
-GLOBAL(cold)
-	.long	1		| cold start flag
 
 GLOBAL(want_resched)
 	.long	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1999/09/15 18:10:42 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22 1999/09/17 20:07:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -97,7 +97,6 @@ int printspl = 0;
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold;		/* if 1, still working on cold-start */
 int	stdinnode;	/* node ID of ROM's console input device */
 int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
@@ -501,7 +500,6 @@ cpu_configure()
 #endif
 
 	(void)spl0();
-	cold = 0;
 }
 
 struct device *altbootdev;

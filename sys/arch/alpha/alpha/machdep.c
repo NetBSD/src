@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182 1999/09/12 01:16:55 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 1999/09/12 01:16:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1090,7 +1090,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern int cold;
 #if defined(MULTIPROCESSOR)
 #if 0 /* XXX See below. */
 	u_long cpu_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.42 1999/03/19 04:58:46 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.43 1999/09/17 19:59:43 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -430,7 +431,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
-	extern int cold;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);

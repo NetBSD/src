@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 1999/09/15 18:10:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53 1999/09/17 20:04:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,15 +83,12 @@ static int target_to_unit __P((u_long, u_long, u_long));
 void
 cpu_configure()
 {
-	extern int	cold;
 
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before ADB attached */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
-
-	cold = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1999/09/15 18:10:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1999/09/17 20:07:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,7 +59,6 @@ static int simple_devprint __P((void *, const char *));
 static struct device *scsi_find __P((dev_t));
 static struct device *find_dev_byname __P((const char *));
 
-extern int cold;	/* 1 if still booting (locore.s) */
 int x68k_realconfig;
 #include <sys/kernel.h>
 
@@ -75,8 +74,6 @@ cpu_configure()
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
-
-	cold = 0;
 
 	/* Turn on interrupts */
 	(void) spl0();

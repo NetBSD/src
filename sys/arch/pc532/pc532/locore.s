@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1999/06/17 00:22:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1999/09/17 20:04:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -65,7 +65,6 @@
  * Initialization
  */
 
-	DATA_D(cold,		1)	/* cold till we are not */
 	DATA_D(esym,		0)	/* pointer to end of symbols */
 	DATA_D(_have_fpu,	0)	/* Have we an FPU installed? */
 

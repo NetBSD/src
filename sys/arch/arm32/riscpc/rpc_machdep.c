@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.30 1999/07/08 18:05:25 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -51,6 +51,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
@@ -151,8 +152,6 @@ extern int pmap_debug_level;
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
-
-extern int cold;
 
 #ifdef CPU_SA110
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)

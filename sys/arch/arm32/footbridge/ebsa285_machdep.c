@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.7 1999/05/27 09:08:09 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.8 1999/09/17 19:59:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
@@ -177,8 +178,6 @@ extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 extern void dumpsys		__P((void));
-
-extern int cold;
 
 /* A load of console goo. */
 #include "vga.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.34 1999/08/16 06:24:07 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.35 1999/09/17 19:59:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -217,8 +217,6 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
-
-extern int cold;
 
 int	badaddr	__P((void *, size_t));
 

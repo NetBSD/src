@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.23 1998/12/13 17:57:19 kleink Exp $	*/
+/*	$NetBSD: xd.c,v 1.24 1999/09/17 20:07:18 thorpej Exp $	*/
 
 /*
  *
@@ -585,7 +585,6 @@ xd_init(xd)
 	struct xd_iopb_drive *driopb;
 	void *dvmabuf;
 	int rqno, err, spt, mb, blk, lcv, fullmode, newstate;
-	extern int cold;
 
 	xdc = xd->parent;
 	xd->state = XD_DRIVE_ATTACHING;

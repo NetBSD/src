@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1999/09/12 01:17:13 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1999/09/17 20:04:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -699,7 +699,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)

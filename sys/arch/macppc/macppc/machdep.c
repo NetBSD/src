@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1999/08/15 12:47:15 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1999/09/17 20:04:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -121,8 +122,6 @@ void	ofkbd_cnpollc __P((dev_t, int));
 int msgbufmapped = 0;
 
 void install_extint __P((void (*)(void)));
-
-int cold = 1;
 
 #ifdef DDB
 void *startsym, *endsym;

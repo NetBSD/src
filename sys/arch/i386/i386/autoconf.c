@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1999/09/15 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 1999/09/17 19:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,13 +71,6 @@ extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
 
 /*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-extern int	cold;		/* cold start flag initialized in locore.s */
-
-/*
  * Determine i/o configuration for a machine.
  */
 void
@@ -94,7 +87,6 @@ cpu_configure()
 	    (u_short)imask[IPL_TTY]);
 
 	spl0();
-	cold = 0;
 
 	/* Set up proc0's TSS and LDT (after the FPU is configured). */
 	i386_proc0_tss_ldt_init();

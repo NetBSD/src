@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9 1999/09/08 17:28:02 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10 1999/09/17 20:04:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -41,6 +41,7 @@
  */
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -327,7 +328,6 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
-	extern int cold;
 
 	irq = mapirq(irq);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.20 1998/07/01 22:47:12 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.21 1999/09/17 19:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -558,7 +558,6 @@ nhpibppwatch(arg)
 {
 	struct hpibbus_softc *hs = arg;
 	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
-	extern int cold;
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1999/06/28 08:20:43 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1999/09/17 19:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,7 +137,6 @@ vaddr_t msgbuf_vaddr;
 paddr_t avail_end;			/* XXX temporary */
 
 void install_extint __P((void (*)(void)));
-int cold = 1;
 
 void
 initppc(startkernel, endkernel, args, btinfo)

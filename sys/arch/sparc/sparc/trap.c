@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 1999/06/28 15:51:26 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.86 1999/09/17 20:04:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -99,8 +99,6 @@ extern struct emul emul_sunos;
 #ifdef COMPAT_AOUT
 extern struct emul emul_netbsd_aout;
 #endif /* COMPAT_AOUT */
-
-extern int cold;
 
 #ifdef DEBUG
 int	rwindow_debug = 0;

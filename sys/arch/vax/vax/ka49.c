@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <machine/clock.h>
 #include <machine/cpu.h>

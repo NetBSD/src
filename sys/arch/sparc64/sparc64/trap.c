@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1999/03/30 02:12:37 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.30 1999/09/17 20:07:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -130,8 +130,6 @@ int rftucnt = 0;
 int rftuld = 0;
 int rftudone = 0;
 int rftkcnt[5] = { 0, 0, 0, 0, 0 };
-
-extern int cold;
 
 #ifdef DEBUG
 #define RW_64		0x1
