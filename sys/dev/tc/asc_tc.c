@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.4 1996/10/13 01:38:37 christos Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.5 1997/06/22 07:44:05 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -89,7 +89,8 @@ asc_tc_attach(parent, self, aux)
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(t->ta_addr);
+	/* Use uncached address for chip registers.  */
+	ascaddr = (void*)MIPS_PHYS_TO_KSEG1(t->ta_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*

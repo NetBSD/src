@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.23 1997/05/25 04:58:36 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.24 1997/06/22 07:42:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -252,7 +252,7 @@ dtopattach(parent, self, aux)
 	int i;
 
 
-	sc->poll = (poll_reg_t)MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
+	sc->poll = (poll_reg_t)MIPS_PHYS_TO_KSEG1(XINE_REG_INTR);
 	sc->data = (data_reg_t)d->iada_addr;
 
 	for (i = 0; i < DTOP_MAX_DEVICES; i++)
