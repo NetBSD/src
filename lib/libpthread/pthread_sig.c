@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.17 2002/10/16 17:43:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.18 2002/10/22 01:28:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -500,11 +500,11 @@ pthread__signal(pthread_t t, int sig, int code)
 	uc = (ucontext_t *)((char *)maskp - 
 	    STACKSPACE - sizeof(ucontext_t));
 
-	_getcontext_u(uc);
-	uc->uc_flags &= ~_UC_USER;
-
+	_INITCONTEXT_U(uc);
 	uc->uc_stack.ss_sp = maskp;
 	uc->uc_stack.ss_size = 0;
+	uc->uc_link = NULL;
+
 	SDPRINTF(("(makecontext %p): target %p: sig: %d %d uc: %p oldmask: %08x\n",
 	    self, target, sig, code, target->pt_uc, maskp->__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 8,
