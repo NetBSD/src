@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.34 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.35 2000/02/10 14:44:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -214,6 +214,7 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* NIPIP > 0 || MROUTING */
+#endif /* NGIF */
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
   gre_input,	rip_output,	0,		rip_ctloutput,
@@ -226,7 +227,6 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* NGRE > 0 */
-#endif /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
