@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.7 2003/02/16 16:50:09 tshiozak Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.8 2003/02/19 11:32:13 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.7 2003/02/16 16:50:09 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.8 2003/02/19 11:32:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	printf(": ACPI AC Adapter\n");
 
 	sc->sc_node = aa->aa_node;
+	simple_lock_init(&sc->sc_lock);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
