@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/09/22 22:10:49 christos Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 1999/09/21 04:56:07 cgd Exp $
 
-PROG = am-utils
-SRCS = am-utils.texinfo
+TEXINFO = am-utils.info
+INFOFLAGS = -I${.CURDIR}
 
-${PROG}: am-utils.dvi
-
-am-utils.dvi: ${SRCS}
-	-tex am-utils.texinfo; tex am-utils.texinfo
-
-clean:
-	-rm -f am-utils.aux am-utils.cp am-utils.cps am-utils.dvi am-utils.fn \
-	 am-utils.fns am-utils.ky am-utils.kys am-utils.log am-utils.pg \
-	 am-utils.pgs am-utils.toc am-utils.tp am-utils.tps am-utils.vr \
-	 am-utils.vrs
+.include <bsd.info.mk>
