@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.552 2003/04/04 20:57:27 wiz Exp $
+#	$NetBSD: mi,v 1.553 2003/04/06 07:17:55 gmcgarry Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -912,9 +912,9 @@
 ./usr/lib/crt0.o		comp-c-lib
 ./usr/lib/gcrt0.o		comp-c-lib
 ./usr/lib/i18n/libBIG5.a	comp-i18n-lib
-./usr/lib/i18n/libGBK2K.a	comp-i18n-lib
 ./usr/lib/i18n/libEUC.a		comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.a	comp-i18n-lib
+./usr/lib/i18n/libGBK2K.a	comp-i18n-lib
 ./usr/lib/i18n/libISO2022.a	comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.a	comp-i18n-lib
 ./usr/lib/i18n/libUTF8.a	comp-i18n-lib
@@ -995,8 +995,8 @@
 ./usr/lib/libposix_p.a		comp-c-proflib
 ./usr/lib/libpthread.a		comp-c-lib
 ./usr/lib/libpthread_dbg.a	comp-c-lib
-./usr/lib/libpthread_p.a	comp-c-proflib
 ./usr/lib/libpthread_dbg_p.a	comp-c-proflib
+./usr/lib/libpthread_p.a	comp-c-proflib
 ./usr/lib/libresolv.a		comp-c-lib
 ./usr/lib/libresolv_p.a		comp-c-proflib
 ./usr/lib/librmt.a		comp-c-lib
@@ -1333,7 +1333,6 @@
 ./usr/share/man/cat2/x86_64_get_mtrr.0		comp-c-catman
 ./usr/share/man/cat2/x86_64_iopl.0		comp-c-catman
 ./usr/share/man/cat2/x86_64_set_mtrr.0		comp-c-catman
-./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman
 ./usr/share/man/cat3/BIO_ctrl.0			comp-c-catman
 ./usr/share/man/cat3/BIO_f_base64.0		comp-c-catman
 ./usr/share/man/cat3/BIO_f_buffer.0		comp-c-catman
@@ -1583,6 +1582,7 @@
 ./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman
 ./usr/share/man/cat3/_longjmp.0	comp-c-catman
+./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman
 ./usr/share/man/cat3/_setjmp.0	comp-c-catman
 ./usr/share/man/cat3/a64l.0	comp-c-catman
 ./usr/share/man/cat3/abort.0	comp-c-catman
@@ -4031,11 +4031,26 @@
 ./usr/share/man/cat9/vflush.0		comp-sys-catman
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman
 ./usr/share/man/cat9/vfs.0		comp-sys-catman
+./usr/share/man/cat9/vfs_attach.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_busy.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_detach.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_export.0		comp-sys-catmaN
 ./usr/share/man/cat9/vfs_export_lookup.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_getnewfsid.0		comp-sys-catman
+./usr/share/man/cat9/vfs_getopsbyname.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_reinit.0		comp-sys-catmaN
 ./usr/share/man/cat9/vfs_rootmountalloc.0		comp-sys-catman
+./usr/share/man/cat9/vfs_setpublicfs.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_showexport.0		comp-sys-catmaN
 ./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman
+./usr/share/man/cat9/vfs_sysctl.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catmaN
+./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catmaN
 ./usr/share/man/cat9/vfsops.0		comp-sys-catman
+./usr/share/man/cat9/vfssubr.0		comp-sys-catmaN
 ./usr/share/man/cat9/vget.0		comp-sys-catman
 ./usr/share/man/cat9/vgone.0		comp-sys-catman
 ./usr/share/man/cat9/vgonel.0		comp-sys-catman
@@ -4399,7 +4414,6 @@
 ./usr/share/man/man2/x86_64_get_mtrr.2		comp-c-man
 ./usr/share/man/man2/x86_64_iopl.2		comp-c-man
 ./usr/share/man/man2/x86_64_set_mtrr.2		comp-c-man
-./usr/share/man/man3/_lwp_makecontext.3		comp-c-man
 ./usr/share/man/man3/BIO_ctrl.3			comp-c-man
 ./usr/share/man/man3/BIO_f_base64.3		comp-c-man
 ./usr/share/man/man3/BIO_f_buffer.3		comp-c-man
@@ -4649,6 +4663,7 @@
 ./usr/share/man/man3/_DIAGASSERT.3		comp-c-man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man
 ./usr/share/man/man3/_longjmp.3		comp-c-man
+./usr/share/man/man3/_lwp_makecontext.3		comp-c-man
 ./usr/share/man/man3/_setjmp.3		comp-c-man
 ./usr/share/man/man3/a64l.3		comp-c-man
 ./usr/share/man/man3/abort.3		comp-c-man
@@ -5856,8 +5871,8 @@
 ./usr/share/man/man3/sem_open.3		comp-c-man
 ./usr/share/man/man3/sem_post.3		comp-c-man
 ./usr/share/man/man3/sem_trywait.3	comp-c-man
-./usr/share/man/man3/sem_wait.3		comp-c-man
 ./usr/share/man/man3/sem_unlink.3	comp-c-man
+./usr/share/man/man3/sem_wait.3		comp-c-man
 ./usr/share/man/man3/set_com_err_hook.3	comp-c-man
 ./usr/share/man/man3/set_current_field.3	comp-c-man
 ./usr/share/man/man3/set_field_back.3	comp-c-man
@@ -7097,11 +7112,26 @@
 ./usr/share/man/man9/vflush.9		comp-sys-man
 ./usr/share/man/man9/vflushbuf.9		comp-sys-man
 ./usr/share/man/man9/vfs.9		comp-sys-man
+./usr/share/man/man9/vfs_attach.9		comp-sys-man
+./usr/share/man/man9/vfs_busy.9		comp-sys-man
+./usr/share/man/man9/vfs_detach.9		comp-sys-man
+./usr/share/man/man9/vfs_export.9		comp-sys-man
 ./usr/share/man/man9/vfs_export_lookup.9		comp-sys-man
 ./usr/share/man/man9/vfs_getnewfsid.9		comp-sys-man
+./usr/share/man/man9/vfs_getopsbyname.9		comp-sys-man
+./usr/share/man/man9/vfs_getvfs.9		comp-sys-man
+./usr/share/man/man9/vfs_mountedon.9		comp-sys-man
+./usr/share/man/man9/vfs_mountroot.9		comp-sys-man
+./usr/share/man/man9/vfs_reinit.9		comp-sys-man
 ./usr/share/man/man9/vfs_rootmountalloc.9		comp-sys-man
+./usr/share/man/man9/vfs_setpublicfs.9		comp-sys-man
+./usr/share/man/man9/vfs_showexport.9		comp-sys-man
 ./usr/share/man/man9/vfs_shutdown.9		comp-sys-man
+./usr/share/man/man9/vfs_sysctl.9		comp-sys-man
+./usr/share/man/man9/vfs_unbusy.9		comp-sys-man
+./usr/share/man/man9/vfs_unmountall.9		comp-sys-man
 ./usr/share/man/man9/vfsops.9		comp-sys-man
+./usr/share/man/man9/vfssubr.9		comp-sys-man
 ./usr/share/man/man9/vget.9		comp-sys-man
 ./usr/share/man/man9/vgone.9		comp-sys-man
 ./usr/share/man/man9/vgonel.9		comp-sys-man
