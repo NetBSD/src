@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.43 1998/02/02 08:11:49 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.44 1998/02/09 00:47:23 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -551,7 +551,7 @@ SHAREMODE = ${DOCMODE}
 
 # A few aliases for *-install targets
 INSTALL_PROGRAM= \
-	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
+	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
 INSTALL_SCRIPT= \
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
 INSTALL_DATA= \
