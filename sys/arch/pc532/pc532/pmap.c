@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2001/09/15 20:36:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2001/09/19 07:54:49 chs Exp $	*/
 
 /*
  *
@@ -2539,7 +2539,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va));
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
 		}
