@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.5.6.3 2001/06/07 15:46:56 he Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.5.6.4 2001/10/27 20:29:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -148,6 +148,9 @@ const struct pciintr_icu_table {
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },
+
+	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1543,
+	  ali1543_init },
 
 	{ 0,			0,
 	  NULL },
