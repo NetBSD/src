@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.3 1994/11/20 20:55:02 deraadt Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4 1995/09/16 23:20:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -30,11 +30,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/param.h>
 #include <machine/psl.h>
 
 #define	CCFSZ	96
 
 	.file	"str0.s"
+
+	.data
+	.global	_cputyp, _nbpg, _pgofset, _pgshift
+_cputyp:
+	.word	1
+_nbpg:
+	.word	1
+_pgofset:
+	.word	1
+_pgshift:
+	.word	1
 
 	.text	
 	.globl	start
@@ -91,14 +103,42 @@ start:
 	 sub    %o1, %o0, %o1
 
 	/*
-	 * Save address of PROM vector (passed in %i0).
+	 * Set CPU type that we are running on.
 	 */
-	sethi	%hi(_promvec), %o0
-	st	%i0, [%o0 + %lo(_promvec)]
+	sethi	%hi(_cputyp), %o0
+	set	0x4000, %g7
+	cmp	%i0, %g7
+	beq	5f
+	 nop
 
 	/*
-	 * That's it, really...
+	 * Save address of PROM vector (passed in %i0).
 	 */
+	sethi	%hi(_promvec), %o1
+	st	%i0, [%o1 + %lo(_promvec)]
+
+	mov	CPU_SUN4C, %g4
+	mov	SUN4CM_PGSHIFT, %g5
+	b,a	6f
+
+5:
+	mov	CPU_SUN4, %g4
+	mov	SUN4_PGSHIFT, %g5
+
+6:
+	st	%g4, [%o0 + %lo(_cputyp)]
+	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
+	st	%g5, [%o0 + %lo(_pgshift)]
+
+	mov	1, %o0			! nbpg = 1 << pgshift
+	sll	%o0, %g5, %g5
+	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
+	st	%g5, [%o0 + %lo(_nbpg)]
+
+	sub	%g5, 1, %g5
+	sethi	%hi(_pgofset), %o0	! page offset = bytes in a page - 1
+	st	%g5, [%o0 + %lo(_pgofset)]
+
 	call	_main
 	 mov	%i0, %o0
 

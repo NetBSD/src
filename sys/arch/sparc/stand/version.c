@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.3 1994/11/20 20:55:04 deraadt Exp $ */
+/*	$NetBSD: version.c,v 1.4 1995/09/16 23:20:39 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -35,6 +35,7 @@
  *
  *	1.1
  *	1.2	get it to work with V0 bootproms.
+ *	1.4	add oldmon support and network support.
  */
 
-char *version = "$Revision: 1.3 $";
+char *version = "$Revision: 1.4 $";

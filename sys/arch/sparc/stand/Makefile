@@ -1,73 +1,23 @@
-#	$NetBSD: Makefile,v 1.6 1995/06/26 23:26:57 pk Exp $
+#	$NetBSD: Makefile,v 1.7 1995/09/16 23:20:22 pk Exp $
 
-RELOC_SUN4=	240000
-RELOC_SUN4C=	340000
-RELOC_SUN4M=	440000
+SUBDIR= boot bootxx installboot
 
-RELOC?=		${RELOC_SUN4C}
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
 
-DEFS= -DSTANDALONE
-CFLAGS=	-O2 ${INCPATH} ${DEFS}
-
-SRCS=   boot.c filesystem.c promdev.c version.c
-XXSRCS=	bootxx.c promdev.c
-
-S=	${.CURDIR}/../../..
-
-.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.PATH: ${S}/stand ${S}/lib/libsa
-
-INCPATH=-I${.CURDIR} -I${S}/arch -I${S} -I${S}/lib/libsa
-
-KERNREL=
 ### find out what to use for libkern and libsa
-.include "$S/lib/libkern/Makefile.inc"
-LIBKERN= ${KERNLIB}
+.include "Makefile.inc"
 .include "$S/lib/libsa/Makefile.inc"
-LIBSA=	${SA_LIB}
+.include "$S/lib/libkern/Makefile.inc"
 
-LIBS=	${LIBSA} ${LIBKERN}
+all: ${SALIB} ${KERNLIB} _SUBDIRUSE
 
-BOOTS=	boot bootxx
-ALL=	${BOOTS} installboot
+libdep:
+	@echo  ${SALIB} ${KERNLIB}
 
-all:	${ALL}
+clean:: _SUBDIRUSE
 
-${BOOTS}: ${LIBS} .NOTMAIN
+cleandir: _SUBDIRUSE
+	rm -rf lib machine
 
-OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-XXOBJS=	${XXSRCS:N*.h:R:S/$/.o/g}
-
-# depend on DEFS
-
-srt0.o: Makefile
-
-# startups
-
-srt0.o: ${.CURDIR}/srt0.S
-	${CC} ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.S
-
-# new boot
-boot:	srt0.o ${OBJS} ${LIBS} fixhdr
-	${LD} -N -T ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@
-	${.OBJDIR}/fixhdr $@
-	@size $@
-
-bootxx:	srt0.o ${XXOBJS} ${LIBS} fixhdr
-	${LD} -N -T ${RELOC} -e start srt0.o ${XXOBJS} ${LIBS} -o $@
-	${.OBJDIR}/fixhdr $@
-	@size $@
-
-installboot: ${.CURDIR}/installboot.c
-	${CC} ${CFLAGS} -o installboot ${.CURDIR}/installboot.c
-
-# utilities
-
-fixhdr: fixhdr.c
-	${CC} -o fixhdr ${.CURDIR}/fixhdr.c
-
-clean::
-	rm -f *.o errs make.out
-	rm -f a.out boot cat ls fixhdr
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
