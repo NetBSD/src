@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_dma.c,v 1.2 2001/06/14 17:57:26 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_dma.c,v 1.3 2001/06/22 05:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,31 @@ algor_p4032_dma_init(struct p4032_config *acp)
 	t = &acp->ac_pci_dmat;
 	t->_cookie = acp;
 	t->_wbase = vtpbc_configuration.vt_dma_winbase;
+	t->_physbase = P4032_DMA_PCI_PHYSBASE;
+	t->_wsize = P4032_DMA_PCI_SIZE;
+	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_destroy = _bus_dmamap_destroy;
+	t->_dmamap_load = _bus_dmamap_load;
+	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	t->_dmamap_load_uio = _bus_dmamap_load_uio;
+	t->_dmamap_load_raw = _bus_dmamap_load_raw;
+	t->_dmamap_unload = _bus_dmamap_unload;
+	t->_dmamap_sync = _bus_dmamap_sync;
+
+	t->_dmamem_alloc = _bus_dmamem_alloc;
+	t->_dmamem_free = _bus_dmamem_free;
+	t->_dmamem_map = _bus_dmamem_map;
+	t->_dmamem_unmap = _bus_dmamem_unmap;
+	t->_dmamem_mmap = _bus_dmamem_mmap;
+
+	/*
+	 * Initialize the DMA tag used for PCI on-board Ethernet DMA.
+	 * This window has pre-fetching enabled (hooray for broken
+	 * PCI bus controllers).
+	 */
+	t = &acp->ac_pci_pf_dmat;
+	t->_cookie = acp;
+	t->_wbase = P4032_DMA_PCI_PF_PCIBASE;
 	t->_physbase = P4032_DMA_PCI_PHYSBASE;
 	t->_wsize = P4032_DMA_PCI_SIZE;
 	t->_dmamap_create = _bus_dmamap_create;
