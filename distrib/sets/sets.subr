@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.30 2004/02/28 01:02:05 matt Exp $
+#	$NetBSD: sets.subr,v 1.31 2004/03/05 04:52:50 jmc Exp $
 #
 
 #
@@ -91,19 +91,20 @@ lkm=yes
 if [ "${MACHINE}" = "evbppc" ]; then
 	lkm=no				# Turn off LKMs for some ports.
 fi
-# Determine lib type.
-if [ "${MKPIC}" = "no" ]; then
-	shlib=no
-elif [ "${OBJECT_FMT}" = "ELF" ]; then
+# Determine lib type. Do this first so stlib also gets set.
+if [ "${OBJECT_FMT}" = "ELF" ]; then
 	shlib=elf
 else
 	shlib=aout
 fi
 stlib=$shlib
+# Now check for MKPIC or specials and turn off shlib if need be.
+if [ "${MKPIC}" = "no" ]; then
+	shlib=no
+fi
 if [ "${MACHINE_ARCH}" = "m68000" ]; then
 	shlib=no			# Turn off shlibs for some ports.
 fi
-
 
 #
 # list_set_files setfile [...]
@@ -112,7 +113,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.30 2004/02/28 01:02:05 matt Exp $
+# 	# $NetBSD: sets.subr,v 1.31 2004/03/05 04:52:50 jmc Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
