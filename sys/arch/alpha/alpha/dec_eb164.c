@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.36 2000/06/20 03:48:54 matt Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.37 2001/04/19 18:25:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.36 2000/06/20 03:48:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.37 2001/04/19 18:25:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,15 @@ static int comcnrate = CONSPEED;
 void dec_eb164_init __P((void));
 static void dec_eb164_cons_init __P((void));
 static void dec_eb164_device_register __P((struct device *, void *));
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 void
 dec_eb164_init()
@@ -150,6 +159,10 @@ dec_eb164_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &ccp->cc_iot);
+#endif /* KGDB */
 }
 
 static void

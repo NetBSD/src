@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.1 2000/07/12 20:36:07 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.2 2001/04/19 18:25:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.1 2000/07/12 20:36:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.2 2001/04/19 18:25:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.1 2000/07/12 20:36:07 thorpej Exp
 void dec_2000_300_init(void);
 static void dec_2000_300_cons_init(void);
 static void dec_2000_300_device_register(struct device *, void *);
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 void
 dec_2000_300_init(void)
@@ -175,6 +184,10 @@ dec_2000_300_cons_init(void)
 	default:
 		goto badconsole;
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &jcp->jc_internal_iot);
+#endif /* KGDB */
 
 	return;
  badconsole:
