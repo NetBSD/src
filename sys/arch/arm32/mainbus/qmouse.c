@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.c,v 1.3 1996/03/17 01:24:36 thorpej Exp $ */
+/* $NetBSD: qmouse.c,v 1.4 1996/03/27 22:14:45 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -56,7 +56,7 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <machine/iomd.h>
-#include <machine/qmouse.h>
+#include <machine/mouse.h>
 
 #include "quadmouse.h"
 
@@ -94,7 +94,7 @@ struct cfattach quadmouse_ca = {
 };
 
 struct cfdriver	quadmouse_cd = {
-    NULL, "quadmouse", DV_DULL
+	NULL, "quadmouse", DV_DULL
 };
 
 
@@ -142,6 +142,7 @@ quadmouseattach(parent, self, aux)
 	sc->sc_ih.ih_func = quadmouseintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
+	sc->sc_ih.ih_name = "T1 quadmouse";
 
 /* Set up origin and multipliers */
 
@@ -192,11 +193,10 @@ quadmouseopen(dev, flag, mode, p)
 	sc->lastb = -1;
 
 	/* initialise buffer */
-	if(clalloc(&sc->buffer, QMOUSE_BSIZE, 0) == -1)
+	if (clalloc(&sc->buffer, QMOUSE_BSIZE, 0) == -1)
 		return(ENOMEM);
 
 	sc->sc_state |= QMOUSE_OPEN;
-
 
 	WriteByte(IOMD_T1LOW, (TIMER1_COUNT >> 0) & 0xff);
 	WriteByte(IOMD_T1HIGH, (TIMER1_COUNT >> 8) & 0xff);
