@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.12 2003/12/25 03:44:11 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.13 2004/02/23 05:20:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,6 +134,12 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 		case TCN_SELCHANGE:
 			tab->show();
 			break;
+		case TCN_KEYDOWN: {
+			NMTCKEYDOWN *key = reinterpret_cast
+				<NMTCKEYDOWN *>(lparam);
+			return _base->focusManagerHook(key->wVKey, key->flags,
+						_cancel_button->_window);
+		    }
 		}
 	}
 	break;
@@ -154,7 +160,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 				    TEXT("WARNING"),
 				    mb_icon | MB_YESNO) != IDYES)
 					break;
-				UpdateWindow(w);
+				UpdateWindow(_window);
 			}
 		boot:
 			SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
@@ -241,13 +247,82 @@ RootWindow::disableTimer()
 BOOL
 RootWindow::isDialogMessage(MSG &msg)
 {
+	HWND tab_window;
+
 	if (_main && IsWindowVisible(_main->_window))
-		return IsDialogMessage(_main->_window, &msg);
-	if (_option && IsWindowVisible(_option->_window))
-		return IsDialogMessage(_option->_window, &msg);
-	if (_console && IsWindowVisible(_console->_window))
-		return IsDialogMessage(_console->_window, &msg);
-	return FALSE;
+		tab_window = _main->_window;
+	else if (_option && IsWindowVisible(_option->_window))
+		tab_window = _option->_window;
+	else if (_console && IsWindowVisible(_console->_window))
+		tab_window = _console->_window;
+
+	if (focusManagerHook(msg, tab_window))
+		return TRUE;
+
+	return IsDialogMessage(tab_window, &msg);
+}
+
+//
+// WinCE 2.11 doesn't support keyboard focus traversal for nested
+// dialogs, so implement poor man focus manager for our root window.
+// This function handles focus transition from boot/cancel buttons.
+// Transition from the tab-control is done on WM_NOTIFY/TCN_KEYDOWN
+// above.
+//
+// XXX: This is a very smplistic implementation that doesn't handle
+// <TAB> auto-repeat count in LOWORD(msg.lParam).
+//
+BOOL
+RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
+{
+	HWND next, prev;
+	HWND dst = 0;
+
+	if (msg.message != WM_KEYDOWN)
+		return FALSE;
+
+	if (msg.hwnd == _boot_button->_window) {
+		next = _cancel_button->_window;
+		prev = _base->_window;
+	} else if (msg.hwnd == _cancel_button->_window) {
+		next = _base->_window;
+		prev = _boot_button->_window;
+	} else if (tab_window == 0) {
+		return FALSE;
+	} else {
+		// last focusable control in the tab_window (XXX: WS_GROUP?)
+		HWND last = GetNextDlgTabItem(tab_window, NULL, TRUE);
+		if (!last || msg.hwnd != last)
+			return FALSE;
+		// XXX: handle DLGC_WANTARROWS &c
+		next = _base->_window; // out of the tab window
+		prev = 0;	// let IsDialogMessage handle it
+	}
+
+	switch (msg.wParam) {
+	case VK_RIGHT:
+	case VK_DOWN:
+		dst = next;
+		break;
+
+	case VK_LEFT:
+	case VK_UP:
+		dst = prev;
+		break;
+
+	case VK_TAB:
+		if (GetKeyState(VK_SHIFT) & 0x8000) // Shift-Tab
+			dst = prev;
+		else
+			dst = next;
+		break;
+	}
+
+	if (dst == 0)
+		return FALSE;
+
+	SetFocus(dst);
+	return TRUE;
 }
 
 void
@@ -299,6 +374,7 @@ CancelButton::create(LPCREATESTRUCT aux)
 	    reinterpret_cast <HMENU>(IDC_CANCELBUTTON),
 	    aux->hInstance,
 	    NULL);
+
 	return IsWindow(_window) ? TRUE : FALSE;
 }
 
