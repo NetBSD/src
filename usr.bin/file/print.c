@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.26 2002/07/09 14:59:54 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.27 2002/07/10 16:15:54 pooka Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -28,22 +28,19 @@
  */
 
 #include "file.h"
-#include <errno.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <time.h>
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.38 2002/07/03 18:37:44 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.26 2002/07/09 14:59:54 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.27 2002/07/10 16:15:54 pooka Exp $");
 #endif
 #endif  /* lint */
 
