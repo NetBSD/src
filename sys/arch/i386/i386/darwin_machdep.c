@@ -1,11 +1,11 @@
-/*	$NetBSD: bioscall.s,v 1.4.24.3 2002/11/11 21:58:58 nathanw Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.1.2.2 2002/12/11 06:00:52 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John Kohl.
+ * by Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,56 +35,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <machine/param.h>
-#include <machine/bioscall.h>
 
-#include <machine/asm.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.1.2.2 2002/12/11 06:00:52 thorpej Exp $");
 
-/* LINTSTUB: include <sys/types.h> */
-/* LINTSTUB: include <machine/bioscall.h> */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/signal.h>
 
-	.globl	_C_LABEL(PTDpaddr)	/* from locore.s */
-	
-_C_LABEL(biostramp_image):
-	.globl	_C_LABEL(biostramp_image)
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_vm.h>
 
-8:
-#include "i386/bioscall/biostramp.inc"
-9:
+#include <compat/darwin/darwin_signal.h>
+#include <compat/darwin/darwin_syscallargs.h>
 
-	.globl	_C_LABEL(biostramp_image_size)
-_C_LABEL(biostramp_image_size):
-	.long	9b - 8b
+void
+darwin_sendsig(sig, mask, code)
+	int sig;
+	sigset_t *mask; 
+	u_long code;
+{
+	printf("darwin_sendsig: sig = %d\n", sig);
+	return;
+}
 
-/*
- * void bioscall(int function, struct bioscallregs *regs):
- * 	call the BIOS interrupt "function" from real mode with
- *	registers as specified in "regs"
- *	for the flags, though, only these flags are passed to the BIOS--
- *	the remainder come from the flags register at the time of the call:
- *	(PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
- *
- *	Fills in *regs with registers as returned by BIOS.
- */
-/* LINTSTUB: Func: void bioscall(int function, struct bioscallregs *regs) */
-NENTRY(bioscall)
-	pushl	%ebp
-	movl	%esp,%ebp		/* set up frame ptr */
+int
+darwin_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 
-	movl	%cr3,%eax		/* save PTDB register */
-	pushl	%eax
+	struct darwin_sys_sigreturn_args /* {
+		syscallarg(struct darwin_ucontext *) uctx;
+	} */ *uap = v;
 
-	movl	_C_LABEL(PTDpaddr),%eax	/* install proc0 PTD */
-	movl	%eax,%cr3
+	printf("darwin_sys_sigreturn: uctx = %p\n", SCARG(uap, uctx));
 
-	movl	$(BIOSTRAMP_BASE),%eax	/* address of trampoline area */
-	pushl	12(%ebp)
-	pushl	8(%ebp)
-	call	*%eax			/* machdep.c initializes it */
-	addl	$8,%esp			/* clear args from stack */
-
-	popl	%eax
-	movl	%eax,%cr3			/* restore PTDB register */
-
-	leave
-	ret
+	return 0;
+}

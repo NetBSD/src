@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15.4.6 2002/11/11 21:59:19 nathanw Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15.4.7 2002/12/11 06:01:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -107,7 +107,7 @@
 #define	CPUID_PGE	0x00002000	/* has page global extension */
 #define	CPUID_MCA	0x00004000	/* has machine check architecture */
 #define	CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
-#define	CPUID_FGPAT	0x00010000	/* Page Attribute Table */
+#define	CPUID_PAT	0x00010000	/* Page Attribute Table */
 #define	CPUID_PSE36	0x00020000	/* 36-bit PSE */
 #define	CPUID_PN	0x00040000	/* processor serial number */
 #define	CPUID_CFLUSH	0x00080000	/* CFLUSH insn supported */
@@ -122,16 +122,30 @@
 #define	CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
 #define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
 #define	CPUID_B30	0x40000000	/* reserved */
-#define	CPUID_B31	0x80000000	/* reserved */
+#define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
 #define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
 			    "\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
 #define CPUID_MASK1	0x00001fff
-#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24CFLUSH" \
+#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN\24CFLUSH" \
 			    "\25B20\26DS\27ACPI\30MMX"
 #define CPUID_MASK2	0x00ffe000
-#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40B31"
+#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40SBF"
 #define CPUID_MASK3	0xff000000
+
+/*
+ * AMD/VIA processor specific flags.
+ */
+
+#define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
+#define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
+#define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
+
+#define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
+				    "\24MPC\25B20\26B21\27MMXX\30MMX"
+#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33B26\34B27\35B28\36B29" \
+				    "\0373DNOW2\0403DNOW"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)

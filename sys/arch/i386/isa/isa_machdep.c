@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.51.2.3 2002/10/18 02:38:00 nathanw Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.51.2.4 2002/12/11 06:01:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.2.3 2002/10/18 02:38:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.2.4 2002/12/11 06:01:02 thorpej Exp $");
 
 #define ISA_DMA_STATS
 
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.2.3 2002/10/18 02:38:00 nathanw
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/icu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -125,12 +124,6 @@ extern	paddr_t avail_end;
 #define	IDTVEC(name)	__CONCAT(X,name)
 typedef void (vector) __P((void));
 extern vector *IDTVEC(intr)[];
-void isa_strayintr __P((int));
-void intr_calculatemasks __P((void));
-static int fakeintr __P((void *));
-#if NMCA > 0
-static int mca_clockfakeintr __P((void *));
-#endif
 
 /*
  * Cookie used by ISA dma.  A pointer to one of these it stashed in
@@ -167,8 +160,6 @@ struct i386_isa_dma_cookie {
 #define	ID_BUFTYPE_MBUF		2
 #define	ID_BUFTYPE_UIO		3
 #define	ID_BUFTYPE_RAW		4
-
-static	void init_i8259 __P((void));
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -214,274 +205,20 @@ struct i386_bus_dma_tag isa_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-/*
- * Fill in default interrupt table (in case of spurious interrupt
- * during configuration of kernel), setup interrupt control unit
- */
-void
-isa_defaultirq()
-{
-	int i;
-
-	/* icu vectors */
-	for (i = 0; i < ICU_LEN; i++)
-		setgate(&idt[ICU_OFFSET + i].gd, IDTVEC(intr)[i], 0,
-		    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
-	init_i8259();
-}
-
-void
-isa_reinit_irq()
-{
-	init_i8259();
-	SET_ICUS();
-}
-
-/* initialize i8259s */
-
-static void
-init_i8259(void)
-{
-	/* initialize 8259's */
-#if NMCA > 0
-	/* level-triggered interrupts on MCA PS/2s */
-	if (MCA_system)
-		outb(IO_ICU1, 0x19);	/* reset; program device, four bytes */
-	else
-#endif
-		outb(IO_ICU1, 0x11);	/* reset; program device, four bytes */
-
-	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
-	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
-#ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU1+1, 1);		/* 8086 mode */
-#endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
-#ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
-#endif
-
-#if NMCA > 0
-	/* level-triggered interrupts on MCA PS/2s */
-	if (MCA_system)
-		outb(IO_ICU2, 0x19);	/* reset; program device, four bytes */
-	else
-#endif	
-		outb(IO_ICU2, 0x11);	/* reset; program device, four bytes */
-
-	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
-	outb(IO_ICU2+1, IRQ_SLAVE);
-#ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU2+1, 1);		/* 8086 mode */
-#endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
-}
-
-/*
- * Handle a NMI, possibly a machine check.
- * return true to panic system, false to ignore.
- */
-int
-isa_nmi()
-{
-	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-	return(0);
-}
-
-/*
- * Caught a stray interrupt, notify
- */
-void
-isa_strayintr(irq)
-	int irq;
-{
-	static u_long strays;
-
-        /*
-         * Stray interrupts on irq 7 occur when an interrupt line is raised
-         * and then lowered before the CPU acknowledges it.  This generally
-         * means either the device is screwed or something is cli'ing too
-         * long and it's timing out.
-         */
-	if (++strays <= 5)
-		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    strays >= 5 ? "; stopped logging" : "");
-}
-
-int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-int iminlevel[ICU_LEN], imaxlevel[ICU_LEN];
-struct intrhand *intrhand[ICU_LEN];
-
-/*
- * Recalculate the interrupt masks from scratch.
- * We could code special registry and deregistry versions of this function that
- * would be faster, but the code would be nastier, and we don't expect this to
- * happen very much anyway.
- */
-void
-intr_calculatemasks()
-{
-	int irq, level, unusedirqs;
-	struct intrhand *q;
-
-	/* First, figure out which levels each IRQ uses. */
-	unusedirqs = 0xffff;
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << (q->ih_level>>CPSHIFT);
-		intrlevel[irq] = levels;
-		if (levels)
-			unusedirqs &= ~(1 << irq);
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		imasks[level] = irqs | unusedirqs;
-	}
-
-	/*
-	 * Initialize soft interrupt masks to block themselves.
-	 */
-#if 0
-	IMASK(IPL_AST) |= 1 << SIR_AST;
-#endif
-	IMASK(IPL_SOFTCLOCK) |= 1 << SIR_CLOCK;
-	IMASK(IPL_SOFTNET) |= 1 << SIR_NET;
-	IMASK(IPL_SOFTSERIAL) |= 1 << SIR_SERIAL;
-	
-#if 0
-	/*
-	 * IPL_NONE is used for hardware interrupts that are never blocked,
-	 * and do not block anything else.
-	 */
-	IMASK(IPL_NONE) = 0;
-#endif
-
-	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 *
-	 * (as a side effect, this also takes care of shared IRQs with
-	 *  different IPL for iunmask below)
-	 */
-	for (level = 0; level<(NIPL-1); level++)
-		imasks[level+1] |= imasks[level];
-	
-#if 0
-	IMASK(IPL_SOFTCLOCK) |= IMASK(IPL_NONE);
-	IMASK(IPL_SOFTNET) |= IMASK(IPL_SOFTCLOCK);
-	IMASK(IPL_BIO) |= IMASK(IPL_SOFTNET);
-	IMASK(IPL_NET) |= IMASK(IPL_BIO);
-	IMASK(IPL_SOFTSERIAL) |= IMASK(IPL_NET);
-	IMASK(IPL_TTY) |= IMASK(IPL_SOFTSERIAL);
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	IMASK(IPL_IMP) |= IMASK(IPL_TTY);
-
-	IMASK(IPL_AUDIO) |= IMASK(IPL_IMP);
-
-	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, clock > imp.
-	 */
-	IMASK(IPL_CLOCK) |= IMASK(IPL_AUDIO);
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	IMASK(IPL_HIGH) |= IMASK(IPL_CLOCK);
-
-	/*
-	 * We need serial drivers to run at the absolute highest priority to
-	 * avoid overruns, so serial > high.
-	 */
-	IMASK(IPL_SERIAL) |= IMASK(IPL_HIGH);
-#endif
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int irqs = 1 << irq;
-		int minlevel = IPL_SERIAL;
-		int maxlevel = 0;
-
-		if (intrhand[irq] == NULL) {
-			maxlevel = minlevel = IPL_SERIAL;
-			irqs = IMASK(IPL_SERIAL);
-		} else {
-			for (q = intrhand[irq]; q; q = q->ih_next) {
-				irqs |= IMASK(q->ih_level);
-				if (q->ih_level > maxlevel)
-					maxlevel = q->ih_level;
-				if (q->ih_level < minlevel)
-					minlevel = q->ih_level;
-			}
-		}
-		if (irqs != IMASK(maxlevel))
-			panic("irq %d level %x mask mismatch: %x vs %x", irq, level, irqs, IMASK(level));
-		
-		imaxlevel[irq] = maxlevel;
-		iminlevel[irq] = minlevel;
-		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
-#if 0
-		printf("irq %d: level %x, mask 0x%x (%x)\n",
-		    irq, imaxlevel[irq], intrmask[irq], IMASK(imaxlevel[irq]));
-#endif
-
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrhand[irq])
-				irqs |= 1 << irq;
-		if (irqs >= 0x100) /* any IRQs >= 8 in use */
-			irqs |= 1 << IRQ_SLAVE;
-		imen = ~irqs;
-	}
-	for (level = 0; level < NIPL; level++)
-		iunmask[level] = ~imasks[level];
-
-}
-
-static int
-fakeintr(arg)
-	void *arg;
-{
-
-	return 0;
-}
-
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NUM_LEGACY_IRQS && (x) != 2)
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int i, tmp, bestirq, count;
 	struct intrhand **p, *q;
+	struct intrsource *isp;
+	struct cpu_info *ci;
 
 	if (type == IST_NONE)
 		panic("intr_alloc: bogus type");
+
+	ci = &cpu_info_primary;
 
 	bestirq = -1;
 	count = -1;
@@ -495,21 +232,25 @@ isa_intr_alloc(ic, mask, type, irq)
 	 */
 	mask &= 0xefbf;
 
-	for (i = 0; i < ICU_LEN; i++) {
+	simple_lock(&ci->ci_slock);
+
+	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
-
-		switch(intrtype[i]) {
-		case IST_NONE:
+		isp = ci->ci_isources[i];
+		if (isp == NULL) {
 			/*
 			 * if nothing's using the irq, just return it
 			 */
 			*irq = i;
+			simple_unlock(&ci->ci_slock);
 			return (0);
+		}
 
+		switch(isp->is_type) {
 		case IST_EDGE:
 		case IST_LEVEL:
-			if (type != intrtype[i])
+			if (type != isp->is_type)
 				continue;
 			/*
 			 * if the irq is shareable, count the number of other
@@ -520,7 +261,7 @@ isa_intr_alloc(ic, mask, type, irq)
 			 * interrupt level and stick IPL_TTY with other
 			 * IPL_TTY, etc.
 			 */
-			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
+			for (p = &isp->is_handlers, tmp = 0; (q = *p) != NULL;
 			     p = &q->ih_next, tmp++)
 				;
 			if ((bestirq == -1) || (count > tmp)) {
@@ -534,6 +275,8 @@ isa_intr_alloc(ic, mask, type, irq)
 			continue;
 		}
 	}
+
+	simple_unlock(&ci->ci_slock);
 
 	if (bestirq == -1)
 		return (1);
@@ -551,10 +294,6 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 	return NULL;
 }
 
-/*
- * Set up an interrupt handler to start being called.
- * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
- */
 void *
 isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
@@ -564,121 +303,35 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {fakeintr};
+	struct pic *pic;
+	int pin;
 #if NIOAPIC > 0
-	struct mp_intr_map *mip = NULL;
-	
+	int mpih;
+#endif
+
+	pin = irq;
+	pic = &i8259_pic;
+
+#if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		int mpspec_pin = irq;
-		int airq;
-		int bus = mp_isa_bus;
-		if (mp_isa_bus != -1) {
-			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
-			     mip=mip->next) {
-				if (mip->bus_pin == mpspec_pin) {
-					airq = mip->ioapic_ih | irq;
-					break;
+		if (intr_find_mpmapping(mp_isa_bus, irq, &mpih) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0) {
+			if (!APIC_IRQ_ISLEGACY(mpih)) {
+				pin = APIC_IRQ_PIN(mpih);
+				pic = (struct pic *)
+				    ioapic_find(APIC_IRQ_APIC(mpih));
+				if (pic == NULL) {
+					printf("isa_intr_establish: "
+					       "unknown apic %d\n",
+					    APIC_IRQ_APIC(mpih));
+					return NULL;
 				}
 			}
-		}
-#if NEISA > 0
-		if (mip == NULL && (mp_eisa_bus != -1)) {
-			bus = mp_eisa_bus;
-			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
-			     mip=mip->next) {
-				if (mip->bus_pin == mpspec_pin) {
-					airq = mip->ioapic_ih | irq;
-					break;
-				}
-			}
-		}
-#endif
-		if (mip == NULL)
+		} else
 			printf("isa_intr_establish: no MP mapping found\n");
-		else
-			return apic_intr_establish (airq, type, level, ih_fun, ih_arg);
 	}
 #endif
-
-#if NMCA > 0
-	/*
-	 * Need special fake handler for PS/2 MCA clock interrupt
-	 */
-
-	if (MCA_system && irq == 0)
-		fakehand.ih_fun = &mca_clockfakeintr;
-#endif
-
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("isa_intr_establish: can't malloc handler info");
-
-	if (!LEGAL_IRQ(irq) || type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
-
-#if NMCA > 0
-	/* change IST_EDGE to IST_LEVEL if MCA system */
-	if (MCA_system && type == IST_EDGE)
-		type = IST_LEVEL;
-#endif
-
-	switch (intrtype[irq]) {
-	case IST_NONE:
-		intrtype[irq] = type;
-		break;
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	case IST_PULSE:
-		if (type != IST_NONE) {
-			/*
-			 * We can't share interrupts in this case.
-			 */
-#ifdef DEBUG
-			printf("intr_establish: irq %d can't share %s "
-			    "with %s\n", irq,
-			    isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type));
-#endif
-			return (NULL);
-		}
-		break;
-	}
-
-	/*
-	 * Figure out where to put the handler.
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * generally small.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
-
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	intr_calculatemasks();
-
-	/*
-	 * Poke the real handler in now.
-	 */
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
-	ih->ih_next = NULL;
-	ih->ih_level = level;
-	ih->ih_irq = irq;
-	*p = ih;
-
-	SET_ICUS();
-	return (ih);
+	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg);
 }
 
 /*
@@ -690,29 +343,11 @@ isa_intr_disestablish(ic, arg)
 	void *arg;
 {
 	struct intrhand *ih = arg;
-	int irq = ih->ih_irq;
-	struct intrhand **p, *q;
 
-	if (!LEGAL_IRQ(irq))
+	if (!LEGAL_IRQ(ih->ih_pin))
 		panic("intr_disestablish: bogus irq");
 
-	/*
-	 * Remove the handler from the chain.
-	 * This is O(n^2), too.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-	if (q)
-		*p = q->ih_next;
-	else
-		panic("intr_disestablish: handler not registered");
-	free(ih, M_DEVBUF);
-
-	intr_calculatemasks();
-	SET_ICUS();
-
-	if (intrhand[irq] == NULL)
-		intrtype[irq] = IST_NONE;
+	intr_disestablish(ih);
 }
 
 void
@@ -1319,17 +954,3 @@ _isa_dma_free_bouncebuf(t, map)
 	cookie->id_nbouncesegs = 0;
 	cookie->id_flags &= ~ID_HAS_BOUNCE;
 }
-
-#if NMCA > 0
-/*
- * Special fake handler for PS/2 MCA clock interrupts
- */
-static int
-mca_clockfakeintr(arg)
-	void *arg;
-{
-	/* Reset clock interrupt by asserting bit 7 of port 0x61 */
-	outb(0x61, inb(0x61) | 0x80);
-	return 0;
-}
-#endif

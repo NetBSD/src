@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.10.12.3 2002/11/11 21:59:49 nathanw Exp $	*/
+/*	$NetBSD: aed.c,v 1.10.12.4 2002/12/11 06:10:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -608,7 +608,7 @@ filt_aedrdetach(struct knote *kn)
 	int s;
 
 	s = spladb();
-	SLIST_REMOVE(&aed_sc->sc_selinfo.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&aed_sc->sc_selinfo.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -634,12 +634,12 @@ aedkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &aed_sc->sc_selinfo.si_klist;
+		klist = &aed_sc->sc_selinfo.sel_klist;
 		kn->kn_fop = &aedread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &aed_sc->sc_selinfo.si_klist;
+		klist = &aed_sc->sc_selinfo.sel_klist;
 		kn->kn_fop = &aed_seltrue_filtops;
 		break;
 

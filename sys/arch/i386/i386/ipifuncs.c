@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.3.2.3 2002/11/11 21:59:02 nathanw Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.3.2.4 2002/12/11 06:00:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ i386_reload_mtrr(struct cpu_info *ci)
 #endif
 
 int
-i386_send_ipi (struct cpu_info *ci, int ipimask)
+i386_send_ipi(struct cpu_info *ci, int ipimask)
 {
 	int ret;
 
@@ -153,7 +153,7 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 
-	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
+	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
 		    ipimask,
@@ -197,7 +197,7 @@ i386_broadcast_ipi (int ipimask)
 }
 
 void
-i386_multicast_ipi (int cpumask, int ipimask)
+i386_multicast_ipi(int cpumask, int ipimask)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -229,6 +229,7 @@ i386_ipi_handler(void)
 	for (bit = 0; bit < I386_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
 			pending &= ~(1<<bit);
+			ci->ci_ipi_events[bit].ev_count++;
 			(*ipifunc[bit])(ci);
 		}
 	}

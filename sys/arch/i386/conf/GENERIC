@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.400.2.19 2002/11/11 21:58:50 nathanw Exp $
+# $NetBSD: GENERIC,v 1.400.2.20 2002/12/11 06:00:49 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.400.2.19 $"
+#ident 		"GENERIC-$Revision: 1.400.2.20 $"
 
 maxusers	32		# estimated number of users
 
@@ -86,7 +86,7 @@ options 	LKM		# loadable kernel modules
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
@@ -118,6 +118,7 @@ options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
@@ -231,6 +232,9 @@ mainbus0 at root
 cpu* at mainbus?
 #ioapic* at mainbus?
 
+# Doesn't do anything yet.
+#p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+
 #apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
@@ -300,10 +304,6 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
 
-#
-
-p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
-
 
 # EISA bus support
 eisa0	at mainbus?
@@ -337,12 +337,12 @@ isapnp0	at isa?
 pcic*	at isapnp?
 
 # CardBus bridge support
-#cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
 
 # CardBus bus support
-#cardbus*	at cardslot?
-#pcmcia* 	at cardslot?
+cardbus*	at cardslot?
+pcmcia* 	at cardslot?
 
 # Coprocessor Support
 
@@ -859,6 +859,18 @@ ugen*	at uhub? port ?
 oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
+# PCI IEEE1394 controllers
+#fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+# CardBus IEEE1394 controllers
+#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+
+#fw*	at fwbus?			# IP over 1394
+
+# IEEE1394 nodes
+#fwnode* at fwbus? idhi ? idlo ?
+#sbpscsi* at fwnode?
+#scsibus* at sbpscsi?
 
 # Audio Devices
 
@@ -1014,9 +1026,8 @@ include	"arch/i386/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-# RAIDframe is broken with MULTIPROCESSOR / LOCKDEBUG
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1

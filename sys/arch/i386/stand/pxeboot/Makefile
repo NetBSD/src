@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3.4.2 2002/02/28 04:10:29 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3.4.3 2002/12/11 06:01:06 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin
-MKMAN=	no
+NOMAN=	# defined
 NEWVERSWHAT=	"PXE Boot"
 STARTFILE=	${PXESTART}
 RELOC=		0x0

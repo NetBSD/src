@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.1.10.2 2002/10/18 02:38:07 nathanw Exp $	*/
+/*	$NetBSD: npx_pnpbios.c,v 1.1.10.3 2002/12/11 06:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.1.10.2 2002/10/18 02:38:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.1.10.3 2002/12/11 06:01:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ npx_pnpbios_attach(struct device *parent, struct device *self, void *aux)
 		    irq);
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(0/*XXX*/, irq, ist, IPL_NONE,
-		    npxintr, NULL);
+		     (int (*)(void *))npxintr, NULL);
 		break;
 	case NPX_EXCEPTION:
 		printf("%s: using exception 16\n", sc->sc_dev.dv_xname);

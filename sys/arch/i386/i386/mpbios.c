@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.5.2.2 2002/10/18 02:37:46 nathanw Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5.2.3 2002/12/11 06:00:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1042,7 +1042,7 @@ mpbios_int(ent, enttype, mpi)
 			if ((altmpi->type != type) ||
 			    (altmpi->flags != flags)) {
 				printf("%s: conflicting map entries for pin %d\n",
-				    sc->sc_dev.dv_xname, pin);
+				    sc->sc_pic.pic_dev.dv_xname, pin);
 			}
 		} else {
 			sc->sc_pins[pin].ip_map = mpi;
@@ -1060,7 +1060,8 @@ mpbios_int(ent, enttype, mpi)
 		char buf[256];
 
 		printf("%s: int%d attached to %s",
-		    sc? sc->sc_dev.dv_xname : "local apic", pin, mpb->mb_name);
+		    sc ? sc->sc_pic.pic_dev.dv_xname : "local apic",
+		    pin, mpb->mb_name);
 
 		if (mpb->mb_idx != -1)
 			printf("%d", mpb->mb_idx);
@@ -1106,19 +1107,19 @@ mpbios_cpu_start(struct cpu_info *ci)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = i386_ipi_init(ci->ci_cpuid)) != 0)
+		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
 			return error;
 
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_cpuid,
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_cpuid,
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.32 2002/11/25 21:40:02 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.33 2002/12/11 06:00:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.32 2002/11/25 21:40:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.33 2002/12/11 06:00:56 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -216,7 +216,6 @@ int     cpureset_delay = 2000; /* default to 2s */
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
@@ -320,8 +319,17 @@ static const char * const i386_intel_brand[] = {
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
 	"Pentium III",      /* Intel (R) Pentium (R) III processor */
 	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
-	"", "", "",	    /* Reserved */
-	"Pentium 4"	    /* Intel (R) Pentium (R) 4 processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"",		    /* Reserved */
+	"Mobile Pentium III", /* Mobile Intel (R) Pentium (R) III processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Xeon",		    /* Intel (R) Xeon (TM) processor */
+	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
+	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
 
 /*
@@ -346,10 +354,13 @@ void winchip_cpu_setup __P((struct cpu_info *));
 void amd_family5_setup __P((struct cpu_info *));
 void transmeta_cpu_setup __P((struct cpu_info *));
 
+static void via_cpu_probe __P((struct cpu_info *));
 static void amd_family6_probe __P((struct cpu_info *));
 
+static const char *intel_family6_name __P((struct cpu_info *));
+
 static void transmeta_cpu_info __P((struct cpu_info *));
-static void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
+static void amd_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -746,7 +757,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III (Cascades)",
+				0, "Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
@@ -797,8 +808,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K5 or K6"		/* Default */
 			},
 			amd_family5_setup,
-			amd_cpuid_cpu_cacheinfo,
 			NULL,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -812,7 +823,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			amd_family6_probe,
-			amd_cpuid_cpu_cacheinfo,
+			amd_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -823,7 +834,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			amd_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		} }
 	},
@@ -882,6 +893,60 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 		} }
 	},
+	{	/* MediaGX is now owned by National Semiconductor */
+		"Geode by NSC",
+		CPUVENDOR_CYRIX, /* XXX */
+		"National Semiconductor",
+		/* Family 4, NSC never had any of these */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5: Geode family, formerly MediaGX */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0,
+				"Geode GX1",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Geode"		/* Default */
+			},
+			cyrix6x86_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible" /* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
 	{
 		"CentaurHauls",
 		CPUVENDOR_IDT,
@@ -910,19 +975,20 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 		},
-		/* Family 6, not yet available from IDT */
+		/* Family 6, VIA acquired IDT Centaur design subsidiary */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				0, 0, 0, 0, 0, 0, "C3 Samuel",
+				"C3 Samuel 2/Ezra", "C3 Ezra-T",
+				0, 0, 0, 0, 0, 0, 0,
+				"C3"	/* Default */
 			},
 			NULL,
-			NULL,
+			via_cpu_probe,
 			NULL,
 		},
-		/* Family > 6, not yet available from IDT */
+		/* Family > 6, not yet available from VIA */
 		{
 			CPUCLASS_686,
 			{
@@ -1048,6 +1114,92 @@ winchip_cpu_setup(ci)
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
 	    : "a" (code));
 
+void
+via_cpu_probe(struct cpu_info *ci)
+{
+	u_int descs[4];
+	u_int lfunc;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags = descs[3];
+	}
+}
+
+const char *
+intel_family6_name(struct cpu_info *ci)
+{
+	int model = CPUID2MODEL(ci->ci_signature);
+	const char *ret = NULL;
+	u_int l2cache = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
+
+	if (model == 5) {
+		switch (l2cache) {
+		case 0:
+		case 128 * 1024:
+			ret = "Celeron (Covington)";
+			break;
+		case 256 * 1024:
+			ret = "Mobile Pentium II (Dixon)";
+			break;
+		case 512 * 1024:
+			ret = "Pentium II";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium II Xeon";
+			break;
+		}
+	} else if (model == 6) {
+		switch (l2cache) {
+		case 256 * 1024:
+		case 512 * 1024:
+			ret = "Mobile Pentium II";
+			break;
+		}
+	} else if (model == 7) {
+		switch (l2cache) {
+		case 512 * 1024:
+			ret = "Pentium III";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium III Xeon";
+			break;
+		}
+	} else if (model >= 8) {
+		if (ci->ci_brand_id && ci->ci_brand_id < 0x10) {
+			switch (ci->ci_brand_id) {
+			case 0x3:
+				if (ci->ci_signature == 0x6B1)
+					ret = "Celeron";
+				break;
+			case 0x08:
+				if (ci->ci_signature >= 0xF13)
+					ret = "genuine processor";
+				break;
+			case 0x0E:
+				if (ci->ci_signature < 0xF13)
+					ret = "Xeon";
+				break;
+			}
+			if (ret == NULL)
+				ret = i386_intel_brand[ci->ci_brand_id];
+		}
+	}
+
+	return ret;
+}
+
 static void
 cpu_probe_base_features(struct cpu_info *ci)
 {
@@ -1163,14 +1315,23 @@ cpu_probe_features(struct cpu_info *ci)
 void
 amd_family6_probe(struct cpu_info *ci)
 {
-	u_int32_t eax;
-	u_int32_t dummy1, dummy2, dummy3;
+	u_int32_t lfunc;
+	u_int32_t descs[4];
 	u_int32_t brand[12];
 	char *p;
 	int i;
 
-	CPUID(0x80000000, eax, dummy1, dummy2, dummy3);
-	if (eax < 0x80000004)
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags |= descs[3];
+	}
+
+	if (lfunc < 0x80000004)
 		return;
 	
 	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
@@ -1503,7 +1664,7 @@ static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
 };
 
 void
-amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+amd_cpu_cacheinfo(struct cpu_info *ci)
 {
 	const struct i386_cache_info *cp;
 	struct i386_cache_info *cai;
@@ -1513,7 +1674,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 
 	family = (ci->ci_signature >> 8) & 15;
 	if (family < CPU_MINFAMILY)
-		panic("amd_cpuid_cpu_cacheinfo: strange family value");
+		panic("amd_cpu_cacheinfo: strange family value");
 	model = CPUID2MODEL(ci->ci_signature);
 
 	/*
@@ -1606,15 +1767,13 @@ identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
-	int family, model, modif;
-#ifdef CPUDEBUG
-	int step;
-#endif
+	int modif, family, model, step;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
 	char buf[1024];
 	char *sep;
+	char *feature_str[3];
 
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1632,15 +1791,11 @@ identifycpu(struct cpu_info *ci)
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 0x3;
-		family = (ci->ci_signature >> 8) & 0xf;
+		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
-#ifdef CPUDEBUG
-		step = ci->ci_signature & 0xf;
-		printf("%s: family %x model %x step %x\n", cpuname, family,
-			model, step);
-#endif
+		step = CPUID2STEPPING(ci->ci_signature);
 
 		for (i = 0; i < max; i++) {
 			if (!strncmp((char *)ci->ci_vendor,
@@ -1680,15 +1835,13 @@ identifycpu(struct cpu_info *ci)
 			ci->cpu_setup = cpufam->cpu_setup;
 			ci->ci_info = cpufam->cpu_info;
 
-			/*
-			 * Intel processors family >= 6, model 8 allow to
-			 * recognize brand by Brand ID value.
-			 */
-			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
-			    model >= 8 && ci->ci_brand_id &&
-			    ci->ci_brand_id < 8)
-				brand = i386_intel_brand[ci->ci_brand_id];
-			
+			if (vendor == CPUVENDOR_INTEL && family == 6 &&
+			    model >= 5) {
+				const char *tmp = intel_family6_name(ci);
+				if (tmp != NULL)
+					name = tmp;
+			}
+
 			if (vendor == CPUVENDOR_AMD && family == 6 &&
 			    model >= 6) {
 				if (ci->ci_brand_id == 1)
@@ -1701,6 +1854,9 @@ identifycpu(struct cpu_info *ci)
 				else
 					brand = amd_brand_name;
 			}
+			
+			if (vendor == CPUVENDOR_IDT && family >= 6)
+				vendorname = "VIA";
 		}
 	}
 
@@ -1735,29 +1891,40 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_tsc_freq != 0)
 		printf(", %qd.%02qd MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	if (ci->ci_signature != 0)
+		printf(", id 0x%x", ci->ci_signature);
 	printf("\n");
 
 	if (ci->ci_info)
 		(*ci->ci_info)(ci);
 
+	if (vendor == CPUVENDOR_INTEL) {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_FLAGS2;
+		feature_str[2] = CPUID_FLAGS3;
+	} else {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_EXT_FLAGS2;
+		feature_str[2] = CPUID_EXT_FLAGS3;
+	}	
+	
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[0], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[1], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS3,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[2], buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 	}
-
 
 	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
 	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
@@ -2649,6 +2816,8 @@ setregs(l, pack, stack)
  */
 
 union	descriptor *idt, *gdt, *ldt;
+char idt_allocmap[NIDT];
+struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
@@ -3363,17 +3532,21 @@ init386(first_avail)
 	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
-	for (x = 0; x < 32; x++)
+	for (x = 0; x < 32; x++) {
 		setgate(&idt[x].gd, IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
+		idt_allocmap[x] = 1;
+	}
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
+	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
 	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
@@ -3423,14 +3596,12 @@ init386(first_avail)
 	mca_busprobe();
 #endif
 
-#if NISA > 0
-	isa_defaultirq();
-#endif
+	intr_default_setup();
 
 	/* Initialize software interrupts. */
 	softintr_init();
 
-	splraise(IPL_SERIAL);	/* XXX MP clean me */
+	splraise(IPL_IPI);
 	enable_intr();
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -3764,13 +3935,15 @@ cpu_setmcontext(l, mcp, flags)
 	return (0);
 }
 
-void cpu_initclocks()
+void
+cpu_initclocks()
 {
 	(*initclock_func)();
 }
 
 #ifdef MULTIPROCESSOR
-void need_resched(struct cpu_info *ci)
+void
+need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
 	if ((ci)->ci_curlwp != NULL)
@@ -3784,47 +3957,43 @@ void need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc (low, high)
+idt_vec_alloc(low, high)
 	int low;
 	int high;
 {
 	int vec;
 
-	for (vec=low; vec<=high; vec++)
-		if (idt[vec].gd.gd_p == 0)
+	simple_lock(&idt_lock);
+	for (vec = low; vec <= high; vec++) {
+		if (idt_allocmap[vec] == 0) {
+			idt_allocmap[vec] = 1;
+			simple_unlock(&idt_lock);
 			return vec;
+		}
+	}
+	simple_unlock(&idt_lock);
 	return 0;
 }
 
-void idt_vec_set (vec, function)
+void
+idt_vec_set(vec, function)
 	int vec;
 	void (*function) __P((void));
 {
+	/*
+	 * Vector should be allocated, so no locking needed.
+	 */
+	KASSERT(idt_allocmap[vec] == 1);
 	setgate(&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 }
 
 void
-idt_vec_free (vec)
+idt_vec_free(vec)
 	int vec;
 {
+	simple_lock(&idt_lock);
 	unsetgate(&idt[vec].gd);
+	idt_allocmap[vec] = 0;
+	simple_unlock(&idt_lock);
 }
-
-#if 0
-extern void xxx_lapic_time(void);
-
-void
-xxx_lapic_time(void)
-{
-	uint64_t before, after;
-	int i, sum;
-
-	before=rdtsc();
-	for (i=0; i<1000000; i++) {
-		sum += lapic_tpr;
-	}
-	after=rdtsc();
-	printf("1000000 lapic_tpr reads: %llx\n", after-before);
-}
-#endif

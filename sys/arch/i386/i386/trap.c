@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.18 2002/12/03 23:21:20 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.19 2002/12/11 06:00:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.18 2002/12/03 23:21:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.19 2002/12/11 06:00:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -235,7 +235,7 @@ trap(frame)
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), lapic_tpr);
+		    frame.tf_eflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
 		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
@@ -290,9 +290,9 @@ trap(frame)
 		else
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x imask %x\n",
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x ilevel %x\n",
 		    type, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), lapic_tpr);
+		    frame.tf_eflags, rcr2(), curcpu()->ci_ilevel);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -416,7 +416,9 @@ copyfault:
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched) /* XXX CSE me? */
@@ -640,13 +642,13 @@ copyfault:
 		/* machine/parity/power fail/"kitchen sink" faults */
 
 #if NMCA > 0
-		/* mca_nmi() takes care to call isa_nmi() if appropriate */
+		/* mca_nmi() takes care to call i386_nmi() if appropriate */
 		if (mca_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;
 #else /* NISA > 0 */
-		if (isa_nmi() != 0)
+		if (i386_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;

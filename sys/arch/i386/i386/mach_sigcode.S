@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.1.6.3 2002/08/01 02:42:02 nathanw Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.2.2.2 2002/12/11 06:00:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,21 +80,51 @@
 
 #include "assym.h"
 
+#include <machine/psl.h>
+#include <machine/segments.h>
+#include <machine/trap.h>
+#include <compat/mach/mach_syscall.h>
 #include <machine/asm.h>
-#include <compat/ibcs2/ibcs2_syscall.h>
+#include <machine/frameasm.h>
 
-/* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
-NENTRY(ibcs2_sigcode)
-	/*
-	 * Handler has returned here as if we called it.  The sigcontext
-	 * is on the stack after the 3 args "we" pushed.
-	 */
-	leal	12(%esp),%eax		# get pointer to sigcontext
-	movl	%eax,4(%esp)		# put it in the argument slot
-					# fake return address already there
-	movl	$IBCS2_SYS_sigreturn,%eax
-	int	$0x80			# enter kernel with args on stack
-	movl	$IBCS2_SYS_exit,%eax
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
+/* LINTSTUB: Var: char mach_sigcode[1], mach_esigcode[1]; */
+NENTRY(mach_sigcode)
+/*
+	call	MACH_SIGF_HANDLER(%esp)
+	leal	MACH_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
+					# copy at SIGF_UCP(%esp))
+	pushl	%eax
+	pushl	$1			# setcontext(p) == syscontext(1, p) 
+	pushl	%eax			# junk to fake return address
+	movl	$MACH_SYS_context,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$MACH_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_esigcode):
+*/
+	.globl	_C_LABEL(mach_esigcode)
+_C_LABEL(mach_esigcode):
+
+IDTVEC(mach_trap)
+	/* Set eflags in trap frame. */
+	pushfl
+	popl	8(%esp)
+	pushl	$7		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	movl	CPUVAR(CURLWP),%edx
+	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
+	call	_C_LABEL(mach_trap)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%eax)
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%eax)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+1:	INTRFASTEXIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.s,v 1.2.24.3 2002/11/11 21:59:00 nathanw Exp $	*/
+/*	$NetBSD: db_dbgreg.S,v 1.1.2.2 2002/12/11 06:00:52 thorpej Exp $	*/
 
 /* 
  * Mach Operating System

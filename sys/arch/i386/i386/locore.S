@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.22 2002/11/25 21:40:02 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.2 2002/12/11 06:00:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -108,37 +107,11 @@
 #endif
 
 /* LINTSTUB: include <sys/types.h> */
-/* LINTSTUB: include <sys/systm.h> */
 /* LINTSTUB: include <machine/cpu.h> */
+/* LINTSTUB: include <sys/systm.h> */
 
-/*
- * override user-land alignment before including asm.h
- */
-#ifdef __ELF__
-#define	ALIGN_DATA	.align	4
-#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
-#else
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
-#endif
-#define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
 
-#define CPL _C_LABEL(lapic_tpr)
-#if __STDC__
-#define	_CONCAT(a,b) a ## b
-#else
-#define _CONCAT(a,b) a/**/b
-#endif
-
-#if defined(MULTIPROCESSOR)
-#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
-#else
-#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
-#endif
-	
 #if defined(MULTIPROCESSOR)
 	
 #define SET_CURLWP(lwp,cpu)				\
@@ -149,36 +122,19 @@
 #else
 
 #define SET_CURLWP(lwp,tcpu)		movl	lwp,CPUVAR(CURLWP)
+#define GET_CURLWP(reg)			movl	CPUVAR(CURLWP),reg
 
 #endif
 
-#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
+#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
-
-#define CHECK_ASTPENDING(reg)		movl	CPUVAR(CURLWP),reg	; \
-					cmpl	$0, reg			; \
-					je 1f				; \
-					movl	L_PROC(reg),reg		; \
-					cmpl	$0, P_MD_ASTPENDING(reg); \
-					1:	
-#define CLEAR_ASTPENDING(reg)		movl	$0, P_MD_ASTPENDING(reg)
-
+	
 #define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
-
-/* NB: NOP now preserves registers so NOPs can be inserted anywhere */
-/* XXX: NOP and FASTER_NOP are misleadingly named */
-#ifdef DUMMY_NOPS	/* this will break some older machines */
-#define	FASTER_NOP
-#define	NOP
-#else
-#define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
-#define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
-#endif
 
 /* Disallow old names for REALBASEMEM */
 #ifdef BIOSBASEMEM
@@ -193,77 +149,7 @@
 #error BIOSEXTMEM option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
 #endif
 
-#ifndef TRAPLOG
-#define TLOG		/**/
-#else
-/*
- * Fill in trap record
- */
-#define TLOG						\
-9:							\
-	movl	%fs:CPU_TLOG_OFFSET, %eax;		\
-	movl	%fs:CPU_TLOG_BASE, %ebx;		\
-	addl	$SIZEOF_TREC,%eax;			\
-	andl	$SIZEOF_TLOG-1,%eax;			\
-	addl	%eax,%ebx;				\
-	movl	%eax,%fs:CPU_TLOG_OFFSET;		\
-	movl	%esp,TREC_SP(%ebx);			\
-	movl	$9b,TREC_HPC(%ebx);			\
-	movl	TF_EIP(%esp),%eax;			\
-	movl	%eax,TREC_IPC(%ebx);			\
-	rdtsc			;			\
-	movl	%eax,TREC_TSC(%ebx);			\
-	movl	$MSR_LASTBRANCHFROMIP,%ecx;		\
-	rdmsr			;			\
-	movl	%eax,TREC_LBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_LBT(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBT(%ebx)
-#endif
-		
-/*
- * These are used on interrupt or trap entry or exit.
- */
-#define	INTRENTRY \
-	pushl	%eax		; \
-	pushl	%ecx		; \
-	pushl	%edx		; \
-	pushl	%ebx		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	pushl	%ebp		; \
-	pushl	%esi		; \
-	pushl	%edi		; \
-	pushl	%ds		; \
-	pushl	%es		; \
-	movl	%eax,%ds	; \
-	movl	%eax,%es	; \
-	pushl	%fs		; \
-	pushl	%gs		; \
-	movl	%eax,%gs	; \
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
-	movl	%eax,%fs	; \
-	TLOG
-
-#define	INTRFASTEXIT \
-	popl	%gs		; \
-	popl	%fs		; \
-	popl	%es		; \
-	popl	%ds		; \
-	popl	%edi		; \
-	popl	%esi		; \
-	popl	%ebp		; \
-	popl	%ebx		; \
-	popl	%edx		; \
-	popl	%ecx		; \
-	popl	%eax		; \
-	addl	$8,%esp		; \
-	iret
+#include <machine/frameasm.h>
 
 
 #ifdef MULTIPROCESSOR
@@ -817,7 +703,7 @@ NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(proc_trampoline_mp)
 #endif
-	movl	$0,CPL
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
@@ -1774,11 +1660,11 @@ ENTRY(longjmp)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
- * void setrunqueue(struct lwp *l);
+ * void setrunqueue(struct lwp *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  * See setrunqueue(9) for more details.
  */
-/* LINTSTUB: Func: void setrunqueue(struct lwp *l) */
+/* LINTSTUB: Func: void setrunqueue(struct lwp *p) */
 NENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
@@ -1786,7 +1672,7 @@ NENTRY(setrunqueue)
 	jne	1f
 	cmpl	$0,L_WCHAN(%eax)
 	jne	1f
-	cmpb	$LSRUN,L_STAT(%eax)
+	cmpb	$SRUN,L_STAT(%eax)
 	jne	1f
 #endif /* DIAGNOSTIC */
 	movzbl	L_PRIORITY(%eax),%edx
@@ -1807,16 +1693,11 @@ NENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 
 /*
- * void remrunqueue(struct lwp *l);
+ * void remrunqueue(struct lwp *p);
  * Remove a process from its queue.  Should be called at splclock().
  * See remrunqueue(9) for more details.
  */
-/*
- * XXX No section 9 man page for remrunqueue. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
- */
-/* LINTSTUB: Func: void remrunqueue(struct lwp *l) */
+/* LINTSTUB: Func: void remrunqueue(struct lwp *p) */
 NENTRY(remrunqueue)
 	movl	4(%esp),%ecx
 	movzbl	L_PRIORITY(%ecx),%eax
@@ -1853,7 +1734,7 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * int cpu_switch(struct lwp *l)
+ * void cpu_switch(struct lwp *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -1868,13 +1749,12 @@ ENTRY(cpu_switch)
 	pushl	%edi
 
 #ifdef DEBUG
-	cmpl	$IPL_SCHED,CPL
+	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jae	1f
-	pushl	$2f
+	pushl	2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splsched() in cpu_switch!"
-
+2:	.asciz	"not splhigh() in cpu_switch!"
 1:	
 #endif /* DEBUG */
 	
@@ -1895,7 +1775,7 @@ ENTRY(cpu_switch)
 	 *   %eax - queue head, scratch, then zero
 	 *   %ebx - queue number
 	 *   %ecx - cached value of whichqs
-	 *   %edx - next lwp in queue
+	 *   %edx - next process in queue
 	 *   %esi - old lwp
 	 *   %edi - new lwp
 	 */
@@ -1973,7 +1853,7 @@ idle_unlock:
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
-	movl	$0,CPL			# spl0()
+	movl	$IPL_NONE,CPUVAR(ILEVEL)		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	jmp	idle_start
 idle_zero:		
@@ -1995,7 +1875,7 @@ idle_start:
 	cmpl	$0,_C_LABEL(sched_whichqs)
 	jz	idle_loop
 idle_exit:	
-	movl	$IPL_HIGH,CPL		# splhigh
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
 #endif
@@ -2011,7 +1891,7 @@ switch_dequeue:
 	sti
 	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
-	movl	L_FORW(%eax),%edi	# unlink from front of lwp q
+	movl	L_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
 	je	_C_LABEL(switch_error)	# not possible
@@ -2046,7 +1926,7 @@ switch_resume:
 	SET_CURLWP(%edi,%ecx)
 
 	/* Skip context switch if same lwp. */
-	movl	$1, %eax	
+	movl	$1, %eax
 	cmpl	%edi,%esi
 	je	switch_return
 
@@ -2080,7 +1960,7 @@ switch_exited:
 	 * Registers:
 	 *   %eax, %ebx, %ecx, %edx - scratch
 	 *   %esi - new pcb
-	 *   %edi - new process
+	 *   %edi - new lwp
 	 */
 
 	/* No interrupts while loading new state. */
@@ -2093,7 +1973,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);  XXX NJWLWP lwp's don't have P_SYSTEM!
+	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
 	jnz	switch_restored
 #endif
 
@@ -2158,22 +2038,19 @@ switch_restored:
 	movl	%eax,TF_EIP(%edx)
 1:
 	xor	%eax,%eax
-	
-switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-	
-	movl	$0,CPL			# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
-	movl	$IPL_HIGH,CPL		# splhigh()
 
+switch_return:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
+	call    _C_LABEL(sched_unlock_idle)
+#endif
+	movl	$IPL_NONE,CPUVAR(ILEVEL)	# spl0()
+	call	_C_LABEL(Xspllower)	# process pending interrupts
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
+	
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
-
-
 
 #ifdef DIAGNOSTIC
 NENTRY(preempt_error)
@@ -2182,10 +2059,10 @@ NENTRY(preempt_error)
 	/* NOTREACHED */
 1:	.asciz	"cpu_preempt"
 #endif /* DIAGNOSTIC */
-	
+
 /*
  * void cpu_preempt(struct lwp *current, struct lwp *next)
- * Switch to the specified next LWP. 
+ * Switch to the specified nexxt LWP.
  */
 ENTRY(cpu_preempt)
 	pushl	%ebx
@@ -2193,14 +2070,13 @@ ENTRY(cpu_preempt)
 	pushl	%edi
 
 #ifdef DEBUG
-	cmpl	$IPL_SCHED,CPL
+	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jae	1f
 	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
 2:	.asciz	"not splsched() in cpu_preempt!"
-
-1:	
+1:
 #endif /* DEBUG */
 
 	movl	CPUVAR(CURLWP),%esi
@@ -2211,14 +2087,14 @@ ENTRY(cpu_preempt)
 	 * This also insures that schedcpu() will move the old process to
 	 * the correct queue if it happens to get called from the spllower()
 	 * below and changes the priority.  (See corresponding comment in
-	 * userret()).
+	 * usrret()).
 	 */
 	movl	$0,CPUVAR(CURLWP)
 
 preempt_dequeue:
-	/* 
-	 * we're running at splhigh(), but it's otherwise okay to take
-	 * interrupts here. 
+	/*
+	 * We're running at splhigh(), but it's otherwise okay to take
+	 * interrupts here.
 	 */
 	sti
 
@@ -2242,14 +2118,12 @@ preempt_dequeue:
 
 3:
 	/* Jump into the middle of cpu_switch */
-
 	xorl	%eax,%eax
-	jmp switch_resume
+	jmp	switch_resume
 
-	
 /*
  * void switch_exit(struct lwp *l);
- * Switch to the appropriate idle context (proc0's if uniprocessor; the cpu's 
+ * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's 
  * if multiprocessor) and deallocate the address space and kernel stack for p. 
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
  */
@@ -2319,18 +2193,18 @@ ENTRY(switch_exit)
 	movl	%esi,CPUVAR(CURLWP)
 	jmp	idle_start
 
-
-/* switch_lwp_exit(struct lwp *l);
- * Switch to the appropriate idle context (proc0's if uniprocessor; the cpu's 
- * if multiprocessor) and deallocate the kernel stack for l. 
+/*
+ * switch_lwp_exit(struct lwp *l);
+ * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's
+ * if multiprocessor) and deallocate the kernel stack for l.
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
  */
 #ifndef MULTIPROCESSOR
 	.globl	_C_LABEL(lwp0)
 #endif
-	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
+	.globl	_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-/* LINTSTUB: Func: void switch_exit(struct lwp *l) */
+/* LINTSTUB: Func: void switch_lwp_exit(struct lwp *l) */
 ENTRY(switch_lwp_exit)
 	movl	4(%esp),%edi		# old process
 #ifndef MULTIPROCESSOR
@@ -2405,337 +2279,6 @@ ENTRY(savectx)
 
 	ret
 
-/*****************************************************************************/
-
-/*
- * Trap and fault vector routines
- *
- * On exit from the kernel to user mode, we always need to check for ASTs.  In
- * addition, we need to do this atomically; otherwise an interrupt may occur
- * which causes an AST, but it won't get processed until the next kernel entry
- * (possibly the next clock tick).  Thus, we disable interrupt before checking,
- * and only enable them again on the final `iret' or before calling the AST
- * handler.
- */ 
-
-#define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	pushl $0 ; TRAP(a)
-
-#ifdef IPKDB
-#define	BPTTRAP(a)	pushl $0; pushl $(a); jmp _C_LABEL(bpttraps)
-#else
-#define	BPTTRAP(a)	ZTRAP(a)
-#endif
-
-/*
- * Store address of TSS in %eax, given a selector in %eax.
- * Clobbers %eax, %ecx, %edx, but that's ok for its usage.
- * This is a bit complicated, but it's done to make as few
- * assumptions as possible about the validity of the environment.
- * The GDT and the current and previous TSS are known to be OK,
- * otherwise we would not be here. The only other thing that needs
- * to be OK is the cpu_info structure for the current CPU.
- */
-#define GET_TSS \
-	andl	$0xfff8,%eax				;\
-	addl	CPUVAR(GDT),%eax			;\
-	movl	2(%eax),%edx				;\
-	andl	$0xffffff,%edx				;\
-	movzbl	7(%eax),%eax				;\
-	shl	$24,%eax				;\
-	orl	%edx,%eax
-
-	.text
-IDTVEC(trap00)
-	ZTRAP(T_DIVIDE)
-IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
-IDTVEC(trap02)
-	ZTRAP(T_NMI)
-IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
-IDTVEC(trap04)
-	ZTRAP(T_OFLOW)
-IDTVEC(trap05)
-	ZTRAP(T_BOUND)
-IDTVEC(trap06)
-	ZTRAP(T_PRIVINFLT)
-IDTVEC(trap07)
-#if NNPX > 0
-	pushl	$0			# dummy error code
-	pushl	$T_DNA
-	INTRENTRY
-	pushl	CPUVAR(SELF)
-	call	*_C_LABEL(npxdna_func)
-	addl	$4,%esp
-	testl	%eax,%eax
-	jz	calltrap
-	INTRFASTEXIT
-#else
-	ZTRAP(T_DNA)
-#endif
-IDTVEC(trap08)
-	ZTRAP(T_DOUBLEFLT)
-IDTVEC(trap09)
-	ZTRAP(T_FPOPFLT)
-IDTVEC(trap0a)
-	TRAP(T_TSSFLT)
-IDTVEC(trap0b)
-	TRAP(T_SEGNPFLT)
-IDTVEC(trap0c)
-	TRAP(T_STKFLT)
-IDTVEC(trap0d)
-	TRAP(T_PROTFLT)
-IDTVEC(trap0e)
-#ifndef I586_CPU
-	TRAP(T_PAGEFLT)
-#else
-	pushl	$T_PAGEFLT
-	INTRENTRY
-	testb	$PGEX_U,TF_ERR(%esp)
-	jnz	calltrap
-	movl	%cr2,%eax
-	subl	_C_LABEL(pentium_idt),%eax
-	cmpl	$(6*8),%eax
-	jne	calltrap
-	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
-#endif
-
-IDTVEC(intrspurious)
-IDTVEC(trap0f)
-	/*
-	 * The Pentium Pro local APIC may erroneously call this vector for a
-	 * default IR7.  Just ignore it.
-	 *
-	 * (The local APIC does this when CPL is raised while it's on the 
-	 * way to delivering an interrupt.. presumably enough has been set 
-	 * up that it's inconvenient to abort delivery completely..)
-	 */
-	iret
-	
-IDTVEC(trap10)
-#if NNPX > 0
-	/*
-	 * Handle like an interrupt so that we can call npxintr to clear the
-	 * error.  It would be better to handle npx interrupts as traps but
-	 * this is difficult for nested interrupts.
-	 */
-	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
-	INTRENTRY
-	pushl	CPL
-	pushl	%esp
-	incl	_C_LABEL(uvmexp)+V_TRAP
-	call	_C_LABEL(npxintr)
-	addl	$8,%esp
-	INTRFASTEXIT
-#else
-	ZTRAP(T_ARITHTRAP)
-#endif
-IDTVEC(trap11)
-	ZTRAP(T_ALIGNFLT)
-IDTVEC(trap12)
-IDTVEC(trap13)
-IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
-	/* 18 - 31 reserved for future exp */
-	ZTRAP(T_RESERVED)
-
-IDTVEC(exceptions)
-	.long	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.long	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.long	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.long	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.long	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.long	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.long	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.long	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
-	.long	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.long	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.long	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.long	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.long	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.long	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.long	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.long	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-
-IDTVEC(tss_trap08)
-1:
-	str	%ax
-	GET_TSS
-	movzwl	(%eax),%eax
-	GET_TSS
-	pushl	$T_DOUBLEFLT
-	pushl	%eax
-	call	_C_LABEL(trap_tss)
-	addl	$12,%esp
-	iret
-	jmp	1b
-
-/*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %eip to point to one of these labels.  We clean up the stack, if
- * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
- */
-/* LINTSTUB: Var: char resume_iret[1]; */
-NENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-/* LINTSTUB: Var: char resume_pop_ds[1]; */
-NENTRY(resume_pop_ds)
-	pushl	%es
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%es
-/* LINTSTUB: Var: char resume_pop_es[1]; */
-NENTRY(resume_pop_es)
-	pushl	%fs
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-/* LINTSTUB: Var: char resume_pop_fs[1]; */
-NENTRY(resume_pop_fs)
-	pushl	%gs	
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%gs
-/* LINTSTUB: Var: char resume_pop_gs[1]; */
-NENTRY(resume_pop_gs)
-	movl	$T_PROTFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
-
-/* LINTSTUB: Ignore */
-NENTRY(alltraps)
-	INTRENTRY
-calltrap:
-#ifdef DIAGNOSTIC
-	movzbl	CPL,%ebx
-#endif /* DIAGNOSTIC */
-	call	_C_LABEL(trap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%eax)
-	je	1f
-	testb	$SEL_RPL,TF_CS(%esp)
-#ifdef VM86
-	jnz	5f
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-#endif
-	jz	1f
-5:	CLEAR_ASTPENDING(%eax)
-	sti
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	call	_C_LABEL(trap)
-	jmp	2b
-#ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
-#else
-1:	cmpl	CPL,%ebx
-	jne	3f
-	INTRFASTEXIT
-3:	sti
-	pushl	$4f
-	call	_C_LABEL(printf)
-	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	%ebx,CPL
-	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
-#endif /* DIAGNOSTIC */
-
-#ifdef IPKDB
-/* LINTSTUB: Ignore */
-NENTRY(bpttraps)
-	INTRENTRY
-	call	_C_LABEL(ipkdb_trap_glue)
-	testl	%eax,%eax
-	jz	calltrap
-	INTRFASTEXIT
-
-ipkdbsetup:
-	popl	%ecx
-
-	/* Disable write protection: */
-	movl	%cr0,%eax
-	pushl	%eax
-	andl	$~CR0_WP,%eax
-	movl	%eax,%cr0
-
-	/* Substitute Protection & Page Fault handlers: */
-	movl	_C_LABEL(idt),%edx
-	pushl	13*8(%edx)
-	pushl	13*8+4(%edx)
-	pushl	14*8(%edx)
-	pushl	14*8+4(%edx)
-	movl	$fault,%eax
-	movw	%ax,13*8(%edx)
-	movw	%ax,14*8(%edx)
-	shrl	$16,%eax
-	movw	%ax,13*8+6(%edx)
-	movw	%ax,14*8+6(%edx)
-
-	pushl	%ecx
-	ret
-
-ipkdbrestore:
-	popl	%ecx
-
-	/* Restore Protection & Page Fault handlers: */
-	movl	_C_LABEL(idt),%edx
-	popl	14*8+4(%edx)
-	popl	14*8(%edx)
-	popl	13*8+4(%edx)
-	popl	13*8(%edx)
-
-	/* Restore write protection: */
-	popl	%edx
-	movl	%edx,%cr0
-
-	pushl	%ecx
-	ret
-
-/* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
-NENTRY(ipkdbfbyte)
-	pushl	%ebp
-	movl	%esp,%ebp
-	call	ipkdbsetup
-	movl	8(%ebp),%edx
-	movzbl	(%edx),%eax
-faultexit:
-	call	ipkdbrestore
-	popl	%ebp
-	ret
-
-/* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
-NENTRY(ipkdbsbyte)
-	pushl	%ebp
-	movl	%esp,%ebp
-	call	ipkdbsetup
-	movl	8(%ebp),%edx
-	movl	12(%ebp),%eax
-	movb	%al,(%edx)
-	call	ipkdbrestore
-	popl	%ebp
-	ret
-
-fault:
-	popl	%eax		/* error code */
-	movl	$faultexit,%eax
-	movl	%eax,(%esp)
-	movl	$-1,%eax
-	iret
-#endif	/* IPKDB */
-
 /*
  * Old call gate entry for syscall
  */
@@ -2758,7 +2301,7 @@ syscall1:
 	INTRENTRY
 
 #ifdef DIAGNOSTIC
-	movzbl	CPL,%ebx
+	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
 	pushl	$5f
@@ -2786,7 +2329,7 @@ syscall1:
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	$0,CPL
+1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -2796,7 +2339,7 @@ syscall1:
 #ifdef DDB
 	int	$3
 #endif /* DDB */
-	movl	$0,CPL
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"	
@@ -2842,10 +2385,3 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 #endif /* NNPX > 0 */
-
-#include <i386/isa/vector.s>
-#include <i386/isa/icu.s>
-
-#if NLAPIC > 0
-#include <i386/i386/apicvec.s>
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.10.10.2 2002/10/18 02:38:09 nathanw Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.10.10.3 2002/12/11 06:01:06 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -86,6 +86,17 @@ set_geometry(d, ed)
 		d->flags |= BIOSDISK_EXT13;
 		if (ed != NULL)
 			int13_getextinfo(d->dev, ed);
+	}
+
+	/*
+	 * If the drive is 2.88 floppy drive, check that we can actually
+	 * read sector >= 18. If not, assume 1.44 floppy disk.
+	 */
+	if (d->dev == 0 && SPT(diskinfo) == 36) {
+		if (biosread(d->dev, 0, 0, 18, 1, diskbuf)) {
+			d->sec = 18;
+			d->chs_sectors /= 2;
+		}			
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4.2.4 2002/11/14 04:31:51 nathanw Exp $ */
+/* $NetBSD: cpu.c,v 1.4.2.5 2002/12/11 06:00:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -266,8 +266,15 @@ cpu_attach(parent, self, aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_cpuid = caa->cpu_number;
+	ci->ci_apicid = caa->cpu_number;
+#ifdef MULTIPROCESSOR
+	ci->ci_cpuid = ci->ci_apicid;
+#else
+	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
+#endif
 	ci->ci_func = caa->cpu_func;
+
+	simple_lock_init(&ci->ci_slock);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -304,6 +311,7 @@ cpu_attach(parent, self, aux)
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
@@ -312,6 +320,7 @@ cpu_attach(parent, self, aux)
 	case CPU_ROLE_BP:
 		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
@@ -335,6 +344,7 @@ cpu_attach(parent, self, aux)
 		printf("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
+		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
 		cpu_start_secondary(ci);
@@ -569,16 +579,17 @@ cpu_hatch(void *v)
 #endif
 
 	lcr0(ci->ci_idle_pcb->pcb_cr0);
+	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
 	npxinit(ci);
-	cpu_init_idt();
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
 
 	s = splhigh();
+	lapic_tpr = 0;
 	enable_intr();
 
 	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
@@ -658,7 +669,7 @@ cpu_init_tss(struct i386tss *tss, void *stack, void *func)
 typedef void (vector)(void);
 extern vector IDTVEC(tss_trap08);
 #ifdef DDB
-extern vector Xintr_tss_ddbipi;
+extern vector Xintrddbipi;
 extern int ddb_vec;
 #endif
 
@@ -686,7 +697,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
 	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    Xintr_tss_ddbipi);
+	    Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.14.4.5 2002/10/18 02:37:52 nathanw Exp $
+#	$NetBSD: Makefile,v 1.14.4.6 2002/12/11 06:00:59 thorpej Exp $
 
-KDIR=	/sys/arch/i386/include
 INCSDIR= /usr/include/i386
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h atomic.h \
@@ -12,7 +11,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h atomic.h \
 	gdt.h \
 	ibcs2_machdep.h ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h \
+	intr.h intrdefs.h \
 	joystick.h \
 	kcore.h \
 	limits.h lock.h \

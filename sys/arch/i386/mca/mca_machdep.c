@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.4.6.4 2002/11/11 21:59:26 nathanw Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.4.6.5 2002/12/11 06:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.4.6.4 2002/11/11 21:59:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.4.6.5 2002/12/11 06:01:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.4.6.4 2002/11/11 21:59:26 nathanw 
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 #include <dev/mca/mcavar.h>
@@ -245,7 +244,7 @@ mca_intr_establish(mc, ih, level, func, arg)
 	int level, (*func) __P((void *));
 	void *arg;
 {
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || ih >= NUM_LEGACY_IRQS || ih == 2)
 		panic("mca_intr_establish: bogus handle 0x%x", ih);
 
 	/* MCA interrupts are always level-triggered */
@@ -275,7 +274,7 @@ mca_nmi()
  
 	int 	slot, mcanmi=0;
 
-	/* if there is no MCA bus, call isa_nmi() */
+	/* if there is no MCA bus, call i386_nmi() */
 	if (!MCA_system)
 		goto out;
 
@@ -301,7 +300,7 @@ mca_nmi()
    out:
 	if (!mcanmi) {
 		/* no CHCK bits asserted, assume ISA NMI */
-		return (isa_nmi());
+		return (i386_nmi());
 	} else
 		return(0);
 }

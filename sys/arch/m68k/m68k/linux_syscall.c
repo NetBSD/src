@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.1.4.3 2002/08/02 08:39:03 gmcgarry Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.1.4.4 2002/12/11 06:10:40 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		break;
 	}
 
-	if ((error = trace_enter(l, code, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
