@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.6.2.1 1999/04/02 23:56:29 minoura Exp $
+#	$NetBSD: install.tmpl,v 1.6.2.2 1999/04/15 16:34:50 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -396,18 +396,18 @@ echo -n	"Labeling disk $drivename..."
 $DONTDOIT disklabel -w $drivename $labelname
 echo	" done."
 
-if [ `cat /kern/physmem` -lt 1536 ]; then # less than 6megs
+if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
 	echo	""
 	echo	"You have to increase the virtual memory by activating"
-	echo	"the swap device you have just configured"
-	echo	"especially if you are going to retrieve the distribution sets"
-	echo	"via network."
+	echo	"the swap device you have just configured especially if"
+	echo	"you are going to retrieve the distribution sets via network."
+	echo	""
 	echo -n	"Enable swapping? (yes/no)"
 	getresp "y"
 	case $resp in
 		n*)
 			echo	""
-			echo	"OK, swapping is not enabled."
+			echo	"Good, swapping is not enabled."
 			;;
 		*)
 			echo	""
@@ -419,6 +419,7 @@ if [ `cat /kern/physmem` -lt 1536 ]; then # less than 6megs
 	echo	"Note that you have to use the SMALL kernel named"
 	echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
 	echo	"the standard kernel which is included the kern.tgz."
+	echo	""
 fi
 
 if [ "$sect_fwd" = "sf:" ]; then
