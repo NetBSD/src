@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.18 2002/09/24 09:26:43 junyoung Exp $	 */
+/*	$NetBSD: map_object.c,v 1.19 2002/09/24 09:35:13 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -86,7 +86,7 @@ _rtld_map_object(path, fd, sb)
 	size_t		 nclear;
 #endif
 
-	u = mmap(NULL, PAGESIZE, PROT_READ, MAP_FILE | MAP_SHARED, fd,
+	u = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
 	if (u == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
@@ -123,7 +123,8 @@ _rtld_map_object(path, fd, sb)
          * always true in practice.  And, it simplifies things considerably.
          */
 	assert(ehdr->e_phentsize == sizeof(Elf_Phdr));
-	assert(ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
+	assert(ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf_Phdr) <=
+	    _rtld_pagesz);
 
 	/*
          * Scan the program header entries, and save key information.
@@ -273,7 +274,7 @@ _rtld_map_object(path, fd, sb)
 	return obj;
 
 bad:
-	munmap(u, PAGESIZE);
+	munmap(u, _rtld_pagesz);
 	return NULL;
 }
 
