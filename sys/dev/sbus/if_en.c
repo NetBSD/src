@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.4 1997/05/24 20:16:22 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.5 1998/03/21 20:14:14 pk Exp $	*/
 
 /*
  *
@@ -65,12 +65,11 @@
  */
 
 struct en_sbus_softc {
-  /* bus independent stuff */
-  struct en_softc esc;		/* includes "device" structure */
+	/* bus independent stuff */
+	struct en_softc	esc;		/* includes "device" structure */
 
-  /* sbus glue */
-  struct sbusdev sc_sd;		/* sbus device */
-  struct intrhand sc_ih;	/* interrupt vectoring */
+	/* sbus glue */
+	struct sbusdev	sc_sd;		/* sbus device */
 };
 
 /*
@@ -91,7 +90,7 @@ static	void en_sbus_attach __P((struct device *, struct device *, void *));
  */
 
 struct cfattach en_sbus_ca = {
-    sizeof(struct en_sbus_softc), en_sbus_match, en_sbus_attach,
+	sizeof(struct en_sbus_softc), en_sbus_match, en_sbus_attach,
 };
 
 /***********************************************************************/
@@ -100,72 +99,61 @@ struct cfattach en_sbus_ca = {
  * autoconfig stuff
  */
 
-static int en_sbus_match(parent, match, aux)
-
-struct device *parent;
-void *match;
-void *aux;
+static int
+en_sbus_match(parent, match, aux)
+	struct device *parent;
+        struct cfdata *cf;
+	void *aux;
 
 {
-  struct cfdata *cf = match;
-  struct confargs *ca = aux;
-  register struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-  if (strcmp("ENI-155s", ra->ra_name))
-    return 0;
-  if (ca->ca_bustype == BUS_SBUS)
-    return (1);
-  
-  return 0;
+	if (CPU_ISSUN4M) {
+#ifdef DEBUG
+		printf("%s: sun4m DMA not supported yet\n", sa->sa_name);
+#endif
+		return (0);
+	}
+	return (strcmp("ENI-155s", sa->sa_name) == 0);
 }
 
 
-static void en_sbus_attach(parent, self, aux)
-
-struct device *parent, *self;
-void *aux;
+static void
+en_sbus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 
 {
-  struct en_softc *sc = (void *)self;
-  struct en_sbus_softc *scs = (void *)self;
-  struct confargs *ca = aux;
-  int lcv, iplcode;
+	struct sbus_attach_args *sa = aux;
+	struct en_softc *sc = (void *)self;
+	struct en_sbus_softc *scs = (void *)self;
+	bus_space_handle_t bh;
+	struct intrhand	*ih;
+	int lcv, iplcode;
 
-  printf("\n");
+	printf("\n");
 
-  if (CPU_ISSUN4M) {
-    printf("%s: sun4m DMA not supported yet\n", sc->sc_dev.dv_xname);
-    return;
-  }
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+			 sa->sa_offset,
+			 4*1024*1024,
+			 0, 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->en_base = (volatile caddr_t)bh;
 
-  sc->en_base = (caddr_t) mapiodev(ca->ca_ra.ra_reg, 0, 4*1024*1024);
+	/* Establish interrupt channel */
+	ih = bus_intr_establish(sa->sa_bustag,
+				sa->sa_pri, 0,
+				en_intr, sc);
 
-  if (ca->ca_ra.ra_nintr == 1) {
-    sc->ipl = ca->ca_ra.ra_intr[0].int_pri;
-  } else {
-    printf("%s: claims to be at the following IPLs: ", sc->sc_dev.dv_xname);
-    iplcode = 0;
-    for (lcv = 0 ; lcv < ca->ca_ra.ra_nintr ; lcv++) {
-      printf("%d ", ca->ca_ra.ra_intr[lcv].int_pri);
-      if (EN_IPL == ca->ca_ra.ra_intr[lcv].int_pri)
-        iplcode = lcv;
-    }
-    if (!iplcode) {
-      printf("%s: can't find the IPL we want (%d)\n", sc->sc_dev.dv_xname,
-		EN_IPL);
-      return;
-    }
-    printf("\n%s: we choose IPL %d\n", sc->sc_dev.dv_xname, EN_IPL);
-    sc->ipl = iplcode;
-  }
-  scs->sc_ih.ih_fun = en_intr;
-  scs->sc_ih.ih_arg = sc;
-  intr_establish(EN_IPL, &scs->sc_ih);
+	sc->ipl = ih->ih_pri;	/* used to be this */
+	/*sc->ipl = sa->sa_pri;	-* but this might more appropriate? */
 
-  /*
-   * done SBUS specific stuff
-   */
+	sbus_establish(&scs->sc_sd, &sc->sc_dev);
 
-  en_attach(sc);
-
+	/*
+	 * done SBUS specific stuff
+	 */
+	en_attach(sc);
 }

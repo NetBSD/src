@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.15 1998/01/12 20:23:42 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.16 1998/03/21 20:11:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -118,20 +118,25 @@
 
 /* per-display variables */
 struct cgfour_softc {
-	struct	device sc_dev;		/* base device */
-	struct	fbdevice sc_fb;		/* frame buffer device */
-	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
+	struct device	sc_dev;		/* base device */
+	struct fbdevice	sc_fb;		/* frame buffer device */
+	bus_space_tag_t	sc_bustag;
+	bus_type_t	sc_btype;	/* phys address description */
+	bus_addr_t	sc_paddr;	/* for device mmap() */
+
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
-	int	sc_bustype;		/* type of bus we live on */
-	union	bt_cmap sc_cmap;	/* Brooktree color map */
+	union bt_cmap	sc_cmap;	/* Brooktree color map */
 };
 
 /* autoconfiguration driver */
 static void	cgfourattach __P((struct device *, struct device *, void *));
 static int	cgfourmatch __P((struct device *, struct cfdata *, void *));
+
 #if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
 #endif
+
+static int	cg4_pfour_probe __P((void *, void *));
 
 /* cdevsw prototypes */
 cdev_decl(cgfour);
@@ -166,91 +171,73 @@ cgfourmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	if (uoba->uoba_isobio4 == 0)
 		return (0);
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 4, cg4_pfour_probe, NULL));
+}
 
-	/*
-	 * Only exists on a sun4.
-	 */
-	if (!CPU_ISSUN4)
-		return (0);
+int
+cg4_pfour_probe(vaddr, arg)
+	void *vaddr;
+	void *arg;
+{
 
-	/*
-	 * Only exists on obio.
-	 */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
-	/*
-	 * Make sure there's hardware there.
-	 */
-	if (probeget(ra->ra_vaddr, 4) == -1)
-		return (0);
-
-#if defined(SUN4)
-	/*
-	 * Check the pfour register.
-	 */
-	if (fb_pfour_id(ra->ra_vaddr) == PFOUR_ID_COLOR8P1) {
-		cf->cf_flags |= FB_PFOUR;
-		return (1);
-	}
-#endif
-
-	return (0);
+	return (fb_pfour_id(vaddr) == PFOUR_ID_COLOR8P1);
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgfourattach(parent, self, args)
+cgfourattach(parent, self, aux)
 	struct device *parent, *self;
-	void *args;
+	void *aux;
 {
 #if defined(SUN4)
-	register struct cgfour_softc *sc = (struct cgfour_softc *)self;
-	register struct confargs *ca = args;
-	register int node = 0, ramsize, i;
-	register volatile struct bt_regs *bt;
+	struct cgfour_softc *sc = (struct cgfour_softc *)self;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_handle_t bh;
+	volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
-	int isconsole;
+	int ramsize, i, isconsole;
+
+	sc->sc_bustag = oba->oba_bustag;
+	sc->sc_btype = (bus_type_t)0;
+	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
+
+	/* Map the pfour register. */
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0,
+			 sizeof(u_int32_t),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map control registers\n", self->dv_xname);
+		return;
+	}
+	fb->fb_pfour = (volatile u_int32_t *)bh;
 
 	fb->fb_driver = &cgfourfbdriver;
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUN4COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
-
-	/*
-	 * Only pfour cgfours, thank you...
-	 */
-	if ((ca->ca_bustype != BUS_OBIO) ||
-	    ((fb->fb_flags & FB_PFOUR) == 0)) {
-		printf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Map the pfour register. */
-	fb->fb_pfour = (volatile u_int32_t *)
-		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags |= FB_PFOUR;
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
 
 	fb->fb_type.fb_depth = 8;
-	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900, node, ca->ca_bustype);
+	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	printf(": cgfour/p4, %d x %d", fb->fb_type.fb_width,
-	    fb->fb_type.fb_height);
+	printf(": cgfour/p4, %d x %d",
+		fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 	isconsole = 0;
 
@@ -289,12 +276,15 @@ cgfourattach(parent, self, args)
 #endif
 
 	/* Map the Brooktree. */
-	sc->sc_fbc = (volatile struct fbcontrol *)
-		mapiodev(ca->ca_ra.ra_reg,
-			 PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol));
-
-	sc->sc_phys = ca->ca_ra.ra_reg[0];
-	sc->sc_bustype = ca->ca_bustype;
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 PFOUR_COLOR_OFF_CMAP,
+			 sizeof(struct fbcontrol),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map control registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_fbc = (volatile struct fbcontrol *)bh;
 
 	/* grab initial (current) color map */
 	bt = &sc->sc_fbc->fbc_dac;
@@ -475,7 +465,10 @@ cgfourmmap(dev, off, prot)
 	} else
 		return (-1);
 
-	return (REG2PHYS(&sc->sc_phys, poff) | PMAP_NC);
+	return (bus_space_mmap (sc->sc_bustag,
+				sc->sc_btype,
+				sc->sc_paddr + poff,
+				BUS_SPACE_MAP_LINEAR));
 }
 
 #if defined(SUN4)

@@ -1,9 +1,9 @@
-/*	$NetBSD: isp_sbus.c,v 1.8 1997/08/27 11:24:19 bouyer Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.9 1998/03/21 20:14:14 pk Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob 
+ * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center
  * All rights reserved.
  *
@@ -80,20 +80,20 @@ static struct ispmdvec mdvec = {
 };
 
 struct isp_sbussoftc {
-	struct ispsoftc sbus_isp;
-	sdparam sbus_dev;
-	struct intrhand sbus_ih;
-	volatile u_char *sbus_reg;
-	int sbus_node;
-	int sbus_pri;
-	vm_offset_t sbus_kdma_allocs[MAXISPREQUEST];
+	struct ispsoftc	sbus_isp;
+	sdparam		sbus_dev;
+	bus_space_tag_t	sbus_bustag;
+	volatile u_char	*sbus_reg;
+	int		sbus_node;
+	int		sbus_pri;
+	vm_offset_t	sbus_kdma_allocs[MAXISPREQUEST];
 };
 
 
 static int isp_match __P((struct device *, struct cfdata *, void *));
 static void isp_sbus_attach __P((struct device *, struct device *, void *));
 struct cfattach isp_sbus_ca = {
-        sizeof (struct isp_sbussoftc), isp_match, isp_sbus_attach
+	sizeof (struct isp_sbussoftc), isp_match, isp_sbus_attach
 };
 
 static int
@@ -102,43 +102,41 @@ isp_match(parent, cf, aux)
         struct cfdata *cf;
         void *aux;
 {
-        struct confargs *ca = aux;
-        register struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-        if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
-	    strcmp("SUNW,isp", ra->ra_name) &&
-	    strcmp("QLGC,isp", ra->ra_name)) {
-                return (0);
-	}
-        if (ca->ca_bustype == BUS_SBUS)
-                return (1);
-        ra->ra_len = NBPG;
-        return (probeget(ra->ra_vaddr, 1) != -1);
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+		strcmp("SUNW,isp", sa->sa_name) == 0 ||
+		strcmp("QLGC,isp", sa->sa_name) == 0);
 }
 
-static void    
+static void
 isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct confargs *ca = aux;
+	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 
-	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
-		return;
-	}
-
-	sbc->sbus_pri = ca->ca_ra.ra_intr[0].int_pri;
+	sbc->sbus_bustag = sa->sa_bustag;
+	sbc->sbus_pri = sa->sa_pri;
+#if 0
 	printf(" pri %d\n", sbc->sbus_pri);
+#endif
 
-	if (ca->ca_ra.ra_vaddr) {
-		sbc->sbus_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
+	if (sa->sa_promvaddr) {
+		sbc->sbus_reg = (volatile u_char *) sa->sa_promvaddr;
 	} else {
-		sbc->sbus_reg = (volatile u_char *)
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
+		bus_space_handle_t bh;
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset,
+				 sa->sa_size,
+				 0, 0, &bh) != 0) {
+			printf("%s: cannot map registers\n", self->dv_xname);
+			return;
+		}
+		sbc->sbus_reg = (volatile u_char *)bh;
 	}
-	sbc->sbus_node = ca->ca_ra.ra_node;
+	sbc->sbus_node = sa->sa_node;
 
 	sbc->sbus_isp.isp_mdvec = &mdvec;
 	sbc->sbus_isp.isp_type = ISP_HA_SCSI_UNKNOWN;
@@ -153,9 +151,11 @@ isp_sbus_attach(parent, self, aux)
 		isp_uninit(&sbc->sbus_isp);
 		return;
 	}
-	sbc->sbus_ih.ih_fun = (void *) isp_intr;
-	sbc->sbus_ih.ih_arg = sbc;
-	intr_establish(sbc->sbus_pri, &sbc->sbus_ih);
+
+	/* Establish interrupt channel */
+	bus_intr_establish(sbc->sbus_bustag,
+			   sbc->sbus_pri, 0,
+			   (int(*)__P((void*)))isp_intr, sbc);
 
 	/*
 	 * Do Generic attach now.
@@ -265,7 +265,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	struct scsipi_xfer *xs;
 	ispreq_t *rq;
 	u_int8_t *iptrp;
-	u_int8_t optr; 
+	u_int8_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	vm_offset_t kdvma;

@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.8 1998/01/12 20:23:55 thorpej Exp $ */
+/*	$NetBSD: power.c,v 1.9 1998/03/21 20:14:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -69,12 +69,13 @@ powermatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
-	if (CPU_ISSUN4M)
-		return (strcmp("power", ca->ca_ra.ra_name) == 0);
+	if (uoba->uoba_isobio4 != 0)
+		return (0);
 
-	return (0);
+	return (strcmp("power", sa->sa_name) == 0);
 }
 
 /* ARGSUSED */
@@ -83,10 +84,21 @@ powerattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	bus_space_handle_t bh;
 
-	power_reg = mapiodev(ra->ra_reg, 0, sizeof(long));
+	/* Map the power configuration register. */
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset,
+			 sizeof(u_int8_t),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map register\n", self->dv_xname);
+		return;
+	}
+	power_reg = (volatile u_int8_t *)bh;
 
 	printf("\n");
 }
