@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.7 1999/10/29 23:06:25 augustss Exp $
+.\" $NetBSD: eap.4,v 1.8 1999/11/02 02:53:57 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm eap
-.Nd Ensoniq AudioPCI device driver
+.Nd AudioPCI device driver
 .Sh SYNOPSIS
 .Cd "eap*   at pci? dev ? function ?"
 .Cd "audio* at eap?"
@@ -47,8 +47,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support Ensoniq AudioPCI sound card.
-Both the ES1370 and ES1371 models are supported.
+driver provides support for the Ensoniq AudioPCI and Creative Labs
+Soundblaster PCI series of audio cards.  All models based on the ES1370,
+ES1371, and ES1373 chips are supported.
 .Sh BUGS
 The "FM" DAC is not supported.
 .Sh SEE ALSO
