@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.29 2000/10/05 01:35:07 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.30 2000/12/28 01:01:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1058,10 +1058,10 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	type = UE_GET_ISO_TYPE(ed->bmAttributes);
 	/* We can't handle endpoints that need a sync pipe. */
 	if (dir == UE_DIR_IN ? type == UE_ISO_ADAPT : type == UE_ISO_ASYNC) {
-		printf("%s: ignored %sput endpoint of type 0x%x\n",
+		printf("%s: ignored %sput endpoint of type %s\n",
 		       USBDEVNAME(sc->sc_dev),
 		       dir == UE_DIR_IN ? "in" : "out",
-		       ed->bmAttributes & UE_ISO_TYPE);
+		       dir == UE_DIR_IN ? "adapt" : "async");
 		return (USBD_NORMAL_COMPLETION);
 	}
 	
