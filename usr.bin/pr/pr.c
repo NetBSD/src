@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.4 1997/01/09 15:01:36 tls Exp $	*/
+/*	$NetBSD: pr.c,v 1.5 1997/10/19 12:42:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -37,15 +37,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: pr.c,v 1.4 1997/01/09 15:01:36 tls Exp $";
+#if 0
+from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: pr.c,v 1.5 1997/10/19 12:42:10 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,6 +110,8 @@ int	addone;			/* page length is odd with double space */
 int	errcnt;			/* error count on file processing */
 char	digs[] = "0123456789";	/* page number translation map */
 
+int	main __P((int, char **));
+
 int
 main(argc, argv)
         int argc;
@@ -146,11 +151,11 @@ onecol(argc, argv)
         int argc;
         char *argv[];
 {
-	register int cnt = -1;
-	register int off;
-	register int lrgln;
-	register int linecnt;
-	register int num;
+	int cnt = -1;
+	int off;
+	int lrgln;
+	int linecnt;
+	int num;
 	int lncnt;
 	int pagecnt;
 	int ips;
@@ -291,13 +296,13 @@ vertcol(argc, argv)
         int argc;
         char *argv[];
 {
-	register char *ptbf;
-	register char **lstdat;
-	register int i;
-	register int j;
-	register int cnt = -1;
-	register int pln;
-	register int *indy;
+	char *ptbf;
+	char **lstdat;
+	int i;
+	int j;
+	int cnt = -1;
+	int pln;
+	int *indy;
 	int cvc;
 	int *lindy;
 	int lncnt;
@@ -612,13 +617,13 @@ horzcol(argc, argv)
         int argc;
         char *argv[];
 {
-	register char *ptbf;
-	register int pln;
-	register int cnt = -1;
-	register char *lstdat;
-	register int col = colwd + 1;
-	register int j;
-	register int i;
+	char *ptbf;
+	int pln;
+	int cnt = -1;
+	char *lstdat;
+	int col = colwd + 1;
+	int j;
+	int i;
 	int lncnt;
 	int pagecnt;
 	char *buf;
@@ -755,12 +760,12 @@ mulfile(argc, argv)
         int argc;
         char *argv[];
 {
-	register char *ptbf;
-	register int j;
-	register int pln;
-	register int cnt;
-	register char *lstdat;
-	register int i;
+	char *ptbf;
+	int j;
+	int pln;
+	int cnt;
+	char *lstdat;
+	int i;
 	FILE **fbuf;
 	int actf;
 	int lncnt;
@@ -968,16 +973,16 @@ int
 inln(inf, buf, lim, cps, trnc, mor)
 	FILE *inf;
 	char *buf;
-	register int lim;
+	int lim;
 	int *cps;
 	int trnc;
 	int *mor;
 {
-	register int col;
-	register int gap = ingap;
-	register int ch = EOF;
-	register char *ptbuf;
-	register int chk = (int)inchar;
+	int col;
+	int gap = ingap;
+	int ch = EOF;
+	char *ptbuf;
+	int chk = (int)inchar;
 
 	ptbuf = buf;
 
@@ -1077,17 +1082,17 @@ inln(inf, buf, lim, cps, trnc, mor)
  */
 int
 otln(buf, cnt, svips, svops, mor)
-	register char *buf;
+	char *buf;
 	int cnt;
 	int *svops;
 	int *svips;
 	int mor;
 {
-	register int ops;		/* last col output */
-	register int ips;		/* last col in buf examined */
-	register int gap = ogap;
-	register int tbps;
-	register char *endbuf;
+	int ops;		/* last col output */
+	int ips;		/* last col in buf examined */
+	int gap = ogap;
+	int tbps;
+	char *endbuf;
 
 	if (ogap) {
 		/*
@@ -1220,11 +1225,11 @@ otln(buf, cnt, svips, svops, mor)
 int
 inskip(inf, pgcnt, lncnt)
 	FILE *inf;
-	register int pgcnt;
-	register int lncnt;
+	int pgcnt;
+	int lncnt;
 {
-	register int c;
-	register int cnt;
+	int c;
+	int cnt;
 
 	while(--pgcnt > 0) {
 		cnt = lncnt;
@@ -1391,11 +1396,11 @@ nxtfile(argc, argv, fname, buf, dt)
  */
 void
 addnum(buf, wdth, line)
-	register char *buf;
-	register int wdth;
-	register int line;
+	char *buf;
+	int wdth;
+	int line;
 {
-	register char *pt = buf + wdth;
+	char *pt = buf + wdth;
 
 	do {
 		*--pt = digs[line % 10];
@@ -1457,7 +1462,7 @@ prhead(buf, fname, pagcnt)
  */
 int
 prtail(cnt, incomp)
-	register int cnt;
+	int cnt;
 	int incomp;
 {
 	if (nohead) {
@@ -1566,10 +1571,10 @@ usage()
  */
 int
 setup(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 {
-	register int c;
+	int c;
 	int eflag = 0;
 	int iflag = 0;
 	int wflag = 0;
@@ -1585,7 +1590,7 @@ setup(argc, argv)
 		}
 	} else
 		err = stderr;
-	while ((c = egetopt(argc, argv, "#adFmrte?h:i?l:n?o:s?w:")) != EOF) {
+	while ((c = egetopt(argc, argv, "#adFmrte?h:i?l:n?o:s?w:")) != -1) {
 		switch (c) {
 		case '+':
 			if ((pgnm = atoi(eoptarg)) < 1) {
