@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.26 2001/04/30 00:25:09 ross Exp $	*/
+/*	$NetBSD: sort.c,v 1.27 2001/05/14 21:52:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.26 2001/04/30 00:25:09 ross Exp $");
+__RCSID("$NetBSD: sort.c,v 1.27 2001/05/14 21:52:21 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -321,10 +321,12 @@ usage(msg)
 static void
 many_files()
 {
+#if 0
 	struct rlimit rlp_many_files[1];
 
 	if (getrlimit(RLIMIT_NOFILE, rlp_many_files) == 0) {
 		rlp_many_files->rlim_cur = rlp_many_files->rlim_max;
 		setrlimit(RLIMIT_NOFILE, rlp_many_files);
 	}
+#endif
 }
