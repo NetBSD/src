@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.13 2002/10/19 08:56:45 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.14 2002/10/19 13:18:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -881,18 +881,37 @@ ENTRY(pmap_asm_zero_page)
 #ifndef _LP64
 	add.l	r2, r63, r2		/* Ensure kva is sign-extended */
 #endif
-	movi	NBPG-32, r0
-	add	r2, r0, r0		/* End of page (minus 1 cache-line) */
+	movi	NBPG-128, r0
+	add	r2, r0, r0		/* End of page (minus 4 cache-lines) */
 	blink	tr1, r63
 
 	/* Cache-align the loop */
 	.balign	32
-1:	alloco	r2, 32			/* Allocate next cache-line */
-	st.q	r2, 0, r63		/* Zero the block */
+1:	st.q	r2, 0, r63
 	st.q	r2, 8, r63
 	st.q	r2, 16, r63
 	st.q	r2, 24, r63
-	addi	r2, 32, r2		/* Next block */
+	alloco	r2, 128
+
+	st.q	r2, 32, r63
+	st.q	r2, 40, r63
+	st.q	r2, 48, r63
+	st.q	r2, 56, r63
+	alloco	r2, 160
+
+	st.q	r2, 64, r63
+	st.q	r2, 72, r63
+	st.q	r2, 80, r63
+	st.q	r2, 88, r63
+	alloco	r2, 192
+
+	st.q	r2, 96, r63
+	st.q	r2, 104, r63
+	st.q	r2, 112, r63
+	st.q	r2, 120, r63
+	alloco	r2, 224
+
+	addi	r2, 128, r2		/* Next block */
 	bne/l	r2, r0, tr1		/* Back for the next one, until done */
 
 	/* Finish the remaining block */
@@ -900,6 +919,18 @@ ENTRY(pmap_asm_zero_page)
 	st.q	r2, 8, r63
 	st.q	r2, 16, r63
 	st.q	r2, 24, r63
+	st.q	r2, 32, r63
+	st.q	r2, 40, r63
+	st.q	r2, 48, r63
+	st.q	r2, 56, r63
+	st.q	r2, 64, r63
+	st.q	r2, 72, r63
+	st.q	r2, 80, r63
+	st.q	r2, 88, r63
+	st.q	r2, 96, r63
+	st.q	r2, 104, r63
+	st.q	r2, 112, r63
+	st.q	r2, 120, r63
 	blink	tr0, r63
 
 
@@ -916,24 +947,59 @@ ENTRY(pmap_asm_copy_page)
 	add.l	r2, r63, r2		/* Ensure src/dst are sign-extended */
 	add.l	r3, r63, r3
 #endif
-	movi	NBPG-32, r0
-	add	r2, r0, r0		/* End of page (minus 1 cache-line) */
+	movi	NBPG-128, r0
+	add	r2, r0, r0		/* End of page (minus 4 cache-lines) */
 	blink	tr1, r63
 
 	/* Cache-align the loop */
 	.balign	32
-1:	ld.q	r3, 0, r4		/* Fetch 32-bytes at a time */
+1:	
+	ld.q	r3, 0, r4		/* Fetch 32-bytes at a time */
 	ld.q	r3, 8, r5
 	ld.q	r3, 16, r6
 	ld.q	r3, 24, r7
-	ld.q	r3, 32, r63		/* Pre-fetch next src cache-line */
 	st.q	r2, 0, r4
 	st.q	r2, 8, r5
 	st.q	r2, 16, r6
 	st.q	r2, 24, r7
-	alloco	r2, 32			/* Allocate cache-line for next dst */
-	addi	r2, 32, r2		/* Next dst block */
-	addi	r3, 32, r3		/* Next src block */
+	ld.q	r3, 128, r63		/* Pre-fetch next src cache-line */
+	alloco	r2, 128			/* Allocate cache-line for next dst */
+
+	ld.q	r3, 32, r4		/* Fetch 32-bytes at a time */
+	ld.q	r3, 40, r5
+	ld.q	r3, 48, r6
+	ld.q	r3, 56, r7
+	st.q	r2, 32, r4
+	st.q	r2, 40, r5
+	st.q	r2, 48, r6
+	st.q	r2, 56, r7
+	ld.q	r3, 160, r63		/* Pre-fetch next src cache-line */
+	alloco	r2, 160			/* Allocate cache-line for next dst */
+
+	ld.q	r3, 64, r4		/* Fetch 32-bytes at a time */
+	ld.q	r3, 72, r5
+	ld.q	r3, 80, r6
+	ld.q	r3, 88, r7
+	st.q	r2, 64, r4
+	st.q	r2, 72, r5
+	st.q	r2, 80, r6
+	st.q	r2, 88, r7
+	ld.q	r3, 192, r63		/* Pre-fetch next src cache-line */
+	alloco	r2, 192			/* Allocate cache-line for next dst */
+
+	ld.q	r3, 96, r4		/* Fetch 32-bytes at a time */
+	ld.q	r3, 104, r5
+	ld.q	r3, 112, r6
+	ld.q	r3, 120, r7
+	st.q	r2, 96, r4
+	st.q	r2, 104, r5
+	st.q	r2, 112, r6
+	st.q	r2, 120, r7
+	ld.q	r3, 224, r63		/* Pre-fetch next src cache-line */
+	alloco	r2, 224			/* Allocate cache-line for next dst */
+
+	addi	r2, 128, r2		/* Next dst block */
+	addi	r3, 128, r3		/* Next src block */
 	bne/l	r2, r0, tr1		/* Back for the next one, until done */
 
 	/* Finish the remaining block */
@@ -945,6 +1011,30 @@ ENTRY(pmap_asm_copy_page)
 	st.q	r2, 8, r5
 	st.q	r2, 16, r6
 	st.q	r2, 24, r7
+	ld.q	r3, 32, r4
+	ld.q	r3, 40, r5
+	ld.q	r3, 48, r6
+	ld.q	r3, 56, r7
+	st.q	r2, 32, r4
+	st.q	r2, 40, r5
+	st.q	r2, 48, r6
+	st.q	r2, 56, r7
+	ld.q	r3, 64, r4
+	ld.q	r3, 72, r5
+	ld.q	r3, 80, r6
+	ld.q	r3, 88, r7
+	st.q	r2, 64, r4
+	st.q	r2, 72, r5
+	st.q	r2, 80, r6
+	st.q	r2, 88, r7
+	ld.q	r3, 96, r4
+	ld.q	r3, 104, r5
+	ld.q	r3, 112, r6
+	ld.q	r3, 120, r7
+	st.q	r2, 96, r4
+	st.q	r2, 104, r5
+	st.q	r2, 112, r6
+	st.q	r2, 120, r7
 	blink	tr0, r63
 
 
