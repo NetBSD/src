@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.155 2002/02/16 18:18:03 he Exp $
+.\"	$NetBSD: main,v 1.156 2002/02/17 21:29:27 maria7 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1664,6 +1664,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
+.It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
 .
 .El
 .
