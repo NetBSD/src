@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2000/09/07 17:20:59 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2000/10/06 18:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,7 +106,10 @@ kgdb_acc(va, len)
 	last_va &= ~PGOFSET;
 
 	do {
-		pte = kvtopte(va);
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			pte = vtopte(va);
+		else
+			pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
 			return (0);
 #ifdef LARGEPAGES
