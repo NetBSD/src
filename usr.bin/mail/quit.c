@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.7.2.2 1997/11/27 08:28:12 mellon Exp $	*/
+/*	$NetBSD: quit.c,v 1.7.2.3 1997/12/09 19:46:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.7.2.2 1997/11/27 08:28:12 mellon Exp $");
+__RCSID("$NetBSD: quit.c,v 1.7.2.3 1997/12/09 19:46:07 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ cream:
 		while ((c = getc(rbuf)) != EOF)
 			(void) putc(c, abuf);
 		(void) fflush(abuf);
-		if (ferror(obuf)) {
+		if (ferror(abuf)) {
 			perror(mailname);
 			Fclose(abuf);
 			Fclose(fbuf);
@@ -417,7 +417,7 @@ writeback(res)
 #endif
 	fflush(obuf);
 	if (!ferror(obuf))
-		trunc(obuf);	/* XXX or show we truncate? */
+		trunc(obuf);	/* XXX or should we truncate? */
 	if (ferror(obuf)) {
 		perror(mailname);
 		Fclose(obuf);
