@@ -1,4 +1,4 @@
-.\"	$NetBSD: banner.1,v 1.6 2001/12/01 16:43:07 wiz Exp $
+.\"	$NetBSD: banner.1,v 1.7 2002/09/30 09:33:39 grant Exp $
 .\"
 .\"	@(#)Copyright (c) 1995, Simon J. Gerraty.
 .\"
@@ -44,16 +44,20 @@ The options are:
 .It Fl b Ar bg
 Use
 .Ar bg
-as the background color (character) rather than the default ``\ ''.
+as the background color (character) rather than the default
+.Dq \  .
 .It Fl f Ar fg
 Use
 .Ar fg
-as the foreground color (character) rather than the default ``#''.
+as the foreground color (character) rather than the default
+.Dq # .
 If
 .Ar fg
-is ``-'', then the actual letter being printed is used as the
-foreground color in the same way that LPD does it.  The results are
-quite variable.
+is
+.Dq - ,
+then the actual letter being printed is used as the
+foreground color in the same way that LPD does it.
+The results are quite variable.
 .It Fl l
 Use the more attractive LPD font instead of the traditional
 .Nm
