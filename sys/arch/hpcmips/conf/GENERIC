@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2002/03/25 10:02:50 shin Exp $
+# $NetBSD: GENERIC,v 1.115 2002/03/26 05:26:37 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	16
 
@@ -81,7 +81,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
