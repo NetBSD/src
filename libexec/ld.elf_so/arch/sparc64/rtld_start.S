@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2000/07/13 23:14:18 eeh Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2000/07/18 22:33:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -38,6 +38,8 @@
  */
 
 #include <machine/asm.h>
+#define	_LOCORE
+#include <machine/frame.h>
 
 /*
  * ELF:
@@ -102,12 +104,26 @@ _rtld_start:
 	 * Neither routine needs to issue a save since it's already been
 	 * done in the PLT entry.
 	 */
+
+	/* NOTE: _rtld_bind_start_0 is untested.  Hence the debug stuff */
 	
 	.section	".text"
 	.align	4
-	.global	_rtld_bind_start
-	.type	_rtld_bind_start,@function
+	.global	_rtld_bind_start_0
+	.type	_rtld_bind_start_0,@function
 _rtld_bind_start_0:	# (obj, reloff)
+#if 0
+	call	_rtld_bind_start_0_stub
+	 ldx     [%o1 + (10*4)], %l7
+	mov	%o0, %l5
+	
+	sllx	%l5, 1, %l6		/* Each element is an Elf_RelA which */
+	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
+	sllx	%l5, 3, %o1		/*  So multiply by 24. */
+	
+	call	_rtld_bind
+	 mov	%l7, %o0
+#else
 	sethi	%hi(1048596), %l1
 	sub	%o0, %o1, %l0		/* x - y */
 	or	%l1, %lo(1048596), %l1
@@ -128,21 +144,51 @@ _rtld_bind_start_0:	# (obj, reloff)
 	sethi	%hi(32768), %l6
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
 	add	%l5, %l6, %l5
+	
+	sllx	%l5, 1, %l6		/* Each element is an Elf_RelA which */
+	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
+	sllx	%l5, 3, %l5		/*  So multiply by 24. */
+	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 sub	%l5, 4, %o1		/* The first 4 entries are reserved. */
+	 mov	%l5, %o1
+
+/* XXXXXXXXXX DEBUG */
+	mov	%o0, %l7
+	
+	mov	%i0, %o0
+	mov	%i1, %o1
+	mov	%i2, %o2
+	mov	%i3, %o3
+	mov	%i4, %o4
+	mov	%i5, %o5
+
+	jmpl	%l7, %o7
+	 nop
+	
+	ret
+	 restore	%o0, %g0, %o0
+/* XXXXXXXXXX END DEBUG */
+	
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
-	
+#endif	
 	
 	.section	".text"
 	.align	4
-	.global	_rtld_bind_start
-	.type	_rtld_bind_start,@function
+	.global	_rtld_bind_start_1
+	.type	_rtld_bind_start_1,@function
 _rtld_bind_start_1:	# (obj, reloff)
-	srax	%o0, 15, %o2		/* %o0 points to our PLT slot */
+	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
+	
+	sllx	%o2, 1, %o3		/* Each element is an Elf_RelA which */
+	add	%o3, %o2, %o2		/*  is 3 longwords or 24 bytes. */
+	sllx	%o2, 3, %o2		/*  So multiply by 24. */
+	
 	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
+	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
-	 sub	%o2, 4*32, %o1		/* The first 4 entries are reserved. */
+	 mov	%o2, %o1
+
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
 

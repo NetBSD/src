@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.29 2000/07/17 02:55:52 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.30 2000/07/18 22:33:55 eeh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -710,7 +710,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 				 * Install the object reference in first slot
 				 * of entry 2.
 				 */
-				obj->pltgot[12] = (Elf_Addr) obj;
+				obj->pltgot[8] = (Elf_Addr) obj;
 			}
 #else
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.1 2000/07/13 23:14:18 eeh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.2 2000/07/18 22:33:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -67,6 +67,7 @@
 #define _RF_P		0x20000000		/* Location relative */
 #define _RF_G		0x10000000		/* GOT offset */
 #define _RF_B		0x08000000		/* Load address relative */
+#define _RF_U		0x04000000		/* Unaligned */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	( (s) & 0xff)		/* right shift */
 static int reloc_target_flags[] = {
@@ -93,7 +94,7 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/* GLOB_DAT */
 				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(64) | _RF_RS(0),		/* RELATIVE */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
+	_RF_S|_RF_A|	_RF_U|	_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
 
 	      _RF_A|		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
 	      _RF_A|		_RF_SZ(32) | _RF_RS(10),	/* HIPLT22 */
@@ -125,8 +126,8 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(12),	/* M44 */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* L44 */
 	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/* REGISTER */
-	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/* UA64 */
-	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* UA16 */
+	_RF_S|_RF_A|	_RF_U|	_RF_SZ(64) | _RF_RS(0),		/* UA64 */
+	_RF_S|_RF_A|	_RF_U|	_RF_SZ(16) | _RF_RS(0),		/* UA16 */
 };
 
 #ifdef RTLD_DEBUG_RELOC
@@ -148,6 +149,8 @@ static const char *reloc_names[] = {
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
 #define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
+#define RELOC_UNALIGNED(t)		((reloc_target_flags[t] & _RF_U) != 0)
+#define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
@@ -189,7 +192,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Word type, value, mask;
+	Elf_Word type, value = 0, mask;
 	const Elf_Sym *def = NULL;
 	const Obj_Entry *defobj = NULL;
 
@@ -219,7 +222,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	 * be able to access globals yet.
 	 */
 	if (!dodebug && type == R_TYPE(RELATIVE)) {
-		*where += (Elf_Addr)(obj->relocbase + value);
+		/* XXXX -- apparently we ignore the preexisting value */
+		*where = (Elf_Addr)(obj->relocbase + value);
 		return (0);
 	}
 
@@ -250,7 +254,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		 * In any case, the implicit and explicit should be mutually
 		 * exclusive. We provide a check for that here.
 		 */
-#define DIAGNOSTIC
 #ifdef DIAGNOSTIC
 		if (value != 0 && *where != 0) {
 			xprintf("BASE_REL(%s): where=%p, *where 0x%lx, "
@@ -259,15 +262,35 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 				rela->r_addend, obj->relocbase);
 		}
 #endif
-		value += (Elf_Word)(obj->relocbase + *where);
+		/* XXXX -- apparently we ignore the preexisting value */
+		value += (Elf_Word)(obj->relocbase);
 	}
 
 	mask = RELOC_VALUE_BITMASK(type);
 	value >>= RELOC_VALUE_RIGHTSHIFT(type);
 	value &= mask;
 
-	/* We ignore alignment restrictions here */
-	if (RELOC_TARGET_SIZE(type) > 32) {
+	if (RELOC_UNALIGNED(type)) {
+		/* Handle unaligned relocations. */
+		Elf_Word tmp = 0;
+		char *ptr = (char *)where;
+		int i, size = RELOC_TARGET_SIZE(type)/8;
+		
+		/* Read it in one byte at a time. */
+		for (i=0; i<size; i++)
+			tmp = (tmp << 8) | ptr[i];
+
+		tmp &= ~mask;
+		tmp |= value;
+
+		/* Write it back out. */
+		for (i=0; i<size; i++)
+			ptr[i] = ((tmp >> (8*i)) & 0xff);
+#ifdef RTLD_DEBUG_RELOC
+		value = (Elf_Word)tmp;
+#endif
+
+	} else if (RELOC_TARGET_SIZE(type) > 32) {
 		*where &= ~mask;
 		*where |= value;
 #ifdef RTLD_DEBUG_RELOC
@@ -329,7 +352,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf32_Word *where = (Elf32_Word *) (obj->relocbase + rela->r_offset);
+	Elf32_Word *where = (Elf32_Word *)((Elf_Addr)obj->pltgot + rela->r_offset);
 	Elf_Addr value, offset;
 
 	if (bind_now == 0 && obj->pltgot != NULL)
@@ -345,9 +368,9 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		return (-1);
 
 	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p", 
+	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%lx new=%lx", 
 	    (int)bind_now, defobj->strtab + def->st_name,
-	    (void *)*where, (void *)value));
+	    (u_long)*where, (u_long)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
@@ -583,3 +606,18 @@ _rtld_install_plt(pltgot, proc)
 	pltgot[6] = JMPL_l0_o0 | LOVAL(proc);
 	pltgot[7] = MOV_g1_o0;
 }
+
+long _rtld_bind_start_0_stub __P((long x, long y));
+long 
+_rtld_bind_start_0_stub(x, y)
+	long x, y;
+{
+	long i;
+	long n;
+
+	i = x - y + 1048596;
+	n = 32768 + (i/5120)*160 + (i%5120)/24;
+
+	return (n);
+}
+
