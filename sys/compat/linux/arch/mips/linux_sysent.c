@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.5 2001/11/13 02:08:45 lukem Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.6 2001/11/20 21:37:51 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.5 2001/11/13 02:08:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.6 2001/11/20 21:37:51 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

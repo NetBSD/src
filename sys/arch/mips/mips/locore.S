@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126 2001/11/14 18:15:22 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.127 2001/11/20 21:37:50 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,9 +205,11 @@ XLEAF(ultrix_esigcode)
 #endif
 
 #ifdef COMPAT_LINUX
+#define SYSCALL_SHIFT 4000		# 4000 shift as in linux_syscall.c
 LEAF_NOPROFILE(linux_sigcode)
-	addu	a0, sp, 16		# address of sigcontext
-	li	v0, LINUX_SYS_sigreturn	# sigreturn(scp)
+/*	addu	a0, sp,	0		# address of sigframe */
+	move	a0, sp
+	li	v0, LINUX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
 	syscall
 	break	0			# just in case sigreturn fails
 END(linux_sigcode)
