@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.9 2001/11/27 03:17:19 thorpej Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.10 2001/11/29 01:22:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -163,6 +163,7 @@ void	upcallret(struct lwp *);
 
 void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
+struct lwp *proc_representative_lwp(struct proc *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.10 2001/11/14 19:16:38 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.11 2001/11/29 01:22:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.10 2001/11/14 19:16:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.11 2001/11/29 01:22:57 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -120,8 +120,6 @@ static int sysctl_procargs(int *, u_int, void *, size_t *, struct proc *);
 #if NPTY > 0
 static int sysctl_pty(void *, size_t *, void *, size_t);
 #endif
-
-static struct lwp *proc_representative_lwp(struct proc *);
 
 /*
  * The `sysctl_memlock' is intended to keep too many processes from
@@ -1686,62 +1684,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 }
 
 
-/* 
- * Pick a LWP to represent the process for those operations which 
- * want information about a "process" that is actually associated 
- * with a LWP.
- */
-static struct lwp *proc_representative_lwp(p)
-	struct proc *p;
-{
-	struct lwp *l = NULL;
-
-	/* Trivial case: only one LWP */
-	if (p->p_nrlwps == 1)
-		return (LIST_FIRST(&p->p_lwps));
-
-	switch (p->p_stat) {
-	case SSTOP: 
-		/* Pick the first stopped LWP */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_stat == LSSTOP)
-				return (l);
-		}
-		/* NOTREACHED */
-		break;
-	case SACTIVE:
-		/* Pick the first live LWP */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_stat == LSRUN ||
-			    l->l_stat == LSSLEEP ||
-			    l->l_stat == LSONPROC ||
-			    l->l_stat == LSSUSPENDED)
-				return (l);
-		}
-		break;
-	case SDEAD:
-	case SZOMB:
-		/* Doesn't really matter... */
-		l = LIST_FIRST(&p->p_lwps);
-		break;
-#ifdef DIAGNOSTIC
-	case SIDL:
-		/* We have more than one LWP and we're in SIDL?
-		 * How'd that happen?
-		 */
-		panic("Too many LWPs (%d) in SIDL process %d (%s)",
-		    p->p_nrlwps, p->p_pid, p->p_comm);
-	default:
-		panic("Process %d (%s) in unknown state %d",
-		    p->p_pid, p->p_comm, p->p_stat);
-#endif
-	}
-
-	panic("proc_representative_lwp: couldn't find a lwp for process"
-		" %d (%s)", p->p_pid, p->p_comm);
-	/* NOTREACHED */
-	return NULL;
-}
 
 
 int
