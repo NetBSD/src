@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2000/01/20 00:08:08 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.11.4.1 2000/10/18 17:10:55 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,11 +56,14 @@
 #include <sys/types.h>
 #include "config.h"
 
-static void nomem __P((void));
-static void vxerror __P((const char *, int, const char *, va_list));
-static void vxwarn __P((const char *, int, const char *, va_list));
-static void vxmsg __P((const char *fname, int line, const char *class, 
-		       const char *fmt, va_list));
+static void nomem(void);
+static void vxerror(const char *, int, const char *, va_list)
+	     __attribute__((__format__(__printf__, 3, 0)));
+static void vxwarn(const char *, int, const char *, va_list)
+	     __attribute__((__format__(__printf__, 3, 0)));
+static void vxmsg(const char *fname, int line, const char *class, 
+		  const char *fmt, va_list)
+     __attribute__((__format__(__printf__, 4, 0)));
 
 /*
  * Malloc, with abort on error.
