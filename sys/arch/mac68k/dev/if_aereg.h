@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.12 1996/01/12 04:53:05 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.13 1997/02/24 06:03:59 scottr Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -50,14 +50,16 @@ struct ae_ring {
 #define	GC_RESET_OFFSET		0x000c0000	/* writes here reset NIC */
 #define	GC_ROM_OFFSET		0x000c0000	/* address prom */
 #define GC_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
-#define GC_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */
+#define GC_REG_OFFSET		0x000e0000	/* Offset to NIC registers */
 
 #define DP_ROM_OFFSET		0x000f0000
 #define DP_DATA_OFFSET		0x000d0000	/* Offset to SONIC memory */
-#define DP_NIC_OFFSET		0x000e0000	/* Offset to SONIC registers */
+#define DP_REG_OFFSET		0x000e0000	/* Offset to SONIC registers */
 
 #define AE_ROM_OFFSET		0x000f0000
 #define AE_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
-#define AE_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */
+#define AE_REG_OFFSET		0x000e0000	/* Offset to NIC registers */
 
 #define FE_ROM_OFFSET		0x000d0006	/* Determined empirically */
+
+#define	AE_REG_SIZE		0x40		/* Size of register space */
