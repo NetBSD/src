@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.9 1993/05/07 10:38:04 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.10 1993/05/08 00:50:10 deraadt Exp $";
 
 /*
  * code to manage AT bus
@@ -189,7 +189,7 @@ config_attach(struct isa_driver *dp, struct isa_device *isdp)
 		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
 			if (dvp->id_driver != dp)
 				continue;
-			if (dvp->id_masunit != isdp->id_masunit)
+			if (dvp->id_masunit != isdp->id_unit)
 				continue;
 			if (dvp->id_physid == -1)
 				continue;
@@ -198,7 +198,7 @@ config_attach(struct isa_driver *dp, struct isa_device *isdp)
 		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
 			if (dvp->id_driver != dp)
 				continue;
-			if (dvp->id_masunit != isdp->id_masunit)
+			if (dvp->id_masunit != isdp->id_unit)
 				continue;
 			if (dvp->id_physid != -1)
 				continue;
