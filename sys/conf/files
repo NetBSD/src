@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.434 2001/04/20 16:39:22 fredette Exp $
+#	$NetBSD: files,v 1.435 2001/04/29 09:50:36 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -633,6 +633,7 @@ defpseudo rnd
 defpseudo loop: ifnet
 defpseudo sl: ifnet
 defpseudo ppp: ifnet, bpf_filter
+defpseudo pppoe: ifnet, ether, sppp
 defpseudo sppp: ifnet
 defpseudo tun: ifnet
 defpseudo vlan: ifnet, ether
@@ -923,7 +924,7 @@ file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan | vlan
+					    wlan | vlan | pppoe
 file	net/if_faith.c			faith			needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
@@ -940,6 +941,7 @@ file	net/if_strip.c			strip			needs-count
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-count
 file	net/if_vlan.c			vlan			needs-flag
+file	net/if_pppoe.c			pppoe			needs-count
 #file net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
