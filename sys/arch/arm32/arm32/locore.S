@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 1999/03/01 10:01:53 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 1999/03/24 12:16:50 tron Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,7 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
 #include "ipkdb.h"
 #include "assym.h"
 #include <sys/syscall.h>
