@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.7 2001/01/04 03:57:58 lukem Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.8 2001/08/20 02:33:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.7 2001/01/04 03:57:58 lukem Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.8 2001/08/20 02:33:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -223,7 +223,10 @@ getifaddrs(struct ifaddrs **pif)
 		dcnt += SA_RLEN(sa);
 		ncnt += sizeof(ifr->ifr_name) + 1;
 		
-		ifr = (struct ifreq *)(((char *)sa) + SA_LEN(sa));
+		if (SA_LEN(sa) < sizeof(*sa))
+			ifr = (struct ifreq *)(((char *)sa) + sizeof(*sa));
+		else
+			ifr = (struct ifreq *)(((char *)sa) + SA_LEN(sa));
 	}
 #endif	/* NET_RT_IFLIST */
 
