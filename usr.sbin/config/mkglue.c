@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkglue.c	5.10 (Berkeley) 1/15/91";*/
-static char rcsid[] = "$Id: mkglue.c,v 1.8 1994/02/22 23:32:50 mycroft Exp $";
+static char rcsid[] = "$Id: mkglue.c,v 1.9 1994/02/23 00:23:25 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -339,7 +339,7 @@ dump_ctrs(fp)
 /*
  * Create the ISA interrupt vector glue file.
  */
-vector() {
+i386_vector() {
 	register FILE *fp, *gp;
 	register struct device *dp, *mp;
 	int count;
