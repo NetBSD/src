@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.13 2005/03/12 08:01:51 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.14 2005/03/14 10:08:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1534,16 +1534,11 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		aprint_error("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
 
-		if (error == EFBIG &&
-		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT) {
-			return error;
-		}
-
-		return ENOBUFS;
+		return error;
 	}
 
 	if (map->dm_nsegs > sc->rtk_ldata.rtk_tx_free - 4) {
-		error = ENOBUFS;
+		error = EFBIG;
 		goto fail_unload;
 	}
 	/*
@@ -1656,7 +1651,8 @@ re_start(struct ifnet *ifp)
 			break;
 
 		error = re_encap(sc, m_head, &idx);
-		if (error == EFBIG) {
+		if (error == EFBIG &&
+		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT) {
 			ifp->if_oerrors++;
 			m_freem(m_head);
 			continue;
