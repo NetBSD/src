@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.213 2004/05/20 09:54:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.214 2004/05/20 12:31:12 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2683,3 +2683,12 @@ sys/kern/uipc_syscalls.c			1.87
 	Update connect manpage to reflect current changes.
 	[ragge, ticket #354]
 
+sys/net/if_gre.c				1.51
+
+	Mark gre(4) interfaces as IFT_TUNNEL (Encapsulation interface).
+	[tron, ticket #324]
+
+sys/net/if_tun.c				1.69
+
+	Initialize interface type to IFT_TUNNEL.
+	[tron, ticket #325]
