@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.4 1997/11/24 06:29:22 lukem Exp $
+.\"	$NetBSD: ethersubr.9,v 1.5 1997/11/27 06:17:59 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Ignatios Souvatzis.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Dt ETHERSUBR 9
 .Os NetBSD
 .Sh NAME
-.Nm ETHERSUBR ,
+.Nm ethersubr ,
 .Nm ether_ifattach ,
 .Nm ether_addmulti ,
 .Nm ether_delmulti ,
@@ -79,52 +79,68 @@ FDDI drivers must request the "fddi" attribute in their "files"
 declaration and call the functions tagged with "fddi_" or "FDDI_"
 instead, where different. Some macros are shared.
 .Pp
-Note that you also need the 
-.Xr ARP 9
+Note that you also need the
+.Xr arp 9
 stuff to support IPv4 on your hardware.
 .Bl -tag -width compact
 .It Fn ether_ifattach
-Perform the device independent, but Ethernet specific initialization of 
+Perform the device-independent, but Ethernet-specific initialization of 
 the interface pointed to by 
 .Fa ifp .
 .Pp
 Among other duties, this function creates a record for the link level
-address in the interfaces' address list and records the link level address
+address in the interface's address list and records the link level address
 pointed to by
 .Fa lla
 there.
 .Pp
-You must call this function from the drivers' attach function.
+You must call this function from the driver's attach function.
 .It Fn fddi_ifattach
 corresponding function for FDDI devices.
 .It Fn ether_addmulti
 .It Fn ether_delmulti
-Add (
-.Fn ether_addmulti )
-or delete (
-.Fn ether_delmulti )
+Add
+.Pq Fn ether_addmulti
+or delete
+.Pq Fn ether_delmulti
 the address described by the
 .Fa ifr
 pointer to the Ethernet multicast list belonging to
 .Fa ec .
 .Pp
-These functions must be called from the drivers' ioctl function to
-handle SIOCADDMULTI and SIOCDELMULTI requests. If they return
-ENETRESET, the hardware multicast filter must be reinitialized.
+These functions must be called from the driver's ioctl function to
+handle
+.Dv SIOCADDMULTI
+and
+.Dv SIOCDELMULTI
+requests. If they return
+.Er ENETRESET ,
+the hardware multicast filter must be reinitialized.
 .Pp
-These functions accept AF_UNSPEC addresses, which are interpreted as
-Ethernet addresses, or AF_INET addresses. In the latter case,
-INADDR_ANY is mapped to a range describing all the Ethernet address
+These functions accept
+.Dv AF_UNSPEC
+addresses, which are interpreted as Ethernet addresses, or
+.Dv AF_INET
+addresses. In the latter case,
+.Dv INADDR_ANY
+is mapped to a range describing all the Ethernet address
 space reserved for IPv4 multicast addresses.
 .Pp
 .Fn ether_addmulti
-returns EAFNOSUPPORT if an unsupportedd address family is specified,
-or EINVAL, if a non-multicast address is specified, or ENETRESET, if
+returns
+.Er EAFNOSUPPORT
+if an unsupported address family is specified,
+.Er EINVAL
+if a non-multicast address is specified, or
+.Er ENETRESET
+if
 the multicast list really changed and the driver should synchronize
 its hardware filter with it.
 .Pp
 .Fn ether_delmulti
-returns, in addition to the above errors, ENXIO, if the specified address
+returns, in addition to the above errors,
+.Er ENXIO
+if the specified address
 can't be found in the list of multicast addresses.
 .It Fn fddi_addmulti
 .It Fn fddi_delmulti
@@ -137,7 +153,8 @@ which the caller must provide.
 .It Fn ETHER_FIRST_MULTI
 must be called to initialize 
 .Fa step
-and get the first record.  Both macros return a NULL 
+and get the first record.  Both macros return a
+.Dv NULL 
 .Fa enm
 when there are no remaining records.
 .It Fn ETHER_IS_MULTICAST
@@ -153,12 +170,15 @@ UCB CSRG (original implementation)
 .br
 Ignatios Souvatzis (support for new ARP system)
 .Sh CODE REFERENCES
-Ethernet support functions are declared in /usr/src/sys/net/if_ether.h
+Ethernet support functions are declared in
+.Aq Pa net/if_ether.h
 and defined (if not implemented as macro) in
-/usr/src/sys/net/if_ethersubr.c.
+.Pa /usr/src/sys/net/if_ethersubr.c .
 .Pp
-FDDI support functions are declared in /usr/src/sys/net/if_fddi.h and
-defined (if not implemented as macro) in /usr/src/sys/net/if_fddisubr.c.
+FDDI support functions are declared in
+.Aq Pa net/if_fddi.h
+and defined (if not implemented as macro) in
+.Pa /usr/src/sys/net/if_fddisubr.c .
 .Sh HISTORY
 Rewritten to attach to the new ARP system in
 .Nx 1.3 .
