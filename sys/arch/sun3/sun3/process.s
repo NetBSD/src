@@ -40,7 +40,7 @@
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
- *	$Id: process.s,v 1.16 1994/06/01 15:37:03 gwr Exp $
+ *	$Id: process.s,v 1.17 1994/06/28 22:05:55 gwr Exp $
  */
 
 /*
@@ -145,10 +145,13 @@ mdpflag:
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
+ * XXX - Should this use p->p_addr instead of _curpcb? -gwr
  */
 ENTRY(switch_exit)
+	movl	sp@(4),a0		| struct proc *p
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
+	movl	a0,sp@-			| pass proc ptr down
 	jra	_cpu_switch
 
 /*
@@ -180,8 +183,9 @@ Lbadsw:
 .globl _load_u_area;
 /*
  * cpu_switch()
- *
  * Hacked for sun3	
+ * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
+ * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */
 ENTRY(cpu_switch)
 	movl	_curpcb,a0		| current pcb
