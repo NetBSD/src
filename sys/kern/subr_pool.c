@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.21.2.3 1999/06/24 16:14:35 perry Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.21.2.4 1999/06/25 00:08:22 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -258,8 +258,11 @@ pr_rmpage(pp, ph)
 	pp->pr_npagefree++;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
+		int s;
 		LIST_REMOVE(ph, ph_hashlist);
+		s = splhigh();
 		pool_put(&phpool, ph);
+		splx(s);
 	}
 
 	if (pp->pr_curpage == ph) {
@@ -313,11 +316,8 @@ pool_create(size, align, ioff, nitems, wchan, pagesz, alloc, release, mtype)
 			pool_destroy(pp);
 			return (NULL);
 		}
-		int s;
 	}
-		s = splhigh();
 
-		splx(s);
 	return (pp);
 }
 
@@ -936,12 +936,14 @@ pool_prime_page(pp, storage)
 	caddr_t cp = storage;
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
-	int n;
+	int s, n;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
 	} else {
+		s = splhigh();
 		ph = pool_get(&phpool, PR_URGENT);
+		splx(s);
 		LIST_INSERT_HEAD(&pp->pr_hashtab[PR_HASH_INDEX(pp, cp)],
 				 ph, ph_hashlist);
 	}
@@ -1051,14 +1053,12 @@ pool_catchup(pp)
 void
 pool_setlowat(pp, n)
 	pool_handle_t	pp;
-	int s, n;
+	int n;
 {
 	int error;
 
 	simple_lock(&pp->pr_slock);
-		s = splhigh();
 
-		splx(s);
 	pp->pr_minitems = n;
 	pp->pr_minpages = (n == 0)
 		? 0
