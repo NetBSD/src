@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.3 2002/03/14 12:32:38 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.4 2002/03/14 21:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -453,6 +453,8 @@ int opts;
 		}
 		if (np->in_flags & IPN_FRAG)
 			printf(" frag");
+		if (np->in_mssclamp)
+			printf(" mssclamp %u", (unsigned)np->in_mssclamp);
 		printf("\n");
 		if (opts & OPT_DEBUG) {
 			printf("\tspace %lu nextip %s pnext %d", np->in_space,

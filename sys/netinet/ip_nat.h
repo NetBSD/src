@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.24 2002/01/24 08:23:14 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.25 2002/03/14 21:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -77,6 +77,7 @@ typedef	struct	nat	{
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
 	struct	in_addr	nat_oip;	/* other ip */
+	u_32_t	nat_mssclamp;		/* if != zero clamp MSS to this */
 	U_QUAD_T	nat_pkts;
 	U_QUAD_T	nat_bytes;
 	u_short	nat_oport;		/* other port */
@@ -113,6 +114,7 @@ typedef	struct	ipnat	{
 	struct	in_addr	in_nextip;
 	u_short	in_pnext;
 	u_short	in_ippip;	/* IP #'s per IP# */
+	u_32_t	in_mssclamp;	/* if != zero clamp MSS to this */
 	u_32_t	in_flags;	/* From here to in_dport must be reflected */
 	u_short	in_spare;
 	u_short	in_ppip;	/* ports per IP */

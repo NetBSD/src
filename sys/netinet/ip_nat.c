@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.45 2002/03/14 12:34:02 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.46 2002/03/14 21:46:54 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.45 2002/03/14 12:34:02 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.46 2002/03/14 21:46:54 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.63 2002/03/06 09:44:11 darrenr Exp";
@@ -155,7 +155,7 @@ static	int	nat_match __P((fr_info_t *, ipnat_t *, ip_t *));
 static	hostmap_t *nat_hostmap __P((ipnat_t *, struct in_addr,
 				    struct in_addr));
 static	void	nat_hostmapdel __P((struct hostmap *));
-
+static	void	tcp_mss_clamp __P((tcphdr_t *, uint32_t, fr_info_t *, u_short *));
 
 int nat_init()
 {
@@ -1129,6 +1129,47 @@ int nat_clearlist()
 	return i;
 }
 
+/*
+ * Check for MSS option and clamp it if necessary.
+ */
+static __inline void
+tcp_mss_clamp(tcp, maxmss, fin, csump)
+	tcphdr_t *tcp;
+	uint32_t maxmss;
+	fr_info_t *fin;
+	u_short *csump;
+{
+	uint8_t *cp;
+	uint32_t opt, mss, sumd;
+	int hlen;
+
+	hlen = tcp->th_off << 2;
+	if (hlen > sizeof(*tcp)) {
+		cp = (uint8_t *)tcp + sizeof(*tcp);
+
+		while (hlen > 0) {
+			opt = *cp++;
+			switch(opt) {
+			case TCPOPT_MAXSEG:
+				++cp;
+				mss = (uint32_t)ntohs(*(short *)cp);
+				if (mss > maxmss) {
+					*(short *)cp = htons((short)(maxmss));
+					CALC_SUMD(mss, maxmss, sumd);
+					fix_outcksum(fin, csump, sumd);
+				}
+				hlen = 0;
+				break;
+			case TCPOPT_EOL:
+			case TCPOPT_NOP:
+				hlen--;
+			default:
+				hlen -= *cp;
+				cp += *cp - 2;
+			}
+		}
+	}
+}
 
 /*
  * Create a new NAT table entry.
@@ -1457,6 +1498,7 @@ int direction;
 	nat->nat_dir = direction;
 	nat->nat_ifp = fin->fin_ifp;
 	nat->nat_ptr = np;
+	nat->nat_mssclamp = np->in_mssclamp;
 	nat->nat_p = fin->fin_p;
 	nat->nat_bytes = 0;
 	nat->nat_pkts = 0;
@@ -2457,6 +2499,15 @@ maskloop:
 				 */
 				if (nat->nat_age == fr_tcpclosed)
 					nat->nat_age = fr_tcplastack;
+
+ 				/*
+ 				 * Do a MSS CLAMPING on a SYN packet,
+				 * only deal IPv4 for now.
+ 				 */
+ 				if (nat->nat_mssclamp &&
+				    (tcp->th_flags & TH_SYN) != 0)
+					tcp_mss_clamp(tcp, nat->nat_mssclamp, fin, csump);
+
 				MUTEX_EXIT(&nat->nat_lock);
 			} else if (fin->fin_p == IPPROTO_UDP) {
 				udphdr_t *udp = (udphdr_t *)tcp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: natparse.c,v 1.6 2002/03/14 12:32:38 martti Exp $	*/
+/*	$NetBSD: natparse.c,v 1.7 2002/03/14 21:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -698,6 +698,14 @@ int linenum;
 		else
 			ipn.in_age[1] = ipn.in_age[0];
 		cpp++;
+	}
+
+	if (*cpp && !strcasecmp(*cpp, "mssclamp")) {
+		cpp++;
+		if (*cpp) {
+			ipn.in_mssclamp = atoi(*cpp);
+			cpp++;
+		}
 	}
 
 	if (*cpp) {
