@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.34 1994/07/27 15:02:59 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.35 1994/07/28 02:39:25 mycroft Exp $
  */
 
 /*
@@ -216,10 +216,12 @@ typedef struct {
 /*
  * EISA registers (offset from slot base)
  */
-#define EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
+#define	EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
 #define	EISA_MODEL		0x0c82	/* model number (2 ports) */
 #define	EISA_CONTROL		0x0c84
-#define  EISA_DISABLE		0x01
+#define	 EISA_RESET		0x04
+#define	 EISA_ERROR		0x02
+#define	 EISA_ENABLE		0x01
 
 /*
  * ha_status error codes
@@ -1062,8 +1064,13 @@ u24_find(uha, ia)
 			continue;
 		}
 
-		if (inb(iobase + EISA_CONTROL) & EISA_DISABLE)
-			continue;
+		printf("u24_find: resetting card\n");
+
+		outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+		delay(10);
+		outb(iobase + EISA_CONTROL, EISA_ENABLE);
+		/* Wait for reset? */
+		delay(1000);
 
 		config0 = inb(iobase + U24_CONFIG);
 		config1 = inb(iobase + U24_CONFIG + 1);
