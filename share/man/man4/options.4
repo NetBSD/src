@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.19 1997/06/14 18:33:11 mrg Exp $
+.\"	$NetBSD: options.4,v 1.20 1997/06/16 13:38:52 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -748,14 +748,9 @@ option also be included.
 This option, in conjuction with
 .Em IPFILTER ,
 enables logging of IP packets using ip-filter.
-.It Cd options IPF_DEFAULT_PASS
-This option sets the default policy of ip-filter.  It should be set
-to either
-.Em FR_PASS
-or
-.Em FR_BLOCK ,
-depending on whether the filter is to pass or block packets by
-default, respectively.
+.It Cd options IPFILTER_DEFAULT_BLOCK
+This option sets the default policy of ip-filter.  If it is set,
+ip-filter will block packets by default.
 .It Cd options PPP_FILTER
 This option turns on
 .Xr pcap 3
