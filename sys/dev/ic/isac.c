@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.10 2002/04/08 12:20:49 martin Exp $ 
+ *	$Id: isac.c,v 1.11 2002/04/10 23:51:06 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.10 2002/04/08 12:20:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.11 2002/04/10 23:51:06 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -687,7 +687,6 @@ isic_isac_init(struct isic_softc *sc)
 	 * We don't want interrupts enabled attach time, so setup the
 	 * mask, but don't write it to the chip yet 
 	 */
-	/* ISAC_WRITE(I_MASK, ISAC_IMASK); */
 
 	return(0);
 }
@@ -750,4 +749,3 @@ isic_recover(struct isic_softc *sc)
 	DELAY(100);
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
 }
-

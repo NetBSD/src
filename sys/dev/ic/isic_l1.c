@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.8 2002/04/08 12:20:49 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.9 2002/04/10 23:51:06 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.8 2002/04/08 12:20:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.9 2002/04/10 23:51:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -62,6 +62,7 @@ unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
+static void isic_enable_intr(struct isic_softc *sc, int enabled);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
 	isic_std_ph_data_req,
@@ -218,8 +219,9 @@ static int
 isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
 	struct isic_softc *sc = (struct isic_softc*)token;
-	int pass_down = 0;
+	int s, pass_down = 0;
 
+	s = splnet();
 	switch(command)
 	{
 		case CMR_DOPEN:		/* daemon running */
@@ -252,16 +254,15 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 	if (pass_down && sc->drv_command != NULL)
 		sc->drv_command(sc, command, parm);
 
-	if (command == CMR_DOPEN) {
+	if (command == CMR_DOPEN)
 		isic_enable_intr(sc, 1);
-		ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
-		ISACCMDRWRDELAY();
-	}
+
+	splx(s);
 
 	return(0);
 }
 
-void
+static void
 isic_enable_intr(struct isic_softc *sc, int enabled)
 {
 	if (sc->sc_ipac) {
@@ -277,14 +278,15 @@ isic_enable_intr(struct isic_softc *sc, int enabled)
 			ISAC_WRITE(I_MASK, 0xff);
 		}
 	}
-	if (enabled == 0) {
+	if (enabled) {
 		/* try to clear any pending interrupts */
 		u_int8_t v;
-
 
 		if (sc->sc_ipac) {
 			v = IPAC_READ(IPAC_ISTA);
 			v = ISAC_READ(I_STAR);
+			if (v & ISAC_ISTA_EXI)
+				v = ISAC_READ(I_EXIR);
 			v = ISAC_READ(I_MODE);
 			v = ISAC_READ(I_ADF2);
 			v = ISAC_READ(I_STAR);
@@ -292,6 +294,8 @@ isic_enable_intr(struct isic_softc *sc, int enabled)
 				v = ISAC_READ(I_EXIR);
 		} else {
 			v = ISAC_READ(I_STAR);
+			if (v & ISAC_ISTA_EXI)
+				v = ISAC_READ(I_EXIR);
 			v = ISAC_READ(I_MODE);
 			v = ISAC_READ(I_ADF2);
 			v = ISAC_READ(I_STAR);

@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.12 2002/04/08 12:20:51 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.13 2002/04/10 23:51:09 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.12 2002/04/08 12:20:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.13 2002/04/10 23:51:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -435,7 +435,6 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	}
 
 	/* init higher protocol layers */
-	isic_enable_intr(sc, 0);
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 
 	return(0);
