@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.131 2002/09/19 17:55:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.132 2002/09/21 01:09:43 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.131 2002/09/19 17:55:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.132 2002/09/21 01:09:43 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -275,7 +275,6 @@ static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
-void rf_mountroot_hook(struct device *);
 
 struct device *raidrootdev;
 
@@ -416,9 +415,6 @@ if (raidautoconfig) {
 
 	kthread_create(rf_buildroothack,config_sets);
 
-#if 0
-	mountroothook_establish(rf_mountroot_hook, &raidrootdev[0]);
-#endif
 }
 
 }
@@ -2665,14 +2661,6 @@ rf_ReconstructInPlaceThread(req)
 	/* That's all... */
 	kthread_exit(0);        /* does not return */
 }
-
-void
-rf_mountroot_hook(dev)
-	struct device *dev;
-{
-
-}
-
 
 RF_AutoConfig_t *
 rf_find_raid_components()
