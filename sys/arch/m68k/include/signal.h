@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1998/09/15 23:14:40 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 1998/09/30 21:04:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -76,6 +76,36 @@ struct sigcontext {
 	int	sc_ps;			/* psl to restore */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+
+#if defined(_KERNEL) && defined(__M68K_SIGNAL_PRIVATE)
+/*
+ * Register state saved while kernel delivers a signal.
+ */
+struct sigstate {
+	int	ss_flags;		/* which of the following are valid */
+	struct frame ss_frame;		/* original exception frame */
+	struct fpframe ss_fpstate;	/* 68881/68882 state info */
+};
+
+#define	SS_RTEFRAME	0x01
+#define	SS_FPSTATE	0x02
+#define	SS_USERREGS	0x04
+
+/*
+ * Stack frame layout when delivering a signal.
+ *
+ * WARNING: code in locore.s assumes the layout shown for sf_signum
+ * thru sf_handler, so... don't screw with them!
+ */
+struct sigframe {
+	int	sf_signum;		/* signal number for handler */
+	int	sf_code;		/* additional info for handler */
+	struct sigcontext *sf_scp;	/* context pointer for handler */
+	sig_t	sf_handler;		/* handler address for u_sigc */
+	struct sigstate sf_state;	/* state of the hardware */
+	struct sigcontext sf_sc;	/* actual context */
+};
+#endif /* _KERNEL && __M68K_SIGNAL_PRIVATE */
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_M68K_SIGNAL_H_ */
