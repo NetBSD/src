@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.38 1999/05/27 09:45:50 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.39 1999/06/08 10:38:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -92,20 +92,21 @@ int wdcdebug_pciide_mask = 0;
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
-		int));
+					      int));
+static __inline void pciide_pci_write __P((pci_chipset_tag_t, pcitag_t,
+					   int, u_int8_t));
+
 static __inline u_int8_t
 pciide_pci_read(pc, pa, reg)
 	pci_chipset_tag_t pc;
 	pcitag_t pa;
 	int reg;
 {
-	return (
-	    pci_conf_read(pc, pa, (reg & ~0x03)) >> ((reg & 0x03) * 8) & 0xff);
+
+	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
+	    ((reg & 0x03) * 8) & 0xff);
 }
 
-
-static __inline void pciide_pci_write __P((pci_chipset_tag_t, pcitag_t,
-		int, u_int8_t));
 static __inline void
 pciide_pci_write(pc, pa, reg, val)
 	pci_chipset_tag_t pc;
@@ -199,193 +200,192 @@ int  pciide_dma_finish __P((void*, int, int, int));
 void pciide_print_modes __P((struct pciide_channel *));
 
 struct pciide_product_desc {
-    u_int32_t ide_product;
-    int ide_flags;
-    int ide_num_channels;
-    const char *ide_name;
-    /* init controller's capabilities for drives probe */
-    void (*setup_cap) __P((struct pciide_softc*));
-    /* init controller after drives probe */
-    void (*setup_chip) __P((struct pciide_softc*));
-    /* map channel if possible/necessary */
-    void (*channel_map) __P((struct pci_attach_args *,
+	u_int32_t ide_product;
+	int ide_flags;
+	int ide_num_channels;
+	const char *ide_name;
+	/* init controller's capabilities for drives probe */
+	void (*setup_cap) __P((struct pciide_softc*));
+	/* init controller after drives probe */
+	void (*setup_chip) __P((struct pciide_softc*));
+	/* map channel if possible/necessary */
+	void (*channel_map) __P((struct pci_attach_args *,
 		struct pciide_channel *));
 };
 
 /* Flags for ide_flags */
-#define CMD_PCI064x_IOEN 0x01 /* CMD-style PCI_COMMAND_IO_ENABLE */
-#define ONE_QUEUE         0x02 /* device need serialised access */
+#define CMD_PCI064x_IOEN	0x01 /* CMD-style PCI_COMMAND_IO_ENABLE */
+#define ONE_QUEUE		0x02 /* device need serialised access */
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
-    0,
-    0,
-    PCIIDE_NUM_CHANNELS,
-    "Generic PCI IDE controller",
-    default_setup_cap,
-    default_setup_chip,
-    default_channel_map
+	0,
+	0,
+	PCIIDE_NUM_CHANNELS,
+	"Generic PCI IDE controller",
+	default_setup_cap,
+	default_setup_chip,
+	default_channel_map
 };
-
 
 const struct pciide_product_desc pciide_intel_products[] =  {
-    { PCI_PRODUCT_INTEL_82092AA,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Intel 82092AA IDE controller",
-      default_setup_cap,
-      default_setup_chip,
-      default_channel_map
-    },
-    { PCI_PRODUCT_INTEL_82371FB_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Intel 82371FB IDE controller (PIIX)",
-      piix_setup_cap,
-      piix_setup_chip,
-      piix_channel_map
-    },
-    { PCI_PRODUCT_INTEL_82371SB_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Intel 82371SB IDE Interface (PIIX3)",
-      piix_setup_cap,
-      piix3_4_setup_chip,
-      piix_channel_map
-    },
-    { PCI_PRODUCT_INTEL_82371AB_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Intel 82371AB IDE controller (PIIX4)",
-      piix_setup_cap,
-      piix3_4_setup_chip,
-      piix_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_INTEL_82092AA,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Intel 82092AA IDE controller",
+	  default_setup_cap,
+	  default_setup_chip,
+	  default_channel_map
+	},
+	{ PCI_PRODUCT_INTEL_82371FB_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Intel 82371FB IDE controller (PIIX)",
+	  piix_setup_cap,
+	  piix_setup_chip,
+	  piix_channel_map
+	},
+	{ PCI_PRODUCT_INTEL_82371SB_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Intel 82371SB IDE Interface (PIIX3)",
+	  piix_setup_cap,
+	  piix3_4_setup_chip,
+	  piix_channel_map
+	},
+	{ PCI_PRODUCT_INTEL_82371AB_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Intel 82371AB IDE controller (PIIX4)",
+	  piix_setup_cap,
+	  piix3_4_setup_chip,
+	  piix_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
+
 const struct pciide_product_desc pciide_cmd_products[] =  {
-    { PCI_PRODUCT_CMDTECH_640,
-      ONE_QUEUE | CMD_PCI064x_IOEN,
-      PCIIDE_NUM_CHANNELS,
-      "CMD Technology PCI0640",
-      default_setup_cap,
-      default_setup_chip,
-      cmd_channel_map
-    },
-    { PCI_PRODUCT_CMDTECH_643,
-      ONE_QUEUE | CMD_PCI064x_IOEN,
-      PCIIDE_NUM_CHANNELS,
-      "CMD Technology PCI0643",
-      cmd0643_6_setup_cap,
-      cmd0643_6_setup_chip,
-      cmd_channel_map
-    },
-    { PCI_PRODUCT_CMDTECH_646,
-      ONE_QUEUE | CMD_PCI064x_IOEN,
-      PCIIDE_NUM_CHANNELS,
-      "CMD Technology PCI0646",
-      cmd0643_6_setup_cap,
-      cmd0643_6_setup_chip,
-      cmd_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_CMDTECH_640,
+	  ONE_QUEUE | CMD_PCI064x_IOEN,
+	  PCIIDE_NUM_CHANNELS,
+	  "CMD Technology PCI0640",
+	  default_setup_cap,
+	  default_setup_chip,
+	  cmd_channel_map
+	},
+	{ PCI_PRODUCT_CMDTECH_643,
+	  ONE_QUEUE | CMD_PCI064x_IOEN,
+	  PCIIDE_NUM_CHANNELS,
+	  "CMD Technology PCI0643",
+	  cmd0643_6_setup_cap,
+	  cmd0643_6_setup_chip,
+	  cmd_channel_map
+	},
+	{ PCI_PRODUCT_CMDTECH_646,
+	  ONE_QUEUE | CMD_PCI064x_IOEN,
+	  PCIIDE_NUM_CHANNELS,
+	  "CMD Technology PCI0646",
+	  cmd0643_6_setup_cap,
+	  cmd0643_6_setup_chip,
+	  cmd_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
 
 const struct pciide_product_desc pciide_via_products[] =  {
-    { PCI_PRODUCT_VIATECH_VT82C586_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "VIA Technologies VT82C586 (Apollo VP) IDE Controller",
-      apollo_setup_cap,
-      apollo_setup_chip,
-      apollo_channel_map
-     },
-    { PCI_PRODUCT_VIATECH_VT82C586A_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "VIA Technologies VT82C586A IDE Controller",
-      apollo_setup_cap,
-      apollo_setup_chip,
-      apollo_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "VIA Technologies VT82C586 (Apollo VP) IDE Controller",
+	  apollo_setup_cap,
+	  apollo_setup_chip,
+	  apollo_channel_map
+	 },
+	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "VIA Technologies VT82C586A IDE Controller",
+	  apollo_setup_cap,
+	  apollo_setup_chip,
+	  apollo_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
 
 const struct pciide_product_desc pciide_cypress_products[] =  {
-    { PCI_PRODUCT_CONTAQ_82C693,
-      0,
-      1,
-      "Contaq Microsystems CY82C693 IDE Controller",
-      cy693_setup_cap,
-      cy693_setup_chip,
-      cy693_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_CONTAQ_82C693,
+	  0,
+	  1,
+	  "Contaq Microsystems CY82C693 IDE Controller",
+	  cy693_setup_cap,
+	  cy693_setup_chip,
+	  cy693_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
 
 const struct pciide_product_desc pciide_sis_products[] =  {
-    { PCI_PRODUCT_SIS_5597_IDE,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Silicon Integrated System 5597/5598 IDE controller",
-      sis_setup_cap,
-      sis_setup_chip,
-      sis_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_SIS_5597_IDE,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Silicon Integrated System 5597/5598 IDE controller",
+	  sis_setup_cap,
+	  sis_setup_chip,
+	  sis_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
 
 const struct pciide_product_desc pciide_acer_products[] =  {
-    { PCI_PRODUCT_ALI_M5229,
-      0,
-      PCIIDE_NUM_CHANNELS,
-      "Acer Labs M5229 UDMA IDE Controller",
-      acer_setup_cap,
-      acer_setup_chip,
-      acer_channel_map
-    },
-    { 0,
-      0,
-      0,
-      NULL,
-    }
+	{ PCI_PRODUCT_ALI_M5229,
+	  0,
+	  PCIIDE_NUM_CHANNELS,
+	  "Acer Labs M5229 UDMA IDE Controller",
+	  acer_setup_cap,
+	  acer_setup_chip,
+	  acer_channel_map
+	},
+	{ 0,
+	  0,
+	  0,
+	  NULL,
+	}
 };
 
 struct pciide_vendor_desc {
-    u_int32_t ide_vendor;
-    const struct pciide_product_desc *ide_products;
+	u_int32_t ide_vendor;
+	const struct pciide_product_desc *ide_products;
 };
 
 const struct pciide_vendor_desc pciide_vendors[] = {
-    { PCI_VENDOR_INTEL, pciide_intel_products },
-    { PCI_VENDOR_CMDTECH, pciide_cmd_products },
-    { PCI_VENDOR_VIATECH, pciide_via_products },
-    { PCI_VENDOR_CONTAQ, pciide_cypress_products },
-    { PCI_VENDOR_SIS, pciide_sis_products },
-    { PCI_VENDOR_ALI, pciide_acer_products },
-    { 0, NULL }
+	{ PCI_VENDOR_INTEL, pciide_intel_products },
+	{ PCI_VENDOR_CMDTECH, pciide_cmd_products },
+	{ PCI_VENDOR_VIATECH, pciide_via_products },
+	{ PCI_VENDOR_CONTAQ, pciide_cypress_products },
+	{ PCI_VENDOR_SIS, pciide_sis_products },
+	{ PCI_VENDOR_ALI, pciide_acer_products },
+	{ 0, NULL }
 };
-
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
@@ -413,27 +413,27 @@ int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
 const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
 
-const struct pciide_product_desc*
+const struct pciide_product_desc *
 pciide_lookup_product(id)
-    u_int32_t id;
+	u_int32_t id;
 {
-    const struct pciide_product_desc *pp;
-    const struct pciide_vendor_desc *vp;
+	const struct pciide_product_desc *pp;
+	const struct pciide_vendor_desc *vp;
 
-    for (vp = pciide_vendors; vp->ide_products != NULL; vp++)
-	if (PCI_VENDOR(id) == vp->ide_vendor)
-	    break;
+	for (vp = pciide_vendors; vp->ide_products != NULL; vp++)
+		if (PCI_VENDOR(id) == vp->ide_vendor)
+			break;
 
-    if ((pp = vp->ide_products) == NULL)
-	return NULL;
+	if ((pp = vp->ide_products) == NULL)
+		return NULL;
 
-    for (; pp->ide_name != NULL; pp++)
-	if (PCI_PRODUCT(id) == pp->ide_product)
-	    break;
+	for (; pp->ide_name != NULL; pp++)
+		if (PCI_PRODUCT(id) == pp->ide_product)
+			break;
     
-    if (pp->ide_name == NULL)
-	return NULL;
-    return pp;
+	if (pp->ide_name == NULL)
+		return NULL;
+	return pp;
 }
 
 int
@@ -522,7 +522,7 @@ pciide_attach(parent, self, aux)
 	 * could be mapped.
 	 *
 	 * XXX Note that despite the fact that the Bus Master IDE specs
-	 * XXX say that "The bus master IDE functoin uses 16 bytes of IO
+	 * XXX say that "The bus master IDE function uses 16 bytes of IO
 	 * XXX space," some controllers (at least the United
 	 * XXX Microelectronics UM8886BF) place it in memory space.
 	 * XXX eventually, we should probably read the register and check
@@ -1781,6 +1781,7 @@ void
 cmd0643_6_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -1861,6 +1862,7 @@ void
 cy693_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -1872,6 +1874,7 @@ void
 cy693_setup_chip(sc)
 	struct pciide_softc *sc;
 {
+
 	WDCDEBUG_PRINT(("cy693_setup_chip: old timings reg 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)),
 		DEBUG_PROBE);
@@ -1987,6 +1990,7 @@ void
 sis_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -2112,6 +2116,7 @@ void
 acer_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.PIO_cap = 4;
