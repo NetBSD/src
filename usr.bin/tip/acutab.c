@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)acutab.c	5.4 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)acutab.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "tip.h"
@@ -45,6 +45,7 @@ extern int df02_dialer(), df03_dialer(), df_disconnect(), df_abort(),
 	   ven_dialer(), ven_disconnect(), ven_abort(),
 	   hay_dialer(), hay_disconnect(), hay_abort(),
 	   cour_dialer(), cour_disconnect(), cour_abort(),
+	   t3000_dialer(), t3000_disconnect(), t3000_abort(),
 	   v3451_dialer(), v3451_disconnect(), v3451_abort(),
 	   v831_dialer(), v831_disconnect(), v831_abort(),
 	   dn_dialer(), dn_disconnect(), dn_abort();
@@ -75,6 +76,9 @@ acu_t acutable[] = {
 #endif
 #ifdef COURIER
 	"courier",cour_dialer,	cour_disconnect,	cour_abort,
+#endif
+#ifdef T3000
+	"t3000",t3000_dialer,	t3000_disconnect,	t3000_abort,
 #endif
 #ifdef V3451
 #ifndef V831

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmds.c	5.15 (Berkeley) 3/4/91";
+static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "tip.h"
@@ -125,6 +125,7 @@ transfer(buf, fd, eofchars)
 	register int cnt, eof;
 	time_t start;
 	sig_t f;
+	char r;
 
 	pwrite(FD, buf, size(buf));
 	quit = 0;
@@ -134,7 +135,8 @@ transfer(buf, fd, eofchars)
 	/*
 	 * finish command
 	 */
-	pwrite(FD, "\r", 1);
+	r = '\r';
+	pwrite(FD, &r, 1);
 	do
 		read(FD, &c, 1); 
 	while ((c&0177) != '\n');
@@ -529,9 +531,8 @@ consh(c)
 	} else {
 		register int i;
 
-		dup2(1, 2);
 		dup2(FD, 0);
-		dup2(0, 1);
+		dup2(3, 1);
 		for (i = 3; i < 20; i++)
 			close(i);
 		signal(SIGINT, SIG_DFL);

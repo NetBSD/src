@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)acu.c	5.8 (Berkeley) 3/2/91";
+static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "tip.h"
@@ -102,6 +102,8 @@ connect()
 				*cp++ = '\0';
 			
 			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
+				if (CM != NOSTR)
+					pwrite(FD, CM, size(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NOSTR);
@@ -138,6 +140,8 @@ connect()
 			
 			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
 				fclose(fd);
+				if (CM != NOSTR)
+					pwrite(FD, CM, size(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NOSTR);
