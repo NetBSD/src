@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.43 1997/05/28 23:52:37 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.44 1997/05/29 19:06:26 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -71,8 +71,22 @@ BUILDDIR= ${OBJDIR}/build
 .endif	# defined(OBJMACHINE)
 .else
 BUILDDIR= ${DESTDIR}
+.undef OBJDIR		# we are really building against DESTDIR, not BUILDDIR
 .endif	# exists(OBJDIR)
 .endif # ! defined(BUILDDIR)
+
+# Don't use a build directory at all if we're not under BSDSRCDIR. This is
+# a bit of a hack; we should possibly generalise object directories so that
+# they can be used outside the BSD tree.
+.if defined(BSDSRCDIR)
+insrcdir != x=${.CURDIR}; if [ $${x\#${BSDSRCDIR}} = $$x ]; then echo no; else echo yes; fi
+.if ${insrcdir} == "no"
+.undef OBJDIR
+.endif	# ${insrcdir}
+.undef insrcdir
+.else
+.undef OBJDIR
+.endif
 
 BINGRP?=	bin
 BINOWN?=	bin
