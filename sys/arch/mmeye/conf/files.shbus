@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.2 1999/09/13 17:14:43 msaitoh Exp $
+#	$NetBSD: files.shbus,v 1.3 1999/09/16 21:18:55 msaitoh Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -52,4 +52,5 @@ file	arch/sh3/dev/pcic_shbsubr.c		pcic_shb
 #
 # Machine-independent PCMCIA drivers
 #
+device	fdc {drive = -1}
 include "dev/pcmcia/files.pcmcia"
