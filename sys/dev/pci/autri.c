@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.21 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: autri.c,v 1.22 2004/11/09 16:28:14 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.21 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.22 2004/11/09 16:28:14 kent Exp $");
 
 #include "midi.h"
 
@@ -494,8 +494,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	char const *intrstr;
 	char devinfo[256];
-	mixer_ctrl_t ctl;
-	int i, r;
+	int r;
 	u_int32_t reg;
 
 	aprint_naive(": Audio controller\n");
@@ -562,38 +561,6 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, r);
 		return;
 	}
-
-	/* disable mutes */
-	for (i = 0; i < 4; i++) {
-		static struct {
-			char *class, *device;
-		} d[] = {
-			{ AudioCoutputs, AudioNmaster},
-			{ AudioCinputs, AudioNdac},
-			{ AudioCinputs, AudioNcd},
-			{ AudioCrecord, AudioNvolume},
-		};
-
-		ctl.type = AUDIO_MIXER_ENUM;
-		ctl.un.ord = 0;
-
-#if 0
-		ctl.dev = sc->sc_codec.codec_if->vtbl->get_portnum_by_name(sc->sc_codec.codec_if,
-		    d[i].class, d[i].device, AudioNmute);
-#endif
-		ctl.dev = autri_get_portnum_by_name(sc,d[i].class, 
-						   d[i].device, AudioNmute);
-		autri_mixer_set_port(sc, &ctl);
-	}
-
-	/* set a reasonable default volume */
-	ctl.type = AUDIO_MIXER_VALUE;
-	ctl.un.value.num_channels = 2;
-	ctl.un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-	ctl.un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 127;
-
-	ctl.dev = autri_get_portnum_by_name(sc,AudioCoutputs,AudioNmaster,NULL);
-	autri_mixer_set_port(sc, &ctl);
 
 	audio_attach_mi(&autri_hw_if, sc, &sc->sc_dev);
 
