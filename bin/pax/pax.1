@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.27 2001/10/28 19:03:12 wiz Exp $
+.\"	$NetBSD: pax.1,v 1.28 2001/11/07 03:17:24 hubertf Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -1132,11 +1132,12 @@ gives the verbose table of contents for an archive stored in
 The following commands:
 .Dl mkdir newdir
 .Dl cd olddir
-.Dl pax -rw .\ newdir
+.Dl pax -rw -pp .\ ../newdir
 will copy the entire
 .Pa olddir
 directory hierarchy to
-.Pa newdir .
+.Pa newdir ,
+preserving permissions.
 .Pp
 The command:
 .Dl pax -r -s ',^//*usr//*,,' -f a.pax
