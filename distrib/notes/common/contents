@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.19 2000/10/10 22:03:41 lukem Exp $
+.\"	$NetBSD: contents,v 1.20 2000/10/15 12:33:02 shin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,11 +56,21 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.if r_hpcmips \{\
+This kernel runs on VR41xx CPU only.
+.\}
 .
 .if r_arm26 \{\
 .			It Pa netbsd.FOURMEG.gz
 A somewhat smaller kernel, intended to be usable on systems with
 four megabytes of RAM.
+.\}
+.
+.if r_hpcmips \{\
+.			It Pa netbsd.TX3912.gz
+A kernel for TX3912 machines.
+.			It Pa netbsd.TX3922.gz
+A kernel for TX3922 machines.
 .\}
 .
 .if r_i386 \{\
@@ -824,7 +834,7 @@ in the
 subdirectory of the
 .Nx \*V
 distribution tree. These kernels are generally named something like
-.Pa netbsd-GENERIC.gz
+.Pa netbsd.GENERIC.gz
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
@@ -842,7 +852,7 @@ follows:
 .(tag pbsdboot1.exe
 .It Pa netbsd.gz
 .Nx*M
-kernel with system installer (sysinst).
+kernel with system installer (sysinst). This kernel runs on VR41xx only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa pbsdboot.exe
