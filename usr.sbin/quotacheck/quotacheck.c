@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.19 1998/08/27 20:31:01 ross Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.20 1999/03/30 23:56:26 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.19 1998/08/27 20:31:01 ross Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.20 1999/03/30 23:56:26 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,21 @@ main(argc, argv)
 		gflag++;
 		uflag++;
 	}
+
+	/* If -a, we do not want to pay the cost of processing every
+	 * group and password entry if there are no filesystems with quotas
+	 */
+	if (aflag) {
+		i = 0;
+		while ((fs = getfsent()) != NULL) {
+			if (needchk(fs))
+				i=1;
+		}
+		endfsent();
+		if (!i)	/* No filesystems with quotas */
+			exit(0);
+	}
+
 	if (gflag) {
 		setgrent();
 		while ((gr = getgrent()) != 0)
