@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.5 2000/06/07 14:34:40 bouyer Exp $	*/
+/*	$NetBSD: lockd.c,v 1.6 2000/06/09 14:00:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.5 2000/06/07 14:34:40 bouyer Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.6 2000/06/09 14:00:53 fvdl Exp $");
 #endif
 
 /*
@@ -44,6 +44,9 @@ __RCSID("$NetBSD: lockd.c,v 1.5 2000/06/07 14:34:40 bouyer Exp $");
  *
  * The actual program logic is in the file lock_proc.c
  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -54,6 +57,7 @@ __RCSID("$NetBSD: lockd.c,v 1.5 2000/06/07 14:34:40 bouyer Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <netconfig.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
@@ -75,15 +79,18 @@ void	usage __P((void));
 
 void sigalarm_handler __P((int));
 
+char *transports[] = { "udp", "tcp", "udp6", "tcp6" };
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	SVCXPRT *transp;
-	int ch;
+	int ch, i, maxindex, s;
 	struct sigaction sigchild, sigalarm;
 	int grace_period = 30;
+	struct netconfig *nconf;
 
 	while ((ch = getopt(argc, argv, "d:g:")) != (-1)) {
 		switch (ch) {
@@ -108,55 +115,53 @@ main(argc, argv)
 		}
 	}
 
-	(void)pmap_unset(NLM_PROG, NLM_SM);
-	(void)pmap_unset(NLM_PROG, NLM_VERS);
-	(void)pmap_unset(NLM_PROG, NLM_VERSX);
-	(void)pmap_unset(NLM_PROG, NLM_VERS4);
+	(void)rpcb_unset(NLM_PROG, NLM_SM, NULL);
+	(void)rpcb_unset(NLM_PROG, NLM_VERS, NULL);
+	(void)rpcb_unset(NLM_PROG, NLM_VERSX, NULL);
+	(void)rpcb_unset(NLM_PROG, NLM_VERS4, NULL);
 
-	transp = svcudp_create(RPC_ANYSOCK);
-	if (transp == NULL) {
-		errx(1, "cannot create udp service.");
-		/* NOTREACHED */
+	/*
+	 * Check if IPv6 support is present.
+	 */
+	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (s < 0)
+		maxindex = 2;
+	else {
+		close(s);
+		maxindex = 4;
 	}
-	if (!svc_register(transp, NLM_PROG, NLM_SM,
-	    nlm_prog_0, IPPROTO_UDP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_SM, udp).");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERS,
-	    nlm_prog_1, IPPROTO_UDP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERS, udp).");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
-	    nlm_prog_3, IPPROTO_UDP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERSX, udp).");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
-	    nlm_prog_4, IPPROTO_UDP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERS4, udp).");
-		/* NOTREACHED */
-	}
-	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
-	if (transp == NULL) {
-		errx(1, "cannot create tcp service.");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERS,
-	    nlm_prog_1, IPPROTO_TCP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERS, tcp).");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
-	    nlm_prog_3, IPPROTO_TCP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERSX, tcp).");
-		/* NOTREACHED */
-	}
-	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
-	    nlm_prog_4, IPPROTO_TCP)) {
-		errx(1, "unable to register (NLM_PROG, NLM_VERS4, tcp).");
-		/* NOTREACHED */
+
+	for (i = 0; i < maxindex; i++) {
+		nconf = getnetconfigent(transports[i]);
+		if (nconf == NULL)
+			errx(1, "cannot get udp netconf.");
+
+		transp = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
+		if (transp == NULL) {
+			errx(1, "cannot create %s service.", transports[i]);
+			/* NOTREACHED */
+		}
+		if (!svc_reg(transp, NLM_PROG, NLM_SM, nlm_prog_0, nconf)) {
+			errx(1, "unable to register (NLM_PROG, NLM_SM, %s)",
+			    transports[i]);
+			/* NOTREACHED */
+		}
+		if (!svc_reg(transp, NLM_PROG, NLM_VERS, nlm_prog_1, nconf)) {
+			errx(1, "unable to register (NLM_PROG, NLM_VERS, %s)",
+			    transports[i]);
+			/* NOTREACHED */
+		}
+		if (!svc_reg(transp, NLM_PROG, NLM_VERSX, nlm_prog_3, nconf)) {
+			errx(1, "unable to register (NLM_PROG, NLM_VERSX, %s)",
+			    transports[i]);
+			/* NOTREACHED */
+		}
+		if (!svc_reg(transp, NLM_PROG, NLM_VERS4, nlm_prog_4, nconf)) {
+			errx(1, "unable to register (NLM_PROG, NLM_VERS4, %s)",
+			    transports[i]);
+			/* NOTREACHED */
+		}
+		freenetconfigent(nconf);
 	}
 
 	/*
