@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/10 18:28:13 wiz Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/18 00:37:26 itojun Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -9,6 +9,9 @@ CFLAGS+=	-Wno-main
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-D_STANDALONE
 DBG=		-Os
+
+SRCS+=		byteorder.c
+.PATH:		${S}/lib/libsa
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
