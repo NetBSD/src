@@ -31,14 +31,31 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.8 1994/01/08 01:11:21 mycroft Exp $
+ *	$Id: vm.h,v 1.9 1994/03/17 02:52:02 cgd Exp $
  */
 
-#ifndef _VM_VM_H_
-#define _VM_VM_H_
+#ifndef _VM_H_
+#define _VM_H_
 
-typedef struct pager_struct	*vm_pager_t;
-typedef struct vm_page		*vm_page_t;
+typedef int vm_inherit_t;		/* XXX: inheritance codes */
+
+union vm_map_object;
+typedef union vm_map_object vm_map_object_t;
+
+struct vm_map_entry;
+typedef struct vm_map_entry *vm_map_entry_t; 
+ 
+struct vm_map;
+typedef struct vm_map *vm_map_t;
+ 
+struct vm_object; 
+typedef struct vm_object *vm_object_t;
+ 
+struct vm_page;
+typedef struct vm_page  *vm_page_t;
+ 
+struct pager_struct;
+typedef struct pager_struct *vm_pager_t;
 
 #include <sys/vmmeter.h>
 #include <vm/queue.h>			/* sys/queue.h in 4.4 */
