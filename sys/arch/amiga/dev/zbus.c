@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.43 1999/11/25 22:11:03 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.44 2000/09/13 20:15:52 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -367,6 +367,15 @@ zbusmap (pa, size)
 	nextkva += size;
 	if (nextkva > ZBUSADDR + ZBUSAVAIL)
 		panic("allocating too much Zorro I/O address space");
+#if defined(__powerpc__)
+/*
+ * XXX we use direct constant mapping, so no need for:
+ * physaccess((caddr_t)kva, (caddr_t)pa, size, PTE_RW|PTE_I);
+ */
+#elif defined(__m68k__)
 	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
+#else
+ERROR no support for this target cpu yet.
+#endif
 	return((caddr_t)kva);
 }
