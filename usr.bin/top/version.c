@@ -9,6 +9,7 @@
  *  Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
  */
 
+#include "os.h"
 #include "top.h"
 #include "patchlevel.h"
 

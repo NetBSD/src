@@ -51,8 +51,19 @@ struct process_select
 
 /* routines defined by the machine dependent module */
 
-char *format_header();
-char *format_next_process();
+struct proc;
+extern int (*proc_compares[]) __P((struct proc **, struct proc **));
 
-/* non-int routines typically used by the machine dependent module */
-char *printable();
+int machine_init __P((struct statics *));
+char *format_header __P((char *));
+void get_system_info __P((struct system_info *));
+caddr_t get_process_info __P((struct system_info *, struct process_select *,
+    int (*)(struct proc **, struct proc **)));
+char *format_next_process __P((caddr_t, char *(*)(int)));
+int compare_cpu __P((struct proc **, struct proc **));
+int compare_prio __P((struct proc **, struct proc **));
+int compare_res __P((struct proc **, struct proc **));
+int compare_size __P((struct proc **, struct proc **));
+int compare_state __P((struct proc **, struct proc **));
+int compare_time __P((struct proc **, struct proc **));
+int proc_owner __P((int));
