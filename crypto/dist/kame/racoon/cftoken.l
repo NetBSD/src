@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.51 2001/02/22 01:11:42 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.52 2001/02/22 03:10:40 itojun Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -69,8 +69,6 @@ static struct include_stack {
 static int incstackp = 0;
 
 static int yy_first_time = 1;
-
-static int yycf_count_nl __P((char *));
 %}
 
 /* common seciton */
@@ -481,21 +479,6 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 .		{ yymore(); }
 
 %%
-
-static int
-yycf_count_nl(p)
-	char *p;
-{
-	int n = 0;
-
-	while (*p != NULL) {
-		if (*p == '\n')
-			n++;
-		p++;
-	}
-
-	return n;
-}
 
 void
 yyerror(char *s, ...)
