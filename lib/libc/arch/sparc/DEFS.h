@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	From: @(#)DEFS.h	8.1 (Berkeley) 6/4/93
- *	$Id: DEFS.h,v 1.1 1993/10/07 00:21:13 cgd Exp $
+ *	$Id: DEFS.h,v 1.2 1994/01/23 07:26:16 deraadt Exp $
  */
 
 #ifdef PROF
@@ -48,4 +48,9 @@
 	.align 4; .globl x; .proc 1; x:
 #endif
 
-#define	ENTRY(x) FUNC(_##x)
+#ifdef __STDC__
+#define ENTRY(x) FUNC(_##x)
+#else
+#define ENTRY(x) FUNC(_/**/x)
+#endif
+
