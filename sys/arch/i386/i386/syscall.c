@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.4.3 2002/01/08 00:25:30 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.4 2002/02/23 22:53:37 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.3 2002/01/08 00:25:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.4 2002/02/23 22:53:37 gmcgarry Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -284,8 +284,10 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
