@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.h,v 1.3 2002/11/24 07:41:29 simonb Exp $	*/
+/*	$NetBSD: cache_mipsNN.h,v 1.4 2003/02/17 11:35:02 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,7 +35,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
 void	mipsNN_cache_init(uint32_t, uint32_t);
 
 void	mipsNN_icache_sync_all_16(void);
@@ -54,4 +53,3 @@ void	mipsNN_pdcache_inv_range_16(vaddr_t, vsize_t);
 void	mipsNN_pdcache_inv_range_32(vaddr_t, vsize_t);
 void	mipsNN_pdcache_wb_range_16(vaddr_t, vsize_t);
 void	mipsNN_pdcache_wb_range_32(vaddr_t, vsize_t);
-#endif
