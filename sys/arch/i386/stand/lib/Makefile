@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/04/23 19:57:14 tsarna Exp $
+#	$NetBSD: Makefile,v 1.15 2000/05/11 16:05:51 jdolecek Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -14,6 +14,9 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
 #CPPFLAGS+= -DNO_DISKLABEL
 #CPPFLAGS+= -DSAVE_MEMORY
+
+# For PS/2 hardware
+# CPPFLAGS+= -DIBM_L40
 
 SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S
 SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosreboot.S gatea20.c
