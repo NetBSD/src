@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.101 1997/05/09 06:19:55 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.102 1997/05/09 07:56:02 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -155,8 +155,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 _LIBS+=llib-l${LIB}.ln
 .endif
 
-all depend: ${SRCS}
-all: ${_LIBS}
+all: ${SRCS} ${_LIBS}
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
