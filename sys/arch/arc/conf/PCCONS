@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.24 2003/04/06 10:00:00 tsutsui Exp $
+#	$NetBSD: PCCONS,v 1.25 2003/05/22 17:16:19 tsutsui Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -11,7 +11,7 @@ include		"arch/arc/conf/std.arc"
 maxusers	32		# estimated number of users
 
 # Platform support
-options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
+options 	PLATFORM_ACER_PICA_61		# PICA, NEC ImageRISCstation
 options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
 options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
