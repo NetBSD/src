@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.37 1998/01/12 18:30:46 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.38 1998/03/28 23:49:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -187,7 +187,8 @@ extern int kgdb_rate;
 extern int kgdb_debug_init;
 #endif
 
-#define	DCAUNIT(x)		minor(x)
+#define	DCAUNIT(x)	(minor(x) & 0x7ffff)
+#define	DCADIALOUT(x)	(minor(x) & 0x80000)
 
 #ifdef DEBUG
 long	fifoin[17];
@@ -344,7 +345,14 @@ dcaopen(dev, flag, mode, p)
 	tp->t_param = dcaparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
+	s = spltty();
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		/*
 		 * Sanity clause: reset the card on first open.
 		 * The card might be left in an inconsistent state
@@ -352,15 +360,12 @@ dcaopen(dev, flag, mode, p)
 		 */
 		dcainit(dca, dcadefaultrate);
 
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = dcadefaultrate;
-
-		s = spltty();
 
 		dcaparam(tp, &tp->t_termios);
 		ttsetwater(tp);
@@ -376,35 +381,24 @@ dcaopen(dev, flag, mode, p)
 		while ((dca->dca_iir & IIR_IMASK) == IIR_RXRDY)
 			code = dca->dca_data;
 
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	else
-		s = spltty();
+		/* Set modem control state. */
+		(void) dcamctl(sc, MCR_DTR | MCR_RTS, DMSET);
 
-	/* Set modem control state. */
-	(void) dcamctl(sc, MCR_DTR | MCR_RTS, DMSET);
+		/* Set soft-carrier if so configured. */
+		if ((sc->sc_flags & DCA_SOFTCAR) ||
+		    (dcamctl(sc, 0, DMGET) & MSR_DCD))
+			tp->t_state |= TS_CARR_ON;
+	}
 
-	/* Set soft-carrier if so configured. */
-	if ((sc->sc_flags & DCA_SOFTCAR) || (dcamctl(sc, 0, DMGET) & MSR_DCD))
-		tp->t_state |= TS_CARR_ON;
-
-	/* Wait for carrier if necessary. */
-	if ((flag & O_NONBLOCK) == 0)
-		while ((tp->t_cflag & CLOCAL) == 0 &&
-		    (tp->t_state & TS_CARR_ON) == 0) {
-			tp->t_state |= TS_WOPEN; 
-			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-			    TTIPRI | PCATCH, ttopen, 0);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-		}
 	splx(s);
 
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = ttyopen(tp, DCADIALOUT(dev), (flag & O_NONBLOCK));
+	if (error)
+		goto bad;
 
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+ bad:
 	return (error);
 }
  

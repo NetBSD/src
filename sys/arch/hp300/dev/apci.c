@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.3 1998/01/12 18:30:43 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.4 1998/03/28 23:49:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -157,7 +157,8 @@ int	apcicheckdca __P((void));
 
 cdev_decl(apci);
 
-#define	APCIUNIT(x)	minor(x)
+#define	APCIUNIT(x)	(minor(x) & 0x7ffff)
+#define	APCIDIALOUT(x)	(minor(x) & 0x80000)
 
 int	apcidefaultrate = TTYDEF_SPEED;
 
@@ -308,7 +309,14 @@ apciopen(dev, flag, mode, p)
 	tp->t_param = apciparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
+	s = spltty();
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		/*
 		 * Sanity clause: reset the chip on first open.
 		 * The chip might be left in an inconsistent state
@@ -316,15 +324,12 @@ apciopen(dev, flag, mode, p)
 		 */
 		apciinit(apci, apcidefaultrate);
 
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = apcidefaultrate;
-
-		s = spltty();
 
 		apciparam(tp, &tp->t_termios);
 		ttsetwater(tp);
@@ -339,44 +344,31 @@ apciopen(dev, flag, mode, p)
 		/* Flush any pending I/O. */
 		while ((apci->ap_iir & IIR_IMASK) == IIR_RXRDY)
 			code = apci->ap_data;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	else
-		s = spltty();
 
-	/* Set the modem control state. */
-	(void) apcimctl(sc, MCR_DTR | MCR_RTS, DMSET);
+		/* Set the modem control state. */
+		(void) apcimctl(sc, MCR_DTR | MCR_RTS, DMSET);
 
-	/* Set soft-carrier if so configured. */
-	if ((sc->sc_flags & APCI_SOFTCAR) ||
-	    (apcimctl(sc, 0, DMGET) & MSR_DCD))
-		tp->t_state |= TS_CARR_ON;
-	
-	/* Wait for carrier if necessary. */
-	if ((flag & O_NONBLOCK) == 0) {
-		while ((tp->t_cflag & CLOCAL) == 0 &&
-		    (tp->t_state & TS_CARR_ON) == 0) {
-			tp->t_state |= TS_WOPEN;
-			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-			    TTIPRI | PCATCH, ttopen, 0);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-		}
+		/* Set soft-carrier if so configured. */
+		if ((sc->sc_flags & APCI_SOFTCAR) ||
+		    (apcimctl(sc, 0, DMGET) & MSR_DCD))
+			tp->t_state |= TS_CARR_ON;
 	}
 
 	splx(s);
 
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = ttyopen(tp, APCIDIALOUT(dev), (flag & O_NONBLOCK));
+	if (error)
+		goto bad;
 
-	if (error == 0) {
-		/* clear errors, start timeout */
-		sc->sc_ferr = sc->sc_perr = sc->sc_oflow = sc->sc_toterr = 0;
-		timeout(apcitimeout, sc, hz);
-	}
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	if (error)
+		goto bad;
 
+	/* clear errors, start timeout */
+	sc->sc_ferr = sc->sc_perr = sc->sc_oflow = sc->sc_toterr = 0;
+	timeout(apcitimeout, sc, hz);
+
+ bad:
 	return (error);
 }
 
