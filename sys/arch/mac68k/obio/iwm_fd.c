@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11 2000/05/27 10:25:15 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.12 2002/08/29 14:15:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -474,7 +474,7 @@ fd_attach(parent, self, auxp)
 	iwm->fd[ia->unit] = fd;		/* iwm has ptr to this drive */
 	iwm->drives++;
 
-	BUFQ_INIT(&fd->bufQueue);
+	bufq_alloc(&fd->bufQueue, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
 	callout_init(&fd->motor_ch);
 
 	printf(" drive %d: ", fd->unit);
@@ -1138,7 +1138,7 @@ fdstrategy(bp)
 		}
 		spl = splbio();
 		callout_stop(&fd->motor_ch);
-		disksort_cylinder(&fd->bufQueue, bp);
+		BUFQ_PUT(&fd->bufQueue, bp);
 		if (fd->sc_active == 0)
 			fdstart(fd);
 		splx(spl);
@@ -1253,7 +1253,7 @@ fdstart_Init(fd)
 	 * Get the first entry from the queue. This is the buf we gave to
 	 * fdstrategy(); disksort() put it into our softc.
 	 */
-	bp = BUFQ_FIRST(&fd->bufQueue);
+	bp = BUFQ_PEEK(&fd->bufQueue);
 	if (NULL == bp) {
 		if (TRACE_STRAT)
 			printf("Queue empty: Nothing to do");
@@ -1656,7 +1656,7 @@ fdstart_Exit(fd)
 			    fd->pos.track, fd->pos.side, fd->pos.sector);
 #endif
 
-	bp = BUFQ_FIRST(&fd->bufQueue);
+	bp = BUFQ_GET(&fd->bufQueue);
 
 	bp->b_resid = fd->bytesLeft;
 	bp->b_error = (0 == fd->iwmErr) ? 0 : EIO;
@@ -1669,14 +1669,9 @@ fdstart_Exit(fd)
 		if (DISABLED)
 			hexDump(bp->b_data, bp->b_bcount);
 	}
-	/*
-	 * Remove requested buf from beginning of queue
-	 * and release it.
-	 */
-	BUFQ_REMOVE(&fd->bufQueue, bp);
 	if (DISABLED && TRACE_STRAT)
 		printf(" Next buf (bufQueue first) at %p\n",
-		    BUFQ_FIRST(&fd->bufQueue));
+		    BUFQ_PEEK(&fd->bufQueue));
 	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid);
 	biodone(bp);
 	/* 
