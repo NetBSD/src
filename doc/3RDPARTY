@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.13 2002/10/20 22:26:09 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.14 2002/11/05 21:25:28 perry Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -587,12 +587,12 @@ Notes:
 Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	1997082200 (Aug 22, 1997)
-Current Vers:	1997082200 (Aug 22, 1997)
-Maintainer:	InterNIC Registration Services
-Archive Site:	ftp://rs.internic.net/domain/named.root
+Version:	2002110501 (Nov 05, 2002)
+Current Vers:	2002110501 (Nov 05, 2002)
+Maintainer:	InterNIC
+Archive Site:	ftp://ftp.internic.net/domain/named.root
 Mailing List:
-Responsible:	thorpej, perry
+Responsible:	perry, thorpej
 Notes:
 The root server cache is also included with BIND.  However, the
 InterNIC version is usually more up to date.
