@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2000/10/11 14:46:16 is Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2002/06/14 01:18:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -153,33 +153,33 @@ extern struct group *gr;	/* pointer to static area used by getgrent */
 extern uid_t userid;		/* user's user ID */
 extern gid_t groupid;		/* user's group ID */
 
-int	 any __P((int, char *));
-char	*colon __P((char *));
-void	 cleanup __P((int));
-void	 define __P((char *));
-void	 docmds __P((char **, int, char **));
-void	 error __P((const char *, ...))
+int	 any(int, char *);
+char	*colon(char *);
+void	 cleanup(int);
+void	 define(char *);
+void	 docmds(char **, int, char **);
+void	 error(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2))) ;
-int	 except __P((char *));
+int	 except(char *);
 struct namelist *
-	 expand __P((struct namelist *, int));
-char	*exptilde __P((char [], char *));
-void	 fatal __P((const char *, ...))
+	 expand(struct namelist *, int);
+char	*exptilde(char [], char *);
+void	 fatal(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
-int	 inlist __P((struct namelist *, char *));
-void	 insert __P((char *,
-	    struct namelist *, struct namelist *, struct subcmd *));
-void	 install __P((char *, char *, int, int));
-void	 log __P((FILE *, const char *, ...))
+int	 inlist(struct namelist *, char *);
+void	 insert(char *,
+	    struct namelist *, struct namelist *, struct subcmd *);
+void	 install(char *, char *, int, int);
+void	 log(FILE *, const char *, ...)
      __attribute__((__format__(__printf__, 2, 3)));
 struct namelist *
-	 lookup __P((char *, int, struct namelist *));
-void	 lostconn __P((int));
+	 lookup(char *, int, struct namelist *);
+void	 lostconn(int);
 struct namelist *
-	 makenl __P((char *));
+	 makenl(char *);
 struct subcmd *
-	 makesubcmd __P((int));
-void	 prnames __P((struct namelist *));
-void	 server __P((void));
-void	 yyerror __P((char *));
-int	 yyparse __P((void));
+	 makesubcmd(int);
+void	 prnames(struct namelist *);
+void	 server(void);
+void	 yyerror(char *);
+int	 yyparse(void);
