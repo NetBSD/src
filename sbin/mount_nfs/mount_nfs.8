@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.10 1999/02/01 23:43:43 msaitoh Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.11 1999/03/07 11:02:07 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,20 +40,46 @@
 .Nm mount_nfs
 .Nd mount nfs file systems
 .Sh SYNOPSIS
-.Nm
+.Nm ""
+.Bk -words
 .Op Fl 23KPTUbcCdilqs
+.Ek
+.Bk -words
 .Op Fl D Ar deadthresh
+.Ek
+.Bk -words
 .Op Fl I Ar readdirsize
+.Ek
+.Bk -words
 .Op Fl L Ar leaseterm
+.Ek
+.Bk -words
 .Op Fl R Ar retrycnt
+.Ek
+.Bk -words
 .Op Fl a Ar maxreadahead
+.Ek
+.Bk -words
 .Op Fl g Ar maxgroups
+.Ek
+.Bk -words
 .Op Fl m Ar realm
+.Ek
+.Bk -words
 .Op Fl o Ar options
+.Ek
+.Bk -words
 .Op Fl r Ar readsize
+.Ek
+.Bk -words
 .Op Fl t Ar timeout
+.Ek
+.Bk -words
 .Op Fl w Ar writesize
+.Ek
+.Bk -words
 .Op Fl x Ar retrans
+.Ek
 .Ar rhost:path node
 .Sh DESCRIPTION
 The

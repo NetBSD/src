@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.16 1998/10/15 15:23:23 ws Exp $
+.\"	$NetBSD: fdisk.8,v 1.17 1999/03/07 11:02:05 mycroft Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -7,13 +7,23 @@
 .Nm fdisk
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl aiufS
+.Bk -words
 .Op Fl 0 | 1 | 2 | 3
+.Ek
+.Bk -words
 .Op Fl b Ar cylinders/heads/sectors
+.Ek
+.Bk -words
 .Op Fl s Ar id/start/size
+.Ek
+.Bk -words
 .Op Fl c Ar bootcode
+.Ek
+.Bk -words
 .Op Ar device
+.Ek
 .Sh PROLOGUE
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
