@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 1997/07/23 10:47:12 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 1997/08/27 20:18:19 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -265,14 +265,7 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "drbbc", simple_devprint);
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "drsc", simple_devprint);
-		config_found(dp, "drcom", simple_devprint);
-		config_found(dp, "drcom", simple_devprint);
-		/*
-		 * XXX -- missing here:
-		 * SuperIO chip parallel, floppy
-		 * or maybe just make that into a pseudo
-		 * ISA bus.
-		 */
+		config_found(dp, "drsupio", simple_devprint);
 	} else 
 #endif
 	{
