@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.9 1997/10/15 08:53:24 is Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.10 1998/02/03 05:33:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.9 1997/10/15 08:53:24 is Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.10 1998/02/03 05:33:32 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: arithmetic.c,v 1.9 1997/10/15 08:53:24 is Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 int	getrandom __P((int, int, int));
 void	intr __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.11 1997/07/20 06:35:36 thorpej Exp $	*/
+/*	$NetBSD: cbc.c,v 1.12 1998/02/03 05:49:42 perry Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -44,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.11 1997/07/20 06:35:36 thorpej Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.12 1998/02/03 05:49:42 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,9 @@ __RCSID("$NetBSD: cbc.c,v 1.11 1997/07/20 06:35:36 thorpej Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
+#ifdef DES
+#include <time.h>
+#endif
 
 #include "ed.h"
 

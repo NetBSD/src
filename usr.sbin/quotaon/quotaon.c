@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.11 1997/10/22 18:43:16 fair Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.12 1998/02/03 05:00:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.11 1997/10/22 18:43:16 fair Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.12 1998/02/03 05:00:42 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,12 @@ __RCSID("$NetBSD: quotaon.c,v 1.11 1997/10/22 18:43:16 fair Exp $");
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <ufs/ufs/quota.h>
+
+#include <err.h>
+#include <fstab.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <fstab.h>
-#include <err.h>
+#include <unistd.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;

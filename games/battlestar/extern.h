@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/10/11 02:07:18 lukem Exp $ */
+/*	$NetBSD: extern.h,v 1.7 1998/02/03 05:39:25 perry Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
+
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
