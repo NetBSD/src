@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/09/05 04:53:41 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/10/27 16:05:03 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -110,7 +110,7 @@
  */
 /*
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
- * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x06000000
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
