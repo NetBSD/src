@@ -1,4 +1,4 @@
-#	$NetBSD: DEFAULT,v 1.11 1997/03/22 08:29:41 matthias Exp $
+#	$NetBSD: DEFAULT,v 1.12 1997/04/01 16:30:35 matthias Exp $
 #
 # DEFAULT: default install kernel
 #
@@ -48,6 +48,7 @@ config		netbsd	root on ? type ?
 sd* at scsibus? target ? lun ?		# SCSI disks
 st* at scsibus? target ? lun ?		# SCSI tapes
 cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+se* at scsibus0 target ? lun ?		# Cabletron EA412/EA419
 uk* at scsibus? target ? lun ?		# All the things we don't know
 
 pseudo-device	pty 16			# pseudo-terminals
