@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.14 2001/09/24 13:22:31 wiz Exp $	*/
+/*	$NetBSD: utilities.c,v 1.15 2001/11/01 08:21:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.14 2001/09/24 13:22:31 wiz Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.15 2001/11/01 08:21:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,12 +318,12 @@ upperbnd(start)
  * report on a badly formed entry
  */
 void
-badentry(ep, msg)
+badentry(ep, message)
 	struct entry *ep;
-	char *msg;
+	char *message;
 {
 
-	fprintf(stderr, "bad entry: %s\n", msg);
+	fprintf(stderr, "bad entry: %s\n", message);
 	fprintf(stderr, "name: %s\n", myname(ep));
 	fprintf(stderr, "parent name %s\n", myname(ep->e_parent));
 	if (ep->e_sibling != NULL)
