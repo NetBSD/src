@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.9 1996/12/29 10:21:48 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.10 1996/12/29 13:25:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -211,9 +211,17 @@
 #define SET_RX_EARLY_THRESH	(u_short) (0x11<<11)
 #define SET_TX_AVAIL_THRESH	(u_short) (0x12<<11)
 #define SET_TX_START_THRESH	(u_short) (0x13<<11)
+#define START_DMA		(u_short) (0x14<<11)	/* busmaster-only */
 #define STATS_ENABLE		(u_short) (0x15<<11)
 #define STATS_DISABLE		(u_short) (0x16<<11)
 #define STOP_TRANSCEIVER	(u_short) (0x17<<11)
+
+/* Only on adapters that support power management: */
+#define POWERUP			(u_short) (0x1b<<11)
+#define POWERDOWN		(u_short) (0x1c<<11)
+#define POWERAUTO		(u_short) (0x1d<<11)
+
+
 
 /*
  * Command parameter that disables threshold interrupts
@@ -403,23 +411,59 @@
 #define PROD_ID				0x5090
 #define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
-#define AUI 				0x1
-#define BNC 				0x2
-#define UTP 				0x4
+
+/*
+ * ep_connectors softc media-preset bitflags
+ */
+#define AUI 				0x01
+#define BNC 				0x02
+#define UTP 				0x04
+#define	TX				0x08
+#define	FX				0x10
+#define	T4				0x20
+#define	MII				0x40
+
+
+/*
+ * ISA/eisa CONFIG_CNTRL media-present bits.
+ * XXX Also used as bus-independent media flags to epconfig().
+ */
 #define IS_AUI 				(1<<13)
 #define IS_BNC 				(1<<12)
 #define IS_UTP 				(1<<9)
+/*
+ * XXX Bogus values to allow 10/100 PCI media.
+ * Should be replaced with Demon, 3c515, or 10/100 PCMCIA  equivalents.
+ */
+#define IS_100BASE_T4			(1<<8)
+#define IS_100BASE_TX			(1<<9)
+#define IS_100BASE_FX			(1<<10)
+#define IS_100BASE_MII			(1<<11)
+
+
+/* EEPROM state flags/commands */
 #define EEPROM_BUSY			(1<<15)
 #define EEPROM_TST_MODE			(1<<14)
 #define READ_EEPROM			(1<<7)
+
 #define ENABLE_UTP			0xc0
 #define DISABLE_UTP			0x0
 #define RX_BYTES_MASK			(u_short) (0x07ff)
 
+/*
+ * PCI configuration-space register media-present bits
+ * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
+ */
+#define IS_PCI_100BASE_T4		(1<<0)
+#define IS_PCI_100BASE_TX		(1<<1)
+#define IS_PCI_100BASE_FX		(1<<2)
+#define IS_PCI_10BASE_T			(1<<3)
+# define IS_PCI_UTP			IS_PCI_10BASE_T
+#define IS_PCI_BNC			(1<<4)
 #define IS_PCI_AUI 			(1<<5)
-#define IS_PCI_BNC 			(1<<4)
-#define IS_PCI_UTP 			(1<<3)
+#define IS_PCI_100BASE_MII		(1<<6)
+#define IS_PCI_INTERNAL_VCO		(1<<8)
 
-/* Used to probe for large-packet support */
+/* Used to probe for large-packet support. */
 #define EP_LARGEWIN_PROBE		EP_THRESH_DISABLE
 #define EP_LARGEWIN_MASK		0xffc
