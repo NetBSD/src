@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.51 2000/11/08 14:28:15 ad Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.52 2001/01/24 09:04:15 itojun Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1691,7 +1691,7 @@ tbf_send_packet(vifp, m)
 		/* If tunnel options */
 #ifdef IPSEC
 		/* Don't lookup socket in forwading case */
-		ipsec_setsocket(m, NULL);
+		(void)ipsec_setsocket(m, NULL);
 #endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
 			  IP_FORWARDING, (struct ip_moptions *)0);
@@ -1708,7 +1708,7 @@ tbf_send_packet(vifp, m)
 
 #ifdef IPSEC
 		/* Don't lookup socket in forwading case */
-		ipsec_setsocket(m, NULL);
+		(void)ipsec_setsocket(m, NULL);
 #endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
 				  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
