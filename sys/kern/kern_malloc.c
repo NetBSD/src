@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_malloc.c,v 1.36 1998/08/18 06:11:35 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.37 1998/09/12 17:20:02 christos Exp $	*/
 
 /*
- * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1987, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
