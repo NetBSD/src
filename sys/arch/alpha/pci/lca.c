@@ -1,10 +1,10 @@
-/*	$NetBSD: lca.c,v 1.2 1996/03/17 01:06:33 thorpej Exp $	*/
+/*	$NetBSD: lca.c,v 1.3 1996/04/12 04:40:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Jeffrey Hsu
+ * Authors: Jeffrey Hsu and Chris G. Demetriou
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -49,11 +49,11 @@ int	lcamatch __P((struct device *, void *, void *));
 void	lcaattach __P((struct device *, struct device *, void *));
 
 struct cfattach lca_ca = {
-	sizeof(struct lca_softc), lcamatch, lcaattach
+	sizeof(struct lca_softc), lcamatch, lcaattach,
 };
 
 struct cfdriver lca_cd = {
-	NULL, "lca", DV_DULL
+	NULL, "lca", DV_DULL,
 };
 
 static int	lcaprint __P((void *, char *pnp));
@@ -92,15 +92,9 @@ lca_init(lcp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	lcp->lc_conffns = &lca_conf_fns;
-	lcp->lc_confarg = lcp;
-	lcp->lc_dmafns = &lca_dma_fns;
-	lcp->lc_dmaarg = lcp;
-	/* Interrupt routines set up in 'attach' */
-	lcp->lc_memfns = &lca_mem_fns;
-	lcp->lc_memarg = lcp;
-	lcp->lc_piofns = &lca_pio_fns;
-	lcp->lc_pioarg = lcp;
+	apecs_lca_bus_io_init(&lcp->lc_bc, lcp);
+	apecs_lca_bus_mem_init(&lcp->lc_bc, lcp);
+	lca_pci_init(&lcp->lc_pc, lcp);
 
 /*
 printf("lca_init: before IOC_HAE=0x%x\n", REGVAL(LCA_IOC_HAE));
@@ -145,10 +139,9 @@ lcaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	struct lca_softc *sc = (struct lca_softc *)self;
 	struct lca_config *lcp;
-	struct pci_attach_args pa;
+	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 LCAs. */
 	/* Um, not sure about this.  XXX JH */
@@ -170,31 +163,18 @@ lcaattach(parent, self, aux)
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_AXPPCI_33)
 	case ST_DEC_AXPPCI_33:
-		pci_axppci_33_pickintr(lcp->lc_conffns, lcp->lc_confarg,
-		    lcp->lc_piofns, lcp->lc_pioarg,
-		    &lcp->lc_intrfns, &lcp->lc_intrarg);
+		pci_axppci_33_pickintr(lcp);
 		break;
 #endif
 	default:
 		panic("lcaattach: shouldn't be here, really...");
 	}
 
-	pa.pa_bus = 0;
-	pa.pa_maxdev = 13;
-	pa.pa_burstlog2 = 8;
-
-	pa.pa_conffns = lcp->lc_conffns;
-	pa.pa_confarg = lcp->lc_confarg;
-	pa.pa_dmafns = lcp->lc_dmafns;
-	pa.pa_dmaarg = lcp->lc_dmaarg;
-	pa.pa_intrfns = lcp->lc_intrfns;
-	pa.pa_intrarg = lcp->lc_intrarg;
-	pa.pa_memfns = lcp->lc_memfns;
-	pa.pa_memarg = lcp->lc_memarg;
-	pa.pa_piofns = lcp->lc_piofns;
-	pa.pa_pioarg = lcp->lc_pioarg;
-
-	config_found(self, &pa, lcaprint);
+	pba.pba_busname = "pci";
+	pba.pba_bc = &lcp->lc_bc;
+	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_bus = 0;
+	config_found(self, &pba, lcaprint);
 }
 
 static int
@@ -202,12 +182,11 @@ lcaprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct pci_attach_args *pa = aux;
+        register struct pcibus_attach_args *pba = aux;
 
-	/* what does this do?  XXX JH */
 	/* only PCIs can attach to LCAes; easy. */
 	if (pnp)
-		printf("pci at %s", pnp);
-	printf(" bus %d", pa->pa_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
