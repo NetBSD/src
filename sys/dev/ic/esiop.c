@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.11 2002/04/27 17:39:51 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.12 2002/04/27 18:46:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.11 2002/04/27 17:39:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.12 2002/04/27 18:46:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,18 +219,22 @@ esiop_reset(sc)
 {
 	int i, j;
 	u_int32_t addr;
-	u_int32_t msgin_addr;
+	u_int32_t msgin_addr, sem_addr;
 
 	siop_common_reset(&sc->sc_c);
 
 	/*
-	 * we copy the script at the beggining of RAM. Then there is 8 bytes
-	 * for messages in.
+	 * we copy the script at the beggining of RAM. Then there is 4 bytes
+	 * for messages in, and 4 bytes for semaphore
 	 */
 	sc->sc_free_offset = sizeof(esiop_script) / sizeof(esiop_script[0]);
 	msgin_addr =
 	    sc->sc_free_offset * sizeof(u_int32_t) + sc->sc_c.sc_scriptaddr;
-	sc->sc_free_offset += 2;
+	sc->sc_free_offset += 1;
+	sc->sc_semoffset = sc->sc_free_offset;
+	sem_addr =
+	    sc->sc_semoffset * sizeof(u_int32_t) + sc->sc_c.sc_scriptaddr;
+	sc->sc_free_offset += 1;
 	/* then we have the scheduler ring */
 	sc->sc_shedoffset = sc->sc_free_offset;
 	sc->sc_free_offset += A_ncmd_slots * CMD_SLOTSIZE;
@@ -254,6 +258,12 @@ esiop_reset(sc)
 		    j++) {
 			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
 			    E_abs_msgin2_Used[j] * 4, msgin_addr);
+		}
+		for (j = 0; j <
+		    (sizeof(E_abs_sem_Used) / sizeof(E_abs_sem_Used[0]));
+		    j++) {
+			bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
+			    E_abs_sem_Used[j] * 4, sem_addr);
 		}
 
 		if (sc->sc_c.features & SF_CHIP_LED0) {
@@ -286,6 +296,12 @@ esiop_reset(sc)
 		    j++) {
 			sc->sc_c.sc_script[E_abs_msgin2_Used[j]] =
 			    htole32(msgin_addr);
+		}
+		for (j = 0; j <
+		    (sizeof(E_abs_sem_Used) / sizeof(E_abs_sem_Used[0]));
+		    j++) {
+			sc->sc_c.sc_script[E_abs_sem_Used[j]] =
+			    htole32(sem_addr);
 		}
 
 		if (sc->sc_c.features & SF_CHIP_LED0) {
@@ -423,18 +439,10 @@ again:
 	}
 	retval = 1;
 	INCSTAT(esiop_stat_intr);
+	esiop_checkdone(sc);
 	if (istat & ISTAT_INTF) {
 		bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 		    SIOP_ISTAT, ISTAT_INTF);
-		esiop_checkdone(sc);
-		if (sc->sc_flags & SCF_CHAN_NOSLOT) {
-			/*
-			 * at last one command terminated,
-			 * so we should have free slots now
-			 */
-			sc->sc_flags &= ~SCF_CHAN_NOSLOT;
-			scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
-		}
 		goto again;
 	}
 
@@ -1091,12 +1099,6 @@ end:
 	if (freetarget && esiop_target->target_c.status == TARST_PROBING)
 		esiop_del_dev(sc, target, lun);
 	CALL_SCRIPT(Ent_script_sched);
-	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
-		/* a command terminated, so we have free slots now */
-		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
-		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
-	}
-
 	return 1;
 }
 
@@ -1173,6 +1175,25 @@ esiop_checkdone(sc)
 	u_int32_t slot;
 	int needsync = 0;
 	int status;
+	u_int32_t sem;
+
+	esiop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	sem = esiop_script_read(sc, sc->sc_semoffset);
+	esiop_script_write(sc, sc->sc_semoffset, sem & ~A_sem_done);
+	if ((sc->sc_flags & SCF_CHAN_NOSLOT) && (sem & A_sem_start)) {
+		/*
+		 * at last one command have been started,
+		 * so we should have free slots now
+		 */
+		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
+		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
+	}
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if ((sem & A_sem_done) == 0) {
+		/* no pending done command */
+		return;
+	}
 
 	bus_dmamap_sync(sc->sc_c.sc_dmat, sc->sc_done_map,
 	    sc->sc_done_offset, A_ndone_slots * sizeof(u_int32_t),
@@ -1422,6 +1443,16 @@ esiop_scsipi_request(chan, req, arg)
 		lun = periph->periph_lun;
 
 		s = splbio();
+		/*
+		 * first check if there are pending complete commands.
+		 * this can free us some resources (in the rings for example).
+		 * we have to lock it to avoid recursion.
+		 */
+		if ((sc->sc_flags & SCF_CHAN_ADAPTREQ) == 0) {
+			sc->sc_flags |= SCF_CHAN_ADAPTREQ;
+			esiop_checkdone(sc);
+			sc->sc_flags &= ~SCF_CHAN_ADAPTREQ;
+		}
 #ifdef SIOP_DEBUG_SCHED
 		printf("starting cmd for %d:%d tag %d(%d)\n", target, lun,
 		    xs->xs_tag_type, xs->xs_tag_id);
@@ -1626,6 +1657,12 @@ esiop_start(sc, esiop_cmd)
 		 */
 		scsipi_channel_freeze(&sc->sc_c.sc_chan, 1);
 		sc->sc_flags |= SCF_CHAN_NOSLOT;
+		esiop_script_sync(sc,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		esiop_script_write(sc, sc->sc_semoffset,
+		    esiop_script_read(sc, sc->sc_semoffset) & ~A_sem_start);
+		esiop_script_sync(sc,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
 		esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
 		esiop_scsicmd_end(esiop_cmd);
