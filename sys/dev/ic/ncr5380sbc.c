@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.10 1996/05/10 18:04:01 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.11 1996/05/13 14:10:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2356,8 +2356,8 @@ do_actions:
 		}
 		/* Device is sitting on the bus! */
 		printf("%s: Target %d LUN %d stuck busy, resetting...\n",
-		       sr->sr_target, sr->sr_lun,
-		       sc->sc_dev.dv_xname);
+		       sc->sc_dev.dv_xname,
+		       sr->sr_target, sr->sr_lun);
 		ncr5380_reset_scsibus(sc);
 	busfree:
 		NCR_TRACE("machine: discon, waited %d\n",
