@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.22 2003/08/31 01:36:12 gson Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.23 2003/10/30 22:12:02 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.22 2003/08/31 01:36:12 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.23 2003/10/30 22:12:02 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,8 @@ struct acpibat_softc {
 	struct envsys_tre_data sc_data[ACPIBAT_NSENSORS];
 
 	struct simplelock sc_lock;
+
+	struct timeval sc_lastupdate, sc_updateinterval;
 };
 
 /*
@@ -702,6 +704,9 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_sysmon.sme_nsensors = ACPIBAT_NSENSORS;
 	sc->sc_sysmon.sme_envsys_version = 1000;
 
+	sc->sc_updateinterval.tv_sec = 1;
+	sc->sc_updateinterval.tv_usec = 0;
+
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
@@ -712,7 +717,8 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct acpibat_softc *sc = sme->sme_cookie;
 
-	acpibat_update(sc);
+	if (ratecheck(&sc->sc_lastupdate, &sc->sc_updateinterval))
+		acpibat_update(sc);
 
 	/* XXX locking */
 	/* XXX it should be checked whether info/stat is valid. */
