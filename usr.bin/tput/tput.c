@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.5 1994/12/07 08:49:11 jtc Exp $	*/
+/*	$NetBSD: tput.c,v 1.6 1994/12/13 08:17:29 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.2 (Berkeley) 3/19/94";
 #endif
-static char rcsid[] = "$NetBSD: tput.c,v 1.5 1994/12/07 08:49:11 jtc Exp $";
+static char rcsid[] = "$NetBSD: tput.c,v 1.6 1994/12/13 08:17:29 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/termios.h>
@@ -195,11 +195,11 @@ process(cap, str, argv)
 	case 2:
 		if (*++argv == NULL || *argv[0] == '\0')
 			errx(2, errfew, 2, cap);
-		arg_cols = atoi(*argv);
+		arg_rows = atoi(*argv);
 
 		if (*++argv == NULL || *argv[0] == '\0')
 			errx(2, errfew, 2, cap);
-		arg_rows = atoi(*argv);
+		arg_cols = atoi(*argv);
 
 		(void) tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
 		break;
