@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.2 2002/03/18 22:58:44 tshiozak Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.3 2003/04/29 14:53:12 scw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -108,7 +108,7 @@ _init_ps(_RuneLocale *rl, mbstate_t *ps)
 {
 	size_t dum;
 	_ps_to_runestate(ps)->rs_runelocale = rl;
-	_citrus_ctype_mbrtowc(rl->rl_citrus_ctype, NULL, NULL, NULL,
+	_citrus_ctype_mbrtowc(rl->rl_citrus_ctype, NULL, NULL, 0,
 			      _ps_to_private(ps), &dum);
 }
 
