@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.28 2005/01/09 08:42:45 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.29 2005/01/09 09:23:21 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.28 2005/01/09 08:42:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.29 2005/01/09 09:23:21 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -133,8 +133,8 @@ void	audio_calc_blksize(struct audio_softc *, int);
 void	audio_fill_silence(struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
-void	audio_init_ringbuffer(struct audio_softc *, struct audio_ringbuffer *,
-			      int, const struct audio_params *);
+void	audio_init_ringbuffer(struct audio_softc *,
+			      struct audio_ringbuffer *, int);
 int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
 static __inline int audio_sleep_timo(int *, char *, int);
@@ -1066,7 +1066,7 @@ audiommap(dev_t dev, off_t off, int prot)
  */
 void
 audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
-		      int mode, const struct audio_params *param)
+		      int mode)
 {
 	int nblks;
 	int blksize = rp->blksize;
@@ -1079,7 +1079,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
 	if (sc->hw_if->round_blocksize)
 		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
-						     mode, param);
+						     mode, &rp->s.param);
 	if (blksize <= 0)
 		panic("audio_init_ringbuffer: blksize");
 	nblks = rp->s.bufsize / blksize;
@@ -1106,7 +1106,7 @@ audio_initbufs(struct audio_softc *sc)
 	int error;
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
-	audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD, &sc->sc_rparams);
+	audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
 		error = hw->init_input(sc->hw_hdl, sc->sc_rr.s.start,
 				       sc->sc_rr.s.end - sc->sc_rr.s.start);
@@ -1114,7 +1114,7 @@ audio_initbufs(struct audio_softc *sc)
 			return error;
 	}
 
-	audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY, &sc->sc_pparams);
+	audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
 	sc->sc_sil_count = 0;
 	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
 		error = hw->init_output(sc->hw_hdl, sc->sc_pr.s.start,
