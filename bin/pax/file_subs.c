@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.14 1999/11/07 09:44:11 mycroft Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.15 1999/11/07 15:48:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.14 1999/11/07 09:44:11 mycroft Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.15 1999/11/07 15:48:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ file_close(arcn, fd)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
-	if (pfflags)
+	if (pfflags && arcn->type != PAX_SLK)
 		set_chflags(arcn->name, arcn->sb.st_flags);
 }
 
@@ -804,9 +804,10 @@ set_chflags(fnm, flags)
 	u_int32_t flags;
 #endif
 {
-	
+#if 0
 	if (chflags(fnm, flags) < 0)
 		syswarn(1, errno, "Could not set file flags on %s", fnm);
+#endif
 	return;
 }
 
