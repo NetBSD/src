@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.3 1995/03/08 00:39:08 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.4 1995/04/22 12:41:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 #include <machine/rpb.h>
 
 #include <alpha/tc/tc.h>
-#include <alpha/tc/dmavar.h>
+#include <alpha/tc/tcds_dmavar.h>
 #include <alpha/tc/tcds.h>
 
 struct tcds_softc {
