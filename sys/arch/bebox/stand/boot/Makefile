@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/10/08 01:36:19 simonb Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/24 18:20:01 matt Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -13,7 +13,7 @@ CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 CLEANFILES+= vers.c vers.o ${BOOTPROG}
 
 COPTS+= -ffreestanding
-CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
+CPPFLAGS= -I. -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
 CPPFLAGS+= -D_STANDALONE -DDBMONITOR -DRELOC=${RELOC}
 CPPFLAGS+= -DUSE_SCAN
@@ -32,9 +32,11 @@ BINMODE= 444
 
 RELOC= 0x700000
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.endif
 .NOPATH: machine powerpc
 CLEANFILES+= machine powerpc
 
