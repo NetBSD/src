@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.10 1994/05/08 05:52:19 chopps Exp $
+ *	$Id: genassym.c,v 1.11 1994/05/11 19:02:55 chopps Exp $
  */
 
 #define KERNEL
@@ -149,6 +149,8 @@ main()
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
 	printf("#define\tCIAICR %d\n", &cia->icr);
+	printf("#define\tAMIGA_68020 %d\n", AMIGA_68020);
+	printf("#define\tAMIGA_68030 %d\n", AMIGA_68030);
 	printf("#define\tAMIGA_68040 %d\n", AMIGA_68040);
 	exit(0);
 }
