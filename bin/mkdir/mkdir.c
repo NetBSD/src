@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkdir.c	5.7 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: mkdir.c,v 1.7 1993/12/31 19:34:53 jtc Exp $";
+static char rcsid[] = "$Id: mkdir.c,v 1.8 1994/04/28 00:10:30 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,9 +92,9 @@ main(argc, argv)
 		usage();
 	
 	for (exitval = 0; *argv; ++argv) {
-		if (pflag)
-			exitval |= build(*argv, mode, dir_mode);
-		else if (mkdir(*argv, mode) < 0) {
+		if (pflag) {
+			exitval |= mkpath(*argv, mode, dir_mode);
+		} else if (mkdir(*argv, mode) < 0) {
 			warn("%s", *argv);
 			exitval = 1;
 		}
@@ -103,33 +103,48 @@ main(argc, argv)
 }
 
 /*
- * build -- create directories.  
+ * mkpath -- create directories.  
+ *	path     - path
  *	mode     - file mode of terminal directory
  *	dir_mode - file mode of intermediate directories
  */
-build(path, mode, dir_mode)
+mkpath(path, mode, dir_mode)
 	char *path;
 	mode_t mode;
 	mode_t dir_mode;
 {
-	register char *p;
 	struct stat sb;
-	int ch;
+	register char *slash;
 
-	for (p = path;; ++p) {
-		if (!*p || *p  == '/') {
-			ch = *p;
-			*p = '\0';
-			if (stat(path, &sb)) {
-				if (errno != ENOENT || mkdir(path, (ch) ? dir_mode : mode) < 0) {
-					warn("%s", path);
-					return(1);
-				}
+	/* skip leading slashes */
+	slash = path;
+	while (*slash == '/')
+		slash++;
+
+	while ((slash = strchr(slash, '/')) != NULL) {
+		*slash = '\0';
+
+		if (stat(path, &sb)) {
+			if (errno != ENOENT || mkdir(path, dir_mode)) {
+				warn("%s", path);
+				return 1;
 			}
-			if (!(*p = ch))
-				break;
+		} else if (!S_ISDIR(sb.st_mode)) {
+		        warnx("%s: %s", path, strerror(ENOTDIR));
+			return 1;
 		}
+		    
+		/* skip multiple slashes */
+		*slash++ = '/';
+		while (*slash == '/')
+			slash++;
 	}
+
+	if (mkdir (path, mode)) {
+		warn("%s", path);
+		return 1;
+	}
+
 	return(0);
 }
 
