@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.2 1999/01/27 20:54:57 thorpej Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.3 1999/01/28 20:22:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -48,7 +48,7 @@ void bi_getbiosgeom()
 	struct btinfo_biosgeom *bibg;
 	int i;
 
-	pvbcopy(0x400 + 0x75, &nhd, 1); /* from BIOS data area */
+	pvbcopy((void *)(0x400 + 0x75), &nhd, 1); /* from BIOS data area */
 	if(nhd == 0 || nhd > 4 /* ??? */ )
 		return;
 

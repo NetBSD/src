@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.7 1998/08/13 17:41:11 rvb Exp $	*/
+/*	$NetBSD: libi386.h,v 1.8 1999/01/28 20:22:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,12 +35,12 @@
 typedef unsigned long physaddr_t;
 
 /* this is in startup code */
-void vpbcopy __P((void*, physaddr_t, int));
-void pvbcopy __P((physaddr_t, void*, int));
-void pbzero __P((physaddr_t, int));
+void vpbcopy __P((const void *, void *, size_t));
+void pvbcopy __P((const void *, void *, size_t));
+void pbzero __P((void *, size_t));
 physaddr_t vtophys __P((void*));
 
-int pread __P((int, physaddr_t, int));
+ssize_t pread __P((int, void *, size_t));
 void startprog __P((physaddr_t, int, unsigned long*, physaddr_t));
 
 int exec_netbsd __P((const char*, physaddr_t, int));
