@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.1 1999/03/07 22:16:19 is Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.2 1999/03/09 20:25:46 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -122,7 +122,7 @@ cbiiiscattach(pdp, dp, auxp)
 	/*
 	 * CTEST7 = 00
 	 */
-	sc->sc_clock_freq = 40 /*80*/;		/* Clock = 80Mhz >> */
+	sc->sc_clock_freq = 50;		/* Clock = 50 Mhz >> */
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x20;		/* XXX ?? */
 
