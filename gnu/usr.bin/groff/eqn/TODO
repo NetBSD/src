@@ -37,3 +37,5 @@ Vphantom
 Smash.
 
 Provide a variant of vec that extends over the length of the accentee.
+
+Support vertical arrow delimiters.

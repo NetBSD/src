@@ -1,11 +1,11 @@
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -14,17 +14,17 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 %{
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "lib.h"
 #include "box.h"
 extern int non_empty_flag;
 char *strsave(const char *);
-#define YYDEBUG 1
 int yylex();
 void yyerror(const char *);
 %}
@@ -80,6 +80,7 @@ void yyerror(const char *);
 %token SPLIT
 %token NOSPLIT
 %token UACCENT
+%token SPECIAL
 
 /* these are handled in the lexer */
 %token SPACE
@@ -107,7 +108,7 @@ Consider `left ( ~ left ( ~ right ) right )'. */
 %right FROM TO
 %left SQRT OVER SMALLOVER
 %right SUB SUP
-%right ROMAN BOLD ITALIC FAT FONT SIZE FWD BACK DOWN UP TYPE VCENTER
+%right ROMAN BOLD ITALIC FAT FONT SIZE FWD BACK DOWN UP TYPE VCENTER SPECIAL
 %right BAR UNDER PRIME
 %left ACCENT UACCENT
 
@@ -252,6 +253,8 @@ simple:
 		{ $3->set_spacing_type($2); $$ = $3; }
 	| VCENTER simple
 		{ $$ = new vcenter_box($2); }
+	| SPECIAL text simple
+		{ $$ = make_special_box($2, $3); }
 	;
 	
 number:
@@ -260,7 +263,7 @@ number:
 		  int n;
 		  if (sscanf($1, "%d", &n) == 1)
 		    $$ = n;
-		  delete $1;
+		  a_delete $1;
 		}
 	;
 

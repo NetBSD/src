@@ -1,21 +1,12 @@
-/*-
- * This code is derived from software copyrighted by the Free Software
- * Foundation.
- *
- * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
- *
- *	@(#)eqn.h	6.4 (Berkeley) 5/8/91
- */
-
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -24,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdio.h>
@@ -46,6 +37,7 @@ extern int inline_flag;
 extern int draw_flag;
 extern int one_size_reduction_flag;
 extern int compatible_flag;
+extern int nroff;
 
 void init_lex(const char *str, const char *filename, int lineno);
 void lex_error(const char *message,

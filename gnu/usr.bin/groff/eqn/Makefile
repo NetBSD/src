@@ -1,16 +1,20 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
-
-.include "../Makefile.g++"
-.include "../../Makefile.inc"
+# Makefile for eqn
 
 PROG=		eqn
-SRCS=		box.cc delim.cc eqn.y lex.cc limit.cc list.cc \
-		main.cc mark.cc other.cc over.cc pile.cc script.cc \
-		sqrt.cc text.cc
-LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
-# Delete the -Ig++-include after we fix libg++ and install it
-CXXFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../libgroff \
-		-I$(.CURDIR)/../../../lib/libg++/g++-include
-CLEANFILES+=	eqn.tab.h
+SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
+		script.cc mark.cc other.cc delim.cc sqrt.cc pile.cc special.cc
+OBJS=		eqn.o 
+CFLAGS+=	-I. -I$(.CURDIR)/../include
+LDADD+=		$(LIBGROFF)
+DPADD+=		$(LIBGROFF)
+
+CLEANFILES+=	eqn.cc eqn.tab.h
+
+afterinstall:
+	sed -e 's/@g@/$(g)/g' $(.CURDIR)/neqn.sh > $(DESTDIR)$(BINDIR)/neqn
+	chown ${BINOWN}.${BINGRP} $(DESTDIR)$(BINDIR)/neqn
+	chmod ${BINMODE} $(DESTDIR)$(BINDIR)/neqn
 
 .include <bsd.prog.mk>
+.include "../../Makefile.inc"
+.include "../Makefile.cfg"

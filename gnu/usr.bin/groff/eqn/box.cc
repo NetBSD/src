@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "eqn.h"
@@ -26,8 +26,8 @@ const char *current_roman_font;
 char *gfont = 0;
 char *grfont = 0;
 char *gbfont = 0;
-
 int gsize = 0;
+
 int script_size_reduction = -1;	// negative means reduce by a percentage 
 
 int positive_space = -1;
@@ -36,8 +36,8 @@ int negative_space = -1;
 int minimum_size = 5;
 
 int fat_offset = 4;
-int body_height = 75;
-int body_depth = 25;
+int body_height = 85;
+int body_depth = 35;
 
 int over_hang = 0;
 int accent_width = 31;
@@ -78,6 +78,7 @@ int shift_down = 26;		// = axis_height
 int column_sep = 100;		// = em space
 int matrix_side_sep = 17;	// = thin space
 
+int nroff = 0;			// should we grok ndefine or tdefine?
 
 struct {
   const char *name;
@@ -117,6 +118,10 @@ struct {
 "shift_down", &shift_down,
 "column_sep", &column_sep,
 "matrix_side_sep", &matrix_side_sep,
+"draw_lines", &draw_flag,
+"body_height", &body_height,
+"body_depth", &body_depth,
+"nroff", &nroff,
 0, 0
 };
 
@@ -148,9 +153,33 @@ void set_space(int n)
     positive_space = n;
 }
 
-void set_gsize(int n)
+// Return 0 if the specified size is bad.
+// The caller is responsible for giving the error message.
+
+int set_gsize(const char *s)
 {
-  gsize = n;
+  const char *p = (*s == '+' || *s == '-') ? s + 1 : s;
+  char *end;
+  long n = strtol(p, &end, 10);
+  if (n <= 0 || *end != '\0' || n > INT_MAX)
+    return 0;
+  if (p > s) {
+    if (!gsize)
+      gsize = 10;
+    if (*s == '+') {
+      if (gsize > INT_MAX - n)
+	return 0;
+      gsize += int(n);
+    }
+    else {
+      if (gsize - n <= 0)
+	return 0;
+      gsize -= int(n);
+    }
+  }
+  else
+    gsize = int(n);
+  return 1;
 }
 
 void set_script_reduction(int n)
@@ -175,19 +204,19 @@ const char *get_gbfont()
 
 void set_gfont(const char *s)
 {
-  delete gfont;
+  a_delete gfont;
   gfont = strsave(s);
 }
 
 void set_grfont(const char *s)
 {
-  delete grfont;
+  a_delete grfont;
   grfont = strsave(s);
 }
 
 void set_gbfont(const char *s)
 {
-  delete gbfont;
+  a_delete gbfont;
   gbfont = strsave(s);
 }
 
@@ -249,28 +278,55 @@ void box::top_level()
   // putc('\n', stderr);
   box *b = this;
   printf(".nr " SAVED_FONT_REG " \\n[.f]\n");
+  printf(".ft\n");
+  printf(".nr " SAVED_PREV_FONT_REG " \\n[.f]\n");
   printf(".ft %s\n", get_gfont());
-  if (gsize > 0)
-    b = new size_box(strsave(itoa(gsize)), b);
+  printf(".nr " SAVED_SIZE_REG " \\n[.s]z\n");
+  if (gsize > 0) {
+    char buf[INT_DIGITS + 1];
+    sprintf(buf, "%d", gsize);
+    b = new size_box(strsave(buf), b);
+  }
   current_roman_font = get_grfont();
   // This catches tabs used within \Z (which aren't allowed).
   b->check_tabs(0);
   int r = b->compute_metrics(DISPLAY_STYLE);
+  printf(".ft \\n[" SAVED_PREV_FONT_REG "]\n");
   printf(".ft \\n[" SAVED_FONT_REG "]\n");
   printf(".nr " MARK_OR_LINEUP_FLAG_REG " %d\n", r);
   if (r == FOUND_MARK) {
     printf(".nr " SAVED_MARK_REG " \\n[" MARK_REG "]\n");
-    printf(".nr " MARK_WIDTH_REG " \\n[" WIDTH_FORMAT "]\n", b->uid);
+    printf(".nr " MARK_WIDTH_REG " 0\\n[" WIDTH_FORMAT "]\n", b->uid);
   }
   else if (r == FOUND_LINEUP)
     printf(".if r" SAVED_MARK_REG " .as " LINE_STRING " \\h'\\n["
 	   SAVED_MARK_REG "]u-\\n[" MARK_REG "]u'\n");
   else
     assert(r == FOUND_NOTHING);
-  printf(".as " LINE_STRING " \\f[%s]", get_gfont());
+  // The problem here is that the argument to \f is read in copy mode,
+  // so we cannot use \E there; so we hide it in a string instead.
+  // Another problem is that if we use \R directly, then the space will
+  // prevent it working in a macro argument.
+  printf(".ds " SAVE_FONT_STRING " "
+	 "\\R'" SAVED_INLINE_FONT_REG " \\\\n[.f]'"
+	 "\\fP"
+	 "\\R'" SAVED_INLINE_PREV_FONT_REG " \\\\n[.f]'"
+	 "\\R'" SAVED_INLINE_SIZE_REG " \\\\n[.s]z'"
+	 "\\s0"
+	 "\\R'" SAVED_INLINE_PREV_SIZE_REG " \\\\n[.s]z'"
+	 "\n"
+	 ".ds " RESTORE_FONT_STRING " "
+	 "\\f[\\\\n[" SAVED_INLINE_PREV_FONT_REG "]]"
+	 "\\f[\\\\n[" SAVED_INLINE_FONT_REG "]]"
+	 "\\s'\\\\n[" SAVED_INLINE_PREV_SIZE_REG "]u'"
+	 "\\s'\\\\n[" SAVED_INLINE_SIZE_REG "]u'"
+	 "\n");
+  printf(".as " LINE_STRING " \\&\\E*[" SAVE_FONT_STRING "]");
+  printf("\\f[%s]", get_gfont());
+  printf("\\s'\\En[" SAVED_SIZE_REG "]u'");
   current_roman_font = get_grfont();
   b->output();
-  printf("\\f[\\n[" SAVED_FONT_REG "]]\n");
+  printf("\\E*[" RESTORE_FONT_STRING "]\n");
   if (r == FOUND_LINEUP)
     printf(".if r" SAVED_MARK_REG " .as " LINE_STRING " \\h'\\n["
 	   MARK_WIDTH_REG "]u-\\n[" SAVED_MARK_REG "]u-(\\n["
@@ -290,22 +346,24 @@ void box::top_level()
 
 void box::extra_space()
 {
+  printf(".if !r" EQN_NO_EXTRA_SPACE_REG " "
+	 ".nr " EQN_NO_EXTRA_SPACE_REG " 0\n");
   if (positive_space >= 0 || negative_space >= 0) {
     if (positive_space > 0)
-      printf(".if !r" EQN_NO_EXTRA_SPACE_REG " "
+      printf(".if !\\n[" EQN_NO_EXTRA_SPACE_REG "] "
 	     ".as " LINE_STRING " \\x'-%dM'\n", positive_space);
     if (negative_space > 0)
-      printf(".if !r" EQN_NO_EXTRA_SPACE_REG " "
+      printf(".if !\\n[" EQN_NO_EXTRA_SPACE_REG "] "
 	     ".as " LINE_STRING " \\x'%dM'\n", negative_space);
     positive_space = negative_space = -1;
   }
   else {
-    printf(".if !r" EQN_NO_EXTRA_SPACE_REG " "
+    printf(".if !\\n[" EQN_NO_EXTRA_SPACE_REG "] "
 	   ".if \\n[" HEIGHT_FORMAT "]>%dM .as " LINE_STRING
 	   " \\x'-(\\n[" HEIGHT_FORMAT
 	   "]u-%dM)'\n",
 	   uid, body_height, uid, body_height);
-    printf(".if !r" EQN_NO_EXTRA_SPACE_REG " "
+    printf(".if !\\n[" EQN_NO_EXTRA_SPACE_REG "] "
 	   ".if \\n[" DEPTH_FORMAT "]>%dM .as " LINE_STRING
 	   " \\x'\\n[" DEPTH_FORMAT
 	   "]u-%dM'\n",
@@ -380,7 +438,7 @@ void box_list::append(box *pp)
     maxlen *= 2;
     p = new box*[maxlen];
     memcpy(p, oldp, sizeof(box*)*len);
-    delete oldp;
+    a_delete oldp;
   }
   p[len++] = pp;
 }
@@ -389,7 +447,7 @@ box_list::~box_list()
 {
   for (int i = 0; i < len; i++)
     delete p[i];
-  delete p;
+  a_delete p;
 }
 
 void box_list::list_check_tabs(int level)
@@ -427,7 +485,7 @@ void pointer_box::compute_subscript_kern()
 void pointer_box::compute_skew()
 {
   p->compute_skew();
-  printf(".nr " SKEW_FORMAT " \\n[" SKEW_FORMAT "]\n",
+  printf(".nr " SKEW_FORMAT " 0\\n[" SKEW_FORMAT "]\n",
 	 uid, p->uid);
 }
 
@@ -438,13 +496,13 @@ void pointer_box::check_tabs(int level)
 
 int simple_box::compute_metrics(int)
 {
-  printf(".nr " WIDTH_FORMAT " \\w" DELIMITER_CHAR, uid);
+  printf(".nr " WIDTH_FORMAT " 0\\w" DELIMITER_CHAR, uid);
   output();
   printf(DELIMITER_CHAR "\n");
-  printf(".nr " HEIGHT_FORMAT " \\n[rst]>?0\n", uid);
+  printf(".nr " HEIGHT_FORMAT " 0>?\\n[rst]\n", uid);
   printf(".nr " DEPTH_FORMAT " 0-\\n[rsb]>?0\n", uid);
   printf(".nr " SUB_KERN_FORMAT " 0-\\n[ssc]>?0\n", uid);
-  printf(".nr " SKEW_FORMAT " \\n[skw]\n", uid);
+  printf(".nr " SKEW_FORMAT " 0\\n[skw]\n", uid);
   return FOUND_NOTHING;
 }
 
@@ -474,7 +532,7 @@ quoted_text_box::quoted_text_box(char *s) : text(s)
 
 quoted_text_box::~quoted_text_box()
 {
-  delete text;
+  a_delete text;
 }
 
 void quoted_text_box::output()
