@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.60 2000/12/18 20:58:41 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.61 2000/12/18 21:03:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -492,6 +492,7 @@ struct	ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
+		int	ifru_dlt;
 		u_int	ifru_value;
 		caddr_t	ifru_data;
 	} ifr_ifru;
@@ -501,6 +502,7 @@ struct	ifreq {
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
+#define	ifr_dlt		ifr_ifru.ifru_dlt	/* data link type (DLT_*) */
 #define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
