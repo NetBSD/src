@@ -95,7 +95,7 @@ char *syscallnames[] = {
 	"setpgid",			/* 82 = setpgid */
 	"setitimer",			/* 83 = setitimer */
 	"compat_43_owait",	/* 84 = compat_43 owait */
-	"swapon",			/* 85 = swapon */
+	"compat_12_swapon",	/* 85 = compat_12 swapon */
 	"getitimer",			/* 86 = getitimer */
 	"compat_43_ogethostname",	/* 87 = compat_43 ogethostname */
 	"compat_43_osethostname",	/* 88 = compat_43 osethostname */
@@ -316,4 +316,5 @@ char *syscallnames[] = {
 	"#238 (unimplemented timer_gettime)",		/* 238 = unimplemented timer_gettime */
 	"#239 (unimplemented timer_getoverrun)",		/* 239 = unimplemented timer_getoverrun */
 	"#240 (unimplemented nanosleep)",		/* 240 = unimplemented nanosleep */
+	"swapon",			/* 241 = swapon */
 };
