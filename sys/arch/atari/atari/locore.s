@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2003/01/17 22:34:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2003/04/08 22:57:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
 /*
  * Clear & skip page zero, it will not be mapped
  */
-	.fill	NBPG/4,4,0
+	.fill	PAGE_SIZE/4,4,0
 
 #include <atari/atari/vectors.s>
 
@@ -1418,7 +1418,7 @@ ASLOCAL(zero)
 Ldorebootend:
 
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 GLOBAL(protorp)
 	.long	0x80000002,0		|  prototype root pointer
