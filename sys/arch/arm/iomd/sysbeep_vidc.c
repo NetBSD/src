@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_vidc.c,v 1.2 2002/02/18 16:23:54 bjh21 Exp $	*/
+/*	$NetBSD: sysbeep_vidc.c,v 1.3 2002/03/10 15:47:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: sysbeep_vidc.c,v 1.2 2002/02/18 16:23:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.3 2002/03/10 15:47:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>

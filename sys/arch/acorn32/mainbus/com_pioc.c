@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.3 2002/02/17 23:53:18 bjh21 Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.4 2002/03/10 15:47:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: com_pioc.c,v 1.3 2002/02/17 23:53:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.4 2002/03/10 15:47:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
