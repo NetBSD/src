@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 1998/01/30 07:10:31 mellon Exp $
+#	$NetBSD: Makefile,v 1.45 1998/02/06 23:11:57 perry Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -29,6 +29,10 @@ regression-tests:
 .endif
 
 beforeinstall:
+.ifmake build
+	@echo -n "Build started at: "
+	@date
+.endif
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
@@ -38,6 +42,10 @@ beforeinstall:
 afterinstall:
 .ifndef NOMAN
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
+.endif
+.ifmake build
+	@echo -n "Build finished at: "
+	@date
 .endif
 
 build: beforeinstall
