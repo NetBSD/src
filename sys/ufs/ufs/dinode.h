@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.9 1998/10/23 00:28:45 thorpej Exp $	*/
+/*	$NetBSD: dinode.h,v 1.10 1999/07/08 01:06:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -39,6 +39,10 @@
  *
  *	@(#)dinode.h	8.9 (Berkeley) 3/29/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ffs.h"
+#endif
 
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
