@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.116 2000/11/30 06:06:08 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.117 2000/11/30 08:33:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.116 2000/11/30 06:06:08 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.117 2000/11/30 08:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ static char ttyline[20];
 static struct utmp utmp;	/* for utmp */
 
 static const char *anondir = NULL;
-static const char *confdir = NULL;
+static const char *confdir = _DEFAULT_CONFDIR;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	has_ccache = 0;
