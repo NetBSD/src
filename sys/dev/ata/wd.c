@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.242 2003/04/15 17:42:44 dogcow Exp $ */
+/*	$NetBSD: wd.c,v 1.243 2003/04/15 18:27:26 darrenr Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.242 2003/04/15 17:42:44 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.243 2003/04/15 18:27:26 darrenr Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -430,6 +430,7 @@ wddetach(self, flags)
 		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
 		free(head, M_TEMP);
 	}
+	sc->sc_bscount = 0;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
@@ -543,10 +544,11 @@ wdstrategy(bp)
 	 */
 	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
 		struct disk_badsectors *dbs;
-		daddr_t maxblk = blkno + bp->b_bcount;
+		daddr_t maxblk = blkno + (bp->b_bcount / DEV_BSIZE) - 1;
 
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
-			if (dbs->dbs_min >= blkno && dbs->dbs_max < maxblk)
+			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
+			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max)
 				goto bad;
 	}
 
@@ -786,6 +788,7 @@ retry:		/* Just reset and retry. Can we do more ? */
 			dbs->dbs_max = dbs->dbs_min + bp->b_bcount - 1;
 			microtime(&dbs->dbs_failedat);
 			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
+			wd->sc_bscount++;
 		}
 
 		bp->b_flags |= B_ERROR;
@@ -1183,23 +1186,45 @@ wdioctl(dev, xfer, addr, flag, p)
 
 	case DIOCBSLIST :
 	{
-		caddr_t laddr = *(caddr_t *)addr;
+		u_int32_t count, missing, skip;
+		struct disk_badsecinfo dbsi;
 		struct disk_badsectors *dbs;
 		size_t available;
-		u_int32_t count;
+		caddr_t laddr;
 
+		dbsi = *(struct disk_badsecinfo *)addr;
+		missing = wd->sc_bscount;
 		count = 0;
-		copyin(laddr, &available, sizeof(available));
-		laddr += sizeof(count);
+		available = dbsi.dbsi_bufsize;
+		skip = dbsi.dbsi_skip;
+		laddr = dbsi.dbsi_buffer;
+
+		/*
+		 * We start this loop with the expectation that all of the
+		 * entries will be missed and decrement this counter each
+		 * time we either skip over one (already copied out) or
+		 * we actually copy it back to user space.  The structs
+		 * holding the bad sector information are copied directly
+		 * back to user space whilst the summary is returned via
+		 * the struct passed in via the ioctl.
+		 */
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next) {
-			if (available < sizeof(dbs))
+			if (skip > 0) {
+				missing--;
+				skip--;
+				continue;
+			}
+			if (available < sizeof(*dbs))
 				break;
-			available -= sizeof(dbs);
+			available -= sizeof(*dbs);
 			copyout(dbs, laddr, sizeof(*dbs));
 			laddr += sizeof(*dbs);
+			missing--;
 			count++;
 		}
-		copyout(&count, *(caddr_t *)addr, sizeof(count));
+		dbsi.dbsi_left = missing;
+		dbsi.dbsi_copied = count;
+		*(struct disk_badsecinfo *)addr = dbsi;
 		return 0;
 	}
 
@@ -1210,6 +1235,7 @@ wdioctl(dev, xfer, addr, flag, p)
 			SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
 			free(head, M_TEMP);
 		}
+		wd->sc_bscount = 0;
 		return 0;
 
 	case DIOCGDINFO:
