@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.40 1997/10/01 18:08:23 drochner Exp 
+ *	NetBSD: pcidevs,v 1.41 1997/10/06 06:18:07 lonhyn Exp 
  */
 
 /*
@@ -89,7 +89,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
 	    0,
 	    "3D Labs",
-	    "300SX (\"Glint\")",
+	    "GLINT 300SX",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500TX,
+	    0,
+	    "3D Labs",
+	    "GLINT 500TX",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_DELTA,
+	    0,
+	    "3D Labs",
+	    "GLINT DELTA",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX,
+	    0,
+	    "3D Labs",
+	    "GLINT 500MX",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
