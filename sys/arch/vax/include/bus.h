@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2000/04/10 03:49:56 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2000/06/04 18:27:39 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -917,6 +917,8 @@ struct vax_bus_dma_segment {
 	bus_size_t	ds_len;		/* length of transfer */
 };
 typedef struct vax_bus_dma_segment	bus_dma_segment_t;
+
+struct proc;
 
 /*
  *	bus_dma_tag_t
