@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1999/12/22 05:54:41 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1999/12/23 06:52:31 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -188,7 +188,7 @@ boot(a0, a1, a2, a3, a4, a5)
 	entry = (void *)marks[MARK_ENTRY];
 
 	if (apbus)
-		apcall_flush_cache();
+		apcall_flushcache();
 	else
 		mips1_flushicache(entry, marks[MARK_SYM] - marks[MARK_ENTRY]);
 

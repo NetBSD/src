@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.1 1999/12/22 05:55:25 tsubai Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,22 +67,29 @@
 #define NZS 2
 #endif
 
-#define	MODE_REGISTER	(-0x00080000)
-#define	FIFO_CH0	0x00000000
-#define	FIFO_CH1	0x00010000
-#define	FIFO_CH2	0x00020000
-#define	FIFO_CH3	0x00030000
-#define	FIFO_DEVWIN0	0x00040000
-#define	FIFO_DEVWIN1	0x00050000
-#define	FIFO_DEVWIN2	0x00060000
-#define	FIFO_DEVWIN3	0x00070000
-
-#define	PORTB_XPORT	FIFO_CH0
-#define	PORTB_RPORT	FIFO_CH1
-#define	PORTA_XPORT	FIFO_CH2
-#define	PORTA_RPORT	FIFO_CH3
-#define	PORTB_OFFSET	FIFO_DEVWIN0
-#define	PORTA_OFFSET	FIFO_DEVWIN1
+#define PORTB_XPORT	0x00000000
+#define PORTB_RPORT	0x00010000
+#define PORTA_XPORT	0x00020000
+#define PORTA_RPORT	0x00030000
+#define   DMA_MODE_REG		3
+#define     DMA_ENABLE		0x01	/* DMA enable */
+#define     DMA_DIR_DM		0x00	/* device to memory */
+#define     DMA_DIR_MD		0x02	/* memory to device */
+#define     DMA_EXTRDY		0x08	/* DMA external ready */
+#define PORTB_OFFSET	0x00040000
+#define PORTA_OFFSET	0x00050000
+#define   PORT_CTL		2
+#define     PORTCTL_RI		0x01
+#define     PORTCTL_DSR		0x02	
+#define     PORTCTL_DTR		0x04
+#define   PORT_SEL		3
+#define     PORTSEL_LOCALTALK	0x01
+#define     PORTSEL_RS232C	0x02
+#define ESCC_REG	0x00060000
+#define   ESCCREG_INTSTAT	0
+#define     INTSTAT_SCC		0x01
+#define   ESCCREG_INTMASK	1
+#define     INTMASK_SCC		0x01
 
 extern int zs_def_cflag;
 extern void (*zs_delay) __P((void));
@@ -213,13 +220,13 @@ zs_ap_attach(parent, self, aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
-	volatile u_int *txBfifo = (void *)(apa->apa_hwbase + FIFO_CH0);
-	volatile u_int *rxBfifo = (void *)(apa->apa_hwbase + FIFO_CH1);
-	volatile u_int *txAfifo = (void *)(apa->apa_hwbase + FIFO_CH2);
-	volatile u_int *rxAfifo = (void *)(apa->apa_hwbase + FIFO_CH3);
-	volatile u_int *devwin0 = (void *)(apa->apa_hwbase + FIFO_DEVWIN0);
-	volatile u_int *devwin1 = (void *)(apa->apa_hwbase + FIFO_DEVWIN1);
-	volatile u_int *devwin2 = (void *)(apa->apa_hwbase + FIFO_DEVWIN2);
+	volatile u_int *txBfifo = (void *)(apa->apa_hwbase + PORTB_XPORT);
+	volatile u_int *rxBfifo = (void *)(apa->apa_hwbase + PORTB_RPORT);
+	volatile u_int *txAfifo = (void *)(apa->apa_hwbase + PORTA_XPORT);
+	volatile u_int *rxAfifo = (void *)(apa->apa_hwbase + PORTA_RPORT);
+	volatile u_int *portBctl = (void *)(apa->apa_hwbase + PORTB_OFFSET);
+	volatile u_int *portActl = (void *)(apa->apa_hwbase + PORTA_OFFSET);
+	volatile u_int *esccregs = (void *)(apa->apa_hwbase + ESCC_REG);
 	static int didintr;
 
 	zs_unit = zsc->zsc_dev.dv_unit;
@@ -227,18 +234,17 @@ zs_ap_attach(parent, self, aux)
 
 	printf(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
 
-	/* enable DMA external ready */
-	txAfifo[3] = rxAfifo[3] = 8;
-	txBfifo[3] = rxBfifo[3] = 8;
+	txAfifo[DMA_MODE_REG] = rxAfifo[DMA_MODE_REG] = DMA_EXTRDY;
+	txBfifo[DMA_MODE_REG] = rxBfifo[DMA_MODE_REG] = DMA_EXTRDY;
 
 	/* assert DTR */			/* XXX */
-	devwin0[2] = devwin1[2] = 0x04;
+	portBctl[PORT_CTL] = portActl[PORT_CTL] = PORTCTL_DTR;
 
 	/* select RS-232C (ch1 only) */
-	devwin1[3] = 0x02;
+	portActl[PORT_SEL] = PORTSEL_RS232C;
 
 	/* enable SCC interrupts */
-	devwin2[1] = 0x01;
+	esccregs[ESCCREG_INTMASK] = INTMASK_SCC;
 
 	zs_delay = zs_ap_delay;
 
@@ -309,7 +315,7 @@ zs_ap_attach(parent, self, aux)
 		didintr = 1;
 
 		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
-				     NEWS5000_INT1_SERIAL,
+				     NEWS5000_INT1_SCC,
 				     0, /* priority */
 				     zshard, zsc,
 				     apa->apa_name, apa->apa_ctlnum);
