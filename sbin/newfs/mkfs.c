@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.78 2003/09/04 15:31:58 itojun Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.79 2003/09/06 12:48:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.78 2003/09/04 15:31:58 itojun Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.79 2003/09/06 12:48:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1130,7 +1130,7 @@ iput(union dinode *ip, ino_t ino)
 			    dp1->di_db[i] = bswap32(ip->dp1.di_db[i]);
 		} else
 			*dp1 = ip->dp1;
-		dp1->di_gen = random();
+		dp1->di_gen = arc4random() & INT32_MAX;
 	} else {
 		dp2 = (struct ufs2_dinode *)iobuf;
 		dp2 += ino_to_fsbo(&sblock, ino);
@@ -1140,7 +1140,7 @@ iput(union dinode *ip, ino_t ino)
 			    dp2->di_db[i] = bswap32(ip->dp2.di_db[i]);
 		} else
 			*dp2 = ip->dp2;
-		dp2->di_gen = random();
+		dp2->di_gen = arc4random() & INT32_MAX;
 	}
 	wtfs(d, sblock.fs_bsize, iobuf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.14 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: prune.c,v 1.15 2003/09/06 12:45:00 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -21,11 +21,7 @@ extern int phys_vif;
 /*
  * dither cache lifetime to obtain a value between x and 2*x
  */
-#ifdef SYSV
-#define CACHE_LIFETIME(x) ((x) + (lrand48() % (x)))
-#else
-#define CACHE_LIFETIME(x) ((x) + (random() % (x)))
-#endif
+#define CACHE_LIFETIME(x) ((x) + (arc4random() % (x)))
 
 #define CHK_GS(x, y) {	\
 		switch(x) { \
