@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 1997/07/12 06:13:08 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 1997/08/07 21:30:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1984,6 +1984,7 @@ struct {
 	caddr_t	fbbase;
 	u_long	fblen;
 } intvid_info[] =  {
+	{ MACH_MACCLASSICII,	(caddr_t)0xfee09a80,	21888 },
 	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB170,	(caddr_t)0xfee00000,	32 * 1024 },
@@ -2496,7 +2497,9 @@ get_mapping(void)
 		}
 		len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
-		/* printf ("0x%x --> 0x%x\n", addr, phys); */
+#if 0
+		printf ("0x%lx --> 0x%lx\n", addr, phys);
+#endif
 		if (nbnumranges > 0
 		    && addr == nblog[nbnumranges - 1] + len
 		    && phys == nbphys[nbnumranges - 1]) {	/* Same as last one */
