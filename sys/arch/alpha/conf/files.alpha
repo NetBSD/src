@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.62 1998/01/29 22:23:06 ross Exp $
+# $NetBSD: files.alpha,v 1.63 1998/02/16 22:12:45 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -34,17 +34,17 @@ file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 define	alpha_sgmap
 file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
-device	vga class dull: wsconsdev
+device	vga: wsconsdev
 file	arch/alpha/common/vga.c		vga
 
 #
 # Bus-independent devices
 #
 
-device	mainbus class dull { }		# no locators (yet?)
+device	mainbus { }			# no locators (yet?)
 attach	mainbus at root
 
-device	cpu class cpu { }		# not really optional
+device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
@@ -82,7 +82,7 @@ file	arch/alpha/wscons/wscons_rops.c		raster
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & kbd.
 #
-device	wscons class tty
+device	wscons: tty
 attach	wscons at wsconsdev
 file	arch/alpha/wscons/wscons.c	wscons		needs-flag
 file	arch/alpha/wscons/wscons_emul.c	wscons
@@ -96,19 +96,19 @@ file	arch/alpha/wscons/ms.c		wscons
 # TurboLaser Bus Support
 #
 
-device	tlsb class dull { node = -1, offset = -1 }
+device	tlsb { node = -1, offset = -1 }
 attach	tlsb at mainbus
 file	arch/alpha/tlsb/tlsb.c		tlsb & dec_kn8ae
 
-device	kft class dull { }
+device	kft { }
 attach	kft at tlsb
 file	arch/alpha/tlsb/kftxx.c		kft
 
-device	tlsbmem class dull
+device	tlsbmem
 attach	tlsbmem at tlsb
 file	arch/alpha/tlsb/tlsbmem.c	tlsbmem
 
-device	gbus class dull { offset = -1 }
+device	gbus { offset = -1 }
 attach	gbus at tlsb
 file	arch/alpha/tlsb/gbus.c		gbus
 
@@ -126,7 +126,7 @@ include "dev/tc/files.tc"
 # TC attachment is MD
 attach	tc at tcbus
 
-device	tcasic class dull: tcbus
+device	tcasic: tcbus
 attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
@@ -142,27 +142,27 @@ file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 file	arch/alpha/tc/ioasic.c		ioasic
 
 # Color Frame buffer
-device	cfb class dull: raster, wsconsdev
+device	cfb: raster, wsconsdev
 attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb
 
 # Smart Frame buffer
-device	sfb class dull: raster, wsconsdev
+device	sfb: raster, wsconsdev
 attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
 # 8530 UARTs
-device	scc class tty
+device	scc: tty
 attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
 # the TCDS ASIC
-device	tcds class dull { slot = -1 }
+device	tcds { slot = -1 }
 attach	tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device	asc class dull: scsi, ncr53c9x
+device	asc: scsi, ncr53c9x
 attach	asc at tcds
 file	arch/alpha/tc/asc.c		asc		needs-count
 file	arch/alpha/tc/tcds_dma.c	asc
@@ -189,15 +189,15 @@ include "dev/isa/files.isa"
 
 file	arch/alpha/isa/isa_machdep.c	isa
 
-device	pcppi class dull { }
+device	pcppi { }
 attach	pcppi at isa
 file	arch/alpha/isa/pcppi.c		pcppi
 
-device	pckbd class dull
+device	pckbd
 attach	pckbd at pcppi
 file	arch/alpha/isa/pckbd.c		pckbd
 
-device	pms class dull
+device	pms
 attach	pms at pcppi
 file	arch/alpha/isa/pms.c		pms
 
@@ -205,9 +205,9 @@ attach	vga at isa with vga_isa
 file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 
 # Floppy disk controller
-device	fdc class dull { drive = -1 }
+device	fdc { drive = -1 }
 attach	fdc at isa
-device	fd class disk: disk, isadma
+device	fd: disk, isadma
 attach	fd at fdc
 file	arch/alpha/isa/fd.c		fdc needs-flag
 major	{ fd = 0 }
@@ -232,7 +232,7 @@ file	arch/alpha/pci/pci_sgmap_pte32.c	alpha_pci_sgmap_pte32
 define	alpha_pci_sgmap_pte64
 file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
 
-device	apecs class dull: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+device	apecs: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_bus_io.c	apecs
@@ -240,7 +240,7 @@ file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_dma.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	cia class dull: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+device	cia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
 file	arch/alpha/pci/cia_dma.c	cia
@@ -248,14 +248,14 @@ file	arch/alpha/pci/cia_pci.c	cia
 file	arch/alpha/pci/cia_swiz_bus_io.c cia
 file	arch/alpha/pci/cia_swiz_bus_mem.c cia
 
-device	a12c class dull: pcibus
+device	a12c: pcibus
 attach	a12c at mainbus
 file	arch/alpha/pci/a12c.c		a12c
 file	arch/alpha/pci/a12c_bus_mem.c	a12c
 file	arch/alpha/pci/a12c_dma.c	a12c
 file	arch/alpha/pci/a12c_pci.c	a12c
 
-device	dwlpx class dull: pcibus, alpha_sgmap, alpha_pci_sgmap_pte32
+device	dwlpx: pcibus, alpha_sgmap, alpha_pci_sgmap_pte32
 attach	dwlpx at kft
 file	arch/alpha/pci/dwlpx.c		dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
@@ -264,7 +264,7 @@ file	arch/alpha/pci/pci_kn8ae.c	dwlpx	# XXX doesn't really fit here
 file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 
-device	lca class dull: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+device	lca: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_bus_io.c	lca
@@ -289,14 +289,14 @@ file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio class dull: isabus, alpha_shared_intr
+device	sio: isabus, alpha_shared_intr
 attach	sio at pci
-device	pceb class dull: isabus, eisabus
+device	pceb: isabus, eisabus
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-device	tga class dull: raster, wsconsdev
+device	tga: raster, wsconsdev
 attach	tga at pci
 file	arch/alpha/pci/tga.c		tga		needs-flag
 file	arch/alpha/pci/tga_conf.c	tga
@@ -309,7 +309,7 @@ file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 #
 # A12 if_de hack, this is temporary!
 #
-device	ade class ifnet: ether, ifnet, arp
+device	ade: ether, ifnet, arp
 attach	ade at pci
 file	arch/alpha/pci/if_ade.c		ade
 
@@ -317,7 +317,7 @@ file	arch/alpha/pci/if_ade.c		ade
 # Devices that can live on multiple busses
 #
 
-device	mcclock class dull
+device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
 attach	mcclock at gbus with mcclock_tlsb

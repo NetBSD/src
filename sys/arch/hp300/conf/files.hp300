@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.33 1998/02/01 21:23:28 is Exp $
+#	$NetBSD: files.hp300,v 1.34 1998/02/16 22:12:46 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -21,14 +21,14 @@ defopt	USELEDS		# make the lights twinkle
 # Mainbus
 #
 
-device	mainbus class dull { }
+device	mainbus { }
 attach	mainbus at root
 
 #
 # Internal i/o space
 #
 
-device	intio class dull { }
+device	intio { }
 attach	intio at mainbus
 file	arch/hp300/dev/intio.c		intio
 
@@ -36,7 +36,7 @@ file	arch/hp300/dev/intio.c		intio
 # DIO bus
 #
 
-device	dio class dull { scode = -1 }
+device	dio { scode = -1 }
 attach	dio at mainbus
 file	arch/hp300/dev/dio.c		dio
 
@@ -45,12 +45,12 @@ file	arch/hp300/dev/dio.c		dio
 #
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
-device	frodo class dull { offset = -1 }
+device	frodo { offset = -1 }
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
 
 # Apollo APCI 8250-like UARTs
-device	apci class tty
+device	apci: tty
 attach	apci at frodo
 file	arch/hp300/dev/apci.c		apci needs-flag
 
@@ -58,29 +58,29 @@ file	arch/hp300/dev/apci.c		apci needs-flag
 define	grfdev { }
 
 # Frame buffer devices
-device	dvbox class dull: grfdev
+device	dvbox: grfdev
 file	arch/hp300/dev/grf_dv.c		dvbox needs-flag
 
-device	gbox class dull: grfdev
+device	gbox: grfdev
 file	arch/hp300/dev/grf_gb.c		gbox needs-flag
 
-device	hyper class dull: grfdev
+device	hyper: grfdev
 file	arch/hp300/dev/grf_hy.c		hyper needs-flag
 
-device	rbox class dull: grfdev
+device	rbox: grfdev
 file	arch/hp300/dev/grf_rb.c		rbox needs-flag
 
-device	topcat class dull: grfdev
+device	topcat: grfdev
 file	arch/hp300/dev/grf_tc.c		topcat needs-flag
 
 # `grf' framebuffer abstraction
-device	grf class dull { }
+device	grf { }
 attach	grf at grfdev
 file	arch/hp300/dev/grf.c		grf needs-flag
 file	arch/hp300/dev/grf_subr.c	grf
 
 # Internal Terminal Emulator
-device	ite class tty
+device	ite: tty
 attach	ite at grf
 file	arch/hp300/dev/ite.c		ite needs-flag
 file	arch/hp300/dev/ite_subr.c	ite
@@ -103,12 +103,12 @@ attach	rbox at dio with rbox_dio
 attach	topcat at dio with topcat_dio
 
 # DCA serial interface
-device	dca class tty: tty
+device	dca: tty
 attach	dca at dio
 file	arch/hp300/dev/dca.c		dca needs-flag
 
 # DCM serial interface
-device	dcm class tty: tty
+device	dcm: tty
 attach	dcm at dio
 file	arch/hp300/dev/dcm.c		dcm needs-flag
 
@@ -119,57 +119,57 @@ file	arch/hp300/dev/if_le.c		le
 # HP-IB interfaces
 define	hpibdev { }
 
-device	nhpib class dull: hpibdev
+device	nhpib: hpibdev
 attach	nhpib at dio
 file	arch/hp300/dev/nhpib.c		nhpib
 
-device	fhpib class dull: hpibdev
+device	fhpib: hpibdev
 attach	fhpib at dio
 file	arch/hp300/dev/fhpib.c		fhpib
 
 # HP-IB bus layer
-device	hpibbus class dull { slave = -1, punit = -1 }
+device	hpibbus { slave = -1, punit = -1 }
 attach	hpibbus at hpibdev
 file	arch/hp300/dev/hpib.c		hpibbus
 
 # HP-IB devices
-device	ct class tape: tape
+device	ct: tape
 attach	ct at hpibbus
 file	arch/hp300/dev/ct.c		ct needs-flag
 major	{ct = 0}
 
-device	mt class tape: tape
+device	mt: tape
 attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
 major	{mt = 1}
 
-device	rd class disk: disk
+device	rd: disk
 attach	rd at hpibbus
 file	arch/hp300/dev/rd.c		rd needs-flag
 file	arch/hp300/dev/rd_compat.c	rd		# XXX
 major	{rd = 2}
 
-device	ppi class dull
+device	ppi
 attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
 # Old HP SCSI layer
-device	oscsi class dull { target = -1, lun = -1 }
+device	oscsi { target = -1, lun = -1 }
 attach	oscsi at dio
 file	arch/hp300/dev/scsi.c		oscsi
 
 # Old HP SCSI devices
-device	sd class disk: disk
+device	sd: disk
 attach	sd at oscsi
 file	arch/hp300/dev/sd.c		sd needs-flag
 file	arch/hp300/dev/sd_compat.c	sd		# XXX
 major	{sd = 4}
 
-device	st class tape: tape
+device	st: tape
 attach	st at oscsi
 file	arch/hp300/dev/st.c		st needs-flag
 
-device	ac class dull
+device	ac
 attach	ac at oscsi
 file	arch/hp300/dev/ac.c		ac needs-flag
 
