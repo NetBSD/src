@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.12 1997/11/02 08:20:44 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.13 1997/11/02 23:43:12 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -263,22 +263,43 @@ get_via_nfs(void)
 	return 1;
 }
 
+/*
+ * Write the network config info the user entered via menus into the
+ * config files in the target disk.  Be careful not to lose any
+ * information we don't immediately add back, in case the install
+ * target is the currently-active root. 
+ */
 void
 mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
+	char buf[STRSIZE];
 
 	if (network_up) {
 		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
-			if (!target_already_root()) {
-				run_prog ("/bin/cp /etc/resolv.conf /mnt/etc");
-			}
 
-			sprintf_to_target_file (
-			    "/etc/hosts", "%s %s", net_ip, net_host);
+			/* If not running in target, copy resolv.conf there. */
+			dup_file_into_target("/etc/resolv");
+#define APPEND append_to_target_file
+			/* 
+			 * Add IPaddr/hostname to  /etc/hosts.
+			 * Be careful not to clobber any existing contents.
+			 * Relies on ordered seach of /etc/hosts. XXX YP?
+			 */
+			APPEND("/etc/hosts", "#");
+			APPEND("/etc/hosts", "#Added by NetBSD sysinst");
+			APPEND("/etc/hosts", "#");
+			snprintf(buf, STRSIZE,
+				 "%s %s", net_ip, net_host);
+			APPEND("/etc/hosts", buf);
+			snprintf(buf, STRSIZE, 
+				 "%s %s.%s", net_ip, net_host, net_domain);
+			APPEND("/etc/hosts", buf);
+			APPEND("/etc/hosts", "127.0.0.1 localhost");
 
+			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
 			snprintf (ifconfig_fn, STRSIZE, 
 			    "/etc/ifconfig.%s", net_dev);
 			sprintf_to_target_file (
