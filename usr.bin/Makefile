@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.35 1994/01/24 06:01:02 cgd Exp $
+#	$Id: Makefile,v 1.36 1994/01/24 23:16:11 cgd Exp $
 
 SUBDIR=	apropos ar asa at biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
@@ -10,7 +10,7 @@ SUBDIR=	apropos ar asa at biff basename cal calendar cap_mkdb \
 	login logname look lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr modstat more msgs netstat newsyslog nfsstat nice nm nohup \
 	pagesize passwd paste patch pr printenv printf quota ranlib \
-	rdist ref renice rev rlogin rpcgen rpcinfo \
+	rdist renice rev rlogin rpcgen rpcinfo \
 	rsh rup ruptime rusers rwall rwho \
 	sccs script sed shar showmount size soelim split strings \
 	strip su symorder tail talk tcopy tee telnet tftp time \
