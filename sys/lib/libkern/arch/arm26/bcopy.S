@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2 2000/12/14 19:33:00 bjh21 Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.3 2000/12/14 19:50:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,4 +45,4 @@ ENTRY(bcopy)
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 
 	eor     r0, r1, r0 
-	b	__memcpy
+	b	_C_LABEL(_memcpy)
