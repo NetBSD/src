@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.102 2003/01/30 16:33:50 hannken Exp $	*/
+/*	$NetBSD: fd.c,v 1.103 2003/02/05 21:38:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2104,17 +2104,18 @@ fdformat(dev, finfo, p)
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
-	if (bp == 0)
+	bp = (struct buf *)pool_get(&bufpool, PR_NOWAIT);
+	if (bp == NULL)
 		return (ENOBUFS);
 
 	memset((void *)bp, 0, sizeof(struct buf));
+	simple_lock_init(&bp->b_interlock);
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -2159,23 +2160,8 @@ fdformat(dev, finfo, p)
 	fdstrategy(bp);
 
 	/* ...and wait for it to complete */
-	s = splbio();
-	while (!(bp->b_flags & B_DONE)) {
-		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
-		if (rv == EWOULDBLOCK)
-			break;
-	}
-	splx(s);
-
-	if (rv == EWOULDBLOCK) {
-		/* timed out */
-		rv = EIO;
-		biodone(bp);
-	}
-	if (bp->b_flags & B_ERROR) {
-		rv = bp->b_error;
-	}
-	free(bp, M_TEMP);
+	rv = biowait(bp);
+	pool_put(&bufpool, bp);
 	return (rv);
 }
 

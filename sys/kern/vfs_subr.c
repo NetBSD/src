@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.186 2003/02/01 06:23:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.187 2003/02/05 21:38:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.186 2003/02/01 06:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.187 2003/02/05 21:38:42 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -157,6 +157,9 @@ static struct simplelock mntid_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock mntvnode_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock vnode_free_list_slock = SIMPLELOCK_INITIALIZER;
 struct simplelock spechash_slock = SIMPLELOCK_INITIALIZER;
+
+/* XXX - gross; single global lock to protect v_numoutput */
+struct simplelock global_v_numoutput_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * These define the root filesystem and device.
@@ -640,12 +643,18 @@ vwakeup(bp)
 	struct vnode *vp;
 
 	if ((vp = bp->b_vp) != NULL) {
+		/* XXX global lock hack
+		 * can't use v_interlock here since this is called
+		 * in interrupt context from biodone().
+		 */
+		simple_lock(&global_v_numoutput_slock);
 		if (--vp->v_numoutput < 0)
 			panic("vwakeup: neg numoutput, vp %p", vp);
 		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
 			vp->v_flag &= ~VBWAIT;
 			wakeup((caddr_t)&vp->v_numoutput);
 		}
+		simple_unlock(&global_v_numoutput_slock);
 	}
 }
 
@@ -691,10 +700,12 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
-			    "vinvalbuf", slptimeo);
+			error = ltsleep((caddr_t)bp,
+				    slpflag | (PRIBIO + 1) | PNORELOCK,
+				    "vinvalbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -702,15 +713,18 @@ restart:
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
-			    "vinvalbuf", slptimeo);
+			error = ltsleep((caddr_t)bp,
+				    slpflag | (PRIBIO + 1) | PNORELOCK,
+				    "vinvalbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -727,10 +741,12 @@ restart:
 			printf("buffer still DELWRI\n");
 #endif
 			bp->b_flags |= B_BUSY | B_VFLUSH;
+			simple_unlock(&bp->b_interlock);
 			VOP_BWRITE(bp);
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
@@ -773,10 +789,11 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep(bp, slpflag | (PRIBIO + 1),
-			    "vtruncbuf", slptimeo);
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			    "vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -784,6 +801,7 @@ restart:
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
@@ -791,10 +809,11 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep(bp, slpflag | (PRIBIO + 1),
-			    "vtruncbuf", slptimeo);
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			    "vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -802,6 +821,7 @@ restart:
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
@@ -826,11 +846,15 @@ loop:
 	s = splbio();
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		if ((bp->b_flags & B_BUSY))
+		simple_lock(&bp->b_interlock);
+		if ((bp->b_flags & B_BUSY)) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty, bp %p", bp);
 		bp->b_flags |= B_BUSY | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
 		splx(s);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,
@@ -846,10 +870,13 @@ loop:
 		splx(s);
 		return;
 	}
+	simple_lock(&global_v_numoutput_slock);
 	while (vp->v_numoutput) {
 		vp->v_flag |= VBWAIT;
-		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0);
+		ltsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
+			&global_v_numoutput_slock);
 	}
+	simple_unlock(&global_v_numoutput_slock);
 	splx(s);
 	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		vprint("vflushbuf: dirty", vp);
