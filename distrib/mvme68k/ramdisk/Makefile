@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/10/21 23:23:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.14 2002/01/23 21:10:00 scw Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ MTREE?=		mtree
 DISKTYPE=	rdroot
 NBLKS=		1024
 
-CLEANFILES=	netbsd-rd ${IMAGE}
+CLEANFILES+=	netbsd-rd ${IMAGE}
 
 netbsd-rd:	${IMAGE}
 	cp ${KERNEL} netbsd-tmp
@@ -39,7 +39,7 @@ netbsd-rd:	${IMAGE}
 
 ${IMAGE}:	${TREE} ${LISTS} ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${NBLKS}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	newfs -B be -m 0 -o space -i 2048 ${VND_CRDEV} ${DISKTYPE}
 	mount ${VND_CDEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${TREE} -p ${MOUNT_POINT}/ -u
@@ -50,11 +50,11 @@ ${IMAGE}:	${TREE} ${LISTS} ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}     
-	-vnconfig -u ${VND_CDEV}      
+	-vnconfig -u ${VND}      
 	-/bin/rm -f ${IMAGE}
 
 # Do not delete this if I change my mind and kill make...
@@ -84,6 +84,10 @@ clean cleandir distclean:
 	-rm -f a.out core *.core *.o
 	-rm -f ${CLEANFILES}
 
-# Standard rules needed by the above...
-.include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.kernobj.mk>
+.include <bsd.sys.mk>
+.include <bsd.prog.mk>
+
