@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 1997/10/07 13:39:59 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 1998/10/07 15:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.2 1997/10/07 13:39:59 mrg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 1998/10/07 15:00:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: misc.c,v 1.2 1997/10/07 13:39:59 mrg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "clean.h"
 
@@ -67,10 +68,16 @@ get(fd, off, p, len)
 {
 	int rbytes;
 
-	if (lseek(fd, off, SEEK_SET) < 0)
-		err(1, "%s: %s", special, strerror(errno));
-	if ((rbytes = read(fd, p, len)) < 0)
-		err(1, "%s: %s", special, strerror(errno));
-	if (rbytes != len)
-		err(1, "%s: short read (%d, not %d)", special, rbytes, len);
+	if (lseek(fd, off, SEEK_SET) < 0) {
+            syslog(LOG_ERR, "Exiting: %s: lseek: %m", special);
+            exit(1);
+        }
+	if ((rbytes = read(fd, p, len)) < 0) {
+            syslog(LOG_ERR, "Exiting: %s: read: %m", special);
+            exit(1);
+        }
+	if (rbytes != len) {
+            syslog(LOG_ERR, "Exiting: %s: short read (%d, not %d)", special, rbytes, len);
+            exit(1);
+        }
 }

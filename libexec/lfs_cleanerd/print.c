@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 1998/09/11 21:21:29 pk Exp $	*/
+/*	$NetBSD: print.c,v 1.5 1998/10/07 15:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.4 1998/09/11 21:21:29 pk Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 1998/10/07 15:00:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,11 @@ __RCSID("$NetBSD: print.c,v 1.4 1998/09/11 21:21:29 pk Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <syslog.h>
+
 #include "clean.h"
 
+extern int debug;
 extern u_long cksum __P((void *, size_t));	/* XXX */
 
 /*
@@ -80,48 +83,40 @@ dump_summary(lfsp, sp, flags, iaddrp)
 		return(-1);
 
 	if (flags & DUMP_SUM_HEADER) {
-		(void)printf("    %s0x%X\t%s%d\t%s%d\n    %s0x%X\t%s0x%X",
+                syslog(LOG_DEBUG, "    %s0x%X\t%s%d\t%s%d\n    %s0x%X\t%s0x%X",
 			"next     ", sp->ss_next,
 			"nfinfo   ", sp->ss_nfinfo,
 			"ninos    ", sp->ss_ninos,
 			"sumsum   ", sp->ss_sumsum,
 			"datasum  ", sp->ss_datasum );
-		(void)printf("\tcreate   %s", ctime((time_t *)&sp->ss_create));
+		syslog(LOG_DEBUG, "\tcreate   %s", ctime((time_t *)&sp->ss_create));
 	}
 
 	numblocks = (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
 
 	/* Dump out inode disk addresses */
 	if (flags & DUMP_INODE_ADDRS)
-		printf("    Inode addresses:");
+                syslog(LOG_DEBUG, "    Inode addresses:");
 
 	dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
 	for (--dp, i = 0; i < sp->ss_ninos; --dp)
 		if (flags & DUMP_INODE_ADDRS) {
-			(void)printf("\t0x%lx", (u_long)*dp);
-			if (++i % 7 == 0)
-				(void)printf("\n");
+                        syslog(LOG_DEBUG, "\t0x%lx", (u_long)*dp);
 		} else
 			++i;
 	if (iaddrp)
 		*iaddrp = ++dp;
-	if (flags & DUMP_INODE_ADDRS)
-		printf("\n");
 
 	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
 		numblocks += fp->fi_nblocks;
 		if (flags & DUMP_FINFOS) {
-			(void)printf("    %s%d version %d nblocks %d\n",
+			syslog(LOG_DEBUG, "    %s%d version %d nblocks %d\n",
 			    "FINFO for inode: ", fp->fi_ino,
 			    fp->fi_version, fp->fi_nblocks);
 			dp = &(fp->fi_blocks[0]);
 			for (j = 0; j < fp->fi_nblocks; j++, dp++) {
-				(void)printf("\t%d", *dp);
-				if ((j % 8) == 7)
-					(void)printf("\n");
+                            syslog(LOG_DEBUG, "\t%d", *dp);
 			}
-			if ((j % 8) != 0)
-				(void)printf("\n");
 			fp = (FINFO *)dp;
 		} else {
 			fp = (FINFO *)(&fp->fi_blocks[fp->fi_nblocks]);
@@ -130,15 +125,17 @@ dump_summary(lfsp, sp, flags, iaddrp)
 	return (numblocks);
 }
 
-#ifdef VERBOSE
 void
 dump_cleaner_info(ipage)
 	void *ipage;
 {
 	CLEANERINFO *cip;
 
+        if(debug <= 1)
+            return;
+
 	cip = (CLEANERINFO *)ipage;
-	(void)printf("segments clean\t%d\tsegments dirty\t%d\n\n",
+	syslog(LOG_DEBUG,"segments clean\t%d\tsegments dirty\t%d\n\n",
 	    cip->clean, cip->dirty);
 }
 
@@ -148,81 +145,77 @@ dump_super(lfsp)
 {
 	int i;
 
-	(void)printf("%s0x%X\t%s0x%X\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG,"%s0x%X\t%s0x%X\t%s%d\t%s%d\n",
 		"magic    ", lfsp->lfs_magic,
 		"version  ", lfsp->lfs_version,
 		"size     ", lfsp->lfs_size,
 		"ssize    ", lfsp->lfs_ssize);
-	(void)printf("%s%d\t\t%s%d\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG, "%s%d\t\t%s%d\t%s%d\t%s%d\n",
 		"dsize    ", lfsp->lfs_dsize,
 		"bsize    ", lfsp->lfs_bsize,
 		"fsize    ", lfsp->lfs_fsize,
 		"frag     ", lfsp->lfs_frag);
 
-	(void)printf("%s%d\t\t%s%d\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG, "%s%d\t\t%s%d\t%s%d\t%s%d\n",
 		"minfree  ", lfsp->lfs_minfree,
 		"inopb    ", lfsp->lfs_inopb,
 		"ifpb     ", lfsp->lfs_ifpb,
 		"nindir   ", lfsp->lfs_nindir);
 
-	(void)printf("%s%d\t\t%s%d\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG, "%s%d\t\t%s%d\t%s%d\t%s%d\n",
 		"nseg     ", lfsp->lfs_nseg,
 		"nspf     ", lfsp->lfs_nspf,
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s0x%X\t%s%d\t%s0x%qX\t%s%lu\n",
+	syslog(LOG_DEBUG, "%s0x%X\t%s%d\t%s0x%qX\t%s%lu\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", (u_quad_t)lfsp->lfs_bmask,
 		"bshift   ", (u_long)lfsp->lfs_bshift);
 
-	(void)printf("%s0x%qX\t\t%s%lu\t%s0x%qX\t%s%lu\n",
+	syslog(LOG_DEBUG, "%s0x%qX\t\t%s%lu\t%s0x%qX\t%s%lu\n",
 		"ffmask   ", (u_quad_t)lfsp->lfs_ffmask,
 		"ffshift  ", (u_long)lfsp->lfs_ffshift,
 		"fbmask   ", (u_quad_t)lfsp->lfs_fbmask,
 		"fbshift  ", (u_long)lfsp->lfs_fbshift);
 
-	(void)printf("%s%d\t\t%s0x%X\t%s0x%qx\n",
+	syslog(LOG_DEBUG, "%s%d\t\t%s0x%X\t%s0x%qx\n",
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
 		"maxfilesize  ", lfsp->lfs_maxfilesize);
 
-	(void)printf("Superblock disk addresses:\t");
+	syslog(LOG_DEBUG, "Superblock disk addresses:\t");
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
-		(void)printf(" 0x%X", lfsp->lfs_sboffs[i]);
-		if ( i == (LFS_MAXNUMSB >> 1))
-			(void)printf("\n\t\t\t\t");
+		syslog(LOG_DEBUG, " 0x%X", lfsp->lfs_sboffs[i]);
 	}
-	(void)printf("\n");
 
-	(void)printf("Checkpoint Info\n");
-	(void)printf("%s%d\t%s0x%X\t%s%d\n",
+	syslog(LOG_DEBUG, "Checkpoint Info\n");
+	syslog(LOG_DEBUG, "%s%d\t%s0x%X\t%s%d\n",
 		"free     ", lfsp->lfs_free,
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
-	(void)printf("%s%d\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG, "%s%d\t%s%d\t%s%d\n",
 		"bfree    ", lfsp->lfs_bfree,
 		"avail    ", lfsp->lfs_avail,
 		"uinodes  ", lfsp->lfs_uinodes);
-	(void)printf("%s%d\t%s0x%X\t%s0x%X\n%s0x%X\t%s0x%X\t",
+	syslog(LOG_DEBUG, "%s%d\t%s0x%X\t%s0x%X\n%s0x%X\t%s0x%X\t",
 		"nfiles   ", lfsp->lfs_nfiles,
 		"lastseg  ", lfsp->lfs_lastseg,
 		"nextseg  ", lfsp->lfs_nextseg,
 		"curseg   ", lfsp->lfs_curseg,
 		"offset   ", lfsp->lfs_offset);
-	(void)printf("tstamp   %s", ctime((time_t *)&lfsp->lfs_tstamp));
-	(void)printf("\nIn-Memory Information\n");
-	(void)printf("%s%d\t%s0x%X\t%s%d\t%s%d\t%s%d\n",
+	syslog(LOG_DEBUG, "tstamp   %s", ctime((time_t *)&lfsp->lfs_tstamp));
+	syslog(LOG_DEBUG, "\nIn-Memory Information\n");
+	syslog(LOG_DEBUG, "%s%d\t%s0x%X\t%s%d\t%s%d\t%s%d\n",
 		"seglock  ", lfsp->lfs_seglock,
 		"iocount  ", lfsp->lfs_iocount,
 		"writer   ", lfsp->lfs_writer,
 		"dirops   ", lfsp->lfs_dirops,
 		"doifile  ", lfsp->lfs_doifile );
-	(void)printf("%s%d\t%s%d\t%s0x%X\t%s%d\n",
+	syslog(LOG_DEBUG, "%s%d\t%s%d\t%s0x%X\t%s%d\n",
 		"nactive  ", lfsp->lfs_nactive,
 		"fmod     ", lfsp->lfs_fmod,
 		"clean    ", lfsp->lfs_clean,
 		"ronly    ", lfsp->lfs_ronly);
 }
-#endif /* VERBOSE */

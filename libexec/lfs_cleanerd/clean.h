@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.5 1998/09/11 21:21:29 pk Exp $	*/
+/*	$NetBSD: clean.h,v 1.6 1998/10/07 15:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -121,50 +121,37 @@ void	 toss __P((void *, int *, size_t,
 /*
  * USEFUL DEBUGGING FUNCTIONS:
  */
-#ifdef VERBOSE
-#define PRINT_FINFO(fp, ip) { \
-	(void)printf("    %s %s%d version %d nblocks %d\n", \
+#define PRINT_FINFO(fp, ip) if(debug > 1) { \
+	syslog(LOG_DEBUG,"    %s %s%d version %d nblocks %d\n", \
 	    (ip)->if_version > (fp)->fi_version ? "TOSSING" : "KEEPING", \
 	    "FINFO for inode: ", (fp)->fi_ino, \
 	    (fp)->fi_version, (fp)->fi_nblocks); \
-	fflush(stdout); \
 }
 
-#define PRINT_INODE(b, bip) { \
-	(void) printf("\t%s inode: %d daddr: 0x%lx create: %s\n", \
+#define PRINT_INODE(b, bip) if(debug > 1) { \
+	syslog(LOG_DEBUG,"\t%s inode: %d daddr: 0x%lx create: %s\n", \
 	    b ? "KEEPING" : "TOSSING", (bip)->bi_inode, (long)(bip)->bi_daddr, \
 	    ctime((time_t *)&(bip)->bi_segcreate)); \
-	fflush(stdout); \
 }
 
-#define PRINT_BINFO(bip) { \
-	(void)printf("\tinode: %d lbn: %d daddr: 0x%lx create: %s\n", \
+#define PRINT_BINFO(bip) if(debug > 1 ) { \
+	syslog(LOG_DEBUG,"\tinode: %d lbn: %d daddr: 0x%lx create: %s\n", \
 	    (bip)->bi_inode, (bip)->bi_lbn, (unsigned long)(bip)->bi_daddr, \
 	    ctime((time_t *)&(bip)->bi_segcreate)); \
-	fflush(stdout); \
 }
 
-#define PRINT_SEGUSE(sup, n) { \
-	(void)printf("Segment %d nbytes=%lu\tflags=%c%c%c ninos=%d nsums=%d lastmod: %s\n", \
+#define PRINT_SEGUSE(sup, n) if(debug > 1) { \
+	syslog(LOG_DEBUG,"Segment %d nbytes=%lu\tflags=%c%c%c ninos=%d nsums=%d lastmod: %s\n", \
 			n, (unsigned long)(sup)->su_nbytes, \
 			(sup)->su_flags & SEGUSE_DIRTY ? 'D' : 'C', \
 			(sup)->su_flags & SEGUSE_ACTIVE ? 'A' : ' ', \
 			(sup)->su_flags & SEGUSE_SUPERBLOCK ? 'S' : ' ', \
 			(sup)->su_ninos, (sup)->su_nsums, \
 			ctime((time_t *)&(sup)->su_lastmod)); \
-	fflush(stdout); \
 }
 
 void	 dump_super __P((struct lfs *));
 void	 dump_cleaner_info __P((void *));
 void	 print_SEGSUM __P(( struct lfs *, SEGSUM *));
 void	 print_CLEANERINFO __P((CLEANERINFO *));
-#else
-#define	PRINT_FINFO(fp, ip)
-#define	PRINT_INODE(b, bip)
-#define PRINT_BINFO(bip)
-#define	PRINT_SEGUSE(sup, n)
-#define	dump_cleaner_info(cip)
-#define	dump_super(lfsp)
-#endif
 __END_DECLS
