@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tunefs.c	8.2 (Berkeley) 4/19/94";*/
-static char *rcsid = "$Id: tunefs.c,v 1.8 1994/06/08 19:36:13 mycroft Exp $";
+static char *rcsid = "$Id: tunefs.c,v 1.9 1995/01/30 19:42:25 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -106,8 +106,7 @@ again:
 		}
 		err(1, "%s", special);
 	}
-	if ((st.st_mode & S_IFMT) != S_IFBLK &&
-	    (st.st_mode & S_IFMT) != S_IFCHR)
+	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 		errx(10, "%s: not a block or character device", special);
 	getsb(&sblock, special);
 	for (; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
