@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.17 2000/03/28 02:58:44 simonb Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.17.12.1 2001/11/17 23:43:41 wdk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -67,14 +67,6 @@
 
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
-
-#ifdef _KERNEL
-struct proc;
-struct exec_package;
-void	cpu_exec_ecoff_setregs __P((
-    struct proc *, struct exec_package *, u_long));
-#endif	/* _KERNEL */
-
 
 /*
  * ECOFF symbol definitions for 32-bit mips.
