@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 1994/11/23 07:02:17 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 1994/11/25 23:10:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -341,71 +341,4 @@ void
 bus_untmp()
 {
 	pmap_remove(kernel_pmap, TMPMAP_VA, TMPMAP_VA+NBPG);
-}
-
-void
-wzero(b, l)
-	u_char *b;
-	int l;
-{
-	register u_char *be = b + l;
-	register u_short *sp;
-
-	if (l <= 0)
-		return;
-
-	/* front, */
-	if ((u_long)b & 1)
-		*b++ = 0;
-
-	/* back, */
-	if (b != be && ((u_long)be & 1) != 0) {
-		be--;
-		*be = 0;
-	}
-
-	/* and middle. */
-	sp = (u_short *)b;
-	while (sp != (u_short *)be)
-		*sp++ = 0;
-}
-
-void
-wcopy(b1, b2, l)
-	u_char *b1, *b2;
-	u_long l;
-{
-	register u_short *sp;
-	register int bstore = 0;
-	register u_char *b1e;
-
-	if (l <= 0)
-		return;
-
-	/* front, */
-	if ((u_long)b1 & 1) {
-		*b2++ = *b1++;
-		l--;
-	}
-
-	/* middle, */
-	sp = (u_short *)b1;
-	b1e = b1 + l;
-	if (l & 1)
-		b1e--;
-	bstore = (u_long)b2 & 1;
-
-	while (sp < (u_short *)b1e) {
-		if (bstore) {
-			b2[1] = *sp & 0xff;
-			b2[0] = *sp >> 8;
-		} else
-			*((short *)b2) = *sp;
-		sp++;
-		b2 += 2;
-	}
-
-	/* and back. */
-	if (l & 1)
-		*b2 = *b1e;
 }
