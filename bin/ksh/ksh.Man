@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.5 2001/11/11 21:09:34 jwise Exp $
+.\" $NetBSD: ksh.Man,v 1.6 2002/01/29 15:12:54 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2204,14 +2204,13 @@ condition command of \fBif\fP and \fBwhile\fP statements.
 The following basic expressions are available:
 .sp
 .TS
-afB ltw(2.8i).
+afB ltw(3.2i).
 \fIstr\fP	T{
 \fIstr\fP has non-zero length.  Note that there is the potential
 for problems if \fIstr\fP turns out to be an operator (\fIe.g.\fP, \fB-r\fP)
 - it is generally better to use a test like
-.RS
+.ce
 \fB[ X"\fP\fIstr\fP\fB" != X ]\fP
-.RE
 instead (double quotes are used in case \fIstr\fP contains spaces or file
 globing characters).
 T}
@@ -2279,9 +2278,8 @@ T}
 shell \fIoption\fP is set (see \fBset\fP command above for list of options).
 As a non-standard extension, if the option starts with a \fB!\fP, the test
 is negated; the test always fails if option doesn't exist (thus
-.RS
+.ce
 \fB[ -o \fP\fIfoo\fP \fB-o -o !\fP\fIfoo\fP \fB]\fP
-.RE
 returns true if and only if option \fIfoo\fP exists).
 T}
 \fIfile\fP \-nt \fIfile\fP	T{
