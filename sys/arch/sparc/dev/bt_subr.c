@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.8 1999/03/24 05:51:10 mrg Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.9 1999/08/26 22:53:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -118,4 +118,25 @@ bt_putcmap(p, cm, cmsize)
 		cp[2] = p->blue[i];
 	}
 	return (0);
+}
+
+/*
+ * Initialize the color map to the default state:
+ *
+ *	- 0 is black
+ *	- all other entries are full white
+ */
+void
+bt_initcmap(cm, cmsize)
+	union bt_cmap *cm;
+	int cmsize;
+{
+	int i;
+	u_char *cp;
+
+	cp = &cm->cm_map[0][0];
+	cp[0] = cp[1] = cp[2] = 0;
+
+	for (i = 1, cp = &cm->cm_map[i][0]; i < cmsize; cp += 3, i++)
+		cp[0] = cp[1] = cp[2] = 0xff;
 }
