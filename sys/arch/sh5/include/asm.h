@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 2002/09/28 15:50:37 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 2003/01/21 11:27:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -276,6 +276,24 @@
 	ld.l	r15, (sz) + 4, r18	;\
 	addi.l	r15, (sz) + 8, r15
 
+/*
+ * For stack frames sized between 512 and 32767 bytes, inclusive.
+ */
+#define	LINK_BIG_FRAME(sz)		\
+	addi.l	r15, -8, r15		;\
+	movi	sz, r0			;\
+	st.l	r15, 0, r14		;\
+	st.l	r15, 4, r18		;\
+	sub.l	r15, r0, r15		;\
+	add.l	r15, r63, r14
+
+#define	UNLINK_BIG_FRAME(sz)		\
+	movi	sz, r0			;\
+	add.l	r14, r0, r15		;\
+	ld.l	r15, 0, r14		;\
+	ld.l	r15, 4, r18		;\
+	addi.l	r15, 8, r15
+
 #else
 
 /*
@@ -297,6 +315,21 @@
 	ld.q	r15, (sz), r14		;\
 	ld.q	r15, (sz) + 8, r18	;\
 	addi	r15, (sz) + 16, r15
+
+#define	LINK_BIG_FRAME(sz)		\
+	addi	r15, -16, r15		;\
+	movi	sz, r0			;\
+	st.q	r15, 0, r14		;\
+	st.q	r15, 8, r18		;\
+	sub	r15, r0, r15		;\
+	add	r15, r63, r14
+
+#define	UNLINK_BIG_FRAME(sz)		\
+	movi	sz, r0			;\
+	add	r14, r0, r15		;\
+	ld.q	r15, 0, r14		;\
+	ld.q	r15, 8, r18		;\
+	addi	r15, 16, r15
 #endif
 
 
