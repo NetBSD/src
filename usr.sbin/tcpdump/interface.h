@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.4 1997/10/13 20:45:40 cjs Exp $	*/
+/*	$NetBSD: interface.h,v 1.5 1998/07/25 11:30:44 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -239,3 +239,5 @@ extern void tcp_print(const u_char *, u_int, const u_char *);
 extern void tftp_print(const u_char *, u_int);
 extern void udp_print(const u_char *, u_int, const u_char *);
 extern void wb_print(const void *, u_int);
+extern void hdlc_if_print(u_char *, const struct pcap_pkthdr *,
+			  const u_char *);
