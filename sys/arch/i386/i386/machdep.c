@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.20 2002/06/24 22:04:56 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.21 2002/07/02 20:42:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.20 2002/06/24 22:04:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.21 2002/07/02 20:42:13 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2204,7 +2204,6 @@ sys___sigreturn14(l, v, retval)
 	return (EJUSTRETURN);
 }
 
-
 int	waittime = -1;
 struct pcb dumppcb;
 
@@ -3596,12 +3595,4 @@ cpu_setmcontext(l, mcp, flags)
 	}
 
 	return (0);
-}
-
-int
-cpu_getsp(struct lwp *l)
-{
-	struct trapframe *tf = l->l_md.md_regs;
-
-	return tf->tf_esp;
 }
