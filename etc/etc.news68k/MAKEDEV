@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 18:11:22 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2001/12/19 18:30:07 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,7 +51,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	st*	SCSI tape
-#	ch*	SCSI changer
+#	ch*	SCSI media changer
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
@@ -67,8 +67,7 @@
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
-#	ch*	SCSI Auto changer
-#	uk*	SCSI unknown
+#	uk*	unknown SCSI device
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77

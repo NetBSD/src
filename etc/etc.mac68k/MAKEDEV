@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.49 2001/12/19 17:58:07 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.50 2001/12/19 18:30:03 wiz Exp $
 #
 ###########################################################################
 #
@@ -74,8 +74,8 @@
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
-#	uk*	SCSI unknown
-#	ch*	SCSI changer
+#	uk*	unknown SCSI device
+#	ch*	SCSI media changer
 #	adb	Apple Desktop Bus
 #	asc*	Apple Sound Chip
 #	cfs*	Venus cache driver, for Coda

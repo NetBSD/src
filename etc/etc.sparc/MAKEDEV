@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.63 2001/12/19 18:14:03 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.64 2001/12/19 18:30:11 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,7 +51,7 @@
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI changer
+#	ch*	SCSI media changer
 #	xy*	Xylogic 450/451 disks
 #	xd*	Xylogic 753/7053 disks
 #	fd*	Floppies
@@ -85,8 +85,7 @@
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ses*    SES/SAF-TE SCSI Devices
 #	ss*	SCSI scanner
-#	uk*	SCSI unknown
-#	ch*	SCSI media changer
+#	uk*	unknown SCSI device
 #	pci*	PCI bus access devices
 
 dialin=0

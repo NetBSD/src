@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.23 2001/12/19 17:58:10 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.24 2001/12/19 18:30:12 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -52,7 +52,7 @@
 #	sd*	SCSI disks
 #	wd*	IDE disks
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI changer
+#	ch*	SCSI media changer
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
@@ -85,7 +85,6 @@
 #	ses* SES/SAF-TE SCSI Devices
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
-#	ch*	SCSI changer
 #	pci*	PCI bus access devices
 #
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.151 2001/12/02 10:50:26 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.152 2001/12/19 18:30:02 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,7 +119,7 @@
 #	ses*	SES/SAF-TE SCSI Devices
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
-#	ch*	SCSI changer
+#	ch*	SCSI media changer
 #	cfs*	Coda file system device
 #	sysmon	System Monitoring hardware
 #	bktr	Brooktree 848/849/878/879 based TV cards

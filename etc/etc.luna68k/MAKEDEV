@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 17:58:07 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2001/12/19 18:30:03 wiz Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -29,7 +29,7 @@
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
-#	uk*	SCSI unknown
+#	uk*	unknown SCSI device
 #	wskbd0	Workstation console ("wscons") keyboard
 #	wsmouse0  Workstation console ("wscons") mouse
 

@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.18 2001/10/29 22:50:43 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.19 2001/12/19 18:30:08 wiz Exp $
 #
 ###########################################################################
 #
@@ -72,8 +72,8 @@
 #	random	Random number generator
 #	scsibus* SCSI busses
 #	ss*	SCSI scanner
-#	uk*	SCSI unknown
-#	ch*	SCSI changer
+#	uk*	unknown SCSI device
+#	ch*	SCSI media changer
 #	wsmux*	wscons event multiplexor
 #
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2001/12/19 18:14:22 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2001/12/19 18:30:13 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,8 +99,8 @@
 #	tun*	network tunnel driver
 #	pow*	power management device
 #	bell*	OPM bell device
-#	ch*	SCSI changer device
-#	uk*	SCSI unknown device
+#	ch*	SCSI media changer
+#	uk*	unknown SCSI device
 #	ss*	SCSI scanner
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	clockctl clock control for non root users

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 2001/12/19 17:58:09 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 18:30:10 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,8 +90,8 @@
 #	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
-#	uk*	SCSI unknown
-#	ch*	SCSI changer
+#	uk*	unknown SCSI device
+#	ch*	SCSI media changer
 #	cfs*	Coda file system device
 #	wsmux*	wscons event multiplexor
 #
