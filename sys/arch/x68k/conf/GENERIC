@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.37 1999/11/15 19:10:59 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.38 1999/11/18 14:08:24 minoura Exp $
 
 #
 #	GENERIC
@@ -25,7 +25,7 @@ options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
-options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
+#options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
 
