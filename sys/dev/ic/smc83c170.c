@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.10 1999/02/12 05:55:27 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.11 1999/02/13 21:08:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1004,7 +1004,6 @@ epic_init(sc)
 		reg0 |= RXCON_PROMISCMODE;
 	bus_space_write_4(st, sh, EPIC_RXCON, reg0);
 
-	/* Set the media.  (XXX full-duplex in TXCON?) */
 	mii_mediachg(&sc->sc_mii);
 
 	/*
@@ -1400,6 +1399,18 @@ void
 epic_statchg(self)
 	struct device *self;
 {
+	struct epic_softc *sc = (struct epic_softc *)self;
+	u_int32_t txcon;
+
+	/*
+	 * Update loopback bits in TXCON to reflect duplex mode.
+	 */
+	txcon = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_TXCON);
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		txcon |= (TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
+	else
+		txcon &= ~(TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TXCON, txcon);
 
 	/* XXX Update ifp->if_baudrate */
 }
@@ -1426,8 +1437,9 @@ int
 epic_mediachange(ifp)
 	struct ifnet *ifp;
 {
+	struct epic_softc *sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_UP)
-		epic_init((struct epic_softc *)ifp->if_softc);
+		mii_mediachg(&sc->sc_mii);
 	return (0);
 }
