@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2000/05/27 14:45:36 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2000/07/24 11:20:47 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,26 +204,13 @@ void	myetheraddr	__P((u_char *));
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
-/* physical memory sections for mvme147 */
+/* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)
 #define	INTIOTOP147	(0xfffe5000u)
 
 /* ditto for mvme1[67]7 */
 #define	INTIOBASE167	(0xfff40000u)
 #define	INTIOTOP167	(0xfffd0000u)
-
-/*
- * Internal IO space:
- *
- * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
- */
-#define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
-#define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
-#define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
 
 #endif /* _KERNEL */
 
