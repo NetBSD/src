@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.5 1998/06/24 18:49:12 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.6 1998/06/24 19:27:12 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -116,16 +116,6 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
- * on where the ROM appears when you turn the MMU off.
- *
- * XXX not actually _used_ on shark!
- */
-
-u_int cpu_reset_address = 0;
 
 /*
  * For faster cache cleaning we need two 16K banks of virtual address
