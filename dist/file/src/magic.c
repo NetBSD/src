@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.5 2003/09/25 18:08:19 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.6 2003/10/27 16:22:36 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -68,9 +68,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.10 2003/07/10 21:07:14 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.15 2003/10/15 01:51:24 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.5 2003/09/25 18:08:19 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.6 2003/10/27 16:22:36 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -79,10 +79,6 @@ private char *apptypeName = NULL;
 protected int file_os2_apptype(struct magic_set *ms, const char *fn,
     const void *buf, size_t nb);
 #endif /* __EMX__ */
-
-#ifndef MAGIC
-# define MAGIC "/etc/magic"
-#endif
 
 private void free_mlist(struct mlist *);
 private void close_and_restore(const struct magic_set *, const char *, int,
@@ -108,34 +104,23 @@ magic_open(int flags)
 		free(ms);
 		return NULL;
 	}
+	ms->o.pbuf = malloc(ms->o.psize = 1024);
+	if (ms->o.pbuf == NULL) {
+		free(ms->o.buf);
+		free(ms);
+		return NULL;
+	}
 	ms->c.off = malloc((ms->c.len = 10) * sizeof(*ms->c.off));
 	if (ms->c.off == NULL) {
+		free(ms->o.pbuf);
 		free(ms->o.buf);
 		free(ms);
 		return NULL;
 	}
 	ms->haderr = 0;
+	ms->error = -1;
 	ms->mlist = NULL;
 	return ms;
-}
-
-/*
- * load a magic file
- */
-public int
-magic_load(struct magic_set *ms, const char *magicfile)
-{
-	struct mlist *ml;
-
-	if (magicfile == NULL)
-		magicfile = (ms->flags & MAGIC_MIME) ? MAGIC ".mime" : MAGIC;
-
-	ml = file_apprentice(ms, magicfile, 0);
-	if (ml == NULL) 
-		return -1;
-	free_mlist(ms->mlist);
-	ms->mlist = ml;
-	return 0;
 }
 
 private void
@@ -149,19 +134,7 @@ free_mlist(struct mlist *mlist)
 	for (ml = mlist->next; ml != mlist;) {
 		struct mlist *next = ml->next;
 		struct magic *mg = ml->magic;
-		switch (ml->mapped) {
-		case 0:
-			free(mg);
-			break;
-		case 1:
-			mg--;
-			free(mg);
-			break;
-		case 2:
-			mg--;
-			(void)munmap(mg, sizeof(*mg) * (ml->nmagic + 1));
-			break;
-		}
+		file_delmagic(mg, ml->mapped, ml->nmagic);
 		free(ml);
 		ml = next;
 	}
@@ -178,12 +151,25 @@ magic_close(ms)
 	free(ms);
 }
 
+/*
+ * load a magic file
+ */
+public int
+magic_load(struct magic_set *ms, const char *magicfile)
+{
+	struct mlist *ml = file_apprentice(ms, magicfile, FILE_LOAD);
+	if (ml) {
+		free_mlist(ms->mlist);
+		ms->mlist = ml;
+		return 0;
+	}
+	return -1;
+}
+
 public int
 magic_compile(struct magic_set *ms, const char *magicfile)
 {
 	struct mlist *ml = file_apprentice(ms, magicfile, FILE_COMPILE);
-	if(ml == NULL)
-		return -1;
 	free_mlist(ml);
 	return ml ? 0 : -1;
 }
@@ -192,8 +178,6 @@ public int
 magic_check(struct magic_set *ms, const char *magicfile)
 {
 	struct mlist *ml = file_apprentice(ms, magicfile, FILE_CHECK);
-	if(ml == NULL)
-		return -1;
 	free_mlist(ml);
 	return ml ? 0 : -1;
 }
@@ -246,7 +230,7 @@ magic_file(struct magic_set *ms, const char *inname)
 	case 0:
 		break;
 	default:
-		return ms->o.buf;
+		return file_getbuffer(ms);
 	}
 
 #ifndef	STDIN_FILENO
@@ -255,21 +239,21 @@ magic_file(struct magic_set *ms, const char *inname)
 	if (inname == NULL)
 		fd = STDIN_FILENO;
 	else if ((fd = open(inname, O_RDONLY)) < 0) {
-		/* We can't open it, but we were able to stat it. */
+		/* We cannot open it, but we were able to stat it. */
 		if (sb.st_mode & 0002)
 			if (file_printf(ms, "writable, ") == -1)
 				return NULL;
 		if (sb.st_mode & 0111)
 			if (file_printf(ms, "executable, ") == -1)
 				return NULL;
-		return ms->o.buf;
+		return file_getbuffer(ms);
 	}
 
 	/*
 	 * try looking at the first HOWMANY bytes
 	 */
 	if ((nbytes = read(fd, (char *)buf, HOWMANY)) == -1) {
-		file_error(ms, "Cannot read `%s' %s", inname, strerror(errno));
+		file_error(ms, errno, "cannot read `%s'", inname);
 		goto done;
 	}
 
@@ -288,10 +272,10 @@ magic_file(struct magic_set *ms, const char *inname)
 		case 0:
 			break;
 		default:
-			return ms->o.buf;
+			return file_getbuffer(ms);
 		}
 #endif
-		if (file_buffer(ms, buf, (size_t)nbytes) == -1)
+		if (file_buffer(ms, buf, (size_t)nbytes - 1) == -1)
 			goto done;
 #ifdef BUILTIN_ELF
 		if (nbytes > 5) {
@@ -300,7 +284,7 @@ magic_file(struct magic_set *ms, const char *inname)
 			 * be an ELF file, and the file is at least 5 bytes
 			 * long, so if it's an ELF file it has at least one
 			 * byte past the ELF magic number - try extracting
-			 * information from the ELF headers that can't easily
+			 * information from the ELF headers that cannot easily
 			 * be extracted with rules in the magic file.
 			 */
 			file_tryelf(ms, fd, buf, (size_t)nbytes);
@@ -309,7 +293,7 @@ magic_file(struct magic_set *ms, const char *inname)
 	}
 
 	close_and_restore(ms, inname, fd, &sb);
-	return ms->haderr ? NULL : ms->o.buf;
+	return file_getbuffer(ms);
 done:
 	close_and_restore(ms, inname, fd, &sb);
 	return NULL;
@@ -328,13 +312,19 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 	if (file_buffer(ms, buf, nb) == -1) {
 		return NULL;
 	}
-	return ms->haderr ? NULL : ms->o.buf;
+	return file_getbuffer(ms);
 }
 
 public const char *
 magic_error(struct magic_set *ms)
 {
 	return ms->haderr ? ms->o.buf : NULL;
+}
+
+public int
+magic_errno(struct magic_set *ms)
+{
+	return ms->haderr ? ms->error : 0;
 }
 
 public int
