@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_hook.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_hook.3,v 1.6 2002/10/01 19:15:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -69,25 +69,29 @@ function returns a pointer to the function that will be called just
 after the current field changes and just before the form is posted,
 this function may be set by using the
 .Fn set_field_init
-function.  Similarly, the function
+function.
+Similarly, the function
 .Fn field_term
 will return a pointer to the function that will be called just before
 the current field changes and just after the form is unposted, this
 function pointer may be set by using the
 .Fn set_field_term
-function.  The
+function.
+The
 .Fn form_init
 function will return a pointer to the function that will be called
 just before the form is posted to the screen, this function can be set
 by calling the
 .Fn set_form_init
-function.  The
+function.
+The
 .Fn form_term
 function will return a pointer to the function that will be called
 just after the form is unposted from the screen, this function may be
 set by using the
 .Fn set_form_term
-function.  By default, the init and term function pointers are NULL.
+function.
+By default, the init and term function pointers are NULL.
 .Sh RETURN VALUES
 Functions returning pointers will return NULL if an error is detected.
 The functions that return an int will return one of the following error

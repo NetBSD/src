@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_new.3,v 1.6 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_field_new.3,v 1.7 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -64,7 +64,8 @@ function duplicates the given field, including any buffers associated
 with the field and returns the pointer to the newly created field.
 .Fn free_field
 destroys the field and frees any allocated resources associated with
-the field.  The function
+the field.
+The function
 .Fn link_field
 copies the given field to a new field at the location
 .Fa frow
@@ -84,7 +85,8 @@ on the page, the argument
 specified the number of off screen rows the field has and the
 .Fa nbuf
 parameter specifies the number of extra buffers attached to the
-field.  There will always be one buffer associated with a field.
+field.
+There will always be one buffer associated with a field.
 .Sh RETURN VALUES
 On error
 .Fn dup_field

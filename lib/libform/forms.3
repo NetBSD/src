@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.9 2002/08/09 14:15:13 blymn Exp $
+.\"	$NetBSD: forms.3,v 1.10 2002/10/01 19:15:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -44,13 +44,15 @@ The
 .Nm
 library provides a terminal independent form system using the
 .Xr curses 3
-library.  Before using the
+library.
+Before using the
 .Nm
 functions the terminal must be set up by
 .Xr curses 3
 using the
 .Fn initscr
-function or similar.  Programs using
+function or similar.
+Programs using
 .Nm
 functions must be linked with the
 .Xr curses 3
@@ -67,11 +69,12 @@ The
 .Nm
 library allows any settable attribute or option of both the form and field
 objects to be defined such that any new form or field automatically inherits
-the value as default.  Setting the default value will not affect any field or
+the value as default.
+Setting the default value will not affect any field or
 form that has already been created but will be applied to subsequent objects.
 To set the default attribute or option the set routine is passed a NULL
-pointer in the field or form parameter when calling the set routine.  The
-current default value can be retrieved by calling the get routine with a
+pointer in the field or form parameter when calling the set routine.
+The current default value can be retrieved by calling the get routine with a
 NULL pointer for the field or form parameter.
 .Pp
 .ta 20
@@ -157,9 +160,8 @@ unpost_form		form_post(3)
 .br
 .ne 8
 .Sh RETURN VALUES
-Any function returning a string pointer will return NULL if an error
-occurs.  Functions returning an integer will return one of the
-following:
+Any function returning a string pointer will return NULL if an error occurs.
+Functions returning an integer will return one of the following:
 .Pp
 .ta 20
 .nf
@@ -189,8 +191,8 @@ E_CURRENT		The field is the active one on the form.
 .Xr menus 3
 .Sh NOTES
 This implementation of the forms library does depart in behaviour
-subtly from the original AT \*[Am] T implementation.  Some of the more
-notable departures are:
+subtly from the original AT \*[Am] T implementation.
+Some of the more notable departures are:
 .Pp
 .Bl -tag -width "circular fields" -compact
 .It field wrapping
@@ -202,9 +204,11 @@ regardless of whether the field has been validated or not.
 .It circular fields
 In the AT\*[Am]T implementation fields are circular on a page, that is, a
 next field from the last field will go to the first field on the
-curent page.  In this implementation a next field request on the last
+curent page.
+In this implementation a next field request on the last
 field of a page will result in the forms library positioning the
-cursor on the first field of the next page.  If the field is the last
+cursor on the first field of the next page.
+If the field is the last
 field in the form then going to the next field will be denied, in the
 AT\*[Am]T it would result in the cursor being placed on the first field of
 the first page.
@@ -215,12 +219,15 @@ contents of the field padded to the size of the field with the pad
 character.
 .It The TAB character
 The handling of the TAB character in fields varies between
-implementations.  In ncurses attempting to set a field contents with a
+implementations.
+In ncurses attempting to set a field contents with a
 string containing a TAB will result in an error and will not allow a
-TAB to be entered into a field.  The AT\*[Am]T library statically
+TAB to be entered into a field.
+The AT\*[Am]T library statically
 converts tabs to the equivalent number of spaces when the field buffer
 is set but the form driver will not allow a TAB to be inserted into
-the field buffer.  This implementation allows TAB when setting the
+the field buffer.
+This implementation allows TAB when setting the
 field buffer and also will allow TAB to be inserted into a field
 buffer via the form driver and correctly calculates the cursor
 position allowing for expansion of the TAB character.

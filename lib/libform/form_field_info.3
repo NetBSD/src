@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_info.3,v 1.5 2002/08/06 12:35:39 wiz Exp $
+.\"	$NetBSD: form_field_info.3,v 1.6 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -48,13 +48,15 @@
 .Sh DESCRIPTION
 The function
 .Fn dynamic_field_info
-returns the sizing information for the field given.  The function will
-return the number of rows, columns and the maximum growth of the field
-in the storage pointed to by the drows, dcols and max parameters
-respectively.  Dynamic field information cannot be requested for the
-default field.  If the field given is not dynamic then
+returns the sizing information for the field given.
+The function will return the number of rows, columns and the maximum
+growth of the field in the storage pointed to by the drows, dcols and max
+parameters respectively.
+Dynamic field information cannot be requested for the default field.
+If the field given is not dynamic then
 .Fn dynamic_field_info
-will simply return the size of the actual field.  The
+will simply return the size of the actual field.
+The
 .Fn field_info
 will return the number or rows, columns, field starting row, field
 starting column, number of off screen rows and number of buffers in
@@ -67,8 +69,7 @@ and
 .Fa nbuf
 respectively.
 .Sh RETURN VALUES
-The functions will return one of the following error
-values:
+The functions will return one of the following error values:
 .Pp
 .Bl -tag -width E_UNKNOWN_COMMAND -compact
 .It Er E_OK

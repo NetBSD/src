@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_win.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_win.3,v 1.6 2002/10/01 19:15:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -55,8 +55,8 @@
 .Fn set_form_win "FORM *form" "WINDOW *window"
 .Sh DESCRIPTION
 All output to the screen done by the forms library is handled by the
-curses library routines.  By default, the forms library will output to
-the curses
+curses library routines.
+By default, the forms library will output to the curses
 .Fa stdscr ,
 but if the forms window has been set via
 .Fn set_form_win
@@ -66,14 +66,15 @@ unless the forms subwindow has been set using
 .Fn set_form_sub .
 If a subwindow has been specified using
 .Fn set_form_sub
-then it will be used by the forms library to for screen output.  The
-current setting for the form window can be retrieved by calling
+then it will be used by the forms library to for screen output.
+The current setting for the form window can be retrieved by calling
 .Fn form_win .
 If the forms window has not been set then NULL will be returned.
 Similarly, the forms subwindow can be found by calling the
 .Fn form_sub
 function, again, if the subwindow has not been set then NULL will be
-returned.  The
+returned.
+The
 .Fn scale_form
 function will return the minimum number of rows and columns that will
 entirely contain the given form.
