@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.31 2004/01/13 23:00:32 keihan Exp $
+$NetBSD: acronyms.comp,v 1.32 2004/01/13 23:21:47 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -110,6 +110,7 @@ MIDI	musical instrument digital interface
 MIME	multipurpose internet mail extensions
 MIPS	million instructions per second
 MMU	memory management unit
+MPEG	moving picture experts group
 MSB	most significant bit [or: byte]
 MTA	mail transfer agent
 MTU	maximum transmission unit
@@ -150,6 +151,7 @@ ROM	read only memory
 RPM	revolutions per minute
 RTF	rich text format
 S/PDIF	sony/phillips digital interface
+SACD	super audio compact disc
 SAM	serial access memory
 SASI	Shugart Associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
