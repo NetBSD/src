@@ -1,6 +1,7 @@
-.\"	$NetBSD: rc.conf.5,v 1.4 1997/03/17 01:22:49 cjs Exp $
+.\"	$NetBSD: rc.conf.5,v 1.5 1997/03/23 07:57:22 cjs Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
+.\" Copyright (c) 1997 Curt J. Sampson
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -30,9 +31,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 30, 1996
+.Dd March 22, 1997
 .Dt RC.CONF 5
 .Os NetBSD 1.3
+.\" turn off hyphenation
+.hym 999
 .Sh NAME
 .Nm rc.conf
 .Nd system startup configuration file
@@ -60,212 +63,243 @@ each daemon's manual page. Most
 variables have three values: a list of parameters to pass on the
 command line, "DEFAULT" for a reasonable default set of parameters,
 or "NO" if the daemon is not to be run at all. Some programs don't
-take a set of flags, and may only be set to "YES" or "NO".
+take a set of flags, and may only be set to "YES" or "NO". A few are
+always run, and will not take "NO."
 The arguments passed if "DEFAULT" is chosen are listed in
 .Nm
 itself.
 .Pp
+Programs run on boot-up:
 .Bl -tag -width bootparamd_flags
+.It Sy savecore_flags
+Parameters, DEFAULT or NO.
+Saves a copy of the kernel and crash dump when the system comes up
+after a crash.  The
+.Ar -z
+parameter will compress the kernel and crash dump.  See
+.Xr savecore 8 .
+.It Sy lkm_init
+YES or NO. Loads
+.Xr lkm 4
+modules based on information in
+.Pa /etc/lkm.conf .
+See
+.Xr lkm.conf 5 .
+.It Sy ipfilter
+YES or NO.  Runs 
+.Xr ipf 8
+to load in packet filter specifications from
+.Pa /etc/ipf.conf
+at network boot time, before any interfaces are configured.  See
+.Xr ipf 5 .
+.El
+Daemons required for other daemons:
+.Bl -tag -width bootparamd_flags
+.It Sy inetd_flags
+Parameters, DEFAULT or NO.
+Starts other internet programs (as listed in
+.Pa /etc/inetd.conf )
+as necessary.  The
+.Ar -l
+option turns on libwrap connection logging.  See
+.Xr inetd 8 .
+.It Sy portmap
+YES or NO.  The
+.Xr portmap 8
+daemon is required for any Sun RPC based services.  These include NFS, YP,
+.Xr bootparamd 8 ,
+.Xr rstatd 8 ,
+.Xr rusersd 8 ,
+and
+.Xr rwalld 8 .
+.El
+Commonly used daemons:
+.Bl -tag -width bootparamd_flags
+.It Sy update_flags
+Parameters or DEFAULT.  The
+.Xr update 8
+daemon flushes cached disk pages that are dirty to disk at regular intervals.
 .It Sy syslog_flags
-Typically set to "" if system logging is to be performed by
+Parameters, DEFAULT or NO.
+Syslog daemon; logs messages to logfiles.  See
 .Xr syslogd 8 .
+.It Sy timed_flags
+Parameters, DEFAULT or NO.
+Local area network time synchronisation daemon.  The
+.Ar -M
+parameter allows this host to be a master, as well as a slave. See
+.Xr timed 8 .
+.It Sy xntpd_flags
+Parameters, DEFAULT or NO.
+Local and wide area network time synchronisation daemon.  If this is used,
+.Sy timed_flags
+should be set to
+.Ar -M -F localhost
+on one xntp-using host on the network, and to "NO"
+on any other xntp-using host.
+.Xr xntpd 8
+is not included with
+.Nx .
+.It Sy sendmail_flags
+Parameters, DEFAULT or NO.
+Sendmail SMTP mail transport agent.  See
+.Xr sendmail 8 .
+.It Sy named_flags
+Parameters, DEFAULT or NO.
+BIND domain name resolver and server.  See
+.Xr named 8 .
+.It Sy lpd_flags
+Parameters, DEFAULT or NO.
+Line printer daemon; allows other hosts to print to the local host's printer.
+The
+.Ar -l
+option turns on extra logging.  See
+.Xr lpd 8 .
+.El
+Routing daemons:
+.Bl -tag -width bootparamd_flags
 .It Sy routed_flags
-Typically set to "-q" if
-.Xr routed 8
-is used, or "NO".
+Parameters, DEFAULT or NO.
+RIP routing protocol daemon.  This should be NO if
+.Sy gated_flags
+is anything but NO.  See
+.Xr routed 8 .
+.It Sy gated_flags
+Parameters, DEFAULT or NO.
+Routing daemon for many IP routing protocols.
+This should be NO if
+.Sy routed_flags
+is anything but NO.
+.Xr gated 8
+is not included with
+.Nx .
 .It Sy mrouted_flags
-Typically set to "" if
-.Xr mrouted 8
-is used, or "NO".
+Parameters, DEFAULT or NO.
+DVMRP multicast routing protocol daemon.  See
+.Xr mrouted 8 .
+.El
+Daemons used to boot other hosts over a network:
+.Bl -tag -width bootparamd_flags
 .It Sy rarpd_flags
-Typically set to "-a" if
-.Xr rarpd 8
-is used, or "NO".
+Parameters, DEFAULT or NO.
+Reverse ARP daemon; used to boot NetBSD and Sun workstations.  See
+.Xr rarpd 8 .
 .It Sy bootparamd_flags
-Typically set to "" if
-.Xr bootparamd 8
-is used, or "NO".
+Parameters, DEFAULT or NO.
+Boot parameter server; used for booting NetBSD and SunOS 4.x systems.  See
+.Xr bootparamd 8 .
+.It Sy dhcpd_flags
+Parameters, DEFAULT or NO.
+Dynamic Host Configuration Protocol daemon, for assigning IP addresses to
+hosts and passing boot information.  See
+.Xr dhcpd 8 .
 .It Sy rbootd_flags
-Typically set to "" if
-.Xr rbootd 8
-is used, or "NO".
+Parameters, DEFAULT or NO.
+HP boot protocol daemon; used for booting HP workstations.  See
+.Xr rbootd 8 .
 .It Sy mopd_flags
 Parameters, DEFAULT or NO.
-DEC MOP protocol daemon; used for booting VAX and other DEC machines.
-See
+DEC MOP protocol daemon; used for booting VAX and other DEC machines.  See
 .Xr mopd 8 .
-.It Sy sendmail_flags
-Typically set to "-bd -q30" if
-.Xr sendmail 8
-is used, or "NO".
-.It Sy named_flags
-Typically set to "" if
-.Xr named 8
-is used, or "NO".
-.It Sy dhcpd_flags
-Typically set to "" if
-.Xr dhcpd 8
-is used, or "NO".
-.It Sy timed_flags
-Typically set to "" if
-.Xr timed 8
-is used, or "NO".
-.It Sy inetd_flags
-Typically set to "" or "-l" (for extra logging), if
-.Xr inetd 8
-is used, or "NO".
-.It Sy lpd_flags
-Typically set to "" or "-l" (for extra logging), if the printer daemon,
-.Xr lpd 8 ,
-is used, or "NO".
-.It Sy ypserv_flags
-Typically set to "-d" if your system is to be a YP server,
-.Xr ypserv 8
-is used, or "NO".
-.It Sy yppasswdd_flags
-Typically set to "" if your system is to be a YP password server,
-.Xr yppasswdd 8
-is used, or "NO".
-.It Sy ypbind_flags
-Typically set to "" if your system is to be a YP client,
-.Xr ypbind 8
-is used, or "NO".
-.It Sy savecore_flags
-Typically set to "" if your system is to check for kernel
-crash dumps with
-.Xr savecore 8 ,
-or "NO".
-.It Sy gated_flags
-Typically set to "" if
-.Xr gated 8
-is used, or "NO".  Note that gated is not supplied with
-.Nx .
 .El
-.Pp
+YP (NIS) daemons:
 .Bl -tag -width bootparamd_flags
-The following variables turn services on or off:
-.It Sy ipfilter
-Set to YES if ip-filter will be run.  Typically reads
-.Pa /etc/ipf.conf
-at network boot time, before any interfaces are,
-configured.
-.It Sy lkm_init
-Set to YES if
-.Xr lkm 4
-modules are to be loaded, from the file
-.Pa /etc/lkm.conf ,
-whose configuration is described in
-.Xr lkm.conf 5 .
-.It Sy rwhod
-Set to "YES" if
-.Xr rwhod 8
-is to be run.
-.It Sy nfs_server
-Set to "YES" if the nfs server,
-.Xr nfsd 8 ,
-and
-.Xr mountd 8
-are to be run.  Additional variables available
-.Sy nfs_server
-enabled:
-.Bl -tag -width mountd_flags
-.It Sy mountd_flags
-These are flags passed to
-.Xr 8 mountd ,
-if
-.Sy nfs_server
-is configured.
-.It Sy nfsd_flags
-These are flags passed to
-.Xr 8 nfsd ,
-if
-.Sy nfs_server
-is configured.  They default to ``-tun 4''.
+.It Sy ypbind_flags
+Parameters, DEFAULT or NO.
+Run on YP (NIS) clients to use information from a YP server.  See
+.Xr ypbind 8 .
+.It Sy ypserv_flags
+Parameters, DEFAULT or NO.
+YP (NIS) server for distributing information from certain files in
+.Pa /etc .
+See
+.Xr ypserv 8 .
+.It Sy yppasswdd_flags
+Parameters, DEFAULT or NO.
+Allows remote YP users to update password on master server.  See
+.Xr yppasswdd 8 .
 .El
+Network file system daemons:
+.Bl -tag -width bootparamd_flags
 .It Sy nfs_client
-Set to "YES" if the nfs client,
-.Xr nfsiod 8 ,
-is to be run.  Additional variables available
-.Sy nfs_client
-enabled:
-.Bl -tag -width nfsiod_flags
+YES or NO.  Runs 
+.Xr nfsiod 8
+to increase performance of an NFS client host.
 .It Sy nfsiod_flags
-These are flags passed to
+Parameters or DEFAULT.  Flags passed to
 .Xr nfsiod 8
 if
 .Sy nfs_client
-is configured.  They default to ``-n 4''
-.El
-.It Sy statd_flags
-Typically set to "" if your system is to run the status monitoring
-daemon,
-.Xr rpc.statd 8 ,
-or "NO"; ignored if neither
+is set to YES.
+.It Sy nfs_server
+YES or NO.  Sets up a host to be a NFS server by running
+.Xr mountd 8
+and
+.Xr nfsd 8 .
+.It Sy mountd_flags
+Parameters or DEFAULT. These are passed to
+.Xr mountd 8
+if
 .Sy nfs_server
-nor
-.Sy nfs_client
-are set to "YES".
+is set to YES.
+.It Sy nfsd_flags
+Parameters or DEFAULT. These are passed to
+.Xr nfsd 8
+if
+.Sy nfs_server
+is set to YES.
 .It Sy lockd_flags
-Typically set to "" if your system is to run the NFS locking
-daemon,
-.Xr rpc.lockd 8 ,
-or "NO"; ignored if neither
+Parameters, DEFAULT or NO.  Provides locking for NFS.  Ignored if
 .Sy nfs_server
-nor
+and
 .Sy nfs_client
-are set to "YES".
-.It Sy kerberos
-Set to "YES" if the kerberos server,
-.Xr kerberos 8 , 
-and the kerberos admininstration server,
-.Xr kadmind 8 ,
-are to be run.  This
-should only be run on the kerberos master server.  Note that
-the kerberos server is only available with the domestic distribution
-of
-.Nx .
-.It Sy portmap
-Set to "NO" if the port mapper,
-.Xr portmap 8 ,
-is not run.
-.It Sy amd
-Set to "YES" if automounter,
-.Xr amd 8 ,
-is to be run.  Additional variables available with
-.Sy amd
-enabled:
-.Bl -tag -width amd_master
+are both set to NO.  See
+.Xr rpc.lockd 8 .
+.It Sy statd_flags
+Parameters, DEFAULT or NO.  Ignored if
+.Sy nfs_server
+and
+.Sy nfs_client
+are both set to NO.  Status monitoring daemon used when
+.Xr rpc.lockd 8
+is running.  See
+.Xr rpc.statd 8 .
 .It Sy amd_flags
-The flags used for logging, etc, for
-.Xr amd 8 .
-Typically "-l syslog -x error,noinfo,nostats".
+Parameters, DEFAULT or NO.  
+The automounter daemon,
+.Xr amd 8 ,
+automatically mounts NFS file systems whenever a file or directory within
+that filesystem is accessed.
 .It Sy amd_dir
 The
 .Xr amd 8 
-mount directory.  Typically /amd.
+mount directory.  Used only if
+.Sy amd_flags
+is not set to NO.
 .It Sy amd_master
 The
 .Xr amd 8 
 automounter master map.
+Used only if
+.Sy amd_flags
+is not set to NO.
 .El
+Other daemons:
+.Bl -tag -width bootparamd_flags
+.It Sy rwhod
+YES or NO.  Daemon to support
+.Xr rwho 8
+command.  See
+.Xr rwhod 8 .
+.It Sy kerberos
+YES or NO.  Runs the kerberos server
+.Xr kerberos 8
+and the kerberos admininstration server,
+.Xr kadmind 8 .
+This should only be run on the kerberos master server.
+The kerberos server is only available with the domestic distribution of
+.Nx .
 .El
-.Pp
-The
-.Sy portmap
-keyword must be "YES" if any of the
-.Sy ypserv_flags ,
-.Sy yppasswdd_flags ,
-.Sy ypbind_flags ,
-.Sy bootparamd_flags ,
-.Sy nfs_server ,
-.Sy nfs_client
-keywords are not "NO", as they all depend on the portmapper.
-.Pp
-Only one of the
-.Sy routed_flags
-or
-.Sy gated_flags
-keywords should be set.
 .Sh FILES
 .Pa /etc/rc.conf
 .Sh SEE ALSO
