@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.35 2003/07/06 07:18:38 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.36 2003/07/06 07:33:57 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.35 2003/07/06 07:18:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.36 2003/07/06 07:33:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -586,11 +586,13 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 #endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			printf("%s: sending %s to %s\n", ifp->if_xname,
+			printf("%s: sending %s to %s on channel %u\n",
+			    ifp->if_xname,
 			    ieee80211_mgt_subtype_name[
 			    (type & IEEE80211_FC0_SUBTYPE_MASK)
 			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-			    ether_sprintf(ni->ni_macaddr));
+			    ether_sprintf(ni->ni_macaddr),
+			    ni->ni_chan);
 	}
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
