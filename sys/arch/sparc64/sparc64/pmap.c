@@ -1,8 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.56.2.2 2000/07/31 02:01:43 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56.2.3 2000/08/07 01:09:24 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
-#undef	BOOT_DEBUG
-#undef	BOOT1_DEBUG
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -319,8 +317,8 @@ struct {
 #define	PDB_ALIAS	0x8000
 #define PDB_EXTRACT	0x10000
 #define	PDB_BOOT	0x20000
-#define	PDB_BOOT1	0x20000
-int	pmapdebug = 0/*PDB_ALIAS|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|PDB_DESTROY|PDB_CHANGEPROT|PDB_ENTER|PDB_REMOVE|PDB_DEMAP|*/;
+#define	PDB_BOOT1	0x40000
+int	pmapdebug = 0;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 
@@ -477,7 +475,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* 
 	 * Get hold or the message buffer.
 	 */
-	msgbufp = (struct kern_msgbuf *)MSGBUF_VA;
+	msgbufp = (struct kern_msgbuf *)(vaddr_t)MSGBUF_VA;
 /* XXXXX -- increase msgbufsiz for uvmhist printing */
 	msgbufsiz = 4*NBPG /* round_page(sizeof(struct msgbuf)) */;
 	BDPRINTF(PDB_BOOT, ("Trying to allocate msgbuf at %lx, size %lx\r\n", 
@@ -1710,14 +1708,8 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 	tsb_enter(pm->pm_ctx, va, tte.data.data);
 	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
-#if 1
 	/* this is correct */
-	dcache_flush_page(va);
-#else
-	/* Go totally crazy */
-	blast_vcache();
-#endif
-
+	dcache_flush_page(pa);
 }
 #endif
 /*
@@ -1840,7 +1832,6 @@ pmap_kremove(va, size)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
-		blast_vcache();
 	}
 }
 #endif
@@ -2092,12 +2083,8 @@ pmap_enter(pm, va, pa, prot, flags)
 						}
 						/* Force reload -- protections may be changed */
 						tlb_flush_pte((npv->pv_va&PV_VAMASK), pm->pm_ctx);	
-#if 1
 						/* XXXXXX We should now flush the DCACHE to make sure */
-						dcache_flush_page((npv->pv_va&PV_VAMASK));
-#else
-						blast_vcache();
-#endif
+						dcache_flush_page(pa);
 					}
 			}
 		fnd:
@@ -2144,15 +2131,9 @@ pmap_enter(pm, va, pa, prot, flags)
 		tlb_flush_pte(va, pm->pm_ctx);	
 		ASSERT((tsb[i].data.data & TLB_NFO) == 0);
 	}
-#if 1
-#if 1
 	/* this is correct */
-	dcache_flush_page(va);
-#else
-	/* Go totally crazy */
-	blast_vcache();
-#endif
-#endif
+	dcache_flush_page(pa);
+
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
 	return (KERN_SUCCESS);
@@ -2168,6 +2149,7 @@ pmap_remove(pm, va, endva)
 {
 	int i, flush=0;
 	int64_t data;
+	vaddr_t flushva = va;
 
 	/* 
 	 * In here we should check each pseg and if there are no more entries,
@@ -2256,7 +2238,7 @@ pmap_remove(pm, va, endva)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
-		blast_vcache();
+		cache_flush_virt(flushva, endva - flushva);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
@@ -2393,116 +2375,6 @@ pmap_extract(pm, va, pap)
 	return (TRUE);
 }
 
-#if 0
-/* This appears to be no longer used. */
-/*
- * Map physical addresses into kernel VM. -- used by device drivers
- */
-vaddr_t
-pmap_map(va, pa, endpa, prot)
-	register vaddr_t va;
-	retister paddr_t pa, endpa;
-	register int prot;
-{
-	register int pgsize = PAGE_SIZE;
-	int i;
-	
-	while (pa < endpa) {
-		for (i=0; page_size_map[i].mask; i++) {
-			if (((pa | va) & page_size_map[i].mask) == 0
-				&& pa + page_size_map[i].mask < endpa)
-				break;
-		}
-		
-		do {
-#ifdef DEBUG
-			page_size_map[i].use++;
-#endif
-			pmap_enter(pmap_kernel(), va, pa|page_size_map[i].code, 
-				   prot,
-				   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-			va += pgsize;
-			pa += pgsize;
-		} while (pa & page_size_map[i].mask);
-	}
-	return (va);
-}
-#endif
-
-#if 0
-/*
- * Really change page protections -- used by device drivers
- */
-void pmap_changeprot(pm, start, prot, size)
-pmap_t pm; 
-vaddr_t start;
-vm_prot_t prot;
-int size;
-{
-	int i, s;
-	vaddr_t sva, eva;
-	int64_t data, set, clr;
-	
-	if (prot == VM_PROT_NONE) {
-		pmap_remove(pm, start, start+size);
-		return;
-	}
-		
-	if (prot & VM_PROT_WRITE) {
-#ifdef HWREF
-		set = TLB_REAL_W/*|TLB_W|TLB_MODIFY*/;
-#else
-		set = TLB_REAL_W|TLB_W|TLB_MODIFY;
-#endif
-		clr = 0LL;
-	} else {
-		set = 0LL;
-		clr = TLB_REAL_W|TLB_W;
-	}
-
-	sva = start & ~PGOFSET;
-	eva = start + size;
-	while (sva < eva) {
-		/*
-		 * Is this part of the permanent 4MB mapping?
-		 */
-		if( pm == pmap_kernel() && sva >= ktext && sva < kdata+4*MEG ) {
-			prom_printf("pmap_changeprot: va=%08x in locked TLB\r\n", sva);
-			OF_enter();
-			return;
-		}
-
-#ifdef DEBUG
-		if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-			printf("pmap_changeprot: va %p prot %x\n", sva, prot);
-#endif
-		/* First flush the TSB */
-		i = ptelookup_va(sva);
-		/* Then update the page table */
-		s = splimp();
-		if ((data = pseg_get(pm, sva))) {
-			data |= set;
-			data &= ~clr;
-			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(pm, sva, data, 0)) {
-				printf("pmap_changeprot: gotten empty pseg!\n");
-				Debugger();
-				/* panic? */
-			}
-			if (pm->pm_ctx || pm == pmap_kernel()) {
-				tlb_flush_pte(sva, pm->pm_ctx);
-				if (tsb[i].tag.tag > 0 
-				    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,sva)) 
-					tsb[i].tag.tag = tsb[i].data.data = data;
-			}
-		}
-		splx(s);
-		sva += NBPG;
-	}
-	pv_check();
-}
-#endif
-
 /*
  * Return the number bytes that pmap_dumpmmu() will dump.
  */
@@ -2528,7 +2400,6 @@ pmap_dumpsize()
  *	kcore_seg_t		 MI header defined in <sys/kcore.h>)
  *	cpu_kcore_hdr_t		 MD header defined in <machine/kcore.h>)
  *	phys_ram_seg_t[memsize]  physical memory segments
- *	segmap_t[NKREG*NSEGRG]	 the kernel's segment map (NB: needed?)
  */
 int
 pmap_dumpmmu(dump, blkno)
@@ -2539,7 +2410,7 @@ pmap_dumpmmu(dump, blkno)
 	cpu_kcore_hdr_t	*kcpu;
 	phys_ram_seg_t	memseg;
 	register int	error = 0;
-	register int	i, memsegoffset, segmapoffset;
+	register int	i, memsegoffset;
 	int		buffer[dbtob(1) / sizeof(int)];
 	int		*bp, *ep;
 
@@ -2572,16 +2443,26 @@ pmap_dumpmmu(dump, blkno)
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpu->cputype = CPU_SUN4U;
-	kcpu->kernbase = KERNBASE;
-	kcpu->kphys = (paddr_t)ktextp;
+	kcpu->kernbase = (u_int64_t)KERNBASE;
+	kcpu->cpubase = (u_int64_t)CPUINFO_VA;
+
+	/* Describe the locked text segment */
+	kcpu->ktextbase = (u_int64_t)ktext;
+	kcpu->ktextp = (u_int64_t)ktextp;
+	kcpu->ktextsz = (u_int64_t)ektextp - ktextp;
+
+	/* Describe locked data segment */
+	kcpu->kdatabase = (u_int64_t)kdata;
+	kcpu->kdatap = (u_int64_t)kdatap;
+	kcpu->kdatasz = (u_int64_t)ekdatap - kdatap;
+
+	/* Now the memsegs */
 	kcpu->nmemseg = memsize;
 	kcpu->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
-	kcpu->nsegmap = STSZ;
-	kcpu->segmapoffset = segmapoffset =
-		memsegoffset + memsize * sizeof(phys_ram_seg_t);
 
-	kcpu->npmeg = 0; 
-	kcpu->pmegoffset = 0; /* We don't do this. */
+	/* Now we need to point this at our kernel pmap. */
+	kcpu->nsegmap = STSZ;
+	kcpu->segmapoffset = (u_int64_t)pmap_kernel()->pm_physaddr;
 
 	/* Note: we have assumed everything fits in buffer[] so far... */
 	bp = (int *)((long)kcpu + ALIGN(sizeof(cpu_kcore_hdr_t)));
@@ -2591,14 +2472,6 @@ pmap_dumpmmu(dump, blkno)
 		memseg.size = mem[i].size;
 		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
 	}
-
-#if 0
-	/*
-	 * Since we're not mapping this in we need to re-do some of this
-	 * logic.
-	 */
-	EXPEDITE(&kernel_pmap_.pm_segs[0], sizeof(kernel_pmap_.pm_segs));
-#endif
 
 	if (bp != buffer)
 		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
@@ -2887,7 +2760,7 @@ pmap_clear_reference(pg)
 		}
 	}
 	/* Stupid here will take a cache hit even on unmapped pages 8^( */
-	blast_vcache();
+	dcache_flush_page(pa);
 	splx(s);
 	pv_check();
 #ifdef DEBUG
@@ -3234,14 +3107,6 @@ pmap_page_protect(pg, prot)
 				printf("pmap_page_protect: demap va %p of pa %lx from pm %p...\n",
 				       pv->pv_va, (long)pa, pv->pv_pmap);
 			}
-#if 0
-			if (!pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]) {
-				printf("pmap_page_protect(%x:%x,%x): pv %x va %x not in pmap %x\n",
-				       (int)(pa>>32), (int)pa, prot, pv, pv->pv_va, pv->pv_pmap);
-					Debugger();
-					goto skipit;
-			}
-#endif
 #endif
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 			/* Save ref/mod info */
@@ -3278,14 +3143,11 @@ pmap_page_protect(pg, prot)
 				pv->pv_pmap = NULL;
 				pv->pv_next = NULL;
 			}
-#if 0
-		skipit:
-#endif
 		}
+		dcache_flush_page(pa);
 		splx(s);
 	}
 	/* We should really only flush the pages we demapped. */
-	blast_vcache();
 	pv_check();
 }
 
