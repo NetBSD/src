@@ -1793,7 +1793,7 @@ char *instring;
 					else
 					    tmpreg=0x30+opP->reg-ADDR;	/* 6.areg */
 					if (isvar(opP->con1)) {
-						if (opP->reg == PC) {
+						if (opP->reg == PC && !subs(opP->con1)) {
 							add_frag(adds(opP->con1),
 								 offs(opP->con1),
 								 TAB(PCLEA,SZ_UNDEF));
@@ -2078,12 +2078,11 @@ char *instring;
 			tmpreg = get_num(opP->con1, 80);
 			switch (s[1]) {
 			case 'B':
-				/* Needs no offsetting */
+				/* Offset is relative to next word */
+				opP->con1->e_exp.X_add_number -= 1;
 				add_fix('B', opP->con1, 1,NO_RELOC);
 				break;
 			case 'W':
-				/* Offset the displacement to be relative to byte disp location */
-				opP->con1->e_exp.X_add_number += 2;
 				add_fix('w', opP->con1, 1,NO_RELOC);
 				addword(0);
 				break;
