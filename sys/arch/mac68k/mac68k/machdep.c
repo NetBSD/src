@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.17 1994/06/29 04:57:43 briggs Exp $
+ *	$Id: machdep.c,v 1.18 1994/07/02 13:04:03 briggs Exp $
  */
 
 #include <param.h>
@@ -83,7 +83,6 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/vnode.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
