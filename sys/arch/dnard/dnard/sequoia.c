@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.2.2.1 2002/01/10 19:41:32 thorpej Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.2.2.2 2002/02/11 20:07:38 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,7 +53,7 @@
 #include <machine/isa_machdep.h>
 #include <arm/cpufunc.h>
 #include <dnard/dnard/sequoia.h>
-#include <dnard/dnard/fiq.h>
+#include <dnard/dnard/dnard_fiq.h>
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15.2.3 2002/01/10 19:48:41 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.4 2002/02/11 20:09:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,11 @@
 #include <uvm/uvm_extern.h>
 
 char cpu_model[120];
+
+/* 
+ * if PCLOCK isn't defined in config file, use this.
+ */
+int sh3_pclock;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -415,7 +420,7 @@ setregs(p, pack, stack)
 	tf->tf_r6 = stack+4*tf->tf_r4 + 8; /* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
+	tf->tf_r9 = (int)PS_STRINGS;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;
@@ -424,8 +429,4 @@ setregs(p, pack, stack)
 	tf->tf_spc = pack->ep_entry;
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
-#ifdef TODO
-	tf->tf_r9 = (int)PS_STRINGS;
-#endif
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1998/11/13 04:47:07 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.38.24.1 2002/02/11 20:08:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -64,6 +64,8 @@
 #include "tun.h"
 #include "uk.h"
 #include "scsibus.h"
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -118,6 +120,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 29: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 30: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 31: RAIDframe disk driver */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 32: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

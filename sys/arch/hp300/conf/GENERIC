@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.2 2002/01/10 19:42:46 thorpej Exp $
+# $NetBSD: GENERIC,v 1.66.2.3 2002/02/11 20:07:47 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.66.2.2 $"
+#ident 		"GENERIC-$Revision: 1.66.2.3 $"
 
 # Support for various CPU types
 options 	HP320
@@ -60,6 +60,7 @@ options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystems
 file-system	FFS		# fast filesystem
@@ -208,8 +209,16 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
 #pseudo-device	gre		2	# generic L3 over IP tunnel

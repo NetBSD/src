@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.54.2.1 2002/01/10 19:56:46 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.54.2.2 2002/02/11 20:09:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.54.2.1 2002/01/10 19:56:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.54.2.2 2002/02/11 20:09:59 jdolecek Exp $");
 
 #include "opt_tlp.h"
 
@@ -634,8 +634,7 @@ tlp_pci_attach(parent, self, aux)
 			extern int tlp_srom_debug;
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
-			    M_NOWAIT);
-			memset(sc->sc_srom, 0, TULIP_ROM_SIZE(6));
+			    M_NOWAIT|M_ZERO);
 			algor_get_ethaddr(pa, sc->sc_srom);
 			if (tlp_srom_debug) {
 				printf("SROM CONTENTS:");

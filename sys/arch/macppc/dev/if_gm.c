@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.13.2.1 2001/08/03 04:11:53 lukem Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.13.2.2 2002/02/11 20:08:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -406,7 +406,7 @@ gmac_rint(sc)
 		 * If so, hand off the raw packet to BPF.
 		 */
 		if (ifp->if_bpf)
-			bpf_tap(ifp->if_bpf, sc->sc_rxbuf[i], len);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
@@ -524,8 +524,9 @@ gmac_start(ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_tap(ifp->if_bpf, buff, tlen);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
+		m_freem(m);
 
 		i++;
 		if (i == NTXBUF)
@@ -543,19 +544,15 @@ gmac_put(sc, buff, m)
 	caddr_t buff;
 	struct mbuf *m;
 {
-	struct mbuf *n;
 	int len, tlen = 0;
 
-	for (; m; m = n) {
+	for (; m; m = m->m_next) {
 		len = m->m_len;
-		if (len == 0) {
-			MFREE(m, n);
+		if (len == 0)
 			continue;
-		}
 		memcpy(buff, mtod(m, caddr_t), len);
 		buff += len;
 		tlen += len;
-		MFREE(m, n);
 	}
 	if (tlen > 2048)
 		panic("%s: gmac_put packet overflow", sc->sc_dev.dv_xname);

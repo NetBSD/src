@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5.4.1 2002/01/10 19:55:14 thorpej Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5.4.2 2002/02/11 20:09:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.4.1 2002/01/10 19:55:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.4.2 2002/02/11 20:09:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -113,8 +113,7 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee1394_attach_args *fwa = aux;
 	struct ieee1394_abuf *ab;
 	
-	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(ab, 0, sizeof(struct ieee1394_abuf));
+	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK|M_ZERO);
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
 	ab->ab_data[0] = 0;
 	
@@ -450,10 +449,9 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	
 	if (!complete) {
 		free(t, M_1394DATA);
-		ab->ab_data = malloc(newlen, M_1394DATA, M_WAITOK);
+		ab->ab_data = malloc(newlen, M_1394DATA, M_WAITOK|M_ZERO);
 		sc->sc_sc1394.sc1394_configrom = ab->ab_data;
 		sc->sc_sc1394.sc1394_configrom_len = 0;
-		memset(ab->ab_data, 0, newlen);
 		ab->ab_csr = CSR_BASE + CSR_CONFIG_ROM;
 		ab->ab_length = newlen;
 		ab->ab_retlen = 0;
@@ -712,8 +710,8 @@ int fwnode_parse_leaf(u_int32_t *addr, struct configrom_data *data)
 	struct configrom_leafdata *l;
 	int len, version;
 	
-	l = malloc(sizeof(struct configrom_leafdata), M_1394DATA, M_WAITOK);
-	memset(l, 0, sizeof(struct configrom_leafdata));
+	l = malloc(sizeof(struct configrom_leafdata), M_1394DATA,
+	    M_WAITOK|M_ZERO);
 	data->leafdata = l;
 	l->desc_type = (ntohl(addr[1]) >> 24) & 0xff;
 	l->spec_id = ntohl(addr[1]) & 0xffffff;
@@ -751,7 +749,7 @@ int fwnode_parse_leaf(u_int32_t *addr, struct configrom_data *data)
 		
 		/* No guarentee this is zero terminated so account for that. */
 		l->datalen = (len * 4) + 1;
-		l->text = malloc (l->datalen, M_1394DATA, M_WAITOK);
+		l->text = malloc(l->datalen, M_1394DATA, M_WAITOK);
 		
 		/* Offset 3 of a text descriptor begins the text. */
 		memcpy (l->text, &addr[3], l->datalen);
@@ -1014,12 +1012,9 @@ sbp2_init(struct fwnode_softc *sc, struct fwnode_device_cap *devcap)
 	struct ieee1394_abuf *ab, *ab2;
 	u_int32_t loc = ((int32_t *)devcap->dev_data)[0];
 	
-	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(ab, 0, sizeof(struct ieee1394_abuf));
-	ab->ab_data = malloc(8, M_1394DATA, M_WAITOK);
-	memset(ab->ab_data, 0, 8);
-	ab2 = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(ab2, 0, sizeof(struct ieee1394_abuf));
+	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK|M_ZERO);
+	ab->ab_data = malloc(8, M_1394DATA, M_WAITOK|M_ZERO);
+	ab2 = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK|M_ZERO);
 	
 	loc *= 4;
 	ab->ab_length = 8;
@@ -1065,10 +1060,10 @@ sbp2_login(struct ieee1394_abuf *ab, int rcode)
 	}
 	
 	ab->ab_data = malloc(32, M_1394DATA, M_WAITOK);
-	respab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	statab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
-	memset(respab, 0, sizeof(struct ieee1394_abuf));
-	memset(statab, 0, sizeof(struct ieee1394_abuf));
+	respab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA,
+	    M_WAITOK|M_ZERO);
+	statab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA,
+	    M_WAITOK|M_ZERO);
 	
 	statab->ab_length = 32;
 	statab->ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.7.4.2 2002/01/10 19:56:28 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.7.4.3 2002/02/11 20:09:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.7.4.2 2002/01/10 19:56:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.7.4.3 2002/02/11 20:09:56 jdolecek Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -317,7 +317,7 @@ cmpci_rate_to_index(rate)
 {
 	int i;
 
-	for (i = 0; i < CMPCI_REG_NUMRATE - 2; i++)
+	for (i = 0; i < CMPCI_REG_NUMRATE - 1; i++)
 		if (rate <=
 		    (cmpci_rate_table[i].rate+cmpci_rate_table[i+1].rate) / 2)
 			return i;

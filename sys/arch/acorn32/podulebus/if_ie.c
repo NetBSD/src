@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.3.2.2 2002/01/10 19:36:34 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.3.2.3 2002/02/11 20:06:38 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1539,13 +1539,13 @@ iestart(ifp)
 			len += m->m_len;
 		}
 
-		m_freem(m0);
-		len = max(len, ETHER_MIN_LEN);
-
 #if NBPFILTER > 0
 		if ( ifp->if_bpf )
-		    bpf_tap(ifp->if_bpf, txbuf, len);
+		    bpf_mtap(ifp->if_bpf, m0);
 #endif
+
+		m_freem(m0);
+		len = max(len, ETHER_MIN_LEN);
 
 		/* When we write directly to the card we dont need this */
     		if (len&1)

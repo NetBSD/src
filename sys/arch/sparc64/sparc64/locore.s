@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124.2.4 2002/01/10 19:49:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.124.2.5 2002/02/11 20:09:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -147,6 +147,7 @@
 #define	CASPTR		casxa
 /* Now something to calculate the stack bias */
 #define STKB		BIAS
+#define	CCCR		%xcc
 #else
 #define	BASEREG		%g0
 #define LNGSZ		4
@@ -164,7 +165,8 @@
 #define STPTR		stw
 #define STPTRA		stwa
 #define	CASPTR		casa
-#define STKB	0
+#define STKB		0
+#define	CCCR		%icc
 #endif
 
 /*
@@ -1096,8 +1098,7 @@ kdatafault:
 	UTRAP(0x031)			! 031 = data MMU miss -- no MMU
 	VTRAP(T_DATA_ERROR, winfault)	! 032 = data fetch fault
 	VTRAP(T_DATA_PROT, winfault)	! 033 = data fetch fault
-	TRAP(T_ALIGN)			! 034 = address alignment error -- we could fix it inline...
-!	sir; nop; TA8	! DEBUG -- trap all kernel alignment errors
+	VTRAP(T_ALIGN, checkalign)	! 034 = address alignment error -- we could fix it inline...
 	TRAP(T_LDDF_ALIGN)		! 035 = LDDF address alignment error -- we could fix it inline...
 	TRAP(T_STDF_ALIGN)		! 036 = STDF address alignment error -- we could fix it inline...
 	TRAP(T_PRIVACT)			! 037 = privileged action
@@ -2374,7 +2375,7 @@ winfault:
 winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
-	brlez,pt	%g1, datafault	! Don't go below trap level 1
+	ble,pt	%icc, datafault		! Don't go below trap level 1
 	 sethi	%hi(CPCB), %g6		! get current pcb
 
 
@@ -2385,7 +2386,7 @@ winfix:
 	andn	%g7, 0x3f, %g5		!   window fill traps are all 0b 0000 11xx xxxx
 
 #if 1
-	cmp	%g7, 0x68		! If we took a datafault just before this trap
+	cmp	%g7, 0x30		! If we took a datafault just before this trap
 	bne,pt	%icc, winfixfill	! our stack's probably bad so we need to switch somewhere else
 	 nop
 
@@ -2527,7 +2528,6 @@ winfixspill:
 	!!
 #if 1
 	btst	TSTATE_PRIV, %g4			! From user mode?
-!	cmp	%g2, 2					! From normal execution? take a fault.
 	wrpr	%g2, 0, %tl				! We need to load the fault type so we can
 	rdpr	%tt, %g5				! overwrite the lower trap and get it to the fault handler
 	wrpr	%g1, 0, %tl
@@ -3416,6 +3416,59 @@ fp_exception:
 	 done
 	NOTREACHED
 
+
+/*
+ * We're here because we took an alignment fault in NUCLEUS context.
+ * This could be a kernel bug or it could be due to saving a user
+ * window to an invalid stack pointer.  If the latter is the case,
+ * we should emulate the save by storing all the user register windows 
+ * to the PCB and returning.
+ */
+checkalign:
+	rdpr	%tl, %g2
+	subcc	%g2, 1, %g1
+	bneg,pn	%icc, slowtrap		! Huh?
+	 sethi	%hi(CPCB), %g6		! get current pcb
+
+	wrpr	%g1, 0, %tl
+	rdpr	%tt, %g7
+	rdpr	%tstate, %g4
+	andn	%g7, 0x3f, %g5
+	cmp	%g5, 0x080		!   window spill traps are all 0b 0000 10xx xxxx
+	bne,a,pn	%icc, slowtrap
+	 wrpr	%g1, 0, %tl		! Revert TL  XXX wrpr in a delay slot...
+
+#ifdef DEBUG
+	cmp	%g7, 0x34		! If we took a datafault just before this trap
+	bne,pt	%icc, checkalignspill	! our stack's probably bad so we need to switch somewhere else
+	 nop
+
+	!!
+	!! Double data fault -- bad stack?
+	!!
+	wrpr	%g2, %tl	! Restore trap level.
+	sir			! Just issue a reset and don't try to recover.
+	mov	%fp, %l6		! Save the frame pointer
+	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
+	add	%fp, -CC64FSZ, %sp	! Create a stackframe
+	wrpr	%g0, 15, %pil		! Disable interrupts, too
+	wrpr	%g0, %g0, %canrestore	! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave	!  probably is too, so blow away
+	ba	slowtrap		!  all our register windows.
+	 wrpr	%g0, 0x101, %tt
+#endif
+checkalignspill:	
+	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
+	ldxa	[SFSR] %asi, %g3			! get sync fault status register
+	stxa	%g0, [SFSR] %asi			! Clear out fault now
+	membar	#Sync					! No real reason for this XXXX
+	/*
+	 * Here we just jump to winfixspill and let it take care of
+	 * saving the windows.
+	 */
+	ba,pt	%icc, winfixspill	! Continue with the winfix
+	 orcc	%g0, %g0, %g0		! Make sure we compare to zero
+	
 /*
  * slowtrap() builds a trap frame and calls trap().
  * This is called `slowtrap' because it *is*....
@@ -3521,9 +3574,9 @@ Lslowtrap_reenter:
  *	%g4 = tt == T_AST
  */
 softtrap:
-	sethi	%hi(EINTSTACK-BIAS), %g5
+	sethi	%hi(EINTSTACK-STKB), %g5
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
-	or	%g5, %lo(EINTSTACK-BIAS), %g5
+	or	%g5, %lo(EINTSTACK-STKB), %g5
 	dec	%g7
 	sub	%g5, %g6, %g5
 	sethi	%hi(CPCB), %g6
@@ -5680,7 +5733,7 @@ _C_LABEL(cpu_initialize):
 	sethi	%hi(_C_LABEL(cpus)), %l1
 	ldxa	[%g0] ASI_MID_REG, %l2
 	LDPTR	[%l1 + %lo(_C_LABEL(cpus))], %l1
-	sllx	%l2, 17, %l2			! Isolate UPAID from CPU reg
+	srax	%l2, 17, %l2			! Isolate UPAID from CPU reg
 	and	%l2, 0x1f, %l2
 0:
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
@@ -9222,7 +9275,7 @@ ENTRY(pseg_find)
 	.data
 	.align	8
 	.globl	block_disable
-block_disable:	.xword	1
+block_disable:	.xword	0
 	.text
 
 #if 0
@@ -9277,10 +9330,10 @@ ENTRY(bcopy) /* src, dest, size */
 	sub	%o1, %o0, %o3
 
 	cmp	%o3, %o2
-	blu,pn	%xcc, Lovbcopy
+	blu,pn	CCCR, Lovbcopy
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
-	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
+	bge,pt	CCCR, 2f	! if >= this many, go be fancy.
 	 cmp	%o2, 256
 
 	mov	%o1, %o5	! Save memcpy return value
@@ -9318,7 +9371,7 @@ Lovbcopy:
 	add	%o2, %o1, %o1	! dst += len
 	
 	deccc	%o2
-	bl,pn	%xcc, 1f
+	bl,pn	CCCR, 1f
 	 dec	%o0
 0:
 	dec	%o1
@@ -9326,7 +9379,7 @@ Lovbcopy:
 	dec	%o0
 	
 	deccc	%o2
-	bge,pt	%xcc, 0b
+	bge,pt	CCCR, 0b
 	 stb	%o4, [%o1]
 1:
 	retl
@@ -9360,7 +9413,7 @@ Lbcopy_fancy:
 	ldub	[%l0], %l4				! Load 1st byte
 	
 	deccc	1, %l2
-	ble,pn	%xcc, Lbcopy_finish			! XXXX
+	ble,pn	CCCR, Lbcopy_finish			! XXXX
 	 inc	1, %l0
 	
 	stb	%l4, [%l1]				! Store 1st byte
@@ -9381,17 +9434,17 @@ Lbcopy_fancy:
 	
 1:	
 	deccc	2, %l2
-	ble,pn	%xcc, Lbcopy_finish			! XXXX
+	ble,pn	CCCR, Lbcopy_finish			! XXXX
 	 inc	2, %l0
 	sth	%l4, [%l1]				! Store 1st short
 	
 	inc	2, %l1
 4:
 	btst	4, %l1
-	bz,pt	%xcc, 4f
+	bz,pt	CCCR, 4f
 	
 	 btst	3, %l0
-	bz,a,pt	%xcc, 1f
+	bz,a,pt	CCCR, 1f
 	 lduw	[%l0], %l4				! Load word -1
 
 	btst	1, %l0
@@ -9416,7 +9469,7 @@ Lbcopy_fancy:
 	
 1:	
 	deccc	4, %l2
-	ble,pn	%xcc, Lbcopy_finish		! XXXX
+	ble,pn	CCCR, Lbcopy_finish		! XXXX
 	 inc	4, %l0
 	
 	st	%l4, [%l1]				! Store word
@@ -9440,7 +9493,7 @@ Lbcopy_common:
 	deccc	12*8, %l2				! Have enough room?
 	
 	sllx	%o0, %l4, %o0
-	bl,pn	%xcc, 2f
+	bl,pn	CCCR, 2f
 	 and	%l3, 0x38, %l3
 Lbcopy_unrolled8:
 
@@ -9504,7 +9557,7 @@ Lbcopy_unrolled8:
 	ldx	[%l0+5*8], %o5
 	
 	stx	%g6, [%l1+5*8]
-	bge,pt	%xcc, 1b
+	bge,pt	CCCR, 1b
 	 inc	6*8, %l1
 
 Lbcopy_unrolled8_cleanup:	
@@ -9556,7 +9609,7 @@ Lbcopy_aligned8:
 !	sllx	%o0, %l4, %o0				! Shift high word
 	
 	 deccc	8, %l2					! Pre-decrement
-	bl,pn	%xcc, Lbcopy_finish
+	bl,pn	CCCR, Lbcopy_finish
 1:
 	ldx	[%l0+8], %o1				! Load word 0
 	inc	8, %l0
@@ -9568,11 +9621,11 @@ Lbcopy_aligned8:
 	 inc	8, %l1
 	
 	deccc	8, %l2
-	bge,pn	%xcc, 1b
+	bge,pn	CCCR, 1b
 	 sllx	%o1, %l4, %o0	
 
 	btst	7, %l2					! Done?
-	bz,pt	%xcc, Lbcopy_complete
+	bz,pt	CCCR, Lbcopy_complete
 
 	!!
 	!! Loadup the last dregs into %o0 and shift it into place
@@ -9590,7 +9643,7 @@ Lbcopy_aligned8:
 	
 Lbcopy_noshift8:
 	deccc	6*8, %l2				! Have enough room?
-	bl,pn	%xcc, 2f
+	bl,pn	CCCR, 2f
 	 nop
 	ba,pt	%icc, 1f
 	 nop
@@ -9612,7 +9665,7 @@ Lbcopy_noshift8:
 	deccc	6*8, %l2
 	stx	%o4, [%l1+4*8]
 	stx	%o5, [%l1+5*8]
-	bge,pt	%xcc, 1b
+	bge,pt	CCCR, 1b
 	 inc	6*8, %l1
 2:
 	inc	6*8, %l2
@@ -9627,18 +9680,18 @@ Lbcopy_noshift8:
 	 inc	8, %l1
 1:
 	btst	7, %l2					! Done?
-	bz,pt	%xcc, Lbcopy_complete
+	bz,pt	CCCR, Lbcopy_complete
 	 clr	%l4
 	ldx	[%l0], %o0
 Lbcopy_finish:
 	
 	brz,pn	%l2, 2f					! 100% complete?
 	 cmp	%l2, 8					! Exactly 8 bytes?
-	bz,a,pn	%xcc, 2f
+	bz,a,pn	CCCR, 2f
 	 stx	%o0, [%l1]
 
 	btst	4, %l2					! Word store?
-	bz	%xcc, 1f
+	bz	CCCR, 1f
 	 srlx	%o0, 32, %g6				! Shift high word down
 	stw	%g6, [%l1]
 	inc	4, %l1
@@ -9789,10 +9842,10 @@ Lbcopy_block:
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
 	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
 	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
+	bgu,pt	CCCR, 1f
 	 set	INTSTACK-STKB, %l4
 	cmp	%sp, %l4
-	blu	%xcc, 1f
+	blu	CCCR, 1f
 0:
 	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
@@ -9835,7 +9888,7 @@ Lbcopy_block:
 	alignaddr %o0, %o4, %o4				! Base addr for load.
 
 	cmp	%o3, %o4
-	be,pt	%xcc, 1f				! Already loaded?
+	be,pt	CCCR, 1f				! Already loaded?
 	 mov	%o4, %o3
 	fmovd	%f2, %f0				! No. Shift
 	ldd	[%o3+8], %f2				! And load
@@ -9855,7 +9908,7 @@ Lbcopy_block:
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
 	cmp	%o3, %o4				! Addresses same?
-	be,pt	%xcc, 1f
+	be,pt	CCCR, 1f
 	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
 	ldd	[%o3+8], %f2				! Load word 0
@@ -9876,7 +9929,7 @@ Lbcopy_block:
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
 	cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 1f
+	beq,pt	CCCR, 1f
 	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
 	ldd	[%o3+8], %f2				! Load word 0
@@ -9898,7 +9951,7 @@ Lbcopy_block_common:
 	alignaddr %o0, %o4, %o4				! base - shift
 
 	cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 1f
+	beq,pt	CCCR, 1f
 	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
 	ldd	[%o3+8], %f2				! Load word 0
@@ -10799,11 +10852,11 @@ Lbcopy_blockfinish:
 	brz,pn	%o2, 2f					! 100% complete?
 	 fmovd	%f48, %f4
 	cmp	%o2, 8					! Exactly 8 bytes?
-	bz,a,pn	%xcc, 2f
+	bz,a,pn	CCCR, 2f
 	 std	%f4, [%o1]
 
 	btst	4, %o2					! Word store?
-	bz	%xcc, 1f
+	bz	CCCR, 1f
 	 nop
 	st	%f4, [%o1]
 	inc	4, %o1
@@ -10893,7 +10946,7 @@ Lbcopy_blockfinish:
 #endif
 	andcc	%l2, %l3, %g0				! If (fpproc && fpstate)
 	STPTR	%l2, [%l1 + %lo(FPPROC)]		! Restore old fproc
-	bz,pt	%xcc, 1f				! Skip if no fpstate
+	bz,pt	CCCR, 1f				! Skip if no fpstate
 	 STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
 	
 	call	_C_LABEL(loadfpstate)			! Re-load orig fpstate
@@ -10947,7 +11000,7 @@ Lbzero_internal:
 	 nop
 	inc	%o0
 	deccc	%o2			! Store up to 7 bytes
-	bge,a,pt	%xcc, Lbzero_internal
+	bge,a,pt	CCCR, Lbzero_internal
 	 stb	%o1, [%o0 - 1]
 
 	retl				! Duplicate Lbzero_done
@@ -10968,16 +11021,16 @@ Lbzero_internal:
 #if 1
 	!! Now we are 64-bit aligned
 	cmp	%o2, 256		! Use block clear if len > 256
-	bge,pt	%xcc, Lbzero_block	! use block store insns
+	bge,pt	CCCR, Lbzero_block	! use block store insns
 #endif	
 	 deccc	8, %o2
 Lbzero_longs:
-	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
+	bl,pn	CCCR, Lbzero_cleanup	! Less than 8 bytes left
 	 nop
 3:	
 	inc	8, %o0
 	deccc	8, %o2
-	bge,pt	%xcc, 3b
+	bge,pt	CCCR, 3b
 	 stx	%o1, [%o0 - 8]		! Do 1 longword at a time
 
 	/*
@@ -10986,13 +11039,13 @@ Lbzero_longs:
 	 */
 Lbzero_cleanup:	
 	btst	4, %o2
-	bz,pt	%xcc, 5f		! if (len & 4) {
+	bz,pt	CCCR, 5f		! if (len & 4) {
 	 nop
 	stw	%o1, [%o0]		!	*(int *)addr = 0;
 	inc	4, %o0			!	addr += 4;
 5:	
 	btst	2, %o2
-	bz,pt	%xcc, 7f		! if (len & 2) {
+	bz,pt	CCCR, 7f		! if (len & 2) {
 	 nop
 	sth	%o1, [%o0]		!	*(short *)addr = 0;
 	inc	2, %o0			!	addr += 2;
@@ -11062,10 +11115,10 @@ Lbzero_block:
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
 	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
 	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
+	bgu,pt	CCCR, 1f
 	 set	INTSTACK-STKB, %l4
 	cmp	%sp, %l4
-	blu	%xcc, 1f
+	blu	CCCR, 1f
 0:
 	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPU's idle proc
@@ -11085,7 +11138,7 @@ Lbzero_block:
 #endif
 	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
 	btst	63, %i0
-	bz,pt	%xcc, 2f
+	bz,pt	CCCR, 2f
 	 nop
 1:
 	stx	%i1, [%i0]

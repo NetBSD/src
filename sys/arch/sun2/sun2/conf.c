@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2.2.1 2001/08/03 04:12:32 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.2.2 2002/02/11 20:09:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -141,6 +141,9 @@ cdev_decl(xt);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 /* Block devices */
 struct bdevsw	bdevsw[] =
 {
@@ -266,6 +269,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 86 */
 	cdev_notdef(),			/* 87 */
 	cdev_tty_init(NPCONS,pcons),	/* 88: PROM console */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
 
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -391,6 +395,13 @@ static int chrtoblktbl[] = {
 	/* 80 */	NODEV,
 	/* 81 */	NODEV,
 	/* 82 */	25,
+	/* 83 */	NODEV,
+	/* 84 */	NODEV,
+	/* 85 */	NODEV,
+	/* 86 */	NODEV,
+	/* 87 */	NODEV,
+	/* 88 */	NODEV,
+	/* 89 */	NODEV,
 };
 
 /*

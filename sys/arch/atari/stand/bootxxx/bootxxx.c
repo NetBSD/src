@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxxx.c,v 1.1.1.1.6.2 2002/01/10 19:40:13 thorpej Exp $	*/
+/*	$NetBSD: bootxxx.c,v 1.1.1.1.6.3 2002/02/11 20:07:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Leo Weppelman.
@@ -61,7 +61,7 @@ bootxxx(readsector, disklabel, od)
 	/* XXX: Limit should be 16MB */
 	setheap(end, (void*)0x1000000);
 	printf("\033v\nNetBSD/Atari tertiary bootloader "
-					"($Revision: 1.1.1.1.6.2 $)\n\n");
+					"($Revision: 1.1.1.1.6.3 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, od->rootfs))
 		return(-1);

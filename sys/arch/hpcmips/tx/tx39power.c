@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.9 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.9.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,8 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_tx39_debug.h"
-//#include "opt_tx39powerdebug.h"
+#include "opt_tx39power_debug.h"
 #define TX39POWERDEBUG 
 
 #include <sys/param.h>
@@ -52,19 +51,20 @@
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39powerreg.h>
 
-#ifdef TX39POWERDEBUG
-int	tx39power_debug = 1;
-#define	DPRINTF(arg)		if (tx39power_debug) printf arg;
-#define	DPRINTFN(n, arg)	if (tx39power_debug > (n)) printf arg;
+#ifdef	TX39POWER_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39power_debug
+#endif
+#include <machine/debug.h>
+
+#ifdef TX39POWER_DEBUG
 #define DUMP_REGS(x)		__tx39power_dump(x)
 #else
-#define	DPRINTF(arg)		((void)0)
-#define DPRINTFN(n, arg)	((void)0)
 #define DUMP_REGS(x)		((void)0)
 #endif
 
 #define ISSET(x, v)		((x) & (v))
-#define ISSETPRINT(r, m)	__is_set_print(r, TX39_POWERCTRL_##m, #m)
+#define ISSETPRINT(r, m)	dbg_bitmask_print(r, TX39_POWERCTRL_##m, #m)
 
 int	tx39power_match(struct device *, struct cfdata *, void *);
 void	tx39power_attach(struct device *, struct device *, void *);
@@ -89,7 +89,7 @@ static int tx39power_ok_intr_p(void *);
 static int tx39power_ok_intr_n(void *);
 static int tx39power_button_intr_p(void *);
 static int tx39power_button_intr_n(void *);
-#ifdef TX39POWERDEBUG
+#ifdef TX39POWER_DEBUG
 static void __tx39power_dump(struct tx39power_softc *);
 #endif
 
@@ -281,7 +281,7 @@ tx39power_ok_intr_n(void *arg)
 	return (0);
 }
 
-#ifdef TX39POWERDEBUG
+#ifdef TX39POWER_DEBUG
 static void
 __tx39power_dump (struct tx39power_softc *sc)
 {
@@ -319,4 +319,4 @@ __tx39power_dump (struct tx39power_softc *sc)
 	printf("STPTIMERVAL=%d ", TX39_POWERCTRL_STPTIMERVAL(reg));
 	printf("\n");
 }
-#endif /* TX39POWERDEBUG */
+#endif /* TX39POWER_DEBUG */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.6.2.2 2002/01/10 19:39:54 thorpej Exp $
+#	$NetBSD: GENERIC.in,v 1.6.2.3 2002/02/11 20:07:30 jdolecek Exp $
 #
 # Generic atari
 #
@@ -157,6 +157,9 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#else /* INSTALL_KERNEL */
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
 
 # These options enable verbose messages for several subsystems.
@@ -219,8 +222,16 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ccd		4	# concatenating disk driver
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #endif

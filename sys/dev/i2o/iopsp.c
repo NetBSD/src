@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.8.2.2 2002/01/10 19:54:01 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.8.2.3 2002/02/11 20:09:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.8.2.2 2002/01/10 19:54:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.8.2.3 2002/02/11 20:09:42 jdolecek Exp $");
 
 #include "opt_i2o.h"
 
@@ -204,8 +204,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	 * purposes only.
 	 */
 	size = sc->sc_channel.chan_ntargets * sizeof(struct iopsp_target);
-	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_targetmap, 0, size);
+	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 #endif
 
  	/* Build the two maps, and attach to scsipi. */
@@ -257,9 +256,8 @@ iopsp_reconfig(struct device *dv)
 	 * and we never address that here).
 	 */
 	size = sc_chan->chan_ntargets * (IOPSP_MAX_LUN) * sizeof(u_short);
-	if ((tidmap = malloc(size, M_DEVBUF, M_WAITOK)) == NULL)
+	if ((tidmap = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO)) == NULL)
 		return (ENOMEM);
-	memset(tidmap, 0, size);
 
 #ifdef I2OVERBOSE
 	for (i = 0; i < sc_chan->chan_ntargets; i++)

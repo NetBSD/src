@@ -1,6 +1,9 @@
-/*	$NetBSD: gayle.c,v 1.3 2001/01/19 21:18:29 is Exp $	*/
+/*	$NetBSD: gayle.c,v 1.3.4.1 2002/02/11 20:06:45 jdolecek Exp $	*/
 
 /* public domain */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.3.4.1 2002/02/11 20:06:45 jdolecek Exp $");
 
 /*
  * Gayle management routines

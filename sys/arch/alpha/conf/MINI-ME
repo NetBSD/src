@@ -1,4 +1,4 @@
-# $NetBSD: MINI-ME,v 1.5 2001/07/09 15:05:22 soren Exp $
+# $NetBSD: MINI-ME,v 1.5.2.1 2002/02/11 20:06:41 jdolecek Exp $
 #
 # mini-me.shagadelic.org - thorpej's Multia
 #
@@ -78,6 +78,7 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.16 1996/04/23 22:53:12 veego Exp $	*/
+/*	$NetBSD: ite_rt.c,v 1.16.44.1 2002/02/11 20:07:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -30,6 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.16.44.1 2002/02/11 20:07:01 jdolecek Exp $");
+
 #include "grfrt.h"
 #if NGRFRT > 0
 
@@ -50,16 +54,16 @@
 
 int retina_console = 1;
 
-void retina_cursor __P((struct ite_softc *,int));
-void retina_scroll __P((struct ite_softc *,int,int,int,int));
-void retina_deinit __P((struct ite_softc *));
-void retina_clear __P((struct ite_softc *,int,int,int,int));
-void retina_putc __P((struct ite_softc *,int,int,int,int));
-void retina_init __P((struct ite_softc *));
+void retina_cursor(struct ite_softc *, int);
+void retina_scroll(struct ite_softc *, int, int, int, int);
+void retina_deinit(struct ite_softc *);
+void retina_clear(struct ite_softc *, int, int, int, int);
+void retina_putc(struct ite_softc *, int, int, int, int);
+void retina_init(struct ite_softc *);
 
 #ifdef RETINA_SPEED_HACK
-static void screen_up __P((struct ite_softc *, int, int, int));
-static void screen_down __P((struct ite_softc *, int, int, int));
+static void screen_up(struct ite_softc *, int, int, int);
+static void screen_down(struct ite_softc *, int, int, int);
 #endif
 
 /*
@@ -67,7 +71,7 @@ static void screen_down __P((struct ite_softc *, int, int, int));
  * field each time a retina is attached.
  */
 int
-grfrt_cnprobe()
+grfrt_cnprobe(void)
 {
 	static int done;
 	int rv;
@@ -80,13 +84,12 @@ grfrt_cnprobe()
 	return(rv);
 }
 
-/* 
+/*
  * init the required fields in the grf_softc struct for a
  * grf to function as an ite.
  */
 void
-grfrt_iteinit(gp)
-	struct grf_softc *gp;
+grfrt_iteinit(struct grf_softc *gp)
 {
 	gp->g_iteinit = retina_init;
 	gp->g_itedeinit = retina_deinit;
@@ -98,26 +101,23 @@ grfrt_iteinit(gp)
 
 
 void
-retina_init(ip)
-	struct ite_softc *ip;
+retina_init(struct ite_softc *ip)
 {
 	struct MonDef *md;
 
 	ip->priv = ip->grf->g_data;
 	md = (struct MonDef *) ip->priv;
- 
+
 	ip->cols = md->TX;
 	ip->rows = md->TY;
 }
 
 
 void
-retina_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+retina_cursor(struct ite_softc *ip, int flag)
 {
       volatile caddr_t ba = ip->grf->g_regkva;
-      
+
       if (flag == ERASE_CURSOR)
         {
 	  /* disable cursor */
@@ -143,12 +143,8 @@ retina_cursor(ip, flag)
 
 #ifdef	RETINA_SPEED_HACK
 static void
-screen_up(ip, top, bottom, lines)
-	struct ite_softc *ip;
-	int top;
-	int bottom;
-	int lines;
-{	
+screen_up(struct ite_softc *ip, int top, int bottom, int lines)
+{
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
@@ -159,7 +155,7 @@ screen_up(ip, top, bottom, lines)
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
 	  return;
-	  
+
 	if (top + lines >= bottom)
 	  {
 	    retina_clear (ip, top, 0, bottom - top, ip->cols);
@@ -170,7 +166,7 @@ screen_up(ip, top, bottom, lines)
 #ifdef BANKEDDEVPAGER
 	/* make sure to save/restore active bank (and if it's only
 	   for tests of the feature in text-mode..) */
-	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) 
+	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO)
 		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
 #endif
 
@@ -184,65 +180,65 @@ screen_up(ip, top, bottom, lines)
 	   `addqb' are the cheapest way to cause read/write cycles (DONT
 	   use `tas' on the Amiga!), their results are completely ignored
 	   by the NCR chip, it just replicates what it just read. */
-	
+
 		/* write to primary, read from secondary */
 	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
-		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 );
 		/* clear extended chain4 mode */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
-	
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);
+
 		/* set write mode 1, "[...] data in the read latches is written
 		   to memory during CPU memory write cycles. [...]" */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE,
-		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
-	
+		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1);
+
 	{
-		/* write to line TOP */	
+		/* write to line TOP */
 		long toploc = top * (md->TX / 16);
-		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, ((unsigned char)toploc)); 
-		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, ((unsigned char)(toploc >> 8))); 
+		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, ((unsigned char)toploc));
+		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, ((unsigned char)(toploc >> 8)));
 	}
 	{
 		/* read from line TOP + LINES */
 		long fromloc = (top+lines) * (md->TX / 16);
-		WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, ((unsigned char)fromloc)) ; 
-		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ; 
+		WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, ((unsigned char)fromloc)) ;
+		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ;
 	}
 	{
 		caddr_t p = (caddr_t)fb;
 		/* transfer all characters but LINES lines, unroll by 16 */
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		do {
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p)); 
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@+" : "=a" (p) : "0" (p));
 		} while (x--);
 	}
-	
+
 		/* reset to default values */
-	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, 0); 
-	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, 0); 
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0); 
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0); 
+	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, 0);
+	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, 0);
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0);
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0);
 		/* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE,
 		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 		/* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,
-		RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
+		RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
 		/* read/write to primary on A0, secondary on B0 */
 	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
 		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40);
@@ -258,10 +254,10 @@ screen_up(ip, top, bottom, lines)
 	}
 
 	   /* clear extended chain4 mode */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);
 	   /* set write mode 1, "[...] data in the read latches is written
 	      to memory during CPU memory write cycles. [...]" */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
+	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1);
 
 	{
 		unsigned long * p = (unsigned long *) fb;
@@ -281,7 +277,7 @@ screen_up(ip, top, bottom, lines)
 	   /* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
 
 #ifdef BANKEDDEVPAGER
 	/* restore former bank */
@@ -293,11 +289,7 @@ screen_up(ip, top, bottom, lines)
 
 
 static void
-screen_down(ip, top, bottom, lines)
-	struct ite_softc *ip;
-	int top;
-	int bottom;
-	int lines;
+screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 {
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
@@ -309,7 +301,7 @@ screen_down(ip, top, bottom, lines)
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
 	  return;
- 
+
 	if (top + lines >= bottom)
 	  {
 	    retina_clear (ip, top, 0, bottom - top, ip->cols);
@@ -319,32 +311,32 @@ screen_down(ip, top, bottom, lines)
 #ifdef BANKEDDEVPAGER
 	/* make sure to save/restore active bank (and if it's only
 	   for tests of the feature in text-mode..) */
-	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) 
+	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO)
 		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
 #endif
 	/* see screen_up() for explanation of chip-tricks */
 
 		/* write to primary, read from secondary */
 	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
-		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 );
 		/* clear extended chain4 mode */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);
 
 		/* set write mode 1, "[...] data in the read latches is written
 		   to memory during CPU memory write cycles. [...]" */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
+	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1);
 
 	{
-		/* write to line TOP + LINES */	
+		/* write to line TOP + LINES */
 		long toloc = (top + lines) * (md->TX / 16);
-		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, ((unsigned char)toloc)); 
-		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, ((unsigned char)(toloc >> 8))); 
+		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, ((unsigned char)toloc));
+		WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, ((unsigned char)(toloc >> 8)));
 	}
 	{
 		/* read from line TOP */
 		long fromloc = top * (md->TX / 16);
-		WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, ((unsigned char)fromloc)); 
-		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ; 
+		WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, ((unsigned char)fromloc));
+		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ;
 	}
 
 	{
@@ -352,38 +344,38 @@ screen_down(ip, top, bottom, lines)
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		p += (1 + bottom - (top + lines)) * md->TX;
 		do {
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
-			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
+			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p));
 		} while (x--);
 	}
 
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0); 
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0); 
-	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, 0); 
-	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, 0); 
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0);
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0);
+	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, 0);
+	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, 0);
 
 		/* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE,
 		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 		/* extended chain4 enable */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
 		/* read/write to primary on A0, secondary on B0 */
 	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
-		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40 ); 
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40 );
 
 	/* fill the free lines with spaces */
 
@@ -395,10 +387,10 @@ screen_down(ip, top, bottom, lines)
 	}
 
 	   /* clear extended chain4 mode */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);
 	   /* set write mode 1, "[...] data in the read latches is written
 	      to memory during CPU memory write cycles. [...]" */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
+	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1);
 
 	{
 		unsigned long * p = (unsigned long *) fb;
@@ -418,7 +410,7 @@ screen_down(ip, top, bottom, lines)
 	   /* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
 
 #ifdef BANKEDDEVPAGER
 	/* restore former bank */
@@ -431,20 +423,14 @@ screen_down(ip, top, bottom, lines)
 
 
 void
-retina_deinit(ip)
-	struct ite_softc *ip;
+retina_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 
 void
-retina_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	register u_char attr;
@@ -460,12 +446,7 @@ retina_putc(ip, c, dy, dx, mode)
 
 
 void
-retina_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	u_short * fb = (u_short *) ip->grf->g_fbkva;
 	short x;
@@ -487,12 +468,7 @@ retina_clear(ip, sy, sx, h, w)
  * it causes text to smear horizontally
  */
 void
-retina_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	volatile caddr_t ba;
 	u_long *fb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.1.4.2 2002/01/10 19:37:47 thorpej Exp $	*/
+/*	$NetBSD: vectors.S,v 1.1.4.3 2002/02/11 20:07:17 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -55,10 +55,14 @@ _C_LABEL(page0):
 	ldr	pc, Ldata_abort_target
 	ldr	pc, Laddress_exception_target
 	ldr	pc, Lirq_target
+#ifdef __ARM_FIQ_INDIRECT
+	ldr	pc, Lfiq_target
+#else
 Lfiqvector:
 	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
 	subs	pc, lr, #4
 	.org	Lfiqvector + 0x100
+#endif
 
 Lreset_target:
 	.word	reset_entry
@@ -80,4 +84,17 @@ Laddress_exception_target:
 
 Lirq_target:
 	.word	irq_entry
+
+#ifdef __ARM_FIQ_INDIRECT
+Lfiq_target:
+	.word	_C_LABEL(fiqvector)
+#endif
 _C_LABEL(page0_end):
+
+#ifdef __ARM_FIQ_INDIRECT
+	.data
+	.align	0
+_C_LABEL(fiqvector):
+	subs	pc, lr, #4
+	.org	_C_LABEL(fiqvector) + 0x100
+#endif

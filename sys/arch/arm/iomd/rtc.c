@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.6.2 2002/01/10 19:38:17 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.6.3 2002/02/11 20:07:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -178,11 +178,11 @@ rtc_write(arg, rtc)
 
 	buff[0] = 1;
 
-/*	buff[1] = dectohexdec(rtc->rtc_centi);
+	buff[1] = dectohexdec(rtc->rtc_centi);
 	buff[2] = dectohexdec(rtc->rtc_sec);
 	buff[3] = dectohexdec(rtc->rtc_min);
 	buff[4] = dectohexdec(rtc->rtc_hour) & 0x3f;
-	buff[5] = dectohexdec(rtc->rtc_day);
+	buff[5] = dectohexdec(rtc->rtc_day) | ((rtc->rtc_year & 3) << 6);
 	buff[6] = dectohexdec(rtc->rtc_mon);
 
 	if (iic_control(RTC_Write, buff, 7))
@@ -192,8 +192,7 @@ rtc_write(arg, rtc)
 		return(0);
 	if (cmos_write(RTC_ADDR_CENT, rtc->rtc_cen))
 		return(0);
-*/
-	printf("rtc_write: Currently disabled\n");
+
 	return(1);
 }
 

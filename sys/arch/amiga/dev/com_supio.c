@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.13 1999/06/22 21:12:00 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.13.16.1 2002/02/11 20:06:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.13.16.1 2002/02/11 20:06:51 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -100,16 +103,16 @@ struct comsupio_softc {
 	struct isr sc_isr;
 };
 
-int com_supio_match __P((struct device *, struct cfdata *, void *));
-void com_supio_attach __P((struct device *, struct device *, void *));
-void com_supio_cleanup __P((void *));
+int com_supio_match(struct device *, struct cfdata *, void *);
+void com_supio_attach(struct device *, struct device *, void *);
+void com_supio_cleanup(void *);
 
 #if 0
 static int      comconsaddr;
-static bus_space_handle_t comconsioh; 
+static bus_space_handle_t comconsioh;
 static int      comconsattached;
 static bus_space_tag_t comconstag;
-static int comconsrate; 
+static int comconsrate;
 static tcflag_t comconscflag;
 #endif
 
@@ -118,10 +121,7 @@ struct cfattach com_supio_ca = {
 };
 
 int
-com_supio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_supio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	bus_space_tag_t iot;
 	int iobase;
@@ -138,9 +138,7 @@ com_supio_match(parent, match, aux)
 }
 
 void
-com_supio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_supio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct comsupio_softc *sc = (void *)self;
 	struct com_softc *csc = &sc->sc_com;
@@ -185,8 +183,7 @@ com_supio_attach(parent, self, aux)
 }
 
 void
-com_supio_cleanup(arg)
-	void *arg;
+com_supio_cleanup(void *arg)
 {
 	struct com_softc *sc = arg;
 

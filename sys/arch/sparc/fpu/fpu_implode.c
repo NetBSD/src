@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.7.4.2 2002/01/10 19:48:49 thorpej Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.7.4.3 2002/02/11 20:09:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -279,7 +279,9 @@ fpu_ftox(fe, fp, res)
 		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
 		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
 			break;
-		return (sign ? -i : i);
+		if (sign) i = -i;
+		res[1] = (int)i;
+		return (i>>32);
 
 	default:		/* Inf, qNaN, sNaN */
 		break;
@@ -506,6 +508,10 @@ fpu_implode(fe, fp, type, space)
 	int type;
 	register u_int *space;
 {
+
+	DPRINTF(FPE_REG, ("\n imploding: "));
+	DUMPFPN(FPE_REG, fp);
+	DPRINTF(FPE_REG, ("\n"));
 
 	switch (type) {
 

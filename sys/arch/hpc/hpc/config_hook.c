@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.1.6.1 2002/01/10 19:43:17 thorpej Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.1.6.2 2002/02/11 20:07:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -53,6 +53,7 @@ struct hook_rec {
 
 LIST_HEAD(hook_list, hook_rec);
 struct hook_list hook_lists[CONFIG_HOOK_NTYPES];
+struct hook_list call_list;
 
 void
 config_hook_init()
@@ -62,23 +63,22 @@ config_hook_init()
 	for (i = 0; i < CONFIG_HOOK_NTYPES; i++) {
 		LIST_INIT(&hook_lists[i]);
 	}
+	LIST_INIT(&call_list);
 }
 
 config_hook_tag
 config_hook(int type, long id, enum config_hook_mode mode,
     int (*func)(void *, int, long, void *), void *ctx)
 {
-	struct hook_rec *hr, *prev_hr;
+	struct hook_rec *hr, *cr, *prev_hr;
 	int s;
 
-	/* Check type value. */
+	/* check type value */
 	if (type < 0 || CONFIG_HOOK_NTYPES <= type) {
 		panic("config_hook: invalid hook type");
 	}
 
-	/*
-	 * Check mode compatibility.
-	 */
+	/* check mode compatibility */
 	prev_hr = NULL;
 	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
 	    hr = LIST_NEXT(hr, hr_link)) {
@@ -115,6 +115,7 @@ config_hook(int type, long id, enum config_hook_mode mode,
 		break;
 	}
 
+	/* allocate new record */
 	hr = malloc(sizeof(*hr), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (hr == NULL)
 		panic("config_hook: malloc failed");
@@ -127,6 +128,22 @@ config_hook(int type, long id, enum config_hook_mode mode,
 
 	s = splhigh();
 	LIST_INSERT_HEAD(&hook_lists[type], hr, hr_link);
+
+	/* update call list */
+	for (cr = LIST_FIRST(&call_list); cr != NULL;
+	    cr = LIST_NEXT(cr, hr_link)) {
+		if (cr->hr_type == type && cr->hr_id == id) {
+			if (cr->hr_func != NULL &&
+			    cr->hr_mode != mode) {
+				panic("config_hook: incompatible mode on "
+				    "type=%d/id=%ld != %d",
+				    type, id, cr->hr_mode);
+			}
+			cr->hr_ctx = ctx;
+			cr->hr_func = func;
+			cr->hr_mode = mode;
+		}
+	}
 	splx(s);
 
 	return (hr);
@@ -136,12 +153,19 @@ void
 config_unhook(config_hook_tag hrx)
 {
 	int s;
-	struct hook_rec *hr = (struct hook_rec*)hrx;
+	struct hook_rec *hr = (struct hook_rec*)hrx, *cr;
 
 	if (hr->hr_link.le_next != NULL) {
 		s = splhigh();
 		LIST_REMOVE(hr, hr_link);
 		hr->hr_link.le_next = NULL;
+		/* update call list */
+		for (cr = LIST_FIRST(&call_list); cr != NULL;
+		    cr = LIST_NEXT(cr, hr_link)) {
+			if (cr->hr_type == hr->hr_type &&
+			    cr->hr_id == hr->hr_id)
+				cr->hr_func = NULL;
+		}
 		splx(s);
 	}
 	free(hr, M_DEVBUF);
@@ -165,6 +189,74 @@ config_hook_call(int type, long id, void *msg)
 			res = (*hr->hr_func)(hr->hr_ctx, type, id, msg);
 		}
 	}
+
+	return (res);
+}
+
+config_hook_tag
+config_connect(int type, long id)
+{
+	int s;
+	struct hook_rec *cr, *hr;
+
+	/* check type value */
+	if (type < 0 || CONFIG_HOOK_NTYPES <= type) {
+		panic("config_hook: invalid hook type");
+	}
+
+	/* allocate new record */
+	cr = malloc(sizeof(*hr), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (cr == NULL)
+		panic("config_connect: malloc failed");
+
+	cr->hr_func = NULL;
+	cr->hr_type = type;
+	cr->hr_id = id;
+
+	s = splhigh();
+	/* insert the record into the call list */
+	LIST_INSERT_HEAD(&call_list, cr, hr_link);
+
+	/* scan hook list */
+	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
+	    hr = LIST_NEXT(hr, hr_link)) {
+		if (hr->hr_id == id) {
+			if (hr->hr_mode == CONFIG_HOOK_SHARE)
+				panic("config_connect: can't connect with "
+				    "shared hook, type=%d id=%ld\n", type, id);
+			cr->hr_ctx = hr->hr_ctx;
+			cr->hr_func = hr->hr_func;
+			cr->hr_mode = hr->hr_mode;
+		}
+	}
+	splx(s);
+
+	return (cr);
+}
+
+void
+config_disconnect(config_call_tag crx)
+{
+	int s;
+	struct hook_rec *cr = (struct hook_rec*)crx;
+
+	s = splhigh();
+	LIST_REMOVE(cr, hr_link);
+	splx(s);
+
+	free(cr, M_DEVBUF);
+}
+
+int
+config_connected_call(config_call_tag crx, void *msg)
+{
+	int res;
+	struct hook_rec *cr = (struct hook_rec*)crx;
+
+	if (cr->hr_func != NULL)
+		res = (*cr->hr_func)(cr->hr_ctx, cr->hr_type, cr->hr_id, msg);
+	else
+		res = -1;
 
 	return (res);
 }

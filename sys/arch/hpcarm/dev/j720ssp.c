@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.2.2.1 2002/01/10 19:43:37 thorpej Exp $ */
+/* $NetBSD: j720ssp.c,v 1.2.2.2 2002/02/11 20:08:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -83,9 +83,8 @@
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/bootinfo.h>
 
-#include <hpc/hpc/bootinfo.h>
-#include <hpc/hpc/config_hook.h>
 #include <hpcarm/dev/sed1356var.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.6.2.2 2002/01/10 19:42:33 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.6.2.3 2002/02/11 20:07:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -89,6 +89,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <arm/undefined.h>
 
 #include <evbarm/integrator/integrator_boot.h>
@@ -769,7 +770,7 @@ initarm(bootinfo)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_icache_sync_all();
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

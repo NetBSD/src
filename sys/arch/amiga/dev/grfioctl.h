@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.13.34.1 2001/08/25 06:15:05 thorpej Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.13.34.2 2002/02/11 20:06:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@ struct grfdyninfo {
 	int	gdi_dwidth;		/* displayed part width */
 	int	gdi_dheight;		/* displayed part height */
 	int	gdi_dx;			/* displayed part x offset */
-	int	gdi_dy;			/* displayed part y offset */ 
+	int	gdi_dy;			/* displayed part y offset */
 };
 
 struct	grfinfo {
@@ -79,7 +79,7 @@ struct	grfinfo {
 };
 
 
-/* video mode, should be display-independant, but it might need 
+/* video mode, should be display-independant, but it might need
    modifications in the future to really become hardware-independant. */
 
 struct grfvideo_mode {
@@ -137,7 +137,7 @@ struct grfvideo_mode {
 /*
  * generic framebuffer-related ioctls. These are somewhat
  * similar to SunOS fb-ioctls since I liked them reading
- * thru the X11-server code. 
+ * thru the X11-server code.
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.38.4.1 2002/01/10 19:51:23 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.38.4.2 2002/02/11 20:09:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <compat/linux/arch/powerpc/linux_syscall.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_syscall.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_syscall.h>
 #else
 #define	LINUX_SYS_MAXSYSCALL	0
 #endif

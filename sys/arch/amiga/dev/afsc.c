@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.27 2001/04/25 17:53:06 bouyer Exp $	*/
+/*	$NetBSD: afsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,6 +36,9 @@
  *	@(#)dma.c
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -52,11 +55,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void afscattach __P((struct device *, struct device *, void *));
-int afscmatch __P((struct device *, struct cfdata *, void *));
-int afsc_dmaintr __P((void *));
+void afscattach(struct device *, struct device *, void *);
+int afscmatch(struct device *, struct cfdata *, void *);
+int afsc_dmaintr(void *);
 #ifdef DEBUG
-void afsc_dump __P((void));
+void afsc_dump(void);
 #endif
 
 
@@ -75,10 +78,7 @@ struct cfattach aftsc_ca = {
  * if we are a Commodore Amiga A4091 or possibly an A4000T
  */
 int
-afscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+afscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 	siop_regmap_p rp;
@@ -107,9 +107,7 @@ afscmatch(pdp, cfp, auxp)
 }
 
 void
-afscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+afscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
@@ -170,8 +168,7 @@ afscattach(pdp, dp, auxp)
 }
 
 int
-afsc_dmaintr(arg)
-	void *arg;
+afsc_dmaintr(void *arg)
 {
 	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
@@ -196,7 +193,7 @@ afsc_dmaintr(arg)
 
 #ifdef DEBUG
 void
-afsc_dump()
+afsc_dump(void)
 {
 	extern struct cfdriver afsc_cd;
 	int i;

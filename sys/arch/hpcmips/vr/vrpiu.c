@@ -1,7 +1,7 @@
-/*	$NetBSD: vrpiu.c,v 1.13.2.2 2002/01/10 19:44:17 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.13.2.3 2002/02/11 20:08:15 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
+ * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
  * Copyright (c) 2000-2001 SATO Kazumi, All rights reserved.
  * Copyright (c) 1999-2001 PocketBSD Project. All rights reserved.
  *
@@ -52,9 +52,8 @@
 #include <dev/hpc/hpcbatteryvar.h>
 #include <dev/hpc/hpcbatterytable.h>
 
-#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vrcpudef.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
 #include <hpcmips/vr/vrpiureg.h>
@@ -182,6 +181,7 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_unit = va->va_unit;
 	sc->sc_vrip = va->va_vc;
 
 	sc->sc_interval = scan_interval(WSMOUSE_RES_DEFAULT);
@@ -252,7 +252,7 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 
 	/* install interrupt handler and enable interrupt */
 	if (!(sc->sc_handler = 
-	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	    vrip_intr_establish(sc->sc_vrip, sc->sc_unit, 0, IPL_TTY,
 		vrpiu_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;
@@ -325,7 +325,7 @@ vrpiu_ad_enable(void *v)
 		return EBUSY;
 
 	/* supply clock to PIU */
-	__vrcmu_supply(CMUMASK_PIU, 1);
+	vrip_power(sc->sc_vrip, sc->sc_unit, 1);
 
 	/* set scan interval */
 	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
@@ -378,7 +378,7 @@ vrpiu_ad_disable(void *v)
 		vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 		/* mask clock to PIU */
-		__vrcmu_supply(CMUMASK_PIU, 0);
+		vrip_power(sc->sc_vrip, sc->sc_unit, 0);
 	}
 }
 
@@ -395,7 +395,7 @@ vrpiu_tp_enable(void *v)
 		return EBUSY;
 
 	/* supply clock to PIU */
-	__vrcmu_supply(CMUMASK_PIU, 1);
+	vrip_power(sc->sc_vrip, sc->sc_unit, 1);
 
 	/* set scan interval */
 	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
@@ -450,7 +450,7 @@ vrpiu_tp_disable(void *v)
 		vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 		/* mask clock to PIU */
-		__vrcmu_supply(CMUMASK_PIU, 0);
+		vrip_power(sc->sc_vrip, sc->sc_unit, 0);
 	}
 }
 

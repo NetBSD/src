@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.6.1 2002/01/10 19:37:50 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.6.2 2002/02/11 20:07:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -67,7 +67,7 @@ arm32_sync_icache(p, args, retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	cpu_cache_syncI_rng(ua.addr, ua.len);
+	cpu_icache_sync_range(ua.addr, ua.len);
 
 	*retval = 0;
 	return(0);

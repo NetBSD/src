@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.134.2.2 2002/01/10 19:45:39 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.134.2.3 2002/02/11 20:08:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -458,7 +458,7 @@ Lberr40:
 
 ENTRY_NOPROFILE(busaddrerr2030)
 #if !(defined(M68020) || defined(M68030))
-	jra	_badtrap
+	jra	_C_LABEL(badtrap)
 #else
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh_mmu.h,v 1.1 2001/02/09 18:35:19 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_mmu.h,v 1.1.6.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,7 +50,7 @@ private:
 public:
 	MemoryManager_SHMMU(Console *&cons, size_t pagesize)
 		: MemoryManager(cons, pagesize) {
-		DPRINTF((TEXT("Use SH hardware MMU.\n")));
+		DPRINTF((TEXT("MemoryManager: SH3 MMU\n")));
 	}
 	virtual ~MemoryManager_SHMMU();
 	BOOL init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.67.2.1 2002/01/10 20:04:24 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.67.2.2 2002/02/11 20:10:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.1 2002/01/10 20:04:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.67.2.2 2002/02/11 20:10:43 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -363,7 +363,7 @@ nfs_disconnect(nmp)
 			/*
 			 * soshutdown() above should wake up the current
 			 * listener.
-			 * Now wake up those waiting for the recive lock, and
+			 * Now wake up those waiting for the receive lock, and
 			 * wait for them to go away unhappy, to prevent *nmp
 			 * from evaporating while they're sleeping.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.27 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: flsc.c,v 1.27.2.1 2002/02/11 20:06:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -43,6 +43,9 @@
 
 #include "opt_ddb.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.27.2.1 2002/02/11 20:06:52 jdolecek Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +73,8 @@
 #include <amiga/dev/flscvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void	flscattach	__P((struct device *, struct device *, void *));
-int	flscmatch	__P((struct device *, struct cfdata *, void *));
+void	flscattach(struct device *, struct device *, void *);
+int	flscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
 struct cfattach flsc_ca = {
@@ -81,17 +84,17 @@ struct cfattach flsc_ca = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	flsc_read_reg __P((struct ncr53c9x_softc *, int));
-void	flsc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	flsc_dma_isintr __P((struct ncr53c9x_softc *));
-void	flsc_dma_reset __P((struct ncr53c9x_softc *));
-int	flsc_dma_intr __P((struct ncr53c9x_softc *));
-int	flsc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	flsc_dma_go __P((struct ncr53c9x_softc *));
-void	flsc_dma_stop __P((struct ncr53c9x_softc *));
-int	flsc_dma_isactive __P((struct ncr53c9x_softc *));
-void	flsc_clear_latched_intr __P((struct ncr53c9x_softc *));
+u_char	flsc_read_reg(struct ncr53c9x_softc *, int);
+void	flsc_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	flsc_dma_isintr(struct ncr53c9x_softc *);
+void	flsc_dma_reset(struct ncr53c9x_softc *);
+int	flsc_dma_intr(struct ncr53c9x_softc *);
+int	flsc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+void	flsc_dma_go(struct ncr53c9x_softc *);
+void	flsc_dma_stop(struct ncr53c9x_softc *);
+int	flsc_dma_isactive(struct ncr53c9x_softc *);
+void	flsc_clear_latched_intr(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue flsc_glue = {
 	flsc_read_reg,
@@ -118,10 +121,7 @@ extern int shift_nosync;
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-flscmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+flscmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zbus_args *zap;
 
@@ -140,9 +140,7 @@ flscmatch(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-flscattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+flscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct flsc_softc *fsc = (void *)self;
 	struct ncr53c9x_softc *sc = &fsc->sc_ncr53c9x;
@@ -226,9 +224,7 @@ flscattach(parent, self, aux)
  */
 
 u_char
-flsc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+flsc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
@@ -236,10 +232,7 @@ flsc_read_reg(sc, reg)
 }
 
 void
-flsc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+flsc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 	struct ncr53c9x_tinfo *ti;
@@ -288,8 +281,7 @@ flsc_write_reg(sc, reg, val)
 }
 
 int
-flsc_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 	unsigned hardbits;
@@ -318,8 +310,7 @@ flsc_dma_isintr(sc)
 }
 
 void
-flsc_clear_latched_intr(sc)
-	struct ncr53c9x_softc *sc;
+flsc_clear_latched_intr(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
@@ -328,8 +319,7 @@ flsc_clear_latched_intr(sc)
 }
 
 void
-flsc_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 struct ncr53c9x_tinfo *ti;
@@ -356,8 +346,7 @@ if (fsc->sc_active) {
 }
 
 int
-flsc_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_intr(struct ncr53c9x_softc *sc)
 {
 	register struct flsc_softc *fsc = (struct flsc_softc *)sc;
 	register u_char	*p;
@@ -485,12 +474,8 @@ if (fsc->sc_dmasize < 8 && cnt)
 }
 
 int
-flsc_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+               int datain, size_t *dmasize)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 	paddr_t pa;
@@ -633,8 +618,7 @@ flsc_dma_setup(sc, addr, len, datain, dmasize)
 }
 
 void
-flsc_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
@@ -652,8 +636,7 @@ flsc_dma_go(sc)
 }
 
 void
-flsc_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
@@ -666,8 +649,7 @@ flsc_dma_stop(sc)
 }
 
 int
-flsc_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+flsc_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 

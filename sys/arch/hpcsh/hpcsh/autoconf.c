@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.1 2002/02/11 20:08:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>

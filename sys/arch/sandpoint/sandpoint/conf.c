@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2001/05/10 01:23:23 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.1 2002/02/11 20:08:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,6 +182,9 @@ cdev_decl(wsmux);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -249,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 55: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 56: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 57: i4b phone device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 58: clockctl pseudo device */
 
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -344,6 +348,12 @@ static int chrtoblktbl[] = {
 	/* 50 */	NODEV,
 	/* 51 */	18,
 	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	NODEV,
+	/* 58 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.37.2.2 2002/01/10 19:44:23 thorpej Exp $
+#	$NetBSD: CARDBUS,v 1.37.2.3 2002/02/11 20:08:19 jdolecek Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.37.2.2 $"
+#ident		"CARDBUS-$Revision: 1.37.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -70,6 +70,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -458,8 +460,8 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 #aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -785,6 +787,7 @@ clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
@@ -837,6 +840,7 @@ audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at emuxki?
+audio*	at esa?
 audio*	at esl?
 audio*	at esm?
 audio*	at eso?

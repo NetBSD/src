@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.7.2.3 2002/01/10 19:53:56 thorpej Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7.2.4 2002/02/11 20:09:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.3 2002/01/10 19:53:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.4 2002/02/11 20:09:40 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -624,6 +624,9 @@ hpcfb_power(int why, void *arg)
 {
 	struct hpcfb_softc *sc = arg;
 
+	if (sc->sc_dc == NULL)
+		return;	/* You have no screen yet. */
+
 	switch (why) {
 	case PWR_STANDBY:
 		break;
@@ -694,11 +697,10 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
-	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dc == NULL)
 		return (ENOMEM);
 
-	memset(dc, 0, sizeof(struct hpcfb_devconfig));
 	dc->dc_sc = sc;
 	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0)
 		return (EINVAL);
@@ -731,12 +733,11 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
 	dc->dc_tvram = malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
-	    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dc->dc_tvram == NULL){
 		free(dc, M_DEVBUF);
 		return (ENOMEM);
 	}
-	memset(dc->dc_tvram, 0, sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 				
 	*curxp = 0;
 	*curyp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.h,v 1.10.16.1 2001/09/13 01:12:57 thorpej Exp $	*/
+/*	$NetBSD: cia.h,v 1.10.16.2 2002/02/11 20:06:44 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 /*
  * This is a rewrite (retype) of the Amiga's CIA chip register map, based
  * on the Hardware Reference Manual.  It is NOT based on the Amiga's
- *  hardware/cia.h.  
+ *  hardware/cia.h.
  */
 
 #ifndef _AMIGA_CIA_
@@ -138,8 +138,8 @@ vaddr_t CIAAbase, CIABbase, CIAADDR;
 #define CLRDSR(c) (c |= CIAB_PRA_DSR)
 #define ISDSR(c)  (!(c & CIAB_PRA_DSR))
 
-void dispatch_cia_ints __P((int, int));
-void ciaa_intr __P((void));
-void ciab_intr __P((void));
+void dispatch_cia_ints(int, int);
+void ciaa_intr(void);
+void ciab_intr(void);
 
 #endif /* _AMIGA_CIA_ */

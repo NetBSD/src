@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89.2.3 2002/01/10 19:37:12 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89.2.4 2002/02/11 20:06:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -110,6 +110,9 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89.2.4 2002/02/11 20:06:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,8 +189,8 @@ int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
-static void	pmap_check_wiring __P((char *, vaddr_t));
-static void	pmap_pvdump __P((paddr_t));
+static void	pmap_check_wiring(char *, vaddr_t);
+static void	pmap_pvdump(paddr_t);
 #else
 #define	PMAP_DPRINTF(l, x)
 #endif
@@ -302,25 +305,25 @@ extern const vaddr_t amiga_uptbase;
 
 extern paddr_t z2mem_start;
 
-extern vaddr_t reserve_dumppages __P((vaddr_t));
+extern vaddr_t reserve_dumppages(vaddr_t);
 
-boolean_t	pmap_testbit __P((paddr_t, int));
-void		pmap_enter_ptpage __P((pmap_t, vaddr_t)); 
-static void	pmap_ptpage_addref __P((vaddr_t));
-static int	pmap_ptpage_delref __P((vaddr_t));
-static void	pmap_changebit __P((vaddr_t, int, boolean_t));
-struct pv_entry * pmap_alloc_pv __P((void));
-void		pmap_free_pv __P((struct pv_entry *));
-void		pmap_pinit __P((pmap_t));
-void		pmap_release __P((pmap_t));
-static void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
+boolean_t	pmap_testbit(paddr_t, int);
+void		pmap_enter_ptpage(pmap_t, vaddr_t);
+static void	pmap_ptpage_addref(vaddr_t);
+static int	pmap_ptpage_delref(vaddr_t);
+static void	pmap_changebit(vaddr_t, int, boolean_t);
+struct pv_entry * pmap_alloc_pv(void);
+void		pmap_free_pv(struct pv_entry *);
+void		pmap_pinit(pmap_t);
+void		pmap_release(pmap_t);
+static void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 
-static void	amiga_protection_init __P((void));
-void		pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
+static void	amiga_protection_init(void);
+void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 
 /* pmap_remove_mapping flags */
 #define		PRM_TFLUSH	0x01
-#define		PRM_CFLUSH	0x02 
+#define		PRM_CFLUSH	0x02
 #define		PRM_KEEPPTPAGE	0x04
 
 
@@ -427,12 +430,12 @@ pmap_bootstrap(firstaddr, loadaddr)
 		 * XXX is: enabled again, but check real size and position.
 		 * We check z2mem_start is in this segment, and set its end
 		 * to the z2mem_start.
-		 * 
+		 *
 		 */
 		if ((fromads <= z2mem_start) && (toads > z2mem_start))
 			toads = z2mem_start;
 
-		uvm_page_physload(atop(fromads), atop(toads), 
+		uvm_page_physload(atop(fromads), atop(toads),
 		    atop(fromads), atop(toads), (fromads & 0xff000000) ?
 		    VM_FREELIST_DEFAULT : VM_FREELIST_ZORROII);
 		physmem += (toads - fromads) / NBPG;
@@ -481,7 +484,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	 ,1			)
 	SYSMAP(caddr_t	,vmpte	   ,vmmap	 ,1			)
 	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr   ,btoc(MSGBUFSIZE)	)
-	
+
 	DCIS();
 
 	virtual_avail = reserve_dumppages(va);
@@ -599,7 +602,7 @@ pmap_init()
 
 	/*
 	 * Allocate physical memory for kernel PT pages and their management.
-	 * we need enough pages to map the page tables for each process 
+	 * we need enough pages to map the page tables for each process
 	 * plus some slop.
 	 */
 	npg = howmany(((maxproc + 16) * AMIGA_UPTSIZE / NPTEPG), NBPG);
@@ -1289,19 +1292,19 @@ validate:
 	 */
 #if defined(M68040) || defined(M68060)
 #if DEBUG
-	if (pmapdebug & 0x10000 && mmutype == MMU_68040 && 
+	if (pmapdebug & 0x10000 && mmutype == MMU_68040 &&
 	    pmap == pmap_kernel()) {
 		char *s;
-		if (va >= amiga_uptbase && 
+		if (va >= amiga_uptbase &&
 		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
 			s = "UPT";
-		else if (va >= (u_int)Sysmap && 
+		else if (va >= (u_int)Sysmap &&
 		    va < ((u_int)Sysmap + AMIGA_KPTSIZE))
 			s = "KPT";
-		else if (va >= (u_int)pmap->pm_stab && 
+		else if (va >= (u_int)pmap->pm_stab &&
 		    va < ((u_int)pmap->pm_stab + AMIGA_STSIZE))
 			s = "KST";
-		else if (curproc && 
+		else if (curproc &&
 		    va >= (u_int)curproc->p_vmspace->vm_map.pmap->pm_stab &&
 		    va < ((u_int)curproc->p_vmspace->vm_map.pmap->pm_stab +
 		    AMIGA_STSIZE))
@@ -1381,7 +1384,7 @@ pmap_kenter_pa(va, pa, prot)
 	 * Segment table entry not valid, we need a new PT page
 	 */
 
-	if (!pmap_ste_v(pmap, va)) { 
+	if (!pmap_ste_v(pmap, va)) {
 		s = splvm();
 		pmap_enter_ptpage(pmap, va);
 		splx(s);
@@ -2465,7 +2468,7 @@ pmap_enter_ptpage(pmap, va)
 #if defined(M68060)
 			stpa = (u_int)pmap->pm_stpa;
 			if (cputype == CPU_68060) {
-				while (stpa < (u_int)pmap->pm_stpa + 
+				while (stpa < (u_int)pmap->pm_stpa +
 				    AMIGA_STSIZE) {
 					pmap_changebit(stpa, PG_CCB, 0);
 					pmap_changebit(stpa, PG_CI, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.26.2.1 2002/01/10 19:44:12 thorpej Exp $	*/
+/*	$NetBSD: vr.c,v 1.26.2.2 2002/02/11 20:08:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -52,8 +52,6 @@
 #include <machine/platid_mask.h>
 
 #include <dev/hpc/hpckbdvar.h>
-
-#include <hpcmips/hpcmips/machdep.h>	/* cpu_name, mem_cluster */
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>

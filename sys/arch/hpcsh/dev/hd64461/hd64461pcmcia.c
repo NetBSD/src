@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.2 2002/01/10 19:44:20 thorpej Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.3 2002/02/11 20:08:16 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#define HD64461PCMCIA_DEBUG
+
+#include "debug_hpcsh.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +47,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#ifdef DEBUG
-#include <hpcsh/hpcsh/debug.h>
-#endif
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -65,18 +62,11 @@
 
 #include "locators.h"
 
-#ifdef HD64461PCMCIA_DEBUG
-int	hd64461pcmcia_debug = 1;
-#define	DPRINTF(fmt, args...)						\
-	if (hd64461pcmcia_debug)					\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#define	DPRINTFN(n, arg)						\
-	if (hd64461pcmcia_debug > (n))					\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#else
-#define	DPRINTF(arg...)		((void)0)
-#define DPRINTFN(n, arg...)	((void)0)
+#ifdef	HD64461PCMCIA_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	hd64461pcmcia_debug
 #endif
+#include <machine/debug.h>
 
 enum controller_channel {
 	CHANNEL_0 = 0,
@@ -164,75 +154,80 @@ struct hd64461pcmcia_softc {
 	struct hd64461pcmcia_channel sc_ch[CHANNEL_MAX];
 };
 
-static int _chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
+STATIC int hd64461pcmcia_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
     struct pcmcia_mem_handle *);
-static void _chip_mem_free(pcmcia_chipset_handle_t,
+STATIC void hd64461pcmcia_chip_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
-static int _chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+STATIC int hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
     bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
-static void _chip_mem_unmap(pcmcia_chipset_handle_t, int);
-static int _chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
+STATIC void hd64461pcmcia_chip_mem_unmap(pcmcia_chipset_handle_t, int);
+STATIC int hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
     bus_size_t, bus_size_t, struct pcmcia_io_handle *);
-static void _chip_io_free(pcmcia_chipset_handle_t, struct pcmcia_io_handle *);
-static int _chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+STATIC void hd64461pcmcia_chip_io_free(pcmcia_chipset_handle_t,
+    struct pcmcia_io_handle *);
+STATIC int hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
     bus_size_t, struct pcmcia_io_handle *, int *);
-static void _chip_io_unmap(pcmcia_chipset_handle_t, int);
-static void _chip_socket_enable(pcmcia_chipset_handle_t);
-static void _chip_socket_disable(pcmcia_chipset_handle_t);
-static void *_chip_intr_establish(pcmcia_chipset_handle_t,
+STATIC void hd64461pcmcia_chip_io_unmap(pcmcia_chipset_handle_t, int);
+STATIC void hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t);
+STATIC void hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t);
+STATIC void *hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *);
-static void _chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
+STATIC void hd64461pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t,
+    void *);
 
-static struct pcmcia_chip_functions hd64461pcmcia_functions = {
-	_chip_mem_alloc,
-	_chip_mem_free,
-	_chip_mem_map,
-	_chip_mem_unmap,
-	_chip_io_alloc,
-	_chip_io_free,
-	_chip_io_map,
-	_chip_io_unmap,
-	_chip_intr_establish,
-	_chip_intr_disestablish,
-	_chip_socket_enable,
-	_chip_socket_disable,
+STATIC struct pcmcia_chip_functions hd64461pcmcia_functions = {
+	hd64461pcmcia_chip_mem_alloc,
+	hd64461pcmcia_chip_mem_free,
+	hd64461pcmcia_chip_mem_map,
+	hd64461pcmcia_chip_mem_unmap,
+	hd64461pcmcia_chip_io_alloc,
+	hd64461pcmcia_chip_io_free,
+	hd64461pcmcia_chip_io_map,
+	hd64461pcmcia_chip_io_unmap,
+	hd64461pcmcia_chip_intr_establish,
+	hd64461pcmcia_chip_intr_disestablish,
+	hd64461pcmcia_chip_socket_enable,
+	hd64461pcmcia_chip_socket_disable,
 };
 
-static int hd64461pcmcia_match(struct device *, struct cfdata *, void *);
-static void hd64461pcmcia_attach(struct device *, struct device *, void *);
-static int hd64461pcmcia_print(void *, const char *);
-static int hd64461pcmcia_submatch(struct device *, struct cfdata *, void *);
+STATIC int hd64461pcmcia_match(struct device *, struct cfdata *, void *);
+STATIC void hd64461pcmcia_attach(struct device *, struct device *, void *);
+STATIC int hd64461pcmcia_print(void *, const char *);
+STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *, void *);
 
 struct cfattach hd64461pcmcia_ca = {
 	sizeof(struct hd64461pcmcia_softc), hd64461pcmcia_match,
 	hd64461pcmcia_attach
 };
 
-static void hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *,
+STATIC void hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *,
     enum controller_channel);
 /* hot plug */
-static void hd64461pcmcia_create_event_thread(void *);
-static void hd64461pcmcia_event_thread(void *);
-static void queue_event(struct hd64461pcmcia_channel *,
+STATIC void hd64461pcmcia_create_event_thread(void *);
+STATIC void hd64461pcmcia_event_thread(void *);
+STATIC void queue_event(struct hd64461pcmcia_channel *,
     enum hd64461pcmcia_event_type);
 /* interrupt handler */
-static int hd64461pcmcia_channel0_intr(void *);
-static int hd64461pcmcia_channel1_intr(void *);
+STATIC int hd64461pcmcia_channel0_intr(void *);
+STATIC int hd64461pcmcia_channel1_intr(void *);
 /* card status */
-static enum hd64461pcmcia_event_type detect_card(enum controller_channel);
-static void power_off(enum controller_channel) __attribute__((__unused__));
-static void power_on(enum controller_channel) __attribute__((__unused__));
+STATIC enum hd64461pcmcia_event_type detect_card(enum controller_channel);
+STATIC void hd64461pcmcia_power_off(enum controller_channel)
+	__attribute__((__unused__));
+STATIC void hd64461pcmcia_power_on(enum controller_channel)
+	__attribute__((__unused__));
 /* memory window access ops */
-static void memory_window_mode(enum controller_channel,
+STATIC void hd64461pcmcia_memory_window_mode(enum controller_channel,
     enum memory_window_mode)__attribute__((__unused__));
-static void memory_window_16(enum controller_channel, enum memory_window_16);
+STATIC void hd64461pcmcia_memory_window_16(enum controller_channel,
+    enum memory_window_16);
 /* bus width */
-static void set_bus_width(enum controller_channel, int);
-#ifdef DEBUG
-static void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
+STATIC void hd64461_set_bus_width(enum controller_channel, int);
+#ifdef HD64461PCMCIA_DEBUG
+STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 #endif
 /* fix SH3 Area[56] bug */
-static void fixup_sh3_pcmcia_area(bus_space_tag_t);
+STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
 #define _BUS_SPACE_ACCESS_HOOK()					\
 {									\
 	u_int8_t dummy __attribute__((__unused__)) =			\
@@ -246,7 +241,7 @@ _BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
 
 #define DELAY_MS(x)	delay((x) * 1000)
 
-static int
+int
 hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -254,7 +249,7 @@ hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (ha->ha_module_id == HD64461_MODULE_PCMCIA);
 }
 
-static void
+void
 hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -264,9 +259,8 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	
 	printf("\n");
 
-#ifdef DEBUG
-	if (bootverbose)
-		hd64461pcmcia_info(sc);
+#ifdef HD64461PCMCIA_DEBUG
+	hd64461pcmcia_info(sc);
 #endif
 	/* Channel 0/1 common CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
@@ -276,7 +270,7 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
 }
 
-static void
+void
 hd64461pcmcia_create_event_thread(void *arg)
 {
 	struct hd64461pcmcia_softc *sc = arg;
@@ -288,7 +282,7 @@ hd64461pcmcia_create_event_thread(void *arg)
 	KASSERT(error == 0);
 }
 
-static void
+void
 hd64461pcmcia_event_thread(void *arg)
 {
 	struct hd64461pcmcia_softc *sc = arg;
@@ -323,7 +317,7 @@ hd64461pcmcia_event_thread(void *arg)
 	/* NOTREACHED */
 }
 
-static int
+int
 hd64461pcmcia_print(void *arg, const char *pnp)
 {
 
@@ -333,7 +327,7 @@ hd64461pcmcia_print(void *arg, const char *pnp)
 	return (UNCONF);
 }
 
-static int
+int
 hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
@@ -356,7 +350,7 @@ hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-static void
+void
 hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
     enum controller_channel channel)
 {
@@ -393,7 +387,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	}
 
 	/* I/O port extent and interrupt staff */
-	_chip_socket_disable(ch); /* enable CSC interrupt only */
+	hd64461pcmcia_chip_socket_disable(ch); /* enable CSC interrupt only */
 
 	if (channel == CHANNEL_0) {
 		ch->ch_iobase = 0;
@@ -406,7 +400,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 		hd64461_intr_establish(HD64461_IRQ_PCC0, IST_LEVEL, IPL_TTY,
 		    hd64461pcmcia_channel0_intr, ch);
 	} else {
-		set_bus_width(CHANNEL_1, PCMCIA_WIDTH_IO16);
+		hd64461_set_bus_width(CHANNEL_1, PCMCIA_WIDTH_IO16);
 		hd64461_intr_establish(HD64461_IRQ_PCC1, IST_EDGE, IPL_TTY,
 		    hd64461pcmcia_channel1_intr, ch);
 	}
@@ -425,7 +419,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	}
 }
 
-static int
+int
 hd64461pcmcia_channel0_intr(void *arg)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)arg;
@@ -449,7 +443,7 @@ hd64461pcmcia_channel0_intr(void *arg)
 	return ret;
 }
 
-static int
+int
 hd64461pcmcia_channel1_intr(void *arg)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)arg;
@@ -473,7 +467,7 @@ hd64461pcmcia_channel1_intr(void *arg)
 	return ret;
 }
 
-static void
+void
 queue_event(struct hd64461pcmcia_channel *ch,
     enum hd64461pcmcia_event_type type)
 {
@@ -519,8 +513,9 @@ queue_event(struct hd64461pcmcia_channel *ch,
 /*
  * interface for pcmcia driver.
  */
-static void *
-_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+void *
+hd64461pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
+    struct pcmcia_function *pf,
     int ipl, int (*ih_func)(void *), void *ih_arg)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
@@ -549,8 +544,8 @@ _chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
 	return (void *)ih_func;
 }
 
-static void
-_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
+void
+hd64461pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
@@ -573,8 +568,8 @@ _chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	splx(s);
 }
 
-static int
-_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
+int
+hd64461pcmcia_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
     struct pcmcia_mem_handle *pcmhp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
@@ -590,14 +585,16 @@ _chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
 	return (0);
 }
 
-static void
-_chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
+void
+hd64461pcmcia_chip_mem_free(pcmcia_chipset_handle_t pch,
+    struct pcmcia_mem_handle *pcmhp)
 {
 	/* nothing to do */
 }
 
-static int
-_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
+int
+hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
+    bus_addr_t card_addr,
     bus_size_t size, struct pcmcia_mem_handle *pcmhp,
     bus_size_t *offsetp, int *windowp)
 {
@@ -630,7 +627,7 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 			goto bad;
 		
 		/* XXX bogus. check window per common memory access. */
-		memory_window_16(ch->ch_channel, window);
+		hd64461pcmcia_memory_window_16(ch->ch_channel, window);
 		*offsetp = ofs + 0x01000000; /* skip attribute area */
 		cookie->wc_window = window;
 	}
@@ -649,8 +646,8 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 	return (1);
 }
 
-static void
-_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
+void
+hd64461pcmcia_chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct hd64461pcmcia_window_cookie *cookie = (void *)window;
 
@@ -661,9 +658,9 @@ _chip_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 	free(cookie, M_DEVBUF);
 }
 
-static int
-_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
-    bus_size_t align, struct pcmcia_io_handle *pcihp)
+int
+hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
+    bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 
@@ -694,8 +691,9 @@ _chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	return (0);
 }
 
-static int
-_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
+int
+hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
+    bus_addr_t offset,
     bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
@@ -705,7 +703,7 @@ _chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 	if (ch->ch_channel == CHANNEL_1)
 		return (1);
 
-	set_bus_width(CHANNEL_0, width);
+	hd64461_set_bus_width(CHANNEL_0, width);
 
 	DPRINTF("%#lx:%#lx+%#lx %s\n", pcihp->ioh, offset, size,
 	    width_names[width]);
@@ -713,8 +711,9 @@ _chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 	return (0);
 }
 
-static void
-_chip_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
+void
+hd64461pcmcia_chip_io_free(pcmcia_chipset_handle_t pch,
+    struct pcmcia_io_handle *pcihp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 
@@ -729,14 +728,14 @@ _chip_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
 	DPRINTF("%#lx+%#lx\n", pcihp->ioh, pcihp->size);
 }
 
-static void
-_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
+void
+hd64461pcmcia_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	/* nothing to do */
 }
 
-static void
-_chip_socket_enable(pcmcia_chipset_handle_t pch)
+void
+hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
@@ -748,8 +747,8 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 	isr = HD64461_PCCISR(channel);
 	gcr = HD64461_PCCGCR(channel);
 
-	power_off(channel);
-	power_on(channel);
+	hd64461pcmcia_power_off(channel);
+	hd64461pcmcia_power_on(channel);
 #if notyet
 	{
 		int i;
@@ -778,19 +777,19 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 				printf(".");
 		}
 		printf("reset failed.\n");
-		power_off(channel);
+		hd64461pcmcia_power_off(channel);
 		return;
 	reset_ok:
 	}
 #endif /* notyet */
 	/* set Continuous 16-MB Area Mode */
 	ch->ch_memory_window_mode = MEMWIN_16M_MODE;
-	memory_window_mode(channel, ch->ch_memory_window_mode);
+	hd64461pcmcia_memory_window_mode(channel, ch->ch_memory_window_mode);
 
 	/* 
 	 * set Common memory area.
 	 */
-	memory_window_16(channel, MEMWIN_16M_COMMON_0);
+	hd64461pcmcia_memory_window_16(channel, MEMWIN_16M_COMMON_0);
 
 	/* set the card type */
 	r = hd64461_reg_read_1(gcr);
@@ -809,8 +808,8 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 	DPRINTF("OK.\n");
 }
 
-static void
-_chip_socket_disable(pcmcia_chipset_handle_t pch)
+void
+hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
@@ -820,14 +819,14 @@ _chip_socket_disable(pcmcia_chipset_handle_t pch)
 	hd64461_reg_write_1(HD64461_PCCCSCR(channel), 0);
 
 	/* power down the socket */
-	power_off(channel);
+	hd64461pcmcia_power_off(channel);
 }
 
 /*
  * Card detect
  */
-static void
-power_off(enum controller_channel channel)
+void
+hd64461pcmcia_power_off(enum controller_channel channel)
 {
 #if notyet
 	u_int8_t r;
@@ -871,8 +870,8 @@ power_off(enum controller_channel channel)
 #endif /* notyet */
 }
 
-static void
-power_on(enum controller_channel channel)
+void
+hd64461pcmcia_power_on(enum controller_channel channel)
 {
 	u_int8_t r;
 	u_int16_t r16;
@@ -962,7 +961,7 @@ power_on(enum controller_channel channel)
 	    HD64461_PCC1CSCR_REG8, 0);
 }
 
-static enum hd64461pcmcia_event_type
+enum hd64461pcmcia_event_type
 detect_card(enum controller_channel channel)
 {
 	u_int8_t r;
@@ -986,8 +985,8 @@ detect_card(enum controller_channel channel)
 /*
  * Memory window access ops.
  */
-static void
-memory_window_mode(enum controller_channel channel,
+void
+hd64461pcmcia_memory_window_mode(enum controller_channel channel,
     enum memory_window_mode mode)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
@@ -999,8 +998,9 @@ memory_window_mode(enum controller_channel channel,
 	hd64461_reg_write_1(a, r);
 }
 
-static void
-memory_window_16(enum controller_channel channel, enum memory_window_16 window)
+void
+hd64461pcmcia_memory_window_16(enum controller_channel channel,
+    enum memory_window_16 window)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
 	u_int8_t r;
@@ -1026,7 +1026,7 @@ memory_window_16(enum controller_channel channel, enum memory_window_16 window)
 }
 
 #if unused
-static void
+void
 memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
@@ -1050,8 +1050,8 @@ memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 }
 #endif
 
-static void
-set_bus_width(enum controller_channel channel, int width)
+void
+hd64461_set_bus_width(enum controller_channel channel, int width)
 {
 	u_int16_t r16;
 
@@ -1066,7 +1066,7 @@ set_bus_width(enum controller_channel channel, int width)
 	SHREG_BCR2 = r16;
 }
 
-static void
+void
 fixup_sh3_pcmcia_area(bus_space_tag_t t)
 {
 	struct hpcsh_bus_space *hbs = (void *)t;
@@ -1077,69 +1077,46 @@ fixup_sh3_pcmcia_area(bus_space_tag_t t)
 	hbs->hbs_sm_1	= _sh3_pcmcia_bug_set_multi_1;
 }
 
-#ifdef DEBUG
-static void
+#ifdef HD64461PCMCIA_DEBUG
+void
 hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 {
-	const char name[] = __FUNCTION__;
 	u_int8_t r8;
 
-	dbg_banner_start(name, sizeof name);
+	dbg_banner_function();
 	/*
 	 * PCC0
 	 */
 	printf("[PCC0 memory and I/O card (SH3 Area 6)]\n");
 	printf("PCC0 Interface Status Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0ISR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC0ISR_##m, #m)
-	DBG_BIT_PRINT(r8, P0READY);
-	DBG_BIT_PRINT(r8, P0MWP);
-	DBG_BIT_PRINT(r8, P0VS2);
-	DBG_BIT_PRINT(r8, P0VS1);
-	DBG_BIT_PRINT(r8, P0CD2);
-	DBG_BIT_PRINT(r8, P0CD1);
-	DBG_BIT_PRINT(r8, P0BVD2);
-	DBG_BIT_PRINT(r8, P0BVD1);
-#undef DBG_BIT_PRINT
+
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0ISR_##m, #m)
+	_(P0READY);_(P0MWP);_(P0VS2);_(P0VS1);_(P0CD2);_(P0CD1);
+	_(P0BVD2);_(P0BVD1);
+#undef _
 	printf("\n");
 
 	printf("PCC0 General Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0GCR_REG8);	
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC0GCR_##m, #m)
-	DBG_BIT_PRINT(r8, P0DRVE);
-	DBG_BIT_PRINT(r8, P0PCCR);
-	DBG_BIT_PRINT(r8, P0PCCT);
-	DBG_BIT_PRINT(r8, P0VCC0);
-	DBG_BIT_PRINT(r8, P0MMOD);
-	DBG_BIT_PRINT(r8, P0PA25);
-	DBG_BIT_PRINT(r8, P0PA24);
-	DBG_BIT_PRINT(r8, P0REG);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0GCR_##m, #m)
+	_(P0DRVE);_(P0PCCR);_(P0PCCT);_(P0VCC0);_(P0MMOD);
+	_(P0PA25);_(P0PA24);_(P0REG);
+#undef _
 	printf("\n");
 
 	printf("PCC0 Card Status Change Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0CSCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC0CSCR_##m, #m)
-	DBG_BIT_PRINT(r8, P0SCDI);
-	DBG_BIT_PRINT(r8, P0IREQ);
-	DBG_BIT_PRINT(r8, P0SC);
-	DBG_BIT_PRINT(r8, P0CDC);
-	DBG_BIT_PRINT(r8, P0RC);
-	DBG_BIT_PRINT(r8, P0BW);
-	DBG_BIT_PRINT(r8, P0BD);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCR_##m, #m)
+	_(P0SCDI);_(P0IREQ);_(P0SC);_(P0CDC);_(P0RC);_(P0BW);_(P0BD);
+#undef _
 	printf("\n");
 
 	printf("PCC0 Card Status Change Interrupt Enable Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0CSCIER_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC0CSCIER_##m, #m)
-	DBG_BIT_PRINT(r8, P0CRE);
-	DBG_BIT_PRINT(r8, P0SCE);
-	DBG_BIT_PRINT(r8, P0CDE);
-	DBG_BIT_PRINT(r8, P0RE);
-	DBG_BIT_PRINT(r8, P0BWE);
-	DBG_BIT_PRINT(r8, P0BDE);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCIER_##m, #m)
+	_(P0CRE);_(P0SCE);_(P0CDE);_(P0RE);_(P0BWE);_(P0BDE);
+#undef _
 	printf("\ninterrupt type: ");
 	switch (r8 & HD64461_PCC0CSCIER_P0IREQE_MASK) {
 	case HD64461_PCC0CSCIER_P0IREQE_NONE:
@@ -1158,10 +1135,9 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	printf("PCC0 Software Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0SCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC0SCR_##m, #m)
-	DBG_BIT_PRINT(r8, P0VCC1);
-	DBG_BIT_PRINT(r8, P0SWP);	
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0SCR_##m, #m)
+	_(P0VCC1);_(P0SWP);	
+#undef _
 	printf("\n");
 
 	/*
@@ -1170,59 +1146,38 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	printf("[PCC1 memory card only (SH3 Area 5)]\n");
 	printf("PCC1 Interface Status Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1ISR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC1ISR_##m, #m)
-	DBG_BIT_PRINT(r8, P1READY);
-	DBG_BIT_PRINT(r8, P1MWP);
-	DBG_BIT_PRINT(r8, P1VS2);
-	DBG_BIT_PRINT(r8, P1VS1);
-	DBG_BIT_PRINT(r8, P1CD2);
-	DBG_BIT_PRINT(r8, P1CD1);
-	DBG_BIT_PRINT(r8, P1BVD2);
-	DBG_BIT_PRINT(r8, P1BVD1);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1ISR_##m, #m)
+	_(P1READY);_(P1MWP);_(P1VS2);_(P1VS1);_(P1CD2);_(P1CD1);
+	_(P1BVD2);_(P1BVD1);
+#undef _
 	printf("\n");
 
 	printf("PCC1 General Contorol Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1GCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC1GCR_##m, #m)
-	DBG_BIT_PRINT(r8, P1DRVE);
-	DBG_BIT_PRINT(r8, P1PCCR);
-	DBG_BIT_PRINT(r8, P1VCC0);
-	DBG_BIT_PRINT(r8, P1MMOD);
-	DBG_BIT_PRINT(r8, P1PA25);
-	DBG_BIT_PRINT(r8, P1PA24);
-	DBG_BIT_PRINT(r8, P1REG);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1GCR_##m, #m)
+	_(P1DRVE);_(P1PCCR);_(P1VCC0);_(P1MMOD);_(P1PA25);_(P1PA24);_(P1REG);
+#undef _
 	printf("\n");
 
 	printf("PCC1 Card Status Change Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1CSCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC1CSCR_##m, #m)
-	DBG_BIT_PRINT(r8, P1SCDI);
-	DBG_BIT_PRINT(r8, P1CDC);
-	DBG_BIT_PRINT(r8, P1RC);
-	DBG_BIT_PRINT(r8, P1BW);
-	DBG_BIT_PRINT(r8, P1BD);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCR_##m, #m)
+	_(P1SCDI);_(P1CDC);_(P1RC);_(P1BW);_(P1BD);
+#undef _
 	printf("\n");
 
 	printf("PCC1 Card Status Change Interrupt Enable Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1CSCIER_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC1CSCIER_##m, #m)
-	DBG_BIT_PRINT(r8, P1CRE);
-	DBG_BIT_PRINT(r8, P1CDE);
-	DBG_BIT_PRINT(r8, P1RE);
-	DBG_BIT_PRINT(r8, P1BWE);
-	DBG_BIT_PRINT(r8, P1BDE);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCIER_##m, #m)
+	_(P1CRE);_(P1CDE);_(P1RE);_(P1BWE);_(P1BDE);
+#undef _
 	printf("\n");
 
 	printf("PCC1 Software Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1SCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCC1SCR_##m, #m)
-	DBG_BIT_PRINT(r8, P1VCC1);
-	DBG_BIT_PRINT(r8, P1SWP);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1SCR_##m, #m)
+	_(P1VCC1);_(P1SWP);
+#undef _
 	printf("\n");
 
 	/*
@@ -1231,30 +1186,25 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	printf("[General Control]\n");
 	printf("PCC0 Output pins Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCP0OCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCCP0OCR_##m, #m)
-	DBG_BIT_PRINT(r8, P0DEPLUP);
-	DBG_BIT_PRINT(r8, P0AEPLUP);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCCP0OCR_##m, #m)
+	_(P0DEPLUP);_(P0AEPLUP);
+#undef _
 	printf("\n");
 
 	printf("PCC1 Output pins Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCP1OCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCCP1OCR_##m, #m)
-	DBG_BIT_PRINT(r8, P1RST8MA);
-	DBG_BIT_PRINT(r8, P1RST4MA);
-	DBG_BIT_PRINT(r8, P1RAS8MA);
-	DBG_BIT_PRINT(r8, P1RAS4MA);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCCP1OCR_##m, #m)
+	_(P1RST8MA);_(P1RST4MA);_(P1RAS8MA);_(P1RAS4MA);
+#undef _
 	printf("\n");
 
 	printf("PC Card General Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCPGCR_REG8);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_PCCPGCR_##m, #m)
-	DBG_BIT_PRINT(r8, PSSDIR);
-	DBG_BIT_PRINT(r8, PSSRDWR);
-#undef DBG_BIT_PRINT
+#define _(m)	dbg_bitmask_print(r8, HD64461_PCCPGCR_##m, #m)
+	_(PSSDIR);_(PSSRDWR);
+#undef _
 	printf("\n");
 
-	dbg_banner_end();
+	dbg_banner_line();
 }
 #endif /* DEBUG */

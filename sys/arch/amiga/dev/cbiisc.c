@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.11 2001/04/25 17:53:06 bouyer Exp $	*/
+/*	$NetBSD: cbiisc.c,v 1.11.2.1 2002/02/11 20:06:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -35,6 +35,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.11.2.1 2002/02/11 20:06:51 jdolecek Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +65,8 @@
 #include <amiga/dev/cbiiscvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void	cbiiscattach	__P((struct device *, struct device *, void *));
-int	cbiiscmatch	__P((struct device *, struct cfdata *, void *));
+void	cbiiscattach(struct device *, struct device *, void *);
+int	cbiiscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
 struct cfattach cbiisc_ca = {
@@ -73,16 +76,16 @@ struct cfattach cbiisc_ca = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	cbiisc_read_reg __P((struct ncr53c9x_softc *, int));
-void	cbiisc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	cbiisc_dma_isintr __P((struct ncr53c9x_softc *));
-void	cbiisc_dma_reset __P((struct ncr53c9x_softc *));
-int	cbiisc_dma_intr __P((struct ncr53c9x_softc *));
-int	cbiisc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	cbiisc_dma_go __P((struct ncr53c9x_softc *));
-void	cbiisc_dma_stop __P((struct ncr53c9x_softc *));
-int	cbiisc_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	cbiisc_read_reg(struct ncr53c9x_softc *, int);
+void	cbiisc_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	cbiisc_dma_isintr(struct ncr53c9x_softc *);
+void	cbiisc_dma_reset(struct ncr53c9x_softc *);
+int	cbiisc_dma_intr(struct ncr53c9x_softc *);
+int	cbiisc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+void	cbiisc_dma_go(struct ncr53c9x_softc *);
+void	cbiisc_dma_stop(struct ncr53c9x_softc *);
+int	cbiisc_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue cbiisc_glue = {
 	cbiisc_read_reg,
@@ -115,17 +118,14 @@ struct {
 } cbiisc_trace[128];
 int cbiisc_trace_ptr = 0;
 int cbiisc_trace_enable = 1;
-void cbiisc_dump __P((void));
+void cbiisc_dump(void);
 #endif
 
 /*
  * if we are a Phase5 CyberSCSI II
  */
 int
-cbiiscmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cbiiscmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zbus_args *zap;
 	volatile u_char *regs;
@@ -148,9 +148,7 @@ cbiiscmatch(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-cbiiscattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cbiiscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cbiisc_softc *csc = (void *)self;
 	struct ncr53c9x_softc *sc = &csc->sc_ncr53c9x;
@@ -240,9 +238,7 @@ cbiiscattach(parent, self, aux)
  */
 
 u_char
-cbiisc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+cbiisc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
@@ -250,10 +246,7 @@ cbiisc_read_reg(sc, reg)
 }
 
 void
-cbiisc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+cbiisc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	u_char v = val;
@@ -269,8 +262,7 @@ if (cbiisc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_C
 }
 
 int
-cbiisc_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
@@ -294,8 +286,7 @@ if (/*sc->sc_nexus && sc->sc_nexus->xs->xs_control & XS_CTL_POLL &&*/ cbiisc_tra
 }
 
 void
-cbiisc_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
@@ -303,8 +294,7 @@ cbiisc_dma_reset(sc)
 }
 
 int
-cbiisc_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_intr(struct ncr53c9x_softc *sc)
 {
 	register struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	register int	cnt;
@@ -338,12 +328,8 @@ cbiisc_dma_intr(sc)
 }
 
 int
-cbiisc_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+cbiisc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+                 int datain, size_t *dmasize)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	paddr_t pa;
@@ -427,20 +413,17 @@ if (xfer != *len)
 }
 
 void
-cbiisc_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_go(struct ncr53c9x_softc *sc)
 {
 }
 
 void
-cbiisc_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_stop(struct ncr53c9x_softc *sc)
 {
 }
 
 int
-cbiisc_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+cbiisc_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
@@ -449,7 +432,7 @@ cbiisc_dma_isactive(sc)
 
 #ifdef DEBUG
 void
-cbiisc_dump()
+cbiisc_dump(void)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.1.4.2 2002/01/10 19:42:11 thorpej Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.1.4.3 2002/02/11 20:07:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -40,6 +40,7 @@
 #include <sys/termios.h>
 
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <machine/bus.h>
 
 #include <evbarm/dev/plcomreg.h>

@@ -1,8 +1,8 @@
-/*	$NetBSD: com_vrip.c,v 1.8.2.1 2002/01/10 19:44:11 thorpej Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.8.2.2 2002/02/11 20:08:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999, 2002 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,6 +52,7 @@
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/siureg.h>
@@ -60,7 +61,6 @@
 #include <dev/ic/comreg.h>
 
 #include "opt_vr41xx.h"
-#include <hpcmips/vr/vrgiuvar.h>
 #include <hpcmips/vr/com_vripvar.h>
 
 #include "locators.h"
@@ -83,7 +83,6 @@ struct com_vrip_softc {
 static int com_vrip_probe(struct device *, struct cfdata *, void *);
 static void com_vrip_attach(struct device *, struct device *, void *);
 static int com_vrip_common_probe(bus_space_tag_t, int);
-int find_comenableport_from_cfdata(int *);
 
 void vrcmu_init(void);
 void vrcmu_supply(int);
@@ -93,44 +92,10 @@ struct cfattach com_vrip_ca = {
 	sizeof(struct com_vrip_softc), com_vrip_probe, com_vrip_attach
 };
 
-/* For serial console */
-extern struct cfdata cfdata[];
-int
-find_comenableport_from_cfdata(int *port)
-{
-	platid_mask_t mask;
-	struct cfdata *cf;
-	int id;
-
-	printf ("COM enable port: ");
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (strcmp(cf->cf_driver->cd_name, "pwctl"))
-			continue;
-		mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
-		id = cf->cf_loc[HPCIOIFCF_ID];
-		if (platid_match(&platid, &mask) &&
-		    id == CONFIG_HOOK_POWERCONTROL_COM0)
-			goto found;
-	}
-	*port = -1;
-	printf ("not found\n");
-	return (0);
- found:
-	*port = cf->cf_loc[HPCIOIFCF_PORT];
-	printf ("#%d\n", *port);
-
-	return (1);
-}
-
 int
 com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,
     tcflag_t cflag, int kgdb)
 {
-	int port;
-	/* Platform dependent setting */
-	__vrcmu_supply(CMUMASK_SIU, 1);
-	if (find_comenableport_from_cfdata(&port))
-		__vrgiu_out(port, 1);	
 
 	if (!com_vrip_common_probe(iot, iobase))
 		return (EIO);	/* I can't find appropriate error number. */
@@ -166,16 +131,13 @@ com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 	
 	DPRINTF(("==com_vrip_probe"));
 
-	if (va->va_addr == VRIPCF_ADDR_DEFAULT ||
-	    va->va_intr == VRIPCF_INTR_DEFAULT) {
+	if (va->va_addr == VRIPIFCF_ADDR_DEFAULT ||
+	    va->va_unit == VRIPIFCF_UNIT_DEFAULT) {
 		printf(": need addr and intr.\n");
 		return (0);
 	}
 
-	if (!va->va_cf || !va->va_cf->cf_clock)
-		return 0; /* not yet CMU attached. Try again later. */
-
-	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
+	vrip_power(va->va_vc, va->va_unit, 1);
 
 	if (com_is_console(iot, va->va_addr, 0)) {
 		/*
@@ -205,7 +167,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPCF_PWCTL];
+	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPIFCF_PWCTL];
 
 	DPRINTF(("==com_vrip_attach"));
 
@@ -222,10 +184,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_frequency = VRCOM_FREQ;
 	/* Power management */
-	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
-	/*
-	  va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
-	*/
+	vrip_power(va->va_vc, va->va_unit, 1);
 	/* XXX, locale 'ID' must be need */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL, vsc->sc_pwctl, (void*)1);
 
@@ -233,7 +192,10 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	DPRINTF(("Establish intr"));
-	vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY, comintr, self);
+	if (!vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
+	    comintr, self)) {
+		printf("%s: can't map interrupt line.\n", sc->sc_dev.dv_xname);
+	}
 
 	DPRINTF((":return()"));
 	VPRINTF(("%s: pwctl %d\n", vsc->sc_com.sc_dev.dv_xname, vsc->sc_pwctl));

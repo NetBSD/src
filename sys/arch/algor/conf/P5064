@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.7.2.2 2002/01/10 19:36:53 thorpej Exp $
+#	$NetBSD: P5064,v 1.7.2.3 2002/02/11 20:06:39 jdolecek Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.7.2.2 $"
+#ident 		"P5064-$Revision: 1.7.2.3 $"
 
 maxusers 32
 
@@ -84,6 +84,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Bitmask for enabling the PCI IDE channels in the southbridge.
 # Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.

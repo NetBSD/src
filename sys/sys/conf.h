@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.2.3 2002/01/10 20:04:39 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.4 2002/02/11 20:10:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -465,8 +465,8 @@ but needs own kqfilter */
 /* open, close, read, write, ioctl, poll */
 #define	cdev_i4brbch_init(c,n)	cdev__ocrwip_init(c,n)
 
-/* open, close, read, write, poll */
-#define	cdev_i4btel_init(c,n)	cdev__ocrwp_init(c,n)
+/* open, close, read, write, ioctl, poll */
+#define	cdev_i4btel_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, read, ioctl */
 #define cdev_i4btrc_init(c,n)	cdev__ocri_init(c,n)

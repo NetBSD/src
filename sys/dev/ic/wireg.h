@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.9.2.1 2002/01/10 19:55:11 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.9.2.2 2002/02/11 20:09:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -513,6 +513,68 @@ struct wi_ltv_mcast {
 #define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
+struct wi_assoc {
+	u_int16_t		wi_assoc_stat;	/* Association Status */
+#define	ASSOC		1
+#define	REASSOC		2
+#define	DISASSOC	3	
+#define	ASSOCFAIL	4
+#define	AUTHFAIL	5
+	u_int8_t		wi_assoc_sta[6];	/* Station Address */
+	u_int8_t		wi_assoc_osta[6];	/* OLD Station Address */
+	u_int16_t		wi_assoc_reason;	/* Reason */
+	u_int16_t		wi_assoc_reserve;	/* Reserved */
+};
+
+#define	WI_INFO_AUTH_REQUEST	0xF202	/* Authentication Request (AP) */
+#define	WI_INFO_POWERSAVE_COUNT	0xF203	/* PowerSave User Count (AP) */
+
+/*
+ * Scan Results of Prism2 chip
+ */
+
+#define MAXAPINFO		30
+struct wi_scan_header {
+	u_int16_t		wi_reserve;	/* future use */
+	u_int16_t		wi_reason;	/* The reason this scan was initiated
+						   1: Host initiated
+						   2: Firmware initiated
+						   3: Inquiry request from host */
+};
+
+struct wi_scan_data_p2 {
+	u_int16_t		wi_chid;	/* BSS Channel ID from Probe Res.(PR)*/
+	u_int16_t		wi_noise;	/* Average Noise Level of the PR */
+	u_int16_t		wi_signal;	/* Signal Level on the PR */
+	u_int8_t		wi_bssid[6];	/* MACaddress of BSS responder from PR */
+	u_int16_t		wi_interval;	/* BSS beacon interval */
+	u_int16_t		wi_capinfo;	/* BSS Capability Information
+						   IEEE Std 802.11(1997) ,see 7.3.1.4 */
+	u_int16_t		wi_namelen;	/* Length of SSID strings */
+	u_int8_t		wi_name[32];	/* SSID strings */
+	u_int16_t		wi_suprate[5];	/* Supported Rates element from the PR
+						   IEEE Std 802.11(1997) ,see 7.3.2.2 */
+	u_int16_t		wi_rate;	/* Data rate of the PR */
+#define	WI_APRATE_1		0x0A		/* 1 Mbps */
+#define	WI_APRATE_2		0x14		/* 2 Mbps */
+#define	WI_APRATE_5		0x37		/* 5.5 Mbps */
+#define	WI_APRATE_11		0x6E		/* 11 Mbps */
+};
+
+/*
+ * Scan Results of Lucent chip
+ */
+struct wi_scan_data {
+	u_int16_t		wi_chid;	/* BSS Channel ID from PR */
+	u_int16_t		wi_noise;	/* Average Noise Level of the PR */
+	u_int16_t		wi_signal;	/* Signal Level on the PR */
+	u_int8_t		wi_bssid[6];	/* MACaddress of BSS responder from PR */
+	u_int16_t		wi_interval;	/* BSS beacon interval */
+	u_int16_t		wi_capinfo;	/* BSS Capability Information
+						   IEEE Std 802.11(1997) ,see 7.3.1.4 */
+	u_int16_t		wi_namelen;	/* Length of SSID strings */
+	u_int8_t		wi_name[32];	/* SSID strings */
+};
 
 /*
  * Hermes transmit/receive frame structure

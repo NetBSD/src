@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.10.2.1 2002/01/10 19:43:35 thorpej Exp $
+#	$NetBSD: JORNADA720,v 1.10.2.2 2002/02/11 20:08:01 jdolecek Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.10.2.1 $"
+#ident 		"GENERIC-$Revision: 1.10.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -106,6 +106,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	NFS_BOOT_DHCP
 

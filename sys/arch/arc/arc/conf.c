@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 2001/03/21 22:25:53 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.2.1 2002/02/11 20:07:13 jdolecek Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -169,6 +169,8 @@ cdev_decl(uk);
 cdev_decl(ss);
 #include "ch.h"
 cdev_decl(ch);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct cdevsw	cdevsw[] =
 {
@@ -226,6 +228,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49: */
 	cdev_notdef(),			/* 50: */
 	cdev_notdef(),			/* 51: OpenBSD xfs comm. device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
 };
 
 int	nchrdev = ARRAY_LENGTH(cdevsw);
@@ -303,6 +306,23 @@ static int chrtoblktbl[] =  {
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
 };
 
 /*

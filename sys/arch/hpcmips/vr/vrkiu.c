@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.28.2.1 2002/01/10 19:44:15 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.28.2.2 2002/02/11 20:08:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -52,7 +52,7 @@
 #include <dev/hpc/hpckbdvar.h>
 
 #include <hpcmips/vr/vr.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrkiureg.h>
 #include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/icureg.h>
@@ -157,7 +157,7 @@ vrkiuattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_chip->kc_sc = sc;
 
 	if (!(sc->sc_handler = 
-	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	    vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 		vrkiu_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;

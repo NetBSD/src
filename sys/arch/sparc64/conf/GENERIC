@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.4.1 2002/01/10 19:49:11 thorpej Exp $
+# $NetBSD: GENERIC,v 1.42.4.2 2002/02/11 20:09:09 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 	"GENERIC-$Revision: 1.42.4.1 $"
+#ident 	"GENERIC-$Revision: 1.42.4.2 $"
 
 include 	"arch/sparc64/conf/std.sparc64-64"
 
@@ -34,3 +34,5 @@ options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

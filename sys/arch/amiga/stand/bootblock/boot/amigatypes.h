@@ -1,4 +1,4 @@
-/* $NetBSD: amigatypes.h,v 1.4 2001/03/11 20:09:07 mhitch Exp $ */
+/* $NetBSD: amigatypes.h,v 1.4.2.1 2002/02/11 20:07:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct ExecBase {
 	u_int8_t Dmy3[322-304];	/* 304 */
 	struct MemHead *MemLst;	/* 322 */
 	/*
-	 * XXX: actually, its a longer List base, but we only need to 
+	 * XXX: actually, its a longer List base, but we only need to
 	 * search it once.
 	 */
 	u_int8_t Dmy4[568-326];	/* 326 */

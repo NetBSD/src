@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.1.2.1 2002/01/10 19:41:30 thorpej Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.1.2.2 2002/02/11 20:07:37 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -49,6 +49,8 @@
 #include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <arm/fiq.h>
 
 #include <dev/cons.h>
 
@@ -184,6 +186,10 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
+
+struct fiqhandler dnard_fiqhandler;
+struct fiqregs dnard_fiqregs;
+
 vaddr_t
 initarm(ofw_handle)
 	ofw_handle_t ofw_handle;
@@ -192,9 +198,7 @@ initarm(ofw_handle)
 	vaddr_t  isa_io_physaddr, isa_mem_physaddr;
 	vaddr_t  isa_io_virtaddr, isa_mem_virtaddr;
 	vaddr_t  isadmaphysbufs;
-	fiqhandler_t fiqhandler;
-	extern void  shark_fiq     __P((void));
-	extern void  shark_fiq_end __P((void));
+	extern char shark_fiq[], shark_fiq_end[];
 
 	/* Don't want to get hit with interrupts 'til we're ready. */
 	(void)disable_interrupts(I32_bit | F32_bit);
@@ -276,7 +280,7 @@ initarm(ofw_handle)
 		}
 
 		/* Sync the first 16 words of memory */
-		cpu_cache_syncI_rng(0, 64);
+		cpu_icache_sync_range(0, 64);
 	}
 
 	data_abort_handler_address = (u_int)data_abort_handler;
@@ -288,17 +292,19 @@ initarm(ofw_handle)
 	undefined_init();
 
 	/* Now for the SHARK-specific part of the FIQ set-up */
-	fiqhandler.fh_func = shark_fiq;
-	fiqhandler.fh_size = (char *)shark_fiq_end - (char *)shark_fiq;
-	fiqhandler.fh_mask = 0x01; /* XXX ??? */
-	fiqhandler.fh_r8   = isa_io_virtaddr;
-	fiqhandler.fh_r9   = 0; /* no routine right now */
-	fiqhandler.fh_r10  = 0; /* no arg right now */
-	fiqhandler.fh_r11  = 0; /* scratch */
-	fiqhandler.fh_r12  = 0; /* scratch */
-	fiqhandler.fh_r13  = 0; /* must set a stack when r9 is set! */
+	dnard_fiqhandler.fh_func = shark_fiq;
+	dnard_fiqhandler.fh_size = (char *)shark_fiq_end - (char *)shark_fiq;
+	dnard_fiqhandler.fh_flags = 0;
+	dnard_fiqhandler.fh_regs = &dnard_fiqregs;
 
-	if (fiq_claim(&fiqhandler))
+	dnard_fiqregs.fr_r8   = isa_io_virtaddr;
+	dnard_fiqregs.fr_r9   = 0; /* no routine right now */
+	dnard_fiqregs.fr_r10  = 0; /* no arg right now */
+	dnard_fiqregs.fr_r11  = 0; /* scratch */
+	dnard_fiqregs.fr_r12  = 0; /* scratch */
+	dnard_fiqregs.fr_r13  = 0; /* must set a stack when r9 is set! */
+
+	if (fiq_claim(&dnard_fiqhandler))
 		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB

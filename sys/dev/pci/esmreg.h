@@ -1,4 +1,4 @@
-/*	$NetBSD: esmreg.h,v 1.2 2001/01/18 17:48:04 tv Exp $	*/
+/*	$NetBSD: esmreg.h,v 1.2.6.1 2002/02/11 20:09:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -69,17 +69,6 @@
 #define ACPI_PART_MIDI		2
 #define ACPI_PART_GAME_PORT	1
 #define ACPI_PART_WP		0
-
-/* Power management */
-#define	CONF_PM_PTR	0x34	/* BYTE R */
-#define	PM_CID		0	/* BYTE R */
-#define	PPMI_CID	1
-#define	PM_CTRL		4	/* BYTE RW */
-#define	PPMI_D0		0	/* Full power */
-#define	PPMI_D1		1	/* Medium power */
-#define	PPMI_D2		2	/* Low power */
-#define	PPMI_D3		3	/* Turned off */
-
 
 /* -----------------------------
  * I/O ports

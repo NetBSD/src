@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.5.2.1 2002/01/10 19:46:17 thorpej Exp $
+# 	$NetBSD: RC3230,v 1.5.2.2 2002/02/11 20:08:39 jdolecek Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -17,6 +17,7 @@ options 	SYSVSHM			# System V shared memory
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 options 	HZ=25
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger

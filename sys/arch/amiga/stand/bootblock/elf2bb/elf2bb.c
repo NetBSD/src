@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.1.2.2 2002/01/10 19:37:27 thorpej Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include "elf2bb.h"
 #include "chksum.h"
 
-void usage __P((void));
+void usage(void);
 int intcmp(const void *, const void *);
 int main(int argc, char *argv[]);
 
@@ -78,20 +78,17 @@ u_int32_t *relbuf;
 	/* can't have more relocs than that*/
 
 int
-intcmp(i, j)
-	const void *i, *j;
+intcmp(const void *i, const void *j)
 {
 	int r;
 
 	r = (*(u_int32_t *)i) < (*(u_int32_t *)j);
 	
-	return 2*r-1; 
+	return 2*r-1;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ifd, ofd;
 	u_int mid, flags, magic;
@@ -229,7 +226,7 @@ main(argc, argv)
 	}
 
 	/*
-	 * Hm. This tool REALLY should understand more than one 
+	 * Hm. This tool REALLY should understand more than one
 	 * relocator version. For now, check that the relocator at
 	 * the image start does understand what we output.
 	 */
@@ -373,8 +370,8 @@ main(argc, argv)
 	    : rpo >= buffer + bbsize)
 		errx(1, "Relocs don't fit.");
 
-	((u_int32_t *)buffer)[1] = 0; 
-	((u_int32_t *)buffer)[1] = 
+	((u_int32_t *)buffer)[1] = 0;
+	((u_int32_t *)buffer)[1] =
 	    htobe32((0xffffffff - chksum((u_int32_t *)buffer, sumsize * 512 / 4)));
 
 	ofd = open(argv[1], O_CREAT|O_WRONLY, 0644);
@@ -388,7 +385,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: %s [-F] bootprog bootprog.bin\n",
 	    progname);

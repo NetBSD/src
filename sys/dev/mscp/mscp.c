@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.15.2.1 2002/01/10 19:56:19 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.15.2.2 2002/02/11 20:09:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.15.2.1 2002/01/10 19:56:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.15.2.2 2002/02/11 20:09:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -185,8 +185,7 @@ loop:
 	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
 		int tmpno = ((mp->mscp_unit + 32) & 0xffe0) * sizeof(void *);
 		struct device **tmp = (struct device **)
-		    malloc(tmpno, M_DEVBUF, M_NOWAIT);
-		bzero(tmp, tmpno);
+		    malloc(tmpno, M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (mi->mi_driveno) {
 			bcopy(mi->mi_dp, tmp, mi->mi_driveno);
 			free(mi->mi_dp, mi->mi_driveno);

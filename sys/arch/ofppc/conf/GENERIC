@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.39.2.2 2002/01/10 19:47:07 thorpej Exp $
+# $NetBSD: GENERIC,v 1.39.2.3 2002/02/11 20:08:47 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.2 $"
+#ident 		"GENERIC-$Revision: 1.39.2.3 $"
 
 maxusers	32
 
@@ -43,6 +43,8 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -145,8 +147,16 @@ ofrtc*		at ofbus?
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pesudo-device	raid		4	# RAIDframe disk driver
+#pesudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

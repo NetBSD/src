@@ -1,4 +1,4 @@
-# $NetBSD: INSTWDCPCM,v 1.6.2.1 2002/01/10 19:37:15 thorpej Exp $
+# $NetBSD: INSTWDCPCM,v 1.6.2.2 2002/02/11 20:06:48 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident		"GENERIC-$Revision: 1.6.2.1 $"
+#ident		"GENERIC-$Revision: 1.6.2.2 $"
 
 makeoptions	COPTS="-Os"
 
@@ -76,9 +76,9 @@ file-system 	KERNFS		# kernel data-structure filesystem
 
 #Support for various kernel options
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	INSECURE	# disable kernel security levels
+options 	SCSIVERBOSE	# human readable SCSI error messages
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 

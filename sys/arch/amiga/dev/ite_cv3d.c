@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv3d.c,v 1.3 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: ite_cv3d.c,v 1.3.22.1 2002/02/11 20:07:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -38,6 +38,10 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_cv3d.c,v 1.3.22.1 2002/02/11 20:07:01 jdolecek Exp $");
+
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
 
@@ -55,23 +59,23 @@
 #include <machine/cpu.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/iteioctl.h>
-#include <amiga/amiga/device.h> 
+#include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cv3dreg.h>
 
-void cv3d_ite_init __P((struct ite_softc *));
-void cv3d_ite_deinit __P((struct ite_softc *));
-static void cv3d_cursor __P((struct ite_softc *, int));
-static void cv3d_putc __P((struct ite_softc *, int, int, int, int));
-static void cv3d_clear __P((struct ite_softc *, int, int, int, int));
-static void cv3d_scroll __P((struct ite_softc *, int, int, int, int));
+void cv3d_ite_init(struct ite_softc *);
+void cv3d_ite_deinit(struct ite_softc *);
+static void cv3d_cursor(struct ite_softc *, int);
+static void cv3d_putc(struct ite_softc *, int, int, int, int);
+static void cv3d_clear(struct ite_softc *, int, int, int, int);
+static void cv3d_scroll(struct ite_softc *, int, int, int, int);
 
 /*
  * called from grf_cv3d to return console priority
  */
 int
-grfcv3d_cnprobe()
+grfcv3d_cnprobe(void)
 {
 	static int done;
 	int rv;
@@ -98,8 +102,7 @@ grfcv3d_cnprobe()
  * grf_softc struct
  */
 void
-grfcv3d_iteinit(gp)
-	struct grf_softc *gp;
+grfcv3d_iteinit(struct grf_softc *gp)
 {
 	gp->g_itecursor = cv3d_cursor;
 	gp->g_iteputc = cv3d_putc;
@@ -111,8 +114,7 @@ grfcv3d_iteinit(gp)
 
 
 void
-cv3d_ite_deinit(ip)
-	struct ite_softc *ip;
+cv3d_ite_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
@@ -127,8 +129,7 @@ static unsigned short cv3d_rowc[MAXCOLS*(MAXROWS+1)];
 static unsigned short *console_buffer;
 
 void
-cv3d_ite_init(ip)
-	register struct ite_softc *ip;
+cv3d_ite_init(register struct ite_softc *ip)
 {
 	struct grfcv3dtext_mode *md;
 	int i;
@@ -148,14 +149,14 @@ cv3d_ite_init(ip)
 #if 0  /* XXX malloc seems not to work in early init :( */
 	if (cv3d_rowc)
 		free(cv3d_rowc, M_DEVBUF);
- 
+
 	/* alloc all in one */
 	cv3d_rowc = malloc(sizeof(short) * (ip->rows + 1) * (ip->cols + 2),
 		M_DEVBUF, M_WAITOK);
 	if (!cv3d_rowc)
 		panic("No buffers for ite_cv3d!");
 #endif
- 
+
 	console_buffer = cv3d_rowc + ip->rows + 1;
 
 
@@ -177,9 +178,7 @@ cv3d_ite_init(ip)
 
 
 void
-cv3d_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+cv3d_cursor(struct ite_softc *ip, int flag)
 {
 	volatile caddr_t ba = ip->grf->g_regkva;
 
@@ -204,12 +203,7 @@ cv3d_cursor(ip, flag)
 
 
 void
-cv3d_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+cv3d_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	caddr_t fb = ip->grf->g_fbkva;
 	unsigned char attr;
@@ -231,12 +225,7 @@ cv3d_putc(ip, c, dy, dx, mode)
 
 
 void
-cv3d_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+cv3d_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	/* cv3d_clear and cv3d_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
@@ -259,12 +248,7 @@ cv3d_clear(ip, sy, sx, h, w)
 }
 
 void
-cv3d_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	unsigned short *src, *dst, *dst2;
 	int i;

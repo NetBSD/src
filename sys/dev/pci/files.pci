@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132.2.4 2002/01/10 19:56:34 thorpej Exp $
+#	$NetBSD: files.pci,v 1.132.2.5 2002/02/11 20:09:58 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -51,6 +51,14 @@ file	dev/pci/twe.c			twe
 
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
+
+# AMI RAID controllers
+device	amr {unit = -1}
+attach	amr at pci
+file	dev/pci/amr.c			amr
+
+attach	ld at amr with ld_amr
+file	dev/pci/ld_amr.c		ld_amr
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
@@ -523,3 +531,7 @@ file	dev/pci/oboe.c			oboe
 device	weasel: sysmon_wdog
 attach	weasel at pci with weasel_pci
 file	dev/pci/weasel_pci.c		weasel
+
+# Game adapter (joystick)
+attach	joy at pci with joy_pci
+file	dev/pci/joy_pci.c		joy_pci

@@ -1,10 +1,10 @@
-#	$NetBSD: GENERICSBC,v 1.2.2.2 2002/01/10 19:45:30 thorpej Exp $
+#	$NetBSD: GENERICSBC,v 1.2.2.3 2002/02/11 20:08:31 jdolecek Exp $
 #
 # GENERICSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.2.2.2 $"
+#ident 		"GENERIC-$Revision: 1.2.2.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -38,11 +38,13 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB			# remote debugger
 #options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
@@ -57,14 +59,17 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-options 	COMPAT_SUNOS	# compatibility with SunOS 4.x binaries
-#options 	COMPAT_SVR4	# compatibility with SVR4 binaries
-#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+# The following is needed to run pre-NetBSD 1.6 binaries under ELF.
+#options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
+
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+#options 	COMPAT_SUNOS	# compatibility with SunOS 4.x binaries
+#options 	COMPAT_SVR4	# compatibility with SVR4 binaries
 
 # File systems
 file-system 	FFS		# UFS
@@ -110,6 +115,7 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -237,8 +243,16 @@ asc0	at obio?			# ASC/EASC audio
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vcoda		1	# Venus/Coda distributed file system
 pseudo-device	vnd		4	# disk-like interface to files

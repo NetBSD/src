@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.1 2001/09/12 19:04:00 thorpej Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.2 2002/02/11 20:07:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,11 +31,14 @@
  */
 
 /* The view major device is a placeholder device.  It serves
- * simply to map the semantics of a graphics dipslay to 
+ * simply to map the semantics of a graphics dipslay to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.4.2 2002/02/11 20:07:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,14 +59,14 @@
 
 #include "view.h"
 
-static void view_display __P((struct view_softc *));
-static void view_remove __P((struct view_softc *));
-static int view_setsize __P((struct view_softc *, struct view_size *));
+static void view_display(struct view_softc *);
+static void view_remove(struct view_softc *);
+static int view_setsize(struct view_softc *, struct view_size *);
 
-int view_get_colormap __P((struct view_softc *, colormap_t *));
-int view_set_colormap __P((struct view_softc *, colormap_t *));
+int view_get_colormap(struct view_softc *, colormap_t *);
+int view_set_colormap(struct view_softc *, colormap_t *);
 
-void viewattach __P((int));
+void viewattach(int);
 
 struct view_softc views[NVIEW];
 int view_inited;			/* also checked in ite_cc.c */
@@ -74,13 +77,12 @@ int view_default_width = 640;
 int view_default_height = 400;
 int view_default_depth = 2;
 
-/* 
+/*
  *  functions for probeing.
  */
 
 void
-viewattach(cnt)
-	int cnt;
+viewattach(int cnt)
 {
 	viewprobe();
 	printf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
@@ -88,10 +90,10 @@ viewattach(cnt)
 
 /* this function is called early to set up a display. */
 void
-viewprobe()
+viewprobe(void)
 {
     	int i;
-	
+
 	if (view_inited)
 		return;
 
@@ -110,21 +112,20 @@ viewprobe()
  */
 
 static void
-view_display (vu)
-	struct view_softc *vu;
+view_display(struct view_softc *vu)
 {
 	int s, i;
 
 	if (vu == NULL)
 		return;
-	
+
 	s = spltty ();
 
 	/*
-	 * mark views that share this monitor as not displaying 
+	 * mark views that share this monitor as not displaying
 	 */
 	for (i=0; i<NVIEW; i++) {
-		if ((views[i].flags & VUF_DISPLAY) && 
+		if ((views[i].flags & VUF_DISPLAY) &&
 		    views[i].monitor == vu->monitor)
 			views[i].flags &= ~VUF_DISPLAY;
 	}
@@ -143,13 +144,12 @@ view_display (vu)
 	splx(s);
 }
 
-/* 
+/*
  * remove a view from our added list if it is marked as displaying
  * switch to a new display.
  */
 static void
-view_remove(vu)
-	struct view_softc *vu;
+view_remove(struct view_softc *vu)
 {
 	int i;
 
@@ -159,7 +159,7 @@ view_remove(vu)
 	vu->flags &= ~VUF_ADDED;
 	if (vu->flags & VUF_DISPLAY) {
 		for (i = 0; i < NVIEW; i++) {
-			if ((views[i].flags & VUF_ADDED) && &views[i] != vu && 
+			if ((views[i].flags & VUF_ADDED) && &views[i] != vu &&
 			    views[i].monitor == vu->monitor) {
 				view_display(&views[i]);
 				break;
@@ -171,14 +171,12 @@ view_remove(vu)
 }
 
 static int
-view_setsize(vu, vs)
-	struct view_softc *vu;
-	struct view_size *vs;
+view_setsize(struct view_softc *vu, struct view_size *vs)
 {
 	view_t *new, *old;
 	dimen_t ns;
 	int co, cs;
-   
+
 	co = 0;
 	cs = 0;
 	if (vs->x != vu->size.x || vs->y != vu->size.y)
@@ -190,14 +188,14 @@ view_setsize(vu, vs)
 
 	if (cs == 0 && co == 0)
 		return(0);
-    
+
 	ns.width = vs->width;
 	ns.height = vs->height;
 
 	new = grf_alloc_view(NULL, &ns, vs->depth);
 	if (new == NULL)
 		return(ENOMEM);
-	
+
 	old = vu->view;
 	vu->view = new;
 	vu->size.x = new->display.x;
@@ -210,9 +208,9 @@ view_setsize(vu, vs)
 	vu->size.x = vs->x;
 	vu->size.y = vs->y;
 
-	/* 
-	 * we need a custom remove here to avoid letting 
-	 * another view display mark as not added or displayed 
+	/*
+	 * we need a custom remove here to avoid letting
+	 * another view display mark as not added or displayed
 	 */
 	if (vu->flags & VUF_DISPLAY) {
 		vu->flags &= ~(VUF_ADDED|VUF_DISPLAY);
@@ -228,10 +226,7 @@ view_setsize(vu, vs)
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+viewopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	dimen_t size;
 	struct view_softc *vu;
@@ -267,10 +262,7 @@ viewopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-viewclose (dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+viewclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct view_softc *vu;
 
@@ -283,19 +275,14 @@ viewclose (dev, flags, mode, p)
 	vu->flags = 0;
 	vu->view = NULL;
 	vu->mode = NULL;
-	vu->monitor = NULL;	
+	vu->monitor = NULL;
        	return(0);
 }
 
 
 /*ARGSUSED*/
 int
-viewioctl (dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+viewioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct view_softc *vu;
 	bmap_t *bm;
@@ -312,7 +299,7 @@ viewioctl (dev, cmd, data, flag, p)
 		view_remove(vu);
 		break;
 	case VIOCGSIZE:
-		bcopy(&vu->size, data, sizeof (struct view_size)); 
+		bcopy(&vu->size, data, sizeof (struct view_size));
 		break;
 	case VIOCSSIZE:
 		error = view_setsize(vu, (struct view_size *)data);
@@ -340,9 +327,7 @@ viewioctl (dev, cmd, data, flag, p)
 }
 
 int
-view_get_colormap (vu, ucm)
-	struct view_softc *vu;
-	colormap_t *ucm;
+view_get_colormap(struct view_softc *vu, colormap_t *ucm)
 {
 	int error;
 	u_long *cme;
@@ -354,11 +339,11 @@ view_get_colormap (vu, ucm)
 		return(ENOMEM);
 
 	uep = ucm->entry;
-	error = 0;	
+	error = 0;
 	ucm->entry = cme;	  /* set entry to out alloc. */
 	if (vu->view == NULL || grf_get_colormap(vu->view, ucm))
 		error = EINVAL;
-	else 
+	else
 		error = copyout(cme, uep, sizeof(u_long) * ucm->size);
 	ucm->entry = uep;	  /* set entry back to users. */
 	free(cme, M_IOCTLOPS);
@@ -366,9 +351,7 @@ view_get_colormap (vu, ucm)
 }
 
 int
-view_set_colormap(vu, ucm)
-	struct view_softc *vu;
-	colormap_t *ucm;
+view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 {
 	colormap_t *cm;
 	int error;
@@ -381,7 +364,7 @@ view_set_colormap(vu, ucm)
 
 	bcopy (ucm, cm, sizeof(colormap_t));
 	cm->entry = (u_long *)&cm[1];		 /* table directly after. */
-	if (((error = 
+	if (((error =
 	    copyin(ucm->entry, cm->entry, sizeof (u_long) * ucm->size)) == 0)
 	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
 		error = EINVAL;
@@ -391,19 +374,16 @@ view_set_colormap(vu, ucm)
 
 /*ARGSUSED*/
 paddr_t
-viewmmap(dev, off, prot)
-        dev_t dev;
-	off_t off;
-	int prot;
+viewmmap(dev_t dev, off_t off, int prot)
 {
 	struct view_softc *vu;
 	bmap_t *bm;
 	u_char *bmd_start;
-	u_long bmd_size; 
+	u_long bmd_size;
 
 	vu = &views[minor(dev)];
 	bm = vu->view->bitmap;
-	bmd_start = bm->hardware_address; 
+	bmd_start = bm->hardware_address;
 	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
 
 	if (off >= 0 && off < bmd_size)
@@ -414,10 +394,7 @@ viewmmap(dev, off, prot)
 
 /*ARGSUSED*/
 int
-viewpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+viewpoll(dev_t dev, int events, struct proc *p)
 {
 	return(events & (POLLOUT | POLLWRNORM));
 }

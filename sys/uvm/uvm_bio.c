@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.15.2.3 2002/01/10 20:05:31 thorpej Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.15.2.4 2002/02/11 20:10:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.15.2.3 2002/01/10 20:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.15.2.4 2002/02/11 20:10:49 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -229,6 +229,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	vaddr_t va, eva, ubc_offset, slot_offset;
 	int i, error, npages;
 	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT], *pg;
+	vm_prot_t prot;
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
 	/*
@@ -288,6 +289,18 @@ again:
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
+	/*
+	 * for virtually-indexed, virtually-tagged caches we should avoid
+	 * creating writable mappings when we don't absolutely need them,
+	 * since the "compatible alias" trick doesn't work on such caches.
+	 * otherwise, we can always map the pages writable.
+	 */
+
+#ifdef PMAP_CACHE_VIVT
+	prot = VM_PROT_READ | access_type;
+#else
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+#endif
 	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0,0);
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
@@ -309,7 +322,7 @@ again:
 		KASSERT(access_type == VM_PROT_READ ||
 		    (pg->flags & PG_RDONLY) == 0);
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE, access_type);
+		    prot, access_type);
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);

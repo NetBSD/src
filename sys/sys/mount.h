@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.90.2.1 2002/01/10 20:04:44 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.90.2.2 2002/02/11 20:10:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -166,6 +166,21 @@ struct mount {
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
 #define MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 
+#define __MNT_BASIC_FLAGS \
+	{ MNT_RDONLY,		0,	"read-only" }, \
+	{ MNT_SYNCHRONOUS,	0,	"synchronous" }, \
+	{ MNT_NOEXEC,		0,	"noexec" }, \
+	{ MNT_NOSUID,		0,	"nosuid" }, \
+	{ MNT_NODEV,		0,	"nodev" }, \
+	{ MNT_UNION,		0,	"union" }, \
+	{ MNT_ASYNC,		0,	"asynchronous" }, \
+	{ MNT_NOCOREDUMP,	0,	"nocoredump" }, \
+	{ MNT_IGNORE,		0,	"hidden" }, \
+	{ MNT_NOATIME,		0,	"noatime" }, \
+	{ MNT_SYMPERM,		0,	"symperm" }, \
+	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
+	{ MNT_SOFTDEP,		0,	"soft dependencies" },
+
 /*
  * exported mount flags.
  */
@@ -177,6 +192,14 @@ struct mount {
 #define MNT_EXNORESPORT	0x08000000	/* don't enforce reserved ports (NFS) */
 #define MNT_EXPUBLIC	0x10000000	/* public export (WebNFS) */
 
+#define __MNT_EXPORTED_FLAGS \
+	{ MNT_EXRDONLY,		1,	"exported read-only" }, \
+	{ MNT_EXPORTED,		0,	"NFS exported" }, \
+	{ MNT_DEFEXPORTED,	1,	"exported to the world" }, \
+	{ MNT_EXPORTANON,	1,	"anon uid mapping" }, \
+	{ MNT_EXKERB,		1,	"kerberos uid mapping" }, \
+	{ MNT_EXNORESPORT,	0,	"non-reserved ports" }, \
+	{ MNT_EXPUBLIC,		0,	"WebNFS exports" },
 /*
  * Flags set by internal operations.
  */
@@ -184,6 +207,11 @@ struct mount {
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
 #define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
 
+
+#define __MNT_INTERNAL_FLAGS \
+	{ MNT_LOCAL,		0,	"local" }, \
+	{ MNT_QUOTA,		0,	"with quotas" }, \
+	{ MNT_ROOTFS,		1,	"root file system" },
 /*
  * Mask of flags that are visible to statfs()
  */
@@ -201,6 +229,11 @@ struct mount {
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 
+#define __MNT_EXTERNAL_FLAGS \
+	{ MNT_UPDATE,		1,	"being updated" }, \
+	{ MNT_DELEXPORT,	1,	"delete export list" }, \
+	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
+	{ MNT_FORCE,		1,	"force unmount or readonly change" },
 /*
  * Internal filesystem control flags.
  *
@@ -212,6 +245,17 @@ struct mount {
 #define MNT_UNMOUNT	0x01000000	/* unmount in progress */
 #define MNT_WANTRDWR	0x02000000	/* upgrade to read/write requested */
 
+#define __MNT_CONTROL_FLAGS \
+	{ MNT_GONE,		0,	"gone" }, \
+	{ MNT_UNMOUNT,		0,	"unmount in progress" }, \
+	{ MNT_WANTRDWR,		0,	"upgrade to read/write requested" },
+
+#define __MNT_FLAGS \
+	__MNT_BASIC_FLAGS \
+	__MNT_EXPORTED_FLAGS \
+	__MNT_INTERNAL_FLAGS \
+	__MNT_EXTERNAL_FLAGS \
+	__MNT_CONTROL_FLAGS
 /*
  * Sysctl CTL_VFS definitions.
  *

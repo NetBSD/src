@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.12.2.1 2002/01/10 19:44:13 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.12.2.2 2002/02/11 20:08:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -36,7 +36,7 @@
 #include <machine/platid_mask.h>
 
 #include <hpcmips/vr/vr.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrc4172pwmvar.h>
 #include <hpcmips/vr/vrc4172pwmreg.h>
 
@@ -153,13 +153,13 @@ vrc4172pwmprobe(struct device *parent, struct cfdata *cf, void *aux)
 	struct vrc4172pwm_param *param;
 	int ret = 0;
 
-	if (va->va_addr == VRIPCF_ADDR_DEFAULT)
+	if (va->va_addr == VRIPIFCF_ADDR_DEFAULT)
 		return (0);
  
-	if (cf->cf_loc[VRIPCF_PLATFORM] == 0)
+	if (cf->cf_loc[VRIPIFCF_PLATFORM] == 0)
 		return (0);
-	if (cf->cf_loc[VRIPCF_PLATFORM] != -1) { /* if specify */
-		mask = PLATID_DEREF(cf->cf_loc[VRIPCF_PLATFORM]);
+	if (cf->cf_loc[VRIPIFCF_PLATFORM] != -1) { /* if specify */
+		mask = PLATID_DEREF(cf->cf_loc[VRIPIFCF_PLATFORM]);
 		VPRINTF(("vrc4172pwmprobe: check platid\n"));
 		if (platid_match(&platid, &mask) == 0)	
 			return (0);

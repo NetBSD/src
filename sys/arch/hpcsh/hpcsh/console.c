@@ -1,7 +1,7 @@
-/*	$NetBSD: console.c,v 1.5 2001/07/08 10:42:38 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.5.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,9 +54,6 @@
 #if NBICONSDEV > 0
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
-#define DPRINTF(arg) printf arg
-#else
-#define DPRINTF(arg)
 #endif
 
 #if NHPCFB > 0

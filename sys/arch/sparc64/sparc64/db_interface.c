@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.60.2.1 2001/08/03 04:12:29 lukem Exp $ */
+/*	$NetBSD: db_interface.c,v 1.60.2.2 2002/02/11 20:09:11 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -843,7 +843,7 @@ db_print_trace_entry(te, i)
 	struct traptrace *te;
 	int i;
 {
-	db_printf("%d:%d p:%d tt:%d:%llx:%llx %llx:%llx ", i, 
+	db_printf("%d:%d p:%d tt:%x:%llx:%llx %llx:%llx ", i, 
 		  (int)te->tl, (int)te->pid, 
 		  (int)te->tt, (unsigned long long)te->tstate, 
 		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,

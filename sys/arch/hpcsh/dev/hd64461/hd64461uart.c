@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461uart.c,v 1.2.6.2 2002/01/10 19:44:20 thorpej Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.2.6.3 2002/02/11 20:08:16 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,15 +49,13 @@
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
 
-#ifdef DEBUG
-#include <hpcsh/hpcsh/debug.h>
-#endif
+#include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 
-static struct hd64461uart_chip {
+STATIC struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
 	bus_space_tag_t io_tag;
 	int console;
@@ -75,22 +73,18 @@ cdev_decl(com);
 void comcnprobe(struct consdev *);
 void comcninit(struct consdev *);
 
-static int hd64461uart_match(struct device *, struct cfdata *, void *);
-static void hd64461uart_attach(struct device *, struct device *, void *);
+STATIC int hd64461uart_match(struct device *, struct cfdata *, void *);
+STATIC void hd64461uart_attach(struct device *, struct device *, void *);
 
 struct cfattach hd64461uart_ca = {
 	sizeof(struct hd64461uart_softc), hd64461uart_match,
 	hd64461uart_attach
 };
 
-static void hd64461uart_init(void);
-static u_int8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
-static void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
+STATIC void hd64461uart_init(void);
+STATIC u_int8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
+STATIC void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
     u_int8_t);
-
-#ifdef DEBUG
-static void hd64461uart_info(struct hd64461uart_softc *);
-#endif
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #ifndef COMCN_SPEED
@@ -124,7 +118,7 @@ comcninit(struct consdev *cp)
 	hd64461uart_chip.console = 1;
 }
 
-static int
+int
 hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -132,7 +126,7 @@ hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (ha->ha_module_id == HD64461_MODULE_UART);
 }
 
-static void
+void
 hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -158,10 +152,6 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	r16 &= ~HD64461_SYSSTBCR_SURTSD;
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);	
 
-#ifdef DEBUG
-	if (bootverbose)
-		hd64461uart_info(sc);
-#endif
 	/* sanity check */
 	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
 		printf(": device problem. don't attach.\n");
@@ -178,7 +168,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	    comintr, self);
 }
 
-static void
+void
 hd64461uart_init()
 {
 
@@ -194,29 +184,17 @@ hd64461uart_init()
 	hd64461uart_chip.io_tag->hbs_w_1 = hd64461uart_write_1;
 }
 
-static u_int8_t
+u_int8_t
 hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
 	return *(volatile u_int8_t *)(h + (ofs << 1));
 }
 
-static void
+void
 hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
     u_int8_t val)
 {
 
 	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
 }
-
-#ifdef DEBUG
-static void
-hd64461uart_info(struct hd64461uart_softc *sc)
-{
-	const char name[] = __FUNCTION__;
-
-	printf("\n");
-	dbg_banner_start(name, sizeof name);
-	dbg_banner_end();
-}
-#endif /* DEBUG */

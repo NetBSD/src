@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.14.2.1 2002/01/10 19:57:22 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.14.2.2 2002/02/11 20:10:07 jdolecek Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.1 2002/01/10 19:57:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.2 2002/02/11 20:10:07 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -329,11 +329,10 @@ xi_pcmcia_cis_quirks(pf)
 
 	/* Fake a cfe. */
 	SIMPLEQ_FIRST(&pf->cfe_head) = cfe = (struct pcmcia_config_entry *)
-	    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	if (cfe == NULL)
 		return -1;
-	memset(cfe, 0, sizeof(*cfe));
 
 	/*
 	 * XXX Use preprocessor symbols instead.

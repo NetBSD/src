@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.4 2002/01/10 19:37:56 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.5 2002/02/11 20:07:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -210,6 +210,12 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+
+/*
+ * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
+ */
+
+#define PMAP_CACHE_VIVT
 
 #endif /* _KERNEL */
 

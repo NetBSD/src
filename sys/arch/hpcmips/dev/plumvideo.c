@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.18.2.3 2002/01/10 19:43:54 thorpej Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18.2.4 2002/02/11 20:08:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #undef PLUMVIDEODEBUG
-#include "opt_tx39_debug.h"
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 
 #include <sys/param.h>
@@ -751,7 +750,7 @@ plumvideo_dump(struct plumvideo_softc *sc)
 	for (i = 0; i < 0x160; i += 4) {
 		reg = plum_conf_read(regt, regh, i);
 		printf("0x%03x %08x", i, reg);
-		bitdisp(reg);
+		dbg_bit_print(reg);
 	}
 }
 #endif /* PLUMVIDEODEBUG */

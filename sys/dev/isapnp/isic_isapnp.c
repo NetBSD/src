@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.3.2.1 2002/01/10 19:55:54 thorpej Exp $ 
+ *	$Id: isic_isapnp.c,v 1.3.2.2 2002/02/11 20:09:53 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.1 2002/01/10 19:55:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.2 2002/02/11 20:09:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -102,7 +102,8 @@ typedef void (*attach_func)(struct l1_softc *sc);
 
 /* map allocators */
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
-	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
+	|| defined(ISICPNP_ITKIX)
 static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
 #endif
 #ifdef ISICPNP_DRN_NGO
@@ -120,6 +121,7 @@ extern void isic_attach_drnngo __P((struct l1_softc *sc));
 extern void isic_attach_sws __P((struct l1_softc *sc));
 extern void isic_attach_Eqs1pi __P((struct l1_softc *sc));
 extern void isic_attach_siemens_isurf __P((struct l1_softc *sc));
+extern void isic_attach_isapnp_itkix1 __P((struct l1_softc *sc));
 
 struct isic_isapnp_card_desc {
 	char *devlogic;			/* ISAPNP logical device ID */
@@ -159,6 +161,10 @@ isic_isapnp_descriptions[] =
 	{ "SIE0020", "Siemens I-Surf 2.0 PnP", CARD_TYPEP_SIE_ISURF2,
 	  generic_pnp_mapalloc, isic_attach_siemens_isurf },
 #endif
+#ifdef ISICPNP_ITKIX
+	{ "ITK0025", "ix1-micro 3.0", 0,
+	  generic_pnp_mapalloc, isic_attach_isapnp_itkix1 },
+#endif
 };
 #define	NUM_DESCRIPTIONS	(sizeof(isic_isapnp_descriptions)/sizeof(isic_isapnp_descriptions[0]))
 
@@ -189,7 +195,6 @@ isic_isapnp_probe(parent, cf, aux)
 
 	return 0;
 }
-
 
 /*---------------------------------------------------------------------------*
  *	card independend attach for ISA P&P cards
@@ -369,7 +374,8 @@ isic_isapnp_attach(parent, self, aux)
 }
 
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
-	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)
+	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
+	|| defined(ISICPNP_ITKIX)
 static void
 generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 {

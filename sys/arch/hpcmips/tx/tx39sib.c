@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.8 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.8.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * TX39 SIB (Serial Interface Bus) module.
  */
 #undef TX39SIBDEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,9 +378,9 @@ txsibsf0_read(tx_chipset_tag_t tc, int addr)
 
 #ifdef TX39SIBDEBUG
 #define ISSETPRINT_CTRL(r, m)						\
-	__is_set_print(r, TX39_SIBCTRL_##m, #m)
+	dbg_bitmask_print(r, TX39_SIBCTRL_##m, #m)
 #define ISSETPRINT_DMACTRL(r, m)					\
-	__is_set_print(r, TX39_SIBDMACTRL_##m, #m)
+	dbg_bitmask_print(r, TX39_SIBDMACTRL_##m, #m)
 
 void
 tx39sib_dump(struct tx39sib_softc *sc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.55.2.1 2002/01/10 19:59:57 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.55.2.2 2002/02/11 20:10:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.55.2.1 2002/01/10 19:59:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.55.2.2 2002/02/11 20:10:24 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -166,13 +166,24 @@ sys_clock_gettime(p, v, retval)
 	clockid_t clock_id;
 	struct timeval atv;
 	struct timespec ats;
+	int s;
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		microtime(&atv);
+		TIMEVAL_TO_TIMESPEC(&atv,&ats);
+		break;
+	case CLOCK_MONOTONIC:
+		/* XXX "hz" granularity */
+		s = splclock(); 
+		atv = mono_time;
+		splx(s);
+		TIMEVAL_TO_TIMESPEC(&atv,&ats);
+		break;
+	default:
 		return (EINVAL);
-
-	microtime(&atv);
-	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+	}
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
 }
@@ -209,12 +220,17 @@ clock_settime1(clock_id, tp)
 	if ((error = copyin(tp, &ats, sizeof(ats))) != 0)
 		return (error);
 
-	if (clock_id != CLOCK_REALTIME)
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		TIMESPEC_TO_TIMEVAL(&atv, &ats);
+		if ((error = settime(&atv)) != 0)
+			return (error);
+		break;
+	case CLOCK_MONOTONIC:
+		return (EINVAL);	/* read-only clock */
+	default:
 		return (EINVAL);
-
-	TIMESPEC_TO_TIMEVAL(&atv, &ats);
-	if ((error = settime(&atv)) != 0)
-		return (error);
+	}
 
 	return 0;
 }
@@ -234,15 +250,18 @@ sys_clock_getres(p, v, retval)
 	int error = 0;
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
-
-	if (SCARG(uap, tp)) {
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
-
-		error = copyout(&ts, SCARG(uap, tp), sizeof(ts));
+		break;
+	default:
+		return (EINVAL);
 	}
+
+	if (SCARG(uap, tp))
+		error = copyout(&ts, SCARG(uap, tp), sizeof(ts));
 
 	return error;
 }

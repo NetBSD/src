@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.17.2.2 2002/01/10 19:38:35 thorpej Exp $
+# $NetBSD: FOURMEG,v 1.17.2.3 2002/02/11 20:07:23 jdolecek Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -95,6 +95,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=1
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Disable kernel security.
 #options 	INSECURE

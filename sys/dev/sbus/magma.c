@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.2.1 2002/01/10 19:58:12 thorpej Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.2.2 2002/02/11 20:10:11 jdolecek Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.1 2002/01/10 19:58:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.2 2002/02/11 20:10:11 jdolecek Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -101,77 +101,82 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.1 2002/01/10 19:58:12 thorpej Exp $
  */
 static struct magma_board_info supported_cards[] = {
 	{
-		"MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
+		"MAGMA_Sp", "MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,8_Sp", "Magma 8 Sp", 8, 0,
+		"MAGMA_Sp", "MAGMA,8_Sp", "Magma 8 Sp", 8, 0,
 		2, 0xa000, 0xc000, 0xe000, { 0x4000, 0x6000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,_8HS_Sp", "Magma Fast 8 Sp", 8, 0,
+		"MAGMA_Sp", "MAGMA,_8HS_Sp", "Magma Fast 8 Sp", 8, 0,
 		2, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,_8SP_422", "Magma 8 Sp - 422", 8, 0,
+		"MAGMA_Sp", "MAGMA,_8SP_422", "Magma 8 Sp - 422", 8, 0,
 		2, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,12_Sp", "Magma 12 Sp", 12, 0,
+		"MAGMA_Sp", "MAGMA,12_Sp", "Magma 12 Sp", 12, 0,
 		3, 0xa000, 0xc000, 0xe000, { 0x2000, 0x4000, 0x6000, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16_Sp", "Magma 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16_Sp", "Magma 16 Sp", 16, 0,
 		4, 0xd000, 0xe000, 0xf000, { 0x8000, 0x9000, 0xa000, 0xb000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16_Sp_2", "Magma 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16_Sp_2", "Magma 16 Sp", 16, 0,
 		4, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0xc000, 0xe000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16HS_Sp", "Magma Fast 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16HS_Sp", "Magma Fast 16 Sp", 16, 0,
 		4, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0xc000, 0xe000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,21_Sp", "Magma LC 2+1 Sp", 2, 1,
+		"MAGMA_Sp", "MAGMA,21_Sp", "Magma LC 2+1 Sp", 2, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,21HS_Sp", "Magma 2+1 Sp", 2, 1,
+		"MAGMA_Sp", "MAGMA,21HS_Sp", "Magma 2+1 Sp", 2, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
 		1, { 0x6000, 0 }
 	},
 	{
-		"MAGMA,41_Sp", "Magma 4+1 Sp", 4, 1,
+		"MAGMA_Sp", "MAGMA,41_Sp", "Magma 4+1 Sp", 4, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
 		1, { 0x6000, 0 }
 	},
 	{
-		"MAGMA,82_Sp", "Magma 8+2 Sp", 8, 2,
+		"MAGMA_Sp", "MAGMA,82_Sp", "Magma 8+2 Sp", 8, 2,
 		2, 0xd000, 0xe000, 0xf000, { 0x8000, 0x9000, 0, 0 },
 		2, { 0xa000, 0xb000 }
 	},
 	{
-		"MAGMA,P1_Sp", "Magma P1 Sp", 0, 1,
+		"MAGMA_Sp", "MAGMA,P1_Sp", "Magma P1 Sp", 0, 1,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		1, { 0x8000, 0 }
 	},
 	{
-		"MAGMA,P2_Sp", "Magma P2 Sp", 0, 2,
+		"MAGMA_Sp", "MAGMA,P2_Sp", "Magma P2 Sp", 0, 2,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		2, { 0x4000, 0x8000 }
 	},
 	{
-		NULL, NULL, 0, 0,
+		"MAGMA 2+1HS Sp", "", "Magma 2+1HS Sp", 2, 0,
+		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
+		1, { 0x8000, 0 }
+	},
+	{
+		NULL, NULL, NULL, 0, 0,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		0, { 0, 0 }
 	}
@@ -314,10 +319,16 @@ magma_match(parent, cf, aux)
 	void *aux;
 {
 	struct sbus_attach_args *sa = aux;
+	struct magma_board_info *card;
 
-	/* is it a magma Sp card? */
-	if( strcmp(sa->sa_name, "MAGMA_Sp") != 0 )
-		return(0);
+	/* See if we support this device */
+	for (card = supported_cards; ; card++) {
+		if (card->mb_sbusname == NULL)
+			/* End of table: no match */
+			return (0);
+		if (strcmp(sa->sa_name, card->mb_sbusname) == 0)
+			break;
+	}
 
 	dprintf(("magma: matched `%s'\n", sa->sa_name));
 	dprintf(("magma: magma_prom `%s'\n",
@@ -340,27 +351,38 @@ magma_attach(parent, self, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_softc *sc = (struct magma_softc *)self;
-	struct magma_board_info *card = supported_cards;
+	struct magma_board_info *card;
 	bus_space_handle_t bh;
-	char *magma_prom;
+	char *magma_prom, *clockstr;
+	int cd_clock;
 	int node, chip;
 
 	node = sa->sa_node;
+
+	/*
+	 * Find the card model.
+	 * Older models all have sbus node name `MAGMA_Sp' (see
+	 * `supported_cards[]' above), and must be distinguished
+	 * by the `magma_prom' property.
+	 */
 	magma_prom = PROM_getpropstring(node, "magma_prom");
 
-	/* find the card type */
-	while (card->mb_name && strcmp(magma_prom, card->mb_name) != 0)
-		card++;
-
-	dprintf((" addr %p", sc));
-	printf(" softpri %d:", PIL_TTY);
+	for (card = supported_cards; card->mb_name != NULL; card++) {
+		if (strcmp(sa->sa_name, card->mb_sbusname) != 0)
+			/* Sbus node name doesn't match */
+			continue;
+		if (strcmp(magma_prom, card->mb_name) == 0)
+			/* Model name match */
+			break;
+	}
 
 	if( card->mb_name == NULL ) {
-		printf(" %s (unsupported)\n", magma_prom);
+		printf(": %s (unsupported)\n", magma_prom);
 		return;
 	}
 
-	printf(" %s\n", card->mb_realname);
+	dprintf((" addr %p", sc));
+	printf(" softpri %d: %s\n", PIL_TTY, card->mb_realname);
 
 	sc->ms_board = card;
 	sc->ms_ncd1400 = card->mb_ncd1400;
@@ -381,14 +403,26 @@ magma_attach(parent, self, aux)
 	sc->ms_svcackt = (caddr_t)bh + card->mb_svcackt;
 	sc->ms_svcackm = (caddr_t)bh + card->mb_svcackm;
 
+	/*
+	 * Find the clock speed; it's the same for all CD1400 chips
+	 * on the board.
+	 */
+	clockstr = PROM_getpropstring(node, "clock");
+	if (*clockstr == '\0')
+		/* Default to 25MHz */
+		cd_clock = 25;
+	else {
+		cd_clock = 0;
+		while (*clockstr != '\0')
+			cd_clock = (cd_clock * 10) + (*clockstr++ - '0');
+	}
+
 	/* init the cd1400 chips */
 	for( chip = 0 ; chip < card->mb_ncd1400 ; chip++ ) {
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
+		cd->cd_clock = cd_clock;
 		cd->cd_reg = (caddr_t)bh + card->mb_cd1400[chip];
-
-		/* XXX PROM_getpropstring(node, "clock") */
-		cd->cd_clock = 25;
 
 		/* PROM_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
@@ -428,9 +462,10 @@ magma_attach(parent, self, aux)
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
 		cd->cd_reg = (caddr_t)bh + card->mb_cd1190[chip];
-		dprintf(("%s attach CD1190 %d addr %p (failed)\n",
-			self->dv_xname, chip, cd->cd_reg));
+
 		/* XXX don't know anything about these chips yet */
+		printf("%s: CD1190 %d addr %p (unsupported)\n",
+			self->dv_xname, chip, cd->cd_reg);
 	}
 
 	sbus_establish(&sc->ms_sd, &sc->ms_dev);
@@ -840,12 +875,12 @@ mtty_attach(parent, dev, args)
 		struct tty *tp;
 
 		mp->mp_cd1400 = &sc->ms_cd1400[chip];
-		if( mp->mp_cd1400->cd_parmode && chan == 0 )
+		if (mp->mp_cd1400->cd_parmode && chan == 0)
 			chan = 1; /* skip channel 0 if parmode */
 		mp->mp_channel = chan;
 
 		tp = ttymalloc();
-		if( tp == NULL ) break;
+		if (tp == NULL) break;
 		tty_attach(tp);
 		tp->t_oproc = mtty_start;
 		tp->t_param = mtty_param;
@@ -853,12 +888,13 @@ mtty_attach(parent, dev, args)
 		mp->mp_tty = tp;
 
 		mp->mp_rbuf = malloc(MTTY_RBUF_SIZE, M_DEVBUF, M_NOWAIT);
-		if( mp->mp_rbuf == NULL ) break;
+		if (mp->mp_rbuf == NULL) break;
 
 		mp->mp_rend = mp->mp_rbuf + MTTY_RBUF_SIZE;
 
 		chan = (chan + 1) % CD1400_NO_OF_CHANNELS;
-		if( chan == 0 ) chip++;
+		if (chan == 0)
+			chip++;
 	}
 
 	ms->ms_nports = port;

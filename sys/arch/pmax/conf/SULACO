@@ -1,4 +1,4 @@
-#	$NetBSD: SULACO,v 1.8.2.2 2002/01/10 19:47:47 thorpej Exp $
+#	$NetBSD: SULACO,v 1.8.2.3 2002/02/11 20:08:51 jdolecek Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
@@ -33,6 +33,7 @@ options 	SYSVSHM			# SYSV-like shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	HZ=256			# RTC rate required
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.2 2002/01/10 19:49:34 thorpej Exp $
+# $NetBSD: GENERIC,v 1.6.2.3 2002/02/11 20:09:14 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include 	"arch/sun2/conf/std.sun2"
 
-#ident 		"GENERIC-$Revision: 1.6.2.2 $"
+#ident 		"GENERIC-$Revision: 1.6.2.3 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -44,6 +44,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
@@ -247,3 +248,11 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1

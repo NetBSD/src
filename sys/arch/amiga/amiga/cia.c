@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.6 1995/02/12 19:34:17 chopps Exp $	*/
+/*	$NetBSD: cia.c,v 1.6.46.1 2002/02/11 20:06:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -34,29 +34,32 @@
  *  Since the interrupt control register of a CIA is cleared
  *  when it's read, it is essential that different interrupt
  *  sources are managed from one central handler, or interrupts
- *  can get lost. 
+ *  can get lost.
  *
  *  if you write a handler dealing with a yet unused interrupt
- *  bit (handler == not_used), enter your interrupt handler 
+ *  bit (handler == not_used), enter your interrupt handler
  *  in the appropriate table below. If your handler must poll
  *  for an interrupt flag to come active, *always* call
  *  dispatch_cia_ints() afterwards with bits in the mask
- *  register your code didn't already deal with. 
+ *  register your code didn't already deal with.
  */
-#include <sys/types.h>
+
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.6.46.1 2002/02/11 20:06:44 jdolecek Exp $");
+
+#include <sys/types.h>
 #include <amiga/amiga/cia.h>
 #include "par.h"
 #include "kbd.h"
 
 struct cia_intr_dispatch {
   u_char	mask;
-  void		(*handler) __P ((int));
+  void		(*handler)(int);
 };
 
-static void not_used __P((int));
-void kbdintr  __P((int));
-void parintr  __P((int));
+static void not_used(int);
+void kbdintr(int);
+void parintr(int);
 
 /* handlers for CIA-A (IPL-2) */
 static struct cia_intr_dispatch ciaa_ints[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.10.2.2 2002/01/10 19:44:10 thorpej Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.10.2.3 2002/02/11 20:08:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -40,12 +40,14 @@
 #include <sys/reboot.h>
 
 #include <machine/bus.h>
+#include <machine/debug.h>
 
 #include <mips/cpuregs.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/bcureg.h>
@@ -234,14 +236,14 @@ vrbcu_dump_regs()
 #ifdef VRBCUDEBUG
 	reg = vrbcu_read(sc, BCUCNT1_REG_W);
 	printf("vrbcu: CNT1 %x: ",  reg);
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 #if !defined(ONLY_VR4181)
 	if (cpuid != BCUREVID_FIXRID_4181 
 	    && cpuid <= BCUREVID_RID_4121
 	    && cpuid >= BCUREVID_RID_4102) {
 		reg = vrbcu_read(sc, BCUCNT2_REG_W);
 		printf("vrbcu: CNT2 %x: ",  reg);
-		bitdisp16(reg);
+		dbg_bit_print(reg);
 	}
 #endif /* !defined ONLY_VR4181 */
 #if !defined(ONLY_VR4181) || !defined(ONLY_VR4122_4131)
@@ -250,10 +252,10 @@ vrbcu_dump_regs()
 	    && cpuid >= BCUREVID_RID_4102) {
 		reg = vrbcu_read(sc, BCUSPEED_REG_W);
 		printf("vrbcu: SPEED %x: ",  reg);
-		bitdisp16(reg);
+		dbg_bit_print(reg);
 		reg = vrbcu_read(sc, BCUERRST_REG_W);
 		printf("vrbcu: ERRST %x: ",  reg);
-		bitdisp16(reg);
+		dbg_bit_print(reg);
 		reg = vrbcu_read(sc, BCURFCNT_REG_W);
 		printf("vrbcu: RFCNT %x\n",  reg);
 		reg = vrbcu_read(sc, BCUREFCOUNT_REG_W);
@@ -267,7 +269,7 @@ vrbcu_dump_regs()
 	{
 		reg = vrbcu_read(sc, BCUCNT3_REG_W);
 		printf("vrbcu: CNT3 %x: ",  reg);
-		bitdisp16(reg);
+		dbg_bit_print(reg);
 	}
 #endif /* !defined ONLY_VR4181 */
 #endif /* VRBCUDEBUG */

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.55.2.2 2002/01/10 19:37:02 thorpej Exp $
+# $NetBSD: INSTALL,v 1.55.2.3 2002/02/11 20:06:41 jdolecek Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -71,6 +71,7 @@ options 	COMPAT_14
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.3.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.3.2.4 2002/02/11 20:09:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.3.2.3 2002/01/10 19:56:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.3.2.4 2002/02/11 20:09:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82810_DC100_GC:
 	case PCI_PRODUCT_INTEL_82810E_GC:
 	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
+	/*case PCI_PRODUCT_INTEL_82830MP_IV: XXX needs somewhat different driver */
 		return (1);
 	}
 
@@ -118,12 +119,11 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt *gatt;
 	int error;
 
-	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT);
+	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return ENOMEM;
 	}
-	memset(isc, 0, sizeof *isc);
 	sc->as_chipc = isc;
 	sc->as_methods = &agp_i810_methods;
 
@@ -314,10 +314,9 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 			return 0;
 	}
 
-	mem = malloc(sizeof *mem, M_AGP, M_WAITOK);
+	mem = malloc(sizeof *mem, M_AGP, M_WAITOK|M_ZERO);
 	if (mem == NULL)
 		return NULL;
-	memset(mem, 0, sizeof *mem);
 	mem->am_id = sc->as_nextid++;
 	mem->am_size = size;
 	mem->am_type = type;

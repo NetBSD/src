@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.1 2002/02/11 20:09:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,6 +226,9 @@ cdev_decl(iop);
 #include "mlx.h"
 cdev_decl(mlx);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 #include <altq/altqconf.h>
 
 struct cdevsw	cdevsw[] =
@@ -328,6 +331,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 79: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -448,6 +452,7 @@ static int chrtoblktbl[] = {
 	/* 76 */	NODEV,
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
+	/* 79 */	NODEV,
 };
 
 /*

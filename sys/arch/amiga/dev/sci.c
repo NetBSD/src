@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.25 2001/04/25 17:53:08 bouyer Exp $	*/
+/*	$NetBSD: sci.c,v 1.25.2.1 2002/02/11 20:07:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -43,6 +43,9 @@
  * AMIGA NCR 5380 scsi adaptor driver
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.25.2.1 2002/02/11 20:07:06 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -69,16 +72,16 @@
 #define	SCI_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SCI_INIT_WAIT	50000	/* wait per step (both) during init */
 
-int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
-int  scigo __P((struct sci_softc *, struct scsipi_xfer *));
-int  sciselectbus __P((struct sci_softc *, u_char, u_char));
-void sciabort __P((struct sci_softc *, char *));
-void scierror __P((struct sci_softc *, u_char));
-void scisetdelay __P((int));
-void sci_scsidone __P((struct sci_softc *, int));
-void sci_donextcmd __P((struct sci_softc *));
-int  sci_ixfer_out __P((struct sci_softc *, int, register u_char *, int)); 
-void sci_ixfer_in __P((struct sci_softc *, int, register u_char *, int)); 
+int  sciicmd(struct sci_softc *, int, void *, int, void *, int,u_char);
+int  scigo(struct sci_softc *, struct scsipi_xfer *);
+int  sciselectbus(struct sci_softc *, u_char, u_char);
+void sciabort(struct sci_softc *, char *);
+void scierror(struct sci_softc *, u_char);
+void scisetdelay(int);
+void sci_scsidone(struct sci_softc *, int);
+void sci_donextcmd(struct sci_softc *);
+int  sci_ixfer_out(struct sci_softc *, int, register u_char *, int);
+void sci_ixfer_in(struct sci_softc *, int, register u_char *, int);
 
 int sci_cmd_wait = SCI_CMD_WAIT;
 int sci_data_wait = SCI_DATA_WAIT;
@@ -97,8 +100,7 @@ int	sci_debug = 0;
  * default minphys routine for sci based controllers
  */
 void
-sci_minphys(bp)
-	struct buf *bp;
+sci_minphys(struct buf *bp)
 {
 
 	/*
@@ -115,10 +117,8 @@ sci_minphys(bp)
  * in scsi_scsipi_cmd().
  */
 void
-sci_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg; 
+sci_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+                   void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -171,8 +171,7 @@ sci_scsipi_request(chan, req, arg)
  * entered with dev->sc_xs pointing to the next xfer to perform
  */
 void
-sci_donextcmd(dev)
-	struct sci_softc *dev;
+sci_donextcmd(struct sci_softc *dev)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -206,9 +205,7 @@ sci_donextcmd(dev)
 }
 
 void
-sci_scsidone(dev, stat)
-	struct sci_softc *dev;
-	int stat;
+sci_scsidone(struct sci_softc *dev, int stat)
 {
 	struct scsipi_xfer *xs;
 
@@ -240,9 +237,7 @@ sci_scsidone(dev, stat)
 }
 
 void
-sciabort(dev, where)
-	struct sci_softc *dev;
-	char *where;
+sciabort(struct sci_softc *dev, char *where)
 {
 	printf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
 	  dev->sc_dev.dv_xname, where, *dev->sci_csr, *dev->sci_bus_csr);
@@ -267,8 +262,7 @@ sciabort(dev, where)
  * initialization).
  */
 void
-scisetdelay(del)
-	int del;
+scisetdelay(int del)
 {
 	static int saved_cmd_wait, saved_data_wait;
 
@@ -286,8 +280,7 @@ scisetdelay(del)
 }
 
 void
-scireset(dev)
-	struct sci_softc *dev;
+scireset(struct sci_softc *dev)
 {
 	u_int s;
 	u_char my_id;
@@ -326,9 +319,7 @@ scireset(dev)
 }
 
 void
-scierror(dev, csr)
-	struct sci_softc *dev;
-	u_char csr;
+scierror(struct sci_softc *dev, u_char csr)
 {
 	struct scsipi_xfer *xs;
 
@@ -349,9 +340,7 @@ scierror(dev, csr)
  * select the bus, return when selected or error.
  */
 int
-sciselectbus(dev, target, our_addr)
-        struct sci_softc *dev;
-	u_char target, our_addr;
+sciselectbus(struct sci_softc *dev, u_char target, u_char our_addr)
 {
 	register int timeo = 2500;
 
@@ -386,11 +375,8 @@ sciselectbus(dev, target, our_addr)
 }
 
 int
-sci_ixfer_out(dev, len, buf, phase)
-	register struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+sci_ixfer_out(register struct sci_softc *dev, int len, register u_char *buf,
+              int phase)
 {
 	register int wait = sci_data_wait;
 	u_char csr;
@@ -430,11 +416,7 @@ sci_ixfer_out(dev, len, buf, phase)
 }
 
 void
-sci_ixfer_in(dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+sci_ixfer_in(struct sci_softc *dev, int len, register u_char *buf, int phase)
 {
 	int wait = sci_data_wait;
 	u_char csr;
@@ -493,11 +475,8 @@ sci_ixfer_in(dev, len, buf, phase)
  * be one of DATA_IN_PHASE, DATA_OUT_PHASE or STATUS_PHASE.
  */
 int
-sciicmd(dev, target, cbuf, clen, buf, len, xferphase)
-	struct sci_softc *dev;
-	void *cbuf, *buf;
-	int clen, len;
-	u_char xferphase;
+sciicmd(struct sci_softc *dev, int target, void *cbuf, int clen, void *buf,
+        int len, u_char xferphase)
 {
 	u_char phase;
 	register int wait;
@@ -586,9 +565,7 @@ out:
 }
 
 int
-scigo(dev, xs)
-	struct sci_softc *dev;
-	struct scsipi_xfer *xs;
+scigo(struct sci_softc *dev, struct scsipi_xfer *xs)
 {
 	int count, target;
 	u_char phase, *addr;

@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_arch.cpp,v 1.7 2001/05/08 18:51:25 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.7.2.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hpcboot.h>
 #include <hpcmenu.h>
 #include <sh3/sh_arch.h>
 #include <sh3/hd64461.h>
+#include <sh3/hd64465.h>
 #include "scifreg.h"
 
 static void __tmu_channel_info(int, paddr_t, paddr_t, paddr_t);
@@ -70,11 +72,13 @@ struct SHArchitecture::intr_priority SHArchitecture::ipr_table[] = {
 BOOL
 SHArchitecture::init(void)
 {
+
 	if (!_mem->init()) {
 		DPRINTF((TEXT("can't initialize memory manager.\n")));
 		return FALSE;
 	}
 	// set D-RAM information
+	DPRINTF((TEXT("Memory Bank:\n")));
 	_mem->loadBank(DRAM_BANK0_START, DRAM_BANK_SIZE);
 	_mem->loadBank(DRAM_BANK1_START, DRAM_BANK_SIZE);
 
@@ -94,7 +98,6 @@ SHArchitecture::setupLoader()
 	    (unsigned)v,(unsigned)_loader_addr));
 
 	memcpy(LPVOID(v), LPVOID(_boot_func), _mem->getPageSize());
-	DPRINTF((TEXT("2nd bootloader copy done.\n")));
 
 	return TRUE;
 }
@@ -113,22 +116,27 @@ SHArchitecture::jump(paddr_t info, paddr_t pvec)
 	info = ptokv(info);
 	pvec = ptokv(pvec);
 	_loader_addr = ptokv(_loader_addr);
-	DPRINTF((TEXT("BootArgs 0x%08x Stack 0x%08x\nBooting kernel...\n"),
+	DPRINTF((TEXT("boot arg: 0x%08x stack: 0x%08x\nBooting kernel...\n"),
 	    info, sp));
 
 	// Change to privilege-mode.
 	SetKMode(1);
 
+	// Cache flush(for 2nd bootloader)
+	//
+	// SH4 uses WinCE CacheSync(). this routine may causes TLB
+	// exception. so calls before suspendIntr().
+	//
+	cache_flush();
+
 	// Disable external interrupt.
 	suspendIntr();
 
-	// Cache flush(for 2nd bootloader)
-	cache_flush();
-
 	// jump to 2nd loader.(run P1) at this time I still use MMU.
-	__asm("mov	r6, r15\n"
+	__asm(
+	    "mov	r6, r15\n"
 	    "jmp	@r7\n"
-	    "nop\n", info, pvec, sp, _loader_addr);
+	    "nop	\n", info, pvec, sp, _loader_addr);
 	// NOTREACHED
 }
 
@@ -137,7 +145,9 @@ u_int32_t
 suspendIntr(void)
 {
 	u_int32_t sr;
-	__asm("stc	sr, r0\n"
+
+	__asm(
+	    "stc	sr, r0\n"
 	    "mov.l	r0, @r4\n"
 	    "or	r5, r0\n"
 	    "ldc	r0, sr\n", &sr, 0x000000f0);
@@ -148,6 +158,7 @@ suspendIntr(void)
 void
 resumeIntr(u_int32_t s)
 {
+
 	__asm("stc	sr, r0\n"
 	    "and	r5, r0\n"
 	    "or	r4, r0\n"
@@ -158,6 +169,7 @@ void
 SHArchitecture::print_stack_pointer(void)
 {
 	int sp;
+
 	__asm("mov.l	r15, @r4", &sp);
 	DPRINTF((TEXT("SP 0x%08x\n"), sp));
 }
@@ -232,6 +244,7 @@ SHArchitecture::systemInfo()
 void
 SHArchitecture::icu_dump(void)
 {
+
 	DPRINTF((TEXT("<<<Interrupt Controller>>>\n")));
 	print_stack_pointer();
 
@@ -255,6 +268,7 @@ void
 SHArchitecture::icu_priority(void)
 {
 	struct intr_priority *tab;
+
 	DPRINTF((TEXT("----interrupt priority----\n")));
 	for (tab = ipr_table; tab->name; tab++) {
 		DPRINTF((TEXT("%-10S %d\n"), tab->name,
@@ -305,6 +319,7 @@ SHArchitecture::icu_control(void)
 
 SH_BOOT_FUNC_(7709);
 SH_BOOT_FUNC_(7709A);
+SH_BOOT_FUNC_(7750);
 
 //
 // Debug Functions.
@@ -312,6 +327,7 @@ SH_BOOT_FUNC_(7709A);
 void
 SHArchitecture::bsc_dump()
 {
+
 	DPRINTF((TEXT("<<<Bus State Controller>>>\n")));
 #define DUMP_BSC_REG(x)							\
 	DPRINTF((TEXT("%-8S"), #x));					\
@@ -335,7 +351,11 @@ void
 SHArchitecture::scif_dump(int bps)
 {
 	u_int16_t r16;
+#ifdef SH4
+	u_int16_t r8;
+#else
 	u_int8_t r8;
+#endif
 	int n;
 	
 	DPRINTF((TEXT("<<<SCIF>>>\n")));
@@ -344,7 +364,7 @@ SHArchitecture::scif_dump(int bps)
 	n = 1 <<((r8 & SCSMR2_CKS) << 1);
 	DPRINTF((TEXT("mode: %dbit %S-parity %d stop bit clock PCLOCK/%d\n"),
 	    r8 & SCSMR2_CHR ? 7 : 8,
-	    r8 & SCSMR2_PE	? r8 & SCSMR2_OE ? "odd" : "even" : "non",
+	    r8 & SCSMR2_PE  ? r8 & SCSMR2_OE ? "odd" : "even" : "non",
 	    r8 & SCSMR2_STOP ? 2 : 1,
 	    n));
 	/* bit rate */

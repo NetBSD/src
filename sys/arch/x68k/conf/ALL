@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.42.2.1 2002/01/10 19:50:15 thorpej Exp $
+#	$NetBSD: ALL,v 1.42.2.2 2002/02/11 20:09:19 jdolecek Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"ALL-$Revision: 1.42.2.1 $"
+#ident 		"ALL-$Revision: 1.42.2.2 $"
 
 maxusers	32
 
@@ -68,6 +68,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM
@@ -253,6 +255,7 @@ audio*	at vs?
 
 ## Network interfaces
 ne*	at intio0 addr 0xece300 intr 249	# Nereid Ethernet
+ne*	at intio0 addr 0xeceb00 intr 248	# Nereid Ethernet
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne*	at neptune? addr 0x300			# NE2000 or clone

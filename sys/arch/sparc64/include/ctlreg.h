@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.26.2.2 2001/08/25 06:15:55 thorpej Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.26.2.3 2002/02/11 20:09:10 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -178,7 +178,7 @@
 #define ASI_SECONDARY_NO_FAULT		ASI_SECONDARY_NOFAULT
 #define ASI_SECONDARY_NO_FAULT_LITTLE	ASI_SECONDARY_NOFAULT_LITTLE
 
-#define	PHYS_ASI(x)	(((x) | 0x08) == 0x1c)
+#define	PHYS_ASI(x)	(((x) | 0x09) == 0x1d)
 #define	LITTLE_ASI(x)	((x) & ASI_LITTLE)
 
 /* 

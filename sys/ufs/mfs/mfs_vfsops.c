@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.34.4.1 2002/01/10 20:05:19 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.34.4.2 2002/02/11 20:10:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.34.4.1 2002/01/10 20:05:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.34.4.2 2002/02/11 20:10:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -235,6 +235,14 @@ mfs_mount(mp, path, data, ndp, p)
 	struct mfsnode *mfsp;
 	size_t size;
 	int flags, error;
+
+	/*
+	 * XXX turn off async to avoid hangs when writing lots of data.
+	 * the problem is that MFS needs to allocate pages to clean pages,
+	 * so if we wait until the last minute to clean pages then there
+	 * may not be any pages available to do the cleaning.
+	 */
+	mp->mnt_flag &= ~MNT_ASYNC;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args));
 	if (error)

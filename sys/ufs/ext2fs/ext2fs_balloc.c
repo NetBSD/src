@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.10.2.1 2002/01/10 20:04:56 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.10.2.2 2002/02/11 20:10:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.10.2.1 2002/01/10 20:04:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.10.2.2 2002/02/11 20:10:46 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -394,7 +394,6 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_size);
 
-	error = 0;
 	oldeof = vp->v_size;
 	eof = MAX(oldeof, off + len);
 	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
@@ -415,7 +414,7 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
 	if (error) {
 		UVMHIST_LOG(ubchist, "getpages %d", error,0,0,0);
-		goto errout;
+		return error;
 	}
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
@@ -447,7 +446,6 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 * if we got an error, free any pages we created past the old eob.
 	 */
 
-errout:
 	simple_lock(&vp->v_interlock);
 	for (i = 0; i < npages; i++) {
 		pgs[i]->flags &= ~PG_RDONLY;

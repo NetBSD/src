@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.2 2002/01/10 19:37:53 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.3 2002/02/11 20:07:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -243,6 +243,9 @@ void bootsync		__P((void));
 
 /* fault.c */
 int badaddr_read	__P((void *, size_t, void *));
+
+/* syscall.c */
+void swi_handler	__P((trapframe_t *));
 
 #endif	/* !_LOCORE */
 

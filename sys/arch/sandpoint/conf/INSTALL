@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.1.4.2 2002/01/10 19:48:18 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.1.4.3 2002/02/11 20:08:55 jdolecek Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
@@ -10,3 +10,5 @@ options 	MEMORY_DISK_IS_ROOT	# Force root on RAM disk
 options 	MINIROOTSIZE=4096	# 2 MB
 
 pseudo-device	md		1
+
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

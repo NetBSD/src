@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.12 2000/06/03 20:42:44 thorpej Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.12.6.1 2002/02/11 20:10:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,12 +44,12 @@
 #define _SYS_DKSTAT_H_
 
 #define	DK_NDRIVE	8
-#ifdef _KERNEL
 
-u_int64_t tk_cancc;
-u_int64_t tk_nin;
-u_int64_t tk_nout;
-u_int64_t tk_rawcc;
+#ifdef _KERNEL
+extern u_int64_t tk_cancc;
+extern u_int64_t tk_nin;
+extern u_int64_t tk_nout;
+extern u_int64_t tk_rawcc;
 #endif
 
 #endif /* _SYS_DKSTAT_H_ */

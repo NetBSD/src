@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.4.2 2002/01/10 20:05:09 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.4.3 2002/02/11 20:10:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.47.4.2 2002/01/10 20:05:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.47.4.3 2002/02/11 20:10:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -248,7 +248,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
 	max = i + fs->lfs_ifpb;
-	/* printf("extend ifile for ino %d--%d\n", i, max); */
+	/* printf("extend_ifile: new block ino %d--%d\n", i, max - 1); */
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
@@ -267,6 +267,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		ifp--;
 		ifp->if_nextfree = oldlast;
 	}
+	LFS_PUT_TAILFREE(fs, cip, cbp, max - 1);
 
 	(void) VOP_BWRITE(bp); /* Ifile */
 	lfs_vunref(vp);
@@ -334,6 +335,7 @@ lfs_valloc(void *v)
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
+	/* printf("lfs_valloc: headfree %d -> %d\n", new_ino, ifp->if_nextfree); */
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
@@ -547,6 +549,7 @@ lfs_vfree(void *v)
 		ifp->if_nextfree = ino;
 		VOP_BWRITE(bp);
 		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
+		/* printf("lfs_vfree: tailfree %d -> %d\n", otail, ino); */
 	}
 #ifdef DIAGNOSTIC
 	if (ino == LFS_UNUSED_INUM) {

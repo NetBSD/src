@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.1.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.1.2.4 2002/02/11 20:09:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.1.2.3 2002/01/10 19:56:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.1.2.4 2002/02/11 20:09:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,13 +177,12 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	int error;
 
-	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT);
+	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT|M_ZERO);
 	if (asc == NULL) {
 		printf(": can't allocate softc\n");
 		/* agp_generic_detach(sc) */
 		return ENOMEM;
 	}
-	memset(asc, 0, sizeof *asc);
 
 	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS, PCI_MAPREG_TYPE_MEM, 0,
 	    &asc->iot, &asc->ioh, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.30.2.1 2002/01/10 19:55:10 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.30.2.2 2002/02/11 20:09:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -195,7 +195,9 @@ int   wdcwait __P((struct channel_softc *, int, int, int));
 int   wdc_dmawait __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdcbit_bucket __P(( struct channel_softc *, int));
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
-	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
+    u_int8_t, u_int8_t, u_int8_t, u_int8_t));
+void  wdccommandext __P((struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
+    u_int16_t));
 void   wdccommandshort __P((struct channel_softc *, int, int));
 void  wdctimeout	__P((void *arg));
 void wdc_reset_channel __P((struct ata_drive_datas *));

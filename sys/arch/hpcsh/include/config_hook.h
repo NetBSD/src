@@ -1,3 +1,3 @@
-/*	$NetBSD: config_hook.h,v 1.1 2001/01/28 03:40:26 uch Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.1.6.1 2002/02/11 20:08:19 jdolecek Exp $	*/
 
-#include <hpc/hpc/config_hook.h>
+#include <hpc/include/config_hook.h>

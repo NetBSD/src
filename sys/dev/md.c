@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26.2.1 2002/01/10 19:52:47 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.26.2.2 2002/02/11 20:09:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.26.2.1 2002/01/10 19:52:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.26.2.2 2002/02/11 20:09:37 jdolecek Exp $");
 
 #include "opt_md.h"
 
@@ -128,12 +128,11 @@ mdattach(n)
 	/* Attach as if by autoconfig. */
 	for (i = 0; i < n; i++) {
 
-		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (!sc) {
 			printf("ramdisk: malloc for attach failed!\n");
 			return;
 		}
-		memset((caddr_t)sc, 0, sizeof(*sc));
 		ramdisk_devs[i] = sc;
 		sc->sc_dev.dv_unit = i;
 		sprintf(sc->sc_dev.dv_xname, "md%d", i);

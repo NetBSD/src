@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.2 2000/03/31 14:51:52 soren Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.2.10.1 2002/02/11 20:07:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+#include <machine/intr_machdep.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.2.2.5 2002/01/10 19:37:47 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2.2.6 2002/02/11 20:07:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -104,13 +104,6 @@ char *booted_kernel;
 
 /* Prototypes */
 
-void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
-			     int cacheable));
-void map_pagetable	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry		__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_nc	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_ro	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -203,6 +196,7 @@ map_pagetable(pagetable, va, pa)
 	     L1_PTE((pa & PG_FRAME) + 0xc00);
 }
 
+/* cats kernels have a 2nd l2 pt, so the range is bigger hence the 0x7ff etc */
 vsize_t
 map_chunk(pd, pt, va, pa, size, acc, flg)
 	vaddr_t pd;
@@ -245,8 +239,13 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 			printf("L");
 #endif
 			for (loop = 0; loop < 16; ++loop)
+#ifndef cats
 				l2pt[((va >> PGSHIFT) & 0x3f0) + loop] =
 				    L2_LPTE(pa, acc, flg);
+#else
+				l2pt[((va >> PGSHIFT) & 0x7f0) + loop] =
+				    L2_LPTE(pa, acc, flg);
+#endif	
 			va += L2_LPAGE_SIZE;
 			pa += L2_LPAGE_SIZE;
 			remain -= L2_LPAGE_SIZE;
@@ -256,7 +255,11 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 #ifdef VERBOSE_INIT_ARM
 			printf("P");
 #endif
+#ifndef cats			
 			l2pt[((va >> PGSHIFT) & 0x3ff)] = L2_SPTE(pa, acc, flg);
+#else
+			l2pt[((va >> PGSHIFT) & 0x7ff)] = L2_SPTE(pa, acc, flg);
+#endif
 			va += NBPG;
 			pa += NBPG;
 			remain -= NBPG;
@@ -268,15 +271,20 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 	return(size);
 }
 
-
+/* cats versions have larger 2 l2pt's next to each other */
 void
 map_entry(pagetable, va, pa)
 	vaddr_t pagetable;
 	vaddr_t va;
 	paddr_t pa;
 {
+#ifndef cats
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KRW);
+#else
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KRW);
+#endif	
 }
 
 
@@ -286,8 +294,13 @@ map_entry_nc(pagetable, va, pa)
 	vaddr_t va;
 	paddr_t pa;
 {
+#ifndef cats
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
+#else
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
+	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
+#endif
 }
 
 
@@ -297,8 +310,13 @@ map_entry_ro(pagetable, va, pa)
 	vaddr_t va;
 	paddr_t pa;
 {
+#ifndef cats
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KR);
+#else
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KR);
+#endif
 }
 
 

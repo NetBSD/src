@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.74 2001/03/02 16:29:41 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.74.4.1 2002/02/11 20:06:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -33,6 +33,9 @@
 
 #include "opt_amigaccgrf.h"
 #include "opt_p5ppc68kboard.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.74.4.1 2002/02/11 20:06:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,19 +120,18 @@ static u_long boot_flags;
 u_long scsi_nosync;
 int shift_nosync;
 
-void  start_c __P((int, u_int, u_int, u_int, char *, u_int, u_long, u_long));
-void rollcolor __P((int));
-static int kernel_image_magic_size __P((void));
-static void kernel_image_magic_copy __P((u_char *));
-int kernel_reload_write __P((struct uio *));
-extern void kernel_reload __P((char *, u_long, u_long, u_long, u_long,
-	u_long, u_long, u_long, u_long, u_long, u_long));
-extern void etext __P((void));
-void start_c_cleanup __P((void));
+void  start_c(int, u_int, u_int, u_int, char *, u_int, u_long, u_long);
+void rollcolor(int);
+static int kernel_image_magic_size(void);
+static void kernel_image_magic_copy(u_char *);
+int kernel_reload_write(struct uio *);
+extern void kernel_reload(char *, u_long, u_long, u_long, u_long,
+	u_long, u_long, u_long, u_long, u_long, u_long);
+extern void etext(void);
+void start_c_cleanup(void);
 
 void *
-chipmem_steal(amount)
-	long amount;
+chipmem_steal(long amount)
 {
 	/*
 	 * steal from top of chipmem, so we don't collide with
@@ -366,8 +368,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	ptpa = pstart;
 #ifdef DRACO
 	if ((id>>24)==0x7D) {
-		ptextra = NDRCCPG 
-		    + RELOC(NZTWOMEMPG, u_int) 
+		ptextra = NDRCCPG
+		    + RELOC(NZTWOMEMPG, u_int)
 		    + btoc(RELOC(ZBUSAVAIL, u_int));
 	} else
 #endif
@@ -493,8 +495,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 			}
 			sg = (u_int *)RELOC(Sysseg_pa, u_int);
 			sg = (u_int *)(sg[loadbase >> SG4_SHIFT1] & SG4_ADDR1);
-			shadow_pt = 
-			    ((u_int *)(sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2] 
+			shadow_pt =
+			    ((u_int *)(sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2]
 				& SG4_ADDR1)) +
 			    ((loadbase & SG4_MASK3) >> SG4_SHIFT3); /* XXX is */
 
@@ -560,8 +562,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 				vstart += NBPG;
 				avail -= NBPG;
 			}
-			shadow_pt = 
-			    ((u_int *)(sg[loadbase >> SG_ISHIFT] & 0xffffff00)) 
+			shadow_pt =
+			    ((u_int *)(sg[loadbase >> SG_ISHIFT] & 0xffffff00))
 			    + ((loadbase & SG_PMASK) >> SG_PSHIFT);
 		}
 	}
@@ -583,7 +585,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 
 #if defined(M68040) || defined(M68060)
 	/*
-	 * map the kernel segment table cache invalidated for 
+	 * map the kernel segment table cache invalidated for
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
@@ -639,7 +641,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 
 #ifdef DEBUG_KERNEL_START
 		/*
-		 * early rollcolor Altais mapping 
+		 * early rollcolor Altais mapping
 		 * XXX (only works if in slot 0)
 		 */
 		*pg++ = 0x20000000 | PG_RW | PG_CI | PG_V;
@@ -647,7 +649,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	} else
 #endif
 	{
-		pg_proto = CHIPMEMBASE | PG_RW | PG_CI | PG_V;	
+		pg_proto = CHIPMEMBASE | PG_RW | PG_CI | PG_V;
 						/* CI needed here?? */
 		while (pg_proto < CHIPMEMTOP) {
 			*pg++     = pg_proto;
@@ -688,10 +690,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		pg = shadow_pt;
 		*pg++ = PG_NV;			/* Make page 0 invalid */
 		pg_proto += NBPG;
-		for (i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG) 
+		for (i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 		pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
-		for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG) 
+		for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 	}
 
@@ -749,7 +751,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
 
 			RELOC(ZBUSADDR, vaddr_t) =
-			    RELOC(ZTWOMEMADDR, u_int) + 
+			    RELOC(ZTWOMEMADDR, u_int) +
 			    RELOC(NZTWOMEMPG, u_int)*NBPG;
 		} else {
 			RELOC(ZBUSADDR, vaddr_t) =
@@ -760,7 +762,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 * some nice variables for pmap to use
 		 */
 		RELOC(amigahwaddr, vaddr_t) = RELOC(DRCCADDR, u_int);
-	} else 
+	} else
 #endif
 	{
 		RELOC(CHIPMEMADDR, u_int) =
@@ -836,8 +838,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 
 		if (id & AMIGA_68060) {
 			/* do i need to clear the branch cache? */
-			asm volatile (	".word 0x4e7a,0x0002;" 
-					"orl #0x400000,%%d0;" 
+			asm volatile (	".word 0x4e7a,0x0002;"
+					"orl #0x400000,%%d0;"
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
 
@@ -855,7 +857,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 ((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
 #endif
 
-		asm volatile ("movel #0xc000,%%d0; .word 0x4e7b,0x0003" 
+		asm volatile ("movel #0xc000,%%d0; .word 0x4e7b,0x0003"
 		    : : :"d0" );
 	} else
 #endif
@@ -909,7 +911,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		draco_intfrc = draco_intpen + NBPG;
 		draco_misc = draco_intfrc + NBPG;
 		draco_ioct = (struct drioct *)(DRCCADDR + DRIOCTLPG*NBPG);
-	} else 
+	} else
 #endif
 	{
 		INTREQRaddr = (vaddr_t)&custom.intreqr;
@@ -954,11 +956,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 
 		*(volatile u_int8_t *)(DRCCADDR + 1 +
 		    DRSUPIOPG*NBPG + 4*(0x2F8 + 1)) = 0; /* and com1 */
-		
+
 		draco_ioct->io_control |= DRCNTRL_WDOGDIS; /* stop Fido */
 		*draco_misc &= ~1/*DRMISC_FASTZ2*/;
 
-	} else 
+	} else
 #endif
 	{
 		custom.intena = 0x7fff;			/* disable ints */
@@ -992,10 +994,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 
 #ifdef	P5PPC68KBOARD
 	/*
-	 * Are we an P5 PPC/68K board? install different reset 
+	 * Are we an P5 PPC/68K board? install different reset
 	 * routine.
 	 */
-        
+
         for (cdp = cfdev, ecdp = &cfdev[ncfdev]; cdp < ecdp; cdp++) {
 		if (cdp->rom.manid == 8512 &&
 		    (cdp->rom.prodid == 100 || cdp->rom.prodid == 110)) {

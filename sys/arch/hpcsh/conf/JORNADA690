@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.8.2.2 2002/01/10 19:44:18 thorpej Exp $
+#	$NetBSD: JORNADA690,v 1.8.2.3 2002/02/11 20:08:15 jdolecek Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -16,6 +16,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=65534
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Standard system options
 

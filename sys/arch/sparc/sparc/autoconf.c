@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.150.2.2 2002/01/10 19:48:54 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150.2.3 2002/02/11 20:09:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -116,6 +116,10 @@ extern	int kgdb_debug_panic;
 #endif
 extern void *bootinfo;
 
+#ifndef DDB
+void bootinfo_relocate(void *);
+#endif
+
 static	char *str2hex __P((char *, int *));
 static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
@@ -224,9 +228,11 @@ void
 bootstrap()
 {
 	extern struct user *proc0paddr;
+	extern int end[];
 #ifdef DDB
 	struct btinfo_symtab *bi_sym;
 #endif
+
 	prom_init();
 
 	/* Find the number of CPUs as early as possible */
@@ -237,6 +243,17 @@ bootstrap()
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
+
+#ifndef DDB
+	/*
+	 * We want to reuse the memory where the symbols were stored
+	 * by the loader. Relocate the bootinfo array which is loaded
+	 * above the symbols (we assume) to the start of BSS. Then
+	 * adjust kernel_top accordingly.
+	 */
+
+	bootinfo_relocate((void *)ALIGN((u_int)end));
+#endif
 
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
@@ -253,21 +270,18 @@ bootstrap()
 	initmsgbuf((caddr_t)KERNBASE, 8192);
 #endif
 
-	/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 #ifdef DDB
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
-	   	bi_sym->ssym += KERNBASE; 
-	   	bi_sym->esym += KERNBASE; 
+		bi_sym->ssym += KERNBASE;
+		bi_sym->esym += KERNBASE;
 		ddb_init(bi_sym->nsym, (int *)bi_sym->ssym,
 		    (int *)bi_sym->esym);
 	} else {
 		/*
 		 * Compatibility, will go away.
 		 */
-		extern int end;
-		extern int *esym;
-
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		extern char *kernel_top;
+		ddb_init(*(int *)end, ((int *)end) + 1, (int *)kernel_top);
 	}
 #endif
 
@@ -511,9 +525,14 @@ bootpath_build()
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
 					cp = str2hex(++cp, &bp->val[1]);
-				if (*cp == ':')
+				if (*cp == ':') {
 					/* XXX - we handle just one char */
-					bp->val[2] = *++cp - 'a', ++cp;
+					/*       skip remainder of paths */
+					/*       like "ledma@f,400010:tpe" */
+					bp->val[2] = *++cp - 'a';
+					while (*++cp != '/' && *cp != '\0')
+						/*void*/;
+				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
 							sbus offset/adddress */
@@ -943,7 +962,7 @@ cpu_rootconf()
 	int bootpartition;
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	if (bp == NULL) 
+	if (bp == NULL)
 		bootpartition = 0;
 	else if (booted_device != bp->dev)
 		bootpartition = 0;
@@ -1015,7 +1034,7 @@ mainbus_match(parent, cf, aux)
 	return (1);
 }
 
-/* 
+/*
  * Helper routines to get some of the more common properties. These
  * only get the first item in case the property value is an array.
  * Drivers that "need to know it all" can call PROM_getprop() directly.
@@ -1974,3 +1993,61 @@ lookup_bootinfo(type)
 
 	return (NULL);
 }
+
+#ifndef DDB
+/*
+ * Move bootinfo from the current kernel top to the proposed
+ * location. As a side-effect, `kernel_top' is adjusted to point
+ * at the first free location after the relocated bootinfo array.
+ */
+void
+bootinfo_relocate(newloc)
+	void *newloc;
+{
+	int bi_size;
+	struct btinfo_common *bt;
+	char *cp, *dp;
+	extern char *kernel_top;
+
+	if (bootinfo == NULL) {
+		kernel_top = newloc;
+		return;
+	}
+
+	/*
+	 * Find total size of bootinfo array
+	 */
+	bi_size = 0;
+	cp = bootinfo;
+	do {
+		bt = (struct btinfo_common *)cp;
+		bi_size += bt->next;
+		cp += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	/*
+	 * Check propective gains.
+	 */
+	if ((int)bootinfo - (int)newloc < bi_size)
+		/* Don't bother */
+		return;
+
+	/*
+	 * Relocate the bits
+	 */
+	cp = bootinfo;
+	dp = newloc;
+	do {
+		bt = (struct btinfo_common *)cp;
+		memcpy(dp, cp, bt->next);
+		cp += bt->next;
+		dp += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	/* Set new bootinfo location and adjust kernel_top */
+	bootinfo = newloc;
+	kernel_top = (char *)newloc + ALIGN(bi_size);
+}
+#endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39var.h,v 1.9 2001/06/13 19:09:08 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.9.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -141,42 +141,8 @@ extern u_int32_t tx39intrvec;
  */
 void tx39power_suspend_cpu(void);
 
-#ifdef TX39_DEBUG
-extern u_int32_t tx39debugflag;
 /*
- *	Debugging use.
+ *	Debug print configration.
  */
-#define __bitdisp(a, s, e, m, c)					\
-({									\
-	u_int32_t __j, __j1;						\
-	int __i, __s, __e, __n;						\
-	__n = sizeof(typeof(a)) * NBBY - 1;				\
-	__j1 = 1 << __n;						\
-	__e = e ? e : __n;						\
-	__s = s;							\
-	for (__j = __j1, __i = __n; __j > 0; __j >>=1, __i--) {		\
-		if (__i > __e || __i < __s) {				\
-			printf("%c", a & __j ? '+' : '-');		\
-		} else {						\
-			printf("%c", a & __j ? '|' : '.');		\
-		}							\
-	}								\
-	if (m) {							\
-		printf("[%s]", (char*)m);				\
-	}								\
-	if (c) {							\
-		for (__j = __j1, __i = __n; __j > 0; __j >>=1, __i--) {	\
-			if (!(__i > __e || __i < __s) && (a & __j)) {	\
-				printf(" %d", __i);			\
-			}						\
-		}							\
-	}								\
-	printf("\n");							\
-})
-#define bitdisp(a) __bitdisp((a), 0, 0, 0, 1)
-#else /* TX39_DEBUG */
-#define __bitdisp(a, s, e, m, c)
-#define bitdisp(a)
-#endif /* TX39_DEBUG */
-
-int	__is_set_print(u_int32_t, int, char *);
+#define USE_HPC_DPRINTF
+#define __DPRINTF_EXT

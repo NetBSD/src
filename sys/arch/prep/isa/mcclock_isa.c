@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1.10.1 2002/01/10 19:48:12 thorpej Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1.10.2 2002/02/11 20:08:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -94,7 +94,7 @@ mcclock_isa_match(parent, match, aux)
 		return (0);
 
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
-	    ia->ia_io[0].ir_size, 0, &ioh))
+	    MCCLOCK_NPORTS, 0, &ioh))
 		return (0);
 
 	bus_space_unmap(ia->ia_iot, ioh, MCCLOCK_NPORTS);

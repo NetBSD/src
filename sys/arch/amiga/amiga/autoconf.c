@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 2001/02/02 21:52:12 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78.4.1 2002/02/11 20:06:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78.4.1 2002/02/11 20:06:43 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
@@ -42,10 +46,10 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-static void findroot __P((void));
-void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, struct cfdata *, void *));
+static void findroot(void);
+void mbattach(struct device *, struct device *, void *);
+int mbprint(void *, const char *);
+int mbmatch(struct device *, struct cfdata *, void *);
 
 #include <sys/kernel.h>
 
@@ -82,7 +86,7 @@ cpu_configure()
 #ifdef DEBUG_KERNEL_START
 	printf("survived autoconf, going to enable interrupts\n");
 #endif
-	
+
 #ifdef DRACO
 	if (is_draco()) {
 		*draco_intena |= DRIRQ_GLOBAL;
@@ -147,8 +151,8 @@ matchname(fp, sp)
 
 /*
  * use config_search to find appropriate device, then call that device
- * directly with NULL device variable storage.  A device can then 
- * always tell the difference betwean the real and console init 
+ * directly with NULL device variable storage.  A device can then
+ * always tell the difference betwean the real and console init
  * by checking for NULL.
  */
 int
@@ -179,12 +183,12 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 
 /*
  * this function needs to get enough configured to do a console
- * basically this means start attaching the grfxx's that support 
+ * basically this means start attaching the grfxx's that support
  * the console. Kinda hacky but it works.
  */
 void
 config_console()
-{	
+{
 	struct cfdata *cf;
 
 	/*
@@ -214,8 +218,8 @@ config_console()
 	amiga_config_found(cf, NULL, "zbus", NULL);
 }
 
-/* 
- * mainbus driver 
+/*
+ * mainbus driver
  */
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
@@ -267,7 +271,7 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "drsc", simple_devprint);
 		config_found(dp, "drsupio", simple_devprint);
-	} else 
+	} else
 #endif
 	{
 		config_found(dp, "ser", simple_devprint);

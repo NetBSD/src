@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.30.2.1 2002/01/10 19:59:59 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.30.2.2 2002/02/11 20:10:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,17 +78,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.30.2.1 2002/01/10 19:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.30.2.2 2002/02/11 20:10:24 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
-#include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/sysctl.h>
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -96,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.30.2.1 2002/01/10 19:59:59 thorpej E
  */
 struct	disklist_head disklist;	/* TAILQ_HEAD */
 int	disk_count;		/* number of drives in global disklist */
+struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -394,10 +394,14 @@ disk_find(char *name)
 	if ((name == NULL) || (disk_count <= 0))
 		return (NULL);
 
-	for (diskp = disklist.tqh_first; diskp != NULL;
-	    diskp = diskp->dk_link.tqe_next)
-		if (strcmp(diskp->dk_name, name) == 0)
+	simple_lock(&disklist_slock);
+	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
+	    diskp = TAILQ_NEXT(diskp, dk_link))
+		if (strcmp(diskp->dk_name, name) == 0) {
+			simple_unlock(&disklist_slock);
 			return (diskp);
+		}
+	simple_unlock(&disklist_slock);
 
 	return (NULL);
 }
@@ -434,7 +438,9 @@ disk_attach(struct disk *diskp)
 	/*
 	 * Link into the disklist.
 	 */
+	simple_lock(&disklist_slock);
 	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
+	simple_unlock(&disklist_slock);
 	++disk_count;
 }
 
@@ -450,7 +456,9 @@ disk_detach(struct disk *diskp)
 	 */
 	if (--disk_count < 0)
 		panic("disk_detach: disk_count < 0");
+	simple_lock(&disklist_slock);
 	TAILQ_REMOVE(&disklist, diskp, dk_link);
+	simple_unlock(&disklist_slock);
 
 	/*
 	 * Free the space used by the disklabel structures.
@@ -529,4 +537,101 @@ disk_resetstat(struct disk *diskp)
 	timerclear(&diskp->dk_time);
 
 	splx(s);
+}
+
+int
+sysctl_disknames(void *vwhere, size_t *sizep)
+{
+	char buf[DK_DISKNAMELEN + 1];
+	char *where = vwhere;
+	struct disk *diskp;
+	size_t needed, left, slen;
+	int error, first;
+
+	first = 1;
+	error = 0;
+	needed = 0;
+	left = *sizep;
+
+	simple_lock(&disklist_slock);
+	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
+	    diskp = TAILQ_NEXT(diskp, dk_link)) {
+		if (where == NULL)
+			needed += strlen(diskp->dk_name) + 1;
+		else {
+			memset(buf, 0, sizeof(buf));
+			if (first) {
+				strncpy(buf, diskp->dk_name, sizeof(buf));
+				first = 0;
+			} else {
+				buf[0] = ' ';
+				strncpy(buf + 1, diskp->dk_name, sizeof(buf - 1));
+			}
+			buf[DK_DISKNAMELEN] = '\0';
+			slen = strlen(buf);
+			if (left < slen + 1)
+				break;
+			/* +1 to copy out the trailing NUL byte */
+			error = copyout(buf, where, slen + 1);
+			if (error)
+				break;
+			where += slen;
+			needed += slen;
+			left -= slen;
+		}
+	}
+	simple_unlock(&disklist_slock);
+	*sizep = needed;
+	return (error);
+}
+
+int
+sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
+{
+	struct disk_sysctl sdisk;
+	struct disk *diskp;
+	char *where = vwhere;
+	size_t tocopy, left;
+	int error;
+
+	if (where == NULL) {
+		*sizep = disk_count * sizeof(struct disk_sysctl);
+		return (0);
+	}
+
+	if (namelen == 0)
+		tocopy = sizeof(sdisk);
+	else
+		tocopy = name[0];
+
+	error = 0;
+	left = *sizep;
+	memset(&sdisk, 0, sizeof(sdisk));
+	*sizep = 0;
+
+	simple_lock(&disklist_slock);
+	TAILQ_FOREACH(diskp, &disklist, dk_link) {
+		if (left < sizeof(struct disk_sysctl))
+			break;
+		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));;
+		sdisk.dk_xfer = diskp->dk_xfer;
+		sdisk.dk_seek = diskp->dk_seek;
+		sdisk.dk_bytes = diskp->dk_bytes;
+		sdisk.dk_attachtime_sec = diskp->dk_attachtime.tv_sec;
+		sdisk.dk_attachtime_usec = diskp->dk_attachtime.tv_usec;
+		sdisk.dk_timestamp_sec = diskp->dk_timestamp.tv_sec;
+		sdisk.dk_timestamp_usec = diskp->dk_timestamp.tv_usec;
+		sdisk.dk_time_sec = diskp->dk_time.tv_sec;
+		sdisk.dk_time_usec = diskp->dk_time.tv_usec;
+		sdisk.dk_busy = diskp->dk_busy;
+
+		error = copyout(&sdisk, where, min(tocopy, sizeof(sdisk)));
+		if (error)
+			break;
+		where += tocopy;
+		*sizep += tocopy;
+		left -= tocopy;
+	}
+	simple_unlock(&disklist_slock);
+	return (error);
 }

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.4.2.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,6 +44,8 @@
 #include <memory.h>
 #include <arch.h>
 #include <sh3/sh3.h>
+#include <sh3/hd64461.h>
+#include <sh3/hd64465.h>
 
 template <class T>
 inline T
@@ -93,7 +95,7 @@ protected:
 	// should be created as actual product insntnce.
 	SHArchitecture(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)
 		: _boot_func(bootfunc), Architecture(cons, mem) {
-		DPRINTF((TEXT("SH architecture.\n")));
+		// NO-OP
 	}
 	virtual ~SHArchitecture(void) { /* NO-OP */ }
 
@@ -108,15 +110,19 @@ public:
 	virtual void cache_flush(void) { /* NO-OP */ }
 };
 
-/* 
- * SH product. setup cache flush routine and 2nd-bootloader.
- */
+// 
+// SH product. setup cache flush routine and 2nd-bootloader.
+//
+
+//
+// SH3 series.
+///
 #define SH_(x)								\
 class SH##x : public SHArchitecture {					\
 public:									\
 	SH##x(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)\
 		: SHArchitecture(cons, mem, bootfunc) {			\
-		DPRINTF((TEXT("SH") TEXT(#x) TEXT("\n")));		\
+		DPRINTF((TEXT("CPU: SH") TEXT(#x) TEXT("\n")));		\
 	}								\
 	~SH##x(void) { /* NO-OP */ }					\
 									\
@@ -127,10 +133,10 @@ public:									\
 	static void boot_func(struct BootArgs *, struct PageTag *);	\
 }
 
-/* 
- * 2nd-bootloader.  make sure that PIC and its size is lower than page size.
- * and can't call subroutine.
- */
+// 
+// 2nd-bootloader.  make sure that PIC and its size is lower than page size.
+// and can't call subroutine.
+//
 #define SH_BOOT_FUNC_(x)						\
 void									\
 SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
@@ -140,10 +146,9 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 	__asm("stc	sr, r5\n"					\
 	      "or	r4, r5\n"					\
 	      "ldc	r5, sr\n", 0x500000f0, tmp);			\
-									\
 	/* Now I run on P1, TLB flush. and disable. */			\
+									\
 	VOLATILE_REF(MMUCR) = MMUCR_TF;					\
-  									\
 	do {								\
 		u_int32_t *dst =(u_int32_t *)p->dst;			\
 		u_int32_t *src =(u_int32_t *)p->src;			\
@@ -166,5 +171,28 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 
 SH_(7709);
 SH_(7709A);
+
+//
+// SH4 series.
+///
+class SH7750 : public SHArchitecture {
+public:
+	SH7750(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)
+		: SHArchitecture(cons, mem, bootfunc) {
+		DPRINTF((TEXT("CPU: SH7750\n")));
+	}
+	~SH7750(void) { /* NO-OP */ }
+
+	void cache_flush(void) {
+		//
+		// To invalidate I-cache, program must run on P2. I can't 
+		// do it myself, use WinCE API. (WCE2.10 or later)
+		//
+		CacheSync(CACHE_D_WBINV);
+		CacheSync(CACHE_I_INV);
+	}
+
+	static void boot_func(struct BootArgs *, struct PageTag *);
+};
 
 #endif // _HPCBOOT_SH_ARCH_H_

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.59.2.2 2002/01/10 19:43:45 thorpej Exp $
+#	$NetBSD: files.hpcmips,v 1.59.2.3 2002/02/11 20:08:04 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -61,6 +61,13 @@ file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
+file	arch/hpc/hpc/kloader.c
+file	arch/hpcmips/hpcmips/kloader_machdep.c
+file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx
+file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx
+defflag	debug_kloader.h			KLOADER_DEBUG
+defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
+
 #
 # H/PC Platform common files.
 #
@@ -70,6 +77,11 @@ include "dev/hpc/files.bicons"
 include "dev/hpc/files.hpcfb"
 include "dev/hpc/files.hpckbd"
 include "dev/hpc/files.hpctp"
+
+#
+# Debug utility
+#
+file	arch/hpc/hpc/debug_subr.c
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
@@ -96,27 +108,28 @@ include "dev/isa/files.isa"
 #
 #  Vr41xx integrated peripherals
 #
-device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1], [platform = -1] }
+device vripif { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [unit=-1], [pwctl=-1], [platform = -1] }
+device vrip: vripif
 attach vrip at mainbus
 file arch/hpcmips/vr/vrip.c		vrip needs-flag
 
 device vrbcu
-attach vrbcu at vrip
+attach vrbcu at vripif
 file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
 
 device vrrtc
-attach vrrtc at vrip
+attach vrrtc at vripif
 file arch/hpcmips/vr/rtc.c			vrrtc needs-flag
 
 device vrcmu
-attach vrcmu at vrip
+attach vrcmu at vripif
 file arch/hpcmips/vr/cmu.c			vrcmu needs-flag
 
 include "dev/hpc/files.hpcio"
 device	vrisabif {[platform = -1], [isaportoffset=0], [isamemoffset=0]}		# GIU attachment
 
 device vrgiu: vrisabif, hpcioif
-attach vrgiu at vrip
+attach vrgiu at vripif
 file arch/hpcmips/vr/vrgiu.c			vrgiu
 
 device vrisab: isabus
@@ -124,35 +137,35 @@ attach vrisab at vrisabif
 file arch/hpcmips/isa/isa_machdep.c		vrisab
 
 device vrkiu: hpckbdif
-attach vrkiu at vrip
+attach vrkiu at vripif
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
 
 device vrpmu
-attach vrpmu at vrip
+attach vrpmu at vripif
 file arch/hpcmips/vr/vrpmu.c			vrpmu needs-flag
 
 device vrdsu
-attach vrdsu at vrip
+attach vrdsu at vripif
 file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
 
 device vrled
-attach vrled at vrip
+attach vrled at vripif
 file arch/hpcmips/vr/vrled.c			vrled needs-flag
 
 device vrpiu: wsmousedev
-attach vrpiu at vrip: tpcalib
+attach vrpiu at vripif: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
 
-attach ohci at vrip with ohci_vrip
+attach ohci at vripif with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
 
 device vrpciu: pcibus
-attach vrpciu at vrip
+attach vrpciu at vripif
 file arch/hpcmips/vr/vrpciu.c			vrpciu needs-flag
 
 defflag opt_mq200.h	MQ200_DEBUG MQ200_USECRT
 device mqvideo: hpcfbif
-attach mqvideo at vrip with mqvideo_vrip
+attach mqvideo at vripif with mqvideo_vrip
 file arch/hpcmips/vr/mq200_vrip.c		mqvideo_vrip
 file arch/hpcmips/dev/mq200.c			mqvideo
 file arch/hpcmips/dev/mq200subr.c		mqvideo
@@ -163,12 +176,12 @@ attach mqvideo at pci with mqvideo_pci
 file arch/hpcmips/pci/mq200_pci.c		mqvideo_pci
 
 device ite8181video: hpcfbif
-attach ite8181video at vrip with ite8181video_vrip
+attach ite8181video at vripif with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
 
 device vrc4172pwm
-attach vrc4172pwm at vrip
+attach vrc4172pwm at vripif
 file arch/hpcmips/vr/vrc4172pwm.c		vrc4172pwm needs-flag
 
 device vrc4172gpio: hpcioif, vrisabif
@@ -200,13 +213,12 @@ file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 #
 #	TOSHIBA TX3912/3922
 #
-defflag			TX39_DEBUG
 defflag			TX39_WATCHDOGTIMER
-defflag			TX39ICUDEBUG
-defflag			TX39CLKDEBUG
-defflag			TX39BIUDEBUG
-defflag			TX39POWERDEBUG
-defflag			TX39UARTDEBUG
+defflag			TX39ICU_DEBUG
+defflag			TX39CLOCK_DEBUG
+defflag			TX39BIU_DEBUG
+defflag			TX39POWER_DEBUG
+defflag			TX39UART_DEBUG
 defflag			USE_POLL
 
 device txsim { }
@@ -388,7 +400,7 @@ file	dev/isa/i82365_isasubr.c		pcic_isa
 include "dev/pcmcia/files.pcmcia"
 
 # Serial Interface Unit
-attach com at vrip with com_vrip
+attach com at vripif with com_vrip
 file	arch/hpcmips/vr/com_vrip.c		com_vrip needs-flag
 
 attach com at hpcioif with com_hpcio

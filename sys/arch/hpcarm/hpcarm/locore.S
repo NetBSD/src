@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.2.1 2002/01/10 19:43:39 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.2.2 2002/02/11 20:08:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -108,7 +108,7 @@ ENTRY_NP(cpu_reset)
 
 	ldr	r0, Lcpufuncs
 	add	lr, pc, #Lboot_cache_purged - . - 8
-	ldr	pc, [r0, #CF_CACHE_PURGE_ID]
+	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 Lboot_cache_purged:
 

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.6 2001/05/21 15:54:25 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.6.2.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,6 +63,7 @@ public:
 	static void SCIPrint(const char *);
 	static void SCIFPrint(const char *);
 	static void HD64461COMPrint(const char *);
+	static void HD64465COMPrint(const char *);
 
 private:
 	static SHConsole *_instance;

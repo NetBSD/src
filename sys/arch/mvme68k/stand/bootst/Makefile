@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.12 2000/12/04 21:25:58 scw Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2002/02/11 20:08:42 jdolecek Exp $
 
 CLEANFILES+=stboot bootst bootst.bug
 
@@ -12,7 +12,8 @@ DPADD=	${LIBS} ${WRTVID}
 bootst stboot: ${PROG} ${WRTVID}
 	@${SIZE} bootst.bug
 	@${STRIP} bootst.bug
-	@${WRTVID} bootst.bug # creates bootst  and stboot
+	@${OBJCOPY} --output-target=binary bootst.bug bootst
+	@${WRTVID} bootst	# creates stboot
 
 proginstall::
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \

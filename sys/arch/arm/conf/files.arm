@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.33.2.4 2002/01/10 19:37:50 thorpej Exp $
+#	$NetBSD: files.arm,v 1.33.2.5 2002/02/11 20:07:20 jdolecek Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,6 +8,8 @@ defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110
 				CPU_XSCALE
+defparam opt_cpuoptions.h	XSCALE_CCLKCFG
+
 
 # Floating point emulator
 defflag				ARMFPE
@@ -65,11 +67,13 @@ file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_sa110 |
 							cpu_xscale
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110
+file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa110	# XXX
 file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
+file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
 # vectors.S gets included manually by Makefile.arm26, since it needs
 # to be at the start of the text segment on those machines.
@@ -89,7 +93,6 @@ file	arch/arm/arm32/pmap.c			arm32
 file	arch/arm/arm32/setcpsr.S		arm32
 file	arch/arm/arm32/setstack.S		arm32
 file	arch/arm/arm32/stubs.c			arm32
-file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
 file	arch/arm/arm32/vm_machdep.c		arm32
 
@@ -97,3 +100,11 @@ file	arch/arm/arm32/vm_machdep.c		arm32
 file	arch/arm/arm32/bcopy_page.S		arm32
 file	arch/arm/arm32/bcopyinout.S		arm32
 file	arch/arm/arm32/copystr.S		arm32
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/ossaudio/files.ossaudio"
+include "compat/linux/files.linux"
+include "compat/linux/arch/arm/files.linux_arm"
+file	arch/arm/arm/linux_sigcode.S		compat_linux
+file	arch/arm/arm/linux_syscall.c		compat_linux
+file	arch/arm/arm/linux_trap.c		compat_linux

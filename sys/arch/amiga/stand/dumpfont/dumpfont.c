@@ -1,10 +1,10 @@
-/*	$NetBSD: dumpfont.c,v 1.5 1994/10/26 02:06:57 cgd Exp $	*/
+/*	$NetBSD: dumpfont.c,v 1.5.46.1 2002/02/11 20:07:12 jdolecek Exp $	*/
 
 /*
- * This is a *real* hack to dump the topaz80 kernel font. This one is 
+ * This is a *real* hack to dump the topaz80 kernel font. This one is
  * ways nicer than the ugly Mach font, but we'll have to dump it from a
  * running system to not run against Commodore copyrights. *NEVER* distribute
- * the generated font with BSD, always regenerate! 
+ * the generated font with BSD, always regenerate!
  */
 
 #include <exec/types.h>
@@ -19,8 +19,8 @@
 
 #include <stdio.h>
 
-
-main()
+int
+main(void)
 {
   unsigned char str[256], *pp;
   int i;
@@ -44,7 +44,7 @@ main()
       exit (1);
     }
   bzero (pp, 256 * 8);
-  
+
   tf = OpenFont (& ta);
   if (! tf)
     {
@@ -58,7 +58,7 @@ main()
   for (i = 32; i < 256; i++) str[i - 32] = i;
 
   Move (&rp, 0, 6);
-  
+
   Text (&rp, str, 256 - 32);
   {
     int bin = open ("bitmap", 1);
@@ -68,31 +68,32 @@ main()
         close (bin);
       }
   }
-  
+
   /* dump them.. */
   printf ("/* generated automatically by dumpfont.c. *DONT* distribute\n");
   printf ("   this file, it contains information Copyright by Commodore!\n");
   printf ("\n");
   printf ("   This is the (new) topaz80 system font: */\n\n");
-  
+
   printf ("unsigned char kernel_font_width  = 8;\n");
   printf ("unsigned char kernel_font_height = 8;\n");
   printf ("unsigned char kernel_font_lo = 32;\n");
   printf ("unsigned char kernel_font_hi = 255;\n\n");
-  
+
   printf ("unsigned char kernel_cursor[] = {\n");
   printf ("  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };\n\n");
   printf ("unsigned char kernel_font[] = {\n");
-  
+
   for (i = 0; i < 256 - 32; i++)
     {
-      printf ("/* %c */ ", i + 32);
-      printf ("0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x,\n",
+      printf( "/* %c */ ", i + 32);
+      printf( "0x%02x, 0x%02x, 0x%02x, 0x%02x, "
+	      "0x%02x, 0x%02x, 0x%02x, 0x%02x,\n",
       	      pp[i+0*256], pp[i+1*256], pp[i+2*256], pp[i+3*256],
       	      pp[i+4*256], pp[i+5*256], pp[i+6*256], pp[i+7*256]);
     }
   printf ("};\n");
-  
+
   CloseFont (tf);
   FreeRaster (pp, 256 * 8, 8);
 }

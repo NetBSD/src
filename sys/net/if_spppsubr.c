@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.23.2.3 2002/01/10 20:02:11 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.23.2.4 2002/02/11 20:10:30 jdolecek Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.23.2.3 2002/01/10 20:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.23.2.4 2002/02/11 20:10:30 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -442,7 +442,7 @@ static const struct cp *cps[IDX_COUNT] = {
 };
 
 
-/*
+/*
  * Exported functions, comprising our interface to the lower layer.
  */
 
@@ -1064,10 +1064,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq*) data;
 	struct sppp *sp = (struct sppp*) ifp;
-	int s, rv, going_up, going_down, newmode;
+	int s, error=0, going_up, going_down, newmode;
 
 	s = splnet();
-	rv = 0;
 	switch (cmd) {
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
@@ -1141,7 +1140,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	{
 		struct proc *p = curproc;		/* XXX */
 
-		if ((rv = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
 	}
 	/* FALLTHROUGH */
@@ -1150,18 +1149,18 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETSTATUS:
 	case SPPPGETIDLETO:
 	case SPPPGETAUTHFAILURES:
-		rv = sppp_params(sp, cmd, data);
+		error = sppp_params(sp, cmd, data);
 		break;
 
 	default:
-		rv = ENOTTY;
+		error = ENOTTY;
 	}
 	splx(s);
-	return rv;
+	return (error);
 }
 
 
-/*
+/*
  * Cisco framing implementation.
  */
 
@@ -1284,7 +1283,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
-/*
+/*
  * PPP protocol implementation.
  */
 
@@ -1981,7 +1980,8 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 		break;
 	}
 }
-/*
+
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                         The LCP implementation.                          *
@@ -2018,6 +2018,9 @@ static void
 sppp_lcp_up(struct sppp *sp)
 {
 	STDDCL;
+
+	/* Initialize activity timestamp: opening a connection is an activity */
+	sp->pp_last_activity = time.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -2670,7 +2673,7 @@ sppp_lcp_check_and_close(struct sppp *sp)
 }
 
 
-/*
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                        The IPCP implementation.                          *
@@ -3117,7 +3120,7 @@ sppp_ipcp_scr(struct sppp *sp)
 }
 
 
-/*
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                      The IPv6CP implementation.                          *
@@ -3613,7 +3616,7 @@ static void sppp_ipv6cp_scr(struct sppp *sp)
 #endif /*INET6*/
 
 
-/*
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                        The CHAP implementation.                          *
@@ -4124,7 +4127,8 @@ sppp_chap_scr(struct sppp *sp)
 		       sp->myauth.name,
 		       0);
 }
-/*
+
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                        The PAP implementation.                           *
@@ -4450,7 +4454,8 @@ sppp_pap_scr(struct sppp *sp)
 		       pwdlen, sp->myauth.secret,
 		       0);
 }
-/*
+
+/*
  * Random miscellaneous functions.
  */
 
@@ -4561,7 +4566,8 @@ sppp_keepalive(void *dummy)
 		struct ifnet *ifp = &sp->pp_if;
 
 		/* check idle timeout */
-		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)) {
+		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)
+		    && (sp->pp_phase == SPPP_PHASE_NETWORK)) {
 		    /* idle timeout is enabled for this interface */
 		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
 		    	if (ifp->if_flags & IFF_DEBUG)
@@ -4905,136 +4911,177 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	switch (cmd) {
 	case SPPPGETAUTHCFG:
 	    {
-		struct spppauthcfg * cfg = (struct spppauthcfg*)data;
+		struct spppauthcfg *cfg = (struct spppauthcfg *)data;
+		int error;
+		size_t len;
+
 		cfg->myauthflags = sp->myauth.flags;
 		cfg->hisauthflags = sp->hisauth.flags;
 		strncpy(cfg->ifname, sp->pp_if.if_xname, IFNAMSIZ);
 		cfg->hisauth = 0;
 		if (sp->hisauth.proto)
-		    cfg->hisauth = sp->hisauth.proto == PPP_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+		    cfg->hisauth = (sp->hisauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
 		cfg->myauth = 0;
 		if (sp->myauth.proto)
-		    cfg->myauth = sp->myauth.proto == PPP_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+		    cfg->myauth = (sp->myauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
 		if (cfg->myname_length == 0) {
 		    if (sp->myauth.name != NULL)
 			cfg->myname_length = strlen(sp->myauth.name)+1;
 		} else {
-		    int rv;
-		    size_t len = strlen(sp->myauth.name);
-		    if (cfg->myname_length < len+1)
-			return ENAMETOOLONG;
-		    rv = copyout(sp->myauth.name, cfg->myname, len);
-		    if (rv) return rv;
+		    if (sp->myauth.name == NULL) {
+			cfg->myname_length = 0;
+		    } else {
+			len = strlen(sp->myauth.name)+1;
+			if (cfg->myname_length < len)
+			    return (ENAMETOOLONG);
+			error = copyout(sp->myauth.name, cfg->myname, len);
+			if (error) return error;
+		    }
 		}
 		if (cfg->hisname_length == 0) {
 		    if(sp->hisauth.name != NULL)
 			cfg->hisname_length = strlen(sp->hisauth.name)+1;
 		} else {
-		    int rv;
-		    size_t len = strlen(sp->hisauth.name);
-		    if (cfg->hisname_length < len+1)
-			return ENAMETOOLONG;
-		    rv = copyout(sp->hisauth.name, cfg->hisname, len);
-		    if (rv) return rv;
+		    if (sp->hisauth.name == NULL) {
+		    	cfg->hisname_length = 0;
+		    } else {
+			len = strlen(sp->hisauth.name)+1;
+			if (cfg->hisname_length < len)
+			    return (ENAMETOOLONG);
+			error = copyout(sp->hisauth.name, cfg->hisname, len);
+			if (error) return error;
+		    }
 		}
 	    }
 	    break;
 	case SPPPSETAUTHCFG:
 	    {
-		struct spppauthcfg * cfg = (struct spppauthcfg*)data;
-		int rv;
+		struct spppauthcfg *cfg = (struct spppauthcfg*)data;
+		int error;
 
-		if (sp->myauth.name) free(sp->myauth.name, M_DEVBUF);
-		sp->myauth.name = NULL;
-		if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
-		sp->myauth.secret = NULL;
-		if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
-		sp->hisauth.name = NULL;
-		if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
-		sp->hisauth.secret = NULL;
+		if (sp->myauth.name) {
+			free(sp->myauth.name, M_DEVBUF);
+			sp->myauth.name = NULL;
+		}
+		if (sp->myauth.secret) {
+			free(sp->myauth.secret, M_DEVBUF);
+			sp->myauth.secret = NULL;
+		}
+		if (sp->hisauth.name) {
+			free(sp->hisauth.name, M_DEVBUF);
+			sp->hisauth.name = NULL;
+		}
+		if (sp->hisauth.secret) {
+			free(sp->hisauth.secret, M_DEVBUF);
+			sp->hisauth.secret = NULL;
+		}
 
-		if (cfg->hisname != NULL && cfg->hisname_length) {
+		if (cfg->hisname != NULL && cfg->hisname_length > 0) {
+		    if (cfg->hisname_length >= MCLBYTES)
+			return (ENAMETOOLONG);
 		    sp->hisauth.name = malloc(cfg->hisname_length, M_DEVBUF, M_WAITOK);
-		    rv = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
-		    if (rv) return rv;
+		    error = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
+		    if (error) {
+			free(sp->hisauth.name, M_DEVBUF);
+			sp->hisauth.name = NULL;
+			return error;
+		    }
 		    sp->hisauth.name[cfg->hisname_length-1] = 0;
 		}
-		if (cfg->hissecret != NULL && cfg->hissecret_length) {
+		if (cfg->hissecret != NULL && cfg->hissecret_length > 0) {
+		    if (cfg->hissecret_length >= MCLBYTES)
+			return (ENAMETOOLONG);
 		    sp->hisauth.secret = malloc(cfg->hissecret_length, M_DEVBUF, M_WAITOK);
-		    rv = copyin(cfg->hissecret, sp->hisauth.secret, cfg->hissecret_length);
-		    if (rv) return rv;
-		    sp->hisauth.secret[cfg->hisname_length-1] = 0;
+		    error = copyin(cfg->hissecret, sp->hisauth.secret, cfg->hissecret_length);
+		    if (error) {
+		    	free(sp->hisauth.secret, M_DEVBUF);
+		    	sp->hisauth.secret = NULL;
+			return error;
+		    }
+		    sp->hisauth.secret[cfg->hissecret_length-1] = 0;
 		}
-		if (cfg->myname != NULL && cfg->myname_length) {
+		if (cfg->myname != NULL && cfg->myname_length > 0) {
+		    if (cfg->myname_length >= MCLBYTES)
+			return (ENAMETOOLONG);
 		    sp->myauth.name = malloc(cfg->myname_length, M_DEVBUF, M_WAITOK);
-		    rv = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
-		    if (rv) return rv;
+		    error = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
+		    if (error) {
+			free(sp->myauth.name, M_DEVBUF);
+			sp->myauth.name = NULL;
+			return error;
+		    }
 		    sp->myauth.name[cfg->myname_length-1] = 0;
 		}
-		if (cfg->mysecret != NULL && cfg->mysecret_length) {
+		if (cfg->mysecret != NULL && cfg->mysecret_length > 0) {
+		    if (cfg->mysecret_length >= MCLBYTES)
+			return (ENAMETOOLONG);
 		    sp->myauth.secret = malloc(cfg->mysecret_length, M_DEVBUF, M_WAITOK);
-		    rv = copyin(cfg->mysecret, sp->myauth.secret, cfg->mysecret_length);
-		    if (rv) return rv;
-		    sp->myauth.secret[cfg->myname_length-1] = 0;
+		    error = copyin(cfg->mysecret, sp->myauth.secret, cfg->mysecret_length);
+		    if (error) {
+		    	free(sp->myauth.secret, M_DEVBUF);
+		    	sp->myauth.secret = NULL;
+			return error;
+		    }
+		    sp->myauth.secret[cfg->mysecret_length-1] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
 		if (cfg->myauth)
-		    sp->myauth.proto = cfg->myauth == SPPP_AUTHPROTO_PAP ? PPP_PAP : PPP_CHAP;
+		    sp->myauth.proto = (cfg->myauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->hisauth.flags = cfg->hisauthflags;
 		if (cfg->hisauth)
-		    sp->hisauth.proto = cfg->hisauth == SPPP_AUTHPROTO_PAP ? PPP_PAP : PPP_CHAP;
+		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->pp_auth_failures = 0;
 	    }
 	    break;
 	case SPPPGETLCPCFG:
 	    {
-	    	struct sppplcpcfg * lcp = (struct sppplcpcfg*)data;
+	    	struct sppplcpcfg *lcp = (struct sppplcpcfg *)data;
 	    	lcp->lcp_timeout = sp->lcp.timeout;
 	    }
 	    break;
 	case SPPPSETLCPCFG:
 	    {
-	    	struct sppplcpcfg * lcp = (struct sppplcpcfg*)data;
+	    	struct sppplcpcfg *lcp = (struct sppplcpcfg *)data;
 	    	sp->lcp.timeout = lcp->lcp_timeout;
 	    }
 	    break;
 	case SPPPGETSTATUS:
 	    {
-		struct spppstatus * status = (struct spppstatus*)data;
+		struct spppstatus *status = (struct spppstatus *)data;
 		status->phase = sp->pp_phase;
 	    }
 	    break;
 	case SPPPGETIDLETO:
 	    {
-	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+	    	struct spppidletimeout *to = (struct spppidletimeout *)data;
 		to->idle_seconds = sp->pp_idle_timeout;
 	    }
 	    break;
 	case SPPPSETIDLETO:
 	    {
-	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+	    	struct spppidletimeout *to = (struct spppidletimeout *)data;
 	    	sp->pp_idle_timeout = to->idle_seconds;
 	    }
 	    break;
 	case SPPPSETAUTHFAILURE:
 	    {
-	    	struct spppauthfailuresettings * afsettings = (struct spppauthfailuresettings*)data;
+	    	struct spppauthfailuresettings *afsettings = (struct spppauthfailuresettings *)data;
 	    	sp->pp_max_auth_fail = afsettings->max_failures;
 	    	sp->pp_auth_failures = 0;
 	    }
 	    break;
 	case SPPPGETAUTHFAILURES:
 	    {
-	    	struct spppauthfailurestats * stats = (struct spppauthfailurestats*)data;
+	    	struct spppauthfailurestats *stats = (struct spppauthfailurestats *)data;
 	    	stats->auth_failures = sp->pp_auth_failures;
 	    	stats->max_failures = sp->pp_max_auth_fail;
 	    }
 	    break;
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
 
-	return 0;
+	return (0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.8 2000/03/15 20:40:00 kleink Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.8.8.1 2002/02/11 20:06:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.8.8.1 2002/02/11 20:06:49 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -56,22 +59,19 @@
 
 #include <dev/clock_subr.h>
 
-int a34kbbc_match __P((struct device *, struct cfdata *, void *));
-void a34kbbc_attach __P((struct device *, struct device *, void *));
+int a34kbbc_match(struct device *, struct cfdata *, void *);
+void a34kbbc_attach(struct device *, struct device *, void *);
 
 struct cfattach a34kbbc_ca = {
 	sizeof(struct device), a34kbbc_match, a34kbbc_attach
 };
 
 void *a34kclockaddr;
-int a34kugettod __P((struct timeval *));
-int a34kusettod __P((struct timeval *));
+int a34kugettod(struct timeval *);
+int a34kusettod(struct timeval *);
 
 int
-a34kbbc_match(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int a34kbbc_matched = 0;
 
@@ -97,9 +97,7 @@ a34kbbc_match(pdp, cfp, auxp)
  * Attach us to the rtc function pointers.
  */
 void
-a34kbbc_attach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+a34kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	printf("\n");
 	a34kclockaddr = (void *)ztwomap(0xdc0000);
@@ -109,8 +107,7 @@ a34kbbc_attach(pdp, dp, auxp)
 }
 
 int
-a34kugettod(tvp)
-	struct timeval *tvp;
+a34kugettod(struct timeval *tvp)
 {
 	struct rtclock3000 *rt;
 	struct clock_ymdhms dt;
@@ -139,8 +136,8 @@ a34kugettod(tvp)
 
 
 	if ((dt.dt_hour > 23) ||
-	    (dt.dt_wday > 6) || 
-	    (dt.dt_day  > 31) || 
+	    (dt.dt_wday > 6) ||
+	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12) ||
 	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
@@ -152,8 +149,7 @@ a34kugettod(tvp)
 }
 
 int
-a34kusettod(tvp)
-	struct timeval *tvp;
+a34kusettod(struct timeval *tvp)
 {
 	struct rtclock3000 *rt;
 	struct clock_ymdhms dt;

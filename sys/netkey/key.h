@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.7.4.1 2001/08/25 06:17:11 thorpej Exp $	*/
+/*	$NetBSD: key.h,v 1.7.4.2 2002/02/11 20:10:42 jdolecek Exp $	*/
 /*	$KAME: key.h,v 1.19 2000/10/05 04:02:58 itojun Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ extern int key_cmpspidx_exactly
 extern int key_cmpspidx_withmask
 	__P((struct secpolicyindex *, struct secpolicyindex *));
 extern int key_spdacquire __P((struct secpolicy *));
-extern void key_timehandler __P((void));
+extern void key_timehandler __P((void *));
 extern u_long key_random __P((void));
 extern void key_randomfill __P((void *, size_t));
 extern void key_freereg __P((struct socket *));

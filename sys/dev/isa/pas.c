@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.48.2.2 2002/01/10 19:55:39 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.48.2.3 2002/02/11 20:09:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.48.2.2 2002/01/10 19:55:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.48.2.3 2002/02/11 20:09:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ pasprobe(parent, match, aux)
 		return (0);
 
 	memset(sc, 0, sizeof *sc);
+	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
 	strcpy(sc->sc_sbdsp.sc_dev.dv_xname, "pas");
 	return pasfind(parent, sc, aux, PASPROBE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.11.2.1 2002/01/10 19:37:45 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.11.2.2 2002/02/11 20:07:16 jdolecek Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,6 +47,7 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
@@ -60,6 +61,7 @@
 
 #ifdef CPU_XSCALE
 #include <arm/xscale/i80200reg.h>
+#include <arm/xscale/i80200var.h>
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -101,24 +103,18 @@ struct cpu_functions arm3_cpufuncs = {
 	cpufunc_nullop,			/* tlb_flushD		*/
 	(void *)cpufunc_nullop,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm3_cache_flush,		/* cache_flushID	*/
-	(void *)arm3_cache_flush,	/* cache_flushID_SE	*/
-	arm3_cache_flush,		/* cache_flushI		*/
-	(void *)arm3_cache_flush,	/* cache_flushI_SE	*/
-	arm3_cache_flush,		/* cache_flushD		*/
-	(void *)arm3_cache_flush,	/* cache_flushD_SE	*/
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *) cpufunc_nullop,	/* icache_sync_range	*/
 
-	cpufunc_nullop,			/* cache_cleanID	s*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
-	cpufunc_nullop,			/* cache_cleanD		s*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+	arm3_cache_flush,		/* dcache_wbinv_all	*/
+	(void *)arm3_cache_flush,	/* dcache_wbinv_range	*/
+	(void *)arm3_cache_flush,	/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
 
-	arm3_cache_flush,		/* cache_purgeID	s*/
-	(void *)arm3_cache_flush,	/* cache_purgeID_E	s*/
-	arm3_cache_flush,		/* cache_purgeD		s*/
-	(void *)arm3_cache_flush,	/* cache_purgeD_E	s*/
+	arm3_cache_flush,		/* idcache_wbinv_all	*/
+	(void *)arm3_cache_flush,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -130,13 +126,6 @@ struct cpu_functions arm3_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	cpufunc_nullop,			/* cache_syncI		*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
-	(void *)arm3_cache_flush,	/* cache_purgeID_rng	*/
-	(void *)arm3_cache_flush,	/* cache_purgeD_rng	*/
-	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	early_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -172,24 +161,18 @@ struct cpu_functions arm6_cpufuncs = {
 	arm67_tlb_flush,		/* tlb_flushD		*/
 	arm67_tlb_purge,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm67_cache_flush,		/* cache_flushID	*/
-	(void *)arm67_cache_flush,	/* cache_flushID_SE	*/
-	arm67_cache_flush,		/* cache_flushI		*/
-	(void *)arm67_cache_flush,	/* cache_flushI_SE	*/
-	arm67_cache_flush,		/* cache_flushD		*/
-	(void *)arm67_cache_flush,	/* cache_flushD_SE	*/
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *) cpufunc_nullop,	/* icache_sync_range	*/
 
-	cpufunc_nullop,			/* cache_cleanID	s*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
-	cpufunc_nullop,			/* cache_cleanD		s*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+	arm67_cache_flush,		/* dcache_wbinv_all	*/
+	(void *)arm67_cache_flush,	/* dcache_wbinv_range	*/
+	(void *)arm67_cache_flush,	/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
 
-	arm67_cache_flush,		/* cache_purgeID	s*/
-	(void *)arm67_cache_flush,	/* cache_purgeID_E	s*/
-	arm67_cache_flush,		/* cache_purgeD		s*/
-	(void *)arm67_cache_flush,	/* cache_purgeD_E	s*/
+	arm67_cache_flush,		/* idcache_wbinv_all	*/
+	(void *)arm67_cache_flush,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -201,13 +184,6 @@ struct cpu_functions arm6_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	cpufunc_nullop,			/* cache_syncI		*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
-	(void *)arm67_cache_flush,	/* cache_purgeID_rng	*/
-	(void *)arm67_cache_flush,	/* cache_purgeD_rng	*/
-	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 #ifdef ARM6_LATE_ABORT
 	late_abort_fixup,		/* dataabt_fixup	*/
@@ -247,24 +223,18 @@ struct cpu_functions arm7_cpufuncs = {
 	arm67_tlb_flush,		/* tlb_flushD		*/
 	arm67_tlb_purge,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm67_cache_flush,		/* cache_flushID	*/
-	(void *)arm67_cache_flush,	/* cache_flushID_SE	*/
-	arm67_cache_flush,		/* cache_flushI		*/
-	(void *)arm67_cache_flush,	/* cache_flushI_SE	*/
-	arm67_cache_flush,		/* cache_flushD		*/
-	(void *)arm67_cache_flush,	/* cache_flushD_SE	*/
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *)cpufunc_nullop,		/* icache_sync_range	*/
 
-	cpufunc_nullop,			/* cache_cleanID	s*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
-	cpufunc_nullop,			/* cache_cleanD		s*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+	arm67_cache_flush,		/* dcache_wbinv_all	*/
+	(void *)arm67_cache_flush,	/* dcache_wbinv_range	*/
+	(void *)arm67_cache_flush,	/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
 
-	arm67_cache_flush,		/* cache_purgeID	s*/
-	(void *)arm67_cache_flush,	/* cache_purgeID_E	s*/
-	arm67_cache_flush,		/* cache_purgeD		s*/
-	(void *)arm67_cache_flush,	/* cache_purgeD_E	s*/
+	arm67_cache_flush,		/* idcache_wbinv_all	*/
+	(void *)arm67_cache_flush,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -276,13 +246,6 @@ struct cpu_functions arm7_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	cpufunc_nullop,			/* cache_syncI		*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
-	(void *)arm67_cache_flush,	/* cache_purgeID_rng	*/
-	(void *)arm67_cache_flush,	/* cache_purgeD_rng	*/
-	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -318,24 +281,18 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	arm7tdmi_tlb_flushID,		/* tlb_flushD		*/
 	arm7tdmi_tlb_flushID_SE,	/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm7tdmi_cache_flushID,		/* cache_flushID	*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_flushID_SE	*/
-	arm7tdmi_cache_flushID,		/* cache_flushI		*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_flushI_SE	*/
-	arm7tdmi_cache_flushID,		/* cache_flushD		*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_flushD_SE	*/
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *)cpufunc_nullop,		/* icache_sync_range	*/
 
-	cpufunc_nullop,			/* cache_cleanID	s*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
-	cpufunc_nullop,			/* cache_cleanD		s*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+	arm7tdmi_cache_flushID,		/* dcache_wbinv_all	*/
+	(void *)arm7tdmi_cache_flushID,	/* dcache_wbinv_range	*/
+	(void *)arm7tdmi_cache_flushID,	/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
 
-	arm7tdmi_cache_flushID,		/* cache_purgeID	s*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_purgeID_E	s*/
-	arm7tdmi_cache_flushID,		/* cache_purgeD		s*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_purgeD_E	s*/
+	arm7tdmi_cache_flushID,		/* idcache_wbinv_all	*/
+	(void *)arm7tdmi_cache_flushID,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -347,13 +304,6 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	cpufunc_nullop,			/* cache_syncI		*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_purgeID_rng	*/
-	(void *)arm7tdmi_cache_flushID,	/* cache_purgeD_rng	*/
-	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -389,24 +339,18 @@ struct cpu_functions arm8_cpufuncs = {
 	arm8_tlb_flushID,		/* tlb_flushD		*/
 	arm8_tlb_flushID_SE,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm8_cache_flushID,		/* cache_flushID	*/
-	arm8_cache_flushID_E,		/* cache_flushID_SE	*/
-	arm8_cache_flushID,		/* cache_flushI		*/
-	arm8_cache_flushID_E,		/* cache_flushI_SE	*/
-	arm8_cache_flushID,		/* cache_flushD		*/
-	arm8_cache_flushID_E,		/* cache_flushD_SE	*/
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *)cpufunc_nullop,		/* icache_sync_range	*/
 
-	arm8_cache_cleanID,		/* cache_cleanID	s*/
-	arm8_cache_cleanID_E,		/* cache_cleanID_E	s*/
-	arm8_cache_cleanID,		/* cache_cleanD		s*/
-	arm8_cache_cleanID_E,		/* cache_cleanD_E	*/
+	arm8_cache_purgeID,		/* dcache_wbinv_all	*/
+	(void *)arm8_cache_purgeID,	/* dcache_wbinv_range	*/
+/*XXX*/	(void *)arm8_cache_purgeID,	/* dcache_inv_range	*/
+	(void *)arm8_cache_cleanID,	/* dcache_wb_range	*/
 
-	arm8_cache_purgeID,		/* cache_purgeID	s*/
-	arm8_cache_purgeID_E,		/* cache_purgeID_E	s*/
-	arm8_cache_purgeID,		/* cache_purgeD		s*/
-	arm8_cache_purgeID_E,		/* cache_purgeD_E	s*/
+	arm8_cache_purgeID,		/* idcache_wbinv_all	*/
+	(void *)arm8_cache_purgeID,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -418,13 +362,6 @@ struct cpu_functions arm8_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	(void *)cpufunc_nullop,		/* cache_syncI		*/
-	(void *)arm8_cache_cleanID,	/* cache_cleanID_rng	*/
-	(void *)arm8_cache_cleanID,	/* cache_cleanD_rng	*/
-	(void *)arm8_cache_purgeID,	/* cache_purgeID_rng	*/
-	(void *)arm8_cache_purgeID,	/* cache_purgeD_rng	*/
-	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	cpufunc_null_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -459,25 +396,19 @@ struct cpu_functions arm9_cpufuncs = {
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	arm9_cache_flushID,		/* cache_flushID	*/
-	arm9_cache_flushID_SE,		/* cache_flushID_SE	*/
-	arm9_cache_flushI,		/* cache_flushI		*/
-	arm9_cache_flushI_SE,		/* cache_flushI_SE	*/
-	arm9_cache_flushD,		/* cache_flushD		*/
-	arm9_cache_flushD_SE,		/* cache_flushD_SE	*/
+	arm9_cache_syncI,		/* icache_sync_all	*/
+	arm9_cache_syncI_rng,		/* icache_sync_range	*/
 
-	/* ... lets use the cache in write-through mode.  */
-	arm9_cache_cleanID,		/* cache_cleanID	*/
-	(void *)arm9_cache_cleanID,	/* cache_cleanID_SE	*/
-	arm9_cache_cleanID,		/* cache_cleanD		*/
-	(void *)arm9_cache_cleanID,	/* cache_cleanD_SE	*/
+		/* ...cache in write-though mode... */
+	arm9_cache_flushD,		/* dcache_wbinv_all	*/
+	arm9_cache_flushD_rng,		/* dcache_wbinv_range	*/
+	arm9_cache_flushD_rng,		/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
 
-	arm9_cache_flushID,		/* cache_purgeID	*/
-	arm9_cache_flushID_SE,		/* cache_purgeID_SE	*/
-	arm9_cache_flushD,		/* cache_purgeD		*/
-	arm9_cache_flushD_SE,		/* cache_purgeD_SE	*/
+	arm9_cache_flushID,		/* idcache_wbinv_all	*/
+	arm9_cache_flushID_rng,		/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -489,12 +420,6 @@ struct cpu_functions arm9_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-	arm9_cache_syncI,		/* cache_syncI		*/
-	(void *)arm9_cache_cleanID,	/* cache_cleanID_rng	*/
-	(void *)arm9_cache_cleanID,	/* cache_cleanD_rng	*/
-	arm9_cache_flushID_rng,		/* cache_purgeID_rng	*/
-	arm9_cache_flushD_rng,		/* cache_purgeD_rng	*/
-	arm9_cache_syncI_rng,		/* cache_syncI_rng	*/
 
 	cpufunc_null_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -530,24 +455,18 @@ struct cpu_functions sa110_cpufuncs = {
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	sa110_cache_flushID,		/* cache_flushID	*/
-	(void *)sa110_cache_flushID,	/* cache_flushID_SE	*/
-	sa110_cache_flushI,		/* cache_flushI		*/
-	(void *)sa110_cache_flushI,	/* cache_flushI_SE	*/
-	sa110_cache_flushD,		/* cache_flushD		*/
-	sa110_cache_flushD_SE,		/* cache_flushD_SE	*/
+	sa110_cache_syncI,		/* icache_sync_all	*/
+	sa110_cache_syncI_rng,		/* icache_sync_range	*/
 
-	sa110_cache_cleanID,		/* cache_cleanID	s*/
-	sa110_cache_cleanD_E,		/* cache_cleanID_E	s*/
-	sa110_cache_cleanD,		/* cache_cleanD		s*/
-	sa110_cache_cleanD_E,		/* cache_cleanD_E	*/
+	sa110_cache_purgeD,		/* dcache_wbinv_all	*/
+	sa110_cache_purgeD_rng,		/* dcache_wbinv_range	*/
+/*XXX*/	sa110_cache_purgeD_rng,		/* dcache_inv_range	*/
+	sa110_cache_cleanD_rng,		/* dcache_wb_range	*/
 
-	sa110_cache_purgeID,		/* cache_purgeID	s*/
-	sa110_cache_purgeID_E,		/* cache_purgeID_E	s*/
-	sa110_cache_purgeD,		/* cache_purgeD		s*/
-	sa110_cache_purgeD_E,		/* cache_purgeD_E	s*/
+	sa110_cache_purgeID,		/* idcache_wbinv_all	*/
+	sa110_cache_purgeID_rng,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -559,13 +478,6 @@ struct cpu_functions sa110_cpufuncs = {
 	(void *)cpufunc_nullop,		/* sleep		*/
 
 	/* Soft functions */
-
-	sa110_cache_syncI,		/* cache_syncI		*/
-	sa110_cache_cleanID_rng,	/* cache_cleanID_rng	*/
-	sa110_cache_cleanD_rng,		/* cache_cleanD_rng	*/
-	sa110_cache_purgeID_rng,	/* cache_purgeID_rng	*/
-	sa110_cache_purgeD_rng,		/* cache_purgeD_rng	*/
-	sa110_cache_syncI_rng,		/* cache_syncI_rng	*/
 
 	cpufunc_null_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -600,24 +512,18 @@ struct cpu_functions xscale_cpufuncs = {
 	armv4_tlb_flushD,		/* tlb_flushD		*/
 	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
 
-	/* Cache functions */
+	/* Cache operations */
 
-	xscale_cache_flushID,		/* cache_flushID	*/
-	(void *)xscale_cache_flushID,	/* cache_flushID_SE	*/
-	xscale_cache_flushI,		/* cache_flushI		*/
-	(void *)xscale_cache_flushI,	/* cache_flushI_SE	*/
-	xscale_cache_flushD,		/* cache_flushD		*/
-	xscale_cache_flushD_SE,		/* cache_flushD_SE	*/
+	xscale_cache_syncI,		/* icache_sync_all	*/
+	xscale_cache_syncI_rng,		/* icache_sync_range	*/
 
-	xscale_cache_cleanID,		/* cache_cleanID	s*/
-	xscale_cache_cleanD_E,		/* cache_cleanID_E	s*/
-	xscale_cache_cleanD,		/* cache_cleanD		s*/
-	xscale_cache_cleanD_E,		/* cache_cleanD_E	*/
+	xscale_cache_purgeD,		/* dcache_wbinv_all	*/
+	xscale_cache_purgeD_rng,	/* dcache_wbinv_range	*/
+	xscale_cache_flushD_rng,	/* dcache_inv_range	*/
+	xscale_cache_cleanD_rng,	/* dcache_wb_range	*/
 
-	xscale_cache_purgeID,		/* cache_purgeID	s*/
-	xscale_cache_purgeID_E,		/* cache_purgeID_E	s*/
-	xscale_cache_purgeD,		/* cache_purgeD		s*/
-	xscale_cache_purgeD_E,		/* cache_purgeD_E	s*/
+	xscale_cache_purgeID,		/* idcache_wbinv_all	*/
+	xscale_cache_purgeID_rng,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -626,84 +532,9 @@ struct cpu_functions xscale_cpufuncs = {
 	cpufunc_nullop,			/* flush_brnchtgt_C	*/
 	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
 
-	(void *)cpufunc_nullop,		/* sleep		*/
+	xscale_cpu_sleep,		/* sleep		*/
 
 	/* Soft functions */
-
-	xscale_cache_syncI,		/* cache_syncI		*/
-	xscale_cache_cleanID_rng,	/* cache_cleanID_rng	*/
-	xscale_cache_cleanD_rng,	/* cache_cleanD_rng	*/
-	xscale_cache_purgeID_rng,	/* cache_purgeID_rng	*/
-	xscale_cache_purgeD_rng,	/* cache_purgeD_rng	*/
-	xscale_cache_syncI_rng,		/* cache_syncI_rng	*/
-
-	cpufunc_null_fixup,		/* dataabt_fixup	*/
-	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
-
-	xscale_context_switch,		/* context_switch	*/
-
-	xscale_setup			/* cpu setup		*/
-};
-
-struct cpu_functions xscale_writethrough_cpufuncs = {
-	/* CPU functions */
-	
-	cpufunc_id,			/* id			*/
-	xscale_cpwait,			/* cpwait		*/
-
-	/* MMU functions */
-
-	xscale_control,			/* control		*/
-	cpufunc_domains,		/* domain		*/
-	xscale_setttb,			/* setttb		*/
-	cpufunc_faultstatus,		/* faultstatus		*/
-	cpufunc_faultaddress,		/* faultaddress		*/
-
-	/* TLB functions */
-
-	armv4_tlb_flushID,		/* tlb_flushID		*/
-	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
-	armv4_tlb_flushI,		/* tlb_flushI		*/
-	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
-	armv4_tlb_flushD,		/* tlb_flushD		*/
-	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
-
-	/* Cache functions */
-
-	xscale_cache_flushID,		/* cache_flushID	*/
-	(void *)xscale_cache_flushID,	/* cache_flushID_SE	*/
-	xscale_cache_flushI,		/* cache_flushI		*/
-	(void *)xscale_cache_flushI,	/* cache_flushI_SE	*/
-	xscale_cache_flushD,		/* cache_flushD		*/
-	xscale_cache_flushD_SE,		/* cache_flushD_SE	*/
-
-	cpufunc_nullop,			/* cache_cleanID	s*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
-	cpufunc_nullop,			/* cache_cleanD		s*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
-
-	xscale_cache_flushID,		/* cache_purgeID	s*/
-	(void *)xscale_cache_flushID,	/* cache_purgeID_E	s*/
-	xscale_cache_flushD,		/* cache_purgeD		s*/
-	xscale_cache_flushD_SE,		/* cache_purgeD_E	s*/
-
-	/* Other functions */
-
-	cpufunc_nullop,			/* flush_prefetchbuf	*/
-	armv4_drain_writebuf,		/* drain_writebuf	*/
-	cpufunc_nullop,			/* flush_brnchtgt_C	*/
-	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
-
-	(void *)cpufunc_nullop,		/* sleep		*/
-
-	/* Soft functions */
-
-	xscale_cache_flushI,		/* cache_syncI		*/
-	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
-	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
-	xscale_cache_flushID_rng,	/* cache_purgeID_rng	*/
-	xscale_cache_flushD_rng,	/* cache_purgeD_rng	*/
-	xscale_cache_flushI_rng,	/* cache_syncI_rng	*/
 
 	cpufunc_null_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
@@ -867,23 +698,20 @@ set_cpufuncs()
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype();
+		/*
+		 * Enable the right variant of sleeping.
+		 */
+		if (cputype == CPU_ID_SA1100 ||
+		    cputype == CPU_ID_SA1110)
+			cpufuncs.cf_sleep = sa11x0_cpu_sleep;
 		return 0;
 	}
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
-		/*
-		 * Reset the Interrupt Controller Unit to a pristine
-		 * state:
-		 *	- all interrupt sources disabled
-		 *	- PMU/BCU sterred to IRQ
-		 */
-		__asm __volatile("mcr p13, 0, %0, c0, c0, 0"
-			:
-			: "r" (0));
-		__asm __volatile("mcr p13, 0, %0, c2, c0, 0"
-			:
-			: "r" (0));
+		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
+
+		i80200_intr_init();
 
 		/*
 		 * Reset the Performance Monitoring Unit to a
@@ -897,6 +725,15 @@ set_cpufuncs()
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
 
+#ifdef XSCALE_CCLKCFG
+		/*
+		 * Crank CCLKCFG to maximum legal value.
+		 */
+		__asm __volatile ("mcr p14, 0, %0, c6, c0, 0"
+			:
+			: "r" (XSCALE_CCLKCFG));
+#endif
+
 		/*
 		 * XXX Disable ECC in the Bus Controller Unit; we
 		 * don't really support it, yet.  Clear any pending
@@ -907,7 +744,18 @@ set_cpufuncs()
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
-		cpufuncs = xscale_writethrough_cpufuncs;
+		cpufuncs = xscale_cpufuncs;
+
+		/*
+		 * i80200 errata: Step-A0 and A1 have a bug where
+		 * D$ dirty bits are not cleared on "invalidate by
+		 * address".
+		 *
+		 * Workaround: Clean cache line before invalidating.
+		 */
+		if (rev == 0 || rev == 1)
+			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
+
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype();
 		return 0;
@@ -1411,7 +1259,7 @@ arm6_setup(args)
 	cpuctrl = parse_cpu_options(args, arm6_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 	cpu_control(0xffffffff, cpuctrl);
@@ -1451,7 +1299,7 @@ arm7_setup(args)
 	cpuctrl = parse_cpu_options(args, arm7_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 	cpu_control(0xffffffff, cpuctrl);
@@ -1483,7 +1331,7 @@ arm7tdmi_setup(args)
 	cpuctrl = parse_cpu_options(args, arm7tdmi_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 	cpu_control(0xffffffff, cpuctrl);
@@ -1557,7 +1405,7 @@ arm8_setup(args)
 	}
 	
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 	cpu_control(0xffffffff, cpuctrl);
@@ -1602,7 +1450,7 @@ arm9_setup(args)
 	cpuctrl = parse_cpu_options(args, arm9_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 	cpu_control(0xffffffff, cpuctrl);
@@ -1648,7 +1496,7 @@ sa110_setup(args)
 	cpuctrl = parse_cpu_options(args, sa110_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
@@ -1705,7 +1553,7 @@ xscale_setup(args)
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
 
 	/* Clear out the cache */
-	cpu_cache_purgeID();
+	cpu_idcache_wbinv_all();
 
 	/*
 	 * Set the control register.  Note that bits 6:3 must always

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.6.2 2002/01/10 19:47:44 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.6.3 2002/02/11 20:08:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,6 +135,8 @@ cdev_decl(ucom);
 cdev_decl(urio);
 #include "uscanner.h"
 cdev_decl(uscanner);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw bdevsw[] =
 {
@@ -195,6 +197,7 @@ struct cdevsw cdevsw[] =
 	cdev_usbdev_init(NURIO,urio),	/* 36: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,
 	    uscanner),			/* 37: USB scanner */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 38: clockctl pseudo device */
 };
 
 static int chrtoblktbl[] =  {
@@ -227,6 +230,18 @@ static int chrtoblktbl[] =  {
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
 };
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: cmuvar.h,v 1.1.1.1.16.1 2002/01/10 19:44:11 thorpej Exp $	*/
+/*	$NetBSD: cmuvar.h,v 1.1.1.1.16.2 2002/02/11 20:08:12 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,10 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef void *vrcmu_chipset_tag_t;
-struct vrcmu_function_tag {
-	int (*cf_clock)(vrcmu_chipset_tag_t, u_int16_t, int);
+struct vrcmu_chipset_tag;
+typedef struct vrcmu_chipset_tag *vrcmu_chipset_tag_t;
+struct vrcmu_chipset_tag {
+	void *cc_sc;
+	int (*cc_clock)(vrcmu_chipset_tag_t, u_int16_t, int);
 };
-typedef struct vrcmu_function_tag *vrcmu_function_tag_t;
-/* Before autoconfiguration */
-void __vrcmu_supply(u_int16_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.15.2.1 2002/01/10 19:37:18 thorpej Exp $	*/
+/*	$NetBSD: siop2.c,v 1.15.2.2 2002/02/11 20:07:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -45,6 +45,9 @@
 
 #include "opt_ddb.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.15.2.2 2002/02/11 20:07:07 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -75,20 +78,20 @@
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void siopng_select __P((struct siop_softc *));
-void siopngabort __P((struct siop_softc *, siop_regmap_p, char *));
-void siopngerror __P((struct siop_softc *, siop_regmap_p, u_char));
-void siopngstart __P((struct siop_softc *));
-int  siopng_checkintr __P((struct siop_softc *, u_char, u_char, u_short, int *));
-void siopngreset __P((struct siop_softc *));
-void siopngsetdelay __P((int));
-void siopng_scsidone __P((struct siop_acb *, int));
-void siopng_sched __P((struct siop_softc *));
-void siopng_poll __P((struct siop_softc *, struct siop_acb *));
-void siopngintr __P((struct siop_softc *));
-void scsi_period_to_siopng __P((struct siop_softc *, int));
-void siopng_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, int)); 
-void siopng_dump_acb __P((struct siop_acb *));
+void siopng_select(struct siop_softc *);
+void siopngabort(struct siop_softc *, siop_regmap_p, char *);
+void siopngerror(struct siop_softc *, siop_regmap_p, u_char);
+void siopngstart(struct siop_softc *);
+int  siopng_checkintr(struct siop_softc *, u_char, u_char, u_short, int *);
+void siopngreset(struct siop_softc *);
+void siopngsetdelay(int);
+void siopng_scsidone(struct siop_acb *, int);
+void siopng_sched(struct siop_softc *);
+void siopng_poll(struct siop_softc *, struct siop_acb *);
+void siopngintr(struct siop_softc *);
+void scsi_period_to_siopng(struct siop_softc *, int);
+void siopng_start(struct siop_softc *, int, int, u_char *, int, u_char *, int);
+void siopng_dump_acb(struct siop_acb *);
 
 /* 53C720/770 script */
 
@@ -144,8 +147,8 @@ int	siopngphmm = 0;
 	siopng_trix = (siopng_trix + 4) & (SIOP_TRACE_SIZE - 1);
 u_char	siopng_trbuf[SIOP_TRACE_SIZE];
 int	siopng_trix;
-void siopng_dump __P((struct siop_softc *));
-void siopng_dump_trace __P((void));
+void siopng_dump(struct siop_softc *);
+void siopng_dump_trace(void);
 #else
 #define SIOP_TRACE(a,b,c,d)
 #endif
@@ -162,8 +165,7 @@ static char *siopng_chips[] = {
  * default minphys routine for siopng based controllers
  */
 void
-siopng_minphys(bp)
-	struct buf *bp;
+siopng_minphys(struct buf *bp)
 {
 
 	/*
@@ -177,10 +179,8 @@ siopng_minphys(bp)
  *
  */
 void
-siopng_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+siopng_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+                      void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -249,9 +249,7 @@ siopng_scsipi_request(chan, req, arg)
 }
 
 void
-siopng_poll(sc, acb)
-	struct siop_softc *sc;
-	struct siop_acb *acb;
+siopng_poll(struct siop_softc *sc, struct siop_acb *acb)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	struct scsipi_xfer *xs = acb->xs;
@@ -314,8 +312,7 @@ siopng_poll(sc, acb)
  * start next command that's ready
  */
 void
-siopng_sched(sc)
-	struct siop_softc *sc;
+siopng_sched(struct siop_softc *sc)
 {
 	struct scsipi_periph *periph;
 	struct siop_acb *acb;
@@ -365,9 +362,7 @@ siopng_sched(sc)
 }
 
 void
-siopng_scsidone(acb, stat)
-	struct siop_acb *acb;
-	int stat;
+siopng_scsidone(struct siop_acb *acb, int stat)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -450,10 +445,7 @@ siopng_scsidone(acb, stat)
 }
 
 void
-siopngabort(sc, rp, where)
-	register struct siop_softc *sc;
-	siop_regmap_p rp;
-	char *where;
+siopngabort(register struct siop_softc *sc, siop_regmap_p rp, char *where)
 {
 #ifdef fix_this
 	int i;
@@ -507,8 +499,7 @@ siopngabort(sc, rp, where)
 }
 
 void
-siopnginitialize(sc)
-	struct siop_softc *sc;
+siopnginitialize(struct siop_softc *sc)
 {
 	int i;
 	u_int inhibit_sync;
@@ -526,9 +517,9 @@ siopnginitialize(sc)
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct siop_acb *, 
+	MALLOC(sc->sc_acb, struct siop_acb *,
 		sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_acb == NULL) 
+	if (sc->sc_acb == NULL)
 		panic("siopnginitialize: ACB malloc failed!");
 
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
@@ -569,8 +560,7 @@ siopnginitialize(sc)
 }
 
 void
-siopngreset(sc)
-	struct siop_softc *sc;
+siopngreset(struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	u_int i, s;
@@ -710,14 +700,8 @@ siopngreset(sc)
  */
 
 void
-siopng_start (sc, target, lun, cbuf, clen, buf, len)
-	struct siop_softc *sc;
-	int target;
-	int lun;
-	u_char *cbuf;
-	int clen;
-	u_char *buf;
-	int len;
+siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
+             int clen, u_char *buf, int len)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	int nchain;
@@ -921,12 +905,8 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
  */
 
 int
-siopng_checkintr(sc, istat, dstat, sist, status)
-	struct	siop_softc *sc;
-	u_char	istat;
-	u_char	dstat;
-	u_short	sist;
-	int	*status;
+siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
+                 u_short sist, int *status)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 	struct siop_acb *acb = sc->sc_nexus;
@@ -1523,8 +1503,7 @@ bad_phase:
 }
 
 void
-siopng_select(sc)
-	struct siop_softc *sc;
+siopng_select(struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	struct siop_acb *acb = sc->sc_nexus;
@@ -1570,8 +1549,7 @@ siopng_select(sc)
  */
 
 void
-siopngintr (sc)
-	register struct siop_softc *sc;
+siopngintr(register struct siop_softc *sc)
 {
 	siop_regmap_p rp;
 	u_char istat, dstat;
@@ -1646,9 +1624,7 @@ siopngintr (sc)
  *
  */
 void
-scsi_period_to_siopng (sc, target)
-	struct siop_softc *sc;
-	int target;
+scsi_period_to_siopng(struct siop_softc *sc, int target)
 {
 	int period, offset, sxfer, scntl3 = 0;
 
@@ -1702,8 +1678,7 @@ scsi_period_to_siopng (sc, target)
 }
 
 void
-siopng_dump_registers(sc)
-	struct siop_softc *sc;
+siopng_dump_registers(struct siop_softc *sc)
 {
 	siop_regmap_p rp = sc->sc_siopp;
 
@@ -1742,7 +1717,7 @@ siopng_dump_registers(sc)
 
 #if SIOP_TRACE_SIZE
 void
-siopng_dump_trace()
+siopng_dump_trace(void)
 {
 	int i;
 
@@ -1757,8 +1732,7 @@ siopng_dump_trace()
 #endif
 
 void
-siopng_dump_acb(acb)
-	struct siop_acb *acb;
+siopng_dump_acb(struct siop_acb *acb)
 {
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
@@ -1781,8 +1755,7 @@ siopng_dump_acb(acb)
 }
 
 void
-siopng_dump(sc)
-	struct siop_softc *sc;
+siopng_dump(struct siop_softc *sc)
 {
 	struct siop_acb *acb;
 	siop_regmap_p rp = sc->sc_siopp;

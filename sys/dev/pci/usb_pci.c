@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.c,v 1.1.2.2 2002/01/10 19:57:08 thorpej Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.1.2.3 2002/02/11 20:10:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.1.2.2 2002/01/10 19:57:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.1.2.3 2002/02/11 20:10:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.1.2.2 2002/01/10 19:57:08 thorpej Exp 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
-static TAILQ_HEAD(, usb_pci) ehci_pci_alldevs =
+struct usb_pci_alldevs ehci_pci_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
 
 void

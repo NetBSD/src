@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.140.2.2 2002/01/10 19:37:03 thorpej Exp $
+# $NetBSD: files.alpha,v 1.140.2.3 2002/02/11 20:06:41 jdolecek Exp $
 #
 # alpha-specific configuration info
 
@@ -87,7 +87,7 @@ include "dev/ata/files.ata"
 major { wd = 4 }
 
 # Memory Disk
-file	arch/alpha/alpha/md_root.c	memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major { md = 6 }
 
 # RAIDframe
@@ -544,7 +544,7 @@ file	arch/alpha/alpha/db_trace.c		ddb
 file	arch/alpha/alpha/kgdb_machdep.c		kgdb
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/alpha/alpha/compat_13_machdep.c	compat_13
+file	arch/alpha/alpha/compat_13_machdep.c	compat_13 | compat_osf1
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"

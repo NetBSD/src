@@ -1,3 +1,5 @@
+/*	$NetBSD: disksubr.c,v 1.3.4.2 2002/02/11 20:09:00 jdolecek Exp $	*/
+
 /*
  * Copyright (c) 2001 Christopher Sekiya
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +39,8 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h> 
 
 #include <machine/disklabel.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.14.2.1 2002/01/10 19:38:40 thorpej Exp $
+#	$NetBSD: OFWGENCFG,v 1.14.2.2 2002/02/11 20:07:24 jdolecek Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -96,6 +96,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 

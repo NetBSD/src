@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.9.2.2 2002/01/10 19:36:01 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.9.2.3 2002/02/11 20:06:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -121,6 +121,7 @@ videomemory_t videomemory;	/* Video memory descriptor */
 
 char *boot_args = NULL;
 char *boot_file = NULL;
+char  booted_kernel[80];
 
 extern int       *vidc_base;
 extern u_int32_t  iomd_base;
@@ -796,7 +797,7 @@ initarm_new_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	/* if there is support for a serial console ...we should now reattach it */
 	/*      fcomcndetach();*/
@@ -827,7 +828,7 @@ initarm_new_bootloader(bootconf)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI_rng(0, page0_end - page0);
+	cpu_icache_sync_range(0, page0_end - page0);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("\n");
@@ -1004,6 +1005,7 @@ parse_rpc_bootargs(args)
 	char *args;
 {
 	int integer;
+	char *kernel_name;
 
 	if (get_bootconf_option(args, "videodram", BOOTOPT_TYPE_INT, &integer)) {
 		videodram_size = integer;
@@ -1012,6 +1014,13 @@ parse_rpc_bootargs(args)
 		videodram_size = round_page(videodram_size);
 		if (videodram_size > 1024*1024)
 			videodram_size = 1024*1024;
+	};
+
+	if (get_bootconf_option(args, "booted_kernel", BOOTOPT_TYPE_STRING, &kernel_name)) {
+		strncpy(booted_kernel, kernel_name, 80);	/* XXX 80 ? */
+	} else {
+		/* no booted kernel name */
+		strcpy(booted_kernel, "");
 	};
 
 #if 0
@@ -1375,7 +1384,7 @@ initarm_old_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem wil not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	/*
 	 * Since we have mapped the VRAM up into kernel space we must
@@ -1732,7 +1741,7 @@ initarm_old_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	if (videodram_size != 0) {
 		bootconfig.display_start = VMEM_VBASE;
@@ -1750,7 +1759,7 @@ initarm_old_bootloader(bootconf)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI_rng(0, page0_end - page0);
+	cpu_icache_sync_range(0, page0_end - page0);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

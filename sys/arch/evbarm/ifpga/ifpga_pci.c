@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.1.4.2 2002/01/10 19:42:08 thorpej Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.1.4.3 2002/02/11 20:07:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -71,6 +71,7 @@
 #include <evbarm/integrator/int_bus_dma.h>
 
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

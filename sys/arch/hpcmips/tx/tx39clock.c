@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39clock.c,v 1.9.2.1 2002/01/10 19:44:09 thorpej Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.9.2.2 2002/02/11 20:08:10 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_tx39_debug.h"
+#include "opt_tx39clock_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,14 @@
 #include <hpcmips/tx/tx39clockreg.h>
 #include <hpcmips/tx/tx39timerreg.h>
 
-#ifdef TX39CLKDEBUG
-#define	DPRINTF(arg)	printf arg
-#else
-#define	DPRINTF(arg)	((void)0)
+#ifdef	TX39CLOCK_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39clock_debug
 #endif
+#include <machine/debug.h>
 
-#define ISSETPRINT(r, m)	__is_set_print(r, TX39_CLOCK_EN ## m ## CLK, #m)
+#define ISSETPRINT(r, m)						\
+	dbg_bitmask_print(r, TX39_CLOCK_EN ## m ## CLK, #m)
 
 void	tx39clock_init(struct device *);
 void	tx39clock_get(struct device *, time_t, struct clock_ymdhms *);
@@ -86,7 +87,9 @@ struct tx39clock_softc {
 
 int	tx39clock_match(struct device *, struct cfdata *, void *);
 void	tx39clock_attach(struct device *, struct device *, void *);
+#ifdef TX39CLOCK_DEBUG
 void	tx39clock_dump(tx_chipset_tag_t);
+#endif
 
 void	tx39clock_cpuspeed(int *, int *);
 
@@ -135,9 +138,9 @@ tx39clock_attach(struct device *parent, struct device *self, void *aux)
 
 	platform_clock_attach(self, &tx39_clock);
 
-#ifdef TX39CLKDEBUG
+#ifdef TX39CLOCK_DEBUG
 	tx39clock_dump(tc);
-#endif /* TX39CLKDEBUG */
+#endif /* TX39CLOCK_DEBUG */
 }
 
 /*
@@ -347,6 +350,7 @@ tx39clock_alarm_refill(tx_chipset_tag_t tc)
 	tx_conf_write(tc, TX39_TIMERALARMLO_REG, t.t_lo);
 }
 
+#ifdef TX39CLOCK_DEBUG
 void
 tx39clock_dump(tx_chipset_tag_t tc)
 {
@@ -376,3 +380,4 @@ tx39clock_dump(tx_chipset_tag_t tc)
 	ISSETPRINT(reg, UARTB);
 	printf("\n");
 }
+#endif /* TX39CLOCK_DEBUG */

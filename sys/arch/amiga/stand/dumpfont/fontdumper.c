@@ -1,24 +1,26 @@
-/*	$NetBSD: fontdumper.c,v 1.3 1994/10/26 02:06:59 cgd Exp $	*/
+/*	$NetBSD: fontdumper.c,v 1.3.46.1 2002/02/11 20:07:12 jdolecek Exp $	*/
 
 /*
  * Routine to allow user to select from available fonts that fit restricitons of
- * NetBSD display code and then dump that font in the format for inclusion in the
- * kernel. Only character values 32-255 are dumped.
+ * NetBSD display code and then dump that font in the format for inclusion in
+ * the kernel. Only character values 32-255 are dumped.
  *
  * Current kernel only allows fonts up to 8 pixels wide & non-proportional.
- * If this changes, the font requestor flags and restriction tests will need updating.
- * Also the NetBSDwidth value, cursor bits and dumping of font hex values needs updating.
+ * If this changes, the font requestor flags and restriction tests will need
+ * updating.
+ * Also the NetBSDwidth value, cursor bits and dumping of font hex values
+ * needs updating.
  *
  * Author: Alan Bair
  * Dated:  11/12/1993
  *
  * Added printing of some other useful data for future (and current) expansion.
- * -ch 
+ * -ch
  * Dated:  11/17/1993
  */
 
 /* Original code by Markus Wild */
-/* This is a *real* hack to dump the topaz80 kernel font. This one is 
+/* This is a *real* hack to dump the topaz80 kernel font. This one is
    ways nicer than the ugly Mach font, but we'll have to dump it from a
    running system to not run against Commodore copyrights. *NEVER* distribute
    the generated font with BSD, always regenerate! */
@@ -130,7 +132,8 @@ main(int argc, char *argv[])
 
     /* Render string with selected font */
     SetFont (&rp, tf);
-    SetSoftStyle(&rp, ta.ta_Style ^ tf->tf_Style, (FSF_BOLD | FSF_UNDERLINED | FSF_ITALIC));
+    SetSoftStyle(&rp, ta.ta_Style ^ tf->tf_Style,
+		 FSF_BOLD | FSF_UNDERLINED | FSF_ITALIC);
     Move (&rp, 0, tf->tf_Baseline);
     ClearEOL(&rp);
     if (tf->tf_XSize != NetBSDwidth) {
@@ -144,21 +147,21 @@ main(int argc, char *argv[])
     } else {
 	Text (&rp, str, 256 - 32);
     }
-  
+
     /* Dump them.. */
     printf ("/* Generated automatically by fontdumper.c. *DONT* distribute\n");
     printf ("   this file, it may contain information Copyright by Commodore!\n");
     printf ("\n");
     printf ("   Font: %s/%d\n", ta.ta_Name, tf->tf_YSize);
     printf (" */\n\n");
-    
+
     printf ("unsigned char kernel_font_width  = %d;\n", tf->tf_XSize);
     printf ("unsigned char kernel_font_height = %d;\n", tf->tf_YSize);
     printf ("unsigned char kernel_font_baseline = %d;\n", tf->tf_Baseline);
     printf ("short         kernel_font_boldsmear = %d;\n", tf->tf_BoldSmear);
     printf ("unsigned char kernel_font_lo = 32;\n");
     printf ("unsigned char kernel_font_hi = 255;\n\n");
-    
+
     printf ("unsigned char kernel_cursor[] = {\n");
     for (j = 0; j < (tf->tf_YSize -1); j++) {
 	printf ("0xff, ");
@@ -174,7 +177,7 @@ main(int argc, char *argv[])
 	printf ("\n");
     }
     printf ("};\n");
-    
+
     CloseFont (tf);
     FreeRaster (pp, 256 * NetBSDwidth, tf->tf_YSize);
     return (0);

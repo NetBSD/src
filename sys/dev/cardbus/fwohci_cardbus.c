@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.1.4.1 2002/01/10 19:53:46 thorpej Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.1.4.2 2002/02/11 20:09:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.1.4.1 2002/01/10 19:53:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.1.4.2 2002/02/11 20:09:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	      CARDBUS_MAPREG_TYPE_MEM, 0,
 	      &sc->sc_sc.sc_memt, &sc->sc_sc.sc_memh,
 	      NULL, &sc->sc_sc.sc_memsize)) {
-		printf("%s: can't map OCHI register space\n", devname);
+		printf("%s: can't map OHCI register space\n", devname);
 		return;
 	}
 

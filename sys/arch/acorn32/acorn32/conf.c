@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.6.2 2002/01/10 19:36:00 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.6.3 2002/02/11 20:06:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -142,6 +142,18 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 70: */
 	bdev_disk_init(NRAID,raid),	/* 71: RAIDframe disk driver */
 	bdev_lkm_dummy(),		/* 72: */
+	bdev_lkm_dummy(),		/* 73: */
+	bdev_lkm_dummy(),		/* 74: */
+	bdev_lkm_dummy(),		/* 75: */
+	bdev_lkm_dummy(),		/* 76: */
+	bdev_lkm_dummy(),		/* 77: */
+	bdev_lkm_dummy(),		/* 78: */
+	bdev_lkm_dummy(),		/* 79: */
+	bdev_lkm_dummy(),		/* 80: */
+	bdev_lkm_dummy(),		/* 81: */
+	bdev_lkm_dummy(),		/* 82: */
+	bdev_lkm_dummy(),		/* 83: */
+	bdev_lkm_dummy(),		/* 84: */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -190,6 +202,8 @@ cdev_decl(i4btel);
 #include "wsmouse.h"
 #include "wsmux.h"
 #include "scsibus.h"
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 /* Character devices */
 
@@ -282,6 +296,7 @@ struct cdevsw cdevsw[] = {
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 81: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 82: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 83: i4b phone device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 84: clockctl pseudo device */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -407,6 +422,7 @@ static int chrtoblktbl[] = {
     /* 81 */	    NODEV,
     /* 82 */	    NODEV,
     /* 83 */	    NODEV,
+    /* 84 */	    NODEV,
 };
 
 /*

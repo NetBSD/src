@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_clreg.h,v 1.6 1997/03/21 09:40:58 veego Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.6.36.1 2002/02/11 20:06:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -30,7 +30,7 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _GRF_CLREG_H
@@ -43,7 +43,7 @@
  */
 
 /* Extension to grfvideo_mode to support text modes.
- * This can be passed to both text & gfx functions 
+ * This can be passed to both text & gfx functions
  * without worry.  If gv.depth == 4, then the extended
  * fields for a text mode are present.
  */
@@ -60,7 +60,7 @@ struct grfcltext_mode {
 
 
 /* 5426 boards types, stored in  cltype in grf_cl.c .
- * used to decide how to handle SR7 and Pass-through 
+ * used to decide how to handle SR7 and Pass-through
  */
 
 #define PICASSO		2167
@@ -93,7 +93,7 @@ struct grfcltext_mode {
 #define GREG_STATUS0_R		0x03C2
 #define GREG_STATUS1_R		0x03DA
 #define GREG_MISC_OUTPUT_R	0x03CC
-#define GREG_MISC_OUTPUT_W	0x03C2	
+#define GREG_MISC_OUTPUT_W	0x03C2
 #define GREG_FEATURE_CONTROL_R	0x03CA
 #define GREG_FEATURE_CONTROL_W	0x03DA
 #define GREG_POS		0x0102
@@ -303,11 +303,11 @@ struct grfcltext_mode {
 		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); \
 	} while (0)
 
-int cl_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
-			u_long a2, int a3));
-int cl_load_mon __P((struct grf_softc *gp, struct grfcltext_mode *gv)); 
-int grfcl_cnprobe __P((void));
-void grfcl_iteinit __P((struct grf_softc *gp));
+int cl_mode(register struct grf_softc *gp, u_long cmd, void *arg,
+			u_long a2, int a3);
+int cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *gv);
+int grfcl_cnprobe(void);
+void grfcl_iteinit(struct grf_softc *gp);
 
 #endif /* _GRF_RHREG_H */
 

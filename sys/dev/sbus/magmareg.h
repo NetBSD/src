@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.3 2000/03/23 07:01:43 thorpej Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.3.8.1 2002/02/11 20:10:11 jdolecek Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -69,8 +69,9 @@
  * Supported Card Types
  */
 struct magma_board_info {
-	char *mb_name;			/* cardname to match against */
-	char *mb_realname;		/* english card name */
+	const char *mb_sbusname;	/* sbus_attach_args.sa_name */
+	const char *mb_name;		/* cardname to match against */
+	const char *mb_realname;	/* english card name */
 	int mb_nser;			/* number of serial ports */
 	int mb_npar;			/* number of parallel ports */
 	int mb_ncd1400;			/* number of CD1400 chips */

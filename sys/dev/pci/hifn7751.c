@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.5.2.1 2002/01/10 19:56:36 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.5.2.2 2002/02/11 20:09:58 jdolecek Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.5.2.1 2002/01/10 19:56:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.5.2.2 2002/02/11 20:09:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1254,12 +1254,11 @@ hifn_process(crp)
 	}
 
 	cmd = (struct hifn_command *)malloc(sizeof(struct hifn_command),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cmd == NULL) {
 		err = ENOMEM;
 		goto errout;
 	}
-	memset(cmd, 0, sizeof(struct hifn_command));
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.6 2000/01/23 21:06:12 aymeric Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.6.8.1 2002/02/11 20:06:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.6.8.1 2002/02/11 20:06:59 jdolecek Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the
@@ -74,19 +77,16 @@ struct bah_zbus_softc {
 	struct	isr		sc_isr;
 };
 
-int	bah_zbus_match __P((struct device *, struct cfdata *, void *));
-void	bah_zbus_attach __P((struct device *, struct device *, void *));
-void	bah_zbus_reset __P((struct bah_softc *, int));
+int	bah_zbus_match(struct device *, struct cfdata *, void *);
+void	bah_zbus_attach(struct device *, struct device *, void *);
+void	bah_zbus_reset(struct bah_softc *, int);
 
 struct cfattach bah_zbus_ca = {
 	sizeof(struct bah_zbus_softc), bah_zbus_match, bah_zbus_attach
 };
 
 int
-bah_zbus_match(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+bah_zbus_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct zbus_args *zap = aux;
 
@@ -97,9 +97,7 @@ bah_zbus_match(parent, cfp, aux)
 }
 
 void
-bah_zbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bah_zbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bah_zbus_softc *bsc = (void *)self;
 	struct bah_softc *sc = &bsc->sc_bah;
@@ -129,9 +127,7 @@ bah_zbus_attach(parent, self, aux)
 }
 
 void
-bah_zbus_reset(sc, onoff)
-	struct bah_softc *sc;
-	int onoff;
+bah_zbus_reset(struct bah_softc *sc, int onoff)
 {
 	struct bah_zbus_softc *bsc;
 	volatile u_int8_t *p;

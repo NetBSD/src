@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.7 2001/04/26 05:58:41 is Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.7.2.1 2002/02/11 20:07:00 jdolecek Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -17,7 +17,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -45,6 +45,9 @@
  *	-is	original implementation [Sun Feb 14 10:29:19 1999]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.1 2002/02/11 20:07:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,19 +80,19 @@
 /* XXX I think the following line should be elsewhere ... -is */
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
-/*static*/ int isic_supio_match __P((struct device *, struct cfdata *, void *));
-/*static*/ void isic_supio_attach __P((struct device *, struct device *, void *));
+/*static*/ int isic_supio_match(struct device *, struct cfdata *, void *);
+/*static*/ void isic_supio_attach(struct device *, struct device *, void *);
 
-/*static*/ u_int8_t aster_read_reg __P((struct l1_softc *sc, int what,
-	bus_size_t offs));
-/*static*/ void aster_write_reg __P((struct l1_softc *sc, int what,
-	bus_size_t offs, u_int8_t data));
-/*static*/ void aster_read_fifo __P((struct l1_softc *sc, int what,
-	void *buf, size_t size));
-/*static*/ void aster_write_fifo __P((struct l1_softc *sc, int what,
-	const void *data, size_t size));
+/*static*/ u_int8_t aster_read_reg(struct l1_softc *sc, int what,
+		bus_size_t offs);
+/*static*/ void aster_write_reg(struct l1_softc *sc, int what,
+	bus_size_t offs, u_int8_t data);
+/*static*/ void aster_read_fifo(struct l1_softc *sc, int what,
+	void *buf, size_t size);
+/*static*/ void aster_write_fifo(struct l1_softc *sc, int what,
+	const void *data, size_t size);
 
-static int supio_isicattach __P((struct l1_softc *sc, char *));
+static int supio_isicattach(struct l1_softc *sc, char *);
 
 struct isic_supio_softc {
 	struct l1_softc	sc_isic;
@@ -105,10 +108,7 @@ struct cfattach isic_supio_ca = {
  * Probe card
  */
 /*static*/ int
-isic_supio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+isic_supio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct supio_attach_args *sap = aux;
 
@@ -121,9 +121,7 @@ int isic_supio_ipl = 2;
  * Attach the card
  */
 /*static*/ void
-isic_supio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isic_supio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isic_supio_softc *ssc = (void *)self;
 	struct l1_softc *sc = &ssc->sc_isic;
@@ -151,7 +149,7 @@ isic_supio_attach(parent, self, aux)
 	/* ISAC */
 	sc->sc_maps[0].t = bst;
 	sc->sc_maps[0].h = h;
-	sc->sc_maps[0].offset = o1;	
+	sc->sc_maps[0].offset = o1;
 	sc->sc_maps[0].size = 0;	/* foreign mapping, leave it alone */
 
 	/* HSCX A */
@@ -195,8 +193,7 @@ isic_supio_attach(parent, self, aux)
 
 #if 0
 int
-isic_supiointr(p)
-	void *p;
+isic_supiointr(void *p)
 {
 	/* XXX should test whether it is our interupt at all */
         add_sicallback((sifunc_t)isicintr, p, NULL);
@@ -235,7 +232,7 @@ aster_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 }
 
 /*static*/ void
-aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data) 
+aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
         bus_space_tag_t t = sc->sc_maps[what].t;
 	bus_space_handle_t h = sc->sc_maps[what].h;
@@ -251,7 +248,7 @@ aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 
 /*
  * parameter and format for message producing e.g. "isic0: "
- * there is no FreeBSD/Amiga, so just: 
+ * there is no FreeBSD/Amiga, so just:
  */
 
 #define	ISIC_FMT	"%s: "
@@ -306,7 +303,7 @@ supio_isicattach(struct l1_softc *sc, char *cardname)
 		case HSCX_VA3:
 		case HSCX_V21:
 			break;
-			
+
 		default:
 			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 				ISIC_PARM, sc->sc_hscx_version);
@@ -315,7 +312,7 @@ supio_isicattach(struct l1_softc *sc, char *cardname)
 	};
 
 	/* ISAC setup */
-	
+
 	isic_isac_init(sc);
 
 	/* HSCX setup */
@@ -347,17 +344,17 @@ supio_isicattach(struct l1_softc *sc, char *cardname)
 
 #if defined(__FreeBSD__) && __FreeBSD__ >=3
 	callout_handle_init(&sc->sc_T3_callout);
-	callout_handle_init(&sc->sc_T4_callout);	
+	callout_handle_init(&sc->sc_T4_callout);
 #endif
 
 	/* init higher protocol layers */
-	
+
 	/* MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp); */
 	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname,
 		cardname, &isic_std_driver);
 
 	/* announce chip versions */
-	
+
 	if(sc->sc_isac_version >= ISAC_UNKN)
 	{
 		printf(ISIC_FMT "ISAC Version UNKNOWN (VN=0x%x)" TERMFMT,

@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461.c,v 1.1.6.1 2001/08/03 04:11:38 lukem Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.1.6.2 2002/02/11 20:08:16 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,9 +46,7 @@
 #include <machine/intr.h>
 #include <sh3/shbvar.h>
 
-#ifdef DEBUG
-#include <hpcsh/hpcsh/debug.h>
-#endif
+#include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
@@ -56,7 +54,7 @@
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
-static struct hd64461_module {
+STATIC struct hd64461_module {
 	const char *name;
 } hd64461_modules[] = {
 	[HD64461_MODULE_VIDEO]		= { "hd64461video" },
@@ -91,21 +89,21 @@ struct hd64461_softc {
 	struct device sc_dev;
 };
 
-static int hd64461_match(struct device *, struct cfdata *, void *);
-static void hd64461_attach(struct device *, struct device *, void *);
-static int hd64461_print(void *, const char *);
+STATIC int hd64461_match(struct device *, struct cfdata *, void *);
+STATIC void hd64461_attach(struct device *, struct device *, void *);
+STATIC int hd64461_print(void *, const char *);
 
 struct cfattach hd64461if_ca = {
 	sizeof(struct hd64461_softc), hd64461_match, hd64461_attach
 };
 
-static void hd64461_module_attach(struct hd64461_softc *);
-static int hd64461_intr(void *);
+STATIC void hd64461_module_attach(struct hd64461_softc *);
+STATIC int hd64461_intr(void *);
 #ifdef DEBUG
-static void hd64461_info(struct hd64461_softc *);
+STATIC void hd64461_info(struct hd64461_softc *);
 #endif
 
-static int
+int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int match;
@@ -125,7 +123,7 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static void
+void
 hd64461_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct shb_attach_args *ia = aux;
@@ -144,7 +142,7 @@ hd64461_attach(struct device *parent, struct device *self, void *aux)
 	hd64461_module_attach(sc);
 }
 
-static void
+void
 hd64461_module_attach(struct hd64461_softc *sc)
 {
 	struct hd64461_attach_args ha;
@@ -161,7 +159,7 @@ hd64461_module_attach(struct hd64461_softc *sc)
 	}	
 }
 
-static int
+int
 hd64461_print(void *aux, const char *pnp)
 {
 	struct hd64461_attach_args *ha = aux;
@@ -246,68 +244,67 @@ hd64461_intr(void *arg)
 }
 
 #ifdef DEBUG
-static void
+void
 hd64461_info(struct hd64461_softc *sc)
 {
-	const char name[] = __FUNCTION__;
 	u_int16_t r16;
 
-	dbg_banner_start(name, sizeof name);
+	dbg_banner_function();
 
 	/*
 	 * System
 	 */
 	printf("STBCR (System Control Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_SYSSTBCR_##m, #m)
-	DBG_BIT_PRINT(r16, CKIO_STBY);
-	DBG_BIT_PRINT(r16, SAFECKE_IST);
-	DBG_BIT_PRINT(r16, SLCKE_IST);
-	DBG_BIT_PRINT(r16, SAFECKE_OST);
-	DBG_BIT_PRINT(r16, SLCKE_OST);
-	DBG_BIT_PRINT(r16, SMIAST);
-	DBG_BIT_PRINT(r16, SLCDST);
-	DBG_BIT_PRINT(r16, SPC0ST);
-	DBG_BIT_PRINT(r16, SPC1ST);
-	DBG_BIT_PRINT(r16, SAFEST);
-	DBG_BIT_PRINT(r16, STM0ST);
-	DBG_BIT_PRINT(r16, STM1ST);
-	DBG_BIT_PRINT(r16, SIRST);
-	DBG_BIT_PRINT(r16, SURTSD);
-#undef DBG_BIT_PRINT
+#define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_SYSSTBCR_##m, #m)
+	DBG_BITMASK_PRINT(r16, CKIO_STBY);
+	DBG_BITMASK_PRINT(r16, SAFECKE_IST);
+	DBG_BITMASK_PRINT(r16, SLCKE_IST);
+	DBG_BITMASK_PRINT(r16, SAFECKE_OST);
+	DBG_BITMASK_PRINT(r16, SLCKE_OST);
+	DBG_BITMASK_PRINT(r16, SMIAST);
+	DBG_BITMASK_PRINT(r16, SLCDST);
+	DBG_BITMASK_PRINT(r16, SPC0ST);
+	DBG_BITMASK_PRINT(r16, SPC1ST);
+	DBG_BITMASK_PRINT(r16, SAFEST);
+	DBG_BITMASK_PRINT(r16, STM0ST);
+	DBG_BITMASK_PRINT(r16, STM1ST);
+	DBG_BITMASK_PRINT(r16, SIRST);
+	DBG_BITMASK_PRINT(r16, SURTSD);
+#undef DBG_BITMASK_PRINT
 	printf("\n");
 
 	printf("SYSCR (System Configuration Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_SYSSYSCR_REG16);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_SYSSYSCR_##m, #m)
-	DBG_BIT_PRINT(r16, SCPU_BUS_IGAT);
-	DBG_BIT_PRINT(r16, SPTA_IR);
-	DBG_BIT_PRINT(r16, SPTA_TM);
-	DBG_BIT_PRINT(r16, SPTB_UR);
-	DBG_BIT_PRINT(r16, WAIT_CTL_SEL);
-	DBG_BIT_PRINT(r16, SMODE1);
-	DBG_BIT_PRINT(r16, SMODE0);
-#undef DBG_BIT_PRINT
+#define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_SYSSYSCR_##m, #m)
+	DBG_BITMASK_PRINT(r16, SCPU_BUS_IGAT);
+	DBG_BITMASK_PRINT(r16, SPTA_IR);
+	DBG_BITMASK_PRINT(r16, SPTA_TM);
+	DBG_BITMASK_PRINT(r16, SPTB_UR);
+	DBG_BITMASK_PRINT(r16, WAIT_CTL_SEL);
+	DBG_BITMASK_PRINT(r16, SMODE1);
+	DBG_BITMASK_PRINT(r16, SMODE0);
+#undef DBG_BITMASK_PRINT
 	printf("\n");
 
 	printf("SCPUCR (CPU Data Bus Control Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_SYSSCPUCR_REG16);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_SYSSCPUCR_##m, #m)
-	DBG_BIT_PRINT(r16, SPDSTOF);
-	DBG_BIT_PRINT(r16, SPDSTIG);
-	DBG_BIT_PRINT(r16, SPCSTOF);
-	DBG_BIT_PRINT(r16, SPCSTIG);
-	DBG_BIT_PRINT(r16, SPBSTOF);
-	DBG_BIT_PRINT(r16, SPBSTIG);
-	DBG_BIT_PRINT(r16, SPASTOF);
-	DBG_BIT_PRINT(r16, SPASTIG);
-	DBG_BIT_PRINT(r16, SLCDSTIG);
-	DBG_BIT_PRINT(r16, SCPU_CS56_EP);
-	DBG_BIT_PRINT(r16, SCPU_CMD_EP);
-	DBG_BIT_PRINT(r16, SCPU_ADDR_EP);
-	DBG_BIT_PRINT(r16, SCPDPU);
-	DBG_BIT_PRINT(r16, SCPU_A2319_EP);
-#undef DBG_BIT_PRINT
+#define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_SYSSCPUCR_##m, #m)
+	DBG_BITMASK_PRINT(r16, SPDSTOF);
+	DBG_BITMASK_PRINT(r16, SPDSTIG);
+	DBG_BITMASK_PRINT(r16, SPCSTOF);
+	DBG_BITMASK_PRINT(r16, SPCSTIG);
+	DBG_BITMASK_PRINT(r16, SPBSTOF);
+	DBG_BITMASK_PRINT(r16, SPBSTIG);
+	DBG_BITMASK_PRINT(r16, SPASTOF);
+	DBG_BITMASK_PRINT(r16, SPASTIG);
+	DBG_BITMASK_PRINT(r16, SLCDSTIG);
+	DBG_BITMASK_PRINT(r16, SCPU_CS56_EP);
+	DBG_BITMASK_PRINT(r16, SCPU_CMD_EP);
+	DBG_BITMASK_PRINT(r16, SCPU_ADDR_EP);
+	DBG_BITMASK_PRINT(r16, SCPDPU);
+	DBG_BITMASK_PRINT(r16, SCPU_A2319_EP);
+#undef DBG_BITMASK_PRINT
 	printf("\n");
 
 	printf("\n");
@@ -316,32 +313,32 @@ hd64461_info(struct hd64461_softc *sc)
 	 */
 	printf("NIRR (Interrupt Request Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_INTCNIRR_REG16);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_INTCNIRR_##m, #m)
-	DBG_BIT_PRINT(r16, PCC0R);
-	DBG_BIT_PRINT(r16, PCC1R);
-	DBG_BIT_PRINT(r16, AFER);
-	DBG_BIT_PRINT(r16, GPIOR);
-	DBG_BIT_PRINT(r16, TMU0R);
-	DBG_BIT_PRINT(r16, TMU1R);
-	DBG_BIT_PRINT(r16, IRDAR);
-	DBG_BIT_PRINT(r16, UARTR);
-#undef DBG_BIT_PRINT
+#define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_INTCNIRR_##m, #m)
+	DBG_BITMASK_PRINT(r16, PCC0R);
+	DBG_BITMASK_PRINT(r16, PCC1R);
+	DBG_BITMASK_PRINT(r16, AFER);
+	DBG_BITMASK_PRINT(r16, GPIOR);
+	DBG_BITMASK_PRINT(r16, TMU0R);
+	DBG_BITMASK_PRINT(r16, TMU1R);
+	DBG_BITMASK_PRINT(r16, IRDAR);
+	DBG_BITMASK_PRINT(r16, UARTR);
+#undef DBG_BITMASK_PRINT
 	printf("\n");
 
 	printf("NIMR (Interrupt Mask Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_INTCNIMR_REG16);
-#define DBG_BIT_PRINT(r, m)	dbg_bit_print(r, HD64461_INTCNIMR_##m, #m)
-	DBG_BIT_PRINT(r16, PCC0M);
-	DBG_BIT_PRINT(r16, PCC1M);
-	DBG_BIT_PRINT(r16, AFEM);
-	DBG_BIT_PRINT(r16, GPIOM);
-	DBG_BIT_PRINT(r16, TMU0M);
-	DBG_BIT_PRINT(r16, TMU1M);
-	DBG_BIT_PRINT(r16, IRDAM);
-	DBG_BIT_PRINT(r16, UARTM);
-#undef DBG_BIT_PRINT
+#define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_INTCNIMR_##m, #m)
+	DBG_BITMASK_PRINT(r16, PCC0M);
+	DBG_BITMASK_PRINT(r16, PCC1M);
+	DBG_BITMASK_PRINT(r16, AFEM);
+	DBG_BITMASK_PRINT(r16, GPIOM);
+	DBG_BITMASK_PRINT(r16, TMU0M);
+	DBG_BITMASK_PRINT(r16, TMU1M);
+	DBG_BITMASK_PRINT(r16, IRDAM);
+	DBG_BITMASK_PRINT(r16, UARTM);
+#undef DBG_BITMASK_PRINT
 	printf("\n");
 
-	dbg_banner_end();
+	dbg_banner_line();
 }
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.9.2.2 2002/01/10 19:46:30 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.9.2.3 2002/02/11 20:08:41 jdolecek Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -41,6 +41,8 @@ options 	INET6		# IPV6
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
 options 	MINIROOTSIZE=1024
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## "generic" boot (put root on boot device)
 config netbsd		root on ? type ?

@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_space.c,v 1.4 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,24 +33,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "debug_hpcsh.h"
+
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
 #include <machine/bus.h>
 
-#ifdef BUS_SPACE_DEBUG
-int	bus_space_debug = 0;
-#define	DPRINTF(fmt, args...)						\
-	if (bus_space_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#define	DPRINTFN(n, arg)						\
-	if (bus_space_debug > (n))					\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
-#else
-#define	DPRINTF(arg...)		((void)0)
-#define DPRINTFN(n, arg...)	((void)0)
+/* bus.h turn on BUS_SPACE_DEBUG if the global DEBUG option is enabled. */
+#ifdef	BUS_SPACE_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	bus_space_debug
 #endif
+#include <machine/debug.h>
 
 #define _BUS_SPACE_ACCESS_HOOK()	((void)0)
 _BUS_SPACE_READ(_bus_space, 1, 8)
@@ -206,8 +203,6 @@ _bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	*bshp = (bus_space_handle_t)bpa;
 
-	DPRINTF("success.\n");
-
 	return (0);
 }
 
@@ -252,8 +247,6 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 
 	if (bpap)
 		*bpap = bpa;
-
-	DPRINTF("success.\n");
 
 	return (0);
 }

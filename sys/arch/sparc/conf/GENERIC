@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121.2.2 2002/01/10 19:48:42 thorpej Exp $
+# $NetBSD: GENERIC,v 1.121.2.3 2002/02/11 20:09:02 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.121.2.2 $"
+#ident 		"GENERIC-$Revision: 1.121.2.3 $"
 
 maxusers	32
 
@@ -79,6 +79,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support; still under development.
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM
@@ -422,8 +424,17 @@ pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-#pseudo-device	raid	4
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid	8
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

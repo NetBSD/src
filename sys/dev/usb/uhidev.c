@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.3.4.2 2002/01/10 19:58:58 thorpej Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3.4.3 2002/02/11 20:10:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -224,9 +224,9 @@ USB_ATTACH(uhidev)
 			dev = (struct uhidev *)config_found_sm(self, &uha,
 			                           uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
-			dev->sc_in_rep_size = repsizes[repid];
-#ifdef DIAGNOSTIC
 			if (dev != NULL) {
+				dev->sc_in_rep_size = repsizes[repid];
+#ifdef DIAGNOSTIC
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
@@ -234,8 +234,8 @@ USB_ATTACH(uhidev)
 					       USBDEVNAME(sc->sc_dev));
 					USB_ATTACH_ERROR_RETURN;
 				}
-			}
 #endif
+			}
 		}
 	}
 

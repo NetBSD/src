@@ -1,3 +1,3 @@
-/*      $NetBSD: bootinfo.h,v 1.1 2001/02/23 03:48:14 ichiro Exp $ */
+/*      $NetBSD: bootinfo.h,v 1.1.6.1 2002/02/11 20:08:02 jdolecek Exp $ */
 
-#include <hpc/hpc/bootinfo.h>
+#include <hpc/include/bootinfo.h>

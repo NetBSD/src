@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.4.2 2002/01/10 19:58:43 thorpej Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.4.3 2002/02/11 20:10:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.2 2002/01/10 19:58:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.3 2002/02/11 20:10:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -633,8 +633,7 @@ stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 	int size;
 
 	size = si->si_consw * si->si_consh * sizeof(*ss->ss_backing);
-	ss->ss_backing = malloc(size, M_DEVBUF, M_NOWAIT);
-	memset(ss->ss_backing, 0, size);
+	ss->ss_backing = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 }
 
 int
@@ -649,8 +648,7 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	if ((stic_consscr.ss_flags & SS_ALLOCED) == 0)
 		ss = &stic_consscr;
 	else {
-		ss = malloc(sizeof(*ss), M_DEVBUF, M_WAITOK);
-		memset(ss, 0, sizeof(*ss));
+		ss = malloc(sizeof(*ss), M_DEVBUF, M_WAITOK|M_ZERO);
 	}
 	stic_setup_backing(si, ss);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.6 2001/04/07 05:09:27 tron Exp $	*/
+/*	$NetBSD: wdc_amiga.c,v 1.6.2.1 2002/02/11 20:07:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.6.2.1 2002/02/11 20:07:08 jdolecek Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,19 +70,16 @@ struct wdc_amiga_softc {
 	char	sc_a1200;
 };
 
-int	wdc_amiga_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_amiga_attach	__P((struct device *, struct device *, void *));
-int	wdc_amiga_intr	__P((void *));
+int	wdc_amiga_probe(struct device *, struct cfdata *, void *);
+void	wdc_amiga_attach(struct device *, struct device *, void *);
+int	wdc_amiga_intr(void *);
 
 struct cfattach wdc_amiga_ca = {
 	sizeof(struct wdc_amiga_softc), wdc_amiga_probe, wdc_amiga_attach
 };
 
 int
-wdc_amiga_probe(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+wdc_amiga_probe(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	if ((!is_a4000() && !is_a1200()) || !matchname(aux, "wdc"))
 		return(0);
@@ -87,9 +87,7 @@ wdc_amiga_probe(parent, cfp, aux)
 }
 
 void
-wdc_amiga_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_amiga_softc *sc = (void *)self;
 
@@ -149,8 +147,7 @@ wdc_amiga_attach(parent, self, aux)
 }
 
 int
-wdc_amiga_intr(arg)
-	void *arg;
+wdc_amiga_intr(void *arg)
 {
 	struct wdc_amiga_softc *sc = (struct wdc_amiga_softc *)arg;
 	u_char intreq = *sc->sc_intreg;

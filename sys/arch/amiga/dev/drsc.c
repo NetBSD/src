@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.18 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: drsc.c,v 1.18.2.1 2002/02/11 20:06:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -37,6 +37,9 @@
  *	@(#)dma.c
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.18.2.1 2002/02/11 20:06:52 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -54,11 +57,11 @@
 
 #include <machine/cpu.h>	/* is_xxx(), */
 
-void drscattach __P((struct device *, struct device *, void *));
-int drscmatch __P((struct device *, struct cfdata *, void *));
-int drsc_dmaintr __P((struct siop_softc *));
+void drscattach(struct device *, struct device *, void *);
+int drscmatch(struct device *, struct cfdata *, void *);
+int drsc_dmaintr(struct siop_softc *);
 #ifdef DEBUG
-void drsc_dump __P((void));
+void drsc_dump(void);
 #endif
 
 #ifdef DEBUG
@@ -73,13 +76,10 @@ struct cfattach drsc_ca = {
 static struct siop_softc *drsc_softc;
 
 /*
- * One of us is on every DraCo motherboard, 
+ * One of us is on every DraCo motherboard,
  */
 int
-drscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+drscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int drsc_matched = 0;
 
@@ -92,9 +92,7 @@ drscmatch(pdp, cfp, auxp)
 }
 
 void
-drscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+drscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
@@ -165,7 +163,7 @@ drscattach(pdp, dp, auxp)
  */
 
 void
-drsc_handler()
+drsc_handler(void)
 {
 	struct siop_softc *sc = drsc_softc;
 
@@ -212,7 +210,7 @@ drsc_handler()
 
 #ifdef DEBUG
 void
-drsc_dump()
+drsc_dump(void)
 {
 	extern struct cfdriver drsc_cd;
 	int i;

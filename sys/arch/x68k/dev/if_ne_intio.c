@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.1.8.2 2002/01/10 19:50:19 thorpej Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.1.8.3 2002/02/11 20:09:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -80,8 +80,10 @@
 
 #include <arch/x68k/dev/intiovar.h>
 
-#define NE_INTIO_ADDR (0xece300)
-#define NE_INTIO_INTR (0xf9)
+#define NE_INTIO_ADDR  (0xece300)
+#define NE_INTIO_ADDR2 (0xeceb00)
+#define NE_INTIO_INTR  (0xf9)
+#define NE_INTIO_INTR2 (0xf8)
 
 static int  ne_intio_match(struct device *, struct cfdata *, void *);
 static void ne_intio_attach(struct device *, struct device *, void *);
@@ -109,9 +111,8 @@ ne_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 		ia->ia_intr = NE_INTIO_INTR;
 
 	/* fixed parameters */
-	if (ia->ia_addr != NE_INTIO_ADDR)
-		return 0;
-	if (ia->ia_intr != NE_INTIO_INTR)
+	if (!(ia->ia_addr == NE_INTIO_ADDR  && ia->ia_intr == NE_INTIO_INTR ) &&
+	    !(ia->ia_addr == NE_INTIO_ADDR2 && ia->ia_intr == NE_INTIO_INTR2)  )
 		return 0;
 
 	/* Make sure this is a valid NE2000 I/O address */

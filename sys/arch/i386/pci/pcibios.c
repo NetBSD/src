@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.6.2.1 2002/01/10 19:45:04 thorpej Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.6.2.2 2002/02/11 20:08:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.6.2.1 2002/01/10 19:45:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.6.2.2 2002/02/11 20:08:29 jdolecek Exp $");
 
 #include "opt_pcibios.h"
 
@@ -125,6 +125,12 @@ void	pcibios_print_pir_table __P((void));
 
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
+
+static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
+struct pci_bridge_hook_arg {
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *);
+	void *arg;
+};
 
 void
 pcibios_init()
@@ -234,8 +240,14 @@ pcibios_pir_init()
 
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
 		p = (caddr_t)ISA_HOLE_VADDR(pa);
-		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R'))
-			continue;
+		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R')) {
+			/*
+			 * XXX: Some laptops (Toshiba/Libretto L series
+			 * use _PIR instead of $PIR. So we try that too.
+			 */
+			if (*(int *)p != BIOS32_MAKESIG('_', 'P', 'I', 'R'))
+				continue;
+		}
 		
 		rev_min = *(p + 4);
 		rev_maj = *(p + 5);
@@ -550,5 +562,32 @@ pci_device_foreach_min(pc, minbus, maxbus, func, context)
 				(*func)(pc, tag, context);
 			}
 		}
+	}
+}
+
+void
+pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *ctx)
+{
+	struct pci_bridge_hook_arg bridge_hook;
+
+	bridge_hook.func = func;
+	bridge_hook.arg = ctx;
+	
+	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
+	    &bridge_hook);
+}
+
+void
+pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
+{
+	struct pci_bridge_hook_arg *bridge_hook = (void *)ctx;
+	pcireg_t reg;
+
+	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
+	    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
 	}
 }

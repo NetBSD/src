@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.57.2.1 2002/01/10 19:36:57 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.57.2.2 2002/02/11 20:06:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57.2.1 2002/01/10 19:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57.2.2 2002/02/11 20:06:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,9 @@ cdev_decl(agp);
 #include "stic.h"
 cdev_decl(stic);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -299,6 +302,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pci_init(NPCI,pci),	/* 66: PCI bus access device */
 	cdev__ocim_init(NAGP,agp),	/* 67: AGP graphics aperture device */
 	cdev__ocm_init(NSTIC,stic),	/* 68: PixelStamp mmap interface */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 69: clockctl pseudo device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -409,6 +413,7 @@ static int chrtoblktbl[] = {
 	/* 66 */	NODEV,
 	/* 67 */	NODEV,
 	/* 68 */	NODEV,
+	/* 69 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.5.6.1 2002/01/10 19:43:54 thorpej Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.5.6.2 2002/02/11 20:08:06 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 /*
  * Device driver for PHILIPS UCB1200 Advanced modem/audio analog front-end
  */
-#define UCB1200DEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,14 +54,11 @@
 #include <hpcmips/dev/ucb1200var.h>
 #include <hpcmips/dev/ucb1200reg.h>
 
-#ifdef UCB1200DEBUG
-int	ucb1200debug = 1;
-#define	DPRINTF(arg) if (ucb1200debug) printf arg;
-#define	DPRINTFN(n, arg) if (ucb1200debug > (n)) printf arg;
-#else
-#define	DPRINTF(arg)
-#define DPRINTFN(n, arg)
+#ifdef	UCB1200_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	ucb1200_debug
 #endif
+#include <machine/debug.h>
 
 struct ucbchild_state {
 	int (*cs_busy)(void *);
@@ -88,7 +83,7 @@ int	ucb1200_print(void *, const char *);
 int	ucb1200_search(struct device *, struct cfdata *, void *);
 int	ucb1200_check_id(u_int16_t, int);
 
-#ifdef UCB1200DEBUG
+#ifdef UCB1200_DEBUG
 void	ucb1200_dump(struct ucb1200_softc *);
 #endif
 
@@ -136,8 +131,8 @@ ucb1200_attach(struct device *parent, struct device *self, void *aux)
 	tx39sib_enable1(sc->sc_parent);
 	tx39sib_enable2(sc->sc_parent);
 
-#ifdef UCB1200DEBUG	
-	if (ucb1200debug)
+#ifdef UCB1200_DEBUG	
+	if (ucb1200_debug)
 		ucb1200_dump(sc);
 #endif
 	reg = txsibsf0_reg_read(sa->sa_tc, UCB1200_ID_REG);
@@ -217,7 +212,7 @@ ucb1200_state_idle(dev)
 	return (1); /* idle state */
 }
 
-#ifdef UCB1200DEBUG
+#ifdef UCB1200_DEBUG
 void
 ucb1200_dump(struct ucb1200_softc *sc)
 {
@@ -249,7 +244,7 @@ ucb1200_dump(struct ucb1200_softc *sc)
 	for (i = 0; i < 16; i++) {
 		reg = txsibsf0_reg_read(tc, i);
 		printf("%s(%02d) 0x%04x ", regname[i], i, reg);
-		bitdisp(reg);
+		dbg_bit_print(reg);
 	}
 }
-#endif /* UCB1200DEBUG */
+#endif /* UCB1200_DEBUG */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: std.hpcmips.vr41,v 1.1.2.2 2002/01/10 19:43:46 thorpej Exp $
+#	$NetBSD: std.hpcmips.vr41,v 1.1.2.3 2002/02/11 20:08:04 jdolecek Exp $
 #	VR41XX common configuration.
 #
 options 	MIPS3			# R4000/R4400/R4600 CPUs
@@ -10,16 +10,16 @@ options 	MIPS3_L2CACHE_ABSENT
 vrip*	at mainbus0
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
-vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
+vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 unit VRRTC
 
-vrkiu*	at vrip? addr 0x0b000180 size 0x20 intr 7
+vrkiu*	at vrip? addr 0x0b000180 size 0x20 unit VRKIU
 hpckbd*	at vrkiu?
-com*	at vrip? addr 0x0c000000 size 0x20 intr 9 pwctl PWCTL_COM0
-vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
-vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
+com*	at vrip? addr 0x0c000000 size 0x20 unit VRSIU pwctl PWCTL_COM0
+vrgiu*	at vrip? addr 0x0b000100 size 0x20 unit VRGIU
+vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 unit VRPMU # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
-vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
-vrled*	at vrip? addr 0x0b000240 size 0x10 intr 17
+vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 unit VRPIU
+vrled*	at vrip? addr 0x0b000240 size 0x10 unit VRLED
 
 # VR-specific debug options.
 

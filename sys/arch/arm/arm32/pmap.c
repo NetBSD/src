@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14.2.4 2002/01/10 19:37:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14.2.5 2002/02/11 20:07:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14.2.4 2002/01/10 19:37:49 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14.2.5 2002/02/11 20:07:18 jdolecek Exp $");        
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -304,8 +304,6 @@ int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
 pt_entry_t *pmap_pte __P((struct pmap *pmap, vaddr_t va));
-void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
-    paddr_t pa, unsigned int flags));
 void pmap_copy_on_write __P((paddr_t pa));
 void pmap_pinit __P((struct pmap *));
 void pmap_freepagedir __P((struct pmap *));
@@ -1175,7 +1173,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 	
-	cpu_cache_cleanD();
+	cpu_dcache_wbinv_all();
 }
 
 /*
@@ -1830,9 +1828,9 @@ pmap_clean_page(pv, is_src)
 	}
 
 	if (page_to_clean)
-		cpu_cache_purgeID_rng(page_to_clean, NBPG);
+		cpu_idcache_wbinv_range(page_to_clean, NBPG);
 	else if (cache_needs_cleaning) {
-		cpu_cache_purgeID();
+		cpu_idcache_wbinv_all();
 		return (1);
 	}
 	return (0);
@@ -1885,7 +1883,7 @@ pmap_zero_page(phys)
 	cpu_tlb_flushD_SE(page_hook0.va);
 	cpu_cpwait();
 	bzero_page(page_hook0.va);
-	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
+	cpu_dcache_wbinv_range(page_hook0.va, NBPG);
 }
 
 /* pmap_pageidlezero()
@@ -1937,7 +1935,7 @@ pmap_pageidlezero(phys)
 		 * if we aborted we'll rezero this page again later so don't
 		 * purge it unless we finished it
 		 */
-		cpu_cache_purgeD_rng(page_hook0.va, NBPG);
+		cpu_dcache_wbinv_range(page_hook0.va, NBPG);
 	return (rv);
 }
  
@@ -1980,8 +1978,8 @@ pmap_copy_page(src, dest)
 	cpu_tlb_flushD_SE(page_hook1.va);
 	cpu_cpwait();
 	bcopy_page(page_hook0.va, page_hook1.va);
-	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
-	cpu_cache_purgeD_rng(page_hook1.va, NBPG);
+	cpu_dcache_wbinv_range(page_hook0.va, NBPG);
+	cpu_dcache_wbinv_range(page_hook1.va, NBPG);
 }
 
 #if 0
@@ -2255,7 +2253,7 @@ pmap_vac_me_user(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
 				    (clear_cache || npv->pv_pmap == kpmap)) ||
 				    (npv->pv_pmap == kpmap &&
 				    !clear_cache && kern_cacheable < 4)) {
-					cpu_cache_purgeID_rng(npv->pv_va,
+					cpu_idcache_wbinv_range(npv->pv_va,
 					    NBPG);
 					cpu_tlb_flushID_SE(npv->pv_va);
 				}
@@ -2263,7 +2261,7 @@ pmap_vac_me_user(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
 		}
 		if ((clear_cache && cacheable_entries >= 4) ||
 		    kern_cacheable >= 4) {
-			cpu_cache_purgeID();
+			cpu_idcache_wbinv_all();
 			cpu_tlb_flushID();
 		}
 		cpu_cpwait();
@@ -2390,7 +2388,7 @@ pmap_remove(pmap, sva, eva)
 
 				/* Nuke everything if needed. */
 				if (pmap_active) {
-					cpu_cache_purgeID();
+					cpu_idcache_wbinv_all();
 					cpu_tlb_flushID();
 				}
 
@@ -2444,7 +2442,8 @@ pmap_remove(pmap, sva, eva)
 
 		for (cnt = 0; cnt < cleanlist_idx; cnt++) {
 			if (pmap_active) {
-				cpu_cache_purgeID_rng(cleanlist[cnt].va, NBPG);
+				cpu_idcache_wbinv_range(cleanlist[cnt].va,
+				    NBPG);
 				*cleanlist[cnt].pte = 0;
 				cpu_tlb_flushID_SE(cleanlist[cnt].va);
 			} else
@@ -2759,7 +2758,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 		} else {
 			/* We are replacing the page with a new one. */
-			cpu_cache_purgeID_rng(va, NBPG);
+			cpu_idcache_wbinv_range(va, NBPG);
 
 			PDEBUG(0, printf("Case 03 in pmap_enter (V%08lx P%08lx P%08lx)\n",
 			    va, pa, opa));
@@ -2941,7 +2940,7 @@ pmap_kremove(va, len)
 
 		KASSERT(pmap_pde_page(pmap_pde(pmap_kernel(), va)));
 		pte = vtopte(va);
-		cpu_cache_purgeID_rng(va, PAGE_SIZE);
+		cpu_idcache_wbinv_range(va, PAGE_SIZE);
 		*pte = 0;
 		cpu_tlb_flushID_SE(va);
 	}
@@ -3133,50 +3132,51 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
+	pd_entry_t *pde;
 	pt_entry_t *pte, *ptes;
 	paddr_t pa;
+	boolean_t rv = TRUE;
 
 	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
 
 	/*
 	 * Get the pte for this virtual address.
 	 */
+	pde = pmap_pde(pmap, va);
 	ptes = pmap_map_ptes(pmap);
 	pte = &ptes[arm_byte_to_page(va)]; 
 
-	/*
-	 * If there is no pte then there is no page table etc.
-	 * Is the pte valid ? If not then no paged is actually mapped here
-	 * XXX Should we handle section mappings?
-	 */
-	if (!pmap_pde_page(pmap_pde(pmap, va)) || !pmap_pte_v(pte)){
-	    pmap_unmap_ptes(pmap);
-    	    return (FALSE);
+	if (pmap_pde_section(pde)) {
+		pa = (*pde & PD_MASK) | (va & (L1_SEC_SIZE - 1));
+		goto out;
+	} else if (pmap_pde_page(pde) == 0 || pmap_pte_v(pte) == 0) {
+		rv = FALSE;
+		goto out;
 	}
 
-	/* Return the physical address depending on the PTE type */
-	/* XXX What about L1 section mappings ? */
-	if ((*(pte) & L2_MASK) == L2_LPAGE) {
+	if ((*pte & L2_MASK) == L2_LPAGE) {
 		/* Extract the physical address from the pte */
-		pa = (*(pte)) & ~(L2_LPAGE_SIZE - 1);
+		pa = *pte & ~(L2_LPAGE_SIZE - 1);
 
 		PDEBUG(5, printf("pmap_extract: LPAGE pa = P%08lx\n",
 		    (pa | (va & (L2_LPAGE_SIZE - 1)))));
 
 		if (pap != NULL)
 			*pap = pa | (va & (L2_LPAGE_SIZE - 1));
-	} else {
-		/* Extract the physical address from the pte */
-		pa = pmap_pte_pa(pte);
-
-		PDEBUG(5, printf("pmap_extract: SPAGE pa = P%08lx\n",
-		    (pa | (va & ~PG_FRAME))));
-
-		if (pap != NULL)
-			*pap = pa | (va & ~PG_FRAME);
+		goto out;
 	}
+
+	/* Extract the physical address from the pte */
+	pa = pmap_pte_pa(pte);
+
+	PDEBUG(5, printf("pmap_extract: SPAGE pa = P%08lx\n",
+	    (pa | (va & ~PG_FRAME))));
+
+	if (pap != NULL)
+		*pap = pa | (va & ~PG_FRAME);
+ out:
 	pmap_unmap_ptes(pmap);
-	return (TRUE);
+	return (rv);
 }
 
 
@@ -3385,7 +3385,7 @@ pmap_clearbit(pa, maskbits)
 				 * current if it is flush it,
 				 * otherwise it won't be in the cache
 				 */
-				cpu_cache_purgeID_rng(pv->pv_va, NBPG);
+				cpu_idcache_wbinv_range(pv->pv_va, NBPG);
 
 			/* make the pte read only */
 			*pte &= ~PT_AP(AP_W);
@@ -3632,7 +3632,7 @@ pmap_procwr(p, va, len)
 {
 	/* We only need to do anything if it is the current process. */
 	if (p == curproc)
-		cpu_cache_syncI_rng(va, len);
+		cpu_icache_sync_range(va, len);
 }
 /*
  * PTP functions

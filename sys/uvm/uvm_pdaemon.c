@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.36.2.1 2002/01/10 20:05:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.36.2.2 2002/02/11 20:10:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.36.2.1 2002/01/10 20:05:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.36.2.2 2002/02/11 20:10:50 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.36.2.1 2002/01/10 20:05:45 thorpej
 #include <uvm/uvm.h>
 
 /*
- * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedeamon will reactivate
+ * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedaemon will reactivate
  * in a pass thru the inactive list when swap is full.  the value should be
  * "small"... if it's too large we'll cycle the active pages thru the inactive
  * queue too quickly to for them to be referenced and avoid being freed.

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.7.2.1 2002/01/10 19:58:45 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.7.2.2 2002/02/11 20:10:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7.2.1 2002/01/10 19:58:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7.2.2 2002/02/11 20:10:15 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -282,8 +282,7 @@ zs_ioasic_attach(parent, self, aux)
 			zs_args.hwflags |= ZS_HWFLAG_CONSOLE;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-					M_DEVBUF, M_NOWAIT);
-			memset(cs, 0, sizeof(struct zs_chanstate));
+					M_DEVBUF, M_NOWAIT|M_ZERO);
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (void *)&zc->zc_csr;
 

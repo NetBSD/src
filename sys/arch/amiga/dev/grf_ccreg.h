@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ccreg.h,v 1.9 1996/04/21 21:11:10 veego Exp $	*/
+/*	$NetBSD: grf_ccreg.h,v 1.9.44.1 2002/02/11 20:06:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-int grfcc_cnprobe __P((void));
-void grfcc_iteinit __P((struct grf_softc *));
-int cc_mode __P((struct grf_softc *, u_long, void *, u_long, int));
+int grfcc_cnprobe(void);
+void grfcc_iteinit(struct grf_softc *);
+int cc_mode(struct grf_softc *, u_long, void *, u_long, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cl.c,v 1.4 1999/06/27 21:17:17 is Exp $	*/
+/*	$NetBSD: ite_cl.c,v 1.4.16.1 2002/02/11 20:07:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -30,10 +30,14 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.4.16.1 2002/02/11 20:07:01 jdolecek Exp $");
+
 #include "grfcl.h"
 #if NGRFCL > 0
 
@@ -58,13 +62,12 @@ int cl_console = 1;
 int cl_console = 0;
 #endif
 
-void cl_init __P((struct ite_softc *ip));
-void cl_cursor __P((struct ite_softc *ip, int flag));
-void cl_deinit __P((struct ite_softc *ip));
-void cl_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
-void cl_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
-void cl_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
-    int dir));
+void cl_init(struct ite_softc *ip);
+void cl_cursor(struct ite_softc *ip, int flag);
+void cl_deinit(struct ite_softc *ip);
+void cl_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
+void cl_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
+void cl_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir);
 
 
 /*
@@ -88,8 +91,7 @@ grfcl_cnprobe(void)
 }
 
 void
-grfcl_iteinit(gp)
-	struct grf_softc *gp;
+grfcl_iteinit(struct grf_softc *gp)
 {
 	gp->g_iteinit = cl_init;
 	gp->g_itedeinit = cl_deinit;
@@ -100,8 +102,7 @@ grfcl_iteinit(gp)
 }
 
 void
-cl_init(ip)
-	struct ite_softc *ip;
+cl_init(struct ite_softc *ip)
 {
 	struct grfcltext_mode *md;
 
@@ -114,9 +115,7 @@ cl_init(ip)
 
 
 void
-cl_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+cl_cursor(struct ite_softc *ip, int flag)
 {
 	volatile u_char *ba = ip->grf->g_regkva;
 
@@ -141,20 +140,14 @@ cl_cursor(ip, flag)
 
 
 void
-cl_deinit(ip)
-	struct ite_softc *ip;
+cl_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 
 void
-cl_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+cl_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	volatile unsigned char *ba = ip->grf->g_regkva;
 	unsigned char *fb = ip->grf->g_fbkva;
@@ -177,12 +170,7 @@ cl_putc(ip, c, dy, dx, mode)
 }
 
 void
-cl_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+cl_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
     	/* cl_clear and cl_scroll both rely on ite passing arguments
          * which describe continuous regions.  For a VT200 terminal,
@@ -196,7 +184,7 @@ cl_clear(ip, sy, sx, h, w)
 		return;
 
     	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
-    	src = dst + (ip->rows*ip->cols); 
+    	src = dst + (ip->rows*ip->cols);
     	len = w*h;
 
     	SetTextPlane(ba, 0x00);
@@ -206,12 +194,7 @@ cl_clear(ip, sy, sx, h, w)
 }
 
 void
-cl_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int count;
-	int dir;
+cl_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
     	unsigned char *fb;
     	volatile unsigned char *ba = ip->grf->g_regkva;
@@ -224,7 +207,7 @@ cl_scroll(ip, sy, sx, count, dir)
 
     	switch (dir) {
     	case SCROLL_UP:
-    	    	bcopy(fb, fb - (count * ip->cols), 
+    	    	bcopy(fb, fb - (count * ip->cols),
     	    	    (ip->bottom_margin + 1 - sy) * ip->cols);
     	    	break;
     	case SCROLL_DOWN:
@@ -243,7 +226,7 @@ cl_scroll(ip, sy, sx, count, dir)
 
     	switch (dir) {
     	case SCROLL_UP:
-    	    	bcopy(fb, fb - (count * ip->cols), 
+    	    	bcopy(fb, fb - (count * ip->cols),
     	    	    (ip->bottom_margin + 1 - sy) * ip->cols);
     	    	break;
     	case SCROLL_DOWN:

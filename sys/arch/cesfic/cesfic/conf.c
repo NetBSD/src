@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/05/14 18:23:00 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.1 2002/02/11 20:07:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -91,6 +91,8 @@ cdev_decl(tun);
 #include "ipfilter.h"
 #include "rnd.h"
 cdev_decl(md);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct cdevsw	cdevsw[] =
 {
@@ -116,6 +118,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 19 */
 	cdev_lkm_dummy(),		/* 20 */
 	cdev_rnd_init(NRND,rnd),	/* 21: random source pseudo-device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 22: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -179,6 +182,7 @@ static int chrtoblktbl[] = {
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
+	/* 22 */	NODEV,
 };
 
 /*

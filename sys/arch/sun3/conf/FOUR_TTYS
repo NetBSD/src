@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.26.2.1 2002/01/10 19:49:42 thorpej Exp $
+#	$NetBSD: FOUR_TTYS,v 1.26.2.2 2002/02/11 20:09:16 jdolecek Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -21,6 +21,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB

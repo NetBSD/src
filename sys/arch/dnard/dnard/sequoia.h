@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.h,v 1.1 2001/05/09 15:58:08 matt Exp $	*/
+/*	$NetBSD: sequoia.h,v 1.1.2.1 2002/02/11 20:07:38 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -5063,7 +5063,7 @@
 #ifndef __LANGUAGE_ASM__
 #ifndef _LOCORE
 
-void sequoiaInit();
+void sequoiaInit(void);
 void sequoiaWrite __P((int reg,u_int16_t value));     
 void sequoiaRead  __P((int reg,u_int16_t * value_ptr));     
 

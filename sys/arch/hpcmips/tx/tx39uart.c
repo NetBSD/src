@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.4 2000/10/22 10:42:33 uch Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.4.6.1 2002/02/11 20:08:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_tx39_debug.h"
-#include "opt_tx39uartdebug.h"
+
+#include "opt_tx39uart_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

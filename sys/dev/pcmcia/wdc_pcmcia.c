@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.42.2.1 2002/01/10 19:57:28 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.42.2.2 2002/02/11 20:10:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.42.2.1 2002/01/10 19:57:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.42.2.2 2002/02/11 20:10:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -260,7 +260,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	/* 
-	 * Compact Falsh memory mapped mode
+	 * Compact Flash memory mapped mode
 	 * CF+ and CompactFlash Spec. Rev 1.4, 6.1.3 Memory Mapped Addressing.
 	 * http://www.compactflash.org/cfspc1_4.pdf
 	 */

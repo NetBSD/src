@@ -1,4 +1,4 @@
-$NetBSD: STYLE,v 1.4.32.1 2001/08/03 04:10:37 lukem Exp $
+$NetBSD: STYLE,v 1.4.32.2 2002/02/11 20:06:39 jdolecek Exp $
 
 Style guide for NetBSD/alpha kernel files.
 
@@ -35,10 +35,10 @@ port.
 
 RCS IDS
 
-(1) NetBSD RCS ID tags ($NetBSD: STYLE,v 1.4.32.1 2001/08/03 04:10:37 lukem Exp $ tags) in C sources and headers should
+(1) NetBSD RCS ID tags ($NetBSD: STYLE,v 1.4.32.2 2002/02/11 20:06:39 jdolecek Exp $ tags) in C sources and headers should
 appear at the top of the file in a single-line comment of the form
 
-/*<space>$NetBSD: STYLE,v 1.4.32.1 2001/08/03 04:10:37 lukem Exp $<space>*/
+/*<space>$NetBSD: STYLE,v 1.4.32.2 2002/02/11 20:06:39 jdolecek Exp $<space>*/
 
 which differs from the normal NetBSD style, in that it uses spaces
 rather than tabs to separate the tag from the comment start and end
@@ -47,11 +47,11 @@ delimiters.
 (2) All C and assembler sources should include an RCS ID tag which can
 be compiled into the binary, with a line like:
 
-__KERNEL_RCSID(0, "$NetBSD: STYLE,v 1.4.32.1 2001/08/03 04:10:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: STYLE,v 1.4.32.2 2002/02/11 20:06:39 jdolecek Exp $");
 
 after the inclusion of cdefs.h.  Source files which include other source
 files should change the number '0' to a different number, so that it
-doesn't conflict with the RCS ID definitios in included sources.
+doesn't conflict with the RCS ID definitions in included sources.
 Generation of these RCS IDs is disabled if the kernel option
 NO_KERNEL_RCSIDS is defined.  (In some cases, picking the number to use
 may not be so straightforward, but the rule above usually works.)

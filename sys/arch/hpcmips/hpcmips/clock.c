@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11.2.1 2002/01/10 19:43:59 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.2.2 2002/02/11 20:08:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.2.1 2002/01/10 19:43:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.2.2 2002/02/11 20:08:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.2.1 2002/01/10 19:43:59 thorpej Exp $
 #include <dev/clock_subr.h>
 #include <machine/sysconf.h>		/* platform */
 
-#define MINYEAR			2001	/* "today" */
+#define MINYEAR			2002	/* "today" */
 #define UNIX_YEAR_OFFSET	0
 
 /* 

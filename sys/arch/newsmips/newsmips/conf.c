@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2000/11/13 16:48:46 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.4.1 2002/02/11 20:08:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,6 +117,8 @@ dev_t	swapdev = makedev(4, 0);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -194,6 +196,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 72: */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 73: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 74: RAIDframe disk driver */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 75: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -298,6 +301,7 @@ static int chrtoblktbl[] =  {
 	/* 72 */	NODEV,
 	/* 73 */	NODEV,
 	/* 74 */	32,
+	/* 75 */	NODEV,
 };
 
 /*

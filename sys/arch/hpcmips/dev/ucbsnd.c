@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.5.6.1 2002/01/10 19:43:55 thorpej Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5.6.2 2002/02/11 20:08:06 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  *
  * /dev/ucbsnd0 : sampling rate 22.154kHz monoral 16bit straight PCM device.
  */
-#define UCBSNDDEBUG
 
-#include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irqhandler.c,v 1.1.4.2 2002/01/10 19:42:07 thorpej Exp $ */
+/*	$NetBSD: ifpga_irqhandler.c,v 1.1.4.3 2002/02/11 20:07:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,6 +46,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
@@ -55,7 +56,7 @@ u_int intr_claimed_mask;	/* Interrupts that are claimed */
 u_int intr_disabled_mask;	/* Interrupts that are temporarily disabled */
 u_int intr_current_mask;	/* Interrupts currently allowable */
 u_int spl_mask;
-u_int irqmasks[IPL_LEVELS];
+u_int irqmasks[NIPL];
 u_int irqblock[NIRQS];
 
 extern u_int soft_interrupts;	/* Only so we can initialise it */
@@ -79,7 +80,7 @@ irq_init(void)
 	 * We will start with no bits set and these will be updated as handlers
 	 * are installed at different IPL's.
 	 */
-	for (loop = 0; loop < IPL_LEVELS; ++loop)
+	for (loop = 0; loop < NIPL; ++loop)
 		irqmasks[loop] = 0;
 
 	current_intr_depth = 0;
@@ -188,7 +189,7 @@ irq_claim(irq, handler)
 		return(-1);
 
 	/* Make sure the level is valid */
-	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
+	if (handler->ih_level < 0 || handler->ih_level >= NIPL)
     	        return(-1);
 
 	/* Attach handler at top of chain */
@@ -226,7 +227,7 @@ irq_claim(irq, handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < NIPL) {
 		irqhandler_t *ptr;
 
 		/*
@@ -241,7 +242,7 @@ irq_claim(irq, handler)
 					level = ptr->ih_level - 1;
 				ptr = ptr->ih_next;
 			}
-			for (loop = 0; loop < IPL_LEVELS; ++loop) {
+			for (loop = 0; loop < NIPL; ++loop) {
 				if (level >= loop)
 					irqmasks[loop] |= (1 << irq);
 				else
@@ -359,7 +360,7 @@ irq_release(irq, handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < NIPL) {
 		irqhandler_t *ptr;
 
 		/*
@@ -374,7 +375,7 @@ irq_release(irq, handler)
 					level = ptr->ih_level - 1;
 				ptr = ptr->ih_next;
 			}
-			for (loop = 0; loop < IPL_LEVELS; ++loop) {
+			for (loop = 0; loop < NIPL; ++loop) {
 				if (level >= loop)
 					irqmasks[loop] |= (1 << irq);
 				else

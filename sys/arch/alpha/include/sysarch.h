@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.8 2001/04/26 03:10:46 ross Exp $ */
+/* $NetBSD: sysarch.h,v 1.8.2.1 2002/02/11 20:06:42 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,9 +53,15 @@
 #define	ALPHA_BUS_GET_WINDOW		4
 #define	ALPHA_PCI_CONF_READWRITE	5
 #define	ALPHA_FPGETSTICKY		6
+#define	ALPHA_GET_FP_C			7
+#define	ALPHA_SET_FP_C			8
 
 struct alpha_fp_except_args {
 	fp_except mask;
+};
+
+struct alpha_fp_c_args {
+	uint64_t fp_c;
 };
 
 struct alpha_bus_get_window_count_args {

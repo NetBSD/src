@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_7seg.c,v 1.4.2.2 2002/01/10 19:42:35 thorpej Exp $	*/
+/*	$NetBSD: iq80310_7seg.c,v 1.4.2.3 2002/02/11 20:07:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,6 +45,7 @@
 #include <machine/bus.h>
 
 #include <evbarm/iq80310/iq80310reg.h>
+#include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
 
 #define	ASCIIMAP_START	'0'

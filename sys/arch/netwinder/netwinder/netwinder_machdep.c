@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.6.2.3 2002/01/10 19:46:50 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6.2.4 2002/02/11 20:08:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -728,7 +728,7 @@ initarm(bootinfo)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_icache_sync_all();
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -829,38 +829,6 @@ process_kernel_args(args)
 
 	parse_mi_bootargs(boot_args);
 }
-
-#if 0
-void
-arm32_cachectl(va, len, flags)
-	vm_offset_t va;
-	int len;
-	int flags;
-{
-	pt_entry_t *ptep, pte;
-	int loop;
-	vm_offset_t addr;
-
-/*	printf("arm32_cachectl(%x,%x,%x)\n", va, len, flags);*/
-
-	if (flags & 1) {
-		addr = va;
-		loop = len;
-		while (loop > 0) {
-			ptep = vtopte(addr & (~PGOFSET));
-			pte = *ptep;
-	
-			*ptep = (pte & ~(PT_C | PT_B)) | (flags & (PT_C | PT_B));
-	
-			loop -= NBPG;
-			addr += NBPG;
-		}
-		tlb_flush();
-	}
-	
-	cpu_cache_purgeD_rng(va, len);	
-}
-#endif
 
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.44.4.1 2002/01/10 19:47:19 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.44.4.2 2002/02/11 20:08:49 jdolecek Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -13,7 +13,7 @@ attach	mainbus at root
 file	arch/pc532/pc532/mainbus.c
 
 # Memory Disk for install floppy
-file arch/pc532/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 3}
 
 # RAIDframe

@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.1.2.1 2002/01/10 19:49:07 thorpej Exp $ */
+/*	$NetBSD: prompatch.c,v 1.1.2.2 2002/02/11 20:09:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -53,44 +53,44 @@ struct prom_patch {
 
 
 /*
- * Patches for JavaStation 1 with OBP 2.x
+ * Patches for JavaStation 1 with OBP 2.30
+ * NB: its romvec is version 3, so this is PROM_OBP_V3.
  */
-static struct patch_entry patch_js1_obp2[] = {
+static struct patch_entry patch_js1_obp[] = {
 
 /*
- * Give "su" (com port) "interrupts" property.
+ * Can not remove a node, so just rename bogus /obio/zs so that it
+ * does not get matched.
  */
-{ "su: adding \"interrupts\"",
-	"\" /obio/su\" open-dev"
-	" d# 13 \" interrupts\" integer-attribute"
-	" close-dev"
+{ "zs: renaming out of the way",
+	"\" /obio/zs@0,0\" find-device \" fakezs\" name"
+	" \" /obio/zs@0,100000\" find-device \" fakezs\" name "
+	" device-end"
 },
 
 /*
- * TODO: Create "8042" (pckbc) node.
- *       Delete "zs"
- */
-
-{ NULL, NULL }
-};
-
-
-/*
- * Patches for JavaStation 1 with OBP 3.x
- */
-static struct patch_entry patch_js1_obp3[] = {
-
-/*
  * Give "su" (com port) "interrupts" property.
  */
 { "su: adding \"interrupts\"",
-	"\" /obio/su\" select-dev"
+	"\" /obio/su\" find-device"
 	" d# 13 \" interrupts\" integer-attribute"
 	" device-end"
 },
 
+/*
+ * Create a bare-bones "8042" (pckbc) node - just enough to attach it.
+ */
+{ "8042: creating node",
+	"0 0 0 0 \" /obio\" begin-package"
+	" \" 8042\" name"
+	" 300060 0 8 reg"
+	" d# 13 \" interrupts\" integer-attribute"
+	" end-package"
+},
+
 { NULL, NULL }
-};
+}; /* patch_js1_obp */
+
 
 /*
  * Patches for JavaStation 1 with OpenFirmware.
@@ -172,8 +172,7 @@ static struct patch_entry patch_js1_ofw[] = {
 
 
 static struct prom_patch prom_patch_tab[] = {
-	{ "SUNW,JavaStation-1", PROM_OBP_V2,	patch_js1_obp2	},
-	{ "SUNW,JavaStation-1", PROM_OBP_V3,	patch_js1_obp3	},
+	{ "SUNW,JavaStation-1", PROM_OBP_V3,	patch_js1_obp	},
 	{ "SUNW,JDM1",		PROM_OPENFIRM,	patch_js1_ofw	},
 	{ NULL, 0, NULL }
 };

@@ -1,11 +1,13 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.9.2.1 2001/09/13 01:13:00 thorpej Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.9.2.2 2002/02/11 20:06:53 jdolecek Exp $ */
 
 /* public domain */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.9.2.2 2002/02/11 20:06:53 jdolecek Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
 #include <sys/param.h>
-#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
@@ -23,11 +25,7 @@
 #include <amiga/amiga/isr.h>
 
 
-/*
- * There is one of these for each slot. This is useless since we have only one,
- * but it makes it clearer if someone wants to understand better the NetBSD
- * device drivers scheme.
- */
+/* There is one of these for each slot. And yes, there is only one slot. */
 struct pccard_slot {
 	struct	pccard_softc *sc;	/* refer to `parent' */
 	int	(*intr_func)(void *);
@@ -48,33 +46,31 @@ struct pccard_softc {
 	struct isr intr2;
 };
 
-static int	pccard_probe __P((struct device *, struct cfdata *, void *));
-static void	pccard_attach __P((struct device *, struct device *, void *));
-static void	pccard_attach_slot __P((struct pccard_slot *));
-static int	pccard_intr6 __P((void *));
-static int	pccard_intr2 __P((void *));
-static void	pccard_create_kthread __P((void *));
-static void	pccard_kthread __P((void *));
+static int	pccard_probe(struct device *, struct cfdata *, void *);
+static void	pccard_attach(struct device *, struct device *, void *);
+static void	pccard_attach_slot(struct pccard_slot *);
+static int	pccard_intr6(void *);
+static int	pccard_intr2(void *);
+static void	pccard_create_kthread(void *);
+static void	pccard_kthread(void *);
 
-static int pcf_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
-		struct pcmcia_mem_handle *));
-static void pcf_mem_free __P((pcmcia_chipset_handle_t,
-		struct pcmcia_mem_handle *));
-static int pcf_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-		bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
-static void pcf_mem_unmap __P((pcmcia_chipset_handle_t, int));
-static int pcf_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-		bus_size_t, struct pcmcia_io_handle *));
-static void pcf_io_free __P((pcmcia_chipset_handle_t,
-		struct pcmcia_io_handle *));
-static int pcf_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-		bus_size_t, struct pcmcia_io_handle *, int *));
-static void pcf_io_unmap __P((pcmcia_chipset_handle_t, int));
-static void *pcf_intr_establish __P((pcmcia_chipset_handle_t,
-		struct pcmcia_function *, int, int (*)(void *), void *));
-static void pcf_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
-static void pcf_socket_enable __P((pcmcia_chipset_handle_t));
-static void pcf_socket_disable __P((pcmcia_chipset_handle_t));
+static int pcf_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
+		struct pcmcia_mem_handle *);
+static void pcf_mem_free(pcmcia_chipset_handle_t, struct pcmcia_mem_handle *);
+static int pcf_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
+		struct pcmcia_mem_handle *, bus_addr_t *, int *);
+static void pcf_mem_unmap(pcmcia_chipset_handle_t, int);
+static int pcf_io_alloc(pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
+		bus_size_t, struct pcmcia_io_handle *);
+static void pcf_io_free(pcmcia_chipset_handle_t, struct pcmcia_io_handle *);
+static int pcf_io_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
+		struct pcmcia_io_handle *, int *);
+static void pcf_io_unmap(pcmcia_chipset_handle_t, int);
+static void *pcf_intr_establish(pcmcia_chipset_handle_t,
+		struct pcmcia_function *, int, int (*)(void *), void *);
+static void pcf_intr_disestablish(pcmcia_chipset_handle_t, void *);
+static void pcf_socket_enable(pcmcia_chipset_handle_t);
+static void pcf_socket_disable(pcmcia_chipset_handle_t);
 
 static bsr(pcmio_bsr1, u_int8_t);
 static bsw(pcmio_bsw1, u_int8_t);
@@ -84,8 +80,6 @@ static bsrm(pcmio_bsrr1, u_int8_t);
 static bswm(pcmio_bswr1, u_int8_t);
 static bssr(pcmio_bssr1, u_int8_t);
 static bscr(pcmio_bscr1, u_int8_t);
-
-static u_int8_t *reset_card_reg;
 
 struct cfattach pccard_ca = {
 	sizeof(struct pccard_softc), pccard_probe, pccard_attach
@@ -102,19 +96,17 @@ struct pcmcia_chip_functions chip_functions = {
 
 struct amiga_bus_space_methods pcmio_bs_methods;
 
+static u_int8_t *reset_card_reg;
+
 static int
-pccard_probe(dev, cfd, aux)
-	struct device *dev;
-	struct cfdata *cfd;
-	void *aux;
+pccard_probe(struct device *dev, struct cfdata *cfd, void *aux)
 {
+
 	return (/*is_a600() || */is_a1200()) && matchname(aux, "pccard");
 }
 
 static void
-pccard_attach(parent, myself, aux)
-	struct device *parent, *myself;
-	void *aux;
+pccard_attach(struct device *parent, struct device *myself, void *aux)
 {
 	struct pccard_softc *self = (struct pccard_softc *) myself;
 	struct pcmciabus_attach_args paa;
@@ -222,8 +214,7 @@ pccard_attach(parent, myself, aux)
 
 /* This is called as soon as it is possible to create a kernel thread */
 static void
-pccard_create_kthread(arg)
-	void *arg;
+pccard_create_kthread(void *arg)
 {
 	struct pccard_softc *self = arg;
 
@@ -235,8 +226,7 @@ pccard_create_kthread(arg)
 }
 
 static int
-pccard_intr6(arg)
-	void *arg;
+pccard_intr6(void *arg)
 {
 	struct pccard_softc *self = arg;
 
@@ -250,8 +240,7 @@ pccard_intr6(arg)
 }
 
 static int
-pccard_intr2(arg)
-	void *arg;
+pccard_intr2(void *arg)
 {
 	struct pccard_softc *self = arg;
 	struct pccard_slot *slot = &self->devs[0];
@@ -279,8 +268,7 @@ pccard_intr2(arg)
 }
 
 static void
-pccard_kthread(arg)
-	void *arg;
+pccard_kthread(void *arg)
 {
 	struct pccard_softc *self = arg;
 	struct pccard_slot *slot = &self->devs[0];
@@ -305,9 +293,9 @@ pccard_kthread(arg)
 }
 
 static void
-pccard_attach_slot(slot)
-	struct pccard_slot *slot;
+pccard_attach_slot(struct pccard_slot *slot)
 {
+
 	if (!(slot->flags & SLOT_OCCUPIED) &&
 			gayle.pcc_status & GAYLE_CCMEM_DETECT) {
 		if (pcmcia_card_attach(slot->card) == 0)
@@ -316,33 +304,25 @@ pccard_attach_slot(slot)
 }
 
 static int
-pcf_mem_alloc(pch, bsz, pcmh)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t bsz;
-	struct pcmcia_mem_handle *pcmh;
+pcf_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t bsz,
+	      struct pcmcia_mem_handle *pcmh)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
+
 	pcmh->memt = &slot->sc->attr_space;
 	pcmh->memh = pcmh->memt->base;
 	return 0;
 }
 
 static void
-pcf_mem_free(pch, memh)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *memh;
+pcf_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *memh)
 {
 }
 
 static int
-pcf_mem_map(pch, kind, addr, size, pcmh, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pcmh;
-	bus_addr_t *offsetp;
-	int *windowp;
+pcf_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t addr,
+	    bus_size_t size, struct pcmcia_mem_handle *pcmh,
+	    bus_addr_t *offsetp, int *windowp)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
@@ -370,19 +350,13 @@ pcf_mem_map(pch, kind, addr, size, pcmh, offsetp, windowp)
 }
 
 static void
-pcf_mem_unmap(pch, win)
-	pcmcia_chipset_handle_t pch;
-	int win;
+pcf_mem_unmap(pcmcia_chipset_handle_t pch, int win)
 {
 }
 
 static int
-pcf_io_alloc(pch, start, size, align, pcihp)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pcihp;
+pcf_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
+	     bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
@@ -392,20 +366,13 @@ pcf_io_alloc(pch, start, size, align, pcihp)
 }
 
 static void
-pcf_io_free(pch, pcihp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pcihp;
+pcf_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pcihp)
 {
 }
 
 static int
-pcf_io_map(pch, width, offset, size, pcihp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+pcf_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
+	   bus_size_t size, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
@@ -417,19 +384,13 @@ pcf_io_map(pch, width, offset, size, pcihp, windowp)
 }
 
 static void
-pcf_io_unmap(pch, win)
-	pcmcia_chipset_handle_t pch;
-	int win;
+pcf_io_unmap(pcmcia_chipset_handle_t pch, int win)
 {
 }
 
 static void *
-pcf_intr_establish(pch, pf, ipl, func, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
+pcf_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+		   int ipl, int (*func)(void *), void *arg)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 	int s;
@@ -449,9 +410,7 @@ pcf_intr_establish(pch, pf, ipl, func, arg)
 }
 
 static void
-pcf_intr_disestablish(pch, intr_handler)
-	pcmcia_chipset_handle_t pch;
-	void *intr_handler;
+pcf_intr_disestablish(pcmcia_chipset_handle_t pch, void *intr_handler)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) intr_handler;
 
@@ -462,44 +421,35 @@ pcf_intr_disestablish(pch, intr_handler)
 }
 
 static void
-pcf_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+pcf_socket_enable(pcmcia_chipset_handle_t pch)
 {
 }
 
 static void
-pcf_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+pcf_socket_disable(pcmcia_chipset_handle_t pch)
 {
 }
 
 
 static u_int8_t
-pcmio_bsr1(h, o)
-	bus_space_handle_t h;
-	bus_size_t o;
+pcmio_bsr1(bus_space_handle_t h, bus_size_t o)
 {
+
 	return *((volatile u_int8_t *) h + o + (o & 1 ? 0xffff : 0));
 }
 
 static void
-pcmio_bsw1(h, o, v)
-	bus_space_handle_t h;
-	bus_size_t o;
-	unsigned v;
+pcmio_bsw1(bus_space_handle_t h, bus_size_t o, unsigned v)
 {
+
 	*((volatile u_int8_t *) h + o + (o & 1 ? 0xffff : 0)) = v;
 }
 
 static void
-pcmio_bsrm1(h, o, p, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int8_t *p;
-	bus_size_t c;
+pcmio_bsrm1(bus_space_handle_t h, bus_size_t o, u_int8_t *p, bus_size_t c)
 {
-	volatile u_int8_t *src = (volatile u_int8_t *) (h + o +
-							(o & 1 ? 0xffff : 0));
+	volatile u_int8_t *src = (volatile u_int8_t *)
+		(h + o + (o & 1 ? 0xffff : 0));
 
 
 	/* XXX we can (should, must) optimize this if c >= 4 */
@@ -509,14 +459,10 @@ pcmio_bsrm1(h, o, p, c)
 
 
 static void
-pcmio_bswm1(h, o, p, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	const u_int8_t *p;
-	bus_size_t c;
+pcmio_bswm1(bus_space_handle_t h, bus_size_t o, const u_int8_t *p, bus_size_t c)
 {
-	volatile u_int8_t *dst = (volatile u_int8_t *) (h + o +
-							(o & 1 ? 0xffff : 0));
+	volatile u_int8_t *dst = (volatile u_int8_t *)
+		(h + o + (o & 1 ? 0xffff : 0));
 
 
 	/* XXX we can (should, must) optimize this if c >= 4 */
@@ -525,11 +471,7 @@ pcmio_bswm1(h, o, p, c)
 }
 
 static void
-pcmio_bsrr1(h, o, p, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int8_t *p;
-	bus_size_t c;
+pcmio_bsrr1(bus_space_handle_t h, bus_size_t o, u_int8_t *p, bus_size_t c)
 {
 	volatile u_int8_t *cp1;
 	volatile u_int8_t *cp2;
@@ -557,11 +499,7 @@ pcmio_bsrr1(h, o, p, c)
 
 
 static void
-pcmio_bswr1(h, o, p, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	const u_int8_t *p;
-	bus_size_t c;
+pcmio_bswr1(bus_space_handle_t h, bus_size_t o, const u_int8_t *p, bus_size_t c)
 {
 	volatile u_int8_t *cp1;
 	volatile u_int8_t *cp2;
@@ -588,22 +526,16 @@ pcmio_bswr1(h, o, p, c)
 }
 
 void
-pcmio_bssr1(h, o, v, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	unsigned v;
-	bus_size_t c;
+pcmio_bssr1(bus_space_handle_t h, bus_size_t o, unsigned v, bus_size_t c)
 {
+
 	panic("pcmio_bssr1 is not defined (" __FILE__ ")");
 }
 
 void
-pcmio_bscr1(h, o, g, q, c)
-	bus_space_handle_t h;
-	bus_size_t o;
-	bus_space_handle_t g;
-	bus_size_t q;
-	bus_size_t c;
+pcmio_bscr1(bus_space_handle_t h, bus_size_t o, bus_space_handle_t g,
+	    bus_size_t q, bus_size_t c)
 {
+
 	panic("pcmio_bscr1 is not defined (" __FILE__ ")");
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.7.2.2 2002/01/10 19:37:46 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.7.2.3 2002/02/11 20:07:16 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ * Written by Allen Briggs and Jason R. Thorpe for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,11 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
+/*
+ * Size of the XScale core D-cache.
+ */
+#define	DCACHE_SIZE		0x00008000
+
 Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
@@ -91,9 +96,15 @@ Lblock_userspace_access:
 	mov	tmp, tmp		/* wait for it to complete */	;\
 	CPWAIT_BRANCH			/* branch to next insn */
 
+#define	CPWAIT_AND_RETURN_SHIFTER	lsr #32
+
+#define	CPWAIT_AND_RETURN(tmp)						 \
+	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	/* Wait for it to complete and branch to the return address */	 \
+	sub	pc, lr, tmp, CPWAIT_AND_RETURN_SHIFTER
+
 ENTRY(xscale_cpwait)
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /*
  * We need a separate cpu_control() entry point, since we have to
@@ -110,9 +121,7 @@ ENTRY(xscale_control)
 	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
 
-	CPWAIT(r1)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r1)
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -174,23 +183,19 @@ ENTRY(xscale_tlb_flushID_SE)
  */
 ENTRY(xscale_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushI)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushD)
 	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushI_SE)
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushD_SE)
 	/*
@@ -200,13 +205,11 @@ ENTRY(xscale_cache_flushD_SE)
 	 */
 	mcr	p15, 0, r0, c7, c10, 1
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_cleanD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
-	CPWAIT(r0)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /*
  * Information for the XScale cache clean/purge functions:
@@ -230,7 +233,7 @@ _C_LABEL(xscale_cache_clean_addr):
 
 	.global	_C_LABEL(xscale_cache_clean_size)
 _C_LABEL(xscale_cache_clean_size):
-	.word	0x00008000
+	.word	DCACHE_SIZE
 
 	.global	_C_LABEL(xscale_minidata_clean_addr)
 _C_LABEL(xscale_minidata_clean_addr):
@@ -275,6 +278,19 @@ Lxscale_minidata_clean_size:
 	XSCALE_CACHE_CLEAN_BLOCK				;	\
 	ldr	r2, Lxscale_cache_clean_addr			;	\
 	ldmia	r2, {r0, r1}					;	\
+	/*								\
+	 * BUG ALERT!							\
+	 *								\
+	 * The XScale core has a strange cache eviction bug, which	\
+	 * requires us to use 2x the cache size for the cache clean	\
+	 * and for that area to be aligned to 2 * cache size.		\
+	 *								\
+	 * The work-around is to use 2 areas for cache clean, and to	\
+	 * alternate between them whenever this is done.  No one knows	\
+	 * why the work-around works (mmm!).				\
+	 */								\
+	eor	r0, r0, #(DCACHE_SIZE)				;	\
+	str	r0, [r2]					;	\
 	add	r0, r0, r1
 
 #define	XSCALE_CACHE_CLEAN_EPILOGUE					\
@@ -323,16 +339,14 @@ ENTRY(xscale_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
-	CPWAIT(r1)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r1)
 
 ENTRY(xscale_cache_purgeD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	CPWAIT(r1)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
-	CPWAIT(r1)
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r1)
 
 /*
  * Soft functions
@@ -357,9 +371,7 @@ ENTRY(xscale_cache_cleanD_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_purgeID_rng)
 	cmp	r1, #0x4000
@@ -380,9 +392,7 @@ ENTRY(xscale_cache_purgeID_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_purgeD_rng)
 	cmp	r1, #0x4000
@@ -402,9 +412,7 @@ ENTRY(xscale_cache_purgeD_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_syncI_rng)
 	cmp	r1, #0x4000
@@ -424,9 +432,7 @@ ENTRY(xscale_cache_syncI_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /* Used in write-through mode. */
 ENTRY(xscale_cache_flushID_rng)
@@ -445,9 +451,7 @@ ENTRY(xscale_cache_flushID_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /* Used in write-though mode. */
 ENTRY(xscale_cache_flushD_rng)
@@ -465,9 +469,7 @@ ENTRY(xscale_cache_flushD_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /* Used in write-through mode. */
 ENTRY(xscale_cache_flushI_rng)
@@ -485,9 +487,7 @@ ENTRY(xscale_cache_flushI_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-	CPWAIT(r0)
-
-	mov	pc, lr
+	CPWAIT_AND_RETURN(r0)
 
 /*
  * Context switch.
@@ -512,6 +512,16 @@ ENTRY(xscale_context_switch)
 	/* If we have updated the TTB we must flush the TLB */
 	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
 
-	CPWAIT(r0)
+	CPWAIT_AND_RETURN(r0)
+
+/*
+ * xscale_cpusleep
+ *
+ * This is called when there is nothing on any of the run queues.
+ * We go into IDLE mode so that any IRQ or FIQ will awaken us.
+ */
+ENTRY(xscale_cpu_sleep)
+	mov	r0, #0x1
+	mcr	p14, 0, r0, c7, c0, 0
 
 	mov	pc, lr

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.10.2.1 2002/01/10 19:38:41 thorpej Exp $
+#	$NetBSD: SHARKINST,v 1.10.2.2 2002/02/11 20:07:26 jdolecek Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -121,6 +121,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 

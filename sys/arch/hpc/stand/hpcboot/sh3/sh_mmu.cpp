@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.1 2001/02/09 18:35:19 uch Exp $	*/
+/*	$NetBSD: sh_mmu.cpp,v 1.1.6.1 2002/02/11 20:08:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,6 +42,7 @@
 BOOL
 MemoryManager_SHMMU::init(void)
 {
+
 	_kmode = SetKMode(1);
 
 	_asid = VOLATILE_REF(MMUPTEH) & MMUPTEH_ASID_MASK;
@@ -52,6 +53,7 @@ MemoryManager_SHMMU::init(void)
 
 MemoryManager_SHMMU::~MemoryManager_SHMMU(void)
 {
+
 	SetKMode(_kmode);
 }
 
@@ -63,7 +65,7 @@ MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
 	paddr_t paddr = ~0;
 	int way;
 
-	vpn = vaddr & PAGE_MASK;
+	vpn = vaddr & SH3_PAGE_MASK;
 	// Windows CE uses VPN-only index-mode.
 	idx = vaddr & MMUAA_VPN_MASK;
 
@@ -82,13 +84,13 @@ MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
 						      
 			if (!(aae & MMUAA_D_VALID) ||
 			    ((aae & MMUAA_D_ASID_MASK) != _asid) ||
-			    (((aae | idx) & PAGE_MASK) != vpn))
+			    (((aae | idx) & SH3_PAGE_MASK) != vpn))
 				continue;
 
 			// entry found.
 			// inquire MMU data array to get its physical address.
 			dae = VOLATILE_REF(MMUDA | entry_idx);
-			paddr = (dae & PAGE_MASK) | (vaddr & ~PAGE_MASK);
+			paddr = (dae & SH3_PAGE_MASK) | (vaddr & ~SH3_PAGE_MASK);
 			break;
 		}
 	} while (paddr == ~0);
