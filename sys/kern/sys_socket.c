@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.23 2001/04/07 09:00:57 jdolecek Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.24 2001/04/09 10:22:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -191,12 +191,12 @@ soo_poll(fp, events, p)
 }
 
 int
-soo_stat(fdata, ub, p)
-	void *fdata;
+soo_stat(fp, ub, p)
+	struct file *fp;
 	struct stat *ub;
 	struct proc *p;
 {
-	struct socket *so = fdata;
+	struct socket *so = (struct socket *)fp->f_data;
 
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
