@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1996/12/26 23:25:05 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 1997/01/03 22:54:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -857,19 +857,22 @@ Lstart3:
 	andl	d2,d1
 	jeq	Ltestfor020		|  Not an 68030, try 68020
 	movl	#MMU_68030,_mmutype	|  Use 68030 MMU
-	jra	Lsetcpu040		|  skip to init.
+	movl	#CPU_68030,_cputype	|    and a 68030 CPU
+	jra	Ltestfor040		|  skip to init.
 Ltestfor020:
 	movl	#ATARI_68020,d1		|  68020 type from loader
 	andl	d2,d1
-	jeq	Lsetcpu040
+	jeq	Ltestfor040
 	movl	#MMU_68851,_mmutype	|  Assume 68851 with 68020
-Lsetcpu040:
+	movl	#CPU_68020,_cputype	|    and a 68020 CPU
+Ltestfor040:
 	movl	#CACHE_OFF,d0		|  68020/030 cache
 	movl	#ATARI_68040,d1
 	andl	d1,d2
-	movl	d2,_cpu040		|  set 68040 CPU flag
+|	movl	d2,_cpu040		|  set 68040 CPU flag
 	jeq	Lstartnot040		|  it's not 68040
-	movl	#MMU_68040,_mmutype	|  same as hp300 for compat
+	movl	#MMU_68040,_mmutype	|  Use a 68040 MMU
+	movl	#CPU_68040,_cputype	|    and a 68040 CPU
 	.word	0xf4f8			|  cpusha bc - push and inval caches
 	movl	#CACHE40_OFF,d0		|  68040 cache disable
 Lstartnot040:

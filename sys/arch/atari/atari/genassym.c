@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1996/10/16 12:42:45 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.12 1997/01/03 22:54:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -167,6 +167,10 @@ main(void)
 	printf("#define\tMMU_68030 %d\n", MMU_68030);
 	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
+
+	printf("#define\tCPU_68020 %d\n", CPU_68020);
+	printf("#define\tCPU_68030 %d\n", CPU_68030);
+	printf("#define\tCPU_68040 %d\n", CPU_68040);
 
 	stio_addr = 0;
 	printf("#define\tSCU_SOFTINT %p\n", (void *)&SCU->sys_int);

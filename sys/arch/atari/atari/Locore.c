@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 1996/11/06 20:19:26 cgd Exp $	*/
+/*	$NetBSD: Locore.c,v 1.8 1997/01/03 22:54:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -124,6 +124,7 @@ lowinit()
 	lowinit();
 	machineid = machineid;
 	mmutype = mmutype;
+	cputype = cputype;
 	ectype = ectype;
 	lowram = lowram;
 	ssir = ssir;
