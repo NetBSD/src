@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.17 1997/03/20 11:03:14 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.18 1997/03/20 21:42:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,7 +82,6 @@ struct sbdsp_softc {
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
-	int	sc_drq;			/* active DMA channel */
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
@@ -113,6 +112,7 @@ struct sbdsp_softc {
 	int	dmaflags;
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
+	int	dmachan;		/* active DMA channel */
 	int	sc_last_hs_size;	/* last HS dma size */
 
 	u_int	sc_encoding;		/* ulaw/linear -- keep track */
@@ -130,6 +130,9 @@ struct sbdsp_softc {
 
 #define MODEL_JAZZ16 0x80000000
 };
+
+#define	ISSB2CLASS(sc) \
+	(SBVER_MAJOR((sc)->sc_model) >= 2)
 
 #define ISSBPROCLASS(sc) \
 	(SBVER_MAJOR((sc)->sc_model) > 2)
