@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.12 1997/06/11 18:46:42 jeremy Exp $	*/
+/*	$NetBSD: cdio.h,v 1.13 1998/03/16 04:17:23 mycroft Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -146,6 +146,7 @@ struct ioc_read_toc_entry {
 	u_short	data_len;
 	struct	cd_toc_entry *data;
 };
+#define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
 #define CDIOREADTOCENTRYS _IOWR('c', 5, struct ioc_read_toc_entry)
 
 struct	ioc_patch {
@@ -173,6 +174,7 @@ struct	ioc_vol {
 #define	CDIOCEJECT	_IO('c', 24)
 #define	CDIOCALLOW	_IO('c', 25)
 #define	CDIOCPREVENT	_IO('c', 26)
+#define	CDIOCCLOSE	_IO('c', 27)
 
 struct ioc_play_msf {
 	u_char	start_m;
