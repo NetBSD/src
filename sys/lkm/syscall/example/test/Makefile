@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/11 13:48:13 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:50:15 tv Exp $
 
 PROG=	testsyscall
-MKMAN=	no
+NOMAN=	# defined
 
 load:
 	@echo "This test program will call the sample system call;"

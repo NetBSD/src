@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/29 02:33:39 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:55 tv Exp $
 
 LIB=	pfkey
 CFLAGS+=-g -Wall -Werror
@@ -14,9 +14,9 @@ SRCS+=	key_debug.c
 #MLINKS+=ipsec_set_policy.3 ipsec_get_policylen.3 \
 #	ipsec_set_policy.3 ipsec_dump_policy.3
 
-MKPIC=no
-MKPROFILE=no
-MKLINT=no
+NOPIC=# defined
+NOPROFILE=# defined
+NOLINT=# defined
 
 # don't install it into public place!
 libinstall::

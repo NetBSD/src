@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:24 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:13 tv Exp $
 
 PROG=	trivial-rewrite
 
@@ -12,6 +12,6 @@ SRCS=	trivial-rewrite.c rewrite.c resolve.c transport.c
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

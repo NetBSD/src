@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:38 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:31 tv Exp $
 
 SUBDIR= adduser deluser disuser listuser
 
 FILES=	index
 FILESDIR=${BINDIR}/sushi/users
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

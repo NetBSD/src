@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/14 23:01:15 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:55 tv Exp $
 
 LIB=	dos
 
-MKLINT=no
-MKPROFILE=no
-MKPIC=no
+NOLINT=# defined
+NOPROFILE=# defined
+NOPIC=# defined
 
 CPPFLAGS+=	-I${.CURDIR}
 

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2001/11/26 15:24:20 perry Exp $
+#	$NetBSD: Makefile,v 1.26 2001/12/12 01:49:33 tv Exp $
 
 .include <bsd.own.mk>
 
-MKOBJ=no
+NOOBJ=# defined
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2001/08/03 14:14:24 drochner Exp $
+# $NetBSD: Makefile,v 1.6 2001/12/12 01:48:50 tv Exp $
 
 LIB    = minires
 SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
@@ -8,9 +8,9 @@ SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
 
 DHCPSRCDIR=	minires
 
-MKLINT=	no
-MKPIC=	no
-MKPROFILE=no
+NOLINT=	# defined
+NOPIC=	# defined
+NOPROFILE=# defined
 
 CFLAGS += -DMINIRES_LIB
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:50:16 tv Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/isofs/cd9660 ${.CURDIR}/../..
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	cd9660
 

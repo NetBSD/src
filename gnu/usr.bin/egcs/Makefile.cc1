@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.cc1,v 1.13 1999/03/07 10:58:23 veego Exp $
+#	$NetBSD: Makefile.cc1,v 1.14 2001/12/12 01:49:03 tv Exp $
 
 .include <bsd.own.mk>
 
 C_OBJC_SRCS=	c-lex.c c-pragma.c c-decl.c c-typeck.c c-convert.c \
 		c-aux-info.c c-common.c c-iterate.c
 BINDIR=		/usr/libexec
-MKMAN=		no
+NOMAN=		# defined
 
 LDADD+=		${COMMONOBJ}/libcc1.a
 DPADD+=		${COMMONOBJ}/libcc1.a

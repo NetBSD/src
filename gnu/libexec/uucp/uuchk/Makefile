@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/12/11 15:49:08 is Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:00 tv Exp $
 #
 # Makefile for uuchk
 
@@ -12,6 +12,6 @@ DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\"
 
-MKMAN=		no
+NOMAN=		# defined
 
 .include <bsd.prog.mk>

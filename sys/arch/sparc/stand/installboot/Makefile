@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/12/04 18:54:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/12 01:49:52 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
 
 CPPFLAGS+=-DBOOT_AOUT -DBOOT_ELF32
 
-MKMAN=	no
+NOMAN=	# defined
 CFLAGS+=-g
 
 LIBSA=${.CURDIR}/../../../../lib/libsa

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/10/27 12:09:34 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.18 2001/12/12 01:50:07 tv Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -12,7 +12,7 @@ CPPFLAGS+=	-nostdinc -DKTRACE -DNSEQUENCER=1 -DINET6
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S} -DCOMPAT_LINUX -D_LKM
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	compat_linux
 
