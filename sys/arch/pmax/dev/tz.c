@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.22 1999/09/17 20:04:49 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.23 1999/11/19 03:04:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -262,16 +262,16 @@ tzprobe(xxxsd)
 	if (i == 5 && inqbuf.version == 1 && (inqbuf.qualifier == 0x50 ||
 	    inqbuf.qualifier == 0x30)) {
 		strcpy(pid, "TK50");
-		printf(" %s\n", pid);
+		printf(" %s", pid);
 		if (inqbuf.qualifier == 0x30)
 			strcpy(pid, "TK50 0x30");
 	} else if (i >= 5 && inqbuf.version == 1 && inqbuf.qualifier == 0 &&
 	    inqbuf.length == 0) {
 		/* assume Emultex MT02 controller */
 		strcpy(pid, "MT02");
-		printf(" %s\n", pid);
+		printf(" %s", pid);
 	} else if (inqbuf.version > 2 || i < 36) {
-		printf(" GENERIC SCSI tape device: qual 0x%x, ver %d\n",
+		printf(" GENERIC SCSI tape device: qual 0x%x, ver %d",
 			inqbuf.qualifier, inqbuf.version);
 	} else {
 
@@ -290,8 +290,10 @@ tzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s\n", vid, pid, revl);
+		printf(" %s %s rev %s (SCSI-%d)", vid, pid, revl,
+		    inqbuf.version);
 	}
+	printf("\n");
 
 	sc->sc_quirks = NULL;
 	for (i = 0; i < NQUIRKS; i++) {
