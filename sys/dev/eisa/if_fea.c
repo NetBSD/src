@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.27 2002/09/30 21:04:25 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.28 2002/10/02 16:33:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.27 2002/09/30 21:04:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.28 2002/10/02 16:33:47 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -529,5 +529,5 @@ pdq_eisa_attach(
 }
 
 CFATTACH_DECL(fea, sizeof(pdq_softc_t),
-    pdq_eisa_match, pdq_eisa_attach, NULL, NULL)
+    pdq_eisa_match, pdq_eisa_attach, NULL, NULL);
 #endif

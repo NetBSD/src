@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.26 2002/09/30 21:04:25 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.27 2002/10/02 16:33:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.26 2002/09/30 21:04:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.27 2002/10/02 16:33:47 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -127,7 +127,7 @@ int ep_eisa_match __P((struct device *, struct cfdata *, void *));
 void ep_eisa_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ep_eisa, sizeof(struct ep_softc),
-    ep_eisa_match, ep_eisa_attach, NULL, NULL)
+    ep_eisa_match, ep_eisa_attach, NULL, NULL);
 
 /* XXX move these somewhere else */
 /* While attaching we need a few special EISA registers of the card,

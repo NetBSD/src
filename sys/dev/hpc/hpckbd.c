@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.9 2002/09/30 21:09:35 thorpej Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.10 2002/10/02 16:33:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.9 2002/09/30 21:09:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.10 2002/10/02 16:33:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ int	__hpckbd_input(void *, int, int);
 void	__hpckbd_input_hook(void*);
 
 CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
-    hpckbd_match, hpckbd_attach, NULL, NULL)
+    hpckbd_match, hpckbd_attach, NULL, NULL);
 
 /* wskbd accessopts */
 int	hpckbd_enable(void *, int);

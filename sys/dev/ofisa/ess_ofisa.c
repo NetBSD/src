@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.10 2002/09/30 22:08:02 thorpej Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.11 2002/10/02 16:34:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.10 2002/09/30 22:08:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.11 2002/10/02 16:34:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int	ess_ofisa_match __P((struct device *, struct cfdata *, void *));
 void	ess_ofisa_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ess_ofisa, sizeof(struct ess_softc),
-    ess_ofisa_match, ess_ofisa_attach, NULL, NULL)
+    ess_ofisa_match, ess_ofisa_attach, NULL, NULL);
 
 int
 ess_ofisa_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.228 2002/09/30 20:42:10 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.229 2002/10/02 16:33:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.228 2002/09/30 20:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.229 2002/10/02 16:33:37 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -184,7 +184,7 @@ int	wdprint	__P((void *, char *));
 void	wdperror __P((const struct wd_softc *));
 
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
-    wdprobe, wdattach, wddetach, wdactivate)
+    wdprobe, wdattach, wddetach, wdactivate);
 
 extern struct cfdriver wd_cd;
 

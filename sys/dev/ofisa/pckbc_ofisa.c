@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.6 2002/09/30 22:08:02 thorpej Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.7 2002/10/02 16:34:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.6 2002/09/30 22:08:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.7 2002/10/02 16:34:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct pckbc_ofisa_softc {
 };
 
 CFATTACH_DECL(pckbc_ofisa, sizeof(struct pckbc_ofisa_softc),
-    pckbc_ofisa_match, pckbc_ofisa_attach, NULL, NULL)
+    pckbc_ofisa_match, pckbc_ofisa_attach, NULL, NULL);
 
 static void pckbc_ofisa_intr_establish (struct pckbc_softc *, pckbc_slot_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.10 2002/09/30 21:36:45 thorpej Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.11 2002/10/02 16:34:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.10 2002/09/30 21:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.11 2002/10/02 16:34:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,4 +442,4 @@ elmc_mca_intrhook(sc, why)
 }
 
 CFATTACH_DECL(elmc_mca, sizeof(struct elmc_mca_softc),
-    elmc_mca_match, elmc_mca_attach, NULL, NULL)
+    elmc_mca_match, elmc_mca_attach, NULL, NULL);
