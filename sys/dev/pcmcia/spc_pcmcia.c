@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.2 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.3 2004/08/09 14:07:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.2 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.3 2004/08/09 14:07:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,7 @@ struct spc_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
 	int sc_flags;
-#define	SPC_PCMCIA_ATTACHED	1		/* attach completed */
-#define SPC_PCMCIA_ATTACHING	2		/* attach in progress */
+#define SPC_PCMCIA_ATTACH	2		/* attach in progress */
 };
 
 int	spc_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
@@ -76,7 +75,7 @@ int	spc_pcmcia_detach __P((struct device *, int));
 int	spc_pcmcia_enable __P((struct device *, int));
 
 CFATTACH_DECL(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
-    spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, NULL);
+    spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, spc_activate);
 
 static const struct spc_pcmcia_product *
     spc_pcmcia_lookup __P((struct pcmcia_attach_args *));
@@ -167,14 +166,14 @@ spc_pcmcia_attach(parent, self, aux)
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
 	if (pcmcia_function_enable(pf)) {
-		printf("%s: function enable failed\n", self->dv_xname);
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 
 	/* Map in the I/O space */
 	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &sc->sc_pcioh,
 	    &sc->sc_io_window)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
 
@@ -185,21 +184,14 @@ spc_pcmcia_attach(parent, self, aux)
 	spc->sc_iot = sc->sc_pcioh.iot;
 	spc->sc_ioh = sc->sc_pcioh.ioh;
 	spc->sc_initiator = 7; /* XXX */
+	spc->sc_adapter.adapt_enable = spc_pcmcia_enable;
 
 	/*
 	 *  Initialize nca board itself.
 	 */
-	sc->sc_flags |= SPC_PCMCIA_ATTACHING;
-
-#if 1
-	if (spc_pcmcia_enable(self, 1))
-		aprint_error("%s: enable failed\n", self->dv_xname);
-	else
-#endif
-		spc_attach(spc);
-
-	sc->sc_flags &= ~SPC_PCMCIA_ATTACHING;
-	sc->sc_flags |= SPC_PCMCIA_ATTACHED;
+	sc->sc_flags |= SPC_PCMCIA_ATTACH;
+	spc_attach(spc);
+	sc->sc_flags &= ~SPC_PCMCIA_ATTACH;
 	return;
 
 iomap_failed:
@@ -211,7 +203,7 @@ enable_failed:
 	pcmcia_io_free(pf, &sc->sc_pcioh);
 
 no_config_entry:
-	return;
+	sc->sc_io_window = -1;
 }
 
 int
@@ -220,22 +212,15 @@ spc_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct spc_pcmcia_softc *sc = (void *)self;
-#if 0
 	int error;
-#endif
 
-	if ((sc->sc_flags & SPC_PCMCIA_ATTACHED) == 0) {
-		/* Nothing to detach. */
-		return (0);
-	}
+	if (sc->sc_io_window == -1)
+                /* Nothing to detach. */
+                return (0);
 
-#if 0
-	error = spc_detach(&sc->sc_spc, flags);
+	error = spc_detach(self, flags);
 	if (error)
 		return (error);
-#else
-	panic("spc_pcmcia_detach");
-#endif
 
 	/* Unmap our i/o window and i/o space. */
 	pcmcia_io_unmap(sc->sc_pf, sc->sc_io_window);
@@ -266,7 +251,7 @@ spc_pcmcia_enable(arg, onoff)
 		 * enabled and chip will be initialized later.
 		 * Otherwise, enable and reset now.
 		 */
-		if ((sc->sc_flags & SPC_PCMCIA_ATTACHING) == 0) {
+		if ((sc->sc_flags & SPC_PCMCIA_ATTACH) == 0) {
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_spc.sc_dev.dv_xname);
@@ -275,7 +260,7 @@ spc_pcmcia_enable(arg, onoff)
 			}
 
 			/* Initialize only chip.  */
-			spc_init(&sc->sc_spc);
+			spc_init(&sc->sc_spc, 0);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
