@@ -23,8 +23,6 @@
 ./usr/include/machine/kdbparam.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/locore.h
-./usr/include/machine/machAsmDefs.h
-./usr/include/machine/machConst.h
 ./usr/include/machine/mips_opcode.h
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
