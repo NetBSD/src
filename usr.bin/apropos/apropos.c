@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.7 1997/10/16 08:44:23 mikel Exp $	*/
+/*	$NetBSD: apropos.c,v 1.8 1997/10/17 06:49:16 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: apropos.c,v 1.7 1997/10/16 08:44:23 mikel Exp $";
+__RCSID("$NetBSD: apropos.c,v 1.8 1997/10/17 06:49:16 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,11 +60,12 @@ static char rcsid[] = "$NetBSD: apropos.c,v 1.7 1997/10/16 08:44:23 mikel Exp $"
 #include <string.h>
 #include <unistd.h>
 
-#include "../man/config.h"
-#include "../man/pathnames.h"
+#include "config.h"
+#include "pathnames.h"
 
 static int *found, foundman;
 
+int main __P((int, char **));
 void apropos __P((char **, char *, int));
 void lowstr __P((char *, char *));
 int match __P((char *, char *));
@@ -82,7 +84,7 @@ main(argc, argv)
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
-	while ((ch = getopt(argc, argv, "C:M:m:P:")) != EOF)
+	while ((ch = getopt(argc, argv, "C:M:m:P:")) != -1)
 		switch (ch) {
 		case 'C':
 			conffile = optarg;
@@ -105,7 +107,7 @@ main(argc, argv)
 		usage();
 
 	if ((found = malloc((u_int)argc * sizeof(int))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	memset(found, 0, argc * sizeof(int));
 
 	for (p = argv; *p; ++p)			/* convert to lower-case */
@@ -148,14 +150,13 @@ apropos(argv, path, buildpath)
 {
 	char *end, *name, **p;
 	char buf[LINE_MAX + 1], wbuf[LINE_MAX + 1];
+	char hold[MAXPATHLEN + 1];
 
 	for (name = path; name; name = end) {	/* through name list */
-		if (end = strchr(name, ':'))
+		if ((end = strchr(name, ':')))
 			*end++ = '\0';
 
 		if (buildpath) {
-			char hold[MAXPATHLEN + 1];
-
 			(void)sprintf(hold, "%s/%s", name, _PATH_WHATIS);
 			name = hold;
 		}
