@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459 2002/01/04 21:04:42 augustss Exp $
+# $NetBSD: GENERIC,v 1.460 2002/01/06 02:45:52 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.459 $"
+#ident 		"GENERIC-$Revision: 1.460 $"
 
 maxusers	32		# estimated number of users
 
@@ -966,6 +966,7 @@ midi*	at umidi?		# USB MIDI
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
+radio* at bktr?
 
 
 # Mice
