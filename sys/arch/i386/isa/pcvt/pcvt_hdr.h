@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.10 1994/11/04 01:00:40 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.11 1994/11/04 19:08:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -86,7 +86,7 @@
 #ifdef PCVT_NETBSD
 #undef PCVT_NETBSD
 #endif
-#define	PCVT_NETBSD		10
+#define	PCVT_NETBSD		11
 
 #include "param.h"
 #include "conf.h"
@@ -110,7 +110,9 @@
 #else
 #include "i386/isa/isa_device.h"
 #endif
+#if PCVT_NETBSD <= 10
 #include "i386/isa/icu.h"
+#endif
 #include "i386/isa/isareg.h"
 
 #if PCVT_NETBSD > 9
