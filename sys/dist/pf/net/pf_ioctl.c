@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.10 2004/09/06 10:01:39 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.11 2004/11/13 21:13:07 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -171,7 +171,6 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
 	    "pfpooladdrpl", NULL);
-
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();
