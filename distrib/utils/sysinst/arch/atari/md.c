@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.1.1 2002/04/12 21:15:52 leo Exp $ */
+/*	$NetBSD: md.c,v 1.2 2002/04/20 20:35:00 leo Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -526,10 +526,10 @@ void
 md_set_no_x()
 {
 
-	toggle_getit (8);
-	toggle_getit (9);
-	toggle_getit (10);
-	toggle_getit (11);
-	toggle_getit (12);
-	toggle_getit (13);
+	toggle_getit(11);
+	toggle_getit(12);
+	toggle_getit(13);
+	toggle_getit(14);
+	toggle_getit(15);
+	toggle_getit(16);
 }

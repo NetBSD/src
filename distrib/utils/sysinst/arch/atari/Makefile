@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2002/04/12 21:15:52 leo Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/20 20:35:00 leo Exp $
 #
 # Makefile for atari
 #
