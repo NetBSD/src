@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.16 1995/06/04 21:56:28 pk Exp $
+ *	$Id: rrs.c,v 1.17 1995/06/05 01:01:51 pk Exp $
  */
 
 #include <sys/param.h>
@@ -916,7 +916,8 @@ relocate_rrs_addresses()
 				? rrs_sdt.sdt_strings + rrs_strtab_size
 				: 0;
 	rrs_sdt.sdt_sods = rrs_shobjs
-				? rrs_sdt.sdt_paths+rrs_search_paths_size
+				? rrs_sdt.sdt_strings + rrs_strtab_size +
+				  rrs_search_paths_size
 				: 0;
 	rrs_sdt.sdt_filler2 = 0;
 	rrs_sdt.sdt_str_sz = rrs_strtab_size;
