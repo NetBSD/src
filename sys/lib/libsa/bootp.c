@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.22 2002/03/20 23:10:39 thorpej Exp $	*/
+/*	$NetBSD: bootp.c,v 1.23 2003/02/25 14:42:30 ragge Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -224,15 +224,6 @@ bootp(sock)
 	if (debug)
 		printf("'native netmask' is %s\n", intoa(nmask));
 #endif
-
-	/* Check subnet mask against net mask; toss if bogus */
-	if ((nmask & smask) != nmask) {
-#ifdef BOOTP_DEBUG
-		if (debug)
-			printf("subnet mask (%s) bad\n", intoa(smask));
-#endif
-		smask = 0;
-	}
 
 	/* Get subnet (or natural net) mask */
 	netmask = nmask;
