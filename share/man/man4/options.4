@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.72 1999/03/16 01:19:17 garbled Exp $
+.\"	$NetBSD: options.4,v 1.73 1999/03/23 00:33:32 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1132,12 +1132,14 @@ vnodes)).
 -- you cannot actually run without this
 .Dq option .
 .It Cd options NMBCLUSTERS=value
-Size of kernel mbuf cluster map,
+The number of mbuf clusters the kernel supports.  Mbuf clusters are
+MCLBYTES in size (usually 2k).  This is used to compute the size of
+the kernel VM map
 .Em mb_map ,
-in CLBYTES-sized logical
-pages.
+which maps mbuf clusters.
 Default on most ports is 256 (512 with
-.Dq options GATEWAY ).
+.Dq options GATEWAY
+).
 See
 .Pa /usr/include/machine/param.h
 for exact default information.
@@ -1145,9 +1147,15 @@ Increase this value if you get
 .Dq mb_map full
 messages.
 .It Cd options NKMEMCLUSTERS=value
-Size of kernel malloc arena in CLBYTES-sized logical pages.
-This area is covered by the kernel submap
-.Em kmem_map .
+Size of kernel VM map
+.Em kmem_map ,
+in CLBYTES-sized chunks (the VM page size; this value may be read
+from the
+.Xr sysctl 8
+variable
+.Em hw.pagesize
+).
+This VM map is used to map the kernel malloc arena.
 See
 .Pa /usr/include/machine/param.h
 for the default value, which is port specific.
