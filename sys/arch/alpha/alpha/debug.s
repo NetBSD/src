@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.3 1999/05/31 20:40:23 ross Exp $ */
+/* $NetBSD: debug.s,v 1.4 1999/06/18 18:08:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.4 1999/06/18 18:08:52 thorpej Exp $")
 
 /*
  * Debugger glue.
