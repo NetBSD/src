@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.12 1998/08/01 01:39:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.13 1998/08/09 22:36:38 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -891,7 +891,7 @@ uvm_km_alloc1(map, size, zeroit)
 	 */
 
 	if (zeroit)
-		bzero((caddr_t)kva, loopva - kva);
+		memset((caddr_t)kva, 0, loopva - kva);
 
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
