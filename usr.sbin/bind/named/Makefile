@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/11/20 19:47:46 veego Exp $
+#	$NetBSD: Makefile,v 1.8 1999/11/28 16:58:16 veego Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -18,6 +18,13 @@ CPPFLAGS+=	${INCLUDE}
 LDADD=		${LIBRARY}
 CLEANFILES+=	y.tab.h named-bootconf tmp_version.c pathnames.h
 MAN=		${PROG}.8 named.conf.5
+
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
+FILES=		named.conf
+FILESDIR=	/usr/share/examples/named
+.endif
 
 HOSTNAMECMD=	hostname
 
