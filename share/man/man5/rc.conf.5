@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.31 2000/02/13 07:47:27 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.32 2000/06/13 16:33:18 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -193,6 +193,13 @@ to load in packet filter specifications from
 at network boot time, before any interfaces are configured.
 See
 .Xr ipf 5 .
+.It Sy ipsec
+YES or NO.
+Runs
+.Xr setkey 8
+to load in IPsec manual keys and policies from
+.Pa /etc/ipsec.conf
+at network boot time, before any interfaces are configured.
 .It Sy auto_ifconfig
 YES or NO.
 Sets the
