@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.40 1999/11/02 06:42:26 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.41 2000/03/18 16:13:23 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -88,15 +88,6 @@
 int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
-
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-struct scsipi_device sbc_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-};
 
 extern label_t	*nofault;
 extern caddr_t	m68k_fault_addr;

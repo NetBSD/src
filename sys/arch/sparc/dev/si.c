@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.55 2000/03/13 23:52:33 soren Exp $	*/
+/*	$NetBSD: si.c,v 1.56 2000/03/18 16:13:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -244,15 +244,6 @@ void si_obio_dma_stop __P((struct ncr5380_softc *));
 void si_obio_intr_on __P((struct ncr5380_softc *));
 void si_obio_intr_off __P((struct ncr5380_softc *));
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsipi_device si_dev = {
-	NULL,		/* Use default error handler.		*/
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.		*/
-	NULL,		/* Use default "done" routine.		*/
-};
-
 
 /* The Sun SCSI-3 VME controller. */
 struct cfattach si_ca = {
@@ -347,8 +338,8 @@ si_attach(parent, self, aux)
 	sc->sc_regs = (struct si_regs *)bh; /* XXX */
 
 	sc->sc_options = si_options;
-	reset_adapter = si_reset_adapter;
 	sc->sc_adapter_type = BOARD_ID_SI;
+	reset_adapter = si_reset_adapter;
 
 	ncr_sc->sc_dma_setup = si_vme_dma_setup;
 	ncr_sc->sc_dma_start = si_vme_dma_start;
@@ -447,21 +438,6 @@ si_attach_common(parent, sc)
 	regs = sc->sc_regs;
 
 	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
-
-	/*
-	 * Fill in the prototype scsipi_link.
-	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &si_dev;
-
-	/*
 	 * Initialize fields used by the MI code
 	 */
 	ncr_sc->sci_r0 = &regs->sci.sci_r0;
@@ -526,15 +502,14 @@ si_attach_common(parent, sc)
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
 	/*
 	 *  Initialize si board itself.
 	 */
 	reset_adapter(ncr_sc);
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-
-	/* Configure sub-devices */
-	config_found(&ncr_sc->sc_dev, &ncr_sc->sc_link, scsiprint);
+	ncr5380_attach(ncr_sc);
 }
 
 static void

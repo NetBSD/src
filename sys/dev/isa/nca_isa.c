@@ -1,7 +1,7 @@
-/*	$NetBSD: nca_isa.c,v 1.2 2000/03/18 13:17:03 mycroft Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.3 2000/03/18 16:13:27 mycroft Exp $	*/
 
 /*-
- * Copyright (c)  1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
 #include <dev/ic/ncr5380var.h>
 #include <dev/ic/ncr53c400reg.h>
 
-#include <dev/isa/ncavar.h>
+#include <dev/isa/nca_isavar.h>
 
 int	nca_isa_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    struct nca_isa_probe_data *));
@@ -115,7 +115,6 @@ struct scsipi_device nca_isa_dev = {
 #define NCA_NO_DISCONNECT    0xff
 #define NCA_NO_PARITY_CHK  0xff00
 #define NCA_FORCE_POLLING 0x10000
-#define NCA_DISABLE_DMA   0x20000
 
 
 /*
@@ -396,7 +395,7 @@ nca_isa_attach(parent, self, aux)
 #if 0
 	esc->sc_options = 0x00000;	/* no options */
 #else
-	esc->sc_options = 0x2ffff;	/* all options except force poll */
+	esc->sc_options = 0x0ffff;	/* all options except force poll */
 #endif
 
 	sc->sc_no_disconnect =
@@ -405,33 +404,8 @@ nca_isa_attach(parent, self, aux)
 		(esc->sc_options & NCA_NO_PARITY_CHK) >> 8;
 	if (esc->sc_options & NCA_FORCE_POLLING)
 		sc->sc_flags |= NCR5380_FORCE_POLLING;
-
-#if 1	/* XXX - Temporary */
-	/* XXX - In case we think DMA is completely broken... */
-	if (esc->sc_options & NCA_DISABLE_DMA) {
-		/* Override this function pointer. */
-		sc->sc_dma_alloc = NULL;
-	}
-#endif
 	sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Fill in the adapter.
-	 */
-	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.type = BUS_SCSI;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &nca_isa_dev;
-	sc->sc_link.openings = 1;
 
 	/*
 	 * Initialize fields used by the MI code
@@ -439,14 +413,11 @@ nca_isa_attach(parent, self, aux)
 	sc->sc_regt = iot;
 	sc->sc_regh = ioh;
 
-	/*
-	 * Allocate DMA handles.
-	 */
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
+	sc->sc_adapter.scsipi_minphys = minphys;
 
 	/*
 	 *  Initialize nca board itself.
 	 */
-	ncr5380_init(sc);
-	ncr5380_reset_scsibus(sc);
-	config_found(&(sc->sc_dev), &(sc->sc_link), scsiprint);
+	ncr5380_attach(sc);
 }

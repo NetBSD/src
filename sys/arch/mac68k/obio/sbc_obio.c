@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.10 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.11 2000/03/18 16:13:24 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -160,20 +160,10 @@ sbc_obio_attach(parent, self, args)
 	}
 
 	/*
-	 * Fill in the adapter.
-	 */
-	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	ncr_sc->sc_adapter.scsipi_minphys = minphys;
-
-	/*
 	 * Fill in the prototype scsi_link.
 	 */
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
-	ncr_sc->sc_link.device = &sbc_dev;
-	ncr_sc->sc_link.type = BUS_SCSI;
+	ncr_sc->sc_adapter.scsipi_minphys = minphys;
 
 	/*
 	 * Initialize fields used by the MI code
@@ -243,12 +233,12 @@ sbc_obio_attach(parent, self, args)
 	ncr_sc->sc_link.flags |= sbc_link_flags;
 #endif
 
+	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
+
 	/*
 	 *  Initialize the SCSI controller itself.
 	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(self, &(ncr_sc->sc_link), scsiprint);
+	ncr5380_attach(ncr_sc);
 }
 
 /*
