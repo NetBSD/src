@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.199 2003/05/10 23:12:47 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.200 2003/05/13 03:00:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.199 2003/05/10 23:12:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.200 2003/05/13 03:00:07 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -187,7 +187,8 @@ sdattach(parent, sd, periph, ops)
 	/*
 	 * Use the subdriver to request information regarding the drive.
 	 */
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	error = scsipi_start(periph, SSS_START,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
@@ -198,23 +199,23 @@ sdattach(parent, sd, periph, ops)
 	else
 		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
 		    XS_CTL_DISCOVERY);
-	printf("%s: ", sd->sc_dev.dv_xname);
+	aprint_normal("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
-	        printf(
+	        aprint_normal(
 		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    (unsigned long long)dp->disksize);
 		break;
 
 	case SDGP_RESULT_OFFLINE:
-		printf("drive offline");
+		aprint_normal("drive offline");
 		break;
 
 	case SDGP_RESULT_UNFORMATTED:
-		printf("unformatted media");
+		aprint_normal("unformatted media");
 		break;
 
 #ifdef DIAGNOSTIC
@@ -223,7 +224,7 @@ sdattach(parent, sd, periph, ops)
 		break;
 #endif
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Establish a shutdown hook so that we can ensure that
@@ -235,7 +236,7 @@ sdattach(parent, sd, periph, ops)
 	 */
 	if ((sd->sc_sdhook =
 	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sd->sc_dev.dv_xname);
 
 #if NRND > 0
