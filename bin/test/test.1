@@ -1,4 +1,4 @@
-.\"	$NetBSD: test.1,v 1.15 2001/10/17 21:14:45 wiz Exp $
+.\"	$NetBSD: test.1,v 1.16 2001/12/20 19:31:52 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,7 +109,7 @@ is a named pipe
 .Po Tn FIFO Pc .
 .It Fl r Ar file
 True if
-.Ar file 
+.Ar file
 exists and is readable.
 .It Fl s Ar file
 True if
@@ -150,7 +150,7 @@ True if the length of
 .Ar string
 is zero.
 .It Fl L Ar file
-True if 
+True if
 .Ar file
 exists and is a symbolic link.
 This operator is retained for compatibility with previous versions of
@@ -214,7 +214,7 @@ True if string
 comes after
 .Ar \&s\&2
 based on the ASCII value of their characters.
-.It Ar \&n\&1 Fl \&eq Ar \&n\&2 
+.It Ar \&n\&1 Fl \&eq Ar \&n\&2
 True if the integers
 .Ar \&n\&1
 and
@@ -282,12 +282,12 @@ operator has higher precedence than the
 .Fl o
 operator.
 .Sh GRAMMAR AMBIGUITY
-The 
+The
 .Nm test
 grammar is inherently ambiguous.  In order to assure a degree of consistency,
-the cases described in 
+the cases described in
 .St -p1003.2
-section 4.62.4, 
+section 4.62.4,
 are evaluated consistently according to the rules specified in the
 standards document.  All other cases are subject to the ambiguity in the
 command semantics.
