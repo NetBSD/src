@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1997/06/08 05:10:25 jonathan Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1997/06/16 04:22:15 jonathan Exp $	*/
 
 /*
  * Copyright Notice:
@@ -74,6 +74,9 @@
  */
 #ifndef _PMAX_BUS_H_
 #define _PMAX_BUS_H_
+
+#include <mips/locore.h>			/* wbflush() */
+
 
 /*
  * Bus address and size types
