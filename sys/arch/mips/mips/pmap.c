@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/01/06 04:11:29 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1999/01/15 01:23:15 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 1999/01/06 04:11:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 1999/01/15 01:23:15 castor Exp $");
 
 /*
  *	Manages physical address maps.
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 1999/01/06 04:11:29 nisimura Exp $");
 
 #include "opt_uvm.h"
 #include "opt_sysv.h"
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 1999/01/06 04:11:29 nisimura Exp $");
 #include <uvm/uvm.h>
 #endif
 
-#include <mips/cpu.h>
+#include <mips/cpuarch.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 
@@ -157,7 +158,6 @@ struct {
 	int pvsearch;
 } remove_stats;
 
-int pmapdebug = 0;
 #define PDB_FOLLOW	0x0001
 #define PDB_INIT	0x0002
 #define PDB_ENTER	0x0004
@@ -172,6 +172,7 @@ int pmapdebug = 0;
 #define PDB_PARANOIA	0x2000
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
+int pmapdebug = 0;
 
 #endif /* DEBUG */
 
@@ -219,7 +220,6 @@ boolean_t	pmap_initialized = FALSE;
 int pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
 int pmap_alloc_tlbpid __P((struct proc *p));
 void pmap_zero_page __P((paddr_t phys));
-void pmap_zero_page __P((vaddr_t));
 void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
@@ -231,6 +231,21 @@ int pmap_is_page_ro __P((pmap_t, vaddr_t, int));
 
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
+static void mips_flushcache_allpvh __P((paddr_t));
+
+
+/* 
+ * Flush virtual addresses associated with a given physical address
+ */
+static void
+mips_flushcache_allpvh(paddr_t pa)
+{
+	struct pv_entry *pv = pa_to_pvh(pa);
+	while (pv) {
+		MachFlushDCache(pv->pv_va, NBPG);
+		pv = pv->pv_next;
+	}
+}
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -683,6 +698,12 @@ pmap_activate(p)
         if (p == curproc) {
                 int tlbpid = pmap_alloc_tlbpid(p);
                 MachSetPID(tlbpid);
+#ifdef	MIPS3
+		if (CPUISMIPS3) {
+			mips3_write_xcontext_upper(
+				(u_int32_t)curpcb->pcb_segtab);
+		}
+#endif
         }
 }
 
@@ -742,13 +763,11 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-
 #if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
 				    ~(PV_MODIFIED|PV_REFERENCED);
 #endif
-
 
 			if (CPUISMIPS3)
 				/* See above about G bit */
@@ -801,7 +820,6 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-
 #if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
@@ -1134,13 +1152,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 				 */
 				npte = mips_pg_rwpage_bit();
 				pmap_set_modified(pa);
-			} else
+			} else {
 				if ((*pa_to_attribute(pa) & PV_MODIFIED) ||
-/*??*/				    !(mem->flags & PG_CLEAN))
+/*??*/					!(mem->flags & PG_CLEAN)) {
 					npte = mips_pg_rwpage_bit();
-			else
+				} else {
 					npte = mips_pg_cwpage_bit();
 				}
+			}
+		}
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
@@ -1492,8 +1512,10 @@ pmap_zero_page(phys)
 #if defined(MIPS3) && defined(MIPS3_FLUSH)
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(phys, NBPG);
+		/* XXX Is this really necessary?  Can't we assure that 
+		 * pages to be zeroed are already flushed?
+		 */
+		mips_flushcache_allpvh(phys); 
 	}
 #endif
 	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
@@ -1528,8 +1550,6 @@ pmap_zero_page(phys)
 	 * writeback of the destination out of the L1  cache.  If we don't,
 	 * later reads (from virtual addresses mapped to the destination PA)
 	 * might read old stale DRAM footprint, not the just-written data.
-	 * XXX  Do we need to also invalidate any cache lines matching
-	 *      the destination as well?
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
@@ -1545,7 +1565,7 @@ pmap_zero_page(phys)
  */
 void
 pmap_copy_page(src, dst)
-	vaddr_t src, dst;
+	paddr_t src, dst;
 {
 	int *s, *d, *end;
 	int tmp0, tmp1, tmp2, tmp3;
@@ -1572,11 +1592,14 @@ pmap_copy_page(src, dst)
 	 * footprint instead of the fresh (but dirty) data in a WB cache.
 	 * XXX invalidate any cached lines of the destination PA
 	 *     here also?
+	 * 
+	 * It would be better to probably map the destination as a
+	 * write-through no allocate to reduce cache thrash.
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache(); */
-		MachFlushDCache(src, NBPG);
+		mips_flushcache_allpvh(src); 
+/*		mips_flushcache_allpvh(dst); */
 	}
 #endif
 	s = (int *)MIPS_PHYS_TO_KSEG0(src);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.41 1998/12/07 04:21:57 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.42 1999/01/15 01:23:15 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.41 1998/12/07 04:21:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.42 1999/01/15 01:23:15 castor Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +148,6 @@ int	mips_L2CacheMixed;
 #endif
 
 struct	user *proc0paddr;
-struct	proc nullproc;		/* for use by switch_exit() */
 struct	proc *fpcurproc;
 struct	pcb  *curpcb;
 
@@ -159,7 +159,6 @@ caddr_t	msgbufaddr;
  */
 mips_locore_jumpvec_t mips1_locore_vec =
 {
-	mips1_ConfigCache,
 	mips1_FlushCache,
 	mips1_FlushDCache,
 	mips1_FlushICache,
@@ -170,7 +169,6 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_TLBUpdate,
 	mips1_wbflush,
 	mips1_proc_trampoline,
-	mips1_switch_exit,
 	mips1_cpu_switch_resume
 };
 
@@ -211,7 +209,6 @@ mips1_vector_init()
  */
 mips_locore_jumpvec_t mips3_locore_vec =
 {
-	mips3_ConfigCache,
 	mips3_FlushCache,
 	mips3_FlushDCache,
 	mips3_FlushICache,
@@ -229,7 +226,6 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_TLBUpdate,
 	mips3_wbflush,
 	mips3_proc_trampoline,
-	mips3_switch_exit,
 	mips3_cpu_switch_resume
 };
 
@@ -287,6 +283,9 @@ mips3_ConfigCache()
 
 	mips_L2CachePresent = (config & MIPS3_CONFIG_SC) == 0;
 	mips_L2CacheLSize = MIPS3_CONFIG_CACHE_L2_LSIZE(config);
+	if (!mips_L2CachePreset) {
+		mips_L2CacheSize = 0;
+	}
 	mips_L2CacheMixed = (config & MIPS3_CONFIG_SS) == 0;
 }
 
@@ -299,16 +298,22 @@ mips3_vector_init()
 
 	/* TLB miss handler address and end */
 	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
+	extern char mips3_XTLBMiss[], mips3_XTLBMissEnd[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
-#if 0  /* XXX: this should be checked, if we will handle XTLB miss. */
 	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
-#endif
+
+	if (mips3_XTLBMissEnd - mips3_XTLBMiss > 0x80)
+		panic("startup: XTLB code too large");
+
 	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_TLBMiss,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
+
+	memcpy((void *)MIPS3_XTLB_MISS_EXC_VEC, mips3_XTLBMiss,
+	      mips3_XTLBMissEnd - mips3_XTLBMiss);
 
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception,
 	      mips3_exceptionEnd - mips3_exception);
@@ -429,14 +434,13 @@ mips_vector_init()
 	switch (cpu_arch) {
 #ifdef MIPS1
 	case 1:
-		mips1_TLBFlush(MIPS1_TLB_NUM_TLB_ENTRIES);
-		for (i = 0; i < MIPS1_TLB_FIRST_RAND_ENTRY; ++i)
-			mips1_TLBWriteIndexed(i, MIPS_KSEG0_START, 0);
+		mips1_clean_tlb();
 		mips1_vector_init();
 		break;
 #endif
-#ifdef MIPS3
+#if (MIPS3 + MIPS4) > 0
 	case 3:
+	case 4:
 		mips3_SetWIRED(0);
 		mips3_TLBFlush(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
@@ -457,13 +461,6 @@ mips_set_wbflush(flush_fn)
 	mips_locore_jumpvec.wbflush = flush_fn;
 	(*flush_fn)();
 }
-
-/* XXX patch work XXX */
-#define	MIPS_R4100	0x0c
-#define	MIPS_TX3900	0x22
-#define	MIPS_RC32364	0x26
-#define	MIPS_RC64470	0x30
-/* XXX patch work XXX */
 
 struct pridtab {
 	int	cpu_imp;
@@ -488,7 +485,7 @@ struct pridtab cputab[] = {
 	{ MIPS_TX3900,	"Toshiba TX3900 or QED R4650 CPU", 1 }, /* see below */
 	{ MIPS_R5000,	"MIPS R5000 CPU",	4 },
 	{ MIPS_RC32364,	"IDT RC32364 CPU",	3 },
-	{ MIPS_RM5230,	"QED RM5200 CPU",	3 },
+	{ MIPS_RM5230,	"QED RM5200 CPU",	4 },
 	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	3 },
 #if 0 /* ID crashs */
 	/*
@@ -601,7 +598,7 @@ cpu_identify()
 	 * but printf() doesn't work in it.
 	 */
 #if !defined(MIPS3_FLUSH)
-	if (cpu_arch == 3 && !mips_L2CachePresent) {
+	if (cpu_arch >= 3 && !mips_L2CachePresent) {
 		printf("This kernel doesn't work without L2 cache.\n"
 		    "Please add \"options MIPS3_FLUSH\""
 		    "to the kernel config file.\n");
@@ -652,9 +649,9 @@ setregs(p, pack, stack)
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
-	f->f_regs[SP] = stack;
-	f->f_regs[PC] = pack->ep_entry & ~3;
-	f->f_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
+	f->f_regs[SP] = (int) stack;
+	f->f_regs[PC] = (int) pack->ep_entry & ~3;
+	f->f_regs[T9] = (int) pack->ep_entry & ~3; /* abicall requirement */
 	f->f_regs[SR] = PSL_USERSET;
 	/*
 	 * Set up arguments for the rtld-capable crt0:
@@ -663,7 +660,7 @@ setregs(p, pack, stack)
 	 *	a2	rtld object (filled in by dynamic loader)
 	 *	a3	ps_strings
 	 */
-	f->f_regs[A0] = (int)stack;
+	f->f_regs[A0] = (int) stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
 	f->f_regs[A3] = (int)PS_STRINGS;
@@ -846,7 +843,7 @@ sys___sigreturn14(p, v, retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc_regs[ZERO] != 0xACEDBADE)		/* magic number */
+	if ((int) ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
@@ -1228,80 +1225,22 @@ mips_init_msgbuf()
 }
 
 /*
- * Initialize the U-area for proc0 and for nullproc.  Since these
- * need to be set up before we can probe for memory, we have to use
- * stolen pages before they're loaded into the VM system.
+ * Initialize the U-area for proc0.  Since these need to be set up
+ * before we can probe for memory, we have to use stolen pages before
+ * they're loaded into the VM system.
  *
- * "space" is 2 * USPACE in size, must be page aligned,
- * and in KSEG0.
+ * "space" is USPACE in size, must be page aligned, and in KSEG0.
  */
 void
 mips_init_proc0(space)
 	caddr_t space;
 {
-	struct tlb tlb;
-	u_long pa;
-	int i;
-
-	memset(space, 0, 2 * USPACE);
+	/* XXX Flush cache?? */
+	memset(space, 0, USPACE);
 
 	proc0.p_addr = proc0paddr = (struct user *)space;
-	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+
 	curpcb = &proc0.p_addr->u_pcb;
-
-	pa = MIPS_KSEG0_TO_PHYS(proc0.p_addr);
-
-	MachSetPID(1);
-
-	if (CPUISMIPS3) {
-		for (i = 0; i < UPAGES; i += 2) {
-			tlb.tlb_mask = MIPS3_PG_SIZE_4K;
-			tlb.tlb_hi = mips3_vad_to_vpn((UADDR +
-			    (i << PGSHIFT))) | 1;
-			tlb.tlb_lo0 = vad_to_pfn(pa) |
-			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
-			tlb.tlb_lo1 = vad_to_pfn(pa + PAGE_SIZE) |
-			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
-			proc0.p_md.md_upte[i] = tlb.tlb_lo0;
-			proc0.p_md.md_upte[i + 1] = tlb.tlb_lo1;
-			mips3_TLBWriteIndexedVPS(i, &tlb);
-			pa += PAGE_SIZE * 2;
-		}
-
-		mips3_FlushDCache(MIPS_KSEG0_TO_PHYS(proc0.p_addr), USPACE);
-		mips3_HitFlushDCache(UADDR, USPACE);
-	} else {
-		for (i = 0; i < UPAGES; i++) {
-			proc0.p_md.md_upte[i] =
-			    pa | MIPS1_PG_V | MIPS1_PG_M;
-			mips1_TLBWriteIndexed(i, (UADDR + (i << PGSHIFT)) |
-			    (1 << MIPS1_TLB_PID_SHIFT),
-			    proc0.p_md.md_upte[i]);
-			pa += PAGE_SIZE;
-		}
-	}
-
-	nullproc.p_addr = (struct user *)(space + USPACE);
-	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
-
-	memcpy(nullproc.p_comm, "nullproc", sizeof("nullproc"));
-
-	pa = MIPS_KSEG0_TO_PHYS(nullproc.p_addr);
-
-	if (CPUISMIPS3) {
-		for (i = 0; i < UPAGES; i += 2) {
-			nullproc.p_md.md_upte[i] = vad_to_pfn(pa) |
-			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
-			nullproc.p_md.md_upte[i + 1] =
-			    vad_to_pfn(pa + PAGE_SIZE) |
-			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
-			pa += PAGE_SIZE * 2;
-		}
-		mips3_FlushDCache(MIPS_KSEG0_TO_PHYS(nullproc.p_addr), USPACE);
-	} else {
-		for (i = 0; i < UPAGES; i++) {
-			nullproc.p_md.md_upte[i] = pa | MIPS1_PG_V | MIPS1_PG_M;
-			pa += PAGE_SIZE;
-		}
-	}
+	MachSetPID(1);		/* Also establishes context using curpcb */
+	proc0.p_md.md_regs = (void *)((struct frame *)((int)curpcb+USPACE) - 1);
 }
