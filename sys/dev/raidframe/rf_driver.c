@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.6 1999/02/05 00:06:10 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.7 1999/02/23 23:55:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -114,6 +114,7 @@ static int init_rad(RF_RaidAccessDesc_t *);
 static void clean_rad(RF_RaidAccessDesc_t *);
 static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
+void rf_UnconfigureVnodes( RF_Raid_t * );
 
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
@@ -154,7 +155,8 @@ RF_DECLARE_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 	static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
 
 /* called at system boot time */
-	int     rf_BootRaidframe()
+int     
+rf_BootRaidframe()
 {
 	int     rc;
 
@@ -244,9 +246,6 @@ int
 rf_Shutdown(raidPtr)
 	RF_Raid_t *raidPtr;
 {
-	int     r, c;
-
-	struct proc *p;
 
 	if (!raidPtr->valid) {
 		RF_ERRORMSG("Attempt to shut down unconfigured RAIDframe driver.  Aborting shutdown\n");
@@ -274,6 +273,23 @@ rf_Shutdown(raidPtr)
 	raidPtr->valid = 0;
 
 
+	rf_UnconfigureVnodes(raidPtr);
+
+	rf_ShutdownList(&raidPtr->shutdownList);
+
+	rf_UnconfigureArray();
+
+	return (0);
+}
+
+void
+rf_UnconfigureVnodes( raidPtr )
+	RF_Raid_t *raidPtr;
+{
+	int r,c; 
+	struct proc *p;
+
+
 	/* We take this opportunity to close the vnodes like we should.. */
 
 	p = raidPtr->proc;	/* XXX */
@@ -282,6 +298,7 @@ rf_Shutdown(raidPtr)
 		for (c = 0; c < raidPtr->numCol; c++) {
 			printf("Closing vnode for row: %d col: %d\n", r, c);
 			if (raidPtr->raid_cinfo[r][c].ci_vp) {
+				VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
 				(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
 				    FREAD | FWRITE, p->p_ucred, p);
 			} else {
@@ -293,6 +310,7 @@ rf_Shutdown(raidPtr)
 	for (r = 0; r < raidPtr->numSpare; r++) {
 		printf("Closing vnode for spare: %d\n", r);
 		if (raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp) {
+			VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
 			(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
 			    FREAD | FWRITE, p->p_ucred, p);
 		} else {
@@ -301,13 +319,9 @@ rf_Shutdown(raidPtr)
 	}
 
 
-
-	rf_ShutdownList(&raidPtr->shutdownList);
-
-	rf_UnconfigureArray();
-
-	return (0);
 }
+
+
 #define DO_INIT_CONFIGURE(f) { \
 	rc = f (&globalShutdown); \
 	if (rc) { \
