@@ -1,5 +1,4 @@
-/* $NetBSD: conf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $ */
-/*	$NetBSD: conf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $	*/
+/* $NetBSD: conf.c,v 1.2 2000/01/13 01:04:33 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1 2000/01/05 08:49:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2 2000/01/13 01:04:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +61,8 @@ bdev_decl(vnd);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
+#include "raid.h"
+bdev_decl(raid);
 
 struct bdevsw	bdevsw[] =
 {
@@ -79,6 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
+	bdev_disk_init(NRAID,raid), 	/* 14: RAIDframe disk driver */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -129,6 +131,11 @@ cdev_decl(wsmouse);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+cdev_decl(raid);
+
+#include "wsmux.h"
+cdev_decl(wsmux);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -162,9 +169,11 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
+	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
-	cdev_lkm_dummy(),		/* 31 */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 32: SCSI bus */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 31: SCSI bus */
+	cdev_disk_init(NRAID,raid),	/* 32: RAIDframe disk driver */
+	cdev_disk_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -235,7 +244,8 @@ static int chrtoblktbl[] = {
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
-	/* 32 */	NODEV,
+	/* 32 */	14,	/* raid */
+	/* 33 */	NODEV,
 };
 
 /*
