@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdevs_data.h,v 1.10 1998/01/30 02:25:30 thorpej Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.11 1998/05/27 02:51:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -158,6 +158,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "T3PKT   ",
 	    TC_DEVICE_T3PKT,
 	    TC_DESCRIPTION_T3PKT,
+	},
+	{
+	    "PMAT-AA ",
+	    TC_DEVICE_PMAT_AA,
+	    TC_DESCRIPTION_PMAT_AA,
 	},
 	{ NULL, NULL, NULL, }
 };
