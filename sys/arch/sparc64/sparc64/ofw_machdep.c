@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.12 2000/08/24 22:00:04 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.13 2000/08/28 18:01:23 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -511,20 +511,22 @@ prom_get_msgbuf(len, align)
 	int is_e250 = 1;
 
 	/* E250s tend to have buggy PROMs that break on test-method */
-	if ((rooth = OF_finddevice("/chosen")) != -1) {
+	if ((rooth = OF_finddevice("/")) != -1) {
 		char name[80];
 
 		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
 			if (strcmp(name, "SUNW,Ultra-250")) 
 				is_e250 = 0;
-		}
-	}
+		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
+	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (!is_e250 && (OF_test("test-method") == 0)) {
+	if (is_e250) {
+		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
+	} else if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
