@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.63 2002/09/23 04:14:20 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.64 2002/10/04 20:05:14 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.63 2002/09/23 04:14:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.64 2002/10/04 20:05:14 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,9 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		raidPtr->status[i] = rf_rs_optimal;
 		raidPtr->reconControl[i] = NULL;
 	}
+
+	TAILQ_INIT(&(raidPtr->iodone));
+	simple_lock_init(&(raidPtr->iodone_lock));
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.14 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.15 2002/10/04 20:05:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <sys/disklabel.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"
@@ -51,6 +52,7 @@
 #include "rf_diskqueue.h"
 #include "rf_reconstruct.h"
 #include "rf_acctrace.h"
+#include "rf_fifo.h"
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 #include "rf_paritylog.h"
@@ -157,6 +159,13 @@ struct RF_Raid_s {
 				 This may be in conflict with last_unit!!?! */
 	                      /* Not currently used. */
 
+	/* queue to gather up requests from KernelWakeupFunc() and let
+	   a kernel thread deal with calling rf_DiskIOComplete and any
+	   callback functions. */
+	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone; 
+	/* and a lock to protect it */
+	struct simplelock iodone_lock;
+
 	/*
          * Cleanup stuff
          */
@@ -210,9 +219,11 @@ struct RF_Raid_s {
 	RF_Thread_t parity_rewrite_thread;
 	RF_Thread_t copyback_thread;
 	RF_Thread_t engine_thread;
+	RF_Thread_t engine_helper_thread;
 	RF_Thread_t recon_thread;
 	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
+	int     shutdown_raidio;
 	int     dags_in_flight;	/* debug */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.10 2002/09/15 21:34:03 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.11 2002/10/04 20:05:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,14 +38,14 @@
 #ifndef _RF__RF_DISKQUEUE_H_
 #define _RF__RF_DISKQUEUE_H_
 
+#include <sys/queue.h>
+
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_threadstuff.h"
 #include "rf_acctrace.h"
 #include "rf_alloclist.h"
 #include "rf_etimer.h"
-
-
 #include "rf_netbsd.h"
 
 
@@ -77,6 +77,10 @@ struct RF_DiskQueueData_s {
 	struct proc *b_proc;	/* the b_proc from the original bp passed into
 				 * the driver for this I/O */
 	struct buf *bp;		/* a bp to use to get this I/O done */
+	/* TAILQ bits for a queue for completed I/O requests */
+	TAILQ_ENTRY(RF_DiskQueueData_s) iodone_entries; 
+	int  error;             /* Indicate if an error occured 
+				   on this I/O (1=yes, 0=no) */
 };
 #define RF_LOCK_DISK_QUEUE   0x01
 #define RF_UNLOCK_DISK_QUEUE 0x02
