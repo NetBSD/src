@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.13 1997/11/17 23:35:28 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.14 1997/11/20 08:03:06 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -361,7 +361,6 @@ stripattach(n)
 		sc->sc_fastq.ifq_maxlen = 32;
 
 		sc->sc_if.if_watchdog = strip_watchdog;
-		sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
@@ -452,7 +451,7 @@ stripopen(dev, tp)
 	if (tp->t_line == STRIPDISC)
 		return (0);
 
-	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++)
+	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {
 		if (sc->sc_ttyp == NULL) {
 			if (stripinit(sc) == 0)
 				return (ENOBUFS);
@@ -488,8 +487,15 @@ stripopen(dev, tp)
 			strip_resetradio(sc, tp);
 			splx(s);
 
+			/*
+			 * Start the watchdog timer to get the radio
+			 * "probe-for-death"/reset machine going.
+			 */
+			sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
+
 			return (0);
 		}
+	}
 	return (ENXIO);
 }
 
@@ -510,6 +516,12 @@ stripclose(tp)
 	tp->t_line = 0;
 	sc = (struct strip_softc *)tp->t_sc;
 	if (sc != NULL) {
+		/*
+		 * Cancel watchdog timer, which stops the "probe-for-death"/
+		 * reset machine.
+		 */
+		sc->sc_if.if_timer = 0;
+
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
@@ -1289,7 +1301,9 @@ stripioctl(ifp, cmd, data)
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct ifreq *ifr;
-	register int s = splimp(), error = 0;
+	register int s, error = 0;
+
+	s = splimp();
 
 	switch (cmd) {
 
@@ -1473,6 +1487,12 @@ strip_watchdog(ifp)
 {
 	register struct strip_softc *sc = ifp->if_softc;
 	struct tty *tp =  sc->sc_ttyp;
+
+	/*
+	 * Just punt if the line has been closed.
+	 */
+	if (tp == NULL)
+		return;
 
 #ifdef DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
