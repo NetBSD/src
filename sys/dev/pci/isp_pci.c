@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.18 1998/02/04 00:38:52 thorpej Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.19 1998/02/04 05:14:56 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -537,7 +537,8 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	} while (seg < segcnt);
 
 mapsync:
-	bus_dmamap_sync(pci->pci_dmat, dmap, xs->flags & SCSI_DATA_IN ?
+	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
+	    xs->flags & SCSI_DATA_IN ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	return (0);
 }
@@ -551,7 +552,8 @@ isp_pci_dmateardown(isp, xs, handle)
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[handle];
 
-	bus_dmamap_sync(pci->pci_dmat, dmap, xs->flags & SCSI_DATA_IN ?
+	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
+	    xs->flags & SCSI_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(pci->pci_dmat, dmap);
 }

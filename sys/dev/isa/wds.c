@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.29 1998/02/04 00:37:50 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.30 1998/02/04 05:14:36 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -15,7 +15,7 @@
  */
 
 /*-   
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  * 
  * This code is derived from software contributed to The NetBSD Foundation
@@ -891,7 +891,8 @@ wds_done(sc, scb, stat)
 		 * the data buffer.
 		 */
 		if (xs->datalen) {
-			bus_dmamap_sync(dmat, scb->dmamap_xfer,
+			bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
+			    scb->dmamap_xfer->dm_mapsize,
 			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(dmat, scb->dmamap_xfer);
@@ -1338,7 +1339,8 @@ wds_scsi_cmd(xs)
 			goto bad;
 		}
 
-		bus_dmamap_sync(dmat, scb->dmamap_xfer,
+		bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
+		    scb->dmamap_xfer->dm_mapsize,
 		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 

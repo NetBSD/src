@@ -1,7 +1,7 @@
-/*	$NetBSD: isadma.c,v 1.1 1997/10/14 06:49:04 sakamoto Exp $	*/
+/*	$NetBSD: isadma.c,v 1.2 1998/02/04 05:12:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -288,10 +288,12 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 #endif
 
 	if (flags & DMAMODE_READ) {
-		bus_dmamap_sync(sc->sc_dmat, dmam, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
 		sc->sc_dmareads |= (1 << chan);
 	} else {
-		bus_dmamap_sync(sc->sc_dmat, dmam, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 		sc->sc_dmareads &= ~(1 << chan);
 	}
 
@@ -469,7 +471,7 @@ isa_dmadone(isadev, chan)
 		printf("%s: isa_dmadone: channel %d not finished\n",
 		    sc->sc_dev.dv_xname, chan);
 
-	bus_dmamap_sync(sc->sc_dmat, dmam,
+	bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
 	    (sc->sc_dmareads & (1 << chan)) ? BUS_DMASYNC_POSTREAD :
 	    BUS_DMASYNC_POSTWRITE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.12 1998/02/04 00:38:50 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.13 1998/02/04 05:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -824,7 +824,8 @@ fxp_start(ifp)
 			    dmamap->dm_segs[segment].ds_len;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, dmamap, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 
 		txp->tbd_number = dmamap->dm_nsegs;
 		txp->cb_soft.mb_head = mb_head;
@@ -919,8 +920,8 @@ fxp_intr(arg)
 				sc->rfa_head = rxd->fr_next;
 				rxd->fr_next = NULL;
 
-				bus_dmamap_sync(sc->sc_dmat, rxmap,
-				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
+				    rxmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 				/*
 				 * Add a new buffer to the receive chain.
@@ -991,6 +992,7 @@ fxp_intr(arg)
 				if (txp->cb_soft.mb_head != NULL) {
 					txmap = txp->cb_soft.dmamap;
 					bus_dmamap_sync(sc->sc_dmat, txmap,
+					    0, txmap->dm_mapsize,
 					    BUS_DMASYNC_POSTWRITE);
 					bus_dmamap_unload(sc->sc_dmat, txmap);
 					m_freem(txp->cb_soft.mb_head);
@@ -1510,7 +1512,8 @@ fxp_add_rfabuf(sc, rxd)
 		}
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, rxmap, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
 
 	/*
 	 * Move the data pointer up so that the incoming data packet

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.6 1998/02/04 00:54:27 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.7 1998/02/04 05:15:17 thorpej Exp $	*/
 
 /*
  *
@@ -1328,8 +1328,8 @@ xyc_startbuf(xycsc, xysc, bp)
 					 * call-back scheme here? */
 	}
 
-	bus_dmamap_sync(xycsc->dmatag, iorq->dmamap,
-			(bp->b_flags & B_READ)
+	bus_dmamap_sync(xycsc->dmatag, iorq->dmamap, 0,
+			iorq->dmamap->dm_mapsize, (bp->b_flags & B_READ)
 				? BUS_DMASYNC_PREREAD
 				: BUS_DMASYNC_PREWRITE);
 
@@ -1674,7 +1674,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid = iorq->sectcnt * XYFM_BPS;
 
-			    bus_dmamap_sync(xycsc->dmatag, iorq->dmamap,
+			    bus_dmamap_sync(xycsc->dmatag, iorq->dmamap, 0,
+					iorq->dmamap->dm_mapsize,
 					(iorq->buf->b_flags & B_READ)
 						? BUS_DMASYNC_POSTREAD
 						: BUS_DMASYNC_POSTWRITE);
@@ -1856,7 +1857,8 @@ xyc_remove_iorq(xycsc)
 			} else {
 				bp->b_resid = 0;	/* done */
 			}
-			bus_dmamap_sync(xycsc->dmatag, iorq->dmamap,
+			bus_dmamap_sync(xycsc->dmatag, iorq->dmamap, 0,
+					iorq->dmamap->dm_mapsize,
 					(iorq->buf->b_flags & B_READ)
 						? BUS_DMASYNC_POSTREAD
 						: BUS_DMASYNC_POSTWRITE);

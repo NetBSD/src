@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.14 1998/02/04 00:36:53 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.15 1998/02/04 05:14:02 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -465,7 +465,8 @@ uha_done(sc, mscp)
 	 * the data buffer.
 	 */
 	if (xs->datalen) {
-		bus_dmamap_sync(dmat, mscp->dmamap_xfer,
+		bus_dmamap_sync(dmat, mscp->dmamap_xfer, 0,
+		    mscp->dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, mscp->dmamap_xfer);
@@ -677,7 +678,8 @@ uha_scsi_cmd(xs)
 			goto bad;
 		}
 
-		bus_dmamap_sync(dmat, mscp->dmamap_xfer,
+		bus_dmamap_sync(dmat, mscp->dmamap_xfer, 0,
+		    mscp->dmamap_xfer->dm_mapsize,
 		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 

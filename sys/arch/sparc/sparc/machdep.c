@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 1998/02/04 01:57:42 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.100 1998/02/04 05:13:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1410,13 +1410,17 @@ _bus_dmamap_unload(t, map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, ops)
+_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
 	int ops;
 {
 
-	/* Nothing to do here. */
+	/*
+	 * XXX Should flush CPU write buffers.
+	 */
 }
 
 /*
