@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.17 2000/06/02 23:11:08 fvdl Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.17.2.1 2000/07/14 16:48:12 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.17 2000/06/02 23:11:08 fvdl Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.17.2.1 2000/07/14 16:48:12 fvdl Exp $");
 #endif
 #endif
 
@@ -185,7 +185,7 @@ call_again:
 	XDR_SETPOS(xdrs, 0);
 	clp->u.mashl_rpcmsg.rm_xid ++ ;
 	if ((! XDR_PUTBYTES(xdrs, clp->u.mashl_callmsg, clp->mcnt)) ||
-	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	    (! XDR_PUTINT32(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp))) {
 		return (RPC_CANTENCODEARGS);
