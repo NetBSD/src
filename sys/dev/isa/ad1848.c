@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.27.2.3 1997/05/24 20:12:29 thorpej Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.27.2.4 1997/06/01 20:51:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1032,6 +1032,13 @@ ad1848_set_params(addr, mode, p, q)
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_LINEAR_LE;
 	    swcode = change_sign16;
+	}
+	break;
+    case AUDIO_ENCODING_ULINEAR_BE:
+	if (p->precision == 16) {
+	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    swcode = mode == AUMODE_PLAY ?
+	      swap_bytes_change_sign16 : change_sign16_swap_bytes;
 	}
 	break;
     }
