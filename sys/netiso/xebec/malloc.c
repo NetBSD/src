@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4 1994/06/29 06:41:10 cgd Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -15,13 +15,14 @@
 #include <stdio.h>
 #include "malloc.h"
 #include "debug.h"
+#include "main.h"
 #define CHUNKSIZE 4096*2
 
 static char *hiwat, *highend;
 int bytesmalloced=0;
 int byteswasted = 0;
 
-
+void
 init_alloc()
 {
 #ifdef LINT
@@ -36,11 +37,12 @@ init_alloc()
 #endif LINT
 }
 
+void
 HIWAT(s)
-char *s;
+	char *s;
 {
 	IFDEBUG(M)
-		fprintf(stdout, "HIWAT 0x%x  %s\n", hiwat,s);
+		fprintf(stdout, "HIWAT 0x%p  %s\n", hiwat,s);
 		fflush(stdout);
 	ENDDEBUG
 }
@@ -63,7 +65,7 @@ int x;
 		fflush(stdout);
 	ENDDEBUG
 	IFDEBUG(M)
-		fprintf(stdout, "Malloc 0x%x, %d, hiwat 0x%x\n",
+		fprintf(stdout, "Malloc 0x%x, %d, hiwat 0x%p\n",
 			total,total, hiwat);
 		fflush(stdout);
 	ENDDEBUG
@@ -89,7 +91,7 @@ int x;
 		if ( (hiwat + x) > highend) {
 			c = sbrk(CHUNKSIZE);
 			IFDEBUG(M)
-				fprintf(stdout, "hiwat 0x%x, x 0x%x, highend 0x%x, c 0x%x\n",
+				fprintf(stdout, "hiwat 0x%p, x 0x%x, highend 0x%p, c 0x%p\n",
 						hiwat, x, highend, c);
 				fflush(stdout);
 			ENDDEBUG
@@ -124,11 +126,11 @@ int x;
 		hiwat = (char *)((unsigned)(hiwat + 3) & ~0x3);
 	}
 	IFDEBUG(M)
-		fprintf(stdout, "Malloc = 0x%x, bytesm 0x%x, wasted 0x%x, hiwat 0x%x\n",
+		fprintf(stdout, "Malloc = 0x%p, bytesm 0x%x, wasted 0x%x, hiwat 0x%p\n",
 			returnvalue, bytesmalloced, byteswasted, hiwat);
 	ENDDEBUG
 	IFDEBUG(N)
-		fprintf(stdout, "Malloc returns 0x%x, sbrk(0) 0x%x\n", returnvalue, sbrk(0));
+		fprintf(stdout, "Malloc returns 0x%p, sbrk(0) 0x%p\n", returnvalue, sbrk(0));
 		fflush(stdout);
 	ENDDEBUG
 	return(returnvalue);

@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.h,v 1.4 1994/06/29 06:41:04 cgd Exp $	*/
+/*	$NetBSD: llparse.h,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 	/************************************************************
 		attributes stack garbage
@@ -127,18 +127,29 @@ extern	char	*llstrings[];
 	routines defined in llparse.c
 ************************************************************/
 
-extern llparse();
-extern llcopye();
-extern llcopys();
-extern llcorrector();
-extern llepsilonok();
-extern llexpand();
+extern int llparse();
+extern void llcopye();
+extern void llcopys();
+extern void llcorrector();
+extern int llepsilonok();
+extern void llexpand();
 extern short llfindaction();
-extern llgetprefix();
-extern llgettoken();
-extern llinsert();
-extern llinsertsym();
-extern llinserttokens();
-extern llparsererror();
-extern llpushprod();
-extern llreadetab();
+extern void llgetprefix();
+extern void llgettoken();
+extern void llinsert();
+extern void llinsertsym();
+extern void llinserttokens();
+extern void llparsererror();
+extern void llpushprod();
+extern void llreadetab();
+extern void llaction();
+extern void llpushattr();
+extern void llsetattr();
+extern void llfinprod();
+
+/************************************************************
+	routines defined in llscan.c
+************************************************************/
+extern void llscan();
+extern void dump_buffer();
+extern void llaccept();

@@ -1,4 +1,4 @@
-/*	$NetBSD: putdriver.c,v 1.4 1994/06/29 06:41:15 cgd Exp $	*/
+/*	$NetBSD: putdriver.c,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -229,9 +229,10 @@ static struct { int start; int finish; } parts[] = {
 	PART15,
 };
 
+void
 putdriver(f, x) 
-FILE *f;
-int x;
+	FILE *f;
+	int x;
 {
 	register int i; 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.4 1994/06/29 06:41:08 cgd Exp $	*/
+/*	$NetBSD: main.h,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 #define TRUE 1
 #define FALSE 0
@@ -28,4 +28,7 @@ extern char *synonyms[];
 extern int transno;
 extern int print_trans;
 extern char *stash();
-
+extern void Exit();
+extern void putincludes();
+extern void openfiles();
+extern void includecode();

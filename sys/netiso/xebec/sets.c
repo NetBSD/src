@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.5 2001/04/06 11:13:56 wiz Exp $	*/
+/*	$NetBSD: sets.c,v 1.6 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -10,6 +10,10 @@
 #include "sets.h"
 #include "debug.h"
 #include <stdio.h>
+
+#include <sys/types.h>
+#include <string.h>
+#include <signal.h>
 
 struct Object *CurrentEvent = (struct Object *)0;
 struct Object *Objtree;
@@ -25,8 +29,12 @@ static FILE *Sfile, *Efile;
 extern FILE *astringfile;
 char *Noname = "Unnamed set\0";
 
+void dumptree();
+void defineitem();
+
+void
 initsets(f,s)
-FILE *f, *s;
+	FILE *f, *s;
 {
 	static char errorstring[20];
 	extern struct Object *SameState;
@@ -36,7 +44,7 @@ FILE *f, *s;
 	IFDEBUG(X)
 		fprintf(astringfile, "char *%s_sstring[] = {\n", protocol);
 	ENDDEBUG
-	sprintf(errorstring, "%sERROR\0", ST_PREFIX);
+	sprintf(errorstring, "%sERROR", ST_PREFIX);
 	defineitem(STATESET, errorstring, (char *)0);	/* state 0 */
 	SameState = (struct Object *) Malloc( sizeof (struct Object) );
 	SameState->obj_kind = OBJ_ITEM;
@@ -69,7 +77,7 @@ char *name;
 
 	while( p && val ) {
 		IFDEBUG(o)
-		fprintf(OUT, "lookup strcmp 0x%x,%s, 0x%x,%s\n",
+		fprintf(OUT, "lookup strcmp 0x%p,%s, 0x%p,%s\n",
 			name, name, OBJ_NAME(p), OBJ_NAME(p));
 		ENDDEBUG
 		if( p->obj_name == (char *)0 ) {
@@ -91,15 +99,16 @@ char *name;
 		p = NULL;
 	}
 	IFDEBUG(o)
-		fprintf(stdout,"lookup 0x%x,%s returning 0x%x\n",type, name, p);
+		fprintf(stdout,"lookup 0x%x,%s returning 0x%p\n",type, name, p);
 	ENDDEBUG
 	return(p);
 }
 
 static int states_done  = 0;
 
+void
 end_states(f)
-FILE *f;
+	FILE *f;
 {
 	register unsigned n = Nstates;
 	register int i;
@@ -114,7 +123,7 @@ FILE *f;
 	IFDEBUG(d)
 		fprintf(OUT, "Eventshift=%d\n", Eventshift);
 	ENDDEBUG
-	sprintf(Eventshiftstring, "%d\0",Eventshift);
+	sprintf(Eventshiftstring, "%d",Eventshift);
 	fprintf(f, "struct %s_event {\n\tint ev_number;\n", &protocol[0]);
 	IFDEBUG(X)
 		/* finish sstring[] & start estring[] */
@@ -125,9 +134,9 @@ FILE *f;
 
 int FirstEventAttribute = 1;
 
-static 
+static void
 insert(o) 
-struct Object *o;
+	struct Object *o;
 {
 	struct Object *p = Objtree;
 	struct Object **q = &Objtree; 
@@ -215,8 +224,9 @@ struct Object *o;
 	ENDDEBUG
 }
 
+void
 delete(o) 
-struct Object *o;
+	struct Object *o;
 {
 	register struct Object *p = o->obj_right; 
 	register struct Object *q;
@@ -224,7 +234,7 @@ struct Object *o;
 	register struct Object **np_childlink;
 
 	IFDEBUG(T)
-		fprintf(stdout, "delete(0x%x)\n", o);
+		fprintf(stdout, "delete(0x%p)\n", o);
 		dumptree(Objtree,0);
 	ENDDEBUG
 
@@ -245,7 +255,7 @@ struct Object *o;
 		np_childlink = &(o->obj_parent->obj_right);
 	}
 	IFDEBUG(T)
-		fprintf(OUT, "newparent=0x%x\n");
+		fprintf(OUT, "newparent=0x%p\n", newparent);
 	ENDDEBUG
 
 	if (q) { /* q gets the left, parent gets the right */
@@ -266,7 +276,7 @@ struct Object *o;
 		p->obj_parent = newparent;
 
 	IFDEBUG(T)
-		fprintf(OUT, "After deleting 0x%x\n",o);
+		fprintf(OUT, "After deleting 0x%p\n",o);
 		dumptree(Objtree,0);
 	ENDDEBUG
 }
@@ -291,20 +301,21 @@ int keep;
 		insert( onew );
 		/* address already stashed before calling defineset */
 	IFDEBUG(o)
-		printf("defineset(0x%x,%s) returning 0x%x\n", type , adr, onew);
+		printf("defineset(0x%x,%s) returning 0x%p\n", type , adr, onew);
 		dumptree(Objtree,0);
 	ENDDEBUG
 	return(onew);
 }
 
+void
 dumpit(o, s)
-char *o;
-char *s;
+	char *o;
+	char *s;
 {
 	register int i;
 
 IFDEBUG(o)
-	fprintf(OUT, "object 0x%x, %s\n",o, s);
+	fprintf(OUT, "object 0x%p, %s\n",o, s);
 	for(i=0; i< sizeof(struct Object); i+=4) {
 		fprintf(OUT, "0x%x: 0x%x 0x%x 0x%x 0x%x\n",
 		*((int *)o), *o, *(o+1), *(o+2), *(o+3) );
@@ -312,17 +323,18 @@ IFDEBUG(o)
 ENDDEBUG
 }
 
+void
 defineitem(type, adr, struc)
-unsigned char type;
-char *adr;
-char *struc;
+	unsigned char type;
+	char *adr;
+	char *struc;
 {
 	struct Object *onew;
 	IFDEBUG(o)
-		printf("defineitem(0x%x, %s at 0x%x, %s)\n", type, adr, adr, struc);
+		printf("defineitem(0x%x, %s at 0x%p, %s)\n", type, adr, adr, struc);
 	ENDDEBUG
 	
-	if( onew = lookup( type, adr ) ) {
+	if((onew = lookup( type, adr ))) {
 		fprintf(stderr, 
 	"Internal error at defineitem: trying to redefine obj type 0x%x, adr %s\n",
 			type, adr);
@@ -337,17 +349,18 @@ char *struc;
 		insert( onew );
 	}
 	IFDEBUG(o)
-		fprintf(OUT, "defineitem(0x%x, %s) returning 0x%x\n", type, adr, onew);
+		fprintf(OUT, "defineitem(0x%x, %s) returning 0x%p\n", type, adr, onew);
 	ENDDEBUG
 }
 
+void
 member(o, adr)
-struct Object *o;
-char *adr;
+	struct Object *o;
+	char *adr;
 {
 	struct Object *onew, *oold;
 	IFDEBUG(o)
-		printf("member(0x%x, %s)\n", o, adr);
+		printf("member(0x%p, %s)\n", o, adr);
 	ENDDEBUG
 	
 	oold = lookup(  o->obj_type, adr );
@@ -392,8 +405,9 @@ char *name;
 	return(o);
 }
 
+void
 AddCurrentEventName(x)
-register char **x;
+	register char **x;
 {
 	register char *n = EV_PREFIX; ;
 	
@@ -417,6 +431,7 @@ register char **x;
 	}
 }
 
+void
 dumptree(o,i)
 	register struct Object *o;
 	int i;
@@ -431,16 +446,16 @@ dumptree(o,i)
 		dumptree(o->obj_left, i+1);
 		for(j=0; j<i; j++) 
 			fputc(' ', stdout);
-		fprintf(stdout, "%3d 0x%x: %s\n", i,o, OBJ_NAME(o));
+		fprintf(stdout, "%3d 0x%p: %s\n", i,o, OBJ_NAME(o));
 		dumptree(o->obj_right, i+1);
 	}
 }
 
+void
 dump(c,a)
 {
 	register int x = 8;
 	int zero = 0;
-#include <sys/signal.h>
 
 	fprintf(stderr, "dump: c 0x%x, a 0x%x\n",c,a);
 
@@ -448,9 +463,10 @@ dump(c,a)
 	kill(0, SIGQUIT);
 }
 
+void
 dump_trans( pred, oldstate, newstate, action, event )
-struct Object *oldstate, *newstate, *event;
-char *pred, *action;
+	struct Object *oldstate, *newstate, *event;
+	char *pred, *action;
 {
 	extern int transno;
 	struct Object *o;
