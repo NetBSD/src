@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.41 1995/07/23 22:02:20 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.42 1995/07/23 22:09:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1227,10 +1227,8 @@ iestart(ifp)
 		}
 
 		IF_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == 0) {
-			ifp->if_flags &= ~IFF_OACTIVE;
+		if (m0 == 0)
 			break;
-		}
 
 		/* We need to use m->m_pkthdr.len, so require the header */
 		if ((m0->m_flags & M_PKTHDR) == 0)
