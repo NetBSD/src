@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.1 1996/08/25 23:41:03 jtk Exp $ */
+/*	$NetBSD: apmd.c,v 1.2 1996/09/13 01:10:15 jtk Exp $	*/
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  *
@@ -41,6 +41,8 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -70,7 +72,7 @@ extern int optreset;
 
 void usage (void);
 int power_status (int fd, int force, struct apm_power_info *pinfo);
-int bind_socket (const char *sn);
+int bind_socket (const char *sn, mode_t mode, uid_t uid, gid_t gid);
 enum apm_state handle_client(int sock_fd, int ctl_fd);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
@@ -88,7 +90,7 @@ sigexit(int signo)
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-d] [-t timo] [-s] [-a] [-f devfile] [-S sockfile]\n", __progname);
+    fprintf(stderr,"usage: %s [-d] [-t timo] [-s] [-a] [-f devfile] [-S sockfile]\n\t[-m sockmode] [-o sockowner]\n", __progname);
     exit(1);
 }
 
@@ -144,7 +146,7 @@ sockunlink(void)
 }
 
 int
-bind_socket(const char *sockname)
+bind_socket(const char *sockname, mode_t mode, uid_t uid, gid_t gid)
 {
     int sock;
     struct sockaddr_un s_un;
@@ -159,9 +161,10 @@ bind_socket(const char *sockname)
     /* remove it if present, we're moving in */
     (void) remove(sockname);
     if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
-	err(1, "cannot connect to APM socket");
-    if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
-	err(1, "cannot set socket mode/owner/group to 666/0/0");
+	err(1, "cannot create APM socket");
+    if (chmod(sockname, mode) == -1 || chown(sockname, uid, gid) == -1)
+	err(1, "cannot set socket mode/owner/group to %o/%d/%d",
+	    mode, uid, gid);
     listen(sock, 1);
     socketname = strdup(sockname);
     atexit(sockunlink);
@@ -300,10 +303,17 @@ main(int argc, char *argv[])
     struct apm_event_info apmevent;
     int suspends, standbys, resumes;
     int noacsleep = 0;
+    mode_t mode = 0660;
     struct timeval tv = {TIMO, 0}, stv;
     const char *sockname = sockfile;
+    char *user, *group;
+    char *scratch;
+    uid_t uid = 0;
+    gid_t gid = 0;
+    struct passwd *pw;
+    struct group *gr;
 
-    while ((ch = getopt(argc, argv, "qadsf:t:S:")) != -1)
+    while ((ch = getopt(argc, argv, "qadsf:t:S:m:o:")) != -1)
 	switch(ch) {
 	case 'q':
 	    speaker_ok = FALSE;
@@ -324,6 +334,38 @@ main(int argc, char *argv[])
 	    tv.tv_sec = strtoul(optarg, 0, 0);
 	    if (tv.tv_sec == 0)
 		usage();
+	    break;
+	case 'm':
+	    mode = strtoul(optarg, 0, 8);
+	    if (mode == 0)
+		usage();
+	    break;
+	case 'o':
+	    /* (user):(group) */
+	    user = optarg;
+	    group = strchr(user, ':');
+	    if (group)
+		*group++ = '\0';
+	    if (*user) {
+		uid = strtoul(user, &scratch, 0);
+		if (*scratch != '\0') {
+		    pw = getpwnam(user);
+		    if (pw)
+			uid = pw->pw_uid;
+		    else
+			errx(1, "user name `%s' unknown", user);
+		}
+	    }
+	    if (group && *group) {
+		gid = strtoul(group, &scratch, 0);
+		if (*scratch != '\0') {
+		    gr = getgrnam(group);
+		    if (gr)
+			gid = gr->gr_gid;
+		    else
+			errx(1, "group name `%s' unknown", group);
+		}
+	    }
 	    break;
 	case 's':			/* status only */
 	    statonly = 1;
@@ -352,7 +394,7 @@ main(int argc, char *argv[])
     (void) signal(SIGHUP, sigexit);
     (void) signal(SIGINT, sigexit);
 
-    sock_fd = bind_socket(sockname);
+    sock_fd = bind_socket(sockname, mode, uid, gid);
 
     FD_ZERO(&devfds);
     FD_SET(ctl_fd, &devfds);
