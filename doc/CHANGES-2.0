@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.308 2004/06/30 21:36:26 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.309 2004/07/01 21:52:48 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4684,4 +4684,12 @@ sys/arch/atari/conf/MILAN-PCIIDE			1.31
 	Add (commented out) ALTQ options to all GENERIC-like files.
 	Regenerate from master config files.
 	[abs, ticket #567]
+
+distrib/utils/sysinst/msg.mi.de				1.12
+	Translate language selection string.
+	[martin, ticket #568]
+
+sys/dev/raidframe/rf_driver.c				1.104
+	Remove a (redundant) check that was already performed in raidstart().
+	[oster, ticket #569]
 
