@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.8 1995/08/29 20:35:15 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.9 1995/09/23 20:31:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$Revision: 1.8 $";
+char version[] = "$Revision: 1.9 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -270,6 +270,14 @@ void get_sys_info()
 					default:
 						error("Unknown CPU-type");
 				}
+			}
+			if(jar[0] == 0x42504658) { /* BPFX	*/
+				unsigned long	*p;
+
+				p = (unsigned long*)jar[1];
+
+				kparam.ttmem_start = p[1];
+				kparam.ttmem_size  = p[2];
 			}
 			jar = &jar[2];
 		} while(jar[-2]);
