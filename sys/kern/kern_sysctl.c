@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.141 2003/08/14 05:14:52 itojun Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.142 2003/08/24 06:11:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.141 2003/08/14 05:14:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.142 2003/08/24 06:11:19 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -945,7 +945,8 @@ cleanup:
 		break;
 
 	case PROC_PID_LIMIT:
-		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
+		if (namelen != 4 || name[2] < 1 ||
+		    name[2] >= PROC_PID_LIMIT_MAXID)
 			return (EINVAL);
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
 		if (name[3] == PROC_PID_LIMIT_TYPE_HARD)
