@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.115 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: key.c,v 1.116 2004/04/26 03:54:28 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.115 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.116 2004/04/26 03:54:28 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2994,6 +2994,7 @@ key_setsaval(sav, m, mhp)
 		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
+		case SADB_X_SATYPE_TCPSIGNATURE:
 			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
 			    sav->alg_auth != SADB_X_AALG_NULL)
 				error = EINVAL;
@@ -3049,6 +3050,7 @@ key_setsaval(sav, m, mhp)
 			sav->key_enc = NULL;	/*just in case*/
 			break;
 		case SADB_SATYPE_AH:
+		case SADB_X_SATYPE_TCPSIGNATURE:
 		default:
 			error = EINVAL;
 			break;
@@ -3085,6 +3087,13 @@ key_setsaval(sav, m, mhp)
 		break;
 	case SADB_X_SATYPE_IPCOMP:
 		break;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		if (sav->alg_enc != SADB_EALG_NONE) {
+			ipseclog((LOG_DEBUG, "key_setsaval: protocol and "
+			    "algorithm mismatched.\n"));
+			error = EINVAL;
+			goto fail;
+		}
 	default:
 		ipseclog((LOG_DEBUG, "key_setsaval: invalid SA type.\n"));
 		error = EINVAL;
@@ -4605,7 +4614,8 @@ key_satype2proto(satype)
 		return IPPROTO_ESP;
 	case SADB_X_SATYPE_IPCOMP:
 		return IPPROTO_IPCOMP;
-		break;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		return IPPROTO_TCP;
 	default:
 		return 0;
 	}
@@ -4628,7 +4638,8 @@ key_proto2satype(proto)
 		return SADB_SATYPE_ESP;
 	case IPPROTO_IPCOMP:
 		return SADB_X_SATYPE_IPCOMP;
-		break;
+	case IPPROTO_TCP:
+		return SADB_X_SATYPE_TCPSIGNATURE;
 	default:
 		return 0;
 	}
@@ -7133,6 +7144,7 @@ key_parse(m, so)
 	case SADB_SATYPE_AH:
 	case SADB_SATYPE_ESP:
 	case SADB_X_SATYPE_IPCOMP:
+	case SADB_X_SATYPE_TCPSIGNATURE:
 		switch (msg->sadb_msg_type) {
 		case SADB_X_SPDADD:
 		case SADB_X_SPDDELETE:
