@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.60 1998/03/28 06:39:14 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.61 1998/04/16 19:48:15 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.55 1998/03/28 06:38:46 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.56 1998/04/16 19:46:03 drochner Exp 
  */
 
 /*
@@ -922,6 +922,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Miami/PCI",
 	},
 	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
+	    0,
+	    "IDT",
+	    "77201/77211 ATM (\"NICStAR\")",
+	},
+	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
 	    0,
 	    "Integrated Micro Solutions",
@@ -1634,6 +1640,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America",
 	    "R4x00 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
+	    0,
+	    "Toshiba America",
+	    "TC35856F ATM (\"Meteor\")",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
