@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.81 2001/08/04 04:28:49 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.82 2001/08/19 18:09:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2001/08/04 04:28:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82 2001/08/19 18:09:22 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,6 +332,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_remove(pmap_kernel(), addr, addr + len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
