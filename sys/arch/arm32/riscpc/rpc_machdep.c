@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.2 1997/10/17 00:12:40 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.3 1998/01/18 04:55:20 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -191,6 +191,7 @@ extern void consinit			__P((void));
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
@@ -214,9 +215,6 @@ void rpc_sa110_kickstart	__P((void));
 extern void parse_mi_bootargs		__P((char *args));
 void parse_rpc_bootargs		__P((char *args));
 
-#ifdef PMAP_DEBUG
-extern void pmap_debug	__P((int level));
-#endif	/* PMAP_DEBUG */
 extern void dumpsys	__P((void));
 extern void hydrastop	__P((void));
 
@@ -454,7 +452,6 @@ initarm(bootconf)
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_BASE;
 	int id;
-	u_int cache_clean_addr;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
