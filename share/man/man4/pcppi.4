@@ -1,4 +1,4 @@
-.\" $NetBSD: pcppi.4,v 1.4 2001/09/22 15:58:14 wiz Exp $
+.\" $NetBSD: pcppi.4,v 1.5 2001/10/02 20:37:00 augustss Exp $
 .Dd April 21, 1999
 .Os
 .Dt PCPPI 4
@@ -6,11 +6,13 @@
 .Nm pcppi
 .Nd PC (ISA) control and timer port driver
 .Sh SYNOPSIS
-.Cd pcppi* at isa?
-.Cd isabeep* at pcppi?
+.Cd "pcppi*   at isa?"
+.Cd "isabeep* at pcppi?"
 (alpha only)
-.Cd sysbeep* at pcppi?
+.Cd "sysbeep* at pcppi?"
 (i386 only)
+.Cd "spkr0    at pcppi?"
+.Cd "midi*    at pcppi?"
 .Sh DESCRIPTION
 The
 .Nm
