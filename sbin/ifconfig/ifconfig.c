@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.122 2002/04/25 09:39:17 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.123 2002/05/06 20:14:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.122 2002/04/25 09:39:17 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.123 2002/05/06 20:14:36 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -2681,8 +2681,8 @@ setatrange(range, d)
 	u_short	first = 123, last = 123;
 
 	if (sscanf(range, "%hu-%hu", &first, &last) != 2
-	    || first == 0 || first > 0xffff
-	    || last == 0 || last > 0xffff || first > last)
+	    || first == 0 /* || first > 0xffff */
+	    || last == 0 /* || last > 0xffff */ || first > last)
 		errx(1, "%s: illegal net range: %u-%u", range, first, last);
 	at_nr.nr_firstnet = htons(first);
 	at_nr.nr_lastnet = htons(last);
