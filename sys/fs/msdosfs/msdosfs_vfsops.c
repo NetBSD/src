@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.16 2004/04/27 17:37:30 jrf Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.17 2004/05/25 04:44:43 atatat Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.16 2004/04/27 17:37:30 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.17 2004/05/25 04:44:43 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1043,7 +1043,8 @@ SYSCTL_SETUP(sysctl_vfs_msdosfs_setup, "sysctl vfs.msdosfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "msdosfs", NULL,
+		       CTLTYPE_NODE, "msdosfs",
+		       SYSCTL_DESCR("MS-DOS file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 4, CTL_EOL);
 	/*

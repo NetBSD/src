@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.138 2004/05/22 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.139 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.138 2004/05/22 22:52:16 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.139 2004/05/25 04:44:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -995,7 +995,8 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "nfs", NULL,
+		       CTLTYPE_NODE, "nfs",
+		       SYSCTL_DESCR("NFS vfs options"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 2, CTL_EOL);
 	/*
@@ -1006,12 +1007,14 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "nfsstats", NULL,
+		       CTLTYPE_STRUCT, "nfsstats",
+		       SYSCTL_DESCR("NFS operation statistics"),
 		       NULL, 0, &nfsstats, sizeof(nfsstats), 
 		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "iothreads", NULL,
+		       CTLTYPE_INT, "iothreads",
+		       SYSCTL_DESCR("Number of NFS client processes desired"),
 		       sysctl_vfs_nfs_iothreads, 0, &nfs_niothreads, 0,
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
 }

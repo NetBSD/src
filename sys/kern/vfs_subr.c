@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.225 2004/05/06 22:01:14 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.226 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.225 2004/05/06 22:01:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.226 2004/05/25 04:44:44 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2108,20 +2108,24 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic", NULL,
+		       CTLTYPE_NODE, "generic",
+		       SYSCTL_DESCR("Non-specific vfs related information"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_EOL);
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "maxtypenum", NULL,
+		       CTLTYPE_INT, "maxtypenum",
+		       SYSCTL_DESCR("Highest valid filesystem type number"),
 		       NULL, nmountcompatnames, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount", NULL,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
 		       NULL, 0, &dovfsusermount, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -2133,7 +2137,8 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "conf", NULL,
+		       CTLTYPE_STRUCT, "conf",
+		       SYSCTL_DESCR("Filesystem configuration information"),
 		       sysctl_vfs_generic_conf, 0, NULL,
 		       sizeof(struct vfsconf),
 		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.150 2004/05/20 05:39:35 atatat Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.151 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.150 2004/05/20 05:39:35 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.151 2004/05/25 04:44:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1708,7 +1708,7 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 	return (0);
 }
 
-SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
+SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 {
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
 
@@ -1719,7 +1719,8 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "lfs", NULL,
+		       CTLTYPE_NODE, "lfs",
+		       SYSCTL_DESCR("Log-structured file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 5, CTL_EOL);
 	/*
@@ -1740,7 +1741,8 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
 		       CTL_VFS, 5, LFS_CLEAN_VNHEAD, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "dostats", NULL,
+		       CTLTYPE_INT, "dostats",
+		       SYSCTL_DESCR("Maintain statistics on LFS operations"),
 		       sysctl_lfs_dostats, 0, &lfs_dostats, 0,
 		       CTL_VFS, 5, LFS_DOSTATS, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.17 2004/05/22 23:17:04 christos Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.18 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.17 2004/05/22 23:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.18 2004/05/25 04:44:44 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -281,7 +281,8 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "layerfs", NULL,
+		       CTLTYPE_NODE, "layerfs",
+		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.12 2004/05/04 13:26:58 jrf Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.13 2004/05/25 04:44:43 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.12 2004/05/04 13:26:58 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.13 2004/05/25 04:44:43 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -743,7 +743,8 @@ SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "filecore", NULL,
+		       CTLTYPE_NODE, "filecore",
+		       SYSCTL_DESCR("Acorn FILECORE file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 19, CTL_EOL);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.70 2004/05/20 05:39:34 atatat Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.71 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.70 2004/05/20 05:39:34 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.71 2004/05/25 04:44:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1079,7 +1079,8 @@ SYSCTL_SETUP(sysctl_vfs_ext2fs_setup, "sysctl vfs.ext2fs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ext2fs", NULL,
+		       CTLTYPE_NODE, "ext2fs",
+		       SYSCTL_DESCR("Linux EXT2FS file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 17, CTL_EOL);
 	/*

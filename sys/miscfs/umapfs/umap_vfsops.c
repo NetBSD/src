@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.45 2004/04/29 16:10:56 jrf Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.46 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.45 2004/04/29 16:10:56 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.46 2004/05/25 04:44:44 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,8 @@ SYSCTL_SETUP(sysctl_vfs_umap_setup, "sysctl vfs.umap subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "umap", NULL,
+		       CTLTYPE_NODE, "umap",
+		       SYSCTL_DESCR("UID/GID remapping file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 10, CTL_EOL);
 	/*

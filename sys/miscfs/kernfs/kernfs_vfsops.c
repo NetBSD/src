@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.61 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.62 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.61 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.62 2004/05/25 04:44:44 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -316,7 +316,8 @@ SYSCTL_SETUP(sysctl_vfs_kernfs_setup, "sysctl vfs.kern subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kernfs", NULL,
+		       CTLTYPE_NODE, "kernfs",
+		       SYSCTL_DESCR("/kern file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 11, CTL_EOL);
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.55 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.56 2004/05/25 04:44:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.55 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.56 2004/05/25 04:44:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -345,7 +345,8 @@ SYSCTL_SETUP(sysctl_vfs_procfs_setup, "sysctl vfs.procfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "procfs", NULL,
+		       CTLTYPE_NODE, "procfs",
+		       SYSCTL_DESCR("Process file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 12, CTL_EOL);
 	/*
