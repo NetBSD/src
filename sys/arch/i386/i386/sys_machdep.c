@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.8 1994/01/11 17:35:04 mycroft Exp $
+ *	$Id: sys_machdep.c,v 1.9 1994/01/11 19:19:05 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -221,6 +221,7 @@ i386_set_ldt(p, args, retval)
 	if (!pcb->pcb_ldt) {
 		union descriptor *new_ldt =
 			(union descriptor *)kmem_alloc(kernel_map, 512*sizeof(union descriptor));
+		bzero(new_ldt, 512*sizeof(union descriptor));
 		bcopy(ldt, new_ldt, sizeof(ldt));
 		pcb->pcb_ldt = (caddr_t)new_ldt;
 		pcb->pcb_ldt_len = 512;		/* XXX need to grow */
