@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/09/29 03:44:04 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2001/09/29 03:50:13 minoura Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -14,7 +14,7 @@ SRCS+=		printf.c snprintf.c sprintf.c subr_prf.c twiddle.c vsprintf.c
 SRCS+=		close.c closeall.c cread.c dev.c fstat.c ioctl.c lseek.c
 SRCS+=		open.c read.c stat.c
 SRCS+=		loadfile.c
-SRCS+=		cd9660.c lfs.c nfs.c ufs.c ustarfs.c
+SRCS+=		cd9660.c lfs.c nfs.c ufs.c ufs_ls.c ustarfs.c
 #SRCS+=		arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
 #SRCS+=		bootp.c
 

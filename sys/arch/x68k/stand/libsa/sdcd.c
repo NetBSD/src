@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.2 2001/09/29 03:50:13 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -187,15 +187,33 @@ readdisklabel (int id)
 }
 
 int
-sd_getpartition (int id, unsigned parttop)
+sd_getbsdpartition (int id, int humanpart)
 {
 	int error, i;
+	char *buffer;
+	struct dos_partition *parttbl;
+	unsigned parttop;
+
+	if (humanpart < 2)
+		humanpart++;
 
 	error = readdisklabel(id);
 	if (error) {
 		printf ("Reading disklabel: %s\n", strerror(error));
 		return -1;
 	}
+	buffer = alloca(2048);
+	error = IOCS_S_READ(8 >> current_blklen, 8 >> current_blklen,
+			    id, current_blklen, buffer);
+	if (error < 0) {
+		printf ("Reading partition table: %s\n", strerror(error));
+		return -1;
+	}
+	parttbl = (void*) (buffer + DOSBBSECTOR);
+	if (strncmp (buffer, "X68K", 4) != 0)
+		return 0;
+	parttop = parttbl[humanpart].dp_start;
+	parttop = parttop<<(2-current_blklen);
 
 	for (i = 0; i < current_npart; i++) {
 		if (partitions[i].start == parttop)
