@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2000/05/26 21:20:16 thorpej Exp $ */
+/*	$NetBSD: proc.h,v 1.8 2003/01/03 15:12:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@ struct mdproc {
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
 	u_long	md_flags;
-	int	md_fpumid;		/* Module ID of last FPU used */
+	struct cpu_info	*md_fpu;	/* Module holding FPU state */
 };
 
 /* md_flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2002/12/16 16:59:13 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.65 2003/01/03 15:12:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -231,11 +231,21 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-	if (p1->p_md.md_fpstate) {
-		if (p1 == cpuinfo.fpproc)
-			savefpstate(p1->p_md.md_fpstate);
-		else if (p1->p_md.md_fpumid != -1)
-			panic("FPU on module %d; fix this", p1->p_md.md_fpumid);
+	if (p1->p_md.md_fpstate != NULL) {
+		struct cpu_info *cpi;
+		if ((cpi = p1->p_md.md_fpu) != NULL) {
+			if (cpi->fpproc != p1)
+				panic("FPU(%d): fpproc %p",
+					cpi->ci_cpuid, cpi->fpproc);
+			if (p1 == cpuinfo.fpproc)
+				savefpstate(p1->p_md.md_fpstate);
+#if defined(MULTIPROCESSOR)
+			else
+				xcall((xcall_func_t)savefpstate,
+					(int)p1->p_md.md_fpstate, 0, 0, 0,
+					1 << cpi->ci_cpuid);
+#endif
+		}
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
@@ -243,7 +253,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	} else
 		p2->p_md.md_fpstate = NULL;
 
-	p2->p_md.md_fpumid = -1;
+	p2->p_md.md_fpu = NULL;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
@@ -303,9 +313,19 @@ cpu_exit(p)
 	struct fpstate *fs;
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == cpuinfo.fpproc) {
-			savefpstate(fs);
-			cpuinfo.fpproc = NULL;
+		struct cpu_info *cpi;
+		if ((cpi = p->p_md.md_fpu) != NULL) {
+			if (cpi->fpproc != p)
+				panic("FPU(%d): fpproc %p",
+					cpi->ci_cpuid, cpi->fpproc);
+			if (p == cpuinfo.fpproc)
+				savefpstate(fs);
+#if defined(MULTIPROCESSOR)
+			else
+				xcall((xcall_func_t)savefpstate,
+					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+#endif
+			cpi->fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
