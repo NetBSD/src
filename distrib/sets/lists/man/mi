@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.552 2003/03/09 13:50:58 he Exp $
+# $NetBSD: mi,v 1.553 2003/03/20 22:00:20 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1440,6 +1440,7 @@
 ./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/w95boot.0		man-sys-catman
 ./usr/share/man/cat8/identd.0			man-netutil-catman
 ./usr/share/man/cat8/ifconfig.0			man-netutil-catman
@@ -3224,6 +3225,7 @@
 ./usr/share/man/man8/i386/dosboot.8		man-sys-man
 ./usr/share/man/man8/i386/installboot.8		man-sysutil-man
 ./usr/share/man/man8/i386/makedev.8		man-sysutil-man
+./usr/share/man/man8/i386/pxeboot.8		man-sys-man
 ./usr/share/man/man8/i386/w95boot.8		man-sys-man
 ./usr/share/man/man8/identd.8			man-netutil-man
 ./usr/share/man/man8/ifconfig.8			man-netutil-man
