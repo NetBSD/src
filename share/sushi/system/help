@@ -26,4 +26,8 @@ Security.conf is the configuration for the security verification script that
 is optionally executed by the daily cronjob.  You may configure which 
 security verifications are run on a daily basis by editing this file.
 
-$NetBSD: help,v 1.1 2001/03/06 21:48:08 garbled Exp $
+The sysctl menu allows you to both change current kernel settings, and
+cause them to be automatically set on reboot using the /etc/sysctl.conf
+file. 
+
+$NetBSD: help,v 1.2 2001/04/26 02:44:47 garbled Exp $
