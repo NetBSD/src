@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.29 2004/07/18 21:24:52 chs Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.30 2004/10/12 22:17:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.29 2004/07/18 21:24:52 chs Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.30 2004/10/12 22:17:56 mycroft Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -423,20 +423,12 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 		break;
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_SUSPENDED:
-	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
 		 * The register state of the thread is in the ucontext_t 
 		 * of the thread structure.
 		 */
-		if (tmp == _PT_STATE_BLOCKED_SYS) {
-			val = READ(thread->proc, 
-			    thread->addr + offsetof(struct __pthread_st, pt_blockuc),
-			    &addr, sizeof(addr));
-			if (val != 0)
-				return val;
-		} else
-			addr = 0;
+		addr = 0;
 		if (addr == 0) {
 			val = READ(thread->proc, 
 			    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
@@ -477,6 +469,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 			return TD_ERR_INVAL;
 		}
 		break;
+	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_ZOMBIE:
 	default:
 		return TD_ERR_BADTHREAD;
@@ -519,7 +512,6 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		break;
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_SUSPENDED:
-	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
 		 * The register state of the thread is in the ucontext_t 
@@ -528,14 +520,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		 * Fetch the uc first, since there is state in it
 		 * besides the registers that should be preserved.
 		 */
-		if (tmp == _PT_STATE_BLOCKED_SYS) {
-			val = READ(thread->proc, 
-			    thread->addr + offsetof(struct __pthread_st, pt_blockuc),
-			    &addr, sizeof(addr));
-			if (val != 0)
-				return val;
-		} else
-			addr = 0;
+		addr = 0;
 		if (addr == 0) {
 			val = READ(thread->proc, 
 			    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
@@ -579,6 +564,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 
 		break;
+	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_ZOMBIE:
 	default:
 		return TD_ERR_BADTHREAD;
