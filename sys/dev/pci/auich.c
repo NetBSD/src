@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.9 2002/02/02 11:13:44 augustss Exp $	*/
+/*	$NetBSD: auich.c,v 1.10 2002/02/14 03:22:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.9 2002/02/02 11:13:44 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.10 2002/02/14 03:22:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fixed_rate = 0;
 	} else {
 		sc->sc_fixed_rate = 48000;
+		printf("%s: warning, fixed rate codec\n", sc->sc_dev.dv_xname);
 	}
 
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
@@ -669,6 +670,15 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		    sc->sc_fixed_rate ? sc->sc_fixed_rate : p->sample_rate);
 		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
 		p->sample_rate = rate;
+		if (sc->sc_fixed_rate) {
+			p->sample_rate = sc->sc_fixed_rate;
+		} else {
+			auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+			    p->sample_rate);
+			auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+			    &rate);
+			p->sample_rate = rate;
+                }
 
 		auich_write_codec(sc, AC97_REG_POWER, val);
 	}
