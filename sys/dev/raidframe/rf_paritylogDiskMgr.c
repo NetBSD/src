@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.6 2000/01/07 03:41:01 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.7 2000/01/08 01:18:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -640,14 +640,11 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_SHUTDOWN;
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
-#if defined(__NetBSD__) && defined(_KERNEL)
+
 	/*
          * In the NetBSD kernel, the thread must exit; returning would
          * cause the proc trampoline to attempt to return to userspace.
          */
 	kthread_exit(0);	/* does not return */
-#else
-	return (0);
-#endif
 }
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
