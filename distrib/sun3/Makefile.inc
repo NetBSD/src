@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1995/10/08 23:07:45 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1995/10/13 16:01:02 gwr Exp $
 
-# Revision is 1.0
-REV=	10
+# Revision is 1.1
+REV=	11
 
 LDSTATIC=	-static
 
