@@ -9,7 +9,7 @@
 @c I hope this is the right category
 @dircategory Programming Languages
 @direntry
-* Gawk: (gawk).           A Text Scanning and Processing Language.
+* Gawk: (awk).           A Text Scanning and Processing Language.
 @end direntry
 @end ifinfo
 
