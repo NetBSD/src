@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.19 1998/07/26 22:15:38 mycroft Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.20 1999/08/16 03:02:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.19 1998/07/26 22:15:38 mycroft Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.20 1999/08/16 03:02:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ yp_passwd(username)
 	}
 
 	/*
-	 * Be sure the port is priviledged
+	 * Be sure the port is privileged
 	 */
 	if (rpcport >= IPPORT_RESERVED)
 		errx(1, "yppasswd daemon is on an invalid port.");

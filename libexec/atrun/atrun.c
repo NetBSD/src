@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.6 1999/02/12 15:04:00 kleink Exp $	*/
+/*	$NetBSD: atrun.c,v 1.7 1999/08/16 03:08:33 simonb Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -70,7 +70,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.6 1999/02/12 15:04:00 kleink Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.7 1999/08/16 03:08:33 simonb Exp $");
 #endif
 
 static int debug = 0;
@@ -407,7 +407,7 @@ main(argc, argv)
 
 	/*
 	 * We don't need root privileges all the time; running under uid
-	 * and gid nobody is fine except for priviledged operations.
+	 * and gid nobody is fine except for privileged operations.
 	 */
 	RELINQUISH_PRIVS_ROOT(NOBODY_UID, NOBODY_GID)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.18 1999/03/25 00:41:46 mrg Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.19 1999/08/16 02:59:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,7 +204,7 @@ sunos_sendsig(catcher, sig, mask, code)
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 int

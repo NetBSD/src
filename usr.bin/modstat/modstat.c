@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.13 1999/06/15 15:04:40 christos Exp $	*/
+/*	$NetBSD: modstat.c,v 1.14 1999/08/16 03:02:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.13 1999/06/15 15:04:40 christos Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.14 1999/08/16 03:02:46 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -176,7 +176,7 @@ main(argc, argv)
 	if ((devfd = open(_PATH_LKM, O_RDONLY, 0)) == -1)
 		err(2, _PATH_LKM);
 
-	/* get rid of our priviledges now */
+	/* get rid of our privileges now */
 	setgid(getgid());
 
 	atexit(cleanup);
