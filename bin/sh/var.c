@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.25 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: var.c,v 1.26 2000/12/20 00:15:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.25 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: var.c,v 1.26 2000/12/20 00:15:10 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ const struct varinit varinit[] = {
 	  NULL },
 	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
 	  NULL },
-	{ &vpath,	VSTRFIXED|VTEXTFIXED,		__CONCAT("PATH=",_PATH_DEFPATH),
+	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=" _PATH_DEFPATH,
 	  changepath },
 	/*
 	 * vps1 depends on uid
