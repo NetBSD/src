@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.10 2001/04/16 14:12:38 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.11 2001/05/14 23:45:39 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.10 2001/04/16 14:12:38 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.11 2001/05/14 23:45:39 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -444,12 +444,15 @@ setstatclockrate(int hzrate)
 }
 
 void
-microtime(struct timeval *tv)
+microtime(struct timeval *tvp)
 {
+	static struct timeval lasttime;
+	struct timeval t;
 	struct device *self;
 	struct ioc_softc *sc;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	long sec, usec;
 	int t0, s, intbefore, intafter;
 
 	KASSERT(the_ioc != NULL);
@@ -461,7 +464,7 @@ microtime(struct timeval *tv)
 
 	s = splclock();
 
-	*tv = time;
+	t = time;
 
 	intbefore = ioc_irq_status(IOC_IRQ_TM0);
 	bus_space_write_1(bst, bsh, IOC_T0LATCH, 0);
@@ -477,17 +480,45 @@ microtime(struct timeval *tv)
 	 * Things are complicated by the fact that this could happen
 	 * while we're trying to work out the time.  We include some
 	 * heuristics to spot this.
+	 *
+	 * NB: t0 counts down from t0_count to 0.
 	 */
-	
+
 	if (intbefore || (intafter && t0 < t0_count / 2))
 		t0 -= t0_count;
 
-	tv->tv_usec += (t0_count - t0) / (IOC_TIMER_RATE / 1000000);
-	
-	while (tv->tv_usec > 1000000) {
-		tv->tv_sec += 1;
-		tv->tv_usec -= 1000000;
+	t.tv_usec += (t0_count - t0) / (IOC_TIMER_RATE / 1000000);
+
+	while (t.tv_usec > 1000000) {
+		t.tv_usec -= 1000000;
+		t.tv_sec++;
 	}
+
+	/*
+	 * Ordinarily, the current clock time is guaranteed to be later
+	 * by at least one microsecond than the last time the clock was
+	 * read.  However, this rule applies only if the current time is
+	 * within one second of the last time.  Otherwise, the clock will
+	 * (shudder) be set backward.  The clock adjustment daemon or
+	 * human equivalent is presumed to be correctly implemented and
+	 * to set the clock backward only upon unavoidable crisis.
+	 */
+	sec = lasttime.tv_sec - t.tv_sec;
+	usec = lasttime.tv_usec - t.tv_usec;
+	if (usec < 0) {
+		usec += 1000000;
+		sec--;
+	}
+	if (sec == 0) {
+		t.tv_usec += usec + 1;
+		if (t.tv_usec >= 1000000) {
+			t.tv_usec -= 1000000;
+			t.tv_sec++;
+		}
+	}
+	lasttime = t;
+
+	*tvp = t;
 }
 
 void
