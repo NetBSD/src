@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.27 2000/01/21 23:29:03 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.28 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1287,12 +1287,12 @@ out:
 	if (bp->b_flags & B_READ)
 		dmaflags |= DMAGO_READ;
 	if ((hs->sc_flags & SCSI_DMA32) &&
-	    ((int)bp->b_un.b_addr & 3) == 0 && (bp->b_bcount & 3) == 0) {
+	    ((int)bp->b_data & 3) == 0 && (bp->b_bcount & 3) == 0) {
 		cmd |= CSR_DMA32;
 		dmaflags |= DMAGO_LWORD;
 	} else
 		dmaflags |= DMAGO_WORD;
-	dmago(hs->sc_dq.dq_chan, bp->b_un.b_addr, bp->b_bcount, dmaflags);
+	dmago(hs->sc_dq.dq_chan, bp->b_data, bp->b_bcount, dmaflags);
 
 	if (bp->b_flags & B_READ) {
 		cmd |= CSR_DMAIN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2000/02/10 12:33:45 tsubai Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2000/05/19 18:54:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -529,7 +529,7 @@ readdisklabel(dev, strat, lp, osdep)
 	else {
 		u_int16_t *sbSigp;
 
-		sbSigp = (u_int16_t *)bp->b_un.b_addr;
+		sbSigp = (u_int16_t *)bp->b_data;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))

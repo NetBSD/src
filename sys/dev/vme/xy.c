@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.21 2000/05/16 05:45:53 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.22 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*
  *
@@ -229,7 +229,7 @@ xydummystrat(bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_un.b_addr, XYFM_BPS);
+	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }

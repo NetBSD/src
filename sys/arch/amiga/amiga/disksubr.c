@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 2000/05/16 05:45:44 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.35 2000/05/19 18:54:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -79,7 +79,7 @@ struct rdbmap {
 	} tab[0];
 };
 
-#define baddr(bp) (void *)((bp)->b_un.b_addr)
+#define baddr(bp) (void *)((bp)->b_data)
 
 u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.9 2000/04/05 11:37:13 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.10 2000/05/19 18:54:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1056,8 +1056,8 @@ fdstrategy(bp)
 		printf("     struct buf is at %p\n", bp);
 		printf("     Allocated buffer size (b_bufsize): 0x0%lx\n",
 		    bp->b_bufsize);
-		printf("     Base address of buffer (b_un.b_addr): %p\n",
-		    bp->b_un.b_addr);
+		printf("     Base address of buffer (b_data): %p\n",
+		    bp->b_data);
 		printf("     Bytes to be transferred (b_bcount): 0x0%lx\n",
 		    bp->b_bcount);
 		printf("     Remaining I/O (b_resid): 0x0%lx\n",
@@ -1266,7 +1266,7 @@ fdstart_Init(fd)
 		iwmMotor(fd->unit, 1);
 		fd->state |= IWM_FD_MOTOR_ON;
 	}
-	fd->current_buffer = bp->b_un.b_addr;
+	fd->current_buffer = bp->b_data;
 
 	/* XXX - assumes blocks of 512 bytes */
 	fd->startBlk = bp->b_blkno;
@@ -1667,7 +1667,7 @@ fdstart_Exit(fd)
 		printf(" fdstart() finished job; fd->iwmErr = %d, b_error = %d",
 		    fd->iwmErr, bp->b_error);
 		if (DISABLED)
-			hexDump(bp->b_un.b_addr, bp->b_bcount);
+			hexDump(bp->b_data, bp->b_bcount);
 	}
 	/*
 	 * Remove requested buf from beginning of queue

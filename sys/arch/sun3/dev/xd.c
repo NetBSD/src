@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.27 2000/05/16 05:45:51 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.28 2000/05/19 18:54:28 thorpej Exp $	*/
 
 /*
  *
@@ -294,7 +294,7 @@ xddummystrat(bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_un.b_addr, XDFM_BPS);
+	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }

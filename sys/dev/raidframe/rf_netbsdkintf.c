@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.78 2000/05/19 04:53:25 minoura Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.79 2000/05/19 18:54:30 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1614,7 +1614,7 @@ raidstart(raidPtr)
 		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
 				      do_async, raid_addr, num_blocks,
-				      bp->b_un.b_addr, bp, NULL, NULL, 
+				      bp->b_data, bp, NULL, NULL, 
 				      RF_DAG_NONBLOCKING_IO, NULL, NULL, NULL);
 
 
@@ -1853,7 +1853,7 @@ InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
 	bp->b_dev = dev;
-	bp->b_un.b_addr = buf;
+	bp->b_data = buf;
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
@@ -2116,7 +2116,7 @@ raidread_component_label(dev, b_vp, clabel)
 	error = biowait(bp); 
 
 	if (!error) {
-		memcpy(clabel, bp->b_un.b_addr,
+		memcpy(clabel, bp->b_data,
 		       sizeof(RF_ComponentLabel_t));
 #if 0
 		rf_print_component_label( clabel );
@@ -2151,9 +2151,9 @@ raidwrite_component_label(dev, b_vp, clabel)
 	bp->b_flags = B_BUSY | B_WRITE;
  	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
-	memset( bp->b_un.b_addr, 0, RF_COMPONENT_INFO_SIZE );
+	memset(bp->b_data, 0, RF_COMPONENT_INFO_SIZE );
 
-	memcpy( bp->b_un.b_addr, clabel, sizeof(RF_ComponentLabel_t));
+	memcpy(bp->b_data, clabel, sizeof(RF_ComponentLabel_t));
 
 	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	error = biowait(bp); 

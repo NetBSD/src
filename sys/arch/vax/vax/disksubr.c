@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2000/03/30 11:37:24 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2000/05/19 18:54:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -137,7 +137,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
-		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -217,7 +217,7 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -261,9 +261,9 @@ disk_reallymapin(bp, map, reg, flag)
 	int pfnum, npf, o, i;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 	p = bp->b_proc;
 
 	/*

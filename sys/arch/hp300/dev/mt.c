@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.13 2000/03/23 06:37:24 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.14 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -768,7 +768,7 @@ mtgo(arg)
 	bp = BUFQ_FIRST(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
-	    bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
+	    bp->b_data, bp->b_bcount, rw, rw != 0);
 }
 
 void

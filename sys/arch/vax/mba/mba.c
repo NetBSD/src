@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.18 2000/01/24 02:40:36 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.19 2000/05/19 18:54:29 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -292,7 +292,7 @@ mbastart(sc)
 	    0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
-	mr->mba_var = ((u_int)bp->b_un.b_addr & VAX_PGOFSET);
+	mr->mba_var = ((u_int)bp->b_data & VAX_PGOFSET);
 	mr->mba_bc = (~bp->b_bcount) + 1;
 	(*md->md_start)(md);		/* machine-dependent start */
 }

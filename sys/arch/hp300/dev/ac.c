@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.11 1998/01/12 18:30:41 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.12 2000/05/19 18:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ accommand(dev, command, bufp, buflen)
 	}
 	bp->b_flags = B_BUSY|B_READ;
 	bp->b_dev = dev;
-	bp->b_un.b_addr = bufp;
+	bp->b_data = bufp;
 	bp->b_bcount = buflen;
 	bp->b_resid = 0;
 	bp->b_blkno = 0;

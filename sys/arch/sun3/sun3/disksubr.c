@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2000/05/16 05:45:51 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2000/05/19 18:54:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -107,7 +107,7 @@ readdisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 	if (!error) {
 		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_un.b_addr, clp->cd_block, sizeof(clp->cd_block));
+		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
@@ -208,7 +208,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_un.b_addr, sizeof(clp->cd_block));
+	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;
