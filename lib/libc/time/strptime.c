@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.2 1997/04/23 00:01:17 jtc Exp $	*/
+/*	$NetBSD: strptime.c,v 1.1 1997/04/23 01:18:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Powerdog Industries.  All rights reserved.
@@ -38,7 +38,7 @@ static char copyright[] =
 "@(#) Copyright (c) 1994 Powerdog Industries.  All rights reserved.";
 static char sccsid[] = "@(#)strptime.c  0.1 (Powerdog) 94/03/27";
 #else
-static char rcsid[] = "$NetBSD: strptime.c,v 1.2 1997/04/23 00:01:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: strptime.c,v 1.1 1997/04/23 01:18:06 mrg Exp $";
 #endif
 #endif /* not lint */
 
