@@ -1,6 +1,6 @@
-#	$NetBSD: majors.malta,v 1.1.2.3 2002/07/14 17:46:08 gehenna Exp $
+#	$NetBSD: majors.evbmips,v 1.1.2.1 2002/08/30 01:27:46 gehenna Exp $
 #
-# Device majors for malta
+# Device majors for evbmips
 #
 
 device-major	cons		char 0
@@ -20,6 +20,8 @@ device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
 
 device-major	lkm		char 16			lkm
+device-major	sbjcn		char 17			jtagconsole
+device-major	sbscn		char 17			sbscn & !jtagconsole
 
 device-major	audio		char 24			audio
 device-major	wsdisplay	char 25			wsdisplay
@@ -67,3 +69,7 @@ device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
 device-major	systrace	char 70			systrace
+device-major	kttcp		char 71			kttcp
+device-major	wsfont		char 72			wsfont
+device-major	aucom		char 73			aucom
+device-major	sysmon		char 74			sysmon
