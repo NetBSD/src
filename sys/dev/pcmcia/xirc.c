@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.3 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.4 2004/08/09 16:05:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.3 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.4 2004/08/09 16:05:00 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -107,6 +107,7 @@ struct xirc_softc {
 	void *sc_ih;			/* interrupt handle */
 
 	u_int16_t sc_id;
+	u_int8_t sc_mako_intmask;
 	int sc_chipset;
 
 	/*
@@ -144,14 +145,14 @@ int	xirc_print __P((void *, const char *));
 
 int	xirc_manfid_ciscallback __P((struct pcmcia_tuple *, void *));
 struct pcmcia_config_entry *
-	xirc_mohawk_alloc __P((struct xirc_softc *));
+	xirc_mako_alloc __P((struct xirc_softc *));
 struct pcmcia_config_entry *
 	xirc_dingo_alloc_modem __P((struct xirc_softc *));
 struct pcmcia_config_entry *
 	xirc_dingo_alloc_ethernet __P((struct xirc_softc *));
 
-int	xirc_enable __P((struct xirc_softc *, int));
-void	xirc_disable __P((struct xirc_softc *, int));
+int	xirc_enable __P((struct xirc_softc *, int, int));
+void	xirc_disable __P((struct xirc_softc *, int, int));
 
 int	xirc_intr __P((void *));
 
@@ -174,7 +175,7 @@ xirc_match(parent, match, aux)
 		return (1);
 
 	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
-	    (pa->product & ((XIMEDIA_ETHER | XIMEDIA_MODEM) << 8)) != 0)
+	    (pa->product & (XIMEDIA_ETHER << 8)) != 0)
 		return (2);
 
 	return (0);
@@ -245,7 +246,7 @@ xirc_attach(parent, self, aux)
 					    self->dv_xname);
 			}
 		} else {
-			cfe = xirc_mohawk_alloc(sc);
+			cfe = xirc_mako_alloc(sc);
 			if (!cfe) {
 				aprint_error("%s: failed to allocate I/O\n",
 				    self->dv_xname);
@@ -265,6 +266,8 @@ xirc_attach(parent, self, aux)
 		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto fail;
 	}
+
+	sc->sc_mako_intmask = 0xee;
 
 	if (sc->sc_id & (XIMEDIA_MODEM << 8))
 		sc->sc_modem = config_found(self, "com", xirc_print);
@@ -302,7 +305,7 @@ xirc_manfid_ciscallback(tuple, arg)
 }
 
 struct pcmcia_config_entry *
-xirc_mohawk_alloc(sc)
+xirc_mako_alloc(sc)
 	struct xirc_softc *sc;
 {
 	struct pcmcia_config_entry *cfe;
@@ -317,9 +320,9 @@ xirc_mohawk_alloc(sc)
 			continue;
 
 		if (pcmcia_io_alloc(sc->sc_pf, cfe->iospace[0].start+8,
-		    XI_IOSIZE, XI_IOSIZE, &sc->sc_ethernet_pcioh) &&
+		    XI_IOSIZE+2, XI_IOSIZE, &sc->sc_ethernet_pcioh) &&
 		    pcmcia_io_alloc(sc->sc_pf, cfe->iospace[0].start-24,
-		    XI_IOSIZE, XI_IOSIZE, &sc->sc_ethernet_pcioh)) {
+		    XI_IOSIZE+2, XI_IOSIZE, &sc->sc_ethernet_pcioh)) {
 			pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 			continue;
 		}
@@ -486,9 +489,9 @@ xirc_intr(arg)
 }
 
 int
-xirc_enable(sc, flag)
+xirc_enable(sc, flag, media)
 	struct xirc_softc *sc;
-	int flag;
+	int flag, media;
 {
 
 	if (sc->sc_flags & flag) {
@@ -526,14 +529,29 @@ xirc_enable(sc, flag)
 	}
 
 	sc->sc_flags |= flag;
+
+	if (sc->sc_chipset < XI_CHIPSET_DINGO &&
+	    sc->sc_id & (XIMEDIA_MODEM << 8)) {
+		sc->sc_mako_intmask |= media;
+		bus_space_write_1(sc->sc_ethernet_pcioh.iot,
+		    sc->sc_ethernet_pcioh.ioh, 0x10, sc->sc_mako_intmask);
+	}
+
 	return (0);
 }
 
 void
-xirc_disable(sc, flag)
+xirc_disable(sc, flag, media)
 	struct xirc_softc *sc;
-	int flag;
+	int flag, media;
 {
+
+	if (sc->sc_chipset < XI_CHIPSET_DINGO &&
+	    sc->sc_id & (XIMEDIA_MODEM << 8)) {
+		sc->sc_mako_intmask &= ~media;
+		bus_space_write_1(sc->sc_ethernet_pcioh.iot,
+		    sc->sc_ethernet_pcioh.ioh, 0x10, sc->sc_mako_intmask);
+	}
 
 	if ((sc->sc_flags & flag) == 0) {
 		printf("%s: %s already disabled\n", sc->sc_dev.dv_xname,
@@ -617,18 +635,18 @@ int
 com_xirc_enable(sc)
 	struct com_softc *sc;
 {
+	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
 
-	return (xirc_enable((struct xirc_softc *)sc->sc_dev.dv_parent,
-	    XIRC_MODEM_ENABLED));
+	return (xirc_enable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM));
 }
 
 void
 com_xirc_disable(sc)
 	struct com_softc *sc;
 {
+	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
 
-	xirc_disable((struct xirc_softc *)sc->sc_dev.dv_parent,
-	    XIRC_MODEM_ENABLED);
+	xirc_disable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM);
 }
 
 #endif /* NCOM_XIRC > 0 */
@@ -702,18 +720,18 @@ int
 xi_xirc_enable(sc)
 	struct xi_softc *sc;
 {
+	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
 
-	return (xirc_enable((struct xirc_softc *)sc->sc_dev.dv_parent,
-	    XIRC_ETHERNET_ENABLED));
+	return (xirc_enable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER));
 }
 
 void
 xi_xirc_disable(sc)
 	struct xi_softc *sc;
 {
+	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
 
-	xirc_disable((struct xirc_softc *)sc->sc_dev.dv_parent,
-	    XIRC_ETHERNET_ENABLED);
+	xirc_disable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER);
 }
 
 int
