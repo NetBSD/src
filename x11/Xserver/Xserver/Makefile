@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2004/03/28 15:28:24 jdc Exp $
+#	$NetBSD: Makefile,v 1.15 2004/08/01 18:52:03 uch Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,10 @@ SUBDIR+=	Xmac68k
 
 .if ${XSERVER_XMACPPC} != "no"
 SUBDIR+=	Xmacppc
+.endif
+
+.if ${XSERVER_XNEWSMIPS} != "no"
+SUBDIR+=	Xnewsmips
 .endif
 
 .if ${XSERVER_XPMAX} != "no"
