@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2004/01/13 14:30:43 sekiya Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13 2004/01/18 00:50:08 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2004/01/13 14:30:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2004/01/18 00:50:08 sekiya Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,12 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2004/01/13 14:30:43 sekiya Exp 
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/sysconf.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#include <sgimips/dev/crimevar.h>
 
 /*
  * PCI doesn't have any special needs; just use
@@ -214,7 +213,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	void *arg;
 {
 
-	return crime_intr_establish(ih, 0, 0, func, arg);
+	return (void *)(*platform.intr_establish)(ih, 0, func, arg);
 }
 
 void
