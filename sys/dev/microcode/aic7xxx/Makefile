@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1998/06/16 18:36:04 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 2000/03/15 02:09:07 fvdl Exp $
 
-# use 'make -f Makefile.sequencer' to make aic7xxx_seq.h
+# use 'make -f Makefile.sequencer headers' to make aic7xxx_seq.h and friends
 
 INCSDIR= /usr/include/dev/microcode/aic7xxx
 
-INCS=	aic7xxx_seq.h
+INCS=	aic7xxx_seq.h aic7xxx_reg.h
 
 .include <bsd.kinc.mk>
