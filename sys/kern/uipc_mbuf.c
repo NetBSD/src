@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp $	*/
+/*	uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp $");
+__KERNEL_RCSID(0, "uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp");
 
 #include "opt_mbuftrace.h"
 
@@ -114,6 +114,14 @@ struct pool_allocator mclpool_allocator = {
 };
 
 static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
+static struct mbuf *m_split0(struct mbuf *, int, int, int);
+static int m_copyback0(struct mbuf **, int, int, caddr_t, int, int);
+
+/* flags for m_copyback0 */
+#define	M_COPYBACK0_COPYBACK	0x0001	/* copyback from cp */
+#define	M_COPYBACK0_PRESERVE	0x0002	/* preserve original data */
+#define	M_COPYBACK0_COW		0x0004	/* do copy-on-write */
+#define	M_COPYBACK0_EXTEND	0x0008	/* extend chain */
 
 const char mclpool_warnmsg[] =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
@@ -912,6 +920,13 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 struct mbuf *
 m_split(struct mbuf *m0, int len0, int wait)
 {
+
+	return m_split0(m0, len0, wait, 0);
+}
+
+static struct mbuf *
+m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
+{
 	struct mbuf *m, *n;
 	unsigned len = len0, remain, len_save;
 
@@ -920,7 +935,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 	if (m == 0)
 		return (NULL);
 	remain = m->m_len - len;
-	if (m0->m_flags & M_PKTHDR) {
+	if (copyhdr && (m0->m_flags & M_PKTHDR)) {
 		MGETHDR(n, wait, m0->m_type);
 		if (n == 0)
 			return (NULL);
@@ -1049,29 +1064,214 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 void
 m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 {
+#if defined(DEBUG)
+	struct mbuf *origm = m0;
+	int error;
+#endif /* defined(DEBUG) */
+
+	if (m0 == NULL)
+		return;
+
+#if defined(DEBUG)
+	error =
+#endif /* defined(DEBUG) */
+	m_copyback0(&m0, off, len, cp,
+	    M_COPYBACK0_COPYBACK|M_COPYBACK0_EXTEND, M_DONTWAIT);
+
+#if defined(DEBUG)
+	if (error != 0 || (m0 != NULL && origm != m0))
+		panic("m_copyback");
+#endif /* defined(DEBUG) */
+}
+
+struct mbuf *
+m_copyback_cow(struct mbuf *m0, int off, int len, caddr_t cp, int how)
+{
+	int error;
+
+	/* don't support chain expansion */
+	KDASSERT(off + len <= m_length(m0));
+
+	error = m_copyback0(&m0, off, len, cp,
+	    M_COPYBACK0_COPYBACK|M_COPYBACK0_COW, how);
+	if (error) {
+		/*
+		 * no way to recover from partial success.
+		 * just free the chain.
+		 */
+		m_freem(m0);
+		return NULL;
+	}
+	return m0;
+}
+
+/*
+ * m_makewritable: ensure the specified range writable.
+ */
+int
+m_makewritable(struct mbuf **mp, int off, int len, int how)
+{
+	int error;
+#if defined(DEBUG)
+	struct mbuf *n;
+	int origlen, reslen;
+
+	origlen = m_length(*mp);
+#endif /* defined(DEBUG) */
+
+#if 0 /* M_COPYALL is large enough */
+	if (len == M_COPYALL)
+		len = m_length(*mp) - off; /* XXX */
+#endif
+
+	error = m_copyback0(mp, off, len, NULL,
+	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
+
+#if defined(DEBUG)
+	reslen = 0;
+	for (n = *mp; n; n = n->m_next)
+		reslen += n->m_len;
+	if (origlen != reslen)
+		panic("m_makewritable: length changed");
+	if (((*mp)->m_flags & M_PKTHDR) != 0 && reslen != (*mp)->m_pkthdr.len)
+		panic("m_makewritable: inconsist");
+#endif /* defined(DEBUG) */
+
+	return error;
+}
+
+int
+m_copyback0(struct mbuf **mp0, int off, int len, caddr_t cp, int flags, int how)
+{
 	int mlen;
-	struct mbuf *m = m0, *n;
+	struct mbuf *m, *n;
+	struct mbuf **mp;
 	int totlen = 0;
 
-	if (m0 == 0)
-		return;
+	KASSERT(mp0 != NULL);
+	KASSERT(*mp0 != NULL);
+	KASSERT((flags & M_COPYBACK0_PRESERVE) == 0 || cp == NULL);
+	KASSERT((flags & M_COPYBACK0_COPYBACK) == 0 || cp != NULL);
+
+	mp = mp0;
+	m = *mp;
 	while (off > (mlen = m->m_len)) {
 		off -= mlen;
 		totlen += mlen;
 		if (m->m_next == 0) {
-			n = m_getclr(M_DONTWAIT, m->m_type);
+			if ((flags & M_COPYBACK0_EXTEND) == 0)
+				goto out;
+			n = m_getclr(how, m->m_type);
 			if (n == 0)
 				goto out;
 			n->m_len = min(MLEN, len + off);
 			m->m_next = n;
 		}
+		mp = &m->m_next;
 		m = m->m_next;
 	}
 	while (len > 0) {
-		mlen = min (m->m_len - off, len);
-		KASSERT(mlen == 0 || !M_READONLY(m));
-		memcpy(mtod(m, caddr_t) + off, cp, (unsigned)mlen);
-		cp += mlen;
+		mlen = m->m_len - off;
+		if (mlen != 0 && M_READONLY(m)) {
+			char *datap;
+			int eatlen;
+
+			/*
+			 * this mbuf is read-only.
+			 * allocate a new writable mbuf and try again.
+			 */
+
+#if defined(DIAGNOSTIC)
+			if ((flags & M_COPYBACK0_COW) == 0)
+				panic("m_copyback0: read-only");
+#endif /* defined(DIAGNOSTIC) */
+
+			/*
+			 * if we're going to write into the middle of
+			 * a mbuf, split it first.
+			 */
+			if (off > 0 && len < mlen) {
+				n = m_split0(m, off, how, 0);
+				if (n == NULL)
+					goto enobufs;
+				m->m_next = n;
+				mp = &m->m_next;
+				m = n;
+				off = 0;
+				continue;
+			}
+
+			/*
+			 * XXX TODO coalesce into the trailingspace of
+			 * the previous mbuf when possible.
+			 */
+
+			/*
+			 * allocate a new mbuf.  copy packet header if needed.
+			 */
+			MGET(n, how, m->m_type);
+			if (n == NULL)
+				goto enobufs;
+			MCLAIM(n, m->m_owner);
+			if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
+				/* XXX M_MOVE_PKTHDR */
+				M_COPY_PKTHDR(n, m);
+				n->m_len = MHLEN;
+			} else {
+				if (len >= MINCLSIZE)
+					MCLGET(n, M_DONTWAIT);
+				n->m_len =
+				    (n->m_flags & M_EXT) ? MCLBYTES : MLEN;
+			}
+			if (n->m_len > len)
+				n->m_len = len;
+
+			/*
+			 * free the region which has been overwritten.
+			 * copying data from old mbufs if requested.
+			 */
+			if (flags & M_COPYBACK0_PRESERVE)
+				datap = mtod(n, char *);
+			else
+				datap = NULL;
+			eatlen = n->m_len;
+			KDASSERT(off == 0 || eatlen >= mlen);
+			if (off > 0) {
+				KDASSERT(len >= mlen);
+				m->m_len = off;
+				m->m_next = n;
+				if (datap) {
+					m_copydata(m, off, mlen, datap);
+					datap += mlen;
+				}
+				eatlen -= mlen;
+				mp = &m->m_next;
+				m = m->m_next;
+			}
+			while (m != NULL && M_READONLY(m) &&
+			    n->m_type == m->m_type && eatlen > 0) {
+				mlen = min(eatlen, m->m_len);
+				if (datap) {
+					m_copydata(m, 0, mlen, datap);
+					datap += mlen;
+				}
+				m->m_data += mlen;
+				m->m_len -= mlen;
+				eatlen -= mlen;
+				if (m->m_len == 0)
+					*mp = m = m_free(m);
+			}
+			if (eatlen > 0)
+				n->m_len -= eatlen;
+			n->m_next = m;
+			*mp = m = n;
+			continue;
+		}
+		mlen = min(mlen, len);
+		if (flags & M_COPYBACK0_COPYBACK) {
+			memcpy(mtod(m, caddr_t) + off, cp, (unsigned)mlen);
+			cp += mlen;
+		}
 		len -= mlen;
 		mlen += off;
 		off = 0;
@@ -1079,16 +1279,24 @@ m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 		if (len == 0)
 			break;
 		if (m->m_next == 0) {
-			n = m_get(M_DONTWAIT, m->m_type);
+			if ((flags & M_COPYBACK0_EXTEND) == 0)
+				goto out;
+			n = m_get(how, m->m_type);
 			if (n == 0)
 				break;
 			n->m_len = min(MLEN, len);
 			m->m_next = n;
 		}
+		mp = &m->m_next;
 		m = m->m_next;
 	}
-out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
+out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 		m->m_pkthdr.len = totlen;
+
+	return 0;
+
+enobufs:
+	return ENOBUFS;
 }
 
 /*
