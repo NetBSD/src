@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.21 2001/10/16 20:09:59 kleink Exp $
+.\"	$NetBSD: getsockopt.2,v 1.22 2001/10/22 20:59:03 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.4 (Berkeley) 5/2/95
 .\"
-.Dd October 16, 2001
+.Dd October 22, 2001
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn getsockopt "int s" "int level" "int optname" "void *optval" "socklen_t *optlen"
+.Fn getsockopt "int s" "int level" "int optname" "void * restrict optval" "socklen_t * restrict optlen"
 .Ft int
 .Fn setsockopt "int s" "int level" "int optname" "const void *optval" "socklen_t optlen"
 .Sh DESCRIPTION
