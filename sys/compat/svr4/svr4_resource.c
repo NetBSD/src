@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.2 1998/11/30 15:46:33 christos Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.3 1998/12/13 18:00:52 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/file.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 
@@ -96,36 +97,42 @@ svr4_sys_getrlimit(p, v, retval)
 {
 	struct svr4_sys_getrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct rlimit *limp;
-	struct svr4_rlimit lim;
+	struct rlimit blim;
+	struct svr4_rlimit slim;
 
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	blim = p->p_rlimit[rl];
+
+	/*
+	 * Our infinity, is their maxfiles.
+	 */
+	if (rl == RLIMIT_NOFILE && blim.rlim_max == RLIM_INFINITY)
+		blim.rlim_max = maxfiles;
 
 	/*
 	 * If the limit can be be represented, it is returned.
 	 * Otherwise, if rlim_cur == rlim_max, return RLIM_SAVED_MAX
 	 * else return RLIM_SAVED_CUR
 	 */
-	if (limp->rlim_max == RLIM_INFINITY)
-		lim.rlim_max = SVR4_RLIM_INFINITY;
-	else if (OKLIMIT(limp->rlim_max))
-		lim.rlim_max = (svr4_rlim_t) limp->rlim_max;
+	if (blim.rlim_max == RLIM_INFINITY)
+		slim.rlim_max = SVR4_RLIM_INFINITY;
+	else if (OKLIMIT(blim.rlim_max))
+		slim.rlim_max = (svr4_rlim_t) blim.rlim_max;
 	else
-		lim.rlim_max = SVR4_RLIM_SAVED_MAX;
+		slim.rlim_max = SVR4_RLIM_SAVED_MAX;
 
-	if (limp->rlim_cur == RLIM_INFINITY)
-		lim.rlim_cur = SVR4_RLIM_INFINITY;
-	else if (OKLIMIT(limp->rlim_cur))
-		lim.rlim_cur = (svr4_rlim_t) limp->rlim_cur;
-	else if (limp->rlim_max == limp->rlim_cur)
-		lim.rlim_cur = SVR4_RLIM_SAVED_MAX;
+	if (blim.rlim_cur == RLIM_INFINITY)
+		slim.rlim_cur = SVR4_RLIM_INFINITY;
+	else if (OKLIMIT(blim.rlim_cur))
+		slim.rlim_cur = (svr4_rlim_t) blim.rlim_cur;
+	else if (blim.rlim_max == blim.rlim_cur)
+		slim.rlim_cur = SVR4_RLIM_SAVED_MAX;
 	else
-		lim.rlim_cur = SVR4_RLIM_SAVED_CUR;
+		slim.rlim_cur = SVR4_RLIM_SAVED_CUR;
 
-	return copyout(&lim, SCARG(uap, rlp), sizeof(*SCARG(uap, rlp)));
+	return copyout(&slim, SCARG(uap, rlp), sizeof(*SCARG(uap, rlp)));
 }
 
 
@@ -137,8 +144,8 @@ svr4_sys_setrlimit(p, v, retval)
 {
 	struct svr4_sys_setrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct rlimit alim, *limp;
-	struct svr4_rlimit lim;
+	struct rlimit blim, *limp;
+	struct svr4_rlimit slim;
 	int error;
 
 	if (rl == -1)
@@ -146,7 +153,7 @@ svr4_sys_setrlimit(p, v, retval)
 
 	limp = &p->p_rlimit[rl];
 
-	if ((error = copyin(SCARG(uap, rlp), &lim, sizeof(lim))) != 0)
+	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
 
 	/*
@@ -158,26 +165,25 @@ svr4_sys_setrlimit(p, v, retval)
 	 * corresponding saved soft limit.
 	 *
 	 */
-	if (lim.rlim_max == SVR4_RLIM_INFINITY)
-		alim.rlim_max = RLIM_INFINITY;
-	else if (OKLIMIT(lim.rlim_max))
-		alim.rlim_max = (rlim_t) lim.rlim_max;
-	else if (lim.rlim_max == SVR4_RLIM_SAVED_MAX)
-		alim.rlim_max = limp->rlim_max;
-	else if (lim.rlim_max == SVR4_RLIM_SAVED_CUR)
-		alim.rlim_max = limp->rlim_cur;
+	if (slim.rlim_max == SVR4_RLIM_INFINITY)
+		blim.rlim_max = RLIM_INFINITY;
+	else if (OKLIMIT(slim.rlim_max))
+		blim.rlim_max = (rlim_t) slim.rlim_max;
+	else if (slim.rlim_max == SVR4_RLIM_SAVED_MAX)
+		blim.rlim_max = limp->rlim_max;
+	else if (slim.rlim_max == SVR4_RLIM_SAVED_CUR)
+		blim.rlim_max = limp->rlim_cur;
 
-	if (lim.rlim_cur == SVR4_RLIM_INFINITY)
-		alim.rlim_cur = RLIM_INFINITY;
-	else if (OKLIMIT(lim.rlim_cur))
-		alim.rlim_cur = (rlim_t) lim.rlim_cur;
-	else if (lim.rlim_cur == SVR4_RLIM_SAVED_MAX)
-		alim.rlim_cur = limp->rlim_max;
-	else if (lim.rlim_cur == SVR4_RLIM_SAVED_CUR)
-		alim.rlim_cur = limp->rlim_cur;
+	if (slim.rlim_cur == SVR4_RLIM_INFINITY)
+		blim.rlim_cur = RLIM_INFINITY;
+	else if (OKLIMIT(slim.rlim_cur))
+		blim.rlim_cur = (rlim_t) slim.rlim_cur;
+	else if (slim.rlim_cur == SVR4_RLIM_SAVED_MAX)
+		blim.rlim_cur = limp->rlim_max;
+	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
+		blim.rlim_cur = limp->rlim_cur;
 
-	*retval = 0;
-	return dosetrlimit(p, rl, &alim);
+	return dosetrlimit(p, rl, &blim);
 }
 
 
@@ -189,36 +195,42 @@ svr4_sys_getrlimit64(p, v, retval)
 {
 	struct svr4_sys_getrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct rlimit *limp;
-	struct svr4_rlimit64 lim;
+	struct rlimit blim;
+	struct svr4_rlimit64 slim;
 
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	blim = p->p_rlimit[rl];
+
+	/*
+	 * Our infinity, is their maxfiles.
+	 */
+	if (rl == RLIMIT_NOFILE && blim.rlim_max == RLIM_INFINITY)
+		blim.rlim_max = maxfiles;
 
 	/*
 	 * If the limit can be be represented, it is returned.
 	 * Otherwise, if rlim_cur == rlim_max, return SVR4_RLIM_SAVED_MAX
 	 * else return SVR4_RLIM_SAVED_CUR
 	 */
-	if (limp->rlim_max == RLIM_INFINITY)
-		lim.rlim_max = SVR4_RLIM64_INFINITY;
-	else if (OKLIMIT64(limp->rlim_max))
-		lim.rlim_max = (svr4_rlim64_t) limp->rlim_max;
+	if (blim.rlim_max == RLIM_INFINITY)
+		slim.rlim_max = SVR4_RLIM64_INFINITY;
+	else if (OKLIMIT64(blim.rlim_max))
+		slim.rlim_max = (svr4_rlim64_t) blim.rlim_max;
 	else
-		lim.rlim_max = SVR4_RLIM64_SAVED_MAX;
+		slim.rlim_max = SVR4_RLIM64_SAVED_MAX;
 
-	if (limp->rlim_cur == RLIM_INFINITY)
-		lim.rlim_cur = SVR4_RLIM64_INFINITY;
-	else if (OKLIMIT64(limp->rlim_cur))
-		lim.rlim_cur = (svr4_rlim64_t) limp->rlim_cur;
-	else if (limp->rlim_max == limp->rlim_cur)
-		lim.rlim_cur = SVR4_RLIM64_SAVED_MAX;
+	if (blim.rlim_cur == RLIM_INFINITY)
+		slim.rlim_cur = SVR4_RLIM64_INFINITY;
+	else if (OKLIMIT64(blim.rlim_cur))
+		slim.rlim_cur = (svr4_rlim64_t) blim.rlim_cur;
+	else if (blim.rlim_max == blim.rlim_cur)
+		slim.rlim_cur = SVR4_RLIM64_SAVED_MAX;
 	else
-		lim.rlim_cur = SVR4_RLIM64_SAVED_CUR;
+		slim.rlim_cur = SVR4_RLIM64_SAVED_CUR;
 
-	return copyout(&lim, SCARG(uap, rlp), sizeof(*SCARG(uap, rlp)));
+	return copyout(&slim, SCARG(uap, rlp), sizeof(*SCARG(uap, rlp)));
 }
 
 
@@ -230,8 +242,8 @@ svr4_sys_setrlimit64(p, v, retval)
 {
 	struct svr4_sys_setrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct rlimit alim, *limp;
-	struct svr4_rlimit64 lim;
+	struct rlimit blim, *limp;
+	struct svr4_rlimit64 slim;
 	int error;
 
 	if (rl == -1)
@@ -239,7 +251,7 @@ svr4_sys_setrlimit64(p, v, retval)
 
 	limp = &p->p_rlimit[rl];
 
-	if ((error = copyin(SCARG(uap, rlp), &lim, sizeof(lim))) != 0)
+	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
 
 	/*
@@ -251,24 +263,23 @@ svr4_sys_setrlimit64(p, v, retval)
 	 * corresponding saved soft limit.
 	 *
 	 */
-	if (lim.rlim_max == SVR4_RLIM64_INFINITY)
-		alim.rlim_max = RLIM_INFINITY;
-	else if (OKLIMIT64(lim.rlim_max))
-		alim.rlim_max = (rlim_t) lim.rlim_max;
-	else if (lim.rlim_max == SVR4_RLIM64_SAVED_MAX)
-		alim.rlim_max = limp->rlim_max;
-	else if (lim.rlim_max == SVR4_RLIM64_SAVED_CUR)
-		alim.rlim_max = limp->rlim_cur;
+	if (slim.rlim_max == SVR4_RLIM64_INFINITY)
+		blim.rlim_max = RLIM_INFINITY;
+	else if (OKLIMIT64(slim.rlim_max))
+		blim.rlim_max = (rlim_t) slim.rlim_max;
+	else if (slim.rlim_max == SVR4_RLIM64_SAVED_MAX)
+		blim.rlim_max = limp->rlim_max;
+	else if (slim.rlim_max == SVR4_RLIM64_SAVED_CUR)
+		blim.rlim_max = limp->rlim_cur;
 
-	if (lim.rlim_cur == SVR4_RLIM64_INFINITY)
-		alim.rlim_cur = RLIM_INFINITY;
-	else if (OKLIMIT64(lim.rlim_cur))
-		alim.rlim_cur = (rlim_t) lim.rlim_cur;
-	else if (lim.rlim_cur == SVR4_RLIM64_SAVED_MAX)
-		alim.rlim_cur = limp->rlim_max;
-	else if (lim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
-		alim.rlim_cur = limp->rlim_cur;
+	if (slim.rlim_cur == SVR4_RLIM64_INFINITY)
+		blim.rlim_cur = RLIM_INFINITY;
+	else if (OKLIMIT64(slim.rlim_cur))
+		blim.rlim_cur = (rlim_t) slim.rlim_cur;
+	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_MAX)
+		blim.rlim_cur = limp->rlim_max;
+	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
+		blim.rlim_cur = limp->rlim_cur;
 
-	*retval = 0;
-	return dosetrlimit(p, rl, &alim);
+	return dosetrlimit(p, rl, &blim);
 }
