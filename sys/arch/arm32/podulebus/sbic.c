@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.13 1999/09/30 22:59:53 thorpej Exp $ */
+/* $NetBSD: sbic.c,v 1.14 2000/01/18 19:36:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -84,7 +84,6 @@
 #define	SBIC_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SBIC_INIT_WAIT	50000	/* wait per step (both) during init */
 
-#define	b_cylin		b_resid
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
 extern u_int kvtop();
