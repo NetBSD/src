@@ -1,3 +1,5 @@
+/*	$NetBSD: stab.h,v 1.4 1994/10/26 00:56:25 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stab.h	5.2 (Berkeley) 4/4/91
- *	$Id: stab.h,v 1.3 1993/08/01 18:45:21 mycroft Exp $
+ *	@(#)stab.h	5.2 (Berkeley) 4/4/91
  */
 
 #ifndef _STAB_H_

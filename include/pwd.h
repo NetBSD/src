@@ -1,3 +1,5 @@
+/*	$NetBSD: pwd.h,v 1.6 1994/10/26 00:56:13 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pwd.h	8.2 (Berkeley) 1/21/94
- *	$Id: pwd.h,v 1.5 1994/05/17 00:12:02 cgd Exp $
+ *	@(#)pwd.h	8.2 (Berkeley) 1/21/94
  */
 
 #ifndef _PWD_H_

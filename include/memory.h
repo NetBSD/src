@@ -1,3 +1,5 @@
+/*	$NetBSD: memory.h,v 1.3 1994/10/26 00:56:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)memory.h	5.5 (Berkeley) 6/1/90
- *	$Id: memory.h,v 1.2 1993/08/01 18:44:48 mycroft Exp $
+ *	@(#)memory.h	5.5 (Berkeley) 6/1/90
  */
 
 #include <string.h>

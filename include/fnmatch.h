@@ -1,3 +1,5 @@
+/*	$NetBSD: fnmatch.h,v 1.5 1994/10/26 00:55:53 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fnmatch.h	8.1 (Berkeley) 6/2/93
- *	$Id: fnmatch.h,v 1.4 1993/11/11 03:25:48 jtc Exp $
+ *	@(#)fnmatch.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef	_FNMATCH_H_

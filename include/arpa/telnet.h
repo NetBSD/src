@@ -1,3 +1,5 @@
+/*	$NetBSD: telnet.h,v 1.4 1994/10/26 00:56:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)telnet.h	8.1 (Berkeley) 6/2/93
- *	$Id: telnet.h,v 1.3 1994/02/25 02:31:18 cgd Exp $
+ *	@(#)telnet.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _TELNET_H_

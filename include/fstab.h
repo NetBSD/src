@@ -1,3 +1,5 @@
+/*	$NetBSD: fstab.h,v 1.3 1994/10/26 00:55:53 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fstab.h	5.12 (Berkeley) 4/3/91
- *	$Id: fstab.h,v 1.2 1993/08/01 18:44:54 mycroft Exp $
+ *	@(#)fstab.h	5.12 (Berkeley) 4/3/91
  */
 
 #ifndef _FSTAB_H_

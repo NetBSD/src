@@ -1,3 +1,5 @@
+/*	$NetBSD: bm.h,v 1.3 1994/10/26 00:55:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bm.h	8.6 (Berkeley) 6/21/94
- *	$Id: bm.h,v 1.2 1994/06/22 00:22:01 cgd Exp $
+ *	@(#)bm.h	8.6 (Berkeley) 6/21/94
  */
 
 #ifndef _BM_H_

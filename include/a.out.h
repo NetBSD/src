@@ -1,3 +1,5 @@
+/*	$NetBSD: a.out.h,v 1.15 1994/10/26 00:55:42 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993 Theo de Raadt
  * Copyright (c) 1991 The Regents of the University of California.
@@ -31,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.14 1994/07/01 01:29:41 deraadt Exp $
+ *	@(#)a.out.h	5.6 (Berkeley) 4/30/91
  */
 
 #ifndef	_AOUT_H_
