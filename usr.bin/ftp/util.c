@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.39 1999/01/01 03:55:26 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.40 1999/01/05 22:54:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.39 1999/01/01 03:55:26 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.40 1999/01/05 22:54:49 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -780,7 +780,6 @@ progressmeter(flag)
 	int flag;
 {
 #ifndef	SMALL
-
 	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize, bytespersec;
