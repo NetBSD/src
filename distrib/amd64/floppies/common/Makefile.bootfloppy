@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.3 2003/04/26 19:20:35 fvdl Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.4 2003/07/25 21:24:37 dsl Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -27,12 +27,10 @@ FLOPPYSIZE=	2880
 FLOPPYKERNDIR?=		instkernel
 FLOPPYSUFFIX?=		.fs
 MDEC=			${DESTDIR}/usr/mdec
-#	XXXDISTRIB: need MI installboot for amd64
-FLOPPYINSTBOOT=		"${MDEC}/installboot -b 17 -f ${FLOPPY_BOOT} @IMAGE@"
+FLOPPYINSTBOOT=		"dd conv=notrunc if=${MDEC}/bootxx_ustarfs of=@IMAGE@"
 FLOPPYKERNOBJ!=		cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
-FLOPPY_BOOT?=		${MDEC}/biosboot.sym
-FLOPPY_BOOT_STRIP=	yes
+FLOPPY_BOOT?=		${MDEC}/biosboot
 FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
 FLOPPYFILES=		boot ${FLOPPYMETAFILE} netbsd
 
