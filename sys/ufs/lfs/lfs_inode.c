@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.29 2000/01/16 05:56:14 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.30 2000/01/19 00:03:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,18 +98,21 @@ static int lfs_vinvalbuf __P((struct vnode *, struct ucred *, struct proc *, ufs
 
 /* Search a block for a specific dinode. */
 struct dinode *
-lfs_ifind(fs, ino, dip)
+lfs_ifind(fs, ino, bp)
 	struct lfs *fs;
 	ino_t ino;
-	register struct dinode *dip;
+	struct buf *bp;
 {
 	register int cnt;
+	register struct dinode *dip = (struct dinode *)bp->b_data;
 	register struct dinode *ldip;
 	
 	for (cnt = INOPB(fs), ldip = dip + (cnt - 1); cnt--; --ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
 	
+	printf("offset is %d (seg %d)\n", fs->lfs_offset, datosn(fs,fs->lfs_offset));
+	printf("block is %d (seg %d)\n", bp->b_blkno, datosn(fs,bp->b_blkno));
 	panic("lfs_ifind: dinode %u not found", ino);
 	/* NOTREACHED */
 }
