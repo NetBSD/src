@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.9 1998/04/02 11:34:23 kleink Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.9.10.1 2000/10/18 01:32:54 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.9 1998/04/02 11:34:23 kleink Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.9.10.1 2000/10/18 01:32:54 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ pr_idle(idle)
 
 	/* If idle more than 36 hours, print as a number of days. */
 	if (idle >= 36 * SECSPERHOUR)
-		printf(days == 1 ? "  %dday " : " %ddays ", days);
+		printf("  %dday%s ", days, days == 1 ? "" : "s");
 
 	/* If idle more than an hour, print as HH:MM. */
 	else if (idle >= SECSPERHOUR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_visual.c,v 1.7 1998/01/09 08:08:11 perry Exp $	*/
+/*	$NetBSD: ex_visual.c,v 1.7.10.1 2000/10/18 01:32:53 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -83,9 +83,9 @@ ex_visual(sp, cmdp)
 
 	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
 		len = snprintf(buf, sizeof(buf),
-		     "%luz%c%lu", sp->lno, pos, cmdp->count);
+		     "%luz%c%lu", (long)sp->lno, pos, cmdp->count);
 	else
-		len = snprintf(buf, sizeof(buf), "%luz%c", sp->lno, pos);
+		len = snprintf(buf, sizeof(buf), "%luz%c", (long)sp->lno, pos);
 	(void)v_event_push(sp, NULL, buf, len, CH_NOMAP | CH_QUOTED);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.87 2000/06/15 13:08:23 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.87.2.1 2000/10/18 01:32:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.87 2000/06/15 13:08:23 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.87.2.1 2000/10/18 01:32:42 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1629,6 +1629,12 @@ usage:
 	(void)command("SITE CHMOD %s %s", argv[1], argv[2]);
 }
 
+#define COMMAND_1ARG(argc, argv, cmd) 			\
+	if (argc == 1)					\
+		command(cmd);				\
+	else						\
+		command(cmd " %s", argv[1])
+
 void
 do_umask(int argc, char *argv[])
 {
@@ -1640,7 +1646,7 @@ do_umask(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "SITE UMASK" : "SITE UMASK %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "SITE UMASK");
 	verbose = oldverbose;
 }
 
@@ -1655,7 +1661,7 @@ idlecmd(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "SITE IDLE" : "SITE IDLE %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "SITE IDLE");
 	verbose = oldverbose;
 }
 
@@ -1673,7 +1679,7 @@ rmthelp(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "HELP" : "HELP %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "HELP");
 	verbose = oldverbose;
 }
 
@@ -2438,7 +2444,7 @@ rmtstatus(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	(void)command(argc > 1 ? "STAT %s" : "STAT" , argv[1]);
+	COMMAND_1ARG(argc, argv, "STAT");
 }
 
 /*
