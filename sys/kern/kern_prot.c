@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.82 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.83 2004/05/02 12:36:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.82 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.83 2004/05/02 12:36:55 pk Exp $");
 
 #include "opt_compat_43.h"
 
@@ -620,6 +620,7 @@ crget(void)
 
 	cr = pool_get(&cred_pool, PR_WAITOK);
 	memset(cr, 0, sizeof(*cr));
+	simple_lock_init(&cr->cr_lock);
 	cr->cr_ref = 1;
 	return (cr);
 }
@@ -631,8 +632,12 @@ crget(void)
 void
 crfree(struct ucred *cr)
 {
+	int n;
 
-	if (--cr->cr_ref == 0)
+	simple_lock(&cr->cr_lock);
+	n = --cr->cr_ref;
+	simple_unlock(&cr->cr_lock);
+	if (n == 0)
 		pool_put(&cred_pool, cr);
 }
 
@@ -655,13 +660,18 @@ struct ucred *
 crcopy(struct ucred *cr)
 {
 	struct ucred *newcr;
+	int n;
 
-	if (cr->cr_ref == 1)
+	simple_lock(&cr->cr_lock);
+	n = cr->cr_ref;
+	simple_unlock(&cr->cr_lock);
+	if (n == 1)
 		return (cr);
+
 	newcr = crget();
-	*newcr = *cr;
+	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
+		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
 	crfree(cr);
-	newcr->cr_ref = 1;
 	return (newcr);
 }
 
@@ -674,8 +684,8 @@ crdup(const struct ucred *cr)
 	struct ucred *newcr;
 
 	newcr = crget();
-	*newcr = *cr;
-	newcr->cr_ref = 1;
+	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
+		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
 	return (newcr);
 }
 
