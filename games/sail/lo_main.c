@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.9 2001/01/04 03:21:17 jwise Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.10 2001/01/16 02:44:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.9 2001/01/04 03:21:17 jwise Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.10 2001/01/16 02:44:43 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: lo_main.c,v 1.9 2001/01/04 03:21:17 jwise Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include "extern.h"
 #include "pathnames.h"
