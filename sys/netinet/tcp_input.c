@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_input.c,v 1.74 1999/01/19 23:03:21 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.75 1999/01/24 01:19:28 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1854,6 +1854,15 @@ do {									\
 	syn_cache_count--;						\
 } while (0)
 
+#define	SYN_CACHE_PUT(sc)						\
+do {									\
+	if ((sc)->sc_ipopts)						\
+		(void) m_free((sc)->sc_ipopts);				\
+	if ((sc)->sc_route.ro_rt != NULL)				\
+		RTFREE((sc)->sc_route.ro_rt);				\
+	pool_put(&syn_cache_pool, (sc));				\
+} while (0)
+
 struct pool syn_cache_pool;
 
 void
@@ -1908,9 +1917,7 @@ syn_cache_insert(sc)
 		 */
 		sc2 = TAILQ_FIRST(&scp->sch_queue);
 		SYN_CACHE_RM(sc2, scp);
-		if (sc2->sc_ipopts)
-			(void) m_free(sc2->sc_ipopts);
-		pool_put(&syn_cache_pool, sc2);
+		SYN_CACHE_PUT(sc2);
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		tcpstat.tcps_sc_overflowed++;
 		/*
@@ -1929,15 +1936,11 @@ syn_cache_insert(sc)
 		}
 		sc2 = TAILQ_FIRST(&scp2->sch_queue);
 		if (sc2 == NULL) {
-			if (sc->sc_ipopts)
-				(void) m_free(sc->sc_ipopts);
-			pool_put(&syn_cache_pool, sc);
+			SYN_CACHE_PUT(sc);
 			return;
 		}
 		SYN_CACHE_RM(sc2, scp2);
-		if (sc2->sc_ipopts)
-			(void) m_free(sc2->sc_ipopts);
-		pool_put(&syn_cache_pool, sc2);
+		SYN_CACHE_PUT(sc2);
 	}
 
 	/* Set entry's timer. */
@@ -1976,9 +1979,7 @@ syn_cache_timer()
 			nsc = TAILQ_NEXT(sc, sc_queue);
 			tcpstat.tcps_sc_timed_out++;
 			SYN_CACHE_RM(sc, scp);
-			if (sc->sc_ipopts)
-				(void) m_free(sc->sc_ipopts);
-			pool_put(&syn_cache_pool, sc);
+			SYN_CACHE_PUT(sc);
 		}
 	}
 	splx(s);
@@ -2068,12 +2069,13 @@ syn_cache_get(so, m)
 		win = TCP_MAXWIN;
 
 	/*
-	 * Verify the sequence and ack numbers.
+	 * Verify the sequence and ack numbers.  Try getting the correct
+	 * response again.
 	 */
 	if ((ti->ti_ack != sc->sc_iss + 1) ||
 	    SEQ_LEQ(ti->ti_seq, sc->sc_irs) ||
 	    SEQ_GT(ti->ti_seq, sc->sc_irs + 1 + win)) {
-		(void) syn_cache_respond(sc, m, ti, win, 0);
+		(void) syn_cache_respond(sc, m, win, 0);
 		splx(s);
 		return ((struct socket *)(-1));
 	}
@@ -2101,6 +2103,12 @@ syn_cache_get(so, m)
 		inp->inp_options = sc->sc_ipopts;
 		sc->sc_ipopts = NULL;
 	}
+
+	/*
+	 * Give the new socket our cached route reference.
+	 */
+	inp->inp_route = sc->sc_route;		/* struct assignment */
+	sc->sc_route.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)
@@ -2175,9 +2183,7 @@ syn_cache_get(so, m)
 	tp->last_ack_sent = tp->rcv_nxt;
 
 	tcpstat.tcps_sc_completed++;
-	if (sc->sc_ipopts)
-		(void) m_free(sc->sc_ipopts);
-	pool_put(&syn_cache_pool, sc);
+	SYN_CACHE_PUT(sc);
 	return (so);
 
 resetandabort:
@@ -2186,9 +2192,7 @@ resetandabort:
 abort:
 	if (so != NULL)
 		(void) soabort(so);
-	if (sc->sc_ipopts)
-		(void) m_free(sc->sc_ipopts);
-	pool_put(&syn_cache_pool, sc);
+	SYN_CACHE_PUT(sc);
 	tcpstat.tcps_sc_aborted++;
 	return ((struct socket *)(-1));
 }
@@ -2219,9 +2223,7 @@ syn_cache_reset(ti)
 	SYN_CACHE_RM(sc, scp);
 	splx(s);
 	tcpstat.tcps_sc_reset++;
-	if (sc->sc_ipopts)
-		(void) m_free(sc->sc_ipopts);
-	pool_put(&syn_cache_pool, sc);
+	SYN_CACHE_PUT(sc);
 }
 
 void
@@ -2267,9 +2269,7 @@ syn_cache_unreach(ip, th)
 	SYN_CACHE_RM(sc, scp);
 	splx(s);
 	tcpstat.tcps_sc_unreach++;
-	if (sc->sc_ipopts)
-		(void) m_free(sc->sc_ipopts);
-	pool_put(&syn_cache_pool, sc);
+	SYN_CACHE_PUT(sc);
 }
 
 /*
@@ -2361,7 +2361,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 			sc->sc_ipopts = ipopts;
 		}
 
-		if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
+		if (syn_cache_respond(sc, m, win, tb.ts_recent) == 0) {
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
 		}
@@ -2379,6 +2379,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
+	memset(&sc->sc_route, 0, sizeof(sc->sc_route));
 	sc->sc_src.s_addr = ti->ti_src.s_addr;
 	sc->sc_dst.s_addr = ti->ti_dst.s_addr;
 	sc->sc_sport = ti->ti_sport;
@@ -2404,92 +2405,137 @@ syn_cache_add(so, m, optp, optlen, oi)
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
-	if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
+	if (syn_cache_respond(sc, m, win, tb.ts_recent) == 0) {
 		syn_cache_insert(sc);
 		tcpstat.tcps_sndacks++;
 		tcpstat.tcps_sndtotal++;
 	} else {
-		if (sc->sc_ipopts)
-			(void) m_free(sc->sc_ipopts);
-		pool_put(&syn_cache_pool, sc);
+		SYN_CACHE_PUT(sc);
 		tcpstat.tcps_sc_dropped++;
 	}
 	return (1);
 }
 
 int
-syn_cache_respond(sc, m, ti, win, ts)
+syn_cache_respond(sc, m, win, ts)
 	struct syn_cache *sc;
 	struct mbuf *m;
-	register struct tcpiphdr *ti;
 	long win;
 	u_long ts;
 {
+	struct route *ro = &sc->sc_route;
+	struct rtentry *rt;
+	struct sockaddr_in *dst;
+	struct tcpiphdr *ti;
 	u_int8_t *optp;
-	int optlen;
+	int optlen, error;
+	u_int16_t tlen;
 
-	/*
-	 * Tack on the TCP options.  If there isn't enough trailing
-	 * space for them, move up the fixed header to make space.
-	 */
+	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
-	if (optlen > M_TRAILINGSPACE(m)) {
-		if (M_LEADINGSPACE(m) >= optlen) {
-			m->m_data -= optlen;
-			m->m_len += optlen;
-		} else {
-			struct mbuf *m0 = m;
-			if ((m = m_gethdr(M_DONTWAIT, MT_HEADER)) == NULL) {
-				m_freem(m0);
-				return (ENOBUFS);
-			}
-			MH_ALIGN(m, sizeof(*ti) + optlen);
-			m->m_next = m0; /* this gets freed below */
-		}
-		bcopy((caddr_t)ti, mtod(m, caddr_t), sizeof(*ti));
-		ti = mtod(m, struct tcpiphdr *);
+
+	tlen = sizeof(struct tcpiphdr) + optlen;
+
+	/*
+	 * Create the IP+TCP header from scratch.  Reuse the received mbuf
+	 * if possible.
+	 */
+	if (m != NULL) {
+		m_freem(m->m_next);
+		m->m_next = NULL;
+		MRESETDATA(m);
+	} else {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			return (ENOBUFS);
 	}
 
+	/* Fixup the mbuf. */
+	m->m_data += max_linkhdr;
+	m->m_len = m->m_pkthdr.len = tlen;
+	m->m_pkthdr.rcvif = NULL;
+
+	ti = mtod(m, struct tcpiphdr *);
+	memset(ti, 0, tlen);
+
+	ti->ti_dst = sc->sc_src;
+	ti->ti_src = sc->sc_dst;
+	ti->ti_sport = sc->sc_dport;
+	ti->ti_dport = sc->sc_sport;
+	ti->ti_pr = IPPROTO_TCP;
+	ti->ti_len = htons(tlen - sizeof(struct ip));
+	/* ti_x1 already 0'd */
+	ti->ti_seq = htonl(sc->sc_iss);
+	ti->ti_ack = htonl(sc->sc_irs + 1);
+	/* ti_x2 already 0 */
+	ti->ti_off = (sizeof(struct tcphdr) + optlen) >> 2;
+	ti->ti_flags = TH_SYN|TH_ACK;
+	ti->ti_win = htons(win);
+	/* ti_sum already 0 */
+	/* ti_urp already 0 */
+
+	/* Tack on the TCP options. */
 	optp = (u_int8_t *)(ti + 1);
-	optp[0] = TCPOPT_MAXSEG;
-	optp[1] = 4;
-	optp[2] = (sc->sc_ourmaxseg >> 8) & 0xff;
-	optp[3] = sc->sc_ourmaxseg & 0xff;
-	optlen = 4;
+	*optp++ = TCPOPT_MAXSEG;
+	*optp++ = 4;
+	*optp++ = (sc->sc_ourmaxseg >> 8) & 0xff;
+	*optp++ = sc->sc_ourmaxseg & 0xff;
 
 	if (sc->sc_request_r_scale != 15) {
-		*((u_int32_t *)(optp + optlen)) = htonl(TCPOPT_NOP << 24 |
+		*((u_int32_t *)optp) = htonl(TCPOPT_NOP << 24 |
 		    TCPOPT_WINDOW << 16 | TCPOLEN_WINDOW << 8 |
 		    sc->sc_request_r_scale);
-		optlen += 4;
+		optp += 4;
 	}
 
 	if (sc->sc_flags & SCF_TIMESTAMP) {
-		u_int32_t *lp = (u_int32_t *)(optp + optlen);
+		u_int32_t *lp = (u_int32_t *)(optp);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
 		*lp++ = htonl(tcp_now);
 		*lp   = htonl(ts);
-		optlen += TCPOLEN_TSTAMP_APPA;
+		optp += TCPOLEN_TSTAMP_APPA;
 	}
 
-	/*
-	 * Toss any trailing mbufs.  No need to worry about
-	 * m_len and m_pkthdr.len, since tcp_respond() will
-	 * unconditionally set them.
-	 */
-	if (m->m_next) {
-		m_freem(m->m_next);
-		m->m_next = NULL;
-  	}
+	/* Compute the packet's checksum. */
+	ti->ti_sum = in_cksum(m, tlen);
 
 	/*
-	 * Fill in the fields that tcp_respond() will not touch, and
-	 * then send the response.
+	 * Fill in some straggling IP bits.  Note the stack expects
+	 * ip_len to be in host order, for convenience.
 	 */
-	ti->ti_off = (sizeof(struct tcphdr) + optlen) >> 2;
-	ti->ti_win = htons(win);
-	return (tcp_respond(NULL, ti, m, sc->sc_irs + 1, sc->sc_iss,
-	    TH_SYN|TH_ACK));
+	((struct ip *)ti)->ip_len = tlen;
+	((struct ip *)ti)->ip_ttl = ip_defttl;
+	/* XXX tos? */
+
+	/*
+	 * If we're doing Path MTU discovery, we need to set DF unless
+	 * the route's MTU is locked.  If we don't yet know the route,
+	 * look it up now.  We will copy this reference to the inpcb
+	 * when we finish creating the connection.
+	 */
+	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
+		if (ro->ro_rt != NULL) {
+			RTFREE(ro->ro_rt);
+			ro->ro_rt = NULL;
+		}
+		dst = satosin(&ro->ro_dst);
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = ti->ti_dst;
+		rtalloc(ro);
+		if ((rt = ro->ro_rt) == NULL) {
+			m_freem(m);
+			ipstat.ips_noroute++;
+			return (EHOSTUNREACH);
+		}
+	}
+	if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		((struct ip *)ti)->ip_off |= IP_DF;
+
+	/* ...and send it off! */
+	error = ip_output(m, sc->sc_ipopts, ro, 0, NULL);
+
+	return (error);
 }

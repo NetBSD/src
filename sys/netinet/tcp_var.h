@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.56 1998/12/18 21:38:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.57 1999/01/24 01:19:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -278,6 +278,7 @@ struct tcp_opt_info {
  */
 struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_queue;
+	struct route sc_route;			/* cached route */
 	u_int sc_timer;
 	u_int32_t sc_hash;
 	struct in_addr sc_src;
@@ -584,7 +585,7 @@ struct syn_cache *
 	 syn_cache_lookup __P((struct tcpiphdr *, struct syn_cache_head **));
 void	 syn_cache_reset __P((struct tcpiphdr *));
 int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
-	    register struct tcpiphdr *, long, u_long));
+	    long, u_long));
 void	 syn_cache_timer __P((void));
 
 int	tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
