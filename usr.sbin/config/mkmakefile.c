@@ -29,19 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         2       00096
- * --------------------         -----   ----------------------
- *
- * 29 Jun 92	Chris G. Demetriou	Fix Version number update
- * 15 Feb 93	Julian Elischer		allow comments (leading #) in
- *					files and files.i386
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";
+/* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
+static char rcsid[] = "$Id: mkmakefile.c,v 1.7 1993/05/18 11:51:52 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -335,7 +327,7 @@ do_cfiles(fp)
 				fputs("\\\n\t", fp);
 			}
 			if (eq(fl->f_fn, "generic"))
-				fprintf(fp, "$S/%s/%s/%s ",
+				fprintf(fp, "$S/arch/%s/%s/%s ",
 				    machinename, machinename, swapname);
 			else
 				fprintf(fp, "%s ", swapname);
@@ -464,7 +456,7 @@ do_swapspec(f, name)
 	if (!eq(name, "generic"))
 		fprintf(f, "swap%s.o: swap%s.c\n", name, name);
 	else
-/* 29 Jun 92*/	fprintf(f, "swapgeneric.o: ../%s/swapgeneric.c\n",
+		fprintf(f, "swapgeneric.o: ../../%s/swapgeneric.c\n",
 			machinename);
 	fprintf(f, "\t${NORMAL_C}\n\n");
 }
