@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.36 2004/11/16 16:45:52 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.37 2005/01/14 01:33:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.36 2004/11/16 16:45:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.37 2005/01/14 01:33:15 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -628,6 +628,8 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 				dagList = dagList->next;
 				rf_FreeDAGList(temp);
 			}
+			desc->dagList = NULL;
+
 			rf_MarkFailuresInASMList(raidPtr, asmh);
 
 			/* note the retry so that we'll bail in
