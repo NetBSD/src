@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.28 1995/04/19 18:58:14 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.29 1995/04/19 22:33:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -528,6 +528,16 @@ block:
 		return (error);
 	}
 	goto again;
+}
+
+struct tty *
+ptytty(dev)
+	dev_t dev;
+{
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
+
+	return (tp);
 }
 
 /*ARGSUSED*/
