@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)kgmon.8	6.5 (Berkeley) 6/6/91
-.\"	$Id: kgmon.8,v 1.4 1993/08/01 07:24:52 mycroft Exp $
+.\"     from:@(#)kgmon.8	8.1 (Berkeley) 6/6/93
+.\"	$Id: kgmon.8,v 1.5 1994/06/10 12:10:59 pk Exp $
 .\"
-.Dd June 6, 1991
+.Dd June 6, 1993
 .Dt KGMON 8
 .Os BSD 4.2
 .Sh NAME
@@ -98,11 +98,11 @@ profiling will be momentarily suspended,
 the operating system profile buffers will be dumped,
 and profiling will be immediately resumed.
 .Sh FILES
-.Bl -tag -width /dev/kmem -compact
-.It Pa /dev/kmem
-default kernel memory
+.Bl -tag -width /dev/kmemx -compact
 .It Pa /netbsd
-default system namelist
+the default system
+.It Pa /dev/kmem
+the default memory
 .El
 .Sh SEE ALSO
 .Xr gprof 1 ,

@@ -1,7 +1,14 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1994/05/05 06:48:52 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-NOPROG=	kgmon
+PROG=	kgmon
 MAN8=	kgmon.0
+DPADD=	${LIBKVM}
+LDADD=	-lkvm
+#
+# This program may safely be run setuid-root to allow non-root
+# users to start, stop, and reset profiling buffers.
+#
+#BINOWN=root
+#BINMODE=4555
 
 .include <bsd.prog.mk>
