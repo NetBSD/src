@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.15 2004/12/07 11:06:02 rtr Exp $
+#	$NetBSD: BRANCHES,v 1.16 2004/12/07 15:01:46 kent Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -293,6 +293,18 @@ Base Tag:	kenh-if-detach-base
 Maintainer:	Ken Hornstein <kenh@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		kent-audio1
+Description:	Audio converter pipeline
+Status:		Active
+Start Date:	Tue Dec  7 2004
+End Date:	
+Base Tag:	kent-audio1-base
+Maintainer:	TAMURA Kent <kent@NetBSD.org>
+Scope:		kernel (audio device drivers)
+Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
+		Please consult with the maintainer before committing
+		to this branch.
 
 Branch:		kqueue
 Description:	kqueue kernel event notification mechanism (from FreeBSD)
