@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.5 2001/04/09 20:19:51 hubertf Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.6 2001/05/04 12:00:20 drochner Exp $
 .\"
 .\" Copyright 2000, 2001 Hubert Feyrer <hubertf@netbsd.org>
 .\" All rights reserved.
@@ -86,6 +86,21 @@ The given argument(s) are handed off to
 for attaching and configuration of keyboards. See
 .Xr wsconscfg 8
 for more information.
+.Pp
+.It Sy encoding    <wsconsctl -w encoding=arg>
+Set the keyboard map to the given language code. The map
+must be supported by the keyboard driver in use and must be
+compiled into the kernel. See the keyboard driver's manpage (eg.
+.Xr pckbd 4 ,
+.Xr ukbd 4 )
+for details.
+.Pp
+.It Sy mapfile
+Passes the contents of a file containing a keyboard map line by line to
+.Dq wsconsctl -w map+=
+See
+.Xr wsconsctl 8
+for details.
 .Pp
 .It Sy mux         <wsconscfg -m args>
 Used to attach and configure keyboard/mouse multiplexors. See
