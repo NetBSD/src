@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.32 1999/11/07 06:15:09 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.33 1999/11/07 08:18:24 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -679,15 +679,15 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked ? */
+	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
-			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_cuda(NULL);	/* process it */
-				if (!adb_initted)
+			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
+				adb_intr_cuda(NULL); /* go process it */
+				if (adb_polling)
 					adb_soft_intr();
-				}
+			}
 
 	return 0;
 }				/* send_adb_cuda */
@@ -1124,8 +1124,8 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
-				adb_intr_II(NULL); /* go process "interrupt" */
-				if (!adb_initted)
+				adb_intr_II(NULL); /* go process it */
+				if (adb_polling)
 					adb_soft_intr();
 			}
 
@@ -1500,13 +1500,13 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked ? */
+	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
-			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_IIsi(NULL);	/* process it */
-				if (!adb_initted)
+			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
+				adb_intr_IIsi(NULL); /* go process it */
+				if (adb_polling)
 					adb_soft_intr();
 			}
 
