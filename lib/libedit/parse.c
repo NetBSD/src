@@ -97,6 +97,8 @@ el_parse(el, argc, argv)
     char *ptr;
     int i;
 
+    if (argc < 1)
+	return -1;
     ptr = strchr(argv[0], ':');
     if (ptr != NULL) {
 	*ptr++ = '\0';
