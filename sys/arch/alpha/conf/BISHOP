@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.2 1998/04/15 21:19:21 drochner Exp $
+#	$NetBSD: BISHOP,v 1.3 1998/04/16 04:11:50 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -37,6 +37,7 @@ file-system	FDESC		# /dev/fd file system
 # File system options
 options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	NFS_BOOT_DHCP	# use DHCP for NFS root
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -110,6 +111,8 @@ mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pcppi*	at	isa? port ?			# PC prog. periph. interface
+spkr*	at	pcppi?				# PC speaker (IBM BASIC'ish)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
