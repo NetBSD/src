@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.10 2003/10/25 21:51:31 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.11 2003/10/26 11:34:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -84,8 +84,9 @@
 #endif
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	GET_CURPCB							;\
-	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
-	tst	r1, #PCB_NOALIGNFLT					;\
+	cmp	r1, #0x00		/* curpcb NULL?			;\
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
+	tstne	r1, #PCB_NOALIGNFLT					;\
 	beq	1f		/* Alignment faults already enabled */	;\
 	GET_CPUINFO							;\
 	ldr	r2, .Lcpufuncs						;\
@@ -141,8 +142,9 @@ Lexception_exit_loop:
 #else
 	ldr	r1, [r6]
 #endif
-	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tst	r1, #PCB_NOALIGNFLT
+	cmp	r1, #0x00		/* curpcb NULL? */
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
+	tstne	r1, #PCB_NOALIGNFLT
 	beq	1f			/* Keep alignment faults enabled */
 	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
 	ldr	r2, .Lcpufuncs
@@ -226,8 +228,9 @@ ASENTRY_NP(swi_entry)
 #else
 	ldr	r1, [r6]
 #endif
-	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tst	r1, #PCB_NOALIGNFLT
+	cmp	r1, #0x00		/* curpcb NULL? */
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
+	tstne	r1, #PCB_NOALIGNFLT
 	beq	1f			/* Keep alignment faults enabled */
 	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
 	ldr	r2, .Lcpufuncs
@@ -433,8 +436,9 @@ ASENTRY_NP(undefined_entry)
 	ldr	r7, .Lcpu_info_store
 	ldr	r1, [r6]
 #endif
-	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
-	tst	r1, #PCB_NOALIGNFLT
+	cmp	r1, #0x00		/* curpcb NULL? */
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
+	tstne	r1, #PCB_NOALIGNFLT
 	beq	1f			/* Keep alignment faults enabled */
 	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
 	ldr	r2, .Lcpufuncs
