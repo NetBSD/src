@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.27 1993/08/15 20:59:38 mycroft Exp $
+#	$Id: bsd.prog.mk,v 1.28 1993/08/15 21:53:05 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -151,3 +151,4 @@ lint: ${SRCS}
 
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
+.include <bsd.subdir.mk>
