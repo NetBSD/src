@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.7 1996/06/03 22:04:40 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.8 1996/06/12 19:50:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -81,11 +81,20 @@ u_int get_stackptr	__P((u_int));
 
 /* In blockio.S */
 
-void insw	__P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
-void outsw	__P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
-void insw16	__P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
-void outsw16	__P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
-
+void insw	__P((u_int io, void *dest, u_int size));
+void outsw	__P((u_int io, void *src, u_int size));
+void insw16	__P((u_int io, void *dest, u_int size));
+void outsw16	__P((u_int io, void *src, u_int size));
+/*
+void insl	__P((u_int io, void *dest, u_int size));
+void outsl	__P((u_int io, void *src, u_int size));
+*/
+#define insl(io, dest, size) \
+	panic("insl: Function not implemented\n");
+	
+#define outsl(io, src, size) \
+	panic("outsl: Function not implemented\n");
+	
 /* Macros for reading and writing words, shorts, bytes */
 
 #define WriteWord(a, b) \
