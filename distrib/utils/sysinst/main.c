@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/12/05 13:38:59 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1998/06/20 13:05:49 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,31 +49,34 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-int main(int argc, char **argv);
-static void usage(void);
-static void inthandler(int);
-static void cleanup(void);
+int main __P((int argc, char **argv));
+static void usage __P((void));
+static void inthandler __P((int));
+static void cleanup __P((void));
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 
-int main(int argc, char **argv)
+int
+main(argc, argv)
+	int argc;
+	char **argv;
 {
 	WINDOW *win;
 	int ch;
 
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
-		(void)fprintf (stderr,
+		(void)fprintf(stderr,
 			 "sysinst: environment varible TERM not set.\n");
 		exit(1);
 	}
 
 	/* argv processing */
-	while ((ch  = getopt(argc, argv, "r:")) != -1)
+	while ((ch = getopt(argc, argv, "r:")) != -1)
 		switch(ch) {
 		case 'r':
 			/* Release name other than compiled in release. */
-			strncpy (rel, optarg, SSTRSIZE);
+			strncpy(rel, optarg, SSTRSIZE);
 			break;
 		case '?':
 		default:
@@ -82,15 +85,15 @@ int main(int argc, char **argv)
 	
 
 	/* initialize message window */
-	win = newwin(22,78,1,1);
+	win = newwin(22, 78, 1, 1);	/* XXX BOGUS XXX */
        	msg_window(win);
 
 	/* Watch for SIGINT and clean up */
-	(void) signal(SIGINT, inthandler);
-	(void) atexit(cleanup);
+	(void)signal(SIGINT, inthandler);
+	(void)atexit(cleanup);
 
 	/* Menu processing */
-	process_menu (MENU_netbsd);
+	process_menu(MENU_netbsd);
 	
 	exit_cleanly = 1;
 	exit(0);
@@ -98,10 +101,12 @@ int main(int argc, char **argv)
 	
 
 /* toplevel menu handler ... */
-void toplevel(void)
+void
+toplevel()
 {
+
 	/* Display banner message in (english, francais, deutche..) */
-	msg_display (MSG_hello);
+	msg_display(MSG_hello);
 
 	/* 
 	 * Undo any stateful side-effects of previous menu choices.
@@ -116,24 +121,28 @@ void toplevel(void)
 /* The usage ... */
 
 static void
-usage(void)
+usage()
 {
-	(void)fprintf (stderr, msg_string(MSG_usage));
+
+	(void)fprintf(stderr, msg_string(MSG_usage));
 	exit(1);
 }
 
 /* ARGSUSED */
 static void
-inthandler(int notused)
+inthandler(notused)
+	int notused;
 {
+
 	/* atexit() wants a void function, so inthandler() just calls cleanup */
 	cleanup();
 	exit(1);
 }
 
 static void
-cleanup(void)
+cleanup()
 {
+
 	endwin();
 	unwind_mounts();
 	run_prog("/sbin/umount /mnt2 2>/dev/null");

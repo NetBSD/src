@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.2 1998/06/20 13:05:51 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@ struct lookfor {
 	char *fmt;	/* Expected format. */
 	char *todo;	/* What to do ... */
 	void *var;	/* Possible var */
-	void (*func) (struct data *list, int num);	/* function to call */
+	void (*func) __P((struct data *list, int num));	/* function to call */
 };
 
 /*  Format string for the expected string:
@@ -77,7 +77,7 @@ struct lookfor {
 
 /* prototypes */
 
-void walk (char *, size_t, struct lookfor *, int);
+void walk __P((char *, size_t, struct lookfor *, int));
 
 
 /* Maximum number of matched data elements per line! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.8 1998/02/20 07:43:52 phil Exp $ */
+/*	$NetBSD: factor.c,v 1.9 1998/06/20 13:05:48 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,8 +38,12 @@
 
 /* Prototypes for strict prototyping. */
 
-static void build_primes (long max);
-void factor (long val, long *fact_list, int fact_size, int *num_fact);
+#include <sys/cdefs.h>
+
+#include <stdio.h>
+
+static void build_primes __P((long max));
+void factor __P((long val, long *fact_list, int fact_size, int *num_fact));
 
 /*
  * primes - prime table, built to include up to 46345 because
@@ -52,7 +56,9 @@ void factor (long val, long *fact_list, int fact_size, int *num_fact);
 long primes[4800];
 int  num_primes = 2;
 
-static void build_primes (long max)
+static void
+build_primes(max)
+	long max;
 {
 	long pc;
 	int j;
@@ -68,7 +74,7 @@ static void build_primes (long max)
 	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc <= max; pc+=2) {
 		j = 0;
 		rem = 1;
-		while (j<num_primes && primes[j]*primes[j] <= pc) {
+		while (j < num_primes && primes[j] * primes[j] <= pc) {
 			if ((rem = pc % primes[j]) == 0)
 				break;
 			j++;
@@ -82,7 +88,12 @@ static void build_primes (long max)
    The last number may not be a prime factor is the list is not
    long enough. */
 
-void factor (long val, long *fact_list, int fact_size, int *num_fact)
+void
+factor(val, fact_list, fact_size, num_fact)
+	long val;
+	long *fact_list;
+	int fact_size;
+	int *num_fact;
 {
 	int i;
 
@@ -97,7 +108,7 @@ void factor (long val, long *fact_list, int fact_size, int *num_fact)
 
 		/* Put factors in array. */
 		while (*num_fact < fact_size-1 && i < num_primes &&
-		       val % primes[i] == 0) {
+		    val % primes[i] == 0) {
 			fact_list[(*num_fact)++] = primes[i];
 			val /= primes[i];
 		}

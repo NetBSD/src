@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.7 1998/02/27 21:30:09 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.8 1998/06/20 13:05:48 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* fdisk.c -- routines to deal with /sbin/fdisk ... */
 
 #include <stdio.h>
+
 #include "defs.h"
 #include "md.h"
 #include "txtwalk.h"
@@ -72,36 +73,37 @@ struct lookfor fdiskbuf[] = {
 
 int numfdiskbuf = sizeof(fdiskbuf) / sizeof(struct lookfor);
 
-
-
 /*
  * Fetch current MBR from disk into core by parsing /sbin/fdisk output.
  */
-void get_fdisk_info (void)
+void
+get_fdisk_info()
 {
 	char *textbuf;
 	int   textsize;
 	int   t1, t2;
 
 	/* Get Fdisk information */
-	textsize = collect (T_OUTPUT, &textbuf,
-			    "/sbin/fdisk -S /dev/r%sd 2>/dev/null", diskdev);
+	textsize = collect(T_OUTPUT, &textbuf,
+	    "/sbin/fdisk -S /dev/r%sd 2>/dev/null", diskdev);
 	if (textsize < 0) {
 		endwin();
-		(void) fprintf (stderr, "Could not run fdisk.");
+		(void)fprintf(stderr, "Could not run fdisk.");
 		exit (1);
 	}
-	walk (textbuf, textsize, fdiskbuf, numfdiskbuf);
-	free (textbuf);
+	walk(textbuf, textsize, fdiskbuf, numfdiskbuf);
+	free(textbuf);
 
-	/* A common failure of fdisk is to get the number of cylinders
-	   wrong and the number of sectors and heads right.  This makes
-	   a disk look very big.  In this case, we can just recompute
-	   the number of cylinders and things should work just fine.
-	   Also, fdisk may correctly indentify the settings to include
-	   a cylinder total > 1024, because translation mode is not used.
-	   Check for it. */
-
+	/*
+	 * A common failure of fdisk is to get the number of cylinders
+	 * wrong and the number of sectors and heads right.  This makes
+	 * a disk look very big.  In this case, we can just recompute
+	 * the number of cylinders and things should work just fine.
+	 * Also, fdisk may correctly indentify the settings to include
+	 * a cylinder total > 1024, because translation mode is not used.
+	 * Check for it.
+	 */
+	/* XXX should warn user about this, and maybe ask! */
 	if (bcyl > 1024 && disk->geom[1] == bhead && disk->geom[2] == bsec)
 		bcyl = 1024;
 	else if (bcyl > 1024 && bsec < 64) {
@@ -119,24 +121,25 @@ void get_fdisk_info (void)
  * Write incore MBR geometry and partition info to disk
  * using  /sbin/fdisk.
  */
-void set_fdisk_info (void)
+void
+set_fdisk_info()
 {
 	int i;
 
 	if (bstuffset)
-		run_prog ("/sbin/fdisk -i -f -b %d/%d/%d /dev/r%sd",
+		run_prog("/sbin/fdisk -i -f -b %d/%d/%d /dev/r%sd",
 			  bcyl, bhead, bsec, diskdev);
 	
-	for (i=0; i<4; i++)
+	for (i = 0; i < 4; i++)
 		if (part[i][SET])
                         run_prog("/sbin/fdisk -u -f -%d -b %d/%d/%d "
-                                 "-s %d/%d/%d /dev/r%sd",
-                                 i, bcyl, bhead, bsec,
-                                 part[i][ID], part[i][START],
-                                 part[i][SIZE],  diskdev);
+			    "-s %d/%d/%d /dev/r%sd",
+			    i, bcyl, bhead, bsec,
+			    part[i][ID], part[i][START],
+			    part[i][SIZE],  diskdev);
 
 	if (activepart >= 0)
-		run_prog ("/sbin/fdisk -a -%d -f /dev/r%s",
-			  activepart, diskdev);
+		run_prog("/sbin/fdisk -a -%d -f /dev/r%s",
+		    activepart, diskdev);
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.1 1998/02/24 05:36:03 jonathan Exp $	*/
+/*	$NetBSD: mbr.h,v 1.2 1998/06/20 13:05:49 mrg Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -57,13 +57,13 @@ EXTERN int usefull;			/* on install, clobber entire disk */
 
 
 /* from mbr.c */
-void	set_fdisk_geom (void);		/* edit incore BIOS geometry */
-void	disp_cur_geom (void);
-int	check_geom (void);		/* primitive geometry sanity-check */
+void	set_fdisk_geom __P((void));	/* edit incore BIOS geometry */
+void	disp_cur_geom __P((void));
+int	check_geom __P((void));		/* primitive geometry sanity-check */
 
 int	edit_mbr __P((void));		
-int 	partsoverlap (int, int);	/* primive partition sanity-check */
+int 	partsoverlap __P((int, int));	/* primive partition sanity-check */
 
 /* from fdisk.c */
-void	get_fdisk_info (void);		/* read from disk into core */
-void	set_fdisk_info (void);		/* write incore info into disk */
+void	get_fdisk_info __P((void));	/* read from disk into core */
+void	set_fdisk_info __P((void));	/* write incore info into disk */

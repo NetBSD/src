@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.2 1998/06/20 13:05:51 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,17 +56,22 @@
 
 /* prototypes */
 
-static void process (struct lookfor, char *);
-static void match (char *, struct lookfor *, int);
-static int finddata (struct lookfor, char *, struct data *, int *);
-static char *strndup (char *, int);
+static void process __P((struct lookfor, char *));
+static void match __P((char *, struct lookfor *, int));
+static int finddata __P((struct lookfor, char *, struct data *, int *));
+static char *strndup __P((char *, int));
 
-
-/* Walk the buffer, call match for each line. */
+/*
+ * Walk the buffer, call match for each line.
+ */
 void
-walk (char *buffer, size_t size, struct lookfor *these, int numthese)
+walk(buffer, size, these, numthese)
+	char *buffer;
+	size_t size;
+	struct lookfor *these;
+	int numthese;
 {
-	int i=0;
+	int i = 0;
 	int len;
 	int line = 1;
 
@@ -92,13 +97,15 @@ walk (char *buffer, size_t size, struct lookfor *these, int numthese)
 	}
 }
 
-
-/* Match the current line with a string of interest.
+/*
+ * Match the current line with a string of interest.
  * For each match in these, process the match.
  */
-
 static void
-match (char *line, struct lookfor *these, int numthese)
+match(line, these, numthese)
+	char *line;
+	struct lookfor *these;
+	int numthese;
 {
 	int linelen;		/* Line length */
 	int patlen;		/* Pattern length */
@@ -110,32 +117,35 @@ match (char *line, struct lookfor *these, int numthese)
 		patlen = strlen(these[which].head);
 		if (linelen < patlen)
 			continue;
-		if (strncmp (these[which].head, line, patlen) == 0)
-			process (these[which], line);
+		if (strncmp(these[which].head, line, patlen) == 0)
+			process(these[which], line);
 	}
 }
 
 
 /* process the matched line. */
 static void
-process (struct lookfor this, char *line)
+process(this, line)
+	struct lookfor this;
+	char *line;
 {
 	struct data found[MAXDATA];
 	int numfound = 0;
-
 	char *p;
 	int   i, j;
 	
 	if (finddata(this, line, found, &numfound)) {
 #ifdef DEBUG
-		printf ("process: \"%s\"\n", line);
-		for (i=0; i<numfound; i++) {
+		printf("process: \"%s\"\n", line);
+		for (i = 0; i < numfound; i++) {
 			printf ("\t%d: ", i);
 			switch (found[i].what) {
-			case INT: printf ("%d\n", found[i].u.i_val);
-				  break;
-			case STR: printf ("'%s'\n", found[i].u.s_val);
-				  break;
+			case INT:
+				printf ("%d\n", found[i].u.i_val);
+				break;
+			case STR:
+				printf ("'%s'\n", found[i].u.s_val);
+				break;
 			}
 		}
 #endif
@@ -144,8 +154,10 @@ process (struct lookfor this, char *line)
 		case 'a':
 			p = this.todo;
 			j = 0;
-			while (*p && *p != '$') p++;
-			if (*p) p++;
+			while (*p && *p != '$')
+				p++;
+			if (*p)
+				p++;
 			while (*p && isdigit(*p)) {
 				i = atoi(p);
 				switch (found[i].what) {
@@ -158,27 +170,35 @@ process (struct lookfor this, char *line)
 					       found[i].u.s_val);
 					break;
 				}
-				while (isdigit(*p)) p++;
-				while (*p && *p != '$') p++;
-				if (*p) p++;
+				while (isdigit(*p))
+					p++;
+				while (*p && *p != '$')
+					p++;
+				if (*p)
+					p++;
 				j++;
 			}
 			break;
 		case 'c':
-			(*this.func) (found, numfound);
+			(*this.func)(found, numfound);
 			break;
 		}
 	}
 }
 
-/* find the expected data.  Return 1 if successful, return 0 if not.
+/*
+ * find the expected data.  Return 1 if successful, return 0 if not.
  * Successful means running into the end of the expect string before
  * running out of line data or encountering other bad data.
  *
  * Side Effect -- sets numfound and found.
  */
 static int
-finddata (struct lookfor this, char *line, struct data *found, int *numfound )
+finddata(this, line, found, numfound )
+	struct lookfor this;
+	char *line;
+	struct data *found;
+	int *numfound;
 {
 	char *fmt = this.fmt;
 	int len;
@@ -208,22 +228,22 @@ finddata (struct lookfor this, char *line, struct data *found, int *numfound )
 						line++;
 				break;
 			case 'd':
-				if (!isdigit (*line))
+				if (!isdigit(*line))
 					return 0;
 				found[*numfound].what = INT;
 				found[(*numfound)++].u.i_val = atoi(line);
-				while (*line && isdigit (*line))
+				while (*line && isdigit(*line))
 					line++;
 				break;
 			case 's':
 				len = 0;
 				while (line[len] && !isspace(line[len])
-				       && line[len] != fmt[1])
+				    && line[len] != fmt[1])
 					len++;
 				found[*numfound].what = STR;
 				found[*numfound].u.s_val = strndup(line, len);
 				if (found[(*numfound)++].u.s_val == NULL) {
-					(void) fprintf (stderr,
+					(void)fprintf(stderr,
 					    "msgwalk: strndup: out of vm.\n");
 					exit(1);
 				}
@@ -234,7 +254,8 @@ finddata (struct lookfor this, char *line, struct data *found, int *numfound )
 			}
 			
 		} else if (*fmt == ' ') {
-			while (*line && isspace(*line)) line++;
+			while (*line && isspace(*line))
+				line++;
 		} else if (*line == *fmt) {
 			line++;
 		} else {
@@ -248,20 +269,23 @@ finddata (struct lookfor this, char *line, struct data *found, int *numfound )
 	return 1;
 }
 
-/* Utility routines.... 
+/*
+ * Utility routines.... 
  */
 
-static char
-*strndup (char *str, int len)
+static char *
+strndup(str, len)
+	char *str;
+	int len;
 {
 	int alen;
 	char *val;
 	
 	alen = strlen(str);
-	alen = len < alen ? len+1 : alen+1;
-	val = (char *) malloc(alen);
+	alen = len < alen ? len + 1 : alen + 1;
+	val = (char *)malloc(alen);
 	if (!val)
 		return NULL;
-	strncpy (val, str, alen-1);
+	strncpy(val, str, alen-1);
 	return val;
 }

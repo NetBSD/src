@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.14 1998/02/20 00:37:17 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.15 1998/06/20 13:05:51 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,25 +52,29 @@ void 	check_prereqs __P((void));
 int	save_etc __P((void));
 int	merge_etc __P((void));
 
-/* Do the system upgrade. */
-void do_upgrade(void)
+/*
+ * Do the system upgrade.
+ */
+void
+do_upgrade()
 {
-	doingwhat = msg_string (MSG_upgrade);
 
-	msg_display (MSG_upgradeusure);
-	process_menu (MENU_noyes);
+	doingwhat = msg_string(MSG_upgrade);
+
+	msg_display(MSG_upgradeusure);
+	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
 
-	get_ramsize ();
+	get_ramsize();
 
-	if (find_disks () < 0)
+	if (find_disks() < 0)
 		return;
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev);
-		process_menu (MENU_ok);
+		process_menu(MENU_ok);
 		return;
 	}
 
@@ -87,12 +91,12 @@ void do_upgrade(void)
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
-	if (!md_update ())
+	if (!md_update())
 		return;
 
 	/* Done with disks. Ready to get and unpack tarballs. */
 	msg_display(MSG_disksetupdone);
-	process_menu (MENU_ok);
+	process_menu(MENU_ok);
 
 	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
 
@@ -109,12 +113,13 @@ void do_upgrade(void)
  * back files we might want during the installation --  in case 
  * we are upgrading the target root.
  */
-int save_etc(void)
+int
+save_etc()
 {
 
 	if (target_dir_exists_p("/etc.old")) {
 		msg_display(MSG_etc_oldexists);
-		process_menu (MENU_ok);
+		process_menu(MENU_ok);
 		return EEXIST;
 	}
 
@@ -123,7 +128,7 @@ int save_etc(void)
 #endif
 
 	/* Move target /etc to /etc.old.  Abort on error. */
-	mv_within_target_or_die ("/etc", "/etc.old");
+	mv_within_target_or_die("/etc", "/etc.old");
 
 	/* now make an /etc that should let the user reboot. */
 	make_target_dir("/etc");
@@ -159,49 +164,49 @@ int save_etc(void)
 	return 0;
 }
 
-
 /*
  * Merge back saved target /etc files after unpacking the new
  * sets has completed.
  */
-int merge_etc(void)
+int
+merge_etc()
 {
+
 	/* just move back fstab, so we can boot cleanly.  */
 	cp_within_target("/etc.old/fstab", "/etc/");
 
 	return 0;	
 }
 
-
-
 /*
  * Unpacks sets,  clobbering existintg contents.
  */
 void
-do_reinstall_sets(void)
+do_reinstall_sets()
 {
 
 	unwind_mounts();
-	msg_display (MSG_reinstallusure);
-	process_menu (MENU_noyes);
+	msg_display(MSG_reinstallusure);
+	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
 
-
-	if (find_disks () < 0)
+	if (find_disks() < 0)
 		return;
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev);
-		process_menu (MENU_ok);
+		process_menu(MENU_ok);
 		return;
 	}
 
 	if (!fsck_disks())
 		return;
 
-	fflush(stdout); puts(CL); wrefresh(stdscr);
+	fflush(stdout);
+	puts(CL);
+	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
 	get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack);
