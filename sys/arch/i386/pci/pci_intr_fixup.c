@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.8 2000/07/18 11:37:56 soda Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.9 2000/07/22 17:43:36 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -626,10 +626,10 @@ pciintr_do_header_fixup(pc, tag)
 		/* routed by BIOS, but inconsistent */
 #ifdef PCIBIOS_INTR_FIXUP_FORCE
 		/* believe PCI IRQ Routing table */
-		PCIBIOS_PRINTV((" WARNING: override irq %d\n", irq));
+		PCIBIOS_PRINTV((" WARNING: overriding irq %d\n", irq));
 #else
 		/* believe PCI Interrupt Configuration Register (default)  */
-		PCIBIOS_PRINTV((" WARNING: leave irq %d\n", irq));
+		PCIBIOS_PRINTV((" WARNING: preserving irq %d\n", irq));
 		return;
 #endif
 	}
