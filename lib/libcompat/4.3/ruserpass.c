@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.9 2003/08/07 16:44:16 agc Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.10 2003/10/21 00:16:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.9 2003/08/07 16:44:16 agc Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.10 2003/10/21 00:16:55 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,7 +125,7 @@ ruserpass(host, aname, apass)
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
 next:
-	while ((t = token()) != NULL) switch(t) {
+	while ((t = token()) != 0) switch(t) {
 
 	case DEFAULT:
 		usedefault = 1;
