@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.1 1996/04/18 18:30:50 chuck Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.2 1996/04/26 19:44:03 chuck Exp $	*/
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -91,7 +91,6 @@ struct sbic_tinfo {
 
 struct  sbic_softc {
     struct  device          sc_dev;
-    struct  isr             sc_isr;     /* Delete this... */
     struct  target_sync {
         u_char  state;
         u_char  period;
