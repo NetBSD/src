@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.229 2000/06/05 11:31:16 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.230 2000/06/05 11:34:10 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.225 2000/06/05 11:29:28 kleink Exp 
+ *	NetBSD: pcidevs,v 1.226 2000/06/05 11:33:35 kleink Exp 
  */
 
 /*
@@ -1652,6 +1652,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS Technology Inc",
 	    "Maestro 2E PCI Audio Accelerator",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 3 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
