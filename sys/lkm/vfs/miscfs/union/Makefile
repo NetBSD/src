@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/08/27 21:44:53 explorer Exp $
+#	$NetBSD: Makefile,v 1.4 1998/02/11 11:57:22 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -12,3 +12,8 @@ SRCS=	lkminit_vfs.c
 SRCS+=	union_vfsops.c union_vnops.c union_subr.c
 
 .include <bsd.kmod.mk>
+
+# XXX
+.if defined(UVM)
+CPPFLAGS+=      -DUVM
+.endif
