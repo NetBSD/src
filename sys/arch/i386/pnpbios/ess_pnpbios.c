@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.3 2000/03/04 23:08:54 nathanw Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.4 2000/04/22 06:38:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,12 +101,14 @@ ess_pnpbios_attach(parent, self, aux)
 	sc->sc_audio1.ist = IST_EDGE;
 	sc->sc_audio2.ist = IST_EDGE;
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_audio1.irq)) {
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_audio1.irq,
+	    NULL)) {
 		printf(": can't get IRQ\n");
 		return;
 	}
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 1, &sc->sc_audio2.irq))
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 1, &sc->sc_audio2.irq,
+	    NULL))
 		sc->sc_audio2.irq = -1;
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->sc_audio1.drq)) {

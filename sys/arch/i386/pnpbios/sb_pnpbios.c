@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.3 2000/04/22 06:38:24 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -89,7 +89,8 @@ sb_pnpbios_attach(parent, self, aux)
 	/* XXX These are only for setting chip configuration registers. */
 	pnpbios_getiobase(aa->pbt, aa->resc, 0, 0, &sc->sc_iobase);
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_irq)) {
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_irq,
+	    NULL)) {
 		printf(": can't get IRQ\n");
 		return;
 	}
