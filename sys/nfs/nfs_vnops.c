@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.108 1999/11/29 23:34:00 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.109 2000/03/30 02:45:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,6 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/conf.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
@@ -3333,7 +3332,6 @@ nfsfifo_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
 	register struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3358,7 +3356,6 @@ nfsfifo_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
 	register struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3388,7 +3385,6 @@ nfsfifo_close(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
-	extern int (**fifo_vnodeop_p) __P((void *));
 
 	if (np->n_flag & (NACC | NUPD)) {
 		if (np->n_flag & NACC) {
