@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname.c,v 1.7 1999/09/16 11:45:13 lukem Exp $	*/
+/*	$NetBSD: getservbyname.c,v 1.8 1999/09/20 04:39:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname.c,v 1.7 1999/09/16 11:45:13 lukem Exp $");
+__RCSID("$NetBSD: getservbyname.c,v 1.8 1999/09/20 04:39:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,10 +62,6 @@ getservbyname(name, proto)
 
 	_DIAGASSERT(name != NULL);
 	/* proto may be NULL */
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (NULL);
-#endif
 
 	setservent(_serv_stayopen);
 	while ((p = getservent()) != NULL) {

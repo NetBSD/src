@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.c,v 1.11 1999/09/16 11:45:41 lukem Exp $	*/
+/*	$NetBSD: strcmp.c,v 1.12 1999/09/20 04:39:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcmp.c,v 1.11 1999/09/16 11:45:41 lukem Exp $");
+__RCSID("$NetBSD: strcmp.c,v 1.12 1999/09/20 04:39:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,10 +64,6 @@ strcmp(s1, s2)
 
 	_DIAGASSERT(s1 != NULL);
 	_DIAGASSERT(s2 != NULL);
-#ifdef _DIAGNOSTIC
-	if (s1 == NULL || s2 == NULL)
-		return (0);
-#endif
 
 	while (*s1 == *s2++)
 		if (*s1++ == 0)

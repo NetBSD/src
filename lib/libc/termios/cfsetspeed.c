@@ -1,4 +1,4 @@
-/*	$NetBSD: cfsetspeed.c,v 1.4 1999/09/16 11:45:44 lukem Exp $	*/
+/*	$NetBSD: cfsetspeed.c,v 1.5 1999/09/20 04:39:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfsetspeed.c,v 1.4 1999/09/16 11:45:44 lukem Exp $");
+__RCSID("$NetBSD: cfsetspeed.c,v 1.5 1999/09/20 04:39:51 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,10 +59,6 @@ cfsetspeed(t, speed)
 {
 
 	_DIAGASSERT(t != NULL);
-#ifdef _DIAGNOSTIC
-	if (t == NULL)
-		return (-1);
-#endif
 
 	t->c_ispeed = t->c_ospeed = speed;
 	return (0);

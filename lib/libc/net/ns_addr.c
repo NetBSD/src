@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.9 1999/09/16 11:45:16 lukem Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.10 1999/09/20 04:39:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.9 1999/09/16 11:45:16 lukem Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.10 1999/09/20 04:39:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,6 @@ ns_addr(name)
 	char buf[50];
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (zero_addr);
-#endif
 
 	(void)strncpy(buf, name, sizeof(buf) - 1);
 	buf[sizeof(buf) - 1] = '\0';

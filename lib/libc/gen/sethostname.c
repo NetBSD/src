@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostname.c,v 1.9 1999/09/16 11:45:04 lukem Exp $	*/
+/*	$NetBSD: sethostname.c,v 1.10 1999/09/20 04:39:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sethostname.c,v 1.9 1999/09/16 11:45:04 lukem Exp $");
+__RCSID("$NetBSD: sethostname.c,v 1.10 1999/09/20 04:39:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,12 +62,6 @@ sethostname(name, namelen)
 	int mib[2];
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_HOSTNAME;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.6 1999/09/16 11:45:06 lukem Exp $	*/
+/*	$NetBSD: uname.c,v 1.7 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uname.c	8.1 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: uname.c,v 1.6 1999/09/16 11:45:06 lukem Exp $");
+__RCSID("$NetBSD: uname.c,v 1.7 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,12 +65,6 @@ uname(name)
 	rval = 0;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSTYPE;

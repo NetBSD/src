@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.11 1999/09/16 11:45:26 lukem Exp $	*/
+/*	$NetBSD: fgets.c,v 1.12 1999/09/20 04:39:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.11 1999/09/16 11:45:26 lukem Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.12 1999/09/20 04:39:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,10 +68,6 @@ fgets(buf, n, fp)
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || fp == NULL)
-		return (NULL);
-#endif
 	if (n <= 0)					/* sanity check */
 		return (NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.11 1999/09/16 11:45:38 lukem Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.12 1999/09/20 04:39:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.11 1999/09/16 11:45:38 lukem Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.12 1999/09/20 04:39:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,12 +89,6 @@ bcopy(src0, dst0, length)
 
 	_DIAGASSERT(dst0 != 0);
 	_DIAGASSERT(src0 != 0);
-#ifdef _DIAGNOSTIC
-	if (dst0 == 0 || src0 == 0) {
-		dst0 = 0;
-		goto done;
-	}
-#endif
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;

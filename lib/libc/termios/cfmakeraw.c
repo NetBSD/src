@@ -1,4 +1,4 @@
-/*	$NetBSD: cfmakeraw.c,v 1.6 1999/09/16 11:45:44 lukem Exp $	*/
+/*	$NetBSD: cfmakeraw.c,v 1.7 1999/09/20 04:39:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfmakeraw.c,v 1.6 1999/09/16 11:45:44 lukem Exp $");
+__RCSID("$NetBSD: cfmakeraw.c,v 1.7 1999/09/20 04:39:50 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,10 +62,6 @@ cfmakeraw(t)
 {
 
 	_DIAGASSERT(t != NULL);
-#ifdef _DIAGNOSTIC
-	if (t == NULL)
-		return;
-#endif
 
 	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	t->c_oflag &= ~OPOST;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getdomainname.c,v 1.8 1999/09/16 11:44:58 lukem Exp $	*/
+/*	$NetBSD: getdomainname.c,v 1.9 1999/09/20 04:39:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getdomainname.c,v 1.8 1999/09/16 11:44:58 lukem Exp $");
+__RCSID("$NetBSD: getdomainname.c,v 1.9 1999/09/20 04:39:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,12 +63,6 @@ getdomainname(name, namelen)
 	size_t size;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_DOMAINNAME;

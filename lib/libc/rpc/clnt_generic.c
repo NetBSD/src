@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.13 1999/09/16 11:45:22 lukem Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.14 1999/09/20 04:39:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.13 1999/09/16 11:45:22 lukem Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.14 1999/09/20 04:39:20 lukem Exp $");
 #endif
 #endif
 
@@ -79,13 +79,6 @@ clnt_create(hostname, prog, vers, proto)
 
 	_DIAGASSERT(hostname != NULL);
 	_DIAGASSERT(proto != NULL);
-#ifdef _DIAGNOSTIC
-	if (hostname == NULL || proto == NULL) {
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-		rpc_createerr.cf_error.re_errno = EFAULT; 
-		return (NULL);
-	}
-#endif
 
 	h = gethostbyname(hostname);
 	if (h == NULL) {

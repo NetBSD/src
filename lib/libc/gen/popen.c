@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.23 1999/09/16 11:45:02 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.24 1999/09/20 04:39:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.23 1999/09/16 11:45:02 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.24 1999/09/20 04:39:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,12 +80,6 @@ popen(command, type)
 
 	_DIAGASSERT(command != NULL);
 	_DIAGASSERT(type != NULL);
-#ifdef _DIAGNOSTIC
-	if (command == NULL || type == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */
@@ -182,12 +176,6 @@ pclose(iop)
 	pid_t pid;
 
 	_DIAGASSERT(iop != NULL);
-#ifdef _DIAGNOSTIC
-	if (iop == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	/* Find the appropriate file pointer. */
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)

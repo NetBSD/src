@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.11 1999/09/16 11:45:33 lukem Exp $	*/
+/*	$NetBSD: atexit.c,v 1.12 1999/09/20 04:39:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)atexit.c	8.2 (Berkeley) 7/3/94";
 #else
-__RCSID("$NetBSD: atexit.c,v 1.11 1999/09/16 11:45:33 lukem Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.12 1999/09/20 04:39:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,6 @@ atexit(fn)
 	struct atexit *p;
 
 	_DIAGASSERT(fn != NULL);
-#ifdef _DIAGNOSTIC
-	if (fn == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	mutex_lock(&__atexit_mutex);
 	if ((p = __atexit) == NULL)

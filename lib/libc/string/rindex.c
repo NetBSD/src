@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
+/*	$NetBSD: rindex.c,v 1.11 1999/09/20 04:39:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rindex.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
+__RCSID("$NetBSD: rindex.c,v 1.11 1999/09/20 04:39:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,6 @@ rindex(p, ch)
 	char *save;
 
 	_DIAGASSERT(p != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL)
-		return (NULL);
-#endif
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)

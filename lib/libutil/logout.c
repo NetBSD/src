@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.10 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: logout.c,v 1.11 1999/09/20 04:48:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.10 1999/09/16 11:45:50 lukem Exp $");
+__RCSID("$NetBSD: logout.c,v 1.11 1999/09/20 04:48:07 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,10 +64,6 @@ logout(line)
 	UTMP ut;
 
 	_DIAGASSERT(line != NULL);
-#ifdef _DIAGNOSTIC
-	if (line == NULL)
-		return(0);
-#endif
 
 	if ((fd = open(_PATH_UTMP, O_RDWR, 0)) < 0)
 		return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.12 1999/09/16 11:45:49 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.13 1999/09/20 04:48:05 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -705,12 +705,6 @@ rmtopen(va_alist)
 	va_end(ap);
 
 	_DIAGASSERT(path != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-#endif
 
 	if (remdev (path))
 	{
@@ -736,12 +730,6 @@ rmtaccess(path, amode)
 {
 
 	_DIAGASSERT(path != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-#endif
 
 	if (remdev (path))
 	{
@@ -778,12 +766,6 @@ rmtread(fildes, buf, nbyte)
 {
 
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (isrmt (fildes))
 	{
@@ -808,12 +790,6 @@ rmtwrite(fildes, buf, nbyte)
 {
 
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (isrmt (fildes))
 	{
@@ -941,12 +917,6 @@ rmtfstat(fildes, buf)
 {
 
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (isrmt (fildes))
 	{
@@ -972,16 +942,6 @@ rmtstat(path, buf)
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (remdev (path))
 	{
@@ -1007,12 +967,6 @@ rmtcreat(path, mode)
 {
 
 	_DIAGASSERT(path != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-#endif
 
 	if (remdev (path))
 	{
@@ -1091,16 +1045,6 @@ rmtlstat(path, buf)
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (remdev (path))
 	{

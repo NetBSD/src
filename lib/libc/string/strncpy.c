@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.c,v 1.10 1999/09/16 11:45:42 lukem Exp $	*/
+/*	$NetBSD: strncpy.c,v 1.11 1999/09/20 04:39:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncpy.c,v 1.10 1999/09/16 11:45:42 lukem Exp $");
+__RCSID("$NetBSD: strncpy.c,v 1.11 1999/09/20 04:39:48 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,10 +67,6 @@ strncpy(dst, src, n)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (NULL);
-#endif
 
 	if (n != 0) {
 		char *d = dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: seekdir.c,v 1.7 1999/09/16 11:45:04 lukem Exp $	*/
+/*	$NetBSD: seekdir.c,v 1.8 1999/09/20 04:39:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)seekdir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: seekdir.c,v 1.7 1999/09/16 11:45:04 lukem Exp $");
+__RCSID("$NetBSD: seekdir.c,v 1.8 1999/09/20 04:39:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,6 @@ seekdir(dirp, loc)
 	long loc;
 {
 
-#ifdef _DIAGNOSTIC
-	if (dirp == NULL)
-		return;
-#endif
 
 	__seekdir(dirp, loc);
 }

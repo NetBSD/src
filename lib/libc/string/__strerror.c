@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.15 1999/09/16 11:45:37 lukem Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.16 1999/09/20 04:39:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.15 1999/09/16 11:45:37 lukem Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.16 1999/09/20 04:39:43 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,10 +74,6 @@ __strerror(num, buf, buflen)
 	catd = catopen("libc", 0);
 #endif
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL)
-		return (NULL);
-#endif
 
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr) {

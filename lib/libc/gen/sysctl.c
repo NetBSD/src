@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.9 1999/09/16 11:45:05 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.10 1999/09/20 04:39:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.9 1999/09/16 11:45:05 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.10 1999/09/20 04:39:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,12 +69,6 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (name[0] != CTL_USER)
 		/* LINTED will fix when sysctl interface gets corrected */

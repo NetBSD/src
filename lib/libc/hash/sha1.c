@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.3 1999/09/16 11:45:07 lukem Exp $	*/
+/*	$NetBSD: sha1.c,v 1.4 1999/09/20 04:39:07 lukem Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -91,10 +91,6 @@ void SHA1Transform(state, buffer)
 
     _DIAGASSERT(buffer != 0);
     _DIAGASSERT(state != 0);
-#ifdef _DIAGNOSTIC
-    if (buffer == 0 || state == 0)
-	return;
-#endif
 
 #ifdef SHA1HANDSOFF
     block = (CHAR64LONG16 *)(void *)workspace;
@@ -152,10 +148,6 @@ void SHA1Init(context)
 {
 
     _DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-    if (context == 0)
-	return;
-#endif
 
     /* SHA1 initialization constants */
     context->state[0] = 0x67452301;
@@ -179,10 +171,6 @@ void SHA1Update(context, data, len)
 
     _DIAGASSERT(context != 0);
     _DIAGASSERT(data != 0);
-#ifdef _DIAGNOSTIC
-    if (context == 0 || data == 0)
-	return;
-#endif
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j)
@@ -213,10 +201,6 @@ void SHA1Final(digest, context)
 
     _DIAGASSERT(digest != 0);
     _DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-    if (digest == 0 || context == 0)
-	return;
-#endif
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]

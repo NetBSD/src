@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.9 1999/09/16 11:45:32 lukem Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.9 1999/09/16 11:45:32 lukem Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,12 +72,6 @@ vsscanf(str, fmt, ap)
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL || fmt == NULL) {
-		errno = EFAULT;
-		return (EOF);
-	}
-#endif
 
 	f._flags = __SRD;
 	/* LINTED we don't touch str */

@@ -1,4 +1,4 @@
-/*	$NetBSD: strncat.c,v 1.8 1999/09/16 11:45:42 lukem Exp $	*/
+/*	$NetBSD: strncat.c,v 1.9 1999/09/20 04:39:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strncat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncat.c,v 1.8 1999/09/16 11:45:42 lukem Exp $");
+__RCSID("$NetBSD: strncat.c,v 1.9 1999/09/20 04:39:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,6 @@ strncat(dst, src, n)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (NULL);
-#endif
 
 	if (n != 0) {
 		char *d = dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.13 1999/09/16 11:45:51 lukem Exp $	*/
+/*	$NetBSD: pty.c,v 1.14 1999/09/20 04:48:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.13 1999/09/16 11:45:51 lukem Exp $");
+__RCSID("$NetBSD: pty.c,v 1.14 1999/09/20 04:48:08 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,12 +81,6 @@ openpty(amaster, aslave, name, termp, winp)
 	/* name may be NULL */
 	/* termp may be NULL */
 	/* winp may be NULL */
-#ifdef _DIAGNOSTIC
-	if (amaster == NULL || aslave == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
@@ -141,12 +135,6 @@ forkpty(amaster, name, termp, winp)
 	/* name may be NULL */
 	/* termp may be NULL */
 	/* winp may be NULL */
-#ifdef _DIAGNOSTIC
-	if (amaster == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (openpty(&master, &slave, name, termp, winp) == -1)
 		return (-1);
