@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.12 1997/09/15 07:58:08 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.13 1997/09/15 12:42:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-__RCSID("$NetBSD: tape.c,v 1.12 1997/09/15 07:58:08 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.13 1997/09/15 12:42:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -716,7 +716,7 @@ dumpabort(signo)
 	Exit(X_ABORT);
 }
 
-__dead void
+void
 Exit(status)
 	int status;
 {
