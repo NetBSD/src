@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.11 2001/04/30 16:23:13 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.12 2001/04/30 16:58:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -244,12 +244,12 @@ struct i386_soft_intr {
 #define	i386_softintr_lock(si, s)					\
 do {									\
 	(s) = splhigh();						\
-} while (/*CONSTCOND*/0)
+} while (/*CONSTCOND*/ 0)
 
 #define	i386_softintr_unlock(si, s)					\
 do {									\
 	splx((s));							\
-} while (/*CONSTCOND*/0)
+} while (/*CONSTCOND*/ 0)
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
@@ -269,7 +269,7 @@ do {									\
 		softintr(__si->softintr_ssir);				\
 	}								\
 	i386_softintr_unlock(__si, __s);				\
-} while (/*CONSTCOND*/0)
+} while (/*CONSTCOND*/ 0)
 #endif /* _LOCORE */
 
 #endif /* !_I386_INTR_H_ */
