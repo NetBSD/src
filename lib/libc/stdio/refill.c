@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.5 1996/03/29 23:29:18 jtc Exp $	*/
+/*	$NetBSD: refill.c,v 1.6 1996/08/13 07:54:00 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: refill.c,v 1.5 1996/03/29 23:29:18 jtc Exp $";
+static char rcsid[] = "$NetBSD: refill.c,v 1.6 1996/08/13 07:54:00 explorer Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -53,7 +53,7 @@ lflush(fp)
 	FILE *fp;
 {
 
-	if ((fp->_flags & (__SLBF|__SWR)) == __SLBF|__SWR)
+	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
 		return (__sflush(fp));
 	return (0);
 }
