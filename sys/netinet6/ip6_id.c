@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.10 2003/11/25 18:13:55 itojun Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.11 2003/12/10 05:22:18 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.10 2003/11/25 18:13:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.11 2003/12/10 05:22:18 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,7 @@ struct randomtab {
 	u_int32_t ru_msb;
 
 	u_int32_t ru_x;
-	u_int32_t ru_seed;
+	u_int32_t ru_seed, ru_seed2;
 	u_int32_t ru_a, ru_b;
 	u_int32_t ru_g;
 	long ru_reseed;
@@ -186,6 +186,7 @@ initid(struct randomtab *p)
 
 	/* (bits - 1) bits of random seed */
 	p->ru_seed = arc4random() & (~0U >> (32 - p->ru_bits + 1));
+	p->ru_seed2 = arc4random() & (~0U >> (32 - p->ru_bits + 1));
 
 	/* Determine the LCG we use */
 	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
@@ -223,15 +224,12 @@ static u_int32_t
 randomid(struct randomtab *p)
 {
 	int i, n;
-	u_int32_t tmp;
 
 	if (p->ru_counter >= p->ru_max || time.tv_sec > p->ru_reseed)
 		initid(p);
 
-	tmp = arc4random();
-
 	/* Skip a random number of ids */
-	n = tmp & 0x3; tmp = tmp >> 2;
+	n = arc4random() & 0x3;
 	if (p->ru_counter + n >= p->ru_max)
 		initid(p);
 
@@ -242,7 +240,7 @@ randomid(struct randomtab *p)
 
 	p->ru_counter += i;
 
-	return (p->ru_seed ^ pmod(p->ru_g, p->ru_x, p->ru_n)) |
+	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 + p->ru_x, p->ru_n)) |
 	    p->ru_msb;
 }
 
