@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2000/03/24 21:31:00 soren Exp $	*/
 
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -19,3 +19,12 @@ extern int systype;
 
 #endif /* _LOCORE */
 #endif /* _MACHINE_CPU_H_ */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_MAXID		1	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+}
