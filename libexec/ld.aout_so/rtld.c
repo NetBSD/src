@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.79 2000/12/17 21:41:15 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.80 2001/03/19 03:54:22 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1084,8 +1084,11 @@ lookup(name, ref_map, src_map, strong)
 	struct rt_symbol	*rtsp;
 	struct	nzlist		*weak_np = 0;
 
-	if ((rtsp = lookup_rts(name)) != NULL)
+	if ((rtsp = lookup_rts(name)) != NULL) {
+		/* common symbol is not a member of particular shlib */
+		*src_map = NULL;
 		return (rtsp->rt_sp);
+	}
 
 	weak_smp = NULL; /* XXX - gcc! */
 
@@ -1211,6 +1214,9 @@ restart:
 	 */
 	rtsp = enter_rts(name, (long)calloc(1, common_size),
 					N_UNDF + N_EXT, 0, common_size, NULL);
+
+	/* common symbol is not a member of particular shlib */
+	*src_map = NULL;
 
 #if DEBUG
 xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp->nz_value);
