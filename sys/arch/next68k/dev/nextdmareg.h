@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.5 1999/08/28 09:19:05 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.6 1999/08/28 09:42:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -101,4 +101,4 @@ struct dma_dev {		/* format of dma device registers */
 #define	DMACSR_INITBUF		0x00200000	/* initialize DMA buffers */
 
 #define DMACSR_BITS \
-"\20\35BUSEXC\34COMPLETE\32SUPDATE\31ENABLE\26INITBUF\25RESET\24CLRCOMPLETE\23READ\22SETSUPDATE\21SETENABLE"
+"\20\35BUSEXC\34COMPLETE\33READ\32SUPDATE\31ENABLE\26INITBUF\25RESET\24CLRCOMPLETE\23SETREAD\22SETSUPDATE\21SETENABLE"
