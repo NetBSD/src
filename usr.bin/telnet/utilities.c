@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $	*/
+/*	$NetBSD: utilities.c,v 1.17 2003/07/14 15:56:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.17 2003/07/14 15:56:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $");
 #include <arpa/telnet.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#ifndef	NOT43
 #include <sys/socket.h>
-#endif
 #include <unistd.h>
 #include <poll.h>
 
@@ -66,7 +64,7 @@ __RCSID("$NetBSD: utilities.c,v 1.16 2003/07/12 14:29:36 itojun Exp $");
 
 #include "externs.h"
 
-#if defined(TN3270)
+#ifdef TN3270
 #include "../sys_curses/telextrn.h"
 #endif
 
@@ -108,17 +106,7 @@ upcase(char *argument)
 int
 SetSockOpt(int fd, int level, int option, int yesno)
 {
-#ifndef	NOT43
-    return setsockopt(fd, level, option,
-				(char *)&yesno, sizeof yesno);
-#else	/* NOT43 */
-    if (yesno == 0) {		/* Can't do that in 4.2! */
-	fprintf(stderr, "Error: attempt to turn off an option 0x%x.\n",
-				option);
-	return -1;
-    }
-    return setsockopt(fd, level, option, 0, 0);
-#endif	/* NOT43 */
+    return setsockopt(fd, level, option, (char *)&yesno, sizeof yesno);
 }
 
 /*
@@ -435,7 +423,7 @@ printsub(
 		fprintf(NetTrace, " ?%d?", pointer[i]);
 	    break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	case TELOPT_AUTHENTICATION:
 	    fprintf(NetTrace, "AUTHENTICATION");
 	    if (length < 2) {
@@ -887,23 +875,17 @@ printsub(
 void
 EmptyTerminal(void)
 {
-#if	defined(unix)
     struct pollfd set[1];
 
     set[0].fd = tout;
     set[0].events = POLLOUT;
-#endif	/* defined(unix) */
 
     if (TTYBYTES() == 0) {
-#if	defined(unix)
 	(void) poll(set, 1, INFTIM);
-#endif	/* defined(unix) */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
-#if	defined(unix)
 	    (void) poll(set, 1, INFTIM);
-#endif	/* defined(unix) */
 	}
     }
 }
@@ -912,7 +894,7 @@ void
 SetForExit(void)
 {
     setconnmode(0);
-#if	defined(TN3270)
+#ifdef TN3270
     if (In3270) {
 	Finish3270();
     }
@@ -925,7 +907,7 @@ SetForExit(void)
     setcommandmode();
     fflush(stdout);
     fflush(stderr);
-#if	defined(TN3270)
+#ifdef TN3270
     if (In3270) {
 	StopScreen(1);
     }
