@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.28 1997/12/31 07:47:41 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.29 1998/01/03 02:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ void		 vm_fault_copy_entry __P((vm_map_t,
 		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
 void		 vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
 int		 vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
-void		 vm_fork __P((struct proc *, struct proc *));
+void		 vm_fork __P((struct proc *, struct proc *, boolean_t));
 int		 vm_inherit __P((vm_map_t,
 		    vm_offset_t, vm_size_t, vm_inherit_t));
 void		 vm_init_limits __P((struct proc *));
@@ -134,6 +134,8 @@ struct vmspace	*vmspace_alloc __P((vm_offset_t, vm_offset_t, int));
 struct vmspace	*vmspace_fork __P((struct vmspace *));
 void		 vmspace_exec __P((struct proc *));
 void		 vmspace_free __P((struct vmspace *));
+void		 vmspace_share __P((struct proc *, struct proc *));
+void		 vmspace_unshare __P((struct proc *));
 void		 vmtotal __P((struct vmtotal *));
 void		 vnode_pager_setsize __P((struct vnode *, u_quad_t));
 void		 vnode_pager_sync __P((struct mount *));
