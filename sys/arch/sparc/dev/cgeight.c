@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.22 2000/06/26 04:56:03 simonb Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.23 2000/06/29 07:40:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -99,11 +99,9 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2000/06/26 14:20:57 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.169 2000/06/29 07:40:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,8 +105,6 @@
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
