@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.40 1994/04/07 06:50:41 mycroft Exp $
+ *	$Id: if_ed.c,v 1.41 1994/04/08 17:16:39 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1574,8 +1574,12 @@ edintr(sc)
 	/* Set NIC to page 0 registers. */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
 
+	isr = inb(sc->nic_addr + ED_P0_ISR);
+	if (!isr)
+		return 0;
+
 	/* Loop until there are no more new interrupts. */
-	while (isr = inb(sc->nic_addr + ED_P0_ISR)) {
+	for (;;) {
 		/*
 		 * Reset all the bits that we are 'acknowledging' by writing a
 		 * '1' to each bit position that was set.
@@ -1741,6 +1745,10 @@ edintr(sc)
 			(void) inb(sc->nic_addr + ED_P0_CNTR1);
 			(void) inb(sc->nic_addr + ED_P0_CNTR2);
 		}
+
+		isr = inb(sc->nic_addr + ED_P0_ISR);
+		if (!isr)
+			return 1;
 	}
 }
  
