@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.16 2003/11/03 20:58:18 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.17 2003/11/09 23:07:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -211,13 +211,20 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_inherit_reply_t;
 
-/* vm_make_memory_entry */
+/* 
+ * vm_make_memory_entry 
+ * XXX req_pad1 and req_pad2 do not seem to exist in Mach header files
+ * but they actually appear on the traces. Probably a placeholder for 
+ * an upcoming 64 bit version.
+ */
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
 	mach_msg_port_descriptor_t req_parent_entry;
 	mach_ndr_record_t req_ndr;
+	int req_pad1; 
 	mach_vm_size_t req_size;
+	int req_pad2;
 	mach_vm_offset_t req_offset;
 	mach_vm_prot_t req_perm;
 } mach_vm_make_memory_entry_request_t;
