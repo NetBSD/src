@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.6 2003/06/23 11:53:36 agc Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.7 2003/09/19 08:39:09 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.6 2003/06/23 11:53:36 agc Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.7 2003/09/19 08:39:09 itojun Exp $");
 #endif
 
 
@@ -425,14 +425,15 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 	};
 	struct ifbifconf bifc;
 	struct ifbreq *req;
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	int i, len = 8192;
 
 	for (;;) {
-		bifc.ifbic_len = len;
-		bifc.ifbic_buf = inbuf = realloc(inbuf, len);
-		if (inbuf == NULL)
+		ninbuf = realloc(inbuf, len);
+		if (ninbuf == NULL)
 			err(1, "unable to allocate interface buffer");
+		bifc.ifbic_len = len;
+		bifc.ifbic_buf = inbuf = ninbuf;
 		if (do_cmd(sock, bridge, BRDGGIFS, &bifc, sizeof(bifc), 0) < 0)
 			err(1, "unable to get interface list");
 		if ((bifc.ifbic_len + sizeof(*req)) < len)
@@ -468,15 +469,16 @@ show_addresses(int sock, const char *bridge, const char *prefix)
 {
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	int i, len = 8192;
 	struct ether_addr ea;
 
 	for (;;) {
-		ifbac.ifbac_len = len;
-		ifbac.ifbac_buf = inbuf = realloc(inbuf, len);
-		if (inbuf == NULL)
+		ninbuf = realloc(inbuf, len);
+		if (ninbuf == NULL)
 			err(1, "unable to allocate address buffer");
+		ifbac.ifbac_len = len;
+		ifbac.ifbac_buf = inbuf = ninbuf;
 		if (do_cmd(sock, bridge, BRDGRTS, &ifbac, sizeof(ifbac), 0) < 0)
 			err(1, "unable to get address cache");
 		if ((ifbac.ifbac_len + sizeof(*ifba)) < len)
