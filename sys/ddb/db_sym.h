@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.11 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.12 2000/05/22 14:49:10 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -61,6 +61,20 @@ typedef int		db_strategy_t;	/* search strategy */
 #define DB_STGY_XTRN	1			/* only external symbols */
 #define DB_STGY_PROC	2			/* only procedures */
 
+
+/*
+ * Internal db_forall function calling convention:
+ *
+ * (*db_forall_func)(stab, sym, name, suffix, prefix, arg);
+ *
+ * stab is the symbol table, symbol the (opaque) symbol pointer,
+ * name the name of the symbol, suffix a string representing
+ * the type, prefix an initial ignorable function prefix (e.g. "_"
+ * in a.out), and arg an opaque argument to be passed in.
+ */
+typedef void (db_forall_func_t)
+	__P((db_symtab_t *, db_sym_t, char *, char *, int, void *));
+
 /*
  * A symbol table may be in one of many formats.  All symbol tables
  * must be of the same format as the master kernel symbol table.
@@ -77,6 +91,8 @@ typedef struct {
 		char **, int *, db_expr_t));
 	boolean_t (*sym_numargs) __P((db_symtab_t *, db_sym_t, int *,
 		char **));
+	void	(*sym_forall) __P((db_symtab_t *,
+		db_forall_func_t *db_forall_func, void *));
 } db_symformat_t;
 
 extern boolean_t	db_qualify_ambiguous_names;
@@ -101,6 +117,9 @@ int db_value_of_name __P((char *, db_expr_t *));
 					/* find symbol value given name */
 
 db_sym_t db_lookup __P((char *));
+
+void db_sifting __P((char *, int));
+				/* print partially matching symbol names */
 
 boolean_t db_symbol_is_ambiguous __P((db_sym_t));
 

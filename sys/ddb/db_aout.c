@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.27 2000/03/30 11:31:26 augustss Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.28 2000/05/22 14:49:10 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,6 +51,8 @@ boolean_t	db_aout_line_at_pc __P((db_symtab_t *, db_sym_t,
 		    char **, int *, db_expr_t));
 boolean_t	db_aout_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
 		    char **));
+void		db_aout_forall __P((db_symtab_t *,
+		    db_forall_func_t db_forall_func, void *));
 
 db_symformat_t db_symformat_aout = {
 	"a.out",
@@ -60,6 +62,7 @@ db_symformat_t db_symformat_aout = {
 	db_aout_symbol_values,
 	db_aout_line_at_pc,
 	db_aout_sym_numargs,
+	db_aout_forall
 };
 
 /*
@@ -346,4 +349,49 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 	}
 	return FALSE;
 }
+
+void
+db_aout_forall(stab, db_forall_func, arg)
+	db_symtab_t		*stab;
+	db_forall_func_t	db_forall_func;
+	void			*arg;
+{
+	static char suffix[2];
+	struct nlist *sp, *ep;
+
+	sp = (struct nlist *)stab->start;
+	ep = (struct nlist *)stab->end;
+
+	for (; sp < ep; sp++) {
+	    if (sp->n_un.n_name == 0)
+		continue;
+	    if ((sp->n_type & N_STAB) == 0 && sp->n_un.n_name != 0) {
+		    suffix[1] = '\0';
+		    switch(sp->n_type & N_TYPE) {
+		    case N_ABS:
+			    suffix[0] = '@';
+			    break;
+		    case N_TEXT:
+			    suffix[0] = '*';
+			    break;
+		    case N_DATA:
+			    suffix[0] = '+';
+			    break;
+		    case N_BSS:
+			    suffix[0] = '-';
+			    break;
+		    case N_FN:
+			    suffix[0] = '/';
+			    break;
+		    default:
+			    suffix[0] = '\0';
+		    }
+		    (*db_forall_func)(stab, (db_sym_t)sp, sp->n_un.n_name,
+			suffix, '_', arg);
+	    }
+	}
+	return;
+}
+
+	
 #endif	/* DB_AOUT_SYMBOLS */
