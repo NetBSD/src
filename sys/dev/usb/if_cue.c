@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.19 2000/03/30 00:18:17 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.20 2000/03/30 08:53:30 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -718,7 +718,7 @@ USB_ATTACH(cue)
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
 #if defined(__OpenBSD__)
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN
+	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 #endif
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
 

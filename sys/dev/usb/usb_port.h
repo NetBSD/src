@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.27 2000/03/30 00:18:18 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -199,8 +199,11 @@ __CONCAT(dname,_detach)(self, flags) \
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) do {						\
+	struct ether_header *eh;					\
+									\
+	eh = mtod(m, struct ether_header *);				\
 	m_adj(m, sizeof(struct ether_header));				\
-	ether_input((ifp), mtod((m), struct ether_header *), (m));	\
+	ether_input((ifp), (eh), (m));					\
 } while (0)
 
 #define	usbpoll			usbselect
