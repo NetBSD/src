@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2000/05/31 11:23:22 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.48 2000/05/31 12:04:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -259,20 +259,14 @@ void		pmap_release __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		pmap_update __P((void));
 void		pmap_init __P((void));
-int		pmap_page_index __P((paddr_t));
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
-void		switchexit __P((struct proc *));
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
 void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
 
-#if !defined(MACHINE_NEW_CONCONTIG)
-u_int		pmap_free_pages __P((void));
-boolean_t	pmap_next_page __P((paddr_t *));
-#endif
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
