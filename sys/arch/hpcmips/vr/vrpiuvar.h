@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.10 2002/03/10 10:13:32 takemura Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.11 2002/12/15 09:24:26 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 TAKEMURA Shin All rights reserved.
@@ -61,4 +61,7 @@ struct vrpiu_softc {
 	void *sc_power_hook;
 	struct hpcbattery_values sc_battery;
 	struct hpcbattery_spec *sc_battery_spec;
+	int sc_ab_paddata_mask;
+	int sc_pb_paddata_mask;
+	int sc_pb_paddata_max;
 };
