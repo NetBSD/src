@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.28 1998/08/13 02:10:53 eeh Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.29 1999/06/01 19:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -467,6 +467,13 @@ pdq_pci_attach(
     }
 
     sc->sc_dmatag = pa->pa_dmat;
+
+    /* Make sure bus mastering is enabled. */
+    pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		   pci_conf_read(pa->pa_pc, pa->pa_tag,
+				 PCI_COMMAND_STATUS_REG) |
+		   PCI_COMMAND_MASTER_ENABLE);
+
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
