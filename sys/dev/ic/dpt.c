@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.22.2.1 2001/03/13 20:33:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.22.2.1 2001/03/13 20:33:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,10 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 	if (cp == NULL)
 		addr = 0;
 
-	dpt_outl(sc, HA_DMA_BASE, (u_int32_t)addr);
+	dpt_outb(sc, HA_DMA_BASE+0, (addr    ) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+1, (addr>>8 ) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+2, (addr>>16) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+3, (addr>>24) & 0xff);
 
 	if (eatacmd == CP_IMMEDIATE) {
 		if (cp == NULL) {
@@ -515,7 +518,7 @@ dpt_readcfg(sc)
 
 	/* Begin reading */
  	while (i--)
-		*p++ = dpt_inw(sc, HA_DATA);
+		*p++ = bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 
 	if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
 	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
@@ -529,12 +532,12 @@ dpt_readcfg(sc)
 	i >>= 1;
 
 	while (i--)
-		*p++ = dpt_inw(sc, HA_DATA);
+		*p++ = bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 	
 	/* Flush until we have read 512 bytes. */
 	i = (512 - j + 1) >> 1;
 	while (i--)
- 		dpt_inw(sc, HA_DATA);
+		dpt_inw(sc, HA_DATA);
 	
 	/* Defaults for older Firmware */
 	if (p <= (u_short *)&ec->ec_hba[DPT_MAX_CHANNELS - 1])
