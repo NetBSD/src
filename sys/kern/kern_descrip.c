@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.103 2003/02/23 14:37:33 pk Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.104 2003/03/01 09:19:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.103 2003/02/23 14:37:33 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.104 2003/03/01 09:19:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1520,7 +1520,6 @@ fdcheckstd(p)
 			devnull = fd;
 			devnullfp = fp;
 			FILE_SET_MATURE(fp);
-			FILE_UNUSE(fp, p);
 		} else {
 restart:
 			if ((error = fdalloc(p, 0, &fd)) != 0) {
@@ -1531,12 +1530,15 @@ restart:
 				return (error);
 			}
 
+			simple_lock(&devnullfp->f_slock);
 			FILE_USE(devnullfp);
 			/* finishdup() will unuse the descriptors for us */
 			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
 				return (error);
 		}
 	}
+	if (devnullfp)
+		FILE_UNUSE(devnullfp, p);
 	if (closed[0] != '\0') {
 		pp = p->p_pptr;
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
