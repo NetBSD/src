@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.64 2001/12/10 08:54:38 msaitoh Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.65 2002/01/21 20:00:02 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,6 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#define HAVE_FUTIMES 1
+#define HAVE_LIBGEN_H 1
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#define HAVE_VIS_H 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
@@ -43,7 +53,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.64 2001/12/10 08:54:38 msaitoh Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.65 2002/01/21 20:00:02 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,18 +63,25 @@ __RCSID("$NetBSD: xinstall.c,v 1.64 2001/12/10 08:54:38 msaitoh Exp $");
 #include <sys/wait.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <libgen.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
+#if HAVE_VIS_H
 #include <vis.h>
+#endif
 
 #include "pathnames.h"
 #include "stat_flags.h"
@@ -77,8 +94,7 @@ int	dobackup, docopy, dodir, dostrip, dolink, dopreserve, dorename,
 int	numberedbackup;
 int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
-uid_t	uid;
-gid_t	gid;
+id_t	uid, gid;
 char	*group, *owner, *fflags, *tags;
 FILE	*metafp;
 char	*metafile;
@@ -153,9 +169,11 @@ main(int argc, char *argv[])
 		case 'd':
 			dodir = 1;
 			break;
+#if !HAVE_CONFIG_H
 		case 'f':
 			fflags = optarg;
 			break;
+#endif
 		case 'g':
 			group = optarg;
 			break;
@@ -259,11 +277,13 @@ main(int argc, char *argv[])
 		iflags |= HASUID;
 	}
 
+#if !HAVE_CONFIG_H
 	if (fflags && !dounpriv) {
 		if (string_to_flags(&fflags, &fileflags, NULL))
 			errx(1, "%s: invalid flag", fflags);
 		iflags |= SETFLAGS;
 	}
+#endif
 
 	if (metafile) {
 		if ((metafp = fopen(metafile, "a")) == NULL)
@@ -304,10 +324,12 @@ main(int argc, char *argv[])
 		 * off the append/immutable bits -- if we fail, go ahead,
 		 * it might work.
 		 */
+#if !HAVE_CONFIG_H
 #define	NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 		if (to_sb.st_flags & NOCHANGEBITS)
 			(void)chflags(to_name,
 			    to_sb.st_flags & ~(NOCHANGEBITS));
+#endif
 		if (dobackup)
 			backup(to_name);
 		else if (!dorename)
@@ -479,7 +501,10 @@ makelink(char *from_name, char *to_name)
 void
 install(char *from_name, char *to_name, u_int flags)
 {
-	struct stat	from_sb, to_sb;
+	struct stat	from_sb;
+#if !HAVE_CONFIG_H
+	struct stat	to_sb;
+#endif
 	struct timeval	tv[2];
 	int		devnull, from_fd, to_fd, serrno, tmpmode;
 	char		*p, tmpl[MAXPATHLEN], *oto_name;
@@ -500,7 +525,9 @@ install(char *from_name, char *to_name, u_int flags)
 		}
 		devnull = 0;
 	} else {
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		from_sb.st_flags = 0;	/* XXX */
+#endif
 		devnull = 1;
 	}
 
@@ -509,9 +536,11 @@ install(char *from_name, char *to_name, u_int flags)
 	 * off the append/immutable bits -- if we fail, go ahead,
 	 * it might work.
 	 */
+#if !HAVE_CONFIG_H
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
+#endif
 	if (dorename) {
 		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
 		    xdirname(to_name));
@@ -592,8 +621,13 @@ install(char *from_name, char *to_name, u_int flags)
 		tv[1].tv_sec = from_sb.st_mtime;
 		tv[1].tv_usec = 0;
 #endif
-		if (!dounpriv && futimes(to_fd, tv) == -1)
+#if HAVE_FUTIMES
+		if (futimes(to_fd, tv) == -1)
 			warn("%s: futimes", to_name);
+#else
+		if (utimes(to_name, tv) == -1)
+			warn("%s: futimes", to_name);
+#endif
 	}
 
 	(void)close(to_fd);
@@ -611,12 +645,14 @@ install(char *from_name, char *to_name, u_int flags)
 	 * If provided a set of flags, set them, otherwise, preserve the
 	 * flags, except for the dump flag.
 	 */
+#if !HAVE_CONFIG_H
 	if (!dounpriv && chflags(to_name,
 	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) == -1)
 	{
 		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
 			warn("%s: chflags", to_name);
 	}
+#endif
 
 	metadata_log(to_name, "file", tv, NULL);
 }
