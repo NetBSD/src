@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.6 1998/02/13 04:19:29 enami Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.7 1998/02/13 08:28:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_SCSIPI_BASE_H_
-#define _DEV_SCSIPI_SCSIPI_BASE_H_
 
 /*
  * Originally written by Julian Elischer (julian@dialix.oz.au)
@@ -84,5 +81,3 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 
 	return (xs);
 }
-
-#endif /* _DEV_SCSIPI_SCSIPI_BASE_H_ */

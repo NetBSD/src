@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.40 1998/02/13 04:19:27 enami Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.41 1998/02/13 08:28:45 enami Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_SCSICONF_H_
-#define _DEV_SCSIPI_SCSICONF_H_
 
 /*
  * Originally written by Julian Elischer (julian@tfs.com)
@@ -88,5 +85,3 @@ int	scsi_probe_busses __P((int, int, int));
 int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
 	    int timeout, struct buf *bp, int flags));
-
-#endif /* _DEV_SCSIPI_SCSICONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.13 1998/02/13 04:19:26 enami Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.14 1998/02/13 08:28:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_SCSI_TAPE_H_
-#define _DEV_SCSIPI_SCSI_TAPE_H_
 
 /*
  * Originally written by Julian Elischer (julian@tfs.com)
@@ -275,5 +272,3 @@ struct scsi_tape_read_position {
 #define DDS		0x13
 #define DAT_1		0x13
 #define QIC_3095	0x45
-
-#endif /* _DEV_SCSIPI_SCSI_TAPE_H_ */

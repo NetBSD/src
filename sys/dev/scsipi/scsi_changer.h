@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.10 1998/02/13 04:19:21 enami Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.11 1998/02/13 08:28:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -35,9 +35,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_SCSI_CHANGER_H_
-#define _DEV_SCSIPI_SCSI_CHANGER_H_
 
 /*
  * SCSI changer interface description
@@ -396,5 +393,3 @@ struct page_transport_geometry_parameters {
 	/* Member number in transport element set. */
 	u_int8_t	member;
 };
-
-#endif /* _DEV_SCSIPI_SCSI_CHANGER_H_ */
