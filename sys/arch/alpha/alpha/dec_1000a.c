@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.4 1999/02/13 02:41:40 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.5 1999/04/15 22:06:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.4 1999/02/13 02:41:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.5 1999/04/15 22:06:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,17 +197,18 @@ dec_1000a_cons_init()
 		}
 
 	case 3:
-#if	NPCKBD > 0
+#if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(iot, PCKBC_KBD_SLOT);
 
-		if ((ctb->ctb_turboslot & 0xffff) == 0)
+		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
+		    CTB_TURBOSLOT_TYPE_ISA)
 			isa_display_console(iot, memt);
 		else
 			pci_display_console(iot, memt,
-			    pcichipset, (ctb->ctb_turboslot >> 8) & 0xff,
-			    ctb->ctb_turboslot & 0xff, 0);
+			    pcichipset, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
+			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else
 		panic("not configured to use display && keyboard console");
 #endif
