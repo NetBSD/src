@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.25 1994/06/03 00:30:29 chopps Exp $
+ *	$Id: locore.s,v 1.26 1994/06/04 11:58:48 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -787,11 +787,20 @@ start:
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
-	movel	a4,sp@-			| pass address of _esym
-	movel	d1,sp@-			| pass chipmem-size
-	movel	d0,sp@-			| pass fastmem-size
-	movel	a0,sp@-			| pass fastmem_start
-	movel	d5,sp@-			| pass machine id
+	movl	a4,sp@-			| pass address of _esym
+	movl	d1,sp@-			| pass chipmem-size
+	movl	d0,sp@-			| pass fastmem-size
+	movl	a0,sp@-			| pass fastmem_start
+	movl	d5,sp@-			| pass machine id
+
+	/*
+	 * initialize some hw addresses to their physical address 
+	 * for early running
+	 */
+	movl	#0x400,_chipmem_start
+	movl	#0xbfe001,_CIAAbase
+	movl	#0xbfd000,_CIABbase
+	movl	#0xdff000,_CUSTOMbase
 
 	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
 	andl	d5,d1
@@ -809,6 +818,7 @@ Lsetcpu040:
 	andl	d1,d5
 	movl	d5,_cpu040		| set 68040 CPU flag
 	jeq	Lstartnot040		| it's not 68040
+	movl	#-2,_mmutype		| same as hp300 for compat
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	lea	Lvectab+0xc0,a0		| set up 68040 floating point
 	movl	#fpsp_bsun,a0@+		|  exception vectors
@@ -2204,15 +2214,7 @@ Ldorebootend:
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_machineid
-_machineid:
-	.long	0		| default to 320
-	.globl	_cpu040
-_cpu040:
-	.long	0
 	.globl	_mmutype,_protorp
-_mmutype:
-	.long	-1		| default to 68030 MMU
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
 	.globl	_cold

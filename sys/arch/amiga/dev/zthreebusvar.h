@@ -41,11 +41,11 @@ struct zthreebus_args {
 	int prodid;
 	int serno;
 };
-caddr_t	ZTHREEADDR;
+vm_offset_t	ZTHREEADDR;
+u_int		ZTHREEAVAIL;	/* Amount of Zorro III address space */
 #define ZTHREEBASE	(0x40000000)
 #define ZTHREETOP	((u_long)0x80000000)
-u_int	ZTHREEAVAIL;	/* Amount of Zorro III address space available */
-#define ZTHREESIZE	btoc(ZTHREETOP-ZTHREEBASE)
+#define NZTHREEPG	btoc(ZTHREETOP - ZTHREEBASE)
 
 #define iszthreepa(pa) ((u_int)(pa) >= ZTHREEBASE && (u_int)(pa) <= ZTHREETOP)
 #endif /* _ZTHREEBUS_H_ */

@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.12 1994/06/03 00:30:50 chopps Exp $
+ *	$Id: grf_rt.c,v 1.13 1994/06/04 11:59:13 chopps Exp $
  */
 
 #include "grf.h"
@@ -709,11 +709,11 @@ rt_load_mon(gp, md)
 	        ;
 	}
 
-	gp->g_data	= (caddr_t) md;
-	gi->gd_regaddr  = ztwomap(ba);
+	gp->g_data	= (caddr_t)md;
+	gi->gd_regaddr  = (caddr_t)ztwomap(ba);
 	gi->gd_regsize  = 64*1024;
 
-	gi->gd_fbaddr   = ztwomap(fb);
+	gi->gd_fbaddr   = (caddr_t)ztwomap(fb);
 #ifdef BANKEDDEVPAGER
 	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
 	gi->gd_bank_size = 64*1024;

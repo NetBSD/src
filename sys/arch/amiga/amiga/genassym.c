@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.14 1994/05/29 06:58:25 chopps Exp $
+ *	$Id: genassym.c,v 1.15 1994/06/04 11:58:46 chopps Exp $
  */
 
 #define KERNEL
@@ -133,7 +133,7 @@ main()
 	printf("#define\tSG_RW %d\n", SG_RW);
 	printf("#define\tSG_FRAME %d\n", SG_FRAME);
 	printf("#define\tSG_ISHIFT %d\n", SG_ISHIFT);
-	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);
+	printf("#define\tSG4_ISHIFT %d\n", SG4_ISHIFT);
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
 	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
 	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
