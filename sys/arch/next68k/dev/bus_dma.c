@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.10 1999/08/03 09:16:01 dbj Exp $ */
+/* $NetBSD: bus_dma.c,v 1.11 1999/08/17 05:07:59 dbj Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 1999/08/03 09:16:01 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 1999/08/17 05:07:59 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,8 +389,35 @@ _bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
+	/* @@@ This routine doesn't enforce map boundary requirement
+	 * @@@ perhaps it should return an error instead of panicing
+	 */
 
-	panic("_bus_dmamap_load_raw_direct: not implemented");
+#ifdef DIAGNOSTIC
+	if (map->_dm_size < size) {
+		panic("_bus_dmamap_load_raw_direct: size is too large for map");
+	}
+	if (map->_dm_segcnt < nsegs) {
+		panic("_bus_dmamap_load_raw_direct: too many segments for map");
+	}
+#endif
+
+	{
+		int i;
+		for (i=0;i<nsegs;i++) {
+#ifdef DIAGNOSTIC
+			if (map->_dm_maxsegsz < map->dm_segs[i].ds_len) {
+				panic("_bus_dmamap_load_raw_direct: segment too large for map");
+			}
+#endif
+			map->dm_segs[i] = segs[i];
+		}
+	}
+
+	map->dm_nsegs   = nsegs;
+	map->dm_mapsize = size;
+
+	return (0);
 }
 
 /*
