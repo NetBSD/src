@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.2 2000/07/03 02:51:23 matt Exp $	*/
+/*	$NetBSD: avl.c,v 1.3 2002/03/21 05:15:39 phil Exp $	*/
 
 /*
  * Copyright (c) 1997 Philip A. Nelson.
@@ -106,7 +106,7 @@ int insert_id (id_rec **root, id_rec *new_id)
 	    case  0:  /* no height increase. */
 	      return (FALSE);
 	    case -1:  /* height increase. */
-	      return (FALSE);
+	      return (TRUE);
 	    case -2:  /* we need to do a rebalancing act. */
 	      A = *root;
 	      B = (*root)->left;
@@ -159,7 +159,7 @@ int insert_id (id_rec **root, id_rec *new_id)
 	    case 0:  /* no height increase. */
 	      return (FALSE);
 	    case 1:  /* height increase. */
-	      return (FALSE);
+	      return (TRUE);
 	    case 2:  /* we need to do a rebalancing act. */
 	      A = *root;
 	      B = (*root)->right;
