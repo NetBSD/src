@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.36 1999/03/16 13:32:25 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.37 1999/03/16 13:37:23 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -553,7 +553,7 @@ ess_config_drq(sc)
 		v |= ESS_AUDIO2_CTRL3_DRQC;
 		break;
 	case 5:
-		v |= ESS_AUDIO2_CTRL3_DRQC;
+		v |= ESS_AUDIO2_CTRL3_DRQD;
 		break;
 #ifdef DIAGNOSTIC
 	default:
