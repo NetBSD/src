@@ -1,4 +1,4 @@
-/*	$NetBSD: bugcrt.c,v 1.3 2000/12/05 21:54:33 scw Exp $	*/
+/*	$NetBSD: bugcrt.c,v 1.4 2002/05/04 22:05:30 scw Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -8,7 +8,7 @@
 void
 _bugstart(void)
 {
-	extern void main(void);
+	extern int main(void);
 	struct mvmeprom_brdid *id;
 
 	/*
@@ -19,7 +19,7 @@ _bugstart(void)
 
 	id = mvmeprom_getbrdid();
 	bugargs.cputyp = id->model;
-	main();
+	(void) main();
 	_rtt();
 	/* NOTREACHED */
 }

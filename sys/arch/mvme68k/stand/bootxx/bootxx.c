@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2000/12/04 18:44:51 scw Exp $ */
+/*	$NetBSD: bootxx.c,v 1.7 2002/05/04 22:05:29 scw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,9 @@ extern daddr_t 	block_table[];
 
 extern		char bootprog_name[], bootprog_rev[];
 
-void
+int main(void);
+
+int
 main()
 {
 	struct open_file	f;
