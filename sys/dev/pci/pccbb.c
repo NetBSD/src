@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.80 2002/10/01 09:09:16 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.81 2002/10/01 14:30:54 onoe Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.80 2002/10/01 09:09:16 haya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.81 2002/10/01 14:30:54 onoe Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1789,7 +1789,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 
-	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_establish start. %p\n", LIST_FIRST(&sc->sc_pil)));
 
 	if (LIST_EMPTY(&sc->sc_pil)) {
 		pccbb_intr_route(sc);
@@ -1817,7 +1817,8 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 		LIST_INSERT_AFTER(pil, newpil, pil_next);
 	}
 
-	DPRINTF(("pccbb_intr_establish add pil. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_establish add pil. %p\n",
+	    LIST_FIRST(&sc->sc_pil)));
 
 	return newpil;
 }
@@ -1840,7 +1841,8 @@ pccbb_intr_disestablish(sc, ih)
 	struct pccbb_intrhand_list *pil;
 	pcireg_t reg;
 
-	DPRINTF(("pccbb_intr_disestablish start. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_disestablish start. %p\n",
+	    LIST_FIRST(&sc->sc_pil)));
 
 	if (ih == NULL) {
 		/* intr handler is not set */
@@ -2068,6 +2070,8 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 	if (rbus_space_alloc(rb, start, size, mask, align, 0, &ioaddr, &ioh)) {
 		return 1;
 	}
+	DPRINTF(("pccbb_pcmcia_io_alloc alloc port %lx+%lx\n",
+	    (u_long) ioaddr, (u_long) size));
 #else
 	if (start) {
 		ioaddr = start;
