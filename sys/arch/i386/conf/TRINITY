@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.23 1993/11/02 20:40:57 mycroft Exp $
+#	$Id: TRINITY,v 1.24 1993/12/10 08:55:32 mycroft Exp $
 #
 
 machine		"i386"
@@ -29,7 +29,7 @@ options		"COMPAT_NOMID"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
-options		QUOTA
+#options	QUOTA
 options		FFS
 options		MFS
 options		NFSSERVER
@@ -41,11 +41,11 @@ options		KERNFS
 
 options		GATEWAY
 options		INET
-options		NS
-options		CCITT
-options		ISO
-options		TPIP
-options		EON
+#options	NS
+#options	CCITT
+#options	ISO
+#options	TPIP
+#options	EON
 
 options		SCSI
 
@@ -73,7 +73,7 @@ device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
-device		pms0	at isa? port "IO_KBD" tty irq 12 vector pmsintr
+#device		pms0	at isa? port "IO_KBD" tty irq 12 vector pmsintr
 
 device		ed0	at isa? port 0x300 net irq 9 vector edintr
 
