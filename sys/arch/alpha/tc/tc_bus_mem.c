@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.18 1998/07/31 04:37:03 thorpej Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.19 1999/03/12 22:59:23 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.18 1998/07/31 04:37:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.19 1999/03/12 22:59:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,7 +615,7 @@ __C(tc_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)			\
 									\
 	if ((h1 & TC_SPACE_SPARSE) != 0 &&				\
 	    (h2 & TC_SPACE_SPARSE) != 0) {				\
-		ovbcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
+		memmove((void *)(h2 + o2), (void *)(h1 + o1), c * BYTES); \
 		return;							\
 	}								\
 									\
