@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.5 1996/06/29 20:07:05 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.6 1996/07/03 17:17:12 chuck Exp $       */
 
 /*
  *
@@ -35,6 +35,18 @@
 /*
  * net/if_atm.h
  */
+
+#if (defined(__FreeBSD__) || defined(__bsdi__)) && defined(KERNEL)
+#ifndef _KERNEL
+#define _KERNEL
+#endif
+#endif /* freebsd doesn't define _KERNEL */
+
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
+#define RTALLOC1(A,B)		rtalloc1((A),(B))
+#elif defined(__FreeBSD__)
+#define RTALLOC1(A,B)		rtalloc1((A),(B),0UL)
+#endif
 
 /*
  * pseudo header for packet transmission
