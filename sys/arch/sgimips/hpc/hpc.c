@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.19 2003/12/04 05:31:27 lonewolf Exp $	*/
+/*	$NetBSD: hpc.c,v 1.20 2003/12/14 07:28:17 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.19 2003/12/04 05:31:27 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.20 2003/12/14 07:28:17 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,10 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	int sysmask, hpctype;
 
 	switch (mach_type) {
+	case MACH_SGI_IP20:
+		hpctype = 15;
+		sysmask = HPCDEV_IP20;
+		break;
 	case MACH_SGI_IP22:
 		hpctype = 3;
 		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
