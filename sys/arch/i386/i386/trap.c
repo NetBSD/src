@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.10 1993/07/08 04:01:13 cgd Exp $
+ *	$Id: trap.c,v 1.11 1993/07/12 13:53:36 mycroft Exp $
  */
 
 /*
@@ -437,13 +437,14 @@ syscall(frame)
 	 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is always.
 	 */
 	opc = frame.sf_eip - 7;
-	callp = (code >= nsysent) ? &sysent[63] : &sysent[code];
-	if (callp == sysent) {
-		i = fuword(params);
-		params += sizeof (int);
-		callp = (code >= nsysent) ? &sysent[63] : &sysent[code];
-	}
-
+        if (code == 0) {                        /* indir */
+                code = fuword(params);
+                params += sizeof(int);
+        }
+        if (code < 0 || code >= nsysent)
+                callp = &sysent[0];             /* indir (illegal) */
+        else
+                callp = &sysent[code];
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
 		frame.sf_eax = error;
