@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.20 2001/02/24 20:09:50 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.21 2001/02/25 17:17:56 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -197,19 +197,19 @@ beepattach(parent, self, aux)
 	printf("\n");
 
 	/* Set sample rate to 32us */
-	WriteWord(VIDC_BASE, VIDC_SFR | 32);
-/*	WriteWord(VIDC_BASE, VIDC_SCR | 0x05);*/
+	WriteWord(vidc_base, VIDC_SFR | 32);
+/*	WriteWord(vidc_base, VIDC_SCR | 0x05);*/
 
 #ifndef RC7500
 	/* Set the stereo postions to centred for all channels */
-	WriteWord(VIDC_BASE, VIDC_SIR0 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR1 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR2 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR3 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR4 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR5 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR6 | SIR_CENTRE);
-	WriteWord(VIDC_BASE, VIDC_SIR7 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR0 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR1 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR2 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR3 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR4 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR5 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR6 | SIR_CENTRE);
+	WriteWord(vidc_base, VIDC_SIR7 | SIR_CENTRE);
 #endif
 
 #ifdef RC7500
@@ -219,7 +219,7 @@ beepattach(parent, self, aux)
 	 * data used to generate beep sound is a 8-bits sample.  I
 	 * really don't care, since it's just beep sound.
 	 */
-	outl(VIDC_BASE, VIDC_SCR | 0x03);
+	outl(vidc_base, VIDC_SCR | 0x03);
 
 	/*
 	 * Video LCD and Serial Sound Mux control.  - Japanese format.
@@ -337,7 +337,7 @@ beepioctl(dev, cmd, data, flag, p)
 		if (rate < 3 || rate > 255)
 			return(EINVAL);
 
-		WriteWord(VIDC_BASE, VIDC_SFR | rate);
+		WriteWord(vidc_base, VIDC_SFR | rate);
 		break;
 
 	case BEEP_SET:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.28 2001/02/24 20:12:40 reinoud Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.29 2001/02/25 17:17:56 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -223,7 +223,7 @@ lmcaudio_attach(parent, self, aux)
 	 * Enable serial sound.  The digital serial sound interface
 	 * consists of 16 bits sample on each channel.
 	 */
-	outl(VIDC_BASE, VIDC_SCR | 0x03);
+	outl(vidc_base, VIDC_SCR | 0x03);
  
 	/*
 	 * Video LCD and Serial Sound Mux control.  - Japanese format.
@@ -527,7 +527,7 @@ lmcaudio_rate(rate)
 	int rate;
 {
 	curr_rate = (int)(250000/rate + 0.5) - 2;
-	outl(VIDC_BASE, VIDC_SFR | curr_rate);
+	outl(vidc_base, VIDC_SFR | curr_rate);
 	return(0);
 }
 
