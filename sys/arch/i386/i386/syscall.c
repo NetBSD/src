@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.20 2003/06/29 22:28:26 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21 2003/08/04 18:43:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2003/06/29 22:28:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/08/04 18:43:38 drochner Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -146,7 +146,7 @@ syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
