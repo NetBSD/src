@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $  */
+/*      $NetBSD: ps.c,v 1.6 1999/10/11 11:55:27 mrg Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $");
+__RCSID("$NetBSD: ps.c,v 1.6 1999/10/11 11:55:27 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -225,7 +225,8 @@ tty2str(kp)
 	if (e->e_tdev == NODEV || (ttyname = devname(e->e_tdev, S_IFCHR)) == NULL)
 		strcpy(ttystr, "??");
 	else {
-		if (strncmp(ttyname, "tty", 3) == 0)
+		if (strncmp(ttyname, "tty", 3) == 0 ||
+		    strncmp(ttyname, "dty", 3) == 0)
 			ttyname += 3;
 		sprintf(ttystr, "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
 	}
