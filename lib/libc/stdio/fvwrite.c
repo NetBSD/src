@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.4 1995/02/02 02:09:45 jtc Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.5 1996/03/29 23:29:09 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fvwrite.c,v 1.4 1995/02/02 02:09:45 jtc Exp $";
+static char rcsid[] = "$NetBSD: fvwrite.c,v 1.5 1996/03/29 23:29:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: fvwrite.c,v 1.4 1995/02/02 02:09:45 jtc Exp $";
  * This routine is large and unsightly, but most of the ugliness due
  * to the three different kinds of output buffering is handled here.
  */
+int
 __sfvwrite(fp, uio)
 	register FILE *fp;
 	register struct __suio *uio;

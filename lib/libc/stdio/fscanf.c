@@ -1,4 +1,4 @@
-/*	$NetBSD: fscanf.c,v 1.4 1995/02/02 02:09:37 jtc Exp $	*/
+/*	$NetBSD: fscanf.c,v 1.5 1996/03/29 23:29:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fscanf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fscanf.c,v 1.4 1995/02/02 02:09:37 jtc Exp $";
+static char rcsid[] = "$NetBSD: fscanf.c,v 1.5 1996/03/29 23:29:08 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$NetBSD: fscanf.c,v 1.4 1995/02/02 02:09:37 jtc Exp $";
 #include <varargs.h>
 #endif
 
+int
 #if __STDC__
 fscanf(FILE *fp, char const *fmt, ...) {
 	int ret;

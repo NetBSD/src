@@ -1,4 +1,4 @@
-/*	$NetBSD: wsetup.c,v 1.4 1995/02/02 02:10:59 jtc Exp $	*/
+/*	$NetBSD: wsetup.c,v 1.5 1996/03/29 23:29:35 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wsetup.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: wsetup.c,v 1.4 1995/02/02 02:10:59 jtc Exp $";
+static char rcsid[] = "$NetBSD: wsetup.c,v 1.5 1996/03/29 23:29:35 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: wsetup.c,v 1.4 1995/02/02 02:10:59 jtc Exp $";
  * because either _flags does not include __SWR, or _buf is NULL.
  * _wsetup returns 0 if OK to write, nonzero otherwise.
  */
+int
 __swsetup(fp)
 	register FILE *fp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.4 1995/02/02 02:10:21 jtc Exp $	*/
+/*	$NetBSD: refill.c,v 1.5 1996/03/29 23:29:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: refill.c,v 1.4 1995/02/02 02:10:21 jtc Exp $";
+static char rcsid[] = "$NetBSD: refill.c,v 1.5 1996/03/29 23:29:18 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -48,7 +48,7 @@ static char rcsid[] = "$NetBSD: refill.c,v 1.4 1995/02/02 02:10:21 jtc Exp $";
 #include <stdlib.h>
 #include "local.h"
 
-static
+static int
 lflush(fp)
 	FILE *fp;
 {
@@ -62,6 +62,7 @@ lflush(fp)
  * Refill a stdio buffer.
  * Return EOF on eof or error, 0 otherwise.
  */
+int
 __srefill(fp)
 	register FILE *fp;
 {

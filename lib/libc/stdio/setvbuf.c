@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.7 1995/02/02 02:10:34 jtc Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.8 1996/03/29 23:29:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$NetBSD: setvbuf.c,v 1.7 1995/02/02 02:10:34 jtc Exp $";
+static char rcsid[] = "$NetBSD: setvbuf.c,v 1.8 1996/03/29 23:29:22 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: setvbuf.c,v 1.7 1995/02/02 02:10:34 jtc Exp $";
  * Set one of the three kinds of buffering, optionally including
  * a buffer.
  */
+int
 setvbuf(fp, buf, mode, size)
 	register FILE *fp;
 	char *buf;

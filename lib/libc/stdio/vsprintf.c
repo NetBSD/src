@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.5 1995/02/02 02:10:56 jtc Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.6 1996/03/29 23:29:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,12 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)vsprintf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: vsprintf.c,v 1.5 1995/02/02 02:10:56 jtc Exp $";
+static char rcsid[] = "$NetBSD: vsprintf.c,v 1.6 1996/03/29 23:29:32 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <limits.h>
 
+int
 vsprintf(str, fmt, ap)
 	char *str;
 	const char *fmt;
