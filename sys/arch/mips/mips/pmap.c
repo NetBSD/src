@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 1999/11/06 16:56:33 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 1999/11/06 23:18:04 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 1999/11/06 16:56:33 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 1999/11/06 23:18:04 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -213,7 +213,7 @@ boolean_t	pmap_initialized = FALSE;
 })
 
 /* Forward function declarations */
-int pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
+void pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
 int pmap_alloc_asid __P((struct proc *p));
 void pmap_zero_page __P((paddr_t phys));
 void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
@@ -706,13 +706,7 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			if (pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
-#ifdef MIPS3
-				if (CPUISMIPS3)
-					MachFlushDCache(sva, PAGE_SIZE);
-#endif
-			}
-
+			pmap_remove_pv(pmap, sva, pfn_to_vad(entry));
 			if (CPUISMIPS3)
 				/* See above about G bit */
 				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -770,12 +764,7 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			if (pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
-#ifdef MIPS3
-				if (CPUISMIPS3)
-					MachFlushDCache(sva, PAGE_SIZE);
-#endif
-			}
+			pmap_remove_pv(pmap, sva, pfn_to_vad(entry));
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -1982,9 +1971,12 @@ pmap_enter_pv(pmap, va, pa, npte)
 
 /*
  * Remove a physical to virtual address translation.
- * Returns TRUE if it was the last mapping and cached, else FALSE.
+ * If cache was inhibited on this page, and there are no more cache
+ * conflicts, restore caching.
+ * Flush the cache if the last page is removed (should always be cached
+ * at this point).
  */
-int
+void
 pmap_remove_pv(pmap, va, pa)
 	pmap_t pmap;
 	vaddr_t va;
@@ -2002,7 +1994,7 @@ pmap_remove_pv(pmap, va, pa)
 	 * may be called at interrupt time).
 	 */
 	if (!PAGE_IS_MANAGED(pa))
-		return (TRUE);
+		return;
 	pv = pa_to_pvh(pa);
 	s = splimp();
 	/*
@@ -2011,19 +2003,26 @@ pmap_remove_pv(pmap, va, pa)
 	 * to the header.  Otherwise we must search the list for
 	 * the entry.  In either case we free the now unused entry.
 	 */
+	last = 0;
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
-		last = (pv->pv_flags & PV_UNCACHED) ? FALSE : TRUE;
 		npv = pv->pv_next;
 		if (npv) {
+			/*
+			 * Copy current modified and referenced status to
+			 * the following entry before copying.
+			 */
+			npv->pv_flags |=
+			    pv->pv_flags & (PV_MODIFIED | PV_REFERENCED);
 			*pv = *npv;
 			free((caddr_t)npv, M_VMPVENT);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			last = 1;	/* Last mapping removed */
+		}
 #ifdef DEBUG
 		remove_stats.pvfirst++;
 #endif
 	} else {
-		last = FALSE;
 		for (npv = pv->pv_next; npv; pv = npv, npv = npv->pv_next) {
 #ifdef DEBUG
 			remove_stats.pvsearch++;
@@ -2037,7 +2036,29 @@ pmap_remove_pv(pmap, va, pa)
 		}
 	}
 	splx(s);
-	return (last);
+#ifdef MIPS3
+	if (CPUISMIPS3 && pv->pv_flags & PV_UNCACHED) {
+		/*
+		 * Page is currently uncached, check if alias mapping has been
+		 * removed.  If it was, then renable caching.
+		 */
+		pv = pa_to_pvh(pa);
+		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
+			if ((pv->pv_va ^ npv->pv_va) & mips_CacheAliasMask)
+				break;
+		}
+		if (npv == NULL)
+			pmap_page_cache(pa, 0);
+	}
+	if (CPUISMIPS3 && last != 0) {
+		MachFlushDCache(va, PAGE_SIZE);
+#ifndef MIPS3_L2CACHE_ABSENT
+		if (mips_L2CachePresent)
+			MachFlushDCache(pa, PAGE_SIZE);
+#endif
+	}
+#endif
+	return;
 }
 
 pt_entry_t *
