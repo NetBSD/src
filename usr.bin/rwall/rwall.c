@@ -1,4 +1,4 @@
-/*	$NetBSD: rwall.c,v 1.9 1998/07/26 22:19:52 mycroft Exp $	*/
+/*	$NetBSD: rwall.c,v 1.10 1998/12/19 21:50:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.9 1998/07/26 22:19:52 mycroft Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.10 1998/12/19 21:50:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, &mbuf, xdr_void, &res, timeout) != RPC_SUCCESS) {
+	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, (caddr_t)&mbuf, xdr_void, &res, timeout) != RPC_SUCCESS) {
 		/*
 		 * An error occurred while calling the server. 
 		 * Print error message and die.
