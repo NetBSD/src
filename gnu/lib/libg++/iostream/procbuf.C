@@ -25,7 +25,7 @@
 
 #ifndef FORK
 #define FORK vfork
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern "C" _G_pid_t vfork(void);
 #else
 extern "C" int vfork(void);
