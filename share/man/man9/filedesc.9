@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.2 2002/10/20 10:46:58 wiz Exp $
+.\"     $NetBSD: filedesc.9,v 1.3 2002/10/20 11:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,9 +39,9 @@
 .Os
 .Sh NAME
 .Nm filedesc ,
+.Nm dupfdopen ,
 .Nm falloc ,
 .Nm fd_getfile ,
-.Nm dupfdopen ,
 .Nm fdalloc ,
 .Nm fdavail ,
 .Nm fdcheckstd ,
@@ -92,18 +92,19 @@
 .Ft void
 .Fn fdunshare "struct proc *p"
 .Sh DESCRIPTION
-For user processes, all I/O is done through file descriptors.  These
-file descriptors represent underlying objects supported by the kernel
-and are created by system calls specific to the type of object.  In
+For user processes, all I/O is done through file descriptors.
+These file descriptors represent underlying objects supported by the kernel
+and are created by system calls specific to the type of object.
+In
 .Nx ,
 three type of objects can be represented by file descriptors: data
 files, pipes, and sockets.
 .Pp
 The kernel maintains a descriptor table for each process which is used
 to translate the external representation of a file descriptor into an
-internal representation.  The file descriptor is merely an index into
-this table.  The file descriptor table maintains the following
-information:
+internal representation.
+The file descriptor is merely an index into this table.
+The file descriptor table maintains the following information:
 .Pp
 .Bl -bullet -compact
 .It
@@ -117,11 +118,12 @@ an array of open file entries.
 .El
 .Pp
 On creation of the file descriptor table, a fixed number of file
-entries are created.  It is the responsibility of the file descriptor
-operations to expand the available number of entries if more are
-required.  Each file entry in the descriptor table contains the
-information necessary to access the underlying object and to maintain
-common information.  See
+entries are created.
+It is the responsibility of the file descriptor operations to expand the
+available number of entries if more are required.
+Each file entry in the descriptor table contains the information necessary
+to access the underlying object and to maintain common information.
+See
 .Xr file 9
 for details of operations on the file entries.
 .Pp
@@ -144,8 +146,8 @@ process
 .Fa p .
 This operation is performed by invoking
 .Fn fdalloc
-to allocate the new file descriptor.  The credential on the file entry
-are inherited from process
+to allocate the new file descriptor.
+The credential on the file entry are inherited from process
 .Fa p .
 The
 .Fn falloc
@@ -165,7 +167,8 @@ Get the file entry for file descriptor
 .Fa fd
 in the file descriptor table
 .Fa fdp .
-The file entry is returned if it is valid and useable, otherwise NULL
+The file entry is returned if it is valid and useable, otherwise
+.Dv NULL
 is returned.
 .It Fn dupfdopen "p" "indx" "dfd" "mode" "error"
 Duplicate file descriptor
@@ -197,10 +200,11 @@ file descriptors are available to process
 Returns zero on success, or 1 on failure.
 .It Fn fdcheckstd "p"
 Check the standard file descriptors 0, 1, 2 and ensure they are
-referencing valid file descriptors.  If they are not, create
-references to /dev/null.  This operation is necessary as these file
-descriptors are given implicit significance in the Standard C Library
-and it is unsafe for
+referencing valid file descriptors.
+If they are not, create references to
+.Pa /dev/null .
+This operation is necessary as these file descriptors are given implicit
+significance in the Standard C Library and it is unsafe for
 .Xr setuid 2
 and
 .Xr setgid 2
@@ -217,8 +221,9 @@ to release the old one.
 .It Fn fdcloseexec "p"
 Close any files for process
 .Fa p
-that are marked "close on exec".  This operation is performed by
-invoking
+that are marked
+.Dq close on exec .
+This operation is performed by invoking
 .Fn fdunshare
 for the process and invoking
 .Fn fdrelease
@@ -226,10 +231,11 @@ on the appropriate file descriptor.
 .It Fn fdcopy "p"
 Copy the file descriptor table from process
 .Fa p
-and return a pointer to the copy.  The returned file descriptor is
-guaranteed to have a reference count of one.  All file descriptor
-state is maintained.  The reference counts on each file entry
-referenced by the file descriptor table is incremented accordingly.
+and return a pointer to the copy.
+The returned file descriptor is guaranteed to have a reference count of one.
+All file descriptor state is maintained.
+The reference counts on each file entry referenced by the file
+descriptor table is incremented accordingly.
 .It Fn fdexpand "p"
 Expand the file descriptor table for process
 .Fa p
@@ -264,23 +270,24 @@ with process
 .Fa p2 .
 Process
 .Fa p2
-is assummed not to have a file descriptor table already allocated.
+is assumed not to have a file descriptor table already allocated.
 The reference count on the file descriptor table is incremented.
 This function is used by
 .Xr fork1 9 .
 .It Fn fdunshare "p"
 Ensure that process
 .Fa p
-does not share its file descriptor table.  If its file descriptor
-table has more than one reference, the file descriptor table is copied
-by invoking
+does not share its file descriptor table.
+If its file descriptor table has more than one reference, the file
+descriptor table is copied by invoking
 .Fn fdcopy .
 The reference count on the original file descriptor table is
 decremented.
 .El
 .Sh RETURN VALUES
-Successful operations return zero.  A failed operation will return a
-non-zero return value.  Possible values include:
+Successful operations return zero.
+A failed operation will return a non-zero return value.
+Possible values include:
 .Pp
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -294,7 +301,8 @@ No space left in file descriptor table.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising file
-descriptors can be found.  All pathnames are relative to
+descriptors can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The framework for file descriptor handling is implemented within the
