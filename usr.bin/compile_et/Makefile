@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:19 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.8 2001/09/21 22:47:37 tv Exp $
 
 NOMAN=	noman
 
@@ -22,12 +22,16 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
+.ifndef HOSTPROG
 VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
+.endif
 
 CLEANFILES+=	lex.c parse.c parse.h
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
