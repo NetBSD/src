@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.82 1997/04/04 15:10:34 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.83 1997/04/04 21:02:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -76,6 +76,16 @@ char ttybuf[]	= "ttybuf";
 #endif
 char ttyin[]	= "ttyin";
 char ttyout[]	= "ttyout";
+
+/*
+ * Used to determine whether we still have a connection.  This is true in
+ * one of 3 cases:
+ * 1) We have carrier.
+ * 2) It's a locally attached terminal, and we are therefore ignoring carrier.
+ * 3) We're using a flow control mechanism that overloads the carrier signal.
+ */
+#define	CONNECTED(tp)	(ISSET(tp->t_state, TS_CARR_ON) ||	\
+			 ISSET(tp->t_cflag, CLOCAL | MDMBUF))
 
 /*
  * Table with character classes and parity. The 8th bit indicates parity,
@@ -945,8 +955,7 @@ ttpoll(dev, events, p)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (events & POLLHUP)
-		if (!ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON))
+		if (!CONNECTED(tp))
 			revents |= POLLHUP;
 
 	if (revents == 0) {
@@ -990,8 +999,7 @@ ttywait(tp)
 	error = 0;
 	s = spltty();
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
-	    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
-	    && tp->t_oproc) {
+	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
 		SET(tp->t_state, TS_ASLEEP);
 		error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
@@ -1147,24 +1155,12 @@ ttymodem(tp, flag)
 	int flag;
 {
 
-	if (!ISSET(tp->t_state, TS_WOPEN) && ISSET(tp->t_cflag, MDMBUF)) {
-		/*
-		 * MDMBUF: do flow control according to carrier flag
-		 */
-		if (flag) {
-			CLR(tp->t_state, TS_TTSTOP);
-			ttstart(tp);
-		} else if (!ISSET(tp->t_state, TS_TTSTOP)) {
-			SET(tp->t_state, TS_TTSTOP);
-			(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
-		}
-	} else if (flag == 0) {
+	if (flag == 0) {
 		/*
 		 * Lost carrier.
 		 */
 		CLR(tp->t_state, TS_CARR_ON);
-		if (ISSET(tp->t_state, TS_ISOPEN) &&
-		    !ISSET(tp->t_cflag, CLOCAL)) {
+		if (ISSET(tp->t_state, TS_ISOPEN) && !CONNECTED(tp)) {
 			if (tp->t_session && tp->t_session->s_leader)
 				psignal(tp->t_session->s_leader, SIGHUP);
 			ttyflush(tp, FREAD | FWRITE);
@@ -1194,7 +1190,7 @@ nullmodem(tp, flag)
 		SET(tp->t_state, TS_CARR_ON);
 	else {
 		CLR(tp->t_state, TS_CARR_ON);
-		if (!ISSET(tp->t_cflag, CLOCAL)) {
+		if (!CONNECTED(tp)) {
 			if (tp->t_session && tp->t_session->s_leader)
 				psignal(tp->t_session->s_leader, SIGHUP);
 			return (0);
@@ -1340,8 +1336,7 @@ sleep:
 		 * awaiting hardware receipt and notification.
 		 * If we have data, we don't need to check for carrier.
 		 */
-		carrier = ISSET(tp->t_state, TS_CARR_ON) ||
-		    ISSET(tp->t_cflag, CLOCAL);
+		carrier = CONNECTED(tp);
 		if (!carrier && ISSET(tp->t_state, TS_ISOPEN)) {
 			splx(s);
 			return (0);	/* EOF */
@@ -1479,8 +1474,7 @@ ttwrite(tp, uio, flag)
 	cc = 0;
 loop:
 	s = spltty();
-	if (!ISSET(tp->t_state, TS_CARR_ON) &&
-	    !ISSET(tp->t_cflag, CLOCAL)) {
+	if (!CONNECTED(tp)) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			splx(s);
 			return (EIO);
@@ -2114,11 +2108,11 @@ ttymalloc()
 
 	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
 	bzero(tp, sizeof *tp);
-	/* XXX: default to 1024 chars for now */
-	clalloc(&tp->t_rawq, 1024, 1);
-	clalloc(&tp->t_canq, 1024, 1);
+	/* XXX: default to 4096 chars for now */
+	clalloc(&tp->t_rawq, 4096, 1);
+	clalloc(&tp->t_canq, 4096, 1);
 	/* output queue doesn't need quoting */
-	clalloc(&tp->t_outq, 1024, 0);
+	clalloc(&tp->t_outq, 4096, 0);
 	return(tp);
 }
 
