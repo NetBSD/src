@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.17 1997/09/10 02:16:13 mjacob Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.18 1998/02/04 00:38:52 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -401,7 +401,7 @@ isp_pci_mbxdma(isp)
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
 	      BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+	      (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	      &pci->pci_rquest_dmap) ||
@@ -418,7 +418,7 @@ isp_pci_mbxdma(isp)
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
 	      BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+	      (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	      &pci->pci_result_dmap) ||
@@ -436,7 +436,7 @@ isp_pci_mbxdma(isp)
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
 		BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&fcp->isp_scratch, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+	      (caddr_t *)&fcp->isp_scratch, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	      &pci->pci_scratch_dmap) ||
