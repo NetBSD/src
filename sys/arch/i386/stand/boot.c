@@ -58,7 +58,10 @@ static char sccsid[] = "from:@(#)boot.c	7.3 (Berkeley) 5/4/91";
  * or if an error is encounter, try alternate files.
  */
 
-char *files[] = { "386bsd", "386bsd.alt", "386bsd.old", "boot" , "vmunix", 0};
+char *files[] = { "bsd", "obsd", "bsd.old",
+		  "386bsd", "o386bsd", "386bsd.old",
+		  "vmunix", "ovmunix", "vmunix.old",
+		  "boot", 0};
 int	retry = 0;
 extern struct disklabel disklabel;
 extern	int bootdev, cyloffset;
