@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.33 2000/05/13 20:50:15 elric Exp $	*/
+/*	$NetBSD: jobs.c,v 1.34 2000/05/13 20:59:41 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.33 2000/05/13 20:50:15 elric Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.34 2000/05/13 20:59:41 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,7 +573,6 @@ forkshell(jp, n, mode)
 	int mode;
 {
 	int pid;
-	int pgrp;
 
 	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
 	    mode));
