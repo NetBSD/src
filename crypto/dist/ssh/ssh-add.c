@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-add.c,v 1.1.1.1.2.2 2000/10/17 01:21:01 tv Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,26 +34,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: ssh-add.c,v 1.22 2000/09/07 20:27:54 deraadt Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-add.c,v 1.1.1.1.2.2 2000/10/17 01:21:01 tv Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-add.c,v 1.28 2001/02/04 15:32:25 stevesk Exp $");
 
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
-#include "rsa.h"
 #include "ssh.h"
-#include "pathnames.h"
+#include "rsa.h"
+#include "log.h"
 #include "xmalloc.h"
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
+#include "pathnames.h"
+#include "readpass.h"
 
 static void
 delete_file(AuthenticationConnection *ac, const char *filename)
@@ -63,10 +55,10 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 	Key *public;
 	char *comment;
 
-	public = key_new(KEY_RSA);
+	public = key_new(KEY_RSA1);
 	if (!load_public_key(filename, public, &comment)) {
 		key_free(public);
-		public = key_new(KEY_DSA);
+		public = key_new(KEY_UNSPEC);
 		if (!try_load_public_key(filename, public, &comment)) {
 			printf("Bad key file %s\n", filename);
 			return;
@@ -94,11 +86,11 @@ delete_all(AuthenticationConnection *ac)
 	if (success)
 		fprintf(stderr, "All identities removed.\n");
 	else
-		fprintf(stderr, "Failed to remove all identitities.\n");
+		fprintf(stderr, "Failed to remove all identities.\n");
 }
 
 static char *
-ssh_askpass(const char *askpass, char *msg)
+ssh_askpass(char *askpass, char *msg)
 {
 	pid_t pid;
 	size_t len;
@@ -106,6 +98,8 @@ ssh_askpass(const char *askpass, char *msg)
 	int p[2], status;
 	char buf[1024];
 
+	if (fflush(stdout) != 0)
+		error("ssh_askpass: fflush: %s", strerror(errno));
 	if (askpass == NULL)
 		fatal("internal error: askpass undefined");
 	if (pipe(p) < 0)
@@ -141,13 +135,11 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	struct stat st;
 	Key *public;
 	Key *private;
-	char *saved_comment, *comment;
-	const char *askpass = NULL;
+	char *saved_comment, *comment, *askpass = NULL;
 	char buf[1024], msg[1024];
 	int success;
 	int interactive = isatty(STDIN_FILENO);
-	int type = KEY_RSA;
-	int count;
+	int type = KEY_RSA1;
 
 	if (stat(filename, &st) < 0) {
 		perror(filename);
@@ -157,10 +149,10 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	 * try to load the public key. right now this only works for RSA,
 	 * since DSA keys are fully encrypted
 	 */
-	public = key_new(KEY_RSA);
+	public = key_new(KEY_RSA1);
 	if (!load_public_key(filename, public, &saved_comment)) {
-		/* ok, so we will asume this is a DSA key */
-		type = KEY_DSA;
+		/* ok, so we will assume this is 'some' key */
+		type = KEY_UNSPEC;
 		saved_comment = xstrdup(filename);
 	}
 	key_free(public);
@@ -169,7 +161,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		if (getenv(SSH_ASKPASS_ENV))
 			askpass = getenv(SSH_ASKPASS_ENV);
 		else
-			askpass = _PATH_SSH_ASKPASS;
+			askpass = _PATH_SSH_ASKPASS_DEFAULT;
 	}
 
 	/* At first, try empty passphrase */
@@ -181,14 +173,9 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			xfree(saved_comment);
 			return;
 		}
-		for (count = 0; ; count++) {
+		snprintf(msg, sizeof msg, "Enter passphrase for %.200s", saved_comment);
+		for (;;) {
 			char *pass;
-
-			snprintf(msg, sizeof msg,
-			    "%sEnter passphrase for %.200s",
-			    count > 0 ?
-			      "You entered the wrong passphrase.  " : "",
-			    saved_comment);
 			if (interactive) {
 				snprintf(buf, sizeof buf, "%s: ", msg);
 				pass = read_passphrase(buf, 1);
@@ -205,6 +192,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			xfree(pass);
 			if (success)
 				break;
+			strlcpy(msg, "Bad passphrase, try again", sizeof msg);
 		}
 	}
 	xfree(comment);
@@ -230,8 +218,9 @@ list_identities(AuthenticationConnection *ac, int fp)
 		     key = ssh_get_next_identity(ac, &comment, version)) {
 			had_identities = 1;
 			if (fp) {
-				printf("%d %s %s\n",
-				    key_size(key), key_fingerprint(key), comment);
+				printf("%d %s %s (%s)\n",
+				    key_size(key), key_fingerprint(key),
+				    comment, key_type(key));
 			} else {
 				if (!key_write(key, stdout))
 					fprintf(stderr, "key_write failed");
@@ -255,16 +244,7 @@ main(int argc, char **argv)
 	int i;
 	int deleting = 0;
 
-	/* check if RSA support exists */
-	if (rsa_alive() == 0) {
-		extern char *__progname;
-
-		fprintf(stderr,
-			"%s: failed to generate RSA key: rnd(4) is mandatory.\n",
-			__progname);
-		exit(1);
-	}
-        SSLeay_add_all_algorithms();
+	SSLeay_add_all_algorithms();
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();
