@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.31 2004/12/28 22:21:15 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.32 2004/12/28 22:30:07 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.31 2004/12/28 22:21:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.32 2004/12/28 22:30:07 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1252,7 +1252,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 							 * hardware -> net80211
 							 */
 	u_int next, nproc = 0;
-	int hwrate, len, rate, rssi;
+	int hwrate, len, rate, rssi, sq;
 	u_int32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
@@ -1392,7 +1392,11 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			if ((hrssi & RTW_RXRSSI_IMR_LNA) == 0)
 				rssi |= 0x80;
 		}
+		sq = MASK_AND_RSHIFT(hrssi, RTW_RXRSSI_SQ);
 
+		/* Note well: now we cannot recycle the srx_mbuf unless
+		 * we restore its original length.
+		 */
 		m->m_pkthdr.rcvif = &sc->sc_if;
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_flags |= M_HASFCS;
@@ -1410,6 +1414,32 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			    rate, rssi);
 		}
 #endif /* RTW_DEBUG */
+
+#if NBPFILTER > 0
+		if (sc->sc_radiobpf != NULL) {
+			struct ieee80211com *ic = &sc->sc_ic;
+			struct rtw_rx_radiotap_header *rr = &sc->sc_rxtap;
+
+			rr->rr_tsft =
+			    htole64(((uint64_t)htsfth << 32) | htsftl);
+
+			if ((hstat & RTW_RXSTAT_SPLCP) != 0)
+				rr->rr_flags = IEEE80211_RADIOTAP_F_SHORTPRE;
+
+			rr->rr_flags = 0;
+			rr->rr_rate = rate;
+			rr->rr_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			rr->rr_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			rr->rr_antsignal = rssi;
+			rr->rr_barker_lock = sq;
+
+			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rr,
+			    sizeof(sc->sc_rxtapu), m);
+		}
+#endif /* NPBFILTER > 0 */
+
 		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
@@ -2741,6 +2771,25 @@ rtw_start(struct ifnet *ifp)
 
 		KASSERT(stx->stx_first < htc->htc_ndesc);
 
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
+
+		if (sc->sc_radiobpf != NULL) {
+			struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
+
+			rt->rt_flags = 0;
+			rt->rt_rate = rate;
+			rt->rt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			rt->rt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rt,
+			    sizeof(sc->sc_txtapu), m0);
+		}
+#endif /* NPBFILTER > 0 */
+
 		for (i = 0, lastdesc = desc = stx->stx_first;
 		     i < dmamap->dm_nsegs;
 		     i++, desc = RTW_NEXT_IDX(htc, desc)) {
@@ -3201,12 +3250,12 @@ static __inline void
 rtw_init_radiotap(struct rtw_softc *sc)
 {
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.rr_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.rr_ihdr.it_present = RTW_RX_RADIOTAP_PRESENT;
+	sc->sc_rxtap.rr_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.rr_ihdr.it_present = htole32(RTW_RX_RADIOTAP_PRESENT);
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.rt_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.rt_ihdr.it_present = RTW_TX_RADIOTAP_PRESENT;
+	sc->sc_txtap.rt_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.rt_ihdr.it_present = htole32(RTW_TX_RADIOTAP_PRESENT);
 }
 
 static int
@@ -3545,14 +3594,14 @@ rtw_attach(struct rtw_softc *sc)
 	ieee80211_media_init(&sc->sc_if, rtw_media_change, rtw_media_status);
 	callout_init(&sc->sc_scan_ch);
 
+	rtw_init_radiotap(sc);
+
 #if NBPFILTER > 0
 	bpfattach2(&sc->sc_if, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
 	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
-
-	rtw_init_radiotap(sc);
 
 	NEXT_ATTACH_STATE(sc, FINISHED);
 
