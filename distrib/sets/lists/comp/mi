@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.203 2000/03/16 15:33:24 ad Exp $
+#	$NetBSD: mi,v 1.204 2000/03/20 19:09:19 jlam Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -185,7 +185,7 @@
 ./usr/include/dev/isa/com_multi.h		comp-c-include
 ./usr/include/dev/isa/cs4231var.h		comp-c-include
 ./usr/include/dev/isa/elink.h		comp-c-include
-./usr/include/dev/isa/espvar.h		comp-c-include
+./usr/include/dev/isa/esp_isavar.h		comp-c-include
 ./usr/include/dev/isa/gusreg.h		comp-c-include
 ./usr/include/dev/isa/ics2101var.h		comp-c-include
 ./usr/include/dev/isa/if_aireg.h		comp-c-include
