@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.20 1998/07/04 18:51:00 is Exp $	
+	$NetBSD: install,v 1.21 1998/08/23 12:42:18 hubertf Exp $	
 
 
 0. Introduction
@@ -457,25 +457,3 @@
 
 	Congratulations, you have successfully installed NetBSD _VER.
 	You can now reboot the machine, and boot from harddisk.
-
-	After reboot, you can log in "root" at the login prompt.  There
-	is no initial password, but if you're using the machine in a
-	networked environment, you should create yourself an account
-	and protect it and the "root" account with good passwords.
-
-	You should now edit the /etc/rc.conf file to configure the system
-	to suit your needs, and then reboot the system again.
-
-	Some other files in the NetBSD _VER distribution might need to be
-	tailored for your site.  In particular, the /etc/sendmail.cf file will
-	almost definitely need to be adjusted, and other files in /etc will
-	probably need to be modified, as well.
-
-	If you are unfamiliar with UN*X-like system administration, it's
-	recommended that you buy a book that discusses it.
-
-	If you have installed the X window system, look at the files in
-	/usr/X11R6/lib/X11/doc for information. You will need to set up
-	a configuration file. An example of such a file is
-	/usr/X11R6/lib/X11/XF86Config.eg. See http://www.xfree86.org/
-	and the XFree86 manual page for more information.

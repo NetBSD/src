@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.6 1998/01/19 20:34:35 phil Exp $
+	$NetBSD: install,v 1.7 1998/08/23 12:42:19 hubertf Exp $
 
 (IF you already have NetBSD/pc532 installed and you only want to update
 your system, see the next section.)
@@ -197,19 +197,13 @@ The Install Procedure:
 
   k) Edit the information in /etc
 
-	- rc.conf - Many of the following things can be configured here
+	- rc.conf - Many things can be configured here
 	- hosts   -  host name and address information
-	- myname  -  your host name
-	- mygate  -  hostname of gateway (assuming you have one)
 	- resolv.conf - which nameserver to use
-	- ifconfig.{sl0,ppp0,plip0} - interface hostname
-	- netstart - configures the network and says if sendmail should
-			be started
 	- ttys    -  make sure the console entry has the correct speed
 	- gettytab - I find "ap" instead of "ep" in the default entry
 			works better for me.
 	- fstab	  -  make sure it includes all partitions you want mounted
-	- localtime - this is usually a link into /usr/share/zoneinfo
 
 	Now you can adjust the kernel's default baud rate to match your
 	monitor's default baud rate. Do the following:
@@ -226,4 +220,3 @@ The Install Procedure:
 	you got it configured correctly.
 
   m) Enjoy!  And help fix bugs and improve NetBSD/pc532!
-

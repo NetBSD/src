@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.16 1998/01/09 18:47:23 perry Exp $	
+	$NetBSD: install,v 1.17 1998/08/23 12:42:20 hubertf Exp $	
 
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
@@ -294,16 +294,4 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-device /sbus/esp/sd@0,0
 
 
-Congratulations, you have successfully installed NetBSD _VER.  When you
-reboot into NetBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
-
-Some of the files in the NetBSD _VER distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you are unfamiliar with UN*X-like
-system administration, it's recommended that you buy a book that
-discusses it.
-
+Congratulations, you have successfully installed NetBSD _VER. 
