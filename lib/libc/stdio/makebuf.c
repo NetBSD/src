@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.8 1998/02/03 18:41:17 perry Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.9 1998/10/13 15:05:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.8 1998/02/03 18:41:17 perry Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.9 1998/10/13 15:05:02 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
