@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.13 1998/03/20 16:36:20 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.14 1998/10/21 20:16:33 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -207,6 +207,10 @@ getbootdev()
 
 
 	case VAX_TYP_8SS:
+		controller = bootregs[1];
+		unit = bootregs[3];
+		break;
+
 	case VAX_TYP_750:
 		controller = 0;	/* XXX Actually massbuss can be on 3 ctlr's */
 		unit = bootregs[3];
@@ -227,6 +231,10 @@ getbootdev()
 	case BDEV_CNSL:		/* Console storage boot */
 	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
 		controller = 0; /* They are always on ctlr 0 */
+		break;
+
+	case BDEV_KDB:		/* DSA disk on KDB50 (VAXBI VAXen) */
+		bootdev = (bootdev & ~B_TYPEMASK) | BDEV_UDA;
 		break;
 
 	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
