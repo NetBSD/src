@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 1996/10/25 20:13:16 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.28 1996/12/02 07:30:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -154,7 +154,7 @@
  * made larger without any effect on existing file systems; however making
  * it smaller make make some file systems unmountable.
  */
-#define	MAXBSIZE	16384 /* XXX MAXPHYS */
+#define	MAXBSIZE	MAXPHYS
 #define MAXFRAG 	8
 
 /*
