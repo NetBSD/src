@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.1.1.2 2000/11/10 09:34:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -92,7 +92,7 @@
 
 /* ns_func.h - declarations for ns_*.c's externally visible functions
  *
- * Id: ns_func.h,v 8.90 1999/10/11 18:22:20 vixie Exp
+ * Id: ns_func.h,v 8.91 1999/11/16 06:01:38 vixie Exp
  */
 
 /* ++from ns_glue.c++ */
@@ -148,6 +148,7 @@ int movefile(const char *, const char *);
 /* ++from ns_notify.c++ */
 #ifdef BIND_NOTIFY
 void			ns_notify(const char *, ns_class, ns_type);
+void			notify_afterload(void);
 void			ns_unnotify(void);
 #endif
 /* --from ns_notify.c-- */
@@ -256,7 +257,7 @@ extern void		schedretry(struct qinfo *, time_t),
 			freeComplaints(void),
 			nsfwdadd(struct qinfo *, struct fwdinfo *);
 extern struct qinfo	*qfindid(u_int16_t),
-			*qnew(const char *, int, int);
+			*qnew(const char *, int, int, int);
 /* --from ns_forw.c-- */
 
 /* ++from ns_main.c++ */
