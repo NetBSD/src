@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.3 1996/08/11 23:30:22 jonathan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.4 1996/10/13 09:28:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,11 +106,17 @@ typedef union pt_entry {
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
+
+/* pte accessor macros */
+
 #define vad_to_pfn(x) (((unsigned)(x) >> PG_SHIFT) & PG_FRAME)
 #define pfn_to_vad(x) (((x) & PG_FRAME) << PG_SHIFT)
 #define vad_to_vpn(x) ((unsigned)(x) & PG_SVPN)
 #define vpn_to_vad(x) ((x) & PG_SVPN)
-/* User viritual to pte page entry */
+
+#define PTE_TO_PADDR(x) (pfn_to_vad((x))
+
+/* User virtual to pte page entry */
 #define uvtopte(adr) (((adr) >> PGSHIFT) & (NPTEPG -1))
 
 #define	PG_SIZE_4K	0x00000000
@@ -121,15 +127,3 @@ typedef union pt_entry {
 #define	PG_SIZE_4M	0x007fe000
 #define	PG_SIZE_16M	0x01ffe000
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * Kernel virtual address to page table entry and visa versa.
- */
-#define	kvtopte(va) \
-	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
-#define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
-
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
-#endif	/* defined(_KERNEL) && !defined(_LOCORE) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.6 1996/02/01 22:32:15 mycroft Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.7 1996/10/13 09:28:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,15 +93,5 @@ typedef union pt_entry {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * Kernel virtual address to page table entry and visa versa.
- */
-#define	kvtopte(va) \
-	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
-#define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
+#define PTE_TO_PADDR(x) ((unsigned)(x) & PG_FRAME)
 
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
-#endif
