@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.3 1998/10/08 12:57:59 agc Exp $ */
+/* $NetBSD: info.h,v 1.4 1998/10/09 18:27:34 agc Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -55,8 +55,8 @@ extern size_t PlayPenSize;
 extern char *CheckPkg;
 
 extern void	show_file(char *, char *);
-extern void	show_plist(char *, Package *, plist_t);
-extern void	show_files(char *, Package *);
+extern void	show_plist(char *, package_t *, pl_ent_t);
+extern void	show_files(char *, package_t *);
 extern void	show_index(char *, char *);
 
 #endif	/* _INST_INFO_H_INCLUDE */

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.9 1998/10/09 11:16:59 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.10 1998/10/09 18:27:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.9 1998/10/09 11:16:59 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.10 1998/10/09 18:27:33 agc Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ pkg_perform(char **pkgs)
     return err_cnt;
 }
 
-static Package Plist;
+static package_t Plist;
 
 /* This is seriously ugly code following.  Written very fast! */
 static int
@@ -57,7 +57,7 @@ pkg_do(char *pkg)
 {
     FILE *cfile;
     char home[FILENAME_MAX];
-    PackingList p;
+    plist_t *p;
     char *tmp;
 
     /* Reset some state */
