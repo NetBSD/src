@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.52 2002/10/16 23:22:59 soren Exp $	*/
+/*	$NetBSD: options.c,v 1.53 2002/10/16 23:37:49 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.52 2002/10/16 23:22:59 soren Exp $");
+__RCSID("$NetBSD: options.c,v 1.53 2002/10/16 23:37:49 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1925,7 +1925,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("Usage: tar -{crtux}[-befhmopqvwzHLOPXZ014578] [archive] "
+	(void)fputs("Usage: tar [-]{crtux}[-befhmopqvwzHLOPXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);
