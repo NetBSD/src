@@ -1,4 +1,5 @@
-/*	$NetBSD: fsdbutil.c,v 1.1.1.1 1995/10/08 23:08:36 thorpej Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.2 1995/10/08 23:18:12 thorpej Exp $	*/
+
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -25,35 +26,36 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.1.1.1 1995/10/08 23:08:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.2 1995/10/08 23:18:12 thorpej Exp $";
 #endif /* not lint */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
+#include <ctype.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 
 #include "fsdb.h"
 #include "fsck.h"
 
 char **
-crack(char *line, int *argc)
+crack(line, argc)
+	char *line;
+	int *argc;
 {
     static char *argv[8];
     int i;
@@ -71,7 +73,10 @@ crack(char *line, int *argc)
 }
 
 int
-argcount(struct cmdtable *cmdp, int argc, char *argv[])
+argcount(cmdp, argc, argv)
+	struct cmdtable *cmdp;
+	int argc;
+	char *argv[];
 {
     if (cmdp->minargc == cmdp->maxargc)
 	warnx("command `%s' takes %u arguments", cmdp->cmd, cmdp->minargc-1);
@@ -84,7 +89,10 @@ argcount(struct cmdtable *cmdp, int argc, char *argv[])
 }
 
 void
-printstat(const char *cp, ino_t inum, struct dinode *dp)
+printstat(cp, inum, dp)
+	const char *cp;
+	ino_t inum;
+	struct dinode *dp;
 {
     struct group *grp;
     struct passwd *pw;
@@ -146,7 +154,7 @@ printstat(const char *cp, ino_t inum, struct dinode *dp)
 }
 
 int
-checkactive(void)
+checkactive()
 {
     if (!curinode) {
 	warnx("no current inode\n");
@@ -156,7 +164,7 @@ checkactive(void)
 }
 
 int
-checkactivedir(void)
+checkactivedir()
 {
     if (!curinode) {
 	warnx("no current inode\n");
@@ -170,7 +178,7 @@ checkactivedir(void)
 }
 
 int
-printactive(void)
+printactive()
 {
     if (!checkactive())
 	return 1;
