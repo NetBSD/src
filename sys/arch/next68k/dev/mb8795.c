@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.24.16.1 2002/05/30 15:34:05 gehenna Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.24.16.2 2002/07/16 12:58:56 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -53,9 +53,7 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 
-#if 0
 #include <net/if_media.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -94,10 +92,13 @@
 #include "mb8795reg.h"
 #include "mb8795var.h"
 
+#include "bmapreg.h"
+
 #if 1
 #define XE_DEBUG
 #endif
 
+#define PRINTF(x) printf x;
 #ifdef XE_DEBUG
 int xe_debug = 0;
 #define DPRINTF(x) if (xe_debug) printf x;
@@ -126,11 +127,16 @@ void mb8795_txdma_shutdown __P((void *));
 bus_dmamap_t mb8795_txdma_restart __P((bus_dmamap_t,void *));
 void mb8795_start_dma __P((struct ifnet *));
 
+int	mb8795_mediachange __P((struct ifnet *));
+void	mb8795_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
 void
-mb8795_config(sc)
-     struct mb8795_softc *sc;
+mb8795_config(sc, media, nmedia, defmedia)
+	struct mb8795_softc *sc;
+	int *media, nmedia, defmedia;
 {
-  struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int i;
 
 	DPRINTF(("%s: mb8795_config()\n",sc->sc_dev.dv_xname));
 
@@ -142,6 +148,18 @@ mb8795_config(sc)
   ifp->if_watchdog = mb8795_watchdog;
   ifp->if_flags =
     IFF_BROADCAST | IFF_NOTRAILERS;
+
+	/* Initialize media goo. */
+	ifmedia_init(&sc->sc_media, 0, mb8795_mediachange,
+	    mb8795_mediastatus);
+	if (media != NULL) {
+		for (i = 0; i < nmedia; i++)
+			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
+		ifmedia_set(&sc->sc_media, defmedia);
+	} else {
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	}
 
   /* Attach the interface. */
   if_attach(ifp);
@@ -206,6 +224,69 @@ mb8795_config(sc)
 	DPRINTF(("%s: leaving mb8795_config()\n",sc->sc_dev.dv_xname));
 }
 
+/*
+ * Media change callback.
+ */
+int
+mb8795_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct mb8795_softc *sc = ifp->if_softc;
+	int data;
+
+	switch IFM_SUBTYPE(sc->sc_media.ifm_media) {
+	case IFM_AUTO:
+		if (bus_space_read_1(sc->sc_bmap_bst, sc->sc_bmap_bsh, BMAP_DATA) &
+		    BMAP_DATA_UTPCARRIER_MASK) {
+			data = 0;
+			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER|IFM_10_2;
+		} else {
+			data = BMAP_DATA_UTPENABLE;
+			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER|IFM_10_T;
+		}
+		break;
+	case IFM_10_T:
+		data = BMAP_DATA_UTPENABLE;
+		break;
+	case IFM_10_2:
+		data = 0;
+		break;
+	default:
+		return (1);
+		break;
+	}
+
+	bus_space_write_1(sc->sc_bmap_bst, sc->sc_bmap_bsh,
+			  BMAP_DDIR, BMAP_DDIR_UTPENABLE_MASK);
+	bus_space_write_1(sc->sc_bmap_bst, sc->sc_bmap_bsh,
+			  BMAP_DATA, data);
+
+	return (0);
+}
+
+/*
+ * Media status callback.
+ */
+void
+mb8795_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct mb8795_softc *sc = ifp->if_softc;
+
+	if (IFM_SUBTYPE(ifmr->ifm_active) == IFM_AUTO) {
+		ifmr->ifm_active = sc->sc_media.ifm_cur->ifm_data;
+	}
+	if (IFM_SUBTYPE(ifmr->ifm_active) == IFM_10_T) {
+		ifmr->ifm_status = IFM_AVALID;
+		if (!(bus_space_read_1(sc->sc_bmap_bst, sc->sc_bmap_bsh, BMAP_DATA) &
+		      BMAP_DATA_UTPCARRIER_MASK))
+			ifmr->ifm_status |= IFM_ACTIVE;
+	} else {
+		ifmr->ifm_status &= ~IFM_AVALID; /* don't know for 10_2 */
+	}
+	return;
+}
 
 /****************************************************************/
 #ifdef XE_DEBUG
@@ -450,9 +531,76 @@ mb8795_reset(sc)
 	struct mb8795_softc *sc;
 {
 	int s;
+	int i;
 
 	s = splnet();
-	mb8795_init(sc);
+
+	DPRINTF (("%s: mb8795_reset()\n",sc->sc_dev.dv_xname));
+
+	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_timer = 0;
+
+	nextdma_reset(sc->sc_tx_nd);
+	nextdma_reset(sc->sc_rx_nd);
+
+	if (sc->sc_tx_loaded) {
+		bus_dmamap_sync(sc->sc_tx_dmat, sc->sc_tx_dmamap,
+				0, sc->sc_tx_dmamap->dm_mapsize,
+				BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_tx_dmat, sc->sc_tx_dmamap);
+	}
+	sc->sc_tx_loaded = 0;
+	if (sc->sc_tx_mb_head) {
+		m_freem(sc->sc_tx_mb_head);
+		sc->sc_tx_mb_head = NULL;
+	}
+	
+	for(i=0;i<MB8795_NRXBUFS;i++) {
+		if (sc->sc_rx_mb_head[i]) {
+			bus_dmamap_unload(sc->sc_rx_dmat, sc->sc_rx_dmamap[i]);
+			m_freem(sc->sc_rx_mb_head[i]);
+			sc->sc_rx_mb_head[i] = NULL;
+		}
+	}
+
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RESET,  XE_RESET_MODE);
+
+	mb8795_mediachange(&sc->sc_ethercom.ec_if);
+		
+#if 0 /* This interrupt was sometimes failing to ack correctly
+       * causing a loop @@@
+       */
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK, 
+			  XE_TXMASK_UNDERFLOWIE | XE_TXMASK_COLLIE | XE_TXMASK_COLL16IE
+			  | XE_TXMASK_PARERRIE);
+#else
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK, 0);
+#endif
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
+	
+#if 0
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
+			  XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE	|
+			  XE_RXMASK_ALIGNERRIE	|  XE_RXMASK_CRCERRIE | XE_RXMASK_OVERFLOWIE);
+#else
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
+			  XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE);
+#endif
+	
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT, XE_RXSTAT_CLEAR);
+	
+	for(i=0;i<sizeof(sc->sc_enaddr);i++) {
+		bus_space_write_1(sc->sc_bst,sc->sc_bsh,XE_ENADDR+i,sc->sc_enaddr[i]);
+	}
+	
+	DPRINTF(("%s: initializing ethernet %02x:%02x:%02x:%02x:%02x:%02x, size=%d\n",
+		 sc->sc_dev.dv_xname,
+		 sc->sc_enaddr[0],sc->sc_enaddr[1],sc->sc_enaddr[2],
+		 sc->sc_enaddr[3],sc->sc_enaddr[4],sc->sc_enaddr[5],
+		 sizeof(sc->sc_enaddr)));
+	
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RESET, 0);
+	
 	splx(s);
 }
 
@@ -468,109 +616,82 @@ mb8795_watchdog(ifp)
 	DPRINTF(("%s: %lld input errors, %lld input packets\n",
 			sc->sc_dev.dv_xname, ifp->if_ierrors, ifp->if_ipackets));
 
-	mb8795_reset(sc);
+	ifp->if_flags &= ~IFF_RUNNING;
+	mb8795_init(sc);
 }
 
 /*
  * Initialization of interface; set up initialization block
  * and transmit/receive descriptor rings.
- * @@@ error handling is bogus in here. memory leaks
  */
 void
 mb8795_init(sc)
      struct mb8795_softc *sc;
 {
-  struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+	int i;
 
-	m_freem(sc->sc_tx_mb_head);
-	sc->sc_tx_mb_head = NULL;
-	sc->sc_tx_loaded = 0;
+	DPRINTF (("%s: mb8795_init()\n",sc->sc_dev.dv_xname));
+	if (ifp->if_flags & IFF_UP) {
+		int rxmode;
 
-	{
-		int i;
-		for(i=0;i<MB8795_NRXBUFS;i++) {
-			if (sc->sc_rx_mb_head[i]) {
-				bus_dmamap_unload(sc->sc_rx_dmat, sc->sc_rx_dmamap[i]);
-				m_freem(sc->sc_rx_mb_head[i]);
-			}
-			sc->sc_rx_mb_head[i] = 
+		s = splnet ();
+		if ((ifp->if_flags & IFF_RUNNING) == 0) {
+			mb8795_reset(sc);
+		}
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxmode = XE_RXMODE_PROMISCUOUS;
+		} else {
+			/* XXX add support for multicast */
+			rxmode = XE_RXMODE_NORMAL;
+		}
+		
+		bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMODE, XE_TXMODE_LB_DISABLE);
+		bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE, rxmode);
+		
+		if ((ifp->if_flags & IFF_RUNNING) == 0) {
+			for(i=0;i<MB8795_NRXBUFS;i++) {
+				sc->sc_rx_mb_head[i] = 
 					mb8795_rxdmamap_load(sc, sc->sc_rx_dmamap[i]);
+			}
+			sc->sc_rx_loaded_idx = 0;
+			sc->sc_rx_completed_idx = 0;
+			sc->sc_rx_handled_idx = 0;
+
+			ifp->if_flags |= IFF_RUNNING;
+			ifp->if_flags &= ~IFF_OACTIVE;
+			ifp->if_timer = 0;
+			
+			nextdma_init(sc->sc_tx_nd);
+			nextdma_init(sc->sc_rx_nd);
+			
+			nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 		}
-		sc->sc_rx_loaded_idx = 0;
-		sc->sc_rx_completed_idx = 0;
-		sc->sc_rx_handled_idx = 0;
-	}
-
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RESET,  XE_RESET_MODE);
-
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMODE, XE_TXMODE_LB_DISABLE);
-#if 0 /* This interrupt was sometimes failing to ack correctly
-			 * causing a loop @@@
-			 */
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK, 
-			XE_TXMASK_UNDERFLOWIE | XE_TXMASK_COLLIE | XE_TXMASK_COLL16IE
-			| XE_TXMASK_PARERRIE);
-#else
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK, 0);
-#endif
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
-
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE, XE_RXMODE_NORMAL);
-
+		splx(s);
 #if 0
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
-			XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE	|
-			XE_RXMASK_ALIGNERRIE	|  XE_RXMASK_CRCERRIE | XE_RXMASK_OVERFLOWIE);
-#else
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK,
-			XE_RXMASK_OKIE | XE_RXMASK_RESETIE | XE_RXMASK_SHORTIE);
-#endif
-
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT, XE_RXSTAT_CLEAR);
-
-	{
-		int i;
-		for(i=0;i<sizeof(sc->sc_enaddr);i++) {
-			bus_space_write_1(sc->sc_bst,sc->sc_bsh,XE_ENADDR+i,sc->sc_enaddr[i]);
+		s = spldma();
+		if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+			mb8795_start_dma(ifp);
 		}
-	}
-
-	DPRINTF(("%s: initializing ethernet %02x:%02x:%02x:%02x:%02x:%02x, size=%d\n",
-			sc->sc_dev.dv_xname,
-			sc->sc_enaddr[0],sc->sc_enaddr[1],sc->sc_enaddr[2],
-			sc->sc_enaddr[3],sc->sc_enaddr[4],sc->sc_enaddr[5],
-			sizeof(sc->sc_enaddr)));
-
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RESET, 0);
-
-  ifp->if_flags |= IFF_RUNNING;
-  ifp->if_flags &= ~IFF_OACTIVE;
-  ifp->if_timer = 0;
-
-	nextdma_init(sc->sc_tx_nd);
-	nextdma_init(sc->sc_rx_nd);
-
-	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
-
-	if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
-		mb8795_start_dma(ifp);
+		splx(s);
+#endif
+	} else {
+/* 		ifp->if_flags &= ~IFF_RUNNING; */
+/* 		ifp->if_flags &= ~IFF_OACTIVE; */
+/* 		ifp->if_timer = 0; */
+		mb8795_reset(sc);
 	}
 }
-
-void
-mb8795_stop(sc)
-	struct mb8795_softc *sc;
-{
-  printf("%s: stop not implemented\n", sc->sc_dev.dv_xname);
-}
-
 
 void
 mb8795_shutdown(arg)
 	void *arg;
 {
-  struct mb8795_softc *sc = (struct mb8795_softc *)arg;
-  mb8795_stop(sc);
+	struct mb8795_softc *sc = (struct mb8795_softc *)arg;
+/* 	struct ifnet *ifp = &sc->sc_ethercom.ec_if; */
+/* 	ifp->if_flags &= ~IFF_RUNNING; */
+	mb8795_reset(sc);
 }
 
 /****************************************************************/
@@ -640,8 +761,8 @@ mb8795_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			mb8795_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
+/* 			ifp->if_flags &= ~IFF_RUNNING; */
+			mb8795_reset(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
@@ -654,7 +775,6 @@ mb8795_ioctl(ifp, cmd, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/*mb8795_stop(sc);*/
 			mb8795_init(sc);
 		}
 #ifdef XE_DEBUG
@@ -676,17 +796,15 @@ mb8795_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			mb8795_reset(sc);
+			mb8795_init(sc);
 			error = 0;
 		}
 		break;
 
-#if 0
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
-#endif
 
 	default:
 		error = EINVAL;
@@ -781,7 +899,8 @@ mb8795_start_dma(ifp)
 			 */
 			printf("%s: transmitter not ready\n",
 				sc->sc_dev.dv_xname);
-			mb8795_reset(sc);
+			ifp->if_flags &= ~IFF_RUNNING;
+			mb8795_init(sc);
 			return;
 		}
 	}
@@ -925,7 +1044,7 @@ mb8795_txdma_shutdown(arg)
 
 		ifp->if_timer = 0;
 
-		if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+		if ((ifp->if_flags & IFF_RUNNING) && !IF_IS_EMPTY(&sc->sc_tx_snd)) {
 			mb8795_start_dma(ifp);
 		}
 
@@ -946,18 +1065,26 @@ mb8795_rxdma_completed(map, arg)
 	void *arg;
 {
 	struct mb8795_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	sc->sc_rx_completed_idx++;
-	sc->sc_rx_completed_idx %= MB8795_NRXBUFS;
-
-	DPRINTF(("%s: mb8795_rxdma_completed(), sc->sc_rx_completed_idx = %d\n",
-			sc->sc_dev.dv_xname, sc->sc_rx_completed_idx));
-
+	if (ifp->if_flags & IFF_RUNNING) {
+		sc->sc_rx_completed_idx++;
+		sc->sc_rx_completed_idx %= MB8795_NRXBUFS;
+		
+		DPRINTF(("%s: mb8795_rxdma_completed(), sc->sc_rx_completed_idx = %d\n",
+			 sc->sc_dev.dv_xname, sc->sc_rx_completed_idx));
+		
 #if (defined(DIAGNOSTIC))
-	if (map != sc->sc_rx_dmamap[sc->sc_rx_completed_idx]) {
-		panic("%s: Unexpected rx dmamap completed\n",
-				sc->sc_dev.dv_xname);
+		if (map != sc->sc_rx_dmamap[sc->sc_rx_completed_idx]) {
+			panic("%s: Unexpected rx dmamap completed\n",
+			      sc->sc_dev.dv_xname);
+		}
+#endif
 	}
+#ifdef DIAGNOSTIC
+	else
+		DPRINTF(("%s: Unexpected rx dmamap completed while if not running\n",
+			 sc->sc_dev.dv_xname));
 #endif
 }
 
@@ -966,13 +1093,20 @@ mb8795_rxdma_shutdown(arg)
 	void *arg;
 {
 	struct mb8795_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",
-		sc->sc_dev.dv_xname));
-
-	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
+	if (ifp->if_flags & IFF_RUNNING) {
+		DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",
+			 sc->sc_dev.dv_xname));
+		
+		nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
+	}
+#ifdef DIAGNOSTIC
+	else
+		DPRINTF(("%s: Unexpected rx dma shutdown while if not running\n",
+			 sc->sc_dev.dv_xname));
+#endif
 }
-
 
 /*
  * load a dmamap with a freshly allocated mbuf
@@ -1046,27 +1180,35 @@ mb8795_rxdma_continue(arg)
 {
 	struct mb8795_softc *sc = arg;
 	bus_dmamap_t map = NULL;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	/*
-	 * Currently, starts dumping new packets if the buffers
-	 * fill up.  This should probably reclaim unhandled
-	 * buffers instead so we drop older packets instead
-	 * of newer ones.
-	 */
-	if (((sc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS) != sc->sc_rx_handled_idx){
-		sc->sc_rx_loaded_idx++;
-		sc->sc_rx_loaded_idx %= MB8795_NRXBUFS;
-		map = sc->sc_rx_dmamap[sc->sc_rx_loaded_idx];
+	if (ifp->if_flags & IFF_RUNNING) {
+		/*
+		 * Currently, starts dumping new packets if the buffers
+		 * fill up.  This should probably reclaim unhandled
+		 * buffers instead so we drop older packets instead
+		 * of newer ones.
+		 */
+		if (((sc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS) != sc->sc_rx_handled_idx){
+			sc->sc_rx_loaded_idx++;
+			sc->sc_rx_loaded_idx %= MB8795_NRXBUFS;
+			map = sc->sc_rx_dmamap[sc->sc_rx_loaded_idx];
 
-		DPRINTF(("%s: mb8795_rxdma_continue() sc->sc_rx_loaded_idx = %d\nn",
-				sc->sc_dev.dv_xname,sc->sc_rx_loaded_idx));
-	}
+			DPRINTF(("%s: mb8795_rxdma_continue() sc->sc_rx_loaded_idx = %d\nn",
+				 sc->sc_dev.dv_xname,sc->sc_rx_loaded_idx));
+		}
 #if (defined(DIAGNOSTIC))
-	else {
-		panic("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname);
-	}
+		else {
+			DPRINTF(("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname));
+		}
 #endif
-
+	}
+#ifdef DIAGNOSTIC
+	else
+		panic("%s: Unexpected rx dma continue while if not running\n",
+		      sc->sc_dev.dv_xname);
+#endif
+	
 	return(map);
 }
 

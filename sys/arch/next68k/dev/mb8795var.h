@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.3.16.1 2002/05/30 15:34:06 gehenna Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.3.16.2 2002/07/16 12:58:57 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -48,6 +48,10 @@ struct mb8795_softc {
 
 	bus_space_handle_t sc_bsh; /* bus space handle */
 
+	bus_space_tag_t sc_bmap_bst;    /* bus space tag */
+
+	bus_space_handle_t sc_bmap_bsh; /* bus space handle */
+
 	u_int8_t sc_enaddr[6];
 
 	bus_dma_tag_t sc_tx_dmat;
@@ -60,6 +64,8 @@ struct mb8795_softc {
 				 * trying to dma it */
 
 	struct ifaltq sc_tx_snd;
+
+	struct ifmedia sc_media;
 
 	bus_dma_tag_t sc_rx_dmat;
 	bus_dmamap_t sc_rx_dmamap[MB8795_NRXBUFS];
@@ -77,7 +83,7 @@ struct mb8795_softc {
 
 };
 
-void mb8795_config __P((struct mb8795_softc *));
+void mb8795_config __P((struct mb8795_softc *, int *, int, int));
 void mb8795_init __P((struct mb8795_softc *));
 int mb8795_ioctl __P((struct ifnet *, u_long, caddr_t));
 void mb8795_reset __P((struct mb8795_softc *));

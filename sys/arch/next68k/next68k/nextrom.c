@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.12 2001/05/12 22:35:30 chs Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.12.16.1 2002/07/16 12:58:59 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_serial.h"
 
 #include <sys/types.h>
 #include <machine/cpu.h>
@@ -75,10 +76,13 @@ typedef int (*putcptr)(int);
 /* #define DISABLE_ROM_PRINT 1 */
 
 #ifdef DISABLE_ROM_PRINT
+#define ROM_PUTC(c)  /* nop */
 #define ROM_PUTS(xs) /* nop */
 #define ROM_PUTX(v)  /* nop */
 #else
 
+#define ROM_PUTC(c) \
+	(*MONRELOC(putcptr,MG_putc))(c)
 #define ROM_PUTS(xs) \
   do { volatile char *_s = xs + NEXT_RAMBASE; \
      while(_s && *_s) (*MONRELOC(putcptr,MG_putc))(*_s++); \
@@ -333,29 +337,38 @@ ddbdone:
 			RELOC(rom_bootfile[i], u_char) = MONRELOC(u_char, MG_bootfile+i);
 		}
 
+		ROM_PUTS("rom bootdev: ");
 		for(i=0;i<sizeof(rom_boot_dev);i++) {
 			RELOC(rom_boot_dev[i], u_char) = MONRELOC(u_char *, MG_boot_dev)[i];
+			ROM_PUTC(RELOC(rom_boot_dev[i], u_char));
 			if (MONRELOC(u_char *, MG_boot_dev)[i] == '\0') break;
 		}
 		RELOC(rom_boot_dev[sizeof(rom_boot_dev)-1], u_char) = 0;
 
+		ROM_PUTS("\r\nrom bootarg: ");
 		for(i=0;i<sizeof(rom_boot_arg);i++) {
 			RELOC(rom_boot_arg[i], u_char) = MONRELOC(u_char *, MG_boot_arg)[i];
+			ROM_PUTC(RELOC(rom_boot_arg[i], u_char));
 			if (MONRELOC(u_char *, MG_boot_arg)[i] == '\0') break;
 		}
 		RELOC(rom_boot_arg[sizeof(rom_boot_arg)-1], u_char) = 0;
 
+		ROM_PUTS("\r\nrom bootinfo: ");
 		for(i=0;i<sizeof(rom_boot_info);i++) {
 			RELOC(rom_boot_info[i], u_char) = MONRELOC(u_char *, MG_boot_info)[i];
+			ROM_PUTC(RELOC(rom_boot_info[i], u_char));
 			if (MONRELOC(u_char *, MG_boot_info)[i] == '\0') break;
 		}
 		RELOC(rom_boot_info[sizeof(rom_boot_info)-1], u_char) = 0;
 
+		ROM_PUTS("\r\nrom bootfile: ");
 		for(i=0;i<sizeof(rom_boot_file);i++) {
 			RELOC(rom_boot_file[i], u_char) = MONRELOC(u_char *, MG_boot_file)[i];
+			ROM_PUTC(RELOC(rom_boot_file[i], u_char));
 			if (MONRELOC(u_char *, MG_boot_file)[i] == '\0') break;
 		}
 		RELOC(rom_boot_file[sizeof(rom_boot_file)-1], u_char) = 0;
+		ROM_PUTS("\r\n");
 
 		RELOC(rom_mon_stack, u_int) = MONRELOC(u_int, MG_mon_stack);
 		RELOC(rom_vbr, u_int) = MONRELOC(u_int, MG_vbr);
@@ -366,5 +379,7 @@ ddbdone:
 		}
 	}
 
+#ifdef SERCONSOLE
 	ROM_PUTS("Check serial port A for console.\r\n");
+#endif
 }

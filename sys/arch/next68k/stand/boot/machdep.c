@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/05/12 22:35:30 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.16.1 2002/07/16 12:59:00 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -99,9 +99,10 @@ struct trapframe {
 	int aregs[8];
 	short sr;
 	int pc;
-	short frame;
+	u_short fmt:4,
+		vec:12;
 	char info[0];
-};
+} __attribute__ ((packed));
 
 int trap __P((struct trapframe *fp));
 
@@ -114,7 +115,7 @@ trap(struct trapframe *fp)
 		return 0;
 	intrap = 1;
 	printf("Got unexpected trap: format=%x vector=%x sr=%x pc=%x\n",
-	       (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
+	       fp->fmt, fp->vec, fp->sr, fp->pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
 	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
 	       fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
@@ -122,6 +123,26 @@ trap(struct trapframe *fp)
 	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
 	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
 	intrap = 0;
+#ifdef DEBUG
+	if (debug)
+	{
+		int i;
+		int *p;
+		p = (int *)(fp->pc);
+		for (i = 0; i < 64; i++) {
+			if ((i % 8) == 0)
+				printf ("\npc %x: ", (int)&p[i-16]);
+			printf ("%x ", p[i]);
+		}
+		p = (int *)(fp->info);
+		for (i = 0; i < 64; i++) {
+			if ((i % 8) == 0)
+				printf ("\nstk %x: ", (int)&p[i-16]);
+			printf ("%x ", p[i]);
+		}
+		printf ("\n");
+	}
+#endif
 	printf("Halting.\n");
 	return 0;
 }
