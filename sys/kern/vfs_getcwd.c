@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.1 1999/03/22 17:01:55 sommerfe Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.2 1999/03/25 02:32:18 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@ getcwd_scandir(cvp, pvpp, bpp, bufp, p)
 	char *bufp;
 	struct proc *p;
 {
-	char   *entry;
 	int     error = 0;
 	int     eofflag;
 	off_t   off;
@@ -179,7 +178,7 @@ unionread:
 			tries++;
 			continue;	/* once more, with feeling */
 		}
-		entry = NULL;
+
 		if (!error) {
 			char   *cpos;
 			struct dirent *dp;
@@ -220,7 +219,7 @@ unionread:
 				cpos += reclen;
 			}
 		}
-	} while (!eofflag && !entry);
+	} while (!eofflag);
 #if 0
 	/*
 	 * Deal with mount -o union, which unions only the
