@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.108 2003/03/21 23:11:29 dsl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.109 2003/03/31 21:02:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.108 2003/03/21 23:11:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.109 2003/03/31 21:02:12 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -989,6 +989,7 @@ ffs_unmount(mp, mntflags, p)
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 			fs->fs_clean = FS_ISCLEAN;
 		}
+		fs->fs_fmod = 0;
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	if (ump->um_devvp->v_type != VBAD)
