@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.4 1997/01/15 07:06:42 mikel Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.1 1997/02/07 17:37:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.

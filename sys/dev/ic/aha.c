@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.19 1996/12/10 21:27:49 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.1 1997/02/07 17:37:29 mycroft Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -69,10 +69,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-#include <dev/isa/ahareg.h>
-#include <dev/isa/ahavar.h>
+#include <dev/ic/ahareg.h>
+#include <dev/ic/ahavar.h>
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (aha1542.c)")
@@ -116,15 +114,6 @@ struct scsi_device aha_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-};
-
-#define	AHA_ISA_IOSIZE	4
-
-int	aha_isa_probe __P((struct device *, void *, void *));
-void	aha_isa_attach __P((struct device *, struct device *, void *));
-
-struct cfattach aha_isa_ca = {
-	sizeof(struct aha_softc), aha_isa_probe, aha_isa_attach
 };
 
 struct cfdriver aha_cd = {
@@ -264,81 +253,6 @@ aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	}
 	bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
 	return (0);
-}
-
-/*
- * Check if the device can be found at the port given
- * and if so, set it up ready for further work
- * as an argument, takes the isa_device structure from
- * autoconf.c
- */
-int
-aha_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct isa_attach_args *ia = aux;
-	struct aha_softc sc;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
-	int rv;
-
-	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
-		return (0);
-
-	rv = aha_find(iot, ioh, &sc);
-
-	bus_space_unmap(iot, ioh, AHA_ISA_IOSIZE);
-
-	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
-			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != sc.sc_drq)
-			return (0);
-		ia->ia_irq = sc.sc_irq;
-		ia->ia_drq = sc.sc_drq;
-		ia->ia_msize = 0;
-		ia->ia_iosize = AHA_ISA_IOSIZE;
-	}
-	return (rv);
-}
-
-/*
- * Attach all the sub-devices we can find
- */
-void
-aha_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	struct aha_softc *sc = (void *)self;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
-	isa_chipset_tag_t ic = ia->ia_ic;
-
-	printf("\n");
-
-	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
-		panic("aha_attach: bus_space_map failed!");
-
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-	if (!aha_find(iot, ioh, sc))
-		panic("aha_attach: aha_find failed!");
-
-	if (sc->sc_drq != -1)
-		isa_dmacascade(sc->sc_drq);
-
-	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
-	    aha_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	aha_attach(sc);
 }
 
 void

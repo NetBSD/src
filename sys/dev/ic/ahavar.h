@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.2 1996/10/21 22:40:20 thorpej Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.1 1997/02/07 17:37:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
