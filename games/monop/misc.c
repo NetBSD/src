@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2003/08/07 09:37:28 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2004/01/26 09:59:36 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 2003/08/07 09:37:28 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2004/01/26 09:59:36 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ getyn(prompt)
 	int com;
 
 	for (;;)
-		if ((com=getinp(prompt, yn)) < 2)
+		if ((com=getinp(prompt, yncoms)) < 2)
 			return com;
 		else
 			(*func[com-2])();

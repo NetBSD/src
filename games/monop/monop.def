@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.def,v 1.7 2003/08/07 09:37:28 agc Exp $	*/
+/*	$NetBSD: monop.def,v 1.8 2004/01/26 09:59:36 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -52,7 +52,7 @@ const char	*name_list[MAX_PL+2],	/* list of players' names	*/
 	"",		/* 16 */
 	0
 	},
-	*const yn[]	= {	/* list of commands for yes/no answers	*/
+	*const yncoms[]	= {	/* list of commands for yes/no answers	*/
 	"yes",		/*  0 */	"no",		/*  1 */
 	"quit",		/*  2 */	"print",	/*  3 */
 	"where",	/*  4 */	"own holdings",	/*  5 */
