@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.12 2002/12/27 19:57:48 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.13 2002/12/30 18:44:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ int mach_port_move_member(struct mach_trap_args *);
 
 extern struct mach_port *mach_clock_port;
 extern struct mach_port *mach_bootstrap_port;
+extern struct mach_port *mach_saved_bootstrap_port;
 
 /* In-kernel Mach port right description */
 struct mach_right {
@@ -257,7 +258,7 @@ void mach_remove_recvport(struct mach_port *);
 void mach_add_recvport(struct mach_port *, struct proc *);
 int mach_port_check(struct mach_port *);
 #ifdef DEBUG_MACH
-void mach_debug_port(struct proc *, int);
+void mach_debug_port(void);
 #endif
 
 #endif /* _MACH_PORT_H_ */

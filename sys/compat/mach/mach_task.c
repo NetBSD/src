@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.17 2002/12/27 19:57:48 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.18 2002/12/30 18:44:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_darwin.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.17 2002/12/27 19:57:48 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.18 2002/12/30 18:44:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.17 2002/12/27 19:57:48 manu Exp $");
 #include <compat/mach/mach_task.h>
 #include <compat/mach/mach_syscallargs.h>
 
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
+#endif
 
 int 
 mach_task_get_special_port(args)
@@ -83,6 +88,11 @@ mach_task_get_special_port(args)
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
 		    p, MACH_PORT_TYPE_SEND);
+#ifdef DEBUG_MACH
+		printf("*** get bootstrap right %p, port %p, recv %p [%p]\n",
+		    mr, mr->mr_port, mr->mr_port->mp_recv,
+		    mr->mr_port->mp_recv->mr_sethead);
+#endif
 		break;
 
 	case MACH_TASK_WIRED_LEDGER_PORT:
@@ -222,6 +232,26 @@ mach_task_set_special_port(args)
 		mp->mp_refcount--;
 		if (mp->mp_refcount == 0)
 			mach_port_put(mp);
+#ifdef COMPAT_DARWIN
+		/*
+		 * mach_init sets the bootstrap port for any new process
+		 */
+		{
+			struct darwin_emuldata *ded;
+
+			ded = p->p_emuldata;
+			if (ded->ded_fakepid == 1) {
+				mach_bootstrap_port = med->med_bootstrap;
+#ifdef DEBUG_DARWIN
+				printf("*** New bootstrap port %p, "
+				    "recv %p [%p]\n",
+				    mach_bootstrap_port, 
+				    mach_bootstrap_port->mp_recv,
+				    mach_bootstrap_port->mp_recv->mr_sethead);
+#endif /* DEBUG_DARWIN */
+			}
+		}
+#endif /* COMPAT_DARWIN */
 		break;
 
 	default:
