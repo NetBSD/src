@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 1997/10/09 07:35:04 jtc Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9 1999/09/06 21:50:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
+#include <m68k/cacheops.h>
 
 static char db_read_data __P((char *src));
 void db_read_bytes __P((vm_offset_t addr, register int size, register char *data));

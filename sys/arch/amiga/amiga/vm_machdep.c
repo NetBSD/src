@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 1999/08/03 21:54:50 is Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 1999/09/06 21:50:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
 #include <m68k/reg.h>
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <vm/vm.h>
 #include <sys/user.h>
