@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.10 2001/01/23 21:19:44 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.11 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,10 +104,6 @@ struct uvisor_connection_info {
 #define UVISOR_CONNECTION_INFO_SIZE 18
 
 
-/* struct uvisor_connection_info.connection[x].port defines: */
-#define UVISOR_ENDPOINT_1		0x01
-#define UVISOR_ENDPOINT_2		0x02
-
 /* struct uvisor_connection_info.connection[x].port_function_id defines: */
 #define UVISOR_FUNCTION_GENERIC		0x00
 #define UVISOR_FUNCTION_DEBUGGER	0x01
@@ -177,7 +173,6 @@ USB_ATTACH(uvisor)
 	char devinfo[1024];
 	char *devname = USBDEVNAME(sc->sc_dev);
 	int i, j, hasin, hasout, port;
-	char *string;
 	usbd_status err;
 	struct ucom_attach_args uca;
 
@@ -227,29 +222,29 @@ USB_ATTACH(uvisor)
 			   USBDEV(sc->sc_dev));
 
 	sc->sc_numcon = UGETW(coninfo.num_ports);
-	/*printf("%s: Number of ports: %d\n", USBDEVNAME(sc->sc_dev), np);*/
+	if (sc->sc_numcon > UVISOR_MAX_CONN)
+		sc->sc_numcon = UVISOR_MAX_CONN;
+
+	/* Attach a ucom for each connection. */
 	for (i = 0; i < sc->sc_numcon; ++i) {
 		switch (coninfo.connections[i].port_function_id) {
 		case UVISOR_FUNCTION_GENERIC:
-			string = "Generic";
+			uca.info = "Generic";
 			break;
 		case UVISOR_FUNCTION_DEBUGGER:
-			string = "Debugger";
+			uca.info = "Debugger";
 			break;
 		case UVISOR_FUNCTION_HOTSYNC:
-			string = "HotSync";
+			uca.info = "HotSync";
 			break;
 		case UVISOR_FUNCTION_REMOTE_FILE_SYS:
-			string = "Remote File System";
+			uca.info = "Remote File System";
 			break;
 		default:
-			string = "unknown";
+			uca.info = "unknown";
 			break;	
 		}
 		port = coninfo.connections[i].port;
-		printf("%s: portno %d is %s\n", USBDEVNAME(sc->sc_dev), port,
-		    string);
-    
 		uca.portno = port;
 		uca.bulkin = port | UE_DIR_IN;
 		uca.bulkout = port | UE_DIR_OUT;
