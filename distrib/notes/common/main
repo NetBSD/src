@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.30 2000/07/01 20:31:42 he Exp $
+.\" $NetBSD: main,v 1.6.2.31 2000/07/02 08:28:06 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ A driver for the Lucent Wavelan PCMCIA card has been added, see
 .It
 The PCI Cyclom-4Y and Cyclom-8Y cards are now supported.
 .It
-The Macontosh LC Ethernet Adapter is now supported.
+The Macintosh LC Ethernet Adapter is now supported.
 .It
 Fixes to the Alteon Gigabit ethernet driver,
 .Xr ti 4 ,
