@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -239,8 +239,6 @@ extern int astpending;
  */
 
 #define signotify(p)            setsoftast()
-
-#define cpu_wait(p)	/* nothing */
 
 /*
  * Preempt the current process if in interrupt from user mode,

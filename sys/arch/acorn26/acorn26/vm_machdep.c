@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.6 2003/07/14 22:48:20 lukem Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:29 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2003/07/14 22:48:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -159,17 +159,19 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do here? */
+}
+
+void
+cpu_exit(struct lwp *l)
 {
 	int s;
 
-	/* Nothing to do here? */
-
 	/* I think this is safe on a uniprocessor machine */
-	if (proc)
-		exit2(l);
-	else
-		lwp_exit2(l);
+	lwp_exit2(l);
 	SCHED_LOCK(s);		/* expected by cpu_switch */
 	cpu_switch(l, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2003/10/05 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -119,7 +119,6 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_swapin(p)			/* nothing */
-#define	cpu_wait(p)			/* nothing */
 #define cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 

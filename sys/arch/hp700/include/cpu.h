@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2003/11/08 15:19:20 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -186,7 +186,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
 
 #define cpu_proc_fork(p1, p2)

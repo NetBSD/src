@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.69 2003/11/17 22:52:09 cl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.70 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.69 2003/11/17 22:52:09 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.70 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "opt_kstack.h"
 
@@ -132,17 +132,6 @@ struct proclist zombproc;	/* resources have been freed */
  *	pid_table
  */
 struct lock proclist_lock;
-
-/*
- * List of processes that has called exit, but need to be reaped.
- * Locking of this proclist is special; it's accessed in a
- * critical section of process exit, and thus locking it can't
- * modify interrupt state.
- * We use a simple spin lock for this proclist.
- * Processes on this proclist are also on zombproc.
- */
-struct simplelock deadproc_slock;
-struct deadprocs deadprocs = SLIST_HEAD_INITIALIZER(deadprocs);
 
 /*
  * pid to proc lookup is done by indexing the pid_table array. 
@@ -229,8 +218,6 @@ procinit(void)
 
 	spinlockinit(&proclist_lock, "proclk", 0);
 
-	simple_lock_init(&deadproc_slock);
-
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
 	/* Set free list running through table...
@@ -249,8 +236,6 @@ procinit(void)
 #undef LINK_EMPTY
 
 	LIST_INIT(&alllwp);
-	LIST_INIT(&deadlwp);
-	LIST_INIT(&zomblwp);
 
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);

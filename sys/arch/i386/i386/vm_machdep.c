@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.112 2003/10/27 14:11:47 junyoung Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.113 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2003/10/27 14:11:47 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113 2004/01/04 11:33:30 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -248,19 +248,21 @@ cpu_swapout(l)
 #endif
 }
 
+void
+cpu_exit(struct lwp *l)
+{
+
+	switch_exit(l, lwp_exit2);
+	/* NOTREACHED */
+}
+
 /*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
- * jumps into switch() to wait for another process to wake up.
- * 
- * If proc==0, we're an exiting lwp, and call switch_lwp_exit() instead of 
- * switch_exit(), and only do LWP-appropriate cleanup (e.g. don't deactivate
- * the pmap).
+ * cpu_lwp_free is called from exit() to let machine-dependent
+ * code free machine-dependent resources that should be cleaned
+ * while we can still block and have process associated with us
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
 
 #if NNPX > 0
@@ -274,35 +276,11 @@ cpu_exit(struct lwp *l, int proc)
 		mtrr_clean(l->l_proc);
 #endif
 
-	/*
-	 * No need to do user LDT cleanup here; it's handled in
-	 * pmap_destroy().
-	 */
-
-	/*
-	 * Deactivate the address space before the vmspace is
-	 * freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to the idle process
-	 * in switch_exit().
-	 */
-	pmap_deactivate(l);
-
-	uvmexp.swtch++;
-	switch_exit(l, proc ? exit2 : lwp_exit2);
-}
-
-/*
- * cpu_wait is called from reaper() to let machine-dependent
- * code free machine-dependent resources that couldn't be freed
- * in cpu_exit().
- */
-void
-cpu_wait(l)
-	struct lwp *l;
-{
-
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);
+#ifdef DEBUG
+	l->l_md.md_tss_sel = 0xfeedbeed;
+#endif
 }
 
 /*

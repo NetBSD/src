@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.185 2003/12/24 22:53:59 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.186 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -177,7 +177,7 @@ struct proc {
 	char		p_pad1[3];
 
 	pid_t		p_pid;		/* Process identifier. */
-	SLIST_ENTRY(proc) p_dead;	/* Processes waiting for reaper */
+	SLIST_ENTRY(proc) _p_nu3;	/* unused: was link to deadproc list */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
@@ -450,9 +450,7 @@ int	ltsleep(const void *, int, const char *, int,
 	    __volatile struct simplelock *);
 void	wakeup(const void *);
 void	wakeup_one(const void *);
-void	reaper(void *);
 void	exit1(struct lwp *, int);
-void	exit2(struct lwp *);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
 void	proc0_insert(struct proc *, struct lwp *, struct pgrp *, struct session *);
@@ -467,15 +465,10 @@ int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
 #endif
-void	cpu_exit(struct lwp *, int);
+void	cpu_exit(struct lwp *);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
-
-		/*
-		 * XXX: use __P() to allow ports to have as a #define.
-		 * XXX: we need a better way to solve this.
-		 */
-void	cpu_wait __P((struct lwp *));
+void	cpu_lwp_free(struct lwp *, int);
 
 void	child_return(void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2003/10/19 17:45:35 cl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2003/10/19 17:45:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2004/01/04 11:33:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,15 @@ cpu_swapout(l)
 	fpu_lwp = 0;
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* If we were using the FPU, forget about it. */
+	if (fpu_lwp == l)
+		fpu_lwp = 0;
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -220,20 +229,14 @@ cpu_swapout(l)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(arg, proc)
+cpu_exit(arg)
 	struct lwp *arg;
-	int proc;
 {
 	extern struct user *proc0paddr;
 	register struct lwp *l __asm("r3");
-	uvmexp.swtch++;
 
 	/* Copy arg into a register. */
 	movd(arg, l);
-
-	/* If we were using the FPU, forget about it. */
-	if (fpu_lwp == l)
-		fpu_lwp = 0;
 
 	/* Switch to temporary stack and address space. */
 	lprd(sp, INTSTACK);
@@ -241,10 +244,7 @@ cpu_exit(arg, proc)
 
 	/* Schedule the vmspace and stack to be freed. */
 	(void) splhigh();
-	if (proc)		/* XXXJRT FRAGILE!  USE A REGISTER! */
-		exit2(l);
-	else
-		lwp_exit2(l);
+	lwp_exit2(l);		/* XXXJRT FRAGILE!  USE A REGISTER! */
 
 	/* Don't update pcb in cpu_switch. */
 	curlwp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2003/11/26 08:36:51 he Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.100 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2003/11/26 08:36:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2004/01/04 11:33:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,14 @@ cpu_swapin(l)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -249,18 +257,13 @@ cpu_swapin(l)
  * into the middle of cpu_switch(), as if it were switching from proc0.
  */
 void
-cpu_exit(l, proc)
+cpu_exit(l)
 	struct lwp *l;
-	int proc;
 {
 	void switch_exit(struct lwp *, void (*)(struct lwp *));
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = (struct lwp *)0;
-
-	uvmexp.swtch++;
 	(void)splhigh();
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 	/* NOTREACHED */
 }
 

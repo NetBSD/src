@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2003/08/07 16:28:19 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2003/08/07 16:28:19 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:30 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,13 @@ cpu_setfunc(l, func, arg)
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }	
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do */
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -192,17 +199,12 @@ cpu_setfunc(l, func, arg)
  * switch to another process thus we never return.
  */
 void
-cpu_exit(l, proc)
+cpu_exit(l)
 	struct lwp *l;
-	int proc;
 {
 
 	(void) splhigh();
-	uvmexp.swtch++;
-	if (proc)
-		switch_exit(l);
-	else
-		switch_lwp_exit(l);
+	switch_lwp_exit(l);
 	/* NOTREACHED */
 }
 

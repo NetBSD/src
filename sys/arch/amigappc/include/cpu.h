@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.10 2003/11/02 16:37:09 jdolecek Exp $ */
+/*      $NetBSD: cpu.h,v 1.11 2004/01/04 11:33:29 jdolecek Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -61,7 +61,6 @@ void	physaccess	__P((caddr_t, caddr_t, int, int));
 #define	PROC_PC(p)		(trapframe(p)->srr0)
 
 #define cpu_swapout(p)		/* nothing */
-#define cpu_wait(p)		/* nothing */
 #define cpu_number()            0
 
 extern void delay __P((unsigned));

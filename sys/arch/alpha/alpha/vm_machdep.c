@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.80 2003/06/29 22:28:04 fvdl Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.81 2004/01/04 11:33:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2003/06/29 22:28:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2004/01/04 11:33:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,15 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	return error;
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 0);
+}
+
+
 /*
  * cpu_exit is called as the last action during exit.
  * We block interrupts and call switch_exit.  switch_exit switches
@@ -101,21 +110,9 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
  * as if it were switching from proc0.
  */
 void
-cpu_exit(struct lwp *l, int proc)
-{
-
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(l, 0);
-
-	/*
-	 * Deactivate the exiting address space before the vmspace
-	 * is freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to proc0 in switch_exit().
-	 */
-	pmap_deactivate(l);
-
+cpu_exit(struct lwp *l)
 	(void) splhigh();
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 	/* NOTREACHED */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.8 2003/11/04 10:33:16 dsl Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.9 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -110,33 +110,6 @@ GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
 	.long	0
 
 ASBSS(nullpcb,SIZEOF_PCB)
-
-/*
- * void switch_exit(struct lwp *);
- *
- * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
- *
- * MUST BE CALLED AT SPLHIGH!
- */
-ENTRY(switch_exit)
-	movl    %sp@(4),%a0
-	/* save state into garbage pcb */
-	movl    #_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea     _ASM_LABEL(tmpstk),%sp	| goto a tmp stack
-
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-		| exit2(l)
-	jbsr	_C_LABEL(exit2)
-	lea	%sp@(4),%sp		| pop args
-
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */ 
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-
-	jra	_C_LABEL(cpu_switch)
 
 /*
  * void switch_lwp_exit(struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.18 2004/01/03 20:10:01 jdolecek Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.19 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.18 2004/01/03 20:10:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.19 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.18 2004/01/03 20:10:01 jdolecek Exp $
 #include <uvm/uvm_extern.h>
 
 struct lwplist alllwp;
-struct lwplist deadlwp;
-struct lwplist zomblwp;
 
 #define LWP_DEBUG
 
@@ -382,7 +380,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 
 	struct proc *p = l->l_proc;
 	struct lwp *l2, *l3;
-	int nfound, error, s, wpri;
+	int nfound, error, wpri;
 	static const char waitstr1[] = "lwpwait";
 	static const char waitstr2[] = "lwpwait2";
 
@@ -405,10 +403,6 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		if (l2->l_stat == LSZOMB) {
 			if (departed)
 				*departed = l2->l_lid;
-
-			s = proclist_lock_write();
-			LIST_REMOVE(l2, l_zlist); /* off zomblwp */
-			proclist_unlock_write(s);
 
 			simple_lock(&p->p_lock);
 			LIST_REMOVE(l2, l_sibling);
@@ -563,16 +557,17 @@ lwp_exit(struct lwp *l)
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
 		exit1(l, 0);
+		/* NOTREACHED */
 	}
 
 	s = proclist_lock_write();
 	LIST_REMOVE(l, l_list);
-	if ((l->l_flag & L_DETACHED) == 0) {
-		DPRINTF(("lwp_exit: %d.%d going on zombie list\n", p->p_pid,
-		    l->l_lid));
-		LIST_INSERT_HEAD(&zomblwp, l, l_zlist);
-	}
 	proclist_unlock_write(s);
+
+	/* Free MD LWP resources */
+#ifndef __NO_CPU_LWP_FREE
+	cpu_lwp_free(l, 0);
+#endif
 
 	simple_lock(&p->p_lock);
 	p->p_nrlwps--;
@@ -584,20 +579,45 @@ lwp_exit(struct lwp *l)
 	KERNEL_PROC_UNLOCK(l);
 
 	/* cpu_exit() will not return */
-	cpu_exit(l, 0);
+	cpu_exit(l);
 
 }
 
-
+/*
+ * We are called from cpu_exit() once it is safe to schedule the
+ * dead process's resources to be freed (i.e., once we've switched to
+ * the idle PCB for the current CPU).
+ *
+ * NOTE: One must be careful with locking in this routine.  It's
+ * called from a critical section in machine-dependent code, so
+ * we should refrain from changing any interrupt state.
+ */
 void
 lwp_exit2(struct lwp *l)
 {
+	struct proc *p;
 
-	simple_lock(&deadproc_slock);
-	LIST_INSERT_HEAD(&deadlwp, l, l_list);
-	simple_unlock(&deadproc_slock);
+	/*
+	 * Free the VM resources we're still holding on to.
+	 */
+	uvm_lwp_exit(l);
 
-	wakeup(&deadprocs);
+	l->l_stat = LSZOMB;
+	if (l->l_flag & L_DETACHED) {
+		/* Nobody waits for detached LWPs. */
+		LIST_REMOVE(l, l_sibling);
+
+		if ((l->l_flag & L_PROCEXIT) == 0) {
+			p = l->l_proc;
+			p->p_nlwps--;
+		}
+
+		pool_put(&lwp_pool, l);
+	} else {
+		p = l->l_proc;
+		p->p_nzlwps++;
+		wakeup(&p->p_nlwps);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.17 2004/01/02 18:52:17 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.18 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
 	struct	lwp *l_back;
 	LIST_ENTRY(lwp) l_list;		/* Entry on list of all LWPs. */
-	LIST_ENTRY(lwp) l_zlist;	/* Entry on zombie list.  */
+	LIST_ENTRY(lwp) _l_nu1;		/* Unused, was entry on zombie list.  */
 
 	struct proc *l_proc;	/* Process with which we are associated. */
 
@@ -98,8 +98,6 @@ struct	lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 extern struct lwplist alllwp;		/* List of all LWPs. */
-extern struct lwplist deadlwp;		/* */
-extern struct lwplist zomblwp;
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
@@ -111,6 +109,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
+#define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
 #define	L_BIGLOCK	0x80000	/* LWP needs kernel "big lock" to run */
 #define	L_SA		0x100000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
