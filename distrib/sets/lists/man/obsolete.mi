@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.36 2002/01/04 15:33:03 bjh21 Exp $
+# $NetBSD: obsolete.mi,v 1.37 2002/02/06 21:06:33 jdolecek Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/i386
 /usr/share/man/cat1/i386/cursor.0
@@ -38,6 +38,7 @@
 /usr/share/man/cat4/hp300/tc.0
 /usr/share/man/cat4/i386/com.0
 /usr/share/man/cat4/i386/ie.0
+/usr/share/man/cat4/i386/joy.0
 /usr/share/man/cat4/i386/le.0
 /usr/share/man/cat4/i386/pcvt.0
 /usr/share/man/cat4/i386/pms.0
@@ -134,6 +135,7 @@
 /usr/share/man/man4/hp300/tc.4
 /usr/share/man/man4/i386/com.4
 /usr/share/man/man4/i386/ie.4
+/usr/share/man/man4/i386/joy.4
 /usr/share/man/man4/i386/le.4
 /usr/share/man/man4/i386/pcvt.4
 /usr/share/man/man4/i386/pms.4
