@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.56 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.57 2001/06/28 05:45:49 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -912,8 +912,10 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	if (sip->si_pid && (p = pfind(sip->si_pid)) &&
 	    p->p_wchan == (caddr_t)&selwait)
 		sip->si_flags |= SI_COLL;
-	else
+	else {
+		sip->si_flags &= ~SI_COLL;
 		sip->si_pid = mypid;
+	}
 }
 
 /*
