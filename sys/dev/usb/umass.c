@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.79 2001/12/24 13:25:52 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.80 2001/12/24 13:43:24 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,10 +94,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.79 2001/12/24 13:25:52 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.80 2001/12/24 13:43:24 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
+#include "wd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.79 2001/12/24 13:25:52 augustss Exp $");
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
 #include <dev/usb/umass_scsipi.h>
+#include <dev/usb/umass_isdata.h>
 
 
 #ifdef UMASS_DEBUG
@@ -388,6 +390,9 @@ USB_ATTACH(umass)
 	case UMASS_CPROTO_ATAPI:
 		sCommand = "ATAPI";
 		break;
+	case UMASS_CPROTO_ISD_ATA:
+		sCommand = "ISD-ATA";
+		break;
 	default:
 		sCommand = "unknown";
 		break;
@@ -575,6 +580,14 @@ USB_ATTACH(umass)
 		error = umass_atapi_attach(sc);
 #else
 		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
+#endif
+		break;
+
+	case UMASS_CPROTO_ISD_ATA:
+#if NWD > 0
+		error = umass_isdata_attach(sc);
+#else
+		printf("%s: isdata not configured\n", USBDEVNAME(sc->sc_dev));
 #endif
 		break;
 
