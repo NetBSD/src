@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/01/22 19:37:58 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2000/04/02 15:35:47 minoura Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -7,6 +7,7 @@ ELFSIZE=32
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=${ELFSIZE}
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 CPPFLAGS+=	-I${.CURDIR}/../common_elf
+CPPFLAGS+=	-I${.CURDIR}/../../libc/dlfcn
 COPTS+=		-fPIC
 
 .PATH:		${.CURDIR}/../common_elf
