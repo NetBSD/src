@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1999/05/30 19:13:34 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.18 1999/06/04 13:55:37 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,6 +79,10 @@
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc64/sparc64/timerreg.h>
+
+#include <dev/ata/atavar.h>
+#include <dev/pci/pcivar.h>
+#include <dev/sbus/sbusvar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -252,6 +256,7 @@ bootstrap(nctx)
  *	[sbus device] val[0] is a sbus slot, and val[1] is an sbus offset
  *	[scsi disk] val[0] is target, val[1] is lun, val[2] is partition
  *	[scsi tape] val[0] is target, val[1] is lun, val[2] is file #
+ *	[pci device] val[0] is device, val[1] is function, val[2] might be partition
  * }
  *
  */
@@ -372,7 +377,6 @@ bootpath_print(bp)
  * device, so we can't set boot device there.   we patch in with
  * dk_establish(), and use this to recover the bootpath.
  */
-
 struct bootpath *
 bootpath_store(storep, bp)
 	int storep;
@@ -387,6 +391,7 @@ bootpath_store(storep, bp)
 
 	return (retval);
 }
+
 /* TEMP: */
 struct bootpath *altbootpath_store(int, struct bootpath *);
 struct bootpath *
@@ -625,9 +630,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	int node0, node;
 
 	static const char *const openboot_special[] = {
-		/* find these first */
-		"",
-
 		/* ignore these (end with NULL) */
 		/*
 		 * These are _root_ devices to ignore. Others must be handled
@@ -689,49 +691,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	if (optionsnode == 0)
 		panic("no options in OPENPROM");
 
-	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
-
-		if ((node = findnode(node0, sp)) == 0) {
-			printf("could not find %s in OPENPROM\n", sp);
-			panic(sp);
-		}
-
-		bzero(&ma, sizeof ma);
-		ma.ma_bustag = &mainbus_space_tag;
-		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_name = getpropstringA(node, "name", namebuf);
-		ma.ma_node = node;
-		if (getprop(node, "reg", sizeof(ma.ma_reg[0]), 
-			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
-{
-panic("mainbus_attach(): %s has no \"reg\"\n", sp);
-			continue;
-}
-		if (getprop(node, "interrupts", sizeof(ma.ma_interrupts[0]), 
-			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
-			free(ma.ma_reg, M_DEVBUF);
-panic("mainbus_attach(): %s has no \"interrupts\"\n", sp);
-			continue;
-		}
-		if (getprop(node, "address", sizeof(*ma.ma_address), 
-			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
-			free(ma.ma_reg, M_DEVBUF);
-			free(ma.ma_interrupts, M_DEVBUF);
-panic("mainbus_attach(): %s has no \"address\"\n", sp);
-			continue;
-		}
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
-
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
-			panic(sp);
-		free(ma.ma_reg, M_DEVBUF);
-		free(ma.ma_interrupts, M_DEVBUF);
-		free(ma.ma_address, M_DEVBUF);
-	}
-
 	/*
-	 * Configure the rest of the devices, in PROM order.  Skip
+	 * Configure the devices, in PROM order.  Skip
 	 * PROM entries that are not for devices, or which must be
 	 * done before we get here.
 	 */
@@ -1058,6 +1019,7 @@ getdevunit(name, unit)
 #define BUSCLASS_OBIO		3
 #define BUSCLASS_SBUS		4
 #define BUSCLASS_VME		5
+#define BUSCLASS_PCI		6
 
 static int bus_class __P((struct device *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
@@ -1076,6 +1038,9 @@ static struct {
 	{ "dma",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
+	{ "psycho",	BUSCLASS_MAINBUS },
+	{ "simba",	BUSCLASS_PCI },
+	{ "pciide",	BUSCLASS_PCI },
 	{ "vme",	BUSCLASS_VME }
 };
 
@@ -1110,7 +1075,7 @@ instance_match(dev, aux, bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
-	struct iommu_attach_args *iom;
+	struct pci_attach_args *pa;
 
 	/*
 	 * Several Sbus devices are represented on bootpaths in one of
@@ -1120,6 +1085,9 @@ instance_match(dev, aux, bp)
 	 *
 	 * hence we fall back on a `unit number' check if the Sbus-specific
 	 * instance parameter check does not produce a match.
+	 *
+	 * For PCI devices, we get:
+	 *	../pci@../xxx@<dev>,<fn>/...
 	 */
 
 	switch (bus_class(dev)) {
@@ -1131,6 +1099,12 @@ instance_match(dev, aux, bp)
 	case BUSCLASS_SBUS:
 		sa = aux;
 		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
+			return (1);
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		if (bp->val[0] == pa->pa_device &&
+		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
 	default:
@@ -1193,8 +1167,12 @@ device_register(dev, aux)
 	    strcmp(dvname, "ledma") == 0 ||
 	    strcmp(dvname, "espdma") == 0 ||
 	    strcmp(dvname, "esp") == 0 ||
+	    strcmp(dvname, "pci") == 0 ||
+	    strcmp(dvname, "pciide") == 0 ||
+	    strcmp(dvname, "psycho") == 0 ||
+	    strcmp(dvname, "simba") == 0 ||
 	    strcmp(dvname, "xdc") == 0 ||
-	    strcmp(dvname, "xyc") == 0 ) {
+	    strcmp(dvname, "xyc") == 0) {
 		/*
 		 * A bus or controller device of sorts. Check instance
 		 * parameters and advance boot path on match.
@@ -1203,9 +1181,10 @@ device_register(dev, aux)
 			altbootpath_store(1, bp + 1);
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0) {
+	} else if (strcmp(dvname, "le") == 0 ||
+		   strcmp(dvname, "hme") == 0) {
 		/*
-		 * LANCE ethernet device
+		 * ethernet devices: LANCE, Happy Meal Ethernet.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
@@ -1265,6 +1244,17 @@ device_register(dev, aux)
 			nail_bootdev(dev, bp);
 			return;
 		}
+	} else if (strcmp("wd", dvname) == 0) {
+		/*
+		 * IDE disks.
+		 * ?XXX?
+		 */
+		struct ata_atapi_attach *aa = aux;
+
+		if (aa->aa_channel == bp->val[0]) {
+			nail_bootdev(dev, bp);
+			return;
+		}
 	} else {
 		/*
 		 * Generic match procedure.
@@ -1274,5 +1264,4 @@ device_register(dev, aux)
 			return;
 		}
 	}
-
 }
