@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 1996/12/01 23:21:07 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.50.6.1 1997/03/12 13:55:37 is Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -84,6 +84,7 @@
 
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
+#include <sparc/sparc/cpuvar.h>
 
 #define	offsetof(s, f) ((int)&((s *)0)->f)
 
@@ -190,6 +191,8 @@ static int fixalign __P((struct proc *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
 void mem_access_fault4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
+int trap_instr __P((int, struct trapframe *));
+static int decode_address __P((int, struct trapframe *));
 
 /*
  * Define the code needed before returning to user mode, for
@@ -239,6 +242,68 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
 	curpriority = p->p_priority;
+}
+
+/*
+ * Decode a trapped instruction to see if we should do
+ * something about it.
+ */
+int
+trap_instr(pc, tf)
+	register int pc;
+	register struct trapframe *tf;
+{
+	union instr instr;
+
+	if (copyin((caddr_t)pc, &instr, sizeof(instr)) != 0)
+		return(0);
+
+	if (instr.i_any.i_op == 2 &&
+	    instr.i_op3.i_op3 == IOP3_FLUSH) {
+		int addr = decode_address(instr.i_int, tf);
+		cpuinfo.cache_flush((caddr_t)addr, 4); /*XXX*/
+		return(1);
+	}
+
+	return(0);
+}
+
+/*
+ * Get source address from an `op3' instruction.
+ */
+static int
+decode_address(instruction, tf)
+	int instruction;
+	struct trapframe *tf;
+{
+	union instr instr;
+	int addr, i, rs[2], offset;
+
+	instr.i_int = instruction;
+	rs[0] = instr.i_op3.i_rs1;
+	i = instr.i_simm13.i_i;
+	if (i) {
+		rs[1] = 0;
+		offset = instr.i_simm13.i_simm13;
+	} else {
+		rs[1] = instr.i_op3.i_low14 & 0x1f;
+		offset = 0;
+	}
+	for (addr = 0, i = 0; i < 2; i++) {
+		int r = rs[i];
+		if (r < 16) {
+			addr += r == 0 ? 0 : tf->tf_global[r];
+		} else {
+			struct rwindow rwindow;
+			write_user_windows();
+			/* Copy frame from user stack */
+			if (copyin((caddr_t)tf->tf_out[6],
+				    &rwindow, sizeof(rwindow)) != 0)
+				return (-1);
+			addr += rwindow.rw_local[r];
+		}
+	}
+	return (addr + offset);
 }
 
 /*
@@ -309,7 +374,12 @@ trap(type, psr, pc, tf)
 			ADVANCE;
 			return;
 		}
-		goto dopanic;
+	dopanic:
+		printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
+		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
+		       PSR_BITS, bits, sizeof(bits)));
+		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+		/* NOTREACHED */
 	}
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -321,12 +391,15 @@ trap(type, psr, pc, tf)
 
 	default:
 		if (type < 0x80) {
-dopanic:
+#ifdef SUSTAIN_BOGUS_TRAPS
+			if (0)
+#endif
+				goto dopanic;
 			printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 			       PSR_BITS, bits, sizeof(bits)));
-			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
-			/* NOTREACHED */
+			trapsignal(p, SIGILL, type);
+			break;
 		}
 #if defined(COMPAT_SVR4)
 badtrap:
@@ -355,6 +428,10 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
+		if (trap_instr(pc, tf)) {
+			ADVANCE;
+			break;
+		}
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
 
@@ -789,9 +866,6 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	int onfault;
 	u_quad_t sticks;
 	char bits[64];
-#if DEBUG
-static int lastdouble;
-#endif
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)	/* safety check */
@@ -818,7 +892,7 @@ static int lastdouble;
 		memerr4m(type, sfsr, sfva, afsr, afva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
-		 * trap to reoccur
+		 * trap to re-occur.
 		 */
 		goto out;
 	}
@@ -848,26 +922,12 @@ static int lastdouble;
 		goto out;	/* No fault. Why were we called? */
 
 	/*
-	 * This next section is a mess since some chips use sfva, and others
-	 * don't on text faults. We want to use sfva where possible, since
-	 * we _could_ be dealing with an ASI 0x8,0x9 data access to text space,
-	 * which would trap as a text fault, at least on a HyperSPARC. Ugh.
-	 * XXX: Find out about MicroSPARCs.
+	 * NOTE: the per-CPU fault status register readers (in locore)
+	 * may already have decided to pass `pc' in `sfva', so we avoid
+	 * testing CPU types here.
+	 * Q: test SFSR_FAV in the locore stubs too?
 	 */
-
-	if (type == T_TEXTFAULT && mmumod == SUN4M_MMU_SS &&
-	    (cpumod & 0xf0) == (SUN4M_SS) && (sfsr & SFSR_FAV)) {
-		sfva = pc;	/* can't trust fav on supersparc/text fault */
-	} else if (type == T_TEXTFAULT && mmumod != SUN4M_MMU_HS) {
-		sfva = pc;
-	} else if (!(sfsr & SFSR_FAV)) {
-#ifdef DEBUG
-		if (type != T_TEXTFAULT)
-		    printf("mem_access_fault: got fault without valid SFVA\n");
-		if (mmumod == SUN4M_MMU_HS)
-		    printf("mem_access_fault: got fault without valid SFVA on "
-			   "HyperSPARC!\n");
-#endif
+	if ((sfsr & SFSR_FAV) == 0) {
 		if (type == T_TEXTFAULT)
 			sfva = pc;
 		else
@@ -876,7 +936,7 @@ static int lastdouble;
 
 	if ((sfsr & SFSR_FT) == SFSR_FT_TRANSERR) {
 		/* Translation errors are always fatal, as they indicate
-		 * a corrupt translation (page) table heirarchy.
+		 * a corrupt translation (page) table hierarchy.
 		 */
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
 			goto fault;
@@ -889,41 +949,17 @@ static int lastdouble;
 
 	va = trunc_page(sfva);
 
-#ifdef DEBUG
-	if (lastdouble) {
-		printf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
-		lastdouble = 0;
-		if (curproc == NULL)
-			printf("NULL proc\n");
-		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-				curproc->p_pid, curproc->p_comm,
-				curproc->p_sigmask, curproc->p_sigcatch);
-	}
-#endif
 	if (((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) &&
 	    !(sfsr & SFSR_AT_STORE) && (sfsr & SFSR_OW)) {
 		if (psr & PSR_PS)	/* never allow in kernel */
 			goto kfault;
+#if 0
 		/*
 		 * Double text fault. The evil "case 5" from the HS manual...
 		 * Attempt to handle early fault. Ignores ASI 8,9 issue...may
 		 * do a useless VM read.
 		 * XXX: Is this really necessary?
 		 */
-#ifdef DEBUG
-		if (dfdebug) {
-			lastdouble = 1;
-			printf("mem_access_fault: double text fault @ %x (pc %x); sfsr %x",
-				sfva, pc, sfsr);
-			if (curproc == NULL)
-				printf("NULL proc\n");
-			else
-				printf(" pid %d(%s); sigmask %x, sigcatch %x\n",
-					curproc->p_pid, curproc->p_comm,
-					curproc->p_sigmask, curproc->p_sigcatch);
-		}
-#endif
 		if (mmumod == SUN4M_MMU_HS) { /* On HS, we have va for both */
 			if (vm_fault(kernel_map, trunc_page(pc),
 				     VM_PROT_READ, 0) != KERN_SUCCESS)
@@ -933,6 +969,7 @@ static int lastdouble;
 #endif
 				;
 		}
+#endif
 	}
 
 	/* Now munch on protections... */
@@ -980,7 +1017,7 @@ static int lastdouble;
 	rv = mmu_pagein4m(&vm->vm_pmap, va,
 			sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
-		printf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
+		uprintf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
 		       sfsr, (sfsr >> 2) & 7, (sfsr >> 5) & 7, (sfsr >> 8) & 3,
 		       sfva, pc, psr);
 	if (rv > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1996/12/17 21:11:21 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15.4.1 1997/03/12 14:05:08 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -234,11 +234,17 @@ writedisklabel(dev, strat, lp, clp)
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+bounds_check_with_label(bp, lp, wlabel)
+	struct buf *bp;
+	struct disklabel *lp;
+	int wlabel;
 {
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	struct partition *p;
+	int sz, maxsz;
+
+	p = lp->d_partitions + dkpart(bp->b_dev);
+	maxsz = p->p_size;
+	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
@@ -448,7 +454,6 @@ disklabel_bsd_to_sun(lp, cp)
 	return(0);
 }
 
-#if 0
 /*
  * Search the bad sector table looking for the specified sector.
  * Return index if found.
@@ -457,6 +462,7 @@ disklabel_bsd_to_sun(lp, cp)
 int
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;
+	int cyl, trk, sec;
 {
 	register int i;
 	register long blk, bblk;
@@ -472,4 +478,3 @@ isbad(bt, cyl, trk, sec)
 	}
 	return (-1);
 }
-#endif

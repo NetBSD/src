@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.4 1996/12/13 19:54:08 gwr Exp $ */
+/*	$NetBSD: i82586.h,v 1.4.6.1 1997/03/12 14:04:34 is Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -60,7 +60,7 @@ struct ie_sys_conf_ptr {
 	u_short mbz;			/* must be zero (alignment) */
 	u_char ie_bus_use;		/* true if 8-bit only */
 	u_char mbz2[5];			/* must be zero */
-	caddr_t ie_iscp_ptr;		/* 24-bit physaddr of ISCP */
+	u_int   ie_iscp_ptr;		/* 24-bit physaddr of ISCP */
 };
 
 /*
@@ -78,7 +78,7 @@ struct ie_int_sys_conf_ptr {
 	u_char ie_busy;			/* zeroed after init */
 	u_char mbz;
 	u_short ie_scb_offset;		/* 16-bit physaddr of next struct */
-	caddr_t ie_base;		/* 24-bit physaddr for all 16-bit vars */
+	u_int   ie_base;		/* 24-bit physaddr for all 16-bit vars */
 };
 
 /*
@@ -163,7 +163,7 @@ struct ie_recv_frame_desc {
 struct ie_recv_buf_desc {
 	u_short ie_rbd_actual;		/* status for this buffer */
 	u_short ie_rbd_next;		/* 16-pointer to next RBD */
-	caddr_t ie_rbd_buffer;		/* 24-pointer to buffer for this RBD */
+	u_int   ie_rbd_buffer;		/* 24-pointer to buffer for this RBD */
 	u_short ie_rbd_length;		/* length of the buffer */
 	u_short mbz;			/* must be zero */
 };
@@ -226,7 +226,7 @@ struct ie_xmit_cmd {
 struct ie_xmit_buf {
 	u_short ie_xmit_flags;		/* see below */
 	u_short ie_xmit_next;		/* 16-pointer to next desc. */
-	caddr_t ie_xmit_buf;		/* 24-pointer to the actual buffer */
+	u_int   ie_xmit_buf;		/* 24-pointer to the actual buffer */
 };
 
 #define IE_XMIT_LAST SWAP(0x8000)	/* this TBD is the last one */
@@ -234,9 +234,11 @@ struct ie_xmit_buf {
 
 /*
  * Multicast setup command.
+ * The command must fit in a transmit buffer (1536).
+ * Also, would like size of ie_mcast_addrs to be even.
  */
 
-#define MAXMCAST 250		/* must fit in transmit buffer */
+#define MAXMCAST 247
 
 struct ie_mcast_cmd {
 	struct ie_cmd_common com;	/* common part */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.38 1996/12/10 22:54:54 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.38.6.1 1997/03/12 13:55:07 is Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -45,13 +45,17 @@
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>
 
+#include <sparc/sparc/cpuvar.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
-#include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
 int dmaprint		__P((void *, const char *));
@@ -375,7 +379,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
 		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -386,7 +390,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	NCR_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (CPU_ISSUN4M && sc->sc_dmasize) {
@@ -443,12 +447,13 @@ int
 espdmaintr(sc)
 	struct dma_softc *sc;
 {
+	struct ncr53c9x_softc *nsc = &sc->sc_esp->sc_ncr53c9x;
 	char bits[64];
 	int trans, resid;
 	u_long csr;
 	csr = DMACSR(sc);
 
-	ESP_DMA(("%s: intr: addr %p, csr %s\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: intr: addr %p, csr %s\n", sc->sc_dev.dv_xname,
 		 DMADDR(sc), bitmask_snprintf(csr, DMACSRBITS, bits,
 		 sizeof(bits))));
 
@@ -472,11 +477,11 @@ espdmaintr(sc)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-				(ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8),
-			ESP_READ_REG(sc->sc_esp, ESP_TCL),
-			ESP_READ_REG(sc->sc_esp, ESP_TCM)));
+		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+			NCR_READ_REG(nsc, NCR_TCL) |
+				(NCR_READ_REG(nsc, NCR_TCM) << 8),
+			NCR_READ_REG(nsc, NCR_TCL),
+			NCR_READ_REG(nsc, NCR_TCM)));
 		return 0;
 	}
 
@@ -488,24 +493,24 @@ espdmaintr(sc)
 	 * bytes are clocked into the FIFO.
 	 */
 	if (!(csr & D_WRITE) &&
-	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
-		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
+	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
+		NCRCMD(nsc, NCRCMD_FLUSH);
 	}
 
-	if ((sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0) {
+	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
 		/*
 		 * `Terminal count' is off, so read the residue
 		 * out of the ESP counter registers.
 		 */
-		resid += ( ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-			  (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
-			   ((sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-				? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16)
+		resid += (NCR_READ_REG(nsc, NCR_TCL) |
+			  (NCR_READ_REG(nsc, NCR_TCM) << 8) |
+			   ((nsc->sc_cfg2 & NCRCFG2_FE)
+				? (NCR_READ_REG(nsc, NCR_TCH) << 16)
 				: 0));
 
 		if (resid == 0 && sc->sc_dmasize == 65536 &&
-		    (sc->sc_esp->sc_cfg2 & ESPCFG2_FE) == 0)
+		    (nsc->sc_cfg2 & NCRCFG2_FE) == 0)
 			/* A transfer of 64K is encoded as `TCL=TCM=0' */
 			resid = 65536;
 	}
@@ -517,15 +522,15 @@ espdmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		ESP_READ_REG(sc->sc_esp, ESP_TCL),
-		ESP_READ_REG(sc->sc_esp, ESP_TCM),
-		(sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
+	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		NCR_READ_REG(nsc, NCR_TCL),
+		NCR_READ_REG(nsc, NCR_TCM),
+		(nsc->sc_cfg2 & NCRCFG2_FE)
+			? NCR_READ_REG(nsc, NCR_TCH) : 0,
 		trans, resid));
 
 	if (csr & D_WRITE)
-		cache_flush(*sc->sc_dmaaddr, trans);
+		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
 	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
 		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
@@ -536,7 +541,7 @@ espdmaintr(sc)
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
+	    nsc->sc_phase != nsc->sc_prevphase)
 		return 0;
 
 	/* and again */

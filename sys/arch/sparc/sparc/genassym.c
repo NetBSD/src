@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 1996/05/26 22:30:20 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.18.6.1 1997/03/12 13:55:29 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,8 @@
 
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
+
+#include <sparc/sparc/cpuvar.h>
 
 #ifdef notyet
 #include <sparc/dev/zsreg.h>
@@ -130,6 +132,9 @@ main()
 	off("V_SWTCH", struct vmmeter, v_swtch);
 	off("V_INTR", struct vmmeter, v_intr);
 	off("V_FAULTS", struct vmmeter, v_faults);
+
+	/* CPU info structure */
+	off("CPUINFO_FAULTSTATUS", struct cpu_softc, get_faultstatus);
 
 	/* PTE bits and related information */
 	def("PG_W", PG_W);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.56 1997/02/04 17:15:38 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.56.2.1 1997/03/12 14:04:30 is Exp $
 
 # Makefile for NetBSD
 #
@@ -31,10 +31,7 @@ CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-COPTS?=	-O2
-
-# Need to override this for cross compilation.
-HOSTED_CC?=	${CC}
+COPTS?=	-O2 -fno-defer-pop
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -49,10 +46,11 @@ XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
 DEFINES=	-D_KERNEL -Dmc68020 -Dsun3
 CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
-CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes # -Wmissing-prototypes
+CWARNFLAGS= 	-Wall -Wstrict-prototypes # -Wmissing-prototypes -Werror
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 # No, we may NOT assume that the compiler does -x whatever...
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
+AFLAGS= 	-m68020
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d
 
@@ -72,8 +70,8 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
-# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
+# compile rules: rules are named NORMAL_${SUFFIX} where SUFFIX is
+# the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
@@ -81,7 +79,7 @@ NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 # This needs an intermediate file.  The original file is always
 # safe in some far away directory, so just use the base name.
 NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} -o $@ $*.s ; rm $*.s
+		${AS} ${AFLAGS} -o $@ $*.s ; rm $*.s
 
 # These comments help identify sections in the generated Makefile.
 # OBJS, CFILES, SFILES follow:
@@ -123,17 +121,16 @@ LINKFLAGS+=	-S
 
 # LOAD-
 
-assym.h: genassym
-	./genassym >assym.h
+# Use awk to cross-build assym.h from the genassym.s file.
+assym.h: genassym.o ${SUN3}/sun3/genassym.awk
+	awk -f ${SUN3}/sun3/genassym.awk < genassym.s > $@
 
-# Doing a cross-build of this is very tricky, and very dependent
-# on compatibility of things like structure member alignment in
-# the compiler used as HOSTED_CC (must match the native compiler).
-# Often this is not possible at all, and you just have to build
-# the assym.h file by hand on some other machine. -gwr
-genassym: ${SUN3}/sun3/genassym.c
-	${CC} ${CPPFLAGS} -E $< > $@.i
-	${HOSTED_CC} -o $@ $@.i
+# The above rule lists genassym.o as a prerequisite so that the
+# generated .depend rule is effective, even though we actually
+# use genassym.s instead.   This always creates both.
+genassym.o: ${SUN3}/sun3/genassym.c
+	${CC} ${CPPFLAGS} -S $<
+	${CC} -c $*.s
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -200,6 +197,9 @@ genassym.o machdep.o: Makefile
 
 # depend on CPU configuration 
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
+
+# depends on KGDBDEV, KGDBRATE
+kgdb_stub.o: Makefile
 
 locore.o: ${SUN3}/sun3/locore.s
 	${NORMAL_S}
