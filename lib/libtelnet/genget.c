@@ -1,4 +1,4 @@
-/*	$NetBSD: genget.c,v 1.7 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: genget.c,v 1.8 1998/11/06 19:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: genget.c,v 1.7 1998/02/27 10:33:46 christos Exp $");
+__RCSID("$NetBSD: genget.c,v 1.8 1998/11/06 19:20:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: genget.c,v 1.7 1998/02/27 10:33:46 christos Exp $");
 #include <ctype.h>
 #include "misc.h"
 
-#define	LOWER(x) (isupper(x) ? tolower(x) : (x))
+#define	LOWER(x) (isupper((unsigned char)x) ? tolower(x) : (x))
 /*
  * The prefix function returns 0 if *s1 is not a prefix
  * of *s2.  If *s1 exactly matches *s2, the negative of
