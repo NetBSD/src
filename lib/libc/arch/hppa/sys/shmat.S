@@ -1,4 +1,4 @@
-/*	$NetBSD: shmat.S,v 1.1 2002/06/06 20:31:24 fredette Exp $	*/
+/*	$NetBSD: shmat.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,6 @@
 #include "SYS.h"
 
 ENTRY(shmat, 0)
-	bv	r0(rp)
-	copy	arg0, ret0
+	bv	%r0(%rp)
+	copy	%arg0, %ret0
 EXIT(shmat)

@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*	$OpenBSD: Ovfork.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -36,14 +36,14 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.1 2002/06/06 20:31:23 fredette Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.2 2003/10/06 05:30:21 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(vfork,0)
 	SYSCALL(vfork)
-	addi	-1, ret1, ret1
-	bv	r0(rp)
-	and	ret1, ret0, ret0
+	addi	-1, %ret1, %ret1
+	bv	%r0(%rp)
+	and	%ret1, %ret0, %ret0
 EXIT(vfork)
 
 	.end

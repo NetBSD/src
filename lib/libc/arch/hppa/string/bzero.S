@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.1 2002/06/06 20:31:22 fredette Exp $	*/
+/*	$NetBSD: bzero.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*	$OpenBSD: bzero.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -42,17 +42,17 @@
 /*
  * void 
  * bzero(dst, count)
- *	vm_offset_t	dst;
- *	int		count;
+ *	void *dst;
+ *	size_t count;
  */
 LEAF_ENTRY(bzero)
-        comb,>=,n r0,arg1,$bzero_exit
+        comb,>=,n %r0,%arg1,$bzero_exit
 
 	/*
 	 * If we need to clear less than a word do it a byte at a time
 	 */
 
-	comib,>>,n 4,arg1,$bzero_bytes
+	comib,>>,n 4,%arg1,$bzero_bytes
 
 	/*
 	 * Since we are only clearing memory the alignment restrictions 
@@ -60,8 +60,8 @@ LEAF_ENTRY(bzero)
 	 * store with stbys.
 	 */
 
-        extru   arg0,31,2,t2
-        add     arg1,t2,arg1
+        extru   %arg0,31,2,%t1
+        add     %arg1,%t1,%arg1
 
 	/*
 	 * We will zero the destination in blocks of 16 bytes as long as we 
@@ -71,11 +71,11 @@ LEAF_ENTRY(bzero)
 	comib,>>=	15, %arg1, $bzero_word
 	addi		-16, %arg1, %arg1
 
-$bzero_loop_16
-        stbys,b,m r0,4(arg0)
-        stwm    r0,4(arg0)
-        stwm    r0,4(arg0)
-        stwm    r0,4(arg0)
+$bzero_loop_16:
+        stbys,b,m %r0,4(%arg0)
+        stwm    %r0,4(%arg0)
+        stwm    %r0,4(%arg0)
+        stwm    %r0,4(%arg0)
 	comib,<<	15, %arg1, $bzero_loop_16
 	addi		-16, %arg1, %arg1
 
@@ -85,22 +85,22 @@ $bzero_loop_16
 	 * there are any full word moves left to do.
 	 */
 
-$bzero_word
-        addib,<,n 12,arg1,$bzero_cleanup
+$bzero_word:
+        addib,<,n 12,%arg1,$bzero_cleanup
 
-$bzero_loop_4
-        addib,>= -4,arg1,$bzero_loop_4
-        stbys,b,m r0,4(arg0)
+$bzero_loop_4:
+        addib,>= -4,%arg1,$bzero_loop_4
+        stbys,b,m %r0,4(%arg0)
 
 	/*
 	 * zero the last bytes that may be unaligned on a word boundary
 	 */
 
-$bzero_cleanup
-        addib,=,n 4,arg1,$bzero_exit
-        add	arg0,arg1,arg0
+$bzero_cleanup:
+        addib,=,n 4,%arg1,$bzero_exit
+        add	%arg0,%arg1,%arg0
         b       $bzero_exit
-        stbys,e r0,0(arg0)
+        stbys,e %r0,0(%arg0)
 	b,n	$bzero_exit
 
 
@@ -108,11 +108,11 @@ $bzero_cleanup
 	 * zero by bytes
 	 */
 
-$bzero_bytes
-        addib,> -1,arg1,$bzero_bytes
-        stbs,ma r0,1(arg0) 
+$bzero_bytes:
+        addib,> -1,%arg1,$bzero_bytes
+        stbs,ma %r0,1(%arg0) 
 
-$bzero_exit
+$bzero_exit:
 	bv,n	%r0(%rp)
 EXIT(bzero)
 

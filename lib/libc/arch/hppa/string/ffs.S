@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2002/06/06 20:31:22 fredette Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*	$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -39,23 +39,23 @@
  */
 
 LEAF_ENTRY(ffs)
-	comb,=	arg0,r0,ffsdone		; If arg0 is 0
-	or	r0,r0,ret0		;   return 0
-	ldi	32,ret0			; Set return to high bit
-	extru,=	arg0,31,16,r0		; If low 16 bits are non-zero
-	addi,tr	-16,ret0,ret0		;   subtract 16 from bitpos
-	shd	r0,arg0,16,arg0		; else shift right 16 bits
-	extru,=	arg0,31,8,r0		; If low 8 bits are non-zero
-	addi,tr	-8,ret0,ret0		;   subtract 8 from bitpos
-	shd	r0,arg0,8,arg0		; else shift right 8 bits
-	extru,=	arg0,31,4,r0		; If low 4 bits are non-zero
-	addi,tr	-4,ret0,ret0		;   subtract 4 from bitpos
-	shd	r0,arg0,4,arg0		; else shift right 4 bits
-	extru,=	arg0,31,2,r0		; If low 2 bits are non-zero
-	addi,tr	-2,ret0,ret0		;   subtract 2 from bitpos
-	shd	r0,arg0,2,arg0		; else shift right 2 bits
-	extru,=	arg0,31,1,r0		; If low bit is non-zero
-	addi	-1,ret0,ret0		;   subtract 1 from bitpos
+	comb,=	%arg0,%r0,ffsdone	; If arg0 is 0
+	or	%r0,%r0,%ret0		;   return 0
+	ldi	32,%ret0		; Set return to high bit
+	extru,=	%arg0,31,16,%r0		; If low 16 bits are non-zero
+	addi,tr	-16,%ret0,%ret0		;   subtract 16 from bitpos
+	shd	%r0,%arg0,16,%arg0	; else shift right 16 bits
+	extru,=	%arg0,31,8,%r0		; If low 8 bits are non-zero
+	addi,tr	-8,%ret0,%ret0		;   subtract 8 from bitpos
+	shd	%r0,%arg0,8,%arg0	; else shift right 8 bits
+	extru,=	%arg0,31,4,%r0		; If low 4 bits are non-zero
+	addi,tr	-4,%ret0,%ret0		;   subtract 4 from bitpos
+	shd	%r0,%arg0,4,%arg0	; else shift right 4 bits
+	extru,=	%arg0,31,2,%r0		; If low 2 bits are non-zero
+	addi,tr	-2,%ret0,%ret0		;   subtract 2 from bitpos
+	shd	%r0,%arg0,2,%arg0	; else shift right 2 bits
+	extru,=	%arg0,31,1,%r0		; If low bit is non-zero
+	addi	-1,%ret0,%ret0		;   subtract 1 from bitpos
 ffsdone:
 EXIT(ffs)
 

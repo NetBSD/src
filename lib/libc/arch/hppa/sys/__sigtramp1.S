@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:36 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -73,7 +73,7 @@ ENTRY_NOPROFILE(__sigtramp_sigcontext_1,0)
 	depi	0, 31, 2, %arg3			; zero L bit in PLABEL pointer
 	ldw	4(%arg3), %r19			; load shared library linkage
 	ldw	0(%arg3), %arg3			; load real catcher address
-L$sigcode_bounce
+L$sigcode_bounce:
 	/*
 	 * This blr puts the address of the following nop in rp.
 	 * It also schedules the nop for execution, which is why
@@ -81,13 +81,13 @@ L$sigcode_bounce
 	 * instruction only meant to execute once the signal handler 
 	 * returns.
 	 */
-	blr	r0, rp
+	blr	%r0, %rp
 	/*
 	 * This bv schedules the instruction pointed to by arg3
 	 * for execution.  So, arg3 is the address of the signal
 	 * handler.
 	 */
-	bv,n	r0(arg3)
+	bv,n	%r0(%arg3)
 	nop
 	/*
 	 * The signal handler has returned.  Since r3 is on the list
@@ -98,15 +98,15 @@ L$sigcode_bounce
 	 * struct sigcontext *.
 	 */
 	/* Make a SYS___sigreturn14 system call. */
-	copy	r3, arg0
-	ldil	L%SYSCALLGATE, r1
+	copy	%r3, %arg0
+	ldil	L%SYSCALLGATE, %r1
 	.call
-	ble	4(sr7, r1)
-	ldi	SYS___sigreturn14, t1
+	ble	4(%sr7, %r1)
+	ldi	SYS___sigreturn14, %t1
 	/* Make a SYS_exit system call. */
-	copy	ret0, arg0
-	ldil	L%SYSCALLGATE, r1
+	copy	%ret0, %arg0
+	ldil	L%SYSCALLGATE, %r1
 	.call
-	ble	4(sr7, r1)
-	ldi	SYS_exit, t1
+	ble	4(%sr7, %r1)
+	ldi	SYS_exit, %t1
 EXIT(__sigtramp_sigcontext_1)

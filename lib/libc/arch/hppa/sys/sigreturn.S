@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.2 2002/07/01 16:00:53 fredette Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@ ENTRY(sigreturn, 0)
 	 * AFAICT, since the hppa port came after __sigreturn14, 
 	 * we shouldn't have to supply the compatability sigreturn.
 	 */
-	ldi	EINVAL, t1
+	ldi	EINVAL, %t1
 	__SYSCALL_ERRNO
-	bv	r0(rp)
-	ldi	-1, ret0
+	bv	%r0(%rp)
+	ldi	-1, %ret0
 EXIT(sigreturn)

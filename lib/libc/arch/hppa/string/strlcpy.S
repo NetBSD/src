@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.S,v 1.1 2002/06/06 20:31:22 fredette Exp $	*/
+/*	$NetBSD: strlcpy.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
 #include <machine/asm.h>
  
 #if defined(LIBC_SCCS) && !defined(lint) 
-        RCSID("$NetBSD: strlcpy.S,v 1.1 2002/06/06 20:31:22 fredette Exp $")
+        RCSID("$NetBSD: strlcpy.S,v 1.2 2003/10/06 05:30:21 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * size_t strlcpy(char *dst, const char *src, size_t size);
  */
-LEAF_ENTRY(strlcpy)
+LEAF_ENTRY(_strlcpy)
+	.weak strlcpy
+	strlcpy = _strlcpy
 
 	/* Always load the first byte of the source string. */
 	ldbs,ma		1(%arg1), %r1
@@ -70,20 +72,20 @@ LEAF_ENTRY(strlcpy)
 	 * %arg2 is always the number of bytes we can still 
 	 * store, and %r1 holds the next byte to store.
 	 */
-$strlcpy_loop
+$strlcpy_loop:
 	comb,=		%r0, %r1, $strlcpy_exit
 	stbs,ma		%r1, 1(%arg0)
 	addib,<>	-1, %arg2, $strlcpy_loop
 	ldbs,ma		1(%arg1), %r1
 
-$strlcpy_dst_full
+$strlcpy_dst_full:
 	stbs,ma		%r0, 1(%arg0)
 
-$strlcpy_dst_done
-	comb,<>,n	%r0, %r1, $stlcpy_dst_done
+$strlcpy_dst_done:
+	comb,<>,n	%r0, %r1, $strlcpy_dst_done
 	ldbs,ma		1(%arg1), %r1
 	
-$strlcpy_exit
+$strlcpy_exit:
 	bv		%r0(%rp)
 	sub		%arg1, %ret0, %ret0
 EXIT(strlcpy)
