@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.6 2004/05/21 16:03:05 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.7 2004/11/07 02:25:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -74,9 +74,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.3 2004/04/12 06:54:59 marka Exp";
+static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.5 2004/08/10 02:19:56 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.6 2004/05/21 16:03:05 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.7 2004/11/07 02:25:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,7 +188,8 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
 #ifdef HAVE_SIN6_SCOPE_ID
-			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
+			    (srv6->sin6_scope_id == 0 ||
+			     srv6->sin6_scope_id == in6p->sin6_scope_id) &&
 #endif
 			    (IN6_IS_ADDR_UNSPECIFIED(&srv6->sin6_addr) ||
 			     IN6_ARE_ADDR_EQUAL(&srv6->sin6_addr, &in6p->sin6_addr)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.6 2004/05/21 16:03:05 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.7 2004/11/07 02:25:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -99,9 +99,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.4 2004/04/13 06:53:20 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 marka Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.6 2004/05/21 16:03:05 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.7 2004/11/07 02:25:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -569,7 +569,7 @@ p_type(int type) {
 	result = sym_ntos(__p_type_syms, type, &success);
 	if (success)
 		return (result);
-	if (type < 0 || type > 0xfff)
+	if (type < 0 || type > 0xffff)
 		return ("BADTYPE");
 	sprintf(typebuf, "TYPE%d", type);
 	return (typebuf);
@@ -605,7 +605,7 @@ p_class(int class) {
 	result = sym_ntos(__p_class_syms, class, &success);
 	if (success)
 		return (result);
-	if (class < 0 || class > 0xfff)
+	if (class < 0 || class > 0xffff)
 		return ("BADCLASS");
 	sprintf(classbuf, "CLASS%d", class);
 	return (classbuf);
