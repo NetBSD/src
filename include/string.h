@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)string.h	5.10 (Berkeley) 3/9/91
- *	$Id: string.h,v 1.2 1993/08/01 18:45:15 mycroft Exp $
+ *	$Id: string.h,v 1.3 1993/10/11 18:43:45 jtc Exp $
  */
 
 #ifndef _STRING_H_
@@ -74,7 +74,7 @@ char	*strtok __P((char *, const char *));
 size_t	 strxfrm __P((char *, const char *, size_t));
 
 /* Nonstandard routines */
-#ifndef _ANSI_SOURCE
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bcopy __P((const void *, void *, size_t));
 void	 bzero __P((void *, size_t));
