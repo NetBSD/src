@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2004/06/10 07:23:49 mbw Exp $
+.\"	$NetBSD: hardware,v 1.16 2004/06/12 07:00:39 mbw Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -105,20 +105,29 @@ Ethernet devices
 Sbus LANCE ethernet
 .Pq Em le
 .It
-Sbus HME ethernet
-.Pq Em hme
-.It
 Sbus BigMac ethernet
 .Pq Em be
 .It
-PCI HME ethernet
+On-board, PCI, and Sbus HME ethernet
 .Pq Em hme
-.It
-PCI Tulip
-.Pq Em tlp
 .It
 PCI ERI
 .Pq Em gem
+.It
+Many other PCI and PCMCIA Ethernet interfaces, such as
+Tulip-compatible
+.Pq Em tlp ,
+Intel
+.Pq Em fxp ,
+Intel gigabit
+.Pq Em wm ,
+NE2000-compatible
+.Pq Em ne ,
+and Realtek
+.Pq Em rtk .
+.It
+Several USB Ethernet interfaces, such as
+.Pq Em aue , cue , No and Em kue
 .bullet)
 .It
 Video devices
@@ -147,12 +156,41 @@ ISP10x0 based controllers
 .It
 Adaptec AHA-2x4x[U][2][W] cards and onboard PCI designs using the AIC-7770,
 AIC-7850, AIC-7860, AIC-7870, AIC-7880 and AIC-789x chipsets.
+.(Note
+Some Adaptec cards that support booting on
+.Tn MacOS
+may be bootable on \*M systems.
+.Note)
+.It
+Many other PCI SCSI controllers should work, but no one has tried them
+.It
+Most SCSI disk/tape/CD-ROM devices should work
 .bullet)
 .It
 PCI IDE host controllers
 .(bullet -compact
-CMD Tech PCI064[3689] IDE Controllers
+Generic IDE controllers
 .Pq Em pciide
+.It
+Acard ATP-850/860 based IDE controllers
+.Pq Em pciide
+.br
+(including the Acard AEC-6210/6260 and the Sonnet Tempo ATA/66 cards)
+.It
+CMD Tech PCI064[3689] and 0680 IDE Controllers
+.Pq Em cmdide
+.It
+Silicon Image 3112 SATA Controller
+.Pq Em satalink
+.(Note
+Some IDE cards that support booting on
+.Tn MacOS
+may be bootable on \*M systems.
+.Note)
+.It
+Many other PCI IDE controllers should work, but no one has tried them
+.It
+Most IDE and ATAPI disk/tape/CD-ROM devices should work
 .bullet)
 .It
 Serial devices
