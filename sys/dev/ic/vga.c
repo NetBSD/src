@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.43 2001/11/13 13:14:45 lukem Exp $ */
+/* $NetBSD: vga.c,v 1.44 2001/12/02 12:46:32 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.43 2001/11/13 13:14:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.44 2001/12/02 12:46:32 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1089,7 +1089,7 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 
 #define NOTYET 0xffff
 static const u_int16_t pcvt_unichars[0xa0] = {
-/* 0 */	_e006U,
+/* 0 */	_e006U, /* N/L control */
 	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET,
 	0x2409, /* SYMBOL FOR HORIZONTAL TABULATION */
@@ -1133,14 +1133,14 @@ static const u_int16_t pcvt_unichars[0xa0] = {
 	0x222b, /* INTEGRAL */
 	0x2215, /* DIVISION SLASH */
 	0x2216, /* SET MINUS */
-	_e00eU,
-	_e00dU,
-	_e00bU,
-/* 6 */	_e00cU,
-	_e007U,
-	_e008U,
-	_e009U,
-	_e00aU,
+	_e00eU, /* angle? */
+	_e00dU, /* inverted angle? */
+	_e00bU, /* braceleftmid */
+/* 6 */	_e00cU, /* bracerightmid */
+	_e007U, /* bracelefttp */
+	_e008U, /* braceleftbt */
+	_e009U, /* bracerighttp */
+	_e00aU, /* bracerightbt */
 	0x221a, /* SQUARE ROOT */
 	0x03c9, /* GREEK SMALL LETTER OMEGA */
 	0x00a5, /* YEN SIGN */
@@ -1161,11 +1161,11 @@ static const u_int16_t pcvt_unichars[0xa0] = {
 	0x00ac, /* NOT SIGN */
 	0x00a8, /* DIAERESIS */
 	0x2260, /* NOT EQUAL TO */
-	_e005U,
-	_e004U,
-	_e003U,
-	_e002U,
-	_e001U,
+	_e005U, /* scan 9 */
+	_e004U, /* scan 7 */
+	_e003U, /* scan 5 */
+	_e002U, /* scan 3 */
+	_e001U, /* scan 1 */
 	0x03c5, /* GREEK SMALL LETTER UPSILON */
 	0x00f8, /* LATIN SMALL LETTER O WITH STROKE */
 /* 8 */	0x0153, /* LATIN SMALL LIGATURE OE */
@@ -1199,7 +1199,7 @@ static const u_int16_t pcvt_unichars[0xa0] = {
 	0x00a9, /* COPYRIGHT SIGN */
 	0x00a4, /* CURRENCY SIGN */
 	0x03ba, /* GREEK SMALL LETTER KAPPA */
-	_e000U
+	_e000U  /* mirrored question mark? */
 };
 
 static int vga_pcvt_mapchar __P((int, unsigned int *));
