@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2001/07/28 18:12:43 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2001/07/29 12:45:27 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -131,7 +131,8 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
-
+#include <sys/cdefs.h>
+ 
 #include <uvm/uvm.h>
 
 #include <machine/bootconfig.h>
@@ -140,7 +141,9 @@
 #include <machine/pcb.h>
 #include <machine/param.h>
 #include <machine/katelib.h>
-       
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2001/07/29 12:45:27 chris Exp $");        
+
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -737,8 +740,11 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pmap_kernel()->pm_pptpt = kernel_ptpt.pv_pa;
 	pmap_kernel()->pm_vptpt = kernel_ptpt.pv_va;
 	simple_lock_init(&pmap_kernel()->pm_lock);
-	pmap_kernel()->pm_count = 1;
-
+	pmap_kernel()->pm_obj.pgops = NULL;
+	TAILQ_INIT(&(pmap_kernel()->pm_obj.memq));
+	pmap_kernel()->pm_obj.uo_npages = 0;
+	pmap_kernel()->pm_obj.uo_refs = 1;
+	
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
@@ -972,6 +978,14 @@ pmap_create()
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
 
+	simple_lock_init(&pmap->pm_obj.vmobjlock);
+	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
+	TAILQ_INIT(&pmap->pm_obj.memq);
+	pmap->pm_obj.uo_npages = 0;
+	pmap->pm_obj.uo_refs = 1;
+	pmap->pm_stats.wired_count = 0;
+	pmap->pm_stats.resident_count = 1;
+
 	/* Now init the machine part of the pmap */
 	pmap_pinit(pmap);
 	return(pmap);
@@ -1171,9 +1185,6 @@ pmap_allocpagedir(pmap)
 	    (char *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
 
-	pmap->pm_count = 1;
-	simple_lock_init(&pmap->pm_lock);
-
 	return(0);
 }
 
@@ -1261,7 +1272,7 @@ pmap_destroy(pmap)
 
 	PDEBUG(0, printf("pmap_destroy(%p)\n", pmap));
 	simple_lock(&pmap->pm_lock);
-	count = --pmap->pm_count;
+	count = --pmap->pm_obj.uo_refs;
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
@@ -1281,15 +1292,8 @@ pmap_release(pmap)
 	struct pmap *pmap;
 {
 	struct vm_page *page;
-	pt_entry_t *pte;
-	int loop;
 
 	PDEBUG(0, printf("pmap_release(%p)\n", pmap));
-
-#if 0
-	if (pmap->pm_count != 1)		/* XXX: needs sorting */
-		panic("pmap_release count %d", pmap->pm_count);
-#endif
 
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
@@ -1300,18 +1304,23 @@ pmap_release(pmap)
 	 * This is only temporay until pmap_enter can count the number
 	 * of mappings made in a page table. Then pmap_remove() can
 	 * reduce the count and free the pagetable when the count
-	 * reaches zero.
+	 * reaches zero.  Note that entries in this list should match the
+	 * contents of the ptpt, however this is faster than walking a 1024
+	 * entries looking for pt's
+	 * taken from i386 pmap.c
 	 */
-	for (loop = 0; loop < (((PD_SIZE - KERNEL_PD_SIZE) >> 4) - 1); ++loop) {
-		pte = (pt_entry_t *)(pmap->pm_vptpt + loop * 4);
-		if (*pte != 0) {
-			PDEBUG(0, printf("%x: pte=%p:%08x\n", loop, pte, *pte));
-			page = PHYS_TO_VM_PAGE(pmap_pte_pa(pte));
-			if (page == NULL)
-				panic("pmap_release: bad address for phys page");
-			uvm_pagefree(page);
-		}
+	while (pmap->pm_obj.memq.tqh_first != NULL) {
+		page = pmap->pm_obj.memq.tqh_first;
+#ifdef DIAGNOSTIC
+		if (page->flags & PG_BUSY)
+			panic("pmap_release: busy page table page");
+#endif
+		/* pmap_page_protect?  currently no need for it. */
+
+		page->wire_count = 0;
+		uvm_pagefree(page);
 	}
+	
 	/* Free the page dir */
 	pmap_freepagedir(pmap);
 }
@@ -1331,7 +1340,7 @@ pmap_reference(pmap)
 		return;
 
 	simple_lock(&pmap->pm_lock);
-	pmap->pm_count++;
+	pmap->pm_obj.uo_refs++;
 	simple_unlock(&pmap->pm_lock);
 }
 
@@ -2127,7 +2136,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	
 		/* Allocate a page table */
 		for (;;) {
-			m = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+			m = uvm_pagealloc(&(pmap->pm_obj), 0, NULL,
+				UVM_PGA_USERESERVE);
 			if (m != NULL)
 				break;
 			
@@ -2156,7 +2166,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_zero_page(l2pa);
 		pmap_map_in_l1(pmap, va, l2pa);
 		++pmap->pm_stats.resident_count;
-
+		m->flags &= ~PG_BUSY;	/* never busy */
+		m->wire_count = 1;	/* no mappings yet */
+		
 		pte = pmap_pte(pmap, va);
 #ifdef DIAGNOSTIC
 		if (!pte)
@@ -2313,11 +2325,12 @@ pmap_kenter_pa(va, pa, prot)
 		 */
 
 		/* Allocate a page table */
-		pg = uvm_pagealloc(NULL, 0, NULL,
+		pg = uvm_pagealloc(&(pmap_kernel()->pm_obj), 0, NULL,
 		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
 		if (pg == NULL) {
 			panic("pmap_kenter_pa: no free pages");
 		}
+		pg->flags &= ~PG_BUSY;	/* never busy */
 
 		/* Wire this page table into the L1. */
 		pmap_map_in_l1(pmap, va, VM_PAGE_TO_PHYS(pg));

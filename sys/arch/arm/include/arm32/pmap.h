@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2001/07/28 18:12:44 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2001/07/29 12:45:27 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -35,6 +35,7 @@
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
+#include <uvm/uvm_object.h>
 
 /*
  * a pmap describes a processes' 4GB virtual address space.  this
@@ -62,8 +63,6 @@
  * table, IE we use 1 4k page to linearly map all the other page tables used.
  */
 
-
-
 /*
  * Data structures used by pmap
  */
@@ -86,12 +85,12 @@ struct l1pt {
  * The pmap structure itself.
  */
 struct pmap {
+	struct uvm_object	pm_obj;		/* uvm_object */
+#define	pm_lock	pm_obj.vmobjlock	
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	struct l1pt		*pm_l1pt;	/* L1 descriptor */
-	paddr_t			pm_pptpt;	/* PA of pt's page table */
-	vaddr_t			pm_vptpt;	/* VA of pt's page table */
-	short			pm_count;	/* pmap reference count */
-	struct simplelock	pm_lock;	/* lock on pmap */
+	paddr_t                 pm_pptpt;	/* PA of pt's page table */
+	vaddr_t                 pm_vptpt;	/* VA of pt's page table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
