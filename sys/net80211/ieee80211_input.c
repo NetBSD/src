@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.20 2004/02/01 08:25:57 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.20 2004/02/01 08:25:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -732,7 +732,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	if (frm + 1 < efrm) {
 		if (frm[1] + 2 > efrm - frm) {
 			IEEE80211_DPRINTF(("elt %d %d bytes too long\n",
-			    frm[0], (frm[1] + 2) - (efrm - frm)));
+			    frm[0], (frm[1] + 2) - (int)(efrm - frm)));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
