@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2002/01/12 13:22:23 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,8 @@ cdev_decl(scif);
 cdev_decl(com);
 #include "biconsdev.h"
 cdev_decl(biconsdev);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw bdevsw[] =
 {
@@ -182,6 +184,7 @@ struct cdevsw cdevsw[] =
 	cdev_tty_init(NSCI,sci),	/* 32: SH internal serial */
 	cdev_tty_init(NBICONSDEV,
 		      biconsdev),	/* 33: bicons pseudo-dev */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 34: clockctl pseudo device */
 };
 
 static int chrtoblktbl[] =  {
