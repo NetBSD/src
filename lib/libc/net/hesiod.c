@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.15 2000/10/31 12:47:21 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.16 2001/02/13 15:41:18 sommerfeld Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.15 2000/10/31 12:47:21 lukem Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.16 2001/02/13 15:41:18 sommerfeld Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -198,7 +198,10 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(type != NULL);
 
-	strcpy(bindname, name);
+        if (strlcpy(bindname, name, sizeof(bindname)) >= sizeof(bindname)) {
+                errno = EMSGSIZE;
+                return NULL;
+        }
 
 		/*
 		 * Find the right right hand side to use, possibly
