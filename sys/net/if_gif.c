@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.12 2000/07/02 00:21:42 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.13 2000/07/05 16:54:19 thorpej Exp $	*/
 /*	$KAME: if_gif.c,v 1.28 2000/06/20 12:30:03 jinmei Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ gif_clone_create(ifc, unit)
 	    gif_encapcheck, &in_gif_protosw, sc);
 	if (sc->encap_cookie4 == NULL) {
 		printf("%s: unable to attach encap4\n", if_name(&sc->gif_if));
+		free(sc, M_DEVBUF);
 		return (EIO);	/* XXX */
 	}
 #endif
@@ -172,6 +173,7 @@ gif_clone_create(ifc, unit)
 			sc->encap_cookie4 = NULL;
 		}
 		printf("%s: unable to attach encap6\n", if_name(&sc->gif_if));
+		free(sc, M_DEVBUF);
 		return (EIO);	/* XXX */
 	}
 #endif
