@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.714 2005/03/25 23:06:19 cube Exp $
+#	$NetBSD: files,v 1.715 2005/04/03 11:21:44 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -668,6 +668,11 @@ file	dev/ic/smc83c170.c		epic
 #
 define	sgec
 file	dev/ic/sgec.c			sgec
+
+# MB86950 Ethernet Controller
+#
+define	mb86950
+file	dev/ic/mb86950.c		mb86950
 
 # MB8696x Ethernet Controller
 #
