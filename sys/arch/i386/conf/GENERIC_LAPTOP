@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.2 2000/10/09 13:16:24 fvdl Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.3 2000/10/30 22:27:19 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.2 $"
+#ident 		"GENERIC-$Revision: 1.2.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -452,6 +452,7 @@ fd*	at fdc? drive ?			# the drives themselves
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
 
 # PCMCIA network interfaces
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
