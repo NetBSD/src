@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.102 2003/01/01 16:21:50 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.102 2003/01/01 16:21:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	usb_status_t ds;
 	usb_config_descriptor_t cd, *cdp;
 	usbd_status err;
-	int ifcidx, nifc, len, selfpowered, power;
+	int i, ifcidx, nifc, len, selfpowered, power;
 
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
 
@@ -615,10 +615,17 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
-	/* Get the full descriptor. */
-	err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdp);
+
+	/* Get the full descriptor.  Try a few times for slow devices. */
+	for (i = 0; i < 3; i++) {
+		err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdp);
+		if (!err)
+			break;
+		usbd_delay_ms(dev, 200);
+	}
 	if (err)
 		goto bad;
+
 	if (cdp->bDescriptorType != UDESC_CONFIG) {
 		DPRINTFN(-1,("usbd_set_config_index: bad desc %d\n",
 			     cdp->bDescriptorType));
