@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.24 2002/07/03 06:19:41 lukem Exp $
+# $NetBSD: postinstall,v 1.25 2002/07/03 23:28:24 yamt Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -350,13 +350,13 @@ do_rc()
 		ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
 		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
 		mountall mountcritlocal mountcritremote mountd moused \
-		mrouted named ndbootd network newsyslog nfsd \
+		mrouted mixerctl named ndbootd network newsyslog nfsd \
 		nfslocking ntpd ntpdate poffd postfix ppp pwcheck \
 		quota racoon rpcbind raidframe rarpd rbootd root \
 		route6d routed rtadvd rtsold rwho savecore \
 		screenblank sendmail securelevel sshd swap1 swap2 \
-		sysdb sysctl syslogd timed ttys virecover wscons xdm \
-		xfs ypbind yppasswdd ypserv
+		sysdb sysctl syslogd timed ttys virecover wscons wsmoused \
+		xdm xfs ypbind yppasswdd ypserv
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
