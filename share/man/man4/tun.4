@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.11 2001/10/31 20:08:18 atatat Exp $
+.\" $NetBSD: tun.4,v 1.12 2001/11/01 01:15:42 wiz Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -42,7 +42,8 @@ To use a
 device, the administrator must first create the interface.  This can
 be done by using the
 .Xr ifconfig 8
-`create' command, or via the 
+.Sq create
+command, or via the
 .Dv SIOCIFCREATE
 ioctl.  Note that an
 .Fn open
