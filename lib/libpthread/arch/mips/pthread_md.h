@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.1 2001/11/28 10:43:56 wdk Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/29 10:56:23 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,6 @@ pthread__sp(void)
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_EPC])
 
-#define STACKSPACE 32			/*8 integer values */
+#define STACKSPACE 16			/* 4 integer values */
 
 #endif /* !_LIB_PTHREAD_MIPS_MD_H */
