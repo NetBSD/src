@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 1998/11/25 13:09:14 mycroft Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 2001/01/18 21:48:27 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,9 +46,9 @@
 #ifndef _ARM32_FRAME_H_
 #define _ARM32_FRAME_H_
 
-#ifndef _LOCORE
+#include <arm/frame.h>		/* Common ARM stack frames */
 
-#include <sys/signal.h>
+#ifndef _LOCORE
 
 /*
  * System stack frames.
@@ -99,18 +99,6 @@ typedef struct trapframe {
 	unsigned int tf_svc_lr;
 	unsigned int tf_pc;
 } trapframe_t;
-
-/*
- * Signal frame
- */
-
-struct sigframe {
-	int		sf_signum;
-	int		sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	struct	sigcontext sf_sc;
-};
 
 /*
  * Switch frame
