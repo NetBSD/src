@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.2 1995/09/11 07:45:50 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.3 1995/09/11 21:37:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,7 @@
 
 #include <machine/autoconf.h>
 #include <pmax/tc/tc.h>
+#include <pmax/dev/lk201.h>
 
 
 #include <pm.h>
@@ -105,7 +106,6 @@ static int romgetc __P ((dev_t));
 static void romputc __P ((dev_t, int));
 static void rompollc __P((dev_t, int));
 
-extern int LKgetc __P((dev_t dev)); /* should be in header file, but which one? */
 
 int	pmax_boardtype;		/* Mother board type */
 
@@ -145,7 +145,7 @@ struct consdev cd = {
 
 
 int consprobetc __P((int prom_slot));
-int consprobeslot __P((caddr_t name, void *addr));
+int consprobeslot __P((int slot));
 void consinit __P((void));
 void xconsinit __P((void));
 
@@ -220,10 +220,10 @@ consinit()
 	    switch (pmax_boardtype) {
 	    case DS_PMAX:
 #if NDC > 0 && NPM > 0
-		if (pminit()) {
+		if (pminit(0, 0, 1)) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
-			lk_divert(dcGetc);
+			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 			cd.cn_pri = CN_INTERNAL;
 			return;
 		}
@@ -239,7 +239,7 @@ consinit()
 #endif /* NDTOP */
 			goto remcons;
 #if NXCFB > 0
-		if (crt == 3 && xcfbinit()) {
+		if (crt == 3 && xcfbinit(NULL, 0, 0)) {
 			cd.cn_pri = CN_INTERNAL;
 			return;
 		}
@@ -251,7 +251,7 @@ consinit()
 		if (kbd == 7) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
-			lk_divert(dcGetc);
+			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		} else
 #endif /* NDC */
 			goto remcons;
@@ -261,8 +261,9 @@ consinit()
 	    case DS_3MAXPLUS:
 #if NSCC > 0
 		if (kbd == 3) {
-			cd.cn_dev = makedev(SCCDEV, SCCKBD_PORT);
-			lk_divert(sccGetc);
+			/*cd.cn_dev = makedev (RCONSDEV, 0);*/
+			cd.cn_dev =  makedev(SCCDEV, SCCKBD_PORT);
+			lk_divert(sccGetc, makedev(SCCDEV, SCCKBD_PORT));
 			cd.cn_getc = LKgetc;
 		} else
 #endif /* NSCC */
@@ -281,7 +282,7 @@ consinit()
 			cd.cn_pri = CN_NORMAL;
 #ifdef RCONS_HACK
 /* FIXME */		cd.cn_putc = v_putc;
-/* FIXME */		cd.cn_dev = makedev (RCONSDEV, 0);
+			cd.cn_dev = makedev (RCONSDEV, 0);
 #endif /* RCONS_HACK */
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
@@ -371,34 +372,28 @@ xconsinit()
  * found as a console.
  */
 int
-consprobetc(prom_slot)
-	int prom_slot;
+consprobetc(preferred_slot)
+	int preferred_slot;
 {
-	void *slotaddr;
 	int slot;
-	struct tc_cpu_desc * sc_desc = cpu_tcdesc(pmax_boardtype);
-	char namebuf[20];
 
-	if (sc_desc == NULL)
-		return;
+	struct tc_cpu_desc * sc_desc;
 
 	/*printf("Looking for fb console in slot %d", slot);*/
+
+	/* First, try the slot configured as console in NVRAM. */
+	 /* if (consprobeslot(preferred_slot)) return (1); */
 
 	/*
 	 * Try to configure each turbochannel (or CPU-internal) device.
 	 * Knows about gross internals of TurboChannel bus autoconfig
 	 * descriptor, which needs to be fixed badly.
 	 */
+	if ((sc_desc = cpu_tcdesc(pmax_boardtype)) == NULL)
+		return 0;
 	for (slot = 0; slot < sc_desc->tcd_ndevs; slot++) {
-		slotaddr = (void *)sc_desc->tcd_slots[slot].tsd_dense;
-		/*printf("probing slot %d at 0x%x\n", slot, slotaddr);*/
 
-		if (tc_checkdevmem(slotaddr) == 0)
-			continue;
-		if (tc_checkslot(slotaddr, namebuf) == 0)
-			continue;
-
-		if (consprobeslot(namebuf, slotaddr))
+		if (consprobeslot(slot))
 			return (1);
 	}
 	return (0);
@@ -407,13 +402,32 @@ consprobetc(prom_slot)
 /*
  * Try and configure one slot as framebuffer console.
  * Accept only the framebuffers configured in.
+ * Attach the framebuffer if found.
  */
 int
-consprobeslot(name, addr)
-    char *name;
-    void * addr;
-    
+consprobeslot(slot)
+	int slot;
 {
+	void *slotaddr;
+	char name[20];
+	struct tc_cpu_desc * sc_desc;
+
+	if (slot < 0 || ((sc_desc = cpu_tcdesc(pmax_boardtype)) == NULL))
+		return 0;
+	slotaddr = (void *)sc_desc->tcd_slots[slot].tsd_dense;
+
+	/*printf("probing slot %d at 0x%x\n", slot, slotaddr);*/
+
+	if (tc_checkdevmem(slotaddr) == 0)
+		return (0);
+
+	if (tc_checkslot(slotaddr, name) == 0)
+		return (0);
+
+	/*
+	 * We found an device in the given slot. Now see if it's a
+	 * framebuffer for which we have a driver. 
+	 */
 
 	/*printf(", trying to init a \"%s\"", name);*/
 
@@ -422,15 +436,15 @@ consprobeslot(name, addr)
 
 #if NMFB > 0
 	if (DRIVER_FOR_SLOT(name, "PMAG-AA ") &&
-	    mfbinit(addr, 0, 1)) {
+	    mfbinit(slotaddr, 0, 1)) {
 		cd.cn_pri = CN_NORMAL;
 		return (1);
-		}
+	}
 #endif /* NMFB */
 
 #if NSFB > 0
 	if (DRIVER_FOR_SLOT(name, "PMAGB-BA") &&
-	    sfbinit(addr, 0, 1)) {
+	    sfbinit(slotaddr, 0, 1)) {
 		cd.cn_pri = CN_NORMAL;
 		return (1);
 	}
@@ -439,7 +453,7 @@ consprobeslot(name, addr)
 #if NCFB > 0
 	/*"cfb"*/
 	if (DRIVER_FOR_SLOT(name, "PMAG-BA ") &&
-	    cfbinit(NULL, addr, 0, 1)) {
+	    cfbinit(NULL, slotaddr, 0, 1)) {
 		cd.cn_pri = CN_NORMAL;
 		return (1);
 	}
