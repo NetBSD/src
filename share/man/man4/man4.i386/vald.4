@@ -1,4 +1,4 @@
-.\" $NetBSD: vald.4,v 1.1 2004/05/03 12:56:03 kanaoka Exp $
+.\" $NetBSD: vald.4,v 1.2 2004/05/03 13:03:24 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,25 +40,32 @@
 .Sh SYNOPSIS
 .Cd "vald* at acpi?"
 .Sh DESCRIPTION
-Some Toshiba computers have a special I/O controller that handles various interface devices.  This special I/O controller is accessed by "GHCI" acpi method.The
+Some Toshiba computers have a special I/O controller that handles various interface devices.
+This special I/O controller is accessed by the "GHCI" ACPI method.
+The
 .Nm
 driver provides some support for it.
 .Pp
 The
 .Nm
-driver handles following hot-keys:
+driver handles the following hot-keys:
 .Pp
-        Fn+F5:   Switch LCD/External Video.
-        Fn+F6:   Down LCD brightness.
-        Fn+F7:   Up LCD Brightness.
-        Fn+F8:   Switch fan (ON/OFF).
+.Bl -tag -compact -offset indent
+.It Fn+F5
+Switch between LCD and External Video output.
+.It Fn+F6
+Decrease LCD brightness.
+.It Fn+F7
+Increase LCD Brightness.
+.It Fn+F8
+Switch fan (ON/OFF).
+.El
 .Pp
-This 
+The
 .Nm
 driver has only been tested on the Libretto L3.
-.Pp
 .Sh SEE ALSO
-.Xr acpi 4 
+.Xr acpi 4
 .Sh HISTORY
 The
 .Nm
@@ -66,5 +73,6 @@ driver
 appeared in
 .Nx 1.6 .
 .Sh BUGS
-It has some problem with X11, when switch LCD/External Video.
-.Pp
+.Nm
+has some problem with X11 when switching between LCD
+and External Video output.
