@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.7.2.2 1997/11/17 16:27:04 mrg Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.7.2.3 1998/07/23 00:49:14 mellon Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.3 1997/11/12 10:57:25 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.9 1998/05/23 14:29:45 darrenr Exp ";
 #endif
 
 #include <stdio.h>
@@ -20,6 +20,7 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.3 1997/11/12 10:57:25 
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
+#include <signal.h>
 #include <sys/dir.h>
 #else
 #include <sys/filio.h>
@@ -89,7 +90,11 @@ struct	flags	tcpfl[] = {
 
 static	char	line[2048];
 static	int	opts = 0;
+static	FILE	*newlog = NULL;
+static	char	*logfile = NULL;
+static	int	donehup = 0;
 static	void	usage __P((char *));
+static	void	handlehup __P((int));
 static	void	flushlogs __P((char *, FILE *));
 static	void	print_log __P((int, FILE *, char *, int));
 static	void	print_ipflog __P((FILE *, char *, int));
@@ -101,6 +106,8 @@ char	*hostname __P((int, struct in_addr));
 char	*portname __P((int, char *, u_short));
 int	main __P((int, char *[]));
 
+static	void	logopts __P((int, char *));
+
 
 #define	OPT_SYSLOG	0x001
 #define	OPT_RESOLVE	0x002
@@ -108,13 +115,27 @@ int	main __P((int, char *[]));
 #define	OPT_VERBOSE	0x008
 #define	OPT_HEXHDR	0x010
 #define	OPT_TAIL	0x020
-#define	OPT_ALL		0x040
 #define	OPT_NAT		0x080
 #define	OPT_STATE	0x100
+#define	OPT_FILTER	0x200
+#define	OPT_PORTNUM	0x400
+#define	OPT_ALL		(OPT_NAT|OPT_STATE|OPT_FILTER)
 
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
 #endif
+
+
+static void handlehup(unused)
+	int unused;
+{
+	FILE	*fp;
+
+	signal(SIGHUP, handlehup);
+	if (logfile && (fp = fopen(logfile, "a")))
+		newlog = fp;
+	donehup = 1;
+}
 
 
 static int read_log(fd, lenp, buf, bufsize, log)
@@ -158,7 +179,7 @@ u_short	port;
 	struct	servent	*serv;
 
 	(void) sprintf(pname, "%hu", htons(port));
-	if (!res)
+	if (!res || (opts & OPT_PORTNUM))
 		return pname;
 	serv = getservbyport((int)port, proto);
 	if (!serv)
@@ -181,7 +202,7 @@ int	len;
 			*t++ = '\n';
 			*t = '\0';
 			if (!(opts & OPT_SYSLOG))
-				fputs(line, stdout);
+				fputs(line, log);
 			else
 				syslog(LOG_INFO, "%s", line);
 			t = (u_char *)line;
@@ -217,8 +238,8 @@ int	len;
 		*t = '\0';
 	}
 	if (!(opts & OPT_SYSLOG)) {
-		fputs(line, stdout);
-		fflush(stdout);
+		fputs(line, log);
+		fflush(log);
 	} else
 		syslog(LOG_INFO, "%s", line);
 }
@@ -232,19 +253,21 @@ int	blen;
 	iplog_t	*ipl = (iplog_t *)buf;
 	char	*t = line;
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec,
-		nl->nl_rule+1);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -269,10 +292,12 @@ int	blen;
 	if (nl->nl_type == NL_EXPIRE) {
 #ifdef	USE_QUAD_T
 		(void) sprintf(t, " Pkts %qd Bytes %qd",
+				(long long)nl->nl_pkts,
+				(long long)nl->nl_bytes);
 #else
 		(void) sprintf(t, " Pkts %ld Bytes %ld",
-#endif
 				nl->nl_pkts, nl->nl_bytes);
+#endif
 		t += strlen(t);
 	}
 
@@ -295,18 +320,21 @@ int	blen;
 	struct	protoent *pr;
 	char	*t = line, *proto, pname[6];
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -342,10 +370,12 @@ int	blen;
 	if (sl->isl_type != ISL_NEW) {
 #ifdef	USE_QUAD_T
 		(void) sprintf(t, " Pkts %qd Bytes %qd",
+				(long long)sl->isl_pkts,
+				(long long)sl->isl_bytes);
 #else
 		(void) sprintf(t, " Pkts %ld Bytes %ld",
-#endif
 				sl->isl_pkts, sl->isl_bytes);
+#endif
 		t += strlen(t);
 	}
 
@@ -364,13 +394,26 @@ char	*buf;
 int	logtype, blen;
 {
 	iplog_t	*ipl;
+	char *bp = NULL, *bpo = NULL;
 	int psize;
 
 	while (blen > 0) {
 		ipl = (iplog_t *)buf;
+		if ((u_long)ipl & (sizeof(long)-1)) {
+			if (bp)
+				bpo = bp;
+			bp = (char *)malloc(blen);
+			bcopy((char *)ipl, bp, blen);
+			if (bpo) {
+				free(bpo);
+				bpo = NULL;
+			}
+			buf = bp;
+			continue;
+		}
 		if (ipl->ipl_magic != IPL_MAGIC) {
 			/* invalid data or out of sync */
-			return;
+			break;
 		}
 		psize = ipl->ipl_dsize;
 		switch (logtype)
@@ -389,6 +432,9 @@ int	logtype, blen;
 		blen -= psize;
 		buf += psize;
 	}
+	if (bp)
+		free(bp);
+	return;
 }
 
 
@@ -421,13 +467,16 @@ int	blen;
 	ip->ip_len = ntohs(ip->ip_len);
 #endif
 
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ", tm->tm_hour, tm->tm_min,
-		tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
@@ -519,9 +568,9 @@ int	blen;
 		ic = (struct icmp *)((char *)ip + hl);
 		(void) sprintf(t, "%s -> ", hostname(res, ip->ip_src));
 		t += strlen(t);
-		(void) sprintf(t, "%s PR icmp len %hu (%hu) icmp %d/%d",
-			hostname(res, ip->ip_dst), hl,
-			ntohs(ip->ip_len), ic->icmp_type, ic->icmp_code);
+		(void) sprintf(t, "%s PR icmp len %hu %hu icmp %d/%d",
+			hostname(res, ip->ip_dst), hl, ip->ip_len,
+			ic->icmp_type, ic->icmp_code);
 		if (ic->icmp_type == ICMP_UNREACH ||
 		    ic->icmp_type == ICMP_SOURCEQUENCH ||
 		    ic->icmp_type == ICMP_PARAMPROB ||
@@ -600,7 +649,7 @@ FILE *log;
 	int	fd, flushed = 0;
 
 	if ((fd = open(file, O_RDWR)) == -1) {
-		(void) fprintf(stderr, "%s: open: %s", file, STRERROR(errno));
+		(void) fprintf(stderr, "%s: open: %s\n", file,STRERROR(errno));
 		exit(-1);
 	}
 
@@ -622,50 +671,97 @@ FILE *log;
 }
 
 
+static void logopts(turnon, options)
+int turnon;
+char *options;
+{
+	int flags = 0;
+	char *s;
+
+	for (s = options; *s; s++)
+	{
+		switch (*s)
+		{
+		case 'N' :
+			flags |= OPT_NAT;
+			break;
+		case 'S' :
+			flags |= OPT_STATE;
+			break;
+		case 'I' :
+			flags |= OPT_FILTER;
+			break;
+		default :
+			fprintf(stderr, "Unknown log option %c\n", *s);
+			exit(1);
+		}
+	}
+
+	if (turnon)
+		opts |= flags;
+	else
+		opts &= ~(flags);
+}
+
+
 int main(argc, argv)
 int argc;
 char *argv[];
 {
 	struct	stat	sb;
 	FILE	*log = stdout;
-	int	fd[3], doread, n, i, nfd = 1;
-	int	tr, nr, regular, c;
-	int	fdt[3];
-	char	buf[512], *iplfile = IPL_NAME;
+	int	fd[3], doread, n, i;
+	int	tr, nr, regular[3], c;
+	int	fdt[3], devices = 0, make_daemon = 0;
+	char	buf[512], *iplfile[3];
 	extern	int	optind;
 	extern	char	*optarg;
 
 	fd[0] = fd[1] = fd[2] = -1;
- 	fdt[0] = IPL_LOGIPF;
-	fdt[1] = IPL_LOGNAT;
-	fdt[2] = IPL_LOGSTATE;
+	fdt[0] = fdt[1] = fdt[2] = -1;
+	iplfile[0] = IPL_NAME;
+	iplfile[1] = IPNAT_NAME;
+	iplfile[2] = IPSTATE_NAME;
 
-	while ((c = getopt(argc, argv, "?af:FhnNsStvxX")) != -1)
+	while ((c = getopt(argc, argv, "?aDf:FhI:nN:o:O:sS:tvxX")) != -1)
 		switch (c)
 		{
 		case 'a' :
 			opts |= OPT_ALL;
-			nfd = 3;
 			break;
-		case 'f' :
-			iplfile = optarg;
+		case 'D' :
+			make_daemon = 1;
+			break;
+		case 'f' : case 'I' :
+			opts |= OPT_FILTER;
+			fdt[0] = IPL_LOGIPF;
+			iplfile[0] = optarg;
 			break;
 		case 'F' :
-			if (!(opts & OPT_ALL))
-				flushlogs(iplfile, log);
-			else {
-				flushlogs(IPL_NAME, log);
-				flushlogs(IPL_NAT, log);
-				flushlogs(IPL_STATE, log);
-			}
+			flushlogs(iplfile[0], log);
+			flushlogs(iplfile[1], log);
+			flushlogs(iplfile[2], log);
 			break;
 		case 'n' :
 			opts |= OPT_RESOLVE;
 			break;
 		case 'N' :
 			opts |= OPT_NAT;
-			fdt[0] = IPL_LOGNAT;
-			iplfile = IPL_NAT;
+			fdt[1] = IPL_LOGNAT;
+			iplfile[1] = optarg;
+			break;
+		case 'o' : case 'O' :
+			logopts(c == 'o', optarg);
+			fdt[0] = fdt[1] = fdt[2] = -1;
+			if (opts & OPT_FILTER)
+				fdt[0] = IPL_LOGIPF;
+			if (opts & OPT_NAT)
+				fdt[1] = IPL_LOGNAT;
+			if (opts & OPT_STATE)
+				fdt[2] = IPL_LOGSTATE;
+			break;
+		case 'p' :
+			opts |= OPT_PORTNUM;
 			break;
 		case 's' :
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
@@ -673,8 +769,8 @@ char *argv[];
 			break;
 		case 'S' :
 			opts |= OPT_STATE;
-			fdt[0] = IPL_LOGSTATE;
-			iplfile = IPL_STATE;
+			fdt[2] = IPL_LOGSTATE;
+			iplfile[2] = optarg;
 			break;
 		case 't' :
 			opts |= OPT_TAIL;
@@ -694,50 +790,66 @@ char *argv[];
 			usage(argv[0]);
 		}
 
-	if ((fd[0] == -1) && (fd[0] = open(iplfile, O_RDONLY)) == -1) {
-		(void) fprintf(stderr, "%s: open: %s", iplfile,
-			STRERROR(errno));
-		exit(-1);
-	}
+	/*
+	 * Default action is to only open the filter log file.
+	 */
+	if ((fdt[0] == -1) && (fdt[1] == -1) && (fdt[2] == -1))
+		fdt[0] = IPL_LOGIPF;
 
-	if ((opts & OPT_ALL)) {
-		if ((fd[1] = open(IPL_NAT, O_RDONLY)) == -1) {
-			(void) fprintf(stderr, "%s: open: %s", IPL_NAT,
-				STRERROR(errno));
-			exit(-1);
-		}
-		if ((fd[2] = open(IPL_STATE, O_RDONLY)) == -1) {
-			(void) fprintf(stderr, "%s: open: %s", IPL_STATE,
-				STRERROR(errno));
-			exit(-1);
+	for (i = 0; i < 3; i++) {
+		if (fdt[i] == -1)
+			continue;
+		if (!strcmp(iplfile[i], "-"))
+			fd[i] = 0;
+		else {
+			if ((fd[i] = open(iplfile[i], O_RDONLY)) == -1) {
+				(void) fprintf(stderr,
+					       "%s: open: %s\n", iplfile[i],
+					       STRERROR(errno));
+				exit(-1);
+			}
+
+			if (fstat(fd[i], &sb) == -1) {
+				(void) fprintf(stderr, "%d: fstat: %s\n",fd[i],
+					       STRERROR(errno));
+				exit(-1);
+			}
+			if (!(regular[i] = !S_ISCHR(sb.st_mode)))
+				devices++;
 		}
 	}
 
 	if (!(opts & OPT_SYSLOG)) {
-		log = argv[optind] ? fopen(argv[optind], "a") : stdout;
+		logfile = argv[optind];
+		log = logfile ? fopen(logfile, "a") : stdout;
 		if (log == NULL) {
 			
-			(void) fprintf(stderr, "%s: fopen: %s", argv[optind],
+			(void) fprintf(stderr, "%s: fopen: %s\n", argv[optind],
 				STRERROR(errno));
 			exit(-1);
 		}
 		setvbuf(log, NULL, _IONBF, 0);
 	}
 
-	if (stat(iplfile, &sb) == -1) {
-		(void) fprintf(stderr, "%s: stat: %s", iplfile,
-			STRERROR(errno));
-		exit(-1);
+	if (make_daemon && (log != stdout)) {
+		if (fork() > 0)
+			exit(0);
+		close(0);
+		close(1);
+		close(2);
+		setsid();
 	}
 
-	regular = !S_ISCHR(sb.st_mode);
+	signal(SIGHUP, handlehup);
 
 	for (doread = 1; doread; ) {
 		nr = 0;
 
-		for (i = 0; i < nfd; i++) {
+		for (i = 0; i < 3; i++) {
 			tr = 0;
-			if (!regular) {
+			if (fdt[i] == -1)
+				continue;
+			if (!regular[i]) {
 				if (ioctl(fd[i], FIONREAD, &tr) == -1) {
 					perror("ioctl(FIONREAD)");
 					exit(-1);
@@ -747,11 +859,20 @@ char *argv[];
 				if (!tr && !(opts & OPT_TAIL))
 					doread = 0;
 			}
-			if (!tr && nfd != 1)
+			if (!tr)
 				continue;
 			nr += tr;
 
 			tr = read_log(fd[i], &n, buf, sizeof(buf), log);
+			if (donehup) {
+				donehup = 0;
+				if (newlog) {
+					fclose(log);
+					log = newlog;
+					newlog = NULL;
+				}
+			}
+
 			switch (tr)
 			{
 			case -1 :
@@ -779,7 +900,7 @@ char *argv[];
 				break;
 			}
 		}
-		if (!nr && ((opts & OPT_TAIL) || !regular))
+		if (!nr && ((opts & OPT_TAIL) || devices))
 			sleep(1);
 	}
 	exit(0);
