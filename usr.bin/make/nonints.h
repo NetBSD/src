@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.30 2004/03/06 03:57:07 enami Exp $	*/
+/*	$NetBSD: nonints.h,v 1.31 2004/05/07 00:04:40 ross Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -72,7 +72,7 @@
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
 
-#ifdef MAKE_BOOTSTRAP
+#ifndef MAKE_NATIVE
 #undef __attribute__
 #define __attribute__(x)
 #endif

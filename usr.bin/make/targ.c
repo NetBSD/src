@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.30 2003/08/07 11:14:58 agc Exp $	*/
+/*	$NetBSD: targ.c,v 1.31 2004/05/07 00:04:40 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,15 +68,15 @@
  * SUCH DAMAGE.
  */
 
-#ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.30 2003/08/07 11:14:58 agc Exp $";
+#ifndef MAKE_NATIVE
+static char rcsid[] = "$NetBSD: targ.c,v 1.31 2004/05/07 00:04:40 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.30 2003/08/07 11:14:58 agc Exp $");
+__RCSID("$NetBSD: targ.c,v 1.31 2004/05/07 00:04:40 ross Exp $");
 #endif
 #endif /* not lint */
 #endif

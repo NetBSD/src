@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.35 2004/05/07 00:04:40 ross Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
-#ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $";
+#ifndef MAKE_NATIVE
+static char rcsid[] = "$NetBSD: util.c,v 1.35 2004/05/07 00:04:40 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.35 2004/05/07 00:04:40 ross Exp $");
 #endif
 #endif
 
@@ -21,7 +21,7 @@ __RCSID("$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $");
 
 #include "make.h"
 
-#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRERROR)
+#if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
 
@@ -38,7 +38,7 @@ strerror(int e)
 }
 #endif
 
-#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRDUP)
+#if !defined(MAKE_NATIVE) && !defined(HAVE_STRDUP)
 #include <string.h>
 
 /* strdup
@@ -61,7 +61,7 @@ strdup(const char *str)
 }
 #endif
 
-#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_SETENV)
+#if !defined(MAKE_NATIVE) && !defined(HAVE_SETENV)
 int
 setenv(const char *name, const char *value, int dum)
 {
@@ -335,7 +335,7 @@ signal(int s, void (*a)(int)))(int)
 }
 #endif
 
-#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_VSNPRINTF)
+#if !defined(MAKE_NATIVE) && !defined(HAVE_VSNPRINTF)
 #include <stdarg.h>
 
 #if !defined(__osf__)
@@ -386,7 +386,7 @@ snprintf(char *s, size_t n, const char *fmt, ...)
 	return rv;
 }
 
-#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRFTIME)
+#if !defined(MAKE_NATIVE) && !defined(HAVE_STRFTIME)
 size_t
 strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 {
