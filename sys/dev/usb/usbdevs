@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.82 2000/02/29 19:06:40 hubertf Exp $
+$NetBSD: usbdevs,v 1.83 2000/03/13 17:14:27 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ vendor COREGA		0x07aa	Corega
 vendor SIIG		0x07cc	SIIG
 vendor ZOOM		0x0803	Zoom Telephonics Inc.
 vendor HANDSPRING	0x082d	Handspring Inc.
+vendor PALM		0x0830	Palm Computing, Inc.
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
@@ -386,6 +387,9 @@ product NETGEAR EA101		0x1001	Ethernet adapter
 /* OmniVision Technologies Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 
+/* Palm Computing, Inc. */
+product PALM SERIAL		0x0080	USB Serial Adaptor
+
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
 product PERACOM ENET		0x0002	Ethernet adapter
@@ -395,7 +399,7 @@ product PERACOM ENET2		0x0005	Ethernet adapter
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
-product PHILIPS DSS150		0x0471	DSS XXX Digital Speaker System
+product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
