@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2001/06/10 10:50:20 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 2001/06/12 21:01:26 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3468,13 +3468,20 @@ dostart:
 	 nop
 
 #if defined(SUN4C) || defined(SUN4M)
-	mov	%o0, %g7		! save prom vector pointer
+	/*
+	 * Be prepared to get OF client entry in either %o0 or %o3.
+	 */
+	cmp	%o0, 0
+	be	is_openfirm
+	 nop
+
+	mov	%o0, %g7		! save romp passed by boot code
 
 	/* First, check `romp->pv_magic' */
 	ld	[%g7 + PV_MAGIC], %o0	! v = pv->pv_magic
 	set	OBP_MAGIC, %o1
 	cmp	%o0, %o1		! if ( v != OBP_MAGIC) {
-	bne	is_openfirm		!    assume this is an OPENFIRM machine
+	bne	is_sun4m		!    assume this is an OPENFIRM machine
 	 nop				! }
 
 	/*
@@ -3508,7 +3515,8 @@ dostart:
 	 nop
 
 is_openfirm:
-	mov	%o3, %g7		! OPENFIRMWARE entry point is in %o3
+	! OF client entry in %o3 (kernel booted directly by PROM?)
+	mov	%o3, %g7
 	/* FALLTHROUGH to sun4m case */
 
 is_sun4m:
