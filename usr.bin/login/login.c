@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.49 2000/01/13 06:30:31 mjl Exp $       */
+/*     $NetBSD: login.c,v 1.50 2000/01/13 06:52:47 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.49 2000/01/13 06:30:31 mjl Exp $");
+__RCSID("$NetBSD: login.c,v 1.50 2000/01/13 06:52:47 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -112,8 +112,8 @@ int	k5_write_creds __P((void));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
-#define DEFAULT_BACKOFF 10
-#define DEFAULT_RETRIES 3
+#define DEFAULT_BACKOFF 3
+#define DEFAULT_RETRIES 10
 
 /*
  * This bounds the time given to login.  Not a define so it can
@@ -436,7 +436,7 @@ main(argc, argv)
 		failures++;
 		cnt++;
 		/* we allow 10 tries, but after 3 we start backing off */
-		if (cnt > login_backoff || cnt >= login_retries) {
+		if (cnt > login_backoff) {
 			if (cnt >= login_retries) {
 				badlogin(username);
 				sleepexit(1);
@@ -553,12 +553,16 @@ main(argc, argv)
 		dofork();
 #endif
 #ifdef LOGIN_CAP
-	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL & ~LOGIN_SETPATH)
-	    != 0) {
-		syslog(LOG_ERR, "setusercontext failed");
-		exit(1);
+	if(lc) {
+		if (setusercontext(lc, pwd, pwd->pw_uid, 
+		    LOGIN_SETALL & ~LOGIN_SETPATH) != 0) {
+			syslog(LOG_ERR, "setusercontext failed");
+			exit(1);
+		}
 	}
-#else
+	else
+#endif
+	{
 	(void)setgid(pwd->pw_gid);
 
 	initgroups(username, pwd->pw_gid);
@@ -571,8 +575,8 @@ main(argc, argv)
 		(void)setuid(0);
 	else
 		(void)setuid(pwd->pw_uid);
+	}
 
-#endif
 
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
