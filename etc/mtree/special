@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.30.4.4 2001/05/28 18:41:26 he Exp $
+#	$NetBSD: special,v 1.30.4.5 2001/06/25 19:59:47 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -57,7 +57,6 @@ aliases		type=file mode=0644 uname=root gname=wheel
 aliases.db	type=file mode=0644 uname=root gname=wheel
 helpfile	type=file mode=0444 uname=root gname=wheel
 sendmail.cf	type=file mode=0444 uname=root gname=wheel
-sendmail-IPv4only.cf	type=file mode=0444 uname=root gname=wheel
 ..	#etc/mail
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0444 uname=root gname=wheel
