@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.15 2003/10/21 02:31:08 fvdl Exp $	*/
+/*	$NetBSD: elf.c,v 1.16 2004/02/11 18:42:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.15 2003/10/21 02:31:08 fvdl Exp $");
+__RCSID("$NetBSD: elf.c,v 1.16 2004/02/11 18:42:37 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -332,8 +332,7 @@ elf_mod_sizes(int fd,
 /* make a link command; XXX if data_offset above is non-zero, force
    data address to be at start of text + offset */
 void
-elf_linkcmd(char *buf,
-	    size_t len,
+elf_linkcmd(char **cmdp,
 	    const char *kernel,
 	    const char *entry,
 	    const char *outfile,
@@ -341,30 +340,25 @@ elf_linkcmd(char *buf,
 	    const char *object,
 	    const char *ldscript)
 {
-	ssize_t n;
-
 	if (ldscript == NULL) {
 		if (data_offset == 0)
-			n = snprintf(buf, len, LINKCMD, kernel, entry, 
+			asprintf(cmdp, LINKCMD, kernel, entry, 
 				     outfile, address, object);
 		else
-			n = snprintf(buf, len, LINKCMD2, kernel, entry, 
+			asprintf(cmdp, LINKCMD2, kernel, entry, 
 				     outfile, address, 
 				     (const char *)address + data_offset,
 				     object);
 	} else {
 		if (data_offset == 0)
-			n = snprintf(buf, len, LINKSCRIPTCMD, ldscript, kernel,
+			asprintf(cmdp, LINKSCRIPTCMD, ldscript, kernel,
 				     entry, outfile, address, object);
 		else
-			n = snprintf(buf, len, LINKSCRIPTCMD2, ldscript, kernel,
+			asprintf(cmdp, LINKSCRIPTCMD2, ldscript, kernel,
 				     entry, outfile, address, 
 				     (const char *)address + data_offset,
 				     object);
 	}
-
-	if (n >= len)
-		errx(1, "link command longer than %lu bytes", (u_long)len);
 }
 
 /* load a pre-linked module; returns entry point */
