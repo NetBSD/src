@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.71 2000/01/25 08:07:14 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.72 2000/01/25 15:44:21 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.70 2000/01/25 08:06:49 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp 
  */
 
 /*-
@@ -292,7 +292,7 @@
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
-#define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
+#define	PCMCIA_STR_SMC_EZCARD	"SMC EZCard 10 PCMCIA"
 
 /* Contec C-NET(PC) */
 #define	PCMCIA_CIS_CONTEC_CNETPC	{ NULL, NULL, NULL, NULL }
