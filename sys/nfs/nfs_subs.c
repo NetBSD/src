@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.97 2001/09/15 20:36:40 chs Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.98 2001/09/27 21:44:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,6 +95,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/filedesc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
 
@@ -1949,9 +1950,9 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 
 	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
 	ndp->ni_segflg = UIO_SYSSPACE;
+	ndp->ni_rootdir = rootvnode;
 
 	if (pubflag) {
-		ndp->ni_rootdir = rootvnode;
 		ndp->ni_loopcnt = 0;
 		if (cnp->cn_pnbuf[0] == '/')
 			dp = rootvnode;
