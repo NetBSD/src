@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.57 1998/11/17 22:41:05 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.58 1998/11/27 00:09:33 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -53,13 +53,13 @@ include "dev/dec/files.dec"
 # 3100 and 5100 ibus
 define baseboard {}
 device kn01bus {}: baseboard
-attach  kn01bus at mainbus
+attach kn01bus at mainbus
 
 device kn230bus {}: baseboard
-attach  kn230bus at mainbus
+attach kn230bus at mainbus
 
 device ibus {}
-attach  ibus at baseboard
+attach ibus at baseboard
 
 file	arch/pmax/ibus/ibus.c		ibus
 file	arch/pmax/ibus/ibus_3100.c	ibus & dec_3100
@@ -128,7 +128,7 @@ define	oldscsi {}
 device oldscsibus {target = -1, drive = -1}
 attach oldscsibus at oldscsi
 
-# asc:  system-slot or turbochannel-option SCSI interface
+# asc: system-slot or turbochannel-option SCSI interface
 #device asc: oldscsi,scsi
 device asc: oldscsi
 attach asc at ioasic with asc_ioasic
@@ -138,7 +138,7 @@ file	dev/tc/asc_tc.c			asc_tc
 
 file	dev/tc/asc.c			asc needs-flag
 
-# sii:  kn01 SCSI interface 
+# sii: kn01 SCSI interface 
 #device sii: scsi,oldscsi
 device sii: oldscsi
 file	arch/pmax/dev/sii.c		sii needs-flag
@@ -159,7 +159,7 @@ file	arch/pmax/dev/rz.c		rz needs-count
 #
 
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
-# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
+# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an ASIC.
 device dc: tty
 file	arch/pmax/dev/dc.c		dc
 attach dc at ioasic with dc_ioasic
@@ -188,9 +188,9 @@ file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm_ds.c		pm_ds
 
-########################################################################
-# Turbochannel options.
-########################################################################
+#########################################################################
+# Turbochannel options.							#
+#########################################################################
 
 device cfb
 attach cfb at tc
@@ -204,7 +204,7 @@ device mfb
 attach mfb at tc
 file	arch/pmax/dev/mfb.c		mfb needs-flag
 
-#  Zilog 8350/Intel 82350(?) SCC UART.
+# Zilog 8350/Intel 82350(?) SCC UART.
 device scc: tty
 attach scc at ioasic
 file	arch/pmax/tc/scc.c		scc needs-flag
@@ -254,8 +254,8 @@ file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
 file	arch/pmax/dev/qvss_compat.c	fb
 
 
-# VDAC/RAMDAC support for framebuffers. Other  devices supported by
-# NetBSD  may use the same chips, too.
+# VDAC/RAMDAC support for framebuffers. Other devices supported by
+# NetBSD may use the same chips, too.
 file	arch/pmax/dev/bt459.c			cfb | sfb
 
 #
