@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_table.c,v 1.4 2004/09/09 14:56:00 yamt Exp $	*/
-/*	$OpenBSD: pf_table.c,v 1.47 2004/03/09 21:44:41 mcbride Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.5 2004/11/14 11:12:16 yamt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.59 2004/07/08 23:17:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -194,9 +194,9 @@ void
 pfr_initialize(void)
 {
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", NULL);
+	    "pfrktable", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry", NULL);
+	    "pfrkentry", &pool_allocator_oldnointr);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -255,8 +255,8 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
-	int			 i, rv, s = 0, xadd = 0;
-	long			 tzero = time.tv_sec;
+	int			 i, rv, s = 0 /* XXX gcc */, xadd = 0;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -333,7 +333,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
-	int			 i, rv, s = 0, xdel = 0;
+	int			 i, rv, s = 0 /* XXX gcc */, xdel = 0, log = 1;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -343,7 +343,34 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (ESRCH);
 	if (kt->pfrkt_flags & PFR_TFLAG_CONST)
 		return (EPERM);
-	pfr_mark_addrs(kt);
+	/*
+	 * there are two algorithms to choose from here.
+	 * with:
+	 *   n: number of addresses to delete
+	 *   N: number of addresses in the table
+	 *
+	 * one is O(N) and is better for large 'n'
+	 * one is O(n*LOG(N)) and is better for small 'n'
+	 * 
+	 * following code try to decide which one is best.
+	 */
+	for (i = kt->pfrkt_cnt; i > 0; i >>= 1)
+		log++;
+	if (size > kt->pfrkt_cnt/log) {
+		/* full table scan */
+		pfr_mark_addrs(kt);
+	} else {
+		/* iterate over addresses to delete */
+		for (i = 0; i < size; i++) {
+			if (COPYIN(addr+i, &ad, sizeof(ad)))
+				return (EFAULT);
+			if (pfr_validate_addr(&ad))
+				return (EINVAL);
+			p = pfr_lookup_addr(kt, &ad, 1);
+			if (p != NULL)
+				p->pfrke_mark = 0;
+		}
+	}
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
 		if (COPYIN(addr+i, &ad, sizeof(ad)))
@@ -395,8 +422,9 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 addq, delq, changeq;
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
-	int			 i, rv, s = 0, xadd = 0, xdel = 0, xchange = 0;
-	long			 tzero = time.tv_sec;
+	int			 i, rv, s = 0 /* XXX gcc */, xadd = 0, xdel = 0,
+				 xchange = 0;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -583,8 +611,8 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	struct pfr_ktable	*kt;
 	struct pfr_walktree	 w;
 	struct pfr_kentryworkq	 workq;
-	int			 rv, s = 0;
-	long			 tzero = time.tv_sec;
+	int			 rv, s = 0 /* XXX gcc */;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC); /* XXX PFR_FLAG_CLSTATS disabled */
 	if (pfr_validate_table(tbl, 0, 0))
@@ -682,14 +710,18 @@ pfr_validate_addr(struct pfr_addr *ad)
 	int i;
 
 	switch (ad->pfra_af) {
+#ifdef INET
 	case AF_INET:
 		if (ad->pfra_net > 32)
 			return (-1);
 		break;
+#endif /* INET */
+#ifdef INET6
 	case AF_INET6:
 		if (ad->pfra_net > 128)
 			return (-1);
 		break;
+#endif /* INET6 */
 	default:
 		return (-1);
 	}
@@ -744,7 +776,7 @@ struct pfr_kentry *
 pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 {
 	union sockaddr_union	 sa, mask;
-	struct radix_node_head	*head;
+	struct radix_node_head	*head = (void *)0xdeadb;
 	struct pfr_kentry	*ke;
 	int			 s;
 
@@ -752,7 +784,7 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 	if (ad->pfra_af == AF_INET) {
 		FILLIN_SIN(sa.sin, ad->pfra_ip4addr);
 		head = kt->pfrkt_ip4;
-	} else {
+	} else if ( ad->pfra_af == AF_INET6 ) {
 		FILLIN_SIN6(sa.sin6, ad->pfra_ip6addr);
 		head = kt->pfrkt_ip6;
 	}
@@ -785,7 +817,7 @@ pfr_create_kentry(struct pfr_addr *ad)
 
 	if (ad->pfra_af == AF_INET)
 		FILLIN_SIN(ke->pfrke_sa.sin, ad->pfra_ip4addr);
-	else
+	else if (ad->pfra_af == AF_INET6)
 		FILLIN_SIN6(ke->pfrke_sa.sin6, ad->pfra_ip6addr);
 	ke->pfrke_af = ad->pfra_af;
 	ke->pfrke_net = ad->pfra_net;
@@ -896,14 +928,14 @@ pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 	if (af == AF_INET) {
 		sa->sin.sin_len = sizeof(sa->sin);
 		sa->sin.sin_family = AF_INET;
-		sa->sin.sin_addr.s_addr = htonl(-1 << (32-net));
-	} else {
+		sa->sin.sin_addr.s_addr = net ? htonl(-1 << (32-net)) : 0;
+	} else if (af == AF_INET6) {
 		sa->sin6.sin6_len = sizeof(sa->sin6);
 		sa->sin6.sin6_family = AF_INET6;
 		for (i = 0; i < 4; i++) {
 			if (net <= 32) {
 				sa->sin6.sin6_addr.s6_addr32[i] =
-				    htonl(-1 << (32-net));
+				    net ? htonl(-1 << (32-net)) : 0;
 				break;
 			}
 			sa->sin6.sin6_addr.s6_addr32[i] = 0xFFFFFFFF;
@@ -917,13 +949,13 @@ pfr_route_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 {
 	union sockaddr_union	 mask;
 	struct radix_node	*rn;
-	struct radix_node_head	*head;
+	struct radix_node_head	*head = (void *)0xdeadb;
 	int			 s;
 
 	bzero(ke->pfrke_node, sizeof(ke->pfrke_node));
 	if (ke->pfrke_af == AF_INET)
 		head = kt->pfrkt_ip4;
-	else
+	else if (ke->pfrke_af == AF_INET6)
 		head = kt->pfrkt_ip6;
 
 	s = splsoftnet();
@@ -942,20 +974,28 @@ pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 {
 	union sockaddr_union	 mask;
 	struct radix_node	*rn;
-	struct radix_node_head	*head;
+	struct radix_node_head	*head = (void *)0xdeadb;
 	int			 s;
 
 	if (ke->pfrke_af == AF_INET)
 		head = kt->pfrkt_ip4;
-	else
+	else if (ke->pfrke_af == AF_INET6)
 		head = kt->pfrkt_ip6;
 
 	s = splsoftnet();
 	if (KENTRY_NETWORK(ke)) {
 		pfr_prepare_network(&mask, ke->pfrke_af, ke->pfrke_net);
+#ifdef __OpenBSD__
+		rn = rn_delete(&ke->pfrke_sa, &mask, head, NULL);
+#else
 		rn = rn_delete(&ke->pfrke_sa, &mask, head);
+#endif
 	} else
+#ifdef __OpenBSD__
+		rn = rn_delete(&ke->pfrke_sa, NULL, head, NULL);
+#else
 		rn = rn_delete(&ke->pfrke_sa, NULL, head);
+#endif
 	splx(s);
 
 	if (rn == NULL) {
@@ -976,7 +1016,7 @@ pfr_copyout_addr(struct pfr_addr *ad, struct pfr_kentry *ke)
 	ad->pfra_not = ke->pfrke_not;
 	if (ad->pfra_af == AF_INET)
 		ad->pfra_ip4addr = ke->pfrke_sa.sin.sin_addr;
-	else
+	else if (ad->pfra_af == AF_INET6)
 		ad->pfra_ip6addr = ke->pfrke_sa.sin6.sin6_addr;
 }
 
@@ -1045,7 +1085,7 @@ pfr_walktree(struct radix_node *rn, void *arg)
 			    &ke->pfrke_sa, AF_INET);
 			w->pfrw_dyn->pfid_mask4 = *SUNION2PF(
 			    &pfr_mask, AF_INET);
-		} else {
+		} else if (ke->pfrke_af == AF_INET6){
 			if (w->pfrw_dyn->pfid_acnt6++ > 0)
 				break;
 			pfr_prepare_network(&pfr_mask, AF_INET6, ke->pfrke_net);
@@ -1099,8 +1139,8 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
 	struct pfr_ktableworkq	 addq, changeq;
 	struct pfr_ktable	*p, *q, *r, key;
-	int			 i, rv, s = 0, xadd = 0;
-	long			 tzero = time.tv_sec;
+	int			 i, rv, s = 0 /* XXX gcc */, xadd = 0;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&addq);
@@ -1128,7 +1168,6 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 
 			/* find or create root table */
 			bzero(key.pfrkt_anchor, sizeof(key.pfrkt_anchor));
-			bzero(key.pfrkt_ruleset, sizeof(key.pfrkt_ruleset));
 			r = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 			if (r != NULL) {
 				p->pfrkt_root = r;
@@ -1252,8 +1291,8 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 {
 	struct pfr_ktable	*p;
 	struct pfr_ktableworkq	 workq;
-	int			 s = 0, n, nn;
-	long			 tzero = time.tv_sec;
+	int			 s = 0 /* XXX gcc */, n, nn;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC|PFR_FLAG_ALLRSETS);
 					/* XXX PFR_FLAG_CLSTATS disabled */
@@ -1300,8 +1339,8 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p, key;
-	int			 i, s = 0, xzero = 0;
-	long			 tzero = time.tv_sec;
+	int			 i, s = 0 /* XXX gcc */, xzero = 0;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_ADDRSTOO);
 	SLIST_INIT(&workq);
@@ -1391,7 +1430,7 @@ pfr_ina_begin(struct pfr_table *trs, u_int32_t *ticket, int *ndel, int flags)
 	int			 xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_DUMMY);
-	rs = pf_find_or_create_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	rs = pf_find_or_create_ruleset(trs->pfrt_anchor);
 	if (rs == NULL)
 		return (ENOMEM);
 	SLIST_INIT(&workq);
@@ -1433,7 +1472,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (pfr_validate_table(tbl, PFR_TFLAG_USRMASK,
 	    flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
-	rs = pf_find_ruleset(tbl->pfrt_anchor, tbl->pfrt_ruleset);
+	rs = pf_find_ruleset(tbl->pfrt_anchor);
 	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (EBUSY);
 	tbl->pfrt_flags |= PFR_TFLAG_INACTIVE;
@@ -1524,7 +1563,7 @@ pfr_ina_rollback(struct pfr_table *trs, u_int32_t ticket, int *ndel, int flags)
 	int			 xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_DUMMY);
-	rs = pf_find_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	rs = pf_find_ruleset(trs->pfrt_anchor);
 	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (0);
 	SLIST_INIT(&workq);
@@ -1553,11 +1592,11 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	struct pfr_ktable	*p, *q;
 	struct pfr_ktableworkq	 workq;
 	struct pf_ruleset	*rs;
-	int			 s = 0, xadd = 0, xchange = 0;
-	long			 tzero = time.tv_sec;
+	int			 s = 0 /* XXX gcc */, xadd = 0, xchange = 0;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
-	rs = pf_find_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	rs = pf_find_ruleset(trs->pfrt_anchor);
 	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (EBUSY);
 
@@ -1675,18 +1714,12 @@ int
 pfr_table_count(struct pfr_table *filter, int flags)
 {
 	struct pf_ruleset *rs;
-	struct pf_anchor *ac;
 
 	if (flags & PFR_FLAG_ALLRSETS)
 		return (pfr_ktable_cnt);
-	if (filter->pfrt_ruleset[0]) {
-		rs = pf_find_ruleset(filter->pfrt_anchor,
-		    filter->pfrt_ruleset);
-		return ((rs != NULL) ? rs->tables : -1);
-	}
 	if (filter->pfrt_anchor[0]) {
-		ac = pf_find_anchor(filter->pfrt_anchor);
-		return ((ac != NULL) ? ac->tables : -1);
+		rs = pf_find_ruleset(filter->pfrt_anchor);
+		return ((rs != NULL) ? rs->tables : -1);
 	}
 	return (pf_main_ruleset.tables);
 }
@@ -1696,13 +1729,7 @@ pfr_skip_table(struct pfr_table *filter, struct pfr_ktable *kt, int flags)
 {
 	if (flags & PFR_FLAG_ALLRSETS)
 		return (0);
-	if (strncmp(filter->pfrt_anchor, kt->pfrkt_anchor,
-	    PF_ANCHOR_NAME_SIZE))
-		return (1);
-	if (!filter->pfrt_ruleset[0])
-		return (0);
-	if (strncmp(filter->pfrt_ruleset, kt->pfrkt_ruleset,
-	    PF_RULESET_NAME_SIZE))
+	if (strcmp(filter->pfrt_anchor, kt->pfrkt_anchor))
 		return (1);
 	return (0);
 }
@@ -1810,16 +1837,13 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero, int attachruleset)
 	kt->pfrkt_t = *tbl;
 
 	if (attachruleset) {
-		rs = pf_find_or_create_ruleset(tbl->pfrt_anchor,
-		    tbl->pfrt_ruleset);
+		rs = pf_find_or_create_ruleset(tbl->pfrt_anchor);
 		if (!rs) {
 			pfr_destroy_ktable(kt, 0);
 			return (NULL);
 		}
 		kt->pfrkt_rs = rs;
 		rs->tables++;
-		if (rs->anchor != NULL)
-			rs->anchor->tables++;
 	}
 
 	if (!rn_inithead((void **)&kt->pfrkt_ip4,
@@ -1863,8 +1887,6 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 		pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
 	if (kt->pfrkt_rs != NULL) {
 		kt->pfrkt_rs->tables--;
-		if (kt->pfrkt_rs->anchor != NULL)
-			kt->pfrkt_rs->anchor->tables--;
 		pf_remove_if_empty_ruleset(kt->pfrkt_rs);
 	}
 	pool_put(&pfr_ktable_pl, kt);
@@ -1877,11 +1899,7 @@ pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 
 	if ((d = strncmp(p->pfrkt_name, q->pfrkt_name, PF_TABLE_NAME_SIZE)))
 		return (d);
-	if ((d = strncmp(p->pfrkt_anchor, q->pfrkt_anchor,
-	    PF_ANCHOR_NAME_SIZE)))
-		return (d);
-	return (strncmp(p->pfrkt_ruleset, q->pfrkt_ruleset,
-	    PF_RULESET_NAME_SIZE));
+	return (strcmp(p->pfrkt_anchor, q->pfrkt_anchor));
 }
 
 struct pfr_ktable *
@@ -1904,18 +1922,22 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 		return (0);
 
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
 		if (ke && KENTRY_RNF_ROOT(ke))
 			ke = NULL;
 		break;
+#endif /* INET */
+#ifdef INET6
 	case AF_INET6:
 		bcopy(a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
 		if (ke && KENTRY_RNF_ROOT(ke))
 			ke = NULL;
 		break;
+#endif /* INET6 */
 	}
 	match = (ke && !ke->pfrke_not);
 	if (match)
@@ -1937,18 +1959,24 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 		return;
 
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
 		if (ke && KENTRY_RNF_ROOT(ke))
 			ke = NULL;
 		break;
+#endif /* INET */
+#ifdef INET6
 	case AF_INET6:
 		bcopy(a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
 		if (ke && KENTRY_RNF_ROOT(ke))
 			ke = NULL;
 		break;
+#endif /* INET6 */
+	default:
+		;
 	}
 	if ((ke == NULL || ke->pfrke_not) != notrule) {
 		if (op_pass != PFR_OP_PASS)
@@ -1972,18 +2000,15 @@ pfr_attach_table(struct pf_ruleset *rs, char *name)
 
 	bzero(&tbl, sizeof(tbl));
 	strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name));
-	if (ac != NULL) {
+	if (ac != NULL)
 		strlcpy(tbl.pfrt_anchor, ac->name, sizeof(tbl.pfrt_anchor));
-		strlcpy(tbl.pfrt_ruleset, rs->name, sizeof(tbl.pfrt_ruleset));
-	}
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
-		kt = pfr_create_ktable(&tbl, time.tv_sec, 1);
+		kt = pfr_create_ktable(&tbl, time_second, 1);
 		if (kt == NULL)
 			return (NULL);
 		if (ac != NULL) {
 			bzero(tbl.pfrt_anchor, sizeof(tbl.pfrt_anchor));
-			bzero(tbl.pfrt_ruleset, sizeof(tbl.pfrt_ruleset));
 			rt = pfr_lookup_table(&tbl);
 			if (rt == NULL) {
 				rt = pfr_create_ktable(&tbl, 0, 1);
@@ -2016,13 +2041,15 @@ int
 pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
     struct pf_addr **raddr, struct pf_addr **rmask, sa_family_t af)
 {
-	struct pfr_kentry	*ke, *ke2;
-	struct pf_addr		*addr;
+	struct pfr_kentry	*ke, *ke2 = (void *)0xdeadb;
+	struct pf_addr		*addr = (void *)0xdeadb;
 	union sockaddr_union	 mask;
 	int			 idx = -1, use_counter = 0;
 
-	addr = (af == AF_INET) ? (struct pf_addr *)&pfr_sin.sin_addr :
-	    (struct pf_addr *)&pfr_sin6.sin6_addr;
+	if (af == AF_INET)
+		addr = (struct pf_addr *)&pfr_sin.sin_addr;
+	else if (af == AF_INET6)
+		addr = (struct pf_addr *)&pfr_sin6.sin6_addr;
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
 		kt = kt->pfrkt_root;
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
@@ -2065,9 +2092,12 @@ _next_block:
 	}
 	for (;;) {
 		/* we don't want to use a nested block */
-		ke2 = (struct pfr_kentry *)(af == AF_INET ?
-		    rn_match(&pfr_sin, kt->pfrkt_ip4) :
-		    rn_match(&pfr_sin6, kt->pfrkt_ip6));
+		if (af == AF_INET)
+			ke2 = (struct pfr_kentry *)rn_match(&pfr_sin,
+			    kt->pfrkt_ip4);
+		else if (af == AF_INET6)
+			ke2 = (struct pfr_kentry *)rn_match(&pfr_sin6,
+			    kt->pfrkt_ip6);
 		/* no need to check KENTRY_RNF_ROOT() here */
 		if (ke2 == ke) {
 			/* lookup return the same block - perfect */
@@ -2100,12 +2130,16 @@ pfr_kentry_byidx(struct pfr_ktable *kt, int idx, int af)
 	w.pfrw_cnt = idx;
 
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
 		return (w.pfrw_kentry);
+#endif /* INET */
+#ifdef INET6
 	case AF_INET6:
 		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
 		return (w.pfrw_kentry);
+#endif /* INET6 */
 	default:
 		return (NULL);
 	}
