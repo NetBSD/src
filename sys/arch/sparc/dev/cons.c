@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.11 1994/11/25 23:55:53 deraadt Exp $ */
+/*	$NetBSD: cons.c,v 1.12 1995/04/10 10:23:49 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,6 @@ extern struct promvec *promvec;
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
-struct tty *cn_tty[1] = { &cons };
 static void (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
