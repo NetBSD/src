@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.22 1997/09/03 19:07:32 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.23 1997/09/16 01:52:01 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.22 1997/09/03 19:07:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.23 1997/09/16 01:52:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,7 @@ _pmap_activate(pmap)
 
 	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = pmap->pm_stpte;
 	ALPHA_TBIAP();
+	alpha_pal_imb();
 }
 
 /*
@@ -823,13 +824,22 @@ pmap_page_protect(pa, prot)
 	if (!PAGE_IS_MANAGED(pa))
 		return;
 
+	/*
+	 * Even though we don't change the mapping of the page,
+	 * we still flush the I-cache if VM_PROT_EXECUTE is set
+	 * because we might be "adding" execute permissions to
+	 * a previously non-execute page.
+	 */
+
 	switch (prot) {
+	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
+		alpha_pal_imb();
 	case VM_PROT_READ|VM_PROT_WRITE:
-	case VM_PROT_ALL:
 		return;
 	/* copy_on_write */
-	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
+		alpha_pal_imb();
+	case VM_PROT_READ:
 /* XXX */	pmap_changebit(pa, PG_KWE | PG_UWE, FALSE);
 		return;
 	/* remove_all */
@@ -917,8 +927,11 @@ pmap_protect(pmap, sva, eva, prot)
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, bits)) {
 				pmap_pte_set_prot(pte, bits);
-				if (needtflush)
+				if (needtflush) {
 					ALPHA_TBIS(sva);
+					if (prot & VM_PROT_EXECUTE)
+						alpha_pal_imb();
+				}
 #ifdef PMAPSTATS
 				protect_stats.changed++;
 #endif
@@ -1160,8 +1173,11 @@ validate:
 	 */
 	wired = ((*pte ^ npte) == PG_WIRED);
 	*pte = npte;
-	if (!wired && active_pmap(pmap))
+	if (!wired && active_pmap(pmap)) {
 		ALPHA_TBIS(va);
+		if (prot & VM_PROT_EXECUTE)
+			alpha_pal_imb();
+	}
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1295,6 +1311,7 @@ pmap_update()
 		printf("pmap_update()\n");
 #endif
 	ALPHA_TBIA();
+	alpha_pal_imb();
 }
 
 /*
