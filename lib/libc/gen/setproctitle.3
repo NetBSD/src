@@ -1,4 +1,4 @@
-.\" $NetBSD: setproctitle.3,v 1.14 2002/02/07 07:00:17 ross Exp $
+.\" $NetBSD: setproctitle.3,v 1.15 2002/07/10 14:37:14 yamt Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -77,3 +77,21 @@ The
 .Fn setproctitle
 function first appeared in
 .Nx 1.0 .
+.Sh CAVEATS
+It is important never to pass a string with user-supplied data as a
+format without using
+.Ql %s .
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the resulting string may still contain user-supplied conversion specifiers
+for later interpolation by
+.Fn setproctitle .
+.Pp
+Always be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+setproctitle("%s", string);
+.Ed

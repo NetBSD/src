@@ -1,4 +1,4 @@
-.\"	$NetBSD: islower.3,v 1.8 2002/02/07 07:00:15 ross Exp $
+.\"	$NetBSD: islower.3,v 1.9 2002/07/10 14:37:14 yamt Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -95,3 +95,11 @@ The
 .Fn islower
 function conforms to
 .St -ansiC .
+.Sh CAVEATS
+The argument to
+.Fn islower
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.
