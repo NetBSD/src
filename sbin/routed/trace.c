@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.23 1999/02/23 10:47:41 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.24 2000/03/02 21:02:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.23 1999/02/23 10:47:41 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.24 2000/03/02 21:02:01 christos Exp $");
 #endif
 
 #define	RIPCMDS
@@ -950,12 +950,12 @@ trace_rip(const char *dir1, const char *dir2,
 						      " auth_len=%d"
 						      " seqno=%#x"
 						      " rsvd=%#x,%#x\n",
-					      ntohs(NA->au.a_md5.md5_pkt_len),
-					      NA->au.a_md5.md5_keyid,
-					      NA->au.a_md5.md5_auth_len,
-					      ntohl(NA->au.a_md5.md5_seqno),
-					      ntohs(NA->au.a_md5.rsvd[0]),
-					      ntohs(NA->au.a_md5.rsvd[1]));
+					    ntohs(NA->au.a_md5.md5_pkt_len),
+					    NA->au.a_md5.md5_keyid,
+					    NA->au.a_md5.md5_auth_len,
+					    (int)ntohl(NA->au.a_md5.md5_seqno),
+					    (int)ntohs(NA->au.a_md5.rsvd[0]),
+					    (int)ntohs(NA->au.a_md5.rsvd[1]));
 					continue;
 				}
 				(void)fprintf(ftrace,
