@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.37 2002/01/28 23:50:09 tv Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.38 2002/01/31 22:43:36 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -35,13 +35,14 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.37 2002/01/28 23:50:09 tv Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.38 2002/01/31 22:43:36 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +58,6 @@ __RCSID("$NetBSD: __fts13.c,v 1.37 2002/01/28 23:50:09 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#endif /* !HAVE_CONFIG_H */
 
 #ifdef __weak_alias
 #ifdef __LIBC12_SOURCE__

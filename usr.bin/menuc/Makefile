@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/11/12 20:30:43 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2002/01/31 22:43:55 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -7,14 +7,14 @@ SRCS=		main.c parse.y scan.l avl.c mdb.c util.c
 CPPFLAGS+=	-I. -I${.CURDIR}
 YHEADER=
 
-LDADD+=		-ll
-DPADD+=		${LIBL}
-
 .if ${MKSHARE} != "no"
 FILES=		menu_sys.def
 FILESDIR=	/usr/share/misc
 .endif
 
 .ifndef HOSTPROG
+LDADD+=		-ll
+DPADD+=		${LIBL}
+
 .include <bsd.prog.mk>
 .endif

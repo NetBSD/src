@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.7 2002/01/29 10:20:35 tv Exp $	*/
+/*	$NetBSD: yacc.y,v 1.8 2002/01/31 22:43:56 tv Exp $	*/
 
 %{
 /*-
@@ -39,8 +39,6 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
-#define HAVE_ERR_H 1
 #endif
 
 #include <sys/cdefs.h>
@@ -49,11 +47,12 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.7 2002/01/29 10:20:35 tv Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.8 2002/01/31 22:43:56 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
+#include <err.h>
 #if !defined(__FreeBSD__)
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ rune_t
@@ -68,10 +67,6 @@ __RCSID("$NetBSD: yacc.y,v 1.7 2002/01/29 10:20:35 tv Exp $");
 #include <unistd.h>
 
 #include "ldef.h"
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
 
 const char	*locale_file = "<stdout>";
 
@@ -260,7 +255,7 @@ map	:	LBRK RUNE RUNE RBRK
 %%
 
 int debug = 0;
-FILE *fp = stdout;
+FILE *ofile;
 
 int
 main(ac, av)
@@ -279,7 +274,7 @@ main(ac, av)
 	    break;
 	case 'o':
 	    locale_file = optarg;
-	    if ((fp = fopen(locale_file, "w")) == 0)
+	    if ((ofile = fopen(locale_file, "w")) == 0)
 		err(1, "unable to open output file %s", locale_file);
 	    break;
 	default:
@@ -610,6 +605,7 @@ dump_tables()
     int x, n;
     rune_list *list;
     _FileRuneLocale file_new_locale;
+    FILE *fp = (ofile ? ofile : stdout);
 
     memset(&file_new_locale, 0, sizeof(file_new_locale));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2002/01/29 10:20:38 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2002/01/31 22:44:05 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,25 +40,16 @@
 #if HAVE_CONFIG_H
 #include "config.h" 
 #else 
-#define HAVE_ERR_H 1
-#define HAVE_FTS_H 1
-#define HAVE_VIS_H 1
-#define HAVE_UTIL_H 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
  
-#if HAVE_ERR_H
 #include <err.h> 
-#endif 
-#if HAVE_FTS_H
 #include <fts.h>
-#endif 
+#include <vis.h>
+
 #if HAVE_NETDB_H
 /* For MAXHOSTNAMELEN on some platforms. */
 #include <netdb.h>
-#endif
-#if HAVE_VIS_H
-#include <vis.h>
 #endif
 
 #ifndef MAXHOSTNAMELEN

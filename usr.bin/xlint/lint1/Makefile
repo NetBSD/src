@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/01/18 21:01:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 2002/01/31 22:44:00 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,6 @@ PROG=		lint1
 SRCS=		cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
 		init.c emit.c emit1.c inittyp.c
 MAN=		lint.7
-LDADD+=		-ll
-DPADD+=		${LIBL}
 YHEADER=
 
 CPPFLAGS+=	-I${.CURDIR} -I.
@@ -41,5 +39,8 @@ ${MAN}:		makeman ${LINT1:C/^\.\///} Makefile
 	sh ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
 
 .ifndef HOSTPROG
+LDADD+=		-ll
+DPADD+=		${LIBL}
+
 .include <bsd.prog.mk>
 .endif

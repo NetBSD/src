@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.37 2002/01/29 10:20:29 tv Exp $	*/
+/*	$NetBSD: options.c,v 1.38 2002/01/31 22:43:35 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.37 2002/01/29 10:20:29 tv Exp $");
+__RCSID("$NetBSD: options.c,v 1.38 2002/01/31 22:43:35 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,21 +51,19 @@ __RCSID("$NetBSD: options.c,v 1.37 2002/01/29 10:20:29 tv Exp $");
 #include <sys/stat.h>
 #include <sys/mtio.h>
 #include <sys/param.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <getopt.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <limits.h>
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
 #include "tar.h"
 #include "extern.h"
 #include "mtree.h"
-
-/* After extern.h to pull in HAVE_CONFIG_H */
-#include <getopt.h>
 
 /*
  * Routines which handle command line options

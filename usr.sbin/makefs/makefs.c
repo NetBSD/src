@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.12 2002/01/26 13:22:16 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.13 2002/01/31 22:44:02 tv Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Systems, Inc.
@@ -36,17 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.12 2002/01/26 13:22:16 lukem Exp $");
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: makefs.c,v 1.13 2002/01/31 22:44:02 tv Exp $");
 #endif	/* !__lint */
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -57,7 +52,6 @@ __RCSID("$NetBSD: makefs.c,v 1.12 2002/01/26 13:22:16 lukem Exp $");
 #include "makefs.h"
 #include "mtree.h"
 #include "strsuftoull.h"
-
 
 /*
  * list of supported file systems and dispatch functions
@@ -121,7 +115,9 @@ main(int argc, char *argv[])
 	specfile = NULL;
 	if (gettimeofday(&start, NULL) == -1)
 		err(1, "Unable to get system time");
-	TIMEVAL_TO_TIMESPEC(&start, &start_time);
+
+	start_time.tv_sec = start.tv_sec;
+	start_time.tv_nsec = start.tv_usec * 1000;
 
 	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:")) != -1) {
 		switch (ch) {

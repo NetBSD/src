@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.13 2002/01/29 10:20:29 tv Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.14 2002/01/31 22:43:35 tv Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -10,19 +10,17 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: getoldopt.c,v 1.13 2002/01/29 10:20:29 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: getoldopt.c,v 1.14 2002/01/31 22:43:35 tv Exp $");
 #endif /* not lint */
 
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include "pax.h"
 #include "extern.h"
-
-/* After extern.h to pull in HAVE_CONFIG_H */
-#include <getopt.h>
 
 int
 getoldopt(int argc, char **argv, const char *optstring,

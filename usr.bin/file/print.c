@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.21 2001/09/09 10:46:36 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.22 2002/01/31 22:43:53 tv Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -43,11 +43,11 @@
 #include <time.h>
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.34 2001/08/07 16:01:26 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.21 2001/09/09 10:46:36 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.22 2002/01/31 22:43:53 tv Exp $");
 #endif
 #endif  /* lint */
 
