@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_vidc.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
+/*	$NetBSD: sysbeep_vidc.c,v 1.6 2002/10/01 03:10:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.6 2002/10/01 03:10:15 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -58,9 +58,8 @@ void sysbeep(int, int);
 void lmcaudio_beep_generate(void);
 
 /* device attach structure */
-const struct cfattach sysbeep_vidc_ca = {
-	sizeof(struct device), sysbeep_vidc_match, sysbeep_vidc_attach
-};
+CFATTACH_DECL(sysbeep_vidc, sizeof(struct device),
+    sysbeep_vidc_match, sysbeep_vidc_attach, NULL, NULL)
 
 int
 sysbeep_vidc_match(struct device *parent, struct cfdata *match, void *aux)

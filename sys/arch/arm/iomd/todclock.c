@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
+/*	$NetBSD: todclock.c,v 1.6 2002/10/01 03:10:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.6 2002/10/01 03:10:16 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -93,9 +93,8 @@ static struct todclock_softc *todclock_sc = NULL;
 
 /* driver and attach structures */
 
-const struct cfattach todclock_ca = {
-	sizeof(struct todclock_softc), todclockmatch, todclockattach
-};
+CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
+    todclockmatch, todclockattach, NULL, NULL)
 
 /*
  * int todclockmatch(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.6 2002/09/27 20:30:43 thorpej Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.7 2002/10/01 03:10:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -81,9 +81,8 @@ int *vidc_base = (int *)VIDC_BASE;
 int  vidc_fref = 24000000;
 
 
-const struct cfattach vidc_ca = {
-	sizeof (struct vidc20_softc), vidcmatch, vidcattach
-};
+CFATTACH_DECL(vidc, sizeof (struct vidc20_softc),
+    vidcmatch, vidcattach, NULL, NULL)
 
 /*
  * vidcmatch()

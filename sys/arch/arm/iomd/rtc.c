@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6 2002/10/01 03:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -248,9 +248,8 @@ rtc_read(arg, rtc)
 
 /* device and attach structures */
 
-const struct cfattach rtc_ca = {
-	sizeof(struct rtc_softc), rtcmatch, rtcattach
-};
+CFATTACH_DECL(rtc, sizeof(struct rtc_softc),]
+    rtcmatch, rtcattach, NULL, NULL)
 
 extern struct cfdriver rtc_cd;
 

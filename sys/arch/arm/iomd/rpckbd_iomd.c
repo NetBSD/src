@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.6 2002/10/01 03:10:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ extern struct rpckbd_softc console_kbd;
 
 /* Device structures */
 
-const struct cfattach rpckbd_iomd_ca = {
-	sizeof(struct rpckbd_softc), rpckbd_iomd_probe, rpckbd_iomd_attach
-};
+CFATTACH_DECL(rpckbd_iomd, sizeof(struct rpckbd_softc),
+    rpckbd_iomd_probe, rpckbd_iomd_attach, NULL, NULL)
 
 static int
 rpckbd_iomd_probe(parent, cf, aux)
