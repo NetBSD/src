@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.4 1999/04/29 05:35:13 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.5 1999/05/30 15:35:39 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -314,7 +314,9 @@ uvm_aiodone_daemon()
 		 */
 
 		for (/*null*/; aio != NULL ; aio = nextaio) {
-			uvmexp.paging -= aio->npages;
+			if (aio->flags & UVM_AIO_PAGEDAEMON) {
+				uvmexp.paging -= aio->npages;
+			}
 			nextaio = TAILQ_NEXT(aio, aioq);
 			aio->aiodone(aio);
 		}
