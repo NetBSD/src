@@ -34,8 +34,12 @@
 #include <number.h>
 #include <assert.h>
 #include <stdlib.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
-#include <ctype.h>/* Prototypes needed for external utility routines. */
+#endif
+#include <ctype.h>
+
+/* Prototypes needed for external utility routines. */
 
 #define bc_rt_warn rt_warn
 #define bc_rt_error rt_error
