@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 2004/06/25 16:27:22 itojun Exp $
 #	$OpenBSD: Makefile,v 1.2 2004/02/27 19:41:39 david Exp $
 
 PROG=	spamdb
