@@ -1,4 +1,4 @@
-/*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
+/*	$NetBSD: logname.c,v 1.7 1997/10/19 04:20:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
 #endif
-static char rcsid[] = "$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $";
+__RCSID("$NetBSD: logname.c,v 1.7 1997/10/19 04:20:06 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,7 +52,8 @@ static char rcsid[] = "$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $";
 #include <unistd.h>
 #include <err.h>
 
-void usage __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -64,7 +65,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:
@@ -78,7 +79,7 @@ main(argc, argv)
 	}
 
 	if ((p = getlogin()) == NULL)
-		err(1, NULL);
+		err(1, "getlogin");
 	(void)printf("%s\n", p);
 	exit(0);
 }
