@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.8 2002/04/20 21:25:01 manu Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.9 2003/01/22 12:58:23 rafal Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.8 2002/04/20 21:25:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.9 2003/01/22 12:58:23 rafal Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -69,8 +69,8 @@ extern struct loadavg averunnable;
 extern long irix_kernel_var[32];
 
 int
-irix_sys_sysmp(p, v, retval)
-	struct proc *p;
+irix_sys_sysmp(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -81,6 +81,7 @@ irix_sys_sysmp(p, v, retval)
 		syscallarg(void *) arg3;
 		syscallarg(void *) arg4;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int cmd = SCARG(uap, cmd);
 	int error = 0;
 	caddr_t sg = stackgap_init(p, 0);

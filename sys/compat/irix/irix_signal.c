@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.23 2003/01/18 07:44:51 thorpej Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.24 2003/01/22 12:58:23 rafal Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.23 2003/01/18 07:44:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.24 2003/01/22 12:58:23 rafal Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -77,11 +77,11 @@ static int irix_wait_siginfo __P((struct proc *, int,
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *, 
     int, u_long, caddr_t));
 static void irix_set_ucontext __P((struct irix_ucontext*, sigset_t *, 
-    int, struct proc *));
+    int, struct lwp *));
 static void irix_set_sigcontext __P((struct irix_sigcontext*, sigset_t *, 
-    int, struct proc *));
-static void irix_get_ucontext __P((struct irix_ucontext*, struct proc *));
-static void irix_get_sigcontext __P((struct irix_sigcontext*, struct proc *));
+    int, struct lwp *));
+static void irix_get_ucontext __P((struct irix_ucontext*, struct lwp *));
+static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
 
 #define irix_sigmask(n)	 (1 << (((n) - 1) & 31))
 #define irix_sigword(n)	 (((n) - 1) >> 5) 
@@ -265,7 +265,8 @@ irix_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curlwp;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	void *sp;
 	struct frame *f;
 	int onstack;
@@ -273,7 +274,7 @@ irix_sendsig(sig, mask, code)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct irix_sigframe sf;
  
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_IRIX
 	printf("irix_sendsig()\n");
 	printf("catcher = %p, sig = %d, code = 0x%lx\n",
@@ -307,11 +308,11 @@ irix_sendsig(sig, mask, code)
 	 */
 	bzero(&sf, sizeof(sf));
 	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
-		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, code, p);
+		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, code, l);
 		irix_signal_siginfo(&sf.isf_ctx.iss.iis, sig, 
 		    code, (caddr_t)f->f_regs[BADVADDR]);
 	} else {
-		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, p);
+		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, l);
 	}
 	
 	/*
@@ -332,7 +333,7 @@ irix_sendsig(sig, mask, code)
 #ifdef DEBUG_IRIX
 		printf("irix_sendsig: stack trashed\n");
 #endif /* DEBUG_IRIX */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -387,19 +388,20 @@ irix_sendsig(sig, mask, code)
 }
 
 static void 
-irix_set_sigcontext (scp, mask, code, p)
+irix_set_sigcontext (scp, mask, code, l)
 	struct irix_sigcontext *scp;
 	sigset_t *mask;
 	int code;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int i;
 	struct frame *f;
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_sigcontext()\n");
 #endif
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 	/*
 	 * Build stack frame for signal trampoline.
 	 */
@@ -420,17 +422,17 @@ irix_set_sigcontext (scp, mask, code, p)
 	 * Save the floating-pointstate, if necessary, then copy it. 
 	 */
 #ifndef SOFTFLOAT
-	scp->isc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
+	scp->isc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
 	if (scp->isc_ownedfp) {
 		/* if FPU has current state, save it first */
-		if (p == fpcurlwp)
-			savefpregs(p);
-		(void)memcpy(&scp->isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+		if (l == fpcurlwp)
+			savefpregs(l);
+		(void)memcpy(&scp->isc_fpregs, &l->l_addr->u_pcb.pcb_fpregs,
 		    sizeof(scp->isc_fpregs));
-		scp->isc_fpc_csr = p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+		scp->isc_fpc_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
 	}
 #else
-	(void)memcpy(&scp->isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+	(void)memcpy(&scp->isc_fpregs, &l->l_addr->u_pcb.pcb_fpregs,
 	    sizeof(scp->isc_fpregs));
 #endif 
 	/*
@@ -443,18 +445,19 @@ irix_set_sigcontext (scp, mask, code, p)
 }
 
 void 
-irix_set_ucontext(ucp, mask, code, p)
+irix_set_ucontext(ucp, mask, code, l)
 	struct irix_ucontext *ucp;
 	sigset_t *mask;
 	int code;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct frame *f;
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_ucontext()\n");
 #endif
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 	/*
 	 * Save general purpose registers
 	 */
@@ -471,19 +474,19 @@ irix_set_ucontext(ucp, mask, code, p)
 	 * Save the floating-pointstate, if necessary, then copy it. 
 	 */
 #ifndef SOFTFLOAT
-	if (p->p_md.md_flags & MDP_FPUSED) {
+	if (l->l_md.md_flags & MDP_FPUSED) {
 		/* if FPU has current state, save it first */
-		if (p == fpcurlwp)
-			savefpregs(p);
+		if (l == fpcurlwp)
+			savefpregs(l);
 		(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs, 
-		    &p->p_addr->u_pcb.pcb_fpregs, 
+		    &l->l_addr->u_pcb.pcb_fpregs, 
 		    sizeof(ucp->iuc_mcontext.svr4___fpregs));
 		ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr = 
-		    p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+		    l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
 	}
 #else
 	(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs, 
-	    &p->p_addr->u_pcb.pcb_fpregs, 
+	    &l->l_addr->u_pcb.pcb_fpregs, 
 	    sizeof(ucp->iuc_mcontext.svr4___fpregs));
 #endif 
 	/* 
@@ -511,8 +514,8 @@ irix_set_ucontext(ucp, mask, code, p)
 }
 
 int      
-irix_sys_sigreturn(p, v, retval)
-	struct proc *p;
+irix_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {       
@@ -545,35 +548,36 @@ irix_sys_sigreturn(p, v, retval)
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 
-		irix_get_ucontext(&ksf.isf_ctx.iss.iuc, p);
+		irix_get_ucontext(&ksf.isf_ctx.iss.iuc, l);
 	} else {
 		if ((error = copyin(usf, &ksf.isf_ctx.isc, 
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 
-		irix_get_sigcontext(&ksf.isf_ctx.isc, p);
+		irix_get_sigcontext(&ksf.isf_ctx.isc, l);
 	}
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sigreturn(): returning [PC=%p SP=%p SR=0x%08lx]\n",
-	    (void *)((struct frame *)(p->p_md.md_regs))->f_regs[PC], 
-	    (void *)((struct frame *)(p->p_md.md_regs))->f_regs[SP], 
-	    ((struct frame *)(p->p_md.md_regs))->f_regs[SR]);
+	    (void *)((struct frame *)(l->l_md.md_regs))->f_regs[PC], 
+	    (void *)((struct frame *)(l->l_md.md_regs))->f_regs[SP], 
+	    ((struct frame *)(l->l_md.md_regs))->f_regs[SR]);
 #endif
 
 	return EJUSTRETURN;
 }
 
 static void
-irix_get_ucontext(ucp, p)
+irix_get_ucontext(ucp, l)
 	struct irix_ucontext *ucp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct frame *f;
 	sigset_t mask;
 
 	/* Restore the register context. */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 
 	if (ucp->iuc_flags & IRIX_UC_CPU) {
 		(void)memcpy(&f->f_regs, &ucp->iuc_mcontext.svr4___gregs, 
@@ -591,17 +595,17 @@ irix_get_ucontext(ucp, p)
 #ifndef SOFTFLOAT
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (p == fpcurlwp) 
-			fpcurlwp = (struct proc *)0;
-		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, 
+		if (l == fpcurlwp) 
+			fpcurlwp = NULL;
+		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, 
 		    &ucp->iuc_mcontext.svr4___fpregs,
-		    sizeof(p->p_addr->u_pcb.pcb_fpregs));
-		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = 
+		    sizeof(l->l_addr->u_pcb.pcb_fpregs));
+		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = 
 		     ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr;
 #else	
-		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, 
+		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, 
 		    &ucp->iuc_mcontext.svr4___fpregs,
-		    sizeof(p->p_addr->u_pcb.pcb_fpregs));
+		    sizeof(l->l_addr->u_pcb.pcb_fpregs));
 #endif
 	}
 
@@ -636,16 +640,17 @@ irix_get_ucontext(ucp, p)
 }
 
 static void
-irix_get_sigcontext(scp, p) 
+irix_get_sigcontext(scp, l) 
 	struct irix_sigcontext *scp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int i;
 	struct frame *f;
 	sigset_t mask;
 
 	/* Restore the register context. */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 
 	for (i = 1; i < 32; i++) /* restore gpr1 to gpr31 */
 		f->f_regs[i] = scp->isc_regs[i];
@@ -657,15 +662,15 @@ irix_get_sigcontext(scp, p)
 	if (scp->isc_ownedfp) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (p == fpcurlwp) 
-			fpcurlwp = (struct proc *)0;
-		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
+		if (l == fpcurlwp) 
+			fpcurlwp = NULL;
+		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
 		    sizeof(scp->isc_fpregs));
-		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;
+		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;
 	}
 #else	
-	(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
-	    sizeof(p->p_addr->u_pcb.pcb_fpregs));
+	(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
+	    sizeof(l->l_addr->u_pcb.pcb_fpregs));
 #endif
 
 	/* Restore signal stack. */
@@ -684,8 +689,8 @@ irix_get_sigcontext(scp, p)
 
 
 int
-irix_sys_sginap(p, v, retval)
-	struct proc *p;
+irix_sys_sginap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -715,19 +720,20 @@ irix_sys_sginap(p, v, retval)
  * XXX Untested. Expect bugs and security problems here 
  */
 int 
-irix_sys_getcontext(p, v, retval)
-	struct proc *p;
+irix_sys_getcontext(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct irix_sys_getcontext_args /* {
 		syscallarg(struct irix_ucontext *) ucp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct frame *f;
 	struct irix_ucontext kucp;
 	int i, error;
 
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 
 	kucp.iuc_flags = IRIX_UC_ALL;
 	kucp.iuc_link = NULL;		/* XXX */
@@ -758,14 +764,15 @@ irix_sys_getcontext(p, v, retval)
  * XXX Untested. Expect bugs and security problems here 
  */
 int 
-irix_sys_setcontext(p, v, retval)
-	struct proc *p;
+irix_sys_setcontext(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct irix_sys_setcontext_args /* {
 		syscallarg(struct irix_ucontext *) ucp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct frame *f;
 	struct irix_ucontext kucp;
 	int i, error;
@@ -774,7 +781,7 @@ irix_sys_setcontext(p, v, retval)
 	if (error)
 		goto out;
 
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 
 	if (kucp.iuc_flags & IRIX_UC_SIGMASK)
 		irix_to_native_sigset(&kucp.iuc_sigmask, 
@@ -818,8 +825,8 @@ out:
  * from svr4_misc.c, or push the irix_irix5_siginfo into svr4_siginfo.h
  */
 int 
-irix_sys_waitsys(p, v, retval)
-	struct proc *p;
+irix_sys_waitsys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -830,6 +837,7 @@ irix_sys_waitsys(p, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) ru;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int nfound, error, s;
 	struct proc *q, *t;
 
@@ -977,8 +985,8 @@ loop:
 }
 
 int 
-irix_sys_sigprocmask(p, v, retval)
-	struct proc *p;
+irix_sys_sigprocmask(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -987,6 +995,7 @@ irix_sys_sigprocmask(p, v, retval)
 		syscallarg(irix_sigset_t *) set;
 		syscallarg(irix_sigset_t *) oset;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct svr4_sys_sigprocmask_args cup;
 	int error;
 	sigset_t *obss;
@@ -1014,12 +1023,12 @@ irix_sys_sigprocmask(p, v, retval)
 
 		SCARG(&cup, how) = SVR4_SIG_SETMASK;
 	}
-	return svr4_sys_sigprocmask(p, &cup, retval);
+	return svr4_sys_sigprocmask(l, &cup, retval);
 }
 
 int
-irix_sys_sigaction(p, v, retval)
-	struct proc *p;
+irix_sys_sigaction(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1029,6 +1038,7 @@ irix_sys_sigaction(p, v, retval)
 		syscallarg(struct svr4_sigaction *) osa;
 		syscallarg(void *) sigtramp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int signum;
 	struct svr4_sys_sigaction_args cup;
 	struct irix_emuldata *ied;
@@ -1085,5 +1095,5 @@ irix_sys_sigaction(p, v, retval)
 	SCARG(&cup, nsa) = SCARG(uap, nsa);
 	SCARG(&cup, osa) = SCARG(uap, osa);
 
-	return svr4_sys_sigaction(p, &cup, retval);
+	return svr4_sys_sigaction(l, &cup, retval);
 }
