@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.10 1998/07/26 11:39:26 mycroft Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.11 1999/01/20 11:37:34 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.10 1998/07/26 11:39:26 mycroft Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.11 1999/01/20 11:37:34 lukem Exp $");
 #endif
 #endif
 
@@ -102,8 +102,8 @@ authnone_create()
 		ap->no_client.ah_cred = ap->no_client.ah_verf = _null_auth;
 		ap->no_client.ah_ops = &ops;
 		xdrs = &xdr_stream;
-		xdrmem_create(xdrs, ap->marshalled_client, (u_int)MAX_MARSHEL_SIZE,
-		    XDR_ENCODE);
+		xdrmem_create(xdrs, ap->marshalled_client,
+		    (u_int)MAX_MARSHEL_SIZE, XDR_ENCODE);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_cred);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_verf);
 		ap->mcnt = XDR_GETPOS(xdrs);

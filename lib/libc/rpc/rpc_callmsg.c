@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.11 1998/11/15 17:32:43 christos Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.12 1999/01/20 11:37:38 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.11 1998/11/15 17:32:43 christos Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.12 1999/01/20 11:37:38 lukem Exp $");
 #endif
 #endif
 
@@ -141,7 +141,9 @@ xdr_callmsg(xdrs, cmsg)
 				}
 				if (oa->oa_base == NULL) {
 					oa->oa_base = (caddr_t)
-						mem_alloc(oa->oa_length);
+					    mem_alloc(oa->oa_length);
+					if (oa->oa_base == NULL)
+						return (FALSE);
 				}
 				buf = XDR_INLINE(xdrs, RNDUP(oa->oa_length));
 				if (buf == NULL) {
@@ -175,7 +177,9 @@ xdr_callmsg(xdrs, cmsg)
 				}
 				if (oa->oa_base == NULL) {
 					oa->oa_base = (caddr_t)
-						mem_alloc(oa->oa_length);
+					    mem_alloc(oa->oa_length);
+					if (oa->oa_base == NULL)
+						return (FALSE);
 				}
 				buf = XDR_INLINE(xdrs, RNDUP(oa->oa_length));
 				if (buf == NULL) {
@@ -205,7 +209,6 @@ xdr_callmsg(xdrs, cmsg)
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_proc)) &&
 	    xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_cred)) )
-	    return (xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_verf)));
+		return (xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_verf)));
 	return (FALSE);
 }
-
