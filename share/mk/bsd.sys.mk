@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.97 2003/10/18 16:41:19 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.98 2003/10/19 02:11:29 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -153,7 +153,7 @@ TOOL_UUDECODE?=		uudecode
 TOOL_VGRIND?=		vgrind -f
 TOOL_ZIC?=		zic
 
-.SUFFIXES:	.c .m .o .ln .lo
+.SUFFIXES:	.c .m .o .ln .lo .s .S .l .y ${YHEADER:D.h}
 
 # C
 .c:
@@ -190,6 +190,24 @@ TOOL_ZIC?=		zic
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${.IMPSRC}
 	${_MKCMD}\
 	mv ${.TARGET}.o ${.TARGET}
+
+# Assembly
+.s:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
+	${LINK.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.s.o:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
+	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.S:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
+	${LINK.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.S.o:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
+	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 # Lex
 LPREFIX?=	yy
