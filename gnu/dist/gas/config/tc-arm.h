@@ -71,7 +71,9 @@
 #define md_start_line_hook() arm_start_line_hook ()
 #define tc_frob_label(S) arm_frob_label (S) 
 
-/*#define obj_fix_adjustable(fixP) */	/* get this from obj-aout.h */
+/* adjust_reloc_syms doesn't know about the GOT */
+#define	tc_fix_adjustable(fixP) \
+	((fixP)->fx_r_type != BFD_RELOC_ARM_GOT32)
 
 #define TC_FIX_TYPE PTR
 #define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
