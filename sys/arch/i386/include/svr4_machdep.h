@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2 1995/01/09 01:05:24 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.3 1995/01/25 04:18:52 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -62,27 +62,12 @@ typedef int svr4_greg_t;
 typedef svr4_greg_t svr4_gregset_t[SVR4_X86_MAXREG];
 
 typedef struct {
-    union {
-
-	struct fpchip_state {
-            int		state[27];  /* x87 state */
-            int		status;     /* exception status */
-        } fp_chip_state;
-
-        struct fp_emul_space {
-            char	fp_emul[246];
-            char	fp_epad[2];
-        } fp_emul_state;
-
-        int f_fpregs[62];	/* union of the above */
-
-    } fp_reg_set;
-
-    long    f_weiregs[33]; 	/* weitek */
-
+    int		f_x87[62];	/* x87 registers */
+    long	f_weitek[33]; 	/* weitek */
 } svr4_fregset_t;
 
 struct svr4_ucontext;
+
 void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
 			  int, int));
 int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
