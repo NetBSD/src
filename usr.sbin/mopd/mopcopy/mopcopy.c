@@ -1,6 +1,6 @@
-/*	$NetBSD: mopa.out.c,v 1.9 2002/06/06 22:52:26 thorpej Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.1 2002/06/06 23:01:01 thorpej Exp $	*/
 
-/* mopa.out - Convert a Unix format kernel into something that
+/* mopcopy - Convert a Unix format kernel into something that
  * can be transfered via MOP.
  *
  * This code was written while refering to the NetBSD/vax boot
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopa.out.c,v 1.9 2002/06/06 22:52:26 thorpej Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.1 2002/06/06 23:01:01 thorpej Exp $");
 #endif
 
 #include "os.h"
