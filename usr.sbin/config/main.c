@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2002/10/11 01:48:26 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2002/10/11 01:54:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -993,7 +993,7 @@ crosscheck(void)
 		(void)fprintf(stderr, " (%s %s declared)\n",
 		    p->p_atunit == WILD ? "nothing matching" : "no",
 		    i->i_at);
-		err++;
+		errs++;
 	}
 	if (TAILQ_EMPTY(&allcf)) {
 		(void)fprintf(stderr, "%s has no configurations!\n",
