@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2004/05/16 15:44:10 wiz Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2004/05/16 15:44:10 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -329,7 +329,7 @@ trap(type, code, v, frame)
 	int s;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
 	int bit;
-	static int panicing = 0;
+	static int panicking = 0;
 
 	uvmexp.traps++;
 	l = curlwp;
@@ -361,7 +361,7 @@ trap(type, code, v, frame)
 		 * one can see registers at the point of failure.
 		 */
 		s = splhigh();
-		panicing = 1;
+		panicking = 1;
 		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
 		printf("%s program counter = 0x%x\n",
 		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
@@ -674,7 +674,7 @@ trap(type, code, v, frame)
 		}
 
 #ifdef DIAGNOSTIC
-		if (interrupt_depth && !panicing) {
+		if (interrupt_depth && !panicking) {
 			printf("trap: calling uvm_fault() from interrupt!\n");
 			goto dopanic;
 		}

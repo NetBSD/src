@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.52 2003/10/18 21:26:22 cdi Exp $	*/
+/*	$NetBSD: cons.c,v 1.53 2004/05/16 15:44:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.52 2003/10/18 21:26:22 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.53 2004/05/16 15:44:11 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -135,7 +135,7 @@ cnopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (cndev == NODEV) {
 		/*
 		 * This is most likely an error in the console attach
-		 * code. Panicing looks better than jumping into nowhere
+		 * code. Panicking looks better than jumping into nowhere
 		 * through cdevsw below....
 		 */
 		panic("cnopen: no console device");
