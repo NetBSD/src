@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/10/04 04:14:06 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2001/10/04 04:57:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -39,7 +39,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
 	disklabel -r -R ${VND_CDEV} tmplabel
-	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
+	newfs -B le -m 0 -o space -i 8192 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
