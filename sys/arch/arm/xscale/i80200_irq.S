@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1.4.6 2002/10/18 02:35:41 nathanw Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.1.4.7 2002/10/22 04:12:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -122,6 +122,7 @@ ASENTRY_NP(irq_entry)
 	mov	r0, sp
 	mov	lr, pc
 	ldr	pc, [r1]
+.Lextirq_return:
 
 	/* Decremement the nest count. */
 	ldr	r0, .Lcurrent_intr_depth 
