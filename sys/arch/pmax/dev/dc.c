@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
- *      $Id: dc.c,v 1.4 1994/05/27 08:58:30 glass Exp $
+ *      $Id: dc.c,v 1.5 1994/05/30 06:12:07 glass Exp $
  */
 
 /*
@@ -593,7 +593,7 @@ dcxint(tp)
 	if (tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else {
-		ndflush(&tp->t_outq, dp->p_mem-tp->t_outq.c_cf);
+		ndflush(&tp->t_outq, dp->p_mem - (caddr_t) tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
 	if (tp->t_line)
