@@ -1,4 +1,4 @@
-/* $NetBSD: joy_eap.c,v 1.1 2004/07/08 19:39:00 drochner Exp $ */
+/* $NetBSD: joy_eap.c,v 1.2 2004/08/03 18:38:52 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,5 @@ int
 joy_eap_detach(struct device *self, int flags)
 {
 
-#ifdef notyet
-	return (joydetach((struct joy_softc *)self));
-#else
-	return (EBUSY);
-#endif
+	return (joydetach((struct joy_softc *)self, flags));
 }
