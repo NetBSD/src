@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: blk.c,v 1.3 1993/08/02 17:53:42 mycroft Exp $";
+static char rcsid[] = "$Id: blk.c,v 1.4 1993/11/19 12:53:32 pk Exp $";
 #endif /* not lint */
 
 #include "config.h"
@@ -475,6 +475,8 @@ int undo()
 	/* "do" the changed version, so we can undo the "undo" */
 	cursor = undocurs;
 	beforedo(TRUE);
+	/* This is a change */
+	significant = TRUE;
 	afterdo();
 
 	/* wipe out the block buffers - we can't assume they're correct */
@@ -483,8 +485,6 @@ int undo()
 	/* use the old header -- and therefore the old text blocks */
 	hdr = oldhdr;
 
-	/* This is a change */
-	significant = TRUE;
 	changes++;
 
 	return TRUE;
