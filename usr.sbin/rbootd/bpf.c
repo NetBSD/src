@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.4 1995/09/12 07:13:06 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.5 1995/10/06 05:12:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: bpf.c,v 1.4 1995/09/12 07:13:06 thorpej Exp $";
+static char rcsid[] = "$NetBSD: bpf.c,v 1.5 1995/10/06 05:12:12 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ static char rcsid[] = "$NetBSD: bpf.c,v 1.4 1995/09/12 07:13:06 thorpej Exp $";
 
 static int BpfFd = -1;
 static unsigned BpfLen = 0;
-static u_char *BpfPkt = NULL;
+static u_int8_t *BpfPkt = NULL;
 
 /*
 **  BpfOpen -- Open and initialize a BPF device.
@@ -166,7 +166,7 @@ BpfOpen()
 		Exit(0);
 	}
 	if (BpfPkt == NULL)
-		BpfPkt = (u_char *)malloc(BpfLen);
+		BpfPkt = (u_int8_t *)malloc(BpfLen);
 
 	if (BpfPkt == NULL) {
 		syslog(LOG_ERR, "bpf: out of memory (%u bytes for bpfpkt)",
@@ -315,7 +315,7 @@ BpfRead(rconn, doread)
 	int doread;
 {
 	register int datlen, caplen, hdrlen;
-	static u_char *bp = NULL, *ep = NULL;
+	static u_int8_t *bp = NULL, *ep = NULL;
 	int cc;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.4 1995/09/12 07:13:12 thorpej Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.5 1995/10/06 05:12:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rmpproto.c,v 1.4 1995/09/12 07:13:12 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rmpproto.c,v 1.5 1995/10/06 05:12:21 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -180,7 +180,7 @@ SendServerID(rconn)
 {
 	register struct rmp_packet *rpl;
 	register char *src, *dst;
-	register u_char *size;
+	register u_int8_t *size;
 
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
 
@@ -234,7 +234,8 @@ SendFileNo(req, rconn, filelist)
 {
 	register struct rmp_packet *rpl;
 	register char *src, *dst;
-	register u_char *size, i;
+	register u_int8_t *size;
+	register int i;
 
 	GETWORD(req->r_brpl.rmp_seqno, i);	/* SeqNo is really FileNo */
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
@@ -299,7 +300,7 @@ SendBootRepl(req, rconn, filelist)
 	RMPCONN *oldconn;
 	register struct rmp_packet *rpl;
 	register char *src, *dst1, *dst2;
-	register u_char i;
+	register u_int8_t i;
 
 	/*
 	 *  If another connection already exists, delete it since we
@@ -401,7 +402,7 @@ int
 SendReadRepl(rconn)
 	RMPCONN *rconn;
 {
-	int retval;
+	int retval = 0;
 	RMPCONN *oldconn;
 	register struct rmp_packet *rpl, *req;
 	register int size = 0;

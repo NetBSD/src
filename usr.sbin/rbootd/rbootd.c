@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.4 1995/08/21 17:05:18 thorpej Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -54,7 +54,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rbootd.c,v 1.4 1995/08/21 17:05:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -180,7 +180,7 @@ main(argc, argv)
 		FILE *fp;
 
 		if ((fp = fopen(PidFile, "w")) != NULL) {
-			(void) fprintf(fp, "%d\n", MyPid);
+			(void) fprintf(fp, "%d\n", (int) MyPid);
 			(void) fclose(fp);
 		} else {
 			syslog(LOG_WARNING, "fopen: failed (%s)", PidFile);

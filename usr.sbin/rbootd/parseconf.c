@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.3 1995/08/21 17:05:13 thorpej Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: parseconf.c,v 1.3 1995/08/21 17:05:13 thorpej Exp $";
+static char rcsid[] = "$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ ParseConfig()
 {
 	FILE *fp;
 	CLIENT *client;
-	u_char *addr;
+	u_int8_t *addr;
 	char line[C_LINELEN];
 	register char *cp, *bcp;
 	register int i, j;
@@ -244,13 +244,12 @@ ParseConfig()
 **	Warnings:
 **		- The return value points to a static buffer; it must
 **		  be copied if it's to be saved.
-**		- For speed, we assume a u_char consists of 8 bits.
 */
-u_char *
+u_int8_t *
 ParseAddr(str)
 	char *str;
 {
-	static u_char addr[RMP_ADDRLEN];
+	static u_int8_t addr[RMP_ADDRLEN];
 	register char *cp;
 	register unsigned i;
 	register int part, subpart;
