@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.35 2000/06/27 17:41:33 mrg Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.36 2000/07/07 14:10:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				 * overflows, then the request
 				 * can't fit.
 				 */
-				if (dontcross > ex->ex_end ||
+				if (newstart + size - 1 > ex->ex_end ||
 				    dontcross < newstart)
 					goto fail;
 			}
@@ -788,7 +788,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			 * overflows, then the request
 			 * can't fit.
 			 */
-			if (dontcross > ex->ex_end ||
+			if (newstart + size - 1 > ex->ex_end ||
 			    dontcross < newstart)
 				goto fail;
 		}
