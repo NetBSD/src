@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.96 2003/05/03 16:28:57 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.97 2003/05/03 16:46:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.96 2003/05/03 16:28:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.97 2003/05/03 16:46:39 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1045,6 +1045,9 @@ again:
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (!error) {
+			/*
+			 * pages are now on stable storage.
+			 */
 			uiop->uio_resid = 0;
 			simple_lock(&uobj->vmobjlock);
 			for (i = 0; i < npages; i++) {
@@ -1069,13 +1072,14 @@ again:
 	nfsstats.write_bios++;
 	error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
 	if (!error && iomode == NFSV3WRITE_UNSTABLE) {
+		/*
+		 * we need to commit pages later.
+		 */
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		nfs_add_tobecommitted_range(vp, off, cnt);
-		simple_lock(&uobj->vmobjlock);
-		for (i = 0; i < npages; i++) {
-			pgs[i]->flags &= ~PG_CLEAN;
-		}
-		simple_unlock(&uobj->vmobjlock);
+		/*
+		 * if there can be too many uncommitted pages, commit them now.
+		 */
 		if (np->n_pushhi - np->n_pushlo > nfs_commitsize) {
 			off = np->n_pushlo;
 			cnt = nfs_commitsize >> 1;
@@ -1084,13 +1088,26 @@ again:
 				nfs_add_committed_range(vp, off, cnt);
 				nfs_del_tobecommitted_range(vp, off, cnt);
 			}
+			if (error == NFSERR_STALEWRITEVERF) {
+				stalewriteverf = TRUE;
+				error = 0; /* it isn't a real error */
+			}
+		} else {
+			/*
+			 * re-dirty pages so that they will be passed
+			 * to us later again.
+			 */
+			simple_lock(&uobj->vmobjlock);
+			for (i = 0; i < npages; i++) {
+				pgs[i]->flags &= ~PG_CLEAN;
+			}
+			simple_unlock(&uobj->vmobjlock);
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-		if (error == NFSERR_STALEWRITEVERF) {
-			stalewriteverf = TRUE;
-			error = 0;
-		}
-	} else if (!error && needcommit) {
+	} else if (!error) {
+		/*
+		 * pages are now on stable storage.
+		 */
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		nfs_del_committed_range(vp, off, cnt);
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
@@ -1100,11 +1117,12 @@ again:
 		}
 		simple_unlock(&uobj->vmobjlock);
 	} else {
-		if (error) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = np->n_error = error;
-			np->n_flag |= NWRITEERR;
-		}
+		/*
+		 * we got an error.
+		 */
+		bp->b_flags |= B_ERROR;
+		bp->b_error = np->n_error = error;
+		np->n_flag |= NWRITEERR;
 	}
 
 	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
