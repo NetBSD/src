@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.7 1999/11/16 03:15:17 jun Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.8 1999/12/04 05:43:44 castor Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -530,6 +530,25 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/* Lava Computers 2SP-PCI */
+	{   "Lava Computers 2SP-PCI parallel port",
+	    {	0x1407,	0x8000,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+	    },
+	},
+
+	/* Lava Computers 2SP-PCI and Quattro-PCI serial ports */
+	{   "Lava Computers dual serial port",
+	    {	0x1407,	0x0100,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
 	    },
 	},
 
