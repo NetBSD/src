@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.7 1996/10/13 03:05:57 christos Exp $ */
+/* $NetBSD: postmortem.c,v 1.8 1996/10/15 02:07:08 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -167,33 +167,7 @@ dumpframe(frame)
 	(void)splx(s);
 }
 
-
-/* Dump kstack information */
-/*
-void kstack_stuff(p)
-	struct proc *p;
-{
-	struct pmap *pmap;
-
-	if (p == 0) return;
-	if (p->p_addr == 0) return;
-	if (p->p_vmspace == 0) return;
-	
-	printf("proc=%08x comm=%s pid=%d\n", (u_int)p, p->p_comm, p->p_pid);
-	
-	pmap = &p->p_vmspace->vm_pmap;
-
-	printf("pmap=%08x\n", (u_int)pmap);
-
-	printf("p->p_addr=%08x pa=%08x,%d:%08x,%d\n",
-	    (u_int)p->p_addr,
-	    (u_int)pmap_extract(pmap, (vm_offset_t)p->p_addr),
-	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr)),
-	    (u_int)pmap_extract(pmap, (vm_offset_t)p->p_addr + NBPG),
-	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr + NBPG)));
-}
-*/
-
+#ifdef STACKCHECKS
 void
 check_stacks(p)
 	struct proc *p;
@@ -212,7 +186,7 @@ check_stacks(p)
 		    USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM);
 	}
 }
-
+#endif
 
 /* Perform a postmortem */
 
@@ -226,9 +200,11 @@ postmortem(frame)
 			
 	s = splhigh();
 
+#ifdef STACKCHECKS
 /* Check the stack for a known pattern */
 
 	check_stacks(p);
+#endif
 
 #ifdef ROTTEN_INARDS
 	addr = traceback();
@@ -260,17 +236,13 @@ postmortem(frame)
 	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
 	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
 
-/*
-	kstack_stuff(&proc0);
-	kstack_stuff(curproc);
-*/
 #else
 	printf("Process = %08x ", (u_int)curproc);
 	printf("pid = %d ", curproc->p_pid); 
 	printf("comm = %s\n", curproc->p_comm); 
 	printf("CPSR=%08x ", GetCPSR());
 
-	printf("Traceback info\n");
+	printf("Traceback info (frame=%08x)\n", (u_int)frame);
 	addr = simpletraceback();
 	printf("Trapframe PC = %08x\n", frame->tf_pc);
 	printf("Trapframe SPSR = %08x\n", frame->tf_spsr);
