@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.75 1998/10/19 22:09:14 tron Exp $ */
+/* $NetBSD: pmap.c,v 1.76 1998/12/18 19:52:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 1998/10/19 22:09:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 1998/12/18 19:52:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1748,7 +1748,7 @@ pmap_kenter_pa(va, pa, prot)
 	 * Sanity check the virtual address.
 	 */
 	if (va < VM_MIN_KERNEL_ADDRESS)
-		panic("pmap_enter: kernel pmap, invalid va 0x%lx", va);
+		panic("pmap_kenter_pa: kernel pmap, invalid va 0x%lx", va);
 #endif
 
 	pte = PMAP_KERNEL_PTE(va);
