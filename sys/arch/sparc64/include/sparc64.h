@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.2 1998/08/13 02:10:45 eeh Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -72,4 +72,4 @@ void ofrootfound __P((void));
  * Debug
  */
 void prom_printf __P((const char *, ...));
-#endif	/* _MACHINE_POWERPC_H_ */
+#endif	/* _MACHINE_SPARC64_H_ */
