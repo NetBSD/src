@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 2003/04/08 06:54:24 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -316,7 +316,7 @@ disklabel_sgimips_to_bsd(struct sgilabel *vh, struct disklabel *lp)
 	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 
 	lp->d_bbsize = BBSIZE;
-	lp->d_sbsize = SBSIZE;
+	lp->d_sbsize = SBLOCKSIZE;
 	lp->d_npartitions = MAXPARTITIONS;
 
 	for (i = 0; i < 16; i++) {
