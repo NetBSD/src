@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1997/09/21 02:35:41 enami Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2000/11/06 14:05:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,19 +41,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.7 1997/09/21 02:35:41 enami Exp $");
+__RCSID("$NetBSD: conf.c,v 1.8 2000/11/06 14:05:54 jdolecek Exp $");
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/syslog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <regexp.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/syslog.h>
+#include <regex.h>
 
 #include "portald.h"
 
@@ -65,23 +65,20 @@ struct path {
 	int p_lno;		/* Line number of this record */
 	char *p_args;		/* copy of arg string (malloc) */
 	char *p_key;		/* Pathname to match (also p_argv[0]) */
-	regexp *p_re;		/* RE to match against pathname (malloc) */
+	regex_t p_re;		/* RE to match against pathname (malloc) */
+	int p_use_re;		/* true if entry is RE */
 	int p_argc;		/* number of elements in arg string */
 	char **p_argv;		/* argv[] pointers into arg string (malloc) */
 };
 
 static	void	ins_que __P((qelem *, qelem *));
-static	path   *palloc __P((char *, int));
+static	path   *palloc __P((char *, int, const char *));
 static	void	pfree __P((path *));
 static	int	pinsert __P((path *, qelem *));
 static	void	preplace __P((qelem *, qelem *));
-static	void	readfp __P((qelem *, FILE *));
-	void	regerror __P((const char *));
+static	void	readfp __P((qelem *, FILE *, const char *));
 static	void	rem_que __P((qelem *));
 static	void   *xmalloc __P((size_t));
-
-static char *conf_file;		/* XXX for regerror */
-static path *curp;		/* XXX for regerror */
 
 /*
  * Add an element to a 2-way list,
@@ -152,20 +149,13 @@ pinsert(p0, q0)
 	
 }
 
-void
-regerror(s)
-	const char *s;
-{
-	syslog(LOG_ERR, "%s:%d: regcomp %s: %s",
-	    conf_file, curp->p_lno, curp->p_key, s);
-}
-
 static path *
-palloc(cline, lno)
+palloc(cline, lno, conf_file)
 	char *cline;
 	int lno;
+	const char *conf_file;
 {
-	int c;
+	int c, errcode;
 	char *s;
 	char *key;
 	path *p;
@@ -222,12 +212,19 @@ palloc(cline, lno)
 #endif
 
 	p->p_key = p->p_argv[0];
+	p->p_use_re = 0;
 	if (strpbrk(p->p_key, RE_CHARS)) {
-		curp = p;			/* XXX */
-		p->p_re = regcomp(p->p_key);
-		curp = 0;			/* XXX */
-	} else
-		p->p_re = 0;
+		errcode = regcomp(&p->p_re, p->p_key, REG_EXTENDED|REG_NOSUB);
+		if (errcode == 0)
+			p->p_use_re = 1;
+		else {
+			char buf[200];
+			regerror(errcode, &p->p_re, buf, sizeof(buf));
+			
+			syslog(LOG_ERR, "%s, line %d: regcomp \"%s\": %s",
+	  		  conf_file, p->p_lno, p->p_key, buf);
+		}
+	}
 	p->p_lno = lno;
 
 	return (p);
@@ -241,9 +238,9 @@ pfree(p)
 	path *p;
 {
 	free(p->p_args);
-	if (p->p_re)
-		free((char *) p->p_re);
 	free((char *) p->p_argv);
+	if (p->p_use_re)
+		regfree(&p->p_re);
 	free((char *) p);
 }
 
@@ -278,9 +275,10 @@ preplace(q0, xq)
  * add them to the list of paths.
  */
 static void
-readfp(q0, fp)
+readfp(q0, fp, conf_file)
 	qelem *q0;
 	FILE *fp;
+	const char *conf_file;
 {
 	char cline[LINE_MAX];
 	int nread = 0;
@@ -295,7 +293,7 @@ readfp(q0, fp)
 	 * Read the lines from the configuration file.
 	 */
 	while (fgets(cline, sizeof(cline), fp)) {
-		path *p = palloc(cline, nread+1);
+		path *p = palloc(cline, nread+1, conf_file);
 		if (p && !pinsert(p, &q))
 			pfree(p);
 		nread++;
@@ -322,9 +320,7 @@ conf_read(q, conf)
 {
 	FILE *fp = fopen(conf, "r");
 	if (fp) {
-		conf_file = conf;		/* XXX */
-		readfp(q, fp);
-		conf_file = 0;		/* XXX */
+		readfp(q, fp, conf);
 		(void) fclose(fp);
 	} else
 		syslog(LOG_ERR, "open config file \"%s\": %m", conf);
@@ -340,8 +336,8 @@ conf_match(q0, key)
 
 	for (q = q0->q_forw; q != q0; q = q->q_forw) {
 		path *p = (path *) q;
-		if (p->p_re) {
-			if (regexec(p->p_re, key))
+		if (p->p_use_re) {
+			if (regexec(&p->p_re, key, 0, NULL, 0) == 0)
 				return (p->p_argv+1);
 		} else {
 			if (strncmp(p->p_key, key, strlen(p->p_key)) == 0)
