@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.10 2002/03/04 01:38:32 wiz Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.11 2002/07/13 19:56:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.10 2002/03/04 01:38:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.11 2002/07/13 19:56:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1076,6 +1076,9 @@ rf_RangeRestrictPDA(
 		    rf_StripeUnitOffset(layoutPtr, dest->startSector);
 	}
 }
+
+#if (RF_INCLUDE_CHAINDECLUSTER > 0)
+
 /*
  * Want the highest of these primes to be the largest one
  * less than the max expected number of columns (won't hurt
@@ -1167,6 +1170,8 @@ rf_compute_workload_shift(
 	}
 	return (ret);
 }
+#endif /* (RF_INCLUDE_CHAINDECLUSTER > 0) */
+
 /*
  * Disk selection routines
  */
