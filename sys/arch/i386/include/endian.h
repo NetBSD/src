@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.7 1993/09/17 01:44:08 cgd Exp $
+ *	$Id: endian.h,v 1.8 1993/12/20 05:25:11 mycroft Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -65,7 +65,7 @@ unsigned short  ntohs __P((unsigned short));
 __END_DECLS
 
 
-#if __GNUC__
+#ifdef __GNUC__
 
 #if __GNUC__ >= 2
 

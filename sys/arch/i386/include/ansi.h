@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	7.1 (Berkeley) 3/9/91
- *	$Id: ansi.h,v 1.2 1993/05/22 08:00:10 cgd Exp $
+ *	$Id: ansi.h,v 1.3 1993/12/20 05:25:02 mycroft Exp $
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_I386_ANSI_H_
+#define	_I386_ANSI_H_
 
 /*
  * Types which are fundamental to the implementation and may appear in
@@ -51,8 +51,9 @@
 #define	_CLOCK_T_	unsigned long		/* clock() */
 #define	_PTRDIFF_T_	int			/* ptr1 - ptr2 */
 #define	_SIZE_T_	unsigned int		/* sizeof() */
+#define	_SSIZE_T_	int			/* byte count or error */
 #define	_TIME_T_	long			/* time() */
 #define	_VA_LIST_	char *			/* va_list */
 #define	_WCHAR_T_	unsigned short		/* wchar_t */
 
-#endif	/* _ANSI_H_ */
+#endif	/* !_I386_ANSI_H_ */
