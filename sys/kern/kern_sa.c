@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.35 2003/11/01 02:09:52 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.36 2003/11/01 15:36:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.35 2003/11/01 02:09:52 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.36 2003/11/01 15:36:35 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ sa_yield(struct lwp *l)
 #endif
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
-	int s, ret;
+	int ret, s;
 	
 	/*
 	 * If we're the last running LWP, stick around to recieve
@@ -706,7 +706,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 	KDASSERT(sa->sa_vp == l);
 
 	if (sa->sa_vp_faultaddr == sa->sa_vp_ofaultaddr) {
-		DPRINTFN(10,("sa_check_upcall(%d.%d) double page fault\n",
+		DPRINTFN(10,("sa_pagefault(%d.%d) double page fault\n",
 			     p->p_pid, l->l_lid));
 		return 1;
 	}
@@ -715,7 +715,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 
 	if ((usp >= sa->sa_vp_stacks_low) &&
 	    (usp < sa->sa_vp_stacks_high)) {
-		DPRINTFN(10,("sa_check_upcall(%d.%d) upcall page fault\n",
+		DPRINTFN(10,("sa_pagefault(%d.%d) upcall page fault\n",
 			     p->p_pid, l->l_lid));
 		return 1;
 	}
@@ -836,6 +836,8 @@ sa_switch(struct lwp *l, int type)
 			sa->sa_stacks[sa->sa_nstacks++] = st;
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
+			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
+				     p->p_pid, l->l_lid));
 			return;
 		}
 
@@ -869,7 +871,6 @@ sa_switch(struct lwp *l, int type)
 				l2 = NULL;
 		}
 	} else {
-
 #if 0
 		/*
 		 * Case 3: The VP is empty. As in case 2, we were
@@ -902,13 +903,11 @@ sa_switch(struct lwp *l, int type)
 		setrunnable(l2);
 		PRELE(l2); /* Remove the artificial hold-count */
 #else
-		
 		/* sa_putcachelwp does not block because we have a hold count on l2 */
 		sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 
 		mi_switch(l, NULL);
 		return;
-
 #endif
 	}
 
@@ -1119,7 +1118,7 @@ sa_unblock_userret(struct lwp *l)
 		}
 		tsleep((caddr_t) &l->l_upcallstack, PWAIT,
 		    "saunblock", 0);
-	       	if (p->p_flag & P_WEXIT)
+		if (p->p_flag & P_WEXIT)
 			lwp_exit(l);
 	}
 
@@ -1180,7 +1179,6 @@ sa_unblock_userret(struct lwp *l)
 	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_PROC_UNLOCK(l);
 }
-
 
 void
 sa_upcall_userret(struct lwp *l)
@@ -1335,6 +1333,7 @@ sa_upcall_userret(struct lwp *l)
 	type = sau->sau_type;
 
 	sadata_upcall_free(sau);
+
 	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n",p->p_pid,
 	    l->l_lid, type));
 
@@ -1346,8 +1345,6 @@ sa_upcall_userret(struct lwp *l)
 		/* May not be reached  */
 	}
 
-	/* May not be reached  */
-	
 	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_PROC_UNLOCK(l);
 }
