@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.265 1999/10/25 16:47:03 itojun Exp $
+#	$NetBSD: GENERIC,v 1.266 1999/11/01 20:43:13 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -556,6 +556,7 @@ ugen*	at uhub? port ?
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+fms*	at pci? dev ? function ?	# Forte Media FM801
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -580,6 +581,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
 opl*	at ess?
+opl*	at fms?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
@@ -590,6 +592,7 @@ opl*	at ym?
 audio*	at eap?
 audio*	at eso?
 audio*	at ess?
+audio*	at fms?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
@@ -603,10 +606,12 @@ audio*	at ym?
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
 mpu*	at eso?
+mpu*	at fms?
 mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
+midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
