@@ -1,4 +1,4 @@
-# $Id: README,v 1.2.2.1 1994/07/28 09:00:43 cgd Exp $
+# $Id: README,v 1.2.2.2 1994/08/12 06:34:41 mycroft Exp $
 
 Initial test versions of a NetBSD/sparc binaries install are available
 at
@@ -40,9 +40,11 @@ Until there are better instructions written, here's a rough idea:
 2.  newfs it using sunos. yup, the filesystem format is identical.
     UFS hasn't changed much over the years. (If you can, there is
     a performance benefit from newfs'ing using NetBSD.)
+
     If you newfs using the NetBSD newfs command, be sure to use -O
     to specify the `4.3BSD filesystem format' for your / partition,
-    otherwise you will not be able to boot.
+    otherwise you will not be able to boot. The SunOS boot blocks do
+    not understand the extended 4.4 filesystem format.
 
 3.  put a SunOS /boot program in the root partition, and use
     "installboot" to cause it to work. the "installboot" man page
@@ -51,30 +53,40 @@ Until there are better instructions written, here's a rough idea:
     /dev/sd1. You have made the filesystems on that drive already.
 	# mount /dev/sd1a /mnt
 	# cp /boot /mnt/boot
-	# cd /usr/mdec
-	# ./installboot -vlt /mnt/boot bootsd /dev/rsd1a
+	# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd1a
 
-4.  extract the provided *.tar.gz files and dev.cpio.gz onto the disk.
-    the file "install.sh" will help you do this.
+4.  extract the provided *.tar.gz files onto the disk. the file
+    "install.sh" will help you do this.
 
-    (the file dev.tar.gz is included, but is of limited use because
-    SunOS tar is not capable of extracting device nodes from tar
-    archives.)
-
-    mount your partition(s) in a proper tree starting at /mnt.
-    In the same directory as your *.tar.gz and *.cpio.gz files are, run
-    "./install.sh". (Now you may cut the head off the chicken and
-    spray the blood over your walls and ceiling.)
+    mount your partition(s) in a proper tree starting at /mnt. In the
+    same directory as your *.tar.gz files are, run "./install.sh".
+    (Now you may cut the head off the chicken and spray the blood over
+    your walls and ceiling. :-)
 
     If you have done anything weird with partitions, take this moment
-    to ensure that etc/fstab is corrent for your disk layout.
+    to ensure that /mnt/etc/fstab is correct for your disk layout.
 
-5.  the install script puts the standard kernel in /mnt. the filesystem
-    image dooes NOT contain this kernel.
-    the kernel expects your root drive to be at the standard sunos
-    sd0/scsi-id#3 location.
+5.  the install script copies the kernel called "netbsd.scsi3" to
+    /mnt/netbsd. Two sample kernels are supplied: "netbsd" and
+    "netbsd.scsi3".
 
-6.  your rom may need some setup. make sure you boot from `new command mode'.
+    Unlike SunOS and the ROM, NetBSD numbers scsi drives sequentially
+    as it finds them. The drive with the lowest scsi-id will be called
+    sd0.  SunOS and the ROM map normally map sd0 to scsi-id 3. Thus, if
+    you have two drives, it's quite likely that NetBSD will disagree with
+    the ROM.
+
+    The "netbsd.scsi3" kernel gets around this problem, by hard-wiring
+    scsi-id#3 to sd0. The remaining drives will be dynamically mapped
+    to other sd* numbers.  If you have more than one drive you will
+    want to use this kernel.
+
+    the "netbsd" kernel expects your root drive to be at the standard
+    SunOS sd0==scsi-id#3 location. If you have a second drive at any
+    of scsi-id's 0, 1, or 2, this kernel will NOT work for you. If you
+    know what you are doing, you could use this kernel.
+
+6.  your ROM may need some setup. make sure you boot from `new command mode'.
     If your machine comes up and gives you a `>' prompt instead of `ok', type:
         >n
         ok setenv sunmon-compat? false
@@ -82,7 +94,7 @@ Until there are better instructions written, here's a rough idea:
     this is needed because netbsd cannot handle the old-mode yet,
     and will firework on you.
 
-    you cannot use the security modes of the sparc rom. sorry, same
+    you cannot use the security modes of the sparc ROM. sorry, same
     problem as above.
 	ok setenv security-mode none
 
@@ -93,7 +105,7 @@ Until there are better instructions written, here's a rough idea:
     found in /sbin.
 
 8.  to boot from netbsd by default, tell something like this to your
-    rom.
+    ROM.
 	>n
 	ok setenv boot-from sd(0,0,0)netbsd
 	ok
