@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.42 1996/05/21 00:04:18 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.43 1996/05/21 02:46:02 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -185,13 +185,19 @@ via1_intr(fp)
 	if (intbits == 0)
 		return;
 
+	/*
+	 * Unflag interrupts here.  If we do it after each interrupt,
+	 * the MRG ADB hangs up.
+	 */
+	via_reg(VIA1, vIFR) = intbits;
+
 	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
 			via1itab[bitnum]((void *)((int) bitnum));
-			via_reg(VIA1, vIFR) = mask;
+			/* via_reg(VIA1, vIFR) = mask; */
 		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
