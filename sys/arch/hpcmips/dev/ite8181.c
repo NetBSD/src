@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.13 2001/07/17 01:41:38 toshii Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.14 2001/07/22 09:56:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -607,9 +607,7 @@ ite8181_fbinit(fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == BIG_ENDIAN /* XXXX */
-		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
-#endif
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;
