@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:07 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -33,5 +33,5 @@ LDADD+=	${LDADD.Xext/exts} ${LDADD.xkb} ${LDADD.xinput} ${LDADD.lbx} -llbxutil \
 
 LDADD+=	-lz -lm -li386
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

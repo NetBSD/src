@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:54:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:13 lukem Exp $
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
-
-XTODO=	LIB=cbrt
 
 LIB=		mi
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
@@ -27,5 +27,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
 
-.include <bsd.lib.mk>
+XTODO=	SRCS+=	miinitext.c ?
+
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

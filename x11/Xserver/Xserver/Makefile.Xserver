@@ -1,13 +1,16 @@
-#	$NetBSD: Makefile.Xserver,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile.Xserver,v 1.2 2003/09/23 23:21:06 lukem Exp $
 
 .PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
-SRCS+=		_dummy_.c
 
-.for _SL in	GL/glx GL/mesa Xext/ext Xext/exts cfb cfb32 \
-		dbe dix dix/xpstubs fb hw/vfb hw/xnest lbx mfb mi os \
-		printer printer/raster printer/pcl printer/ps \
-		randr record render xinput xkb xtrap
+.for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
+		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
+		record randr render xtrap mfb cfb cfb16 cfb24 cfb32 fb \
+		hw/xnest hw/vfb \
+		\
+		dix/xpstubs 
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
 LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 .endfor
+
+LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
