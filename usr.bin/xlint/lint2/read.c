@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.12 2002/01/21 19:49:52 tv Exp $ */
+/* $NetBSD: read.c,v 1.13 2002/01/31 19:36:56 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: read.c,v 1.12 2002/01/21 19:49:52 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: read.c,v 1.13 2002/01/31 19:36:56 tv Exp $");
 #endif
 
 #include <ctype.h>

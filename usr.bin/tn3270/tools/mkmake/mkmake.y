@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.8 2000/07/06 14:30:09 ad Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.9 2002/01/31 19:36:52 tv Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.8 2000/07/06 14:30:09 ad Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.9 2002/01/31 19:36:52 tv Exp $");
 #endif
 #endif /* not lint */
 

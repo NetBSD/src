@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.24 2002/01/29 02:43:39 tv Exp $ */
+/* $NetBSD: scan.l,v 1.25 2002/01/31 19:36:54 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,8 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.24 2002/01/29 02:43:39 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: scan.l,v 1.25 2002/01/31 19:36:54 tv Exp $");
 #endif
 
 #include <stdlib.h>

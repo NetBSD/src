@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2002/01/21 21:49:58 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2002/01/31 19:36:47 tv Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -38,16 +38,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2002/01/21 21:49:58 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2002/01/31 19:36:47 tv Exp $");
 #endif
 #endif /* not lint */
 

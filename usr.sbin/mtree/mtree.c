@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.27 2002/01/29 00:07:27 tv Exp $	*/
+/*	$NetBSD: mtree.c,v 1.28 2002/01/31 19:37:16 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.27 2002/01/29 00:07:27 tv Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.28 2002/01/31 19:37:16 tv Exp $");
 #endif
 #endif /* not lint */
 

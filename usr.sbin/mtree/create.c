@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.38 2002/01/29 00:07:27 tv Exp $	*/
+/*	$NetBSD: create.c,v 1.39 2002/01/31 19:37:15 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.38 2002/01/29 00:07:27 tv Exp $");
+__RCSID("$NetBSD: create.c,v 1.39 2002/01/31 19:37:15 tv Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.22 2001/11/17 04:35:32 perry Exp $	*/
+/*	$NetBSD: tree.c,v 1.23 2002/01/31 19:36:54 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,8 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.22 2001/11/17 04:35:32 perry Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: tree.c,v 1.23 2002/01/31 19:36:54 tv Exp $");
 #endif
 
 #include <stdlib.h>

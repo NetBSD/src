@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.10 1999/12/15 16:47:35 bouyer Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.11 2002/01/31 19:36:49 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.10 1999/12/15 16:47:35 bouyer Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.11 2002/01/31 19:36:49 tv Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.9 2000/06/11 03:38:30 thorpej Exp $	*/
+/*	$NetBSD: dohits.c,v 1.10 2002/01/31 19:36:52 tv Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.9 2000/06/11 03:38:30 thorpej Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.10 2002/01/31 19:36:52 tv Exp $");
 #endif
 #endif /* not lint */
 

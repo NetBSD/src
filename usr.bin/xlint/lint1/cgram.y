@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.22 2002/01/30 06:48:32 thorpej Exp $ */
+/* $NetBSD: cgram.y,v 1.23 2002/01/31 19:36:53 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,8 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: cgram.y,v 1.22 2002/01/30 06:48:32 thorpej Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: cgram.y,v 1.23 2002/01/31 19:36:53 tv Exp $");
 #endif
 
 #include <stdlib.h>
