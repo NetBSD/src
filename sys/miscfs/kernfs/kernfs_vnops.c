@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.67 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.67.12.1 2000/07/14 18:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,9 @@ struct kern_target kern_targets[] = {
      { DT_DIR, N("."),         0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KTT_INT,  VREG, READ_MODE  },
-     { DT_REG, N("copyright"), copyright,    KTT_STRING,   VREG, READ_MODE  },
+			/* XXX cast away const */
+     { DT_REG, N("copyright"), (void *)copyright,
+     					     KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KTT_HOSTNAME, VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
@@ -93,7 +95,9 @@ struct kern_target kern_targets[] = {
      { DT_BLK, N("rootdev"),   &rootdev,     KTT_DEVICE,   VBLK, READ_MODE  },
      { DT_CHR, N("rrootdev"),  &rrootdev,    KTT_DEVICE,   VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KTT_TIME,     VREG, READ_MODE  },
-     { DT_REG, N("version"),   version,      KTT_STRING,   VREG, READ_MODE  },
+			/* XXX cast away const */
+     { DT_REG, N("version"),   (void *)version,
+     					     KTT_STRING,   VREG, READ_MODE  },
 #undef N
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
