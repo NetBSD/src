@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2003/11/01 11:50:53 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2003/11/01 12:18:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2003/11/01 11:50:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2003/11/01 12:18:55 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1163,7 +1163,7 @@ mem_exists(mem, basemax)
 {
 	/* most variables must be register! */
 	volatile unsigned char *m, *b;
-	unsigned char save_m, save_b;
+	unsigned char save_m, save_b=0;	/* XXX: shutup gcc */
 	int baseismem;
 	int exists = 0;
 	caddr_t base;
@@ -1287,6 +1287,7 @@ setmemrange(void)
 		int cacr;
 		PCIA();		/* cpusha dc */
 		switch (cputype) {
+		default:
 		case CPU_68030:
 			cacr = CACHE_OFF;
 			break;
@@ -1331,6 +1332,7 @@ setmemrange(void)
 		int cacr;
 		ICIA();
 		switch (cputype) {
+		default:
 		case CPU_68030:
 			cacr = CACHE_ON;
 			break;
