@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -44,6 +44,7 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+#include <sys/device.h>
 #include <mips/cpuregs.h>
 
 extern int _splraise __P((int));
@@ -101,6 +102,20 @@ extern void _clrsoftintr __P((int));
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
 #define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
+
+struct newsmips_intrhand {
+	LIST_ENTRY(newsmips_intrhand) ih_q;
+	struct evcnt intr_count;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	u_int ih_level;
+	u_int ih_mask;
+	u_int ih_priority;
+};
+
+struct newsmips_intr {
+	LIST_HEAD(,newsmips_intrhand) intr_q;
+};
 
 /*
  * Index into intrcnt[], which is defined in locore
