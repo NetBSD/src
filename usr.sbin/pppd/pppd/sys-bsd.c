@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.31 1999/08/25 02:07:45 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.32 1999/08/25 16:28:41 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.46 1999/08/13 06:46:18 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.31 1999/08/25 02:07:45 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.32 1999/08/25 16:28:41 itojun Exp $");
 #endif
 #endif
 
@@ -62,6 +62,10 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.31 1999/08/25 02:07:45 christos Exp $");
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
+#ifdef __KAME__
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
+#endif
 
 #if RTM_VERSION >= 3
 #include <sys/param.h>
@@ -101,7 +105,7 @@ static unsigned char inbuf[512]; /* buffer for chars read from loopback */
 
 static int sockfd;		/* socket for doing interface ioctls */
 #ifdef INET6
-static int sock6fd = -1;	/* socket for doing ipv6 interface ioctls */
+static int sock6_fd = -1;	/* socket for doing ipv6 interface ioctls */
 #endif /* INET6 */
 
 static fd_set in_fds;		/* set of fds that wait_input waits for */
@@ -128,7 +132,7 @@ sys_init()
 	fatal("Couldn't create IP socket: %m");
 
 #ifdef INET6
-    if ((sock6fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+    if ((sock6_fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 	fatal("Couldn't create IPv6 socket: %m");
 #endif
 
@@ -491,13 +495,64 @@ sif6addr(unit, our_eui64, his_eui64)
     int unit;
     eui64_t our_eui64, his_eui64;
 {
+#ifdef __KAME__
+    int ifindex;
+    struct in6_aliasreq addreq6;
+
+    /* actually, this part is not kame local - RFC2553 conformant */
+    ifindex = if_nametoindex(ifname);
+    if (ifindex == 0) {
+	error("sifaddr6: no interface %s", ifname);
+	return 0;
+    }
+
+    memset(&addreq6, 0, sizeof(addreq6));
+    strlcpy(addreq6.ifra_name, ifname, sizeof(addreq6.ifra_name));
+
+    /* my addr */
+    addreq6.ifra_addr.sin6_family = AF_INET6;
+    addreq6.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
+    addreq6.ifra_addr.sin6_addr.s6_addr[0] = 0xfe;
+    addreq6.ifra_addr.sin6_addr.s6_addr[1] = 0x80;
+    memcpy(&addreq6.ifra_addr.sin6_addr.s6_addr[8], &our_eui64,
+	sizeof(our_eui64));
+    /* KAME ifindex hack */
+    *(u_int16_t *)&addreq6.ifra_addr.sin6_addr.s6_addr[2] = htons(ifindex);
+
+    /* his addr */
+    addreq6.ifra_dstaddr.sin6_family = AF_INET6;
+    addreq6.ifra_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
+    addreq6.ifra_dstaddr.sin6_addr.s6_addr[0] = 0xfe;
+    addreq6.ifra_dstaddr.sin6_addr.s6_addr[1] = 0x80;
+    memcpy(&addreq6.ifra_dstaddr.sin6_addr.s6_addr[8], &his_eui64,
+	sizeof(our_eui64));
+    /* KAME ifindex hack */
+    *(u_int16_t *)&addreq6.ifra_dstaddr.sin6_addr.s6_addr[2] = htons(ifindex);
+
+    /* prefix mask: 128bit (correct?) */
+    addreq6.ifra_prefixmask.sin6_family = AF_INET6;
+    addreq6.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
+    memset(&addreq6.ifra_prefixmask.sin6_addr, 0xff,
+	sizeof(addreq6.ifra_prefixmask.sin6_addr));
+
+    /* address lifetime (infty) */
+    addreq6.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
+    addreq6.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
+
+    if (ioctl(sock6_fd, SIOCAIFADDR_IN6, &addreq6) < 0) {
+	error("sif6addr: ioctl(SIOCAIFADDR_IN6): %m");
+	return 0;
+    }
+
+    return 1;
+#else
     struct in6_ifreq ifr6;
     struct ifreq ifr;
     struct in6_rtmsg rt6;
 
     memset(&ifr, 0, sizeof (ifr));
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-    if (ioctl(sock6fd, SIOCGIFINDEX, (caddr_t) &ifr) < 0) {
+    if (ioctl(sock6_fd, SIOCGIFINDEX, (caddr_t) &ifr) < 0) {
 	error("sif6addr: ioctl(SIOCGIFINDEX): %m");
 	return 0;
     }
@@ -505,10 +560,10 @@ sif6addr(unit, our_eui64, his_eui64)
     /* Local interface */
     memset(&ifr6, 0, sizeof(ifr6));
     IN6_LLADDR_FROM_EUI64(ifr6.ifr6_addr, our_eui64);
-    ifr6.ifr6_ifindex = ifr.ifr_ifindex;
+    ifr6.ifr6_ifindex = ifindex;
     ifr6.ifr6_prefixlen = 10;
 
-    if (ioctl(sock6fd, SIOCSIFADDR, &ifr6) < 0) {
+    if (ioctl(sock6_fd, SIOCSIFADDR, &ifr6) < 0) {
 	error("sif6addr: ioctl(SIOCSIFADDR): %m");
 	return 0;
     }
@@ -527,6 +582,7 @@ sif6addr(unit, our_eui64, his_eui64)
     }
 
     return 1;
+#endif
 }
 
 
@@ -534,10 +590,42 @@ sif6addr(unit, our_eui64, his_eui64)
  * cif6addr - Remove IPv6 address from interface
  */
 int
-cif6addr(unit, out_eui64, his_eui64)
+cif6addr(unit, our_eui64, his_eui64)
     int unit;
     eui64_t our_eui64, his_eui64;
 {
+#ifdef __KAME__
+    int ifindex;
+    struct in6_ifreq delreq6;
+
+    /* actually, this part is not kame local - RFC2553 conformant */
+    ifindex = if_nametoindex(ifname);
+    if (ifindex == 0) {
+	error("cifaddr6: no interface %s", ifname);
+	return 0;
+    }
+
+    memset(&delreq6, 0, sizeof(delreq6));
+    strlcpy(delreq6.ifr_name, ifname, sizeof(delreq6.ifr_name));
+
+    /* my addr */
+    delreq6.ifr_ifru.ifru_addr.sin6_family = AF_INET6;
+    delreq6.ifr_ifru.ifru_addr.sin6_len = sizeof(struct sockaddr_in6);
+    delreq6.ifr_ifru.ifru_addr.sin6_addr.s6_addr[0] = 0xfe;
+    delreq6.ifr_ifru.ifru_addr.sin6_addr.s6_addr[1] = 0x80;
+    memcpy(&delreq6.ifr_ifru.ifru_addr.sin6_addr.s6_addr[8], &our_eui64,
+	sizeof(our_eui64));
+    /* KAME ifindex hack */
+    *(u_int16_t *)&delreq6.ifr_ifru.ifru_addr.sin6_addr.s6_addr[2] =
+	htons(ifindex);
+
+    if (ioctl(sock6_fd, SIOCDIFADDR_IN6, &delreq6) < 0) {
+	error("cif6addr: ioctl(SIOCDIFADDR_IN6): %m");
+	return 0;
+    }
+
+    return 1;
+#else
     struct ifreq ifr;
     struct in6_ifreq ifr6;
 
@@ -564,6 +652,7 @@ cif6addr(unit, out_eui64, his_eui64)
         return (0);
     }
     return 1;
+#endif
 }
 #endif /* INET6 */
 
