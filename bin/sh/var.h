@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.22 2003/08/07 09:05:39 agc Exp $	*/
+/*	$NetBSD: var.h,v 1.23 2004/10/02 12:16:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,7 @@ struct var {
 	struct var *next;		/* next entry in hash list */
 	int flags;			/* flags are defined above */
 	char *text;			/* name=value */
+	int name_len;			/* length of name */
 	void (*func)(const char *);
 					/* function to be called when  */
 					/* the variable gets set/unset */
