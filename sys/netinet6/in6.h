@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.15.2.2 2000/08/27 01:25:07 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.15.2.3 2000/08/27 01:38:54 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -404,6 +404,7 @@ struct route_in6 {
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
+/* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
 #define IPV6_RTHDR_STRICT    1 /* this hop must be a neighbor. XXX old spec */
