@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.3 2002/06/11 01:30:14 lukem Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.4 2002/06/11 16:21:26 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -6230,6 +6230,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI2040 PCI-to-DSP Bridge",
+	},
+	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-800L",
 	},
 	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,

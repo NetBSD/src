@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.3 2002/06/11 01:30:12 lukem Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.4 2002/06/11 16:21:24 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1969,6 +1969,7 @@
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-to-DSP Bridge */
 
 /* Titan Electronics products */
+#define	PCI_PRODUCT_TITAN_PCI800L	0x8080		/* PCI-800L */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
 #define	PCI_PRODUCT_TITAN_PCI100H	0xa001		/* PCI-100H */
 
