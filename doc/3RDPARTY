@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.251 2004/11/06 20:13:06 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.252 2004/11/07 02:52:21 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -57,33 +57,27 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	9.3.0beta3
+Version:	9.3.0
 Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Mailing List:
 Responsible:	vixie, itojun, christos
 Notes:
-bind2netbsd script to import into src/dist/bind.
+First bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
-do not try to use libc resolver from src/usr.sbin/bind, it adds
-too much constraint between bind and libc, as well as problem with
-_res declaration differences.
-
-Package:	bind/resolver
-Version:	4.9.11
-Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0
-Maintainer:	Paul Vixie <vixie@vix.com>
-Archive Site:	ftp://ftp.isc.org/isc/bind9/
-Mailing List:
-Responsible:	vixie
-Notes:
-Mostly imported with cvs import.  Makefile's, etc, are not.
-upgrade to BIND8 resolver can only happen with libc major bump (otherwise
-it needs too much effort).  Reasons: (1) need to support binaries that use
-BIND4 resolver API (res_init), and need to support BIND8 API.  we practically
-need to maintain both BIND4 _res and BIND8 _res.  (2) amount of local changes.
-nsswitch/nsdispatch need to be reimplemented.
+Then binclude4netbsd script to import into src/usr.sbin/bind/include.
+Then include4netbsd script to import into src/include.
+Then libc4netbsd script to update the resolver in libc.
+Todo[1]: Update libresolv if needed.
+Todo[2]: A few files in libc/net were imported in the ISC branch but now
+	 they are too different or do not exist anymore:
+	    gethnamaddr.c getnetent.c getnetnamadr.c sethostent.c
+	 Others like getaddrinfo.c could be merged with isc, but it seems
+	 that ours is from a more recent version of KAME?
+Todo[3]: net/base64.c could be imported from bind and should be moved from
+	 net to isc/base64.c.
+Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
 Version:	2.14
