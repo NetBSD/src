@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.46 2000/06/04 06:16:57 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.47 2000/06/04 19:30:16 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -464,21 +464,21 @@ ubastray(arg)
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	struct	uba_softc *sc = uba_cd.cd_devs[arg];
-	int	vektor;
+	int	vector;
 
 	rbr = mfpr(PR_IPL);
 #ifdef DW780
 	if (sc->uh_type == DW780)
-		vektor = svec >> 2;
+		vector = svec >> 2;
 	else
 #endif
-		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+		vector = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
 
 	if (cold) {
 #ifdef DW780
 		if (sc->uh_type != DW780)
 #endif
-			rcvec = vektor;
+			rcvec = vector;
 	} else 
 		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
