@@ -220,3 +220,38 @@ sense buffer.
 
 [ stat(2) ] S_ISFIFO(x) should not return true with sockets.  S_ISSOCK(x)
 	should not return true with fifos.
+
+[ kernel/i386 ] Fix timing bug in floppy driver.
+
+[ kernel/msdosfs ] Fix a bug with allowed/disallowed characters in non-
+    Win95 filenames.
+
+[ kernel/msdosfs ] Don't extend directory when nothing is written to it.
+
+[ kernel/amiga ] Update msc serial driver.
+
+[ kernel/generic ] Clarify section of code in sys_setitimer().
+
+[ kernel/generic ] Fix bug in SunOS emulation when using half-open pty's.
+
+[ kernel/bio ] Fix potential NULL-pointer dereference.
+
+[ kernel/slip ] Cleanup unnecessary pointer arithmetic.
+
+[ kernel/mac68k ] Correctly support Mac LC III-type machines.
+
+[ games/larn ] Fix security bug (closes PR #2699).
+
+[ compress(1) ] Fix usage of stdin and stdout (closes PR #774 & #957)
+
+[ cron(8) ] Fix security bugs.
+
+[ pppd(8) ] Allow 255.255.255.255 netmasks.  Fixes bin/2954.
+
+[ sh(1) ] Fix many bugs in system shell.
+
+[ lpr(1)/lprm(1)/lpc(8)/lpd(8) ] Fix security bugs.
+
+[ make(1) ] Fix many bugs in make.
+
+[ write(1) ] Fix a security bug.
