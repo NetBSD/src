@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.20 1999/03/31 00:05:38 ross Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.21 1999/08/23 21:54:20 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1544,10 +1544,18 @@ The prefix macro is not callable, but it is parsed:
 becomes
 .Pf ( Fa name2 .
 .El
-.Pp
+.It Li \&.Ns
 The
 .Ql \&.Ns
-(no space) macro performs the analogous suffix function.
+(no space) macro, which
+.Em is
+callable,
+performs the analogous suffix function.
+.It Li ".Ap
+The \&.Ap macro inserts an apostrophe and exits any special text modes,
+continuing in
+.Li \&.No
+mode.
 .El
 .Pp
 .ne 4
@@ -1579,6 +1587,8 @@ Examples of quoting:
 .Sq
 .It Li "\&.Sq string
 .Sq string
+.It Li "\&.Em or Ap ing
+.Em or Ap ing
 .El
 .Pp
 For a good example of nested enclosure macros, see the
