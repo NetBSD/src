@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.6 2004/01/04 06:37:16 oster Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.7 2004/06/02 22:58:28 drochner Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -569,7 +569,7 @@ typedef struct RF_LayoutSW_s {
 
 	/* states to step through in an access. Must end with "LastState". The
 	 * default is DefaultStates in rf_layout.c */
-	RF_AccessState_t *states;
+	const RF_AccessState_t *states;
 
 	RF_AccessStripeMapFlags_t flags;
 #endif				/* !KERNEL */

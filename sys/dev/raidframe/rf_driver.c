@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.101 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.102 2004/06/02 22:58:28 drochner Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.101 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.102 2004/06/02 22:58:28 drochner Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -502,7 +502,7 @@ RF_RaidAccessDesc_t *
 rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 		    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
 		    caddr_t bufPtr, void *bp, RF_RaidAccessFlags_t flags,
-		    RF_AccessState_t *states)
+		    const RF_AccessState_t *states)
 {
 	RF_RaidAccessDesc_t *desc;
 

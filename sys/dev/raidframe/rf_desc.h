@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.13 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.14 2004/06/02 22:58:28 drochner Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -76,7 +76,7 @@ struct RF_RaidAccessDesc_s {
 	RF_RaidAccessFlags_t flags;	/* flags controlling operation */
 	int     state;		/* index into states telling how far along the
 				 * RAID operation has gotten */
-	RF_AccessState_t *states;	/* array of states to be run */
+	const RF_AccessState_t *states;	/* array of states to be run */
 	int     status;		/* pass/fail status of the last operation */
 	RF_DagList_t *dagList;	/* list of dag lists, one list per stripe */
 	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned 
