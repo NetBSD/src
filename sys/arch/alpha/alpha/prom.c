@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.21 1998/02/13 02:09:09 cgd Exp $ */
+/* $NetBSD: prom.c,v 1.22 1998/02/27 04:03:00 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.21 1998/02/13 02:09:09 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.22 1998/02/27 04:03:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,9 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.21 1998/02/13 02:09:09 cgd Exp $");
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#ifdef NEW_PMAP
-#include <vm/pmap.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -54,12 +51,33 @@ extern struct prom_vec prom_dispatch_v;
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int		prom_mapped = 1;	/* Is PROM still mapped? */
-pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
-#endif
+pt_entry_t	rom_pte, saved_pte[1];	/* XXX */
 
-#ifdef NEW_PMAP
-#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_map.pmap->dir[0] : rom_ptep)
-#endif
+static pt_entry_t *rom_lev1map __P((void));
+
+static pt_entry_t *
+rom_lev1map()
+{
+	struct alpha_pcb *apcb;
+	extern u_long curpcb;
+	extern pt_entry_t *Lev1map;
+
+	/*
+	 * We may be called before the first context switch
+	 * after alpha_init(), in which case we just need
+	 * to use the kernel Lev1map.
+	 */
+	if (curpcb == 0)
+		return (Lev1map);
+
+	/*
+	 * Find the level 1 map that we're currently running on.
+	 */
+	apcb = (struct alpha_pcb *)ALPHA_PHYS_TO_K0SEG(curpcb);
+
+	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
+}
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 void
 init_prom_interface(rpb)
@@ -94,16 +112,19 @@ static void prom_cache_sync __P((void));
 #endif
 
 static int
-enter_prom __P((void))
+enter_prom()
 {
 	int s = splhigh();
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	pt_entry_t *lev1map;
+
 	if (!prom_mapped) {
 		if (!pmap_uses_prom_console())
 			panic("enter_prom");
-		saved_pte = *rom_ptep;		/* XXX */
-		*rom_ptep = rom_pte;		/* XXX */
+		lev1map = rom_lev1map();	/* XXX */
+		saved_pte[0] = lev1map[0];	/* XXX */
+		lev1map[0] = rom_pte;		/* XXX */
 		prom_cache_sync();		/* XXX */
 	}
 #endif
@@ -116,10 +137,13 @@ leave_prom __P((s))
 {
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	pt_entry_t *lev1map;
+
 	if (!prom_mapped) {
 		if (!pmap_uses_prom_console())
 			panic("leave_prom");
-		*rom_ptep = saved_pte;		/* XXX */
+		lev1map = rom_lev1map();	/* XXX */
+		lev1map[0] = saved_pte[0];	/* XXX */
 		prom_cache_sync();		/* XXX */
 	}
 #endif
