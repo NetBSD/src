@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1996/02/27 00:13:45 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1996/02/27 00:15:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,10 +78,8 @@ configure()
 
 	/* Similar things for ISA and PCI will happen in the future. */
 	config_rootfound("isa", NULL);
-#if NEISA > 0
 	eba.eba_busname = "eisa";
 	config_rootfound("eisa", &eba);
-#endif
 	config_rootfound("pci", NULL);
 
 	printf("biomask %x netmask %x ttymask %x\n",
