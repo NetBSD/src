@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.5 1994/05/09 16:17:08 gwr Exp $
+ *	$Id: db_disasm.c,v 1.6 1994/05/13 04:46:47 gwr Exp $
  */
 /*
  * Notes:
@@ -3064,14 +3064,13 @@ printu_wb(dbuf, val, sz, base)
 {
 	static char buf[sizeof(long) * NBBY / 3 + 2];
 	char *p, ch;
-	
-	if (base == 16) 
-		addchar('$');
-	else if (base == 8)
+
+	if (base != 10) {
 		addchar('0');
-	else if (base != 10) {
-		base = 16;
-		addchar('$');
+		if (base != 8) {
+			base = 16;
+			addchar('x');
+		}
 	}
 
 	p = buf;
@@ -3106,14 +3105,13 @@ iprintu_wb(dbuf, val, sz, base)
 {
 	static char buf[sizeof(long) * NBBY / 3 + 2];
 	char *p, ch;
-	
-	if (base == 16) 
-		iaddchar('$');
-	else if (base == 8)
+
+	if (base != 10) {
 		iaddchar('0');
-	else if (base != 10) {
-		base = 16;
-		iaddchar('$');
+		if (base != 8) {
+			base = 16;
+			iaddchar('x');
+		}
 	}
 
 	p = buf;
