@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.11 1995/03/08 01:26:41 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.12 1995/03/09 12:06:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,7 +56,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct adosfs_args args;
 	struct adosfsmount *amp;
-	u_long size;
+	size_t size;
 	int error;
 	mode_t accessmode;
 

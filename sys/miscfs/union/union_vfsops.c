@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.8 1995/01/18 09:34:35 mycroft Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.9 1995/03/09 12:06:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@ union_mount(mp, path, data, ndp, p)
 	struct vattr va;
 	char *cp;
 	int len;
-	u_int size;
+	size_t size;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_mount(mp = %x)\n", mp);

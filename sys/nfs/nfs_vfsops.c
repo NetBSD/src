@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.33 1995/01/18 06:15:19 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.34 1995/03/09 12:06:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -435,7 +435,7 @@ nfs_mount(mp, path, data, ndp, p)
 	struct mbuf *nam;
 	struct vnode *vp;
 	char pth[MNAMELEN], hst[MNAMELEN];
-	u_int len;
+	size_t len;
 	nfsv2fh_t nfh;
 
 	if (error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args)))

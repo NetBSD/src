@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.63 1995/03/08 01:23:00 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.64 1995/03/09 12:05:39 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -218,7 +218,7 @@ execve(p, uap, retval)
 	char *argp;
 	char **cpp, *dp, *sp, *np;
 	long argc, envc;
-	u_long len;
+	size_t len;
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;

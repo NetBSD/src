@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.6 1995/01/25 14:50:56 cgd Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.7 1995/03/09 12:05:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct vnode *lowerrootvp, *vp;
 	struct vnode *umapm_rootvp;
 	struct umap_mount *amp;
-	u_int size;
+	size_t size;
 	int error;
 
 #ifdef UMAPFS_DIAGNOSTIC
