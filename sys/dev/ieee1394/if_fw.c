@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.10 2001/07/02 10:46:03 onoe Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.11 2001/11/13 12:24:12 lukem Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.11 2001/11/13 12:24:12 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
