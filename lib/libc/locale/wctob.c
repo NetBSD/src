@@ -1,4 +1,4 @@
-/*	$NetBSD: btowc.c,v 1.2 2003/03/03 07:39:54 tshiozak Exp $	*/
+/*	$NetBSD: wctob.c,v 1.1 2003/03/03 07:39:55 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: btowc.c,v 1.2 2003/03/03 07:39:54 tshiozak Exp $");
+__RCSID("$NetBSD: wctob.c,v 1.1 2003/03/03 07:39:55 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -36,25 +36,24 @@ __RCSID("$NetBSD: btowc.c,v 1.2 2003/03/03 07:39:54 tshiozak Exp $");
 #include <assert.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <limits.h>
 
 /*
  * convert a single byte character to a corresponding wide character.
  */
-wint_t
-btowc(c)
-	int c;
+int
+wctob(wc)
+	wint_t wc;
 {
-	char mb;
+	char mb[MB_LEN_MAX];
 	mbstate_t mbs;
-	wchar_t wc;
 
-	if (c==EOF)
-		return (WEOF);
+	if (wc==WEOF)
+		return (EOF);
 
-	mb = (unsigned char)c;
 	memset(&mbs, 0, sizeof(mbs));
-	if (mbrtowc(&wc, &mb, 1, &mbs) != 1)
+	if (wcrtomb(mb, wc, &mbs) != 1)
 		return (WEOF);
 
-	return ((wint_t)wc);
+	return ((int)(unsigned char)mb[0]);
 }
