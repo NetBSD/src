@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.31 2002/11/24 20:24:54 thorpej Exp $ */
+/* $NetBSD: xlint.c,v 1.32 2003/01/06 13:10:31 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.31 2002/11/24 20:24:54 thorpej Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.32 2003/01/06 13:10:31 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ static	void	cat(char *const *, const char *);
 
 /*
  * Some functions to deal with lists of strings.
- * Take care that we get no surprises in case of asyncron signals.
+ * Take care that we get no surprises in case of asynchronous signals.
  */
 static void
 appstrg(char ***lstp, char *s)

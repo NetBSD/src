@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2002/10/24 13:56:46 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 2003/01/06 13:10:27 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -390,7 +390,7 @@ trap(struct proc *p, struct trapframe *tf)
 }
 
 /*
- * Handle "TRAPA"-induced syncronous exceptions
+ * Handle "TRAPA"-induced synchronous exceptions
  */
 void
 trapa(struct proc *p, struct trapframe *tf)

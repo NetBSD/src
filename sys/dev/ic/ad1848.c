@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.15 2002/08/22 20:42:22 martin Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.16 2003/01/06 13:10:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.15 2002/08/22 20:42:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.16 2003/01/06 13:10:28 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1169,7 +1169,7 @@ ad1848_commit_settings(addr)
 		 */
 		(void)ADREAD(sc, AD1848_IDATA);
 		(void)ADREAD(sc, AD1848_IDATA);
-		/* Write to I8 starts resyncronization. Wait for completion. */
+		/* Write to I8 starts resynchronization. Wait for completion. */
 		timeout = 100000;
 		while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 			timeout--;
@@ -1180,7 +1180,7 @@ ad1848_commit_settings(addr)
 		/* Now wait for resync for capture side of the house */
 	}
 	/*
-	 * Write to I8 starts resyncronization. Wait until it completes.
+	 * Write to I8 starts resynchronization. Wait until it completes.
 	 */
 	timeout = 100000;
 	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT) {

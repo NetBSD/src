@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 2002/09/22 20:31:18 scw Exp $	*/
+/*	$NetBSD: trap.h,v 1.7 2003/01/06 13:10:26 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -105,8 +105,8 @@
  */
 #define	CRIT_FREE		0	/* Nobody is in the critical section */
 #define	CRIT_EXIT		0x01	/* Flag bit for exiting crit section */
-#define	CRIT_SYNC_EXCEPTION	0x02	/* Syncronous Exception Handler */
-#define	CRIT_ASYNC_EXCEPTION	0x04	/* Asyncronous Exception Handler */
+#define	CRIT_SYNC_EXCEPTION	0x02	/* Synchronous Exception Handler */
+#define	CRIT_ASYNC_EXCEPTION	0x04	/* Asynchronous Exception Handler */
 #define	CRIT_TLBMISS_TRAP	0x06	/* TLB Miss promoted to TRAP */
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.18 2002/05/12 21:30:35 matt Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.19 2003/01/06 13:10:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.18 2002/05/12 21:30:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.19 2003/01/06 13:10:31 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ valid_nr(hdp, nr, finalbit)
 
 	/*
 	 * This section validates the frame's  N(R) value.  It's N(R) value
-	 * must be  in syncronization  with  our V(S)  value and  our "last
+	 * must be  in synchronization  with  our V(S)  value and  our "last
 	 * received nr" variable. If it is correct then we are able to send
 	 * more IFRAME's, else frame reject condition is entered.
 	 */
