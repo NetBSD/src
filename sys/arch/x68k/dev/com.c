@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.22 2001/11/25 15:43:06 minoura Exp $	*/
+/*	$NetBSD: com.c,v 1.23 2001/11/25 15:45:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ cdev_decl(com);
 
 static int comprobe1 __P((int));
 static void comdiag __P((void *));
-static int comintr __P((void *));
+int comintr __P((void *));
 static void compollin __P((void *));
 static int comparam __P((struct tty *, struct termios *));
 static void comstart __P((struct tty *));
