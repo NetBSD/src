@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.12 2000/08/22 15:34:00 minoura Exp $	
+.\"	$NetBSD: install,v 1.13 2000/10/03 22:24:33 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ getting
 .Nx
 installed on your hard disk. If any question has a
 default answer, it will be displayed in brackets ("[]") after the
-question. If you wish to stop the installation, you may hit Control-C
+question. If you wish to stop the installation, you may press Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 .Bl -enum
@@ -108,7 +108,7 @@ an exisiting system.  Select "install" to start installation.
 .It
 You will be presented a prompt asking if you wish to proceed
 with the installation process.  If you wish to proceed,
-enter "y" and hit return.
+enter "y" and press return.
 .It
 The install program will then tell you which disks it can
 install on, and ask you which it should use.
@@ -123,7 +123,7 @@ You don't need to remember this name.
 You will be prompted for your disk's geometry information,
 i.e. the number of bytes per sector, cylinders on the disk,
 tracks per cylinder (heads), and sectors per track. Enter
-them when they are requested. If you make a mistake, hit
+them when they are requested. If you make a mistake, press
 Control-C and when you get to the shell prompt, restart the
 install process by running the "install" command. Once you
 have entered this data, the install program will tell you the
@@ -269,11 +269,11 @@ you're using the second.
 .Pp
 You will be prompted to insert a floppy into the drive,
 to have its contents copied to your hard disk. Do so,
-and hit return to begin copying. When that is done,
+and press return to begin copying. When that is done,
 read the remainder of the floppies that contain the
 distribution sets that you want to install, one by
 one. When the last is read, and you are being
-prompted for another, hit Control-C.
+prompted for another, press Control-C.
 .Pp
 Run the "Extract" command once for each distribution
 set you wish to install. For instance, if you wish to
@@ -325,7 +325,7 @@ the SCSI tape drive with the lowest SCSI ID number.
 (For the SCSI tape drive with the next lowest SCSI ID
 number, you should use "rst1", and so on.)
 .Pp
-You will be prompted to hit return when you have
+You will be prompted to press return when you have
 inserted the tape into the tape drive. When you do,
 the contents of the tape will be extracted into the
 temporary directory, and the names of the files being
@@ -337,7 +337,7 @@ install. (Depending on how you made the tape, it's
 probably a subdirectory of the temporary directory you
 specified above.) Once there, run the "Set_tmp_dir"
 command again, and accept its default answer by
-hitting return at the prompt.
+pressing return at the prompt.
 .Pp
 Use the
 .Ic Extract
