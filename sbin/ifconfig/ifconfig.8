@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.61 2002/09/30 05:42:59 onoe Exp $
+.\"	$NetBSD: ifconfig.8,v 1.62 2002/09/30 07:37:09 grant Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,8 @@ and on interfaces other than the first.
 For the
 .Tn ISO
 family, addresses are specified as a long hexadecimal string,
-as in the Xerox family.  However, two consecutive dots imply a zero
+as in the Xerox family.
+However, two consecutive dots imply a zero
 byte, and the dots are optional, if the user wishes to
 .Pq carefully
 count out long strings of digits in network byte order.
@@ -192,7 +193,8 @@ with explicit IPv6 address instead.
 Specify the address of the correspondent on the other end
 of a point to point link.
 .It Cm down
-Mark an interface ``down''.  When an interface is
+Mark an interface ``down''.
+When an interface is
 marked ``down'', the system will not attempt to
 transmit messages through that interface.
 If possible, the interface will be reset to disable reception as well.
@@ -210,10 +212,12 @@ packets is done differently.
 Set the media type of the interface to
 .Ar type .
 Some interfaces support the mutually exclusive use of one of several
-different physical media connectors.  For example, a 10Mb/s Ethernet
+different physical media connectors.
+For example, a 10Mb/s Ethernet
 interface might support the use of either
 .Tn AUI
-or twisted pair connectors.  Setting the media type to
+or twisted pair connectors.
+Setting the media type to
 .Dq 10base5
 or
 .Dq AUI
@@ -222,7 +226,8 @@ Setting it to
 .Dq 10baseT
 or
 .Dq UTP
-would activate twisted pair.  Refer to the interfaces' driver
+would activate twisted pair.
+Refer to the interfaces' driver
 specific man page for a complete list of the available types.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
@@ -423,9 +428,11 @@ automatically.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect, however,
-they are in general used to select special modes of operation. An example
+they are in general used to select special modes of operation.
+An example
 of this is to enable SLIP compression, or to select the connector type
-for some ethernet cards.  Refer to the man page for the specific driver
+for some ethernet cards.
+Refer to the man page for the specific driver
 for more information.
 .ne 1i
 .It Fl link[0-2]
@@ -444,7 +451,8 @@ pseudo-interface, set the VLAN tag to
 This is a 16-bit number which is used to create an 802.1Q VLAN header for
 packets sent from the
 .Xr vlan 4
-interface.  Note that
+interface.
+Note that
 .Cm vlan
 and
 .Cm vlanif
@@ -454,22 +462,26 @@ If the interface is a
 .Xr vlan 4
 pseudo-interface, associate the physical interface
 .Ar iface
-with it.  Packets transmitted through the
+with it.
+Packets transmitted through the
 .Xr vlan 4
 interface will be diverted to the specified physical interface
 .Ar iface
-with 802.1Q VLAN encapsulation.  Packets with 802.1Q encapsulation received
+with 802.1Q VLAN encapsulation.
+Packets with 802.1Q encapsulation received
 by the physical interface with the correct VLAN tag will be diverted to the
 associated
 .Xr vlan 4
-pseudo-interface.  The VLAN interface is assigned a copy of the physical
+pseudo-interface.
+The VLAN interface is assigned a copy of the physical
 interface's flags and
 .Tn Ethernet
 address.
 If the
 .Xr vlan 4
 interface already has a physical interface associated with it, this command
-will fail.  To change the association to another physical interface, the
+will fail.
+To change the association to another physical interface, the
 existing association must be cleared first.
 Note that
 .Cm vlanif
@@ -535,7 +547,8 @@ If the
 .Fl s
 flag is passed before an interface name,
 .Nm
-will attempt to query the interface for its media status.  If the
+will attempt to query the interface for its media status.
+If the
 interface supports reporting media status, and it reports that it does
 not appear to be connected to a network,
 .Nm
@@ -544,7 +557,8 @@ will exit with status of 1
 otherwise, it will exit with a
 zero
 .Pq true
-exit status.  Not all interface drivers support media
+exit status.
+Not all interface drivers support media
 status reporting.
 .Pp
 If the
@@ -559,7 +573,8 @@ as time offset string.
 .Pp
 Optionally, the
 .Fl a
-flag may be used instead of an interface name.  This flag instructs
+flag may be used instead of an interface name.
+This flag instructs
 .Nm
 to display information about all interfaces in the system.
 .Fl d
@@ -574,7 +589,8 @@ omits interfaces which appear not to be connected to a network.
 The
 .Fl l
 flag may be used to list all available interfaces on the system, with
-no other additional information.  Use of this flag is mutually exclusive
+no other additional information.
+Use of this flag is mutually exclusive
 with all other flags and commands, except for
 .Fl d
 .Pq only list interfaces that are down ,
@@ -588,7 +604,8 @@ with all other flags and commands, except for
 The
 .Fl C
 flag may be used to list all of the interface cloners available on
-the system, with no additional information.  Use of this flag is
+the system, with no additional information.
+Use of this flag is
 mutually exclusive with all other flags and commands.
 .Pp
 Only the super-user may modify the configuration of a network interface.
