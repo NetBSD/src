@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.149 2001/06/18 22:40:19 thorpej Exp $
+# $NetBSD: ALPHA,v 1.150 2001/07/07 17:09:47 tsutsui Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.149 $"
+ident		"ALPHA-$Revision: 1.150 $"
 
 maxusers 32
 
@@ -252,7 +252,6 @@ gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
@@ -398,7 +397,6 @@ scsibus* at	bha?
 scsibus* at	dpt?
 scsibus* at	iha?
 scsibus* at	isp?
-#scsibus* at	ncr?
 scsibus* at	siop?
 scsibus* at	pcscp?
 scsibus* at	uha?
