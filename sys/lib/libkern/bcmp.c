@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.10 1998/03/27 01:29:59 cgd Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.11 1999/04/01 00:30:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.10 1998/03/27 01:29:59 cgd Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.11 1999/04/01 00:30:39 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,10 @@ bcmp(b1, b2, length)
 	const void *b1, *b2;
 	size_t length;
 {
-	const char *p1, *p2;
+	const char *p1 = b1, *p2 = b2;
 
 	if (length == 0)
 		return(0);
-	p1 = (const char *)b1;
-	p2 = (const char *)b2;
 	do
 		if (*p1++ != *p2++)
 			break;
