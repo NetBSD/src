@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 2000/03/27 15:53:04 minoura Exp $
+#	$NetBSD: GENERIC,v 1.45 2000/04/19 06:50:37 itojun Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	32
 
@@ -312,6 +312,7 @@ pseudo-device	ipfilter
 ## for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 #### Other device configuration
 

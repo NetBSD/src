@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2000/04/03 00:03:28 augustss Exp $
+# $NetBSD: GENERIC,v 1.148 2000/04/19 06:50:27 itojun Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 maxusers 32
 
@@ -393,6 +393,7 @@ pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
