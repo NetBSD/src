@@ -1,7 +1,7 @@
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,15 +35,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.3 1994/05/17 10:28:30 cgd Exp $
+ *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
+ *	$Id: pmap.h,v 1.4 1994/05/23 06:21:40 mycroft Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
 #define HP_PAGE_SIZE	NBPG
+#if defined(HP380)
+#define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
+#else
 #define HP_SEG_SIZE	NBSEG
+#endif
+
+#define hp300_trunc_seg(x)	(((unsigned)(x)) & ~(HP_SEG_SIZE-1))
+#define hp300_round_seg(x)	hp300_trunc_seg((unsigned)(x) + HP_SEG_SIZE-1)
 
 /*
  * Pmap stuff
@@ -52,6 +59,8 @@ struct pmap {
 	struct pte		*pm_ptab;	/* KVA of page table */
 	struct ste		*pm_stab;	/* KVA of segment table */
 	int			pm_stchanged;	/* ST changed */
+	int			pm_stfree;	/* 040: free lev2 blocks */
+	struct ste		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -61,15 +70,34 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-extern pmap_t		kernel_pmap;
+extern struct pmap	kernel_pmap_store;
+
+#define kernel_pmap	(&kernel_pmap_store)
+#define	active_pmap(pm) \
+	((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
+
+/*
+ * On the 040 we keep track of which level 2 blocks are already in use
+ * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
+ * (block 31).  For convenience, the level 1 table is considered to be
+ * block 0.
+ *
+ * MAX[KU]L2SIZE control how many pages of level 2 descriptors are allowed.
+ * for the kernel and users.  8 implies only the initial "segment table"
+ * page is used.  WARNING: don't change MAXUL2SIZE unless you can allocate
+ * physically contiguous pages for the ST in pmap.c!
+ */
+#define	MAXKL2SIZE	32
+#define MAXUL2SIZE	8
+#define l2tobm(n)	(1 << (n))
+#define	bmtol2(n)	(ffs(n) - 1)
 
 /*
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = hp300_btop(pmap_extract(kernel_pmap, \
-		    (vm_offset_t)(pmapp)->pm_stab)); \
+		(pcbp)->pcb_ustp = hp300_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
@@ -89,20 +117,24 @@ typedef struct pv_entry {
 	int		pv_flags;	/* flags */
 } *pv_entry_t;
 
-#define	PV_CI		0x01	/* all entries must be cache inhibited */
-#define PV_PTPAGE	0x02	/* entry maps a page table page */
+#define	PV_CI		0x01	/* header: all entries are cache inhibited */
+#define PV_PTPAGE	0x02	/* header: entry maps a page table page */
 
 #ifdef	KERNEL
+#if defined(HP320) || defined(HP350)
+#define	HAVEVAC				/* include cheezy VAC support */
+#endif
+
 pv_entry_t	pv_table;		/* array of entries, one per page */
 
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
-#define	pmap_kernel()			(kernel_pmap)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
-#endif	KERNEL
+#endif /* KERNEL */
 
-#endif	_PMAP_MACHINE_
+#endif /* _PMAP_MACHINE_ */
