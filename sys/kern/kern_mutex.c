@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.7 2002/03/22 00:15:54 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.8 2002/03/22 01:45:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.7 2002/03/22 00:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.8 2002/03/22 01:45:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.7 2002/03/22 00:15:54 thorpej E
 #if defined(MUTEX_DEBUG)
 /* These rely on machdep code doing a tail-call to us. */
 #define	MTX_LOCKED(mtx)							\
-	(mtx)->mtx_debug.mtx_locked = __builtin_return_address(0)
+	(mtx)->mtx_debug.mtx_locked = (vaddr_t) __builtin_return_address(0)
 #define	MTX_UNLOCKED(mtx)						\
-	(mtx)->mtx_debug.mtx_unlocked = __builtin_return_address(0)
+	(mtx)->mtx_debug.mtx_unlocked = (vaddr_t) __builtin_return_address(0)
 #else
 #define	MTX_LOCKED(mtx)		/* nothing */
 #define	MTX_UNLOCKED(mtx)	/* nothing */
