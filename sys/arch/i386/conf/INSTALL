@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.119 1999/07/05 09:14:09 fvdl Exp $
+#	$NetBSD: INSTALL,v 1.120 1999/07/12 15:16:23 kleink Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -515,6 +515,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -533,17 +534,21 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+#opl*	at eso?
 #opl*	at ess?
 #opl*	at sb?
 #opl*	at sv?
  
 # Audio support
 #audio*	at aria?
+#audio*	at eap?
+#audio*	at eso?
 #audio*	at gus?
 #audio*	at guspnp?
 #audio*	at pas?
 #audio*	at sb?
 #audio*	at sp?
+#audio*	at sv?
 #audio*	at wss?
 
 # MIDI support
