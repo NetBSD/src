@@ -20,7 +20,7 @@
 .if n .sp
 .if t .sp 0.4
 ..
-.Id $Id: gcc.1,v 1.4 1998/01/09 06:02:38 lukem Exp $
+.Id $Id: gcc.1,v 1.5 1998/04/07 13:16:29 tv Exp $
 .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
 .SH NAME
 gcc, g++ \- GNU project C and C++ Compiler (v2.7)
@@ -1379,7 +1379,8 @@ The standard libraries are used normally.
 .TP
 .B \-nostdlib
 Don't use the standard system libraries and startup files when linking.
-Only the files you specify will be passed to the linker.
+Only the files you specify will be passed to the linker.  This option is
+also passed to the linker, which may change the library search path.
 .TP
 .B \-static
 On systems that support dynamic linking, this prevents linking with the shared
