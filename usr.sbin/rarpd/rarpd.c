@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.24 1998/04/15 15:06:06 mrg Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.24 1998/04/15 15:06:06 mrg Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $");
 #endif
 
 
@@ -69,6 +69,8 @@ __RCSID("$NetBSD: rarpd.c,v 1.24 1998/04/15 15:06:06 mrg Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include "pathnames.h"
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -172,6 +174,8 @@ main(argc, argv)
 		init_one(ifname);
 
 	if ((!fflag) && (!dflag)) {
+		FILE *fp;
+
 		pid = fork();
 		if (pid > 0)
 			/* Parent exits, leaving child in background. */
@@ -181,6 +185,13 @@ main(argc, argv)
 				rarperr(FATAL, "cannot fork");
 				/* NOTREACHED */
 			}
+
+		/* write pid file */
+		if ((fp = fopen(_PATH_RARPDPID, "w")) != NULL) {
+			fprintf(fp, "%u\n", getpid());
+			(void)fclose(fp);
+		}
+
 		/* Fade into the background */
 		f = open("/dev/tty", O_RDWR);
 		if (f >= 0) {
@@ -717,6 +728,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 	*addrp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
 	if (ioctl(fd, SIOCGIFNETMASK, (char *) &ifr) < 0) {
 		perror("SIOCGIFNETMASK");
+		unlink(_PATH_RARPDPID);
 		exit(1);
 	}
 	*netmaskp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
@@ -915,8 +927,10 @@ va_dcl
 	}
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-	if (fatal)
+	if (fatal) {
+		unlink(_PATH_RARPDPID);
 		exit(1);
+	}
 	/* NOTREACHED */
 }
 
