@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 1997/08/23 19:19:31 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.25 1997/11/17 01:58:37 lukem Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -6,27 +6,28 @@
 include		"arch/vax/conf/std.vax"
 
 # Here are all different supported CPU types listed.
-options         "VAX8600"
-options         "VAX8200"
-options         "VAX780"
-options         "VAX750"
-options         "VAX630"	# MV II
-options         "VAX650"	# MV III, 3600, 3800, 3900
-options		"VAX410"	# VS 2000
-options		"VAX43"		# VS 3100/76
+options 	"VAX8600"
+options 	"VAX8200"
+options 	"VAX780"
+options 	"VAX750"
+options 	"VAX630"	# MV II
+options 	"VAX650"	# MV III, 3600, 3800, 3900
+options 	"VAX410"	# VS 2000
+options 	"VAX43"		# VS 3100/76
 
 # Max users on system; this is just a hint
 maxusers	8
 
 # Kernel compiled-in symbolic debugger & system call tracer
-options		DDB
-options		KTRACE
-#options		DIAGNOSTIC
+options 	DDB
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	KTRACE
+#options 	DIAGNOSTIC
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Network support
-#options		GATEWAY
+#options 	GATEWAY
 options         INET
 
 # All supported filesystem types
@@ -41,28 +42,28 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 
-options		QUOTA
-options		FIFO
-options		NFSSERVER
+options 	QUOTA
+options 	FIFO
+options 	NFSSERVER
 
 # System V shared memory & semaphores support.
-options		SYSVMSG
-options		SYSVSEM
-options		SYSVSHM
+options 	SYSVMSG
+options 	SYSVSEM
+options 	SYSVSHM
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
-options		COMPAT_43
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_12
-#options		COMPAT_ULTRIX
-options		TCP_COMPAT_42
+options 	COMPAT_43
+options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
+#options 	COMPAT_ULTRIX
+options 	TCP_COMPAT_42
 
-options		LKM
+options 	LKM
 
 # Kernel(s) to compile
 config          netbsd root on ? type ?
