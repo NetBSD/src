@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.41 1998/03/28 22:29:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.40 1998/03/26 19:20:37 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.41 1998/03/28 22:29:04 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 1998/03/26 19:20:37 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 1998/03/28 22:29:04 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,7 +393,7 @@ Main_ParseArgLine(line)
 	if (p1)
 		free(p1);
 
-	argv = brk_string(line, &argc, TRUE, &args);
+	argv = brk_string(buf, &argc, TRUE, &args);
 	MainParseArgs(argc, argv);
 
 	free(args);
@@ -620,6 +620,7 @@ main(argc, argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
+	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
