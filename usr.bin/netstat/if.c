@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: if.c,v 1.10 1995/06/12 03:03:07 mycroft Exp $";
+static char *rcsid = "$Id: if.c,v 1.11 1995/07/03 03:16:57 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,7 +152,7 @@ intpr(interval, ifnetaddr)
 				    ifaddr.in.ia_subnetmask));
 #else
 				printf("%-11.11s ",
-				    netname(htonl(ifaddr.in.ia_subnet),
+				    netname(ifaddr.in.ia_subnet,
 				    ifaddr.in.ia_subnetmask));
 #endif
 				printf("%-15.15s ",
