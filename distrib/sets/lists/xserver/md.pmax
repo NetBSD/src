@@ -1,4 +1,2 @@
-./usr
-./usr/X11R6
-./usr/X11R6/bin
+./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xpmax
