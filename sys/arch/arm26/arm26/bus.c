@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.3 2001/03/20 22:56:16 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.4 2001/04/13 14:50:47 bjh21 Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: bus.c,v 1.3 2001/03/20 22:56:16 bjh21 Exp $");
+__RCSID("$NetBSD: bus.c,v 1.4 2001/04/13 14:50:47 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/memcreg.h>
@@ -44,7 +44,7 @@ bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
 
 	if (flags & BUS_SPACE_MAP_LINEAR)
 		return -1;
-	*bshp = (bus_space_handle_t)(MEMC_IO_BASE + addr);
+	*bshp = (bus_space_handle_t)(addr);
 	return 0;
 }
 
