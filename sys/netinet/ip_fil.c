@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.10 1997/04/01 00:07:07 augustss Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.11 1997/04/03 00:57:03 cgd Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.10 1997/04/01 00:07:07 augustss Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.11 1997/04/03 00:57:03 cgd Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -435,7 +435,7 @@ int mode;
 		else {
 			*(int *)data = iplused[unit];
 			iplh[unit] = iplt[unit] = iplbuf[unit];
-			iplused[unix] = 0;
+			iplused[unit] = 0;
 		}
 		break;
 #endif /* IPFILTER_LOG */
