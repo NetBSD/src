@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.25 1998/11/17 20:44:03 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.26 1998/11/18 18:15:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -508,14 +508,21 @@ ne_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-#ifdef notyet
-	struct dp8390_softc *sc = (struct dp8390_softc *)self;
+	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
 
+	/* Unmap our i/o windows. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+#ifdef notyet
 	/*
 	 * Our softc is about to go away, so drop our reference
 	 * to the ifnet.
 	 */
-	if_delref(sc->sc_ec.ec_if);
+	if_delref(psc->sc_ne2000.sc_dp8390.sc_ec.ec_if);
 	return (0);
 #else
 	return (EBUSY);
@@ -544,13 +551,6 @@ ne_pcmcia_activate(self, act)
 
 		/* Now disable the interface.  This releases our interrupt. */
 		dp8390_disable(sc);
-
-		/* Unmap our i/o windows. */
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
-
-		/* Free our i/o space. */
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 		break;
 	}
 	return (rv);
