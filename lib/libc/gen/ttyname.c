@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.12 1998/02/03 18:23:56 perry Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.13 1998/02/27 19:01:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.12 1998/02/03 18:23:56 perry Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.13 1998/02/27 19:01:03 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ __weak_alias(ttyname,_ttyname);
 #endif
 
 static char buf[sizeof(_PATH_DEV) + MAXNAMLEN] = _PATH_DEV;
-static char *oldttyname __P((int, struct stat *));
+static char *oldttyname __P((struct stat *));
 
 char *
 ttyname(fd)
@@ -94,12 +94,11 @@ ttyname(fd)
 		}
 		(void)(db->close)(db);
 	}
-	return (oldttyname(fd, &sb));
+	return (oldttyname(&sb));
 }
 
 static char *
-oldttyname(fd, sb)
-	int fd;
+oldttyname(sb)
 	struct stat *sb;
 {
 	struct dirent *dirp;
@@ -113,7 +112,7 @@ oldttyname(fd, sb)
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
 		bcopy(dirp->d_name, buf + sizeof(_PATH_DEV) - 1,
-		    dirp->d_namlen + 1);
+		    (size_t)(dirp->d_namlen + 1));
 		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
 		    sb->st_ino != dsb.st_ino)
 			continue;
