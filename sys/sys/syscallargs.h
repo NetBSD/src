@@ -941,3 +941,378 @@ struct shmget_args {
 };
 
 #undef	syscallarg
+
+/*
+ * System call prototypes.
+ */
+
+int	nosys	__P((struct proc *, void *, register_t *));
+int	exit	__P((struct proc *, void *, register_t *));
+int	fork	__P((struct proc *, void *, register_t *));
+int	read	__P((struct proc *, void *, register_t *));
+int	write	__P((struct proc *, void *, register_t *));
+int	open	__P((struct proc *, void *, register_t *));
+int	close	__P((struct proc *, void *, register_t *));
+int	wait4	__P((struct proc *, void *, register_t *));
+int	link	__P((struct proc *, void *, register_t *));
+int	unlink	__P((struct proc *, void *, register_t *));
+int	chdir	__P((struct proc *, void *, register_t *));
+int	fchdir	__P((struct proc *, void *, register_t *));
+int	mknod	__P((struct proc *, void *, register_t *));
+int	chmod	__P((struct proc *, void *, register_t *));
+int	chown	__P((struct proc *, void *, register_t *));
+int	obreak	__P((struct proc *, void *, register_t *));
+int	getfsstat	__P((struct proc *, void *, register_t *));
+int	getpid	__P((struct proc *, void *, register_t *));
+int	mount	__P((struct proc *, void *, register_t *));
+int	unmount	__P((struct proc *, void *, register_t *));
+int	setuid	__P((struct proc *, void *, register_t *));
+int	getuid	__P((struct proc *, void *, register_t *));
+int	geteuid	__P((struct proc *, void *, register_t *));
+int	ptrace	__P((struct proc *, void *, register_t *));
+int	recvmsg	__P((struct proc *, void *, register_t *));
+int	sendmsg	__P((struct proc *, void *, register_t *));
+int	recvfrom	__P((struct proc *, void *, register_t *));
+int	accept	__P((struct proc *, void *, register_t *));
+int	getpeername	__P((struct proc *, void *, register_t *));
+int	getsockname	__P((struct proc *, void *, register_t *));
+int	access	__P((struct proc *, void *, register_t *));
+int	chflags	__P((struct proc *, void *, register_t *));
+int	fchflags	__P((struct proc *, void *, register_t *));
+int	sync	__P((struct proc *, void *, register_t *));
+int	kill	__P((struct proc *, void *, register_t *));
+int	getppid	__P((struct proc *, void *, register_t *));
+int	dup	__P((struct proc *, void *, register_t *));
+int	pipe	__P((struct proc *, void *, register_t *));
+int	getegid	__P((struct proc *, void *, register_t *));
+int	profil	__P((struct proc *, void *, register_t *));
+#ifdef KTRACE
+int	ktrace	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	sigaction	__P((struct proc *, void *, register_t *));
+int	getgid	__P((struct proc *, void *, register_t *));
+int	sigprocmask	__P((struct proc *, void *, register_t *));
+int	getlogin	__P((struct proc *, void *, register_t *));
+int	setlogin	__P((struct proc *, void *, register_t *));
+int	acct	__P((struct proc *, void *, register_t *));
+int	sigpending	__P((struct proc *, void *, register_t *));
+int	sigaltstack	__P((struct proc *, void *, register_t *));
+int	ioctl	__P((struct proc *, void *, register_t *));
+int	reboot	__P((struct proc *, void *, register_t *));
+int	revoke	__P((struct proc *, void *, register_t *));
+int	symlink	__P((struct proc *, void *, register_t *));
+int	readlink	__P((struct proc *, void *, register_t *));
+int	execve	__P((struct proc *, void *, register_t *));
+int	umask	__P((struct proc *, void *, register_t *));
+int	chroot	__P((struct proc *, void *, register_t *));
+int	msync	__P((struct proc *, void *, register_t *));
+int	vfork	__P((struct proc *, void *, register_t *));
+int	sbrk	__P((struct proc *, void *, register_t *));
+int	sstk	__P((struct proc *, void *, register_t *));
+int	ovadvise	__P((struct proc *, void *, register_t *));
+int	munmap	__P((struct proc *, void *, register_t *));
+int	mprotect	__P((struct proc *, void *, register_t *));
+int	madvise	__P((struct proc *, void *, register_t *));
+int	mincore	__P((struct proc *, void *, register_t *));
+int	getgroups	__P((struct proc *, void *, register_t *));
+int	setgroups	__P((struct proc *, void *, register_t *));
+int	getpgrp	__P((struct proc *, void *, register_t *));
+int	setpgid	__P((struct proc *, void *, register_t *));
+int	setitimer	__P((struct proc *, void *, register_t *));
+int	swapon	__P((struct proc *, void *, register_t *));
+int	getitimer	__P((struct proc *, void *, register_t *));
+int	dup2	__P((struct proc *, void *, register_t *));
+int	fcntl	__P((struct proc *, void *, register_t *));
+int	select	__P((struct proc *, void *, register_t *));
+int	fsync	__P((struct proc *, void *, register_t *));
+int	setpriority	__P((struct proc *, void *, register_t *));
+int	socket	__P((struct proc *, void *, register_t *));
+int	connect	__P((struct proc *, void *, register_t *));
+int	getpriority	__P((struct proc *, void *, register_t *));
+int	sigreturn	__P((struct proc *, void *, register_t *));
+int	bind	__P((struct proc *, void *, register_t *));
+int	setsockopt	__P((struct proc *, void *, register_t *));
+int	listen	__P((struct proc *, void *, register_t *));
+int	sigsuspend	__P((struct proc *, void *, register_t *));
+#ifdef TRACE
+int	vtrace	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	gettimeofday	__P((struct proc *, void *, register_t *));
+int	getrusage	__P((struct proc *, void *, register_t *));
+int	getsockopt	__P((struct proc *, void *, register_t *));
+int	readv	__P((struct proc *, void *, register_t *));
+int	writev	__P((struct proc *, void *, register_t *));
+int	settimeofday	__P((struct proc *, void *, register_t *));
+int	fchown	__P((struct proc *, void *, register_t *));
+int	fchmod	__P((struct proc *, void *, register_t *));
+int	rename	__P((struct proc *, void *, register_t *));
+int	flock	__P((struct proc *, void *, register_t *));
+int	mkfifo	__P((struct proc *, void *, register_t *));
+int	sendto	__P((struct proc *, void *, register_t *));
+int	shutdown	__P((struct proc *, void *, register_t *));
+int	socketpair	__P((struct proc *, void *, register_t *));
+int	mkdir	__P((struct proc *, void *, register_t *));
+int	rmdir	__P((struct proc *, void *, register_t *));
+int	utimes	__P((struct proc *, void *, register_t *));
+int	adjtime	__P((struct proc *, void *, register_t *));
+int	setsid	__P((struct proc *, void *, register_t *));
+int	quotactl	__P((struct proc *, void *, register_t *));
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+int	nfssvc	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	statfs	__P((struct proc *, void *, register_t *));
+int	fstatfs	__P((struct proc *, void *, register_t *));
+#ifdef NFSCLIENT
+int	getfh	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	sysarch	__P((struct proc *, void *, register_t *));
+#if defined(SYSVSEM) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVMSG) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVSHM) && !defined(alpha)
+#else
+#endif
+int	setgid	__P((struct proc *, void *, register_t *));
+int	setegid	__P((struct proc *, void *, register_t *));
+int	seteuid	__P((struct proc *, void *, register_t *));
+#ifdef LFS
+int	lfs_bmapv	__P((struct proc *, void *, register_t *));
+int	lfs_markv	__P((struct proc *, void *, register_t *));
+int	lfs_segclean	__P((struct proc *, void *, register_t *));
+int	lfs_segwait	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	stat	__P((struct proc *, void *, register_t *));
+int	fstat	__P((struct proc *, void *, register_t *));
+int	lstat	__P((struct proc *, void *, register_t *));
+int	pathconf	__P((struct proc *, void *, register_t *));
+int	fpathconf	__P((struct proc *, void *, register_t *));
+int	getrlimit	__P((struct proc *, void *, register_t *));
+int	setrlimit	__P((struct proc *, void *, register_t *));
+int	getdirentries	__P((struct proc *, void *, register_t *));
+int	mmap	__P((struct proc *, void *, register_t *));
+int	nosys	__P((struct proc *, void *, register_t *));
+int	lseek	__P((struct proc *, void *, register_t *));
+int	truncate	__P((struct proc *, void *, register_t *));
+int	ftruncate	__P((struct proc *, void *, register_t *));
+int	__sysctl	__P((struct proc *, void *, register_t *));
+int	mlock	__P((struct proc *, void *, register_t *));
+int	munlock	__P((struct proc *, void *, register_t *));
+int	undelete	__P((struct proc *, void *, register_t *));
+#ifdef LKM
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+int	lkmnosys	__P((struct proc *, void *, register_t *));
+#else	/* !LKM */
+#endif	/* !LKM */
+#ifdef SYSVSEM
+int	__semctl	__P((struct proc *, void *, register_t *));
+int	semget	__P((struct proc *, void *, register_t *));
+int	semop	__P((struct proc *, void *, register_t *));
+int	semconfig	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVMSG
+int	msgctl	__P((struct proc *, void *, register_t *));
+int	msgget	__P((struct proc *, void *, register_t *));
+int	msgsnd	__P((struct proc *, void *, register_t *));
+int	msgrcv	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVSHM
+int	shmat	__P((struct proc *, void *, register_t *));
+int	shmctl	__P((struct proc *, void *, register_t *));
+int	shmdt	__P((struct proc *, void *, register_t *));
+int	shmget	__P((struct proc *, void *, register_t *));
+#else
+#endif
+
+#ifdef COMPAT_43
+#define compat_43(func) __CONCAT(compat_43_,func)
+
+int	compat_43(creat)	__P((struct proc *, void *, register_t *));
+int	compat_43(lseek)	__P((struct proc *, void *, register_t *));
+int	compat_43(stat)	__P((struct proc *, void *, register_t *));
+int	compat_43(lstat)	__P((struct proc *, void *, register_t *));
+#ifdef KTRACE
+#else
+#endif
+int	compat_43(fstat)	__P((struct proc *, void *, register_t *));
+int	compat_43(getkerninfo)	__P((struct proc *, void *, register_t *));
+int	compat_43(getpagesize)	__P((struct proc *, void *, register_t *));
+int	compat_43(mmap)	__P((struct proc *, void *, register_t *));
+int	compat_43(wait)	__P((struct proc *, void *, register_t *));
+int	compat_43(gethostname)	__P((struct proc *, void *, register_t *));
+int	compat_43(sethostname)	__P((struct proc *, void *, register_t *));
+int	compat_43(getdtablesize)	__P((struct proc *, void *, register_t *));
+int	compat_43(accept)	__P((struct proc *, void *, register_t *));
+int	compat_43(send)	__P((struct proc *, void *, register_t *));
+int	compat_43(recv)	__P((struct proc *, void *, register_t *));
+int	compat_43(sigvec)	__P((struct proc *, void *, register_t *));
+int	compat_43(sigblock)	__P((struct proc *, void *, register_t *));
+int	compat_43(sigsetmask)	__P((struct proc *, void *, register_t *));
+int	compat_43(sigstack)	__P((struct proc *, void *, register_t *));
+int	compat_43(recvmsg)	__P((struct proc *, void *, register_t *));
+int	compat_43(sendmsg)	__P((struct proc *, void *, register_t *));
+#ifdef TRACE
+#else
+#endif
+int	compat_43(recvfrom)	__P((struct proc *, void *, register_t *));
+int	compat_43(setreuid)	__P((struct proc *, void *, register_t *));
+int	compat_43(setregid)	__P((struct proc *, void *, register_t *));
+int	compat_43(truncate)	__P((struct proc *, void *, register_t *));
+int	compat_43(ftruncate)	__P((struct proc *, void *, register_t *));
+int	compat_43(getpeername)	__P((struct proc *, void *, register_t *));
+int	compat_43(gethostid)	__P((struct proc *, void *, register_t *));
+int	compat_43(sethostid)	__P((struct proc *, void *, register_t *));
+int	compat_43(getrlimit)	__P((struct proc *, void *, register_t *));
+int	compat_43(setrlimit)	__P((struct proc *, void *, register_t *));
+int	compat_43(killpg)	__P((struct proc *, void *, register_t *));
+int	compat_43(quota)	__P((struct proc *, void *, register_t *));
+int	compat_43(getsockname)	__P((struct proc *, void *, register_t *));
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+#else
+#endif
+int	compat_43(getdirentries)	__P((struct proc *, void *, register_t *));
+#ifdef NFSCLIENT
+#else
+#endif
+#if defined(SYSVSEM) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVMSG) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVSHM) && !defined(alpha)
+#else
+#endif
+#ifdef LFS
+#else
+#endif
+#ifdef LKM
+#else	/* !LKM */
+#endif	/* !LKM */
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+
+#else /* COMPAT_43 */
+#define compat_43(func) nosys
+#endif /* COMPAT_43 */
+
+
+#ifdef COMPAT_09
+#define compat_09(func) __CONCAT(compat_09_,func)
+
+#ifdef KTRACE
+#else
+#endif
+#ifdef TRACE
+#else
+#endif
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+#else
+#endif
+#ifdef NFSCLIENT
+#else
+#endif
+int	compat_09(getdomainname)	__P((struct proc *, void *, register_t *));
+int	compat_09(setdomainname)	__P((struct proc *, void *, register_t *));
+int	compat_09(uname)	__P((struct proc *, void *, register_t *));
+#if defined(SYSVSEM) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVMSG) && !defined(alpha)
+#else
+#endif
+#if defined(SYSVSHM) && !defined(alpha)
+#else
+#endif
+#ifdef LFS
+#else
+#endif
+#ifdef LKM
+#else	/* !LKM */
+#endif	/* !LKM */
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+
+#else /* COMPAT_09 */
+#define compat_09(func) nosys
+#endif /* COMPAT_09 */
+
+
+#ifdef COMPAT_10
+#define compat_10(func) __CONCAT(compat_10_,func)
+
+#ifdef KTRACE
+#else
+#endif
+#ifdef TRACE
+#else
+#endif
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+#else
+#endif
+#ifdef NFSCLIENT
+#else
+#endif
+#if defined(SYSVSEM) && !defined(alpha)
+int	compat_10(semsys)	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#if defined(SYSVMSG) && !defined(alpha)
+int	compat_10(msgsys)	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#if defined(SYSVSHM) && !defined(alpha)
+int	compat_10(shmsys)	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef LFS
+#else
+#endif
+#ifdef LKM
+#else	/* !LKM */
+#endif	/* !LKM */
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+
+#else /* COMPAT_10 */
+#define compat_10(func) nosys
+#endif /* COMPAT_10 */
+
