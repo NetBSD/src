@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.94 1998/08/09 05:44:51 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.95 1998/08/09 07:25:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -974,8 +974,9 @@ audio_close(dev, flags, ifmt, p)
 
 	DPRINTF(("audio_close: unit=%d\n", unit));
 
+	s = splaudio();
         /* Stop recording. */
-	if (sc->sc_rbus) {
+	if ((flags & FREAD) && sc->sc_rbus) {
 		/* 
 		 * XXX Some drivers (e.g. SB) use the same routine
 		 * to halt input and output so don't halt input if
@@ -989,25 +990,29 @@ audio_close(dev, flags, ifmt, p)
 	 * Block until output drains, but allow ^C interrupt.
 	 */
 	sc->sc_pr.usedlow = sc->sc_pr.blksize;	/* avoid excessive wakeups */
-	s = splaudio();
 	/*
 	 * If there is pending output, let it drain (unless
 	 * the output is paused).
 	 */
-	if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pr.pause) {
-		if (!audio_drain(sc) && hw->drain)
+	if ((flags & FWRITE) && sc->sc_pbus) {
+		if (!sc->sc_pr.pause && !audio_drain(sc) && hw->drain)
 			(void)hw->drain(sc->hw_hdl);
+		sc->hw_if->halt_output(sc->hw_hdl);
+		sc->sc_pbus = 0;
 	}
 	
 	hw->close(sc->hw_hdl);
 	
-	if (flags & FREAD)
+	if (flags & FREAD) {
 		sc->sc_open &= ~AUOPEN_READ;
-	if (flags & FWRITE)
+		sc->sc_mode &= ~AUMODE_RECORD;
+	}
+	if (flags & FWRITE) {
 		sc->sc_open &= ~AUOPEN_WRITE;
+		sc->sc_mode &= ~(AUMODE_PLAY|AUMODE_PLAY_ALL);
+	}
 
 	sc->sc_async_audio = 0;
-	sc->sc_mode = 0;
 	sc->sc_full_duplex = 0;
 	splx(s);
 	DPRINTF(("audio_close: done\n"));
