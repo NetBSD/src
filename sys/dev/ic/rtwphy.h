@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.h,v 1.2 2004/12/29 19:41:54 dyoung Exp $ */
+/* $NetBSD: rtwphy.h,v 1.3 2005/01/02 04:23:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
 struct rtw_rf *rtw_sa2400_create(struct rtw_regs *, rtw_rf_write_t, int);
 struct rtw_rf *rtw_max2820_create(struct rtw_regs *, rtw_rf_write_t, int);
 
-int rtw_phy_init(struct rtw_regs *, struct rtw_rf *, u_int8_t, u_int8_t, u_int,
+int rtw_phy_init(struct rtw_regs *, struct rtw_rf *, uint8_t, uint8_t, u_int,
     int, int, enum rtw_pwrstate);
 
 #endif /* _DEV_IC_RTWPHY_H */

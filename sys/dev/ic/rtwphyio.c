@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.5 2004/12/27 06:12:28 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.6 2005/01/02 04:23:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.5 2004/12/27 06:12:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.6 2005/01/02 04:23:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.5 2004/12/27 06:12:28 dyoung Exp $");
 
 static int rtw_macbangbits_timeout = 100;
 
-u_int8_t
+uint8_t
 rtw_bbp_read(struct rtw_regs *regs, u_int addr)
 {
 	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
@@ -117,11 +117,11 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 
 /* Help rtw_rf_hostwrite bang bits to RF over 3-wire interface. */
 static __inline void
-rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
+rtw_rf_hostbangbits(struct rtw_regs *regs, uint32_t bits, int lo_to_hi,
     u_int nbits)
 {
 	int i;
-	u_int32_t mask, reg;
+	uint32_t mask, reg;
 
 	KASSERT(nbits <= 32);
 
@@ -174,7 +174,7 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
  * interface.
  */
 static __inline int
-rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
+rtw_rf_macbangbits(struct rtw_regs *regs, uint32_t reg)
 {
 	int i;
 
@@ -198,19 +198,19 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 	return -1;
 }
 
-static u_int32_t
-rtw_grf5101_host_crypt(u_int addr, u_int32_t val)
+static uint32_t
+rtw_grf5101_host_crypt(u_int addr, uint32_t val)
 {
 	/* TBD */
 	return 0;
 }
 
-static u_int32_t
-rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
+static uint32_t
+rtw_grf5101_mac_crypt(u_int addr, uint32_t val)
 {
-	u_int32_t data_and_addr;
+	uint32_t data_and_addr;
 #define EXTRACT_NIBBLE(d, which) (((d) >> (4 * (which))) & 0xf)
-	static u_int8_t caesar[16] = {0x0, 0x8, 0x4, 0xc,
+	static uint8_t caesar[16] = {0x0, 0x8, 0x4, 0xc,
 	                              0x2, 0xa, 0x6, 0xe,
 				      0x1, 0x9, 0x5, 0xd,
 				      0x3, 0xb, 0x7, 0xf};
@@ -248,11 +248,11 @@ rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 /* Bang bits over the 3-wire interface. */
 int
 rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+    u_int addr, uint32_t val)
 {
 	u_int nbits;
 	int lo_to_hi;
-	u_int32_t bits;
+	uint32_t bits;
 
 	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
@@ -312,7 +312,7 @@ rtw_maxim_swizzle(u_int addr, uint32_t val)
 /* Tell the MAC what to bang over the 3-wire interface. */
 int
 rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+    u_int addr, uint32_t val)
 {
 	uint32_t reg;
 
