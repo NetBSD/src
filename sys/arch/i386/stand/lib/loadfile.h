@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.3 1999/01/29 18:44:09 christos Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.3.2.1 1999/12/20 13:32:43 he Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ int loadfile __P((const char *, u_long *, int));
 
 #ifdef _STANDALONE
 
-#define LOADADDR(a)		((((u_long)(a)) & 0x00ffffff) + offset)
+#define LOADADDR(a)		((((u_long)(a)) & 0x07ffffff) + offset)
 #define ALIGNENTRY(a)		((u_long)(a) & 0x00100000)
 #define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
