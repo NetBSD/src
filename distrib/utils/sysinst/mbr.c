@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.59 2004/03/22 07:11:00 lukem Exp $ */
+/*	$NetBSD: mbr.c,v 1.60 2004/03/26 17:38:44 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -158,6 +158,31 @@ static void convert_mbr_chs(int, int, int, u_int8_t *, u_int8_t *,
  * is space at the start of the extended partition.
  */
 
+#ifndef debug_extended
+#define dump_mbr(mbr, msg)
+#else
+void
+dump_mbr(mbr_info_t *mbr, const char *msg)
+{
+	int i;
+
+	fprintf(stderr, "%s: bsec %d\n", msg, bsec);
+	do {
+		fprintf(stderr, "%9p: %9d %9p %6.6s:",
+		    mbr, mbr->sector, mbr->extended,
+		    mbr->prev_ext, mbr->last_mounted);
+		for (i = 0; i < 4; i++)
+			fprintf(stderr, " %*d %9d %9d %9d,\n",
+			    i ? 41 : 3,
+			    mbr->mbr.mbr_parts[i].mbrp_type,
+			    mbr->mbr.mbr_parts[i].mbrp_start,
+			    mbr->mbr.mbr_parts[i].mbrp_size,
+			    mbr->mbr.mbr_parts[i].mbrp_start +
+				mbr->mbr.mbr_parts[i].mbrp_size);
+	} while ((mbr = mbr->extended));
+}
+#endif
+
 /*
  * get C/H/S geometry from user via menu interface and
  * store in globals.
@@ -303,6 +328,8 @@ set_mbr_type(menudesc *m, void *arg)
 	int start, sz;
 	int i;
 	char numbuf[4];
+
+	dump_mbr(ombri, "set type");
 
 	mbrp = get_mbrp(&mbri, opt);
 	if (opt >= MBR_PART_COUNT)
@@ -1335,6 +1362,13 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	int bootkey;
 #endif
 
+	/*
+	 * Fake up a likely 'bios sectors per track' for any extended
+	 * partition headers we might have to produce.
+	 */
+	if (bsec == 0)
+		bsec = dlsec;
+
 	memset(mbri, 0, sizeof *mbri);
 
 	/* Open the disk. */
@@ -1427,6 +1461,9 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 				ext->sector = base;
 				ext->mbr.mbr_magic = htole16(MBR_MAGIC);
 				ext->mbr.mbr_parts[1] = mbrp[1];
+				ext->mbr.mbr_parts[0].mbrp_start = bsec;
+				ext->mbr.mbr_parts[0].mbrp_size =
+				    ext_base + limit - base - bsec;
 				mbrp[1].mbrp_type = MBR_PTYPE_EXT;
 				mbrp[1].mbrp_start = base - ext_base;
 				mbrp[1].mbrp_size = limit - mbrp[1].mbrp_start;
@@ -1458,6 +1495,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		memset(&mbrs->mbr_parts, 0, sizeof mbrs->mbr_parts);
 		mbrs->mbr_magic = htole16(MBR_MAGIC);
 	}
+	dump_mbr(ombri, "read");
 	return rval;
 }
 
