@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.15 2003/10/25 18:28:31 christos Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.16 2003/10/28 23:40:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.15 2003/10/25 18:28:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.16 2003/10/28 23:40:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,8 +468,9 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 			return (EINVAL);
 		}
 		break;
+
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
