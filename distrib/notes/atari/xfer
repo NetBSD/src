@@ -12,11 +12,11 @@ If you are using NetBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
 the disk. To write onto fd0 use:
 
-	dd if=inst-10.fs.1 of=/dev/rfd0b bs=9b
+	dd if=miniroot-12.fs.1 of=/dev/rfd0b bs=9b
 
 If you are using TOS to make the floppies, grab the 'rawwrite' utility
 from the "atari/utils" directory and issue the command:
-	rawwrite boot-10.fs
+	rawwrite miniroot-12.fs
 
 This will create the boot-floppy on the floppy in drive a. The floppies
 should be pre-formatted on 720Kb for both the 'dd' and 'rawwrite' commands
@@ -31,12 +31,10 @@ To prepare for installing via an GEMDOS partition:
 
 	To install NetBSD from an GEMDOS partition, you need to
 	get the NetBSD distribution sets you wish to install
-	on your system on to an GEMDOS partition.  All of the
-	set_name.xx pieces can be placed in a single directory
-	instead of separate ones for each distribution set.  This
-	will also simplify the installation work later on.
+	on your system on to an GEMDOS partition.  Rename the
+	sets from xxx.tar.gz to xxx.tgz. 
 
-	Note where you place the files you will need this later.
+	Note where you placed the files you will need this later.
 
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.
