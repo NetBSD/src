@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.19.4.2 1996/06/03 18:51:39 cgd Exp $	*/
+/*	$NetBSD: pstat.c,v 1.19.4.3 1996/06/03 19:00:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.19.4.2 1996/06/03 18:51:39 cgd Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.19.4.3 1996/06/03 19:00:46 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -668,7 +668,7 @@ kinfo_vnodes(avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 	
-char hdr[]="  LINE  RAW  CAN  OUT  HWT LWT    COL STATE    SESS  PGID DISC\n";
+char hdr[]="  LINE  RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 
 void
 ttymode()
@@ -731,7 +731,7 @@ ttyprt(tp)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-6s %6x", state, (u_long)tp->t_session & ~KERNBASE);
+	(void)printf("%-6s %8x", state, (u_long)tp->t_session & ~KERNBASE);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
