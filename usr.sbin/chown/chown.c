@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.18 1999/03/14 01:47:09 kleink Exp $	*/
+/*	$NetBSD: chown.c,v 1.19 1999/03/14 19:36:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,11 +43,11 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.18 1999/03/14 01:47:09 kleink Exp $");
+__RCSID("$NetBSD: chown.c,v 1.19 1999/03/14 19:36:05 kleink Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: chown.c,v 1.18 1999/03/14 01:47:09 kleink Exp $");
 static void	a_gid __P((const char *));
 static void	a_uid __P((const char *));
 static id_t	id __P((const char *, const char *));
-int	main __P((int, char **));
+	int	main __P((int, char **));
 static void	usage __P((void));
 
 static uid_t uid;
@@ -81,28 +81,27 @@ main(argc, argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
-	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
+	int Hflag, Lflag, ch, fts_options, hflag, rval;
 	char *cp;
 	int (*change_owner) __P((const char *, uid_t, gid_t));
 	
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
-	ischown = myname[2] == 'o';
+	ischown = (myname[2] == 'o');
 	
-	Hflag = Lflag = Pflag = hflag = 0;
+	Hflag = Lflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'R':
@@ -137,7 +136,7 @@ main(argc, argv)
 			fts_options |= FTS_COMFOLLOW;
 		if (Lflag) {
 			if (hflag)
-				errx(1, "the -L and -h options may not be specified together.");
+				errx(EXIT_FAILURE, "the -L and -h options may not be specified together.");
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
@@ -164,10 +163,10 @@ main(argc, argv)
 	} else 
 		a_gid(*argv);
 
-	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
-		err(1, "%s", "");
+	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
+		err(EXIT_FAILURE, "%s", "");
 
-	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
+	for (rval = EXIT_SUCCESS; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
 			if (!Rflag)		/* Change it at FTS_DP. */
@@ -175,12 +174,12 @@ main(argc, argv)
 			continue;
 		case FTS_DNR:			/* Warn, chown, continue. */
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
-			rval = 1;
+			rval = EXIT_FAILURE;
 			break;
 		case FTS_ERR:			/* Warn, continue. */
 		case FTS_NS:
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
-			rval = 1;
+			rval = EXIT_FAILURE;
 			continue;
 		case FTS_SL:			/* Ignore. */
 		case FTS_SLNONE:
@@ -199,11 +198,11 @@ main(argc, argv)
 
 		if ((*change_owner)(p->fts_accpath, uid, gid) && !fflag) {
 			warn("%s", p->fts_path);
-			rval = 1;
+			rval = EXIT_FAILURE;
 		}
 	}
 	if (errno)
-		err(1, "fts_read");
+		err(EXIT_FAILURE, "fts_read");
 	exit(rval);
 	/* NOTREACHED */
 }
@@ -240,9 +239,9 @@ id(name, type)
 	errno = 0;
 	val = (id_t)strtoul(name, &ep, 10);
 	if (errno)
-		err(1, "%s", name);
+		err(EXIT_FAILURE, "%s", name);
 	if (*ep != '\0')
-		errx(1, "%s: invalid %s name", name, type);
+		errx(EXIT_FAILURE, "%s: invalid %s name", name, type);
 	return (val);
 }
 
@@ -252,5 +251,5 @@ usage()
 	(void)fprintf(stderr,
 	    "usage: %s [-R [-H | -L | -P]] [-fh] %s file ...\n",
 	    myname, ischown ? "[owner][:group]" : "group");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
