@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2003/02/07 04:39:09 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2003/06/28 14:32:02 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -141,16 +141,20 @@ trap(struct trapframe *frame)
 
 	ftype = VM_PROT_READ;
 
-DBPRINTF(TDB_ALL, ("trap(%x) at %lx from frame %p &frame %p\n",
-	type, frame->srr0, frame, &frame));
+	DBPRINTF(TDB_ALL, ("trap(%x) at %lx from frame %p &frame %p\n",
+	    type, frame->srr0, frame, &frame));
 
 	switch (type) {
 	case EXC_DEBUG|EXC_USER:
-{
-	int srr2, srr3;
-__asm __volatile("mfspr %0,0x3f0" : "=r" (rv), "=r" (srr2), "=r" (srr3) :);
-printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
-}
+		{
+			int srr2, srr3;
+
+			__asm __volatile("mfspr %0,0x3f0" :
+			    "=r" (rv), "=r" (srr2), "=r" (srr3) :);
+			printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2,
+			    srr3);
+			/* XXX fall through or break here?! */
+		}
 		/*
 		 * DEBUG intr -- probably single-step.
 		 */
@@ -161,7 +165,9 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
-	  /* If we could not find and install appropriate TLB entry, fall through */
+	/*
+	 * If we could not find and install appropriate TLB entry, fall through.
+	 */
 
 	case EXC_DSI:
 		/* FALLTHROUGH */
@@ -182,8 +188,11 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 				ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %lx %s fault on %p esr %x\n",
-frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->tf_xtra[TF_ESR]));
+			DBPRINTF(TDB_ALL,
+			    ("trap(EXC_DSI) at %lx %s fault on %p esr %x\n",
+			    frame->srr0,
+			    (ftype & VM_PROT_WRITE) ? "write" : "read",
+			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
 			if (rv == 0)
@@ -211,21 +220,23 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->tf_xtr
 		if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
-DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %lx %s fault on %lx %x\n",
-frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dar, frame->tf_xtra[TF_ESR]));
-KASSERT(l == curlwp && (l->l_stat == LSONPROC));
-		rv = uvm_fault(&p->p_vmspace->vm_map,
-			       trunc_page(frame->dar), 0, ftype);
+		DBPRINTF(TDB_ALL,
+		    ("trap(EXC_DSI|EXC_USER) at %lx %s fault on %lx %x\n",
+		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
+		    frame->dar, frame->tf_xtra[TF_ESR]));
+		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
+		    0, ftype);
 		if (rv == 0) {
-		  KERNEL_PROC_UNLOCK(l);
-		  break;
+			KERNEL_PROC_UNLOCK(l);
+			break;
 		}
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
-			       "out of swap\n",
-			       p->p_pid, p->p_comm, l->l_lid,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			    "out of swap\n",
+			    p->p_pid, p->p_comm, l->l_lid,
+			    p->p_cred && p->p_ucred ?
+			    p->p_ucred->cr_uid : -1);
 			trapsignal(l, SIGKILL, EXC_DSI);
 		} else {
 			trapsignal(l, SIGSEGV, EXC_DSI);
@@ -236,12 +247,15 @@ KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %lx %s fault on %lx tf %p\n",
-frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
-		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0), 0, ftype);
+		DBPRINTF(TDB_ALL,
+		    ("trap(EXC_ISI|EXC_USER) at %lx %s fault on %lx tf %p\n",
+		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
+		    frame->srr0, frame));
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
+		    0, ftype);
 		if (rv == 0) {
-		  KERNEL_PROC_UNLOCK(l);
-		  break;
+			KERNEL_PROC_UNLOCK(l);
+			break;
 		}
 		trapsignal(l, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(l);
@@ -311,7 +325,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		}
 		goto brain_damage;
 	default:
-brain_damage:
+ brain_damage:
 		printf("trap type 0x%x at 0x%lx\n", type, frame->srr0);
 #ifdef DDB
 		if (kdb_trap(type, frame))
@@ -341,7 +355,7 @@ brain_damage:
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
-  done:
+ done:
 	return;
 }
 
@@ -367,9 +381,9 @@ ctx_setup(int ctx, int srr1)
 				 * XXX this is also used by jtag debuggers...
 				 */
 			__asm __volatile("mfspr %0,0x3f2;"
-				"or %0,%0,%1;"
-				"mtspr 0x3f2,%0;" :
-				"=&r" (dbreg) : "r" (mask));
+			    "or %0,%0,%1;"
+			    "mtspr 0x3f2,%0;" :
+			    "=&r" (dbreg) : "r" (mask));
 		}
 	}
 	else if (!ctx) {
@@ -383,7 +397,7 @@ ctx_setup(int ctx, int srr1)
  */
 extern vaddr_t vmaprange __P((struct proc *, vaddr_t, vsize_t, int));
 extern void vunmaprange __P((vaddr_t, vsize_t));
-static int bigcopyin __P((const void *,	void *,	size_t ));
+static int bigcopyin __P((const void *, void *, size_t ));
 static int bigcopyout __P((const void *, void *, size_t ));
 
 int
@@ -419,7 +433,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"lbz %2,0(%4); addi %4,%4,1;"	/* Load byte */
 		"sync; isync;"
 		"mtpid %1;sync;"
-		"stb %2,0(%5); dcbf 0,%5; addi %5,%5,1;"	/* Store kernel byte */
+		"stb %2,0(%5); dcbf 0,%5; addi %5,%5,1;" /* Store kernel byte */
 		"sync; isync;"
 		"b 1b;"				/* repeat */
 
@@ -499,7 +513,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"lbz %2,0(%5); addi %5,%5,1;"	/* Load kernel byte */
 		"sync; isync;"
 		"mtpid %3; sync;"		/* Load user ctx */
-		"stb %2,0(%4);  dcbf 0,%4; addi %4,%4,1;"	/* Store user byte */
+		"stb %2,0(%4);  dcbf 0,%4; addi %4,%4,1;" /* Store user byte */
 		"sync; isync;"
 		"b 1b;"				/* repeat */
 
@@ -537,7 +551,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
-		VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE);
 
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
