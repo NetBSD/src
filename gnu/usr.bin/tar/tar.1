@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.20 2001/08/20 12:00:48 wiz Exp $
+.\"	$NetBSD: tar.1,v 1.21 2002/02/04 10:35:39 fair Exp $
 .\"
 .Dd August 6, 1994
 .Os
@@ -161,6 +161,8 @@ is
 then
 .Nm
 uses stdin or stdout.
+.It Fl -force-local
+Archive file is local even if it has a colon
 .It Fl F Ar file
 .It Fl -info-script Ar file
 .It Fl -new-volume-script Ar file
@@ -209,6 +211,10 @@ Create/list/extract multi-volume archive.
 .It Fl -newer Ar date
 Only store files newer than
 .Ar date .
+.It Fl -newer-mtime Ar date
+Like
+.Fl N ,
+But files are selected according to their modification time.
 .It Fl o
 .It Fl -old-archive
 .It Fl -portability
@@ -235,6 +241,10 @@ Remove files after adding them to the archive.
 .It Fl -same-order
 .It Fl -preserve-order
 List of names to extract is sorted to match archive.
+.It Fl -same-owner
+create extracted files with the same ownership
+.It Fl -show-omitted-dirs
+Show directories which were omitted while processing the archive.
 .It Fl S
 .It Fl -sparse
 Handle "sparse" files efficiently.
@@ -265,6 +275,8 @@ Create archive with the given
 .Ar volume-name .
 .It Fl -version
 Print tar program version number.
+.It Fl -volno-file Ar file
+File name with volume number to start with.
 .It Fl w
 .It Fl -interactive
 .It Fl -confirmation
