@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.24 1998/11/04 18:53:17 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.25 1999/02/12 14:35:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.24 1998/11/04 18:53:17 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.25 1999/02/12 14:35:49 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,6 +247,38 @@ printacol(dp)
 		while (chcnt++ < colwidth)
 			(void)putchar(' ');
 		col++;
+	}
+	(void)putchar('\n');
+}
+
+void
+printstream(dp)
+	DISPLAY *dp;
+{
+	extern int termwidth;
+	FTSENT *p;
+	int col;
+	int extwidth;
+
+	extwidth = 0;
+	if (f_inode)
+		extwidth += dp->s_inode + 1;
+	if (f_size)
+		extwidth += dp->s_block + 1;
+	if (f_type)
+		extwidth += 1;
+
+	for (col = 0, p = dp->list; p != NULL; p = p->fts_link) {
+		if (IS_NOPRINT(p))
+			continue;
+		if (col > 0) {
+			(void)putchar(','), col++;
+			if (col + 1 + extwidth + p->fts_namelen >= termwidth)
+				(void)putchar('\n'), col = 0;
+			else
+				(void)putchar(' '), col++;
+		}
+		col += printaname(p, dp->s_inode, dp->s_block);
 	}
 	(void)putchar('\n');
 }
