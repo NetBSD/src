@@ -1,10 +1,10 @@
-$NetBSD: README,v 1.29 2003/05/10 14:53:33 jdolecek Exp $
+$NetBSD: README,v 1.30 2003/05/10 17:19:18 wiz Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
 algor:		Algorithmics, Ltd. MIPS evaluation boards (mips, 20010528)
 alpha:		Compaq (formerly Digital Equipment Corp.) Alpha (alpha, 19950213)
-amd64:		AMD's x86 64 bit architecture on the simics simulator (x86_64, 20010619)
+amd64:		AMD's x86 64 bit architecture (x86_64, 20010619)
 amiga:		Commodore et al. Amiga (m68k, 19930902)
 amigappc:	Phase 5 Amiga (powerpc, 20000525)
 arc:		MIPS Advanced Risc Computing spec machines (mips, 20000123)
