@@ -1,0 +1,36 @@
+$NetBSD: TODO,v 1.3.4.2 2000/06/20 06:02:38 thorpej Exp $
+
+- Make KTH Kerberos IV API like the Berkeley'ized MIT API that
+  appeared in 4.4BSD.  This also means include paths and library
+  requirements.
+
+- Make the Heimdal Kerberos V API much more like the MIT API.  The
+  current situation means that basically no krb5-aware programs can
+  work with Heimdal without significant modification.  This includes
+  making compatibility links for e.g. libk5crypto -> libcrypto, etc.
+
+  Currently known-broken Kerberos-aware packages:
+
+  - ssh and ssh6
+  - cvs
+  - sudo
+
+- Fix the telnet situation.  The Heimdal telnet suite appears to
+  be an older version of the NetBSD telnet suite with all of the
+  tn3270 support ripped out.  What we should probably just do is
+  lift the crypto-us telnet suite and add support for Heimdal krb5
+  to it.
+
+- Make rcp, rlogin, ftpd, and ftp work with Kerberos again.
+
+- Decide if we're going to really try and support both krb4 and
+  krb5.  It's hard to make programs work with both, and having
+  to decide at compile-time really sucks.
+
+- Make passwd(1) fall back to non-Kerberos properly.  Right now, it
+  aborts, meaning you have to specify -l, or whatever.
+
+- OpenSSL installs a config file into /etc/openssl when you do a
+  `make install'.  This is Bad.  Fix it.
+
+- Nuke .cat* and .info files from src/crypto/dist.
