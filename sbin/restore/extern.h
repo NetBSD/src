@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/07/06 08:51:29 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/09/15 08:04:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@ long		 deletefile __P((char *, ino_t, int));
 void		 deleteino __P((ino_t));
 void		 delwhiteout __P((struct entry *));
 ino_t		 dirlookup __P((const char *));
-void		 dumpsymtable __P((char *, long));
+void		 dumpsymtable __P((char *, int32_t));
 void	 	 extractdirs __P((int));
 int		 extractfile __P((char *));
 void		 findunreflinks __P((void));
@@ -60,7 +60,7 @@ void		 freename __P((char *));
 int	 	 genliteraldir __P((char *, ino_t));
 char		*gentempname __P((struct entry *));
 void		 getfile __P((void (*)(char *, long), void (*)(char *, long)));
-void		 getvol __P((long));
+void		 getvol __P((int));
 void		 initsymtable __P((char *));
 int	 	 inodetype __P((ino_t));
 int		 linkit __P((char *, char *, int));

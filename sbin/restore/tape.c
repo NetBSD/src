@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.27 1997/07/06 08:51:32 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.28 1997/09/15 08:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.27 1997/07/06 08:51:32 lukem Exp $";
+__RCSID("$NetBSD: tape.c,v 1.28 1997/09/15 08:04:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +67,7 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.27 1997/07/06 08:51:32 lukem Exp $";
 #include "restore.h"
 #include "extern.h"
 
-static long	fssize = MAXBSIZE;
+static u_int32_t fssize = MAXBSIZE;
 static int	mt = -1;
 static int	pipein = 0;
 static char	magtape[BUFSIZ];
@@ -74,9 +75,9 @@ static int	blkcnt;
 static int	numtrec;
 static char	*tapebuf;
 static union	u_spcl endoftapemark;
-static long	blksread;		/* blocks read since last header */
-static long	tpblksread = 0;		/* TP_BSIZE blocks read */
-static long	tapesread;
+static int	blksread;		/* blocks read since last header */
+static int	tpblksread = 0;		/* TP_BSIZE blocks read */
+static int	tapesread;
 static jmp_buf	restart;
 static int	gettingfile = 0;	/* restart has a valid frame */
 static char	*host = NULL;
@@ -287,13 +288,14 @@ setup()
  */
 void
 getvol(nextvol)
-	long nextvol;
+	int nextvol;
 {
-	long newvol, savecnt, wantnext, i;
+	int newvol, savecnt, wantnext, i;
 	union u_spcl tmpspcl;
 #	define tmpbuf tmpspcl.s_spcl
 	char buf[TP_BSIZE];
 
+	newvol = savecnt = wantnext = 0;
 	if (nextvol == 1) {
 		tapesread = 0;
 		gettingfile = 0;
@@ -411,7 +413,7 @@ gethdr:
  	 * of the next record.
  	 */
 	dprintf(stdout, "read %ld recs, tape starts with %ld\n", 
-		tpblksread, tmpbuf.c_firstrec);
+		(long)tpblksread, (long)tmpbuf.c_firstrec);
  	if (tmpbuf.c_type == TS_TAPE && (tmpbuf.c_flags & DR_NEWHEADER)) {
  		if (!wantnext) {
  			tpblksread = tmpbuf.c_firstrec;
@@ -662,6 +664,11 @@ getfile(fill, skip)
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
 
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&curblk;
+	(void)&size;
+#endif
+
 	if (spcl.c_type == TS_END)
 		panic("ran off end of tape\n");
 	if (spcl.c_magic != NFS_MAGIC)
@@ -827,7 +834,7 @@ static void
 readtape(buf)
 	char *buf;
 {
-	long rd, newvol, i;
+	int rd, newvol, i;
 	int cnt, seek_failed;
 
 	if (blkcnt < numtrec) {
@@ -962,8 +969,9 @@ findtapeblksize()
 		exit(1);
 	}
 	if (i % TP_BSIZE != 0) {
-		fprintf(stderr, "Tape block size (%d) %s (%d)\n",
-			i, "is not a multiple of dump block size", TP_BSIZE);
+		fprintf(stderr, "Tape block size (%ld) %s (%ld)\n",
+			(long)i, "is not a multiple of dump block size",
+			(long)TP_BSIZE);
 		exit(1);
 	}
 	ntrec = i / TP_BSIZE;
@@ -1171,8 +1179,8 @@ accthdr(header)
 		break;
 	}
 	if (predict != blksread - 1)
-		fprintf(stderr, "; predicted %d blocks, got %d blocks",
-			predict, blksread - 1);
+		fprintf(stderr, "; predicted %ld blocks, got %ld blocks",
+			(long)predict, (long)(blksread - 1));
 	fprintf(stderr, "\n");
 newcalc:
 	blks = 0;
@@ -1251,7 +1259,8 @@ findinode(header)
 		}
 	} while (header->c_type == TS_ADDR);
 	if (skipcnt > 0)
-		fprintf(stderr, "resync restore, skipped %d blocks\n", skipcnt);
+		fprintf(stderr, "resync restore, skipped %ld blocks\n",
+		    (long)skipcnt);
 	skipcnt = 0;
 }
 

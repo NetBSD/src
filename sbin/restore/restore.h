@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
+/*	$NetBSD: restore.h,v 1.9 1997/09/15 08:04:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -57,9 +57,9 @@ extern int	yflag;		/* always try to recover from tape errors */
 extern char	*dumpmap; 	/* map of inodes on this dump tape */
 extern char	*usedinomap; 	/* map of inodes that are in use on this fs */
 extern ino_t	maxino;		/* highest numbered inode in this file system */
-extern long	dumpnum;	/* location of the dump on this tape */
-extern long	volno;		/* current volume being read */
-extern long	ntrec;		/* number of TP_BSIZE records per tape block */
+extern int32_t	dumpnum;	/* location of the dump on this tape */
+extern int32_t	volno;		/* current volume being read */
+extern int32_t	ntrec;		/* number of TP_BSIZE records per tape block */
 extern time_t	dumptime;	/* time that this dump begins */
 extern time_t	dumpdate;	/* time that this dump was made */
 extern char	command;	/* opration being performed */
@@ -75,9 +75,9 @@ struct entry {
 	char	*e_name;		/* the current name of this entry */
 	u_char	e_namlen;		/* length of this name */
 	char	e_type;			/* type of this entry, see below */
-	short	e_flags;		/* status flags, see below */
+	int16_t	e_flags;		/* status flags, see below */
 	ino_t	e_ino;			/* inode number in previous file sys */
-	long	e_index;		/* unique index (for dumpped table) */
+	int32_t	e_index;		/* unique index (for dumped table) */
 	struct	entry *e_parent;	/* pointer to parent directory (..) */
 	struct	entry *e_sibling;	/* next element in this directory (.) */
 	struct	entry *e_links;		/* hard links to this inode */

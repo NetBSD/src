@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.11 1997/07/06 08:51:31 lukem Exp $	*/
+/*	$NetBSD: restore.c,v 1.12 1997/09/15 08:04:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.11 1997/07/06 08:51:31 lukem Exp $";
+__RCSID("$NetBSD: restore.c,v 1.12 1997/09/15 08:04:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
