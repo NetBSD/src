@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
+/* $NetBSD: rtwvar.h,v 1.11 2004/12/27 06:12:28 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -443,8 +443,6 @@ struct rtw_softc {
 #define sc_txtap	sc_txtapu.tap
 
 extern int rtw_host_rfio;
-extern int rtw_flush_rfio;
-extern int rtw_rfio_delay;
 
 void rtw_txdac_enable(struct rtw_softc *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
