@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7 1998/02/21 23:17:05 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8 1998/02/22 00:05:56 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -302,6 +302,12 @@ u_int GetCPSR		__P((void));
 
 void set_stackptr	__P((u_int mode, u_int address));
 u_int get_stackptr	__P((u_int mode));
+
+/*
+ * CPU functions from locore.S
+ */
+
+void cpu_reset		__P((void)) __attribute__((__noreturn__));
 
 #endif	/* _KERNEL */
 #endif	/* _ARM32_CPUFUNC_H_ */
