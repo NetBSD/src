@@ -1,4 +1,4 @@
-# Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+# Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
 #      Written by Werner Lemberg <wl@gnu.org>
 # 
 # This file is part of groff.
@@ -19,7 +19,7 @@
 
 # These may be overridden if cross-compiling.
 GROFFBIN=$(top_builddir)/src/roff/groff/groff
-GROFF_BIN_PATH=`echo $(groff_bin_dirs) | sed -e 's|  *|:|g'`
+GROFF_BIN_PATH=`echo $(groff_bin_dirs) | sed -e 's|  *|$(SH_SEP)|g'`
 
 # Since info files are distributed within the groff package, no
 # autoconf test for the makeinfo binary is done.
@@ -62,6 +62,9 @@ PROCESSEDDOCFILES=\
 HTMLDOCFILES=\
   pic.html
 
+HTMLDOCFILESALL=\
+  pic*.html
+
 HTMLDOCIMAGEFILES=\
   pic*
 
@@ -88,7 +91,10 @@ CLEANADD=\
   $(PROCESSEDDOCFILES) \
   $(PROCESSEDEXAMPLEFILES) \
   $(HTMLEXAMPLEFILES) \
-  $(HTMLDOCFILES)
+  $(HTMLDOCFILESALL) \
+  groff.aux groff.cp* groff.dvi groff.es* groff.fn* groff.ky* groff.log \
+  groff.ma* groff.op* groff.pdf groff.pg* groff.ps groff.rq* groff.st* \
+  groff.toc groff.tp groff.vr*
 
 CLEANDIRADD=\
   $(imagedir)
@@ -135,6 +141,11 @@ gnu.png: gnu.xpm
 NetBSD_DISABLED_gnu.png:
 	xpmtoppm $(srcdir)/gnu.xpm | pnmdepth 15 | pnmtopng >$@
 
+pic.html: pic.ms
+	$(GROFF) -P-p -P-b -P-I`basename $< | sed -e 's|.ms$$||'` \
+                 -P-D$(imagedir) -P-j`basename $< | sed -e 's|.ms$$||'` \
+                 -Thtml -ms >$@
+
 webpage.html: webpage.ms gnu.png
 webpage.ps: gnu.eps
 
@@ -149,7 +160,7 @@ install_data: groff $(DOCFILES) $(PROCESSEDDOCFILES) $(make_install_html) \
 # the existence of `groff'.
 	d=.; \
 	  test -f "groff" || d=$(srcdir); \
-	  for f in $$d/groff $$d/groff-*; do \
+	  for f in $$d/groff `ls $$d/groff-*`; do \
 	    rm -f $(infodir)/`basename $$f`; \
 	    $(INSTALL_DATA) $$f $(infodir)/`basename $$f`; \
 	  done
@@ -175,7 +186,7 @@ install_data: groff $(DOCFILES) $(PROCESSEDDOCFILES) $(make_install_html) \
 
 install_html: $(HTMLDOCFILES) $(HTMLEXAMPLEFILES)
 	-test -d $(htmldocdir) || $(mkinstalldirs) $(htmldocdir)
-	for f in $(HTMLDOCFILES); do \
+	for f in `ls $(HTMLDOCFILESALL)`; do \
 	  rm -f $(htmldocdir)/$$f; \
 	  $(INSTALL_DATA) $$f $(htmldocdir)/$$f; \
 	done
@@ -192,14 +203,14 @@ install_html: $(HTMLDOCFILES) $(HTMLEXAMPLEFILES)
 	$(INSTALL_DATA) $(imagedir)/$(HTMLEXAMPLEIMAGEFILES) $(exampleimagedir)
 
 uninstall_sub:
-	-for f in groff groff-*; do \
+	-for f in groff `ls groff-*`; do \
 	  rm -f $(infodir)/$$f; \
 	done
 	$(INSTALL_INFO) --delete --info-dir=$(infodir) $(infodir)/groff
 	-for f in $(DOCFILES) $(PROCESSEDDOCFILES); do \
 	  rm -f $(docdir)/$$f; \
 	done
-	-for f in $(HTMLDOCFILES); do \
+	-for f in `ls $(HTMLDOCFILESALL)`; do \
 	  rm -f $(htmldocdir)/$$f; \
 	done
 	-rm -f $(htmldocimagedir)/$(HTMLDOCIMAGEFILES)
