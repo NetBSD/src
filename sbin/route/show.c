@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.10 1999/07/12 20:46:15 itojun Exp $	*/
+/*	$NetBSD: show.c,v 1.11 1999/07/17 06:51:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.10 1999/07/12 20:46:15 itojun Exp $");
+__RCSID("$NetBSD: show.c,v 1.11 1999/07/17 06:51:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,6 +311,9 @@ p_sockaddr(sa, flags, width)
 		      sin->sin6_addr.s6_addr32[3] == 0) ? "default" :
 			((flags & RTF_HOST) ?
 			routename(sa) :	netname(sa));
+		/* make sure numeric address is not truncated */
+		if (strchr(cp, ':') != NULL && strlen(cp) > width)
+			width = strlen(cp);
 		break;
 	    }
 #endif /* INET6 */
