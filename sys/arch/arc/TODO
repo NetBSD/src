@@ -1,6 +1,12 @@
-$NetBSD: TODO,v 1.11 2000/06/09 05:06:25 soda Exp $
+$NetBSD: TODO,v 1.12 2000/06/17 06:56:20 soda Exp $
 
 To do list (not in any particular order).
+
+    o	XXX at least 2000/06/07 version is already quite unstable
+	on PICA and NEC Image RISCstation. (but almost OK on Magnum)
+	Userland commands dumps	core randomly.
+	This version is before _MIPS_PADDR_T_64BIT changes
+	and MIPS3_TLB_WIRED_UPAGES changes.	
 
     o	XXX sudden hang up in a few minutes or dozens of minutes.
 	2000 Mar 17 -current is OK. Mar 29 is NG.
