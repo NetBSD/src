@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.8 2003/09/29 21:04:53 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.9 2003/11/10 08:51:52 wiz Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -387,7 +387,7 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 	movl	%r1,SSP(%r0)		# Put it in new PCB
 
 #
-# Nice routine to get physical from virtual adresses.
+# Nice routine to get physical from virtual addresses.
 #
 	extzv	$9,$21,%r0,%r1		# extract offset
 	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3

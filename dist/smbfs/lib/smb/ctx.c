@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.5 2003/04/09 09:12:38 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.6 2003/11/10 08:51:51 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -281,7 +281,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 	char *d;
 
 	/*
-	 * If the name contains dot, it's likely a IP adress
+	 * If the name contains dot, it's likely a IP address
 	 * or a name. Update srvaddr in that case, and use
 	 * first part of the name (up to the dot) as NetBIOS name.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.73 2003/10/28 20:21:44 mycroft Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.74 2003/11/10 08:51:52 wiz Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.73 2003/10/28 20:21:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.74 2003/11/10 08:51:52 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2764,7 +2764,7 @@ sppp_ipcp_open(struct sppp *sp)
 	if (hisaddr == 1) {
 		/*
 		 * XXX - remove this hack!
-		 * remote has no valid adress, we need to get one assigned.
+		 * remote has no valid address, we need to get one assigned.
 		 */
 		sp->ipcp.flags |= IPCP_HISADDR_DYN;
 	}

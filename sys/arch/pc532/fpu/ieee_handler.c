@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.15 2003/07/15 02:54:33 lukem Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.16 2003/11/10 08:51:52 wiz Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,7 @@
  * */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.15 2003/07/15 02:54:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.16 2003/11/10 08:51:52 wiz Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"
@@ -147,7 +147,7 @@ const union t_conv qnan =
 
 #define COPYIN(U,K,N) ({if (copyin((AT)U, (AT)K, N) != 0) longjmp(copyin_buffer.copyfail, 1);0;})
 
-/* Adressing modes.  */
+/* Addressing modes.  */
 #define Adrmod_index_byte 0x1c
 #define Adrmod_index_word 0x1d
 #define Adrmod_index_doubleword 0x1e

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.h,v 1.4 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: pwcache.h,v 1.5 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -40,7 +40,7 @@
  * caches. Traditional passwd/group cache routines perform quite poorly with
  * archives. The chances of hitting a valid lookup with an archive is quite a
  * bit worse than with files already resident on the file system. These misses
- * create a MAJOR performance cost. To adress this problem, these routines
+ * create a MAJOR performance cost. To address this problem, these routines
  * cache both hits and misses.
  *
  * NOTE:  name lengths must be as large as those stored in ANY PROTOCOL and

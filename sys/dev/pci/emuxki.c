@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.30 2003/10/30 10:02:16 hannken Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.31 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.30 2003/10/30 10:02:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.31 2003/11/10 08:51:52 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1717,7 +1717,7 @@ emuxki_open(void *addr, int flags)
 	/*
 	 * I did this because i have problems identifying the selected
 	 * recording source(s) which is necessary when setting recording
-	 * params This will be adressed very soon
+	 * params This will be addressed very soon
 	 */
 	if (flags & AUOPEN_READ) {
 		sc->rvoice = emuxki_voice_new(sc, 0 /* EMU_VOICE_USE_RECORD */);

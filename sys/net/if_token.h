@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.8 2003/08/07 16:32:55 agc Exp $	*/
+/*	$NetBSD: if_token.h,v 1.9 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,7 +52,7 @@ struct token_rif {
 	u_int16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
 } __attribute__((__packed__));
 
-/* standard values for adress control and frame control field */
+/* standard values for address control and frame control field */
 #define TOKEN_AC		0x10
 #define TOKEN_FC		0x40
 

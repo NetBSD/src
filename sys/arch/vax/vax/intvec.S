@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.5 2003/03/28 20:25:40 he Exp $   */
+/*	$NetBSD: intvec.S,v 1.6 2003/11/10 08:51:52 wiz Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -208,7 +208,7 @@ L4:	addl2	(%sp)+,%sp	# remove info pushed on stack
 	brb	2f
 
 3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-2:	movl	_C_LABEL(memtest),(%sp)	# REI to new adress
+2:	movl	_C_LABEL(memtest),(%sp)	# REI to new address
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.1 2000/10/02 03:57:54 sato Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.2 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -39,7 +39,7 @@
 #define		ITE8181_CLASS_MASK      0xffff0000
 #define		ITE8181_REV_MASK	0x000000ff
 #define ITE8181_MBA      0x10	/* Memory Base Address(4MB bounday) */
-#define ITE8181_GBA      0x14	/* GUI Base Adress(32KB boundary) */
+#define ITE8181_GBA      0x14	/* GUI Base Address(32KB boundary) */
 #define ITE8181_SBA      0x18	/* Graphic Base Address (64KB boundary) */
 #define ITE8181_TEST     0x40	/* Test Reg. */
 #define ITE8181_STANDBY  0x44	/* Standby Reg. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.4 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.5 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -243,7 +243,7 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base adresses registers can be disabled at
+	 * and base addresses registers can be disabled at
 	 * hardware level. In this case, the device is wired
 	 * in compat mode and its first channel is always enabled,
 	 * but we can't rely on PCI_COMMAND_IO_ENABLE.
@@ -277,7 +277,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base adresses registers can be disabled at
+	 * and base addresses registers can be disabled at
 	 * hardware level. In this case, the device is wired
 	 * in compat mode and its first channel is always enabled,
 	 * but we can't rely on PCI_COMMAND_IO_ENABLE.

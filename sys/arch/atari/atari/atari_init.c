@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.59 2003/07/15 01:19:42 lukem Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.60 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.59 2003/07/15 01:19:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.60 2003/11/10 08:51:51 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -429,7 +429,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * Map the allocated space in ST-ram now. In the contig-case, there
 	 * is no need to make a distinction between virtual and physical
-	 * adresses. But I make it anyway to be prepared.
+	 * addresses. But I make it anyway to be prepared.
 	 * Physcal space is already reserved!
 	 */
 	st_pool_virt = vstart;

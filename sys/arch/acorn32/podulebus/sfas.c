@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.12 2003/08/07 16:26:30 agc Exp $	*/
+/*	$NetBSD: sfas.c,v 1.13 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.12 2003/08/07 16:26:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.13 2003/11/10 08:51:51 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1290,7 +1290,7 @@ sfas_postaction(dev, rp, nexus)
 			dev->sc_dma_len = dev->sc_dma_blk_len;
 		  }
 
-		  /* Load DMA with adress and length of transfer. */
+		  /* Load DMA with address and length of transfer. */
 		  dev->sc_setup_dma(dev, dev->sc_dma_buf, dev->sc_dma_len,
 				    ((nexus->state == SFAS_NS_DATA_OUT) ?
 				     SFAS_DMA_WRITE : SFAS_DMA_READ));

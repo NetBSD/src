@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.197 2003/09/18 00:06:32 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.198 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.197 2003/09/18 00:06:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.198 2003/11/10 08:51:52 wiz Exp $");
 
 #include "rnd.h"
 
@@ -1076,8 +1076,8 @@ cdwrite(dev, uio, ioflag)
 }
 
 /*
- * conversion between minute-seconde-frame and logical block adress
- * adresses format
+ * conversion between minute-seconde-frame and logical block address
+ * addresses format
  */
 void
 lba2msf (lba, m, s, f)

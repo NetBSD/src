@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.9 2003/07/15 02:15:06 lukem Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.10 2003/11/10 08:51:52 wiz Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.9 2003/07/15 02:15:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.10 2003/11/10 08:51:52 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.9 2003/07/15 02:15:06 lukem Exp $"
 
 #include "ioconf.h"
 /*
- * Adresses.
+ * Addresses.
  */
 #define SGECADDR        0x20008000
 #define NISA_ROM        0x27800000

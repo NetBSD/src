@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40 2003/07/15 01:19:54 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2003/07/15 01:19:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2003/11/10 08:51:51 wiz Exp $");
 
 #include "opt_mbtype.h"
 
@@ -466,7 +466,7 @@ enable_pci_devices()
     }
 
     /*
-     * second step: calculate the memory and I/O adresses beginning from
+     * second step: calculate the memory and I/O addresses beginning from
      * PCI_MEM_START and PCI_IO_START. Care about already mapped areas.
      *
      * begin with memory list

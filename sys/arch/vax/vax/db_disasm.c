@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:15:03 lukem Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.13 2003/11/10 08:51:52 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2003/11/10 08:51:52 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -246,7 +246,7 @@ get_operands(ib)
 			add_off(ib, ib->addr);
 			break;
 
-		case 'a':	/* absolute adressing mode */
+		case 'a':	/* absolute addressing mode */
 			aa = 1; /* do not break here ! */
 
 		default:

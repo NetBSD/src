@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.63 2003/11/02 10:50:40 wiz Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.64 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.63 2003/11/02 10:50:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.64 2003/11/10 08:51:52 wiz Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -393,7 +393,7 @@ tl_pci_attach(parent, self, aux)
 	/* read mac addr */
 	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
 				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
-		printf("%s: error reading Ethernet adress\n",
+		printf("%s: error reading Ethernet address\n",
 		    sc->sc_dev.dv_xname);
 			return;
 	}
@@ -737,7 +737,7 @@ static int tl_init(ifp)
 
 	/* start ticks calls */
 	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
-	/* write adress of Rx list and enable interrupts */
+	/* write address of Rx list and enable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CH_PARM, sc->Rx_list[0].hw_listaddr);
 	TL_HR_WRITE(sc, TL_HOST_CMD,
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
@@ -1114,7 +1114,7 @@ tl_intr(v)
 #endif
 		{
 		/*
-		 * write adress of Rx list and send Rx GO command, ack
+		 * write address of Rx list and send Rx GO command, ack
 		 * interrupt and enable interrupts in one command
 		 */
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM, sc->active_Rx->hw_listaddr);

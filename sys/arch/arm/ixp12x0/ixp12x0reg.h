@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.4 2003/07/13 08:26:31 igy Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.5 2003/11/10 08:51:51 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -87,7 +87,7 @@
  *
  * IXP12x0 processors have many device registers at very lower addresses.
  * To make user process space wider, we map the registers at lower address
- * to upper address using adress translation of virtual memory system.
+ * to upper address using address translation of virtual memory system.
  *
  * Some device registers are staticaly mapped on upper address region.
  * because we have to access them before bus_space is initialized.
