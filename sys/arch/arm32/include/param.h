@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.1 1996/01/31 23:22:26 mark Exp $ */
+/* $NetBSD: param.h,v 1.2 1996/02/16 23:29:45 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: param.h,v 1.1 1996/01/31 23:22:26 mark Exp $
+ *	$Id: param.h,v 1.2 1996/02/16 23:29:45 mark Exp $
  */
 
 #ifndef	_ARM32_PARAM_H_
@@ -173,5 +173,9 @@
 
 #define arm_byte_to_page(x) (x >> PGSHIFT)
 #define arm_page_to_byte(x) (x << PGSHIFT)
+
+#ifdef _KERNEL
+void	delay __P((unsigned));
+#endif
 
 #endif	/* _ARM_PARAM_H_ */
