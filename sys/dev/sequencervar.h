@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.1 1998/08/07 00:00:59 augustss Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.2 1998/08/08 11:00:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,8 +72,10 @@ struct channel_info {
 #define MAXCHAN 16
 struct midi_dev {
 	char	*name;
-	int	type, subtype;
+	int	subtype;
 	int	capabilities;
+	int	nr_voices;
+	int	instr_bank_size;
 	struct	channel_info chan_info[MAXCHAN];
 	int	unit;
 	u_char	last_cmd;
