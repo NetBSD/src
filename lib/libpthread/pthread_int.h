@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.26 2002/07/16 13:26:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.27 2002/08/02 22:16:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ struct	pthread_st {
 #define PT_FLAG_CS_DISABLED	0x0004	/* Cancellation disabled */
 #define PT_FLAG_CS_ASYNC	0x0008  /* Cancellation is async */
 #define PT_FLAG_CS_PENDING	0x0010
+#define PT_FLAG_SIGCATCH	0x0020	/* Interrupt sleep on a signal */
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
