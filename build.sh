@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.13 2001/10/31 13:12:35 reinoud Exp $
+#  $NetBSD: build.sh,v 1.14 2001/10/31 18:23:55 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -179,6 +179,15 @@ done
 
 # Remove the target directories.
 if $do_removedirs; then
+	dir1=`cd $DESTDIR;pwd`
+	dir2=`cd $TOOLDIR;pwd`
+	if [ "$dir1" = "/" ] || [ "$dir2" = "/" ]; then
+		echo "Will not remove /, please check DESTDIR and TOOLDIR settings"
+		echo
+		echo "DESTDIR: $DESTDIR"
+		echo "TOOLDIR: $TOOLDIR"
+		exit 1
+	fi
 	echo "Removing DESTDIR and TOOLDIR...."
 	$runcmd rm -rf $DESTDIR $TOOLDIR
 fi
@@ -235,7 +244,7 @@ if $do_rebuildmake || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; then
 	eval $mkscriptcmd <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.13 2001/10/31 13:12:35 reinoud Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.14 2001/10/31 18:23:55 jmc Exp $
 #
 exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
 USETOOLS=yes USE_NEW_TOOLCHAIN=yes TOOLDIR="$TOOLDIR" \${1+\$@}
