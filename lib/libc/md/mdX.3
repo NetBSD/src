@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdX.3,v 1.9 2003/04/16 13:34:41 wiz Exp $
+.\"	$NetBSD: mdX.3,v 1.10 2003/06/13 01:28:41 lukem Exp $
 .\"
 .\" ----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
@@ -9,7 +9,7 @@
 .\"
 .\"	from FreeBSD Id: mdX.3,v 1.7 1996/10/22 16:28:56 phk Exp
 .\"
-.Dd October 9, 1996
+.Dd June 13, 2003
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -30,15 +30,15 @@ message digest
 .Ft void
 .Fn MDXInit "MDX_CTX *context"
 .Ft void
-.Fn MDXUpdate "MDX_CTX *context" "unsigned char *data" "unsigned int len"
+.Fn MDXUpdate "MDX_CTX *context" "const unsigned char *data" "unsigned int len"
 .Ft void
 .Fn MDXFinal "unsigned char digest[16]" "MDX_CTX *context"
 .Ft "char *"
 .Fn MDXEnd "MDX_CTX *context" "char *buf"
 .Ft "char *"
-.Fn MDXFile "char *filename" "char *buf"
+.Fn MDXFile "const char *filename" "char *buf"
 .Ft "char *"
-.Fn MDXData "unsigned char *data" "unsigned int len" "char *buf"
+.Fn MDXData "const unsigned char *data" "unsigned int len" "char *buf"
 .Sh DESCRIPTION
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.
