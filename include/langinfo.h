@@ -1,7 +1,7 @@
-/*	$NetBSD: langinfo.h,v 1.6 2003/07/04 04:46:14 tshiozak Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.7 2003/07/26 17:35:00 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>
+ * Written by J.T. Conklin <jtc@NetBSD.org>
  * Public domain.
  */
 
