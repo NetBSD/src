@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.5 1994/01/08 16:06:04 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.6 1994/01/08 18:05:35 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ exec_aout_makecmds(p, epp)
 	}
 
 	if (error)
-		KILL_VMCMDS(&epp->ep_vmcmds);
+		kill_vmcmds(&epp->ep_vmcmds);
 
 bad:
 
