@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.15 1998/10/02 19:37:21 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.16 1998/10/04 15:01:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -104,29 +104,38 @@ struct pciide_softc {
 
 void default_setup_cap __P((struct pciide_softc*));
 void default_setup_chip __P((struct pciide_softc*,
-				pci_chipset_tag_t, pcitag_t));
-const char *default_compat_channel_probe __P((struct pciide_softc *,
-	    struct pci_attach_args *, int));
+		pci_chipset_tag_t, pcitag_t));
+const char *default_channel_probe __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+int default_channel_disable __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+
 
 void piix_setup_cap __P((struct pciide_softc*));
 void piix_setup_chip __P((struct pciide_softc*,
-				pci_chipset_tag_t, pcitag_t));
+		pci_chipset_tag_t, pcitag_t));
 void piix3_4_setup_chip __P((struct pciide_softc*,
-				pci_chipset_tag_t, pcitag_t));
-const char *piix_compat_channel_probe __P((struct pciide_softc *,
-	    struct pci_attach_args *, int));
+		pci_chipset_tag_t, pcitag_t));
+const char *piix_channel_probe __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+int piix_channel_disable __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
 static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 
 void apollo_setup_cap __P((struct pciide_softc*));
 void apollo_setup_chip __P((struct pciide_softc*,
-				pci_chipset_tag_t, pcitag_t));
-const char *apollo_compat_channel_probe __P((struct pciide_softc *,
-	    struct pci_attach_args *, int));
+		pci_chipset_tag_t, pcitag_t));
+const char *apollo_channel_probe __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+int apollo_channel_disable __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
 
-const char *cmd_compat_channel_probe __P((struct pciide_softc *,
-            struct pci_attach_args *, int));
+const char *cmd_channel_probe __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+int cmd_channel_disable __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
 
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
@@ -142,7 +151,9 @@ struct pciide_product_desc {
     /* init controller after drives probe */
     void (*setup_chip) __P((struct pciide_softc*, pci_chipset_tag_t, pcitag_t));
     /* Probe for compat channel enabled/disabled */
-    const char * (*compat_channel_probe) __P((struct pciide_softc *,
+    const char * (*channel_probe) __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
+    int  (*channel_disable) __P((struct pciide_softc *,
 		struct pci_attach_args *, int));
 };
 
@@ -157,7 +168,8 @@ const struct pciide_product_desc default_product_desc = {
     "Generic PCI IDE controller",
     default_setup_cap,
     default_setup_chip,
-    default_compat_channel_probe
+    default_channel_probe,
+    default_channel_disable
 };
 
 
@@ -167,28 +179,32 @@ const struct pciide_product_desc pciide_intel_products[] =  {
       "Intel 82092AA IDE controller",
       default_setup_cap,
       default_setup_chip,
-      default_compat_channel_probe
+      default_channel_probe,
+      default_channel_disable
     },
     { PCI_PRODUCT_INTEL_82371FB_IDE,
       0,
       "Intel 82371FB IDE controller (PIIX)",
       piix_setup_cap,
       piix_setup_chip,
-      piix_compat_channel_probe
+      piix_channel_probe,
+      piix_channel_disable
     },
     { PCI_PRODUCT_INTEL_82371SB_IDE,
       0,
       "Intel 82371SB IDE Interface (PIIX3)",
       piix_setup_cap,
       piix3_4_setup_chip,
-      piix_compat_channel_probe
+      piix_channel_probe,
+      piix_channel_disable
     },
     { PCI_PRODUCT_INTEL_82371AB_IDE,
       0,
       "Intel 82371AB IDE controller (PIIX4)",
       piix_setup_cap,
       piix3_4_setup_chip,
-      piix_compat_channel_probe
+      piix_channel_probe,
+      piix_channel_disable
     },
     { 0,
       0,
@@ -201,7 +217,8 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
       "CMD Technology PCI0640",
       default_setup_cap,
       default_setup_chip,
-      cmd_compat_channel_probe
+      cmd_channel_probe,
+      cmd_channel_disable
     },
     { 0,
       0,
@@ -215,7 +232,8 @@ const struct pciide_product_desc pciide_via_products[] =  {
       "VT82C586 (Apollo VP) IDE Controller",
       apollo_setup_cap,
       apollo_setup_chip,
-      apollo_compat_channel_probe
+      apollo_channel_probe,
+      apollo_channel_disable
      },
      { 0,
        0,
@@ -403,8 +421,6 @@ pciide_attach(parent, self, aux)
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		if (sc->sc_dma_ok == 0) {
 			printf(", but unused (couldn't map registers)");
-		} else if (sc->sc_pp == 0) {
-			printf(", but unused (no driver support)");
 		} else {
 			sc->sc_wdcdev.dma_arg = sc;
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
@@ -413,10 +429,7 @@ pciide_attach(parent, self, aux)
 		}
 		printf("\n");
 	}
-	if (sc->sc_pp == NULL)
-		default_setup_cap(sc);
-	else
-		sc->sc_pp->setup_cap(sc);
+	sc->sc_pp->setup_cap(sc);
 	sc->sc_wdcdev.channels = sc->wdc_channels;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
@@ -449,21 +462,18 @@ pciide_attach(parent, self, aux)
 		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
 		      "compatibility");
 
+		/*
+		 * pciide_map_channel_native() and pciide_map_channel_compat()
+		 * will also call wdcattach. Eventually the channel will be
+		 * disabled if there's no drive present
+		 */
 		if (interface & PCIIDE_INTERFACE_PCI(i))
 			cp->hw_ok = pciide_map_channel_native(sc, pa, i);
 		else
 			cp->hw_ok = pciide_map_channel_compat(sc, pa, i);
-		if (!cp->hw_ok)
-			continue;
-		sc->wdc_channels[i].data32iot = sc->wdc_channels[i].cmd_iot;
-		sc->wdc_channels[i].data32ioh = sc->wdc_channels[i].cmd_ioh;
-		/* Now call common attach routine */
-		wdcattach(&sc->wdc_channels[i]);
+			
 	}
-	if (sc->sc_pp == NULL)
-		default_setup_chip(sc, pc, tag);
-	else
-		sc->sc_pp->setup_chip(sc, pc, tag);
+	sc->sc_pp->setup_chip(sc, pc, tag);
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
@@ -522,7 +532,7 @@ pciide_map_channel_compat(sc, pa, chan)
 	 * If the channel has been disabled, other devices are free to use
 	 * its ports.
 	 */
-	probe_fail_reason = sc->sc_pp->compat_channel_probe(sc, pa, chan);
+	probe_fail_reason = sc->sc_pp->channel_probe(sc, pa, chan);
 	if (probe_fail_reason != NULL) {
 		printf("%s: %s channel ignored (%s)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname,
@@ -535,6 +545,27 @@ pciide_map_channel_compat(sc, pa, chan)
 		    PCIIDE_COMPAT_CTL_SIZE);
 
 		goto out;
+	}
+	wdc_cp->data32iot = wdc_cp->cmd_iot;
+	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
+	wdcattach(&sc->wdc_channels[chan]);
+	/*
+	 * If drive not present, try to disable the channel and
+	 * free the resources.
+	 */
+	if ((sc->wdc_channels[chan].ch_drive[0].drive_flags & DRIVE) == 0 &&
+	    (sc->wdc_channels[chan].ch_drive[1].drive_flags & DRIVE) == 0) {
+		if (sc->sc_pp->channel_disable(sc, pa, chan)) {
+			printf("%s: disabling %s channel (no drives)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    PCIIDE_CHANNEL_NAME(chan));
+			bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
+			    PCIIDE_COMPAT_CMD_SIZE);
+			bus_space_unmap(wdc_cp->ctl_iot, wdc_cp->ctl_ioh,
+			    PCIIDE_COMPAT_CTL_SIZE);
+			rv = 0;
+			goto out;
+		}
 	}
 
 	/*
@@ -599,7 +630,30 @@ pciide_map_channel_native(sc, pa, chan)
 		    PCIIDE_CHANNEL_NAME(chan));
 		rv = 0;
 	}
-
+	wdc_cp->data32iot = wdc_cp->cmd_iot;
+	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
+	if (rv) {
+		wdcattach(&sc->wdc_channels[chan]);
+		/*
+		 * If drive not present, try to disable the channel and
+		 * free the resources.
+		 */
+		/* XXX How do we unmap regs mapped with pci_mapreg_map ?*/
+#if 0
+		if ((sc->wdc_channels[chan].ch_drive[0].drive_flags & DRIVE)
+		    == 0 &&
+		    (sc->wdc_channels[chan].ch_drive[1].drive_flags & DRIVE)
+		    == 0) {
+			if (sc->sc_pp->channel_disable(sc, pa, chan)) {
+				printf("%s: disabling %s channel (no drives)\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    PCIIDE_CHANNEL_NAME(chan));
+				pci_mapreg_map(xxx);
+				rv = 0;
+			}
+		}
+#endif
+	}
 	return (rv);
 }
 
@@ -708,7 +762,7 @@ default_setup_chip(sc, pc, tag)
 }
 
 const char *
-default_compat_channel_probe(sc, pa, chan)
+default_channel_probe(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
@@ -741,6 +795,15 @@ out:
 	return (failreason);
 }
 
+int
+default_channel_disable(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	/* don't know how to disable a channel */
+	return 0;
+}
+
 void
 piix_setup_cap(sc)
 	struct pciide_softc *sc;
@@ -762,20 +825,24 @@ piix_setup_chip(sc, pc, tag)
 	struct channel_softc *chp;
 	u_int8_t mode[2];
 	u_int8_t channel, drive;
-	u_int32_t idetim, sidetim, idedma_ctl;
+	u_int32_t oidetim, idetim, sidetim, idedma_ctl;
 	struct ata_drive_datas *drvp;
 
+	oidetim = pci_conf_read(pc, tag, PIIX_IDETIM);
 	idetim = sidetim = 0;
 
 	WDCDEBUG_PRINT(("piix_setup_chip: old idetim=0x%x, sidetim=0x%x\n",
-	    pci_conf_read(pc, tag, PIIX_IDETIM),
+	    oidetim,
 	    pci_conf_read(pc, tag, PIIX_SIDETIM)), DEBUG_PROBE);
 
 	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
 		chp = &sc->wdc_channels[channel];
 		drvp = chp->ch_drive;
 		idedma_ctl = 0;
-		/* Enable IDE registers decode */
+		/* If channel disabled, no need to go further */
+		if ((PIIX_IDETIM_READ(oidetim, channel) & PIIX_IDETIM_IDE) == 0)
+			continue;
+		/* set up new idetim: Enable IDE registers decode */
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE,
 		    channel);
 
@@ -861,7 +928,8 @@ end:		/*
 			if ((drvp[drive].drive_flags & DRIVE) == 0)
 				continue;
 			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
-			printf("%s:%d:%d: using PIO mode %d",
+			printf("%s(%s:%d:%d): using PIO mode %d",
+			    drvp[drive].drv_softc->dv_xname,
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive, drvp[drive].PIO_mode);
 			if (drvp[drive].drive_flags & DRIVE_DMA) {
@@ -892,12 +960,13 @@ piix3_4_setup_chip(sc, pc, tag)
 	int channel, drive;
 	struct channel_softc *chp;
 	struct ata_drive_datas *drvp;
-	u_int32_t idetim, sidetim, udmareg, idedma_ctl;
+	u_int32_t oidetim, idetim, sidetim, udmareg, idedma_ctl;
 
 	idetim = sidetim = udmareg = 0;
+	oidetim = pci_conf_read(pc, tag, PIIX_IDETIM);
 
 	WDCDEBUG_PRINT(("piix3_4_setup_chip: old idetim=0x%x, sidetim=0x%x",
-	    pci_conf_read(pc, tag, PIIX_IDETIM),
+	    oidetim,
 	    pci_conf_read(pc, tag, PIIX_SIDETIM)), DEBUG_PROBE);
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
 		WDCDEBUG_PRINT((", udamreg 0x%x",
@@ -909,7 +978,10 @@ piix3_4_setup_chip(sc, pc, tag)
 	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
 		chp = &sc->wdc_channels[channel];
 		idedma_ctl = 0;
-		/* Enable IDE registers decode */
+		/* If channel disabled, no need to go further */
+		if ((PIIX_IDETIM_READ(oidetim, channel) & PIIX_IDETIM_IDE) == 0)
+			continue;
+		/* set up new idetim: Enable IDE registers decode */
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE,
 		    channel);
 		for (drive = 0; drive < 2; drive++) {
@@ -964,7 +1036,8 @@ pio:			/* use PIO mode */
 				idetim =PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_SITRE, channel);
 			}
-			printf("%s:%d:%d: using PIO mode %d",
+			printf("%s(%s:%d:%d): using PIO mode %d",
+			    drvp->drv_softc->dv_xname,
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive, drvp->PIO_mode);
 			if (drvp[drive].drive_flags & DRIVE_DMA)
@@ -1084,7 +1157,7 @@ piix_setup_sidetim_timings(mode, dma, channel)
 }
 
 const char*
-piix_compat_channel_probe(sc, pa, chan)
+piix_channel_probe(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 	int chan;
@@ -1095,6 +1168,17 @@ piix_compat_channel_probe(sc, pa, chan)
 		return NULL;
 	else
 		return "disabled";
+}
+
+int
+piix_channel_disable(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	u_int32_t idetim = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_IDETIM);
+	idetim = PIIX_IDETIM_CLEAR(idetim, PIIX_IDETIM_IDE, chan);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PIIX_IDETIM, idetim);
+	return 1;
 }
 
 void
@@ -1115,19 +1199,17 @@ apollo_setup_chip(sc, pc, tag)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-	u_int32_t udmatim_reg, ideconf_reg, ctlmisc_reg, datatim_reg;
+	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;
 	int mode;
 	int channel, drive;
 	struct channel_softc *chp;
 	struct ata_drive_datas *drvp;
 
-	ideconf_reg = pci_conf_read(pc, tag, APO_IDECONF);
-	ctlmisc_reg = pci_conf_read(pc, tag, APO_CTLMISC);
-	
 	WDCDEBUG_PRINT(("apollo_setup_chip: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
-	    ideconf_reg, ctlmisc_reg,
+	    pci_conf_read(pc, tag, APO_IDECONF),
+	    pci_conf_read(pc, tag, APO_CTLMISC),
 	    pci_conf_read(pc, tag, APO_DATATIM),
 	    pci_conf_read(pc, tag, APO_UDMA)),
 	    DEBUG_PROBE);
@@ -1185,7 +1267,8 @@ pio:			/* setup PIO mode */
 				apollo_pio_rec[mode]);
 			drvp->PIO_mode = mode;
 			drvp->DMA_mode = mode + 2;
-			printf("%s:%d:%d: using PIO mode %d",
+			printf("%s(%s:%d:%d): using PIO mode %d",
+			    drvp->drv_softc->dv_xname,
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive, drvp->PIO_mode);
 			if (drvp[drive].drive_flags & DRIVE_DMA)
@@ -1208,7 +1291,7 @@ pio:			/* setup PIO mode */
 }
 
 const char*
-apollo_compat_channel_probe(sc, pa, chan)
+apollo_channel_probe(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 	int chan;
@@ -1223,8 +1306,19 @@ apollo_compat_channel_probe(sc, pa, chan)
 	
 }
 
+int
+apollo_channel_disable(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	u_int32_t ideconf = pci_conf_read(pa->pa_pc, pa->pa_tag, APO_IDECONF);
+	ideconf &= ~APO_IDECONF_EN(chan);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, APO_IDECONF, ideconf);
+	return 1;
+}
+
 const char*
-cmd_compat_channel_probe(sc, pa, chan)
+cmd_channel_probe(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 	int chan;
@@ -1245,7 +1339,22 @@ cmd_compat_channel_probe(sc, pa, chan)
 
 	return NULL;
 }
-	
+
+int
+cmd_channel_disable(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	u_int32_t ctrl0;
+	/* with a CMD PCI64x, the first channel is always enabled */
+	if (chan == 0)
+		return 0;
+	ctrl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0);
+	ctrl0 &= ~CMD_CONF_2PORT;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0, ctrl0);
+	return 1;
+}
+
 int
 pciide_dma_table_setup(sc, channel, drive)
 	struct pciide_softc *sc;

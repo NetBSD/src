@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.16 1998/10/02 19:37:20 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.17 1998/10/04 15:01:55 bouyer Exp $ */
 
 
 /*
@@ -681,18 +681,17 @@ wdc_probe_caps(drvp)
 	int i, printed;
 	char *sep = "";
 
+	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
+		/* IDENTIFY failed. Can't tell more about the device */
+		return;
+	}
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
 		/*
 		 * Controller claims 16 and 32 bit transferts.
-		 * Do 2 IDENTIFY cmds, one with 16-bit
-		 * and one with 32-bit, and compare results.
+		 * Re-do an UDENTIFY with 32-bit transferts,
+		 * and compare results.
 		 */
-		if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
-			/* IDENTIFY failed. Can't tell more about the device */
-			return;
-		}
-		/* try again in 32bit */
 		drvp->drive_flags |= DRIVE_CAP32;
 		ata_get_params(drvp, AT_POLL, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
@@ -702,7 +701,11 @@ wdc_probe_caps(drvp)
 			printf("%s: using 32-bits pio transfers\n",
 			    drv_dev->dv_xname);
 		}
-	} 
+	}
+
+	/* An ATAPI device is at last PIO mode 3 */
+	if (drvp->drive_flags & DRIVE_ATAPI)
+		drvp->PIO_mode = 3;
 
 	/*
 	 * It's not in the specs, but it seems that some drive 
@@ -710,7 +713,6 @@ wdc_probe_caps(drvp)
 	 */
 	if (params.atap_extensions != 0xffff &&
 	    (params.atap_extensions & WDC_EXT_MODES)) {
-		printf("%s:", drv_dev->dv_xname);
 		printed = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
@@ -731,7 +733,8 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf(" PIO mode %d", i + 3);
+				printf("%s: PIO mode %d", drv_dev->dv_xname,
+				    i + 3);
 				sep = ",";
 				printed = 1;
 			}
@@ -744,6 +747,13 @@ wdc_probe_caps(drvp)
 				drvp->PIO_mode = i + 3;
 				break;
 			}
+		}
+		if (!printed) {
+			/* 
+			 * We didn't find a valid PIO mode.
+			 * Assume the values returned for DMA are buggy too
+			 */
+			return;
 		}
 		printed = 0;
 		for (i = 7; i >= 0; i--) {

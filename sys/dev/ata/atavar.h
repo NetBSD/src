@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.1.2.4 1998/09/20 19:00:14 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.1.2.5 1998/10/04 15:01:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -59,7 +59,7 @@ struct ata_drive_datas {
      */
     u_int8_t state;
 
-    void* drv_softc; /* ATA drives softc, if any */
+    struct device *drv_softc; /* ATA drives softc, if any */
     void* chnl_softc; /* channel softc */
 };
 
