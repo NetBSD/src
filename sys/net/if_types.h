@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.15 2000/03/22 11:24:59 itojun Exp $	*/
+/*	$NetBSD: if_types.h,v 1.16 2000/04/19 06:30:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -181,4 +181,5 @@
 #define IFT_GIF		0xf0
 #define IFT_PVC		0xf1
 #define IFT_FAITH	0xf2
+#define IFT_STF		0xf3
 #endif /* _NET_IF_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.16 2000/02/26 09:09:17 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.17 2000/04/19 06:30:56 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.40 2000/02/24 16:34:49 itojun Exp $	*/
 
 /*
@@ -82,6 +82,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_encap.h>
 #ifndef TCP6
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
@@ -224,20 +225,22 @@ struct ip6protosw inet6sw[] = {
   ipsec6_sysctl,
 },
 #endif /* IPSEC */
-#if NGIF > 0
+#ifdef INET
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq,	  
+  encap6_input,	rip6_output, 	0,		rip6_ctloutput,
+  rip6_usrreq,
   0,		0,		0,		0,
 },
-#ifdef INET6
+#endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq,	  
+  encap6_input, rip6_output,	 0,		rip6_ctloutput,
+  rip6_usrreq,
+#ifndef INET6
   0,		0,		0,		0,
+#else
+  encap_init,	0,		0,		0,
+#endif
 },
-#endif /* INET6 */
-#endif /* GIF */
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim6_input,    rip6_output,	0,              rip6_ctloutput, 
   rip6_usrreq,
@@ -250,6 +253,15 @@ struct ip6protosw inet6sw[] = {
   rip6_init,	0,		0,		0,
 },
 };
+
+#if NGIF > 0
+struct ip6protosw in6_gif_protosw =
+{ SOCK_RAW,	&inet6domain,	0/*IPPROTO_IPV[46]*/,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,            0,              0,              0,
+};
+#endif /*NGIF*/
 
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0, 

@@ -1,9 +1,10 @@
-/*	$NetBSD: in_gif.c,v 1.11 2000/03/30 13:24:55 augustss Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.12 2000/04/19 06:30:54 itojun Exp $	*/
+/*	$KAME: in_gif.c,v 1.36 2000/04/19 04:51:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,7 +34,12 @@
  * in_gif.c
  */
 
+#ifdef __FreeBSD__
+#include "opt_mrouting.h"
+#endif
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +47,17 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
+#include <sys/kernel.h>
+#include <sys/sysctl.h>
+#endif
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
-#include <sys/protosw.h>
+#endif
+
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#include <sys/malloc.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -53,7 +68,12 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_gif.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_encap.h>
 #include <netinet/ip_ecn.h>
+#ifdef __OpenBSD__
+#include <netinet/ip_ipsp.h>
+#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -76,6 +96,10 @@ int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
 #endif
+#ifdef __FreeBSD__
+SYSCTL_INT(_net_inet_ip, IPCTL_GIF_TTL, gifttl, CTLFLAG_RW,
+	&ip_gif_ttl,	0, "");
+#endif
 
 int
 in_gif_output(ifp, family, m, rt)
@@ -84,7 +108,7 @@ in_gif_output(ifp, family, m, rt)
 	struct mbuf	*m;
 	struct rtentry *rt;
 {
-	struct gif_softc *sc = (struct gif_softc*)ifp;
+	register struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
@@ -181,8 +205,7 @@ in_gif_output(ifp, family, m, rt)
 		printf("ENOBUFS in in_gif_output %d\n", __LINE__);
 		return ENOBUFS;
 	}
-
-	*(mtod(m, struct ip *)) = iphdr;
+	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
 	if (dst->sin_family != sin_dst->sin_family ||
 	    dst->sin_addr.s_addr != sin_dst->sin_addr.s_addr) {
@@ -205,12 +228,18 @@ in_gif_output(ifp, family, m, rt)
 			m_freem(m);
 			return ENETUNREACH;
 		}
+
+		/* if it constitutes infinite encapsulation, punt. */
+		if (sc->gif_ro.ro_rt->rt_ifp == ifp) {
+			m_freem(m);
+			return ENETUNREACH;	/*XXX*/
+		}
 #if 0
 		ifp->if_mtu = sc->gif_ro.ro_rt->rt_ifp->if_mtu
 			- sizeof(struct ip);
-#endif 
+#endif
 	}
-	
+
 #ifndef __OpenBSD__
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
 #else
@@ -229,56 +258,27 @@ in_gif_input(m, va_alist)
 #endif
 {
 	int off, proto;
-	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
-	int i, af;
+	int af;
 	va_list ap;
 	u_int8_t otos;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
+#ifndef __OpenBSD__
 	proto = va_arg(ap, int);
+#endif
 	va_end(ap);
 
 	ip = mtod(m, struct ip *);
+#ifdef __OpenBSD__
+	proto = ip->ip_p;
+#endif
 
-	/* this code will be soon improved. */
-#define	satosin(sa)	((struct sockaddr_in *)(sa))	
-	for (i = 0, sc = gif; i < ngif; i++, sc++) {
-		if (sc->gif_psrc == NULL
-		 || sc->gif_pdst == NULL
-		 || sc->gif_psrc->sa_family != AF_INET
-		 || sc->gif_pdst->sa_family != AF_INET) {
-			continue;
-		}
+	gifp = (struct ifnet *)encap_getarg(m);
 
-		if ((sc->gif_if.if_flags & IFF_UP) == 0)
-			continue;
-
-		if ((sc->gif_if.if_flags & IFF_LINK0)
-		 && satosin(sc->gif_psrc)->sin_addr.s_addr == ip->ip_dst.s_addr
-		 && satosin(sc->gif_pdst)->sin_addr.s_addr == INADDR_ANY) {
-			gifp = &sc->gif_if;
-			continue;
-		}
-
-		if (satosin(sc->gif_psrc)->sin_addr.s_addr == ip->ip_dst.s_addr
-		 && satosin(sc->gif_pdst)->sin_addr.s_addr == ip->ip_src.s_addr)
-		{
-			gifp = &sc->gif_if;
-			break;
-		}
-	}
-
-	if (gifp == NULL) {
-#ifdef MROUTING
-		/* for backward compatibility */
-		if (proto == IPPROTO_IPV4) {
-			ipip_input(m, off, proto);
-			return;
-		}
-#endif /*MROUTING*/
+	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		ipstat.ips_nogif++;
 		return;
@@ -331,4 +331,89 @@ in_gif_input(m, va_alist)
 	}
 	gif_input(m, af, gifp);
 	return;
+}
+
+/*
+ * we know that we are in IFF_UP, outer address available, and outer family
+ * matched the physical addr family.  see gif_encapcheck().
+ */
+int
+gif_encapcheck4(m, off, proto, arg)
+	const struct mbuf *m;
+	int off;
+	int proto;
+	void *arg;
+{
+	struct ip ip;
+	struct gif_softc *sc;
+	struct sockaddr_in *src, *dst;
+	int addrmatch;
+	struct in_ifaddr *ia4;
+
+	/* sanity check done in caller */
+	sc = (struct gif_softc *)arg;
+	src = (struct sockaddr_in *)sc->gif_psrc;
+	dst = (struct sockaddr_in *)sc->gif_pdst;
+
+	/* LINTED const cast */
+	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+
+	/* check for address match */
+	addrmatch = 0;
+	if (src->sin_addr.s_addr == ip.ip_dst.s_addr)
+		addrmatch |= 1;
+	if (dst->sin_addr.s_addr == ip.ip_src.s_addr)
+		addrmatch |= 2;
+	else if ((sc->gif_if.if_flags & IFF_LINK0) != 0 &&
+		 dst->sin_addr.s_addr == INADDR_ANY) {
+		addrmatch |= 2; /* we accept any source */
+	}
+	if (addrmatch != 3)
+		return 0;
+
+	/* martian filters on outer source - NOT done in ip_input! */
+	if (IN_MULTICAST(&ip.ip_src.s_addr))
+		return 0;
+	switch ((ntohl(ip.ip_src.s_addr) & 0xff000000) >> 24) {
+	case 0: case 127: case 255:
+		return 0;
+	}
+	/* reject packets with broadcast on source */
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
+#else
+	for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
+#endif
+	{
+		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
+			continue;
+		if (ip.ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
+			return 0;
+	}
+
+	/* ingress filters on outer source */
+	if ((m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
+		struct sockaddr_in sin;
+		struct rtentry *rt;
+
+		bzero(&sin, sizeof(sin));
+		sin.sin_family = AF_INET;
+		sin.sin_len = sizeof(struct sockaddr_in);
+		sin.sin_addr = ip.ip_src;
+#ifdef __FreeBSD__
+		rt = rtalloc1((struct sockaddr *)&sin, 0, 0UL);
+#else
+		rt = rtalloc1((struct sockaddr *)&sin, 0);
+#endif
+		if (!rt)
+			return 0;
+		if (rt->rt_ifp != m->m_pkthdr.rcvif) {
+			rtfree(rt);
+			return 0;
+		}
+		rtfree(rt);
+	}
+
+	/* prioritize: IFF_LINK0 mode is less preferred */
+	return (sc->gif_if.if_flags & IFF_LINK0) ? 32 : 32 * 2;
 }
