@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_esdb.c,v 1.2 2003/07/16 08:05:27 itojun Exp $	*/
+/*	$NetBSD: citrus_esdb.c,v 1.3 2004/01/02 12:19:25 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_esdb.c,v 1.2 2003/07/16 08:05:27 itojun Exp $");
+__RCSID("$NetBSD: citrus_esdb.c,v 1.3 2004/01/02 12:19:25 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -112,7 +112,7 @@ conv_esdb(struct _citrus_esdb *esdb, struct _region *fr)
 	esdb->db_len_variable = 0;
 	esdb->db_variable = NULL;
 	ret = _db_lookupstr_by_s(db, _CITRUS_ESDB_SYM_VARIABLE, &str, NULL);
-	if (ret==0) {
+	if (ret == 0) {
 		esdb->db_len_variable = strlen(str)+1;
 		esdb->db_variable = strdup(str);
 		if (esdb->db_variable == NULL) {
@@ -131,7 +131,7 @@ conv_esdb(struct _citrus_esdb *esdb, struct _region *fr)
 
 	/* get invalid character */
 	ret = _db_lookup32_by_s(db, _CITRUS_ESDB_SYM_INVALID, &tmp, NULL);
-	if (ret==0) {
+	if (ret == 0) {
 		esdb->db_use_invalid = 1;
 		esdb->db_invalid = tmp;
 	} else if (ret == ENOENT)
@@ -145,7 +145,7 @@ conv_esdb(struct _citrus_esdb *esdb, struct _region *fr)
 		ret = errno;
 		goto err3;
 	}
-	for (i=0; i<num_charsets; i++) {
+	for (i = 0; i < num_charsets; i++) {
 		snprintf(buf, sizeof(buf),
 		    _CITRUS_ESDB_SYM_CSID_PREFIX "%d", i);
 		ret = _db_lookup32_by_s(db, buf, &csid, NULL);
@@ -169,8 +169,8 @@ conv_esdb(struct _citrus_esdb *esdb, struct _region *fr)
 	return 0;
 
 err4:
-	for (; i>0; i--)
-		free(esdb->db_charsets[i-1].ec_csname);
+	for (; i > 0; i--)
+		free(esdb->db_charsets[i - 1].ec_csname);
 	free(esdb->db_charsets);
 err3:
 	free(esdb->db_variable);
@@ -231,7 +231,7 @@ _citrus_esdb_close(struct _citrus_esdb *db)
 	_DIAGASSERT(db != NULL);
 	_DIAGASSERT(db->db_num_charsets == 0 || db->db_charsets != NULL);
 
-	for (i=0; i<db->db_num_charsets; i++)
+	for (i = 0; i < db->db_num_charsets; i++)
 		free(db->db_charsets[i].ec_csname);
 	db->db_num_charsets = 0;
 	free(db->db_charsets); db->db_charsets = NULL;
@@ -249,7 +249,7 @@ _citrus_esdb_free_list(char **list, size_t num)
 {
 	size_t i;
 
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 		free(list[i]);
 	free(list);
 }
@@ -265,7 +265,7 @@ _citrus_esdb_get_list(char ***rlist, size_t *rnum)
 	struct _region key;
 	size_t num;
 	struct _citrus_lookup *cla, *cld;
-	char **list;
+	char **list, **q;
 	char buf[PATH_MAX];
 
 	num = 0;
@@ -286,7 +286,7 @@ _citrus_esdb_get_list(char ***rlist, size_t *rnum)
 
 	/* allocate list pointer space */
 	list = malloc(num * sizeof(char *));
-	num=0;
+	num = 0;
 	if (list == NULL) {
 		ret = errno;
 		goto quit3;
@@ -331,7 +331,12 @@ _citrus_esdb_get_list(char ***rlist, size_t *rnum)
 		goto quit3;
 
 	ret = 0;
-	list = realloc(list, num*sizeof(char *));
+	q = realloc(list, num * sizeof(char *));
+	if (!q) {
+		ret = ENOMEM;
+		goto quit3;
+	}
+	list = q;
 	*rlist = list;
 	*rnum = num;
 quit3:
