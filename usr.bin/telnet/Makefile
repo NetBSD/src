@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2005/02/19 23:28:41 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2005/03/04 20:41:09 he Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,8 +71,8 @@ DPADD+=	${LIBKRB}
 .endif
 
 .if (${USE_PAM} != "no")
-LDADD+= -lpam
-DPADD+=	${LIBPAM}
+LDADD+= -lpam ${PAM_STATIC_LDADD}
+DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 LDADD+= -ldes -lcom_err -lroken

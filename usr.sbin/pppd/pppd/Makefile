@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2005/02/22 00:34:27 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2005/03/04 20:41:09 he Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,8 @@ SRCS+=	eui64.c ipv6cp.c
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+= -DUSE_PAM
-LDADD+=-lpam
-DPADD+=${LIBPAM}
+LDADD+=-lpam ${PAM_STATIC_LDADD}
+DPADD+=${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 LDADD+= -lpcap -lcrypt -lutil -Wl,--export-dynamic
