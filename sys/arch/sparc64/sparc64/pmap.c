@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2004/02/12 03:25:48 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2004/03/14 18:18:56 chs Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2004/02/12 03:25:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2004/03/14 18:18:56 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1051,6 +1051,7 @@ remap_data:
 		avail->start += PAGE_SIZE;
 		avail->size -= PAGE_SIZE;
 	}
+
 	/*
 	 * Now we need to remove the area we valloc'ed from the available
 	 * memory lists.  (NB: we may have already alloc'ed the entire space).
@@ -1297,10 +1298,10 @@ remap_data:
 #ifdef DIAGNOSTIC
 		vmmap += PAGE_SIZE; /* redzone -- XXXX do we need one? */
 #endif
-		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
+		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK)
 			vmmap += PAGE_SIZE; /* Matchup virtual color for D$ */
 		intstk = vmmap;
-		cpus = (struct cpu_info *)(intstk+CPUINFO_VA-INTSTACK);
+		cpus = (struct cpu_info *)(intstk + CPUINFO_VA - INTSTACK);
 
 		BDPRINTF(PDB_BOOT1,
 			("Inserting cpu_info into pmap_kernel() at %p\r\n",
@@ -1308,6 +1309,7 @@ remap_data:
 		/* Now map in all 8 pages of cpu_info */
 		pa = cpu0paddr;
 		prom_map_phys(pa, 64*KB, vmmap, -1);
+
 		/* 
 		 * Also map it in as the interrupt stack.
 		 * This lets the PROM see this if needed.
@@ -1316,7 +1318,7 @@ remap_data:
 		 * before installing the locked TTE.
 		 */
 		prom_map_phys(pa, 64*KB, CPUINFO_VA, -1);
-		for (i=0; i<8; i++) {
+		for (i = 0; i < 8; i++) {
 			int64_t data;
 
 			data = TSB_DATA(0 /* global */,
@@ -1335,7 +1337,8 @@ remap_data:
 		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\r\n"));
 
 		/* Initialize our cpu_info structure */
-		memset((void*)intstk, 0, 8*PAGE_SIZE);
+		memset((void *)intstk, 0, 8 * PAGE_SIZE);
+		cpus->ci_self = cpus;
 		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
@@ -1350,7 +1353,10 @@ remap_data:
 		cpus->ci_eintstack = (void *)EINTSTACK;
 		cpus->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE);
 
-		cpu0paddr += 64*KB;
+		cpu0paddr += 64 * KB;
+
+		CPUSET_CLEAR(cpus_active);
+		CPUSET_ADD(cpus_active, 0);
 
 		/* The rest will be done at CPU attach time. */
 		BDPRINTF(PDB_BOOT1, 
@@ -1358,6 +1364,7 @@ remap_data:
 	}
 
 	vmmap = (vaddr_t)reserve_dumppages((caddr_t)(u_long)vmmap);
+
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
 	 */
@@ -3654,3 +3661,18 @@ pmap_testout()
 	pmap_free_page(pa);
 }
 #endif
+
+void
+pmap_update(struct pmap *pmap)
+{
+
+#ifdef MULTIPROCESSOR
+	smp_tlb_flush_all();
+#endif
+
+	if (pmap->pm_refs > 0) {
+		return;
+	}
+	pmap->pm_refs = 1;
+	pmap_activate_pmap(pmap);
+}
