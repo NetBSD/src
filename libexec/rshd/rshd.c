@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rshd.c	5.38 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rshd.c,v 1.2 1993/08/01 18:29:42 mycroft Exp $";
+static char rcsid[] = "$Id: rshd.c,v 1.3 1993/12/23 09:06:01 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -81,6 +81,7 @@ static char rcsid[] = "$Id: rshd.c,v 1.2 1993/08/01 18:29:42 mycroft Exp $";
 
 int	keepalive = 1;
 int	check_all = 0;
+int	paranoid = 0;
 char	*index(), *rindex(), *strncat();
 /*VARARGS1*/
 int	error();
@@ -91,13 +92,13 @@ int	sent_null;
 #include <kerberosIV/krb.h>
 #define	VERSION_SIZE	9
 #define SECURE_MESSAGE  "This rsh session is using DES encryption for all transmissions.\r\n"
-#define	OPTIONS		"alknvx"
+#define	OPTIONS		"alknvxL"
 char	authbuf[sizeof(AUTH_DAT)];
 char	tickbuf[sizeof(KTEXT_ST)];
 int	doencrypt, use_kerberos, vacuous;
 Key_schedule	schedule;
 #else
-#define	OPTIONS	"aln"
+#define	OPTIONS	"alnL"
 #endif
 
 /*ARGSUSED*/
@@ -119,9 +120,11 @@ main(argc, argv)
 		case 'a':
 			check_all = 1;
 			break;
+
 		case 'l':
 			_check_rhosts_file = 0;
 			break;
+
 		case 'n':
 			keepalive = 0;
 			break;
@@ -140,6 +143,11 @@ main(argc, argv)
 			break;
 #endif
 #endif
+
+		case 'L':
+			paranoid = 1;
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -433,8 +441,9 @@ doit(fromp)
 		if (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0') {
 			if (kuserok(kdata, locuser) != 0) {
 				syslog(LOG_NOTICE|LOG_AUTH,
-				    "Kerberos rsh denied to %s.%s@%s",
-				    kdata->pname, kdata->pinst, kdata->prealm);
+				    "Kerberos shell denied to %s.%s@%s on %s as %s: cmd='%s'; %s",
+				    kdata->pname, kdata->pinst, kdata->prealm,
+                        	    hostname, locuser, cmdbuf, errorstr);
 				error("Permission denied.\n");
 				exit(1);
 			}
@@ -448,6 +457,14 @@ doit(fromp)
 fail:
 			if (errorstr == NULL)
 				errorstr = "Permission denied.\n";
+
+			/* log the (failed) rsh request, if paranoid */
+			if (paranoid || pwd->pw_uid == 0)
+		    		syslog(LOG_INFO|LOG_AUTH,
+				    "rsh denied to %s@%s as %s: cmd='%s'; %s",
+				    remuser, hostname, locuser, cmdbuf,
+				    errorstr);
+
 			error(errorstr, errorhost);
 			exit(1);
 		}
@@ -643,19 +660,20 @@ fail:
 	else
 		cp = pwd->pw_shell;
 	endpwent();
-	if (pwd->pw_uid == 0) {
+	if (paranoid || pwd->pw_uid == 0) {
 #ifdef	KERBEROS
 		if (use_kerberos)
-			syslog(LOG_INFO|LOG_AUTH,
-				"ROOT Kerberos shell from %s.%s@%s on %s, comm: %s\n",
-				kdata->pname, kdata->pinst, kdata->prealm,
-				hostname, cmdbuf);
+		    syslog(LOG_INFO|LOG_AUTH,
+                        "Kerberos shell from %s.%s@%s on %s as %s: cmd='%s'",
+                        kdata->pname, kdata->pinst, kdata->prealm,
+                        hostname, locuser, cmdbuf);
 		else
 #endif
-			syslog(LOG_INFO|LOG_AUTH,
-				"ROOT shell from %s@%s, comm: %s\n",
-				remuser, hostname, cmdbuf);
+		    syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%s'",
+			remuser, hostname, locuser, cmdbuf);
 	}
+
+
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	perror(pwd->pw_shell);
 	exit(1);
