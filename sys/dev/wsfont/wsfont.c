@@ -1,6 +1,6 @@
-/* $NetBSD: wsfont.c,v 1.5 1999/04/26 04:24:22 ad Exp $ */
+/* 	$NetBSD: wsfont.c,v 1.6 1999/04/26 23:41:57 ad Exp $ */
 
-/*-
+/*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
  * All rights reserved.
  *
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.5 1999/04/26 04:24:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.6 1999/04/26 23:41:57 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -87,24 +87,24 @@ struct font {
 /* Our list of built-in fonts */
 static struct font *list, builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
-	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 #ifdef FONT_ISO8x16
-	{ NULL, NULL, &iso8x16, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &iso8x16, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 #ifdef FONT_COURIER11x18
-	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 #ifdef FONT_GALLANT12x22
-	{ NULL, NULL, &gallant12x22, 0, 4, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &gallant12x22, 0, 4, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 #ifdef FONT_LUCIDA16x29
-	{ NULL, NULL, &lucida16x29, 0, 5, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &lucida16x29, 0, 5, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 #ifdef FONT_QVSS8x15
-	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN, 0, 0 },
+	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_R2L, WSFONT_L2R },
 #endif
-	{ NULL, NULL, NULL, 0, 0, 0 },
+	{ NULL, NULL, NULL, 0, WSFONT_L2R, WSFONT_L2R },
 };
 
 /* Reverse the bit order in a byte */
@@ -409,7 +409,7 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 	s = splhigh();
 	
 	if ((ent = wsfont_find0(cookie)) != NULL) {
-		if (bitorder != ent->bitorder) {
+		if (bitorder && bitorder != ent->bitorder) {
 			if (ent->lockcount)
 				return (-1);
 		
@@ -417,7 +417,7 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 			ent->bitorder = bitorder;
 		}
 
-		if (byteorder != ent->byteorder) {
+		if (byteorder && byteorder != ent->byteorder) {
 			if (ent->lockcount)
 				return (-1);
 

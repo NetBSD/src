@@ -1,6 +1,6 @@
-/* $NetBSD: wsfont.h,v 1.3 1999/04/26 04:24:22 ad Exp $ */
+/* 	$NetBSD: wsfont.h,v 1.4 1999/04/26 23:41:57 ad Exp $ */
 
-/*-
+/*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
  * All rights reserved.
  *
@@ -55,8 +55,8 @@
 struct wsdisplay_font;
 
 /* Left to Right, Right to Left */
-#define WSFONT_L2R	(0)
-#define WSFONT_R2L	(1)
+#define WSFONT_L2R	(1)
+#define WSFONT_R2L	(2)
 
 void	wsfont_init __P((void));
 int	wsfont_find __P((char *name, int width, int height, int stride));
