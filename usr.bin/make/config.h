@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.9 (Berkeley) 6/1/90
- *	$Id: config.h,v 1.2 1993/08/01 18:12:05 mycroft Exp $
+ *	$Id: config.h,v 1.3 1994/03/05 00:34:40 cgd Exp $
  */
 
 #define	DEFSHELL	1			/* Bourne shell */
@@ -86,4 +86,8 @@
  */
 #define	LIBSUFF	".a"
 #define	RECHECK
+
+#ifndef RANLIBMAG
+#define RANLIBMAG "__.SYMDEF"
+#endif
 /*#define POSIX*/

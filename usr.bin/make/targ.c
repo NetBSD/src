@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)targ.c	5.9 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: targ.c,v 1.2 1993/08/01 18:11:39 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
+static char *rcsid = "$Id: targ.c,v 1.3 1994/03/05 00:35:13 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -84,6 +84,7 @@ static char rcsid[] = "$Id: targ.c,v 1.2 1993/08/01 18:11:39 mycroft Exp $";
 #include	  <time.h>
 #include	  "make.h"
 #include	  "hash.h"
+#include	  "dir.h"
 
 static Lst        allTargets;	/* the list of all targets found so far */
 static Hash_Table targets;	/* a hash table of same */
@@ -149,6 +150,7 @@ Targ_NewGN (name)
     gn->preds =     	Lst_Init(FALSE);
     gn->context =   	Lst_Init (FALSE);
     gn->commands =  	Lst_Init (FALSE);
+    gn->suffix =	NULL;
 
     return (gn);
 }
@@ -342,6 +344,7 @@ Targ_SetMain (gn)
 }
 
 static int
+/*ARGSUSED*/
 TargPrintName (gn, ppath)
     GNode          *gn;
     int		    ppath;
@@ -356,7 +359,7 @@ TargPrintName (gn, ppath)
 	    printf ("(MAIN NAME)  ");
 	}
     }
-#endif notdef
+#endif /* notdef */
     return (0);
 }
 
@@ -496,13 +499,13 @@ TargPrintNode (gn, pass)
 	    if (!Lst_IsEmpty (gn->iParents)) {
 		printf("# implicit parents: ");
 		Lst_ForEach (gn->iParents, TargPrintName, (ClientData)0);
-		putc ('\n', stdout);
+		fputc ('\n', stdout);
 	    }
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
 	    Lst_ForEach (gn->parents, TargPrintName, (ClientData)0);
-	    putc ('\n', stdout);
+	    fputc ('\n', stdout);
 	}
 	
 	printf("%-16s", gn->name);
@@ -516,7 +519,7 @@ TargPrintNode (gn, pass)
 	}
 	Targ_PrintType (gn->type);
 	Lst_ForEach (gn->children, TargPrintName, (ClientData)0);
-	putc ('\n', stdout);
+	fputc ('\n', stdout);
 	Lst_ForEach (gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
@@ -562,6 +565,7 @@ TargPrintOnlySrc(gn)
  *	lots o' output
  *-----------------------------------------------------------------------
  */
+void
 Targ_PrintGraph (pass)
     int	    pass; 	/* Which pass this is. 1 => no processing
 			 * 2 => processing done */
