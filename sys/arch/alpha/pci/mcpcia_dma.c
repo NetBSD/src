@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.10 1999/04/06 19:26:32 pk Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.11 1999/04/15 22:32:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.10 1999/04/06 19:26:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.11 1999/04/15 22:32:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,12 @@ void	mcpcia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 #define	MCPCIA_ISA_SG_MAPPED_BASE	(8*1024*1024)
 #define	MCPCIA_ISA_SG_MAPPED_SIZE	(8*1024*1024)
 
-#define	MCPCIA_SGTLB_INVALIDATE(mcp)	\
-	alpha_mb(),	\
-	REGVAL(MCPCIA_SG_TBIA(mcp)) = 0xdeadbeef, \
-	alpha_mb()
+#define	MCPCIA_SGTLB_INVALIDATE(ccp)					\
+do {									\
+	alpha_mb();							\
+	REGVAL(MCPCIA_SG_TBIA(ccp)) = 0xdeadbeef;			\
+	alpha_mb();							\
+} while (0)
 
 void
 mcpcia_dma_init(ccp)
@@ -187,35 +189,35 @@ mcpcia_dma_init(ccp)
 	 * Disable windows first.
 	 */
 
-	REGVAL(MCPCIA_W0_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_W1_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_W2_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_W3_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_T0_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_T1_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_T2_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_T3_BASE(ccp->cc_sc)) = 0;
+	REGVAL(MCPCIA_W0_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_W1_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_W2_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_W3_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_T0_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_T1_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_T2_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_T3_BASE(ccp)) = 0;
 	alpha_mb();
 
 	/*
 	 * Set up window 0 as an 8MB SGMAP-mapped window starting at 8MB.
 	 */
-	REGVAL(MCPCIA_W0_MASK(ccp->cc_sc)) = MCPCIA_WMASK_8M;
-	REGVAL(MCPCIA_T0_BASE(ccp->cc_sc)) =
+	REGVAL(MCPCIA_W0_MASK(ccp)) = MCPCIA_WMASK_8M;
+	REGVAL(MCPCIA_T0_BASE(ccp)) =
 		ccp->cc_sgmap.aps_ptpa >> MCPCIA_TBASEX_SHIFT;
-	REGVAL(MCPCIA_W0_BASE(ccp->cc_sc)) =
+	REGVAL(MCPCIA_W0_BASE(ccp)) =
 		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_ISA_SG_MAPPED_BASE;
 	alpha_mb();
 
-	MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+	MCPCIA_SGTLB_INVALIDATE(ccp);
 
 	/*
 	 * Set up window 1 as a 1 GB Direct-mapped window starting at 2GB.
 	 */
 
-	REGVAL(MCPCIA_W0_MASK(ccp->cc_sc)) = MCPCIA_WMASK_1G;
-	REGVAL(MCPCIA_T0_BASE(ccp->cc_sc)) = 0;
-	REGVAL(MCPCIA_W0_BASE(ccp->cc_sc)) =
+	REGVAL(MCPCIA_W0_MASK(ccp)) = MCPCIA_WMASK_1G;
+	REGVAL(MCPCIA_T0_BASE(ccp)) = 0;
+	REGVAL(MCPCIA_W0_BASE(ccp)) =
 		MCPCIA_DIRECT_MAPPED_BASE | MCPCIA_WBASE_EN;
 	alpha_mb();
 
@@ -327,7 +329,7 @@ mcpcia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
 	    t->_sgmap);
 	if (error == 0)
-		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+		MCPCIA_SGTLB_INVALIDATE(ccp);
 	return (error);
 }
 
@@ -346,7 +348,7 @@ mcpcia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 
 	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, t->_sgmap);
 	if (error == 0)
-		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+		MCPCIA_SGTLB_INVALIDATE(ccp);
 	return (error);
 }
 
@@ -365,7 +367,7 @@ mcpcia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 
 	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, t->_sgmap);
 	if (error == 0)
-		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+		MCPCIA_SGTLB_INVALIDATE(ccp);
 	return (error);
 }
 
@@ -387,7 +389,7 @@ mcpcia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
 	    t->_sgmap);
 	if (error == 0)
-		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+		MCPCIA_SGTLB_INVALIDATE(ccp);
 	return (error);
 }
 
@@ -405,7 +407,7 @@ mcpcia_bus_dmamap_unload_sgmap(t, map)
 	 * Invalidate any SGMAP page table entries used by this mapping.
 	 */
 	pci_sgmap_pte64_unload(t, map, t->_sgmap);
-	MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
+	MCPCIA_SGTLB_INVALIDATE(ccp);
 
 	/*
 	 * Do the generic bits of the unload.
