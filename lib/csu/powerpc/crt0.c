@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.18 2000/06/14 22:52:50 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.19 2002/04/17 13:32:42 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -54,6 +54,18 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
 {
 	char *namep;
 
+	/*
+	 * Initialize the Small Data Area registers.
+	 * _SDA_BASE is defined in the SVR4 ABI for PPC.
+	 * _SDA2_BASE is defined in the E[mbedded] ABI for PPC.
+	 */
+	__asm(	".weak _SDA_BASE_;"
+		"addis 13,0,_SDA_BASE_@ha;"
+		"addi 13,13,_SDA_BASE_@l;"
+		".weak _SDA2_BASE_;"
+		"addis 2,0,_SDA2_BASE_@ha;"
+		"addi 2,2,_SDA2_BASE_@l" );
+
 	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
 		if ((__progname = _strrchr(namep, '/')) == NULL)
 			__progname = namep;
@@ -86,7 +98,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.18 2000/06/14 22:52:50 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19 2002/04/17 13:32:42 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
