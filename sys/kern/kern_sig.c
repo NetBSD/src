@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.121 2002/07/04 23:32:14 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.122 2002/07/28 22:18:51 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.121 2002/07/04 23:32:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.122 2002/07/28 22:18:51 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.121 2002/07/04 23:32:14 thorpej Exp $
 #include <uvm/uvm_extern.h>
 
 static void	proc_stop(struct proc *p);
-void		killproc(struct proc *, char *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
@@ -1307,7 +1306,7 @@ postsig(int signum)
  * Kill the current process for stated reason.
  */
 void
-killproc(struct proc *p, char *why)
+killproc(struct proc *p, const char *why)
 {
 
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);

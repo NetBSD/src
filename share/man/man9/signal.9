@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.2 2002/07/09 14:05:29 wiz Exp $
+.\"	$NetBSD: signal.9,v 1.3 2002/07/28 22:18:52 manu Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@
 .Ft void
 .Fn postsig "int signum"
 .Ft void
-.Fn killproc "struct proc *p" "char *why"
+.Fn killproc "struct proc *p" "const char *why"
 .Ft void
 .Fn sigexit "struct proc *p" "int signum"
 .Ft int
@@ -347,7 +347,7 @@ is to terminate the process, and the signal does not have
 a registered handler, the process exits using
 .Fn sigexit ,
 dumping a core image if necessary.
-.It void Fn killproc "struct proc *p" "char *why"
+.It void Fn killproc "struct proc *p" "const char *why"
 .Pp
 This function sends a SIGKILL signal to the specified process.  The
 message provided by
