@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.51 2000/01/13 12:43:20 mjl Exp $       */
+/*     $NetBSD: login.c,v 1.52 2000/01/22 09:48:52 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.51 2000/01/13 12:43:20 mjl Exp $");
+__RCSID("$NetBSD: login.c,v 1.52 2000/01/22 09:48:52 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -325,10 +325,9 @@ main(argc, argv)
 		/*
 		 * Establish the class now, before we might goto
 		 * within the next block. pwd can be NULL since it
-                 * falls back to the "default" class if it is.
-                 */
-		if (pwd != NULL)
-                	lc = login_getclass(pwd->pw_class);
+		 * falls back to the "default" class if it is.
+		 */
+		lc = login_getclass(pwd ? pwd->pw_class : NULL);
 #endif
 		/*
 		 * if we have a valid account name, and it doesn't have a
@@ -452,12 +451,8 @@ main(argc, argv)
 
 	/* if user not super-user, check for disabled logins */
 #ifdef LOGIN_CAP
-        if (!rootlogin || login_getcapbool(lc, "ignorenologin", 0)) {
-		char *fname;
-		
-		fname = login_getcapstr(lc, "nologin", NULL, NULL);
-                checknologin(fname);
-	}
+        if (!rootlogin || login_getcapbool(lc, "ignorenologin", 0))
+		checknologin(login_getcapstr(lc, "nologin", NULL, NULL));
 #else
         if (!rootlogin)
                 checknologin(NULL);
@@ -553,16 +548,12 @@ main(argc, argv)
 		dofork();
 #endif
 #ifdef LOGIN_CAP
-	if(lc) {
-		if (setusercontext(lc, pwd, pwd->pw_uid, 
-		    LOGIN_SETALL & ~LOGIN_SETPATH) != 0) {
-			syslog(LOG_ERR, "setusercontext failed");
-			exit(1);
-		}
+	if (setusercontext(lc, pwd, pwd->pw_uid, 
+	    LOGIN_SETALL & ~LOGIN_SETPATH) != 0) {
+		syslog(LOG_ERR, "setusercontext failed");
+		exit(1);
 	}
-	else
-#endif
-	{
+#else
 	(void)setgid(pwd->pw_gid);
 
 	initgroups(username, pwd->pw_gid);
@@ -575,8 +566,7 @@ main(argc, argv)
 		(void)setuid(0);
 	else
 		(void)setuid(pwd->pw_uid);
-	}
-
+#endif
 
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
@@ -609,10 +599,7 @@ main(argc, argv)
 	(void)setenv("USER", pwd->pw_name, 1);
 
 #ifdef LOGIN_CAP
-	if(lc)
-		setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH);
-	else
-		(void)setenv("PATH", _PATH_DEFPATH, 0);
+	setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH);
 #else
 	(void)setenv("PATH", _PATH_DEFPATH, 0);
 #endif
