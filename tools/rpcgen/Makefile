@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:34 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:42 tv Exp $
 
+HOSTPROGNAME=	nbrpcgen
 HOST_SRCDIR=	usr.bin/rpcgen
 
 .include "${.CURDIR}/../Makefile.host"

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:25 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:39 tv Exp $
 
-HOSTPROG=	binstall
+HOSTPROGNAME=	nbinstall
 HOST_SRCDIR=	usr.bin/xinstall
 
 .include "${.CURDIR}/../Makefile.host"
 
-INSTALL=	./binstall
+INSTALL=	./xinstall

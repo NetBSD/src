@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.216 2001/11/14 19:46:38 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.217 2001/11/14 22:13:43 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -76,46 +76,46 @@ TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 # Define default locations for common tools.
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
-ASN1_COMPILE=	${TOOLDIR}/bin/asn1_compile
+ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-COMPILE_ET=	${TOOLDIR}/bin/compile_et
-CONFIG=		${TOOLDIR}/bin/config
+COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
+CONFIG=		${TOOLDIR}/bin/nbconfig
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/crunchgen
+CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
-EQN=		${TOOLDIR}/bin/eqn
+EQN=		${TOOLDIR}/bin/nbeqn
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
-GENCAT=		${TOOLDIR}/bin/gencat
-#GRIND=		${TOOLDIR}/bin/vgrind -f
-GROFF=		${TOOLDIR}/bin/groff
-INDXBIB=	${TOOLDIR}/bin/indxbib
-INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/binstall
-INSTALL_INFO=	${TOOLDIR}/bin/install-info
+GENCAT=		${TOOLDIR}/bin/nbgencat
+#GRIND=		${TOOLDIR}/bin/nbvgrind -f
+GROFF=		${TOOLDIR}/bin/nbgroff
+INDXBIB=	${TOOLDIR}/bin/nbindxbib
+INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
+INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
 LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
-LEX=		${TOOLDIR}/bin/lex
+LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
-LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/lorder
+LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/nblorder
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
-MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
-MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/mkdep
-MKLOCALE=	${TOOLDIR}/bin/mklocale
-MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/msgc
-MTREE=		${TOOLDIR}/bin/mtree
+MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmenuc
+MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/nbmkdep
+MKLOCALE=	${TOOLDIR}/bin/nbmklocale
+MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
+MTREE=		${TOOLDIR}/bin/nbmtree
 NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
-PIC=		${TOOLDIR}/bin/pic
+PIC=		${TOOLDIR}/bin/nbpic
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
-REFER=		${TOOLDIR}/bin/refer
-RPCGEN=		${TOOLDIR}/bin/rpcgen
+REFER=		${TOOLDIR}/bin/nbrefer
+RPCGEN=		${TOOLDIR}/bin/nbrpcgen
 SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
-SOELIM=		${TOOLDIR}/bin/soelim
+SOELIM=		${TOOLDIR}/bin/nbsoelim
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
-TBL=		${TOOLDIR}/bin/tbl
-TSORT=		${TOOLDIR}/bin/tsort -q
-YACC=		${TOOLDIR}/bin/yacc
+TBL=		${TOOLDIR}/bin/nbtbl
+TSORT=		${TOOLDIR}/bin/nbtsort -q
+YACC=		${TOOLDIR}/bin/nbyacc
 
 # Make sure DESTDIR is set, so that builds with these tools always
 # get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
