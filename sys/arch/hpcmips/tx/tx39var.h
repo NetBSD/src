@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.3 2000/01/03 18:24:05 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.4 2000/01/12 14:56:19 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -30,6 +30,7 @@ struct tx_chipset_tag {
 	void *tc_intrt;  /* interrupt tag */
 	void *tc_powert; /* power tag */
 	void *tc_clockt; /* clock/timer tag */
+	void *tc_soundt; /* sound tag */
 };
 
 typedef struct tx_chipset_tag* tx_chipset_tag_t;
@@ -38,6 +39,7 @@ typedef u_int32_t txreg_t;
 void	tx_conf_register_intr __P((tx_chipset_tag_t, void*));
 void	tx_conf_register_power __P((tx_chipset_tag_t, void*));
 void	tx_conf_register_clock __P((tx_chipset_tag_t, void*));
+void	tx_conf_register_sound __P((tx_chipset_tag_t, void*));
 
 /*
  *	TX39 Internal Function Register access

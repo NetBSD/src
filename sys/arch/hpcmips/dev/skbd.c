@@ -1,4 +1,4 @@
-/*	$NetBSD: skbd.c,v 1.1 1999/12/08 15:49:18 uch Exp $ */
+/*	$NetBSD: skbd.c,v 1.2 2000/01/12 14:56:22 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  *
  */
+#include "opt_tx39xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -46,6 +48,11 @@
 
 #include <hpcmips/dev/skbdvar.h>
 #include <hpcmips/dev/skbdkeymap.h>
+
+#ifdef TX39XX
+#include <hpcmips/tx/tx39var.h>
+#include <hpcmips/tx/txsnd.h>
+#endif
 
 struct skbd_softc;
 
@@ -209,7 +216,14 @@ __skbd_input(arg, flag, scancode)
 	struct skbd_chip *sk = arg;
 	int type, key;
 
-	type = flag ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
+	if (flag) {
+#ifdef TX39XX
+		tx_sound_click(tx_conf_get_tag());
+#endif
+		type = WSCONS_EVENT_KEY_DOWN; 
+	} else {
+		type = WSCONS_EVENT_KEY_UP;
+	}
 	
 	if ((key = sk->sk_keymap[scancode]) == UNK) {
 		printf("skbd: unknown scan code %#x\n", scancode);
