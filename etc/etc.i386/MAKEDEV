@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.57 1997/08/18 21:23:17 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.58 1997/08/22 11:19:43 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -160,7 +160,7 @@ wt*)
 	    mknod r$name$sub	c $chr $(($sub + 0))
 	    mknod nr$name$sub	c $chr $(($sub + 4))
 	    chgrp operator $name$sub n$name$sub r$name$sub nr$name$sub
-	    chmod 640 $name$sub n$name$sub r$name$sub nr$name$sub
+	    chmod 660 $name$sub n$name$sub r$name$sub nr$name$sub
 	done
 	;;
 
@@ -183,11 +183,12 @@ ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss};	chr=19;;
 	esac
-	rm -f $name$unit n$name$unit
+	rm -f $name$unit n$name$unit en$name$unit
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	chgrp operator $name$unit n$name$unit
-	chmod 640 $name$unit n$name$unit
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 ccd*|fd*|sd*|vnd*|wd*)
@@ -286,7 +287,7 @@ st*)
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
@@ -396,7 +397,12 @@ satlink*)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
+	;;
+
+*)
+	echo $i: unknown device
 	;;
 
 esac
