@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2002, 2004 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,8 +10,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`Id: access_db.m4,v 8.24 2002/03/06 21:50:25 ca Exp')
-VERSIONID(`$NetBSD: access_db.m4,v 1.4 2003/06/01 14:06:45 atatat Exp $')
+VERSIONID(`Id: access_db.m4,v 8.26 2004/06/24 18:10:02 ca Exp')
+VERSIONID(`$NetBSD: access_db.m4,v 1.5 2005/03/15 02:14:15 atatat Exp $')
 divert(-1)
 
 define(`_ACCESS_TABLE_', `')
@@ -34,9 +34,12 @@ ifelse(defn(`_ARG_'), `', `',
       ')
     ')
   ')
+ifdef(`_GREET_PAUSE_',
+	`errprint(`*** WARNING: FEATURE(`greet_pause') before FEATURE(`access_db')
+	greet_pause will not use access_db!')')
 
 LOCAL_CONFIG
 # Access list database (for spam stomping)
 Kaccess ifelse(defn(`_ARG_'), `', DATABASE_MAP_TYPE -T`'_ATMPF_ MAIL_SETTINGS_DIR`access',
-	       defn(`_ARG_'), `LDAP', `ldap -T`'_ATMPF_ -1 -v sendmailMTAMapValue -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=access)(sendmailMTAKey=%0))',
+	       defn(`_ARG_'), `LDAP', `ldap -T`'_ATMPF_ -1 -v sendmailMTAMapValue,sendmailMTAMapSearch:FILTER:sendmailMTAMapObject,sendmailMTAMapURL:URL:sendmailMTAMapObject -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=access)(sendmailMTAKey=%0))',
 	       defn(`_NARG_'), `', `_ARG_', `_NARG_')

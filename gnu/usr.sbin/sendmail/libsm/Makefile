@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/15 02:14:20 atatat Exp $
 
 MKPRIVATELIB=	yes
 
@@ -21,7 +21,6 @@ SRCS=		assert.c cf.c clock.c clrerr.c config.c debug.c \
 		sscanf.c stdio.c strcasecmp.c strdup.c strerror.c \
 		strexit.c string.c stringf.c strio.c strl.c strrevcmp.c \
 		strto.c syslogio.c test.c ungetc.c vasprintf.c vfprintf.c \
-		vfscanf.c vprintf.c vsnprintf.c vsprintf.c vsscanf.c \
-		wbuf.c wsetup.c xtrap.c
+		vfscanf.c vprintf.c vsnprintf.c wbuf.c wsetup.c xtrap.c
 
 .include <bsd.lib.mk>

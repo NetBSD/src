@@ -52,6 +52,12 @@ DDEESSCCRRIIPPTTIIOONN
        Aliasing occurs only on local names.  Loops can  not  occur,  since  no
        message will be sent to any person more than once.
 
+       If  an  alias  is found for _n_a_m_e, sendmail then checks for an alias for
+       _o_w_n_e_r_-_n_a_m_e.  If it is found and the result of the lookup expands  to  a
+       single address, the envelope sender address of the message is rewritten
+       to that address.  If it is found and the result expands  to  more  than
+       one address, the envelope sender address is changed to _o_w_n_e_r_-_n_a_m_e.
+
        After  aliasing  has  been  done, local and valid recipients who have a
        ``.forward'' file in their home directory have  messages  forwarded  to
        the list of users defined in that file.
@@ -80,4 +86,4 @@ HHIISSTTOORRYY
 
 
 
-                         Date: 2000/12/14 23:09:46               ALIASES(5)
+                         Date: 2004/07/12 05:39:21               ALIASES(5)

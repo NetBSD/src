@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/07/04 04:52:59 atatat Exp $
+#	$NetBSD: Makefile,v 1.12 2005/03/15 02:14:20 atatat Exp $
 
 .include <bsd.own.mk>
 
@@ -27,10 +27,10 @@ DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a ${LIBSMDIR}/libsm.a \
 SRCS=		alias.c arpadate.c bf.c collect.c conf.c control.c \
 		convtime.c daemon.c deliver.c domain.c envelope.c err.c \
 		headers.c macro.c main.c map.c mci.c milter.c mime.c \
-		parseaddr.c queue.c readcf.c recipient.c sasl.c savemail.c \
-		sfsasl.c shmticklib.c sm_resolve.c srvrsmtp.c stab.c \
-		stats.c sysexits.c timers.c tls.c trace.c udb.c usersmtp.c \
-		util.c version.c
+		parseaddr.c queue.c ratectrl.c readcf.c recipient.c sasl.c \
+		savemail.c sfsasl.c shmticklib.c sm_resolve.c srvrsmtp.c \
+		stab.c stats.c sysexits.c timers.c tls.c trace.c udb.c \
+		usersmtp.c util.c version.c
 
 MAN=		aliases.5 mailq.1 newaliases.1 sendmail.8
 

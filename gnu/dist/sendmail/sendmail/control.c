@@ -1,11 +1,11 @@
-/* $NetBSD: control.c,v 1.10 2004/03/25 19:14:31 atatat Exp $ */
+/* $NetBSD: control.c,v 1.11 2005/03/15 02:14:17 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: control.c,v 1.10 2004/03/25 19:14:31 atatat Exp $");
+__RCSID("$NetBSD: control.c,v 1.11 2005/03/15 02:14:17 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: control.c,v 1.10 2004/03/25 19:14:31 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: control.c,v 8.118.4.8 2003/06/24 17:45:27 ca Exp")
+SM_RCSID("@(#)Id: control.c,v 8.126 2004/08/04 20:54:00 ca Exp")
 
 #include <sm/fdset.h>
 
@@ -52,6 +52,7 @@ static struct cmd	CmdTab[] =
 
 
 
+static void	controltimeout __P((int));
 int ControlSocket = -1;
 
 /*
@@ -253,7 +254,7 @@ static jmp_buf	CtxControlTimeout;
 /* ARGSUSED0 */
 static void
 controltimeout(timeout)
-	time_t timeout;
+	int timeout;
 {
 	/*
 	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD

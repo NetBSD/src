@@ -1,11 +1,11 @@
-/* $NetBSD: listener.c,v 1.11 2004/03/25 19:14:30 atatat Exp $ */
+/* $NetBSD: listener.c,v 1.12 2005/03/15 02:14:16 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: listener.c,v 1.11 2004/03/25 19:14:30 atatat Exp $");
+__RCSID("$NetBSD: listener.c,v 1.12 2005/03/15 02:14:16 atatat Exp $");
 #endif
 
 /*
- *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: listener.c,v 1.11 2004/03/25 19:14:30 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: listener.c,v 8.85.2.17 2003/10/21 17:22:57 ca Exp")
+SM_RCSID("@(#)Id: listener.c,v 8.111 2004/09/20 21:11:15 msk Exp")
 
 /*
 **  listener.c -- threaded network listener
@@ -38,6 +38,7 @@ static SOCKADDR_LEN_T L_socksize;
 static socket_t listenfd = INVALID_SOCKET;
 
 static socket_t mi_milteropen __P((char *, int, bool, char *));
+static void *mi_thread_handle_wrapper __P((void *));
 
 /*
 **  MI_OPENSOCKET -- create the socket where this filter and the MTA will meet
@@ -47,7 +48,7 @@ static socket_t mi_milteropen __P((char *, int, bool, char *));
 **		backlog -- listen backlog
 **		dbg -- debug level
 **		rmsocket -- if true, try to unlink() the socket first
-**		            (UNIX domain sockets only)
+**			(UNIX domain sockets only)
 **		smfi -- filter structure to use
 **
 **	Return value:
@@ -85,7 +86,7 @@ mi_opensocket(conn, backlog, dbg, rmsocket, smfi)
 		(void) smutex_unlock(&L_Mutex);
 		return MI_FAILURE;
 	}
-#if !_FFR_USE_POLL
+#if !SM_CONF_POLL
 	if (!SM_FD_OK_SELECT(listenfd))
 	{
 		smi_log(SMI_LOG_ERR, "%s: fd %d is larger than FD_SETSIZE %d",
@@ -93,7 +94,8 @@ mi_opensocket(conn, backlog, dbg, rmsocket, smfi)
 		(void) smutex_unlock(&L_Mutex);
 		return MI_FAILURE;
 	}
-#endif /* !_FFR_USE_POLL */
+#endif /* !SM_CONF_POLL */
+	(void) smutex_unlock(&L_Mutex);
 	return MI_SUCCESS;
 }
 
@@ -559,7 +561,7 @@ mi_milteropen(conn, backlog, rmsocket, name)
 **		results from mi_handle_session()
 */
 
-void *
+static void *
 mi_thread_handle_wrapper(arg)
 	void *arg;
 {
@@ -591,9 +593,7 @@ mi_closener()
 		struct stat fileinfo;
 
 		removable = sockpath != NULL &&
-#if _FFR_MILTER_ROOT_UNSAFE
 			    geteuid() != 0 &&
-#endif /* _FFR_MILTER_ROOT_UNSAFE */
 			    fstat(listenfd, &sockinfo) == 0 &&
 			    (S_ISFIFO(sockinfo.st_mode)
 # ifdef S_ISSOCK
@@ -641,8 +641,6 @@ mi_closener()
 **	Parameters:
 **		conn -- connection description
 **		dbg -- debug level
-**		rmsocket -- if true, try to unlink() the socket first
-**			(UNIX domain sockets only)
 **		smfi -- filter structure to use
 **		timeout -- timeout for reads/writes
 **		backlog -- listen queue backlog size
@@ -710,6 +708,9 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 	int backlog;
 {
 	socket_t connfd = INVALID_SOCKET;
+#if _FFR_DUP_FD
+	socket_t dupfd = INVALID_SOCKET;
+#endif /* _FFR_DUP_FD */
 	int sockopt = 1;
 	int r, mistop;
 	int ret = MI_SUCCESS;
@@ -729,7 +730,6 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 		return MI_FAILURE;
 
 	clilen = L_socksize;
-	(void) smutex_unlock(&L_Mutex);
 	while ((mistop = mi_stop()) == MILTER_CONT)
 	{
 		(void) smutex_lock(&L_Mutex);
@@ -808,7 +808,7 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 			save_errno = EINVAL;
 		}
 
-#if !_FFR_USE_POLL
+#if !SM_CONF_POLL
 		/* check if acceptable for select() */
 		if (ValidSocket(connfd) && !SM_FD_OK_SELECT(connfd))
 		{
@@ -816,11 +816,36 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 			connfd = INVALID_SOCKET;
 			save_errno = ERANGE;
 		}
-#endif /* !_FFR_USE_POLL */
+#endif /* !SM_CONF_POLL */
 
 		if (!ValidSocket(connfd))
 		{
-			if (save_errno == EINTR)
+			if (save_errno == EINTR
+#ifdef EAGAIN
+			    || save_errno == EAGAIN
+#endif /* EAGAIN */
+#ifdef ECONNABORTED
+			    || save_errno == ECONNABORTED
+#endif /* ECONNABORTED */
+#ifdef EMFILE
+			    || save_errno == EMFILE
+#endif /* EMFILE */
+#ifdef ENFILE
+			    || save_errno == ENFILE
+#endif /* ENFILE */
+#ifdef ENOBUFS
+			    || save_errno == ENOBUFS
+#endif /* ENOBUFS */
+#ifdef ENOMEM
+			    || save_errno == ENOMEM
+#endif /* ENOMEM */
+#ifdef ENOSR
+			    || save_errno == ENOSR
+#endif /* ENOSR */
+#ifdef EWOULDBLOCK
+			    || save_errno == EWOULDBLOCK
+#endif /* EWOULDBLOCK */
+			   )
 				continue;
 			acnt++;
 			smi_log(SMI_LOG_ERR,
@@ -836,6 +861,19 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 			continue;
 		}
 		acnt = 0;	/* reset error counter for accept() */
+#if _FFR_DUP_FD
+		dupfd = fcntl(connfd, F_DUPFD, 256);
+		if (ValidSocket(dupfd)
+# if !SM_CONF_POLL
+		    && SM_FD_OK_SELECT(dupfd)
+# endif /* !SM_CONF_POLL */
+		   )
+		{
+			close(connfd);
+			connfd = dupfd;
+			dupfd = INVALID_SOCKET;
+		}
+#endif /* _FFR_DUP_FD */
 
 		if (setsockopt(connfd, SOL_SOCKET, SO_KEEPALIVE,
 				(void *) &sockopt, sizeof sockopt) < 0)

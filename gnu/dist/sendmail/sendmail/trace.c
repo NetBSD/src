@@ -1,7 +1,7 @@
-/* $NetBSD: trace.c,v 1.7 2003/06/01 14:07:09 atatat Exp $ */
+/* $NetBSD: trace.c,v 1.8 2005/03/15 02:14:17 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.7 2003/06/01 14:07:09 atatat Exp $");
+__RCSID("$NetBSD: trace.c,v 1.8 2005/03/15 02:14:17 atatat Exp $");
 #endif
 
 /*
@@ -21,7 +21,7 @@ __RCSID("$NetBSD: trace.c,v 1.7 2003/06/01 14:07:09 atatat Exp $");
 #include <sm/debug.h>
 #include <sm/string.h>
 
-SM_RCSID("@(#)Id: trace.c,v 8.37.4.1 2002/12/05 17:28:05 ca Exp")
+SM_RCSID("@(#)Id: trace.c,v 8.38 2002/12/05 17:28:35 ca Exp")
 
 static char	*tTnewflag __P((char *));
 static char	*tToldflag __P((char *));

@@ -1,7 +1,7 @@
-/* $NetBSD: stab.c,v 1.9 2004/03/25 19:14:31 atatat Exp $ */
+/* $NetBSD: stab.c,v 1.10 2005/03/15 02:14:17 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stab.c,v 1.9 2004/03/25 19:14:31 atatat Exp $");
+__RCSID("$NetBSD: stab.c,v 1.10 2005/03/15 02:14:17 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: stab.c,v 1.9 2004/03/25 19:14:31 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: stab.c,v 8.86.4.1 2003/03/31 17:44:24 ca Exp")
+SM_RCSID("@(#)Id: stab.c,v 8.88 2003/05/21 15:36:30 ca Exp")
 
 /*
 **  STAB -- manage the symbol table
@@ -178,6 +178,12 @@ stab(name, type, op)
 	  case ST_QUEUE:
 		len = sizeof s->s_quegrp;
 		break;
+
+#if SOCKETMAP
+	  case ST_SOCKETMAP:
+		len = sizeof s->s_socketmap;
+		break;
+#endif /* SOCKETMAP */
 
 	  default:
 		/*

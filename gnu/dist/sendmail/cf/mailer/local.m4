@@ -1,6 +1,6 @@
 PUSHDIVERT(-1)
 #
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2000, 2004 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -32,8 +32,8 @@ POPDIVERT
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-VERSIONID(`Id: local.m4,v 8.58 2000/10/26 01:58:29 ca Exp')
-VERSIONID(`$NetBSD: local.m4,v 1.6 2003/06/01 14:06:48 atatat Exp $')
+VERSIONID(`Id: local.m4,v 8.59 2004/11/23 00:37:25 ca Exp')
+VERSIONID(`$NetBSD: local.m4,v 1.7 2005/03/15 02:14:15 atatat Exp $')
 
 #
 #  Envelope sender rewriting
@@ -89,6 +89,6 @@ R$+			$@ $1 < @ *LOCAL* >	add local qualification',
 Mlocal,		P=LOCAL_MAILER_PATH, F=_MODMF_(CONCAT(_DEF_LOCAL_MAILER_FLAGS, LOCAL_MAILER_FLAGS), `LOCAL'), LOCAL_RWR,_OPTINS(`LOCAL_MAILER_EOL', ` E=', `, ')
 		_OPTINS(`LOCAL_MAILER_MAX', `M=', `, ')_OPTINS(`LOCAL_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`LOCAL_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`LOCAL_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/LOCAL_MAILER_DSN_DIAGNOSTIC_CODE,_LOCAL_QGRP
 		A=LOCAL_MAILER_ARGS
-Mprog,		P=LOCAL_SHELL_PATH, F=CONCAT(_DEF_LOCAL_SHELL_FLAGS, LOCAL_SHELL_FLAGS), S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=LOCAL_SHELL_DIR,
+Mprog,		P=LOCAL_SHELL_PATH, F=_MODMF_(CONCAT(_DEF_LOCAL_SHELL_FLAGS, LOCAL_SHELL_FLAGS), `SHELL'), S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=LOCAL_SHELL_DIR,
 		_OPTINS(`LOCAL_MAILER_MAX', `M=', `, ')T=X-Unix/X-Unix/X-Unix,_PROG_QGRP
 		A=LOCAL_SHELL_ARGS

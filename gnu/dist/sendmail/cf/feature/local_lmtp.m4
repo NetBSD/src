@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2000, 2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,8 +10,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`Id: local_lmtp.m4,v 8.16 2000/08/18 18:58:45 ca Exp')
-VERSIONID(`$NetBSD: local_lmtp.m4,v 1.4 2003/06/01 14:06:46 atatat Exp $')
+VERSIONID(`Id: local_lmtp.m4,v 8.17 2002/11/17 04:41:04 ca Exp')
+VERSIONID(`$NetBSD: local_lmtp.m4,v 1.5 2005/03/15 02:14:15 atatat Exp $')
 divert(-1)
 
 ifdef(`_MAILER_local_',
@@ -22,7 +22,8 @@ define(`LOCAL_MAILER_PATH',
 	ifelse(defn(`_ARG_'), `',
 		ifdef(`confEBINDIR', confEBINDIR, `/usr/libexec')`/mail.local',
 		_ARG_))
-define(`LOCAL_MAILER_FLAGS', `PSXfmnz9')
-define(`LOCAL_MAILER_ARGS', `mail.local -l')
+define(`LOCAL_MAILER_FLAGS', `PSXmnz9')
+define(`LOCAL_MAILER_ARGS',
+	ifelse(len(X`'_ARG2_), `1', `mail.local -l', _ARG2_))
 define(`LOCAL_MAILER_DSN_DIAGNOSTIC_CODE', `SMTP')
 define(`_LOCAL_LMTP_', `1')
