@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.9 1998/07/26 11:26:11 mycroft Exp $	*/
+/*	$NetBSD: regerror.c,v 1.10 1998/07/26 12:17:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.9 1998/07/26 11:26:11 mycroft Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.10 1998/07/26 12:17:51 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,8 +97,8 @@ static char *regatoi __P((const regex_t *preg, char *localbuf, int buflen));
  */
 static const struct rerr {
 	int code;
-	char *name;
-	char *explain;
+	const char *name;
+	const char *explain;
 } rerrs[] = {
 	{ REG_NOMATCH,	"REG_NOMATCH",	"regexec() failed to match" },
 	{ REG_BADPAT,	"REG_BADPAT",	"invalid regular expression" },
@@ -134,7 +134,7 @@ size_t errbuf_size;
 	const struct rerr *r;
 	size_t len;
 	int target = errcode &~ REG_ITOA;
-	char *s;
+	const char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
