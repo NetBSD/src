@@ -1,4 +1,5 @@
 # Makefile for uustat
+# $Id: Makefile,v 1.2 1993/08/05 16:15:22 jtc Exp $
 
 BINDIR=		$(bindir)
 BINOWN=		$(owner)

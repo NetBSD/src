@@ -1,4 +1,5 @@
 # Makefile for uuxqt
+# $Id: Makefile,v 1.2 1993/08/05 16:15:28 jtc Exp $
 
 BINDIR=		$(sbindir)
 BINOWN=		$(owner)
