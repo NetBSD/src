@@ -1,4 +1,4 @@
-/*      $NetBSD: ncrreg.h,v 1.9 1996/11/20 21:26:52 perry Exp $      */
+/*      $NetBSD: ncrreg.h,v 1.10 1997/01/10 05:57:14 perry Exp $      */
 
 /**************************************************************************
 **
@@ -172,12 +172,18 @@ struct ncr_reg {
 	#define   CSIGP   0x40
 
 /*1b*/  U_INT8    nc_ctest3;
-	#define   CLF	  0x04	/* clear scsi fifo		    */
+        #define   FLF     0x08  /* cmd: flush dma fifo              */
+        #define   CLF	  0x04	/* cmd: clear dma fifo		    */
+        #define   FM      0x02  /* mod: fetch pin mode              */
+        #define   WRIE    0x01  /* mod: write and invalidate enable */
 
 /*1c*/  U_INT32   nc_temp;	/* ### Temporary stack              */
 
 /*20*/	U_INT8	  nc_dfifo;
 /*21*/  U_INT8    nc_ctest4;
+        #define   BDIS    0x80  /* mod: burst disable               */
+        #define   MPEE    0x08  /* mod: master parity error enable  */
+
 /*22*/  U_INT8    nc_ctest5;
 /*23*/  U_INT8    nc_ctest6;
 
@@ -188,12 +194,23 @@ struct ncr_reg {
 /*34*/  U_INT32   nc_scratcha;  /* ??? Temporary register a         */
 
 /*38*/  U_INT8    nc_dmode;
+        #define   BL_2    0x80  /* mod: burst length shift value +2 */
+        #define   BL_1    0x40  /* mod: burst length shift value +1 */
+        #define   ERL     0x08  /* mod: enable read line            */
+        #define   ERMP    0x04  /* mod: enable read multiple        */
+        #define   BOF     0x02  /* mod: burst op code fetch         */
+
 /*39*/  U_INT8    nc_dien;
 /*3a*/  U_INT8    nc_dwt;
 
 /*3b*/  U_INT8    nc_dcntl;	/* --> Script execution control     */
+        #define   CLSE    0x80  /* mod: cache line size enable      */
+        #define   PFF     0x40  /* cmd: pre-fetch flush             */
+        #define   PFEN    0x20  /* mod: pre-fetch enable            */
         #define   SSM     0x10  /* mod: single step mode            */
+        #define   IRQM    0x08  /* mod: irq mode (1 = totem pole !) */
         #define   STD     0x04  /* cmd: start dma mode              */
+        #define   IRQD    0x02  /* mod: irq disable                 */
 	#define	  NOCOM   0x01	/* cmd: protect sfbr while reselect */
 
 /*3c*/  U_INT32   nc_adder;
