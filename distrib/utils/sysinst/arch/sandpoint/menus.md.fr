@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.2.2.1 2003/02/08 07:02:04 jmc Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.2.2.2 2003/02/08 07:10:50 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,7 +134,7 @@ menu chooseid, title  "Type de Partition?";
 	{
 		part[editpart].mbrp_typ = 6;
 	};
-	option "unused",	exit,	action
+	option "inutilis'e",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
 	};
