@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.18.4.1 2000/12/14 23:02:53 he Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.18.4.2 2000/12/15 00:37:19 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.18.4.1 2000/12/14 23:02:53 he Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.18.4.2 2000/12/15 00:37:19 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,13 +482,13 @@ getnpty()
  * Returns the file descriptor of the opened pty.
  */
 #ifndef	__GNUC__
-char *line = NULL16STR;
+char *line = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 #else
-static char Xline[] = NULL16STR;
+static char Xline[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 char *line = Xline;
 #endif
 #ifdef	CRAY
-char *myline = NULL16STR;
+char *myline = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 #endif	/* CRAY */
 
 #ifdef OPENPTY_PTY
@@ -522,7 +522,7 @@ int *ptynum;
 	if (p > 0) {
 		grantpt(p);
 		unlockpt(p);
-		(void)strlcpy(line, ptsname(p), sizeof(NULL16STR));
+		strcpy(line, ptsname(p));
 		return(p);
 	}
 
@@ -1601,7 +1601,7 @@ start_login(host, autologin, name)
 #endif
 #ifdef SOLARIS
 	char *term;
-	char termnamebuf[64];
+	char termbuf[64];
 #endif
 
 #ifdef	UTMPX
@@ -1655,10 +1655,9 @@ start_login(host, autologin, name)
 		if (term == NULL || term[0] == 0) {
 			term = "-";
 		} else {
-			(void)strcpy(termnamebuf, "TERM=");
-			(void)strlcpy(&termnamebuf[5], term,
-			    sizeof(termnamebuf) - 6);
-			term = termnamebuf;
+			strcpy(termbuf, "TERM=");
+			strncat(termbuf, term, sizeof(termbuf) - 6);
+			term = termbuf;
 		}
 		argv = addarg(argv, term);
 #endif
