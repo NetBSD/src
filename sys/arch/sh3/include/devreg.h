@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.h,v 1.1 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: devreg.h,v 1.2 2002/04/28 17:10:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #ifndef _SH3_DEVREG_H_
-#define _SH3_DEVREG_H_
+#define	_SH3_DEVREG_H_
 /*
  * SH embeded device register defines.
  */
@@ -56,11 +56,11 @@
  * Register address.
  */
 #if defined(SH3) && defined(SH4)
-#define SH_(x)		__sh_ ## x
+#define	SH_(x)		__sh_ ## x
 #elif defined(SH3)
-#define SH_(x)		SH3_ ## x
+#define	SH_(x)		SH3_ ## x
 #elif defined(SH4)
-#define SH_(x)		SH4_ ## x
+#define	SH_(x)		SH4_ ## x
 #endif
 
 #ifndef _LOCORE

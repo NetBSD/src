@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2002/03/24 18:04:41 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2002/04/28 17:10:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -40,7 +40,7 @@
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
 
-#define RECURSE_TLB_HANDLER
+#define	RECURSE_TLB_HANDLER
 
 /*
  * SH3 Trap and System call handling

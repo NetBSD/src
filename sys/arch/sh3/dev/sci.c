@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.24 2002/04/28 11:38:48 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.25 2002/04/28 17:10:32 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -217,9 +217,9 @@ void	scidiag(void *);
 #define	SCIDIALOUT(x)	(minor(x) & SCIDIALOUT_MASK)
 
 /* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCI_HW_NOIEN	0x01
@@ -236,7 +236,7 @@ void	scidiag(void *);
 u_int sci_rbuf_hiwat = (SCI_RING_SIZE * 1) / 4;
 u_int sci_rbuf_lowat = (SCI_RING_SIZE * 3) / 4;
 
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int sciconscflag = CONMODE;
 int sciisconsole = 0;
 
@@ -270,9 +270,9 @@ void InitializeSci (unsigned int);
 /*
  * following functions are debugging prupose only
  */
-#define CR      0x0D
-#define I2C_ADRS (*(volatile unsigned int *)0xa8000000)
-#define USART_ON (unsigned int)~0x08
+#define	CR      0x0D
+#define	I2C_ADRS (*(volatile unsigned int *)0xa8000000)
+#define	USART_ON (unsigned int)~0x08
 
 void sci_putc(unsigned char);
 unsigned char sci_getc(void);
@@ -374,9 +374,9 @@ sci_getc(void)
 }
 
 #if 0
-#define SCI_MAX_UNITS 2
+#define	SCI_MAX_UNITS 2
 #else
-#define SCI_MAX_UNITS 1
+#define	SCI_MAX_UNITS 1
 #endif
 
 
@@ -794,7 +794,7 @@ scipoll(dev_t dev, int events, struct proc *p)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -1235,7 +1235,7 @@ sciintr(void *arg)
 			SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
 		}
 	}
-	
+
 #if 0
 	msr = bus_space_read_1(iot, ioh, sci_msr);
 	delta = msr ^ sc->sc_msr;

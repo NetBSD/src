@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.1 2002/03/24 18:00:42 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.2 2002/04/28 17:10:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ shb_attach(struct device *parent, struct device *self, void *aux)
 {
 
 	printf("\n");
-	
+
 	config_search(shb_search, self, NULL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,10 +56,10 @@
 #include <machine/intr.h>
 
 #ifndef HZ
-#define HZ		64
+#define	HZ		64
 #endif
-#define MINYEAR		2002	/* "today" */
-#define SH_RTC_CLOCK	16384	/* Hz */
+#define	MINYEAR		2002	/* "today" */
+#define	SH_RTC_CLOCK	16384	/* Hz */
 
 /*
  * NetBSD/sh3 clock module
@@ -86,7 +86,7 @@ struct {
 #ifdef PCLOCK
 	.pclock = PCLOCK,
 #endif
-	.rtc = { 
+	.rtc = {
 		/* SH RTC module to default RTC */
 		.init	= sh_rtc_init,
 		.get	= sh_rtc_get,
@@ -104,13 +104,13 @@ int sh4_clock_intr(void *);
 /*
  * Estimate CPU and Peripheral clock.
  */
-#define TMU_START(x)							\
+#define	TMU_START(x)							\
 do {									\
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR##x);	\
 	_reg_write_4(SH_(TCNT ## x), 0xffffffff);			\
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR##x);	\
 } while (/*CONSTCOND*/0)
-#define TMU_ELAPSED(x)							\
+#define	TMU_ELAPSED(x)							\
 	(0xffffffff - _reg_read_4(SH_(TCNT ## x)))
 void
 sh_clock_init(int flags, struct rtc_ops *rtc)
@@ -173,7 +173,7 @@ sh_clock_init(int flags, struct rtc_ops *rtc)
 		t0 = TMU_ELAPSED(0);
 		t1 = TMU_ELAPSED(1);
 		_cpu_exception_resume(s);
-		
+
 		sh_clock.pclock = ((t1 * 4)/ t0) * SH_RTC_CLOCK;
 	}
 
@@ -240,7 +240,7 @@ microtime(struct timeval *tv)
 void
 delay(int n)
 {
-	
+
 	_cpu_spin(sh_clock.cpucycle_1us * n);
 }
 
@@ -258,8 +258,8 @@ cpu_initclocks()
 	hz = HZ;
 	tick = 1000000 / hz;
 
-	/* 
-	 * Use TMU channel 0 as hard clock 
+	/*
+	 * Use TMU channel 0 as hard clock
 	 */
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR0);
 
@@ -268,7 +268,7 @@ cpu_initclocks()
 		_reg_write_2(SH_(TCR0), TCR_UNIE | TCR_TPSC_P16);
 	} else {
 		/* use RTC clock as TMU0 source */
-		_reg_write_2(SH_(TCR0), TCR_UNIE | 
+		_reg_write_2(SH_(TCR0), TCR_UNIE |
 		    (CPU_IS_SH3 ? SH3_TCR_TPSC_RTC : SH4_TCR_TPSC_RTC));
 	}
 	sh_clock.hz_cnt = sh_clock.tmuclk / hz - 1;
@@ -307,11 +307,11 @@ inittodr(time_t base)
 	rtc = clock_ymdhms_to_secs(&dt);
 
 #ifdef DEBUG
-	printf("inittodr: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year, 
+	printf("inittodr: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year,
 	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
 	    dt.dt_wday);
 #endif
-	
+
 	if (!(sh_clock.flags & SH_CLOCK_NOINITTODR) &&
 	    (rtc < base ||
 		dt.dt_year < MINYEAR || dt.dt_year > 2037 ||
@@ -435,14 +435,14 @@ sh_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
 			dt->dt_year = FROMBCD(_reg_read_2(SH4_RYRCNT) & 0x00ff);
 
 		/* read counter */
-#define RTCGET(x, y)	dt->dt_ ## x = FROMBCD(_reg_read_1(SH_(R ## y ## CNT)))
+#define	RTCGET(x, y)	dt->dt_ ## x = FROMBCD(_reg_read_1(SH_(R ## y ## CNT)))
 		RTCGET(mon, MON);
 		RTCGET(wday, WK);
 		RTCGET(day, DAY);
 		RTCGET(hour, HR);
 		RTCGET(min, MIN);
 		RTCGET(sec, SEC);
-#undef RTCGET		
+#undef RTCGET
 	} while ((_reg_read_1(SH_(RCR1)) & SH_RCR1_CF) && --retry > 0);
 
 	if (retry == 0) {
@@ -472,7 +472,7 @@ sh_rtc_set(void *cookie, struct clock_ymdhms *dt)
 		_reg_write_1(SH3_RYRCNT, TOBCD(dt->dt_year % 100));
 	else
 		_reg_write_2(SH4_RYRCNT, TOBCD(dt->dt_year % 100));
-#define RTCSET(x, y)	_reg_write_1(SH_(R ## x ## CNT), TOBCD(dt->dt_ ## y))
+#define	RTCSET(x, y)	_reg_write_1(SH_(R ## x ## CNT), TOBCD(dt->dt_ ## y))
 	RTCSET(MON, mon);
 	RTCSET(WK, wday);
 	RTCSET(DAY, day);

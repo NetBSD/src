@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 1999/09/13 10:31:23 itojun Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 2002/04/28 17:10:37 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SH3_SIGNAL_H_
-#define _SH3_SIGNAL_H_
+#define	_SH3_SIGNAL_H_
 
 typedef int sig_atomic_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2002/03/24 18:04:39 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2002/04/28 17:10:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,10 +72,10 @@ struct intc_intrhand {
 	int	ih_idx;		/* evtcode -> intrhand mapping */
 };
 
-#define EVTCODE_TO_MAP_INDEX(x)		(((x) - 0x200) >> 5)
-#define EVTCODE_TO_IH_INDEX(x)						\
+#define	EVTCODE_TO_MAP_INDEX(x)		(((x) - 0x200) >> 5)
+#define	EVTCODE_TO_IH_INDEX(x)						\
 	__intc_evtcode_to_ih[EVTCODE_TO_MAP_INDEX(x)]
-#define EVTCODE_IH(x)	(&__intc_intrhand[EVTCODE_TO_IH_INDEX(x)])
+#define	EVTCODE_IH(x)	(&__intc_intrhand[EVTCODE_TO_IH_INDEX(x)])
 extern int8_t __intc_evtcode_to_ih[];
 extern struct intc_intrhand __intc_intrhand[];
 

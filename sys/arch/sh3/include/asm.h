@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 2002/03/17 17:55:24 uch Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 2002/04/28 17:10:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,13 @@
  */
 
 #ifndef _SH3_ASM_H_
-#define _SH3_ASM_H_
+#define	_SH3_ASM_H_
 
-#define PIC_PROLOGUE
-#define PIC_EPILOGUE
-#define PIC_PLT(x)	x
-#define PIC_GOT(x)	x
-#define PIC_GOTOFF(x)	x
+#define	PIC_PROLOGUE
+#define	PIC_EPILOGUE
+#define	PIC_PLT(x)	x
+#define	PIC_GOT(x)	x
+#define	PIC_GOTOFF(x)	x
 
 /*
  * The old NetBSD/sh3 ELF toolchain used underscores.  The new
@@ -70,21 +70,21 @@
 #endif
 
 #ifdef __ELF__
-#define _ENTRY(x)							\
+#define	_ENTRY(x)							\
 	.text								;\
 	_ALIGN_TEXT							;\
 	.globl x							;\
 	.type x,@function						;\
 	x:
 #else /* __ELF__ */
-#define _ENTRY(x)							\
+#define	_ENTRY(x)							\
 	.text								;\
 	_ALIGN_TEXT							;\
 	.globl x							;\
 	x:
 #endif /* __ELF__ */
 
-#define _PROF_PROLOGUE
+#define	_PROF_PROLOGUE
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
 	_PROF_PROLOGUE
@@ -103,7 +103,7 @@
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define	RCSID(x)	.text; .asciz x
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

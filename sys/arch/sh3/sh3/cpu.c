@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2002/03/24 18:01:29 uch Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 
-#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+#define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf(": HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz\n",
 	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
 	    MHZ(sh_clock_get_pclock()));

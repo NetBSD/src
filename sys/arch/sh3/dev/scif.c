@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.24 2002/03/24 18:04:42 uch Exp $ */
+/*	$NetBSD: scif.c,v 1.25 2002/04/28 17:10:32 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -224,9 +224,9 @@ void	scifdiag(void *);
 #define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
 
 /* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCIF_HW_NOIEN	0x01
@@ -243,7 +243,7 @@ void	scifdiag(void *);
 u_int scif_rbuf_hiwat = (SCIF_RING_SIZE * 1) / 4;
 u_int scif_rbuf_lowat = (SCIF_RING_SIZE * 3) / 4;
 
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int scifconscflag = CONMODE;
 int scifisconsole = 0;
 
@@ -277,8 +277,8 @@ void InitializeScif (unsigned int);
 /*
  * following functions are debugging prupose only
  */
-#define CR      0x0D
-#define USART_ON (unsigned int)~0x08
+#define	CR      0x0D
+#define	USART_ON (unsigned int)~0x08
 
 void scif_putc(unsigned char);
 unsigned char scif_getc(void);
@@ -413,9 +413,9 @@ scif_getc(void)
 #endif
 
 #if 0
-#define SCIF_MAX_UNITS 2
+#define	SCIF_MAX_UNITS 2
 #else
-#define SCIF_MAX_UNITS 1
+#define	SCIF_MAX_UNITS 1
 #endif
 
 
@@ -865,7 +865,7 @@ scifpoll(dev_t dev, int events, struct proc *p)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -1513,7 +1513,7 @@ scif_kgdb_init()
 	    (void (*)(void *, int))scifcnputc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
 	kgdb_attached = 1;
-	
+
 	return (0);
 }
 #endif /* KGDB */

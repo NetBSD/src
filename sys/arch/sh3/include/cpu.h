@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2002/04/26 11:56:02 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2002/04/28 17:10:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #ifndef _SH3_CPU_H_
-#define _SH3_CPU_H_
+#define	_SH3_CPU_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -74,11 +74,11 @@ extern struct cpu_info cpu_info_store;
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
-/* 
- * Can't swapout u-area, (__SWAP_BROKEN) 
+/*
+ * Can't swapout u-area, (__SWAP_BROKEN)
  * since we use P1 converted address for trapframe.
  */
-#define cpu_swapin(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
@@ -131,7 +131,7 @@ do {									\
  */
 #define	signotify(p)	aston(p)
 
-#define aston(p)	((p)->p_md.md_astpending = 1)
+#define	aston(p)	((p)->p_md.md_astpending = 1)
 
 extern int want_resched;		/* need_resched() was called */
 
@@ -144,27 +144,27 @@ extern int want_resched;		/* need_resched() was called */
 /*
  * Logical address space of SH3/SH4 CPU.
  */
-#define SH3_PHYS_MASK	0x1fffffff
+#define	SH3_PHYS_MASK	0x1fffffff
 
-#define SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
-#define SH3_P0SEG_END	0x7fffffff
-#define SH3_P1SEG_BASE	0x80000000	/* pa == va */
-#define SH3_P1SEG_END	0x9fffffff
-#define SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
-#define SH3_P2SEG_END	0xbfffffff
-#define SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, kernel mode */
-#define SH3_P3SEG_END	0xdfffffff
-#define SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
-#define SH3_P4SEG_END	0xffffffff
+#define	SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
+#define	SH3_P0SEG_END	0x7fffffff
+#define	SH3_P1SEG_BASE	0x80000000	/* pa == va */
+#define	SH3_P1SEG_END	0x9fffffff
+#define	SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
+#define	SH3_P2SEG_END	0xbfffffff
+#define	SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, kernel mode */
+#define	SH3_P3SEG_END	0xdfffffff
+#define	SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
+#define	SH3_P4SEG_END	0xffffffff
 
-#define SH3_P1SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
-#define SH3_P2SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
-#define SH3_PHYS_TO_P1SEG(x)	((u_int32_t)(x) | SH3_P1SEG_BASE)
-#define SH3_PHYS_TO_P2SEG(x)	((u_int32_t)(x) | SH3_P2SEG_BASE)
-#define SH3_P1SEG_TO_P2SEG(x)	((u_int32_t)(x) | 0x20000000)
+#define	SH3_P1SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_P2SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_PHYS_TO_P1SEG(x)	((u_int32_t)(x) | SH3_P1SEG_BASE)
+#define	SH3_PHYS_TO_P2SEG(x)	((u_int32_t)(x) | SH3_P2SEG_BASE)
+#define	SH3_P1SEG_TO_P2SEG(x)	((u_int32_t)(x) | 0x20000000)
 
 /* run on P2 */
-#define RUN_P2								\
+#define	RUN_P2								\
 do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P2;						\
@@ -173,7 +173,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /* run on P1 */
-#define RUN_P1								\
+#define	RUN_P1								\
 do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P1;						\

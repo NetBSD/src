@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2002/02/28 01:58:53 uch Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2002/04/28 17:10:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #ifndef _SH3_BUS_H_
-#define _SH3_BUS_H_
+#define	_SH3_BUS_H_
 
 #include <machine/bswap.h>
 
@@ -77,24 +77,24 @@
 #define	__BUS_SPACE_COMPAT_OLDDEFS
 #endif
 
-#define __BUS_SPACE_HAS_STREAM_METHODS
+#define	__BUS_SPACE_HAS_STREAM_METHODS
 
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+#define	BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Values for the sh3 bus space tag, not to be used directly by MI code.
  */
 #define	SH3_BUS_SPACE_IO	0	/* space is i/o space */
-#define SH3_BUS_SPACE_MEM	1	/* space is mem space */
-#define SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
-#define SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
-#define SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
-#define SH3_BUS_SPACE_PCMCIA_8BIT 0x8000 /* PCMCIA BUS 8 BIT WIDTH */
-#define SH3_BUS_SPACE_PCMCIA_IO8 \
+#define	SH3_BUS_SPACE_MEM	1	/* space is mem space */
+#define	SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
+#define	SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
+#define	SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
+#define	SH3_BUS_SPACE_PCMCIA_8BIT 0x8000 /* PCMCIA BUS 8 BIT WIDTH */
+#define	SH3_BUS_SPACE_PCMCIA_IO8 \
             (SH3_BUS_SPACE_PCMCIA_IO|SH3_BUS_SPACE_PCMCIA_8BIT)
-#define SH3_BUS_SPACE_PCMCIA_MEM8 \
+#define	SH3_BUS_SPACE_PCMCIA_MEM8 \
             (SH3_BUS_SPACE_PCMCIA_MEM|SH3_BUS_SPACE_PCMCIA_8BIT)
-#define SH3_BUS_SPACE_PCMCIA_ATT8 \
+#define	SH3_BUS_SPACE_PCMCIA_ATT8 \
             (SH3_BUS_SPACE_PCMCIA_ATT|SH3_BUS_SPACE_PCMCIA_8BIT)
 
 /*
@@ -125,7 +125,7 @@ int bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t size,
 int shpcmcia_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t size,
     int, bus_space_handle_t *);
 
-int shpcmcia_mem_add_mapping(bus_addr_t, bus_size_t, int, 
+int shpcmcia_mem_add_mapping(bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
 void shpcmcia_memio_unmap(bus_space_tag_t, bus_space_handle_t,
     bus_size_t);
@@ -271,7 +271,7 @@ bus_space_read_multi_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
     bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 
-#define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
+#define	bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
 	sh_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
 
 /*
@@ -282,7 +282,7 @@ int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
  */
 void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-#define bus_space_free(t, h, s)						\
+#define	bus_space_free(t, h, s)						\
 	sh_memio_free((t), (h), (s))
 
 /*
@@ -293,7 +293,7 @@ void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
  */
 void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-#define bus_space_unmap(t, h, s)					\
+#define	bus_space_unmap(t, h, s)					\
 	sh_memio_unmap((t), (h), (s))
 
 /*
@@ -306,7 +306,7 @@ void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
     bus_size_t, bus_size_t, bus_space_handle_t *);
 
-#define bus_space_subregion(t, h, o, s, nhp)				\
+#define	bus_space_subregion(t, h, o, s, nhp)				\
 	sh_memio_subregion((t), (h), (o), (s), (nhp))
 
 /*

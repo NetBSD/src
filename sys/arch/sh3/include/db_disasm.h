@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.h,v 1.1 1999/09/13 10:31:17 itojun Exp $ */
+/* $NetBSD: db_disasm.h,v 1.2 2002/04/28 17:10:34 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -26,26 +26,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define OP_BF	0x8b00
-#define OP_BFS	0x8f00
-#define OP_BT	0x8900
-#define OP_BTS	0x8d00
-#define OP_BRA	0xa000
-#define OP_BRAF	0x0023
-#define OP_BSR	0xb000
-#define OP_BSRF	0x0003
-#define OP_JMP	0x402b
-#define OP_JSR	0x400b
-#define OP_RTS	0xffff
+#define	OP_BF	0x8b00
+#define	OP_BFS	0x8f00
+#define	OP_BT	0x8900
+#define	OP_BTS	0x8d00
+#define	OP_BRA	0xa000
+#define	OP_BRAF	0x0023
+#define	OP_BSR	0xb000
+#define	OP_BSRF	0x0003
+#define	OP_JMP	0x402b
+#define	OP_JSR	0x400b
+#define	OP_RTS	0xffff
 
-#define OP_BF_MASK	0xff00
-#define OP_BFS_MASK	0xff00
-#define OP_BT_MASK	0xff00
-#define OP_BTS_MASK	0xff00
-#define OP_BRA_MASK	0xf000
-#define OP_BSR_MASK	0xf000
-#define OP_BRAF_MASK	0xf0ff
-#define OP_BSRF_MASK	0xf0ff
-#define OP_JMP_MASK	0xf0ff
-#define OP_JSR_MASK	0xf0ff
-#define OP_RTS_MASK	0xffff
+#define	OP_BF_MASK	0xff00
+#define	OP_BFS_MASK	0xff00
+#define	OP_BT_MASK	0xff00
+#define	OP_BTS_MASK	0xff00
+#define	OP_BRA_MASK	0xf000
+#define	OP_BSR_MASK	0xf000
+#define	OP_BRAF_MASK	0xf0ff
+#define	OP_BSRF_MASK	0xf0ff
+#define	OP_JMP_MASK	0xf0ff
+#define	OP_JSR_MASK	0xf0ff
+#define	OP_RTS_MASK	0xffff

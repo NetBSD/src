@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2002/04/04 18:12:23 uch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2002/04/28 17:10:39 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -250,23 +250,23 @@ struct simplelock pmaps_lock;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 struct lock pmap_main_lock;
 
-#define PMAP_MAP_TO_HEAD_LOCK() \
+#define	PMAP_MAP_TO_HEAD_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
-#define PMAP_MAP_TO_HEAD_UNLOCK() \
+#define	PMAP_MAP_TO_HEAD_UNLOCK() \
      spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
-#define PMAP_HEAD_TO_MAP_LOCK() \
+#define	PMAP_HEAD_TO_MAP_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
-#define PMAP_HEAD_TO_MAP_UNLOCK() \
+#define	PMAP_HEAD_TO_MAP_UNLOCK() \
      spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #else
 
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
+#define	PMAP_MAP_TO_HEAD_LOCK()		/* null */
+#define	PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
 
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
+#define	PMAP_HEAD_TO_MAP_LOCK()		/* null */
+#define	PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 #endif
 
@@ -333,8 +333,8 @@ static int pv_nfpvents;			/* # of free pv entries */
 static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
 static vaddr_t pv_cachedva;		/* cached VA for later use */
 
-#define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
-#define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
+#define	PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
+#define	PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
 					/* high water mark */
 
 /*
@@ -365,13 +365,13 @@ extern paddr_t msgbuf_paddr;
 static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
 static struct vm_page	*pmap_alloc_ptp(struct pmap *, int, boolean_t);
 static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
-#define ALLOCPV_NEED	0	/* need PV now */
-#define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
-#define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
+#define	ALLOCPV_NEED	0	/* need PV now */
+#define	ALLOCPV_TRY	1	/* just try to allocate, don't steal */
+#define	ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
 static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
 static void		 pmap_enter_pv(struct pv_head *, struct pv_entry *,
 		    struct pmap *,
-		    
+
 		    vaddr_t, struct vm_page *);
 static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
@@ -429,7 +429,7 @@ pmap_tmpmap_pa(paddr_t pa)
 	if (CPU_IS_SH3) {
 		return SH3_PHYS_TO_P1SEG(pa);
 	} else {
-		cacheflush(); 
+		cacheflush();
 		return SH3_PHYS_TO_P2SEG(pa);
 	}
 
@@ -1779,7 +1779,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 		memcpy((void *)SH3_PHYS_TO_P1SEG(dstpa),
 		    (void *)SH3_PHYS_TO_P1SEG(srcpa), NBPG);
 	} else {
-		cacheflush(); 
+		cacheflush();
 		memcpy((void *)SH3_PHYS_TO_P2SEG(dstpa),
 		    (void *)SH3_PHYS_TO_P2SEG(srcpa), NBPG);
 	}
@@ -3025,7 +3025,7 @@ vtophys(vaddr_t va)
 void
 pmap_update_pg(vaddr_t va)
 {
-	
+
 	if (CPU_IS_SH3) {
 		sh_tlb_invalidate_addr(0, va); /* all entries are ASID 0. */
 	} else {
