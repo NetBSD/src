@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/11/08 23:28:15 eeh Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2002/03/13 19:32:25 eeh Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -37,9 +37,9 @@
 #include <sys/systm.h>
 
 #include <machine/walnut.h>
+#include <machine/dcr.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/dcr.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
