@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.6 1993/11/10 11:46:38 deraadt Exp $
+ * $Id: sun_misc.c,v 1.7 1993/11/12 03:23:51 deraadt Exp $
  */
 
 /*
@@ -72,7 +72,7 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 
-#include <sys/specdev.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
 
