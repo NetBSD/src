@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.8 1998/02/04 15:21:52 christos Exp $	*/
+/*	$NetBSD: chpass.h,v 1.9 1998/07/26 15:13:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,9 +38,9 @@
 struct passwd;
 
 typedef struct _entry {
-	char *prompt;
-	int (*func) __P((char *, struct passwd *, struct _entry *)), restricted, len;
-	char *except, *save;
+	const char *prompt;
+	int (*func) __P((const char *, struct passwd *, struct _entry *)), restricted, len;
+	const char *except, *save;
 } ENTRY;
 
 extern	int use_yp;
@@ -55,21 +55,22 @@ extern	int use_yp;
 extern ENTRY list[];
 extern uid_t uid;
 
-int	 atot __P((char *, time_t *));
+int	 atot __P((const char *, time_t *));
 void	 display __P((char *, int, struct passwd *));
 void	 edit __P((char *, struct passwd *));
-char    *ok_shell __P((char *));
-int	 p_change __P((char *, struct passwd *, ENTRY *));
-int	 p_class __P((char *, struct passwd *, ENTRY *));
-int	 p_expire __P((char *, struct passwd *, ENTRY *));
-int	 p_gecos __P((char *, struct passwd *, ENTRY *));
-int	 p_gid __P((char *, struct passwd *, ENTRY *));
-int	 p_hdir __P((char *, struct passwd *, ENTRY *));
-int	 p_login __P((char *, struct passwd *, ENTRY *));
-int	 p_login __P((char *, struct passwd *, ENTRY *));
-int	 p_passwd __P((char *, struct passwd *, ENTRY *));
-int	 p_shell __P((char *, struct passwd *, ENTRY *));
-int	 p_uid __P((char *, struct passwd *, ENTRY *));
+const char *
+	 ok_shell __P((const char *));
+int	 p_change __P((const char *, struct passwd *, ENTRY *));
+int	 p_class __P((const char *, struct passwd *, ENTRY *));
+int	 p_expire __P((const char *, struct passwd *, ENTRY *));
+int	 p_gecos __P((const char *, struct passwd *, ENTRY *));
+int	 p_gid __P((const char *, struct passwd *, ENTRY *));
+int	 p_hdir __P((const char *, struct passwd *, ENTRY *));
+int	 p_login __P((const char *, struct passwd *, ENTRY *));
+int	 p_login __P((const char *, struct passwd *, ENTRY *));
+int	 p_passwd __P((const char *, struct passwd *, ENTRY *));
+int	 p_shell __P((const char *, struct passwd *, ENTRY *));
+int	 p_uid __P((const char *, struct passwd *, ENTRY *));
 char    *ttoa __P((char *, size_t, time_t));
 int	 verify __P((char *, struct passwd *));
 

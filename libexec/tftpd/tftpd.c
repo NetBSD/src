@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.12 1998/07/03 11:50:51 mrg Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.12 1998/07/03 11:50:51 mrg Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static char	*securedir;
 struct formats;
 
 static void tftp __P((struct tftphdr *, int));
-static char *errtomsg __P((int));
+static const char *errtomsg __P((int));
 static void nak __P((int));
 static char *verifyhost __P((struct sockaddr_in *));
 static void usage __P((void));
@@ -634,9 +634,9 @@ abort:
 	return;
 }
 
-struct errmsg {
+const struct errmsg {
 	int	e_code;
-	char	*e_msg;
+	const char *e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
 	{ ENOTFOUND,	"File not found" },
@@ -649,12 +649,12 @@ struct errmsg {
 	{ -1,		0 }
 };
 
-static char *
+static const char *
 errtomsg(error)
 	int error;
 {
 	static char buf[20];
-	register struct errmsg *pe;
+	register const struct errmsg *pe;
 
 	if (error == 0)
 		return "success";
@@ -677,19 +677,20 @@ nak(error)
 {
 	register struct tftphdr *tp;
 	int length;
-	register struct errmsg *pe;
+	register const struct errmsg *pe;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
-	tp->th_code = htons((u_short)error);
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
 		if (pe->e_code == error)
 			break;
 	if (pe->e_code < 0) {
-		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;   /* set 'undef' errorcode */
+		strcpy(tp->th_msg, strerror(error - 100));
+	} else {
+		tp->th_code = htons((u_short)error);
+		strcpy(tp->th_msg, pe->e_msg);
 	}
-	strcpy(tp->th_msg, pe->e_msg);
 	length = strlen(pe->e_msg);
 	tp->th_msg[length] = '\0';
 	length += 5;
