@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.17 1999/07/04 08:01:39 cgd Exp $ */
+/*	$NetBSD: mbr.c,v 1.18 1999/07/10 23:07:15 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -428,9 +428,10 @@ read_mbr(disk, buf, len)
 }
 
 int
-write_mbr(disk, buf, len)
+write_mbr(disk, buf, len, convert)
 	char *disk, *buf;
 	int len;
+	int convert;
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i, ret = 0;
@@ -462,12 +463,14 @@ write_mbr(disk, buf, len)
 			psize = mbrp[i].mbrp_size;
 			mbrp[i].mbrp_start = native_to_le32(pstart);
 			mbrp[i].mbrp_size = native_to_le32(psize);
-			convert_mbr_chs(bcyl, bhead, bsec,
-			    &mbrp[i].mbrp_scyl, &mbrp[i].mbrp_shd,
-			    &mbrp[i].mbrp_ssect, pstart);
-			convert_mbr_chs(bcyl, bhead, bsec,
-			    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
-			    &mbrp[i].mbrp_esect, pstart + psize);
+			if (convert) {
+				convert_mbr_chs(bcyl, bhead, bsec,
+				    &mbrp[i].mbrp_scyl, &mbrp[i].mbrp_shd,
+				    &mbrp[i].mbrp_ssect, pstart);
+				convert_mbr_chs(bcyl, bhead, bsec,
+				    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
+				    &mbrp[i].mbrp_esect, pstart + psize);
+			}
 		}
 	}
 
