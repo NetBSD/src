@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.4 2003/07/14 22:54:51 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.5 2003/07/24 23:14:53 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,34 @@ into a
 in the
 .Ar prefix
 directory.
+.Sh WARNING
+.Bf -emphasis
+Since the
+.Nm
+command may execute scripts or programs contained within a package file,
+your system may be susceptible to ``Trojan horses'' or other subtle
+attacks from miscreants who create dangerous package files.
 .Pp
+You are advised to verify the competence and identity of those who
+provide installable package files.
+For extra protection, use the
+.Fl M
+flag to extract the package file, and inspect its contents and scripts
+to ensure it poses no danger to your system's integrity.
+Pay particular attention to any +INSTALL, +DEINSTALL, +REQUIRE
+or +MTREE_DIRS files, and inspect the +CONTENTS file for
+.Cm @cwd ,
+.Cm @mode
+(check for setuid),
+.Cm @dirrm ,
+.Cm @exec ,
+and
+.Cm @unexec
+directives, and/or use the
+.Xr pkg_info 1
+command to examine the package file.
+.Ef
+.Sh OPTIONS
 The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl d Ar stowdir
@@ -140,6 +167,55 @@ can be overridden by specifying an alternative directory in the
 .Ev PREFIX
 environment variable.
 .El
+.Sh FILES
+.Bl -tag -width indent
+.It Pa <pkg-dbdir>/<package>/+INSTALL
+If the package contains an
+.Ar install
+script (see
+.Xr pkg_create 1 ) ,
+then after the package is added into a view, the script is executed
+with the following arguments:
+.Bl -tag -width package
+.It Ar package
+The name of the package being installed.
+.It Cm VIEW-INSTALL
+Keyword denoting that the script is to perform any actions needed after
+the package is added to a view.
+.El
+.Pp
+If the
+.Ar install
+script exits with a non-zero status code, the installation is terminated.
+.It Pa <pkg-dbdir>/<package>/+DEINSTALL
+If the package contains an
+.Ar deinstall
+script (see
+.Xr pkg_create 1 ) ,
+then before the package is removed from a view, the script is executed
+with the following arguments:
+.Bl -tag -width package
+.It Ar package
+The name of the package being installed.
+.It Cm VIEW-DEINSTALL
+Keyword denoting that the script is to perform any actions needed before
+the package is removed from a view.
+.El
+.Pp
+If the
+.Ar deinstall
+script exits with a non-zero status code, the de-installation is terminated.
+.El
+.Pp
+The
+.Ar install
+and
+.Ar deinstall
+scripts are called with the environment variable
+.Ev PKG_PREFIX
+set to the path to the
+.Ar view
+directory.
 .Sh SEE ALSO
 .Xr pkg_delete 1 ,
 .Xr linkfarm 1

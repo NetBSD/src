@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.12 2003/07/23 22:58:24 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.13 2003/07/24 23:14:53 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,9 @@
 # set -x
 
 # set up program definitions
+chmodprog=/bin/chmod
 cpprog=/bin/cp
+envprog=/usr/bin/env
 findprog=/usr/bin/find
 grepprog=/usr/bin/grep
 linkfarmprog=/usr/sbin/linkfarm
@@ -53,7 +55,7 @@ usage() {
 }
 
 version() {
-	echo "20030713"
+	echo "20030724"
 	exit 0
 }
 
@@ -119,7 +121,7 @@ esac
 while [ $# -gt 0 ]; do
 	case $action in
 	add)
-		if [ -f ${pkg_dbdir}/$1/+CONTENTS ]; then
+		if [ -f ${pkg_dbdir}/$1/+DEPOT]; then
 			echo "Package $1 already exists in $viewstr."
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
@@ -134,6 +136,11 @@ while [ $# -gt 0 ]; do
 			(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' ./+* ${pkg_dbdir}/$1)
 			$sedprog -e 's|'${depot_pkg_dbdir}/$1'|'${targetdir}'|g' < ${depot_pkg_dbdir}/$1/+CONTENTS > ${pkg_dbdir}/$1/+CONTENTS
 			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
+			if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
+				$chmodprog +x ${pkg_dbdir}/$1/+INSTALL
+				$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+INSTALL $1 VIEW-INSTALL
+				exit $?
+			fi
 		fi
 		;;
 	check)
@@ -141,9 +148,18 @@ while [ $# -gt 0 ]; do
 		exit $?
 		;;
 	delete)
-		if [ ! -f ${pkg_dbdir}/$1/+CONTENTS ]; then
+		if [ ! -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "Package $1 does not exist in $viewstr."
 		else
+			if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
+				$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
+				$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
+				ec=$?
+				if [ $ec != 0 ]; then
+					echo "De-install script returned an error."
+					exit $ec
+				fi
+			fi
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
