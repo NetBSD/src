@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.20 2004/01/11 19:39:48 jdolecek Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.21 2004/02/06 08:08:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.20 2004/01/11 19:39:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.21 2004/02/06 08:08:46 junyoung Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -205,9 +205,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 }
 
 inline int
-lwp_suspend(l, t)
-	struct lwp *l;
-	struct lwp *t;
+lwp_suspend(struct lwp *l, struct lwp *t)
 {
 	struct proc *p = t->l_proc;
 	int s;
@@ -315,7 +313,6 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 
 	SCHED_LOCK(s);
 
-
 	LIST_FOREACH(t, &p->p_lwps, l_sibling)
 		if (t->l_lid == target_lid)
 			break;
@@ -343,7 +340,6 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	error = 0;
 exit:
 	SCHED_UNLOCK(s);
-
 
 	return error;
 }
@@ -376,7 +372,6 @@ sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 int
 lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 {
-
 	struct proc *p = l->l_proc;
 	struct lwp *l2, *l3;
 	int nfound, error, wpri;
@@ -472,7 +467,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
 
-
 	memset(&l2->l_startzero, 0,
 	       (unsigned) ((caddr_t)&l2->l_endzero -
 			   (caddr_t)&l2->l_startzero));
@@ -508,7 +502,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_addr = (struct user *)uaddr;
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
-
 
 	simple_lock(&p2->p_lock);
 	l2->l_lid = ++p2->p_nlwpid;
@@ -579,7 +572,6 @@ lwp_exit(struct lwp *l)
 
 	/* cpu_exit() will not return */
 	cpu_exit(l);
-
 }
 
 /*
@@ -625,8 +617,7 @@ lwp_exit2(struct lwp *l)
  * with a LWP.
  */
 struct lwp *
-proc_representative_lwp(p)
-	struct proc *p;
+proc_representative_lwp(struct proc *p)
 {
 	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
 
