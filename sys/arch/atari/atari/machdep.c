@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1999/07/22 09:20:38 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 1999/10/28 13:38:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,6 +168,7 @@ void
 cpu_startup()
 {
 	extern	 void		etext __P((void));
+	extern	 int		iomem_malloc_safe;
 	register unsigned	i;
 		 caddr_t	v;
 		 int		base, residual;
@@ -307,6 +308,11 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/*
+	 * Alloc extent allocation to use malloc
+	 */
+	iomem_malloc_safe = 1;
 }
 
 /*
