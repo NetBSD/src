@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.7 2000/06/15 16:48:28 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.8 2001/05/17 21:21:07 fredette Exp $ */
 
 /*
  * Copyright (c) 1999 Klaus Klein
@@ -49,7 +49,9 @@ _start:
 	movl	%a2,-(%sp)		| ps_strings
 	movl	%a0,-(%sp)		| obj
 	movl	%a1,-(%sp)		| cleanup
-	pea	(16+4)(%sp,%d0.l*4)	| envp = &argv[argc + 1]
+	movl	%d0,%d1
+	lsll	#2,%d1
+	pea	(16+4)(%sp,%d1.l)	| envp = &argv[argc + 1]
 	pea	20(%sp)			| argv
 	movl	%d0,-(%sp)		| argc
 	jsr	__start
@@ -96,7 +98,7 @@ __start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 2000/06/15 16:48:28 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.8 2001/05/17 21:21:07 fredette Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
