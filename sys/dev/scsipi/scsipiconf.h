@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.20 1998/10/12 16:09:25 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.21 1998/10/15 05:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef	int	boolean;
  */
 
 struct buf;
+struct proc;
 struct scsipi_link;
 struct scsipi_xfer;
 
