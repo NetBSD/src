@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6.4.1 2000/11/01 03:48:46 tv Exp $
+.\"	$NetBSD: install,v 1.6.4.2 2000/11/09 23:38:05 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ monitors also support the
 command, which shows available units to boot from.
 .Pp
 A summary of the most common boot devices and their name:
-.(tag "Ic B DUA0"
+.(tag B\ DUA0
 .It Ic "B DUA0"
 first MSCP controller, unit 0.
 .It Ic "B MUA0"
