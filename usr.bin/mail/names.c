@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.7 1997/11/25 17:58:18 bad Exp $	*/
+/*	$NetBSD: names.c,v 1.8 1998/12/19 16:33:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.7 1997/11/25 17:58:18 bad Exp $");
+__RCSID("$NetBSD: names.c,v 1.8 1998/12/19 16:33:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ yankword(ap, wbuf)
 		for (cp2 = wbuf; *cp && (*cp2++ = *cp++) != '>';)
 			;
 	else
-		for (cp2 = wbuf; *cp && !index(" \t,(", *cp); *cp2++ = *cp++)
+		for (cp2 = wbuf; *cp && !strchr(" \t,(", *cp); *cp2++ = *cp++)
 			;
 	*cp2 = '\0';
 	return cp;
