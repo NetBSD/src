@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.5 2003/02/18 10:20:50 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.6 2003/02/18 11:21:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -354,7 +354,7 @@ smb_rq_reply(struct smb_rq *rqp)
 	(void) md_get_uint16le(mdp, &rqp->sr_rpuid);
 	(void) md_get_uint16le(mdp, &rqp->sr_rpmid);
 
-	printf("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
+	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
 	    rqp->sr_rpmid, rqp->sr_rppid, rqp->sr_rpuid, rqp->sr_rptid,
 	    rqp->sr_errclass, rqp->sr_serror);
 	return (rperror);
