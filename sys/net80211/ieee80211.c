@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.22 2004/07/16 03:02:41 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.23 2004/07/22 14:44:17 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.22 2004/07/16 03:02:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.23 2004/07/22 14:44:17 mycroft Exp $");
 #endif
 
 /*
@@ -108,8 +108,7 @@ static int ieee80211_inact_max_nodenum;
 struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
 
-static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
-		enum ieee80211_phymode);
+static void ieee80211_setbasicrates(struct ieee80211com *);
 
 #ifdef __NetBSD__
 static void sysctl_ieee80211_fill_node(struct ieee80211_node *,
@@ -188,6 +187,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 
+	ieee80211_setbasicrates(ic);
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
 
 	if (ic->ic_lintval == 0)
@@ -571,12 +571,6 @@ ieee80211_media_change(struct ifnet *ifp)
 			break;
 		case IEEE80211_M_IBSS:
 			ic->ic_flags |= IEEE80211_F_IBSSON;
-#ifdef notdef
-			if (ic->ic_curmode == IEEE80211_MODE_11G)
-				ieee80211_set11gbasicrates(
-					&ic->ic_sup_rates[newphymode],
-					IEEE80211_MODE_11B);
-#endif
 			break;
 		}
 		error = ENETRESET;
@@ -661,24 +655,30 @@ ieee80211_watchdog(struct ifnet *ifp)
  * the basic OFDM rates.
  */
 static void
-ieee80211_set11gbasicrates(struct ieee80211_rateset *rs, enum ieee80211_phymode mode)
+ieee80211_setbasicrates(struct ieee80211com *ic)
 {
 	static const struct ieee80211_rateset basic[] = {
+	    { 0 },				/* IEEE80211_MODE_AUTO */
 	    { 3, { 12, 24, 48 } },		/* IEEE80211_MODE_11A */
-	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11B */
+	    { 2, { 2, 4 } },			/* IEEE80211_MODE_11B */
 	    { 7, { 2, 4, 11, 22, 12, 24, 48 } },/* IEEE80211_MODE_11G */
-	    { 0 },				/* IEEE80211_MODE_FH */
+	    { 2, { 2, 4 } },			/* IEEE80211_MODE_FH */
 	    { 0 },				/* IEEE80211_MODE_TURBO	*/
 	};
+	enum ieee80211_phymode mode;
+	struct ieee80211_rateset *rs;
 	int i, j;
 
-	for (i = 0; i < rs->rs_nrates; i++) {
-		rs->rs_rates[i] &= IEEE80211_RATE_VAL;
-		for (j = 0; j < basic[mode].rs_nrates; j++)
-			if (basic[mode].rs_rates[j] == rs->rs_rates[i]) {
-				rs->rs_rates[i] |= IEEE80211_RATE_BASIC;
-				break;
-			}
+	for (mode = 0; mode < IEEE80211_MODE_MAX; mode++) {
+		rs = &ic->ic_sup_rates[mode];
+		for (i = 0; i < rs->rs_nrates; i++) {
+			rs->rs_rates[i] &= IEEE80211_RATE_VAL;
+			for (j = 0; j < basic[mode].rs_nrates; j++)
+				if (basic[mode].rs_rates[j] == rs->rs_rates[i]) {
+					rs->rs_rates[i] |= IEEE80211_RATE_BASIC;
+					break;
+				}
+		}
 	}
 }
 
@@ -780,11 +780,8 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	if (mode == IEEE80211_MODE_11G) {
 		if (ic->ic_caps & IEEE80211_C_SHSLOT)
 			ic->ic_flags |= IEEE80211_F_SHSLOT;
-		ieee80211_set11gbasicrates(&ic->ic_sup_rates[mode],
-			IEEE80211_MODE_11G);
-	} else {
+	} else
 		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
-	}
 
 	ic->ic_curmode = mode;
 	return 0;
