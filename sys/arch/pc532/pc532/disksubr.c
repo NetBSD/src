@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2001/04/25 17:53:20 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 2001/11/29 08:41:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -239,45 +239,4 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
-}
-
-/*
- * This function appears to be called by each disk driver.
- * Aparently this is to give this MD code a chance to do
- * additional "device registration" types of work. (?)
- * For example, the sparc port uses this to record the
- * device node for the PROM-specified boot device.
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	struct scsibus_softc *sbsc;
-	int major, target, lun;
-
-	major  = B_TYPE(bootdev);
-	target = B_UNIT(bootdev);
-	lun    = 0;
-
-	if (booted_device != NULL || major != 0)
-		return;
-
-	/*
- 	 * scsi: sd, cd
- 	 */
-
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-		if (sbsc->sc_channel->chan_periphs[target][lun] != NULL &&
-		    sbsc->sc_channel->chan_periphs[target][lun]->periph_dev ==
-		     (void *)dev) {
-			booted_device = dev;
-			return;
-		}
-	}
-
-	return;
 }
