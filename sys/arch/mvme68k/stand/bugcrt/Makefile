@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/09 07:50:31 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 2000/06/25 16:39:07 scw Exp $
 #
 # DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
@@ -8,7 +8,7 @@ OBJS=bugcrt.o
 
 CLEANFILES+=a.out
 
-all:	${OBJS}
+realall:	${OBJS}
 
 bugcrt.o: bugcrt.c
 	${CC} ${CFLAGS} -c ${.ALLSRC}
