@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.50 2000/12/10 04:19:53 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.51 2001/01/04 03:57:58 lukem Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.50 2000/12/10 04:19:53 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.51 2001/01/04 03:57:58 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -90,15 +90,16 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.50 2000/12/10 04:19:53 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stddef.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <syslog.h>
 #include <stdarg.h>
@@ -329,6 +330,8 @@ freeaddrinfo(ai)
 {
 	struct addrinfo *next;
 
+	_DIAGASSERT(ai != NULL);
+
 	do {
 		next = ai->ai_next;
 		if (ai->ai_canonname)
@@ -344,6 +347,8 @@ str_isnumber(p)
 	const char *p;
 {
 	char *ep;
+
+	_DIAGASSERT(p != NULL);
 
 	if (*p == '\0')
 		return NO;
@@ -368,6 +373,11 @@ getaddrinfo(hostname, servname, hints, res)
 	struct addrinfo ai0;
 	struct addrinfo *pai;
 	const struct explore *ex;
+
+	/* hostname is allowed to be NULL */
+	/* servname is allowed to be NULL */
+	/* hints is allowed to be NULL */
+	_DIAGASSERT(res != NULL);
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
@@ -572,6 +582,11 @@ explore_fqdn(pai, hostname, servname, res)
 		{ 0 }
 	};
 
+	_DIAGASSERT(pai != NULL);
+	/* hostname may be NULL */
+	/* servname may be NULL */
+	_DIAGASSERT(res != NULL);
+
 	result = NULL;
 
 #if 0
@@ -638,6 +653,10 @@ explore_null(pai, servname, res)
 	struct addrinfo sentinel;
 	int error;
 
+	_DIAGASSERT(pai != NULL);
+	/* servname may be NULL */
+	_DIAGASSERT(res != NULL);
+
 	*res = NULL;
 	sentinel.ai_next = NULL;
 	cur = &sentinel;
@@ -702,6 +721,11 @@ explore_numeric(pai, hostname, servname, res)
 	struct addrinfo sentinel;
 	int error;
 	char pton[PTON_MAX];
+
+	_DIAGASSERT(pai != NULL);
+	/* hostname may be NULL */
+	/* servname may be NULL */
+	_DIAGASSERT(res != NULL);
 
 	*res = NULL;
 	sentinel.ai_next = NULL;
@@ -775,6 +799,11 @@ explore_numeric_scope(pai, hostname, servname, res)
 	char *cp, *hostname2 = NULL, *scope, *addr;
 	struct sockaddr_in6 *sin6;
 
+	_DIAGASSERT(pai != NULL);
+	/* hostname may be NULL */
+	/* servname may be NULL */
+	_DIAGASSERT(res != NULL);
+
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
@@ -844,6 +873,11 @@ get_canonname(pai, ai, str)
 	struct addrinfo *ai;
 	const char *str;
 {
+
+	_DIAGASSERT(pai != NULL);
+	_DIAGASSERT(ai != NULL);
+	_DIAGASSERT(str != NULL);
+
 	if ((pai->ai_flags & AI_CANONNAME) != 0) {
 		ai->ai_canonname = (char *)malloc(strlen(str) + 1);
 		if (ai->ai_canonname == NULL)
@@ -861,6 +895,10 @@ get_ai(pai, afd, addr)
 {
 	char *p;
 	struct addrinfo *ai;
+
+	_DIAGASSERT(pai != NULL);
+	_DIAGASSERT(afd != NULL);
+	_DIAGASSERT(addr != NULL);
 
 	ai = (struct addrinfo *)malloc(sizeof(struct addrinfo)
 		+ (afd->a_socklen));
@@ -884,6 +922,9 @@ get_portmatch(ai, servname)
 	const char *servname;
 {
 
+	_DIAGASSERT(ai != NULL);
+	/* servname may be NULL */
+
 	/* get_port does not touch first argument. when matchonly == 1. */
 	/* LINTED const cast */
 	return get_port((struct addrinfo *)ai, servname, 1);
@@ -899,6 +940,9 @@ get_port(ai, servname, matchonly)
 	struct servent *sp;
 	int port;
 	int allownumeric;
+
+	_DIAGASSERT(ai != NULL);
+	/* servname may be NULL */
 
 	if (servname == NULL)
 		return 0;
@@ -996,6 +1040,8 @@ addrconfig(pai)
 {
 	int s;
 
+	_DIAGASSERT(pai != NULL);
+
 	/* XXX errno */
 	s = socket(pai->ai_family, SOCK_DGRAM, 0);
 	if (s < 0)
@@ -1013,8 +1059,13 @@ ip6_str2scopeid(scope, sin6)
 	struct sockaddr_in6 *sin6;
 {
 	int scopeid;
-	struct in6_addr *a6 = &sin6->sin6_addr;
+	struct in6_addr *a6;
 	char *ep;
+
+	_DIAGASSERT(scope != NULL);
+	_DIAGASSERT(sin6 != NULL);
+
+	a6 = &sin6->sin6_addr;
 
 	/* empty scopeid portion is invalid */
 	if (*scope == '\0')
@@ -1078,6 +1129,10 @@ getanswer(answer, anslen, qname, qtype, pai)
 	char tbuf[MAXDNAME];
 	int (*name_ok) __P((const char *));
 	char hostbuf[8*1024];
+
+	_DIAGASSERT(answer != NULL);
+	_DIAGASSERT(qname != NULL);
+	_DIAGASSERT(pai != NULL);
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
@@ -1321,6 +1376,7 @@ _dns_getaddrinfo(rv, cb_data, ap)
 static void
 _sethtent()
 {
+
 	if (!hostf)
 		hostf = fopen(_PATH_HOSTS, "r" );
 	else
@@ -1330,6 +1386,7 @@ _sethtent()
 static void
 _endhtent()
 {
+
 	if (hostf) {
 		(void) fclose(hostf);
 		hostf = NULL;
@@ -1347,6 +1404,9 @@ _gethtent(name, pai)
 	int error;
 	const char *addr;
 	char hostbuf[8*1024];
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(pai != NULL);
 
 	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "r" )))
 		return (NULL);
@@ -1443,11 +1503,15 @@ _yphostent(line, pai)
 	struct addrinfo sentinel, *cur;
 	struct addrinfo hints, *res, *res0;
 	int error;
-	char *p = line;
+	char *p;
 	const char *addr, *canonname;
 	char *nextline;
 	char *cp;
 
+	_DIAGASSERT(line != NULL);
+	_DIAGASSERT(pai != NULL);
+
+	p = line;
 	addr = canonname = NULL;
 
 	memset(&sentinel, 0, sizeof(sentinel));
@@ -1603,6 +1667,9 @@ res_queryN(name, target)
 	int rcode;
 	int ancount;
 
+	_DIAGASSERT(name != NULL);
+	/* XXX: target may be NULL??? */
+
 	rcode = NOERROR;
 	ancount = 0;
 
@@ -1705,10 +1772,15 @@ res_searchN(name, target)
 	struct res_target *target;
 {
 	const char *cp, * const *domain;
-	HEADER *hp = (HEADER *)(void *)target->answer;	/*XXX*/
+	HEADER *hp;
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(target != NULL);
+
+	hp = (HEADER *)(void *)target->answer;	/*XXX*/
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -1846,6 +1918,9 @@ res_querydomainN(name, domain, target)
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
 	size_t n, d;
+
+	_DIAGASSERT(name != NULL);
+	/* XXX: target may be NULL??? */
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
