@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.2 2001/09/18 23:25:26 ad Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * LK200/LK400 keyboard attached with channel A of the 2nd SCC
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.3 2001/11/13 06:26:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

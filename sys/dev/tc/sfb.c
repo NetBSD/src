@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.48 2001/08/22 05:15:58 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.49 2001/11/13 06:26:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -30,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.48 2001/08/22 05:15:58 nisimura Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.49 2001/11/13 06:26:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
