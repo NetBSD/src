@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.5 2002/02/04 17:32:02 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.6 2002/02/11 17:05:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ hpcboot(void *arg)
 			goto failed_exit;
 		}
 		sz = f._file->size();
+		sz = f._mem->roundPage(sz);
 		f._file->close();
 	}
 
@@ -156,7 +157,7 @@ hpcboot(void *arg)
 	}
 
 	menu.progress();
-	sz += f._loader->memorySize();
+	sz += f._mem->roundPage(f._loader->memorySize());
 
 	// allocate required memory.
 	if (!f._arch->allocateMemory(sz)) {
@@ -173,8 +174,7 @@ hpcboot(void *arg)
 
 	menu.progress();
 	if (!f._loader->load()) {
-		error_message =
-		    TEXT("couldn't load kernel image to memory.\n");
+		error_message = TEXT("couldn't load kernel image to memory.\n");
 		goto failed;
 	}
 	menu.progress();
@@ -183,7 +183,11 @@ hpcboot(void *arg)
 	// load file system image to memory
 	if (f.args.loadmfs) {
 		f._file->open(f.args.mfsName);
-		f._loader->loadExtData();
+		if (!f._loader->loadExtData()) {
+			error_message =
+			    TEXT("couldn't load filesystem image to memory.\n");
+			goto failed;
+		}
 		f._file->close();
 	}
 	f._loader->loadEnd();
@@ -254,4 +258,53 @@ HpcBootApp::registerClass(WNDPROC proc)
 	wc.lpszClassName= wc_name;
 
 	return RegisterClass(&wc);
+}
+
+
+//
+// Debug support.
+//
+void
+_bitdisp(u_int32_t a, int s, int e, int m, int c)
+{
+	u_int32_t j, j1;
+	int i, n;
+
+	DPRINTF_SETUP();
+
+	n = 31;	// 32bit only.
+	j1 = 1 << n;
+	e = e ? e : n;
+	for (j = j1, i = n; j > 0; j >>=1, i--) {
+		if (i > e || i < s) {
+			DPRINTF((TEXT("%c"), a & j ? '+' : '-'));
+		} else {
+			DPRINTF((TEXT("%c"), a & j ? '|' : '.'));
+		}
+	}
+	if (m) {
+		DPRINTF((TEXT("[%s]"),(char*)m));
+	}
+
+	DPRINTF((TEXT(" [0x%08x]"), a));
+
+	if (c) {
+		for (j = j1, i = n; j > 0; j >>=1, i--) {
+			if (!(i > e || i < s) &&(a & j)) {
+				DPRINTF((TEXT(" %d"), i));
+			}
+		}
+	}
+
+	DPRINTF((TEXT(" %d\n"), a));
+}
+
+void
+_dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
+{
+	static const char onoff[3] = "_x";
+
+	DPRINTF_SETUP();
+
+	DPRINTF((TEXT("%S[%c] "), name, onoff[reg & mask ? 1 : 0]));
 }

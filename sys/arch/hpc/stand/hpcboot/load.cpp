@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.4 2001/05/08 18:51:22 uch Exp $	*/
+/*	$NetBSD: load.cpp,v 1.5 2002/02/11 17:05:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ Loader::objectFormat(File &file)
 	return LOADER_UNKNOWN;
 }
 
-void
+BOOL
 Loader::loadExtData(void)
 {
 	size_t sz;
@@ -86,6 +86,8 @@ Loader::loadExtData(void)
 
 	DPRINTF((TEXT("[file system image]")));
 	_load_segment(kv, sz, 0, sz);
+
+	return _load_success();
 }
 
 void
@@ -132,11 +134,13 @@ Loader::_load_segment_start(void)
 	vaddr_t v;
 	paddr_t p;
 
+	_error = FALSE;
 	_nload_link = _n0clr_link = 0;
 	_tpsz = _mem->getTaggedPageSize();
 
 	// start of chain.
-	_mem->getTaggedPage(v, p, &_pvec_clr, _pvec_clr_paddr);
+	if (!_mem->getTaggedPage(v, p, &_pvec_clr, _pvec_clr_paddr))
+		_error = TRUE;
 #ifdef PAGE_LINK_DUMP
 	_page_tag_start =(u_int32_t)_pvec_clr;
 #else
@@ -217,7 +221,8 @@ Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 	}
 
 	_opvec_prev = _pvec_prev;
-	_mem->getTaggedPage(v, p, &pvec, pvec_paddr);      
+	if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
+		_error = TRUE;
 	memcpy((void *)v, data, memsz);
 	_pvec_prev->src = ptokv(p);
 	_pvec_prev->dst = kv;
@@ -240,7 +245,8 @@ Loader::_load_page(vaddr_t kv, off_t ofs, size_t sz, struct PageTag *prev)
 	paddr_t p, pvec_paddr;
 	vaddr_t v;
 
-	_mem->getTaggedPage(v, p, &pvec, pvec_paddr);      
+	if (!_mem->getTaggedPage(v, p, &pvec, pvec_paddr))
+		_error = TRUE;
 	_file->read((void *)v, sz, ofs);
 	prev->src = ptokv(p);
 	prev->dst = kv;
