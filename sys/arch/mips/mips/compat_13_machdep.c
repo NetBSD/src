@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 1999/01/06 04:11:31 nisimura Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 1999/04/24 08:10:38 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 1999/01/06 04:11:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 1999/04/24 08:10:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,7 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 1999/01/06 04:11:31 nisimu
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h> 
+#include <sys/syscallargs.h>
 
 #include <mips/regnum.h>
 

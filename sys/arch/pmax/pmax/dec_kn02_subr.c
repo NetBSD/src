@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn02_subr.c,v 1.2 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_kn02_subr.c,v 1.3 1999/04/24 08:01:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.2 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.3 1999/04/24 08:01:12 simonb Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -67,7 +67,7 @@ static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
 
 static unsigned
 kn02ba_recover_erradr(phys, mer)
-	register unsigned phys, mer;
+	unsigned phys, mer;
 {
 	/* phys holds bits 28:2, mer knows which byte */
 	switch (mer & KMIN_MER_LASTBYTE) {
@@ -93,7 +93,7 @@ kn02ba_recover_erradr(phys, mer)
 void
 kn02ba_errintr()
 {
-	register int mer, adr, siz;
+	int mer, adr, siz;
 	static int errintr_cnt = 0;
 
 	siz = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.14 1999/03/27 03:27:09 mhitch Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.15 1999/04/24 08:01:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.14 1999/03/27 03:27:09 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.15 1999/04/24 08:01:11 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ dec_3maxplus_init()
 {
 	volatile u_int *intrp =
 	    (volatile u_int *) MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
-	register u_int intr;
+	u_int intr;
 
 	platform.iobus = "tcioasic";
 
@@ -250,12 +250,12 @@ dec_3maxplus_device_register(dev, aux)
  */
 void
 dec_3maxplus_enable_intr(slotno, handler, sc, on)
-	register unsigned int slotno;
+	unsigned int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
 {
-	register unsigned mask;
+	unsigned mask;
 
 #if 0
 	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
@@ -321,8 +321,8 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register u_int intr;
-	register volatile struct chiptime *c =
+	u_int intr;
+	volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(KN03_REG_IMSK);
@@ -332,7 +332,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	struct clockframe cf;
 	int temp;
 	static int user_warned = 0;
-	register u_long old_buscycle = latched_cycle_cnt;
+	u_long old_buscycle = latched_cycle_cnt;
 
 	old_mask = *imaskp & kn03_tc3_imask;
 	*imaskp = kn03_tc3_imask;
@@ -490,7 +490,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 static void
 dec_3maxplus_errintr()
 {
-	register u_int erradr, errsyn;
+	u_int erradr, errsyn;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);

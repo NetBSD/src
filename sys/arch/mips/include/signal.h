@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 1999/01/31 00:55:41 castor Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 1999/04/24 08:10:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ struct sigcontext13 {
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	int	sc_xxx[8];	/* XXX reserved */ 
+	int	sc_xxx[8];	/* XXX reserved */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
@@ -83,7 +83,7 @@ struct sigcontext {
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	int	sc_xxx[8];	/* XXX reserved */ 
+	int	sc_xxx[8];	/* XXX reserved */
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
 
@@ -91,7 +91,7 @@ struct sigcontext {
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
 #if !defined(_KERNEL)
-/* 
+/*
  * Hard code these to make people think twice about breaking compatibility.
  * These macros are generated independently for the kernel.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: px.c,v 1.2 1999/04/13 00:40:07 ad Exp $ */
+/* $NetBSD: px.c,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -37,10 +37,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.2 1999/04/13 00:40:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.3 1999/04/24 08:01:06 simonb Exp $");
 
 /*
- * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers 
+ * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
  * with PixelStamp blitter asics (and i860 accelerators, on the higher end
  * cards).
  */
@@ -117,8 +117,8 @@ static int	px_mmap_info  __P((struct proc *, dev_t, vm_offset_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
 
 struct cfattach px_ca = {
-	sizeof(struct px_softc), 
-	px_match, 
+	sizeof(struct px_softc),
+	px_match,
 	px_attach,
 };
 
@@ -272,11 +272,11 @@ px_match(parent, match, aux)
 {
 	struct tc_attach_args *ta = (struct tc_attach_args *)aux;
 	int i;
-	
+
 	for (i = 0; i < NUM_PX_TYPES; i++)
 		if (!strncmp(px_types[i], ta->ta_modname, TC_ROM_LLEN))
 			break;
-			
+
 	return (px_types[i] != NULL);
 }
 
@@ -295,7 +295,7 @@ px_attach(parent, self, aux)
 	caddr_t slotbase;
 	char *p;
 	int i;
-	
+
 	sc = (struct px_softc *)self;
 	ta = (struct tc_attach_args *)aux;
 	slotbase = (caddr_t)TC_PHYS_TO_UNCACHED(ta->ta_addr);
@@ -303,11 +303,11 @@ px_attach(parent, self, aux)
 	/* Init the card only if it hasn't been done before... */
 	if (px_cons_info && slotbase != (caddr_t)px_cons_info->pxi_slotbase)
 		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 1);
-	
+
 	/* px_init() fills in px_unit[#] */
 	pxi = px_unit[sc->px_dv.dv_unit];
 	sc->px_info = pxi;
-	
+
 	/* Now grab the interrupt */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, px_intr, sc);
 
@@ -323,7 +323,7 @@ px_attach(parent, self, aux)
 	}
 
 	/* The following values are filled in by px_init_stic. */
-	printf(": %s Rev. %d, %dx%d stamp, %d plane\n", pxi->pxi_type, 
+	printf(": %s Rev. %d, %dx%d stamp, %d plane\n", pxi->pxi_type,
 	    pxi->pxi_revision, pxi->pxi_stampw, pxi->pxi_stamph,
 	    pxi->pxi_nplanes);
 }
@@ -336,7 +336,7 @@ px_attach(parent, self, aux)
  *
  * XXX use magic number to make sure fi isn't a real struct fbinfo?
  */
-int 
+int
 px_init(fi, slotbase, unit, silent)
 	struct fbinfo *fi;
 	caddr_t slotbase;
@@ -345,11 +345,11 @@ px_init(fi, slotbase, unit, silent)
 	struct px_info *pxi;
 	u_long bufpa;
 	int i;
-	
+
 #if NPX > 1
 	if (px_cons_rbuf_use)
 		/* XXX allocate buffers */;
-	else 
+	else
 #endif
 	{
 		bufpa = MIPS_KSEG0_TO_PHYS(px_cons_rbuf);
@@ -363,7 +363,7 @@ px_init(fi, slotbase, unit, silent)
 	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG0(bufpa);
 	px_unit[unit] = pxi;
 	bufpa += PXMAP_INFO_SIZE;
-	
+
 	if (fi == NULL)
 		px_cons_info = pxi;
 
@@ -371,14 +371,14 @@ px_init(fi, slotbase, unit, silent)
 		printf("px%d: ring buffer outside first 8MB of RAM\n", unit);
 		return 0;
 	}
-		
+
 	/* Fill info struct enough to init the STIC, then do it */
 	pxi->pxi_slotbase = TC_PHYS_TO_UNCACHED(slotbase);
 	pxi->pxi_unit = unit;
 	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
 	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
 	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
-	
+
 	/* We need to do this ASAP so we can disable the co-processor */
 	px_init_stic(pxi, 1);
 
@@ -397,7 +397,7 @@ px_init(fi, slotbase, unit, silent)
 
 	if ((i = wsfont_find(NULL, 0, 0, 2)) < 0)
 		panic("px_init: unable to get font");
-	
+
 	if (wsfont_lock(i, &pxi->pxi_font, WSFONT_BIG, WSFONT_LITTLE) < 0)
 		panic("px_init: unable to lock font");
 
@@ -415,10 +415,10 @@ px_init(fi, slotbase, unit, silent)
 		px_qvss_init(pxi);
 
 		rcons_connect_native(&px_emulops, pxi, 1280, 1024,
-		  1280 / pxi->pxi_font->fontwidth, 
+		  1280 / pxi->pxi_font->fontwidth,
 		  1024 / pxi->pxi_font->fontheight);
 	}
-	
+
 	return 1;
 }
 
@@ -434,10 +434,10 @@ px_qvss_init(pxi)
 	struct fbinfo *fi;
 	static struct pmax_fbtty pxfb;
 	static struct fbdriver fbdriver = {
-		NULL, NULL, NULL, NULL, 
+		NULL, NULL, NULL, NULL,
 		NULL, px_cursor_hack, NULL, NULL
 	};
-	
+
 	fi = &pxi->pxi_fbinfo;
 	fi->fi_driver = &fbdriver;
 	fi->fi_base = (caddr_t)pxi;
@@ -472,10 +472,10 @@ px_bt459_init(pxi)
 	BT459_WRITE_REG(vdac, 0xc0c0c0);
 
 	/* Now reset the VDAC */
-	if (pxi->pxi_option) 
+	if (pxi->pxi_option)
 		*(int32_t *)(pxi->pxi_slotbase + PXG_VDAC_RESET_OFFSET) = 0;
 	else
-		*(int32_t *)(pxi->pxi_slotbase + PX_VDAC_RESET_OFFSET) = 0;	
+		*(int32_t *)(pxi->pxi_slotbase + PX_VDAC_RESET_OFFSET) = 0;
 
 	tc_wmb();
 
@@ -484,10 +484,10 @@ px_bt459_init(pxi)
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);
 	BT459_WRITE_REG(vdac, 0xffffff);
-	
+
 	for (i = 0; i < 7; i++)
 		BT459_WRITE_REG(vdac, 0);
-	
+
 	/* Set cursor colormap */
 	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
 	BT459_WRITE_REG(vdac, DUPBYTE0(0xff));
@@ -513,7 +513,7 @@ px_bt459_init(pxi)
 	/* Make a sane cursor and load it */
 	px_make_cursor(pxi);
 	px_load_cursor(pxi);
-	
+
 	/* Enable cursor */
 	BT459_SELECT(vdac, BT459_REG_CCR);
 	BT459_WRITE_REG(vdac, 0x1c1c1c1);
@@ -534,33 +534,33 @@ px_probe_planes(pxi, buf)
 	if (buf == 0) {
 		/*
 		 * For the real framebuffer (# 0), we can cheat and use the
-		 * VDAC ID. One color is active at level 0x4a for 8 bits, all 
+		 * VDAC ID. One color is active at level 0x4a for 8 bits, all
 		 * colors are active at 0x4a on the 24 bit cards.
 		 */
 		BT459_SELECT(pxi->pxi_vdac, BT459_REG_ID);
 		i = pxi->pxi_vdac->reg & 0x00ffffff;
-	
+
 		/* 3 VDACs */
 		if (i == 0x4a4a4a)
 			return 24;
-		
+
 		/* 1 VDAC */
 		if ((i & 0xff0000) == 0x4a0000 ||
 		    (i & 0x00ff00) == 0x004a00 ||
 		    (i & 0x0000ff) == 0x00004a)
 			return 8;
-	
+
 		/* Whoops... Assume 8 planes? */
 		printf("\n");
 		printf("px%d: invalid VDAC ID 0x%08x", pxi->pxi_unit, i);
 		return 8;
 	}
-	
+
 	/* Don't give a damn about Z-buffers... */
 	panic("px_probe_planes: (buf != 0) was un-implemented (bloat)");
 }
-	
-	
+
+
 /*
  * Initialize the STIC (STamp Interface Chip) and stamp
  */
@@ -635,7 +635,7 @@ px_init_stic(pxi, probe)
 			}
 		}
 	}
-	
+
 	/*
 	 * Initialize STIC video registers. (if we knew what we were doing,
 	 * we might be able to frob this to work at different montior
@@ -649,26 +649,26 @@ px_init_stic(pxi, probe)
 	stic->ipdvint = STIC_INT_CLR;
 	stic->sticsr = 0x00000008;
 	tc_wmb();
-	
+
 	/*
 	 * If this is a 3D board, disable the i860 co-processor or we'll
 	 * run into serious trouble later while trying to initiate DMAs.
 	 * The code overhead needed to support the use of the onboard SRAM
-	 * and i860 is too big and too undocumented to consider. A paging 
+	 * and i860 is too big and too undocumented to consider. A paging
 	 * mechanism and N10 interrupt handling scheme are required for this.
-	 * 
+	 *
 	 * XXX shouldn't we be doing this sooner?
 	 * XXX do we have to DMA from the SRAM?
 	 */
 	if (pxi->pxi_option) {
 		int32_t *slot = (int32_t *)pxi->pxi_slotbase;
-		
+
 		slot[PXG_N10_RESET_OFFSET >> 2] = 0;
 		tc_wmb();
 		slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
 		tc_wmb();
 		DELAY(40000); /* paranoia */
-	}	
+	}
 }
 
 
@@ -685,7 +685,7 @@ px_make_cursor(pxi)
 	ip = pxi->pxi_cursor;
 	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
 	bzero(pxi->pxi_cursor, sizeof(pxi->pxi_cursor));
-	
+
 	for (r = 0; r < pxi->pxi_font->fontheight; r++) {
 		for (c = 0; c < pxi->pxi_font->fontwidth; c++) {
 			o = c >> 3;
@@ -693,7 +693,7 @@ px_make_cursor(pxi)
 			ip[o] |= b;
 			mp[o] |= b;
 		}
-		
+
 		ip += 8;
 		mp += 8;
 	}
@@ -723,7 +723,7 @@ px_conv_cursor(pxi, sip)
 		mp += 4;
 	}
 }
-	
+
 
 /*
  * Load a single byte into the cursor map.
@@ -735,19 +735,19 @@ px_load_cursor_data(pxi, pos, val)
 {
 	struct bt459_regs *vdac;
 	int cnt;
-	
+
 	vdac = pxi->pxi_vdac;
-	
+
 	for (cnt = 10; cnt; cnt--) {
 		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
 		BT459_WRITE_REG(vdac, DUPBYTE0(val));
-		
+
 		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
-		
+
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
 			return;
 	}
-	
+
 	printf("px%d: cursor data failed to load\n", pxi->pxi_unit);
 }
 
@@ -765,12 +765,12 @@ px_load_cursor(pxi)
 
 	vdac = pxi->pxi_vdac;
 	ip = pxi->pxi_cursor;
-	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1); 
+	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
 
 	bcnt = 0;
 	BT459_SELECT(vdac, BT459_REG_CRAM_BASE + 0);
-		
-	/* 64 pixel scan line is made with 8 bytes of cursor RAM */ 
+
+	/* 64 pixel scan line is made with 8 bytes of cursor RAM */
 	while (bcnt < sizeof(pxi->pxi_cursor)) {
 		img = *ip++;
 		msk = *mp++;
@@ -793,10 +793,10 @@ px_load_cmap(pxi, index, num)
 {
 	struct bt459_regs *vdac;
 	u_char *p;
-	
+
 	if (index < 0 || num <= 0 || index + num > 256)
 		return;
-	
+
 	vdac = pxi->pxi_vdac;
 	num = (num << 1) + num; /* multiply by 3 */
 	p = pxi->pxi_cmap + (index << 1) + index;
@@ -805,7 +805,7 @@ px_load_cmap(pxi, index, num)
 
 	for (; num--; p++)
 		BT459_WRITE_CMAP(vdac, DUPBYTE0(*p));
-}	
+}
 
 /*
  * PixelStamp board interrupt handler. We can get more than one interrupt
@@ -821,19 +821,19 @@ px_intr(xxx_sc)
 	struct bt459_regs *vdac;
 	struct px_info *pxi;
 	int caught, i;
-	
-	/* 
+
+	/*
 	 * Due to a MIPS caching peculariarity which I admittedly don't
-	 * understand, we need to access this from KSEG1, because the 
+	 * understand, we need to access this from KSEG1, because the
 	 * mappings in KUSEG and KSEG0 can get badly out of sync.
 	 */
 	pxi = (struct px_info *)
 	   MIPS_PHYS_TO_KSEG1(((struct px_softc *)xxx_sc)->px_info);
-	
+
 	stic = pxi->pxi_stic;
 	vdac = pxi->pxi_vdac;
 	caught = 0;
-	
+
 	/* Vertical retrace interrupt. */
 	if (stic->ipdvint & STIC_INT_V) {
 		stic->ipdvint = STIC_INT_V_WE | (stic->ipdvint & STIC_INT_V_EN);
@@ -843,7 +843,7 @@ px_intr(xxx_sc)
 		/*
 		 * Update colormap, video enable, cursor and cursor
 		 * colormap on vertical retrace. If you don't to this here
-		 * (i.e. at vertical retrace time) you'll see shearing and 
+		 * (i.e. at vertical retrace time) you'll see shearing and
 		 * other nasty artifacts.
 		 */
 		if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
@@ -856,7 +856,7 @@ px_intr(xxx_sc)
 
 		if (pxi->pxi_dirty & PX_DIRTY_CURSOR)
 			px_load_cursor(pxi);
-		
+
 		if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
 			u_char *cp = pxi->pxi_curcmap;
 
@@ -881,20 +881,20 @@ px_intr(xxx_sc)
 			} else {
 				BT459_SELECT(vdac, BT459_REG_PRM);
 				BT459_WRITE_REG(vdac, 0);
-				
+
 				BT459_SELECT(vdac, 0);
 				BT459_WRITE_CMAP(vdac, 0);
 				BT459_WRITE_CMAP(vdac, 0);
 				BT459_WRITE_CMAP(vdac, 0);
-				
+
 				BT459_SELECT(vdac, BT459_REG_CCR);
 				BT459_WRITE_REG(vdac, 0);
 			}
 		}
-	
+
 		if (pxi->pxi_flg & PX_ENABLE) {
 			if (pxi->pxi_dirty & PX_DIRTY_CMAP)
-				px_load_cmap(pxi, pxi->pxi_cmap_idx, 
+				px_load_cmap(pxi, pxi->pxi_cmap_idx,
 				    pxi->pxi_cmap_cnt);
 
 			if (pxi->pxi_dirty & PX_DIRTY_CURSOR_ENABLE) {
@@ -906,14 +906,14 @@ px_intr(xxx_sc)
 						i = 0x01c1c1c1;
 				} else
 					i = 0;
-				
+
 				BT459_SELECT(vdac, BT459_REG_CCR);
 				BT459_WRITE_REG(vdac, i);
 			}
 		}
 
 		pxi->pxi_dirty = 0;
-	} 
+	}
 
 	/* Packet interrupt. Clear packet done flag. */
 	if (stic->ipdvint & STIC_INT_P) {
@@ -921,8 +921,8 @@ px_intr(xxx_sc)
 		tc_wmb();
 		caught = 1;
 	}
-	
-#ifdef notyet		
+
+#ifdef notyet
 	/* Error/stray interrupt */
 	if ((stic->ipdvint & STIC_INT_E) || !caught) {
 		printf("px%d: %s intr, %x %x %x %x %x", pxi->pxi_unit,
@@ -935,40 +935,40 @@ px_intr(xxx_sc)
 		pxi->pxi_flg &= ~PX_ISR_ACTIVE;
 		return (0);
 	}
-	
+
 	/* Abort if we're awaiting reload of cliplist */
 	if (pxi->pxi_flg & PX_ISR_LOAD_CLIP)
 		return (0);
-	
+
 	cl = &pxi->pxi_cliplist;
-	
+
 	/* Does this new packet need to be clipped? */
 	if ((pxi->pxi_flg & PX_ISR_PASS_CLIP) == 0) {
 		int32_t *buf;
-		
+
 		buf = (int32_t *)pxi->pxi_rbuf + (pxi->pxi_lpr & 15) * 1024;
- 		
+
 		if (*buf & STAMP_CLIPRECT) {
 			pxi->pxi_flg |= PX_ISR_PASS_CLIP;
-	
+
 			/* Figure out where in the packet fixup should occur */
 			cl->cl_fixup = buf + 4;
-	
+
 			if (*buf & STAMP_XY_PERPACKET)
 				cl->cl_fixup++;
 
 			if (*buf & STAMP_LW_PERPACKET)
 				cl->cl_fixup++;
-				
+
 			cl->cl_cur = 0;
 		}
 	}
-	
-	/* Need to fix up packet with next cliprect? */ 
+
+	/* Need to fix up packet with next cliprect? */
 	if (pxi->pxi_flg & PX_ISR_PASS_CLIP) {
 		cl->cl_fixup[0] = cl->cl_minval[cl->cl_cur];
 		cl->cl_fixup[1] = cl->cl_maxval[cl->cl_cur];
-		
+
 		/* Need more cliprects/finished? */
 		if ((cl->cl_cur + 1) >= cl->cl_loaded) {
 			if (cl->cl_notloaded != 0)
@@ -976,8 +976,8 @@ px_intr(xxx_sc)
 			else
 				pxi->pxi_flg &= ~PX_ISR_PASS_CLIP;
 		}
-	}		
-		
+	}
+
 	/* Fire off the packet and move to next cliprect OR next packet */
 	if (*pxi->pxi_qpoll[pxi->pxi_lpr & 15] == STAMP_OK) {
 		if (pxi->pxi_flg & PX_ISR_PASS_CLIP)
@@ -1003,43 +1003,43 @@ px_alloc_pbuf(pxi)
 	if (pxi->pxi_flg & PX_ISR_ENABLE) {
 		volatile int32_t *poll;
 		int i, j;
- 	
+
  		/* Wait until we have a free buffer */
 		for (i = STAMP_RETRIES; i; i--) {
 			if (pxi->pxi_lpw - pxi->pxi_lpr < 15)
 				break;
-				
+
 			DELAY(STAMP_DELAY);
 		}
-		
-		/* 
+
+		/*
 		 * XXX not needed if only the interrupt handling on the 3min
 		 * was not ``a disastrous mess''.
 		 */
 		if (i == 0) {
-			/* 
+			/*
 			 * Dequeue stalled packets manually. This should only
 			 * ever happen during prelonged periods at splhigh().
 			 * Autoconfiguration time is an example.
 			 */
 			for (i = pxi->pxi_lpr; i < pxi->pxi_lpw; i++) {
 				poll = pxi->pxi_qpoll[i & 15];
-				
+
 				for (j = STAMP_RETRIES; j; j--) {
 					if (*poll == STAMP_OK)
 						break;
-	
+
 					DELAY(STAMP_DELAY);
 				}
 			}
 
 			pxi->pxi_lpr = pxi->pxi_lpw;
 		}
-		
-		return (int32_t *)((caddr_t)pxi->pxi_rbuf + 
+
+		return (int32_t *)((caddr_t)pxi->pxi_rbuf +
 		    ((pxi->pxi_lpw & 15) << 12));
 	}
-	
+
 	buf = (int32_t *)((u_long)pxi->pxi_rbuf + pxi->pxi_pbuf_select);
 	pxi->pxi_pbuf_select ^= 4096;
 	return buf;
@@ -1050,19 +1050,19 @@ px_alloc_pbuf(pxi)
  * Send a PixelStamp packet.
  */
 static int
-px_send_packet(pxi, buf) 
+px_send_packet(pxi, buf)
 	struct px_info *pxi;
 	int32_t *buf;
 {
 	volatile int32_t *poll;
 	int c;
-	
+
 	if (pxi->pxi_flg & PX_ISR_ENABLE) {
 		struct stic_regs *stic;
-		
+
 		pxi->pxi_lpw++;
 		stic = pxi->pxi_stic;
-		
+
 		/* Generate a packet-done interrupt */
 		c = stic->ipdvint;
 		c |= (STIC_INT_P_EN | STIC_INT_P | STIC_INT_P_WE);
@@ -1081,17 +1081,17 @@ px_send_packet(pxi, buf)
 	 * wait for ever, just in case something's wrong.
 	 */
 	tc_wmb();
-	
+
 	for (c = STAMP_RETRIES; c; c--) {
 		if (*poll == STAMP_OK)
 			return (0);
 
 		DELAY(STAMP_DELAY);
 	}
-	
-	/* 
+
+	/*
 	 * Oops... The STIC seems to have died. Reinitialize it and hope
-	 * for the best. This is a non destructive operation anyhow, except 
+	 * for the best. This is a non destructive operation anyhow, except
 	 * for the packet that we just dropped on the floor.
 	 */
 	px_init_stic(pxi, 0);
@@ -1114,7 +1114,7 @@ px_rect(pxi, x, y, w, h, color)
 
 	linewidth = (h << 2) - 1;
 	y = (y << 3) + linewidth;
-		
+
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
 	pb[1] = 0x01ffffff;
 	pb[2] = 0;
@@ -1141,10 +1141,10 @@ px_alloc_attr(cookie, fg, bg, flags, attr)
 
 	if (flags & (WSATTR_BLINK | WSATTR_UNDERLINE))
 		return (EINVAL);
-	
+
 	if (flags & WSATTR_HILIT)
 		fg += 8;
-		
+
 	if (flags & WSATTR_REVERSE) {
 		swap = fg;
 		fg = bg;
@@ -1168,7 +1168,7 @@ px_erasecols(cookie, row, col, num, attr)
 	struct px_info *pxi = (struct px_info *)cookie;
 	int32_t *pb;
 	u_int linewidth;
-	
+
 	col = (col * pxi->pxi_font->fontwidth) << 19;
 	num = (num * pxi->pxi_font->fontwidth) << 19;
 	row = row * pxi->pxi_font->fontheight;
@@ -1177,7 +1177,7 @@ px_erasecols(cookie, row, col, num, attr)
 
 	linewidth = (pxi->pxi_font->fontheight << 2) - 1;
 	row = (row << 3) + linewidth;
-		
+
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
 	pb[1] = 0x01ffffff;
 	pb[2] = 0;
@@ -1211,7 +1211,7 @@ px_eraserows(cookie, row, num, attr)
 
 	linewidth = (num << 2) - 1;
 	row = (row << 3) + linewidth;
-		
+
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
 	pb[1] = 0x01ffffff;
 	pb[2] = 0;
@@ -1236,13 +1236,13 @@ px_copyrows(cookie, src, dst, height)
 	struct px_info *pxi;
 	int32_t *pb, *pbs;
 	int num, inc, adj;
-	
+
 	pxi = (struct px_info *)cookie;
-	
-	/* 
+
+	/*
 	 * We need to do this in reverse if the destination row is below
 	 * the source.
-	 */ 
+	 */
 	if (dst > src) {
 		src += height;
 		dst += height;
@@ -1252,17 +1252,17 @@ px_copyrows(cookie, src, dst, height)
 		inc = 8;
 		adj = 0;
 	}
-	
+
 	src = (src * pxi->pxi_font->fontheight + adj) << 3;
 	dst = (dst * pxi->pxi_font->fontheight + adj) << 3;
 	height *= pxi->pxi_font->fontheight;
-	
+
 	while (height > 0) {
 		num = (height < 255 ? height : 255);
 		height -= num;
 
 		pb = pbs = px_alloc_pbuf(pxi);
-	    
+
 		/*
 		 * We can use COPYSPAN_ALIGNED here to improve performance
 		 * since the source and destination X co-ordinates are
@@ -1271,8 +1271,8 @@ px_copyrows(cookie, src, dst, height)
 		*pb++ = STAMP_CMD_COPYSPANS | STAMP_LW_PERPACKET;
 		*pb++ = (num << 24) | 0xffffff;
 		*pb++ = 0x0;
-		*pb++ = STAMP_UPDATE_ENABLE | 
-			STAMP_METHOD_COPY | 
+		*pb++ = STAMP_UPDATE_ENABLE |
+			STAMP_METHOD_COPY |
 			STAMP_SPAN |
 			STAMP_COPYSPAN_ALIGNED;
 		*pb++ = 1; /* linewidth */
@@ -1282,7 +1282,7 @@ px_copyrows(cookie, src, dst, height)
 			*pb++ = src;
 			*pb++ = dst;
 		}
-	    
+
 	    	px_send_packet(pxi, pbs);
 	}
 }
@@ -1299,38 +1299,38 @@ px_copycols(cookie, row, src, dst, num)
 	struct px_info *pxi = (struct px_info *)cookie;
 	int32_t *pb, *pbs;
 	int height, updword;
-	
+
 	/*
-	 * Due the fact that the stamp reads and writes left->right only, 
-	 * we need to "half-buffer" if the source and destination regions 
+	 * Due the fact that the stamp reads and writes left->right only,
+	 * we need to "half-buffer" if the source and destination regions
 	 * overlap, and the source is left of the destination. This is
 	 * slower than just a simple copy.
 	 */
 	updword = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY | STAMP_SPAN;
-	
+
 	if (src < dst && src + num > dst)
 		updword |= STAMP_HALF_BUFF;
-	
+
 	row = (row * pxi->pxi_font->fontheight) << 3;
 	num = (num * pxi->pxi_font->fontwidth) << 3;
 	src = row | ((src * pxi->pxi_font->fontwidth) << 19);
 	dst = row | ((dst * pxi->pxi_font->fontwidth) << 19);
 	height = pxi->pxi_font->fontheight;
-	
+
 	pb = pbs = px_alloc_pbuf(pxi);
-	    
+
 	*pb++ = STAMP_CMD_COPYSPANS | STAMP_LW_PERPACKET;
 	*pb++ = (height << 24) | 0xffffff;
 	*pb++ = 0x0;
 	*pb++ = updword;
 	*pb++ = 1; /* linewidth */
-	
+
 	for ( ; height; height--, src += 8, dst += 8) {
 		*pb++ = num;
 		*pb++ = src;
 		*pb++ = dst;
 	}
-	    
+
 	px_send_packet(pxi, pbs);
 }
 
@@ -1353,20 +1353,20 @@ px_putchar(cookie, r, c, uc, attr)
 	int		v1;	/* mask co-ords */
 	int		v2;	/* mask co-ords */
 	int		xya;	/* saved XY position */
-	
+
 	/* Don't bother blitting the space character */
 	if (uc == ' ') {
 		px_erasecols(cookie, r, c, 1, attr);
 		return;
 	}
-	
+
 	pxi = (struct px_info *)cookie;
 	font = pxi->pxi_font;
 	pb = px_alloc_pbuf(pxi);
 
-	pb[0] = STAMP_CMD_LINES | 
-		STAMP_RGB_FLAT | 
-		STAMP_XY_PERPRIMATIVE | 
+	pb[0] = STAMP_CMD_LINES |
+		STAMP_RGB_FLAT |
+		STAMP_XY_PERPRIMATIVE |
 		STAMP_LW_PERPRIMATIVE;
 	pb[2] = 0x0;
 	pb[3] = STAMP_UPDATE_ENABLE | STAMP_WE_XYMASK | STAMP_METHOD_COPY;
@@ -1388,14 +1388,14 @@ px_putchar(cookie, r, c, uc, attr)
 	v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);
 	xya = XYMASKADDR(c, r, 0, 0);
 
-	pb[4] = PACK_WORD(fr, 0); 
-	pb[5] = PACK_WORD(fr, 2); 
-	pb[6] = PACK_WORD(fr, 4); 
-	pb[7] = PACK_WORD(fr, 6); 
-	pb[8] = PACK_WORD(fr, 8); 
-	pb[9] = PACK_WORD(fr, 10); 
-	pb[10] = PACK_WORD(fr, 12); 
-	pb[11] = PACK_WORD(fr, 14); 
+	pb[4] = PACK_WORD(fr, 0);
+	pb[5] = PACK_WORD(fr, 2);
+	pb[6] = PACK_WORD(fr, 4);
+	pb[7] = PACK_WORD(fr, 6);
+	pb[8] = PACK_WORD(fr, 8);
+	pb[9] = PACK_WORD(fr, 10);
+	pb[10] = PACK_WORD(fr, 12);
+	pb[11] = PACK_WORD(fr, 14);
 	pb[12] = xya;
 	pb[13] = v1;
 	pb[14] = v2;
@@ -1420,12 +1420,12 @@ px_putchar(cookie, r, c, uc, attr)
 	if (font->fontheight > 16) {
 		i = ((font->fontheight - 16) << 2) - 1;
 		r += 16;
-		v1 = (c << 19) | ((r << 3) + i);	
-		v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);	
+		v1 = (c << 19) | ((r << 3) + i);
+		v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);
 
 		/* lower part of fg character */
-		pb[30] = PACK_WORD(fr, 16); 
-		pb[31] = PACK_WORD(fr, 18); 
+		pb[30] = PACK_WORD(fr, 16);
+		pb[31] = PACK_WORD(fr, 18);
 		pb[32] = PACK_WORD(fr, 20);
 		pb[33] = PACK_WORD(fr, 22);
 		pb[34] = PACK_WORD(fr, 24);
@@ -1453,7 +1453,7 @@ px_putchar(cookie, r, c, uc, attr)
 		pb[54] = i;
 		pb[55] = bgcolor;
 	}
-	
+
 	px_send_packet(pxi, pb);
 }
 
@@ -1470,17 +1470,17 @@ px_mapchar(cookie, c, cp)
 	struct px_info *pxi;
 
 	pxi = (struct px_info *)cookie;
-	
+
 	if (c < pxi->pxi_font->firstchar) {
 		*cp = ' ';
 		return (0);
 	}
-	
+
 	if (c - pxi->pxi_font->firstchar >= pxi->pxi_font->numchars) {
 		*cp = ' ';
 		return (0);
 	}
-	
+
 	*cp = c;
 	return (5);
 }
@@ -1495,7 +1495,7 @@ px_cursor(cookie, on, row, col)
 	int on, row, col;
 {
 	struct px_info *pxi;
-	
+
 	pxi = (struct px_info *)cookie;
 #if 0
 	if (row < 0)
@@ -1508,18 +1508,18 @@ px_cursor(cookie, on, row, col)
 	else if (col > pxi->pxi_max_col)
 		col = pxi->pxi_max_col;
 #endif
-	/* 
+	/*
 	 * These magic offsets (370, 37) were obtained by looking at sfb.c
 	 * and then bumping them until they worked right.
 	 */
 	pxi->pxi_curx = col * pxi->pxi_font->fontwidth + 370;
 	pxi->pxi_cury = row * pxi->pxi_font->fontheight + 37;
-	
+
 	if (on)
 		pxi->pxi_flg |= PX_CURSOR_ENABLE;
 	else
 		pxi->pxi_flg &= ~PX_CURSOR_ENABLE;
-	
+
 	pxi->pxi_dirty |= (PX_DIRTY_CURSOR_ENABLE | PX_DIRTY_CURSOR_POS);
 }
 
@@ -1551,7 +1551,7 @@ pxopen(dev, flag, mode, p)
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
-	
+
 	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
 		return (ENXIO);
 
@@ -1559,7 +1559,7 @@ pxopen(dev, flag, mode, p)
 
 	if (pxi->pxi_flg & PX_OPEN)
 		return (EBUSY);
-		
+
 	pxi->pxi_flg = (pxi->pxi_flg | PX_OPEN) & ~PX_CURSOR_ENABLE;
 	pxi->pxi_flg &= ~PX_ISR_MASK;
 	pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
@@ -1597,7 +1597,7 @@ pxclose(dev, flag, mode, p)
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
-	
+
 	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
 		return (EBADF);
 
@@ -1605,7 +1605,7 @@ pxclose(dev, flag, mode, p)
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-		
+
 	pxi->pxi_flg = (pxi->pxi_flg & ~PX_OPEN) | PX_ENABLE;
 	pxi->pxi_fbinfo.fi_open = 0;
 	genDeconfigMouse();
@@ -1642,7 +1642,7 @@ pxioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct pmax_fbtty *fbtty;
+	struct pmax_fbtty *fbtty;
 	struct px_info *pxi;
 	u_int *ptr;
 	int i;
@@ -1655,7 +1655,7 @@ pxioctl(dev, cmd, data, flag, p)
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-		
+
 	switch (cmd) {
 	case QIOCGINFO:
 		/*
@@ -1694,7 +1694,7 @@ pxioctl(dev, cmd, data, flag, p)
 
 	case QIOWCURSORCOLOR:
 		ptr = (u_int *)data;
-		
+
 		for (i = 0; i < 6; i++)
 			pxi->pxi_curcmap[i] = *ptr++ >> 8;
 
@@ -1704,7 +1704,7 @@ pxioctl(dev, cmd, data, flag, p)
 	case QIOSETCMAP:
 		if (i < 0 || i > 255)
 			return (-1);
-	
+
 		i = ((ColorMap *)data)->index;
 		pxi->pxi_cmap_idx = i;
 		pxi->pxi_cmap_cnt = 1;
@@ -1779,23 +1779,23 @@ pxmmap(dev, off, prot)
 	int off, prot;
 {
 	struct px_info *pxi;
-	
+
 	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
 		return (EBADF);
 
 	pxi = px_unit[minor(dev)];
-	
+
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-	
+
 	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
 
-	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);	
-	
+	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
+
 	if (off < NBPG)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_stic) + off);
-	
+
 	return (-1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.10 1999/03/16 05:59:01 nisimura Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.11 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,7 +73,7 @@ typedef int32_t		tc_offset_t;
     badaddr((void *)(tcaddr), sizeof (u_int32_t))
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
-		
+
 #define	TC_PHYS_TO_UNCACHED(addr) MIPS_PHYS_TO_KSEG1(addr)
 
 
