@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.2.2.4 2000/11/16 17:25:24 tv Exp $
+#	$NetBSD: list.m4,v 1.2.2.5 2000/11/16 23:36:48 tv Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -78,7 +78,7 @@ COPY	SRCROOT/etc/group		etc/group
 COPY	SRCROOT/etc/master.passwd	etc/master.passwd
 COPY	SRCROOT/etc/protocols	etc/protocols
 COPY	SRCROOT/etc/services	etc/services
-COPY	SRCROOT/etc/nteconfig	etc/netconfig
+COPY	SRCROOT/etc/netconfig	etc/netconfig
 
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 SPECIAL /bin/rm etc/spwd.db
