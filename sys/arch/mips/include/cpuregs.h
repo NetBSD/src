@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.26 1999/12/27 20:05:06 castor Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.27 2000/03/07 01:05:48 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,10 +144,6 @@
 #define MIPS_SR_INT_IE		0x00000001
 /*#define MIPS_SR_MBZ		0x0f8000c0*/	/* Never used, true for r3k */
 /*#define MIPS_SR_INT_MASK	0x0000ff00*/
-
-#define MIPS_SR_INT_ENAB	MIPS_SR_INT_IE	/* backwards compatibility */
-#define MIPS_SR_INT_ENA_CUR	MIPS_SR_INT_IE	/* backwards compatibility */
-
 
 
 /*
