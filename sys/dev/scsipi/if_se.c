@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.53 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: if_se.c,v 1.54 2005/01/31 23:46:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.53 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.54 2005/01/31 23:46:33 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -213,7 +213,7 @@ static void	se_ifstart __P((struct ifnet *));
 static void	sestart __P((struct scsipi_periph *));
 
 static void	sedone __P((struct scsipi_xfer *, int));
-static int	se_ioctl __P((struct ifnet *, uint32_t, caddr_t));
+static int	se_ioctl __P((struct ifnet *, ulong, caddr_t));
 static void	sewatchdog __P((struct ifnet *));
 
 static __inline uint16_t ether_cmp __P((void *, void *));
@@ -984,7 +984,7 @@ se_stop(sc)
 static int
 se_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	uint32_t cmd;
+	ulong cmd;
 	caddr_t data;
 {
 	struct se_softc *sc = ifp->if_softc;
@@ -1220,7 +1220,7 @@ seclose(dev, flag, fmt, p)
 int
 seioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	uint32_t cmd;
+	ulong cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
