@@ -50,13 +50,13 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        Other flags are `x' (disable extended expression  syntax),
        and `m' (enable multi-line mode).
 
-       Each  pattern is applied to the entire string being looked
-       up.  Depending on  the  application,  that  string  is  an
-       entire client hostname, an entire client IP address, or an
-       entire mail address.  Thus, no  parent  domain  or  parent
-       network search is done, and <i>user@domain</i> mail addresses are
-       not broken up  into  their  <i>user</i>  and  <i>domain</i>  constituent
-       parts, nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
+       Each  pattern  is applied to the entire lookup key string.
+       Depending on the application, that  string  is  an  entire
+       client hostname, an entire client IP address, or an entire
+       mail address.  Thus, no parent domain  or  parent  network
+       search  is  done,  and  <i>user@domain</i> mail addresses are not
+       broken up into their <i>user</i> and  <i>domain</i>  constituent  parts,
+       nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
        Patterns  are  applied  in  the  order as specified in the
 
@@ -74,10 +74,10 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        table, until a pattern is found that  matches  the  search
        string.
 
-       Substitution of sub-strings from the matched expression is
-       possible using $1, $2, etc.. The macros in the replacement
-       string  may  need  to  be  written as ${n} or $(n) if they
-       aren't followed by whitespace.
+       Substitution  of  substrings  from  the matched expression
+       into the result string is possible using $1, $2, etc.. The
+       macros in the result string may need to be written as ${n}
+       or $(n) if they aren't followed by whitespace.
 
 <b>EXAMPLES</b>
        # Disallow sender-specified routing. This is a must if you relay mail

@@ -112,8 +112,6 @@ static const char *dict_unix_getgrnam(DICT *unused_dict, const char *key)
 
 static void dict_unix_close(DICT *dict)
 {
-    DICT_UNIX *dict_unix = (DICT_UNIX *) dict;
-
     dict_free(dict);
 }
 

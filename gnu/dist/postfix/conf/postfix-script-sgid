@@ -194,7 +194,7 @@ check)
 		test -d $dir || {
 			$WARN creating missing Postfix $dir directory
 			mkdir $dir || exit 1
-			chmod 700 $dir; $CHATTR $dir
+			chmod 700 $dir; $CHATTR $dir 2>/dev/null
 			chown $mail_owner $dir
 		}
 	done

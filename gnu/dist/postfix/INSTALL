@@ -67,9 +67,9 @@ If your system is supported, it is one of
     Linux RedHat 5.x
     Linux RedHat 6.x
     Linux RedHat 7.x
-    Linux Slackware 3.5
-    Linux Slackware 4.0
-    Linux Slackware 7.0
+    Linux Slackware 3.x
+    Linux Slackware 4.x
+    Linux Slackware 7.x
     Linux SuSE 5.x
     Linux SuSE 6.x
     Linux SuSE 7.x
@@ -207,6 +207,10 @@ In order to install or upgrade Postfix:
 
     # make install              (interactive version, first time install)
     # make install </dev/null   (non-interactive version, for upgrades)
+
+  The non-interactive version needs the /etc/postfix/install.cf
+  file from a previous installation. If the file does not exist,
+  use interactive installation instead.
 
   The INSTALL.sh script offers suggestions for pathnames that you
   can override, either by editing INSTALL.sh or by specifying your

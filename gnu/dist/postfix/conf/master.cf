@@ -37,6 +37,7 @@
 # Max procs: the maximum number of processes that may execute this
 # service simultaneously. Default is to use a globally configurable
 # limit (the default_process_limit configuration parameter in main.cf).
+# Specify 0 for no process count limit.
 #
 # Command + args: the command to be executed. The command name is
 # relative to the Postfix program directory (pathname is controlled by
