@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.96 2004/09/29 21:30:00 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.97 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.96 2004/09/29 21:30:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.97 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -563,7 +563,7 @@ in_pcbnotify(table, faddr, fport_arg, laddr, lport_arg, errno, notify)
 	struct in_addr faddr, laddr;
 	u_int fport_arg, lport_arg;
 	int errno;
-	void (*notify) __P((struct inpcb *, int));
+	void (*notify)(struct inpcb *, int);
 {
 	struct inpcbhead *head;
 	struct inpcb *inp, *ninp;
@@ -595,7 +595,7 @@ in_pcbnotifyall(table, faddr, errno, notify)
 	struct inpcbtable *table;
 	struct in_addr faddr;
 	int errno;
-	void (*notify) __P((struct inpcb *, int));
+	void (*notify)(struct inpcb *, int);
 {
 	struct inpcb *inp, *ninp;
 

@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.21 2005/01/24 04:46:49 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.22 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -130,25 +130,23 @@ struct pack6 {
 enum direction { INBOUND, OUTBOUND };
 
 #ifdef INET
-static struct encaptab *encap4_lookup __P((struct mbuf *, int, int,
-	enum direction));
+static struct encaptab *encap4_lookup(struct mbuf *, int, int, enum direction);
 #endif
 #ifdef INET6
-static struct encaptab *encap6_lookup __P((struct mbuf *, int, int,
-	enum direction));
+static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction);
 #endif
-static int encap_add __P((struct encaptab *));
-static int encap_remove __P((struct encaptab *));
-static int encap_afcheck __P((int, const struct sockaddr *, const struct sockaddr *));
+static int encap_add(struct encaptab *);
+static int encap_remove(struct encaptab *);
+static int encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
 #ifdef USE_RADIX
-static struct radix_node_head *encap_rnh __P((int));
-static int mask_matchlen __P((const struct sockaddr *));
+static struct radix_node_head *encap_rnh(int);
+static int mask_matchlen(const struct sockaddr *);
 #endif
 #ifndef USE_RADIX
-static int mask_match __P((const struct encaptab *, const struct sockaddr *,
-		const struct sockaddr *));
+static int mask_match(const struct encaptab *, const struct sockaddr *,
+		const struct sockaddr *);
 #endif
-static void encap_fillarg __P((struct mbuf *, const struct encaptab *));
+static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
 LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
@@ -668,7 +666,7 @@ const struct encaptab *
 encap_attach_func(af, proto, func, psw, arg)
 	int af;
 	int proto;
-	int (*func) __P((const struct mbuf *, int, int, void *));
+	int (*func)(const struct mbuf *, int, int, void *);
 	const struct protosw *psw;
 	void *arg;
 {

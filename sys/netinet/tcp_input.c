@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.218 2005/01/28 00:18:22 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.219 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.218 2005/01/28 00:18:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.219 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -338,11 +338,10 @@ extern struct evcnt tcp_reass_fragdup;
 #endif /* TCP_REASS_COUNTERS */
 
 #ifdef INET
-static void tcp4_log_refused __P((const struct ip *, const struct tcphdr *));
+static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
 #endif
 #ifdef INET6
-static void tcp6_log_refused
-    __P((const struct ip6_hdr *, const struct tcphdr *));
+static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
