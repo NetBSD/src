@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.5 2000/03/21 04:42:58 itojun Exp $	*/
+/*	$NetBSD: shb.c,v 1.6 2000/04/21 13:35:27 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -72,6 +72,8 @@ void Xsoftserial __P((void));
 void Xsoftnet __P((void));
 void Xsoftclock __P((void));
 void init_soft_intr_handler __P((void));
+void enable_ext_intr __P((void));
+void disable_ext_intr __P((void));
 
 struct cfattach shb_ca = {
 	sizeof(struct shb_softc), shbmatch, shbattach
