@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.87 2002/04/23 17:20:58 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.88 2002/04/24 16:09:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.87 2002/04/23 17:20:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.88 2002/04/24 16:09:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1390,6 +1390,7 @@ fdcheckstd(p)
 	struct nameidata nd;
 	struct filedesc *fdp;
 	struct file *fp;
+	struct file *devnullfp;
 	register_t retval;
 	int fd, i, error, flags = FREAD|FWRITE, devnull = -1, logged = 0;
 
@@ -1420,6 +1421,7 @@ fdcheckstd(p)
 			fp->f_type = DTYPE_VNODE;
 			VOP_UNLOCK(nd.ni_vp, 0);
 			devnull = fd;
+			devnullfp = fp;
 			FILE_SET_MATURE(fp);
 			FILE_UNUSE(fp, p);
 		} else {
@@ -1431,6 +1433,9 @@ restart:
 				}
 				return error;
 			}
+
+			FILE_USE(devnullfp);
+			/* finishdup() will unuse the descriptors for us */
 			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
 				return error;
 		}
