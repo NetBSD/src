@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.25 2001/07/12 21:25:31 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.26 2001/07/20 07:07:28 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.25 2001/07/12 21:25:07 thorpej Exp 
+ *	NetBSD: miidevs,v 1.26 2001/07/20 07:06:42 thorpej Exp 
  */
 
 /*-
@@ -67,7 +67,7 @@
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
-#define	MII_OUI_MARVELL	0x000ac2	/* Marvell Semiconductor */
+#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
@@ -101,6 +101,7 @@
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 
 /*
  * List of known models.  Grouped by oui.
@@ -165,8 +166,8 @@
 #define	MII_STR_LEVEL1_LXT1000	"LXT1000 1000BASE-T media interface"
 
 /* Marvell Semiconductor PHYs */
-#define	MII_MODEL_MARVELL_E1000	0x0005
-#define	MII_STR_MARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000	0x0005
+#define	MII_STR_xxMARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
