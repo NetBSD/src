@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.6 2003/02/21 20:15:01 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.7 2003/02/23 21:26:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -883,7 +883,7 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	md_get_uint16le(mbp, &time);
 	md_get_uint16le(mbp, &date);
 	md_get_uint32le(mbp, &size);
-	KASSERT(ctx->f_name == ctx->f_fname);
+	KASSERT(ctx->f_name == (char *) ctx->f_fname);
 	cp = ctx->f_name;
 	md_get_mem(mbp, cp, sizeof(ctx->f_fname), MB_MSYSTEM);
 	cp[sizeof(ctx->f_fname) - 1] = '\0';
