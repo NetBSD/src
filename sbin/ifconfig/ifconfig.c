@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.87 2000/07/20 18:42:03 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.88 2000/07/21 04:53:03 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.87 2000/07/20 18:42:03 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.88 2000/07/21 04:53:03 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,6 +159,7 @@ void 	setifipdst __P((const char *, int));
 void 	setifmetric __P((const char *, int));
 void 	setifmtu __P((const char *, int));
 void	setifnwid __P((const char *, int));
+void	setifnwkey __P((const char *, int));
 void 	setifnetmask __P((const char *, int));
 void	setifprefixlen __P((const char *, int));
 void 	setnsellength __P((const char *, int));
@@ -232,6 +233,8 @@ const struct cmd {
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
+	{ "nwkey",	NEXTARG,	0,		setifnwkey },
+	{ "-nwkey",	-1,		0,		setifnwkey },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -282,6 +285,8 @@ void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
 void 	status __P((const u_int8_t *, int));
 void 	usage __P((void));
+const char *get_string __P((const char *, const char *, u_int8_t *, int *));
+void	print_string __P((const u_int8_t *, int));
 char	*sec2str __P((time_t));
 
 const char *get_media_type_string __P((int));
@@ -1147,6 +1152,88 @@ setifmtu(val, d)
 		warn("SIOCSIFMTU");
 }
 
+const char *
+get_string(val, sep, buf, lenp)
+	const char *val, *sep;
+	u_int8_t *buf;
+	int *lenp;
+{
+	int len;
+	int hexstr;
+	u_int8_t *p;
+
+	len = *lenp;
+	p = buf;
+	hexstr = (val[0] == '0' && tolower((u_char)val[1]) == 'x');
+	if (hexstr)
+		val += 2;
+	for (;;) {
+		if (*val == '\0')
+			break;
+		if (sep != NULL && strchr(sep, *val) != NULL) {
+			val++;
+			break;
+		}
+		if (hexstr) {
+			if (!isxdigit((u_char)val[0]) ||
+			    !isxdigit((u_char)val[1])) {
+				warnx("bad hexadecimal digits");
+				return NULL;
+			}
+		}
+		if (p > buf + len) {
+			if (hexstr)
+				warnx("hexadecimal digits too long");
+			else
+				warnx("strings too long");
+			return NULL;
+		}
+		if (hexstr) {
+#define	tohex(x)	(isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
+			*p++ = (tohex((u_char)val[0]) << 4) |
+			    tohex((u_char)val[1]);
+#undef tohex
+			val += 2;
+		} else
+			*p++ = *val++;
+	}
+	len = p - buf;
+	if (len < *lenp)
+		memset(p, 0, *lenp - len);
+	*lenp = len;
+	return val;
+}
+
+void
+print_string(buf, len)
+	const u_int8_t *buf;
+	int len;
+{
+	int i;
+	int hasspc;
+
+	i = 0;
+	hasspc = 0;
+	if (len < 2 || buf[0] != '0' || tolower(buf[1]) != 'x') {
+		for (; i < len; i++) {
+			if (!isprint(buf[i]))
+				break;
+			if (isspace(buf[i]))
+				hasspc++;
+		}
+	}
+	if (i == len) {
+		if (hasspc || len == 0)
+			printf("\"%.*s\"", len, buf);
+		else
+			printf("%.*s", len, buf);
+	} else {
+		printf("0x");
+		for (i = 0; i < len; i++)
+			printf("%02x", buf[i]);
+	}
+}
+
 void
 setifnwid(val, d)
 	const char *val;
@@ -1154,37 +1241,11 @@ setifnwid(val, d)
 {
 	struct ieee80211_nwid nwid;
 	int len;
-	u_int8_t *p;
 
-	memset(&nwid, 0, sizeof(nwid));
-	if (val[0] == '0' && (val[1] == 'x' || val[1] == 'X')) {
-		val += 2;
-		p = nwid.i_nwid;
-		while (isxdigit((u_char)val[0]) && isxdigit((u_char)val[1])) {
-			if (p >= nwid.i_nwid + sizeof(nwid.i_nwid)) {
-				warnx("SIOCS80211NWID: Too long nwid.");
-				return;
-			}
-#define	tohex(x)	(isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
-			*p++ = (tohex((u_char)val[0]) << 4) |
-			    tohex((u_char)val[1]);
-#undef tohex
-			val += 2;
-		}
-		if (*val != '\0') {
-			warnx("SIOCS80211NWID: Bad hexadecimal digits.");
-			return;
-		}
-		nwid.i_len = p - nwid.i_nwid;
-	} else {
-		len = strlen(val);
-		if (len > sizeof(nwid.i_nwid)) {
-			warnx("SIOCS80211NWID: Too long nwid.");
-			return;
-		}
-		nwid.i_len = len;
-		memcpy(nwid.i_nwid, val, len);
-	}
+	len = sizeof(nwid.i_nwid);
+	if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
+		return;
+	nwid.i_len = len;
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&nwid;
 	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
@@ -1192,10 +1253,59 @@ setifnwid(val, d)
 }
 
 void
+setifnwkey(val, d)
+	const char *val;
+	int d;
+{
+	struct ieee80211_nwkey nwkey;
+	int i;
+	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
+
+	nwkey.i_wepon = 1;
+	nwkey.i_defkid = 1;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
+		nwkey.i_key[i].i_keydat = keybuf[i];
+	}
+	if (d != 0) {
+		/* disable WEP encryption */
+		nwkey.i_wepon = 0;
+		i = 0;
+	} else if (isdigit(val[0]) && val[1] == ':') {
+		/* specifying a full set of four keys */
+		nwkey.i_defkid = val[0] - '0';
+		val += 2;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			val = get_string(val, ",", keybuf[i],
+			    &nwkey.i_key[i].i_keylen);
+			if (val == NULL)
+				return;
+		}
+		if (*val != '\0') {
+			warnx("SIOCS80211NWKEY: too many keys.");
+			return;
+		}
+	} else {
+		val = get_string(val, NULL, keybuf[0],
+		    &nwkey.i_key[0].i_keylen);
+		if (val == NULL)
+			return;
+		i = 1;
+	}
+	for (; i < IEEE80211_WEP_NKID; i++)
+		nwkey.i_key[i].i_keylen = 0;
+	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
+	if (ioctl(s, SIOCS80211NWKEY, (caddr_t)&nwkey) < 0)
+		warn("SIOCS80211NWKEY");
+}
+
+void
 ieee80211_status()
 {
 	int i;
 	struct ieee80211_nwid nwid;
+	struct ieee80211_nwkey nwkey;
+	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (caddr_t)&nwid;
@@ -1206,21 +1316,55 @@ ieee80211_status()
 		warnx("SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
 		return;
 	}
-	i = 0;
-	if (nwid.i_nwid[0] != '0' || tolower(nwid.i_nwid[1]) != 'x') {
-		for (; i < nwid.i_len; i++) {
-			if (!isprint(nwid.i_nwid[i]))
-				break;
+	printf("\tnwid ");
+	print_string(nwid.i_nwid, nwid.i_len);
+	memset(&nwkey, 0, sizeof(nwkey));
+	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
+	/* show nwkey only when WEP is enabled */
+	if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) != 0 ||
+	    nwkey.i_wepon == 0) {
+		printf("\n");
+		return;
+	}
+
+	printf(" nwkey ");
+	/* try to retrieve WEP keys */
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		nwkey.i_key[i].i_keydat = keybuf[i];
+		nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
+	}
+	if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) != 0) {
+		printf("*****");
+	} else {
+		if (nwkey.i_defkid != 1) {
+			/* non default key or multiple keys defined */
+			i = 0;
+		} else if (nwkey.i_key[0].i_keylen >= 2 &&
+		    isdigit(nwkey.i_key[0].i_keydat[0]) &&
+		    nwkey.i_key[0].i_keydat[1] == ':') {
+			/* ambiguous */
+			i = 0;
+		} else {
+			for (i = 1; i < IEEE80211_WEP_NKID; i++) {
+				if (nwkey.i_key[i].i_keylen != 0)
+					break;
+			}
+		}
+		if (i == IEEE80211_WEP_NKID) {
+			/* only show the first key */
+			print_string(nwkey.i_key[0].i_keydat,
+			    nwkey.i_key[0].i_keylen);
+		} else {
+			printf("%d:", nwkey.i_defkid);
+			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+				if (i > 0)
+					printf(",");
+				print_string(nwkey.i_key[i].i_keydat,
+				    nwkey.i_key[i].i_keylen);
+			}
 		}
 	}
-	if (i == nwid.i_len)
-		printf("\tnwid \"%.*s\"\n", nwid.i_len, nwid.i_nwid);
-	else {
-		printf("\tnwid 0x");
-		for (i = 0; i < nwid.i_len; i++)
-			printf("%02x", nwid.i_nwid[i]);
-		printf("\n");
-	}
+	printf("\n");
 }
 
 void
@@ -2575,6 +2719,7 @@ usage()
 		"\t[ metric n ]\n"
 		"\t[ mtu n ]\n"
 		"\t[ nwid network_id ]\n"
+		"\t[ nwkey network_key | -nwkey ]\n"
 		"\t[ [ af ] tunnel src_addr dest_addr ]\n"
 		"\t[ deletetunnel ]\n"
 		"\t[ arp | -arp ]\n"
