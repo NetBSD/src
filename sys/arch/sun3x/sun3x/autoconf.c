@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1997/01/22 06:19:34 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1997/01/23 22:44:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
 #include "pmap_pvt.h"
 
 int cold;
