@@ -1,6 +1,6 @@
-# $NetBSD: rc.subr,v 1.40 2002/02/25 07:12:47 lukem Exp $
+# $NetBSD: rc.subr,v 1.41 2002/02/25 08:11:23 lukem Exp $
 #
-# Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+# Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -258,7 +258,7 @@ wait_for_pids()
 #	${_arg}_precmd	n	If set, run just before performing the main
 #				action in the default command (i.e, after
 #				checking for required bits and process
-#				(non)existance).
+#				(non)existence).
 #				If this completes with a non-zero exit code,
 #				don't run ${_arg}_cmd.
 #
