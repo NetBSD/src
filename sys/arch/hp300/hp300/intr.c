@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2000/07/02 04:40:37 cgd Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2000/07/17 06:53:42 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ u_short hp300_ipls[HP300_NIPLS];
 extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl __P((void));
+void	netintr __P((void));
 
 void
 intr_init()
