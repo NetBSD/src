@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey.c,v 1.15 2003/03/09 01:03:55 lukem Exp $	*/
-/*	$KAME: pfkey.c,v 1.41 2002/05/14 10:59:09 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.16 2003/07/22 03:31:44 itojun Exp $	*/
+/*	$KAME: pfkey.c,v 1.43 2003/06/27 07:09:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.15 2003/03/09 01:03:55 lukem Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.16 2003/07/22 03:31:44 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -703,14 +703,14 @@ pfkey_recv_register(so)
 {
 	pid_t pid = getpid();
 	struct sadb_msg *newmsg;
-	int error;
+	int error = -1;
 
 	/* receive message */
 	for (;;) {
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
-		if (newmsg->sadb_msg_type == SADB_REGISTER
-		    && newmsg->sadb_msg_pid == pid)
+		if (newmsg->sadb_msg_type == SADB_REGISTER &&
+		    newmsg->sadb_msg_pid == pid)
 			break;
 		free(newmsg);
 	}
