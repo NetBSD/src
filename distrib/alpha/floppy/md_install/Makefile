@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/05/02 08:50:12 ross Exp $
+#	$NetBSD: Makefile,v 1.6 1998/05/13 19:07:46 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,10 +20,13 @@ IMAGE?=		xxx-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
 DISKTYPE=	floppy
+
+CRUNCHCONF=	${CBIN}.conf
+CRUNCHFILES=	${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+CRUNCHCMD=	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
@@ -56,8 +59,8 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+${CRUNCHFILES}:	${CRUNCHCONF}
+	if ${CRUNCHCMD}; then exit 0; else rm -f ${CRUNCHFILES}; exit 1; fi
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
