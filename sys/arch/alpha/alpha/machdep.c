@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1996/07/11 05:31:21 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1996/07/11 20:14:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -927,7 +927,7 @@ frametoreg(framep, regp)
 	regp->r_regs[R_T12] = framep->tf_regs[FRAME_T12];
 	regp->r_regs[R_AT] = framep->tf_regs[FRAME_AT];
 	regp->r_regs[R_GP] = framep->tf_regs[FRAME_GP];
-	regp->r_regs[R_SP] = framep->tf_regs[FRAME_SP];
+	/* regp->r_regs[R_SP] = framep->tf_regs[FRAME_SP]; XXX */
 	regp->r_regs[R_ZERO] = 0;
 }
 
@@ -967,7 +967,7 @@ regtoframe(regp, framep)
 	framep->tf_regs[FRAME_T12] = regp->r_regs[R_T12];
 	framep->tf_regs[FRAME_AT] = regp->r_regs[R_AT];
 	framep->tf_regs[FRAME_GP] = regp->r_regs[R_GP];
-	framep->tf_regs[FRAME_SP] = regp->r_regs[R_SP];
+	/* framep->tf_regs[FRAME_SP] = regp->r_regs[R_SP]; XXX */
 	/* ??? = regp->r_regs[R_ZERO]; */
 }
 
@@ -989,6 +989,8 @@ regdump(framep)
 	struct reg reg;
 
 	frametoreg(framep, &reg);
+	reg.r_regs[R_SP] = alpha_pal_rdusp();
+
 	printf("REGISTERS:\n");
 	printregs(&reg);
 }
@@ -1034,8 +1036,7 @@ sendsig(catcher, sig, mask, code)
 		    psp->ps_sigstk.ss_size - rndfsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		scp = (struct sigcontext *)(frame->tf_regs[FRAME_SP] -
-		    rndfsize);
+		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
 	if ((u_long)scp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)grow(p, (u_long)scp);
 #ifdef DEBUG
@@ -1073,6 +1074,7 @@ sendsig(catcher, sig, mask, code)
 	/* copy the registers. */
 	frametoreg(frame, (struct reg *)ksc.sc_regs);
 	ksc.sc_regs[R_ZERO] = 0xACEDBADE;		/* magic number */
+	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
 
 	/* save the floating-point state, if necessary, then copy it. */
 	if (p == fpcurproc) {
@@ -1110,11 +1112,11 @@ sendsig(catcher, sig, mask, code)
 	 */
 	frame->tf_regs[FRAME_PC] =
 	    (u_int64_t)PS_STRINGS - (esigcode - sigcode);
-	frame->tf_regs[FRAME_SP] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = code;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
+	alpha_pal_wrusp((unsigned long)scp);
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -1182,6 +1184,7 @@ sys_sigreturn(p, v, retval)
 	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
 	regtoframe((struct reg *)ksc.sc_regs, p->p_md.md_tf);
+	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	/* XXX ksc.sc_ownedfp ? */
 	if (p == fpcurproc)
@@ -1257,7 +1260,7 @@ setregs(p, pack, stack, retval)
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
 #define FP_RN 2 /* XXX */
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
-	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
+	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
 

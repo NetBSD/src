@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 1996/07/11 05:31:23 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -63,7 +63,8 @@
 #include <machine/frame.h>
 
 #define	process_frame(p)	((p)->p_md.md_tf)
-#define	process_fpframe(p)	(&(p)->p_addr->u_pcb.pcb_fp)
+#define	process_pcb(p)		(&(p)->p_addr->u_pcb)
+#define	process_fpframe(p)	(&(process_pcb(p)->pcb_fp))
 
 int
 process_read_regs(p, regs)
@@ -73,6 +74,7 @@ process_read_regs(p, regs)
 
 	frametoreg(process_frame(p), regs);
 	regs->r_regs[R_ZERO] = process_frame(p)->tf_regs[FRAME_PC];
+	regs->r_regs[R_SP] = process_pcb(p)->pcb_hw.apcb_usp;
 	return (0);
 }
 
@@ -82,8 +84,9 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 
-	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
 	regtoframe(regs, process_frame(p));
+	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
+	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1996/07/11 05:31:24 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1996/07/11 20:14:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -401,7 +401,7 @@ syscall(code, framep)
 	default:
 		if (nargs > 10)		/* XXX */
 			panic("syscall: too many args (%d)", nargs);
-		error = copyin((caddr_t)(framep->tf_regs[FRAME_SP]), &args[6],
+		error = copyin((caddr_t)(alpha_pal_rdusp()), &args[6],
 		    (nargs - 6) * sizeof(u_int64_t));
 	case 6:	
 		args[5] = framep->tf_regs[FRAME_A5];
