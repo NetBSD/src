@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.15 2000/10/10 10:07:35 ad Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.16 2000/10/15 11:58:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -421,16 +421,20 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
+		if (ifv->ifv_p != NULL) {
+			ifp->if_flags |= IFF_UP;
 
-		switch (ifa->ifa_addr->sa_family) {
+			switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
+			case AF_INET:
+				arp_ifinit(ifp, ifa);
+				break;
 #endif
-		default:
-			break;
+			default:
+				break;
+			}
+		} else {
+			error = EINVAL;
 		}
 		break;
 
@@ -498,11 +502,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-		error = (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr);
+		if (ifv->ifv_p != NULL) {
+			error = (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr);
+		} else {
+			error = EINVAL;
+		}
 		break;
 
 	case SIOCDELMULTI:
-		error = (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr);
+		if (ifv->ifv_p != NULL) {
+			error = (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr);
+		} else {
+			error = EINVAL;
+		}
 		break;
 
 	default:
