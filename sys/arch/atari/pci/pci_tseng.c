@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.1 1999/03/15 15:47:22 leo Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.2 1999/03/26 08:21:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -40,7 +40,7 @@
 #define PCI_LINMEMBASE	0x0e000000
 #define PCI_IOBASE	0x800
 
-static void et6000_init(volatile u_char *, u_char *);
+static void et6000_init(volatile u_char *, u_char *, int);
 
 /*
  * Use tables for the card init...
@@ -64,6 +64,9 @@ static u_char crt_tab[] = {
 	0x85, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
 	0x05, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00 };
 
+static u_char ras_cas_tab[] = {
+	0x11, 0x14, 0x15 };
+
 void
 tseng_init(pc, tag, id, ba, fb)
 	pci_chipset_tag_t	pc;
@@ -72,7 +75,7 @@ tseng_init(pc, tag, id, ba, fb)
 	volatile u_char		*ba;
 	u_char			*fb;
 {
-	int			i, csr;
+	int			i, j, csr;
 	int			is_et6000 = 0;
 
 	is_et6000 = (id ==  PCI_PRODUCT_TSENG_ET6000) ? 1 : 0;
@@ -87,8 +90,26 @@ tseng_init(pc, tag, id, ba, fb)
 	csr |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
-	if (is_et6000)
-		et6000_init(ba, fb);
+	if (is_et6000) {
+		/*
+		 * The et6[01]000 cards have MDRAM chips. The
+		 * timeing to those chips is not properly initialized
+		 * by the card on init. The way to determine the
+		 * values is not documented either :-( So that's why
+		 * all this mess below (and in et6000_init()....
+		 */
+		for (i = 0; i < sizeof(ras_cas_tab); i++) {
+			et6000_init(ba, fb, i);
+			for (j = 0; j < 32; j++)
+				fb[j] = j;
+			for (j = 0; j < 32; j++)
+				if (fb[j] != j)
+					break;
+			if (j == 32)
+				break;
+		}
+	}
+
 
 	vgaw(ba, GREG_MISC_OUTPUT_W,      0x63);
 	vgaw(ba, GREG_VIDEOSYSENABLE,     0x01);
@@ -140,9 +161,10 @@ tseng_init(pc, tag, id, ba, fb)
  */
 
 static void
-et6000_init(ba, fb)
+et6000_init(ba, fb, iter)
 volatile u_char *ba;
 u_char		*fb;
+int		iter;
 {
 
 	int		i;
@@ -158,7 +180,7 @@ u_char		*fb;
 	ba[0x40] = 0x06;	/* Use standard vga addressing		*/
 	ba[0x41] = 0x2a;	/* Performance control			*/
 	ba[0x43] = 0x02;	/* XCLK/SCLK config			*/
-	ba[0x44] = 0x11;	/* RAS/CAS config			*/
+	ba[0x44] = ras_cas_tab[iter];	/* RAS/CAS config		*/
 	ba[0x46] = 0x00;	/* CRT display feature			*/
 	ba[0x47] = 0x10;
 	ba[0x58] = 0x00;	/* Video Control 1			*/
@@ -185,6 +207,5 @@ u_char		*fb;
 		ba[0x45] = bv | 0x70;	/* Program latency value	*/
 		ma[0x0] = 0;		/* Yeah, right :-(		*/
 		ba[0x45] = bv;		/* Back to normal		*/
-		ba[0x44] = 0x14;	/* RAS/CAS config		*/
 	}
 }
