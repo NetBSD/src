@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.6 1996/12/02 05:44:17 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.7 1996/12/05 02:39:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -171,6 +171,8 @@ depca_isa_probe(lesc, ia)
 	/* Just needed to check mapability; don't need it anymore. */
 	bus_space_unmap(ia->ia_memt, ia->ia_maddr, ia->ia_msize);
 
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 	lesc->sc_rap = DEPCA_RAP;
 	lesc->sc_rdp = DEPCA_RDP;
 	lesc->sc_card = DEPCA;
@@ -249,8 +251,6 @@ found:
 	 * XXX INDIRECT BROKENNESS!
 	 * XXX Should always unmap, and re-map in if_le_isa_attach().
 	 */
-	lesc->sc_iot = iot;
-	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 16;
 	ia->ia_drq = DRQUNK;
@@ -276,6 +276,8 @@ ne2100_isa_probe(lesc, ia)
 	if (bus_space_map(iot, iobase, 24, 0, &ioh))
 		return 0;
 
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 	lesc->sc_rap = NE2100_RAP;
 	lesc->sc_rdp = NE2100_RDP;
 	lesc->sc_card = NE2100;
@@ -295,8 +297,6 @@ ne2100_isa_probe(lesc, ia)
 	 * XXX INDIRECT BROKENNESS!
 	 * XXX Should always unmap, and re-map in if_le_isa_attach().
 	 */
-	lesc->sc_iot = iot;
-	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 24;
 	return 1;
@@ -317,6 +317,8 @@ bicc_isa_probe(lesc, ia)
 	if (bus_space_map(iot, iobase, 16, 0, &ioh))
 		return 0;
 
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 	lesc->sc_rap = BICC_RAP;
 	lesc->sc_rdp = BICC_RDP;
 	lesc->sc_card = BICC;
@@ -336,8 +338,6 @@ bicc_isa_probe(lesc, ia)
 	 * XXX INDIRECT BROKENNESS!
 	 * XXX Should always unmap, and re-map in if_le_isa_attach().
 	 */
-	lesc->sc_iot = iot;
-	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 16;
 	return 1;
