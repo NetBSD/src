@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.113 2003/03/05 11:40:55 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.114 2003/03/12 15:26:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.113 2003/03/05 11:40:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.114 2003/03/12 15:26:33 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -269,13 +269,6 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
-	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
-	 */
-	p->p_stat = SDEAD;
-	p->p_nrlwps--;
-	l->l_stat = SDEAD;
-
-	/*
 	 * Save exit status and final rusage info, adding in child rusage
 	 * info and self times.
 	 * In order to pick up the time for the current execution, we must
@@ -285,6 +278,13 @@ exit1(struct lwp *l, int rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
+	 */
+	p->p_stat = SDEAD;
+	p->p_nrlwps--;
+	l->l_stat = SDEAD;
 
 	/*
 	 * Remove proc from pidhash chain so looking it up won't
