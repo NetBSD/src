@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.257 2000/09/13 13:53:06 tron Exp $
+$NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -920,7 +920,6 @@ product DELTA 8139	0x1360	8139 Ethernet
 product DIAMOND VIPER	0x9001	Viper/PCI
 
 /* D-Link Systems products */
-product DLINK DFE530TX	$$$
 product DLINK DFE550TX	0x1002	DFE-550TX 10/100 Ethernet
 
 /* Distributed Processing Technology products */
