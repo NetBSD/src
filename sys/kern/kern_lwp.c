@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.8 2003/06/23 11:02:05 martin Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.9 2003/07/14 14:59:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.9 2003/07/14 14:59:01 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 
