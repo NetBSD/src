@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.268 2004/01/05 00:12:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.269 2004/01/05 04:05:06 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -175,10 +175,7 @@ release-info:
 	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
 		echo "	$$(date -u)  $${USER-root}@$$(hostname)"; \
 		echo ; \
-		echo "Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004" ; \
-		echo "	The NetBSD Foundation, Inc.  All rights reserved."; \
-		echo "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994"; \
-		echo "	The Regents of the University of California.  All rights reserved."; \
+		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
 	) >${.TARGET}
