@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.172 2004/07/22 20:07:38 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.173 2004/07/22 20:12:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.172 2004/07/22 20:07:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.173 2004/07/22 20:12:20 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -567,6 +567,8 @@ wi_intr(void *arg)
 
 		if (status & WI_EV_INFO)
 			wi_info_intr(sc);
+
+		CSR_WRITE_2(sc, WI_EVENT_ACK, status);
 
 		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
 		    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0 &&
@@ -1437,7 +1439,6 @@ wi_rx_intr(struct wi_softc *sc)
 
 	/* First read in the frame header */
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr))) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 		ifp->if_ierrors++;
 		DPRINTF(("wi_rx_intr: read fid %x failed\n", fid));
 		return;
@@ -1452,7 +1453,6 @@ wi_rx_intr(struct wi_softc *sc)
 	status = le16toh(frmhdr.wi_status);
 	if ((status & WI_STAT_ERRSTAT) != 0 &&
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 		ifp->if_ierrors++;
 		DPRINTF(("wi_rx_intr: fid %x error status %x\n", fid, status));
 		return;
@@ -1469,7 +1469,6 @@ wi_rx_intr(struct wi_softc *sc)
 	 */
 	if (off + len > MCLBYTES) {
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 			ifp->if_ierrors++;
 			DPRINTF(("wi_rx_intr: oversized packet\n"));
 			return;
@@ -1479,7 +1478,6 @@ wi_rx_intr(struct wi_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 		ifp->if_ierrors++;
 		DPRINTF(("wi_rx_intr: MGET failed\n"));
 		return;
@@ -1487,7 +1485,6 @@ wi_rx_intr(struct wi_softc *sc)
 	if (off + len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 			m_freem(m);
 			ifp->if_ierrors++;
 			DPRINTF(("wi_rx_intr: MCLGET failed\n"));
@@ -1501,8 +1498,6 @@ wi_rx_intr(struct wi_softc *sc)
 	    m->m_data + sizeof(struct ieee80211_frame), len);
 	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + len;
 	m->m_pkthdr.rcvif = ifp;
-
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
@@ -1635,7 +1630,6 @@ wi_tx_ex_intr(struct wi_softc *sc)
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
 out:
 	ifp->if_flags &= ~IFF_OACTIVE;
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX_EXC);
 }
 
 STATIC void
@@ -1646,7 +1640,6 @@ wi_txalloc_intr(struct wi_softc *sc)
 	int fid, cur;
 
 	fid = CSR_READ_2(sc, WI_ALLOC_FID);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
 
 	cur = sc->sc_txcur;
 	if (sc->sc_txd[cur].d_fid != fid) {
@@ -1724,7 +1717,6 @@ wi_tx_intr(struct wi_softc *sc)
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
 out:
 	ifp->if_flags &= ~IFF_OACTIVE;
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX);
 }
 
 STATIC void
@@ -1806,7 +1798,6 @@ wi_info_intr(struct wi_softc *sc)
 		    le16toh(ltbuf[1]), le16toh(ltbuf[0])));
 		break;
 	}
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_INFO);
 }
 
 STATIC int
