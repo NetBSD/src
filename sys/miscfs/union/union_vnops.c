@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.44 1999/03/25 13:05:42 bouyer Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.45 1999/08/01 00:00:57 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1595,7 +1595,9 @@ union_lock(v)
 	int flags = ap->a_flags;
 	struct union_node *un;
 	int error;
-
+#ifdef DIAGNOSTIC
+	int drain = 0;
+#endif
 
 	genfs_nolock(ap);
 	/*
@@ -1609,6 +1611,31 @@ union_lock(v)
 	 */
 	flags &= ~LK_INTERLOCK;
 
+	un = VTOUNION(vp);
+#ifdef DIAGNOSTIC
+	if (un->un_flags & (UN_DRAINING|UN_DRAINED)) {
+		if (un->un_flags & UN_DRAINED)
+			panic("union: %p: warning: locking decommissioned lock\n", vp);
+		if ((flags & LK_TYPE_MASK) != LK_RELEASE)
+			panic("union: %p: non-release on draining lock: %d\n",
+			    vp, flags & LK_TYPE_MASK);
+		un->un_flags &= ~UN_DRAINING;
+		if ((flags & LK_REENABLE) == 0)
+			un->un_flags |= UN_DRAINED;
+	}
+#endif
+	
+	/*
+	 * Don't pass DRAIN through to sub-vnode lock; keep track of
+	 * DRAIN state at this level, and just get an exclusive lock
+	 * on the underlying vnode.
+	 */
+	if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
+#ifdef DIAGNOSTIC
+		drain = 1;
+#endif
+		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
+	}
 start:
 	un = VTOUNION(vp);
 
@@ -1633,6 +1660,7 @@ start:
 #endif
 	}
 
+	/* XXX ignores LK_NOWAIT */
 	if (un->un_flags & UN_LOCKED) {
 #ifdef DIAGNOSTIC
 		if (curproc && un->un_pid == curproc->p_pid &&
@@ -1649,6 +1677,8 @@ start:
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;
+	if (drain)
+		un->un_flags |= UN_DRAINING;
 #endif
 
 	un->un_flags |= UN_LOCKED;
@@ -1682,6 +1712,8 @@ union_unlock(v)
 	if (curproc && un->un_pid != curproc->p_pid &&
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
+	if (un->un_flags & UN_DRAINED)
+		panic("union: %p: warning: unlocking decommissioned lock\n", ap->a_vp);			
 #endif
 
 	un->un_flags &= ~UN_LOCKED;
@@ -1698,6 +1730,10 @@ union_unlock(v)
 
 #ifdef DIAGNOSTIC
 	un->un_pid = 0;
+	if (un->un_flags & UN_DRAINING) {
+		un->un_flags |= UN_DRAINED;
+		un->un_flags &= ~UN_DRAINING;
+	}
 #endif
 	genfs_nounlock(ap);
 
