@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.37 2004/02/17 02:38:47 itojun Exp $	*/
+/*	$NetBSD: sort.c,v 1.38 2004/02/17 13:52:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.37 2004/02/17 02:38:47 itojun Exp $");
+__RCSID("$NetBSD: sort.c,v 1.38 2004/02/17 13:52:56 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ main(argc, argv)
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
 	struct field *fldtab, *ftpos, *p;
-	size_t fldtab_sz = 2;
+	size_t fldtab_sz = 3;
 	struct filelist filelist;
 	FILE *outfp = NULL;
 	struct rlimit rl;
