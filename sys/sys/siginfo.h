@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.3 2003/09/14 07:00:45 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.4 2003/09/16 12:04:58 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	_SYS_SIGINFO_H_
 
 #include <machine/signal.h>	/* XXX: __HAVE_SIGINFO */
+#include <sys/queue.h>
 
 typedef union sigval {
 	int	sival_int;
@@ -79,8 +80,7 @@ struct ksiginfo {
 			int	_fd;
 		} _poll;
 	} _reason;
-	struct ksiginfo *ksi_next;
-	struct ksiginfo *ksi_prev;
+	CIRCLEQ_ENTRY(ksiginfo)	_list;
 };
 
 typedef union siginfo {
@@ -125,6 +125,8 @@ typedef struct ksiginfo ksiginfo_t;
 
 #define	ksi_band	_reason._poll._band
 #define	ksi_fd		_reason._poll._fd
+
+#define	ksi_list	_list
 #endif
 
 /** si_code */
