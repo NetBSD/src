@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.72 2001/11/12 23:49:41 lukem Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.73 2001/11/13 00:49:35 lukem Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,11 +86,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.72 2001/11/12 23:49:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.73 2001/11/13 00:49:35 lukem Exp $");
 
 #include "ppp.h"
-
-#if NPPP > 0
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1697,5 +1695,3 @@ done:
     *bp = 0;
     printf("%s\n", buf);
 }
-
-#endif	/* NPPP > 0 */
