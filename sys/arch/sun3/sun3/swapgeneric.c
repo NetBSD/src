@@ -35,13 +35,13 @@
  *	swapgeneric.c,v 1.2 1993/05/22 07:57:44 cgd Exp
  */
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
 
-/*#include "../dev/device.h"*/
+/*#include <../dev/device.h>*/
 
 /*#include "sd.h" XXX */
 #define NSD 0
