@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp_var.h,v 1.6 1995/09/08 01:06:32 tls Exp $      */
+/*      $NetBSD: ftp_var.h,v 1.7 1995/09/15 00:32:35 pk Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -99,7 +99,8 @@ char	*stringbase;		/* current scan point in line buffer */
 char	argbuf[200];		/* argument storage buffer */
 char	*argbase;		/* current storage point in arg buffer */
 int	margc;			/* count of arguments on input line */
-char	*margv[20];		/* args parsed from input line */
+char	**margv;		/* args parsed from input line */
+int	margvlen;		/* how large margv is currently */
 int     cpend;                  /* flag: if != 0, then pending server reply */
 int	mflag;			/* flag: if != 0, then active multi command */
 
