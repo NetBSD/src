@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.6 1996/12/03 05:24:56 mikel Exp $
+.\"	$NetBSD: tar.1,v 1.7 1997/02/06 06:05:39 mikel Exp $
 .\"
 .Dd 6 August 1994
 .Os NetBSD
@@ -131,7 +131,7 @@ this will change the inode-change time!).
 Sets the block size for reading or writing to N 512-byte blocks.
 .It Fl B
 .It Fl -read-full-blocks
-Re-assemble short readsinto full blocks (for reading 4.2BSD pipes).
+Re-assemble short reads into full blocks (for reading 4.2BSD pipes).
 .It Fl C Ar directory
 .It Fl -directory Ar directory
 Change to
@@ -143,7 +143,8 @@ Print directory names while reading the archive.
 .It Fl -file  Ar [hostname:]file
 Read or write the specified
 .Ar file
-(default is /dev/rst0).  If a
+.Po default is Pa /dev/rst0 Pc .
+If a
 .Ar hostname
 is specified,
 .Nm
@@ -151,7 +152,13 @@ will use
 .Xr rmt 8
 to read or write the specified
 .Ar file
-on a remote machine.
+on a remote machine. If the given
+.Ar file
+is
+.Ql - ,
+then
+.Nm
+uses stdin or stdout.
 .It Fl F Ar file
 .It Fl -info-script Ar file
 .It Fl -new-volume-script Ar file
@@ -237,11 +244,16 @@ Modifies behavior of
 to expect null-terminated names; disables
 .Fl C.
 .It Fl -totals
-Prints total bytes written with --create.
+Prints total bytes written with
+.Fl -create .
 .It Fl v
 .It Fl -verbose
-Lists files written to archive with --create or extracted with --extract;
-lists file protection information along with file names with --list.
+Lists files written to archive with
+.Fl -create
+or extracted with
+.Fl -extract ;
+lists file protection information along with file names with
+.Fl -list .
 .It Fl V Ar volume-name
 .It Fl -label Ar volume-name
 Create archive with the given
@@ -290,7 +302,9 @@ Don't recurse into subdirectories when creating.
 Unlink files before creating them.
 .El
 .Sh EXAMPLES
-To create an archive on tape drive /dev/rst0 with a block size of 20
+To create an archive on tape drive
+.Pa /dev/rst0
+with a block size of 20
 blocks, containing files named "bert" and "ernie", you can enter
 .Dl tar cfb /dev/rst0 20 bert ernie
 or
@@ -302,7 +316,9 @@ and
 flags both require arguments, which they take from the command line in
 the order they were listed in the command word.
 .Pp
-Because /dev/rst0 is the default device, and 20 is the default block
+Because
+.Pa /dev/rst0
+is the default device, and 20 is the default block
 size, the above example could have simply been
 .Dl tar c bert ernie
 .Pp
@@ -313,6 +329,9 @@ Note that the pattern must be quoted to prevent the shell from
 attempting to expand it according the files in the current working
 directory (the shell does not have access to the list of files in
 the archive, of course).
+.Pp
+To copy a file hierarchy while preserving metadata, type
+.Dl tar cf - -C srcdir ". |" tar xpf "-C destdir"
 .Pp
 To create a compressed archive on diskette, using gzip, use a command-line like
 .Dl tar --block-compress -z -c -v -f /dev/rfd1a -b 36 tar/
@@ -330,18 +349,25 @@ archive1.tar (note that this can't be done by simply typing
 .Dl cat archive2.tar >> archive1.tar
 because of the end-of-file block at the end of a tar archive).
 .Sh ENVIRONMENT
-The tar program examines the following environment variables.
+The
+.Nm
+program examines the following environment variables:
 .Bl -tag -width "POSIXLY-CORRECT"
-.It POSIXLY-CORRECT
-Normally, tar will process flag arguments that appear in the file list.
-If set in the environment, this flag causes tar to consider the first
+.It Ev POSIXLY-CORRECT
+Normally, 
+.Nm
+will process flag arguments that appear in the file list.
+If set in the environment, this flag causes
+.Nm
+to consider the first
 non-flag argument to terminate flag processing, as per the POSIX specification.
-.It SHELL
+.It Ev SHELL
 In interactive mode, a permissible response to the prompt is to
-request to spawn a subshell, which will be "/bin/sh" unless the SHELL variable
-is set.
-.It TAPE
-Changes tar's default tape drive (which is still overridden by the
+request to spawn a subshell, which will be "/bin/sh" unless the
+.Ev SHELL
+variable is set.
+.It Ev TAPE
+Changes the default tape drive (which is still overridden by the
 .Fl f
 flag).
 .El
@@ -375,6 +401,8 @@ The
 feature does not work like historical tar programs, and is probably
 untrustworthy.
 .Pp
-The -A command should work to join an arbitrary number of tar archives
+The
+.Fl A
+command should work to join an arbitrary number of tar archives
 together, but it does not; attempting to do so leaves the
 end-of-archive blocks in place for the second and subsequent archives.
