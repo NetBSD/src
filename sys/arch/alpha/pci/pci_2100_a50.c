@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.20 1998/04/16 19:40:56 thorpej Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.21 1998/04/16 19:50:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.20 1998/04/16 19:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.21 1998/04/16 19:50:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: pirq %d, reg = %x\n",
+	printf("pci_2100_a50_intr_map: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
 #endif
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
@@ -207,7 +207,7 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 	pirqline &= 0xf;
 
 #if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: mapped to line %d\n",
+	printf("pci_2100_a50_intr_map: device %d pin %c: mapped to line %d\n",
 	    device, '@' + buspin, pirqline);
 #endif
 
