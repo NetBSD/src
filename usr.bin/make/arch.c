@@ -96,6 +96,10 @@ static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #include    "make.h"
 #include    "hash.h"
 
+#ifndef RANLIBMAG
+#define RANLIBMAG  "__.SYMDEF"
+#endif
+
 static Lst	  archives;   /* Lst of archives we've already examined */
 
 typedef struct Arch {
