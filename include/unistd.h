@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.9 1993/09/21 21:53:31 jtc Exp $
+ *	$Id: unistd.h,v 1.10 1993/09/25 01:52:59 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -48,8 +48,6 @@
 #ifndef NULL
 #define	NULL		0	/* null pointer constant */
 #endif
-
-typedef	int ssize_t;		/* count of bytes or error indication */
 
 __BEGIN_DECLS
 __dead void	 _exit __P((int));
