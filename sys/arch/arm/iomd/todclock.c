@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.3 2002/02/18 12:03:38 bjh21 Exp $	*/
+/*	$NetBSD: todclock.c,v 1.4 2002/03/10 15:47:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: todclock.c,v 1.3 2002/02/18 12:03:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.4 2002/03/10 15:47:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
