@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.28 1997/10/14 15:06:45 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.29 1998/03/29 04:41:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.28 1997/10/14 15:06:45 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.29 1998/03/29 04:41:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,6 @@ preadbuffer()
 	char *p, *q;
 	int more;
 	int something;
-	extern EditLine *el;
 	char savec;
 
 	if (parsefile->strpush) {
