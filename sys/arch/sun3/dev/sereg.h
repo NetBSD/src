@@ -1,4 +1,4 @@
-/*	$NetBSD: sereg.h,v 1.2 1997/10/25 18:04:20 gwr Exp $	*/
+/*	$NetBSD: sereg.h,v 1.3 1997/12/08 19:17:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@ struct se_regs {
 	u_short			dma_cntr;	/* DMA count down register */
 	u_short			unused3[5];
 	u_short			se_csr;		/* control/status register */
-	u_char			unused9[3];
-	u_char			se_ivec;	/* interrupt vector	*/
+	u_short			unused4;
+	u_short			se_ivec;	/* interrupt vector	*/
 };
 
 /*
@@ -80,9 +80,8 @@ struct se_regs {
 struct ie_regs {
 	u_short			ie_pad0;
 	u_short			ie_csr;
-	u_short			ie_pad1[6];
-	u_char			ie_pad2[3];
-	u_char			ie_ivec; /* interrupt vector */
+	u_short			ie_pad1[7];
+	u_short			ie_ivec;	/* interrupt vector */
 	u_short			ie_pad3[128-10];
 };
 
