@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.14.2.1 2004/05/06 05:34:18 jmc Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.14.2.2 2004/10/04 05:21:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.14.2.1 2004/05/06 05:34:18 jmc Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.14.2.2 2004/10/04 05:21:59 jmc Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -145,15 +145,14 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	pthread__block(self, &cond->ptc_lock);
 	/* Spinlock is unlocked on return */
 	pthread_mutex_lock(mutex);
-	if (__predict_false(self->pt_cancel)) {
 #ifdef ERRORCHECK
-		pthread_spinlock(self, &cond->ptc_lock);
-		if (PTQ_EMPTY(&cond->ptc_waiters))
-			cond->ptc_mutex = NULL;
-		pthread_spinunlock(self, &cond->ptc_lock);
+	pthread_spinlock(self, &cond->ptc_lock);
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		cond->ptc_mutex = NULL;
+	pthread_spinunlock(self, &cond->ptc_lock);
 #endif		
+	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
-	}
 
 	SDPRINTF(("(cond wait %p) Woke up on %p, mutex %p\n",
 	    self, cond, mutex));
@@ -236,15 +235,14 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	SDPRINTF(("(cond timed wait %p) %s\n",
 	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 	pthread_mutex_lock(mutex);
-	if (__predict_false(self->pt_cancel)) {
 #ifdef ERRORCHECK
-		pthread_spinlock(self, &cond->ptc_lock);
-		if (PTQ_EMPTY(&cond->ptc_waiters))
-			cond->ptc_mutex = NULL;
-		pthread_spinunlock(self, &cond->ptc_lock);
+	pthread_spinlock(self, &cond->ptc_lock);
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		cond->ptc_mutex = NULL;
+	pthread_spinunlock(self, &cond->ptc_lock);
 #endif		
+	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
-	}
 
 	return retval;
 }
