@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1995/07/08 04:25:18 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 1995/09/16 15:09:28 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2370,6 +2370,11 @@ pmap_enter_ptpage(pmap, va)
 	 * letting the VM system allocate a zero-filled page.
 	 */
 	else {
+		/*
+		 * Count the segment table reference now so that we won't
+		 * lose the segment table when low on memory.
+		 */
+		pmap->pm_sref++;
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter: about to fault UPT pg at %x\n", va);
@@ -2454,7 +2459,6 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	*ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
 	if (pmap != pmap_kernel()) {
-		pmap->pm_sref++;
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: stab %x refcnt %d\n",
