@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.3 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.4 2004/09/06 07:24:06 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.3 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.4 2004/09/06 07:24:06 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,6 +131,8 @@ macepci_attach(parent, self, aux)
 
 	pc->pc_conf_read = macepci_conf_read;
 	pc->pc_conf_write = macepci_conf_write;
+	pc->intr_establish = mace_intr_establish;
+	pc->intr_disestablish = mace_intr_disestablish;
 
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_ERROR_ADDR, 0);
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_ERROR_FLAGS, 0);
