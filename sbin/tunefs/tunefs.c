@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tunefs.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tunefs.c,v 1.7 1994/04/20 03:57:08 cgd Exp $";
+/*static char sccsid[] = "from: @(#)tunefs.c	8.2 (Berkeley) 4/19/94";*/
+static char *rcsid = "$Id: tunefs.c,v 1.8 1994/06/08 19:36:13 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -47,7 +47,10 @@ static char rcsid[] = "$Id: tunefs.c,v 1.7 1994/04/20 03:57:08 cgd Exp $";
  */
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <ufs/fs.h>
+
+#include <ufs/ffs/fs.h>
+
+#include <errno.h>
 #include <err.h>
 #include <fcntl.h>
 #include <fstab.h>
@@ -56,22 +59,8 @@ static char rcsid[] = "$Id: tunefs.c,v 1.7 1994/04/20 03:57:08 cgd Exp $";
 #include <stdlib.h>
 #include <unistd.h>
 
-/*    
- * MINFREE gives the minimum acceptable percentage of file system
- * blocks which may be free. If the freelist drops below this level
- * only the superuser may continue to allocate blocks. This may
- * be set to 0 if no reserve of free blocks is deemed necessary,
- * however throughput drops by fifty percent if the file system
- * is run at between 90% and 100% full; thus the default value of
- * fs_minfree is 10%. With 10% free space, fragmentation is not a
- * problem, so we choose to optimize for time.  
- *
- * XXX should be in some header common with newfs; snarfed from there.
- */
-#define	MINFREE		10
-
 /* the optimization warning string template */
-#define	OPTWARN		"should optimize for %s with minfree %s %d%%"
+#define	OPTWARN	"should optimize for %s with minfree %s %d%%"
 
 union {
 	struct	fs sb;
@@ -119,7 +108,7 @@ again:
 	}
 	if ((st.st_mode & S_IFMT) != S_IFBLK &&
 	    (st.st_mode & S_IFMT) != S_IFCHR)
-		errx(1, "%s: not a block or character device", special);
+		errx(10, "%s: not a block or character device", special);
 	getsb(&sblock, special);
 	for (; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
 		for (cp = &argv[0][1]; *cp; cp++)
@@ -132,11 +121,11 @@ again:
 			case 'a':
 				name = "maximum contiguous block count";
 				if (argc < 1)
-					errx(1, "-a: missing %s", name);
+					errx(10, "-a: missing %s", name);
 				argc--, argv++;
 				i = atoi(*argv);
 				if (i < 1)
-					errx(1, "%s must be >= 1 (was %s)",
+					errx(10, "%s must be >= 1 (was %s)",
 					    name, *argv);
 				warnx("%s changes from %d to %d",
 				    name, sblock.fs_maxcontig, i);
@@ -147,7 +136,7 @@ again:
 				name =
 				   "rotational delay between contiguous blocks";
 				if (argc < 1)
-					errx(1, "-d: missing %s", name);
+					errx(10, "-d: missing %s", name);
 				argc--, argv++;
 				i = atoi(*argv);
 				warnx("%s changes from %dms to %dms",
@@ -159,11 +148,11 @@ again:
 				name =
 				  "maximum blocks per file in a cylinder group";
 				if (argc < 1)
-					errx(1, "-e: missing %s", name);
+					errx(10, "-e: missing %s", name);
 				argc--, argv++;
 				i = atoi(*argv);
 				if (i < 1)
-					errx(1, "%s must be >= 1 (was %s)",
+					errx(10, "%s must be >= 1 (was %s)",
 					    name, *argv);
 				warnx("%s changes from %d to %d",
 				    name, sblock.fs_maxbpg, i);
@@ -173,11 +162,11 @@ again:
 			case 'm':
 				name = "minimum percentage of free space";
 				if (argc < 1)
-					errx(1, "-m: missing %s", name);
+					errx(10, "-m: missing %s", name);
 				argc--, argv++;
 				i = atoi(*argv);
 				if (i < 0 || i > 99)
-					errx(1, "bad %s (%s)", name, *argv);
+					errx(10, "bad %s (%s)", name, *argv);
 				warnx("%s changes from %d%% to %d%%",
 				    name, sblock.fs_minfree, i);
 				sblock.fs_minfree = i;
@@ -192,7 +181,7 @@ again:
 			case 'o':
 				name = "optimization preference";
 				if (argc < 1)
-					errx(1, "-o: missing %s", name);
+					errx(10, "-o: missing %s", name);
 				argc--, argv++;
 				chg[FS_OPTSPACE] = "space";
 				chg[FS_OPTTIME] = "time";
@@ -201,7 +190,7 @@ again:
 				else if (strcmp(*argv, chg[FS_OPTTIME]) == 0)
 					i = FS_OPTTIME;
 				else
-					errx(1, "bad %s (options are `space' or `time')",
+					errx(10, "bad %s (options are `space' or `time')",
 					    name);
 				if (sblock.fs_optim == i) {
 					warnx("%s remains unchanged as %s",
@@ -237,14 +226,15 @@ again:
 void
 usage()
 {
-	fprintf(stderr, "usage: tunefs tuneup-options special-device\n");
+
+	fprintf(stderr, "Usage: tunefs tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
 	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
-	exit(1);
+	exit(2);
 }
 
 void
@@ -255,24 +245,25 @@ getsb(fs, file)
 
 	fi = open(file, 2);
 	if (fi < 0)
-		err(1, "cannot open %s", file);
+		err(3, "cannot open %s", file);
 	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE))
-		err(1, "%s: bad super block", file);
+		err(4, "%s: bad super block", file);
 	if (fs->fs_magic != FS_MAGIC)
-		err(1, "%s: bad magic number", file);
+		err(5, "%s: bad magic number", file);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 }
 
 void
-bwrite(bno, buf, size)
-	daddr_t bno;
+bwrite(blk, buf, size)
+	daddr_t blk;
 	char *buf;
 	int size;
 {
-	if (lseek(fi, bno * dev_bsize, 0) < 0)
-		err(1, "FS SEEK");
+
+	if (lseek(fi, (off_t)blk * dev_bsize, SEEK_SET) < 0)
+		err(6, "FS SEEK");
 	if (write(fi, buf, size) != size)
-		err(1, "FS WRITE");
+		err(7, "FS WRITE");
 }
 
 int
@@ -281,9 +272,9 @@ bread(bno, buf, cnt)
 	char *buf;
 	int cnt;
 {
-	register i;
+	int i;
 
-	if (lseek(fi, bno * dev_bsize, 0) < 0)
+	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0)
 		return(1);
 	if ((i = read(fi, buf, cnt)) != cnt) {
 		for(i=0; i<sblock.fs_bsize; i++)

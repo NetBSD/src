@@ -1,8 +1,6 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1993/10/08 00:51:24 cgd Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 2/20/94
+#	$Id: Makefile,v 1.6 1994/06/08 19:34:37 mycroft Exp $
 
 PROG=	umount
-CFLAGS+=-DNFS
-NOMAN=	noman
 
 .include <bsd.prog.mk>
