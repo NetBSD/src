@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.419 2002/04/15 14:44:31 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.420 2002/04/16 10:08:59 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.416 2002/04/15 14:43:42 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.417 2002/04/16 10:08:34 drochner Exp 
  */
 
 /*
@@ -1820,6 +1820,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65554",
+	},
+	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69030,
+	    0,
+	    "Chips and Technologies",
+	    "69030",
 	},
 	{
 	    PCI_VENDOR_CHRYSALIS, PCI_PRODUCT_CHRYSALIS_LUNAVPN,

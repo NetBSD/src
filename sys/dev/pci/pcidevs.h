@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.421 2002/04/15 14:44:30 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.422 2002/04/16 10:08:58 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.416 2002/04/15 14:43:42 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.417 2002/04/16 10:08:34 drochner Exp 
  */
 
 /*
@@ -965,6 +965,7 @@
 #define	PCI_PRODUCT_CHIPS_65548	0x00dc		/* 65548 */
 #define	PCI_PRODUCT_CHIPS_65550	0x00e0		/* 65550 */
 #define	PCI_PRODUCT_CHIPS_65554	0x00e4		/* 65554 */
+#define	PCI_PRODUCT_CHIPS_69030	0x0c30		/* 69030 */
 
 /* Chrysalis products */
 #define	PCI_PRODUCT_CHRYSALIS_LUNAVPN	0x0001		/* LunaVPN */
