@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.34 1998/06/03 21:50:48 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.35 1998/06/09 00:12:00 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -529,6 +529,7 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
+	static struct i386_isa_chipset i386_isa_chipset;
 	extern int isa_has_been_seen;
 
 	/*
@@ -538,6 +539,13 @@ isa_attach_hook(parent, self, iba)
 	if (isa_has_been_seen)
 		panic("isaattach: ISA bus already seen!");
 	isa_has_been_seen = 1;
+
+	/*
+	 * Since we can only have one ISA bus, we just use a single
+	 * statically allocated ISA chipset structure.  Pass it up
+	 * now.
+	 */
+	iba->iba_ic = &i386_isa_chipset;
 }
 
 int
