@@ -44,3 +44,6 @@ G_LIB2ADDEHDEP= unwind-dw2-fde.h
 G_CXX_OBJS=call.o decl.o expr.o pt.o typeck2.o  class.o decl2.o error.o lex.o parse.o ptree.o rtti.o  spew.o typeck.o cvt.o except.o friend.o init.o method.o  search.o semantics.o tree.o repo.o dump.o  optimize.o mangle.o cp-lang.o
 G_CXX_C_OBJS=attribs.o c-common.o c-format.o c-pragma.o c-semantics.o c-lex.o  c-dump.o  c-pretty-print.o c-opts.o
 G_F77_OBJS=bad.o bit.o bld.o com.o data.o equiv.o expr.o  global.o implic.o info.o intrin.o lab.o lex.o malloc.o  name.o parse.o src.o st.o sta.o stb.o stc.o  std.o ste.o storag.o stp.o str.o sts.o stt.o stu.o  stv.o stw.o symbol.o target.o top.o type.o where.o
+G_ENABLE_SHARED=yes
+G_SHLIB_LINK= ./xgcc -B./ -B/usr/local/shle--netbsdelf/bin/ -isystem /usr/local/shle--netbsdelf/include -isystem /usr/local/shle--netbsdelf/sys-include -O2  -DIN_GCC   -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -isystem ./include  -fpic -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED -shared -nodefaultlibs  -Wl,--soname=@shlib_so_name@.so.1  -Wl,--version-script=@shlib_map_file@  -o @shlib_dir@@shlib_so_name@.so.1 @multilib_flags@ @shlib_objs@ -lc &&  rm -f @shlib_base_name@.so &&  ln -s @shlib_dir@@shlib_so_name@.so.1 @shlib_base_name@.so
+G_SHLIB_MULTILIB=
