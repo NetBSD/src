@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.9 1998/12/10 02:22:52 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.9.4.1 1999/10/10 20:50:52 cgd Exp $	*/
 
 /*
  * 
@@ -56,6 +56,12 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.9.4.1  1999/10/10 20:50:52  cgd
+ * pull up rev 1.13 from trunk (requested by mycroft):
+ *   Fix potential overflow of v_usecount and v_writecount (and panics
+ *   resulting from this) by widening them to `long'.  Mostly affects
+ *   systems where maxvnodes>=32768.
+ *
  * Revision 1.9  1998/12/10 02:22:52  rvb
  * Commit a couple of old fixes
  *
@@ -655,7 +661,7 @@ printf("coda_rdwr: Internally Opening %p\n", vp);
     }
 
     /* Have UFS handle the call. */
-    CODADEBUG(CODA_RDWR, myprintf(("indirect rdwr: fid = (%lx.%lx.%lx), refcnt = %d\n",
+    CODADEBUG(CODA_RDWR, myprintf(("indirect rdwr: fid = (%lx.%lx.%lx), refcnt = %ld\n",
 			      cp->c_fid.Volume, cp->c_fid.Vnode, 
 			      cp->c_fid.Unique, CTOV(cp)->v_usecount)); )
 
@@ -1924,7 +1930,7 @@ printf("coda_readdir: Internally Opening %p\n", vp);
 	}
 	
 	/* Have UFS handle the call. */
-	CODADEBUG(CODA_READDIR, myprintf(("indirect readdir: fid = (%lx.%lx.%lx), refcnt = %d\n",cp->c_fid.Volume, cp->c_fid.Vnode, cp->c_fid.Unique, vp->v_usecount)); )
+	CODADEBUG(CODA_READDIR, myprintf(("indirect readdir: fid = (%lx.%lx.%lx), refcnt = %ld\n",cp->c_fid.Volume, cp->c_fid.Vnode, cp->c_fid.Unique, vp->v_usecount)); )
 	error = VOP_READDIR(cp->c_ovp, uiop, cred, eofflag, cookies,
 			       ncookies);
 	if (error)
