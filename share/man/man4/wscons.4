@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.3 1999/02/03 19:49:31 drochner Exp $
+.\" $NetBSD: wscons.4,v 1.4 1999/02/03 21:27:02 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -58,16 +58,26 @@
 .Cd "lms0       at isa? port 0x23c irq 5"
 .Cd "mms0       at isa? port 0x23c irq 5"
 .Cd "wskbd*     at pckbd? console ?"
+.Cd "wskbd*     at ukbd? console ?"
 .Cd "wsmouse*   at pms?"
 .Cd "wsmouse*   at lms?"
 .Cd "wsmouse*   at mms?"
+.Cd "wsmouse*   at ums?"
 .Pp
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for machine independent access to the console.
+.Sh BUGS
+This man page is extremely incomplete.
 .Sh SEE ALSO
-.Xr wsconscfg 8 ,
-.Xr wsconsctl 1 ,
 .Xr isa 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr ukbd 4 ,
+.Xr lms 4 ,
+.Xr mms 4 ,
+.Xr pms 4 ,
+.Xr ums 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsconsctl 8 ,
+.Xr wsfontload 8
