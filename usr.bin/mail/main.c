@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1999/02/09 04:51:30 dean Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/09/19 01:12:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1999/02/09 04:51:30 dean Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/09/19 01:12:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(argc, argv)
 	bcc = NIL;
 	smopts = NIL;
 	subject = NOSTR;
-	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
+	while ((i = getopt(argc, argv, "~EINT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
 			/*
@@ -170,6 +170,7 @@ main(argc, argv)
 			assign("verbose", "");
 			break;
 		case 'I':
+		case '~':
 			/*
 			 * We're interactive
 			 */
@@ -187,12 +188,18 @@ main(argc, argv)
 			 */
 			bcc = cat(bcc, nalloc(optarg, GBCC));
 			break;
+		case 'E':
+			/*
+			 * Don't send empty files.
+			 */
+			assign("dontsendempty", "");
+			break;
 		case '?':
 			fputs("\
-Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
+Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
             [- sendmail-options ...]\n\
-       mail [-iInNv] -f [name]\n\
-       mail [-iInNv] [-u user]\n",
+       mail [-EiInNv] -f [name]\n\
+       mail [-EiInNv] [-u user]\n",
 				stderr);
 			exit(1);
 		}

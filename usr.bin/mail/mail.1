@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.16 2000/05/05 18:21:06 itojun Exp $
+.\"	$NetBSD: mail.1,v 1.17 2000/09/19 01:12:48 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,17 +43,17 @@
 .Nd send and receive mail
 .Sh SYNOPSIS
 .Nm
-.Op Fl iInv
+.Op Fl EiInv
 .Op Fl s Ar subject
 .Op Fl c Ar cc-addr
 .Op Fl b Ar bcc-addr
 .Ar to-addr...
 .Nm ""
-.Op Fl iInNv
+.Op Fl EiInNv
 .Fl f
 .Op Ar name
 .Nm ""
-.Op Fl iInNv
+.Op Fl EiInNv
 .Op Fl u Ar user
 .Sh INTRODUCTION
 .Nm
@@ -67,6 +67,9 @@ with lines replaced by messages.
 Verbose mode.
 The details of
 delivery are displayed on the user's terminal.
+.It Fl E
+Don't send messages with an empty body. This is useful
+for piping errors from cron scripts.
 .It Fl i
 Ignore tty interrupt signals.
 This is
