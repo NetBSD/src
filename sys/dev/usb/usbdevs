@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.79 2000/02/17 16:30:11 augustss Exp $
+$NetBSD: usbdevs,v 1.80 2000/02/20 14:37:48 jdolecek Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -319,6 +319,7 @@ product KONICA CAMERA		0x0720	Digital Color Camera
 
 /* KYE products */
 product KYE NICHE		0x0001	Niche mouse
+product KYE NETSCROLL		0x0003	Genius NetScroll mouse
 product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 
 /* Lexmark products */
