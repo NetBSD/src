@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.524 2003/04/15 21:32:28 rjs Exp $
+$NetBSD: pcidevs,v 1.525 2003/04/15 23:13:50 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2368,6 +2368,7 @@ product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
 product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
 product VIATECH VT8633AGP	0xb091	VT8633 (Apollo Pro 266) CPU-AGP Bridge
 product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP Bridge
+product VIATECH VT8377		0xb168	VT8377 CPU-AGP Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050
