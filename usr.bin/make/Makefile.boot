@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.15 2002/06/11 06:06:19 itojun Exp $
+#	$NetBSD: Makefile.boot,v 1.16 2004/05/06 23:15:46 ross Exp $
 #
 # a very simple makefile...
 #
@@ -16,8 +16,7 @@ MACHINE_ARCH=i386
 # tested on HP-UX 10.20
 #MAKE_MACHINE=hp700
 #MAKE_MACHINE_ARCH=hppa
-CFLAGS= -I.\
-	-DTARGET_MACHINE=\"${MACHINE}\" \
+CFLAGS= -DTARGET_MACHINE=\"${MACHINE}\" \
 	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
 	-DMAKE_MACHINE=\"${MACHINE}\" \
 	-DMAKE_BOOTSTRAP

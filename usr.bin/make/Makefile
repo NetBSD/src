@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 2004/02/15 19:05:45 sjg Exp $
+#	$NetBSD: Makefile,v 1.32 2004/05/06 23:15:46 ross Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
-CPPFLAGS+= -I${.CURDIR}
 PROG=	make
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c trace.c var.c util.c 
