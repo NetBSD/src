@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.7 2002/10/02 05:47:17 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.8 2003/09/19 21:35:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.7 2002/10/02 05:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.8 2003/09/19 21:35:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.7 2002/10/02 05:47:17 thorpej E
 
 static int	pciide_pnpbios_match(struct device *, struct cfdata *, void *);
 static void	pciide_pnpbios_attach(struct device *, struct device *, void *);
+void		pciide_pnpbios_setup_channel(struct channel_softc *);
 
 extern void	pciide_channel_dma_setup(struct pciide_channel *);
 extern int	pciide_dma_init(void *, int, int, void *, size_t, int);
@@ -121,12 +122,13 @@ pciide_pnpbios_attach(parent, self, aux)
 	sc->sc_wdcdev.nchannels = 1;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-#if 0	/* Need documentation. */
+#if 0 /* XXX */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_MODE;
 #endif
         sc->sc_wdcdev.PIO_cap = 4;
         sc->sc_wdcdev.DMA_cap = 2;		/* XXX */
         sc->sc_wdcdev.UDMA_cap = 2;		/* XXX */
+	sc->sc_wdcdev.set_modes = pciide_pnpbios_setup_channel;
 
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->wdc_channel;
@@ -146,13 +148,21 @@ pciide_pnpbios_attach(parent, self, aux)
 	wdc_cp->ctl_iot = wdc_cp->data32iot = compat_iot;
 	wdc_cp->ctl_ioh = wdc_cp->data32ioh = ctl_ioh;
 
-	cp->hw_ok = 1;				/* XXX */
 	cp->compat = 1;
 
 	cp->ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_BIO,
 					pciide_compat_intr, cp);
 
-	wdcattach(wdc_cp);
+	config_interrupts(self, wdcattach);
+
+	pciide_channel_dma_setup(cp);
+}
+
+void
+pciide_pnpbios_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
 
 	pciide_channel_dma_setup(cp);
 }

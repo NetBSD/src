@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.124 2003/09/17 11:56:19 drochner Exp $ */
+/*	$NetBSD: wdc.c,v 1.125 2003/09/19 21:36:02 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.124 2003/09/17 11:56:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.125 2003/09/19 21:36:02 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -142,6 +142,7 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
+void wdc_channel_attach __P((struct channel_softc *));
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -192,7 +193,6 @@ wdcprobe(chp)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
-	int found;
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -203,7 +203,6 @@ wdcprobe(chp)
 
 		if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
 			chp->wdc->select(chp,0);
-
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM);
 		delay(10);
@@ -211,7 +210,6 @@ wdcprobe(chp)
 		
 		if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
 			chp->wdc->select(chp,1);
-
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10);
 		delay(10);
@@ -221,12 +219,92 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff || st0 == WDSD_IBM)
+		if ((st0 & 0x7f) == 0x7f || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
+		if ((st1 & 0x7f) == 0x7f || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
+
+		/* Register writability test, drive 0. */
+		if (ret_value & 0x01) {
+			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+				chp->wdc->select(chp,0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo,
+			    0x01);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_cyl_lo) != 0x01)
+				ret_value &= ~0x01;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo,
+			    0x02);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_cyl_lo) != 0x02)
+				ret_value &= ~0x01;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector,
+			    0x01);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_sector) != 0x01)
+				ret_value &= ~0x01;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector,
+			    0x02);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_sector) != 0x02)
+				ret_value &= ~0x01;
+		}
+
+		/* Register writability test, drive 1. */
+		if (ret_value & 0x02) {
+			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+				chp->wdc->select(chp,1);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | 0x10);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo,
+			    0x01);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_cyl_lo) != 0x01)
+				ret_value &= ~0x02;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo,
+			    0x02);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_cyl_lo) != 0x02)
+				ret_value &= ~0x02;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector,
+			    0x01);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_sector) != 0x01)
+				ret_value &= ~0x02;
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector,
+			    0x02);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_sector) != 0x02)
+				ret_value &= ~0x02;
+		}
+
+		/* Register ghost test. */
+		if (ret_value == 0x03) {
+			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+				chp->wdc->select(chp,1);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | 0x10);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, 0x01);
+			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+				chp->wdc->select(chp,0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, 0x02);
+			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+				chp->wdc->select(chp,1);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | 0x10);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector) == 0x02) {
+				printf("ghost detected\n");
+				ret_value = 0x01;
+			}
+		}
+
 		if (ret_value == 0)
 			return 0;
+
 	}
 
 	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
@@ -260,25 +338,9 @@ wdcprobe(chp)
 	 * something here assume it's ATA or OLD. Ghost will be killed later in
 	 * attach routine.
 	 */
-	found = 0;
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
-		if (1 < ++found && chp->wdc != NULL &&
-		    (chp->wdc->cap & WDC_CAPABILITY_SINGLE_DRIVE)) {
-			/*
-			 * Ignore second drive if WDC_CAPABILITY_SINGLE_DRIVE
-			 * is set.
-			 *
-			 * Some CF Card (for ex. IBM MicroDrive and SanDisk) 
-			 * doesn't seem to implement drive select command. In
-			 * this case, you can't eliminate ghost drive properly.
-			 */
-			WDCDEBUG_PRINT(("%s:%d:%d: ignored.\n",
-			    chp->wdc->sc_dev.dv_xname,
-			    chp->channel, drive), DEBUG_PROBE);
-			break;
-		}
 		if (chp->wdc && chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
@@ -311,12 +373,26 @@ wdcprobe(chp)
 }
 
 void
-wdcattach(chp)
+wdcattach(self)
+	struct device *self;
+{
+	struct wdc_softc *wdc = (void *)self;
+	int i;
+
+	for (i = 0; i < wdc->nchannels; i++)
+		wdc_channel_attach(wdc->channels[i]);
+}
+
+void
+wdc_channel_attach(chp)
 	struct channel_softc *chp;
 {
 	int ctrl_flags, i, error;
 	struct ataparams params;
 	static int inited = 0;
+
+	if (chp->ch_flags & WDCF_DISABLED)
+		return;
 
 	callout_init(&chp->ch_callout);
 
@@ -361,10 +437,10 @@ wdcattach(chp)
 		 * Then issue a IDENTIFY command, to try to detect slave ghost
 		 */
 		delay(5000);
-		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
+		error = ata_get_params(&chp->ch_drive[i], AT_WAIT, &params);
 		if (error != CMD_OK) {
 			delay(1000000);
-			error = ata_get_params(&chp->ch_drive[i], AT_POLL,
+			error = ata_get_params(&chp->ch_drive[i], AT_WAIT,
 			    &params);
 		}
 		if (error == CMD_OK) {
@@ -511,6 +587,10 @@ wdcattach(chp)
 			}
 		}
 	}
+
+	if (chp->wdc->cap & WDC_CAPABILITY_MODE)
+		chp->wdc->set_modes(chp);
+	wdc_print_modes(chp);
 
 out:
 	wdc_delref(chp);
@@ -749,7 +829,8 @@ wdcintr(arg)
 }
 
 /* Put all disk in RESET state */
-void wdc_reset_channel(drvp)
+void
+wdc_reset_channel(drvp)
 	struct ata_drive_datas *drvp;
 {
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -1019,7 +1100,7 @@ wdc_probe_caps(drvp)
 	char *sep = "";
 	int cf_flags;
 
-	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
+	if (ata_get_params(drvp, AT_WAIT, &params) != CMD_OK) {
 		/* IDENTIFY failed. Can't tell more about the device */
 		return;
 	}
@@ -1031,12 +1112,12 @@ wdc_probe_caps(drvp)
 		 * and compare results.
 		 */
 		drvp->drive_flags |= DRIVE_CAP32;
-		ata_get_params(drvp, AT_POLL, &params2);
+		ata_get_params(drvp, AT_WAIT, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			aprint_normal("%s: 32-bit data port",
+			aprint_normal("%s: 32-bit data port\n",
 			    drv_dev->dv_xname);
 		}
 	}
@@ -1045,20 +1126,14 @@ wdc_probe_caps(drvp)
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
-				if ((drvp->drive_flags & DRIVE_CAP32) == 0)
-					aprint_normal("%s: ",
-					    drv_dev->dv_xname);
-				else
-					aprint_normal(", ");
-				aprint_normal("ATA version %d\n", i);
+				aprint_normal("%s: ATA version %d\n",
+				    drv_dev->dv_xname, i);
 				drvp->ata_vers = i;
 				break;
 			}
 		}
-	} else 
+	}
 #endif
-	if (drvp->drive_flags & DRIVE_CAP32)
-		aprint_normal("\n");
 
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
@@ -1090,7 +1165,7 @@ wdc_probe_caps(drvp)
 			 */
 			if ((wdc->cap & WDC_CAPABILITY_MODE) != 0)
 				if (ata_set_mode(drvp, 0x08 | (i + 3),
-				   AT_POLL) != CMD_OK)
+				   AT_WAIT) != CMD_OK)
 					continue;
 			if (!printed) { 
 				aprint_normal("%s: drive supports PIO mode %d",
@@ -1123,7 +1198,7 @@ wdc_probe_caps(drvp)
 				continue;
 			if ((wdc->cap & WDC_CAPABILITY_DMA) &&
 			    (wdc->cap & WDC_CAPABILITY_MODE))
-				if (ata_set_mode(drvp, 0x20 | i, AT_POLL)
+				if (ata_set_mode(drvp, 0x20 | i, AT_WAIT)
 				    != CMD_OK)
 					continue;
 			if (!printed) {
@@ -1150,7 +1225,7 @@ wdc_probe_caps(drvp)
 				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 				    (wdc->cap & WDC_CAPABILITY_UDMA))
 					if (ata_set_mode(drvp, 0x40 | i,
-					    AT_POLL) != CMD_OK)
+					    AT_WAIT) != CMD_OK)
 						continue;
 				if (!printed) {
 					aprint_normal("%s Ultra-DMA mode %d",

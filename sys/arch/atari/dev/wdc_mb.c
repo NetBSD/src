@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_mb.c,v 1.12 2003/07/15 01:19:52 lukem Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.13 2003/09/19 21:35:58 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.12 2003/07/15 01:19:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.13 2003/09/19 21:35:58 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,7 +185,6 @@ wdc_mb_attach(parent, self, aux)
 		sc->sc_wdcdev.sc_dev.dv_xname);
 	    return;
 	}
-	wdcattach(&sc->wdc_channel);
 
 	/*
 	 * Setup & enable disk related interrupts.
@@ -193,6 +192,8 @@ wdc_mb_attach(parent, self, aux)
 	MFP->mf_ierb |= IB_DINT;
 	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
 	MFP->mf_imrb |= IB_DINT;
+
+	config_interrupts(self, wdcattach);
 }
 
 /*

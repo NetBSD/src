@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.56 2003/09/07 22:11:22 mycroft Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.57 2003/09/19 21:36:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.56 2003/09/07 22:11:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.57 2003/09/19 21:36:09 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -82,7 +82,7 @@ int wdcdebug_atapi_mask = 0;
 #endif
 
 #define ATAPI_DELAY 10	/* 10 ms, this is used only before sending a cmd */
-int   wdc_atapi_get_params __P((struct scsipi_channel *, int, int,
+int   wdc_atapi_get_params __P((struct scsipi_channel *, int,
 				struct ataparams *));
 void  wdc_atapi_probe_device __P((struct atapibus_softc *, int));
 void  wdc_atapi_minphys  __P((struct buf *bp));
@@ -185,9 +185,9 @@ wdc_atapi_kill_xfer(chp, xfer)
 }
 
 int
-wdc_atapi_get_params(chan, drive, flags, id)
+wdc_atapi_get_params(chan, drive, id)
 	struct scsipi_channel *chan;
-	int drive, flags;
+	int drive;
 	struct ataparams *id;
 {
 	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
@@ -204,32 +204,19 @@ wdc_atapi_get_params(chan, drive, flags, id)
 		    drive), DEBUG_PROBE);
 		return -1;
 	}
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
-	wdc_c.r_command = ATAPI_SOFT_RESET;
-	wdc_c.r_st_bmask = 0;
-	wdc_c.r_st_pmask = 0;
-	wdc_c.flags = AT_POLL;
-	wdc_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], &wdc_c) != WDC_COMPLETE) {
-		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
-		    " drive %s:%d:%d: driver failed\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive);
-		panic("wdc_atapi_get_params");
-	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	wdccommandshort(chp, drive, ATAPI_SOFT_RESET);
+	chp->ch_drive[drive].state = 0;
+	if (wait_for_unbusy(chp, WDC_RESET_WAIT) != 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
-		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
-		    wdc_c.r_error), DEBUG_PROBE);
+		    "failed for drive %s:%d:%d\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel, drive),
+		    DEBUG_PROBE);
 		return -1;
 	}
-	chp->ch_drive[drive].state = 0;
 
-	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-	
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
-	if (ata_get_params(&chp->ch_drive[drive], AT_POLL, id) != 0) {
+	if (ata_get_params(&chp->ch_drive[drive], AT_WAIT, id) != 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
@@ -258,8 +245,7 @@ wdc_atapi_probe_device(sc, target)
 	if (scsipi_lookup_periph(chan, target, 0) != NULL)
 		return;
 
-	if (wdc_atapi_get_params(chan, target,
-	    XS_CTL_POLL|XS_CTL_NOSLEEP, id) == 0) {
+	if (wdc_atapi_get_params(chan, target, id) == 0) {
 #ifdef ATAPI_DEBUG_PROBE
 		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
 		    sc->sc_dev.dv_xname, target,
@@ -567,7 +553,7 @@ again:
 
 	switch (phase) {
 	case PHASE_CMDOUT:
-		cmd  = sc_xfer->cmd;
+		cmd = sc_xfer->cmd;
 		WDCDEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
@@ -581,29 +567,23 @@ again:
 		/* send packet command */
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
 		if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
-			if (drvp->drive_flags & DRIVE_CAP32) {
+			if (drvp->drive_flags & DRIVE_CAP32)
 				bus_space_write_multi_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)cmd,
+				    chp->data32ioh, 0, (u_int32_t *)cmd,
 				    sc_xfer->cmdlen >> 2);
-			} else {
+			else
 				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)cmd,
+				    chp->cmd_ioh, wd_data, (u_int16_t *)cmd,
 				    sc_xfer->cmdlen >> 1);
-			}
 		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
+			if (drvp->drive_flags & DRIVE_CAP32)
 				bus_space_write_multi_stream_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)cmd,
+				    chp->data32ioh, 0, (u_int32_t *)cmd,
 				    sc_xfer->cmdlen >> 2);
-			} else {
+			else
 				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)cmd,
+				    chp->cmd_ioh, wd_data, (u_int16_t *)cmd,
 				    sc_xfer->cmdlen >> 1);
-			}
 		}
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
@@ -932,33 +912,23 @@ wdc_atapi_phase_complete(xfer)
 		WDCDEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
 		    "polldsc %d\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->drive, xfer->c_dscpoll), DEBUG_XFERS);
-		if (cold) {
-			if (wdcwait(chp, WDCS_DSC, WDCS_DSC,
-			    sc_xfer->timeout)) {
+#if 1
+		if (cold)
+			panic("wdc_atapi_phase_complete: cold");
+#endif
+		if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
+			/* 10ms not enough, try again in 1 tick */
+			if (xfer->c_dscpoll++ > 
+			    mstohz(sc_xfer->timeout)) {
 				printf("%s:%d:%d: wait_for_dsc failed\n",
 				    chp->wdc->sc_dev.dv_xname, chp->channel,
 				    xfer->drive);
 				sc_xfer->error = XS_TIMEOUT;
 				wdc_atapi_reset(chp, xfer);
-				return;
-			}
-		} else {
-			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
-				/* 10ms not enough, try again in 1 tick */
-				if (xfer->c_dscpoll++ > 
-				    mstohz(sc_xfer->timeout)) {
-					printf("%s:%d:%d: wait_for_dsc "
-					    "failed\n",
-					    chp->wdc->sc_dev.dv_xname,
-					    chp->channel, xfer->drive);
-					sc_xfer->error = XS_TIMEOUT;
-					wdc_atapi_reset(chp, xfer);
-					return;
-				}
+			} else
 				callout_reset(&chp->ch_callout, 1,
 				    wdc_atapi_polldsc, xfer);
-				return;
-			}
+			return;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.8 2003/09/19 21:35:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.8 2003/09/19 21:35:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,8 @@ wdc_pioc_attach(parent, self, aux)
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
-	wdcattach(&sc->wdc_channel);
+
+	config_interrupts(self, wdcattach);
 }
 
 /* End of wdc_pioc.c */

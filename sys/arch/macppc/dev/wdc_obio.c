@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_obio.c,v 1.26 2003/07/15 02:43:30 lukem Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.27 2003/09/19 21:35:59 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.26 2003/07/15 02:43:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.27 2003/09/19 21:35:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,9 +224,7 @@ wdc_obio_attach(parent, self, aux)
 		out32rb(OHARE_FEATURE_REG, x);
 	}
 
-	wdcattach(chp);
-	sc->sc_wdcdev.set_modes(chp);
-
+	config_interrupts(self, wdcattach);
 }
 
 /* Multiword DMA transfer timings */
@@ -342,7 +340,6 @@ adjust_timing(chp)
 	} else if (sc->sc_dmaconf[1]) {
 		wdc_obio_select(chp,1);
 	}
-	wdc_print_modes(chp);
 }
 
 void
@@ -412,7 +409,6 @@ ata4_adjust_timing(chp)
 	} else if (sc->sc_dmaconf[1]) {
 		wdc_obio_select(chp,1);
 	}
-	wdc_print_modes(chp);
 }
 
 int
