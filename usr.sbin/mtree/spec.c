@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.21 2001/03/09 03:09:46 simonb Exp $	*/
+/*	$NetBSD: spec.c,v 1.22 2001/03/25 20:02:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.21 2001/03/09 03:09:46 simonb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.22 2001/03/25 20:02:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ noparent:		mtree_err("no parent node");
 			mtree_err("%s", strerror(errno));
 		*centry = ginfo;
                 if (strunvis(centry->name, p) == -1)
-			mtree_err("strunvis failed on %s", p);
+			mtree_err("strunvis failed on `%s'", p);
 #define	MAGIC	"?*["
 		if (strpbrk(p, MAGIC))
 			centry->flags |= F_MAGIC;
@@ -191,22 +191,22 @@ set(char *t, NODE *ip)
 		case F_CKSUM:
 			ip->cksum = strtoul(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid checksum %s", val);
+				mtree_err("invalid checksum `%s'", val);
 			break;
 		case F_FLAGS:
 			if (strcmp("none", val) == 0)
 				ip->st_flags = 0;
 			else if (string_to_flags(&val, &ip->st_flags, NULL) != 0)
-				mtree_err("invalid flag %s", val);
+				mtree_err("invalid flag `%s'", val);
 			break;
 		case F_GID:
 			ip->st_gid = (gid_t)strtoul(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid gid %s", val);
+				mtree_err("invalid gid `%s'", val);
 			break;
 		case F_GNAME:
 			if ((gr = getgrnam(val)) == NULL)
-			    mtree_err("unknown group %s", val);
+			    mtree_err("unknown group `%s'", val);
 			ip->st_gid = gr->gr_gid;
 			break;
 		case F_IGN:
@@ -222,19 +222,19 @@ set(char *t, NODE *ip)
 			break;
 		case F_MODE:
 			if ((m = setmode(val)) == NULL)
-				mtree_err("invalid file mode %s", val);
+				mtree_err("invalid file mode `%s'", val);
 			ip->st_mode = getmode(m, 0);
 			free(m);
 			break;
 		case F_NLINK:
 			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid link count %s", val);
+				mtree_err("invalid link count `%s'", val);
 			break;
 		case F_SIZE:
 			ip->st_size = (off_t)strtoq(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid size %s", val);
+				mtree_err("invalid size `%s'", val);
 			break;
 		case F_SLINK:
 			if ((ip->slink = strdup(val)) == NULL)
@@ -244,11 +244,11 @@ set(char *t, NODE *ip)
 			ip->st_mtimespec.tv_sec =
 			    (time_t)strtoul(val, &ep, 10);
 			if (*ep != '.')
-				mtree_err("invalid time %s", val);
+				mtree_err("invalid time `%s'", val);
 			val = ep + 1;
 			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid time %s", val);
+				mtree_err("invalid time `%s'", val);
 			break;
 		case F_TYPE:
 			switch(*val) {
@@ -279,17 +279,17 @@ set(char *t, NODE *ip)
 					ip->type = F_SOCK;
 				break;
 			default:
-				mtree_err("unknown file type %s", val);
+				mtree_err("unknown file type `%s'", val);
 			}
 			break;
 		case F_UID:
 			ip->st_uid = (uid_t)strtoul(val, &ep, 10);
 			if (*ep)
-				mtree_err("invalid uid %s", val);
+				mtree_err("invalid uid `%s'", val);
 			break;
 		case F_UNAME:
 			if ((pw = getpwnam(val)) == NULL)
-			    mtree_err("unknown user %s", val);
+			    mtree_err("unknown user `%s'", val);
 			ip->st_uid = pw->pw_uid;
 			break;
 		}
