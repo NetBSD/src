@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.18 1999/01/26 02:23:34 thorpej Exp $	*/
+/*	$NetBSD: fstab.c,v 1.19 1999/02/23 17:00:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.18 1999/01/26 02:23:34 thorpej Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.19 1999/02/23 17:00:53 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ fstabscan()
 	static const char sep[] = ":\n";
 	static const char ws[] = " \t\n";
 	static char *fstab_type[] = {
-	    FSTAB_RW, FSTAB_RQ, FSTAB_RO, FSTAB_SW, FSTAB_XX, NULL 
+	    FSTAB_RW, FSTAB_RQ, FSTAB_RO, FSTAB_SW, FSTAB_DP, FSTAB_XX, NULL 
 	};
 
 	for (;;) {

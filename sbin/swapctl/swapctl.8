@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
+.\"	$NetBSD: swapctl.8,v 1.15 1999/02/23 17:00:53 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Sh SYNOPSIS
 .Nm
 .Fl A
+.Op Fl D Ar dumpdev
 .Op Fl p Ar priority
 .Op Fl t Ar blk|noblk
 .Nm ""
@@ -86,10 +87,29 @@ This option causes
 .Nm
 to read the
 .Pa /etc/fstab
-file for devices and files with a ``sw'' type, and adds all these entries
-as swap devices.  If no swap devices are configured,
+file for devices and files with a 
+.Dq sw
+and
+.Dq dp
+type, and adds all these entries
+as swap devices, or for a dump device in the case of a
+.Dq dp
+type.  If no swap devices are configured,
 .Nm
 will exit with an error code.
+.It Fl D
+The
+.Fl D
+option requires that a
+.Ar dumpdev
+also be in the argument list.  The kernel dump device is set to
+.Ar dumpdev .
+This changed is made via the
+.Xr swapctl 2
+system call.  The dump device is used when the system crashes
+to write a current snapshot of real memory, to be saved later with
+.Xr savecore 8
+at system reboot, and analyzed to determine the problem.
 .It Fl a
 The
 .Fl a
