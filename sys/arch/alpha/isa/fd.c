@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 2000/03/23 06:32:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 2000/03/24 01:04:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -721,7 +721,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(&fd->sc_motor_ch, 5 * hz, fd_motor_off, fd);
+	callout_reset(&fd->sc_motor_ch, 5 * hz, fd_motor_off, fd);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -1040,7 +1040,7 @@ loop:
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* Allow .25s for motor to stabilize. */
-			callout_reset(&fd->fd_motor_ch, hz / 4,
+			callout_reset(&fd->sc_motor_ch, hz / 4,
 			    fd_motor_on, fd);
 			return 1;
 		}
