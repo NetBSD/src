@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 1996/10/13 03:06:15 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 1996/10/15 19:31:35 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -459,8 +459,12 @@ fd_nvtotype(fdc, nvraminfo, drive)
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
 	switch (type) {
+#ifndef RC7500
 	case 0x00 :
 		return NULL;
+#else
+	case 0x00 :
+#endif	/* !RC7500 */
 	case 0x10 :
 		return &fd_types[0];
 	default:
