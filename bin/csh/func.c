@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.21 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: func.c,v 1.22 2001/12/17 16:38:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.21 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: func.c,v 1.22 2001/12/17 16:38:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1295,10 +1295,13 @@ setlim(const struct limits *lp, Char hard, RLIM_TYPE limit)
     else
 	rlim.rlim_cur = limit;
 
+    if (rlim.rlim_max < rlim.rlim_cur)
+	rlim.rlim_max = rlim.rlim_cur;
+
     if (setrlimit(lp->limconst, &rlim) < 0) {
-	(void)fprintf(csherr, "%s: %s: Can't %s%s limit\n", bname, lp->limname,
-		       limit == RLIM_INFINITY ? "remove" : "set",
-		       hard ? " hard" : "");
+	(void)fprintf(csherr, "%s: %s: Can't %s%s limit (%s)\n", bname,
+	    lp->limname, limit == RLIM_INFINITY ? "remove" : "set",
+	    hard ? " hard" : "", strerror(errno));
 	return (-1);
     }
     return (0);
