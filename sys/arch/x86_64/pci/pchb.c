@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 2002/10/02 16:02:46 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7 2003/01/01 02:32:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ pchb_print(aux, pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
