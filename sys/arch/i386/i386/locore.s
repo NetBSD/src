@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.11 2000/08/18 14:01:11 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.12 2000/08/23 15:12:32 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1977,8 +1977,7 @@ ENTRY(cpu_switch)
 
 	/* Look for new process. */
 	cli				# splhigh doesn't do a cli
-	movl	_C_LABEL(sched_whichqs),%ecx	# XXX MP
-
+	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx		# find a full q
 	jnz	switch_dequeue
 
@@ -2048,37 +2047,37 @@ ENTRY(cpu_switch)
 	SET_CURPCB(%esi, %ecx)
 
 	xorl	%esi,%esi
-#ifdef MULTIPROCESSOR	
-	pushl	$1
+	sti
+idle_unlock:	
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_unlock_idle)
-	popl	%eax
 #endif
 	/* Interrupts are okay again. */
-	sti
 	movl	$0,CPL			# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	jmp	idle_start
-idle_loop:	
-#ifdef MULTIPROCESSOR
-	pushl	$2
-	call	_C_LABEL(sched_unlock_idle)
-	popl	%eax
-#endif
+idle_loop:
 	sti
 	hlt
 NENTRY(mpidle)
 idle_start:	
 	cli
-#ifdef MULTIPROCESSOR
-	pushl	$3	
+	cmpl	$0,_C_LABEL(sched_whichqs)
+	jz	idle_loop
+	movl	$IPL_HIGH,CPL
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
-	popl	%eax
 #endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
-	jz	idle_loop
+	jz	idle_unlock
 
 switch_dequeue:		
+	/* 
+	 * we're running at splhigh(), but it's otherwise okay to take
+	 * interrupts here. 
+	 */
+	sti
 	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
@@ -2113,13 +2112,9 @@ switch_dequeue:
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
 	SET_CURPROC(%edi,%ecx)
 
-#ifdef MULTIPROCESSOR	
-	pushl	$4
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_unlock_idle)
-	popl	%eax
 #endif
-	/* It's okay to take interrupts here. */
-	sti
 
 	/* Skip context switch if same process. */
 	cmpl	%edi,%esi
