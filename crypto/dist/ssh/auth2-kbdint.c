@@ -1,6 +1,4 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.9 2002/06/24 05:26:05 itojun Exp $	*/
-/*	$OpenBSD: sshconnect.h,v 1.17 2002/06/19 00:27:55 deraadt Exp $	*/
-
+/*	$NetBSD: auth2-kbdint.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,47 +22,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SSHCONNECT_H
-#define SSHCONNECT_H
 
-typedef struct Sensitive Sensitive;
-struct Sensitive {
-	Key	**keys;
-	int	nkeys;
-	int	external_keysign;
+#include "includes.h"
+RCSID("$OpenBSD: auth2-kbdint.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
+
+#include "packet.h"
+#include "auth.h"
+#include "log.h"
+#include "servconf.h"
+#include "xmalloc.h"
+
+/* import */
+extern ServerOptions options;
+
+static int
+userauth_kbdint(Authctxt *authctxt)
+{
+	int authenticated = 0;
+	char *lang, *devs;
+
+	lang = packet_get_string(NULL);
+	devs = packet_get_string(NULL);
+	packet_check_eom();
+
+	debug("keyboard-interactive devs %s", devs);
+
+	if (options.challenge_response_authentication)
+		authenticated = auth2_challenge(authctxt, devs);
+
+	xfree(devs);
+	xfree(lang);
+	return authenticated;
+}
+
+Authmethod method_kbdint = {
+	"keyboard-interactive",
+	userauth_kbdint,
+	&options.kbd_interactive_authentication
 };
-
-int
-ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int, const char *);
-
-void
-ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *);
-
-int	 verify_host_key(char *, struct sockaddr *, Key *);
-
-void	 ssh_kex(char *, struct sockaddr *);
-void	 ssh_kex2(char *, struct sockaddr *);
-
-void	 ssh_userauth1(const char *, const char *, char *, Sensitive *);
-void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
-
-void	 ssh_put_password(char *);
-
-
-/*
- * Macros to raise/lower permissions.
- */
-#define PRIV_START do {				\
-	int save_errno = errno;			\
-	(void)seteuid(original_effective_uid);	\
-	errno = save_errno;			\
-} while (0)
-
-#define PRIV_END do {				\
-	int save_errno = errno;			\
-	(void)seteuid(original_real_uid);	\
-	errno = save_errno;			\
-} while (0)
-
-#endif
