@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.7 2000/10/03 13:49:24 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.8 2000/10/04 16:26:43 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -13,6 +13,7 @@ device mainbus { [systype = -1] }
 attach mainbus at root
 
 file	arch/news68k/news68k/autoconf.c
+file	arch/news68k/news68k/bus_space.c
 file	arch/news68k/news68k/conf.c
 file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/db_memrw.c		ddb | kgdb

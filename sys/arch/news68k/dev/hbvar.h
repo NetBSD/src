@@ -1,4 +1,4 @@
-/*	$NetBSD: hbvar.h,v 1.2 2000/02/08 16:17:31 tsutsui Exp $	*/
+/*	$NetBSD: hbvar.h,v 1.3 2000/10/04 16:26:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -26,6 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/bus.h>
+
 /* Shorthand for locators. */
 #include "locators.h"
 #define cf_addr	cf_loc[HBCF_ADDR]
@@ -36,10 +38,12 @@
  * Structure used to attach hb devices.
  */
 struct hb_attach_args {
-	char	*ha_name;	/* name of device */
-	u_long	ha_address;	/* device address */
-	int	ha_ipl;		/* interrupt level */
-	int	ha_vect;	/* interrupt vector */
+	char		*ha_name;	/* name of device */
+	bus_space_tag_t	ha_bust;	/* bus space tag */
+	bus_addr_t	ha_address;	/* device address */
+	bus_size_t	ha_size;	/* device space */
+	int		ha_ipl;		/* interrupt level */
+	int		ha_vect;	/* interrupt vector */
 };
 
 void	hb_intr_establish __P((int, int (*)(void *), int, void *));
