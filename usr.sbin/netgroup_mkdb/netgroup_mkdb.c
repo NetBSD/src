@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.8 1997/10/17 11:49:05 lukem Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.9 1999/11/28 04:40:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.8 1997/10/17 11:49:05 lukem Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.9 1999/11/28 04:40:21 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -290,6 +290,10 @@ ng_load(fname)
 				}
 				break;
 
+			case _NG_ERROR:
+				errx(1, "Fatal error at `%s'", p);
+				break;
+				
 			default:
 				abort();
 				break;
