@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2004/06/12 17:10:04 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2004/06/12 17:14:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2004/06/12 17:10:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2004/06/12 17:14:55 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -137,6 +137,8 @@ static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	    void *buf, bus_size_t buflen, struct proc *p, int flags,
 	    paddr_t *lastaddrp, int *segp);
+static __inline int _bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
+    paddr_t, int, paddr_t * __restrict, int * __restrict);
 
 
 /*
@@ -326,6 +328,65 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	return (0);
 }
 
+static __inline int
+_bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
+    paddr_t paddr, int size,
+    paddr_t * __restrict lastaddrp, int * __restrict nsegp)
+{
+	bus_dma_segment_t * const segs = map->dm_segs;
+	int nseg = *nsegp;
+	bus_addr_t lastaddr = *lastaddrp;
+	bus_addr_t bmask = ~(map->_dm_boundary - 1);
+	int sgsize;
+	int error = 0;
+
+again:
+	KASSERT(nseg < 0 || segs[nseg].ds_addr + segs[nseg].ds_len == lastaddr);
+	sgsize = size;
+	/*
+	 * Make sure we don't cross any boundaries.
+	 */
+	if (map->_dm_boundary > 0) {
+		bus_addr_t baddr; /* next boundary address */
+
+		baddr = (paddr + map->_dm_boundary) & bmask;
+		if (sgsize > (baddr - paddr))
+			sgsize = (baddr - paddr);
+	}
+
+	/*
+	 * Insert chunk into a segment, coalescing with
+	 * previous segment if possible.
+	 */
+	if (nseg >= 0 && paddr == lastaddr &&
+	    segs[nseg].ds_len + sgsize <= map->_dm_maxsegsz &&
+	    (map->_dm_boundary == 0 ||
+	     (segs[nseg].ds_addr & bmask) == (paddr & bmask))) {
+		/* coalesce */
+		KASSERT(segs[nseg].ds_addr + segs[nseg].ds_len == paddr);
+		segs[nseg].ds_len += sgsize;
+	} else if (++nseg >= map->_dm_segcnt) {
+		return EFBIG;
+	} else {
+		/* new segment */
+		segs[nseg].ds_addr = paddr;
+		segs[nseg].ds_len = sgsize;
+	}
+
+	lastaddr = paddr + sgsize;
+	if (map->_dm_bounce_thresh != 0 && lastaddr > map->_dm_bounce_thresh)
+		return EINVAL;
+
+	paddr += sgsize;
+	size -= sgsize;
+	if (size > 0)
+		goto again;
+
+	*nsegp = nseg;
+	*lastaddrp = lastaddr;
+	return error;
+}
+
 /*
  * Like _bus_dmamap_load(), but for mbufs.
  */
@@ -358,33 +419,68 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = -1;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		int offset;
+		int remainbytes;
+		const struct vm_page * const *pgs;
+		paddr_t paddr;
+		int size;
+
 		if (m->m_len == 0)
 			continue;
 		/* XXX Could be better about coalescing. */
 		/* XXX Doesn't check boundaries. */
-		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
+		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER|M_EXT_PAGES)) {
 		case M_EXT|M_EXT_CLUSTER:
 			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-			lastaddr = m->m_ext.ext_paddr +
+			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
- have_addr:
-			if (++seg >= map->_dm_segcnt) {
-				error = EFBIG;
-				break;
+			size = m->m_len;
+			error = _bus_dmamap_load_paddr(t, map,
+			    paddr, size, &lastaddr, &seg);
+			break;
+
+		case M_EXT|M_EXT_PAGES:
+			KASSERT(m->m_ext.ext_buf <= m->m_data);
+			KASSERT(m->m_data <=
+			    m->m_ext.ext_buf + m->m_ext.ext_size);
+
+			offset = (vaddr_t)m->m_data -
+			    trunc_page((vaddr_t)m->m_ext.ext_buf);
+			remainbytes = m->m_len;
+
+			/* skip uninteresting pages */
+			pgs = (const struct vm_page * const *)
+			    m->m_ext.ext_pgs + (offset >> PAGE_SHIFT);
+
+			offset &= PAGE_MASK; /* offset in the first page */
+
+			/* load each pages */
+			while (remainbytes > 0) {
+				const struct vm_page *pg;
+
+				size = MIN(remainbytes, PAGE_SIZE - offset);
+
+				pg = *pgs++;
+				KASSERT(pg);
+				paddr = VM_PAGE_TO_PHYS(pg) + offset;
+
+				error = _bus_dmamap_load_paddr(t, map,
+				    paddr, size, &lastaddr, &seg);
+				if (error)
+					break;
+				offset = 0;
+				remainbytes -= size;
 			}
-			map->dm_segs[seg].ds_addr = lastaddr;
-			map->dm_segs[seg].ds_len = m->m_len;
-			lastaddr += m->m_len;
-			if (map->_dm_bounce_thresh != 0 &&
-			    lastaddr > map->_dm_bounce_thresh)
-				error = EINVAL;
 			break;
 
 		case 0:
-			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
-			goto have_addr;
+			size = m->m_len;
+			error = _bus_dmamap_load_paddr(t, map,
+			    paddr, size, &lastaddr, &seg);
+			break;
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
@@ -1063,7 +1159,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 	int *segp;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	bus_addr_t curaddr, lastaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
@@ -1074,9 +1170,10 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 		pmap = pmap_kernel();
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0 ; ) {
+		int error;
+
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -1097,35 +1194,11 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		/*
-		 * Make sure we don't cross any boundaries.
-		 */
-		if (map->_dm_boundary > 0) {
-			baddr = (curaddr + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - curaddr))
-				sgsize = (baddr - curaddr);
-		}
+		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
+		    &lastaddr, &seg);
+		if (error)
+			return error;
 
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (seg >= 0 && curaddr == lastaddr &&
-		    (map->dm_segs[seg].ds_len + sgsize) <= map->_dm_maxsegsz &&
-		    (map->_dm_boundary == 0 ||
-		    (map->dm_segs[seg].ds_addr & bmask) == (curaddr & bmask))) {
-			/* coalesce */
-			map->dm_segs[seg].ds_len += sgsize;
-		} else if (++seg >= map->_dm_segcnt) {
-			/* EFBIG */
-			break;
-		} else {
-			/* new segment */
-			map->dm_segs[seg].ds_addr = curaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-		}
-
-		lastaddr = curaddr + sgsize;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
