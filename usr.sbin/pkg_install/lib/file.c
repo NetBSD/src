@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.12 1998/07/06 07:03:55 mrg Exp $	*/
+/*	$NetBSD: file.c,v 1.13 1998/07/09 16:47:26 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.12 1998/07/06 07:03:55 mrg Exp $");
+__RCSID("$NetBSD: file.c,v 1.13 1998/07/09 16:47:26 hubertf Exp $");
 #endif
 #endif
 
@@ -34,10 +34,12 @@ __RCSID("$NetBSD: file.c,v 1.12 1998/07/06 07:03:55 mrg Exp $");
 #include <sys/wait.h>
 
 #include <err.h>
-#include <ftpio.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
+
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode);
 
 /* Quick check to see if a file exists */
 Boolean
@@ -286,7 +288,8 @@ fileGetURL(char *base, char *spec)
     else
 	printf("Error: FTP Unable to get %s: %s\n",
 	       fname,
-	       status ? ftpErrString(status) : hstrerror(h_errno));
+	       status ? "Error while performing FTP" :
+	       hstrerror(h_errno));
     return rp;
 }
 
@@ -563,4 +566,52 @@ format_cmd(char *buf, char *fmt, char *dir, char *name)
 	    *buf++ = *fmt++;
     }
     *buf = '\0';
+}
+
+
+/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+ * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
+ * etc.
+ */
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode)
+{
+  FILE *ftp;
+  pid_t pid_ftp;
+  int p[2];
+
+  *retcode=0;
+
+  if( pipe(p) < 0){
+    *retcode = 1;
+    return NULL;
+  }
+
+  pid_ftp = fork();
+  if(pid_ftp < 0){
+    *retcode = 1;
+    return NULL;
+  }
+  if(pid_ftp == 0){
+    /* child */
+    dup2(p[1],1);
+    close(p[1]);
+
+
+ fprintf(stderr, ">>> ftp -o - %s\n",url); 
+    execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+    exit(1);
+  }else{
+    /* parent */
+    ftp = fdopen(p[0],"r");
+
+    close(p[1]);
+    
+    if(ftp < 0){
+      *retcode = 1;
+      return NULL;
+    }
+  }
+  
+  return ftp;
 }
