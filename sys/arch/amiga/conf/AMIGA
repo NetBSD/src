@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.16 1999/05/10 22:22:59 is Exp $
+# $NetBSD: AMIGA,v 1.17 1999/05/17 20:08:23 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.123 1999/05/10 22:18:47 is Exp $
+#$ NetBSD: GENERIC,v 1.124 1999/05/17 19:42:56 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -240,9 +240,9 @@ audio*		at melody?
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
 ne*		at zbus0		# AriadneII
-ed0		at zbus0		# Hydra, ASDG LanRover
-es0		at zbus0		# CEI A4066 EthernetPLUS
-qn0		at zbus0		# Quicknet
+ed*		at zbus0		# Hydra, ASDG LanRover
+es*		at zbus0		# CEI A4066 EthernetPLUS
+qn*		at zbus0		# Quicknet
 
 bah*		at zbus0		# C=/Ameristar A2060 / 560
 
