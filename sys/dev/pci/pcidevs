@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.571 2003/08/27 14:13:10 kleink Exp $
+$NetBSD: pcidevs,v 1.572 2003/08/27 14:21:51 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -828,6 +828,7 @@ product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
 product AMD PBC8111_IDE		0x7469	AMD8111 IDE Controller
 product AMD PBC8111_SMB		0x746a	AMD8111 SMBus Controller
+product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 
 /* American Megatrends products */
