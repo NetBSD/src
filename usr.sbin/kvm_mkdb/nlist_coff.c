@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.5 2001/07/22 13:34:17 wiz Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.6 2003/07/15 12:37:35 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_coff.c,v 1.5 2001/07/22 13:34:17 wiz Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.6 2003/07/15 12:37:35 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -230,10 +230,10 @@ create_knlist_coff(name, db)
 			}
 		}
 #if 0
-		strcpy(symname, "_"); 
-		strcat(symname, fsymname);
+		strlcpy(symname, "_", symnamesize); 
+		strlcat(symname, fsymname, symnamesize);
 #else
-		strcpy(symname, fsymname);
+		strlcpy(symname, fsymname, symnamesize);
 #endif
 
 		key.data = symname;

@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.15 2003/05/02 16:25:22 ragge Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.16 2003/07/15 12:37:35 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.15 2003/05/02 16:25:22 ragge Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.16 2003/07/15 12:37:35 itojun Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -275,8 +275,8 @@ ELFNAMEEND(create_knlist)(name, db)
 				punt();
 			}
 		}
-		strcpy(symname, "_");
-		strcat(symname, fsymname);
+		strlcpy(symname, "_", symnamesize);
+		strlcat(symname, fsymname, symnamesize);
 
 		key.data = symname;
 		key.size = strlen((char *)key.data);
