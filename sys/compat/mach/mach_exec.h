@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.6 2002/12/07 15:33:01 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.7 2002/12/12 23:18:20 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 struct mach_emuldata {
 	mach_cproc_t med_p;
+	int med_thpri;
 };
 
 int exec_mach_copyargs(struct proc *, struct exec_package *, 
