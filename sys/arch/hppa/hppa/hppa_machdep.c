@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.3 2003/08/31 01:26:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,9 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.3 2003/08/31 01:26:35 chs Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -46,3 +49,29 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
  * probably be moved here from hp700/hp700/machdep.c, seeing
  * that there's related code already in hppa/hppa/trap.S.
  */
+
+
+/*
+ * cpu_upcall:
+ *
+ *      Send an an upcall to userland.
+ */
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	printf("cpu_upcall not implemented\n");
+}
+
+void
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
+{
+	printf("cpu_getmcontext not implemented\n");
+}
+
+int
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	printf("cpu_setmcontext not implemented\n");
+	return 0;
+}

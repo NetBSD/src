@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2003/07/15 02:29:41 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2003/08/31 01:26:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2003/07/15 02:29:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2003/08/31 01:26:36 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2003/07/15 02:29:41 lukem Exp $");
 #include <sys/acct.h>
 #include <sys/signal.h>
 #include <sys/device.h>
+#include <sys/pool.h>
 
 #include <net/netisr.h>
 
@@ -185,34 +186,35 @@ u_int rctr_next_iioq;
 #endif
 
 static __inline void
-userret (struct proc *p, register_t pc, u_quad_t oticks)
+userret (struct lwp *l, register_t pc, u_quad_t oticks)
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	p->p_priority = p->p_usrpri;
+	l->l_priority = l->l_usrpri;
 	if (want_resched) {
 		/*
 		 * We're being preempted.
 		 */
 		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (l->l_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
 /*
@@ -344,10 +346,11 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace __P((struct trapframe *, struct proc *, int));
+static void user_backtrace __P((struct trapframe *, struct lwp *, int));
 static void
-user_backtrace(struct trapframe *tf, struct proc *p, int type)
+user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 {
+	struct proc *p = l->l_proc;
 	u_int pc, fp, inst;
 
 	/*
@@ -401,11 +404,11 @@ user_backtrace(struct trapframe *tf, struct proc *p, int type)
  * with some documented elsewhere, some not.
  */
 struct trapframe *sanity_frame;
-struct proc *sanity_proc;
+struct lwp *sanity_lwp;
 int sanity_checked = 0;
-void frame_sanity_check __P((struct trapframe *, struct proc *));
+void frame_sanity_check __P((struct trapframe *, struct lwp *));
 void
-frame_sanity_check(struct trapframe *tf, struct proc *p)
+frame_sanity_check(struct trapframe *tf, struct lwp *l)
 {
 	extern int kernel_text;
 	extern int etext;
@@ -417,7 +420,7 @@ frame_sanity_check(struct trapframe *tf, struct proc *p)
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
 		sanity_frame = tf;			\
-		sanity_proc = p;			\
+		sanity_lwp = l;				\
 		sanity_checked = __LINE__;		\
 	}						\
 } while (/* CONSTCOND */ 0)
@@ -443,20 +446,20 @@ do {							\
 #else
 			uspace_size = USPACE;
 #endif
-			SANITY(p == NULL ||
-				((tf->tf_sp >= (u_int)(p->p_addr) + PAGE_SIZE &&
-				  tf->tf_sp < (u_int)(p->p_addr) + uspace_size)));
+			SANITY(l == NULL ||
+				((tf->tf_sp >= (u_int)(l->l_addr) + PAGE_SIZE &&
+				  tf->tf_sp < (u_int)(l->l_addr) + uspace_size)));
 		}
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(p != NULL && tf->tf_cr30 == kvtop((caddr_t)p->p_addr));
+		SANITY(l != NULL && tf->tf_cr30 == kvtop((caddr_t)l->l_addr));
 	}
 #undef SANITY
 	if (sanity_frame == tf) {
 		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
-		sanity_proc = NULL;
+		sanity_lwp = NULL;
 		sanity_checked = 0;
 	}
 }
@@ -467,13 +470,14 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct pcb *pcbp;
-	register vaddr_t va;
-	register struct vm_map *map;
+	vaddr_t va;
+	struct vm_map *map;
 	struct vmspace *vm;
-	register vm_prot_t vftype;
-	register pa_space_t space;
+	vm_prot_t vftype;
+	pa_space_t space;
 	u_int opcode;
 	int ret;
 	const char *tts;
@@ -528,7 +532,7 @@ trap(type, frame)
 #endif /* DIAGNOSTIC */
 		
 #ifdef DEBUG
-	frame_sanity_check(frame, p);
+	frame_sanity_check(frame, l);
 #endif /* DEBUG */
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
@@ -536,7 +540,7 @@ trap(type, frame)
 		mtctl(frame->tf_eiem, CR_EIEM);
 
 	if (frame->tf_flags & TFF_LAST)
-		p->p_md.md_regs = frame;
+		l->l_md.md_regs = frame;
 
 	if ((type & ~T_USER) > trap_types)
 		tts = "reserved";
@@ -604,13 +608,13 @@ trap(type, frame)
 
 	case T_EMULATION | T_USER:
 #ifdef FPEMUL
-		hppa_fpu_emulate(frame, p);
+		hppa_fpu_emulate(frame, l);
 #else  /* !FPEMUL */
 		/*
 		 * We don't have FPU emulation, so signal the
 		 * process with a SIGFPE.
 		 */
-		trapsignal(p, SIGFPE, frame->tf_iioq_head);
+		trapsignal(l, SIGFPE, frame->tf_iioq_head);
 #endif /* !FPEMUL */
 		break;
 
@@ -631,9 +635,9 @@ trap(type, frame)
 	dead_end:
 		if (type & T_USER) {
 #ifdef DEBUG
-			user_backtrace(frame, p, type);
+			user_backtrace(frame, l, type);
 #endif
-			trapsignal(p, SIGILL, frame->tf_iioq_head);
+			trapsignal(l, SIGILL, frame->tf_iioq_head);
 			break;
 		}
 		if (trap_kdebug(type, va, frame))
@@ -650,11 +654,11 @@ trap(type, frame)
 		break;
 
 	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
-		trapsignal(p, SIGFPE, va);
+		trapsignal(l, SIGFPE, va);
 		break;
 
 	case T_OVERFLOW | T_USER:
-		trapsignal(p, SIGFPE, va);
+		trapsignal(l, SIGFPE, va);
 		break;
 		
 	case T_CONDITION | T_USER:
@@ -662,34 +666,34 @@ trap(type, frame)
 
 	case T_ILLEGAL | T_USER:
 #ifdef DEBUG
-		user_backtrace(frame, p, type);
+		user_backtrace(frame, l, type);
 #endif
-		trapsignal(p, SIGILL, va);
+		trapsignal(l, SIGILL, va);
 		break;
 
 	case T_PRIV_OP | T_USER:
 #ifdef DEBUG
-		user_backtrace(frame, p, type);
+		user_backtrace(frame, l, type);
 #endif
-		trapsignal(p, SIGILL, va);
+		trapsignal(l, SIGILL, va);
 		break;
 
 	case T_PRIV_REG | T_USER:
 #ifdef DEBUG
-		user_backtrace(frame, p, type);
+		user_backtrace(frame, l, type);
 #endif
-		trapsignal(p, SIGILL, va);
+		trapsignal(l, SIGILL, va);
 		break;
 
 		/* these should never got here */
 	case T_HIGHERPL | T_USER:
 	case T_LOWERPL | T_USER:
-		trapsignal(p, SIGSEGV, va);
+		trapsignal(l, SIGSEGV, va);
 		break;
 
 	case T_IPROT | T_USER:
 	case T_DPROT | T_USER:
-		trapsignal(p, SIGSEGV, va);
+		trapsignal(l, SIGSEGV, va);
 		break;
 
 	case T_DATACC:   	case T_USER | T_DATACC:
@@ -756,15 +760,15 @@ trap(type, frame)
 printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
 	map, (u_int)va, 0, vftype, ret);
 #ifdef DEBUG
-				user_backtrace(frame, p, type);
+				user_backtrace(frame, l, type);
 #endif
-				trapsignal(p, SIGSEGV, frame->tf_ior);
+				trapsignal(l, SIGSEGV, frame->tf_ior);
 			} else {
-				if (p && p->p_addr->u_pcb.pcb_onfault) {
+				if (l && l->l_addr->u_pcb.pcb_onfault) {
 #ifdef PMAPDEBUG
 					printf("trap: copyin/out %d\n",ret);
 #endif
-					pcbp = &p->p_addr->u_pcb;
+					pcbp = &l->l_addr->u_pcb;
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
 						pcbp->pcb_onfault);
@@ -784,9 +788,9 @@ if (trap_kdebug (type, va, frame))
 
 	case T_DATALIGN | T_USER:
 #ifdef DEBUG
-		user_backtrace(frame, p, type);
+		user_backtrace(frame, l, type);
 #endif
-		trapsignal(p, SIGBUS, va);
+		trapsignal(l, SIGBUS, va);
 		break;
 
 	case T_INTERRUPT:
@@ -823,12 +827,12 @@ if (trap_kdebug (type, va, frame))
 	}
 
 	if (type & T_USER)
-		userret(p, p->p_md.md_regs->tf_iioq_head, 0);
+		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
 #ifdef DEBUG
-	frame_sanity_check(frame, p);
-	if (frame->tf_flags & TFF_LAST && curproc != NULL)
-		frame_sanity_check(curproc->p_md.md_regs, curproc);
+	frame_sanity_check(frame, l);
+	if (frame->tf_flags & TFF_LAST && curlwp != NULL)
+		frame_sanity_check(curlwp->l_md.md_regs, curlwp);
 #endif /* DEBUG */
 }
 
@@ -836,15 +840,16 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
 
-	userret(p, p->p_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 #ifdef DEBUG
-	frame_sanity_check(p->p_md.md_regs, p);
+	frame_sanity_check(l->l_md.md_regs, l);
 #endif /* DEBUG */
 }
 
@@ -860,8 +865,9 @@ syscall(frame, args)
 	struct trapframe *frame;
 	int *args;
 {
-	register struct proc *p;
-	register const struct sysent *callp;
+	struct lwp *l;
+	struct proc *p;
+	const struct sysent *callp;
 	int nsys, code, argsize, error;
 	int tmp;
 	int rval[2];
@@ -869,14 +875,15 @@ syscall(frame, args)
 	uvmexp.syscalls++;
 
 #ifdef DEBUG
-	frame_sanity_check(frame, curproc);
+	frame_sanity_check(frame, curlwp);
 #endif /* DEBUG */
 
 	if (!USERMODE(frame->tf_iioq_head))
 		panic("syscall");
 
-	p = curproc;
-	p->p_md.md_regs = frame;
+	l = curlwp;
+	p = l->l_proc;
+	l->l_md.md_regs = frame;
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 	code = frame->tf_t1;
@@ -1068,15 +1075,15 @@ syscall(frame, args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	switch (error = (*callp->sy_call)(p, args, rval)) {
+	switch (error = (*callp->sy_call)(l, args, rval)) {
 	case 0:
-		p = curproc;			/* changes on exec() */
-		frame = p->p_md.md_regs;
+		l = curlwp;			/* changes on exec() */
+		frame = l->l_md.md_regs;
 		frame->tf_ret0 = rval[0];
 		frame->tf_ret1 = rval[1];
 		frame->tf_t1 = 0;
@@ -1114,10 +1121,41 @@ syscall(frame, args)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p, frame->tf_iioq_head, 0);
+	userret(l, frame->tf_iioq_head, 0);
 #ifdef DEBUG
-	frame_sanity_check(frame, p);
+	frame_sanity_check(frame, l);
 #endif /* DEBUG */
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 2003/08/07 16:27:52 agc Exp $	*/
+/*	$NetBSD: proc.h,v 1.3 2003/08/31 01:26:37 chs Exp $	*/
 
 /*	$OpenBSD: proc.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
 
@@ -33,13 +33,20 @@
  *	@(#)proc.h      7.1 (Berkeley) 5/15/91
  */
 
+#ifndef _HPPA_PROC_H_
+#define _HPPA_PROC_H_
+
 /*
  * Machine-dependent part of the proc structure for hppa.
  */
-struct mdproc {
+struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 };
 
+struct mdproc {
+};
+
 /* md_flags */
 
+#endif /* _HPPA_PROC_H_ */
