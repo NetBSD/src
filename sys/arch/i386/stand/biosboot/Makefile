@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/03/08 00:09:24 fvdl Exp $
+#	$NetBSD: Makefile,v 1.19 1999/03/14 00:04:22 fvdl Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -38,5 +38,7 @@ SRCS+= ls.c
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
+
+VERSIONFILE= ${.CURDIR}/version
 
 .include "../Makefile.booters"
