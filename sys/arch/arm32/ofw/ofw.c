@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.13 1998/08/08 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: ofw.c,v 1.14 1998/08/27 04:00:55 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -77,15 +77,6 @@
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
 #define IO_VIRT_SIZE 0x01000000
-
-/*
- *  Imported types
- */
-typedef	struct {
-        vm_offset_t physical;
-        vm_offset_t virtual;
-} pv_addr_t;
-
 
 /*
  *  Imported variables

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1998/08/20 05:46:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1998/08/27 04:00:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -130,11 +130,6 @@ vm_offset_t virtual_end;
 
 vm_offset_t avail_start;
 vm_offset_t avail_end;
-
-typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
-} pv_addr_t;
 
 extern pv_addr_t systempage;
 
