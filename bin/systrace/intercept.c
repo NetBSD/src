@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.2 2002/06/18 02:49:09 thorpej Exp $	*/
+/*	$NetBSD: intercept.c,v 1.3 2002/07/03 22:54:38 atatat Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
 
 /*
@@ -31,11 +31,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.2 2002/06/18 02:49:09 thorpej Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.3 2002/07/03 22:54:38 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/tree.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +69,8 @@ static int sccompare(struct intercept_syscall *, struct intercept_syscall *);
 static int pidcompare(struct intercept_pid *, struct intercept_pid *);
 static struct intercept_syscall *intercept_sccb_find(const char *,
     const char *);
+static void child_handler(int);
+static void sigusr1_handler(int);
 
 static SPLAY_HEAD(pidtree, intercept_pid) pids;
 static SPLAY_HEAD(sctree, intercept_syscall) scroot;
@@ -219,20 +222,76 @@ intercept_register_execcb(void (*cb)(int, pid_t, int, const char *, const char *
 	return (0);
 }
 
-pid_t
-intercept_run(int fd, char *path, char *const argv[])
+static void 
+child_handler(int sig)
 {
-	pid_t pid;
+	int s = errno, status;
+	extern int trfd;
 
-	pid = fork();
-	if (pid == -1)
+	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
+		close(trfd);
+	} 
+
+	while (wait4(-1, &status, WNOHANG, NULL) > 0)
+		;
+
+	errno = s;
+}
+
+static void
+sigusr1_handler(int signum)
+{
+	/* all we need to do is pretend to handle it */
+}
+
+pid_t
+intercept_run(int bg, char *path, char *const argv[])
+{
+	sigset_t none, set, oset;
+	sig_t ohandler;
+	pid_t pid, cpid;
+	int status;
+
+	sigemptyset(&none);
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	if (sigprocmask(SIG_BLOCK, &set, &oset) == -1)
+		err(1, "sigprocmask");
+	ohandler = signal(SIGUSR1, sigusr1_handler);
+	if (ohandler == SIG_ERR)
+		err(1, "signal");
+	pid = getpid();
+	cpid = fork();
+	if (cpid == -1)
 		return (-1);
-	if (pid == 0) {
-		/* Needs to be closed */
-		close(fd);
 
-		/* Stop myself */
-		raise(SIGSTOP);
+	/*
+	 * If the systrace process should be in the background and we're
+	 * the parent, or vice versa.
+	 */
+	if ((bg && cpid != 0) || (!bg && cpid == 0)) {
+		if (bg) {
+			/* Wait for child to "detach" */
+			cpid = wait(&status);
+			if (cpid == -1)
+				err(1, "wait");
+			if (status != 0)
+				errx(1, "wait: child gave up");
+		}
+
+		/* Sleep */
+		(void)sigsuspend(&none);
+
+		/*
+		 * Woken up, restore signal handling state.
+		 *
+		 * Note that there is either no child or we have no idea
+		 * what pid it might have at this point.  If we fail.
+		 */
+		if (signal(SIGUSR1, ohandler) == SIG_ERR)
+			err(1, "signal");
+		if (sigprocmask(SIG_SETMASK, &oset, NULL) == -1)
+			err(1, "sigprocmask");
 
 		execvp(path, argv);
 
@@ -240,9 +299,38 @@ intercept_run(int fd, char *path, char *const argv[])
 		err(1, "execvp");
 	}
 
-	sleep(1); /* XXX */
+	/* Setup done, restore signal handling state */
+	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
+		if (!bg)
+			kill(cpid, SIGKILL);
+		err(1, "signal");
+	}
+	if (sigprocmask(SIG_SETMASK, &oset, NULL) == -1) {
+		if (!bg)
+			kill(cpid, SIGKILL);
+		err(1, "sigprocmask");
+	}
 
-	return (pid);
+	if (bg) {
+		pid_t c2;
+
+		c2 = fork();
+		if (c2 == -1)
+			err(1, "fork");
+		if (c2 != 0)
+			exit(0);
+		if (setsid() == -1)
+			err(1, "setsid");
+	}
+	else {
+		if (signal(SIGCHLD, child_handler) == SIG_ERR) {
+			warn("signal");
+			kill(cpid, SIGKILL);
+			exit(1);
+		}
+	}
+
+	return (bg ? pid : cpid);
 }
 
 int
@@ -303,6 +391,9 @@ intercept_open(void)
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		warn("fcntl(O_NONBLOCK)");
+
+	if (fcntl(fd, F_SETFD, 1) == -1)
+		warn("fcntl(F_SETFD)");
 
 	return (fd);
 }
