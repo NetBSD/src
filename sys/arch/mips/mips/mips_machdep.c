@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.17 1997/07/01 09:32:13 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.18 1997/07/19 09:54:37 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -25,7 +25,7 @@
 #include <sys/user.h>
 
 #include <mips/cpu.h>			/* declaration of of cpu_id */
-#include <mips/reg.h>			/* register names */
+#include <mips/regnum.h>			/* symbolic register indices */
 #include <mips/locore.h>
 #include <mips/vmparam.h>			/* USRSTACK */
 #include <mips/psl.h>

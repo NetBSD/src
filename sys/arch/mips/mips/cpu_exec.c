@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.12 1996/11/11 20:23:39 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.13 1997/07/19 09:54:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 #include <machine/bsd-aout.h>
 #endif
 #include <machine/reg.h>
+#include <mips/regnum.h>			/* symbolic register indices */
 
 #include <machine/elf.h>
 /*XXX*/

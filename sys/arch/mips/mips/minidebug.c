@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.2 1997/06/30 14:42:34 jonathan Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.3 1997/07/19 09:54:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,6 +52,7 @@
 
 #include <machine/trap.h>
 #include <machine/reg.h>
+#include <mips/regnum.h>			/* symbolic register indices */
 #include <machine/cpu.h>
 #include <machine/pte.h>
 

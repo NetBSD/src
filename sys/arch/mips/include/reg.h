@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.7 1997/06/15 17:37:45 mhitch Exp $	*/
+/*	$NetBSD: reg.h,v 1.8 1997/07/19 09:54:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,45 +52,5 @@ struct reg {
 struct fpreg {
 	int	r_regs[33];
 };
-
-#define ZERO	0
-#define AST	1
-#define V0	2
-#define V1	3
-#define A0	4
-#define A1	5
-#define A2	6
-#define A3	7
-#define T0	8
-#define T1	9
-#define T2	10
-#define T3	11
-#define T4	12
-#define T5	13
-#define T6	14
-#define T7	15
-#define S0	16
-#define S1	17
-#define S2	18
-#define S3	19
-#define S4	20
-#define S5	21
-#define S6	22
-#define S7	23
-#define T8	24
-#define T9	25
-#define K0	26
-#define K1	27
-#define GP	28
-#define SP	29
-#define S8	30
-#define RA	31
-#define SR	32
-#define PS	SR	/* alias for SR */
-#define MULLO	33
-#define MULHI	34
-#define BADVADDR 35
-#define CAUSE	36
-#define PC	37
 
 #endif /*_MACHINE_REG_H_*/

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 1997/07/07 03:57:55 jonathan Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 1997/07/19 09:54:25 jonathan Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -36,7 +36,8 @@
 
 #include <vm/vm_param.h>		/* XXX  boolean_t */
 #include <mips/trap.h>			/* T_BREAK */
-#include <mips/reg.h>			/* register names */
+#include <mips/reg.h>			/* register state */
+#include <mips/regnum.h>		/* symbolic register indices */
 #include <mips/proc.h>			/* register state */
 
 
