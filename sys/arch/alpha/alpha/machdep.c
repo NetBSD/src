@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.249 2001/09/10 21:19:08 chris Exp $ */
+/* $NetBSD: machdep.c,v 1.250 2001/09/17 17:40:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,10 +71,11 @@
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2001/09/10 21:19:08 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2001/09/17 17:40:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1988,12 +1989,7 @@ delay(n)
 	}
 }
 
-#if defined(COMPAT_OSF1) || 1		/* XXX */
-void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-	    u_long));
-#endif
-
-#if 1		/* XXX */
+#ifdef EXEC_ECOFF
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -2028,7 +2024,7 @@ cpu_exec_ecoff_probe(p, epp)
 
 	return (error);
 }
-#endif
+#endif /* EXEC_ECOFF */
 
 int
 alpha_pa_access(pa)
