@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.15 1996/08/19 04:19:01 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.16 1996/08/19 04:28:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -175,6 +175,12 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		break;
 
 	default:
+#ifdef KN20AA_BOGUS_IRQ_FROB
+		*ihp = 0xdeadbeef;
+		printf("\n\n BOGUS INTERRUPT MAPPING: dev %d, pin %d\n",
+		    device, buspin);
+		return (0);
+#endif
 		panic("pci_kn20aa_map_int: invalid device number %d\n",
 		    device);
 	}
@@ -196,6 +202,12 @@ dec_kn20aa_intr_string(ccv, ih)
 	struct cia_config *ccp = ccv;
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
+#ifdef KN20AA_BOGUS_IRQ_FROB
+	if (ih == 0xdeadbeef) {
+		sprintf(irqstr, "BOGUS");
+		return (irqstr);
+	}
+#endif
         if (ih > KN20AA_MAX_IRQ)
                 panic("dec_kn20aa_a50_intr_string: bogus kn20aa IRQ 0x%x\n",
 		    ih);
@@ -214,6 +226,22 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
         struct cia_config *ccp = ccv;
 	void *cookie;
 
+#ifdef KN20AA_BOGUS_IRQ_FROB
+	if (ih == 0xdeadbeef) {
+		int i;
+		char chars[10];
+
+		printf("dec_kn20aa_intr_establish: BOGUS IRQ\n");
+		do {
+			printf("IRQ to enable? ");
+			getstr(chars, 10);
+			i = atoi(chars);
+		} while (i < 0 || i > 32);
+		printf("ENABLING IRQ %d\n", i);
+		kn20aa_enable_intr(i);
+		return ((void *)0xbabefacedeadbeef);
+	}
+#endif
         if (ih > KN20AA_MAX_IRQ)
                 panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x\n",
 		    ih);
