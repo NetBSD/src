@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.1 2002/07/07 12:56:34 drochner Exp $ */
+/* $NetBSD: kvm86.c,v 1.2 2002/07/10 19:09:35 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.1 2002/07/07 12:56:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.2 2002/07/10 19:09:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ struct kvm86_data *bioscallvmd;
 void *bioscallscratchpage;
 /* where this page is mapped in the vm86 */
 #define BIOSCALLSCRATCHPAGE_VMVA 0x1000
+/* a virtual page to map in vm86 memory temporarily */
+vaddr_t bioscalltmpva;
 
 #define KVM86_IOPL3 /* not strictly necessary, saves a lot of traps */
 
@@ -114,6 +116,7 @@ kvm86_init()
 	kvm86_map(vmd, vtophys((vaddr_t)bioscallscratchpage),
 		  BIOSCALLSCRATCHPAGE_VMVA);
 	bioscallvmd = vmd;
+	bioscalltmpva = uvm_km_valloc(kernel_map, NBPG);
 }
 
 /*
@@ -190,6 +193,34 @@ kvm86_bios_delpage(vmva, kva)
 
 	bioscallvmd->pgtbl[vmva >> 12] = 0;
 	free(kva, M_DEVBUF);
+}
+
+size_t
+kvm86_bios_read(vmva, buf, len)
+	u_int32_t vmva;
+	char *buf;
+	size_t len;
+{
+	size_t todo, now;
+	paddr_t vmpa;
+
+	todo = len;
+	while (todo > 0) {
+		now = min(todo, NBPG - (vmva & (NBPG - 1)));
+
+		if (!bioscallvmd->pgtbl[vmva >> 12])
+			break;
+		vmpa = bioscallvmd->pgtbl[vmva >> 12] & ~(NBPG - 1);
+		pmap_kenter_pa(bioscalltmpva, vmpa, VM_PROT_READ);
+		pmap_update(pmap_kernel());
+
+		memcpy(buf, (void *)(bioscalltmpva + (vmva & (NBPG - 1))),
+		       now);
+		buf += now;
+		todo -= now;
+		vmva += now;
+	}
+	return (len - todo);
 }
 
 int
