@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6 2003/09/06 08:45:18 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 10:56:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/09/06 08:45:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 10:56:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,35 +51,42 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/09/06 08:45:18 jdolecek Exp
 
 int coda_lkmentry(struct lkm_table *, int, int);
 
+static int coda_dispatch_vfs(struct lkm_table *, int, int);
+static int coda_dispatch_dev(struct lkm_table *, int, int);
+
 /*
- * This is the vfsops table for the file system in question
+ * The VFS part of module.
  */
-extern struct vfsops coda_vfsops;
+static int
+coda_dispatch_vfs(struct lkm_table *lkmtp, int cmd, int ver)
+{
+	extern struct vfsops coda_vfsops;
+
+	/*
+	 * declare the filesystem
+	 */
+	MOD_VFS("coda", -1, &coda_vfsops);
+	lkmtp->private.lkm_any = (void *) &_module;	/* XXX */
+
+	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+}
 
 /*
- * declare the filesystem
+ * The device part.
  */
-/*
-MOD_VFS("coda", -1, &coda_vfsops);
-*/
-struct lkm_vfs coda_lkm_vfs = {
-	LM_VFS, LKM_VERSION, "coda", -1, (void *)&coda_vfsops};
+static int
+coda_dispatch_dev(struct lkm_table *lkmtp, int cmd, int ver)
+{
+	/*
+	 * declare up/down call device
+	 */
+	extern const struct cdevsw vcoda_cdevsw;
 
+	MOD_DEV("vcoda", "vcoda", NULL, -1, &vcoda_cdevsw, -1);
+	lkmtp->private.lkm_any = (void *) &_module;	/* XXX */
 
-
-/*
- * declare up/down call device
- */
-extern const struct cdevsw vcoda_cdevsw;
-
-/*
-MOD_DEV("vcoda", NULL, NULL, -1, &vcoda_cdevsw, -1);
-*/
-struct lkm_dev coda_lkm_dev = {
-	LM_DEV, LKM_VERSION, "vcoda", -1, NULL,
-	NULL, -1, &vcoda_cdevsw, -1,
-};
-
+	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+}
 
 /*
  * entry point
@@ -89,25 +96,18 @@ coda_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	int error = 0;
 
-	if (ver != LKM_VERSION)
-		return EINVAL;
-
 	switch (cmd) {
 	case LKM_E_LOAD:
-		lkmtp->private.lkm_any = (void *) &coda_lkm_dev;
-		error = lkmdispatch(lkmtp, cmd);
+		error = coda_dispatch_dev(lkmtp, cmd, ver);
 		if (error)
 			break;
-		lkmtp->private.lkm_any = (void *) &coda_lkm_vfs ;
-		error = lkmdispatch(lkmtp, cmd);
+		error = coda_dispatch_vfs(lkmtp, cmd, ver);
 		break;
 	case LKM_E_UNLOAD:
-		lkmtp->private.lkm_any = (void *) &coda_lkm_vfs ;
-		error = lkmdispatch(lkmtp, cmd);
+		error = coda_dispatch_vfs(lkmtp, cmd, ver);
 		if (error)
 			break;
-		lkmtp->private.lkm_any = (void *) &coda_lkm_dev;
-		error = lkmdispatch(lkmtp, cmd);
+		error = coda_dispatch_dev(lkmtp, cmd, ver);
 		break;
 	case LKM_E_STAT:
 		error = lkmdispatch(lkmtp, cmd);
