@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstab.5	6.5 (Berkeley) 5/10/91
-.\"	$Id: fstab.5,v 1.2 1993/08/01 07:35:30 mycroft Exp $
+.\"	$Id: fstab.5,v 1.3 1993/11/28 08:48:42 mycroft Exp $
 .\"
 .Dd May 10, 1991
 .Dt FSTAB 5
@@ -82,20 +82,30 @@ For swap partitions, this field should be specified as ``none''.
 The third field,
 .Pq Fa fs_vfstype ,
 describes the type of the filesystem.
-The system currently supports four types of filesystems:
+The system currently supports nine types of filesystems:
 .Bl -tag -width indent -offset indent
-.It Em ufs 
-a local
-.Tn UNIX
-filesystem
+.It Em fdesc
+an implementation of /dev/fd
+.It Em isofs
+an ISO 9660 CD-ROM filesystem
+.It Em kernfs
+various and sundry kernel statistics
 .It Em mfs 
 a local memory-based
 .Tn UNIX
 filesystem
+.It Em msdos
+a MSDOS ``FAT'' filesystem
 .It Em nfs 
 a Sun Microsystems compatible ``Network File System''
+.It Em procfs
+a local filesystem of process information
 .It Em swap 
 a disk partition to be used for swapping
+.It Em ufs 
+a local
+.Tn UNIX
+filesystem
 .El
 .Pp
 The fourth field,
