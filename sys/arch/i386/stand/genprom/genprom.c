@@ -1,4 +1,4 @@
-/*	$NetBSD: genprom.c,v 1.4 2002/07/20 08:36:18 grant Exp $	 */
+/*	$NetBSD: genprom.c,v 1.5 2003/05/08 13:42:17 christos Exp $	 */
 
 /*
  * mainly from netbsd:sys/arch/i386/netboot/genprom.c
@@ -13,37 +13,51 @@
  */
 
 #include <stdio.h>
-#include <err.h>
 #include <string.h>
 
 #define PROM_SIZE 0x10000	/* max */
 
+static char *progname;
+
+static void bail(const char *)
+    __attribute__((__noreturn__));
+int main(int, char **);
+
+static void
+bail(const char *msg)
+{
+	(void)fprintf(stderr, "%s: %s\n", progname, msg);
+	exit(1);
+}
+
 int
-main(argc, argv)
-	int             argc;
-	char          **argv;
+main(int argc, char **argv)
 {
 	char            w[PROM_SIZE];
 	int             i, sum;
 	int             romsize;
 	unsigned short  ck16;
 
+	if ((progname = strrchr(argv[0], '/')) != NULL)
+		progname++;
+	else
+		progname = argv[0];
+
 	if (argc > 1) {
-		if (sscanf(argv[1], "%d", &romsize) != 1) {
-			errx(1, "bad arg");
-		}
+		if (sscanf(argv[1], "%d", &romsize) != 1)
+			bail("bad arg");
 	} else {
-		errx(1, "arg: romsize / bytes");
+		bail("arg: romsize / bytes");
 	}
 
-	memset(w, 0x0, PROM_SIZE);
+	(void)memset(w, 0x0, PROM_SIZE);
 	i = fread(w, 1, PROM_SIZE, stdin);
 
-	fprintf(stderr, "bios extension size: %d (0x%x), read %d bytes\n",
-		romsize, romsize, i);
+	(void)fprintf(stderr, "bios extension size: %d (0x%x), read %d bytes\n",
+	    romsize, romsize, i);
 
 	if (i > romsize)
-		errx(1, "read longer than expected");
+		bail("read longer than expected");
 
 	w[2] = romsize / 512;	/* BIOS extension size */
 
@@ -54,16 +68,16 @@ main(argc, argv)
 		fprintf(stderr, "PCI Data Structure found\n");
 		w[i + 0x10] = romsize / 512;	/* BIOS extension size again */
 	}
-	for (sum = 0, i = 0; i < romsize; i++) {
+	for (sum = 0, i = 0; i < romsize; i++)
 		sum += w[i];
-	}
+
 	w[5] = -sum;		/* left free for checksum adjustment */
 
 	/* calculate CRC as used by PROM programmers */
 	for (ck16 = 0, i = 0; i < romsize; i++)
 		ck16 += (unsigned char) w[i];
-	fprintf(stderr, "ROM CRC: 0x%04x\n", ck16);
+	(void)fprintf(stderr, "ROM CRC: 0x%04x\n", ck16);
 
-	fwrite(w, 1, romsize, stdout);
+	(void)fwrite(w, 1, romsize, stdout);
 	return (0);
 }
