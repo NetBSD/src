@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.6 2002/04/14 01:41:25 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.7 2002/04/14 04:22:38 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -6,16 +6,21 @@
 #
 # Required variables:
 #	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
-#	MDSETTARGETS	List of images to ${MDSETIMAGE} into kernels:
+#	MDSETTARGETS	List of images to ${MDSETIMAGE} into kernels,
+#			containing one or more tuples of the form:
 #				KERNEL	IMAGE	FILENAME
-#			The kernel ${KERNOBJDIR}/${KERNEL}/netbsd is
-#			${MDSETIMAGE} with ${IMAGE}, ${STRIP}ped,
-#			and gzipped into ${FILENAME}.gz.
+#
+#			The kernel is ${MDSETIMAGE} with ${IMAGE},
+#			${STRIP}ped (with the symbols are stored in
+#			${FILENAME}.symbols.gz), and gzipped into
+#			${FILENAME}.gz.
+#
 #			If FILENAME is "-", use "netbsd.${KERNEL}" as
 #			the target name.
 #
 # Optional variables:
 #	MDSETDIR			Where to install release kernels.
+#
 #	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
 #					Kernel is available as netbsd.tmp.
@@ -23,6 +28,7 @@
 #					this to build extra kernels, the
 #					resultant file must be gzipped as
 #					"netbsd.${suffix}.gz"
+#
 #	MDSET.${FILENAME}.suffixes	List of extra install kernel suffixes.
 #					The extra kernels are usually created
 #					by MDSET.${FILENAME}.post.
@@ -55,7 +61,9 @@ _POST.${_KERNEL.${_K}}:= ${MDSET.${_FILENAME}.post}
 .endif
 
 ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
-	@echo "Populating ${_K} with ${_I} into ${.TARGET}"
+	@echo "mdsetimage: ${KERNOBJDIR}/${_K}/netbsd"
+	@echo "      with: ${_I}"
+	@echo "      into: ${.TARGET}"
 	@rm -f netbsd.tmp ${_KERNEL.${_K}}.symbols.gz
 	@cp ${KERNOBJDIR}/${_K}/netbsd netbsd.tmp
 	${MDSETIMAGE} -v netbsd.tmp ${_I}
