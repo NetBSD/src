@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.1.1 1995/07/25 23:12:25 chuck Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1995/10/12 20:39:49 chuck Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@ char *cline;
 				file = line;
 		}
 		exec_mvme(file, LOADADDR, boothowto);
-		printf("boot: %s\n", strerror(errno));
+		printf("boot: %s: %s\n", file, strerror(errno));
 		boothowto |= RB_ASKNAME;
 	}
 }
