@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.3 1998/12/09 01:02:29 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.4 1998/12/11 00:05:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,12 +91,6 @@ LIST_HEAD(, usb_block_dma) usb_blk_freelist =
 LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
-/*
- * XXX usb_block_allocmem() does not have any locks because
- * it should never be called from an interrupt context, nor
- * should should it block.  But is that true?
- */
-
 usbd_status
 usb_block_allocmem(tag, size, align, dmap)
 	bus_dma_tag_t tag;
@@ -106,6 +100,7 @@ usb_block_allocmem(tag, size, align, dmap)
 {
 	int error;
         usb_dma_block_t *p;
+	int s;
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%d align=%d\n", size, align));
 
@@ -116,16 +111,19 @@ usb_block_allocmem(tag, size, align, dmap)
 	}
 #endif
 
+	s = splusb();
 	/* First check the free list. */
 	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
 		if (p->tag == tag && p->size >= size && p->align >= align) {
 			LIST_REMOVE(p, next);
+			splx(s);
 			*dmap = p;
 			DPRINTFN(6, ("usb_block_allocmem: free list size=%d\n",
 				     p->size));
 			return (USBD_NORMAL_COMPLETION);
 		}
 	}
+	splx(s);
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
@@ -187,20 +185,18 @@ usb_block_real_freemem(p)
 /*
  * Do not free the memory unconditionally since we might be called
  * from an interrupt context and that is BAD.
- * XXX when you we really free?
+ * XXX when should we really free?
  */
 void
 usb_block_freemem(p)
         usb_dma_block_t *p;
 {
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("usb_block_freemem: in interrupt context\n");
-		return;
-	}
-#endif
+	int s;
+
 	DPRINTFN(6, ("usb_block_freemem: size=%d\n", p->size));
+	s = splusb();
 	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
+	splx(s);
 }
 
 usbd_status
