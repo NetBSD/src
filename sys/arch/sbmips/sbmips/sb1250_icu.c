@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.4 2003/07/15 03:35:51 lukem Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.5 2003/09/26 10:34:41 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.4 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.5 2003/09/26 10:34:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ sb1250_icu_init(void)
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_line, 0, sizeof ints_for_line);
-	imr_all = 0xffffffffffffffff;
+	imr_all = 0xffffffffffffffffULL;
 	memset(sb1250_ihands, 0, sizeof sb1250_ihands);
 
 	systemsw.s_cpu_intr = sb1250_cpu_intr;
