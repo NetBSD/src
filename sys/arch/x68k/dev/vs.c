@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.13 2002/03/26 15:05:29 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.14 2002/04/02 15:22:37 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -316,6 +316,8 @@ vs_open(void *hdl, int flags)
 
 	sc->sc_pintr = NULL;
 	sc->sc_rintr = NULL;
+
+	msm6258_codec_open(sc);
 
 	return 0;
 }
