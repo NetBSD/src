@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.2 2003/06/26 12:09:58 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.3 2003/07/01 08:34:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.2 2003/06/26 12:09:58 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.3 2003/07/01 08:34:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -228,7 +228,7 @@ open_dsts(struct _citrus_iconv_std_dst_list *dl,
 		return errno;
 
 	for (i=0; i<dbdst->db_num_charsets; i++) {
-		ret = open_csmapper(&sd->sd_mapper,ec->ec_csname,
+		ret = open_csmapper(&sd->sd_mapper, ec->ec_csname,
 				    dbdst->db_charsets[i].ec_csname, &norm);
 		if (ret == 0) {
 			sd->sd_csid = dbdst->db_charsets[i].ec_csid;
