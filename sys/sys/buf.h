@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.15 1994/06/29 06:43:37 cgd Exp $	*/
+/*	$NetBSD: buf.h,v 1.16 1994/10/29 08:02:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,8 @@ struct buf {
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
 	struct	vnode *b_vp;		/* Device vnode. */
-	int	b_pfcent;		/* Center page when swapping cluster. */
+	long	b_pfcent;		/* Center page when swapping cluster. */
+					/* XXX pfcent should be int; overld. */
 	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
 	int	b_dirtyend;		/* Offset of end of dirty region. */
 	struct	ucred *b_rcred;		/* Read credentials reference. */
