@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.2 1998/10/31 02:06:01 matt Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.3 1998/11/11 15:26:14 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -378,7 +378,8 @@ posmid:
  */
 	ashl	$-3,r2,r3
 	bicb2	$3,r3
-	subl3	r3,$bits2opi,r3
+	mnegl	r3,r3
+	movab	bits2opi[r3],r3
 /*
  *  Set  r2  to the size of the shift needed to 
  *  obtain the correct portion of  2/pi .
