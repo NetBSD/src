@@ -86,11 +86,22 @@ hdb_init_db __P((
 	krb5_context context,
 	HDB *db));
 
+int
+hdb_key2principal __P((
+	krb5_context context,
+	krb5_data *key,
+	krb5_principal p));
+
 krb5_error_code
 hdb_ldap_create __P((
 	krb5_context context,
 	HDB ** db,
 	const char *filename));
+
+krb5_error_code
+hdb_lock __P((
+	int fd,
+	int operation));
 
 krb5_error_code
 hdb_ndbm_create __P((
@@ -104,6 +115,12 @@ hdb_next_enctype2key __P((
 	const hdb_entry *e,
 	krb5_enctype enctype,
 	Key **key));
+
+int
+hdb_principal2key __P((
+	krb5_context context,
+	krb5_principal p,
+	krb5_data *key));
 
 krb5_error_code
 hdb_print_entry __P((
