@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.4 1999/06/24 01:10:32 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -35,20 +35,19 @@
  * NS16550 support
  */
 
-#include <bebox/include/bootinfo.h>
 #include "ns16550.h"
 
 volatile struct NS16550 *
-NS16550_init()
+NS16550_init(addr, speed)
+	int addr;
+	int speed;
 {
 	volatile struct NS16550 *com_port;
-	int speed;
-	extern struct btinfo_console btinfo_console;
 
-	com_port = (struct NS16550 *)(COMBASE + btinfo_console.addr);
+	com_port = (struct NS16550 *)(COMBASE + addr);
 
 	com_port->lcr = 0x80;  /* Access baud rate */
-	speed = comspeed(btinfo_console.speed);
+	speed = comspeed(speed);
 	com_port->dll = speed;
 	com_port->dlm = speed >> 8;
 
