@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.198 2004/05/10 12:43:51 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.199 2004/05/17 12:17:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.198 2004/05/10 12:43:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.199 2004/05/17 12:17:18 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -933,6 +933,7 @@ nfs_lookup(v)
 		*vpp = NULLVP;
 	}
 dorpc:
+#if 0
 	/*
 	 * because nfsv3 has the same CREATE semantics as ours,
 	 * we don't have to perform LOOKUPs beforehand.
@@ -948,6 +949,7 @@ dorpc:
 		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
+#endif /* 0 */
 
 	error = 0;
 	newvp = NULLVP;
