@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.8 1994/11/14 20:40:04 gwr Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.9 1994/11/17 04:51:50 gwr Exp $	*/
 
 /*
  * Mach Operating System
@@ -86,37 +86,28 @@ db_examine(addr, fmt, count)
 		size = 4;
 		width = 12;
 		while ((c = *fp++) != 0) {
+			if (db_print_position() == 0) {
+				/* Always print the address. */
+				db_printsym(addr, DB_STGY_ANY);
+				db_printf(":\t");
+				db_prev = addr;
+			}
 			switch (c) {
-			case 'b':
+			case 'b':	/* byte */
 				size = 1;
 				width = 4;
 				break;
-			case 'h':
+			case 'h':	/* half-word */
 				size = 2;
 				width = 8;
 				break;
-			case 'l':
+			case 'l':	/* long-word */
 				size = 4;
 				width = 12;
 				break;
 			case 'a':	/* address */
-				/* always forces a new line */
-				if (db_print_position() != 0)
-					db_printf("\n");
-				db_prev = addr;
-				db_printsym(addr, DB_STGY_ANY);
-				db_printf(":\t");
+				db_printf("= 0x%x\n", addr);
 				break;
-			}
-			if (db_print_position() == 0) {
-
-				/* Always print the address. */
-				db_printsym(addr, DB_STGY_ANY);
-				db_printf(":\t");
-
-				db_prev = addr;
-			}
-			switch (c) {
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
