@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.1 1999/11/19 18:23:35 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.2 1999/12/07 07:11:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -225,6 +225,26 @@ tlp_cardbus_attach(parent, self, aux)
 	printf(": %s Ethernet, pass %d.%d\n",
 	    tlp_cardbus_chip_names[sc->sc_chip],
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
+
+	/*
+	 * Check to see if the device is in power-save mode, and
+	 * bring it out if necessary.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/*
+		 * Clear the "sleep mode" bit in the CFDA register.
+		 */
+		reg = cardbus_conf_read(cc, cf, ca->ca_tag, TULIP_PCI_CFDA);
+		if (reg & CFDA_SLEEP)
+			cardbus_conf_write(cc, cf, ca->ca_tag, TULIP_PCI_CFDA,
+			    reg & ~CFDA_SLEEP);
+		break;
+
+	default:
+		/* Nothing. */
+	}
 
 	/*
 	 * Map the device.
