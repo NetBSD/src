@@ -1,4 +1,4 @@
-.\"	$NetBSD: profil.2,v 1.7 2001/09/16 02:13:30 wiz Exp $
+.\"	$NetBSD: profil.2,v 1.8 2002/01/30 09:22:48 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Fd #include <unistd.h>
 .Ft int
 .Fn profil "char *samples" "size_t size" "u_long offset" "u_int scale"
 .Sh DESCRIPTION
