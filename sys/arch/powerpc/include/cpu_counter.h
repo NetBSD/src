@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.3 2003/01/23 15:59:38 kleink Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.1 2003/02/05 13:57:59 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -26,23 +26,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_RND_H_
-#define _POWERPC_RND_H_
+#ifndef _POWERPC_CPU_COUNTER_H_
+#define _POWERPC_CPU_COUNTER_H_
 
 /*
- * Machine-specific support for rnd(4)
+ * Machine-specific support for CPU counter.
  */
 
 #ifdef _KERNEL
 
 #include <powerpc/spr.h>
 
-#define cpu_hascounter() 1
+#define cpu_hascounter()	(1)
+#define cpu_counter()		cpu_counter32()
 
-static __inline u_int32_t
-cpu_counter(void)
+static __inline uint32_t
+cpu_counter32(void)
 {
-	u_int32_t rv, rtcu, scratch;
+	uint32_t rv, rtcu, scratch;
 
 	__asm __volatile (
 	    "mfpvr	%0		\n"
@@ -66,6 +67,12 @@ cpu_counter(void)
 	return rv;
 }
 
+#if 0	/* XXX MI microtime() needs frequency of CPU counter. */
+static __inline uint64_t
+cpu_frequency(struct cpu_info *ci)
+{
+}
+#endif
 #endif /* _KERNEL */
 
-#endif /* _POWERPC_RND_H_ */
+#endif /* _POWERPC_CPU_COUNTER_H_ */
