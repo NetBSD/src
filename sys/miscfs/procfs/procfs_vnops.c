@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.17 1994/02/15 13:32:39 mycroft Exp $
+ *	$Id: procfs_vnops.c,v 1.18 1994/04/12 02:55:53 cgd Exp $
  */
 
 /*
@@ -74,19 +74,20 @@ static struct pfsnames {
 	u_short	d_namlen;
 	char	d_name[PROCFS_NAMELEN];
 	pfstype	d_pfstype;
+	int	(*d_valid) __P((struct proc *procp));
 } procent[] = {
 #define N(s) sizeof(s)-1, s
 	/* namlen, nam, type */
-	{  N("."),	Pproc },
-	{  N(".."),	Proot },
-	{  N("file"),	Pfile },
-	{  N("mem"),    Pmem },
-	{  N("regs"),   Pregs },
-	{  N("fpregs"), Pfpregs },
-	{  N("ctl"),    Pctl },
-	{  N("status"), Pstatus },
-	{  N("note"),   Pnote },
-	{  N("notepg"), Pnotepg },
+	{  N("."),	Pproc,		NULL },
+	{  N(".."),	Proot,		NULL },
+	{  N("file"),	Pfile,		procfs_validfile },
+	{  N("mem"),    Pmem,		NULL },
+	{  N("regs"),   Pregs,		procfs_validregs },
+	{  N("fpregs"), Pfpregs,	procfs_validfpregs },
+	{  N("ctl"),    Pctl,		NULL },
+	{  N("status"), Pstatus,	NULL },
+	{  N("note"),   Pnote,		NULL },
+	{  N("notepg"), Pnotepg,	NULL },
 #undef N
 };
 #define Nprocent (sizeof(procent)/sizeof(procent[0]))
@@ -380,21 +381,17 @@ procfs_getattr(vp, vap, cred, p)
 				    procp->p_vmspace->vm_ssize);
 		break;
 
-	case Pregs:
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
+	case Pregs:
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
-#else
-		vap->va_bytes = vap->va_size = 0;
-#endif
 		break;
+#endif
 
-	case Pfpregs:
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	case Pfpregs:
 		vap->va_bytes = vap->va_size = sizeof(struct fpreg);
-#else
-		vap->va_bytes = vap->va_size = 0;
-#endif
 		break;
+#endif
 
 	case Pstatus:
 		vap->va_bytes = vap->va_size = 256;	/* only a maximum */
@@ -581,7 +578,8 @@ procfs_lookup(dvp, ndp, p)
 			struct pfsnames *dp = &procent[i];
 
 			if (ndp->ni_namelen == dp->d_namlen &&
-			    bcmp(pname, dp->d_name, dp->d_namlen) == 0) {
+			    bcmp(pname, dp->d_name, dp->d_namlen) == 0 &&
+			    (dp->d_valid == NULL || (*dp->d_valid)(procp))) {
 			    	pfs_type = dp->d_pfstype;
 				goto found;
 			}
@@ -611,6 +609,14 @@ procfs_lookup(dvp, ndp, p)
 	default:
 		return (ENOTDIR);
 	}
+}
+
+/* check to see if we should display the 'file' entry */
+int
+procfs_validfile(procp)
+	struct proc *procp;
+{
+	return (procfs_findtextvp(procp) != NULL);
 }
 
 /*
@@ -672,8 +678,9 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 		while (uio->uio_resid >= UIO_MX && (!cookies || ncookies > 0)) {
 			struct pfsnames *dt;
 			pid_t pid = pfs->pfs_pid;
+			struct proc *procp = PFIND(pid);
 
-			if (i >= Nprocent) {
+			if (procp == NULL || i >= Nprocent) {
 				*eofflagp = 1;
 				break;
 			}
@@ -685,12 +692,8 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				pid = 0;
 			dp->d_fileno = PROCFS_FILENO(pid, dt->d_pfstype);
 
-			if (dt->d_pfstype == Pfile) {
-				struct proc *procp = PFIND(pid);
-
-				if (!procp || !procfs_findtextvp(procp))
-					dp->d_fileno = 0;
-			}
+			if (dt->d_valid != NULL && !(*dt->d_valid)(procp))
+				dp->d_fileno = 0;
 
 			dp->d_namlen = dt->d_namlen;
 			bcopy(dt->d_name, dp->d_name, sizeof(dt->d_name)-1);
