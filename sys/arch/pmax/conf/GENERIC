@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.56 1999/11/27 01:31:47 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.57 1999/12/02 03:52:25 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -111,10 +111,10 @@ options 	COMPAT_13	# Netbsd 1.3
 options 	COMPAT_14	# Netbsd 1.4
 
 # Raster console options
-options		FONT_BOLD8x16		# Font for fb devices
-options		FONT_LUCIDA16x29	# Font for px devices
-#options	FONT_GALLANT12x22
-#options	FONT_QVSS8x15
+options 	FONT_BOLD8x16		# Font for fb devices
+options 	FONT_LUCIDA16x29	# Font for px devices
+#options 	FONT_GALLANT12x22
+#options 	FONT_QVSS8x15
 
 # pmax specific
 options 	COMPAT_ULTRIX	# Ultrix compatibility
