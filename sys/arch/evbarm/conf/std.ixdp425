@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixdp425,v 1.3 2003/05/24 01:59:32 ichiro Exp $
+#	$NetBSD: std.ixdp425,v 1.4 2003/09/25 14:11:18 ichiro Exp $
 #
 # standard NetBSD/evbarm for IXDP425 options
 
@@ -22,4 +22,4 @@ makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.ixdp425"
 options 	ARM_INTR_IMPL="<arch/arm/xscale/ixp425_intr.h>"
 
 # We need to configure the PCI bus.
-#options 	PCI_NETBSD_CONFIGURE
+options 	PCI_NETBSD_CONFIGURE
