@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.10 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.11 1998/08/13 17:32:46 drochner Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -148,7 +148,7 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
 
 struct uvm_aobj {
 	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
-	vsize_t u_pages;	 /* number of pages in entire object */
+	int u_pages;		 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
 				 /*
@@ -168,7 +168,7 @@ static void			 uao_init __P((void));
 static struct uao_swhash_elt	*uao_find_swhash_elt __P((struct uvm_aobj *,
 							  int, boolean_t));
 static int			 uao_find_swslot __P((struct uvm_aobj *, 
-						      vaddr_t));
+						      int));
 static boolean_t		 uao_flush __P((struct uvm_object *, 
 						vaddr_t, vaddr_t, 
 						int));
@@ -273,7 +273,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 __inline static int
 uao_find_swslot(aobj, pageidx)
 	struct uvm_aobj *aobj;
-	vaddr_t pageidx;
+	int pageidx;
 {
 
 	/*
