@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.26 2002/02/26 00:15:58 augustss Exp $
+.\"	$NetBSD: audiorecord.1,v 1.27 2002/09/02 04:40:03 ross Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -51,14 +51,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-program copies the audio devices to the named audiofile, or the standard
+program copies the audio device to the named audiofile or to the standard
 output if no file is named.
-The output file will contain either a Sun/NeXT audio header (default), a
-RIFF/WAVE audio header or no header at all.  For Sun output files when
-using a linear PCM encoding, we always output big-endian signed samples,
-possibly after converting these from little-endian and/or unsigned
-samples.  For RIFF/WAVE files, we always use little-endian, signed
-samples, also converting if necessary (there is no support for RIFX output.)
+.Pp
+The output file will contain either the default Sun/NeXT audio header, a
+RIFF/WAVE audio header or no header at all.  Sun output files
+using a linear PCM encoding are written with big-endian signed samples,
+possibly after converting these from little-endian or unsigned
+samples.  RIFF/WAVE files are written in little-endian, signed
+samples, also converting if necessary.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
@@ -114,8 +115,12 @@ option, the sample rates must match.  The
 option will allow a discrepancy to be ignored.
 .It Fl h
 Print a help message.
-.It Fl i
-If the audio device cannot be opened, exit now rather than wait for it.
+.It Fl i Ar info
+If supported by the
+.Fl F
+format, add the string
+.Ar info
+to the output header.
 .It Fl m
 Set the monitor volume.
 .It Fl P
