@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 1999/02/24 15:00:08 drochner Exp $
+#	$NetBSD: Makefile,v 1.84 1999/02/27 21:21:26 tv Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -21,11 +21,7 @@ LIB=		c
 CPPFLAGS+=	-D_LIBC -DNLS -DYP -DHESIOD -DLIBC_SCCS -DSYSLIBC_SCCS \
 		-D_REENTRANT -I${.CURDIR}/include
 
-.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
-ARCHSUBDIR=	mips
-.else
-ARCHSUBDIR=	${MACHINE_ARCH}
-.endif
+ARCHSUBDIR=	${MACHINE_ARCH:C/mipse[bl]/mips/}
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 AINC=		-I${ARCHDIR}
 .if defined(DESTDIR)
