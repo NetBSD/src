@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.11 2000/02/01 04:14:18 mjacob Exp $ */
+/* $NetBSD: shared_intr.c,v 1.12 2000/02/10 07:45:02 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.11 2000/02/01 04:14:18 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.12 2000/02/10 07:45:02 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -237,14 +237,10 @@ alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
 	unsigned int num;
 	int newmaxstrays;
 {
-
-#ifdef DIAGNOSTIC
-	if (alpha_shared_intr_isactive(intr, num))
-		panic("alpha_shared_intr_set_maxstrays on active intr");
-#endif
-
+	int s = splhigh();
 	intr[num].intr_maxstrays = newmaxstrays;
 	intr[num].intr_nstrays = 0;
+	splx(s);
 }
 
 void
