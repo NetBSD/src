@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1999/12/23 07:06:44 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 1999/12/22 05:55:26 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 1999/12/23 07:06:44 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -228,7 +228,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		_sip = (void *)bi_arg->sip;
 		x_maxmem = _sip->apbsi_memsize;
 		x_maxmem -= 0x00100000;	/* reserve 1MB for ROM monitor */
-		apcall_write(1, "Hello APbus\n", 12);
 
 		consinit();
 	}
@@ -562,10 +561,8 @@ prom_halt(howto)
 
 {
 #ifdef news5000
-	if (systype == NEWS5000) {
-		howto = RB_HALT;	/* XXX */
+	if (systype == NEWS5000)
 		apcall_exit(howto);
-	}
 #endif
 #ifdef news3400
 	if (systype == NEWS3400)
