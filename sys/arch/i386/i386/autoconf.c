@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1998/10/06 21:42:08 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1999/01/29 11:20:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -165,7 +165,11 @@ static int match_harddisk(dv, bid)
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
 #ifndef DEBUG
-		if (error != ENXIO) /* ENXIO is "normal" */
+		/*
+		 * Ignore errors caused by missing
+		 * device, partition or medium.
+		 */
+		if (error != ENXIO && error != ENODEV)
 #endif
 			printf("findroot: can't open dev %s%c (%d)\n",
 			       dv->dv_xname, 'a' + bid->partition, error);
