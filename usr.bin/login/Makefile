@@ -1,13 +1,17 @@
-#	from: @(#)Makefile	5.6 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.8 1994/05/24 06:50:57 deraadt Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
+#	$Id: Makefile,v 1.9 1994/07/25 21:11:08 brezak Exp $
 
 PROG=	login
-SRCS=	klogin.c login.c
-CFLAGS+=-DSKEY
+SRCS=	klogin.c k5login.c login.c
 DPADD=	${LIBUTIL} ${LIBCRYPT} ${LIBSKEY}
 LDADD=	-lutil -lcrypt -lskey
+CFLAGS+= -DSKEY
 
-.if defined(KERBEROS)
+.if defined(KERBEROS5)
+CFLAGS+= -DKERBEROS5
+DPADD+=	${LIBKRB5} ${LIBCRYPTO}
+LDADD+=	-lkrb5 -lcrypto
+.elif defined(KERBEROS)
 CFLAGS+= -DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
 LDADD+=	-lkrb -ldes
