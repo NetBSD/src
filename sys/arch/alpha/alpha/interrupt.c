@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15 1997/03/12 04:22:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -74,16 +74,19 @@ interrupt(a0, a1, a2, framep)
 	} else if (a0 == 3) {		/* I/O device interrupt */
 		cnt.v_intr++;
 		(*iointr)(framep, a1);
-	} else if (a0 == 2)		/* machine check or correctable error */
+	} else if (a0 == 2) {		/* Machine Check or Correctable Error */
 		machine_check(framep, a1, a2);
-	else {
+	} else if (a0 == 5) {		/* Passive Release (?) interrupt XXX */
+		cnt.v_intr++;
+		printf("passive release(?) interrupt vec 0x%lx (ignoring)\n",
+		    a1);
+	} else {
 		/*
 		 * Not expected or handled:
 		 *	0	Interprocessor interrupt
 		 *	4	Performance counter
 		 */
-		panic("unexpected interrupt: type 0x%lx, vec 0x%lx\n",
-		    a0, a1);
+		panic("unexpected interrupt: type 0x%lx, vec 0x%lx\n", a0, a1);
 	}
 }
 
