@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: expand.c,v 1.3 1993/08/01 18:09:45 mycroft Exp $";
+static char rcsid[] = "$Id: expand.c,v 1.4 1993/12/04 02:11:33 jtc Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -284,7 +284,7 @@ matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
-	register struct direct *dp;
+	register struct dirent *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);

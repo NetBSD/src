@@ -31,18 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	5.9 (Berkeley) 8/27/90
- *	$Id: defs.h,v 1.3 1993/08/01 18:09:48 mycroft Exp $
+ *	$Id: defs.h,v 1.4 1993/12/04 02:11:23 jtc Exp $
  */
 
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <netinet/in.h>
+#include <dirent.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -155,6 +156,3 @@ struct subcmd *makesubcmd();
 struct namelist *lookup();
 struct namelist *expand();
 char *exptilde();
-char *malloc();
-char *rindex();
-char *index();
