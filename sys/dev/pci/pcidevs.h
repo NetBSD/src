@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.322 2001/04/12 07:47:16 itojun Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.323 2001/04/13 19:01:28 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.316 2001/04/12 07:46:00 itojun Exp 
+ *	NetBSD: pcidevs,v 1.317 2001/04/13 19:00:31 hubertf Exp 
  */
 
 /*
@@ -1511,7 +1511,6 @@
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
 #define	PCI_PRODUCT_S3_TRIO32	0x8810		/* Trio32 */
 #define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio32/64 */
-#define	PCI_PRODUCT_TRIDENT_CYBERBLADE	0x9910		/* CyberBlade */
 #define	PCI_PRODUCT_S3_AURORA64P	0x8812		/* Aurora64V+ */
 #define	PCI_PRODUCT_S3_TRIO64UVP	0x8814		/* Trio64UV+ */
 #define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE/VX */
@@ -1712,6 +1711,7 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9680	0x9680		/* TGUI 9680 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9682	0x9682		/* TGUI 9682 */
+#define	PCI_PRODUCT_TRIDENT_CYBERBLADE	0x9910		/* CyberBlade */
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
