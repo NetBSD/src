@@ -1,5 +1,5 @@
-/*	$NetBSD: pf.c,v 1.7 2004/11/21 17:59:24 peter Exp $	*/
-/*	$OpenBSD: pf.c,v 1.457.2.3 2004/11/13 23:48:51 brad Exp $ */
+/*	$NetBSD: pf.c,v 1.8 2004/12/05 13:32:17 peter Exp $	*/
+/*	$OpenBSD: pf.c,v 1.457.2.4 2004/11/28 06:21:44 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2259,7 +2259,7 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 					    saddr, pd->af);
 				break;
 			case PF_IN:
-				if (r->rpool.cur->addr.type == PF_ADDR_DYNIFTL){
+				if (r->src.addr.type == PF_ADDR_DYNIFTL) {
 					switch (pd->af) {
 #ifdef INET
 					case AF_INET:
