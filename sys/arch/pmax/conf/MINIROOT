@@ -2,9 +2,9 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: MINIROOT,v 1.3 1996/11/16 23:10:48 jonathan Exp $
+# 	$NetBSD: MINIROOT,v 1.4 1996/12/03 01:18:17 cgd Exp $
 #
-include		"std.pmax"
+include		"arch/pmax/conf/std.pmax"
 
 maxusers	8
 

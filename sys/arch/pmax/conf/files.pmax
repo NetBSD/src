@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.36 1996/10/13 05:28:48 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.37 1996/12/03 01:18:21 cgd Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -57,7 +57,7 @@ file	arch/pmax/pmax/clock.c		clock
 # Machine-independent SCSI driver.
 #
 
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 #major { st = 10 }
 #major { cd = 3 }
 #major { sd = 21 }
@@ -191,7 +191,7 @@ file	dev/cons.c
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
-include "../../../dev/rcons/files.rcons"
+include "dev/rcons/files.rcons"
 
 pseudo-device	rasterconsole
 file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
@@ -223,6 +223,6 @@ file	arch/pmax/dev/fb.c		fb needs-count
 file	arch/pmax/pmax/conf-glue.c
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
-include "../../../compat/ultrix/files.ultrix"
+include "compat/ultrix/files.ultrix"
 
 # Configs
