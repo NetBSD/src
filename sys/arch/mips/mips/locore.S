@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.115 2000/09/05 01:24:51 soren Exp $	*/
+/*	$NetBSD: locore.S,v 1.116 2000/10/04 22:44:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1067,28 +1067,60 @@ END(_remque)
 #endif
 
 
-/*----------------------------------------------------------------------------
+/*
+ * u_int32_t mips_cp0_cause_read(void)
  *
- * mips_read_causereg --
+ *	Return the current value of the CP0 Cause register.
  *
- *	Return the current value of the cause register.
- *
- *	int mips_read_causereg(void)
- *
- * Results:
- *	current value of Cause register.
- *
- * Side effects:
- *	None.
- *	Not profiled, skews CPU-clock measurement to uselessness.
- *
- *----------------------------------------------------------------------------
+ *	Note: Not profiled, skews CPU-clock measurement (mips_mcclock.c)
+ *	to uselessness.
  */
-LEAF_NOPROFILE(mips_read_causereg)
+LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
 	j	ra
 	nop
-END(mips_read_causereg)
+END(mips_cp0_cause_read)
+
+/*
+ * void mips_cp0_cause_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Cause register.
+ */
+LEAF(mips_cp0_cause_write)
+	mtc0	a0, MIPS_COP_0_CAUSE
+	nop
+	nop
+	j	ra
+	nop
+END(mips_cp0_cause_write)
+
+/*
+ * u_int32_t mips_cp0_status_read(void)
+ *
+ *	Return the current value of the CP0 Status register.
+ */
+LEAF(mips_cp0_status_read)
+	mfc0	v0, MIPS_COP_0_STATUS
+	j	ra
+	nop
+END(mips_cp0_status_read)
+
+/*
+ * void mips_cp0_status_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Status register.
+ *
+ *	Note: This is almost certainly not the way you want to write a
+ *	"permanent" value to to the CP0 Status register, since it gets
+ *	saved in trap frames and restores.
+ */
+LEAF(mips_cp0_status_write)
+	mtc0	a0, MIPS_COP_0_STATUS
+	nop
+	nop
+	j	ra
+	nop
+END(mips_cp0_status_write)
 
 #if !defined(NOFPU) || defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
