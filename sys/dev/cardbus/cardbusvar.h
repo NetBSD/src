@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.25 2003/07/08 10:06:29 itojun Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.26 2004/05/08 23:40:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -338,6 +338,8 @@ int cardbus_function_disable __P((struct cardbus_softc *, int));
 
 int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, int, int *, cardbusreg_t *));
+int cardbus_powerstate __P((cardbus_devfunc_t, pcitag_t, const int *, int *));
+int cardbus_setpowerstate __P((const char *, cardbus_devfunc_t, pcitag_t, int));
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
