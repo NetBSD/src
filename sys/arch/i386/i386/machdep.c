@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.16 1993/05/20 14:33:44 cgd Exp $
+ *	$Id: machdep.c,v 1.17 1993/05/20 15:36:40 cgd Exp $
  */
 
 #include "param.h"
@@ -100,15 +100,6 @@ extern int forcemaxmem;
 int biosmem;
 
 extern cyloffset;
-
-char *cpu_typenames[] = {
-	"i386SX",	/* CPU_386SX */
-	"i386",		/* CPU_386 */
-	"i486SX",	/* CPU_486SX */
-	"i486",		/* CPU_486 */
-	"i586",		/* CPU_586 & note that i hate lawyers -- cgd */
-	0,
-};
 
 cpu_startup()
 {
@@ -259,12 +250,28 @@ again:
 
 identifycpu()	/* translated from hp300 -- cgd */
 {
-	if (cpu < CPU_MINTYPE || cpu > CPU_MAXTYPE) {
+	printf("CPU: ");
+	switch (cpu) {
+	case CPU_386SX:
+		printf("i386SX");
+		break;
+	case CPU_386:
+		printf("i386");
+		break;
+	case CPU_486SX:
+		printf("i486SX");
+		break;
+	case CPU_486:
+		printf("i486");
+		break;
+	case CPU_586:
+		printf("i586");
+		break;
+	default:
 		printf("unknown cpu type %d\n", cpu);
 		panic("startup: bad cpu id");
 	}
-	printf("CPU: %s\n", cpu_typenames[cpu]);
-
+	printf("\n");	/* cpu speed would be nice, but how? */
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -272,12 +279,12 @@ identifycpu()	/* translated from hp300 -- cgd */
 	switch (cpu) {
 	case -1:                /* keep compilers happy */
 #if !defined(I386_CPU)
-	case CPU_386:
 	case CPU_386SX:
+	case CPU_386:
 #endif
 #if !defined(I486_CPU)
-	case CPU_486:
 	case CPU_486SX:
+	case CPU_486:
 #endif
 #if !defined(I586_CPU)
 	case CPU_586:
