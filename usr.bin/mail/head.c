@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)head.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: head.c,v 1.3 1994/06/29 05:09:27 deraadt Exp $";
+static char rcsid[] = "$Id: head.c,v 1.4 1994/12/18 23:33:48 glass Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -164,14 +164,18 @@ copyin(src, space)
  * 'N'	A new line
  */
 char ctype[] = "Aaa Aaa O0 00:00:00 0000";
+char ctype_without_secs[] = "Aaa Aaa O0 00:00 0000";
 char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
+char tmztype_without_secs[] = "Aaa Aaa O0 00:00 AAA 0000";
 
 int
 isdate(date)
 	char date[];
 {
 
-	return cmatch(date, ctype) || cmatch(date, tmztype);
+	return cmatch(date, ctype_without_secs) || 
+	       cmatch(date, tmztype_without_secs) || 
+	       cmatch(date, ctype) || cmatch(date, tmztype);
 }
 
 /*
