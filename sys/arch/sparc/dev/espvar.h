@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.3 1994/11/20 20:52:12 deraadt Exp $ */
+/*	$NetBSD: espvar.h,v 1.4 1995/06/02 15:46:47 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -79,7 +79,7 @@ struct ecb {
 	int	 clen;
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
-	int 	 stat;		/* SCSI status byte */
+	u_char 	 stat;		/* SCSI status byte */
 };
 
 /* 
@@ -98,6 +98,7 @@ struct esp_tinfo {
 #define NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
 #define DO_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
 #define TARGET_BUSY	0x04	/* Target is busy, i.e. cmd in progress */
+#define T_XXX		0x08	/* Target is XXX */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
