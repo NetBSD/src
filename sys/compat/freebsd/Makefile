@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1995/10/10 01:19:24 mycroft Exp $
+#	$NetBSD: Makefile,v 1.2 1996/09/03 03:18:04 mycroft Exp $
 
-SYS=	../..
-DEP=	syscalls.conf syscalls.master ${SYS}/kern/makesyscalls.sh
+DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
 OBJS=	freebsd_sysent.c freebsd_syscalls.c \
 	freebsd_syscall.h freebsd_syscallargs.h
 
