@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.36 2000/03/30 11:27:20 augustss Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.37 2000/04/12 02:46:41 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1160,6 +1160,12 @@ i_str(fp, p, retval, fd, cmd, dat)
 {
 	int			 error;
 	struct svr4_strioctl	 ioc;
+
+	/*
+	 * Noop on non sockets
+	 */
+	if (fp->f_type != DTYPE_SOCKET)
+		return 0;
 
 	if ((error = copyin(dat, &ioc, sizeof(ioc))) != 0)
 		return error;
