@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.36 2001/07/21 02:28:06 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.36.2.1 2002/08/09 22:59:20 lukem Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.36 2001/07/21 02:28:06 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.36.2.1 2002/08/09 22:59:20 lukem Exp $");
 #endif
 #endif
 
@@ -907,6 +907,8 @@ wait_input(timo)
 void add_fd(fd)
     int fd;
 {
+    if (fd >= FD_SETSIZE)
+	fatal("descriptor too big");
     FD_SET(fd, &in_fds);
     if (fd > max_in_fd)
 	max_in_fd = fd;
@@ -935,6 +937,8 @@ wait_loop_output(timo)
     int n;
 
     FD_ZERO(&ready);
+    if (loop_master >= FD_SETSIZE)
+	fatal("descriptor too big");
     FD_SET(loop_master, &ready);
     n = select(loop_master + 1, &ready, NULL, &ready, timo);
     if (n < 0 && errno != EINTR)
