@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.2 1997/10/09 07:25:49 jtc Exp $
+#	$NetBSD: install.md,v 1.3 2003/03/07 16:57:46 he Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,18 +76,18 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | grep "^sd[0-9]*:.*cylinders" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/^sd[0-9]*:.*cylinders/ { print $1; }' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	dmesg | grep "cd[0-9]*:.*CD-ROM" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/cd[0-9]*:.*CD-ROM/ { print $1; }' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network interfaces
-	dmesg | grep "^ae[0-9]*:" | cut -d":" -f1 | sort -u
-	dmesg | grep "^sn[0-9]*:" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/^ae[0-9]*:/ { print $1; }' | sort -u
+	dmesg | awk -F : '/^sn[0-9]*:/ { print $1; }' | sort -u
 }
 
 md_installboot() {

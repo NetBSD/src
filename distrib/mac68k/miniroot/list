@@ -1,12 +1,11 @@
-#	$NetBSD: list,v 1.5 2003/02/19 14:21:06 he Exp $
+#	$NetBSD: list,v 1.6 2003/03/07 16:57:46 he Exp $
 
 # mac68k extra's
 PROG	sbin/dmesg
 
 PROG	usr/bin/basename
 PROG	usr/bin/cksum usr/bin/sum
-PROG	usr/bin/cut
-PROG	usr/bin/grep usr/bin/egrep usr/bin/fgrep
+PROG	usr/bin/gawk usr/bin/awk
 PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
@@ -18,7 +17,6 @@ SYMLINK	/bin/cat	usr/bin/strings
 # crunchgen source directory specials
 #SPECIAL	vi srcdir usr.bin/vi/build
 SPECIAL	less srcdir usr.bin/less/less
-SPECIAL grep srcdir gnu/usr.bin/grep/grep
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
