@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.10 2003/07/14 09:46:06 aymeric Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11 2003/10/08 01:35:49 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,26 +44,26 @@ static void setup(void);
 
 static int stack[8192/4 + 4];
 
-asm("
-	.text
-	.globl	_start
-_start:
-	li	8,0
-	li	9,0x100
-	mtctr	9
-1:
-	dcbf	0,8
-	icbi	0,8
-	addi	8,8,0x20
-	bdnz	1b
-	sync
-	isync
+asm(
+"	.text					\n"
+"	.globl	_start				\n"
+"_start:					\n"
+"	li	8,0				\n"
+"	li	9,0x100				\n"
+"	mtctr	9				\n"
+"1:						\n"
+"	dcbf	0,8				\n"
+"	icbi	0,8				\n"
+"	addi	8,8,0x20			\n"
+"	bdnz	1b				\n"
+"	sync					\n"
+"	isync					\n"
 
-	lis	1,stack@ha
-	addi	1,1,stack@l
-	addi	1,1,8192
-	b	startup
-");
+"	lis	1,stack@ha			\n"
+"	addi	1,1,stack@l			\n"
+"	addi	1,1,8192			\n"
+"	b	startup				\n"
+);
 
 static int
 openfirmware(void *arg)
