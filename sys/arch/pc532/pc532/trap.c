@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2003/08/07 16:29:03 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 2003/09/20 23:44:07 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2003/08/07 16:29:03 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2003/09/20 23:44:07 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -426,8 +426,15 @@ trap(frame)
 		 */
 		if (type == T_ABT && va >= KERNBASE)
 			map = kernel_map;
-		else
+		else {
 			map = &vm->vm_map;
+			if (l->l_flag & L_SA) {
+				KDASSERT(p != NULL && p->p_sa != NULL);
+				p->p_sa->sa_vp_faultaddr =
+					(vaddr_t)frame.tf_tear;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		}
 		if ((frame.tf_msr & MSR_DDT) == DDT_WRITE ||
 		    (frame.tf_msr & MSR_STT) == STT_RMW)
 			ftype = VM_PROT_WRITE;
@@ -459,6 +466,7 @@ trap(frame)
 
 			if (type == T_ABT)
 				return;
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
 
@@ -481,6 +489,7 @@ trap(frame)
 		} else {
 			trapsignal(l, SIGSEGV, T_ABT);
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		break;
 	}
 
