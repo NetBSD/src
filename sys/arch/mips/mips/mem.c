@@ -1,8 +1,8 @@
-/*	$NetBSD: mem.c,v 1.5 1994/10/26 21:10:37 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -37,9 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: mem.c 1.14 90/10/12
- *
- *	@(#)mem.c	8.2 (Berkeley) 3/28/94
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -50,27 +48,47 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
+
+extern vm_offset_t avail_end;
+caddr_t zeropage;
 
 /*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register u_long v;
-	register u_int c;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
-	extern vm_offset_t avail_end;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -85,28 +103,27 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			v = (u_long)uio->uio_offset;
+			v = uio->uio_offset;
 			c = iov->iov_len;
-			if (v + c <= btoc(physmem))
-				v += MACH_CACHED_MEMORY_ADDR;
-			else
+			if (v + c > btoc(physmem))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, (int)c, uio);
+			v += MACH_CACHED_MEMORY_ADDR;
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			v = (u_long)uio->uio_offset;
+			v = uio->uio_offset;
+			c = min(iov->iov_len, MAXPHYS);
 			if (v < MACH_CACHED_MEMORY_ADDR)
 				return (EFAULT);
-			c = iov->iov_len;
-			if (v + c <= MACH_PHYS_TO_CACHED(avail_end) ||
-			    v >= MACH_KSEG2_ADDR && kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
-				error = uiomove((caddr_t)v, (int)c, uio);
-				continue;
-			}
-			return (EFAULT);
+			if (v + c > MACH_PHYS_TO_CACHED(avail_end) &&
+			    (v < MACH_KSEG2_ADDR ||
+			    !kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
+				return (EFAULT);
+			error = uiomove((caddr_t)v, c, uio);
+			continue;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
@@ -120,13 +137,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zbuf == NULL) {
-				zbuf = (caddr_t)
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -139,7 +156,14 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
 	return (error);
+}
+
+int
+mmmmap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+
+	return (EOPNOTSUPP);
 }

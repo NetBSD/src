@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1995/04/10 01:55:57 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 1995/04/10 11:54:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,8 +37,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.14 90/10/12$
- *
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
@@ -50,14 +48,12 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
 
 caddr_t zeropage;
 
@@ -91,7 +87,6 @@ mmrw(dev, uio, flags)
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	long kernloc;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -113,20 +108,18 @@ mmrw(dev, uio, flags)
 				return (EFAULT);
 #endif
 			o = uio->uio_offset & PGOFSET;
-			c = (NBPG - ((long)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove(phystok0seg(v), (int)c, uio);
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove(phystok0seg(v), c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			kernloc = uio->uio_offset;
+			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)kernloc, c,
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)kernloc, (int)c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -154,12 +147,12 @@ mmrw(dev, uio, flags)
 				zeropage = Segtabzero;
 #else
 				zeropage = (caddr_t)
-					malloc(CLBYTES, M_TEMP, M_WAITOK);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zeropage, CLBYTES);
 #endif
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
