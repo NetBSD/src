@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33.2.8 2002/10/06 00:10:55 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.9 2002/10/15 18:02:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -163,10 +163,10 @@ void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */
-int procfs_validfile __P((struct lwp *, struct mount *));
-int procfs_validfpregs __P((struct lwp *, struct mount *));
-int procfs_validregs __P((struct lwp *, struct mount *));
-int procfs_validmap __P((struct lwp *, struct mount *));
+int procfs_validfile __P((struct proc *, struct mount *));
+int procfs_validfpregs __P((struct proc *, struct mount *));
+int procfs_validregs __P((struct proc *, struct mount *));
+int procfs_validmap __P((struct proc *, struct mount *));
 
 int procfs_rw __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.7.2.5 2002/07/12 01:40:26 nathanw Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.7.2.6 2002/10/15 18:02:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.2.5 2002/07/12 01:40:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.2.6 2002/10/15 18:02:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ procfs_dofpregs(curp, l, pfs, uio)
 }
 
 int
-procfs_validfpregs(l, mp)
-	struct lwp *l;
+procfs_validfpregs(p, mp)
+	struct proc *p;
 	struct mount *mp;
 {
 
-	return (process_validfpregs(l));
+	return (process_validfpregs(p));
 }
