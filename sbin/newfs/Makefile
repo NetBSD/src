@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/10 19:51:49 christos Exp $
+#	$NetBSD: Makefile,v 1.16 1998/03/18 17:10:15 bouyer Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	newfs
-SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c
+SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c ffs_bswap.c
 MAN=	newfs.8
 
 MOUNT=	${.CURDIR}/../mount
 DISKLABEL=${.CURDIR}/../disklabel
 CPPFLAGS+=-DMFS -I${.CURDIR} -I${MOUNT} -I${DISKLABEL}
-.PATH:	${MOUNT} ${DISKLABEL}
+.PATH:	${MOUNT} ${DISKLABEL} ${.CURDIR}/../../sys/ufs/ffs 
 
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
