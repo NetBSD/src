@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.19 1997/10/16 23:54:40 christos Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.20 1997/10/19 18:35:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -631,19 +631,24 @@ linux_sys_mknod(p, v, retval)
 		syscallarg(int) dev;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
-	struct sys_mkfifo_args bma;
+	struct sys_mkfifo_args mfa;
+	struct sys_mknod_args mna;
 
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	/*
 	 * BSD handles FIFOs seperately
 	 */
-	if (SCARG(uap, mode) & S_IFIFO) {
-		SCARG(&bma, path) = SCARG(uap, path);
-		SCARG(&bma, mode) = SCARG(uap, mode);
-		return sys_mkfifo(p, uap, retval);
-	} else
-		return sys_mknod(p, uap, retval);
+	if (S_ISFIFO(SCARG(uap, mode))) {
+		SCARG(&mfa, path) = SCARG(uap, path);
+		SCARG(&mfa, mode) = SCARG(uap, mode);
+		return (sys_mkfifo(p, &mfa, retval));
+	} else {
+		SCARG(&mna, path) = SCARG(uap, path);
+		SCARG(&mna, mode) = SCARG(uap, mode);
+		SCARG(&mna, dev) = SCARG(uap, dev);
+		return (sys_mknod(p, &mna, retval));
+	}
 }
 
 int
