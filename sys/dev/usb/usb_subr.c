@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.119 2004/10/23 13:26:33 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.120 2004/10/23 16:17:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.119 2004/10/23 13:26:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.120 2004/10/23 16:17:56 augustss Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -961,13 +961,14 @@ usbd_status
 usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		int speed, int port, struct usbd_port *up)
 {
-	usbd_device_handle dev;
+	usbd_device_handle dev, adev;
 	struct usbd_device *hub;
 	usb_device_descriptor_t *dd;
 	usb_port_status_t ps;
 	usbd_status err;
 	int addr;
 	int i;
+	int p;
 
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
@@ -1001,11 +1002,27 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	dev->depth = depth;
 	dev->powersrc = up;
 	dev->myhub = up->parent;
-	for (hub = up->parent;
+
+	up->device = dev;
+
+	/* Locate port on upstream high speed hub */
+	for (adev = dev, hub = up->parent;
 	     hub != NULL && hub->speed != USB_SPEED_HIGH;
-	     hub = hub->myhub)
+	     adev = hub, hub = hub->myhub)
 		;
-	dev->myhighhub = hub;
+	if (hub) {
+		for (p = 0; p < hub->hub->hubdesc.bNbrPorts; p++) {
+			if (hub->hub->ports[p].device == adev) {
+				dev->myhsport = &hub->hub->ports[p];
+				goto found;
+			}
+		}
+		panic("usbd_new_device: cannot find HS port\n");
+	found:
+		DPRINTFN(1,("usbd_new_device: high speed port %d\n", p));
+	} else {
+		dev->myhsport = NULL;
+	}
 	dev->speed = speed;
 	dev->langid = USBD_NOLANG;
 	dev->cookie.cookie = ++usb_cookie_no;
@@ -1017,8 +1034,6 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
-
-	up->device = dev;
 
 	/* Set the address.  Do this early; some devices need that. */
 	err = usbd_set_address(dev, addr);
@@ -1134,8 +1149,8 @@ usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
 
 	if (dev->default_pipe != NULL)
 		usbd_kill_pipe(dev->default_pipe);
-	up->device = 0;
-	dev->bus->devices[dev->address] = 0;
+	up->device = NULL;
+	dev->bus->devices[dev->address] = NULL;
 
 	free(dev, M_USB);
 }
