@@ -84,7 +84,6 @@ struct cpu_attach_args {
 	struct cpu_functions *cpu_func;
 	int cpu_signature;
 	int feature_flags;
-	paddr_t lapic_paddr;
 };
 
 #define MP_PICMODE	0x00000001      /* System booted in picmode */
@@ -97,6 +96,7 @@ int i386_ipi_init __P((int));
 
 void identifycpu __P((struct cpu_info *));
 void cpu_init __P((struct cpu_info *));
+void cpu_init_first __P((void));
 
 #endif
 

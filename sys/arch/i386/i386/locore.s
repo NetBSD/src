@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.1 2000/02/20 18:06:41 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,8 +140,8 @@
 
 #include <machine/i82489reg.h>
 
-#define GET_CPUINFO(reg)				\
-	movzbl	_C_LABEL(local_apic)+LAPIC_ID+3,reg	; \
+#define GET_CPUINFO(reg)			  \
+	movzbl	_C_LABEL(lapic_id)+3,reg	; \
 	movl	_C_LABEL(cpu_info)(,reg,4),reg
 
 #define GET_CURPROC(reg, treg)			\
@@ -305,7 +305,9 @@
 #if NLAPIC > 0
 	.globl _C_LABEL(local_apic)
 _C_LABEL(local_apic):
-		.space  LAPIC_TPRI
+		.space	LAPIC_ID
+_C_LABEL(lapic_id):	
+		.space  LAPIC_TPRI-LAPIC_ID
 _C_LABEL(lapic_tpr):		
 		.space  LAPIC_PPRI-LAPIC_TPRI
 _C_LABEL(lapic_ppr):		
@@ -313,7 +315,7 @@ _C_LABEL(lapic_ppr):
 _C_LABEL(lapic_isr):
 		.space	NBPG-LAPIC_ISR
 #else
-	_C_LABEL(lapic_tpr):	
+_C_LABEL(lapic_tpr):	
 	.long 0
 #endif
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.1 2000/02/20 17:38:09 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ struct cpu_info {
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 
-#define cpu_number() 	((i82489_readreg(LAPIC_ID) & LAPIC_ID_MASK)>>LAPIC_ID_SHIFT)
+#define cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
 #define curcpu()	(cpu_info[cpu_number()])
 #define	curpcb		curcpu()->ci_curpcb
 

@@ -111,15 +111,33 @@ void    cpu_attach __P((struct device *, struct device *, void *));
  * curproc, etc. are used early.
  */
 
-static struct cpu_info dummy_cpu_info;
+static struct cpu_info dummy_cpu_info; /* XXX */
 struct cpu_info *cpu_info[I386_MAXPROCS] = { &dummy_cpu_info };
 extern 
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
 static void	cpu_copy_trampoline __P((void));
-#endif
 
+/*
+ * Runs once per boot once multiprocessor goo has been detected and
+ * the local APIC has been mapped.
+ * Called from mpbios_scan();
+ */
+void
+cpu_init_first()
+{
+	int cpunum = cpu_number();
+
+	if (cpunum != 0) {
+		cpu_info[0] = NULL;
+		cpu_info[cpunum] = &dummy_cpu_info;
+	}
+
+	cpu_copy_trampoline();
+}
+#endif
+	
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_info), cpu_match, cpu_attach
 };
@@ -144,22 +162,27 @@ cpu_attach(parent, self, aux)
 {
 	struct cpu_info *ci = (struct cpu_info *)self;  
 	struct cpu_attach_args  *caa = (struct cpu_attach_args  *) aux;
+
 #ifdef MULTIPROCESSOR
 	int cpunum = caa->cpu_number;
 	vaddr_t kstack;
 	struct pcb *pcb;
-#endif
-	
-#ifdef MULTIPROCESSOR
-	if (cpunum == 0) {                                          /* XXX */
-		/* special-case CPU 0 */			    /* XXX */
-		if (cpu_info[0] == &dummy_cpu_info) {               /* XXX */
+
+	if (caa->cpu_role != CPU_ROLE_AP) {
+		if (cpunum != cpu_number()) {
+			panic("%s: running cpu is at apic %d"
+			    " instead of at expected %d\n",
+			    self->dv_xname, cpu_number(), cpunum);
+		}
+		
+		/* special-case boot CPU */			    /* XXX */
+		if (cpu_info[cpunum] == &dummy_cpu_info) {          /* XXX */
 			ci->ci_curproc = dummy_cpu_info.ci_curproc; /* XXX */
-			cpu_info[0] = NULL;			    /* XXX */
+			cpu_info[cpunum] = NULL;		    /* XXX */
 		}						    /* XXX */
-	}							    /* XXX */
+	}
 	if (cpu_info[cpunum] != NULL)
-		panic("cpu %d already attached?", cpunum);
+		panic("cpu at apic id %d already attached?", cpunum);
 
 	cpu_info[cpunum] = ci;
 #endif			
@@ -204,38 +227,22 @@ cpu_attach(parent, self, aux)
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP;
 		identifycpu(ci);
 		cpu_init(ci);
-#if NLAPIC > 0
-		if (caa->lapic_paddr) {
-			/*
-			 * Map, and enable local apic
-			 */
-			lapic_map(caa->lapic_paddr);
-			lapic_enable();
-			lapic_calibrate_timer(ci);
-		}
-#endif
 		break;
 
 	case CPU_ROLE_BP:
 		printf("apid %d (", caa->cpu_number);
 		printf("boot processor");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP;
-#ifdef MULTIPROCESSOR		
-		cpu_copy_trampoline(); /* XXX WRONG PLACE */
-#endif
 		printf(")\n");
 		identifycpu(ci);
 		cpu_init(ci);
 
 #if NLAPIC > 0
-		if (caa->lapic_paddr) {
-			/*
-			 * Map, and enable local apic
-			 */
-			lapic_map(caa->lapic_paddr);
-			lapic_enable();
-			lapic_calibrate_timer(ci);
-		}
+		/*
+		 * Enable local apic
+		 */
+		lapic_enable();
+		lapic_calibrate_timer(ci);
 #endif
 		break;
 		
