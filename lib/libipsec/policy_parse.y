@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.4 2001/02/04 19:50:51 christos Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.5 2001/03/30 15:17:47 agc Exp $	*/
 /*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ static void policy_parse_request_init __P((void));
 static caddr_t policy_parse __P((char *msg, int msglen));
 
 extern void __policy__strbuffer__init__ __P((char *msg));
+extern int yyparse __P((void));
 extern int yylex __P((void));
 
 extern char *__libyytext;	/*XXX*/
