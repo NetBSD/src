@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.16.8.1 2002/05/16 12:05:24 gehenna Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.16.8.2 2002/06/08 09:09:24 gehenna Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.16.8.1 2002/05/16 12:05:24 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.16.8.2 2002/06/08 09:09:24 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.16.8.1 2002/05/16 12:05:24 gehenna E
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -123,7 +124,7 @@ dev_type_strategy(mtstrategy);
 dev_type_dump(mtdump);
 
 const struct bdevsw mt_bdevsw = {
-	mtopen, mtclose, mtstrategy, mtioctl, mtdump, nosize, D_TAP
+	mtopen, mtclose, mtstrategy, mtioctl, mtdump, nosize, D_TAPE
 };
 
 const struct cdevsw mt_cdevsw = {
@@ -435,7 +436,7 @@ mtioerror(usc, mp, bp)
 int
 mtioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
