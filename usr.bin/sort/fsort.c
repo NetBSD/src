@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.18 2001/05/14 21:45:19 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.19 2001/05/15 11:19:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.18 2001/05/14 21:45:19 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.19 2001/05/15 11:19:45 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -167,43 +167,48 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				crec = (RECHEADER *) (buffer + ((u_char *)crec - oldb));
 				goto do_read;
 			}
-			if (c == BUFFEND || ntfiles || mfct) {	/* push */
-				if (panic >= PANIC) {
-					fstack[MSTART + mfct].fp = ftmp();
-					if ((stable_sort)
-						? sradixsort(keylist, nelem,
-							weights, REC_D)
-						: radixsort(keylist, nelem,
-							weights, REC_D) )
-						err(2, NULL);
-					append(keylist, nelem, depth,
-					    fstack[MSTART + mfct].fp, putrec,
-					    ftbl);
-					mfct++;
-					/* reduce number of open files */
-					if (mfct == MERGE_FNUM ||(c == EOF && ntfiles)) {
-						tmpbuf = malloc(bufend -
-						    crec->data);
-						memmove(tmpbuf, crec->data,
-						    bufend - crec->data);
-						fstack[base + ntfiles].fp
-						    = ftmp();
-						fmerge(0, MSTART, filelist,
-						    mfct, geteasy,
-						    fstack[base].fp,
-						    putrec, ftbl);
-						ntfiles++;
-						mfct = 0;
-						memmove(crec->data, tmpbuf,
-						    bufend - crec->data);
-						free(tmpbuf);
-					}
-				} else {
-					fstack[base + ntfiles].fp= ftmp();
-					onepass(keylist, depth, nelem, sizes,
-					    weights, fstack[base + ntfiles].fp);
+
+			if (c != BUFFEND && !ntfiles && !mfct) {
+				/* do not push */
+				continue;
+			}
+
+			/* push */
+			if (panic >= PANIC) {
+				fstack[MSTART + mfct].fp = ftmp();
+				if ((stable_sort)
+					? sradixsort(keylist, nelem,
+						weights, REC_D)
+					: radixsort(keylist, nelem,
+						weights, REC_D) )
+					err(2, NULL);
+				append(keylist, nelem, depth,
+				    fstack[MSTART + mfct].fp, putrec,
+				    ftbl);
+				mfct++;
+				/* reduce number of open files */
+				if (mfct == MERGE_FNUM ||(c == EOF && ntfiles)) {
+					tmpbuf = malloc(bufend -
+					    crec->data);
+					memmove(tmpbuf, crec->data,
+					    bufend - crec->data);
+					fstack[base + ntfiles].fp
+					    = ftmp();
+					fmerge(0, MSTART, filelist,
+					    mfct, geteasy,
+					    fstack[base].fp,
+					    putrec, ftbl);
 					ntfiles++;
+					mfct = 0;
+					memmove(crec->data, tmpbuf,
+					    bufend - crec->data);
+					free(tmpbuf);
 				}
+			} else {
+				fstack[base + ntfiles].fp= ftmp();
+				onepass(keylist, depth, nelem, sizes,
+				    weights, fstack[base + ntfiles].fp);
+				ntfiles++;
 			}
 		}
 		if (!ntfiles && !mfct) {	/* everything in memory--pop */
@@ -280,6 +285,12 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			concat(outfp, tailfp[i]);
 			fclose(tailfp[i]);
 		}
+
+	/* If on top level, free our structures */
+	if (depth == 0) {
+		free(keylist), keylist = NULL;
+		free(buffer), buffer = NULL;
+	}
 }
 
 /*
