@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.67 2001/11/12 15:25:33 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.68 2002/02/11 18:11:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,10 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.67 2001/11/12 15:25:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.68 2002/02/11 18:11:43 jdolecek Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -854,7 +854,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-#ifndef NEW_PIPE
+#ifdef PIPE_SOCKETPAIR
 /* ARGSUSED */
 int
 sys_pipe(struct proc *p, void *v, register_t *retval)
@@ -908,7 +908,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	(void)soclose(rso);
 	return (error);
 }
-#endif /* !NEW_PIPE */
+#endif /* PIPE_SOCKETPAIR */
 
 /*
  * Get socket name.
