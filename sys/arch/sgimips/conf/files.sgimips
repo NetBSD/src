@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.1 2000/06/14 15:45:37 soren Exp $
+#	$NetBSD: files.sgimips,v 1.2 2000/06/29 15:10:14 soren Exp $
 
 maxpartitions 16
 
@@ -29,12 +29,16 @@ file arch/sgimips/dev/mace.c		mace
 attach com at mace with com_mace
 file arch/sgimips/dev/com_mace.c	com_mace
 
-device lpt
+device lpt # XXX
 attach lpt at mace with lpt_mace
 file arch/sgimips/dev/lpt_mace.c	lpt_mace
+file dev/ic/lpt.c			lpt_mace
 
 attach pckbc at mace with pckbc_mace
 file arch/sgimips/dev/pckbc_mace.c	pckbc_mace
+
+#attach mcclock at mace with mcclock_mace
+#file arch/sgimips/dev/mcclock_mace.c	mcclock_mace
 
 device mec: arp, ether, ifnet, mii
 attach mec at mace
@@ -43,10 +47,6 @@ file arch/sgimips/dev/if_mec.c		mec
 device macepci: pcibus
 attach macepci at mace
 file arch/sgimips/pci/macepci.c		macepci
-
-file arch/sgimips/sgimips/ip22.c
-file arch/sgimips/sgimips/ip27.c
-file arch/sgimips/sgimips/ip32.c
 
 file arch/sgimips/sgimips/arcs.c
 file arch/sgimips/sgimips/autoconf.c
@@ -66,7 +66,7 @@ file dev/clock_subr.c
 file dev/cons.c
 
 include "arch/sgimips/gio/files.gio"
-include "arch/sgimips/hpc/files.hpc"
+#include "arch/sgimips/hpc/files.hpc"
 
 include "dev/pci/files.pci"
 file	arch/sgimips/pci/pci_machdep.c	pci
