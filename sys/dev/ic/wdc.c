@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.4 1998/06/05 10:09:14 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.5 1998/06/05 16:15:27 bouyer Exp $ */
 
 
 /*
@@ -296,6 +296,7 @@ wdcattach(chp)
 {
 	int channel_flags, ctrl_flags, i;
 
+	LIST_INIT(&xfer_free_list);
 	for (i = 0; i < 2; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
@@ -1018,7 +1019,6 @@ wdc_get_xfer(flags)
 		    ((flags & WDC_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
 		if (xfer == NULL)
 			return 0;
-
 #ifdef DIAGNOSTIC
 		xfer->c_flags &= ~C_INUSE;
 #endif
