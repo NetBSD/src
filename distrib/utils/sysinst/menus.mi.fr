@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.21 1999/06/20 06:08:14 cgd Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.22 1999/07/04 09:41:02 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,10 +224,8 @@ menu distset, title "Sélection de la distribution";
 menu ftpsource, title "Changer";
 	display action
 		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
-		  if (strcmp(ftp_user, "ftp") == 0)
-			msg_printf_add ("%s", ftp_pass);
-		  else if (strlen(ftp_pass) != 0)
-			msg_printf_add ("** caché **", ftp_pass);
+		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
+		       strlen(ftp_pass) != 0 ? "** caché **" : "");
 		};
 	option "Serveur ftp", action
 		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };

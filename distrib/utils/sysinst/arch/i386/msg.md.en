@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.16 1999/07/04 08:01:40 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.17 1999/07/04 09:41:03 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,8 +63,8 @@ message dlgeom
 disklabel and the disklabel reports geometry that is different from
 the real geometry.  The two geometries are:
 
-disklabel: %d cylinders, %d heads, %d sectors
-real geom: %d cylinders, %d heads, %d sectors
+disklabel:	%d cylinders, %d heads, %d sectors
+real geometry:	%d cylinders, %d heads, %d sectors
 }
 
 /* the %s's will expand into three character strings */
@@ -133,7 +133,7 @@ message editpart
 
 message editparttable
 {Edit your DOS partition table.  The highlighted partition is the currently
-active partition.   The partition table currently looks like:
+active partition.  The partition table currently looks like:
 
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.11 1999/07/04 08:01:40 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.12 1999/07/04 09:41:04 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,8 +64,8 @@ message dlgeom
 {Votre disque a déjà un label BSD. Ce label montre une géométrie différente
 de la géométrie réelle du disque. Les deux géométrie sont :
 
-disklabel:   %d cylindres, %d têtes, %d secteurs
-géom réelle: %d cylindres, %d têtes, %d secteurs
+disklabel:	%d cylindres, %d têtes, %d secteurs
+géom réelle:	%d cylindres, %d têtes, %d secteurs
 }
 
 /* the %s's will expand into three character strings */
