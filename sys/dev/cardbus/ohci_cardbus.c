@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.18 2004/08/02 18:44:56 mycroft Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.18 2004/08/02 18:44:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.18 2004/08/02 18:44:56 mycroft Ex
 #endif
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/usb_cardbus.h>
 
