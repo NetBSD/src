@@ -1,4 +1,4 @@
-/* $NetBSD: shell_shell.c,v 1.5 1996/04/19 20:15:36 mark Exp $ */
+/* $NetBSD: shell_shell.c,v 1.6 1996/04/26 22:49:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -59,6 +59,10 @@
 #include <machine/katelib.h>
 #include <machine/vidc.h>
 #include <machine/rtc.h>
+
+/* Any asc devices configured ? */
+
+#include "asc.h"
 
 /* Declare global variables */
 
@@ -178,7 +182,7 @@ shell_peek(argc, argv)
 
 	if (argv[0][4] == 'b')
 		data = ReadByte(addr);
-	if (argv[0][4] == 'w')
+	else
 		data = ReadWord(addr);
 
 	printf("%08x : %08x\n\r", addr, data);
@@ -453,7 +457,51 @@ shell_vnode(argc, argv)
 	vprint("vnode:", vp);
 }
 
-#if 0
+
+void
+shell_buf(argc, argv)
+	int argc;
+	char *argv[];	
+{
+	struct buf *bp;
+
+	if (argc < 2) {
+		printf("Syntax: buf <bp>\n\r");
+		return;
+	}
+
+/* Decode the one argument */
+
+	bp = (struct buf *)readhex(argv[1]);
+
+	printf("buf pointer=%08x\n", (u_int)bp);
+	if (bp->b_proc)
+		printf("proc=%08x pid=%d\n", (u_int)bp->b_proc, bp->b_proc->p_pid);
+	
+	printf("flags=%08x\n", (u_int)bp->b_proc);
+	printf("b_error=%d\n", bp->b_error);
+	printf("b_bufsize=%08x\n", (u_int)bp->b_bufsize);
+	printf("b_bcount=%08x\n", (u_int)bp->b_bcount);
+	printf("b_resid=%d\n", (int)bp->b_resid);
+	printf("b_bdev=%04x\n", bp->b_dev);
+	printf("b_baddr=%08x\n", (u_int)bp->b_un.b_addr);
+	printf("b_lblkno=%08x\n", (u_int)bp->b_lblkno);
+	printf("b_blkno=%08x\n", bp->b_blkno);
+	printf("b_vp=%08x\n", (u_int)bp->b_vp);
+}
+
+
+
+#ifdef XXX1
+void
+shell_bufstats(argc, argv)
+	int argc;
+	char *argv[];	
+{
+	vfs_bufstats();
+}
+
+
 void
 shell_vndbuf(argc, argv)
 	int argc;
@@ -623,8 +671,20 @@ shell()
 			shell_pextract(args, argv);
 		else if (strcmp(argv[0], "vnode") == 0)
 			shell_vnode(args, argv);
+#if NASC > 0
 		else if (strcmp(argv[0], "ascdump") == 0)
 			asc_dump();
+#endif
+		else if (strcmp(argv[0], "buf") == 0)
+			shell_buf(args, argv);
+#ifdef XXX1
+		else if (strcmp(argv[0], "vndbuf") == 0)
+			shell_vndbuf(args, argv);
+		else if (strcmp(argv[0], "vncbuf") == 0)
+			shell_vncbuf(args, argv);
+		else if (strcmp(argv[0], "bufstats") == 0)
+			shell_bufstats(args, argv);
+#endif
 		else if (strcmp(argv[0], "help") == 0
 		    || strcmp(argv[0], "?") == 0) {
 			printf("peekb <hexaddr>\r\n");
@@ -652,7 +712,15 @@ shell()
 			printf("dumppvs\r\n");
 			printf("pextract <phys addr>\r\n");
 			printf("vnode <vp>\r\n");
+			printf("buf <bp>\r\n");
+#if NASC > 0
 			printf("ascdump\r\n");
+#endif
+#ifdef XXX1
+			printf("vndbuf\r\n");
+			printf("vncbuf\r\n");
+			printf("bufstats\r\n");
+#endif
 		}
 	} while (!quit);
 
