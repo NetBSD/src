@@ -1,4 +1,4 @@
-/* $NetBSD: dtop.c,v 1.1.2.8 1999/11/26 07:36:42 nisimura Exp $ */
+/* $NetBSD: dtop.c,v 1.1.2.9 2000/02/03 09:34:47 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -50,8 +50,8 @@
 #include <dev/dec/wskbdmap_lk201.h>
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-#include <pmax/tc/ioasicreg.h>
 #include <pmax/pmax/maxine.h>
 
 #include <dev/dec/lk201reg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.16 1999/12/06 08:52:12 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.17 2000/02/03 09:36:23 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.16 1999/12/06 08:52:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.17 2000/02/03 09:36:23 nisimura Exp $");
+
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.16 1999/12/06 08:52:12 nisimura Exp
 
 #include <pmax/pmax/pmaxtype.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-#include <pmax/tc/ioasicreg.h>
-
-#include "opt_dec_3min.h"
-#include "opt_dec_maxine.h"
-#include "opt_dec_3maxplus.h"
 
 static int  ioasicmatch __P((struct device *, struct cfdata *, void *));
 static void ioasicattach __P((struct device *, struct device *, void *));
@@ -55,6 +55,9 @@ const struct cfattach ioasic_ca = {
 };
 
 tc_addr_t ioasic_base;
+
+/* There can be only one. */
+int ioasicfound;
 
 struct ioasic_dev *ioasic_devs;
 int ioasic_ndevs, builtin_ndevs;
@@ -78,7 +81,7 @@ ioasicmatch(parent, cfdata, aux)
 	if (strncmp("IOCTL   ", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 
-	if (cfdata->cf_unit > 0)
+	if (ioasicfound)
 		return (0);
 
 	return (1);
@@ -92,6 +95,8 @@ ioasicattach(parent, self, aux)
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
 	int i, imsk;
+
+	ioasicfound = 1;
 
 	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,

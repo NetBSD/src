@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.6.4.17 1999/12/06 08:52:15 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.6.4.18 2000/02/03 09:34:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.17 1999/12/06 08:52:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.18 2000/02/03 09:34:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,17 +88,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.17 1999/12/06 08:52:15 nisimura
 #include <pmax/pmax/memc.h>
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-#include <pmax/tc/ioasicreg.h>
 #include <dev/ic/z8530sc.h>
 #include <pmax/tc/zs_ioasicvar.h>
 
 #include "wsdisplay.h"
 #include "xcfb.h"
-
-/* XXX XXX XXX */
-#define	IOASIC_INTR_SCSI 0x00000200
-/* XXX XXX XXX */
 
 void dec_maxine_init __P((void));
 void dec_maxine_bus_reset __P((void));
@@ -140,6 +136,7 @@ dec_maxine_init()
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 	platform.iointr = dec_maxine_intr;
+	platform.memsize = memsize_scan;
 	platform.clkread = kn02ca_clkread;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
 
