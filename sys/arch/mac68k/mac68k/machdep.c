@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1995/05/17 00:00:42 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1995/06/21 03:41:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,7 +130,7 @@
 char machine[] = "mac68k";	/* cpu "architecture" */
 
 vm_map_t buffer_map;
-extern vm_offset_t avail_end;
+extern vm_offset_t avail_remaining;
 
 int dbg_flg = 0;
 struct mac68k_machine_S	mac68k_machine;
@@ -236,19 +236,15 @@ cpu_startup(void)
 	extern struct map *useriomap;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size = 0; /* To avoid compiler warning */
+	int delay;
 
 	/*
 	 * Initialize error message buffer (at end of core).
+	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-#ifdef MACHINE_NONCONTIG
 		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
-			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-#else  /* MACHINE_NONCONTIG */
-		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
-			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-#endif /* MACHINE_NONCONTIG */
+			   high[numranges-1] + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	/*
@@ -259,8 +255,6 @@ cpu_startup(void)
 
 	vers = mac68k_machine.booter_version;
 	if (vers < CURRENTBOOTERVER) {
-		int	delay;
-
 		/* fix older booters with indicies, not versions */
 		if (vers < 100) vers += 99;
 
@@ -784,7 +778,7 @@ boot(howto)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr, 0);
+		savectx(curproc->p_addr);
 
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
@@ -1110,8 +1104,7 @@ regdump(frame, sbytes)
 }
 
 
-extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
+#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz)
 	register unsigned int *ptr;
@@ -1279,55 +1272,6 @@ void print_bus(struct frame *fp)
 #ifdef NO_MY_CORE_DUMP
   my_core_dump(fp);
 #endif
-}
-
-#define PMapPTE(v)	(&Sysmap[(vm_offset_t)(v) >> PG_SHIFT])
-#define brad_kvtoste(va) (&kmem_map->pmap->pm_stab[va>>SG_ISHIFT])
-
-force_pte_invalid(
-	int addr)
-{
-	PMapPTE(addr)->pg_v = 0;
-	PMapPTE(addr)->pg_prot = 1;
-	TBIA();
-}
-
-
-force_pte_valid(
-	int addr)
-{
-	int valid;
-
-	valid = PMapPTE(addr)->pg_v;
-	PMapPTE(addr)->pg_v = PG_V;
-	TBIA();
-	return(valid);
-}
-
-int md_phys(
-	int vaddr)
-{
-	int pa;
-
-	return(*((int *)PMapPTE(vaddr)) & PG_FRAME);
-}
-
-int md_virt(
-	int paddr)
-{
-	int va, pa;
-
-	for(va = NBPG; va != 0; va += NBPG)
-	   if(brad_kvtoste(va)->sg_v)
-	      if(kvtopte(va)->pg_v)
-	         if(paddr == kvtopte(va)->pg_pfnum << PG_SHIFT)
-                    return(va + (paddr & (~ PG_FRAME)));
-/*	for(va = - 10 * 1024 * 1024; va != 0; va += NBPG)
-	   if(brad_kvtoste(va)->sg_v)
-	      if(kvtopte(va)->pg_v)
-	         if(paddr == kvtopte(va)->pg_pfnum << PG_SHIFT)
-                    return(va + (paddr & (~ PG_FRAME))); */
-	return(0xffffffff);
 }
 
 int get_crp_pa(register long crp[2])
@@ -1625,7 +1569,8 @@ void ddprintf (char *fmt, int val)
 #endif
 }
 
-void dddprintf (char *fmt, int val1, int val2)
+void
+dddprintf(char *fmt, int val1, int val2)
 {
 #if 0
   char buf[128], *s;
@@ -1643,7 +1588,8 @@ void dddprintf (char *fmt, int val1, int val2)
 
 static char *envbuf = NULL;
 
-void initenv (unsigned long flag, char *buf)
+void
+initenv (unsigned long flag, char *buf)
 {
   /*
    * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -1657,7 +1603,8 @@ void initenv (unsigned long flag, char *buf)
   }
 }
 
-static char toupper (char c)
+static char
+toupper (char c)
 {
   if (c >= 'a' && c <= 'z') {
     return c - 'a'+ 'A';
@@ -1666,7 +1613,8 @@ static char toupper (char c)
   }
 }
 
-static long getenv (char *str)
+static long
+getenv (char *str)
 {
   /*
    * Returns the value of the environment variable "str".
@@ -2137,6 +2085,9 @@ getenvvars (void)
    */
 
   ROMBase = (caddr_t) getenv("ROMBASE");
+  if (ROMBase == (caddr_t) 0) {
+	ROMBase = (caddr_t) ROMBASE;
+  }
   TimeDBRA = getenv("TIMEDBRA");
   ADBDelay = (u_short) getenv("ADBDELAY");
 }
@@ -2157,9 +2108,6 @@ void printenvvars (void)
   ddprintf ("graybars = %u\n\r", (int)mac68k_machine.do_graybars);
   ddprintf ("serial echo = %u\n\r", (int)mac68k_machine.serial_boot_echo);
 }
-
-extern volatile unsigned char	*sccA;
-extern volatile unsigned char	*ASCBase;
 
 struct cpu_model_info *current_mac_model;
 
@@ -2186,127 +2134,161 @@ static	int			firstpass = 1;
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
 
+	if (firstpass == 0) return;
+
 	/*
 	 * Set up current ROM Glue vectors
 	 */
-	if ((mac68k_machine.serial_console & 0x01) == 0)
-		mrg_setvectors(cpui->rom_vectors);
+	if (cpui->class != MACH_CLASSIIsi)
+		if ((mac68k_machine.serial_console & 0x01) == 0)
+			mrg_setvectors(cpui->rom_vectors);
 
 	/*
 	 * Set up any machine specific stuff that we have to before
 	 * ANYTHING else happens
 	 */
 	switch(cpui->class){	/* Base this on class of machine... */
-		case MACH_CLASSII:
-			if (firstpass) {
-				VIA2 = 1;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0x4000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi80 = 1;
-				mac68k_machine.sccClkConst = 115200;
-			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			break;
-		case MACH_CLASSPB:
-			if (firstpass) {
-				VIA2 = 1;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0x4000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi80 = 1;
-				mac68k_machine.sccClkConst = 115200;
-			}
-			/* Disable everything but PM; we need it. */
-			via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
-			/* Are we disabling something important? */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			break;
-		case MACH_CLASSQ:
-			if (firstpass) {
-				VIA2 = 1;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0xc000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi96 = 1;
-				mac68k_machine.sccClkConst = 249600;
-			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			break;
-		case MACH_CLASSIIci:
-			if (firstpass) {
-				VIA2 = 0x13;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0x4000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi80 = 1;
-				mac68k_machine.sccClkConst = 122400;
-			/*
-			 * LAK: Find out if internal video is on.  If yes, then
-			 * we loaded in bank B.  We need a better way to
-			 * determine this, like use the TT0 register.
-			 */
-				if (rbv_vidstatus ()) {
-					load_addr = 0x04000000;
-				}
-			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			break;
-		case MACH_CLASSIIsi:
-			if (firstpass) {
-				VIA2 = 0x13;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0x4000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi80 = 1;
-				mac68k_machine.sccClkConst = 122400;
-			/*
-			 * LAK: Find out if internal video is on.  If yes, then
-			 * we loaded in bank B.  We need a better way to
-			 * determine this, like use the TT0 register.
-			 */
-				if (rbv_vidstatus ()) {
-					load_addr = 0x04000000;
-				}
-			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			break;
-		case MACH_CLASSLC:
-			if (firstpass) {
-				VIA2 = 0x13;
-				IOBase = 0x50f00000;
-				Via1Base = (volatile u_char *) IOBase;
-				sccA = (volatile u_char *) 0x4000;
-				ASCBase = (volatile u_char *) 0x14000;
-				mac68k_machine.scsi80 = 1;
-				mac68k_machine.sccClkConst = 122400;
-			/*
-			 * LAK: Find out if internal video is on.  If yes, then
-			 * we loaded in bank B.  We need a better way to
-			 * determine this, like use the TT0 register.
-			 */
-				if (rbv_vidstatus ()) {
-					load_addr = 0x04000000;
-				}
-			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			break;
-		default:
-		case MACH_CLASSH:
-		case MACH_CLASSIIfx:
-			break;
+	case MACH_CLASSII:
+		VIA2 = 1;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 115200;
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		break;
+	case MACH_CLASSPB:
+		VIA2 = 1;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 115200;
+		/* Disable everything but PM; we need it. */
+		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
+		/* Are we disabling something important? */
+		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		break;
+	case MACH_CLASSQ:
+		VIA2 = 1;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi96 = 1;
+		mac68k_machine.sccClkConst = 249600;
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		break;
+	case MACH_CLASSIIci:
+		VIA2 = 0x13;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 122400;
+		/*
+		 * LAK: Find out if internal video is on.  If yes, then
+		 * we loaded in bank B.  We need a better way to
+		 * determine this, like use the TT0 register.
+		 */
+		if (rbv_vidstatus ()) {
+			load_addr = 0x04000000;
+		}
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+		break;
+	case MACH_CLASSIIsi:
+		VIA2 = 0x13;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 122400;
+		/*
+		 * LAK: Find out if internal video is on.  If yes, then
+		 * we loaded in bank B.  We need a better way to
+		 * determine this, like use the TT0 register.
+		 */
+		if (rbv_vidstatus ()) {
+			load_addr = 0x04000000;
+		}
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+		break;
+	case MACH_CLASSLC:
+		VIA2 = 0x13;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 122400;
+		/*
+		 * LAK: Find out if internal video is on.  If yes, then
+		 * we loaded in bank B.  We need a better way to
+		 * determine this, like use the TT0 register.
+		 */
+		if (rbv_vidstatus ()) {
+			load_addr = 0x04000000;
+		}
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+		break;
+	default:
+	case MACH_CLASSH:
+	case MACH_CLASSIIfx:
+		break;
 	}
 	firstpass = 0;
+}
+
+/*
+ * Set IO offsets.
+ */
+void
+mac68k_set_io_offsets(base)
+	vm_offset_t	base;
+{
+	extern volatile unsigned char	*sccA;
+	extern volatile unsigned char	*ASCBase;
+	extern vm_offset_t		SCSIBase;
+
+	switch(current_mac_model->class) {
+	case MACH_CLASSII:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	case MACH_CLASSPB:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	case MACH_CLASSQ:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0xc000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	case MACH_CLASSIIci:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	case MACH_CLASSIIsi:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	case MACH_CLASSLC:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
+	default:
+	case MACH_CLASSH:
+	case MACH_CLASSIIfx:
+		break;
+	}
 }
 
 void mmudebug (long phys2, long phys1, long logical)
@@ -2468,7 +2450,8 @@ extern int	get_pte (unsigned int addr, unsigned long pte[2],
  *  to look through MacOS page tables.
  */
 
-unsigned long get_physical (unsigned int addr, unsigned long *phys)
+unsigned long
+get_physical (unsigned int addr, unsigned long *phys)
 {
 	unsigned long		pte[2], ph;
 	unsigned short		psr;
@@ -2509,35 +2492,16 @@ unsigned long get_physical (unsigned int addr, unsigned long *phys)
 	return 1;
 }
 
-void printstar (void)
-{
-	/*
-	 * Be careful calling this from assembly, it doesn't seem to
-	 * save these registers properly.
-	 */
-
-	asm("movl a0, sp@-");
-	asm("movl a1, sp@-");
-	asm("movl d0, sp@-");
-	asm("movl d1, sp@-");
-
-	/* printf ("*"); */
-
-	asm("movl sp@+, d1");
-	asm("movl sp@+, d0");
-	asm("movl sp@+, a1");
-	asm("movl sp@+, a0");
-}
-
 /*
  * Find out how MacOS has mapped itself so we can do the same thing.
  * Returns the address of logical 0 so that locore can map the kernel
  * properly.
  */
-unsigned int get_mapping (void)
+unsigned int
+get_mapping (void)
 {
 	int			i, same;
-	unsigned long		addr, lastpage, phys;
+	unsigned long		addr, lastpage, phys, len;
 
 	numranges = 0;
 	for (i = 0; i < 8; i++) {
@@ -2547,9 +2511,10 @@ unsigned int get_mapping (void)
 
 	lastpage = get_top_of_ram ();
 
+	get_physical(0, &load_addr);
+
 	for (addr = 0; addr <= lastpage && get_physical (addr, &phys);
 		addr += NBPG) {
-		/* printf ("0x%x --> 0x%x\n", addr, phys); */
 		if (numranges > 0 && phys == high[numranges - 1]) {
 			high[numranges - 1] += NBPG;
 		} else {
@@ -2559,10 +2524,10 @@ unsigned int get_mapping (void)
 		}
 	}
 #if 1
+	printf("System RAM: %d bytes in %d pages.\n", addr, addr/NBPG);
 	for (i = 0; i < numranges; i++) {
-		printf ("Low = 0x%x, high = 0x%x\n", low[i], high[i]);
+		printf ("     Low = 0x%x, high = 0x%x\n", low[i], high[i]);
 	}
-	printf ("%d bytes available (%d pages)\n", addr, addr / NBPG);
 #endif
 
 	/*
@@ -2579,37 +2544,6 @@ unsigned int get_mapping (void)
 	int_video_start = 0;	/* Logical address */
 	int_video_length = 0;	/* Length in bytes */
 
-#if 0
-	for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
-		/*
-		 * If this address is not mapped, skip it, cause we're
-		 * not interested.  I don't think this happens in
-		 * NuBus space.
-		 */
-		if (get_physical (addr, &phys) && addr != phys) {
-			break;
-		}
-	}
-
-	/*
-	 * We must do some guessing here because the pages map
-	 * like to these physical locations: 0, 0, 32768, 65536, ..., 
-	 * 0, 0, 0, ....  Hence the bizarre checks below.
-	 */
-
-	if (addr < 0xFF000000) {
-		/* Assume only one such block */
-		do {
-			printf ("0x%x --> 0x%x\n", addr, phys);
-			if (phys == 32768) {
-				int_video_start = addr - 32768;
-			}
-			addr += 32768;
-		} while ((addr & 0x00FFFFFF) && get_physical (addr, &phys) &&
-			addr != phys && !(int_video_start != 0 && phys == 0));
-		int_video_length = addr - int_video_start;
-	}
-#else
 	nbnumranges = 0;
 	for (i = 0; i < NBMAXRANGES; i++) {
 		nbphys[i] = 0;
@@ -2622,19 +2556,23 @@ unsigned int get_mapping (void)
 		if (!get_physical (addr, &phys)) {
 			continue;
 		}
+
+		len = nblen[nbnumranges-1];
+
 		/* printf ("0x%x --> 0x%x\n", addr, phys); */
-		if (nbnumranges > 0 &&
-			addr == nblog[nbnumranges-1] + nblen[nbnumranges-1] &&
-			phys == nbphys[nbnumranges-1]) { /* Same as last one */
+		if (   nbnumranges > 0
+		    && addr == nblog[nbnumranges-1] + len
+		    && phys == nbphys[nbnumranges-1]) { /* Same as last one */
 			nblen[nbnumranges-1] += 32768;
 			same = 1;
-		} else if (nbnumranges > 0 && !same &&
-			addr == nblog[nbnumranges-1] + nblen[nbnumranges-1] &&
-			phys == nbphys[nbnumranges-1] + nblen[nbnumranges-1]) {
+		} else if (   nbnumranges > 0
+		           && !same
+		           && addr == nblog[nbnumranges-1] + len
+		           && phys == nbphys[nbnumranges-1] + len) {
 			nblen[nbnumranges-1] += 32768;
 		} else {
 			if (same) {
-				nblen[nbnumranges-1] = -nblen[nbnumranges-1];
+				nblen[nbnumranges-1] = -len;
 				same = 0;
 			}
 			if (nbnumranges == NBMAXRANGES) {
@@ -2653,8 +2591,9 @@ unsigned int get_mapping (void)
 		same = 0;
 	}
 #if 1
+	printf("Non-system RAM (nubus, etc.):\n");
 	for (i = 0; i < nbnumranges; i++) {
-		printf ("Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%ld)\n",
+		printf ("     Log = 0x%x, Phys = 0x%x, Len = 0x%x (%ud)\n",
 			nblog[i], nbphys[i], nblen[i], nblen[i]);
 	}
 #endif
@@ -2667,8 +2606,9 @@ unsigned int get_mapping (void)
 	 */
 
 	for (i = 0; i < nbnumranges; i++) {
-		if (nblen[i] > 0 && nbphys[i] <= 32768 &&
-			32768 <= nbphys[i] + nblen[i]) {
+		if (   nblen[i] > 0
+		    && nbphys[i] <= 32768
+		    && 32768 <= nbphys[i] + nblen[i]) {
 			int_video_start = nblog[i] - nbphys[i];
 			/* XXX Guess: */
 			int_video_length = nblen[i] + nbphys[i];
@@ -2676,115 +2616,37 @@ unsigned int get_mapping (void)
 		}
 	}
 	if (i == nbnumranges) {
-		printf ("get_mapping(): no internal video.\n");
+		printf ("  no internal video at address 0.\n");
+	} else {
+		printf ("  Video address = 0x%x\n", videoaddr);
+		printf ("  Int video starts at 0x%x\n",
+			int_video_start);
+		printf ("  Length = 0x%x (%d) bytes\n",
+			int_video_length, int_video_length);
 	}
-#endif
-
-	printf ("  Video address = 0x%x\n", videoaddr);
-	printf ("  Weird mapping starts at 0x%x\n", int_video_start);
-	printf ("  Length = 0x%x (%d) bytes\n", int_video_length, int_video_length);
 
 	return low[0];	 /* Return physical address of logical 0 */
 }
 
 /*
- * remap_kernel()
- *
- *   The booter might have loaded the kernel across a bank break.  Since
- *   locore maps the kernel as if it was load contiguously, we've got
- *   to go back here and remap it properly according to the bank mapping
- *   that we found in get_mapping().
+ * Debugging code for locore page-traversal routine.
  */
-
-static void remap_kernel (unsigned long *pt)
+void
+printstar(void)
 {
-	int		i, len, numleft;
-	unsigned long	pte;
+	/*
+	 * Be careful as we assume that no registers are clobbered
+	 * when we call this from assembly.
+	 */
+	asm("movl a0, sp@-");
+	asm("movl a1, sp@-");
+	asm("movl d0, sp@-");
+	asm("movl d1, sp@-");
 
-	numleft = Sysptsize * NPTEPG;
-	for (i = 0; i < numranges; i++) {
-		pte = low[i] & PG_FRAME;
-		len = (high[i] - low[i]) >> PGSHIFT;
-		while (len--) {
-			if ((*pt & PG_V) == 0 || numleft == 0) {
-				/* End of kernel mapping */
-				return;
-			}
-			*pt = (*pt & ~PG_FRAME) | pte;
-			pt++;
-			numleft--;
-			pte += NBPG;
-		}
-	}
-	/* Not likely to get here */
-}
+	/* printf("*"); */
 
-/*
- * remap_nubus()
- *
- *   Locore maps all of NuBus space linearly.  Some systems that have
- *   internal video at physical 0 map the screen into NuBus space.
- *   Here we go back and remap NuBus the way the MacOS had it so that
- *   we can use their address for video.
- */
-
-static void remap_nubus (unsigned long *pt)
-{
-	int		i, len;
-	unsigned long	*pteptr, pte, offset;
-
-	for (i = 0; i < nbnumranges; i++) {
-		pteptr = pt + ((nblog[i] - NBBASE) >> PGSHIFT);
-		pte = (nbphys[i] & PG_FRAME) | PG_RW | PG_CI | PG_V;
-		if (nblen[i] < 0) {
-			len = -nblen[i] >> PGSHIFT;
-			offset = 0;
-			while (len--) {
-				*pteptr++ = pte + offset;
-				/* Wrap around every 32k: */
-				offset = (offset + NBPG) & 0x7fff;
-			}
-		} else {
-			len = nblen[i] >> PGSHIFT;
-			while (len--) {
-				*pteptr++ = pte;
-				pte += NBPG;
-			}
-		}
-	}
-}
-
-/*
- * remap_rom()
- *
- *   Remaps the first 8 megs of ROM.  Uses early-termination pages.
- */
-
-static void remap_rom (unsigned long *st)
-{
-        unsigned long   addr, index;
-
-	addr = ROMBASE;
-
-	while (addr < ROMTOP) {	/* ROMSIZE must be a multiple of 4 MB! */
-		index = addr / 0x400000;
-		st[index] = addr | 0x01;
-		addr += 0x400000;
-	}
-}
-
-/*
- * remap_MMU()
- *
- *   This function remaps kernel and NuBus pages the way they were done
- *   in MacOS.  "st" is the address of the segment table, and "pt" is
- *   the address of the first kernel page table.
- */
-
-void remap_MMU (unsigned long st, unsigned long pt)
-{
-	remap_kernel ((unsigned long *)pt);
-	remap_nubus ((unsigned long *)(pt +
-		((Sysptsize + (IIOMAPSIZE+NPTEPG-1)/NPTEPG) << PGSHIFT)));
-	remap_rom ((unsigned long *)st);
+	asm("movl sp@+, d1");
+	asm("movl sp@+, d0");
+	asm("movl sp@+, a1");
+	asm("movl sp@+, a0");
 }
