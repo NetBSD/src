@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.1 1998/01/14 23:42:07 cgd Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.2 1998/01/17 00:40:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -125,10 +125,10 @@ wdc_isa_probe(parent, match, aux)
 		ia->ia_msize = 0;
 	}
 
-outunmap:
 	bus_space_unmap(ad.auxiot, ad.auxioh, WDC_ISA_AUXREG_NPORTS);
-out:
+outunmap:
 	bus_space_unmap(ad.iot, ad.ioh, WDC_ISA_REG_NPORTS);
+out:
 	return (result);
 }
 
