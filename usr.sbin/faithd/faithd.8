@@ -1,4 +1,4 @@
-.\"	$NetBSD: faithd.8,v 1.21 2003/07/01 10:27:47 wiz Exp $
+.\"	$NetBSD: faithd.8,v 1.22 2003/07/04 12:56:58 wiz Exp $
 .\"	$KAME: faithd.8,v 1.37 2002/05/09 14:21:23 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@ destination.
 For example, if
 .Li 3ffe:0501:4819:ffff::
 is reserved for
-.Nm Ns ,
+.Nm ,
 and the
 .Tn TCPv6
 destination address is
@@ -144,7 +144,7 @@ or other standard mechanisms.
 By specifying
 .Ar serverpath
 to
-.Nm Ns ,
+.Nm ,
 you can run local daemons on the router.
 .Nm
 will invoke local daemon at
@@ -279,7 +279,7 @@ on success, and
 on error.
 .Sh EXAMPLES
 Before invoking
-.Nm Ns ,
+.Nm ,
 .Xr faith 4
 interface has to be configured properly.
 .Bd -literal -offset
@@ -379,7 +379,7 @@ command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh SECURITY CONSIDERATIONS
 It is very insecure to use IP-address based authentication, for connections relayed by
-.Nm Ns ,
+.Nm ,
 and any other TCP relaying services.
 .Pp
 Administrators are advised to limit accesses to
