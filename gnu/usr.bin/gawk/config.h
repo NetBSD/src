@@ -149,7 +149,9 @@
 #define HAVE_MEMSET 1
 
 /* we have the mktime function */
-/* #undef HAVE_MKTIME */
+/* XXX: defined manually, since configure script has weird test
+ * that fails on NetBSD. wiz 2003/10/20 */
+#define HAVE_MKTIME 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
