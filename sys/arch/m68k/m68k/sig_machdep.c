@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.12 2002/05/29 21:31:45 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.13 2002/06/21 05:57:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,13 +52,13 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/ucontext.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
