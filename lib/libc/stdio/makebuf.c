@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.9 1998/10/13 15:05:02 kleink Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.10 1998/11/15 17:16:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.9 1998/10/13 15:05:02 kleink Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.10 1998/11/15 17:16:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,7 +109,7 @@ __swhatbuf(fp, bufsize, couldbetty)
 
 	/* could be a tty iff it is a character device */
 	*couldbetty = S_ISCHR(st.st_mode);
-	if (st.st_blksize <= 0) {
+	if (st.st_blksize == 0) {
 		*bufsize = BUFSIZ;
 		return (__SNPT);
 	}
