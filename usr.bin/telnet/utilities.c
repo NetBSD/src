@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.19 2003/08/07 11:16:12 agc Exp $	*/
+/*	$NetBSD: utilities.c,v 1.20 2005/02/06 17:51:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.19 2003/08/07 11:16:12 agc Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.20 2005/02/06 17:51:40 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ optionstatus(void)
 
 void
 printsub(
-    int direction,	/* '<' or '>' */
+    char direction,	/* '<' or '>' */
     unsigned char *pointer,	/* where suboption data sits */
     int		  length)	/* length of suboption data */
 {
