@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.23.2.3 1993/09/29 06:57:05 mycroft Exp $
+#	$Id: BOAT_ANCHOR,v 1.23.2.4 1993/09/30 20:15:20 mycroft Exp $
 #
 
 # standard options
@@ -23,6 +23,7 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
+#options	LKM			# loadable kernel modules
 
 # compatibility options
 options		"COMPAT_NOMID"		# old zmagic executables

@@ -1,7 +1,7 @@
 #
 #	PAIN -- one of cgd's 486/50 EISA boxes
 #
-#	$Id: PAIN,v 1.13.2.3 1993/09/29 06:57:07 mycroft Exp $
+#	$Id: PAIN,v 1.13.2.4 1993/09/30 20:15:22 mycroft Exp $
 #
 
 # standard options
@@ -23,6 +23,7 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
+#options	LKM			# loadable kernel modules
 
 # compatibility options
 options		"COMPAT_NOMID"		# old zmagic executables
