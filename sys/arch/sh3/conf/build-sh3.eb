@@ -4,6 +4,7 @@
 
 MACHINE=evbsh3
 MACHINE_ARCH=sh3eb
+MACHINE_CPU=sh3
 # just in case you forgot to specify this when you built gcc...
 CFLAGS="-D__NetBSD__"
 export MACHINE MACHINE_ARCH CFLAGS
