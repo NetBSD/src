@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 1998/07/08 04:49:21 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 1998/08/25 21:53:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,6 +36,9 @@
 #ifndef	_ARM32_VMPARAM_H_
 #define	_ARM32_VMPARAM_H_
 
+/* for pt_entry_t definition */
+#include <machine/pte.h>
+
 #define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
@@ -43,15 +46,15 @@
  * Note that MAXTSIZ mustn't be greater than 32M. Otherwise you'd have
  * to change the compiler to not generate bl instructions
  */
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
+#define	MAXTSIZ		(16*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(256*1024*1024)		/* max data size */
+#define	MAXDSIZ		(512*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(8*1024*1024)		/* max stack size */
@@ -76,17 +79,42 @@
 #define	MAXSLP		20
 
 /*
+ *Address space constants
+ */
+
+/*
+ * The line between user space and kernel space
+ * Mappings >= KERNEL_SPACE_START are constant across all processes
+ */
+#define	KERNEL_SPACE_START	0xf0000000
+
+/* total number of page table entries to map 4GB * size of each entry*/
+#define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
+
+/* Address where the page tables are mapped */
+#define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
+
+/* Various constants used by the MD code*/
+#define	KERNEL_BASE		0xf0000000
+#define	KERNEL_TEXT_BASE	KERNEL_BASE
+#define	KERNEL_VM_BASE		0xf1000000
+#define	KERNEL_VM_SIZE		0x01ffffff
+#define	PAGE_DIRS_BASE		0xf3000000
+#define	ALT_PAGE_TBLS_BASE	0xf3c00000
+#define	CURRENT_PAGEDIR_HOLE	0xf5000000
+#define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
+#define	CURRENT_PAGEDIR_BASE	(PAGE_TABLE_SPACE_START + (CURRENT_PAGEDIR_HOLE >> PGSHIFT) * sizeof(pt_entry_t))
+
+/*
  * Mach derived constants
  */
 
-/* Need to link some of these with some in param.h */
-   
 #define	VM_MIN_ADDRESS		((vm_offset_t)0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xefc00000 - UPAGES * NBPG)
-#define	VM_MAX_ADDRESS		((vm_offset_t)0xeffc0000)
+#define	VM_MAXUSER_ADDRESS	((vm_offset_t)(PAGE_TABLE_SPACE_START - UPAGES * NBPG))
+#define	VM_MAX_ADDRESS		((vm_offset_t)(PAGE_TABLE_SPACE_START + (KERNEL_SPACE_START >> PGSHIFT) * sizeof(pt_entry_t)))
 
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf0000000)
-#define	VM_MAXKERN_ADDRESS	((vm_offset_t)0xf3000000)
+#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNEL_TEXT_BASE)
+#define	VM_MAXKERN_ADDRESS	((vm_offset_t)PAGE_DIRS_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffff)
 
 /*
