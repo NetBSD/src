@@ -1,5 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.1 1998/08/27 11:30:45 mrg Exp $ */
-/* $Id: isp_sbus.c,v 1.1 1998/08/27 11:30:45 mrg Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.2 1998/09/08 07:36:26 mjacob Exp $ */
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -179,6 +178,7 @@ isp_sbus_attach(parent, self, aux)
 	}
 
 	isp->isp_mdvec = &sbc->sbus_mdvec;
+	isp->isp_bustype = ISP_BT_SBUS;
 	isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 	isp->isp_param = &sbc->sbus_dev;
 	bzero(isp->isp_param, sizeof (sdparam));
