@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1999/09/16 21:17:46 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1999/09/23 05:34:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -461,7 +461,7 @@ resettodr()
 	SHREG_RHRCNT = dectohexdec(n / 60);
 
 	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	SHREG_RDAYCNT = (n + 4) % 7;  /* 1/1/70 is Thursday */
+	SHREG_RWKCNT = (n + 4) % 7;  /* 1/1/70 is Thursday */
 
 	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
 		n -= i;
