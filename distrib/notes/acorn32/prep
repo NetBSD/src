@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2 2002/04/14 14:40:13 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.3 2002/05/29 14:21:56 bjh21 Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -12,7 +12,7 @@ You will need the following RiscOS software:
 A program that will unpack sparchives. We recommend that you
 get David Pilling's !SparkPlug. A self-extracting version of this
 can be found at David Pilling's W3 site
-.Pq Lk http://www.pilling.demon.co.uk/free.html .
+.Pq Lk http://pilling.users.netlink.co.uk/free.html .
 .It
 A program that can uncompress gzip files, because the current bootloader
 can't read gzip'ed kernels (yet!).
