@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.15 1998/10/11 19:42:29 kleink Exp $	*/
+/*	$NetBSD: fstab.c,v 1.16 1998/10/16 11:24:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.15 1998/10/11 19:42:29 kleink Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.16 1998/10/16 11:24:30 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ fstabscan()
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
 	int typexx;
+	char *lastp;
 	static const char sep[] = ":\n";
 	static const char ws[] = " \t\n";
 
@@ -83,11 +84,11 @@ fstabscan()
 			return(0);
 /* OLD_STYLE_FSTAB */
 		if (!strpbrk(cp, " \t")) {
-			_fs_fstab.fs_spec = strtok(cp, sep);
+			_fs_fstab.fs_spec = strtok_r(cp, sep, &lastp);
 			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 				continue;
-			_fs_fstab.fs_file = strtok(NULL, sep);
-			_fs_fstab.fs_type = strtok(NULL, sep);
+			_fs_fstab.fs_file = strtok_r(NULL, sep, &lastp);
+			_fs_fstab.fs_type = strtok_r(NULL, sep, &lastp);
 			if (_fs_fstab.fs_type) {
 				if (!strcmp(_fs_fstab.fs_type, FSTAB_XX))
 					continue;
@@ -95,9 +96,11 @@ fstabscan()
 				_fs_fstab.fs_vfstype =
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
-				if ((cp = strtok(NULL, sep)) != NULL) {
+				if ((cp = strtok_r(NULL, sep, &lastp))
+				    != NULL) {
 					_fs_fstab.fs_freq = atoi(cp);
-					if ((cp = strtok(NULL, sep)) != NULL) {
+					if ((cp = strtok_r(NULL, sep, &lastp))
+					    != NULL) {
 						_fs_fstab.fs_passno = atoi(cp);
 						return(1);
 					}
@@ -106,24 +109,24 @@ fstabscan()
 			goto bad;
 		}
 /* OLD_STYLE_FSTAB */
-		_fs_fstab.fs_spec = strtok(cp, ws);
+		_fs_fstab.fs_spec = strtok_r(cp, ws, &lastp);
 		if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 			continue;
-		_fs_fstab.fs_file = strtok(NULL, ws);
-		_fs_fstab.fs_vfstype = strtok(NULL, ws);
-		_fs_fstab.fs_mntops = strtok(NULL, ws);
+		_fs_fstab.fs_file = strtok_r(NULL, ws, &lastp);
+		_fs_fstab.fs_vfstype = strtok_r(NULL, ws, &lastp);
+		_fs_fstab.fs_mntops = strtok_r(NULL, ws, &lastp);
 		if (_fs_fstab.fs_mntops == NULL)
 			goto bad;
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
-		if ((cp = strtok(NULL, ws)) != NULL) {
+		if ((cp = strtok_r(NULL, ws, &lastp)) != NULL) {
 			_fs_fstab.fs_freq = atoi(cp);
-			if ((cp = strtok(NULL, ws)) != NULL)
+			if ((cp = strtok_r(NULL, ws, &lastp)) != NULL)
 				_fs_fstab.fs_passno = atoi(cp);
 		}
 		(void)strncpy(subline, _fs_fstab.fs_mntops, sizeof(subline)-1);
-		for (typexx = 0, cp = strtok(subline, ","); cp;
-		     cp = strtok((char *)NULL, ",")) {
+		for (typexx = 0, cp = strtok_r(subline, ",", &lastp); cp;
+		     cp = strtok_r((char *)NULL, ",", &lastp)) {
 			if (strlen(cp) != 2)
 				continue;
 			if (!strcmp(cp, FSTAB_RW)) {
