@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.14 1995/12/25 23:15:33 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.15 1998/07/27 13:55:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,6 +54,6 @@ typedef _BSD_VA_LIST_	va_list;
 			   sizeof(type) != __va_size(type) ?	\
 			   sizeof(type) : __va_size(type))))
 
-#define	va_end(ap)	((void)0)
+#define	va_end(ap)	
 
 #endif /* !_M68K_STDARG_H_ */
