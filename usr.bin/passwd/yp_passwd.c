@@ -32,7 +32,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: yp_passwd.c,v 1.5 1994/01/13 23:42:28 deraadt Exp $";
+static char rcsid[] = "$Id: yp_passwd.c,v 1.6 1994/08/17 06:06:42 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -191,7 +191,7 @@ getnewpasswd(pw, old_pass)
 	
 	(void)printf("Changing YP password for %s.\n", pw->pw_name);
 
-	if (uid && old_pass) {
+	if (old_pass) {
 		*old_pass = NULL;
 	
 		if (pw->pw_passwd &&
