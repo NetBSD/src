@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.109 1999/08/14 06:19:49 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.110 1999/08/17 18:48:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 1999/08/14 06:19:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 1999/08/17 18:48:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,8 +355,8 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	This pmap module uses two types of locks: `normal' (sleep)
  *	locks and `simple' (spin) locks.  They are used as follows:
  *
- *	NORMAL LOCKS
- *	------------
+ *	READ/WRITE SPIN LOCKS
+ *	---------------------
  *
  *	* pmap_main_lock - This lock is used to prevent deadlock and/or
  *	  provide mutex access to the pmap module.  Most operations lock
@@ -400,13 +400,13 @@ struct simplelock pmap_all_pmaps_slock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	PMAP_MAP_TO_HEAD_LOCK() \
-	lockmgr(&pmap_main_lock, LK_SHARED, NULL)
+	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define	PMAP_MAP_TO_HEAD_UNLOCK() \
-	lockmgr(&pmap_main_lock, LK_RELEASE, NULL)
+	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
 #define	PMAP_HEAD_TO_MAP_LOCK() \
-	lockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
+	spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
 #define	PMAP_HEAD_TO_MAP_UNLOCK() \
-	lockmgr(&pmap_main_lock, LK_RELEASE, NULL)
+	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
 #else
 #define	PMAP_MAP_TO_HEAD_LOCK()		/* nothing */
 #define	PMAP_MAP_TO_HEAD_UNLOCK()	/* nothing */
@@ -883,7 +883,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	/*
 	 * Initialize the locks.
 	 */
-	lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
+	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pmap_all_pmaps_slock);
 
 	/*
