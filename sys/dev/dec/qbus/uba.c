@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.4 1994/11/25 19:09:31 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.5 1995/02/13 00:44:21 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -39,10 +39,10 @@
 
  /* All bugs are subject to removal without further notice */
 
+#include "sys/param.h"
 #include "sys/types.h"
 #include "sys/time.h"
 #include "sys/systm.h"
-#include "sys/param.h"
 #include "sys/map.h"
 #include "sys/buf.h"
 #include "sys/proc.h"
@@ -53,21 +53,20 @@
 #include "sys/malloc.h"
 #include "sys/device.h"
 
-#include "vax/include/pte.h"
-#include "vax/include/cpu.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/nexus.h"
+#include "machine/pte.h"
+#include "machine/cpu.h"
+#include "machine/mtpr.h"
+#include "machine/nexus.h"
 #include "uba.h"
 #include "ubareg.h"
 #include "ubavar.h"
 
 int	(*vekmatris[NUBA][128])();
 int dkn;
-struct	cfdriver ubacd;
-
+extern int cold;
 /* F|r att f} genom kompilatorn :( Nollpekare f|r interrupt... */
-int cvec=0,catcher=0;
-volatile int rbr,rcvec,finnaenheter=0;
+int cvec=0;
+volatile int rbr,rcvec;
 
 /*
  * Mark addresses starting at "addr" and continuing
@@ -99,42 +98,40 @@ csralloc(ualloc, addr, size)
  * by mapping kernel ptes starting at pte.
  */
 ioaccess(physa, pte, size)
-        caddr_t physa;
-        register struct pte *pte;
-        int size;
+        u_int physa;
+        u_int *pte;
+        u_int size;
 {
-        int i = btoc(size);
-        unsigned v = vax_btop(physa);
+        u_int i = (size>>PG_SHIFT);
+        u_int v = (physa>>PG_SHIFT);
 
 	do {
-	        *(int *)pte = PG_V|PG_KW|v;
+	        *pte = PG_V|PG_KW|v;
 		pte++;
 		v++;
 	} while (--i > 0);
-#ifdef	VAX750
-	mtpr(0x39, 0);
-#endif
+	mtpr(0, PR_TBIA);
 }
 
 /*
  * General uba interrupt handler.
  */
-ubainterrupt(vektor,level){
-/*	printf("Ubainterrupt, vektor %o\n",vektor); */
-	(*vekmatris[0][vektor])(vektor,level);
+ubainterrupt(level, uba,vektor){
+/*printf("ubainterrupt: level %x, uba %x, vektor %x\n",level, uba,vektor); */
+	(*vekmatris[uba][vektor])(vektor,level,uba);
 }
 
 /* 
  * Stray interrupt vector handler, used when nowhere else to 
  * go to.
  */
-ubastray(vektor, level){
-	if(finnaenheter){
+ubastray(vektor, level,uba){
+	if(cold){
 		rbr=level;
 		rcvec=vektor;
 	} else {
-	printf("uba?: unexpected interrupt at vector %d on level %d",
-		vektor, level);
+	printf("uba%d: unexpected interrupt at vector %d on level %d",
+		uba, vektor, level);
 	}
 }
 
@@ -159,7 +156,6 @@ unifind(uhp0, pumem)
 	struct uba_driver *udp;
 	int i, (*ivec)();
 	caddr_t ualloc;
-/*	extern quad catcher[128]; */
 	volatile extern int br, cvec;
 	volatile extern int rbr, rcvec;
 #if DW780 || DWBUA
@@ -190,7 +186,7 @@ unifind(uhp0, pumem)
 	else
 #endif
 		uhp->Nuh_vec = vekmatris[numuba];
-
+printf("numuba %d\n",numuba);
 	for (i = 0; i < 128; i++)
 		uhp->Nuh_vec[i] = ubastray;
 
@@ -248,12 +244,11 @@ unifind(uhp0, pumem)
 	 * see if it is really there, and if it is record it and
 	 * then go looking for slaves.
 	 */
-	finnaenheter=1;
 	for (um = ubminit; udp = um->um_driver; um++) {
 		if (um->um_ubanum != numuba && um->um_ubanum != '?' ||
 		    um->um_alive)
 			continue;
-		addr = (u_short)um->um_addr;
+		addr = (u_short)(u_long)um->um_addr;
 		/*
 		 * use the particular address specified first,
 		 * or if it is given as "0", of there is no device
@@ -301,8 +296,6 @@ unifind(uhp0, pumem)
 		um->um_hd = uhp;
 		um->um_addr = (caddr_t)reg;
 		udp->ud_minfo[um->um_ctlr] = um;
-/*		for (ivec = um->um_intr; *ivec; rcvec++, ivec++)
-			uhp->Nuh_vec[rcvec] = ivec; */
 		uhp->Nuh_vec[rcvec] = um->um_intr;
 		for (ui = ubdinit; ui->ui_driver; ui++) {
 			int t;
@@ -345,7 +338,7 @@ unifind(uhp0, pumem)
 		if (ui->ui_ubanum != numuba && ui->ui_ubanum != '?' ||
 		    ui->ui_alive || ui->ui_slave != -1)
 			continue;
-		addr = (u_short)ui->ui_addr;
+		addr = (u_short)(u_long)ui->ui_addr;
 
 	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
 		
@@ -384,8 +377,6 @@ unifind(uhp0, pumem)
 		printf("vec %o, ipl %x\n", rcvec, rbr);
 		csralloc(ualloc, addr, i);
 		ui->ui_hd = uhp;
-/* 		for (ivec = ui->ui_intr; *ivec; rcvec++, ivec++)
-			uhp->Nuh_vec[rcvec] = ivec; */
 		uhp->Nuh_vec[rcvec] = ui->ui_intr;
 		ui->ui_alive = 1;
 		ui->ui_ubanum = numuba;
@@ -432,7 +423,6 @@ unifind(uhp0, pumem)
 	}
 	printf("\n");
 #endif
-	finnaenheter=0;
 	free(ualloc, M_TEMP);
 }
 
@@ -604,28 +594,19 @@ ubasetup(int uban,struct buf *bp,int flags) {
 	if (bdp && (o & 01))
 		temp |= UBAMR_BO;
 	if ((bp->b_flags & B_PHYS) == 0)
-		pte = kvtopte(bp->b_un.b_addr);
+		pte = (struct pte *)kvtopte(bp->b_un.b_addr);
 	else if (bp->b_flags & B_PAGET) {
-		printf("B_PAGET\n");
-		asm("halt");
-/*		pte = &Usrptmap[btokmx((struct pte *)bp->b_un.b_addr)]; */
+		panic("ubasetup: B_PAGET");
 	} else {
 		if( bp->b_flags&B_DIRTY){
 			rp=&pageproc[2];
-			printf("B_DIRTY\n");
-			asm("halt");
+			panic("ubasetup: B_DIRTY");
 		} else {
 			rp =bp->b_proc;
 		}
-#if 0
-printf("(u_int)bp->b_un.b_addr %x\n",(u_int)bp->b_un.b_addr);
-asm("halt");
-#endif
 		v = vax_btop((u_int)bp->b_un.b_addr&0x3fffffff);
 		if (bp->b_flags & B_UAREA){
-			printf("B_UAREA\n");
-			asm("halt");
-/*			pte = &rp->p_addr[v]; */
+			panic("ubasetup: B_UAREA");
 		} else {
 /*
  * It may be better to use pmap_extract() here somewhere,
@@ -640,10 +621,6 @@ asm("halt");
 				hej=rp->p_vmspace->vm_pmap.pm_pcb->P1BR;
 			}
 			pte=(struct pte*)&hej[v];
-#if 0
-printf("ubasetup: pte %x, *pte %x, addr %x, hej %x\n",pte, *pte, 
-	(u_int)bp->b_un.b_addr, hej);
-#endif
 		}
 	}
 	io = &uh->uh_mr[reg];
@@ -833,7 +810,7 @@ ubareset(uban)
 	ubameminit(uban);
 	for (cdp = cdevsw; cdp < cdevsw + nchrdev; cdp++)
 		(*cdp->d_reset)(uban);
-	ifubareset(uban);
+/*	ifubareset(uban); Don't think we need this */
 	printf("\n");
 	splx(s);
 }
@@ -875,7 +852,7 @@ ubainit(uba)
 	case DWBUA:
 		BUA(uba)->bua_csr |= BUACSR_UPI;
 		/* give devices time to recover from power fail */
-		kern_delay(5000000);
+		waitabit(500);
 		break;
 #endif
 #ifdef DW780
@@ -896,11 +873,13 @@ ubainit(uba)
 	case QBA:
 #endif
 #if DW750 || DW730 || QBA
-		mtpr(PR_IUR, 0);
+		mtpr(0, PR_IUR);
 		/* give devices time to recover from power fail */
+#if 0
 /* THIS IS PROBABLY UNNECESSARY */
-		kern_delay(5000000);
+		waitabit(50);
 /* END PROBABLY UNNECESSARY */
+#endif
 #ifdef QBA
 		/*
 		 * Re-enable local memory access
@@ -1068,8 +1047,8 @@ jdhfgsjdkfhgsdjkfghak
 }
 
 rmget(){
-	printf("rmget() not implemented. (in uba.c)\n");
-	asm("halt");
+	showstate(curproc);
+	panic("rmget() not implemented. (in uba.c)");
 }
 
 /*
@@ -1148,3 +1127,73 @@ unmaptouser(vaddress)
 	kvtopte(vaddress)->pg_prot = (PG_KW >> 27);
 }
 #endif
+
+resuba()
+{
+	showstate(curproc);
+	panic("resuba");
+}
+
+int
+uba_match(parent, cf, aux)
+	struct	device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
+	extern int numuba;
+	int ubanr;
+
+	if(numuba) return 0;
+	if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
+		return 0; /* UBA doesn't match spec's */
+
+	switch(sa->type){
+	case NEX_UBA0:
+	case NEX_UBA1:
+	case NEX_UBA2:
+	case NEX_UBA3:
+		return 1;
+	
+	default:
+		return 0;
+	}
+}
+
+void
+uba_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
+	extern struct uba_hd uba_hd[];
+	struct uba_regs *ubar=(struct uba_regs *)sa->nexaddr;
+	struct uba_hd *uhp = &uba_hd[numuba];
+	void ubascan();
+
+	printf("\n");
+	uhp->uh_mr = (void *)ubar->uba_map;
+	uhp->uh_type = DW750;
+	uhp->uh_uba = (void*)ubar;
+	uhp->uh_physuba = (void*)0xf20000+sa->nexnum*0x2000;
+	uhp->uh_memsize = UBAPAGES;
+	uhp->uh_mem = Tumem(numuba);
+	uhp->uh_iopage = Tumem(numuba) + (uhp->uh_memsize * NBPG);
+	ioaccess(UMEM750(numuba), UMEMmap[numuba], (UBAPAGES+UBAIOPAGES)*NBPG);
+/* Now everything should be set up (I hope...) */
+#ifdef notyet
+	config_scan(ubascan,self);
+
+#else
+	unifind(uhp, UMEM750(numuba) + (uhp->uh_memsize * NBPG));
+	numuba++;
+#endif
+}
+
+
+
+struct	cfdriver ubacd=
+	{ NULL, "uba", uba_match, uba_attach, DV_CPU, sizeof(struct device),1,0};
+
+
+
