@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.24 2003/11/28 21:53:32 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.25 2003/11/28 23:32:25 wiz Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -418,7 +418,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-AaitUu] [-c uid:gid] [-d policydir] [-f file]\n"
+	    "Usage: systrace [-AaCitUu] [-c uid:gid] [-d policydir] [-f file]\n"
 	    "\t [-g gui] [-p pid] command ...\n");
 	exit(1);
 }
