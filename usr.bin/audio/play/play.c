@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.17.4.1 2001/03/11 21:30:28 he Exp $	*/
+/*	$NetBSD: play.c,v 1.17.4.2 2001/03/14 23:22:12 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -240,7 +240,7 @@ main(argc, argv)
 			filesize -= hdrlen;
 			addr = (char *)addr + hdrlen;
 			if (filesize < datasize || datasize == 0) {
-				warn("bogus datasize:%u", datasize);
+				warn("bogus datasize: %lu", (long)datasize);
 				datasize = filesize;
 			}
 
