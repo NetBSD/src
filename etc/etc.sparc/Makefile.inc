@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2000/10/20 14:12:01 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2000/10/20 14:13:12 pk Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -42,3 +42,11 @@ snap_md_post:
 .for dir in ${MD_INSTALLATION_DIRS}
 	sh $(TOP)/distrib/sets/makesums -t ${RELEASEDIR}/${dir} '*'
 .endfor
+
+CDBOOTIMAGE!=	cd ${TOP}/distrib/miniroot; \
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/miniroot.fs\n" | \
+		${MAKE} -s -f-
+
+iso-image_md_post:
+	mksunbootcd ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
+		$(CDBOOTIMAGE) $(CDBOOTIMAGE) $(CDBOOTIMAGE)
