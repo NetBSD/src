@@ -1,4 +1,4 @@
-.\" $NetBSD: mca.4,v 1.4 2001/03/22 17:04:37 jdolecek Exp $
+.\" $NetBSD: mca.4,v 1.5 2001/03/23 19:27:29 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,12 @@
 .Nd introduction to machine-independent MCA bus support and drivers
 .Sh SYNOPSIS
 .Cd "mca0 at mainbus?"
-.Cd "XX*  at mca? slot ?"
+.Pp
+Machine-dependant; depends on the bus topology and
+.Tn MCA
+bus interface of your system. Typical
+.Tn MCA
+buses are connected directly to the main system bus.
 .Sh INTRODUCTION
 .Nx
 includes a machine-independent
