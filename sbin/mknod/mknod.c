@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.29 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: mknod.c,v 1.30 2004/01/30 19:06:55 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.29 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.30 2004/01/30 19:06:55 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: mknod.c,v 1.29 2004/01/05 23:23:33 jmmv Exp $");
 #include "pack_dev.h"
 
 static int gid_name(const char *, gid_t *);
+static portdev_t callPack(pack_t *, int, u_long *);
 
 	int	main(int, char *[]);
 static	void	usage(void);
@@ -208,7 +209,7 @@ main(int argc, char **argv)
 		break;
 
 	default:
-		dev = (*pack)(argc, numbers);
+		dev = callPack(pack, argc, numbers);
 		break;
 	}
 
@@ -274,4 +275,16 @@ gid_name(const char *name, gid_t *gid)
 		return -1;
 	*gid = g->gr_gid;
 	return 0;
+}
+
+static portdev_t
+callPack(pack_t *f, int n, u_long *numbers)
+{
+	portdev_t d;
+	char *error = NULL;
+
+	d = (*f)(n, numbers, &error);
+	if (error != NULL)
+		errx(1, "%s", error);
+	return d;
 }
