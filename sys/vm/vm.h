@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.27 2000/06/27 04:19:04 mrg Exp $	*/
+/*	$NetBSD: vm.h,v 1.28 2000/06/27 09:00:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -59,12 +59,12 @@ typedef struct vm_page  *vm_page_t;
 #include <sys/lock.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_inherit.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_pager.h>
-#include <vm/vm_extern.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Shareable process virtual address space.

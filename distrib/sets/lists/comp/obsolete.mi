@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.22 2000/06/27 07:18:08 mrg Exp $
+# $NetBSD: obsolete.mi,v 1.23 2000/06/27 09:00:16 mrg Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -301,10 +301,12 @@
 /usr/include/vm/pmap.h
 /usr/include/vm/swap_pager.h
 /usr/include/vm/vm_conf.h
+/usr/include/vm/vm_extern.h
 /usr/include/vm/vm_inherit.h
 /usr/include/vm/vm_kern.h
 /usr/include/vm/vm_map.h
 /usr/include/vm/vm_object.h
+/usr/include/vm/vm_page.h
 /usr/include/vm/vm_pageout.h
 /usr/include/vm/vm_pager.h
 /usr/include/vm/vm_param.h
