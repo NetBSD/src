@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.3 2001/08/25 17:55:24 bjh21 Exp $ */
+/* $NetBSD: machdep.h,v 1.4 2001/08/26 12:24:24 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -62,4 +62,9 @@ extern void proc_trampoline(void); /* not quite true */
 
 /* pmap.c */
 extern register_t update_memc	__P((register_t, register_t));
+
+/* rtc.c */
+extern int cmos_read(int);
+extern int cmos_write(int, int);
+
 #endif
