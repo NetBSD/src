@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sh.1	5.1 (Berkeley) 3/7/91
-.\"	$Id: sh.1,v 1.6 1993/08/01 07:58:14 mycroft Exp $
+.\"	$Id: sh.1,v 1.7 1994/01/27 17:53:28 jtc Exp $
 .\"
 .TH SH 1 "March 7, 1991"
 .UC 7
@@ -698,8 +698,6 @@ the CDPATH mechanism was used or because a symbolic link was crossed.
 .b ".\fI\h'0.1i'file"
 .br
 The commands in the specified file are read and executed by the shell.
-A path search is not done to find the file because the directories in
-PATH generally contain files that are intended to be executed, not read.
 .b eval
 .IR string ...
 .br
