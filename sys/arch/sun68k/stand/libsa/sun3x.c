@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.6 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.7 2005/01/26 20:32:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,11 +75,11 @@
 #define MON_DVMA_BASE	SUN3X_MON_DVMA_BASE
 #define MON_DVMA_SIZE	SUN3X_MON_DVMA_SIZE
 
-void mmu_atc_flush(u_int);
-void set_iommupte(u_int, u_int);
+void mmu_atc_flush(vaddr_t);
+void set_iommupte(vaddr_t, paddr_t);
 
 u_int	get_pte(vaddr_t);
-void	set_pte(vaddr_t, u_int);
+void	set_pte(vaddr_t, paddr_t);
 char *	dvma3x_alloc(int);
 void	dvma3x_free(char *, int);
 char *	dvma3x_mapin(char *, int);
