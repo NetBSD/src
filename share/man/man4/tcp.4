@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.14 2003/11/23 07:25:11 jhawk Exp $
+.\"	$NetBSD: tcp.4,v 1.15 2004/04/25 02:13:37 jonathan Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,10 +103,12 @@ network interface through which packets are being transmitted and received.
 Normally this address corresponds to the peer entity's network.
 .Pp
 .Tn TCP
-supports one socket option which is set with
+supports a number of  socket options which can be set with
 .Xr setsockopt 2
 and tested with
-.Xr getsockopt 2 .
+.Xr getsockopt 2 :
+.Bl -tag -width TCP_MD5SIGx
+.It Dv TCP_NODELAY
 Under most circumstances,
 .Tn TCP
 sends data when it is presented;
@@ -123,12 +125,22 @@ provides a boolean option,
 (from
 .Aq Pa netinet/tcp.h ,
 to defeat this algorithm.
+.It Dv TCP_MAXSEG
+By default, a sender\- and receiver-TCP
+will negotiate among themselves to determine the maximum segment size
+to be used for each connection.  The
+.Dv TCP_MAXSEG
+option allows the user to determine the result of this negotiation,
+and to reduce it if desired.
+.El
+.Pp
 The option level for the
 .Xr setsockopt 2
 call is the protocol number for
 .Tn TCP ,
 available from
 .Xr getprotobyname 3 .
+.Pp
 In the historical
 .Bx
 .Tn TCP
