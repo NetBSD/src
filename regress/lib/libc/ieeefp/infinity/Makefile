@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/27 23:36:32 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:02 tv Exp $
 
-PROG=	infinity
-MKMAN=	no
+PROG=		infinity
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

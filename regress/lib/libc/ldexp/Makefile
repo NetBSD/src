@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1999/08/30 17:06:33 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:02 tv Exp $
 
-PROG=	ldexp
-MKMAN=	no
-
-CLEANFILES+=output
+PROG=		ldexp
+NOMAN=		# defined
+CLEANFILES+=	output
 
 regress: ${PROG}
 	@./${PROG} >output

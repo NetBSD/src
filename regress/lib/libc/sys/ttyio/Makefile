@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/20 16:56:53 atatat Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:05 tv Exp $
 
-PROG=	ioctl
-MKMAN=	no
-WARNS=	2
-LDADD+=	-lutil
-DPADD+=	${LIBUTIL}
+PROG=		ioctl
+NOMAN=		# defined
+WARNS=		2
+LDADD+=		-lutil
+DPADD+=		${LIBUTIL}
 
 regress: ${PROG}
 	@if ./ioctl > /dev/null; then \

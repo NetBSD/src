@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2001/07/17 11:32:28 jdolecek Exp $
+# $NetBSD: Makefile,v 1.2 2001/12/12 01:24:18 tv Exp $
 
-PROG=	uipc_syscalls_43
-
-NOMAN=	yes
+PROG=		uipc_syscalls_43
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2001/05/22 18:57:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:04 tv Exp $
 
-PROG=	swabcheck
-SRCS=	swabcheck.c
-MKMAN=	no
+PROG=		swabcheck
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

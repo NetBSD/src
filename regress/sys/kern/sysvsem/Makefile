@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/08/25 04:35:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:17 tv Exp $
 
-PROG=	semtest
-MKMAN=	no
-WARNS=	1
+PROG=		semtest
+NOMAN=		# defined
+WARNS=		1
 
 regress:
 	@if ./semtest ${.OBJDIR}/semtest; then \

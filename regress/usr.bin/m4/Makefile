@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:18 tv Exp $
 
-MKMAN=  no
-
-CLEANFILES+= ff_after_dnl.m4
+NOMAN=  	# defined
+CLEANFILES+=	ff_after_dnl.m4
 
 regress: test-ff_after_dnl test-m4wrap
 

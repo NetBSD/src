@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/14 05:20:10 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:01 tv Exp $
 
-PROG=	hsearchtest
-SRCS=	hsearchtest.c
-NOMAN=	noman, no way, man
+PROG=		hsearchtest
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

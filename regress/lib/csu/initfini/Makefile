@@ -1,20 +1,18 @@
-#	$NetBSD: Makefile,v 1.4 2001/08/06 02:25:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:24:12 tv Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
-
-MKMAN=no
 
 .if (${OBJECT_FMT} == "ELF")
 
 .if exists(arch/${MACHINE_CPU}/initfini_asm.S)
-PROG=	initfini
-SRCS=	initfini.c initfini_asm.S
+PROG=		initfini
+SRCS=		initfini.c initfini_asm.S
+WARNS?=		1
+CLEANFILES+=	output
 
-WARNS?=	1
-
-CLEANFILES+= output
-
-.PATH: ${.CURDIR}/arch/${MACHINE_CPU}
+.PATH:		${.CURDIR}/arch/${MACHINE_CPU}
 
 regress:
 	@./initfini > output

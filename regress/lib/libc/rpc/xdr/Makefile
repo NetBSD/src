@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2001/02/27 19:05:56 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:03 tv Exp $
 
-PROG=xdrtest
-MKMAN=no
+PROG=		xdrtest
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}
