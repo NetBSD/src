@@ -657,7 +657,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 			fatal("Received more data than asked for %d > %d",
 			    len, COPY_SIZE);
 
-		debug3("In read loop, got %d offset %lld", len,
+		debug3("In read loop, got %d offset %llu", len,
 		    (unsigned long long)offset);
 		if (atomic_write(local_fd, data, len) != len) {
 			error("Couldn't write to \"%s\": %s", local_path,
