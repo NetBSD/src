@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.11 2003/08/07 11:16:20 agc Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.12 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: uucplock.c,v 1.11 2003/08/07 11:16:20 agc Exp $");
+__RCSID("$NetBSD: uucplock.c,v 1.12 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -47,15 +47,15 @@ __RCSID("$NetBSD: uucplock.c,v 1.11 2003/08/07 11:16:20 agc Exp $");
  */
 
 int
-uu_lock(ttyname)
-	char *ttyname;
+uu_lock(ttname)
+	char *ttname;
 {
-	int fd, pid;
+	int fd, mypid;
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 	char text_pid[81];
 	int len;
 
-	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttyname);
+	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttname);
 	fd = open(tbuf, O_RDWR|O_CREAT|O_EXCL, 0660);
 	if (fd < 0) {
 		/*
@@ -76,9 +76,9 @@ uu_lock(ttyname)
 			return(-1);
 		}
 		text_pid[len] = 0;
-		pid = atol(text_pid);
+		mypid = atol(text_pid);
 
-		if (kill(pid, 0) == 0 || errno != ESRCH) {
+		if (kill(mypid, 0) == 0 || errno != ESRCH) {
 			(void)close(fd);	/* process is still running */
 			return(-1);
 		}
@@ -87,7 +87,7 @@ uu_lock(ttyname)
 		 * we'll lock it ourselves
 		 */
 		fprintf(stderr, "Stale lock on %s PID=%d... overriding.\n",
-			ttyname, pid);
+			ttname, mypid);
 		if (lseek(fd, (off_t)0, SEEK_SET) < 0) {
 			perror(tbuf);
 			(void)close(fd);
@@ -96,8 +96,8 @@ uu_lock(ttyname)
 		}
 		/* fall out and finish the locking process */
 	}
-	pid = getpid();
-	(void)snprintf(text_pid, sizeof text_pid, "%10d\n", pid);
+	mypid = getpid();
+	(void)snprintf(text_pid, sizeof text_pid, "%10d\n", mypid);
 	len = strlen(text_pid);
 	if (write(fd, text_pid, len) != len) {
 		(void)close(fd);
@@ -110,11 +110,11 @@ uu_lock(ttyname)
 }
 
 int
-uu_unlock(ttyname)
-	char *ttyname;
+uu_unlock(ttname)
+	char *ttname;
 {
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 
-	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttyname);
+	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttname);
 	return(unlink(tbuf));
 }

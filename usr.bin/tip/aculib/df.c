@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.6 2003/08/07 11:16:22 agc Exp $	*/
+/*	$NetBSD: df.c,v 1.7 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: df.c,v 1.6 2003/08/07 11:16:22 agc Exp $");
+__RCSID("$NetBSD: df.c,v 1.7 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -71,11 +71,11 @@ df_dialer(num, acu, df03)
 {
 	int f = FD;
 	struct termios cntrl;
-	int speed = 0;
+	int spd = 0;
 	char c = '\0';
 
 #if __GNUC__	/* XXX pacify gcc */
-	(void)&speed;
+	(void)&spd;
 #endif
 
 	tcgetattr(f, &cntrl);
@@ -94,8 +94,8 @@ df_dialer(num, acu, df03)
 		int st = TIOCM_ST;	/* secondary Transmit flag */
 
 		tcgetattr(f, &cntrl);
-		speed = cfgetospeed(&cntrl);
-		if (speed != B1200) {	/* must dial at 1200 baud */
+		spd = cfgetospeed(&cntrl);
+		if (spd != B1200) {	/* must dial at 1200 baud */
 			cfsetospeed(&cntrl, B1200);
 			cfsetispeed(&cntrl, B1200);
 			tcsetattr(f, TCSAFLUSH, &cntrl);
@@ -113,9 +113,9 @@ df_dialer(num, acu, df03)
 	write(f, num, strlen(num));
 	read(f, &c, 1);
 #ifdef TIOCMSET
-	if (df03 && speed != B1200) {
-		cfsetospeed(&cntrl, speed);
-		cfsetispeed(&cntrl, speed);
+	if (df03 && spd != B1200) {
+		cfsetospeed(&cntrl, spd);
+		cfsetispeed(&cntrl, spd);
 		tcsetattr(f, TCSAFLUSH, &cntrl);
 	}
 #endif
