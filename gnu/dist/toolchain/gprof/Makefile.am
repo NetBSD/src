@@ -141,7 +141,8 @@ gprof.o: gprof.c $(INCDIR)/getopt.h $(INCDIR)/libiberty.h \
   $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h gconfig.h \
   $(INCDIR)/bin-bugs.h basic_blocks.h source.h search_list.h \
   symtab.h ../bfd/bfd.h call_graph.h cg_arcs.h cg_print.h \
-  corefile.h gmon_io.h gmon.h hertz.h hist.h sym_ids.h
+  corefile.h gmon_io.h gmon.h hertz.h hist.h sym_ids.h \
+  $(INCDIR)/demangle.h
 hertz.o: hertz.c hertz.h gprof.h $(INCDIR)/ansidecl.h \
   $(BFDDIR)/sysdep.h ../bfd/config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/filenames.h gconfig.h $(INCDIR)/bin-bugs.h
