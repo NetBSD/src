@@ -1,4 +1,4 @@
-/* $NetBSD: coscreg.h,v 1.1 1996/10/15 00:08:44 mark Exp $ */
+/* $NetBSD: coscreg.h,v 1.2 1997/01/03 23:24:48 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -15,6 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Mark Brinicombe
+ *      for the NetBSD Project.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -29,6 +30,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Termination and DMA enable registers provided by
+ * Andreas Gandor <andi@knipp.de>
  */
 
 #ifndef _COSCREG_H_
