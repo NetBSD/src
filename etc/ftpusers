@@ -1,10 +1,11 @@
-#	$NetBSD: ftpusers,v 1.5 2002/06/05 21:32:25 itojun Exp $
+#	$NetBSD: ftpusers,v 1.6 2002/06/05 22:00:03 itojun Exp $
 #
 # list of users denied (or allowed) ftp access
 # read by ftpd(8).
 root	deny
 toor	deny
 uucp	deny
+postfix	deny
 named	deny
 ntpd	deny
 sshd	deny
