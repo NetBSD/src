@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.22 1994/06/16 01:08:21 mycroft Exp $
+ *	$Id: lpt.c,v 1.22.2.1 1994/11/23 06:27:25 cgd Exp $
  */
 
 /*
@@ -125,7 +125,7 @@ struct cfdriver lptcd = {
 static int notready __P((u_char, struct lpt_softc *));
 #endif
 
-static void lptout __P((void *arg));
+static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
 /*
@@ -332,7 +332,9 @@ lptopen(dev, flag)
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
-	lptout(sc);
+
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
+		lptwakeup(sc);
 
 	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
 	return 0;
@@ -362,21 +364,17 @@ notready(status, sc)
 #endif
 
 void
-lptout(arg)
+lptwakeup(arg)
 	void *arg;
 {
-	struct lpt_softc *sc;
+	struct lpt_softc *sc = arg;
 	int s;
-
-	sc = (struct lpt_softc *)arg;
-	if (sc->sc_flags & LPT_NOINTR)
-		return;
 
 	s = spltty();
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptout, sc, STEP);
+	timeout(lptwakeup, sc, STEP);
 }
 
 /*
@@ -392,6 +390,9 @@ lptclose(dev, flag)
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
+
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
+		untimeout(lptwakeup, sc);
 
 	outb(iobase + lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
