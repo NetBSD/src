@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.126 2000/02/22 00:26:01 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.127 2000/02/23 01:25:12 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3478,3 +3478,58 @@ distrib/notes/macppc/prep			patch
 
   Rework this part of the install notes.  Provide more hints on
   working with OpenFirmware, and the network boot process.
+
+regress/lib/libc/Makefile			patch
+
+  Skip ieeefp regression test on powerpc too; the functions needed
+  are currently missing.
+
+lib/libc/arch/i386/SYS.h			1.14-1.15
+lib/libc/arch/i386/sys/cerror.S			1.12
+
+  Implement a better fix for the ``stubs in other shlibs'' problem.
+  With this fix the stack is left clean during the transition from
+  the stub to cerror().
+
+etc/root/dot.login				1.6-1.8
+etc/root/dot.profile				1.12-1.15 via patch
+
+  Implement better handling of the SU_FROM environment variable.
+
+lib/libterm/termcap.h				patch
+
+  Make documented stand-alone inclusion of this header file work;
+  fixes PR#9452.
+
+distrib/macppc/floppies/ramdisk			patch
+
+  Add NOLIBHACKOPENDIR=1 so that libhack's opendir() does not get
+  built (causes linker conflict).
+
+bin/stty/gfmt.c					1.14
+
+  Make stty accept g-format data.  Fixes PR#7751.
+
+usr.sbin/pkg_install/admin/main.c		1.11
+usr.sbin/pkg_install/admin/pkg_admin.1		1.7
+usr.sbin/pkg_install/info/show.c		1.20
+usr.sbin/pkg_install/lib/ftpio.c		1.17
+usr.sbin/pkg_install/lib/pkgdb.c		1.6
+
+  Copyright adjustments to get proper attribution for ``external''
+  use.
+
+sys/arch/sparc/stand/binstall/binstall.sh	1.4
+sys/arch/sparc/stand/Makefile.buildboot		patch
+sys/arch/sparc/stand/boot/Makefile		patch
+sys/arch/sparc/stand/bootxx/Makefile		patch
+distrib/sparc/bootfs/Makefile			patch
+
+  Make several sparc boot programs to run at different relocated
+  addresses.  The boot build procedures can then pick the one which
+  is least likely to fail.
+
+distrib/notes/macppc/prep			patch
+
+  Add pointers for Apple firmware updates and NetBSD's diskless
+  info page.  Also fix a couple of typos.
