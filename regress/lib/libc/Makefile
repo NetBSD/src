@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/07 16:01:33 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/11 22:57:49 mycroft Exp $
 
 SUBDIR+= _setjmp db regex setjmp sigsetjmp
 .if (${MACHINE_ARCH} != "vax")
@@ -8,7 +8,5 @@ SUBDIR+= ieeefp
 .if exists(arch/${MACHINE_ARCH})
 SUBDIR+= arch/${MACHINE_ARCH}
 .endif
-
-regress: _SUBDIRUSE
 
 .include <bsd.subdir.mk>
