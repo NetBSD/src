@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.4 2002/11/10 11:11:39 simonb Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.5 2002/11/15 01:23:17 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -542,6 +542,10 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 	while ((eva - va) >= (8 * 32)) {
 		cache_r4k_op_8lines_32_4way(va, w2va, w3va, w4va,
 		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+#ifdef MIPS64_SB1	/* XXX really any physical Dcache where way size > page size */
+		cache_r4k_op_8lines_32_4way(va + 4096, w2va + 4096, w3va + 4096, w4va + 4096,
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+#endif
 		va   += (8 * 32);
 		w2va += (8 * 32);
 		w3va += (8 * 32);
@@ -553,6 +557,12 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		cache_op_r4k_line(w3va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		cache_op_r4k_line(w4va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+#ifdef MIPS64_SB1	/* XXX really any physical Dcache where way size > page size */
+		cache_op_r4k_line(va   + 4096, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va + 4096, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w3va + 4096, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w4va + 4096, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+#endif
 		va   += 32;
 		w2va += 32;
 		w3va += 32;
