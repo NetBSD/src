@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/06 23:28:56 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/08/16 16:59:24 mrg Exp $
 
 # XXX - This gdb.new directory should be renamed to "gdb" after all platforms
 # have been migrated to the new toolchain.
@@ -23,6 +23,7 @@ TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/..
 
+.include "../../Makefile.inc"
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
 
