@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.23 2003/08/07 16:33:39 agc Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.24 2003/08/11 15:17:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.23 2003/08/07 16:33:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.24 2003/08/11 15:17:30 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -547,7 +547,7 @@ tpip_input(m, va_alist)
 	 */
 
 
-	if ((m = m_pullup(m, iplen + 1)) == MNULL)
+	if ((m = m_pullup(m, iplen + 1)) == NULL)
 		goto discard;
 	CHANGE_MTYPE(m, TPMT_DATA);
 
@@ -559,7 +559,7 @@ tpip_input(m, va_alist)
 	hdrlen = iplen + 1 + mtod(m, u_char *)[iplen];
 
 	if (m->m_len < hdrlen) {
-		if ((m = m_pullup(m, hdrlen)) == MNULL) {
+		if ((m = m_pullup(m, hdrlen)) == NULL) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
 				printf("tp_input, pullup 2!\n");

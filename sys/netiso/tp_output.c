@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.23 2003/08/07 16:33:40 agc Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.24 2003/08/11 15:17:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.23 2003/08/07 16:33:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.24 2003/08/11 15:17:30 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -417,7 +417,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		error = ENOTSOCK;
 		goto done;
 	}
-	if (*mp == MNULL) {
+	if (*mp == NULL) {
 		struct mbuf *m;
 
 		MGET(m, M_DONTWAIT, TPMT_SONAME);	/* does off, type, next */
@@ -449,7 +449,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			    tpcb->tp_state == TP_OPEN &&
 			    (old_credit < tpcb->tp_maxlcredit))
 				tp_emit(AK_TPDU_type, tpcb,
-					tpcb->tp_rcvnxt, 0, MNULL);
+					tpcb->tp_rcvnxt, 0, NULL);
 			tpcb->tp_rhiwat = so->so_rcv.sb_hiwat;
 		}
 		goto done;
@@ -693,7 +693,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 				error = EMSGSIZE;
 				goto done;
 			}
-			(*mp)->m_next = MNULL;
+			(*mp)->m_next = NULL;
 			(*mp)->m_nextpkt = 0;
 			if (tpcb->tp_ucddata)
 				m_cat(tpcb->tp_ucddata, *mp);
@@ -710,7 +710,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			      tpcb->tp_flags, so->so_snd.sb_cc, val_len, 0);
 			}
 #endif
-			*mp = MNULL;
+			*mp = NULL;
 			if (optname == TPOPT_CFRM_DATA && (so->so_state & SS_ISCONFIRMING))
 				(void) tp_confirm(tpcb);
 		}
@@ -753,7 +753,7 @@ done:
 	if (*mp) {
 		if (cmd == PRCO_SETOPT) {
 			m_freem(*mp);
-			*mp = MNULL;
+			*mp = NULL;
 		} else {
 			ASSERT(m_compress(*mp, mp) <= MLEN);
 			if (error)
