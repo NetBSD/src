@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.67 2001/11/17 20:38:45 thorpej Exp $
+#	$NetBSD: bsd.man.mk,v 1.68 2001/11/19 04:46:07 perry Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -88,7 +88,7 @@ manlinks: manpages					# symlink install
 		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			echo $$t -\> $$l; \
-			ln -f $$l $$t; \
+			${INSTALL_LINK} $$l $$t; \
 		fi; \
 	done
 .endif
@@ -135,7 +135,7 @@ catlinks: catpages					# symlink install
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			echo $$t -\> $$l; \
-			ln -f $$l $$t; \
+			${INSTALL_LINK} $$l $$t; \
 		fi; \
 	done
 .endif
