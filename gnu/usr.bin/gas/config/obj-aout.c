@@ -472,18 +472,19 @@ object_headers *headers;
 			if (symbolP->sy_symbol.n_type != N_SETA &&
 			    symbolP->sy_symbol.n_type != N_SETT &&
 			    symbolP->sy_symbol.n_type != N_SETD &&
-			    symbolP->sy_symbol.n_type != N_SETB)
+			    symbolP->sy_symbol.n_type != N_SETB) {
 				S_SET_SEGMENT(symbolP,
 					      S_GET_SEGMENT(symbolP->sy_forward));
+				if (S_IS_EXTERNAL(symbolP->sy_forward)
+				    && !S_IS_DEBUG(symbolP))
+					S_SET_EXTERNAL(symbolP);
+			}
 			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP)
 				    + S_GET_VALUE(symbolP->sy_forward)
 				    + symbolP->sy_forward->sy_frag->fr_address);
 			
 			symbolP->sy_aux |= symbolP->sy_forward->sy_aux;
 			symbolP->sy_sizexp = symbolP->sy_forward->sy_sizexp;
-			if (S_IS_EXTERNAL(symbolP->sy_forward)
-			    && !S_IS_DEBUG(symbolP))
-				S_SET_EXTERNAL(symbolP);
 		} /* if it has a forward reference */
 		symbolP->sy_forward=0;
 	} /* walk the symbol chain */
