@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.31 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: netdb.h,v 1.32 2004/02/19 19:30:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -313,6 +313,43 @@ void		freeaddrinfo __P((struct addrinfo *));
 char		*gai_strerror __P((int));
 #endif
 void		setservent __P((int));
+
+#if defined(_NETBSD_SOURCE)
+
+struct protoent_data {
+        FILE *fp;
+	struct protoent proto;
+	char **aliases;
+	size_t maxaliases;
+	int stayopen;
+};
+
+struct protoent	*getprotoent_r __P((struct protoent *, struct protoent_data *));
+struct protoent	*getprotobyname_r __P((const char *,
+    struct protoent *, struct protoent_data *));
+struct protoent	*getprotobynumber_r __P((int,
+    struct protoent *, struct protoent_data *));
+struct protoent	*getprotoent_r __P((struct protoent *, struct protoent_data *));
+void setprotoent_r __P((int, struct protoent_data *));
+void endprotoent_r __P((struct protoent_data *));
+
+struct servent_data {
+        FILE *fp;
+	struct servent serv;
+	char **aliases;
+	size_t maxaliases;
+	int stayopen;
+};
+
+struct servent	*getservent_r __P((struct servent *, struct servent_data *));
+struct servent	*getservbyname_r __P((const char *, const char *,
+    struct servent *, struct servent_data *));
+struct servent	*getservbyport_r __P((int, const char *,
+    struct servent *, struct servent_data *));
+void setservent_r __P((int, struct servent_data *));
+void endservent_r __P((struct servent_data *));
+
+#endif /* _NETBSD_SOURCE */
 __END_DECLS
 
 #endif /* !_NETDB_H_ */
