@@ -9,42 +9,48 @@ POSTLOG(1)                                             POSTLOG(1)
        postlog - Postfix-compatible logging utility
 
 <b>SYNOPSIS</b>
-       <b>postlog</b> [<b>-i</b>] [<b>-p</b> <i>priority</i><b>]</b> <b>[-t</b> <i>tag</i>] [<b>-v</b>] [<i>text...</i>]
+       <b>postlog</b> [<b>-iv</b>] [<b>-c</b> <i>config_dir</i>] [<b>-p</b> <i>priority</i><b>]</b> <b>[-t</b> <i>tag</i>]
+       [<i>text...</i>]
 
 <b>DESCRIPTION</b>
-       The  <b>postlog</b>  command implements a Postfix-compatible log-
+       The <b>postlog</b> command implements a  Postfix-compatible  log-
        ging interface for use in, for example, shell scripts.
 
-       By default, <b>postlog</b> logs the <i>text</i>  given  on  the  command
+       By  default,  <b>postlog</b>  logs  the <i>text</i> given on the command
        line as one record. If no <i>text</i> is specified on the command
-       line, <b>postlog</b> reads from  standard  input  and  logs  each
+       line,  <b>postlog</b>  reads  from  standard  input and logs each
        input line as one record.
 
-       Logging  is  sent  to  <b>syslogd</b>(8); when the standard error
-       stream is connected to a terminal, logging is  sent  there
+       Logging is sent to <b>syslogd</b>(8);  when  the  standard  error
+       stream  is  connected to a terminal, logging is sent there
        as well.
 
        The following options are implemented:
 
+       <b>-c</b> <i>config_dir</i>
+              Read the <b>main.cf</b> configuration file  in  the  named
+              directory  instead  of  the  default  configuration
+              directory.
+
        <b>-i</b>     Include the process ID in the logging tag.
 
        <b>-p</b> <i>priority</i>
-              Specifies  the  logging  severity:  <b>info</b> (default),
+              Specifies the  logging  severity:  <b>info</b>  (default),
               <b>warn</b>, <b>error</b>, <b>fatal</b>, or <b>panic</b>.
 
        <b>-t</b> <i>tag</i> Specifies the logging tag, that is, the identifying
-              name  that appears at the beginning of each logging
+              name that appears at the beginning of each  logging
               record.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple  <b>-v</b>  options  make  the software increasingly
+              tiple <b>-v</b> options  make  the  software  increasingly
               verbose.
 
 <b>SEE</b> <b>ALSO</b>
        syslogd(8) syslog daemon.
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -52,12 +58,6 @@ POSTLOG(1)                                             POSTLOG(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
 
 
 

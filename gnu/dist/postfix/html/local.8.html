@@ -16,8 +16,8 @@ LOCAL(8)                                                 LOCAL(8)
        Postfix queue manager to deliver mail to local recipients.
        Each  delivery  request  specifies  a queue file, a sender
        address, a domain or host to deliver to, and one  or  more
-       recipients.   This program expects to be run from the <a href="master.8.html"><b>mas-</b>
-       <b>ter</b>(8)</a> process manager.
+       recipients.   This program expects to be run from the <a href="master.8.html"><b>mas-</b></a>
+       <a href="master.8.html"><b>ter</b>(8)</a> process manager.
 
        The <b>local</b> daemon updates queue files and marks  recipients
        as finished, or it informs the queue manager that delivery
@@ -216,7 +216,7 @@ LOCAL(8)                                                 LOCAL(8)
        lope  header  to each message, prepends an optional <b>Deliv-</b>
        <b>ered-To:</b>  header  with  the  recipient  envelope  address,
        prepends  a  <b>Return-Path:</b>  header with the sender envelope
-       address, and appends an empty line.
+       address, and appends no empty line.
 
 <b>EXTERNAL</b> <b>FILE</b> <b>DELIVERY</b>
        The <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b> configuration parameter  restricts
@@ -252,7 +252,7 @@ LOCAL(8)                                                 LOCAL(8)
        <b>ward</b>+<i>foo</i> or in ~<i>name</i>/.<b>forward</b>, to the mailbox owned by the
        user <i>name</i>, or it is sent back as undeliverable.
 
-       In all cases the <b>local</b> daemon prepends an opional  `<b>Deliv-</b>
+       In all cases the <b>local</b> daemon prepends an optional `<b>Deliv-</b>
        <b>ered-To:</b> <i>name</i>+<i>foo</i>' header line.
 
 <b>DELIVERY</b> <b>RIGHTS</b>
@@ -277,7 +277,7 @@ LOCAL(8)                                                 LOCAL(8)
        the <b>default</b><i>_</i><b>privs</b> configuration parameter.
 
 <b>STANDARDS</b>
-       RFC 822 (ARPA Internet Text Messages)
+       <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
 
 <b>DIAGNOSTICS</b>
        Problems  and transactions are logged to <b>syslogd</b>(8).  Cor-
@@ -309,20 +309,20 @@ LOCAL(8)                                                 LOCAL(8)
        <b>alias</b><i>_</i><b>maps</b>
               List of alias databases.
 
+       <b>biff</b>   Enable or disable notification of new mail via  the
+              <b>comsat</b> network service.
+
        <b>expand</b><i>_</i><b>owner</b><i>_</i><b>alias</b>
               When delivering to an alias that has an owner- com-
-              panion  alias,  set  the envelope sender address to
-              the right-hand side of  the  owner  alias,  instead
+              panion alias, set the envelope  sender  address  to
+              the  right-hand  side  of  the owner alias, instead
               using of the left-hand side address.
 
-       <b>forward</b><i>_</i><b>path</b>
-              Search list for .forward files.  The names are sub-
-              ject to <i>$name</i> expansion.
+       <b>export</b><i>_</i><b>environment</b>
+              List of names of environment parameters that can be
+              exported to non-Postfix processes.
 
-       <b>local</b><i>_</i><b>command</b><i>_</i><b>shell</b>
-              Shell to use for external  command  execution  (for
-              example,  /some/where/smrsh  -c).   When a shell is
-              specified, it is  invoked  even  when  the  command
+
 
 
 
@@ -335,7 +335,15 @@ LOCAL(8)                                                 LOCAL(8)
 LOCAL(8)                                                 LOCAL(8)
 
 
-              contains no shell built-in commands or meta charac-
+       <b>forward</b><i>_</i><b>path</b>
+              Search list for .forward files.  The names are sub-
+              ject to <i>$name</i> expansion.
+
+       <b>local</b><i>_</i><b>command</b><i>_</i><b>shell</b>
+              Shell to use for external  command  execution  (for
+              example,  /some/where/smrsh  -c).   When a shell is
+              specified, it is invoked even when the command con-
+              tains  no  shell  built-in commands or meta charac-
               ters.
 
        <b>owner</b><i>_</i><b>request</b><i>_</i><b>special</b>
@@ -351,6 +359,11 @@ LOCAL(8)                                                 LOCAL(8)
 
        <b>recipient</b><i>_</i><b>delimiter</b>
               Separator between username and address extension.
+
+       <b>require</b><i>_</i><b>home</b><i>_</i><b>directory</b>
+              Require that a recipient's home directory is acces-
+              sible by the recipient before attempting  delivery.
+              Defer delivery otherwise.
 
 <b>Mailbox</b> <b>delivery</b>
        <b>fallback</b><i>_</i><b>transport</b>
@@ -376,6 +389,18 @@ LOCAL(8)                                                 LOCAL(8)
               External command to use for mailbox  delivery.  The
               command  executes  with  the  recipient  privileges
               (exception: root). The string is subject  to  $name
+
+
+
+                                                                6
+
+
+
+
+
+LOCAL(8)                                                 LOCAL(8)
+
+
               expansions.
 
        <b>mailbox</b><i>_</i><b>transport</b>
@@ -390,17 +415,6 @@ LOCAL(8)                                                 LOCAL(8)
               Limit  the  number of attempts to acquire an exclu-
               sive lock on a mailbox or external file.
 
-
-
-                                                                6
-
-
-
-
-
-LOCAL(8)                                                 LOCAL(8)
-
-
        <b>deliver</b><i>_</i><b>lock</b><i>_</i><b>delay</b>
               Time in  seconds  between  successive  attempts  to
               acquire an exclusive lock.
@@ -408,53 +422,39 @@ LOCAL(8)                                                 LOCAL(8)
        <b>stale</b><i>_</i><b>lock</b><i>_</i><b>time</b>
               Limit the time after which a stale lock is removed.
 
+       <b>mailbox</b><i>_</i><b>delivery</b><i>_</i><b>lock</b>
+              What file locking method(s) to use when  delivering
+              to  a  UNIX-style  mailbox.  The default setting is
+              system dependent.  For a  list  of  available  file
+              locking methods, use the <b>postconf</b> <b>-l</b> command.
+
 <b>Resource</b> <b>controls</b>
        <b>command</b><i>_</i><b>time</b><i>_</i><b>limit</b>
-              Limit the amount of time for delivery  to  external
+              Limit  the  amount of time for delivery to external
               command.
 
        <b>duplicate</b><i>_</i><b>filter</b><i>_</i><b>limit</b>
-              Limit  the size of the duplicate filter for results
+              Limit the size of the duplicate filter for  results
               from alias etc. expansion.
 
        <b>line</b><i>_</i><b>length</b><i>_</i><b>limit</b>
-              Limit the amount of memory used  for  processing  a
+              Limit  the  amount  of memory used for processing a
               partial input line.
 
        <b>local</b><i>_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
               Limit the number of parallel deliveries to the same
-              user.   The  default  limit  is  taken   from   the
+              user.    The   default  limit  is  taken  from  the
               <b>default</b><i>_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b> parameter.
 
        <b>local</b><i>_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit  the  number of recipients per message deliv-
-              ery.   The  default  limit  is   taken   from   the
+              Limit the number of recipients per  message  deliv-
+              ery.    The   default   limit  is  taken  from  the
               <b>default</b><i>_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b> parameter.
 
-<b>Security</b> <b>controls</b>
-       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>commands</b>
-              Restrict  the  usage  of  mail delivery to external
-              command.
-
-       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b>
-              Restrict the usage of  mail  delivery  to  external
-              file.
-
-       <b>command</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>
-              What  characters  are  allowed  to  appear in $name
-              expansions of mailbox_command.  Illegal  characters
-              are replaced by underscores.
-
-       <b>default</b><i>_</i><b>privs</b>
-              Default  rights  for  delivery  to external file or
-              command.
-
-       <b>forward</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>
-              What characters are  allowed  to  appear  in  $name
-              expansions  of forward_path. Illegal characters are
-              replaced by underscores.
-
-
+       <b>mailbox</b><i>_</i><b>size</b><i>_</i><b>limit</b>
+              Limit the size of a mailbox  etc.  file  (any  file
+              that  is written to upon delivery).  Set to zero to
+              disable the limit.
 
 
 
@@ -467,11 +467,36 @@ LOCAL(8)                                                 LOCAL(8)
 LOCAL(8)                                                 LOCAL(8)
 
 
+<b>Security</b> <b>controls</b>
+       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>commands</b>
+              Restrict the usage of  mail  delivery  to  external
+              command.   Specify zero or more of: <b>alias</b>, <b>forward</b>,
+              <b>include</b>.
+
+       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b>
+              Restrict the usage of  mail  delivery  to  external
+              file.   Specify  zero  or  more of: <b>alias</b>, <b>forward</b>,
+              <b>include</b>.
+
+       <b>command</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>
+              What characters are  allowed  to  appear  in  $name
+              expansions  of  mailbox_command. Illegal characters
+              are replaced by underscores.
+
+       <b>default</b><i>_</i><b>privs</b>
+              Default rights for delivery  to  external  file  or
+              command.
+
+       <b>forward</b><i>_</i><b>expansion</b><i>_</i><b>filter</b>
+              What  characters  are  allowed  to  appear in $name
+              expansions of forward_path. Illegal characters  are
+              replaced by underscores.
+
 <b>HISTORY</b>
-       The <b>Delivered-To:</b> header appears in the  <b>qmail</b>  system  by
+       The  <b>Delivered-To:</b>  header  appears in the <b>qmail</b> system by
        Daniel Bernstein.
 
-       The  <i>maildir</i>  structure  appears  in  the  <b>qmail</b> system by
+       The <i>maildir</i> structure  appears  in  the  <b>qmail</b>  system  by
        Daniel Bernstein.
 
 <b>SEE</b> <b>ALSO</b>
@@ -482,7 +507,7 @@ LOCAL(8)                                                 LOCAL(8)
        <a href="qmgr.8.html">qmgr(8)</a> queue manager
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -490,31 +515,6 @@ LOCAL(8)                                                 LOCAL(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

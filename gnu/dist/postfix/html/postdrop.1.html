@@ -19,8 +19,8 @@ POSTDROP(1)                                           POSTDROP(1)
        and  with  group  write  permission  to the <b>maildrop</b> queue
        directory.
 
-       The <b>postdrop</b> command is automatically invoked by the <a href="sendmail.1.html"><b>send-</b>
-       <b>mail</b>(1)</a>  mail posting agent when the <b>maildrop</b> queue direc-
+       The <b>postdrop</b> command is automatically invoked by the <a href="sendmail.1.html"><b>send-</b></a>
+       <a href="sendmail.1.html"><b>mail</b>(1)</a>  mail posting agent when the <b>maildrop</b> queue direc-
        tory is not world-writable.
 
        Options:
@@ -53,12 +53,12 @@ POSTDROP(1)                                           POSTDROP(1)
        default  values.  Use  the  <b>postfix</b> <b>reload</b> command after a
        configuration change.
 
+       <b>import</b><i>_</i><b>environment</b>
+              List of names of environment parameters that can be
+              imported from non-Postfix processes.
+
        <b>queue</b><i>_</i><b>directory</b>
-              Top-level directory of the Postfix queue.  This  is
-              also the root directory of Postfix daemons that run
-              chrooted.
-
-
+              Top-level  directory  of the Postfix queue. This is
 
 
 
@@ -71,12 +71,15 @@ POSTDROP(1)                                           POSTDROP(1)
 POSTDROP(1)                                           POSTDROP(1)
 
 
+              also the root directory of Postfix daemons that run
+              chrooted.
+
 <b>SEE</b> <b>ALSO</b>
        <a href="sendmail.1.html">sendmail(1)</a> compatibility interface
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -84,9 +87,6 @@ POSTDROP(1)                                           POSTDROP(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
 
 
 

@@ -12,21 +12,36 @@ RELOCATED(5)                                         RELOCATED(5)
        <b>postmap</b> <b>/etc/postfix/relocated</b>
 
 <b>DESCRIPTION</b>
-       The  optional <b>relocated</b> file provides the information that
+       The optional <b>relocated</b> table provides the information that
        is used in "user has moved to  <i>new_location</i>"  bounce  mes-
        sages.
 
-       The  file  serves  as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command. The
-       result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
-       fast searching by the mail system. After an update issue a
-       <b>postfix</b> <b>reload</b> command to make the change visible.
+       Normally,  the <b>relocated</b> table is specified as a text file
+       that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
+       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
+       fast searching by the mail  system.  Execute  the  command
+       <b>postmap</b>  <b>/etc/postfix/relocated</b>  in  order  to rebuild the
+       indexed file after changing the relocated table.
+
+       When the table is provided via other means  such  as  NIS,
+       LDAP  or  SQL,  the  same lookups are done as for ordinary
+       indexed files.
+
+       Alternatively, the table can be  provided  as  a  regular-
+       expression map where patterns are given as regular expres-
+       sions. In that case, the lookups are done  in  a  slightly
+       different way as described below.
 
        Table lookups are case insensitive.
 
+<b>TABLE</b> <b>FORMAT</b>
        The format of the table is as follows:
 
-       <b>o</b>      Blank lines are ignored,  as  are  lines  beginning
+       <b>o</b>      Blank  lines  are  ignored,  as are lines beginning
               with `#'.
+
+       <b>o</b>      Lines that begin with whitespace continue the  pre-
+              vious line.
 
        <b>o</b>      An entry has one of the following form:
                    <i>key</i>  <i>new_location</i>
@@ -34,7 +49,9 @@ RELOCATED(5)                                         RELOCATED(5)
               such as an  email  address,  or  perhaps  a  street
               address or telephone number.
 
-       The <i>key</i> field is one of the following:
+       With lookups from indexed files such as DB or DBM, or from
+       networked tables such as NIS, LDAP or SQL, the  <i>key</i>  field
+       is one of the following:
 
        <i>user</i>@<i>domain</i>
               Matches  <i>user</i>@<i>domain</i>. This form has precedence over
@@ -42,23 +59,6 @@ RELOCATED(5)                                         RELOCATED(5)
 
        <i>user</i>   Matches <i>user</i>@<i>site</i> when <i>site</i> is $<b>myorigin</b>, when <i>site</i>
               is listed in $<b>mydestination</b>, or when <i>site</i> is listed
-              in $<b>inet</b><i>_</i><b>interfaces</b>.
-
-       @<i>domain</i>
-              Matches every address in <i>domain</i>. This form has  the
-              lowest precedence.
-
-<b>ADDRESS</b> <b>EXTENSION</b>
-       When  the search fails, and the address localpart contains
-       the optional recipient delimiter (e.g.,  <i>user+foo</i>@<i>domain</i>),
-       the  search  is  repeated for the unextended address (e.g.
-       <i>user</i>@<i>domain</i>).
-
-<b>BUGS</b>
-       The table format does not understand quoting  conventions.
-
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
 
 
 
@@ -71,6 +71,43 @@ RELOCATED(5)                                         RELOCATED(5)
 RELOCATED(5)                                         RELOCATED(5)
 
 
+              in $<b>inet</b><i>_</i><b>interfaces</b>.
+
+       @<i>domain</i>
+              Matches every address in <i>domain</i>. This form has  the
+              lowest precedence.
+
+<b>ADDRESS</b> <b>EXTENSION</b>
+       When  the search fails, and the address localpart contains
+       the optional recipient delimiter (e.g.,  <i>user+foo</i>@<i>domain</i>),
+       the  search  is  repeated for the unextended address (e.g.
+       <i>user</i>@<i>domain</i>).
+
+<b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
+       This section describes how the table lookups  change  when
+       the table is given in the form of regular expressions. For
+       a description of regular expression lookup  table  syntax,
+       see <a href="regexp_table.5.html"><b>regexp</b><i>_</i><b>table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre</b><i>_</i><b>table</b>(5)</a>.
+
+       Each  pattern  is  a regular expression that is applied to
+       the entire address being looked up. Thus, <i>user@domain</i> mail
+       addresses  are  not  broken up into their <i>user</i> and <i>@domain</i>
+       constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and
+       <i>foo</i>.
+
+       Patterns  are  applied  in  the  order as specified in the
+       table, until a pattern is found that  matches  the  search
+       string.
+
+       Results  are the same as with normal indexed file lookups,
+       with the additional feature that parenthesized  substrings
+       from  the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+
+<b>BUGS</b>
+       The table format does not understand quoting  conventions.
+
+<b>CONFIGURATION</b> <b>PARAMETERS</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
        to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
        details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
        command after a configuration change.
@@ -88,11 +125,25 @@ RELOCATED(5)                                         RELOCATED(5)
               List of domains that  this  mail  system  considers
               local.
 
+
+
+
+                                                                2
+
+
+
+
+
+RELOCATED(5)                                         RELOCATED(5)
+
+
        <b>myorigin</b>
               The domain that is appended to locally-posted mail.
 
 <b>SEE</b> <b>ALSO</b>
        <a href="postmap.1.html">postmap(1)</a> create lookup table
+       <a href="pcre_table.5.html">pcre_table(5)</a> format of PCRE tables
+       <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this
@@ -128,7 +179,22 @@ RELOCATED(5)                                         RELOCATED(5)
 
 
 
-                                                                2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                3
 
 
 </pre> </body> </html>

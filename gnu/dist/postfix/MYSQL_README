@@ -10,8 +10,8 @@ In order to build postfix with mysql map support, you will need to add
 the mysqlclient library (and libm) to AUXLIBS, for example:
 
 make -f Makefile.init makefiles \
-	'CCARGS=-DHAS_MYSQL -I/some/where/include/mysql' \
-	'AUXLIBS=/some/where/lib/mysql/libmysqlclient.a -lm'
+	'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+	'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lm'
 
 then, just run 'make'.
 
@@ -37,7 +37,7 @@ map config file follows:
 
 # the user name and password to log into the mysql server
 user = someone
-password = some_passwordd 
+password = some_password 
 
 # the database name on the servers
 dbname = customer_database
@@ -60,7 +60,8 @@ additional_conditions = and status = 'paid'
 #
 # the hosts that postfix will try to connect to
 # and query from (in the order listed)
-hosts = host1.some.domain host2.some.domain
+# specify unix: for unix-domain sockets, inet: for TCP connections (default)
+hosts = host1.some.domain host2.some.domain unix:/file/name
 
 # end mysql config file
 
@@ -79,7 +80,7 @@ databases on two or more hosts.  Whenever queries fail with an error
 at one host, the rest of the hosts will be tried in order.  Each host
 that is in an error state will undergo a reconnection attempt every so 
 often, and if no mysql server hosts are reachable, then mail will be
-deferred until atleast one of those hosts is reachable.
+deferred until at least one of those hosts is reachable.
 
 Performance of postfix with mysql has not been thoroughly tested,
 however, we have found it to be stable.  Busy mail servers using mysql
