@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_powerpc,v 1.4 2002/05/19 17:55:08 jdolecek Exp $
+#	$NetBSD: files.linux_powerpc,v 1.4.10.1 2004/07/26 07:12:45 tron Exp $
 #
 # Config file description for powerpc-dependent Linux compat code.
 
@@ -7,7 +7,6 @@ file	compat/linux/arch/powerpc/linux_ptrace.c		compat_linux
 file	compat/linux/arch/powerpc/linux_syscalls.c		compat_linux
 file	compat/linux/arch/powerpc/linux_sysent.c		compat_linux
 file	compat/linux/arch/powerpc/linux_exec_powerpc.c		compat_linux
-file	compat/linux/arch/powerpc/linux_sp_wrap_powerpc.S	compat_linux
 
 file	compat/linux/common/linux_pipe.c		compat_linux
 file	compat/linux/common/linux_ipccall.c		compat_linux
