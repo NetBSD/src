@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.65 2000/02/14 20:12:03 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.66 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -144,9 +144,9 @@ bremfree(bp)
 void
 bufinit()
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct bqueues *dp;
-	register int i;
+	int i;
 	int base, residual;
 
 	/*
@@ -190,7 +190,7 @@ bio_doread(vp, blkno, size, cred, async)
 	struct ucred *cred;
 	int async;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	bp = getblk(vp, blkno, size, 0, 0);
@@ -230,7 +230,7 @@ bread(vp, blkno, size, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
@@ -263,7 +263,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
@@ -630,7 +630,7 @@ incore(vp, blkno)
  */
 struct buf *
 getblk(vp, blkno, size, slpflag, slptimeo)
-	register struct vnode *vp;
+	struct vnode *vp;
 	daddr_t blkno;
 	int size, slpflag, slptimeo;
 {
@@ -810,7 +810,7 @@ struct buf *
 getnewbuf(slpflag, slptimeo)
 	int slpflag, slptimeo;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int s;
 
 start:
@@ -964,8 +964,8 @@ biodone(bp)
 int
 count_lock_queue()
 {
-	register struct buf *bp;
-	register int n = 0;
+	struct buf *bp;
+	int n = 0;
 
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
 	    bp = bp->b_freelist.tqe_next)
@@ -983,8 +983,8 @@ void
 vfs_bufstats()
 {
 	int s, i, j, count;
-	register struct buf *bp;
-	register struct bqueues *dp;
+	struct buf *bp;
+	struct bqueues *dp;
 	int counts[MAXBSIZE/NBPG+1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 

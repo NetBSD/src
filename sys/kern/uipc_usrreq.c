@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.45 1999/06/17 23:17:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.46 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ unp_output(m, control, unp, p)
 
 void
 unp_setsockaddr(unp, nam)
-	register struct unpcb *unp;
+	struct unpcb *unp;
 	struct mbuf *nam;
 {
 	struct sockaddr_un *sun;
@@ -148,7 +148,7 @@ unp_setsockaddr(unp, nam)
 
 void
 unp_setpeeraddr(unp, nam)
-	register struct unpcb *unp;
+	struct unpcb *unp;
 	struct mbuf *nam;
 {
 	struct sockaddr_un *sun;
@@ -172,8 +172,8 @@ uipc_usrreq(so, req, m, nam, control, p)
 	struct proc *p;
 {
 	struct unpcb *unp = sotounpcb(so);
-	register struct socket *so2;
-	register int error = 0;
+	struct socket *so2;
+	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
@@ -484,7 +484,7 @@ int
 unp_attach(so)
 	struct socket *so;
 {
-	register struct unpcb *unp;
+	struct unpcb *unp;
 	struct timeval tv;
 	int error;
 	
@@ -518,7 +518,7 @@ unp_attach(so)
 
 void
 unp_detach(unp)
-	register struct unpcb *unp;
+	struct unpcb *unp;
 {
 	
 	if (unp->unp_vnode) {
@@ -556,7 +556,7 @@ unp_bind(unp, nam, p)
 	struct proc *p;
 {
 	struct sockaddr_un *sun;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vattr vattr;
 	size_t addrlen;
 	int error;
@@ -618,9 +618,9 @@ unp_connect(so, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
-	register struct sockaddr_un *sun;
-	register struct vnode *vp;
-	register struct socket *so2, *so3;
+	struct sockaddr_un *sun;
+	struct vnode *vp;
+	struct socket *so2, *so3;
 	struct unpcb *unp2, *unp3;
 	size_t addrlen;
 	int error;
@@ -685,11 +685,11 @@ unp_connect(so, nam, p)
 
 int
 unp_connect2(so, so2)
-	register struct socket *so;
-	register struct socket *so2;
+	struct socket *so;
+	struct socket *so2;
 {
-	register struct unpcb *unp = sotounpcb(so);
-	register struct unpcb *unp2;
+	struct unpcb *unp = sotounpcb(so);
+	struct unpcb *unp2;
 
 	if (so2->so_type != so->so_type)
 		return (EPROTOTYPE);
@@ -719,7 +719,7 @@ void
 unp_disconnect(unp)
 	struct unpcb *unp;
 {
-	register struct unpcb *unp2 = unp->unp_conn;
+	struct unpcb *unp2 = unp->unp_conn;
 
 	if (unp2 == 0)
 		return;
@@ -802,10 +802,10 @@ unp_externalize(rights)
 	struct mbuf *rights;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	register int i, *fdp = (int *)(cm + 1);
-	register struct file **rp;
-	register struct file *fp;
+	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
+	int i, *fdp = (int *)(cm + 1);
+	struct file **rp;
+	struct file *fp;
 	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof(struct file *);
 	int f, error = 0;
 
@@ -878,10 +878,10 @@ unp_internalize(control, p)
 	struct proc *p;
 {
 	struct filedesc *fdescp = p->p_fd;
-	register struct cmsghdr *cm = mtod(control, struct cmsghdr *);
-	register struct file **rp;
-	register struct file *fp;
-	register int i, fd, *fdp;
+	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
+	struct file **rp;
+	struct file *fp;
+	int i, fd, *fdp;
 	int nfds;
 	u_int neededspace;
 
@@ -1041,8 +1041,8 @@ extern	struct domain unixdomain;
 void
 unp_gc()
 {
-	register struct file *fp, *nextfp;
-	register struct socket *so, *so1;
+	struct file *fp, *nextfp;
+	struct socket *so, *so1;
 	struct file **extra_ref, **fpp;
 	int nunref, i;
 
@@ -1201,14 +1201,14 @@ unp_dispose(m)
 
 void
 unp_scan(m0, op, discard)
-	register struct mbuf *m0;
+	struct mbuf *m0;
 	void (*op) __P((struct file *));
 	int discard;
 {
-	register struct mbuf *m;
-	register struct file **rp;
-	register struct cmsghdr *cm;
-	register int i;
+	struct mbuf *m;
+	struct file **rp;
+	struct cmsghdr *cm;
+	int i;
 	int qfds;
 
 	while (m0) {

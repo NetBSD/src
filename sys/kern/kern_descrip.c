@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.65 2000/03/23 05:16:14 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.66 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,8 +79,8 @@ int finishdup __P((struct proc *, int, int, register_t *));
 
 static __inline void
 fd_used(fdp, fd)
-	register struct filedesc *fdp;
-	register int fd;
+	struct filedesc *fdp;
+	int fd;
 {
 
 	if (fd > fdp->fd_lastfile)
@@ -89,8 +89,8 @@ fd_used(fdp, fd)
 
 static __inline void
 fd_unused(fdp, fd)
-	register struct filedesc *fdp;
-	register int fd;
+	struct filedesc *fdp;
+	int fd;
 {
 
 	if (fd < fdp->fd_freefile)
@@ -125,8 +125,8 @@ sys_dup(p, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
-	register int old = SCARG(uap, fd);
+	struct filedesc *fdp = p->p_fd;
+	int old = SCARG(uap, fd);
 	int new;
 	int error;
 
@@ -161,8 +161,8 @@ sys_dup2(p, v, retval)
 		syscallarg(int) to;
 	} */ *uap = v;
 	struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
-	register int old = SCARG(uap, from), new = SCARG(uap, to);
+	struct filedesc *fdp = p->p_fd;
+	int old = SCARG(uap, from), new = SCARG(uap, to);
 	int i, error;
 
 	if ((u_int)old >= fdp->fd_nfiles ||
@@ -205,14 +205,14 @@ sys_fcntl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fcntl_args /* {
+	struct sys_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	int i, tmp, error = 0, flg = F_POSIX, cmd;
 	struct flock fl;
@@ -433,9 +433,9 @@ fdrelease(p, fd)
 	struct proc *p;
 	int fd;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp, *fp;
-	register char *pf;
+	struct filedesc *fdp = p->p_fd;
+	struct file **fpp, *fp;
+	char *pf;
 
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
@@ -469,7 +469,7 @@ sys_close(p, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles)
 		return (EBADF);
@@ -486,13 +486,13 @@ sys___fstat13(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys___fstat13_args /* {
+	struct sys___fstat13_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct stat ub;
 	int error;
 
@@ -533,7 +533,7 @@ sys_fpathconf(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fpathconf_args /* {
+	struct sys_fpathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
 	} */ *uap = v;
@@ -583,8 +583,8 @@ fdalloc(p, want, result)
 	int want;
 	int *result;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register int i;
+	struct filedesc *fdp = p->p_fd;
+	int i;
 	int lim, last, nfiles;
 	struct file **newofile;
 	char *newofileflags;
@@ -646,11 +646,11 @@ fdalloc(p, want, result)
 int
 fdavail(p, n)
 	struct proc *p;
-	register int n;
+	int n;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp;
-	register int i, lim;
+	struct filedesc *fdp = p->p_fd;
+	struct file **fpp;
+	int i, lim;
 
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
@@ -683,11 +683,11 @@ finit()
  */
 int
 falloc(p, resultfp, resultfd)
-	register struct proc *p;
+	struct proc *p;
 	struct file **resultfp;
 	int *resultfd;
 {
-	register struct file *fp, *fq;
+	struct file *fp, *fq;
 	int error, i;
 
 	if ((error = fdalloc(p, 0, &i)) != 0)
@@ -728,7 +728,7 @@ falloc(p, resultfp, resultfd)
  */
 void
 ffree(fp)
-	register struct file *fp;
+	struct file *fp;
 {
 
 #ifdef DIAGNOSTIC
@@ -902,9 +902,9 @@ struct filedesc *
 fdcopy(p)
 	struct proc *p;
 {
-	register struct filedesc *newfdp, *fdp = p->p_fd;
-	register struct file **fpp;
-	register int i;
+	struct filedesc *newfdp, *fdp = p->p_fd;
+	struct file **fpp;
+	int i;
 
 	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	memcpy(newfdp, fdp, sizeof(struct filedesc));
@@ -950,9 +950,9 @@ void
 fdfree(p)
 	struct proc *p;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp, *fp;
-	register int i;
+	struct filedesc *fdp = p->p_fd;
+	struct file **fpp, *fp;
+	int i;
 
 	if (--fdp->fd_refcnt > 0)
 		return;
@@ -982,8 +982,8 @@ fdfree(p)
  */
 int
 closef(fp, p)
-	register struct file *fp;
-	register struct proc *p;
+	struct file *fp;
+	struct proc *p;
 {
 	struct vnode *vp;
 	struct flock lf;
@@ -1111,14 +1111,14 @@ sys_flock(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_flock_args /* {
+	struct sys_flock_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) how;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	int how = SCARG(uap, how);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	struct flock lf;
 	int error = 0;
@@ -1282,10 +1282,10 @@ fcntl_forfs(fd, p, cmd, arg)
 	struct proc *p;
 	void *arg;
 {
-	register struct file *fp;
-	register struct filedesc *fdp;
-	register int error;
-	register u_int size;
+	struct file *fp;
+	struct filedesc *fdp;
+	int error;
+	u_int size;
 	caddr_t data, memp;
 #define STK_PARAMS	128
 	char stkbuf[STK_PARAMS];
@@ -1350,8 +1350,8 @@ void
 fdcloseexec(p)
 	struct proc *p;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register int fd;
+	struct filedesc *fdp = p->p_fd;
+	int fd;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)

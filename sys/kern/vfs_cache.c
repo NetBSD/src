@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.22 2000/03/23 14:32:41 soren Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.23 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,8 +105,8 @@ cache_lookup(dvp, vpp, cnp)
 	struct vnode **vpp;
 	struct componentname *cnp;
 {
-	register struct namecache *ncp;
-	register struct nchashhead *ncpp;
+	struct namecache *ncp;
+	struct nchashhead *ncpp;
 	struct vnode *vp;
 	int vpid, error;
 
@@ -323,9 +323,9 @@ cache_enter(dvp, vp, cnp)
 	struct vnode *vp;
 	struct componentname *cnp;
 {
-	register struct namecache *ncp;
-	register struct nchashhead *ncpp;
-	register struct ncvhashhead *nvcpp;
+	struct namecache *ncp;
+	struct nchashhead *ncpp;
+	struct ncvhashhead *nvcpp;
 
 #ifdef DIAGNOSTIC
 	if (cnp->cn_namelen > NCHNAMLEN)
@@ -441,7 +441,7 @@ void
 cache_purgevfs(mp)
 	struct mount *mp;
 {
-	register struct namecache *ncp, *nxtcp;
+	struct namecache *ncp, *nxtcp;
 
 	for (ncp = nclruhead.tqh_first; ncp != 0; ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
