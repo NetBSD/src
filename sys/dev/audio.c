@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.100 1998/08/18 06:16:45 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.101 1998/08/18 18:17:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -418,9 +418,6 @@ audioprint(aux, pnp)
 			type = "mpu";
 			break;
 		default:
-#ifdef __GNUC__
-			type = NULL;	/* XXX -Wuninitialized */
-#endif
 			panic("audioprint: unknown type %d", arg->type);
 		}
 		printf("%s at %s", type, pnp);
