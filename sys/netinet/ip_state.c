@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.41 2002/09/19 08:09:19 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.42 2002/09/19 08:12:54 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
@@ -96,7 +96,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.41 2002/09/19 08:09:19 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.42 2002/09/19 08:12:54 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.74 2002/07/27 15:58:10 darrenr Exp";
@@ -1026,7 +1026,7 @@ tcphdr_t *tcp;
 
 	idx = (out << 1) + rev;
 
-	if ((is->is_ifp[idx] == NULL &&
+	if ((is->is_ifp[idx] == NULL && 
 	     (*is->is_ifname[idx] == '\0' || *is->is_ifname[idx] == '*')) ||
 	    is->is_ifp[idx] == ifp)
 		ret = 1;
@@ -1294,7 +1294,7 @@ fr_info_t *fin;
 			}
 		RWLOCK_EXIT(&ipf_state);
 		return fr;
-
+	
 	case IPPROTO_TCP :
 	case IPPROTO_UDP :
 		if (fin->fin_plen < ICMPERR_MAXPKTLEN)

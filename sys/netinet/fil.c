@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.57 2002/09/19 08:09:10 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.58 2002/09/19 08:12:43 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,7 +100,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.57 2002/09/19 08:09:10 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.58 2002/09/19 08:12:43 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp";
@@ -151,9 +151,6 @@ fr_info_t	frcache[2];
 static	int	frflushlist __P((int, minor_t, int *, frentry_t **));
 #ifdef	_KERNEL
 static	void	frsynclist __P((frentry_t *));
-#endif
-#ifndef	_KERNEL
-int		mbuflen(mb_t *);
 #endif
 
 
@@ -616,7 +613,7 @@ void *m;
 #endif
 
 		FR_VERBOSE(("%c", fr->fr_skip ? 's' :
-				  (pass & FR_PASS) ? 'p' :
+				  (pass & FR_PASS) ? 'p' : 
 				  (pass & FR_AUTH) ? 'a' :
 				  (pass & FR_ACCOUNT) ? 'A' :
 				  (pass & FR_NOMATCH) ? 'n' : 'b'));
@@ -928,7 +925,7 @@ int out;
 	fin->fin_qif = qif;
 # endif
 #endif /* _KERNEL */
-
+	
 	changed = 0;
 	fin->fin_ifp = ifp;
 	fin->fin_v = v;
@@ -1676,10 +1673,10 @@ minor_t which;
 int set;
 {
 	frgroup_t *fg, **fgp;
-
+ 
 	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
 		return;
-
+ 
 	*fgp = fg->fg_next;
 	KFREE(fg);
 }
@@ -1711,7 +1708,7 @@ frentry_t **listp;
 
 		ATOMIC_DEC32(fp->fr_ref);
 		if (fp->fr_grhead) {
-			fr_delgroup(fp->fr_grhead, fp->fr_flags,
+			fr_delgroup(fp->fr_grhead, fp->fr_flags, 
 				    unit, set);
 			fp->fr_grhead = 0;
 		}
