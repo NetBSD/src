@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71.2.4 2002/02/28 04:13:10 nathanw Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71.2.5 2002/04/01 07:45:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.4 2002/02/28 04:13:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.5 2002/04/01 07:45:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ ccdattach(num)
 
 	/* Initialize the component buffer pool. */
 	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
-	    0, 0, "ccdpl", 0, NULL, NULL, M_DEVBUF);
+	    0, 0, "ccdpl", NULL);
 
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {

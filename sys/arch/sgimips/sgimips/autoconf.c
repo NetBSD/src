@@ -1,9 +1,9 @@
-/*	$NetBSD: autoconf.c,v 1.4.4.2 2002/01/08 00:27:31 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.4.3 2002/04/01 07:42:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -67,7 +67,7 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-	/* 
+	/*
 	 * Clear latched bus error registers which may have been
 	 * caused by probes for non-existent devices.
 	 */
@@ -208,7 +208,7 @@ device_register(dev, aux)
 	 * Check if netboot device.
 	 */
 	if (netboot && strcmp(cd->cd_name, "sq") == 0) {
-		/* XXX Check unit number? (Which we don't parse yet)  */
+		/* XXX Check unit number? (Which we don't parse yet) */
 		booted_device = dev;
 		found = 1;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.36.2.3 2001/11/14 19:13:25 nathanw Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.36.2.4 2002/04/01 07:44:47 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.36.2.3 2001/11/14 19:13:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.36.2.4 2002/04/01 07:44:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,17 +272,10 @@ fd_revoke(l, fd, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-		vp = (struct vnode *) fp->f_data;
-
-	case DTYPE_SOCKET:
+	if (fp->f_type != DTYPE_VNODE)
 		return EINVAL;
 
-	default:
-		panic("svr4_fcntl(F_REVOKE)");
-		/*NOTREACHED*/
-	}
+	vp = (struct vnode *) fp->f_data;
 
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
@@ -375,7 +368,7 @@ svr4_sys_open(l, v, retval)
 	int			error;
 	struct sys_open_args	cup;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
 
@@ -423,10 +416,11 @@ svr4_sys_creat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_creat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_open_args cup;
 
-	caddr_t sg = stackgap_init(l->l_proc->p_emul);
-	CHECK_ALT_EXIST(l->l_proc, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p, 0);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -476,10 +470,11 @@ svr4_sys_access(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_access_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_access_args cup;
 
-	caddr_t sg = stackgap_init(l->l_proc->p_emul);
-	CHECK_ALT_EXIST(l->l_proc, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p, 0);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = SCARG(uap, flags);
@@ -584,6 +579,7 @@ svr4_sys_fcntl(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_fcntl_args	*uap = v;
+	struct proc *p = l->l_proc;
 	int				error;
 	struct sys_fcntl_args		fa;
 
@@ -632,9 +628,9 @@ svr4_sys_fcntl(l, v, retval)
 		{
 			struct svr4_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(l->l_proc->p_emul);
+			caddr_t sg = stackgap_init(p, 0);
 
-			flp = stackgap_alloc(&sg, sizeof(struct flock));
+			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
 
 			error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);
@@ -694,9 +690,10 @@ svr4_sys_fcntl(l, v, retval)
 			{
 				struct svr4_flock64	 ifl;
 				struct flock		*flp, fl;
-				caddr_t sg = stackgap_init(l->l_proc->p_emul);
+				caddr_t sg = stackgap_init(p, 0);
 
-				flp = stackgap_alloc(&sg, sizeof(struct flock));
+				flp = stackgap_alloc(p, &sg, 
+				    sizeof(struct flock));
 				SCARG(&fa, arg) = (void *) flp;
 
 				error = copyin(SCARG(uap, arg), &ifl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.2.2.4 2002/01/08 00:29:08 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.2.2.5 2002/04/01 07:44:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.4 2002/01/08 00:29:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.5 2002/04/01 07:44:33 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -85,7 +85,7 @@ netbsd32_execve(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return netbsd32_execve2(p, &ua, retval);
@@ -425,7 +425,9 @@ netbsd32_execve2(p, uap, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_emul->e_setregs)(p, &pack, (u_long) stack);
+	if (pack.ep_es->es_setregs)
+		(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);

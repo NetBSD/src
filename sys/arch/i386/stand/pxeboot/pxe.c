@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.3.4.2 2002/02/28 04:10:30 nathanw Exp $	*/
+/*	$NetBSD: pxe.c,v 1.3.4.3 2002/04/01 07:40:44 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -336,7 +336,7 @@ pxe_init(void)
 	pxenv = NULL;
 	pxe = NULL;
 
-	for (cp = (char *)0xa0000; cp > (char *)0x10000; cp -= 16) {
+	for (cp = (char *)0xa0000; cp > (char *)0x10000; cp -= 2) {
 		if (pxenv == NULL) {
 			pxenv = (pxenv_t *)cp;
 			if (bcmp(pxenv->Signature, S_SIZE("PXENV+")))

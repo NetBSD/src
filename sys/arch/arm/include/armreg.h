@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.8.6.3 2002/02/28 04:07:31 nathanw Exp $	*/
+/*	$NetBSD: armreg.h,v 1.8.6.4 2002/04/01 07:39:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -183,12 +183,14 @@
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
 #define	CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
+#define CPU_ID_ARM1022ES	0x4105a220
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
-#define CPU_ID_I80200		0x69052000 /* XScale core */
+#define CPU_ID_80200		0x69052000
 #define CPU_ID_PXA250		0x69052100
 #define CPU_ID_PXA210		0x69052120
+#define	CPU_ID_80321		0x69052420
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6.6.2 2002/02/28 04:07:34 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.6.6.3 2002/04/01 07:39:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -111,9 +111,9 @@
 #define	USPACE_UNDEF_STACK_TOP		(USPACE_SVC_STACK_BOTTOM - 0x10)
 #define USPACE_UNDEF_STACK_BOTTOM	(sizeof(struct user) + FPCONTEXTSIZE + 10)
 
-#define arm_byte_to_page(x) ((x) >> PGSHIFT)
-#define arm_page_to_byte(x) ((x) << PGSHIFT)
-#define arm_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define arm_btop(x)			((x) >> PGSHIFT)
+#define arm_ptob(x)			((x) << PGSHIFT)
+#define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
     
 #ifdef _KERNEL
 #ifndef _LOCORE

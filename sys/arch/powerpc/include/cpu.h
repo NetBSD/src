@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.5 2002/01/08 00:27:10 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.6 2002/04/01 07:42:03 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,8 +45,19 @@
 #include <machine/psl.h>
 #include <machine/intr.h>
 
+
+struct cache_info {
+	int dcache_size;
+	int dcache_line_size;
+	int icache_size;
+	int icache_line_size;
+};
+
+
 #ifdef _KERNEL
 #include <sys/sched.h>
+#include <dev/sysmon/sysmonvar.h>
+
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
@@ -75,6 +86,9 @@ struct cpu_info {
 	int ci_ddbsave[8];
 	int ci_ipkdbsave[8];
 	int ci_disisave[4];
+	struct cache_info ci_ci;		
+	struct sysmon_envsys ci_sysmon;
+	struct envsys_tre_data ci_tau_info;
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
@@ -154,6 +168,11 @@ extern int cpu_printfataltraps;
 extern struct cpu_info *cpu_attach_common(struct device *, int);
 extern void cpu_identify(char *, size_t);
 extern void delay (unsigned int);
+extern void cpu_probe_cache(void);
+extern void dcache_flush_page(vaddr_t);
+extern void icache_flush_page(vaddr_t);
+extern void dcache_flush(vaddr_t, vsize_t);
+extern void icache_flush(vaddr_t, vsize_t);
 #define	DELAY(n)		delay(n)
 
 #define	need_resched(ci)	(want_resched = 1, astpending = 1)
@@ -168,7 +187,8 @@ extern void delay (unsigned int);
 #endif
 #endif
 
-void __syncicache(void *, int);
+void __syncicache(void *, size_t);
+
 
 /*
  * CTL_MACHDEP definitions.
@@ -177,7 +197,8 @@ void __syncicache(void *, int);
 #define	CPU_TIMEBASE		2
 #define	CPU_CPUTEMP		3
 #define	CPU_PRINTFATALTRAPS	4
-#define	CPU_MAXID		5
+#define	CPU_CACHEINFO		5
+#define	CPU_MAXID		6
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -185,6 +206,7 @@ void __syncicache(void *, int);
 	{ "timebase", CTLTYPE_INT }, \
 	{ "cputempature", CTLTYPE_INT }, \
 	{ "printfataltraps", CTLTYPE_INT }, \
+	{ "cacheinfo", CTLTYPE_STRUCT }, \
 }
 
 #endif	/* _POWERPC_CPU_H_ */

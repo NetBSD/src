@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.12.8.3 2002/02/28 04:11:14 nathanw Exp $
+# 	$NetBSD: NEWS1200,v 1.12.8.4 2002/04/01 07:41:35 nathanw Exp $
 
 #	news1200 config file
 #
@@ -71,7 +71,7 @@ file-system	NULLFS		# loopback file system
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP securyty (encryption part; define w/IPSEC)
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
@@ -138,7 +138,6 @@ pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip		1	# Starmode Radio IP (Metricom)
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	rnd			# /dev/random and in-kernle generator

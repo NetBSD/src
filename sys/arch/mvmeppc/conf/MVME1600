@@ -1,9 +1,9 @@
-# $NetBSD: MVME1600,v 1.1.2.2 2002/02/28 04:10:55 nathanw Exp $
+# $NetBSD: MVME1600,v 1.1.2.3 2002/04/01 07:41:27 nathanw Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
-#ident		"MVME1600-$Revision: 1.1.2.2 $"
+#ident		"MVME1600-$Revision: 1.1.2.3 $"
 
 maxusers	8
 
@@ -13,8 +13,6 @@ options 	SUPPORT_MVME160X
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-options 	CACHELINESIZE=32
-options 	NEWPMAP
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -229,7 +227,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation

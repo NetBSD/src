@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.6.2.2 2002/01/08 00:31:32 nathanw Exp $	*/
+/*	$NetBSD: oak.c,v 1.6.2.3 2002/04/01 07:47:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.6.2.2 2002/01/08 00:31:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.6.2.3 2002/04/01 07:47:00 nathanw Exp $");
 
 #include <sys/param.h>
 
@@ -146,7 +146,9 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oak_softc *sc = (struct oak_softc *)self;
 	struct podulebus_attach_args *pa = aux;
+#ifndef NCR5380_USE_BUS_SPACE
 	u_char *iobase;
+#endif
 	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
 
 	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;

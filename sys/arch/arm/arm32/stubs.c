@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.5.2.4 2002/02/28 04:07:24 nathanw Exp $	*/
+/*	$NetBSD: stubs.c,v 1.5.2.5 2002/04/01 07:39:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -59,7 +59,7 @@ extern BootConfig bootconfig;
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -105,7 +105,7 @@ cpu_dumpconf()
 
 /* This should be moved to machdep.c */
 
-extern pagehook_t page_hook0;
+extern char *memhook;		/* XXX */
 
 /*
  * Doadump comes here after turning off memory management and
@@ -143,7 +143,7 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	blkno = dumplo;
-	dumpspace = page_hook0.va;
+	dumpspace = (vaddr_t) memhook;
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.26.4.2 2002/01/08 00:28:40 nathanw Exp $	*/
+/*	$NetBSD: ite.c,v 1.26.4.3 2002/04/01 07:43:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -487,10 +487,11 @@ iteioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -534,7 +535,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		}
 #endif
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void

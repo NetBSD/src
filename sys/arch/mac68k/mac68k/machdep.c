@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.4 2002/01/08 00:26:04 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.5 2002/04/01 07:40:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -562,7 +562,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -770,7 +770,7 @@ cpu_dump(dump, blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
@@ -2007,6 +2007,8 @@ struct intvid_info_t {
 	{ MACH_MACPB160,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB165,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB180,	0x60000000,	0x0ffe0000,	128 * 1024 },
+	{ MACH_MACPB210,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB230,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACIICI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACIISI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACCCLASSIC,	0x50f40000,	0x0,		512 * 1024 },

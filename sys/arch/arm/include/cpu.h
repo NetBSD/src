@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.7 2002/02/28 04:07:32 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.8 2002/04/01 07:39:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -169,6 +169,7 @@ extern int current_intr_depth;
  * Per-CPU information.  For now we assume one CPU.
  */
 
+#include <sys/device.h>
 #include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -176,6 +177,12 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	struct device *ci_dev;		/* Device corresponding to this CPU */
+	u_int32_t ci_cpuid;		/* aggregate CPU id */
+	u_int32_t ci_cputype;		/* CPU type */
+	u_int32_t ci_cpurev;		/* CPU revision */
+	u_int32_t ci_ctrl;		/* The CPU control register */
+	struct evcnt ci_arm700bugcount;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -214,7 +221,7 @@ int	want_resched;		/* resched() was called */
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
-#ifndef arm26
+#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */

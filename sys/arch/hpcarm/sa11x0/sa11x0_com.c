@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.11.8.4 2002/02/28 04:09:52 nathanw Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.11.8.5 2002/04/01 07:40:21 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -737,11 +737,11 @@ sacomioctl(dev, cmd, data, flag, p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -788,7 +788,7 @@ sacomioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

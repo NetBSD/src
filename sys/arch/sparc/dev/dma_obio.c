@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.3 1999/04/12 23:01:00 pk Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.3.20.1 2002/04/01 07:42:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ dmamatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				4,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -93,10 +93,9 @@ dmaattach_obio(parent, self, aux)
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_dmatag = oba->oba_dmatag;
 
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0, 4 * sizeof(u_int32_t),
-			 0, 0,
-			 &sc->sc_regs) != 0) {
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+			  4 * sizeof(u_int32_t),
+			  0, &sc->sc_regs) != 0) {
 		printf("dmaattach_obio: cannot map registers\n");
 		return;
 	}

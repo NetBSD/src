@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.1.4.2 2002/02/28 04:09:35 nathanw Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.1.4.3 2002/04/01 07:40:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -275,9 +275,12 @@ int	config_connected_call(config_call_tag, void *);
 /* PCI interrupt */
 #define PCIINTR_ID(bus, dev, func)	CONFIG_HOOK_PCIINTR_ID(bus, dev, func)
 #define PCIINTR_00_00_00	PCIINTR_ID(0,  0, 0)
+#define PCIINTR_00_00_01	PCIINTR_ID(0,  0, 1)
 #define PCIINTR_00_01_00	PCIINTR_ID(0,  1, 0)
+#define PCIINTR_00_12_00	PCIINTR_ID(0, 12, 0)
 #define PCIINTR_00_12_02	PCIINTR_ID(0, 12, 2)
 #define PCIINTR_00_16_00	PCIINTR_ID(0, 16, 0)
+#define PCIINTR_00_19_00	PCIINTR_ID(0, 19, 0)
 #define PCIINTR_00_19_02	PCIINTR_ID(0, 19, 2)
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
 

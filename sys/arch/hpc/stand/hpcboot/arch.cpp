@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.8.2 2002/02/28 04:09:44 nathanw Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.8.3 2002/04/01 07:40:13 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ Architecture::setupBootInfo(Loader &loader)
 	_boot_arg = reinterpret_cast <struct BootArgs *>(v);
 
 	_boot_arg->argc = menu.setup_kernel_args(v + sizeof(struct BootArgs),
-	    p + sizeof(struct BootArgs));
+	    p + sizeof(struct BootArgs),
+	    _mem->getTaggedPageSize() - sizeof(struct BootArgs));
 	_boot_arg->argv = ptokv(p + sizeof(struct BootArgs));
 	menu.setup_bootinfo(_boot_arg->bi);
 	_boot_arg->bi.bi_cnuse = _cons->getBootConsole();
@@ -126,6 +127,26 @@ Architecture::systemInfo(void)
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
 	HDC hdc;
+	BOOL (*getVersionEx)(LPOSVERSIONINFO);
+	
+	//
+	// WCE200 ... GetVersionEx
+	// WCE210 or later ... GetVersionExA or GetVersionExW
+	// see winbase.h
+	//
+	getVersionEx = reinterpret_cast <BOOL(*)(LPOSVERSIONINFO)>
+	    (_load_func(TEXT("GetVersionEx")));
+	
+	if (getVersionEx) {
+		getVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionEx\n")));
+	} else {
+		GetVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionExW\n")));
+	}
+
+	DPRINTF((TEXT("Windows CE %d.%d\n"), WinCEVersion.dwMajorVersion,
+	    WinCEVersion.dwMinorVersion));
 
 	GetSystemInfo(&si);
 	DPRINTF((TEXT("GetSystemInfo:\n")));

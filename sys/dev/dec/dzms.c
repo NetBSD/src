@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.1.4.2 2002/02/28 04:13:15 nathanw Exp $	*/
+/*	$NetBSD: dzms.c,v 1.1.4.3 2002/04/01 07:45:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.1.4.2 2002/02/28 04:13:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.1.4.3 2002/04/01 07:45:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,8 @@ dzms_enable(v)
 	sc->self_test = 1;
 	dzputc(sc->dzms_ls, MOUSE_SELF_TEST);
 	DELAY(100000);
+	DELAY(100000);
+	DELAY(100000);
 	if (sc->self_test < 0) {
 		sc->self_test = 0;
 		return EBUSY;
@@ -195,7 +197,7 @@ dzms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static int

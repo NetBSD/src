@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.65.2.5 2002/01/09 02:52:03 nathanw Exp $        */
+/*      $NetBSD: ukbd.c,v 1.65.2.6 2002/04/01 07:47:35 nathanw Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.65.2.5 2002/01/09 02:52:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.65.2.6 2002/04/01 07:47:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,7 +706,7 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		return (0);
 #endif
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9.8.2 2002/02/28 04:11:31 nathanw Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9.8.3 2002/04/01 07:42:13 nathanw Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -88,8 +88,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -103,7 +104,6 @@ void intr_calculatemasks(void);
 int fakeintr(void *);
 void ext_intr(void);
 
-extern int cold;
 int imen = 0xffffffff;
 volatile int cpl, ipending, astpending, tickspending;
 int imask[NIPL];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.12 2002/02/28 04:14:44 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.13 2002/04/01 07:47:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.12 2002/02/28 04:14:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.13 2002/04/01 07:47:55 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -205,6 +205,10 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 #endif
 	case CTL_PROC:
 		fn = proc_sysctl;
+		break;
+
+	case CTL_EMUL:
+		fn = emul_sysctl;
 		break;
 	default:
 		return (EOPNOTSUPP);
@@ -657,8 +661,10 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
+	if (name[0] >= CTL_DEBUG_MAXID)
+		return (EOPNOTSUPP);
 	cdp = debugvars[name[0]];
-	if (name[0] >= CTL_DEBUG_MAXID || cdp->debugname == 0)
+	if (cdp->debugname == 0)
 		return (EOPNOTSUPP);
 	switch (name[1]) {
 	case CTL_DEBUG_NAME:
@@ -816,6 +822,38 @@ cleanup:
 	return (EINVAL);
 }
 
+int
+emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	extern int nexecs_builtin;
+	extern const struct execsw execsw_builtin[];
+	static struct {
+		const char *name;
+		int  type;
+	} emulations[] = CTL_EMUL_NAMES;
+	const char *ename;
+	int i;
+
+	/* all sysctl names at this level are name and field */
+	if (namelen < 2)
+		return (ENOTDIR);		/* overloaded */
+
+	if (name[0] >= EMUL_MAXID || name[0] == 0)
+		return (EOPNOTSUPP);
+
+	ename = emulations[name[0]].name;
+
+	for (i = 0; i < nexecs_builtin; i++) {
+	     const struct emul *e = execsw_builtin[i].es_emul;
+	     if (e != NULL && strcmp(ename, e->e_name) == 0 &&
+		execsw_builtin[i].es_sysctl != NULL)
+		    return (*execsw_builtin[i].es_sysctl)(name + 1, namelen - 1,
+			oldp, oldlenp, newp, newlen, p);
+	}
+
+	return (EOPNOTSUPP);
+}
 /*
  * Convenience macros.
  */

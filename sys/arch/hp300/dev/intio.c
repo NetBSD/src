@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.6.32.1 2002/01/08 00:24:35 nathanw Exp $	*/
+/*	$NetBSD: intio.c,v 1.6.32.2 2002/04/01 07:39:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Autoconfiguration support for hp300 internal i/o space.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.32.2 2002/04/01 07:39:52 nathanw Exp $");                                                  
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h> 
@@ -61,9 +64,9 @@ const struct cfattach intio_ca = {
     defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
     defined(HP380) || defined(HP385)
 const struct intio_builtins intio_3xx_builtins[] = {
-	{ "rtc     ",	0x020000,	-1},
-	{ "hil     ",	0x028000,	1},
-	{ "fb      ",	0x160000,	-1},
+	{ "rtc",	0x020000,	-1},
+	{ "hil",	0x028000,	1},
+	{ "fb",		0x160000,	-1},
 };
 #define nintio_3xx_builtins \
 	(sizeof(intio_3xx_builtins) / sizeof(intio_3xx_builtins[0]))
@@ -71,10 +74,10 @@ const struct intio_builtins intio_3xx_builtins[] = {
 
 #if defined(HP400) || defined(HP425) || defined(HP433)
 const struct intio_builtins intio_4xx_builtins[] = {
-	{ "rtc     ",	0x020000,	-1},
-	{ "frodo   ",	0x01c000,	5},
-	{ "hil     ",	0x028000,	1},
-	{ "fb      ",	0x160000,	-1},
+	{ "rtc",	0x020000,	-1},
+	{ "frodo",	0x01c000,	5},
+	{ "hil",	0x028000,	1},
+	{ "fb",		0x160000,	-1},
 };
 #define nintio_4xx_builtins \
 	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))
@@ -158,11 +161,11 @@ intioprint(aux, pnp)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (pnp)
+	if (pnp != NULL)
 		printf("%s at %s", ia->ia_modname, pnp);
-	if (ia->ia_addr != 0) {
-		printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
-		if (ia->ia_ipl != -1)
+	if (ia->ia_iobase != 0) {
+		printf(" addr 0x%lx", (u_long)intiobase+ia->ia_iobase);
+		if (ia->ia_ipl != -1 && pnp != NULL)
 			printf(" ipl %d", ia->ia_ipl);
 	}
 	return (UNCONF);

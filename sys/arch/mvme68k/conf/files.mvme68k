@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.47.6.3 2002/02/28 04:10:49 nathanw Exp $
+#	$NetBSD: files.mvme68k,v 1.47.6.4 2002/04/01 07:41:19 nathanw Exp $
 
 # config file for mvme68k
 
@@ -85,8 +85,11 @@ attach wdsc at pcc with wdsc_pcc
 file arch/mvme68k/dev/wdsc.c			wdsc_pcc
 
 file arch/mvme68k/dev/pcctwo_68k.c		pcctwo
-file arch/mvme68k/dev/vme_two_68k.c		vmetwo
 file arch/mvme68k/dev/memc_68k.c		memc
+
+# This isn't as odd as it looks. This file is still needed even if
+# no vmetwo device is configured into the kernel.
+file arch/mvme68k/dev/vme_two_68k.c		vmetwo | pcctwo
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/bus_dma.c

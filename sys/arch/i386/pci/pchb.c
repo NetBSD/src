@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23.4.3 2002/02/28 04:10:22 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23.4.4 2002/04/01 07:40:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.4.3 2002/02/28 04:10:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.4.4 2002/04/01 07:40:43 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,6 +226,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			 * (It would be easier to attach all the buses
 			 * at the MIOC, but less aesthetical imho.)
 			 */
+			if ((attachflags &
+			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
+			    PCI_FLAGS_MEM_ENABLED)
+				attachflags |= PCI_FLAGS_IO_ENABLED;
+
 			pbnum = 0;
 			switch (pa->pa_device) {
 			case 18: /* PXB 0 bus A - primary bus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62.8.2 2002/02/28 04:06:20 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.62.8.3 2002/04/01 07:38:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include "opt_compat_svr4.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.2 2002/02/28 04:06:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.3 2002/04/01 07:38:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,16 +122,16 @@ cdev_decl(wskbd);
 
 cdev_decl(wd);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 struct cdevsw	cdevsw[] =
 {
@@ -180,11 +180,11 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 42: random source pseudo-device */
 	cdev_disk_init(NMD,md),		/* 43: memory disk */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 44: SCSI bus */
-	cdev_i4b_init(NI4B, i4b),		/* 45: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 46: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 47: i4b raw b-channel */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 48: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 49: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 45: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 46: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 47: isdn raw b-channel */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 48: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 49: isdn phone device */
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
 	cdev_disk_init(NWD,wd),		/* 52: IDE disk */

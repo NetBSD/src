@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.1 2000/11/15 14:04:05 tsubai Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.1.10.1 2002/04/01 07:41:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -205,5 +205,5 @@ ms_ap_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return -1;
+	return EPASSTHROUGH;
 }

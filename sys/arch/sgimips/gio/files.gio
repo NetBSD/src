@@ -1,0 +1,21 @@
+# $NetBSD: files.gio,v 1.2.8.2 2002/04/01 07:42:21 nathanw Exp $
+
+device	gio {[slot = -1], [addr = -1]}
+attach	gio at giobus
+
+file	arch/sgimips/gio/gio.c		gio needs-flag
+
+device	hpc {[offset = -1]}
+attach	hpc at gio
+file	arch/sgimips/hpc/hpc.c		hpc
+
+include "arch/sgimips/hpc/files.hpc"
+
+# XL graphics
+#device	newport {}
+#attach	newport at gio
+#file	arch/sgimips/gio/newport.c	newport
+
+# Challenge/S mezzanine I/O board..
+
+# Other GIO boards..

@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_syssgi.h,v 1.2.2.2 2002/02/28 04:12:43 nathanw Exp $ */
+/*	$NetBSD: irix_syssgi.h,v 1.2.2.3 2002/04/01 07:44:02 nathanw Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
 #define	IRIX_SGI_SETKOPT		10
 #define	IRIX_SGI_QUERY_FTIMER		12
 #define	IRIX_SGI_QUERY_CYCLECNTR	13
-#define	IRIX_SGI_SETSID	20
+#define	IRIX_SGI_SETSID			20
 #define	IRIX_SGI_SETPGID		21
 #define	IRIX_SGI_SYSCONF		22
 #define	IRIX_SGI_PATHCONF		24
@@ -403,6 +403,23 @@
 #define IRIX_SC_XBS5_LPBIG_OFFBIG           122
 #define IRIX_SC_XOPEN_LEGACY                123
 #define IRIX_SC_XOPEN_REALTIME              124
+
+/* From IRIX's <sys/unistd.h> */
+#define IRIX_PC_LINK_MAX		1
+#define IRIX_PC_MAX_CANON		2
+#define IRIX_PC_MAX_INPUT		3
+#define IRIX_PC_NAME_MAX		4
+#define IRIX_PC_PATH_MAX		5
+#define IRIX_PC_PIPE_BUF		6
+#define IRIX_PC_CHOWN_RESTRICTED	7
+#define IRIX_PC_NO_TRUNC		8
+#define IRIX_PC_VDISABLE		9
+#define IRIX_PC_SYNC_IO			10
+#define IRIX_PC_PRIO_IO			11
+#define IRIX_PC_ASYNC_IO		64
+#define IRIX_PC_ABI_ASYNC_IO		65
+#define IRIX_PC_ABI_AIO_XFER_MAX	66
+#define IRIX_PC_FILESIZEBITS		67
 
 
 #endif /* _IRIX_TYPES_H_ */

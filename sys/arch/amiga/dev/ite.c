@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56.8.2 2002/02/28 04:06:48 nathanw Exp $ */
+/*	$NetBSD: ite.c,v 1.56.8.3 2002/04/01 07:38:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.8.2 2002/02/28 04:06:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.8.3 2002/04/01 07:38:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -545,10 +545,10 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	KDASSERT(tp);
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -599,7 +599,7 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (error);
 	}
 #endif
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void

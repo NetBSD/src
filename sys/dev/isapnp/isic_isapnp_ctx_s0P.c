@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Creatix PnP cards
  *	============================================================
  *
- *	$Id: isic_isapnp_ctx_s0P.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $ 
+ *	$Id: isic_isapnp_ctx_s0P.c,v 1.2.2.2 2002/04/01 07:45:59 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.2.2.2 2002/04/01 07:45:59 nathanw Exp $");
 
 #include "opt_isicpnp.h"
 #if ISICPNP_CRTX_S0_P
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.2.2.1 2001/11/14 19:14:58 
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
@@ -84,11 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.2.2.1 2001/11/14 19:14:58 
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t ctxs0P_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void ctxs0P_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void ctxs0P_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void ctxs0P_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-void isic_attach_Cs0P(struct l1_softc *sc);
+static u_int8_t ctxs0P_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void ctxs0P_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void ctxs0P_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void ctxs0P_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+void isic_attach_Cs0P(struct isic_softc *sc);
 #endif
 
 #ifdef __FreeBSD__
@@ -110,7 +112,7 @@ ctxs0P_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-ctxs0P_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+ctxs0P_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -134,7 +136,7 @@ ctxs0P_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-ctxs0P_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+ctxs0P_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -157,7 +159,7 @@ ctxs0P_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-ctxs0P_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+ctxs0P_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -180,7 +182,7 @@ ctxs0P_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-ctxs0P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+ctxs0P_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -198,7 +200,7 @@ ctxs0P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -325,7 +327,7 @@ isic_attach_Cs0P(struct isa_device *dev, unsigned int iobase2)
 #else /* !__FreeBSD__ */
 
 void
-isic_attach_Cs0P(struct l1_softc *sc)
+isic_attach_Cs0P(struct isic_softc *sc)
 {
 	/* init card */
 	bus_space_tag_t t = sc->sc_maps[0].t;

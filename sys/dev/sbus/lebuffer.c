@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7.6.4 2002/02/28 04:14:20 nathanw Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.6.5 2002/04/01 07:47:13 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.4 2002/02/28 04:14:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.5 2002/04/01 07:47:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,10 +105,9 @@ lebufattach(parent, self, aux)
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 0, 0, &bh) != 0) {
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
@@ -118,7 +117,7 @@ lebufattach(parent, self, aux)
 	 * Lance ring-buffers can be stored. Note the buffer's location
 	 * and size, so the `le' driver can pick them up.
 	 */
-	sc->sc_buffer = (caddr_t)(u_long)bh;
+	sc->sc_buffer = bus_space_vaddr(sa->sa_bustag, bh);
 	sc->sc_bufsiz = sa->sa_size;
 
 	node = sc->sc_node = sa->sa_node;

@@ -1,11 +1,11 @@
-#	$NetBSD: LAMB,v 1.2.2.6 2002/02/28 04:10:15 nathanw Exp $
+#	$NetBSD: LAMB,v 1.2.2.7 2002/04/01 07:40:38 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.6 $"
+#ident 		"GENERIC-$Revision: 1.2.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -355,7 +355,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

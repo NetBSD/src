@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17.2.2 2002/02/28 04:12:43 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.17.2.3 2002/04/01 07:44:03 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -49,6 +49,7 @@
 #include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_types.h>
@@ -131,7 +132,7 @@
 #else
 53	UNIMPL		semsys
 #endif
-54	NOARGS		{ int svr4_sys_ioctl(int fd, u_long com, \
+54	STD		{ int irix_sys_ioctl(int fd, u_long com, \
 			    caddr_t data); }
 55	UNIMPL		uadmin
 56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
@@ -220,8 +221,8 @@
 			    int len); }
 111	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
 			    int len); }
-112	UNIMPL		truncate
-113	UNIMPL		ftruncate
+112	NOARGS		{ int sys_truncate(const char *path, long length); }
+113	NOARGS		{ int sys_ftruncate(int fd, long length); }
 114	NOARGS		{ int sys_rename(const char *from, const char *to); }
 115	NOARGS		{ int sys_symlink(const char *path, \
 			    const char *link); }
@@ -233,8 +234,8 @@
 120	UNIMPL		nfs_getfh
 121	UNIMPL		async_daemon
 122	UNIMPL		exportfs
-123	UNIMPL		setregid
-124	UNIMPL		setreuid
+123	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
+124	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 125	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 126	NOARGS		{ int sys_setitimer(u_int which, \
@@ -286,13 +287,13 @@
 			    struct svr4_sigaction *osa); }
 163	NOARGS		{ int svr4_sys_sigpending(int what, \
 			    svr4_sigset_t *set); }
-164	NOARGS		{ int svr4_sys_sigprocmask(int how, \
-			    const svr4_sigset_t *set, \
-			    svr4_sigset_t *oset); }
+164	STD		{ int irix_sys_sigprocmask(int how, \
+			    const irix_sigset_t *set, \
+			    irix_sigset_t *oset); }
 165	NOARGS		{ int svr4_sys_sigsuspend( \
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
-167	UNIMPL		swapctl
+167	STD		{ int irix_sys_swapctl(int cmd, void *arg); }
 168	STD		{ int irix_sys_getcontext(irix_ucontext_t *ucp); }
 169	STD		{ int irix_sys_setcontext(const irix_ucontext_t *ucp); }
 170	STD		{ int irix_sys_waitsys(int type, int pid, \
@@ -301,8 +302,10 @@
 171	UNIMPL		sigstack
 172	UNIMPL		sigaltstack
 173	UNIMPL		sigsendset
-174	UNIMPL		statvfs
-175	UNIMPL		fstatvfs
+174	NOARGS		{ int svr4_sys_statvfs(const char *path, \
+			    struct svr4_statvfs *fs); }
+175	NOARGS		{ int svr4_sys_fstatvfs(int fd, \
+			    struct svr4_statvfs *fs); }
 176	UNIMPL		getpmsg
 177	UNIMPL		putpmsg
 178	UNIMPL		lchown
@@ -312,8 +315,10 @@
 			    const struct iovec *iovp, int iovcnt); }
 182	NOARGS		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-183	UNIMPL		truncate64
-184	UNIMPL		ftruncate64
+183	NOARGS		{ int sys_truncate(const char *path, int pad, \
+			    off_t length); } truncate64
+184	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); } \
+			    ftruncate64
 185	UNIMPL		mmap64
 186	UNIMPL		dmi
 187	UNIMPL		pread

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.2.3 2002/02/28 04:08:39 nathanw Exp $
+# $NetBSD: GENERIC,v 1.11.2.4 2002/04/01 07:39:39 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -122,8 +122,7 @@ options 	SYSVSHM		# System V-like memory sharing
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -490,7 +489,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

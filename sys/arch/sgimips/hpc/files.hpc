@@ -1,24 +1,24 @@
-# $NetBSD: files.hpc,v 1.2.6.2 2002/01/08 00:27:27 nathanw Exp $	
+# $NetBSD: files.hpc,v 1.2.6.3 2002/04/01 07:42:22 nathanw Exp $
 
-device sq: arp, ether, ifnet
-attach sq at hpc
-file arch/sgimips/hpc/if_sq.c		sq
+device	sq: arp, ether, ifnet
+attach	sq at hpc
+file	arch/sgimips/hpc/if_sq.c	sq
 
-define sbic
-file arch/sgimips/hpc/sbic.c		sbic
+define	sbic
+file	arch/sgimips/hpc/sbic.c		sbic
 
-define hpcdma
-file arch/sgimips/hpc/hpcdma.c		hpcdma
+define	hpcdma
+file	arch/sgimips/hpc/hpcdma.c	hpcdma
 
-device wdsc: sbic, scsi, hpcdma
-attach wdsc at hpc
-file arch/sgimips/hpc/wdsc.c		wdsc
+device	wdsc: sbic, scsi, hpcdma
+attach	wdsc at hpc
+file	arch/sgimips/hpc/wdsc.c		wdsc
 
-device  dsclock
-attach  dsclock at hpc
-file arch/sgimips/hpc/dsclock_hpc.c
+device	dsclock
+attach	dsclock at hpc
+file	arch/sgimips/hpc/dsclock_hpc.c
 
-attach zsc at hpc with zsc_hpc
+attach	zsc at hpc with zsc_hpc
 
-attach pckbc at hpc with pckbc_hpc
-file arch/sgimips/hpc/pckbc_hpc.c      pckbc_hpc
+attach	pckbc at hpc with pckbc_hpc
+file	arch/sgimips/hpc/pckbc_hpc.c	pckbc_hpc

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8.2.2 2002/02/28 04:12:49 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.8.2.3 2002/04/01 07:44:09 nathanw Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -220,7 +220,8 @@
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
 123	UNIMPL		modify_ldt	
 124	UNIMPL		adjtimex
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    const linux_old_sigset_t *set, \
 			    linux_old_sigset_t *oset); }
@@ -324,8 +325,7 @@
 190	NOARGS		vfork { int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
-192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+192	UNIMPL		mmap2
 193	STD		{ int linux_sys_truncate64(const char *path, \
 				off_t length); }
 194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, \

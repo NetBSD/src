@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.2.2.2 2002/02/28 04:09:22 nathanw Exp $
+# $NetBSD: INSTALL,v 1.2.2.3 2002/04/01 07:39:49 nathanw Exp $
 #
 # INSTALL machine description file
 #
@@ -65,7 +65,7 @@ file-system	NFS		# Network filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	PROCFS		# /proc filesystem
-#file-system	MFS		# Memory-based filesystem
+file-system	MFS		# Memory-based filesystem
 
 # Filesystem options
 #options 	QUOTA		# User and group quotas in FFS

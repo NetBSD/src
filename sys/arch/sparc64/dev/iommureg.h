@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.6.6.2 2002/02/28 04:12:11 nathanw Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.6.6.3 2002/04/01 07:43:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,8 @@ struct iommu_strbuf {
 	u_int64_t	strbuf_flushsync;/* streaming buffer flush sync */
 };
 
+#define	IOMMUREG(x)	(offsetof(struct iommureg, x))
+#define	STRBUFREG(x)	(offsetof(struct iommu_strbuf, x))
 /* streaming buffer control register */
 #define STRBUF_EN	0x000000000000000001LL
 #define STRBUF_D	0x000000000000000002LL

@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.7.2.10 2002/02/28 04:13:33 nathanw Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7.2.11 2002/04/01 07:45:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -95,6 +95,34 @@
 /*
  * register space access macros
  */
+#ifdef WI_AT_BIGENDIAN_BUS_HACK
+	/*
+	 * XXX - ugly hack for sparc bus_space_* macro deficiencies:
+	 *       assume the bus we are accessing is big endian.
+	 */
+
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg) , htole32(val))
+#define CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), htole16(val))
+#define CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
+
+#define CSR_READ_4(sc, reg)		\
+	le32toh(bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg)))
+#define CSR_READ_2(sc, reg)		\
+	le16toh(bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg)))
+#define CSR_READ_1(sc, reg)		\
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+
+#else
+
 #define CSR_WRITE_4(sc, reg, val)	\
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
 			(sc->sc_pci? reg * 2: reg) , val)
@@ -114,6 +142,7 @@
 #define CSR_READ_1(sc, reg)		\
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
 			(sc->sc_pci? reg * 2: reg))
+#endif
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_stream_2	bus_space_write_2
@@ -393,6 +422,7 @@ struct wi_ltv_ver {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
 	u_int16_t		wi_ver[4];
+#define WI_NIC_LUCENT	0x0005
 #define WI_NIC_EVB2	0x8000
 #define WI_NIC_HWB3763	0x8001
 #define WI_NIC_HWB3163	0x8002

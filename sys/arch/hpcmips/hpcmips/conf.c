@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14.4.2 2002/02/28 04:09:56 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.14.4.3 2002/04/01 07:40:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,13 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_disk_init(NRAID,raid),	/* 9: RAIDframe disk driver */
+
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
+	bdev_lkm_dummy(),		/* 13 */
+	bdev_lkm_dummy(),		/* 14 */
+	bdev_lkm_dummy(),		/* 15 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -169,21 +176,24 @@ cdev_decl(urio);
 #include "uscanner.h"
 cdev_decl(uscanner);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 #include "rnd.h"
 
 #include "clockctl.h"
 cdev_decl(clockctl);
+
+#include "audio.h"
+cdev_decl(audio);
 
 struct cdevsw	cdevsw[] =
 {
@@ -234,12 +244,14 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
 	cdev_usbdev_init(NURIO,urio),	/* 39: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 40: USB scanner */
-	cdev_i4b_init(NI4B, i4b),	/* 41: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 42: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 43: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 44: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 45: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),	/* 41: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 42: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 43: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 44: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 45: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
+	cdev_lkm_init(NLKM,lkm),	/* 47: loadable module driver */
+	cdev_audio_init(NAUDIO,audio),		/* 48: VR4121 audio interface */
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -316,6 +328,8 @@ static int chrtoblktbl[] =  {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
 };
 
 /*

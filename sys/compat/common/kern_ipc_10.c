@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.12.2.2 2001/11/14 19:12:54 nathanw Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.12.2.3 2002/04/01 07:43:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.12.2.2 2001/11/14 19:12:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.12.2.3 2002/04/01 07:43:50 nathanw Exp $");
 
 #include "opt_sysv.h"
 
@@ -82,14 +82,14 @@ compat_10_sys_semsys(l, v, retval)
 		syscallarg(int) flag;
 	} */ semconfig_args;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
 		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
 		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
 		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = stackgap_alloc(&sg,
+		SCARG(&__semctl_args, arg) = stackgap_alloc(p, &sg,
 			sizeof(union semun *));
 		copyout(&SCARG(uap, a5), SCARG(&__semctl_args, arg),
 			sizeof(union __semun));

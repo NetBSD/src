@@ -1,4 +1,4 @@
-#	$NetBSD: files.irix,v 1.13.2.2 2002/02/28 04:12:42 nathanw Exp $
+#	$NetBSD: files.irix,v 1.13.2.3 2002/04/01 07:43:56 nathanw Exp $
 #
 
 file	arch/mips/mips/irix_syscall.c		compat_irix
@@ -8,10 +8,13 @@ file	compat/irix/irix_errno.c		compat_irix
 file	compat/irix/irix_exec.c			compat_irix
 file	compat/irix/irix_exec_elf32.c		compat_irix & exec_elf32
 file	compat/irix/irix_fcntl.c		compat_irix
+file	compat/irix/irix_ioctl.c		compat_irix
+file	compat/irix/irix_kmem.c			compat_irix
 file	compat/irix/irix_mount.c		compat_irix
 file	compat/irix/irix_prctl.c		compat_irix
 file	compat/irix/irix_signal.c		compat_irix
 file	compat/irix/irix_stat.c			compat_irix
+file	compat/irix/irix_swap.c			compat_irix
 file	compat/irix/irix_syscalls.c		compat_irix
 file	compat/irix/irix_sysent.c		compat_irix
 file	compat/irix/irix_syssgi.c		compat_irix

@@ -33,7 +33,7 @@
  *	ELSA MicroLink MC/all card specific routines
  *	--------------------------------------------
  *
- *	$Id: isic_pcmcia_elsa_mcall.c,v 1.2.2.1 2001/11/14 19:15:39 nathanw Exp $
+ *	$Id: isic_pcmcia_elsa_mcall.c,v 1.2.2.2 2002/04/01 07:46:54 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.2.2.1 2001/11/14 19:15:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.2.2.2 2002/04/01 07:46:54 nathanw Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.2.2.1 2001/11/14 19:15:
 #include <dev/pcmcia/pcmciavar.h>
 #endif
 
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
@@ -92,10 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.2.2.1 2001/11/14 19:15:
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */
-static u_int8_t elsa_mcall_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void elsa_mcall_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void elsa_mcall_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void elsa_mcall_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+static u_int8_t elsa_mcall_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void elsa_mcall_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void elsa_mcall_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void elsa_mcall_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -109,7 +111,7 @@ elsa_mcall_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-elsa_mcall_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+elsa_mcall_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -128,7 +130,7 @@ elsa_mcall_write_fifo(void *base, const void *buf, size_t len)
 }
 #else
 static void
-elsa_mcall_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+elsa_mcall_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -147,7 +149,7 @@ elsa_mcall_write_reg(u_char *base, u_int offset, u_int v)
 }
 #else
 static void
-elsa_mcall_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+elsa_mcall_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -167,7 +169,7 @@ elsa_mcall_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-elsa_mcall_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+elsa_mcall_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -186,9 +188,9 @@ elsa_mcall_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
  * could be removed an inserted again.
  */
 int
-isic_attach_elsamcall(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_elsamcall(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 
@@ -212,9 +214,6 @@ isic_attach_elsamcall(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *c
 		printf(": can't map i/o space\n");
 		return 0;
 	}
-
-	/* setup card type */
-	sc->sc_cardtyp = CARD_TYPEP_ELSAMLMCALL;
 
 	/* Setup bus space maps */
 	sc->sc_num_mappings = 1;

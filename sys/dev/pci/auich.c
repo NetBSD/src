@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.2.3 2002/02/28 04:13:57 nathanw Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.2.4 2002/04/01 07:46:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.3 2002/02/28 04:13:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.4 2002/04/01 07:46:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,13 +391,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	auich_read_codec(sc, AC97_REG_EXTENDED_ID, &ext_id);
-        if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
+	if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
 		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &ext_status);
-        	if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
-                	ext_status |= AC97_ENAB_VRA;
-        	if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
-                	ext_status |= AC97_ENAB_MICVRA;
-        	auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
+		if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
+			ext_status |= AC97_ENAB_VRA;
+		if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
+			ext_status |= AC97_ENAB_MICVRA;
+		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
 		sc->sc_fixed_rate = 0;
 	} else {
 		sc->sc_fixed_rate = 48000;
@@ -411,21 +411,34 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
 }
 
+#define ICH_CODECIO_INTERVAL	10
 int
 auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 {
 	struct auich_softc *sc = v;
 	int i;
+	uint32_t status;
 
+	if (!(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR)) {
+		printf("auich_read_codec: codec is not ready.");
+		*val = 0xffff;
+		return -1;
+	}
 	/* wait for an access semaphore */
-	for (i = ICH_SEMATIMO; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1; DELAY(1));
+	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
+	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
 		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
 		DPRINTF(ICH_DEBUG_CODECIO,
 		    ("auich_read_codec(%x, %x)\n", reg, *val));
-
+		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+		if (status & ICH_RCS) {
+			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS,
+					  status & ~(ICH_SRI|ICH_PRI|ICH_GSCI));
+			*val = 0xffff;
+		}
 		return 0;
 	} else {
 		DPRINTF(ICH_DEBUG_CODECIO,
@@ -441,10 +454,14 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 	int i;
 
 	DPRINTF(ICH_DEBUG_CODECIO, ("auich_write_codec(%x, %x)\n", reg, val));
-
+	if (!(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR)) {
+		printf("auich_write_codec: codec is not ready.");
+		return -1;
+	}
 	/* wait for an access semaphore */
-	for (i = ICH_SEMATIMO; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1; DELAY(1));
+	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
+	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
 		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
@@ -469,10 +486,15 @@ void
 auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
+	int i;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, 0);
 	DELAY(10);
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, ICH_CRESET);
+
+	for (i = 500000; i-- &&
+	       !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR);
+	     DELAY(1));					/*       or ICH_SCR? */
 }
 
 int
@@ -498,7 +520,6 @@ int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 
-#if 0 /* XXX Not until we emulate it. */
 	switch (aep->index) {
 	case 0:
 		strcpy(aep->name, AudioEulinear);
@@ -506,9 +527,6 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
-#else
-	switch (aep->index + 1) {
-#endif
 	case 1:
 		strcpy(aep->name, AudioEmulaw);
 		aep->encoding = AUDIO_ENCODING_ULAW;
@@ -575,7 +593,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			continue;
 
 		inout = mode == AUMODE_PLAY ? ICH_PM_PCMO : ICH_PM_PCMI;
-		
+
 		if ((p->sample_rate !=  8000) &&
 		    (p->sample_rate != 11025) &&
 		    (p->sample_rate != 16000) &&
@@ -586,12 +604,20 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 
 		p->factor = 1;
+		if (p->precision == 8)
+			p->factor *= 2;
+
 		p->sw_code = NULL;
+		/* setup hardware formats */
+		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		p->hw_precision = 16;
+		if (p->channels < 2)
+			p->hw_channels = 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
+			if (p->precision == 16) {
 				p->sw_code = swap_bytes;
-			else {
+			} else {
 				if (mode == AUMODE_PLAY)
 					p->sw_code = linear8_to_linear16_le;
 				else
@@ -617,45 +643,41 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 					p->sw_code =
 					    change_sign16_swap_bytes_le;
 			} else {
-				/*
-				 * XXX ulinear8_to_slinear16_le
-				 */
-				return (EINVAL);
+				if (mode == AUMODE_PLAY)
+					p->sw_code =
+					    ulinear8_to_slinear16_le;
+				else
+					p->sw_code =
+					    slinear16_to_ulinear8_le;
 			}
 			break;
 
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
+			if (p->precision == 16) {
 				p->sw_code = change_sign16_le;
-			else {
-				/*
-				 * XXX ulinear8_to_slinear16_le
-				 */
-				return (EINVAL);
+			} else {
+				if (mode == AUMODE_PLAY)
+					p->sw_code =
+					    ulinear8_to_slinear16_le;
+				else
+					p->sw_code =
+					    slinear16_to_ulinear8_le;
 			}
 			break;
 
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
 				p->sw_code = mulaw_to_slinear16_le;
 			} else {
-				/*
-				 * XXX slinear16_le_to_mulaw
-				 */
-				return (EINVAL);
+				p->sw_code = slinear16_to_mulaw_le;
 			}
 			break;
 
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_le;
 			} else {
-				/*
-				 * XXX slinear16_le_to_alaw
-				 */
-				return (EINVAL);
+				p->sw_code = slinear16_to_alaw_le;
 			}
 			break;
 
@@ -667,14 +689,21 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		auich_write_codec(sc, AC97_REG_POWER, val | inout);
 
 		if (sc->sc_fixed_rate) {
-			p->sample_rate = sc->sc_fixed_rate;
+			p->hw_sample_rate = sc->sc_fixed_rate;
 		} else {
-			auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-			    p->sample_rate);
-			auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-			    &rate);
-			p->sample_rate = rate;
-                }
+			if (mode == AUMODE_PLAY) {
+				auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+				    p->sample_rate);
+				auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+				    &rate);
+			} else {
+				auich_write_codec(sc, AC97_REG_PCM_LR_ADC_RATE,
+				    p->sample_rate);
+				auich_read_codec(sc, AC97_REG_PCM_LR_ADC_RATE,
+				    &rate);
+			}
+			p->hw_sample_rate = rate;
+		}
 
 		auich_write_codec(sc, AC97_REG_POWER, val);
 	}

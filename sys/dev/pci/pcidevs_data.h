@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.13 2002/02/28 18:39:48 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.14 2002/04/01 07:46:39 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.306.2.11 2002/02/28 18:37:05 nathanw Exp 
+ *	NetBSD
  */
 
 /*
@@ -874,6 +874,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD766 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 PCI to ISA/LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 EIDE Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_MD,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 AC97 Modem",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 PCI to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 USB Controller",
+	},
+	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
 	    0,
 	    "American Megatrends",
@@ -1346,6 +1388,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Rage 128 Pro AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7200,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_8500,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 8500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7500,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7000,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7000/VE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI,
@@ -2048,6 +2114,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Conexant Systems",
 	    "SoftK56 PCI Software Modem",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56KFAXMODEM,
+	    0,
+	    "Conexant Systems",
+	    "HW 56K Fax Modem",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -3208,6 +3280,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82840 PCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_HB,
+	    0,
+	    "Intel",
+	    "82845 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_AGP,
+	    0,
+	    "Intel",
+	    "82845 AGP",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
 	    0,
 	    "Intel",
@@ -4076,6 +4160,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Motorola",
 	    "MPC107 \"Chaparral\" Host Bridge",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
+	    0,
+	    "Motorola",
+	    "Raven Host Bridge & Multi-Processor Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_FALCON,
+	    0,
+	    "Motorola",
+	    "Falcon ECC Memory Controller Chip Set",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_HAWK,
+	    0,
+	    "Motorola",
+	    "Hawk System Memory Controller & PCI Host Bridge",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,

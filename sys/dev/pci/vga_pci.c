@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.4.2.3 2002/01/08 00:31:18 nathanw Exp $ */
+/* $NetBSD: vga_pci.c,v 1.4.2.4 2002/04/01 07:46:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.2.3 2002/01/08 00:31:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.2.4 2002/04/01 07:46:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    cmd, data, flag, p));
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 }
 

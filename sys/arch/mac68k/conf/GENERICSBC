@@ -1,10 +1,10 @@
-#	$NetBSD: GENERICSBC,v 1.5.4.3 2002/02/28 04:10:34 nathanw Exp $
+#	$NetBSD: GENERICSBC,v 1.5.4.4 2002/04/01 07:40:47 nathanw Exp $
 #
 # GENERICSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERICSBC-$Revision: 1.5.4.3 $"
+#ident 		"GENERICSBC-$Revision: 1.5.4.4 $"
 
 maxusers	16		# estimated number of users
 
@@ -64,7 +64,8 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # The following is needed to run pre-NetBSD 1.6 binaries under ELF.
-#options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
+options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
+options 	EXEC_AOUT	# support for exec'ing a.out
 
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries

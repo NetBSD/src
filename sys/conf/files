@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.12 2002/02/28 04:13:02 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.13 2002/04/01 07:44:56 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -43,7 +43,7 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
-				EXEC_ELF_CATCHALL
+				EXEC_ELF_NOTELESS
 
 # compatibility options
 #
@@ -181,9 +181,7 @@ defflag				SYSCALL_DEBUG
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
-defparam opt_md.h		MEMORY_DISK_SERVER
-
-defparam opt_mdsize.h		MINIROOTSIZE
+defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_SIZE
 
 # device classes
 #
@@ -209,6 +207,8 @@ define	radiodev	{ }
 #
 define	mulaw
 define	auconv
+define	aurateconv
+file	dev/aurateconv.c	aurateconv	needs-flag
 
 # audio and midi devices, attaches to audio hardware driver
 #
@@ -707,7 +707,7 @@ file	dev/ic/aic6915.c		sf
 # Mostek time-of-day clock and NVRAM
 #
 define	mk48txx
-file	dev/ic/mk48txx.c		mk48txx			needs-flag
+file	dev/ic/mk48txx.c		mk48txx
 
 # Intersil 7170 time-of-day clock
 #
@@ -833,25 +833,24 @@ define	bpf_filter
 
 # Attributes used by the ISDN subsystem
 #
-define	isdn		# the ISDN subsystem
+define	isdndev		# the ISDN subsystem
 define	passive_isdn	# files needed by passive cards (XXX - protocol
 			# specific)
-define	spppi4b		# synchronous PPP support
 
 # ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
 #
-device	isic: isdn, passive_isdn
+device	isic: isdndev, passive_isdn
 
 file	dev/ic/isic.c			isic
-file	dev/ic/isac.c			isic
+file	dev/ic/isac.c			isic|ifpci
+file	dev/ic/isic_l1.c		isic|ifpci
+file	dev/ic/isic_l1fsm.c		isic|ifpci
 file	dev/ic/hscx.c			isic
-file	dev/ic/isic_l1.c		isic
-file	dev/ic/isic_l1fsm.c		isic
 file	dev/ic/isic_bchan.c		isic
 
 # (old) Diehl active ISDN cards
 #
-device	daic: isdn
+device	daic: isdndev
 file	dev/ic/daic.c			daic
 
 # legitimate pseudo-devices
@@ -878,7 +877,6 @@ defpseudo bridge:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
 defpseudo strip:	ifnet
 defpseudo ipfilter:	ifnet
-defpseudo ipip:		ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
@@ -887,16 +885,19 @@ defpseudo irframetty:	irframedrv, irdasir
 
 defpseudo sequencer
 defpseudo clockctl
+defpseudo irix_kmem
 
 # ISDN userland pseudo devices
 #
-defpseudo i4btrc:	isdn
-defpseudo i4brbch:	isdn
-defpseudo i4btel:	isdn
-defpseudo i4bipr:	isdn
-defpseudo i4bisppp:	isdn, sppp
-defpseudo i4bctl:	isdn
-defpseudo i4b:		isdn
+defpseudo isdntrc:	isdndev, tty
+defpseudo isdnbchan:	isdndev, tty
+defpseudo isdntel:	isdndev, tty
+defpseudo isdnctl:	isdndev, tty
+defpseudo isdn:		isdndev, tty
+
+# ISDN network interfaces
+defpseudo irip:		isdndev, ifnet
+defpseudo ippp:		isdndev, sppp, ifnet
 
 # kernel sources
 #
@@ -1210,7 +1211,7 @@ file	net/if_strip.c			strip			needs-count
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
-file	net/if_pppoe.c			pppoe			needs-count
+file	net/if_pppoe.c			pppoe			needs-flag
 #file net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
@@ -1220,7 +1221,7 @@ file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
-file	net/slcompress.c		sl | ppp | strip | i4bipr
+file	net/slcompress.c		sl | ppp | strip | irip
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
 file	netatalk/aarp.c			netatalk
 file	netatalk/at_control.c		netatalk
@@ -1266,7 +1267,6 @@ file	netinet/ip_frag.c		ipfilter
 file	netinet/ip_gre.c		inet & gre
 file	netinet/ip_icmp.c		inet
 file	netinet/ip_input.c		inet
-file	netinet/ip_ipip.c		ipip			needs-count
 file	netinet/ip_log.c		ipfilter & ipfilter_log
 file	netinet/ip_mroute.c		inet & mrouting
 file	netinet/ip_nat.c		ipfilter
@@ -1462,14 +1462,13 @@ file	uvm/uvm_unix.c
 file	uvm/uvm_user.c
 file	uvm/uvm_vnode.c
 
-file	netisdn/i4b_ctl.c		i4bctl			needs-flag
-file	netisdn/i4b_isppp.c		i4bisppp		needs-count
-file	netisdn/i4b_ipr.c		i4bipr			needs-count
-file	netisdn/i4b_rbch.c		i4brbch			needs-count
-file	netisdn/i4b_tel.c		i4btel			needs-count
-file	netisdn/i4b_trace.c		i4btrc			needs-count
+file	netisdn/i4b_ctl.c		isdnctl			needs-flag
+file	netisdn/i4b_isppp.c		ippp			needs-count
+file	netisdn/i4b_ipr.c		irip			needs-count
+file	netisdn/i4b_rbch.c		isdnbchan		needs-count
+file	netisdn/i4b_tel.c		isdntel			needs-count
+file	netisdn/i4b_trace.c		isdntrc			needs-count
 
-file	netisdn/i4b_l1l2.c		passive_isdn
 file	netisdn/i4b_mbuf.c		passive_isdn
 file	netisdn/i4b_l2.c		passive_isdn
 file	netisdn/i4b_l2fsm.c		passive_isdn
@@ -1487,11 +1486,11 @@ file	netisdn/i4b_l3fsm.c		passive_isdn
 file	netisdn/i4b_l3timer.c		passive_isdn
 file	netisdn/i4b_l2if.c		passive_isdn
 file	netisdn/i4b_l4if.c		passive_isdn
-# isdn device driver, interface to i4bd
-file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
-file	netisdn/i4b_l4.c		isdn			needs-flag
-file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
-file	netisdn/i4b_l4timer.c		isdn			needs-flag
+# isdn device driver, interface to isdnd
+file	netisdn/i4b_i4bdrv.c		isdn			needs-flag
+file	netisdn/i4b_l4.c		isdndev			needs-flag
+file	netisdn/i4b_l4mgmt.c		isdndev			needs-flag
+file	netisdn/i4b_l4timer.c		isdndev			needs-flag
 
 # Game adapter (joystick)
 device	joy

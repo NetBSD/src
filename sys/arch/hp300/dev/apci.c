@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12.8.2 2002/01/08 00:24:31 nathanw Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.8.3 2002/04/01 07:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@
  * XXX more code could be shared.  (Currently, no code is shared.)
  * XXX FIXME!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.12.8.3 2002/04/01 07:39:50 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,10 +590,11 @@ apciioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -659,7 +663,7 @@ apciioctl(dev, cmd, data, flag, p)
 	}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

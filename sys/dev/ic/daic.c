@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997,1999,2001 Martin Husemann <martin@duskware.de>
+ * Copyright (c) 1997-2002 Martin Husemann <martin@duskware.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.1.1.1.4.4 2002/01/08 00:29:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.1.1.1.4.5 2002/04/01 07:45:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,24 +67,28 @@ struct cfdriver daic_cd = {
 
 /* local function prototypes */
 static char * cardtypename __P((int cardtype));
-static int daic_download __P((int unit, int portcount, struct isdn_dr_prot *data));
-static int daic_diagnostic __P((int unit, struct isdn_diagnostic_request *req));
+static int daic_download __P((void *, int portcount, struct isdn_dr_prot *data));
+static int daic_diagnostic __P((void *, struct isdn_diagnostic_request *req));
 static void daic_connect_request(unsigned int);
 static void daic_connect_response(unsigned int, int, int);
 static void daic_disconnect_request(unsigned int, int);
-static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int quiet));
-static int daic_handle_intr __P((struct daic *sc, int port));
-static int daic_register_port(struct daic *sc, int port);
-static void daic_request(struct daic *sc, int port, u_int req, u_int id, bus_size_t parmsize, const u_int8_t *parms);
-static u_int daic_assign(struct daic *sc, int port, u_int instance, bus_size_t parmsize, const u_int8_t *parms);
-static void daic_indicate_ind(struct daic *sc, int port);
-static void daic_bch_config(int unit, int channel, int bprot, int updown);
-static void daic_bch_tx_start(int unit, int channel);
-static void daic_set_linktab(int unit, int channel, drvr_link_t *dlt);
-static isdn_link_t *daic_ret_linktab(int unit, int channel);
+static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize));
+static int daic_handle_intr __P((struct daic_softc *sc, int port));
+static void daic_register_port(struct daic_softc *sc, int port);
+static void daic_request(struct daic_softc *sc, int port, u_int req, u_int id, bus_size_t parmsize, const u_int8_t *parms);
+static u_int daic_assign(struct daic_softc *sc, int port, u_int instance, bus_size_t parmsize, const u_int8_t *parms);
+static void daic_indicate_ind(struct daic_softc *sc, int port);
+static void daic_bch_config(void *, int channel, int bprot, int updown);
+static void daic_bch_tx_start(void *, int channel);
+static void daic_set_link(void *softc, int channel,
+	const struct isdn_l4_driver_functions *l4_driver, void *l4_inst );
+static void daic_mgmt_command(int bri, int cmd, void *parm);
+static void daic_alert_request(unsigned int);
+
+static isdn_link_t *daic_ret_linktab(void *softc, int channel);
 
 #ifdef DAIC_DEBUG
-static void daic_dump_request(struct daic *sc, int port, u_int req, u_int id, bus_size_t parmsize, u_int8_t *parms);
+static void daic_dump_request(struct daic_softc *sc, int port, u_int req, u_int id, bus_size_t parmsize, u_int8_t *parms);
 #endif
 
 /* static data */
@@ -123,16 +127,6 @@ static u_int8_t parm_global_assign[] = {
 };
 
 /*---------------------------------------------------------------------------*
- *	structure mapping one isdn port (a 'unit') to an sc/port pair
- *---------------------------------------------------------------------------*/
-struct daic_unit_map {
-	struct daic *sc;
-	int port;
-};
-static struct daic_unit_map *unit_map = NULL;
-static int next_unit = 0;
-
-/*---------------------------------------------------------------------------*
  *	Return the name of a card with given cardtype
  *---------------------------------------------------------------------------*/
 static char *
@@ -147,15 +141,15 @@ cardtypename(cardtype)
 	
 /*---------------------------------------------------------------------------*
  * Probe for presence of device at given io space. 
- * Return:	0 no card identified
- *		1 card found
+ * Return the card type (stupid ISA needs to know this in advance, to 
+ * calculate the share memory size).
  *---------------------------------------------------------------------------*/
 int
 daic_probe(bus, io)
 	bus_space_tag_t bus;
 	bus_space_handle_t io;
 {
-	return daic_reset(bus, io, 0, 1);
+	return (daic_reset(bus, io, 0, NULL));
 }
 
 /*---------------------------------------------------------------------------*
@@ -164,25 +158,29 @@ daic_probe(bus, io)
 void
 daic_attach(self, sc)
 	struct device *self;
-	struct daic *sc;
+	struct daic_softc *sc;
 {
-	int i, num_ports;
-
-	num_ports = sc->sc_cardtype == DAIC_TYPE_QUAD ? 4 : 1;
+	int i, num_ports, memsize = 0;
 
 	/* init sc */
-	memset(sc->sc_assign_res, 0, sizeof sc->sc_assign_res);
-	memset(sc->sc_assign, 0, sizeof sc->sc_assign);
-	for (i = 0; i < num_ports; i++) {
-		sc->sc_state[i] = DAIC_STATE_COLD;
-	}
+	memset(sc->sc_port, 0, sizeof sc->sc_port);
+	memset(sc->sc_con, 0, sizeof sc->sc_con);
 	sc->sc_cardtype = -1;
 
 	/* init card */
-	sc->sc_cardtype = daic_reset(sc->sc_iot, sc->sc_ioh, 0, 0);
-	if (sc->sc_cardtype >= 0)
-		for (i = 0; i < num_ports; i++)
-			sc->sc_state[i] = DAIC_STATE_DOWNLOAD;
+	sc->sc_cardtype = daic_reset(sc->sc_iot, sc->sc_ioh, 0, &memsize);
+	if (sc->sc_cardtype == 0) {
+		printf(": unknown card, can not attach.\n");
+		return;
+	}
+
+	printf("\n");
+	printf("%s: EICON.Diehl %s\n", sc->sc_dev.dv_xname,
+	    cardtypename(sc->sc_cardtype));
+	printf("%s: %d kByte on board RAM\n", sc->sc_dev.dv_xname, memsize);
+	num_ports = sc->sc_cardtype == DAIC_TYPE_QUAD ? 4 : 1;
+	for (i = 0; i < num_ports; i++)
+		sc->sc_port[i].du_state = DAIC_STATE_DOWNLOAD;
 
 	/* register all ports this card has */
 	for (i = 0; i < num_ports; i++)
@@ -194,10 +192,11 @@ daic_attach(self, sc)
  *---------------------------------------------------------------------------*/
 static int
 daic_handle_intr(sc, port)
-	struct daic *sc;
+	struct daic_softc *sc;
 	int port;
 {
 	struct outcallentry *assoc;
+	struct daic_unit * du = &sc->sc_port[port];
 	int off = port * DAIC_ISA_MEMSIZE;
 	u_int8_t rc, rcid;
 	u_int8_t ind, indid;
@@ -208,10 +207,10 @@ daic_handle_intr(sc, port)
 		return 0;	/* nope, exit */
 
 	/* is the card in running state yet? */
-	if (sc->sc_state[port] == DAIC_STATE_TESTING) {
+	if (du->du_state == DAIC_STATE_TESTING) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_RC+off, 0);
-		sc->sc_state[port] = DAIC_STATE_RUNNING;
-		wakeup(&sc->sc_state[port]);
+		du->du_state = DAIC_STATE_RUNNING;
+		wakeup(du);
 		goto done;
 	}
 
@@ -223,37 +222,37 @@ daic_handle_intr(sc, port)
 
 	/* maybe an assign answer (positive or negative) */
 	if (rc == DAIC_RC_ASSIGN_OK) {
-		sc->sc_assign_res[port] = rcid;	
+		du->du_assign_res = rcid;	
 		/* assing rc is special, we tell the card it's done */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_REQ+off, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_RC+off, 0);
 		/* we handle some types of assigns to global dchannel id's automaticaly */
-		if (sc->sc_assign[port] & DAIC_ASSIGN_GLOBAL) {
-			sc->sc_global_dchan[port] = rcid;
-			sc->sc_assign[port] &= ~(DAIC_ASSIGN_GLOBAL|DAIC_ASSIGN_PENDING);
-			if (sc->sc_assign[port] & DAIC_ASSIGN_SLEEPING) {
-				sc->sc_assign[port] = 0;
-				wakeup(&sc->sc_assign_res[port]);
+		if (du->du_assign & DAIC_ASSIGN_GLOBAL) {
+			du->du_global_dchan = rcid;
+			du->du_assign &= ~(DAIC_ASSIGN_GLOBAL|DAIC_ASSIGN_PENDING);
+			if (du->du_assign & DAIC_ASSIGN_SLEEPING) {
+				du->du_assign = 0;
+				wakeup(&du->du_assign_res);
 			}
 		} else {
-			wakeup(&sc->sc_assign[port]);
+			wakeup(&du->du_assign);
 		}
 		goto check_ind;
 	} else if ((rc & DAIC_RC_ASSIGN_MASK) == DAIC_RC_ASSIGN_RC) {
 		printf("%s: assign request failed, error 0x%02x: %s\n",
 			sc->sc_dev.dv_xname, rc & DAIC_RC_ERRMASK,
 			err_codes[rc & DAIC_RC_ERRMASK]);
-		sc->sc_assign_res[port] = 0;
+		du->du_assign_res = 0;
 		/* assing rc is special, we tell the card it's done */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_REQ+off, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_RC+off, 0);
 		/* that's it */
-		wakeup(&sc->sc_assign[port]);
+		wakeup(&du->du_assign);
 		goto check_ind;
 	}
-	if (rcid == sc->sc_global_dchan[port]) {
-		sc->sc_request_res[port] = rc;
-		wakeup(&sc->sc_request_res[port]);
+	if (rcid == du->du_global_dchan) {
+		du->du_request_res = rc;
+		wakeup(&du->du_request_res);
 		goto req_done;
 	}
 	for (chan = 0; chan < 2; chan++) {
@@ -267,7 +266,7 @@ daic_handle_intr(sc, port)
 			goto req_done;
 		}
 	}
-	for (assoc = sc->sc_outcalls[port].tqh_first; assoc; assoc = assoc->queue.tqe_next) {
+	TAILQ_FOREACH(assoc, &sc->sc_outcalls[port], queue) {
 		if (rcid == assoc->dchan_id) {
 			assoc->rc = rc;
 			wakeup(assoc);
@@ -290,7 +289,7 @@ check_ind:
 	if (!ind) goto done;
 
 	/* incoming call routed to global dchannel task? */
-	if (indid == sc->sc_global_dchan[port]) {
+	if (indid == du->du_global_dchan) {
 		if (ind == DAIC_IND_INDICATE) {
 			daic_indicate_ind(sc, port);
 		} else if (ind == DAIC_IND_INFO) {
@@ -327,7 +326,7 @@ check_ind:
 		}
 	}
 
-	for (assoc = sc->sc_outcalls[port].tqh_first; assoc; assoc = assoc->queue.tqe_next) {
+	TAILQ_FOREACH(assoc, &sc->sc_outcalls[port], queue) {
 		if (indid == assoc->dchan_id) {
 			printf("%s: D-Channel indication 0x%02x for outgoing call with cdid %d\n",
 				sc->sc_dev.dv_xname, ind, assoc->cdid);
@@ -353,7 +352,7 @@ done:
  *---------------------------------------------------------------------------*/
 int
 daic_intr(sc)
-	struct daic *sc;
+	struct daic_softc *sc;
 {
 	int handeld = 0;
 	if (sc->sc_cardtype == DAIC_TYPE_QUAD) {
@@ -369,11 +368,13 @@ daic_intr(sc)
  * Download primary protocol microcode to on-board processor
  *---------------------------------------------------------------------------*/
 static int
-daic_download(unit, count, data)
-	int unit, count;
+daic_download(token, count, data)
+	void *token;
+	int count;
 	struct isdn_dr_prot *data;
 {
-	struct daic *sc = unit_map[unit].sc;
+	struct daic_unit *du = token;
+	struct daic_softc *sc = du->du_sc;
 	int i;
 
 	if (sc->sc_cardtype != DAIC_TYPE_QUAD)
@@ -445,19 +446,19 @@ daic_download(unit, count, data)
 				break;
 			}
 			splx(x);
-			tsleep(&sc->sc_state[i], 0, "daic protocol init", hz/25);
+			tsleep(&sc->sc_port[i].du_state, 0, "daic protocol init", hz/25);
 			x = splnet();
 		}
 
 		/* real check: send an invalid request and wait for an interrupt */
-		sc->sc_state[i] = DAIC_STATE_TESTING;
+		sc->sc_port[i].du_state = DAIC_STATE_TESTING;
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_RC+off, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_REQID+off, 0xff);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_REQ+off, 1);
 		splx(x);
-		tsleep(&sc->sc_state[i], 0, "daic irq test", 2*hz);
+		tsleep(&sc->sc_port[i].du_state, 0, "daic irq test", 2*hz);
 		x = splnet();
-		if (sc->sc_state[i] != DAIC_STATE_RUNNING) {
+		if (sc->sc_port[i].du_state != DAIC_STATE_RUNNING) {
 			splx(x);
 			printf("%s: download interrupt test timeout\n",
 				sc->sc_dev.dv_xname);
@@ -470,20 +471,20 @@ daic_download(unit, count, data)
 		splx(x);
 
 		/* assign global d-channel id for that port */
-		sc->sc_global_dchan[i] =
+		sc->sc_port[i].du_global_dchan =
 			daic_assign(sc, i, DAIC_GLOBALID_DCHAN,
 				sizeof parm_global_assign, parm_global_assign);
 
 		/* send an INDICATE request to get incoming calls on this id */
 		x = splnet();
-		VOIDREQ(sc, i, DAIC_REQ_INDICATE, sc->sc_global_dchan[i]);
+		VOIDREQ(sc, i, DAIC_REQ_INDICATE, sc->sc_port[i].du_global_dchan);
 		splx(x);
-		tsleep(&sc->sc_request_res[i], 0, "daic request", 0);
+		tsleep(&sc->sc_port[i].du_request_res, 0, "daic request", 0);
 		x = splnet();
-		if (sc->sc_request_res[i] != DAIC_RC_OK) {
+		if (sc->sc_port[i].du_request_res != DAIC_RC_OK) {
 			printf("%s: INDICATE request error (0x%02x): %s\n",
-				sc->sc_dev.dv_xname, sc->sc_request_res[i],
-				err_codes[sc->sc_request_res[i] & DAIC_RC_ERRMASK]);
+				sc->sc_dev.dv_xname, sc->sc_port[i].du_request_res,
+				err_codes[sc->sc_port[i].du_request_res & DAIC_RC_ERRMASK]);
 			splx(x);
 			return EIO;
 		}
@@ -498,13 +499,14 @@ daic_download(unit, count, data)
  *	or -1 if no known card is detected.
  *---------------------------------------------------------------------------*/
 static int
-daic_reset(bus, io, port, quiet)
+daic_reset(bus, io, port, memsize)
 	bus_space_tag_t bus;
 	bus_space_handle_t io;
-	int port, quiet;
+	int port;
+	int *memsize;
 {
-	int memsize = 0, cardtype = -1;
 	int i, off = port * DAIC_ISA_MEMSIZE;
+	int cardtype, mem, quiet = memsize == NULL;	/* no output if we are only probing */
 
 	/* clear any pending interrupt */
 	bus_space_read_1(bus, io, DAIC_IRQ+off);
@@ -538,10 +540,9 @@ daic_reset(bus, io, port, quiet)
 		
 	/* fetch info from primary bootstrap code */
 	cardtype = bus_space_read_1(bus, io, DAIC_BOOT_CARD+off);
-	memsize = bus_space_read_1(bus, io, DAIC_BOOT_MSIZE+off);
-
-	/* done, output info */
-	if (!quiet) printf(": EICON.Diehl-%s (%d kB RAM)\n", cardtypename(cardtype), memsize << 4);
+	mem = bus_space_read_1(bus, io, DAIC_BOOT_MSIZE+off) << 4;
+	if (memsize)
+		*memsize = mem;
 
 	return cardtype;
 }
@@ -552,12 +553,13 @@ daic_reset(bus, io, port, quiet)
  * userland, but hey, this is only a diagnostic tool...
  *---------------------------------------------------------------------------*/
 static int
-daic_diagnostic(unit, req)
-	int unit;
+daic_diagnostic(token, req)
+	void *token;
 	struct isdn_diagnostic_request *req;
 {
-	struct daic *sc = unit_map[unit].sc;
-	int port = unit_map[unit].port;
+	struct daic_unit *du = token;
+	struct daic_softc *sc = du->du_sc;
+	int port = du->du_port;
 	int off = port * DAIC_ISA_MEMSIZE;
 	int rc, cnt;
 	int s, err = 0;
@@ -604,11 +606,11 @@ daic_diagnostic(unit, req)
 
 	/* check state and switch to DIAGNOSTIC */
 	s = splnet();
-	if (sc->sc_state[port] != DAIC_STATE_RUNNING) {
+	if (sc->sc_port[port].du_state != DAIC_STATE_RUNNING) {
 		splx(s);
 		return EWOULDBLOCK;
 	}
-	sc->sc_state[port] = DAIC_STATE_DIAGNOSTIC;
+	sc->sc_port[port].du_state = DAIC_STATE_DIAGNOSTIC;
 	splx(s);
 
 	/* set new request */
@@ -639,80 +641,77 @@ daic_diagnostic(unit, req)
 
 done:	/* back to normal state */
 	s = splnet();
-	sc->sc_state[port] = DAIC_STATE_RUNNING;
+	sc->sc_port[port].du_state = DAIC_STATE_RUNNING;
 	splx(s);
 
 	return err;
 }
 
+static void daic_stat(void *port, int channel, bchan_statistics_t *bsp)
+{
+}
+
+static const struct isdn_l4_bchannel_functions
+daic_l4_driver = {
+	daic_bch_config,
+	daic_bch_tx_start,
+	daic_stat
+};
+
+static const struct isdn_l3_driver_functions
+daic_l3_functions =  {
+	daic_ret_linktab,
+	daic_set_link,
+	daic_connect_request,
+	daic_connect_response,
+	daic_disconnect_request,
+	daic_alert_request,
+	daic_download,
+	daic_diagnostic,
+	daic_mgmt_command
+};
+
 /*---------------------------------------------------------------------------*
  *	Register one port and attach it to the upper layers
  *---------------------------------------------------------------------------*/
-static int
-daic_register_port(struct daic *sc, int port)
+static void
+daic_register_port(struct daic_softc *sc, int port)
 {
 	int chan;
-	int unit = next_unit++;
+	char cardname[80], devname[80];
+
+	sc->sc_port[port].du_port = port;
+	sc->sc_port[port].du_sc = sc;
 
 	/* make sure this hardware driver type is known to layer 4 */
-	ctrl_types[CTRL_DAIC].set_linktab = daic_set_linktab;
-	ctrl_types[CTRL_DAIC].get_linktab = daic_ret_linktab;
-
-	/* attach a new unit */
-	if (unit_map) {
-		struct daic_unit_map *temp = malloc(next_unit*sizeof(struct daic_unit_map), 0, M_DEVBUF);
-		memcpy(temp, unit_map, unit*sizeof(struct daic_unit_map));
-		free(unit_map, M_DEVBUF);
-		unit_map = temp;
-	} else {
-		unit_map = malloc(sizeof(struct daic_unit_map), 0, M_DEVBUF);
-		next_unit = 0;
-	}
-	next_unit++;
-	unit_map[unit].sc = sc;
-	unit_map[unit].port = port;
-
-	/* setup function pointers */
-	ctrl_desc[nctrl].N_CONNECT_REQUEST = daic_connect_request;
-	ctrl_desc[nctrl].N_CONNECT_RESPONSE = daic_connect_response;
-	ctrl_desc[nctrl].N_DISCONNECT_REQUEST = daic_disconnect_request;
-	ctrl_desc[nctrl].N_DOWNLOAD = daic_download;
-	ctrl_desc[nctrl].N_DIAGNOSTICS = daic_diagnostic;
-
-	/* init type and unit */
-	ctrl_desc[nctrl].unit = unit;
-	ctrl_desc[nctrl].ctrl_type = CTRL_DAIC;
-	ctrl_desc[nctrl].card_type = sc->sc_cardtype + 1;
-
-	/* state fields */
-	ctrl_desc[nctrl].dl_est = DL_DOWN;
-	ctrl_desc[nctrl].bch_state[0] = BCH_ST_FREE;
-	ctrl_desc[nctrl].bch_state[1] = BCH_ST_FREE;
-	sc->sc_ctrl[port] = nctrl++;
+	if (sc->sc_cardtype == DAIC_TYPE_QUAD)
+		sprintf(devname, "%s port %d", sc->sc_dev.dv_xname, port);
+	else
+		strcpy(devname, sc->sc_dev.dv_xname);
+	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
+	sc->sc_port[port].du_l3 = isdn_attach_bri(
+	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
 
 	/* initialize linktabs for this port */
 	for (chan = 0; chan < 2; chan++) {
 		isdn_link_t *lt = &sc->sc_con[port*2+chan].isdn_linktab;
-		lt->unit = unit;
+		lt->l1token = &sc->sc_port[port];
 		lt->channel = chan;
-		lt->bch_config = daic_bch_config;
-		lt->bch_tx_start = daic_bch_tx_start;
 		lt->tx_queue = &sc->sc_con[port*2+chan].tx_queue;
 		lt->rx_queue = &sc->sc_con[port*2+chan].rx_queue;
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
-
-	return unit;
 }
 
 /*---------------------------------------------------------------------------*
  *	return the address of daic drivers linktab	
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
-daic_ret_linktab(int unit, int channel)
+daic_ret_linktab(void *token, int channel)
 {
-	struct daic *sc = unit_map[unit].sc;
-	int port = unit_map[unit].port;
+	struct daic_unit *du = token;
+	struct daic_softc *sc = du->du_sc;
+	int port = du->du_port;
 	struct daic_connection *con = &sc->sc_con[port*2+channel];
 
 	return(&con->isdn_linktab);
@@ -722,13 +721,15 @@ daic_ret_linktab(int unit, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-daic_set_linktab(int unit, int channel, drvr_link_t *dlt)
+daic_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_inst)
 {
-	struct daic *sc = unit_map[unit].sc;
-	int port = unit_map[unit].port;
+	struct daic_unit *du = token;
+	struct daic_softc *sc = du->du_sc;
+	int port = du->du_port;
 	struct daic_connection *con = &sc->sc_con[port*2+channel];
 
-	con->drvr_linktab = dlt;
+	con->l4_driver = l4_driver;
+	con->l4_driver_softc = l4_inst;
 }
 
 /*---------------------------------------------------------------------------*
@@ -736,7 +737,7 @@ daic_set_linktab(int unit, int channel, drvr_link_t *dlt)
  *---------------------------------------------------------------------------*/
 static void
 daic_request(
-	struct daic *sc,		/* ourself */
+	struct daic_softc *sc,		/* ourself */
 	int port, 			/* and the port on this card */
 	u_int req, 			/* the request to send */
 	u_int id, 			/* id of communication task */
@@ -764,7 +765,7 @@ daic_request(
  *---------------------------------------------------------------------------*/
 static u_int
 daic_assign(
-	struct daic *sc,	/* our state and port no */
+	struct daic_softc *sc,	/* our state and port no */
 	int port,
 	u_int classid,		/* Diehl calls this "global instance id" */
 	bus_size_t parmsize, 	/* sizeof paramter arra */
@@ -777,30 +778,30 @@ daic_assign(
 	/* there only may be one assignment running concurrently */
 		x = splnet();
 	for (;;) {
-		if (!(sc->sc_assign[port] & DAIC_ASSIGN_PENDING))
+		if (!(sc->sc_port[port].du_assign & DAIC_ASSIGN_PENDING))
 			break;	/* we got it! */
 
 		/* somebody else is assigning, record state and sleep */
-		sc->sc_assign[port] |= DAIC_ASSIGN_SLEEPING;
-		tsleep(&sc->sc_assign_res[port], 0, wchan, 0);
+		sc->sc_port[port].du_assign |= DAIC_ASSIGN_SLEEPING;
+		tsleep(&sc->sc_port[port].du_assign_res, 0, wchan, 0);
 	}
 
 	/* put parameters and request to card */
-	sc->sc_assign[port] |= DAIC_ASSIGN_PENDING;
+	sc->sc_port[port].du_assign |= DAIC_ASSIGN_PENDING;
 	daic_request(sc, port, DAIC_REQ_ASSIGN, classid, parmsize, parms);
 
 	/* wait for completition of assignment by the card */
-	tsleep(&sc->sc_assign[port], 0, wchan, 0);
-	id = sc->sc_assign_res[port];
+	tsleep(&sc->sc_port[port].du_assign, 0, wchan, 0);
+	id = sc->sc_port[port].du_assign_res;
 
 	/* have we lost our global dchannel id in the meantime? */
-	if (sc->sc_assign[port] & DAIC_ASSIGN_NOGLOBAL) {
+	if (sc->sc_port[port].du_assign & DAIC_ASSIGN_NOGLOBAL) {
 		/* start an assign request and let the result
 		   be handled by the interrupt handler - we don't
 		   have to wait for it here. As the assign lock
 		   isn't freed, we don't wake up others... */
-		sc->sc_assign[port] &= ~DAIC_ASSIGN_NOGLOBAL;
-		sc->sc_assign[port] |= DAIC_ASSIGN_PENDING|DAIC_ASSIGN_GLOBAL;
+		sc->sc_port[port].du_assign &= ~DAIC_ASSIGN_NOGLOBAL;
+		sc->sc_port[port].du_assign |= DAIC_ASSIGN_PENDING|DAIC_ASSIGN_GLOBAL;
 		daic_request(sc, port, DAIC_REQ_ASSIGN, DAIC_GLOBALID_DCHAN, 
 			sizeof parm_global_assign, parm_global_assign);
 		splx(x);
@@ -810,11 +811,11 @@ daic_assign(
 	/* XXX - review this, can't remember why I did it this complicated */
 
 	/* unlock and wakup others, if any */
-	if (sc->sc_assign[port] & DAIC_ASSIGN_SLEEPING) {
-		sc->sc_assign[port] = 0;
-		wakeup(&sc->sc_assign_res[port]);
+	if (sc->sc_port[port].du_assign & DAIC_ASSIGN_SLEEPING) {
+		sc->sc_port[port].du_assign = 0;
+		wakeup(&sc->sc_port[port].du_assign_res);
 	} else
-		sc->sc_assign[port] = 0;
+		sc->sc_port[port].du_assign = 0;
 	splx(x);
 
 	return id;
@@ -825,7 +826,7 @@ daic_assign(
  *	Debug output of request parameters
  *---------------------------------------------------------------------------*/
 static void
-daic_dump_request(struct daic *sc, int port, u_int req, u_int id, bus_size_t parmsize, u_int8_t *parms)
+daic_dump_request(struct daic_softc *sc, int port, u_int req, u_int id, bus_size_t parmsize, u_int8_t *parms)
 {
 	int i;
 	printf("%s: request 0x%02x to task id 0x%02x:",
@@ -845,7 +846,7 @@ daic_dump_request(struct daic *sc, int port, u_int req, u_int id, bus_size_t par
  *	context.
  *---------------------------------------------------------------------------*/
 static void
-daic_indicate_ind(struct daic *sc, int port)
+daic_indicate_ind(struct daic_softc *sc, int port)
 {
 	int offset = port*DAIC_ISA_MEMSIZE;
 	int i;
@@ -854,7 +855,6 @@ daic_indicate_ind(struct daic *sc, int port)
 
 	/* get and init new calldescriptor */
 	cd = reserve_cd();	/* cdid filled in */
-	cd->controller = sc->sc_ctrl[port];
 	cd->bprot = BPROT_NONE;
 	cd->cause_in = 0;
 	cd->cause_out = 0;			
@@ -865,7 +865,6 @@ daic_indicate_ind(struct daic *sc, int port)
 	cd->cr = -1;
 	cd->crflag = CRF_DEST;
 	cd->ilt = NULL;		/* reset link tab ptrs */
-	cd->dlt = NULL;
 
 	i = 0;
 	for (;;) {
@@ -920,20 +919,20 @@ daic_indicate_ind(struct daic *sc, int port)
 		i += ielen;
 	}
 	cd->event = EV_SETUP;
-	ctrl_desc[cd->controller].bch_state[cd->channelid] = BCH_ST_RSVD;
+	/* ctrl_desc[cd->controller].bch_state[cd->channelid] = BCH_ST_RSVD; */
 
 	/* record the dchannel id for this call and the call descriptor */
-	sc->sc_con[port*2+cd->channelid].dchan_inst = sc->sc_global_dchan[port];
+	sc->sc_con[port*2+cd->channelid].dchan_inst = sc->sc_port[port].du_global_dchan;
 	sc->sc_con[port*2+cd->channelid].cdid = cd->cdid;
 
 	/* this task is busy now, we need a new global dchan id */
-	if (sc->sc_assign[port] & DAIC_ASSIGN_PENDING) {
+	if (sc->sc_port[port].du_assign & DAIC_ASSIGN_PENDING) {
 		/* argh - can't assign right now */
-		sc->sc_assign[port] |= DAIC_ASSIGN_NOGLOBAL;
+		sc->sc_port[port].du_assign |= DAIC_ASSIGN_NOGLOBAL;
 	} else {
 		/* yeah - can request the assign right away, but let the
 		   interrupt handler autohandle the result */
-		sc->sc_assign[port] |= DAIC_ASSIGN_PENDING|DAIC_ASSIGN_GLOBAL;
+		sc->sc_port[port].du_assign |= DAIC_ASSIGN_PENDING|DAIC_ASSIGN_GLOBAL;
 		daic_request(sc, port, DAIC_REQ_ASSIGN, DAIC_GLOBALID_DCHAN,
 			sizeof parm_global_assign, parm_global_assign);
 	}
@@ -957,8 +956,9 @@ daic_connect_request(unsigned int cdid)
 {
 	u_int8_t id, cpn[TELNO_MAX+4], parms[TELNO_MAX+16], *p;
 	call_desc_t *cd = cd_by_cdid(cdid);
-	struct daic *sc = unit_map[cd->driver_unit].sc;
-	int port = unit_map[cd->driver_unit].port;
+	struct daic_unit *du = cd->ilt->l1token;
+	struct daic_softc *sc = du->du_sc;
+	int port = du->du_port;
 	int x, len;
 	struct outcallentry *assoc;
 
@@ -1047,7 +1047,7 @@ static void daic_disconnect_request(unsigned int cdid, int cause)
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_bch_config(int unit, int channel, int bprot, int updown)
+static void daic_bch_config(void *token, int channel, int bprot, int updown)
 {
 	printf("daic: bch_config\n");
 }
@@ -1055,8 +1055,24 @@ static void daic_bch_config(int unit, int channel, int bprot, int updown)
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_bch_tx_start(int unit, int channel)
+static void daic_bch_tx_start(void *token, int channel)
 {
 	printf("daic: bch_tx_start\n");
+}
+
+/*---------------------------------------------------------------------------*
+ *	TODO:
+ *---------------------------------------------------------------------------*/
+static void
+daic_mgmt_command(int whatever, int cmd, void *parm)
+{
+}
+
+/*---------------------------------------------------------------------------*
+ *	TODO:
+ *---------------------------------------------------------------------------*/
+static void
+daic_alert_request(unsigned int whatever)
+{
 }
 

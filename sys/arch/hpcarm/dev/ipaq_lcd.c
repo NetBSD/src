@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.3.8.2 2002/01/08 00:24:51 nathanw Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.3.8.3 2002/04/01 07:40:18 nathanw Exp $	*/
 #define IPAQ_LCD_DEBUG
 
 /*
@@ -380,7 +380,7 @@ ipaqlcd_ioctl(v, cmd, data, flag, p)
         case HPCFBIO_SOP:
 		return (EINVAL);
         }
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

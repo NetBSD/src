@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.33.6.3 2002/01/08 00:31:23 nathanw Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.33.6.4 2002/04/01 07:46:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.33.6.3 2002/01/08 00:31:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.33.6.4 2002/04/01 07:46:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,20 +288,30 @@ ep_pcmcia_attach(parent, self, aux)
 	}
 
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		bus_addr_t maxaddr = pa->pf->sc->iobase + pa->pf->sc->iosize;
+		/*
+		 * the 3c562 can only use 0x??00-0x??7f
+		 * according to the Linux driver
+		 */
 
-		for (i = pa->pf->sc->iobase; i < maxaddr; i += 0x10) {
-			/*
-			 * the 3c562 can only use 0x??00-0x??7f
-			 * according to the Linux driver
-			 */
-			if (i & 0x80)
-				continue;
+		/*
+		 * 3c562 i/o may decodes address line not only A0-3
+		 * but also A7.  Anyway, we must sweep at most
+		 * [0x0000, 0x0100).  The address higher is given by a
+		 * pcmcia bridge.  But pcmcia bus-space allocation
+		 * function implies cards will decode 10-bit address
+		 * line.  So we must search [0x0000, 0x0400).
+		 *
+		 * XXX: We must not check the bunch of I/O space range
+		 * [0x400*n, 0x300 + 0x400*n) because they are
+		 * reserved for legacy ISA devices and their alias
+		 * images on PC/AT architecture.
+		 */
+		for (i = 0x0300; i < 0x0380; i += 0x10) {
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
 				break;
 		}
-		if (i >= maxaddr) {
+		if (i == 0x0380) {
 			printf(": can't allocate i/o space\n");
 			goto ioalloc_failed;
 		}

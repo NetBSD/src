@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.20.2.1 2001/08/24 00:11:53 nathanw Exp $	*/
+/*	$NetBSD: bootp.c,v 1.20.2.2 2002/04/01 07:48:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -39,7 +39,7 @@
  * @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
@@ -105,6 +105,10 @@ bootp(sock)
 		u_char header[HEADER_SIZE];
 		struct bootp rbootp;
 	} rbuf;
+#ifdef SUPPORT_DHCP
+	char vci[64];
+	int vcilen;
+#endif
 
 #ifdef BOOTP_DEBUG
  	if (debug)
@@ -137,17 +141,14 @@ bootp(sock)
 	bp->bp_vend[5] = 1;
 	bp->bp_vend[6] = DHCPDISCOVER;
 	/*
-	 * If we are booting from PXE, we want to send the string
-	 * "PXEClient" to the DHCP server in case it only wants to
-	 * respond to PXE clients.
+	 * Insert a NetBSD Vendor Class Identifier option.
 	 */
-	if (bootp_flags & BOOTP_PXE) {
-		bp->bp_vend[7] = TAG_CLASSID;
-		bp->bp_vend[8] = 9;
-		bcopy("PXEClient", &bp->bp_vend[9], 9);
-		bp->bp_vend[18] = TAG_END;
-	} else
-		bp->bp_vend[7] = TAG_END;
+	sprintf(vci, "NetBSD:%s:libsa", MACHINE);
+	vcilen = strlen(vci);
+	bp->bp_vend[7] = TAG_CLASSID;
+	bp->bp_vend[8] = vcilen;
+	bcopy(vci, &bp->bp_vend[9], vcilen);
+	bp->bp_vend[9 + vcilen] = TAG_END;
 #else
 	bp->bp_vend[4] = TAG_END;
 #endif
@@ -184,13 +185,15 @@ bootp(sock)
 		bp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		bcopy(&leasetime, &bp->bp_vend[21], 4);
-		if (bootp_flags & BOOTP_PXE) {
-			bp->bp_vend[25] = TAG_CLASSID;
-			bp->bp_vend[26] = 9;
-			bcopy("PXEClient", &bp->bp_vend[27], 9);
-			bp->bp_vend[36] = TAG_END;
-		}
-			bp->bp_vend[25] = TAG_END;
+		/*
+		 * Insert a NetBSD Vendor Class Identifier option.
+		 */
+		sprintf(vci, "NetBSD:%s:libsa", MACHINE);
+		vcilen = strlen(vci);
+		bp->bp_vend[25] = TAG_CLASSID;
+		bp->bp_vend[26] = vcilen;
+		bcopy(vci, &bp->bp_vend[27], vcilen);
+		bp->bp_vend[27 + vcilen] = TAG_END;
 
 		expected_dhcpmsgtype = DHCPACK;
 
@@ -256,6 +259,17 @@ bootp(sock)
 #endif
 		gateip.s_addr = 0;
 	}
+
+	printf("net_open: client addr: %s\n", inet_ntoa(myip));
+	if (smask)
+		printf("net_open: subnet mask: %s\n", intoa(smask));
+	if (gateip.s_addr != 0)
+		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
+	printf("net_open: server addr: %s\n", inet_ntoa(rootip));
+	if (rootpath[0] != '\0')
+		printf("net_open: server path: %s\n", rootpath);
+	if (bootfile[0] != '\0')
+		printf("net_open: file name: %s\n", bootfile);
 
 	/* Bump xid so next request will be unique. */
 	++d->xid;

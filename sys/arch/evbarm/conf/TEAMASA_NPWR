@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.3.2.2 2002/02/28 04:09:07 nathanw Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.3.2.3 2002/04/01 07:39:45 nathanw Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -19,7 +19,7 @@ options 	NTP		# NTP phase/frequency locked loop
 # CPU options
 
 # For StrongARM systems
-options 	CPU_XSCALE	# Support the XScale core
+options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
 
@@ -100,8 +100,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is oriented towards the IQ80310

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.4.5 2002/02/28 04:11:32 nathanw Exp $
+# $NetBSD: GENERIC,v 1.14.4.6 2002/04/01 07:42:15 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.14.4.5 $"
+#ident 		"GENERIC-$Revision: 1.14.4.6 $"
 
 maxusers	32
 
@@ -37,7 +37,6 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-options 	NEWPMAP
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
@@ -129,16 +128,18 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 #vga*	at pci? dev ? function ?
 
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 options 	TLP_MATCH_21040
 options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
-tlp*	at pci? dev ? function ?	# DEC Tulip and similar
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
-ukphy*	at mii? phy ?			# generic unknown PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports

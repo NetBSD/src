@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.6 2002/04/01 07:38:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.6 2002/04/01 07:38:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Ex
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -74,9 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Ex
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <sys/exec.h>
+
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
+
+#include <sys/exec_aout.h>
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -390,7 +393,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -577,7 +580,7 @@ cpu_reboot(howto, bootstr)
 }
 
 
-unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;

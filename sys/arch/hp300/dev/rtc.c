@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2.2.2 2002/01/08 00:24:36 nathanw Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2.2.3 2002/04/01 07:39:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,9 @@
  * attachment for HP300 real-time clock (RTC)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2.2.3 2002/04/01 07:39:54 nathanw Exp $");                                                  
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -86,7 +89,7 @@ rtcmatch(parent, match, aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp("rtc     ", ia->ia_modname) != 0)
+	if (strcmp("rtc", ia->ia_modname) != 0)
 		return (0);
 
 	return (1);
@@ -110,8 +113,8 @@ rtcattach(parent, self, aux)
 		return;
 	}
 
-	todr_handle = malloc(sizeof(struct todr_chip_handle),
-	    M_DEVBUF, M_NOWAIT);
+	MALLOC(todr_handle, struct todr_chip_handle *,
+	    sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
 
 	todr_handle->cookie = sc;
 	todr_handle->todr_gettime = rtc_gettime;

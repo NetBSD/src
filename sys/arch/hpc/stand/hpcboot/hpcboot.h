@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.h,v 1.1.10.1 2002/02/28 04:09:45 nathanw Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.1.10.2 2002/04/01 07:40:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -160,5 +160,8 @@ void _bitdisp(u_int32_t, int, int, int, int);
 void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
 #define bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 __END_DECLS
+
+/* Runtime Windows CE version */
+extern OSVERSIONINFOW WinCEVersion;
 
 #endif /* _HPCBOOT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.8 2002/02/28 04:14:58 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.9 2002/04/01 07:48:17 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107.2.8 2002/02/28 04:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107.2.9 2002/04/01 07:48:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,6 +562,7 @@ msdosfs_write(v)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
+	boolean_t async;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",
@@ -611,6 +612,7 @@ msdosfs_write(v)
 	/*
 	 * Remember some values in case the write fails.
 	 */
+	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = dep->de_FileSize;
 
@@ -647,7 +649,7 @@ msdosfs_write(v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (oldoff >> 16 != uio->uio_offset >> 16) {
+		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
@@ -1120,6 +1122,10 @@ abortit:
 		}
 		dotdotp = (struct direntry *)bp->b_data + 1;
 		putushort(dotdotp->deStartCluster, dp->de_StartCluster);
+		if (FAT32(pmp)) {
+			putushort(dotdotp->deHighClust,
+				dp->de_StartCluster >> 16);
+		}
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			VOP_UNLOCK(fvp, 0);

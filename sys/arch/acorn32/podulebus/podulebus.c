@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.1.4.3 2002/02/28 04:05:58 nathanw Exp $ */
+/* $NetBSD: podulebus.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.1.4.3 2002/02/28 04:05:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

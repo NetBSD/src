@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $	*/
+/*	$NetBSD: isic_isa.c,v 1.2.2.7 2002/04/01 07:45:54 nathanw Exp $	*/
 
 /*
  *   Copyright (c) 1997-1999 Martin Husemann. All rights reserved.
@@ -35,7 +35,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.7 2002/04/01 07:45:54 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -45,7 +45,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.7 2002/04/01 07:45:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -78,12 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.6 2002/02/28 04:13:44 nathanw Exp
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
@@ -108,7 +109,7 @@ static int setup_io_map __P((int flags, bus_space_tag_t iot,
 static void args_unmap __P((int *num_mappings, struct isic_io_map *maps));
 
 struct cfattach isic_isa_ca = {
-	sizeof(struct l1_softc), isic_isa_probe, isic_isa_attach
+	sizeof(struct isic_softc), isic_isa_probe, isic_isa_attach
 };
 
 #define	ISIC_FMT	"%s: "
@@ -371,12 +372,14 @@ done:
 			ia->ia_nio = 1;
 			ia->ia_io[0].ir_addr = iobase;
 			ia->ia_io[0].ir_size = iosize;
-		}
+		} else
+			ia->ia_nio = 0;
 		if (msize != 0) {
 			ia->ia_niomem = 1;
 			ia->ia_iomem[0].ir_addr = maddr;
 			ia->ia_iomem[0].ir_size = msize;
-		}
+		} else
+			ia->ia_niomem = 0;
 		ia->ia_nirq = 1;
 
 		ia->ia_ndrq = 0;
@@ -386,21 +389,21 @@ done:
 }
 
 static int
-isicattach(int flags, struct l1_softc *sc)
+isicattach(int flags, struct isic_softc *sc)
 {
 	int ret = 0;
 	char *drvid;
 
 #ifdef __FreeBSD__
 
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 #define	PARM	dev
 #define	PARM2	dev, iobase2
 #define	FLAGS	dev->id_flags
 
 #elif defined(__bsdi__)
 
-	struct l1_softc *sc = (struct l1_softc *)self;
+	struct isic_softc *sc = (struct isic_softc *)self;
 #define	PARM	parent, self, ia
 #define	PARM2	parent, self, ia
 #define	FLAGS	sc->sc_flags
@@ -573,8 +576,8 @@ isicattach(int flags, struct l1_softc *sc)
 				break;
 
 			default:
-				printf("isic%d: Error, IPAC version %d unknown!\n",
-					sc->sc_unit, ret);
+				printf("%s: Error, IPAC version %d unknown!\n",
+					sc->sc_dev.dv_xname, ret);
 				return(0);
 				break;
 		}
@@ -657,10 +660,6 @@ isicattach(int flags, struct l1_softc *sc)
 	callout_init(&sc->sc_T3_callout);
 	callout_init(&sc->sc_T4_callout);
 #endif
-	
-	/* init higher protocol layers */
-	
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 	
 	/* announce manufacturer and card type */
 	
@@ -807,6 +806,9 @@ isicattach(int flags, struct l1_softc *sc)
 
 #endif /* __FreeBSD__ */
 
+	/* init higher protocol layers */
+	isic_attach_bri(sc, drvid, &isic_std_driver);
+	
 	return(1);
 #undef PARM
 #undef FLAGS
@@ -820,7 +822,7 @@ isic_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct l1_softc *sc = (void *)self;
+	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int flags = sc->sc_dev.dv_cfdata->cf_flags;
 	int ret = 0, iobase, iosize, maddr, msize;
@@ -842,7 +844,6 @@ isic_isa_attach(parent, self, aux)
 	}
 
 	/* Setup parameters */
-	sc->sc_unit = sc->sc_dev.dv_unit;
 	sc->sc_irq = ia->ia_irq[0].ir_irq;
 	sc->sc_maddr = maddr;
 	sc->sc_num_mappings = 0;

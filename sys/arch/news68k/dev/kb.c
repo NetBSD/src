@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.1 2001/01/25 14:33:28 tsutsui Exp $	*/
+/*	$NetBSD: kb.c,v 1.1.10.1 2002/04/01 07:41:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -177,5 +177,5 @@ kb_ioctl(v, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }

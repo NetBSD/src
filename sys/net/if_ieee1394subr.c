@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.3 2002/01/08 00:33:52 nathanw Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.4 2002/04/01 07:48:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.3 2002/01/08 00:33:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.4 2002/04/01 07:48:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -96,10 +96,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	struct ieee1394_arphdr *ah;
 #endif /* INET */
-
-	/*
-	 * XXX ALTQ
-	 */
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -137,6 +134,13 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+
+	/*
+	 * If the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -225,11 +229,6 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		senderr(ENOBUFS);
 
 	s = splnet();
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
-		splx(s);
-		senderr(ENOBUFS);
-	}
 	ifp->if_obytes += m0->m_pkthdr.len;
 	if (m0->m_flags & M_MCAST)
 		ifp->if_omcasts++;
@@ -241,7 +240,12 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			senderr(ENOBUFS);
 		}
 		memcpy(mtod(m, caddr_t), &hwdst, sizeof(hwdst));
-		IF_ENQUEUE(&ifp->if_snd, m);
+		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+		if (error) {
+			/* mbuf is already freed */
+			splx(s);
+			goto bad;
+		}
 	}
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.2.2 2002/02/28 04:11:01 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.3 2002/04/01 07:41:28 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #ifndef	_LOCORE
 #include <machine/cpu.h>
 #endif	/* _LOCORE */
-#endif
+#endif	/* _KERNEL */
 
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)

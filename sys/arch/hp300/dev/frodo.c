@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.5.20.1 2002/01/08 00:24:32 nathanw Exp $	*/
+/*	$NetBSD: frodo.c,v 1.5.20.2 2002/04/01 07:39:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  * Support for the "Frodo" (a.k.a. "Apollo Utility") chip found
  * in HP Apollo 9000/4xx workstations.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.5.20.2 2002/04/01 07:39:51 nathanw Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -136,7 +139,7 @@ frodomatch(parent, match, aux)
 	if (frodo_matched)
 		return (0);
 
-	if (strcmp(ia->ia_modname, "frodo   ") != 0)
+	if (strcmp(ia->ia_modname, "frodo") != 0)
 		return (0);
 
 	if (badaddr((caddr_t)ia->ia_addr))

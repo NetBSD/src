@@ -1,4 +1,4 @@
-/*     $NetBSD: bzero.S,v 1.2.2.2 2002/01/08 00:32:51 nathanw Exp $ */
+/*	$NetBSD: bzero.S,v 1.2.2.3 2002/04/01 07:48:06 nathanw Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -72,18 +72,19 @@ cb_memset:
 		bl	_GLOBAL_OFFSET_TABLE_@local-4
 		mflr	r10
 		mtlr	r9
-		lwz	r5,cache_size@got(r10)
+		lwz	r5,cache_info@got(r10)
 #else
-		lis	r5,cache_size@h
-		ori	r5,r5,cache_size@l
+		lis	r5,cache_info@h
+		ori	r5,r5,cache_info@l
 #endif
-		lwz	r6, 0(r5)
+		lwz	r6, 4(r5)
 		cmpwi	r6, -1
 		bne+	cb_cacheline_known
 
 /*----------------------------------------------------------------------*/
 #define CTL_MACHDEP	7
 #define CPU_CACHELINE	1
+#define	CPU_CACHEINFO	5
 
 #define STKFRAME_SZ	48
 #define MIB		8
@@ -102,6 +103,29 @@ cb_memset:
 		stw	r4, R4_SAVE(r1)
 		stw	r0, R0_SAVE(r1)
 
+	
+
+		li	r0, CTL_MACHDEP		/* Construct MIB */
+		stw	r0, MIB(r1)
+		li	r0, CPU_CACHEINFO
+		stw	r0, MIB+4(r1)
+
+		li	r0, 4*4			/* Oldlenp := 4*4 */
+		stw	r0, OLDPLEN(r1)
+
+		addi	r3, r1, MIB
+		li	r4, 2			/* namelen */
+		/* r5 already contains &cache_info */
+		addi	r6, r1, OLDPLEN
+		li	r7, 0
+		li	r8, 0
+		bl	PIC_PLT(_C_LABEL(sysctl))
+	
+		cmpwi	r3, 0			/* Check result */
+		beq	1f
+
+		/* Failure, try older sysctl */
+	
 		li	r0, CTL_MACHDEP		/* Construct MIB */
 		stw	r0, MIB(r1)
 		li	r0, CPU_CACHELINE
@@ -112,12 +136,22 @@ cb_memset:
 
 		addi	r3, r1, MIB
 		li	r4, 2			/* namelen */
-		/* r5 already contains &cache_size */
+#ifdef PIC
+		mflr	r9
+		bl	_GLOBAL_OFFSET_TABLE_@local-4
+		mflr	r10
+		mtlr	r9
+		lwz	r5,cache_info@got(r10)
+		addi	r5, r5, 4
+#else
+		lis	r5,cache_info+4@h
+		ori	r5,r5,cache_info+4@l
+#endif
 		addi	r6, r1, OLDPLEN
 		li	r7, 0
 		li	r8, 0
 		bl	PIC_PLT(_C_LABEL(sysctl))
-
+1:
 		lwz	r8, R8_SAVE(r1)
 		lwz	r3, R3_SAVE(r1)
 		lwz	r4, R4_SAVE(r1)
@@ -126,11 +160,11 @@ cb_memset:
 #ifdef PIC
 		bl	_GLOBAL_OFFSET_TABLE_@local-4
 		mflr	r10
-		lwz	r9, cache_size@got(r10)
-		lwz	r9, 0(r9)
+		lwz	r9, cache_info@got(r10)
+		lwz	r9, 4(r9)
 #else
-		lis	r5, cache_size@ha
-		lwz	r9, cache_size@l(r5)
+		lis	r5, cache_info+4@ha
+		lwz	r9, cache_info+4@l(r5)
 #endif
 		la	r1, STKFRAME_SZ(r1)
 		lwz	r5, 4(r1)
@@ -151,25 +185,28 @@ cb_memset:
 /* Okay, we know the cache line size (r9) and shift value (r10) */
 cb_cacheline_known:
 #ifdef PIC
-		lwz	r5, cache_size@got(r10)
-		lwz	r9, 0(r5)
+		lwz	r5, cache_info@got(r10)
+		lwz	r9, 4(r5)
 		lwz	r5, cache_sh@got(r10)
 		lwz	r10, 0(r5)
 #else
-		lis	r9, cache_size@ha
-		lwz	r9, cache_size@l(r9)
+		lis	r9, cache_info+4@ha
+		lwz	r9, cache_info+4@l(r9)
 		lis	r10, cache_sh@ha
 		lwz	r10, cache_sh@l(r10)
 #endif
 
 #else /* _KERNEL */
-		li	r9, CACHELINESIZE
-#if CACHELINESIZE == 32
-#define CACHELINESHIFT 5
+#ifdef	MULTIPROCESSOR
+		mfspr	r10, 0			/* Get cpu_info pointer */
 #else
-#error Define CACHELINESHIFT for your CACHELINESIZE
+		lis	r10, cpu_info_store@ha
+		addi	r10, r10, cpu_info_store@l
 #endif
-		li	r10, CACHELINESHIFT
+		lwz	r9, CPU_CI+4(r10)	/* Load D$ line size */
+		cntlzw	r10, r9			/* Calculate shift.. */
+		li	r6, 31
+		subf	r10, r10, r6
 #endif /* _KERNEL */
 		/* Back in memory filling business */
 		
@@ -328,7 +365,7 @@ sf_bytewise:
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
 		.data
-cache_size:	.long	-1
+cache_info:	.long	-1, -1, -1, -1
 cache_sh:	.long	0
 
 #endif

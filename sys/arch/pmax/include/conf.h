@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5.6.2 2002/02/28 04:11:22 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.5.6.3 2002/04/01 07:41:57 nathanw Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #ifndef _PMAX_CONF_H_
-#define _PMAX_CONF_H_
+#define	_PMAX_CONF_H_
 
 #include <sys/conf.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.9 2002/02/28 04:14:04 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.10 2002/04/01 07:46:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.9 2002/02/28 04:14:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.10 2002/04/01 07:46:32 nathanw Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2005,6 +2005,8 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 	if (start != 0) {
 		/* XXX: assume all card decode lower 10 bits by its hardware */
 		mask = 0x3ff;
+		/* enforce to use only masked address */
+		start &= mask;
 	} else {
 		/*
 		 * calculate mask:

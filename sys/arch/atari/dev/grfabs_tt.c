@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.9 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.9.26.1 2002/04/01 07:39:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -104,7 +104,7 @@ static dmode_t vid_modes[] = {
 
 /*
  * XXX: called from ite console init routine.
- * Initialize list of posible video modes.
+ * Initialize list of possible video modes.
  */
 
 void

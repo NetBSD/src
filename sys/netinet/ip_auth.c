@@ -1,10 +1,13 @@
-/*	$NetBSD: ip_auth.c,v 1.18.2.5 2002/02/28 04:15:05 nathanw Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.18.2.6 2002/04/01 07:48:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -21,7 +24,6 @@
 #else
 # include <sys/ioctl.h>
 #endif
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 #endif
@@ -106,9 +108,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.18.2.5 2002/02/28 04:15:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.18.2.6 2002/04/01 07:48:31 nathanw Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.15 2002/01/01 15:08:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.17 2002/03/06 09:44:10 darrenr Exp";
 #endif
 #endif
 
@@ -458,7 +460,7 @@ fr_authioctlloop:
 
 			bzero((char *)&ro, sizeof(ro));
 #  if ((_BSDI_VERSION >= 199802) && (_BSDI_VERSION < 200005)) || \
-       defined(__OpenBSD__)
+       defined(__OpenBSD__) || (defined(IRIX) && (IRIX >= 605))
 			error = ip_output(m, NULL, &ro, IP_FORWARDING, NULL,
 					  NULL);
 #  else
@@ -483,7 +485,9 @@ fr_authioctlloop:
 				error = ENOBUFS;
 			} else {
 				IF_ENQUEUE(ifq, m);
+#  if IRIX < 605
 				schednetisr(NETISR_IP);
+#  endif
 			}
 # endif /* SOLARIS */
 			if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2.4.3 2001/11/14 19:16:07 nathanw Exp $ */
+/*	$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.3 2001/11/14 19:16:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 	struct fbdevice *fb;
 	int depth, def_width, def_height;
 {
-#if defined(SUN4)
+#if !defined(SUN4U)
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 	if (!CPU_ISSUN4) {
@@ -320,7 +320,7 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 	}
 
 	fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
-#endif /* SUN4 */
+#endif /* !SUN4U */
 }
 
 
@@ -379,7 +379,7 @@ fbrcons_init(fb)
 	maxcol = 5000;
 
 #if !defined(RASTERCONS_FULLSCREEN)
-#if defined(SUN4)
+#if !defined(SUN4U)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
@@ -391,7 +391,7 @@ fbrcons_init(fb)
 			maxrow = eep->eeTtyRows;
 		}
 	}
-#endif /* SUN4 */
+#endif /* !SUN4U */
 	if (!CPU_ISSUN4) {
 		maxcol =
 		    a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.13.32.1 2002/01/08 00:24:32 nathanw Exp $	*/
+/*	$NetBSD: dio.c,v 1.13.32.2 2002/04/01 07:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Autoconfiguration and mapping support for the DIO bus.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.13.32.2 2002/04/01 07:39:50 nathanw Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 

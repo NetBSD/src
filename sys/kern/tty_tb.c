@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25.2.3 2001/11/14 19:16:45 nathanw Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.25.2.4 2002/04/01 07:48:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.3 2001/11/14 19:16:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.4 2002/04/01 07:48:01 nathanw Exp $");
 
 #include "tb.h"
 
@@ -388,11 +388,15 @@ tbtioctl(tp, cmd, data, flag, p)
 
 	case TIOCSETD:
 	case TIOCGETD:
+	case TIOCSLINED:
+	case TIOCGLINED:
+	case TIOCGETA:
 	case TIOCGETP:
 	case TIOCGETC:
-		return (-1);		/* pass thru... */
+		return (EPASSTHROUGH);	/* pass thru... */
 
 	default:
+		/* specifically disallow any other ioctl commands */
 		return (ENOTTY);
 	}
 	return (0);

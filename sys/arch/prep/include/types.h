@@ -1,5 +1,5 @@
-/*	$NetBSD: types.h,v 1.1.14.1 2002/01/08 00:27:16 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.1.14.2 2002/04/01 07:42:11 nathanw Exp $	*/
 
-#define __HAVE_NWSCONS
+#define	__HAVE_NWSCONS
 
 #include <powerpc/types.h>

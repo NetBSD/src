@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_compat.c,v 1.7 1998/01/12 18:31:11 thorpej Exp $	*/
+/*	$NetBSD: sd_compat.c,v 1.7.32.1 2002/04/01 07:39:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -41,6 +41,9 @@
 /*
  * Compatibility for SCSI disks without labels.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd_compat.c,v 1.7.32.1 2002/04/01 07:39:54 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/disklabel.h>

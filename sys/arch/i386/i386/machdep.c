@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.16 2002/02/28 04:10:17 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.17 2002/04/01 07:40:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.16 2002/02/28 04:10:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.17 2002/04/01 07:40:39 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -454,6 +454,11 @@ cpu_startup()
 	}
 	if ((cpu_feature & CPUID_MASK2) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK3) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS3,
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
 	}
@@ -2258,7 +2263,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -2553,7 +2558,7 @@ setregs(l, pack, stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_ebx = (int)p->p_psstr;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.7 2002/02/28 04:14:43 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.8 2002/04/01 07:47:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.7 2002/02/28 04:14:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.8 2002/04/01 07:47:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -713,11 +713,11 @@ finit(void)
 {
 
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILE);
+	    &pool_allocator_nointr);
 	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
+	    &pool_allocator_nointr);
 	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
+	    &pool_allocator_nointr);
 }
 
 /*

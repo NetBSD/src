@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.7.26.1 2002/02/28 04:06:39 nathanw Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.7.26.2 2002/04/01 07:38:57 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.1 2002/02/28 04:06:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.2 2002/04/01 07:38:57 nathanw Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -846,7 +846,7 @@ cv3d_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 
@@ -896,7 +896,7 @@ cv3d_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 	    case GRFIOCBLANK:
 		return (cv3d_blank (gp, (int *)data));
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 

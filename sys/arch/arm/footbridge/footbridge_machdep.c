@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.3.6.4 2002/02/28 04:07:28 nathanw Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.3.6.5 2002/04/01 07:39:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,8 +41,6 @@
 #include <arm/footbridge/footbridge.h>
 #include <arm/footbridge/dc21285mem.h>
 
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
-
 /*
  * For optimal cache cleaning we need two 16K banks of
  * virtual address space that NOTHING else will access
@@ -76,7 +74,7 @@ footbridge_sa110_cc_setup(void)
 /*	printf("vaddr=%x addr=%x\n", vaddr, addr);*/
 
 	for (loop = 0; loop < cleanarea; loop += NBPG) {
-		pte = pmap_pte(pmap_kernel(), (addr + loop));
+		pte = vtopte(addr + loop);
 		*pte = L2_PTE(DC21285_SA_CACHE_FLUSH_BASE + loop, AP_KR);
 	}
 	sa110_cache_clean_addr = addr;

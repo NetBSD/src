@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.12.12.1 2002/01/08 00:24:31 nathanw Exp $	*/
+/*	$NetBSD: ac.c,v 1.12.12.2 2002/04/01 07:39:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
  * never uses it.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.12.12.2 2002/04/01 07:39:49 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -162,12 +165,14 @@ acattach(parent, self, aux)
 	sc->sc_sq.sq_go = acgo;
 	sc->sc_sq.sq_intr = acintr;
 
-	sc->sc_bp = (struct buf *)malloc(sizeof(struct buf),
+	MALLOC(sc->sc_bp, struct buf *, sizeof(struct buf), M_DEVBUF, M_NOWAIT);
+	if (sc->sc_bp == NULL) {
+		printf("%s: memory allocation failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	MALLOC(sc->sc_cmd, struct scsi_fmt_cdb *, sizeof(struct scsi_fmt_cdb),
 	    M_DEVBUF, M_NOWAIT);
-	sc->sc_cmd = (struct scsi_fmt_cdb *)malloc(sizeof(struct scsi_fmt_cdb),
-	    M_DEVBUF, M_NOWAIT);
-
-	if (sc->sc_bp == NULL || sc->sc_cmd == NULL) {
+	if (sc->sc_cmd == NULL) {
 		printf("%s: memory allocation failed\n", sc->sc_dev.dv_xname);
 		return;
 	}

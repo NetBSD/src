@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3.6.3 2002/02/28 04:06:05 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.6.4 2002/04/01 07:38:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.6.3 2002/02/28 04:06:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3.6.4 2002/04/01 07:38:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -168,7 +168,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

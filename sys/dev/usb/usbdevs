@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.9 2002/02/28 04:14:34 nathanw Exp $
+$NetBSD: usbdevs,v 1.148.2.10 2002/04/01 07:47:39 nathanw Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ vendor MELCO		0x0411	Melco
 vendor CREATIVE		0x041e	Creative
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
+vendor SMC2		0x0424	Standard Microsystems
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech.
 vendor SUN		0x0430	Sun Microsystems
 vendor TAUGA		0x0436  Taugagreining HF
@@ -181,6 +182,7 @@ vendor BRAINBOXES	0x05d1	Brainboxes Limited
 vendor ULTIMA		0x05d8	Ultima
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
+vendor SUNTAC		0x05db	SUN Corporation
 vendor LEXAR		0x05dc	Lexar Media
 vendor SYMBOL		0x05e0	Symbol Technologies
 vendor GENESYS		0x05e3	Genesys Logic
@@ -209,6 +211,7 @@ vendor SIGMATEL		0x066f	Sigmatel
 vendor AIWA		0x0677	Aiwa
 vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
+vendor SIEMENS		0x067c	Siemens
 vendor ADVANCELOGIC	0x0680	Avance Logic
 vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
@@ -294,6 +297,7 @@ vendor PORTSMITH	0x095a	Portsmith
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
+vendor INTERSIL		0x09aa	Intersil
 vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
@@ -314,9 +318,11 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor TODOS		0x0b0c	Todos Data System
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
+vendor GREENHOUSE2	0x0bda	GREENHOUSE
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
+vendor PEN		0x0d7d	Pen Drive
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -374,6 +380,9 @@ product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
 product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
+
+/* Actiontec products */
+product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
 
 /* ACTiSYS products */
 product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
@@ -619,6 +628,7 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
+product GREENHOUSE2 USBKR100	0x8150	USB Ethernet Adapter GH-USB100B
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
@@ -705,6 +715,9 @@ product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
 product INTEL TESTBOARD		0x9890	82930 test board
 
+/* Intersil products */
+product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
+
 /* I/O DATA products */
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
@@ -733,6 +746,7 @@ product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
 product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
 product KENSINGTON TURBOBALL	0x1005	TurboBall
 product KENSINGTON ORBIT_MAC	0x1009	Orbit USB trackball for Mac
+product KENSINGTON VIDEOCAM_VGA	0x5002	VideoCAM VGA
 
 /* Keyspan products */
 product KEYSPAN USA28		0x0101	USA-28 serial adapter
@@ -741,6 +755,7 @@ product KEYSPAN USA19		0x0103	USA-19 serial adapter
 product KEYSPAN USA18X		0x0105	USA-18X serial adapter
 product KEYSPAN USA19W		0x0106	USA-19W serial adapter
 product KEYSPAN USA49W		0x0109	USA-49W serial adapter
+product KEYSPAN USA19Q		0x010b	USA-19Q serial adapter
 product KEYSPAN UIA10_NF	0x0201	UIA-10 remote control
 
 /* Kingston products */
@@ -781,6 +796,8 @@ product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
 product LINKSYS USB10TA		0x2206	USB10TA Ethernet
+product	LINKSYS	WUSB11		0x2211	WUSB11 Wireless USB Network Adapter
+product	LINKSYS	WUSB11_25	0x2212	WUSB11 Wireless USB Network Adapter (version 2.5)
 product LINKSYS USB10TX2	0x400b	USB10TX
 
 /* Logitech products */
@@ -822,6 +839,7 @@ product MCT ML_4500		0x0302	ML-4500
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
+product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -933,10 +951,14 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 product PALM SERIAL		0x0080	USB Serial Adaptor
 product PALM M500		0x0001	Palm m500
 product PALM M505		0x0002	Palm m505
+product PALM M125		0x0040	Palm m125
 
 /* Panasonic products */
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
 product PANASONIC LS120		0x0901	LS-120 Camera
+
+/* Pen Driver */
+product PEN USBDISK		0x0d7d	USB Disk
 
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
@@ -1047,6 +1069,9 @@ product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
 
+/* Siemens products */
+product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
+
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
 
@@ -1067,6 +1092,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
+product SMC2 2020HUB            0x2020  USB Hub
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	10/100 USB Ethernet
@@ -1090,6 +1116,10 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
 /* STSN products */
 product STSN STSN0001		0x0001	Internet Access Device
+
+/* SUN Corporation products */
+product SUNTAC PS64P1		0x0005	SUNTAC U-Cable type P1
+product SUNTAC VS10U		0x0009	SUNTAC Slipper U
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB keyboard

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.1.4.2 2002/02/28 04:07:38 nathanw Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 #endif
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 
@@ -228,7 +228,7 @@ rpckbd_enable(void *v, int on)
 		res = kbdcmd(sc, KBC_ENABLE, 0);
 		if (res != KBR_ACK) {
 			printf("rpckbd_enable: command error; got response %d\n", res);
-			return (res);
+			return (EIO);
 		};
 		sc->sc_enabled = 1;
 	} else {
@@ -237,7 +237,7 @@ rpckbd_enable(void *v, int on)
 		res = kbdcmd(sc, KBC_DISABLE, 0);
 		if (res != KBR_ACK) {
 			printf("rpckbd_disable: command error; got response %d\n", res);
-			return (res);
+			return (EIO);
 		};
 		sc->sc_enabled = 0;
 	};

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2000/07/24 18:39:14 jdolecek Exp $ */
+/*	$NetBSD: boot.c,v 1.3.8.1 2002/04/01 07:41:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@ main()
 			file = line;
 	}
 
-	exec_mvme(file, flag, part);
+	exec_mvme(file, flag | RB_NOSYM, part);
 
 	printf("tapeboot: %s: %s\n", file, strerror(errno));
 	return(0);

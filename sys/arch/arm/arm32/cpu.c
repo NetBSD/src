@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.3 2002/02/28 04:07:21 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.4 2002/04/01 07:39:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,6 +45,9 @@
 #include "opt_cputypes.h"
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.4 2002/04/01 07:39:07 nathanw Exp $");
+
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -54,106 +57,47 @@
 #include <machine/cpu.h>
 #include <arm/undefined.h>
 
-#include <arm/cpus.h>
-
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
 #include <arm/fpe-arm/armfpe.h>
 #endif
 
-cpu_t cpus[MAX_CPUS];
-
-char cpu_model[64];
-volatile int undefined_test;	/* Used for FPA test */
-extern int cpuctrl;		/* cpu control register value */
+char cpu_model[256];
 
 /* Prototypes */
-void identify_master_cpu(struct device *dv, int cpu_number);
-void identify_arm_cpu(struct device *dv, int cpu_number);
-void identify_arm_fpu(struct device *dv, int cpu_number);
-int fpa_test(u_int, u_int, trapframe_t *, int);
-int fpa_handler(u_int, u_int, trapframe_t *, int);
+void identify_arm_cpu(struct device *dv, struct cpu_info *);
 
 /*
- * void cpusattach(struct device *parent, struct device *dev, void *aux)
- *
- * Attach the main cpu
+ * Identify the master (boot) CPU
  */
   
 void
 cpu_attach(struct device *dv)
 {
+	int usearmfpe;
 
-	identify_master_cpu(dv, CPU_MASTER);
-}
+	usearmfpe = 1;	/* when compiled in, its enabled by default */
 
-/*
- * Used to test for an FPA. The following function is installed as a coproc1
- * handler on the undefined instruction vector and then we issue a FPA
- * instruction. If undefined_test is non zero then the FPA did not handle
- * the instruction so must be absent.
- */
+	curcpu()->ci_dev = dv;
 
-int
-fpa_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
-{
-
-	frame->tf_pc += INSN_SIZE;
-	++undefined_test;
-	return(0);
-}
-
-/*
- * If an FPA was found then this function is installed as the coproc1 handler
- * on the undefined instruction vector. Currently we don't support FPA's
- * so this just triggers an exception.
- */
-
-int
-fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
-    int fault_code)
-{
-	u_int fpsr;
-    
-	__asm __volatile("stmfd sp!, {r0};"
-	    "rfs r0;"
-	    "mov %0, r0;"
-	    "ldmfd sp!, {r0}" : "=r" (fpsr));
-
-	printf("FPA exception: fpsr = %08x\n", fpsr);
-
-	return(1);
-}
-
-
-/*
- * Identify the master (boot) CPU
- * This also probes for an FPU and will install an FPE if necessary
- */
- 
-void
-identify_master_cpu(struct device *dv, int cpu_number)
-{
-	u_int fpsr;
-	void *uh;
-
-	cpus[cpu_number].cpu_ctrl = cpuctrl;
-
+	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
+	    NULL, dv->dv_xname, "arm700swibug");
+	
 	/* Get the cpu ID from coprocessor 15 */
 
-	cpus[cpu_number].cpu_id = cpu_id();
+	curcpu()->ci_cpuid = cpu_id();
+	curcpu()->ci_cputype = curcpu()->ci_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_cpurev = curcpu()->ci_cpuid & CPU_ID_REVISION_MASK;
 
-	identify_arm_cpu(dv, cpu_number);
-	strcpy(cpu_model, cpus[cpu_number].cpu_model);
+	identify_arm_cpu(dv, curcpu());
 
-	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SA1
-	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
+	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
 
 #ifdef CPU_ARM8
-	if ((cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
@@ -177,6 +121,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
  	}
 #endif
 
+#ifdef ARMFPE
 	/*
 	 * Ok now we test for an FPA
 	 * At this point no floating point emulator has been installed.
@@ -191,60 +136,39 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	 * FP status register for identification.
 	 */
  
-	uh = install_coproc_handler(FP_COPROC, fpa_test);
+	/*
+	 * Ok if ARMFPE is defined and the boot options request the 
+	 * ARM FPE then it will be installed as the FPE.
+	 * This is just while I work on integrating the new FPE.
+	 * It means the new FPE gets installed if compiled int (ARMFPE
+	 * defined) and also gives me a on/off option when I boot in
+	 * case the new FPE is causing panics.
+	 */
 
-	undefined_test = 0;
 
-	__asm __volatile("stmfd sp!, {r0};"
-	    "rfs r0;"
-	    "mov %0, r0;"
-	    "ldmfd sp!, {r0}" : "=r" (fpsr));
-
-	remove_coproc_handler(uh);
-
-	if (undefined_test == 0) {
-		cpus[cpu_number].fpu_type = (fpsr >> 24);
-	        switch (fpsr >> 24) {
-		case 0x81:
-			cpus[cpu_number].fpu_class = FPU_CLASS_FPA;
-			break;
-
-		default:
-			cpus[cpu_number].fpu_class = FPU_CLASS_FPU;
-			break;
-		}
-		cpus[cpu_number].fpu_flags = 0;
-		install_coproc_handler(FP_COPROC, fpa_handler);
-	} else {
-		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
-		cpus[cpu_number].fpu_flags = 0;
-
-		/*
-		 * Ok if ARMFPE is defined and the boot options request the 
-		 * ARM FPE then it will be installed as the FPE.
-		 * This is just while I work on integrating the new FPE.
-		 * It means the new FPE gets installed if compiled int (ARMFPE
-		 * defined) and also gives me a on/off option when I boot in
-		 * case the new FPE is causing panics.
-		 */
-
-#ifdef ARMFPE
-		if (boot_args) {
-			int usearmfpe = 1;
-
-			get_bootconf_option(boot_args, "armfpe",
-			    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-			if (usearmfpe) {
-				if (initialise_arm_fpe(&cpus[cpu_number]) != 0)
-					identify_arm_fpu(dv, cpu_number);
-			}
-		}
-
+	if (boot_args)
+		get_bootconf_option(boot_args, "armfpe",
+		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
+	if (usearmfpe)
+		initialise_arm_fpe();
 #endif
-	}
-
-	identify_arm_fpu(dv, cpu_number);
 }
+
+enum cpu_class {
+	CPU_CLASS_NONE,
+	CPU_CLASS_ARM2,
+	CPU_CLASS_ARM2AS,
+	CPU_CLASS_ARM3,
+	CPU_CLASS_ARM6,
+	CPU_CLASS_ARM7,
+	CPU_CLASS_ARM7TDMI,
+	CPU_CLASS_ARM8,
+	CPU_CLASS_ARM9TDMI,
+	CPU_CLASS_ARM9ES,
+	CPU_CLASS_SA1,
+	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM10E
+};
 
 static const char *generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
@@ -274,7 +198,7 @@ static const char *sa1110_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *i80200_steppings[16] = {
+static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
@@ -346,8 +270,14 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
 	  sa1110_steppings },
 
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
-	  i80200_steppings },
+	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
+	  xscale_steppings },
+
+	{ CPU_ID_80321,		CPU_CLASS_XSCALE,	"i80321",
+	  xscale_steppings },
+
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
+	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -369,7 +299,8 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
+	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
 /*
@@ -398,14 +329,13 @@ static const char *wtnames[] = {
 };
 
 void
-identify_arm_cpu(struct device *dv, int cpu_number)
+identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 {
-	cpu_t *cpu;
 	u_int cpuid;
+	enum cpu_class cpu_class;
 	int i;
 
-	cpu = &cpus[cpu_number];
-	cpuid = cpu->cpu_id;
+	cpuid = ci->ci_cpuid;
 
 	if (cpuid == 0) {
 		printf("Processor failed probe - no CPU ID\n");
@@ -414,56 +344,61 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
-			cpu->cpu_class = cpuids[i].cpu_class;
-			sprintf(cpu->cpu_model, "%s %s (%s core)",
+			cpu_class = cpuids[i].cpu_class;
+			sprintf(cpu_model, "%s %s (%s core)",
 			    cpuids[i].cpu_name,
 			    cpuids[i].cpu_steppings[cpuid &
 						    CPU_ID_REVISION_MASK],
-			    cpu_classes[cpu->cpu_class].class_name);
+			    cpu_classes[cpu_class].class_name);
 			break;
 		}
 
 	if (cpuids[i].cpuid == 0)
-		sprintf(cpu->cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
-	switch (cpu->cpu_class) {
+	printf(": %s\n", cpu_model);
+
+	printf("%s:", dv->dv_xname);
+
+	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
 	case CPU_CLASS_ARM7:
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
-		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " IDC disabled");
+		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
+			printf(" IDC disabled");
 		else
-			strcat(cpu->cpu_model, " IDC enabled");
+			printf(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
-		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " DC disabled");
+		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
+			printf(" DC disabled");
 		else
-			strcat(cpu->cpu_model, " DC enabled");
-		if ((cpu->cpu_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " IC disabled");
+			printf(" DC enabled");
+		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
+			printf(" IC disabled");
 		else
-			strcat(cpu->cpu_model, " IC enabled");
+			printf(" IC enabled");
+		break;
+	default:
 		break;
 	}
-	if ((cpu->cpu_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		strcat(cpu->cpu_model, " WB disabled");
+	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
+		printf(" WB disabled");
 	else
-		strcat(cpu->cpu_model, " WB enabled");
+		printf(" WB enabled");
 
-	if (cpu->cpu_ctrl & CPU_CONTROL_LABT_ENABLE)
-		strcat(cpu->cpu_model, " LABT");
+	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
+		printf(" LABT");
 	else
-		strcat(cpu->cpu_model, " EABT");
+		printf(" EABT");
 
-	if (cpu->cpu_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		strcat(cpu->cpu_model, " branch prediction enabled");
+	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
+		printf(" branch prediction enabled");
 
-	/* Print the info */
-	printf(": %s\n", cpu->cpu_model);
+	printf("\n");
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
@@ -486,7 +421,7 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 
  skip_pcache:
 
-	switch (cpu->cpu_class) {
+	switch (cpu_class) {
 #ifdef CPU_ARM2
 	case CPU_CLASS_ARM2:
 #endif
@@ -514,12 +449,12 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 #ifdef CPU_SA110
 	case CPU_CLASS_SA1:
 #endif
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;
 	default:
-		if (cpu_classes[cpu->cpu_class].class_option != NULL)
+		if (cpu_classes[cpu_class].class_option != NULL)
 			printf("%s: %s does not fully support this CPU."
 			       "\n", dv->dv_xname, ostype);
 		else {
@@ -527,57 +462,11 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 			       "this CPU.\n", dv->dv_xname);
 			printf("%s: Recompile with \"options %s\" to "
 			       "correct this.\n", dv->dv_xname,
-			       cpu_classes[cpu->cpu_class].class_option);
+			       cpu_classes[cpu_class].class_option);
 		}
 		break;
 	}
 			       
-}
-
-
-/*
- * Report the type of the specifed arm fpu. This uses the generic and arm
- * specific information in the cpu structure to identify the fpu. The
- * remaining fields in the cpu structure are filled in appropriately.
- */
-
-void
-identify_arm_fpu(struct device *dv, int cpu_number)
-{
-	cpu_t *cpu;
-
-	cpu = &cpus[cpu_number];
-
-	/* Now for the FP info */
-
-	switch (cpu->fpu_class) {
-	case FPU_CLASS_NONE :
-		strcpy(cpu->fpu_model, "None");
-		break;
-	case FPU_CLASS_FPE :
-		printf("%s: FPE: %s\n", dv->dv_xname, cpu->fpu_model);
-		printf("%s: no FP hardware found\n", dv->dv_xname);
-		break;
-	case FPU_CLASS_FPA :
-		printf("%s: FPE: %s\n", dv->dv_xname, cpu->fpu_model);
-		if (cpu->fpu_type == FPU_TYPE_FPA11) {
-			strcpy(cpu->fpu_model, "FPA11");
-			printf("%s: FPA11 found\n", dv->dv_xname);
-		} else {
-			strcpy(cpu->fpu_model, "FPA");
-			printf("%s: FPA10 found\n", dv->dv_xname);
-		}
-		if ((cpu->fpu_flags & 4) == 0)
-			strcat(cpu->fpu_model, "");
-		else
-			strcat(cpu->fpu_model, " clk/2");
-		break;
-	case FPU_CLASS_FPU :
-		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n",
-		    cpu->fpu_type);
-		printf("%s: %s\n", dv->dv_xname, cpu->fpu_model);
-		break;
-	}
 }
 
 /* End of cpu.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.17.8.2 2002/01/08 00:28:00 nathanw Exp $ */
+/*	$NetBSD: types.h,v 1.17.8.3 2002/04/01 07:43:08 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ typedef unsigned long int	paddr_t;
 typedef paddr_t			psize_t;
 #endif
 
-#define __HAVE_DEVICE_REGISTER
+#define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 #endif	/* _MACHTYPES_H_ */

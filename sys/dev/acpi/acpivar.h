@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.3.4.2 2001/10/08 21:18:06 nathanw Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.3.4.3 2002/04/01 07:45:07 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -246,6 +246,7 @@ int		acpi_probe(void);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, int *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
+ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
 
 ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));

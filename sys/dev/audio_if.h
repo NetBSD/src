@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.35.2.2 2001/10/22 20:41:15 nathanw Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.35.2.3 2002/04/01 07:45:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -51,6 +51,19 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;				/* coding space change */
+	int	factor_denom;		/* coding space change smaller */
+	/*
+	 * The following four members represent what format is used in a
+	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
+	 * channels, the audio framework converts data.  Encoding and
+	 * precision are converted in sw_code().
+	 * set_params() should set correct values to them if no conversion is
+	 * needed.
+	 */
+	u_long	hw_sample_rate;
+	u_int	hw_encoding;
+	u_int	hw_precision;
+	u_int	hw_channels;
 };
 
 /* The default audio mode: 8 kHz mono ulaw */
@@ -60,20 +73,20 @@ struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
 	int	(*drain)(void *);	/* Optional: drain buffers */
-	
+
 	/* Encoding. */
 	/* XXX should we have separate in/out? */
 	int	(*query_encoding)(void *, struct audio_encoding *);
 
 	/* Set the audio encoding parameters (record and play).
-	 * Return 0 on success, or an error code if the 
+	 * Return 0 on success, or an error code if the
 	 * requested parameters are impossible.
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
-        int	(*set_params)(void *, int, int, struct audio_params *,
+	int	(*set_params)(void *, int, int, struct audio_params *,
 		    struct audio_params *);
-  
+
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)(void *, int);
 
@@ -103,20 +116,20 @@ struct audio_hw_if {
 
 	int	(*getdev)(void *, struct audio_device *);
 	int	(*setfd)(void *, int);
-	
+
 	/* Mixer (in/out ports) */
 	int	(*set_port)(void *, mixer_ctrl_t *);
 	int	(*get_port)(void *, mixer_ctrl_t *);
 
 	int	(*query_devinfo)(void *, mixer_devinfo_t *);
-	
+
 	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
 	void	*(*allocm)(void *, int, size_t, int, int);
 	void	(*freem)(void *, void *, int);
 	size_t	(*round_buffersize)(void *, int, size_t);
 	paddr_t	(*mappage)(void *, void *, off_t, int);
 
-	int 	(*get_props)(void *); /* device properties */
+	int	(*get_props)(void *); /* device properties */
 
 	int	(*trigger_output)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
@@ -157,6 +170,12 @@ int	audioprint(void *, const char *);
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
+
+/*
+ * USB Audio specification defines 12 channels:
+ *	L R C LFE Ls Rs Lc Rc S Sl Sr T
+ */
+#define AUDIO_MAX_CHANNELS	12
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
 

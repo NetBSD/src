@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.10 2002/02/28 04:13:17 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.11 2002/04/01 07:45:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.10 2002/02/28 04:13:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.11 2002/04/01 07:45:15 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -290,7 +290,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		    sc->sc_dv.dv_xname);
 		return;
 	}
-	state++;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    sc->sc_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
@@ -365,12 +364,17 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	if (sc->sc_framesize < IOP_MIN_MSG_SIZE) {
 		printf("%s: frame size too small (%d)\n",
 		    sc->sc_dv.dv_xname, sc->sc_framesize);
-		return;
+		goto bail_out;
 	}
 #endif
 
 	/* Allocate message wrappers. */
 	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (im == NULL) {
+		printf("%s: memory allocation failure\n", sc->sc_dv.dv_xname);
+		goto bail_out;
+	}
+	state++;
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
 
@@ -438,7 +442,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-
 }
 
 /*

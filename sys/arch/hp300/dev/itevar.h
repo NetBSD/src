@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14.40.1 2002/01/08 00:24:35 nathanw Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14.40.2 2002/04/01 07:39:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,10 +211,11 @@ struct ite_kbdmap {
 };
 
 /* ite.c prototypes */
-void	ite_attach_grf __P((int, int));
 int	iteon __P((struct ite_data *, int));
 void	iteoff __P((struct ite_data *, int));
+void	iteinstallkeymap __P((void *));
 void	itefilter __P((char, char));
+
 void	itedisplaycnattach __P((struct grf_data *, struct itesw *));
 void	itekbdcnattach __P((struct ite_kbdops *, struct ite_kbdmap *));
 void	itecninit __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.4 2002/02/28 04:07:20 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.5 2002/04/01 07:39:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -182,17 +182,17 @@ bdev_decl(sw);
  * ISDN devices
  */
 #ifdef CONF_HAVE_ISDN
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
 #else
-#define	NI4B	0
-#define	NI4BCTL	0
-#define	NI4BTRC	0
-#define	NI4BRBCH	0
-#define	NI4BTEL	0
+#define	NISDN	0
+#define	NISDNCTL	0
+#define	NISDNTRC	0
+#define	NISDNBCHAN	0
+#define	NISDNTEL	0
 #endif
 
 #ifdef CONF_HAVE_PCI
@@ -391,11 +391,11 @@ struct bdevsw bdevsw[] = {
 };
 
 /* Character devices */
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
 #define ptctty          ptytty
@@ -481,11 +481,11 @@ struct cdevsw cdevsw[] = {
 	cdev_ugen_init(NUSCANNER,uscanner),	/* 76: USB scanner */
 	cdev_openfirm_init(NOPENFIRM,openfirm),	/* 77: openfirmware */
 	cdev_tty_init(NBICONSDEV,biconsdev),	/* 78: bicons pseudo-dev */
-	cdev_i4b_init(NI4B,i4b),		/* 79: i4b main device */
-	cdev_i4bctl_init(NI4BCTL,i4bctl),	/* 80: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH,i4brbch),	/* 81: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC,i4btrc),	/* 82: i4b trace device */
-	cdev_i4btel_init(NI4BTEL,i4btel),	/* 83: i4b phone device */
+	cdev_isdn_init(NISDN,isdn),		/* 79: isdn main device */
+	cdev_isdnctl_init(NISDNCTL,isdnctl),	/* 80: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN,isdnbchan),	/* 81: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC,isdntrc),	/* 82: isdn trace device */
+	cdev_isdntel_init(NISDNTEL,isdntel),	/* 83: isdn phone device */
 	cdev_tty_init(NSACOM,sacom),		/* 84: SA11x0 serial port */
 	cdev__oci_init(NMLY,mly),		/* 85: Newer Mylex ctrl iface */
 	cdev__oci_init(NWSFONT,wsfont),		/* 86: wsfont pseudo-device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.4 2001/11/17 01:10:17 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.5 2002/04/01 07:47:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.4 2001/11/17 01:10:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.5 2002/04/01 07:47:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,29 +204,28 @@ procinit()
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+	    &pool_allocator_nointr);
 	pool_init(&lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PGRP);
+	    &pool_allocator_nointr);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
 	    "saupcpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
-	
+	    &pool_allocator_nointr);
 }
 
 /*

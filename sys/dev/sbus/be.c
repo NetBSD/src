@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.24.2.4 2001/11/14 19:15:56 nathanw Exp $	*/
+/*	$NetBSD: be.c,v 1.24.2.5 2002/04/01 07:47:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.24.2.4 2001/11/14 19:15:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.24.2.5 2002/04/01 07:47:07 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -257,29 +257,32 @@ beattach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[0].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[0].sbr_offset,
+	if (bus_space_map(sa->sa_bustag,
+			  (bus_addr_t)BUS_ADDR(
+				sa->sa_reg[0].sbr_slot,
+				sa->sa_reg[0].sbr_offset),
 			  (bus_size_t)sa->sa_reg[0].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
+			  0, &sc->sc_cr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[1].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[1].sbr_offset,
+	if (bus_space_map(sa->sa_bustag,
+			  (bus_addr_t)BUS_ADDR(
+				sa->sa_reg[1].sbr_slot,
+				sa->sa_reg[1].sbr_offset),
 			  (bus_size_t)sa->sa_reg[1].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_br) != 0) {
+			  0, &sc->sc_br) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[2].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[2].sbr_offset,
+	if (bus_space_map(sa->sa_bustag,
+			  (bus_addr_t)BUS_ADDR(
+				sa->sa_reg[2].sbr_slot,
+				sa->sa_reg[2].sbr_offset),
 			  (bus_size_t)sa->sa_reg[2].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tr) != 0) {
+			  0, &sc->sc_tr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}

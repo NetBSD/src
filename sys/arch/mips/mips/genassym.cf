@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.2.5 2002/01/08 00:26:20 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.6 2002/04/01 07:41:03 nathanw Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -48,6 +48,7 @@ include <sys/user.h>
 
 include <uvm/uvm.h>
 
+include <mips/cpu.h>
 include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
@@ -86,6 +87,10 @@ define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 define	SIGFPE		 	SIGFPE
 define	SIGILL		 	SIGILL
 define	SIGSEGV			SIGSEGV
+
+# CPU info
+define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
+
 
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0

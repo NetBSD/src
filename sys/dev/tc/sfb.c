@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.44.2.4 2001/11/14 19:16:10 nathanw Exp $ */
+/* $NetBSD: sfb.c,v 1.44.2.5 2002/04/01 07:47:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.44.2.4 2001/11/14 19:16:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.44.2.5 2002/04/01 07:47:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,16 +345,18 @@ sfb_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("sfb: font table is empty\n");
 		return;
 	}
 
 	/* the accelerated sfb_putchar() needs LSbit left */
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("sfb: couldn't lock font\n");
 		return;
 	}
@@ -444,7 +446,7 @@ sfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t
@@ -794,7 +796,7 @@ get_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

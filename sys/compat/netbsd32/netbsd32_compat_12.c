@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.10.2.3 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.10.2.4 2002/04/01 07:44:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.10.2.3 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.10.2.4 2002/04/01 07:44:31 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -149,7 +149,7 @@ compat_12_netbsd32_stat12(p, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(p, &ua, retval);
@@ -209,7 +209,7 @@ compat_12_netbsd32_lstat12(p, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(p, &ua, retval);

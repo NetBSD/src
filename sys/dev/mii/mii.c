@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.21.2.5 2001/11/14 19:15:02 nathanw Exp $	*/
+/*	$NetBSD: mii.c,v 1.21.2.6 2002/04/01 07:46:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.21.2.5 2001/11/14 19:15:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.21.2.6 2002/04/01 07:46:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,7 +137,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
-		ma.mii_flags = flags;
+		ma.mii_flags = flags | (mii->mii_flags & MIIF_INHERIT_MASK);
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.9.2.2 2002/02/28 04:12:43 nathanw Exp $ */
+/*	$NetBSD: irix_types.h,v 1.9.2.3 2002/04/01 07:44:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
+
+/* From IRIX's <limits.h> */
+#define IRIX_PATH_MAX 1024
 
 /* From IRIX's <sys/signal.h> */
 typedef struct {

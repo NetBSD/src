@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.4 2002/02/28 04:12:04 nathanw Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.5 2002/04/01 07:42:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,8 @@
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
+
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +418,7 @@ bootstrapIIep()
 		      "node from prom");
 
 	if (bus_space_map2(&mainbus_space_tag,
-			   (bus_type_t)0, (bus_addr_t)MSIIEP_PCIC_PA,
+			   (bus_addr_t)MSIIEP_PCIC_PA,
 			   (bus_size_t)sizeof(struct msiiep_pcic_reg),
 			   BUS_SPACE_MAP_LINEAR,
 			   MSIIEP_PCIC_VA, &bh) != 0)
@@ -908,7 +910,7 @@ cpu_configure()
 			/* Clear top bits of physical address on 4/100 */
 			paddr &= ~0xf0000000;
 
-		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
+		if (obio_find_rom_map(paddr, NBPG, &bh) != 0)
 			panic("configure: ROM hasn't mapped memreg!");
 
 		par_err_reg = (volatile int *)bh;
@@ -1017,8 +1019,9 @@ mbprint(aux, name)
 	if (name)
 		printf("%s at %s", ma->ma_name, name);
 	if (ma->ma_paddr)
-		printf(" %saddr 0x%lx", ma->ma_iospace ? "io" : "",
-			(long)ma->ma_paddr);
+		printf(" %saddr 0x%lx",
+			BUS_ADDR_IOSPACE(ma->ma_paddr) ? "io" : "",
+			(u_long)BUS_ADDR_PADDR(ma->ma_paddr));
 	if (ma->ma_pri)
 		printf(" ipl %d", ma->ma_pri);
 	return (UNCONF);
@@ -1225,8 +1228,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (PROM_getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
-		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_paddr = (bus_addr_t)
+			BUS_ADDR(romreg.oa_space, romreg.oa_base);
 		ma.ma_size = romreg.oa_size;
 		if (PROM_getprop_intr1(node, &ma.ma_pri) != 0)
 			continue;
@@ -1281,8 +1284,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (CPU_ISSUN4M && strcmp(ma.ma_name, "sbus") == 0) {
 			printf("mainbus_attach: sbus node under root on sun4m - assuming iommu\n");
 			ma.ma_name = "iommu";
-			ma.ma_iospace = (bus_type_t) 0;
-			ma.ma_paddr = (bus_addr_t) 0x10000000;
+			ma.ma_paddr = (bus_addr_t)BUS_ADDR(0, 0x10000000);
 			ma.ma_size = 0x300;
 			ma.ma_pri = 0;
 			ma.ma_promvaddr = 0;
@@ -1295,8 +1297,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (PROM_getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
-		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_paddr = BUS_ADDR(romreg.oa_space, romreg.oa_base);
 		ma.ma_size = romreg.oa_size;
 
 		if (PROM_getprop_intr1(node, &ma.ma_pri) != 0)
@@ -1630,7 +1631,7 @@ static struct {
 	{ "xdc",	BUSCLASS_XDC },
 	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
-	{ "msiiep",	BUSCLASS_PCIC },
+	{ "mspcic",	BUSCLASS_PCIC },
 	{ "pci",	BUSCLASS_PCI },
 };
 
@@ -1721,9 +1722,10 @@ instance_match(dev, aux, bp)
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
 		    "want space %#x addr %#x have space %#lx addr %#llx\n",
-		    bp->val[0], bp->val[1], ma->ma_iospace, (unsigned long long)ma->ma_paddr));
-		if ((bus_type_t)(u_long)bp->val[0] == ma->ma_iospace &&
-		    (bus_addr_t)(u_long)bp->val[1] == ma->ma_paddr)
+		    bp->val[0], bp->val[1], BUS_ADDR_IOSPACE(ma->ma_paddr),
+			(unsigned long long)BUS_ADDR_PADDR(ma->ma_paddr)));
+		if ((u_long)bp->val[0] == BUS_ADDR_IOSPACE(ma->ma_paddr) &&
+		    (bus_addr_t)(u_long)bp->val[1] == BUS_ADDR_PADDR(ma->ma_paddr))
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
@@ -1882,6 +1884,7 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+#if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1933,7 +1936,7 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-
+#endif /* NSCSIBUS */
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
 		/* A Xylogic disk */
@@ -2015,9 +2018,12 @@ bootinfo_relocate(newloc)
 	}
 
 	/*
-	 * Find total size of bootinfo array
+	 * Find total size of bootinfo array.
+	 * The array is terminated with a `nul' record (size == 0);
+	 * we account for that up-front by initializing `bi_size'
+	 * to size of a `btinfo_common' record.
 	 */
-	bi_size = 0;
+	bi_size = sizeof(struct btinfo_common);
 	cp = bootinfo;
 	do {
 		bt = (struct btinfo_common *)cp;
@@ -2045,6 +2051,10 @@ bootinfo_relocate(newloc)
 		dp += bt->next;
 	} while (bt->next != 0 &&
 		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	/* Write the terminating record */
+	bt = (struct btinfo_common *)dp;
+	bt->next = bt->type = 0;
 
 	/* Set new bootinfo location and adjust kernel_top */
 	bootinfo = newloc;

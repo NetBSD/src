@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.12.2.6 2002/01/08 00:31:41 nathanw Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.12.2.7 2002/04/01 07:47:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.6 2002/01/08 00:31:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.7 2002/04/01 07:47:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,14 +207,19 @@ espattach_sbus(parent, self, aux)
 		      sizeof (lsc->sc_dev.dv_xname));
 
 		/* Map dma registers */
-		if (bus_space_map2(sa->sa_bustag,
-		                   sa->sa_reg[0].sbr_slot,
-			           sa->sa_reg[0].sbr_offset,
-			           sa->sa_reg[0].sbr_size,
-			           BUS_SPACE_MAP_LINEAR,
-			           0, &lsc->sc_regs) != 0) {
-			printf("%s: cannot map dma registers\n", self->dv_xname);
-			return;
+		if (sa->sa_npromvaddrs) {
+			sbus_promaddr_to_handle(sa->sa_bustag,
+				sa->sa_promvaddrs[0], &lsc->sc_regs);
+		} else {
+			if (sbus_bus_map(sa->sa_bustag,
+				sa->sa_reg[0].sbr_slot,
+				sa->sa_reg[0].sbr_offset,
+				sa->sa_reg[0].sbr_size,
+				0, &lsc->sc_regs) != 0) {
+				printf("%s: cannot map dma registers\n",
+					self->dv_xname);
+				return;
+			}
 		}
 
 		/*
@@ -252,15 +257,20 @@ espattach_sbus(parent, self, aux)
 		/*
 		 * map SCSI core registers
 		 */
-		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_reg[1].sbr_slot,
-				 sa->sa_reg[1].sbr_offset,
-				 sa->sa_reg[1].sbr_size,
-				 BUS_SPACE_MAP_LINEAR, 
-				 0, &esc->sc_reg) != 0) {
-			printf("%s @ sbus: cannot map scsi core registers\n",
-			       self->dv_xname);
-			return;
+		if (sa->sa_npromvaddrs > 1) {
+			sbus_promaddr_to_handle(sa->sa_bustag,
+				sa->sa_promvaddrs[1], &esc->sc_reg);
+		} else {
+			if (sbus_bus_map(sa->sa_bustag,
+				sa->sa_reg[1].sbr_slot,
+				sa->sa_reg[1].sbr_offset,
+				sa->sa_reg[1].sbr_size,
+				0, &esc->sc_reg) != 0) {
+				printf("%s @ sbus: "
+					"cannot map scsi core registers\n",
+					self->dv_xname);
+				return;
+			}
 		}
 
 		if (sa->sa_nintr == 0) {
@@ -312,14 +322,13 @@ espattach_sbus(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs)
-		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &esc->sc_reg) != 0) {
+	if (sa->sa_npromvaddrs) {
+		sbus_promaddr_to_handle(sa->sa_bustag,
+			sa->sa_promvaddrs[0], &esc->sc_reg);
+	} else {
+		if (sbus_bus_map(sa->sa_bustag,
+			sa->sa_slot, sa->sa_offset, sa->sa_size,
+			0, &esc->sc_reg) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
 				self->dv_xname);
 			return;
@@ -374,15 +383,13 @@ espattach_dma(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs)
-		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
-		if (bus_space_map2(sa->sa_bustag,
-				   sa->sa_slot,
-				   sa->sa_offset,
-				   sa->sa_size,
-				   BUS_SPACE_MAP_LINEAR,
-				   0, &esc->sc_reg) != 0) {
+	if (sa->sa_npromvaddrs) {
+		sbus_promaddr_to_handle(sa->sa_bustag,
+			sa->sa_promvaddrs[0], &esc->sc_reg);
+	} else {
+		if (sbus_bus_map(sa->sa_bustag,
+			sa->sa_slot, sa->sa_offset, sa->sa_size,
+			0, &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
 				self->dv_xname);
 			return;

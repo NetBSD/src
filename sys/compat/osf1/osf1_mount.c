@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.17.2.3 2001/11/14 19:13:20 nathanw Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.17.2.4 2002/04/01 07:44:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.17.2.3 2001/11/14 19:13:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.17.2.4 2002/04/01 07:44:37 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -280,7 +280,7 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 {
 	struct osf1_mfs_args osf_ma;
 	struct mfs_args bsd_ma;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error, len;
 	static const char mfs_name[] = MOUNT_MFS;
 
@@ -293,12 +293,12 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 	bsd_ma.base = osf_ma.base;
 	bsd_ma.size = osf_ma.size;
 
-	SCARG(bsd_argp, data) = stackgap_alloc(&sg, sizeof bsd_ma);
+	SCARG(bsd_argp, data) = stackgap_alloc(p, &sg, sizeof bsd_ma);
 	if ((error = copyout(&bsd_ma, SCARG(bsd_argp, data), sizeof bsd_ma)))
 		return error;
 
 	len = strlen(mfs_name) + 1;
-	SCARG(bsd_argp, type) = stackgap_alloc(&sg, len);
+	SCARG(bsd_argp, type) = stackgap_alloc(p, &sg, len);
 	if ((error = copyout(mfs_name, (void *)SCARG(bsd_argp, type), len)))
 		return error;
 
@@ -313,7 +313,7 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 {
 	struct osf1_nfs_args osf_na;
 	struct nfs_args bsd_na;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error, len;
 	static const char nfs_name[] = MOUNT_NFS;
 	unsigned long leftovers;
@@ -356,12 +356,12 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 	if (bsd_na.flags & NFSMNT_RETRANS)
 		bsd_na.retrans = osf_na.retrans;
 
-	SCARG(bsd_argp, data) = stackgap_alloc(&sg, sizeof bsd_na);
+	SCARG(bsd_argp, data) = stackgap_alloc(p, &sg, sizeof bsd_na);
 	if ((error = copyout(&bsd_na, SCARG(bsd_argp, data), sizeof bsd_na)))
 		return error;
 
 	len = strlen(nfs_name) + 1;
-	SCARG(bsd_argp, type) = stackgap_alloc(&sg, len);
+	SCARG(bsd_argp, type) = stackgap_alloc(p, &sg, len);
 	if ((error = copyout(MOUNT_NFS, (void *)SCARG(bsd_argp, type), len)))
 		return error;
 

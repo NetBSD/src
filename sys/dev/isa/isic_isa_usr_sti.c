@@ -27,14 +27,14 @@
  *	i4b_usr_sti.c - USRobotics Sportster ISDN TA intern (Tina-pp)
  *	-------------------------------------------------------------
  *
- *	$Id: isic_isa_usr_sti.c,v 1.2.2.1 2001/11/14 19:14:51 nathanw Exp $ 
+ *	$Id: isic_isa_usr_sti.c,v 1.2.2.2 2002/04/01 07:45:57 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.2.2.1 2001/11/14 19:14:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.2.2.2 2002/04/01 07:45:57 nathanw Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_USR_STI
@@ -68,8 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.2.2.1 2001/11/14 19:14:51 nat
 #include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
+#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -145,7 +148,7 @@ usrtai_read_reg(u_char *base, u_int offset)
 int
 isic_probe_usrtai(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -307,7 +310,7 @@ static int map_base[] = { 33, 1, 17, 0 };	/* ISAC, HSCX A, HSCX B */
  *	USRobotics read fifo routine
  *---------------------------------------------------------------------------*/
 static void
-usrtai_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+usrtai_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	int map, off, offset;
 	u_char * p = buf;
@@ -328,7 +331,7 @@ usrtai_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
  *	USRobotics write fifo routine
  *---------------------------------------------------------------------------*/
 static void
-usrtai_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+usrtai_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	int map, off, offset;
 	const u_char * p = buf;
@@ -351,7 +354,7 @@ usrtai_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
  *	USRobotics write register routine
  *---------------------------------------------------------------------------*/
 static void
-usrtai_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+usrtai_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	int map = map_base[what] + (offs / 4), 
 	    off = USR_REG_OFFS(offs);
@@ -365,7 +368,7 @@ usrtai_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
  *	USRobotics read register routine
  *---------------------------------------------------------------------------*/
 static u_char
-usrtai_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+usrtai_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	int map = map_base[what] + (offs / 4), 
 	    off = USR_REG_OFFS(offs);
@@ -397,7 +400,7 @@ isic_probe_usrtai(struct isic_attach_args *ia)
  *	isic_attach_usrtai - attach USR
  *---------------------------------------------------------------------------*/
 int
-isic_attach_usrtai(struct l1_softc *sc)
+isic_attach_usrtai(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;

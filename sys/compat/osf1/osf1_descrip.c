@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.6.2.4 2001/11/14 19:13:19 nathanw Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.6.2.5 2002/04/01 07:44:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.6.2.4 2001/11/14 19:13:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.6.2.5 2002/04/01 07:44:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ osf1_sys_fcntl(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 
@@ -152,7 +152,7 @@ osf1_sys_fcntl(l, v, retval)
 			SCARG(&a, cmd) = F_SETLK;
 		else if (SCARG(uap, cmd) == OSF1_F_SETLKW)
 			SCARG(&a, cmd) = F_SETLKW;
-		SCARG(&a, arg) = stackgap_alloc(&sg, sizeof nflock);
+		SCARG(&a, arg) = stackgap_alloc(p, &sg, sizeof nflock);
 
 		error = copyin(SCARG(uap, arg), &oflock, sizeof oflock);
 		if (error == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.3 2002/03/29 23:22:44 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.4 2002/04/01 07:43:33 nathanw Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -203,11 +203,15 @@ fram:
 #ifdef nohwbug
 		panic("translation fault");
 #endif
+
+	case T_PTELEN|T_USER:	/* Page table length exceeded */
 	case T_ACCFLT|T_USER:
 		if (frame->code < 0) { /* Check for kernel space */
 			sig = SIGSEGV;
 			break;
 		}
+
+	case T_PTELEN:
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
@@ -267,16 +271,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			KERNEL_PROC_UNLOCK(p);
 		else
 			KERNEL_UNLOCK();
-		break;
-
-	case T_PTELEN:
-		if (l && l->l_addr)
-			FAULTCHK;
-		panic("ptelen fault in system space: addr %lx pc %lx",
-		    frame->code, frame->pc);
-
-	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		sig = SIGSEGV;
 		break;
 
 	case T_BPTFLT|T_USER:
@@ -340,7 +334,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	exptr->r6 = stack;			/* for ELF */
 	exptr->r7 = 0;				/* for ELF */
 	exptr->r8 = 0;				/* for ELF */
-	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
+	exptr->r9 = (u_long) p->p_psstr;	/* for ELF */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.12.2.4 2002/02/28 04:14:21 nathanw Exp $ */
+/*	$NetBSD: qec.c,v 1.12.2.5 2002/04/01 07:47:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.4 2002/02/28 04:14:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.2.5 2002/04/01 07:47:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,7 @@ void		qec_init	__P((struct qec_softc *));
 
 static int qec_bus_map __P((
 		bus_space_tag_t,
-		bus_type_t,		/*slot*/
-		bus_addr_t,		/*offset*/
+		bus_addr_t,		/*coded slot+offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
@@ -135,7 +134,7 @@ qecattach(parent, self, aux)
 			 sa->sa_reg[0].sbr_slot,
 			 sa->sa_reg[0].sbr_offset,
 			 sa->sa_reg[0].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_regs) != 0) {
+			 0, &sc->sc_regs) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
@@ -149,11 +148,11 @@ qecattach(parent, self, aux)
 			 sa->sa_reg[1].sbr_slot,
 			 sa->sa_reg[1].sbr_offset,
 			 sa->sa_reg[1].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_buffer = (caddr_t)(u_long)bh;
+	sc->sc_buffer = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
 	/* Get number of on-board channels */
@@ -232,31 +231,29 @@ qecattach(parent, self, aux)
 }
 
 int
-qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
+qec_bus_map(t, baddr, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
+	bus_addr_t baddr;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t va;	/* Ignored */
 	bus_space_handle_t *hp;
 {
 	struct qec_softc *sc = t->cookie;
-	int slot = btype;
+	int slot = BUS_ADDR_IOSPACE(baddr);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
-		bus_type_t iospace;
+		struct sbus_range *rp = &sc->sc_range[i];
 
 		if (sc->sc_range[i].cspace != slot)
 			continue;
 
 		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].poffset + offset;
-		iospace = sc->sc_range[i].pspace;
-		return (bus_space_map2(sc->sc_bustag, iospace, paddr,
-					size, flags, vaddr, hp));
+		return (bus_space_map(sc->sc_bustag,
+				BUS_ADDR(rp->pspace,
+					 rp->poffset + BUS_ADDR_PADDR(baddr)),
+				size, flags, hp));
 	}
 
 	return (EINVAL);

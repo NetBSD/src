@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.2.18.2 2001/11/14 19:13:20 nathanw Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.2.18.3 2002/04/01 07:44:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.2.18.2 2001/11/14 19:13:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.2.18.3 2002/04/01 07:44:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,8 @@ osf1_sys_getrusage(l, v, retval)
 		return (EINVAL);
 	}
 
-	sg = stackgap_init(p->p_emul);
-	SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
+	sg = stackgap_init(p, 0);
+	SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
 
 	error = sys_getrusage(l, &a, retval);
 	if (error == 0)

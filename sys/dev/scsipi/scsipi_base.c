@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.8 2002/02/28 04:14:22 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.9 2002/04/01 07:47:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.8 2002/02/28 04:14:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.9 2002/04/01 07:47:19 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -101,7 +101,7 @@ scsipi_init()
 
 	/* Initialize the scsipi_xfer pool. */
 	pool_init(&scsipi_xfer_pool, sizeof(struct scsipi_xfer), 0,
-	    0, 0, "scxspl", 0, NULL, NULL, M_DEVBUF);
+	    0, 0, "scxspl", NULL);
 }
 
 /*
@@ -1871,7 +1871,7 @@ scsipi_execute_xs(xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int async, poll, retries, error, s;
+	int oasync, async, poll, retries, error, s;
 
 	xs->xs_status &= ~XS_STS_DONE;
 	xs->error = XS_NOERROR;
@@ -1943,6 +1943,7 @@ scsipi_execute_xs(xs)
 	 * If we don't yet have a completion thread, or we are to poll for
 	 * completion, clear the ASYNC flag.
 	 */
+	oasync =  (xs->xs_control & XS_CTL_ASYNC);
 	if (chan->chan_thread == NULL || (xs->xs_control & XS_CTL_POLL) != 0)
 		xs->xs_control &= ~XS_CTL_ASYNC;
 
@@ -1951,7 +1952,7 @@ scsipi_execute_xs(xs)
 	retries = xs->xs_retries;		/* for polling commands */
 
 #ifdef DIAGNOSTIC
-	if (async != 0 && xs->bp == NULL)
+	if (oasync != 0 && xs->bp == NULL)
 		panic("scsipi_execute_xs: XS_CTL_ASYNC but no buf");
 #endif
 
@@ -2013,6 +2014,12 @@ scsipi_execute_xs(xs)
 	if (error == ERESTART)
 		goto restarted;
 
+	/*
+	 * If it was meant to run async and we cleared aync ourselve, 
+	 * don't return an error here. It has already been handled
+	 */
+	if (oasync)
+		error = EJUSTRETURN;
 	/*
 	 * Command completed successfully or fatal error occurred.  Fall
 	 * into....

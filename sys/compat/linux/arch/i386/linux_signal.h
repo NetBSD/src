@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.9.2.1 2002/02/28 04:12:50 nathanw Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.9.2.2 2002/04/01 07:44:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -70,8 +70,13 @@
 #define LINUX_SIGWINCH	28
 #define LINUX_SIGIO	29
 #define LINUX_SIGPWR	30
+#define LINUX_SIGSYS	31
 #define LINUX_SIGUNUSED	31
 #define LINUX_NSIG	32
+
+/* Min/max real-time linux signal */
+#define LINUX_SIGRTMIN		32
+#define LINUX_SIGRTMAX		(LINUX__NSIG - 1)
 
 #define LINUX__NSIG 		64
 #define LINUX__NSIG_BPW		32

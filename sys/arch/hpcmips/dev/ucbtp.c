@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.6.4.2 2002/02/28 04:09:56 nathanw Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.6.4.3 2002/04/01 07:40:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -735,7 +735,7 @@ ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
                 return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20.6.3 2002/02/28 04:08:46 nathanw Exp $
+# $NetBSD: GENERIC,v 1.20.6.4 2002/04/01 07:39:42 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.20.6.3 $"
+#ident 		"GENERIC-$Revision: 1.20.6.4 $"
 
 maxusers	32
 
@@ -260,7 +260,6 @@ pseudo-device	loop				# network loopback
 #pseudo-device	strip		2		# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2		# network tunneling over tty
 #pseudo-device	gre		2		# generic L3 over IP tunnel
-#pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
 #pseudo-device	gif		4		# RFC1933 tunnel
 #pseudo-device	faith		1		# IPv[46] tcp relay translation
 #pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation

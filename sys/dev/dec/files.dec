@@ -1,4 +1,4 @@
-#	$NetBSD: files.dec,v 1.4.14.1 2002/02/28 04:13:15 nathanw Exp $
+#	$NetBSD: files.dec,v 1.4.14.2 2002/04/01 07:45:10 nathanw Exp $
 #
 # Config file and device description for  machine-independent
 # code for devices for Digital Equipment Corp. systems.
@@ -13,7 +13,9 @@ file	dev/dec/if_le_dec.c		le_dec_subr
 
 #  LK201 keyboard
 file	dev/dec/lk201_ws.c		lkkbd
-file	dev/dec/wskbdmap_lk201.c	lkkbd
+
+define	lkkbdmap
+file	dev/dec/wskbdmap_lk201.c	lkkbdmap
 
 # DZ-11 (-compatible) tty device driver.
 device	dz { line = -1 }: tty

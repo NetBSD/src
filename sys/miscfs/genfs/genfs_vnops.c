@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.11 2002/02/28 20:40:12 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.12 2002/04/01 07:48:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.11 2002/02/28 20:40:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.12 2002/04/01 07:48:15 nathanw Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -245,7 +245,7 @@ genfs_enoioctl(v)
 	void *v;
 {
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 
@@ -1104,8 +1104,8 @@ genfs_putpages(v)
 		 * wait for it to become unbusy.
 		 */
 
-		yield = curproc->l_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD;
+		yield = (curproc->l_cpu->ci_schedstate.spc_flags &
+		    SPCF_SHOULDYIELD) && curproc != uvm.pagedaemon_proc;
 		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(curproc != uvm.pagedaemon_proc);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
@@ -1552,6 +1552,9 @@ genfs_compat_getpages(void *v)
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
 			break;
+		}
+		if (uio.uio_resid) {
+			memset(iov.iov_base, 0, uio.uio_resid);
 		}
 	}
 	uvm_pagermapout(kva, npages);

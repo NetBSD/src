@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.4.6.2 2001/11/05 19:46:22 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.3 2002/04/01 07:43:39 nathanw Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
@@ -86,6 +86,7 @@
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/properties.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -95,9 +96,9 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/walnut.h>
+#include <machine/dcr.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/dcr.h>
 
 #include <dev/cons.h>
 
@@ -151,6 +152,7 @@ struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
 
 int fake_mapiodev = 1;
 struct board_cfg_data board_data;
+struct propdb *board_info = NULL;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
@@ -159,6 +161,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
 	extern int isitrap, isisize;
+	extern int mchktrap, mchksize;
 	extern int tlbimiss4xx, tlbim4size;
 	extern int tlbdmiss4xx, tlbdm4size;
 	extern int pitfitwdog, pitfitwdogsize;
@@ -175,6 +178,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_ER, 0);
+
+        /* Initialize cache info for memcpy, etc. */
+        cpu_probe_cache();
 
 	memset(&_edata, 0, &_end-&_edata); /* Clear BSS area */
 
@@ -221,6 +227,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		case EXC_ISI:
 			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
 			break;
+		case EXC_MCHK:
+			memcpy((void *)EXC_MCHK, &mchktrap, (size_t)&mchksize);
+			break;
 		case EXC_ITMISS:
 			memcpy((void *)EXC_ITMISS, &tlbimiss4xx,
 				(size_t)&tlbim4size);
@@ -246,20 +255,27 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			memcpy((void *)(EXC_DTMISS|EXC_ALI), &errata51handler,
 				(size_t)&errata51size);
 			break;
-#if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 #if defined(DDB)
 			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
-#else
+#elif defined(IPKDB)
 			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
+#else
+			memcpy((void *)exc, &pgmtrap, (size_t)&pgmsize);
 #endif
 			break;
-#endif /* DDB || IPKDB */
 		}
 
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
 	consinit();
+
+	/* Handle trap instruction as PGM exception */
+	{
+	  int dbcr0;
+	  asm volatile("mfspr %0,%1":"=r"(dbcr0):"K"(SPR_DBCR0));
+	  asm volatile("mtspr %0,%1"::"K"(SPR_DBCR0),"r"(dbcr0 & ~DBCR0_TDE));
+	}
 
 	/*
 	 * external interrupt handler install
@@ -366,9 +382,8 @@ cpu_startup(void)
 	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
+			msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
@@ -458,6 +473,26 @@ cpu_startup(void)
 	 * Set up the buffers.
 	 */
 	bufinit();
+
+	/*
+	 * Set up the board properties database.
+	 */
+	if (!(board_info = propdb_create("board info")))
+		panic("Cannot create board info database");
+
+	if (board_info_set("mem-size", &board_data.mem_size, 
+		sizeof(&board_data.mem_size), PROP_CONST, 0))
+		panic("setting mem-size");
+	if (board_info_set("emac-mac-addr", &board_data.mac_address_local, 
+		sizeof(&board_data.mac_address_local), PROP_CONST, 0))
+		panic("setting emac-mac-addr");
+	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
+		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
+		panic("setting sip0-mac-addr");
+	if (board_info_set("processor-frequency", &board_data.processor_speed, 
+		sizeof(&board_data.processor_speed), PROP_CONST, 0))
+		panic("setting processor-frequency");
+
 }
 
 

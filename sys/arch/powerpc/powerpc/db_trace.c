@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.5 2002/02/28 23:56:13 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.6 2002/04/01 07:42:08 nathanw Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -111,7 +111,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *symname;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
-	extern int trapexit[], end[];
+	extern int trapexit[];
+#ifdef PPC_MPC6XX
+	extern int end[];
+#endif
 	boolean_t full = FALSE;
 
 	{
@@ -156,22 +159,25 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	for (;;) {
 		if (frame < NBPG)
 			break;
+#ifdef PPC_MPC6XX
 		if (kernel_only &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
 		     frame >= VM_MAX_KERNEL_ADDRESS))
 			break;
- 
+#endif 
 		frame = *(db_addr_t *)frame;
 	    next_frame:
 		args = (db_addr_t *)(frame + 8);
 		if (frame < NBPG)
 			break;
+#ifdef PPC_MPC6XX
 		if (kernel_only &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
 		     frame >= VM_MAX_KERNEL_ADDRESS))
 			break;
+#endif
 	        if (count-- == 0)
 			break;
 
@@ -257,6 +263,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			fakeframe[0] = (db_addr_t) tf->fixreg[1];
 			fakeframe[1] = (db_addr_t) tf->lr;
 			frame = (db_addr_t) fakeframe;
+			if (kernel_only && (tf->srr1 & PSL_PR))
+				break;
 			goto next_frame;
 		}
 

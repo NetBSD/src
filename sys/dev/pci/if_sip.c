@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.24.2.6 2002/02/28 04:14:01 nathanw Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24.2.7 2002/04/01 07:46:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.6 2002/02/28 04:14:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.7 2002/04/01 07:46:22 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -144,6 +144,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.6 2002/02/28 04:14:01 nathanw Exp 
 #define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
+
+#if defined(DP83020)
+#define	TX_DMAMAP_SIZE		ETHER_MAX_LEN_JUMBO
+#else
+#define	TX_DMAMAP_SIZE		MCLBYTES
+#endif
 
 /*
  * Receive descriptor list size.  We have one Rx buffer per incoming
@@ -584,9 +590,20 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	printf(": %s\n", sip->sip_name);
+	printf(": %s, rev %#02x\n", sip->sip_name, sc->sc_rev);
 
 	sc->sc_model = sip;
+
+	/*
+	 * XXX Work-around broken PXE firmware on some boards.
+	 *
+	 * The DP83815 shares an address decoder with the MEM BAR
+	 * and the ROM BAR.  Make sure the ROM BAR is disabled,
+	 * so that memory mapped access works.
+	 */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM) &
+	    ~PCI_MAPREG_ROM_ENABLE);
 
 	/*
 	 * Map the device.
@@ -625,10 +642,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	/* Enable bus mastering. */
+	/*
+	 * Make sure bus mastering is enabled.  Also make sure
+	 * Write/Invalidate is enabled if we're allowed to use it.
+	 */
+	pmreg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+		pmreg |= PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
+	    pmreg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
@@ -711,7 +733,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * Create the transmit buffer DMA maps.
 	 */
 	for (i = 0; i < SIP_TXQUEUELEN; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		if ((error = bus_dmamap_create(sc->sc_dmat, TX_DMAMAP_SIZE,
 		    SIP_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
@@ -869,6 +891,35 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+
+	/*
+	 * The number of bytes that must be available in
+	 * the Tx FIFO before the bus master can DMA more
+	 * data into the FIFO.
+	 */
+	sc->sc_tx_fill_thresh = 64 / 32;
+
+	/*
+	 * Start at a drain threshold of 512 bytes.  We will
+	 * increase it if a DMA underrun occurs.
+	 *
+	 * XXX The minimum value of this variable should be
+	 * tuned.  We may be able to improve performance
+	 * by starting with a lower value.  That, however,
+	 * may trash the first few outgoing packets if the
+	 * PCI bus is saturated.
+	 */
+	sc->sc_tx_drain_thresh = 512 / 32;
+
+	/*
+	 * Initialize the Rx FIFO drain threshold.
+	 *
+	 * This is in units of 8 bytes.
+	 *
+	 * We should never set this value lower than 2; 14 bytes are
+	 * required to filter the packet.
+	 */
+	sc->sc_rx_drain_thresh = 128 / 8;
 
 #ifdef SIP_EVENT_COUNTERS
 	/*
@@ -2077,31 +2128,6 @@ SIP_DECL(init)(struct ifnet *ifp)
 	bus_space_write_4(st, sh, SIP_CFG, sc->sc_cfg);
 
 	/*
-	 * Initialize the transmit fill and drain thresholds if
-	 * we have never done so.
-	 */
-	if (sc->sc_tx_fill_thresh == 0) {
-		/*
-		 * XXX This value should be tuned.  We may be able to
-		 * improve performance by increasing it.
-		 */
-		sc->sc_tx_fill_thresh = 64/32;
-	}
-	if (sc->sc_tx_drain_thresh == 0) {
-		/*
-		 * Start at a drain threshold of 512 bytes.  We will
-		 * increase it if a DMA underrun occurs.
-		 *
-		 * XXX The minimum value of this variable should be
-		 * tuned.  We may be able to improve performance
-		 * by starting with a lower value.  That, however,
-		 * may trash the first few outgoing packets if the
-		 * PCI bus is saturated.
-		 */
-		sc->sc_tx_drain_thresh = 512 / 32;
-	}
-
-	/*
 	 * Initialize the prototype TXCFG register.
 	 */
 #if defined(DP83820)
@@ -2644,17 +2670,16 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 			goto allmulti;
 		}
 
-#ifdef DP83820
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
+#ifdef DP83820
 		/* Just want the 11 most significant bits. */
 		hash = crc >> 21;
 #else
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
 		/* Just want the 9 most significant bits. */
 		hash = crc >> 23;
 #endif /* DP83820 */
+
 		slot = hash >> 4;
 		bit = hash & 0xf;
 
@@ -3044,10 +3069,11 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 {
 	u_int16_t myea[ETHER_ADDR_LEN / 2];
 
-	switch (PCI_REVISION(pa->pa_class)) {
+	switch (sc->sc_rev) {
 	case SIS_REV_630S:
 	case SIS_REV_630E:
 	case SIS_REV_630EA1:
+	case SIS_REV_630ET:
 	case SIS_REV_635:
 		/*
 		 * The MAC address for the on-board Ethernet of

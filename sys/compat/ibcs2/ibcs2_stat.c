@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.17.2.2 2001/11/14 19:13:01 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.17.2.3 2002/04/01 07:43:55 nathanw Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.17.2.2 2001/11/14 19:13:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.17.2.3 2002/04/01 07:43:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ibcs2_sys_statfs(l, v, retval)
 	struct statfs *sp;
 	int error;
 	struct nameidata nd;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
@@ -203,7 +203,7 @@ ibcs2_sys_statvfs(l, v, retval)
 	struct statfs *sp;
 	int error;
 	struct nameidata nd;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
@@ -265,8 +265,8 @@ ibcs2_sys_stat(l, v, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct sys___stat13_args cup;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+	caddr_t sg = stackgap_init(p, 0);
+	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -294,9 +294,9 @@ ibcs2_sys_lstat(l, v, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct sys___lstat13_args cup;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -324,10 +324,10 @@ ibcs2_sys_fstat(l, v, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct sys___fstat13_args cup;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
-	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(st));
+	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 	if ((error = sys___fstat13(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)

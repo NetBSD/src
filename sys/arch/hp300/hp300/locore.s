@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116.6.4 2002/02/28 04:09:28 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.116.6.5 2002/04/01 07:39:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -95,7 +95,7 @@ ASLOCAL(tmpstk)
  * Macro to relocate a symbol, used before MMU is enabled.
  */
 #define	_RELOC(var, ar)		\
-	lea	var,ar;		\
+	movel	#var,ar;	\
 	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
@@ -106,9 +106,6 @@ ASLOCAL(tmpstk)
  * must be disabled when this is invoked.
  */
 #define DOREBOOT						\
-	/* Reset Vector Base Register to what PROM expects. */	\
-	movl	#0,%d0;						\
-	movc	%d0,%vbr;					\
 	/* Jump to REQ_REBOOT */				\
 	jmp	0x1A4;
 

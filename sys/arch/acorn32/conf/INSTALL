@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4.2.2 2002/02/28 04:05:52 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.4.2.3 2002/04/01 07:38:44 nathanw Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.4.2.2 $"
+#ident		"INSTALL-$Revision: 1.4.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -119,8 +119,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=4100	# Size in blocks
+options 	MEMORY_DISK_SIZE=4100	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -186,7 +185,7 @@ options 	WSEMUL_VT100
 #options 	FONT_OMRON12x20		# looks funny
 #options 	FONT_QVSS8x15		# broken ?
 options 	FONT_SONY12x25		# looks like VT220 font
-options 	FONT_SONY8x16		# not tested
+#options 	FONT_SONY8x16		# not tested
 #options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
 #options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
 #options 	FONT_VT220L8x10		# not tested

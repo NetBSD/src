@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22.4.2 2002/01/08 00:24:39 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.22.4.3 2002/04/01 07:39:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,9 @@
  * The latter makes it possible to use timers 3 and 2 together to get
  * a 32-bit countdown timer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22.4.3 2002/04/01 07:39:55 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.8 2002/02/28 04:13:31 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.9 2002/04/01 07:45:44 nathanw Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.8 2002/02/28 04:13:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.9 2002/04/01 07:45:44 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -331,7 +331,7 @@ wdcattach(chp)
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
-		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
+		    0, 0, "wdcspl", NULL);
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
@@ -878,9 +878,6 @@ wdcwait(chp, mask, bits, timeout)
 {
 	u_char status;
 	int time = 0;
-#ifdef WDCNDELAY_DEBUG
-	extern int cold;
-#endif
 
 	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc ?chp->wdc->sc_dev.dv_xname
 	    :"none", chp->channel), DEBUG_STATUS);

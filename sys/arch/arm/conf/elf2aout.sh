@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: elf2aout.sh,v 1.3.2.2 2002/02/28 04:07:26 nathanw Exp $
+# $NetBSD: elf2aout.sh,v 1.3.2.3 2002/04/01 07:39:09 nathanw Exp $
 #
 # Shell script to convert an ARM ELF kernel into a bootable a.out kernel by
 # changing the header block on the kernel, and shuffling bits around in the
@@ -44,9 +44,10 @@ DPAD=$(( $DALIGN - $DATA ))
 BPAD=$(( $BALIGN - $BSS ))
 
 DTMP=$(( $DATA + 32768 - $TPAD ))
+DTALIGN=$(( (($DTMP + 4095) /4096) * 4096 ))
 
 TDPAD=32768
-DBPAD=$(( ((($DTMP + 4095) / 4096) * 4096) - $DTMP ))
+DBPAD=$(( $DTALIGN - $DTMP ))
 
 echo TEXT	= $TEXT
 echo TPAD	= $TPAD
@@ -57,7 +58,7 @@ echo DPAD	= $DPAD
 echo DBPAD	= $DBPAD
 
 (
-	echo $TALIGN $DTMP $BSS | awk "${AWKPROG}"; \
+	echo $TALIGN $DTALIGN $BSS | awk "${AWKPROG}"; \
 	cat ${infile}.text; \
 	dd if=/dev/zero bs=$TDPAD count=1; \
 	cat ${infile}.data; \

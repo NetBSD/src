@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.2.4.3 2002/01/08 00:29:20 nathanw Exp $
+#	$NetBSD: files.acpi,v 1.2.4.4 2002/04/01 07:45:07 nathanw Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -28,3 +28,8 @@ file	dev/acpi/acpi_button.c		acpibut
 device	acpiacad
 attach	acpiacad at acpi
 file	dev/acpi/acpi_acad.c		acpiacad
+
+# ACPI Control Method Battery
+device	acpibat
+attach	acpibat at acpi
+file	dev/acpi/acpi_bat.c		acpibat

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1.4.2 2002/02/28 04:05:54 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.1.4.3 2002/04/01 07:38:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -55,26 +55,26 @@ cdev_decl(raid);
 /* Character device declarations */
 
 /* open, close, read, write, ioctl, tty, mmap -- XXX should be a tty */
-#define cdev_physcon_init(c,n)	cdev__ttym_init(c,n,0)
+#define	cdev_physcon_init(c,n)	cdev__ttym_init(c,n,0)
 
 /* open, close, ioctl */
-#define cdev_beep_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_beep_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, read, ioctl */
-#define cdev_kbd_init(c,n)	cdev__ocri_init(c,n)
+#define	cdev_kbd_init(c,n)	cdev__ocri_init(c,n)
 
 /* open, close, ioctl, mmap */
-#define cdev_vidcvid_init(c,n) { \
+#define	cdev_vidcvid_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), 0 }
 
 /* open, close, read, write, ioctl */
-#define cdev_iic_init(c,n)	cdev__ocrwi_init(c,n)
-#define cdev_rtc_init(c,n)	cdev__ocrwi_init(c,n)
+#define	cdev_iic_init(c,n)	cdev__ocrwi_init(c,n)
+#define	cdev_rtc_init(c,n)	cdev__ocrwi_init(c,n)
 
 /* open, close, read, ioctl */
-#define cdev_prof_init(c,n)	cdev__ocri_init(c,n)
+#define	cdev_prof_init(c,n)	cdev__ocri_init(c,n)
 
 cdev_decl(physcon);
 cdev_decl(vidcconsole);

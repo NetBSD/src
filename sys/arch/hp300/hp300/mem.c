@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33.4.3 2002/02/28 04:09:31 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.33.4.4 2002/04/01 07:39:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,9 @@
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.4.4 2002/04/01 07:39:57 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,9 +180,8 @@ mmrw(dev, uio, flags)
 			 * of memory for use with /dev/zero.
 			 */
 			if (devzeropage == NULL) {
-				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(devzeropage, 0, NBPG);
+				MALLOC(devzeropage, caddr_t, NBPG, M_TEMP,
+				    M_WAITOK | M_ZERO);
 			}
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.1.2.4 2002/01/08 00:31:33 nathanw Exp $	*/
+/*	$NetBSD: if_il.c,v 1.1.2.5 2002/04/01 07:47:02 nathanw Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.2.4 2002/01/08 00:31:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.2.5 2002/04/01 07:47:02 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -216,6 +216,7 @@ ilattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ether_ioctl;
 	ifp->if_start = ilstart;
 	ifp->if_watchdog = ilwatch;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_stats.ils_addr);
@@ -415,7 +416,7 @@ ilstart(struct ifnet *ifp)
 	struct mbuf *m;
 	short csr;
 
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0) {
 		if ((sc->sc_flags & ILF_STATPENDING) == 0)
 			return;

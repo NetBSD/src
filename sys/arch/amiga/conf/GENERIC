@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162.6.3 2002/02/28 04:06:28 nathanw Exp $
+# $NetBSD: GENERIC,v 1.162.6.4 2002/04/01 07:38:54 nathanw Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.162.6.3 $"
+#ident 		"GENERIC-$Revision: 1.162.6.4 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -496,7 +496,6 @@ pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.1.4.2 2002/01/11 23:39:37 nathanw Exp $	*/
+/*	$NetBSD: ustir.c,v 1.1.4.3 2002/04/01 07:47:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.2 2002/01/11 23:39:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.3 2002/04/01 07:47:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,11 @@ struct framestate {
 
 #define deframe_isclear(fs) ((fs)->fsmstate == FSTATE_END_OF_FRAME)
 
-Static void deframe_clear(struct framestate*);
-Static void deframe_init(struct framestate*, struct framedefn const*,
-			 u_int8_t*, size_t);
-Static enum frameresult deframe_process(struct framestate*, u_int8_t const**,
-					size_t*);
+Static void deframe_clear(struct framestate *);
+Static void deframe_init(struct framestate *, struct framedefn const *,
+			 u_int8_t *, size_t);
+Static enum frameresult deframe_process(struct framestate *, u_int8_t const **,
+					size_t *);
 
 struct ustir_softc {
 	USBBASEDEVICE		sc_dev;
@@ -230,9 +230,9 @@ Static struct irframe_methods const ustir_methods = {
 };
 
 Static void ustir_rd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static usbd_status ustir_start_read(struct ustir_softc*);
-Static void ustir_periodic(struct ustir_softc*);
-Static void ustir_thread(void*);
+Static usbd_status ustir_start_read(struct ustir_softc *);
+Static void ustir_periodic(struct ustir_softc *);
+Static void ustir_thread(void *);
 
 Static u_int32_t
 crc_ccitt_16(u_int32_t crcinit, u_int8_t const *buf, size_t blen)
@@ -1191,7 +1191,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 	error = 0;
 	switch (cmd) {
 	case USTIR_READ_REGISTER:
-		regnum = *(unsigned int*)addr;
+		regnum = *(unsigned int *)addr;
 
 		if (regnum > STIR_MAX_REG) {
 			error = EINVAL;
@@ -1203,7 +1203,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 		DPRINTFN(10, ("%s: regget(%u) = 0x%x\n", __FUNCTION__,
 			      regnum, (unsigned int)regdata));
 
-		*(unsigned int*)addr = regdata;
+		*(unsigned int *)addr = regdata;
 		if (err) {
 			printf("%s: register read failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
@@ -1213,7 +1213,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 		break;
 
 	case USTIR_WRITE_REGISTER:
-		regnum = *(unsigned int*)addr;
+		regnum = *(unsigned int *)addr;
 		regdata = (regnum >> 8) & 0xff;
 		regnum = regnum & 0xff;
 
@@ -1236,7 +1236,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 
 	case USTIR_DEBUG_LEVEL:
 #ifdef USTIR_DEBUG
-		ustirdebug = *(int*)addr;
+		ustirdebug = *(int *)addr;
 #endif
 		break;
 

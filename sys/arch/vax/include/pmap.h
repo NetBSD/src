@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49.4.2 2002/02/28 04:12:29 nathanw Exp $	   */
+/*	$NetBSD: pmap.h,v 1.49.4.3 2002/04/01 07:43:29 nathanw Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -55,8 +55,17 @@
  */
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
-#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-#define	NPTEPGS	(USRPTSIZE / (sizeof(struct pte) * LTOHPN))
+#define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
+#define	NPTEPGS		(PROCPTSIZE / (NBPG / (sizeof(struct pte) * LTOHPN)))
+
+/*
+ * Link struct if more than one process share pmap (like vfork).
+ * This is rarely used.
+ */
+struct pm_share {
+	struct pm_share	*ps_next;
+	struct pcb	*ps_pcb;
+};
 
 /*
  * Pmap structure
@@ -64,15 +73,16 @@
  */
 
 typedef struct pmap {
-	vaddr_t		 pm_stack;	/* Base of alloced p1 pte space */
-	int		 ref_count;	/* reference count	  */
+	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
+	int		 pm_count;	/* reference count */
+	struct pm_share	*pm_share;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
+	u_char		*pm_pref;	/* pte reference count array */
 	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
-	u_char		 pm_refcnt[NPTEPGS];	/* Refcount per pte page */
 } *pmap_t;
 
 /*
@@ -82,10 +92,11 @@ typedef struct pmap {
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* next pv_entry */
-	struct pte	*pv_pte;	/* pte for this physical page */
+	vaddr_t		 pv_vaddr;	/* address for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };
+struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
@@ -103,6 +114,7 @@ extern	struct pmap kernel_pmap_store;
 #define pmap_kernel()			(&kernel_pmap_store)
 
 #endif	/* _KERNEL */
+
 
 /*
  * Real nice (fast) routines to get the virtual address of a physical page
@@ -149,6 +161,62 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return (FALSE);
 }
 
+boolean_t pmap_clear_modify_long(struct pv_entry *);
+boolean_t pmap_clear_reference_long(struct pv_entry *);
+boolean_t pmap_is_modified_long(struct pv_entry *);
+void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
+void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+
+__inline static boolean_t
+pmap_clear_reference(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+
+	pv->pv_attr &= ~PG_V;
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		rv |= pmap_clear_reference_long(pv);
+	return rv;
+}
+
+__inline static boolean_t
+pmap_clear_modify(struct vm_page *pg)
+{
+	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	boolean_t rv = (pv->pv_attr & PG_M) != 0;
+
+	pv->pv_attr &= ~PG_M;
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		rv |= pmap_clear_modify_long(pv);
+	return rv;
+}
+
+__inline static boolean_t
+pmap_is_modified(struct vm_page *pg)
+{
+	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	if (pv->pv_attr & PG_M)
+		return 1;
+	else
+		return pmap_is_modified_long(pv);
+}
+
+__inline static void
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+{
+	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+
+	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
+		pmap_page_protect_long(pv, prot);
+}
+
+__inline static void
+pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
+{
+	if (pmap->pm_p0lr != 0 || pmap->pm_p1lr != 0x200000 ||
+	    (start & KERNBASE) != 0)
+		pmap_protect_long(pmap, start, end, prot);
+}
 
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
@@ -158,8 +226,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define pmap_deactivate(p)		/* Dont do anything */
-#define pmap_reference(pmap)		(pmap)->ref_count++
+#define pmap_reference(pmap)		(pmap)->pm_count++
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)			\

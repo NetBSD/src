@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200var.h,v 1.2.4.2 2002/02/28 04:07:44 nathanw Exp $	*/
+/*	$NetBSD: i80200var.h,v 1.2.4.3 2002/04/01 07:39:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #define	_ARM_XSCALE_I80200VAR_H_
 
 /* i80200_icu.c */
-void	i80200_intr_init(void);
+void	i80200_icu_init(void);
 void	i80200_intr_enable(uint32_t);
 void	i80200_intr_disable(uint32_t);
 

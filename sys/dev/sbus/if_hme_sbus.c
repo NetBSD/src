@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.2.4 2002/04/01 07:47:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.2.4 2002/04/01 07:47:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,42 +131,42 @@ hmeattach_sbus(parent, self, aux)
 	 *
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[0].sbr_slot,
-			 (bus_addr_t)sa->sa_reg[0].sbr_offset,
+			 sa->sa_reg[0].sbr_slot,
+			 sa->sa_reg[0].sbr_offset,
 			 (bus_size_t)sa->sa_reg[0].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_seb) != 0) {
+			 0, &sc->sc_seb) != 0) {
 		printf("%s: cannot map SEB registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[1].sbr_slot,
-			 (bus_addr_t)sa->sa_reg[1].sbr_offset,
+			 sa->sa_reg[1].sbr_slot,
+			 sa->sa_reg[1].sbr_offset,
 			 (bus_size_t)sa->sa_reg[1].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_etx) != 0) {
+			 0, &sc->sc_etx) != 0) {
 		printf("%s: cannot map ETX registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[2].sbr_slot,
-			 (bus_addr_t)sa->sa_reg[2].sbr_offset,
+			 sa->sa_reg[2].sbr_slot,
+			 sa->sa_reg[2].sbr_offset,
 			 (bus_size_t)sa->sa_reg[2].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_erx) != 0) {
+			 0, &sc->sc_erx) != 0) {
 		printf("%s: cannot map ERX registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[3].sbr_slot,
-			 (bus_addr_t)sa->sa_reg[3].sbr_offset,
+			 sa->sa_reg[3].sbr_slot,
+			 sa->sa_reg[3].sbr_offset,
 			 (bus_size_t)sa->sa_reg[3].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mac) != 0) {
+			 0, &sc->sc_mac) != 0) {
 		printf("%s: cannot map MAC registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[4].sbr_slot,
-			 (bus_addr_t)sa->sa_reg[4].sbr_offset,
+			 sa->sa_reg[4].sbr_slot,
+			 sa->sa_reg[4].sbr_offset,
 			 (bus_size_t)sa->sa_reg[4].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mif) != 0) {
+			 0, &sc->sc_mif) != 0) {
 		printf("%s: cannot map MIF registers\n", self->dv_xname);
 		return;
 	}

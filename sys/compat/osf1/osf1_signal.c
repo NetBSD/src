@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.18.2.2 2001/11/14 19:13:21 nathanw Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.18.2.3 2002/04/01 07:44:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.18.2.2 2001/11/14 19:13:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.18.2.3 2002/04/01 07:44:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,17 +84,17 @@ osf1_sys_sigaction(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	nosa = SCARG(uap, nsa);
 	oosa = SCARG(uap, osa);
 
 	if (oosa != NULL)
-		obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		obsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 	else
 		obsa = NULL;
 
 	if (nosa != NULL) {
-		nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		nbsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 		if ((error = copyin(nosa, &tmposa, sizeof(tmposa))) != 0)
 			return error;
 		osf1_cvt_sigaction_to_native(&tmposa, &tmpbsa);
@@ -135,17 +135,17 @@ osf1_sys_sigaltstack(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	noss = SCARG(uap, nss);
 	ooss = SCARG(uap, oss);
 
 	if (ooss != NULL)
-		obss = stackgap_alloc(&sg, sizeof(struct sigaltstack));
+		obss = stackgap_alloc(p, &sg, sizeof(struct sigaltstack));
 	else
 		obss = NULL;
 
 	if (noss != NULL) {
-		nbss = stackgap_alloc(&sg, sizeof(struct sigaltstack));
+		nbss = stackgap_alloc(p, &sg, sizeof(struct sigaltstack));
 		if ((error = copyin(noss, &tmposs, sizeof(tmposs))) != 0)
 			return error;
 		if ((error = osf1_cvt_sigaltstack_to_native(&tmposs, &tmpbss)) != 0)
@@ -183,7 +183,7 @@ osf1_sys_signal(l, v, retval)
 	struct proc *p = l->l_proc;
 	int signum = osf1_signal_xlist[OSF1_SIGNO(SCARG(uap, signum))];
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	if (signum <= 0 || signum >= OSF1_NSIG) {
 		if (OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGNAL_MASK ||
@@ -213,8 +213,8 @@ osf1_sys_signal(l, v, retval)
 			struct sys_sigaction_args sa_args;
 			struct sigaction *nbsa, *obsa, sa;
 
-			nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
-			obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+			nbsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
+			obsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 			SCARG(&sa_args, signum) = signum;
 			SCARG(&sa_args, nsa) = nbsa;
 			SCARG(&sa_args, osa) = obsa;
@@ -263,7 +263,7 @@ osf1_sys_signal(l, v, retval)
 			struct sys_sigaction_args sa_args;
 			struct sigaction *bsa, sa;
 
-			bsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+			bsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 			SCARG(&sa_args, signum) = signum;
 			SCARG(&sa_args, nsa) = bsa;
 			SCARG(&sa_args, osa) = NULL;

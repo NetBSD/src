@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19.8.3 2002/01/08 00:26:19 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19.8.4 2002/04/01 07:41:02 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -42,8 +42,8 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
 
-int __start __P((void));	/* lowest kernel code address */
-vaddr_t getreg_val __P((db_expr_t regno));
+int __start(void);	/* lowest kernel code address */
+vaddr_t getreg_val(db_expr_t regno);
 
 #define REG_ARG(i)	(4+i)
 #define SAVES_RA(x)	isa_spill((x),31)
@@ -58,7 +58,7 @@ vaddr_t getreg_val __P((db_expr_t regno));
 		 ((int *)(&((struct mips_kernel_state *)0)->sp) - (int *)0):  \
 	 -1)
 
-db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
+db_sym_t localsym(db_sym_t sym, boolean_t isreg, int *lex_level);
 
 /*
  * Machine register set.
@@ -66,18 +66,14 @@ db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
 struct mips_saved_state *db_cur_exc_frame = 0;
 
 /*XXX*/
-void stacktrace_subr __P((int a0, int a1, int a2, int a3,
-			  u_int pc, u_int sp, u_int fp, u_int ra,
-			  void (*)(const char*, ...)));
+void	stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
+	    void (*)(const char*, ...));
 
 /*
  * Stack trace helper.
  */
-void db_mips_stack_trace __P((int count, vaddr_t stackp,
-			      vaddr_t the_pc, vaddr_t the_ra, int flags,
-			      vaddr_t kstackp));
-int db_mips_variable_func __P((const struct db_variable *vp, db_expr_t *valuep,
-			       int db_var_fun));
+void db_mips_stack_trace(int, vaddr_t, vaddr_t, vaddr_t, int, vaddr_t);
+int db_mips_variable_func(const struct db_variable *, db_expr_t *, int);
 
 #define DB_SETF_REGS db_mips_variable_func
 #define DBREGS_REG()

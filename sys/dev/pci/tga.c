@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.31.2.5 2002/02/28 04:14:10 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.31.2.6 2002/04/01 07:46:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.31.2.5 2002/02/28 04:14:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.31.2.6 2002/04/01 07:46:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,16 +362,18 @@ tga_init(memt, pc, tag, dc)
 
 	wsfont_init();
 	/* prefer 8 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("tga: no appropriate fonts.\n");
 		return;
 	}
 
 	/* the accelerated tga_putchar() needs LSbit left */
-	if (wsfont_lock(cookie, &dc->dc_rinfo.ri_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &dc->dc_rinfo.ri_font)) {
 		printf("tga: couldn't lock font\n");
 		return;
 	}
@@ -606,7 +608,7 @@ tga_ioctl(v, cmd, data, flag, p)
 		return (*dcrf->ramdac_set_cursor)(dcrc,
 		    (struct wsdisplay_cursor *)data);
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 static int

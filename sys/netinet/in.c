@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.65.2.5 2002/02/28 04:15:05 nathanw Exp $	*/
+/*	$NetBSD: in.c,v 1.65.2.6 2002/04/01 07:48:29 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.65.2.5 2002/02/28 04:15:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.65.2.6 2002/04/01 07:48:29 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -1076,6 +1076,7 @@ in_savemkludge(oia)
 	if (ia) {	/* there is another address */
 		for (inm = LIST_FIRST(&oia->ia_multiaddrs); inm; inm = next){
 			next = LIST_NEXT(inm, inm_list);
+			LIST_REMOVE(inm, inm_list);
 			IFAFREE(&inm->inm_ia->ia_ifa);
 			IFAREF(&ia->ia_ifa);
 			inm->inm_ia = ia;
@@ -1107,6 +1108,7 @@ in_restoremkludge(ia, ifp)
 			for (inm = LIST_FIRST(&oia->ia_multiaddrs);
 			    inm != NULL; inm = next) {
 				next = LIST_NEXT(inm, inm_list);
+				LIST_REMOVE(inm, inm_list);
 				IFAFREE(&inm->inm_ia->ia_ifa);
 				IFAREF(&ia->ia_ifa);
 				inm->inm_ia = ia;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110.4.4 2002/02/28 04:10:38 nathanw Exp $
+# $NetBSD: GENERIC,v 1.110.4.5 2002/04/01 07:40:52 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.110.4.4 $"
+#ident 		"GENERIC-$Revision: 1.110.4.5 $"
 
 maxusers	32
 
@@ -173,6 +173,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+#options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 gm*	at pci? dev ? function ?	# gmac ethernet

@@ -1,0 +1,57 @@
+###
+### SBMIPS DEVICES
+###
+
+# System Control/Debug
+device	sbscd {[offset = -1], [intr[2] = {-1,-1}]}
+attach	sbscd at zbbus
+file	arch/mips/sibyte/dev/sbscd.c		sbscd
+
+# On-board I/O (slow I/O bridge)
+device	sbobio {[offset = -1], [intr[2] = {-1,-1}]}
+attach	sbobio at zbbus
+file	arch/mips/sibyte/dev/sbobio.c		sbobio
+
+# Generic bus, hang off of sbobio
+device	sbgbus {[chipsel = -1], [offset = 0], [intr[2] = {-1,-1}]}
+attach	sbgbus at sbobio
+file	arch/mips/sibyte/dev/sbgbus.c		sbgbus
+
+# I/O Bridge Zero attachment to ZBbus
+device	sbbrz: pcibus
+attach	sbbrz at zbbus
+file	arch/mips/sibyte/pci/sbbrz.c		sbbrz
+file	arch/mips/sibyte/pci/sbbrz_pci.c	sbbrz
+
+# Instantiated SB-1250 PCI Host bridge
+device	sbpcihb
+attach	sbpcihb at pci
+file	arch/mips/sibyte/pci/sbpcihb.c		sbpcihb
+
+# SB-1250 LDT Host bridge (acts like ppb)
+device	sbldthb: pcibus
+attach	sbldthb at pci
+file	arch/mips/sibyte/pci/sbldthb.c		sbldthb
+
+# sbscd children
+
+device	sbtimer
+attach	sbtimer at sbscd
+file	arch/mips/sibyte/dev/sbtimer.c		sbtimer
+
+device	sbwdog
+attach	sbwdog at sbscd
+file	arch/mips/sibyte/dev/sbwdog.c		sbwdog
+
+# sbobio children
+
+# SB1250 MAC (XXX: maybe add mii_bitbang?)
+device	sbmac: arp, ether, ifnet, mii, mii_bitbang
+attach	sbmac at sbobio
+file	arch/mips/sibyte/dev/sbmac.c		sbmac
+
+# SB1250 built-in (asynchronous) serial ports
+device	sbscn: tty
+attach	sbscn at sbobio
+file	arch/mips/sibyte/dev/sbscn.c		sbscn	needs-flag
+

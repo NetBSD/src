@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.2.2.3 2002/02/28 04:10:42 nathanw Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.2.2.4 2002/04/01 07:40:57 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 #define	CACHEOP_R4K_HIT_WB		(6 << 2)	/* I, D, SD */
 #define	CACHEOP_R4K_HIT_SET_VIRTUAL	(7 << 2)	/* SI, SD */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
  * cache_r4k_op_line:
@@ -233,6 +233,70 @@ do {									\
 	    : "memory");						\
 } while (/*CONSTCOND*/0)
 
+/*
+ * cache_r4k_op_8lines_16_4way:
+ *
+ *	Perform the specified cache operation on 8 16-byte
+ * 	cache lines, 4-ways.
+ */
+#define	cache_r4k_op_8lines_16_4way(va1, va2, va3, va4, op)		\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
+		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\
+		"cache %4, 0x010(%0); cache %4, 0x010(%1);	\n\t"	\
+		"cache %4, 0x010(%2); cache %4, 0x010(%3);	\n\t"	\
+		"cache %4, 0x020(%0); cache %4, 0x020(%1);	\n\t"	\
+		"cache %4, 0x020(%2); cache %4, 0x020(%3);	\n\t"	\
+		"cache %4, 0x030(%0); cache %4, 0x030(%1);	\n\t"	\
+		"cache %4, 0x030(%2); cache %4, 0x030(%3);	\n\t"	\
+		"cache %4, 0x040(%0); cache %4, 0x040(%1);	\n\t"	\
+		"cache %4, 0x040(%2); cache %4, 0x040(%3);	\n\t"	\
+		"cache %4, 0x050(%0); cache %4, 0x050(%1);	\n\t"	\
+		"cache %4, 0x050(%2); cache %4, 0x050(%3);	\n\t"	\
+		"cache %4, 0x060(%0); cache %4, 0x060(%1);	\n\t"	\
+		"cache %4, 0x060(%2); cache %4, 0x060(%3);	\n\t"	\
+		"cache %4, 0x070(%0); cache %4, 0x070(%1);	\n\t"	\
+		"cache %4, 0x070(%2); cache %4, 0x070(%3);	\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va1), "r" (va2), "r" (va3), "r" (va4), "i" (op)	\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
+/*
+ * cache_r4k_op_8lines_32_4way:
+ *
+ *	Perform the specified cache operation on 8 32-byte
+ * 	cache lines, 4-ways.
+ */
+#define	cache_r4k_op_8lines_32_4way(va1, va2, va3, va4, op)		\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %4, 0x000(%0); cache %4, 0x000(%1);	\n\t"	\
+		"cache %4, 0x000(%2); cache %4, 0x000(%3);	\n\t"	\
+		"cache %4, 0x020(%0); cache %4, 0x020(%1);	\n\t"	\
+		"cache %4, 0x020(%2); cache %4, 0x020(%3);	\n\t"	\
+		"cache %4, 0x040(%0); cache %4, 0x040(%1);	\n\t"	\
+		"cache %4, 0x040(%2); cache %4, 0x040(%3);	\n\t"	\
+		"cache %4, 0x060(%0); cache %4, 0x060(%1);	\n\t"	\
+		"cache %4, 0x060(%2); cache %4, 0x060(%3);	\n\t"	\
+		"cache %4, 0x080(%0); cache %4, 0x080(%1);	\n\t"	\
+		"cache %4, 0x080(%2); cache %4, 0x080(%3);	\n\t"	\
+		"cache %4, 0x0a0(%0); cache %4, 0x0a0(%1);	\n\t"	\
+		"cache %4, 0x0a0(%2); cache %4, 0x0a0(%3);	\n\t"	\
+		"cache %4, 0x0c0(%0); cache %4, 0x0c0(%1);	\n\t"	\
+		"cache %4, 0x0c0(%2); cache %4, 0x0c0(%3);	\n\t"	\
+		"cache %4, 0x0e0(%0); cache %4, 0x0e0(%1);	\n\t"	\
+		"cache %4, 0x0e0(%2); cache %4, 0x0e0(%3);	\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va1), "r" (va2), "r" (va3), "r" (va4), "i" (op)	\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
 void	r4k_icache_sync_all_16(void);
 void	r4k_icache_sync_range_16(vaddr_t, vsize_t);
 void	r4k_icache_sync_range_index_16(vaddr_t, vsize_t);
@@ -299,4 +363,4 @@ void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
 void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
 void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
 
-#endif /* _KERNEL */
+#endif /* _KERNEL && !_LOCORE */

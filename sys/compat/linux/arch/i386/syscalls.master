@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54.2.4 2002/02/28 04:12:51 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.54.2.5 2002/04/01 07:44:13 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -45,6 +45,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
@@ -64,7 +65,8 @@
 7	STD		{ int linux_sys_waitpid(int pid, int *status, \
 			    int options);}
 8	STD		{ int linux_sys_creat(const char *path, int mode); }
-9	STD		{ int linux_sys_link(const char *path, const char *link); }
+9	STD		{ int linux_sys_link(const char *path, \
+			    const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
 11	STD		{ int linux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
@@ -124,7 +126,8 @@
 56	OBSOL		mpx
 57	NOARGS		{ int sys_setpgid(int pid, int pgid); }
 58	OBSOL		ulimit
-59	STD		{ int linux_sys_oldolduname(struct linux_oldold_utsname *up); }
+59	STD		{ int linux_sys_oldolduname( \
+			    struct linux_oldold_utsname *up); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
 62	UNIMPL		ustat
@@ -154,7 +157,8 @@
 79	STD		{ int linux_sys_settimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 80	STD		{ int linux_sys_getgroups16(int gidsetsize, linux_gid_t *gidset); }
-81	STD		{ int linux_sys_setgroups16(int gidsetsize, linux_gid_t *gidset); }
+81	STD		{ int linux_sys_setgroups16(int gidsetsize, \
+			    linux_gid_t *gidset); }
 82	STD		{ int linux_sys_oldselect(struct linux_oldselect *lsp); }
 83	STD		{ int linux_sys_symlink(const char *path, \
 			    const char *to); }
@@ -216,7 +220,8 @@
 123	STD		{ int linux_sys_modify_ldt(int func, void *ptr, \
 			    size_t bytecount); }
 124	UNIMPL		adjtimex
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    const linux_old_sigset_t *set, \
 			    linux_old_sigset_t *oset); }
@@ -319,11 +324,13 @@
 190	NOARGS		{ int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct orlimit *rlp); }
-192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+192	NOARGS		{ linux_off_t linux_sys_mmap(unsigned long addr, \
+			    size_t len, int prot, int flags, int fd, \
+			    linux_off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
-194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, off_t length); }
+194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+			    off_t length); }
 195	STD		{ int linux_sys_stat64(const char *path, \
 			    struct linux_stat64 *sp); }
 196	STD		{ int linux_sys_lstat64(const char *path, \
@@ -360,4 +367,4 @@
 218	UNIMPL		mincore
 219	UNIMPL		madvise
 220	UNIMPL		getdents64
-221	UNIMPL		fcntl64
+221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }

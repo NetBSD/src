@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.6 2002/02/28 04:14:31 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.7 2002/04/01 07:47:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.6 2002/02/28 04:14:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.7 2002/04/01 07:47:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 		
 		DPRINTF(("uhid_intr: data ="));
 		for (i = 0; i < len; i++)
-			DPRINTF((" %02x", ((u_char*)data)[i]));
+			DPRINTF((" %02x", ((u_char *)data)[i]));
 		DPRINTF(("\n"));
 	}
 #endif

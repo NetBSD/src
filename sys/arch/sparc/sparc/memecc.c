@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.2 1998/09/19 16:50:31 pk Exp $	*/
+/*	$NetBSD: memecc.c,v 1.2.30.1 2002/04/01 07:42:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,12 +98,10 @@ memecc_attach(parent, self, aux)
 	/*
 	 * Map registers
 	 */
-	if (bus_space_map2(
+	if (bus_space_map(
 			ma->ma_bustag,
-			ma->ma_iospace,
 			ma->ma_paddr,
 			ma->ma_size,
-			0,
 			0,
 			&sc->sc_bh) != 0) {
 		printf("memecc_attach: cannot map registers\n");

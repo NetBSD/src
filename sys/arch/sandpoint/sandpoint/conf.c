@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.8.2 2002/02/28 04:11:33 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.8.3 2002/04/01 07:42:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,16 +96,16 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -247,11 +247,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 50: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 51: RAIDframe disk driver */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 52: ws multiplexor */
-	cdev_i4b_init(NI4B, i4b),		/* 53: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 54: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 55: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 56: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 57: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 53: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 54: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 55: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 56: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 57: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 58: clockctl pseudo device */
 
 };

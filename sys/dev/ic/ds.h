@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.3 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: ds.h,v 1.3.20.1 2002/04/01 07:45:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 /* Family codes (low byte of the ROM) */
 
+#define DS_FAMILY_2401	0x01	/* DS2401 Silicon Serial Number */
 #define DS_FAMILY_2404	0x04	/* DS2404 Econoram Time Chip */
 
 /*

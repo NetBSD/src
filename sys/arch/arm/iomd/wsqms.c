@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.1.4.2 2002/01/08 00:23:16 nathanw Exp $ */
+/* $NetBSD: wsqms.c,v 1.1.4.3 2002/04/01 07:39:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -140,7 +140,7 @@ wsqms_ioctl(cookie, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 

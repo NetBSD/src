@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.1.10.1 2002/02/28 04:06:31 nathanw Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.1.10.2 2002/04/01 07:38:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.1 2002/02/28 04:06:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.2 2002/04/01 07:38:55 nathanw Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1065,7 +1065,7 @@ amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return amidisplaycc_gfxscreen(adp, 0);
 		if (INTDATA == WSDISPLAYIO_MODE_MAPPED)
 			return amidisplaycc_gfxscreen(adp, 1);
-		return (-1);
+		return (EINVAL);
 
 	case WSDISPLAYIO_GINFO:
 		FBINFO.width  = adp->gfxwidth;
@@ -1086,7 +1086,7 @@ amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		(char)((cmd&0xff00)>>8),
 		(int)(cmd&0xff));
 
-	return (-1);
+	return (EPASSTHROUGH);
 
 #undef UINTDATA
 #undef INTDATA
@@ -1569,16 +1569,16 @@ amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, char *fontname)
 		wsfontcookie = wsfont_find(fontname,
 					   scr->fontwidth,
 					   scr->fontheight,
-					   1);
+					   1,
+					   WSDISPLAY_FONTORDER_L2R,
+					   WSDISPLAY_FONTORDER_L2R);
 
 		if (wsfontcookie == -1)
 			return (EINVAL);
 
 		/* So, found a suitable font. Now lock it. */
 		if (wsfont_lock(wsfontcookie,
-				&font,
-				WSDISPLAY_FONTORDER_L2R,
-				WSDISPLAY_FONTORDER_L2R) == -1)
+				&font))
 			return (EINVAL);
 
 		/* Ok here we have the font successfully. */
@@ -1626,13 +1626,13 @@ amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 	if (font->stride != 1) {
 		dprintf("amidisplaycc_load_font: stride %d != 1\n",
 		       font->stride);
-		return (-1);
+		return (EINVAL);
 	}
 
 	if (font->fontwidth != 8) {
 		dprintf("amidisplaycc_load_font: width %d not supported\n",
 		       font->fontwidth);
-		return (-1);
+		return (EINVAL);
 	}
 
 	/* Size of the font in bytes... Assuming stride==1 */
@@ -1822,7 +1822,7 @@ amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 		return (0);
 
 	} else
-		return (-1);
+		return (EPASSTHROUGH);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61.4.4 2002/02/28 04:06:27 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61.4.5 2002/04/01 07:38:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.4 2002/02/28 04:06:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.5 2002/04/01 07:38:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,8 +348,6 @@ kvtop(addr)
 		panic("kvtop: invalid page frame");
 	return (pa);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5.26.2 2002/02/28 04:10:19 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.5.26.3 2002/04/01 07:40:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DEV_IO		14	/* iopl for compat_10 */
+#define	DEV_IO		14	/* iopl for compat_10 */
 
 #include <sys/conf.h>
 

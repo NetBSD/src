@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.40.2.3 2001/11/14 19:16:44 nathanw Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.40.2.4 2002/04/01 07:47:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.3 2001/11/14 19:16:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.4 2002/04/01 07:47:58 nathanw Exp $");
 
 #define SYSVSEM
 
@@ -97,6 +97,7 @@ seminit()
 		suptr->un_proc = NULL;
 	}
 	semu_list = NULL;
+	exithook_establish(semexit, NULL);
 }
 
 /*
@@ -585,7 +586,8 @@ sys_semop(l, v, retval)
 	int i, j, eval;
 	int do_wakeup, do_undos;
 
-	SEM_PRINTF(("call to semop(%d, %p, %d)\n", semid, sops, nsops));
+	SEM_PRINTF(("call to semop(%d, %p, %lld)\n", semid, sops,
+	    (long long)nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -603,14 +605,16 @@ sys_semop(l, v, retval)
 	}
 
 	if (nsops > MAX_SOPS) {
-		SEM_PRINTF(("too many sops (max=%d, nsops=%d)\n", MAX_SOPS, nsops));
+		SEM_PRINTF(("too many sops (max=%d, nsops=%lld)\n", MAX_SOPS,
+		    (long long)nsops));
 		return(E2BIG);
 	}
 
 	if ((eval = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0])))
 	    != 0) {
-		SEM_PRINTF(("eval = %d from copyin(%p, %p, %d)\n", eval,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		SEM_PRINTF(("eval = %d from copyin(%p, %p, %lld)\n", eval,
+		    SCARG(uap, sops), &sops,
+		    (long long)(nsops * sizeof(sops[0]))));
 		return(eval);
 	}
 
@@ -636,7 +640,7 @@ sys_semop(l, v, retval)
 
 			semptr = &semaptr->_sem_base[sopptr->sem_num];
 
-			SEM_PRINTF(("semop:  semaptr=%x, sem_base=%x, semptr=%x, sem[%d]=%d : op=%d, flag=%s\n",
+			SEM_PRINTF(("semop:  semaptr=%p, sem_base=%p, semptr=%p, sem[%d]=%d : op=%d, flag=%s\n",
 			    semaptr, semaptr->_sem_base, semptr,
 			    sopptr->sem_num, semptr->semval, sopptr->sem_op,
 			    (sopptr->sem_flg & IPC_NOWAIT) ? "nowait" : "wait"));
@@ -806,9 +810,11 @@ done:
  * Go through the undo structures for this process and apply the adjustments to
  * semaphores.
  */
+/*ARGSUSED*/
 void
-semexit(p)
+semexit(p, v)
 	struct proc *p;
+	void *v;
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.5 2002/01/08 00:32:06 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.6 2002/04/01 07:47:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.5 2002/01/08 00:32:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.6 2002/04/01 07:47:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,17 +605,17 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
 			    sc->sc_portno, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return (error);
 	}
 
@@ -663,7 +663,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

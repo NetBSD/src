@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.8.3 2002/02/28 04:09:24 nathanw Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.8.4 2002/04/01 07:39:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)hil.c	8.2 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.8.4 2002/04/01 07:39:52 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -97,12 +100,7 @@ int 	hildebug = 0;
 extern struct emul emul_hpux;
 #endif
 
-/* ITE interface */
-char *kbd_keymap;
-char *kbd_shiftmap;
-char *kbd_ctrlmap; 
-char *kbd_ctrlshiftmap;
-char **kbd_stringmap;
+extern struct kbdmap kbd_map[];
 
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
@@ -142,7 +140,7 @@ hilmatch(parent, match, aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp("hil     ", ia->ia_modname) != 0)
+	if (strcmp("hil", ia->ia_modname) != 0)
 		return (0);
 
 	return (1);
@@ -156,10 +154,6 @@ hilattach(parent, self, aux)
 	struct hil_softc *hilp = (struct hil_softc *)self;
 	struct intio_attach_args *ia = aux;
 	int i;
-
-	/* XXX ITE interface */
-	extern char us_keymap[], us_shiftmap[], us_ctrlmap[],
-		    us_ctrlshiftmap[], *us_stringmap[];
 
 	printf("\n");
 
@@ -195,12 +189,17 @@ hilattach(parent, self, aux)
 	 * to US ASCII - it seems to work OK for non-recognized
 	 * keyboards.
 	 */
+
 	hilp->hl_kbdlang = KBD_DEFAULT;
-	kbd_keymap = us_keymap;			/* XXX */
-	kbd_shiftmap = us_shiftmap;		/* XXX */
-	kbd_ctrlmap = us_ctrlmap;		/* XXX */
-	kbd_ctrlshiftmap = us_ctrlshiftmap;	/* XXX */
-	kbd_stringmap = us_stringmap;		/* XXX */
+#if NITE > 0
+	{
+		struct kbdmap *km;
+		for (km = kbd_map; km->kbd_code; km++) {
+			if (km->kbd_code == KBD_US)
+				iteinstallkeymap(km);
+		}
+	}
+#endif
 
 	(void) intio_intr_establish(hilint, hilp, ia->ia_ipl, IPL_TTY);
 
@@ -1215,12 +1214,13 @@ hilkbddisable(v)
 {
 }
 
+#if NITE > 0
 /*
  * The following chunk of code implements HIL console keyboard
  * support.
  */
 
-static struct	hil_dev *hilkbd_cn_device;
+static struct hil_dev *hilkbd_cn_device;
 static struct ite_kbdmap hilkbd_cn_map;
 static struct ite_kbdops hilkbd_cn_ops = {
 	hilkbdcngetc,
@@ -1228,6 +1228,8 @@ static struct ite_kbdops hilkbd_cn_ops = {
 	hilkbdbell,
 	NULL,
 };
+
+extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
 
 /*
  * XXX: read keyboard directly and return code.
@@ -1269,9 +1271,6 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	bus_space_handle_t bsh;
 	u_char lang;
 
-	/* XXX from hil_keymaps.c */
-	extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
-
 	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
 		return (1);
 
@@ -1307,7 +1306,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	return (0);
 }
 
-/* End of HIL console keyboard code. */
+#endif /* End of HIL console keyboard code. */
 
 /*
  * Recoginize and clear keyboard generated NMIs.
@@ -1504,18 +1503,15 @@ hilconfig(hilp)
 	if (hilp->hl_kbdlang != KBD_SPECIAL) {
 		struct kbdmap *km;
 
+#if NITE > 0
 		for (km = kbd_map; km->kbd_code; km++) {
 			if (km->kbd_code == db) {
 				hilp->hl_kbdlang = db;
-				/* XXX */
-				kbd_keymap = km->kbd_keymap;
-				kbd_shiftmap = km->kbd_shiftmap;
-				kbd_ctrlmap = km->kbd_ctrlmap;
-				kbd_ctrlshiftmap = km->kbd_ctrlshiftmap;
-				kbd_stringmap = km->kbd_stringmap;
+				iteinstallkeymap(km);
 				break;
 			}
 		}
+#endif
 		if (km->kbd_code == 0) {
 		    printf(
 		     "hilconfig: unknown keyboard type 0x%x, using default\n",

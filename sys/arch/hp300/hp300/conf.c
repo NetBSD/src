@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47.2.3 2002/02/28 04:09:27 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.47.2.4 2002/04/01 07:39:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.4 2002/04/01 07:39:56 nathanw Exp $");                                                  
 
 #include "opt_compat_svr4.h"
 

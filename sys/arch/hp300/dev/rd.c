@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.45.4.3 2002/02/28 04:09:25 nathanw Exp $	*/
+/*	$NetBSD: rd.c,v 1.45.4.4 2002/04/01 07:39:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /*
  * CS80/SS80 disk driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45.4.4 2002/04/01 07:39:53 nathanw Exp $");                                                  
 
 #include "opt_useleds.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.21.2.3 2001/11/14 19:13:42 nathanw Exp $	*/
+/*	$NetBSD: rnd.c,v 1.21.2.4 2002/04/01 07:45:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.3 2001/11/14 19:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.4 2002/04/01 07:45:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -288,7 +288,7 @@ rnd_init(void)
 	SIMPLEQ_INIT(&rnd_samples);
 
 	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
-	    0, NULL, NULL, 0);
+	    NULL);
 
 	rndpool_init(&rnd_pool);
 

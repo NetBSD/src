@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.1 2000/02/29 15:21:52 nonaka Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.1.14.1 2002/04/01 07:42:14 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -47,9 +47,6 @@
 #include <machine/endian.h>
 
 #include "magic.h"
-
-#define MBR_PTYPE_PREP	0x41
-#define MBR_BOOT_ACTIVE	0x80
 
 int
 main(argc, argv)
@@ -153,7 +150,7 @@ main(argc, argv)
 	 * Build a "PReP" partition table entry in the boot record
 	 *  - "PReP" may only look at the system_indicator
 	 */
-	mbrp->mbrp_flag = MBR_BOOT_ACTIVE;
+	mbrp->mbrp_flag = MBR_FLAGS_ACTIVE;
 	mbrp->mbrp_typ  = MBR_PTYPE_PREP;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197.2.3 2002/01/08 00:27:07 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197.2.4 2002/04/01 07:41:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.3 2002/01/08 00:27:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.4 2002/04/01 07:41:58 nathanw Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.3 2002/01/08 00:27:07 nathanw Ex
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
+#include <mips/cache.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
@@ -390,6 +391,14 @@ mach_init(argc, argv, code, cv, bim, bip)
 	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
+}
+
+void
+mips_machdep_cache_config(void)
+{
+	/* All r4k pmaxen have a 1MB L2 cache. */
+	if (CPUISMIPS3)
+		mips_sdcache_size = 1024 * 1024;
 }
 
 void

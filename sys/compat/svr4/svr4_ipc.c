@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.10.2.4 2002/01/08 00:29:10 nathanw Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.10.2.5 2002/04/01 07:44:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.10.2.4 2002/01/08 00:29:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.10.2.5 2002/04/01 07:44:47 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -459,14 +459,15 @@ svr4_msgctl(l, v, retval)
 {
 	int error;
 	struct svr4_sys_msgctl_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___msgctl13_args ap;
 	struct svr4_msqid_ds ss;
 	struct msqid_ds bs;
-	caddr_t sg = stackgap_init(l->l_proc->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&ap, msqid) = SCARG(uap, msqid);
 	SCARG(&ap, cmd) = SCARG(uap, cmd);
-	SCARG(&ap, buf) = stackgap_alloc(&sg, sizeof(bs));
+	SCARG(&ap, buf) = stackgap_alloc(p, &sg, sizeof(bs));
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
@@ -649,8 +650,9 @@ svr4_shmctl(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_shmctl_args *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
-	caddr_t sg = stackgap_init(l->l_proc->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys___shmctl13_args ap;
 	struct shmid_ds bs;
 	struct svr4_shmid_ds ss;
@@ -658,7 +660,8 @@ svr4_shmctl(l, v, retval)
 	SCARG(&ap, shmid) = SCARG(uap, shmid);
 
 	if (SCARG(uap, buf) != NULL) {
-		SCARG(&ap, buf) = stackgap_alloc(&sg, sizeof (struct shmid_ds));
+		SCARG(&ap, buf) = stackgap_alloc(p, &sg, 
+		    sizeof (struct shmid_ds));
 		switch (SCARG(uap, cmd)) {
 		case SVR4_IPC_SET:
 		case SVR4_IPC_RMID:

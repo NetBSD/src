@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.2.3 2002/02/28 04:12:02 nathanw Exp $ */
+/*	$NetBSD: rtc.c,v 1.1.2.4 2002/04/01 07:42:42 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -131,8 +131,8 @@ rtcattach_ebus(parent, self, aux)
 	todr_chip_handle_t handle;
 
 	sc->sc_bt = ea->ea_bustag;
-	if (ebus_bus_map(sc->sc_bt, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-			 ea->ea_reg[0].size, 0, 0, &sc->sc_bh) != 0)
+	if (bus_space_map(sc->sc_bt, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+			  ea->ea_reg[0].size, 0, &sc->sc_bh) != 0)
 	{
 		printf(": can't map registers\n", self->dv_xname);
 		return;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96.2.4 2002/02/28 04:09:52 nathanw Exp $
+# $NetBSD: GENERIC,v 1.96.2.5 2002/04/01 07:40:22 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.96.2.4 $"
+#ident 		"GENERIC-$Revision: 1.96.2.5 $"
 
 maxusers	16
 
@@ -32,6 +32,7 @@ options 	VR4121			# NEC VR4121
 options 	VR4122			# NEC VR4122
 options 	VR4131			# NEC VR4131
 options 	TX392X			# Toshiba TX3922
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -62,7 +63,6 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystem options
@@ -81,7 +81,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
@@ -102,12 +102,14 @@ options 	INET6		# IPV6
 # NetBSD backwards compatibility
 options 	COMPAT_43
 
+options 	LKM		# loadable kernel modules
+
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 
 # compile options
-makeoptions	DEFGP="-G 14"
+makeoptions	DEFGP="-G 10"
 
 config		netbsd		root on ? type ?
 
@@ -320,6 +322,10 @@ vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a 
 vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_PENCENTRA_130
+pci*	at vrc4172pci?
+hpcioman5 at vrc4172gpio0 platform FUJITSU_PENCENTRA_130
+hpcin*	at hpcioman5 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 
 #
 # SigmarionII
@@ -330,14 +336,14 @@ isa6	at vrisab6
 ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
 #wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
 hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
-hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_02 port 0 level 1 connect 1
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
 
 #
 # MP-C303/304
 #
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
 hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
-hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_02 port 1 level 0 hold 1 connect 1
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 connect 1
 
 #
 # Sharp Telios HC-AJ1, HC-VJ1C
@@ -412,9 +418,8 @@ pci*	at vrpciu?
 
 # VRC4173
 vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
-#vrc4173cmu* at vrc4173bcu?		# VRC4173 CMU
-#vrc4173piu* at vrc4173bcu?		# VRC4173 PIU
-#vrc4173kiu* at vrc4173bcu?		# VRC4173 KIU
+vrkiu* at vrc4173bcu? addr 0x100 size 0x20 unit VRKIU	# VRC4173 KIU
+vrpiu* at vrc4173bcu? addr 0x0a0 size 0x20 addr2 0x0c0 size2 0x20 unit VRPIU	# VRC4173 PIU
 
 #vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
 #pcmcia*	at vrc4173cardu?

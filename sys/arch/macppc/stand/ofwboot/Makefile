@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.4.4 2002/02/28 04:10:41 nathanw Exp $
+#	$NetBSD: Makefile,v 1.22.4.5 2002/04/01 07:40:56 nathanw Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -51,10 +51,12 @@ CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 
 CLEANFILES+= ${XCOFFXTRAOBJ} boot.o boot1.o
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
 .NOPATH: machine powerpc
+.endif
 CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.3.4.2 2002/01/11 23:39:45 nathanw Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.3.4.3 2002/04/01 07:48:24 nathanw Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -89,6 +89,8 @@ struct sppp {
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
+	int	query_dns;	/* 1 if we want to know the dns addresses */
+	u_int32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */

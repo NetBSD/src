@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.10 2002/01/08 00:23:06 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.11 2002/04/01 07:39:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.10 2002/01/08 00:23:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.11 2002/04/01 07:39:05 nathanw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -109,7 +109,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf = l->l_addr->u_pcb.pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_r0 = (u_int)PS_STRINGS;
+	tf->tf_r0 = (u_int)p->p_psstr;
 #ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
 #endif

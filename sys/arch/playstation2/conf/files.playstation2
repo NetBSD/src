@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.2.4.2 2002/01/08 00:27:02 nathanw Exp $
+#	$NetBSD: files.playstation2,v 1.2.4.3 2002/04/01 07:41:50 nathanw Exp $
 
 maxpartitions 8
 
@@ -15,8 +15,6 @@ device cpu
 attach cpu at mainbus
 file arch/playstation2/playstation2/cpu.c		cpu
 
-file	arch/mips/mips/fp.S		softfloat
-
 file arch/playstation2/playstation2/autoconf.c
 file arch/playstation2/playstation2/interrupt.c
 file arch/playstation2/playstation2/bus_space.c
@@ -25,8 +23,8 @@ file arch/playstation2/playstation2/clock.c
 file arch/playstation2/playstation2/conf.c
 file arch/playstation2/playstation2/disksubr.c		disk
 file arch/playstation2/playstation2/machdep.c
-file arch/playstation2/playstation2/procfs_machdep.c	procfs
 file arch/playstation2/playstation2/sifbios.c
+
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 file arch/playstation2/playstation2/kloader.c		kloader_kernel_path
 

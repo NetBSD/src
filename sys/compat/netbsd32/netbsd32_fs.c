@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.1.4.3 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.1.4.4 2002/04/01 07:44:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.1.4.3 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.1.4.4 2002/04/01 07:44:33 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -150,6 +150,8 @@ netbsd32_readv(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	return (dofilereadv32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp), 
 			      SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
@@ -179,15 +181,19 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	} else
-		return (EINVAL);
+	} else {
+		error = EINVAL;
+		goto out;
+	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
@@ -216,7 +222,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -232,13 +238,15 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 		if (error == 0) {
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
 			    error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
 done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
+out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -262,6 +270,8 @@ netbsd32_writev(p, v, retval)
 
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
+
+	FILE_USE(fp);
 
 	return (dofilewritev32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp),
 			       SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
@@ -291,15 +301,19 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	} else
-		return (EINVAL);
+	} else {
+		error = EINVAL;
+		goto out;
+	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
@@ -328,7 +342,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -347,13 +361,15 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 		if (error == 0) {
 			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
 			    error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
 done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
+out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -570,7 +586,7 @@ netbsd32___stat13(p, v, retval)
 	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
@@ -634,7 +650,7 @@ netbsd32___lstat13(p, v, retval)
 	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
@@ -674,10 +690,13 @@ netbsd32_preadv(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE
-	    || vp->v_type == VFIFO)
-		return (ESPIPE);
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		error = ESPIPE;
+		goto out;
+	}
 
 	offset = SCARG(uap, offset);
 
@@ -686,10 +705,14 @@ netbsd32_preadv(p, v, retval)
 	 * XXX take any action on the seek operation.
 	 */
 	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		return (error);
+		goto out;
 
 	return (dofilereadv32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &offset, 0, retval));
+
+out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 int
@@ -717,10 +740,13 @@ netbsd32_pwritev(p, v, retval)
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE
-	    || vp->v_type == VFIFO)
-		return (ESPIPE);
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		error = ESPIPE;
+		goto out;
+	}
 
 	offset = SCARG(uap, offset);
 
@@ -729,10 +755,14 @@ netbsd32_pwritev(p, v, retval)
 	 * XXX take any action on the seek operation.
 	 */
 	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		return (error);
+		goto out;
 
 	return (dofilewritev32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &offset, 0, retval));
+
+out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 /*

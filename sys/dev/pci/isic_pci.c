@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.2.2.4 2002/02/28 04:14:02 nathanw Exp $ 
+ *	$Id: isic_pci.c,v 1.2.2.5 2002/04/01 07:46:29 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.4 2002/02/28 04:14:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.5 2002/04/01 07:46:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -75,17 +75,17 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.4 2002/02/28 04:14:02 nathanw Exp
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_trace.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
-
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_trace.h>
-#include <netisdn/i4b_l1l2.h>
 #include <dev/pci/isic_pci.h>
-
-#include "opt_isicpci.h"
 
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
@@ -93,12 +93,13 @@ static int isic_pci_match __P((struct device *, struct cfdata *, void *));
 static void isic_pci_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
-#ifdef ISICPCI_ELSA_QS1PCI
-static void isic_pci_isdn_attach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
-#endif
+static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname));
+static int isic_pci_detach(struct device *self, int flags);
+static int isic_pci_activate(struct device *self, enum devact act);
 
 struct cfattach isic_pci_ca = {
-	sizeof(struct pci_l1_softc), isic_pci_match, isic_pci_attach
+	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach,
+	isic_pci_detach, isic_pci_activate
 };
 
 
@@ -107,35 +108,15 @@ static const struct isic_pci_product {
 	pci_product_id_t npp_product;
 	int cardtype;
 	const char * name;
-	void (*attach)(struct pci_l1_softc *psc, struct pci_attach_args *pa);
-	void (*pciattach)(struct pci_l1_softc *psc, struct pci_attach_args *pa);
+	void (*attach)(struct pci_isic_softc *psc, struct pci_attach_args *pa);
+	void (*pciattach)(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
 } isic_pci_products[] = {
-
-#ifdef ISICPCI_ELSA_QS1PCI
-#ifndef PCI_PRODUCT_ELSA_QS1PCI
-#define PCI_PRODUCT_ELSA_QS1PCI 0x1000	/* added to pcidevs in 1.3K, earlier versions missing it */
-#endif
 	{ PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
 	  CARD_TYPEP_ELSAQS1PCI,
 	  "ELSA QuickStep 1000pro/PCI",
 	  isic_attach_Eqs1pp,	/* card specific initialization */
 	  isic_pci_isdn_attach	/* generic setup for ISAC/HSCX or IPAC boards */
 	 },
-#endif
-
-#ifdef ISICPCI_AVM_A1
-#ifndef PCI_VENDOR_AVM
-#define PCI_VENDOR_AVM	0x1244	/* earlier versions missing this */
-#define	PCI_PRODUCT_AVM_FRITZ_CARD 0x0a00
-#endif
-	{ PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
-	  CARD_TYPEP_AVMA1PCI,
-	  "Fritz!Card",
-	  isic_attach_fritzPci,
-	  NULL				/* card rolls its own setup */
-	 },
-#endif
-
 	{ 0, 0, 0, NULL, NULL },
 };
 
@@ -177,8 +158,8 @@ isic_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_l1_softc *psc = (void*) self;
-	struct l1_softc *sc = &psc->sc_isic;
+	struct pci_isic_softc *psc = (void*) self;
+	struct isic_softc *sc = &psc->sc_isic;
 	struct pci_attach_args *pa = aux;
 	const struct isic_pci_product * prod;
 
@@ -186,7 +167,6 @@ isic_pci_attach(parent, self, aux)
 	prod = find_matching_card(pa);
 	if (prod == NULL) return; /* oops - not found?!? */
 
-	sc->sc_unit = sc->sc_dev.dv_unit;
 	printf(": %s\n", prod->name);
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
@@ -198,19 +178,19 @@ isic_pci_attach(parent, self, aux)
 	prod->attach(psc, pa);
 
 	/* generic setup, if needed for this card */
-	if (prod->pciattach) prod->pciattach(psc, pa);
+	if (prod->pciattach) prod->pciattach(psc, pa, prod->name);
 }
 
 /*---------------------------------------------------------------------------*
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
-#ifdef ISICPCI_ELSA_QS1PCI
 static void
-isic_pci_isdn_attach(psc, pa)
-	struct pci_l1_softc *psc;
+isic_pci_isdn_attach(psc, pa, cardname)
+	struct pci_isic_softc *psc;
 	struct pci_attach_args *pa;
+	const char *cardname;
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -313,6 +293,7 @@ isic_pci_isdn_attach(psc, pa)
 		printf("\n");
 		return;
 	}
+	psc->sc_pc = pc;
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* ISAC setup */
@@ -353,7 +334,45 @@ isic_pci_isdn_attach(psc, pa)
 #endif
 	
 	/* init higher protocol layers */
-	
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
+
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
-#endif
+
+
+static int
+isic_pci_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+
+	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
+	return (0);
+}
+
+static int
+isic_pci_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
+	int error = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		psc->sc_isic.sc_dying = 1;
+		isic_detach_bri(&psc->sc_isic);
+		break;
+	}
+	splx(s);
+	return (error);
+}
+

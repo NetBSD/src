@@ -1,5 +1,5 @@
-/*	$NetBSD: types.h,v 1.2 2000/03/31 14:51:53 soren Exp $	*/
+/*	$NetBSD: types.h,v 1.2.14.1 2002/04/01 07:39:42 nathanw Exp $	*/
 
 #include <mips/types.h>
 
-#define __HAVE_DEVICE_REGISTER
+#define	__HAVE_DEVICE_REGISTER
