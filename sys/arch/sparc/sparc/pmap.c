@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.244 2003/02/21 19:07:36 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.245 2003/02/24 15:14:51 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2737,7 +2737,7 @@ pv_link4m(pg, pm, va, pteprotop)
 	if ((pv0->pv_flags & PV_ANC) != 0) {
 		/* already uncached, just stay that way */
 		*pteprotop &= ~SRMMU_PG_C;
-		goto out;
+		goto link_npv;
 	}
 
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
@@ -2768,6 +2768,7 @@ pv_link4m(pg, pm, va, pteprotop)
 		}
 	}
 
+link_npv:
 	/* Now link in the new PV entry */
 	npv->pv_next = pv0->pv_next;
 	npv->pv_pmap = pm;
