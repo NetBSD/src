@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.8 1999/03/25 16:46:08 hubertf Exp $	*/
+/*	$NetBSD: cypher.c,v 1.9 1999/07/28 01:45:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.8 1999/03/25 16:46:08 hubertf Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.9 1999/07/28 01:45:42 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,6 +51,8 @@ cypher()
 	int     junk;
 	int     lflag = -1;
 	char    buffer[10];
+	char   *filename, *rfilename;
+	size_t	filename_len;
 
 	while (wordtype[wordnumber] == ADJS)
 		wordnumber++;
@@ -367,7 +369,21 @@ cypher()
 			break;
 
 		case SAVE:
-			save();
+			printf("\nSave file name (default %s) ",
+			       DEFAULT_SAVE_FILE);
+			filename = fgetln(stdin, &filename_len);
+			if (filename_len == 0
+			    || (filename_len == 1 && filename[0] == '\n'))
+				rfilename = save_file_name(DEFAULT_SAVE_FILE,
+				    strlen(DEFAULT_SAVE_FILE));
+			else {
+				if (filename[filename_len - 1] == '\n')
+					filename_len--;
+				rfilename = save_file_name(filename,
+							   filename_len);
+			}
+			save(rfilename);
+			free(rfilename);
 			break;
 
 		case FOLLOW:
