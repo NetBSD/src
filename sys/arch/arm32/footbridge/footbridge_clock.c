@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.1 1998/09/06 02:20:34 mark Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2 1999/04/23 09:09:04 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -241,6 +241,9 @@ microtime(tvp)
 	int tm;
 	int deltatm;
 	static struct timeval oldtv;
+
+	if (clock_sc == NULL || clock_sc->sc_clock_count == 0)
+		return;
 
 	s = splhigh();
 
