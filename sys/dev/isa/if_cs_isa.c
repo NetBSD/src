@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.1 1998/07/27 01:20:43 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.2 1998/07/27 18:27:36 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -55,7 +55,7 @@
 int	cs_isa_probe __P((struct device *, struct cfdata *, void *));
 void	cs_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach cs_ca = {
+struct cfattach cs_isa_ca = {
 	sizeof(struct cs_softc), cs_isa_probe, cs_isa_attach
 };
 
