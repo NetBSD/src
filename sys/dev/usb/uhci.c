@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.73 2000/01/16 13:12:05 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.74 2000/01/16 13:14:43 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1600,7 +1600,7 @@ uhci_abort_xfer(xfer, status)
 
 	xfer->hcpriv = ii;
 
-#if 0
+#if 1
 	/* Make sure hardware has completed. */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
