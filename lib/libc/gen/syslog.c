@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.28 2002/05/26 14:03:20 wiz Exp $	*/
+/*	$NetBSD: syslog.c,v 1.29 2003/01/18 11:23:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.28 2002/05/26 14:03:20 wiz Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.29 2003/01/18 11:23:53 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ static int	LogMask = 0xff;		/* mask of priorities to be logged */
 static void	openlog_unlocked __P((const char *, int, int));
 static void	closelog_unlocked __P((void));
 
-#ifdef _REENT
+#ifdef _REENTRANT
 static mutex_t	syslog_mutex = MUTEX_INITIALIZER;
 #endif
 

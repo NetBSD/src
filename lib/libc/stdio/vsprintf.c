@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.11 2001/12/07 11:47:45 yamt Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.12 2003/01/18 11:30:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vsprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsprintf.c,v 1.11 2001/12/07 11:47:45 yamt Exp $");
+__RCSID("$NetBSD: vsprintf.c,v 1.12 2003/01/18 11:30:00 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: vsprintf.c,v 1.11 2001/12/07 11:47:45 yamt Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
+#include "reentrant.h"
 #include "local.h"
 
 int
@@ -69,7 +70,7 @@ vsprintf(str, fmt, ap)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
-	ret = vfprintf(&f, fmt, ap);
+	ret = vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;
 	return (ret);
 }

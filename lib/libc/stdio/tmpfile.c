@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfile.c,v 1.9 2002/08/10 16:28:51 yamt Exp $	*/
+/*	$NetBSD: tmpfile.c,v 1.10 2003/01/18 11:29:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tmpfile.c,v 1.9 2002/08/10 16:28:51 yamt Exp $");
+__RCSID("$NetBSD: tmpfile.c,v 1.10 2003/01/18 11:29:58 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

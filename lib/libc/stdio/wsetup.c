@@ -1,4 +1,4 @@
-/*	$NetBSD: wsetup.c,v 1.9 1999/09/20 04:39:35 lukem Exp $	*/
+/*	$NetBSD: wsetup.c,v 1.10 2003/01/18 11:30:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wsetup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wsetup.c,v 1.9 1999/09/20 04:39:35 lukem Exp $");
+__RCSID("$NetBSD: wsetup.c,v 1.10 2003/01/18 11:30:00 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: wsetup.c,v 1.9 1999/09/20 04:39:35 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "reentrant.h"
 #include "local.h"
 
 /*

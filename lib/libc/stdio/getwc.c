@@ -1,4 +1,4 @@
-/* $NetBSD: getwc.c,v 1.1 2001/12/07 11:47:42 yamt Exp $ */
+/* $NetBSD: getwc.c,v 1.2 2003/01/18 11:29:55 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,

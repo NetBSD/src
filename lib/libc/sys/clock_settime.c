@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.3 2001/12/09 16:11:45 manu Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.4 2003/01/18 11:33:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      

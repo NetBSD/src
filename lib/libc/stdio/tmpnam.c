@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpnam.c,v 1.12 2002/08/10 16:28:51 yamt Exp $	*/
+/*	$NetBSD: tmpnam.c,v 1.13 2003/01/18 11:29:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpnam.c	8.3 (Berkeley) 3/28/94";
 #else
-__RCSID("$NetBSD: tmpnam.c,v 1.12 2002/08/10 16:28:51 yamt Exp $");
+__RCSID("$NetBSD: tmpnam.c,v 1.13 2003/01/18 11:29:58 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: tmpnam.c,v 1.12 2002/08/10 16:28:51 yamt Exp $");
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "reentrant.h"
 #include "local.h"
 
 __warn_references(tmpnam,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.8 2002/11/08 00:13:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.9 2003/01/18 11:29:04 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.8 2002/11/08 00:13:07 fvdl Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.9 2003/01/18 11:29:04 thorpej Exp $");
 #endif
 #endif
  
@@ -124,9 +124,10 @@ struct ct_data {
  *      Yes, this is silly, and as soon as this code is proven to work, this
  *      should be the first thing fixed.  One step at a time.
  */
-#ifdef __REENT
+#ifdef _REENTRANT
 static int      *vc_fd_locks;
-extern int __rpc_lock_value;
+extern int __isthreaded;
+#define __rpc_lock_value __isthreaded;
 extern mutex_t  clnt_fd_lock;
 static cond_t   *vc_cv;
 #define release_fd_lock(fd, mask) {             \
@@ -167,7 +168,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	struct timeval now;
 	struct rpc_msg call_msg;
 	static u_int32_t disrupt;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -197,10 +198,10 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
-#ifdef __REENT
+#ifdef _REENTRANT
 	mutex_lock(&clnt_fd_lock);
 	if (vc_fd_locks == (int *) NULL) {
-		int cv_allocsz, fd_allocsz;
+		size_t cv_allocsz, fd_allocsz;
 		int dtbsize = __rpc_dtbsize();
 
 		fd_allocsz = dtbsize * sizeof (int);
@@ -334,23 +335,24 @@ clnt_vc_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	u_int32_t *msg_x_id;
 	bool_t shipnow;
 	int refreshes = 2;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask, newmask;
 #endif
 
 	_DIAGASSERT(h != NULL);
 
-#ifdef __REENT
+	ct = (struct ct_data *) h->cl_private;
+
+#ifdef _REENTRANT
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (vc_fd_locks[ct->ct_fd])
 		cond_wait(&vc_cv[ct->ct_fd], &clnt_fd_lock);
-	vc_fd_locks[ct->ct_fd] = lock_value;
+	vc_fd_locks[ct->ct_fd] = __rpc_lock_value;
 	mutex_unlock(&clnt_fd_lock);
 #endif
 
-	ct = (struct ct_data *) h->cl_private;
 	xdrs = &(ct->ct_xdrs);
 	msg_x_id = &ct->ct_u.ct_mcalli;
 
@@ -469,7 +471,7 @@ clnt_vc_freeres(cl, xdr_res, res_ptr)
 	struct ct_data *ct;
 	XDR *xdrs;
 	bool_t dummy;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -482,7 +484,7 @@ clnt_vc_freeres(cl, xdr_res, res_ptr)
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
-#ifdef __REENT
+#ifdef _REENTRANT
 	while (vc_fd_locks[ct->ct_fd])
 		cond_wait(&vc_cv[ct->ct_fd], &clnt_fd_lock);
 #endif
@@ -511,7 +513,7 @@ clnt_vc_control(cl, request, info)
 {
 	struct ct_data *ct;
 	void *infop = info;
-#ifdef _REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -523,7 +525,7 @@ clnt_vc_control(cl, request, info)
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
-#ifdef __REENT
+#ifdef _REENTRANT
 	while (vc_fd_locks[ct->ct_fd])
 		cond_wait(&vc_cv[ct->ct_fd], &clnt_fd_lock);
 	vc_fd_locks[ct->ct_fd] = __rpc_lock_value;
@@ -638,8 +640,8 @@ clnt_vc_destroy(cl)
 	CLIENT *cl;
 {
 	struct ct_data *ct;
-#ifdef __REENT
-	int ct_fd = ct->ct_fd;
+#ifdef _REENTRANT
+	int ct_fd;
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -647,11 +649,12 @@ clnt_vc_destroy(cl)
 	_DIAGASSERT(cl != NULL);
 
 	ct = (struct ct_data *) cl->cl_private;
+	ct_fd = ct->ct_fd;
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
-#ifdef _REENT
+#ifdef _REENTRANT
 	while (vc_fd_locks[ct_fd])
 		cond_wait(&vc_cv[ct_fd], &clnt_fd_lock);
 #endif
@@ -744,7 +747,7 @@ static struct clnt_ops *
 clnt_vc_ops()
 {
 	static struct clnt_ops ops;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t  ops_lock;
 	sigset_t mask;
 #endif

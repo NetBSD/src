@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.41 2002/06/06 20:31:25 fredette Exp $	*/
+/*	$NetBSD: strtod.c,v 1.42 2003/01/18 11:32:04 thorpej Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.41 2002/06/06 20:31:25 fredette Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.42 2003/01/18 11:32:04 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
@@ -353,7 +353,7 @@ Bigint {
 
  static Bigint *freelist[Kmax+1];
 
-#ifdef _REENT
+#ifdef _REENTRANT
  static mutex_t freelist_mutex = MUTEX_INITIALIZER;
 #endif
 

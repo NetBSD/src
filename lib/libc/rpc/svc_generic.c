@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.4 2002/11/08 00:13:08 fvdl Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.5 2003/01/18 11:29:06 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -95,7 +95,7 @@ svc_create(dispatch, prognum, versnum, nettype)
 	SVCXPRT *xprt;
 	struct netconfig *nconf;
 	void *handle;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t xprtlist_lock;
 #endif
 

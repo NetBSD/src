@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.75 2003/01/06 13:04:54 wiz Exp $	*/
+/*	$NetBSD: print.c,v 1.76 2003/01/18 10:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,13 +74,14 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.75 2003/01/06 13:04:54 wiz Exp $");
+__RCSID("$NetBSD: print.c,v 1.76 2003/01/18 10:52:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/ucred.h>
@@ -264,11 +265,12 @@ strprintorsetwidth(v, str, mode)
 }
 
 void
-command(ki, ve, mode)
-	struct kinfo_proc2 *ki;
+command(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *ki;
 	VAR *v;
 	int left;
 	char **argv, **p, *name;
@@ -276,6 +278,7 @@ command(ki, ve, mode)
 	if (mode == WIDTHMODE)
 		return;
 
+	ki = arg;
 	v = ve->var;
 	if (ve->next != NULL || termwidth != UNLIMITED) {
 		if (ve->next == NULL) {
@@ -343,40 +346,46 @@ command(ki, ve, mode)
 }
 
 void
-ucomm(k, ve, mode)
-	struct kinfo_proc2 *k;
+ucomm(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, k->p_comm, mode);
 }
 
 void
-logname(k, ve, mode)
-	struct kinfo_proc2 *k;
+logname(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, k->p_login, mode);
 }
 
 void
-state(k, ve, mode)
-	struct kinfo_proc2 *k;
+state(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	int flag, is_zombie;
 	char *cp;
 	VAR *v;
 	char buf[16];
 
+	k = arg;
 	is_zombie = 0;
 	v = ve->var;
 	flag = k->p_flag;
@@ -384,34 +393,38 @@ state(k, ve, mode)
 
 	switch (k->p_stat) {
 
-	case SSTOP:
+	case LSSTOP:
 		*cp = 'T';
 		break;
 
-	case SSLEEP:
-		if (flag & P_SINTR)	/* interruptable (long) */
+	case LSSLEEP:
+		if (flag & L_SINTR)	/* interruptable (long) */
 			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
 
-	case SRUN:
-	case SIDL:
-	case SONPROC:
+	case LSRUN:
+	case LSIDL:
+	case LSONPROC:
 		*cp = 'R';
 		break;
 
-	case SZOMB:
-	case SDEAD:
+	case LSZOMB:
+	case LSDEAD:
 		*cp = 'Z';
 		is_zombie = 1;
+		break;
+
+	case LSSUSPENDED:
+		*cp = 'U';
 		break;
 
 	default:
 		*cp = '?';
 	}
 	cp++;
-	if (flag & P_INMEM) {
+	if (flag & L_INMEM) {
 	} else
 		*cp++ = 'W';
 	if (k->p_nice < NZERO)
@@ -433,6 +446,10 @@ state(k, ve, mode)
 		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
+	if (flag & P_SA)
+		*cp++ = 'a';
+	else if (k->p_nlwps > 1)
+		*cp++ = 'l';
 	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
@@ -440,63 +457,135 @@ state(k, ve, mode)
 }
 
 void
-pnice(k, ve, mode)
-	struct kinfo_proc2 *k;
+lstate(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_lwp *k;
+	int flag, is_zombie;
+	char *cp;
+	VAR *v;
+	char buf[16];
+
+	k = arg;
+	is_zombie = 0;
+	v = ve->var;
+	flag = k->l_flag;
+	cp = buf;
+
+	switch (k->l_stat) {
+
+	case LSSTOP:
+		*cp = 'T';
+		break;
+
+	case LSSLEEP:
+		if (flag & L_SINTR)	/* interuptable (long) */
+			*cp = k->l_slptime >= maxslp ? 'I' : 'S';
+		else
+			*cp = 'D';
+		break;
+
+	case LSRUN:
+	case LSIDL:
+	case LSONPROC:
+		*cp = 'R';
+		break;
+
+	case LSZOMB:
+	case LSDEAD:
+		*cp = 'Z';
+		is_zombie = 1;
+		break;
+
+	case LSSUSPENDED:
+		*cp = 'U';
+		break;
+
+	default:
+		*cp = '?';
+	}
+	cp++;
+	if (flag & L_INMEM) {
+	} else
+		*cp++ = 'W';
+	if (k->l_holdcnt)
+		*cp++ = 'L';
+	if (flag & L_DETACHED)
+		*cp++ = '-';
+	*cp = '\0';
+	strprintorsetwidth(v, buf, mode);
+}
+
+void
+pnice(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v, k->p_nice - NZERO, mode);
 }
 
 void
-pri(k, ve, mode)
-	struct kinfo_proc2 *k;
+pri(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_lwp *l;
 	VAR *v;
-
+	
+	l = arg;
 	v = ve->var;
-	intprintorsetwidth(v, k->p_priority - PZERO, mode);
+	intprintorsetwidth(v, l->l_priority - PZERO, mode);
 }
 
 void
-uname(k, ve, mode)
-	struct kinfo_proc2 *k;
+uname(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, user_from_uid(k->p_uid, 0), mode);
 }
 
 void
-runame(k, ve, mode)
-	struct kinfo_proc2 *k;
+runame(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, user_from_uid(k->p_ruid, 0), mode);
 }
 
 void
-tdev(k, ve, mode)
-	struct kinfo_proc2 *k;
+tdev(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 	dev_t dev;
 	char buff[16];
 
+	k = arg;
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV) {
@@ -514,16 +603,18 @@ tdev(k, ve, mode)
 }
 
 void
-tname(k, ve, mode)
-	struct kinfo_proc2 *k;
+tname(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 	dev_t dev;
 	const char *ttname;
 	int noctty;
-
+	
+	k = arg;
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL) {
@@ -554,15 +645,17 @@ tname(k, ve, mode)
 }
 
 void
-longtname(k, ve, mode)
-	struct kinfo_proc2 *k;
+longtname(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 	dev_t dev;
 	const char *ttname;
 
+	k = arg;
 	v = ve->var;
 	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL) {
@@ -579,17 +672,19 @@ longtname(k, ve, mode)
 }
 
 void
-started(k, ve, mode)
-	struct kinfo_proc2 *k;
+started(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 	static time_t now;
 	time_t startt;
 	struct tm *tp;
 	char buf[100], *cp;
 
+	k = arg;
 	v = ve->var;
 	if (!k->p_uvalid) {
 		if (mode == PRINTMODE)
@@ -617,15 +712,17 @@ started(k, ve, mode)
 }
 
 void
-lstarted(k, ve, mode)
-	struct kinfo_proc2 *k;
+lstarted(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
-{
+{	
+	struct kinfo_proc2 *k;
 	VAR *v;
 	time_t startt;
 	char buf[100];
 
+	k = arg;
 	v = ve->var;
 	if (!k->p_uvalid) {
 		/*
@@ -647,22 +744,24 @@ lstarted(k, ve, mode)
 }
 
 void
-wchan(k, ve, mode)
-	struct kinfo_proc2 *k;
+wchan(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_lwp *l;
 	VAR *v;
 	char *buf;
 
+	l = arg;
 	v = ve->var;
-	if (k->p_wchan) {
-		if (k->p_wmesg) {
-			strprintorsetwidth(v, k->p_wmesg, mode);
+	if (l->l_wchan) {
+		if (l->l_wmesg) {
+			strprintorsetwidth(v, l->l_wmesg, mode);
 			v->width = min(v->width, WMESGLEN);
 		} else {
 			(void)asprintf(&buf, "%-*llx", v->width,
-			    (long long)k->p_wchan);
+			    (long long)l->l_wchan);
 			if (buf == NULL)
 				err(1, "%s", "");
 			strprintorsetwidth(v, buf, mode);
@@ -678,54 +777,62 @@ wchan(k, ve, mode)
 #define pgtok(a)        (((a)*getpagesize())/1024)
 
 void
-vsize(k, ve, mode)
-	struct kinfo_proc2 *k;
+vsize(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v,
 	    pgtok(k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize), mode);
 }
 
 void
-rssize(k, ve, mode)
-	struct kinfo_proc2 *k;
+rssize(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	/* XXX don't have info about shared */
 	intprintorsetwidth(v, pgtok(k->p_vm_rssize), mode);
 }
 
 void
-p_rssize(k, ve, mode)		/* doesn't account for text */
-	struct kinfo_proc2 *k;
+p_rssize(arg, ve, mode)		/* doesn't account for text */
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v, pgtok(k->p_vm_rssize), mode);
 }
 
 void
-cputime(k, ve, mode)
-	struct kinfo_proc2 *k;
+cputime(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 	int32_t secs;
 	int32_t psecs;	/* "parts" of a second. first micro, then centi */
 	int fmtlen;
 
+	k = arg;
 	v = ve->var;
 	if (P_ZOMBIE(k) || k->p_uvalid == 0) {
 		secs = 0;
@@ -785,7 +892,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (k->p_swtime == 0 || (k->p_flag & P_INMEM) == 0 ||
+	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
 	    k->p_stat == SZOMB || k->p_stat == SDEAD)
 		return (0.0);
 	if (rawcpu)
@@ -795,13 +902,15 @@ getpcpu(k)
 }
 
 void
-pcpu(k, ve, mode)
-	struct kinfo_proc2 *k;
+pcpu(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	doubleprintorsetwidth(v, getpcpu(k), 1, mode);
 }
@@ -819,7 +928,7 @@ getpmem(k)
 	if (failure)
 		return (0.0);
 
-	if ((k->p_flag & P_INMEM) == 0)
+	if ((k->p_flag & L_INMEM) == 0)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = uspace/getpagesize();
@@ -829,32 +938,36 @@ getpmem(k)
 }
 
 void
-pmem(k, ve, mode)
-	struct kinfo_proc2 *k;
+pmem(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	doubleprintorsetwidth(v, getpmem(k), 1, mode);
 }
 
 void
-pagein(k, ve, mode)
-	struct kinfo_proc2 *k;
+pagein(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v, k->p_uvalid ? k->p_uru_majflt : 0, mode);
 }
 
 void
-maxrss(k, ve, mode)
-	struct kinfo_proc2 *k;
+maxrss(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
@@ -867,13 +980,15 @@ maxrss(k, ve, mode)
 }
 
 void
-tsize(k, ve, mode)
-	struct kinfo_proc2 *k;
+tsize(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
+	struct kinfo_proc2 *k;
 	VAR *v;
 
+	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v, pgtok(k->p_vm_tsize), mode);
 }
@@ -1112,13 +1227,13 @@ printval(bp, v, mode)
 }
 
 void
-pvar(k, ve, mode)
-	struct kinfo_proc2 *k;
+pvar(arg, ve, mode)
+	void *arg;
 	VARENT *ve;
 	int mode;
 {
 	VAR *v;
 
 	v = ve->var;
-	printval((char *)k + v->off, v, mode);
+	printval((char *)arg + v->off, v, mode);
 }

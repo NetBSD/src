@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.17 2003/01/05 11:05:47 kristerw Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.18 2003/01/18 11:29:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.17 2003/01/05 11:05:47 kristerw Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.18 2003/01/18 11:29:59 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: vsnprintf.c,v 1.17 2003/01/05 11:05:47 kristerw Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
 #include "local.h"
 
 #ifdef __weak_alias
@@ -86,7 +87,7 @@ vsnprintf(str, n, fmt, ap)
 		f._bf._base = f._p = (unsigned char *)str;
 		f._bf._size = f._w = n - 1;
 	}
-	ret = vfprintf(&f, fmt, ap);
+	ret = vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.21 2003/01/06 13:05:16 wiz Exp $  */
+/*      $NetBSD: ps.c,v 1.22 2003/01/18 10:54:11 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.21 2003/01/06 13:05:16 wiz Exp $");
+__RCSID("$NetBSD: ps.c,v 1.22 2003/01/18 10:54:11 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -164,26 +164,26 @@ state2str(struct kinfo_proc2 *kp)
 	cp = buf;
 
 	switch (kp->p_stat) {
-	case SSTOP:
+	case LSSTOP:
 		*cp = 'T';
 		break;
 
-	case SSLEEP:
-		if (flag & P_SINTR)     /* interruptable (long) */
+	case LSSLEEP:
+		if (flag & L_SINTR)     /* interruptable (long) */
 			*cp = kp->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
 
-	case SRUN:
-	case SIDL:
-	case SONPROC:
+	case LSRUN:
+	case LSIDL:
+	case LSONPROC:
 		*cp = 'R';
 		break;
 
-	case SZOMB:
-#ifdef SDEAD
-	case SDEAD:
+	case LSZOMB:
+#ifdef LSDEAD
+	case LSDEAD:
 #endif
 		*cp = 'Z';
 		break;
@@ -192,7 +192,7 @@ state2str(struct kinfo_proc2 *kp)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & P_INMEM) {
+	if (flag & L_INMEM) {
 	} else
 		*cp++ = 'W';
 	if (kp->p_nice < NZERO)
@@ -203,7 +203,7 @@ state2str(struct kinfo_proc2 *kp)
 		*cp++ = 'X';
 	if (flag & P_WEXIT &&
 	    /* XXX - I don't like this */
-	    (kp->p_stat == SZOMB || kp->p_stat == SDEAD) == 0)
+	    (kp->p_stat == LSZOMB || kp->p_stat == LSDEAD) == 0)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
@@ -294,7 +294,7 @@ pmem2float(struct kinfo_proc2 *kp)
 	int szptudot = 0;
 
 	/* XXX - I don't like this. */
-	if ((kp->p_flag & P_INMEM) == 0)
+	if ((kp->p_flag & L_INMEM) == 0)
 	        return (0.0);
 #ifdef USPACE
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.16 2002/03/23 01:28:11 thorpej Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.17 2003/01/18 10:55:52 thorpej Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,7 +36,7 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.16 2002/03/23 01:28:11 thorpej Exp $
+ * $Id: m_netbsd15.c,v 1.17 2003/01/18 10:55:52 thorpej Exp $
  */
 
 #include <sys/param.h>
@@ -426,9 +426,9 @@ get_process_info(si, sel, compare)
 		if (pp->p_stat != 0 && (show_system || ((pp->p_flag & P_SYSTEM) == 0))) {
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
-			if (pp->p_stat != SZOMB && pp->p_stat != SDEAD &&
+			if (pp->p_stat != LSZOMB && pp->p_stat != LSDEAD &&
 			    (show_idle || (pp->p_pctcpu != 0) || 
-			    (pp->p_stat == SRUN || pp->p_stat == SONPROC)) &&
+			    (pp->p_stat == LSRUN || pp->p_stat == LSONPROC)) &&
 			    (!show_uid || pp->p_ruid == (uid_t)sel->uid)) {
 				*prefp++ = pp;
 				active_procs++;
@@ -476,7 +476,7 @@ format_next_process(handle, get_userid)
 	hp->remaining--;
 
 	/* get the process's user struct and set cputime */
-	if ((pp->p_flag & P_INMEM) == 0)
+	if ((pp->p_flag & L_INMEM) == 0)
 		pretty = "<>";
 	else if ((pp->p_flag & P_SYSTEM) != 0)
 		pretty = "[]";
@@ -507,7 +507,7 @@ format_next_process(handle, get_userid)
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
-	if (pp->p_stat == SSLEEP) {
+	if (pp->p_stat == LSSLEEP) {
 		strlcpy(wmesg, pp->p_wmesg, sizeof(wmesg));
 		statep = wmesg;
 	} else
@@ -517,9 +517,9 @@ format_next_process(handle, get_userid)
 	/* Post-1.5 change: add cpu number if appropriate */
 	if (pp->p_cpuid != KI_NOCPU) {
 		switch (pp->p_stat) {
-		case SONPROC:
-		case SRUN:
-		case SSLEEP:			
+		case LSONPROC:
+		case LSRUN:
+		case LSSLEEP:			
 			snprintf(state, sizeof(state), "%.6s/%lld", 
 				 statep, (long long)pp->p_cpuid);
 			statep = state;

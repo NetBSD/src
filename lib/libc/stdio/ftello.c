@@ -1,4 +1,4 @@
-/*	$NetBSD: ftello.c,v 1.2 2000/07/26 08:52:57 kleink Exp $	*/
+/*	$NetBSD: ftello.c,v 1.3 2003/01/18 11:29:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftello.c,v 1.2 2000/07/26 08:52:57 kleink Exp $");
+__RCSID("$NetBSD: ftello.c,v 1.3 2003/01/18 11:29:54 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(ftello, _ftello)

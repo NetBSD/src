@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.20 2002/11/11 20:39:12 thorpej Exp $	*/
+/*	$NetBSD: setenv.c,v 1.21 2003/01/18 11:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.20 2002/11/11 20:39:12 thorpej Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.21 2003/01/18 11:32:04 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ __weak_alias(setenv,_setenv)
 __weak_alias(unsetenv,_unsetenv)
 #endif
 
-#ifdef _REENT
+#ifdef _REENTRANT
 extern rwlock_t __environ_lock;
 #endif
 

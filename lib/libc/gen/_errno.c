@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.9 2000/12/10 03:52:16 christos Exp $	*/
+/*	$NetBSD: _errno.c,v 1.10 2003/01/18 11:23:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "reentrant.h"
 #include <errno.h>
+#include <stdlib.h>
 
 #undef errno
 extern int errno;
@@ -44,5 +46,14 @@ extern int errno;
 int *
 __errno(void)
 {
+#ifdef _REENTRANT
+	extern int __isthreaded;
+
+	if (__isthreaded == 0)
+		return &errno;
+
+	return thr_errno();
+#else
 	return &errno;
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.12 2002/11/08 00:13:08 fvdl Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.13 2003/01/18 11:29:06 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -161,7 +161,7 @@ __rpc_control(request, info)
  * block all clnt_create's if we are trying to connect to a host that's down,
  * since the lock will be held all during that time.
  */
-#ifdef __REENT
+#ifdef _REENTRANT
 extern rwlock_t	rpcbaddr_cache_lock;
 #endif
 
@@ -436,7 +436,7 @@ local_rpcb()
 	CLIENT *client;
 	static struct netconfig *loopnconf;
 	static char *hostname;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t loopnconf_lock;
 #endif
 	int sock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.18 2002/11/08 00:13:08 fvdl Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.19 2003/01/18 11:29:07 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.18 2002/11/08 00:13:08 fvdl Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.19 2003/01/18 11:29:07 thorpej Exp $");
 #endif
 #endif
 
@@ -65,7 +65,7 @@ svc_run()
 {
 	fd_set readfds, cleanfds;
 	struct timeval timeout;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern rwlock_t svc_fd_lock;
 #endif
 
@@ -100,7 +100,7 @@ svc_run()
 void
 svc_exit()
 {
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern rwlock_t svc_fd_lock;
 #endif
 

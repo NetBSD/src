@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.h,v 1.5 2002/05/26 14:43:59 wiz Exp $	*/
+/*	$NetBSD: fvwrite.h,v 1.6 2003/01/18 11:29:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

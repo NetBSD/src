@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.11 2002/05/24 22:17:20 thorpej Exp $	*/
+/*	$NetBSD: local.h,v 1.12 2003/01/18 11:29:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,6 +63,9 @@ extern char	*_mktemp __P((char *));
 extern int	__swsetup __P((FILE *));
 extern int	__sflags __P((const char *, int *));
 extern int	__svfscanf __P((FILE * __restrict, const char * __restrict,
+		    _BSD_VA_LIST_))
+		    __attribute__((__format__(__scanf__, 2, 0)));
+extern int	__svfscanf_unlocked __P((FILE * __restrict, const char * __restrict,
 		    _BSD_VA_LIST_))
 		    __attribute__((__format__(__scanf__, 2, 0)));
 

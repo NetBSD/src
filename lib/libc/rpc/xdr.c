@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.25 2002/02/10 13:47:10 bjh21 Exp $	*/
+/*	$NetBSD: xdr.c,v 1.26 2003/01/18 11:29:07 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.25 2002/02/10 13:47:10 bjh21 Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.26 2003/01/18 11:29:07 thorpej Exp $");
 #endif
 #endif
 

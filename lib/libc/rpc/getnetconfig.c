@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.9 2002/11/11 17:13:59 thorpej Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.10 2003/01/18 11:29:04 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,6 +40,7 @@ static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
  */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/cdefs.h>
 #include <stdio.h>
 #include <assert.h>
@@ -141,33 +142,39 @@ static struct netconfig_info	ni = { 0, 0, NULL, NULL};
 
 #define MAXNETCONFIGLINE    1000
 
+#ifdef _REENTRANT
+static thread_key_t nc_key;
+static once_t nc_once = ONCE_INITIALIZER;
+
+static void 
+__nc_error_setup(void)
+{
+	thr_keycreate(&nc_key, free);
+}
+#endif
+
 static int *
 __nc_error()
 {
-#ifdef __REENT
-	static thread_key_t nc_key = 0;
+#ifdef _REENTRANT
+	extern int __isthreaded;
 	int *nc_addr = NULL;
 #endif
 	static int nc_error = 0;
 
-#ifdef __REENT
-	if (_thr_getspecific(nc_key, (void **) &nc_addr) != 0) {
-		mutex_lock(&nc_lock);
-		if (_thr_keycreate(&rce_key, free) != 0) {
-			mutex_unlock(&nc_lock);
-			return nc_addr;
-		}
-		mutex_unlock(&nc_lock);
-	}
+#ifdef _REENTRANT
+	if (__isthreaded == 0)
+		return &nc_error;
+	thr_once(&nc_once, __nc_error_setup);
+	nc_addr = thr_getspecific(nc_key) ;
 	if (nc_addr == NULL) {
 		nc_addr = (int *)malloc(sizeof (int));
-		if (_thr_setspecific(nc_key, (void *) nc_addr) != 0) {
+		if (thr_setspecific(nc_key, (void *) nc_addr) != 0) {
 			if (nc_addr)
 				free(nc_addr);
 			return &nc_error;
 		}
 		*nc_addr = 0;
-		return nc_addr;
 	}
 	return nc_addr;
 #else

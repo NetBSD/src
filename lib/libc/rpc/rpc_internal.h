@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_internal.h,v 1.1 2002/11/08 00:13:08 fvdl Exp $	*/
+/*	$NetBSD: rpc_internal.h,v 1.2 2003/01/18 11:29:05 thorpej Exp $	*/
 
 /*
  * Private include file for XDR functions only used internally in libc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.8 2002/11/08 00:13:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.9 2003/01/18 11:29:04 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -96,8 +96,9 @@ static int __rpc_timeval_to_msec __P((struct timeval *));
  *	at a time.
  */
 static int	*dg_fd_locks;
-#ifdef __REENT
-extern int __rpc_lock_value;
+#ifdef _REENTRANT
+extern int __isthreaded;
+#define __rpc_lock_value __isthreaded;
 extern mutex_t clnt_fd_lock;
 static cond_t	*dg_cv;
 #define	release_fd_lock(fd, mask) {		\
@@ -163,7 +164,7 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	struct cu_data *cu = NULL;	/* private data */
 	struct timeval now;
 	struct rpc_msg call_msg;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -174,8 +175,8 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	if (dg_fd_locks == (int *) NULL) {
-#ifdef __REENT
-		int cv_allocsz;
+#ifdef _REENTRANT
+		size_t cv_allocsz;
 #endif
 		size_t fd_allocsz;
 		int dtbsize = __rpc_dtbsize();
@@ -189,7 +190,7 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 		} else
 			memset(dg_fd_locks, '\0', fd_allocsz);
 
-#ifdef __REENT
+#ifdef _REENTRANT
 		cv_allocsz = dtbsize * sizeof (cond_t);
 		dg_cv = (cond_t *) mem_alloc(cv_allocsz);
 		if (dg_cv == (cond_t *) NULL) {
@@ -319,8 +320,7 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct timeval retransmit_time;
 	struct timeval startime, curtime;
 	int firsttimeout = 1;
-#ifdef __REENT
-	int dtbsize = __rpc_dtbsize();
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -586,7 +586,7 @@ clnt_dg_freeres(cl, xdr_res, res_ptr)
 	struct cu_data *cu;
 	XDR *xdrs;
 	bool_t dummy;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -623,7 +623,7 @@ clnt_dg_control(cl, request, info)
 {
 	struct cu_data *cu;
 	struct netbuf *addr;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -762,7 +762,7 @@ clnt_dg_destroy(cl)
 {
 	struct cu_data *cu;
 	int cu_fd;
-#ifdef __REENT
+#ifdef _REENTRANT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -795,7 +795,7 @@ static struct clnt_ops *
 clnt_dg_ops()
 {
 	static struct clnt_ops ops;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t	ops_lock;
 	sigset_t mask;
 #endif

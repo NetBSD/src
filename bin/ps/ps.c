@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $	*/
+/*	$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.48 2003/01/18 10:52:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $");
 #include <sys/user.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -112,7 +113,7 @@ __RCSID("$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx"
+#define	GETOPTSTR	"acCeghjLlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"MNOopUW"
 
 struct kinfo_proc2 *kinfo;
@@ -124,11 +125,14 @@ int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-int	needcomm, needenv, commandonly, use_procfs;
+int	needcomm, needenv, commandonly;
 uid_t	myuid;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
+static struct kinfo_lwp
+		*pick_representative_lwp __P((struct kinfo_proc2 *, 
+		    struct kinfo_lwp *, int));
 static struct kinfo_proc2
 		*getkinfo_kvm __P((kvm_t *, int, int, int *));
 static char	*kludge_oldps_options __P((char *));
@@ -142,6 +146,7 @@ char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
 char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
 char   o1[] = "pid";
 char   o2[] = "tt state time command";
+char sfmt[] = "uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt time command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 
@@ -154,8 +159,9 @@ main(argc, argv)
 {
 	struct varent *vent;
 	struct winsize ws;
-	int ch, flag, i, fmt, lineno, nentries;
-	int prtheader, wflag, what, xflg, mode;
+	struct kinfo_lwp *kl, *l;
+	int ch, flag, i, j, fmt, lineno, nentries, nlwps;
+	int prtheader, wflag, what, xflg, mode, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
@@ -170,7 +176,7 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	fmt = prtheader = wflag = xflg = 0;
+	fmt = prtheader = wflag = xflg = showlwps = 0;
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
@@ -241,6 +247,13 @@ main(argc, argv)
 			break;
 		case 'S':
 			sumrusage = 1;
+			break;
+		case 's':
+			/* -L was already taken... */
+			showlwps = 1;
+			parsefmt(sfmt);
+			fmt = 1;
+			sfmt[0] = '\0';
 			break;
 		case 'T':
 			if ((ttname = ttyname(STDIN_FILENO)) == NULL)
@@ -357,12 +370,8 @@ main(argc, argv)
 	/*
 	 * select procs
 	 */
-	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
-	{
-		if (kd)
-			warnx("%s.", kvm_geterr(kd));
-		exit(1);
-	}
+	if (!(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
+		err(1, "%s", kvm_geterr(kd));
 	if (nentries == 0) {
 		printheader();
 		exit(1);
@@ -383,8 +392,25 @@ main(argc, argv)
 			if (xflg == 0 && (ki->p_tdev == NODEV ||
 			    (ki->p_flag & P_CONTROLT) == 0))
 				continue;
-			for (vent = vhead; vent; vent = vent->next)
-				(vent->var->oproc)(ki, vent, WIDTHMODE);
+
+			kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
+			    sizeof(struct kinfo_lwp), &nlwps);
+			if (kl == 0)
+				nlwps = 0;
+			if (showlwps == 0) {
+				l = pick_representative_lwp(ki, kl, nlwps);
+				for (vent = vhead; vent; vent = vent->next)
+					OUTPUT(vent, ki, l, WIDTHMODE);
+			} else {
+				/* The printing is done with the loops
+				 * reversed, but here we don't need that,
+				 * and this improves the code locality a bit.
+				 */
+				for (vent = vhead; vent; vent = vent->next)
+					for (j = 0; j < nlwps; j++)
+						OUTPUT(vent, ki, &kl[j], 
+						    WIDTHMODE);
+			}
 		}
 	/*
 	 * Print header - AFTER determining process field widths.
@@ -402,21 +428,105 @@ main(argc, argv)
 		if (xflg == 0 && (ki->p_tdev == NODEV ||
 		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
-		for (vent = vhead; vent; vent = vent->next) {
-			(vent->var->oproc)(ki, vent, mode);
-			if (vent->next != NULL)
-				(void)putchar(' ');
-		}
-		(void)putchar('\n');
-		if (prtheader && lineno++ == prtheader - 4) {
+		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
+		    sizeof(struct kinfo_lwp), &nlwps);
+		if (kl == 0)
+			nlwps = 0;
+		if (showlwps == 0) {
+			l = pick_representative_lwp(ki, kl, nlwps);
+			for (vent = vhead; vent; vent = vent->next) {
+				OUTPUT(vent, ki, l, mode);
+				if (vent->next != NULL)
+					(void)putchar(' ');
+			}
 			(void)putchar('\n');
-			printheader();
-			lineno = 0;
+			if (prtheader && lineno++ == prtheader - 4) {
+				(void)putchar('\n');
+				printheader();
+				lineno = 0;
+			}
+		} else {
+			for (j = 0; j < nlwps; j++) {
+				for (vent = vhead; vent; vent = vent->next) {
+					OUTPUT(vent, ki, &kl[j], mode);
+					if (vent->next != NULL)
+						(void)putchar(' ');
+				}
+				(void)putchar('\n');
+				if (prtheader && lineno++ == prtheader - 4) {
+					(void)putchar('\n');
+					printheader();
+					lineno = 0;
+				}
+			}
 		}
 	}
 	exit(eval);
 	/* NOTREACHED */
 }
+
+static struct kinfo_lwp *
+pick_representative_lwp(ki, kl, nlwps)
+	struct kinfo_proc2 *ki;
+	struct kinfo_lwp *kl;
+	int nlwps;
+{
+	int i, onproc, running, sleeping, stopped, suspended;
+	static struct kinfo_lwp zero_lwp;
+
+	if (kl == 0)
+		return &zero_lwp;
+		
+	/* Trivial case: only one LWP */
+	if (nlwps == 1)
+		return kl;
+
+	switch (ki->p_realstat) {
+	case SSTOP:
+	case SACTIVE:
+		/* Pick the most live LWP */
+		onproc = running = sleeping = stopped = suspended = -1;
+		for (i = 0; i < nlwps; i++) {
+			switch (kl[i].l_stat) {
+			case LSONPROC:
+				onproc = i;
+				break;
+			case LSRUN:
+				running = i;
+				break;
+			case LSSLEEP:
+				sleeping = i;
+				break;
+			case LSSTOP:
+				stopped = i;
+				break;
+			case LSSUSPENDED:
+				suspended = i;
+				break;
+			}
+		}
+		if (onproc != -1)
+			return &kl[onproc];
+		if (running != -1)
+			return &kl[running];
+		if (sleeping != -1)
+			return &kl[sleeping];
+		if (stopped != -1)
+			return &kl[stopped];
+		if (suspended != -1)
+			return &kl[suspended];
+		break;
+	case SDEAD:
+	case SZOMB:
+		/* First will do */
+		return kl;
+		break;
+	}
+	/* Error condition! */
+	warnx("Inconsistent LWP state for process %d\n", ki->p_pid);
+	return kl;
+}
+	 
 
 static struct kinfo_proc2 *
 getkinfo_kvm(kdp, what, flag, nentriesp)
@@ -532,7 +642,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-acCehjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-acCehjlmrsSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap] [-U username]",
 	    "ps [-L]");
 	exit(1);

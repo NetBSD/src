@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.15 2001/12/07 11:47:43 yamt Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.16 2003/01/18 11:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.15 2001/12/07 11:47:43 yamt Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.16 2003/01/18 11:29:57 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: setvbuf.c,v 1.15 2001/12/07 11:47:43 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 /*
  * Set one of the three kinds of buffering, optionally including

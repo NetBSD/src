@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.18 1999/09/20 04:39:29 lukem Exp $	*/
+/*	$NetBSD: fseek.c,v 1.19 2003/01/18 11:29:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.18 1999/09/20 04:39:29 lukem Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.19 2003/01/18 11:29:53 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: fseek.c,v 1.18 1999/09/20 04:39:29 lukem Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #define	POS_ERR	(-(fpos_t)1)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.14 2001/12/07 11:47:41 yamt Exp $	*/
+/*	$NetBSD: fclose.c,v 1.15 2003/01/18 11:29:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.14 2001/12/07 11:47:41 yamt Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.15 2003/01/18 11:29:50 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: fclose.c,v 1.14 2001/12/07 11:47:41 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 int
 fclose(fp)

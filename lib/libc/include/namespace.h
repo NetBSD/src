@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.74 2002/11/30 03:04:45 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.75 2003/01/18 11:23:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
+#define getcontext	_getcontext
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
@@ -192,6 +193,9 @@
 #define execvp			_execvp
 #define fdopen			_fdopen
 #define fgetln			_fgetln
+#define flockfile		_flockfile
+#define ftrylockfile		_ftrylockfile
+#define funlockfile		_funlockfile
 #define fnmatch			_fnmatch
 #define fparseln		_fparseln
 #define fpgetmask		_fpgetmask
@@ -317,6 +321,7 @@
 #define isinf			_isinf
 #define isnan			_isnan
 #define jrand48			_jrand48
+#define kill			_kill
 #define l64a			_l64a
 #define l64a_r			_l64a_r
 #define lcong48			_lcong48
@@ -402,6 +407,7 @@
 #define setgroupent		_setgroupent
 #define sethostent		_sethostent
 #define sethostname		_sethostname
+#define setlogin		_setlogin
 #define setlogmask		_setlogmask
 #define setmode			_setmode
 #define setnetconfig		_setnetconfig
@@ -477,7 +483,7 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
-#define sysarch			_sysarch
+#define sysarch			_sys_sysarch
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain

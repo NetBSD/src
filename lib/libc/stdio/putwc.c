@@ -1,4 +1,4 @@
-/* $NetBSD: putwc.c,v 1.2 2002/03/14 21:21:00 yamt Exp $ */
+/* $NetBSD: putwc.c,v 1.3 2003/01/18 11:29:56 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,

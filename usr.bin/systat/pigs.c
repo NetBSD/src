@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.22 2002/05/04 18:44:27 thorpej Exp $	*/
+/*	$NetBSD: pigs.c,v 1.23 2003/01/18 10:54:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.22 2002/05/04 18:44:27 thorpej Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.23 2003/01/18 10:54:11 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -216,7 +216,7 @@ fetchpigs(void)
 		pctp = &pt[i].pt_pctcpu;
 		time = k->p_swtime;
 		/* XXX - I don't like this */
-		if (k->p_swtime == 0 || (k->p_flag & P_INMEM) == 0 ||
+		if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
 		    k->p_stat == SZOMB || k->p_stat == SDEAD)
 			*pctp = 0;
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.18 2001/07/14 06:53:44 matt Exp $	*/
+/*	$NetBSD: nlist.c,v 1.19 2003/01/18 10:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,12 +74,13 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.18 2001/07/14 06:53:44 matt Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.19 2003/01/18 10:52:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.11 2001/12/07 11:47:41 yamt Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.12 2003/01/18 11:29:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fpurge.c,v 1.11 2001/12/07 11:47:41 yamt Exp $");
+__RCSID("$NetBSD: fpurge.c,v 1.12 2003/01/18 11:29:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: fpurge.c,v 1.11 2001/12/07 11:47:41 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 /*
  * fpurge: like fflush, but without writing anything: leave the
