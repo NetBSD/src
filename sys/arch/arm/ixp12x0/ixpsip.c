@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.4 2002/10/02 05:02:30 thorpej Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.5 2003/01/01 00:46:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -106,11 +106,11 @@ ixpsip_print(aux, name)
         struct ixpsip_attach_args *sa = (struct ixpsip_attach_args*)aux;
 
 	if (sa->sa_size)
-		printf(" addr 0x%lx", sa->sa_addr);
+		aprint_normal(" addr 0x%lx", sa->sa_addr);
 	if (sa->sa_size > 1)
-		printf("-0x%lx", sa->sa_addr + sa->sa_size - 1);
+		aprint_normal("-0x%lx", sa->sa_addr + sa->sa_size - 1);
 	if (sa->sa_intr > 1)
-		printf(" intr %d", sa->sa_intr);
+		aprint_normal(" intr %d", sa->sa_intr);
 
 	return (UNCONF);
 }

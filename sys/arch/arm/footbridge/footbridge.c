@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.11 2002/11/03 21:43:30 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.12 2003/01/01 00:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -116,9 +116,9 @@ footbridge_print(aux, pnp)
 	union footbridge_attach_args *fba = aux;
 
 	if (pnp)
-		printf("%s at %s", fba->fba_name, pnp);
+		aprint_normal("%s at %s", fba->fba_name, pnp);
 	if (strcmp(fba->fba_name, "pci") == 0)
-		printf(" bus %d", fba->fba_pba.pba_bus);
+		aprint_normal(" bus %d", fba->fba_pba.pba_bus);
 	return(UNCONF);
 }
 
