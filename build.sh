@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.57 2002/05/02 22:13:31 sommerfeld Exp $
+#  $NetBSD: build.sh,v 1.58 2002/05/13 01:44:34 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -83,7 +83,7 @@ resolvepath () {
 usage () {
 	echo "Usage:"
 	echo "$0 [-bdorUu] [-a arch] [-B buildid] [-j njob] [-m mach] "
-	echo "   [-w wrapper] [-D dest] [-O obj] [-R release] [-T tools]"
+	echo "   [-w wrapper] [-D dest] [-M obj] [-O obj] [-R release] [-T tools]"
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
 	echo "    -B: set BUILDID to buildid"
@@ -91,6 +91,7 @@ usage () {
 	echo "    -D: set DESTDIR to dest"
 	echo "    -d: build a full distribution into DESTDIR (including etc files)"
 	echo "    -j: Run up to njob jobs in parallel; see make(1)"
+	echo "    -M: set obj root directory to obj (sets MAKEOBJDIRPREFIX)"
 	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
 	echo "    -n: show commands that would be executed, but do not execute them"
 	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
@@ -119,7 +120,7 @@ do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:B:bdhj:m:nortuw:D:O:R:T:U'
+opts='a:B:bdhj:m:nortuw:D:M:O:R:T:U'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -177,6 +178,11 @@ while eval $getoptcmd; do case $opt in
 	-D)	eval $optargcmd; resolvepath
 		DESTDIR="$OPTARG"; export DESTDIR
 		makeenv="$makeenv DESTDIR";;
+
+	-M)	eval $optargcmd; resolvepath
+		MAKEOBJDIRPREFIX="$OPTARG"; export MAKEOBJDIRPREFIX
+		makeobjdir=$OPTARG
+		makeenv="$makeenv MAKEOBJDIRPREFIX";;
 
 	-O)	eval $optargcmd; resolvepath
 		MAKEOBJDIR="\${.CURDIR:C,^$cwd,$OPTARG,}"; export MAKEOBJDIR
@@ -285,7 +291,7 @@ if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
 fi
 
 #
-# If setting -O to root an obj dir make sure the base directory is made
+# If setting -M or -O to root an obj dir make sure the base directory is made
 # before continuing as bsd.own.mk will need this to pick up _SRC_TOP_OBJ_
 #
 if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
@@ -367,7 +373,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.57 2002/05/02 22:13:31 sommerfeld Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58 2002/05/13 01:44:34 lukem Exp $
 #
 
 EOF
