@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.17 1996/07/17 21:43:22 explorer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -134,7 +134,9 @@ struct ctlname {
 #define KERN_RAWPARTITION	24	/* int: raw partition number */
 #define	KERN_NTPTIME		25	/* struct: extended-precision time */
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
-#define	KERN_MAXID		27	/* number of valid kern ids */
+#define KERN_AUTONICETIME	27	/* int: proc time before autonice */
+#define KERN_AUTONICEVAL	28	/* int: auto nice value */
+#define	KERN_MAXID		29	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -164,6 +166,8 @@ struct ctlname {
 	{ "rawpartition", CTLTYPE_INT }, \
 	{ "ntptime", CTLTYPE_STRUCT }, \
 	{ "timex", CTLTYPE_STRUCT }, \
+	{ "autonicetime", CTLTYPE_INT }, \
+	{ "autoniceval", CTLTYPE_INT }, \
 }
 
 /*
