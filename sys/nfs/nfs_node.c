@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.44 2001/05/03 15:53:04 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.45 2001/09/15 16:13:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -90,6 +90,37 @@ nfs_nhinit()
 }
 
 /*
+ * Reinitialize inode hash table.
+ */
+
+void
+nfs_nhreinit()
+{
+	struct nfsnode *np;
+	struct nfsnodehashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE, M_WAITOK,
+	    &mask);
+	
+	lockmgr(&nfs_hashlock, LK_EXCLUSIVE, NULL);
+	oldhash = nfsnodehashtbl;
+	oldmask = nfsnodehash;
+	nfsnodehashtbl = hash;
+	nfsnodehash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((np = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(np, n_hash);
+			val = NFSNOHASH(nfs_hash(np->n_fhp, np->n_fhsize));
+			LIST_INSERT_HEAD(&hash[val], np, n_hash);
+		}
+	}
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
+	hashdone(oldhash, M_NFSNODE);
+}
+
+/*
  * Free resources previoslu allocated in nfs_nhinit().
  */
 void
@@ -138,9 +169,9 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	struct vnode *nvp;
 	int error;
 
-	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
+	nhpp = &nfsnodehashtbl[NFSNOHASH(nfs_hash(fhp, fhsize))];
 loop:
-	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
+	LIST_FOREACH(np, nhpp, n_hash) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
 		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
@@ -178,7 +209,7 @@ loop:
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 
 	/*
 	 * XXXUBC doing this while holding the nfs_hashlock is bad,
@@ -193,7 +224,7 @@ loop:
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);
 
-	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	*npp = np;
 	return (0);
 }

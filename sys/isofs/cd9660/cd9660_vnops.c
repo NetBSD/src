@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.65 2001/08/17 05:54:36 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.66 2001/09/15 16:12:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -105,7 +105,6 @@ cd9660_mknod(ndp, vap, cred, p)
 	struct vnode *vp;
 	struct iso_node *ip;
 	struct iso_dnode *dp;
-	int error;
 
 	vp = ndp->ni_vp;
 	ip = VTOI(vp);
@@ -119,12 +118,11 @@ cd9660_mknod(ndp, vap, cred, p)
 		return (EINVAL);
 	}
 
-	dp = iso_dmap(ip->i_dev,ip->i_number,1);
+	dp = iso_dmap(ip->i_dev, ip->i_number, 1);
 	if (ip->inode.iso_rdev == vap->va_rdev ||
 	    vap->va_rdev == (dev_t)VNOVAL) {
 		/* same as the unmapped one, delete the mapping */
-		dp->d_next->d_prev = dp->d_prev;
-		*dp->d_prev = dp->d_next;
+		LIST_REMOVE(dp, d_hash);
 		FREE(dp, M_CACHE);
 	} else
 		/* enter new mapping */
