@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.29 2002/10/01 12:56:44 fvdl Exp $
+#	$NetBSD: LAMB,v 1.30 2002/12/26 08:21:56 junyoung Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -342,7 +342,7 @@ ne1	at isa? port 0x300 irq 10		# GLOBAL (right)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#Options to enable various other RAIDframe RAID types.
+# Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
 #options 	RF_INCLUDE_PARITYLOGGING=1
