@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.3 1999/10/20 20:38:15 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.4 1999/10/20 22:52:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -229,6 +229,7 @@ struct scsipi_bustype {
 		    int, struct buf *, int));
 	int	(*bustype_interpret_sense) __P((struct scsipi_xfer *));
 	void	(*bustype_printaddr) __P((struct scsipi_periph *));
+	void	(*bustype_kill_pending) __P((struct scsipi_periph *));
 };
 
 /* bustype_type */
