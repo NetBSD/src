@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.10 2000/12/19 02:59:23 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -79,7 +79,7 @@ amsmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 
 	if (aa_args->origaddr == ADBADDR_MS)
 		return 1;
@@ -94,7 +94,7 @@ amsattach(parent, self, aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct ams_softc *sc = (struct ams_softc *)self;
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 	int error;
 	struct wsmousedev_attach_args a;
 
@@ -264,6 +264,7 @@ ems_init(sc)
 		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
 
 		adb_op_sync((Ptr)data2, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+		return;
 	}
 	if ((sc->handler_id == ADBMS_100DPI) ||
 	    (sc->handler_id == ADBMS_200DPI)) {
