@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.24 1999/04/26 12:03:53 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.25 1999/04/26 23:26:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -217,8 +217,9 @@ fbconnect (name, info, silent)
 		}
 
 		fbix = fbcd.cd_ndevs++;
-	}
-	fbcd.cd_devs [fbix] = info;
+		fbcd.cd_devs [fbix] = info;
+	} else
+		info = fbcd.cd_devs [fbix];
 #endif /* FBDRIVER_DOES_ATTACH */
 
 	/*
@@ -237,7 +238,7 @@ fbconnect (name, info, silent)
 	}
 
 	if (!silent)
-		printf (" (%dx%dx%d)%s",
+		printf (": (%dx%dx%d)%s",
 			info -> fi_type.fb_width,
 			info -> fi_type.fb_height,
 			info -> fi_type.fb_depth,
