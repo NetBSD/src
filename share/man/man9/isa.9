@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.10 2003/04/16 13:35:29 wiz Exp $
+.\"     $NetBSD: isa.9,v 1.11 2003/05/10 00:02:22 fvdl Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,6 +56,8 @@
 .Nm isa_dmacount ,
 .Nm isa_dmadone ,
 .Nm isa_dmamaxsize ,
+.Nm isa_drq_alloc ,
+.Nm isa_drq_free ,
 .Nm isa_drq_isfree ,
 .Nm isa_dmacascade ,
 .Nm isa_mappage
@@ -109,6 +111,10 @@
 .Fn isa_dmadone "isa_chipset_tag_t ic" "int chan"
 .Ft bus_size_t
 .Fn isa_dmamaxsize "isa_chipset_tag_t ic" "int chan"
+.Ft int
+.Fn isa_drq_alloc "isa_chipset_tag_t ic" "int chan"
+.Ft int
+.Fn isa_drq_free "isa_chipset_tag_t ic" "int chan"
 .Ft int
 .Fn isa_drq_isfree "isa_chipset_tag_t ic" "int chan"
 .Ft int
@@ -205,6 +211,19 @@ Dis-establish the interrupt handler with handle
 .Fa ih .
 The handle was returned from
 .Fn isa_intr_establish .
+.It Fn isa_drq_alloc "ic" "chan"
+Reserves the DMA channel
+.Fa chan
+for future use.
+Normally, this call precedes an
+.Fn isa_dmamap_create
+call. It is an error to start DMA on a channel that has not been reserved
+with
+.Fn isa_drq_alloc .
+.It Fn isa_drq_free "ic" "chan"
+Marks the DMA channel
+.Fa chan
+as available again.
 .It Fn isa_dmamap_create "ic" "chan" "size" "flags"
 Creates a DMA map for channel
 .Fa chan .
