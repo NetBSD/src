@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.13 2001/06/26 22:01:45 bjh21 Exp $
+.\"	$NetBSD: vlan.4,v 1.14 2001/07/01 02:04:57 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,15 +73,17 @@ interface will have to handle frames that are 4 bytes larger than the
 ethernet MTU. Drivers supporting this increased MTU are:
 .Bl -dash -compact indent
 .It
-drivers using the dp8390 core (
-.Xr ec 4 ,
-.Xr we 4 ,
+drivers using the dp8390 core
+.Ns ( Ns Xr ec 4 ,
 .Xr ne 4 ,
+.Xr we 4 ,
 possibly others)
 .It
 .Xr ea 4
 .It
 .Xr eb 4
+.It
+.Xr epic 4
 .It
 .Xr ex 4
 .It
@@ -91,9 +93,9 @@ possibly others)
 .It
 .Xr tlp 4
 .It
-.Xr epic 4
-.It
 .Xr ti 4
+.It
+.Xr xi 4
 .El
 .Nm
 can be used with devices not supporting the 802.1Q MTU, but then the MTU of the
