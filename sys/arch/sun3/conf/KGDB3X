@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB3X,v 1.5 1997/04/09 04:36:56 jeremy Exp $
+#	$NetBSD: KGDB3X,v 1.6 1997/04/12 19:48:00 gwr Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -81,8 +81,17 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Disk and tape devices
 #
 
+# Note the flags on the esp entries below, that work around
+# deficiencies in the current driver:
+#	bits 0-7:  disable disconnect/reselect for the corresponding target
+#	bits 8-15: disable synch negotiation for target [bit-8]
+#	Note: targets 4-7 have disconnect/reselect enabled on the premise
+#	      that tape devices normally have one of these targets. Tape
+#	      devices should be allowed to disconnect for the SCSI bus
+#	      to operate acceptably.
+#
 # Emulex SCSI (3/80 only)
-esp0 at obio0 addr 0x66000000 ipl 2
+esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
