@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.8 1997/11/02 22:02:47 is Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.9 1997/11/03 11:10:41 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -181,15 +181,6 @@ fpu_emul_fscale(fe, insn)
 
     /* it's barbaric but we're going to operate directly on
      * the dst operand's bit pattern */
-
-    if ((word1 & 0x7f) == 0x11) {
-	/* ftwotox: preload reg with 1.0 */
-	fpregs[regnum * 3 + 0] = 0x3fff0000;
-	fpregs[regnum * 3 + 1] = 0x80000000;
-	fpregs[regnum * 3 + 2] = 0x00000000;
-	fe->fe_f2.fp_class = FPC_NUM;
-    }
-
     sign = fpregs[regnum * 3] & 0x80000000;
     exp = (fpregs[regnum * 3] & 0x7fff0000) >> 16;
     m0 = fpregs[regnum * 3 + 1];
