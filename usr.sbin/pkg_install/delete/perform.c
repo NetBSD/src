@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.34.2.2 2002/11/24 22:34:21 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.34.2.3 2002/11/24 22:37:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.34.2.2 2002/11/24 22:34:21 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.34.2.3 2002/11/24 22:37:47 tron Exp $");
 #endif
 #endif
 
@@ -647,11 +647,10 @@ pkg_do(char *pkg)
 			}
 		}
 	}
-	/* Change out of LogDir before we remove it */
-	if (chdir(home) == FAIL) {
-		cleanup(0);
-		errx(2, "Toto! This doesn't look like Kansas anymore!");
-	}
+	/* Change out of LogDir before we remove it.
+	 * Do not fail here, as the package is not yet completely deleted! */
+	if (chdir(home) == FAIL)
+		warnx("Oops - removed current working directory.  Oh, well.");
 	if (!Fake) {
 		/* Finally nuke the +-files and the pkgdb-dir (/var/db/pkg/foo) */
 		if (vsystem("%s -r %s", REMOVE_CMD, LogDir)) {
