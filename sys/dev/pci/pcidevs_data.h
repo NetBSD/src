@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.41 1997/10/06 06:18:07 lonhyn Exp 
+ *	NetBSD: pcidevs,v 1.42 1997/10/08 17:00:43 mycroft Exp 
  */
 
 /*
@@ -1130,10 +1130,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA PX2085 (\"Atlas\")",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENIUM,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM,
 	    0,
 	    "Matrox",
-	    "MGA Millenium 2064W (\"Storm\")",
+	    "MGA Millennium 2064W (\"Storm\")",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
