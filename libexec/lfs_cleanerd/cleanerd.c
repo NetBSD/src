@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.23 2000/11/03 17:52:55 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.24 2000/11/11 22:40:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.23 2000/11/03 17:52:55 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.24 2000/11/11 22:40:13 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,6 +655,8 @@ add_segment(fsp, slp, sbp)
 	struct tossstruct t;
 	struct dinode *dip;
 	caddr_t seg_buf;
+	caddr_t cmp_buf, cmp_dp;
+	size_t size;
 	daddr_t seg_addr;
 	int num_blocks, i, j, error;
 	int seg_isempty=0;
@@ -786,6 +788,32 @@ add_segment(fsp, slp, sbp)
                 lp = (u_long *)_bip->bi_bp;
             }
         }
+
+	/* Compress segment buffer, if necessary */
+	if (slp->sl_bytes < seg_size(lfsp) / 2) {
+		if (debug > 1)
+			syslog(LOG_DEBUG, "compressing: %d < %d",
+				(int)slp->sl_bytes, seg_size(lfsp) / 2);
+		cmp_buf = malloc(slp->sl_bytes); /* XXX could do in-place */
+		if (cmp_buf == NULL) {
+			if (debug)
+				syslog(LOG_DEBUG, "can't compress segment: %m");
+		} else {
+			cmp_dp = cmp_buf;
+			for (i = 0; i < num_blocks; i++) {
+				if(tba[i].bi_lbn == LFS_UNUSED_LBN)
+					size = sizeof(struct dinode);
+				else
+					size = tba[i].bi_size;
+				memcpy(cmp_dp, tba[i].bi_bp, size);
+				tba[i].bi_bp = cmp_dp;
+				cmp_dp += size;
+			}
+			free(seg_buf);
+			seg_buf = cmp_buf;
+			sbp->buf[sbp->nsegs - 1] = seg_buf;
+		}
+	}
 
 	/* Add these blocks to the accumulated list */
 	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
