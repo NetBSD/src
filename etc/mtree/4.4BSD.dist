@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.14 1995/11/30 23:46:57 pk Exp $
+#	$Id: 4.4BSD.dist,v 1.15 1995/11/30 23:57:58 pk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -841,20 +841,20 @@ generate
 ..
 
 # ./usr/share/lkm
-lkm		gname=bin uname=bin mode=0555
+lkm		gname=bin uname=bin
 
 # ./usr/share/lkm/misc
-misc		gname=bin uname=bin mode=0555
+misc		gname=bin uname=bin
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall		gname=bin uname=bin mode=0555
+syscall		gname=bin uname=bin
 # ./usr/share/lkm/syscall
 ..
 
 # ./usr/share/lkm/vfs
-vfs
+vfs		gname=bin uname=bin
 # ./usr/share/lkm/vfs
 ..
 
