@@ -1,4 +1,4 @@
-/*	$NetBSD: moptrace.c,v 1.8 2003/04/20 00:19:05 christos Exp $	*/
+/*	$NetBSD: moptrace.c,v 1.9 2003/04/20 00:20:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moptrace.c,v 1.8 2003/04/20 00:19:05 christos Exp $");
+__RCSID("$NetBSD: moptrace.c,v 1.9 2003/04/20 00:20:29 christos Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: moptrace.c,v 1.8 2003/04/20 00:19:05 christos Exp $");
 #include "pf.h"
 #include "print.h"
 #include "rc.h"
+#include "log.h"
 
 /*
  * The list of all interfaces that are being listened to. 

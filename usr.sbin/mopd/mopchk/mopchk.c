@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.9 2002/02/18 22:00:37 thorpej Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.10 2003/04/20 00:19:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.9 2002/02/18 22:00:37 thorpej Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.10 2003/04/20 00:19:56 christos Exp $");
 #endif
 
 /*
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: mopchk.c,v 1.9 2002/02/18 22:00:37 thorpej Exp $");
 #include "file.h"
 #include "mopdef.h"
 #include "pf.h"
+#include "log.h"
 
 /*
  * The list of all interfaces that are being listened to.  rarp_loop()
@@ -74,8 +75,7 @@ main(argc, argv)
 	struct if_info *ii;
 	int	err;
 
-	/* All error reporting is done through syslogs. */
-	openlog("mopchk", LOG_PID, LOG_DAEMON);
+	mopInteractive = 1;
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "av")) != -1) {
