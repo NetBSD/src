@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.10 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.11 2004/01/09 23:31:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.10 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.11 2004/01/09 23:31:37 oster Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -342,7 +342,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 #ifdef RAID_DIAGNOSTIC
 	long    nfaults = qfuncs ? 2 : 1;
 #endif /* RAID_DIAGNOSTIC */
-	int     lu_flag = (rf_enableAtomicRMW) ? 1 : 0;	/* lock/unlock flag */
+	int     lu_flag = 0;	/* lock/unlock flag */
 
 	if (rf_dagDebug)
 		printf("[Creating parity-logging small-write DAG]\n");
