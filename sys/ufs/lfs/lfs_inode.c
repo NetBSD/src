@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.66 2003/02/28 04:37:07 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.67 2003/02/28 07:37:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.66 2003/02/28 04:37:07 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.67 2003/02/28 07:37:56 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -288,7 +288,7 @@ lfs_truncate(void *v)
 	osize = oip->i_ffs_size;
 	needunlock = usepc = 0;
 #ifdef LFS_UBC
-	usepc = (ovp->v_type == VREG && osize > length && ovp != fs->lfs_ivnode);
+	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 #endif
 
 	/*
@@ -302,20 +302,59 @@ lfs_truncate(void *v)
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = lfs_reserve(fs, ovp, NULL,
-		    btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
-		if (error)
-			return (error);
-		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
-		lfs_reserve(fs, ovp, NULL,
-		    -btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
-		if (error)
-			return (error);
-		oip->i_ffs_size = length;
-		uvm_vnp_setsize(ovp, length);
-		(void) VOP_BWRITE(bp);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 0));
+#ifdef LFS_UBC
+		if (usepc) {
+			if (lblkno(fs, osize) < NDADDR &&
+			    lblkno(fs, osize) != lblkno(fs, length) &&
+			    blkroundup(fs, osize) != osize) {
+				error = ufs_balloc_range(ovp, osize,
+							 blkroundup(fs, osize) -
+							 osize, ap->a_cred,
+							 aflags);
+				if (error) {
+					return error;
+				}
+				if (ap->a_flags & IO_SYNC) {
+					ovp->v_size = blkroundup(fs, osize);
+					simple_lock(&ovp->v_interlock);
+					VOP_PUTPAGES(ovp,
+					    trunc_page(osize & fs->lfs_bmask),
+					    round_page(ovp->v_size),
+					    PGO_CLEANIT | PGO_SYNCIO);
+				}
+			}
+			error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+						 aflags);
+			if (error) {
+				(void) VOP_TRUNCATE(ovp, osize,
+						    ap->a_flags & IO_SYNC,
+				    		    ap->a_cred, ap->a_p);
+				return error;
+			}
+			uvm_vnp_setsize(ovp, length);
+			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			KASSERT(ovp->v_size == oip->i_ffs_size);
+			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+		} else {
+#endif /* !LFS_UBC */
+			error = lfs_reserve(fs, ovp, NULL,
+			    btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
+			if (error)
+				return (error);
+			error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred,
+					   aflags, &bp);
+			lfs_reserve(fs, ovp, NULL,
+			    -btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
+			if (error)
+				return (error);
+			oip->i_ffs_size = length;
+			uvm_vnp_setsize(ovp, length);
+			(void) VOP_BWRITE(bp);
+			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			return (VOP_UPDATE(ovp, NULL, NULL, 0));
+#ifdef LFS_UBC
+		}
+#endif
 	}
 
 	if ((error = lfs_reserve(fs, ovp, NULL,
