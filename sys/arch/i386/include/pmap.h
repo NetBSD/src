@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 1998/08/15 05:10:25 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38.6.1 2000/02/19 00:20:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,12 +114,12 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	PTDPTDI		0x3bf		/* ptd entry that points to ptd! */
-#define	KPTDI		0x3c0		/* start of kernel virtual pde's */
-#define	NKPDE_BASE	4		/* min. # of kernel PDEs */ 
-#define	NKPDE_MAX	63		/* max. # of kernel PDEs */ 
-#define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
-#define	APTDPTDI	0x3ff		/* start of alternate page directory */
+#define	PTDPTDI		((KERNBASE/NBPD)-1) /* ptd entry that points to ptd! */
+#define	KPTDI		(KERNBASE/NBPD)	    /* start of kernel virtual pde's */
+#define	NKPDE_BASE	4		 /* min. # of kernel PDEs */ 
+#define	NKPDE_MAX	255		 /* max. # of kernel PDEs */ 
+#define	NKPDE_SCALE	1		 /* # of kernel PDEs to add per meg. */
+#define	APTDPTDI	((unsigned)1023) /* start of alternate page directory */
 
 #define UPT_MIN_ADDRESS	(PTDPTDI<<PDSHIFT)
 #define UPT_MAX_ADDRESS	(UPT_MIN_ADDRESS + (PTDPTDI<<PGSHIFT))

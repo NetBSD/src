@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.7.6.1 1999/05/05 17:02:34 perry Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.7.6.2 2000/02/19 00:20:48 he Exp $	*/
 
 /*
  *
@@ -52,17 +52,17 @@
  * are described by PDEs in the PDP.   the PDEs are defined as follows:
  *
  * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
- * (the following assumes that KERNBASE is 0xf0000000)
+ * (the following assumes that KERNBASE is 0xc0000000)
  *
  * PDE#s	VA range		usage
- * 0->959	0x0 -> 0xefc00000	user address space, note that the
- *					max user address is 0xefbfe000
+ * 0->767	0x0 -> 0xbfc00000	user address space, note that the
+ *					max user address is 0xbfbfe000
  *					the final two pages in the last 4MB
  *					used to be reserved for the UAREA
  *					but now are no longer used
- * 959		0xefc00000->		recursive mapping of PDP (used for
- *			0xf0000000	linear mapping of PTPs)
- * 960->1023	0xf0000000->		kernel address space (constant
+ * 768		0xbfc00000->		recursive mapping of PDP (used for
+ *			0xc0000000	linear mapping of PTPs)
+ * 768->1023	0xc0000000->		kernel address space (constant
  *			0xffc00000	across all pmap's/processes)
  * 1023		0xffc00000->		"alternate" recursive PDP mapping
  *			<end>		(for other pmaps)
@@ -75,18 +75,18 @@
  * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
  * address).
  *
- * all pmap's PD's must have the same values in slots 960->1023 so that
+ * all pmap's PD's must have the same values in slots 768->1023 so that
  * the kernel is always mapped in every process.   these values are loaded
  * into the PD at pmap creation time.
  *
  * at any one time only one pmap can be active on a processor.   this is
  * the pmap whose PDP is pointed to by processor register %cr3.   this pmap
  * will have all its PTEs mapped into memory at the recursive mapping
- * point (slot #959 as show above).   when the pmap code wants to find the
+ * point (slot #767 as show above).  when the pmap code wants to find the
  * PTE for a virtual address, all it has to do is the following:
  *
- * address of PTE = (959 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
- *                = 0xefc00000 + (VA /4096) * 4
+ * address of PTE = (767 * 4MB) + (VA / NBPG) * sizeof(pt_entry_t)
+ *                = 0xbfc00000 + (VA / 4096) * 4
  *
  * what happens if the pmap layer is asked to perform an operation
  * on a pmap that is not the one which is currently active?   in that
@@ -102,25 +102,25 @@
  *   |   0| -> PTP#0 that maps VA 0x0 -> 0x400000
  *   |    |
  *   |    |
- *   | 959| -> points back to PDP (%cr3) mapping VA 0xefc00000 -> 0xf0000000
- *   | 960| -> first kernel PTP (maps 0xf0000000 -> 0xf0400000)
+ *   | 767| -> points back to PDP (%cr3) mapping VA 0xbfc00000 -> 0xc0000000
+ *   | 768| -> first kernel PTP (maps 0xc0000000 -> 0xf0400000)
  *   |    |
  *   |1023| -> points to alternate pmap's PDP (maps 0xffc00000 -> end)
  *   +----+
  *
- * note that the PDE#959 VA (0xefc00000) is defined as "PTE_BASE"
+ * note that the PDE#767 VA (0xbfc00000) is defined as "PTE_BASE"
  * note that the PDE#1023 VA (0xffc00000) is defined as "APTE_BASE"
  *
- * starting at VA 0xefc00000 the current active PDP (%cr3) acts as a
+ * starting at VA 0xbfc00000 the current active PDP (%cr3) acts as a
  * PTP:
  *
- * PTP#959 == PDP(%cr3) => maps VA 0xefc00000 -> 0xf0000000
+ * PTP#767 == PDP(%cr3) => maps VA 0xbfc00000 -> 0xc0000000
  *   +----+
- *   |   0| -> maps the contents of PTP#0 at VA 0xefc00000->0xefc01000
+ *   |   0| -> maps the contents of PTP#0 at VA 0xbfc00000->0xbfc01000
  *   |    |
  *   |    |
- *   | 959| -> maps contents of PTP#959 (the PDP) at VA 0xeffbf000
- *   | 960| -> maps contents of first kernel PTP 
+ *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbffbf000
+ *   | 768| -> maps contents of first kernel PTP 
  *   |    |
  *   |1023|
  *   +----+
@@ -143,8 +143,8 @@
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 959: for recursive PDP map */
-#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 960: start of kernel space */
+#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 767: for recursive PDP map */
+#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 768: start of kernel space */
 #define PDSLOT_APTE	((unsigned)1023) /* 1023: alternative recursive slot */
 
 /*
