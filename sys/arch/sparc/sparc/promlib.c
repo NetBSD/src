@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.8 2001/06/26 20:21:59 uwe Exp $ */
+/*	$NetBSD: promlib.c,v 1.9 2001/06/26 20:35:54 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -298,16 +298,16 @@ prom_search(rootnode, name)
 
 	do {
 		if (strcmp(GPSA("name"), name) == 0)
-			return node;
+			return (node);
 
 		if ((strcmp(GPSA("device_type"), "hierarchical") == 0 ||
 		    strcmp(GPSA("name"), "iommu") == 0)
 		    && (rtnnode = prom_search(node, name)) != 0)
-			return rtnnode;
+			return (rtnnode);
 
 	} while ((node = nextsibling(node)) != NULL);
 
-	return 0;
+	return (0);
 }
 #endif
 
@@ -725,9 +725,9 @@ opf_finddevice(name)
 {
 	int phandle = OF_finddevice(name);
 	if (phandle == -1)
-		return 0;
+		return (0);
 	else
-		return phandle;
+		return (phandle);
 }
 
 static int
@@ -736,9 +736,9 @@ opf_instance_to_package(ihandle)
 {
 	int phandle = OF_instance_to_package(ihandle);
 	if (phandle == -1)
-		return 0;
+		return (0);
 	else
-		return phandle;
+		return (phandle);
 }
 
 
@@ -750,7 +750,7 @@ opf_getbootpath()
 	int blen = 0;
 
 	if (getprop(node, "bootpath", 1, &blen, (void **)&buf) != 0)
-		return "";
+		return ("");
 
 	return (buf);
 }
@@ -763,7 +763,7 @@ opf_getbootargs()
 	int blen = 0;
 
 	if (getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
-		return "";
+		return ("");
 
 	return (parse_bootargs(buf));
 }
@@ -776,7 +776,7 @@ opf_getbootfile()
 	int blen = 0;
 
 	if (getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
-		return "";
+		return ("");
 
 	return (parse_bootfile(buf));
 }
