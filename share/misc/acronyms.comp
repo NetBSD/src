@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.60 2005/03/27 00:41:33 uwe Exp $
+$NetBSD: acronyms.comp,v 1.61 2005/03/28 15:07:16 jschauma Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -280,6 +280,7 @@ TIFF	tagged image file format
 TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
+TLS	transport layer security
 TMDS	transition minimized differential signaling
 TR	token ring
 TTL	time to live
