@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.4 1998/07/06 15:21:24 agc Exp $
+.\"	$NetBSD: packages.7,v 1.5 1998/07/06 15:31:53 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -228,6 +228,12 @@ Don't clean dependent packages
 Package is broken.  Set this string to the reason why.
 .It RESTRICTED
 Package is restricted.  Set this string to the reason why.
+.It LICENCE
+The package has a non-standard licence, such as shareware, or non-commercial-use
+only. This string should be set to the type of licence the package has,
+like "shareware", or "non-commercial-use". If LICENCE is set, the
+.Dv ACCEPTABLE_LICENCES
+variable will be searched, if set, for a string matching the licence.
 .It PASSIVE_FETCH	
 Uses passive
 .Xr ftp 1
