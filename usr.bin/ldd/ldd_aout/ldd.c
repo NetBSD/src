@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.15 1998/09/05 13:08:41 pk Exp $	*/
+/*	$NetBSD: ldd.c,v 1.16 1998/12/16 23:13:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+int	main __P((int, char *[]));
+void	usage __P((void));
 
 void
 usage()
