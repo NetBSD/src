@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 2003/04/10 22:07:05 christos Exp $
+# $NetBSD: INSTALL,v 1.21 2003/09/06 03:25:31 itojun Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -188,7 +188,7 @@ pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files

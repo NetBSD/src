@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.72 2003/04/16 23:41:36 thorpej Exp $
+# $NetBSD: INSTALL,v 1.73 2003/09/06 03:25:23 itojun Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -322,3 +322,5 @@ pseudo-device	md		1
 pseudo-device	ppp		1
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	sl		1
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

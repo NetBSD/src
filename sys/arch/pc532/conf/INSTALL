@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 2002/09/18 02:44:06 lukem Exp $
+#	$NetBSD: INSTALL,v 1.31 2003/09/06 03:25:29 itojun Exp $
 #
 # INSTALL -- install kernel
 #
@@ -56,3 +56,5 @@ pseudo-device	loop 1				# loopback network
 pseudo-device	sl 1				# compressed SLIP
 pseudo-device	ppp 1				# Point-to-Point Protocol
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

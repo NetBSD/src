@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.10 2003/08/01 01:18:47 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.11 2003/09/06 03:25:26 itojun Exp $
 #
 # INSTALL machine description file
 #
@@ -221,4 +221,4 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
