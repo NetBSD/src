@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.8 2003/06/29 22:29:10 fvdl Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.9 2003/08/27 17:49:49 drochner Exp $	*/
 
 /*
  * 
@@ -40,7 +40,7 @@
 struct cfid {
     u_short	cfid_len;
     u_short     padding;
-    ViceFid	cfid_fid;
+    CodaFid	cfid_fid;
 };
 
 struct mount;
