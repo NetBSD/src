@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.9 2002/12/04 17:59:52 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.10 2002/12/04 18:06:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.9 2002/12/04 17:59:52 mycroft Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.10 2002/12/04 18:06:36 mycroft Exp $");
 #endif
 #endif
 
@@ -1068,47 +1068,46 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 			TCHECK(fap->fa3_size);
 			printf(" sz ");
 			print_int64((u_int32_t *)&fap->fa3_size, UNSIGNED);
-			putchar(' ');
 		} else {
 			TCHECK(fap->fa2_size);
-			printf(" sz %d ", (u_int32_t) ntohl(fap->fa2_size));
+			printf(" sz %d", (u_int32_t) ntohl(fap->fa2_size));
 		}
 	}
 	/* print lots more stuff */
 	if (verbose > 1) {
 		if (v3) {
 			TCHECK(fap->fa3_ctime);
-			printf("nlink %d rdev %d/%d ",
+			printf(" nlink %d rdev %d/%d",
 			       (u_int32_t)ntohl(fap->fa_nlink),
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata1),
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata2));
-			printf("fsid ");
+			printf(" fsid ");
 			print_int64((u_int32_t *)&fap->fa3_fsid, HEX);
-			printf(" nodeid ");
+			printf(" fileid ");
 			print_int64((u_int32_t *)&fap->fa3_fileid, HEX);
-			printf(" a/m/ctime %u.%06u ",
+			printf(" a/m/ctime %u.%06u",
 			       (u_int32_t) ntohl(fap->fa3_atime.nfsv3_sec),
 			       (u_int32_t) ntohl(fap->fa3_atime.nfsv3_nsec));
-			printf("%u.%06u ",
+			printf(" %u.%06u",
 			       (u_int32_t) ntohl(fap->fa3_mtime.nfsv3_sec),
 			       (u_int32_t) ntohl(fap->fa3_mtime.nfsv3_nsec));
-			printf("%u.%06u ",
+			printf(" %u.%06u",
 			       (u_int32_t) ntohl(fap->fa3_ctime.nfsv3_sec),
 			       (u_int32_t) ntohl(fap->fa3_ctime.nfsv3_nsec));
 		} else {
 			TCHECK(fap->fa2_ctime);
-			printf("nlink %d rdev %x fsid %x nodeid %x a/m/ctime ",
+			printf("nlink %d rdev %x fsid %x fileid %x a/m/ctime",
 			       (u_int32_t) ntohl(fap->fa_nlink),
 			       (u_int32_t) ntohl(fap->fa2_rdev),
 			       (u_int32_t) ntohl(fap->fa2_fsid),
 			       (u_int32_t) ntohl(fap->fa2_fileid));
-			printf("%u.%06u ",
+			printf(" %u.%06u",
 			       (u_int32_t) ntohl(fap->fa2_atime.nfsv2_sec),
 			       (u_int32_t) ntohl(fap->fa2_atime.nfsv2_usec));
-			printf("%u.%06u ",
+			printf(" %u.%06u",
 			       (u_int32_t) ntohl(fap->fa2_mtime.nfsv2_sec),
 			       (u_int32_t) ntohl(fap->fa2_mtime.nfsv2_usec));
-			printf("%u.%06u ",
+			printf(" %u.%06u",
 			       (u_int32_t) ntohl(fap->fa2_ctime.nfsv2_sec),
 			       (u_int32_t) ntohl(fap->fa2_ctime.nfsv2_usec));
 		}
