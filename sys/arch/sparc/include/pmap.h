@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2003/08/16 19:21:23 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.71 2004/04/03 23:11:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -242,7 +242,7 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
                                  daddr_t));
 
 #define	pmap_kernel()	(&kernel_pmap_store)
-#define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
+#define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
 
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 
@@ -253,7 +253,6 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 void		pmap_activate __P((struct lwp *));
 void		pmap_deactivate __P((struct lwp *));
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
-int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vaddr_t, vaddr_t *));
 int		pmap_pa_exists __P((paddr_t));
 void		pmap_unwire __P((pmap_t, vaddr_t));
