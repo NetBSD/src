@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.37 2000/08/11 02:25:52 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.38 2000/08/11 02:39:27 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -854,8 +854,8 @@ or
 .Sq NO .
 Runs the
 .Xr kdc 8
-kerberos server.
-This should only be run on the kerberos master server.
+Kerberos v4 and v5 server.
+This should be run on Kerberos master and slave servers.
 .El
 .Ss Hardware daemons:
 .Bl -tag -width net_interfaces
