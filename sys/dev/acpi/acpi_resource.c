@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.12 2004/04/11 08:36:19 kochi Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.13 2004/04/11 09:25:28 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.12 2004/04/11 08:36:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.13 2004/04/11 09:25:28 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.12 2004/04/11 08:36:19 kochi Exp
 
 #define	_COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME("RESOURCE")
+
+static ACPI_STATUS acpi_resource_parse_callback(ACPI_RESOURCE *, void *);
 
 struct resource_parse_callback_arg {
 	const struct acpi_resource_parse_ops *ops;
@@ -101,9 +103,10 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				     "FixedIo 0x%x/%d\n",
 				     res->Data.FixedIo.BaseAddress,
 				     res->Data.FixedIo.RangeLength));
-		(*ops->ioport)(arg->dev, arg->context,
-		    res->Data.FixedIo.BaseAddress,
-		    res->Data.FixedIo.RangeLength);
+		if (ops->ioport)
+			(*ops->ioport)(arg->dev, arg->context,
+			    res->Data.FixedIo.BaseAddress,
+			    res->Data.FixedIo.RangeLength);
 		break;
 
 	case ACPI_RSTYPE_IO:
@@ -113,20 +116,22 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 					     "Io 0x%x/%d\n",
 					     res->Data.Io.MinBaseAddress,
 					     res->Data.Io.RangeLength));
-			(*ops->ioport)(arg->dev, arg->context,
-			    res->Data.Io.MinBaseAddress,
-			    res->Data.Io.RangeLength);
+			if (ops->ioport)
+				(*ops->ioport)(arg->dev, arg->context,
+				    res->Data.Io.MinBaseAddress,
+				    res->Data.Io.RangeLength);
 		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Io 0x%x-0x%x/%d\n",
 					     res->Data.Io.MinBaseAddress,
 					     res->Data.Io.MaxBaseAddress,
 					     res->Data.Io.RangeLength));
-			(*ops->iorange)(arg->dev, arg->context,
-			    res->Data.Io.MinBaseAddress,
-			    res->Data.Io.MaxBaseAddress,
-			    res->Data.Io.RangeLength,
-			    res->Data.Io.Alignment);
+			if (ops->ioport)
+				(*ops->iorange)(arg->dev, arg->context,
+				    res->Data.Io.MinBaseAddress,
+				    res->Data.Io.MaxBaseAddress,
+				    res->Data.Io.RangeLength,
+				    res->Data.Io.Alignment);
 		}
 		break;
 
@@ -135,9 +140,10 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				     "FixedMemory32 0x%x/%d\n",
 				     res->Data.FixedMemory32.RangeBaseAddress,
 				     res->Data.FixedMemory32.RangeLength));
-		(*ops->memory)(arg->dev, arg->context,
-		    res->Data.FixedMemory32.RangeBaseAddress,
-		    res->Data.FixedMemory32.RangeLength);
+		if (ops->memory)
+			(*ops->memory)(arg->dev, arg->context,
+			    res->Data.FixedMemory32.RangeBaseAddress,
+			    res->Data.FixedMemory32.RangeLength);
 		break;
 
 	case ACPI_RSTYPE_MEM32:
@@ -147,20 +153,22 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 					     "Memory32 0x%x/%d\n",
 					     res->Data.Memory32.MinBaseAddress,
 					     res->Data.Memory32.RangeLength));
-			(*ops->memory)(arg->dev, arg->context,
-			    res->Data.Memory32.MinBaseAddress,
-			    res->Data.Memory32.RangeLength);
+			if (ops->memory)
+				(*ops->memory)(arg->dev, arg->context,
+				    res->Data.Memory32.MinBaseAddress,
+				    res->Data.Memory32.RangeLength);
 		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Memory32 0x%x-0x%x/%d\n",
 					     res->Data.Memory32.MinBaseAddress,
 					     res->Data.Memory32.MaxBaseAddress,
 					     res->Data.Memory32.RangeLength));
-			(*ops->memrange)(arg->dev, arg->context,
-			    res->Data.Memory32.MinBaseAddress,
-			    res->Data.Memory32.MaxBaseAddress,
-			    res->Data.Memory32.RangeLength,
-			    res->Data.Memory32.Alignment);
+			if (ops->memrange)
+				(*ops->memrange)(arg->dev, arg->context,
+				    res->Data.Memory32.MinBaseAddress,
+				    res->Data.Memory32.MaxBaseAddress,
+				    res->Data.Memory32.RangeLength,
+				    res->Data.Memory32.Alignment);
 		}
 		break;
 
@@ -171,20 +179,22 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 					     "Memory24 0x%x/%d\n",
 					     res->Data.Memory24.MinBaseAddress,
 					     res->Data.Memory24.RangeLength));
-			(*ops->memory)(arg->dev, arg->context,
-			    res->Data.Memory24.MinBaseAddress,
-			    res->Data.Memory24.RangeLength);
+			if (ops->memory)
+				(*ops->memory)(arg->dev, arg->context,
+				    res->Data.Memory24.MinBaseAddress,
+				    res->Data.Memory24.RangeLength);
 		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Memory24 0x%x-0x%x/%d\n",
 					     res->Data.Memory24.MinBaseAddress,
 					     res->Data.Memory24.MaxBaseAddress,
 					     res->Data.Memory24.RangeLength));
-			(*ops->memrange)(arg->dev, arg->context,
-			    res->Data.Memory24.MinBaseAddress,
-			    res->Data.Memory24.MaxBaseAddress,
-			    res->Data.Memory24.RangeLength,
-			    res->Data.Memory24.Alignment);
+			if (ops->memrange)
+				(*ops->memrange)(arg->dev, arg->context,
+				    res->Data.Memory24.MinBaseAddress,
+				    res->Data.Memory24.MaxBaseAddress,
+				    res->Data.Memory24.RangeLength,
+				    res->Data.Memory24.Alignment);
 		}
 		break;
 
@@ -193,9 +203,10 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "IRQ %d\n",
 					     res->Data.Irq.Interrupts[i]));
-			(*ops->irq)(arg->dev, arg->context,
-			    res->Data.Irq.Interrupts[i],
-			    res->Data.Irq.EdgeLevel);
+			if (ops->irq)
+				(*ops->irq)(arg->dev, arg->context,
+				    res->Data.Irq.Interrupts[i],
+				    res->Data.Irq.EdgeLevel);
 		}
 		break;
 
@@ -204,8 +215,9 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "DRQ %d\n",
 					     res->Data.Dma.Channels[i]));
-			(*ops->drq)(arg->dev, arg->context,
-			    res->Data.Dma.Channels[i]);
+			if (ops->drq)
+				(*ops->drq)(arg->dev, arg->context,
+				    res->Data.Dma.Channels[i]);
 		}
 		break;
 
@@ -213,14 +225,16 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				     "Start dependant functions: %d\n",
 				     res->Data.StartDpf.CompatibilityPriority));
-		(*ops->start_dep)(arg->dev, arg->context,
-		    res->Data.StartDpf.CompatibilityPriority);
+		if (ops->start_dep)
+			(*ops->start_dep)(arg->dev, arg->context,
+			    res->Data.StartDpf.CompatibilityPriority);
 		break;
 
 	case ACPI_RSTYPE_END_DPF:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				     "End dependant functions\n"));
-		(*ops->end_dep)(arg->dev, arg->context);
+		if (ops->end_dep)
+			(*ops->end_dep)(arg->dev, arg->context);
 
 	case ACPI_RSTYPE_ADDRESS32:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
@@ -273,7 +287,10 @@ acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, char *path,
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	(*ops->init)(dev, arg, &cbarg.context);
+	if (ops->init)
+		(*ops->init)(dev, arg, &cbarg.context);
+	else
+		cbarg.context = arg;
 	cbarg.ops = ops;
 	cbarg.dev = dev;
 
@@ -285,7 +302,8 @@ acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, char *path,
 		return_ACPI_STATUS(rv);
 	}
 
-	(*ops->fini)(dev, cbarg.context);
+	if (ops->fini)
+		(*ops->fini)(dev, cbarg.context);
 
 	return_ACPI_STATUS(AE_OK);
 }
@@ -463,20 +481,20 @@ static void	acpi_res_parse_start_dep(struct device *, void *, int);
 static void	acpi_res_parse_end_dep(struct device *, void *);
 
 const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
-	acpi_res_parse_init,
-	acpi_res_parse_fini,
+	.init = acpi_res_parse_init,
+	.fini = acpi_res_parse_fini,
 
-	acpi_res_parse_ioport,
-	acpi_res_parse_iorange,
+	.ioport = acpi_res_parse_ioport,
+	.iorange = acpi_res_parse_iorange,
 
-	acpi_res_parse_memory,
-	acpi_res_parse_memrange,
+	.memory = acpi_res_parse_memory,
+	.memrange = acpi_res_parse_memrange,
 
-	acpi_res_parse_irq,
-	acpi_res_parse_drq,
+	.irq = acpi_res_parse_irq,
+	.drq = acpi_res_parse_drq,
 
-	acpi_res_parse_start_dep,
-	acpi_res_parse_end_dep,
+	.start_dep = acpi_res_parse_start_dep,
+	.end_dep = acpi_res_parse_end_dep,
 };
 
 static void
