@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.6 2000/06/17 01:00:17 matt Exp $ */
+/*	$NetBSD: start.s,v 1.7 2000/06/19 20:05:17 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -103,6 +103,10 @@ from_0x08:			# Any machine from VMB
 	.long	(SISIZE + SILOAD + SIOFF)	# sum of previous 3 
 
 
+	.align	2
+	.globl	_from
+_from:	.long	0
+
 /*
  * After bootblock (LBN0) has been loaded into the first page 
  * of good memory by 11/750's ROM-code (transfer address
@@ -151,10 +155,6 @@ cont_750:
 start_uvax:
 	movzbl	$2,_from	# Booted from subset-VMB
 	brb	start_all
-
-	.align	2
-	.globl	_from
-_from:	.long	0
 
 /*
  * start_all: stack already at RELOC, we save registers, move ourself
