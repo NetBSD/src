@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.h,v 1.1.1.1.2.3 2001/12/10 23:52:27 he Exp $	*/
+/*	$NetBSD: bufaux.h,v 1.1.1.1.2.4 2002/06/06 16:47:44 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -23,6 +23,9 @@ void    buffer_put_bignum(Buffer *, BIGNUM *);
 void    buffer_put_bignum2(Buffer *, BIGNUM *);
 int     buffer_get_bignum(Buffer *, BIGNUM *);
 int	buffer_get_bignum2(Buffer *, BIGNUM *);
+
+u_short	buffer_get_short(Buffer *);
+void	buffer_put_short(Buffer *, u_short);
 
 u_int	buffer_get_int(Buffer *);
 void    buffer_put_int(Buffer *, u_int);
