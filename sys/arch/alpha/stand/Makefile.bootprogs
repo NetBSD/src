@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.14 1999/09/10 07:31:16 ross Exp $
+# $NetBSD: Makefile.bootprogs,v 1.15 2000/01/19 16:29:55 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 STRIPFLAG=
 BINMODE= 444
 
-STRIP?=	strip
+STRIPPROG?=	strip
 
 # XXX Can't do warnings yet.
 WARNS=	0

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2000/01/19 16:30:06 tsutsui Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -37,7 +37,7 @@ SAMAKE= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
 	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    LD=${LD:Q} STRIPPROG=${STRIPPROG:Q} \
 	    AR=${AR:Q} NM=${NM:Q} \
 	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \

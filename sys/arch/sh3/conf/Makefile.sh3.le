@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3.le,v 1.1 1999/09/13 10:31:06 itojun Exp $
+#	$NetBSD: Makefile.sh3.le,v 1.2 2000/01/19 16:30:03 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
 SIZE?=	size
-STRIP?=	strip
+STRIPPROG?=strip
 TSORT?=	tsort -q
 
 COPTS?=	-g -O -ml 
@@ -98,8 +98,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	
 .endif

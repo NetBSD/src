@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.71 2000/01/19 14:45:02 tsutsui Exp $
+#	$NetBSD: Makefile.hp300,v 1.72 2000/01/19 16:29:56 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
 SIZE?=	size
-STRIP?=	strip
+STRIPPROG?=strip
 TSORT?=	tsort -q
 
 COPTS?=	-O2
@@ -114,8 +114,8 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

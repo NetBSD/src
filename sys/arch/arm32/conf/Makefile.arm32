@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.48 2000/01/19 14:45:00 tsutsui Exp $
+#	$NetBSD: Makefile.arm32,v 1.49 2000/01/19 16:29:55 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
 SIZE?=	size
-STRIP?=	strip
+STRIPPROG?=strip
 TSORT?=	tsort -q
 
 COPTS?=	-O2
@@ -115,8 +115,8 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 #LINKFLAGS+=	-S
 LINKFLAGS+=	-x

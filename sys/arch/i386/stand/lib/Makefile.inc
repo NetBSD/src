@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/09/05 15:15:16 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/01/19 16:29:57 tsutsui Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -23,7 +23,7 @@ I386MAKE= \
 	cd ${I386DIR} && MAKEOBJDIR=${I386DST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    LD=${LD:Q} STRIPPROG=${STRIPPROG:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    I386CPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
 	    I386MISCCPPFLAGS=${I386MISCCPPFLAGS:Q} \
