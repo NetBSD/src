@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.27 1998/07/06 21:23:40 fair Exp $	*/
+/*	$NetBSD: fstat.c,v 1.28 1998/07/06 21:47:07 fair Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.27 1998/07/06 21:23:40 fair Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.28 1998/07/06 21:47:07 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,8 +135,7 @@ int maxfiles;
 		free(ofiles); \
 		ofiles = malloc((d) * sizeof(struct file *)); \
 		if (ofiles == NULL) { \
-			fprintf(stderr, "fstat: %s\n", strerror(errno)); \
-			exit(1); \
+			err(1, NULL); \
 		} \
 		maxfiles = (d); \
 	}
@@ -196,8 +195,7 @@ main(argc, argv)
 			if (pflg++)
 				usage();
 			if (!isdigit(*optarg)) {
-				fprintf(stderr,
-				    "fstat: -p requires a process id\n");
+				warnx("-p requires a process id\n");
 				usage();
 			}
 			what = KERN_PROC_PID;
@@ -207,9 +205,7 @@ main(argc, argv)
 			if (uflg++)
 				usage();
 			if (!(passwd = getpwnam(optarg))) {
-				fprintf(stderr, "%s: unknown uid\n",
-				    optarg);
-				exit(1);
+				errx(1, "%s: unknown uid\n", optarg);
 			}
 			what = KERN_PROC_UID;
 			arg = passwd->pw_uid;
@@ -260,13 +256,11 @@ main(argc, argv)
 
 #ifdef notdef
 	if (kvm_nlist(kd, nl) != 0) {
-		fprintf(stderr, "fstat: no namelist: %s\n", kvm_geterr(kd));
-		exit(1);
+		errx(1, "no namelist: %s\n", kvm_geterr(kd));
 	}
 #endif
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL) {
-		fprintf(stderr, "fstat: %s\n", kvm_geterr(kd));
-		exit(1);
+		errx(1, "%s\n", kvm_geterr(kd));
 	}
 	if (nflg)
 		printf("%s",
@@ -608,12 +602,11 @@ getmnton(m)
 		if (m == mt->m)
 			return (mt->mntonname);
 	if (!KVM_READ(m, &mount, sizeof(struct mount))) {
-		fprintf(stderr, "can't read mount table at %lx\n", (long)m);
+		warnx("can't read mount table at %lx\n", (long)m);
 		return (NULL);
 	}
 	if ((mt = malloc(sizeof (struct mtab))) == NULL) {
-		fprintf(stderr, "fstat: %s\n", strerror(errno));
-		exit(1);
+		err(1, "malloc(%u)", sizeof (struct mtab));
 	}
 	mt->m = m;
 	memmove(&mt->mntonname[0], &mount.mnt_stat.f_mntonname[0], MNAMELEN);
@@ -788,12 +781,11 @@ getfname(filename)
 	DEVS *cur;
 
 	if (stat(filename, &statbuf)) {
-		fprintf(stderr, "fstat: %s: %s\n", filename, strerror(errno));
+		warn("stat(%s)", filename);
 		return(0);
 	}
 	if ((cur = malloc(sizeof(DEVS))) == NULL) {
-		fprintf(stderr, "fstat: %s\n", strerror(errno));
-		exit(1);
+		err(1, "malloc(%u)", sizeof(DEVS));
 	}
 	cur->next = devs;
 	devs = cur;
@@ -807,8 +799,6 @@ getfname(filename)
 void
 usage()
 {
-
-	(void)fprintf(stderr,
+	errx(1,
  "usage: fstat [-fnv] [-p pid] [-u user] [-N system] [-M core] [file ...]\n");
-	exit(1);
 }
