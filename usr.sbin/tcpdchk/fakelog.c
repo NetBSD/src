@@ -1,4 +1,4 @@
-/*	$NetBSD: fakelog.c,v 1.2 1997/10/11 21:41:36 christos Exp $	*/
+/*	$NetBSD: fakelog.c,v 1.3 1999/01/18 18:01:26 christos Exp $	*/
 
  /*
   * This module intercepts syslog() library calls and redirects their output
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fakelog.c 1.3 94/12/28 17:42:21";
 #else
-__RCSID("$NetBSD: fakelog.c,v 1.2 1997/10/11 21:41:36 christos Exp $");
+__RCSID("$NetBSD: fakelog.c,v 1.3 1999/01/18 18:01:26 christos Exp $");
 #endif
 #endif
 
@@ -73,7 +73,6 @@ syslog(va_alist)
 #else
     va_start(ap, fmt);
 #endif
-    fmt = va_arg(ap, char *);
     vsyslog(severity, fmt, ap);
     va_end(ap);
 }
