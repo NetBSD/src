@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.17 2000/06/26 14:38:50 mrg Exp $	*/
+/*	$NetBSD: adv.c,v 1.18 2000/06/28 17:12:48 mrg Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -53,7 +53,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

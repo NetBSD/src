@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.17 2000/06/26 04:56:19 simonb Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.18 2000/06/28 17:13:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.68 2000/05/26 16:38:13 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.69 2000/06/28 17:13:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <machine/endian.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
