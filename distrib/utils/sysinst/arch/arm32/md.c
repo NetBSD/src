@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1997/12/05 14:55:09 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1998/02/20 02:33:52 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -248,11 +248,17 @@ void	md_post_newfs (void)
 
 void	md_copy_filesystem (void)
 {
+	if (target_already_root()) {
+		return;
+	}
+
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
 	run_prog ("tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
-	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
+
+	/* Copy next-stage install profile into target /.profile. */
+	cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
 int md_make_bsd_partitions (void)
