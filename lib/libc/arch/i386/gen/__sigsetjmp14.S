@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.2 1999/02/08 18:56:48 christos Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.3 1999/02/13 16:13:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __sigsetjmp14.S,v 1.2 1999/02/08 18:56:48 christos Exp $")
+	RCSID("$NetBSD: __sigsetjmp14.S,v 1.3 1999/02/13 16:13:49 christos Exp $")
 #endif
 
 ENTRY(__sigsetjmp14)
@@ -61,17 +61,18 @@ ENTRY(__sigsetjmp14)
 
 	/* Get the signal mask. */
 	leal	24(%ecx),%edx
+
+	PIC_PROLOGUE
 	pushl	%edx
 	pushl	$0
 	pushl	$0
 #ifdef PIC
-	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-	PIC_EPILOGUE
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
 	addl	$12,%esp
+	PIC_EPILOGUE
 
 1:	xorl	%eax,%eax
 	ret
@@ -84,17 +85,18 @@ ENTRY(__siglongjmp14)
 
 	/* Restore the signal mask. */
 	leal	24(%ecx),%edx
+
+	PIC_PROLOGUE
 	pushl	$0
 	pushl	%edx
 	pushl	$3			/* SIG_SETMASK */
 #ifdef PIC
-	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-	PIC_EPILOGUE
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
 	addl	$12,%esp
+	PIC_EPILOGUE
 
 1:	movl	4(%esp),%edx
 	movl	8(%esp),%eax
