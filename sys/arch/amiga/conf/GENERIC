@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.116 1999/03/09 11:58:56 is Exp $
+#	$NetBSD: GENERIC,v 1.117 1999/03/09 12:15:30 is Exp $
 
 #
 #if 0
@@ -25,10 +25,10 @@ options 	DRACO
 #endif
 #ifdef AMIGA_CONFIGURATION
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# 68060 with an OS ROM up to (at least) 
+				# MC68060 with an OS ROM up to (at least) 
 				# V40 (OS3.1) and want to boot with the
 				# bootblock.
-				# You don't need this if you have a DraCo,
+				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
 #endif
 #
@@ -131,7 +131,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #
 # Amiga specific options
 #
-#options 	LIMITMEM=24	# Don't use more than LIMITMEM MB of the
+#options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
 #options	NKPTADD=4	# set this for 4 additional KPT pages
 #options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
@@ -170,7 +170,7 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
-# The used frequencies are the defaults, and don't need option setting
+# The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
 #options 	ULOWELL_OSC2=66667000
 
@@ -178,7 +178,7 @@ options 	GRF_SUPER72	# AGA Super-72
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #options 	RH_MEMCLK=61000000
-# this option enables the 64 bit sprite which doesn't seems to be work
+# this option enables the 64 bit sprite which does not seems to be work
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
 #options 	RH_64BIT_SPRITE
@@ -213,16 +213,16 @@ grf6		at grfet?
 grf7		at grfcv3d0
 #endif
 #ifdef AMIGA_CONFIGURATION
-ite0		at grf0			# terminal emulators for grf's
-ite1		at grf1			# terminal emulators for grf's
+ite0		at grf0			# terminal emulators for grfs
+ite1		at grf1			# terminal emulators for grfs
 #endif
-ite2		at grf2			# terminal emulators for grf's
+ite2		at grf2			# terminal emulators for grfs
 #ifdef AMIGA_CONFIGURATION
-ite3		at grf3			# terminal emulators for grf's
-ite4		at grf4			# terminal emulators for grf's
-ite5		at grf5			# terminal emulators for grf's
-ite6		at grf6			# terminal emulators for grf's
-ite7		at grf7			# terminal emulators for grf's
+ite3		at grf3			# terminal emulators for grfs
+ite4		at grf4			# terminal emulators for grfs
+ite5		at grf5			# terminal emulators for grfs
+ite6		at grf6			# terminal emulators for grfs
+ite7		at grf7			# terminal emulators for grfs
 #endif
 
 msc0		at zbus0		# A2232 MSC multiport serial.
@@ -346,7 +346,7 @@ scsibus*	at drsc0
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
-cd*	at scsibus? target ? lun ?	# scsi cd's
+cd*	at scsibus? target ? lun ?	# scsi cds
 ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
 uk*	at scsibus? target ? lun ?	# scsi unknown
