@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.14 2002/07/20 02:58:59 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.15 2002/07/20 03:00:41 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1939,8 +1939,8 @@ The reason is that the Cyclone firmware is unable to boot anything other
 than an a.out format kernels.
 .Pp
 Kernels created on a
-.Nx*V
-\*M system are natively ELF and converted to a.out.
+.Nx*M
+\*V system are natively ELF and converted to a.out.
 This conversion process loses the symbol information used for,
 amongst other things, kernel memory grovelers such as vmstat.
 The workaround to the problem is to provide both the native ELF kernel
