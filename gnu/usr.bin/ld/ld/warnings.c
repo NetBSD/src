@@ -1,15 +1,16 @@
 /*
- * $Id: warnings.c,v 1.9 1994/01/28 20:56:42 pk Exp $
+ * $Id: warnings.c,v 1.10 1994/06/10 15:16:17 pk Exp $
  */
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <ar.h>
 #include <ranlib.h>
@@ -86,70 +87,6 @@ get_file_name (entry)
 	return result;
 }
 
-/*
- * Report a fatal error.  The error message is STRING followed by the
- * filename of ENTRY.
- */
-void
-#if __STDC__
-fatal_with_file (char *fmt, struct file_entry *entry, ...)
-#else
-fatal_with_file (fmt, entry, va_alist)
-	char			*fmt;
-	struct file_entry	*entry;
-	va_dcl
-#endif
-{
-	va_list	ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "%s: ", progname);
-	(void)vfprintf(stderr, fmt, ap);
-	print_file_name (entry, stderr);
-	(void)fprintf(stderr, "\n");
-
-	va_end(ap);
-	exit (1);
-}
-
-/*
- * Report a fatal error using the message for the last failed system call,
- * followed by the string NAME.
- */
-void
-perror_name (name)
-	char *name;
-{
-	char *s;
-
-	if (errno < sys_nerr)
-		s = concat ("", sys_errlist[errno], " for %s");
-	else
-		s = "cannot open %s";
-	fatal (s, name);
-}
-
-/*
- * Report a fatal error using the message for the last failed system call,
- * followed by the name of file ENTRY.
- */
-void
-perror_file (entry)
-     struct file_entry *entry;
-{
-	char *s;
-
-	if (errno < sys_nerr)
-		s = concat ("", sys_errlist[errno], " for ");
-	else
-		s = "cannot open ";
-	fatal_with_file (s, entry);
-}
-
-
 /* Print a complete or partial map of the output file. */
 
 static void	describe_file_sections __P((struct file_entry *, FILE *));
@@ -160,7 +97,7 @@ print_symbols(outfile)
 	FILE           *outfile;
 {
 	fprintf(outfile, "\nFiles:\n\n");
-	each_file(describe_file_sections, outfile);
+	each_file(describe_file_sections, (void *)outfile);
 
 	fprintf(outfile, "\nGlobal symbols:\n\n");
 	FOR_EACH_SYMBOL(i, sp) {
@@ -178,7 +115,7 @@ print_symbols(outfile)
 						sp->name, sp->value, sp->size);
 	} END_EACH_SYMBOL;
 
-	each_file(list_file_locals, outfile);
+	each_file(list_file_locals, (void *)outfile);
 }
 
 static void
@@ -189,7 +126,7 @@ describe_file_sections(entry, outfile)
 	fprintf(outfile, "  ");
 	print_file_name(entry, outfile);
 	if (entry->flags & (E_JUST_SYMS | E_DYNAMIC))
-		fprintf(outfile, " symbols only\n", 0);
+		fprintf(outfile, " symbols only\n");
 	else
 		fprintf(outfile, " text %x(%x), data %x(%x), bss %x(%x) hex\n",
 			entry->text_start_address, entry->header.a_text,
@@ -226,7 +163,7 @@ list_file_locals (entry, outfile)
 	entry->strings = 0;		/* All done with them.  */
 }
 
-
+
 /* Static vars for do_warnings and subroutines of it */
 static int list_unresolved_refs;	/* List unresolved refs */
 static int list_warning_symbols;	/* List warning syms */
@@ -397,11 +334,11 @@ address_to_line(address, state_pointer)
 /* Next must be passed by reference! */
 	struct line_debug_entry state_pointer[3];
 {
-	struct line_debug_entry
-	               *current = state_pointer, *next = state_pointer + 1;
-	struct line_debug_entry *tmp_pointer;
+	struct line_debug_entry	*current, *next, *tmp_pointer;
+	int			use_data_symbols;
 
-	int             use_data_symbols;
+	current = state_pointer;
+	next = state_pointer + 1;
 
 	if (next->sym)
 		use_data_symbols =
@@ -409,7 +346,7 @@ address_to_line(address, state_pointer)
 	else
 		return current->line;
 
-	/* Go back to the beginning if we've already passed it.  */
+	/* Go back to the beginning if we've already passed it. */
 	if (current->sym->nzlist.nlist.n_value > address) {
 		tmp_pointer = init_debug_scan(use_data_symbols,
 					      (struct file_entry *)
@@ -419,13 +356,15 @@ address_to_line(address, state_pointer)
 		state_pointer[2] = tmp_pointer[2];
 		free(tmp_pointer);
 	}
-	/* If we're still in a bad way, return -1, meaning invalid line.  */
+
+	/* If we're still in a bad way, return -1, meaning invalid line. */
 	if (current->sym->nzlist.nlist.n_value > address)
 		return -1;
 
 	while (next->sym
 	       && next->sym->nzlist.nlist.n_value <= address
 	       && next_debug_entry(use_data_symbols, state_pointer));
+
 	return current->line;
 }
 
@@ -548,8 +487,9 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 			char           *nm;
 
 			nm = g->name;
-			errmsg = (char *) xmalloc(strlen(errfmt) + strlen(nm) + 1);
-			sprintf(errmsg, errfmt, nm, data_segment ? "data" : "text");
+			errmsg = (char *)
+				xmalloc(strlen(errfmt) + strlen(nm) + 1);
+			sprintf(errmsg, errfmt, nm, data_segment?"data":"text");
 			if (nm != g->name)
 				free(nm);
 		}
@@ -577,8 +517,8 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 
 void
 do_file_warnings (entry, outfile)
-     struct file_entry *entry;
-     FILE *outfile;
+	struct file_entry	*entry;
+	FILE			*outfile;
 {
 	int number_of_syms = entry->nsymbols;
 	unsigned char *nlist_bitvector = (unsigned char *)
@@ -595,24 +535,24 @@ do_file_warnings (entry, outfile)
 	if (!entry->strings) {
 		int desc;
 
-		entry->strings = (char *) alloca (entry->string_size);
-		desc = file_open (entry);
-		read_entry_strings (desc, entry);
+		entry->strings = (char *)alloca(entry->string_size);
+		desc = file_open(entry);
+		read_entry_strings(desc, entry);
 	}
 
 	if (!(entry->flags & E_DYNAMIC)) {
-		/* Do text warnings based on a scan through the relocation info. */
-		do_relocation_warnings (entry, 0, outfile, nlist_bitvector);
+		/* Do text warnings based on a scan through the reloc info. */
+		do_relocation_warnings(entry, 0, outfile, nlist_bitvector);
 
-		/* Do data warnings based on a scan through the relocation info. */
-		do_relocation_warnings (entry, 1, outfile, nlist_bitvector);
+		/* Do data warnings based on a scan through the reloc info. */
+		do_relocation_warnings(entry, 1, outfile, nlist_bitvector);
 	}
 
 	/* Scan through all of the nlist entries in this file and pick up
 	anything that the scan through the relocation stuff didn't. */
 
-	text_scan = init_debug_scan (0, entry);
-	data_scan = init_debug_scan (1, entry);
+	text_scan = init_debug_scan(0, entry);
+	data_scan = init_debug_scan(1, entry);
 
 	for (i = 0; i < number_of_syms; i++) {
 		struct nlist *s;
@@ -654,12 +594,14 @@ do_file_warnings (entry, outfile)
 			switch (s->n_type) {
 
 			case N_TEXT | N_EXT:
-				line_number = address_to_line (s->n_value, text_scan);
+				line_number =
+					address_to_line(s->n_value, text_scan);
 				file_name = text_scan[0].filename;
 				break;
 
 			case N_DATA | N_EXT:
-				line_number = address_to_line (s->n_value, data_scan);
+				line_number =
+					address_to_line(s->n_value, data_scan);
 				file_name = data_scan[0].filename;
 				break;
 
@@ -669,7 +611,9 @@ do_file_warnings (entry, outfile)
 			case N_SETB | N_EXT:
 				if (g->mult_defs == 2)
 					continue;
-				errfmt = "First set element definition of symbol %s (multiply defined)";
+				errfmt =
+		"First set element definition of symbol %s (multiply defined)";
+				line_number = -1;
 				break;
 
 			default:
@@ -678,9 +622,11 @@ printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 				continue;
 			}
 
-		} else if (BIT_SET_P (nlist_bitvector, i)) {
+		} else if (BIT_SET_P(nlist_bitvector, i)) {
 			continue;
-		} else if (list_unresolved_refs && !g->defined && !g->so_defined) {
+		} else if (list_unresolved_refs &&
+			   !g->defined && !g->so_defined) {
+
 			if (g->undef_refs >= MAX_UREFS_PRINTED)
 				continue;
 
@@ -696,8 +642,8 @@ printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 			 * do a reference. The second is if it's the reference
 			 * used by the warning stabs itself.
 			 */
-			if (s->n_type != (N_EXT | N_UNDF)
-					|| (i && (s-1)->n_type == N_WARNING))
+			if (s->n_type != (N_EXT | N_UNDF) ||
+			    (i && (s-1)->n_type == N_WARNING))
 				continue;
 
 			errfmt = g->warning;
@@ -707,19 +653,19 @@ printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 			continue;
 
 		if (line_number == -1)
-			fprintf (outfile, "%s: ", entry->filename);
+			fprintf(outfile, "%s: ", entry->filename);
 		else
-			fprintf (outfile, "%s:%d: ", file_name, line_number);
+			fprintf(outfile, "%s:%d: ", file_name, line_number);
 
 		if (dont_allow_symbol_name)
-			fprintf (outfile, "%s", errfmt);
+			fprintf(outfile, "%s", errfmt);
 		else
-			fprintf (outfile, errfmt, g->name);
+			fprintf(outfile, errfmt, g->name);
 
-		fputc ('\n', outfile);
+		fputc('\n', outfile);
 	}
-	free (text_scan);
-	free (data_scan);
+	free(text_scan);
+	free(data_scan);
 	entry->strings = 0;	/* Since it will dissapear anyway. */
 }
 
@@ -733,14 +679,14 @@ do_warnings(outfile)
 	list_multiple_defs = multiple_def_count != 0;
 
 	if (!(list_unresolved_refs ||
-			list_warning_symbols || list_multiple_defs))
+	    list_warning_symbols || list_multiple_defs))
 		/* No need to run this routine */
 		return 1;
 
 	if (entry_symbol && !entry_symbol->defined)
-		fprintf (outfile, "Undefined entry symbol %s\n",
-						entry_symbol->name);
-	each_file (do_file_warnings, outfile);
+		fprintf(outfile, "Undefined entry symbol %s\n",
+			entry_symbol->name);
+	each_file(do_file_warnings, (void *)outfile);
 
 	if (list_unresolved_refs || list_multiple_defs)
 		return 0;
