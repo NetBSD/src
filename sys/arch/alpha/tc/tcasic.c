@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.31 2000/12/22 13:33:57 ad Exp $ */
+/* $NetBSD: tcasic.c,v 1.32 2000/12/23 13:11:57 tron Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.31 2000/12/22 13:33:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.32 2000/12/23 13:11:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ extern int	tc_checkslot __P((tc_addr_t, char *));
 
 struct cnboards {
 	const char	*cb_tcname;
-	int	(*cb_cnattach)(tc_addr_t);
+	void	(*cb_cnattach)(tc_addr_t);
 } static cnboards[] = {
 #if NSFB > 0
 	{ "PMAGB-BA", sfb_cnattach },
