@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.263 2003/07/15 00:05:08 lukem Exp $ */
+/*	$NetBSD: pmap.c,v 1.264 2003/08/12 15:13:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2003/07/15 00:05:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2003/08/12 15:13:11 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4268,6 +4268,29 @@ static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 }
 #endif /* SUN4M || SUN4D */
 
+void pmap_remove_all(struct pmap *pm)
+{
+	if (pm->pm_ctx == NULL)
+		return;
+
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		int ctx = getcontext4();
+		setcontext4(pm->pm_ctxnum);
+		cache_flush_context(pm->pm_ctxnum);
+		setcontext4(ctx);
+	}
+#endif
+
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
+		cache_flush_context(pm->pm_ctxnum);
+	}
+#endif
+
+	pm->pm_flags |= PMAP_USERCACHECLEAN;
+}
+
 /*
  * Remove the given range of mapping entries.
  * The starting and ending addresses are already rounded to pages.
@@ -4572,7 +4595,9 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
 		setcontext4(pm->pm_ctxnum);
-		if (npg > PMAP_SFL_THRESHOLD) {
+		if ((pm->pm_flags & PMAP_USERCACHECLEAN) != 0)
+			perpage = 0;
+		else if (npg > PMAP_SFL_THRESHOLD) {
 			perpage = 0; /* flush the whole segment */
 			cache_flush_segment(vr, vs, pm->pm_ctxnum);
 		} else
@@ -4675,7 +4700,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	/*
 	 * Invalidate PTE in MMU pagetables. Flush cache if necessary.
 	 */
-	if (pm->pm_ctx) {
+	if (pm->pm_ctx && (pm->pm_flags & PMAP_USERCACHECLEAN) == 0) {
 		/* process has a context, must flush cache */
 		if (CACHEINFO.c_vactype != VAC_NONE) {
 			npg = (endva - va) >> PGSHIFT;
@@ -5563,6 +5588,8 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	struct regmap *rp;
 	struct segmap *sp;
 
+	pm->pm_flags &= ~PMAP_USERCACHECLEAN;
+
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -6153,6 +6180,8 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	if (KERNBASE < va)
 		panic("pmap_enu4m: can't enter va 0x%lx above KERNBASE", va);
 #endif
+
+	pm->pm_flags &= ~PMAP_USERCACHECLEAN;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
