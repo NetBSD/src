@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26 1997/07/21 05:39:15 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.1 1997/11/09 20:14:52 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,6 +92,11 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.1 1997/11/09 20:14:52 mellon Exp $");
+
+#include "rasterconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +285,7 @@ dtopopen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit;
 	int s, error = 0;
+	int firstopen = 0;
 
 	unit = minor(dev);
 	if (unit >= dtop_cd.cd_ndevs)
@@ -294,6 +300,7 @@ dtopopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
+		firstopen = 1;
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -318,6 +325,15 @@ dtopopen(dev, flag, mode, p)
 	if (error)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+#if NRASTERRCONSOLE > 0
+	/* handle raster console specially */
+	if (tp == DTOP_TTY(0) && firstopen) {
+	  	extern struct tty *fbconstty;
+		tp->t_winsize = fbconstty->t_winsize;
+	}
+#endif /* HAVE_RCONS */		
+
 	return (error);
 }
 
