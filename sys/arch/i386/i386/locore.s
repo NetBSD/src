@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.164 1997/03/14 19:50:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.165 1997/03/22 16:56:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1926,9 +1926,9 @@ ENTRY(savectx)
 #endif
 
 	.text
-IDTVEC(div)
+IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
-IDTVEC(dbg)
+IDTVEC(trap01)
 	subl	$4,%esp
 	pushl	%eax
 	movl	%dr6,%eax
@@ -1937,18 +1937,18 @@ IDTVEC(dbg)
 	movl	%eax,%dr6
 	popl	%eax
 	BPTTRAP(T_TRCTRAP)
-IDTVEC(nmi)
+IDTVEC(trap02)
 	ZTRAP(T_NMI)
-IDTVEC(bpt)
+IDTVEC(trap03)
 	pushl	$0
 	BPTTRAP(T_BPTFLT)
-IDTVEC(ofl)
+IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
-IDTVEC(bnd)
+IDTVEC(trap05)
 	ZTRAP(T_BOUND)
-IDTVEC(ill)
+IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
-IDTVEC(dna)
+IDTVEC(trap07)
 #if NNPX > 0
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
@@ -1962,23 +1962,27 @@ IDTVEC(dna)
 #else
 	ZTRAP(T_DNA)
 #endif
-IDTVEC(dble)
+IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
-IDTVEC(fpusegm)
+IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
-IDTVEC(tss)
+IDTVEC(trap0a)
 	TRAP(T_TSSFLT)
-IDTVEC(missing)
+IDTVEC(trap0b)
 	TRAP(T_SEGNPFLT)
-IDTVEC(stk)
+IDTVEC(trap0c)
 	TRAP(T_STKFLT)
-IDTVEC(prot)
+IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
-IDTVEC(page)
+IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
-IDTVEC(rsvd)
-	ZTRAP(T_RESERVED)
-IDTVEC(fpu)
+IDTVEC(trap0f)
+	/*
+	 * The Pentium Pro local APIC may erroneously call this vector for a
+	 * default IR7.  Just ignore it.
+	 */
+	iret
+IDTVEC(trap10)
 #if NNPX > 0
 	/*
 	 * Handle like an interrupt so that we can call npxintr to clear the
@@ -1997,9 +2001,34 @@ IDTVEC(fpu)
 #else
 	ZTRAP(T_ARITHTRAP)
 #endif
-IDTVEC(align)
+IDTVEC(trap11)
 	ZTRAP(T_ALIGNFLT)
+IDTVEC(trap12)
+IDTVEC(trap13)
+IDTVEC(trap14)
+IDTVEC(trap15)
+IDTVEC(trap16)
+IDTVEC(trap17)
+IDTVEC(trap18)
+IDTVEC(trap19)
+IDTVEC(trap1a)
+IDTVEC(trap1b)
+IDTVEC(trap1c)
+IDTVEC(trap1d)
+IDTVEC(trap1e)
+IDTVEC(trap1f)
 	/* 18 - 31 reserved for future exp */
+	ZTRAP(T_RESERVED)
+
+IDTVEC(exceptions)
+	.long	_Xtrap00, _Xtrap01, _Xtrap02, _Xtrap03
+	.long	_Xtrap04, _Xtrap05, _Xtrap06, _Xtrap07
+	.long	_Xtrap08, _Xtrap09, _Xtrap0a, _Xtrap0b
+	.long	_Xtrap0c, _Xtrap0d, _Xtrap0e, _Xtrap0f
+	.long	_Xtrap10, _Xtrap11, _Xtrap12, _Xtrap13
+	.long	_Xtrap14, _Xtrap15, _Xtrap16, _Xtrap17
+	.long	_Xtrap18, _Xtrap19, _Xtrap1a, _Xtrap1b
+	.long	_Xtrap1c, _Xtrap1d, _Xtrap1e, _Xtrap1f
 
 /*
  * If an error is detected during trap, syscall, or interrupt exit, trap() will
