@@ -17,6 +17,7 @@
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
