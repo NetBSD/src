@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.178 2004/05/27 02:23:12 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.179 2004/05/27 16:47:35 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.178 2004/05/27 02:23:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.179 2004/05/27 16:47:35 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1805,14 +1805,14 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		wdc_c->r_head = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_sdh], 0);
-		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_hi], 0) << 8;
-		wdc_c->r_cyl |= bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_lo], 0);
-		wdc_c->r_sector = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_sector], 0);
 		wdc_c->r_count = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_seccnt], 0);
+		wdc_c->r_sector = bus_space_read_1(chp->cmd_iot,
+		    chp->cmd_iohs[wd_sector], 0);
+		wdc_c->r_cyl |= bus_space_read_1(chp->cmd_iot,
+		    chp->cmd_iohs[wd_cyl_lo], 0);
+		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot,
+		    chp->cmd_iohs[wd_cyl_hi], 0) << 8;
 		wdc_c->r_error = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_error], 0);
 		wdc_c->r_features = bus_space_read_1(chp->cmd_iot,
@@ -1859,11 +1859,11 @@ wdccommand(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 	/* Load parameters into the wd_features register. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_features], 0,
 	    features);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, count);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sector], 0, sector);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_lo], 0, cylin);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_hi],
 	    0, cylin >> 8);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sector], 0, sector);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, count);
 
 	/* Send command. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0, command);
@@ -1896,21 +1896,21 @@ wdccommandext(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_features], 0, 0);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt],
 	    0, count >> 8);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_hi],
-	    0, blkno >> 40);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_mi],
-	    0, blkno >> 32);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_lo],
 	    0, blkno >> 24);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_mi],
+	    0, blkno >> 32);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_hi],
+	    0, blkno >> 40);
 
 	/* current */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_features], 0, 0);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_seccnt], 0, count);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_hi],
-	    0, blkno >> 16);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_lo], 0, blkno);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_mi],
 	    0, blkno >> 8);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_lo], 0, blkno);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_lba_hi],
+	    0, blkno >> 16);
 
 	/* Send command. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0, command);
