@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2003/03/12 16:46:31 drochner Exp $
+#	$NetBSD: Makefile,v 1.54 2003/04/11 11:31:44 dsl Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -34,6 +34,7 @@ SRCS+=	cread.c
 SRCS+=	loadfile.c loadfile_aout.c loadfile_ecoff.c loadfile_elf32.c \
 	loadfile_elf64.c
 .endif
+
 .if (${SA_INCLUDE_NET} == "yes")
 # network routines
 SRCS+=	arp.c ether.c ether_sprintf.c in_cksum.c net.c netif.c rpc.c udp.c
@@ -44,7 +45,10 @@ SRCS+=	bootp.c rarp.c bootparam.c
 # boot filesystems
 SRCS+=	nfs.c tftp.c
 .endif
-SRCS+=	lfsv1.c lfsv2.c ufs.c ufs_ls.c cd9660.c ustarfs.c dosfs.c
+
+SRCS+=	lfsv1.c lfsv2.c ffsv1.c ffsv2.c ufs_ls.c cd9660.c ustarfs.c dosfs.c
+# for historic comparibility ufs == ffsv1
+SRCS+=	ufs.c
 
 # only needed during build
 libinstall::
