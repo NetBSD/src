@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.14 1997/08/30 06:51:07 mycroft Exp $	*/
+/*	$NetBSD: ppb.c,v 1.15 1997/08/30 06:53:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -130,6 +130,7 @@ ppbattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
+	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
 	pba.pba_flags = pa->pa_flags;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);

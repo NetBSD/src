@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.28 1997/08/30 06:47:44 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.29 1997/08/30 06:53:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -173,6 +173,7 @@ pciattach(parent, self, aux)
 
 			pa.pa_iot = iot;
 			pa.pa_memt = memt;
+			pa.pa_dmat = pba->pba_dmat;
 			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;
