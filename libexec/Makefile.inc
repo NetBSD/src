@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.3 1996/12/18 05:39:58 thorpej Exp $
-#	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
+#	$NetBSD: Makefile.inc,v 1.4 1997/10/08 09:07:12 mrg Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 BINDIR?=	/usr/libexec
+WARNS?=		1
