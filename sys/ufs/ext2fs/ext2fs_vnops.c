@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.42 2002/10/23 09:15:05 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.43 2002/10/23 19:52:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.42 2002/10/23 09:15:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.43 2002/10/23 19:52:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,14 +505,14 @@ ext2fs_remove(v)
 		(ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(VTOI(dvp)->i_e2fs_flags & EXT2_APPEND)) {
 		error = EPERM;
-		goto out;
+	} else {
+		error = ext2fs_dirremove(dvp, ap->a_cnp);
+		if (error == 0) {
+			ip->i_e2fs_nlink--;
+			ip->i_flag |= IN_CHANGE;
+		}
 	}
-	error = ext2fs_dirremove(dvp, ap->a_cnp);
-	if (error == 0) {
-		ip->i_e2fs_nlink--;
-		ip->i_flag |= IN_CHANGE;
-	}
-out:
+
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
