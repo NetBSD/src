@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.31 1998/10/30 11:17:08 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.32 1998/10/31 17:17:56 veego Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -46,37 +46,35 @@ STRIPPROG?=	strip
 	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
 
 
-.if defined(PARALLEL) || defined(LEXPREFIX)
-LEXPREFIX?=yy
-LFLAGS+=-P${LEXPREFIX}
+.if defined(PARALLEL)
 # Lex
 .l:
-	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
-	${LINK.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c ${LDLIBS} -ll
-	rm -f ${.TARGET:R}.${LEXPREFIX}.c
+	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
+	${LINK.c} -o ${.TARGET} ${.TARGET:R}.yy.c ${LDLIBS} -ll
+	rm -f ${.TARGET:R}.yy.c
 .l.c:
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 .l.o:
-	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
-	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c 
-	rm -f ${.TARGET:R}.${LEXPREFIX}.c
+	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
+	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
+	rm -f ${.TARGET:R}.yy.c
 .l.lo:
-	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
-	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c 
-	rm -f ${.TARGET:R}.${LEXPREFIX}.c
+	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
+	rm -f ${.TARGET:R}.yy.c
 .endif
 
 # Yacc
-.if defined(YHEADER) || defined(YACCPREFIX)
-YACCPREFIX?=yy
-YFLAGS+=-d -p${YACCPREFIX}
+.if defined(YHEADER)
+YFLAGS+=-d
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.c ${.TARGET:R}.tab.h
-.y.h: ${.TARGET:R}.c
-.y.c:
-	${YACC.y} -o ${.TARGET} ${.IMPSRC}
+.y.h .y.c:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	mv ${.TARGET:R}.tab.c ${.TARGET:R}.c
+	mv ${.TARGET:R}.tab.h ${.TARGET:R}.h
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
@@ -91,7 +89,8 @@ YFLAGS+=-d -p${YACCPREFIX}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.c
 .y.c:
-	${YACC.y} -o ${.TARGET} ${.IMPSRC}
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	mv ${.TARGET:R}.tab.c ${.TARGET}
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
