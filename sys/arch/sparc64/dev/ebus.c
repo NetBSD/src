@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.19 2001/01/08 22:15:47 pk Exp $	*/
+/*	$NetBSD: ebus.c,v 1.20 2001/05/18 19:17:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -337,7 +337,7 @@ ebus_find_ino(sc, ea)
 				    lo == sc->sc_intmap[k].lo &&
 				    intr == sc->sc_intmap[k].intr) {
 					ea->ea_intrs[j] =
-						sc->sc_intmap[k].cintr|INTMAP_OBIO;
+						sc->sc_intmap[k].cintr;
 					DPRINTF(EDB_INTRMAP, ("; FOUND IT! changing to %d\n", sc->sc_intmap[k].cintr));
 					goto next_intr;
 				}
