@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.67 2001/07/22 16:18:31 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.68 2001/07/27 02:04:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -879,8 +879,8 @@ bad:
 }
 
 #define rtinitflags(x) \
-	(((((x)->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) != 0) && \
-	  (x)->ia_dstaddr.sin_family == AF_INET) ? RTF_HOST : 0)
+	((((x)->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) != 0) \
+	    ? RTF_HOST : 0)
 
 /*
  * add a route to prefix ("connected route" in cisco terminology).
