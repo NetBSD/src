@@ -1,5 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.43 1999/10/14 02:14:35 mjacob Exp $ */
-/* release_6_5_99 */
+/* $NetBSD: isp_pci.c,v 1.44 1999/10/17 01:22:08 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -167,8 +166,8 @@ static struct ispmdvec mdvec_2200 = {
 #define	PCI_QLOGIC_ISP2200	\
 	((PCI_PRODUCT_QLOGIC_ISP2200 << 16) | PCI_VENDOR_QLOGIC)
 
-#define IO_MAP_REG	0x10
-#define MEM_MAP_REG	0x14
+#define	IO_MAP_REG	0x10
+#define	MEM_MAP_REG	0x14
 #define	PCIR_ROMADDR	0x30
 
 #define	PCI_DFLT_LTNCY	0x40
@@ -199,12 +198,12 @@ struct cfattach isp_pci_ca = {
 
 static int
 isp_pci_probe(parent, match, aux)
-        struct device *parent;
-        struct cfdata *match;
-	void *aux; 
-{       
-        struct pci_attach_args *pa = aux;
-        switch (pa->pa_id) {
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct pci_attach_args *pa = aux;
+	switch (pa->pa_id) {
 #ifndef	ISP_DISABLE_1020_SUPPORT
 	case PCI_QLOGIC_ISP:
 		return (1);
@@ -228,10 +227,10 @@ isp_pci_probe(parent, match, aux)
 }
 
 
-static void    
+static void
 isp_pci_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 #ifdef	DEBUG
 	static char oneshot = 1;
@@ -404,8 +403,8 @@ isp_pci_attach(parent, self, aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	if (intrstr == NULL)
 		intrstr = "<I dunno>";
-	pcs->pci_ih =
-	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_pci_intr, isp);
+	pcs->pci_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+	    isp_pci_intr, isp);
 	if (pcs->pci_ih == NULL) {
 		printf("%s: couldn't establish interrupt at %s\n",
 			isp->isp_name, intrstr);
@@ -606,14 +605,13 @@ isp_pci_mbxdma(isp)
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
-	      BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
+	    BUS_DMA_NOWAIT) || bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
+	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
-	      &pci->pci_rquest_dmap) ||
-	    bus_dmamap_load(pci->pci_dmat, pci->pci_rquest_dmap,
-	      (caddr_t)isp->isp_rquest, len, NULL, BUS_DMA_NOWAIT))
+	    &pci->pci_rquest_dmap) || bus_dmamap_load(pci->pci_dmat,
+	    pci->pci_rquest_dmap, (caddr_t)isp->isp_rquest, len, NULL,
+	    BUS_DMA_NOWAIT))
 		return (1);
 
 	isp->isp_rquest_dma = pci->pci_rquest_dmap->dm_segs[0].ds_addr;
@@ -623,14 +621,13 @@ isp_pci_mbxdma(isp)
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
-	      BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
+	    BUS_DMA_NOWAIT) || bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
+	    (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
-	      &pci->pci_result_dmap) ||
-	    bus_dmamap_load(pci->pci_dmat, pci->pci_result_dmap,
-	      (caddr_t)isp->isp_result, len, NULL, BUS_DMA_NOWAIT))
+	    &pci->pci_result_dmap) || bus_dmamap_load(pci->pci_dmat,
+	    pci->pci_result_dmap, (caddr_t)isp->isp_result, len, NULL,
+	    BUS_DMA_NOWAIT))
 		return (1);
 	isp->isp_result_dma = pci->pci_result_dmap->dm_segs[0].ds_addr;
 
@@ -641,14 +638,13 @@ isp_pci_mbxdma(isp)
 	fcp = isp->isp_param;
 	len = ISP2100_SCRLEN;
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
-		BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
-	      (caddr_t *)&fcp->isp_scratch, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
+	    BUS_DMA_NOWAIT) || bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
+	    (caddr_t *)&fcp->isp_scratch, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		return (1);
 	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
-	      &pci->pci_scratch_dmap) ||
-	    bus_dmamap_load(pci->pci_dmat, pci->pci_scratch_dmap,
-	      (caddr_t)fcp->isp_scratch, len, NULL, BUS_DMA_NOWAIT))
+	    &pci->pci_scratch_dmap) || bus_dmamap_load(pci->pci_dmat,
+	    pci->pci_scratch_dmap, (caddr_t)fcp->isp_scratch, len, NULL,
+	    BUS_DMA_NOWAIT))
 		return (1);
 	fcp->isp_scdma = pci->pci_scratch_dmap->dm_segs[0].ds_addr;
 	return (0);
@@ -697,8 +693,8 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	segcnt = dmap->dm_nsegs;
 
 	for (seg = 0, rq->req_seg_count = 0;
-	     seg < segcnt && rq->req_seg_count < seglim;
-	     seg++, rq->req_seg_count++) {
+	    seg < segcnt && rq->req_seg_count < seglim;
+	    seg++, rq->req_seg_count++) {
 		if (IS_FC(isp)) {
 			ispreqt2_t *rq2 = (ispreqt2_t *)rq;
 			rq2->req_dataseg[rq2->req_seg_count].ds_count =
@@ -721,8 +717,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
 		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
 		if (*iptrp == optr) {
-			printf("%s: Request Queue Overflow++\n",
-			       isp->isp_name);
+			printf("%s: Request Queue Overflow++\n", isp->isp_name);
 			bus_dmamap_unload(pci->pci_dmat, dmap);
 			XS_SETERR(xs, HBA_BOTCH);
 			return (CMD_COMPLETE);
