@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.38 1997/08/05 01:13:50 jonathan Exp $	*/
+/*	$NetBSD: wt.c,v 1.39 1997/08/08 09:38:18 jonathan Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -82,10 +82,10 @@
 /*
  * Wangtek controller ports
  */
-#define WT_CTLPORT		(0)		/* control, write only */
-#define WT_STATPORT		(0)		/* status, read only */
-#define WT_CMDPORT		(1)		/* command, write only */
-#define WT_DATAPORT		(1)		/* data, read only */
+#define WT_CTLPORT		(ia->ia_iobase + 0 )	/* control, write only */
+#define WT_STATPORT		(ia->ia_iobase + 0 )	/* status, read only */
+#define WT_CMDPORT		(ia->ia_iobase + 1 )	/* command, write only */
+#define WT_DATAPORT		(ia->ia_iobase + 1 )	/* data, read only */
 #define WT_NPORT		2		/* 2 i/o ports */
 
 /* status port bits */
@@ -103,12 +103,12 @@
 /*
  * Archive controller ports
  */
-#define AV_DATAPORT		(0)		/* data, read only */
-#define AV_CMDPORT		(0)		/* command, write only */
-#define AV_STATPORT		(1)		/* status, read only */
-#define AV_CTLPORT		(1)		/* control, write only */
-#define AV_SDMAPORT		(2)		/* start dma */
-#define AV_RDMAPORT		(3)		/* reset dma */
+#define AV_DATAPORT		(ia->ia_iobase + 0)	/* data, read only */
+#define AV_CMDPORT		(ia->ia_iobase + 0)	/* command, write only */
+#define AV_STATPORT		(ia->ia_iobase + 1)	/* status, read only */
+#define AV_CTLPORT		(ia->ia_iobase + 1)	/* control, write only */
+#define AV_SDMAPORT		(ia->ia_iobase + 2)	/* start dma */
+#define AV_RDMAPORT		(ia->ia_iobase + 3)	/* reset dma */
 #define AV_NPORT		4		/* 4 i/o ports */
 
 /* status port bits */
