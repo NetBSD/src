@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.10 1998/02/06 14:35:46 kleink Exp $	*/
+/*	$NetBSD: random.c,v 1.11 1998/02/28 00:09:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.10 1998/02/06 14:35:46 kleink Exp $");
+__RCSID("$NetBSD: random.c,v 1.11 1998/02/28 00:09:45 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -150,8 +150,8 @@ __weak_alias(srandom,_srandom);
  */
 #define	MAX_TYPES	5		/* max number of types above */
 
-static long degrees[MAX_TYPES] =	{ DEG_0, DEG_1, DEG_2, DEG_3, DEG_4 };
-static long seps [MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
+static int degrees[MAX_TYPES] =	{ DEG_0, DEG_1, DEG_2, DEG_3, DEG_4 };
+static int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
 
 /*
  * Initially, everything is set up as if from:
@@ -169,12 +169,17 @@ static long seps [MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
 
 static long randtbl[DEG_3 + 1] = {
 	TYPE_3,
-	0x9a319039, 0x32d9c024, 0x9b663182, 0x5da1f342, 0xde3b81e0, 0xdf0a6fb5,
-	0xf103bc02, 0x48f340fb, 0x7449e56b, 0xbeb1dbb0, 0xab5c5918, 0x946554fd,
-	0x8c2e680f, 0xeb3d799f, 0xb11ee0b7, 0x2d436b86, 0xda672e2a, 0x1588ca88,
-	0xe369735d, 0x904f35f7, 0xd7158fd6, 0x6fa6f051, 0x616e6b96, 0xac94efdc,
-	0x36413f93, 0xc622c298, 0xf5a42ab8, 0x8a88d77b, 0xf5ad9d0e, 0x8999220b,
-	0x27fb47b9,
+	(long)0x9a319039L, (long)0x32d9c024L, (long)0x9b663182L,
+	(long)0x5da1f342L, (long)0xde3b81e0L, (long)0xdf0a6fb5L,
+	(long)0xf103bc02L, (long)0x48f340fbL, (long)0x7449e56bL,
+	(long)0xbeb1dbb0L, (long)0xab5c5918L, (long)0x946554fdL,
+	(long)0x8c2e680fL, (long)0xeb3d799fL, (long)0xb11ee0b7L,
+	(long)0x2d436b86L, (long)0xda672e2aL, (long)0x1588ca88L,
+	(long)0xe369735dL, (long)0x904f35f7L, (long)0xd7158fd6L,
+	(long)0x6fa6f051L, (long)0x616e6b96L, (long)0xac94efdcL,
+	(long)0x36413f93L, (long)0xc622c298L, (long)0xf5a42ab8L,
+	(long)0x8a88d77bL, (long)0xf5ad9d0eL, (long)0x8999220bL,
+	(long)0x27fb47b9L,
 };
 
 /*
@@ -206,8 +211,8 @@ static long *rptr = &randtbl[1];
  */
 static long *state = &randtbl[1];
 static long rand_type = TYPE_3;
-static long rand_deg = DEG_3;
-static long rand_sep = SEP_3;
+static int rand_deg = DEG_3;
+static int rand_sep = SEP_3;
 static long *end_ptr = &randtbl[DEG_3 + 1];
 
 /*
@@ -226,14 +231,14 @@ void
 srandom(x)
 	unsigned long x;
 {
-	long i;
+	int i;
 
 	if (rand_type == TYPE_0)
 		state[0] = x;
 	else {
 		state[0] = x;
 		for (i = 1; i < rand_deg; i++)
-			state[i] = 1103515245 * state[i - 1] + 12345;
+			state[i] = 1103515245L * state[i - 1] + 12345L;
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
@@ -270,7 +275,7 @@ initstate(seed, arg_state, n)
 	char *arg_state;		/* pointer to state array */
 	size_t n;				/* # bytes of state info */
 {
-	char *ostate = (char *)(&state[-1]);
+	void *ostate = (void *)(&state[-1]);
 	long *long_arg_state = (long *) arg_state;
 
 	if (rand_type == TYPE_0)
@@ -311,7 +316,7 @@ initstate(seed, arg_state, n)
 		long_arg_state[0] = rand_type;
 	else
 		long_arg_state[0] = MAX_TYPES * (rptr - state) + rand_type;
-	return(ostate);
+	return((char *)ostate);
 }
 
 /*
@@ -338,9 +343,9 @@ setstate(arg_state)
 	char *arg_state;		/* pointer to state array */
 {
 	long *new_state = (long *) arg_state;
-	long type = new_state[0] % MAX_TYPES;
-	long rear = new_state[0] / MAX_TYPES;
-	char *ostate = (char *)(&state[-1]);
+	int type = (int)(new_state[0] % MAX_TYPES);
+	int rear = (int)(new_state[0] / MAX_TYPES);
+	void *ostate = (void *)(&state[-1]);
 
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
@@ -366,7 +371,7 @@ setstate(arg_state)
 		fptr = &state[(rear + rand_sep) % rand_deg];
 	}
 	end_ptr = &state[rand_deg];		/* set end_ptr too */
-	return(ostate);
+	return((char *)ostate);
 }
 
 /*
@@ -394,7 +399,7 @@ random()
 
 	if (rand_type == TYPE_0) {
 		i = state[0];
-		state[0] = i = (i * 1103515245 + 12345) & 0x7fffffff;
+		state[0] = i = (i * 1103515245L + 12345L) & 0x7fffffff;
 	} else {
 		/*
 		 * Use local variables rather than static variables for speed.
