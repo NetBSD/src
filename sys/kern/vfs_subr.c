@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.91 1998/08/04 04:03:19 perry Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.92 1998/08/17 17:29:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1033,8 +1033,10 @@ loop:
 		 * vnodes open for writing.
 		 */
 		if ((flags & WRITECLOSE) &&
-		    (vp->v_writecount == 0 || vp->v_type != VREG))
+		    (vp->v_writecount == 0 || vp->v_type != VREG)) {
+			simple_unlock(&vp->v_interlock);
 			continue;
+		}
 		/*
 		 * With v_usecount == 0, all we need to do is clear
 		 * out the vnode data structures and we are done.
