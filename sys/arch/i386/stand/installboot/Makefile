@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/11/23 23:34:40 fvdl Exp $
+#	$NetBSD: Makefile,v 1.26 2003/05/09 00:11:26 fvdl Exp $
 
 NOMAN=	# defined
 
@@ -29,6 +29,6 @@ CLEANFILES+= machine
 
 machine::
 	-rm -f $@
-	ln -s ${.CURDIR}/../../include $@
+	ln -s ${.CURDIR}/../../../${MACHINE}/include $@
 
 .include <bsd.prog.mk>
