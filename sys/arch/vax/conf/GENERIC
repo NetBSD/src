@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.63 2000/04/22 16:48:53 ragge Exp $
+#	$NetBSD: GENERIC,v 1.64 2000/04/23 16:38:52 matt Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -125,7 +125,8 @@ dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
-asc0		at vsbus0 csr 0x200c0080 # VS4000 SCSI-ctlr
+asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
+asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics

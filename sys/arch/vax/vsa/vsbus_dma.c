@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.3 2000/03/07 00:07:16 matt Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.4 2000/04/23 16:38:54 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/sgmap.h>
 #include <machine/vsbus.h>
 
@@ -74,14 +75,15 @@ static void vsbus_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
 void
-vsbus_dma_init(sc)
+vsbus_dma_init(sc, ptecnt)
 	struct vsbus_softc *sc;
+	unsigned ptecnt;
 {
 	bus_dma_tag_t t;
 	bus_dma_segment_t segs[1];
 	struct pte *pte;
 	int nsegs, error;
-	vaddr_t vs_regs;
+	unsigned mapsize = ptecnt * sizeof(struct pte);
 
 	/*
 	 * Initialize the DMA tag used for sgmap-mapped DMA.
@@ -89,7 +91,7 @@ vsbus_dma_init(sc)
 	t = &sc->sc_dmatag;
 	t->_cookie = sc;
 	t->_wbase = 0;
-	t->_wsize = 16*1024*1024;
+	t->_wsize = ptecnt * VAX_NBPG;
 	t->_boundary = 0;
 	t->_sgmap = &sc->sc_sgmap;
 	t->_dmamap_create = vsbus_bus_dmamap_create_sgmap;
@@ -107,28 +109,34 @@ vsbus_dma_init(sc)
 	t->_dmamem_unmap = _bus_dmamem_unmap;
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
-	/*
-	 * Allocate and map the VS4000 scatter gather map.
-	 */
-	error = bus_dmamem_alloc(t, 0x20000, 0x20000, 0x20000,
-	    segs, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error) {
-		panic("vsbus_dma_init: error allocating memory for hw sgmap"
-		    ": error=%d", error);
-	}
+	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
+		/*
+		 * Allocate and map the VS4000 scatter gather map.
+		 */
+		error = bus_dmamem_alloc(t, mapsize, mapsize, mapsize,
+		    segs, 1, &nsegs, BUS_DMA_NOWAIT);
+		if (error) {
+			panic("vsbus_dma_init: error allocating memory for "
+			    "hw sgmap: error=%d", error);
+		}
 
-	error = bus_dmamem_map(t, segs, nsegs, 0x20000, 
-	   (caddr_t *) &pte, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		panic("vsbus_dma_init: error mapping memory for hw sgmap"
-		    ": error=%d", error);
+		error = bus_dmamem_map(t, segs, nsegs, mapsize, 
+		   (caddr_t *) &pte, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		if (error) {
+			panic("vsbus_dma_init: error mapping memory for "
+			    "hw sgmap: error=%d", error);
+		}
+		memset(pte, 0, mapsize);
+		*(int *) (sc->sc_vsregs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
+	} else {
+		pte = (struct pte *) vax_map_physmem(KA49_SCSIMAP, mapsize / VAX_NBPG);
+		for (; ptecnt > 0; ) {
+			((u_int32_t *) pte)[--ptecnt] = 0;
+		}
+		segs->ds_addr = KA49_SCSIMAP;
 	}
-	printf("%s: 32K entry DMA SGMAP at PA 0x%lx (VA %p)\n",
-		sc->sc_dev.dv_xname, segs->ds_addr, pte);
-	memset(pte, 0, 0x20000);
-	vs_regs = vax_map_physmem(VS_REGS, 1);
-	*(int *) (vs_regs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
-	vax_unmap_physmem(vs_regs, 1);
+	printf("%s: %uK entry DMA SGMAP at PA 0x%lx (VA %p)\n",
+		sc->sc_dev.dv_xname, ptecnt / 1024, segs->ds_addr, pte);
 
 	/*
 	 * Initialize the SGMAP.
