@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.4 2001/01/23 22:08:00 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.5 2001/03/17 21:56:07 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,8 +52,11 @@ struct podulebus_chunk {
 };
 
 struct podulebus_attach_args {
-	bus_space_tag_t		pa_memc_t;
-	bus_space_handle_t	pa_memc_h;
+	/* bus_space references for the (many) podule spaces */
+	bus_space_tag_t		pa_easi_t;
+	bus_space_handle_t	pa_easi_h;
+	bus_space_tag_t		pa_mod_t;
+	bus_space_handle_t	pa_mod_h;
 	bus_space_tag_t		pa_fast_t;
 	bus_space_handle_t	pa_fast_h;
 	bus_space_tag_t		pa_medium_t;
@@ -62,6 +65,15 @@ struct podulebus_attach_args {
 	bus_space_handle_t	pa_slow_h;
 	bus_space_tag_t		pa_sync_t;
 	bus_space_handle_t	pa_sync_h;
+
+	/* Same things as raw addresses (arm32 compat) */
+	u_int	pa_easi_base;
+	u_int	pa_mod_base;
+	u_int	pa_fast_base;
+	u_int	pa_medium_base;
+	u_int	pa_slow_base;
+	u_int	pa_sync_base;
+
 	int	pa_slotnum;
 	int	pa_ecid;
 	int	pa_flags1;
@@ -71,6 +83,8 @@ struct podulebus_attach_args {
 	int	pa_nchunks;
 	char	*pa_descr;
 	void	*pa_loader;
+	int	pa_slotflags;
+#define PA_SLOT_EASI	0x01	/* EASI space available */
 };
 
 #define IS_PODULE(pa, man, prod)	\
