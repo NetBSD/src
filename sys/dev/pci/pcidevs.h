@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.352 2001/08/23 03:42:26 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.353 2001/08/27 08:03:37 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp 
  */
 
 /*
@@ -1062,7 +1062,8 @@
 #define	PCI_PRODUCT_DLINK_DL4000	0x4000		/* DL-4000 Gigabit Ethernet */
 
 /* Distributed Processing Technology products */
-#define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID */
+#define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID (EATA) */
+#define	PCI_PRODUCT_DPT_I960_PPB	0xa500		/* PCI-PCI Bridge */
 #define	PCI_PRODUCT_DPT_RAID_I2O	0xa501		/* SmartRAID (I2O) */
 #define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Controller */
 

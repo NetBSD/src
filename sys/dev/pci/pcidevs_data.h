@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.350 2001/08/23 03:42:27 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.351 2001/08/27 08:03:37 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp 
  */
 
 /*
@@ -2227,7 +2227,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    0,
 	    "Distributed Processing Technology",
-	    "SmartCache/SmartRAID",
+	    "SmartCache/SmartRAID (EATA)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_I960_PPB,
+	    0,
+	    "Distributed Processing Technology",
+	    "PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O,
