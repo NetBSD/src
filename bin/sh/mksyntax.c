@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.18 1998/07/28 11:41:56 mycroft Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.19 1998/09/12 18:55:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.18 1998/07/28 11:41:56 mycroft Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.19 1998/09/12 18:55:08 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,8 +125,13 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+#ifdef	TARGET_CHAR
+	TARGET_CHAR c;
+	TARGET_CHAR d;
+#else
 	char c;
 	char d;
+#endif
 	int sign;
 	int i;
 	char buf[80];
