@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.3 2000/10/03 23:33:38 thorpej Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.4 2000/10/03 23:50:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct vlanreq {
 
 #ifdef _KERNEL
 void	vlan_input(struct ifnet *, struct mbuf *);
+void	vlan_ifdetach(struct ifnet *);
 #endif	/* _KERNEL */
 
 #endif	/* !_NET_IF_VLANVAR_H_ */
