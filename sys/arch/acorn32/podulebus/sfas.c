@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.10.2.3 2004/09/21 13:11:28 skrll Exp $	*/
+/*	$NetBSD: sfas.c,v 1.10.2.4 2005/04/01 14:26:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.10.2.3 2004/09/21 13:11:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.10.2.4 2005/04/01 14:26:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,8 @@ sfasinitialize(dev)
 /*
  * Setup bump buffer.
  */
-	dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map, dev->sc_bump_sz);
+	dev->sc_bump_va = (u_char *)uvm_km_alloc(kernel_map, dev->sc_bump_sz, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)dev->sc_bump_va,
 	    (paddr_t *)&dev->sc_bump_pa);
 

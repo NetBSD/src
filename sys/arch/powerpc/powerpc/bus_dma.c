@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15.2.7 2005/02/19 13:18:15 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15.2.8 2005/04/01 14:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.2.7 2005/02/19 13:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.2.8 2005/04/01 14:28:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,11 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = (struct powerpc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_bounce_thresh = t->_bounce_thresh;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -195,7 +196,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
-		sgsize = min(sgsize, map->_dm_maxsegsz);
+		sgsize = min(sgsize, map->dm_maxsegsz);
 
 		/*
 		 * Make sure we don't cross any boundaries.
@@ -217,7 +218,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
+			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
@@ -269,6 +270,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -302,6 +304,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -378,6 +381,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -445,6 +449,7 @@ _bus_dmamap_unload(t, map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
@@ -648,7 +653,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -697,7 +702,8 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	pmap_kremove((vaddr_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*

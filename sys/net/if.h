@@ -1,11 +1,11 @@
-/*	$NetBSD: if.h,v 1.90.2.9 2005/03/08 13:53:11 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.10 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by William Studnemund and Jason R. Thorpe.
+ * by William Studenmund and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -122,6 +122,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "agr.h"
 #endif
 
 struct mbuf;
@@ -288,6 +289,10 @@ struct ifnet {				/* and the entries */
 
 	void	*if_afdata[AF_MAX];
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
+
+#if NAGR > 0
+	void	*if_agrprivate;
+#endif
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -326,6 +331,11 @@ struct ifnet {				/* and the entries */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
 
+#define	IFFBITS \
+    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
+    "\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX" \
+    "\15LINK0\16LINK1\17LINK2\20MULTICAST"
+
 /* flags set internally only: */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
@@ -348,6 +358,10 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
 #define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
 #define	IFCAP_TSOv4		0x0080	/* can do TCPv4 segmentation offload */
+
+#define	IFCAPBITS \
+    "\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx" \
+    "\7UDP4CSUM_Rx\10TSO4"
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -631,6 +645,7 @@ do {									\
 
 #ifdef ALTQ
 #define	ALTQ_DECL(x)		x
+#define ALTQ_COMMA		,
 
 #define IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -694,6 +709,7 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	ALTQ_DECL(x)		/* nothing */
+#define ALTQ_COMMA
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -773,6 +789,11 @@ void	if_clone_detach __P((struct if_clone *));
 
 int	if_clone_create __P((const char *));
 int	if_clone_destroy __P((const char *));
+
+int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
+    ALTQ_DECL(struct altq_pktattr *));
+int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
+    ALTQ_DECL(struct altq_pktattr *));
 
 int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));

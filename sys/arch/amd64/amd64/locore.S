@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4.2.3 2004/09/21 13:12:07 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.2.4 2005/04/01 14:26:50 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1069,8 +1069,7 @@ ENTRY(cpu_switchto)
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_C_LABEL(lwp0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+	.globl	_C_LABEL(lwp0)
 ENTRY(switch_exit)
 #ifdef MULTIPROCESSOR
 	movq	CPUVAR(IDLE_PCB),%r8

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.43.2.7 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.43.2.8 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43.2.7 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43.2.8 2005/04/01 14:31:34 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -355,3 +355,4 @@ struct vfsops fdesc_vfsops = {
 	vfs_stdextattrctl,
 	fdesc_vnodeopv_descs,
 };
+VFS_ATTACH(fdesc_vfsops);

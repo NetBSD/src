@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.49.6.3 2004/09/21 13:26:00 skrll Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.49.6.4 2005/04/01 14:29:36 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.49.6.3 2004/09/21 13:26:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.49.6.4 2005/04/01 14:29:36 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.49.6.3 2004/09/21 13:26:00 skrll Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/svr4_machdep.h>
 
@@ -98,4 +100,6 @@ const struct emul emul_svr4 = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.69.2.7 2005/02/04 11:47:42 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.69.2.8 2005/04/01 14:30:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.7 2005/02/04 11:47:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.8 2005/04/01 14:30:57 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -346,14 +346,14 @@ mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, NULL, waitok));
+	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
 
 void
 mclpool_release(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+	uvm_km_free_poolpage(mb_map, (vaddr_t)v);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.117.2.8 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.117.2.9 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.8 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.9 2005/04/01 14:30:56 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -466,7 +466,7 @@ exit1(struct lwp *l, int rv)
 	 * flag set, notify init instead (and hope it will handle
 	 * this situation).
 	 */
-	if (q->p_flag & P_NOCLDWAIT) {
+	if (q->p_flag & (P_NOCLDWAIT|P_CLDSIGIGN)) {
 		proc_reparent(p, initproc);
 
 		/*

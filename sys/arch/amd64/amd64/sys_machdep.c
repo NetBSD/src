@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.2.3 2004/09/21 13:12:07 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.2.4 2005/04/01 14:26:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.2.3 2004/09/21 13:12:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.2.4 2005/04/01 14:26:50 skrll Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -188,7 +188,8 @@ x86_64_set_ldt(p, args, retval)
 		while ((ua.start + ua.num) > pmap->pm_ldt_len)
 			pmap->pm_ldt_len *= 2;
 		new_len = pmap->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len,
+		    0, UVM_KMF_WIRED);
 		memcpy(new_ldt, old_ldt, old_len);
 		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
 		pmap->pm_ldt = new_ldt;
@@ -209,7 +210,8 @@ x86_64_set_ldt(p, args, retval)
 		 */
 
 		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
+			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len, 0,
+			    UVM_KMF_WIRED);
 #ifdef LDT_DEBUG
 		printf("x86_64_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
 #endif

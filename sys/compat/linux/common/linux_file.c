@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.61.2.7 2005/03/04 16:40:02 skrll Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.61.2.8 2005/04/01 14:29:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.7 2005/03/04 16:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.8 2005/04/01 14:29:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -515,6 +515,11 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
+#ifdef LINUX_STAT_HAS_NSEC
+	lsp->lst_atime_nsec   = bsp->st_atimensec;
+	lsp->lst_mtime_nsec   = bsp->st_mtimensec;
+	lsp->lst_ctime_nsec   = bsp->st_ctimensec;
+#endif
 }
 
 /*

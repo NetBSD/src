@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.83.2.5 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.83.2.6 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.83.2.5 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.83.2.6 2005/04/01 14:31:34 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -433,6 +433,7 @@ sloutput(ifp, m, dst, rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;
 	struct ip *ip;
+	struct ifqueue *ifq = NULL;
 	int s, error;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -483,26 +484,13 @@ sloutput(ifp, m, dst, rtp)
 
 	s = splnet();
 #ifdef INET
-	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
+	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0)
+		ifq = &sc->sc_fastq;
 #endif
-	    ) {
-		if (IF_QFULL(&sc->sc_fastq)) {
-			IF_DROP(&sc->sc_fastq);
-			m_freem(m);
-			error = ENOBUFS;
-		} else {
-			IF_ENQUEUE(&sc->sc_fastq, m);
-			error = 0;
-		}
-	} else
-#endif
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
+	if ((error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA
+	    ALTQ_DECL(&pktattr))) != 0) {
 		splx(s);
-		ifp->if_oerrors++;
-		return (error);
+		return error;
 	}
 	sc->sc_lastpacket = time;
 	splx(s);

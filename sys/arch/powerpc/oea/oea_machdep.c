@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.8.2.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.8.2.4 2005/04/01 14:28:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.3 2004/09/21 13:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.4 2005/04/01 14:28:04 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -802,7 +802,7 @@ mapiodev(paddr_t pa, psize_t len)
 	faddr = trunc_page(pa);
 	off = pa - faddr;
 	len = round_page(off + len);
-	va = taddr = uvm_km_valloc(kernel_map, len);
+	va = taddr = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return NULL;

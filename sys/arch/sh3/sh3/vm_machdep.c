@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.2.5 2005/01/17 19:30:19 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.6 2005/04/01 14:28:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.5 2005/01/17 19:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.6 2005/04/01 14:28:20 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -386,7 +386,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr= uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -431,7 +431,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	kpmap = vm_map_pmap(phys_map);
 	pmap_remove(kpmap, addr, addr + len);
 	pmap_update(kpmap);
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.12.2.3 2004/09/21 13:22:59 skrll Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.12.2.4 2005/04/01 14:28:41 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.12.2.3 2004/09/21 13:22:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.12.2.4 2005/04/01 14:28:41 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.12.2.3 2004/09/21 13:22:59 skr
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
+
+#include <uvm/uvm_param.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_lwp.h>
@@ -593,6 +595,10 @@ svr4_32_trap(type, l)
 	int n;
 	struct proc *p = l->l_proc;
 	struct trapframe64 *tf = l->l_md.md_tf;
+	struct schedstate_percpu *spc;
+	struct timeval tv;
+	uint64_t tm;
+	int s;
 
 	if (p->p_emul != &emul_svr4_32)
 		return 0;
@@ -621,20 +627,14 @@ svr4_32_trap(type, l)
 		 * guaranteed to be monotonically increasing, which we
 		 * obtain from mono_time(9).
 		 */
-		{
-			struct timeval tv;
-			quad_t tm;
-			int s;
+		s = splclock();
+		tv = mono_time;
+		splx(s);
 
-			s = splclock();
-			tv = mono_time;
-			splx(s);
-
-			tm = (u_quad_t) tv.tv_sec * 1000000000 +
-			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
-			tf->tf_out[1] = tm & 0x00000000ffffffffffUL;
-		}
+		tm = tv.tv_usec * 1000u;
+		tm += tv.tv_sec * (uint64_t)1000000000u;
+		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
+		tf->tf_out[1] = tm & 0x00000000ffffffffffUL;
 		break;
 
 	case T_SVR4_GETHRVTIME:
@@ -645,37 +645,24 @@ svr4_32_trap(type, l)
 		 * for now using the process's real time augmented with its
 		 * current runtime is the best we can do.
 		 */
-		{
-			struct schedstate_percpu *spc =
-			    &curcpu()->ci_schedstate;
-			struct timeval tv;
-			quad_t tm;
+		spc = &curcpu()->ci_schedstate;
 
-			microtime(&tv);
+		microtime(&tv);
 
-			tm =
-			    (u_quad_t) (p->p_rtime.tv_sec +
-			                tv.tv_sec -
-			                    spc->spc_runtime.tv_sec)
-			                * 1000000 +
-			    (u_quad_t) (p->p_rtime.tv_usec +
-			                tv.tv_usec -
-			                    spc->spc_runtime.tv_usec)
-			                * 1000;
-			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
-			tf->tf_out[1] = tm & 0x00000000ffffffffffUL;
-		}
+		tm = (p->p_rtime.tv_sec + tv.tv_sec -
+			spc->spc_runtime.tv_sec) * (uint64_t)1000000u;
+		tm += p->p_rtime.tv_usec + tv.tv_usec;
+		tm -= spc->spc_runtime.tv_usec;
+		tm *= 1000;
+		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
+		tf->tf_out[1] = tm & 0x00000000ffffffffffUL;
 		break;
 
 	case T_SVR4_GETHRESTIME:
-		{
-			/* I assume this is like gettimeofday(3) */
-			struct timeval  tv;
-
-			microtime(&tv);
-			tf->tf_out[0] = tv.tv_sec;
-			tf->tf_out[1] = tv.tv_usec;
-		}
+		/* I assume this is like gettimeofday(3) */
+		microtime(&tv);
+		tf->tf_out[0] = tv.tv_sec;
+		tf->tf_out[1] = tv.tv_usec * 1000u;
 		break;
 
 	default:
@@ -701,4 +688,10 @@ svr4_32_sys_sysarch(l, v, retval)
 		printf("(sparc) svr4_32_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
+}
+
+vaddr_t
+svr4_32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+{
+	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

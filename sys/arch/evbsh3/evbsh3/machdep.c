@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46.2.3 2004/09/21 13:15:07 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.2.4 2005/04/01 14:27:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.2.3 2004/09/21 13:15:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.2.4 2005/04/01 14:27:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,7 +441,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 		panic("sh3_pcmcia_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
 	if (va == 0){
 		printf("shpcmcia_add_mapping: nomem \n");
 		return (ENOMEM);
@@ -513,7 +513,9 @@ shpcmcia_memio_unmap(t, bsh, size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-	uvm_km_free(kernel_map, va, endva - va);
+	pmap_kremove(va, endva - va);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 
 #if 0
 	if (extent_free(ex, bpa, size,
@@ -754,6 +756,11 @@ intc_intr(int ssr, int spc, int ssp)
 	case CPU_PRODUCT_7750S:
 		evtcode = _reg_read_4(SH4_INTEVT);
 		break;
+	default:
+#ifdef DIAGNOSTIC
+		panic("intr_intc: cpu_product %d unhandled!", cpu_product);
+#endif
+		return;
 	}
 
 	ih = EVTCODE_IH(evtcode);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.8.2.7 2005/03/04 16:51:46 skrll Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.8.2.8 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.8.2.7 2005/03/04 16:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.8.2.8 2005/04/01 14:30:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,3 +643,4 @@ struct vfsops union_vfsops = {
 	vfs_stdextattrctl,
 	union_vnodeopv_descs,
 };
+VFS_ATTACH(union_vfsops);

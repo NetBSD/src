@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142.2.9 2005/03/04 16:53:29 skrll Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.142.2.10 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.9 2005/03/04 16:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.10 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1238,9 +1238,11 @@ tcp_freeq(tp)
 		TAILQ_REMOVE(&tp->segq, qe, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
-		pool_put(&tcpipqent_pool, qe);
+		tcpipqent_free(qe);
 		rv = 1;
 	}
+	tp->t_segqlen = 0;
+	KASSERT(TAILQ_EMPTY(&tp->timeq));
 	return (rv);
 }
 
@@ -1543,7 +1545,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 /*
- * When a source quence is received, we are being notifed of congestion.
+ * When a source quench is received, we are being notified of congestion.
  * Close the congestion window down to the Loss Window (one segment).
  * We will gradually open it again as we proceed.
  */
@@ -2194,9 +2196,6 @@ tcp_optlen(struct tcpcb *tp)
 	if (tp->t_flags & TF_SIGNATURE)
 		optlen += TCPOLEN_SIGNATURE + 2;
 #endif /* TCP_SIGNATURE */
-
-	if (tp->t_flags & TF_WILL_SACK)
-		optlen += 8 * TCP_SACK_MAX + 4;
 
 	return optlen;
 }

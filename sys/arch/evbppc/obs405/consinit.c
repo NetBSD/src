@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.4.6 2005/01/24 08:34:12 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.1.4.7 2005/04/01 14:27:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.4.6 2005/01/24 08:34:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.4.7 2005/04/01 14:27:26 skrll Exp $");
 
 #include <machine/obs405.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
@@ -41,11 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.4.6 2005/01/24 08:34:12 skrll Exp $
  *   Initialize the system console.
  */
 void
-obs405_consinit(void)
+obs405_consinit(int com_freq)
 {
 
 #if (NCOM > 0)
-	com_opb_cnattach(OBS405_COM_FREQ,
+	com_opb_cnattach(com_freq,
 		OBS405_CONADDR, OBS405_CONSPEED, OBS405_CONMODE);
 #endif /* NCOM */
 }

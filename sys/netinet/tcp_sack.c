@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.1.2.3 2005/03/08 13:53:12 skrll Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.1.2.4 2005/04/01 14:31:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.1.2.3 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.1.2.4 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -175,45 +175,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.1.2.3 2005/03/08 13:53:12 skrll Exp $
 POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl", NULL);
 
 void
-tcp_update_sack_list(struct tcpcb *tp)
-{
-	int i = 0;
-	struct ipqent *tiqe = NULL;
-
-	if (!TCP_SACK_ENABLED(tp) || (tp->t_flags & TF_SIGNATURE)) {
-		/* Can't SACK this connection. */
-		return;
-	}
-
-	/*
-	 * If possible, tack on the D-SACK block. (RFC2883)
-	 */
-	if (tp->rcv_sack_flags & TCPSACK_HAVED) {
-		tp->rcv_sack_block[0].left = tp->rcv_dsack_block.left;
-		tp->rcv_sack_block[0].right = tp->rcv_dsack_block.right;
-		tp->rcv_sack_flags &= ~TCPSACK_HAVED;
-		i++;
-	}
-
-	/*
-	 * Build up a list of holes in the TCP space.  Note that
-	 * the first SACK block is always the most recent segment
-	 * received.
-	 */
-	TAILQ_FOREACH(tiqe, &tp->timeq, ipqe_timeq) {
-		tp->rcv_sack_block[i].left = tiqe->ipqe_seq;
-		tp->rcv_sack_block[i].right = tiqe->ipqe_seq + tiqe->ipqe_len;
-		i++;
-		if (i >= TCP_SACK_MAX) {
-			break;
-		}
-	}
-
-	/* If we can SACK, do so. */
-	tp->rcv_sack_num = i;
-}
-
-void
 tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
 {
 	if (TCP_SACK_ENABLED(tp)) {
@@ -236,13 +197,18 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	tcp_seq left, right, acked;
 
 	/*
-	 * If we aren't processing SACK responses, or the peer
-	 * sends us a sack option with invalid length, don't
+	 * If we aren't processing SACK responses, this is not an ACK
+	 * or the peer sends us a sack option with invalid length, don't
 	 * update the scoreboard.
 	 */
-	if (!TCP_SACK_ENABLED(tp) || (optlen % 8 != 2 || optlen < 10)) {
+	if (!TCP_SACK_ENABLED(tp) || ((th->th_flags & TH_ACK) == 0) ||
+			(optlen % 8 != 2 || optlen < 10)) {
 		return;
 	}
+
+	/* If the ACK is outside [snd_una, snd_max], ignore the SACK options. */
+	if (SEQ_LT(th->th_ack, tp->snd_una) || SEQ_GT(th->th_ack, tp->snd_max))
+		return;
 
 	/*
 	 * Extract SACK blocks.
@@ -552,4 +518,27 @@ tcp_sack_adjust(struct tcpcb *tp)
 	tp->snd_nxt = tp->rcv_lastsack;
 
 	return;
+}
+
+int
+tcp_sack_numblks(const struct tcpcb *tp)
+{
+	int numblks;
+
+	if (!TCP_SACK_ENABLED(tp)) {
+		return 0;
+	}
+
+	numblks = (((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) ? 1 : 0) +
+	    tp->t_segqlen;
+
+	if (numblks == 0) {
+		return 0;
+	}
+
+	if (numblks > TCP_SACK_MAX) {
+		numblks = TCP_SACK_MAX;
+	}
+
+	return numblks;
 }

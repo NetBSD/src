@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29.2.3 2004/09/21 13:22:57 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.29.2.4 2005/04/01 14:28:41 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.3 2004/09/21 13:22:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.4 2005/04/01 14:28:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ alloc_cpuinfo(cpu_node)
 			return cpi;
 
 	/* Allocate the aligned VA and determine the size. */
-	va = uvm_km_valloc_align(kernel_map, sz, sz);
+	va = uvm_km_alloc(kernel_map, sz, sz, UVM_KMF_VAONLY);
 	if (!va)
 		panic("alloc_cpuinfo: no virtual space");
 	va0 = va;

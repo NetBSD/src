@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.5.2.4 2005/03/04 16:38:25 skrll Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.5.2.5 2005/04/01 14:27:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5.2.4 2005/03/04 16:38:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5.2.5 2005/04/01 14:27:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	offset = bpa & PAGE_MASK;
 	startpa = trunc_page(bpa);
 		
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -196,7 +196,7 @@ obio_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	va = trunc_page(bsh);
 
 	pmap_kremove(va, endva - va);
-	uvm_km_free(kernel_map, va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 void    

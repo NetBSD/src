@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.11 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.12 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.11 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.12 2005/04/01 14:32:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -160,6 +160,7 @@ struct vfsops lfs_vfsops = {
 	vfs_stdextattrctl,
 	lfs_vnodeopv_descs,
 };
+VFS_ATTACH(lfs_vfsops);
 
 struct genfs_ops lfs_genfsops = {
 	lfs_gop_size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.28.2.5 2005/03/04 16:53:29 skrll Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.28.2.6 2005/04/01 14:31:50 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,6 +6,8 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Heiko W.Rupp <hwr@pilhuhn.de>
+ *
+ * IPv6-over-GRE contributed by Gert Doering <gert@greenie.muc.de>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28.2.5 2005/03/04 16:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28.2.6 2005/04/01 14:31:50 skrll Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -145,7 +147,7 @@ int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
 	struct greip *gip;
-	int s;
+	int s, isr;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_int16_t flags;
@@ -186,22 +188,31 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
+			isr = NETISR_IP;
 			break;
 #ifdef NS
 		case ETHERTYPE_NS:
 			ifq = &nsintrq;
-			schednetisr(NETISR_NS);
+			isr = NETISR_NS;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
 			ifq = &atintrq1;
-			schednetisr(NETISR_ATALK);
+			isr = NETISR_ATALK;
 			break;
 #endif
+#ifdef INET6
 		case ETHERTYPE_IPV6:
-			/* FALLTHROUGH */
+#ifdef GRE_DEBUG
+			printf( "ip_gre.c/gre_input2: IPv6 packet\n" );
+#endif
+			ifq = &ip6intrq;
+			isr = NETISR_IPV6;
+			break;
+#endif
 		default:	   /* others not yet supported */
+			printf( "ip_gre.c/gre_input2: unhandled ethertype 0x%04x\n", (int) ntohs(gip->gi_ptype) );
 			return (0);
 		}
 		break;
@@ -239,6 +250,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	} else {
 		IF_ENQUEUE(ifq, m);
 	}
+	/* we need schednetisr since the address family may change */
+	schednetisr(isr);
 	splx(s);
 
 	return (1);	/* packet is done, no further processing needed */

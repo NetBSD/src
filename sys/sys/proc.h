@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.8 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.9 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -126,6 +126,8 @@ struct emul {
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
 	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+
+	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 };
 
 /*
@@ -290,6 +292,7 @@ struct proc {
 #define	P_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
+#define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
 #define	P_INEXEC	0x00100000 /* Process is exec'ing and can't be traced */
 #define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
 #define	P_CHTRACED	0x00400000 /* Child has been traced & reparented */

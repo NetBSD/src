@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.169.2.6 2005/03/04 16:53:29 skrll Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.169.2.7 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169.2.6 2005/03/04 16:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169.2.7 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1226,6 +1226,7 @@ insert:
 		for (t = m; t; t = t->m_next)
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
+		m->m_pkthdr.csum_flags = 0;
 	}
 	return (m);
 

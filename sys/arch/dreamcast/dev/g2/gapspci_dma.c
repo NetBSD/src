@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.7.8.4 2005/03/04 16:38:13 skrll Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.7.8.5 2005/04/01 14:27:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.7.8.4 2005/03/04 16:38:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.7.8.5 2005/04/01 14:27:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -170,9 +170,10 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	map->_dm_size = size;
 	map->_dm_segcnt = 1;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		u_long res;
@@ -230,6 +231,7 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 		 */
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
+		KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 	}
 
 	/* XXX Don't support DMA to process space right now. */
@@ -273,6 +275,7 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		 */
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
+		KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 	}
 
 #ifdef DIAGNOSTIC
@@ -335,6 +338,7 @@ gaps_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		    map->dm_segs[0].ds_addr,
 		    map->dm_mapsize, EX_NOWAIT);
 
+		map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
 	}
@@ -581,7 +585,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return ENOMEM;
@@ -622,7 +626,7 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	size = round_page(size);
 	pmap_kremove((vaddr_t) kva, size);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, (vaddr_t) kva, size);
+	uvm_km_free(kernel_map, (vaddr_t) kva, size, UVM_KMF_VAONLY);
 }
 
 paddr_t

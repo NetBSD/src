@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.24.2.4 2005/01/24 08:35:02 skrll Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.24.2.5 2005/04/01 14:28:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.24.2.4 2005/01/24 08:35:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.24.2.5 2005/04/01 14:28:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ bus_mapin(int bustype, int pa, int sz)
 	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
-	va = uvm_km_valloc_wait(kernel_map, sz);
+	va = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (va == 0)
 		panic("bus_mapin");
 
@@ -190,5 +190,5 @@ bus_mapout(void *ptr, int sz)
 	sz += off;
 	sz = m68k_round_page(sz);
 
-	uvm_km_free_wakeup(kernel_map, va, sz);
+	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }

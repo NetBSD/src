@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.4 2005/01/17 19:29:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.5 2005/04/01 14:26:50 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.4 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.5 2005/04/01 14:26:50 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4123,8 +4123,8 @@ pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags)
 		return (rv);
 	}
 
-	new_page = uvm_km_kmemalloc(kernel_map, NULL, PAGE_SIZE,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT);
+	new_page = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT));
 
 	KASSERT(new_page > last_bootstrap_page);
 	last_bootstrap_page = new_page;
@@ -4181,7 +4181,7 @@ pmap_postinit(void)
 
 	for (loop = 0; loop < needed; loop++, l1++) {
 		/* Allocate a L1 page table */
-		va = uvm_km_valloc(kernel_map, L1_TABLE_SIZE);
+		va = uvm_km_alloc(kernel_map, L1_TABLE_SIZE, 0, UVM_KMF_VAONLY);
 		if (va == 0)
 			panic("Cannot allocate L1 KVM");
 

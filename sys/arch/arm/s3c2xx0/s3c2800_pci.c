@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.6.2.4 2004/09/21 13:13:32 skrll Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.6.2.5 2005/04/01 14:26:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.6.2.4 2004/09/21 13:13:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.6.2.5 2005/04/01 14:26:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ sspci_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	endpa = round_page(bpa + size);
 
 	/* Get some VM.  */
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return ENOMEM;
 

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.gzboot,v 1.8.2.3 2004/09/21 13:14:53 skrll Exp $
+#	$NetBSD: Makefile.gzboot,v 1.8.2.4 2005/04/01 14:27:26 skrll Exp $
 
 NOMAN=  # defined
 
+.include <bsd.obj.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
 
 EVBARM_STAND=	${S}/arch/evbarm/stand

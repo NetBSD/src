@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.17.2.4 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.17.2.5 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -93,6 +93,7 @@ struct uidinfo {
 	LIST_ENTRY(uidinfo) ui_hash;
 	uid_t	ui_uid;
 	long	ui_proccnt;	/* Number of processes */
+	long	ui_lockcnt;	/* Number of locks */
 	rlim_t	ui_sbsize;	/* socket buffer size */
 
 };
@@ -101,6 +102,7 @@ extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 extern u_long uihash;		/* size of hash table - 1 */
 int       chgproccnt(uid_t, int);
 int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
+struct uidinfo *uid_find(uid_t);
 
 extern char defcorename[];
 void	 addupc_intr(struct proc *, u_long);

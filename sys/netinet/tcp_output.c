@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.94.2.7 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.94.2.8 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.7 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.8 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -550,11 +550,13 @@ tcp_output(struct tcpcb *tp)
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
+	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
+	int txsegsize_nosack;
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
-	int use_tso;
+	int has_tso, use_tso;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
 	struct sackhole *p;
@@ -612,7 +614,7 @@ tcp_output(struct tcpcb *tp)
 	 * - If there is not an IPsec policy that prevents it
 	 * - If the interface can do it
 	 */
-	use_tso = tp->t_inpcb != NULL &&
+	has_tso = tp->t_inpcb != NULL &&
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
@@ -667,7 +669,21 @@ tcp_output(struct tcpcb *tp)
 		}
 	}
 
+	txsegsize_nosack = txsegsize;
 again:
+	use_tso = has_tso;
+	TCP_REASS_LOCK(tp);
+	sack_numblks = tcp_sack_numblks(tp);
+	if (sack_numblks) {
+		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+			/* don't duplicate D-SACK. */
+			use_tso = 0;
+		}
+		txsegsize = txsegsize_nosack - TCP_SACK_OPTLEN(sack_numblks);
+	} else {
+		txsegsize = txsegsize_nosack;
+	}
+
 	/*
 	 * Determine length of data that should be transmitted, and
 	 * flags that should be used.  If there is some data or critical
@@ -851,6 +867,9 @@ again:
 			 * stack (rather than big-small-big-small-...).
 			 */
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
+			if (len <= txsegsize) {
+				use_tso = 0;
+			}
 		} else
 			len = txsegsize;
 		flags &= ~TH_FIN;
@@ -967,6 +986,7 @@ again:
 	 * No reason to send a segment, just return.
 	 */
 just_return:
+	TCP_REASS_UNLOCK(tp);
 	return (0);
 
 send:
@@ -1061,24 +1081,33 @@ send:
 	/*
 	 * Tack on the SACK block if it is necessary.
 	 */
-	if (TCP_SACK_ENABLED(tp) && (tp->t_flags & TF_ACKNOW)
-			&& (tp->rcv_sack_num > 0)) {
-		int sack_len, i;
+	if (sack_numblks) {
+		int sack_len;
 		u_char *bp = (u_char *)(opt + optlen);
 		u_int32_t *lp = (u_int32_t *)(bp + 4);
+		struct ipqent *tiqe;
 
-		sack_len = tp->rcv_sack_num * 8 + 2;
+		sack_len = sack_numblks * 8 + 2;
 		bp[0] = TCPOPT_NOP;
 		bp[1] = TCPOPT_NOP;
 		bp[2] = TCPOPT_SACK;
 		bp[3] = sack_len;
-		for (i = 0; i < tp->rcv_sack_num; i++) {
-			*lp++ = htonl(tp->rcv_sack_block[i].left);
-			*lp++ = htonl(tp->rcv_sack_block[i].right);
+		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+			sack_numblks--;
+			*lp++ = htonl(tp->rcv_dsack_block.left);
+			*lp++ = htonl(tp->rcv_dsack_block.right);
+			tp->rcv_sack_flags &= ~TCPSACK_HAVED;
 		}
-		tp->rcv_sack_num = 0;
+		for (tiqe = TAILQ_FIRST(&tp->timeq);
+		    sack_numblks > 0; tiqe = TAILQ_NEXT(tiqe, ipqe_timeq)) {
+			KASSERT(tiqe != NULL);
+			sack_numblks--;
+			*lp++ = htonl(tiqe->ipqe_seq);
+			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len);
+		}
 		optlen += sack_len + 2;
 	}
+	TCP_REASS_UNLOCK(tp);
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
@@ -1282,9 +1311,10 @@ send:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
+		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 		if (use_tso) {
 			m->m_pkthdr.segsz = txsegsize;
-			m->m_pkthdr.csum_flags |= M_CSUM_TSOv4;
+			m->m_pkthdr.csum_flags = M_CSUM_TSOv4;
 		} else {
 			if (__predict_true(ro->ro_rt == NULL ||
 					   !(ro->ro_rt->rt_ifp->if_flags &
@@ -1293,7 +1323,6 @@ send:
 				m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
 			else
 				m->m_pkthdr.csum_flags = 0;
-			m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 			if (len + optlen) {
 				/* Fixup the pseudo-header checksum. */
 				/* XXXJRT Not IP Jumbogram safe. */

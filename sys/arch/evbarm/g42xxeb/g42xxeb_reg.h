@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002  Genetec corp.  All rights reserved.
+ * Copyright (c) 2002, 2005  Genetec corp.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corp.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,8 @@
 #define G42XXEB_INTCTL_VBASE	0xfd100000
 #define G42XXEB_CLKMAN_VBASE	0xfd200000
 #define G42XXEB_GPIO_VBASE	0xfd300000
-
-#define G42XXEB_VBASE_FREE	0xfd400000
-/* FFUART and/or BTUART are mapped to this area when
-   used for console or kgdb port */
+#define G42XXEB_FFUART_VBASE	0xfd400000
+#define G42XXEB_BTUART_VBASE	0xfd500000
 
 /*
  * Onboard register address

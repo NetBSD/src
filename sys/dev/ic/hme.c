@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.37.2.7 2005/03/08 13:53:10 skrll Exp $	*/
+/*	$NetBSD: hme.c,v 1.37.2.8 2005/04/01 14:29:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.7 2005/03/08 13:53:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.8 2005/04/01 14:29:52 skrll Exp $");
 
 /* #define HMEDEBUG */
 
@@ -755,7 +755,7 @@ hme_get(sc, ri, flags)
 
 #ifdef INET
 	/* hardware checksum */
-	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_TCPv4)) {
+	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		struct ether_header *eh;
 		struct ip *ip;
 		struct udphdr *uh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.2.2.5 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.2.2.6 2005/04/01 14:29:10 skrll Exp $	*/
 
 /*
  *
@@ -37,6 +37,7 @@
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+#include <machine/evtchn.h>
 #include <machine/xenpmap.h>
 #include <machine/pte.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.16.2.4 2005/02/15 21:32:32 skrll Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.16.2.5 2005/04/01 14:26:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.4 2005/02/15 21:32:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.5 2005/04/01 14:26:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -581,7 +581,8 @@ vidcvideo_cursor_init(int width, int height)
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
-		cursor_data = (char *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		cursor_data = (char *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.6 2005/03/04 16:54:45 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.7 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.6 2005/03/04 16:54:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.7 2005/04/01 14:32:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,6 +225,16 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
+		if (bp == NULL) {
+
+			/*
+			 * getblk() above returns NULL only iff we are
+			 * pagedaemon.  See the implementation of getblk
+			 * for detail.
+			 */
+
+			 return (ENOMEM);
+		}
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55.2.4 2004/09/21 13:19:59 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.2.5 2005/04/01 14:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.2.4 2004/09/21 13:19:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.2.5 2005/04/01 14:28:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr= uvm_km_valloc_wait(phys_map, len);
+	taddr= uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -399,7 +399,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

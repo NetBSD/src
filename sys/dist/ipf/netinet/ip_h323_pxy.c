@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.1.2.3 2005/04/01 14:30:55 skrll Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -31,10 +31,10 @@
 #endif
 
 #ifdef _KERNEL_OPT
-#include "opt_ipfilter_log.h"
+#include "opt_ipfilter.h"
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.1.2.3 2005/04/01 14:30:55 skrll Exp $");
 
 #define IPF_H323_PROXY
 

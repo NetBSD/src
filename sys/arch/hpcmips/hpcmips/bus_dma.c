@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19.2.6 2005/02/19 13:18:14 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19.2.7 2005/04/01 14:27:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.6 2005/02/19 13:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.7 2005/04/01 14:27:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,9 +113,10 @@ _hpcmips_bd_map_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct bus_dmamap_hpcmips *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->bdm.dm_maxsegsz = maxsegsz;
 	map->bdm.dm_mapsize = 0;	/* no valid mappings */
 	map->bdm.dm_nsegs = 0;
 	map->bdm.dm_segs = (bus_dma_segment_t *)((char *)mapstore +
@@ -194,7 +195,7 @@ _hpcmips_bd_map_load_buffer(bus_dmamap_t mapx, void *buf, bus_size_t buflen,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->bdm.dm_segs[seg].ds_len + sgsize) <=
-			    map->_dm_maxsegsz &&
+			    map->bdm.dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 				(map->bdm.dm_segs[seg].ds_addr & bmask) ==
 				(curaddr & bmask)))
@@ -242,6 +243,7 @@ _hpcmips_bd_map_load(bus_dma_tag_t t, bus_dmamap_t mapx, void *buf,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -283,6 +285,7 @@ _hpcmips_bd_map_load_mbuf(bus_dma_tag_t t, bus_dmamap_t mapx, struct mbuf *m0,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -329,6 +332,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -389,6 +393,7 @@ _hpcmips_bd_map_unload(bus_dma_tag_t t, bus_dmamap_t mapx)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->bdm.dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
 	map->_dm_flags &= ~HPCMIPS_DMAMAP_COHERENT;
@@ -644,7 +649,7 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -691,7 +696,9 @@ _hpcmips_bd_mem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 		return;
 
 	size = round_page(size);
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.45.2.3 2004/09/21 13:22:55 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.45.2.4 2005/04/01 14:28:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1669,7 +1669,7 @@ struct sparc_bus_dmamap {
 	bus_size_t	_dm_dvmasize;	/* DVMA segment for this map. */
 
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_segcnt;	/* number of segs this map can map */
 	int		_dm_flags;	/* misc. flags */
@@ -1685,6 +1685,7 @@ struct sparc_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.8 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.9 2005/04/01 14:30:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -18,7 +18,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:1
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
-# include "opt_ipfilter_log.h"
+# include "opt_ipfilter.h"
 # include "opt_pfil_hooks.h"
 # include "opt_ipsec.h"
 #endif

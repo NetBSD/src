@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.7.2.5 2005/01/24 08:34:05 skrll Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.7.2.6 2005/04/01 14:26:50 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.7.2.5 2005/01/24 08:34:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.7.2.6 2005/04/01 14:26:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ jazz_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 		int npte;
 
 		tlbmap = (jazz_tlbmap_t)map->_dm_cookie;
-		npte = jazz_dma_page_round(map->_dm_maxsegsz) /
+		npte = jazz_dma_page_round(map->dm_maxsegsz) /
 		    JAZZ_DMA_PAGE_SIZE + 1;
 		jazz_dmatlb_free(tlbmap->vaddr, npte);
 		free(tlbmap, M_DMAMAP);

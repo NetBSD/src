@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.8 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.9 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.8 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.9 2005/04/01 14:30:56 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -100,15 +100,16 @@ static void *
 sigacts_poolpage_alloc(struct pool *pp, int flags)
 {
 
-	return (void *)uvm_km_kmemalloc1(kernel_map,
-	    uvm.kernel_object, (PAGE_SIZE)*2, (PAGE_SIZE)*2, UVM_UNKNOWN_OFFSET,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
+	return (void *)uvm_km_alloc(kernel_map,
+	    (PAGE_SIZE)*2, (PAGE_SIZE)*2,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
 }
 
 static void
 sigacts_poolpage_free(struct pool *pp, void *v)
 {
-        uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2);
+        uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2, UVM_KMF_WIRED);
 }
 
 static struct pool_allocator sigactspool_allocator = {
@@ -361,6 +362,18 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 					p->p_flag |= P_NOCLDWAIT;
 			} else
 				p->p_flag &= ~P_NOCLDWAIT;
+
+			if (nsa->sa_handler == SIG_IGN) {
+				/*
+				 * Paranoia: same as above.
+				 */
+				if (p->p_pid == 1)
+					p->p_flag &= ~P_CLDSIGIGN;
+				else
+					p->p_flag |= P_CLDSIGIGN;
+			} else
+				p->p_flag &= ~P_CLDSIGIGN;
+				
 		}
 		if ((nsa->sa_flags & SA_NODEFER) == 0)
 			sigaddset(&SIGACTION_PS(ps, signum).sa_mask, signum);

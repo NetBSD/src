@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.33.2.8 2005/03/04 16:38:39 skrll Exp $
+#	$NetBSD: LAMB,v 1.33.2.9 2005/04/01 14:27:39 skrll Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -296,6 +296,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #wsmouse*	at pms? mux 0
 
 # no buzzer installed
+#attimer0	at isa?
 #pcppi0		at isa?
 #sysbeep0	at pcppi?
 
@@ -322,6 +323,8 @@ wdc*	at isapnp?
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
+atabus* at wdc?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -333,7 +336,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 
 # Network Interfaces

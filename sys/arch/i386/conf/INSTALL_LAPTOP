@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.13 2005/03/04 16:38:37 skrll Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.14 2005/04/01 14:27:39 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -284,6 +284,7 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

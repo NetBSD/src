@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38.2.6 2005/03/04 16:54:23 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.38.2.7 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -228,6 +228,12 @@ void	realtimerexpire(void *);
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE
+#if (_POSIX_C_SOURCE - 0) >= 200112L || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#include <sys/select.h>
+#endif
+
 #include <time.h>
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)

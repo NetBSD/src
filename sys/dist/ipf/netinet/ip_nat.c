@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.2.6 2005/04/01 14:30:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -18,7 +18,7 @@
 #include <sys/file.h>
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
-# include "opt_ipfilter_log.h"
+# include "opt_ipfilter.h"
 #endif
 #if !defined(_KERNEL)
 # include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.4.4 2004/09/21 13:24:45 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.4.5 2005/04/01 14:29:11 skrll Exp $	*/
 /*	NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.4 2004/09/21 13:24:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.5 2005/04/01 14:29:11 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -104,7 +104,7 @@ x86_bus_space_init()
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = 1;
 		if (HYPERVISOR_dom0_op(&op) != 0)
 			panic("Unable to obtain IOPL, "
@@ -285,6 +285,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	pt_entry_t *maptp;
 	int32_t cpumask = 0;
 
 	pa = x86_trunc_page(bpa);
@@ -298,7 +299,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
 		va = (vaddr_t)ISA_HOLE_VADDR(pa);
 	} else {
-		va = uvm_km_valloc(kernel_map, endpa - pa);
+		va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
 		if (va == 0)
 			return (ENOMEM);
 	}
@@ -306,7 +307,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
@@ -324,10 +325,11 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
+			maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
 			if (cacheable)
-				PTE_CLEARBITS(pte, PG_N);
+				PTE_CLEARBITS(pte, maptp, PG_N);
 			else
-				PTE_SETBITS(pte, PG_N);
+				PTE_SETBITS(pte, maptp, PG_N);
 			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
 			    &cpumask);
 		}
@@ -378,21 +380,17 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			}
 #endif
 
-#if __NetBSD_Version__ > 104050000
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
 			bpa += (bsh & PGOFSET);
-#else
-			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
-#endif
 
 			pmap_kremove(va, endva - va);
 			/*
 			 * Free the kernel virtual mapping.
 			 */
-			uvm_km_free(kernel_map, va, endva - va);
+			uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 		}
 	} else {
 		panic("_x86_memio_unmap: bad bus space tag");
@@ -436,14 +434,14 @@ x86_memio_unmap(t, bsh, size)
 			panic("x86_memio_unmap: overflow");
 #endif
 
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract_ma(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);
 		/*
 		 * Free the kernel virtual mapping.
 		 */
-		uvm_km_free(kernel_map, va, endva - va);
+		uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 	} else
 		panic("x86_memio_unmap: bad bus space tag");
 
