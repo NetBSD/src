@@ -83,21 +83,25 @@ To ensure that a PR is handled promptly, it should contain your (unique)
 \fIsubmitter-id\fR and one of the available \fIcategories\fR to identify the
 problem area.  (Use
 .B `send-pr -L'
-to see a list of categories.)
-.LP
-The
-.B send-pr
-template at your site should already be customized with your
-submitter-id (running `\|\fBinstall-sid\fP \fIsubmitter-id\fP\|' to
-accomplish this is part of the installation procedures for
-.BR send-pr ).
-If this hasn't been done, see your system administrator for your
-submitter-id, or request one from your support site by invoking
-.B `send-pr \-\-request\-id'.
-If your site does not distinguish between different user sites, or if
-you are not affiliated with the support site, use
+to see a list of categories).
+NetBSD does not use unique \fIsubmitter-id\fR's - all PR's use the
+default value of
 .B `net'
 for this field.
+.\" .LP
+.\" The
+.\" .B send-pr
+.\" template at your site should already be customized with your
+.\" submitter-id (running `\|\fBinstall-sid\fP \fIsubmitter-id\fP\|' to
+.\" accomplish this is part of the installation procedures for
+.\" .BR send-pr ).
+.\" If this hasn't been done, see your system administrator for your
+.\" submitter-id, or request one from your support site by invoking
+.\" .B `send-pr \-\-request\-id'.
+.\" If your site does not distinguish between different user sites, or if
+.\" you are not affiliated with the support site, use
+.\" .B `net'
+.\" for this field.
 .LP
 The more precise your problem description and the more complete your
 information, the faster your support team can solve your problems.
@@ -193,6 +197,65 @@ Please try to be as accurate as possible in the subject and/or synopsis line.
 The subject and the synopsis line are not confidential.  This is
 because open-bugs lists are compiled from them.  Avoid confidential
 information there.
+.LP
+The
+.B severity
+field is to indicate the severity of the problem.
+The accepted values are:
+.IP \fBcritical\fR
+The product, component or concept is completely non-operational or some
+essential functionality is missing (e.g. kernel panic or program core dumps).
+No workaround is known.
+.IP \fBserious\fR
+The product, component or concept is not working properly or significant
+functionality is missing.
+Problems that would otherwise be considered
+.B critical
+are rated
+.B serious
+when a workaround is known.
+.IP \fBnon-critical\fR
+The product, component or concept is working in general, but lacks
+features, has irritating behavior, does something wrong, or doesn't
+match its documentation.
+.LP
+The default value is 
+.B serious.
+.LP
+The
+.B priority
+field specifies
+how soon the problem report submitter requires a solution.
+The accepted values are:
+.IP \fBhigh\fR
+A solution is needed as soon as possible.
+.IP \fBmedium\fR
+The problem should be solved in the next release.
+.IP \fBlow\fR
+The problem should be solved in a future release.
+.LP
+The default value is 
+.B medium.
+.LP
+The
+.B class
+of a problem report can be one of the following:
+.IP \fBsw-bug\fR
+A general software problem (
+.I `sw'
+stands for
+.I "software"
+).
+.IP \fBdoc-bug\fR
+A problem with the manual pages or other documentation.
+.IP \fBchange-request\fR
+A request for a change from existing behavior that is not a bug
+("It's nice, but it would be better if ...").
+.IP \fBsupport\fR
+A support problem or question.
+.LP
+The default value is
+.B sw-bug.
 .LP
 See the GNU 
 .B Info 
