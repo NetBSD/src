@@ -1,0 +1,811 @@
+.\"	$NetBSD: options.4,v 1.1 1996/10/20 23:58:12 perry Exp $
+.\"
+.\" Copyright (c) 1996
+.\" 	Perry E. Metzger.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed for the NetBSD Project
+.\"	by Perry E. Metzger.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd October 20, 1996
+.Os NetBSD 1.3
+.Dt OPTIONS 4
+.Sh NAME
+.Nm options
+.Nd Miscellaneous kernel configuration options
+.Sh SYNOPSIS
+.Cd options ...
+.Sh DESCRIPTION
+This manual page describes a number of miscellaneous kernel
+configuration options that may be specified in a kernel config
+file. See
+.Xr config 8
+for information on how to configure and build kernels.
+.Em Note:
+Options are passed to the compile process as -D flags to the C
+compiler, as is the name of the kernel. This means that kernel names
+(which are set by the file name passed to
+.Xr config 8 )
+and option names must not conflict! Naming your kernel
+.Em PORTAL
+or
+.Em GATEWAY
+or other such things is the equivalent of setting an option, and can
+have unintended consequences! (Unfortunately, not all possible kernel
+options are documented here. You may find out about one the hard way.)
+.Ss Compatibility Options
+.Bl -ohang
+.It Cd options COMPAT_09
+Enable binary compatibility with
+.Nx 0.9 .
+This enables support for
+16-bit user, group, and process ids (following revisions support
+32-bit identifiers),
+It also allows the use of the deprecated getdomainname, setdomainname,
+and uname syscalls.
+This option also allows using numeric fileystem identifiers rather
+than strings.  Post 0.9 versions use string identifiers.
+.It Cd options COMPAT_10
+Enable binary compatibility with
+.Nx 1.0 .
+This option allows the use of the filesystem name of 
+.Dq ufs
+as an alias for
+.Dq ffs .
+The name
+.Dq ffs
+should be used post 1.0 in 
+.Pa /etc/fstab
+and other files.  It also adds old syscalls for the
+.At V
+shared memory interface.  This was changed post 1.0 to work on 64-bit
+architectures.  This option also enables 
+.Dq sgtty
+compatibility, without which programs using the old interface produce
+an
+.Dq inapropriate ioctl
+error.
+.It Cd options COMPAT_11
+Enable binary compatibility with
+.Nx 1.1 .
+This allows binaries running on the i386 port to gain direct access to
+the io ports by opening
+.Pa /dev/io
+read/write.  This functionality was
+replaced by 
+.Xr i386_iopl 2
+post 1.1.
+On the
+.Tn Atari
+port, the location of the disk label was moved after 1.1. When the
+.Em COMPAT_11
+option is set, the kernel will read (pre) 1.1 style disk labels as a
+last resort. When a disklabel is re-written, the old style label will
+be replaced with a post 1.1 style label.
+.It Cd options COMPAT_12
+Enable binary compatibility with
+.Nx 1.2 .
+This allows the use of old syscalls for reboot.  The syscall number
+was changed post 1.2 to add functionality to the reboot syscall.
+.It Cd options COMPAT_43
+Enables compatibility with
+.Bx 4.3 .
+This adds an old syscall for lseek.  It also adds the ioctls for
+TIOCGETP and TIOCSETP.  The return values for getpid, getgid, and
+getuid syscalls are modified as well, to return the parent's pid and
+uid as well as the current process's.  It also enables the deprecated
+NTTYDISC terminal line disipline.
+It also provides backwards compatibility with 
+.Dq old
+SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
+binary compatibility with code written before the introduction of the
+sa_len field in sockaddrs.
+It also enables
+support for some older pre BSD 4.4 socket calls.
+.It Cd options COMPAT_SVR4
+On those architectures that support it, this enables binary
+compatibility with
+.At V.4
+applications built for the same architecture.
+.El
+.Ss Debugging Options
+.Bl -ohang
+.It Cd options DDB
+Compiles in a kernel debugger for diagnosing kernel problems. See
+.Xr ddb 4
+for details. 
+.Em NOTE:
+not available on all architectures.
+.It Cd options KGDB
+Compiles in a remote kernel debugger stub for diagnosing kernel problems
+using the
+.Dq remote target
+feature of gdb. See
+.Xr gdb 1
+for details. 
+.Em NOTE:
+not available on all architectures.
+.It Cd makeoptions DEBUG="-g"
+The -g flag causes
+.Pa netbsd.gdb
+to be built in addition to
+.Pa netbsd .
+.Pa netbsd.gdb
+is useful for debugging kernel crash dumps with gdb.
+The command
+.Dl gdb -k
+invokes gdb in kernel debugger mode.
+See
+.Xr gdb 1
+for details. This also turns on
+.Em options DEBUG
+(which see).
+.It Cd options DEBUG
+Turns on miscellaneous kernel debugging. Since options are turned into
+preprocessor defines (see above),
+.Em options DEBUG
+is equivalent to doing a 
+.Em #define DEBUG
+throughout the kernel. Much of the kernel has
+.Em #ifdef DEBUG
+conditionalized debugging code. Note that many parts of the kernel
+(typically device drivers) include their own
+.Em #ifdef XXX_DEBUG
+conditionals instead.
+.It Cd options DIAGNOSTIC
+Adds code to the kernel that does internal consistency checks.  This
+code will cause the kernel to panic if corruption of internal data
+structures is detected.
+.It Cd options KTRACE
+Add hooks for the system call tracing facility, which allows users to
+watch the system call invokation behavior of processes. See
+.Xr ktrace 1
+for details.
+.El
+.Ss File Systems
+.Bl -ohang
+.It Cd options FFS
+Includes code implementing the Berkeley Fast File System
+.Em ( FFS ) .
+Most machines need this if they are not running diskless.
+.It Cd options LFS
+Include the log structured file system
+.Em ( LFS ) .
+See
+.Xr mount_lfs 8
+and
+.Xr newlfs 8
+for details.
+.It Cd options MFS
+Include the memory file system
+.Em ( MFS ) .
+This file system stores files in swappable memory, and produces
+notable performance improvements when it is used as the file store
+for
+.Pa /tmp
+and similar file systems. See
+.Xr mount_mfs 8
+for details.
+.It Cd options NFSCLIENT
+.It Cd options NFSSERVER
+Include code implementing the client and server sides of the
+.Em NFS
+(Network File System) remote file sharing protocol,
+respectively. Although the bulk of the code implementing
+.Em NFS
+is kernel based, several user level daemons are needed for it to
+work. See 
+.Xr mount_nfs 8 ,
+.Xr mountd 8 ,
+.Xr nfsd 8 , 
+and
+.Xr nfsiod 8
+for details.
+.It Cd options CD9660
+Includes code for the ISO 9660 + Rock Ridge file system, which is the
+standard file system on many CD-ROMs. Useful mostly if you have a CD
+drive. See
+.Xr mount_cd9660 8
+for details.
+.It Cd options MSDOSFS
+Includes the
+.Tn MS-DOS
+FAT file system, which is reportedly still used
+by unfortunate people who have not heard about
+.Nx .
+Also implements the 
+.Tn Windows 95
+extensions to the same, which permit the use of longer, mixed case
+file names. see
+.Xr mount_msdos 8
+and
+.Xr fsck_msdos 8
+for details.
+.It Cd options FDESC
+Includes code for a file system, conventionally mounted on
+.Pa /dev/fd ,
+which permits access to the per-process file descriptor space via
+special files in the file system.
+See
+.Xr mount_fdesc 8
+for details.
+Note that this facility is redundant, and thus unneeded on most
+.Nx
+systems, since the
+.Xr fd 4
+pseudodevice driver already provides identical functionality. On most
+.Nx
+systems, instances of
+.Xr fd 4
+are mknoded under
+.Pa /dev/fd/
+and on
+.Pa /dev/stdin ,
+.Pa /dev/stdout ,
+and
+.Pa /dev/stderr .
+.It Cd options KERNFS
+Includes code which permits the mounting of a special file system
+(normally mounted on
+.Pa /kern )
+in which files representing various kernel variables and parameters
+may be found.
+See
+.Xr mount_kernfs 8
+for details.
+.It Cd options NULLFS
+Includes code for a loopback file system. This permits portions of the file
+hierarchy to be re-mounted in other places. The code really exists to
+provide an example of a stackable file system layer. See
+.Xr mount_null 8
+for details.
+.It Cd options PORTAL
+Includes the (experimental) portal filesystem. This permits
+interesting tricks like opening TCP sockets by opening files in the
+file system. The portal file system is conventionally mounted on
+.Pa /p
+and is partially implemented by a special daemon. See
+.Xr mount_portal 8
+for details.
+.It Cd options PROCFS
+Includes code for a special file system (conventionally mounted on
+.Pa /proc )
+in which the process space becomes visible in the file system. Among
+other things, the memory spaces of processes running on the system are
+visible as files, and signals may be sent to processes by writing to
+.Pa ctl
+files in the procfs namespace. See
+.Xr mount_procfs 8
+for details.
+.It Cd options UMAPFS
+Includes a loopback file system in which user and group ids may be
+remapped -- this can be useful when mounting alien file systems with
+different uids and gids than the local system.
+See
+.Xr mount_umap 8
+for details.
+.It Cd options UNION
+Includes code for the union file system, which permits directories to
+be mounted on top of each other in such a way that both file systems
+remain visible -- this permits tricks like allowing writing (and the
+deleting of files) on a read-only file system like a CD-ROM by
+mounting a local writable file system on top of the read-only file
+system. See
+.Xr mount_union 8
+for details.
+.El
+.Ss File System Options
+.Bl -ohang
+.It Cd options QUOTA
+Enables kernel support for file system quotas. See
+.Xr quotaon 8 ,
+.Xr edquota 8 ,
+and
+.Xr quota 1
+for details. Note that quotas only work on
+.Dq ffs
+file systems, although
+.Xr rpc.rquotad 8
+permits them to be accessed over 
+.Em NFS .
+.It Cd options FIFO
+Augments the system to permit the use of
+.At V
+style FIFOs (i.e.
+.Dq named pipes
+). This option is recommended.
+.El
+.Ss Miscellaneous Options
+.Bl -ohang
+.It Cd options GENERIC
+Indicates, on some ports, that code permitting booting and mounting
+root on any file system should be included.  This option also allows
+the 
+.Dq swap generic
+configuration file option to find the location of the swap file at
+boot time rather than having a compiled in default.  Largely obsolete
+though still in use on some architectures.  Most ports now include the
+necessary code regardless of this option.  On a port that still cares
+about
+.Em options GENERIC ,
+it should be omitted ONLY in very special cases, such as
+a
+.Em RAMDISK
+installation kernel.
+.It Cd options LKM
+Enable loadable kernel modules. See
+.Xr lkm 4
+for details.
+.Em NOTE:
+not available on all architectures.
+.It Cd options INSECURE
+Hardwires the kernel security level at -1. This means that the system
+always runs in secure level 0 mode, even when running multiuser. See
+the manual page for
+.Xr init 8
+for details on the implications of this. The kernel secure level may
+manipulated by the superuser by altering the
+.Em kern.securelevel
+sysctl variable. (It should be noted that the secure level may only be
+lowered by a call from process id 1, i.e.
+.Em init . )
+See also
+.Xr sysctl 8
+and
+.Xr sysctl 3 .
+.It Cd options UCONSOLE
+Normally, only the superuser can execute the TIOCCONS ioctl, which
+redirects console output to a non-console tty. (See
+.Xr tty 4
+for details).
+This option permits any user to execute the ioctl. This is useful on
+machines such as personal workstations which run X servers, where one
+would prefer to permit console output to be viewed in a window without
+requiring a suid root program to do it.
+.It Cd options MACHINE_NONCONTIG
+[Does something or other with the VM subsystem. Not clear if its
+optional. Text is solicited.]
+.It Cd options NTP
+Turns on in-kernel precision timekeeping support used by software
+implementing
+.Em NTP
+(Network Time Protocol, RFC1305).
+The
+.Em NTP
+option adds an in-kernel phase-locked loop (PLL) for normal
+.Em NTP
+operation, and a frequency-locked loop (FLL) for intermittently-connected
+operation.
+.Xr xntpd 8
+will employ a user-level PLL when kernel support is unavailable,
+but the in-kernel version has lower latency and more precision, and
+so typically keeps much better time.
+The interface to the kernel
+.Em NTP
+support is provided by the
+.Xr ntp_adjtime 2
+and
+.Xr ntp_gettime 2
+system calls, which are intended for use by
+.Xr xntpd 8
+and are enabled by the option.
+On systems with sub-microsecond resolution timers, or where (HZ / 100000)
+is not an integer, the
+.Em NTP
+option also enables extended-precision arithmetic to keep track of
+fractional clock ticks at NTP time-format precision.
+.It Cd options PPS
+This option enables a kernel serial line discipline for receiving time
+phase signals from an external reference clock such as a radio clock.
+(The
+.Em NTP
+option (which see) must be on if the
+.Em PPS
+option is used.)
+Some reference clocks generate a pulse per second (PPS) signal in
+phase with their time source. The
+.Em PPS
+line discipline receives this signal on either the data leads
+or the DCD control lead of a serial port.
+.Em NTP
+uses the PPS signal to discipline the local clock oscillator to a high
+degree of precision (typically less than 50 microseconds in time and
+0.1 ppm in accuracy).
+.Em PPS
+can also generate a serial output pulse when the system receives a PPS
+interrupt.  This can be used to measure the system interrupt latency
+and thus calibrate
+.Em NTP
+to account for it.
+Using
+.Em PPS
+usually requires a
+gadget box
+to convert from TTL to RS-232 signal levels.
+The gadget box and PPS are described in more detail in the HTML documentation
+shipped with the xntpd distribution.
+.It Cd option SETUIDSCRIPTS
+Allows scripts with the setuid bit set to execute as the effective
+user rather than the real user, just like binary executables.
+NOTE: Using this option will also enable 
+.Em option FDSCRIPTS
+.It Cd option FDSCRIPTS
+Allows execution of scripts with the execute bit set, but not the
+read bit, by opening the file and passing the file descriptor to
+the shell, rather than the filename.  NOTE: Execute only (non-readable)
+scripts will have 
+.Va argv[0]
+set to
+.Pa /dev/fd/* . [Quoth Curt Sampson "Is this the secure or
+non-secure version of this?]
+.It Cd options TIMEZONE=integer
+The kernel (and typically the hardware battery backed-up clock on
+those machines that have one) keeps time in
+.Em UTC
+(Universal Coordinated Time, once known as
+.Em GMT ,
+or Greenwich Mean Time)
+and not in the time of the local time zone.
+The
+.Em TIMEZONE
+option is used on some ports (such as the i386) to tell the kernel
+that the hardware clock is offset from
+.Em UTC
+by the specified number of minutes. This is typically used when a
+machine boots several operating systems and one of them wants the
+hardware clock to run in the local time zone and not in
+.Em UTC ,
+e.g.
+.Em TIMEZONE=300
+means
+the hardware clock is running US Eastern Time (300 minutes behind 
+.Em UTC ) ,
+and not 
+.Em UTC .
+.Bd -filled -offset indent
+.Em HISTORICAL NOTE:
+The
+.Em TIMEZONE
+option at one time was used to set the kernel's idea of what time zone
+the system was operating in -- this information was returned by
+.Xr gettimeofday 2 .
+Time zone information is now managed by user space software based
+on the contents of the
+.Pa /etc/localtime
+file or the
+.Ev TZ
+environment variable.
+(See
+.Xr zic 8 ,
+.Xr tzfile 5 ,
+and
+.Xr tzset 3
+for details).
+This usage of the
+.Em TIMEZONE
+option is now obsolete.
+.Ed
+.It Cd options DST=[0|1]
+On some ports (such as the i386) that permit offsetting the system's
+hardware real time clock with the
+.Em TIMEZONE
+option
+(see
+.Em TIMEZONE
+above) the
+.Em DST
+option being set to one indicates that the hardware clock real time
+clock is set for
+.Dq daylight savings time ,
+and that because of this 60
+minutes should be subtracted from the 
+.Em TIMEZONE
+value (60 minutes being the standard DST correction.) The effect of
+this on such ports is thus identical to simply subtracting 60 from the
+value of
+.Em TIMEZONE ,
+and the use of the option is thus purely aesthetic in nature.
+.Bd -filled -offset indent
+.Em HISTORICAL NOTE:
+Long ago,
+.Dq daylight savings time
+computations were made in the kernel and not in user space.
+The
+.Em DST
+option was used at that time to set the kernel's idea of whether DST
+information should be returned by
+.Xr gettimeofday 2 .
+As with
+.Em TIMEZONE
+(which see), the moving of timezone handling from the kernel to user
+space libraries has obsoleted the old usage of this option.
+.Ed
+.El
+.Ss Networking Options
+.Bl -ohang
+.It Cd options GATEWAY
+Enables 
+.Em IPFORWARDING
+(which see) 
+and (on most ports) increases the size of 
+.Em NMBCLUSTERS
+(which see). In general,
+.Em GATEWAY
+is used to indicate that a system should act as a router, and
+.Em IPFORWARDING
+is not invoked directly.
+(Note that
+.Em GATEWAY
+has no impact on protocols other than IP, such as CLNP or XNS.)
+.It Cd options IPFORWARDING
+Enables IP routing behavior. With this option enabled, the machine
+will forward IP datagrams between its interfaces that are destined for
+other machines. Note that even without this option, the kernel will
+still forward some packets (such as source routed packets) -- removing
+.Em GATEWAY
+and
+.Em IPFORWARDING
+is insufficient to stop all routing through a bastion host on a
+firewall -- source routing is controlled independently.
+To turn off source routing, use 
+.Em options IPFORWSRCRT=0
+(which see).
+Note that IP forwarding may be turned on and off independently of the
+setting of the
+.Em IPFORWARDING
+option through the use of the
+.Em net.inet.ip.forwarding
+sysctl variable. If
+.Em net.inet.ip.forwarding
+is 1, IP forwarding is on. See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details.
+.It Cd options IPFORWSRCRT=value
+If
+.Em value
+is set to zero, source routing of IP datagrams is turned off. If
+.Em value
+is set to one (the default) or the option is absent, source routed IP
+datagrams are forwarded by the machine.  Note that source routing of
+IP packets may be turned on and off independently of the setting of
+the
+.Em IPFORWSRCRT
+option through the use of the
+.Em net.inet.ip.forwsrcrt
+sysctl variable. If
+.Em net.inet.ip.forwsrcrt
+is 1, forwarding of source routed IP datagrams is on. See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details.
+.It Cd options INET
+Includes support for the TCP/IP protocol stack. You almost certainly
+want this. See
+.Xr inet 4
+for details.
+[Is this option required, though? Can you save space on a
+standalone machine by nuking it, or will the kernel compile croak?]
+.It Cd options NS
+Include support for the Xerox XNS protocol stack. See
+.Xr ns 4
+for details.
+.It Cd options ISO,TPIP
+Include support for the ubiquitous OSI protocol stack. See
+.Xr iso 4
+for details.
+.It Cd options EON
+Include support for OSI tunneling over IP. [Do we have any
+documentation on this at all?]
+.It Cd options CCITT,LLC,HDLC
+Include support for the X.25 protocol stack. [Really? What is this
+thing? Does anything actually drive it? Do we have any documentation?]
+.It Cd options IPNOPRIVPORTS
+Normally, only root can bind a socket descriptor to a so-called
+.Dq privileged
+TCP
+port, that is, a port number in the range 0-1023.  This option
+eliminates those checks from the kernel. This can be useful if there
+is a desire to allow daemons without privileges to bind those ports,
+e.g. on firewalls. The security tradeoffs in doing this are subtle.
+This option should only be used by experts.
+.It Cd options TCP_COMPAT_42
+TCP bug compatibility with 4.2BSD.  In 4.2BSD, TCP sequence numbers
+were 32-bit signed values.  Modern implementations of TCP use unsigned
+values.  This option clamps the initial sequence number to start in
+the range 2^31 rather than the full unsigned range of 2^32.  Also,
+under 4.2BSD, keepalive packets must contain at least one byte or else
+the remote end would not respond.
+.El
+.Ss System V IPC Options
+.Bl -ohang
+.It Cd options SYSVMSG
+Includes support for
+.At V
+style message queues.  See
+.Xr msgctl 2 ,
+.Xr msgget 2 ,
+.Xr msgrcv 2 ,
+.Xr msgsnd 2 .
+.It Cd options SYSVSEM
+Includes support for
+.At V
+style semaphores. See
+.Xr semctl 2 ,
+.Xr semget 2 ,
+.Xr semop 2 .
+.It Cd options SYSVSHM
+Includes support for
+.At V
+style shared memory.  See
+.Xr shmat 2 ,
+.Xr shmctl 2 ,
+.Xr shmdt 2 ,
+.Xr shmget 2 .
+.It Cd options SHMPAXPGS=value
+Sets the maximum number of
+.At V
+style shared memory pages that are available through the
+.Xr shmget 2
+system call. Default value is 1024 on most ports. See
+.Pa /usr/include/machine/vmparam.h
+for the default.
+.El
+.Ss VM Related Options
+.Bl -ohang
+.It Cd options SWAPPAGER
+Turns on paging.  (To be specific, this enables the virtual memory
+module responsible for handling page faults for
+.Dq anonymous 
+objects (i.e. BSS pages)).
+.Em MANDATORY
+-- you cannot actually run without
+this
+.Dq option .
+[If its mandatory, why is it an option at all?]
+.It Cd options VNODEPAGER
+Support for mmap()ing of files. (Specifically, this enables the
+virtual memory module responsible for handling page faults on mapped
+files (
+.Dq plain file
+vnodes)).
+.Em MANDATORY
+-- you cannot actually run without
+this
+.Dq option .
+[If its mandatory, why is it an option at all?]
+.It Cd options DEVPAGER
+Support for mmap()ing of devices.  (Specifically, this enables the
+virtual memory module responsible for handling page faults on mapped
+devices (
+.Dq cdev
+vnodes)).
+.Em MANDATORY
+-- you cannot actually run without
+this
+.Dq option .
+[If its mandatory, why is it an option at all?]
+.It Cd options NMBCLUSTERS=value
+Size of kernel [Something, what? mbuf pool?] in CLBYTES-sized logical
+pages. This region is covered by the kernel submap 
+.Em mb_map .
+[Better description, please? What does this do EXACTLY.]  Default on
+most ports is 256 (512 with GATEWAY).  See
+.Pa /usr/include/machine/param.h
+for exact default information.  Increase this value if you get 
+.Dq mb_map full
+messages.
+.It Cd options NKMEMCLUSTERS=value
+Size of kernel malloc arena in CLBYTES-sized logical pages.  This area
+is covered by the kernel submap 
+.Em kmem_map .
+See
+.Pa /usr/include/machine/param.h
+for the default value, which is port specific.  Increase this value if
+you get 
+.Dq out of space in kmem_map
+panics, which mean you have run out of mallocable kernel memory. [Is
+this last bit right?]
+.It Cd options NBUF=value
+[Quoth CGD: "Don't forget NBUF and BUFPAGES, which can be set to
+influence buffer cache size calculations." Can anyone fill in text?]
+.It Cd options BUFPAGES=value
+[Quoth CGD: "Don't forget NBUF and BUFPAGES, which can be set to
+influence buffer cache size calculations." Can anyone fill in text?]
+.It Cd options NKPDE=value
+.Em [ NOTE :
+This option may be i386 specific.]
+The i386 architecture uses a two-level page table; page directories
+contain entries for page tables, which contain entries for pages.
+The value of NKPDE indicates how many page tables (page directory entries)
+to reserve for use by the kernel.  This option should
+not be necessary, but the kernel cannot currently initialize this value at
+boot time and the default of 12 page directory entries is not large enough
+for the kernel if a very large buffer cache is used, either by default on
+machines with large memories or by modifying the value of BUFPAGES.  This
+limitation could be removed by changing NKPDE from a preprocessor symbol
+to a kernel global variable (nkpde) and modifying locore.s to compute nkpde
+from the values of the kernel global variables physmem and bufpages
+(as defined or computed) at boot time.
+.El
+.\" The following requests should be uncommented and used where appropriate.
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.Sh SEE ALSO
+.Xr config 8 ,
+.Xr init 8 ,
+.Xr gettimeofday 2 ,
+.Xr tzset 3 ,
+.Xr zic 8 ,
+.Xr tzfile 5 ,
+.Xr sysctl 8 ,
+.Xr sysctl 3 ,
+.Xr xntpd 8 ,
+.Xr ntp_adjtime 2 ,
+.Xr ntp_gettime 2 ,
+.Xr i386_iopl 2 ,
+.Xr msgctl 2 ,
+.Xr msgget 2 ,
+.Xr msgrcv 2 ,
+.Xr msgsnd 2 ,
+.Xr semctl 2 ,
+.Xr semget 2 ,
+.Xr semop 2 ,
+.Xr shmat 2 ,
+.Xr shmctl 2 ,
+.Xr shmdt 2 ,
+.Xr shmget 2 ,
+.Xr ddb 4 ,
+.Xr lkm 4 ,
+.Xr inet 4 ,
+.Xr ns 4 ,
+.Xr iso 4 ,
+.Xr mount_lfs 8 ,
+.Xr newlfs 8 ,
+.Xr mount_mfs 8 ,
+.Xr mount_nfs 8 ,
+.Xr mount_cd9660 8 ,
+.Xr mount_msdos 8 ,
+.Xr mount_fdesc 8 ,
+.Xr mount_kernfs 8 ,
+.Xr mount_null 8 ,
+.Xr mount_portal 8 ,
+.Xr mount_procfs 8 ,
+.Xr mount_umap 8 ,
+.Xr mount_union 8 ,
+.Xr edquota 8 ,
+.Xr quotaon 8 ,
+.Xr quota 1 ,
+.Xr rpc.rquotad 8 ,
+.Xr ktrace 1 ,
+.Xr gdb 1
+.Sh HISTORY
+The
+.Nm
+man page first appeared in
+.Nx 1.3 .
