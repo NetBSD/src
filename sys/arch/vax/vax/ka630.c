@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.5 1997/02/19 10:04:15 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.6 1997/04/18 18:49:36 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,8 +55,6 @@
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
-static struct ka630clock *ka630_clkptr = KA630CLK;
-
 static void ka630_conf __P((struct device *, struct device *, void *));
 static void ka630_memerr __P((void));
 static int ka630_mchk __P((caddr_t));
@@ -68,8 +66,8 @@ struct	cpu_dep ka630_calls = {
 	ka630_mchk,
 	ka630_memerr,
 	ka630_conf,
-	ka630_clkread,
-	ka630_clkwrite,
+	chip_clkread,
+	chip_clkwrite,
 	1,      /* ~VUPS */
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
@@ -141,6 +139,8 @@ void
 ka630_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	short *clk_page;
+	extern	int clk_adrshift, clk_tweak;
 	int	junk;
 
 	/*
@@ -158,8 +158,10 @@ ka630_steal_pages()
 	pmap_map((vm_offset_t)uvaxIIcpu_ptr, (vm_offset_t)UVAXIICPU,
 	    (vm_offset_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	MAPVIRT(ka630_clkptr, 1);
-	pmap_map((vm_offset_t)ka630_clkptr, (vm_offset_t)KA630CLK,
+	clk_adrshift = 0;	/* Addressed at short's... */
+	clk_tweak = 0;		/* ...and no shifting */
+	MAPVIRT(clk_page, 1);
+	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA630CLK,
 	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
@@ -174,12 +176,3 @@ ka630_steal_pages()
 	UVAXIICPU->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
 	    UVAXIIMSER_LEB);
 }
-#define uVAX_gettodr	ka630_gettodr
-#define uVAX_settodr	ka630_settodr
-#define uVAX_clkptr	ka630_clkptr
-#define uVAX_genclock	ka630_genclock
-#define uVAX_clock	ka630clock
-#define uVAX_clkread	ka630_clkread
-#define uVAX_clkwrite	ka630_clkwrite
-
-#include <arch/vax/vax/uvax_proto.c>
