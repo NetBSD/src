@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.21 1999/12/23 01:02:52 mjl Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.22 2000/02/14 04:36:21 aidan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.21 1999/12/23 01:02:52 mjl Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.22 2000/02/14 04:36:21 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,12 +71,11 @@ __RCSID("$NetBSD: yp_passwd.c,v 1.21 1999/12/23 01:02:52 mjl Exp $");
 
 extern	char *__progname;		/* from crt0.o */
 
-extern	int yflag, yppwd;
+static	int yflag;
 
 static	char		*getnewpasswd __P((struct passwd *, char **));
-static	int		 ypgetpwnam __P((char *));
+static	int		 ypgetpwnam __P((const char *));
 static	void		 pw_error __P((char *, int, int));
-static	void		 test_local __P((char *));
 
 static uid_t uid;
 char *domain;
@@ -92,25 +91,58 @@ pw_error(name, err, eval)
 	errx(eval, "YP passwd database unchanged");
 }
 
-static void
-test_local(username)
-	char *username;
+int
+yp_init(progname)
+	const char *progname;
 {
+	int yppwd;
 
-	/*
-	 * Something failed recoverably stating that the YP system couldn't
-	 * find this user.  Look for a local passwd entry, and change that
-	 * if and only if we weren't run as yppasswd or with the -y option.
-	 * This function does not return if a local entry is found.
-	 */
-	if (yppwd == 0 && yflag == 0)
-		if ((getpwnam(username) != NULL) && !local_passwd(username))
-			exit(0);
+	if (strcmp(progname, "yppasswd") == 0) {
+		yppwd = 1;
+	} else
+		yppwd = 0;
+	yflag = 0;
+	if (_yp_check(NULL) == 0) {
+		/* can't use YP. */
+		if (yppwd)
+			errx(1, "YP not in use.");
+		return(-1);
+	}
+	return (0);
 }
 
 int
-yp_passwd(username)
-	char *username;
+yp_arg(ch, arg)
+	char ch;
+	const char *arg;
+{
+	switch (ch) {
+	case 'y':
+		yflag = 1;
+		break;
+	default:
+		return(0);
+	}
+	return(1);
+}
+
+int
+yp_arg_end()
+{
+	if (yflag)
+		return (PW_USE_FORCE);
+	return (PW_USE);
+}
+
+void
+yp_end()
+{
+	/* NOOP */
+}
+
+int
+yp_chpw(username)
+	const char *username;
 {
 	char *master;
 	int r, rpcport, status;
@@ -124,7 +156,7 @@ yp_passwd(username)
 	/*
 	 * Get local domain
 	 */
-	if ((r = yp_get_default_domain(&domain)) != NULL)
+	if ((r = yp_get_default_domain(&domain)) != 0)
 		errx(1, "can't get local YP domain.  Reason: %s",
 		    yperr_string(r));
 
@@ -133,9 +165,10 @@ yp_passwd(username)
 	 * the daemon.
 	 */
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
-		test_local(username);
-		errx(1, "can't find the master YP server.  Reason: %s",
+		warnx("can't find the master YP server.  Reason: %s",
 		    yperr_string(r));
+		/* continuation */
+		return(-1);
 	}
 
 	/*
@@ -143,9 +176,10 @@ yp_passwd(username)
 	 */
 	if ((rpcport = getrpcport(master, YPPASSWDPROG,
 	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
-		test_local(username);
-		errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
-		    "Can't change password.");
+		warnx("master YP server not running yppasswd daemon.\n\t%s\n",
+		    "Can't change YP password.");
+		/* continuation */
+		return(-1);
 	}
 
 	/*
@@ -158,8 +192,9 @@ yp_passwd(username)
 	/* then get user's login identity */
 	if (!ypgetpwnam(username) ||
 	    !(pw = getpwnam(username))) {
-		test_local(username);
-		errx(1, "unknown user %s", username);
+		warnx("YP unknown user %s", username);
+		/* continuation */
+		return(-1);
 	}
 
 	if (uid && uid != pw->pw_uid)
@@ -196,7 +231,7 @@ yp_passwd(username)
 	else
 		printf("The YP password has been changed on %s, %s\n",
 		    master, "the master YP passwd server.");
-	exit(0);
+	return(0);
 }
 
 static char *
@@ -263,7 +298,7 @@ getnewpasswd(pw, old_pass)
 
 static int
 ypgetpwnam(nam)
-	char *nam;
+	const char *nam;
 {
 	char *val;
 	int reason, vallen;

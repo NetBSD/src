@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2000/01/26 01:18:48 aidan Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2000/02/14 04:36:20 aidan Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -35,10 +35,39 @@
  *	@(#)extern.h	8.1 (Berkeley) 4/2/94
  */
 
-int	kadm_passwd __P((char *, char *, char *, char *));
-int	kadm5_passwd __P((char *));
-int	krb_check __P((void));
-int	krb_passwd __P((void));
-int	local_passwd __P((char *));
-void	to64 __P((char *, long, int));
-int	yp_passwd __P((char *));
+/* return values from pw_init() and pw_arg_end() */
+enum {
+	PW_USE_FORCE,
+	PW_USE,
+	PW_DONT_USE
+};
+
+void to64(char *, long, int);
+
+#ifdef KERBEROS5
+int	krb5_init __P((const char *));
+int	krb5_arg __P((char, const char *));
+int	krb5_arg_end __P((void));
+void	krb5_end __P((void));
+int	krb5_chpw __P((const char *));
+#endif
+#ifdef KERBEROS
+int	krb4_init __P((const char *));
+int	krb4_arg __P((char, const char *));
+int	krb4_arg_end __P((void));
+void	krb4_end __P((void));
+int	krb4_chpw __P((const char *));
+#endif
+#ifdef YP
+int	yp_init __P((const char *));
+int	yp_arg __P((char, const char *));
+int	yp_arg_end __P((void));
+void	yp_end __P((void));
+int	yp_chpw __P((const char *));
+#endif
+/* local */
+int	local_init __P((const char *));
+int	local_arg __P((char, const char *));
+int	local_arg_end __P((void));
+void	local_end __P((void));
+int	local_chpw __P((const char *));
