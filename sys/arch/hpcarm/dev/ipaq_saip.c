@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.6 2001/07/15 17:18:53 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.7 2001/08/01 06:59:17 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -85,6 +85,12 @@ ipaq_attach(parent, self, aux)
 	sc->sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
 	sc->sc_gpioh = psc->sc_gpioh;
+
+	bus_space_map(sc->sc_iot, 0x1a000000, 1, 0, &sc->sc_ioh);
+	printf("0x1a000000 = %x\n", bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0));
+
+	bus_space_map(sc->sc_iot, 0x19000000, 1, 0, &sc->sc_ioh);
+	printf("0x19000000 = %x\n", bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0));
 
 	/* Map the Extended GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
