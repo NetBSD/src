@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.13 1998/07/05 06:20:05 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.14 1998/07/19 17:48:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.13 1998/07/05 06:20:05 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.14 1998/07/19 17:48:15 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ static void selectdrives __P((int, char **));
 
 void dkswap __P((void));
 void dkreadstats __P((void));
-int dkinit __P((int));
+int dkinit __P((int, gid_t));
 int main __P((int, char **));
 
 int
@@ -130,6 +130,8 @@ main(argc, argv)
 {
 	int ch, hdrcnt;
 	struct timeval	tv;
+	gid_t egid = getegid();
+	setegid(getgid());
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
@@ -179,7 +181,7 @@ main(argc, argv)
 	if (nlistf != NULL || memf != NULL)
 		setgid(getgid());
 
-	dkinit(0);
+	dkinit(0, egid);
 	dkreadstats();
 	selectdrives(argc, argv);
 
