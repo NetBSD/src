@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.62 2002/04/03 15:33:20 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.63 2002/04/03 15:43:14 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.62 2002/04/03 15:33:20 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.63 2002/04/03 15:43:14 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1986,8 +1986,8 @@ wi_get_id(sc)
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_EVB3:
-	case WI_NIC_3842:
-		printf("RF:PRISM2 MAC:HFA3842");
+	case WI_NIC_3842_EVA:
+		printf("RF:PRISM2 MAC:HFA3842 CARD:HFA3842 EVAL");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_HWB1153:
