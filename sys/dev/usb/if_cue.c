@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.3 2000/01/28 00:34:12 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.4 2000/02/02 11:49:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -653,43 +653,36 @@ USB_ATTACH(cue)
 USB_DETACH(cue)
 {
 	USB_DETACH_START(cue, sc);
-#if defined(__FreeBSD__)
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
 	s = splusb();
 
-	sc = device_get_softc(dev);
-	ifp = &sc->arpcom.ac_if;
+	if (ifp->if_flags & IFF_RUNNING)
+		cue_stop(sc);
 
-	untimeout(cue_tick, sc, sc->cue_stat_ch);
+	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
+
+#if defined(__NetBSD__)
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+#endif /* __NetBSD__ */
+
 	if_detach(ifp);
 
-	if (sc->cue_ep[CUE_ENDPT_TX] != NULL)
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_TX]);
-	if (sc->cue_ep[CUE_ENDPT_RX] != NULL)
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_RX]);
-	if (sc->cue_ep[CUE_ENDPT_INTR] != NULL)
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
+#ifdef DIAGNOSTIC
+	if (sc->cue_ep[CUE_ENDPT_TX] != NULL ||
+	    sc->cue_ep[CUE_ENDPT_RX] != NULL ||
+	    sc->cue_ep[CUE_ENDPT_INTR] != NULL)
+		printf("%s: detach has active endpoints\n",
+		       USBDEVNAME(sc->cue_dev));
+#endif
 
 	splx(s);
 
 	return (0);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	sc = sc;		/* XXX use sc */
-	/* XXX deallocate */
-
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our refernce
-	 * to the ifnet.
-	 */
-	if_delref(sc->cue_ec.ec_if);
-#else
-	return (0);
-#endif
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -708,10 +701,8 @@ cue_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->cue_ec.ec_if);
-#endif
+		/* Deactivate the interface. */
+		if_deactivate(&sc->cue_ec.ec_if);
 		sc->cue_dying = 1;
 		break;
 	}
@@ -722,7 +713,8 @@ cue_activate(self, act)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-static int cue_newbuf(sc, c, m)
+static int
+cue_newbuf(sc, c, m)
 	struct cue_softc	*sc;
 	struct cue_chain	*c;
 	struct mbuf		*m;
@@ -861,6 +853,9 @@ cue_rxeof(xfer, priv, status)
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
 		     __FUNCTION__, status));
 
+	if (sc->cue_dying)
+		return;
+
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
@@ -962,6 +957,9 @@ cue_txeof(xfer, priv, status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
+	if (sc->cue_dying)
+		return;
+
 	s = splimp();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
@@ -1009,12 +1007,13 @@ cue_tick(xsc)
 	struct ifnet		*ifp;
 	int			s;
 
-	s = splimp();
-
-	if (sc == NULL) {
-		splx(s);
+	if (sc == NULL)
 		return;
-	}
+
+	if (sc->cue_dying)
+		return;
+
+	s = splimp();
 
 	ifp = GET_IFP(sc);
 
@@ -1072,11 +1071,15 @@ cue_send(sc, m, idx)
 	return (0);
 }
 
-static void cue_start(ifp)
+static void
+cue_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct cue_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
+
+	if (sc->cue_dying)
+		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -1116,6 +1119,9 @@ cue_init(xsc)
 	usbd_status		err;
 	int			i, s;
 	u_char			*eaddr;
+
+	if (sc->cue_dying)
+		return;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -1229,6 +1235,9 @@ cue_ioctl(ifp, command, data)
 #endif
 	int			s, error = 0;
 
+	if (sc->cue_dying)
+		return (EIO);
+
 	s = splimp();
 
 	switch(command) {
@@ -1319,6 +1328,9 @@ cue_watchdog(ifp)
 	struct cue_softc	*sc = ifp->if_softc;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+
+	if (sc->cue_dying)
+		return;
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->cue_dev));
