@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.5 1999/10/05 03:53:53 itohy Exp $
+# $NetBSD: obsolete.mi,v 1.6 1999/11/12 20:49:54 kleink Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -311,13 +311,19 @@
 /usr/share/man/cat1/lexdoc.0
 /usr/share/man/cat2/getdirentries.0
 /usr/share/man/cat2/swapon.0
+/usr/share/man/cat3/getpw.0
 /usr/share/man/cat3/regsterrpc.0
 /usr/share/man/cat3/setgrfile.0
 /usr/share/man/cat3/setpwfile.0
 /usr/share/man/cat3/setregid.0
 /usr/share/man/cat3/setreuid.0
+/usr/share/man/cat3/vlimit.0
+/usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
+/usr/share/man/man3/getpw.3
 /usr/share/man/man3/regsterrpc.3
+/usr/share/man/man3/vlimit.3
+/usr/share/man/man3/vtimes.3
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
 /usr/share/mk/bsd.port.mk
