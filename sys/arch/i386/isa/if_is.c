@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.22 1994/02/16 20:15:22 mycroft Exp $
+ *	$Id: if_is.c,v 1.23 1994/02/16 20:22:16 mycroft Exp $
  */
 
 /* TODO
@@ -1149,7 +1149,7 @@ is_setladrf(ac, af)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		af[0] = af[1] = 0xffffffff;
 		return;
