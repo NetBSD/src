@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.424 2002/05/15 14:14:34 augustss Exp $
+$NetBSD: pcidevs,v 1.425 2002/05/18 07:19:16 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1588,8 +1588,13 @@ product SYMBIOS 895A	0x0012	53c895A
 product SYMBIOS 875A	0x0013	53c875A
 product SYMBIOS 1010	0x0020	53c1010
 product SYMBIOS 1010_2	0x0021	53c1010 (66MHz)
+product SYMBIOS 1030R	0x1030	53c1030R
 product SYMBIOS 875J	0x008f	53c875J
 product SYMBIOS FC909	0x0621	FC909
+product SYMBIOS FC929	0x0622	FC929
+product SYMBIOS FC929_1	0x0623	FC929
+product SYMBIOS FC919	0x0624	FC919
+product SYMBIOS FC919_1	0x0625	FC919
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
