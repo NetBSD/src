@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.106 1999/09/29 10:43:14 kleink Exp $
+# $NetBSD: ALPHA,v 1.107 1999/09/29 10:46:03 kleink Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -211,6 +211,7 @@ pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+sv*	at	pci? dev ? function ?		# S3 SonicVibes
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
@@ -219,8 +220,10 @@ ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 
 #audio*	at	eap?
 audio*	at	eso?
+audio*	at	sv?
 
 opl*	at	eso?
+#opl*	at	sv?
 
 mpu*	at	eso?
 
