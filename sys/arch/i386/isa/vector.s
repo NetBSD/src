@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.23 1994/11/04 00:00:36 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.24 1994/11/18 22:22:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -118,19 +118,6 @@
  */
 
 	.globl	_isa_strayintr
-
-/*
- * Handle exceptions on vectors we don't expect.
- */
-IDTVEC(wild)
-	sti
-	pushl	$0			/* fake interrupt frame */
-	pushl	$0
-	INTRENTRY
-	pushl	$-1
-	call	_isa_strayintr
-	addl	$4,%esp
-	INTRFASTEXIT
 
 /*
  * Fast vectors.
