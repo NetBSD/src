@@ -39,14 +39,19 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)time.c	4.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: time.c,v 1.2 1993/08/01 18:07:01 mycroft Exp $";
+static char rcsid[] = "$Id: time.c,v 1.3 1993/08/27 19:05:31 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
+#include <sys/wait.h>
 #include <stdio.h>
+#include <errno.h>
+
+int lflag;
+int portableflag;
 
 main(argc, argv)
 	int argc;
@@ -54,19 +59,22 @@ main(argc, argv)
 {
 	extern int optind;
 	register int pid;
-	int ch, status, lflag;
+	int ch, status;
 	struct timeval before, after;
 	struct rusage ru;
 
 	lflag = 0;
-	while ((ch = getopt(argc, argv, "l")) != EOF)
+	while ((ch = getopt(argc, argv, "lp")) != EOF)
 		switch((char)ch) {
+		case 'p':
+			portableflag = 1;
+			break;
 		case 'l':
 			lflag = 1;
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: time [-l] command.\n");
+			fprintf(stderr, "usage: time [-lp] command.\n");
 			exit(1);
 		}
 
@@ -83,39 +91,54 @@ main(argc, argv)
 	case 0:				/* child */
 		execvp(*argv, argv);
 		perror(*argv);
-		_exit(1);
+		_exit((errno == ENOENT) ? 127 : 126);
 		/* NOTREACHED */
 	}
+
 	/* parent */
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
-	while (wait3(&status, 0, &ru) != pid);		/* XXX use waitpid */
+	while (wait3(&status, 0, &ru) != pid);
 	gettimeofday(&after, (struct timezone *)NULL);
-	if (status&0377)
+	if (!WIFEXITED(status))
 		fprintf(stderr, "Command terminated abnormally.\n");
 	after.tv_sec -= before.tv_sec;
 	after.tv_usec -= before.tv_usec;
 	if (after.tv_usec < 0)
 		after.tv_sec--, after.tv_usec += 1000000;
-	fprintf(stderr, "%9ld.%02ld real ", after.tv_sec, after.tv_usec/10000);
-	fprintf(stderr, "%9ld.%02ld user ",
-	    ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
-	fprintf(stderr, "%9ld.%02ld sys\n",
-	    ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+
+	if (portableflag) {
+		fprintf (stderr, "real %9ld.%02ld\n", 
+			after.tv_sec, after.tv_usec/10000);
+		fprintf (stderr, "user %9ld.%02ld\n",
+			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		fprintf (stderr, "sys  %9ld.%02ld\n",
+			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+	} else {
+
+		fprintf(stderr, "%9ld.%02ld real ", 
+			after.tv_sec, after.tv_usec/10000);
+		fprintf(stderr, "%9ld.%02ld user ",
+			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		fprintf(stderr, "%9ld.%02ld sys\n",
+			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+	}
+
 	if (lflag) {
 		int hz = 100;			/* XXX */
 		long ticks;
 
 		ticks = hz * (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
 		     hz * (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000;
+
 		fprintf(stderr, "%10ld  %s\n",
 			ru.ru_maxrss, "maximum resident set size");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_ixrss / ticks, "average shared memory size");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_idrss / ticks, "average unshared data size");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_isrss / ticks, "average unshared stack size");
+		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_ixrss / ticks : 0,
+			"average shared memory size");
+		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_idrss / ticks : 0,
+			"average unshared data size");
+		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_isrss / ticks : 0,
+			"average unshared stack size");
 		fprintf(stderr, "%10ld  %s\n",
 			ru.ru_minflt, "page reclaims");
 		fprintf(stderr, "%10ld  %s\n",
@@ -137,5 +160,6 @@ main(argc, argv)
 		fprintf(stderr, "%10ld  %s\n",
 			ru.ru_nivcsw, "involuntary context switches");
 	}
-	exit (status>>8);
+
+	exit (WEXITSTATUS(status));
 }
