@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.6 2000/03/17 22:54:06 tron Exp $
+# $NetBSD: md.newsmips,v 1.7 2000/04/29 03:46:29 thorpej Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/newsmips/kdbparam.h	comp-c-include
 ./usr/include/newsmips/keyboard.h	comp-c-include
 ./usr/include/newsmips/limits.h	comp-c-include
+./usr/include/newsmips/lock.h	comp-c-include
 ./usr/include/newsmips/locore.h	comp-c-include
 ./usr/include/newsmips/machConst.h	comp-c-include
 ./usr/include/newsmips/math.h	comp-c-include
