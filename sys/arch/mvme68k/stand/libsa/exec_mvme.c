@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.6 2000/07/10 20:36:15 jdolecek Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.7 2000/07/10 22:48:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -105,7 +105,7 @@ exec_mvme(file, flag)
 	/*
 	 * Read in the text segment.
 	 */
-	printf("%d", x.a_text);
+	printf("%ld", x.a_text);
 	cc = (int)x.a_text;
 	if (magic == ZMAGIC) 
 		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
@@ -126,7 +126,7 @@ exec_mvme(file, flag)
 	/*
 	 * Read in the data segment.
 	 */
-	printf("+%d", x.a_data);
+	printf("+%ld", x.a_data);
 	if (read(io, cp, (size_t)x.a_data) != (size_t)x.a_data)
 		goto shread;
 	cp += (int)x.a_data;
@@ -135,7 +135,7 @@ exec_mvme(file, flag)
 	 * Zero out the BSS section.
 	 * (Kernel doesn't care, but do it anyway.)
 	 */
-	printf("+%d", x.a_bss);
+	printf("+%ld", x.a_bss);
 	cc = (int)x.a_bss;
 	/*LINTED*/
 	while ((int)cp & 3) {
