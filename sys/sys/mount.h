@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.43 1995/10/15 15:33:26 ws Exp $	*/
+/*	$NetBSD: mount.h,v 1.44 1995/11/11 22:00:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -82,7 +82,8 @@ struct statfs {
 /*
  * File system types.
  */
-#define	MOUNT_UFS	"ufs"		/* UNIX "Fast" Filesystem */
+#define	MOUNT_FFS	"ffs"		/* UNIX "Fast" Filesystem */
+#define	MOUNT_UFS	MOUNT_FFS	/* for compatibility */
 #define	MOUNT_NFS	"nfs"		/* Network Filesystem */
 #define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
