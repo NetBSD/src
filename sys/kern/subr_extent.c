@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.8.4.1 1997/07/30 07:27:21 marc Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.8.4.2 1997/08/29 00:29:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -553,12 +553,16 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 #endif
 	}
 
-	for (rp = ex->ex_regions.lh_first;
-	     rp != NULL; rp = rp->er_link.le_next) {
-	    last = rp;
-
-	    if (rp->er_start >= newstart)
-		break;
+	/*
+	 * Find the first allocated region that begins on or after
+	 * the subregion start, advancing the "last" pointer along
+	 * the way.
+	 */
+	for (rp = ex->ex_regions.lh_first; rp != NULL;
+	    rp = rp->er_link.le_next) {
+		if (rp->er_start >= newstart)
+			break;
+		last = rp;
 	}
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
