@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.29 1996/09/30 22:43:38 abrown Exp $
+#	$NetBSD: files.sparc,v 1.30 1996/11/01 23:15:51 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -18,10 +18,6 @@ attach vmel at mainbus
 device vmes { [addr = -1], [level = -1], [vect = -1] }
 attach vmes at mainbus
 file	arch/sparc/dev/obio.c		obio | vmel | vmes
-
-device audio
-attach audio at mainbus, obio
-file	arch/sparc/dev/amd7930.c		audio
 
 device auxreg
 attach auxreg at mainbus, obio
@@ -90,6 +86,11 @@ file	arch/sparc/dev/dma.c		dma | ledma
 device esp: scsi
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
+
+device audio
+attach audio at mainbus, obio, sbus
+file	arch/sparc/dev/amd7930.c		audio
+file	arch/sparc/sparc/amd7930intr.s		audio
 
 # Brooktree DAC attribute
 define bt_dac
@@ -187,7 +188,6 @@ file	arch/sparc/fpu/fpu_subr.c
 # N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
 # identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc/sparc/autoconf.c
-file	arch/sparc/sparc/amd7930intr.s	audio
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/in_cksum.c
