@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.6 1996/04/26 22:38:11 mark Exp $ */
+/* $NetBSD: asc.c,v 1.7 1996/06/03 22:41:14 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -58,19 +58,17 @@
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
 
-int ascprint __P((void *auxp, char *));
-void ascattach __P((struct device *, struct device *, void *));
-int ascmatch __P((struct device *, void *, void *));
+int ascprint	__P((void *auxp, char *));
+void ascattach	__P((struct device *, struct device *, void *));
+int ascmatch	__P((struct device *, void *, void *));
 
 void asc_enintr __P((struct sbic_softc *));
 void asc_dmastop __P((struct sbic_softc *));
 int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
-int asc_dmago __P((struct sbic_softc *, char *, int, int));
+int asc_dmago	__P((struct sbic_softc *, char *, int, int));
 int asc_scsicmd __P((struct scsi_xfer *xs));
-int asc_intr __P((struct asc_softc *));
-
-char *strstr		__P((char */*s1*/, char */*s2*/));
+int asc_intr	__P((struct asc_softc *));
 
 struct scsi_adapter asc_scsiswitch = {
 	asc_scsicmd,
