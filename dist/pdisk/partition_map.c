@@ -629,7 +629,38 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 		    (cur->data->dpme_pblock_start + cur->data->dpme_pblocks)) {
 	    break;
 	} else {
-	    cur = cur->next_by_base;
+	  // check if request is past end of existing partitions, but on disk
+	  if ((cur->next_by_base == NULL) &&
+	      (base + length <= map->media_size)) {
+	    // Expand final free partition
+	    if ((istrncmp(cur->data->dpme_type, kFreeType, DPISTRLEN) == 0) &&
+		base >= cur->data->dpme_pblock_start) {
+	      cur->data->dpme_pblocks =
+		map->media_size - cur->data->dpme_pblock_start;
+	      break;
+	    }
+	    // create an extra free partition
+	    if (base >= cur->data->dpme_pblock_start + cur->data->dpme_pblocks) {
+	      if (map->maximum_in_map < 0) {
+		limit = map->media_size;
+	      } else {
+		limit = map->maximum_in_map;
+	      }
+	      if (map->blocks_in_map + 1 > limit) {
+		printf("the map is not big enough\n");
+		return 0;
+	      }
+	      data = create_data(kFreeName, kFreeType,
+		  cur->data->dpme_pblock_start + cur->data->dpme_pblocks,
+		  map->media_size - (cur->data->dpme_pblock_start + cur->data->dpme_pblocks));
+	      if (data != NULL) {
+		if (add_data_to_map(data, cur->disk_address, map) == 0) {
+		  free(data);
+		}
+	      }
+	    }
+	  }
+	  cur = cur->next_by_base;
 	}
     }
 	// if it is not Extra then punt
@@ -950,6 +981,20 @@ delete_partition_from_map(partition_map *entry)
 	if (get_okay("are you sure you want to delete this driver? [n/y]: ", 0) != 1) {
 	    return;
 	}
+    }
+    // if past end of disk, delete it completely
+    if (entry->next_by_base == NULL &&
+	entry->data->dpme_pblock_start >= entry->the_map->media_size) {
+      if (entry->contains_driver) {
+	remove_driver(entry);	// update block0 if necessary
+      }
+      delete_entry(entry);
+      return;
+    }
+    // If at end of disk, incorporate extra disk space to partition
+    if (entry->next_by_base == NULL) {
+      entry->data->dpme_pblocks =
+	 entry->the_map->media_size - entry->data->dpme_pblock_start;
     }
     data = create_data(kFreeName, kFreeType,
 	    entry->data->dpme_pblock_start, entry->data->dpme_pblocks);
