@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.4 2003/02/05 21:48:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -107,6 +107,14 @@ ENTRY(getmementry)
 
 	call	_C_LABEL(prot_to_real)
 	.code16
+
+	push	%di
+	shrl	$4, %edi
+	mov	%ds, %ax
+	add	%di, %ax
+	mov	%ax, %ds
+	pop	%di
+	and	$0xf, %di
 
 	movw	$0xe820, %ax
 	int	$0x15
