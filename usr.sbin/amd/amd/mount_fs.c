@@ -36,14 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.3 1994/06/13 20:47:40 mycroft Exp $
+ *	$Id: mount_fs.c,v 1.4 1996/02/19 20:57:47 christos Exp $
  */
 
 #include "am.h"
 #ifdef NFS_3
 typedef nfs_fh fhandle_t;
 #endif /* NFS_3 */
-#include <sys/mount.h>
 
 #include <sys/stat.h>
 

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: ufs_ops.c,v 1.5 1994/06/13 20:48:06 mycroft Exp $
+ *	$Id: ufs_ops.c,v 1.6 1996/02/19 20:57:49 christos Exp $
  */
 
 #include "am.h"
@@ -51,8 +51,6 @@ typedef nfs_fh fhandle_t;
 #ifdef UFS_HDR
 #include UFS_HDR
 #endif /* UFS_HDR */
-
-#include <sys/mount.h>
 
 /*
  * UN*X file system

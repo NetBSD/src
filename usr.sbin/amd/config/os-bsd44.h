@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.10 1995/03/22 17:15:17 mycroft Exp $
+ *	$Id: os-bsd44.h,v 1.11 1996/02/19 20:57:54 christos Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -176,7 +176,9 @@ struct mntent {
  * Type of a file handle
  */
 #undef NFS_FH_TYPE
-#define	NFS_FH_TYPE	nfsv2fh_t *
+#if __NetBSD__
+#define NFS_FH_TYPE void *
+#endif
 
 /*
  * How to get a mount list
