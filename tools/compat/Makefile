@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.3 2002/01/21 20:04:36 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/21 23:35:14 lukem Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c err.c fgetln.c flock.c fparseln.c \
-		getmode.c pread.c pwrite.c setprogname.c strlcat.c strlcpy.c vis.c
+		getmode.c pread.c pwrite.c setprogname.c strlcat.c strlcpy.c \
+		vis.c
 HOST_CPPFLAGS+=	-I. -I${.CURDIR} -DHAVE_CONFIG_H
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
-		${.CURDIR}/../../lib/libc/string
+		${.CURDIR}/../../lib/libc/string \
+		${.CURDIR}/../../lib/libutil \
 
 DPSRCS=		config.h
 CLEANFILES=	config.cache config.log config.status config.stamp confdefs.h defs.mk
