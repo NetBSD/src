@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kdb_locl.h,v 1.2 2001/02/04 18:03:03 christos Exp $ */
+/* $KTH-KRB: kdb_locl.h,v 1.11 2002/09/09 15:27:45 joda Exp $
+   $NetBSD: kdb_locl.h,v 1.3 2002/09/12 12:33:13 joda Exp $ */
 
 #ifndef __kdb_locl_h
 #define __kdb_locl_h

@@ -41,7 +41,8 @@
 
 #include "kauth.h"
 
-RCSID("$Id: kauth.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
+__RCSID("$KTH-KRB: kauth.c,v 1.102 2002/05/24 17:17:25 bg Exp $"
+      "$NetBSD: kauth.c,v 1.3 2002/09/12 12:33:11 joda Exp $");
 
 krb_principal princ;
 static char srvtab[MaxPathLen];
@@ -310,7 +311,7 @@ main(int argc, char **argv)
 	do{
 	    snprintf(tf, sizeof(tf), "%s%u_%u", TKT_ROOT, (unsigned)getuid(),
 		     (unsigned)(getpid()*time(0)));
-	    f = open(tf, O_CREAT|O_EXCL|O_RDWR);
+	    f = open(tf, O_CREAT|O_EXCL|O_RDWR, 0600);
 	}while(f < 0);
 	close(f);
 	unlink(tf);

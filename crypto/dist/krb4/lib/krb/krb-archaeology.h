@@ -1,5 +1,5 @@
 /*
- * $Id: krb-archaeology.h,v 1.2 2001/02/04 18:04:03 christos Exp $
+ * $Id: krb-archaeology.h,v 1.3 2002/09/12 12:33:14 joda Exp $
  *
  * Most of the cruft in this file is probably:
  *
