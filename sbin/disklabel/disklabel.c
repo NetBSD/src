@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.32 1996/06/29 18:44:11 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.33 1996/08/10 17:59:01 explorer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.32 1996/06/29 18:44:11 pk Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.33 1996/08/10 17:59:01 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -818,7 +818,7 @@ display(f, lp)
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
-			if (Cflag) {
+			if (Cflag && lp->d_secpercyl && lp->d_nsectors) {
 				char sbuf[32], obuf[32];
 				sprintf(sbuf, "%d/%d/%d",
 				   pp->p_size/lp->d_secpercyl,
@@ -857,19 +857,22 @@ display(f, lp)
 				fprintf(f, "%20.20s", "");
 				break;
 			}
-			fprintf(f, "\t# (Cyl. %4d",
-			    pp->p_offset / lp->d_secpercyl);
-			if (pp->p_offset % lp->d_secpercyl)
-			    putc('*', f);
-			else
-			    putc(' ', f);
-			fprintf(f, "- %d",
-			    (pp->p_offset + 
-			    pp->p_size + lp->d_secpercyl - 1) /
-			    lp->d_secpercyl - 1);
-			if (pp->p_size % lp->d_secpercyl)
-			    putc('*', f);
-			fprintf(f, ")\n");
+			if (lp->d_secpercyl != 0) {
+				fprintf(f, "\t# (Cyl. %4d",
+				    pp->p_offset / lp->d_secpercyl);
+				if (pp->p_offset % lp->d_secpercyl)
+				    putc('*', f);
+				else
+				    putc(' ', f);
+				fprintf(f, "- %d",
+				    (pp->p_offset + 
+				    pp->p_size + lp->d_secpercyl - 1) /
+				    lp->d_secpercyl - 1);
+				if (pp->p_size % lp->d_secpercyl)
+				    putc('*', f);
+				fprintf(f, ")\n");
+			} else
+				fprintf(f, "\n");
 		}
 	}
 	fflush(f);
