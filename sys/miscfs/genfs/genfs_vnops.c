@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.10 2002/02/28 04:14:55 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.11 2002/02/28 20:40:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.10 2002/02/28 04:14:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.11 2002/02/28 20:40:12 nathanw Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1104,7 +1104,7 @@ genfs_putpages(v)
 		 * wait for it to become unbusy.
 		 */
 
-		yield = curproc->p_cpu->ci_schedstate.spc_flags &
+		yield = curproc->l_cpu->ci_schedstate.spc_flags &
 		    SPCF_SHOULDYIELD;
 		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(curproc != uvm.pagedaemon_proc);
