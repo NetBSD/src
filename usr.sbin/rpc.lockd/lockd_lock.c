@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.8.2.1 2003/06/30 02:27:38 grant Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.8.2.2 2004/04/06 09:32:01 grant Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -382,9 +382,13 @@ sigchild_handler(sig)
 			if (pid == fl->locker)
 				break;
 		}
-		if (pid != fl->locker) {
+		if (fl == NULL) {
 			syslog(LOG_NOTICE, "unknow child %d", pid);
 		} else {
+			/*
+			 * protect from pid reusing.
+			 */
+			fl->locker = 0;
 			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 				syslog(LOG_NOTICE, "child %d failed", pid);
 				/*
