@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp 
+ *	NetBSD: pcidevs,v 1.16 1996/09/24 17:47:14 christos Exp 
  */
 
 /*
@@ -391,6 +391,7 @@
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
 #define	PCI_VENDOR_SYMPHONY	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM	0x1de1		/* Tekram Technology */
+#define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
@@ -641,3 +642,7 @@
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
+
+/* Cyclades products */
+#define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOMY_2	0x0101		/* Cyclom-Y above 1M */
