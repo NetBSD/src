@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.35 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.36 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  *
@@ -68,7 +68,7 @@ static void		udv_init __P((void));
 static void             udv_reference __P((struct uvm_object *));
 static void             udv_detach __P((struct uvm_object *));
 static int		udv_fault __P((struct uvm_faultinfo *, vaddr_t,
-				       vm_page_t *, int, int, vm_fault_t,
+				       struct vm_page **, int, int, vm_fault_t,
 				       vm_prot_t, int));
 static boolean_t        udv_flush __P((struct uvm_object *, voff_t, voff_t,
 				       int));
@@ -375,7 +375,7 @@ static int
 udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
 	vaddr_t vaddr;
-	vm_page_t *pps;
+	struct vm_page **pps;
 	int npages, centeridx, flags;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;
