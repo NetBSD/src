@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 1997/10/15 04:35:25 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 1997/10/17 22:17:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,7 +167,7 @@ EXTERN int  fs_num;
 /* needed prototypes */
 
 /* Machine dependent functions .... */
-void	md_get_info __P((void));
+int	md_get_info __P((void));
 void	md_pre_disklabel __P((void));
 void	md_post_disklabel __P((void));
 void	md_post_newfs __P((void));
@@ -193,11 +193,11 @@ void	do_install __P((void));
 void	factor __P((long, long *, int, int *));
 
 /* from geom.c */
-int get_geom __P((char *, struct disklabel *));
+int	get_geom __P((char *, struct disklabel *));
 
 /* from net.c */
-int  get_via_ftp __P((void));
-int  get_via_nfs __P((void));
+int	get_via_ftp __P((void));
+int	get_via_nfs __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, char *name, ...));
@@ -212,3 +212,4 @@ void	ask_sizemult __P((void));
 int	ask_ynquestion __P((char *quest, char def, ...));
 void	extract_dist __P((void));
 void	run_makedev __P((void));
+int	get_via_floppy __P((void));
