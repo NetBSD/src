@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.27 2001/08/17 02:18:47 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.28 2002/04/10 17:29:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.27 2001/08/17 02:18:47 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.28 2002/04/10 17:29:30 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ pass5()
 				cg_blks(fs, newcg, j, 0)[cbtorpos(fs, i)]++;
 				if (fs->fs_contigsumsize > 0)
 					setbit(cg_clustersfree(newcg, 0),
-					    i / fs->fs_frag);
+					    fragstoblks(fs, i));
 			} else if (frags > 0) {
 				newcg->cg_cs.cs_nffree += frags;
 				blk = blkmap(fs, cg_blksfree(newcg, 0), i);
