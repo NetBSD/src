@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.1.1.1.2.3 2001/12/10 23:52:45 he Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.1.1.1.2.4 2002/06/26 19:30:59 he Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -244,6 +244,8 @@ input_userauth_info_response(int type, int plen, void *ctxt)
 
 	authctxt->postponed = 0;	/* reset */
 	nresp = packet_get_int();
+	if (nresp > 100)
+		fatal("input_userauth_info_response: nresp too big %u", nresp);
 	if (nresp > 0) {
 		response = xmalloc(nresp * sizeof(char*));
 		for (i = 0; i < nresp; i++)
