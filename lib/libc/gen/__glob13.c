@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.16 2001/03/16 21:09:05 christos Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.17 2001/03/18 22:40:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.16 2001/03/16 21:09:05 christos Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.17 2001/03/18 22:40:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -830,6 +830,7 @@ globfree(pglob)
 			if (*pp)
 				free(*pp);
 		free(pglob->gl_pathv);
+		pglob->gl_pathv = NULL;
 	}
 }
 
