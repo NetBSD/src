@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.4 1996/03/31 23:24:59 pk Exp $ */
+/*	$NetBSD: timerreg.h,v 1.5 1996/05/02 18:17:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,8 +83,8 @@
  */
 #ifndef _LOCORE
 struct timer_4 {
-	int	t_counter;		/* counter reg */
-	int	t_limit;		/* limit reg */
+	volatile int	t_counter;		/* counter reg */
+	volatile int	t_limit;		/* limit reg */
 };
 
 struct timerreg_4 {
@@ -93,11 +93,11 @@ struct timerreg_4 {
 };
 
 struct timer_4m {		/* counter that interrupts at ipl 10 */
-	int	t_limit;		/* limit register */
-	int	t_counter;		/* counter register */
-	int	t_limit_nr;		/* limit reg, non-resetting */
-	int	t_reserved;
-	int	t_cfg;			/* a configuration register */
+	volatile int	t_limit;		/* limit register */
+	volatile int	t_counter;		/* counter register */
+	volatile int	t_limit_nr;		/* limit reg, non-resetting */
+	volatile int	t_reserved;
+	volatile int	t_cfg;			/* a configuration register */
 /*
  * Note: The SparcClassic manual only defines this one bit
  * I suspect there are more in multi-processor machines.
@@ -106,10 +106,10 @@ struct timer_4m {		/* counter that interrupts at ipl 10 */
 };
 
 struct counter_4m {		/* counter that interrupts at ipl 14 */
-	int	t_limit;		/* limit register */
-	int	t_counter;		/* counter register */
-	int	t_limit_nr;		/* limit reg, non-resetting */
-	int	t_ss;			/* Start/Stop register */
+	volatile int	t_limit;		/* limit register */
+	volatile int	t_counter;		/* counter register */
+	volatile int	t_limit_nr;		/* limit reg, non-resetting */
+	volatile int	t_ss;			/* Start/Stop register */
 #define TMR_USER_RUN	1
 };
 #endif /* _LOCORE */
