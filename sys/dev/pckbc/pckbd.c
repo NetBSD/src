@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.8 1998/06/11 22:15:14 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.9 1998/06/16 11:26:04 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -68,6 +68,7 @@
 
 #include "locators.h"
 
+#include "opt_pckbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 
 struct pckbd_internal {
