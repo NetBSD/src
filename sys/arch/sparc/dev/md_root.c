@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.4 1996/12/09 17:46:44 thorpej Exp $	*/
+/*	$NetBSD: md_root.c,v 1.5 1996/12/28 23:27:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,26 +44,26 @@
 #include <sys/conf.h>
 #include <sys/stat.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 extern int boothowto;
 
-int	(*rd_read_image) __P((size_t *, caddr_t *));
+int	(*md_read_image) __P((size_t *, caddr_t *));
 
 /*
  * This is called during autoconfig.
  */
 void
-rd_attach_hook(unit, rd)
+md_attach_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
-	if (unit == 0 && rd_read_image != NULL) {
+	if (unit == 0 && md_read_image != NULL) {
 		/* Setup root ramdisk */
-		if ((*rd_read_image)(&rd->rd_size, &rd->rd_addr) != 0)
-			panic("rd_attach");
-		rd->rd_type = RD_KMEM_FIXED;
-		printf("rd0: fixed, %d blocks", rd->rd_size >> DEV_BSHIFT);
+		if ((*md_read_image)(&md->md_size, &md->md_addr) != 0)
+			panic("md_attach");
+		md->md_type = MD_KMEM_FIXED;
+		printf("md0: fixed, %d blocks", md->md_size >> DEV_BSHIFT);
 	}
 }
 
@@ -71,9 +71,9 @@ rd_attach_hook(unit, rd)
  * This is called during open (i.e. mountroot)
  */
 void
-rd_open_hook(unit, rd)
+md_open_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
@@ -83,7 +83,7 @@ rd_open_hook(unit, rd)
 
 #if 0
 int
-rd_read_image (dev, addr)
+md_read_image (dev, addr)
 	dev_t dev;
 	caddr_t addr;
 {
@@ -95,7 +95,7 @@ rd_read_image (dev, addr)
 
 	error = (*bdevsw[major(dev)].d_open)(dev, 0, S_IFCHR, &proc0);
 	if (error)
-		panic("rd_read_image: open: error %d", error);
+		panic("md_read_image: open: error %d", error);
 
 	bzero(bp, sizeof(*bp));
 	offset = 0;
@@ -113,19 +113,19 @@ rd_read_image (dev, addr)
 		uio.uio_procp = &proc0;
 		error = (*cdevsw[major(dev)].d_read)(dev, &uio, 0);
 		if (error)
-			panic("rd_read_image: read: error %d", error);
+			panic("md_read_image: read: error %d", error);
 
 		if (uio.uio_resid != 0)
 			break;
 
 		addr += DEV_BSIZE;
 		offset += DEV_BSIZE;
-		rd_root_size += DEV_BSIZE;
-		if (offset + DEV_BSIZE > rd_root_size)
+		md_root_size += DEV_BSIZE;
+		if (offset + DEV_BSIZE > md_root_size)
 			break;
 	}
 	(void)(*bdevsw[major(dev)].d_close)(dev, 0, S_IFCHR, &proc0);
-	rd_root_size = offset;
+	md_root_size = offset;
 	return 0;
 }
 #endif

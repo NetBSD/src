@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.6 1996/10/27 08:52:04 oki Exp $
+#	$NetBSD: ALL,v 1.7 1996/12/28 23:30:16 pk Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -140,4 +140,4 @@ pseudo-device	pow		2	# software power switch
 pseudo-device	loop			# loopback; recommended
 pseudo-device	vnd		10	# vn virtual filesystem device
 pseudo-device	ccd		4	# concatenating disk driver
-pseudo-device	rd		1	# ramdisk
+pseudo-device	md		1	# memory disk

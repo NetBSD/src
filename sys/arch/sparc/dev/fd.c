@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.44 1996/12/10 22:54:57 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.45 1996/12/28 23:27:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1960,8 +1960,8 @@ fd_do_eject()
 	auxregbisc(AUXIO_FEJ, AUXIO_FDS);
 }
 
-#ifdef RAMDISK_HOOKS
-int	fd_read_rd_image __P((size_t *, caddr_t *));
+#ifdef MEMORY_DISK_HOOKS
+int	fd_read_md_image __P((size_t *, caddr_t *));
 #endif
 
 /* ARGSUSED */
@@ -1982,18 +1982,18 @@ fd_mountroot_hook(dev)
 	}
 #ifdef RAMDISK_HOOKS
 	{
-	extern int (*rd_read_image) __P((size_t *, caddr_t *));
-	rd_read_image = fd_read_rd_image;
+	extern int (*md_read_image) __P((size_t *, caddr_t *));
+	md_read_image = fd_read_md_image;
 	}
 #endif
 }
 
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
 int
-fd_read_rd_image(sizep, addrp)
+fd_read_md_image(sizep, addrp)
 	size_t	*sizep;
 	caddr_t	*addrp;
 {

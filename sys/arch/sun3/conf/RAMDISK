@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.7 1996/11/19 21:04:48 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.8 1996/12/28 23:27:30 pk Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -26,7 +26,7 @@ makeoptions DEBUG="-g"			# symbols for kgdb + nm
 options 	KGDB
 
 # Enable the hooks used for initializing the ram-disk.
-options 	RAMDISK_HOOKS
+options 	MEMORY_DISK_HOOKS
 options 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
@@ -55,7 +55,7 @@ options 	DIAGNOSTIC
 
 # The config program assumes all devices have partions...
 # Is it OK to put swap on a non-existent partition?
-config		netbsd root on rd0a swap on rd0b
+config		netbsd root on md0a swap on md0b
 
 #
 # Serial ports
@@ -123,8 +123,8 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
-# RAM-disk (root for install tape)
-pseudo-device	rd	2		# RAM-disk
+# Memory-disk (root for install tape)
+pseudo-device	md	2		# Memory-disk
 
 # Misc.
 pseudo-device	loop	1		# network loopback

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
+#	$NetBSD: files.sun3,v 1.27 1996/12/28 23:27:32 pk Exp $
 
 #
 # sun3-specific configuration info
@@ -177,17 +177,17 @@ attach ms at zsc
 file dev/sun/ms.c			ms needs-flag
 
 
-# RAM Disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
-file arch/sun3/dev/rd_root.c		ramdisk_hooks
+# Memory Disk for boot tape
+pseudo-device md
+file dev/md.c			md needs-flag
+file arch/sun3/dev/md_root.c	memory_disk_hooks
 
 # Major numbers for root/swap device configuration
 major	{xy=3}	# Xylogics 450 and 451
 major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
-major	{rd=13}	# RAM disk (for mini-kernel)
+major	{md=13}	# Memory disk (for mini-kernel)
 
 # Compatibility modules
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 1996/12/17 21:11:18 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 1996/12/28 23:29:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -52,9 +52,9 @@ cdev_decl(cd);
 bdev_decl(ccd);
 cdev_decl(ccd);
 
-#include "rd.h"
-bdev_decl(rd);
-/* no cdev for rd */
+#include "md.h"
+bdev_decl(md);
+/* no cdev for md */
 
 #include "sd.h"
 bdev_decl(sd);
@@ -99,7 +99,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NXD,xd),		/* 10: SMD disk on Xylogics 7053 */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12: Sun ns? */
-	bdev_disk_init(NRD,rd),		/* 13: RAM disk - for install tape */
+	bdev_disk_init(NMD,md),		/* 13: Memory disk - for install tape */
 	bdev_notdef(),			/* 14: Sun ft? */
 	bdev_notdef(),			/* 15: Sun hd? */
 	bdev_notdef(),			/* 16: Sun fd? */
