@@ -92,7 +92,7 @@ static void nbsd_find_new_threads PARAMS ((void));
 static struct cleanup *
 save_inferior_pid ()
 {
-  return make_cleanup (restore_inferior_pid, (void *)inferior_pid);
+  return make_cleanup (restore_inferior_pid, (void *)(long)inferior_pid);
 }
 
 static void
@@ -100,7 +100,7 @@ restore_inferior_pid (pid)
      void *pid;
 {
   /* XXX terrible type punning, but C doesn't have closures... */
-  inferior_pid = (int)pid;
+  inferior_pid = (int)(long)pid;
 }
 
 static td_proc_t *main_ta;
