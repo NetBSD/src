@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.71 2003/11/04 14:52:22 scw Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.72 2004/01/16 00:36:39 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -59,13 +59,13 @@ ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 	mv tmp.o ${.TARGET}
 
 ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
-	${OBJDUMP} --reloc ${KMOD}_tmp.o | \
+	${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 		 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk > tmp.S
 	mv tmp.S ${.TARGET}
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${LD} -r ${LDFLAGS} \
-		`${OBJDUMP} --reloc ${KMOD}_tmp.o | \
+		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
 .if exists($S/lkm/arch/${MACHINE_CPU}/lkmhide.awk)
