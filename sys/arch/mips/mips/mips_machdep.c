@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.111 2000/12/28 09:27:09 castor Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.112 2000/12/31 19:06:40 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.111 2000/12/28 09:27:09 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.112 2000/12/31 19:06:40 castor Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -803,6 +803,7 @@ sendsig(catcher, sig, mask, code)
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 
 	/* Save the floating-pointstate, if necessary, then copy it. */
+#ifndef SOFTFLOAT
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
@@ -810,6 +811,9 @@ sendsig(catcher, sig, mask, code)
 			savefpregs(p);
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
+#else
+	*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+#endif
 
 	/* Save signal stack. */
 	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -914,6 +918,7 @@ sys___sigreturn14(p, v, retval)
 	f->f_regs[MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
+#ifndef	SOFTFLOAT
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
@@ -922,6 +927,9 @@ sys___sigreturn14(p, v, retval)
 		}
 		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	}
+#else
+	p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+#endif
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
