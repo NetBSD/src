@@ -1,4 +1,4 @@
-/*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
+/*	$NetBSD: rev.c,v 1.6 1997/10/19 14:03:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $";
+__RCSID("$NetBSD: rev.c,v 1.6 1997/10/19 14:03:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,19 +56,20 @@ static char rcsid[] = "$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $";
 #include <string.h>
 #include <unistd.h>
 
-void usage __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *filename, *p, *t;
+	char *filename, *p, *t;
 	FILE *fp;
 	size_t len;
 	int ch, rval;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
