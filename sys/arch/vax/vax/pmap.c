@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 1999/04/17 00:01:19 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.63 1999/04/17 17:02:50 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,13 +60,7 @@
 
 /* QDSS console mapping hack */
 #include "qd.h"
-#if NQD > 0
-/* Pointer to virtual memory for for mapping QDSS */
-void *qvmem[NQD];
-/* Pointer to page tables for this virtual memory */
-struct pte *QVmap[NQD];
-extern void *qd_ubaio;
-#endif
+void	qdearly(void);
 
 #define ISTACK_SIZE NBPG
 vaddr_t	istack;
@@ -218,12 +212,7 @@ pmap_bootstrap()
 
         /* QDSS console mapping hack */
 #if NQD > 0
-        /*
-         * This allocates some kernel virtual address space.  qdcninit
-         * maps things here
-         */
-        MAPVIRT(qvmem[0], 64 * 1024 * NQD / VAX_NBPG);
-        MAPVIRT(qd_ubaio, 16);
+	qdearly();
 #endif
 
 	MAPVIRT(iospace, IOSPSZ); /* Device iospace mapping area */

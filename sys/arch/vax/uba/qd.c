@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.12 1999/01/19 21:04:48 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.13 1999/04/17 17:02:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -150,8 +150,8 @@ struct qdflags {
  */
 struct uba_device *qdinfo[NQD];  /* array of pntrs to each QDSS's */
 struct tty *qd_tty[NQD*4];	/* teletype structures for each.. */
-extern volatile char *qvmem[NQD];
-extern volatile struct pte *QVmap[NQD];
+volatile char *qvmem[NQD];
+volatile struct pte *QVmap[NQD];
 #define CHUNK	  (64 * 1024)
 #define QMEMSIZE  (1024 * 1024 * 4)	/* 4 meg */
 
@@ -333,6 +333,7 @@ void write_ID __P((volatile struct adder *, short, short));
 int wait_status __P((volatile struct adder *, int));
 void led_control __P((int, int, int));
 void qdstart(struct tty *);
+void qdearly(void);
 int qdpolling = 0;
 
 /*
@@ -378,67 +379,65 @@ volatile u_short *qdaddr;         /* Virtual address for QDSS CSR */
  * has been performed on qd0.  That initialization is required and must 
  * be done before the device probe routine.
  */
-int qd0cninited = 0;
+int qd0cninited = 0, qd0iscons = 0;
+
+/*
+ * Do early check if the qdss is console. If not; don't allocate
+ * any memory for it in bootstrap.
+ */
+void
+qdearly()
+{
+	extern vaddr_t virtual_avail;
+	int tmp;
+
+	/* Make sure we're running on a system that can have a QDSS */
+	if (vax_boardtype == VAX_BTYP_630)  {
+		/* Now check some undocumented flag */
+		if ((*(int *)(0x200B801E) & 0x60) == 0) 
+			/* The KA630 isn't using a QDSS as the console,
+			 * so we won't either */
+			return;
+	} else if (vax_boardtype != VAX_BTYP_650)
+		return;
+
+	/* How to check for console on KA650? We assume that if there is a
+	 * QDSS, it is console.
+	 */
+	tmp = QIOPAGE + ubdevreg(QDSSCSR);
+	if (badaddr((caddr_t)tmp, sizeof(short)))
+		return;
+
+	MAPVIRT(qvmem[0], 64 * 1024 * NQD / VAX_NBPG);
+	MAPVIRT(qd_ubaio, 16);
+	pmap_map((int)qd_ubaio, QIOPAGE, QIOPAGE + UBAIOPAGES * VAX_NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE);
+	qdaddr = (u_short *)((u_int)qd_ubaio + ubdevreg(QDSSCSR));
+	qd0iscons = 1;
+}
 
 void
 qdcnprobe(cndev)
-        struct  consdev *cndev;
+	struct  consdev *cndev;
 {
-        int i;
+	int i;
 
-        cndev->cn_pri = CN_DEAD;
+	cndev->cn_pri = CN_DEAD;
    
 	if (mfpr(PR_MAPEN) == 0)
 		return; /* Cannot use qd if vm system is OFF */
 
-        /* Make sure we're running on a system that can have a QDSS */
-        if (vax_boardtype == VAX_BTYP_630)  {
-                /*
-		 * The KA630 can have a QDSS and we can even check if 
-		 * the ROM is using it. 
-		 */
-	    
-                /* Temporarily map in physical memory */
-	        pmap_map((int)qd_ubaio, 0x200B8000, 0x200B8000 + VAX_NBPG,
-		        	            VM_PROT_READ|VM_PROT_WRITE);
+	if (!qd0iscons)
+		return;
 
-	        /* Now check some undocumented flag */
-	        if ((*(int *)((uint)qd_ubaio + 0x1E) & 0x60) == 0) 
-	                /* The KA630 isn't using a QDSS as the console,
-	                 * so we won't either */
-		        return;
-	} else /* if (vax_boardtype != VAX_BTYP_650) */
-                /* 
-		 * The KA640, 650 and 655 should also support a QDSS.
-		 * Otherwise, it shouldn't be there so apply artificial
-	         * feature blocking.
-	         */
-                return;
-	      
-        /*
-	 * Map device registers - the last 8K of qvmem.
-	 */
-        pmap_map((int)qd_ubaio, QIOPAGE, QIOPAGE + UBAIOPAGES * VAX_NBPG,
-			            VM_PROT_READ|VM_PROT_WRITE);
-        qdaddr = (u_short *)((u_int)qd_ubaio + ubdevreg(QDSSCSR));
-
-        /* 
-	 * If there's nothing there then we don't have a console QDSS. 
-	 * If something is there then we have a console QDSS.  
-	 * ie.  Don't put anything at QDSSCSR.  The ROM would also
-	 * think you have a QDSS.
-         */  
-        if (badaddr((caddr_t)qdaddr, sizeof(short)))
-                     return;
-
-        /* Find the console device corresponding to the console QDSS */
-        for (i = 0; i < nchrdev; i++)
-                if (cdevsw[i].d_open == qdopen)  {
-                              cndev->cn_dev = makedev(i,0);
-                              cndev->cn_pri = CN_INTERNAL;
-                              return;
-                 }
-        return;
+	/* Find the console device corresponding to the console QDSS */
+	for (i = 0; i < nchrdev; i++)
+		if (cdevsw[i].d_open == qdopen)  {
+			      cndev->cn_dev = makedev(i,0);
+			      cndev->cn_pri = CN_INTERNAL;
+			      return;
+		 }
+	return;
 }
 
 
@@ -447,32 +446,32 @@ qdcnprobe(cndev)
  */
 void
 qdcninit(cndev)
-        struct  consdev *cndev;
+	struct  consdev *cndev;
 {
 	caddr_t phys_adr;		/* physical QDSS base adrs */
 	u_int mapix;			/* index into QVmap[] array */
-        int unit;
+	int unit;
 
-        /* qdaddr must point to CSR for this unit! */
+	/* qdaddr must point to CSR for this unit! */
    
-        /* The console QDSS is QDSS unit 0 */
-        unit = 0;
+	/* The console QDSS is QDSS unit 0 */
+	unit = 0;
 
-        /*
+	/*
 	 * Map q-bus memory used by qdss. (separate map)
 	 */
 	mapix = QMEMSIZE - (CHUNK * (unit + 1));
-        (int)phys_adr = QMEM + mapix;
-        pmap_map((int)(qvmem[0]), (int)phys_adr, (int)(phys_adr + (CHUNK*NQD)),
-			            VM_PROT_READ|VM_PROT_WRITE);
+	(int)phys_adr = QMEM + mapix;
+	pmap_map((int)(qvmem[0]), (int)phys_adr, (int)(phys_adr + (CHUNK*NQD)),
+				    VM_PROT_READ|VM_PROT_WRITE);
 
-        /* 
+	/* 
 	 * Set QVmap to point to page table entries for what we just
 	 * mapped.
 	 */
-        QVmap[0] = (struct pte *)kvtopte(qvmem[0]);
+	QVmap[0] = (struct pte *)kvtopte(qvmem[0]);
    
-        /*
+	/*
 	 * tell QDSS which Q memory address base to decode 
 	 * (shifted right 16 bits - its in 64K units)
 	 */
@@ -509,8 +508,8 @@ qdcninit(cndev)
 	ldcursor(unit, cons_cursor);	/* load default cursor map */
 	setup_input(unit);		/* init the DUART */
 
-        /* Set flag so probe knows */
-        qd0cninited = 1;
+	/* Set flag so probe knows */
+	qd0cninited = 1;
 } /* qdcninit */
 
  
@@ -527,13 +526,13 @@ qdcninit(cndev)
  */
 static int
 qd_match(parent, match, aux)
-        struct device *parent;
+	struct device *parent;
 	struct cfdata *match;
-        void *aux;
+	void *aux;
 {
-        struct uba_attach_args *ua = aux;
-        struct uba_softc *uh = (void *)parent;
-        register int *reg = (int *)(ua->ua_addr);
+	struct uba_attach_args *ua = aux;
+	struct uba_softc *uh = (void *)parent;
+	register int *reg = (int *)(ua->ua_addr);
 	register int unit;
 	volatile struct dga *dga;       /* pointer to gate array structure */
 	int vector;
@@ -555,7 +554,7 @@ qd_match(parent, match, aux)
 
 	/*
 	 * QDSS regs must be mapped to Qbus memory space at a 64kb
- 	 * physical boundary.  The Qbus memory space is mapped into
+	 * physical boundary.  The Qbus memory space is mapped into
 	 * the system memory space at config time.  After config
 	 * runs, "qvmem[0]" (ubavar.h) holds the system virtual adrs
 	 * of the start of Qbus memory.   The Qbus memory page table
@@ -570,7 +569,7 @@ qd_match(parent, match, aux)
 	 * Only if QD is the graphics device.
 	 */
 
-        /* if this QDSS is NOT the console, then do init here.. */
+	/* if this QDSS is NOT the console, then do init here.. */
 
 	if (unit != 0) {
 		printf("qd: can't support two qdss's (yet)\n");
@@ -633,30 +632,30 @@ qd_match(parent, match, aux)
 		}
 #endif /*notdef*/
 	} else {
-	        /* We are dealing with qd0 */
-	         
-	        if (!qd0cninited) {
-		        /* 
+		/* We are dealing with qd0 */
+		 
+		if (!qd0cninited) {
+			/* 
 			 * qd0 has not been initiallized as the console.
 			 * We need to do some initialization now
 			 * 
-		         * XXX 
+			 * XXX 
 			 * However, if the QDSS is not the console then
 			 * that stupid undocumented bit (see qdcnprobe)
 			 * is cleared.  Then the QDSS refuses to work.
 			 * (What did the ROM do to it!?)
 			 * XXX
 			 */
-		         return 0;
+			 return 0;
 		   
 #if 0		   
-		         qdaddr = (void *)reg;
+			 qdaddr = (void *)reg;
 
-		         /* Lame probe for QDSS.  Should be ok for qd0 */
-		         if (badaddr((caddr_t)qdaddr, sizeof(short)))
-                                 return 0;
+			 /* Lame probe for QDSS.  Should be ok for qd0 */
+			 if (badaddr((caddr_t)qdaddr, sizeof(short)))
+				 return 0;
 
-		         qdcninit(NULL);
+			 qdcninit(NULL);
 #endif		   
 		}
 	}
@@ -696,25 +695,25 @@ qd_match(parent, match, aux)
 	DELAY(20000);			/* wait for the intrpt */
 	dga->csr = HALT;		/* stop the wheels */
 
-        /* Set interrupt vector for DMA service routine */      
-        ua->ua_ivec = qddint;
+	/* Set interrupt vector for DMA service routine */      
+	ua->ua_ivec = qddint;
    
 	/*
 	* score this as an existing qdss
 	*/
 	qdcount++;
 
-        return 1;
+	return 1;
 } /* qdprobe */
 
 
 void qd_attach(parent, self, aux)
-           struct device *parent, *self;
-           void *aux;
+	   struct device *parent, *self;
+	   void *aux;
      {
 	register struct uba_attach_args *ua = aux;
 	
-        register int unit;	/* QDSS module # for this call */
+	register int unit;	/* QDSS module # for this call */
 
 	printf("\n");
 	
@@ -770,7 +769,7 @@ void qd_attach(parent, self, aux)
 
 /* see <sys/device.h> */
 struct cfattach qd_ca = {
-        sizeof(struct device), qd_match, qd_attach
+	sizeof(struct device), qd_match, qd_attach
 };
 
    
@@ -779,7 +778,7 @@ int
 qdopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-        struct proc *p;
+	struct proc *p;
 {
 	volatile register struct dga *dga;	/* ptr to gate array struct */
 	register struct tty *tp;
@@ -793,10 +792,10 @@ qdopen(dev, flag, mode, p)
 	/*
 	* check for illegal conditions	
 	*/
-        if (unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[unit] == NULL)
-                return (ENXIO);		/* no such device or address */
+	if (unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[unit] == NULL)
+		return (ENXIO);		/* no such device or address */
 
-        duart = (struct duart *) qdmap[unit].duart;
+	duart = (struct duart *) qdmap[unit].duart;
 	dga = (struct dga *) qdmap[unit].dga;
 
 	if ((minor_dev & 0x03) == 2) {
@@ -815,14 +814,14 @@ qdopen(dev, flag, mode, p)
 		duart->imask = qdflags[unit].duart_imask;
 	} else {
 	       /* Only one console */
-               if (minor_dev) return ENXIO;
+	       if (minor_dev) return ENXIO;
 	   
 	       /* If not done already, allocate tty structure */
 	       if (qd_tty[minor_dev] == NULL)
-                       qd_tty[minor_dev] = ttymalloc();
-              
+		       qd_tty[minor_dev] = ttymalloc();
+	      
 	       if (qd_tty[minor_dev] == NULL)
-	               return ENXIO;
+		       return ENXIO;
 	   
 	       /*
 		* this is the console 
@@ -837,7 +836,7 @@ qdopen(dev, flag, mode, p)
 		tp = qd_tty[minor_dev];
 		/* tp->t_addr = ui->ui_addr; */
 		tp->t_oproc = qdstart;
-	        tp->t_dev = dev;
+		tp->t_dev = dev;
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			ttychars(tp);
 			tp->t_ispeed = B9600;
@@ -847,12 +846,12 @@ qdopen(dev, flag, mode, p)
 			tp->t_oflag = TTYDEF_OFLAG;
 			tp->t_lflag = TTYDEF_LFLAG;
 			tp->t_cflag = TTYDEF_CFLAG;
-		        ttsetwater(tp);
+			ttsetwater(tp);
 		}
 		/*
 		* enable intrpts, open line discipline 
 		*/
-	        dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
+		dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
 		return ((*linesw[tp->t_line].l_open)(dev, tp));
 	}
 	dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
@@ -877,14 +876,14 @@ qdclose(dev, flag, mode, p)
 	int minor_dev;
 	u_int mapix;
 	int i;				/* SIGNED index */
-        struct uba_softc *uh;
+	struct uba_softc *uh;
    
 	minor_dev = minor(dev); 	/* get minor device number */
 	unit = minor_dev >> 2;		/* get QDSS number */
 	qd = &qdmap[unit];
 
-        uh = (struct uba_softc *)
-             (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	uh = (struct uba_softc *)
+	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
 
    
 	if ((minor_dev & 0x03) == 2) {
@@ -892,7 +891,7 @@ qdclose(dev, flag, mode, p)
 		* this is the graphic device... 
 		*/
 		if (qdopened[unit] != 1)
-		    	return(EBUSY);
+			return(EBUSY);
 		else
 			qdopened[unit] = 0;	/* allow it to be re-opened */
 		/*
@@ -1056,9 +1055,9 @@ int
 qdioctl(dev, cmd, datap, flags, p)
 	dev_t dev;
 	u_long cmd;
-        caddr_t datap;
+	caddr_t datap;
 	int flags;
-        struct proc *p;
+	struct proc *p;
 {
 	volatile register int *ptep;	/* page table entry pointer */
 	register int mapix;		/* QVmap[] page table index */
@@ -1077,10 +1076,10 @@ qdioctl(dev, cmd, datap, flags, p)
 	int error;
 	int s;
 	short *temp;			/* a pointer to template RAM */
-        struct uba_softc *uh;
+	struct uba_softc *uh;
 
-        uh = (struct uba_softc *)
-             (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	uh = (struct uba_softc *)
+	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
 
 	/*
 	* service graphic device ioctl commands 
@@ -1207,7 +1206,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		for (i = 0; i < vax_btop(CLRSIZE); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
 
-  	       /*
+	       /*
 		* enable user write to DUART 
 		*/
 		mapix = VTOP((int)qd->duart) - VTOP(qvmem[0]);
@@ -1216,12 +1215,12 @@ qdioctl(dev, cmd, datap, flags, p)
 
 		mtpr(0, PR_TBIA);		/* invalidate translation buffer */
 
-	        /*
+		/*
 		 * stuff qdmap structure in return buffer 
 		 */
 		bcopy((caddr_t)qd, datap, sizeof(struct qdmap));
 
-	        break;
+		break;
 
 	case QD_MAPIOBUF:
 		/*
@@ -1481,77 +1480,77 @@ qdioctl(dev, cmd, datap, flags, p)
 
 int
 qdpoll(dev, events, p)
-        dev_t dev;
-        int events;
-        struct proc *p;
+	dev_t dev;
+	int events;
+	struct proc *p;
 {
 	register int s;
 	register int unit;
 	register struct tty *tp;
 	u_int minor_dev = minor(dev);
-        int revents = 0;
+	int revents = 0;
 
 	s = spl5();
 	unit = minor_dev >> 2;
 
-        if ((minor_dev & 0x03) == 2)  {
-                /* 
+	if ((minor_dev & 0x03) == 2)  {
+		/* 
 		 * This is a graphics device, so check for events.
 		 */
 
-	        if (events & (POLLIN | POLLRDNORM))
+		if (events & (POLLIN | POLLRDNORM))
 			if(!(ISEMPTY(eq_header[unit])))
-			        revents |= events & (POLLIN | POLLRDNORM);
+				revents |= events & (POLLIN | POLLRDNORM);
 			   
-	        if (events & (POLLOUT | POLLWRNORM))
+		if (events & (POLLOUT | POLLWRNORM))
 			if (DMA_ISEMPTY(DMAheader[unit]))
-	                        revents |= events & (POLLOUT | POLLWRNORM);
+				revents |= events & (POLLOUT | POLLWRNORM);
 	   
-	        if (revents == 0)  {
-		        if (events & (POLLIN | POLLRDNORM))  {
-		 		selrecord(p, &qdrsel[unit]);
-			        qdflags[unit].selmask |= SEL_READ;
+		if (revents == 0)  {
+			if (events & (POLLIN | POLLRDNORM))  {
+				selrecord(p, &qdrsel[unit]);
+				qdflags[unit].selmask |= SEL_READ;
 			}
 
-       		        if (events & (POLLOUT | POLLWRNORM))  {
-		 		selrecord(p, &qdrsel[unit]);
-			        qdflags[unit].selmask |= SEL_WRITE;
+			if (events & (POLLOUT | POLLWRNORM))  {
+				selrecord(p, &qdrsel[unit]);
+				qdflags[unit].selmask |= SEL_WRITE;
 			}
-	        }
+		}
 	} else  {
-       		/*
-       		* this is a tty device
-       		*/
-	        tp = qd_tty[minor_dev];
+		/*
+		* this is a tty device
+		*/
+		tp = qd_tty[minor_dev];
 	   
-	        if (events & (POLLIN | POLLRDNORM))  {
+		if (events & (POLLIN | POLLRDNORM))  {
 		     /* This is ttnread.  It's static and I don't feel
 		      * like altering platform independant parts of NetBSD
 		      */
 		     int nread;
 		     /* if (tp->t_lflag & PENDIN)
-		                     ttypend(tp); */
+				     ttypend(tp); */
 		     nread = tp->t_canq.c_cc;
 		     if (!(tp->t_lflag & ICANON))  {
-		             nread += tp->t_rawq.c_cc;
-		             if (nread < tp->t_cc[VMIN] && !tp->t_cc[VTIME])
-		                     nread = 0;
+			     nread += tp->t_rawq.c_cc;
+			     if (nread < tp->t_cc[VMIN] && !tp->t_cc[VTIME])
+				     nread = 0;
 		     }
-	             if (nread > 0) 
-	                     revents |= events & (POLLIN | POLLRDNORM);
-	        }
+		     if (nread > 0) 
+			     revents |= events & (POLLIN | POLLRDNORM);
+		}
 	   
-	        if (events & (POLLOUT | POLLWRNORM))
-	                if (tp->t_outq.c_cc <= tp->t_lowat)
-	                        revents |= events & (POLLOUT | POLLWRNORM);
+		if (events & (POLLOUT | POLLWRNORM))
+			if (tp->t_outq.c_cc <= tp->t_lowat)
+				revents |= events & (POLLOUT | POLLWRNORM);
 	   
-	        if (revents == 0)  {
-	                if (events & (POLLIN | POLLRDNORM))
-                                selrecord(p, &tp->t_rsel);
+		if (revents == 0)  {
+			if (events & (POLLIN | POLLRDNORM))
+				selrecord(p, &tp->t_rsel);
 	  
-	                if (events & (POLLOUT | POLLWRNORM))
-       	                        selrecord(p, &tp->t_wsel);
-	        }
+			if (events & (POLLOUT | POLLWRNORM))
+				selrecord(p, &tp->t_wsel);
+		}
 	}
 	   
 	splx(s);
@@ -1604,7 +1603,7 @@ qdread(dev, uio, flag)
 	unit = (minor_dev >> 2) & 0x07;
 
 	if ((minor_dev & 0x03) != 0x02 && qdflags[unit].inuse & CONS_DEV) {
-               /*
+	       /*
 		* this is the console
 		*/
 		tp = qd_tty[minor_dev];
@@ -1637,12 +1636,12 @@ qd_strategy(bp)
 	int QBAreg;
 	int s;
 	int cookie;
-        struct uba_softc *uh;
+	struct uba_softc *uh;
    
 	unit = (minor(bp->b_dev) >> 2) & 0x07;
 
-        uh = (struct uba_softc *)
-             (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	uh = (struct uba_softc *)
+	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
    
 	/*
 	* init pointers 
@@ -1672,7 +1671,7 @@ qd_strategy(bp)
 	}
 
 STRAT_ERR:
-        adder = (struct adder *) qdmap[unit].adder;
+	adder = (struct adder *) qdmap[unit].adder;
 	adder->command = CANCEL;	/* cancel adder activity */
 	dga->csr &= ~DMA_IE;
 	dga->csr &= ~0x0600;		/* halt DMA (reset fifo) */
@@ -2017,7 +2016,7 @@ qddint(qd)
 	* if this was a DMA from user space... 
 	*/
 	if (qdflags[qd].user_dma) {
-	        qdflags[qd].user_dma = 0;
+		qdflags[qd].user_dma = 0;
 		wakeup((caddr_t)&qdflags[qd].user_dma);
 		return;
 	}
@@ -2037,7 +2036,7 @@ qddint(qd)
 		header->newest = header->oldest;
 		header->used = 0;
 
-	        if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
+		if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
 			selwakeup(&qdrsel[qd]);
 			qdrsel[qd].si_pid = 0;
 			qdflags[qd].selmask &= ~SEL_WRITE;
@@ -2056,7 +2055,7 @@ qddint(qd)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-	        if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
+		if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
 			selwakeup(&qdrsel[qd]);
 			qdrsel[qd].si_pid = 0;  
 			qdflags[qd].selmask &= ~SEL_WRITE;
@@ -2521,7 +2520,7 @@ GET_MBUTTON:
 
 				}  /* get last byte of report */
 			} else if ((status = duart->statusB)&RCV_RDY &&
-			           qdflags[qd].pntr_id == TABLET_ID) {
+				   qdflags[qd].pntr_id == TABLET_ID) {
 				/*
 				* pickup tablet input, if any  
 				*/
@@ -2720,10 +2719,10 @@ GET_TBUTTON:
 		if (qdpolling)
 			return;
 	   
-                if (qd >= qd_cd.cd_ndevs || qd_cd.cd_devs[qd] == NULL)
-                        return;		/* no such device or address */
+		if (qd >= qd_cd.cd_ndevs || qd_cd.cd_devs[qd] == NULL)
+			return;		/* no such device or address */
 
-	        tp = qd_tty[qd << 2];
+		tp = qd_tty[qd << 2];
 
 		/*
 		 * Get a character from the keyboard. 
@@ -2808,16 +2807,16 @@ GET_TBUTTON:
 			}
 			else {
 #ifdef DDB
-			        /* Check for kernel debugger escape here */
-			        int j;
+				/* Check for kernel debugger escape here */
+				int j;
 			   
 				j = kdbrint(chr&0177);
 			   
-			        if (j == 1)  /* Escape received, just return */
-			            return;
+				if (j == 1)  /* Escape received, just return */
+				    return;
 			   
-			        if (j == 2)  /* Second char wasn't 'D' */
-			            (*linesw[tp->t_line].l_rint)(27, tp);
+				if (j == 2)  /* Second char wasn't 'D' */
+				    (*linesw[tp->t_line].l_rint)(27, tp);
 #endif
 				(*linesw[tp->t_line].l_rint)(chr&0177, tp);
 			}
@@ -2876,7 +2875,7 @@ clear_qd_screen(unit)
  */
 void
 qdcnputc(dev, chr)
-        dev_t dev;
+	dev_t dev;
 	int chr;
 {
 
@@ -2898,7 +2897,7 @@ qdcnputc(dev, chr)
 void
 ldcursor(unit, bitmap)
 	int unit;
-        short *bitmap;
+	short *bitmap;
 {
 	volatile register struct dga *dga;
 	volatile register short *temp;
@@ -3063,8 +3062,8 @@ ldfont(unit)
  */
 void
 qdcnpollc(dev, onoff)
-        dev_t dev;
-        int onoff;
+	dev_t dev;
+	int onoff;
 {
      qdpolling = onoff;
 }
@@ -3075,7 +3074,7 @@ qdcnpollc(dev, onoff)
  */
 int
 qdcngetc(dev)
-        dev_t dev;
+	dev_t dev;
 {
 	register short key;
 	register char chr;
@@ -3264,7 +3263,7 @@ scroll_up(adder)
  */
 void
 init_shared(unit)
-        int unit;
+	int unit;
 {
 	volatile register struct dga *dga;
 
@@ -3750,7 +3749,7 @@ OUT:
 int
 wait_status(adder, mask)
 	volatile struct adder *adder;
-        int mask;
+	int mask;
 {
 	register int i;
 
@@ -3772,7 +3771,7 @@ wait_status(adder, mask)
  */
 void
 write_ID(adder, adrs, data)
-        volatile struct adder *adder;
+	volatile struct adder *adder;
 	short adrs;
 	short data;
 {
