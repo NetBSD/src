@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.59 1999/09/24 00:48:24 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.60 1999/09/24 12:52:18 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.59 1999/09/24 00:48:24 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.60 1999/09/24 12:52:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2178,11 +2178,7 @@ restart(argc, argv)
 		return;
 	}
 	if (argc == 2) {
-#ifndef NO_QUAD
-		quad_t	rp;
-#else
-		long	rp;
-#endif
+		off_t rp;
 		char *ep;
 
 #ifndef NO_QUAD
