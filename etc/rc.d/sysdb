@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.2 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: sysdb,v 1.2.4.1 2000/08/09 19:09:48 lukem Exp $
 #
 
 # PROVIDE: databases
-# REQUIRE: systemfs
+# REQUIRE: mountcritremote
 
 . /etc/rc.subr
 
@@ -26,6 +26,12 @@ sysdb_start()
 		kvm_mkdb /netbsd
 	fi
 	dev_mkdb
+
+	#	Re-create /var/run/utmp, which is deleted by mountcritlocal
+	#	but can't be recreated by it because install and chown may
+	#	not be available then (possibly no /usr).
+	#
+	install -c -m 664 -g utmp /dev/null /var/run/utmp
 }
 
 load_rc_config $name

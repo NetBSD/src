@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: LOGIN,v 1.2 2000/05/02 16:31:11 augustss Exp $
+# $NetBSD: LOGIN,v 1.2.4.1 2000/08/09 19:09:37 lukem Exp $
 #
 
 # PROVIDE: LOGIN
@@ -9,7 +9,8 @@
 # REQUIRE: route6d rtadvd rtsold wscons yppasswdd
 
 
-#	This is a dummy to ensure that xdm, inetd, cron and kerberos are
-#	started after everything else, incase the user has increased the
-#	system security level, and because we want to delay user logins
-#	until the system is (almost) fully operational.
+#	This is a dummy dependancy to ensure user services such as xdm,
+#	inetd, cron and kerberos are started after everything else, incase
+#	the administrator has increased the system security level and
+#	wants to delay user logins until the system is (almost) fully
+#	operational.
