@@ -1,3 +1,2 @@
-# $NetBSD: md.bebox,v 1.4 2001/01/26 01:39:17 jwise Exp $
+# $NetBSD: md.bebox,v 1.5 2001/04/12 02:40:45 briggs Exp $
 ./etc/fstab.wd		etc-sys-etc
-./etc/ld.so.conf	etc-sys-etc
