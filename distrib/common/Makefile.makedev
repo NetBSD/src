@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.5 2003/03/11 07:18:38 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.6 2003/05/08 13:04:37 christos Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
@@ -41,7 +41,7 @@ MTREECONF+=	${MAKEDEVSPEC}
 ${MAKEDEVSPEC}:	${_MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	MAKEDEVSCRIPT=${_MAKEDEVSCRIPT:Q} \
-	    sh ${_MAKEDEVWRAP} ${MAKEDEVTARGETS} | \
+	    ${HOST_SH} ${_MAKEDEVWRAP} ${MAKEDEVTARGETS} | \
 	    awk -f ${_MAKEDEV2SPEC} > ${.TARGET}.tmp \
 	&& sort -o ${.TARGET} ${.TARGET}.tmp
 
