@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.18 2002/10/02 16:53:01 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.19 2003/02/04 05:24:51 matt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.18 2002/10/02 16:53:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.19 2003/02/04 05:24:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,8 @@ int	bba_round_blocksize __P((void *, int));
 int	bba_halt_output __P((void *));
 int	bba_halt_input __P((void *));
 int	bba_getdev __P((void *, struct audio_device *));
-void	*bba_allocm __P((void *, int, size_t, int, int));
-void	bba_freem __P((void *, void *, int));
+void	*bba_allocm __P((void *, int, size_t, struct malloc_type *, int));
+void	bba_freem __P((void *, void *, struct malloc_type *));
 size_t	bba_round_buffersize __P((void *, int, size_t));
 int	bba_get_props __P((void *));
 paddr_t	bba_mappage __P((void *, void *, off_t, int));
@@ -297,7 +297,8 @@ bba_allocm(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct am7930_softc *asc = addr;
 	struct bba_softc *sc = addr;
@@ -351,7 +352,7 @@ void
 bba_freem(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	struct bba_softc *sc = addr;
         struct bba_mem **mp, *m;
