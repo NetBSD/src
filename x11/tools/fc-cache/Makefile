@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/15 13:47:05 dbj Exp $
 
 NOMAN=		1
 
@@ -48,6 +48,10 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${X11SRCDIR.xc}/lib/expat \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT \
 		${EXPAT_FLAGS}
+
+# This tells a cross build on darwin not to bother with
+# resource fork font support which needs the carbon libraries.
+HOST_CPPFLAGS+=	-DDARWIN_NO_CARBON
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>
