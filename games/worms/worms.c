@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)worms.c	5.9 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: worms.c,v 1.4 1994/04/05 00:21:20 mycroft Exp $";
+static char rcsid[] = "$Id: worms.c,v 1.5 1995/01/31 15:54:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -231,7 +231,7 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-length #] [-number #]\n");
+			    "usage: worms [-ft] [-l #] [-n #]\n");
 			exit(1);
 		}
 
