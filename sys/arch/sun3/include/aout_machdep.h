@@ -1,8 +1,3 @@
-/*	$NetBSD: aout_machdep.h,v 1.10 1996/10/08 13:07:37 cgd Exp $	*/
-
-#ifndef _MACHINE_EXEC_H_
-#define _MACHINE_EXEC_H_
+/*	$NetBSD: aout_machdep.h,v 1.11 1996/12/13 20:23:51 gwr Exp $	*/
 
 #include <m68k/aout_machdep.h>
-
-#endif /* _MACHINE_EXEC_H_ */
