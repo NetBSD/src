@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.4 2001/12/10 04:05:23 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,10 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.4 2001/12/10 04:05:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
@@ -71,9 +72,10 @@ int	coredump_writesegs_netbsd32(struct proc *, struct vnode *,
 	    struct ucred *, struct uvm_coredump_state *);
 
 int
-coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
+coredump_netbsd32(struct lwp *l, struct vnode *vp, struct ucred *cred)
 {
 	struct coredump_state cs;
+	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	int error;
 
@@ -86,7 +88,7 @@ coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
 	cs.core.c_tsize = (u_long)ctob(vm->vm_tsize);
 	cs.core.c_dsize = (u_long)ctob(vm->vm_dsize);
 	cs.core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
-	error = cpu_coredump32(p, vp, cred, &cs.core);
+	error = cpu_coredump32(l, vp, cred, &cs.core);
 	if (error)
 		return (error);
 

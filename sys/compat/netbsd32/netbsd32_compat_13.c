@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.12 2002/10/23 13:16:41 scw Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.13 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.12 2002/10/23 13:16:41 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.13 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,17 +37,19 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.12 2002/10/23 13:16:41 scw 
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_13_netbsd32_sigaltstack13(p, v, retval)
-	struct proc *p;
+compat_13_netbsd32_sigaltstack13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct compat_13_netbsd32_sigaltstack13_args /* {
 		syscallarg(const netbsd32_sigaltstack13p_t) nss;
 		syscallarg(netbsd32_sigaltstack13p_t) oss;
@@ -80,7 +82,7 @@ compat_13_netbsd32_sigaltstack13(p, v, retval)
 	if (error)
 		return (error);
 
-	error = compat_13_sys_sigaltstack(p, &ua, retval);
+	error = compat_13_sys_sigaltstack(l, &ua, retval);
 	if (error)
 		return (error);
 
@@ -102,11 +104,12 @@ compat_13_netbsd32_sigaltstack13(p, v, retval)
 
 
 int
-compat_13_netbsd32_sigprocmask(p, v, retval)
-	struct proc *p;
+compat_13_netbsd32_sigprocmask(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct compat_13_netbsd32_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
@@ -126,8 +129,8 @@ compat_13_netbsd32_sigprocmask(p, v, retval)
 }
 
 int
-compat_13_netbsd32_sigsuspend(p, v, retval)
-	struct proc *p;
+compat_13_netbsd32_sigsuspend(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -139,5 +142,5 @@ compat_13_netbsd32_sigsuspend(p, v, retval)
 
 	ess = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ess, &bss);
-	return (sigsuspend1(p, &bss));
+	return (sigsuspend1(l->l_proc, &bss));
 }

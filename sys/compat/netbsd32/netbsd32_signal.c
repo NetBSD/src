@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.5 2002/11/27 16:44:03 atatat Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.6 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.5 2002/11/27 16:44:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.6 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.5 2002/11/27 16:44:03 atatat E
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-netbsd32_sigaction(p, v, retval)
-	struct proc *p;
+netbsd32_sigaction(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -67,7 +67,7 @@ netbsd32_sigaction(p, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum), 
+	error = sigaction1(l->l_proc, SCARG(uap, signum), 
 			   SCARG(uap, nsa) ? &nsa : 0, 
 			   SCARG(uap, osa) ? &osa : 0,
 			   NULL, 0);
@@ -89,8 +89,8 @@ netbsd32_sigaction(p, v, retval)
 }
 
 int
-netbsd32___sigaltstack14(p, v, retval)
-	struct proc *p;
+netbsd32___sigaltstack14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -111,7 +111,7 @@ netbsd32___sigaltstack14(p, v, retval)
 		nss.ss_size = (size_t)s32.ss_size;
 		nss.ss_flags = s32.ss_flags;
 	}
-	error = sigaltstack1(p,
+	error = sigaltstack1(l->l_proc,
 	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
 		return (error);
@@ -129,8 +129,8 @@ netbsd32___sigaltstack14(p, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction14(p, v, retval)
-	struct proc *p;
+netbsd32___sigaction14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -152,7 +152,7 @@ netbsd32___sigaction14(p, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum),
+	error = sigaction1(l->l_proc, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NULL, 0);
 	if (error)
@@ -171,8 +171,8 @@ netbsd32___sigaction14(p, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction_sigtramp(p, v, retval)
-	struct proc *p;
+netbsd32___sigaction_sigtramp(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -183,6 +183,7 @@ netbsd32___sigaction_sigtramp(p, v, retval)
 		syscallarg(netbsd32_voidp) tramp;
 		syscallarg(int) vers;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;

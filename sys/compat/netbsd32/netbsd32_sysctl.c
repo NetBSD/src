@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.7 2002/10/23 13:16:45 scw Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.7 2002/10/23 13:16:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.7 2002/10/23 13:16:45 scw Exp 
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #define	__SYSCTL_PRIVATE
@@ -159,8 +160,8 @@ hw_sysctl32(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 
 int
-netbsd32___sysctl(p, v, retval)
-	struct proc *p;
+netbsd32___sysctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -176,6 +177,7 @@ netbsd32___sysctl(p, v, retval)
 	netbsd32_size_t savelen = 0;
 	size_t oldlen = 0;
 	sysctlfn *fn;
+	struct proc *p = l->l_proc;
 	int name[CTL_MAXNAME];
 
 /*
