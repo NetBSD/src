@@ -260,12 +260,12 @@ isc_result_t name##_array_lookup (stype **,				      \
 		     omapi_array_foreach_index++) {			      \
 			if ((array) -> data [omapi_array_foreach_index]) {    \
 				((*(array) -> ref)			      \
-				 ((char **)&var,			      \
+				 ((void *)&var,				      \
 				  (array) -> data [omapi_array_foreach_index],\
 				  MDL));
 
 #define	omapi_array_foreach_end(array, stype, var)			      \
-				(*(array) -> deref) ((char **)&var, MDL);     \
+				(*(array) -> deref) ((void *)&var, MDL);      \
 			}						      \
 		}							      \
 	}
