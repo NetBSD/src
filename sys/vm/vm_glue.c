@@ -76,6 +76,8 @@
 #include <machine/cpu.h>
 
 int	avefree = 0;		/* XXX */
+unsigned maxdmap = MAXDSIZ;	/* XXX */ 
+unsigned maxsmap = MAXSSIZ;	/* XXX */ 
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 
 static void swapout __P((struct proc *));
