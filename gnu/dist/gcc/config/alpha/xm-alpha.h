@@ -85,4 +85,4 @@ extern void *malloc (), *realloc (), *calloc ();
 
 /* OSF/1 has strerror. */
 
-#define HAVE_STRERROR
+#define HAVE_STRERROR 1
