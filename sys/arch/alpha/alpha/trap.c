@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.91 2004/03/14 01:08:47 cl Exp $ */
+/* $NetBSD: trap.c,v 1.92 2004/03/23 18:44:00 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2004/03/23 18:44:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1219,9 +1219,8 @@ static int
 alpha_ucode_to_ksiginfo(u_long ucode)
 {
 	long i;
-	long flags = ucode >> 1;
 
-	static int alpha_ksiginfo_table[] = { FPE_FLTINV,
+	static const int alpha_ksiginfo_table[] = { FPE_FLTINV,
 					     FPE_FLTDIV,
 					     FPE_FLTOVF,
 					     FPE_FLTUND,
@@ -1229,7 +1228,7 @@ alpha_ucode_to_ksiginfo(u_long ucode)
 					     FPE_INTOVF };
 
 	for(i=0;i < sizeof(alpha_ksiginfo_table)/sizeof(int); i++) {
-		if (flags & (1 << i))
+		if (ucode & (1 << i))
 			return (alpha_ksiginfo_table[i]);
 	}
 	/* punt if the flags weren't set */
