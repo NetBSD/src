@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.14 2000/02/01 22:52:07 thorpej Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.15 2000/02/26 16:03:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -266,6 +266,10 @@ pk_ctlinput(code, src, addr)
 {
 	register struct pkcb *pkp = (struct pkcb *) addr;
 	struct rtentry *llrt;
+
+	/*XXX correct?*/
+	if (src->sa_family != AF_CCITT)
+		return 0;
 
 	switch (code) {
 	case PRC_LINKUP:
