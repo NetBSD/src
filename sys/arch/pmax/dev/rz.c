@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28.4.2 1997/11/09 20:09:28 mellon Exp $	*/
+/*	$NetBSD: rz.c,v 1.28.4.3 1997/11/09 20:22:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)rz.c	8.1 (Berkeley) 7/29/93
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.3 1997/11/09 20:22:40 mellon Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -78,6 +81,7 @@
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsi_disk.h>	/* disk-specific sense data */
 #include <dev/scsipi/scsipi_disk.h>	/* disk-specific sense data */
+#include <dev/scsipi/scsipi_cd.h>	/* cd-specific sense data */
 #include <dev/scsipi/scsipi_debug.h>
 
 
@@ -85,6 +89,7 @@
 #include <machine/conf.h>
 
 #define	SDRETRIES	4
+#define	CDRETRIES	4
 
 struct rz_softc;
 struct scsi_mode_sense_data;
@@ -110,6 +115,7 @@ static int rz_mode_sense __P((struct rz_softc *sd,
 static int rz_getsize __P((struct rz_softc *sc, int flags));
 void	rzgetgeom __P((struct rz_softc *, int flags));
 void	rz_setlabelgeom __P((struct disklabel *lp, struct disk_parms *dp));
+u_long	rz_cdsize __P((struct rz_softc *cd, int flags));
 
 
 struct	pmax_driver rzdriver = {
@@ -260,7 +266,6 @@ static char legal_cmds[256] = {
 /*
  * Private forward declarations
  */
-
 static	int rzready __P((register struct rz_softc *sc));
 static void rzlblkstrat __P((register struct buf *bp, register int bsize));
 
@@ -353,9 +358,8 @@ rzready(sc)
 		return 0;
 	}
 
-	/*XXX perhaps move to end of  rzready()? */
+	/*XXX perhaps move to rzprobe? */
 	rzgetgeom(sc, SCSI_SILENT);
-
 	return (1);
 }
 
@@ -366,6 +370,13 @@ rz_getsize(sc, flags)
 	int flags;
 {
 	register int i;
+
+	if (sc->sc_type == SCSI_ROM_TYPE) {
+		register int cdsize;
+		 cdsize = rz_cdsize(sc, flags);
+		sc->params.disksize = cdsize;
+		return (cdsize);
+	}
 
 	sc->sc_cdb.len = sizeof(ScsiGroup1Cmd);
 	scsiGroup1Cmd(SCSI_READ_CAPACITY, sc->sc_rwcmd.unitNumber, 0, 0,
@@ -495,12 +506,13 @@ rzprobe(xxxsd)
 		printf(" %s %s rev %s", vid, pid, revl);
 	}
 
-	if (sc->sc_flags & RZF_FAKEGEOM)
-		printf("; using fake geometry");
-        printf("\nrz%d: %ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
-	    sd->sd_unit,
-	    dp->disksize / (1048576 / dp->blksize), dp->cyls,
-	    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+	printf ("%s\n", 
+	    (sc->sc_flags & RZF_FAKEGEOM) ? "; using fake geometry": "");
+	if (dp->blksize)
+	    printf("\nrz%d: %ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
+		sd->sd_unit,
+		dp->disksize / (1048576 / dp->blksize), dp->cyls,
+		dp->heads, dp->sectors, dp->blksize, dp->disksize);
 
 	if (!inqbuf.rmb && sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
@@ -740,9 +752,11 @@ rzstart(unit)
 		sc->sc_rwcmd.midHighAddr = n >> 16;
 		sc->sc_rwcmd.midLowAddr = n >> 8;
 		sc->sc_rwcmd.lowAddr = n;
-		n = howmany(bp->b_bcount, sc->sc_blksize);
+		n = howmany(bp->b_bcount, (sc->sc_blksize) ? sc->sc_blksize :
+							     DEV_BSIZE);
 		sc->sc_rwcmd.highBlockCount = n >> 8;
 		sc->sc_rwcmd.lowBlockCount = n;
+
 #ifdef DEBUG
 		if ((bp->b_bcount & (sc->sc_blksize - 1)) != 0)
 			printf("rz%d: partial block xfer -- %lx bytes\n",
@@ -891,10 +905,17 @@ rzgetinfo(dev)
 		lp->d_rpm = 300;
 		lp->d_interleave = 1;
 		lp->d_flags = D_REMOVABLE;
-		lp->d_npartitions = 1;
+		/* 4.4bsd code set 'a'. Also set up 'c' for disklabel. */
+		lp->d_npartitions = 3;
 		lp->d_partitions[0].p_offset = 0;
 		lp->d_partitions[0].p_size = sc->sc_blks;
 		lp->d_partitions[0].p_fstype = FS_ISO9660;
+		lp->d_partitions[1].p_offset = 0;
+		lp->d_partitions[1].p_size = 0;
+		lp->d_partitions[2].p_offset = 0;
+		lp->d_partitions[2].p_size = sc->sc_blks;
+		lp->d_partitions[2].p_fstype = FS_ISO9660;
+
 		lp->d_magic = DISKMAGIC;
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
@@ -1251,6 +1272,64 @@ rzsize(dev)
 }
 
 /*
+ * Find out from a CD-rom device what it's capacity is
+ */
+u_long
+rz_cdsize(cd, flags)
+	struct rz_softc *cd;
+	int flags;
+{
+	struct scsipi_read_cd_cap_data rdcap;
+	struct scsipi_read_cd_capacity scsipi_cmd;
+	int blksize;
+	u_long size;
+	int error;
+
+	/*
+	 * make up a scsi command and ask the scsi driver to do
+	 * it for you.
+	 */
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = READ_CD_CAPACITY;
+
+	/*
+	 * If the command works, interpret the result as a 4 byte
+	 * number of blocks and a blocksize
+	 */
+	error = rz_command(cd,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
+	    flags | SCSI_DATA_IN | SCSI_SILENT);
+	if (error != sizeof(rdcap)) {
+		/*
+		 * the drive doesn't support the READ_CD_CAPACITY command
+		 * use a fake size
+		 */
+#ifdef pmax
+		cd->sc_flags |= RZF_FAKEGEOM;
+		/*  Must jumper CDs to 512-byte blocks to boot on pmax. */
+		cd->sc_blksize = 512;
+		cd->sc_blks = 400000 * 4;
+#else
+		cd->sc_blksize = 2048;
+		cd->sc_blks = 400000;
+#endif
+		return (cd->sc_blks);
+	}
+
+	blksize = _4btol(rdcap.length);
+	if ((blksize < 512) || ((blksize & 511) != 0))
+		blksize = 2048;	/* some drives lie ! */
+	cd->sc_blksize = blksize;
+
+	size = _4btol(rdcap.addr) + 1;
+	if (size < 100)
+		size = 400000;	/* ditto */
+	cd->sc_blks = size;
+	return (size);
+}
+
+/*
  * Send a SCSI command to a target drive, using
  * the 4.4bsd/pmax driver formatting support  RZ_ALTCMD machinery.
  * Used as a substitute for the  MI scsi scsipi_command().
@@ -1271,7 +1350,8 @@ rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen,
 	u_int flags;
 {
 	int retried = 0;
-	register int recvlen;
+	register int recvlen, savedflags;
+
 
 	/* check command and expected response fit in sc format-cmd fields */
 	if (cmdlen > sizeof(sc->sc_cdb) ||
@@ -1281,6 +1361,13 @@ rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen,
 	      cmdlen, datalen);
 		return(-1);	/* XXX */
 	}
+
+	/* map NetBSD MI scsi command  flags onto 4.4bsd SCSI (rz) flags */
+	savedflags = sc->sc_flags;
+	if (flags & SCSI_SILENT) {
+		sc->sc_flags |= RZF_NOERR;
+	}
+
 	bzero(sc->sc_capbuf, datalen);
 
 again:
@@ -1299,7 +1386,8 @@ again:
 	sc->sc_flags &= ~RZF_ALTCMD;
 	DELAY(timeout);
 	if (biowait(&sc->sc_buf)) {
-		return (-1);
+		recvlen = -1;
+		goto done;
 	}
 
 	recvlen = datalen - sc->sc_buf.b_resid;
@@ -1309,12 +1397,15 @@ again:
 		DELAY(timeout);
 		if (retried++ < nretries) 
 			goto again;	
-		return (recvlen);
+		/* give up, return 0 */
+		goto done;
 
 	}
 
-	/* Result is in capbuf */
+	/* Any result is in capbuf. Copy to caller's buf. */
 	bcopy(&sc->sc_capbuf, data_addr, recvlen);
+done:
+	sc->sc_flags = savedflags;	/* undo MI scsi flags */
 	return(recvlen);
 }
 
@@ -1416,7 +1507,8 @@ rzgetgeom(sc,  flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		/* XXX */sectors = rz_getsize(sc, flags);
+		/* Our caller just called rz_getsize(sc, flags). */
+		sectors = sc->sc_blks;
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
