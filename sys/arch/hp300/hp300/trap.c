@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.5 1994/01/07 00:45:37 mycroft Exp $
+ *	$Id: trap.c,v 1.6 1994/01/09 19:58:47 mycroft Exp $
  */
 
 #include "param.h"
@@ -134,6 +134,14 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		p->p_regs = frame.f_regs;
 	}
+
+#ifdef DDB
+	if (type == T_TRACE || type == T_BREAKPOINT) {
+		if (kdb_trap(type, &frame))
+			return;
+	}
+#endif
+
 	switch (type) {
 
 	default:
@@ -274,8 +282,8 @@ copyfault:
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */
-	case T_TRACE:		/* kernel trace trap */
-	case T_TRAP15:		/* SUN trace trap */
+	case T_TRACE:		/* XXX kernel trace trap */
+	case T_TRAP15:		/* XXX SUN trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
