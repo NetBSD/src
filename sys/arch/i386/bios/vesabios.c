@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.3 2002/07/11 10:02:21 drochner Exp $ */
+/* $NetBSD: vesabios.c,v 1.4 2002/07/14 13:56:20 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ vesabios_attach(parent, dev, aux)
 
 		config_found(dev, &vbaa, vesabios_print);
 	}
-	if (textmodes) {
+	if (ntextmodes) {
 		vbaa.vbaa_type = "text";
 		vbaa.vbaa_modes = textmodes;
 		vbaa.vbaa_nmodes = ntextmodes;
