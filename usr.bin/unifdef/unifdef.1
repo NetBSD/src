@@ -1,4 +1,4 @@
-.\"	$NetBSD: unifdef.1,v 1.10 2003/10/08 07:43:55 wiz Exp $
+.\"	$NetBSD: unifdef.1,v 1.11 2003/11/11 13:48:50 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,8 @@
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
-.Nm unifdef , unifdefall
+.Nm unifdef ,
+.Nm unifdefall
 .Nd remove preprocessor conditionals from code
 .Sh SYNOPSIS
 .Nm
@@ -91,10 +92,9 @@ The
 utility selectively processes conditional
 .Xr cpp 1
 directives.
-It removes from a file
-both the directives
-and any additional text that they specify should be removed,
-while otherwise leaving the file alone.
+It removes from a file both the directives and any additional text
+that they specify should be removed, while otherwise leaving the
+file alone.
 .Pp
 The
 .Nm
@@ -115,7 +115,7 @@ the
 .Fn defined
 operator applied to symbols defined or undefined on the command line,
 the operators
-.Ic \&! , < , > , <= , >= , == , != , && , || ,
+.Ic \&! , \*[Lt] , \*[Gt] , \*[Lt]= , \*[Gt]= , == , != , \*[Am]\*[Am] , || ,
 and parenthesized expressions.
 Anything that it does not understand is passed through unharmed.
 It only processes
@@ -168,12 +168,10 @@ for the purpose of handling
 and
 .Ic #elif
 directives.
-.Pp
 .It Fl U Ns Ar sym
 Specify that a symbol is undefined.
 If the same symbol appears in more than one argument,
 the last occurrence dominates.
-.Pp
 .It Fl c
 If the
 .Fl c
@@ -183,7 +181,6 @@ then the operation of
 is complemented,
 i.e., the lines that would have been removed or blanked
 are retained and vice versa.
-.Pp
 .It Fl e
 Because
 .Nm
@@ -201,7 +198,6 @@ The
 option changes the behaviour so that,
 where possible,
 such lines are left unprocessed instead of reporting an error.
-.Pp
 .It Fl k
 Process
 .Ic #if
@@ -213,11 +209,9 @@ because they typically start
 .Dq Li "#if 0"
 and are used as a kind of comment to sketch out future or past development.
 It would be rude to strip them out, just as it would be for normal comments.
-.Pp
 .It Fl l
 Replace removed lines with blank lines
 instead of deleting them.
-.Pp
 .It Fl s
 Instead of processing the input file as usual,
 this option causes
@@ -233,13 +227,11 @@ option of
 for creating
 .Nm
 command lines.
-.Pp
 .It Fl t
 Disables parsing for C comments
 and line continuations,
 which is useful
 for plain text.
-.Pp
 .It Fl iD Ns Ar sym Ns Op = Ns Ar val
 .It Fl iU Ns Ar sym
 Ignore
@@ -265,7 +257,6 @@ similar to
 and
 .Fl U Ns Ar sym
 above.
-.Pp
 .It Fl I Ns Ar path
 Specifies to
 .Nm unifdefall
@@ -296,9 +287,6 @@ utility works nicely with the
 .Fl D Ns Ar sym
 option of
 .Xr diff 1 .
-.Sh SEE ALSO
-.Xr cpp 1 ,
-.Xr diff 1
 .Sh DIAGNOSTICS
 .Bl -item
 .It
@@ -313,11 +301,11 @@ or
 Obfuscated preprocessor control line.
 .It
 Premature
-.Tn EOF
+.Dv EOF
 (with the line number of the most recent unterminated
 .Ic #if ) .
 .It
-.Tn EOF
+.Dv EOF
 in comment.
 .El
 .Pp
@@ -325,6 +313,17 @@ The
 .Nm
 utility exits 0 if the output is an exact copy of the input,
 1 if not, and 2 if in trouble.
+.Sh SEE ALSO
+.Xr cpp 1 ,
+.Xr diff 1
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+.Tn ANSI\~C
+support was added in
+.Fx 4.7 .
 .Sh BUGS
 Expression evaluation is very limited.
 .Pp
@@ -340,11 +339,3 @@ different points in the source file.
 The text-mode and ignore functionality does not correspond to modern
 .Xr cpp 1
 behaviour.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 .
-.Tn ANSI\~C
-support was added in
-.Fx 4.7 .
