@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.79 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.79 2004/04/26 01:31:57 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -133,13 +133,7 @@ rip_init()
  * mbuf chain.
  */
 void
-#if __STDC__
 rip_input(struct mbuf *m, ...)
-#else
-rip_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int proto;
 	struct ip *ip = mtod(m, struct ip *);
@@ -308,13 +302,7 @@ rip_ctlinput(cmd, sa, v)
  * Tack on options user may have setup with control call.
  */
 int
-#if __STDC__
 rip_output(struct mbuf *m, ...)
-#else
-rip_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct inpcb *inp;
 	struct ip *ip;
