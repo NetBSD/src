@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $	*/
+/*	$NetBSD: mtree.c,v 1.6 1996/09/05 09:56:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: mtree.c,v 1.6 1996/09/05 09:56:49 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $";
 extern int crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, rflag, sflag, uflag;
+int cflag, dflag, eflag, rflag, sflag, tflag, uflag;
 u_short keys;
 char fullpath[MAXPATHLEN];
 
@@ -77,7 +77,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:ux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tux")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -114,6 +114,9 @@ main(argc, argv)
 			crc_total = ~strtol(optarg, &p, 0);
 			if (*p)
 				err("illegal seed value -- %s", optarg);
+		case 't':
+			tflag = 1;
+			break;
 		case 'u':
 			uflag = 1;
 			break;
