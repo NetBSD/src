@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2001/02/11 06:45:59 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.11 2001/05/27 04:08:04 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,12 @@ BIND_DIR=	${.CURDIR}/..
 BIND_DIST_DIR=	${.CURDIR}/../../../dist/bind
 BIND_CRYPTO_DIST_DIR=	${.CURDIR}/../../../crypto/dist/bind
 
-VER!=		cat ${BIND_DIST_DIR}/Version
+VER0!=		cat ${BIND_DIST_DIR}/Version
+.if ${MKCRYPTO} == "yes"
+VER=		${VER0}
+.else
+VER=		${VER0}-NOESW
+.endif
 
 NAMED=		named
 PIDFILE=	/var/run/named.pid
