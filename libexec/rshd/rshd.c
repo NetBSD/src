@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.40 2005/03/13 01:48:54 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.41 2005/03/27 21:00:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.40 2005/03/13 01:48:54 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.41 2005/03/27 21:00:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,10 +137,10 @@ int	check_all;
 int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
 
-void	 doit(struct sockaddr *);
+void	 doit(struct sockaddr *) __attribute__((__noreturn__));
 void	 rshd_errx(int, const char *, ...)
      __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-void	 getstr(char *, int, char *);
+void	 getstr(char *, int, const char *);
 int	 local_domain(char *);
 char	*topdomain(char *);
 void	 usage(void);
@@ -185,10 +185,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	fromlen = sizeof (from); /* xxx */
-	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	fromlen = sizeof(from); /* xxx */
+	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR, "getpeername: %m");
-		exit(1);
+		return EXIT_FAILURE;
 	}
 #if 0
 	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
@@ -200,12 +200,12 @@ main(int argc, char *argv[])
 		    sizeof(struct sockaddr_in);
 
 		sin6 = (struct sockaddr_in6 *)&from;
-		memset(&sin, 0, sizeof(sin));
+		(void)memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
-		memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[off],
+		(void)memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[off],
 		    sizeof(sin.sin_addr));
-		memcpy(&from, &sin, sizeof(sin));
+		(void)memcpy(&from, &sin, sizeof(sin));
 		fromlen = sin.sin_len;
 	}
 #else
@@ -218,25 +218,22 @@ main(int argc, char *argv[])
 		}
 		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)",
 		    hbuf);
-		exit(1);
+		return EXIT_FAILURE;
 	}
 #endif
 	if (keepalive &&
-	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
+	    setsockopt(STDIN_FILENO, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
 	    sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 	linger.l_onoff = 1;
 	linger.l_linger = 60;			/* XXX */
-	if (setsockopt(0, SOL_SOCKET, SO_LINGER, (char *)&linger,
+	if (setsockopt(STDIN_FILENO, SOL_SOCKET, SO_LINGER, (char *)&linger,
 	    sizeof (linger)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
 	proto = getprotobyname("tcp");
-	setsockopt(0, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
+	(void)setsockopt(STDIN_FILENO, proto->p_proto, TCP_NODELAY, &on,
+	    sizeof(on));
 	doit((struct sockaddr *)&from);
-	/* NOTREACHED */
-#ifdef __GNUC__
-	exit(0);
-#endif
 }
 
 char	username[20] = "USER=";
@@ -275,14 +272,14 @@ doit(struct sockaddr *fromp)
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
 	const char *errormsg = NULL, *errorstr = NULL;
 
-	(void) signal(SIGINT, SIG_DFL);
-	(void) signal(SIGQUIT, SIG_DFL);
-	(void) signal(SIGTERM, SIG_DFL);
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
+	(void)signal(SIGTERM, SIG_DFL);
 #ifdef DEBUG
 	{ 
-		int t = open(_PATH_TTY, 2);
+		int t = open(_PATH_TTY, O_RDWR);
 		if (t >= 0) {
-			ioctl(t, TIOCNOTTY, (char *)0);
+			ioctl(t, TIOCNOTTY, NULL);
 			(void)close(t);
 		}
 	}
@@ -298,12 +295,12 @@ doit(struct sockaddr *fromp)
 #endif
 	default:
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)", af);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	if (getnameinfo(fromp, fromp->sa_len, naddr, sizeof(naddr),
 			pbuf, sizeof(pbuf), niflags) != 0) {
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)", af);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #ifdef IP_OPTIONS
 	if (af == AF_INET) {
@@ -327,7 +324,7 @@ doit(struct sockaddr *fromp)
 				    inet_ntoa((
 				    (struct sockaddr_in *)fromp)->sin_addr),
 				    c == IPOPT_LSRR ? "LSRR" : "SSRR");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			if (c == IPOPT_EOL)
 				break;
@@ -337,11 +334,11 @@ doit(struct sockaddr *fromp)
 	}
 #endif
 	if (ntohs(*portp) >= IPPORT_RESERVED
-	    || ntohs(*portp) < IPPORT_RESERVED/2) {
+	    || ntohs(*portp) < IPPORT_RESERVED / 2) {
 		syslog(LOG_NOTICE|LOG_AUTH,
 		    "Connection from %s on illegal port %u",
 		    naddr, ntohs(*portp));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	(void) alarm(60);
@@ -352,8 +349,8 @@ doit(struct sockaddr *fromp)
 		if ((cc = read(STDIN_FILENO, &c, 1)) != 1) {
 			if (cc < 0)
 				syslog(LOG_ERR, "read: %m");
-			shutdown(0, SHUT_RDWR);
-			exit(1);
+			(void)shutdown(0, SHUT_RDWR);
+			exit(EXIT_FAILURE);
 		}
 		if (c == 0)
 			break;
@@ -366,25 +363,25 @@ doit(struct sockaddr *fromp)
 		s = rresvport_af(&lport, af);
 		if (s < 0) {
 			syslog(LOG_ERR, "can't get stderr port: %m");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (port >= IPPORT_RESERVED) {
 			syslog(LOG_ERR, "2nd port not reserved");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		*portp = htons(port);
 		if (connect(s, fromp, fromp->sa_len) < 0) {
 			syslog(LOG_ERR, "connect second port %d: %m", port);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
 
 #ifdef notdef
 	/* from inetd, socket is already on 0, 1, 2 */
-	dup2(f, 0);
-	dup2(f, 1);
-	dup2(f, 2);
+	(void)dup2(f, STDIN_FILENO);
+	(void)dup2(f, STDOUT_FILENO);
+	(void)dup2(f, STDERR_FILENO);
 #endif
 	if (getnameinfo(fromp, fromp->sa_len, saddr, sizeof(saddr),
 			NULL, 0, NI_NAMEREQD) == 0) {
@@ -397,9 +394,9 @@ doit(struct sockaddr *fromp)
 		hostname = saddr;
 		res0 = NULL;
 		if (check_all || local_domain(saddr)) {
-			strlcpy(remotehost, saddr, sizeof(remotehost));
+			(void)strlcpy(remotehost, saddr, sizeof(remotehost));
 			errorhost = remotehost;
-			memset(&hints, 0, sizeof(hints));
+			(void)memset(&hints, 0, sizeof(hints));
 			hints.ai_family = fromp->sa_family;
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_CANONNAME;
@@ -440,12 +437,12 @@ doit(struct sockaddr *fromp)
 				}
 			}
 		}
-		strlcpy(hostnamebuf, hostname, sizeof(hostnamebuf));
+		(void)strlcpy(hostnamebuf, hostname, sizeof(hostnamebuf));
 		hostname = hostnamebuf;
 		if (res0)
 			freeaddrinfo(res0);
 	} else {
-		strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
+		(void)strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
 		errorhost = hostname = hostnamebuf;
 	}
 
@@ -460,20 +457,20 @@ doit(struct sockaddr *fromp)
 	if (pam_err != PAM_SUCCESS) {
 		syslog(LOG_ERR|LOG_AUTH, "pam_start(): %s",
 		    pam_strerror(pamh, pam_err));
-		rshd_errx(1, incorrect);
+		rshd_errx(EXIT_FAILURE, incorrect);
 	}
 
 	if ((pam_err = pam_set_item(pamh, PAM_RUSER, remuser)) != PAM_SUCCESS ||
 	    (pam_err = pam_set_item(pamh, PAM_RHOST, hostname) != PAM_SUCCESS)){
 		syslog(LOG_ERR|LOG_AUTH, "pam_set_item(): %s",
 		    pam_strerror(pamh, pam_err));
-		rshd_errx(1, incorrect);
+		rshd_errx(EXIT_FAILURE, incorrect);
 	}
 
 	pam_err = pam_authenticate(pamh, 0);
 	if (pam_err == PAM_SUCCESS) {
 		if ((pam_err = pam_get_user(pamh, &cp, NULL)) == PAM_SUCCESS) {
-			strlcpy(locuser, cp, sizeof(locuser));
+			(void)strlcpy(locuser, cp, sizeof(locuser));
 			/* XXX truncation! */
  		}
 		pam_err = pam_acct_mgmt(pamh, 0);
@@ -492,7 +489,7 @@ doit(struct sockaddr *fromp)
 		    remuser, hostname, locuser, cmdbuf);
 		if (errorstr == NULL)
 			errorstr = "Permission denied.";
-		rshd_errx(1, errorstr, errorhost);
+		rshd_errx(EXIT_FAILURE, errorstr, errorhost);
 	}
 #ifdef LOGIN_CAP
 	lc = login_getclass(pwd ? pwd->pw_class : NULL);
@@ -507,7 +504,7 @@ doit(struct sockaddr *fromp)
 			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: no home directory. cmd='%.80s'",
 			    remuser, hostname, locuser, cmdbuf);
-			rshd_errx(0, "No remote home directory.");
+			rshd_errx(EXIT_SUCCESS, "No remote home directory.");
 		}
 	}
 
@@ -523,7 +520,7 @@ doit(struct sockaddr *fromp)
 	}
 
 	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK))
-		rshd_errx(1, "Logins currently disabled.");
+		rshd_errx(EXIT_FAILURE, "Logins currently disabled.");
 #endif
 
 #ifdef LOGIN_CAP
@@ -534,7 +531,7 @@ doit(struct sockaddr *fromp)
 	 */
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) != 0) {
 		syslog(LOG_ERR, "setusercontext: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #else
 	initgroups(pwd->pw_name, pwd->pw_gid);
@@ -550,22 +547,22 @@ doit(struct sockaddr *fromp)
 	}
 #endif
 
-	(void) write(STDERR_FILENO, "\0", 1);
+	(void)write(STDERR_FILENO, "\0", 1);
 	sent_null = 1;
 
 	if (port) {
 		if (pipe(pv) < 0)
-			rshd_errx(1, "Can't make pipe. (%s)", strerror(errno));
+			rshd_errx(EXIT_FAILURE, "Can't make pipe. (%s)",
+			    strerror(errno));
 		pid = fork();
 		if (pid == -1)
-			rshd_errx(1, "Can't fork. (%s)", strerror(errno));
+			rshd_errx(EXIT_FAILURE, "Can't fork. (%s)",
+			    strerror(errno));
 		if (pid) {
-			{
-				(void) close(0);
-				(void) close(1);
-			}
-			(void) close(2);
-			(void) close(pv[1]);
+			(void)close(STDIN_FILENO);
+			(void)close(STDOUT_FILENO);
+			(void)close(STDERR_FILENO);
+			(void)close(pv[1]);
 
 			set[0].fd = s;
 			set[0].events = POLLIN;
@@ -593,24 +590,25 @@ doit(struct sockaddr *fromp)
 						shutdown(s, SHUT_RDWR);
 						set[1].events = 0;
 					} else {
-						(void) write(s, buf, cc);
+						(void)write(s, buf, cc);
 					}
 				}
 
 			} while ((set[0].revents | set[1].revents) & POLLIN);
 			PAM_END;
-			exit(0);
+			exit(EXIT_SUCCESS);
 		}
-		(void) close(s);
-		(void) close(pv[0]);
-		dup2(pv[1], 2);
+		(void)close(s);
+		(void)close(pv[0]);
+		(void)dup2(pv[1], STDERR_FILENO);
 		close(pv[1]);
 	}
 #ifdef USE_PAM
 	else {
 		pid = fork();
 		if (pid == -1)
-			rshd_errx(1, "Can't fork. (%s)", strerror(errno));
+			rshd_errx(EXIT_FAILURE, "Can't fork. (%s)",
+			    strerror(errno));
 		if (pid) {
 			pid_t xpid;
 			int status;
@@ -628,17 +626,17 @@ doit(struct sockaddr *fromp)
 				else
 					syslog(LOG_WARNING,
 					    "wait pid=%d failed %m", pid);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
-			exit(0);
+			exit(EXIT_SUCCESS);
 		}
 	}
 #endif
 
 #ifdef F_CLOSEM
-	(void)fcntl(3, F_CLOSEM, 0);
+	(void)fcntl(STDERR_FILENO + 1, F_CLOSEM, 0);
 #else
-	for (fd = getdtablesize(); fd > 2; fd--)
+	for (fd = getdtablesize(); fd > STDERR_FILENO; fd--)
 		(void)close(fd);
 #endif
 	if (setsid() == -1)
@@ -648,7 +646,7 @@ doit(struct sockaddr *fromp)
 		syslog(LOG_ERR, "setlogin() failed: %m");
 
 	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
+		pwd->pw_shell = __UNCONST(_PATH_BSHELL);
 
 	(void)pam_setenv(pamh, "HOME", pwd->pw_dir, 1);
 	(void)pam_setenv(pamh, "SHELL", pwd->pw_shell, 1);
@@ -663,17 +661,17 @@ doit(struct sockaddr *fromp)
 		if ((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
 			if(!(sh = strdup(sh))) {
 				syslog(LOG_ERR, "Cannot alloc mem");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			pwd->pw_shell = sh;
 		}
 	}
 #endif
 	environ = envinit;
-	strlcat(homedir, pwd->pw_dir, sizeof(homedir));
-	strlcat(path, _PATH_DEFPATH, sizeof(path));
-	strlcat(shell, pwd->pw_shell, sizeof(shell));
-	strlcat(username, pwd->pw_name, sizeof(username));
+	(void)strlcat(homedir, pwd->pw_dir, sizeof(homedir));
+	(void)strlcat(path, _PATH_DEFPATH, sizeof(path));
+	(void)strlcat(shell, pwd->pw_shell, sizeof(shell));
+	(void)strlcat(username, pwd->pw_name, sizeof(username));
 #endif
 
 	cp = strrchr(pwd->pw_shell, '/');
@@ -686,7 +684,7 @@ doit(struct sockaddr *fromp)
 	if (setusercontext(lc, pwd, pwd->pw_uid,
 		LOGIN_SETALL & ~LOGIN_SETGROUP) < 0) {
 		syslog(LOG_ERR, "setusercontext(): %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	login_close(lc);
 #else
@@ -698,13 +696,13 @@ doit(struct sockaddr *fromp)
 		syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
 	}
-	execl(pwd->pw_shell, cp, "-c", cmdbuf, NULL);
-	rshd_errx(1, "%s: %s", pwd->pw_shell, strerror(errno));
+	(void)execl(pwd->pw_shell, cp, "-c", cmdbuf, NULL);
+	rshd_errx(EXIT_FAILURE, "%s: %s", pwd->pw_shell, strerror(errno));
 badlogin:
 	syslog(LOG_INFO|LOG_AUTH,
 	    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
 	    remuser, hostname, locuser, errormsg, cmdbuf);
-	rshd_errx(1, errorstr, errorhost);
+	rshd_errx(EXIT_FAILURE, errorstr, errorhost);
 }
 
 /*
@@ -736,16 +734,16 @@ rshd_errx(int error, const char *fmt, ...)
 }
 
 void
-getstr(char *buf, int cnt, char *err)
+getstr(char *buf, int cnt, const char *err)
 {
 	char c;
 
 	do {
 		if (read(STDIN_FILENO, &c, 1) != 1)
-			exit(1);
+			exit(EXIT_FAILURE);
 		*buf++ = c;
 		if (--cnt == 0)
-			rshd_errx(1, "%s too long", err);
+			rshd_errx(EXIT_FAILURE, "%s too long", err);
 	} while (c != 0);
 }
 
@@ -793,6 +791,6 @@ void
 usage(void)
 {
 
-	syslog(LOG_ERR, "usage: rshd [-%s]", OPTIONS);
-	exit(2);
+	syslog(LOG_ERR, "Usage: %s [-%s]", getprogname(), OPTIONS);
+	exit(EXIT_FAILURE);
 }
