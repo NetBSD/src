@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.12 1994/06/29 06:34:46 cgd Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.13 1995/08/13 09:06:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -197,7 +197,10 @@ procfs_control(curp, p, op)
 	 * Step.  Let the target process execute a single instruction.
 	 */
 	case PROCFS_CTL_STEP:
-		if (error = process_sstep(p, 1))
+		PHOLD(p);
+		error = process_sstep(p, 1);
+		PRELE(p);
+		if (error)
 			return (error);
 		break;
 

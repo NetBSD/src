@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.8 1994/06/29 06:34:54 cgd Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.9 1995/08/13 09:06:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -70,6 +70,8 @@ procfs_doregs(curp, p, pfs, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
+	PHOLD(p);
+
 	if (kl < 0)
 		error = EINVAL;
 	else
@@ -82,6 +84,8 @@ procfs_doregs(curp, p, pfs, uio)
 		else
 			error = process_write_regs(p, &r);
 	}
+
+	PRELE(p);
 
 	uio->uio_offset = 0;
 	return (error);
