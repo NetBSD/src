@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/02 10:59:14 leo Exp $
+#	$NetBSD: Makefile,v 1.6 2003/01/06 17:40:23 lukem Exp $
 
 # Makefile for atari tags file and boot blocks
 
@@ -27,6 +27,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR= dev include stand
+SUBDIR=	compile dev include stand
 
 .include <bsd.subdir.mk>
