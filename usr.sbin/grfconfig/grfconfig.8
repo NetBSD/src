@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfconfig.8,v 1.10 2000/12/02 21:58:10 is Exp $
+.\"	$NetBSD: grfconfig.8,v 1.11 2002/01/19 03:14:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -38,15 +38,15 @@
 .Dt GRFCONFIG 8 amiga
 .Os
 .Sh NAME
-.Nm grfconfig 
+.Nm grfconfig
 .Nd alter grf device screen mode definitions at run time
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl r
 .Ar device
 .Op Ar file
 .Sh DESCRIPTION
-.Nm ""
+.Nm
 is used to change or view the screen mode definition list contained
 in a grf device.  You may alter the console screen definition as well
 as the definitions for the graphic screen.  The console will automatically
@@ -62,12 +62,11 @@ pretty list normally shown.
 The grf device to manipulate.  This argument is required.
 .It Ar file
 The file which contains the mode definitions.  If this argument
-is not specified, 
-.Nm ""
+is not specified,
+.Nm
 will print out of a list of the modes currently loaded into
-the grf device.  
+the grf device.
 .El
-.Pp
 .Sh MODE DEFINITION FILE
 The mode definitions are taken from a file which has lines of the format:
 .Pp
@@ -102,7 +101,7 @@ Use the default flags: -hsync -vsync
 .It doublescan
 Doublescan mode
 .It interlace
-Interlace mode 
+Interlace mode
 .It +hsync
 Positive horizontal sync pulses
 .It -hsync
@@ -113,12 +112,10 @@ Positive vertical sync pulses
 Negative vertical sync pulses
 .It sync-on-green
 Composite sync on green
-.Pp
+.El
 .El
 .Pp
-.El
-.Pp
-.nf
+.Bd -literal
  ------------------------------------------------------
  |                           ^                        |
  |                          vse                       |
@@ -151,23 +148,22 @@ Composite sync on green
                         - ------- -
                              ^
                             vbe
-
-
+.Ed
 .Sh SEE ALSO
 .Xr console 4 ,
-.Xr iteconfig 8 ,
 .Xr grfcl 4 ,
 .Xr grfcv 4 ,
 .Xr grfcv3d 4 ,
 .Xr grfet 4 ,
 .Xr grfrh 4 ,
 .Xr grfrt 4 ,
-.Xr grful 4
+.Xr grful 4 ,
+.Xr iteconfig 8
 .Sh HISTORY
 The
-.Nm ""
+.Nm
 command first appeared in
-.Nx 1.0
+.Nx 1.0 .
 .Pp
 The mode definition file changed two times.
 .Pp
@@ -207,9 +203,12 @@ Beginning with
  4   31000000 640 480  8  640 688 768 832 480 489 492 520 +hsync +vsync
 .Pp
 hbe and vbe are computed in the grf drivers.
-.Pp
 .Sh BUGS
-.Nm ""
-can not set the modes for /dev/grf1, /dev/grf2 and /dev/grf4
-and it will not work for /dev/grf0.
-
+.Nm
+can not set the modes for
+.Pa /dev/grf1 ,
+.Pa /dev/grf2
+and
+.Pa /dev/grf4
+and it will not work for
+.Pa /dev/grf0 .
