@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.14 1998/09/05 13:08:41 pk Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.15 1998/10/19 00:30:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct nzlist {
 
 #define AUX_OBJECT	1
 #define AUX_FUNC	2
+#define AUX_LABEL	3
 /*#define BIND_LOCAL	0	not used */
 /*#define BIND_GLOBAL	1	not used */
 #define BIND_WEAK	2
