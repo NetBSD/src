@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.66 1998/03/20 20:15:14 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.67 1998/03/22 12:53:56 drochner Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -120,7 +120,7 @@ struct npx_softc {
 	void *sc_ih;
 };
 
-int npxprobe __P((struct device *, void *, void *));
+int npxprobe __P((struct device *, struct cfdata *, void *));
 void npxattach __P((struct device *, struct device *, void *));
 
 struct cfattach npx_ca = {
@@ -248,7 +248,8 @@ npxprobe1(ia)
 int
 npxprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct	isa_attach_args *ia = aux;
 	int	irq;

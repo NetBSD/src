@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.118 1998/02/10 14:11:24 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.119 1998/03/22 12:53:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -154,7 +154,7 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, void *, void *));
+int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 #ifdef NEWCONFIG
 void fdcforceintr __P((void *));
@@ -233,7 +233,7 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe __P((struct device *, void *, void *));
+int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
 struct cfattach fd_ca = {
@@ -270,7 +270,8 @@ void	fd_mountroot_hook __P((struct device *));
 int
 fdcprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	register struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -454,7 +455,8 @@ fdcattach(parent, self, aux)
 int
 fdprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct cfdata *cf = match;
