@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.6 2003/10/18 12:47:28 enami Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.6 2003/10/18 12:47:28 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,7 +210,7 @@ sbpscsi_scsipi_request(struct scsipi_channel *channel, scsipi_adapter_req_t req,
 		cmd.cb_arg = xs;
 		handle = sbp2_runcmd(sbp2, &cmd);
 		if (handle)
-			callout_reset(&xs->xs_callout, xs->timeout,
+			callout_reset(&xs->xs_callout, mstohz(xs->timeout),
 			    sbpscsi_timeout, handle);
 		else {
 			DPRINTF(("Got an error from sbp2_runcmd\n"));
