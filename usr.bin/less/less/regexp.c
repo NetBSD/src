@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.1.1.2 1997/04/22 13:45:36 mrg Exp $	*/
+/*	$NetBSD: regexp.c,v 1.1.1.3 1997/09/21 12:23:07 mrg Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
