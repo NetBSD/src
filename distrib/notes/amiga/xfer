@@ -4,6 +4,7 @@ Installation is supported from several media types, including:
 	NFS partitions
 	FTP
 	NetBSD partitions, if doing an upgrade.
+	CD-ROM (but only SCSI CD-ROM)
 
 The miniroot file system needs to be transferred to the NetBSD swap
 partition.  This can be done from AmigaDOS in the case of a new
@@ -24,6 +25,21 @@ To prepare for installing via an AmigaDOS partition:
 	will also simplify the installation work later on.
 
 	Note where you place the files you will need this later.
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your hard disk.
+
+To prepare for installing from CD-ROM:
+
+	To install NetBSD from a CD-ROM drive, make sure it is a SCSI
+	CD-ROM on a SCSI bus currently supported by NetBSD (refer to the
+	supported hardware list). If it is an ATAPI CD-ROM, or a
+	SCSI CD-ROM on a non-supported SCSI bus like CyberSCSI Mk.3,
+	Blizzard-3 SCSI, Apollo SCSI) you must first copy the distribution
+	sets to an AmigaDOS partition like described above.
+
+	If your SCSI CD-ROM is connected to a supported SCSI host adapter,
+	simply put the CD into the drive before installation.
 
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.
