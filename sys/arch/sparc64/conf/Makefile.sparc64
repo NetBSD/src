@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.45 2002/03/19 18:10:33 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.46 2002/06/04 21:39:12 thorpej Exp $
 
 #=========================================================================
 #
@@ -70,7 +70,11 @@ CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
 AFLAGS+=	-Wa,-Av8plusa
 .endif
 CFLAGS+=	-mno-fpu
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -O0 -c $<
 

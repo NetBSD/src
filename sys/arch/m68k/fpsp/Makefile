@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/07 01:39:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2002/06/04 21:39:10 thorpej Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -47,7 +47,11 @@ CPPFLAGS=	${FPSPCPPFLAGS} ${FPSPMISCCPPFLAGS}
 
 AS?		= as
 LD?		= ld
+.if defined(HAVE_GCC3)
+AFLAGS		= -x assembler-with-cpp -m68040
+.else
 AFLAGS		= -x assembler-with-cpp -traditional-cpp -m68040
+.endif
 
 #
 # For the Library Version:
