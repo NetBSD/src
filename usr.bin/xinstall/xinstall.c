@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.52 2001/10/19 14:26:19 tv Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.53 2001/10/25 15:06:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.52 2001/10/19 14:26:19 tv Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.53 2001/10/25 15:06:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,12 +110,11 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct stat from_sb, to_sb;
-	void *set;
-	u_int iflags;
-	int ch, no_target;
-	char *p;
-	char *to_name;
+	struct stat	from_sb, to_sb;
+	void		*set;
+	u_int		iflags;
+	int		ch, no_target;
+	char		*p, *to_name;
 
 	setprogname(argv[0]);
 
@@ -327,7 +326,7 @@ parseid(char *name, id_t *id)
 void
 makelink(char *from_name, char *to_name)
 {
-	char src[MAXPATHLEN], dst[MAXPATHLEN], lnk[MAXPATHLEN];
+	char	src[MAXPATHLEN], dst[MAXPATHLEN], lnk[MAXPATHLEN];
 
 	/* Try hard links first */
 	if (dolink & (LN_HARD|LN_MIXED)) {
@@ -392,10 +391,10 @@ makelink(char *from_name, char *to_name)
 void
 install(char *from_name, char *to_name, u_int flags)
 {
-	struct stat from_sb, to_sb;
-	struct timeval tv[2];
-	int devnull, from_fd, to_fd, serrno;
-	char *p, tmpl[MAXPATHLEN], *oto_name;
+	struct stat	from_sb, to_sb;
+	struct timeval	tv[2];
+	int		devnull, from_fd, to_fd, serrno;
+	char		*p, tmpl[MAXPATHLEN], *oto_name;
 
 	/* If try to install NULL file to a directory, fails. */
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
@@ -550,10 +549,10 @@ install(char *from_name, char *to_name, u_int flags)
 void
 copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
-	ssize_t nr, nw;
-	int serrno;
-	char *p;
-	char buf[MAXBSIZE];
+	ssize_t	nr, nw;
+	int	serrno;
+	char	*p;
+	char	buf[MAXBSIZE];
 
 	/*
 	 * There's no reason to do anything other than close the file
@@ -611,8 +610,8 @@ mmap_failed:
 void
 strip(char *to_name)
 {
-	int serrno, status;
-	char *stripprog;
+	int	serrno, status;
+	char	*stripprog;
 
 	switch (vfork()) {
 	case -1:
@@ -659,7 +658,7 @@ strip(char *to_name)
 void
 backup(const char *to_name)
 {
-	char backup[FILENAME_MAX];
+	char	backup[FILENAME_MAX];
 	
 	if (numberedbackup) {
 		/* Do numbered backup */
@@ -689,9 +688,9 @@ backup(const char *to_name)
 void
 install_dir(char *path, u_int flags)
 {
-        char *p;
-        struct stat sb;
-        int ch;
+        char		*p;
+        struct stat	sb;
+        int		ch;
 
         for (p = path;; ++p)
                 if (!*p || (p != path && *p  == '/')) {
@@ -724,7 +723,7 @@ void
 metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 {
 	const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
-	char	*buf;
+	char		*buf;
 
 	if (!metafp)	
 		return;
@@ -767,6 +766,7 @@ metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 void
 usage(void)
 {
+
 	(void)fprintf(stderr, "\
 usage: install [-Ubcprs] [-M log] [-B suffix] [-f flags] [-m mode]\n\
 	    [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
