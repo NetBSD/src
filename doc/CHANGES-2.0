@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.38 2004/04/06 03:56:37 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.39 2004/04/06 03:57:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -440,3 +440,8 @@ etc/defaults/rc.conf				1.57
 	passing an (optional) filename argument (that must come last) works fine
 	from $ipmon_flags. PR#25006
 	[mrg, ticket #66]
+
+distrib/sets/lists/xserver/md.sgimips		1.5
+
+	Add mmapw - mmapr is already there.
+	[hubertf, ticket #67]
