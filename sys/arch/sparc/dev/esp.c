@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.36 1996/02/21 10:21:14 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.37 1996/02/22 23:35:04 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1028,7 +1028,9 @@ printf("<<target%d: MSG_MESSAGE_REJECT>>", ecb->xs->sc_link->target);
 			ti->dconns++;
 			sc->sc_flags |= ESP_DISCON;
 			sc->sc_flags |= ESP_BUSFREE_OK;
-			break;
+			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+				break;
+			/*FALLTHROUGH*/
 		case MSG_SAVEDATAPOINTER:
 			ESP_MSGS(("save datapointer "));
 			ecb->dleft = sc->sc_dleft;
