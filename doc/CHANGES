@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.263 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.264 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -582,9 +582,19 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	acorn32: sysbeep(4) removed.  [bjh21 20040117]
 	disklabel(8): On i386 & amd64, preserve the MBR and partition table
 		even on disks without a NetBSD MBR partition.  [lukem 20040119]
+	ppbus(4): imported FreeBSD Parallel Port Bus code (lpt+plip ATM only)
+		from netbsd-ppbus port done by Gary Thorpe for evaluation.
+		ppbus separates the physical parallel port access and
+		the specific connected device access, allowing clean support
+		for PLIP and non-printer devices using parallel port. 
+		The port drivers in ppbus also support advanced modes such as
+		Fast Centronics, EPP, and ECP (including DMA). This code will
+		replace historical lpt(4) eventually [jdolecek 20040119]
 	acorn32: beep(4) removed.  [bjh21 20040125]
 	arm: Change ARM9 support code to use the Dcache in write-back mode.
 		[rearnsha 20040126]
+	ppbus(4): add a "pps" device to get pulse-per-second signals into ntpd
+		[drochner 20040128]
 	install(1): Add -h {none,md5,rmd160,sha1} to determine the appropriate
 		hash (digest) of a copied file to store in the -M METALOG.
 		[lukem 20040129]
@@ -592,3 +602,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		of pidentd, plus ipv6 support and cleaner implementation.
 		This version of identd is written by Peter Postma.
 		[christos 20040131]
+	ppbus(4): changed lpt(4) to configure interrupt use, printer priming
+		and auto LF on CR via lptctl(8), dropped compatibility minor
+		number bit mapping [jdolecek 20040203]
