@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.21.2.2 2000/08/22 05:38:13 mrg Exp $
+# $NetBSD: makeflist,v 1.21.2.3 2000/10/05 02:33:27 tv Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -81,13 +81,4 @@ for setname in $lists; do
 			awk -- '{print $1}' $setd/lists/$setname/shl.${shlib}
 		fi
 	fi
-
-	# Split man/md_share into: this machine, other machine
-	if [ $setname = man ]; then
-		grep ${machine} $setd/lists/man/md_share
-	fi
-	if [ $setname = misc ]; then
-		grep -v ${machine} $setd/lists/man/md_share
-	fi
-
 done | egrep -v '^#' | sort -u
