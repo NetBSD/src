@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.69 2001/01/12 19:26:48 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.70 2001/01/12 19:27:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -324,6 +324,7 @@ slclose(tp)
 		tp->t_sc = NULL;
 
 		m_freem(sc->sc_mbuf);
+		sc->sc_mbuf = NULL;
 		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
 		IF_PURGE(&sc->sc_inq);
 
