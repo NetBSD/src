@@ -8,4 +8,4 @@ SRCS=	 tmac.n install.mn
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}

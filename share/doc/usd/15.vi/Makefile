@@ -10,10 +10,10 @@ CLEANFILES+=summary.* viapwh.*
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS} ${DOC}.summary.${PRINTER} ${DOC}.viapwh.${PRINTER}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
 
 ${DOC}.summary.${PRINTER}: vi.summary
-	${TBL} vi.summary | ${ROFF}  > ${.TARGET}
+	( cd ${.CURDIR} ; ${TBL} vi.summary ) | ${ROFF}  > ${.TARGET}
 
 ${DOC}.viapwh.${PRINTER}: vi.apwh.ms
-	${ROFF} vi.apwh.ms > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} vi.apwh.ms ) > ${.TARGET}

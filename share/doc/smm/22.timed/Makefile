@@ -9,4 +9,4 @@ MACROS=	-ms
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${SOELIM} ${SRCS} ) | ${TBL} | ${ROFF} > ${.TARGET}
