@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.11 1998/12/30 18:06:25 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.12 1999/01/01 15:25:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,3 +85,7 @@ usbd_status usbd_set_config_no
 	__P((usbd_device_handle dev, int no, int msg));
 usbd_status usbd_set_config_index
 	__P((usbd_device_handle dev, int index, int msg));
+
+usbd_status usbd_bulk_transfer
+	__P((usbd_request_handle reqh, usbd_pipe_handle pipe, u_int16_t flags,
+	     void *buf, u_int32_t *size, char *lbl));

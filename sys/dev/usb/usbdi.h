@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.13 1998/12/29 03:09:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.14 1999/01/01 15:25:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef enum {
 	USBD_TIMEOUT,
 	USBD_SHORT_XFER,
 	USBD_STALLED,
+	USBD_INTERRUPTED,
 
 	USBD_XXX,
 } usbd_status;

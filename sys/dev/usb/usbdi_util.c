@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.9 1998/12/26 12:53:04 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.10 1999/01/01 15:25:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -454,3 +454,53 @@ usbd_get_config(dev, conf)
 	USETW(req.wLength, 1);
 	return (usbd_do_request(dev, &req, conf));
 }
+
+static void usbd_bulk_transfer_cb __P((usbd_request_handle reqh, 
+		usbd_private_handle priv, usbd_status status));
+static void
+usbd_bulk_transfer_cb(reqh, priv, status)
+	usbd_request_handle reqh;
+	usbd_private_handle priv;
+	usbd_status status;
+{
+	wakeup(reqh);
+}
+
+usbd_status
+usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
+	usbd_request_handle reqh;
+	usbd_pipe_handle pipe;
+	u_int16_t flags;
+	void *buf;
+	u_int32_t *size;
+	char *lbl;
+{
+	usbd_private_handle priv;
+	void *buffer;
+	usbd_status r;
+	int s;
+
+	r = usbd_setup_request(reqh, pipe, 0, buf, *size,
+			       flags, USBD_NO_TIMEOUT, usbd_bulk_transfer_cb);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	DPRINTFN(1, ("usbd_bulk_transfer: transfer %d bytes\n", *size));
+	s = splusb();
+	r = usbd_transfer(reqh);
+	if (r != USBD_IN_PROGRESS) {
+		splx(s);
+		return (r);
+	}
+	if (tsleep((caddr_t)reqh, PZERO | PCATCH, lbl, 0)) {
+		usbd_abort_pipe(pipe);
+		splx(s);
+		return (USBD_INTERRUPTED);
+	}
+	usbd_get_request_status(reqh, &priv, &buffer, size, &r);
+	if (r != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("ugenread: error=%d\n", r));
+		usbd_clear_endpoint_stall(pipe);
+	}
+	return (r);
+}
+
