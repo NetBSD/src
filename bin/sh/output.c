@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.24 2001/09/24 13:22:26 wiz Exp $	*/
+/*	$NetBSD: output.c,v 1.25 2002/04/09 00:52:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.24 2001/09/24 13:22:26 wiz Exp $");
+__RCSID("$NetBSD: output.c,v 1.25 2002/04/09 00:52:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,12 +334,9 @@ fmtstr(va_alist)
 
 #define TEMPSIZE 24
 
-static const char digit[] = "0123456789ABCDEF";
-
 #ifdef BSD4_4
 #define HAVE_VASPRINTF 1
 #endif
-
 
 void
 doformat(dest, f, ap)
@@ -354,6 +351,7 @@ doformat(dest, f, ap)
 	outstr(s, dest);
 	free(s);     
 #else	/* !HAVE_VASPRINTF */
+	static const char digit[] = "0123456789ABCDEF";
 	char c;
 	char temp[TEMPSIZE];
 	int flushleft;
