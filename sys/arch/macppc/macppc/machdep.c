@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1999/01/24 15:07:51 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1999/01/27 14:46:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,6 +117,8 @@ char *bootpath;
 paddr_t msgbuf_paddr;
 
 int msgbufmapped = 0;
+
+extern int ofmsr;
 
 #ifdef	NBUF
 int	nbuf = NBUF;
@@ -299,6 +301,8 @@ initppc(startkernel, endkernel, args)
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	ofmsr &= ~PSL_IP;
 
 	/*
 	 * Parse arg string.
