@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.20 2002/07/26 01:25:07 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.21 2002/08/01 02:03:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.20 2002/07/26 01:25:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.21 2002/08/01 02:03:58 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -819,7 +819,7 @@ psignal1(struct proc *p, int signum,
 	/* XXXSMP: works, but icky */
 	if (dolock)
 		SCHED_LOCK(s);
-	
+
 	if (p->p_nrlwps > 0) {
 		/*
 		 * At least one LWP is running or on a run queue. 
@@ -834,7 +834,6 @@ psignal1(struct proc *p, int signum,
 	} else {
 		/* Process is sleeping or stopped */
 		if (p->p_flag & P_SA) {
-			KDASSERT(p->p_sa->sa_idle != NULL);
 			l = p->p_sa->sa_idle;
 		} else {
 			/*
@@ -857,7 +856,8 @@ psignal1(struct proc *p, int signum,
 		}
 		if (p->p_stat == SACTIVE) {
 			/* All LWPs must be sleeping */
-			
+			KDASSERT(((p->p_flag & P_SA) == 0) || (l != NULL));
+
 			if (l != NULL && (p->p_flag & P_TRACED))
 				goto run;
 			     
@@ -1313,11 +1313,13 @@ proc_unstop(p)
 	 */
 
 	p->p_stat = SACTIVE;
+	if (p->p_flag & P_SA)
+		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
 	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
 	     l = LIST_NEXT(l, l_sibling))
 		if (l->l_stat == LSSTOP) {
 			if (l->l_wchan == 0) {
-				if (lr == NULL)
+				if (lr == NULL || l == lr)
 					lr = l;
 				else
 					setrunnable(l);
