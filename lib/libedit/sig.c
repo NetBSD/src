@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.2 1997/01/11 06:48:10 lukem Exp $	*/
+/*	$NetBSD: sig.c,v 1.3 1997/04/11 17:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: sig.c,v 1.2 1997/01/11 06:48:10 lukem Exp $";
+static char rcsid[] = "$NetBSD: sig.c,v 1.3 1997/04/11 17:52:48 christos Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -127,7 +127,7 @@ sig_init(el)
 
     el->el_signal = (sig_t *) el_malloc(SIGSIZE);
     for (i = 0; sighdl[i] != -1; i++) 
-	el->el_signal[i] = BADSIG;
+	el->el_signal[i] = SIG_ERR;
 
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
 
@@ -191,7 +191,7 @@ sig_clr(el)
     (void) sigprocmask(SIG_BLOCK, &nset, &oset);
 
     for (i = 0; sighdl[i] != -1; i++) 
-	if (el->el_signal[i] != BADSIG)
+	if (el->el_signal[i] != SIG_ERR)
 	    (void) signal(sighdl[i], el->el_signal[i]);
 
     sel = NULL;	/* we are going to die if the handler is called */

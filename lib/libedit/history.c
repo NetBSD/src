@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.4 1997/01/23 14:02:45 mrg Exp $	*/
+/*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 
 #include <string.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -570,7 +570,7 @@ history_next_string(h, str)
  *	User interface to history functions.
  */
 const HistEvent *
-#if __STDC__
+#ifdef __STDC__
 history(History *h, int fun, ...)
 #else
 history(va_alist)
@@ -582,7 +582,7 @@ history(va_alist)
     const char *str;
     static HistEvent sev = { 0, "" };
 
-#if __STDC__
+#ifdef __STDC__
     va_start(va, fun);
 #else
     History *h; 
