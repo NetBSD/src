@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.16 2004/03/17 17:04:59 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.17 2004/04/24 15:49:00 kleink Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.16 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.17 2004/04/24 15:49:00 kleink Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -246,7 +246,7 @@ ebus_attach(parent, self, aux)
 	int node, error;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s, revision 0x%02x\n",
 	       devinfo, PCI_REVISION(pa->pa_class));
 

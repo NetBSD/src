@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.7 2003/07/15 00:24:49 lukem Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.8 2004/04/24 15:49:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.7 2003/07/15 00:24:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.8 2004/04/24 15:49:00 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 		class_reg = bus_space_read_4(iot,
 		    sc->sc_reg_ioh, PCI_CLASS_REG);
 
-		pci_devinfo(id_reg, class_reg, 1, buf);
+		pci_devinfo(id_reg, class_reg, 1, buf, sizeof(buf));
 		printf("%s: %s\n", self->dv_xname, buf);
 	}
 

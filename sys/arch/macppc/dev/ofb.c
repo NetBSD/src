@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.38 2003/11/13 03:09:28 chs Exp $	*/
+/*	$NetBSD: ofb.c,v 1.39 2004/04/24 15:49:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.38 2003/11/13 03:09:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.39 2004/04/24 15:49:00 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -195,7 +195,7 @@ ofbattach(parent, self, aux)
 		return;
 	}
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 	printf("%s: %d x %d, %dbpp\n", self->dv_xname,
 	       dc->dc_ri.ri_width, dc->dc_ri.ri_height, dc->dc_ri.ri_depth);

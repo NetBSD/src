@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.17 2003/09/06 11:31:20 rearnsha Exp $ */
+/*	$NetBSD: ifpga.c,v 1.18 2004/04/24 15:49:00 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.17 2003/09/06 11:31:20 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.18 2004/04/24 15:49:00 kleink Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -303,7 +303,7 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 		class_reg = bus_space_read_4(pci_sc->sc_memt,
 		    pci_sc->sc_reg_ioh, V360_PCI_CC_REV);
 
-		pci_devinfo(id_reg, class_reg, 1, buf);
+		pci_devinfo(id_reg, class_reg, 1, buf, sizeof(buf));
 		printf("%s: %s\n", self->dv_xname, buf);
 	}
 
