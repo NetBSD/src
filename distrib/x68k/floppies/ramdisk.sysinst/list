@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2000/06/18 10:33:20 minoura Exp $
+#	$NetBSD: list,v 1.5.2.1 2000/08/31 15:30:47 minoura Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -16,11 +16,13 @@ LINK	ramdiskbin			bin/mt
 LINK	ramdiskbin			bin/mv
 LINK	ramdiskbin			bin/pax
 LINK	ramdiskbin			bin/pwd
-LINK	ramdiskbin			bin/rcmd
 LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
+LINK	ramdiskbin			bin/sleep
 LINK	ramdiskbin			bin/stty
 LINK	ramdiskbin			bin/sync
+LINK	ramdiskbin			bin/test
+LINK	ramdiskbin			bin/[
 LINK	ramdiskbin			sbin/cd9660
 LINK	ramdiskbin			sbin/disklabel
 LINK	ramdiskbin			sbin/ffs
@@ -43,14 +45,11 @@ LINK	ramdiskbin			sbin/nfs
 LINK	ramdiskbin			sbin/ping
 LINK	ramdiskbin			sbin/ping6
 LINK	ramdiskbin			sbin/reboot
-LINK	ramdiskbin			sbin/restore
 LINK	ramdiskbin			sbin/route
-LINK	ramdiskbin			sbin/rrestore
 LINK	ramdiskbin			sbin/rtsol
 LINK	ramdiskbin			sbin/shutdown
 LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/swapctl
-LINK	ramdiskbin			sbin/test
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
@@ -59,9 +58,7 @@ SYMLINK	/bin/cat		usr/bin/gzcat
 SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
-SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/tar
-SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/mdec/newdisk
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
