@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 1996/03/27 04:01:14 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22 1996/03/27 06:49:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -260,15 +260,14 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	pci_intr_handle_t *ihp;
 {
 
-#define BAD	{ *ihp = -1; return 1; }
 	if (pin == 0) {
 		/* No IRQ used. */
-		BAD;
+		goto bad;
 	}
 
 	if (pin > 4) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		BAD;
+		goto bad;
 	}
 
 	/*
@@ -287,11 +286,11 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	 */
 	if (line == 0 || line == 255) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
-		BAD;
+		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
 			printf("pci_intr_map: bad interrupt line %d\n", line);
-			BAD;
+			goto bad;
 		}
 		if (line == 2) {
 			printf("pci_intr_map: changed line 2 to line 9\n");
@@ -301,7 +300,10 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 
 	*ihp = line;
 	return 0;
-#undef BAD
+
+bad:
+	*ihp = -1;
+	return 1;
 }
 
 const char *
