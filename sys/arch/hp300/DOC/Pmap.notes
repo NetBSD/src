@@ -1,3 +1,5 @@
+$NetBSD: Pmap.notes,v 1.2 1994/10/26 07:22:54 cgd Exp $
+
 Following are some observations about the the BSD hp300 pmap module that
 may prove useful for other pmap modules:
 

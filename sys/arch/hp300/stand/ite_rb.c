@@ -1,3 +1,5 @@
+/*	$NetBSD: ite_rb.c,v 1.7 1994/10/26 07:27:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_hy.c,v 1.2 1994/10/26 07:23:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
@@ -38,8 +40,7 @@
  *
  * from: Utah $Hdr: grf_hy.c 1.2 93/08/13$
  *
- *	from: @(#)grf_hy.c	8.4 (Berkeley) 1/12/94
- *	$Id: grf_hy.c,v 1.1 1994/05/25 11:47:34 mycroft Exp $
+ *	@(#)grf_hy.c	8.4 (Berkeley) 1/12/94
  */
 
 #include "grf.h"

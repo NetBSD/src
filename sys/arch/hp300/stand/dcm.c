@@ -1,3 +1,5 @@
+/*	$NetBSD: dcm.c,v 1.5 1994/10/26 07:27:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -35,9 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)dcm.c	8.1 (Berkeley) 6/10/93
- *
- * $Id: dcm.c,v 1.4 1994/02/19 17:55:19 hpeyerl Exp $
+ *	@(#)dcm.c	8.1 (Berkeley) 6/10/93
  */
 
 #ifdef DCMCONSOLE

@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.26 1994/10/26 07:26:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
- *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.25 1994/10/25 15:33:40 mycroft Exp $
+ *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

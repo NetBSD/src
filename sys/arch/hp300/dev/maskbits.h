@@ -1,3 +1,5 @@
+/*	$NetBSD: maskbits.h,v 1.2 1994/10/26 07:24:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)maskbits.h	8.2 (Berkeley) 3/21/94
- *	$Id: maskbits.h,v 1.1 1994/05/23 05:59:05 mycroft Exp $
+ *	@(#)maskbits.h	8.2 (Berkeley) 3/21/94
  */
 
 /*

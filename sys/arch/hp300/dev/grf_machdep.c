@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_machdep.c,v 1.2 1994/10/26 07:23:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: grf_machdep.c 1.1 92/01/21
  *
- *	from: @(#)grf_machdep.c	8.2 (Berkeley) 1/12/94
- *	$Id: grf_machdep.c,v 1.1 1994/05/25 11:47:43 mycroft Exp $
+ *	@(#)grf_machdep.c	8.2 (Berkeley) 1/12/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: mem.c,v 1.6 1994/10/26 07:25:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
- *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
- *	$Id: mem.c,v 1.5 1994/05/23 06:15:13 mycroft Exp $
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: hil.c,v 1.17 1994/10/26 07:24:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hil.c 1.38 92/01/21$
  *
- *	from: @(#)hil.c	8.2 (Berkeley) 1/12/94
- *	$Id: hil.c,v 1.16 1994/05/25 20:22:54 deraadt Exp $
+ *	@(#)hil.c	8.2 (Berkeley) 1/12/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: dcm.c,v 1.15 1994/10/26 07:23:34 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from Utah: $Hdr: dcm.c 1.29 92/01/21$
  *
- *	from: @(#)dcm.c	8.4 (Berkeley) 1/12/94
- *	$Id: dcm.c,v 1.14 1994/05/23 05:58:40 mycroft Exp $
+ *	@(#)dcm.c	8.4 (Berkeley) 1/12/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: ppi.c,v 1.6 1994/10/26 07:24:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ppi.c	8.1 (Berkeley) 6/16/93
- *	$Id: ppi.c,v 1.5 1994/05/25 11:49:17 mycroft Exp $
+ *	@(#)ppi.c	8.1 (Berkeley) 6/16/93
  */
 
 /*

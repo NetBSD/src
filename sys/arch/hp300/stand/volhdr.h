@@ -1,3 +1,5 @@
+/*	$NetBSD: volhdr.h,v 1.4 1994/10/26 07:28:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -35,9 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)volhdr.h	8.1 (Berkeley) 6/10/93
- *
- * $Id: volhdr.h,v 1.3 1994/01/26 02:39:04 brezak Exp $
+ *	@(#)volhdr.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

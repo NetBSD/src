@@ -1,3 +1,5 @@
+/*	$NetBSD: rdreg.h,v 1.5 1994/10/26 07:24:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: rdreg.h 1.2 90/10/12$
  *
- *	from: @(#)rdreg.h	8.1 (Berkeley) 6/10/93
- *	$Id: rdreg.h,v 1.4 1994/05/23 05:59:17 mycroft Exp $
+ *	@(#)rdreg.h	8.1 (Berkeley) 6/10/93
  */
 
 struct	rd_iocmd {

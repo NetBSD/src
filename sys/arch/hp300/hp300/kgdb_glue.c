@@ -1,3 +1,5 @@
+/*	$NetBSD: kgdb_glue.c,v 1.2 1994/10/26 07:25:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,8 +56,7 @@
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/sys/arch/hp300/hp300/Attic/kgdb_glue.c,v 1.1 1994/05/23 06:14:38 mycroft Exp $ (LBL)";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.2 1994/10/26 07:25:39 cgd Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800

@@ -1,3 +1,5 @@
+/*	$NetBSD: sdvar.h,v 1.2 1994/10/26 07:25:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sdvar.h	8.1 (Berkeley) 6/10/93
- *	$Id: sdvar.h,v 1.1 1994/05/23 06:01:35 mycroft Exp $
+ *	@(#)sdvar.h	8.1 (Berkeley) 6/10/93
  */
 
 struct sdinfo {

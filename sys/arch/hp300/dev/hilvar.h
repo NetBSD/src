@@ -1,3 +1,5 @@
+/*	$NetBSD: hilvar.h,v 1.8 1994/10/26 07:24:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hilvar.h 1.3 92/01/21$
  *
- *	from: @(#)hilvar.h	8.1 (Berkeley) 6/10/93
- *	$Id: hilvar.h,v 1.7 1994/05/25 11:48:23 mycroft Exp $
+ *	@(#)hilvar.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef TRUE

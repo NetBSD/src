@@ -1,3 +1,5 @@
+/*	$NetBSD: locore.s,v 1.32 1994/10/26 07:25:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
- *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.31 1994/10/20 20:47:53 mycroft Exp $
+ *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
 /*

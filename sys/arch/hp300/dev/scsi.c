@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi.c,v 1.4 1994/10/26 07:24:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)scsi.c	8.2 (Berkeley) 1/12/94
- *	$Id: scsi.c,v 1.3 1994/05/23 05:59:18 mycroft Exp $
+ *	@(#)scsi.c	8.2 (Berkeley) 1/12/94
  */
 
 #ifndef DEBUG
@@ -47,7 +48,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/scsi.c,v 1.3 1994/05/23 05:59:18 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/scsi.c,v 1.4 1994/10/26 07:24:57 cgd Exp $";
 #endif
 
 #include <sys/param.h>

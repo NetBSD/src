@@ -1,3 +1,5 @@
+/*	$NetBSD: rdvar.h,v 1.2 1994/10/26 07:24:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: rdvar.h 1.1 92/12/21$
  *
- *	from: @(#)rdvar.h	8.1 (Berkeley) 6/10/93
- *	$Id: rdvar.h,v 1.1 1994/05/23 06:01:26 mycroft Exp $
+ *	@(#)rdvar.h	8.1 (Berkeley) 6/10/93
  */
 
 struct	rdidentinfo {

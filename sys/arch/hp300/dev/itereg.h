@@ -1,3 +1,5 @@
+/*	$NetBSD: itereg.h,v 1.5 1994/10/26 07:24:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: itereg.h 1.3 92/01/21$
  *
- *	from: @(#)itereg.h	8.1 (Berkeley) 6/10/93
- *	$Id: itereg.h,v 1.4 1994/05/25 11:49:10 mycroft Exp $
+ *	@(#)itereg.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

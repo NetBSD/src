@@ -1,6 +1,4 @@
-/*
- *	$Id: float.h,v 1.5 1994/01/08 12:41:45 cgd Exp $
- */
+/*	$NetBSD: float.h,v 1.6 1994/10/26 07:26:25 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/float.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: prf.c,v 1.5 1994/10/26 07:27:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)prf.c	8.1 (Berkeley) 6/10/93
- *      $Id: prf.c,v 1.4 1994/08/22 21:41:23 brezak Exp $
+ *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
 getchar()

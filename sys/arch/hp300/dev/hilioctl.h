@@ -1,3 +1,5 @@
+/*	$NetBSD: hilioctl.h,v 1.6 1994/10/26 07:24:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hilioctl.h 1.10 92/01/21$
  *
- *	from: @(#)hilioctl.h	8.1 (Berkeley) 6/10/93
- *	$Id: hilioctl.h,v 1.5 1994/05/25 13:13:32 mycroft Exp $
+ *	@(#)hilioctl.h	8.1 (Berkeley) 6/10/93
  */
 
 struct _hilbell {

@@ -1,9 +1,9 @@
 #!/bin/sh
+#	$NetBSD: installboot.sh,v 1.2 1994/10/26 07:27:26 cgd Exp $
+
 # compatibility with old installboot program
 #
-# from: @(#)installboot.sh	8.1 (Berkeley) 6/10/93
-#
-# $Id: installboot.sh,v 1.1 1994/08/04 19:42:18 brezak Exp $
+#	@(#)installboot.sh	8.1 (Berkeley) 6/10/93
 #
 if [ $# != 2 ]
 then

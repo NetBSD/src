@@ -1,3 +1,5 @@
+/*	$NetBSD: grfioctl.h,v 1.5 1994/10/26 07:24:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: grfioctl.h 1.17 93/08/13$
  *
- *	from: @(#)grfioctl.h	8.2 (Berkeley) 9/9/93
- *	$Id: grfioctl.h,v 1.4 1994/05/25 11:47:59 mycroft Exp $
+ *	@(#)grfioctl.h	8.2 (Berkeley) 9/9/93
  */
 
 struct	grfinfo {

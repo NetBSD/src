@@ -1,3 +1,5 @@
+/*	$NetBSD: dmavar.h,v 1.4 1994/10/26 07:23:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dmavar.h	8.1 (Berkeley) 6/10/93
- *	$Id: dmavar.h,v 1.3 1994/05/23 05:58:51 mycroft Exp $
+ *	@(#)dmavar.h	8.1 (Berkeley) 6/10/93
  */
 
 /* dmago flags */

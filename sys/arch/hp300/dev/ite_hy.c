@@ -1,3 +1,5 @@
+/*	$NetBSD: ite_hy.c,v 1.2 1994/10/26 07:24:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
@@ -38,8 +40,7 @@
  *
  * from: Utah $Hdr: ite_hy.c 1.2 92/12/20$
  *
- *	from: @(#)ite_hy.c	8.1 (Berkeley) 6/10/93
- *	$Id: ite_hy.c,v 1.1 1994/05/25 11:48:36 mycroft Exp $
+ *	@(#)ite_hy.c	8.1 (Berkeley) 6/10/93
  */
 
 #include "ite.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: sd_compat.c,v 1.3 1994/10/26 07:25:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sd_compat.c	8.1 (Berkeley) 6/10/93
- *	$Id: sd_compat.c,v 1.2 1994/07/16 06:24:47 cgd Exp $
+ *	@(#)sd_compat.c	8.1 (Berkeley) 6/10/93
  */
 
 /*

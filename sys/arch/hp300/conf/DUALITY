@@ -1,7 +1,6 @@
+#	$NetBSD: DUALITY,v 1.14 1994/10/26 07:23:07 cgd Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
-#
-#	$Id: DUALITY,v 1.13 1994/08/17 20:16:07 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"

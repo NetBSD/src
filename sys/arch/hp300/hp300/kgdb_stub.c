@@ -1,3 +1,5 @@
+/*	$NetBSD: kgdb_stub.c,v 1.2 1994/10/26 07:25:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +49,7 @@
  */
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/hp300/Attic/kgdb_stub.c,v 1.1 1994/05/23 06:14:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.2 1994/10/26 07:25:41 cgd Exp $";
 #endif
 
 #include <sys/param.h>
