@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.3 2000/08/20 21:51:31 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.4 2000/08/21 20:50:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kcore.h>
 
 #include <machine/cpu.h>
 #define _MVME68K_BUS_DMA_PRIVATE
@@ -66,6 +67,7 @@ static const char *mvmebus_mod_string(vme_addr_t, vme_size_t,
 	    vme_am_t, vme_datasize_t);
 #endif
 
+static void mvmebus_offboard_ram(struct mvmebus_softc *);
 static int mvmebus_dmamap_load_common(struct mvmebus_softc *, bus_dmamap_t);
 
 vme_am_t	_mvmebus_am_cap[] = {
@@ -79,6 +81,67 @@ vme_am_t	_mvmebus_am_cap[] = {
 	MVMEBUS_AM_CAP_BLK    | MVMEBUS_AM_CAP_SUPER
 };
 
+extern phys_ram_seg_t mem_clusters[0];
+extern int mem_cluster_cnt;
+
+
+static void
+mvmebus_offboard_ram(sc)
+	struct mvmebus_softc *sc;
+{
+	struct mvmebus_range *svr, *mvr;
+	vme_addr_t start, end, size;
+	int i;
+
+	/*
+	 * If we have any offboard RAM (i.e. a VMEbus RAM board) then
+	 * we need to record its details since it's effectively another
+	 * VMEbus slave image as far as we're concerned.
+	 * The chip-specific backend will have reserved sc->sc_slaves[0]
+	 * for exactly this purpose.
+	 */
+	svr = sc->sc_slaves;
+	if (mem_cluster_cnt < 2) {
+		svr->vr_am = MVMEBUS_AM_DISABLED;
+		return;
+	}
+
+	start = mem_clusters[1].start;
+	size = mem_clusters[1].size - 1;
+	end = start + size;
+
+	/*
+	 * Figure out which VMEbus master image the RAM is
+	 * visible through. This will tell us the address
+	 * modifier and datasizes it uses, as well as allowing
+	 * us to calculate its `real' VMEbus address.
+	 */
+	for (i = 0, mvr = sc->sc_masters; i < sc->sc_nmasters; i++, mvr++) {
+		vme_addr_t vstart = mvr->vr_locstart + mvr->vr_vmestart;
+
+		if (start >= vstart &&
+		    end <= vstart + (mvr->vr_vmeend - mvr->vr_vmestart))
+			break;
+	}
+	if (i == sc->sc_nmasters) {
+		svr->vr_am = MVMEBUS_AM_DISABLED;
+#ifdef DEBUG
+		printf("%s: No VMEbus master mapping for offboard RAM!\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return;
+	}
+
+	svr->vr_locstart = start;
+	svr->vr_vmestart = start & mvr->vr_mask;
+	svr->vr_vmeend = svr->vr_vmestart + size;
+	svr->vr_datasize = mvr->vr_datasize;
+	svr->vr_mask = mvr->vr_mask;
+	svr->vr_am = mvr->vr_am & VME_AM_ADRSIZEMASK;
+	svr->vr_am |= MVMEBUS_AM_CAP_DATA  | MVMEBUS_AM_CAP_PROG |
+		      MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER;
+}
+
 void
 mvmebus_attach(sc)
 	struct mvmebus_softc *sc;
@@ -89,6 +152,9 @@ mvmebus_attach(sc)
 	/* Zap the IRQ reference counts */
 	for (i = 0; i < 8; i++)
 		sc->sc_irqref[i] = 0;
+
+	/* If there's offboard RAM, get its VMEbus slave attributes */
+	mvmebus_offboard_ram(sc);
 
 #ifdef DEBUG
 	for (i = 0; i < sc->sc_nmasters; i++) {
@@ -720,6 +786,9 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	 */
 	for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
 		if (vr->vr_am == MVMEBUS_AM_DISABLED)
+			continue;
+
+		if (i == 0 && (flags & BUS_DMA_ONBOARD_RAM) != 0)
 			continue;
 
 		if (am == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
