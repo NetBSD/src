@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: str2val.c,v 1.2 2003/07/12 09:37:12 itojun Exp $");
+__RCSID("$NetBSD: str2val.c,v 1.3 2004/10/30 15:15:38 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,9 +88,9 @@ str2val(str, base, len)
 
 	i = 0;
 	for (p = str; *p != '\0'; p++) {
-		if (isxdigit(*p))
+		if (isxdigit((unsigned char)*p))
 			i++;
-		else if (isspace(*p))
+		else if (isspace((unsigned char)*p))
 			;
 		else
 			return NULL;
@@ -105,7 +105,7 @@ str2val(str, base, len)
 	i = 0;
 	f = 0;
 	for (rp = dst, p = str; *p != '\0'; p++) {
-		if (isxdigit(*p)) {
+		if (isxdigit((unsigned char)*p)) {
 			if (!f) {
 				b[0] = *p;
 				f = 1;

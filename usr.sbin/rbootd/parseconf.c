@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.8 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.9 2004/10/30 15:20:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.8 2003/08/07 11:25:41 agc Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.9 2004/10/30 15:20:36 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,9 +158,9 @@ ParseConfig()
 	 *  and null terminates it.  `cp' is positioned at the start
 	 *  of the next token.  spaces & commas are separators.
 	 */
-#define GETSTR	while (isspace(*cp) || *cp == ',') cp++;	\
-		bcp = cp;					\
-		while (*cp && *cp!=',' && !isspace(*cp)) cp++;	\
+#define GETSTR	while (isspace((unsigned char)*cp) || *cp == ',') cp++;	\
+		bcp = cp;						\
+		while (*cp && *cp!=',' && !isspace((unsigned char)*cp)) cp++;\
 		if (*cp) *cp++ = '\0'
 
 	/*
@@ -313,10 +313,10 @@ ParseAddr(str)
 		/*
 		 *  Convert hex character to an integer.
 		 */
-		if (isdigit(*cp))
+		if (isdigit((unsigned char)*cp))
 			i = *cp - '0';
 		else {
-			i = (isupper(*cp)? tolower(*cp): *cp) - 'a' + 10;
+			i = tolower((unsigned char)*cp) - 'a' + 10;
 			if (i < 10 || i > 15)		/* not a hex char */
 				return(NULL);
 		}

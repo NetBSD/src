@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.43 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.44 2004/10/30 15:23:30 dsl Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.43 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.44 2004/10/30 15:23:30 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ main(argc, argv)
 			iface = optarg;
 			break;
 		case 'r':
-			if (isdigit(*optarg)) {
+			if (isdigit((unsigned char)*optarg)) {
 				if (inet_aton(optarg, &route_addr) != 0)
 					break;
 			}

@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backupsa.c,v 1.8 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: backupsa.c,v 1.9 2004/10/30 15:15:37 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,7 +251,7 @@ backupsa_from_file()
 		created = mktime(&tm);
 		p++;
 
-		for (q = p; *q != '\0' && !isspace(*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		src = str2saddr(p, NULL);
@@ -259,7 +259,7 @@ backupsa_from_file()
 			goto err;
 		p = q + 1;
 
-		for (q = p; *q != '\0' && !isspace(*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		dst = str2saddr(p, NULL);
@@ -272,7 +272,7 @@ backupsa_from_file()
 #define GETNEXTNUM(value, function) \
 do { \
 	char *y; \
-	for (q = p; *q != '\0' && !isspace(*q); q++) \
+	for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++) \
 		; \
 	*q = '\0'; \
 	(value) = function(p, &y, 10); \
@@ -454,7 +454,7 @@ str2num(p, len)
 
 	res = 0;
         for (i = len; i > 0; i--) {
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			return -1;
 		res *= 10;
 		res += *p - '0';

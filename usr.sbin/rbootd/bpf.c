@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.16 2004/04/10 17:53:05 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.17 2004/10/30 15:20:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.16 2004/04/10 17:53:05 darrenr Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.17 2004/10/30 15:20:36 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ BpfGetIntfName(errmsg)
 #endif
 			continue;
 
-		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
+		for (cp = ifa->ifa_name; !isdigit((unsigned char)*cp); ++cp)
 			;
 		n = atoi(cp);
 		if (n < minunit) {
