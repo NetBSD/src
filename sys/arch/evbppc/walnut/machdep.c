@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/07/16 01:00:33 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/07/25 11:44:21 scw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/07/16 01:00:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/25 11:44:21 scw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -331,7 +331,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
-	fake_mapiodev = 0;
 }
 
 static void
@@ -485,6 +484,12 @@ cpu_startup(void)
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
+
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
+	fake_mapiodev = 0;
 }
 
 
