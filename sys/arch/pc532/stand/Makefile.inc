@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/05/17 13:55:35 matthias Exp $
+#	$NetBSD: Makefile.inc,v 1.1.8.1 1997/11/18 02:50:15 mellon Exp $
 
 BINDIR=		/usr/mdec
 
-# Load at 0x260000 + 78 * 1024 * 18
+# Load at 0x260000 + 2800 * 512
 # That way the boot code will be at the correct address if the floppy
 # image is started from memory.
-RELOC=		3BF000
+RELOC=		3BE000
 
 CLEANFILES+=	${PROG}.sym ${PROG}
 
