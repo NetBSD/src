@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.6 1994/10/09 08:19:29 mycroft Exp $	*/
+/*	$NetBSD: db_access.c,v 1.7 1994/10/09 08:29:55 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,6 +34,8 @@
 
 #include <machine/db_machdep.h>		/* type definitions */
 
+#include <ddb/db_access.h>
+
 /*
  * Access unaligned data items on aligned (longword)
  * boundaries.
@@ -48,11 +50,11 @@ int db_extend[] = {	/* table for sign-extending */
 
 db_expr_t
 db_get_value(addr, size, is_signed)
-	db_addr_t	addr;
+	db_addr_t addr;
 	register size_t size;
-	boolean_t	is_signed;
+	boolean_t is_signed;
 {
-	char		data[sizeof(int)];
+	char data[sizeof(int)];
 	register db_expr_t value;
 	register size_t i;
 

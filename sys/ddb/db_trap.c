@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.6 1994/10/09 08:19:42 mycroft Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.7 1994/10/09 08:30:13 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,11 @@
 /*
  * Trap entry point to kernel debugger.
  */
+#include <sys/param.h>
+#include <sys/proc.h>
+
+#include <machine/db_machdep.h>
+
 #include <ddb/db_run.h>
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>

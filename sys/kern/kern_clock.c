@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.20 1994/09/18 21:56:16 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.21 1994/10/09 08:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -531,6 +531,8 @@ sysctl_clockrate(where, sizep)
 }
 
 #ifdef DDB
+#include <machine/db_machdep.h>
+
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 
@@ -550,7 +552,7 @@ void db_show_callout(long addr, int haddr, int count, char *modif)
 		if (t > 0)
 			cum += t;
 
-		db_find_sym_and_offset(p1->c_func, &name, &offset);
+		db_find_sym_and_offset((db_addr_t)p1->c_func, &name, &offset);
 		if (name == NULL)
 			name = "?";
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.6 1994/10/09 08:19:33 mycroft Exp $	*/
+/*	$NetBSD: db_break.h,v 1.7 1994/10/09 08:29:58 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,12 +33,10 @@
 #define	_DDB_DB_BREAK_H_
 
 #include <vm/vm.h>
-#include <machine/db_machdep.h>
 
 /*
- * Breakpoint.
+ * Breakpoints.
  */
-
 typedef struct db_breakpoint {
 	vm_map_t map;			/* in this map */
 	db_addr_t address;		/* set here */
