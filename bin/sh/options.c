@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.22 1997/01/11 02:04:43 tls Exp $	*/
+/*	$NetBSD: options.c,v 1.23 1997/02/25 17:51:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.22 1997/01/11 02:04:43 tls Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.23 1997/02/25 17:51:50 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ procargs(argc, argv)
 		setinputfile(commandname, 0);
 	}
 	/* POSIX 1003.2: first arg after -c cmd is $0, remainder $1... */
-	if (argptr && minusc)
+	if (argptr && minusc && *argptr)
 	        arg0 = *argptr++;
 
 	shellparam.p = argptr;
