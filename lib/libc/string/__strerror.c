@@ -33,13 +33,17 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.1 1994/09/03 05:07:51 jtc Exp $";
+static char *rcsid = "$Id: __strerror.c,v 1.2 1994/10/06 18:17:52 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <string.h>
 #ifdef NLS
+#define catclose	__catclose
+#define catgets		__catgets
+#define catopen		__catopen
 #include <nl_types.h>
 #endif
+
+#include <string.h>
 
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
