@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.12 2000/06/12 05:27:27 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.13 2000/06/18 07:05:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -154,7 +154,6 @@ iommu_init(name, is, tsbsize)
 	struct iommu_state *is;
 	int tsbsize;
 {
-	bus_space_handle_t vtsbp;
 	psize_t size;
 	vaddr_t va;
 	paddr_t pa;
@@ -295,7 +294,7 @@ iommu_enter(is, va, pa, flags)
 
 #ifdef DIAGNOSTIC
 	if (va < is->is_dvmabase)
-		panic("iommu_enter: va 0x%lx not in DVMA space",va);
+		panic("iommu_enter: va %#lx not in DVMA space", va);
 #endif
 
 	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
