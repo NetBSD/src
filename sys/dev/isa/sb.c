@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.42 1997/03/20 06:48:57 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.43 1997/03/20 11:03:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -129,8 +129,8 @@ int
 sbmatch(sc)
 	struct sbdsp_softc *sc;
 {
-	static u_char drq_conf[4] = {
-		0x01, 0x02, -1, 0x08
+	static u_char drq_conf[8] = {
+		0x01, 0x02, -1, 0x08, -1, 0x20, 0x40, 0x80
 	};
 
 	static u_char irq_conf[11] = {
@@ -141,26 +141,34 @@ sbmatch(sc)
 		printf("%s: sbdsp probe failed\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
-		
+
 	/*
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (ISSBPROCLASS(sc)) {
-		if (!SBP_DRQ_VALID(sc->sc_drq)) {
+		if (!SBP_DRQ_VALID(sc->sc_drq8)) {
 			printf("%s: configured dma chan %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq);
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			return 0;
 		}
-		if (ISSB16CLASS(sc))
-			sbdsp_mix_write(sc, SBP_SET_DRQ, drq_conf[sc->sc_drq]);
-	}
-	else {
-		if (!SB_DRQ_VALID(sc->sc_drq)) {
+	} else {
+		if (!SB_DRQ_VALID(sc->sc_drq8)) {
 			printf("%s: configured dma chan %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq);
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			return 0;
 		}
 	}
+	
+	if (ISSB16CLASS(sc)) {
+		if (sc->sc_drq16 == -1)
+			sc->sc_drq16 = sc->sc_drq8;
+		if (!SB16_DRQ_VALID(sc->sc_drq16)) {
+			printf("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			return 0;
+		}
+	} else
+		sc->sc_drq16 = sc->sc_drq8;
 	
 #ifdef NEWCONFIG
 	/*
@@ -191,16 +199,42 @@ sbmatch(sc)
 			    sc->sc_dev.dv_xname, sc->sc_irq);
 			return 0;
 		}
-		if (ISSB16CLASS(sc))
-			sbdsp_mix_write(sc, SBP_SET_IRQ, irq_conf[sc->sc_irq]);
-	}
-	else {
+	} else {
 		if (!SB_IRQ_VALID(sc->sc_irq)) {
 			printf("%s: configured irq %d invalid\n",
 			    sc->sc_dev.dv_xname, sc->sc_irq);
 			return 0;
 		}
 	}
+
+	if (ISSB16CLASS(sc)) {
+#if 0
+		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_DRQ));
+		printf("%s: try drq conf %02x\n", sc->sc_dev.dv_xname,
+		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
+#endif
+		sbdsp_mix_write(sc, SBP_SET_DRQ,
+		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
+#if 0
+		printf("%s: new drq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_DRQ));
+#endif
+
+#if 0
+		printf("%s: old irq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_IRQ));
+		printf("%s: try irq conf %02x\n", sc->sc_dev.dv_xname,
+		    irq_conf[sc->sc_irq]);
+#endif
+		sbdsp_mix_write(sc, SBP_SET_IRQ,
+		    irq_conf[sc->sc_irq]);
+#if 0
+		printf("%s: new irq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_IRQ));
+#endif
+	}
+
 	return 1;
 }
 
@@ -240,7 +274,7 @@ sbforceintr(aux)
 	 * it is needed (and you pay the latency).  Also, you might
 	 * never need the buffer anyway.)
 	 */
-	at_dma(DMAMODE_READ, &dmabuf, 1, sc->sc_drq);
+	at_dma(DMAMODE_READ, &dmabuf, 1, sc->sc_drq8);
 	if (sbdsp_wdsp(sc, SB_DSP_RDMA) == 0) {
 		(void)sbdsp_wdsp(sc, 0);
 		(void)sbdsp_wdsp(sc, 0);

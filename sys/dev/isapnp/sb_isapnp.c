@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.2 1997/03/13 01:45:11 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.3 1997/03/20 11:03:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -105,7 +105,7 @@ sb_isapnp_attach(parent, self, aux)
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
-	sc->sc_drq = ipa->ipa_drq[0].num;
+	sc->sc_drq8 = ipa->ipa_drq[0].num;
 	sc->sc_drq16 = ipa->ipa_drq[1].num;
 
 	printf("\n");

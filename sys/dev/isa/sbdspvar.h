@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.16 1997/03/20 06:48:59 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.17 1997/03/20 11:03:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,7 +82,8 @@ struct sbdsp_softc {
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
-	int	sc_drq;			/* DMA (8-bit) */
+	int	sc_drq;			/* active DMA channel */
+	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
 	u_short	sc_open;		/* reference count of open calls */
