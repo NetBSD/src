@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.2 1998/07/24 13:42:29 drochner Exp $	*/
+/*	$NetBSD: am79900.c,v 1.3 1998/08/08 23:51:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -437,7 +437,7 @@ am79900_intr(arg)
  * Setup output on interface.
  * Get another datagram to send off of the interface queue, and map it to the
  * interface before starting the output.
- * Called only at splimp or interrupt level.
+ * Called only at splnet or interrupt level.
  */
 void
 am79900_start(ifp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.13 1998/07/05 06:49:04 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.14 1998/08/08 23:58:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -277,7 +277,7 @@ esinit(sc)
 	register u_int iobase = sc->sc_base;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 #ifdef ESDEBUG
 	if (ifp->if_flags & IFF_RUNNING)
@@ -852,7 +852,7 @@ esioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 
@@ -952,7 +952,7 @@ esreset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	esstop(sc);
 	esinit(sc);
 	(void)splx(s);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.18 1998/07/05 06:49:04 jonathan Exp $ */
+/* $NetBSD: if_ie.c,v 1.19 1998/08/08 23:58:40 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -623,7 +623,7 @@ ieioctl(ifp, cmd, data)
     int s;
     int error=0;
 
-    s=splimp();
+    s=splnet();
 
     switch ( cmd )
     {
@@ -684,7 +684,7 @@ iereset(sc)
 	struct ie_softc *sc;
 {
 	struct ie_sys_ctl_block scb;
-	int s = splimp();
+	int s = splnet();
 
 	iestop(sc);
 
@@ -986,7 +986,7 @@ iestop(sc)
 	struct ie_softc *sc;
 {
     struct ie_sys_ctl_block scb;
-    int s = splimp();
+    int s = splnet();
 
     ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
 

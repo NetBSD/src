@@ -1,4 +1,4 @@
-/*	$Id: hd64570.c,v 1.1 1998/07/26 03:26:57 explorer Exp $	*/
+/*	$Id: hd64570.c,v 1.2 1998/08/08 23:51:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -816,7 +816,7 @@ sca_output(ifp, m, dst, rt0)
 	/*
 	 * queue the packet.  If interactive, use the fast queue.
 	 */
-	s = splimp();
+	s = splnet();
 #ifdef SCA_USE_FASTQ
 	ifq = (highpri == 1 ? &scp->fastq : &ifp->if_snd);
 #else
@@ -860,7 +860,7 @@ sca_ioctl(ifp, cmd, addr)
 	int error;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	ifr = (struct ifreq *)addr;
 	ifa = (struct ifaddr *)addr;
@@ -917,7 +917,7 @@ sca_ioctl(ifp, cmd, addr)
 /*
  * start packet transmission on the interface
  *
- * MUST BE CALLED AT splimp()
+ * MUST BE CALLED AT splnet()
  */
 static void
 sca_start(ifp)
@@ -1335,7 +1335,7 @@ sca_frame_avail(sca_port_t *scp, int *descindx)
  * Pass the packet up to the kernel if it is a packet we want to pay
  * attention to.
  *
- * MUST BE CALLED AT splimp()
+ * MUST BE CALLED AT splnet()
  */
 static void
 sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)

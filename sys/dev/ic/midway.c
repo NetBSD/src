@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.33 1998/07/05 00:51:19 jonathan Exp $	*/
+/*	$NetBSD: midway.c,v 1.34 1998/08/08 23:51:40 mycroft Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1237,7 +1237,7 @@ int on;
   slot = sc->rxvc2slot[vci];
   if ((sc->rxslot[slot].oth_flags & (ENOTHER_FREE|ENOTHER_DRAIN)) != 0)
     return(EINVAL);
-  s = splimp();		/* block out enintr() */
+  s = splnet();		/* block out enintr() */
   oldmode = EN_READ(sc, MID_VC(vci));
   newmode = MIDV_SETMODE(oldmode, MIDV_TRASH) & ~MIDV_INSERVICE;
   EN_WRITE(sc, MID_VC(vci), (newmode | (oldmode & MIDV_INSERVICE)));
@@ -1478,7 +1478,7 @@ int vc;
 
 /*
  * en_start: start transmitting the next packet that needs to go out
- * if there is one.    note that atm_output() has already splimp()'d us.
+ * if there is one.    note that atm_output() has already splnet()'d us.
  */
 
 STATIC void en_start(ifp)

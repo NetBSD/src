@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.13 1998/07/05 06:49:15 jonathan Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.14 1998/08/08 23:51:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -561,7 +561,7 @@ static int tl_init(sc)
 	struct ifnet *ifp = &sc->tl_if;
 	int i, s;
 
-	s = splimp();
+	s = splnet();
 	/* cancel any pending IO */
 	tl_shutdown(sc);
 	tl_reset(sc);
@@ -1054,7 +1054,7 @@ tl_ifioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 	
-	s = splimp();
+	s = splnet();
 	switch(cmd) {
 	case SIOCSIFADDR: {
 		struct ifaddr *ifa = (struct ifaddr *)data;

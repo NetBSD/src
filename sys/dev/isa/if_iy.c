@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.28 1998/07/31 01:10:13 rvb Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.29 1998/08/08 23:51:41 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -420,7 +420,7 @@ iyreset(sc)
 struct iy_softc *sc;
 {
 	int s;
-	s = splimp();
+	s = splnet();
 	iystop(sc);
 	iyinit(sc);
 	splx(s);
@@ -1087,7 +1087,7 @@ iyioctl(ifp, cmd, data)
 	    ifp, ifp->if_xname, cmd, data);
 #endif
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 
