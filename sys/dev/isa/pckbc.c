@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.7 1998/05/03 12:04:53 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.8 1998/07/24 03:29:29 sommerfe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -41,7 +41,6 @@
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
-#include <sys/pool.h>
 
 #include <machine/bus.h>
 
@@ -86,10 +85,9 @@ struct pckbc_softc {
 struct pckbc_slotdata {
 	int polling; /* don't read data port in interrupt handler */
 	TAILQ_HEAD(, pckbc_devcmd) cmdqueue; /* active commands */
-	pool_handle_t cmdpool; /* freelist for descriptors */
+	TAILQ_HEAD(, pckbc_devcmd) freequeue; /* free commands */
 #define NCMD 5
-	char cmdpool_storage[POOL_STORAGE_SIZE(sizeof(struct pckbc_devcmd),
-					       NCMD)];
+	struct pckbc_devcmd cmds[NCMD];
 };
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
@@ -477,9 +475,13 @@ void
 pckbc_init_slotdata(q)
 	struct pckbc_slotdata *q;
 {
+	int i;
 	TAILQ_INIT(&q->cmdqueue);
-	q->cmdpool = pool_create(sizeof(struct pckbc_devcmd), NCMD,
-				 "kbccmdget", 0, q->cmdpool_storage);
+	TAILQ_INIT(&q->freequeue);
+
+	for (i=0; i<NCMD; i++) {
+		TAILQ_INSERT_TAIL(&q->freequeue, &(q->cmds[i]), next);
+	}
 	q->polling = 0;
 }
 
@@ -736,7 +738,7 @@ pckbc_cleanqueue(q)
 			printf(" %02x", cmd->cmd[i]);
 		printf("\n");
 #endif
-		pool_put(q->cmdpool, cmd);
+		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 	}
 }
 
@@ -793,7 +795,7 @@ pckbc_start(t, slot)
 				wakeup(cmd);
 			else {
 				untimeout(pckbc_cleanup, t);
-				pool_put(q->cmdpool, cmd);
+				TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 			}
 			cmd = TAILQ_FIRST(&q->cmdqueue);
 		} while (cmd);
@@ -858,7 +860,7 @@ pckbc_cmdresponse(t, slot, data)
 		wakeup(cmd);
 	else {
 		untimeout(pckbc_cleanup, t);
-		pool_put(q->cmdpool, cmd);
+		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 	}
 	if (!CMD_IN_QUEUE(q))
 		return (1);
@@ -886,7 +888,10 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 	if ((len > 4) || (responselen > 4))
 		return (EINVAL);
 	s = spltty();
-	nc = pool_get(q->cmdpool, 0);
+	nc = TAILQ_FIRST(&q->freequeue);
+	if (nc) {
+		TAILQ_REMOVE(&q->freequeue, nc, next);
+	}
 	splx(s);
 	if (!nc)
 		return (ENOMEM);
@@ -927,7 +932,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 	if (sync) {
 		if (respbuf)
 			bcopy(nc->response, respbuf, responselen);
-		pool_put(q->cmdpool, nc);
+		TAILQ_INSERT_TAIL(&q->freequeue, nc, next);
 	}
 
 	splx(s);
