@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.116 2003/07/13 07:48:01 itojun Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.117 2003/08/04 16:51:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.116 2003/07/13 07:48:01 itojun Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.117 2003/08/04 16:51:56 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -644,7 +644,7 @@ readmbr(int f)
 	struct mbr_partition *dp;
 	mbr_sector_t mbr;
 	int part;
-	uint ext_base, next_ext;
+	uint ext_base, next_ext, this_ext;
 	static mbr_partition_t netbsd_part;
 
 	/*
@@ -656,8 +656,9 @@ readmbr(int f)
 	ext_base = 0;
 	next_ext = 0;
 	for (;;) {
+		this_ext = next_ext;
 		next_ext += ext_base;
-		if (pread(f, &mbr, sizeof mbr, ext_base * (off_t)DEV_BSIZE)
+		if (pread(f, &mbr, sizeof mbr, next_ext * (off_t)DEV_BSIZE)
 		    != sizeof(mbr)) {
 			warn("Can't read master boot record %d", next_ext);
 			return 0;
@@ -707,6 +708,11 @@ readmbr(int f)
 		if (next_ext == 0)
 			/* No more extended partitions */
 			break;
+		if (next_ext <= this_ext) {
+			warnx("Invalid extented chain %x <= %x",
+				next_ext, this_ext);
+			break;
+		}
 		if (ext_base == 0) {
 			ext_base = next_ext;
 			next_ext = 0;
