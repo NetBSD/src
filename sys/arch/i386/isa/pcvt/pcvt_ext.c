@@ -2744,7 +2744,9 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	{
 
 #if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
+#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+#endif
 #elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		struct trapframe *fp = (struct trapframe *)p->p_regs;
 #else
