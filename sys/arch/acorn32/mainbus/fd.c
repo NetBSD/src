@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 2002/11/01 11:31:50 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 2003/01/01 00:25:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		aprint_normal(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 
