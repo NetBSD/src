@@ -1,7 +1,7 @@
 /*
  * file.h - definitions for file(1) program
  *
- *	$Id: file.h,v 1.3 1993/08/01 18:16:29 mycroft Exp $
+ *	$Id: file.h,v 1.4 1993/11/03 04:04:19 mycroft Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -35,13 +35,14 @@
 struct magic {
 	short flag;		
 #define INDIR	1		/* if '>(...)' appears,  */
+#define	UNSIGNED 2		/* comparison is unsigned */
+#define	MASK	4		/* this is a masked op, like & v1 = v2 */
 	short cont_level;	/* level of ">" */
 	struct {
 		char type;	/* byte short long */
 		long offset;	/* offset from indirection */
 	} in;
 	long offset;		/* offset to magic number */
-#define	MASK	0200		/* this is a masked op, like & v1 = v2 */
 	unsigned char reln;	/* relation (0=eq, '>'=gt, etc) */
 	char type;		/* int, short, long or string. */
 	char vallen;		/* length of string value, if any */
@@ -57,14 +58,14 @@ struct magic {
 #define				LELONG	11
 #define				LEDATE	12
 	union VALUETYPE {
-		char b;
-		short h;
-		long l;
+		unsigned char b;
+		unsigned short h;
+		unsigned long l;
 		char s[MAXstring];
 		unsigned char hs[2];	/* 2 bytes of a fixed-endian "short" */
 		unsigned char hl[4];	/* 2 bytes of a fixed-endian "long" */
 	} value;		/* either number or string */
-	long mask;		/* mask before comparison with value */
+	unsigned long mask;	/* mask before comparison with value */
 	char nospflag;		/* supress space character */
 	char desc[MAXDESC];	/* description */
 };

@@ -26,7 +26,7 @@
  */
 
 #ifndef	lint
-static char rcsid[] = "$Id: apprentice.c,v 1.3 1993/08/01 18:16:26 mycroft Exp $";
+static char rcsid[] = "$Id: apprentice.c,v 1.4 1993/11/03 04:04:21 mycroft Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -43,6 +43,7 @@ static int getvalue __P((struct magic *, char **));
 static int hextoint __P((int));
 static char *getstr __P((char *, char *, int, int *));
 static int parse    __P((char *, int *, int));
+extern unsigned long signextend	__P((struct magic *, unsigned long));
 
 static int maxmagic = 0;
 
@@ -75,10 +76,6 @@ int check;			/* non-zero? checking-only run. */
 			exit(1);
 	}
 
-	/* parse it */
-	if (check)	/* print silly verbose header for USG compat. */
-		(void) printf("cont\toffset\ttype\topcode\tmask\tvalue\tdesc\n");
-
 	for (lineno = 1;fgets(line, BUFSIZ, f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
 			continue;
@@ -91,6 +88,45 @@ int check;			/* non-zero? checking-only run. */
 
 	(void) fclose(f);
 	return errs ? -1 : 0;
+}
+
+/*
+ * extend the sign bit if the comparison is to be signed
+ */
+unsigned long
+signextend(m, v)
+struct magic *m;
+unsigned long v;
+{
+	if (!(m->flag & UNSIGNED))
+		switch(m->type) {
+		/*
+		 * Do not remove the casts below.  They are
+		 * vital.  When later compared with the data,
+		 * the sign extension must have happened.
+		 */
+		case BYTE:
+			v = (char) v;
+			break;
+		case SHORT:
+		case BESHORT:
+		case LESHORT:
+			v = (short) v;
+			break;
+		case DATE:
+		case BEDATE:
+		case LEDATE:
+		case LONG:
+		case BELONG:
+		case LELONG:
+			v = (long) v;
+			break;
+		default:
+			magwarn("can't happen: m->type=%d\n",
+				m->type);
+			return -1;
+		}
+	return v;
 }
 
 /*
@@ -188,6 +224,11 @@ int *ndx, check;
 #define NLELONG		6
 #define NLEDATE		6
 
+	if (*l == 'u') {
+		++l;
+		m->flag |= UNSIGNED;
+	}
+
 	/* get type, skip it */
 	if (strncmp(l, "byte", NBYTE)==0) {
 		m->type = BYTE;
@@ -229,7 +270,8 @@ int *ndx, check;
 	/* New-style anding: "0 byte&0x80 =0x80 dynamically linked" */
 	if (*l == '&') {
 		++l;
-		m->mask = strtol(l, &l, 0);
+		m->mask = signextend(m, strtol(l, &l, 0));
+		m->flag |= MASK;
 	} else
 		m->mask = 0L;
 	EATAB;
@@ -310,36 +352,9 @@ char **p;
 	if (m->type == STRING) {
 		*p = getstr(*p, m->value.s, sizeof(m->value.s), &slen);
 		m->vallen = slen;
-	} else {
-		if (m->reln != 'x') {
-			switch(m->type) {
-			/*
-			 * Do not remove the casts below.  They are vital.
-			 * When later compared with the data, the sign
-			 * extension must have happened.
-			 */
-			case BYTE:
-				m->value.l = (char) strtol(*p,p,0);
-				break;
-			case SHORT:
-			case BESHORT:
-			case LESHORT:
-				m->value.l = (short) strtol(*p,p,0);
-				break;
-			case DATE:
-			case BEDATE:
-			case LEDATE:
-			case LONG:
-			case BELONG:
-			case LELONG:
-				m->value.l = (long) strtol(*p,p,0);
-				break;
-			default:
-				magwarn("can't happen: m->type=%d\n", m->type);
-				return -1;
-			}
-		}
-	}
+	} else
+		if (m->reln != 'x')
+			m->value.l = signextend(m, strtol(*p, p, 0));
 	return 0;
 }
 
