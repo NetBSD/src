@@ -1,11 +1,11 @@
-# $NetBSD: files.alpha,v 1.64 1998/03/02 08:04:04 ross Exp $
+# $NetBSD: files.alpha,v 1.65 1998/03/12 06:04:14 thorpej Exp $
 #
 # alpha-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
 
-maxusers 2 8 64
+maxusers 8 16 64
 
 # CPU support option headers
 defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
