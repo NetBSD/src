@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.488 2004/10/08 03:01:15 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.489 2004/10/08 03:02:19 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7750,3 +7750,9 @@ dist/ipf/tools/ipf_y.y				1.14
 	The "keep options" only allow one order, not both as they should for 
 	proper backwards compatibility. PR#27086
 	[grant, ticket #890]
+
+dist/ipf/tools/ipnat_y.y			1.6
+
+	Actually add a token to generate the value IPNY_TCPUDP as expected by 
+	the grammar. PR#25972
+	[grant, ticket #891]
