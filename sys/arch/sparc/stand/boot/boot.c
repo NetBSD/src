@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1999/04/28 15:22:25 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.6 1999/04/30 09:29:40 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -44,6 +44,8 @@
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
+
+#include "bootinfo.h"
 
 static int	bootoptions __P((char *));
 #if 0
@@ -117,7 +119,8 @@ main()
 	int	io, i;
 	char	*kernel;
 	int	how;
-	u_long	marks[MARK_MAX];
+	u_long	marks[MARK_MAX], bootinfo;
+	struct btinfo_symtab bi_sym;
 	void	*arg;
 
 	prom_init();
@@ -184,99 +187,21 @@ main()
 
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-	/*
-	 * XXX: Fix me properly (struct bootinfo)
-	 */
-	marks[MARK_END] |= 0xf0000000;
 	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
-printf("entry = 0x%lx, arg = 0x%lx, end = 0x%lx\n", marks[MARK_ENTRY], (u_long)arg, marks[MARK_END]);
+#if 0
+	/* Old style cruft; works only with a.out */
+	marks[MARK_END] |= 0xf0000000;
 	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, marks[MARK_END],
 	    DDB_MAGIC1);
+#else
+	/* Should work with both a.out and ELF, but somehow ELF is busted */
+	bootinfo = bi_init(marks[MARK_END]);
+	bi_sym.nsym = marks[MARK_NSYM];
+	bi_sym.ssym = marks[MARK_SYM];
+	bi_sym.esym = marks[MARK_END];
+	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
+	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, bootinfo, DDB_MAGIC2);
+#endif
 
 	_rtt();
 }
-
-#if 0
-struct syms {
-	u_int32_t	value;
-	u_int32_t	index;
-};
-
-static void
-sort(syms, n)
-	struct syms *syms;
-	int n;
-{
-	register struct syms *sj;
-	register int i, j, k;
-	register u_int32_t value, index;
-
-	/* Insertion sort.  This is O(n^2), but so what? */
-	for (i = 1; i < n; i++) {
-		/* save i'th entry */
-		value = syms[i].value;
-		index = syms[i].index;
-		/* find j such that i'th entry goes before j'th */
-		for (j = 0, sj = syms; j < i; j++, sj++)
-			if (value < sj->value)
-				break;
-		/* slide up any additional entries */
-		for (k = 0; k < (i - j); k++) {
-			sj[k+1].value = sj[k].value;
-			sj[k+1].index = sj[k].index;
-		}
-		sj->value = value;
-		sj->index = index;
-	}
-}
-
-void
-promsyms(fd, hp)
-	int fd;
-	struct exec *hp;
-{
-	int i, n, strtablen;
-	char *str, *p, *cp, buf[128];
-	struct syms *syms;
-
-	lseek(fd, sizeof(*hp)+hp->a_text+hp->a_data, SEEK_SET);
-	n = hp->a_syms/sizeof(struct nlist);
-	if (n == 0)
-		return;
-	syms = (struct syms *)alloc(n * sizeof(struct syms));
-
-	printf("+[%x+", hp->a_syms);
-	for (i = 0; i < n; i++) {
-		struct nlist nlist;
-
-		if (read(fd, &nlist, sizeof(nlist)) != sizeof(nlist)) {
-			printf("promsyms: read failed\n");
-			return;
-		}
-		syms[i].value = nlist.n_value;
-		syms[i].index = nlist.n_un.n_strx - sizeof(strtablen);
-	}
-
-	sort(syms, n);
-
-	if (read(fd, &strtablen, sizeof(strtablen)) != sizeof(strtablen)) {
-		printf("promsym: read failed (strtablen)\n");
-		return;
-	}
-	if (strtablen < sizeof(strtablen)) {
-		printf("promsym: string table corrupted\n");
-		return;
-	}
-	strtablen -= sizeof(strtablen);
-	str = (char *)alloc(strtablen);
-
-	printf("%x]", strtablen);
-	if (read(fd, str, strtablen) != strtablen) {
-		printf("promsym: read failed (strtab)\n");
-		return;
-	}
-
-	sprintf(buf, "%x %d %x loadsyms", syms, n, str);
-	prom_interpret(buf);
-}
-#endif
