@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.90 2003/09/07 15:59:37 itojun Exp $	*/
-/*	$KAME: key.c,v 1.304 2003/09/07 13:49:54 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.91 2003/09/07 20:41:27 itojun Exp $	*/
+/*	$KAME: key.c,v 1.308 2003/09/07 20:35:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.90 2003/09/07 15:59:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91 2003/09/07 20:41:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -703,8 +703,8 @@ key_allocsa(family, src, dst, proto, spi)
 	caddr_t src, dst;
 	u_int32_t spi;
 {
-	struct secasvar *sav;
-	u_int stateidx, state;
+	struct secasvar *sav, *match;
+	u_int stateidx, state, tmpidx, matchidx;
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
 	int s;
@@ -721,109 +721,120 @@ key_allocsa(family, src, dst, proto, spi)
 	 */
 	s = splsoftnet();	/*called from softclock()*/
 	/* search valid state */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_valid);
-	     stateidx++) {
-		state = saorder_state_valid[stateidx];
-		LIST_FOREACH(sav, &spihash[spi % SPIHASHSIZE], spihash) {
-			if (sav->spi != spi)
-				continue;
-			if (sav->state != state)
-				continue;
-			if (proto != sav->sah->saidx.proto)
-				continue;
-			if (family != sav->sah->saidx.src.ss_family ||
-			    family != sav->sah->saidx.dst.ss_family)
-				continue;
+	match = NULL;
+	matchidx = _ARRAYLEN(saorder_state_valid);
+	LIST_FOREACH(sav, &spihash[spi % SPIHASHSIZE], spihash) {
+		if (sav->spi != spi)
+			continue;
+		if (sav->state != state)
+			continue;
+		if (proto != sav->sah->saidx.proto)
+			continue;
+		if (family != sav->sah->saidx.src.ss_family ||
+		    family != sav->sah->saidx.dst.ss_family)
+			continue;
+		tmpidx = _ARRAYLEN(saorder_state_valid);
+		for (stateidx = 0; stateidx < matchidx; stateidx++) {
+			state = saorder_state_valid[stateidx];
+			if (sav->state == state) {
+				tmpidx = stateidx;
+				break;
+			}
+		}
+		if (tmpidx >= matchidx)
+			continue;
 
 #if 0	/* don't check src */
-			/* check src address */
-			switch (family) {
-			case AF_INET:
-				bzero(&sin, sizeof(sin));
-				sin.sin_family = AF_INET;
-				sin.sin_len = sizeof(sin);
-				bcopy(src, &sin.sin_addr,
-				    sizeof(sin.sin_addr));
-				if (key_sockaddrcmp((struct sockaddr*)&sin,
-				    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
-					continue;
-
-				break;
-			case AF_INET6:
-				bzero(&sin6, sizeof(sin6));
-				sin6.sin6_family = AF_INET6;
-				sin6.sin6_len = sizeof(sin6);
-				bcopy(src, &sin6.sin6_addr,
-				    sizeof(sin6.sin6_addr));
-				if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-					/* kame fake scopeid */
-					sin6.sin6_scope_id =
-					    ntohs(sin6.sin6_addr.s6_addr16[1]);
-					sin6.sin6_addr.s6_addr16[1] = 0;
-				}
-				if (key_sockaddrcmp((struct sockaddr*)&sin6,
-				    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
-					continue;
-				break;
-			default:
-				ipseclog((LOG_DEBUG, "key_allocsa: "
-				    "unknown address family=%d.\n",
-				    family));
+		/* check src address */
+		switch (family) {
+		case AF_INET:
+			bzero(&sin, sizeof(sin));
+			sin.sin_family = AF_INET;
+			sin.sin_len = sizeof(sin);
+			bcopy(src, &sin.sin_addr,
+			    sizeof(sin.sin_addr));
+			if (key_sockaddrcmp((struct sockaddr*)&sin,
+			    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
 				continue;
+
+			break;
+		case AF_INET6:
+			bzero(&sin6, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			bcopy(src, &sin6.sin6_addr,
+			    sizeof(sin6.sin6_addr));
+			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
+				/* kame fake scopeid */
+				sin6.sin6_scope_id =
+				    ntohs(sin6.sin6_addr.s6_addr16[1]);
+				sin6.sin6_addr.s6_addr16[1] = 0;
 			}
+			if (key_sockaddrcmp((struct sockaddr*)&sin6,
+			    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
+				continue;
+			break;
+		default:
+			ipseclog((LOG_DEBUG, "key_allocsa: "
+			    "unknown address family=%d.\n",
+			    family));
+			continue;
+		}
 
 #endif
-			/* check dst address */
-			switch (family) {
-			case AF_INET:
-				bzero(&sin, sizeof(sin));
-				sin.sin_family = AF_INET;
-				sin.sin_len = sizeof(sin);
-				bcopy(dst, &sin.sin_addr,
-				    sizeof(sin.sin_addr));
-				if (key_sockaddrcmp((struct sockaddr*)&sin,
-				    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
-					continue;
-
-				break;
-			case AF_INET6:
-				bzero(&sin6, sizeof(sin6));
-				sin6.sin6_family = AF_INET6;
-				sin6.sin6_len = sizeof(sin6);
-				bcopy(dst, &sin6.sin6_addr,
-				    sizeof(sin6.sin6_addr));
-				if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-					/* kame fake scopeid */
-					sin6.sin6_scope_id =
-					    ntohs(sin6.sin6_addr.s6_addr16[1]);
-					sin6.sin6_addr.s6_addr16[1] = 0;
-				}
-				if (key_sockaddrcmp((struct sockaddr*)&sin6,
-				    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
-					continue;
-				break;
-			default:
-				ipseclog((LOG_DEBUG, "key_allocsa: "
-				    "unknown address family=%d.\n", family));
+		/* check dst address */
+		switch (family) {
+		case AF_INET:
+			bzero(&sin, sizeof(sin));
+			sin.sin_family = AF_INET;
+			sin.sin_len = sizeof(sin);
+			bcopy(dst, &sin.sin_addr,
+			    sizeof(sin.sin_addr));
+			if (key_sockaddrcmp((struct sockaddr*)&sin,
+			    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
 				continue;
-			}
 
-			goto found;
+			break;
+		case AF_INET6:
+			bzero(&sin6, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			bcopy(dst, &sin6.sin6_addr,
+			    sizeof(sin6.sin6_addr));
+			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
+				/* kame fake scopeid */
+				sin6.sin6_scope_id =
+				    ntohs(sin6.sin6_addr.s6_addr16[1]);
+				sin6.sin6_addr.s6_addr16[1] = 0;
+			}
+			if (key_sockaddrcmp((struct sockaddr*)&sin6,
+			    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
+				continue;
+			break;
+		default:
+			ipseclog((LOG_DEBUG, "key_allocsa: "
+			    "unknown address family=%d.\n", family));
+			continue;
 		}
+
+		match = sav;
+		matchidx = tmpidx;
 	}
+
+	if (match)
+		goto found;
 
 	/* not found */
 	splx(s);
 	return NULL;
 
 found:
-	sav->refcnt++;
+	match->refcnt++;
 	splx(s);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP allocsa cause refcnt++:%d SA:%p\n",
-			sav->refcnt, sav));
-	return sav;
+			match->refcnt, match));
+	return match;
 }
 
 /*
@@ -2679,28 +2690,27 @@ key_getsavbyspi(sah, spi)
 	struct secashead *sah;
 	u_int32_t spi;
 {
-	struct secasvar *sav;
-	u_int stateidx, state;
+	struct secasvar *sav, *match;
+	u_int stateidx, state, matchidx;
 
-	/* search all status */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_alive);
-	     stateidx++) {
-
-		state = saorder_state_alive[stateidx];
-		LIST_FOREACH(sav, &spihash[spi % SPIHASHSIZE], spihash) {
-			if (sav->spi != spi)
-				continue;
-			if (sav->state != state)
-				continue;
-			if (sav->sah != sah)
-				continue;
-
-			return sav;
- 		}
+	match = NULL;
+	matchidx = _ARRAYLEN(saorder_state_alive);
+	LIST_FOREACH(sav, &spihash[spi % SPIHASHSIZE], spihash) {
+		if (sav->spi != spi)
+			continue;
+		if (sav->sah != sah)
+			continue;
+		for (stateidx = 0; stateidx < matchidx; stateidx++) {
+			state = saorder_state_alive[stateidx];
+			if (sav->state == state) {
+				match = sav;
+				matchidx = stateidx;
+				break;
+			}
+		}
 	}
 
-	return NULL;
+	return match;
 }
 
 /*
