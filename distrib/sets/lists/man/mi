@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.705 2004/06/23 13:28:54 bsh Exp $
+# $NetBSD: mi,v 1.706 2004/06/25 00:06:09 itojun Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1571,6 +1571,7 @@
 ./usr/share/man/cat8/atari/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/atari/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/atrun.0			man-cron-catman		.cat
+./usr/share/man/cat8/authpf.0			man-sys-cat		.cat
 ./usr/share/man/cat8/bad144.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
@@ -3686,6 +3687,7 @@
 ./usr/share/man/man8/atari/installboot.8	man-sysutil-man		.man
 ./usr/share/man/man8/atari/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/atrun.8			man-cron-man		.man
+./usr/share/man/man8/authpf.8			man-sys-man		.man
 ./usr/share/man/man8/bad144.8			man-sysutil-man		.man
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
