@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.18 2001/01/10 12:34:50 lukem Exp $	*/
+/*	$NetBSD: vacation.c,v 1.19 2001/01/10 23:15:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.18 2001/01/10 12:34:50 lukem Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.19 2001/01/10 23:15:42 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -112,7 +112,7 @@ main(int argc, char **argv)
 
 	opterr = iflag = 0;
 	interval = -1;
-	openlog("vacation", 0, LOG_MAIL);
+	openlog("vacation", 0, LOG_USER);
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
