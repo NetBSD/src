@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.80 1998/07/27 22:58:43 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.81 1998/07/28 21:51:34 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.74 1998/07/27 22:58:07 tron Exp 
+ *	NetBSD: pcidevs,v 1.75 1998/07/28 21:50:30 thorpej Exp 
  */
 
 /*
@@ -1016,6 +1016,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Integrated Micro Solutions",
 	    "8849",
+	},
+	{
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_TT128M,
+	    0,
+	    "Integrated Micro Solutions",
+	    "TwinTurbo 128M",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
