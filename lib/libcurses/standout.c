@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.12 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: standout.c,v 1.13 2003/01/27 21:04:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.12 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: standout.c,v 1.13 2003/01/27 21:04:10 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -80,15 +80,8 @@ wstandout(WINDOW *win)
 	 * If standout/standend strings, or can underline, set the
 	 * screen standout bit.
 	 */
-	if ((__tc_so != NULL && __tc_se != NULL) || __tc_uc != NULL) {
+	if ((__tc_so != NULL && __tc_se != NULL) || __tc_uc != NULL)
 		win->wattr |= __STANDOUT;
-		if ((win->wattr & __COLOR) && (__nca & __STANDOUT)) {
-#ifdef DEBUG
-			__CTRACE("wstandout: !COLOR\n");
-#endif
-			win->wattr &= ~__COLOR;
-		}
-	}
 	return (1);
 }
 
