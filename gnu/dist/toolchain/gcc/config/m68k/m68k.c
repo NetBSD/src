@@ -494,6 +494,9 @@ use_return_insn ()
   for (regno = 0 ; regno < FIRST_PSEUDO_REGISTER ; regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       return 0;
+
+  if (flag_pic && regs_ever_live[PIC_OFFSET_TABLE_REGNUM])
+    return 0;
   
   return 1;
 }
