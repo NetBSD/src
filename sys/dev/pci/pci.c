@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.35 1998/05/05 22:14:23 mjacob Exp $	*/
+/*	$NetBSD: pci.c,v 1.36 1998/05/18 17:28:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -273,10 +273,18 @@ pciprint(aux, pnp)
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
 #if 0
-	printf(" (%si/o, %smem)",
+	printf(": ");
+	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
+	if (!pnp)
+		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+	printf("%s at %s", devinfo, pnp ? pnp : "?");
+	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
+#endif
+#if 0
+	printf(" (%si/o, %smem,",
 	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "" : "no ",
 	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "" : "no ");
-	printf(" tag %x intrtag %x intrswiz %x intrpin %x", pa->pa_tag,
+	printf(" tag %x intrtag %x intrswiz %x intrpin %x)", pa->pa_tag,
 	    pa->pa_intrtag, pa->pa_intrswiz, pa->pa_intrpin);
 #endif
 	return (UNCONF);
