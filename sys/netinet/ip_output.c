@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.113 2003/08/19 01:20:03 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.114 2003/08/19 08:00:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.113 2003/08/19 01:20:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.114 2003/08/19 08:00:54 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -1111,9 +1111,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	int optval = 0;
 	int error = 0;
 #if defined(IPSEC) || defined(FAST_IPSEC)
-#ifdef __NetBSD__
 	struct proc *p = curproc;	/*XXX*/
-#endif
 #endif
 
 	if (level != IPPROTO_IP) {
