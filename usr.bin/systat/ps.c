@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.3 1999/06/19 05:35:14 itohy Exp $  */
+/*      $NetBSD: ps.c,v 1.4 1999/07/22 18:18:27 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.3 1999/06/19 05:35:14 itohy Exp $");
+__RCSID("$NetBSD: ps.c,v 1.4 1999/07/22 18:18:27 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,6 +179,7 @@ state2str(kp)
 		break;
 
 	case SZOMB:
+	case SDYING:
 		*cp = 'Z';
 		break;
 
@@ -195,7 +196,7 @@ state2str(kp)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
-	if (flag & P_WEXIT && p->p_stat != SZOMB)
+	if (flag & P_WEXIT && P_ZOMBIE(p) == 0)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
@@ -355,7 +356,7 @@ time2str(kp)
 
 	p = &(kp->kp_proc);
 	        
-	if (p->p_stat == SZOMB) {
+	if (P_ZOMBIE(p)) {
 	        secs = 0;
 	        psecs = 0;
 	} else {
