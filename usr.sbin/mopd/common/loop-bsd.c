@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.3 1997/10/16 23:24:42 lukem Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.4 1998/02/03 04:51:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.3 1997/10/16 23:24:42 lukem Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.4 1998/02/03 04:51:29 perry Exp $");
 #endif
 
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
-#if defined(__bsdi__) || defined(__FreeBSD__)
+#if defined(__bsdi__) || defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/time.h>
 #endif
 #include <net/bpf.h>
