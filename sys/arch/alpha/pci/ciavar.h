@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.16 1999/11/04 19:11:51 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.17 2000/03/19 01:43:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -80,3 +80,5 @@ void	cia_bwx_bus_mem_init __P((bus_space_tag_t, void *));
 
 void	cia_swiz_bus_io_init __P((bus_space_tag_t, void *));
 void	cia_swiz_bus_mem_init __P((bus_space_tag_t, void *));
+
+void	cia_pyxis_intr_enable __P((int, int));

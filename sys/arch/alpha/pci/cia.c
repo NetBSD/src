@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.53 2000/02/26 18:53:12 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.54 2000/03/19 01:43:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.53 2000/02/26 18:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.54 2000/03/19 01:43:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,4 +461,28 @@ cia_bus_get_window(type, window, abst)
 	}
 
 	return (alpha_bus_space_get_window(st, window, abst));
+}
+
+void
+cia_pyxis_intr_enable(irq, onoff)
+	int irq, onoff;
+{
+	u_int64_t imask;
+	int s;
+
+#if 0
+	printf("cia_pyxis_intr_enable: %s %d\n",
+	    onoff ? "enabling" : "disabling", irq);
+#endif
+
+	s = splhigh();
+	alpha_mb();
+	imask = REGVAL64(PYXIS_INT_MASK);
+	if (onoff)
+		imask |= (1UL << irq);
+	else
+		imask &= ~(1UL << irq);
+	REGVAL64(PYXIS_INT_MASK) = imask;
+	alpha_mb();
+	splx(s);
 }
