@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.12.8.1 2000/10/19 14:24:18 tv Exp $
+#	$NetBSD: install.md,v 1.12.8.2 2000/11/01 03:16:45 tv Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -187,12 +187,15 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	if [ -f /mnt/netbsd.GENERIC ]; then
-		echo -n "Linking /netbsd.GENERIC to /netbsd ... "
-		ln /mnt/netbsd.GENERIC /mnt/netbsd
-		echo "done."
-	else
-		echo "WARNING: No /netbsd.GENERIC!  Please install /netbsd manually!"
+	if [ ! -f /mnt/netbsd ]; then
+		echo -n "WARNING: No kernel installed; "
+		if [ -f /netbsd ]; then
+			echo -n "copying miniroot kernel... "
+			cp -p /netbsd /mnt/netbsd
+			echo "done."
+		else
+			echo -n "install a kernel manually."
+		fi
 	fi
 }
 
