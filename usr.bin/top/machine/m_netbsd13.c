@@ -32,7 +32,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.2.2.2 1999/07/02 17:17:38 perry Exp $
+ * $Id: m_netbsd13.c,v 1.2.2.3 1999/11/11 21:40:08 he Exp $
  */
 #define UVM
 
@@ -185,8 +185,8 @@ char *cpustatenames[] = {
 
 int memory_stats[7];
 char *memorynames[] = {
-    "K Act ", "K Inact ", "K Wired ", "K Free ",
-    "K Swap ", "K Swap free ",
+    "K Act, ", "K Inact, ", "K Wired, ", "K Free, ",
+    "K Swap, ", "K Swap free, ",
     NULL
 };
 
