@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Theo de Raadt
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.12 1994/01/12 19:14:21 pk Exp $
+ *	$Id: a.out.h,v 1.13 1994/04/07 06:34:03 deraadt Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -45,6 +46,15 @@
 #define	N_PAGSIZ(ex)	(__LDPGSZ)
 #endif
 
+/*
+ * The a.out structure's a_midmag field is a network-byteorder encoding
+ * of this int
+ *	FFFFFFmmmmmmmmmmMMMMMMMMMMMMMMMM
+ * Where `F' is 6 bits of flag like EX_DYNAMIC,
+ *       `m' is 10 bits of machine-id like MID_I386, and
+ *       `M' is 16 bits worth of magic number, ie. ZMAGIC.
+ * The macros below will set/get the needed fields.
+ */
 #define	N_GETMAGIC(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
@@ -60,12 +70,12 @@
 
 #define	N_ALIGN(ex,x) \
 	(N_GETMAGIC(ex) == ZMAGIC || N_GETMAGIC(ex) == QMAGIC ? \
-	 ((x) + __LDPGSZ - 1) & ~(__LDPGSZ - 1) : (x))
+	((x) + __LDPGSZ - 1) & ~(__LDPGSZ - 1) : (x))
 
 /* Valid magic number check. */
 #define	N_BADMAG(ex) \
 	(N_GETMAGIC(ex) != NMAGIC && N_GETMAGIC(ex) != OMAGIC && \
-	    N_GETMAGIC(ex) != ZMAGIC && N_GETMAGIC(ex) != QMAGIC)
+	N_GETMAGIC(ex) != ZMAGIC && N_GETMAGIC(ex) != QMAGIC)
 
 /* Address of the bottom of the text segment. */
 #define	N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : __LDPGSZ)
@@ -73,7 +83,7 @@
 /* Address of the bottom of the data segment. */
 #define	N_DATADDR(ex) \
 	(N_GETMAGIC(ex) == OMAGIC ? N_TXTADDR(ex) + (ex).a_text : \
-		(N_TXTADDR(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
+	(N_TXTADDR(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
 
 /* Address of the bottom of the bss segment. */
 #define	N_BSSADDR(ex) \
@@ -82,7 +92,8 @@
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
 	( N_GETMAGIC2(ex)==ZMAGIC || N_GETMAGIC2(ex)==(QMAGIC|0x10000) ? \
-	0 : (N_GETMAGIC2(ex)==(ZMAGIC|0x10000) ? __LDPGSZ : sizeof(struct exec)) )
+	0 : (N_GETMAGIC2(ex)==(ZMAGIC|0x10000) ? __LDPGSZ : \
+	sizeof(struct exec)) )
 
 /* Data segment offset. */
 #define	N_DATOFF(ex) \
@@ -103,7 +114,6 @@
 /* String table offset. */
 #define	N_STROFF(ex) \
 	(N_SYMOFF(ex) + (ex).a_syms)
-
 
 #define	_AOUT_INCLUDE_
 #include <nlist.h>
