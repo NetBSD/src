@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1996/04/22 02:54:10 christos Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.1 1996/05/07 02:24:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -55,32 +55,30 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <dev/tc/if_levar.h>
 #include <dev/ic/am7990reg.h>
-#define	LE_NEED_BUF_CONTIG
-#define	LE_NEED_BUF_GAP2
-#define	LE_NEED_BUF_GAP16
 #include <dev/ic/am7990var.h>
+
+#include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
 /* access LANCE registers */
-void lewritereg __P((volatile u_short *regptr, u_short val));
+void le_dec_writereg __P((volatile u_short *regptr, u_short val));
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
-#define	LEWREG(src, dst)	lewritereg(&(dst), (src))
+#define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	DELAY(x)
-
-struct cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+hide void le_dec_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_dec_rdcsr __P((struct am7990_softc *, u_int16_t));  
 
 void
 dec_le_common_attach(sc, eap)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_char *eap;
 {
 	int i;
+
+	sc->sc_rdcsr = le_dec_rdcsr;
+	sc->sc_wrcsr = le_dec_wrcsr;
+	sc->sc_hwinit = NULL;
 
 	sc->sc_conf3 = 0;
 	sc->sc_addr = 0;
@@ -94,33 +92,26 @@ dec_le_common_attach(sc, eap)
 		eap += 4;
 	}
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	am7990_config(sc);
 }
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
-
-integrate void
-lewrcsr(sc, port, val)
-	struct le_softc *sc;
+hide void
+le_dec_wrcsr(sc, port, val)
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	LEWREG(port, ler1->ler1_rap);
 	LERDWR(port, val, ler1->ler1_rdp);
 }
 
-integrate u_int16_t
-lerdcsr(sc, port)
-	struct le_softc *sc;
+hide u_int16_t
+le_dec_rdcsr(sc, port)
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	LEWREG(port, ler1->ler1_rap);
@@ -134,7 +125,7 @@ lerdcsr(sc, port)
  * pokey sometimes.
  */
 void
-lewritereg(regptr, val)
+le_dec_writereg(regptr, val)
 	register volatile u_short *regptr;
 	register u_short val;
 {
@@ -165,5 +156,3 @@ lewritereg(regptr, val)
  *   and alpha)
  * The buffer offset is the logical byte offset, assuming contiguous storage.
  */
-
-#include <dev/ic/am7990.c>
