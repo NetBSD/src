@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:19 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:24 itojun Exp $
 
 LIB=	util
 
-DIST=	${.CURDIR}/../../../dist/postfix/${LIB}
+DIST=	${.CURDIR}/../../../dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
 SRCS=	argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
@@ -26,7 +26,10 @@ SRCS=	argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
 	vstream.c vstream_popen.c vstring.c vstring_vstream.c writable.c \
 	write_buf.c write_wait.c dict_unix.c dict_pcre.c stream_listen.c \
 	stream_connect.c stream_trigger.c dict_regexp.c mac_expand.c \
-	clean_env.c watchdog.c spawn_command.c sane_rename.c sane_link.c
+	clean_env.c watchdog.c spawn_command.c duplex_pipe.c sane_rename.c \
+	sane_link.c unescape.c timed_read.c timed_write.c dict_tcp.c \
+	hex_quote.c dict_alloc.c rand_sleep.c sane_time.c dict_debug.c \
+	sane_socketpair.c
 
 MKLINT=		no
 MKPIC=		no
