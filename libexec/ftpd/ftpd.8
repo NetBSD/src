@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.18 1997/11/11 05:48:09 mrg Exp $
+.\"	$NetBSD: ftpd.8,v 1.19 1997/11/11 12:42:35 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -300,16 +300,21 @@ as configuration directives.
 .Pp
 Each configuration line may be one of:
 .Bl -tag -width 4n
-.It Sy checkportcmd Ar class
-Check the ftp protocol
-.Sy PORT
+.It Sy checkportcmd Ar class Op Sy off
+Check the
+PORT
 command for validity.  The
-.Sy PORT
+PORT
 command will fail if the IP address specified does not match the ftp
-command connection, or if the TCP port number is less than
+command connection, or if the remote TCP port number is less than
 .Dv IPPORT_RESERVED .
 This option should be used for sites concerned with potential security
 problems with ftp bounce attacks.
+If class is
+.Dq none
+or
+.Sy off
+is given, disable this feature, otherwise enable it.
 .It Xo Sy conversion Ar class
 .Ar suffix Op Ar "type disable command"
 .Xc
@@ -436,14 +441,15 @@ Matches no class.
 .Pp
 The following defaults are used:
 .Bd -literal -offset indent -compact
-display     none
-maxtimeout  all    7200   # 2 hours
-modify      all
-modify      guest  off
-notify      none
-timeout     all    900    # 15 minutes
-umask       all    027
-umask       guest  0707
+checkportcmd  none
+display       none
+maxtimeout    all    7200   # 2 hours
+modify        all
+modify        guest  off
+notify        none
+timeout       all    900    # 15 minutes
+umask         all    027
+umask         guest  0707
 .Ed
 .Pp
 Directives that appear later in the file override settings by previous
