@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1996/09/27 02:39:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -160,6 +160,12 @@ main(argc, argv)
 	argv += optind;
 
 #ifdef __sparc__
+	/*
+	 * Discard setgid setgid privileges if not the running kernel so
+	 * that bad guys can't print interesting stuff from kernel memory.
+	 */
+	if (system != NULL)
+		setgid(getgid());
 	if (getcputype() != CPU_SUN4)
 		use_openprom = 1;
 #endif /* __sparc__ */
