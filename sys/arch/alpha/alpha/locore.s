@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.44 1998/03/18 20:36:13 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.45 1998/03/19 06:44:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.44 1998/03/18 20:36:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.45 1998/03/19 06:44:25 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1561,26 +1561,6 @@ EXPORT(eintrcnt)
 	.text
 
 /**************************************************************************/
-
-/*
- *	Object:
- *		swpctxt			EXPORTED function
- *
- *	Change HW process context
- *
- *	Arguments:
- *		pcb			PHYSICAL struct pcb_hw *
- *		old_ksp			VIRTUAL long *
- *
- *	If old_ksp is non-zero it saves the current KSP in it.
- *	Execute the PAL call.
- */
-LEAF(swpctxt,2)
-	beq	a1,Lswpctxt1
-	stq	sp,0(a1)
-Lswpctxt1: call_pal PAL_OSF1_swpctx
-	RET
-	END(swpctxt)
 
 /*
  * console 'restart' routine to be placed in HWRPB.
