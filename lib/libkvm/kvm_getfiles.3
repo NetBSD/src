@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getfiles.3,v 1.7 2002/02/07 07:00:48 ross Exp $
+.\"	$NetBSD: kvm_getfiles.3,v 1.8 2002/10/01 19:18:13 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,15 +64,16 @@ The
 and
 .Fa arg
 arguments constitute a predicate which limits the set of files
-returned.  No predicates are currently defined.
+returned.
+No predicates are currently defined.
 .Pp
 The number of processes found is returned in the reference parameter
 .Fa cnt .
 The files are returned as a contiguous array of file structures,
 preceded by the address of the first file entry in the kernel.
 This memory is owned by kvm and is not guaranteed to be persistent across
-subsequent kvm library calls.  Data should be copied out if it needs to be
-saved.
+subsequent kvm library calls.
+Data should be copied out if it needs to be saved.
 .Sh RETURN VALUES
 .Fn kvm_getfiles
 will return
