@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.22 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: grf.c,v 1.23 2000/06/26 04:55:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -282,10 +282,11 @@ grfpoll(dev, events, p)
  * map the contents of a graphics display card into process' 
  * memory space.
  */
-int
+paddr_t
 grfmmap(dev, off, prot)
-dev_t	dev;
-int	off, prot;
+	dev_t	dev;
+	off_t	off;
+	int	prot;
 {
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
@@ -301,19 +302,19 @@ int	off, prot;
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
+		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
 
 	/*
 	 * VGA memory
 	 */
 	if (off >= vgabase && off < (vgabase + gi->gd_vgasize))
-		return(((u_int)gi->gd_vgaaddr - vgabase + off) >> PGSHIFT);
+		return(((paddr_t)gi->gd_vgaaddr - vgabase + off) >> PGSHIFT);
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= linbase && off < (linbase + gi->gd_fbsize))
-		return(((u_int)gi->gd_fbaddr - linbase + off) >> PGSHIFT);
+		return(((paddr_t)gi->gd_fbaddr - linbase + off) >> PGSHIFT);
 	return(-1);
 }
 

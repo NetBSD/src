@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.21 2000/04/04 21:47:17 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.22 2000/06/26 04:56:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -417,14 +417,15 @@ cgeightpoll(dev, events, p)
  * goes. Starting at 8MB, it maps the ramdac for NBPG, then the p4
  * register for NBPG, then the bootrom for 0x40000.
  */
-int
+paddr_t
 cgeightmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
-	int poff;
+	off_t poff;
 
 #define START_ENABLE	(128*1024)
 #define START_COLOR	((128*1024) + (128*1024))
@@ -497,7 +498,7 @@ cgeightmmap(dev, off, prot)
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
 
-	return ((int)bh);
+	return ((paddr_t)bh);
 }
 
 #if defined(SUN4)

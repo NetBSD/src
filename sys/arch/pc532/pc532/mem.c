@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 1999/12/04 21:21:14 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.26 2000/06/26 04:55:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,29 +175,26 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct proc *p = curproc;	/* XXX */
 
-	switch (minor(dev)) {
-/* minor device 0 is physical memory */
-	case 0:
-		if ((u_int)off > ctob(physmem) &&
-		    suser(p->p_ucred, &p->p_acflag) != 0)
-			return -1;
-		return ns532_btop((u_int)off);
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != 0)
+		return (-1);
 
-/* minor device 1 is kernel memory */
-	case 1:
-		/* XXX - writability, executability checks? */
-		if (!uvm_kernacc((caddr_t)off, NBPG, B_READ))
-			return -1;
-		return ns532_btop(vtophys((u_int)off));
-
-	default:
-		return -1;
-	}
+	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+		return (-1);
+	return (ns532_btop((u_int)off));
 }

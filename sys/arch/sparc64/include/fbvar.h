@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.4 1999/04/13 18:45:42 ad Exp $ */
+/*	$NetBSD: fbvar.h,v 1.5 2000/06/26 04:56:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ struct fbdriver {
 	int	(*fbd_close) __P((dev_t, int, int, struct proc *));
 	int	(*fbd_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int	(*fbd_poll) __P((dev_t, int, struct proc *));
-	int	(*fbd_mmap) __P((dev_t, int, int));
+	paddr_t	(*fbd_mmap) __P((dev_t, off_t, int));
 #ifdef notyet
 	/* 
 	 * XXX redundant idea? these can hook into rasops on a per-device 

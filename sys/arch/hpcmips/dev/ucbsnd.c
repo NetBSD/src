@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.4 2000/03/04 19:35:36 uch Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5 2000/06/26 04:55:41 simonb Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -678,10 +678,11 @@ ucbsndpoll(dev, events, p)
 	return (error);
 }
 
-int
+paddr_t
 ucbsndmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.6 1999/10/05 03:31:35 itohy Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.7 2000/06/26 04:56:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ int	ad1848_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 
 int	ad1848_halt_output __P((void *));
 int	ad1848_halt_input __P((void *));
-int	ad1848_mappage __P((void *, void *, int, int));
+paddr_t	ad1848_mappage __P((void *, void *, off_t, int));
 
 #ifdef AUDIO_DEBUG
 void	ad1848_dump_regs __P((struct ad1848_softc *));
