@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.103 2002/03/17 10:21:42 simonb Exp $	*/
+/*	$NetBSD: if.c,v 1.104 2002/05/12 20:40:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.103 2002/03/17 10:21:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104 2002/05/12 20:40:11 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -150,10 +150,12 @@ struct	callout if_slowtimo_ch;
  * XXX: declare here to avoid to include many inet6 related files..
  * should be more generalized?
  */
-extern void nd6_setmtu __P((struct ifnet *));
+void nd6_setmtu __P((struct ifnet *));
 #endif 
 
-int	if_rt_walktree __P((struct radix_node *, void *));
+int netisr;			/* scheduling bits for network */
+
+int if_rt_walktree __P((struct radix_node *, void *));
 
 struct if_clone *if_clone_lookup __P((const char *, int *));
 int if_clone_list __P((struct if_clonereq *));
