@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.4 2001/03/31 11:37:45 aymeric Exp $	*/
+/*	$NetBSD: cl_funcs.c,v 1.5 2001/05/01 16:46:11 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -693,12 +693,15 @@ usage: vi [-eFlRrSv] [-c command] [-t tag] [-w size] [file ...]\n"
 }
 
 #ifdef DEBUG
+
+int gdbrefresh __P((void));
+
 /*
  * gdbrefresh --
  *	Stub routine so can flush out curses screen changes using gdb.
  */
 int
-gdbrefresh()
+gdbrefresh(void)
 {
 	refresh();
 	return (0);		/* XXX Convince gdb to run it. */
