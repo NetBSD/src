@@ -802,27 +802,6 @@ Makefile: $(srcdir)/Makefile.in config.status $(srcdir)/version.c \
 	LANGUAGES="$(CONFIG_LANGUAGES)" $(SHELL) config.run
 	rm -f config.run
 
-$(srcdir)/configure: $(srcdir)/configure.in
-	cd $(srcdir); autoconf
-
-# cstamp-h.in controls rebuilding of config.in.
-# It is named cstamp-h.in and not stamp-h.in so the mostlyclean rule doesn't
-# delete it.  A stamp file is needed as autoheader won't update the file if
-# nothing has changed.
-# It remains in the source directory and is part of the distribution.
-# This follows what is done in shellutils, fileutils, etc.
-# "echo timestamp" is used instead of touch to be consistent with other
-# packages that use autoconf (??? perhaps also to avoid problems with patch?).
-# ??? Newer versions have a maintainer mode that may be useful here.
-$(srcdir)/config.in: $(srcdir)/cstamp-h.in
-$(srcdir)/cstamp-h.in: $(srcdir)/configure.in $(srcdir)/acconfig.h
-	cd $(srcdir) && autoheader
-	@rm -f $(srcdir)/cstamp-h.in
-	echo timestamp > $(srcdir)/cstamp-h.in
-auto-host.h: cstamp-h ; @true
-cstamp-h: config.in config.status
-	CONFIG_HEADERS=auto-host.h:config.in LANGUAGES="$(CONFIG_LANGUAGES)" $(SHELL) config.status
-
 # Really, really stupid make features, such as SUN's KEEP_STATE, may force
 # a target to build even if it is up-to-date.  So we must verify that
 # config.status does not exist before failing.
