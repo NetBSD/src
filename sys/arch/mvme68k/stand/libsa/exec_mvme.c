@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.5 1998/08/22 10:55:36 scw Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.6 2000/07/10 20:36:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,7 +38,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <a.out.h>
+#include <sys/exec_aout.h>
 
 #include "stand.h"
 #include "libsa.h"
