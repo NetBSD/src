@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.181 2004/06/23 21:10:52 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.182 2004/07/31 21:26:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.181 2004/06/23 21:10:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.182 2004/07/31 21:26:42 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -146,10 +146,13 @@ const struct ata_bustype wdc_ata_bustype = {
 static int	wdcprobe1(struct wdc_channel*, int);
 static void	__wdcerror(struct wdc_channel*, char *);
 static int	__wdcwait_reset(struct wdc_channel *, int, int);
+static void	__wdc_reset_channel(struct wdc_channel *, int);
 static void	__wdccommand_done(struct wdc_channel *, struct ata_xfer *);
+static void	__wdccommand_done_end(struct wdc_channel *, struct ata_xfer *);
+static void	__wdccommand_kill_xfer(struct wdc_channel *,
+			               struct ata_xfer *, int);
 static void	__wdccommand_start(struct wdc_channel *, struct ata_xfer *);
-static int	__wdccommand_intr(struct wdc_channel *, struct ata_xfer *,
-				  int);
+static int	__wdccommand_intr(struct wdc_channel *, struct ata_xfer *, int);
 static int	__wdcwait(struct wdc_channel *, int, int, int);
 
 #define DEBUG_INTR   0x01
@@ -966,24 +969,60 @@ wdc_reset_channel(struct ata_drive_datas *drvp, int flags)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
-	int drive;
-
 	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_FUNCS);
+
+
+	__wdc_reset_channel(chp, flags);
+}
+
+static void
+__wdc_reset_channel(struct wdc_channel *chp, int flags)
+{
+	struct ata_xfer *xfer;
+	int drive;
+
+	/*
+	 * look for pending xfers. If we have a shared queue, we'll also reset
+	 * the other channel if the current xfer is running on it.
+	 * Then we'll freese the queue, and dequeue only the xfers for this
+	 * channel. xfer->c_kill_xfer() will reset any ATAPI device when
+	 * needed.
+	 */
+	chp->ch_queue->queue_freeze++;
+	if ((flags & AT_RST_NOCMD) == 0) {
+		xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+		if (xfer && xfer->c_chp != chp)
+			__wdc_reset_channel(xfer->c_chp, flags);
+		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+		    xfer != 0; ) {
+			if (xfer->c_chp != chp)
+				continue;
+			if ((flags & AT_RST_EMERG) == 0)
+				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
+		}
+	}
 	if ((flags & AT_POLL) == 0) {
 		if (chp->ch_flags & WDCF_TH_RESET) {
 			/* no need to schedule a reset more than one time */
 			return;
 		}
 		chp->ch_flags |= WDCF_TH_RESET;
-		chp->ch_queue->queue_freeze++;
 		wakeup(&chp->ch_thread);
 		return;
 	}
 	(void) wdcreset(chp, RESET_POLL);
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
+	}
+	if ((flags & AT_RST_EMERG) == 0)  {
+		chp->ch_queue->queue_freeze--;
+		wdcstart(chp);
+	} else {
+		/* make sure that we can use polled commands */
+		TAILQ_INIT(&chp->ch_queue->queue_xfer);
+		chp->ch_queue->queue_freeze = 0;
 	}
 }
 
@@ -1565,7 +1604,7 @@ wdc_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	wdc->set_modes(chp);
 	wdc_print_modes(chp);
 	/* reset the channel, which will shedule all drives for setup */
-	wdc_reset_channel(drvp, flags);
+	wdc_reset_channel(drvp, flags | AT_RST_NOCMD);
 	return 1;
 }
 
@@ -1598,7 +1637,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 	xfer->c_cmd = wdc_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
-	xfer->c_kill_xfer = __wdccommand_done;
+	xfer->c_kill_xfer = __wdccommand_kill_xfer;
 
 	s = splbio();
 	wdc_exec_xfer(chp, xfer);
@@ -1780,7 +1819,6 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_FUNCS);
 
-	callout_stop(&chp->ch_callout);
 
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
@@ -1788,7 +1826,6 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wdc_c->flags |= AT_ERROR;
 		wdc_c->r_error = chp->ch_error;
 	}
-	wdc_c->flags |= AT_DONE;
 	if ((wdc_c->flags & AT_READREG) != 0 &&
 	    (wdc->sc_dev.dv_flags & DVF_ACTIVE) != 0 &&
 	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
@@ -1807,7 +1844,16 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wdc_c->r_features = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_features], 0);
 	}
+	__wdccommand_done_end(chp, xfer);
+}
 	
+static void
+__wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
+{
+	struct wdc_command *wdc_c = xfer->c_cmd;
+
+	callout_stop(&chp->ch_callout);
+	wdc_c->flags |= AT_DONE;
 	if (wdc_c->flags & AT_POLL) {
 		/* enable interrupts */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
@@ -1821,6 +1867,28 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wdc_c->callback(wdc_c->callback_arg);
 	wdcstart(chp);
 	return;
+}
+
+static void
+__wdccommand_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
+    int reason)
+{
+	struct wdc_command *wdc_c = xfer->c_cmd;
+
+	switch (reason) {
+	case KILL_GONE:
+		wdc_c->flags |= AT_GONE;
+		break;                
+	case KILL_RESET:
+		wdc_c->flags |= AT_RESET;
+		break;
+	default:
+		printf("__wdccommand_kill_xfer: unknown reason %d\n",
+		    reason);
+		panic("__wdccommand_kill_xfer");
+	}
+	__wdccommand_done_end(chp, xfer);
+
 }
 
 /*
@@ -1940,15 +2008,6 @@ wdc_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	/* complete xfer setup */
 	xfer->c_chp = chp;
 
-	/*
-	 * If we are a polled command, and the list is not empty,
-	 * we are doing a dump. Drop the list to allow the polled command
-	 * to complete, we're going to reboot soon anyway.
-	 */
-	if ((xfer->c_flags & C_POLL) != 0 &&
-	    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != NULL) {
-		TAILQ_INIT(&chp->ch_queue->queue_xfer);
-	}
 	/* insert at the end of command list */
 	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
@@ -1999,7 +2058,7 @@ wdc_kill_pending(struct wdc_channel *chp)
 
 	while ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) != NULL) {
 		chp = xfer->c_chp;
-		(*xfer->c_kill_xfer)(chp, xfer);
+		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
 	}
 }
 
