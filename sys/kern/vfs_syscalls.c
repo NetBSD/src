@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.57.2.1 1995/11/07 22:44:07 gwr Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.57.2.2 1996/02/02 07:55:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2034,11 +2034,13 @@ out:
 /*
  * Convert a user file descriptor to a kernel file entry.
  */
+int
 getvnode(fdp, fd, fpp)
 	struct filedesc *fdp;
-	struct file **fpp;
 	int fd;
+	struct file **fpp;
 {
+	struct vnode *vp;
 	struct file *fp;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
@@ -2046,6 +2048,9 @@ getvnode(fdp, fd, fpp)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type == VBAD)
+		return (EBADF);
 	*fpp = fp;
 	return (0);
 }
