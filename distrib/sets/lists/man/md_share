@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.68 1999/09/21 14:20:39 hubertf Exp $
+# $NetBSD: md_share,v 1.69 1999/09/27 00:14:53 perry Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -570,8 +570,8 @@
 ./usr/share/man/man8/atari/bootpref.8
 ./usr/share/man/man8/atari/installboot.8
 ./usr/share/man/man8/atari/makedev.8
-./usr/share/man/man8/bebox/MAKEDEV.0
-./usr/share/man/man8/bebox/makedev.0
+./usr/share/man/man8/bebox/MAKEDEV.8
+./usr/share/man/man8/bebox/makedev.8
 ./usr/share/man/man8/bad144.8
 ./usr/share/man/man8/dbsym.8
 ./usr/share/man/man8/eeprom.8
@@ -599,19 +599,19 @@
 ./usr/share/man/man8/i386/zzz.8
 ./usr/share/man/man8/iteconfig.8
 ./usr/share/man/man8/mac68k/boot.8
-./usr/share/man/man8/mac68k/MAKEDEV.0
-./usr/share/man/man8/mac68k/makedev.0
-./usr/share/man/man8/mvme68k/MAKEDEV.0
+./usr/share/man/man8/mac68k/MAKEDEV.8
+./usr/share/man/man8/mac68k/makedev.8
+./usr/share/man/man8/mvme68k/MAKEDEV.8
 ./usr/share/man/man8/mvme68k/installboot.8
-./usr/share/man/man8/mvme68k/makedev.0
-./usr/share/man/man8/next68k/MAKEDEV.0
-./usr/share/man/man8/next68k/makedev.0
+./usr/share/man/man8/mvme68k/makedev.8
+./usr/share/man/man8/next68k/MAKEDEV.8
+./usr/share/man/man8/next68k/makedev.8
 ./usr/share/man/man8/pc532/MAKEDEV.8
 ./usr/share/man/man8/pc532/bim.8
 ./usr/share/man/man8/pc532/makedev.8
-./usr/share/man/man8/pmax/MAKEDEV.0
+./usr/share/man/man8/pmax/MAKEDEV.8
 ./usr/share/man/man8/pmax/boot.8
-./usr/share/man/man8/pmax/makedev.0
+./usr/share/man/man8/pmax/makedev.8
 ./usr/share/man/man8/sparc/MAKEDEV.8
 ./usr/share/man/man8/sparc/boot.8
 ./usr/share/man/man8/sparc/installboot.8

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 1999/09/12 12:09:12 hwr Exp $
+# $NetBSD: mi,v 1.20 1999/09/27 00:14:53 perry Exp $
 ./usr/games/adventure
 ./usr/games/arithmetic
 ./usr/games/atc
@@ -111,7 +111,6 @@
 ./usr/share/games/fortune/fortunes2-o.dat
 ./usr/share/games/fortune/fortunes2.dat
 ./usr/share/games/fortune/limerick
-./usr/share/games/fortune/limerick-o
 ./usr/share/games/fortune/limerick-o.dat
 ./usr/share/games/fortune/limerick.dat
 ./usr/share/games/fortune/startrek
