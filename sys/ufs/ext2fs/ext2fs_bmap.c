@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.10 2003/01/24 21:55:20 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.11 2003/05/18 12:59:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.10 2003/01/24 21:55:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11 2003/05/18 12:59:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.10 2003/01/24 21:55:20 fvdl Exp $"
 
 static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
 								struct indir *, int *, int *));
+
+#define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 
 /*
  * Bmap converts a the logical block number of a file to its physical block
