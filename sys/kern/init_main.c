@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.161 2000/01/01 05:00:03 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.162 2000/01/19 20:05:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -54,6 +54,7 @@
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/map.h>
@@ -205,6 +206,9 @@ main()
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Initialize callouts. */
+	callout_startup();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

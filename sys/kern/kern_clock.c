@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.50 1999/09/06 20:44:02 sommerfeld Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.51 2000/01/19 20:05:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -752,6 +752,22 @@ softclock()
 		(void) splhigh();
 	}
 	splx(s);
+}
+
+/*
+ * callout_startup:
+ *
+ *	Initialize the callout freelist.
+ */
+void
+callout_startup()
+{
+	int i;
+
+	callfree = callout;
+	for (i = 1; i < ncallout; i++)
+		callout[i-1].c_next = &callout[i];
+	callout[i-1].c_next = NULL;
 }
 
 /*
