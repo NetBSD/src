@@ -253,6 +253,9 @@ typedef enum bfd_format {
 /* This flag indicates that the BFD contents are actually cached in
    memory.  If this is set, iostream points to a bfd_in_memory struct.  */
 #define BFD_IN_MEMORY 0x800
+
+/* BFD is a position independent object. */
+#define BFD_PIC 0x1000
 
 /* symbols and relocation */
 
@@ -647,6 +650,16 @@ extern struct bfd_link_needed_list *bfd_sunos_get_needed_list
 extern boolean bfd_sunos_record_link_assignment
   PARAMS ((bfd *, struct bfd_link_info *, const char *));
 extern boolean bfd_sunos_size_dynamic_sections
+  PARAMS ((bfd *, struct bfd_link_info *, struct sec **, struct sec **,
+	   struct sec **));
+
+/* NetBSD shared library support routines for the linker.  */
+
+extern struct bfd_link_needed_list *bfd_netbsd_get_needed_list
+  PARAMS ((bfd *, struct bfd_link_info *));
+extern boolean bfd_netbsd_record_link_assignment
+  PARAMS ((bfd *, struct bfd_link_info *, const char *));
+extern boolean bfd_netbsd_size_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *, struct sec **, struct sec **,
 	   struct sec **));
 
