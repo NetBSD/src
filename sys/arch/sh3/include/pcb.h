@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 1999/09/13 10:31:19 itojun Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -86,9 +86,7 @@ struct pcb {
 	int	pcb_flags;
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
 	int	fusubail;
-#if defined(PMAP_NEW)
 	struct pmap *pcb_pmap;	/* back pointer to our pmap */
-#endif
 };
 
 /*
