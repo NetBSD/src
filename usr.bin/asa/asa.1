@@ -1,4 +1,4 @@
-.\"	$NetBSD: asa.1,v 1.4 1995/03/26 02:25:05 glass Exp $
+.\"	$NetBSD: asa.1,v 1.5 1997/09/20 14:55:00 lukem Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm asa
 .Nd interpret carriage-control characters.
 .Sh SYNOPSIS
-.Nm asa
+.Nm
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -47,7 +47,7 @@ and writes them to the standard output.
 .Pp
 The first character of each line is interpreted as a carriage-control
 character.  The following characters are interpreted as follows:
-.Bl -tag -width indent
+.Bl -tag -width "<space>"
 .It <space>
 Output the rest of the line without change.
 .It 0
@@ -78,7 +78,7 @@ utility exit 0 on success, and >0 if an error occurs.
 .Xr f77 1
 .Sh STANDARDS
 The
-.Nm asa
+.Nm
 utility conforms to
 .St -p1003.2-92 .
 .Sh AUTHORS
