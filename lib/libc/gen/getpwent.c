@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.38 1999/01/21 12:42:06 mycroft Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.39 1999/01/25 01:09:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.38 1999/01/21 12:42:06 mycroft Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.39 1999/01/25 01:09:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -445,9 +445,11 @@ _dns_getpw(rv, cb_data, ap)
 	const char	 *name;
 	uid_t		  uid;
 	int		  search;
+
 	char		 *map;
 	char		**hp;
-
+	void		 *context;
+	int		  r;
 
 	search = va_arg(ap, int);
 	switch (search) {
@@ -471,30 +473,33 @@ _dns_getpw(rv, cb_data, ap)
 	}
 	line[sizeof(line) - 1] = '\0';
 
-	hp = hes_resolve(line, map);
+	r = NS_UNAVAIL;
+	if (hesiod_init(&context) == -1)
+		return (r);
+
+	hp = hesiod_resolve(context, line, map);
 	if (hp == NULL) {
-		switch (hes_error()) {
-		case HES_ER_NOTFOUND:
+		if (errno == ENOENT) {
 			if (search == _PW_KEYBYNUM) {
 				_pw_hesnum = 0;
 				_pw_none = 1;
-				return NS_SUCCESS;
-			}
-			return NS_NOTFOUND;
-		case HES_ER_OK:
-			abort();
-			break;
-		default:
-			return NS_UNAVAIL;
+				r = NS_SUCCESS;
+			} else
+				r = NS_NOTFOUND;
 		}
+		goto cleanup_dns_getpw;
 	}
 
 	strncpy(line, hp[0], sizeof(line));	/* only check first elem */
 	line[sizeof(line) - 1] = '\0';
-	hes_free(hp);
+	hesiod_free_list(context, hp);
 	if (__pwparse(&_pw_passwd, line))
-		return NS_UNAVAIL;
-	return NS_SUCCESS;
+		r = NS_UNAVAIL;
+	else
+		r = NS_SUCCESS;
+ cleanup_dns_getpw:
+	hesiod_end(context);
+	return (r);
 }
 #endif
 

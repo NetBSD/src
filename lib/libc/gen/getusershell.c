@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.16 1999/01/20 13:11:18 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.17 1999/01/25 01:09:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,21 +38,24 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.16 1999/01/20 13:11:18 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.17 1999/01/25 01:09:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #include <sys/file.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <errno.h>
 #include <nsswitch.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stringlist.h>
+#include <unistd.h>
+
 #ifdef HESIOD
 #include <hesiod.h>
 #endif
@@ -160,33 +163,36 @@ _dns_initshells(rv, cb_data, ap)
 	va_list	 ap;
 {
 	char	  shellname[] = "shells-XXXXX";
-	int	  hsindex, hpi;
+	int	  hsindex, hpi, r;
 	char	**hp;
+	void	 *context;
 
 	if (sl)
 		sl_free(sl, 1);
 	sl = sl_init();
+	r = NS_UNAVAIL;
+	if (hesiod_init(&context) == -1)
+		return (r);
 
 	for (hsindex = 0; ; hsindex++) {
 		snprintf(shellname, sizeof(shellname)-1, "shells-%d", hsindex);
-		hp = hes_resolve(shellname, "shells");
+		hp = hesiod_resolve(context, shellname, "shells");
 		if (hp == NULL) {
-			switch(hes_error()) {
-			case HES_ER_OK:
-				break;
-			case HES_ER_NOTFOUND:
+			if (errno == ENOENT) {
 				if (hsindex == 0)
-					return NS_NOTFOUND;
-				return NS_SUCCESS;
-			default:
-				return NS_UNAVAIL;
+					r = NS_NOTFOUND;
+				else
+					r = NS_SUCCESS;
 			}
+			break;
 		} else {
 			for (hpi = 0; hp[hpi]; hpi++)
 				sl_add(sl, hp[hpi]);
 			free(hp);
 		}
 	}
+	hesiod_end(context);
+	return (r);
 }
 #endif /* HESIOD */
 
