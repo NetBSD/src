@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.1 2000/06/17 00:59:24 matt Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.2 2000/06/17 01:05:11 matt Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ load_bootstrap(const char *bootstrap, char **data,
 
 	*data = malloc(buflen);
 	if (*data == NULL)
-		err(EXIT_FAILURE, "malloc(%d)", buflen);
+		err(EXIT_FAILURE, "malloc(%lu)", (unsigned long int) buflen);
 
 	cc = read(fd, *data, buflen);
 	if (cc <= 0)
