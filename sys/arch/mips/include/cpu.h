@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2000/05/30 02:05:36 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 2000/07/11 06:34:57 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  * Exported definitions unique to NetBSD/mips cpu support.
  */
 
+#ifndef CPU_MAXID			/* platform can override */
 /*
  * CTL_MACHDEP definitions.
  */
@@ -59,7 +60,7 @@
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "root_device", CTLTYPE_STRING }, \
 }
-
+#endif
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -80,7 +81,7 @@
 
 #else /* run-time test */
 extern int cpu_arch;
-#define CPUISMIPS3	(cpu_arch == 3)
+#define CPUISMIPS3	(cpu_arch >= 3)
 #endif /* run-time test */
 
 /*
@@ -89,6 +90,8 @@ extern int cpu_arch;
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+
+void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
