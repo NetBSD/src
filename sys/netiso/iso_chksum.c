@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.19 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.20 2005/02/26 22:39:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.19 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.20 2005/02/26 22:39:49 perry Exp $");
 
 #include "opt_iso.h"
 
@@ -201,7 +201,7 @@ iso_gen_csum(
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("enter gen csum m %p n 0x%x l 0x%x\n", 
+		printf("enter gen csum m %p n 0x%x l 0x%x\n",
 		    m, n - 1, l);
 	}
 #endif

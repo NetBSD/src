@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.9 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.10 2005/02/26 22:39:49 perry Exp $
  *
  * $FreeBSD$
  *
@@ -65,7 +65,7 @@
 #define I4B_TIME_FORMAT	"%d.%m.%Y %H:%M:%S"
 
 /*---------------------------------------------------------------------------*
- *	ISDN D-channel protocols 
+ *	ISDN D-channel protocols
  *---------------------------------------------------------------------------*/
 #define PROTOCOL_DSS1	0		/* default, Euro-ISDN/DSS1 */
 #define PROTOCOL_D64S	1		/* 64k leased line, no protocol */
@@ -81,7 +81,7 @@
 /*---------------------------------------------------------------------------*
  *	in case the src or dst telephone number is empty
  *---------------------------------------------------------------------------*/
-#define TELNO_EMPTY	"NotAvailable"	
+#define TELNO_EMPTY	"NotAvailable"
 
 /*---------------------------------------------------------------------------*
  *	B channel parameters
@@ -133,7 +133,7 @@ typedef struct {
 		CDID_REQ ----------------->
 
 	            <------------------ cdid
-	
+
 		CONNECT_REQ -------------->
 
 		    <------------------ PROCEEDING_IND (if connect req ok)
@@ -143,8 +143,8 @@ typedef struct {
 		or
 
 	            <------------------ DISCONNECT_IND (if connection failed)
-	            
-		
+
+
 
 	incoming call:
 	--------------
@@ -169,7 +169,7 @@ typedef struct {
 		DISCONNECT_REQ ------------>
 
 	            <------------------ DISCONNECT_IND
-	            
+
 
 	passive disconnect:
 	-------------------
@@ -178,7 +178,7 @@ typedef struct {
 		--------		------
 
 	            <------------------ DISCONNECT_IND
-	            
+
 
 ****************************************************************************/
 
@@ -186,10 +186,10 @@ typedef struct {
 /*===========================================================================*
  *===========================================================================*
  *	"read" messages from kernel -> userland
- *===========================================================================* 
+ *===========================================================================*
  *===========================================================================*/
 
- 
+
 /*---------------------------------------------------------------------------*
  *	message header, included in every message
  *---------------------------------------------------------------------------*/
@@ -304,7 +304,7 @@ typedef struct {
 	int		driver;		/* driver type		*/
 	int		driver_unit;	/* driver unit number	*/
 	int		cmdlen;		/* length of string	*/
-	char		cmd[TELNO_MAX];	/* the number to dial	*/	
+	char		cmd[TELNO_MAX];	/* the number to dial	*/
 } msg_dialoutnumber_ind_t;
 
 /*---------------------------------------------------------------------------*
@@ -431,7 +431,7 @@ typedef struct {
 /*===========================================================================*
  *===========================================================================*
  *	"ioctl" messages from userland -> kernel
- *===========================================================================* 
+ *===========================================================================*
  *===========================================================================*/
 
 /*---------------------------------------------------------------------------*
@@ -440,7 +440,7 @@ typedef struct {
 typedef struct {
 	int		cdid;			/* call descriptor id	*/
 } msg_cdid_req_t;
- 
+
 #define	I4B_CDID_REQ		_IOWR('4', 0, int)
 
 /*---------------------------------------------------------------------------*
@@ -458,7 +458,7 @@ typedef struct {
 	msg_shorthold_t	shorthold_data;	/* the shorthold data		     */
 	int		unitlen_method;	/* how to calculate the unitlength   */
 #define  ULEN_METHOD_STATIC  0	/* use unitlen_time value (see above) */
-#define  ULEN_METHOD_DYNAMIC 1	/* use AOCD */	
+#define  ULEN_METHOD_DYNAMIC 1	/* use AOCD */
 	char		dst_telno[TELNO_MAX];	/* destination telephone no  */
 	char		src_telno[TELNO_MAX];	/* source telephone number   */
 } msg_connect_req_t;
@@ -481,9 +481,9 @@ typedef struct {
 	int	bprot;		/* B chan protocol			*/
 	int	driver;		/* driver to route b channel data to	*/
 	int	driver_unit;	/*      unit number for above driver	*/
-	int	max_idle_time;	/* max time without activity on b ch	*/	
+	int	max_idle_time;	/* max time without activity on b ch	*/
 } msg_connect_resp_t;
-	
+
 #define	I4B_CONNECT_RESP	_IOW('4', 2, msg_connect_resp_t)
 
 /*---------------------------------------------------------------------------*
@@ -494,7 +494,7 @@ typedef struct {
 	int	cdid;		/* call descriptor id			*/
 	cause_t	cause;		/* protocol independent cause		*/
 } msg_discon_req_t;
-	
+
 #define	I4B_DISCONNECT_REQ	_IOW('4', 3, msg_discon_req_t)
 
 /*---------------------------------------------------------------------------*
@@ -509,7 +509,7 @@ typedef struct {
 	char	cardname[80];	/* human readable brand / version	*/
 	int	nbch;		/* number of b channels provided	*/
 } msg_ctrl_info_req_t;
-	
+
 #define	I4B_CTRL_INFO_REQ	_IOWR('4', 4, msg_ctrl_info_req_t)
 
 /*---------------------------------------------------------------------------*
@@ -528,7 +528,7 @@ typedef struct {
 } msg_dialout_resp_t;
 
 #define	I4B_DIALOUT_RESP	_IOW('4', 5, msg_dialout_resp_t)
-	
+
 /*---------------------------------------------------------------------------*
  *	timeout value update
  *---------------------------------------------------------------------------*/
@@ -536,7 +536,7 @@ typedef struct {
 	int	cdid;		/* call descriptor id			*/
 	msg_shorthold_t	shorthold_data;
 } msg_timeout_upd_t;
-	
+
 #define	I4B_TIMEOUT_UPD		_IOW('4', 6, msg_timeout_upd_t)
 
 /*---------------------------------------------------------------------------*
@@ -558,7 +558,7 @@ typedef struct {
 typedef struct {
 	int	cdid;		/* call descriptor id			*/
 } msg_alert_req_t;
-	
+
 #define	I4B_ALERT_REQ		_IOW('4', 8, msg_alert_req_t)
 
 /*---------------------------------------------------------------------------*
@@ -568,7 +568,7 @@ typedef struct {
 typedef struct {
 	int	version;	/* version number */
 	int	release;	/* release number */
-	int	step;		/* release step number */	
+	int	step;		/* release step number */
 } msg_vr_req_t;
 
 #define I4B_VR_REQ              _IOR('4', 9, msg_vr_req_t)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.48 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.49 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.48 2005/02/26 05:40:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.49 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,12 @@ lfs_blkatoff(void *v)
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
-	
+
 	ip = VTOI(ap->a_vp);
 	fs = ip->i_lfs;
 	lbn = lblkno(fs, ap->a_offset);
 	bsize = blksize(fs, ip, lbn);
-	
+
 	*ap->a_bpp = NULL;
 	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
@@ -213,7 +213,7 @@ lfs_mhash(void *vp)
 /*
  * Return memory of the given size for the given purpose, or use one of a
  * number of spare last-resort buffers, if malloc returns NULL.
- */ 
+ */
 void *
 lfs_malloc(struct lfs *fs, size_t size, int type)
 {
@@ -314,7 +314,7 @@ int
 lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
-	
+
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
@@ -329,7 +329,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 			(void)ltsleep(&fs->lfs_seglock, PRIBIO + 1,
 				      "lfs seglock", 0, &fs->lfs_interlock);
 	}
-	
+
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
 	simple_unlock(&fs->lfs_interlock);
@@ -344,7 +344,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
 	(void) lfs_initseg(fs);
-	
+
 	/*
 	 * Keep a cumulative count of the outstanding I/O operations.  If the
 	 * disk drive catches up with us it could go to zero before we finish,
@@ -446,7 +446,7 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	struct buf *bp;
 	int do_unmark_dirop = 0;
-	
+
 	sp = fs->lfs_sp;
 
 	simple_lock(&fs->lfs_interlock);
@@ -563,10 +563,10 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 	fs->lfs_writer++;
 
 	while (fs->lfs_dirops > 0) {
-		++fs->lfs_diropwait;  
+		++fs->lfs_diropwait;
 		error = ltsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
 		    &fs->lfs_interlock);
-		--fs->lfs_diropwait; 
+		--fs->lfs_diropwait;
 	}
 
 	if (error)

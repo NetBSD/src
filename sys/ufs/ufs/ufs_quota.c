@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.32 2004/09/17 14:11:27 skrll Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.33 2005/02/26 22:32:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.32 2004/09/17 14:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.33 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -440,7 +440,7 @@ quotaoff(p, mp, type)
 	struct dquot *dq;
 	struct inode *ip;
 	int error;
-	
+
 	if ((qvp = ump->um_quotas[type]) == NULLVP)
 		return (0);
 	ump->um_qflags[type] |= QTF_CLOSING;

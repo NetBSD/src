@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.134 2005/02/26 05:40:42 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.135 2005/02/26 22:32:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.134 2005/02/26 05:40:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.135 2005/02/26 22:32:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ restart:
 		simple_unlock(&fs->lfs_interlock);
 #ifdef DEBUG_LFS
 		printf("lfs_set_dirop: sleeping with dirops=%d, "
-		       "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount); 
+		       "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount);
 #endif
 		if ((error = ltsleep(&lfs_dirvcount,
 		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
@@ -421,11 +421,11 @@ restart:
 			goto unreserve;
 		}
 		goto restart;
-	}							
+	}
 	simple_unlock(&lfs_subsys_lock);
 
-	++fs->lfs_dirops;						
-	fs->lfs_doifile = 1;						
+	++fs->lfs_dirops;
+	fs->lfs_doifile = 1;
 	simple_unlock(&fs->lfs_interlock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
@@ -529,7 +529,7 @@ lfs_mknod(void *v)
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
-	struct mount	*mp;	
+	struct mount	*mp;
 	ino_t		ino;
 
 	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
@@ -574,7 +574,7 @@ lfs_mknod(void *v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, 
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0,
 	    curproc)) != 0) {
 		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
 		       VTOI(*vpp)->i_number);
@@ -813,7 +813,7 @@ lfs_rename(void *v)
 	if (tvp) {
 		MARK_VNODE(tvp);
 	}
-	
+
 	error = ufs_rename(ap);
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(tdvp);
@@ -1175,7 +1175,7 @@ lfs_flush_dirops(struct lfs *fs)
 			    LK_NOWAIT) == 0) {
 			needunlock = 1;
 		} else {
-			printf("lfs_flush_dirops: flushing locked ino %d\n", 
+			printf("lfs_flush_dirops: flushing locked ino %d\n",
 			       VTOI(vp)->i_number);
 			needunlock = 0;
 		}
@@ -1527,7 +1527,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 /*
  * lfs_putpages functions like genfs_putpages except that
- * 
+ *
  * (1) It needs to bounds-check the incoming requests to ensure that
  *     they are block-aligned; if they are not, expand the range and
  *     do the right thing in case, e.g., the requested range is clean
@@ -1703,7 +1703,7 @@ lfs_putpages(void *v)
 		preempt(1);
 		simple_lock(&vp->v_interlock);
 	} while(1);
-		
+
 	/*
 	 * Dirty and asked to clean.
 	 *
@@ -1735,9 +1735,9 @@ lfs_putpages(void *v)
 		if (locked)
 			VOP_UNLOCK(vp, 0);
 		simple_unlock(&vp->v_interlock);
-		
+
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
-		
+
 		simple_lock(&vp->v_interlock);
 		if (locked)
 			VOP_LOCK(vp, LK_EXCLUSIVE);
@@ -1789,19 +1789,19 @@ lfs_putpages(void *v)
 	if (!seglocked) {
 		if (sp->seg_bytes_left < fs->lfs_bsize ||
 		    sp->sum_bytes_left < sizeof(struct finfo))
-			(void) lfs_writeseg(fs, fs->lfs_sp); 
-	 
+			(void) lfs_writeseg(fs, fs->lfs_sp);
+
 		sp->sum_bytes_left -= FINFOSIZE;
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
- 
+
 	if (!seglocked) {
 		if (vp->v_flag & VDIROP)
 			((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 	}
- 
+
 	sp->fip->fi_nblocks = 0;
 	sp->fip->fi_ino = ip->i_number;
 	sp->fip->fi_version = ip->i_gen;
@@ -1827,7 +1827,7 @@ again:
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
 			(void) lfs_writeseg(fs, sp);
-	 
+
 			/*
 			 * Reinitialize brand new FIP and add us to it.
 			 * (This should duplicate the fixup in
@@ -1932,11 +1932,11 @@ void
 lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
 	struct inode *ip = VTOI(vp);
-	struct lfs *fs = ip->i_lfs; 
+	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
 
 	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE)) 
+	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
 		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.2 2003/08/27 00:12:37 thorpej Exp $ */
+/*	$NetBSD: deflate.c,v 1.3 2005/02/26 22:39:52 perry Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.2 2003/08/27 00:12:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.3 2005/02/26 22:39:52 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -95,7 +95,7 @@ deflate_global(data, size, decomp, out)
 	zbuf.avail_in = size;	/* Total length of data to be processed */
 
 	if (!decomp) {
-		MALLOC(buf[i].out, u_int8_t *, (u_long) size, M_CRYPTO_DATA, 
+		MALLOC(buf[i].out, u_int8_t *, (u_long) size, M_CRYPTO_DATA,
 		    M_NOWAIT);
 		if (buf[i].out == NULL)
 			goto bad;
@@ -110,7 +110,7 @@ deflate_global(data, size, decomp, out)
 	 	 * updated while the decompression is going on
 	 	 */
 
-		MALLOC(buf[i].out, u_int8_t *, (u_long) (size * 4), 
+		MALLOC(buf[i].out, u_int8_t *, (u_long) (size * 4),
 		    M_CRYPTO_DATA, M_NOWAIT);
 		if (buf[i].out == NULL)
 			goto bad;
