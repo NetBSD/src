@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.101 1997/06/14 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.102 1997/09/11 23:02:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -533,7 +533,8 @@ start_init(p)
 		 * Now try to exec the program.  If can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
-		if ((error = sys_execve(p, &args, retval)) == 0)
+		error = sys_execve(p, &args, retval);
+		if (error == 0 || error == EJUSTRETURN)
 			return;
 		if (error != ENOENT)
 			printf("exec %s: error %d\n", path, error);

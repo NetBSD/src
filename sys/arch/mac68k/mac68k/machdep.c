@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 1997/09/10 03:43:48 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 1997/09/11 23:02:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -525,25 +525,22 @@ void via_shutdown __P((void));
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, sp, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
-	u_long  sp;
-	register_t *retval;
+	u_long stack;
 {
-	struct frame *frame;
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
-	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = sp;
+	frame->f_regs[SP] = stack;
 	frame->f_regs[A2] = (int) PS_STRINGS;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 
-	if (fputype) {
+	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-	}
 }
 
 int     waittime = -1;
