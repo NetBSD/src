@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.5 2000/08/22 21:43:36 pk Exp $
+# 	$NetBSD: GENERIC32,v 1.6 2000/09/21 23:44:06 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -83,7 +83,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-g"
+#makeoptions 	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -93,7 +93,7 @@ makeoptions 	DEBUG="-g"
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
-options 	DEBUG
+#options 	DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -173,7 +173,7 @@ options 	MROUTING	# packet forwarding of multicast packets
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
+options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
@@ -250,12 +250,11 @@ ms0	at zs1 channel 1	# mouse
 #sabtty1	at sab0 channel 1	# ttyb
 
 ## Part of a PC87332VLJ?
-#ucom0	at ebus? addr 0x3083f8		# `com' driver
-#ucom1	at ebus? addr 0x3062f8		# 
-#ucom0	at ebus?			# `com' driver
-#ucom1	at ebus?			# 
-#kbd0	at ucom0 channel 0		# keyboard
-#ms0	at ucom1 channel 1		# mouse
+#com0	at ebus? addr 0x3083f8		# `com' driver
+#com1	at ebus? addr 0x3062f8		# 
+com*	at ebus?			# `com' driver
+kbd0	at com?			# keyboard
+ms0	at com?			# mouse
 
 #### Disk controllers and disks
 
@@ -266,8 +265,8 @@ ms0	at zs1 channel 1	# mouse
 ## sun4u on-board SCSI, and FSBE/S SBus SCSI cards, an NCR53c94 or
 ## equivalent behind an LSI Logic DMA controller
 
-dma*	at sbus? slot ? offset ?		# SBus
-esp*	at dma? flags 0x0000			# SBus
+dma*	at sbus? slot ? offset ?			# SBus
+esp*	at dma? flags 0x0000				# SBus
 
 scsibus* at esp?
 
@@ -280,12 +279,8 @@ scsibus* at isp?
 #scsibus* at fas?
 
 ## GLM support missing
-siop*	at pci?					# 53C875 "glm" compatible
+siop*	at pci?						# 53C875 "glm" compatible
 scsibus* at siop?
-
-## Adaptec [23]94x, aic78x0 SCSI controller
-ahc*	at pci? dev ? function ?
-scsibus* at ahc?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.

@@ -1,10 +1,17 @@
-# 	$NetBSD: GENERIC,v 1.40 2000/07/07 19:11:56 eeh Exp $
+# 	$NetBSD: GENERIC,v 1.41 2000/09/21 23:44:06 eeh Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"GENERIC64-$Revision: 1.40 $"
+#ident 		"GENERIC64-$Revision: 1.41 $"
 
 options 	_LP64		# we're using a 64-bit compiler
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
-options		LOCKDEBUG
+
+# DEBUG options turned on:
+
+#options		LOCKDEBUG
+#options		DIAGNOSTIC
+#makeoptions 	DEBUG="-g"
+#options 	DEBUG
+#options 	SYSCALL_DEBUG
