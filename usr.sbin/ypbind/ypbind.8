@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.14 2002/02/08 01:38:58 ross Exp $
+.\"	$NetBSD: ypbind.8,v 1.15 2005/02/26 16:15:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm ypbind
-.Nd create and maintain a binding to a YP server
+.Nd create and maintain a binding to a NIS server
 .Sh SYNOPSIS
 .Nm
 .Op Fl broadcast
@@ -49,7 +49,7 @@
 .Sh DESCRIPTION
 .Nm
 finds the server for a particular
-.Tn YP
+.Tn NIS
 domain and stores information about it
 in a
 .Dq binding file .
@@ -63,7 +63,7 @@ where
 .Aq domain
 is the relevant domain.
 The
-.Tn YP
+.Tn NIS
 system only supplies information on version 2.
 .Pp
 If
@@ -73,14 +73,14 @@ is started without the
 option,
 .Nm
 steps through the list of
-.Tn YP
+.Tn NIS
 servers specified in
 .Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 and contacts each in turn attempting to bind to that server.
 It is strongly recommended that these hosts are in the local
 hosts file, and that hosts are looked up in local files before
 the
-.Tn YP
+.Tn NIS
 hosts map.
 .Pp
 If
@@ -109,7 +109,7 @@ The options are as follows:
 .Bl -tag -width "-broadcast"
 .It Fl broadcast
 sends a broadcast requesting a
-.Tn YP
+.Tn NIS
 server to which to bind.
 .It Fl insecure
 do not require that the server is running on a reserved port.
@@ -117,7 +117,7 @@ This may be necessary when connecting to
 .Tn SunOS 3.x
 or
 .Tn ULTRIX
-.Tn YP
+.Tn NIS
 servers.
 .It Fl ypset
 .Xr ypset 8
@@ -143,10 +143,10 @@ options are inherently insecure and should be avoided.
 Messages are send to syslog daemon using facility LOG_DAEMON.
 .Sh SEE ALSO
 .Xr domainname 1 ,
+.Xr nis 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
 .Xr ypwhich 1 ,
-.Xr yp 8 ,
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS

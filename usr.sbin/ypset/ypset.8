@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypset.8,v 1.6 2002/02/02 02:31:24 wiz Exp $
+.\"	$NetBSD: ypset.8,v 1.7 2005/02/26 16:16:22 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm ypset
 .Nd tell
 .Xr ypbind 8
-which YP server process to use
+which NIS server process to use
 .Sh SYNOPSIS
 .Nm
 .Op Fl h Ar host
@@ -52,49 +52,49 @@ which YP server process to use
 tells the
 .Xr ypbind 8
 process on the current machine which
-.Tn YP
+.Tn NIS
 server process to communicate with.
 If
 .Ar server
 is down or is not running a
-.Tn YP
+.Tn NIS
 server process, it is not discovered until
 a
-.Tn YP
+.Tn NIS
 client process attempts to access a
-.Tn YP
+.Tn NIS
 map, at which time
 .Xr ypbind 8
 tests the binding and takes appropriate action.
 .Pp
 .Nm
 is most useful for binding a
-.Tn YP
+.Tn NIS
 client that is not on the same broadcast
 network as the closest
-.Tn YP
+.Tn NIS
 server, but can also be used for debugging
 a local network's
-.Tn YP
+.Tn NIS
 configuration, testing specific
-.Tn YP
+.Tn NIS
 client
 programs, or binding to a specific server when there are many servers on
 the local network supplying
-.Tn YP
+.Tn NIS
 maps.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl h Ar host
 Set the
-.Tn YP
+.Tn NIS
 binding on
 .Ar host
 instead of the local machine.
 .It Fl d Ar domain
 Use the
-.Tn YP
+.Tn NIS
 domain
 .Ar domain
 instead of the default domain as returned by
@@ -102,10 +102,10 @@ instead of the default domain as returned by
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
+.Xr nis 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
 .Xr ypwhich 1 ,
-.Xr yp 8 ,
 .Xr ypbind 8 ,
 .Xr yppoll 8
 .Sh AUTHORS
