@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.22 1998/01/12 20:24:05 thorpej Exp $ */
+/*	$NetBSD: auxreg.c,v 1.23 1998/03/21 20:34:58 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,11 +54,20 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch __P((struct device *, struct cfdata *, void *));
-static void auxregattach __P((struct device *, struct device *, void *));
+static int auxregmatch_mainbus __P((struct device *, struct cfdata *, void *));
+static int auxregmatch_obio __P((struct device *, struct cfdata *, void *));
+static void auxregattach_mainbus
+		__P((struct device *, struct device *, void *));
+static void auxregattach_obio
+		__P((struct device *, struct device *, void *));
 
-struct cfattach auxreg_ca = {
-	sizeof(struct device), auxregmatch, auxregattach
+static void auxregattach __P((struct device *));
+
+struct cfattach auxreg_mainbus_ca = {
+	sizeof(struct device), auxregmatch_mainbus, auxregattach_mainbus
+};
+struct cfattach auxreg_obio_ca = {
+	sizeof(struct device), auxregmatch_obio, auxregattach_obio
 };
 
 #ifdef BLINK
@@ -86,45 +95,85 @@ blink(zero)
 #endif
 
 /*
- * The OPENPROM calls this "auxiliary-io".
+ * The OPENPROM calls this "auxiliary-io" (sun4c) or "auxio" (sun4m).
  */
 static int
-auxregmatch(parent, cf, aux)
+auxregmatch_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	switch (cputyp) {
-	    case CPU_SUN4:
+	return (strcmp("auxiliary-io", ma->ma_name) == 0);
+}
+
+static int
+auxregmatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+
+	if (uoba->uoba_isobio4 != 0)
 		return (0);
-	    case CPU_SUN4C:
-		return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
-	    case CPU_SUN4M:
-		return (strcmp("auxio", ca->ca_ra.ra_name) == 0);
-	    default:
-		panic("auxregmatch");
-	}
+
+	return (strcmp("auxio", uoba->uoba_sbus.sa_name) == 0);
 }
 
 /* ARGSUSED */
 static void
-auxregattach(parent, self, aux)
+auxregattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t hp;
 
-	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long));
-	if (CPU_ISSUN4M) {
-		auxio_reg = AUXIO4M_REG;
-		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
-	} else {
-		auxio_reg = AUXIO4C_REG;
-		auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+	if (sparc_bus_map(ma->ma_bustag,
+			  ma->ma_iospace,
+			  (bus_addr_t)ma->ma_paddr,
+			  sizeof(long),
+			  BUS_SPACE_MAP_LINEAR,
+			  AUXREG_VA,
+			  &hp) != 0) {
+		printf("auxregattach_mainbus: can't map register\n");
+		return;
 	}
+
+	auxio_reg = AUXIO4C_REG;
+	auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+	auxregattach(self);
+}
+
+static void
+auxregattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	bus_space_handle_t bh;
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset,
+			 sizeof(long),
+			 BUS_SPACE_MAP_LINEAR,
+			 AUXREG_VA, &bh) != 0) {
+		printf("auxregattach_obio: can't map register\n");
+		return;
+	}
+
+	auxio_reg = AUXIO4M_REG;
+	auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
+	auxregattach(self);
+}
+
+static void
+auxregattach(self)
+	struct device *self;
+{
 
 	printf("\n");
 #ifdef BLINK

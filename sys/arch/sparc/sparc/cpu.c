@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.61 1998/01/12 20:24:07 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.62 1998/03/21 20:34:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -144,9 +144,9 @@ cpu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
+	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
 /*
@@ -160,13 +160,13 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	register int node;
 	register char *fpuname;
-	struct confargs *ca = aux;
 	char fpbuf[40];
 
-	sc->node = node = ca->ca_ra.ra_node;
+	sc->node = node = ma->ma_node;
 
 	/*
 	 * First, find out if we're attaching the boot CPU.

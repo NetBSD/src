@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.22 1998/01/12 20:24:09 thorpej Exp $ */
+/*	$NetBSD: memreg.c,v 1.23 1998/03/21 20:34:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,11 +61,21 @@
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-static int memregmatch __P((struct device *, struct cfdata *, void *));
-static void memregattach __P((struct device *, struct device *, void *));
+static int	memregmatch_mainbus
+			__P((struct device *, struct cfdata *, void *));
+static int	memregmatch_obio
+			__P((struct device *, struct cfdata *, void *));
+static void	memregattach_mainbus
+			__P((struct device *, struct device *, void *));
+static void	memregattach_obio
+			__P((struct device *, struct device *, void *));
 
-struct cfattach memreg_ca = {
-	sizeof(struct device), memregmatch, memregattach
+struct cfattach memreg_mainbus_ca = {
+	sizeof(struct device), memregmatch_mainbus, memregattach_mainbus
+};
+
+struct cfattach memreg_obio_ca = {
+	sizeof(struct device), memregmatch_obio, memregattach_obio
 };
 
 void memerr __P((int, u_int, u_int, u_int, u_int));
@@ -77,39 +87,91 @@ static void hardmemerr4m __P((int, u_int, u_int));
  * The OPENPROM calls this "memory-error".
  */
 static int
-memregmatch(parent, cf, aux)
+memregmatch_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (CPU_ISSUN4) {
-		if (ca->ca_bustype == BUS_OBIO)
-			return (strcmp(cf->cf_driver->cd_name,
-				       ca->ca_ra.ra_name) == 0);
+	return (strcmp("memory-error", ma->ma_name) == 0);
+}
+
+static int
+memregmatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (strcmp("memory-error", uoba->uoba_sbus.sa_name) == 0);
+
+	if (!CPU_ISSUN4) {
+		printf("memregmatch_obio: attach args mixed up\n");
 		return (0);
 	}
-	return (strcmp("memory-error", ca->ca_ra.ra_name) == 0);
+
+	return (1);
 }
 
 /* ARGSUSED */
 static void
-memregattach(parent, self, aux)
+memregattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh;
 
-	if (CPU_ISSUN4) {
-		if (par_err_reg == NULL)
-			panic("memregattach");
-		ra->ra_vaddr = (caddr_t)par_err_reg;
-	} else {
-		par_err_reg = ra->ra_vaddr ? (volatile u_int *)ra->ra_vaddr :
-		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int));
+	printf("\n");
+	if (ma->ma_promvaddr != 0) {
+		par_err_reg = (volatile int *)ma->ma_promvaddr;
+		return;
 	}
+
+	if (sparc_bus_map(ma->ma_bustag, ma->ma_iospace,
+			 (bus_addr_t)ma->ma_paddr,
+			 sizeof(par_err_reg),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("memregattach_mainbus: can't map register\n");
+		return;
+	}
+}
+
+/* ARGSUSED */
+static void
+memregattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	bus_space_handle_t bh;
+
+	if (uoba->uoba_isobio4 == 0) {
+		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+		if (sa->sa_promvaddr != 0) {
+			par_err_reg = (volatile int *)sa->sa_promvaddr;
+			return;
+		}
+
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset,
+				 sizeof(par_err_reg),
+				 BUS_SPACE_MAP_LINEAR,
+				 0, &bh) != 0) {
+			printf("memregattach_obio: can't map register\n");
+			return;
+		}
+		par_err_reg = (volatile int *)bh;
+	}
+
+	/* On sun4, `par_err_reg' has already been mapped in autoconf.c */
+	if (par_err_reg == NULL)
+		panic("memregattach");
+
 	printf("\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.8 1996/03/31 23:45:34 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.9 1998/03/21 20:34:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/openpromio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 1998/01/12 20:24:06 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.59 1998/03/21 20:34:58 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
@@ -169,17 +170,35 @@ struct cfattach eeprom_ca = {
 
 extern struct cfdriver eeprom_cd;
 
-static int	clockmatch __P((struct device *, struct cfdata *, void *));
-static void	clockattach __P((struct device *, struct device *, void *));
+static int	clockmatch_mainbus
+			__P((struct device *, struct cfdata *, void *));
+static int	clockmatch_obio
+			__P((struct device *, struct cfdata *, void *));
+static void	clockattach_mainbus
+			__P((struct device *, struct device *, void *));
+static void	clockattach_obio
+			__P((struct device *, struct device *, void *));
 
-struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
+static void	clockattach __P((struct clockreg *, struct idprom *, char *));
+
+static struct clockreg *clock_map __P((bus_space_handle_t, char *));
+
+struct cfattach clock_mainbus_ca = {
+	sizeof(struct device), clockmatch_mainbus, clockattach_mainbus
+};
+
+struct cfattach clock_obio_ca = {
+	sizeof(struct device), clockmatch_obio, clockattach_obio
 };
 
 extern struct cfdriver clock_cd;
 
-static int	timermatch __P((struct device *, struct cfdata *, void *));
-static void	timerattach __P((struct device *, struct device *, void *));
+static int	timermatch_mainbus __P((struct device *, struct cfdata *, void *));
+static int	timermatch_obio __P((struct device *, struct cfdata *, void *));
+static void	timerattach_mainbus __P((struct device *, struct device *, void *));
+static void	timerattach_obio __P((struct device *, struct device *, void *));
+
+static void	timerattach __P((volatile int *, volatile int *));
 
 /*struct counter_4m	*counterreg_4m;*/
 struct timer_4m		*timerreg4m;
@@ -187,8 +206,12 @@ struct timer_4m		*timerreg4m;
 
 #define	timerreg4	((struct timerreg_4 *)TIMERREG_VA)
 
-struct cfattach timer_ca = {
-	sizeof(struct device), timermatch, timerattach
+struct cfattach timer_mainbus_ca = {
+	sizeof(struct device), timermatch_mainbus, timerattach_mainbus
+};
+
+struct cfattach timer_obio_ca = {
+	sizeof(struct device), timermatch_obio, timerattach_obio
 };
 
 struct chiptime;
@@ -209,7 +232,11 @@ oclockmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (0);
 
 	/* Only these sun4s have oclock */
 	if (!CPU_ISSUN4 ||
@@ -217,15 +244,11 @@ oclockmatch(parent, cf, aux)
 	     cpuinfo.cpu_type != CPUTYP_4_200))
 		return (0);
 
-	/* Check configuration name */
-	if (strcmp(oclock_cd.cd_name, ca->ca_ra.ra_name) != 0)
-		return (0);
-
 	/* Make sure there is something there */
-	if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
-		return (0);
-
-	return (1);
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag,
+			       oba->oba_paddr,
+			       0, 1, NULL, NULL));
 }
 
 /* ARGSUSED */
@@ -235,14 +258,25 @@ oclockattach(parent, self, aux)
 	void *aux;
 {
 #if defined(SUN4)
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_handle_t bh;
 	struct idprom *idp;
 	register int h;
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	i7 = (struct intersil7170 *) mapiodev(ra->ra_reg, 0, sizeof(*i7));
+	if (obio_bus_map(oba->oba_bustag,
+			 oba->oba_paddr,
+			 0,			/* offset */
+			 sizeof(struct intersil7170),
+			 BUS_SPACE_MAP_LINEAR,	/* flags */
+			 0,			/* vaddr */
+			 &bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+	i7 = (struct intersil7170 *)bh;
 
 	idp = &idprom;
 	h = idp->id_machine << 24;
@@ -294,31 +328,26 @@ eeprom_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
-	if (!CPU_ISSUN4)
+	if (uoba->uoba_isobio4 == 0)
 		return (0);
 
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if (cpuinfo.cpu_type != CPUTYP_4_100 &&
-	    cpuinfo.cpu_type != CPUTYP_4_200)
+	/* Only these sun4s have oclock */
+	if (!CPU_ISSUN4 ||
+	    (cpuinfo.cpu_type != CPUTYP_4_100 &&
+	     cpuinfo.cpu_type != CPUTYP_4_200))
 		return (0);
 
-	if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name) != 0)
-		return (0);
-
-	/*
-	 * Make sure there's something there...
-	 * This is especially important if we want to
-	 * use the same kernel on a 4/100 as a 4/200.
-	 */
-	if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
-		return (0);
-
-	/* Passed all tests */
-	return (1);
+	/* Make sure there is something there */
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag,
+			       oba->oba_paddr,
+			       0, 1, NULL, NULL));
 }
 
 static void
@@ -327,13 +356,23 @@ eeprom_attach(parent, self, aux)
 	void *aux;
 {
 #if defined(SUN4)
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_handle_t bh;
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE);
-
+	if (obio_bus_map(oba->oba_bustag,
+			 oba->oba_paddr,
+			 0,			/* offset */
+			 EEPROM_SIZE,
+			 BUS_SPACE_MAP_LINEAR,	/* flags */
+			 0,			/* vaddr */
+			 &bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+	eeprom_va = (char *)bh;
 	eeprom_nvram = 0;
 #endif /* SUN4 */
 }
@@ -343,56 +382,82 @@ eeprom_attach(parent, self, aux)
  * own special match function to call it the "clock".
  */
 static int
-clockmatch(parent, cf, aux)
+clockmatch_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (CPU_ISSUN4) {
-		/* Only these sun4s have "clock" (others have "oclock") */
-		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
-		    cpuinfo.cpu_type != CPUTYP_4_400)
-			return (0);
+	return (strcmp("eeprom", ma->ma_name) == 0);
+}
 
-		if (strcmp(clock_cd.cd_name, ca->ca_ra.ra_name) != 0)
-			return (0);
+static int
+clockmatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
-		/* Make sure there is something there */
-		if (probeget(ca->ca_ra.ra_vaddr, 1) == -1)
-			return (0);
+	if (uoba->uoba_isobio4 == 0)
+		return (strcmp("eeprom", uoba->uoba_sbus.sa_name) == 0);
 
-		return (1);
+	if (!CPU_ISSUN4) {
+		printf("clockmatch_obio: attach args mixed up\n");
+		return (0);
 	}
 
-	return (strcmp("eeprom", ca->ca_ra.ra_name) == 0);
+	/* Only these sun4s have "clock" (others have "oclock") */
+	if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+	    cpuinfo.cpu_type != CPUTYP_4_400)
+		return (0);
+
+	/* Make sure there is something there */
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag,
+			       oba->oba_paddr,
+			       0, 1, NULL, NULL));
+}
+
+static struct clockreg *
+clock_map(bh, model)
+	bus_space_handle_t bh;
+	char *model;
+{
+	struct clockreg *cl;
+
+	pmap_changeprot(pmap_kernel(), (vm_offset_t)bh, VM_PROT_READ, 1);
+	if (strcmp(model, "mk48t08") == 0) {
+		if (NBPG < 8192)
+			pmap_changeprot(pmap_kernel(), (vm_offset_t)bh + 4096,
+					VM_PROT_READ, 1);
+		cl = (struct clockreg *)((int)bh + CLK_MK48T08_OFF);
+	} else
+		cl = (struct clockreg *)bh;
+
+	return (cl);
 }
 
 /* ARGSUSED */
 static void
-clockattach(parent, self, aux)
+clockattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register int h;
-	register struct clockreg *cl;
-	register struct idprom *idp;
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
-	char *prop = NULL;
+	struct mainbus_attach_args *ma = aux;
+	char *model;
+	int sz;
+	struct clockreg *cl;
+	struct idprom *idp;
+	bus_space_handle_t bh;
 
-	if (CPU_ISSUN4)
-		prop = "mk48t02";
-
-	if (CPU_ISSUN4COR4M)
-		prop = getpropstring(ra->ra_node, "model");
-
-#ifdef DIAGNOSTIC
-	if (prop == NULL)
-		panic("no prop");
-#endif
-	printf(": %s (eeprom)\n", prop);
+	model = getpropstring(ma->ma_node, "model");
+	/*
+	 * the MK48T08 is 8K; the MK48T02 is 2K
+	 */
+	sz = strcmp(model, "mk48t08") == 0 ? 8192 : 2048;
 
 	/*
 	 * We ignore any existing virtual address as we need to map
@@ -402,29 +467,88 @@ clockattach(parent, self, aux)
 	 * of reloading the cpu type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
-	if (strcmp(prop, "mk48t08") == 0) {
-		/*
-		 * the MK48T08 is 8K
-		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + 4096,
-				VM_PROT_READ, 1);
-		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
-	} else {
-		/*
-		 * the MK48T02 is 2K
-		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0,
-						 sizeof *clockreg);
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
+	if (sparc_bus_map(ma->ma_bustag,
+			  ma->ma_iospace,
+			  (bus_addr_t)ma->ma_paddr,
+			  sz,
+			  BUS_SPACE_MAP_LINEAR,
+			  0,
+			  &bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
 	}
+
+	cl = clock_map(bh, model);
 	idp = &cl->cl_idprom;
+	clockattach(cl, idp, model);
+}
+
+static void
+clockattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	char *model;
+	int sz;
+	struct clockreg *cl;
+	struct idprom *idp;
+	bus_space_handle_t bh;
+
+	if (uoba->uoba_isobio4 == 0) {
+		/* sun4m clock at obio */
+		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+
+		model = getpropstring(sa->sa_node, "model");
+		sz = strcmp(model, "mk48t08") == 0 ? 8192 : 2048;
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot,
+				 sa->sa_offset,
+				 sz,
+				 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
+		cl = clock_map(bh, model);
+		idp = &cl->cl_idprom;
+	} else {
+		/* sun4 clock at obio */
+		struct obio4_attach_args *oba = &uoba->uoba_oba4;
+		model = "mk48t02";
+		sz = 2048;
+		if (obio_bus_map(oba->oba_bustag,
+				 oba->oba_paddr,
+				 0,			/* offset */
+				 sz,			/* size */
+				 BUS_SPACE_MAP_LINEAR,	/* flags */
+				 0,			/* vaddr */
+				 &bh) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
+		cl = clock_map(bh, model);
+#if defined(SUN4)
+		idp = &idprom;
+#else
+		idp = NULL;
+#endif
+	}
+
+	clockattach(cl, idp, model);
+}
+
+static void
+clockattach(cl, idp, model)
+	struct clockreg *cl;
+	struct idprom *idp;
+	char *model;
+{
+	int h;
+
+	printf(": %s (eeprom)\n", model);
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		idp = &idprom;
-
 		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
 		    cpuinfo.cpu_type == CPUTYP_4_400) {
 			eeprom_va = (char *)cl->cl_nvram;
@@ -442,113 +566,185 @@ clockattach(parent, self, aux)
 }
 
 /*
- * The OPENPROM calls the timer the "counter-timer".
+ * The sun4c OPENPROM calls the timer the "counter-timer".
  */
 static int
-timermatch(parent, cf, aux)
+timermatch_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (CPU_ISSUN4) {
-		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
-		    cpuinfo.cpu_type != CPUTYP_4_400)
-			return (0);
+	return (strcmp("counter-timer", ma->ma_name) == 0);
+}
 
-		if (strcmp("timer", ca->ca_ra.ra_name) != 0)
-			return (0);
+/*
+ * The sun4m OPENPROM calls the timer the "counter".
+ * The sun4 timer must be probed.
+ */
+static int
+timermatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
-		/* Make sure there is something there */
-		if (probeget(ca->ca_ra.ra_vaddr, 4) == -1)
-			return (0);
+	if (uoba->uoba_isobio4 == 0)
+		return (strcmp("counter", uoba->uoba_sbus.sa_name) == 0);
 
-		return (1);
+	if (!CPU_ISSUN4) {
+		printf("timermatch_obio: attach args mixed up\n");
+		return (0);
 	}
 
-	if (CPU_ISSUN4C) {
-		return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
-	}
+	/* Only these sun4s have "timer" (others have "oclock") */
+	if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+	    cpuinfo.cpu_type != CPUTYP_4_400)
+		return (0);
 
-	if (CPU_ISSUN4M) {
-		return (strcmp("counter", ca->ca_ra.ra_name) == 0);
-	}
-
-	return (0);
+	/* Make sure there is something there */
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag,
+			       oba->oba_paddr,
+			       0, 4, NULL, NULL));
 }
 
 /* ARGSUSED */
 static void
-timerattach(parent, self, aux)
+timerattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
-	volatile int *cnt = NULL, *lim = NULL;
-		/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh;
 
-	if (CPU_ISSUN4M) {
+	/*
+	 * This time, we ignore any existing virtual address because
+	 * we have a fixed virtual address for the timer, to make
+	 * microtime() faster.
+	 */
+	if (sparc_bus_map(ma->ma_bustag,
+			  ma->ma_iospace,
+			 (bus_addr_t)ma->ma_paddr,
+			 sizeof(struct timerreg_4),
+			 BUS_SPACE_MAP_LINEAR,
+			 TIMERREG_VA, &bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+
+	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+}
+
+static void
+timerattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+
+	if (uoba->uoba_isobio4 == 0) {
+		/* sun4m timer at obio */
+#if defined(SUN4M)
+		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+		bus_space_handle_t bh;
+		struct rom_reg *rr = NULL;
+		int nreg;
 		int i;
 
+		/* Get full-size register property */
+		if (getpropA(sa->sa_node, "reg", sizeof(*rr),
+			     &nreg, (void **)&rr) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
+
+		if (nreg < 2) {
+			printf("%s: only %d register sets\n", self->dv_xname,
+				nreg);
+			return;
+		}
+
 		/* Map the system timer */
-		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
-			     sizeof(struct timer_4m));
+		if (sbus_bus_map(sa->sa_bustag,
+				 rr[nreg-1].rr_iospace,
+				 (int)rr[nreg-1].rr_paddr,
+				 sizeof(struct timer_4m),
+				 BUS_SPACE_MAP_LINEAR,
+				 TIMERREG_VA, &bh) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
 		timerreg4m = (struct timer_4m *)TIMERREG_VA;
 
-		for (i = 0; i < ra->ra_nreg-1; i++) {
+		for (i = 0; i < nreg - 1; i++) {
 			if (i != 0)
 				break;
-			cpuinfo.counterreg_4m = (struct counter_4m *)
-				mapdev(&ra->ra_reg[i], 0, 0,
-				       sizeof(struct counter_4m));
+			if (sbus_bus_map(sa->sa_bustag,
+					 rr[i].rr_iospace,
+					 (int)rr[i].rr_paddr,
+					 sizeof(struct timer_4m),
+					 BUS_SPACE_MAP_LINEAR,
+					 0, &bh) != 0) {
+				printf("%s: can't map register\n",
+					self->dv_xname);
+				return;
+			}
+			cpuinfo.counterreg_4m = (struct counter_4m *)bh;
 		}
-#if 0
-		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
-			     sizeof(struct counter_4m));
-		counterreg4m = (struct counter_4m *)COUNTERREG_VA;
-#endif
 
 		/* Put processor counter in "timer" mode */
 		timerreg4m->t_cfg = 0;
 
-		cnt = &counterreg4m->t_counter;
-		lim = &counterreg4m->t_limit;
+		timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
+#endif
+		return;
+	} else {
+#if defined(SUN4)
+		/* sun4 timer at obio */
+		struct obio4_attach_args *oba = &uoba->uoba_oba4;
+		bus_space_handle_t bh;
+
+		if (obio_bus_map(oba->oba_bustag,
+				 oba->oba_paddr,
+				 0,	/* offset */
+				 sizeof(struct timerreg_4),
+				 BUS_SPACE_MAP_LINEAR,
+				 (void *)TIMERREG_VA,
+				 &bh) != 0) {
+			printf("%s: can't map register\n", self->dv_xname);
+			return;
+		}
+		timerattach(&timerreg4->t_c14.t_counter,
+			    &timerreg4->t_c14.t_limit);
+#endif
 	}
+}
 
-	if (CPU_ISSUN4OR4C) {
-		/*
-		 * This time, we ignore any existing virtual address because
-		 * we have a fixed virtual address for the timer, to make
-		 * microtime() faster (in SUN4/SUN4C kernel only).
-		 */
-		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
-			     sizeof(struct timerreg_4));
-
-		cnt = &timerreg4->t_c14.t_counter;
-		lim = &timerreg4->t_c14.t_limit;
-	}
-
-	timerok = 1;
+static void
+timerattach(cntreg, limreg)
+	volatile int *cntreg, *limreg;
+{
 
 	/*
 	 * Calibrate delay() by tweaking the magic constant
 	 * until a delay(100) actually reads (at least) 100 us on the clock.
 	 * Note: sun4m clocks tick with 500ns periods.
 	 */
-
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
 		register int t0, t1;
 
 		/* Reset counter register by writing some large limit value */
-		discard = *lim;
-		*lim = tmr_ustolim(TMR_MASK-1);
+		discard = *limreg;
+		*limreg = tmr_ustolim(TMR_MASK-1);
 
-		t0 = *cnt;
+		t0 = *cntreg;
 		delay(100);
-		t1 = *cnt;
+		t1 = *cntreg;
 
 		if (t1 & TMR_LIMIT)
 			panic("delay calibration");
@@ -558,7 +754,6 @@ timerattach(parent, self, aux)
 
 		if (t1 >= t0 + 100)
 			break;
-
 	}
 
 	printf(" delay constant %d\n", timerblurb);
@@ -566,6 +761,8 @@ timerattach(parent, self, aux)
 	/* link interrupt handlers */
 	intr_establish(10, &level10);
 	intr_establish(14, &level14);
+
+	timerok = 1;
 }
 
 /*
