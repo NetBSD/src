@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 2002/10/05 21:18:44 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.5 2002/10/25 12:01:56 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
+#include "opt_mtrr.h"
 
 #include "lapic.h"
 #include "ioapic.h"
@@ -419,10 +420,10 @@ cpu_init(ci)
 		/*
 		 * Must be a K6-2 Step >= 7 or a K6-III.
 		 */
-		if (CPUID2FAMILY(cpu_id) == 5) {
-			if (CPUID2MODEL(cpu_id) > 8 ||
-			    (CPUID2MODEL(cpu_id) == 8 &&
-			     CPUID2STEPPING(cpu_id) >= 7)) {
+		if (CPUID2FAMILY(ci->ci_signature) == 5) {
+			if (CPUID2MODEL(ci->ci_signature) > 8 ||
+			    (CPUID2MODEL(ci->ci_signature) == 8 &&
+			     CPUID2STEPPING(ci->ci_signature) >= 7)) {
 				mtrr_funcs = &k6_mtrr_funcs;
 				k6_mtrr_init_first();
 				mtrr_init_cpu(ci);
