@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.25 2002/05/07 09:56:32 onoe Exp $
+.\"     $NetBSD: wi.4,v 1.26 2002/08/12 17:27:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.25 2002/05/07 09:56:32 onoe Exp $
+.\"	$Id: wi.4,v 1.26 2002/08/12 17:27:39 thorpej Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -78,17 +78,34 @@ For WaveLAN/IEEE Turbo 11Mbps adapters and PRISM-II adapters, speeds up to
 .Pp
 The
 .Nm
-driver supports configuration of WaveLAN card for special ad-hoc operation.
-In this mode, the nwid is ignored and
-stations can communicate among each other without the aid of an access
-point.
-Note that this mode is not in the IEEE 802.11 specification and the driver
-may interoperate with other cards. This mode is no longer the default
-and must be selected using the
+driver supports configuration of Lucent card for special ad-hoc operation.
+In this mode, the nwid is ignored and stations can communicate among each
+other without the aid of an access point.  Note that this mode is specific
+to Lucent chips, and not in the IEEE 802.11 specification.  Due to changes
+in the implementation of this special ad-hoc mode, Lucent-based cards with
+different firmware revisions may not interoperate in this mode.  This mode
+is no longer the default and must be selected using the
 .Xr ifconfig 8
+.Pq media option Dq adhoc
 or
 .Xr wiconfig 8
 utilities.
+.Pp
+Recent versions of Lucent and PRISM-II firmware support IBSS creation.
+IBSS is the standard IEEE 802.11 ad-hoc mode.  In this mode, one station
+should be configured as the IBSS
+.Dq master .
+The nwid is
+.Em not
+ignored in IBSS mode.
+.Pp
+Recent versions of PRISM-II firmware support operating as an 802.11
+Access Point.  In this mode, the Access Point station should set the
+nwid.  This will create a standard 802.11 network, and the Access Point
+station will show up in an Access Point scan.  This mode is enabled
+using the
+.Dq hostap
+media option.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
@@ -190,8 +207,7 @@ The
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
 .Sh BUGS
-The IBSS mode is not supported.
-PRISM chipset does not have IBSS mode.
+WEP does not work in Access Point mode.
 .Pp
 The execution of
 .Xr wiconfig 8
