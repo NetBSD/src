@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 1999/05/03 05:19:59 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 1999/05/06 04:37:44 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -60,34 +60,6 @@ extern char *bootpath;
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32
 #endif
-
-extern void flushcache __P((void *, int));
-
-extern __inline void
-flushcache(from, len)
-	void *from;
-	int len;
-{
-	int l, off;
-	char *p;
-
-	off = (int)from & (CACHELINESIZE - 1);
-	from = (char *)from - off;
-	len += off;
-
-	l = len; p = from;
-	do {
-		__asm__ __volatile ("dcbf 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("sync");
-	l = len; p = from;
-	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("isync");
-}
 
 #include <powerpc/cpu.h>
 
