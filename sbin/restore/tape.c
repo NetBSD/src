@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.44 2001/12/23 14:40:42 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.45 2002/02/19 19:16:38 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.44 2001/12/23 14:40:42 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.45 2002/02/19 19:16:38 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1258,6 +1258,7 @@ findinode(header)
 	curfile.action = UNKNOWN;
 	curfile.dip = NULL;
 	curfile.ino = 0;
+    top:
 	do {
 		if (header->c_magic != NFS_MAGIC) {
 			skipcnt++;
@@ -1277,7 +1278,8 @@ findinode(header)
 			while (gethead(header) == FAIL ||
 			    header->c_date != dumpdate)
 				skipcnt++;
-			break;
+			/* We've read a header; don't drop it. */
+			goto top;
 
 		case TS_INODE:
 			curfile.dip = &header->c_dinode;
