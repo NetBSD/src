@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.170 1999/11/04 16:18:41 tsarna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.171 1999/11/06 11:18:01 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.165 1999/11/04 16:02:20 tsarna Exp 
+ *	NetBSD: pcidevs,v 1.166 1999/11/06 11:17:30 augustss Exp 
  */
 
 /*
@@ -2672,6 +2672,126 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sigma Designs",
 	    "REALmagic Hollywood-Plus MPEG-2 Decoder",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_P,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Parallel PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2P,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Parallel Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_S550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_S650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_S850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_IO550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber I/O 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_IO650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber I/O 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_IO850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber I/O 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial Dual 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial Dual 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber Serial Dual 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2P1S550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2P1S 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2P1S650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2P1S 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2P1S850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2P1S 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_4S550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 4S 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_4S650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 4S 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_4S850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 4S 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S1P550,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2S1P 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S1P650,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2S1P 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER_2S1P850,
+	    0,
+	    "SIIG Inc",
+	    "Cyber 2S1P 16850 PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
@@ -6337,6 +6457,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_FORTEMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Forte Media",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SIIG, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "SIIG Inc",
 	    NULL,
 	},
 	{
