@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: pidentd2netbsd,v 1.1 1998/07/15 07:37:26 msaitoh Exp $
+#	$NetBSD: pidentd2netbsd,v 1.2 2002/11/30 03:18:46 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for pidentd into
 #	a NetBSD source tree.
@@ -283,8 +283,8 @@ PROG=	identd
 %% man
 
 CPPFLAGS+= -DINCLUDE_EXTENSIONS -DSTRONG_LOG -DALLOW_FORMAT
-LDADD+=	-lutil -lkvm
-DPADD+=	${LIBUTIL} ${LIBKVM}
+LDADD+=	-lkvm
+DPADD+=	${LIBKVM}
 
 .include <bsd.prog.mk>
 %% patch libexec/identd
