@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.6 1997/07/23 18:42:40 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.7 1997/10/08 23:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,6 +73,9 @@ void ofdstrategy __P((struct buf *));
 
 struct dkdriver ofdkdriver = { ofdstrategy };
 
+void ofdgetdefaultlabel __P((struct ofd_softc *, struct disklabel *));
+void ofdgetdisklabel __P((dev_t));
+
 static int
 ofdprobe(parent, match, aux)
 	struct device *parent;
@@ -135,7 +138,6 @@ ofdopen(dev, flags, fmt, p)
 	struct ofd_softc *of;
 	char path[256];
 	struct disklabel *lp;
-	char *errmes;
 	int l;
 	
 	if (unit >= ofdisk_cd.cd_ndevs)
@@ -177,53 +179,7 @@ ofdopen(dev, flags, fmt, p)
 		if (of->max_transfer > MAXPHYS)
 			of->max_transfer = MAXPHYS;
 
-		lp = of->sc_dk.dk_label;
-		bzero(lp, sizeof *lp);
-
-		/*
-		 * XXX Firmware bug?  Asking for block size gives a
-		 * XXX rediculous number!  So we use what the boot program
-		 * XXX uses.
-		 */
-		lp->d_secsize = DEV_BSIZE;
-
-		lp->d_secperunit = OF_call_method_1("#blocks",
-		    of->sc_ihandle, 0);
-		if (lp->d_secperunit == (u_int32_t)-1)
-			lp->d_secperunit = 0x7fffffff;
-
-		lp->d_secpercyl = 1;
-		lp->d_nsectors = 1;
-		lp->d_ntracks = 1;
-		lp->d_ncylinders = lp->d_secperunit;
-			
-		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-		lp->d_npartitions = RAW_PART + 1;
-
-		/*
-		 * Don't read the disklabel on a floppy; simply
-		 * assign all partitions the same size/offset as
-		 * RAW_PART.  (This is essentially what the ISA
-		 * floppy driver does, but we don't deal with
-		 * density stuff.)
-		 */
-		if (of->sc_flags & OFDF_ISFLOPPY) {
-			lp->d_npartitions = MAXPARTITIONS;
-			for (l = 0; l < lp->d_npartitions; l++) {
-				if (l == RAW_PART)
-					continue;
-				/* struct copy */
-				lp->d_partitions[l] =
-				    lp->d_partitions[RAW_PART];
-			}
-		} else {
-			errmes = readdisklabel(MAKEDISKDEV(major(dev),
-			    unit, RAW_PART), ofdstrategy, lp,
-			    of->sc_dk.dk_cpulabel);
-			if (errmes != NULL)
-				printf("%s: %s\n", errmes);
-		}
+		ofdgetdisklabel(dev);
 	}
 
 	switch (fmt) {
@@ -384,6 +340,11 @@ ofdioctl(dev, cmd, data, flag, p)
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
 
 		return error;
+
+	case DIOCGDEFLABEL:
+		ofdgetdefaultlabel(of, (struct disklabel *)data);
+		return 0;
+
 	default:
 		return ENOTTY;
 	}
@@ -429,4 +390,76 @@ ofdsize(dev)
 		return -1;
 
 	return size;
+}
+
+void
+ofdiskgetdefaultlabel(of, lp)
+	struct ofd_softc *of;
+	struct disklabel *lp;
+{
+
+	bzero(lp, sizeof *lp);
+
+	/*
+	 * XXX Firmware bug?  Asking for block size gives a
+	 * XXX rediculous number!  So we use what the boot program
+	 * XXX uses.
+	 */
+	lp->d_secsize = DEV_BSIZE;
+
+	lp->d_secperunit = OF_call_method_1("#blocks",
+	    of->sc_ihandle, 0);
+	if (lp->d_secperunit == (u_int32_t)-1)
+		lp->d_secperunit = 0x7fffffff;
+
+	lp->d_secpercyl = 1;
+	lp->d_nsectors = 1;
+	lp->d_ntracks = 1;
+	lp->d_ncylinders = lp->d_secperunit;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+}
+
+void
+ofdiskgetdisklabel(dev)
+	dev_t dev;
+{
+	int unit = DISKUNIT(dev);
+	struct ofd_softc *of = ofdisk_cd.cd_devs[unit];
+	struct disklabel *lp = of->sc_dk.dk_label;
+	char *errmes;
+	int l;
+
+	ofdgetdefaultlabel(of, lp);
+
+	/*
+	 * Don't read the disklabel on a floppy; simply
+	 * assign all partitions the same size/offset as
+	 * RAW_PART.  (This is essentially what the ISA
+	 * floppy driver does, but we don't deal with
+	 * density stuff.)
+	 */
+	if (of->sc_flags & OFDF_ISFLOPPY) {
+		lp->d_npartitions = MAXPARTITIONS;
+		for (l = 0; l < lp->d_npartitions; l++) {
+			if (l == RAW_PART)
+				continue;
+			/* struct copy */
+			lp->d_partitions[l] =
+			    lp->d_partitions[RAW_PART];
+		}
+		lp->d_checksum = dkcksum(lp);
+	} else {
+		errmes = readdisklabel(MAKEDISKDEV(major(dev),
+		    unit, RAW_PART), ofdstrategy, lp,
+		    of->sc_dk.dk_cpulabel);
+		if (errmes != NULL)
+			printf("%s: %s\n", errmes);
+	}
 }
