@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.9 1996/07/14 20:00:30 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.10 1996/08/20 22:40:13 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -29,7 +29,12 @@
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
+#ifndef NEW_PMAP
 #include <machine/pte.h>
+#else
+#include <vm/vm.h>
+#include <vm/pmap.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -46,6 +51,10 @@ int		prom_mapped = 1;	/* Is PROM still mapped? */
 extern struct prom_vec prom_dispatch_v;
 
 pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
+
+#ifdef NEW_PMAP
+#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_pmap.dir[0] : rom_ptep)
+#endif
 
 void
 init_prom_interface()
