@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.20 2001/03/15 06:10:53 chs Exp $	*/
+/*	$NetBSD: grf.c,v 1.21 2001/12/27 02:23:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,7 +193,7 @@ grfioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case GRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
+		memcpy(data, (caddr_t)&gp->g_display, sizeof(struct grfinfo));
 		break;
 
 	case GRFIOCON:
@@ -640,7 +640,7 @@ grffindpid(gp)
 	if (gp->g_pid == NULL) {
 		gp->g_pid = (short *)
 			malloc(GRFMAXLCK * sizeof(short), M_DEVBUF, M_WAITOK);
-		bzero((caddr_t)gp->g_pid, GRFMAXLCK * sizeof(short));
+		memset((caddr_t)gp->g_pid, 0, GRFMAXLCK * sizeof(short));
 	}
 	pid = curproc->p_pid;
 	ni = limit = gp->g_pid[0];

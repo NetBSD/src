@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.6 2001/05/02 13:00:20 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.7 2001/12/27 02:23:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -188,7 +188,7 @@ opm_set_voice(channel, voice)
 	int channel;
 	struct opm_voice *voice;
 {
-	bcopy(voice, &opm0->sc_vdata[channel], sizeof(struct opm_voice));
+	memcpy(&opm0->sc_vdata[channel], voice, sizeof(struct opm_voice));
 
 	opm_set_voice_sub(0x40 + channel, &voice->m1);
 	opm_set_voice_sub(0x48 + channel, &voice->m2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 1999/03/27 01:21:37 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 2001/12/27 02:23:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -226,8 +226,8 @@ zs_attach(parent, self, aux)
 		cs->cs_reg_data = &zc->zc_data;
 
 		zs_init_reg[2] = ia->ia_intr;
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		if (zc == conschan) {
 			zsc_args.hwflags |= ZS_HWFLAG_CONSOLE;
@@ -623,12 +623,12 @@ zscninit(cn)
 	volatile struct zschan *cnchan = (void*) INTIO_ADDR(ZSCN_PHYSADDR);
 	int s;
 
-	bzero (&zscn_cs, sizeof (struct zs_chanstate));
+	memset(&zscn_cs, 0, sizeof (struct zs_chanstate));
 	zscn_cs.cs_reg_csr = &cnchan->zc_csr;
 	zscn_cs.cs_reg_data = &cnchan->zc_data;
 	zscn_cs.cs_channel = 0;
 	zscn_cs.cs_brg_clk = PCLK / 16;
-	bcopy (zs_init_reg, zscn_cs.cs_preg, 16);
+	memcpy(zscn_cs.cs_preg, zs_init_reg, 16);
 	zscn_cs.cs_preg[4] = ZSWR4_CLK_X16 | ZSWR4_ONESB; /* XXX */
 	zscn_cs.cs_preg[9] = 0;
 	zs_set_speed(&zscn_cs, ZSCN_SPEED);
