@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.1 2002/08/11 21:19:12 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.2 2002/08/12 20:34:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -269,8 +269,6 @@ Liout:
 	mov	pc, lr
 
 Lcopyfault:
-	mov	r0, #EFAULT
-
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
