@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1995/03/08 00:39:04 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1995/03/24 14:57:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -587,7 +587,7 @@ lestart(ifp)
 		IF_DEQUEUE(&sc->sc_if.if_snd, m);
 		if (m == 0)
 			break;
-		len = leput(sc, LER2_TBUFADDR(sc->sc_r2, bix), m);
+
 #if NBPFILTER > 0
 		/*
 		 * If bpf is listening on this interface, let it
@@ -597,6 +597,7 @@ lestart(ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
+		len = leput(sc, LER2_TBUFADDR(sc->sc_r2, bix), m);
 #ifdef PACKETSTATS
 		if (len <= LEMTU)
 			lexpacketsizes[len]++;
@@ -824,7 +825,7 @@ leread(sc, buf, len)
 	(*sc->sc_copyfrombuf)(buf, 0, (char *)&eh, sizeof (eh));
 
 	/* adjust input length to account for header and CRC */
-	len -= sizeof(struct ether_header) - 4;
+	len -= sizeof(struct ether_header) + 4;
 	if (len <= 0)
 		return;
 
@@ -840,7 +841,14 @@ leread(sc, buf, len)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf) {
+		M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+		if (m == 0)
+			return;
+		bcopy(&eh, mtod(m, void *), sizeof(struct ether_header));
+
 		bpf_mtap(ifp->if_bpf, m);
+
+		m_adj(m, sizeof(struct ether_header));
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
