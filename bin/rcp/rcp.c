@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.17 1997/09/14 08:17:12 lukem Exp $	*/
+/*	$NetBSD: rcp.c,v 1.18 1997/10/19 13:12:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.17 1997/09/14 08:17:12 lukem Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.18 1997/10/19 13:12:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,9 +425,11 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * Make it compatible with possible future
 			 * versions expecting microseconds.
 			 */
-			(void)snprintf(buf, sizeof(buf), "T%ld 0 %ld 0\n",
+			(void)snprintf(buf, sizeof(buf), "T%ld %ld %ld %ld\n",
 			    (long)stb.st_mtimespec.tv_sec,
-			    (long)stb.st_atimespec.tv_sec);
+			    (long)stb.st_mtimespec.tv_nsec / 1000,
+			    (long)stb.st_atimespec.tv_sec,
+			    (long)stb.st_atimespec.tv_nsec / 1000);
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
@@ -490,9 +492,11 @@ rsource(name, statp)
 	else
 		last++;
 	if (pflag) {
-		(void)snprintf(path, sizeof(path), "T%ld 0 %ld 0\n",
+		(void)snprintf(path, sizeof(path), "T%ld %ld %ld %ld\n",
 		    (long)statp->st_mtimespec.tv_sec,
-		    (long)statp->st_atimespec.tv_sec);
+		    (long)statp->st_mtimespec.tv_nsec / 1000,
+		    (long)statp->st_atimespec.tv_sec,
+		    (long)statp->st_atimespec.tv_nsec / 1000);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
@@ -739,19 +743,19 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
 		}
-		(void)close(ofd);
-		(void)response();
 		if (setimes && wrerr == NO) {
 			setimes = 0;
-			if (utimes(np, tv) < 0) {
+			if (futimes(ofd, tv) < 0) {
 				run_err("%s: set times: %s",
 				    np, strerror(errno));
 				wrerr = DISPLAYED;
 			}
 		}
+		(void)close(ofd);
+		(void)response();
 		switch(wrerr) {
 		case YES:
-			run_err("%s: %s", np, strerror(wrerrno));
+			run_err("%s: write: %s", np, strerror(wrerrno));
 			break;
 		case NO:
 			(void)write(rem, "", 1);
