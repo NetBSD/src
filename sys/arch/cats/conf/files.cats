@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.5 2001/06/12 08:30:47 chris Exp $
+#	$NetBSD: files.cats,v 1.6 2001/06/18 22:26:17 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -88,8 +88,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/stubs.c
 file	arch/arm32/arm32/vm_machdep.c
-
-file	arch/arm32/dev/bus_space_notimpl.S
 
 # library functions
 

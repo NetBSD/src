@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.11 2001/06/12 17:10:25 matt Exp $
+#	$NetBSD: files.netwinder,v 1.12 2001/06/18 22:26:18 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -93,7 +93,6 @@ file	arch/arm32/arm32/setcpsr.S
 file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
-file	arch/arm32/dev/bus_space_notimpl.S
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
