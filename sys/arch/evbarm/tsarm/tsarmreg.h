@@ -1,10 +1,8 @@
-/*	$NetBSD: tsarmreg.h,v 1.1 2004/12/23 04:29:38 joff Exp $	*/
+/*	$NetBSD: tsarmreg.h,v 1.2 2004/12/27 02:41:54 joff Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2004 Jesse Off
  * All rights reserved.
- *
- * Based on code written by Jason R. Thorpe for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,8 +33,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TS7XXXREG_H_
-#define	_TS7XXXREG_H_
+#ifndef _TSARMREG_H_
+#define	_TSARMREG_H_
 
 /*
  * Memory map and register definitions for the TS-7200 single board computer
@@ -46,8 +44,10 @@
 #define TS7XXX_IO8_HWBASE	0x10000000UL
 #define TS7XXX_IO8_SIZE		0x04000000UL
 #define  TS7XXX_STATUS1		0x00800000UL
+#define  TS7XXX_RTCIDX		0x00b00000UL
 #define  TS7XXX_CFREGS1		0x01000001UL
 #define  TS7XXX_CFREGS2		0x01040006UL
+#define  TS7XXX_RTCDAT		0x01700000UL
 #define TS7XXX_IO16_VBASE	(TS7XXX_IO8_VBASE + TS7XXX_IO8_SIZE)
 #define TS7XXX_IO16_HWBASE	0x20000000UL
 #define TS7XXX_IO16_SIZE	0x04000000UL
@@ -61,4 +61,4 @@
 #define  TS7XXX_WDOGCTRL	0x03800000UL
 #define  TS7XXX_WDOGFEED	0x03c00000UL
 
-#endif /* _TS7XXXREG_H_ */
+#endif /* _TSARMREG_H_ */
