@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.114 1999/02/10 21:11:47 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.115 1999/02/11 13:25:42 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -36,6 +36,11 @@ MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
 MANINSTALL?=	maninstall catinstall
+
+INFODIR?=	/usr/share/info
+INFOGRP?=	wheel
+INFOOWN?=	root
+INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint
