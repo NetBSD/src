@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.7 1998/12/08 14:21:48 augustss Exp $
+.\" $NetBSD: usb.4,v 1.8 1998/12/10 23:43:32 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
-.Cd "uhub*   at uhub?"
+.Cd "uhub*   at uhub? port ? configuration ? interface ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ?"
 .Pp
 .Cd "#include <dev/usb/usb.h>"
