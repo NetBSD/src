@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2002/01/25 20:57:43 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2002/07/28 17:54:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -661,11 +661,6 @@ struct arm32_bus_dma_segment {
 	 */
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	/*
-	 * PRIVATE MEMBERS: not for use by machine-independent code.
-	 */
-	bus_addr_t	_ds_vaddr;	/* Virtual mapped address
-					 * Used by bus_dmamem_sync() */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
@@ -761,6 +756,9 @@ struct arm32_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+
+	void		*_dm_origbuf;	/* pointer to original buffer */
+	int		_dm_buftype;	/* type of buffer */
 	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
@@ -774,6 +772,14 @@ struct arm32_bus_dmamap {
 };
 
 #ifdef _ARM32_BUS_DMA_PRIVATE
+
+/* _dm_buftype */
+#define	ARM32_BUFTYPE_INVALID		0
+#define	ARM32_BUFTYPE_LINEAR		1
+#define	ARM32_BUFTYPE_MBUF		2
+#define	ARM32_BUFTYPE_UIO		3
+#define	ARM32_BUFTYPE_RAW		4
+
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
