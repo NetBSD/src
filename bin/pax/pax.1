@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.13 1999/03/07 11:06:34 mycroft Exp $
+.\"	$NetBSD: pax.1,v 1.14 1999/03/07 19:58:45 mycroft Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -68,7 +68,9 @@
 .Oo
 .Fl T
 .Op Ar from_date
-.Oo Ar ,to_date Oc
+.Sm off
+.Oo , Ar to_date Oc
+.Sm on
 .Oc
 .Ar ...\&
 .Ek
@@ -106,7 +108,9 @@
 .Oo
 .Fl T
 .Op Ar from_date
-.Oo Ar ,to_date Oc
+.Sm off
+.Oo , Ar to_date Oc
+.Sm on
 .Oc
 .Ar ...\&
 .Ek
@@ -148,8 +152,8 @@
 .Fl T
 .Op Ar from_date
 .Sm off
-.Oo Ar ,to_date Oc
-.Oo /[c][m] Oc
+.Oo , Ar to_date Oc
+.Oo /[ Cm c ] [ Cm m ] Oc
 .Sm on
 .Oc
 .Ar ...\&
@@ -180,8 +184,8 @@
 .Fl T
 .Op Ar from_date
 .Sm off
-.Oo Ar ,to_date Oc
-.Oo /[c][m] Oc
+.Oo , Ar to_date Oc
+.Oo /[ Cm c ] [ Cm m ] Oc
 .Sm on
 .Oc
 .Ar ...\&
