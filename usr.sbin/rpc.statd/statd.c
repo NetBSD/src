@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.19 2001/11/22 12:23:15 tron Exp $	*/
+/*	$NetBSD: statd.c,v 1.20 2001/11/23 17:10:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.19 2001/11/22 12:23:15 tron Exp $");
+__RCSID("$NetBSD: statd.c,v 1.20 2001/11/23 17:10:29 christos Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -89,7 +89,6 @@ static int notify_one __P((DBT *, HostInfo *, void *));
 static void init_file __P((char *));
 static int notify_one_host __P((char *));
 static void die __P((int)) __attribute__((__noreturn__));
-static void sigchld_handler __P((int));
 
 int main __P((int, char **));
 
@@ -99,8 +98,12 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
+	struct sigaction nsa;
 
-	(void)signal(SIGCHLD, sigchld_handler);
+	sigemptyset(&nsa.sa_mask);
+	nsa.sa_flags = SA_NOCLDSTOP|SA_NOCLDWAIT;
+	nsa.sa_handler = SIG_IGN;
+	(void)sigaction(SIGCHLD, &nsa, NULL);
 
 	while ((ch = getopt(argc, argv, "d")) != (-1)) {
 		switch (ch) {
@@ -626,11 +629,4 @@ die(n)
 {
 	(*db->close)(db);
 	exit(n);
-}
-
-static void
-sigchld_handler(dontcare)
-	int dontcare;
-{
-	while (wait3(&dontcare, WNOHANG, NULL) > 0);
 }
