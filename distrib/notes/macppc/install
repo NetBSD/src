@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2001/05/19 05:43:29 mbw Exp $
+.\"	$NetBSD: install,v 1.13 2001/05/22 04:09:41 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -23,7 +23,7 @@ mode.
 .Li kernel_location
 is either a filename if the kernel is on the same partition as the
 bootloader, or another complete
-.Sq Li device:partition,filename .
+.Sq Li "device:partition,filename" .
 And, there's no reason (other than Open Firmware bugginess) that you can't
 specify an entirely different device for the kernel.
 For instance, you could have a
@@ -86,13 +86,13 @@ is the partition.
 .
 Here are some examples of the commands you might use to boot your system:
 .(bullet
-.Em Floppy disk
+.Em "Floppy disk"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
 .Pp
 The floppy disk has a
-.Sq partition zero
+.Sq "partition zero"
 bootloader. 
 .(Note
 This is not a normal
@@ -119,7 +119,7 @@ You can try the simple form (i.e. that you are booting from ethernet):
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
-.Dl 0 > Ic boot "enet:,ofwboot.xcf enet:,netbsd.ram.gz"
+.Dl 0 > Ic "boot enet:,ofwboot.xcf enet:,netbsd.ram.gz"
 .(Note
 Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
 correctly. These machines cannot netboot.
@@ -136,7 +136,7 @@ You can try the simple form (i.e. that you are booting from ethernet):
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
-.Dl 0 > Ic boot "enet:0,ofwboot.xcf enet:0,netbsd.ram.gz"
+.Dl 0 > Ic "boot enet:0,ofwboot.xcf enet:0,netbsd.ram.gz"
 .It
 .Em CD-ROM
 .br
@@ -189,15 +189,15 @@ usually sets their CD-ROM drives to SCSI ID 3):
 .Dl 0 > Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.RAM"
 .Dl 0 > Ic "boot cd:0,OFWBOOT.XCF NETBSD.RAM"
 .It
-.Em IDE or SCSI drive with a
-.Sq partition zero
+.Em "IDE or SCSI drive with a"
+.Sq "partition zero"
 bootloader
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
 .Pp
 You do not specify a file to load, since the
-.Sq partition zero
+.Sq "partition zero"
 booloader knows what to do. You would boot such a system if you have dumped
 the boot floppy image to your drive, or if you have an already-installed
 .Nx*M
@@ -216,7 +216,7 @@ Here are some examples of what you might use to boot from such a drive:
 .Dl 0 > Ic "boot ide0/disk@0:0"
 .Dl 0 > Ic "boot zip:0"
 .It
-.Em IDE or SCSI drive from an HFS or HFS+ partition
+.Em "IDE or SCSI drive from an HFS or HFS+ partition"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
@@ -478,7 +478,7 @@ can set Open Firmware to always boot into
 .Nx
 from the media of your choice.  First, make sure you know what command you
 need to boot (see above).  If you are using a 
-.Sq partition zero
+.Sq "partition zero"
 style boot scheme, you would type something like the following:
 .Pp
 .Dl 0 > Ic "setenv auto-boot? true"
@@ -496,7 +496,7 @@ also enter something like:
 .Dl 0 > Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
 .Pp
 If you are not using a
-.Sq partition zero
+.Sq "partition zero"
 style boot scheme, then you can still plug in all the information you
 need:
 .Pp
