@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1 1998/09/26 00:03:52 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.2 1998/09/29 07:06:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1 1998/09/26 00:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 1998/09/29 07:06:02 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -94,8 +94,20 @@ alpha_send_ipi(cpu_id, ipinum)
 void
 alpha_ipi_halt()
 {
+	u_long cpu_id = alpha_pal_whami();
+	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
+	struct cpu_softc *sc = cpus[cpu_id];
 
-	/* XXX Implement me! */
+	/* Disable interrupts. */
+	(void) splhigh();
+
+	printf("%s: shutting down...\n", sc->sc_dev.dv_xname);
+	alpha_atomic_clearbits_q(&cpus_running, (1UL << cpu_id));
+
+	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
+	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
+	alpha_pal_halt();
+	/* NOTREACHED */
 }
 
 void
