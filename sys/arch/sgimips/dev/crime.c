@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.4.8.4 2003/01/07 21:14:32 thorpej Exp $	*/
+/*	$NetBSD: crime.c,v 1.4.8.5 2003/01/15 18:22:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -93,16 +93,12 @@ crime_attach(parent, self, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int64_t crm_id;
-	int id, rev;
 
 	crm_id = bus_space_read_8(ma->ma_iot, ma->ma_ioh, 0);
 
-	id = (crm_id & 0xf0) >> 4;
-	rev = crm_id & 0x0f;
-
 	aprint_naive(": system ASIC");
 
-	switch (id) {
+	switch ((crm_id & CRIME_ID_IDBITS) >> CRIME_ID_IDSHIFT) {
 	case 0x0b:
 		aprint_normal(": rev 1.5");
 		break;

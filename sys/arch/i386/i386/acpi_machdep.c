@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.1.4.7 2003/01/08 01:17:39 thorpej Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.1.4.8 2003/01/15 18:21:13 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.7 2003/01/08 01:17:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.8 2003/01/15 18:21:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.7 2003/01/08 01:17:39 thorpej
 #include <machine/acpi_machdep.h>
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
+#include <machine/i82093var.h>
+#include <machine/pic.h>
 
 #include <dev/pci/pcivar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include "ioapic.h"
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -94,13 +98,37 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
     OSD_HANDLER ServiceRoutine, void *Context, void **cookiep)
 {
 	void *ih;
+	struct pic *pic;
+	int irq;
+	int pin;
+#if NIOAPIC > 0
+	struct ioapic_softc *sc;
 
-	/*
-	 * XXX We currently just use InterruptNumber as a
-	 * "pre-mapped" PCI IRQ -- double-check that this
-	 * is OK (talk to Sommerfeld).
-	 */
-	ih = pci_intr_establish(NULL, InterruptNumber, IPL_HIGH /* XXX */,
+	if (ioapics != NULL) {
+		sc = ioapic_find_bybase(InterruptNumber);
+		if (sc == NULL) {
+			pin = (int)InterruptNumber;
+			for (sc = ioapics ; sc != NULL && pin > sc->sc_apic_sz;
+			     sc = sc->sc_next)
+				pin -= sc->sc_apic_sz;
+			if (sc == NULL)
+				return AE_NOT_FOUND;
+			if (nioapics > 1)
+				printf("acpi: WARNING: no matching "
+				       "I/O apic for SCI, assuming %s\n",
+				    sc->sc_pic.pic_dev.dv_xname);
+		} else
+			pin = InterruptNumber - sc->sc_apic_vecbase;
+		pic = (struct pic *)sc;
+		irq = -1;
+	} else
+#endif
+	{
+		pic = &i8259_pic;
+		irq = pin = (int)InterruptNumber;
+	}
+
+	ih = intr_establish(irq, pic, pin, IST_LEVEL, IPL_HIGH /* XXX */,
 	    (int (*)(void *)) ServiceRoutine, Context);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
@@ -112,7 +140,7 @@ void
 acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
 
-	pci_intr_disestablish(NULL, cookie);
+	intr_disestablish(cookie);
 }
 
 ACPI_STATUS
@@ -211,6 +239,6 @@ acpi_md_callback(struct device *acpi)
 	if (mpbios_scanned)
 		return;
 #endif
-	mpacpi_find_interrupts();
+	mpacpi_find_interrupts(acpi);
 #endif
 }

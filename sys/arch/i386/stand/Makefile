@@ -1,9 +1,15 @@
-#	$NetBSD: Makefile,v 1.13.8.3 2002/04/17 00:03:25 nathanw Exp $
+#	$NetBSD: Makefile,v 1.13.8.4 2003/01/15 18:21:15 thorpej Exp $
 
 SUBDIR=		genprom installboot .WAIT
 
 SUBDIR+=	biosboot
+
 SUBDIR+=	biosboot_com0
+SUBDIR+=	biosboot_com0_9600
+SUBDIR+=	biosboot_com0_38400
+SUBDIR+=	biosboot_com0_57600
+SUBDIR+=	biosboot_com0_115200
+
 SUBDIR+=	biosboot_resetvideo
 
 SUBDIR+=	dosboot misc

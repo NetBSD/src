@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.1.2.5 2002/12/29 19:35:07 thorpej Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.1.2.6 2003/01/15 18:22:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1.2.5 2002/12/29 19:35:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1.2.6 2003/01/15 18:22:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,7 @@ mach_create_thread_child(arg)
 	}
 	
 	/* 
-	 * Copy right from parent. Will disaprear the 
-	 * day we will have struct lwp.
+	 * Copy right from parent. Will disappear the day we have struct lwp.
 	 */
 	mach_copy_right(p->p_pptr, p);
 
