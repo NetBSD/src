@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.28 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.28.2.1 2001/07/10 13:23:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,10 +44,11 @@
 #ifdef _KERNEL
 #include <sys/queue.h>
 
-struct proc;
-struct uio;
 struct iovec;
+struct knote;
+struct proc;
 struct stat;
+struct uio;
 
 /*
  * Kernel descriptor table.
@@ -59,6 +60,7 @@ struct file {
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
+#define	DTYPE_KQUEUE	4		/* event queue */
 	short		f_type;		/* descriptor type */
 	short		f_count;	/* reference count */
 	short		f_msgcount;	/* references from message queue */
@@ -80,6 +82,7 @@ struct file {
 		int	(*fo_stat)	(struct file *fp, struct stat *sp,
 					    struct proc *p);
 		int	(*fo_close)	(struct file *fp, struct proc *p);
+		int	(*fo_kqfilter)	(struct file *fp, struct knote *kn);
 	} *f_ops;
 	off_t		f_offset;
 	caddr_t		f_data;		/* vnode or socket */
