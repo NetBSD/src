@@ -29,11 +29,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: nl_langinfo.c,v 1.1 1994/06/21 04:14:03 jtc Exp $";
+static char *rcsid = "$Id: nl_langinfo.c,v 1.2 1994/09/29 04:57:30 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#define _LOCALE_PRIVATE
-
+#include <sys/localedef.h>
 #include <locale.h>
 #include <nl_types.h>
 #include <langinfo.h>
@@ -46,20 +45,20 @@ nl_langinfo(item)
 
 	switch (item) {
 	case D_T_FMT:
-		s =  _CurrentTimeLocale->d_t_fmt;
+		s = _CurrentTimeLocale->d_t_fmt;
 		break;	
 	case D_FMT:
-		s =  _CurrentTimeLocale->d_fmt;
+		s = _CurrentTimeLocale->d_fmt;
 		break;
 	case T_FMT:
-		s =  _CurrentTimeLocale->t_fmt;
+		s = _CurrentTimeLocale->t_fmt;
 		break;
 	case T_FMT_AMPM:
-		s =  _CurrentTimeLocale->t_fmt_ampm;
+		s = _CurrentTimeLocale->t_fmt_ampm;
 		break;
 	case AM_STR:
 	case PM_STR:
-		s =  _CurrentTimeLocale->am_pm[item - AM_STR];
+		s = _CurrentTimeLocale->am_pm[item - AM_STR];
 		break;
 	case DAY_1:
 	case DAY_2:
@@ -68,7 +67,7 @@ nl_langinfo(item)
 	case DAY_5:
 	case DAY_6:
 	case DAY_7:
-		s =  _CurrentTimeLocale->day[item - DAY_1];
+		s = _CurrentTimeLocale->day[item - DAY_1];
 		break;
 	case ABDAY_1:
 	case ABDAY_2:
@@ -77,7 +76,7 @@ nl_langinfo(item)
 	case ABDAY_5:
 	case ABDAY_6:
 	case ABDAY_7:
-		s =  _CurrentTimeLocale->abday[item - ABDAY_1];
+		s = _CurrentTimeLocale->abday[item - ABDAY_1];
 		break;
 	case MON_1:
 	case MON_2:
@@ -91,7 +90,7 @@ nl_langinfo(item)
 	case MON_10:
 	case MON_11:
 	case MON_12:
-		s =  _CurrentTimeLocale->mon[item - MON_1];
+		s = _CurrentTimeLocale->mon[item - MON_1];
 		break;
 	case ABMON_1:
 	case ABMON_2:
@@ -105,31 +104,31 @@ nl_langinfo(item)
 	case ABMON_10:
 	case ABMON_11:
 	case ABMON_12:
-		s =  _CurrentTimeLocale->abmon[item - ABMON_1];
+		s = _CurrentTimeLocale->abmon[item - ABMON_1];
 		break;
 	case RADIXCHAR:
-		s =  _CurrentNumericLocale->decimal_point;
+		s = _CurrentNumericLocale->decimal_point;
 		break;
 	case THOUSEP:
-		s =  _CurrentNumericLocale->thousands_sep;
+		s = _CurrentNumericLocale->thousands_sep;
 		break;
-	case YESSTR:				/* XXX */
-		s =  "yes";
+	case YESSTR:
+		s = _CurrentMessagesLocale->yesstr;
 		break;
-	case YESEXPR:				/* XXX */
-		s =  "^[yY]";
+	case YESEXPR:
+		s = _CurrentMessagesLocale->yesexpr;
 		break;
-	case NOSTR:				/* XXX */
-		s =  "no";
+	case NOSTR:
+		s = _CurrentMessagesLocale->nostr;
 		break;
-	case NOEXPR:				/* XXX */
-		s =  "^[nN]";
+	case NOEXPR:
+		s = _CurrentMessagesLocale->noexpr;
 		break;
 	case CRNCYSTR:				/* XXX */
-		s =  "";
+		s = "";
 		break;
 	default:
-		s =  "";
+		s = "";
 		break;
 	}
 

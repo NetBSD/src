@@ -29,10 +29,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: localeconv.c,v 1.4 1994/05/25 01:49:33 jtc Exp $";
+static char *rcsid = "$Id: localeconv.c,v 1.5 1994/09/29 04:57:29 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#define _LOCALE_PRIVATE
+#include <sys/localedef.h>
 #include <locale.h>
 
 /* 
