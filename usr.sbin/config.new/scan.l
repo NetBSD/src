@@ -41,7 +41,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scan.l	8.1 (Berkeley) 6/6/93
- *	$Id: scan.l,v 1.4 1994/06/22 10:44:21 pk Exp $
+ *	$Id: scan.l,v 1.5 1994/08/08 19:24:54 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 		return NUMBER;
 	}
 0[xX][0-9a-fA-F]+ {
-		yylval.val = strtol(yytext + 2, NULL, 16);
+		yylval.val = strtoul(yytext + 2, NULL, 16);
 		return NUMBER;
 	}
 [1-9][0-9]* {
