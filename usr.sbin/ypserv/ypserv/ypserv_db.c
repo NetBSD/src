@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.8 1999/01/19 03:53:27 lukem Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.9 1999/01/22 02:36:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.8 1999/01/19 03:53:27 lukem Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.9 1999/01/22 02:36:13 thorpej Exp $");
 #endif
 
 /*
@@ -67,7 +67,6 @@ __RCSID("$NetBSD: ypserv_db.c,v 1.8 1999/01/19 03:53:27 lukem Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-#include "yplog.h"
 #include "ypdb.h"
 #include "ypdef.h"
 #include "ypserv.h"
@@ -178,8 +177,9 @@ ypdb_close_map(map)
 	LIST_REMOVE(map, mapsl);		/* remove from domain list */
 
 #ifdef DEBUG
-	yplog("  ypdb_close_map: closing map %s in domain %s [db=%#x]",
-	      map->map, map->dom->domain, map->db);
+	syslog(LOG_DEBUG,
+	    "ypdb_close_map: closing map %s in domain %s [db=%#x]",
+	    map->map, map->dom->domain, map->db);
 #endif
 
 	ypdb_close(map->db);			/* close DB */
@@ -197,7 +197,8 @@ ypdb_close_last()
 	struct opt_map *last = maps.cqh_last;
 
 	if (last == (void *) &maps) {
-		yplog("  ypdb_close_last: LRU list is empty!");
+		syslog(LOG_ERR,
+		    "ypdb_close_last: LRU list is empty!");
 		return;
 	}
 	ypdb_close_map(last);
@@ -211,14 +212,14 @@ ypdb_close_all()
 {
 
 #ifdef DEBUG
-	yplog("  ypdb_close_all(): start");
+	syslog(LOG_DEBUG, "ypdb_close_all(): start");
 #endif
 
 	while (maps.cqh_first != (void *) &maps)
 		ypdb_close_last();
 
 #ifdef DEBUG
-	yplog("  ypdb_close_all(): done");
+	syslog(LOG_DEBUG, "ypdb_close_all(): done");
 #endif
 }
 
@@ -231,7 +232,7 @@ ypdb_close_db(db)
 {
 
 #ifdef DEBUG
-	yplog("  ypdb_close_db(%#x)", db);
+	syslog(LOG_DEBUG, "ypdb_close_db(%#x)", db);
 #endif
 
 #ifndef OPTIMIZE_DB
@@ -278,7 +279,8 @@ ypdb_open_db(domain, map, status, map_info)
 	snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
 	if (stat(map_path, &finfo) < 0 || S_ISDIR(finfo.st_mode) == 0) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: no domain %s (map=%s)", domain, map);
+		syslog(LOG_DEBUG,
+		    "ypdb_open_db: no domain %s (map=%s)", domain, map);
 #endif
 		*status = YP_NODOM;
 	} else {
@@ -286,7 +288,8 @@ ypdb_open_db(domain, map, status, map_info)
 		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
 		if (stat(map_path, &finfo) < 0) {
 #ifdef DEBUG
-			yplog("  ypdb_open_db: no map %s (domain=%s)", map,
+			syslog(LOG_DEBUG,
+			    "ypdb_open_db: no map %s (domain=%s)", map,
 			    domain);
 #endif
 			*status = YP_NOMAP;
@@ -310,9 +313,11 @@ ypdb_open_db(domain, map, status, map_info)
 	 */
 	if (m) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=%#x,",
+		syslog(LOG_DEBUG,
+		    "ypdb_open_db: cached open: domain=%s, map=%s, db=%#x,",
 		    domain, map, m->db);
-		yplog("\t\tdbdev %d new %d; dbino %d new %d; dbmtime %d new %d",
+		syslog(LOG_DEBUG,
+		    "\tdbdev %d new %d; dbino %d new %d; dbmtime %d new %d",
 		    m->dbdev, finfo.st_dev, m->dbino, finfo.st_ino,
 		    m->dbmtime, finfo.st_mtime);
 #endif
@@ -322,8 +327,9 @@ ypdb_open_db(domain, map, status, map_info)
 		 */
 		if (*status != YP_TRUE) {
 #ifdef DEBUG
-			yplog(
-	"  ypdb_open_db: cached db is now unavailable - closing: status %s", 
+			syslog(LOG_DEBUG,
+			    "ypdb_open_db: cached db is now unavailable - "
+			    "closing: status %s",
 			    yperr_string(ypprot_err(*status)));
 #endif
 			ypdb_close_map(m);
@@ -342,7 +348,8 @@ ypdb_open_db(domain, map, status, map_info)
 			return (m->db);
 		} else {
 #ifdef DEBUG
-			yplog("  ypdb_open_db: db changed; closing");
+			syslog(LOG_DEBUG,
+			    "ypdb_open_db: db changed; closing");
 #endif
 			ypdb_close_map(m);
 			m = NULL;
@@ -367,7 +374,8 @@ retryopen:
 #ifdef OPTIMIZE_DB
 	if (db == NULL) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: errno %d (%s)", errno, strerror(errno));
+		syslog(LOG_DEBUG,
+		    "ypdb_open_db: errno %d (%s)", errno, strerror(errno));
 #endif /* DEBUG */
 		if ((errno == ENFILE) || (errno == EMFILE)) {
 			ypdb_close_last();
@@ -380,7 +388,8 @@ retryopen:
 
 	if (db == NULL) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)",
+		syslog(LOG_DEBUG,
+		    "ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)",
 		    map, domain);
 #endif
 		return (NULL);
@@ -394,7 +403,8 @@ retryopen:
 		if (d)
 			d->domain = strdup(domain);
 		if (d == NULL || d->domain == NULL) {
-			yplog("  ypdb_open_db: MALLOC failed");
+			syslog(LOG_ERR,
+			    "ypdb_open_db: MALLOC failed");
 			ypdb_close(db);
 			if (d)
 				free(d);
@@ -403,7 +413,8 @@ retryopen:
 		LIST_INIT(&d->dmaps);
 		LIST_INSERT_HEAD(&doms, d, domsl);
 #ifdef DEBUG
-		yplog("  ypdb_open_db: NEW DOMAIN %s", domain);
+		syslog(LOG_DEBUG,
+		    "ypdb_open_db: NEW DOMAIN %s", domain);
 #endif
 	}
 
@@ -417,7 +428,7 @@ retryopen:
 	if (m == NULL || m->map == NULL) {
 		if (m)
 			free(m);
-		yplog("  ypdb_open_db: MALLOC failed");
+		syslog(LOG_ERR, "ypdb_open_db: MALLOC failed");
 		ypdb_close(db);
 		return (NULL);
 	}
@@ -453,7 +464,8 @@ retryopen:
 		*map_info = m;
 
 #ifdef DEBUG
-	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=%#x",
+	syslog(LOG_DEBUG,
+	    "ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=%#x",
 	    domain, map, m->host_lookup, m->secure, m->db);
 #endif
 
@@ -525,11 +537,9 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 			l++;
 
 	if (l == 0) {
-		yplog("lookup_host: address %s not listed for host %s\n",
-		      inet_ntoa(addr_addr), hostname);
 		syslog(LOG_NOTICE,
-		       "ypserv: address %s not listed for host %s\n",
-		       inet_ntoa(addr_addr), hostname);
+		    "address %s not listed for host %s\n",
+		    inet_ntoa(addr_addr), hostname);
 		return (YP_NOKEY);
 	}
 
@@ -815,7 +825,8 @@ ypdb_xdr_get_all(xdrs, req)
 
 		if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
-			yplog("  ypdb_xdr_get_all: xdr_ypresp_all failed");
+			syslog(LOG_DEBUG,
+			    "ypdb_xdr_get_all: xdr_ypresp_all failed");
 #endif
 			return (FALSE);
 		}
@@ -832,7 +843,8 @@ ypdb_xdr_get_all(xdrs, req)
 
 	if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
-		yplog("  ypdb_xdr_get_all: final xdr_ypresp_all failed");
+		syslog(LOG_DEBUG,
+		    "ypdb_xdr_get_all: final xdr_ypresp_all failed");
 #endif
 		return (FALSE);
 	}

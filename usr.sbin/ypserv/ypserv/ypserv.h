@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.h,v 1.3 1997/10/15 05:01:30 lukem Exp $	*/
+/*	$NetBSD: ypserv.h,v 1.4 1999/01/22 02:36:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,3 +72,10 @@ void	ypdb_close_all __P((void));
 void	ypdb_init __P((void));
 int	ypdb_secure __P((const char *, const char *));
 bool_t	ypdb_xdr_get_all __P((XDR *, struct ypreq_nokey *));
+
+#ifdef LIBWRAP
+/* from ypserv.c */
+extern	int lflag;
+extern	int allow_severity;
+extern	const char *clientstr;
+#endif
