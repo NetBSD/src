@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.15 2002/09/18 20:48:55 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.16 2002/10/01 20:29:33 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -361,6 +361,15 @@ filt_procattach(struct knote *kn)
 	p = pfind(kn->kn_id);
 	if (p == NULL)
 		return (ESRCH);
+
+	/*
+	 * Fail if it's not owned by you, or the last exec gave us
+	 * setuid/setgid privs (unless you're root).
+	 */
+	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+		(p->p_flag & P_SUGID))
+	    && suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
