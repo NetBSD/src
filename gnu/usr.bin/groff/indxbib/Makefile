@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/04/19 14:41:23 wiz Exp $
+#	$NetBSD: Makefile,v 1.13 2002/01/01 00:27:35 thorpej Exp $
 
 .include "../Makefile.lib"
 
@@ -6,6 +6,7 @@ DIST=		${IDIST}/src/utils/indxbib
 .PATH:		${DIST}
 
 PROG=		indxbib
+PROG_CXX=
 SRCS=		indxbib.cc dirnamemax.c signal.c
 LDADD+= 	$(LIBBIB) $(LIBGROFF) -lm
 DPADD+= 	$(LIBBIB) $(LIBGROFF) $(LIBM)
