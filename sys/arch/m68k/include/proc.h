@@ -1,8 +1,8 @@
-/*	$NetBSD: types.h,v 1.15 2002/07/13 08:28:42 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.1 2002/07/13 08:28:42 scw Exp $	*/
 
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,33 +32,34 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)types.h	7.9 (Berkeley) 3/9/91
+ *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
-#ifndef	_M68K_TYPES_H_
-#define	_M68K_TYPES_H_
 
-#include <sys/cdefs.h>
-#include <m68k/int_types.h>
+#ifndef _M68K_PROC_H
+#define _M68K_PROC_H
 
-#if defined(_KERNEL)
-typedef struct label_t {		/* consistent with HP-UX */
-	int val[15];
-} label_t;
-#endif
+/*
+ * Machine-dependent part of the proc structure for m68k-based ports.
+ */
+struct mdproc {
+	int	*md_regs;		/* registers on current frame */
+	int	md_flags;		/* machine-dependent flags */
+	void	(*md_syscall)(register_t, struct proc *, struct frame *);
+};
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
+/*
+ * Note: The following are the aggregate of all the MDP_* #defines from the
+ * various m68k-based ports at the time this file was created.
+ * Some of them are probably obsolete and/or not applicable to all ports.
+ */
+/* md_flags */
+#define	MDP_FPUSED	0x0001  /* floating point coprocessor used */
+#define	MDP_HPUXTRACE	0x0004  /* being traced by HP-UX process */
+#define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
+#define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
+#define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
+#define MDP_STACKADJ	0x0040	/* Frame SP adjusted, might have to
+				 * undo when system call returns
+				 * ERESTART. */
 
-typedef vm_offset_t	paddr_t;
-typedef vm_size_t	psize_t;
-typedef vm_offset_t	vaddr_t;
-typedef vm_size_t	vsize_t;
-#endif
-
-typedef int		register_t;
-
-#define	__HAVE_SYSCALL_INTERN
-
-#endif	/* !_M68K_TYPES_H_ */
+#endif /* _M68K_PROC_H */

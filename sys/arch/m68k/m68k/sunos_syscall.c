@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.3 2002/07/13 08:28:43 scw Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.1 2002/07/13 08:28:43 scw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,8 +79,6 @@
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_aout_m68k.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,87 +101,32 @@
 
 #include <uvm/uvm_extern.h>
 
-/*
- * Defined in machine-specific code (usually trap.c)
- * XXX: This will disappear when all m68k ports share common trap() code...
- */
-extern void machine_userret(struct proc *, struct frame *, u_quad_t);
+#include <compat/sunos/sunos_syscall.h>
+#include <compat/sunos/sunos_exec.h>
 
-void syscall(register_t, struct frame);
-
-void	syscall_intern(struct proc *);
-#ifdef COMPAT_AOUT_M68K
-void	aoutm68k_syscall_intern(struct proc *);
-#endif
-static void syscall_plain(register_t, struct proc *, struct frame *);
-static void syscall_fancy(register_t, struct proc *, struct frame *);
-
-
-/*
- * Process a system call.
- */
-void
-syscall(code, frame)
-	register_t code;
-	struct frame frame;
-{
-	struct proc *p;
-	u_quad_t sticks;
-
-	uvmexp.syscalls++;
-	if (!USERMODE(frame.f_sr))
-		panic("syscall");
-
-	p = curproc;
-	sticks = p->p_sticks;
-	p->p_md.md_regs = frame.f_regs;
-
-	(p->p_md.md_syscall)(code, p, &frame);
-
-	machine_userret(p, &frame, sticks);
-}
+void	sunos_syscall_intern(struct proc *);
+static void sunos_syscall_plain(register_t, struct proc *, struct frame *);
+static void sunos_syscall_fancy(register_t, struct proc *, struct frame *);
 
 void
-syscall_intern(struct proc *p)
+sunos_syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = sunos_syscall_fancy;
 	else
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = sunos_syscall_fancy;
 	else
 #endif
-		p->p_md.md_syscall = syscall_plain;
+		p->p_md.md_syscall = sunos_syscall_plain;
 }
-
-#ifdef COMPAT_AOUT_M68K
-/*
- * Not worth the effort of a whole new set of syscall_{plain,fancy} functions
- */
-void
-aoutm68k_syscall_intern(struct proc *p)
-{
-
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
-		p->p_md.md_syscall = syscall_plain;
-}
-#endif
 
 static void
-syscall_plain(register_t code, struct proc *p, struct frame *frame)
+sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -194,36 +137,41 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
+	/*
+	 * SunOS passes the syscall-number on the stack, whereas
+	 * BSD passes it in D0. So, we have to get the real "code"
+	 * from the stack, and clean up the stack, as SunOS glue
+	 * code assumes the kernel pops the syscall argument the
+	 * glue pushed on the stack. Sigh...
+	 */
+	code = fuword((caddr_t)frame->f_regs[SP]);
+
+	/*
+	 * XXX
+	 * Don't do this for sunos_sigreturn, as there's no stored pc
+	 * on the stack to skip, the argument follows the syscall
+	 * number without a gap.
+	 */
+	if (code != SUNOS_SYS_sigreturn) {
+		frame->f_regs[SP] += sizeof (int);
+		/*
+		 * remember that we adjusted the SP, 
+		 * might have to undo this if the system call
+		 * returns ERESTART.
+		 */
+		p->p_md.md_flags |= MDP_STACKADJ;
+	} else
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
-	case SYS_syscall:
+	case SUNOS_SYS_syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
 		code = fuword(params);
 		params += sizeof(int);
-		/*
-		 * XXX sigreturn requires special stack manipulation
-		 * that is only done if entered via the sigreturn
-		 * trap.  Cannot allow it here so make sure we fail.
-		 */
-		switch (code) {
-#ifdef COMPAT_13
-		case SYS_compat_13_sigreturn13:
-#endif
-		case SYS___sigreturn14:
-			code = nsys;
-			break;
-		}
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
 		break;
 	default:
 		break;
@@ -259,18 +207,6 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
-
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#endif
 		break;
 	case ERESTART:
 		/*
@@ -284,24 +220,25 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		break;
 	default:
 	bad:
-		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
-		 * to translate errno.
-		 */
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
 
+	/* need new p-value for this */
+	if (p->p_md.md_flags & MDP_STACKADJ) {
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+		if (error == ERESTART)
+			frame->f_regs[SP] -= sizeof (int);
+	}
+
 #ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval)
+	scdebug_ret(p, code, error, rval)
 #endif
 }
 
 static void
-syscall_fancy(register_t code, struct proc *p, struct frame *frame)
+sunos_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -312,36 +249,41 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
+	/*
+	 * SunOS passes the syscall-number on the stack, whereas
+	 * BSD passes it in D0. So, we have to get the real "code"
+	 * from the stack, and clean up the stack, as SunOS glue
+	 * code assumes the kernel pops the syscall argument the
+	 * glue pushed on the stack. Sigh...
+	 */
+	code = fuword((caddr_t)frame->f_regs[SP]);
+
+	/*
+	 * XXX
+	 * Don't do this for sunos_sigreturn, as there's no stored pc
+	 * on the stack to skip, the argument follows the syscall
+	 * number without a gap.
+	 */
+	if (code != SUNOS_SYS_sigreturn) {
+		frame->f_regs[SP] += sizeof (int);
+		/*
+		 * remember that we adjusted the SP, 
+		 * might have to undo this if the system call
+		 * returns ERESTART.
+		 */
+		p->p_md.md_flags |= MDP_STACKADJ;
+	} else
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
-	case SYS_syscall:
+	case SUNOS_SYS_syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
 		code = fuword(params);
 		params += sizeof(int);
-		/*
-		 * XXX sigreturn requires special stack manipulation
-		 * that is only done if entered via the sigreturn
-		 * trap.  Cannot allow it here so make sure we fail.
-		 */
-		switch (code) {
-#ifdef COMPAT_13
-		case SYS_compat_13_sigreturn13:
-#endif
-		case SYS___sigreturn14:
-			code = nsys;
-			break;
-		}
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
 		break;
 	default:
 		break;
@@ -376,18 +318,6 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
-
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#endif
 		break;
 	case ERESTART:
 		/*
@@ -401,35 +331,17 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		break;
 	default:
 	bad:
-		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
-		 * to translate errno.
-		 */
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
 
+	/* need new p-value for this */
+	if (p->p_md.md_flags & MDP_STACKADJ) {
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+		if (error == ERESTART)
+			frame->f_regs[SP] -= sizeof (int);
+	}
+
 	trace_exit(p, code, args, rval, error);
-}
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-	/* See cpu_fork() */
-	struct frame *f = (struct frame *)p->p_md.md_regs;
-
-	f->f_regs[D0] = 0;
-	f->f_sr &= ~PSL_C;
-	f->f_format = FMT0;
-
-	machine_userret(p, f, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
-#endif
 }
