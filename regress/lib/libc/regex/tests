@@ -318,6 +318,11 @@ a[ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab][ab
 123456789012345678901234567890123	-	a123456789012345678901234567890123b	123456789012345678901234567890123
 # and one really big one, beyond any plausible word width
 1234567890123456789012345678901234567890123456789012345678901234567890	-	a1234567890123456789012345678901234567890123456789012345678901234567890b	1234567890123456789012345678901234567890123456789012345678901234567890
+# fish for problems as brackets go past 8
+[ab][cd][ef][gh][ij][kl][mn]	-	xacegikmoq	acegikm
+[ab][cd][ef][gh][ij][kl][mn][op]	-	xacegikmoq	acegikmo
+[ab][cd][ef][gh][ij][kl][mn][op][qr]	-	xacegikmoqy	acegikmoq
+[ab][cd][ef][gh][ij][kl][mn][op][q]	-	xacegikmoqy	acegikmoq
 
 # subtleties of matching
 abc		&	xabcy	abc
@@ -434,3 +439,10 @@ a[[:>:]]	&	a-	a
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc	abc
 [[:<:]]a.c[[:>:]]	&	axcd-dayc-dazce-abc-q	abc
 [[:<:]]a.c[[:>:]]	&	axc-dayc-dazce-abc	axc
+
+# past problems
+(A[1])|(A[2])|(A[3])|(A[4])|(A[5])|(A[6])|(A[7])|(A[8])|(A[9])|(A[A])	-	A1	A1
+abcdefghijklmnop	i	abcdefghijklmnop	abcdefghijklmnop
+abcdefghijklmnopqrstuv	i	abcdefghijklmnopqrstuv	abcdefghijklmnopqrstuv
+(ALAK)|(ALT[AB])|(CC[123]1)|(CM[123]1)|(GAMC)|(LC[23][EO ])|(SEM[1234])|(SL[ES][12])|(SLWW)|(SLF )|(SLDT)|(VWH[12])|(WH[34][EW])|(WP1[ESN])	-	CC11	CC11
+CC[13]1|a{21}[23][EO][123][Es][12]a{15}aa[34][EW]aaaaaaa[X]a	-	CC11	CC11
