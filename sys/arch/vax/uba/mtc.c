@@ -1,4 +1,4 @@
-/*	$NetBSD: mtc.c,v 1.1 1996/07/10 23:42:07 ragge Exp $	*/
+/*	$NetBSD: mtc.c,v 1.2 1996/07/20 19:00:28 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -188,7 +188,7 @@ mtcattach(parent, self, aux)
 	volatile struct mtcdevice *mtcddr;
 	volatile struct mscp *mp;
 	struct	mtc_softc *sc = (void *)self;
-	struct  uba_attach_args *ua = aux;
+	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
 	struct	mscp_info *mi;
 	struct	mscp_attach_args ma;
@@ -210,7 +210,7 @@ mtcattach(parent, self, aux)
 	 */
 	sc->sc_unit.uu_softc = sc;	/* Backpointer to softc */
 	sc->sc_unit.uu_dgo = mtcdgo;	/* go routine called from adapter */
-	sc->sc_unit.uu_keepbdp = cpunumber == VAX_750 ? 1 : 0;
+	sc->sc_unit.uu_keepbdp = vax_cputype == VAX_750 ? 1 : 0;
 
 	/*
 	 * Map the communication area and command and
@@ -255,7 +255,7 @@ mtcgo(usc)
  * If we are not called from within mtcstart(), we must have been
  * blocked, so call mtcstart to do more requests (if any).  If
  * this calls us again immediately we will not recurse, because
- * that time we will be in mtcstart().  Clever....
+ * that time we will be in mtcstart().	Clever....
  */
 void
 mtcdgo(uu)
@@ -355,7 +355,7 @@ mtcintr(ctlr)
 	struct mscp_pack *ud;
 
 #ifdef QBA
-	if(cpunumber == VAX_78032)
+	if(vax_cputype == VAX_78032)
 		splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
 	if (mtcddr->mtcsa & MP_ERR) {	/* ctlr fatal error */

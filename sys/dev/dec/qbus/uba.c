@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.24 1996/07/11 19:33:56 ragge Exp $      */
+/*	$NetBSD: uba.c,v 1.25 1996/07/20 19:00:24 ragge Exp $	   */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)uba.c	7.10 (Berkeley) 12/16/90
- *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
+ *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ ubastray(arg)
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	struct	uba_softc *sc = uba_cd.cd_devs[arg];
-	struct  uba_regs *ur = sc->uh_uba;
+	struct	uba_regs *ur = sc->uh_uba;
 	int	vektor;
 
 	rbr = mfpr(PR_IPL);
@@ -127,7 +127,7 @@ ubastray(arg)
 char	ubasr_bits[] = UBASR_BITS;
 #endif
 
-#define	spluba	splbio		/* IPL 17 */
+#define spluba	splbio		/* IPL 17 */
 
 /*
  * Do transfer on device argument.  The controller
@@ -136,7 +136,7 @@ char	ubasr_bits[] = UBASR_BITS;
  * We return 1 if the transfer was started, 0 if it was not.
  *
  * The onq argument must be zero iff the device is not on the
- * queue for this UBA.  If onq is set, the device must be at the
+ * queue for this UBA.	If onq is set, the device must be at the
  * head of the queue.  In any case, if the transfer is started,
  * the device will be off the queue, and if not, it will be on.
  *
@@ -486,7 +486,7 @@ ubainitmaps(uhp)
 }
 
 /*
- * Generate a reset on uba number uban.  Then
+ * Generate a reset on uba number uban.	 Then
  * call each device that asked to be called during attach,
  * giving it a chance to clean up so as to be able to continue.
  */
@@ -576,7 +576,7 @@ ubainit(uhp)
 #ifdef QBA
 /*
  * Determine the interrupt priority of a Q-bus
- * peripheral.  The device probe routine must spl6(),
+ * peripheral.	The device probe routine must spl6(),
  * attempt to make the device request an interrupt,
  * delaying as necessary, then call this routine
  * before resetting the device.
@@ -603,7 +603,7 @@ int	ubacrazy = 500;
 int	zvcnt_max = 5000;	/* in 8 sec */
 /*
  * This routine is called by the locore code to process a UBA
- * error on an 11/780 or 8600.  The arguments are passed
+ * error on an 11/780 or 8600.	The arguments are passed
  * on the stack, and value-result (through some trickery).
  * In particular, the uvec argument is used for further
  * uba processing so the result aspect of it is very important.
@@ -634,7 +634,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 		if (++uh->uh_zvcnt > zvcnt_max) {
 			printf("uba%d: too many zero vectors (%d in <%d sec)\n",
 				uban, uh->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b  Adapter Code: 0x%x\n",
+			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
 				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
 				uba->uba_cnfgr&0xff);
 			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
@@ -673,7 +673,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 
 /*
  * Look for devices with unibus memory, allow them to configure, then disable
- * map registers as necessary.  Called during autoconfiguration and ubareset.
+ * map registers as necessary.	Called during autoconfiguration and ubareset.
  * The device ubamem routine returns 0 on success, 1 on success if it is fully
  * configured (has no csr or interrupt, so doesn't need to be probed),
  * and -1 on failure.
@@ -684,7 +684,7 @@ ubameminit(uban)
 	register struct uba_device *ui;
 	register struct uba_softc *uh = uba_cd.cd_devs[uban];
 	caddr_t umembase, addr;
-#define	ubaoff(off)	((int)(off) & 0x1fff)
+#define ubaoff(off)	((int)(off) & 0x1fff)
 
 	umembase = uh->uh_iopage;
 	uh->uh_lastmem = 0;
@@ -767,7 +767,7 @@ ubamem(uban, addr, npg, doalloc)
 #ifdef DW780
 		/*
 		 * On a 780, set up the map register disable
-		 * field in the configuration register.  Beware
+		 * field in the configuration register.	 Beware
 		 * of callers that request memory ``out of order''
 		 * or in sections other than 8K multiples.
 		 * Ubameminit handles such requests properly, however.
@@ -898,14 +898,14 @@ uba_attach(parent, self, aux)
 	sc->uh_iarea = (void *)scb + NBPG + sa->nexinfo * NBPG;
 	sc->uh_resno = 0;
 #if VAX780 || VAX8600 || VAX750
-	if ((cpunumber == VAX_780) || (cpunumber == VAX_8600) || 
-	    (cpunumber == VAX_750))
+	if ((vax_cputype == VAX_780) || (vax_cputype == VAX_8600) || 
+	    (vax_cputype == VAX_750))
 		sc->uh_nr = sa->nexnum * (parent->dv_unit + 1);
 #endif
 	/*
 	 * Create interrupt dispatchers for this uba.
 	 */
-#define	NO_IVEC	128
+#define NO_IVEC 128
 	{
 		vm_offset_t	iarea;
 		int	i;
@@ -923,7 +923,7 @@ uba_attach(parent, self, aux)
 		}
 	}
 
-	switch (cpunumber) {
+	switch (vax_cputype) {
 #if VAX780 || VAX8600
 	case VAX_780:
 	case VAX_8600:
@@ -956,9 +956,9 @@ uba_attach(parent, self, aux)
 #endif
 #if VAX630 || VAX410
 	case VAX_78032:
-		switch (cpu_type) {
+		switch (vax_boardtype) {
 #if VAX630
-		case VAX_630:
+		case 0x08000001:
 			sc->uh_mr = (void *)sa->nexaddr;
 			sc->uh_type = QBA;
 			sc->uh_physuba = (void*)QBAMAP630;
@@ -994,7 +994,7 @@ uba_attach(parent, self, aux)
 	    (UBAIOPAGES * NBPG), VM_PROT_READ|VM_PROT_WRITE);
 #if VAX630 || VAX650
 	/* Enable access to local memory. */
-	if (cpu_type == VAX_630 || cpunumber == VAX_650)
+	if (vax_boardtype == VAX_BTYP_630 || vax_boardtype == VAX_BTYP_650)
 		*((u_short *)(sc->uh_iopage + QIPCR)) = Q_LMEAE;
 #endif
 	/*
@@ -1014,15 +1014,15 @@ uba_attach(parent, self, aux)
 	sc->uh_lastiv = 0x200;
 
 #ifdef DWBUA
-        if (sc->uh_type == DWBUA)
-                BUA(ubar)->bua_offset = (int)sc->uh_vec - (int)&scb[0];
+	if (sc->uh_type == DWBUA)
+		BUA(ubar)->bua_offset = (int)sc->uh_vec - (int)&scb[0];
 #endif
 
 #ifdef DW780
-        if (sc->uh_type == DW780) {
-                ubar->uba_sr = ubar->uba_sr;
-                ubar->uba_cr = UBACR_IFS|UBACR_BRIE;
-        }
+	if (sc->uh_type == DW780) {
+		ubar->uba_sr = ubar->uba_sr;
+		ubar->uba_cr = UBACR_IFS|UBACR_BRIE;
+	}
 #endif
 #ifdef notyet
 	/*
@@ -1060,7 +1060,7 @@ ubascan(parent, match)
 	struct	device *dev = match;
 	struct	cfdata *cf = dev->dv_cfdata;
 	struct	uba_softc *sc = (struct uba_softc *)parent;
-	volatile struct	uba_regs *ubar = sc->uh_uba;
+	volatile struct uba_regs *ubar = sc->uh_uba;
 	struct	uba_attach_args ua;
 	int	i;
 
@@ -1072,8 +1072,8 @@ ubascan(parent, match)
 
 #ifdef DW780
 	if (sc->uh_type == DW780 && ubar->uba_sr) {
-	        ubar->uba_sr = ubar->uba_sr;
-	        goto forgetit;
+		ubar->uba_sr = ubar->uba_sr;
+		goto forgetit;
 	}
 #endif
 	rcvec = 0x200;
@@ -1081,8 +1081,8 @@ ubascan(parent, match)
 
 #ifdef DW780
 	if (sc->uh_type == DW780 && ubar->uba_sr) {
-	        ubar->uba_sr = ubar->uba_sr;
-	        goto forgetit;
+		ubar->uba_sr = ubar->uba_sr;
+		goto forgetit;
 	}
 #endif
 	if (i == 0)
