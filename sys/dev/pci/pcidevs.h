@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.422 2002/04/16 10:08:58 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.423 2002/04/18 17:40:56 tshiozak Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -574,6 +574,7 @@
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
+#define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics, Inc. */
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
