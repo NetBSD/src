@@ -1,4 +1,4 @@
-/*	$NetBSD: strip.c,v 1.14 1996/10/08 22:00:22 christos Exp $	*/
+/*	$NetBSD: strip.c,v 1.15 1996/10/09 18:07:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strip.c	5.8 (Berkeley) 11/6/91";*/
 #else
-static char rcsid[] = "$NetBSD: strip.c,v 1.14 1996/10/08 22:00:22 christos Exp $";
+static char rcsid[] = "$NetBSD: strip.c,v 1.15 1996/10/09 18:07:14 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,13 +72,13 @@ static void usage __P((void));
 
 static int xflag = 0;
 static int Xflag = 0;
-        
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int fd, nb;
+	int fd;
 	EXEC *ep;
 	struct stat sb;
 	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
@@ -88,12 +88,12 @@ main(argc, argv)
 	sfcn = s_sym;
 	while ((ch = getopt(argc, argv, "dxX")) != EOF)
 		switch(ch) {
-                case 'x':
-                        xflag = 1;
-                        /*FALLTHROUGH*/
-                case 'X':
-                        Xflag = 1;
-                        /*FALLTHROUGH*/
+		case 'x':
+			xflag = 1;
+			/*FALLTHROUGH*/
+		case 'X':
+			Xflag = 1;
+			/*FALLTHROUGH*/
 		case 'd':
 			sfcn = s_stab;
 			break;
@@ -110,7 +110,7 @@ main(argc, argv)
 		if ((fd = open(fn, O_RDWR)) < 0) {
 			ERROR(errno);
 		}
-        	if (fstat(fd, &sb)) {
+		if (fstat(fd, &sb)) {
 			(void)close(fd);
 			ERROR(errno);
 		}
@@ -145,7 +145,7 @@ s_sym(fn, fd, ep, sp)
 	register EXEC *ep;
 	struct stat *sp;
 {
-	char *neweof, *mineof;
+	char *neweof;
 	int zmagic;
 
 	zmagic = ep->a_data &&
@@ -182,6 +182,7 @@ s_sym(fn, fd, ep, sp)
 	 */
 
 	if (zmagic) {
+		char *mineof;
 		/*
 		 * Get rid of unneeded zeroes at the end of the data segment
 		 * to reduce the file size even more.
@@ -211,7 +212,7 @@ s_stab(fn, fd, ep, sp)
 	EXEC *ep;
 	struct stat *sp;
 {
-	register int cnt, len, nsymcnt;
+	register int cnt, len;
 	register char *nstr, *nstrbase, *p, *strbase;
 	register NLIST *sym, *nsym;
 	NLIST *symbase;
@@ -249,27 +250,42 @@ s_stab(fn, fd, ep, sp)
 	 * copy it and save its string in the new string table.  Keep
 	 * track of the number of symbols.
 	 */
-	for (cnt = ep->a_syms / sizeof(NLIST); cnt--; ++sym)
-		if (!(sym->n_type & N_STAB) && sym->strx) {
-			*nsym = *sym;
-			nsym->strx = nstr - nstrbase;
-			p = strbase + sym->strx;
-			if (Xflag &&
-                             (strcmp(p, "gcc_compiled.") == 0 ||
-                             strcmp(p, "gcc2_compiled.") == 0 ||
-                             strncmp(p, "___gnu_compiled_", 16) == 0)) {
+	for (cnt = ep->a_syms / sizeof(NLIST); cnt--; ++sym) {
+		/* debugging symbol? */
+		if (sym->n_type & N_STAB)
+			continue;
+		/* empty symbol? */
+		if (sym->strx == NULL)
+			continue;
+		/* compute a pointer to its name */
+		p = strbase + sym->strx;
+		if (Xflag) {
+			/* compiler identification? */
+			if (!strcmp(p, "gcc_compiled."))
 				continue;
-			}
-                        if (xflag && 
-                            (!(sym->n_type & N_EXT) ||
-                             (sym->n_type & ~N_EXT) == N_FN)) {
-                                continue;
-                        }
-			len = strlen(p) + 1;
-			bcopy(p, nstr, len);
-			nstr += len;
-			++nsym;
+			if (!strcmp(p, "gcc2_compiled."))
+				continue;
+			if (!strncmp(p, "___gnu_compiled_", 16))
+				continue;
+			/* Other -X tests? */
 		}
+		if (xflag) {
+			/* static symbol? */
+			if ((sym->n_type & N_EXT) == 0)
+				continue;
+			/* file name? */
+			if ((sym->n_type & ~N_EXT) == N_FN)
+				continue;
+			/* Other -x tests? */
+		}
+		/* OK, copy the symbol. */
+		*nsym = *sym;
+		nsym->strx = nstr - nstrbase;
+		len = strlen(p) + 1;
+		bcopy(p, nstr, len);
+		nstr += len;
+		++nsym;
+	}
 
 	/* Fill in new symbol table size. */
 	ep->a_syms = (nsym - symbase) * sizeof(NLIST);
