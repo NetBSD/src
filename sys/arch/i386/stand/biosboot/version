@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.15 2003/01/23 21:22:24 jdolecek Exp $
+$NetBSD: version,v 1.16 2003/02/01 14:48:17 dsl Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -26,3 +26,7 @@ is taken as the current.
 	in slightly nonstandard way in int15, function 0xE801
 2.15:	Use int15/0xc7 to get memory information on machines which support
 	it, like later IBM PS/2 machines
+2.16:	Move 16bit %ss to allow >64k for code, data and stack
+	Default partition to that passed in by mbr code
+	Support limited filename globbing in 'ls' command
+	Use .code16 and .code32 directives

@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_pci.S,v 1.3 1997/08/18 22:44:01 hannken Exp $	*/
+/*	$NetBSD: bios_pci.S,v 1.4 2003/02/01 14:48:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -57,23 +57,22 @@ ENTRY(pcibios_present)
 	pushl	%edx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$PCI_FUNCTION_ID, %ah
 	movb	$PCI_BIOS_PRESENT, %al
 	int	$0x1a
 
 	jnc	ok1
-	data32
 	movl	$-1, %ebx
 	jmp err1
 
 ok1:
-	data32
-	movl	$0,%ebx
-	mov	%eax, %ebx		# !!! at run time, it is mov %ax,%bx
+	xorl	%ebx, %ebx
+	mov	%ax, %bx
 err1:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	8(%ebp), %eax
 	movl	%edx, (%eax)
@@ -103,23 +102,22 @@ ENTRY(pcibios_finddev)
 	movl	16(%ebp), %esi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$PCI_FUNCTION_ID, %ah
 	movb	$FIND_PCI_DEVICE, %al
 	int	$0x1a
 
 	jnc	ok2
-	data32
 	movl	$-1, %edx
 	jmp err2
 
 ok2:
-	data32
 	movl	$0,%edx
 	movb	%ah, %dl
 err2:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	20(%ebp), %eax
 	mov	%bx, (%eax)
@@ -149,23 +147,22 @@ ENTRY(pcibios_cfgread)
 	movl	12(%ebp), %edi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$PCI_FUNCTION_ID, %ah
 	movb	$READ_CONFIG_DWORD, %al
 	int	$0x1a
 
 	jnc	ok3
-	data32
 	movl	$-1, %edx
 	jmp err3
 
 ok3:
-	data32
 	movl	$0,%edx
 	movb	%ah, %dl
 err3:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	16(%ebp), %eax
 	movl	%ecx, (%eax)
@@ -196,23 +193,22 @@ ENTRY(pcibios_cfgwrite)
 	movl	16(%ebp), %ecx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$PCI_FUNCTION_ID, %ah
 	movb	$WRITE_CONFIG_DWORD, %al
 	int	$0x1a
 
 	jnc	ok4
-	data32
 	movl	$-1, %edx
 	jmp err4
 
 ok4:
-	data32
 	movl	$0,%edx
 	movb	%ah, %dl
 err4:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	%edx, %eax		# return value in %eax
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/01/03 15:34:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2003/02/01 14:48:17 dsl Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -23,7 +23,9 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 SRCS+= getopt.c
 .PATH: ${.CURDIR}/../libsa
 
-SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
+# XXX these should depend on the size of the image
+CPPFLAGS+= -DSTACK_START=0x10000
+SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: diskbuf.h,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: diskbuf.h,v 1.2 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -40,6 +40,7 @@
 #define DISKBUFSIZE (18*512)
 #endif
 
-extern char diskbuf[]; /* the buffer */
-extern void *diskbuf_user; /* using function sets it to unique
+extern char *diskbufp;		/* allocated from heap... */
+extern const void *diskbuf_user; /* using function sets it to unique
 			    value to allow check if overwritten*/
+char *alloc_diskbuf(const void *);
