@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 2003/06/23 11:01:34 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 2003/06/23 13:06:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -58,6 +58,9 @@
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#include <sys/pool.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -81,7 +84,7 @@
 #include <machine/db_machdep.h>
 #endif
 
-struct proc *fpu_proc;		/* Process owning the FPU. */
+struct lwp *fpu_lwp;		/* LWP owning the FPU. */
 
 /* Allow turning off if ieee_handler for debugging */
 int ieee_handler_disable = 0;
@@ -94,32 +97,41 @@ int ieee_handler_disable = 0;
 
 void syscall __P((struct syscframe)) __CDECL__;
 void trap __P((struct trapframe)) __CDECL__;
-static __inline void userret __P((struct proc *, int, u_quad_t));
+static __inline void userret __P((struct lwp *, int, u_quad_t));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	struct proc *p;
+userret(l, pc, oticks)
+	struct lwp *l;
 	int pc;
 	u_quad_t oticks;
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
+	l->l_priority = l->l_usrpri;
+	if (want_resched) {	/* XXX Move to AST handler. */
 		/*
 		 * We are being preempted.
 		 */
 		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
+
+	/* Invoke per-process kernel-exit handling, if any. */
+	if (p->p_userret)
+		(*p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -130,7 +142,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}                   
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
 char	*trap_type[] = {
@@ -173,7 +185,8 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
@@ -196,7 +209,7 @@ trap(frame)
 	if (USERMODE(frame.tf_regs.r_psr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = &frame.tf_regs;
+		l->l_md.md_regs = &frame.tf_regs;
 	} else
 		sticks = 0;
 
@@ -278,20 +291,20 @@ trap(frame)
 			sprd(cfg, cfg);
 			if ((cfg & CFG_F) == 0) {
 				lprd(cfg, cfg | CFG_F);
-				if (fpu_proc == p)
+				if (fpu_lwp == l)
 					return;
-				pcb = &p->p_addr->u_pcb;
-				if (fpu_proc != 0)
-					save_fpu_context(&fpu_proc->p_addr->u_pcb);
+				pcb = &l->l_addr->u_pcb;
+				if (fpu_lwp != 0)
+					save_fpu_context(&fpu_lwp->l_addr->u_pcb);
 				restore_fpu_context(pcb);
-				fpu_proc = p;
+				fpu_lwp = l;
 				return;
 			}
 		}
 	}
 
 	case T_ILL | T_USER:		/* privileged instruction fault */
-		trapsignal(p, SIGILL, type &~ T_USER);
+		trapsignal(l, SIGILL, type &~ T_USER);
 		goto out;
 
 	case T_AST | T_USER:		/* Allow process switch */
@@ -304,15 +317,15 @@ trap(frame)
 
 	case T_OVF | T_USER:
 	case T_DVZ | T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		trapsignal(l, SIGFPE, type &~ T_USER);
 		goto out;
 
 	case T_SLAVE | T_USER: {
 		int fsr, sig = SIGFPE;
-		pcb = &p->p_addr->u_pcb;
+		pcb = &l->l_addr->u_pcb;
 		if (ieee_handler_disable == 0) {
 			save_fpu_context(pcb);
-			switch(ieee_handle_exception(p)) {
+			switch(ieee_handle_exception(l)) {
 			case FPC_TT_NONE:
 				restore_fpu_context(pcb);
 				if (frame.tf_regs.r_psr &  PSL_T) {
@@ -329,7 +342,7 @@ trap(frame)
 			restore_fpu_context(pcb);
 		}
 		sfsr(fsr);
-		trapsignal(p, sig, 0x80000000 | fsr);
+		trapsignal(l, sig, 0x80000000 | fsr);
 		goto out;
 	}
 
@@ -338,7 +351,7 @@ trap(frame)
 		    (frame.tf_msr & MSR_STT) == STT_NSQ_INS ||
 		    (p == 0))
 			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
+		pcb = &l->l_addr->u_pcb;
 		/*
 		 * {fu,su}bail is used by [fs]uswintr() to prevent page
 		 * faulting from inside the profiling interrupt.
@@ -429,9 +442,9 @@ trap(frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_ABT);
+			trapsignal(l, SIGKILL, T_ABT);
 		} else {
-			trapsignal(p, SIGSEGV, T_ABT);
+			trapsignal(l, SIGSEGV, T_ABT);
 		}
 		break;
 	}
@@ -440,7 +453,7 @@ trap(frame)
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
 	trace:
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		trapsignal(l, SIGTRAP, type &~ T_USER);
 		break;
 
 	case T_NMI:		/* non-maskable interrupt */
@@ -463,7 +476,7 @@ trap(frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.tf_regs.r_pc, sticks);
+	userret(l, frame.tf_regs.r_pc, sticks);
 }
 
 /*
@@ -478,6 +491,7 @@ syscall(frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
+	struct lwp *l;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -487,9 +501,10 @@ syscall(frame)
 	uvmexp.syscalls++;
 	if (!USERMODE(frame.sf_regs.r_psr))
 		panic("syscall");
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = &frame.sf_regs;
+	l->l_md.md_regs = &frame.sf_regs;
 	opc = frame.sf_regs.r_pc++;
 	code = frame.sf_regs.r_r0;
 
@@ -530,12 +545,12 @@ syscall(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame.sf_regs.r_r1;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		/*
@@ -565,23 +580,60 @@ syscall(frame)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p, frame.sf_regs.r_pc, sticks);
+	userret(l, frame.sf_regs.r_pc, sticks);
 }
 
 void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
 
-	p->p_md.md_regs->r_r0 = 0;
-	p->p_md.md_regs->r_psr &= ~PSL_C;
+	l->l_md.md_regs->r_r0 = 0;
+	l->l_md.md_regs->r_psr &= ~PSL_C;
 
-	userret(p, p->p_md.md_regs->r_pc, 0);
+	userret(l, l->l_md.md_regs->r_pc, 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
+}
+
+/*
+ * Start a new LWP.
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int error;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	l->l_md.md_regs->r_r0 = 0;
+	l->l_md.md_regs->r_psr &= ~PSL_C;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (error)
+		printf("Error %d from cpu_setmcontext.", error);
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l, l->l_md.md_regs->r_pc, p->p_sticks);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(l)
+	struct lwp *l;
+{
+	struct proc *p = l->l_proc;
+
+	userret(l, l->l_md.md_regs->r_pc, p->p_sticks);
 }

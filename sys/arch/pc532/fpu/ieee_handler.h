@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.4 1998/09/02 19:17:12 matthias Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.5 2003/06/23 13:06:54 thorpej Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -69,21 +69,21 @@ typedef struct {
 #include <sys/proc.h>
 #include <sys/user.h>
 
-typedef struct proc state;
+typedef struct lwp state;
 
-#define LREGBASE(s) ((vaddr_t) (s)->p_addr->u_pcb.pcb_freg)
+#define LREGBASE(s) ((vaddr_t) (s)->l_addr->u_pcb.pcb_freg)
 #define LREGOFFSET(n) (n * sizeof(double))
-#define FREGBASE(s) ((vaddr_t) (s)->p_addr->u_pcb.pcb_freg)
+#define FREGBASE(s) ((vaddr_t) (s)->l_addr->u_pcb.pcb_freg)
 #define FREGOFFSET(n) ((n & ~1) * sizeof(double) + (n & 1) * sizeof(float))
-#define REGBASE(s) ((vaddr_t) (s)->p_md.md_regs)
+#define REGBASE(s) ((vaddr_t) (s)->l_md.md_regs)
 #define REGOFFSET(n) offsetof(struct reg, r_r ## n)
 
-#define FSR p_addr->u_pcb.pcb_fsr
-#define FP p_md.md_regs->r_fp
-#define SP p_md.md_regs->r_sp
-#define SB p_md.md_regs->r_sb
-#define PC p_md.md_regs->r_pc
-#define PSR p_md.md_regs->r_psr
+#define FSR l_addr->u_pcb.pcb_fsr
+#define FP l_md.md_regs->r_fp
+#define SP l_md.md_regs->r_sp
+#define SB l_md.md_regs->r_sb
+#define PC l_md.md_regs->r_pc
+#define PSR l_md.md_regs->r_psr
 
 #define PSR_N	PSL_N
 #define PSR_Z	PSL_Z

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 2003/01/06 13:05:05 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 2003/06/23 13:06:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -103,7 +103,7 @@ ASENTRY(start)
 
 ENTRY_NOPROFILE(proc_trampoline)
 #if !defined(MRTD)
-	movd	r4,0(sp)	/* There was curproc on the stack */
+	movd	r4,0(sp)	/* There was curlwp on the stack */
 	jsr	0(r3)
 	cmpqd	0,tos
 	br	rei
@@ -663,28 +663,28 @@ KENTRY(longjmp, 4)
  */
 
 /*
- * setrunqueue(struct proc *p);
+ * setrunqueue(struct lwp *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 KENTRY(setrunqueue, 4)
 	movd	S_ARG0,r0
 #ifdef DIAGNOSTIC
-	cmpqd	0,P_BACK(r0)		/* should not be on q already */
+	cmpqd	0,L_BACK(r0)		/* should not be on q already */
 	bne	1f
-	cmpqd	0,P_WCHAN(r0)
+	cmpqd	0,L_WCHAN(r0)
 	bne	1f
-	cmpb	SRUN,P_STAT(r0)
+	cmpb	LSRUN,L_STAT(r0)
 	bne	1f
 #endif
-	movzbd	P_PRIORITY(r0),r1
+	movzbd	L_PRIORITY(r0),r1
 	lshd	-2,r1
 	sbitd	r1,_C_LABEL(sched_whichqs)(pc) /* set queue full bit */
 	addr	_C_LABEL(sched_qs)(pc)[r1:q],r1 /* locate q hdr */
-	movd	P_BACK(r1),r2		/* locate q tail */
-	movd	r1,P_FORW(r0)		/* set p->p_forw */
-	movd	r0,P_BACK(r1)		/* update q's p_back */
-	movd	r0,P_FORW(r2)		/* update tail's p_forw */
-	movd    r2,P_BACK(r0)		/* set p->p_back */
+	movd	L_BACK(r1),r2		/* locate q tail */
+	movd	r1,L_FORW(r0)		/* set l->l_forw */
+	movd	r0,L_BACK(r1)		/* update q's l_back */
+	movd	r0,L_FORW(r2)		/* update tail's l_forw */
+	movd    r2,L_BACK(r0)		/* set l->l_back */
 	ret	ARGS
 #ifdef DIAGNOSTIC
 1:	PANIC("setrunqueue")		/* Was on the list! */
@@ -696,17 +696,17 @@ KENTRY(setrunqueue, 4)
  */
 KENTRY(remrunqueue, 4)
 	movd	S_ARG0,r1
-	movzbd	P_PRIORITY(r1),r0
+	movzbd	L_PRIORITY(r1),r0
 #ifdef DIAGNOSTIC
 	lshd	-2,r0
 	tbitd	r0,_C_LABEL(sched_whichqs)(pc)
 	bfc	1f
 #endif
-	movd	P_BACK(r1),r2		/* Address of prev. item */
-	movqd	0,P_BACK(r1)		/* Clear reverse link */
-	movd	P_FORW(r1),r1		/* Addr of next item. */
-	movd	r1,P_FORW(r2)		/* Unlink item. */
-	movd	r2,P_BACK(r1)
+	movd	L_BACK(r1),r2		/* Address of prev. item */
+	movqd	0,L_BACK(r1)		/* Clear reverse link */
+	movd	L_FORW(r1),r1		/* Addr of next item. */
+	movd	r1,L_FORW(r2)		/* Unlink item. */
+	movd	r2,L_BACK(r1)
 	cmpd	r1,r2			/* r1 = r2 => empty queue */
 	bne	2f
 #ifndef DIAGNOSTIC
@@ -739,22 +739,22 @@ ENTRY_NOPROFILE(idle)
 	br	0b
 
 /*
- * void cpu_switch(struct proc *)
+ * int cpu_switch(struct lwp *)
  * Find a runnable process and switch to it.  Wait if necessary.
  */
 KENTRY(cpu_switch, 4)
 	enter	[r3,r4,r5,r6,r7],0
 
-	movd	_C_LABEL(curproc)(pc),r4
+	movd	_C_LABEL(curlwp)(pc),r4
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 * This also insures that schedcpu() will move the old process to
 	 * the correct queue if it happens to get called from the spl0()
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	movqd	0,_C_LABEL(curproc)(pc)
+	movqd	0,_C_LABEL(curlwp)(pc)
 
 	movd	_C_LABEL(imask)(pc),tos
 	bsr	_C_LABEL(splx)		/* spl0 - process pending interrupts */
@@ -788,44 +788,49 @@ KENTRY(cpu_switch, 4)
 sw1:	/* Get the process and unlink it from the queue. */
 	addr	_C_LABEL(sched_qs)(pc)[r0:q],r1 /* address of qs entry! */
 
-	movd	P_FORW(r1),r2		/* unlink from front of process q */
+	movd	L_FORW(r1),r2		/* unlink from front of process q */
 #ifdef	DIAGNOSTIC
 	cmpd	r2,r1			/* linked to self (i.e. nothing queued? */
 	beq	_C_LABEL(switch_error)	/* not possible */
 #endif
-	movd	P_FORW(r2),r3
-	movd	r3,P_FORW(r1)
-	movd	r1,P_BACK(r3)
+	movd	L_FORW(r2),r3
+	movd	r3,L_FORW(r1)
+	movd	r1,L_BACK(r3)
 
 	cmpd	r1,r3			/* q empty? */
 	bne	3f
 
 	cbitd	r0,_C_LABEL(sched_whichqs)(pc) /* queue is empty, turn off whichqs. */
 
-3:	movqd	0,_C_LABEL(want_resched)(pc) /* We did a resched! */
-
+3:
 #ifdef	DIAGNOSTIC
 	cmpqd	0,P_WCHAN(r2)		/* Waiting for something? */
 	bne	_C_LABEL(switch_error)	/* Yes; shouldn't be queued. */
-	cmpb	SRUN,P_STAT(r2)		/* In run state? */
+	cmpb	LSRUN,L_STAT(r2)	/* In run state? */
 	bne	_C_LABEL(switch_error)	/* No; shouldn't be queued. */
 #endif
 
 	/* Isolate process. XXX Is this necessary? */
-	movqd	0,P_BACK(r2)
+	movqd	0,L_BACK(r2)
+
+switch_resume:
+	movqd	0,_C_LABEL(want_resched)(pc) /* We did a resched! */
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Record new process. */
-	movb	SONPROC,P_STAT(r2)	/* p->p_stat = SONPROC */
-	movd	r2,_C_LABEL(curproc)(pc)
+	movb	LSONPROC,L_STAT(r2)	/* l->l_stat = LSONPROC */
+	movd	r2,_C_LABEL(curlwp)(pc)
 
 	/* It's okay to take interrupts here. */
 	ints_on
 
 	/* Skip context switch if same process. */
+	movqd	0,r0			/* return "didn't switch" */
 	cmpd	r2,r4
 	beq	_ASM_LABEL(switch_return)
+
+	movqd	1,r0			/* return "did switch" */
 
 	/* If old process exited, don't bother. */
 	cmpqd	0,r4
@@ -839,7 +844,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 	 *   r2 - new process
 	 */
 
-	movd	P_ADDR(r4),r4
+	movd	L_ADDR(r4),r4
 
 	/* save stack and frame pointer registers. */
 	sprd	sp,PCB_KSP(r4)
@@ -856,7 +861,7 @@ ASLOCAL(switch_exited)
 
 	/* No interrupts while loading new state. */
 	ints_off
-	movd	P_ADDR(r2),r1
+	movd	L_ADDR(r2),r1
 
 	/* Switch address space. */
 	lmr	ptb0,PCB_PTB(r1)
@@ -872,9 +877,9 @@ ASLOCAL(switch_exited)
 	/*
 	 * Disable the FPU.
 	 */
-	sprw	cfg,r0
-	andw	~CFG_F,r0
-	lprw	cfg,r0
+	sprw	cfg,r3
+	andw	~CFG_F,r3
+	lprw	cfg,r3
 
 	/* Interrupts are okay again. */
 	ints_on
@@ -895,6 +900,41 @@ switch_return:
 ENTRY(switch_error)
 	PANIC("cpu_switch")
 #endif
+
+/*
+ * void cpu_switchto(struct lwp *old, struct lwp *new)
+ * Switch to to the specified new LWP.
+ */
+KENTRY(cpu_switchto, 4)
+	enter	[r3,r4,r5,r6,r7],0
+
+	movd	8(fp),r4		/* old LWP */
+	movd	12(fp),r2		/* new LWP */
+
+	movd	_C_LABEL(imask)(pc),tos
+	bsr	_C_LABEL(splx)		/* spl0 - process pending interrupts */
+#if !defined(MRTD)
+# if defined(DDB) || defined(KGDB)
+	cmpqd	0,tos
+	movd	r0,tos
+# else
+	movd	r0,0(sp)
+# endif
+#else
+	movd	r0,tos
+#endif
+
+	/*
+	 * Ok, right now we have:
+	 *   r2 - new process
+	 *   r4 - old process
+	 * ...and the stack just the way cpu_switch() wants.  Disable
+	 * interrupts and then jump into the middle of cpu_switch().
+	 *
+	 * XXX This strategy might have problems with MRTD.
+	 */
+	ints_off
+	br	switch_resume
 
 /****************************************************************************/
 

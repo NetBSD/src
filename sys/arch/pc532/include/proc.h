@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 1996/04/04 06:36:50 phil Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2003/06/23 13:06:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -39,10 +39,17 @@
 #define _NS532_PROC_H_
 
 /*
+ * Machine-dependent part of the lwp structure for the pc532.
+ */
+struct mdlwp {
+	struct reg *md_regs;	/* pointer to regs on the stack */
+};
+
+/*
  * Machine-dependent part of the proc structure for the pc532.
  */
 struct mdproc {
-	struct reg *md_regs;	/* pointer to regs on the stack */
+	int md_dummy;
 };
 
 #endif /* _NS532_PROC_H_ */
