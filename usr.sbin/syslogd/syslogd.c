@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.40 2000/09/13 15:46:32 sommerfeld Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.41 2000/09/13 21:20:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.40 2000/09/13 15:46:32 sommerfeld Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.41 2000/09/13 21:20:21 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.40 2000/09/13 15:46:32 sommerfeld Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -227,6 +228,8 @@ main(argc, argv)
 	struct sockaddr_storage frominet;
 	char *p, *line, **pp;
 	struct pollfd *readfds;
+
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "dsf:m:p:P:")) != -1)
 		switch(ch) {
