@@ -1,11 +1,11 @@
-/*	$NetBSD: futil.c,v 1.6 1998/08/27 23:37:35 hubertf Exp $	*/
+/*	$NetBSD: futil.c,v 1.6.2.1 1999/09/13 21:22:26 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.6 1998/08/27 23:37:35 hubertf Exp $");
+__RCSID("$NetBSD: futil.c,v 1.6.2.1 1999/09/13 21:22:26 he Exp $");
 #endif
 #endif
 
@@ -37,63 +37,62 @@ __RCSID("$NetBSD: futil.c,v 1.6 1998/08/27 23:37:35 hubertf Exp $");
  * Assuming dir is a desired directory name, make it and all intervening
  * directories necessary.
  */
-
 int
 make_hierarchy(char *dir)
 {
-    char *cp1, *cp2;
+	char   *cp1, *cp2;
 
-    if (dir[0] == '/')
-	cp1 = cp2 = dir + 1;
-    else
-	cp1 = cp2 = dir;
-    while (cp2) {
-	if ((cp2 = strchr(cp1, '/')) !=NULL )
-	    *cp2 = '\0';
-	if (fexists(dir)) {
-	    if (!(isdir(dir) || islinktodir(dir)))
-		return FAIL;
+	if (dir[0] == '/')
+		cp1 = cp2 = dir + 1;
+	else
+		cp1 = cp2 = dir;
+	while (cp2) {
+		if ((cp2 = strchr(cp1, '/')) != NULL)
+			*cp2 = '\0';
+		if (fexists(dir)) {
+			if (!(isdir(dir) || islinktodir(dir)))
+				return FAIL;
+		} else {
+			if (vsystem("mkdir %s", dir))
+				return FAIL;
+			apply_perms(NULL, dir);
+		}
+		/* Put it back */
+		if (cp2) {
+			*cp2 = '/';
+			cp1 = cp2 + 1;
+		}
 	}
-	else {
-	    if (vsystem("mkdir %s", dir))
-		return FAIL;
-	    apply_perms(NULL, dir);
-	}
-	/* Put it back */
-	if (cp2) {
-	    *cp2 = '/';
-	    cp1 = cp2 + 1;
-	}
-    }
-    return SUCCESS;
+	return SUCCESS;
 }
 
-/* Using permission defaults, apply them as necessary */
+/*
+ * Using permission defaults, apply them as necessary
+ */
 void
 apply_perms(char *dir, char *arg)
 {
-    char *cd_to;
+	char   *cd_to;
 
-    if (!dir || *arg == '/')	/* absolute path? */
-	cd_to = "/";
-    else
-	cd_to = dir;
+	if (!dir || *arg == '/')/* absolute path? */
+		cd_to = "/";
+	else
+		cd_to = dir;
 
-    if (Mode)
-	if (vsystem("cd %s && chmod -R %s %s", cd_to, Mode, arg))
-	    warnx("couldn't change modes of '%s' to '%s'", arg, Mode);
-    if (Owner && Group) {
-	if (vsystem("cd %s && chown -R %s.%s %s", cd_to, Owner, Group, arg))
-	    warnx("couldn't change owner/group of '%s' to '%s.%s'",
-		   arg, Owner, Group);
-	return;
-    }
-    if (Owner) {
-	if (vsystem("cd %s && chown -R %s %s", cd_to, Owner, arg))
-	    warnx("couldn't change owner of '%s' to '%s'", arg, Owner);
-	return;
-    } else if (Group)
-	if (vsystem("cd %s && chgrp -R %s %s", cd_to, Group, arg))
-	    warnx("couldn't change group of '%s' to '%s'", arg, Group);
+	if (Mode)
+		if (vsystem("cd %s && %s -R %s %s", cd_to, CHMOD, Mode, arg))
+			warnx("couldn't change modes of '%s' to '%s'", arg, Mode);
+	if (Owner && Group) {
+		if (vsystem("cd %s && %s -R %s.%s %s", cd_to, CHOWN, Owner, Group, arg))
+			warnx("couldn't change owner/group of '%s' to '%s.%s'",
+			    arg, Owner, Group);
+		return;
+	}
+	if (Owner) {
+		if (vsystem("cd %s && %s -R %s %s", cd_to, CHOWN, Owner, arg))
+			warnx("couldn't change owner of '%s' to '%s'", arg, Owner);
+		return;
+	} else if (Group)
+		if (vsystem("cd %s && %s -R %s %s", cd_to, CHGRP, Group, arg))
+			warnx("couldn't change group of '%s' to '%s'", arg, Group);
 }
-
