@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.3 1996/03/17 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.4 1996/03/17 06:23:18 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -457,12 +457,15 @@ getdevattach(name)
 	p = (u_char *)name;
 	if (!isalpha(*p))
 		goto badname;
-	while (*++p)
-		if (!isalpha(*p) && *p != '_') {
+	while (*++p) {
+		if (!isalnum(*p) && *p != '_')
+			goto badname;
+	}
+	if (isdigit(*--p)) {
 badname:
-			error("bad device attachment name `%s'", name);
-			return (&errdeva);
-		}
+		error("bad device attachment name `%s'", name);
+		return (&errdeva);
+	}
 	deva = ht_lookup(devatab, name);
 	if (deva == NULL) {
 		deva = emalloc(sizeof *deva);
