@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.108 2004/03/03 05:59:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.108.2.1 2004/05/11 13:00:20 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.108 2004/03/03 05:59:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.108.2.1 2004/05/11 13:00:20 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1014,8 +1014,8 @@ send:
 		win = 0;
 	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
-	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
-		win = (long)(tp->rcv_adv - tp->rcv_nxt);
+	if (win < (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt))
+		win = (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt);
 	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
