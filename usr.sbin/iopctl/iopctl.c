@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.11 2001/08/04 16:55:46 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.11 2001/08/04 16:55:46 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -265,6 +265,11 @@ showlct(char **argv)
 	nent = ((le16toh(lct->tablesize) << 2) -
 	    sizeof(struct i2o_lct) + sizeof(struct i2o_lct_entry)) /
 	    sizeof(struct i2o_lct_entry);
+
+	show("flags", "0x%x", le16toh(lct->flags));
+	show("iop flags", "0x%x", le32toh(lct->iopflags));
+	show("lct change indicator", "%d", le32toh(lct->changeindicator));
+	printf("\n");
 
 	for (i = 0; i < nent; i++, ent++) {
 		classid = le32toh(ent->classid);
