@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: iso.c,v 1.9 1994/05/13 08:08:13 mycroft Exp $";
+static char *rcsid = "$Id: iso.c,v 1.10 1994/10/06 16:30:57 mycroft Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -304,7 +304,6 @@ tp_protopr(off, name)
 	u_long off;
 	char *name;
 {
-#ifdef notyet /* XXXX */
 	extern char *tp_sstring[];
 	struct tp_ref *tpr, *tpr_base;
 	struct tp_refinfo tpkerninfo;
@@ -344,7 +343,6 @@ tp_protopr(off, name)
 			printf(" %-12.12s", tp_sstring[tpcb.tp_state]);
 		putchar('\n');
 	}
-#endif
 }
 
 void
