@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.23 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.24 2004/08/30 18:28:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.23 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.24 2004/08/30 18:28:33 drochner Exp $");
 
 #include "rnd.h"
 
@@ -307,7 +307,7 @@ edc_mca_attach(parent, self, aux)
 	for(devno=0; devno < sc->sc_maxdevs; devno++) {
 		eda.edc_drive = devno;
 		sc->sc_ed[devno] =
-			(void *) config_found_sm(self, &eda, NULL, NULL);
+			(void *) config_found(self, &eda, NULL);
 
 		/* If initialization did not succeed, NULL the pointer. */
 		if (sc->sc_ed[devno]
