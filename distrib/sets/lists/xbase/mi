@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2002/06/18 12:59:27 christos Exp $
+# $NetBSD: mi,v 1.23 2002/08/03 23:24:14 chris Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -161,6 +161,13 @@
 ./usr/X11R6/include/X11/bitmaps/xlogo32
 ./usr/X11R6/include/X11/bitmaps/xlogo64
 ./usr/X11R6/include/X11/bitmaps/xsnow
+./usr/X11R6/include/X11/pixmaps
+./usr/X11R6/include/X11/pixmaps/deny-always.xpm
+./usr/X11R6/include/X11/pixmaps/deny.xpm
+./usr/X11R6/include/X11/pixmaps/logo.xpm
+./usr/X11R6/include/X11/pixmaps/permit-always.xpm
+./usr/X11R6/include/X11/pixmaps/permit.xpm
+./usr/X11R6/include/X11/pixmaps/skull.xpm
 ./usr/X11R6/include/X11/extensions
 ./usr/X11R6/include/X11/fonts
 ./usr/X11R6/lib
@@ -185,6 +192,7 @@
 ./usr/X11R6/lib/X11/app-defaults/Xfd
 ./usr/X11R6/lib/X11/app-defaults/Xmag
 ./usr/X11R6/lib/X11/app-defaults/Xmh
+./usr/X11R6/lib/X11/app-defaults/Xsystrace
 ./usr/X11R6/lib/X11/config
 ./usr/X11R6/lib/X11/fonts
 ./usr/X11R6/lib/X11/fonts/100dpi
