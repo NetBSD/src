@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.175 2004/07/22 20:23:31 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.176 2004/07/22 20:25:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.175 2004/07/22 20:23:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.176 2004/07/22 20:25:23 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -757,9 +757,9 @@ wi_init(struct ifnet *ifp)
 	/* Set multicast filter. */
 	wi_write_multi(sc);
 
+	sc->sc_txalloc = 0;
 	sc->sc_txalloced = 0;
-	sc->sc_txcur = 0;
-	sc->sc_txnext = 0;
+	sc->sc_txqueue = 0;
 
 	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
 		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
@@ -959,7 +959,7 @@ wi_start(struct ifnet *ifp)
 		return;
 
 	memset(&frmhdr, 0, sizeof(frmhdr));
-	cur = sc->sc_txnext;
+	cur = sc->sc_txqueue;
 	for (;;) {
 		ni = ic->ic_bss;
 		if (sc->sc_txalloced == 0 || SLIST_EMPTY(&sc->sc_rssdfree)) {
@@ -1106,7 +1106,7 @@ wi_start(struct ifnet *ifp)
 		m_freem(m0);
 		sc->sc_txpending[ni->ni_txrate]++;
 		--sc->sc_txalloced;
-		if (sc->sc_txcur == cur) {
+		if (sc->sc_txalloc == cur) {
 			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
 				printf("%s: xmit failed\n",
 				    sc->sc_dev.dv_xname);
@@ -1116,7 +1116,7 @@ wi_start(struct ifnet *ifp)
 			sc->sc_tx_timer = 5;
 			ifp->if_timer = 1;
 		}
-		sc->sc_txnext = cur = (cur + 1) % WI_NTXBUF;
+		sc->sc_txqueue = cur = (cur + 1) % WI_NTXBUF;
 		SLIST_REMOVE_HEAD(&sc->sc_rssdfree, rd_next);
 		id->id_node = ni;
 		continue;
@@ -1645,16 +1645,16 @@ wi_txalloc_intr(struct wi_softc *sc)
 
 	fid = CSR_READ_2(sc, WI_ALLOC_FID);
 
-	cur = sc->sc_txcur;
+	cur = sc->sc_txalloc;
 	if (sc->sc_txd[cur].d_fid != fid) {
 		printf("%s: bad alloc %x != %x, cur %d nxt %d\n",
 		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid, cur,
-		    sc->sc_txnext);
+		    sc->sc_txqueue);
 		return;
 	}
 	sc->sc_tx_timer = 0;
 	++sc->sc_txalloced;
-	sc->sc_txcur = cur = (cur + 1) % WI_NTXBUF;
+	sc->sc_txalloc = cur = (cur + 1) % WI_NTXBUF;
 	if (sc->sc_txalloced >= WI_NTXBUF)
 		ifp->if_flags &= ~IFF_OACTIVE;
 	else {
