@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.18 1995/06/12 06:46:38 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.19 1995/06/12 06:48:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -414,8 +414,9 @@ tcp_ctlinput(cmd, sa, ip)
 {
 	register struct tcphdr *th;
 	extern struct in_addr zeroin_addr;
-	extern int inetctlerrmap[], errno;
+	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	int errno;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;

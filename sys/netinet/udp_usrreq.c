@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.20 1995/06/12 06:46:40 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.21 1995/06/12 06:48:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -365,8 +365,9 @@ udp_ctlinput(cmd, sa, ip)
 {
 	register struct udphdr *uh;
 	extern struct in_addr zeroin_addr;
-	extern int inetctlerrmap[], errno;
+	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
+	int errno;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
