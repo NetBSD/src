@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.3 2001/01/23 01:57:01 blymn Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.4 2001/02/10 14:57:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -32,6 +32,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <limits.h>
 #include "form.h"
 #include "internals.h"
 
@@ -40,13 +43,25 @@
  */
 
 /*
+ * define the styles of address we can have, they are:
+ *    FORMI_DOTTED_QUAD    address of form aaa.bbb.ccc.ddd
+ *    FORMI_HEX            address of form 0xaabbccdd
+ *    FORMI_CLASSLESS      address of form aaa.bbb.ccc.ddd/ee
+ */
+#define FORMI_DOTTED_QUAD  0
+#define FORMI_HEX          1
+#define FORMI_CLASSLESS    2
+
+/*
  * Check the contents of the field buffer are a valid IPv4 address only.
  */
 static int
 ipv4_check_field(FIELD *field, char *args)
 {
-	char *buf, *keeper, *p;
-	unsigned int vals[4], i;
+	char *buf, *buf1, *keeper, *p, *slash;
+	unsigned int vals[4], style, start, mask;
+	unsigned long hex_val, working;
+	int i;
 
 	if (args == NULL)
 		return FALSE;
@@ -54,31 +69,100 @@ ipv4_check_field(FIELD *field, char *args)
 	if (asprintf(&keeper, "%s", args) < 0)
 		return FALSE;
 
+	style = FORMI_DOTTED_QUAD;
 	buf = keeper;
-	
-	for (i = 0; i < 4; i++) {
-		p = strsep(&buf, ".");
-		if (*p == '\0')
-			goto FAIL;
-		vals[i] = atoi(p);
-		if (vals[i] > 255)
-			goto FAIL;
+
+	if ((slash = index(buf, '/')) != NULL)
+		style = FORMI_CLASSLESS;
+	else {
+		start = _formi_skip_blanks(buf, 0);
+		if ((buf[start] != '\0') && (buf[start + 1] != '\0') &&
+		    (buf[start] == '0') && ((buf[start + 1] == 'x') ||
+					    (buf[start + 1] == 'X')))
+			style = FORMI_HEX;
 	}
 
+	switch (style) {
+	case FORMI_CLASSLESS:
+		*slash = '\0';
+		slash++;
+		mask = atoi(slash);
+		if (mask > 32)
+			goto FAIL;
+		  /* FALLTHROUGH */
+		
+	case FORMI_DOTTED_QUAD:
+		for (i = 0; i < 4; i++) {
+			p = strsep(&buf, ".");
+			if (*p == '\0')
+				goto FAIL;
+			vals[i] = atoi(p);
+			if (vals[i] > 255)
+				goto FAIL;
+		}
+		break;
+
+		
+	case FORMI_HEX:
+		hex_val = strtoul(buf, NULL, 16);
+		if ((hex_val == ULONG_MAX) && (errno == ERANGE))
+			goto FAIL;
+		working = hex_val;
+		for (i = 3; i < 0; i--) {
+			vals[i] = (unsigned int)(working & 0xff);
+			working = working >> 8;
+		}
+		break;
+
+	}
+	
+		
 	  /* check for null buffer pointer, indicates trailing garbage */
 	if (buf != NULL)
 		goto FAIL;
 
 	free(keeper);
-	
-	if (asprintf(&buf, "%d.%d.%d.%d", vals[0], vals[1], vals[2],
-		     vals[3]) < 0)
-		return FALSE;
 
+	buf1 = NULL;
+	
+	switch (style) {
+	case FORMI_DOTTED_QUAD:
+		if (asprintf(&buf, "%d.%d.%d.%d", vals[0], vals[1], vals[2],
+			     vals[3]) < 0)
+			return FALSE;
+		break;
+
+	case FORMI_CLASSLESS:
+		if (asprintf(&buf, "%d.%d.%d.%d/%d", vals[0], vals[1],
+			     vals[2], vals[3], mask) < 0)
+			return FALSE;
+		if (asprintf(&buf1, "%d.%d.%d.%d", vals[0], vals[1],
+			     vals[2], vals[3]) < 0)
+			return FALSE;
+		break;
+
+	case FORMI_HEX:
+		if (asprintf(&buf, "0x%.8lx", hex_val) < 0)
+			return FALSE;
+		if (asprintf(&buf1, "%d.%d.%d.%d", vals[0], vals[1],
+			     vals[2], vals[3]) < 0)
+			return FALSE;
+		break;
+	}
+	
 	  /* re-set the field buffer to be the reformatted IPv4 address */
 	set_field_buffer(field, 0, buf);
 
+	  /*
+	   * Set the field buffer 1 to the dotted quad format regardless
+	   * of the input format, only if buffer 1 exists.
+	   */
+	if ((field->nbuf > 1) && (buf1 != NULL))
+		set_field_buffer(field, 1, buf1);
+	
 	free(buf);
+	if (buf1 != NULL)
+		free(buf1);
 	
 	return TRUE;
 
@@ -95,11 +179,12 @@ ipv4_check_field(FIELD *field, char *args)
 static int
 ipv4_check_char(/* ARGSUSED1 */ int c, char *args)
 {
-	return ((isdigit(c) || (c == '.')) ? TRUE : FALSE);
+	return (isxdigit(c) || (c == '.') || (tolower(c) == 'x'))
+		? TRUE : FALSE;
 }
 
 static FIELDTYPE builtin_ipv4 = {
-	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
+	_TYPE_IS_BUILTIN,                   /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
 	NULL,                               /* make_args */
