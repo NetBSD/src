@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.15 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.16 2001/10/13 19:56:09 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.15 2001/10/13 15:56:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.16 2001/10/13 19:56:09 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -613,7 +613,7 @@ wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 	if (sc->sc_mux || sc->sc_events.io)
 		return (EBUSY);
 
-	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
+	return (wsmux_attach_sc(muxsc, WSMUX_MOUSE, &sc->sc_dv, &sc->sc_events, 
 				&sc->sc_mux, &wsmouse_muxops));
 }
 
