@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm_private.h,v 1.2 1996/05/13 02:30:25 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

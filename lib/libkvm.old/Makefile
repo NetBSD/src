@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.4 1996/05/13 02:30:20 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.3 1996/05/09 12:41:38 pk Exp $
 
 .PATH: ${.CURDIR}/../libkvm
 
