@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.4 2001/10/14 23:13:22 rafal Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.5 2001/11/24 18:07:04 rafal Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -73,39 +73,41 @@ _rtld_relocate_mips_got(obj)
 			    obj->path, sym->st_name + obj->strtab,
 			    (u_long) ELF_R_TYPE(info), 
 			    (u_long) obj->symtabno - i - 1);
+		else {
 
-		if (sym->st_shndx == SHN_UNDEF) {
+			if (sym->st_shndx == SHN_UNDEF) {
 #if 0	/* These don't seem to work? */
 
-			if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_FUNC) {
-				if (sym->st_value)
-					*got = sym->st_value +
-					    (Elf_Word)obj->relocbase;
-				else
+				if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+				    STT_FUNC) {
+					if (sym->st_value)
+						*got = sym->st_value +
+						    (Elf_Word)obj->relocbase;
+					else
+						*got = def->st_value +
+						    (Elf_Word)defobj->relocbase;
+				} else
+#endif
 					*got = def->st_value +
 					    (Elf_Word)defobj->relocbase;
-			} else
-#endif
+			} else if (sym->st_shndx == SHN_COMMON) {
 				*got = def->st_value +
 				    (Elf_Word)defobj->relocbase;
-		} else if (sym->st_shndx == SHN_COMMON) {
-			*got = def->st_value +
-			    (Elf_Word)defobj->relocbase;
-		} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-		    STT_FUNC &&
-		    *got != sym->st_value) {
-			*got += (Elf_Word)obj->relocbase;
-		} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-		    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
-		    STB_GLOBAL) {
-			if (sym->st_shndx == SHN_ABS)
-				*got = sym->st_value +
-				    (Elf_Word)obj->relocbase;
-			/* else SGI stuff ignored */
-		} else
-			*got = def->st_value +
-			    (Elf_Word)defobj->relocbase;
+			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+			    STT_FUNC &&
+			    *got != sym->st_value) {
+				*got += (Elf_Word)obj->relocbase;
+			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+			    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
+			    STB_GLOBAL) {
+				if (sym->st_shndx == SHN_ABS)
+					*got = sym->st_value +
+					    (Elf_Word)obj->relocbase;
+				/* else SGI stuff ignored */
+			} else
+				*got = def->st_value +
+				    (Elf_Word)defobj->relocbase;
+		}
 
 		++sym;
 		++got;
