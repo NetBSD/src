@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.44 2003/12/05 13:37:48 lukem Exp $	*/
+/*	$NetBSD: readline.c,v 1.45 2004/01/17 17:57:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.44 2003/12/05 13:37:48 lukem Exp $");
+__RCSID("$NetBSD: readline.c,v 1.45 2004/01/17 17:57:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -61,10 +61,10 @@ __RCSID("$NetBSD: readline.c,v 1.44 2003/12/05 13:37:48 lukem Exp $");
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
-#include "histedit.h"
-#include "readline/readline.h"
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
+#include "histedit.h"
+#include "readline/readline.h"
 
 /* for rl_complete() */
 #define TAB		'\r'

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.39 2004/01/17 17:57:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.39 2004/01/17 17:57:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -941,8 +941,11 @@ term_set(EditLine *el, const char *term)
 		/* Get the size */
 		Val(T_co) = tgetnum("co");
 		Val(T_li) = tgetnum("li");
-		for (t = tstr; t->name != NULL; t++)
-			term_alloc(el, t, tgetstr(t->name, &area));
+		for (t = tstr; t->name != NULL; t++) {
+			/* XXX: some systems tgetstr needs non const */
+			term_alloc(el, t, tgetstr(strchr(t->name, *t->name),
+			    &area));
+		}
 	}
 
 	if (Val(T_co) < 2)
@@ -1424,7 +1427,7 @@ term_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			}
 		(void) fprintf(el->el_outfile, fmtd, 0);
 #else
-		(void) fprintf(el->el_outfile, fmtd, el->el_tty.t_speed);
+		(void) fprintf(el->el_outfile, fmtd, (int)el->el_tty.t_speed);
 #endif
 		return (0);
 	} else if (strcmp(*argv, "rows") == 0 || strcmp(*argv, "lines") == 0) {
@@ -1443,8 +1446,10 @@ term_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			scap = el->el_term.t_str[t - tstr];
 			break;
 		}
-	if (t->name == NULL)
-		scap = tgetstr(*argv, &area);
+	if (t->name == NULL) {
+		/* XXX: some systems tgetstr needs non const */
+		scap = tgetstr(strchr(*argv, **argv), &area);
+	}
 	if (!scap || scap[0] == '\0') {
 		if (!silent)
 			(void) fprintf(el->el_errfile,
