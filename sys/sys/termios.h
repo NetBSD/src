@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)termios.h	7.22 (Berkeley) 5/7/91
- *	$Id: termios.h,v 1.5 1993/06/05 22:40:40 cgd Exp $
+ *	$Id: termios.h,v 1.6 1994/02/09 20:54:52 mycroft Exp $
  */
 
 #ifndef _SYS_TERMIOS_H_
@@ -255,15 +255,9 @@ void	cfmakeraw __P((struct termios *));
 void	cfsetspeed __P((struct termios *, speed_t));
 #endif /* !POSIX */
 __END_DECLS
-
 #endif /* !KERNEL */
-
 #endif /* !_SYS_TERMIOS_H_ */
 
 #ifndef _POSIX_SOURCE
-#ifdef KERNEL
-#include "ttydefaults.h"
-#else
 #include <sys/ttydefaults.h>
-#endif
 #endif  /*_POSIX_SOURCE */
