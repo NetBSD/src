@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.19 2001/10/24 16:05:07 atatat Exp $	*/
+/*	$NetBSD: show.c,v 1.20 2003/05/17 23:02:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.19 2001/10/24 16:05:07 atatat Exp $");
+__RCSID("$NetBSD: show.c,v 1.20 2003/05/17 23:02:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,7 @@ p_sockaddr(sa, nm, flags, width)
 	case AF_LINK:
 		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
 		    NULL, 0, NI_NUMERICHOST) != 0)
-			strncpy(workbuf, "invalid", sizeof(workbuf));
+			strlcpy(workbuf, "invalid", sizeof(workbuf));
 		cp = workbuf;
 		break;
 
