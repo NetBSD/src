@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.19 2003/01/06 21:02:18 matt Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.20 2004/12/07 22:27:17 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description.
@@ -25,10 +25,6 @@
 #define _DEV_SCSIPI_SCSI_ALL_H_
 
 /*
- * SCSI command format
- */
-
-/*
  * Define dome bits that are in ALL (or a lot of) scsi commands
  */
 #define	SCSI_CTL_LINK		0x01
@@ -42,17 +38,6 @@
  */
 #define	SCSI_CMD_LUN_MASK	0xe0
 #define	SCSI_CMD_LUN_SHIFT	5
-
-/*
- * XXX
- * Actually some SCSI driver expects this structure to be 12 bytes, so
- * don't change it unless you really know what you are doing
- */
-
-struct scsi_generic {
-	u_int8_t opcode;
-	u_int8_t bytes[11];
-};
 
 /* XXX Is this a command ? What's its opcode ? */
 struct scsi_send_diag {
