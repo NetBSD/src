@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.12 2000/06/26 06:25:40 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.13 2001/05/05 17:46:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,11 +43,11 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.12 2000/06/26 06:25:40 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.13 2001/05/05 17:46:37 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-	.globl	_C_LABEL(end)
+	.globl	_end
 	.globl	_C_LABEL(__minbrk)
 	.globl	CURBRK
 
@@ -57,7 +57,7 @@ WEAK_ALIAS(brk, _brk)
 
 	.data
 _C_LABEL(__minbrk):
-	.long	_C_LABEL(end)
+	.long	_end
 
 	.text
 
