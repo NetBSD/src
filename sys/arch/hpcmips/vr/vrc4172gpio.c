@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.6 2003/07/15 02:29:35 lukem Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.7 2003/09/26 15:29:22 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.6 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.7 2003/09/26 15:29:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,9 +489,9 @@ vrc4172gpio_intr_establish(
 	s = splhigh();
 
 	if (!CHECK_PORT(port))
-		panic (__FUNCTION__": bogus interrupt line");
+		panic ("%s: bogus interrupt line", __FUNCTION__);
 	if (sc->sc_intr_mode[port] && mode != sc->sc_intr_mode[port])
-		panic (__FUNCTION__": bogus interrupt type");
+		panic ("%s: bogus interrupt type", __FUNCTION__);
 	else
 		sc->sc_intr_mode[port] = mode;
 
@@ -501,7 +501,7 @@ vrc4172gpio_intr_establish(
 
 	ih = malloc(sizeof(struct vrc4172gpio_intr_entry), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
-		panic(__FUNCTION__": no memory");
+		panic("%s: no memory", __FUNCTION__);
 
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
@@ -604,7 +604,7 @@ vrc4172gpio_intr_disestablish(hpcio_chip_t hc, void *arg)
 			return;
 		}
 	}
-	panic(__FUNCTION__": no such a handle.");
+	panic("%s: no such a handle.", __FUNCTION__);
 	/* NOTREACHED */
 }
 
