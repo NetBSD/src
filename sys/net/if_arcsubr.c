@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.23 1999/08/26 20:44:50 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.24 1999/08/27 19:23:19 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -619,6 +619,23 @@ arc_sprintf(ap)
 }
 
 /*
+ * Register (new) link level address.
+ */
+void
+arc_storelladdr(ifp, lla)
+	struct ifnet *ifp;
+	u_int8_t lla;
+{
+	register struct sockaddr_dl *sdl;
+	if ((sdl = ifp->if_sadl) &&
+	   sdl->sdl_family == AF_LINK) {
+		sdl->sdl_type = IFT_ARCNET;
+		sdl->sdl_alen = ifp->if_addrlen;
+		*(LLADDR(sdl)) = lla;
+	}
+}
+
+/*
  * Perform common duties while attaching to interface list
  */
 void
@@ -626,7 +643,6 @@ arc_ifattach(ifp, lla)
 	register struct ifnet *ifp;
 	u_int8_t lla;
 {
-	register struct sockaddr_dl *sdl;
 	register struct arccom *ac;
 
 	ifp->if_type = IFT_ARCNET;
@@ -650,11 +666,7 @@ arc_ifattach(ifp, lla)
 		   ifp->if_xname, ifp->if_xname); 
 	}
 	if_attach(ifp);
-	if ((sdl = ifp->if_sadl) &&
-	   sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_ARCNET;
-		sdl->sdl_alen = ifp->if_addrlen;
-		*(LLADDR(sdl)) = lla;
-	}
+	arc_storelladdr(ifp, lla);
+
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 }
