@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/11/08 13:57:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/12/22 12:45:21 mrg Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -64,7 +64,7 @@ COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
 AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/X86
 .endif
 
-.if ${MACHINE_ARCH} == "sparc"
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/SPARC
 SRCS+=		sparc.c xform.S clip.S norm.S
 CPPFLAGS+=	-DUSE_SPARC_ASM
