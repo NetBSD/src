@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.30 1998/02/05 18:35:18 perry Exp $
+.\"	$NetBSD: doc-syms,v 1.31 1998/02/05 19:43:08 perry Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -396,6 +396,7 @@
 .if "\\$1"libedit" \&Command Line Editor Library (libedit, -ledit)
 .if "\\$1"libkvm" \&Kernel Data Access Library (libkvm, -lkvm)
 .if "\\$1"libm" \&Math Library (libm, -lm)
+.if "\\$1"libossaudio" \&OSS Audio Emulation Library (libossaudio, -lossaudio)
 .if "\\$1"libposix" \&Posix Compatibility Library (libposix, -lposix)
 .if "\\$1"libresolv" \&DNS Resolver Library (libresolv, -lresolv)
 .if "\\$1"libtermcap" \&Termcap Access Library (libtermcap, -ltermcap)
