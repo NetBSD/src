@@ -1,10 +1,13 @@
-/*	$NetBSD: fil.c,v 1.52 2002/01/24 08:23:40 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.53 2002/03/14 12:34:00 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,7 +39,6 @@
 # include <string.h>
 # include <stdlib.h>
 #endif
-#include <sys/uio.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 # ifndef linux
 #  include <sys/mbuf.h>
@@ -98,10 +100,10 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.52 2002/01/24 08:23:40 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.53 2002/03/14 12:34:00 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.48 2002/01/07 10:57:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.58 2002/03/13 02:23:13 darrenr Exp";
 #endif
 #endif
 
@@ -112,7 +114,7 @@ extern	int	opts;
 
 # define	FR_VERBOSE(verb_pr)			verbose verb_pr
 # define	FR_DEBUG(verb_pr)			debug verb_pr
-# define	IPLLOG(a, c, d, e)		ipllog()
+# define	IPLLOG(a, c, d, e)		ipflog(a, c, d, e)
 #else /* #ifndef _KERNEL */
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
@@ -581,16 +583,14 @@ void *m;
 	pass = passin;
 	fr = fin->fin_fr;
 	fin->fin_fr = NULL;
-	fin->fin_rule = 0;
-	fin->fin_group = 0;
 	off = fin->fin_off;
-	pass |= (fi->fi_fl << 24);
 
 	if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
 		portcmp = 1;
 
 	for (rulen = 0; fr; fr = fr->fr_next, rulen++) {
 		if (skip) {
+			FR_VERBOSE(("%d (%#x)\n", skip, fr->fr_flags));
 			skip--;
 			continue;
 		}
@@ -613,7 +613,8 @@ void *m;
 			printf("\n");
 #endif
 
-		FR_VERBOSE(("%c", (pass & FR_PASS) ? 'p' : 
+		FR_VERBOSE(("%c", fr->fr_skip ? 's' :
+				  (pass & FR_PASS) ? 'p' : 
 				  (pass & FR_AUTH) ? 'a' :
 				  (pass & FR_ACCOUNT) ? 'A' :
 				  (pass & FR_NOMATCH) ? 'n' : 'b'));
@@ -643,22 +644,19 @@ void *m;
 			/*
 			 * Unrolled loops (4 each, for 32 bits).
 			 */
-			i |= ((*lip & *lm) != *ld) << 19;
 			FR_DEBUG(("1a. %#08x & %#08x != %#08x\n",
 				   *lip, *lm, *ld));
+			i |= ((*lip++ & *lm++) != *ld++) << 5;
 			if (fi->fi_v == 6) {
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 19;
 				FR_DEBUG(("1b. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 19;
+				i |= ((*lip++ & *lm++) != *ld++) << 5;
 				FR_DEBUG(("1c. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 19;
+				i |= ((*lip++ & *lm++) != *ld++) << 5;
 				FR_DEBUG(("1d. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
+				i |= ((*lip++ & *lm++) != *ld++) << 5;
 			} else {
 				lip += 3;
 				lm += 3;
@@ -667,23 +665,19 @@ void *m;
 			i ^= (fr->fr_flags & FR_NOTSRCIP);
 			if (i)
 				continue;
-			lip++, lm++, ld++;
-			i |= ((*lip & *lm) != *ld) << 20;
 			FR_DEBUG(("2a. %#08x & %#08x != %#08x\n",
 				   *lip, *lm, *ld));
+			i |= ((*lip++ & *lm++) != *ld++) << 6;
 			if (fi->fi_v == 6) {
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 20;
 				FR_DEBUG(("2b. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 20;
+				i |= ((*lip++ & *lm++) != *ld++) << 6;
 				FR_DEBUG(("2c. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
-				lip++, lm++, ld++;
-				i |= ((*lip & *lm) != *ld) << 20;
+				i |= ((*lip++ & *lm++) != *ld++) << 6;
 				FR_DEBUG(("2d. %#08x & %#08x != %#08x\n",
 					   *lip, *lm, *ld));
+				i |= ((*lip++ & *lm++) != *ld++) << 6;
 			} else {
 				lip += 3;
 				lm += 3;
@@ -692,14 +686,12 @@ void *m;
 			i ^= (fr->fr_flags & FR_NOTDSTIP);
 			if (i)
 				continue;
-			lip++, lm++, ld++;
-			i |= ((*lip & *lm) != *ld);
 			FR_DEBUG(("3. %#08x & %#08x != %#08x\n",
 				   *lip, *lm, *ld));
-			lip++, lm++, ld++;
-			i |= ((*lip & *lm) != *ld);
+			i |= ((*lip++ & *lm++) != *ld++);
 			FR_DEBUG(("4. %#08x & %#08x != %#08x\n",
 				   *lip, *lm, *ld));
+			i |= ((*lip & *lm) != *ld);
 			if (i)
 				continue;
 		}
@@ -732,6 +724,8 @@ void *m;
 			passl = passin;
 			fin->fin_fr = frl;
 			frl = NULL;
+			if (fr->fr_flags & FR_QUICK)
+				break;
 			continue;
 		}
 
@@ -758,32 +752,33 @@ void *m;
 			logged = 1;
 		}
 #endif /* IPFILTER_LOG */
-		if (!(skip = fr->fr_skip) && (passt & FR_LOGMASK) != FR_LOG)
-			pass = passt;
-		FR_DEBUG(("pass %#x\n", pass));
 		ATOMIC_INCL(fr->fr_hits);
-		if (pass & FR_ACCOUNT)
+		if (passt & FR_ACCOUNT)
 			fr->fr_bytes += (U_QUAD_T)ip->ip_len;
 		else
 			fin->fin_icode = fr->fr_icode;
 		fin->fin_rule = rulen;
 		fin->fin_group = fr->fr_group;
-		if (fr->fr_grp) {
+		if (fr->fr_grp != NULL) {
 			fin->fin_fr = fr->fr_grp;
-			pass = fr_scanlist(pass, ip, fin, m);
+			passt = fr_scanlist(passt, ip, fin, m);
 			if (fin->fin_fr == NULL) {
 				fin->fin_rule = rulen;
 				fin->fin_group = fr->fr_group;
 				fin->fin_fr = fr;
 			}
-			if (pass & FR_DONTCACHE)
+			if (passt & FR_DONTCACHE)
 				logged = 1;
 		}
-		if (pass & FR_QUICK)
+		if (!(skip = fr->fr_skip) && (passt & FR_LOGMASK) != FR_LOG)
+			pass = passt;
+		FR_DEBUG(("pass %#x\n", pass));
+		if (passt & FR_QUICK)
 			break;
 	}
 	if (logged)
 		pass |= FR_DONTCACHE;
+	pass |= (fi->fi_fl << 24);
 	return pass;
 }
 
@@ -945,20 +940,26 @@ int out;
 		ATOMIC_INCL(frstats[0].fr_ipv6[out]);
 		if (((ip6_t *)ip)->ip6_hlim < fr_minttl) {
 			ATOMIC_INCL(frstats[0].fr_badttl);
-			if (fr_minttllog)
-				logit = -2;
+			if (fr_minttllog & 1)
+				logit = -3;
+			if (fr_minttllog & 2)
+				drop = 1;
 		}
 	} else
 # endif
 	if (!out) {
 		if (fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
 			ATOMIC_INCL(frstats[0].fr_badsrc);
-			if (fr_chksrc == 2)
+			if (fr_chksrc & 1)
+				drop = 1;
+			if (fr_chksrc & 2)
 				logit = -2;
 		} else if (ip->ip_ttl < fr_minttl) {
 			ATOMIC_INCL(frstats[0].fr_badttl);
-			if (fr_minttllog)
+			if (fr_minttllog & 1)
 				logit = -3;
+			if (fr_minttllog & 2)
+				drop = 1;
 		}
 	}
 	if (drop) {
@@ -1122,11 +1123,19 @@ int out;
 		else
 #endif
 			list = ipacct[1][fr_active];
-		if ((fin->fin_fr = list) &&
-		    (fr_scanlist(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT)) {
-			ATOMIC_INCL(frstats[1].fr_acct);
+		if (list != NULL) {
+			u_32_t sg, sr;
+
+			fin->fin_fr = list;
+			sg = fin->fin_group;
+			sr = fin->fin_rule;
+			if (fr_scanlist(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT) {
+				ATOMIC_INCL(frstats[1].fr_acct);
+			}
+			fin->fin_group = sg;
+			fin->fin_rule = sr;
+			fin->fin_fr = fr;
 		}
-		fin->fin_fr = fr;
 		changed = ip_natout(ip, fin);
 	} else
 		fin->fin_fr = fr;
@@ -1229,8 +1238,10 @@ logit:
 		frdest_t *fdp = &fr->fr_tif;
 
 		if (((pass & FR_FASTROUTE) && !out) ||
-		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1))
+		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
 			(void) ipfr_fastroute(m, mp, fin, fdp);
+			m = *mp;
+		}
 
 		if (mc != NULL)
 			(void) ipfr_fastroute(mc, &mc, fin, &fr->fr_dif);
@@ -1265,6 +1276,12 @@ logit:
 		return 0;
 	if (pass & FR_AUTH)
 		return -2;
+	if ((pass & FR_RETMASK) == FR_RETRST)
+		return -3;
+	if ((pass & FR_RETMASK) == FR_RETICMP)
+		return -4;
+	if ((pass & FR_RETMASK) == FR_FAKEICMP)
+		return -5;
 	return -1;
 #endif /* _KERNEL */
 }
@@ -1486,7 +1503,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.48 2002/01/07 10:57:22 darrenr Exp
+ * Id: fil.c,v 2.35.2.58 2002/03/13 02:23:13 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

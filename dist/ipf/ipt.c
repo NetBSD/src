@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.4 2002/01/24 08:21:34 martti Exp $	*/
+/*	$NetBSD: ipt.c,v 1.5 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -13,6 +13,9 @@
 #   include <osreldate.h>
 #  endif
 # endif
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <assert.h>
@@ -62,7 +65,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipt.c,v 2.6.2.14 2002/01/15 14:36:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipt.c,v 2.6.2.19 2002/03/11 03:30:51 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -81,12 +84,13 @@ int	kmemcpy __P((char *, long, int));
 void	dumpnat __P((void));
 void	dumpstate __P((void));
 char	*getifname __P((void *));
+void	drain_log __P((char *));
 
 int main(argc,argv)
 int argc;
 char *argv[];
 {
-	char	*datain, *iface, *ifname, *packet;
+	char	*datain, *iface, *ifname, *packet, *logout;
 	int	fd, i, dir, c, loaded, dump, hlen;
 	struct	ifnet	*ifp;
 	struct	ipread	*r;
@@ -98,15 +102,17 @@ char *argv[];
 	loaded = 0;
 	r = &iptext;
 	iface = NULL;
+	logout = NULL;
 	ifname = "anon0";
 	datain = NULL;
 
 	nat_init();
 	fr_stateinit();
 	initparse();
+	ipflog_init();
 	fr_running = 1;
 
-	while ((c = getopt(argc, argv, "6bdDEHi:I:NoPr:STvxX")) != -1)
+	while ((c = getopt(argc, argv, "6bdDEHi:I:l:NoPr:STvxX")) != -1)
 		switch (c)
 		{
 #ifdef	USE_INET6
@@ -128,6 +134,9 @@ char *argv[];
 			break;
 		case 'I' :
 			ifname = optarg;
+			break;
+		case 'l' :
+			logout = optarg;
 			break;
 		case 'o' :
 			opts |= OPT_SAVEOUT;
@@ -199,11 +208,20 @@ char *argv[];
 			hlen = sizeof(ip6_t);
 #endif
 		packet = (char *)buf;
-		ipfr_slowtimer();
+		/* ipfr_slowtimer(); */
 		i = fr_check(ip, hlen, ifp, dir, (mb_t **)&packet);
 		if ((opts & OPT_NAT) == 0)
 			switch (i)
 			{
+			case -5 :
+				(void)printf("block return-icmp-as-dest");
+				break;
+			case -4 :
+				(void)printf("block return-icmp");
+				break;
+			case -3 :
+				(void)printf("block return-rst");
+				break;
 			case -2 :
 				(void)printf("auth");
 				break;
@@ -230,7 +248,7 @@ char *argv[];
 			printpacket((ip_t *)buf);
 #ifndef	linux
 		if (dir && (ifp != NULL) && ip->ip_v && (packet != NULL))
-# ifdef __sgi
+# if defined(__sgi) && (IRIX < 605)
 			(*ifp->if_output)(ifp, (void *)packet, NULL);
 # else
 			(*ifp->if_output)(ifp, (void *)packet, NULL, 0);
@@ -245,6 +263,10 @@ char *argv[];
 		}
 	}
 	(*r->r_close)();
+
+	if (logout != NULL) {
+		drain_log(logout);
+	}
 
 	if (dump == 1)  {
 		dumpnat();
@@ -378,7 +400,7 @@ void *ptr;
 #if defined(NetBSD) && (NetBSD >= 199905) && (NetBSD < 1991011) || \
     defined(__OpenBSD__)
 #else
-	char buf[32];
+	char buf[32], *s;
 	int len;
 #endif
 	struct ifnet netif;
@@ -405,7 +427,52 @@ void *ptr;
 	else
 		len = 5;
 	buf[sizeof(buf) - len] = '\0';
+	for (s = buf; *s && !isdigit(*s); s++)
+		;
+	if (isdigit(*s))
+		*s = '\0';
 	sprintf(buf + strlen(buf), "%d", netif.if_unit % 10000);
 	return strdup(buf);
 #endif
+}
+
+
+void drain_log(filename)
+char *filename;
+{
+	char buffer[IPLLOGSIZE];
+	struct iovec iov;
+	struct uio uio;
+	size_t resid;
+	int fd;
+
+	fd = open(filename, O_CREAT|O_TRUNC|O_WRONLY, 0644);
+	if (fd == -1) {
+		perror("drain_log:open");
+		return;
+	}
+
+	while (1) {
+		bzero((char *)&iov, sizeof(iov));
+		iov.iov_base = buffer;
+		iov.iov_len = sizeof(buffer);
+
+		bzero((char *)&uio, sizeof(uio));
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_resid = iov.iov_len;
+		resid = uio.uio_resid;
+
+		if (ipflog_read(0, &uio) == 0) {
+			/*
+			 * If nothing was read then break out.
+			 */
+			if (uio.uio_resid == resid)
+				break;
+			write(fd, buffer, resid - uio.uio_resid);
+		} else
+			break;
+	}
+
+	close(fd);
 }

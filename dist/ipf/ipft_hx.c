@@ -1,10 +1,13 @@
-/*	$NetBSD: ipft_hx.c,v 1.3 2002/01/24 08:21:33 martti Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.4 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -42,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.2.2.4 2001/12/08 15:44:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.2.2.5 2002/02/22 15:32:54 darrenr Exp";
 #endif
 
 extern	int	opts;

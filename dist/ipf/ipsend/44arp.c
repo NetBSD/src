@@ -1,8 +1,11 @@
-/*	$NetBSD: 44arp.c,v 1.2 2001/03/26 06:11:47 mike Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.3 2002/03/14 12:32:39 martti Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>

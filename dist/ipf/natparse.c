@@ -1,10 +1,13 @@
-/*	$NetBSD: natparse.c,v 1.5 2002/01/24 08:21:35 martti Exp $	*/
+/*	$NetBSD: natparse.c,v 1.6 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -55,7 +58,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: natparse.c,v 1.17.2.22 2002/01/15 14:36:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: natparse.c,v 1.17.2.23 2002/02/22 15:32:55 darrenr Exp";
 #endif
 
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipl.4,v 1.3 2002/01/24 08:21:42 martti Exp $
+.\"	$NetBSD: ipl.4,v 1.4 2002/03/14 12:32:42 martti Exp $
 .\"
 .TH IPL 4
 .SH NAME
@@ -51,7 +51,7 @@ When reading from the \fBipl\fP device, it is necessary to call read(2) with
 a buffer big enough to hold at least 1 complete log record - reading of partial
 log records is not supported.
 .PP
-If the packet contents is more than 128 bytes when \fBlog body\fP is used,
+If the packet contents are more than 128 bytes when \fBlog body\fP is used,
 then only 128 bytes of the packet contents is logged.
 .PP
 Although it is only possible to read from the \fBipl\fP device, opening it

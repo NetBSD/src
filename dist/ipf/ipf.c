@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.7 2002/01/24 08:21:32 martti Exp $	*/
+/*	$NetBSD: ipf.c,v 1.8 2002/03/14 12:32:36 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,6 +13,9 @@
 #   include <osreldate.h>
 #  endif
 # endif
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -49,7 +52,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.11 2002/01/09 11:46:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.13 2002/02/22 15:32:53 darrenr Exp";
 #endif
 
 #if	SOLARIS
@@ -105,11 +108,9 @@ char *argv[];
 	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
-#ifdef	USE_INET6
 		case '6' :
 			use_inet6 = 1;
 			break;
-#endif
 		case 'A' :
 			opts &= ~OPT_INACTIVE;
 			break;

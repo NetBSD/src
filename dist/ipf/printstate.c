@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.2 2002/03/14 12:30:10 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.2 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.

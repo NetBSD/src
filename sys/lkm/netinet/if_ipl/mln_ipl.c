@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.27 2002/01/24 08:22:01 martti Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.28 2002/03/14 12:33:20 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.27 2002/01/24 08:22:01 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.28 2002/03/14 12:33:20 martti Exp $");
 
 #include <sys/param.h>
 
@@ -231,6 +231,10 @@ static int ipl_load()
 	 * XXX perfect world we could use the ones specified by cdevsw[].
 	 */
 	(void)ipl_remove();
+
+	error = ipl_enable();
+	if (error)
+		return error;
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);

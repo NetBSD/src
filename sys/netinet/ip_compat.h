@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.26 2002/01/24 08:23:41 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.27 2002/03/14 12:34:01 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.26.2.34 2002/01/08 14:18:13 darrenr Exp
+ * Id: ip_compat.h,v 2.26.2.39 2002/03/13 03:54:34 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -71,6 +71,18 @@ struct  ether_addr {
 };
 #endif
 
+#ifndef	LIFNAMSIZ
+# ifdef	IF_NAMESIZE
+#  define	LIFNAMSIZ	IF_NAMESIZE
+# else
+#  ifdef	IFNAMSIZ
+#   define	LIFNAMSIZ	IFNAMSIZ
+#  else
+#   define	LIFNAMSIZ	16
+#  endif
+# endif
+#endif
+
 #if defined(__sgi) && !defined(IPFILTER_LKM)
 # ifdef __STDC__
 #  define IPL_EXTERN(ep) ipfilter##ep
@@ -92,6 +104,25 @@ struct  ether_addr {
 #ifdef	linux
 # include <sys/sysmacros.h>
 #endif
+
+
+/*
+ * This is a workaround for <sys/uio.h> troubles on FreeBSD and OpenBSD.
+ */
+#ifndef _KERNEL
+# define ADD_KERNEL
+# define _KERNEL
+# define KERNEL
+#endif
+#ifdef __OpenBSD__
+struct file;
+#endif
+#include <sys/uio.h>
+#ifdef ADD_KERNEL
+# undef _KERNEL
+# undef KERNEL
+#endif
+
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
 # if SOLARIS2 >= 4
@@ -152,7 +183,7 @@ typedef	struct	qif	{
 	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
 	size_t	qf_off;
 	size_t	qf_len;	/* this field is used for in ipfr_fastroute */
-	char	qf_name[8];
+	char	qf_name[LIFNAMSIZ];
 	/*
 	 * in case the ILL has disappeared...
 	 */
@@ -351,6 +382,21 @@ union	i6addr	{
  * Build some macros and #defines to enable the same code to compile anywhere
  * Well, that's the idea, anyway :-)
  */
+#if SOLARIS
+typedef mblk_t mb_t;
+# if SOLARIS2 >= 7
+#  ifdef lint
+#   define ALIGN32(ptr)    (ptr ? 0L : 0L)
+#   define ALIGN16(ptr)    (ptr ? 0L : 0L)
+#  else
+#   define ALIGN32(ptr)    (ptr)
+#   define ALIGN16(ptr)    (ptr)
+#  endif
+# endif
+#else
+typedef struct mbuf mb_t;
+#endif /* SOLARIS */
+
 #if !SOLARIS || (SOLARIS2 < 6) || !defined(KERNEL)
 # define	ATOMIC_INCL		ATOMIC_INC
 # define	ATOMIC_INC64		ATOMIC_INC
@@ -576,7 +622,7 @@ extern	vm_map_t	kmem_map;
 # endif /* NetBSD && (NetBSD <= 1991011) && (NetBSD >= 199407) */
 # define	PANIC(x,y)	if (x) panic y
 #else /* KERNEL */
-# define	SLEEP(x,y)	;
+# define	SLEEP(x,y)	1
 # define	WAKEUP(x)	;
 # define	PANIC(x,y)	;
 # define	ATOMIC_INC(x)	(x)++
@@ -605,34 +651,10 @@ extern	vm_map_t	kmem_map;
 # define	IRCOPYPTR	ircopyptr
 # define	IWCOPYPTR	iwcopyptr
 # define	IFNAME(x)	get_ifname((struct ifnet *)x)
+# define	UIOMOVE(a,b,c,d)	ipfuiomove(a,b,c,d)
+extern	void	m_copydata __P((mb_t *, int, int, caddr_t));
+extern	int	ipfuiomove __P((caddr_t, int, int, struct uio *));
 #endif /* KERNEL */
-
-#if SOLARIS
-typedef mblk_t mb_t;
-# if SOLARIS2 >= 7
-#  ifdef lint
-#   define ALIGN32(ptr)    (ptr ? 0L : 0L)
-#   define ALIGN16(ptr)    (ptr ? 0L : 0L)
-#  else
-#   define ALIGN32(ptr)    (ptr)
-#   define ALIGN16(ptr)    (ptr)
-#  endif
-# endif
-#else
-# ifdef	linux
-#  ifndef kernel
-typedef struct mb {
-	struct mb *next;
-	u_int len;
-	u_char *data;
-} mb_t;
-#  else
-typedef struct sk_buff mb_t;
-#  endif
-# else
-typedef struct mbuf mb_t;
-# endif
-#endif /* SOLARIS */
 
 /*
  * These #ifdef's are here mainly for linux, but who knows, they may

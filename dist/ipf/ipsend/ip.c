@@ -1,10 +1,13 @@
-/*	$NetBSD: ip.c,v 1.3 2002/01/24 08:21:39 martti Exp $	*/
+/*	$NetBSD: ip.c,v 1.4 2002/03/14 12:32:39 martti Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +34,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.1.4.3 2001/07/15 22:00:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.1.4.4 2002/02/22 15:32:57 darrenr Exp";
 #endif
 
 static	char	*ipbuf = NULL, *ethbuf = NULL;
