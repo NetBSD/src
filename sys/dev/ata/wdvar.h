@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.24 2003/12/14 05:14:39 thorpej Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.25 2003/12/14 05:37:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -29,7 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __ATA_DISK_PRIVATE
+#ifndef _DEV_ATA_WDVAR_H_
+#define	_DEV_ATA_WDVAR_H_
 
 struct wd_softc {
 	/* General disk infos */
@@ -79,6 +80,6 @@ struct wd_softc {
 #define sc_multi sc_wdc_bio.multi
 #define sc_badsect sc_wdc_bio.badsect
 
-#endif /* __ATA_DISK_PRIVATE */
-
 void wddone __P((void *));
+
+#endif /* _DEV_ATA_WDVAR_H_ */
