@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 2002/07/29 22:05:37 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.6 2002/08/03 21:29:41 thorpej Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,6 +111,8 @@ Intel i82542, i82543, i85244 Gigabit Ethernet
 .It
 .Te 2 "i80321 I/O Processor functions"
 .(bullet -compact
+Application Accelerator Unit
+.It
 Watchdog timer
 .bullet)
 .bullet)
