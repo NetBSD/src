@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.113 2003/03/20 14:17:21 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.114 2003/03/21 06:16:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.113 2003/03/20 14:17:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.114 2003/03/21 06:16:54 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -538,7 +538,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	struct vnode *vp;
 	SEGUSE *segusep;
 	daddr_t ibno;
-	int do_ckp, did_ckp, error, i;
+	int do_ckp, did_ckp, error, i, s;
 	int writer_set = 0;
 	int dirty;
 	int redo;
@@ -676,6 +676,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		 * for other parts of the Ifile to be dirty after the loop
 		 * above, since we hold the segment lock.
 		 */
+		s = splbio();
 		if (LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			LFS_CLR_UINO(ip, IN_ALLMOD);
 		}
@@ -690,6 +691,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			}
 		}
 #endif
+		splx(s);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
@@ -2187,14 +2189,10 @@ lfs_cluster_aiodone(struct buf *bp)
 		 * the locked list to be written again.
 		 */
 		vp = tbp->b_vp;
+
 		if ((tbp->b_flags & (B_LOCKED | B_DELWRI)) == B_LOCKED)
 			LFS_UNLOCK_BUF(tbp);
-#if 0
-		else if (vp != devvp)
-			printf("dirtied while busy?! bp %p, ino %d, lbn %d\n",
-				tbp, vp ? VTOI(vp)->i_number : -1,
-				tbp->b_lblkno);
-#endif
+
 		tbp->b_flags &= ~B_GATHERED;
 
 		LFS_BCLEAN_LOG(fs, tbp);
