@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.61 2005/01/08 18:12:35 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.62 2005/01/08 22:16:23 manu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.61 2005/01/08 18:12:35 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.62 2005/01/08 22:16:23 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,10 +268,27 @@ main(argc, argv)
 		goto pam_failed;
 
 pam_failed:
-	if (pam_err != PAM_SUCCESS) {
-		warnx("PAM failed, fallback to plain old authentication");
+	/*
+	 * If PAM is broken, fallback to plain old authentication.
+	 * Do not do that on authentication errors.
+	 */	
+	switch(pam_err) {
+	case PAM_SUCCESS:
+		break;
+
+	case PAM_ABORT:
+	case PAM_BUF_ERR:
+	case PAM_SYMBOL_ERR:
+	case PAM_SYSTEM_ERR:
+		warnx("PAM failed: %s", pam_strerror(pamh, pam_err));
+		warnx("fallback to plain old authentication");
 		pam_end(pamh, pam_err);
 		username = getlogin();
+		break;
+
+	default:
+		fatalx((1, "Sorry: %s\n", pam_strerror(pamh, pam_err)));
+		break;
 	}	
 
 	/* 
