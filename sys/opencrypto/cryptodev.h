@@ -1,5 +1,5 @@
-/*	$NetBSD: cryptodev.h,v 1.3 2003/07/30 18:45:31 jonathan Exp $ */
-/*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.4 2003/02/26 00:14:05 sam Exp $	*/
+/*	$NetBSD: cryptodev.h,v 1.4 2003/08/21 16:08:05 jonathan Exp $ */
+/*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.5 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
 /*
@@ -265,6 +265,7 @@ struct cryptop {
 #define CRYPTO_F_REL	0x0004	/* Must return data in same place */
 #define	CRYPTO_F_BATCH	0x0008	/* Batch op if possible possible */
 #define	CRYPTO_F_CBIMM	0x0010	/* Do callback immediately */
+#define	CRYPTO_F_DONE	0x0020	/* Operation completed */
 
 	caddr_t		crp_buf;	/* Data to be processed */
 	caddr_t		crp_opaque;	/* Opaque pointer, passed along */

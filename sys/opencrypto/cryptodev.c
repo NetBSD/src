@@ -1,5 +1,5 @@
-/*	$NetBSD: cryptodev.c,v 1.3 2003/07/30 18:20:15 jonathan Exp $ */
-/*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.3 2003/02/26 00:14:05 sam Exp $	*/
+/*	$NetBSD: cryptodev.c,v 1.4 2003/08/21 16:08:05 jonathan Exp $ */
+/*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.3 2003/07/30 18:20:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.4 2003/08/21 16:08:05 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,9 +449,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 
 	s = splcrypto();	/* NB: only needed with CRYPTO_F_CBIMM */
 	error = crypto_dispatch(crp);
-	if (error == 0) {
+	if (error == 0 && (crp->crp_flags & CRYPTO_F_DONE) == 0)
 		error = tsleep(crp, PSOCK, "crydev", 0);
-	}
 	splx(s);
 	if (error) {
 		goto bail;
