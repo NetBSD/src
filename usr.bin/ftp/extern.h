@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.57 2000/06/15 13:08:25 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.58 2000/07/18 07:16:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ void	domacro(int, char **);
 char   *domap(char *);
 void	doproxy(int, char **);
 char   *dotrans(char *);
+void	feat(int, char **);
 void	fget(int, char **);
 int	foregroundproc(void);
 void	formatbuf(char *, size_t, const char *);
@@ -148,6 +149,7 @@ struct cmd *getcmd(const char *);
 int	getit(int, char **, int, const char *);
 struct option *getoption(const char *);
 char   *getoptionvalue(const char *);
+void	getremoteinfo(void);
 int	getreply(int);
 char   *globulize(const char *);
 char   *gunique(const char *);
@@ -171,9 +173,11 @@ void	mdelete(int, char **);
 void	mget(int, char **);
 void	mintr(int);
 void	mls(int, char **);
+void	mlst(int, char **);
 void	modtime(int, char **);
 void	mput(int, char **);
 char   *onoff(int);
+void	opts(int, char **);
 void	newer(int, char **);
 void	page(int, char **);
 int	parserate(int, char **, int);
@@ -196,7 +200,6 @@ void	reget(int, char **);
 char   *remglob(char **, int, char **);
 time_t	remotemodtime(const char *, int);
 off_t	remotesize(const char *, int);
-void	remotesyst(void);
 void	removedir(int, char **);
 void	renamefile(int, char **);
 void	reset(int, char **);

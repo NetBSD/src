@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.101 2000/07/07 15:13:24 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.102 2000/07/18 07:16:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.101 2000/07/07 15:13:24 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.102 2000/07/18 07:16:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,7 +400,7 @@ hookup(char *host, char *port)
 	}
 
 	return (hostname);
-bad:
+ bad:
 	(void)close(s);
 	return (NULL);
 }
@@ -432,7 +432,6 @@ cmdtimeout(int notused)
 		siglongjmp(ptabort, 1);
 	errno = oerrno;
 }
-
 
 /*VARARGS*/
 int
@@ -597,20 +596,19 @@ getreply(int expecteof)
 			(void)putc(c, ttyout);
 			(void)fflush (ttyout);
 		}
-		if (line == 0) {
-			size_t len = cp - current_line;
-
-			if (len > sizeof(reply_string))
-				len = sizeof(reply_string);
-
-			(void)strlcpy(reply_string, current_line, len);
-		}
+		if (cp[-1] == '\r')
+			cp[-1] = '\0';
+		*cp = '\0';
+		if (line == 0)
+			(void)strlcpy(reply_string, current_line,
+			    sizeof(reply_string));
+		if (line > 0 && code == 0 && reply_callback != NULL)
+			(*reply_callback)(current_line);
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
 				originalcode = code;
 			continue;
 		}
-		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
 		alarmtimer(0);
@@ -893,7 +891,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 					usleep(1000000 - td.tv_usec);
 				}
 			}
-		} else {		/* simpler/faster no rate limit */
+		} else {		/* simpler/faster; no rate limit */
 			while (1) {
 				errno = c = d = 0;
 				if ((c = read(fileno(fin), buf, bufsize)) <= 0)
@@ -979,7 +977,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		ptransfer(0);
 	goto cleanupsend;
 
-abort:
+ abort:
 	(void)xsignal(SIGINT, oldintr);
 	oldintr = NULL;
 	if (!cpend) {
@@ -999,7 +997,7 @@ abort:
 	if (bytes > 0)
 		ptransfer(0);
 
-cleanupsend:
+ cleanupsend:
 	if (oldintr)
 		(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
@@ -1276,7 +1274,7 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 					i++;
 			}
 			if (fseek(fout, 0L, SEEK_CUR) < 0) {
-done:
+ done:
 				warn("local: %s", local);
 				goto cleanuprecv;
 			}
@@ -1357,7 +1355,7 @@ break2:
 	}
 	goto cleanuprecv;
 
-abort:
+ abort:
 			/*
 			 * abort using RFC 959 recommended IP,SYNC sequence
 			 */
@@ -1374,7 +1372,7 @@ abort:
 	if (bytes > 0)
 		ptransfer(0);
 
-cleanuprecv:
+ cleanuprecv:
 	if (oldintr)
 		(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
@@ -1414,7 +1412,7 @@ initconn(void)
 		warnx("use of scoped address can be troublesome");
 	}
 #endif
-reinit:
+ reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
 		data = socket(data_addr.su_family, SOCK_STREAM, 0);
@@ -1664,7 +1662,7 @@ reinit:
 		return (0);
 	}
 
-noport:
+ noport:
 	data_addr = myctladdr;
 	if (sendport)
 		data_addr.su_port = 0;	/* let system pick one */
@@ -1788,7 +1786,7 @@ noport:
 	}
 #endif
 	return (0);
-bad:
+ bad:
 	(void)close(data), data = -1;
 	if (tmpno)
 		sendport = 1;
@@ -2013,7 +2011,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	ptflag = 0;
 	fprintf(ttyout, "local: %s remote: %s\n", local, remote);
 	return;
-abort:
+ abort:
 	if (sigsetjmp(xferabort, 1)) {
 		(void)xsignal(SIGINT, oldintr);
 		return;

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.69 2000/06/05 09:22:53 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.70 2000/07/18 07:16:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd June 5, 2000
+.Dd July 18, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -410,7 +410,7 @@ by the string
 Delete the file
 .Ar remote-file
 on the remote machine.
-.It Ic dir Op Ar remote-directory Op Ar local-file
+.It Ic dir Op Ar remote-path Op Ar local-file
 Print a listing of the contents of a
 directory on the remote machine.
 The listing includes any system-dependent information that the server
@@ -420,7 +420,7 @@ systems will produce
 output from the command
 .Ql ls \-l .
 If
-.Ar remote-directory
+.Ar remote-path
 is left unspecified, the current working directory is used.
 If interactive prompting is on,
 .Nm
@@ -460,6 +460,10 @@ is executed again.
 .It Ic exit
 A synonym for
 .Ic bye .
+.It Ic features
+Display what features the remote server supports (using the
+.Dv FEAT
+command).
 .It Ic fget Ar localfile
 Retrieve the files listed in
 .Ar localfile ,
@@ -589,7 +593,7 @@ with the program specified by the
 option.
 .It Ic lpwd
 Print the working directory on the local machine.
-.It Ic \&ls Op Ar remote-directory Op Ar local-file
+.It Ic \&ls Op Ar remote-path Op Ar local-file
 A synonym for
 .Ic dir .
 .It Ic macdef Ar macro-name
@@ -664,6 +668,22 @@ will prompt the user to verify that the last argument is indeed the
 target local file for receiving
 .Ic mls
 output.
+.It Ic mlsd Op Ar remote-path
+Display the contents of
+.Ar remote-path
+(which should default to the current directory if not given)
+in a machine-parsable form, using
+.Dv MLSD .
+The format of display can be changed with
+.Sq "opts mlst ..." .
+.It Ic mlst Op Ar remote-path
+Display the details about
+.Ar remote-path
+(which should default to the current directory if not given)
+in a machine-parsable form, using
+.Dv MLST .
+The format of display can be changed with
+.Sq "opts mlst ..." .
 .It Ic mode Ar mode-name
 Set the file transfer
 .Ic mode
@@ -701,7 +721,7 @@ exist on the current system, the remote file is considered
 .Ic newer .
 Otherwise, this command is identical to
 .Ar get .
-.It Ic nlist Op Ar remote-directory Op Ar local-file
+.It Ic nlist Op Ar remote-path Op Ar local-file
 A synonym for
 .Ic ls .
 .It Ic nmap Op Ar inpattern outpattern
@@ -823,6 +843,22 @@ will also attempt to automatically log the user in to
 the
 .Tn FTP
 server (see below).
+.It Ic opts Ar command Op Ar command-options
+Set options on the remote
+.Tn FTP
+server for
+.Ar command
+to
+.Ar command-options
+(whose absence is handled on a command-specific basis).
+Remote
+.Tn FTP
+commands known to support options include:
+.Sq MLST
+(used for
+.Dv MLSD
+and 
+.Dv MLST ) .
 .It Ic page Ar file
 Retrieve
 .Ic file
@@ -859,17 +895,24 @@ traffic.
 servers are required to support the
 .Dv PASV
 command by RFC 1123, some do not.)
-.It Ic pdir Op Ar remote-directory
+.It Ic pdir Op Ar remote-path
 Perform
 .Ic dir
-.Op Ar remote-directory ,
+.Op Ar remote-path ,
 and display the result with the program specified by the
 .Ic "set pager"
 option.
-.It Ic pls Op Ar remote-directory
+.It Ic pls Op Ar remote-path
 Perform
 .Ic ls
-.Op Ar remote-directory ,
+.Op Ar remote-path ,
+and display the result with the program specified by the
+.Ic "set pager"
+option.
+.It Ic pmlsd Op Ar remote-path
+Perform
+.Ic mlsd
+.Op Ar remote-path ,
 and display the result with the program specified by the
 .Ic "set pager"
 option.
@@ -1584,7 +1627,7 @@ must be quoted; e.g.
 .Dq Qq Li \&| ls\ \-lt .
 A particularly
 useful example of this mechanism is:
-.Dq Li dir \&. \&|more .
+.Dq Li dir \&"\&" \&|more .
 .It
 Failing the above checks, if ``globbing'' is enabled,
 local file names are expanded
@@ -1943,8 +1986,9 @@ attempts to be compliant with
 .Cm RFC 1738 ,
 .Cm RFC 2068 ,
 .Cm RFC 2428 ,
+.Cm RFC 2732 ,
 and
-.Cm RFC 2732 .
+.Cm draft-ietf-ftpext-mlst-11 .
 .Sh HISTORY
 The
 .Nm
@@ -1987,13 +2031,13 @@ assumes that all IPv4 mapped addresses
 IPv6 addresses with a form like
 .Li ::ffff:10.1.1.1
 .Pc
-indicate IPv4 destination which can be handled by
+indicate IPv4 destinations which can be handled by
 .Dv AF_INET
 sockets.
-However, in certain IPv6 network configuration, the assumption is not true.
-In such an environment, IPv4 mapped address must be passed to
+However, in certain IPv6 network configurations, this assumption is not true.
+In such an environment, IPv4 mapped addresses must be passed to
 .Dv AF_INET6
 sockets directly.
-For example, if your site uses SIIT translator for IPv6-to-IPv4 translation,
+For example, if your site uses a SIIT translator for IPv6-to-IPv4 translation,
 .Nm
 is unable to support your configuration.

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.96 2000/06/15 13:08:27 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.97 2000/07/18 07:16:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.96 2000/06/15 13:08:27 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.97 2000/07/18 07:16:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -175,64 +175,103 @@ setpeer(int argc, char *argv[])
 	}
 }
 
+static void
+parse_feat(const char *line)
+{
+
+	if (strcasecmp(line, " MDTM") == 0)
+		features[FEAT_MDTM] = 1;
+	else if (strncasecmp(line, " MLST", sizeof(" MLST") - 1) == 0) {
+		features[FEAT_MLST] = 1;
+	} else if (strcasecmp(line, " REST STREAM") == 0)
+		features[FEAT_REST_STREAM] = 1;
+	else if (strcasecmp(line, " SIZE") == 0)
+		features[FEAT_SIZE] = 1;
+	else if (strcasecmp(line, " TVFS") == 0)
+		features[FEAT_TVFS] = 1;
+}
+
 /*
- * Determine the remote system type.
+ * Determine the remote system type (SYST) and features (FEAT).
  * Call after a successful login (i.e, connected = -1)
  */
 void
-remotesyst(void)
+getremoteinfo(void)
 {
-	int overbose;
+	int overbose, i;
 
 	overbose = verbose;
 	if (debug == 0)
 		verbose = -1;
-	if (command("SYST") == COMPLETE && overbose) {
-		char *cp, c;
-		c = 0;
-		cp = strchr(reply_string + 4, ' ');
-		if (cp == NULL)
-			cp = strchr(reply_string + 4, '\r');
-		if (cp) {
-			if (cp[-1] == '.')
-				cp--;
-			c = *cp;
-			*cp = '\0';
-		}
 
-		fprintf(ttyout, "Remote system type is %s.\n",
-		    reply_string + 4);
-		if (cp)
-			*cp = c;
-	}
-	if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
-		if (proxy)
-			unix_proxy = 1;
-		else
-			unix_server = 1;
-		/*
-		 * Set type to 0 (not specified by user),
-		 * meaning binary by default, but don't bother
-		 * telling server.  We can use binary
-		 * for text files unless changed by the user.
-		 */
-		type = 0;
-		(void)strlcpy(typename, "binary", sizeof(typename));
-		if (overbose)
-		    fprintf(ttyout,
-			"Using %s mode to transfer files.\n",
-			typename);
-	} else {
-		if (proxy)
-			unix_proxy = 0;
-		else
-			unix_server = 0;
-		if (overbose &&
-		    !strncmp(reply_string, "215 TOPS20", 10))
-			fputs(
+			/* determine remote system type */
+	if (command("SYST") == COMPLETE) {
+		if (overbose) {
+			char *cp, c;
+
+			c = 0;
+			cp = strchr(reply_string + 4, ' ');
+			if (cp == NULL)
+				cp = strchr(reply_string + 4, '\r');
+			if (cp) {
+				if (cp[-1] == '.')
+					cp--;
+				c = *cp;
+				*cp = '\0';
+			}
+
+			fprintf(ttyout, "Remote system type is %s.\n",
+			    reply_string + 4);
+			if (cp)
+				*cp = c;
+		}
+		if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
+			if (proxy)
+				unix_proxy = 1;
+			else
+				unix_server = 1;
+			/*
+			 * Set type to 0 (not specified by user),
+			 * meaning binary by default, but don't bother
+			 * telling server.  We can use binary
+			 * for text files unless changed by the user.
+			 */
+			type = 0;
+			(void)strlcpy(typename, "binary", sizeof(typename));
+			if (overbose)
+			    fprintf(ttyout,
+				"Using %s mode to transfer files.\n",
+				typename);
+		} else {
+			if (proxy)
+				unix_proxy = 0;
+			else
+				unix_server = 0;
+			if (overbose &&
+			    !strncmp(reply_string, "215 TOPS20", 10))
+				fputs(
 "Remember to set tenex mode when transferring binary files from this machine.\n",
-			    ttyout);
+				    ttyout);
+		}
 	}
+
+			/* determine features (if any) */
+	for (i = 0; i < FEAT_max; i++)
+		features[i] = -1;
+	reply_callback = parse_feat;
+	if (command("FEAT") == COMPLETE) {
+		for (i = 0; i < FEAT_max; i++) {
+			if (features[i] == -1)
+				features[i] = 0;
+		}
+		features[FEAT_FEAT] = 1;
+	} else
+		features[FEAT_FEAT] = 0;
+	if (debug)
+		for (i = 0; i < FEAT_max; i++)
+			printf("features[%d] = %d\n", i, features[i]);
+	reply_callback = NULL;
+
 	verbose = overbose;
 }
 
@@ -427,7 +466,7 @@ ftp_login(const char *host, const char *user, const char *pass)
 		goto cleanup_ftp_login;
 
 	connected = -1;
-	remotesyst();
+	getremoteinfo();
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
 			(void)strlcpy(line, "$init", sizeof(line));
@@ -438,7 +477,7 @@ ftp_login(const char *host, const char *user, const char *pass)
 	}
 	updateremotepwd();
 
-cleanup_ftp_login:
+ cleanup_ftp_login:
 	if (user != NULL && freeuser)
 		free((char *)user);
 	if (pass != NULL && freepass)
@@ -596,14 +635,21 @@ globulize(const char *pattern)
 off_t
 remotesize(const char *file, int noisy)
 {
-	int overbose;
+	int overbose, r;
 	off_t size;
 
 	overbose = verbose;
 	size = -1;
 	if (debug == 0)
 		verbose = -1;
-	if (command("SIZE %s", file) == COMPLETE) {
+	if (! features[FEAT_SIZE]) {
+		if (noisy)
+			fprintf(ttyout,
+			    "SIZE is not supported by remote server.\n");
+		goto cleanup_remotesize;
+	}
+	r = command("SIZE %s", file);
+	if (r == COMPLETE) {
 		char *cp, *ep;
 
 		cp = strchr(reply_string, ' ');
@@ -617,10 +663,15 @@ remotesize(const char *file, int noisy)
 			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
-	} else if (noisy && debug == 0) {
-		fputs(reply_string, ttyout);
-		putc('\n', ttyout);
+	} else {
+		if (r == ERROR && code == 500 && features[FEAT_SIZE] == -1)
+			features[FEAT_SIZE] = 0;
+		if (noisy && debug == 0) {
+			fputs(reply_string, ttyout);
+			putc('\n', ttyout);
+		}
 	}
+ cleanup_remotesize:
 	verbose = overbose;
 	return (size);
 }
@@ -631,16 +682,22 @@ remotesize(const char *file, int noisy)
 time_t
 remotemodtime(const char *file, int noisy)
 {
-	int overbose;
-	time_t rtime;
-	int ocode;
+	int	overbose, ocode, r;
+	time_t	rtime;
 
 	overbose = verbose;
 	ocode = code;
 	rtime = -1;
 	if (debug == 0)
 		verbose = -1;
-	if (command("MDTM %s", file) == COMPLETE) {
+	if (! features[FEAT_MDTM]) {
+		if (noisy)
+			fprintf(ttyout,
+			    "MDTM is not supported by remote server.\n");
+		goto cleanup_parse_time;
+	}
+	r = command("MDTM %s", file);
+	if (r == COMPLETE) {
 		struct tm timebuf;
 		char *timestr, *frac;
 		int yy, mo, day, hour, min, sec;
@@ -698,9 +755,13 @@ remotemodtime(const char *file, int noisy)
 				goto cleanup_parse_time;
 		} else if (debug)
 			fprintf(ttyout, "parsed date as: %s", ctime(&rtime));
-	} else if (noisy && debug == 0) {
-		fputs(reply_string, ttyout);
-		putc('\n', ttyout);
+	} else {
+		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
+			features[FEAT_MDTM] = 0;
+		if (noisy && debug == 0) {
+			fputs(reply_string, ttyout);
+			putc('\n', ttyout);
+		}
 	}
  cleanup_parse_time:
 	verbose = overbose;
