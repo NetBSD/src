@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.8 1997/06/29 18:44:08 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.9 1997/07/06 18:17:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.8 1997/06/29 18:44:08 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.9 1997/07/06 18:17:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -276,8 +276,8 @@ pw_copy(ffd, tfd, pw)
 		}
 		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
-		    pw->pw_dir, pw->pw_shell);
+		    pw->pw_class, (long)pw->pw_change, (long)pw->pw_expire,
+		    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
 		done = 1;
 		if (ferror(to))
 			goto err;
@@ -285,8 +285,8 @@ pw_copy(ffd, tfd, pw)
 	if (!done)
 		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
-		    pw->pw_dir, pw->pw_shell);
+		    pw->pw_class, (long)pw->pw_change, (long)pw->pw_expire,
+		    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
 
 	if (ferror(to))
 err:		pw_error(NULL, 1, 1);
