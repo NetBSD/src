@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.2 1998/10/03 20:17:42 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,13 @@
 
 #ifndef _LINUX_MISC_H
 #define _LINUX_MISC_H
+
+/*
+ * Options passed to the Linux wait4() system call.
+ */
+#define	LINUX_WAIT4_WNOHANG	0x00000001
+#define	LINUX_WAIT4_WUNTRACED	0x00000002
+#define	LINUX_WAIT4_WCLONE	0x80000000
 
 #ifdef _KERNEL
 __BEGIN_DECLS
