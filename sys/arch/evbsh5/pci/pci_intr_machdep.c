@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.4 2002/10/31 14:54:37 scw Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.5 2002/11/24 12:12:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -227,6 +227,7 @@ cayman_intr_ihead(void *arg, pci_intr_handle_t handle)
 
 	if (CAYMAN_INTR_IS_PRIMARY(handle)) {
 		ihp = &sc->sc_primary[line];
+		evt = 0; /* XXX: Quell stupid compiler warning */
 		switch (line) {
 		case 0:	evt = INTC_INTEVT_PCI_INTA;
 			break;
@@ -271,20 +272,15 @@ cayman_intr_establish(void *arg, pci_intr_handle_t handle,
 {
 	struct sh5pci_ihead *ihead;
 	struct evcnt *evcnt, *parent_evcnt;
-	int pin, inum, group;
+	int inum, group;
 	void *cookie;
 	const char *ename, *gname;
+	static const char *enames[] = {"INTA", "INTB", "INTC", "INTD"};
 
 	if ((ihead = cayman_intr_ihead(arg, handle)) == NULL)
 		return (NULL);
 
-	pin = (SH5PCI_IH_PIN(handle) - 1) & 3;
-	switch (pin) {
-	case 0:	ename = "INTA"; break;
-	case 1:	ename = "INTB"; break;
-	case 2:	ename = "INTC"; break;
-	case 3:	ename = "INTD"; break;
-	}
+	ename = enames[(SH5PCI_IH_PIN(handle) - 1) & 3];
 
 	if (CAYMAN_INTR_IS_PRIMARY(handle)) {
 		cookie = sh5_intr_establish(ihead->ih_intevt, IST_LEVEL, level,
