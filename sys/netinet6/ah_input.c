@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.39 2003/07/09 04:05:59 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.40 2003/07/22 11:18:25 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.39 2003/07/09 04:05:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.40 2003/07/22 11:18:25 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -123,11 +123,7 @@ ah4_input(m, va_alist)
 		goto fail;
 	}
 	nxt = ah->ah_nxt;
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	/* find the sassoc. */
 	spi = ah->ah_spi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.31 2003/07/22 03:24:26 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.31 2003/07/22 03:24:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.32 2003/07/22 11:18:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1081,11 +1081,7 @@ again:
 		size_t hlen;
 
 		m_copydata(m, off, sizeof(iphdr), (caddr_t)&iphdr);
-#ifdef _IP_VHL
-		hlen = IP_VHL_HL(iphdr.ip_vhl) << 2;
-#else
 		hlen = iphdr.ip_hl << 2;
-#endif
 		iphdr.ip_ttl = 0;
 		iphdr.ip_sum = htons(0);
 		if (ip4_ah_cleartos)

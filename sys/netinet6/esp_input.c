@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.31 2003/07/09 04:05:59 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.32 2003/07/22 11:18:25 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.31 2003/07/09 04:05:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.32 2003/07/22 11:18:25 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -138,11 +138,7 @@ esp4_input(m, va_alist)
 
 	ip = mtod(m, struct ip *);
 	esp = (struct esp *)(((u_int8_t *)ip) + off);
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	/* find the sassoc. */
 	spi = esp->esp_spi;

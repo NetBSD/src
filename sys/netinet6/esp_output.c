@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.16 2002/09/27 15:37:52 provos Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.17 2003/07/22 11:18:26 itojun Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.16 2002/09/27 15:37:52 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.17 2003/07/22 11:18:26 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -307,11 +307,7 @@ esp_output(m, nexthdrp, md, isr, af)
 #ifdef INET
 	case AF_INET:
 		ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-		hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 		hlen = ip->ip_hl << 2;
-#endif
 		break;
 #endif
 #ifdef INET6
