@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 1997/01/08 23:59:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.61 1997/01/09 06:38:16 thorpej Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -20,7 +20,7 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	hosts.equiv hosts.lpd inetd.conf lkm.conf man.conf monthly \
 	monthly.conf motd mrouted.conf myname netstart networks \
 	newsyslog.conf phones printcap protocols rbootd.conf rc rc.conf \
-	rc.lkm rc.local remote rpc security security.conf services shells 
+	rc.lkm rc.local remote rpc security security.conf services shells \
 	syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
 	etc.${MACHINE}/disktab
 
