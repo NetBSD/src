@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.59 1996/02/18 11:53:58 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.60 1996/03/05 05:30:09 jtk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -777,10 +777,10 @@ nfs_lookup(v)
 	int lockparent, wantparent, error = 0, attrflag, fhsize;
 	int v3 = NFS_ISV3(dvp);
 
+	*vpp = NULLVP;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
-	*vpp = NULLVP;
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 	lockparent = flags & LOCKPARENT;
