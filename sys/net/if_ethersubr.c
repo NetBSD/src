@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.80 2001/04/27 00:14:02 marcus Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.81 2001/04/29 09:50:37 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,12 +73,14 @@
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "vlan.h"
+#include "pppoe.h"
 #include "bridge.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -103,6 +105,10 @@
 #include <net/if_ether.h>
 #if NVLAN > 0
 #include <net/if_vlanvar.h>
+#endif
+
+#if NPPPOE > 0
+#include <net/if_pppoe.h>
 #endif
 
 #if NBRIDGE > 0
@@ -748,6 +754,28 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem(m);
 		return;
 #endif /* NVLAN > 0 */
+#if NPPPOE > 0
+	case ETHERTYPE_PPPOEDISC:
+	case ETHERTYPE_PPPOE:
+		if (etype == ETHERTYPE_PPPOEDISC) 
+			inq = &ppoediscinq;
+		else
+			inq = &ppoeinq;
+		s = splnet();
+		if (IF_QFULL(inq)) {
+			IF_DROP(inq);
+			m_freem(m);
+		} else
+			IF_ENQUEUE(inq, m);
+		splx(s);
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+		if (!callout_active(&pppoe_softintr))
+			callout_reset(&pppoe_softintr, 1, pppoe_softintr_handler, NULL);
+#else
+		softintr_schedule(pppoe_softintr);
+#endif
+		return;
+#endif /* NPPPOE > 0 */
 	default:
 		; /* Nothing. */
 	}
