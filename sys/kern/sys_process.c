@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.61.18.1 2000/07/31 02:49:19 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.61.18.2 2001/03/30 21:47:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -345,7 +345,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-		if (!procfs_validregs(t))
+		if (!procfs_validregs(t, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -370,7 +370,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-		if (!procfs_validfpregs(t))
+		if (!procfs_validfpregs(t, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
