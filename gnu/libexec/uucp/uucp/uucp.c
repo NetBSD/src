@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uucp_rcsid[] = "$Id: uucp.c,v 1.3 1995/08/24 05:23:20 jtc Exp $";
+const char uucp_rcsid[] = "$Id: uucp.c,v 1.4 2001/08/24 10:24:45 wiz Exp $";
 #endif
 
 #include <ctype.h>
@@ -658,7 +658,7 @@ uchelp ()
   printf (" --help: Print help and exit\n");
 }
 
-/* This is called for each file in a directory heirarchy.  */
+/* This is called for each file in a directory hierarchy.  */
 
 static void
 ucdirfile (zfull, zrelative, pinfo)
