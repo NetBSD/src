@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.12 2003/12/20 13:31:43 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.13 2005/02/09 05:51:38 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.12 2003/12/20 13:31:43 mrg Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.13 2005/02/09 05:51:38 xtraeme Exp $");
 #endif
 
 
@@ -56,18 +56,12 @@ __RCSID("$NetBSD: swaplist.c,v 1.12 2003/12/20 13:31:43 mrg Exp $");
 #include "swapctl.h"
 
 void
-list_swap(pri, kflag, pflag, tflag, dolong, hflag)
-	int	pri;
-	int	kflag;
-	int	pflag;
-	int	tflag;
-	int	dolong;
-	int	hflag;
+list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 {
 	struct	swapent *sep, *fsep;
 	long	blocksize;
-	char	*header, *suff;
 	char	szbuf[5], usbuf[5], avbuf[5]; /* size, used, avail */
+	const	char *header, *suff;
 	size_t	l;
 	int	hlen, totalsize, size, totalinuse, inuse, ncounted, pathmax;
 	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
