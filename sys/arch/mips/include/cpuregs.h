@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.8 1997/06/15 17:27:03 mhitch Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.9 1997/06/16 05:37:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,15 +96,15 @@
  */
 #define MACH_CR_BR_DELAY	0x80000000
 #define MACH_CR_COP_ERR		0x30000000
-#define MIPS_3K_CR_EXC_CODE	0x0000003C
-#define MIPS_4K_CR_EXC_CODE	0x0000007C
+#define MIPS1_CR_EXC_CODE	0x0000003C	/* four bits */
+#define MIPS3_CR_EXC_CODE	0x0000007C	/* five bits */
 #define MACH_CR_IP		0x0000FF00
 #define MACH_CR_EXC_CODE_SHIFT	2
 
 #ifdef MIPS3 /* XXX not used any more, only to satisfy regression tests */
-#define MACH_CR_EXC_CODE	MIPS_4K_CR_EXC_CODE
+#define MACH_CR_EXC_CODE	MIPS3_CR_EXC_CODE
 #else
-#define MACH_CR_EXC_CODE	MIPS_3K_CR_EXC_CODE
+#define MACH_CR_EXC_CODE	MIPS1_CR_EXC_CODE
 #endif	/* MIPs3 */
 
 /*
@@ -168,8 +168,8 @@
 
 #define MIPS_3K_SR_KU_OLD	0x00000020	/* 2nd stacked KU/IE*/
 #define MIPS_3K_SR_INT_ENA_OLD	0x00000010	/* 2nd stacked KU/IE*/
-#define MIPS_3K_SR_KU_PREV	0x00000008	/* 1st stacked KU/IE*/
-#define MIPS_3K_SR_INT_ENA_PREV	0x00000004	/* 1st stacked KU/IE*/
+#define MIPS1_SR_KU_PREV	0x00000008	/* 1st stacked KU/IE*/
+#define MIPS1_SR_INT_ENA_PREV	0x00000004	/* 1st stacked KU/IE*/
 #define MIPS_3K_SR_KU_CUR	0x00000002	/* current KU */
 
 /* backwards compatibility */
@@ -181,9 +181,9 @@
 
 #define MACH_SR_KU_OLD		MIPS_3K_SR_KU_OLD
 #define MACH_SR_INT_ENA_OLD	MIPS_3K_SR_INT_ENA_OLD
-#define MACH_SR_KU_PREV		MIPS_3K_SR_KU_PREV
+#define MACH_SR_KU_PREV		MIPS1_SR_KU_PREV
 #define MACH_SR_KU_CUR		MIPS_3K_SR_KU_CUR
-#define MACH_SR_INT_ENA_PREV	MIPS_3K_SR_INT_ENA_PREV
+#define MACH_SR_INT_ENA_PREV	MIPS1_SR_INT_ENA_PREV
 
 /*
  * R4000 status register bit definitons,
@@ -201,7 +201,7 @@
 #define MIPS_4K_SR_SX		0x00000040
 #define MIPS_4K_SR_UX		0x00000020
 #define MIPS_4K_SR_KSU_MASK	0x00000018
-#define MIPS_4K_SR_KSU_USER	0x00000010
+#define MIPS3_SR_KSU_USER	0x00000010
 #define MIPS_4K_SR_KSU_SUPER	0x00000008
 #define MIPS_4K_SR_KSU_KERNEL	0x00000000
 #define MIPS_4K_SR_ERL		0x00000004
@@ -221,7 +221,7 @@
 #define MACH_SR_UX		MIPS_4K_SR_UX
 
 #define MACH_SR_KSU_MASK	MIPS_4K_SR_KSU_MASK
-#define MACH_SR_KSU_USER	MIPS_4K_SR_KSU_USER
+#define MACH_SR_KSU_USER	MIPS3_SR_KSU_USER
 #define MACH_SR_KSU_SUPER	MIPS_4K_SR_KSU_SUPER
 #define MACH_SR_KSU_KERNEL	MIPS_4K_SR_KSU_KERNEL
 #define MACH_SR_ERL		MIPS_4K_SR_ERL
@@ -297,14 +297,14 @@
 /*
  * R3000 general exception vector (everything else)
  */
-#define MIPS_3K_GEN_EXC_VEC	0x80000080
+#define MIPS1_GEN_EXC_VEC	0x80000080
 
 /*
  * R4000 MIPS-III exception vectors
  */
 #define MIPS_4K_XTLB_MISS_EXC_VEC	0x80000080
 #define MIPS_4K_CACHE_ERR_EXC_VEC	0x80000100
-#define MIPS_4K_GEN_EXC_VEC		0x80000180
+#define MIPS3_GEN_EXC_VEC		0x80000180
 
 /*
  * Coprocessor 0 registers:
