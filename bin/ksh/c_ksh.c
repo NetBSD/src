@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.3 1998/08/19 01:43:22 thorpej Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.4 1998/11/04 18:27:20 christos Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1123,7 +1123,8 @@ c_kill(wp)
 	int i, n, rv, sig;
 
 	/* assume old style options if -digits or -UPPERCASE */
-	if ((p = wp[1]) && *p == '-' && (digit(p[1]) || isupper(p[1]))) {
+	if ((p = wp[1]) && *p == '-' && (digit(p[1]) ||
+	    isupper((unsigned char)p[1]))) {
 		if (!(t = gettrap(p + 1))) {
 			bi_errorf("bad signal `%s'", p + 1);
 			return 1;

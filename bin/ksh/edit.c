@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.3 1997/07/20 17:42:00 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.4 1998/11/04 18:27:21 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -707,7 +707,7 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!isspace(c)
+#define IS_WORDC(c)	!isspace((unsigned char)c)
 
 static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)
@@ -750,7 +750,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		int iscmd;
 
 		/* Figure out if this is a command */
-		for (p = start - 1; p >= 0 && isspace(buf[p]); p--)
+		for (p = start - 1; p >= 0 && isspace((unsigned char)buf[p]); p--)
 			;
 		iscmd = p < 0 || strchr(";|&()", buf[p]);
 		if (iscmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.4 1998/08/19 01:43:23 thorpej Exp $	*/
+/*	$NetBSD: var.c,v 1.5 1998/11/04 18:27:21 christos Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -504,7 +504,7 @@ formatstr(vp, s)
 		if (vp->flag & RJUST) {
 			const char *q = s + olen;
 			/* strip trailing spaces (at&t ksh uses q[-1] == ' ') */
-			while (q > s && isspace(q[-1]))
+			while (q > s && isspace((unsigned char)q[-1]))
 				--q;
 			slen = q - s;
 			if (slen > vp->u2.field) {
@@ -517,7 +517,7 @@ formatstr(vp, s)
 				vp->u2.field - slen, null, slen, s);
 		} else {
 			/* strip leading spaces/zeros */
-			while (isspace(*s))
+			while (isspace((unsigned char)*s))
 				s++;
 			if (vp->flag & ZEROFIL)
 				while (*s == '0')
@@ -530,11 +530,11 @@ formatstr(vp, s)
 
 	if (vp->flag & UCASEV_AL) {
 		for (q = p; *q; q++)
-			if (islower(*q))
+			if (islower((unsigned char)*q))
 				*q = toupper(*q);
 	} else if (vp->flag & LCASEV) {
 		for (q = p; *q; q++)
-			if (isupper(*q))
+			if (isupper((unsigned char)*q))
 				*q = tolower(*q);
 	}
 
