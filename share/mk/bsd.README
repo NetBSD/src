@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.117 2003/07/16 05:42:01 itojun Exp $
+#	$NetBSD: bsd.README,v 1.118 2003/07/18 00:33:18 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -137,7 +137,8 @@ MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKINFO=no MKMAN=no
 		MKNLS=no".  I.e, don't build catman pages, documentation,
 		Info documentation, man pages, NLS files, ...
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=-=-=-=-=   sys.mk   =-=-=-=-=
 
 The include file <sys.mk> has the default rules for all makes, in the BSD
 environment or otherwise.  You probably don't want to touch this file.
@@ -148,41 +149,8 @@ OBJCOPY		objcopy - copy and translate object files
 
 STRIP		strip - Discard symbols from object files
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-The include file <bsd.man.mk> handles installing manual pages and their
-links.
-
-It has a two targets:
-
-	maninstall:
-		Install the manual page sources and their links.
-	catinstall:
-		Install the preformatted manual pages and their links.
-
-It sets/uses the following variables:
-
-MANDIR		Base path for manual installation.
-
-MANGRP		Manual group.
-
-MANOWN		Manual owner.
-
-MANMODE		Manual mode.
-
-MANSUBDIR	Subdirectory under the manual page section, i.e. "/vax"
-		or "/tahoe" for machine specific manual pages.
-
-MAN		The manual pages to be installed (use a .1 - .9 suffix).
-
-MLINKS		List of manual page links (using a .1 - .9 suffix).  The
-		linked-to file must come first, the linked file second,
-		and there may be multiple pairs.  The files are soft-linked.
-
-The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
-it exists.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+=-=-=-=-=   bsd.own.mk   =-=-=-=-=
 
 The include file <bsd.own.mk> contains source tree configuration parameters,
 such as the owners, groups, etc. for both manual pages and binaries, and
@@ -390,33 +358,14 @@ EXTERNAL_TOOLCHAIN
 bsd.own.mk is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-The include file <bsd.shlib.mk> computes parameters for shared library
-installation and use.  It defines no targets.  <bsd.own.mk> MUST be
-included before bsd.shlib.mk.
+=-=-=-=-=   bsd.files.mk   =-=-=-=-=
 
-bsd.own.mk sets the following variables, if they are not already defined
-(defaults are in brackets):
+The include file <bsd.files.mk> handles the FILES variables and is included
+from bsd.lib.mk and bsd.prog.mk.
 
-SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBINSTALLDIR} instead of
-		${LIBDIR} as the base path for shared library installation.
-		[/lib]
 
-SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
-		a program.  [/lib for programs in /bin and /sbin, /usr/lib
-		for all others.]
-
-_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is "yes",
-		otherwise set to ${LIBDIR}
-
-SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
-
-SHLINKDIR	Path to use for shared linker when building a program.
-		[/libexec for programs in /bin and /sbin, /usr/libexec for
-		all others.]
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+=-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
 
 The include file <bsd.gcc.mk> computes various parameters related to GCC
 support libraries.  It defines no targets.  <bsd.own.mk> MUST be included
@@ -442,7 +391,230 @@ _GCC_CRTENDS	The full path name to crtendS.o.
 
 _GCC_LIBGCCDIR	The directory where libgcc.a is located.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=-=-=-=-=   bsd.inc.mk   =-=-=-=-=
+
+The include file <bsd.inc.mk> defines the includes target and uses two
+variables:
+
+INCS		The list of include files
+
+INCSDIR		The location to install the include files.
+
+INCSNAME	Target name of the include file, if only one; same as
+		FILESNAME, but for include files.
+
+INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
+		same as FILESNAME_<file>, but for include files.
+
+
+=-=-=-=-=   bsd.info.mk   =-=-=-=-=
+
+The include file <bsd.info.mk> is used to generate and install GNU Info
+documentation from respective Texinfo source files.  It defines three
+implicit targets (.txi.info, .texi.info, and .texinfo.info), and uses the
+following variables:
+
+TEXINFO		List of Texinfo source files.  Info documentation will
+		consist of single files with the extension replaced by
+		.info.
+
+INFOFLAGS	Flags to pass to makeinfo.  []
+
+
+=-=-=-=-=   bsd.kernobj.mk   =-=-=-=-=
+
+The include file <bsd.kernobj.mk> defines variables related to the
+location of kernel sources and object directories.
+
+KERNSRCDIR	Is the location of the top of the kernel src.
+		It defaults to ${_SRC_TOP_}/sys
+
+KERNARCHDIR	Is the location of the machine dependent kernel
+		sources.  It defaults to arch/${MACHINE}
+		
+KERNCONFDIR	Is where the configuration files for kernels are
+		found; default is ${KERNSRCDIR}/${KERNARCHDIR}/conf.
+
+KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
+		instance will be compiled in ${KERNOBJDIR}/GENERIC.
+		The default value is
+		${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile
+		if it exists or the target 'obj' is being made.
+		Otherwise the default is
+		${KERNSRCDIR}/${KERNARCHDIR}/compile.
+
+It is important that Makefiles (such as those under src/distrib) that
+wish to find compiled kernels use bsd.kernobj.mk and ${KERNOBJDIR}
+rather than make assumptions about the location of the compiled kernel.
+
+
+=-=-=-=-=   bsd.kinc.mk   =-=-=-=-=
+
+The include file <bsd.kinc.mk> defines the many targets (includes,
+subdirectories, etc.), and is used by kernel makefiles to handle
+include file installation.  It is intended to be included alone, by
+kernel Makefiles.  Please see bsd.kinc.mk for more details, and keep
+the documentation in that file up to date.
+
+
+=-=-=-=-=   bsd.lib.mk   =-=-=-=-=
+
+The include file <bsd.lib.mk> has support for building libraries.  It has
+the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
+includes, install, lint, and tags.  Additionally, it has a checkver target
+which checks for installed shared object libraries whose version is greater
+that the version of the source. It has a limited number of suffixes,
+consistent with the current needs of the BSD tree.  bsd.lib.mk includes
+<bsd.shlib.mk> to get shared library parameters.
+
+It sets/uses the following variables:
+
+LIB		The name of the library to build.
+
+LIBDIR		Target directory for libraries.
+
+SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+		is "yes".
+
+USE_SHLIBDIR	If "yes", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
+		as the path to install shared libraries to.
+		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
+
+LINTLIBDIR	Target directory for lint libraries.
+
+LIBGRP		Library group.
+
+LIBOWN		Library owner.
+
+LIBMODE		Library mode.
+
+LDADD		Additional loader objects.
+
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+		Also:
+			- don't install the .a libraries
+			- don't install _pic.a libraries on PIC systems
+			- don't build .a libraries on PIC systems
+			- don't install the .so symlink on ELF systems
+		I.e, only install the shared library (and the .so.major
+		symlink on ELF).
+
+MKPICLIB	If "no", don't build _pic.a libraries, and build the
+		shared object libraries from the .a libraries.  A
+		symlink is installed in ${DESTDIR}/usr/lib for the
+		_pic.a library pointing to the .a library.
+
+NOCHECKVER_<library>
+NOCHECKVER	If set, disables checking for installed shared object
+		libraries with versions greater than the source.  A
+		particular library name, without the "lib" prefix, may
+		be appended to the variable name to disable the check for
+		only that library.
+
+SRCS		List of source files to build the library.  Suffix types
+		.s, .c, and .f are supported.  Note, .s files are preferred
+		to .c files of the same name.  (This is not the default for
+		versions of make.)
+
+The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
+if it exists, as well as the include file <bsd.man.mk>.
+
+It has rules for building profiled objects; profiled libraries are
+built by default.
+
+Libraries are ranlib'd when made.
+
+
+=-=-=-=-=   bsd.links.mk   =-=-=-=-=
+
+The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
+and is included from from bsd.lib.mk and bsd.prog.mk.
+
+
+=-=-=-=-=   bsd.man.mk   =-=-=-=-=
+
+The include file <bsd.man.mk> handles installing manual pages and their
+links.
+
+It has a two targets:
+
+	maninstall:
+		Install the manual page sources and their links.
+	catinstall:
+		Install the preformatted manual pages and their links.
+
+It sets/uses the following variables:
+
+MANDIR		Base path for manual installation.
+
+MANGRP		Manual group.
+
+MANOWN		Manual owner.
+
+MANMODE		Manual mode.
+
+MANSUBDIR	Subdirectory under the manual page section, i.e. "/vax"
+		or "/tahoe" for machine specific manual pages.
+
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+MLINKS		List of manual page links (using a .1 - .9 suffix).  The
+		linked-to file must come first, the linked file second,
+		and there may be multiple pairs.  The files are soft-linked.
+
+The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
+it exists.
+
+
+=-=-=-=-=   bsd.obj.mk   =-=-=-=-=
+
+The include file <bsd.obj.mk> defines targets related to the creation
+and use of separated object and source directories.
+
+If an environment variable named MAKEOBJDIRPREFIX is set, make(1) uses
+${MAKEOBJDIRPREFIX}${.CURDIR} as the name of the object directory if
+it exists.  Otherwise make(1) looks for the existence of a
+subdirectory (or a symlink to a directory) of the source directory
+into which built targets should be placed.  If an environment variable
+named MAKEOBJDIR is set, make(1) uses its value as the name of the
+object directory; failing that, make first looks for a subdirectory
+named "obj.${MACHINE}", and if that doesn't exist, it looks for "obj".
+
+Object directories are not created automatically by make(1) if they
+don't exist; you need to run a separate "make obj".  (This will happen
+during a top-level build if "MKOBJDIRS" is set to a value other than
+"no").  When the source directory is a subdirectory of ${BSDSRCDIR} --
+and this is determined by a simple string prefix comparison -- object
+directories are created in a separate object directory tree, and a
+symlink to the object directory in that tree is created in the source
+directory; otherwise, "make obj" assumes that you're not in the main
+source tree and that it's not safe to use a separate object tree.
+
+Several variables used by <bsd.obj.mk> control exactly what
+directories and links get created during a "make obj":
+
+MAKEOBJDIR	If set, this is the component name of the object
+		directory.
+
+OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
+		object directories or links named "obj.${MACHINE}";
+		otherwise, just creates ones named "obj".
+
+USR_OBJMACHINE  If set, and the current directory is a subdirectory of
+		${BSDSRCDIR}, create object directory in the
+		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
+		otherwise, create it in the corresponding subdirectory
+		of ${BSDOBJDIR}
+
+BUILDID		If set, the contents of this variable are appended
+		to the object directory name.  If OBJMACHINE is also
+		set, ".${BUILDID}" is added after ".${MACHINE}".
+
+
+=-=-=-=-=   bsd.prog.mk   =-=-=-=-=
 
 The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
@@ -660,7 +832,54 @@ If foo has multiple source files, add the line:
 
 	SRCS=	a.c b.c c.c d.c
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=-=-=-=-=   bsd.rpc.mk   =-=-=-=-=
+
+The include file <bsd.rpc.mk> contains a makefile fragment used to
+construct source files built by rpcgen.
+
+The following macros may be defined in makefiles which include
+<bsd.rpc.mk> in order to control which files get built and how they
+are to be built:
+
+RPC_INCS:	construct .h file from .x file
+RPC_XDRFILES:	construct _xdr.c from .x file 
+		(for marshalling/unmarshalling data types)
+RPC_SVCFILES:	construct _svc.c from .x file
+		(server-side stubs)
+RPC_SVCFLAGS:	Additional flags passed to builds of RPC_SVCFILES.
+
+RPC_XDIR:	Directory containing .x/.h files
+
+
+=-=-=-=-=   bsd.shlib.mk   =-=-=-=-=
+
+The include file <bsd.shlib.mk> computes parameters for shared library
+installation and use.  It defines no targets.  <bsd.own.mk> MUST be
+included before bsd.shlib.mk.
+
+bsd.own.mk sets the following variables, if they are not already defined
+(defaults are in brackets):
+
+SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBINSTALLDIR} instead of
+		${LIBDIR} as the base path for shared library installation.
+		[/lib]
+
+SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
+		a program.  [/lib for programs in /bin and /sbin, /usr/lib
+		for all others.]
+
+_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is "yes",
+		otherwise set to ${LIBDIR}
+
+SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
+
+SHLINKDIR	Path to use for shared linker when building a program.
+		[/libexec for programs in /bin and /sbin, /usr/libexec for
+		all others.]
+
+
+=-=-=-=-=   bsd.subdir.mk   =-=-=-=-=
 
 The include file <bsd.subdir.mk> contains the default targets for building
 subdirectories.  It has the same eight targets as <bsd.prog.mk>: all, 
@@ -676,53 +895,8 @@ before the .WAIT must complete before any subdirs after .WAIT are
 started.  See make(1) for some caveats on use of .WAIT and other
 special sources.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
-and is included from from bsd.lib.mk and bsd.prog.mk.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.files.mk> handles the FILES variables and is included
-from bsd.lib.mk and bsd.prog.mk.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.inc.mk> defines the includes target and uses two
-variables:
-
-INCS		The list of include files
-
-INCSDIR		The location to install the include files.
-
-INCSNAME	Target name of the include file, if only one; same as
-		FILESNAME, but for include files.
-
-INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
-		same as FILESNAME_<file>, but for include files.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.kinc.mk> defines the many targets (includes,
-subdirectories, etc.), and is used by kernel makefiles to handle
-include file installation.  It is intended to be included alone, by
-kernel Makefiles.  Please see bsd.kinc.mk for more details, and keep
-the documentation in that file up to date.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.info.mk> is used to generate and install GNU Info
-documentation from respective Texinfo source files.  It defines three
-implicit targets (.txi.info, .texi.info, and .texinfo.info), and uses the
-following variables:
-
-TEXINFO		List of Texinfo source files.  Info documentation will
-		consist of single files with the extension replaced by
-		.info.
-
-INFOFLAGS	Flags to pass to makeinfo.  []
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+=-=-=-=-=   bsd.sys.mk   =-=-=-=-=
 
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 <bsd.lib.mk>.  It contains overrides that are used when building
@@ -846,164 +1020,5 @@ WFORMAT 	-Wnetbsd-format-audit for extra-stringent format checking.
 		be even uglier if rewritten) FORMAT_AUDIT should go in
 		mk.conf if you're doing format-string auditing. 
 		FORMAT_AUDIT may go away in time.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.lib.mk> has support for building libraries.  It has
-the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-includes, install, lint, and tags.  Additionally, it has a checkver target
-which checks for installed shared object libraries whose version is greater
-that the version of the source. It has a limited number of suffixes,
-consistent with the current needs of the BSD tree.  bsd.lib.mk includes
-<bsd.shlib.mk> to get shared library parameters.
-
-It sets/uses the following variables:
-
-LIB		The name of the library to build.
-
-LIBDIR		Target directory for libraries.
-
-SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
-		is "yes".
-
-USE_SHLIBDIR	If "yes", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
-		as the path to install shared libraries to.
-		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
-
-LINTLIBDIR	Target directory for lint libraries.
-
-LIBGRP		Library group.
-
-LIBOWN		Library owner.
-
-LIBMODE		Library mode.
-
-LDADD		Additional loader objects.
-
-MAN		The manual pages to be installed (use a .1 - .9 suffix).
-
-MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
-		Also:
-			- don't install the .a libraries
-			- don't install _pic.a libraries on PIC systems
-			- don't build .a libraries on PIC systems
-			- don't install the .so symlink on ELF systems
-		I.e, only install the shared library (and the .so.major
-		symlink on ELF).
-
-MKPICLIB	If "no", don't build _pic.a libraries, and build the
-		shared object libraries from the .a libraries.  A
-		symlink is installed in ${DESTDIR}/usr/lib for the
-		_pic.a library pointing to the .a library.
-
-NOCHECKVER_<library>
-NOCHECKVER	If set, disables checking for installed shared object
-		libraries with versions greater than the source.  A
-		particular library name, without the "lib" prefix, may
-		be appended to the variable name to disable the check for
-		only that library.
-
-SRCS		List of source files to build the library.  Suffix types
-		.s, .c, and .f are supported.  Note, .s files are preferred
-		to .c files of the same name.  (This is not the default for
-		versions of make.)
-
-The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
-if it exists, as well as the include file <bsd.man.mk>.
-
-It has rules for building profiled objects; profiled libraries are
-built by default.
-
-Libraries are ranlib'd when made.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.obj.mk> defines targets related to the creation
-and use of separated object and source directories.
-
-If an environment variable named MAKEOBJDIRPREFIX is set, make(1) uses
-${MAKEOBJDIRPREFIX}${.CURDIR} as the name of the object directory if
-it exists.  Otherwise make(1) looks for the existence of a
-subdirectory (or a symlink to a directory) of the source directory
-into which built targets should be placed.  If an environment variable
-named MAKEOBJDIR is set, make(1) uses its value as the name of the
-object directory; failing that, make first looks for a subdirectory
-named "obj.${MACHINE}", and if that doesn't exist, it looks for "obj".
-
-Object directories are not created automatically by make(1) if they
-don't exist; you need to run a separate "make obj".  (This will happen
-during a top-level build if "MKOBJDIRS" is set to a value other than
-"no").  When the source directory is a subdirectory of ${BSDSRCDIR} --
-and this is determined by a simple string prefix comparison -- object
-directories are created in a separate object directory tree, and a
-symlink to the object directory in that tree is created in the source
-directory; otherwise, "make obj" assumes that you're not in the main
-source tree and that it's not safe to use a separate object tree.
-
-Several variables used by <bsd.obj.mk> control exactly what
-directories and links get created during a "make obj":
-
-MAKEOBJDIR	If set, this is the component name of the object
-		directory.
-
-OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
-		object directories or links named "obj.${MACHINE}";
-		otherwise, just creates ones named "obj".
-
-USR_OBJMACHINE  If set, and the current directory is a subdirectory of
-		${BSDSRCDIR}, create object directory in the
-		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
-		otherwise, create it in the corresponding subdirectory
-		of ${BSDOBJDIR}
-
-BUILDID		If set, the contents of this variable are appended
-		to the object directory name.  If OBJMACHINE is also
-		set, ".${BUILDID}" is added after ".${MACHINE}".
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.kernobj.mk> defines variables related to the
-location of kernel sources and object directories.
-
-KERNSRCDIR	Is the location of the top of the kernel src.
-		It defaults to ${_SRC_TOP_}/sys
-
-KERNARCHDIR	Is the location of the machine dependent kernel
-		sources.  It defaults to arch/${MACHINE}
-		
-KERNCONFDIR	Is where the configuration files for kernels are
-		found; default is ${KERNSRCDIR}/${KERNARCHDIR}/conf.
-
-KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
-		instance will be compiled in ${KERNOBJDIR}/GENERIC.
-		The default value is
-		${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile
-		if it exists or the target 'obj' is being made.
-		Otherwise the default is
-		${KERNSRCDIR}/${KERNARCHDIR}/compile.
-
-It is important that Makefiles (such as those under src/distrib) that
-wish to find compiled kernels use bsd.kernobj.mk and ${KERNOBJDIR}
-rather than make assumptions about the location of the compiled kernel.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.rpc.mk> contains a makefile fragment used to
-construct source files built by rpcgen.
-
-The following macros may be defined in makefiles which include
-<bsd.rpc.mk> in order to control which files get built and how they
-are to be built:
-
-RPC_INCS:	construct .h file from .x file
-RPC_XDRFILES:	construct _xdr.c from .x file 
-		(for marshalling/unmarshalling data types)
-RPC_SVCFILES:	construct _svc.c from .x file
-		(server-side stubs)
-RPC_SVCFLAGS:	Additional flags passed to builds of RPC_SVCFILES.
-
-RPC_XDIR:	Directory containing .x/.h files
-
-
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
