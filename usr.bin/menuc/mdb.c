@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.32 2003/06/09 18:48:40 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.33 2003/06/10 17:19:04 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -159,8 +159,14 @@ write_menu_file (char *initcode)
 		"#include <curses.h>\n\n"
 		);
 
+	if (do_msgxlat)
+		(void)fprintf(out_file, "#define MSG_XLAT(x) msg_string(x)\n");
+	else
+		(void)fprintf(out_file, "#define MSG_XLAT(x) (x)\n");
 	if (do_dynamic)
-		(void) fprintf (out_file, "#define DYNAMIC_MENUS\n\n");
+		(void)fprintf(out_file, "#define DYNAMIC_MENUS\n");
+	if (do_dynamic || do_msgxlat)
+		(void)fprintf(out_file, "\n");
 
 	(void) fprintf (out_file,
 		"typedef struct menudesc menudesc;\n"	
@@ -256,19 +262,19 @@ write_menu_file (char *initcode)
 	for (i=0; i<menu_no; i++) {
 		if (strlen(menus[i]->info->postact.code)) {
 			(void) fprintf (out_file,
-				"static void menu_%d_postact(menudesc *menu, void *arg);\n"
-				"static void menu_%d_postact(menudesc *menu, void *arg)\n{", i, i);
+				"/*ARGSUSED*/\n"
+				"static void menu_%d_postact(menudesc *menu, void *arg)\n{\n", i);
 			if (menus[i]->info->postact.endwin)
 				(void) fprintf (out_file, "\tendwin();\n"
 					"\t__m_endwin = 1;\n");
 			(void) fprintf (out_file,
-					"\t%s\n}\n",
+					"\t%s\n}\n\n",
 					menus[i]->info->postact.code);
 		}
 		if (strlen(menus[i]->info->exitact.code)) {
 			(void) fprintf (out_file,
-				"static void menu_%d_exitact(menudesc *menu, void *arg);\n"
-				"static void menu_%d_exitact(menudesc *menu, void *arg)\n{", i, i);
+				"/*ARGSUSED*/\n"
+				"static void menu_%d_exitact(menudesc *menu, void *arg)\n{\n", i);
 			if (menus[i]->info->exitact.endwin)
 				(void) fprintf (out_file, "\tendwin();\n"
 					"\t__m_endwin = 1;\n");
