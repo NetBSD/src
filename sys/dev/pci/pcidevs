@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.211 2000/04/26 17:30:35 thorpej Exp $
+$NetBSD: pcidevs,v 1.212 2000/04/28 20:54:10 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -858,6 +858,7 @@ product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 /* Creative Labs products */
 product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
 product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
+product CREATIVELABS EV1938	0x8938	Ectiva 1938
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
@@ -921,6 +922,7 @@ product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ENSONIQ AUDIOPCI97	0x1371	AudioPCI 97
+product ENSONIQ CT5880		0x5880	CT5880
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
