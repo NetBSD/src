@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.32 2000/07/05 03:06:53 nisimura Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.33 2000/10/17 08:55:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.32 2000/07/05 03:06:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.33 2000/10/17 08:55:43 nisimura Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -144,9 +144,7 @@ dec_3000_300_cons_init()
 			 * XXX Should use ctb_line_off to get the
 			 * XXX line parameters.
 			 */
-			if (zs_ioasic_cnattach(0x1a0000000, 0x00100000, 1,
-			    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-				panic("can't init serial console");
+			zs_ioasic_cnattach(0x1a0000000, 0x00100000, 1);
 			break;
 		}
 
