@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.4 2003/09/16 17:39:12 jdc Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.5 2003/11/28 08:56:48 keihan Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.4 2003/09/16 17:39:12 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.5 2003/11/28 08:56:48 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1053,7 +1053,7 @@ bstp_tick(void *arg)
 		 * XXX and "spanning tree gets updated".  We need
 		 * XXX come sort of callback from the link state
 		 * XXX update code to kick spanning tree.
-		 * XXX --thorpej@netbsd.org
+		 * XXX --thorpej@NetBSD.org
 		 */
 		bstp_ifupdstatus(sc, bif);
 	}
