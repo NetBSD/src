@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.138 2003/10/08 20:58:00 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.139 2003/10/09 18:40:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.138 2003/10/08 20:58:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.139 2003/10/09 18:40:19 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1718,7 +1718,6 @@ __wdccommand_start(chp, xfer)
 {   
 	int drive = xfer->drive;
 	struct wdc_command *wdc_c = xfer->cmd;
-	int st;
 
 	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
@@ -1751,20 +1750,7 @@ __wdccommand_start(chp, xfer)
 	}
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
-	if ((wdc_c->flags & (AT_WAIT | AT_POLL | AT_READ)) ==
-	    (AT_WAIT | AT_POLL | AT_READ)) {
-		/*
-		 * This is a data in command, so we should have either
-		 * BSY or DRQ in 400ns, or error.
-		 */
-		delay(10);	/* 400ns delay */
-		st = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		if (st == 0) {
-			wdc_c->flags |= AT_TIMEOU;
-			__wdccommand_done(chp, xfer);
-			return;
-		}
-	}
+
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
 		callout_reset(&chp->ch_callout, wdc_c->timeout / 1000 * hz,
