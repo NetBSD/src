@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: wsfont.h,v 1.7 1999/12/04 13:35:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  *
  *	wsfont_unlock(cookie);
  */
+
 struct wsdisplay_font;
 
 /* Left to Right, Right to Left */
@@ -76,4 +77,4 @@ int	wsfont_lock __P((int cookie, struct wsdisplay_font **font, int, int));
 int	wsfont_unlock __P((int cookie));
 int	wsfont_getflg __P((int cookie, int *flg, int *lockcount));
 
-#endif /* _WSFONT_H_ */
+#endif	/* !_WSFONT_H_ */
