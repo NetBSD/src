@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.25 2003/02/14 10:19:14 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.26 2003/09/28 08:11:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25 2003/02/14 10:19:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.26 2003/09/28 08:11:47 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -76,9 +76,9 @@ static int irix_wait_siginfo __P((struct proc *, int,
     struct irix_irix5_siginfo *));
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *, 
     int, u_long, caddr_t));
-static void irix_set_ucontext __P((struct irix_ucontext*, sigset_t *, 
+static void irix_set_ucontext __P((struct irix_ucontext*, const sigset_t *, 
     int, struct lwp *));
-static void irix_set_sigcontext __P((struct irix_sigcontext*, sigset_t *, 
+static void irix_set_sigcontext __P((struct irix_sigcontext*, const sigset_t *, 
     int, struct lwp *));
 static void irix_get_ucontext __P((struct irix_ucontext*, struct lwp *));
 static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
@@ -262,7 +262,7 @@ irix_to_native_sigset(sss, bss)
 void
 irix_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
@@ -390,7 +390,7 @@ irix_sendsig(sig, mask, code)
 static void 
 irix_set_sigcontext (scp, mask, code, l)
 	struct irix_sigcontext *scp;
-	sigset_t *mask;
+	const sigset_t *mask;
 	int code;
 	struct lwp *l;
 {
@@ -447,7 +447,7 @@ irix_set_sigcontext (scp, mask, code, l)
 void 
 irix_set_ucontext(ucp, mask, code, l)
 	struct irix_ucontext *ucp;
-	sigset_t *mask;
+	const sigset_t *mask;
 	int code;
 	struct lwp *l;
 {
