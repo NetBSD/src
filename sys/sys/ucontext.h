@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.2 2003/01/18 09:53:17 thorpej Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.3 2003/09/13 15:28:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -99,9 +99,8 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #ifdef _KERNEL
-#include <sys/cdefs.h>
-
 struct lwp;
+
 void	getucontext(struct lwp *, ucontext_t *);
 int	setucontext(struct lwp *, const ucontext_t *);
 void	cpu_getmcontext(struct lwp *, mcontext_t *, unsigned int *);
