@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1997/10/25 10:10:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 1999/07/30 04:07:24 mycroft Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 
@@ -37,8 +37,6 @@ SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
 CPPFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DOLD_GAS -DSIGTY=void -Derror=as_fatal \
 		-DNETBSD_AOUT
-#LDADD+=		-lgnumalloc
-#DPADD+=		${LIBGNUMALLOC}
 
 CONF_HEADERS=	targ-cpu.h obj-format.h host.h targ-env.h
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1998/07/21 08:06:55 fair Exp $
+#	$NetBSD: Makefile,v 1.20 1999/07/30 04:07:25 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,6 @@ CPPFLAGS+= -DDEF_AR_FILE=\"/dev/rst0\" -DDEFBLOCKING=20
 CPPFLAGS+= -DSTDC_HEADERS -DENABLE_SPARSE
 
 LDSTATIC?= -static
-LDADD+=	-lgnumalloc
-DPADD+=	${LIBGNUMALLOC}
 
 MAN=tar.1
 
