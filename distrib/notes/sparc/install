@@ -48,12 +48,19 @@ the boot specifier accordingly, e.g.:
 	ok boot disk1:b netbsd -s
 
 to boot from SCSI disk target 1 from a version 2 OpenBOOT ROM.
+If you have to use the old-style `sd(c,u,p)' syntax to boot from a
+SCSI disk, you can calculate the parameters as follows:
 
-This will cause the kernel contained in the miniroot to be booted.
-After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section `Running the installation
-scripts' below.
+	`c'	- specifies the controller number
+	`u'	- the hexadecimal number obtained from evaluating
+		  the expression `(8 * TARGET) + LUN'
+	`p'	- the partition number from which to boot (0=`a', 1=`b', etc).
 
+
+The monitor boot command will cause the NetBSD kernel contained in the
+miniroot image to be booted. After the initial probe messages you'll be
+asked to start the install or upgrade procedure. Proceed to the section
+`Running the installation scripts' below.
 
 Installing using a diskless setup.
 
