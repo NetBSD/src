@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.3 1996/03/14 23:11:34 mark Exp $ */
+/* $NetBSD: profile.h,v 1.4 1996/10/14 22:52:49 mark Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -29,31 +29,67 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+/*#define	_MCOUNT_DECL static inline void _mcount*/
+#define	_MCOUNT_DECL static void _mcount
 
-/* Cannot implement mcount in C as GCC uses the ip register to pass the
- * frompcindex variable. GCC also uses ip during the register pushing
- * at the beginning of any C function.
+/*
+ * Cannot implement mcount in C as GCC will trash the ip register when it
+ * pushes a trapframe. Pity we cannot insert assembly before the function
+ * prologue.
  */
+#if 0
 #define	MCOUNT \
 extern void mcount() asm("mcount");					\
 void									\
 mcount()								\
 {									\
-	register int selfpc, frompcindex;					\
+	register int selfpc, frompcindex;				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("mov %0, lr" : "=r" (selfpc));				\
+	asm("stmfd\tsp!, {r0-r3}");					\
+	asm("mov\t%0, lr" : "=r" (selfpc));				\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("mov %0, ip" : "=r" (frompcindex));				\
+	asm("mov\t%0, ip" : "=r" (frompcindex));			\
 	_mcount(frompcindex, selfpc);					\
+	asm("ldmfd\tsp!, {r0-r3}");					\
 }
+#else
+#define	MCOUNT								\
+	asm(".text");							\
+	asm(".align	0");						\
+	asm(".type	mcount, @function");				\
+	asm(".global	mcount");					\
+	asm("mcount:");							\
+	/*								\
+	 * Preserve registers that are trashed during mcount		\
+	 */								\
+	asm("stmfd	sp!, {r0-r3,lr}");				\
+	/*								\
+	 * find the return address for mcount,				\
+	 * and the return address for mcount's caller.			\
+	 *								\
+	 * frompcindex = pc pushed by call into self.			\
+	 */								\
+	asm("mov	r0, ip");					\
+	/*								\
+	 * selfpc = pc pushed by mcount call				\
+	 */								\
+	asm("mov	r1, lr");					\
+	/*								\
+	 * Call the real mcount code					\
+	 */								\
+	asm("bl	__mcount");						\
+	/*								\
+	 * Restore registers that were trashed during mcount		\
+	 */								\
+	asm("ldmfd	sp!, {r0-r3,pc}");
+#endif
 
 #ifdef _KERNEL
 /*
