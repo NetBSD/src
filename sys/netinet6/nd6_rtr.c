@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.36 2002/09/11 02:46:46 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.37 2003/05/08 20:08:52 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.36 2002/09/11 02:46:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.37 2003/05/08 20:08:52 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ nd6_rtmsg(cmd, rt)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_IFP] =
-	    (struct sockaddr *)TAILQ_FIRST(&rt->rt_ifp->if_addrlist);
+	    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 
 	rt_missmsg(cmd, &info, rt->rt_flags, 0);
