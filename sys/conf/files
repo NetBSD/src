@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.466 2001/10/04 19:05:32 eeh Exp $
+#	$NetBSD: files,v 1.467 2001/10/13 13:32:20 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -589,8 +589,8 @@ file	dev/ic/ate_subr.c		ate
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
-define	wsdisplaydev { }
-define	wsemuldisplaydev {[console = -1]}
+define	wsdisplaydev {[kbdmux = -1]}
+define	wsemuldisplaydev {[console = -1], [kbdmux = -1]}
 define	wskbddev {[console = -1], [mux = -1]}
 define	wsmousedev {[mux = -1]}
 # attribute to pull in raster support
