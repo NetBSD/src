@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.7 1994/05/01 06:46:33 cgd Exp $
+ *	$Id: sys.c,v 1.8 1994/06/13 19:15:19 cgd Exp $
  */
 
 #include "boot.h"
@@ -87,9 +87,9 @@ find(path)
 loop:
 	iodest = iobuf;
 	cnt = fs->fs_bsize;
-	bnum = fsbtodb(fs, itod(fs,ino)) + boff;
+	bnum = fsbtodb(fs, ino_to_fsba(fs,ino)) + boff;
 	devread();
-	bcopy(&((struct dinode *)iodest)[ino % fs->fs_inopb],
+	bcopy(&((struct dinode *)iodest)[ino_to_fsbo(fs,ino)],
 	      &inode.i_din,
 	      sizeof(struct dinode));
 	if (!*path)
