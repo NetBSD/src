@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.4.4.1 2000/11/01 03:48:04 tv Exp $
+.\"	$NetBSD: install,v 1.4.4.2 2002/01/05 18:30:29 he Exp $
 .
 Boot with
 .Ic pbsdboot.exe
@@ -21,7 +21,7 @@ memory to be used.  If failed
 failed with a
 .Dq cannot allocate heap
 error, configure more RAM for memory and less for disk with the dialog at
-[Setting]->[ControlPanel]->[System]->[Memory] under
+[Setting]-\*>[ControlPanel]-\*>[System]-\*>[Memory] under
 .Tn "Windows CE" .
 .Pp
 .
