@@ -31,11 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.6 1993/12/20 05:25:19 mycroft Exp $
+ *	$Id: limits.h,v 1.7 1994/05/09 03:23:03 cgd Exp $
  */
-
-#ifndef _I386_LIMITS_H_
-#define _I386_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
@@ -59,10 +56,15 @@
 #define	LONG_MAX	0x7fffffff	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE)
+#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+
+#if !defined(_POSIX_SOURCE)
+#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+
 #define	UQUAD_MAX	0xffffffffffffffffLL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
-#endif
 
-#endif /* !_I386_LIMITS_H_ */
+#endif /* !_POSIX_SOURCE */
+#endif /* !_ANSI_SOURCE */
