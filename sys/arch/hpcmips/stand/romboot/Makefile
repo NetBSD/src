@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/23 13:27:56 shin Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/03 11:28:12 shin Exp $
 
 CC?=		${CROSSDIR}cc
 AS?=		${CROSSDIR}as
 LD?=		${CROSSDIR}ld
 OBJCOPY?=	${CROSSDIR}objcopy
 
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 all: romboot.bin
 
