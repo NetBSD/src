@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.1 2003/05/23 06:51:16 petrov Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.2 2004/05/20 01:50:43 heas Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -52,6 +52,11 @@
 #define	FFB_REG_SFB32		13
 #define	FFB_REG_SFB64		14
 #define	FFB_REG_DFB422A		15
+
+#define	FFB_DAC_TYPE		0x0
+#define	FFB_DAC_VALUE		0x4
+#define	FFB_DAC_TYPE2		0x8
+#define	FFB_DAC_VALUE2		0xc
 
 #define	FFB_FBC_ALPHA		0x00c
 #define	FFB_FBC_RED		0x010
