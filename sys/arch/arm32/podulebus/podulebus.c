@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.10 1996/06/12 21:09:55 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.11 1996/08/21 19:46:47 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <machine/io.h>
+#include <machine/iomd.h>
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>
 #include <arm32/podulebus/podulebus.h>
@@ -535,7 +536,18 @@ podulebusattach(parent, self, aux)
 {
 	int loop;
 	struct podule_attach_args pa;
-    
+	int easi_time;
+	int bit;
+
+	easi_time = ReadByte(IOMD_ECTCR);
+
+	printf(": easi timings=");
+	for (bit = 0x01; bit < 0x100; bit = bit << 1)
+		if (easi_time & bit)
+			printf("C");
+		else
+			printf("A");
+
 	printf("\n");
 
 /* Ok we need to map in the podulebus */
