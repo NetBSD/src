@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.34 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: uk.c,v 1.35 2002/09/27 20:41:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.34 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.35 2002/09/27 20:41:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,10 @@ int ukactivate __P((struct device *, enum devact));
 int ukdetach __P((struct device *, int));
 
 
-struct cfattach uk_scsibus_ca = {
+const struct cfattach uk_scsibus_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
 };
-struct cfattach uk_atapibus_ca = {
+const struct cfattach uk_atapibus_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.72 2002/09/27 15:37:45 provos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.73 2002/09/27 20:42:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.72 2002/09/27 15:37:45 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.73 2002/09/27 20:42:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -547,7 +547,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	struct device *dev;
 	struct cftable *ct;
 	struct cfdriver *cd;
-	struct cfattach *ca;
+	const struct cfattach *ca;
 	size_t lname, lunit;
 	const char *xunit;
 	int myunit;
@@ -662,7 +662,7 @@ config_detach(struct device *dev, int flags)
 {
 	struct cftable *ct;
 	struct cfdata *cf;
-	struct cfattach *ca;
+	const struct cfattach *ca;
 	struct cfdriver *cd;
 #ifdef DIAGNOSTIC
 	struct device *d;
@@ -784,7 +784,7 @@ config_detach(struct device *dev, int flags)
 int
 config_activate(struct device *dev)
 {
-	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	const struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
@@ -802,7 +802,7 @@ config_activate(struct device *dev)
 int
 config_deactivate(struct device *dev)
 {
-	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	const struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)

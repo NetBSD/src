@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sunms.c,v 1.9 2002/09/27 20:41:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.9 2002/09/27 20:41:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static void	sunms_attach(struct device *, struct device *, void *);
 static int	sunmsiopen(struct device *, int mode);
 int	sunmsinput(int, struct tty *);
 
-struct cfattach ms_ca = {
+const struct cfattach ms_ca = {
 	sizeof(struct ms_softc), sunms_match, sunms_attach
 };
 
