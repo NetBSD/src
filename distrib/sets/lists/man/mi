@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.684 2004/04/27 07:38:23 heas Exp $
+# $NetBSD: mi,v 1.685 2004/04/27 17:51:17 heas Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2077,7 +2077,7 @@
 ./usr/share/man/cat8/vax/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/veriexecctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/verifiedexec_load.0	man-obsolete		obsolete
-./usr/share/man/cat8/verify.8			man-postfix-man		postfix,.cat
+./usr/share/man/cat8/verify.0			man-postfix-man		postfix,.cat
 ./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/vinum.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman	.cat
