@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.7 2000/04/22 17:06:03 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.8 2000/04/25 14:59:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -121,6 +121,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
@@ -206,10 +207,11 @@ iommu_init(name, is, tsbsize)
 #endif
 
 	/*
-	 * Initialize streaming buffer.
+	 * Initialize streaming buffer, if it is there.
 	 */
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush,
-	    (paddr_t *)&is->is_flushpa);
+	if (is->is_sb)
+		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush,
+		    (paddr_t *)&is->is_flushpa);
 
 	/*
 	 * now actually start up the IOMMU
@@ -224,6 +226,11 @@ iommu_init(name, is, tsbsize)
 				       M_DEVBUF, 0, 0, EX_NOWAIT);
 }
 
+/*
+ * Streaming buffers don't exist on the UltraSPARC IIi; we should have
+ * detected that already and disabled them.  If not, we will notice that
+ * they aren't there when the STRBUF_EN bit does not remain.
+ */
 void
 iommu_reset(is)
 	struct iommu_state *is;
@@ -286,6 +293,8 @@ iommu_enter(is, va, pa, flags)
  * iommu_remove: removes mappings created by iommu_enter
  *
  * Only demap from IOMMU if flag is set.
+ *
+ * XXX: this function needs better internal error checking.
  */
 void
 iommu_remove(is, va, len)
@@ -305,7 +314,12 @@ iommu_remove(is, va, len)
 #endif
 
 	va = trunc_page(va);
+	DPRINTF(IDB_DVMA, ("iommu_remove: va %lx TSB[%lx]@%p\n",
+	    va, IOTSBSLOT(va,is->is_tsbsize), 
+	    &is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]));
 	while (len > 0) {
+		DPRINTF(IDB_DVMA, ("iommu_remove: clearing TSB slot %d for va %p size %lx\n", 
+		    (int)IOTSBSLOT(va,is->is_tsbsize), va, (u_long)len));
 		if (is->is_sb) {
 			DPRINTF(IDB_DVMA, ("iommu_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
@@ -323,7 +337,11 @@ iommu_remove(is, va, len)
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
+		} else {
+			len -= NBPG;
+			membar_sync();	/* XXX */
 		}
+
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = 0;
 		bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_flush, 0, va);
 		va += NBPG;
@@ -534,7 +552,6 @@ iommu_dvmamap_unload(t, is, map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	
-	/* Unmapping is bus dependent */
 	s = splhigh();
 	error = extent_free(is->is_dvmamap, dvmaddr, sgsize, EX_NOWAIT);
 	splx(s);
@@ -612,7 +629,7 @@ iommu_dvmamem_alloc(t, is, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 
 	DPRINTF(IDB_DVMA, ("iommu_dvmamem_alloc: sz %qx align %qx bound %qx "
-	   "segp %p flags %d", size, alignment, boundary, segs, flags));
+	   "segp %p flags %d\n", size, alignment, boundary, segs, flags));
 	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags));
 }
@@ -648,38 +665,21 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
-	paddr_t curaddr;
-	u_long dvmaddr;
-	int cbit, s, err;
+	int cbit;
 
 	DPRINTF(IDB_DVMA, ("iommu_dvmamem_map: segp %p nsegs %d size %lx\n",
 	    segs, nsegs, size));
 
 	/*
-	 * OK, now map this into the IOMMU
+	 * Allocate some space in the kernel map, and then map these pages
+	 * into this space.
 	 */
+	size = round_page(size);
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		return (ENOMEM);
 
-	s = splhigh();
-	err = extent_alloc(is->is_dvmamap, segs[0].ds_len, NBPG,
-	    segs[0]._ds_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
-	splx(s);
-
-	if (err)
-		return (err);	/* XXX: cleanup here? */
-
-	segs[0].ds_addr = dvmaddr;
-	size = segs[0].ds_len;
-	mlist = segs[0]._ds_mlist;
-
-	/* Map memory into DVMA space */
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-		curaddr = VM_PAGE_TO_PHYS(m);
-		DPRINTF(IDB_DVMA,
-		    ("iommu_dvmamem_map: map %p loading va %lx at pa %lx\n",
-		    (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-		iommu_enter(is, dvmaddr, curaddr, flags);
-		dvmaddr += PAGE_SIZE;
-	}
+	*kvap = (caddr_t)va;
 
 	/* 
 	 * digest flags:
@@ -691,22 +691,14 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 		cbit |= PMAP_NC;
 
 	/*
-	 * Now take this and map it into the CPU since it should already
-	 * be in the IOMMU.
+	 * Now take this and map it into the CPU.
 	 */
-#ifdef DIAGNOSTIC
-	if (!segs[0].ds_addr) {
-		printf("iommu_dvmamem_map: NULL ds_addr\n");
-		Debugger();
-	}
-#endif
-	*kvap = (caddr_t)va = segs[0].ds_addr;
 	mlist = segs[0]._ds_mlist;
 	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-
+#ifdef DIAGNOSTIC
 		if (size == 0)
 			panic("iommu_dvmamem_map: size botch");
-
+#endif
 		addr = VM_PAGE_TO_PHYS(m);
 		DPRINTF(IDB_DVMA, ("iommu_dvmamem_map: "
 		    "mapping va %lx at %qx\n", va, addr | cbit));
@@ -740,4 +732,11 @@ iommu_dvmamem_unmap(t, is, kva, size)
 	
 	size = round_page(size);
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, size);
+#if 0
+	/*
+	 * XXX ? is this necessary? i think so and i think other
+	 * implementations are missing it.
+	 */
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+#endif
 }
