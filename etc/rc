@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.119 1999/03/19 00:35:44 perry Exp $
+#	$NetBSD: rc,v 1.120 1999/03/24 18:59:47 mellon Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -105,6 +105,10 @@ if checkyesno lkm && [ -f /etc/rc.lkm ]; then
 	fi
 fi
 
+if ! checkyesno critfs_require_network; then
+	mount_critical_filesystems
+fi
+
 # set hostname, turn on network
 echo 'starting network'
 sh /etc/netstart
@@ -112,19 +116,9 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-for fs in /usr /var $critical_filesystems; do
-	mount | (
-        		ismounted=no
-        		while read what _on on _type type; do
-               		 if [ $on = $fs ]; then
-                        			ismounted=yes
-               		 fi
-        		done
-       		if [ $ismounted = no ]; then
-			mount $fs >/dev/null 2>&1
-		fi
-	)
-done
+if checkyesno critfs_require_network; then
+	mount_critical_filesystems
+fi
 
 # Network Address Translation...
 if checkyesno ipnat && [ -f /etc/ipnat.conf ]; then
