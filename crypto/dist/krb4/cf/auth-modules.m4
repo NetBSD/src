@@ -1,4 +1,4 @@
-dnl $Id: auth-modules.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $Id: auth-modules.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
 dnl
 dnl Figure what authentication modules should be built
 
@@ -16,9 +16,7 @@ if test "$ac_cv_header_security_pam_modules_h" = yes -a "$enable_shared" = yes; 
 fi
 
 case "${host}" in
-changequote(,)dnl
-*-*-irix[56]*) LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS afskauthlib" ;;
-changequote([,])dnl
+*-*-irix[[56]]*) LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS afskauthlib" ;;
 esac
 
 AC_MSG_RESULT($LIB_AUTH_SUBDIRS)

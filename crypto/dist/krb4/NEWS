@@ -1,3 +1,71 @@
+Changes in release 1.1:
+
+* ftpd: new functionality (-R, -a/-A), also using high ports
+
+* kx: support local TCP sockets
+
+* push: print several headers, add --count
+
+* telnetd: handle linux devfs case (only unix98 ptys)
+
+* handle openssl's libcrypto
+
+* do not use result from snprintf blindly
+
+* lib/kafs: support debian's arla package (/etc/arla)
+
+* handle different cases of database libraries better
+
+* now uses libtool/automake
+
+* update config.{guess,sub}
+
+* portability enhancements
+
+* bug fixes
+
+Changes in release 1.0.9:
+
+* fix buffer overrun in telnetd
+
+* fix -ldes building (now only happens on Solaris)
+
+* support /etc/openafs for looking for ThisCell, CellServDB
+
+* new argument `-b' for specifying telnet binary to rxtelnet/rxterm
+
+* fix endian bug in 'kadmin ckey'
+
+* fix globing problem on FreeBSD (ftpd)
+
+* man pages updates
+
+* update some copyright notices
+
+Changes in release 1.0.8:
+
+* add GLOB_LIMIT flag to glob and use in ftpd
+
+* fix dynamic memory errors in libkadm
+
+* man pages fixes
+
+Changes in release 1.0.7:
+
+* fix two weak keys that were wrong
+
+* make ftpd handle options to an external ls better
+
+* some few ftp-related fixes
+
+Changes in release 1.0.6:
+
+* build fixes
+
+* fix buffer overrun in ftpd
+
+* add afs syscall for solaris 8
+
 Changes in release 1.0.5:
 
 * Remember to update version string.

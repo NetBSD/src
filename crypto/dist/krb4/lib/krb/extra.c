@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: extra.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+RCSID("$Id: extra.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
 
 struct value {
     char *variable;

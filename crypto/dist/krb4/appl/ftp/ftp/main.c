@@ -36,7 +36,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: main.c,v 1.1.1.2 2000/12/29 01:42:56 assar Exp $");
+RCSID("$Id: main.c,v 1.1.1.3 2001/09/17 12:09:50 assar Exp $");
 
 int
 main(int argc, char **argv)
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 	char homedir[MaxPathLen];
 	struct servent *sp;
 
-	set_progname(argv[0]);
+	setprogname(argv[0]);
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -54,9 +54,11 @@ main(int argc, char **argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
+	lineedit = 1;
 	passivemode = 0; /* passive mode not active */
+        use_kerberos = 1;
 
-	while ((ch = getopt(argc, argv, "dginptv")) != -1) {
+	while ((ch = getopt(argc, argv, "dgilnptvK")) != -1) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -71,6 +73,9 @@ main(int argc, char **argv)
 			interactive = 0;
 			break;
 
+		case 'l':
+			lineedit = 0;
+			break;
 		case 'n':
 			autologin = 0;
 			break;
@@ -86,9 +91,14 @@ main(int argc, char **argv)
 			verbose++;
 			break;
 
+                case 'K':
+                        /* Disable Kerberos authentication */
+                        use_kerberos = 0;
+                        break;
+
 		default:
 		    fprintf(stderr,
-			    "usage: ftp [-dginptv] [host [port]]\n");
+                            "usage: ftp [-dgilnptvK] [host [port]]\n");
 		    exit(1);
 		}
 	}
@@ -117,7 +127,7 @@ main(int argc, char **argv)
 		exit(0);
 	    signal(SIGINT, intr);
 	    signal(SIGPIPE, lostpeer);
-	    xargv[0] = (char*)__progname;
+	    xargv[0] = (char*)getprogname();
 	    xargv[1] = argv[0];
 	    xargv[2] = argv[1];
 	    xargv[3] = argv[2];
@@ -200,10 +210,8 @@ tail(filename)
 }
 */
 
-#ifndef HAVE_READLINE
-
 static char *
-readline(char *prompt)
+simple_readline(char *prompt)
 {
     char buf[BUFSIZ];
     printf ("%s", prompt);
@@ -213,6 +221,14 @@ readline(char *prompt)
     if (buf[strlen(buf) - 1] == '\n')
 	buf[strlen(buf) - 1] = '\0';
     return strdup(buf);
+}
+
+#ifndef HAVE_READLINE
+
+static char *
+readline(char *prompt)
+{
+    return simple_readline (prompt);
 }
 
 static void
@@ -243,13 +259,17 @@ cmdscanner(int top)
     for (;;) {
 	if (fromatty) {
 	    char *p;
-	    p = readline("ftp> ");
+	    if (lineedit)
+		p = readline("ftp> ");
+	    else
+		p = simple_readline("ftp> ");
 	    if(p == NULL) {
 		printf("\n");
 		quit(0, 0);
 	    }
 	    strlcpy(line, p, sizeof(line));
-	    add_history(p);
+	    if (lineedit)
+		add_history(p);
 	    free(p);
 	} else{
 	    if (fgets(line, sizeof line, stdin) == NULL)

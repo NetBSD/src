@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -52,9 +52,10 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
 {
     char buf[1024];
     char *p;
-    int nchar;
+    int rlen, tlen;
     FILE *f;
     int ret = KFAILURE;
+    char *rstart;
 
     if (n < 0)
         return KFAILURE;
@@ -70,21 +71,21 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
             goto done;
 
     /* We now have the n:th line, remove initial white space. */
-    p = buf + strspn(buf, " \t");
+    rstart = p = buf + strspn(buf, " \t");
 
     /* Collect realmname. */
-    nchar    = strcspn(p, " \t\n");
-    if (nchar == 0 || nchar > REALM_SZ)
+    rlen    = strcspn(p, " \t\n");
+    if (rlen == 0 || rlen > REALM_SZ)
         goto done;		/* No realmname */
-    strncpy(r, p, nchar);
-    r[nchar] = 0;
 
     /* Does more junk follow? */
-    p += nchar;
-    nchar = strspn(p, " \t\n");
-    if (p[nchar] == 0)
+    p += rlen;
+    tlen = strspn(p, " \t\n");
+    if (p[tlen] == 0) {
+	strncpy(r, rstart, rlen);
+	r[rlen] = 0;
         ret = KSUCCESS;		/* This was a realm name only line. */
-
+    }
   done:
     fclose(f);
     return ret;
