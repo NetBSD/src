@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.11 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: measure.c,v 1.12 2005/02/06 04:56:27 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.11 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: measure.c,v 1.12 2005/02/06 04:56:27 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	long min_idelta, min_odelta;
 	struct timeval tdone, tcur, ttrans, twait, tout;
 	u_char packet[PACKET_IN], opacket[64];
-	register struct icmp *icp = (struct icmp *) packet;
-	register struct icmp *oicp = (struct icmp *) opacket;
+	struct icmp *icp = (struct icmp *) packet;
+	struct icmp *oicp = (struct icmp *) opacket;
 	struct ip *ip = (struct ip *) packet;
 
 	min_idelta = min_odelta = 0x7fffffff;
