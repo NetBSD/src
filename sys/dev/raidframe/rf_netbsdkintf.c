@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.128 2002/08/04 03:27:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.129 2002/08/07 20:45:39 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.128 2002/08/04 03:27:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.129 2002/08/07 20:45:39 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2688,6 +2688,12 @@ rf_find_raid_components()
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
 			continue;
 		}
+
+		/* we don't care about CD's... */
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"cd")) {
+			continue;
+		}
+
 		/* hdfd is the Atari/Hades floppy driver */
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
 			continue;
