@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.18 1999/08/15 10:59:01 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.19 1999/08/16 08:34:33 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.18 1999/08/15 10:59:01 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.19 1999/08/16 08:34:33 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ t_getstr(info, id, area, limit)
 	struct tinfo *info;
 	const char *id;
 	char **area;
-	int *limit;
+	size_t *limit;
 {
 	char ids[3];
 	char *s;
