@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/11/30 18:28:16 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.7 1999/12/24 19:12:38 garbled Exp $
 
 LIB=bind
 
@@ -41,7 +41,8 @@ SRCS+=	dst_api.c prandom.c rsaref_link.c support.c bsafe_link.c \
 libinstall::
 
 port_ipv6.h:
-	env CC="${CC}" /bin/sh ${BIND_DIST_DIR}/bin/probe_ipv6
+	env CC="${CC}" CPPFLAGS="${CPPFLAGS}" /bin/sh \
+	${BIND_DIST_DIR}/bin/probe_ipv6
 
 CLEANFILES+=port_ipv6.h
 
