@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.262 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.263 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -588,3 +588,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	install(1): Add -h {none,md5,rmd160,sha1} to determine the appropriate
 		hash (digest) of a copied file to store in the -M METALOG.
 		[lukem 20040129]
+	identd(8): Replaced with a newly written one that has all the features
+		of pidentd, plus ipv6 support and cleaner implementation.
+		This version of identd is written by Peter Postma.
+		[christos 20040131]
