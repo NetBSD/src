@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.16 1993/06/06 22:20:11 cgd Exp $
+#	$Id: files.i386,v 1.17 1993/06/13 14:03:50 andrew Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
@@ -18,6 +18,7 @@ arch/i386/i386/vm_machdep.c	standard
 arch/i386/i386/disksubr.c	standard
 arch/i386/isa/aha1542.c		optional aha device-driver requires isa scsi
 arch/i386/isa/aha1742.c		optional ahb device-driver requires isa scsi not aha
+arch/i386/isa/bms.c		optional bms device-driver requires isa
 arch/i386/isa/bt742a.c		optional bt device-driver requires isa scsi not aha
 arch/i386/isa/clock.c		optional isa
 arch/i386/isa/com.c		optional com device-driver requires isa
@@ -30,6 +31,7 @@ arch/i386/isa/if_ne.c		optional ne device-driver requires ether isa
 arch/i386/isa/if_we.c		optional we device-driver requires ether isa
 arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa
 arch/i386/isa/isa.c		optional isa device-driver
+arch/i386/isa/lms.c		optional lms device-driver requires isa
 arch/i386/isa/lpt.c		optional lpt device-driver requires isa
 arch/i386/isa/lpa.c		optional lpa device-driver requires isa
 arch/i386/isa/npx.c		optional npx device-driver requires isa
