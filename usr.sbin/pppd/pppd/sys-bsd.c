@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.26 1998/05/02 14:19:16 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.27 1998/08/27 06:55:16 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.26 1998/05/02 14:19:16 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.27 1998/08/27 06:55:16 christos Exp $");
 #endif
 #endif
 
@@ -1073,7 +1073,7 @@ dodefaultroute(g, cmd)
 
     memset(&rtmsg, 0, sizeof(rtmsg));
     rtmsg.hdr.rtm_type = cmd == 's'? RTM_ADD: RTM_DELETE;
-    rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY;
+    rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
     rtmsg.hdr.rtm_version = RTM_VERSION;
     rtmsg.hdr.rtm_seq = ++rtm_seq;
     rtmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
