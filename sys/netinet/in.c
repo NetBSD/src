@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.22 1995/06/04 05:06:54 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.23 1995/06/04 06:46:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -535,6 +535,7 @@ in_addmulti(ap, ifp)
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
+		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = *ap;
 		if ((ifp->if_ioctl == NULL) ||

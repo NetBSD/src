@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.18 1995/06/04 05:07:06 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.19 1995/06/04 06:46:08 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -567,6 +567,7 @@ add_vif(m)
 			return (EOPNOTSUPP);
 		
 		/* Enable promiscuous reception of all IP multicasts. */
+		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
@@ -627,6 +628,7 @@ reset_vif(vifp)
 			last_encap_src = 0;
 		}
 	} else {
+		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
 		ifp = vifp->v_ifp;
