@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.46 1997/09/08 02:43:26 mikel Exp $
+#	$NetBSD: netstart,v 1.47 1997/09/26 07:44:07 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -52,6 +52,9 @@ fi
 
 # Set the address for the first loopback interface, so that the auto-route
 # from a newly configured interface's address to lo0 works correctly.
+#
+# NOTE: obscure networking problems may occur if lo0 isn't configured...
+#
 ifconfig lo0 inet 127.0.0.1
 
 # Configure all of the network interfaces listed in $net_interfaces;
