@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.98 1998/11/29 01:54:16 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.99 1998/11/29 02:00:33 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.92 1998/11/29 01:54:02 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.93 1998/11/29 02:00:13 thorpej Exp 
  */
 
 /*
@@ -1108,8 +1108,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x1571		/* VT82C586 (Apollo VP) IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
-/* XXX What was the original Rhine's part number? */
-#define	PCI_PRODUCT_VIATECH_RHINE	0x3043		/* VIA Rhine 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT86C100	0x3043		/* VT86C100 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 
