@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.68 1999/09/28 06:47:41 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.69 1999/09/28 07:51:06 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.68 1999/09/28 06:47:41 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.69 1999/09/28 07:51:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -798,8 +798,6 @@ sendrequest(cmd, local, remote, printnames)
 		bufsize = sndbuf_size;
 		buf = xmalloc(bufsize);
 	}
-	if (debug)
-		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	progressmeter(-1);
 	oldintp = xsignal(SIGPIPE, SIG_IGN);
@@ -1143,8 +1141,6 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		bufsize = rcvbuf_size;
 		buf = xmalloc(bufsize);
 	}
-	if (debug)
-		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	progressmeter(-1);
 

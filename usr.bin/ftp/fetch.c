@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.78 1999/09/28 06:47:41 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.79 1999/09/28 07:51:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.78 1999/09/28 06:47:41 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.79 1999/09/28 07:51:05 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1052,8 +1052,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		bufsize = rcvbuf_size;
 		xferbuf = xmalloc(bufsize);
 	}
-	if (debug)
-		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	bytes = 0;
 	hashbytes = mark;
