@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.12 2002/11/23 02:44:15 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.13 2003/12/29 05:22:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.12 2002/11/23 02:44:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.13 2003/12/29 05:22:16 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -126,11 +126,7 @@ rf_ConfigureDebugMem(listp)
 #if RF_DEBUG_MEM
 	int     i, rc;
 
-	rc = rf_create_managed_mutex(listp, &rf_debug_mem_mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
-		return (rc);
-	}
+	rf_mutex_init(&rf_debug_mem_mutex);
 	if (rf_memDebug) {
 		for (i = 0; i < RF_MH_TABLESIZE; i++)
 			mh_table[i] = NULL;

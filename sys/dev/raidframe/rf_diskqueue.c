@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.24 2003/12/29 03:33:47 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.25 2003/12/29 05:22:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.24 2003/12/29 03:33:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.25 2003/12/29 05:22:16 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -206,11 +206,7 @@ rf_ConfigureDiskQueue(
 	diskqueue->flags = 0;
 	diskqueue->raidPtr = raidPtr;
 	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[c];
-	rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
+	rf_mutex_init(&diskqueue->mutex);
 	rc = rf_create_managed_cond(listp, &diskqueue->cond);
 	if (rc) {
 		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
