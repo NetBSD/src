@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.96 2004/10/29 20:40:32 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.97 2004/11/05 18:07:27 mason Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -676,7 +676,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 		for (dep = deps; dep != NULL; dep = dep->nv_next) {
 			/*
 			 * If the dependency is an attribute, it must not
-			 * be an interface attribute.  Otherwise, is must
+			 * be an interface attribute.  Otherwise, it must
 			 * be a previously declared option.
 			 */
 			if ((a = ht_lookup(attrtab, dep->nv_name)) != NULL) {
