@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.5 1999/12/03 23:24:33 explorer Exp $	*/
+/*	$NetBSD: _errno.c,v 1.6 1999/12/03 23:31:20 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,11 +38,17 @@
 
 #include <errno.h>
 
+
+/*
+ * Make __errno a weak alias for __errno_func if possible.  If we cannot
+ * make weak aliases, libc cannot be made thread safe anyway, so just
+ * map __errno to __errno_func via a define.
+ */
 #ifdef __weak_alias
 __weak_alias(__errno, __errno_func);
+#else
+#define __errno_func __errno
 #endif
-
-int *__errno_func(void);
 
 int *
 __errno_func(void)
