@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.1 1996/01/31 23:16:48 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.2 1996/03/08 17:11:13 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,11 +41,7 @@
  * Routines to read and write the RTC and CMOS RAM
  *
  * Created      : 13/10/94
- * Last updated : 01/07/95
- *
  * Based of kate/display/iiccontrol.c
- *
- *    $Id: rtc.c,v 1.1 1996/01/31 23:16:48 mark Exp $
  */
 
 #include <sys/types.h>
@@ -60,9 +56,9 @@ cmos_read(location)
 	u_char buff;
 
 /*
- * This commented code dates from when I was translated CMOS address
+ * This commented code dates from when I was translating CMOS address
  * from the RISCOS addresses. Now all addresses are specifed as
- * actually address in the CMOS RAM
+ * actual addresses in the CMOS RAM
  */
 
 /* 
@@ -95,9 +91,9 @@ cmos_write(location, value)
 	u_char buff[2];
 
 /*
- * This commented code dates from when I was translated CMOS address
+ * This commented code dates from when I was translating CMOS address
  * from the RISCOS addresses. Now all addresses are specifed as
- * actually address in the CMOS RAM
+ * actual addresses in the CMOS RAM
  */
 
 /*	if (location > 0xF0)
