@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.60 2002/09/22 07:20:32 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.61 2002/11/17 08:32:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.60 2002/09/22 07:20:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.61 2002/11/17 08:32:45 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -290,15 +290,20 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 * Wire down the U-area for the process, which contains the PCB
 	 * and the kernel stack.  Wired state is stored in p->p_flag's
 	 * P_INMEM bit rather than in the vm_map_entry's wired count
-	 * to prevent kernel_map fragmentation.
+	 * to prevent kernel_map fragmentation.  If we reused a cached U-area,
+	 * P_INMEM will already be set and we don't need to do anything.
 	 *
-	 * Note the kernel stack gets read/write accesses right off
-	 * the bat.
+	 * Note the kernel stack gets read/write accesses right off the bat.
 	 */
-	error = uvm_fault_wire(kernel_map, (vaddr_t)up, (vaddr_t)up + USPACE,
-	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
-	if (error)
-		panic("uvm_fork: uvm_fault_wire failed: %d", error);
+
+	if ((p2->p_flag & P_INMEM) == 0) {
+		error = uvm_fault_wire(kernel_map, (vaddr_t)up,
+		    (vaddr_t)up + USPACE, VM_FAULT_WIRE,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		if (error)
+			panic("uvm_fork: uvm_fault_wire failed: %d", error);
+		p2->p_flag |= P_INMEM;
+	}
 
 #ifdef KSTACK_CHECK_MAGIC
 	/*
@@ -354,8 +359,8 @@ uvm_exit(p)
  * uvm_uarea_alloc: allocate a u-area
  */
 
-vaddr_t
-uvm_uarea_alloc(void)
+boolean_t
+uvm_uarea_alloc(vaddr_t *uaddrp)
 {
 	vaddr_t uaddr;
 
@@ -367,10 +372,12 @@ uvm_uarea_alloc(void)
 	if (uaddr) {
 		uvm_uareas = *(void **)uvm_uareas;
 		uvm_nuarea--;
+		*uaddrp = uaddr;
+		return TRUE;
 	} else {
-		uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+		*uaddrp = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+		return FALSE;
 	}
-	return uaddr;
 }
 
 /*
