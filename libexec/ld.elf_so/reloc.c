@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.19 1999/03/13 20:00:14 christos Exp $	 */
+/*	$NetBSD: reloc.c,v 1.20 1999/04/29 15:06:41 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -157,11 +157,12 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__i386__) || defined(__alpha__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
 	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
 	extern Elf_Dyn   _DYNAMIC;
 #endif
-#if defined(__i386__) || defined(__alpha__) || defined(__powerpc__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
+    defined(__powerpc__)
 	Elf_Addr         tmp;
 #endif
 
@@ -170,7 +171,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	case R_TYPE(NONE):
 		break;
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__m68k__)
 	case R_TYPE(GOT32):
 
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -216,7 +217,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
 		break;
-#endif /* __i386__ */
+#endif /* __i386__ || __m68k__ */
 
 #ifdef __alpha__
 	case R_TYPE(REFQUAD):
@@ -235,7 +236,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __alpha__ */
 
-#if defined(__i386__) || defined(__alpha__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
 	case R_TYPE(GLOB_DAT):
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, false);
@@ -379,7 +380,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
 #endif
 
-#if defined(__alpha__)	|| defined(__i386__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
@@ -397,7 +398,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		    defobj->strtab + def->st_name,
 		    (void *)*where, (void *)new_value));
 	} else
-#endif /* __alpha__ || __i386__ */
+#endif /* __alpha__ || __i386__ || __m68k__ */
 	if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
@@ -566,7 +567,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL) {
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
 			obj->pltgot[1] = (Elf_Addr) obj;
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
 #endif
