@@ -1,4 +1,4 @@
-/*	$NetBSD: pccreg.h,v 1.6 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: pccreg.h,v 1.7 2000/08/20 21:51:31 scw Exp $	*/
 
 /*
  *
@@ -184,5 +184,10 @@
  */
 
 #define PCC_GENCR_IEN	0x10	/* global interrupt enable */
+
+/*
+ * slave base address register
+ */
+#define PCC_SLAVE_BASE_MASK	(0x01fu)
 
 #endif /* __MVME68K_PCCREG_H */

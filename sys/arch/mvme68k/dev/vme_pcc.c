@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.10 2000/08/13 17:00:52 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.11 2000/08/20 21:51:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -83,35 +83,45 @@ void vme_pcc_intr_disestablish(void *, int, int, int);
 
 
 static struct mvmebus_range vme_pcc_masters[] = {
-	{VME_AM_MBO | VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER,
-		VME_D32 | VME_D16,
+	{VME_AM_A24 |
+	    MVMEBUS_AM_CAP_DATA  | MVMEBUS_AM_CAP_PROG |
+	    MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER,
+		VME_D32 | VME_D16 | VME_D8,
 		VME1_A24D32_LOC_START,
 		VME1_A24_MASK,
 		VME1_A24D32_START,
 		VME1_A24D32_END},
 
-	{VME_AM_MBO | VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER,
-		VME_D32 | VME_D16,
+	{VME_AM_A32 |
+	    MVMEBUS_AM_CAP_DATA  | MVMEBUS_AM_CAP_PROG |
+	    MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER,
+		VME_D32 | VME_D16 | VME_D8,
 		VME1_A32D32_LOC_START,
 		VME1_A32_MASK,
 		VME1_A32D32_START,
 		VME1_A32D32_END},
 
-	{VME_AM_MBO | VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER,
-		VME_D16,
+	{VME_AM_A24 |
+	    MVMEBUS_AM_CAP_DATA  | MVMEBUS_AM_CAP_PROG |
+	    MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER,
+		VME_D16 | VME_D8,
 		VME1_A24D16_LOC_START,
 		VME1_A24_MASK,
 		VME1_A24D16_START,
 		VME1_A24D16_END},
 
-	{VME_AM_MBO | VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER,
+	{VME_AM_A32 |
+	    MVMEBUS_AM_CAP_DATA  | MVMEBUS_AM_CAP_PROG |
+	    MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER,
 		VME_D16 | VME_D8,
 		VME1_A32D16_LOC_START,
 		VME1_A32_MASK,
 		VME1_A32D16_START,
 		VME1_A32D16_END},
 
-	{VME_AM_MBO | VME_AM_A16 | VME_AM_DATA | VME_AM_SUPER,
+	{VME_AM_A16 |
+	    MVMEBUS_AM_CAP_DATA  |
+	    MVMEBUS_AM_CAP_SUPER | MVMEBUS_AM_CAP_USER,
 		VME_D16 | VME_D8,
 		VME1_A16D16_LOC_START,
 		VME1_A16_MASK,
@@ -150,6 +160,7 @@ vme_pcc_attach(parent, self, aux)
 {
 	struct pcc_attach_args *pa;
 	struct vme_pcc_softc *sc;
+	vme_am_t am;
 	u_int8_t reg;
 
 	sc = (struct vme_pcc_softc *) self;
@@ -181,17 +192,62 @@ vme_pcc_attach(parent, self, aux)
 		    (vme_addr_t) (mem_clusters[0].size - 0x01000000);
 	}
 
-	vme_pcc_attached = 1;
+	am = 0;
+	reg = vme1_reg_read(sc, VME1REG_SLADDRMOD);
+	if ((reg & VME1_SLMOD_DATA) != 0)
+		am |= MVMEBUS_AM_CAP_DATA;
+	if ((reg & VME1_SLMOD_PRGRM) != 0)
+		am |= MVMEBUS_AM_CAP_PROG;
+	if ((reg & VME1_SLMOD_SUPER) != 0)
+		am |= MVMEBUS_AM_CAP_SUPER;
+	if ((reg & VME1_SLMOD_USER) != 0)
+		am |= MVMEBUS_AM_CAP_USER;
+	if ((reg & VME1_SLMOD_BLOCK) != 0)
+		am |= MVMEBUS_AM_CAP_BLK;
+
+#ifdef notyet
+	if ((reg & VME1_SLMOD_SHORT) != 0) {
+		sc->sc_slave[VME1_SLAVE_A16].vr_am = am | VME_AM_A16;
+		sc->sc_slave[VME1_SLAVE_A16].vr_mask = 0xffffu;
+	} else
+#endif
+		sc->sc_slave[VME1_SLAVE_A16].vr_am = MVMEBUS_AM_DISABLED;
+
+	if (pcc_slave_base_addr < 0x01000000u && (reg & VME1_SLMOD_STND) != 0) {
+		sc->sc_slave[VME1_SLAVE_A24].vr_am = am | VME_AM_A24;
+		sc->sc_slave[VME1_SLAVE_A24].vr_datasize = VME_D32 |
+		    VME_D16 | VME_D8;
+		sc->sc_slave[VME1_SLAVE_A24].vr_mask = 0xffffffu;
+		sc->sc_slave[VME1_SLAVE_A24].vr_locstart = 0;
+		sc->sc_slave[VME1_SLAVE_A24].vr_vmestart = pcc_slave_base_addr;
+		sc->sc_slave[VME1_SLAVE_A24].vr_vmeend = (pcc_slave_base_addr +
+		    mem_clusters[0].size - 1) & 0x00ffffffu;
+	} else
+		sc->sc_slave[VME1_SLAVE_A24].vr_am = MVMEBUS_AM_DISABLED;
+
+	if ((reg & VME1_SLMOD_EXTED) != 0) {
+		sc->sc_slave[VME1_SLAVE_A32].vr_am = am | VME_AM_A32;
+		sc->sc_slave[VME1_SLAVE_A32].vr_datasize = VME_D32 |
+		    VME_D16 | VME_D8;
+		sc->sc_slave[VME1_SLAVE_A32].vr_mask = 0xffffffffu;
+		sc->sc_slave[VME1_SLAVE_A32].vr_locstart = 0;
+		sc->sc_slave[VME1_SLAVE_A32].vr_vmestart = pcc_slave_base_addr;
+		sc->sc_slave[VME1_SLAVE_A32].vr_vmeend =
+		    pcc_slave_base_addr + mem_clusters[0].size - 1;
+	} else
+		sc->sc_slave[VME1_SLAVE_A32].vr_am = MVMEBUS_AM_DISABLED;
 
 	/* Attach to the mvme68k common VMEbus front-end */
 	sc->sc_mvmebus.sc_dmat = pa->pa_dmat;
 	sc->sc_mvmebus.sc_chip = sc;
 	sc->sc_mvmebus.sc_nmasters = VME1_NMASTERS;
 	sc->sc_mvmebus.sc_masters = &vme_pcc_masters[0];
-	sc->sc_mvmebus.sc_nslaves = 0;
-	sc->sc_mvmebus.sc_slaves = NULL;
+	sc->sc_mvmebus.sc_nslaves = VME1_NSLAVES;
+	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
 	sc->sc_mvmebus.sc_intr_establish = vme_pcc_intr_establish;
 	sc->sc_mvmebus.sc_intr_disestablish = vme_pcc_intr_disestablish;
+
+	vme_pcc_attached = 1;
 
 	mvmebus_attach(&sc->sc_mvmebus);
 }
