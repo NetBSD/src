@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.7 2002/12/28 04:16:33 dsainty Exp $	*/
+/*	$NetBSD: ustir.c,v 1.8 2002/12/28 04:23:40 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.7 2002/12/28 04:16:33 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.8 2002/12/28 04:23:40 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,7 +609,7 @@ ustir_periodic(struct ustir_softc *sc)
 
 		err = ustir_read_reg(sc, STIR_REG_STATUS,
 				     &regval);
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: status register read failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -636,11 +636,11 @@ ustir_periodic(struct ustir_softc *sc)
 						      STIR_RSTATUS_FFCLR);
 				/* XXX if we fail partway through
 				 * this, we may not recover? */
-				if (!err)
+				if (err == USBD_NORMAL_COMPLETION)
 					err = ustir_write_reg(sc,
 							      STIR_REG_STATUS,
 							      0);
-				if (err) {
+				if (err != USBD_NORMAL_COMPLETION) {
 					printf("%s: FIFO reset failed: %s\n",
 					       USBDEVNAME(sc->sc_dev),
 					       usbd_errstr(err));
@@ -814,7 +814,7 @@ ustir_start_read(struct ustir_softc *sc)
 			USBD_NO_TIMEOUT, ustir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		DPRINTFN(0, ("%s: err=%d\n", __func__, err));
+		DPRINTFN(0, ("%s: err=%d\n", __func__, (int)err));
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
@@ -850,12 +850,12 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_rd_addr, 0, &sc->sc_rd_pipe);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad1;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_wr_addr, 0, &sc->sc_wr_pipe);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad2;
 	}
@@ -1130,7 +1130,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 					 USTIR_WR_TIMEOUT,
 					 wrbuf, &btlen, "ustiwr");
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
 			else if (err == USBD_TIMEOUT)
@@ -1288,7 +1288,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 			      regnum, (unsigned int)regdata));
 
 		*(unsigned int *)addr = regdata;
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: register read failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -1310,7 +1310,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 			      regnum, (unsigned int)regdata));
 
 		err = ustir_write_reg(sc, regnum, regdata);
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: register write failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -1393,12 +1393,12 @@ ustir_set_params(void *h, struct irda_params *p)
 		DPRINTFN(10, ("%s: setting BRATE = %x\n", __func__,
 			      (unsigned int)regbrate));
 		err = ustir_write_reg(sc, STIR_REG_BRATE, regbrate);
-		if (!err) {
+		if (err == USBD_NORMAL_COMPLETION) {
 			DPRINTFN(10, ("%s: setting MODE = %x\n", __func__,
 				      (unsigned int)regmode));
 			err = ustir_write_reg(sc, STIR_REG_MODE, regmode);
 		}
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			DPRINTFN(10, ("%s: error setting register: %s\n",
 				      __func__, usbd_errstr(err)));
 			return EIO;
