@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/07/21 21:57:23 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2000/08/14 17:51:41 nonaka Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -62,10 +62,10 @@ vers.c: ${.CURDIR}/../boot/version
 
 ${PROG}: ${OBJS} machine powerpc
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
-		-Ttext ${RELOC} ${OBJS} ${LIBS} vers.o
+		-Ttext ${RELOC} ${OBJS} ${LIBS}
 	${COMPILE.c} -DKERN_OFFSET=${KERN_OFFSET} -DHEAD_SIZE=0x${HEAD_SIZE} \
 		${.CURDIR}/../boot/inkernel.c
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
-		-Ttext ${RELOC} ${OBJS} ${LIBS} vers.o
+		-Ttext ${RELOC} ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>
