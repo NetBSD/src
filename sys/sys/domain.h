@@ -33,6 +33,9 @@
  *	@(#)domain.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _SYS_DOMAIN_H_
+#define _SYS_DOMAIN_H_
+
 /*
  * Structure per communications domain.
  */
@@ -49,3 +52,5 @@ struct	domain {
 #ifdef KERNEL
 struct	domain *domains;
 #endif
+
+#endif /* !_SYS_DOMAIN_H_ */

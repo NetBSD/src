@@ -33,6 +33,9 @@
  *	@(#)mbuf.h	7.14 (Berkeley) 12/5/90
  */
 
+#ifndef _SYS_MBUF_H_
+#define _SYS_MBUF_H_
+
 #ifndef M_WAITOK
 #include "malloc.h"
 #endif
@@ -380,3 +383,5 @@ int mbtypes[] = {				/* XXX */
 };
 #endif
 #endif
+
+#endif /* !_SYS_MBUF_H_ */

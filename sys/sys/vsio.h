@@ -33,6 +33,9 @@
  *	@(#)vsio.h	7.4 (Berkeley) 5/9/91
  */
 
+#ifndef _SYS_VSIO_H_
+#define _SYS_VSIO_H_
+
  /****************************************************************************
  *									    *
  *  Copyright (c) 1983, 1984 by						    *
@@ -151,3 +154,5 @@ typedef struct _vsIoAddr {
 	vsBox	 mbox;			/* atomic read/write */
 } vsIoAddr;
 typedef vsIoAddr *vsIoAddrAddr;
+
+#endif /* !_SYS_VSIO_H_ */

@@ -33,6 +33,9 @@
  *	@(#)syslog.h	7.20 (Berkeley) 2/23/91
  */
 
+#ifndef _SYS_SYSLOG_H_
+#define _SYS_SYSLOG_H_
+
 #define	_PATH_LOG	"/dev/log"
 
 /*
@@ -176,3 +179,5 @@ void	vsyslog __P((int, const char *, va_list));
 __END_DECLS
 
 #endif /* !KERNEL */
+
+#endif /* !_SYS_SYSLOG_H_ */

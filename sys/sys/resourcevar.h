@@ -33,8 +33,8 @@
  *	@(#)resourcevar.h	7.1 (Berkeley) 5/9/91
  */
 
-#ifndef	_RESOURCEVAR_H_		/* tmp for user.h */
-#define	_RESOURCEVAR_H_
+#ifndef _SYS_RESOURCEVAR_H_
+#define _SYS_RESOURCEVAR_H_
 
 /*
  * Kernel per-process accounting / statistics
@@ -80,4 +80,5 @@ struct plimit {
 
 /* make copy of plimit structure */
 struct	plimit *limcopy __P((struct plimit *lim));
-#endif	/* !_RESOURCEVAR_H_ */
+
+#endif /* !_SYS_RESOURCEVAR_H_ */

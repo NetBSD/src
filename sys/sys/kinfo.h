@@ -33,6 +33,9 @@
  *	@(#)kinfo.h	7.9 (Berkeley) 6/26/91
  */
 
+#ifndef _SYS_KINFO_H_
+#define _SYS_KINFO_H_
+
 /*
  * Get kernel info
  */
@@ -89,3 +92,5 @@ __BEGIN_DECLS
 int	getkerninfo __P((int, void *, int *, int));
 __END_DECLS
 #endif
+
+#endif /* !_SYS_KINFO_H_ */

@@ -5,6 +5,9 @@
  * created from	@(#)syscalls.master	7.26 (Berkeley) 3/25/91
  */
 
+#ifndef _SYS_SYSCALL_H_
+#define _SYS_SYSCALL_H_
+
 #define	SYS_exit	1
 #define	SYS_fork	2
 #define	SYS_read	3
@@ -166,3 +169,5 @@
 #define	SYS_setgid	181
 #define	SYS_setegid	182
 #define	SYS_seteuid	183
+
+#endif /* !_SYS_SYSCALL_H_ */

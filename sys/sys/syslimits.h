@@ -33,6 +33,9 @@
  *	@(#)syslimits.h	7.4 (Berkeley) 2/4/91
  */
 
+#ifndef _SYS_SYSLIMITS_H_
+#define _SYS_SYSLIMITS_H_
+
 #define	ARG_MAX		20480	/* max bytes for an exec function */
 #define	CHILD_MAX	40	/* max simultaneous processes */
 #define	LINK_MAX	32767	/* max file link count */
@@ -53,3 +56,5 @@
 #define	EXPR_NEST_MAX	32	/* max expressions nested in expr(1) */
 #define	LINE_MAX	2048	/* max length in bytes of an input line */
 #define	RE_DUP_MAX	255	/* max repeated RE's using interval notation */
+
+#endif /* !_SYS_SYSLIMITS_H_ */

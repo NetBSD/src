@@ -33,6 +33,9 @@
  *	@(#)mount.h	7.22 (Berkeley) 6/3/91
  */
 
+#ifndef _SYS_MOUNT_H_
+#define _SYS_MOUNT_H_
+
 typedef quad fsid_t;			/* file system id type */
 
 /*
@@ -301,3 +304,5 @@ int	unmount __P((const char *, int));
 __END_DECLS
 
 #endif /* KERNEL */
+
+#endif /* !_SYS_MOUNT_H_ */
