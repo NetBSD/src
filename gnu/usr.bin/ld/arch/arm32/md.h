@@ -1,7 +1,10 @@
-/* $NetBSD: md.h,v 1.1 1996/05/17 21:51:10 mark Exp $ */
+/*	$NetBSD: md.h,v 1.2 1997/10/17 21:25:54 mark Exp $	*/
 
 /*
- * Copyright (C) 1996 Wolfgang Solfrank
+ * Copyright (c) 1997 Mark Brinicombe
+ * Copyright (c) 1997 Causality Limited
+ * Copyright (c) 1993 Paul Kranenburg
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +16,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Wolfgang Solfrank.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Paul Kranenburg.
+ *      This product includes software developed by Causality Limited
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,16 +33,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* First cut for arm32 */
+/* Second cut for arm32 */
+
+#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==sparc
+#define NEED_SWAP
+#endif
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
+#ifdef NetBSD
 #define PAGSIZ			__LDPGSZ
+#else
+#define PAGSIZ			4096
+#endif
 
 #define N_SET_FLAG(ex,f)	(N_SETMAGIC(ex,			\
-					    N_GETMAGIC(ex),	\
-					    MID_MACHINE,	\
-					    N_GETFLAG(ex)|(f)))
+					   N_GETMAGIC(ex),	\
+					   MID_MACHINE,		\
+					   N_GETFLAG(ex)|(f)))
 
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
@@ -59,10 +70,10 @@
 	 : (TEXT_START(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
 #endif
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	0	/* ??? */
-#define JMPSLOT_NEEDS_RELOC		1
+#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
+#define JMPSLOT_NEEDS_RELOC		(1)
 
-#define md_got_reloc(r)			0
+#define md_got_reloc(r)			(-r->r_address)
 
 #define md_get_rt_segment_addend(r,a)	md_get_addend(r,a)
 
@@ -71,16 +82,26 @@
 typedef long	got_t;
 
 typedef struct jmpslot {
-	u_long	opcode1;	/* mov ip, lr */
-	u_long	opcode2;	/* call */
-	u_long	reloc_index;	/* used as destination after fixup */
+	u_long	opcode1;	/* ldr ip, [pc] */
+	u_long	opcode2;	/* add pc, pc, ip */
+	u_long	address;	/* binder/function address */
+	u_long	reloc_index;	/* relocation index */
 #define	JMPSLOT_RELOC_MASK	0xffffffff
 } jmpslot_t;
 
 #define	SAVEPC	0xe1a0c00e	/* MOV ip, lr */
 #define CALL	0xeb000000	/* CALL opcode */
 #define JUMP	0xe59ff000	/* LDR pc, [pc] (used as JMP) */
-#define TRAP	0xe6000010	/* Undefined Instruction (used for bpt) */
+#define TRAP	0xe6000011	/* Undefined Instruction (used for bpt) */
+
+#define	GETSLOTADDR	0xe04fc00c	/* sub ip, pc, ip */
+#define ADDPC		0xe08ff00c	/* add pc, pc, ip */
+#define LDRPCADDR	0xe51ff004	/* ldr pc, [pc, #-4] */
+#define	GETRELADDR	0xe59fc000	/* ldr ip, [pc] */
+
+
+void	md_swapin_reloc __P((struct relocation_info *, int));
+void	md_swapout_reloc __P((struct relocation_info *, int));
 
 /*
  * Byte swap defs for cross linking
@@ -94,8 +115,6 @@ typedef struct jmpslot {
 #define md_swapout_symbols(s,n)
 #define md_swapin_zsymbols(s,n)
 #define md_swapout_zsymbols(s,n)
-#define md_swapin_reloc(r,n)
-#define md_swapout_reloc(r,n)
 #define md_swapin__dynamic(l)
 #define md_swapout__dynamic(l)
 #define md_swapin_section_dispatch_table(l)
@@ -117,30 +136,30 @@ typedef struct jmpslot {
 
 #define get_byte(p)	( ((unsigned char *)(p))[0] )
 
-#define get_short(p)	( ( ((unsigned char *)(p))[1] << 8) | \
-			  ( ((unsigned char *)(p))[0]     )   \
+#define get_short(p)	( ( ((unsigned char *)(p))[0] << 8) | \
+			  ( ((unsigned char *)(p))[1]     )   \
 			)
 
-#define get_long(p)	( ( ((unsigned char *)(p))[3] << 24) | \
-			  ( ((unsigned char *)(p))[2] << 16) | \
-			  ( ((unsigned char *)(p))[1] << 8 ) | \
-			  ( ((unsigned char *)(p))[0]      )   \
+#define get_long(p)	( ( ((unsigned char *)(p))[0] << 24) | \
+			  ( ((unsigned char *)(p))[1] << 16) | \
+			  ( ((unsigned char *)(p))[2] << 8 ) | \
+			  ( ((unsigned char *)(p))[3]      )   \
 			)
 
 #define put_byte(p, v)	{ ((unsigned char *)(p))[0] = ((unsigned long)(v)); }
 
-#define put_short(p, v)	{ ((unsigned char *)(p))[1] =			\
+#define put_short(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 8) & 0xff); 	\
-			  ((unsigned char *)(p))[0] =			\
+			  ((unsigned char *)(p))[1] =			\
 				((((unsigned long)(v))     ) & 0xff); }
 
-#define put_long(p, v)	{ ((unsigned char *)(p))[3] =			\
+#define put_long(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 24) & 0xff); 	\
-			  ((unsigned char *)(p))[2] =			\
-				((((unsigned long)(v)) >> 16) & 0xff); 	\
 			  ((unsigned char *)(p))[1] =			\
+				((((unsigned long)(v)) >> 16) & 0xff); 	\
+			  ((unsigned char *)(p))[2] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
-			  ((unsigned char *)(p))[0] =			\
+			  ((unsigned char *)(p))[3] =			\
 				((((unsigned long)(v))      ) & 0xff); }
 
 #ifdef NEED_SWAP
@@ -149,8 +168,6 @@ typedef struct jmpslot {
 
 void	md_swapin_exec_hdr __P((struct exec *));
 void	md_swapout_exec_hdr __P((struct exec *));
-void	md_swapin_reloc __P((struct relocation_info *, int));
-void	md_swapout_reloc __P((struct relocation_info *, int));
 void	md_swapout_jmpslot __P((jmpslot_t *, int));
 
 #define md_swapin_symbols(s,n)			swap_symbols(s,n)
@@ -220,8 +237,24 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define RELOC_COPY_P(r)			(0)
 #define RELOC_LAZY_P(r)			((r)->r_jmptable)
 
-#define CHECK_GOT_RELOC(r)		RELOC_PCREL_P(r)
-#define RELOC_PIC_TYPE(r)		((r)->r_baserel?\
-						PIC_TYPE_LARGE:PIC_TYPE_NONE)
+/*#define CHECK_GOT_RELOC(r)		RELOC_PCREL_P(r)*/
+#define CHECK_GOT_RELOC(r)		(((r)->r_pcrel == 1) && ((r)->r_length == 2))
+
+/*
+ * Define the range of usable Global Offset Table offsets
+ * when using arm LDR instructions with 12 bit offset (-4092 -> 4092);
+ * this is the case if the object files are compiles with -fpic'.
+ * IF a "large" model is used (i.e. -fPIC'), .word instructions
+ * are generated instead providing 32-bit addressability of the GOT table.
+ */
+
+#define MAX_GOTOFF(t)           ((t) == PIC_TYPE_SMALL ? 4092 : LONG_MAX)
+#define MIN_GOTOFF(t)           ((t) == PIC_TYPE_SMALL ? -4092 : LONG_MIN)
+       
+#define RELOC_PIC_TYPE(r)		((r)->r_baserel ? \
+						((r)->r_length == 1 ? \
+						PIC_TYPE_SMALL : \
+						PIC_TYPE_LARGE) : \
+						PIC_TYPE_NONE)
 
 #define RELOC_INIT_SEGMENT_RELOC(r)

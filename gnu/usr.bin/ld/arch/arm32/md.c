@@ -1,6 +1,8 @@
-/* $NetBSD: md.c,v 1.2 1996/08/21 18:43:29 mark Exp $ */
+/*	$NetBSD: md.c,v 1.3 1997/10/17 21:25:49 mark Exp $	*/
 
 /*
+ * Copyright (C) 1997 Mark Brinicombe
+ * Copyright (C) 1997 Causality Limited
  * Copyright (C) 1996 Wolfgang Solfrank
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +16,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Wolfgang Solfrank.
+ *	This product includes software developed by Causality Limited.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -30,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* First cut for arm32 (currently a simple copy of i386 code) */
+/* Second cut for arm32 (used to be a simple copy of i386 code) */
 
 #include <sys/param.h>
 #include <stdio.h>
@@ -41,8 +44,39 @@
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
+#ifdef RTLD
+#include <machine/sysarch.h>
+#include <sys/syscall.h>
+#endif	/* RTLD */
 
 #include "ld.h"
+
+#ifdef RTLD
+/*
+ * Flush the instruction cache of the specified address
+ * Some processors have separate instruction caches and
+ * as such may need a flush following a jump slot fixup.
+ */
+__inline void
+iflush(addr, len)
+	void *addr;
+	int len;
+{
+	struct arm32_sync_icache_args p;
+
+	/*
+	 * This is not an efficient way to flush a chunk of memory
+	 * if we need to flush lots of small chunks i.e. a jmpslot
+	 * per function call.
+	 */
+	p.addr = (u_int)addr;
+	p.len = len;
+
+	__asm __volatile("mov r0, %0; mov r1, %1; swi %2"
+	 : : "I" (ARM32_SYNC_ICACHE), "r" (&p), "J" (SYS_sysarch));
+}
+#endif	/* RTLD */
+
 
 /*
  * Get relocation addend corresponding to relocation record RP
@@ -67,7 +101,21 @@ unsigned char		*addr;
 		break;
 	case 3:			/* looks like a special hack for b & bl */
 		rel = (((long)get_long(addr) & 0xffffff) << 8) >> 6;
-		rel -= rp->r_address; /* really?			XXX */
+		/*
+		 * XXX
+		 * Address the addend to be relative to the start of the file
+		 * The implecation of doing this is that this adjustment is
+		 * done every time the reloc goes through ld.
+		 * This means that the adjustment can be applied multiple
+		 * times if ld -r is used to do a partial link.
+		 *
+		 * Solution:
+		 * 1. Put a hack in md_relocate so that PC relative
+		 *    relocations are not modified if
+		 *    relocatable_output == 1
+		 * 2. Modify the assembler to apply this adjustment.
+		 */
+		rel -= rp->r_address;
 		break;
 	default:
 		errx(1, "Unsupported relocation size: %x",
@@ -79,8 +127,9 @@ unsigned char		*addr;
 /*
  * Put RELOCATION at ADDR according to relocation record RP.
  */
-static struct relocation_info *rrs_reloc; /* HACK HACK HACK			XXX */
-
+#ifdef HACK
+static struct relocation_info *rrs_reloc; /* HACK HACK HACK		XXX */
+#endif
 void
 md_relocate(rp, relocation, addr, relocatable_output)
 struct relocation_info	*rp;
@@ -88,13 +137,25 @@ long			relocation;
 unsigned char		*addr;
 int			relocatable_output;
 {
+	/*
+	 * XXX
+	 * See comments above in md_get_addend
+	 */
+#ifndef RTLD
+	if (RELOC_PCREL_P(rp) && relocatable_output)
+		relocation += (rp->r_address + pc_relocation);
+	if (rp->r_pcrel && rp->r_length == 2 && relocatable_output)
+		relocation -= rp->r_address;
+#endif
+
+#ifdef HACK
 	if (rp == rrs_reloc	/* HACK HACK HACK			XXX */
 	    || (RELOC_PCREL_P(rp) && relocatable_output)) {
 		rrs_reloc = NULL;
 		return;
 	}
 	rrs_reloc = NULL;
-	
+#endif
 	if (rp->r_neg)		/* Not sure, whether this works in all cases XXX */
 		relocation = -relocation;
 	
@@ -108,11 +169,15 @@ int			relocatable_output;
 	case 2:
 		put_long(addr, relocation);
 		break;
-	case 3:
+	case 3: {
+		int a;
+		a = (get_long(addr)&0xff000000)
+			 | ((relocation&0x3ffffff) >> 2);
 		put_long(addr,
 			 (get_long(addr)&0xff000000)
 			 | ((relocation&0x3ffffff) >> 2));
 		break;
+		}
 	default:
 		errx(1, "Unsupported relocation size: %x",
 		    rp->r_length);
@@ -129,9 +194,10 @@ md_make_reloc(rp, r, type)
 struct relocation_info	*rp, *r;
 int			type;
 {
+#ifdef HACK
 	if (type == RELTYPE_EXTERN)
 		rrs_reloc = rp;	/* HACK HACK HACK			XXX */
-	
+#endif
 	/* Copy most attributes */
 	r->r_pcrel = rp->r_pcrel;
 	r->r_length = rp->r_length;
@@ -154,11 +220,21 @@ jmpslot_t	*sp;
 long		offset;
 long		index;
 {
-	u_long	fudge = - (offset + 12);
-
-	sp->opcode1 = SAVEPC;
-	sp->opcode2 = CALL | ((fudge >> 2) & 0xffffff);
+	/*
+	 * Build the jump slot as follows
+	 *
+	 *	ldr	ip, [pc]
+	 *	add	pc, pc, ip
+	 *	.word	new_addr
+	 *	.word	reloc_index
+	 */
+	sp->opcode1 = GETRELADDR;
+	sp->opcode2 = ADDPC;
+	sp->address = - (offset + 12);
 	sp->reloc_index = index;
+#ifdef RTLD
+	iflush(sp, sizeof(jmpslot_t));
+#endif	/* RTLD */
 }
 
 /*
@@ -166,6 +242,11 @@ long		index;
  * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
  * and by `ld.so' after resolving the symbol.
  */
+
+#ifdef RTLD
+extern       void		binder_entry __P((void));
+#endif
+
 void
 md_fix_jmpslot(sp, offset, addr)
 jmpslot_t	*sp;
@@ -173,12 +254,59 @@ long		offset;
 u_long		addr;
 {
 	/*
-	 * Generate the following sequence:
-	 *	ldr	pc, [pc]
+	 * For jmpslot 0 (the binder)
+	 * generate
+	 *	sub	ip, pc, ip
+	 *	ldr	pc, [pc, #-4]
 	 *	.word	addr
+	 *	<unused>
+	 *
+	 * For jump slots generated by the linker (i.e. -Bsymbolic)
+	 * build a direct jump to the absolute address
+	 * i.e.
+	 *	ldr	pc, [pc]
+	 *	<unused>
+	 *	.word	new_addr
+	 *	<unused>
+	 *
+	 * For other jump slots generated (fixed by ld.so)
+	 * just modify the address offset since the slot
+	 * will have been created with md_make_jmpslot().
+	 * i.e.
+	 *	ldr	ip, [pc]
+	 *	add	pc, pc, ip
+	 *	.word	new_rel_addr
+	 *	<unused>
 	 */
-	sp->opcode1 = JUMP;
-	sp->reloc_index = addr;
+#ifdef RTLD
+	if ((void *)addr == binder_entry) {
+#else
+	if (offset == 0) {
+#endif
+		/* Build binder jump slot */
+		sp->opcode1 = GETSLOTADDR;
+		sp->opcode2 = LDRPCADDR;
+		sp->address = addr;
+#ifdef RTLD
+		iflush(sp, sizeof(jmpslot_t));
+#endif	/* RTLD */
+	} else {
+#ifdef RTLD
+		/*
+		 * Change the relative offset to the binder
+		 * into a relative offset to the function
+		 */
+		sp->address = (addr - (long)sp - 12);
+/*		iflush(sp, sizeof(jmpslot_t));*/
+#else
+		/*
+		 * Build a direct transfer jump slot
+		 * as we not doing a run time fixup.
+		 */
+		sp->opcode1 = JUMP;
+		sp->address = addr;
+#endif	/* RTLD */
+	}
 }
 
 /*
@@ -212,6 +340,7 @@ int			type;
 	r->r_baserel = 1;
 	r->r_jmptable = 0;
 	r->r_relative = 0;
+
 }
 
 /*
@@ -236,6 +365,9 @@ long	*savep;
 {
 	*savep = *(long *)where;
 	*(long *)where = TRAP;
+#ifdef RTLD
+	iflush((long *)where, sizeof(long));
+#endif	/* RTLD */	
 }
 
 #ifndef RTLD
@@ -255,7 +387,7 @@ int		magic, flags;
 	if (!(link_mode & SHAREABLE))
 		hp->a_entry = PAGSIZ;
 }
-#endif /* RTLD */
+#endif	/* RTLD */
 
 
 #ifdef NEED_SWAP
@@ -283,49 +415,6 @@ struct exec *h;
 	swap_longs((long *)h + skip, sizeof(*h)/sizeof(long) - skip);
 }
 
-
-void
-md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
-{
-	int	bits;
-
-	for (; n; n--, r++) {
-		r->r_address = md_swap_long(r->r_address);
-		bits = ((int *)r)[1];
-		r->r_symbolnum = md_swap_long(bits) & 0x00ffffff;
-		r->r_pcrel = (bits & 1);
-		r->r_length = (bits >> 1) & 3;
-		r->r_extern = (bits >> 3) & 1;
-		r->r_neg = (bits >> 4) & 1;
-		r->r_baserel = (bits >> 5) & 1;
-		r->r_jmptable = (bits >> 6) & 1;
-		r->r_relative = (bits >> 7) & 1;
-	}
-}
-
-void
-md_swapout_reloc(r, n)
-struct relocation_info *r;
-int n;
-{
-	int	bits;
-
-	for (; n; n--, r++) {
-		r->r_address = md_swap_long(r->r_address);
-		bits = md_swap_long(r->r_symbolnum) & 0xffffff00;
-		bits |= (r->r_pcrel & 1);
-		bits |= (r->r_length & 3) << 1;
-		bits |= (r->r_extern & 1) << 3;
-		bits |= (r->r_neg & 1) << 4;
-		bits |= (r->r_baserel & 1) << 5;
-		bits |= (r->r_jmptable & 1) << 6;
-		bits |= (r->r_relative & 1) << 7;
-		((int *)r)[1] = bits;
-	}
-}
-
 void
 md_swapout_jmpslot(j, n)
 jmpslot_t	*j;
@@ -339,3 +428,75 @@ int		n;
 }
 
 #endif /* NEED_SWAP */
+
+/*
+ * md_swapin_reloc()
+ *
+ * As well as provide bit swapping for cross compiling with different
+ * endianness we need to munge some of the reloc bits.
+ * This munging is due to the assemble packing all the PIC related
+ * relocs so that only 1 extra bit in the reloc structure is needed
+ * The result is that jmpslot branches are packed as a baserel branch
+ * Spot this case and internally use a jmptable bit.
+ */
+
+void
+md_swapin_reloc(r, n)
+struct relocation_info *r;
+int n;
+{
+	int	bits;
+
+	for (; n; n--, r++) {
+#ifdef NEED_SWAP
+		r->r_address = md_swap_long(r->r_address);
+		bits = ((int *)r)[1];
+		r->r_symbolnum = md_swap_long(bits) & 0x00ffffff;
+		r->r_pcrel = (bits & 1);
+		r->r_length = (bits >> 1) & 3;
+		r->r_extern = (bits >> 3) & 1;
+		r->r_neg = (bits >> 4) & 1;
+		r->r_baserel = (bits >> 5) & 1;
+		r->r_jmptable = (bits >> 6) & 1;
+		r->r_relative = (bits >> 7) & 1;
+#endif
+		/* Look for PIC relocation */
+		if (r->r_baserel) {
+			/* Look for baserel branch */
+			if (r->r_length == 3 && r->r_pcrel == 0) {
+				r->r_jmptable = 1;
+			}
+			/* Look for GOTPC reloc */
+			if (r->r_length == 2 && r->r_pcrel == 1)
+				r->r_baserel = 0;
+		}
+	}
+}
+
+void
+md_swapout_reloc(r, n)
+struct relocation_info *r;
+int n;
+{
+	int	bits;
+
+	for (; n; n--, r++) {
+		/* Look for jmptable relocation */
+		if (r->r_jmptable && r->r_pcrel == 0 && r->r_length == 3) {
+			r->r_jmptable = 0;
+			r->r_baserel = 1;
+		}
+#ifdef NEED_SWAP
+		r->r_address = md_swap_long(r->r_address);
+		bits = md_swap_long(r->r_symbolnum) & 0xffffff00;
+		bits |= (r->r_pcrel & 1);
+		bits |= (r->r_length & 3) << 1;
+		bits |= (r->r_extern & 1) << 3;
+		bits |= (r->r_neg & 1) << 4;
+		bits |= (r->r_baserel & 1) << 5;
+		bits |= (r->r_jmptable & 1) << 6;
+		bits |= (r->r_relative & 1) << 7;
+		((int *)r)[1] = bits;
+#endif
+	}
+}
