@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.83 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: in6.c,v 1.84 2003/12/10 11:46:33 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.83 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.84 2003/12/10 11:46:33 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -293,7 +293,7 @@ in6_ifindex2scopeid(idx)
 	struct ifaddr *ifa;
 	struct sockaddr_in6 *sin6;
 
-	if (idx < 0 || if_index < idx)
+	if (idx < 0 || if_indexlim <= idx)
 		return -1;
 	ifp = ifindex2ifnet[idx];
 	if (!ifp)
