@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.19 1994/05/07 00:53:14 cgd Exp $
+ *	$Id: cpu.h,v 1.20 1994/05/19 08:10:02 cgd Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -54,6 +54,7 @@
 #define	COPY_SIGCODE	/* copy sigcode above user stack in exec */
 
 #define	cpu_exec(p)	/* nothing */
+#define	cpu_wait(p)	/* nothing */
 
 /*
  * Arguments to hardclock, softclock and statclock
