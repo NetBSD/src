@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.6 1997/10/20 03:20:29 lukem Exp $	*/
+/*	$NetBSD: who.c,v 1.7 1998/12/20 14:53:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.6 1997/10/20 03:20:29 lukem Exp $");
+__RCSID("$NetBSD: who.c,v 1.7 1998/12/20 14:53:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -208,13 +208,13 @@ output(up)
 		
 	}
 
-	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, up->ut_name);
+	(void)printf("%-*.*s ", (int)UT_NAMESIZE, (int)UT_NAMESIZE, up->ut_name);
 
 	if (show_term) {
 		(void)printf("%c ", state);
 	}
 
-	(void)printf("%-*.*s ", UT_LINESIZE, UT_LINESIZE, up->ut_line);
+	(void)printf("%-*.*s ", (int)UT_LINESIZE, (int)UT_LINESIZE, up->ut_line);
 	(void)printf("%.12s ", ctime(&up->ut_time) + 4);
 
 	if (show_idle) {
@@ -229,25 +229,25 @@ output(up)
 	}
 	
 	if (*up->ut_host)
-		printf("\t(%.*s)", UT_HOSTSIZE, up->ut_host);
+		printf("\t(%.*s)", (int)UT_HOSTSIZE, up->ut_host);
 	(void)putchar('\n');
 }
 
 void
 output_labels()
 {
-	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, "USER");
+	(void)printf("%-*.*s ", (int)UT_NAMESIZE, (int)UT_NAMESIZE, "USER");
 
 	if (show_term)
 		(void)printf("S ");
 	
-	(void)printf("%-*.*s ", UT_LINESIZE, UT_LINESIZE, "LINE");
+	(void)printf("%-*.*s ", (int)UT_LINESIZE, (int)UT_LINESIZE, "LINE");
 	(void)printf("WHEN         ");
 
 	if (show_idle)
 		(void)printf("IDLE  ");
 	
-	(void)printf("\t%.*s", UT_HOSTSIZE, "FROM");
+	(void)printf("\t%.*s", (int)UT_HOSTSIZE, "FROM");
 
 	(void)putchar('\n');
 }
