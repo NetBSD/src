@@ -56,12 +56,17 @@
 
 #include "prom.h"
 
+#include "zs.h"
 
 int promcnprobe(), promcninit(), promcngetc(), promcnputc();
+int zscnprobe(), zscninit(), zscngetc(), zscnputc();
 
 struct	consdev constab[] = {
 #if NPROM
     {promcnprobe, promcninit, promcngetc, promcnputc},
+#endif
+#if NZS
+    {zscnprobe, zscninit, zscngetc, zscnputc},
 #endif
     { 0 },
 };

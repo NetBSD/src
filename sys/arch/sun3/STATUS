@@ -1,12 +1,13 @@
-						<$Revision: 1.7 $> 
+						<$Revision: 1.8 $> 
 
 This is to be a summary of the status of code, its problems,
-and the directions it should and take in the future.
+and the direction it should take in the future.
 
-Summary: Execs SunOS /sbin/init.  executes system calls but when it forks, the
-	 new process segfaults immediately.  Possibly some bug in
-	 softclock() processing, as scheduling may be muffed.
-	 All this via nfs_diskless since there is no scsi driver.
+Summary: Boots via nfsdiskless (due to lack of a scsi driver),
+	 execs /sbin/init (MID_M68K), and because single-user is forced,
+	 provides a /bin/sh.  It works, though the console driver is flakey
+	 and there are a bunch of vm/pmap assertions that should be
+	 investigated
 
 	 nfs_diskless structure is hardwired :)
 

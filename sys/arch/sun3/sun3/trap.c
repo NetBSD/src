@@ -73,6 +73,12 @@
 #include "compat/sunos/sun_syscall.h"
 #endif
 
+
+/*
+ * TODO:
+ *        Chris's new syscall debug stuff 
+ */
+
 struct	sysent	sysent[];
 int	nsysent;
 #ifdef COMPAT_SUNOS
@@ -517,6 +523,8 @@ syscall(code, frame)
 	int rval[2];
 	struct timeval syst;
 	struct sysent *systab;
+	extern char *syscallnames[];
+	char **sysnames;
 #ifdef HPUXCOMPAT
 	extern struct sysent hpuxsysent[];
 	extern int hpuxnsysent, notimp();
@@ -535,7 +543,7 @@ syscall(code, frame)
 
 	    systab = sun_sysent;
 	    numsys = nsun_sysent;
-	    
+	    sysnames = sun_syscallnames;
 	    /* SunOS passes the syscall-number on the stack, whereas
 	       BSD passes it in D0. So, we have to get the real "code"
 	       from the stack, and clean up the stack, as SunOS glue
@@ -559,6 +567,7 @@ syscall(code, frame)
 	case EMUL_HPUX: 
 		systab = hpuxsysent;
 		numsys = hpuxnsysent;
+	        sysnames = hpuxnsyscallnames;
 	    break;
 	    
 #endif
@@ -566,7 +575,7 @@ syscall(code, frame)
 	default:
 	    systab = sysent;
 	    numsys = nsysent;
-
+	    sysnames = syscallnames;
 	}
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	if (code == 0) {			/* indir */
