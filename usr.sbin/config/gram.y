@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.13 1997/01/31 03:12:32 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,8 +99,8 @@ static	void	check_maxpart __P((void));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
-%token	XFILE FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DUMPS
+%token	ENDFILE XFILE FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	SWAP TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
@@ -220,6 +220,7 @@ one_def:
 	file |
 	include |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
+	DEFOPT WORD			{ defoption($2); } |
 	DEVICE devbase interface_opt attrs_opt
 					{ defdev($2, 0, $3, $4); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
