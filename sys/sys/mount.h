@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.10 1993/06/10 16:25:01 brezak Exp $
+ *	$Id: mount.h,v 1.11 1993/07/19 11:52:03 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -115,6 +115,9 @@ struct mount {
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesysem */
+#ifdef ISOFS
+#define ISOFSMNT_NORRIP	0x00000040	/* disable Rock Ridge Ext.*/
+#endif
 
 /*
  * exported mount flags.
