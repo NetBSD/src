@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.12 2000/07/26 21:50:49 matt Exp $ */
+/*	$NetBSD: lkc.c,v 1.13 2002/02/25 14:58:09 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,8 +43,8 @@
 
 #include <machine/vsbus.h>
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 
 #include "ioconf.h"
 
