@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.65 2001/07/18 16:45:27 thorpej Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.66 2001/11/13 02:09:13 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.66 2001/11/13 02:09:13 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

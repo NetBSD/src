@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.1 2000/12/01 19:17:41 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.2 2001/11/13 02:08:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.2 2001/11/13 02:08:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

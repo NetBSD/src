@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.38 2001/10/14 17:14:07 manu Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.39 2001/11/13 02:08:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  */
 
 /* XXX XXX This exists to keep kdump and friends happy. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.39 2001/11/13 02:08:32 lukem Exp $");
 
 #if defined(__i386__)
 #include "../../sys/compat/linux/arch/i386/linux_syscalls.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.13 2001/06/14 20:32:44 thorpej Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.14 2001/11/13 02:09:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.14 2001/11/13 02:09:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.12 2000/11/08 22:51:01 eeh Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.13 2001/11/13 02:08:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -38,6 +38,10 @@
 /*
  * mapping routines for old line discipline (yuck)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.13 2001/11/13 02:08:03 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

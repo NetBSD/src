@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.3 2001/05/30 11:37:23 mrg Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.4 2001/11/13 02:08:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  * HP-UX has both `old' (before HP-UX A8.00) and `new' variants of these
  * calls.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.4 2001/11/13 02:08:15 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

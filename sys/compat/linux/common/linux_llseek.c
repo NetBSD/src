@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.25 1998/10/04 00:02:36 fvdl Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

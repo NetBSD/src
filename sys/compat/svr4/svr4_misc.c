@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.92 2001/11/11 21:21:02 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.93 2001/11/13 02:09:23 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * SVR4 system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.93 2001/11/13 02:09:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
