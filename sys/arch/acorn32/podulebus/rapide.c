@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.21 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.22 2004/08/20 06:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.21 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.22 2004/08/20 06:39:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,10 +250,10 @@ rapide_attach(parent, self, aux)
 	iobase = pa->pa_podule->easi_base;
 
 	/* Fill in wdc and channel infos */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->sc_wdcdev.channels = sc->sc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		rcp = &sc->rapide_channels[channel];
 		sc->sc_chanarray[channel] = &rcp->rc_channel;
@@ -261,7 +261,7 @@ rapide_attach(parent, self, aux)
 		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
-		cp->ch_wdc = &sc->sc_wdcdev;
+		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &rcp->rc_chqueue;
 		wdr->cmd_iot = iot;
 		wdr->ctl_iot = iot;

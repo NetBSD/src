@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.94 2004/08/19 23:36:26 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.95 2004/08/20 06:39:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.94 2004/08/19 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.95 2004/08/20 06:39:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -209,7 +209,7 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	cfe = pa->pf->cfe;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
 
@@ -260,20 +260,20 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 			goto fail;
 		sc->sc_wdcdev.datain_pio = wdc_pcmcia_datain_memory;
 		sc->sc_wdcdev.dataout_pio = wdc_pcmcia_dataout_memory;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
 	} else {
 		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
 		wdr->data32iot = wdr->cmd_iot;
 		wdr->data32ioh = wdr->cmd_iohs[wd_data];
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 	}
 
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->wdc_chanlist[0] = &sc->ata_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->ata_channel.ch_channel = 0;
-	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
@@ -282,9 +282,9 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 
 	/* We can enable and disable the controller. */
-	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
+	sc->sc_wdcdev.sc_atac.atac_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
-	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_refcnt = 1;
+	sc->sc_wdcdev.sc_atac.atac_atapi_adapter._generic.adapt_refcnt = 1;
 
 	wdcattach(&sc->ata_channel);
 	ata_delref(&sc->ata_channel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.22 2004/08/19 23:38:06 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.23 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.22 2004/08/19 23:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.23 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,12 +154,12 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	    IPL_BIO, wdcintr, &sc->sc_channel);
 
 	printf("\n");
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
 	wdcattach(&sc->sc_channel);

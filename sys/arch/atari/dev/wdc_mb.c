@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.23 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.24 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.23 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.24 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.23 2004/08/14 15:08:04 thorpej Exp $");
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
  */
-static int	claim_hw __P((void *, int));
-static void	free_hw __P((void *));
+static int	claim_hw __P((struct ata_channel *, int));
+static void	free_hw __P((struct ata_channel *));
 static void	read_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, u_int16_t *, bus_size_t));
 static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
@@ -105,7 +105,7 @@ wdc_mb_probe(parent, cfp, aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	wdr.cmd_iot = wdr.ctl_iot = mb_alloc_bus_space_tag();
@@ -164,7 +164,7 @@ wdc_mb_attach(parent, self, aux)
 	if (bus_space_map(wdr->cmd_iot, 0xfff00000, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	if (bus_space_subregion(wdr->cmd_iot,
@@ -178,16 +178,16 @@ wdc_mb_attach(parent, self, aux)
 	 */
 	MFP->mf_ierb &= ~IB_DINT;
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 |
-	    WDC_CAPABILITY_ATA_NOSTREAM;
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->sc_wdcdev.claim_hw = &claim_hw;
-	sc->sc_wdcdev.free_hw  = &free_hw;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 |
+	    ATAC_CAP_ATA_NOSTREAM;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_claim_hw = &claim_hw;
+	sc->sc_wdcdev.sc_atac.atac_free_hw  = &free_hw;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 
 	/*
@@ -206,8 +206,8 @@ wdc_mb_attach(parent, self, aux)
 static int	wd_lock;
 
 static int
-claim_hw(softc, maysleep)
-void *softc;
+claim_hw(chp, maysleep)
+struct ata_channel *chp;
 int  maysleep;
 {
 	if (wd_lock != DMA_LOCK_GRANT) {
@@ -218,7 +218,7 @@ int  maysleep;
 			return 0;
 		}
 		if (!st_dmagrab((dma_farg)wdcintr,
-		    (dma_farg)(maysleep ? NULL : wdcrestart), softc,
+		    (dma_farg)(maysleep ? NULL : wdcrestart), chp,
 		    &wd_lock, 1))
 			return 0;
 	}
@@ -226,8 +226,8 @@ int  maysleep;
 }
 
 static void
-free_hw(softc)
-void *softc;
+free_hw(chp)
+struct ata_channel *chp;
 {
 	/*
 	 * Flush pending interrupts before giving-up lock
@@ -238,7 +238,7 @@ void *softc;
 	 * Only free the lock on a Falcon. On the Hades, keep it.
 	 */
 /*	if (machineid & ATARI_FALCON) */
-		st_dmafree(softc, &wd_lock);
+		st_dmafree(chp, &wd_lock);
 }
 
 /*

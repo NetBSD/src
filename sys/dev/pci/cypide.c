@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.12 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.13 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -109,16 +109,16 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_cy_compatchan = 1;
 	} else {
 		aprint_error("%s: unexpected PCI function %d\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, pa->pa_function);
 		return;
 	}
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 		aprint_normal("%s: bus-master DMA support present",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		pciide_mapreg_dma(sc, pa);
 	} else {
 		aprint_normal("%s: hardware does not support DMA",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		sc->sc_dma_ok = 0;
 	}
 	aprint_normal("\n");
@@ -126,21 +126,21 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_cy_handle = cy82c693_init(pa->pa_iot);
 	if (sc->sc_cy_handle == NULL) {
 		aprint_error("%s: unable to map hyperCache control registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		sc->sc_dma_ok = 0;
 	}
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = cy693_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = cy693_setup_channel;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -149,17 +149,17 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->wdc_chanarray[0] = &cp->ata_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(0);
 	cp->ata_channel.ch_channel = 0;
-	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s primary channel: "
 		    "can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
+		sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	aprint_normal("%s: primary channel %s to ",
-	    sc->sc_wdcdev.sc_dev.dv_xname, 
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, 
 	    (interface & PCIIDE_INTERFACE_SETTABLE(0)) ?
 	    "configured" : "wired");
 	if (interface & PCIIDE_INTERFACE_PCI(0)) {

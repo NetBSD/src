@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.18 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.19 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.18 2004/08/19 23:25:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.19 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,13 +121,13 @@ pciide_pnpbios_attach(parent, self, aux)
 	sc->sc_wdcdev.dma_init = pciide_dma_init;
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 1;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-        sc->sc_wdcdev.PIO_cap = 4;
-        sc->sc_wdcdev.DMA_cap = 2;		/* XXX */
-        sc->sc_wdcdev.UDMA_cap = 2;		/* XXX */
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
+        sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+        sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;		/* XXX */
+        sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;	/* XXX */
 #if 0 /* XXX */
 	sc->sc_wdcdev.set_modes = pciide_pnpbios_setup_channel;
 #endif
@@ -137,7 +137,7 @@ pciide_pnpbios_attach(parent, self, aux)
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->ata_channel;
 	cp->ata_channel.ch_channel = 0;
-	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
 					  M_DEVBUF, M_NOWAIT);
 	if (cp->ata_channel.ch_queue == NULL) {
