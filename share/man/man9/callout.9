@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.1 2000/03/23 07:05:30 thorpej Exp $
+.\"	$NetBSD: callout.9,v 1.2 2000/03/27 17:13:50 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Nm callout_stop
 .Nd execute a function after a specified length of time
 .Sh SYNOPSIS
+.Fd #include <sys/callout.h>
 .Ft void
 .Fn "callout_init" "struct callout *c"
 .Ft void
