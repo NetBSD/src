@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.9 1996/06/19 14:16:25 pk Exp $
+#	$NetBSD: install.sub,v 1.10 1996/06/25 07:36:54 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1042,7 +1042,7 @@ install_sets()
 cat << \__install_sets_1
 
 It is now time to extract the installation sets onto the hard disk.
-Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
+Make sure the sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
@@ -1085,7 +1085,7 @@ while [ "X${resp}" = X"" ]; do
 	# If that's the case, bypass the menu the first time.
 	if [ X"$_yup" = X"FALSE" ]; then
 		echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, (N)FS"
-		echo -n " or local (d)isk?"
+		echo -n " or local (d)isk? "
 		getresp ""
 		case "$resp" in
 		d*|D*)
