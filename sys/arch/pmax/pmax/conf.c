@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1999/10/24 23:57:23 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1999/11/15 22:45:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,14 +170,14 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
+#include "px.h"
+cdev_decl(px);
 dev_decl(filedesc,open);
 #include "tun.h"
 cdev_decl(tun);
 cdev_decl(vnd);
 #include "ipfilter.h"
 #include "rnd.h"
-#include "px.h"
-cdev_decl(px);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
