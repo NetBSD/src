@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.15 2000/12/19 02:50:11 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1609,7 +1609,6 @@ adb_cmd_extra(u_char *in)
 	}
 }
 
-
 /*
  * adb_op_sync
  *
@@ -1624,18 +1623,40 @@ adb_cmd_extra(u_char *in)
 int
 adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 {
+	int tmout;
 	int result;
 	volatile int flag = 0;
 
 	result = adb_op(buffer, (void *)adb_op_comprout,
 	    (void *)&flag, command);	/* send command */
-	if (result == 0)		/* send ok? */
-		while (0 == flag)
-			/* wait for compl. routine */;
+	if (result == 0) {		/* send ok? */
+		/*
+		 * Total time to wait is calculated as follows:
+		 *  - Tlt (stop to start time): 260 usec
+		 *  - start bit: 100 usec
+		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
+		 *  - stop bit (with SRQ): 140 usec
+		 * Total: 6900 usec
+		 *
+		 * This is the total time allowed by the specification.  Any
+		 * device that doesn't conform to this will fail to operate
+		 * properly on some Apple systems.  In spite of this we
+		 * double the time to wait; some Cuda-based apparently
+		 * queues some commands and allows the main CPU to continue
+		 * processing (radical concept, eh?).  To be safe, allow
+		 * time for two complete ADB transactions to occur.
+		 */
+		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
+
+		if (!flag)
+			result = -2;
+	}
 
 	return result;
 }
-
 
 /*
  * adb_op_comprout
@@ -2137,14 +2158,13 @@ adb_cuda_autopoll()
 	volatile int flag = 0;
 	int result;
 	u_char output[16];
-	extern void adb_op_comprout();
 
 	output[0] = 0x03;	/* 3-byte message */
 	output[1] = 0x01;	/* to pram/rtc device */
 	output[2] = 0x01;	/* cuda autopoll */
 	output[3] = 0x01;
-	result = send_adb_cuda(output, output, adb_op_comprout,
-		(void *)&flag, 0);
+	result = send_adb_cuda(output, output, adb_op_comprout, (void *)&flag,
+			       0);
 	if (result != 0)	/* exit if not sent */
 		return;
 
@@ -2154,7 +2174,6 @@ adb_cuda_autopoll()
 void
 adb_restart()
 {
-	volatile int flag = 0;
 	int result;
 	u_char output[16];
 
@@ -2165,8 +2184,7 @@ adb_restart()
 		output[0] = 0x02;	/* 2 byte message */
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
 		output[2] = 0x11;	/* restart */
-		result = send_adb_cuda((u_char *)output, (u_char *)0,
-				       (void *)0, (void *)0, (int)0);
+		result = send_adb_cuda(output, NULL, NULL, NULL, 0);
 		if (result != 0)	/* exit if not sent */
 			return;
 		while (1);		/* not return */
