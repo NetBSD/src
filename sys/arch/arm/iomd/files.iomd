@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.4 2003/12/31 15:15:29 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.5 2004/01/01 19:12:13 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -75,11 +75,6 @@ file	arch/arm/iomd/sysbeep_vidc.c		sysbeep_vidc
 device	vidcaudio: audiobus, mulaw, aurateconv
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
-
-device	lmcaudio: audiobus
-attach	lmcaudio at vidc
-file	arch/arm/iomd/lmcaudio.c		lmcaudio	needs-flag
-file	arch/arm/iomd/lmc1982.S			lmcaudio
 
 #
 # Old console devices.
