@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.8 1998/08/26 10:31:37 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.9 1998/08/27 11:47:12 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -163,11 +163,6 @@ file	arch/sparc64/dev/si.c		 sw
 # device declaration in sys/conf/files
 #attach  en at sbus with en_sbus
 #file    arch/sparc64/dev/if_en_sbus.c     en_sbus
-
-# Qlogic ISP 10x0 (Sbus) family
-# device declaration in sys/conf/files
-attach isp at sbus with isp_sbus
-file	arch/sparc64/dev/isp_sbus.c	isp_sbus
 
 #
 # Generic Sun stuff
