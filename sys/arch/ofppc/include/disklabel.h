@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 1998/07/07 04:36:15 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,16 +47,16 @@
 #define	MBRMAGIC	0xaa55		/* Actual magic number */
 
 struct mbr_partition {
-	unsigned char	mbr_flag;	/* default boot flag */
-	unsigned char	mbr_shd;	/* start head, IsN't Always Meaningful */
-	unsigned char	mbr_ssect;	/* start sector, INAM */
-	unsigned char	mbr_scyl;	/* start cylinder, INAM */
-	unsigned char	mbr_type;	/* partition type */
-	unsigned char	mbr_ehd;	/* end head, INAM */
-	unsigned char	mbr_esect;	/* end sector, INAM */
-	unsigned char	mbr_ecyl;	/* end cylinder, INAM */
-	unsigned long	mbr_start;	/* absolute start sector number */
-	unsigned long	mbr_size;	/* partition size in sectors */
+	u_int8_t	mbr_flag;	/* default boot flag */
+	u_int8_t	mbr_shd;	/* start head, IsN't Always Meaningful */
+	u_int8_t	mbr_ssect;	/* start sector, INAM */
+	u_int8_t	mbr_scyl;	/* start cylinder, INAM */
+	u_int8_t	mbr_type;	/* partition type */
+	u_int8_t	mbr_ehd;	/* end head, INAM */
+	u_int8_t	mbr_esect;	/* end sector, INAM */
+	u_int8_t	mbr_ecyl;	/* end cylinder, INAM */
+	u_int32_t	mbr_start;	/* absolute start sector number */
+	u_int32_t	mbr_size;	/* partition size in sectors */
 };
 
 /* Known partition types: */
