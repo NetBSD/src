@@ -1,6 +1,6 @@
-$NetBSD: version,v 1.5 1997/06/01 14:07:27 mrg Exp $
+$NetBSD: version,v 1.6 1997/06/01 14:08:15 mrg Exp $
 
-1.1:
+1.1:	
 1.2:	get it to work with V0 bootproms.
 1.4:	add oldmon support and network support.
 1.5:	bootprograms work unmodified across all platforms.
