@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.15 2001/03/28 14:15:23 drochner Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.16 2001/04/09 09:39:57 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.15 2001/03/28 14:14:57 drochner Exp 
+ *	NetBSD: miidevs,v 1.16 2001/04/09 09:39:24 drochner Exp 
  */
 
 /*-
@@ -145,6 +145,10 @@
 #define	MII_STR_xxINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82555	0x0015
 #define	MII_STR_yyINTEL_I82555	"i82555 10/100 media interface"
+#define	MII_MODEL_yyINTEL_I82562EH	0x0017
+#define	MII_STR_yyINTEL_I82562EH	"i82562EH HomePNA interface"
+#define	MII_MODEL_yyINTEL_I82562EM	0x0032
+#define	MII_STR_yyINTEL_I82562EM	"i82562EM 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
 
