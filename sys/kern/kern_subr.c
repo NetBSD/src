@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.81 2002/06/17 16:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,10 +90,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.81 2002/06/17 16:22:51 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
+#include "opt_syscall_debug.h"
+#include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80 2002/03/17 22:19:20 christos Exp 
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
+#include <sys/systrace.h>
+#include <sys/ktrace.h>
 
 #include <dev/cons.h>
 
@@ -1165,4 +1170,45 @@ format_bytes(buf, len, bytes)
 			buf[nlen] = '\0';
 	}
 	return (rv);
+}
+
+int
+trace_enter(struct proc *p, register_t code, void *args, register_t rval[])
+{
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif /* SYSCALL_DEBUG */
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p, code, args);
+#endif /* KTRACE */
+
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		return systrace_enter(p, code, args, rval);
+#endif
+	return 0;
+}
+
+void
+trace_exit(struct proc *p, register_t code, void *args, register_t rval[],
+    int error)
+{
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif /* SYSCALL_DEBUG */
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
+#endif /* KTRACE */
+
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_exit(p, code, args, rval, error);
+#endif
 }
