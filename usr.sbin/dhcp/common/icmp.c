@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.3 1997/06/03 02:49:27 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.4 1997/06/04 21:04:10 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -149,8 +149,9 @@ void icmp_echoreply (protocol)
 		warn ("icmp_echoreply: %m");
 		return;
 	}
+
+	/* Probably not for us. */
 	if (status < (sizeof (struct ip)) + (sizeof *icfrom)) {
-		warn ("icmp_echoreply: short packet");
 		return;
 	}
 
