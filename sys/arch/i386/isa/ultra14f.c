@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.5 1993/11/28 23:35:48 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.6 1993/11/28 23:46:30 mycroft Exp $
  */
 
 #include "uha.h"
@@ -857,7 +857,7 @@ uha_scsi_cmd(xs)
 	int s;
 	u_long templen;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_scsi_cmd\n"));
+	SC_DEBUG(sc_link, SDEV_DB2, ("uha_scsi_cmd\n"));
 	/*
 	 * get a mscp (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -878,7 +878,7 @@ uha_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start mscp(%x)\n", mscp));
+	SC_DEBUG(sc_link, SDEV_DB3, ("start mscp(%x)\n", mscp));
 	mscp->xs = xs;
 
 	/*
@@ -898,8 +898,8 @@ uha_scsi_cmd(xs)
 
 	mscp->dcn = 0x00;
 	mscp->chan = 0x00;
-	mscp->target = xs->sc_link->target;
-	mscp->lun = xs->sc_link->lun;
+	mscp->target = sc_link->target;
+	mscp->lun = sc_link->lun;
 	mscp->link.addr[0] = 0x00;
 	mscp->link.addr[1] = 0x00;
 	mscp->link.addr[2] = 0x00;
@@ -937,9 +937,8 @@ uha_scsi_cmd(xs)
 				sg->addr.addr[2] = ((scratch >> 16) & 0xff);
 				sg->addr.addr[3] = ((scratch >> 24) & 0xff);
 				xs->datalen += *(u_long *) sg->len.len = iovp->iov_len;
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-					iovp->iov_len,
-					iovp->iov_base));
+				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
+					iovp->iov_len, iovp->iov_base));
 				sg++;
 				iovp++;
 				seg++;
@@ -951,8 +950,8 @@ uha_scsi_cmd(xs)
 			/*
 			 * Set up the scatter gather block
 			 */
-			SC_DEBUG(xs->sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
+			SC_DEBUG(sc_link, SDEV_DB4,
+				("%d @0x%x:- ", xs->datalen, xs->data));
 			datalen = xs->datalen;
 			thiskv = (int) xs->data;
 			thisphys = KVTOPHYS(thiskv);
@@ -967,11 +966,12 @@ uha_scsi_cmd(xs)
 				sg->addr.addr[2] = ((thisphys >> 16) & 0xff);
 				sg->addr.addr[3] = ((thisphys >> 24) & 0xff);
 
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%x", thisphys));
+				SC_DEBUGN(sc_link, SDEV_DB4,
+					("0x%x", thisphys));
 
 				/* do it at least once */
 				nextphys = thisphys;
-				while ((datalen) && (thisphys == nextphys)) {
+				while (datalen && thisphys == nextphys) {
 					/*
 					 * This page is contiguous (physically)
 					 * with the the last, just extend the
@@ -994,8 +994,8 @@ uha_scsi_cmd(xs)
 				/*
 				 * next page isn't contiguous, finish the seg
 				 */
-				SC_DEBUGN(xs->sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
+				SC_DEBUGN(sc_link, SDEV_DB4,
+					("(0x%x)", bytes_this_seg));
 				sg->len.len[0] = (bytes_this_seg & 0xff);
 				sg->len.len[1] = ((bytes_this_seg >> 8) & 0xff);
 				sg->len.len[2] = ((bytes_this_seg >> 16) & 0xff);
@@ -1012,7 +1012,7 @@ uha_scsi_cmd(xs)
 		mscp->datalen.len[2] = ((templen >> 16) & 0xff);
 		mscp->datalen.len[3] = ((templen >> 24) & 0xff);
 		mscp->sg_num = seg;
-		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 
 		if (datalen) {	/* there's still data, must have run out of segs! */
 			printf("%s: uha_scsi_cmd, more than %d DMA segs\n",
@@ -1048,7 +1048,7 @@ uha_scsi_cmd(xs)
 		uha_send_mbox(uha, mscp);
 		timeout(uha_timeout, (caddr_t)mscp, (xs->timeout * hz) / 1000);
 		splx(s);
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_sent\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 		return SUCCESSFULLY_QUEUED;
 	}
 
@@ -1056,7 +1056,7 @@ uha_scsi_cmd(xs)
 	 * If we can't use interrupts, poll on completion
 	 */
 	uha_send_mbox(uha, mscp);
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_wait\n"));
+	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_wait\n"));
 	do {
 		if (uha_poll(uha, xs->timeout)) {
 			if (!(xs->flags & SCSI_SILENT))
