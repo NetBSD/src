@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.14 1999/03/09 03:53:18 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.15 1999/03/14 21:53:31 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1374,7 +1374,7 @@ rf_ReconKernelThread()
 		LOCK_RECON_Q_MUTEX();
 		while (!recon_queue) {
 			UNLOCK_RECON_Q_MUTEX();
-			tsleep(&recon_queue, PRIBIO | PCATCH, 
+			tsleep(&recon_queue, PRIBIO,
 			       "raidframe recon", 0);
 			LOCK_RECON_Q_MUTEX();
 		}
@@ -1413,7 +1413,7 @@ rf_GetSpareTableFromDaemon(req)
 
 	/* mpsleep unlocks the mutex */
 	while (!rf_sparet_resp_queue) {
-		tsleep(&rf_sparet_resp_queue, PRIBIO | PCATCH,
+		tsleep(&rf_sparet_resp_queue, PRIBIO,
 		    "raidframe getsparetable", 0);
 #if 0
 		mpsleep(&rf_sparet_resp_queue, PZERO, "sparet resp", 0, 

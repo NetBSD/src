@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.4 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.5 1999/03/14 21:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -88,7 +88,7 @@ static void DAGExecutionThread(RF_ThreadArg_t arg);
  */
 #define DO_LOCK(_r_)      { ks = splbio(); RF_LOCK_MUTEX((_r_)->node_queue_mutex); }
 #define DO_UNLOCK(_r_)    { RF_UNLOCK_MUTEX((_r_)->node_queue_mutex); splx(ks); }
-#define DO_WAIT(_r_)   tsleep(&(_r_)->node_queue, PRIBIO | PCATCH, "raidframe nq",0)
+#define DO_WAIT(_r_)   tsleep(&(_r_)->node_queue, PRIBIO, "raidframe nq",0)
 #define DO_SIGNAL(_r_)    wakeup(&(_r_)->node_queue)
 
 static void rf_ShutdownEngine(void *);
@@ -102,10 +102,6 @@ rf_ShutdownEngine(arg)
 	raidPtr = (RF_Raid_t *) arg;
 	raidPtr->shutdown_engine = 1;
 	DO_SIGNAL(raidPtr);
-	/* XXX something is missing here... */
-#ifdef DEBUG
-	printf("IGNORING WAIT_STOP\n");
-#endif
 }
 
 int 
