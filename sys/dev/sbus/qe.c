@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $	*/
+/*	$NetBSD: qe.c,v 1.31 2004/03/15 23:51:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.31 2004/03/15 23:51:12 pk Exp $");
 
 #define QEDEBUG
 
@@ -215,7 +215,6 @@ qeattach(parent, self, aux)
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
-	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
@@ -258,7 +257,7 @@ qeattach(parent, self, aux)
 
 	/* Note: no interrupt level passed */
 	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, qeintr, sc);
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(node, sc->sc_enaddr);
 
 	/*
 	 * Allocate descriptor ring and buffers.

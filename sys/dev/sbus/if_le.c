@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.28 2003/11/11 15:01:05 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.29 2004/03/15 23:51:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.28 2003/11/11 15:01:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.29 2004/03/15 23:51:11 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -164,9 +164,6 @@ leattach_sbus(parent, self, aux)
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_dma_tag_t dmatag;
 	struct sbusdev *sd;
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
-
 
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
@@ -263,7 +260,7 @@ leattach_sbus(parent, self, aux)
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(sa->sa_node, sc->sc_enaddr);
 
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
