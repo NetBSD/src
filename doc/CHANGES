@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.252 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.253 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -569,3 +569,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	acorn32: Substantial rewrite of vidcaudio(4).  It now works, and has a
 		manual page. [bjh21 20031231]
 	cvs(1): upgrade to 1.11.11 [itojun 20040102]
+	etc/release-info:  Create & install as part of "make build",
+		based on work by Hubert Feyrer.  [lukem 20040104]
