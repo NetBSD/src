@@ -1,8 +1,8 @@
-/*	$NetBSD: biosmem.S,v 1.4 1997/08/14 15:22:01 drochner Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.1 1997/08/14 15:22:00 drochner Exp $	*/
 
 /*
- * Copyright (c) 1996
- * 	Perry E. Metzger.  All rights reserved.
+ * Copyright (c) 1997
+ *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +13,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgements:
+ *    must display the following acknowledgement:
  *	This product includes software developed for the NetBSD Project
- *	by Perry E. Metzger.
- * 4. The names of the authors may not be used to endorse or promote products
+ *	by Matthias Drochner.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -31,7 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-	
 
 #include <machine/asm.h>
 
@@ -39,53 +38,85 @@
 
 	.text
 
-/* get mem below 1M, in kByte */
-
-ENTRY(getbasemem)
+/* int getextmem2(int buffer[2])
+   return: 0=OK, -1=error
+   buffer[0]: extmem kBytes below 16M (max 15M/1024)
+   buffer[1]: extmem above 16M, in 64k units
+*/
+ENTRY(getextmem2)
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
 	push	%esi
 	push	%edi
 
 	call	_C_LABEL(prot_to_real)
 
-	int	$0x12
-	# zero-extend 16-bit result to 32 bits.
 	data32
-	movl	$0, %ebx
-	mov	%eax,%ebx		# !!! at run time, it's mov %ax,%bx
+	movl	$0xe801, %eax
+	int	$0x15
+	jc	err2
+
+	data32
+	movl	$0, %ecx
+	jmp ok2
+err2:
+	data32
+	movl	$-1, %ecx
+ok2:
+	data32
+	movl	%eax, %edx
 
 	data32
 	call	_C_LABEL(real_to_prot)
 
-	movl	%ebx, %eax
+	movl	8(%ebp), %eax
+	movl	%edx, (%eax)
+	movl	%ebx, 4(%eax)
+
+	movl	%ecx, %eax
 
 	pop	%edi
 	pop	%esi
+	popl	%edx
+	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
 
-/* get mem above 1M, in kByte */
-
-ENTRY(getextmem1)
+/* int getmementry(int iterator, buffer[5])
+   return: new iterator, 0=end of list or error
+   buffer[0]: start of memory chunk
+   buffer[2]: length (bytes)
+   buffer[4]: type
+*/
+ENTRY(getmementry)
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
 	push	%esi
 	push	%edi
 
+	movl	8(%ebp), %ebx
+	movl	$20, %ecx
+	movl	$0x534d4150, %edx	# "SMAP"
+	movl	12(%ebp), %edi
+
 	call	_C_LABEL(prot_to_real)
 
-	movb	$0x88,%ah
+	data32
+	movl	$0xe820, %eax
 	int	$0x15
 
-	# zero-extend 16-bit result to 32 bits.
+	jnc	ok
 	data32
 	movl	$0, %ebx
-	mov	%eax,%ebx		# !!! at run time, it's mov %ax,%bx
 
+ok:
 	data32
 	call	_C_LABEL(real_to_prot)
 
@@ -93,7 +124,8 @@ ENTRY(getextmem1)
 
 	pop	%edi
 	pop	%esi
+	popl	%edx
+	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
-
