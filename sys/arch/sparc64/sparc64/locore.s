@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 2001/07/05 06:37:58 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 2001/07/08 21:05:11 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -311,6 +311,7 @@
  * local storage can be requested by setting the siz parameter,
  * and can be accessed at %sp+CC64FSZ.
  */
+
 #define ENABLE_FPU(siz)									     \
 	save	%sp, -(CC64FSZ), %sp;		/* Allocate a stack frame */		     \
 	sethi	%hi(FPPROC), %l1;							     \
@@ -349,7 +350,7 @@
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
-#if 1
+#ifdef DEBUG
 #define __CHECK_FPU				\
 	LDPTR	[%l5 + P_FPSTATE], %l7;		\
 	cmp	%l7, %l0;			\
@@ -376,24 +377,6 @@ _C_LABEL(data_start):					! Start of data segment
 #define DATA_START	_C_LABEL(data_start)
 
 /*
- * The interrupt stack.
- *
- * This is the very first thing in the data segment, and therefore has
- * the lowest kernel stack address.  We count on this in the interrupt
- * trap-frame setup code, since we may need to switch from the kernel
- * stack to the interrupt stack (iff we are not already on the interrupt
- * stack).  One sethi+cmp is all we need since this is so carefully
- * arranged.
- */
-#if 0
-	.globl	_C_LABEL(intstack)
-	.globl	_C_LABEL(eintstack)
-_C_LABEL(intstack):
-	.space	(2*USPACE)
-_C_LABEL(eintstack):
-#endif
-
-/*
  * When a process exits and its u. area goes away, we set cpcb to point
  * to this `u.', leaving us with something to use for an interrupt stack,
  * and letting all the register save code have a pcb_uw to examine.
@@ -410,15 +393,9 @@ _C_LABEL(idle_u):
  *
  * This must be aligned on an 8 byte boundary.
  */
-#if 0
-	.globl	_C_LABEL(u0)
-_C_LABEL(u0):	.space	(2*USPACE)
-estack0:
-#else
 	.globl	_C_LABEL(u0)
 _C_LABEL(u0):	POINTER	0
 estack0:	POINTER	0
-#endif
 
 #ifdef KGDB
 /*
@@ -4123,17 +4100,10 @@ setup_sparcintr:
 	bne,pn	%xcc, 1b		! No, try again
          nop
 #else	/* INTRLIST */
-#if 1
 	DLFLUSH(%g1, %g3)
 	mov	%g5, %g3
 	CASPTR	[%g1] ASI_N, %g0, %g3	! Try a slot -- MPU safe
 	brz,pt	%g3, 2f			! Available?
-#else
-	DLFLUSH(%g1, %g3)
-	LDPTR	[%g1], %g3		! Try a slot
-	brz,a	%g3, 2f			! Available?
-	 STPTR	%g5, [%g1]		! Grab it
-#endif
 #ifdef DEBUG
 	cmp	%g5, %g3		! if these are the same
 	bne,pt	%icc, 97f		! then we aleady have the
@@ -9376,6 +9346,17 @@ ENTRY(pseg_find)
 	retl
 	 mov	1, %o0
 
+
+/*
+ * Use block_disable to turn off block insns for
+ * bcopy/memset
+ */
+	.data
+	.align	8
+	.globl	block_disable
+block_disable:	.xword	1
+	.text
+	
 #if 1
 /*
  * kernel bcopy/memcpy
@@ -9800,6 +9781,48 @@ Lbcopy_finish:
 	inc	1, %o1					! Update address
 2:	
 Lbcopy_complete:
+#if 0
+	!!
+	!! verify copy success.
+	!! 
+
+	mov	%i0, %o2
+	mov	%i1, %o4
+	mov	%i2, %l4
+0:	
+	ldub	[%o2], %o1
+	inc	%o2
+	ldub	[%o4], %o3
+	inc	%o4
+	cmp	%o3, %o1
+	bnz	1f
+	 dec	%l4
+	brnz	%l4, 0b
+	 nop
+	ba	2f
+	 nop
+
+1:
+	set	block_disable, %o0
+	stx	%o0, [%o0]
+	
+	set	0f, %o0
+	call	prom_printf
+	 sub	%i2, %l4, %o5
+	set	1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	prom_printf
+	 mov	%i2, %o3
+	ta	1
+	.data
+	_ALIGN
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\r\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
+	_ALIGN
+	.text
+2:	
+#endif
 	ret
 	 restore %i1, %g0, %o0
 
@@ -9812,9 +9835,12 @@ Lbcopy_complete:
  */
 	
 Lbcopy_block:
+	sethi	%hi(block_disable), %o3
+	ldx	[ %o3 + %lo(block_disable) ], %o3
+	brnz,pn	%o3, Lbcopy_fancy
 	!! Make sure our trap table is installed
-	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
+	rdpr	%tba, %o3
 	sub	%o3, %o5, %o3
 	brnz,pn	%o3, Lbcopy_fancy	! No, then don't use block load/store
 	 nop
@@ -9861,13 +9887,12 @@ Lbcopy_block:
  *
  * Register ussage, Kernel and user:
  *
- * %g1		data is valid
- * %g2		last safe fetchable address
- * %g7		src (retval for memcpy)
+ * %g1		src (retval for memcpy)
  *
  * %o0		src
  * %o1		dest
  * %o2		end dest
+ * %o5		last safe fetchable address
  */
 
 #define	ASI_STORE	ASI_BLK_P
@@ -9913,34 +9938,35 @@ Lbcopy_block:
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
-#else
-	save	%sp, -CC64FSZ, %sp
-	mov	%i0, %o0				! Src addr.
-	mov	%i1, %o1				! Store our dest ptr here.
-	mov	%i2, %o2				! Len counter
-
 #endif
 
 	!!
 	!! First align the output to a 64-bit entity
 	!! 
 
-	mov	%o1, %g5				! memcpy retval
+	mov	%o1, %g1				! memcpy retval
 	add	%o0, %o2, %o5				! End of source block
+
+	andn	%o0, 7, %o3				! Start of block
 	dec	%o5
+	fzero	%f0
 
-	clr	%g1					! No data loaded
 	andn	%o5, BLOCK_ALIGN, %o5			! Last safe addr.
+	ldd	[%o3], %f2				! Load 1st word
 
+	dec	8, %o3					! Move %o3 1 word back
 	btst	1, %o1
 	bz	4f
 	
 	 mov	-7, %o4					! Lowest src addr possible
-	alignaddr %o0, %o4, %o3				! Base addr for load.
-	
-	ldd	[%o3], %f0				! Load word -1
-	mov	1, %g1					! Data loaded
-	ldd	[%o3+8], %f2				! Load word 0
+	alignaddr %o0, %o4, %o4				! Base addr for load.
+
+	cmp	%o3, %o4
+	be,pt	%xcc, 1f				! Already loaded?
+	 mov	%o4, %o3
+	fmovd	%f2, %f0				! No. Shift
+	ldd	[%o3+8], %f2				! And load
+1:	
 
 	faligndata	%f0, %f2, %f4			! Isolate 1st byte
 
@@ -9955,18 +9981,12 @@ Lbcopy_block:
 	 mov	-6, %o4					! Calculate src - 6
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	be,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
 
 	stda	%f4, [%o1] ASI_FL16_P			! Store 1st short
@@ -9982,18 +10002,12 @@ Lbcopy_block:
 	mov	-4, %o4
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
 
 	st	%f5, [%o1]				! Store word
@@ -10010,18 +10024,12 @@ Lbcopy_block_common:
 	 mov	-0, %o4
 	alignaddr %o0, %o4, %o4				! base - shift
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	add	%o3, 8, %o0				! now use %o0 for src
 	
 	!!
@@ -10161,9 +10169,9 @@ Lbcopy_block_jmp:
 	!!
 L100:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L100"
 	.align	8
@@ -10245,9 +10253,9 @@ L100:
 	!! 
 L101:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L101"
 	.align	8
@@ -10342,9 +10350,9 @@ L101:
 	!! 
 L102:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L102"
 	.align	8
@@ -10439,9 +10447,9 @@ L102:
 	!! 
 L103:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L103"
 	.align	8
@@ -10534,9 +10542,9 @@ L103:
 	!! 
 L104:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L104"
 	.align	8
@@ -10627,9 +10635,9 @@ L104:
 	!! 
 L105:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L105"
 	.align	8
@@ -10719,9 +10727,9 @@ L105:
 	!! 
 L106:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L106"
 	.align	8
@@ -10809,9 +10817,9 @@ L106:
 	!! 
 L107:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L107"
 	.align	8
@@ -10987,8 +10995,7 @@ Lbcopy_blockfinish:
 	ta	1
 	.data
 	_ALIGN
-block_disable:	.xword	0
-0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\r\n"
+0:	.asciz	"block bcopy failed: %x@%p != %x@%p byte %d\r\n"
 1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
 	_ALIGN
 	.text
@@ -11021,12 +11028,10 @@ block_disable:	.xword	0
 1:
 #endif
 	ret
-	 restore	%g5, 0, %o0			! Return DEST for memcpy
+	 restore	%g1, 0, %o0			! Return DEST for memcpy
 #endif
-	ret
-	 restore %g5, 0, %o0
-	retl
-	 mov	%g5, %o0
+ 	retl
+	 mov	%g1, %o0
 #endif
 
 	
@@ -11186,9 +11191,12 @@ Lbzero_small:
 
 #if 1
 Lbzero_block:
+	sethi	%hi(block_disable), %o3
+	ldx	[ %o3 + %lo(block_disable) ], %o3
+	brnz,pn	%o3, Lbzero_longs
 	!! Make sure our trap table is installed
-	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
+	rdpr	%tba, %o3
 	sub	%o3, %o5, %o3
 	brnz,pn	%o3, Lbzero_longs	! No, then don't use block load/store
 	 nop
@@ -11773,7 +11781,7 @@ Lfp_finish:
 	bz,a,pt	%icc, 1f		! Then skip it
 	 add	%o2, 128, %o2		! Skip a block
 
-
+	membar	#Sync
 	stda	%f0, [%o2] ASI_BLK_COMMIT_P	! f->fs_f0 = etc;
 	inc	BLOCK_SIZE, %o2
 	stda	%f16, [%o2] ASI_BLK_COMMIT_P
@@ -11783,6 +11791,7 @@ Lfp_finish:
 	bz,pt	%icc, 2f		! Then skip it
 	 nop
 
+	membar	#Sync
 	stda	%f32, [%o2] ASI_BLK_COMMIT_P
 	inc	BLOCK_SIZE, %o2
 	stda	%f48, [%o2] ASI_BLK_COMMIT_P
@@ -11799,6 +11808,7 @@ Lfp_finish:
 	bz,a,pt	%icc, 4f		! Then skip it
 	 add	%o0, 128, %o0
 
+	membar	#Sync
 	std	%f0, [%o0 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
 	std	%f2, [%o0 + FS_REGS + (4*2)]
 	std	%f4, [%o0 + FS_REGS + (4*4)]
@@ -11820,6 +11830,7 @@ Lfp_finish:
 	bz,pt	%icc, 5f		! Then skip it
 	 nop
 
+	membar	#Sync
 	std	%f32, [%o0 + FS_REGS + (4*32)]
 	std	%f34, [%o0 + FS_REGS + (4*34)]
 	std	%f36, [%o0 + FS_REGS + (4*36)]
@@ -11837,6 +11848,7 @@ Lfp_finish:
 	std	%f60, [%o0 + FS_REGS + (4*60)]
 	std	%f62, [%o0 + FS_REGS + (4*62)]
 5:
+	membar	#Sync
 	retl
 	 wr	%g0, FPRS_FEF, %fprs		! Mark FPU clean
 
@@ -11895,6 +11907,7 @@ ENTRY(loadfpstate)
 	btst	BLOCK_ALIGN, %o3
 	bne,pt	%icc, 1f	! Only use block loads on aligned blocks
 	 wr	%o4, %g0, %gsr
+	membar	#Sync
 	ldda	[%o3] ASI_BLK_P, %f0
 	inc	BLOCK_SIZE, %o3
 	ldda	[%o3] ASI_BLK_P, %f16
@@ -11912,6 +11925,7 @@ ENTRY(loadfpstate)
 	 nop
 #endif
 	/* Unaligned -- needs to be done the long way
+	membar	#Sync
 	ldd	[%o3 + (4*0)], %f0
 	ldd	[%o3 + (4*2)], %f2
 	ldd	[%o3 + (4*4)], %f4
@@ -11944,6 +11958,7 @@ ENTRY(loadfpstate)
 	ldd	[%o3 + (4*58)], %f58
 	ldd	[%o3 + (4*60)], %f60
  	ldd	[%o3 + (4*62)], %f62
+	membar	#Sync
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
 
@@ -12292,7 +12307,7 @@ ENTRY(delay)			! %o0 = n
 	mulx	%o0, %g2, %g2					! Scale it: (usec * Hz) / 1 x 10^6 = ticks
 	udivx	%g2, %o2, %g2
 	add	%g1, %g2, %g2
-!	add	%o5, %g2, %g2					! But this gets complicated
+!	add	%o5, %g2, %g2			5, %g2, %g2					! But this gets complicated
 	rdpr	%tick, %g1					! Top of next itr
 	mov	%g1, %g1	! Erratum 50
 1:
