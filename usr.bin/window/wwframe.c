@@ -1,6 +1,8 @@
+/*	$NetBSD: wwframe.c,v 1.3 1995/09/28 10:35:31 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wwframe.c	3.20 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: wwframe.c,v 1.2 1993/08/01 18:01:46 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)wwframe.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: wwframe.c,v 1.3 1995/09/28 10:35:31 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"

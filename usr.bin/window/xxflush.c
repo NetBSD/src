@@ -1,6 +1,8 @@
+/*	$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)xxflush.c	3.6 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: xxflush.c,v 1.2 1993/08/01 18:02:32 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)xxflush.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -94,7 +99,7 @@ xxflush(intr)
 		xx_tail = 0;
 		xxbufp = xxbuf;
 	}
-	(*tt.tt_flush)();
+	ttflush();
 }
 
 xxflush_scroll(xp)

@@ -1,6 +1,8 @@
+/*	$NetBSD: ww.h,v 1.3 1995/09/28 10:35:07 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ww.h	3.63 (Berkeley) 3/2/91
- *	$Id: ww.h,v 1.2 1993/08/01 18:01:29 mycroft Exp $
+ *	@(#)ww.h	8.1 (Berkeley) 6/6/93
  */
 
 #ifdef OLD_TTY
@@ -225,6 +226,7 @@ int wwdtablesize;		/* result of getdtablesize() call */
 char **wwsmap;			/* the screen map */
 union ww_char **wwos;		/* the old (current) screen */
 union ww_char **wwns;		/* the new (desired) screen */
+union ww_char **wwcs;		/* the checkpointed screen */
 char *wwtouched;		/* wwns changed flags */
 struct ww_update *wwupd;	/* for display update */
 int wwospeed;			/* output baud rate, copied from wwoldtty */
@@ -238,7 +240,8 @@ int wwnwwr, wwnwwra, wwnwwrc;
 int wwntokdef, wwntokuse, wwntokbad, wwntoksave, wwntokc;
 int wwnupdate, wwnupdline, wwnupdmiss;
 int wwnupdscan, wwnupdclreol, wwnupdclreos, wwnupdclreosmiss, wwnupdclreosline;
-int wwnread, wwnreade, wwnreadz, wwnreadc;
+int wwnread, wwnreade, wwnreadz;
+int wwnreadc, wwnreadack, wwnreadnack, wwnreadstat, wwnreadec;
 int wwnwread, wwnwreade, wwnwreadz, wwnwreadd, wwnwreadc, wwnwreadp;
 int wwnselect, wwnselecte, wwnselectz;
 
@@ -257,8 +260,9 @@ char *wwib;		/* input (keyboard) buffer */
 char *wwibe;		/* wwib + sizeof buffer */
 char *wwibp;		/* current read position in buffer */
 char *wwibq;		/* current write position in buffer */
-#define wwgetc()	(wwibp < wwibq ? *wwibp++ & 0x7f : -1)
-#define wwpeekc()	(wwibp < wwibq ? *wwibp & 0x7f : -1)
+#define wwmaskc(c)	((c) & 0x7f)
+#define wwgetc()	(wwibp < wwibq ? wwmaskc(*wwibp++) : -1)
+#define wwpeekc()	(wwibp < wwibq ? wwmaskc(*wwibp) : -1)
 #define wwungetc(c)	(wwibp > wwib ? *--wwibp = (c) : -1)
 
 	/* things for short circuiting wwiomux() */
@@ -269,6 +273,9 @@ jmp_buf wwjmpbuf;	/* jmpbuf for above */
 #define wwsetintr()	do { wwintr = 1; if (wwsetjmp) longjmp(wwjmpbuf, 1); } \
 			while (0)
 #define wwclrintr()	(wwintr = 0)
+
+	/* checkpointing */
+int wwdocheckpoint;
 
 	/* the window virtual terminal */
 #define WWT_TERM	"window-v2"
@@ -288,11 +295,16 @@ jmp_buf wwjmpbuf;	/* jmpbuf for above */
 #define WWT_DC		"dc=\\EN:"
 char wwwintermcap[1024];	/* terminal-specific but window-independent
 				   part of the window termcap */
+#ifdef TERMINFO
+	/* where to put the temporary terminfo directory */
+char wwterminfopath[1024];
+#endif
 
 	/* our functions */
 struct ww *wwopen();
 void wwchild();
-void wwsuspend();
+void wwalarm();
+void wwquit();
 char **wwalloc();
 char *wwerror();
 

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1985, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: window.1,v 1.3 1995/09/28 10:35:05 tls Exp $
+.\"
+.\" Copyright (c) 1985, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Edward Wang at The University of California, Berkeley.
@@ -32,10 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)window.1	6.15 (Berkeley) 7/26/91
-.\"	$Id: window.1,v 1.2 1993/08/01 07:25:57 mycroft Exp $
+.\"	@(#)window.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd July 26, 1991
+.Dd December 30, 1993
 .Dt WINDOW 1
 .Os BSD 4.3
 .Sh NAME
@@ -60,7 +61,7 @@ position can be changed by the user at any time.  Processes
 communicate with their window in the same way they normally
 interact with a terminal\-through their standard input, output,
 and diagnostic file descriptors.  The window program handles the
-details of redirecting input an output to and from the
+details of redirecting input and output to and from the
 windows.  At any one time, only one window can receive
 input from the keyboard, but all windows can simultaneously send output
 to the display.
@@ -321,6 +322,13 @@ Move the cursor of the current window down by one line.
 Move the cursor of the current window up by one line.
 .It Ic l
 Move the cursor of the current window right by one column.
+.It Ic y
+Yank.  The user is prompted to enter two points within the current
+window.  Then the content of the current window between those two points
+is saved in the yank buffer.
+.It Ic p
+Put.  The content of the yank buffer is written to the current
+window as input.
 .It Ic ^S
 Stop output in the current window.
 .It Ic ^Q
@@ -589,7 +597,7 @@ unpredictable.  Most arguments can be omitted; default values will
 be supplied for them.  The
 .Ar argnames
 can be unique prefixes
-of the the argument names.  The commas separating
+of the argument names.  The commas separating
 arguments are used only to disambiguate, and can usually be omitted.
 .Pp
 Only the first argument form is valid for user defined aliases.  Aliases
@@ -601,7 +609,7 @@ above).
 .Pp
 Most functions return value, but some are used for side effect
 only and so must be used as statements.  When a function or an alias is used
-as a statement, the parenthesis surrounding
+as a statement, the parentheses surrounding
 the argument list may be omitted.  Aliases return no value.
 .El
 .Ss  Builtin Functions

@@ -1,6 +1,8 @@
+/*	$NetBSD: ttzapple.c,v 1.3 1995/09/28 10:34:57 tls Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ttzapple.c	3.11 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: ttzapple.c,v 1.2 1993/08/01 18:02:02 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: ttzapple.c,v 1.3 1995/09/28 10:34:57 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -60,6 +65,13 @@ zz|zapple|perfect apple:\
 #define TOKEN_MAX	32
 
 extern short gen_frame[];
+
+	/* for error correction */
+int zz_ecc;
+int zz_lastc;
+
+	/* for checkpointing */
+int zz_sum;
 
 zz_setmodes(new)
 {
@@ -212,17 +224,35 @@ out:
 
 zz_start()
 {
-	zz_setmodes(0);
-	zz_setscroll(0, NROW - 1);
-	zz_clear();
 	ttesc('T');
 	ttputc(TOKEN_MAX + ' ');
+	ttesc('U');
+	ttputc('!');
+	zz_ecc = 1;
+	zz_lastc = -1;
+	ttesc('v');
+	ttflush();
+	zz_sum = 0;
+	zz_setscroll(0, NROW - 1);
+	zz_clear();
+	zz_setmodes(0);
+}
+
+zz_reset()
+{
+	zz_setscroll(0, NROW - 1);
+	tt.tt_modes = WWM_REV;
+	zz_setmodes(0);
+	tt.tt_col = tt.tt_row = -10;
 }
 
 zz_end()
 {
 	ttesc('T');
 	ttputc(' ');
+	ttesc('U');
+	ttputc(' ');
+	zz_ecc = 0;
 }
 
 zz_clreol()
@@ -330,6 +360,93 @@ zz_put_token(t, s, n)
 	ttputc(t + 0x81);
 }
 
+zz_rint(p, n)
+	char *p;
+{
+	register i;
+	register char *q;
+
+	if (!zz_ecc)
+		return n;
+	for (i = n, q = p; --i >= 0;) {
+		register c = (unsigned char) *p++;
+
+		if (zz_lastc == 0) {
+			switch (c) {
+			case 0:
+				*q++ = 0;
+				zz_lastc = -1;
+				break;
+			case 1:		/* start input ecc */
+				zz_ecc = 2;
+				zz_lastc = -1;
+				wwnreadstat++;
+				break;
+			case 2:		/* ack checkpoint */
+				tt.tt_ack = 1;
+				zz_lastc = -1;
+				wwnreadack++;
+				break;
+			case 3:		/* nack checkpoint */
+				tt.tt_ack = -1;
+				zz_lastc = -1;
+				wwnreadnack++;
+				break;
+			default:
+				zz_lastc = c;
+				wwnreadec++;
+			}
+		} else if (zz_ecc == 1) {
+			if (c)
+				*q++ = c;
+			else
+				zz_lastc = 0;
+		} else {
+			if (zz_lastc < 0) {
+				zz_lastc = c;
+			} else if (zz_lastc == c) {
+				*q++ = zz_lastc;
+				zz_lastc = -1;
+			} else {
+				wwnreadec++;
+				zz_lastc = c;
+			}
+		}
+	}
+	return q - (p - n);
+}
+
+zz_checksum(p, n)
+	register char *p;
+	register n;
+{
+	while (--n >= 0) {
+		register c = *p++ & 0x7f;
+		c ^= zz_sum;
+		zz_sum = c << 1 | c >> 11 & 1;
+	}
+}
+
+zz_compress(flag)
+{
+	if (flag)
+		tt.tt_checksum = 0;
+	else
+		tt.tt_checksum = zz_checksum;
+}
+
+zz_checkpoint()
+{
+	static char x[] = { ctrl('['), 'V', 0, 0 };
+
+	zz_checksum(x, sizeof x);
+	ttesc('V');
+	ttputc(' ' + (zz_sum & 0x3f));
+	ttputc(' ' + (zz_sum >> 6 & 0x3f));
+	ttflush();
+	zz_sum = 0;
+}
+
 tt_zapple()
 {
 	tt.tt_insspace = zz_insspace;
@@ -347,6 +464,7 @@ tt_zapple()
 	tt.tt_ncol = NCOL;
 	tt.tt_nrow = NROW;
 	tt.tt_start = zz_start;
+	tt.tt_reset = zz_reset;
 	tt.tt_end = zz_end;
 	tt.tt_write = zz_write;
 	tt.tt_putc = zz_putc;
@@ -362,5 +480,10 @@ tt_zapple()
 	tt.tt_token_max = TOKEN_MAX;
 	tt.tt_set_token_cost = 2;
 	tt.tt_put_token_cost = 1;
+	tt.tt_compress = zz_compress;
+	tt.tt_checksum = zz_checksum;
+	tt.tt_checkpoint = zz_checkpoint;
+	tt.tt_reset = zz_reset;
+	tt.tt_rint = zz_rint;
 	return 0;
 }

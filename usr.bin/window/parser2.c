@@ -1,6 +1,8 @@
+/*	$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parser2.c	3.14 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: parser2.c,v 1.2 1993/08/01 18:02:16 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "parser.h"

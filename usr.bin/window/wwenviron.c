@@ -1,6 +1,8 @@
+/*	$NetBSD: wwenviron.c,v 1.3 1995/09/28 10:35:27 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wwenviron.c	3.27 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: wwenviron.c,v 1.2 1993/08/01 18:01:48 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: wwenviron.c,v 1.3 1995/09/28 10:35:27 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -75,8 +80,7 @@ register struct ww *wp;
 	(void) dup2(i, 0);
 	(void) dup2(i, 1);
 	(void) dup2(i, 2);
-	for (i = wwdtablesize - 1; i > 2; i--)
-		(void) close(i);
+	(void) close(i);
 #ifdef TIOCSCTTY
 	(void) setsid();
 	(void) ioctl(0, TIOCSCTTY, 0);

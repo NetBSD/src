@@ -1,6 +1,8 @@
+/*	$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)xx.c	3.6 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: xx.c,v 1.2 1993/08/01 18:02:44 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)xx.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -66,7 +71,27 @@ xxstart()
 	(*tt.tt_start)();
 	if (tt.tt_ntoken > 0)
 		ccstart();
-	xxreset();			/* might be a restart */
+	xxreset1();			/* might be a restart */
+}
+
+xxreset()
+{
+	if (tt.tt_ntoken > 0)
+		ccreset();
+	xxreset1();
+	(*tt.tt_reset)();
+}
+
+xxreset1()
+{
+	register struct xx *xp, *xq;
+
+	for (xp = xx_head; xp != 0; xp = xq) {
+		xq = xp->link;
+		xxfree(xp);
+	}
+	xx_tail = xx_head = 0;
+	xxbufp = xxbuf;
 }
 
 xxend()
@@ -82,7 +107,7 @@ xxend()
 	if (tt.tt_ntoken > 0)
 		ccend();
 	(*tt.tt_end)();
-	(*tt.tt_flush)();
+	ttflush();
 }
 
 struct xx *
@@ -190,7 +215,7 @@ xxclear()
 {
 	register struct xx *xp;
 
-	xxreset();
+	xxreset1();
 	xp = xxalloc();
 	xp->cmd = xc_clear;
 }
@@ -230,16 +255,4 @@ xxwrite(row, col, p, n, m)
 	bcopy(p, xxbufp, n);
 	xxbufp += n;
 	*xxbufp++ = char_sep;
-}
-
-xxreset()
-{
-	register struct xx *xp, *xq;
-
-	for (xp = xx_head; xp != 0; xp = xq) {
-		xq = xp->link;
-		xxfree(xp);
-	}
-	xx_tail = xx_head = 0;
-	xxbufp = xxbuf;
 }

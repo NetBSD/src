@@ -1,6 +1,8 @@
+/*	$NetBSD: tttvi925.c,v 1.3 1995/09/28 10:34:54 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * David Barto at Celerity Computer Corp.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tttvi925.c	3.6 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: tttvi925.c,v 1.2 1993/08/01 18:02:05 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)tttvi925.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: tttvi925.c,v 1.3 1995/09/28 10:34:54 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"

@@ -1,6 +1,8 @@
+/*	$NetBSD: wwinit.c,v 1.7 1995/09/28 10:35:33 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wwinit.c	3.40 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: wwinit.c,v 1.6 1994/12/30 02:46:05 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$NetBSD: wwinit.c,v 1.7 1995/09/28 10:35:33 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -55,10 +60,13 @@ wwinit()
 	wwhead.ww_forw = &wwhead;
 	wwhead.ww_back = &wwhead;
 
-	s = sigblock(sigmask(SIGIO));
-	if (signal(SIGIO, wwrint) == SIG_ERR ||
-	    signal(SIGCHLD, wwchild) == SIG_ERR ||
-	    signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+	s = sigblock(sigmask(SIGIO) | sigmask(SIGCHLD) | sigmask(SIGALRM) |
+		sigmask(SIGHUP) | sigmask(SIGTERM));
+	if (signal(SIGIO, wwrint) == BADSIG ||
+	    signal(SIGCHLD, wwchild) == BADSIG ||
+	    signal(SIGHUP, wwquit) == BADSIG ||
+	    signal(SIGTERM, wwquit) == BADSIG ||
+	    signal(SIGPIPE, SIG_IGN) == BADSIG) {
 		wwerrno = WWE_SYS;
 		return -1;
 	}
@@ -98,7 +106,6 @@ wwinit()
 	wwnewtty.ww_termios = wwoldtty.ww_termios;
 	wwnewtty.ww_termios.c_iflag &=
 		~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IMAXBEL);
-	wwnewtty.ww_termios.c_iflag |= INPCK;
 	wwnewtty.ww_termios.c_oflag = 0;
 	wwnewtty.ww_termios.c_cflag &= ~(CSIZE | PARENB);
 	wwnewtty.ww_termios.c_cflag |= CS8;
@@ -120,11 +127,12 @@ wwinit()
 		wwerrno = WWE_BADTERM;
 		goto bad;
 	}
-#ifndef OLD_TTY
+#ifdef OLD_TTY
+	wwospeed = wwoldtty.ww_sgttyb.sg_ospeed;
+#else
 	wwospeed = cfgetospeed(&wwoldtty.ww_termios);
 	wwbaud = wwospeed;
-#else
-	wwospeed = wwoldtty.ww_sgttyb.sg_ospeed;
+#endif
 	switch (wwospeed) {
 	default:
 	case B0:
@@ -185,16 +193,15 @@ wwinit()
 		break;
 #ifdef B57600
 	case B57600:
-		wwbaud = 57600;
+		wwbaud= 57600;
 		break;
 #endif
 #ifdef B115200
-	case B11520:
+	case B115200:
 		wwbaud = 115200;
 		break;
 #endif
 	}
-#endif
 
 	if (xxinit() < 0)
 		goto bad;
@@ -223,9 +230,7 @@ wwinit()
 		wwalloc(0, 0, wwnrow, wwncol, sizeof (union ww_char));
 	if (wwos == 0)
 		goto bad;
-	for (i = 0; i < wwnrow; i++)
-		for (j = 0; j < wwncol; j++)
-			wwos[i][j].c_w = ' ';
+	/* wwos is cleared in wwstart1() */
 	wwns = (union ww_char **)
 		wwalloc(0, 0, wwnrow, wwncol, sizeof (union ww_char));
 	if (wwns == 0)
@@ -233,6 +238,13 @@ wwinit()
 	for (i = 0; i < wwnrow; i++)
 		for (j = 0; j < wwncol; j++)
 			wwns[i][j].c_w = ' ';
+	if (tt.tt_checkpoint) {
+		/* wwcs is also cleared in wwstart1() */
+		wwcs = (union ww_char **)
+			wwalloc(0, 0, wwnrow, wwncol, sizeof (union ww_char));
+		if (wwcs == 0)
+			goto bad;
+	}
 
 	wwtouched = malloc((unsigned) wwnrow);
 	if (wwtouched == 0) {
@@ -297,11 +309,20 @@ wwinit()
 	 * wwterm now points to the copy.
 	 */
 	(void) setenv("TERM", WWT_TERM, 1);
+#ifdef TERMINFO
+	if (wwterminfoinit() < 0)
+		goto bad;
+#endif
 
-	(void) sigsetmask(s);
+	if (tt.tt_checkpoint)
+		if (signal(SIGALRM, wwalarm) == BADSIG) {
+			wwerrno = WWE_SYS;
+			goto bad;
+		}
 	/* catch typeahead before ASYNC was set */
 	(void) kill(getpid(), SIGIO);
-	xxstart();
+	wwstart1();
+	(void) sigsetmask(s);
 	return 0;
 bad:
 	/*
@@ -343,4 +364,42 @@ wwaddcap1(cap, kp)
 	while (*(*kp)++ = *cap++)
 		;
 	(*kp)--;
+}
+
+wwstart()
+{
+	register i;
+
+	(void) wwsettty(0, &wwnewtty);
+	for (i = 0; i < wwnrow; i++)
+		wwtouched[i] = WWU_TOUCHED;
+	wwstart1();
+}
+
+wwstart1()
+{
+	register i, j;
+
+	for (i = 0; i < wwnrow; i++)
+		for (j = 0; j < wwncol; j++) {
+			wwos[i][j].c_w = ' ';
+			if (tt.tt_checkpoint)
+				wwcs[i][j].c_w = ' ';
+		}
+	xxstart();
+	if (tt.tt_checkpoint)
+		wwdocheckpoint = 1;
+}
+
+/*
+ * Reset data structures and terminal from an unknown state.
+ * Restoring wwos has been taken care of elsewhere.
+ */
+wwreset()
+{
+	register i;
+
+	xxreset();
+	for (i = 0; i < wwnrow; i++)
+		wwtouched[i] = WWU_TOUCHED;
 }

@@ -1,6 +1,8 @@
+/*	$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)compress.c	3.6 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: compress.c,v 1.2 1993/08/01 18:02:23 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "ww.h"
@@ -44,6 +49,7 @@ static char rcsid[] = "$Id: compress.c,v 1.2 1993/08/01 18:02:23 mycroft Exp $";
 
 	/* special */
 #include <stdio.h>
+#include <fcntl.h>
 int cc_trace = 0;
 FILE *cc_trace_fp;
 
@@ -287,30 +293,37 @@ nomem:
 
 ccstart()
 {
-	register struct cc *p;
 	int ccflush();
 
-	(*tt.tt_flush)();
+	ttflush();
 	tt_obp = tt_ob = cc_buffer;
 	tt_obe = tt_ob + cc_bufsize;
 	tt.tt_flush = ccflush;
+	if (cc_trace) {
+		cc_trace_fp = fopen("window-trace", "a");
+		(void) fcntl(fileno(cc_trace_fp), F_SETFD, 1);
+	}
+	ccreset();
+}
+
+ccreset()
+{
+	register struct cc *p;
+
 	bzero((char *) cc_htab, HSIZE * sizeof *cc_htab);
 	for (p = cc_q0a.qforw; p != &cc_q0a; p = p->qforw)
 		p->hback = 0;
 	for (p = cc_q1a.qforw; p != &cc_q1a; p = p->qforw)
 		p->hback = 0;
-	if (cc_trace)
-		cc_trace_fp = fopen("window-trace", "a");
 }
 
 ccend()
 {
-	int ttflush();
 
-	(*tt.tt_flush)();
+	ttflush();
 	tt_obp = tt_ob = cc_tt_ob;
 	tt_obe = cc_tt_obe;
-	tt.tt_flush = ttflush;
+	tt.tt_flush = 0;
 	if (cc_trace_fp != NULL) {
 		(void) fclose(cc_trace_fp);
 		cc_trace_fp = NULL;
@@ -321,21 +334,21 @@ ccflush()
 {
 	int bufsize = tt_obp - tt_ob;
 	int n;
-	int ttflush();
 
 	if (tt_ob != cc_buffer)
 		abort();
 	if (cc_trace_fp != NULL) {
 		(void) fwrite(tt_ob, 1, bufsize, cc_trace_fp);
-		putc(-1, cc_trace_fp);
+		(void) putc(-1, cc_trace_fp);
 	}
+	tt.tt_flush = 0;
+	(*tt.tt_compress)(1);
 	if (bufsize < tt.tt_token_min) {
 		ttflush();
-		return;
+		goto out;
 	}
 	tt_obp = tt_ob = cc_tt_ob;
 	tt_obe = cc_tt_obe;
-	tt.tt_flush = ttflush;
 	cc_time0 = cc_time;
 	cc_time += bufsize;
 	n = cc_sweep_phase(cc_buffer, bufsize, cc_tokens);
@@ -344,6 +357,8 @@ ccflush()
 	ttflush();
 	tt_obp = tt_ob = cc_buffer;
 	tt_obe = cc_buffer + cc_bufsize;
+out:
+	(*tt.tt_compress)(0);
 	tt.tt_flush = ccflush;
 }
 

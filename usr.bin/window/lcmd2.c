@@ -1,6 +1,8 @@
+/*	$NetBSD: lcmd2.c,v 1.6 1995/09/28 10:34:24 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lcmd2.c	3.23 (Berkeley) 6/17/90";*/
-static char rcsid[] = "$Id: lcmd2.c,v 1.5 1995/03/21 14:16:29 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: lcmd2.c,v 1.6 1995/09/28 10:34:24 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
@@ -44,10 +49,9 @@ static char rcsid[] = "$Id: lcmd2.c,v 1.5 1995/03/21 14:16:29 mycroft Exp $";
 #include "value.h"
 #include "var.h"
 #include "lcmd.h"
+#include "alias.h"
 #include <sys/types.h>
 #include <sys/resource.h>
-#include "alias.h"
-#include <string.h>
 
 /*ARGSUSED*/
 l_iostat(v, a)
@@ -85,9 +89,10 @@ struct value *v, *a;
 	wwprintf(w, "select\terror\tzero\n");
 	wwprintf(w, "%d\t%d\t%d\n",
 		wwnselect, wwnselecte, wwnselectz);
-	wwprintf(w, "read\terror\tzero\tchar\n");
-	wwprintf(w, "%d\t%d\t%d\t%d\n",
-		wwnread, wwnreade, wwnreadz, wwnreadc);
+	wwprintf(w, "read\terror\tzero\tchar\tack\tnack\tstat\terrorc\n");
+	wwprintf(w, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		wwnread, wwnreade, wwnreadz, wwnreadc, wwnreadack, wwnreadnack,
+		wwnreadstat, wwnreadec);
 	wwprintf(w, "ptyread\terror\tzero\tcontrol\tdata\tchar\n");
 	wwprintf(w, "%d\t%d\t%d\t%d\t%d\t%d\n",
 		wwnwread, wwnwreade, wwnwreadz,
@@ -117,7 +122,7 @@ register struct value *a;
 	}
 
 	(void) gettimeofday(&timeval, (struct timezone *)0);
-	timersub(&timeval, &starttime, &timeval);
+        timersub(&timeval, &starttime, &timeval);
 	(void) getrusage(a->v_type == V_STR
 			&& str_match(a->v_str, "children", 1)
 		? RUSAGE_CHILDREN : RUSAGE_SELF, &rusage);
