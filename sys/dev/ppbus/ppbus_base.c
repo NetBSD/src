@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.3 2004/01/22 01:13:21 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -31,9 +31,9 @@
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h" 
 
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
