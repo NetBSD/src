@@ -1,0 +1,9 @@
+# $NetBSD: md.x68k,v 1.8 2004/01/09 16:32:13 rtr Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/X68k
+./usr/X11R6/bin/Xnest
+./usr/X11R6/lib/X11/X68kConfig
+./usr/X11R6/man/cat1/X68k.0
+./usr/X11R6/man/cat1/Xnest.0
+./usr/X11R6/man/man1/X68k.1
+./usr/X11R6/man/man1/Xnest.1
