@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 1996/04/04 06:36:43 phil Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 1998/04/11 17:30:40 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,6 +87,7 @@ struct switchframe {
 	long	sf_r3;
 	long	sf_fp;
 	int	sf_pc;
+	struct	proc *sf_p;
 };
 
 /*
