@@ -80,7 +80,7 @@ uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
 int	 getgroups __P((int, int *));		/* XXX (gid_t *) */
 char	*getlogin __P((void));
-pid_t	 getpgrp __P((void));
+pid_t	 getpgrp __P((int));
 pid_t	 getpid __P((void));
 pid_t	 getppid __P((void));
 uid_t	 getuid __P((void));
