@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 1998/12/19 20:32:17 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2000/10/11 14:46:16 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -158,17 +158,20 @@ char	*colon __P((char *));
 void	 cleanup __P((int));
 void	 define __P((char *));
 void	 docmds __P((char **, int, char **));
-void	 error __P((const char *, ...));
+void	 error __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2))) ;
 int	 except __P((char *));
 struct namelist *
 	 expand __P((struct namelist *, int));
 char	*exptilde __P((char [], char *));
-void	 fatal __P((const char *, ...));
+void	 fatal __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 int	 inlist __P((struct namelist *, char *));
 void	 insert __P((char *,
 	    struct namelist *, struct namelist *, struct subcmd *));
 void	 install __P((char *, char *, int, int));
-void	 log __P((FILE *, const char *, ...));
+void	 log __P((FILE *, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 struct namelist *
 	 lookup __P((char *, int, struct namelist *));
 void	 lostconn __P((int));

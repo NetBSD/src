@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/04/10 09:42:37 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5 2000/10/11 14:46:05 is Exp $
 
 PROG=		ktruss
 SRCS=		ktrace.c dump.c subr.c ioctl.c misc.c setemul.c
@@ -7,7 +7,7 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../ktrace -I${.CURDIR}/../../sys \
 LDSTATIC?=	-static
 CLEANFILES+=	misc.c misc.h ioctl.c
 MAN=
-
+WFORMAT=1
 dump.c: misc.h
 misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h \
 	       ${DESTDIR}/usr/include/sys/signal.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2000/08/25 04:48:56 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2000/10/11 14:46:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,8 @@ void	 disks_delete(char *);
 void	 disks_drives(char *);
 void	 display(int);
 int	 dkinit(int, gid_t);
-void	 error(const char *, ...);
+void	 error(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
 void	 fetchbufcache(void);
 void	 fetchicmp(void);
 void	 fetchiostat(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.90 2000/08/01 22:47:25 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.91 2000/10/11 14:46:03 is Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.90 2000/08/01 22:47:25 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.91 2000/10/11 14:46:03 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -1645,6 +1645,12 @@ do_chmod(int argc, char *argv[])
 	(void)command("SITE CHMOD %s %s", argv[1], argv[2]);
 }
 
+#define COMMAND_1ARG(argc, argv, cmd) 			\
+	if (argc == 1)					\
+		command(cmd);				\
+	else						\
+		command(cmd " %s", argv[1])
+
 void
 do_umask(int argc, char *argv[])
 {
@@ -1656,7 +1662,7 @@ do_umask(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "SITE UMASK" : "SITE UMASK %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "SITE UMASK");
 	verbose = oldverbose;
 }
 
@@ -1671,7 +1677,7 @@ idlecmd(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "SITE IDLE" : "SITE IDLE %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "SITE IDLE");
 	verbose = oldverbose;
 }
 
@@ -1689,7 +1695,7 @@ rmthelp(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;
-	(void)command(argc == 1 ? "HELP" : "HELP %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "HELP");
 	verbose = oldverbose;
 }
 
@@ -2452,7 +2458,7 @@ rmtstatus(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	(void)command(argc > 1 ? "STAT %s" : "STAT" , argv[1]);
+	COMMAND_1ARG(argc, argv, "STAT");
 }
 
 /*
@@ -2673,7 +2679,7 @@ mlst(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;	/* If we aren't verbose, this doesn't do anything! */
-	(void)command(argc == 1 ? "MLST" : "MLST %s", argv[1]);
+	COMMAND_1ARG(argc, argv, "MLST");
 	verbose = oldverbose;
 }
 
@@ -2693,6 +2699,9 @@ opts(int argc, char *argv[])
 		return;
 	}
 	verbose = 1;	/* If we aren't verbose, this doesn't do anything! */
-	(void)command(argc == 2 ? "OPTS %s" : "OPTS %s %s", argv[1], argv[2]);
+	if (argc == 2)
+		command("OPTS %s", argv[1]);
+	else
+		command("OPTS %s %s", argv[1], argv[2]);
 	verbose = oldverbose;
 }

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2000/09/22 16:34:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.26 2000/10/11 14:46:03 is Exp $
 
 .include <bsd.own.mk>
 
+WFORMAT=	1
 MFILESDIR=	/usr/share/misc
 MFILES=		magic magic.mime
 MAGIC=		${MFILESDIR}/magic

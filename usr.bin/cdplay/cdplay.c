@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.9 2000/08/30 10:13:53 abs Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.10 2000/10/11 14:46:01 is Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.9 2000/08/30 10:13:53 abs Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.10 2000/10/11 14:46:01 is Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -285,9 +285,7 @@ main(argc, argv)
 		} while (!arg);
 
 		if (run(cmd, arg) < 0) {
-			/* XXX damned -Wall */
-			char   *null = NULL;
-			warn(null);
+			warn(NULL);
 			close(fd);
 			fd = -1;
 		}

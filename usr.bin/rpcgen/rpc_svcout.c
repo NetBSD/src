@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.10 1997/10/18 10:54:07 lukem Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.11 2000/10/11 14:46:17 is Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.10 1997/10/18 10:54:07 lukem Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.11 2000/10/11 14:46:17 is Exp $");
 #endif
 #endif
 
@@ -318,7 +318,8 @@ write_real_program(def)
 				f_print(fout, "(");
 				/* arg name */
 				if (proc->arg_num > 1)
-					f_print(fout, proc->args.argname);
+					f_print(fout, "%s",
+						proc->args.argname);
 				else
 					ptype(proc->args.decls->decl.prefix,
 					    proc->args.decls->decl.type, 0);
@@ -440,11 +441,14 @@ write_program(def, storage)
 		f_print(fout, "\tswitch (%s->rq_proc) {\n", RQSTP);
 		if (!nullproc(vp->procs)) {
 			f_print(fout, "\tcase NULLPROC:\n");
-			f_print(fout,
-			    Cflag
-			    ? "\t\t(void) svc_sendreply(%s, (xdrproc_t) xdr_void, (char *)NULL);\n"
-			    : "\t\t(void) svc_sendreply(%s, xdr_void, (char *)NULL);\n",
-			    TRANSP);
+			if (Cflag) {
+			  	f_print(fout,
+					"\t\t(void) svc_sendreply(%s, (xdrproc_t) xdr_void, (char *)NULL);\n", TRANSP);
+			} else {
+			  	f_print(fout,
+					"\t\t(void) svc_sendreply(%s, xdr_void, (char *)NULL);\n",
+					TRANSP);
+			}
 			print_return("\t\t");
 			f_print(fout, "\n");
 		}
@@ -643,11 +647,11 @@ write_msg_out()
 	f_print(fout, "#ifdef RPC_SVC_FG\n");
 	if (inetdflag || pmflag)
 		f_print(fout, "\tif (_rpcpmstart)\n");
-	f_print(fout, "\t\tsyslog(LOG_ERR, msg);\n");
+	f_print(fout, "\t\tsyslog(LOG_ERR, \"%%s\", msg);\n");
 	f_print(fout, "\telse\n");
 	f_print(fout, "\t\t(void) fprintf(stderr, \"%%s\\n\", msg);\n");
 	f_print(fout, "#else\n");
-	f_print(fout, "\tsyslog(LOG_ERR, msg);\n");
+	f_print(fout, "\tsyslog(LOG_ERR, \"%%s\", msg);\n");
 	f_print(fout, "#endif\n");
 	f_print(fout, "}\n");
 }
