@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.4 1996/05/29 20:05:58 thorpej Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.4.2.1 1996/09/17 21:21:38 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,13 +32,18 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_all.c,v 1.4 1996/05/29 20:05:58 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yp_all.c,v 1.4.2.1 1996/09/17 21:21:38 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(yp_all,_yp_all);
+#endif
 
 extern struct timeval _yplib_timeout;
 
@@ -83,7 +88,7 @@ yp_all(indomain, inmap, incallback)
 	clnt_destroy(clnt);
 
 	/* not really needed... */
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 
 	if (status != RPC_SUCCESS)
 		return YPERR_RPC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.15.2.1 1996/09/17 21:21:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.15.2.1 1996/09/17 21:21:35 jtc Exp $";
 #endif
 
 /*
@@ -47,6 +47,7 @@ static char *rcsid = "$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $";
  * often inaccurate.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -59,6 +60,28 @@ static char *rcsid = "$NetBSD: xdryp.c,v 1.15 1996/08/15 21:43:03 chuck Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
+#ifdef __weak_alias
+__weak_alias(xdr_datum,_xdr_datum);
+__weak_alias(xdr_yp_inaddr,_xdr_yp_inaddr);
+__weak_alias(xdr_ypall,_xdr_ypall);
+__weak_alias(xdr_ypbind_resp,_xdr_ypbind_resp);
+__weak_alias(xdr_ypbind_setdom,_xdr_ypbind_setdom);
+__weak_alias(xdr_ypdomain_wrap_string,_xdr_ypdomain_wrap_string);
+__weak_alias(xdr_ypmap_parms,_xdr_ypmap_parms);
+__weak_alias(xdr_ypmap_wrap_string,_xdr_ypmap_wrap_string);
+__weak_alias(xdr_ypmaplist,_xdr_ypmaplist);
+__weak_alias(xdr_ypowner_wrap_string,_xdr_ypowner_wrap_string);
+__weak_alias(xdr_yppushresp_xfr,_xdr_yppushresp_xfr);
+__weak_alias(xdr_ypreq_key,_xdr_ypreq_key);
+__weak_alias(xdr_ypreq_nokey,_xdr_ypreq_nokey);
+__weak_alias(xdr_ypreq_xfr,_xdr_ypreq_xfr);
+__weak_alias(xdr_ypresp_key_val,_xdr_ypresp_key_val);
+__weak_alias(xdr_ypresp_maplist,_xdr_ypresp_maplist);
+__weak_alias(xdr_ypresp_master,_xdr_ypresp_master);
+__weak_alias(xdr_ypresp_order,_xdr_ypresp_order);
+__weak_alias(xdr_ypresp_val,_xdr_ypresp_val);
+#endif
+
 /*
  * Functions used only within this file.
  */
@@ -67,38 +90,6 @@ static	bool_t xdr_ypbind_resptype __P((XDR *, enum ypbind_resptype *));
 static	bool_t xdr_ypstat __P((XDR *, enum ypbind_resptype *));
 static	bool_t xdr_ypmaplist_str __P((XDR *, char *));
 
-__warn_references(xdr_domainname,
-    "warning: this program uses xdr_domainname(), which is deprecated and buggy.");
-
-bool_t
-xdr_domainname(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXDOMAIN);
-}
-
-__warn_references(xdr_peername,
-    "warning: this program uses xdr_peername(), which is deprecated and buggy.");
-
-bool_t
-xdr_peername(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXPEER);
-}
-
-__warn_references(xdr_mapname,
-    "warning: this program uses xdr_mapname(), which is deprecated and buggy.");
-
-bool_t
-xdr_mapname(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXMAP);
-}
 
 bool_t
 xdr_ypdomain_wrap_string(xdrs, objp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.3.2.1 1996/09/17 21:21:40 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,14 +32,20 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_first.c,v 1.3.2.1 1996/09/17 21:21:40 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(yp_first,_yp_first);
+__weak_alias(yp_next,_yp_next);
+#endif
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
@@ -104,7 +110,7 @@ again:
 		}
 	}
 	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	return r;
 }
 
@@ -172,6 +178,6 @@ again:
 		}
 	}
 	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	return r;
 }

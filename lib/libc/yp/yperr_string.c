@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.1 1996/05/14 13:36:50 jtc Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.1.2.1 1996/09/17 21:21:53 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,12 +32,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yperr_string.c,v 1.1 1996/05/14 13:36:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: yperr_string.c,v 1.1.2.1 1996/09/17 21:21:53 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(yperr_string,_yperr_string);
+#endif
 
 char *
 yperr_string(incode)

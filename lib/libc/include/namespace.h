@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.2.4.3 1996/09/17 17:53:30 jtc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.2.4.4 1996/09/17 21:21:29 jtc Exp $	*/
 
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
@@ -128,7 +128,9 @@
 #define xdr_callhdr	_xdr_callhdr
 #define xdr_callmsg	_xdr_callmsg
 #define xdr_char	_xdr_char
+#define xdr_datum	_xdr_datum
 #define xdr_des_block	_xdr_des_block
+#define xdr_domainname	_xdr_domainname
 #define xdr_double	_xdr_double
 #define xdr_enum	_xdr_enum
 #define xdr_float	_xdr_float
@@ -137,9 +139,11 @@
 #define xdr_int16_t	_xdr_int16_t
 #define xdr_int32_t	_xdr_int32_t
 #define xdr_long	_xdr_long
+#define xdr_mapname	_xdr_mapname
 #define xdr_netobj	_xdr_netobj
 #define xdr_opaque	_xdr_opaque
 #define xdr_opaque_auth	_xdr_opaque_auth
+#define xdr_peername	_xdr_peername
 #define xdr_pmap	_xdr_pmap
 #define xdr_pmaplist	_xdr_pmaplist
 #define xdr_pointer	_xdr_pointer
@@ -160,6 +164,24 @@
 #define xdr_vector	_xdr_vector
 #define xdr_void	_xdr_void
 #define xdr_wrapstring	_xdr_wrapstring
+#define xdr_yp_inaddr	_xdr_yp_inaddr
+#define xdr_ypall	_xdr_ypall
+#define xdr_ypbind_resp	_xdr_ypbind_resp
+#define xdr_ypbind_setdom	_xdr_ypbind_setdom
+#define xdr_ypdomain_wrap_string	_xdr_ypdomain_wrap_string
+#define xdr_ypmap_parms	_xdr_ypmap_parms
+#define xdr_ypmap_wrap_string	_xdr_ypmap_wrap_string
+#define xdr_ypmaplist	_xdr_ypmaplist
+#define xdr_ypowner_wrap_string	_xdr_ypowner_wrap_string
+#define xdr_yppushresp_xfr	_xdr_yppushresp_xfr
+#define xdr_ypreq_key	_xdr_ypreq_key
+#define xdr_ypreq_nokey	_xdr_ypreq_nokey
+#define xdr_ypreq_xfr	_xdr_ypreq_xfr
+#define xdr_ypresp_key_val	_xdr_ypresp_key_val
+#define xdr_ypresp_maplist	_xdr_ypresp_maplist
+#define xdr_ypresp_master	_xdr_ypresp_master
+#define xdr_ypresp_order	_xdr_ypresp_order
+#define xdr_ypresp_val	_xdr_ypresp_val
 #define xdrmem_create	_xdrmem_create
 #define xdrrec_create	_xdrrec_create
 #define xdrrec_endofrecord	_xdrrec_endofrecord
@@ -168,6 +190,18 @@
 #define xdrstdio_create	_xdrstdio_create
 #define xprt_register	_xprt_register
 #define xprt_unregister	_xprt_unregister
+#define yp_all		_yp_all
+#define yp_bind		_yp_bind
+#define yp_first	_yp_first
+#define yp_get_default_domain	_yp_get_default_domain
+#define yp_maplist	_yp_maplist
+#define yp_master	_yp_master
+#define yp_match	_yp_match
+#define yp_next		_yp_next
+#define yp_order	_yp_order
+#define yp_unbind	_yp_unbind
+#define yperr_string	_yperr_string
+#define ypprot_err	_ypprot_err
 
 #endif
 

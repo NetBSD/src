@@ -1,4 +1,4 @@
-/*	$NetBSD: ypprot_err.c,v 1.1 1996/05/18 19:06:47 jtc Exp $	 */
+/*	$NetBSD: ypprot_err.c,v 1.1.2.1 1996/09/17 21:21:57 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,12 +32,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: ypprot_err.c,v 1.1 1996/05/18 19:06:47 jtc Exp $";
+static char rcsid[] = "$NetBSD: ypprot_err.c,v 1.1.2.1 1996/09/17 21:21:57 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(ypprot_err,_ypprot_err);
+#endif
 
 int
 ypprot_err(incode)
