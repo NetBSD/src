@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.11 1997/10/17 03:23:06 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.12 1998/01/22 23:45:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
 #include <machine/dvma.h>
 #include <machine/machdep.h>
 
+/* DVMA is the last 1MB, but the PROM owns the last page. */
+#define DVMA_MAP_END	(DVMA_MAP_BASE + DVMA_MAP_AVAIL)
+
 /* Resource map used by dvma_mapin/dvma_mapout */
 #define	NUM_DVMA_SEGS 10
 struct map dvma_segmap[NUM_DVMA_SEGS];
@@ -82,7 +85,7 @@ dvma_init()
 	 * remainder will be used as the DVMA page pool.
 	 */
 	phys_map = vm_map_create(pmap_kernel(),
-		DVMA_SPACE_START, DVMA_SPACE_END, 1);
+		DVMA_MAP_BASE, DVMA_MAP_END, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 
@@ -92,7 +95,7 @@ dvma_init()
 	 * memory pages (i.e. driver control blocks, etc.)
 	 */
 	segmap_addr = kmem_alloc_wait(phys_map, dvma_segmap_size);
-	if (segmap_addr != DVMA_SPACE_START)
+	if (segmap_addr != DVMA_MAP_BASE)
 		panic("dvma_init: unable to allocate DVMA segments");
 
 	/*
@@ -146,25 +149,23 @@ dvma_kvtopa(kva, bustype)
 	void *kva;
 	int bustype;
 {
-	u_long dvma, mask = 0;
+	u_long addr, mask;
 
-	dvma = (u_long)kva;
-	if (dvma < DVMA_SPACE_START || dvma >= DVMA_SPACE_END)
-		panic("dvma_kvtopa: bad dmva addr=0x%x\n", dvma);
+	addr = (u_long)kva;
+	if ((addr & DVMA_MAP_BASE) != DVMA_MAP_BASE)
+		panic("dvma_kvtopa: bad dmva addr=0x%x\n", addr);
 
 	switch (bustype) {
 	case BUS_OBIO:
+	case BUS_OBMEM:
 		mask = DVMA_OBIO_SLAVE_MASK;
 		break;
-	case BUS_VME16:
-	case BUS_VME32:
+	default:	/* VME bus device. */
 		mask = DVMA_VME_SLAVE_MASK;
 		break;
-	default:
-		panic("dvma_kvtopa: bad bus type %d\n", bustype);
 	}
 
-	return(dvma & mask);
+	return(addr & mask);
 }
 
 /*
@@ -187,12 +188,9 @@ dvma_mapin(kva, len, canwait)
 	/* Get seg-aligned address and length. */
 	seg_kva = (vm_offset_t)kva;
 	seg_len = (vm_offset_t)len;
-	/* seg-align beginning */
 	seg_off = seg_kva & SEGOFSET;
 	seg_kva -= seg_off;
-	seg_len += seg_off;
-	/* seg-align length */
-	seg_len = m68k_round_seg(seg_len);
+	seg_len = m68k_round_seg(seg_len + seg_off);
 
 	s = splimp();
 
@@ -249,12 +247,9 @@ dvma_mapout(dma, len)
 	/* Get seg-aligned address and length. */
 	seg_dma = (vm_offset_t)dma;
 	seg_len = (vm_offset_t)len;
-	/* seg-align beginning */
 	seg_off = seg_dma & SEGOFSET;
 	seg_dma -= seg_off;
-	seg_len += seg_off;
-	/* seg-align length */
-	seg_len = m68k_round_seg(seg_len);
+	seg_len = m68k_round_seg(seg_len + seg_off);
 
 	s = splimp();
 
