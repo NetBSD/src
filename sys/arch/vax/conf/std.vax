@@ -1,10 +1,9 @@
-#	$NetBSD: std.vax,v 1.7 1998/11/16 04:32:56 mrg Exp $
+#	$NetBSD: std.vax,v 1.8 1999/03/24 06:06:11 mrg Exp $
 #
 # Std vaxfiles
 #
 machine	vax
 
-options 	UVM		# UVM virtual memory
 options 	PMAP_NEW	# new pmap(9) interfaces
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries

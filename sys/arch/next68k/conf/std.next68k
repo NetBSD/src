@@ -1,4 +1,4 @@
-# $NetBSD: std.next68k,v 1.5 1999/01/09 05:08:55 dbj Exp $
+# $NetBSD: std.next68k,v 1.6 1999/03/24 06:06:11 mrg Exp $
 
 # Standard information for next68k
 machine	next68k m68k
@@ -6,6 +6,3 @@ machine	next68k m68k
 # Standard defines
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER
-
-options         UVM

@@ -1,17 +1,9 @@
-# $NetBSD: std.i386,v 1.12 1998/08/31 17:57:02 thorpej Exp $
+# $NetBSD: std.i386,v 1.13 1999/03/24 06:06:10 mrg Exp $
 #
 # standard, required NetBSD/i386 'options'
 
 machine i386
 
-# VM pager support
-# XXX Not with UVM; garbage-collect these eventually.
-options 	SWAPPAGER	# paging
-options 	VNODEPAGER	# mmap() of files
-options 	DEVPAGER	# mmap() of devices
-
-# UVM is the standard VM system on NetBSD/i386.
-options 	UVM		# New UVM VM system
 options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# exec a.out binaries

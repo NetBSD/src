@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.5 1999/03/17 18:40:30 sommerfe Exp $
+#	$NetBSD: INSTALL_TINY,v 1.6 1999/03/24 06:06:10 mrg Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -62,9 +62,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	UVM		# Use UVM instead of Mach VM.
-
-#options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default

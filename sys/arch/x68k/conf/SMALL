@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.15 1999/03/17 12:31:26 minoura Exp $
+#	$NetBSD: SMALL,v 1.16 1999/03/24 06:06:12 mrg Exp $
 
 #
 #	SMALL -- works with a small memory, e.g. 4MB
@@ -20,7 +20,6 @@ options 	M68060
 
 #### System options specific to the x68k port
 
-options 	UVM			# new virtual memory system
 #options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040

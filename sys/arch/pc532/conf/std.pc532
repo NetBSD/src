@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.7 1998/09/02 19:22:14 matthias Exp $
+#	$NetBSD: std.pc532,v 1.8 1999/03/24 06:06:11 mrg Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -27,14 +27,7 @@ scn5		at mainbus? flags 0x0 # addr 0x28000028
 scn6		at mainbus? flags 0x0 # addr 0x28000030
 scn7		at mainbus? flags 0x0 # addr 0x28000038
 
-# VM pager support
-# XXX Not with UVM; garbage-collect these eventually.
-options 	SWAPPAGER	# paging
-options 	VNODEPAGER	# mmap() of files
-options 	DEVPAGER	# mmap() of devices
-
 # UVM is the standard VM system on NetBSD/i386.
-options 	UVM		# New UVM VM system
 options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# #! scripts
