@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.7 1994/10/26 08:47:21 cgd Exp $	*/
+/*	$NetBSD: via.h,v 1.8 1994/12/03 23:35:12 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -164,16 +164,17 @@ extern int VIA2;
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
 #define RBVMonIDBW	0x30	/* No internal video */
 
-#define via_reg(v, r) (*(VIA1_addr+(v)*0x2000+(r)))
+#define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via_SR_input(v)	(via_reg((v), vACR) &= 0xef)
 #define via_SR_output(v)	(via_reg((v), vACR) = ((via_reg((v), vACR) & \
 								0xe3) | 0x1c))
 
 #define vDirA_ADBState	0x30
 
-long		VIA_set_handler  (long vianum, long bitnum, long (*handle)());
-long		VIA_unset_handler(long vianum, long bitnum, long (*handle)());
 void		VIA_initialize   (void);
 unsigned char	VIA_get_SR       (long vianum);
 long		VIA_set_SR       (long vianum, unsigned char data);
 int		rbv_vidstatus(void);
+
+extern long	(*via1itab[7])();
+extern long	(*via2itab[7])();
