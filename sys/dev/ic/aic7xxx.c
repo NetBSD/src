@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.11 1996/08/27 21:59:12 cgd Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.12 1996/08/28 19:00:58 cgd Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -577,19 +577,6 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 	}
 }
 
-#if defined(__NetBSD__)
-int
-ahcprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-#endif
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -612,6 +599,7 @@ ahc_attach(ahc)
 	ahc->sc_link.fordriver = 0;
 #elif defined(__NetBSD__)
 	ahc->sc_link.adapter_target = ahc->our_id;
+	ahc->sc_link.channel = 0;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
 	ahc->sc_link.adapter = &ahc_switch;
@@ -628,6 +616,7 @@ ahc_attach(ahc)
 		ahc->sc_link_b.fordriver = (void *)SELBUSB;
 #elif defined(__NetBSD__)
 		ahc->sc_link_b.adapter_target = ahc->our_id_b;
+		ahc->sc_link_b.channel = 1;
 #endif
 	}
 
@@ -683,13 +672,9 @@ ahc_attach(ahc)
 		/* make IS_SCSIBUS_B() == false, while probing channel A */
 		ahc->sc_link_b.scsibus = 0xff;
 
+		config_found((void *)ahc, &ahc->sc_link, scsiprint);
 		if (ahc->type & AHC_TWIN)
-			printf("%s: Probing channel A\n", ahc_name(ahc));
-		config_found((void *)ahc, &ahc->sc_link, ahcprint);
-		if (ahc->type & AHC_TWIN) {
-			printf("%s: Probing channel B\n", ahc_name(ahc));
-			config_found((void *)ahc, &ahc->sc_link_b, ahcprint);
-		}
+			config_found((void *)ahc, &ahc->sc_link_b, scsiprint);
 	} else {
 		/*
 		 * if implementation of IS_SCSIBUS_B() is changed to use
@@ -698,10 +683,8 @@ ahc_attach(ahc)
 		 */
 
 		/* assert(ahc->type & AHC_TWIN); */
-		printf("%s: Probing channel B\n", ahc_name(ahc));
-		config_found((void *)ahc, &ahc->sc_link_b, ahcprint);
-		printf("%s: Probing channel A\n", ahc_name(ahc));
-		config_found((void *)ahc, &ahc->sc_link, ahcprint);
+		config_found((void *)ahc, &ahc->sc_link_b, scsiprint);
+		config_found((void *)ahc, &ahc->sc_link, scsiprint);
 	}
 #endif
 	return 1;

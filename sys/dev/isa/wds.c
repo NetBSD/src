@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.9 1996/08/27 21:59:41 cgd Exp $	*/
+/*	$NetBSD: wds.c,v 1.10 1996/08/28 19:01:25 cgd Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -180,7 +180,6 @@ struct scsi_device wds_dev = {
 
 int	wdsprobe __P((struct device *, void *, void *));
 void	wdsattach __P((struct device *, struct device *, void *));
-int	wdsprint __P((void *, const char *));
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach
@@ -251,17 +250,6 @@ wdsprobe(parent, match, aux)
 	return 1;
 }
 
-int
-wdsprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all available units.
  */
@@ -288,6 +276,7 @@ wdsattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
@@ -306,7 +295,7 @@ wdsattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, wdsprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 integrate void

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.13 1996/08/27 21:59:16 cgd Exp $	*/
+/*	$NetBSD: aha.c,v 1.14 1996/08/28 19:01:07 cgd Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -165,7 +165,6 @@ struct scsi_device aha_dev = {
 
 int	ahaprobe __P((struct device *, void *, void *));
 void	ahaattach __P((struct device *, struct device *, void *));
-int	ahaprint __P((void *, const char *));
 
 struct cfattach aha_ca = {
 	sizeof(struct aha_softc), ahaprobe, ahaattach
@@ -337,17 +336,6 @@ ahaprobe(parent, match, aux)
 	return 1;
 }
 
-int
-ahaprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -374,6 +362,7 @@ ahaattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &aha_switch;
@@ -389,7 +378,7 @@ ahaattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, ahaprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 integrate void

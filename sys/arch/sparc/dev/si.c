@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.25 1996/08/27 21:57:21 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.26 1996/08/28 19:00:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -201,7 +201,6 @@ static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
 static void	si_minphys __P((struct buf *));
-static int	si_print __P((void *, const char *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
 void si_dma_free __P((struct ncr5380_softc *));
@@ -257,16 +256,6 @@ struct cfattach sw_ca = {
 struct cfdriver sw_cd = {
 	NULL, "sw", DV_DULL
 };
-
-static int
-si_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
 
 static int
 si_match(parent, vcf, args)
@@ -356,6 +345,7 @@ si_attach(parent, self, args)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
@@ -494,7 +484,7 @@ si_attach(parent, self, args)
 		bootpath_store(1, bp + 1);
 
 	/* Configure sub-devices */
-	config_found(self, &(ncr_sc->sc_link), si_print);
+	config_found(self, &(ncr_sc->sc_link), scsiprint);
 
 	bootpath_store(1, NULL);
 }

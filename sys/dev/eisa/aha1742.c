@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.62 1996/08/28 19:00:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -453,11 +453,6 @@ ahbmatch(parent, match, aux)
 	return (rv);
 }
 
-ahbprint()
-{
-
-}
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -489,6 +484,7 @@ ahbattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->ahb_scsi_dev;
 	sc->sc_link.adapter = &ahb_switch;
@@ -530,7 +526,7 @@ ahbattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, ahbprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 /*

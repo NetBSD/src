@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.24 1996/08/27 21:55:02 cgd Exp $	*/
+/*	$NetBSD: idesc.c,v 1.25 1996/08/28 18:59:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -236,7 +236,6 @@ struct idec_softc
 
 int ide_scsicmd __P((struct scsi_xfer *));
 
-int idescprint __P((void *auxp, const char *));
 void idescattach __P((struct device *, struct device *, void *));
 int idescmatch __P((struct device *, void *, void *));
 
@@ -405,6 +404,7 @@ idescattach(pdp, dp, auxp)
 
 	printf ("\n");
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &idesc_scsiswitch;
@@ -420,20 +420,7 @@ idescattach(pdp, dp, auxp)
 	/*
 	 * attach all "scsi" units on us
 	 */
-	config_found(dp, &sc->sc_link, idescprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-idescprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 /*

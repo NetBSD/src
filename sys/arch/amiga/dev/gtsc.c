@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.16 1996/08/27 21:54:59 cgd Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.17 1996/08/28 18:59:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,7 +54,6 @@
 
 void gtscattach __P((struct device *, struct device *, void *));
 int gtscmatch __P((struct device *, void *, void *));
-int gtscprint __P((void *auxp, const char *));
 
 void gtsc_enintr __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
@@ -187,6 +186,7 @@ gtscattach(pdp, dp, auxp)
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
 	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &gtsc_scsiswitch;
@@ -203,20 +203,7 @@ gtscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, gtscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-gtscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.13 1996/08/27 21:54:29 cgd Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.14 1996/08/28 18:59:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -51,7 +51,6 @@
 #include <amiga/dev/ahscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int ahscprint __P((void *auxp, const char *));
 void ahscattach __P((struct device *, struct device *, void *));
 int ahscmatch __P((struct device *, void *, void *));
 
@@ -138,6 +137,7 @@ ahscattach(pdp, dp, auxp)
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x41);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &ahsc_scsiswitch;
@@ -154,22 +154,8 @@ ahscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, ahscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-ahscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 void
 ahsc_enintr(dev)

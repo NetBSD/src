@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.9 1996/08/27 21:55:28 cgd Exp $ */
+/* $NetBSD: asc.c,v 1.10 1996/08/28 18:59:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -58,7 +58,6 @@
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
 
-int ascprint	__P((void *auxp, const char *));
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, void *, void *));
 
@@ -172,6 +171,7 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_sbicp = (sbic_regmap_p) (sc->sc_podule->mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
+	sbic->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sbic->sc_link.adapter_softc = sbic;
 	sbic->sc_link.adapter_target = 7;
 	sbic->sc_link.adapter = &asc_scsiswitch;
@@ -208,22 +208,8 @@ ascattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sbic->sc_link, ascprint);
+	config_found(dp, &sbic->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-ascprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 void
 asc_enintr(sbicsc)

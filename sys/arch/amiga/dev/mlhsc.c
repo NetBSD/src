@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.11 1996/08/27 21:55:09 cgd Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.12 1996/08/28 18:59:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,6 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mlhscprint __P((void *auxp, const char *));
 void mlhscattach __P((struct device *, struct device *, void *));
 int mlhscmatch __P((struct device *, void *, void *));
 
@@ -142,6 +141,7 @@ mlhscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &mlhsc_scsiswitch;
@@ -152,22 +152,8 @@ mlhscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, mlhscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-mlhscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 int
 mlhsc_dma_xfer_in (dev, len, buf, phase)

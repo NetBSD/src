@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.19 1996/08/27 21:55:07 cgd Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.20 1996/08/28 18:59:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,7 +50,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mgnscprint __P((void *auxp, const char *));
 void mgnscattach __P((struct device *, struct device *, void *));
 int mgnscmatch __P((struct device *, void *, void *));
 int mgnsc_dmaintr __P((void *));
@@ -124,6 +123,7 @@ mgnscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &mgnsc_scsiswitch;
@@ -140,20 +140,7 @@ mgnscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, mgnscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-mgnscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 /*

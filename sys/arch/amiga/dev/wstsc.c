@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.13 1996/08/27 21:55:15 cgd Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.14 1996/08/28 18:59:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,6 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int wstscprint __P((void *auxp, const char *));
 void wstscattach __P((struct device *, struct device *, void *));
 int wstscmatch __P((struct device *, void *, void *));
 
@@ -167,6 +166,7 @@ wstscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &wstsc_scsiswitch;
@@ -177,20 +177,7 @@ wstscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, wstscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-wstscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.12 1996/08/27 21:55:11 cgd Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.13 1996/08/28 18:59:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,6 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int otgscprint __P((void *auxp, const char *));
 void otgscattach __P((struct device *, struct device *, void *));
 int otgscmatch __P((struct device *, void *, void *));
 
@@ -149,6 +148,7 @@ otgscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &otgsc_scsiswitch;
@@ -159,22 +159,8 @@ otgscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, otgscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-otgscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 int
 otgsc_dma_xfer_in (dev, len, buf, phase)

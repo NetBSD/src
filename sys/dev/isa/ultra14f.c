@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.67 1996/08/27 21:59:34 cgd Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.68 1996/08/28 19:01:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -329,7 +329,6 @@ struct scsi_device uha_dev = {
 
 int	uhaprobe __P((struct device *, void *, void *));
 void	uhaattach __P((struct device *, struct device *, void *));
-int	uhaprint __P((void *, const char *));
 
 struct cfattach uha_ca = {
 	sizeof(struct uha_softc), uhaprobe, uhaattach
@@ -574,16 +573,6 @@ uhaprobe(parent, match, aux)
 	return 1;
 }
 
-int
-uhaprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)       
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -604,6 +593,7 @@ uhaattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	uha->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	uha->sc_link.adapter_softc = uha;
 	uha->sc_link.adapter_target = uha->uha_scsi_dev;
 	uha->sc_link.adapter = &uha_switch;
@@ -621,7 +611,7 @@ uhaattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &uha->sc_link, uhaprint);
+	config_found(self, &uha->sc_link, scsiprint);
 }
 
 /*

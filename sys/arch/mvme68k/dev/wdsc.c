@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.4 1996/08/27 21:56:21 cgd Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.5 1996/08/28 19:00:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -53,7 +53,6 @@
 #include <mvme68k/dev/sbicvar.h>
 #include <mvme68k/dev/wdscreg.h>
 
-int     wdscprint       __P((void *auxp, const char *));
 void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
 int     wdsc_pcc_match  __P((struct device *, void *, void *));
 
@@ -135,6 +134,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_dmastop = wdsc_dmastop;
     sc->sc_dmacmd  = 0;
 
+    sc->sc_link.channel        = SCSI_CHANNEL_ONLY_ONE;
     sc->sc_link.adapter_softc  = sc;
     sc->sc_link.adapter_target = 7;
     sc->sc_link.adapter        = &wdsc_scsiswitch;
@@ -183,26 +183,9 @@ wdsc_pcc_attach(pdp, dp, auxp)
     tmp = bootpart;
     if (PCC_PADDR(pa->pa_offset) != bootaddr) 
 	bootpart = -1;		/* invalid flag to dk_establish */
-    (void)config_found(dp, &sc->sc_link, wdscprint);
+    (void)config_found(dp, &sc->sc_link, scsiprint);
     bootpart = tmp;		/* restore old value */
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-wdscprint(auxp, pnp)
-    void *auxp;
-    const char *pnp;
-{
-
-    /* Only scsibusses can attach to wdscs...easy. */
-    if (pnp)
-	printf("scsibus at %s", pnp);
-
-    return (UNCONF);
-}
-
 
 /*
  * Enable DMA interrupts

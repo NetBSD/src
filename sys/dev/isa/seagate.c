@@ -304,7 +304,6 @@ struct scsi_device sea_dev = {
 
 int	seaprobe __P((struct device *, void *, void *));
 void	seaattach __P((struct device *, struct device *, void *));
-int	seaprint __P((void *, const char *));
 
 struct cfattach sea_ca = {
 	sizeof(struct sea_softc), seaprobe, seaattach
@@ -408,16 +407,6 @@ seaprobe(parent, match, aux)
 	return 1;
 }
 
-int
-seaprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)       
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all sub-devices we can find
  */
@@ -434,6 +423,7 @@ seaattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sea->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sea->sc_link.adapter_softc = sea;
 	sea->sc_link.adapter_target = sea->our_id;
 	sea->sc_link.adapter = &sea_switch;
@@ -451,7 +441,7 @@ seaattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sea->sc_link, seaprint);
+	config_found(self, &sea->sc_link, scsiprint);
 }
 
 /*

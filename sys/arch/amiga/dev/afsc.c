@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.15 1996/08/27 21:54:28 cgd Exp $	*/
+/*	$NetBSD: afsc.c,v 1.16 1996/08/28 18:59:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,7 +51,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int afscprint __P((void *auxp, const char *));
 void afscattach __P((struct device *, struct device *, void *));
 int afscmatch __P((struct device *, void *, void *));
 int afsc_dmaintr __P((void *));
@@ -153,6 +152,7 @@ afscattach(pdp, dp, auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_CDIS;
 	sc->sc_dcntl = SIOP_DCNTL_EA;
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &afsc_scsiswitch;
@@ -169,20 +169,7 @@ afscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, afscprint);
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-afscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
 int

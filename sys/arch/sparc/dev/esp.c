@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.52 1996/08/27 21:57:05 cgd Exp $ */
+/*	$NetBSD: esp.c,v 1.53 1996/08/28 19:00:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -68,7 +68,6 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
-/*static*/ int	espprint	__P((void *, const char *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	espselect	__P((struct esp_softc *,
@@ -110,16 +109,6 @@ struct scsi_device esp_dev = {
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
-
-int
-espprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
 
 int
 espmatch(parent, vcf, aux)
@@ -327,6 +316,7 @@ espattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = &esp_switch;
@@ -355,7 +345,7 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(self, &sc->sc_link, espprint);
+	config_found(self, &sc->sc_link, scsiprint);
 
 	bootpath_store(1, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.2 1996/08/27 21:58:48 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.3 1996/08/28 19:00:47 cgd Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -281,16 +281,6 @@ struct cfattach ncr_ca = {
 	sizeof(struct si_softc), si_match, si_attach,
 };
 
-integrate int
-si_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 void
 dk_establish(p,q)
 	struct disk *p;
@@ -395,6 +385,7 @@ si_attach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = ca->ca_idval;
 	ncr_sc->sc_link.adapter = &si_ops;
@@ -461,7 +452,7 @@ si_attach(parent, self, aux)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-	config_found(self, &(ncr_sc->sc_link), si_print);
+	config_found(self, &(ncr_sc->sc_link), scsiprint);
 
 	/* 
 	 * Now ready for interrupts. 
