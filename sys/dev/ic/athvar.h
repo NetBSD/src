@@ -1,3 +1,4 @@
+/* $NetBSD: athvar.h,v 1.2 2003/10/13 05:23:07 dyoung Exp $ */
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -42,11 +43,19 @@
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
 
+#ifdef __FreeBSD__
 #include <sys/taskqueue.h>
 
-#include <contrib/dev/ath/ah.h>
+#include <contrib/dev/ic/ah.h>
+#else
+#include <../contrib/sys/dev/ic/athhal.h>
+#endif
 #include <net80211/ieee80211_radiotap.h>
+#ifdef __FreeBSD__
 #include <dev/ath/if_athioctl.h>
+#else
+#include <dev/ic/athioctl.h>
+#endif
 
 #define	ATH_TIMEOUT		1000
 
@@ -68,26 +77,39 @@ struct ath_node {
 
 struct ath_buf {
 	TAILQ_ENTRY(ath_buf)	bf_list;
-	int			bf_nseg;
 	bus_dmamap_t		bf_dmamap;	/* DMA map of the buffer */
+#ifdef __FreeBSD__
+	int			bf_nseg;
+	bus_dma_segment_t	bf_segs[ATH_MAX_SCATTER];
+	bus_size_t		bf_mapsize;
+#else
+#define bf_nseg		bf_dmamap->dm_nsegs
+#define bf_mapsize	bf_dmamap->dm_mapsize
+#define bf_segs		bf_dmamap->dm_segs
+#endif
 	struct ath_desc		*bf_desc;	/* virtual addr of desc */
 	bus_addr_t		bf_daddr;	/* physical addr of desc */
 	struct mbuf		*bf_m;		/* mbuf for buf */
 	struct ieee80211_node	*bf_node;	/* pointer to the node */
-	bus_size_t		bf_mapsize;
 #define	ATH_MAX_SCATTER		64
-	bus_dma_segment_t	bf_segs[ATH_MAX_SCATTER];
 };
 
 struct ath_softc {
+#ifdef __NetBSD__
+	struct device		sc_dev;
+#endif
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
+#ifdef __FreeBSD__
 	device_t		sc_dev;
+#endif
 	bus_space_tag_t		sc_st;		/* bus space tag */
 	bus_space_handle_t	sc_sh;		/* bus space handle */
 	bus_dma_tag_t		sc_dmat;	/* bus DMA tag */
+#ifdef __FreeBSD__
 	struct mtx		sc_mtx;		/* master lock (recursive) */
+#endif
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
 				sc_have11g  : 1,/* have 11g support */
@@ -101,7 +123,11 @@ struct ath_softc {
 	u_int8_t		sc_hwmap[32];	/* h/w rate ix to IEEE table */
 	HAL_INT			sc_imask;	/* interrupt mask copy */
 
+#ifdef __FreeBSD__
 	struct bpf_if		*sc_drvbpf;
+#else
+	caddr_t			sc_drvbpf;
+#endif
 	union {
 		struct ath_tx_radiotap_header th;
 		u_int8_t	pad[64];
@@ -113,31 +139,38 @@ struct ath_softc {
 
 	struct ath_desc		*sc_desc;	/* TX/RX descriptors */
 	bus_dma_segment_t	sc_dseg;
+#ifdef __NetBSD__
+	int			sc_dnseg;	/* number of segments */
+#endif
 	bus_dmamap_t		sc_ddmamap;	/* DMA map for descriptors */
 	bus_addr_t		sc_desc_paddr;	/* physical addr of sc_desc */
 	bus_addr_t		sc_desc_len;	/* size of sc_desc */
 
-	struct task		sc_fataltask;	/* fatal int processing */
-	struct task		sc_rxorntask;	/* rxorn int processing */
+	ath_task_t		sc_fataltask;	/* fatal int processing */
+	ath_task_t		sc_rxorntask;	/* rxorn int processing */
 
 	TAILQ_HEAD(, ath_buf)	sc_rxbuf;	/* receive buffer */
 	u_int32_t		*sc_rxlink;	/* link ptr in last RX desc */
-	struct task		sc_rxtask;	/* rx int processing */
+	ath_task_t		sc_rxtask;	/* rx int processing */
 
 	u_int			sc_txhalq;	/* HAL q for outgoing frames */
 	u_int32_t		*sc_txlink;	/* link ptr in last TX desc */
 	int			sc_tx_timer;	/* transmit timeout */
 	TAILQ_HEAD(, ath_buf)	sc_txbuf;	/* transmit buffer */
+#ifdef __FreeBSD__
 	struct mtx		sc_txbuflock;	/* txbuf lock */
+#endif
 	TAILQ_HEAD(, ath_buf)	sc_txq;		/* transmitting queue */
+#ifdef __FreeBSD__
 	struct mtx		sc_txqlock;	/* lock on txq and txlink */
-	struct task		sc_txtask;	/* tx int processing */
+#endif
+	ath_task_t		sc_txtask;	/* tx int processing */
 
 	u_int			sc_bhalq;	/* HAL q for outgoing beacons */
 	struct ath_buf		*sc_bcbuf;	/* beacon buffer */
 	struct ath_buf		*sc_bufptr;	/* allocated buffer ptr */
-	struct task		sc_swbatask;	/* swba int processing */
-	struct task		sc_bmisstask;	/* bmiss int processing */
+	ath_task_t		sc_swbatask;	/* swba int processing */
+	ath_task_t		sc_bmisstask;	/* bmiss int processing */
 
 	struct callout		sc_cal_ch;	/* callout handle for cals */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
@@ -151,7 +184,11 @@ int	ath_detach(struct ath_softc *);
 void	ath_resume(struct ath_softc *);
 void	ath_suspend(struct ath_softc *);
 void	ath_shutdown(struct ath_softc *);
+#ifdef __FreeBSD__
 void	ath_intr(void *);
+#else
+int	ath_intr(void *);
+#endif
 
 /*
  * HAL definitions to comply with local coding convention.
