@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.291 2004/04/22 10:14:58 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.292 2004/04/22 11:45:48 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2004/04/22 10:14:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2004/04/22 11:45:48 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2731,20 +2731,21 @@ pv_syncflags4m(pg)
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE ||
-		    (tpte & (SRMMU_PG_R|SRMMU_PG_M)) == 0)
-			continue;
+		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE &&
+		    (tpte & (SRMMU_PG_R|SRMMU_PG_M)) != 0) {
+			/*
+			 * Flush cache if modified to make sure the PTE
+			 * M bit will be set again on the next write access.
+			 */
+			if (pm->pm_ctx && (tpte & SRMMU_PG_M) == SRMMU_PG_M)
+				cache_flush_page(va, pm->pm_ctxnum);
 
-		/*
-		 * Flush cache if modified to make sure the pte M will be
-		 * set again on the next write access.
-		 */
-		if (pm->pm_ctx && (tpte & SRMMU_PG_M) == SRMMU_PG_M)
-			cache_flush_page(va, pm->pm_ctxnum);
-
-		flags |= MR4M(updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+			flags |= MR4M(updatepte4m(va,
+					&sp->sg_pte[VA_SUN4M_VPG(va)],
 					SRMMU_PG_M | SRMMU_PG_R,
 					0, pm->pm_ctxnum, PMAP_CPUSET(pm)));
+		}
+
 		simple_unlock(&pm->pm_lock);
 	}
 
