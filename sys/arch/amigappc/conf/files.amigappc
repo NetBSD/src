@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.15 2003/09/27 20:52:59 is Exp $
+#	$NetBSD: files.amigappc,v 1.16 2003/09/27 21:32:12 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -103,9 +103,15 @@ device	ite: tty
 attach	ite at grf
 file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
-file	arch/amiga/dev/kf_8x8.c		ite | amidisplaycc
-file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom
+file	arch/amiga/dev/kf_iso8859_1_8x8.c	kfont_cons_iso8859_1 &
+	( ite | amidisplaycc )
+file	arch/amiga/dev/kf_iso8859_1_8x11.c	kfont_cons_iso8859_1 &
+	kfont_8x11
+file	arch/amiga/dev/kf_iso8859_2_8x8.c	kfont_cons_iso8859_2 &
+	( ite | amidisplaycc )
+file	arch/amiga/dev/kf_iso8859_2_8x11.c	kfont_cons_iso8859_2 &
+	kfont_8x11
 
 # custom chips grf (ite0 grf0)
 device	grfcc: grfbus
