@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.6 1995/06/11 21:49:56 pk Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.7 1995/06/24 14:59:41 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$Id: rpc_main.c,v 1.6 1995/06/11 21:49:56 pk Exp $";
+static char cvsid[] = "$Id: rpc_main.c,v 1.7 1995/06/24 14:59:41 pk Exp $";
 #endif
 
 /*
@@ -615,7 +615,9 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	  f_print(fout, "#include <sys/types.h>\n");
 
 	f_print(fout, "#include <memory.h>\n");
-	f_print(fout, "#include <stropts.h>\n");
+	if (tirpcflag)
+		f_print(fout, "#include <stropts.h>\n");
+
 	if (inetdflag || !tirpcflag ) {
 		f_print(fout, "#include <sys/socket.h>\n");
 		f_print(fout, "#include <netinet/in.h>\n");
