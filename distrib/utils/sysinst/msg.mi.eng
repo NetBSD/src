@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.27 1998/05/15 15:19:25 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.28 1998/06/02 14:14:46 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -499,7 +499,7 @@ message notarfile
 }
 
 message endtarok
-{All selected distribution sets unpacked sucessfully.}
+{All selected distribution sets unpacked successfully.}
 
 message endtar
 {There were problems unpacking distribution sets.
