@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.10 1997/11/23 23:24:14 tv Exp $	*/
+/*	$NetBSD: man.c,v 1.11 1998/06/19 23:02:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.10 1997/11/23 23:24:14 tv Exp $");
+__RCSID("$NetBSD: man.c,v 1.11 1998/06/19 23:02:44 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,8 +385,7 @@ manual(page, tag, pg)
 	for (; e_tag != NULL; e_tag = e_tag->q.tqe_next) {
 		(void)snprintf(buf, sizeof(buf), "%s/%s.*", e_tag->s, page);
 		if (glob(buf,
-		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
-		    NULL, pg)) {
+		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT, NULL, pg)) {
 			warn("globbing");
 			(void)cleanup();
 			exit(1);

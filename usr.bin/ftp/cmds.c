@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.37 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.38 1998/06/19 23:01:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.37 1998/06/04 08:28:35 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.38 1998/06/19 23:01:21 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,7 @@ mput(argc, argv)
 		}
 
 		memset(&gl, 0, sizeof(gl));
-		flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+		flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 		if (glob(argv[i], flags, NULL, &gl) || gl.gl_pathc == 0) {
 			warnx("%s: not found", argv[i]);
 			globfree(&gl);
