@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.16 2001/01/25 17:15:33 jhawk Exp $
+# $NetBSD: mi,v 1.253.2.17 2001/02/26 21:03:21 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -311,6 +311,7 @@
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
 ./usr/share/man/cat1/send-pr.0
+./usr/share/man/cat1/sftp.0
 ./usr/share/man/cat1/sh.0
 ./usr/share/man/cat1/shar.0
 ./usr/share/man/cat1/shlock.0
@@ -327,6 +328,7 @@
 ./usr/share/man/cat1/ssh-add.0
 ./usr/share/man/cat1/ssh-agent.0
 ./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh-keyscan.0
 ./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/stty.0
@@ -855,8 +857,8 @@
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/viaenv.0
-./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/viapm.0
+./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/wd.0
@@ -1324,6 +1326,7 @@
 ./usr/share/man/cat8/setencstat.0
 ./usr/share/man/cat8/setkey.0
 ./usr/share/man/cat8/setobjstat.0
+./usr/share/man/cat8/sftp-server.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/showq.0
 ./usr/share/man/cat8/shutdown.0
@@ -1716,6 +1719,7 @@
 ./usr/share/man/man1/sdiff.1
 ./usr/share/man/man1/sed.1
 ./usr/share/man/man1/send-pr.1
+./usr/share/man/man1/sftp.1
 ./usr/share/man/man1/sh.1
 ./usr/share/man/man1/shar.1
 ./usr/share/man/man1/shlock.1
@@ -1732,6 +1736,7 @@
 ./usr/share/man/man1/ssh-add.1
 ./usr/share/man/man1/ssh-agent.1
 ./usr/share/man/man1/ssh-keygen.1
+./usr/share/man/man1/ssh-keyscan.1
 ./usr/share/man/man1/ssh.1
 ./usr/share/man/man1/stop.1
 ./usr/share/man/man1/stty.1
@@ -2260,8 +2265,8 @@
 ./usr/share/man/man4/vax/vv.4
 ./usr/share/man/man4/vga.4
 ./usr/share/man/man4/viaenv.4
-./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/viapm.4
+./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/wd.4
@@ -2729,6 +2734,7 @@
 ./usr/share/man/man8/setencstat.8
 ./usr/share/man/man8/setkey.8
 ./usr/share/man/man8/setobjstat.8
+./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/showq.8
 ./usr/share/man/man8/shutdown.8
