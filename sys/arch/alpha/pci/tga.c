@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.21 1997/09/25 01:32:04 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.22 1998/01/12 10:21:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.21 1997/09/25 01:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.22 1998/01/12 10:21:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,6 @@ int	tgaprint __P((void *, const char *));
 
 struct cfattach tga_ca = {
 	sizeof(struct tga_softc), tgamatch, tgaattach,
-};
-
-struct cfdriver tga_cd = {
-	NULL, "tga", DV_DULL,
 };
 
 int	tga_identify __P((tga_reg_t *));

@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.25 1997/09/02 20:08:02 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.26 1998/01/12 10:21:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.25 1997/09/02 20:08:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.26 1998/01/12 10:21:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,7 @@ struct cfattach lca_ca = {
 	sizeof(struct lca_softc), lcamatch, lcaattach,
 };
 
-struct cfdriver lca_cd = {
-	NULL, "lca", DV_DULL,
-};
+extern struct cfdriver lca_cd;
 
 static int	lcaprint __P((void *, const char *pnp));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.7 1997/04/06 22:30:45 cgd Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.8 1998/01/12 10:21:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -102,9 +102,3 @@ int	tcds_dma_setup __P((struct tcds_slotconfig *, caddr_t *, size_t *,
 	    int, size_t *));
 void	tcds_dma_go __P((struct tcds_slotconfig *));
 int	tcds_dma_isactive __P((struct tcds_slotconfig *));
-
-/*
- * The TCDS (bus) cfdriver, so that subdevices can more
- * easily tell what bus they're on.
- */
-extern struct cfdriver tcds_cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.6 1997/09/02 13:20:48 thorpej Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.6 1997/09/02 13:20:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,13 +67,14 @@ struct cfattach mcclock_tlsb_ca = {
 	mcclock_tlsb_attach, 
 };
 
+extern struct cfdriver mcclock_cd;
+
 static void	mcclock_tlsb_write __P((struct mcclock_softc *, u_int, u_int));
 static u_int	mcclock_tlsb_read __P((struct mcclock_softc *, u_int));
 
 const struct mcclock_busfns mcclock_tlsb_busfns = {
 	mcclock_tlsb_write, mcclock_tlsb_read,
 };
-extern struct cfdriver mcclock_cd;
 
 int
 mcclock_tlsb_match(parent, match, aux)

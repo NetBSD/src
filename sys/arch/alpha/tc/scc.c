@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.36 1997/09/02 13:27:35 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.37 1998/01/12 10:21:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.36 1997/09/02 13:27:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.37 1998/01/12 10:21:17 thorpej Exp $");
 
 #include "scc.h"
 #if NSCC > 0
@@ -205,13 +205,12 @@ static int	sccmatch  __P((struct device * parent, struct cfdata *cf,
 		    void *aux));
 static void	sccattach __P((struct device *parent, struct device *self,
 		    void *aux));
+
 struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
 };
 
-struct cfdriver scc_cd = {
-	NULL, "scc", DV_TTY,
-};
+extern struct cfdriver scc_cd;
 
 int		sccGetc __P((dev_t));
 void		sccPutc __P((dev_t, int));

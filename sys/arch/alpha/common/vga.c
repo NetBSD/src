@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.10 1997/10/24 23:03:02 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.11 1998/01/12 10:21:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.10 1997/10/24 23:03:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.11 1998/01/12 10:21:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.10 1997/10/24 23:03:02 thorpej Exp $");
 
 #define	VGA_IO_D_6845_ADDR	0x4
 #define	VGA_IO_D_6845_DATA	0x5
-
-struct cfdriver vga_cd = {
-	NULL, "vga", DV_DULL,
-};
 
 static void	vga_cursor __P((void *, int, int, int));
 static void	vga_putstr __P((void *, int, int, char *, int));

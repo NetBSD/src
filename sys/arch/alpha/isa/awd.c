@@ -1,4 +1,4 @@
-/*	$NetBSD: awd.c,v 1.9 1997/10/08 23:25:24 thorpej Exp $	*/
+/*	$NetBSD: awd.c,v 1.10 1998/01/12 10:21:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -154,10 +154,6 @@ struct cfattach awdc_ca = {
 	sizeof(struct wdc_softc), wdcprobe, wdcattach
 };
 
-struct cfdriver awdc_cd = {
-	NULL, "wdc", DV_DULL
-};
-
 #ifdef __BROKEN_INDIRECT_CONFIG
 int wdprobe __P((struct device *, void *, void *));
 #else
@@ -170,9 +166,7 @@ struct cfattach awd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
 };
 
-struct cfdriver awd_cd = {
-	NULL, "wd", DV_DISK
-};
+extern struct cfdriver awd_cd;
 
 void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void	wdgetdisklabel	__P((struct wd_softc *));
