@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.184 2003/11/25 05:14:58 cdi Exp $	*/
+/*	$NetBSD: locore.s,v 1.185 2003/12/02 22:44:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4672,13 +4672,7 @@ return_from_trap:
 	!!
 	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
 	btst	TSTATE_PRIV, %g1			! returning to userland?
-#if 0
-	bnz,pt	%icc, 0f
-	 sethi	%hi(CURLWP), %o1
-	call	_C_LABEL(rwindow_save)			! Flush out our pcb
-	 LDPTR	[%o1 + %lo(CURLWP)], %o0
-0:
-#endif
+
 	!!
 	!! Let all pending interrupts drain before returning to userland
 	!!
@@ -8192,24 +8186,13 @@ ENTRY(proc_trampoline)
 	 mov	%l1, %o0
 
 	/*
-	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() /cpu_set_kpc()
-	 * have only set npc, in anticipation that trap.c will advance past
-	 * the trap instruction; but we bypass that, so we must do it manually.
+	 * Here we finish up as in syscall, but simplified.
 	 */
 	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
-	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-!	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
 	srl	%g1, 0, %g1			! Clear out the condition codes
-!	add	%g2, 4, %g3			! npc = pc+4
-!	andn	%g1, CWP, %g1			! Clear the CWP bits
-!	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-!	or	%g1, %g5, %g1	! Not needed
-!	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 #ifdef SCHED_DEBUG
-!	set	panicstack-CC64FSZ-STKB, %o0! DEBUG
-!	save	%g0, %o0, %sp	! DEBUG
+	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2	! pc = tf->tf_pc from execve/fork
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
 	ldx	[%fp + CC64FSZ + STKB + TF_O + ( 6*8)], %o2

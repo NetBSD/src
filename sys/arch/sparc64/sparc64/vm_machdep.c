@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 2003/11/09 16:41:53 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.52 2003/12/02 22:44:17 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2003/11/09 16:41:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2003/12/02 22:44:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,25 +278,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 */
 	if (stack != NULL)
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
-
-#if 0
-	/* XXX not needed if pc/npc adjusted in syscall */
-	/* Duplicate efforts of syscall(), but slightly differently */
-	if (tf2->tf_global[1] & SYSCALL_G7RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[7];
-	} else if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[2];
-	} else {
-		/*
-		 * old system call convention: clear C on success
-		 * note: proc_trampoline() sets a fresh psr when
-		 * returning to user mode.
-		 */
-		/*tf2->tf_psr &= ~PSR_C;   -* success */
-	}
-#endif
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
