@@ -1,4 +1,4 @@
-/*	$NetBSD: pass0.c,v 1.3 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: pass0.c,v 1.4 2000/05/16 04:55:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -55,12 +55,9 @@
 #define CKSEG_IGNORECLEAN 2
 
 extern int fake_cleanseg;
-void check_segment(int, int, daddr_t, struct lfs *, int, int (*)(struct lfs *, SEGSUM *, int, int, daddr_t, daddr_t));
-static int check_summary(struct lfs *, SEGSUM *, int, int, daddr_t, daddr_t);
-SEGUSE *lfs_gseguse(int);
+void check_segment(int, int, daddr_t, struct lfs *, int,
+		   int (*)(struct lfs *, SEGSUM *, daddr_t));
 
-struct dinode **din_table;
-SEGUSE *seg_table;
 /*
  * Pass 0.  Check the LFS partial segments for valid checksums, correcting
  * if necessary.  Also check for valid offsets for inode and finfo blocks.
@@ -72,39 +69,44 @@ SEGUSE *seg_table;
 
 void pass0()
 {
-    int i;
-    daddr_t seg_addr;
+    daddr_t daddr;
+    IFILE *ifp;
+    struct bufarea *bp;
+    ino_t ino, lastino, nextino;
 
     /*
-     * Run through the Ifile, to count and load the inodes into
-     * a dynamic inode table.
+     * Check the inode free list for inuse inodes.
+     *
+     * XXX should also check for cycles or breaks in the list, and be able
+     * to repair them.
      */
-    
-    /*
-     * Check the segments
-     */
-
-    seg_addr = sblock.lfs_sboffs[0];
-    for(i=0; i < sblock.lfs_nseg; i++)
-    {
-	    seg_table[i] = *(lfs_gseguse(i));
-	    check_segment(fsreadfd, i, seg_addr, &sblock,
-			  CKSEG_IGNORECLEAN|CKSEG_VERBOSE, check_summary);
-	    seg_addr += (sblock.lfs_ssize << sblock.lfs_fsbtodb);
+    lastino = 0;
+    ino=sblock.lfs_free;
+    while(ino) {
+	    ifp = lfs_ientry(ino,&bp);
+	    nextino = ifp->if_nextfree;
+	    daddr = ifp->if_daddr;
+	    bp->b_flags &= ~B_INUSE;
+	    if(daddr) {
+		    printf("! Ino %d with daddr 0x%x is on the free list!\n",
+			   ino, daddr);
+		    if(preen || reply("FIX")==1) {
+			    if(lastino == 0) {
+				    sblock.lfs_free = nextino;
+				    sbdirty();
+			    } else {
+				    ifp = lfs_ientry(lastino,&bp);
+				    ifp->if_nextfree = nextino;
+				    ++bp->b_dirty;
+				    bp->b_flags &= ~B_INUSE;
+			    }
+			    ino = nextino;
+			    continue;
+		    }
+	    }
+	    lastino = ino;
+	    ino = nextino;
     }
-#if 0
-    /* check to see which inodes we didn't get */
-    printf("Unavailable inodes: ");
-    for(i=1;i<maxino;i++) /* XXX ino 0 is never present */
-        if(din_table[i]==NULL)
-        {
-            struct ifile *ifp;
-
-            ifp = lfs_ientry(i);
-            printf("(%d should be at daddr 0x%x)",i,ifp->if_daddr);
-        }
-    putchar('\n');
-#endif
 }
 
 static void dump_segsum(SEGSUM *sump, daddr_t addr)
@@ -121,21 +123,23 @@ static void dump_segsum(SEGSUM *sump, daddr_t addr)
            sump->ss_flags&SS_CONT?'c':'-');
 }
 
-void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, int (*func)(struct lfs *, SEGSUM *, int, int, daddr_t, daddr_t))
+void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, int (*func)(struct lfs *, SEGSUM *, daddr_t))
 {
     struct lfs *sbp;
     SEGSUM *sump=NULL;
-    SEGUSE su;
+    SEGUSE *su;
     struct bufarea *bp = NULL;
     int psegnum=0, ninos=0;
     off_t sum_offset, db_ssize;
-    int bc;
+    int bc, su_flags, su_nsums, su_ninos;
 
     db_ssize = sblock.lfs_ssize << sblock.lfs_fsbtodb;
-    su = *(lfs_gseguse(segnum)); /* structure copy */
 
-    if(fake_cleanseg >= 0 && segnum == fake_cleanseg)
-        seg_table[segnum].su_flags &= ~SEGUSE_DIRTY;
+    su = lfs_gseguse(segnum, &bp);
+    su_flags = su->su_flags;
+    su_nsums = su->su_nsums;
+    su_ninos = su->su_ninos;
+    bp->b_flags &= ~B_INUSE;
 
     /* printf("Seg at 0x%x\n",addr); */
     if((flags & CKSEG_VERBOSE) && segnum*db_ssize + fs->lfs_sboffs[0] != addr)
@@ -145,7 +149,7 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
     sum_offset = ((off_t)addr << dbshift);
 
     /* If this segment should have a superblock, look for one */
-    if(su.su_flags & SEGUSE_SUPERBLOCK) {
+    if(su_flags & SEGUSE_SUPERBLOCK) {
         bp = getddblk(sum_offset >> dbshift, LFS_SBPAD);
         sum_offset += LFS_SBPAD;
 
@@ -166,11 +170,11 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
         bp->b_flags &= ~B_INUSE;
     }
     /* XXX need to also check whether this one *should* be dirty */
-    if((flags & CKSEG_IGNORECLEAN) && (su.su_flags & SEGUSE_DIRTY)==0)
+    if((flags & CKSEG_IGNORECLEAN) && (su_flags & SEGUSE_DIRTY)==0)
         return;
 
     while(1) {
-        if(su.su_nsums <= psegnum)
+        if(su_nsums <= psegnum)
             break;
         bp = getddblk(sum_offset >> dbshift, LFS_SUMMARY_SIZE);
         sump = (SEGSUM *)(bp->b_un.b_buf);
@@ -185,7 +189,7 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
 		if(flags & CKSEG_VERBOSE) {
 			/* Corrupt partial segment */
 			pwarn("CORRUPT PARTIAL SEGMENT %d/%d OF SEGMENT %d AT BLK 0x%qx",
-			      psegnum, su.su_nsums, segnum, 
+			      psegnum, su_nsums, segnum, 
 				  (unsigned long long)sum_offset>>dbshift);
 			if(db_ssize < (sum_offset>>dbshift) - addr)
 				pwarn(" (+0x%qx/0x%qx)",
@@ -209,7 +213,7 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
 	/*
 	 * Good partial segment
 	 */
-	bc = (*func)(&sblock, sump, segnum, psegnum, addr, (daddr_t)(sum_offset>>dbshift));
+	bc = (*func)(&sblock, sump, (daddr_t)(sum_offset>>dbshift));
 	if(bc) {
                 sum_offset += LFS_SUMMARY_SIZE + bc;
                 ninos += (sump->ss_ninos + INOPB(&sblock)-1)/INOPB(&sblock);
@@ -221,82 +225,97 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
         bp->b_flags &= ~B_INUSE;
     }
     if(flags & CKSEG_VERBOSE) {
-	    if(ninos != su.su_ninos)
+	    if(ninos != su_ninos)
 		    pwarn("SEGMENT %d has %d ninos, not %d\n",
-			  segnum, ninos, su.su_ninos);
-	    if(psegnum != su.su_nsums)
+			  segnum, ninos, su_ninos);
+	    if(psegnum != su_nsums)
 		    pwarn("SEGMENT %d has %d summaries, not %d\n",
-			  segnum, psegnum, su.su_nsums);
+			  segnum, psegnum, su_nsums);
     }
 
     return;
 }
 
-static int check_summary(struct lfs *fs, SEGSUM *sp, int sn, int pn, daddr_t seg_addr, daddr_t pseg_addr)
+int check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr)
 {
     FINFO *fp;
     int bc; /* Bytes in partial segment */
-    daddr_t *dp;
-    struct dinode *ip;
+    int nblocks;
+    daddr_t seg_addr, *dp, *idp, daddr;
     struct bufarea *bp;
-    int i, j, n;
+    int i, j, k, datac, len;
+    long sn;
+    u_long *datap;
+    u_int32_t ccksum;
+
+    sn = datosn(fs, pseg_addr);
+    seg_addr = sntoda(fs, sn);
 
     /* printf("Pseg at 0x%x, %d inos, %d finfos\n",addr>>dbshift,sp->ss_ninos,sp->ss_nfinfo); */
     /* We've already checked the sumsum, just do the data bounds and sum */
-    bc = ((sp->ss_ninos + INOPB(fs) - 1) / INOPB(fs)) << fs->lfs_bshift;
+    
+    /* 1. Count the blocks. */
+    nblocks = ((sp->ss_ninos + INOPB(fs) - 1) / INOPB(fs));
+    bc = nblocks << fs->lfs_bshift;
+
+    fp = (FINFO *)(sp + 1);
+    for(i=0; i<sp->ss_nfinfo; i++) {
+	    nblocks += fp->fi_nblocks;
+	    bc +=  fp->fi_lastlength + ((fp->fi_nblocks-1) << fs->lfs_bshift);
+	    fp = (FINFO *)(fp->fi_blocks + fp->fi_nblocks);
+    }
+    datap = (u_long *)malloc(nblocks * sizeof(*datap));
+    datac = 0;
+
     dp = (daddr_t *)sp;
     dp += LFS_SUMMARY_SIZE / sizeof(daddr_t);
     dp--;
-    i=0;
-#if 0
-    if(sp->ss_ninos==0 && sp->ss_nfinfo==0) {
-        pwarn("SEGMENT %d PSEG %d IS EMPTY\n",sn,pn);
-        return 0;
-    }
-#endif
-    while(i<sp->ss_ninos)
-    {
-        if(*dp < seg_addr || *dp > seg_addr + (sblock.lfs_ssize<<dbshift))
-        {
-            printf("Disk address 0x%x but should be in 0x%x--0x%x\n",
-                   *dp, seg_addr, seg_addr+(sblock.lfs_ssize<<dbshift));
-        }
-        bp = getddblk(*dp, (1<<fs->lfs_bshift));
-        ip = (struct dinode *)bp->b_un.b_buf;
-        for(j=0; i<sp->ss_ninos && j<INOPB(fs); j++) {
-            /* check range */
-            if(ip[j].di_inumber < 0 || ip[j].di_inumber > maxino)
-            {
-                pwarn("BAD INUM %d IN SEGMENT %d PARTIAL %d\n",
-                      ip[j].di_inumber, sn, pn);
-                /* XXX Allow to fix (zero) this */
-            } else {
-                /* take a record of the highest-generation of each inode */
-                n = ip[j].di_inumber;
-#if 1
-                if(din_table[n]==NULL || din_table[n]->di_gen < ip[j].di_gen) {
-                    if(!din_table[n])
-                        din_table[n] = (struct dinode *)
-                            malloc(sizeof(struct dinode));
-                    memcpy(din_table[n],&ip[j],sizeof(struct dinode));
-                }
-#endif
-            }
-            i++;
-        }
-        bp->b_flags &= ~B_INUSE;
-        dp--;
-    }
+
+    idp = dp;
+    daddr = pseg_addr + (LFS_SUMMARY_SIZE/dev_bsize);
     fp = (FINFO *)(sp + 1);
-    for(i=0; i<sp->ss_nfinfo; i++) {
-        bc +=  fp->fi_lastlength + ((fp->fi_nblocks-1) << fs->lfs_bshift);
-        /* XXX for now, ignore mismatches between segments' FINFO and IFILE */
-        dp = &(fp->fi_blocks[0]);
-        for(j=0; j<fp->fi_nblocks; j++) {
-            /* XXX check values against inodes' known block size */
-            dp++;
-        }
-        fp = (FINFO *)dp;
+    for(i=0, j=0; i<sp->ss_nfinfo || j<howmany(sp->ss_ninos,INOPB(fs)); i++) {
+	    /* printf("*idp=%x, daddr=%x\n", *idp, daddr); */
+	    if(i >= sp->ss_nfinfo && *idp != daddr) {
+		    pwarn("Not enough inode blocks in pseg at 0x%x: found %d, wanted %d\n",
+			  pseg_addr, j, howmany(sp->ss_ninos,INOPB(fs)));
+		    pwarn("*idp=%x, daddr=%x\n", *idp, daddr);
+		    break;
+	    }
+	    while(j < howmany(sp->ss_ninos,INOPB(fs)) && *idp == daddr) {
+		    bp = getddblk(daddr, (1<<fs->lfs_bshift));
+		    datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
+		    bp->b_flags &= ~B_INUSE;
+
+		    ++j;
+		    daddr += (1<<fs->lfs_bshift)/dev_bsize;
+		    --idp;
+	    }
+	    if(i < sp->ss_nfinfo) {
+		    for(k=0; k<fp->fi_nblocks; k++) {
+			    len = (k==fp->fi_nblocks - 1 ? fp->fi_lastlength
+				   : (1<<fs->lfs_bshift));
+			    bp = getddblk(daddr, len);
+			    datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
+			    bp->b_flags &= ~B_INUSE;
+			    daddr += len/dev_bsize;
+		    }
+		    fp = (FINFO *)(fp->fi_blocks + fp->fi_nblocks);
+	    }
     }
+
+    if(datac != nblocks) {
+	    pwarn("Partial segment at 0x%x expected %d blocks counted %d\n",
+		  pseg_addr, nblocks, datac);
+    }
+
+    ccksum = cksum(datap, nblocks * sizeof(u_long));
+    /* Check the data checksum */
+    if (ccksum != sp->ss_datasum) {
+	    pwarn("Partial segment at 0x%x data checksum mismatch: got 0x%x, expected 0x%x\n",
+		  pseg_addr, sp->ss_datasum, ccksum);
+	    /* return 0; */
+    }
+
     return bc;
 }

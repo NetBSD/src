@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.3 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 2000/05/16 04:55:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -59,8 +59,8 @@
 #include "fsutil.h"
 
 struct bufarea asblk;
-extern struct dinode **din_table;
-extern SEGUSE *seg_table;
+daddr_t *din_table;
+SEGUSE *seg_table;
 #define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
@@ -69,6 +69,8 @@ int calcsb __P((const char *, int, struct lfs *));
 static struct disklabel *getdisklabel __P((const char *, int));
 static int readsb __P((int));
 int lfs_maxino(void);
+
+static daddr_t try_verify(struct lfs *, struct lfs *);
 
 #ifdef DKTYPENAMES
 int useless __P((void));
@@ -83,6 +85,48 @@ useless(void)
 }
 #endif
 
+static daddr_t
+try_verify(struct lfs *osb, struct lfs *nsb) 
+{
+	daddr_t daddr;
+	SEGSUM *sp;
+	char summary[LFS_SUMMARY_SIZE];
+	int bc, flag;
+	
+	daddr = osb->lfs_offset;
+	while(daddr != nsb->lfs_offset) {
+		flag = 0;
+	    oncemore:
+		/* Read in summary block */
+		bread(fsreadfd, summary, daddr, LFS_SUMMARY_SIZE);
+		sp = (SEGSUM *)summary;
+
+		/*
+		 * Could be a superblock instead of a segment summary.
+		 * XXX should use gseguse, but right now we need to do more
+		 * setup before we can...fix this
+		 */
+		if(sp->ss_magic != SS_MAGIC ||
+		   sp->ss_sumsum != cksum(&sp->ss_datasum, LFS_SUMMARY_SIZE -
+					  sizeof(sp->ss_sumsum)))
+		{
+			if(flag==0) {
+				daddr += LFS_SBPAD/dev_bsize;
+				goto oncemore;
+			}
+			return 0x0;
+		}
+		bc = check_summary(osb, sp, daddr);
+		if(bc==0)
+			break;
+		daddr += (LFS_SUMMARY_SIZE + bc) / dev_bsize;
+		if(datosn(osb,daddr) != datosn(osb, daddr + (LFS_SUMMARY_SIZE+(1<<osb->lfs_bshift))/dev_bsize)) {
+			daddr = ((SEGSUM *)summary)->ss_next;
+		}
+	}
+	return daddr;
+}
+
 int
 setup(dev)
 	const char *dev;
@@ -94,10 +138,12 @@ setup(dev)
 	off_t sizepb;
 #endif
 	struct stat statb;
+	daddr_t daddr;
 	struct lfs proto;
 	int doskipclean;
 	u_int64_t maxfilesize;
-        struct lfs *sb0;
+        struct lfs *sb0, *sb1, *osb, *nsb;
+	struct dinode *idinode;
 
 	havesb = 0;
 	fswritefd = -1;
@@ -169,6 +215,9 @@ setup(dev)
 		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
+
+	bufinit();
+
 	if(bflag==0) {
 		/*
 		 * Even if that superblock read in properly, it may not
@@ -177,26 +226,50 @@ setup(dev)
 		 * of the two is *less* recent. --ks
 		 */
 		sb0 = malloc(sizeof(*sb0));
+		sb1 = malloc(sizeof(*sb1));
 		memcpy(sb0,&sblock,sizeof(*sb0));
-			bflag = sblock.lfs_sboffs[1];
-			if(readsb(1)==0) {
-				pwarn("COULDN'T READ ALT SUPERBLOCK AT BLK %d",bflag);
-				if (reply("ASSUME PRIMARY SUPERBLOCK IS GOOD") == 0) {
-					return (0);
-				} else { /* use primary as good */
-					memcpy(&sblock,sb0,sizeof(*sb0)); /* XXX cheating? */
-				}
-			} else {
-				if(debug)
-					pwarn("sb0 %d, sb1 %d\n",sb0->lfs_tstamp,sblock.lfs_tstamp);
-				if(sblock.lfs_tstamp >= sb0->lfs_tstamp) {
-					memcpy(&sblock,sb0,sizeof(*sb0)); /* XXX cheating? */
+		bflag = sblock.lfs_sboffs[1];
+		if(readsb(1)==0) {
+			pwarn("COULDN'T READ ALT SUPERBLOCK AT BLK %d",bflag);
+			if (reply("ASSUME PRIMARY SUPERBLOCK IS GOOD") == 0) {
+				return (0);
+			} else { /* use primary as good */
+				memcpy(&sblock,sb0,sizeof(*sb0)); /* XXX cheating? */
+			}
+		} else {
+			memcpy(sb1,&sblock,sizeof(*sb1));
+			if(debug)
+				pwarn("sb0 %d, sb1 %d\n",sb0->lfs_tstamp,sblock.lfs_tstamp);
+			/*
+			 * Verify the checkpoint of the newer superblock,
+			 * if the timestamp of the two superblocks is
+			 * different.  XXX use lfs_offset instead, discover
+			 * how to quickly discover "newness" based on that.
+			 */
+			if(sb0->lfs_tstamp != sb1->lfs_tstamp) {
+				if(sb0->lfs_tstamp > sb1->lfs_tstamp) {
+					osb = sb1;
+					nsb = sb0;
 				} else {
-					pwarn("Using alt superblock, disk addr 0x%x\n",
-					      bflag);
+					osb = sb0;
+					nsb = sb1;
+				}
+				daddr = try_verify(osb, nsb);
+
+				if (debug)
+					printf("done.\n");
+				if (daddr == nsb->lfs_offset) {
+					pwarn("Checkpoint verified, recovered %d seconds of data\n", nsb->lfs_tstamp - osb->lfs_tstamp);
+					memcpy(&sblock,nsb,sizeof(*nsb));
+					sbdirty();
+				} else {
+					pwarn("Checkpoint invalid, lost %d seconds of data\n", nsb->lfs_tstamp - osb->lfs_tstamp);
+					memcpy(&sblock,osb,sizeof(*osb));
 				}
 			}
+		}
 		free(sb0);
+		free(sb1);
 	}
 	if(debug) {
         	printf("dev_bsize = %lu\n",dev_bsize);
@@ -233,11 +306,14 @@ setup(dev)
             printf("Couldn't read disk block %d\n",sblock.lfs_idaddr);
             exit(1);
         }
-        maxino = lfs_maxino();
+	idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
+	maxino = ((idinode->di_size
+            - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
+        / sblock.lfs_bsize) * sblock.lfs_ifpb - 1;
 #endif
 	if (debug)
         	printf("maxino=%d\n",maxino);
-        din_table = (struct dinode **)malloc(maxino*sizeof(*din_table));
+        din_table = (daddr_t *)malloc(maxino*sizeof(*din_table));
         memset(din_table,0,maxino*sizeof(*din_table));
         seg_table = (SEGUSE *)malloc(sblock.lfs_nseg * sizeof(SEGUSE));
         memset(seg_table,0,sblock.lfs_nseg * sizeof(SEGUSE));
@@ -367,7 +443,6 @@ u_quad_t maxtable[] = {
 		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
-	bufinit();
 	return (1);
 
 badsblabel:
@@ -531,24 +606,28 @@ calcsb(dev, devfd, fs)
 		return (0);
 	}
 	lp = getdisklabel(dev, devfd);
-	if (isdigit(*cp))
-		pp = &lp->d_partitions[0];
-	else
-		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_fstype != FS_BSDLFS) {
-		pfatal("%s: NOT LABELED AS AN LFS FILE SYSTEM (%s)\n",
-			dev, pp->p_fstype < FSMAXTYPES ?
-			fstypenames[pp->p_fstype] : "unknown");
-		return (0);
+	if(lp==NULL) {
+		dev_bsize = DEV_BSIZE;
+	} else {
+		if (isdigit(*cp))
+			pp = &lp->d_partitions[0];
+		else
+			pp = &lp->d_partitions[*cp - 'a'];
+		if (pp->p_fstype != FS_BSDLFS) {
+			pfatal("%s: NOT LABELED AS AN LFS FILE SYSTEM (%s)\n",
+				dev, pp->p_fstype < FSMAXTYPES ?
+				fstypenames[pp->p_fstype] : "unknown");
+			return (0);
+		}
+		memset(fs, 0, sizeof(struct lfs));
+		fs->lfs_fsize = pp->p_fsize;
+		fs->lfs_frag = pp->p_frag;
+		fs->lfs_size = pp->p_size;
+		fs->lfs_nspf = fs->lfs_fsize / lp->d_secsize;
+		dev_bsize = lp->d_secsize;
+		for (fs->lfs_fsbtodb = 0, i = fs->lfs_nspf; i > 1; i >>= 1)
+			fs->lfs_fsbtodb++;
 	}
-	memset(fs, 0, sizeof(struct lfs));
-	fs->lfs_fsize = pp->p_fsize;
-	fs->lfs_frag = pp->p_frag;
-	fs->lfs_size = pp->p_size;
-	fs->lfs_nspf = fs->lfs_fsize / lp->d_secsize;
-	dev_bsize = lp->d_secsize;
-	for (fs->lfs_fsbtodb = 0, i = fs->lfs_nspf; i > 1; i >>= 1)
-		fs->lfs_fsbtodb++;
 	return (1);
 }
 
@@ -563,7 +642,11 @@ getdisklabel(s, fd)
 		if (s == NULL)
 			return ((struct disklabel *)NULL);
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
+#if 0
 		errexit("%s: can't read disk label\n", s);
+#else
+		return NULL;
+#endif
 	}
 	return (&lab);
 }

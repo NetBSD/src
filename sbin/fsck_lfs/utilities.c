@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: utilities.c,v 1.3 2000/05/16 04:56:00 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -266,12 +266,27 @@ ckfini(markclean)
 		return;
 	}
 	flush(fswritefd, &sblk);
-	if (havesb && sblk.b_bno != LFS_SBPAD / dev_bsize &&
-	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
-		sblk.b_bno = LFS_SBPAD / dev_bsize;
+	if (havesb && sblk.b_bno != LFS_LABELPAD / dev_bsize &&
+	    sblk.b_bno != sblock.lfs_sboffs[0] &&
+	    !preen && reply("UPDATE STANDARD SUPERBLOCKS")) {
+		sblk.b_bno = LFS_LABELPAD / dev_bsize;
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
+	if (havesb) {
+		if(sblk.b_bno == LFS_LABELPAD / dev_bsize) {
+			/* Do the first alternate */
+			sblk.b_bno = sblock.lfs_sboffs[1];
+			sbdirty();
+			flush(fswritefd, &sblk);
+		} else if(sblk.b_bno == sblock.lfs_sboffs[1]) {
+			/* Do the primary */
+			sblk.b_bno = LFS_LABELPAD / dev_bsize;
+			sbdirty();
+			flush(fswritefd, &sblk);
+		}
+	}
+		
 	/* flush(fswritefd, &cgblk); */
 	/* free(cgblk.b_un.b_buf); */
 	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {
@@ -284,8 +299,7 @@ ckfini(markclean)
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
-#if 0 /* FFS */
-	if (markclean && (sblock.lfs_clean & FS_ISCLEAN) == 0) {
+	if (markclean && sblock.lfs_clean == 0) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
 		 */
@@ -294,12 +308,20 @@ ckfini(markclean)
 		else if (!reply("MARK FILE SYSTEM CLEAN"))
 			markclean = 0;
 		if (markclean) {
-			sblock.lfs_clean = FS_ISCLEAN;
+			sblock.lfs_clean = 1;
 			sbdirty();
 			flush(fswritefd, &sblk);
+			if(sblk.b_bno == LFS_LABELPAD / dev_bsize) {
+				/* Do the first alternate */
+				sblk.b_bno = sblock.lfs_sboffs[0];
+				flush(fswritefd, &sblk);
+			} else if(sblk.b_bno == sblock.lfs_sboffs[0]) {
+				/* Do the primary */
+				sblk.b_bno = LFS_LABELPAD / dev_bsize;
+				flush(fswritefd, &sblk);
+			}
 		}
 	}
-#endif
 	if (debug)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
 		    totalreads, (int)(diskreads * 100 / totalreads));
@@ -389,6 +411,13 @@ int
 allocblk(frags)
 	long frags;
 {
+#if 1
+	/*
+	 * XXX Can't allocate blocks right now because we would have to do
+	 * a full partial segment write.
+	 */
+	return 0;
+#else /* 0 */
 	register int i, j, k;
 
 	if (frags <= 0 || frags > sblock.lfs_frag)
@@ -416,6 +445,7 @@ allocblk(frags)
 		}
 	}
 	return (0);
+#endif /* 0 */
 }
 
 /*
