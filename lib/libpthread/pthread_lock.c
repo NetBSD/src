@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.11 2002/11/03 12:29:03 skrll Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.12 2002/11/14 04:10:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,13 +38,14 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
-#undef PTHREAD_SA_DEBUG
+#undef PTHREAD_SPIN_DEBUG
 
-#ifdef PTHREAD_SA_DEBUG
+#ifdef PTHREAD_SPIN_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
 #else
 #define SDPRINTF(x)
@@ -70,6 +71,12 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 	count = nspins;
 	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
+#ifdef PTHREAD_SPIN_DEBUG
+	if(!(thread->pt_spinlocks >= 0)) {
+		(void)kill(getpid(), SIGABRT);
+		_exit(1);
+	}
+#endif
 	++thread->pt_spinlocks;
 
 	do {
@@ -144,7 +151,12 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
 	--thread->pt_spinlocks;
-
+#ifdef PTHREAD_SPIN_DEBUG
+	if (!(thread->pt_spinlocks >= 0)) {
+		(void)kill(getpid(), SIGABRT);
+		_exit(1);
+	}
+#endif
 	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
 
 	/*
