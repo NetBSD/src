@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.145 2003/09/27 07:58:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.145 2003/09/27 07:58:55 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp 
 #include <sys/sysctl.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
+#include <sys/conf.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -108,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
 static int sysctl_file(void *, size_t *);
+static int sysctl_drivers(void *, size_t *);
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 #endif
@@ -488,6 +490,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_ROOT_DEVICE:
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    root_device->dv_xname));
+	case KERN_ROOT_PARTITION:
+		return (sysctl_rdint(oldp, oldlenp, newp, DISKPART(rootdev)));
 	case KERN_MSGBUFSIZE:
 		/*
 		 * deal with cases where the message buffer has
@@ -662,6 +666,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
 	case KERN_DUMP_ON_PANIC:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &dumponpanic));
+
+	case KERN_DRIVERS:
+		return (sysctl_drivers(oldp, oldlenp));
 
 	default:
 		return (EOPNOTSUPP);
@@ -1028,7 +1035,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			if (*oldlenp < len)				\
 				return (ENOMEM);			\
 			*oldlenp = len;					\
-			error = copyout((caddr_t)valp, oldp, len);	\
+			error = copyout(valp, oldp, len);		\
 		}							\
 	}
 
@@ -1253,7 +1260,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 		*sizep = 0;
 		return (0);
 	}
-	error = copyout((caddr_t)&filehead, where, sizeof(filehead));
+	error = copyout(&filehead, where, sizeof(filehead));
 	if (error)
 		return (error);
 	buflen -= sizeof(filehead);
@@ -1267,7 +1274,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 			*sizep = where - start;
 			return (ENOMEM);
 		}
-		error = copyout((caddr_t)fp, where, sizeof(struct file));
+		error = copyout(fp, where, sizeof(struct file));
 		if (error)
 			return (error);
 		buflen -= sizeof(struct file);
@@ -1275,6 +1282,59 @@ sysctl_file(void *vwhere, size_t *sizep)
 	}
 	*sizep = where - start;
 	return (0);
+}
+
+/*
+ * Get driver names and majors
+ */
+static int
+sysctl_drivers(void *vwhere, size_t *sizep)
+{
+	int error;
+	size_t buflen;
+	struct kinfo_drivers kd;
+	char *start, *where;
+	const char *name;
+	int i;
+	extern struct devsw_conv *devsw_conv;
+	extern int max_devsw_convs;
+
+	start = where = vwhere;
+	buflen = *sizep;
+	if (where == NULL) {
+		*sizep = sizeof (int32_t) + max_devsw_convs * sizeof kd;
+		return 0;
+	}
+
+	/*
+	 * An array of kinfo_drivers structures
+	 */
+	error = 0;
+	if (buflen >= sizeof (int32_t)) {
+		int32_t l = sizeof kd;
+		error = copyout(&l, where, sizeof (int32_t));
+		where += sizeof (int32_t);
+		buflen -= sizeof (int32_t);
+	}
+	for (i = 0; i < max_devsw_convs; i++) {
+		name = devsw_conv[i].d_name;
+		if (name == NULL)
+			continue;
+		if (buflen < sizeof kd) {
+			error = ENOMEM;
+			break;
+		}
+		kd.d_bmajor = devsw_conv[i].d_bmajor;
+		kd.d_cmajor = devsw_conv[i].d_cmajor;
+		strlcpy(kd.d_name, name, sizeof kd.d_name);
+		error = copyout(&kd, where, sizeof kd);
+		if (error != 0)
+			break;
+		buflen -= sizeof kd;
+		where += sizeof kd;
+	}
+	*sizep = where - start;
+	return error;
 }
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
@@ -1627,11 +1687,11 @@ again:
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, &eproc);
-				error = copyout((caddr_t)p, &dp->kp_proc,
+				error = copyout(p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout((caddr_t)&eproc, &dp->kp_eproc,
+				error = copyout(&eproc, &dp->kp_eproc,
 				    sizeof(eproc));
 				if (error)
 					goto cleanup;
@@ -1664,7 +1724,7 @@ again:
 
 	if (where != NULL) {
 		if (type == KERN_PROC)
-			*sizep = (caddr_t)dp - where;
+			*sizep = (char *)dp - where;
 		else
 			*sizep = dp2 - where;
 		if (needed > *sizep)
