@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.10 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: ptrace.2,v 1.10.4.1 2000/07/30 09:39:50 jdolecek Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -169,8 +169,7 @@ Second, if a process has its root directory set with
 it may not trace another process unless that process's root directory
 is at or below the tracing process's root.
 .It Dv PT_DETACH
-This request is like PT_CONTINUE, except that it does not allow
-specifying an alternative place to continue execution, and after it
+This request is like PT_CONTINUE, except that after it
 succeeds, the traced process is no longer traced and continues
 execution normally.
 .El
