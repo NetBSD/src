@@ -28,11 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/nfs/nfs_boot.c,v 1.1 1994/04/18 06:18:20 glass Exp $
+ *	$Id: nfs_boot.c,v 1.2 1994/05/05 05:39:42 cgd Exp $
  */
 
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
@@ -40,7 +40,6 @@
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/systm.h>
 #include <sys/reboot.h>
 
 #include <net/if.h>

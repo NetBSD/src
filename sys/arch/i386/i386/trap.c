@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.37 1994/05/04 03:41:14 cgd Exp $
+ *	$Id: trap.c,v 1.38 1994/05/05 05:35:54 cgd Exp $
  */
 
 /*
@@ -85,7 +85,7 @@ userret(p, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		psig(sig);
-	p->p_pri = p->p_usrpri;
+	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
 		 * Since we are curproc, a clock interrupt could
@@ -104,6 +104,7 @@ userret(p, pc, oticks)
 			psig(sig);
 	}
 
+#ifdef notdef
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
@@ -122,8 +123,9 @@ userret(p, pc, oticks)
 #endif
 		}
 	}
+#endif
 
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 }
 
 char	*trap_type[] = {
@@ -198,8 +200,10 @@ trap(frame)
 
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
+#ifdef notdef
 		sticks = p->p_stime;
-		p->p_regs = (int *)&frame;
+#endif
+		p->p_md.md_regs = (int *)&frame;
 	}
 
 	code = frame.tf_err;
@@ -468,8 +472,10 @@ syscall(frame)
 	if (ISPL(frame.tf_cs) != SEL_UPL)
 		panic("syscall");
 	p = curproc;
+#ifdef notdef
 	sticks = p->p_stime;
-	p->p_regs = (int *)&frame;
+#endif
+	p->p_md.md_regs = (int *)&frame;
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
 	params = (caddr_t)frame.tf_esp + sizeof(int);

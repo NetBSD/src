@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.8 1994/04/07 06:49:32 mycroft Exp $
+ *	$Id: psl.h,v 1.9 1994/05/05 05:36:09 cgd Exp $
  */
 
 #ifndef _I386_PSL_H_
@@ -97,6 +97,7 @@ SPL(bio, cpl |= imask[IPL_BIO])
 SPL(imp, cpl |= imask[IPL_NET])
 SPL(tty, cpl |= imask[IPL_TTY])
 SPL(clock, cpl |= imask[IPL_CLOCK])
+SPL(statclock, cpl |= imask[IPL_CLOCK])
 SPL(high, cpl = -1)
 /*
  * splsoftclock() is used by hardclock() to lower the priority from clock to

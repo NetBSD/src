@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.12 1994/04/29 23:16:33 cgd Exp $
+ *	$Id: if.c,v 1.13 1994/05/05 05:39:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@
 
 int	ifqmaxlen = IFQ_MAXLEN;
 
-void if_slowtimo(caddr_t);
+void if_slowtimo __P((void *));
 
 /*
  * Network interface utility routines.
@@ -373,7 +373,8 @@ if_qflush(ifq)
  */
 /* ARGSUSED */
 void
-if_slowtimo(caddr_t arg)
+if_slowtimo(arg)
+	void *arg;
 {
 	register struct ifnet *ifp;
 	int s = splimp();
@@ -385,7 +386,7 @@ if_slowtimo(caddr_t arg)
 			(*ifp->if_watchdog)(ifp->if_unit);
 	}
 	splx(s);
-	timeout((timeout_t)if_slowtimo, (caddr_t)0, hz / IFNET_SLOWHZ);
+	timeout(if_slowtimo, (caddr_t)0, hz / IFNET_SLOWHZ);
 }
 
 /*
