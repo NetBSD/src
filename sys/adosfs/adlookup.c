@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adlookup.c,v 1.3 1994/05/31 03:13:41 chopps Exp $
+ *	$Id: adlookup.c,v 1.4 1994/06/02 23:40:56 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -186,12 +186,20 @@ adosfs_lookup(pvp, ndp, p)
 #endif
 			return(error);
 		}
-		if (i < 0) {
-			if (i < pap->tabi[hval])
+		if (i <= 0) {
+			if (--i < pap->tabi[hval])
 				pap->tabi[hval] = i;	
-			i--;
-			if (ap->hashf == 0)
+			/*
+			 * last header in chain lock count down by
+			 * negating it to positive
+			 */
+			if (ap->hashf == 0) {
+#ifdef DEBUG
+				if (i != pap->tabi[hval])
+					panic("adlookup: wrong chain count");
+#endif
 				pap->tabi[hval] = -pap->tabi[hval];
+			}
 		}
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("%s =? %s", pelt, ap->name);
