@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.6 2000/06/05 05:24:07 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.7 2000/06/09 07:09:28 enami Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.6 2000/06/05 05:24:07 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.7 2000/06/09 07:09:28 enami Exp $
  */
 
 #include <sys/param.h>
@@ -269,7 +269,8 @@ get_system_info(si)
 	int mib[2];
 	struct uvmexp uvmexp;
 	struct swapent *sep, *seporig;
-	int totalsize, size, totalinuse, inuse, ncounted;
+	u_int64_t totalsize, totalinuse;
+	int size, inuse, ncounted;
 	int rnswap, nswap;
 
 	mib[0] = CTL_KERN;
