@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.3.6.1 2005/03/22 15:22:48 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@
 .Ft int
 .Fn pthread_mutexattr_settype "pthread_mutexattr_t *attr" "int type"
 .Ft int
-.Fn pthread_mutexattr_gettype "pthread_mutexattr_t *attr" "int *type"
+.Fn pthread_mutexattr_gettype "pthread_mutexattr_t * restrict attr" "int * restrict type"
 .Sh DESCRIPTION
 Mutex attributes are used to specify parameters to
 .Fn pthread_mutex_init .
