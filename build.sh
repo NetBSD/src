@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.74 2002/12/08 22:14:00 lukem Exp $
+#  $NetBSD: build.sh,v 1.75 2002/12/09 03:13:41 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -370,7 +370,7 @@ if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 			bomb "DESTDIR must be set to a non-root path for non -E (expert) builds"
 		fi
 		$runcmd echo "===> WARNING: Building to /, in expert mode."
-		$runcmd echo "===>          This may cause your system to break, including if"
+		$runcmd echo "===>          This may cause your system to break!  Reasons include:"
 		$runcmd echo "===>             - your kernel is not up to date"
 		$runcmd echo "===>             - the libraries or toolchain have changed"
 		$runcmd echo "===>          YOU HAVE BEEN WARNED!"
@@ -419,7 +419,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.74 2002/12/08 22:14:00 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.75 2002/12/09 03:13:41 lukem Exp $
 #
 
 EOF
