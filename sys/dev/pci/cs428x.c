@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.1 2001/02/07 14:41:12 tacha Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.2 2001/04/18 01:35:07 tacha Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -377,8 +377,11 @@ cs428x_src_wait(sc)
 	n = 0;
 	while ((BA0READ4(sc, CS428X_ACCTL) & ACCTL_DCV)) {
 		delay(1000);
-		while (++n > 1000)
+		while (++n > 1000) {
+			printf("cs428x_src_wait: 0x%08x\n",
+			    BA0READ4(sc, CS428X_ACCTL));
 			return -1;
+		}
 	}
 	return 0;
 }

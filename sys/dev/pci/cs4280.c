@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.15 2001/02/13 04:11:11 tacha Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.16 2001/04/18 01:35:06 tacha Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -660,9 +660,7 @@ cs4280_halt_output(addr)
 	
 	mem = BA1READ4(sc, CS4280_PCTL);
 	BA1WRITE4(sc, CS4280_PCTL, mem & ~PCTL_MASK);
-#ifdef DIAGNOSTIC
 	sc->sc_prun = 0;
-#endif
 	return 0;
 }
 
@@ -675,9 +673,7 @@ cs4280_halt_input(addr)
 
 	mem = BA1READ4(sc, CS4280_CCTL);
 	BA1WRITE4(sc, CS4280_CCTL, mem & ~CCTL_MASK);
-#ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
-#endif
 	return 0;
 }
 
@@ -706,8 +702,8 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_prun)
 		printf("cs4280_trigger_output: already running\n");
-	sc->sc_prun = 1;
 #endif
+	sc->sc_prun = 1;
 
 	DPRINTF(("cs4280_trigger_output: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -774,6 +770,7 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	BA1WRITE4(sc, CS4280_PFIE, pfie | PFIE_PI_ENABLE);
 
+	sc->sc_prate = param->sample_rate;
 	cs4280_set_dac_rate(sc, param->sample_rate);
 
 	pctl = BA1READ4(sc, CS4280_PCTL) & ~PCTL_MASK;
@@ -798,8 +795,9 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4280_trigger_input: already running\n");
-	sc->sc_rrun = 1;
 #endif
+	sc->sc_rrun = 1;
+
 	DPRINTF(("cs4280_trigger_input: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
 	sc->sc_rintr = intr;
@@ -846,6 +844,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	cie = BA1READ4(sc, CS4280_CIE) & ~CIE_CI_MASK;
 	BA1WRITE4(sc, CS4280_CIE, cie | CIE_CI_ENABLE);
 
+	sc->sc_rrate = param->sample_rate;
 	cs4280_set_adc_rate(sc, param->sample_rate);
 
 	cctl = BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK;
@@ -861,6 +860,8 @@ cs4280_power(why, v)
 	void *v;
 {
 	struct cs428x_softc *sc = (struct cs428x_softc *)v;
+	static u_int32_t pctl = 0, pba = 0, pfie = 0, pdtc = 0;
+	static u_int32_t cctl = 0, cba = 0, cie = 0;
 
 	DPRINTF(("%s: cs4280_power why=%d\n",
 	       sc->sc_dev.dv_xname, why));
@@ -869,10 +870,28 @@ cs4280_power(why, v)
 	case PWR_STANDBY:
 		sc->sc_suspend = why;
 
-		cs4280_halt_output(sc);
-		cs4280_halt_input(sc);
-		/* should I powerdown here ? */
-		cs428x_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
+		/* save current playback status */
+		if ( sc->sc_prun ) {
+			pctl = BA1READ4(sc, CS4280_PCTL);
+			pfie = BA1READ4(sc, CS4280_PFIE);
+			pba  = BA1READ4(sc, CS4280_PBA);
+			pdtc = BA1READ4(sc, CS4280_PDTC);
+			DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
+			    pctl, pfie, pba, pdtc));
+		}
+
+		/* save current capture status */
+		if ( sc->sc_rrun ) {
+			cctl = BA1READ4(sc, CS4280_CCTL);
+			cie  = BA1READ4(sc, CS4280_CIE);
+			cba  = BA1READ4(sc, CS4280_CBA);
+			DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
+			    cctl, cie, cba));
+		}
+
+		/* Stop DMA */
+		BA1WRITE4(sc, CS4280_PCTL, pctl & ~PCTL_MASK);
+		BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
 		break;
 	case PWR_RESUME:
 		if (sc->sc_suspend == PWR_RESUME) {
@@ -884,7 +903,28 @@ cs4280_power(why, v)
 		cs4280_init(sc, 0);
 		cs4280_reset_codec(sc);
 
+		/* restore ac97 registers */
 		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+		/* restore DMA related status */
+		if(sc->sc_prun) {
+			DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
+			    pctl, pfie, pba, pdtc));
+			cs4280_set_dac_rate(sc, sc->sc_prate);
+			BA1WRITE4(sc, CS4280_PDTC, pdtc);
+			BA1WRITE4(sc, CS4280_PBA,  pba);
+			BA1WRITE4(sc, CS4280_PFIE, pfie);
+			BA1WRITE4(sc, CS4280_PCTL, pctl);
+		}
+
+		if (sc->sc_rrun) {
+			DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
+			    cctl, cie, cba));
+			cs4280_set_adc_rate(sc, sc->sc_rrate);
+			BA1WRITE4(sc, CS4280_CBA,  cba);
+			BA1WRITE4(sc, CS4280_CIE,  cie);
+			BA1WRITE4(sc, CS4280_CCTL, cctl);
+		}
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
@@ -1291,7 +1331,9 @@ cs4280_init(sc, init)
 	 */
 	mem = BA1READ4(sc, CS4280_PCTL);
 	sc->pctl = mem & PCTL_MASK; /* save startup value */
-	cs4280_halt_output(sc);
+	BA1WRITE4(sc, CS4280_PCTL, mem & ~PCTL_MASK);
+	if (init != 0)
+		sc->sc_prun = 0;
 	
 	/* Save capture parameter and then write zero.
 	 * this ensures that DMA doesn't immediately occur upon
@@ -1299,7 +1341,9 @@ cs4280_init(sc, init)
 	 */
 	mem = BA1READ4(sc, CS4280_CCTL);
 	sc->cctl = mem & CCTL_MASK; /* save startup value */
-	cs4280_halt_input(sc);
+	BA1WRITE4(sc, CS4280_CCTL, mem & ~CCTL_MASK);
+	if (init != 0)
+		sc->sc_rrun = 0;
 
 	/* Processor Startup Procedure */
 	BA1WRITE4(sc, CS4280_FRMT, FRMT_FTV);
