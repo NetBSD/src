@@ -376,7 +376,7 @@ BUILDING
                 actually execute them.  This will still cause recursion to
                 take place.
 
-     -v var     Print make(1)'s idea of the value of var.  Does not build any
+     -V var     Print make(1)'s idea of the value of var.  Does not build any
                 targets.
 
      var=value  Set the variable var to value, overriding any setting speci-
@@ -679,4 +679,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         October 25, 2003                         NetBSD
+NetBSD                         December 19, 2003                        NetBSD
