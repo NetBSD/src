@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.8 2001/04/25 17:53:16 bouyer Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.9 2001/04/30 09:05:59 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,8 +58,9 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-#include <mvme68k/dev/siopreg.h>
-#include <mvme68k/dev/siopvar.h>
+#include <dev/ic/osiopreg.h>
+#include <dev/ic/osiopvar.h>
+
 #include <mvme68k/dev/pcctworeg.h>
 #include <mvme68k/dev/pcctwovar.h>
 
@@ -68,22 +69,12 @@ int ncrsc_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void ncrsc_pcctwo_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ncrsc_pcctwo_ca = {
-	sizeof(struct siop_softc), ncrsc_pcctwo_match, ncrsc_pcctwo_attach
+	sizeof(struct osiop_softc), ncrsc_pcctwo_match, ncrsc_pcctwo_attach
 };
 
 static int ncrsc_pcctwo_intr __P((void *));
 
-extern struct cfdriver ncrsc_cd;
-
-/*
- * Define 'scsi_nosync = 0x00' to enable sync SCSI mode.
- * (Required by the main SIOP driver. This was also used by
- * the 147's SBIC driver, but sync scsi is so unreliable on
- * that board that I disabled it permanently. '167 sync.
- * scsi appears to work very well, on the other hand.)
- */
-u_long scsi_nosync = 0;
-int shift_nosync = 0;
+extern struct cfdriver osiop_cd;
 
 /* ARGSUSED */
 int
@@ -96,7 +87,7 @@ ncrsc_pcctwo_match(parent, cf, args)
 
 	pa = args;
 
-	if (strcmp(pa->pa_name, ncrsc_cd.cd_name))
+	if (strcmp(pa->pa_name, osiop_cd.cd_name))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
@@ -112,12 +103,11 @@ ncrsc_pcctwo_attach(parent, self, args)
 	void *args;
 {
 	struct pcctwo_attach_args *pa;
-	struct siop_softc *sc;
-	bus_space_handle_t bush;
+	struct osiop_softc *sc;
 	int clk, ctest7;
 
 	pa = (struct pcctwo_attach_args *) args;
-	sc = (struct siop_softc *) self;
+	sc = (struct osiop_softc *) self;
 
 	/*
 	 * On the '17x the siop's clock is the same as the cpu clock.
@@ -130,52 +120,34 @@ ncrsc_pcctwo_attach(parent, self, args)
 		ctest7 = 0;
 	} else {
 		clk = cpuspeed * 2;
-		ctest7 = SIOP_CTEST7_SC0;
+		ctest7 = OSIOP_CTEST7_SC0;
 	}
 
 	printf(": %dMHz ncr53C710 SCSI I/O Processor\n", clk);
 
-	/* XXXSCW: This is a hack until siop is bus-spaced */
-	bus_space_map(pa->pa_bust, pa->pa_offset, 0x40, 0, &bush);
-	sc->sc_siopp = (siop_regmap_p) bush;
+	sc->sc_bst = pa->pa_bust;
+	sc->sc_dmat = pa->pa_dmat;
+	(void) bus_space_map(sc->sc_bst, pa->pa_offset, OSIOP_NREGS,
+	    0, &sc->sc_reg);
 
 	sc->sc_clock_freq = clk;
-	sc->sc_ctest7 = ctest7 | SIOP_CTEST7_TT1;
-	sc->sc_dcntl = SIOP_DCNTL_EA;
+	sc->sc_ctest7 = ctest7 | OSIOP_CTEST7_TT1;
+	sc->sc_dcntl = OSIOP_DCNTL_EA;
+	sc->sc_id = 7;	/* XXX: Could use NVRAM setting */
 
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
-	sc->sc_adapter.adapt_nchannels = 1;
-	sc->sc_adapter.adapt_openings = 7; 
-	sc->sc_adapter.adapt_max_periph = 1;
-	sc->sc_adapter.adapt_ioctl = NULL;
-	sc->sc_adapter.adapt_minphys = siop_minphys;
-	sc->sc_adapter.adapt_request = siop_scsi_request;
-
-	sc->sc_channel.chan_adapter = &sc->sc_adapter;
-	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = 8;
-	sc->sc_channel.chan_nluns = 8;
-	sc->sc_channel.chan_id = 7; /* Could use NVRAM setting */
-
-	/* Chip-specific initialisation */
-	siopinitialize(sc);
+	/* Attach main MI driver */
+	osiop_attach(sc);
 
 	/* Hook the chip's interrupt */
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
-
-	(void) config_found(self, &sc->sc_channel, scsiprint);
 }
 
 static int
 ncrsc_pcctwo_intr(arg)
 	void *arg;
 {
-	struct siop_softc *sc;
-	siop_regmap_p rp;
+	struct osiop_softc *sc = (struct osiop_softc *) arg;
 	u_char istat;
-
-	sc = arg;
 
 	/*
 	 * Catch any errors which can happen when the SIOP is
@@ -188,23 +160,23 @@ ncrsc_pcctwo_intr(arg)
 		istat |= PCCTWO_ERR_SR_SCLR;
 		pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ERR_STATUS, istat);
 	}
+
 	/* This is potentially nasty, since the IRQ is level triggered... */
-	if (sc->sc_flags & SIOP_INTSOFF)
+	if (sc->sc_flags & OSIOP_INTSOFF)
 		return (0);
 
-	rp = sc->sc_siopp;
-	istat = rp->siop_istat;
+	istat = osiop_read_1(sc, OSIOP_ISTAT);
 
-	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+	if ((istat & (OSIOP_ISTAT_SIP | OSIOP_ISTAT_DIP)) == 0)
 		return (0);
 
 	/* Save interrupt details for the back-end interrupt handler */
-	sc->sc_sstat0 = rp->siop_sstat0;
+	sc->sc_sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
 	sc->sc_istat = istat;
-	sc->sc_dstat = rp->siop_dstat;
+	sc->sc_dstat = osiop_read_1(sc, OSIOP_DSTAT);
 
 	/* Deal with the interrupt */
-	siopintr(sc);
+	osiop_intr(sc);
 
 	return (1);
 }
