@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.2 1999/05/29 18:18:30 christos Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.2.8.1 2001/06/10 18:47:42 he Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -29,14 +29,13 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" The following requests are required for all man pages.
 .Dd December 16, 1998
 .Dt MAILER.CONF 5
 .Os
 .Sh NAME
 .Nm mailer.conf
 .Nd configuration file for
-.Xr mailwrapper 8 .
+.Xr mailwrapper 8
 .Sh DESCRIPTION
 .Pp
 The file
@@ -55,19 +54,25 @@ The second member of each pair is the name of the program to
 actually execute when the first name is invoked. The file may also
 contain comments, denoted by a # mark in the first column of any line.
 .Sh EXAMPLES
-The following is an example of how to set up an
+The following is an example of how to set up
 .Nm
-for traditional sendmail invocation behavior.
+for traditional
+.Xr sendmail 8
+invocation behavior.
 .Bd -literal
 # Execute the "real" sendmail program, named /usr/libexec/sendmail/sendmail
 sendmail	/usr/libexec/sendmail/sendmail
 send-mail	/usr/libexec/sendmail/sendmail
 mailq		/usr/libexec/sendmail/sendmail
 newaliases	/usr/libexec/sendmail/sendmail
+hoststat	/usr/libexec/sendmail/sendmail
+purgestat	/usr/libexec/sendmail/sendmail
 .Ed
 .Pp
-This example shows how to invoke the fictitious "newmail" program in
-place of sendmail.
+This example shows how to invoke the
+.Sy postfix
+MTA suite in place of
+.Xr sendmail 8 .
 .Bd -literal
 # Emulate sendmail using postfix
 sendmail	/usr/libexec/postfix/sendmail
@@ -82,7 +87,7 @@ newaliases	/usr/libexec/postfix/sendmail
 .Xr mailq 1 ,
 .Xr mailwrapper 8 ,
 .Xr newaliases 1 ,
-.Xr sendmail 8 .
+.Xr sendmail 8
 .Sh HISTORY
 .Nm
 appeared in
