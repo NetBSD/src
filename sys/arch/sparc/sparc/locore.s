@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.186 2003/02/21 19:04:07 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.187 2003/02/26 17:39:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3523,23 +3523,6 @@ init_tables:
 	retl
 	 stb	%o2, [%o3 + %o1]	! (wmask - 1)[i] = j;
 
-#ifdef SUN4
-/*
- * getidprom(struct idprom *, sizeof(struct idprom))
- */
-_ENTRY(_C_LABEL(getidprom))
-	set	AC_IDPROM, %o2
-1:	lduba	[%o2] ASI_CONTROL, %o3
-	stb	%o3, [%o0]
-	inc	%o0
-	inc	%o2
-	dec	%o1
-	cmp	%o1, 0
-	bne	1b
-	 nop
-	retl
-	 nop
-#endif
 
 dostart:
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.7 2003/02/26 14:25:20 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.8 2003/02/26 17:39:06 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #ifndef _SPARC_PROMLIB_H_
 #define _SPARC_PROMLIB_H_
 
+#include <machine/idprom.h>
 #include <machine/bsd_openprom.h>
+#include <machine/openfirm.h>
 
 /*
  * A set of methods to access the firmware.
@@ -128,6 +130,8 @@ int	prom_makememarr(struct memarr *, int max, int which);
 #define	MEMARR_AVAILPHYS	0
 #define	MEMARR_TOTALPHYS	1
 
+struct idprom	*prom_getidprom(void);
+void		prom_getether(u_char *);
 
 void	prom_init	__P((void));	/* To setup promops */
 

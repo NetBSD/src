@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.91 2003/01/18 06:45:01 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.92 2003/02/26 17:39:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,6 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
-#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
 
@@ -137,48 +136,8 @@ static void	eeprom_give(void);
 static int	eeprom_update(char *, int, int);
 #endif
 
-/* Global TOD clock handle & idprom pointer */
+/* Global TOD clock handle */
 todr_chip_handle_t todr_handle;
-struct idprom *idprom;
-
-void establish_hostid(struct idprom *);
-void myetheraddr(u_char *);
-
-/*
- * XXX this belongs elsewhere
- */
-void
-myetheraddr(cp)
-	u_char *cp;
-{
-	struct idprom *idp = idprom;
-
-	cp[0] = idp->id_ether[0];
-	cp[1] = idp->id_ether[1];
-	cp[2] = idp->id_ether[2];
-	cp[3] = idp->id_ether[3];
-	cp[4] = idp->id_ether[4];
-	cp[5] = idp->id_ether[5];
-}
-
-void
-establish_hostid(idp)
-	struct idprom *idp;
-{
-	u_long h;
-
-	h = idp->id_machine << 24;
-	h |= idp->id_hostid[0] << 16;
-	h |= idp->id_hostid[1] << 8;
-	h |= idp->id_hostid[2];
-
-	printf(": hostid %lx\n", h);
-
-	/* Save IDPROM pointer and Host ID in globals */
-	idprom = idp;
-	hostid = h;
-}
-
 
 /*
  * Set up the real-time and statistics clocks.
