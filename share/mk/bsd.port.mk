@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.37 1998/01/25 14:39:49 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.38 1998/01/25 14:46:10 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -870,14 +870,6 @@ IGNORE=	"uses X11, but ${X11BASE} not found"
 IGNORE=	"is marked as broken: ${BROKEN}"
 .endif
 
-.if !defined(__ARCH_OK)
-.MAIN:	all
-
-fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
-	@echo "This port is only for ${ONLY_FOR_ARCHS},"
-	@echo "and you are running ${MACHINE_ARCH}."
-.else
-
 .if defined(IGNORE)
 .if defined(IGNORE_SILENT)
 IGNORECMD=	${DO_NADA}
@@ -902,8 +894,16 @@ install:
 	@${IGNORECMD}
 package:
 	@${IGNORECMD}
-.endif
-.endif
+.endif # IGNORE
+.endif # !NO_IGNORE
+
+.if !defined(__ARCH_OK)
+.MAIN:	all
+
+fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "This port is only for ${ONLY_FOR_ARCHS},"
+	@echo "and you are running ${MACHINE_ARCH}."
+.else
 
 .if defined(ALL_HOOK)
 all:
