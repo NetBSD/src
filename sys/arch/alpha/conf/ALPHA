@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.54 1997/06/06 23:49:36 thorpej Exp $
+# $NetBSD: ALPHA,v 1.55 1997/06/12 18:41:58 mrg Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -104,7 +104,7 @@ options		TCVERBOSE		# recognize "unknown" TC devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	root on ? type ?
-#config		netbsd	root on sd0 type ffs swap on sd0
+#config		netbsd	root on sd0 type ffs
 #config		netbsd	root on ? type nfs
 
 mainbus0 at	root

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.10 1997/05/08 16:39:36 oki Exp $
+#	$NetBSD: GENERIC,v 1.11 1997/06/12 18:42:24 mrg Exp $
 
 #
 #	GENERIC
@@ -92,7 +92,7 @@ options 	EIOMAPSIZE=0		# do not map PCI address space
 #options 	KGDB,"KGDBDEV=15*256+2", KGDBRATE=19200
 #options 	PPP_OUTQ_SIZE=4096
 
-#config		netbsd root on sd6a swap on sd6b
+#config		netbsd root on sd6a 
 config		netbsd root on ? type ?
 
 mainbus0	at root
