@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.45 1994/12/14 15:20:11 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.46 1994/12/16 04:38:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -584,9 +584,6 @@ cdioctl(dev, cmd, addr, flag)
 		return EIO;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return EINVAL;
-
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = cd->sc_dk.dk_label;
 		return 0;
