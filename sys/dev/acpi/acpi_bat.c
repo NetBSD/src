@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.12 2002/12/30 10:19:59 chris Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.13 2002/12/30 13:06:43 explorer Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -33,7 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if 0
 #define ACPI_BAT_DEBUG
+#endif
 
 /*
  * ACPI Battery Driver.
@@ -48,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.12 2002/12/30 10:19:59 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.13 2002/12/30 13:06:43 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +71,7 @@ struct acpibat_softc {
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
 	struct callout sc_callout; 	/* XXX temporary polling */
+	int sc_present;			/* is battery present? */
 	int sc_status;			/* power status */
 	int sc_rate;			/* current drain rate */
 	int sc_capacity;		/* current capacity */
@@ -98,6 +101,11 @@ struct acpibat_softc {
 #define ACPIBAT_CRITICAL        0x00000004  /* battery is critical */
 
 /*
+ * Flags for battery status from _STA return
+ */
+#define ACPIBAT_PRESENT		0x00000010  /* battery present */
+
+/*
  * These flags are used to set internal state in our softc.
  */
 #define	ABAT_F_VERBOSE		0x01	/* verbose events */
@@ -117,6 +125,7 @@ static void acpibat_get_status(void *);
 static void acpibat_get_info(void *);
 void	acpibat_notify_handler(ACPI_HANDLE, UINT32, void *context);
 static void acpibat_tick(void *);
+static int acpibat_battery_present(void *);
 
 /*
  * acpibat_match:
@@ -154,21 +163,24 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibat_notify_handler, sc);
+				      ACPI_DEVICE_NOTIFY,
+				      acpibat_notify_handler, sc);
 	if (rv != AE_OK) {
 		printf("%s: unable to register DEVICE NOTIFY handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+		       sc->sc_dev.dv_xname, rv);
 		return;
 	}
 
 	/* XXX See acpibat_notify_handler() */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_SYSTEM_NOTIFY, acpibat_notify_handler, sc);
+				      ACPI_SYSTEM_NOTIFY,
+				      acpibat_notify_handler, sc);
 	if (rv != AE_OK) {
 		printf("%s: unable to register SYSTEM NOTIFY handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+		       sc->sc_dev.dv_xname, rv);
 		return;
 	}
+
 	/*
 	 * XXX poll battery in the driver for now.
 	 * in the future, when we have an API, let userland do this polling
@@ -199,6 +211,48 @@ acpibat_tick(void *arg)
 	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpibat_get_status, sc);
 }
 
+/*
+ * returns 0 for no battery, 1 for present, and -1 on error
+ */
+static int
+acpibat_battery_present(void *arg)
+{
+	struct acpibat_softc *sc = arg;
+	u_int32_t sta;
+	ACPI_OBJECT *p1;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+
+	buf.Pointer = sc->sc_Ret;
+	buf.Length = sizeof(sc->sc_Ret);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_STA", NULL, &buf);
+	if (rv != AE_OK) {
+		printf("%s: failed to evaluate _STA: %x\n",
+		       sc->sc_dev.dv_xname, rv);
+		sc->sc_present = -1;
+		return (-1);
+	}
+	p1 = (ACPI_OBJECT *)buf.Pointer;
+
+	if (p1->Type != ACPI_TYPE_INTEGER) {
+		printf("%s: expected INTEGER, got %d\n", sc->sc_dev.dv_xname,
+		       p1->Type);
+		sc->sc_present = -1;
+		return (-1);
+	}
+	if (p1->Package.Count < 1) {
+		printf("%s: expected 1 elts, got %d\n",
+		       sc->sc_dev.dv_xname, p1->Package.Count);
+		sc->sc_present = -1;
+		return (-1);
+	}
+	sta = p1->Integer.Value;
+
+	sc->sc_present = (sta & ACPIBAT_PRESENT) ? 1 : 0;
+
+	return (sc->sc_present);
+}
 
 /*
  * acpibat_get_info
@@ -213,6 +267,13 @@ acpibat_get_info(void *arg)
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
+
+	(void)acpibat_battery_present(sc);
+
+	if (sc->sc_present != 1) {
+		printf("%s: not present\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BIF", &buf);
 	if (rv != AE_OK) {
@@ -268,6 +329,11 @@ acpibat_get_status(void *arg)
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
+
+	if (sc->sc_present != 1) {
+		printf("%s: not present\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	buf.Pointer = sc->sc_Ret;
 	buf.Length = sizeof(sc->sc_Ret);
@@ -359,7 +425,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		if (rv != AE_OK)
 			printf("%s: unable to queue status check: %d\n",
 			       sc->sc_dev.dv_xname, rv);
-		/* fallthrough */
+		break;
 
 	case ACPI_NOTIFY_BatteryStatusChanged:
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
