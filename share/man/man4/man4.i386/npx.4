@@ -1,4 +1,4 @@
-.\" $NetBSD: npx.4,v 1.9 2000/06/14 17:25:41 cgd Exp $
+.\" $NetBSD: npx.4,v 1.10 2000/06/16 06:42:32 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,6 +43,7 @@ Numeric Processing Extension coprocessor and emulator
 .Cd "options MATH_EMULATE"
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "npx0 at isa? port" \&"IO_NPX0\&" irq 13
+.Cd "npx* at pnpbios? index ?"
 .Sh DESCRIPTION
 The
 .Nm npx
@@ -77,3 +78,6 @@ if consistent system operation is desired.
 .Pp
 Emulation of the transcendental functions instructions is incorrect.
 Emulation of other instructions is suspect.
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr pnpbios 4 .
