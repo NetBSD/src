@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.14 1996/05/22 13:56:05 mycroft Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.15 1996/09/17 16:43:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -329,7 +329,7 @@ tp_init()
 		return;
 
 	/* FOR INET */
-	in_pcbinit(&tp_inpcb, 1);
+	in_pcbinit(&tp_inpcb, 1, 1);
 	/* FOR ISO */
 	tp_isopcb.isop_next = tp_isopcb.isop_prev = &tp_isopcb;
 
