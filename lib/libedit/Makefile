@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/08/01 17:03:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2003/12/05 13:37:48 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -16,7 +16,10 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 el_parse.3 editline.3 el_set.3 editline.3 el_get.3 \
 	editline.3 el_source.3 editline.3 el_resize.3 editline.3 el_line.3 \
 	editline.3 el_insertstr.3 editline.3 el_deletestr.3 \
-	editline.3 history_init.3 editline.3 history_end.3 editline.3 history.3
+	editline.3 history_init.3 editline.3 history_end.3 \
+	editline.3 history.3 \
+	editline.3 tok_init.3 editline.3 tok_end.3 editline.3 tok_reset.3 \
+	editline.3 tok_line.3 editline.3 tok_str.3
 
 # For speed and debugging
 #SRCS=   ${OSRCS} tokenizer.c history.c readline.c

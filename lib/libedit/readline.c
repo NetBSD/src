@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.44 2003/12/05 13:37:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.44 2003/12/05 13:37:48 lukem Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $");
 #include "histedit.h"
 #include "readline/readline.h"
 #include "el.h"
-#include "tokenizer.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 
 /* for rl_complete() */
@@ -2061,7 +2060,7 @@ rl_parse_and_bind(const char *line)
 	Tokenizer *tok;
 
 	tok = tok_init(NULL);
-	tok_line(tok, line, &argc, &argv);
+	tok_str(tok, line, &argc, &argv);
 	argc = el_parse(e, argc, argv);
 	tok_end(tok);
 	return (argc ? 1 : 0);

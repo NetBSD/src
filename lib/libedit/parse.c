@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.20 2003/12/05 13:37:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.20 2003/12/05 13:37:48 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $");
  *	setty
  */
 #include "el.h"
-#include "tokenizer.h"
 #include <stdlib.h>
 
 private const struct {
@@ -84,7 +83,7 @@ parse_line(EditLine *el, const char *line)
 	Tokenizer *tok;
 
 	tok = tok_init(NULL);
-	tok_line(tok, line, &argc, &argv);
+	tok_str(tok, line, &argc, &argv);
 	argc = el_parse(el, argc, argv);
 	tok_end(tok);
 	return (argc);
