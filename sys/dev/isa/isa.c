@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.108 2001/06/19 12:45:23 fvdl Exp $	*/
+/*	$NetBSD: isa.c,v 1.109 2001/11/13 08:01:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.109 2001/11/13 08:01:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.1 1998/12/16 11:33:50 christos Exp $	*/
+/*	$NetBSD: tcom.c,v 1.2 2001/11/13 08:01:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * set to 0x100 or 0x200 and baud rate jumpers to "normal".  This code
  * does NOT know about the 2x and 4x baud rates available on TCOM cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.2 2001/11/13 08:01:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

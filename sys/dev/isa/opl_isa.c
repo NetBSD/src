@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.4 2000/02/26 05:11:27 thorpej Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.5 2001/11/13 08:01:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.5 2001/11/13 08:01:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.14 2000/06/28 16:27:53 mrg Exp $	*/
-
-#define	PCICISADEBUG
+/*	$NetBSD: i82365_isa.c,v 1.15 2001/11/13 08:01:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,6 +28,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.15 2001/11/13 08:01:14 lukem Exp $");
+
+#define	PCICISADEBUG
 
 #include <sys/types.h>
 #include <sys/param.h>

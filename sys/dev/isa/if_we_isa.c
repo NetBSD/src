@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.3 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.4 2001/11/13 08:01:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * Device driver for the Western Digital/SMC 8003 and 8013 series,
  * and the SMC Elite Ultra (8216).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.4 2001/11/13 08:01:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
