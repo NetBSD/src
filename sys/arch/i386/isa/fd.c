@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.31 1993/11/29 21:08:52 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.32 1993/12/13 10:57:09 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -148,7 +148,7 @@ STATIC struct fd_type fd_types[] = {
         {  9,2,0xff,0xdf,0x2a,0x50,40, 720,2,2,2, "360KB/x"  }, /* 360kB in 720kB drive */
 };
 
-/* software state, per disk (with up to 2 disks per ctlr) */
+/* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
 	struct device sc_dev;
 	struct dkdevice sc_dk;
