@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.1 2000/06/05 23:14:22 gmcgarry Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.2 2000/06/09 08:22:13 gmcgarry Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -153,7 +153,7 @@ struct xi_softc {
 };
 
 struct xi_pcmcia_softc {
-	struct	xi_softc sc_xe;			/* Generic device info */
+	struct	xi_softc sc_xi;			/* Generic device info */
 
 	/* PCMCIA-specific goo */
 	struct	pcmcia_function *sc_pf;		/* PCMCIA function */
@@ -309,7 +309,7 @@ xi_pcmcia_attach(parent, self, aux)
 	void *aux;
 {
 	struct xi_pcmcia_softc *psc = (struct xi_pcmcia_softc *)self;
-	struct xi_softc *sc = &psc->sc_xe;
+	struct xi_softc *sc = &psc->sc_xi;
 	struct pcmcia_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct xi_pcmcia_product *xpp;
@@ -362,14 +362,14 @@ xi_pcmcia_attach(parent, self, aux)
 
 		if (pcmcia_mem_alloc(psc->sc_pf, PCMCIA_CCR_SIZE_DINGO,
 			&pcmh)) {
-			DPRINTF(XID_CONFIG, ("bad mem alloc\n"));
+			DPRINTF(XID_CONFIG, ("xi: bad mem alloc\n"));
 			goto fail;
 		}
 
 		if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
 			psc->sc_pf->ccr_base, PCMCIA_CCR_SIZE_DINGO,
 			&pcmh, &ccr_offset, &ccr_window)) {
-			DPRINTF(XID_CONFIG, ("bad mem map\n"));
+			DPRINTF(XID_CONFIG, ("xi: bad mem map\n"));
 			pcmcia_mem_free(psc->sc_pf, &pcmh);
 			goto fail;
 		}
@@ -427,7 +427,7 @@ xi_pcmcia_attach(parent, self, aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, xi_mediachange,
 	    xi_mediastatus);
 	DPRINTF(XID_MII | XID_CONFIG,
-	    ("bmsr %x\n", xi_mdi_read(&sc->sc_dev, 0, 1)));
+	    ("xi: bmsr %x\n", xi_mdi_read(&sc->sc_dev, 0, 1)));
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)
@@ -490,7 +490,7 @@ xi_pcmcia_detach(self, flags)
      int flags;
 {
 	struct xi_pcmcia_softc *psc = (struct xi_pcmcia_softc *)self;
-	struct xi_softc *sc = &psc->sc_xe;
+	struct xi_softc *sc = &psc->sc_xi;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	DPRINTF(XID_CONFIG, ("xi_pcmcia_detach()\n"));
@@ -535,7 +535,7 @@ xi_pcmcia_activate(self, act)
      enum devact act;
 {
 	struct xi_pcmcia_softc *psc = (struct xi_pcmcia_softc *)self;
-	struct xi_softc *sc = &psc->sc_xe;
+	struct xi_softc *sc = &psc->sc_xi;
 	int s, rv=0;
 
 	DPRINTF(XID_CONFIG, ("xi_pcmcia_activate()\n"));
@@ -575,7 +575,7 @@ xi_pcmcia_lan_nid_ciscallback(tuple, arg)
 	u_int8_t *myla = arg;
 	int i;
 
-	DPRINTF(XID_CONFIG, ("xi_pcmcia_lan_nid_ciscallback\n"));
+	DPRINTF(XID_CONFIG, ("xi_pcmcia_lan_nid_ciscallback()\n"));
 
 	if (tuple->code == PCMCIA_CISTPL_FUNCE) {
 		if (tuple->length < 2)
@@ -624,7 +624,7 @@ xi_intr(arg)
 	u_int8_t esr, rsr, isr, rx_status, savedpage;
 	u_int16_t tx_status, recvcount = 0, tempint;
 
-	DPRINTF(XID_CONFIG, ("xi_intr\n"));
+	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
 
 #if 0
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -674,8 +674,7 @@ xi_intr(arg)
 		/* Compare bytes read this interrupt to hard maximum. */
 		if (recvcount > MAX_BYTES_INTR) {
 			DPRINTF(XID_INTR,
-			    ("%s: too many bytes this interrupt\n",
-			    sc->sc_dev.dv_xname));
+			    ("xi: too many bytes this interrupt\n"));
 			ifp->if_iqdrops++;
 			/* Drop packet. */
 			bus_space_write_2(sc->sc_bst, sc->sc_bsh,
@@ -693,29 +692,26 @@ xi_intr(arg)
 	/* Packet too long? */
 	if (rsr & RSR_TOO_LONG) {
 		ifp->if_ierrors++;
-		DPRINTF(XID_INTR,
-		    ("%s: packet too long\n", sc->sc_dev.dv_xname));
+		DPRINTF(XID_INTR, ("xi: packet too long\n"));
 	}
 
 	/* CRC error? */
 	if (rsr & RSR_CRCERR) {
 		ifp->if_ierrors++;
-		DPRINTF(XID_INTR,
-		    ("%s: CRC error detected\n", sc->sc_dev.dv_xname));
+		DPRINTF(XID_INTR, ("xi: CRC error detected\n"));
 	}
 
 	/* Alignment error? */
 	if (rsr & RSR_ALIGNERR) {
 		ifp->if_ierrors++;
-		DPRINTF(XID_INTR,
-		    ("%s: alignment error detected\n", sc->sc_dev.dv_xname));
+		DPRINTF(XID_INTR, ("xi: alignment error detected\n"));
 	}
 
 	/* Check for rx overrun. */
 	if (rx_status & RX_OVERRUN) {
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    CLR_RX_OVERRUN);
-		DPRINTF(XID_INTR, ("overrun cleared\n"));
+		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
 	}
 			
 	/* Try to start more packets transmitting. */
@@ -724,8 +720,7 @@ xi_intr(arg)
 
 	/* Detected excessive collisions? */
 	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {
-		DPRINTF(XID_INTR,
-		    ("%s: excessive collisions\n", sc->sc_dev.dv_xname));
+		DPRINTF(XID_INTR, ("xi: excessive collisions\n"));
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    RESTART_TX);
 		ifp->if_oerrors++;
@@ -756,7 +751,7 @@ xi_get(sc)
 	u_int8_t *data;
 	u_int8_t rsr;
 	
-	DPRINTF(XID_CONFIG, ("xi_get\n"));
+	DPRINTF(XID_CONFIG, ("xi_get()\n"));
 
 	PAGE(sc, 0);
 	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RSR);
@@ -998,7 +993,7 @@ static int
 xi_mediachange(ifp)
 	struct ifnet *ifp;
 {
-	DPRINTF(XID_CONFIG, ("xi_mediachange\n"));
+	DPRINTF(XID_CONFIG, ("xi_mediachange()\n"));
 
 	if (ifp->if_flags & IFF_UP)
 		xi_init(ifp->if_softc);
@@ -1015,7 +1010,7 @@ xi_mediastatus(ifp, ifmr)
 {
 	struct xi_softc *sc = ifp->if_softc;
 
-	DPRINTF(XID_CONFIG, ("xi_mediastatus\n"));
+	DPRINTF(XID_CONFIG, ("xi_mediastatus()\n"));
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
@@ -1028,7 +1023,7 @@ xi_reset(sc)
 {
 	int s;
 
-	DPRINTF(XID_CONFIG, ("xi_reset\n"));
+	DPRINTF(XID_CONFIG, ("xi_reset()\n"));
 
 	s = splnet();
 	xi_stop(sc);
@@ -1053,7 +1048,7 @@ static void
 xi_stop(sc)
 	register struct xi_softc *sc;
 {
-	DPRINTF(XID_CONFIG, ("xi_stop\n"));
+	DPRINTF(XID_CONFIG, ("xi_stop()\n"));
 
 	/* Disable interrupts. */
 	PAGE(sc, 0);
@@ -1078,7 +1073,7 @@ xi_init(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
-	DPRINTF(XID_CONFIG, ("xi_init\n"));
+	DPRINTF(XID_CONFIG, ("xi_init()\n"));
 
 	s = splimp();
 
@@ -1108,11 +1103,11 @@ xi_start(ifp)
 	struct mbuf *m0, *m;
 	u_int16_t space;
 
-	DPRINTF(XID_CONFIG, ("xi_start\n"));
+	DPRINTF(XID_CONFIG, ("xi_start()\n"));
 
 	/* Don't transmit if interface is busy or not running. */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
-		DPRINTF(XID_CONFIG, ("xe0: interface busy or not running\n"));
+		DPRINTF(XID_CONFIG, ("xi: interface busy or not running\n"));
 		return;
 	}
 
@@ -1135,8 +1130,8 @@ xi_start(ifp)
 	space = bus_space_read_2(bst, bsh, offset + TSO0) & 0x7fff;
 	if (len + pad + 2 > space) {
 		DPRINTF(XID_FIFO,
-		    ("%s: not enough space in output FIFO (%d > %d)\n",
-		    sc->sc_dev.dv_xname, len + pad + 2, space));
+		    ("xi: not enough space in output FIFO (%d > %d)\n",
+		    len + pad + 2, space));
 		return;
 	}
 
@@ -1190,7 +1185,7 @@ xi_ether_ioctl(ifp, cmd, data)
 	struct xi_softc *sc = ifp->if_softc;
 
 
-	DPRINTF(XID_CONFIG, ("xi_ether_ioctl\n"));
+	DPRINTF(XID_CONFIG, ("xi_ether_ioctl()\n"));
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1245,7 +1240,7 @@ xi_ioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	DPRINTF(XID_CONFIG, ("xi_ioctl\n"));
+	DPRINTF(XID_CONFIG, ("xi_ioctl()\n"));
 
 	s = splimp();
 
@@ -1335,7 +1330,7 @@ xi_set_address(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, page, pos, num;
 
-	DPRINTF(XID_CONFIG, ("xi_set_address\n"));
+	DPRINTF(XID_CONFIG, ("xi_set_address()\n"));
 
 	PAGE(sc, 0x50);
 	for (i = 0; i < 6; i++) {
@@ -1392,7 +1387,7 @@ xi_cycle_power(sc)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	bus_addr_t offset = sc->sc_offset;
 
-	DPRINTF(XID_CONFIG, ("xi_cycle_power\n"));
+	DPRINTF(XID_CONFIG, ("xi_cycle_power()\n"));
 
 	PAGE(sc, 4);
 	DELAY(1);
@@ -1414,7 +1409,7 @@ xi_full_reset(sc)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	bus_addr_t offset = sc->sc_offset;
 
-	DPRINTF(XID_CONFIG, ("xi_full_reset\n"));
+	DPRINTF(XID_CONFIG, ("xi_full_reset()\n"));
 
 	/* Do an as extensive reset as possible on all functions. */
 	xi_cycle_power(sc);
