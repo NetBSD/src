@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.375 2001/07/01 02:56:21 gmcgarry Exp $
+# $NetBSD: mi,v 1.376 2001/07/02 14:50:40 fredette Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -2311,6 +2311,7 @@
 ./usr/share/man/man4/rtk.4			man-sys-man
 ./usr/share/man/man4/sb.4			man-sys-man
 ./usr/share/man/man4/sbus.4			man-sys-man
+./usr/share/man/man4/sc.4			man-sys-man
 ./usr/share/man/man4/scsi.4			man-sys-man
 ./usr/share/man/man4/scsibus.4			man-sys-man
 ./usr/share/man/man4/sd.4			man-sys-man
