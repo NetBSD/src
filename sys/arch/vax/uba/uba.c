@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.37 1998/11/05 19:48:04 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.38 1998/11/29 14:48:53 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -596,7 +596,7 @@ ubasetup(uh, bp, flags)
 		flags &= ~UBA_NEEDBDP;
 
 	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
+	npf = vax_btoc(bp->b_bcount + o) + 1;
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
 	a = spluba();

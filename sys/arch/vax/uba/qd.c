@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.9 1998/11/05 19:48:04 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.10 1998/11/29 14:48:52 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -910,21 +910,21 @@ qdclose(dev, flag, mode, p)
 			*/
 			mapix = VTOP((int)qd->template) - VTOP(qvmem[0]);
 			ptep = (int *)(QVmap[0] + mapix);
-			for (i = 0; i < btop(TMPSIZE); i++, ptep++)
+			for (i = 0; i < vax_btop(TMPSIZE); i++, ptep++)
 				*ptep = (*ptep & ~PG_PROT) | PG_V | PG_KW;
 			/*
 			* ADDER 
 			*/
 			mapix = VTOP((int)qd->adder) - VTOP(qvmem[0]);
 			ptep = (int *)(QVmap[0] + mapix);
-			for (i = 0; i < btop(REGSIZE); i++, ptep++)
+			for (i = 0; i < vax_btop(REGSIZE); i++, ptep++)
 				*ptep = (*ptep & ~PG_PROT) | PG_V | PG_KW;
 			/*
 			* COLOR MAPS 
 			*/
 			mapix = VTOP((int)qd->red) - VTOP(qvmem[0]);
 			ptep = (int *)(QVmap[0] + mapix);
-			for (i = 0; i < btop(CLRSIZE); i++, ptep++)
+			for (i = 0; i < vax_btop(CLRSIZE); i++, ptep++)
 				*ptep = (*ptep & ~PG_PROT) | PG_V | PG_KW;
 		}
 
@@ -949,7 +949,7 @@ qdclose(dev, flag, mode, p)
 			}
 			ptep = (int *)
 			   ((VTOP(DMAheader[unit]*4)) + (mfpr(PR_SBR)|0x80000000));
-			for (i = 0; i < btop(DMAbuf_size); i++, ptep++)
+			for (i = 0; i < vax_btop(DMAbuf_size); i++, ptep++)
 				*ptep = (*ptep & ~PG_PROT) | PG_V | PG_KW;
 			ubarelse(uh, &Qbus_unmap[unit]);
 		}
@@ -1194,7 +1194,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		*/
 		mapix = VTOP((int)qd->template) - VTOP(qvmem[0]);
 		ptep = (int *)(QVmap[0] + mapix);
-		for (i = 0; i < btop(TMPSIZE); i++, ptep++)
+		for (i = 0; i < vax_btop(TMPSIZE); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
 
 	       /*
@@ -1202,7 +1202,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		*/
 		mapix = VTOP((int)qd->adder) - VTOP(qvmem[0]);
 		ptep = (int *)(QVmap[0] + mapix);
-		for (i = 0; i < btop(REGSIZE); i++, ptep++)
+		for (i = 0; i < vax_btop(REGSIZE); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
 
 		/*
@@ -1210,7 +1210,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		*/
 		mapix = VTOP((int)qd->red) - VTOP(qvmem[0]);
 		ptep = (int *)(QVmap[0] + mapix);
-		for (i = 0; i < btop(CLRSIZE); i++, ptep++)
+		for (i = 0; i < vax_btop(CLRSIZE); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
 
   	       /*
@@ -1238,7 +1238,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		qdflags[unit].mapped |= MAPDMA;
 		ptep = (int *) ((VTOP(DMAheader[unit]) * 4)
 			+ (mfpr(PR_SBR) | 0x80000000));
-		for (i = 0; i < btop(DMAbuf_size); i++, ptep++)
+		for (i = 0; i < vax_btop(DMAbuf_size); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
 		mtpr(0, PR_TBIA);		/* invalidate translation buffer */
 		/*
