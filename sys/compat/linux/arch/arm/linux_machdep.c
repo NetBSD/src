@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11 2003/01/18 08:02:47 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.12 2003/09/26 12:02:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2003/01/18 08:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2003/09/26 12:02:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ process_frame(struct lwp *l)
 void
 linux_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;

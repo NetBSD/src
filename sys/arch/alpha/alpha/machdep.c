@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.272 2003/08/02 19:10:04 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.273 2003/09/26 12:02:55 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2003/08/02 19:10:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2003/09/26 12:02:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1512,7 +1512,7 @@ regdump(framep)
 void
 sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
