@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.12 1999/02/23 03:20:03 thorpej Exp $ */
+/* $NetBSD: process_machdep.c,v 1.13 1999/08/10 23:35:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 1999/02/23 03:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 1999/08/10 23:35:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 1999/02/23 03:20:03 thorpej
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
+#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/alpha.h>
-
-#include <alpha/alpha/cpuvar.h>
 
 #define	process_frame(p)	((p)->p_md.md_tf)
 #define	process_pcb(p)		(&(p)->p_addr->u_pcb)
