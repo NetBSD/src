@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.2 2005/01/10 02:58:58 lukem Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.3 2005/01/13 00:44:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ in(void)
 	sin4.sin_addr.s_addr = ntohl(INADDR_LOOPBACK);
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %p %a",
 	    (struct sockaddr *)&sin4);
-	if (i != 18)
-		errx(1, "bad length for sin4 %d != %d", i, 18);
+	if (i != 17)
+		errx(1, "bad length for sin4 %d != %d", i, 17);
 	if (strcmp(res = "2 16 80 127.0.0.1", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
@@ -83,8 +83,8 @@ in6(void)
 	sin6.sin6_addr = in6addr_nodelocal_allnodes;
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %p %a",
 	    (struct sockaddr *)&sin6);
-	if (i != 17)
-		errx(1, "bad length for sin6 %d != %d", i, 17);
+	if (i != 16)
+		errx(1, "bad length for sin6 %d != %d", i, 16);
 	if (strcmp(res = "24 28 80 ff01::1", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
@@ -104,8 +104,8 @@ un(void)
 	(void)strncpy(sun.sun_path, "/tmp/sock", sizeof(sun.sun_path));
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 	    (struct sockaddr *)&sun);
-	if (i != 16)
-		errx(1, "bad length for sun %d != %d", i, 16);
+	if (i != 15)
+		errx(1, "bad length for sun %d != %d", i, 15);
 	if (strcmp(res = "1 106 /tmp/sock", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
@@ -125,8 +125,8 @@ at(void)
 	sat.sat_addr.s_node = 3;
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 	    (struct sockaddr *)&sat);
-	if (i != 12)
-		errx(1, "bad length for sat %d != %d", i, 12);
+	if (i != 11)
+		errx(1, "bad length for sat %d != %d", i, 11);
 	if (strcmp(res = "16 16 101.3", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
@@ -150,8 +150,8 @@ dl(void)
 	(void)memcpy(sdl.sdl_data, "\01\02\03\04\05\06", 6);
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 	    (struct sockaddr *)&sdl);
-	if (i != 18)
-		errx(1, "bad length for sdl %d != %d", i, 18);
+	if (i != 17)
+		errx(1, "bad length for sdl %d != %d", i, 17);
 	if (strcmp(res = "18 20 1.2.3.4.5.6", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }

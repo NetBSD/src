@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.3 2004/12/11 06:41:16 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.4 2005/01/13 00:44:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.3 2004/12/11 06:41:16 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.4 2005/01/13 00:44:25 dyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 	const struct sockaddr_dl *sdl = NULL;
 
 #define ADDC(c) if (buf < ebuf) *buf++ = c; else buf++
-#define ADDN()	if (buf < ebuf) *buf++ = '\0'; else buf[len - 1] = '\0'
+#define ADDN()	if (buf < ebuf) *buf = '\0'; else buf[len - 1] = '\0'
 #define ADDS(p) for (s = p; *s; s++) ADDC(*s)
 #define ADDNA() ADDS("N/A")
 
