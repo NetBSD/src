@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 1998/01/02 22:17:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 1998/05/19 19:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,6 +95,8 @@ int pv_nfree;
 int pv_pcnt;
 static struct pv_entry *pmap_alloc_pv __P((void));
 static void pmap_free_pv __P((struct pv_entry *));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 struct po_page;
 struct po_page_info {

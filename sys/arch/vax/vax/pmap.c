@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1998/05/03 13:02:23 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.49 1998/05/19 19:00:19 thorpej Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -104,6 +104,9 @@ static inline void rensa __P((int, struct pte *));
 
 vm_offset_t   avail_start, avail_end;
 vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory	*/
+
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /*
  * pmap_bootstrap().

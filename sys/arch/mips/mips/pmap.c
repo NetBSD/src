@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1998/05/06 21:53:53 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1998/05/19 19:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 1998/05/06 21:53:53 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 1998/05/19 19:00:16 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -233,6 +233,9 @@ void pmap_page_cache __P((vm_offset_t, int));
 void mips_dump_segtab __P((struct proc *));
 #endif
 int pmap_is_page_ro __P((pmap_t, vm_offset_t, int));
+
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /*
  *	Bootstrap the system enough to run with virtual memory.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 1998/02/19 22:21:28 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 1998/05/19 19:00:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -436,7 +436,8 @@ void pv_print __P((vm_offset_t pa));
 void pmeg_print __P((pmeg_t pmegp));
 static void pmeg_verify_empty __P((vm_offset_t va));
 #endif	/* PMAP_DEBUG */
-
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /*
  * Various in-line helper functions.
