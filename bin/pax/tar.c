@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.37 2003/03/31 20:06:33 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.38 2003/03/31 20:30:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.37 2003/03/31 20:06:33 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.38 2003/03/31 20:30:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -999,7 +999,9 @@ ustar_wr(ARCHD *arcn)
 	 * check for those file system types ustar cannot store
 	 */
 	if (arcn->type == PAX_SCK) {
-		tty_warn(1, "Ustar cannot archive a socket %s", arcn->org_name);
+		if (!is_gnutar)
+			tty_warn(1, "Ustar cannot archive a socket %s",
+			    arcn->org_name);
 		return(1);
 	}
 
