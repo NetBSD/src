@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.9 2005/02/25 19:56:07 matt Exp $	*/
+/*	$NetBSD: poll.h,v 1.10 2005/03/10 00:29:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,16 @@ int	pollcommon(struct lwp *, register_t *, struct pollfd *, u_int,
 __BEGIN_DECLS
 int	poll(struct pollfd *, nfds_t, int);
 __END_DECLS
+
+#ifdef _NETBSD_SOURCE
+#include <sys/sigtypes.h>	/* for sigset_t */
+struct timespec;
+
+__BEGIN_DECLS
+int	pollts(struct pollfd * __restrict, nfds_t,
+	    const struct timespec * __restrict, const sigset_t * __restrict);
+__END_DECLS
+#endif /* _NETBSD_SOURCE */
 
 #endif /* _KERNEL */
 
