@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.11 2002/03/20 21:42:32 he Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.12 2002/04/03 21:17:06 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1377,6 +1377,26 @@ after_listen:
 	}
 
 	switch (tp->t_state) {
+	case TCPS_LISTEN:
+		/*
+		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+		 */
+		if (m->m_flags & (M_BCAST|M_MCAST))
+			goto drop;
+		switch (af) {
+#ifdef INET6
+		case AF_INET6:
+			if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+				goto drop;
+			break;
+#endif /* INET6 */
+		case AF_INET:
+			if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+			    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+				goto drop;
+			break;
+		}
+		break;
 
 	/*
 	 * If the state is SYN_SENT:
@@ -2190,6 +2210,21 @@ dropwithreset:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
+
+	switch (af) {
+#ifdef INET6
+	case AF_INET6:
+		/* For following calls to tcp_respond */
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+			goto drop;
+		break;
+#endif /* INET6 */
+	case AF_INET:
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+			goto drop;
+	}
+
     {
 	/*
 	 * need to recover version # field, which was overwritten on
