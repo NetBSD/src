@@ -1,3 +1,4 @@
-# $NetBSD: obsolete.i386,v 1.6 2003/05/15 18:51:19 wiz Exp $
+# $NetBSD: obsolete.i386,v 1.7 2003/09/19 08:15:49 mrg Exp $
+./usr/include/i386/_G_config.h
 ./usr/include/i386/conf.h
 ./usr/include/i386/mouse.h
