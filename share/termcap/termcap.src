@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.90 2004/04/04 07:49:53 jdc Exp $
+#	$NetBSD: termcap.src,v 1.91 2004/06/23 22:48:56 matt Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1987,7 +1987,7 @@ xterm-pcolor|xterm with color used for highlights and status line:\
 
 # HP ships this, except for the pb#9600 which was merged in from BSD termcap.
 # (hpterm: added empty <acsc>, we have no idea what ACS chars look like --esr)
-xhpterm|X-hpterm|hp X11 terminal emulator:\
+xhpterm|X-hpterm|xpterm|hpterm|hp X11 terminal emulator:\
 	:am:da:db:mi:xs:\
 	:Nl#8:co#80:lh#2:li#24:lm#0:lw#8:pb#9600:sg#0:\
 	:LF=\E&j@:LO=\E&jB:ac=:ae=^O:al=\EL:as=^N:bl=^G:bt=\Ei:\
