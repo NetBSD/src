@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.11 2000/01/23 17:04:05 mycroft Exp $
+#	$NetBSD: Makefile.buildboot,v 1.12 2000/12/16 04:20:24 simonb Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -31,6 +31,13 @@ CFLAGS=		-Os -msoft-float
 CPPFLAGS+=	-DBOOT_AOUT
 #CPPFLAGS+=	-DBOOT_ELF
 
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
+
 ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
 	${MKBOOT_PROG} ${PROGAOUT} ${PROG}
 
@@ -54,9 +61,7 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 LIBSA=		${SALIB}
 
 ${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
-	${LD} -N -T ${RELOC} -e begin -o ${PROGAOUT} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -N -Ttext ${RELOC} -e begin -o ${PROGAOUT} \
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	@size ${PROGAOUT}
 	@echo ${PROGAOUT} total size should not exceed 1044480 bytes
