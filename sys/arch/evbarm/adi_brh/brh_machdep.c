@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.1 2003/01/25 02:00:16 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.2 2003/01/29 20:44:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -377,7 +377,9 @@ u_int
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
+#ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size;
+#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;
