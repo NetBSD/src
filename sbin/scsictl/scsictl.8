@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.4 1999/09/28 23:32:04 ad Exp $
+.\"	$NetBSD: scsictl.8,v 1.5 2000/03/07 19:27:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,10 @@ Either may be wildcarded by specifying the keyword
 .Dq any
 or
 .Dq all .
+.Sh NOTES
+When scanning the scsi bus, information about newly recognized devices
+is printed to console. No information is printed for already probed
+devices.
 .Sh FILES
 /dev/scsibus* - for commands operating on SCSI busses
 .Sh SEE ALSO
