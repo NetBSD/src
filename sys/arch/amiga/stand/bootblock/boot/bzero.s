@@ -1,4 +1,4 @@
-/*      $NetBSD: bzero.s,v 1.4 2001/02/26 14:58:37 is Exp $ */
+/*      $NetBSD: bzero.s,v 1.5 2001/03/01 21:32:53 is Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
 #include <machine/asm.h>
 
 ENTRY_NOPROFILE(bzero)
-	movel sp@(4),a0
-	movel sp@(8),d0
+	movel %sp@(4),%a0
+	movel %sp@(8),%d0
 	jeq L3
 L4:
-	clrb a0@+
-	subql #1,d0
+	clrb %a0@+
+	subql #1,%d0
 	jne L4
 L3:
 	rts

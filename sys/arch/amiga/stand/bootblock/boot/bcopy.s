@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.5 2001/02/26 14:58:37 is Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.6 2001/03/01 21:32:53 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,29 +46,29 @@
 	.even
 
 ENTRY_NOPROFILE(memcpy)
-	movel sp@(4),a0
-	movel sp@(8),a1
+	movel %sp@(4),%a0
+	movel %sp@(8),%a1
 	jra Lcpy
 
 ENTRY_NOPROFILE(bcopy)
-	movel sp@(4),a1
-	movel sp@(8),a0
+	movel %sp@(4),%a1
+	movel %sp@(8),%a0
 Lcpy:
-	movel sp@(12),d0
+	movel %sp@(12),%d0
 	jeq L1
-	cmpl a1,a0
+	cmpl %a1,a0
 	jcc L3
 L4:
-	moveb a1@+,a0@+
-	subql #1,d0
+	moveb %a1@+,%a0@+
+	subql #1,%d0
 	jne L4
 	rts
 L3:
-	addl d0,a1
-	addl d0,a0
+	addl %d0,a1
+	addl %d0,a0
 L9:
-	moveb a1@-,a0@-
-	subql #1,d0
+	moveb %a1@-,%a0@-
+	subql #1,%d0
 	jne L9
 L1:
 	rts
