@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.26 2001/05/06 15:16:08 he Exp $
+# $NetBSD: mi,v 1.253.2.27 2001/05/09 22:33:09 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -633,6 +633,9 @@
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
+./usr/share/man/cat4/macppc/autoconf.0
+./usr/share/man/cat4/macppc/awacs.0
+./usr/share/man/cat4/macppc/intro.0
 ./usr/share/man/cat4/mainbus.0
 ./usr/share/man/cat4/mbe.0
 ./usr/share/man/cat4/mca.0
@@ -2056,6 +2059,9 @@
 ./usr/share/man/man4/mac68k/mem.4
 ./usr/share/man/man4/mac68k/obio.4
 ./usr/share/man/man4/mac68k/sn.4
+./usr/share/man/man4/macppc/autoconf.4
+./usr/share/man/man4/macppc/awacs.4
+./usr/share/man/man4/macppc/intro.4
 ./usr/share/man/man4/mainbus.4
 ./usr/share/man/man4/mbe.4
 ./usr/share/man/man4/mca.4
