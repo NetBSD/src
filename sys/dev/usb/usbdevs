@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.73 2000/01/24 08:44:07 augustss Exp $
+$NetBSD: usbdevs,v 1.74 2000/01/25 21:58:45 soren Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ vendor IOMEGA		0x059b	Iomega Corp.
 vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
+vendor DIGI		0x05c5	Digi International
 vendor QTRONIX		0x05c7	Qtronix Corp
 vendor ELSA		0x05cc	ELSA Gmbh
 vendor EIZONANAO	0x05e7	EIZO Nanao
@@ -225,6 +226,11 @@ product DALLAS J6502		0x4201	J-6502 speakers
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
+
+/* Digi International products */
+product DIGI ACCELEPORT2	0x0002	AccelePort USB 2
+product DIGI ACCELEPORT4	0x0004	AccelePort USB 4
+product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
 
 /* EIZO products */
 product EIZO HUB		0x0000	hub
