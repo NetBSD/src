@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.22 2001/12/03 01:47:13 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.23 2001/12/12 15:48:18 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.22 2001/12/03 01:47:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.23 2001/12/12 15:48:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,104 +78,111 @@ int	uscannerdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+struct uscan_info {
+	struct usb_devno devno;
+	u_int flags;
+#define USC_KEEP_OPEN 1
+};
+
 /* Table of scanners that may work with this driver. */
-static const struct usb_devno uscanner_devs[] = {
-	/* Acer Peripherals */
-	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U },
-	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U },
-	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_620U },
-	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_C310U },
+static const struct uscan_info uscanner_devs[] = {
+  /* Acer Peripherals */
+ {{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U }, 0 },
+ {{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U }, 0 },
+ {{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_620U }, 0 },
+ {{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_C310U }, 0 },
 
-	/* AGFA */
-	{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U },
-	{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U2 },
-	{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANTOUCH },
+  /* AGFA */
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U2 }, 0 },
+ {{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCANTOUCH }, 0 },
 
-	/* Kye */
-	{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO },
+  /* Kye */
+ {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
 
-	/* HP */
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_3300C },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C },
+  /* HP */
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_3300C }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C }, 0 },
 #if 0
-	/* Handled by usscanner */
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_5300C },
+  /* Handled by usscanner */
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_5300C }, 0 },
 #endif
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_6300C },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_6300C }, 0 },
 
-	/* Avision */
-	{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U },
+  /* Avision */
+ {{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U }, 0 },
 
 #if 0
-	/* XXX Should be handled by usscanner */
-	/* Microtek */
-	{ USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_336CX },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_X6U },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX2 },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_C6 },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL2 },
-	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6UL },
+  /* XXX Should be handled by usscanner */
+  /* Microtek */
+ {{ USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_336CX }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_X6U }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX2 }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_C6 }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL2 }, 0 },
+ {{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6UL }, 0 },
 #endif
 
-	/* Mustek */
-	{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU },
-	{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW },
-	{ USB_VENDOR_NATIONAL, USB_PRODUCT_MUSTEK_600CU },
-	{ USB_VENDOR_NATIONAL, USB_PRODUCT_MUSTEK_1200USB },
-	{ USB_VENDOR_NATIONAL, USB_PRODUCT_MUSTEK_1200UB },
+  /* Mustek */
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU }, 0 },
+ {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600CU }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USB }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200UB }, 0 },
+ {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CUPLUS }, 0 },
 
-	/* Primax */
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2X300 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E300 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2300 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E3002 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_9600 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_600U },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_19200 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_1200U },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G600 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_636I },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2600 },
-	{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E600 },
+  /* Primax */
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2X300 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E300 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2300 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E3002 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_9600 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_600U }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_19200 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_1200U }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G600 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_636I }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2600 }, 0 },
+ {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2E600 }, 0 },
 
-	/* Epson */
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_636 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_610 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1200 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1240 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1600 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_640U },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1650 },
-	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_GT9700F },
+  /* Epson */
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_636 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_610 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1200 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1240 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1600 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_640U }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1650 }, 0 },
+ {{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_GT9700F }, USC_KEEP_OPEN },
 
-	/* UMAX */
-	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1220U },
-	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1236U },
-	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2000U },
-	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2200U },
-	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA3400 },
+  /* UMAX */
+ {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1220U }, 0 },
+ {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1236U }, 0 },
+ {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2000U }, 0 },
+ {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA2200U }, 0 },
+ {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA3400 }, 0 },
 
-	/* Visioneer */
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_5300 },
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_7600 },
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6100 },
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6200 },
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8100 },
-	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8600 },
+  /* Visioneer */
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_5300 }, 0 },
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_7600 }, 0 },
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6100 }, 0 },
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6200 }, 0 },
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8100 }, 0 },
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8600 }, 0 },
 
-	/* Canon */
-	{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U },
+  /* Canon */
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U }, 0 },
 
 };
-#define uscanner_lookup(v, p) usb_lookup(uscanner_devs, v, p)
+#define uscanner_lookup(v, p) ((struct uscan_info *)usb_lookup(uscanner_devs, v, p))
 
 #define	USCANNER_BUFFERSIZE	1024
 
@@ -183,6 +190,8 @@ struct uscanner_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
+
+	u_int			sc_dev_flags;
 
 	usbd_pipe_handle	sc_bulkin_pipe;
 	int			sc_bulkin;
@@ -265,6 +274,8 @@ USB_ATTACH(uscanner)
 	usbd_devinfo(uaa->device, 0, devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+
+	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
 
 	sc->sc_udev = uaa->device;
 
@@ -360,21 +371,25 @@ uscanneropen(dev, flag, mode, p)
 	sc->sc_bulkout_bufferlen = USCANNER_BUFFERSIZE;
 
 	/* We have decided on which endpoints to use, now open the pipes */
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin,
-				USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-	if (err) {
-		printf("%s: cannot open bulk-in pipe (addr %d)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_bulkin);
-		uscanner_do_close(sc);
-		return (EIO);
+	if (sc->sc_bulkin_pipe == NULL) {
+		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin,
+				     USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+		if (err) {
+			printf("%s: cannot open bulk-in pipe (addr %d)\n",
+			       USBDEVNAME(sc->sc_dev), sc->sc_bulkin);
+			uscanner_do_close(sc);
+			return (EIO);
+		}
 	}
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout,
-				USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-	if (err) {
-		printf("%s: cannot open bulk-out pipe (addr %d)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_bulkout);
-		uscanner_do_close(sc);
-		return (EIO);
+	if (sc->sc_bulkout_pipe == NULL) {
+		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout,
+				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+		if (err) {
+			printf("%s: cannot open bulk-out pipe (addr %d)\n",
+			       USBDEVNAME(sc->sc_dev), sc->sc_bulkout);
+			uscanner_do_close(sc);
+			return (EIO);
+		}
 	}
 
 	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
@@ -429,15 +444,17 @@ uscanner_do_close(struct uscanner_softc *sc)
 		sc->sc_bulkout_xfer = NULL;
 	}
 
-	if (sc->sc_bulkin_pipe) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-	}
-	if (sc->sc_bulkout_pipe) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
+	if (!(sc->sc_dev_flags & USC_KEEP_OPEN)) {
+		if (sc->sc_bulkin_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+			sc->sc_bulkin_pipe = NULL;
+		}
+		if (sc->sc_bulkout_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkout_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+			sc->sc_bulkout_pipe = NULL;
+		}
 	}
 
 	if (sc->sc_bulkin_buffer) {
@@ -607,11 +624,12 @@ USB_DETACH(uscanner)
 #endif
 
 	sc->sc_dying = 1;
+	sc->sc_dev_flags = 0;	/* make close really close device */
 
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
-	if (sc->sc_bulkin_pipe)
+	if (sc->sc_bulkin_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-	if (sc->sc_bulkout_pipe)
+	if (sc->sc_bulkout_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
 
 	s = splusb();
