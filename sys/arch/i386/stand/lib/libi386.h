@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: libi386.h,v 1.2 1997/04/13 18:44:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -49,6 +49,7 @@ int netbsd_opt __P((char));
 void delay __P((int));
 int getbasemem __P((void));
 int getextmem __P((void));
+void reboot __P((void));
 void gateA20 __P((void));
 
 char *initio __P((int));

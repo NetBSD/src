@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/03/22 09:00:41 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/04/13 18:44:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -358,11 +358,12 @@ bootmenu()
 	}
 }
 
-int
+char
 awaitkey(timeout, tell)
 	int timeout, tell;
 {
 	int i;
+	char c;
 
 	i = timeout * POLL_FREQ;
 
@@ -370,8 +371,8 @@ awaitkey(timeout, tell)
 		if (iskey()) {
 			/* flush input buffer */
 			while (iskey())
-				getchar(); 
-			return(1);
+				c = getchar();
+			return(c); /* XXX what happens if c == 0? */
 		}
 		delay(1000000 / POLL_FREQ);
 		if (tell && (i % POLL_FREQ) == 0)
@@ -390,7 +391,7 @@ print_banner(void)
 	printf("\n" ">> NetBSD BOOT: %d/%d k [%s]\n"
 #ifndef MATTHIAS
 	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-	    "press any key for boot menu\n",
+	    "press return to boot now, any other key for boot menu\n",
 #else
 	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n",
 #endif
@@ -406,6 +407,7 @@ void
 main()
 {
 	int currname;
+	char c;
 
 	consdev = initio(CONSDEV_PC);
 	gateA20();
@@ -425,9 +427,12 @@ main()
 		print_bootsel(0, 0);
 		printf("starting in %d\b", TIMEOUT);
 
-		if (awaitkey(TIMEOUT, 1))
+		c = awaitkey(TIMEOUT, 1);
+		if ((c != '\r') && (c != '\n'))
 			bootmenu(); /* does not return */
 
+		printf("\n");
+		
 		/*
 		 * try pairs of names[] entries, foo and foo.gz
 		 */
@@ -448,8 +453,11 @@ main()
 		printf("press any key for boot menu\n"
 		    "starting in %d\b", TIMEOUT);
 
-		if (awaitkey(TIMEOUT, 1))
+		c = awaitkey(TIMEOUT, 1);
+		if ((c != '\r') && (c != '\n'))
 			bootmenu(); /* does not return */
+
+		printf("\n");
 
 		/* try every names[] entry once */
 		do {
@@ -495,7 +503,11 @@ command_quit(arg)
 	char *arg;
 {
 
-	printf("Exiting... goodbye...\n");
+	printf("Rebooting... goodbye...\n");
+	delay(1000000);
+	reboot();
+	/* Note: we shouldn't get to this point! */
+	panic("Could not reboot!");
 	exit(0);
 }
 
