@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.83 2003/08/07 16:29:44 agc Exp $ */
+/*	$NetBSD: intr.c,v 1.84 2004/04/17 10:01:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.83 2003/08/07 16:29:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.84 2004/04/17 10:01:55 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -364,7 +364,7 @@ static void xcallintr(void *v)
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		if (p->func)
-			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2); 
 		break;
 	    }
 	}
