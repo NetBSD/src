@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.40.2.5 2002/01/08 00:34:41 nathanw Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.40.2.6 2002/01/09 02:56:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -791,7 +791,7 @@ int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
 int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
 
-int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_elf32 __P((struct lwp *, struct vnode *, struct ucred *));
 int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
 	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
 #endif
