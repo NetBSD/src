@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.35 2003/12/14 05:33:29 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.36 2003/12/20 19:53:54 lha Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -236,7 +236,9 @@ struct ata_smart_attr {
 	u_int8_t		id;		/* attribute id number */
 	u_int16_t		flags;
 	u_int8_t		value;		/* attribute value */
-	u_int8_t		vendor_specific[8];
+	u_int8_t		worst;
+	u_int8_t		raw[6];
+	u_int8_t		reserved;
 } __attribute__((packed));
 
 struct ata_smart_attributes {
@@ -271,6 +273,26 @@ struct ata_smart_thresholds {
 	int8_t			checksum;
 } __attribute__((packed));
 
+struct ata_smart_selftest {
+	u_int8_t		number;
+	u_int8_t		status;
+	uint16_t		time_stamp;
+	u_int8_t		failure_check_point;
+	u_int32_t		lba_first_error;
+	u_int8_t		vendor_specific[15];
+} __attribute__((packed));
+
+struct ata_smart_selftestlog {
+	u_int16_t		data_structure_revision;
+	struct ata_smart_selftest log_entries[21];
+	u_int8_t		vendorspecific[2];
+	u_int8_t		mostrecenttest;
+	u_int8_t		reserved[2];
+	u_int8_t		checksum;
+} __attribute__((packed));
+
+#ifdef _KERNEL
+
 int	wdc_downgrade_mode(struct ata_drive_datas *, int);
 
 struct ataparams;
@@ -284,3 +306,5 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 void	ata_dmaerr(struct ata_drive_datas *, int);
 
 #endif /* _DEV_ATA_ATAVAR_H_ */
+
+#endif /* _KERNEL */
