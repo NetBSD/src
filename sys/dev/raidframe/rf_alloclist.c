@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.6 2001/10/04 15:58:51 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.7 2001/10/04 17:39:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,6 +38,7 @@
 
 #include <dev/raidframe/raidframevar.h>
 
+#include "rf_options.h"
 #include "rf_threadstuff.h"
 #include "rf_alloclist.h"
 #include "rf_debugMem.h"
