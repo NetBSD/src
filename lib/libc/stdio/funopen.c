@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.6 1998/02/03 18:41:15 perry Exp $	*/
+/*	$NetBSD: funopen.c,v 1.7 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: funopen.c,v 1.6 1998/02/03 18:41:15 perry Exp $");
+__RCSID("$NetBSD: funopen.c,v 1.7 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,6 +76,7 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 		return (NULL);
 	fp->_flags = flags;
 	fp->_file = -1;
+	/* LINTED we don't play with cookie */
 	fp->_cookie = (void *)cookie;
 	fp->_read = readfn;
 	fp->_write = writefn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.10 1998/10/15 07:10:38 mycroft Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.11 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.10 1998/10/15 07:10:38 mycroft Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.11 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,8 @@ __sfvwrite(fp, uio)
 		 */
 		do {
 			GETIOV(;);
-			w = (*fp->_write)(fp->_cookie, p, MIN(len, BUFSIZ));
+			w = (*fp->_write)(fp->_cookie, p,
+			    (int)MIN(len, BUFSIZ));
 			if (w <= 0)
 				goto err;
 			p += w;
@@ -129,7 +130,8 @@ __sfvwrite(fp, uio)
 				do {
 					_size = (_size << 1) + 1;
 				} while (_size < blen + len);
-				_base = realloc(fp->_bf._base, _size + 1);
+				_base = realloc(fp->_bf._base,
+				    (size_t)(_size + 1));
 				if (_base == NULL)
 					goto err;
 				fp->_w += _size - fp->_bf._size;

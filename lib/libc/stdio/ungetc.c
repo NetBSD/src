@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.8 1998/09/07 14:37:13 kleink Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.9 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.8 1998/09/07 14:37:13 kleink Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.9 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,7 @@ __submore(fp)
 		return (0);
 	}
 	i = fp->_ub._size;
-	p = realloc(fp->_ub._base, i << 1);
+	p = realloc(fp->_ub._base, (size_t)(i << 1));
 	if (p == NULL)
 		return (EOF);
 	/* no overlap (hence can use memcpy) because we doubled the size */
