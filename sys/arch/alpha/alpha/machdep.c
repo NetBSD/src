@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1996/07/14 20:00:15 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1996/07/16 04:42:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -563,6 +563,16 @@ alpha_init(pfn, ptb)
 	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+
+#ifndef OLD_PMAP
+	printf("going to set up new pcb\n");
+	proc0paddr->u_pcb.pcb_hw.apcb_asn = kernel_pmap->pid;
+	proc0paddr->u_pcb.pcb_hw.apcb_ptbr =
+	    alpha_btop(kvtophys((unsigned long)kernel_pmap->dirbase));
+	printf("did new pcb setup (asn = %d, ptbr = 0x%lx)\n",
+	    proc0paddr->u_pcb.pcb_hw.apcb_asn,
+	    proc0paddr->u_pcb.pcb_hw.apcb_ptbr);
+#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
