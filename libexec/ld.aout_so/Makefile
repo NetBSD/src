@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2002/01/22 16:27:51 skrll Exp $
+#	$NetBSD: Makefile,v 1.34 2002/01/31 19:15:23 tv Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -41,8 +41,10 @@ CLEANFILES+=	ld.so
 
 all dependall: ${FILES}
 
+UUDECODE?=	uudecode
+
 ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
-	uudecode ${.ALLSRC}
+	${UUDECODE} ${.ALLSRC}
 
 .include <bsd.files.mk>
 
