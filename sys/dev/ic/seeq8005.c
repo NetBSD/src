@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.8 2000/12/23 16:37:20 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.9 2001/03/24 00:16:41 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.8 2000/12/23 16:37:20 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.9 2001/03/24 00:16:41 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -629,6 +629,8 @@ ea_init(struct ifnet *ifp)
 	dprintf(("Configuring rx...\n"));
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->sc_config1 = EA_CFG1_PROMISCUOUS;
+	else if (ifp->if_flags & IFF_ALLMULTI)
+		sc->sc_config1 = EA_CFG1_MULTICAST;
 	else
 		sc->sc_config1 = EA_CFG1_BROADCAST;
 	sc->sc_config1 |= EA_CFG1_STATION_ADDR0;
