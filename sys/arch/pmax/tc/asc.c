@@ -1,7 +1,7 @@
-/* $NetBSD: asc.c,v 1.1.2.1 1998/10/15 02:48:58 nisimura Exp $ */
+/* $NetBSD: asc.c,v 1.1.2.2 1998/10/15 07:12:20 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.2.1 1998/10/15 02:48:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.2.2 1998/10/15 07:12:20 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -27,8 +27,7 @@ int asc_scsi_cmd __P((struct scsipi_xfer *));
 struct scsipi_adapter asc_switch = {
 	asc_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_dev = {
