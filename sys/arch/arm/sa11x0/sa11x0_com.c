@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.5 2002/07/19 19:07:33 ichiro Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.6 2002/09/02 05:27:39 manu Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1175,7 +1175,7 @@ sacom_filltx(sc)
 	int c, n;
 
 	n = 0;
-	while(bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR1)
+	while(bus_space_read_4(iot, ioh, SACOM_SR1)
 	      & SR1_TNF) {
 		if (n == SACOM_TXFIFOLEN || n == sc->sc_tbc)
 			break;
