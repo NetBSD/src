@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.243 1999/07/21 20:28:45 tron Exp $
+#	$NetBSD: GENERIC,v 1.244 1999/07/22 09:35:06 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -524,7 +524,7 @@ uhid*	at uhub? port ? configuration ? interface ?
 ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
-ugen*	at uhub? port ? configuration ? interface ?
+ugen*	at uhub? port ?
 
 # Audio Devices
 
