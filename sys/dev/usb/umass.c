@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.7 1999/08/29 19:58:55 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.8 1999/08/29 20:41:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ USB_ATTACH(umass)
 	sc->sc_link.scsipi_scsi.adapter_target = UMASS_SCSIID_HOST;
 	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &umass_dev;
-	sc->sc_link.openings = 4;		/* XXX */
+	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE; /* XXX */
 	sc->sc_link.scsipi_scsi.max_lun = maxlun;
 	sc->sc_link.type = BUS_SCSI;
