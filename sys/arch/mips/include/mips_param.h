@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.5 1997/07/07 03:54:30 jonathan Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.6 1997/08/20 03:47:17 jonathan Exp $	*/
 
 /*
  * Architecture name.
@@ -11,6 +11,9 @@
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
  * to be the number of per-process-wired kernel-stack pages/PTES.
  */
+
+#define	SSIZE		1		/* initial stack size/NBPG */
+#define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
 #define	UADDR		0xffffc000	/* address of u */
@@ -96,6 +99,9 @@ extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
 #define	splstatclock()	((*Mach_splstatclock)())
 
 extern void delay __P((int n));
+extern int cpuspeed;
+#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
-#endif	/* _LOCORE */
+
+#endif	/* !_LOCORE */
 #endif	/* _KERNEL */
