@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 1997/09/17 18:32:50 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.6 1997/09/20 12:36:05 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -55,14 +55,16 @@ static struct {
 		"fd", 0
 	},
 	{
+		"hd", 0x80
+	},
+#ifdef COMPAT_OLDBOOT
+	{
 		"wd", 0x80
 	},
 	{
 		"sd", 0x80
-	},
-	{
-		"hd", 0x80
 	}
+#endif
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
@@ -100,13 +102,13 @@ bios2dev(biosdev, devname, unit)
 
 		if(disklabel.d_magic == DISKMAGIC) {
 			if(disklabel.d_type == DTYPE_SCSI)
-				*devname = biosdevtab[2].name;
+				*devname = biosdevtab[3].name;
 			else
-				*devname = biosdevtab[1].name;
+				*devname = biosdevtab[2].name;
 		} else
 #endif
 			/* call it "hd", we don't know better */
-			*devname = biosdevtab[3].name;
+			*devname = biosdevtab[1].name;
 	} else
 		*devname = biosdevtab[0].name;
 
