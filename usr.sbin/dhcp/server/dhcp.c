@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.8 1999/03/29 23:08:23 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.9 1999/04/09 17:55:02 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -314,15 +314,16 @@ void dhcprequest (packet)
 	}
 
 	/* If we're not allowed to serve this client anymore, don't. */
-	if (!lease -> host &&
+	if (lease &&
+	    !lease -> host &&
 	    !lease -> subnet -> group -> boot_unknown_clients) {
 		note ("Ignoring unknown client %s",
 		      print_hw_addr (packet -> raw -> htype,
 				     packet -> raw -> hlen,
 				     packet -> raw -> chaddr));
 		return;
-	} else if (lease -> host &&
-		    !lease -> host -> group -> allow_booting) {
+	} else if (lease && lease -> host &&
+		   !lease -> host -> group -> allow_booting) {
 		note ("Declining to renew client %s",
 		      lease -> host -> name
 		      ? lease -> host -> name
@@ -449,6 +450,7 @@ void nak_lease (packet, cip)
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
 	struct hardware hto;
+	int i;
 
 	struct tree_cache *options [256];
 	struct tree_cache dhcpnak_tree;
@@ -476,9 +478,12 @@ void nak_lease (packet, cip)
 	options [DHO_DHCP_MESSAGE] -> tree = (struct tree *)0;
 
 	/* Do not use the client's requested parameter list. */
-	packet -> options [DHO_DHCP_PARAMETER_REQUEST_LIST].len = 0;
-	packet -> options [DHO_DHCP_PARAMETER_REQUEST_LIST].data =
-		(unsigned char *)0;
+	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
+	if (packet -> options [i].data) {
+		packet -> options [i].len = 0;
+		dfree (packet -> options [i].data, "nak_lease");
+		packet -> options [i].data = (unsigned char *)0;
+	}
 
 	/* Set up the option buffer... */
 	outgoing.packet_length =
