@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.8 1995/11/10 19:25:59 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.9 1995/11/30 00:59:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -717,7 +717,7 @@ de_attach(){
 }
 
 struct  cfdriver decd =
-        { 0,"de",de_match, de_attach, DV_IFNET, sizeof(struct uba_driver) };
+        { NULL,"de",de_match, de_attach, DV_IFNET, sizeof(struct uba_driver) };
 
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.9 1995/09/04 13:04:48 chopps Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.10 1995/11/30 00:57:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -162,7 +162,7 @@ struct	sbic_softc {
 #define	DDB_FOLLOW	0x04
 #define DDB_IO		0x08
 #endif
-extern int sbic_inhibit_sync;
+extern u_char sbic_inhibit_sync[8];
 extern int sbic_no_dma;
 extern int sbic_clock_override;
 

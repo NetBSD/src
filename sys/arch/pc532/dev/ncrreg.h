@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrreg.h,v 1.2 1995/08/25 07:30:40 phil Exp $ */
+/*	$NetBSD: ncrreg.h,v 1.3 1995/11/30 00:58:56 jtc Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncrreg.h,v 1.2 1995/08/25 07:30:40 phil Exp $
+ *	$Id: ncrreg.h,v 1.3 1995/11/30 00:58:56 jtc Exp $
  */
 
 #ifndef _NCRREG_H
@@ -37,6 +37,7 @@
 
 #define PDMA_ADDRESS	((volatile u_char *) 0xffe00000)
 #define	NCR5380		((volatile struct ncr5380 *) 0xffd00000)
+#define MIN_PHYS	0x20000
 
 struct ncr5380 {
 	volatile u_char	regs[8];	/* use only the odd bytes	*/
