@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.39 2000/01/25 22:11:12 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.40 2000/01/28 22:23:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -684,6 +684,7 @@ tlp_start(ifp)
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_lastdesc = lasttx;
+		txs->txs_ndescs = dmamap->dm_nsegs;
 
 		/* Advance the tx pointer. */
 		sc->sc_txfree -= dmamap->dm_nsegs;
@@ -1246,21 +1247,12 @@ tlp_txintr(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
-	 * If we were doing a filter setup, check to see if it completed.
-	 */
-	if (sc->sc_flags & TULIPF_DOING_SETUP) {
-		TULIP_CDSDSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if ((sc->sc_setup_desc.td_status & htole32(TDSTAT_OWN)) == 0)
-			sc->sc_flags &= ~TULIPF_DOING_SETUP;
-	}
-
-	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		TULIP_CDTXSYNC(sc, txs->txs_lastdesc,
-		    txs->txs_dmamap->dm_nsegs,
+		    txs->txs_ndescs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef TLP_DEBUG
@@ -1289,7 +1281,22 @@ tlp_txintr(sc)
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
 
-		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
+		sc->sc_txfree += txs->txs_ndescs;
+
+		if (txs->txs_mbuf == NULL) {
+			/*
+			 * If we didn't have an mbuf, it was the setup
+			 * packet.
+			 */
+#ifdef DIAGNOSTIC
+			if ((sc->sc_flags & TULIPF_DOING_SETUP) == 0)
+				panic("tlp_txintr: null mbuf, not doing setup");
+#endif
+			TULIP_CDSPSYNC(sc, BUS_DMASYNC_POSTWRITE);
+			sc->sc_flags &= ~TULIPF_DOING_SETUP;
+			SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+			continue;
+		}
 
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize,
@@ -2164,6 +2171,7 @@ tlp_filter_setup(sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	__volatile u_int32_t *sp;
+	struct tulip_txsoft *txs;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t hash, hashsize;
 	int cnt;
@@ -2369,23 +2377,29 @@ tlp_filter_setup(sc)
 	/*
 	 * Fill in the setup packet descriptor.
 	 */
-	sc->sc_setup_desc.td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
-	sc->sc_setup_desc.td_bufaddr2 =
-	    htole32(TULIP_CDTXADDR(sc, sc->sc_txnext));
-	sc->sc_setup_desc.td_ctl =
+	txs = SIMPLEQ_FIRST(&sc->sc_txfreeq);
+
+	txs->txs_firstdesc = sc->sc_txnext;
+	txs->txs_lastdesc = sc->sc_txnext;
+	txs->txs_ndescs = 1;
+	txs->txs_mbuf = NULL;
+
+	sc->sc_txdescs[sc->sc_txnext].td_bufaddr1 =
+	    htole32(TULIP_CDSPADDR(sc));
+	sc->sc_txdescs[sc->sc_txnext].td_ctl =
 	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
 	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS | TDCTL_Tx_LS |
 	    TDCTL_Tx_IC | TDCTL_CH);
-	sc->sc_setup_desc.td_status = htole32(TDSTAT_OWN);
-	TULIP_CDSDSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	sc->sc_txdescs[sc->sc_txnext].td_status = htole32(TDSTAT_OWN);
+	TULIP_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndescs,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	/*
-	 * Write the address of the setup descriptor.  This also has
-	 * the side effect of giving the transmit ring to the chip,
-	 * since the setup descriptor points to the next available
-	 * descriptor in the ring.
-	 */
-	TULIP_WRITE(sc, CSR_TXLIST, TULIP_CDSDADDR(sc));
+	/* Advance the tx pointer. */
+	sc->sc_txfree -= 1;
+	sc->sc_txnext = TULIP_NEXTTX(sc->sc_txnext);
+
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 	/*
 	 * Set the OPMODE register.  This will also resume the

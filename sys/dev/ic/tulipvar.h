@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.25 2000/01/25 22:11:12 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.26 2000/01/28 22:23:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -85,11 +85,6 @@ struct tulip_control_data {
 	struct tulip_desc tcd_rxdescs[TULIP_NRXDESC];
 
 	/*
-	 * The setup descriptor.
-	 */
-	struct tulip_desc tcd_setup_desc;
-
-	/*
 	 * The setup packet.
 	 */
 	u_int32_t tcd_setup_packet[TULIP_SETUP_PACKET_LEN / sizeof(u_int32_t)];
@@ -98,7 +93,6 @@ struct tulip_control_data {
 #define	TULIP_CDOFF(x)		offsetof(struct tulip_control_data, x)
 #define	TULIP_CDTXOFF(x)	TULIP_CDOFF(tcd_txdescs[(x)])
 #define	TULIP_CDRXOFF(x)	TULIP_CDOFF(tcd_rxdescs[(x)])
-#define	TULIP_CDSDOFF		TULIP_CDOFF(tcd_setup_desc)
 #define	TULIP_CDSPOFF		TULIP_CDOFF(tcd_setup_packet)
 
 /*
@@ -109,6 +103,7 @@ struct tulip_txsoft {
 	bus_dmamap_t txs_dmamap;	/* our DMA map */
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
+	int txs_ndescs;			/* number of descriptors */
 	SIMPLEQ_ENTRY(tulip_txsoft) txs_q;
 };
 
@@ -400,7 +395,6 @@ struct tulip_softc {
 #define	TULIP_CDTXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDTXOFF((x)))
 #define	TULIP_CDRXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDRXOFF((x)))
 
-#define	TULIP_CDSDADDR(sc)	((sc)->sc_cddma + TULIP_CDSDOFF)
 #define	TULIP_CDSPADDR(sc)	((sc)->sc_cddma + TULIP_CDSPOFF)
 
 #define	TULIP_CDSP(sc)		((sc)->sc_control_data->tcd_setup_packet)
@@ -429,10 +423,6 @@ do {									\
 #define	TULIP_CDRXSYNC(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
 	    TULIP_CDRXOFF((x)), sizeof(struct tulip_desc), (ops))
-
-#define	TULIP_CDSDSYNC(sc, ops)						\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
-	    TULIP_CDSDOFF, sizeof(struct tulip_desc), (ops))
 
 #define	TULIP_CDSPSYNC(sc, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
