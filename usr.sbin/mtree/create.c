@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)create.c	5.19 (Berkeley) 3/2/92"; */
-static char *rcsid = "$Id: create.c,v 1.5 1993/11/02 07:51:07 cgd Exp $";
+static char *rcsid = "$Id: create.c,v 1.6 1993/11/17 11:00:56 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ statf(p)
 			output(&indent, "uid=%u", p->fts_statp->st_uid);
 	if (keys & (F_GID | F_GNAME) && p->fts_statp->st_gid != gid)
 		if (keys & F_GNAME && (gr = getgrgid(p->fts_statp->st_gid)))
-			output(&indent, "gid=%s", gr->gr_name);
+			output(&indent, "gname=%s", gr->gr_name);
 		else /* if (keys & F_GID) */
 			output(&indent, "gid=%u", p->fts_statp->st_gid);
 	if (keys & F_MODE && (p->fts_statp->st_mode & MBITS) != mode)
