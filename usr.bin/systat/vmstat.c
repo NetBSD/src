@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.48 2003/02/17 19:30:33 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.49 2003/02/18 14:55:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.48 2003/02/17 19:30:33 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.49 2003/02/18 14:55:05 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -83,7 +83,7 @@ static	enum state { BOOT, TIME, RUN } state = TIME;
 static void allocinfo(struct Info *);
 static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
-static void dinfo(int, int);
+static void dinfo(int, int, int);
 static void getinfo(struct Info *, enum state);
 static void putint(int, int, int, int);
 static void putfloat(double, int, int, int, int, int);
@@ -97,6 +97,7 @@ static	int nintr;
 static	long *intrloc;
 static	char **intrname;
 static	int nextintsrow;
+static	int disk_horiz = 1;
 
 WINDOW *
 openvmstat(void)
@@ -155,14 +156,8 @@ static struct nlist namelist[] = {
 #define NAMEICOL	 0
 #define DISKROW		18	/* uses 5 rows and 50 cols (for 9 drives) */
 #define DISKCOL		 0
-
-#define	DRIVESPACE	 9	/* max # for space */
-
-#if DK_NDRIVE > DRIVESPACE
-#define	MAXDRIVES	DRIVESPACE	 /* max # to display */
-#else
-#define	MAXDRIVES	DK_NDRIVE	 /* max # to display */
-#endif
+#define DISKCOLWIDTH	 6
+#define DISKCOLEND	INTSCOL
 
 typedef struct intr_evcnt intr_evcnt_t;
 struct intr_evcnt {
@@ -328,7 +323,7 @@ print_ie_title(int i)
 void
 labelvmstat(void)
 {
-	int i, j;
+	int i;
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
@@ -374,18 +369,18 @@ labelvmstat(void)
 	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
 		"    Calls     hits    %%     hits     %%");
-	mvprintw(DISKROW, DISKCOL, "Discs");
-	mvprintw(DISKROW + 1, DISKCOL, "seeks");
-	mvprintw(DISKROW + 2, DISKCOL, "xfers");
-	mvprintw(DISKROW + 3, DISKCOL, "bytes");
-	mvprintw(DISKROW + 4, DISKCOL, "%%busy");
-	j = 0;
-	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
-		if (dk_select[i]) {
-			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-				" %4.4s", dr_name[j]);
-			j++;
-		}
+	mvprintw(DISKROW, DISKCOL, "Discs:");
+	if (disk_horiz) {
+		mvprintw(DISKROW + 1, DISKCOL + 1, "seeks");
+		mvprintw(DISKROW + 2, DISKCOL + 1, "xfers");
+		mvprintw(DISKROW + 3, DISKCOL + 1, "bytes");
+		mvprintw(DISKROW + 4, DISKCOL + 1, "%%busy");
+	} else {
+		mvprintw(DISKROW, DISKCOL + 1 + 1 * DISKCOLWIDTH, "seeks");
+		mvprintw(DISKROW, DISKCOL + 1 + 2 * DISKCOLWIDTH, "xfers");
+		mvprintw(DISKROW, DISKCOL + 1 + 3 * DISKCOLWIDTH, "bytes");
+		mvprintw(DISKROW, DISKCOL + 1 + 4 * DISKCOLWIDTH, "%%busy");
+	}
 	for (i = 0; i < nintr; i++) {
 		if (intrloc[i] == 0)
 			continue;
@@ -414,8 +409,15 @@ showvmstat(void)
 {
 	float f1, f2;
 	int psiz, inttotal;
-	int i, l, c;
+	int i, l, r, c;
 	static int failcnt = 0;
+	static int relabel = 0;
+	static int last_disks = 0;
+
+	if (relabel) {
+		labelvmstat();
+		relabel = 0;
+	}
 
 	if (state == TIME) {
 		dkswap();
@@ -547,13 +549,49 @@ showvmstat(void)
 	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 16, 5);
 	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 21, 5);
 	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 26, 6);
-	mvprintw(DISKROW, DISKCOL + 5, "                              ");
-	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
-		if (dk_select[i]) {
-			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-				" %4.4s", dr_name[i]);
-			dinfo(i, ++c);
+	for (l = 0, i = 0, r = DISKROW, c = DISKCOL; i < dk_ndrive; i++) {
+		if (!dk_select[i])
+			continue;
+		if (disk_horiz)
+			c += DISKCOLWIDTH;
+		else
+			r++;
+		if (c + DISKCOLWIDTH > DISKCOLEND) {
+			if (disk_horiz && LINES - 1 - DISKROW >
+					(DISKCOLEND - DISKCOL) / DISKCOLWIDTH) {
+				disk_horiz = 0;
+				relabel = 1;
+			}
+			break;
 		}
+		if (r >= LINES - 1) {
+			if (!disk_horiz && LINES - 1 - DISKROW <
+					(DISKCOLEND - DISKCOL) / DISKCOLWIDTH) {
+				disk_horiz = 1;
+				relabel = 1;
+			}
+			break;
+		}
+		l++;
+
+		dinfo(i, r, c);
+	}
+	/* blank out if we lost any disks */
+	for (i = l; i < last_disks; i++) {
+		int j;
+		if (disk_horiz)
+			c += DISKCOLWIDTH;
+		else
+			r++;
+		for (j = 0; j < 5; j++) {
+			mvprintw(r, c, "%*s", DISKCOLWIDTH, "");
+			if (disk_horiz)
+				r++;
+			else
+				c += DISKCOLWIDTH;
+		}
+	}
+	last_disks = l;
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
 	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 9, 9);
 #define nz(x)	((x) ? (x) : 1)
@@ -744,23 +782,29 @@ copyinfo(struct Info *from, struct Info *to)
 }
 
 static void
-dinfo(int dn, int c)
+dinfo(int dn, int r, int c)
 {
 	double atime;
+#define ADV if (disk_horiz) r++; else c += DISKCOLWIDTH
 
-	c = DISKCOL + c * 5;
+	mvprintw(r, c, "%*.*s", DISKCOLWIDTH, DISKCOLWIDTH, dr_name[dn]);
+	ADV;
+
+	putint((int)(cur.dk_seek[dn]/etime+0.5), r, c, DISKCOLWIDTH);
+	ADV;
+	putint((int)((cur.dk_rxfer[dn]+cur.dk_wxfer[dn])/etime+0.5),
+	    r, c, DISKCOLWIDTH);
+	ADV;
+	puthumanint((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / etime + 0.5,
+		    r, c, DISKCOLWIDTH);
+	ADV;
 
 	/* time busy in disk activity */
-	atime = (double)cur.dk_time[dn].tv_sec +
-		((double)cur.dk_time[dn].tv_usec / (double)1000000);
-
-	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
-	putint((int)((float)(cur.dk_rxfer[dn]+cur.dk_wxfer[dn])/etime+0.5),
-	    DISKROW + 2, c, 5);
-	puthumanint((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / etime + 0.5,
-		    DISKROW + 3, c, 5);
-	if (atime*100.0/etime >= 100)
-		putint(100, DISKROW + 4, c, 5);
+	atime = cur.dk_time[dn].tv_sec + cur.dk_time[dn].tv_usec / 1000000.0;
+	atime = atime * 100.0 / etime;
+	if (atime >= 100)
+		putint(100, r, c, DISKCOLWIDTH);
 	else
-		putfloat(atime*100.0/etime, DISKROW + 4, c, 5, 1, 1);
+		putfloat(atime, r, c, DISKCOLWIDTH, 1, 1);
+#undef ADV
 }
