@@ -266,11 +266,21 @@ import (argc, argv)
 	client_import_setup (repository);
 	err = import_descend (message, argv[1], argc - 2, argv + 2);
 	client_import_done ();
+	if (message)
+	    free (message);
+	free (repository);
+	free (vbranch);
+	free (vhead);
 	send_to_server ("import\012", 0);
 	err += get_responses_and_close ();
 	return err;
     }
 #endif
+
+    if (!safe_location ())
+    {
+	error (1, 0, "attempt to import the repository");
+    }
 
     /*
      * Make all newly created directories writable.  Should really use a more
@@ -1057,7 +1067,14 @@ add_rcs_file (message, rcs, user, add_vhead, key_opt,
        stat the file before opening it. -twp */
 
     if (CVS_LSTAT (userfile, &sb) < 0)
-	error (1, errno, "cannot lstat %s", userfile);
+    {
+	/* not fatal, continue import */
+	if (add_logfp != NULL)
+	    fperrmsg (add_logfp, 0, errno,
+			  "ERROR: cannot lstat file %s", userfile);
+	error (0, errno, "cannot lstat file %s", userfile);
+	goto read_error;
+    }
     file_type = sb.st_mode & S_IFMT;
 
     fpuser = NULL;
@@ -1205,12 +1222,18 @@ add_rcs_file (message, rcs, user, add_vhead, key_opt,
 		    case S_IFREG: break;
 		    case S_IFCHR:
 		    case S_IFBLK:
+#ifdef HAVE_ST_RDEV
 			if (fprintf (fprcs, "special\t%s %lu;\012",
 				     (file_type == S_IFCHR
 				      ? "character"
 				      : "block"),
 				     (unsigned long) sb.st_rdev) < 0)
 			    goto write_error;
+#else
+			error (0, 0,
+"can't import %s: unable to import device files on this system",
+userfile);
+#endif
 			break;
 		    default:
 			error (0, 0,
@@ -1256,12 +1279,18 @@ add_rcs_file (message, rcs, user, add_vhead, key_opt,
 			case S_IFREG: break;
 			case S_IFCHR:
 			case S_IFBLK:
+#ifdef HAVE_ST_RDEV
 			    if (fprintf (fprcs, "special\t%s %lu;\012",
 					 (file_type == S_IFCHR
 					  ? "character"
 					  : "block"),
 					 (unsigned long) sb.st_rdev) < 0)
 				goto write_error;
+#else
+			    error (0, 0,
+"can't import %s: unable to import device files on this system",
+userfile);
+#endif
 			    break;
 			default:
 			    error (0, 0,
