@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.254 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.255 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -571,3 +571,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	cvs(1): upgrade to 1.11.11 [itojun 20040102]
 	etc/release:  Create & install as part of "make build",
 		based on work by Hubert Feyrer.  [lukem 20040104]
+	rc(8): implement "one" prefix, to skip the rc.conf(5) test yet
+		perform all of the other checks.  [lukem 20040106]
+
