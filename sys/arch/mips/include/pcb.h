@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 2002/11/30 01:49:18 simonb Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16 2002/11/30 22:50:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,8 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS_REG_H_
-#define	_MIPS_REG_H_
+#ifndef _MIPS_PCB_H_
+#define	_MIPS_PCB_H_
 
 #include <mips/reg.h>
 
@@ -70,4 +70,4 @@ struct md_coredump {
 #ifdef _KERNEL
 #define	PCB_FSR(pcb)	((pcb)->pcb_fpregs.r_regs[FSR - FPBASE])
 #endif
-#endif /*_MIPS_REG_H_*/
+#endif /*_MIPS_PCB_H_*/
