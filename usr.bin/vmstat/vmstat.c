@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.61 2000/03/27 17:03:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.61 2000/03/27 17:03:27 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -1142,7 +1142,8 @@ hist_dodump(histp)
 			}
 			fn[fnlen] = '\0';
 
-			printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
+			printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
+			    (long int)e->tv.tv_usec);
 			printf("%s#%ld: ", fn, e->call); 
 			printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			printf("\n");

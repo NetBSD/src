@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.8 1999/09/10 03:26:49 simonb Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.9 2000/03/27 17:07:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.8 1999/09/10 03:26:49 simonb Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.9 2000/03/27 17:07:23 kleink Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif
 
 #include "globals.h"
@@ -190,7 +190,8 @@ again:
 
 		if (trace) {
 			fprintf(fd, "readmsg: wait %ld.%6ld at %s\n",
-				rwait.tv_sec, rwait.tv_usec, date());
+			    (long int)rwait.tv_sec, (long int)rwait.tv_usec,
+			    date());
 			/* Notice a full disk, as we flush trace info.
 			 * It is better to flush periodically than at
 			 * every line because the tracing consists of bursts
