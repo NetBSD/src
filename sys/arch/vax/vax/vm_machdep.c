@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.8 1995/03/08 00:50:13 cgd Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.9 1995/03/09 12:05:32 mycroft Exp $       */
 
 #undef SWDEBUG
 /*
@@ -239,7 +239,7 @@ idle:
 /* Should check that values is in bounds XXX */
 copyinstr(from, to, maxlen, lencopied)
 void *from, *to;
-u_int *lencopied,maxlen;
+size_t *lencopied,maxlen;
 {
 	u_int i;
 	char *gfrom=from, *gto=to;
@@ -257,7 +257,7 @@ ok:
 /* Should check that values is in bounds XXX */
 copyoutstr(from, to, maxlen, lencopied)
 void *from, *to;
-u_int *lencopied,maxlen;
+size_t *lencopied,maxlen;
 {
 	u_int i;
 	char *gfrom=from, *gto=to;

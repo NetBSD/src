@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.50 1995/03/08 01:21:32 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.51 1995/03/09 12:05:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -975,7 +975,7 @@ symlink(p, uap, retval)
 	struct nameidata nd;
 
 	MALLOC(path, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
-	if (error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL))
+	if (error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, (size_t *)0))
 		goto out;
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), p);
 	if (error = namei(&nd))

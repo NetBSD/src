@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.22 1994/12/24 13:25:48 cgd Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.23 1995/03/09 12:05:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -321,7 +321,8 @@ lkmioctl(dev, cmd, data, flag)
 			 * Copy name and lookup id from all loaded
 			 * modules.  May fail.
 			 */
-		 	if (err = copyinstr(unloadp->name, istr, MAXLKMNAME-1, NULL))
+		 	if (err = copyinstr(unloadp->name, istr, MAXLKMNAME-1,
+			    (size_t *)0))
 				break;
 
 			/*
@@ -372,7 +373,7 @@ lkmioctl(dev, cmd, data, flag)
 			 * Copy name and lookup id from all loaded
 			 * modules.
 			 */
-		 	copystr(statp->name, istr, MAXLKMNAME-1, NULL);
+		 	copystr(statp->name, istr, MAXLKMNAME-1, (size_t *)0);
 			/*
 			 * look up id...
 			 */
@@ -418,7 +419,7 @@ lkmioctl(dev, cmd, data, flag)
 		copystr(curp->private.lkm_any->lkm_name, 
 			  statp->name,
 			  MAXLKMNAME - 2,
-			  NULL);
+			  (size_t *)0);
 
 		break;
 

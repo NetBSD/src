@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.7 1995/03/08 01:34:50 cgd Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.8 1995/03/09 12:05:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	struct vnode *lowerrootvp, *vp;
 	struct vnode *nullm_rootvp;
 	struct null_mount *xmp;
-	u_long size;
+	size_t size;
 
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount(mp = %x)\n", mp);

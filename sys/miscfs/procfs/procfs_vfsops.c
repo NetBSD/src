@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.22 1995/01/18 09:34:31 mycroft Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.23 1995/03/09 12:05:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -68,7 +68,7 @@ procfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	u_int size;
+	size_t size;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");

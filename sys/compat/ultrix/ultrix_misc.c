@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.9 1995/01/18 06:56:34 mellon Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.10 1995/03/09 12:06:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -316,7 +316,8 @@ sun_mount(p, uap, retval)
 		nflags |= MNT_UPDATE;
 	uap->flags = nflags;
 
-	if (error = copyinstr((caddr_t)uap->type, fsname, sizeof fsname, (u_int *)0))
+	if (error = copyinstr((caddr_t)uap->type, fsname, sizeof fsname,
+	    (size_t *)0))
 		return (error);
 
 	if (strcmp(fsname, "4.2") == 0) {

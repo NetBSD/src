@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.24 1995/03/08 01:21:30 cgd Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.25 1995/03/09 12:05:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -588,7 +588,7 @@ setlogin(p, uap, retval)
 		return (error);
 	error = copyinstr((caddr_t) SCARG(uap, namebuf),
 	    (caddr_t) p->p_pgrp->pg_session->s_login,
-	    sizeof (p->p_pgrp->pg_session->s_login) - 1, NULL);
+	    sizeof (p->p_pgrp->pg_session->s_login) - 1, (size_t *)0);
 	if (error == ENAMETOOLONG)
 		error = EINVAL;
 	return (error);

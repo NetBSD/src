@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.41 1994/12/17 19:22:16 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.42 1995/03/09 12:06:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -183,7 +183,7 @@ sunos_mount(p, uap, retval)
 	SCARG(uap, flags) = nflags;
 
 	if (error = copyinstr((caddr_t)SCARG(uap, type), fsname,
-	    sizeof fsname, (u_int *)0))
+	    sizeof fsname, (size_t *)0))
 		return (error);
 
 	if (strcmp(fsname, "4.2") == 0) {

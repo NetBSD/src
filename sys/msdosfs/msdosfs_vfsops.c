@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.27 1995/03/08 01:49:37 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.28 1995/03/09 12:06:04 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -84,7 +84,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args args; /* will hold data from mount request */
 	struct msdosfsmount *pmp; /* msdosfs specific mount control block */
-	u_long size;
+	size_t size;
 	int error, flags;
 	mode_t accessmode;
 
