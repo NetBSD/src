@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.2 1999/11/14 02:15:50 thorpej Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.3 2000/02/01 18:33:22 soren Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -65,6 +65,7 @@ com_pnpbios_match(parent, match, aux)
 
 	if (strcmp(aa->idstr, "PNP0500") &&
 	    strcmp(aa->idstr, "PNP0501") &&
+	    strcmp(aa->idstr, "PNP0510") &&
 	    strcmp(aa->idstr, "PNP0511"))
 		return (0);
 
