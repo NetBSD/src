@@ -5,8 +5,8 @@ SRCS = amq.c amq_clnt.c misc_rpc.c
 CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-DARCH_REP=\"${MACHINE}\"
-CFLAGS+=-DOS_REP=\"netbsd\"
-CFLAGS+=-DOS_HDR=\"os-netbsd.h\"
+CFLAGS+=-DOS_REP=\"${OS}\"
+CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc
 .PATH: ${.CURDIR}/../amd

@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: os-bsd44.h,v 1.1 1993/11/27 21:18:58 mycroft Exp $
+ * $Id: os-bsd44.h,v 1.2 1993/11/27 21:38:37 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -102,12 +102,20 @@
  * How to copy an address into an NFS filehandle
  */
 #undef NFS_SA_DREF
+#ifndef __NetBSD__
 #define	NFS_SA_DREF(dst, src) { \
 		(dst).addr = (struct sockaddr *) (src); \
 		(dst).addrlen = sizeof(*src); \
 		(dst).sotype = SOCK_DGRAM; \
 		(dst).proto = 0; \
 	}
+#else /* __NetBSD__ */
+#define	NFS_SA_DREF(dst, src) { \
+		(dst).addr = (struct sockaddr *) (src); \
+		(dst).sotype = SOCK_DGRAM; \
+		(dst).proto = 0; \
+	}
+#endif /* __NetBSD__ */
 
 /*
  * Byte ordering
@@ -149,7 +157,9 @@ XXX - Probably no hope of running Amd on this machine!
 #define	MNTOPT_SOFT	"soft"		/* soft mount */
 #define	MNTOPT_INTR	"intr"		/* interrupts allowed */
 
+#ifndef __NetBSD__
 #define NFSMNT_HOSTNAME	0		/* hostname on 4.4 is not optional */
+#endif
 
 struct mntent {
 	char	*mnt_fsname;	/* name of mounted file system */
