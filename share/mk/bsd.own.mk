@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.284 2002/04/10 15:05:45 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.285 2002/04/12 05:08:53 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -110,6 +110,7 @@ CONFIG=		${TOOLDIR}/bin/nbconfig
 CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen
 CTAGS=		${TOOLDIR}/bin/nbctags
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
+ELF2ECOFF=	${TOOLDIR}/bin/nbmips-elf2ecoff
 EQN=		${TOOLDIR}/bin/nbeqn
 GENCAT=		${TOOLDIR}/bin/nbgencat
 #GRIND=		${TOOLDIR}/bin/nbvgrind -f
