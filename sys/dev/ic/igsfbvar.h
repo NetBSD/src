@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.6 2003/05/10 16:20:23 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.7 2003/05/11 03:20:09 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -95,11 +95,18 @@ struct igsfb_devconfig {
 	int dc_hwflags;
 #define IGSFB_HW_BSWAP			0x1 /* endianness mismatch */
 #define IGSFB_HW_BE_SELECT		0x2 /* big endian magic (cyberpro) */
+#define IGSFB_HW_TEXT_CURSOR		0x4 /* do text cursor in hardware */
 
 /* do we need to do bswap in software? */
 #define IGSFB_HW_SOFT_BSWAP(dc)						\
 	((((dc)->dc_hwflags) & (IGSFB_HW_BSWAP | IGSFB_HW_BE_SELECT))	\
 		== IGSFB_HW_BSWAP)
+
+	int dc_nscreens;		/* can do only a single screen */
+
+	int dc_blanked;			/* screen is currently blanked */
+	int dc_curenb;			/* cursor sprite enabled */
+	int dc_mapped;			/* currently in mapped mode */
 
 	struct rasops_info dc_ri;
 
@@ -108,11 +115,6 @@ struct igsfb_devconfig {
 
 	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
 	u_int16_t dc_bexpand[256];
-
-	int dc_nscreens;		/* can do only a single screen */
-
-	int dc_blanked;			/* screen is currently blanked */
-	int dc_curenb;			/* cursor sprite enabled */
 };
 
 
