@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.10 1996/12/05 01:25:37 cgd Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.11 1997/02/13 00:08:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -153,7 +153,8 @@ pdq_eisa_subprobe(
 
 static void
 pdq_eisa_devinit(
-    pdq_softc_t *sc)
+    pdq_softc_t *sc,
+    pdq_uint16_t ioaddr)
 {
     pdq_uint8_t data;
     pdq_bus_t tag;
@@ -168,8 +169,8 @@ pdq_eisa_devinit(
      * Do the standard initialization for the DEFEA registers.
      */
     PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_FUNCTION_CTRL, 0x23);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (sc->sc_iobase >> 8) & 0xF0);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (sc->sc_iobase >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (ioaddr >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (ioaddr >> 8) & 0xF0);
     PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_SLOT_CTRL, 0x01);
     data = PDQ_OS_IORD_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
 #if defined(PDQ_IOMAPPED)
@@ -298,7 +299,7 @@ pdq_eisa_attach(
 
     eisa_reg_end(ed);
 
-    pdq_eisa_devinit(sc);
+    pdq_eisa_devinit(sc, iospace->addr);
     sc->sc_pdq = pdq_initialize(PDQ_BUS_EISA, sc->sc_membase,
 				sc->sc_if.if_name, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFEA);
@@ -404,7 +405,7 @@ pdq_eisa_attach(
 
     sc->sc_iobase = ia->ia_iobase;
 
-    pdq_eisa_devinit(sc);
+    pdq_eisa_devinit(sc, ia->ia_iobase);
     sc->sc_pdq = pdq_initialize(PDQ_BUS_EISA,
 				(pdq_bus_memaddr_t) ISA_HOLE_VADDR(ia->ia_maddr),
 				sc->sc_if.if_name, sc->sc_if.if_unit,
@@ -509,7 +510,7 @@ pdq_eisa_attach(
 	return;
     }
 #endif
-    pdq_eisa_devinit(sc);
+    pdq_eisa_devinit(sc, EISA_SLOT_ADDR(ea->ea_slot));
     sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFEA);
