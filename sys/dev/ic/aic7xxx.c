@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.38 2000/01/26 06:04:38 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.39 2000/01/26 06:17:59 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2588,8 +2588,6 @@ ahc_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->xs_control;
-	if (fromqueue)
-		flags &= ~XS_CTL_NOSLEEP;
 	if (!(scb = ahc_get_scb(ahc, flags))) {
 #if defined(__NetBSD__)			/* XXX */
 		/*
