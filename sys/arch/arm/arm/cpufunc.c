@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.45 2002/05/22 19:06:23 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.46 2002/06/07 18:25:28 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -906,7 +906,7 @@ set_cpufuncs()
 	}
 #endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
-	if (cputype == CPU_ID_80321) {
+	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600) {
 		i80321_icu_init();
 
 		/*
