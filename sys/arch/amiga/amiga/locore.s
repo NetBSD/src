@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 1997/09/29 20:52:05 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.92.2.1 1998/09/30 01:51:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -504,7 +504,7 @@ _DraCoLev2intr:
 	addql	#1,_intrcnt+32		| add another system clock interrupt
 
 Ldraciaend:
-	moveml	sp@+,d0/d1/a0/d1
+	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
