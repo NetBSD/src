@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.3 2002/08/26 10:08:02 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.4 2002/08/30 13:54:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,6 +158,8 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
 	LDC32(SH5_CONREG_SR_BL, r4)
 	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
 	ori	r3, SH5_PTEH_V, r3
+	addz.l	r2, r63, r2		/* Zero-extend PTEH */
+	addz.l	r3, r63, r3		/* Zero-extend PTEL */
 	or	r4, r5, r4		/* Block exceptions */
 	putcon	r4, sr
 
@@ -224,6 +226,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 	 * TLBs. This avoids searching all 64 entries in both TLBs.
 	 */
 	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
+	addz.l	r2, r63, r2		/* Zero-extend the PTEH */
 
 	pta/u	1f, tr1			/* Pre-load jump targets */
 	pta/u	2f, tr2
@@ -356,7 +359,8 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
 	LEAF(Ltlbmiss_dotrap, r3)
 	ptabs/u	r2, tr1			/* Stash the return address */
 	ptabs/u	r3, tr0
-	addz.l	r1, r63, r1		/* Ensure upper 32-bit of PTEL clear */
+	add.l	r0, r63, r0		/* Sign-extend PTEH */
+	add.l	r1, r63, r1		/* Sign-extend PTEL */
 
 	/* For "write" misses, verify the page is actually writable */
 
@@ -404,6 +408,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
 	ori	r0, SH5_PTEH_V, r0	/* Ensure mapping is Valid */
 	getcon	ctc, r2			/* Fetch free-running counter */
 	pta/l	3f, tr0
+	shlri	r2, 2, r2		/* The 2 LSBs tend not to be random */
 	andi	r2, 0x3f, r2		/* Generate random TLB index */
 	bne/l	r2, r63, tr0		/* Don't trash KSEG0 TLB slot! */
 	addi	r2, 1, r2		/* FIX ME! Overloads TLB slot 1 */
