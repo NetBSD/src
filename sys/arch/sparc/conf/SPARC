@@ -1,19 +1,22 @@
-# from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.6 1994/05/22 23:13:51 deraadt Exp $
-# SPARCstation 1, 1+, 2, etc.
+# $Id: SPARC,v 1.6.2.1 1994/08/01 19:05:26 cgd Exp $
 
 include	"std.sparc"
+
+# Runs on Sun4c machines: SS1, SS1+, SS2, IPC, IPX, SLC, ELC
+options		"SUN4C"
 
 # obsolete timezone spec
 options               TIMEZONE=480, DST=1
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options		DEBUG, DIAGNOSTIC	# extra kernel debugging
+#options	DEBUG, DIAGNOSTIC	# extra kernel debugging
 options		KTRACE			# system call tracing support
-options		KGDB			# support for kernel gdb
-options		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
+#options	KGDB			# support for kernel gdb
+#options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
+options		SYSVMSG,SYSVSEM,SYSVSHM
+options		"COMPAT_09"
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
@@ -37,10 +40,12 @@ options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options	EON
 options		COMPAT_43
 
+options		LKM
+
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
 
-config		vmunix	root on sd0 swap on sd0 and sd1 and sd2 and sd3
+config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
 dma*	at sbus0 slot ? offset ?
 esp*	at sbus0 slot ? offset ?	# nb., esp is a `scsi'
