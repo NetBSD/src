@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.upgrutils,v 1.2 1995/10/09 02:41:32 chopps Exp $
+#	$Id: dot.upgrutils,v 1.3 1997/05/14 22:19:51 is Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
@@ -48,7 +48,16 @@ Cleanup()
 	echo	"Done."
 
 	echo	""
-	echo	"All that's left to do now is to install a new NetBSD kernel"
-	echo	"on your hard disk.  You should now halt your machine using"
-	echo	"the 'halt' command."
+	echo -n	"Copying the kernel..."
+	cp /netbsd $upgrade_dir/netbsd
+	echo	"Done."
+	echo -n "Installing boot block..."
+	read rdev rest < /mnt/etc/fstab
+	/mnt/usr/sbin/installboot /mnt/usr/mdec/xxboot `echo $rdev | sed -e 's^/dev/^/dev/r^'`
+	echo    " done."
+
+        echo    "" 
+        echo    "You should now halt your machine using the 'halt' command."  
+        echo    "Once the machine is halted, reboot it."
+
 }
