@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.2 1995/01/26 23:28:11 gwr Exp $
+#	$Id: MAKEDEV,v 1.3 1995/07/07 15:46:44 gwr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -49,8 +49,8 @@
 # Call units:
 # Special purpose devices:
 #	bwtwo*
-#	cgthree*
-#	cgsix*
+#	cgtwo*
+#	cgfour*
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -79,7 +79,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh MAKEDEV std sd0 sd1 pty0
+	sh MAKEDEV std sd0 sd1 sd2 sd3 st0 st1 pty0
 	;;
 
 std)
@@ -115,6 +115,10 @@ bpf*)
 	mk bpf$unit c 36 $unit 600
 	;;
 
+tun*)
+	mk tun$unit c 24 $unit 600
+	;;
+
 pty*)
 	case $unit in
 	0) offset=0 name=p;;
@@ -139,11 +143,12 @@ pty*)
 	done
 	;;
 
-sd*|xy*|vnd*)
+cd*|sd*|xy*|vnd*)
 	case $arg in
+	  cd*) name=cd; blk=18; chr=58;;
 	  sd*) name=sd; blk=7; chr=17;;
 	  xy*) name=xy; blk=3; chr=9 ;;
-	  vnd*) name=vnd; blk=5; chr=19;
+	  vnd*) name=vnd; blk=5; chr=19;;
 	esac
 	case $unit in
 	  0|1|2|3|4) offset=`expr $unit \* 8`;;
@@ -160,6 +165,30 @@ sd*|xy*|vnd*)
 		mk r$name$unit$1 c $chr $minor 640 operator
 	)
 	done
+	;;
+
+st*)
+	name=st; blk=11; chr=18;
+	case $unit in
+	  0|1|2|3) offset=`expr $unit \* 16`;;
+	  *) echo bad unit for $name in: $arg;;
+	esac
+	mk   r$name$unit c $chr `expr $offset + 0`
+	mk  nr$name$unit c $chr `expr $offset + 1`
+	mk  er$name$unit c $chr `expr $offset + 2`
+	mk enr$name$unit c $chr `expr $offset + 3`
+	;;
+
+bwtwo*)
+	mk bwtwo$unit c 27 $unit
+	;;
+
+cgtwo*)
+	mk cgtwo$unit c 31 $unit
+	;;
+
+cgfour*)
+	mk cgfour$unit c 39 $unit
 	;;
 
 local)
