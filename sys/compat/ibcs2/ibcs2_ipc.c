@@ -127,6 +127,7 @@ ibcs2_msgsys(p, uap, retval)
 	int *retval;
 {
 	switch (SCARG(uap, which)) {
+#ifdef SYSVMSG
 	case 0:				/* msgget */
 		SCARG(uap, which) = 1;
 		return compat_10_msgsys(p, uap, retval);
@@ -163,6 +164,7 @@ ibcs2_msgsys(p, uap, retval)
 	case 3:				/* msgsnd */
 		SCARG(uap, which) = 2;
 		return compat_10_msgsys(p, uap, retval);
+#endif
 	default:
 		return EINVAL;
 	}
@@ -247,6 +249,7 @@ ibcs2_semsys(p, uap, retval)
 {
 	int error;
 
+#ifdef SYSVSEM
 	switch (SCARG(uap, which)) {
 	case 0:					/* semctl */
 		switch(SCARG(uap, a4)) {
@@ -295,6 +298,7 @@ ibcs2_semsys(p, uap, retval)
 	case 2:				/* semop */
 		return compat_10_semsys(p, uap, retval);
 	}
+#endif
 	return EINVAL;
 }
 
@@ -359,6 +363,7 @@ ibcs2_shmsys(p, uap, retval)
 {
 	int error;
 
+#ifdef SYSVSHM
 	switch (SCARG(uap, which)) {
 	case 0:						/* shmat */
 		return compat_10_shmsys(p, uap, retval);
@@ -410,5 +415,6 @@ ibcs2_shmsys(p, uap, retval)
 	case 3:						/* shmget */
 		return compat_10_shmsys(p, uap, retval);
 	}
+#endif
 	return EINVAL;
 }
