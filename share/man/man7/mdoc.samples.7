@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.29 2000/09/24 09:52:26 kleink Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.30 2001/05/06 12:03:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,9 @@ formatting
 package for
 .Xr troff 1 .
 Its predecessor, the
-.Xr \-man 7
-package,
+.Nm -man
+package (see
+.Xr groff_man 7 ) ,
 addressed page layout leaving the
 manipulation of fonts and other
 typesetting details to the individual author.
@@ -311,7 +312,7 @@ manual
 .Xr mdoc 7 .
 This is a technical
 .Em faux pas
-as almost all of the macros in 
+as almost all of the macros in
 .Nm \-mdoc
 are parsed, but as it was cumbersome to constantly refer to macros
 as being callable and being able to call other macros,
@@ -343,9 +344,9 @@ of passing spaces in between quotes by reassigning individual
 arguments before parsing was fairly expensive speed wise
 and space wise to implement in all the macros for
 .Tn AT&T
-.Xr troff .
+.Xr troff 1 .
 It is not expensive for
-.Xr groff
+.Xr groff 1
 but for the sake of portability, has been limited
 to the following macros which need
 it the most:
@@ -386,7 +387,7 @@ that is, a blank space preceded by the escape character
 This method may be used with any macro but has the side effect
 of interfering with the adjustment of text
 over the length of a line.
-.Xr Troff
+.Xr troff 1
 sees the hard space as if it were any other printable character and
 cannot split the string into blank or newline separated pieces as one
 would expect.
@@ -417,7 +418,7 @@ a newline boundary, see the
 .Sx BUGS
 section.
 .Ss Trailing Blank Space Characters
-.Xr Troff
+.Xr troff 1
 can be confused by blank space characters at the end of a line.
 It
 is a wise preventive measure to globally remove all blank spaces
@@ -617,7 +618,7 @@ In the first case,
 .Xr troff 1
 macros are themselves a type of command;
 the general syntax for a troff command is:
-.Bd -filled -offset indent
+.Bd -literal -offset indent
 \&.Va argument1 argument2 ... argument9
 .Ed
 .Pp
@@ -757,7 +758,7 @@ have nesting limitations.
 All content macros
 are capable of recognizing and properly handling punctuation,
 provided each punctuation character is separated by a leading space.
-If an request is given:
+If a request is given:
 .Pp
 .Dl \&.Li sptr, ptr),
 .Pp
@@ -781,7 +782,7 @@ default font distinguishing it from the strings in literal font.
 To remove the special meaning from a punctuation character
 escape it with
 .Ql \e& .
-.Xr Troff
+.Xr troff 1
 is limited as a macro language, and has difficulty
 when presented with a string containing
 a member of the mathematical, logical or
@@ -791,7 +792,7 @@ quotation set:
 .Ed
 .Pp
 The problem is that
-.Xr troff
+.Xr troff 1
 may assume it is supposed to actually perform the operation
 or evaluation suggested by the characters.  To prevent
 the accidental evaluation of these characters,
@@ -1045,7 +1046,9 @@ The
 .Ql \&.Fl
 macro is parsed and is callable.
 .Ss Functions (library routines)
-The .Fn macro is modeled on ANSI C conventions.
+The
+.Ql \&.Fn
+macro is modeled on ANSI C conventions.
 .Bd -literal
 Usage: .Fn [type] function [[type] parameters ... \*(Pu]
 .Ed
@@ -1532,14 +1535,14 @@ of them.
 .Bd -filled -offset indent
 .Bl -column "quote " "close " "open " "Enclose Stringx(in XX) " XXstringXX
 .Em " Quote	 Close	 Open	Function	Result"
-\&.Aq	.Ac	.Ao	Angle Bracket Enclosure	<string>
-\&.Bq	.Bc	.Bo	Bracket Enclosure	[string]
-\&.Dq	.Dc	.Do	Double Quote	``string''
-	.Ec	.Eo	Enclose String (in XX)	XXstringXX
-\&.Pq	.Pc	.Po	Parenthesis Enclosure	(string)
-\&.Ql			Quoted Literal	`st' or string
-\&.Qq	.Qc	.Qo	Straight Double Quote	"string"
-\&.Sq	.Sc	.So	Single Quote	`string'
+.It Li ".Aq	.Ac	.Ao" Ta No Angle Bracket Enclosure	<string>
+.It Li ".Bq	.Bc	.Bo" Ta No Bracket Enclosure	[string]
+.It Li ".Dq	.Dc	.Do" Ta No Double Quote	``string''
+.It Li ".Ec	.Eo	" Ta No Enclose String (in XX)	XXstringXX
+.It Li ".Pq	.Pc	.Po" Ta No Parenthesis Enclosure	(string)
+.It Li ".Ql		" Ta No Quoted Literal	`st' or string
+.It Li ".Qq	.Qc	.Qo" Ta No Straight Double Quote	"string"
+.It Li ".Sq	.Sc	.So" Ta No Single Quote	`string'
 .El
 .Ed
 .Pp
@@ -1556,11 +1559,11 @@ These macros expect the first argument to be the
 opening and closing strings respectively.
 .It Li \&.Ql
 The quoted literal macro behaves differently for
-.Xr troff
+.Xr troff 1
 than
-.Xr nroff .
+.Xr nroff 1 .
 If formatted with
-.Xr nroff ,
+.Xr nroff 1 ,
 a quoted literal is always quoted. If formatted with
 troff, an item is only quoted if the width
 of the item is less than three constant width characters.
@@ -1580,8 +1583,10 @@ The
 .Em is
 callable,
 performs the analogous suffix function.
-.It Li ".Ap
-The \&.Ap macro inserts an apostrophe and exits any special text modes,
+.It Li \&.Ap
+The
+.Ql \&.Ap
+macro inserts an apostrophe and exits any special text modes,
 continuing in
 .Li \&.No
 mode.
@@ -1736,7 +1741,7 @@ returns to its caller.
 (And not very predictably at the moment either.)
 The purpose is to allow trade names
 to be pretty printed in
-.Xr troff Ns / Ns Xr ditroff
+.Xr troff 1 Ns / Ns Ic ditroff
 output.
 .Ss Trade Names (or Acronyms and Type Names)
 The trade name macro is generally a small caps macro for
@@ -1884,7 +1889,7 @@ The
 macro can take up to nine arguments.
 It is parsed and but is not callable.
 .Bl -tag -width ".Sh SYNOPSIS"
-.It \&.Sh NAME
+.It Li \&.Sh NAME
 The
 .Ql \&.Sh NAME
 macro is mandatory.
@@ -1904,7 +1909,7 @@ name from the third item, which is the description.
 The
 description should be the most terse and lucid possible,
 as the space available is small.
-.It \&.Sh SYNOPSIS
+.It Li \&.Sh SYNOPSIS
 The
 .Sx SYNOPSIS
 section describes the typical usage of the
@@ -1963,13 +1968,13 @@ so a command line such as:
 .Dl ".Op Fl a | Fl b"
 .Pp
 will not go orbital.
-.Xr Troff
+.Xr troff 1
 normally interprets a \*(Ba as a special operator.
 See
 .Sx PREDEFINED STRINGS
 for a usable \*(Ba
 character in other situations.
-.It \&.Sh DESCRIPTION
+.It Li \&.Sh DESCRIPTION
 In most cases the first text in the
 .Sx DESCRIPTION
 section
@@ -1996,27 +2001,27 @@ to maintain consistency.
 They are listed in the order
 in which they would be used.
 .Bl -tag -width SYNOPSIS
-.It \&.Sh ENVIRONMENT
+.It Li \&.Sh ENVIRONMENT
 The
 .Sx ENVIRONMENT
 section should reveal any related
 environment
 variables and clues to their behavior and/or usage.
-.It \&.Sh EXAMPLES
+.It Li \&.Sh EXAMPLES
 There are several ways to create examples.
 See
 the
 .Sx EXAMPLES
 section below
 for details.
-.It \&.Sh FILES
+.It Li \&.Sh FILES
 Files which are used or created by the man page subject
 should be listed via the
 .Ql \&.Pa
 macro in the
 .Sx FILES
 section.
-.It \&.Sh SEE ALSO
+.It Li \&.Sh SEE ALSO
 References to other material on the man page topic and
 cross references to other relevant man pages should
 be placed in the
@@ -2032,7 +2037,7 @@ style references are not accommodated.
 .Pp
 It is recommended that the cross references are sorted on the section
 number, and then alphabetically on the names within a section.
-.It \&.Sh STANDARDS
+.It Li \&.Sh STANDARDS
 If the command, library function or file adheres to a
 specific implementation such as
 .St -p1003.2
@@ -2044,20 +2049,20 @@ command does not adhere to any standard, its history
 should be noted in the
 .Sx HISTORY
 section.
-.It \&.Sh HISTORY
+.It Li \&.Sh HISTORY
 Any command which does not adhere to any specific standards
 should be outlined historically in this section.
-.It \&.Sh AUTHORS
+.It Li \&.Sh AUTHORS
 Credits, if need be, should be placed here.
-.It \&.Sh DIAGNOSTICS
+.It Li \&.Sh DIAGNOSTICS
 Diagnostics from a command should be placed in this section.
-.It \&.Sh ERRORS
+.It Li \&.Sh ERRORS
 Specific error handling, especially from library functions
 (man page sections 2 and 3) should go here.
 The
 .Ql \&.Er
 macro is used to specify an errno.
-.It \&.Sh BUGS
+.It Li \&.Sh BUGS
 Blatant problems with the topic go here...
 .El
 .Pp
@@ -2066,11 +2071,11 @@ User specified
 sections may be added,
 for example, this section was set with:
 .Bd -literal -offset 14n
-\&.Sh PAGE LAYOUT MACROS
+\&.Sh PAGE STRUCTURE DOMAIN
 .Ed
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
-.It \&.Pp
+.It Li \&.Pp
 The
 .Ql \&.Pp
 paragraph command may
@@ -2221,14 +2226,14 @@ and is useful for preventing line breaks in the middle of options.
 In the example for the make command line arguments (see
 .Sx What's in a name ) ,
 the keep prevented
-.Xr nroff
+.Xr nroff 1
 from placing the
 flag and the argument
 on separate lines.
 (Actually, the option macro formerly prevented this from occurring,
 but was dropped when the decision (religious) was made to force
 right justified margins in
-.Xr troff
+.Xr troff 1
 as options in general look atrocious when spread across a sparse
 line.
 More work needs to be done with the keep macros, a
@@ -2286,7 +2291,11 @@ macro.
 Displays may be nested within lists, but may
 .Em not
 contain other displays; this also prohibits nesting
-of .D1 and .Dl one-line displays.
+of
+.Ql \&.D1
+and
+.Ql \&.Dl
+one-line displays.
 .Ql \&.Bd
 has the following syntax:
 .Pp
@@ -2317,7 +2326,7 @@ flag is read and displayed.
 Literal mode is
 asserted and tabs are set at 8 constant width character
 intervals, however any
-.Xr troff/ Ns Nm \-mdoc
+.Xr troff 1 Ns / Ns Nm \-mdoc
 commands in file will be processed.
 .It Fl offset Ar string
 If
@@ -2354,10 +2363,10 @@ aligns the block about two inches from
 the right side of the page.
 This macro needs
 work and perhaps may never do the right thing by
-.Xr troff .
+.Xr troff 1 .
 .El
 .El
-.It ".Ed"
+.It Li ".Ed"
 End-display.
 .El
 .Ss Tagged Lists and Columns
@@ -2497,7 +2506,9 @@ Here is the source text which produced the above example:
 \&.Bl -inset -offset indent
 \&.It Em Tag
 \&The tagged list (also called a tagged paragraph) is the
-\&most common type of list used in the Berkeley manuals.
+\&most common type of list used in the Berkeley manuals. Use a
+\&.Fl width
+\&attribute as described below.
 \&.It Em Diag
 \&Diag lists create section four diagnostic lists
 \&and are similar to inset lists except callable
@@ -2692,14 +2703,14 @@ as the collision of an argument name with an internal
 register or macro name.
 (A what?)
 A register is an arithmetic storage class for
-.Xr troff
+.Xr troff 1
 with a one or two character name.
 All registers internal to
 .Nm \-mdoc
 for
-.Xr troff
+.Xr troff 1
 and
-.Xr ditroff
+.Ic ditroff
 are two characters and
 of the form <upper_case><lower_case> such as
 .Ql \&Ar ,
@@ -2709,7 +2720,7 @@ or
 <upper or lower letter><digit> as
 .Ql \&C\&1 .
 And adding to the muddle,
-.Xr troff
+.Xr troff 1
 has its own internal registers all of which are either
 two lower case characters or a dot plus a letter or meta-character
 character.
@@ -2799,15 +2810,16 @@ If one or more files are involved
 may be bogus.
 If there is only one file, it should be accurate.
 The second line gives the argument count, the argument
-.Pq Ql \&Fl
+.Pq Li \&Fl
 and its length.
 If the length of an argument is two characters, the
 argument is tested to see if it is executable (unfortunately, any
 register which contains a non-zero value appears executable).
 The third line gives the space allotted for a class, and the
 class type.
-The problem here is the argument aC should not be
-executable.
+The problem here is the argument
+.Ql \&aC
+should not be executable.
 The four types of classes are string, executable, closing
 punctuation and opening punctuation.
 The last line shows the entire
@@ -2847,19 +2859,19 @@ Other diagnostics consist of usage statements and are self explanatory.
 The
 .Nm \-mdoc
 package does not need compatibility mode with
-.Xr groff .
+.Xr groff 1 .
 .Pp
 The package inhibits page breaks, and the headers and footers
 which normally occur at those breaks with
-.Xr nroff ,
+.Xr nroff 1 ,
 to make the manual more efficient for viewing on-line.
 At the moment,
-.Xr groff
+.Xr groff 1
 with
 .Fl T Ns Ar ascii
 does eject the imaginary remainder of the page at end of file.
 The inhibiting of the page breaks makes
-.Xr nroff Ns 'd
+.Xr nroff 1 Ns 'd
 files unsuitable for hardcopy.
 There is a register named
 .Ql \&cR
@@ -2903,7 +2915,7 @@ looks ridiculous if a line is in fill mode.
 .Pp
 The method used to prevent header and footer page
 breaks (other than the initial header and footer) when using
-.Xr nroff
+.Xr nroff 1
 occasionally places an unsightly partially filled line (blank)
 at the would be bottom of the page.
 .Pp
@@ -2946,13 +2958,13 @@ and certainly should be able to.
 .\" Not a pretty sight...
 .\" In a paragraph, a long parameter containing unpaddable spaces as
 .\" in the former example will cause
-.\" .Xr troff
+.\" .Xr troff 1
 .\" to break the line and spread
 .\" the remaining words out.
 .\" The latter example will adjust nicely to
 .\" justified margins, but may break in between an argument and its
 .\" declaration.
 .\" In
-.\" .Xr nroff
+.\" .Xr nroff 1
 .\" the right margin adjustment is normally ragged and the problem is
 .\" not as severe.
