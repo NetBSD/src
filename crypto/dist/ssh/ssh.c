@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh.c,v 1.11 2001/04/10 08:08:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.104 2001/03/08 21:42:32 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.108 2001/04/07 08:55:18 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -122,11 +123,8 @@ struct sockaddr_storage hostaddr;
  */
 volatile int received_window_change_signal = 0;
 
-/* Flag indicating whether we have a valid host private key loaded. */
-int host_private_key_loaded = 0;
-
 /* Host private key. */
-RSA *host_private_key = NULL;
+Key *host_private_key = NULL;
 
 /* Original real UID. */
 uid_t original_real_uid;
@@ -173,6 +171,9 @@ usage(void)
 	fprintf(stderr, "  -R listen-port:host:port   Forward remote port to local address\n");
 	fprintf(stderr, "              These cause %s to listen for connections on a port, and\n", __progname);
 	fprintf(stderr, "              forward them to the other side by connecting to host:port.\n");
+	fprintf(stderr, "  -D port     Dynamically forward local port to multiple remote addresses.\n");
+	fprintf(stderr, "              Allows SSH to act as an application-layer proxy.\n");
+	fprintf(stderr, "              Protocols Supported: SOCKS4\n");
 	fprintf(stderr, "  -C          Enable compression.\n");
 	fprintf(stderr, "  -N          Do not execute a shell or command.\n");
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
@@ -255,6 +256,15 @@ main(int ac, char **av)
 		if (setrlimit(RLIMIT_CORE, &rlim) < 0)
 			fatal("setrlimit failed: %.100s", strerror(errno));
 	}
+	/* Get user data. */
+	pw = getpwuid(original_real_uid);
+	if (!pw) {
+		log("You don't exist, go away!");
+		exit(1);
+	}
+	/* Take a copy of the returned structure. */
+	pw = pwcopy(pw);
+
 	/*
 	 * Use uid-swapping to give up root privileges for the duration of
 	 * option processing.  We will re-instantiate the rights when we are
@@ -262,7 +272,7 @@ main(int ac, char **av)
 	 * them when the port has been created (actually, when the connection
 	 * has been made, as we may need to create the port several times).
 	 */
-	temporarily_use_uid(original_real_uid);
+	temporarily_use_uid(pw);
 
 	/*
 	 * Set our umask to something reasonable, as some files are created
@@ -295,7 +305,7 @@ main(int ac, char **av)
 		opt = av[optind][1];
 		if (!opt)
 			usage();
-		if (strchr("eilcmpLRo", opt)) {	/* options with arguments */
+		if (strchr("eilcmpLRDo", opt)) {   /* options with arguments */
 			optarg = av[optind] + 2;
 			if (strcmp(optarg, "") == 0) {
 				if (optind >= ac - 1)
@@ -461,6 +471,12 @@ main(int ac, char **av)
 			}
 			add_local_forward(&options, fwd_port, buf, fwd_host_port);
 			break;
+
+		case 'D':
+			fwd_port = atoi(optarg);
+			add_local_forward(&options, fwd_port, "socks4", 0);
+			break;
+
 		case 'C':
 			options.compression = 1;
 			break;
@@ -535,15 +551,6 @@ main(int ac, char **av)
 		tty_flag = 0;
 	}
 
-	/* Get user data. */
-	pw = getpwuid(original_real_uid);
-	if (!pw) {
-		log("You don't exist, go away!");
-		exit(1);
-	}
-	/* Take a copy of the returned structure. */
-	pw = pwcopy(pw);
-
 	/*
 	 * Initialize "log" output.  Since we are the client all output
 	 * actually goes to stderr.
@@ -588,7 +595,7 @@ main(int ac, char **av)
 		restore_uid();
 
 		/* Switch to the original uid permanently. */
-		permanently_set_uid(original_real_uid);
+		permanently_set_uid(pw);
 
 		/* Execute rsh. */
 		rsh_connect(host, options.user, &command);
@@ -602,8 +609,7 @@ main(int ac, char **av)
 	ok = ssh_connect(host, &hostaddr, options.port,
 	    options.connection_attempts,
 	    original_effective_uid != 0 || !options.use_privileged_port,
-	    original_real_uid,
-	    options.proxy_command);
+	    pw, options.proxy_command);
 
 	/*
 	 * If we successfully made the connection, load the host private key
@@ -612,12 +618,8 @@ main(int ac, char **av)
 	 * privileges, because the file is only readable by root.
 	 */
 	if (ok && (options.protocol & SSH_PROTO_1)) {
-		Key k;
-		host_private_key = RSA_new();
-		k.type = KEY_RSA1;
-		k.rsa = host_private_key;
-		if (load_private_key(_PATH_HOST_KEY_FILE, "", &k, NULL))
-			host_private_key_loaded = 1;
+		host_private_key = key_load_private_type(KEY_RSA1,
+		    _PATH_HOST_KEY_FILE, "", NULL);
 	}
 	/*
 	 * Get rid of any extra privileges that we may have.  We will no
@@ -634,7 +636,7 @@ main(int ac, char **av)
 	 * process, read the private hostkey and impersonate the host.
 	 * OpenBSD does not allow ptracing of setuid processes.
 	 */
-	permanently_set_uid(original_real_uid);
+	permanently_set_uid(pw);
 
 	/*
 	 * Now that we are back to our own permissions, create ~/.ssh
@@ -676,12 +678,11 @@ main(int ac, char **av)
 	    tilde_expand_filename(options.user_hostfile2, original_real_uid);
 
 	/* Log into the remote system.  This never returns if the login fails. */
-	ssh_login(host_private_key_loaded, host_private_key,
-		  host, (struct sockaddr *)&hostaddr, original_real_uid);
+	ssh_login(host_private_key, host, (struct sockaddr *)&hostaddr, pw);
 
 	/* We no longer need the host private key.  Clear it now. */
-	if (host_private_key_loaded)
-		RSA_free(host_private_key);	/* Destroys contents safely */
+	if (host_private_key != NULL)
+		key_free(host_private_key);	/* Destroys contents safely */
 
 	exit_status = compat20 ? ssh_session2() : ssh_session();
 	packet_close();
@@ -934,9 +935,6 @@ ssh_session2_callback(int id, void *arg)
 
 	debug("client_init id %d arg %ld", id, (long)arg);
 
-	if (no_shell_flag)
-		goto done;
-
 	if (tty_flag) {
 		struct winsize ws;
 		char *cp;
@@ -999,15 +997,14 @@ ssh_session2_callback(int id, void *arg)
 	}
 	/* channel_callback(id, SSH2_MSG_OPEN_CONFIGMATION, client_init, 0); */
 
-done:
 	/* register different callback, etc. XXX */
 	packet_set_interactive(interactive);
 }
 
-int
-ssh_session2(void)
+static int
+ssh_session2_command(void)
 {
-	int window, packetmax, id;
+	int id, window, packetmax;
 	int in, out, err;
 
 	if (stdin_null_flag) {
@@ -1029,14 +1026,6 @@ ssh_session2(void)
 	if (!isatty(err))
 		set_nonblock(err);
 
-	/* XXX should be pre-session */
-	ssh_init_forwarding();
-
-	/* If requested, let ssh continue in the background. */
-	if (fork_after_authentication_flag)
-		if (daemon(1, 1) < 0)
-			fatal("daemon() failed: %.200s", strerror(errno));
-
 	window = CHAN_SES_WINDOW_DEFAULT;
 	packetmax = CHAN_SES_PACKET_DEFAULT;
 	if (!tty_flag) {
@@ -1048,34 +1037,32 @@ ssh_session2(void)
 	    window, packetmax, CHAN_EXTENDED_WRITE,
 	    xstrdup("client-session"), /*nonblock*/0);
 
+debug("channel_new: %d", id);
+
 	channel_open(id);
 	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION,
 	     ssh_session2_callback, (void *)0);
 
+	return id;
+}
+
+int
+ssh_session2(void)
+{
+	int id;
+
+	/* XXX should be pre-session */
+	ssh_init_forwarding();
+
+	id = no_shell_flag ? -1 : ssh_session2_command();
+
+	/* If requested, let ssh continue in the background. */
+	if (fork_after_authentication_flag)
+		if (daemon(1, 1) < 0)
+			fatal("daemon() failed: %.200s", strerror(errno));
+
 	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
 }
-
-#if 0
-int
-guess_identity_file_type(const char *filename)
-{
-	struct stat st;
-	Key *public;
-	int type = KEY_RSA1; /* default */
-
-	if (stat(filename, &st) < 0) {
-		/* ignore this key */
-		return KEY_UNSPEC;
-	}
-	public = key_new(type);
-	if (!load_public_key(filename, public, NULL)) {
-		/* ok, so we will assume this is 'some' key */
-		type = KEY_UNSPEC;
-	}
-	key_free(public);
-	return type;
-}
-#endif
 
 void
 load_public_identity_files(void)
@@ -1087,16 +1074,7 @@ load_public_identity_files(void)
 	for (i = 0; i < options.num_identity_files; i++) {
 		filename = tilde_expand_filename(options.identity_files[i],
 		    original_real_uid);
-		public = key_new(KEY_RSA1);
-		if (!load_public_key(filename, public, NULL)) {
-			key_free(public);
-			public = key_new(KEY_UNSPEC);
-			if (!try_load_public_key(filename, public, NULL)) {
-				debug("unknown identity file %s", filename);
-				key_free(public);
-				public = NULL;
-			}
-		}
+		public = key_load_public(filename, NULL);
 		debug("identity file %s type %d", filename,
 		    public ? public->type : -1);
 		xfree(options.identity_files[i]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.h,v 1.1.1.2 2001/04/10 07:14:22 itojun Exp $	*/
+/*	$NetBSD: tildexpand.h,v 1.2 2001/04/10 08:08:05 itojun Exp $	*/
 /*	$OpenBSD: tildexpand.h,v 1.2 2001/01/29 01:58:19 niklas Exp $	*/
 
 /*

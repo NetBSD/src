@@ -1,3 +1,4 @@
+/*	$NetBSD: deattack.c,v 1.6 2001/04/10 08:07:57 itojun Exp $	*/
 /*	$OpenBSD: deattack.c,v 1.13 2001/03/01 02:45:10 deraadt Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$NetBSD: cli.h,v 1.3 2001/04/10 08:07:56 itojun Exp $	*/
 /*	$OpenBSD: cli.h,v 1.4 2001/03/01 03:38:33 deraadt Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$NetBSD: sftp.c,v 1.5 2001/04/10 08:08:01 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -24,7 +25,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.11 2001/03/07 10:11:23 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.13 2001/04/08 20:52:55 deraadt Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -184,9 +185,9 @@ main(int argc, char **argv)
 		case 'b':
 			if (infile == stdin) {
 				infile = fopen(optarg, "r");
-				if (infile == NULL) 
+				if (infile == NULL)
 					fatal("%s (%s).", strerror(errno), optarg);
-			} else 
+			} else
 				fatal("Filename already specified.");
 			break;
 		case 'h':
@@ -198,7 +199,7 @@ main(int argc, char **argv)
 	if (optind == argc || argc > (optind + 1))
 		usage();
 
-	userhost = argv[optind];
+	userhost = xstrdup(argv[optind]);
 
 	if ((host = strchr(userhost, '@')) == NULL)
 		host = userhost;

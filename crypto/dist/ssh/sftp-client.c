@@ -1,3 +1,4 @@
+/*	$NetBSD: sftp-client.c,v 1.8 2001/04/10 08:08:00 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -29,7 +30,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.15 2001/03/19 10:52:51 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.16 2001/04/05 10:42:52 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -284,7 +285,7 @@ do_close(int fd_in, int fd_out, char *handle, u_int handle_len)
 
 
 static int
-do_lsreaddir(int fd_in, int fd_out, char *path, int printflag, 
+do_lsreaddir(int fd_in, int fd_out, char *path, int printflag,
     SFTP_DIRENT ***dir)
 {
 	Buffer msg;
@@ -370,7 +371,7 @@ do_lsreaddir(int fd_in, int fd_out, char *path, int printflag,
 				printf("%s\n", longname);
 
 			if (dir) {
-				*dir = xrealloc(*dir, sizeof(**dir) * 
+				*dir = xrealloc(*dir, sizeof(**dir) *
 				    (ents + 2));
 				(*dir)[ents] = xmalloc(sizeof(***dir));
 				(*dir)[ents]->filename = xstrdup(filename);

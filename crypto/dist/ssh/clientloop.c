@@ -1,3 +1,4 @@
+/*	$NetBSD: clientloop.c,v 1.7 2001/04/10 08:07:56 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -59,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.53 2001/03/06 01:08:27 millert Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.61 2001/04/08 11:27:33 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -73,6 +74,7 @@ RCSID("$OpenBSD: clientloop.c,v 1.53 2001/03/06 01:08:27 millert Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "key.h"
+#include "kex.h"
 #include "log.h"
 #include "readconf.h"
 #include "clientloop.h"
@@ -126,9 +128,14 @@ static u_long stdin_bytes, stdout_bytes, stderr_bytes;
 static u_int buffer_high;/* Soft max buffer size. */
 static int connection_in;	/* Connection to server (input). */
 static int connection_out;	/* Connection to server (output). */
+static int need_rekeying;	/* Set to non-zero if rekeying is requested. */
+static int session_closed = 0;	/* In SSH2: login session closed. */
 
 void	client_init_dispatch(void);
 int	session_ident = -1;
+
+/*XXX*/
+extern Kex *xxx_kex;
 
 /* Returns the user\'s terminal to normal mode if it had been put in raw mode. */
 
@@ -363,10 +370,10 @@ client_check_window_change(void)
 
 static void
 client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
-    int *maxfdp)
+    int *maxfdp, int rekeying)
 {
 	/* Add any selections by the channel mechanism. */
-	channel_prepare_select(readsetp, writesetp, maxfdp);
+	channel_prepare_select(readsetp, writesetp, maxfdp, rekeying);
 
 	if (!compat20) {
 		/* Read from the connection, unless our buffers are full. */
@@ -548,6 +555,15 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 				/* We have been continued. */
 				continue;
 
+			case 'R':
+				if (compat20) {
+					if (datafellows & SSH_BUG_NOREKEY)
+						log("Server does not support re-keying");
+					else
+						need_rekeying = 1;
+				}
+				continue;
+
 			case '&':
 				/* XXX does not work yet with proto 2 */
 				if (compat20)
@@ -725,7 +741,7 @@ client_process_output(fd_set * writeset)
 		}
 		/* Consume printed data from the buffer. */
 		buffer_consume(&stdout_buffer, len);
-		stdout_bytes += len; 
+		stdout_bytes += len;
 	}
 	/* Write buffered output to stderr. */
 	if (FD_ISSET(fileno(stderr), writeset)) {
@@ -743,7 +759,7 @@ client_process_output(fd_set * writeset)
 		}
 		/* Consume printed characters from the buffer. */
 		buffer_consume(&stderr_buffer, len);
-		stderr_bytes += len; 
+		stderr_bytes += len;
 	}
 }
 
@@ -762,7 +778,7 @@ client_process_output(fd_set * writeset)
 static void
 client_process_buffered_input_packets(void)
 {
-	dispatch_run(DISPATCH_NONBLOCK, &quit_pending, NULL);
+	dispatch_run(DISPATCH_NONBLOCK, &quit_pending, compat20 ? xxx_kex : NULL);
 }
 
 /* scan buf[] for '~' before sending data to the peer */
@@ -772,6 +788,17 @@ simple_escape_filter(Channel *c, char *buf, int len)
 {
 	/* XXX we assume c->extended is writeable */
 	return process_escapes(&c->input, &c->output, &c->extended, buf, len);
+}
+
+static void
+client_channel_closed(int id, void *arg)
+{
+	if (id != session_ident)
+		error("client_channel_closed: id %d != session_ident %d",
+		    id, session_ident);
+	session_closed = 1;
+	if (in_raw_mode)
+		leave_raw_mode();
 }
 
 /*
@@ -785,9 +812,8 @@ int
 client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int max_fd = 0;
 	double start_time, total_time;
-	int len;
+	int max_fd = 0, len, rekeying = 0;
 	char buf[100];
 
 	debug("Entering interactive session.");
@@ -838,6 +864,9 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		if (escape_char != -1)
 			channel_register_filter(session_ident,
 			    simple_escape_filter);
+		if (session_ident != -1)
+			channel_register_cleanup(session_ident,
+			    client_channel_closed);
 	} else {
 		/* Check if we should immediately send eof on stdin. */
 		client_check_initial_eof_on_stdin();
@@ -849,45 +878,58 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		/* Process buffered packets sent by the server. */
 		client_process_buffered_input_packets();
 
-		if (compat20 && !channel_still_open()) {
-			debug2("!channel_still_open.");
+		if (compat20 && session_closed && !channel_still_open())
 			break;
+
+		rekeying = (xxx_kex != NULL && !xxx_kex->done);
+
+		if (rekeying) {
+			debug("rekeying in progress");
+		} else {
+			/*
+			 * Make packets of buffered stdin data, and buffer
+			 * them for sending to the server.
+			 */
+			if (!compat20)
+				client_make_packets_from_stdin_data();
+
+			/*
+			 * Make packets from buffered channel data, and
+			 * enqueue them for sending to the server.
+			 */
+			if (packet_not_very_much_data_to_write())
+				channel_output_poll();
+
+			/*
+			 * Check if the window size has changed, and buffer a
+			 * message about it to the server if so.
+			 */
+			client_check_window_change();
+
+			if (quit_pending)
+				break;
 		}
-
-		/*
-		 * Make packets of buffered stdin data, and buffer them for
-		 * sending to the server.
-		 */
-		if (!compat20)
-			client_make_packets_from_stdin_data();
-
-		/*
-		 * Make packets from buffered channel data, and enqueue them
-		 * for sending to the server.
-		 */
-		if (packet_not_very_much_data_to_write())
-			channel_output_poll();
-
-		/*
-		 * Check if the window size has changed, and buffer a message
-		 * about it to the server if so.
-		 */
-		client_check_window_change();
-
-		if (quit_pending)
-			break;
-
 		/*
 		 * Wait until we have something to do (something becomes
 		 * available on one of the descriptors).
 		 */
-		client_wait_until_can_do_something(&readset, &writeset, &max_fd);
+		client_wait_until_can_do_something(&readset, &writeset,
+		    &max_fd, rekeying);
 
 		if (quit_pending)
 			break;
 
-		/* Do channel operations. */
-		channel_after_select(readset, writeset);
+		/* Do channel operations unless rekeying in progress. */
+		if (!rekeying) {
+			channel_after_select(readset, writeset);
+
+			if (need_rekeying) {
+				debug("user requests rekeying");
+				xxx_kex->done = 0;
+				kex_send_kexinit(xxx_kex);
+				need_rekeying = 0;
+			}
+		}
 
 		/* Buffer input from the connection.  */
 		client_process_net_input(readset);
@@ -940,7 +982,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 			break;
 		}
 		buffer_consume(&stdout_buffer, len);
-		stdout_bytes += len; 
+		stdout_bytes += len;
 	}
 
 	/* Output any buffered data for stderr. */
@@ -952,7 +994,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 			break;
 		}
 		buffer_consume(&stderr_buffer, len);
-		stderr_bytes += len; 
+		stderr_bytes += len;
 	}
 
 	if (have_pty)
@@ -1206,6 +1248,9 @@ client_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &client_input_channel_req);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
+
+	/* rekeying */
+	dispatch_set(SSH2_MSG_KEXINIT, &kex_input_kexinit);
 }
 static void
 client_init_dispatch_13(void)

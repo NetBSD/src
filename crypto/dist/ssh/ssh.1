@@ -1,3 +1,4 @@
+.\"	$NetBSD: ssh.1,v 1.10 2001/04/10 08:08:03 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -34,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.99 2001/03/19 12:49:51 djm Exp $
+.\" $OpenBSD: ssh.1,v 1.101 2001/04/05 15:45:43 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -640,16 +641,20 @@ The argument must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq no .
 .It Cm CheckHostIP
 If this flag is set to
 .Dq yes ,
-ssh will additionally check the host ip address in the
+ssh will additionally check the host IP address in the
 .Pa known_hosts
 file.
 This allows ssh to detect if a host key changed due to DNS spoofing.
 If the option is set to
 .Dq no ,
 the check will not be executed.
+The default is
+.Dq yes .
 .It Cm Cipher
 Specifies the cipher to use for encrypting the session
 in protocol version 1.
@@ -677,8 +682,10 @@ The argument must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq no .
 .It Cm CompressionLevel
-Specifies the compression level to use if compression is enable.
+Specifies the compression level to use if compression is enabled.
 The argument must be an integer from 1 (fast) to 9 (slow, best).
 The default level is 6, which is good for most applications.
 The meaning of the values is the same as in
@@ -688,12 +695,15 @@ Specifies the number of tries (one per second) to make before falling
 back to rsh or exiting.
 The argument must be an integer.
 This may be useful in scripts if the connection sometimes fails.
+The default is 4.
 .It Cm PubkeyAuthentication
 Specifies whether to try public key authentication.
 The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq yes .
 Note that this option applies to protocol version 2 only.
 .It Cm EscapeChar
 Sets the escape character (default:
@@ -719,6 +729,8 @@ the session being unencrypted).
 The argument must be
 .Dq yes
 or
+.Dq no .
+The default is
 .Dq no .
 .It Cm ForwardAgent
 Specifies whether the connection to the authentication agent (if any)
@@ -849,6 +861,8 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq yes .
 Note that this option applies to both protocol version 1 and 2.
 .It Cm Port
 Specifies the port number to connect on the remote host.
@@ -871,11 +885,11 @@ and
 .Dq 2 .
 Multiple versions must be comma-separated.
 The default is
-.Dq 1,2 .
+.Dq 2,1 .
 This means that
 .Nm
-tries version 1 and falls back to version 2
-if version 1 is not available.
+tries version 2 and falls back to version 1
+if version 2 is not available.
 .It Cm ProxyCommand
 Specifies the command to use to connect to the server.
 The command
@@ -923,14 +937,17 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq yes .
 .It Cm RhostsRSAAuthentication
 Specifies whether to try rhosts based authentication with RSA host
 authentication.
-This is the primary authentication method for most sites.
 The argument must be
 .Dq yes
 or
 .Dq no .
+The default is
+.Dq yes .
 .It Cm RSAAuthentication
 Specifies whether to try RSA authentication.
 The argument to this keyword must be
@@ -940,6 +957,8 @@ or
 RSA authentication will only be
 attempted if the identity file exists, or an authentication agent is
 running.
+The default is
+.Dq yes .
 Note that this option applies to protocol version 1 only.
 .It Cm ChallengeResponseAuthentication
 Specifies whether to use challenge response authentication.

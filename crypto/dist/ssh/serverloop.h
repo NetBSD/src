@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.h,v 1.1.1.2 2001/04/10 07:14:02 itojun Exp $	*/
+/*	$NetBSD: serverloop.h,v 1.2 2001/04/10 08:08:00 itojun Exp $	*/
 /*	$OpenBSD: serverloop.h,v 1.2 2001/01/29 01:58:17 niklas Exp $	*/
 
 /*

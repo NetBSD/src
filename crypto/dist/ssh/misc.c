@@ -1,3 +1,4 @@
+/*	$NetBSD: misc.c,v 1.3 2001/04/10 08:07:58 itojun Exp $	*/
 /*	$OpenBSD: misc.c,v 1.4 2001/02/28 17:52:54 deraadt Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$NetBSD: authfd.c,v 1.4 2001/04/10 08:07:55 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.38 2001/03/06 00:33:03 deraadt Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.39 2001/04/05 10:42:48 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -119,7 +120,7 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 	while (len > 0) {
 		l = read(auth->fd, buf + 4 - len, len);
 		if (l == -1 && (errno == EAGAIN || errno == EINTR))
-			continue; 
+			continue;
 		if (l <= 0) {
 			error("Error reading response length from authentication socket.");
 			return 0;
@@ -140,7 +141,7 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 			l = sizeof(buf);
 		l = read(auth->fd, buf, l);
 		if (l == -1 && (errno == EAGAIN || errno == EINTR))
-			continue; 
+			continue;
 		if (l <= 0) {
 			error("Error reading response from authentication socket.");
 			return 0;

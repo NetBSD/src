@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-add.c,v 1.8 2001/04/10 08:08:01 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.30 2001/03/12 22:02:02 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.33 2001/04/09 15:12:23 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -49,20 +50,28 @@ RCSID("$OpenBSD: ssh-add.c,v 1.30 2001/03/12 22:02:02 markus Exp $");
 #include "pathnames.h"
 #include "readpass.h"
 
+/* we keep a cache of one passphrases */
+static char *pass = NULL;
+static void
+clear_pass(void)
+{
+	if (pass) {
+		memset(pass, 0, strlen(pass));
+		xfree(pass);
+		pass = NULL;
+	}
+}
+
 static void
 delete_file(AuthenticationConnection *ac, const char *filename)
 {
 	Key *public;
-	char *comment;
+	char *comment = NULL;
 
-	public = key_new(KEY_RSA1);
-	if (!load_public_key(filename, public, &comment)) {
-		key_free(public);
-		public = key_new(KEY_UNSPEC);
-		if (!try_load_public_key(filename, public, &comment)) {
-			printf("Bad key file %s\n", filename);
-			return;
-		}
+	public = key_load_public(filename, &comment);
+	if (public == NULL) {
+		printf("Bad key file %s\n", filename);
+		return;
 	}
 	if (ssh_remove_identity(ac, public))
 		fprintf(stderr, "Identity removed: %s (%s)\n", filename, comment);
@@ -133,30 +142,15 @@ static void
 add_file(AuthenticationConnection *ac, const char *filename)
 {
 	struct stat st;
-	Key *public;
 	Key *private;
-	char *saved_comment, *comment, *askpass = NULL;
+	char *comment = NULL, *askpass = NULL;
 	char buf[1024], msg[1024];
-	int success;
 	int interactive = isatty(STDIN_FILENO);
-	int type = KEY_RSA1;
 
 	if (stat(filename, &st) < 0) {
 		perror(filename);
 		exit(1);
 	}
-	/*
-	 * try to load the public key. right now this only works for RSA,
-	 * since DSA keys are fully encrypted
-	 */
-	public = key_new(KEY_RSA1);
-	if (!load_public_key(filename, public, &saved_comment)) {
-		/* ok, so we will assume this is 'some' key */
-		type = KEY_UNSPEC;
-		saved_comment = xstrdup(filename);
-	}
-	key_free(public);
-
 	if (!interactive && getenv("DISPLAY")) {
 		if (getenv(SSH_ASKPASS_ENV))
 			askpass = getenv(SSH_ASKPASS_ENV);
@@ -165,17 +159,22 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	}
 
 	/* At first, try empty passphrase */
-	private = key_new(type);
-	success = load_private_key(filename, "", private, &comment);
-	if (!success) {
+	private = key_load_private(filename, "", &comment);
+	if (comment == NULL)
+		comment = xstrdup(filename);
+	/* try last */
+	if (private == NULL && pass != NULL)
+		private = key_load_private(filename, pass, NULL);
+	if (private == NULL) {
+		/* clear passphrase since it did not work */
+		clear_pass();
 		printf("Need passphrase for %.200s\n", filename);
 		if (!interactive && askpass == NULL) {
-			xfree(saved_comment);
+			xfree(comment);
 			return;
 		}
-		snprintf(msg, sizeof msg, "Enter passphrase for %.200s", saved_comment);
+		snprintf(msg, sizeof msg, "Enter passphrase for %.200s", comment);
 		for (;;) {
-			char *pass;
 			if (interactive) {
 				snprintf(buf, sizeof buf, "%s: ", msg);
 				pass = read_passphrase(buf, 1);
@@ -184,24 +183,22 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			}
 			if (strcmp(pass, "") == 0) {
 				xfree(pass);
-				xfree(saved_comment);
+				xfree(comment);
 				return;
 			}
-			success = load_private_key(filename, pass, private, &comment);
-			memset(pass, 0, strlen(pass));
-			xfree(pass);
-			if (success)
+			private = key_load_private(filename, pass, &comment);
+			if (private != NULL)
 				break;
+			clear_pass();
 			strlcpy(msg, "Bad passphrase, try again", sizeof msg);
 		}
 	}
-	xfree(comment);
-	if (ssh_add_identity(ac, private, saved_comment))
-		fprintf(stderr, "Identity added: %s (%s)\n", filename, saved_comment);
+	if (ssh_add_identity(ac, private, comment))
+		fprintf(stderr, "Identity added: %s (%s)\n", filename, comment);
 	else
 		fprintf(stderr, "Could not add identity: %s\n", filename);
+	xfree(comment);
 	key_free(private);
-	xfree(saved_comment);
 }
 
 static void
@@ -291,6 +288,7 @@ main(int argc, char **argv)
 		else
 			add_file(ac, buf);
 	}
+	clear_pass();
 	ssh_close_authentication_connection(ac);
 	exit(0);
 }
