@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.46 2003/12/11 09:46:27 dyoung Exp $
+# $NetBSD: shl.elf,v 1.47 2003/12/29 03:13:28 lukem Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -14,9 +14,9 @@
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtendS.o		comp-c-lib
 ./usr/lib/i18n/libBIG5.so	comp-i18n-lib
-./usr/lib/i18n/libGBK2K.so	comp-i18n-lib
 ./usr/lib/i18n/libEUC.so	comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.so	comp-i18n-lib
+./usr/lib/i18n/libGBK2K.so	comp-i18n-lib
 ./usr/lib/i18n/libISO2022.so	comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.so	comp-i18n-lib
 ./usr/lib/i18n/libUTF1632.so	comp-i18n-lib
@@ -29,20 +29,32 @@
 ./usr/lib/i18n/libmapper_serial.so	comp-i18n-lib
 ./usr/lib/i18n/libmapper_std.so		comp-i18n-lib
 ./usr/lib/i18n/libmapper_zone.so	comp-i18n-lib
+./usr/lib/libasn1.so		comp-c-lib	kerberos
 ./usr/lib/libbsdmalloc.so	comp-c-lib
 ./usr/lib/libbz2.so		comp-c-lib
 ./usr/lib/libc.so		comp-c-lib
 ./usr/lib/libcdk.so		comp-c-lib
-./usr/lib/libcrypto.so		comp-c-lib
+./usr/lib/libcom_err.so		comp-c-lib	kerberos
 ./usr/lib/libcrypt.so		comp-c-lib
-./usr/lib/libdes.so		comp-c-lib
+./usr/lib/libcrypto.so		comp-c-lib
 ./usr/lib/libcurses.so		comp-c-lib
+./usr/lib/libdes.so		comp-c-lib
 ./usr/lib/libedit.so		comp-c-lib
 ./usr/lib/libevent.so		comp-c-lib
 ./usr/lib/libform.so		comp-c-lib
 ./usr/lib/libgnumalloc.so	comp-c-lib
+./usr/lib/libgssapi.so		comp-c-lib	kerberos
+./usr/lib/libhdb.so		comp-c-lib	kerberos
 ./usr/lib/libintl.so		comp-c-lib
 ./usr/lib/libipsec.so		comp-c-lib
+./usr/lib/libkadm.so		comp-c-lib	kerberos4
+./usr/lib/libkadm5clnt.so	comp-c-lib	kerberos
+./usr/lib/libkadm5srv.so	comp-c-lib	kerberos
+./usr/lib/libkafs.so		comp-c-lib	kerberos
+./usr/lib/libkdb.so		comp-c-lib	kerberos4
+./usr/lib/libkrb.so		comp-c-lib	kerberos4
+./usr/lib/libkrb5.so		comp-c-lib	kerberos
+./usr/lib/libkstream.so		comp-c-lib	kerberos4
 ./usr/lib/libkvm.so		comp-c-lib
 ./usr/lib/libm.so		comp-c-lib
 ./usr/lib/libmagic.so		comp-c-lib
@@ -54,8 +66,11 @@
 ./usr/lib/libpthread.so		comp-c-lib
 ./usr/lib/libpthread_dbg.so	comp-c-lib
 ./usr/lib/libresolv.so		comp-c-lib
+./usr/lib/libroken.so		comp-c-lib	kerberos
 ./usr/lib/librt.so		comp-c-lib
 ./usr/lib/libskey.so		comp-c-lib
+./usr/lib/libsl.so		comp-c-lib	kerberos
+./usr/lib/libss.so		comp-c-lib	kerberos
 ./usr/lib/libssl.so		comp-c-lib
 ./usr/lib/libtermcap.so		comp-c-lib
 ./usr/lib/libtermlib.so		comp-c-lib

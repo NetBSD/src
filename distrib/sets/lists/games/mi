@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2003/12/26 18:01:33 christos Exp $
+# $NetBSD: mi,v 1.29 2003/12/29 03:13:28 lukem Exp $
 ./usr/games/adventure		games-games-bin
 ./usr/games/arithmetic		games-games-bin
 ./usr/games/atc			games-games-bin
@@ -10,6 +10,7 @@
 ./usr/games/caesar		games-utils-bin
 ./usr/games/canfield		games-games-bin
 ./usr/games/cfscores		games-games-bin
+./usr/games/chess			games-obsolete	obsolete
 ./usr/games/countmail		games-utils-bin
 ./usr/games/cribbage		games-games-bin
 ./usr/games/dab			games-games-bin
@@ -20,6 +21,39 @@
 ./usr/games/gomoku		games-games-bin
 ./usr/games/hack		games-games-bin
 ./usr/games/hangman		games-games-bin
+./usr/games/hide/adventure		games-obsolete	obsolete
+./usr/games/hide/arithmetic		games-obsolete	obsolete
+./usr/games/hide/atc			games-obsolete	obsolete
+./usr/games/hide/backgammon		games-obsolete	obsolete
+./usr/games/hide/battlestar		games-obsolete	obsolete
+./usr/games/hide/bcd			games-obsolete	obsolete
+./usr/games/hide/boggle			games-obsolete	obsolete
+./usr/games/hide/canfield		games-obsolete	obsolete
+./usr/games/hide/cfscores		games-obsolete	obsolete
+./usr/games/hide/chess			games-obsolete	obsolete
+./usr/games/hide/cribbage		games-obsolete	obsolete
+./usr/games/hide/fish			games-obsolete	obsolete
+./usr/games/hide/gomoku			games-obsolete	obsolete
+./usr/games/hide/hack			games-obsolete	obsolete
+./usr/games/hide/hangman		games-obsolete	obsolete
+./usr/games/hide/hunt			games-obsolete	obsolete
+./usr/games/hide/larn			games-obsolete	obsolete
+./usr/games/hide/mille			games-obsolete	obsolete
+./usr/games/hide/monop			games-obsolete	obsolete
+./usr/games/hide/morse			games-obsolete	obsolete
+./usr/games/hide/phantasia		games-obsolete	obsolete
+./usr/games/hide/ppt			games-obsolete	obsolete
+./usr/games/hide/quiz			games-obsolete	obsolete
+./usr/games/hide/robots			games-obsolete	obsolete
+./usr/games/hide/rogue			games-obsolete	obsolete
+./usr/games/hide/sail			games-obsolete	obsolete
+./usr/games/hide/snake			games-obsolete	obsolete
+./usr/games/hide/snscore		games-obsolete	obsolete
+./usr/games/hide/teachgammon		games-obsolete	obsolete
+./usr/games/hide/tetris			games-obsolete	obsolete
+./usr/games/hide/trek			games-obsolete	obsolete
+./usr/games/hide/worm			games-obsolete	obsolete
+./usr/games/hide/wump			games-obsolete	obsolete
 ./usr/games/hunt		games-games-bin
 ./usr/games/huntd		games-games-bin
 ./usr/games/larn		games-games-bin
@@ -49,6 +83,7 @@
 ./usr/games/worms		games-games-bin
 ./usr/games/wtf			games-utils-bin
 ./usr/games/wump		games-games-bin
+./usr/share/games/atc/ATC_scores	games-obsolete	obsolete
 ./usr/share/games/atc/Atlantis		games-games-share
 ./usr/share/games/atc/Game_List		games-games-share
 ./usr/share/games/atc/Killer		games-games-share
@@ -91,13 +126,17 @@
 ./usr/share/games/fortune/netbsd.dat		games-utils-share
 ./usr/share/games/fortune/startrek		games-utils-share
 ./usr/share/games/fortune/startrek.dat		games-utils-share
+./usr/share/games/fortune/unamerican	games-obsolete	obsolete
 ./usr/share/games/fortune/unamerican-o		games-utils-share
 ./usr/share/games/fortune/unamerican-o.dat	games-utils-share
+./usr/share/games/fortune/unamerican.dat	games-obsolete	obsolete
 ./usr/share/games/fortune/zippy			games-utils-share
 ./usr/share/games/fortune/zippy.dat		games-utils-share
+./usr/share/games/gnuchess.book		games-obsolete	obsolete
 ./usr/share/games/larn/larn.help	games-games-share
 ./usr/share/games/larn/larnmaze		games-games-share
 ./usr/share/games/larn/larnopts		games-games-share
+./usr/share/games/larn/lfortune		games-obsolete	obsolete
 ./usr/share/games/quiz.db/africa	games-games-share
 ./usr/share/games/quiz.db/america	games-games-share
 ./usr/share/games/quiz.db/areas		games-games-share
@@ -143,6 +182,7 @@
 ./usr/share/man/cat6/boggle.0		games-games-catman
 ./usr/share/man/cat6/caesar.0		games-utils-catman
 ./usr/share/man/cat6/canfield.0		games-games-catman
+./usr/share/man/cat6/chess.0		games-obsolete	obsolete
 ./usr/share/man/cat6/countmail.0	games-utils-catman
 ./usr/share/man/cat6/cribbage.0		games-games-catman
 ./usr/share/man/cat6/dab.0		games-games-catman
@@ -190,6 +230,7 @@
 ./usr/share/man/man6/boggle.6		games-games-man
 ./usr/share/man/man6/caesar.6		games-utils-man
 ./usr/share/man/man6/canfield.6		games-games-man
+./usr/share/man/man6/chess.6		games-obsolete	obsolete
 ./usr/share/man/man6/countmail.6	games-utils-man
 ./usr/share/man/man6/cribbage.6		games-games-man
 ./usr/share/man/man6/dab.6		games-games-man
@@ -227,6 +268,7 @@
 ./usr/share/man/man6/worms.6		games-games-man
 ./usr/share/man/man6/wtf.6		games-utils-man
 ./usr/share/man/man6/wump.6		games-games-man
+./var/games/atc_scores			games-obsolete	obsolete
 ./var/games/hackdir/data		games-games-root
 ./var/games/hackdir/help		games-games-root
 ./var/games/hackdir/hh			games-games-root

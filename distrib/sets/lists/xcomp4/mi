@@ -1,4 +1,5 @@
-# $NetBSD: mi,v 1.5 2003/12/28 15:45:59 lukem Exp $
+# $NetBSD: mi,v 1.6 2003/12/29 03:13:29 lukem Exp $
+./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
 ./usr/X11R6/bin/freetype-config
@@ -175,6 +176,7 @@
 ./usr/X11R6/include/X11/Xft
 ./usr/X11R6/include/X11/Xft/Xft.h
 ./usr/X11R6/include/X11/Xft/XftCompat.h
+./usr/X11R6/include/X11/Xft/XftFreetype.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/X11/Xfuncproto.h
 ./usr/X11R6/include/X11/Xfuncs.h
 ./usr/X11R6/include/X11/Xlib.h
@@ -375,6 +377,7 @@
 ./usr/X11R6/include/freetype2/freetype/internal/ftdebug.h
 ./usr/X11R6/include/freetype2/freetype/internal/ftdriver.h
 ./usr/X11R6/include/freetype2/freetype/internal/ftexcept.h
+./usr/X11R6/include/freetype2/freetype/internal/ftextend.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftgloadr.h
 ./usr/X11R6/include/freetype2/freetype/internal/fthash.h
 ./usr/X11R6/include/freetype2/freetype/internal/ftmemory.h
@@ -385,6 +388,7 @@
 ./usr/X11R6/include/freetype2/freetype/internal/internal.h
 ./usr/X11R6/include/freetype2/freetype/internal/pcftypes.h
 ./usr/X11R6/include/freetype2/freetype/internal/psaux.h
+./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/pshints.h
 ./usr/X11R6/include/freetype2/freetype/internal/psnames.h
 ./usr/X11R6/include/freetype2/freetype/internal/sfnt.h
@@ -630,6 +634,7 @@
 ./usr/X11R6/man/cat3/WhitePixelOfScreen.0
 ./usr/X11R6/man/cat3/WidthMMOfScreen.0
 ./usr/X11R6/man/cat3/WidthOfScreen.0
+./usr/X11R6/man/cat3/X.0		xcomp-obsolete	obsolete
 ./usr/X11R6/man/cat3/XActivateScreenSaver.0
 ./usr/X11R6/man/cat3/XAddConnectionWatch.0
 ./usr/X11R6/man/cat3/XAddHost.0
@@ -694,6 +699,7 @@
 ./usr/X11R6/man/cat3/XConfigureEvent.0
 ./usr/X11R6/man/cat3/XConfigureRequestEvent.0
 ./usr/X11R6/man/cat3/XConfigureWindow.0
+./usr/X11R6/man/cat3/XConsortium.0	xcomp-obsolete	obsolete
 ./usr/X11R6/man/cat3/XContextDependentDrawing.0
 ./usr/X11R6/man/cat3/XContextualDrawing.0
 ./usr/X11R6/man/cat3/XConvertCase.0
@@ -950,6 +956,7 @@
 ./usr/X11R6/man/cat3/XRaiseWindow.0
 ./usr/X11R6/man/cat3/XReadBitmapFile.0
 ./usr/X11R6/man/cat3/XReadBitmapFileData.0
+./usr/X11R6/man/cat3/XRebindKeySym.0	xcomp-obsolete	obsolete
 ./usr/X11R6/man/cat3/XRebindKeysym.0
 ./usr/X11R6/man/cat3/XRecolorCursor.0
 ./usr/X11R6/man/cat3/XReconfigureWMWindow.0
@@ -1060,6 +1067,7 @@
 ./usr/X11R6/man/cat3/XShrinkRegion.0
 ./usr/X11R6/man/cat3/XSizeHints.0
 ./usr/X11R6/man/cat3/XStandardColormap.0
+./usr/X11R6/man/cat3/XStandards.0	xcomp-obsolete	obsolete
 ./usr/X11R6/man/cat3/XStoreBuffer.0
 ./usr/X11R6/man/cat3/XStoreBytes.0
 ./usr/X11R6/man/cat3/XStoreColor.0
@@ -1237,6 +1245,7 @@
 ./usr/X11R6/man/cat3/XrmStringToQuarkList.0
 ./usr/X11R6/man/cat3/XrmUniqueQuark.0
 ./usr/X11R6/man/cat3/XrmValue.0
+./usr/X11R6/man/cat3/Xsecurity.0	xcomp-obsolete	obsolete
 ./usr/X11R6/man/cat3/XtAddActions.0
 ./usr/X11R6/man/cat3/XtAddCallback.0
 ./usr/X11R6/man/cat3/XtAddCallbacks.0
