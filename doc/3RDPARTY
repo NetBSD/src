@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.232 2004/07/13 00:13:22 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.233 2004/07/23 05:43:59 martti Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -307,8 +307,8 @@ Responsible:	mrg
 Notes:
 
 Package:	ipf
-Version:	4.1.1
-Current Vers:	4.1.1
+Version:	4.1.3
+Current Vers:	4.1.3
 Maintainer:	Darren Reed
 Archive Site:	http://www.ipfilter.org/
 Mailing List:	ipfilter@postbox.anu.edu.au
