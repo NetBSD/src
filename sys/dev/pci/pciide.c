@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.95 2000/11/30 18:11:40 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.96 2000/12/04 20:25:40 fvdl Exp $	*/
 
 
 /*
@@ -719,7 +719,7 @@ pciide_mapreg_dma(sc, pa)
 		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
 		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
-			printf(", but unused (registers at unsafe address %#lx)", addr);
+			printf(", but unused (registers at unsafe address %#lx)", (unsigned long)addr);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -854,9 +854,9 @@ pciide_dma_table_setup(sc, channel, drive)
 		    channel, drive, error);
 		return error;
 	}
-	WDCDEBUG_PRINT(("pciide_dma_table_setup: table at %p len %ld, "
-	    "phy 0x%lx\n", dma_maps->dma_table, dma_table_size,
-	    seg.ds_addr), DEBUG_PROBE);
+	WDCDEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
+	    "phy 0x%lx\n", dma_maps->dma_table, (u_long)dma_table_size,
+	    (unsigned long)seg.ds_addr), DEBUG_PROBE);
 
 	/* Create and load table DMA map for this disk */
 	if ((error = bus_dmamap_create(sc->sc_dmat, dma_table_size,
@@ -877,7 +877,8 @@ pciide_dma_table_setup(sc, channel, drive)
 		return error;
 	}
 	WDCDEBUG_PRINT(("pciide_dma_table_setup: phy addr of table 0x%lx\n",
-	    dma_maps->dmamap_table->dm_segs[0].ds_addr), DEBUG_PROBE);
+	    (unsigned long)dma_maps->dmamap_table->dm_segs[0].ds_addr),
+	    DEBUG_PROBE);
 	/* Create a xfer DMA map for this drive */
 	if ((error = bus_dmamap_create(sc->sc_dmat, IDEDMA_BYTE_COUNT_MAX,
 	    NIDEDMA_TABLES, IDEDMA_BYTE_COUNT_MAX, IDEDMA_BYTE_COUNT_ALIGN,
