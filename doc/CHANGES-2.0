@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.461 2004/09/22 20:59:09 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.462 2004/09/23 02:41:59 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7579,3 +7579,14 @@ sys/dev/pci/yds.c				1.21
 	ac97_host_if::reset() returns non-zero value if codec reset fails, and
 	ac97 is not attached in that case. PR#26973
 	[kent, ticket #867]
+
+sys/arch/xen/conf/GENERIC			1.16
+sys/arch/xen/conf/XEN				1.13
+sys/arch/xen/i386/locore.S			1.6
+sys/arch/xen/xen/clock.c			1.7
+
+	Changes to improve timekeeping on NetBSD/xen by actually adjusting the 
+	time correctly (calling hardclock as needed, not just blindly every 
+	time Xen schedules us) based on Xens idea of the time in the 
+	shared page.
+	[tls, ticket #871]
