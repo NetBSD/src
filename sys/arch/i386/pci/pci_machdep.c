@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 1994/11/18 22:04:49 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 1994/12/28 19:45:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -110,11 +110,7 @@ mode2:
 		panic("pci_make_tag: bad request");
 
 	tag.mode2.port = 0xc000 | (device << 8);
-	/*
-	 * Allow special cycles in the same manner as mode 1, though with
-	 * device == 15 rather than 31.
-	 */
-	tag.mode2.enable = 0xf1 | (function << 1);
+	tag.mode2.enable = 0xf0 | (function << 1);
 	tag.mode2.forward = bus;
 	return tag;
 #endif
