@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1997/10/12 18:20:21 oki Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 1998/02/13 07:42:00 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,8 @@ static void dumpwb __P((int, u_short, u_int, u_int));
 
 static inline void userret __P((struct proc *p, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+
+int	astpending;
 
 char	*trap_type[] = {
 	"Bus error",

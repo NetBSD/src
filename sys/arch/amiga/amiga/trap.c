@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 1998/02/13 07:41:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,6 +133,9 @@ extern struct emul emul_sunos;
 /*
  * XXX End hack
  */
+
+int	astpending;
+
 char	*trap_type[] = {
 	"Bus error",
 	"Address error",

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1997/09/12 08:19:00 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 1998/02/13 07:41:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,6 +72,8 @@
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
+
+int	astpending;
 
 char	*trap_type[] = {
 	"Bus error",
