@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.3 1999/05/29 18:18:15 christos Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.4 2000/11/16 08:33:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -49,7 +49,6 @@ int main __P((int, char *[], char *[]));
 
 static void initarg __P((struct arglist *));
 static void addarg __P((struct arglist *, const char *, int));
-static void freearg __P((struct arglist *, int));
 
 extern const char *__progname;	/* from crt0.o */
 
@@ -80,18 +79,6 @@ addarg(al, arg, copy)
 			err(1, "mailwrapper:");
 	} else
 		al->argv[al->argc++] = (char *)arg;
-}
-
-static void
-freearg(al, copy)
-	struct arglist *al;
-	int copy;
-{
-	size_t i;
-	if (copy)
-		for (i = 0; i < al->argc; i++)
-			free(al->argv[i]);
-	free(al->argv);
 }
 
 int
@@ -151,14 +138,11 @@ main(argc, argv, envp)
 
 	(void)fclose(config);
 
+	addarg(&al, NULL, 0);
 	execve(to, al.argv, envp);
-	freearg(&al, 0);
-	free(line);
 	err(1, "mailwrapper: execing %s", to);
 	/*NOTREACHED*/
 parse_error:
-	freearg(&al, 0);
-	free(line);
 	errx(1, "mailwrapper: parse error in %s at line %lu",
 	    _PATH_MAILERCONF, (u_long)lineno);
 	/*NOTREACHED*/
