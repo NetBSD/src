@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 2003/03/05 22:08:29 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 2003/03/15 07:25:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -594,6 +594,13 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
+			/*
+			 * If we are mapping nocache, flush the page from
+			 * cache before we map it.
+			 */
+			if (flags & BUS_DMA_NOCACHE)
+				dcbf(addr, NBPG,
+				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE |
 			    PMAP_WIRED |
