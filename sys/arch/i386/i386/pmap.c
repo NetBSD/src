@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.30 1995/04/21 06:23:56 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1995/05/01 08:06:46 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -216,7 +216,6 @@ pmap_bootstrap(virtual_start)
 #if notyet
 	extern vm_offset_t reserve_dumppages(vm_offset_t);
 #endif
-	extern int IdlePTD;
 
 	/* XXX: allow for msgbuf */
 	avail_end -= i386_round_page(sizeof(struct msgbuf));
@@ -240,13 +239,14 @@ pmap_bootstrap(virtual_start)
 
 	firstaddr += NBPG;
 	for (x = i386_btod(VM_MIN_KERNEL_ADDRESS);
-	    x < i386_btod(VM_MIN_KERNEL_ADDRESS) + NKPDE; x++) {
+	     x < i386_btod(VM_MIN_KERNEL_ADDRESS) + NKPDE; x++) {
 		pd_entry_t *pde;
 		pde = pmap_kernel()->pm_pdir + x;
 		*pde = (firstaddr + x*NBPG) | PG_V | PG_KW;
 	}
 #else
-	pmap_kernel()->pm_pdir = (pd_entry_t *)(KERNBASE + IdlePTD);
+	pmap_kernel()->pm_pdir =
+	    (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 #endif
 
 	simple_lock_init(&pmap_kernel()->pm_lock);

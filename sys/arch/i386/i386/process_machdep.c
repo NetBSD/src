@@ -1,6 +1,7 @@
-/*	$NetBSD: process_machdep.c,v 1.12 1995/01/15 00:42:01 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.13 1995/05/01 08:06:48 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.

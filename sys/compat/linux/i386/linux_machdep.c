@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 1995/04/22 20:26:25 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3 1995/05/01 08:06:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -92,7 +92,7 @@ linux_sendsig(catcher, sig, mask, code)
 	int oonstack;
 	extern char linux_sigcode[], linux_esigcode[];
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
@@ -148,10 +148,11 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_esp = (int)fp;
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 	     (linux_esigcode - linux_sigcode));
+#ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
+#endif
 	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 }
@@ -177,7 +178,7 @@ linux_sigreturn(p, uap, retval)
 	struct linux_sigcontext *scp, context;
 	register struct trapframe *tf;
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.

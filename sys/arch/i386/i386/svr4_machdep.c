@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.6 1995/04/28 23:11:37 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.7 1995/05/01 08:06:49 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,8 +54,6 @@
 #include <machine/sysarch.h>
 #include <machine/svr4_machdep.h>
 
-extern int _ucodesel, _udatasel;
-
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
 
 void
@@ -64,7 +62,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 	struct svr4_ucontext *uc;
 	int mask, oonstack;
 {
-	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
+	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
 	svr4_greg_t* r = uc->uc_mcontext.greg;
 	svr4_stack_t *s = &uc->uc_stack;
@@ -149,7 +147,7 @@ svr4_setcontext(p, uc)
 	 * set to 0 right now?
 	 */
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 
 	/*
 	 * Check for security violations.
@@ -313,7 +311,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	int oonstack;
 	extern char svr4_esigcode[], svr4_sigcode[];
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
@@ -363,11 +361,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	tf->tf_esp = (int)fp;
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 				(svr4_esigcode - svr4_sigcode));
+#ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
-	tf->tf_cs = _ucodesel;
-	tf->tf_ds = _udatasel;
-	tf->tf_es = _udatasel;
-	tf->tf_ss = _udatasel;
+#endif
+	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 }
 
 

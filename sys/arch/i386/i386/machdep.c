@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 1995/05/01 04:48:36 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.154 1995/05/01 08:06:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -124,7 +124,7 @@ extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 
-int	_udatasel, _ucodesel, _gsel_tss;
+int	_gsel_tss;
 
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
@@ -508,7 +508,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	frame.sf_signum = sig;
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
@@ -561,11 +561,13 @@ sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_esp = (int)fp;
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+#ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
-	tf->tf_cs = _ucodesel;
-	tf->tf_ds = _udatasel;
-	tf->tf_es = _udatasel;
-	tf->tf_ss = _udatasel;
+#endif
+	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 }
 
 /*
@@ -588,7 +590,7 @@ sigreturn(p, uap, retval)
 	struct sigcontext *scp, context;
 	register struct trapframe *tf;
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	tf = p->p_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -600,7 +602,10 @@ sigreturn(p, uap, retval)
 		return (EFAULT);
 
 	/*
-	 * Check for security violations.
+	 * Check for security violations.  If we're returning to protected
+	 * mode, the CPU will validate the segment registers automatically
+	 * and generate a trap on violations.  We handle the trap, rather
+	 * than doing all of the checking here.
 	 */
 	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
 	    ISPL(context.sc_cs) != SEL_UPL)
@@ -665,7 +670,7 @@ boot(howto)
 	} else {
 		if (howto & RB_DUMP) {
 			savectx(&dumppcb, 0);
-			dumppcb.pcb_ptd = rcr3();
+			dumppcb.pcb_cr3 = rcr3();
 			dumpsys();
 		}
 	}
@@ -800,22 +805,22 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	register struct trapframe *tf;
 	register struct pcb *pcb;
-
-	tf = (struct trapframe *)p->p_md.md_regs;
-	tf->tf_ebp = 0;	/* bottom of the fp chain */
-	tf->tf_eip = pack->ep_entry;
-	tf->tf_esp = stack;
-	tf->tf_ss = _udatasel;
-	tf->tf_ds = _udatasel;
-	tf->tf_es = _udatasel;
-	tf->tf_cs = _ucodesel;
-	tf->tf_eflags = PSL_USERSET | (tf->tf_eflags & PSL_T);
+	register struct trapframe *tf;
 
 	pcb = &p->p_addr->u_pcb;
 	lcr0(pcb->pcb_cr0 |= CR0_EM);
 	pcb->pcb_flags = 0;
+
+	tf = p->p_md.md_regs;
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ebp = 0;
+	tf->tf_eip = pack->ep_entry;
+	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_eflags = PSL_USERSET;
+	tf->tf_esp = stack;
+	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 
 	retval[1] = 0;
 }
@@ -834,13 +839,13 @@ struct gate_descriptor idt[NIDT];
 
 int _default_ldt, currentldt;
 
-struct	i386tss	tss, panic_tss;
+struct	i386tss	tss;
 
 extern  struct user *proc0paddr;
 
 /* software prototypes -- in more palatable form */
 struct soft_segment_descriptor gdt_segs[] = {
-	/* Null Descriptor */
+	/* Null descriptor */
 {	0x0,			/* segment base address  */
 	0x0,			/* length */
 	0,			/* segment type */
@@ -849,7 +854,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
-	/* Code Descriptor for kernel */
+	/* Kernel code descriptor */
 {	0x0,			/* segment base address  */
 	0xfffff,		/* length - all address space */
 	SDT_MEMERA,		/* segment type */
@@ -858,7 +863,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ },
-	/* Data Descriptor for kernel */
+	/* Kernel data descriptor */
 {	0x0,			/* segment base address  */
 	0xfffff,		/* length - all address space */
 	SDT_MEMRWA,		/* segment type */
@@ -871,24 +876,6 @@ struct soft_segment_descriptor gdt_segs[] = {
 {	(int) ldt,			/* segment base address  */
 	sizeof(ldt)-1,		/* length - all address space */
 	SDT_SYSLDT,		/* segment type */
-	0,			/* segment descriptor priority level */
-	1,			/* segment descriptor present */
-	0, 0,
-	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
-	/* Null Descriptor - Placeholder */
-{	0x0,			/* segment base address  */
-	0x0,			/* length */
-	0,			/* segment type */
-	0,			/* segment descriptor priority level */
-	0,			/* segment descriptor present */
-	0, 0,
-	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
-	/* Panic Tss Descriptor */
-{	(int) &panic_tss,		/* segment base address  */
-	sizeof(tss)-1,		/* length - all address space */
-	SDT_SYS386TSS,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
 	0, 0,
@@ -933,16 +920,7 @@ struct soft_segment_descriptor ldt_segs[] = {
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
-	/* Null Descriptor - overwritten by call gate */
-{	0x0,			/* segment base address  */
-	0x0,			/* length */
-	0,			/* segment type */
-	0,			/* segment descriptor priority level */
-	0,			/* segment descriptor present */
-	0, 0,
-	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units)*/ },
-	/* Code Descriptor for user */
+	/* User code descriptor */
 {	0x0,			/* segment base address  */
 	0xfffff,		/* length - all address space */
 	SDT_MEMERA,		/* segment type */
@@ -951,7 +929,7 @@ struct soft_segment_descriptor ldt_segs[] = {
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ },
-	/* Data Descriptor for user */
+	/* User data descriptor */
 {	0x0,			/* segment base address  */
 	0xfffff,		/* length - all address space */
 	SDT_MEMRWA,		/* segment type */
@@ -1028,7 +1006,7 @@ init386(first_avail)
 	struct region_descriptor region;
 	extern char etext[], sigcode[], esigcode[];
 	extern void consinit __P((void));
-	extern lgdt();
+	extern void lgdt();
 
 	proc0.p_addr = proc0paddr;
 
@@ -1037,10 +1015,10 @@ init386(first_avail)
 	/* Set up proc 0's PCB and TSS. */
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_flags = 0;
-	pcb->pcb_ptd = IdlePTD;
 	pcb->pcb_tss.tss_esp0 = (int)USRSTACK + USPACE;
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_ioopt = sizeof(struct i386tss) << 16;
+
 
 #ifndef LKM
 	/* set code segment limit to end of kernel text */
@@ -1146,10 +1124,6 @@ init386(first_avail)
 	ltr(_gsel_tss);
 	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	lldt(currentldt = _default_ldt);
-
-	/* transfer to user mode */
-	_ucodesel = LSEL(LUCODE_SEL, SEL_UPL);
-	_udatasel = LSEL(LUDATA_SEL, SEL_UPL);
 }
 
 struct queue {

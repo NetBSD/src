@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 1995/05/01 04:50:28 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 1995/05/01 08:06:53 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
@@ -103,6 +104,7 @@ cpu_fork(p1, p2)
 	pcb->pcb_cr0 |= CR0_TS;
 
 #ifdef USER_LDT
+	/* Copy the LDT, if necessary. */
 	if (pcb->pcb_ldt) {
 		size_t len;
 		union descriptor *new_ldt;
@@ -127,7 +129,7 @@ cpu_fork(p1, p2)
 		pmap_enter(&p2->p_vmspace->vm_pmap,
 		    (vm_offset_t)kstack + i * NBPG,
 		    pmap_extract(pmap_kernel(),
-		        (vm_offset_t)p2->p_addr + i * NBPG),
+			(vm_offset_t)p2->p_addr + i * NBPG),
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
@@ -206,7 +208,7 @@ cpu_coredump(p, vp, cred, chdr)
 		npxsave();
 #endif
 
-	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
+	cpustate.regs = *p->p_md.md_regs;
 	cpustate.fpstate = p->p_addr->u_pcb.pcb_savefpu;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_I386, CORE_CPU);
