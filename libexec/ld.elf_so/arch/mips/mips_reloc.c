@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.28 2002/09/13 16:54:14 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.29 2002/09/13 17:07:12 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -139,13 +139,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 	sym = symtab + gotsym;
 	/* Now do the global GOT entries */
 	for (i = gotsym; i < symtabno; i++) {
-		if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
-		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			if (sym->st_shndx == SHN_ABS)
-				*got = sym->st_value + relocbase;
-			/* else SGI stuff ignored */
-		} else
-			*got = sym->st_value + relocbase;
+		*got = sym->st_value + relocbase;
 		++sym;
 		++got;
 	}
@@ -249,17 +243,8 @@ _rtld_relocate_nonplt_objects(obj, self)
 		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
 		    sym->st_name + obj->strtab, *got));
 
-		/* if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    ELF_ST_BIND(sym->st_info) != STB_WEAK &&
-		    sym->st_shndx == SHN_UNDEF)
-			*got = sym->st_value + (Elf_Addr)obj->relocbase;
-		else */ if (sym->st_shndx == SHN_UNDEF ||
-		    sym->st_shndx == SHN_COMMON) {
-			def = _rtld_find_symdef(i, obj, &defobj, true);
-			if (def == NULL)
-				return -1;
-			*got = def->st_value + (Elf_Addr)defobj->relocbase;
-		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
+		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    sym->st_value != 0)
 			*got = sym->st_value + (Elf_Addr)obj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
