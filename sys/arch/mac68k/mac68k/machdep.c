@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 1997/09/03 06:28:55 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 1997/09/10 03:43:48 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1902,6 +1902,35 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
+	/*
+	 * Vectors verified for the Mac IIfx
+	 */
+	{			/* 18 */
+		"Mac IIfx ROMs",
+		(caddr_t) 0x40809f4a,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
+		(caddr_t) 0x4080a4d8,	/* ADBBase + 130 interupt */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x0,		/* Egret */
+		(caddr_t) 0x0,		/* InitEgret */
+		(caddr_t) 0x408037c0,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1919,7 +1948,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACIISI, "IIsi ", "", MACH_CLASSIIsi, &romvecs[2]},
 	{MACH_MACIIVI, "IIvi ", "", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACIIVX, "IIvx ", "", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACIIFX, "IIfx ", "", MACH_CLASSIIfx, NULL},
+	{MACH_MACIIFX, "IIfx ", "", MACH_CLASSIIfx, &romvecs[18]},
 
 /* The Centris/Quadra series. */
 	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[4]},
@@ -2192,9 +2221,16 @@ setmachdep()
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
+	case MACH_CLASSIIfx:
+		VIA2 = 0xd;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 115200;
+		via_reg(VIA1, vIER) = 0x7f;  /* disable VIA1 int */
+		break;
 	default:
 	case MACH_CLASSH:
-	case MACH_CLASSIIfx:
 		break;
 	}
 
@@ -2288,10 +2324,15 @@ mac68k_set_io_offsets(base)
 		sccA = (volatile u_char *) base + 0x4000;
 		SCSIBase = base;
 		break;
+	case MACH_CLASSIIfx:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4020;
+		SCSIBase = base;
+		break;
 	default:
 	case MACH_CLASSH:
-	case MACH_CLASSIIfx:
-		panic("Unknown/unsupported machine class.");
+		panic("Unknown/unsupported machine class (%d).",
+		    current_mac_model->class);
 		break;
 	}
 	Via2Base = Via1Base + 0x2000 * VIA2;
