@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.2 (Berkeley) 4/1/94
+ *	from: @(#)extern.h	8.2 (Berkeley) 4/1/94
+ *	$Id: extern.h,v 1.2 1994/09/22 09:24:41 mycroft Exp $
  */
 
 typedef struct {

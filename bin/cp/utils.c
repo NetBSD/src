@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
+/*static char sccsid[] = "from: @(#)utils.c	8.3 (Berkeley) 4/1/94";*/
+static char *rcsid = "$Id: utils.c,v 1.2 1994/09/22 09:24:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +85,7 @@ copy_file(entp, dne)
 			checkch = ch = getchar();
 			while (ch != '\n' && ch != EOF)
 				ch = getchar();
-			if (checkch != 'y') {
+			if (checkch != 'y' && checkch != 'Y') {
 				(void)close(from_fd);
 				return (0);
 			}
