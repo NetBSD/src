@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1996/02/17 18:23:19 ragge Exp $
+#	$NetBSD: Makefile,v 1.8 1996/03/02 14:22:57 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -50,7 +50,7 @@ xxboot:	start.o bootxx.o romread.o ${LIBSA} ${LIBKERN} libsvax.a
 	@rm -f a.out
 
 boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
-	ld -Z -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
+	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
 	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
 	@strip boot
 	@size boot
