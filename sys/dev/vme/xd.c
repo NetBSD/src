@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.11 1998/04/24 20:20:33 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.12 1998/06/18 22:08:43 pk Exp $	*/
 
 /*
  *
@@ -472,6 +472,7 @@ xdcattach(parent, self, aux)
 
 	for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 		xdc->reqs[lcv].iopb = &xdc->iopbase[lcv];
+		xdc->reqs[lcv].dmaiopb = &xdc->dvmaiopb[lcv];
 		xdc->freereq[lcv] = lcv;
 		xdc->iopbase[lcv].fixd = 1;	/* always the same */
 		xdc->iopbase[lcv].naddrmod = XDC_ADDRMOD; /* always the same */
@@ -1601,7 +1602,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 #endif				/* XDC_DEBUG */
 
 	/* controller not busy, start command */
-	iopbaddr = (u_long) iorq->iopb;
+	iopbaddr = (u_long) iorq->dmaiopb;
 	XDC_GO(xdcsc->xdc, iopbaddr);	/* go! */
 	xdcsc->nrun++;
 	/* command now running, wrap it up */
