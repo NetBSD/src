@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2002/09/10 11:31:10 dbj Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2002/09/28 01:17:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -233,7 +233,7 @@ whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 		*fstype = FS_HFS;
 	} else if (strcmp(PART_TYPE_APPLEUFS, typestr) == 0) {
 		type = SCRATCH_PART;
-		*fstype = FS_OTHER;
+		*fstype = FS_APPLEUFS;
 	} else if (strcmp(PART_TYPE_LINUX, typestr) == 0) {
 		type = SCRATCH_PART;
 		*fstype = FS_OTHER;
