@@ -1,5 +1,7 @@
-# $NetBSD: TODO,v 1.1 2000/03/19 10:37:04 jdolecek Exp $
+# $NetBSD: TODO,v 1.2 2000/03/20 07:30:14 jdolecek Exp $
 
+- createde(): do cleanup in an error occurs in middle of our work (especially,
+	clean the recently added entries)
 - support async mount (handy e.g. on slow medium when extracting lot's
 	of small files)
 - the fat cache (see msdosfs_fat.c, denode->de_fc[]) should prolly
