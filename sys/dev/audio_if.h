@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.27 1998/08/08 23:40:03 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.28 1998/08/09 20:28:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -68,7 +68,8 @@ struct audio_hw_if {
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
-        int	(*set_params)__P((void *, int, int, struct audio_params *, struct audio_params *));
+        int	(*set_params)__P((void *, int, int, struct audio_params *,
+		    struct audio_params *));
   
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
@@ -113,6 +114,11 @@ struct audio_hw_if {
 	int	(*mappage)__P((void *, void *, int, int));
 
 	int 	(*get_props)__P((void *)); /* device properties */
+
+	int	(*trigger_output)__P((void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *));
+	int	(*trigger_input)__P((void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *));
 };
 
 struct midi_info {
