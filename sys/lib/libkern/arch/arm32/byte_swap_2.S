@@ -1,11 +1,11 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:29 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2 1999/01/22 09:17:47 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Neil A. Carson
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,8 +43,7 @@ _ENTRY(_C_FUNC(bswap16));
 _ENTRY(_C_FUNC(ntohs));
 _ENTRY(_C_FUNC(htons));
 _END_ENTRY
-	mov		r1, r0, lsl #8
-	mov		r0, r0, lsr #8
-	bic		r0, r0, #0xFF00
-	orr		r0, r0, r1
+	and		r1, r0, #0xFF00
+	mov		r0, r0, lsl #8
+	orr		r0, r0, r1, lsr #8
 	mov		pc, lr  
