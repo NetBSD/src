@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.11 1996/11/06 01:17:12 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.12 1999/02/04 00:27:07 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,8 +64,9 @@ struct shparam {
 #define	aflag optlist[12].val
 #define	bflag optlist[13].val
 #define	uflag optlist[14].val
+#define	qflag optlist[15].val
 
-#define NOPTS	15
+#define NOPTS	16
 
 struct optent {
 	const char *name;
@@ -90,6 +91,7 @@ struct optent optlist[NOPTS] = {
 	{ "allexport",	'a',	0 },
 	{ "notify",	'b',	0 },
 	{ "nounset",	'u',	0 },
+	{ "quietprofile", 'q',	0 },
 };
 #else
 extern struct optent optlist[NOPTS];
