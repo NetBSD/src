@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2001/02/17 04:27:54 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2001/06/13 15:08:05 soda Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -34,8 +34,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <arc/arc/arctype.h>
 #include <machine/autoconf.h>
+#include <machine/platform.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -79,6 +79,7 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
+	int i;
 
 	mainbus_found = 1;
 
@@ -102,67 +103,12 @@ mbattach(parent, self, aux)
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		nca.ca_name = "jazzio";
+	for (i = 0; platform->mainbusdevs[i] != NULL; i++) {
+		nca.ca_name = platform->mainbusdevs[i];
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
-		break;
-
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		nca.ca_name = "algor";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-		break;
-	}
-
-	/* The following machines have a PCI bus */
-	switch (cputype) {
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_JC94:
-		nca.ca_name = "necpb";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-		break;
-
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		nca.ca_name = "pbcpcibr";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-		break;
-	}
-
-	/* The following machines have an ISA bus */
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_R96:
-	case DESKSTATION_TYNE:
-	case DESKSTATION_RPC44:
-		nca.ca_name = "isabr";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-		break;
 	}
 }
 

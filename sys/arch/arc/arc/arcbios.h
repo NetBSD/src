@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.3 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.4 2001/06/13 15:08:05 soda Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -364,3 +364,10 @@ void bios_save_info __P((void));
 #ifdef arc
 void bios_display_info __P((int *, int *, int *, int *));
 #endif
+
+extern char arc_vendor_id[sizeof(((arc_sid_t *)0)->vendor) + 1];
+extern unsigned char arc_product_id[sizeof(((arc_sid_t *)0)->prodid)];
+extern char arc_id[64 + 1];
+extern char arc_displayc_id[64 + 1];
+extern arc_dsp_stat_t arc_displayinfo;
+extern int arc_cpu_l2cache_size;
