@@ -1,4 +1,4 @@
-/*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
+/*	$NetBSD: closure.c,v 1.5 1997/07/25 16:46:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $";
+__RCSID("$NetBSD: closure.c,v 1.5 1997/07/25 16:46:29 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,15 +54,17 @@ unsigned *ruleset;
 static unsigned *first_derives;
 static unsigned *EFF;
 
+void set_EFF __P((void));
 
+void
 set_EFF()
 {
-    register unsigned *row;
-    register int symbol;
-    register short *sp;
-    register int rowsize;
-    register int i;
-    register int rule;
+    unsigned *row;
+    int symbol;
+    short *sp;
+    int rowsize;
+    int i;
+    int rule;
 
     rowsize = WORDSIZE(nvars);
     EFF = NEW2(nvars * rowsize, unsigned);
@@ -90,19 +93,22 @@ set_EFF()
 }
 
 
+void
 set_first_derives()
 {
-    register unsigned *rrow;
-    register unsigned *vrow;
-    register int j;
-    register unsigned k;
-    register unsigned cword;
-    register short *rp;
+    unsigned *rrow;
+    unsigned *vrow;
+    int j;
+    unsigned k;
+    unsigned cword;
+    short *rp;
 
     int rule;
     int i;
     int rulesetsize;
     int varsetsize;
+
+    cword = 0;
 
     rulesetsize = WORDSIZE(nrules);
     varsetsize = WORDSIZE(nvars);
@@ -145,17 +151,18 @@ set_first_derives()
 }
 
 
+void
 closure(nucleus, n)
 short *nucleus;
 int n;
 {
-    register int ruleno;
-    register unsigned word;
-    register unsigned i;
-    register short *csp;
-    register unsigned *dsp;
-    register unsigned *rsp;
-    register int rulesetsize;
+    int ruleno;
+    unsigned word;
+    unsigned i;
+    short *csp;
+    unsigned *dsp;
+    unsigned *rsp;
+    int rulesetsize;
 
     short *csend;
     unsigned *rsend;
@@ -214,7 +221,7 @@ int n;
 }
 
 
-
+void
 finalize_closure()
 {
   FREE(itemset);
@@ -228,7 +235,7 @@ finalize_closure()
 print_closure(n)
 int n;
 {
-  register short *isp;
+  short *isp;
 
   printf("\n\nn = %d\n\n", n);
   for (isp = itemset; isp < itemsetend; isp++)
@@ -238,10 +245,10 @@ int n;
 
 print_EFF()
 {
-    register int i, j;
-    register unsigned *rowp;
-    register unsigned word;
-    register unsigned k;
+    int i, j;
+    unsigned *rowp;
+    unsigned word;
+    unsigned k;
 
     printf("\n\nEpsilon Free Firsts\n");
 
@@ -269,11 +276,11 @@ print_EFF()
 
 print_first_derives()
 {
-    register int i;
-    register int j;
-    register unsigned *rp;
-    register unsigned cword;
-    register unsigned k;
+    int i;
+    int j;
+    unsigned *rp;
+    unsigned cword;
+    unsigned k;
 
     printf("\n\n\nFirst Derives\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.5 1997/01/15 07:24:25 mikel Exp $	*/
+/*	$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.5 1997/01/15 07:24:25 mikel Exp $";
+__RCSID("$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +63,35 @@ static short *check;
 static int lowzero;
 static int high;
 
+void output __P((void));
+void output_prefix __P((void));
+void output_rule_data __P((void));
+void output_yydefred __P((void));
+void output_actions __P((void));
+void token_actions __P((void));
+void goto_actions __P((void));
+int default_goto __P((int));
+void save_column __P((int, int));
+void sort_actions __P((void));
+void pack_table __P((void));
+int matching_vector __P((int));
+int pack_vector __P((int));
+void output_base __P((void));
+void output_table __P((void));
+void output_check __P((void));
+int is_C_identifier __P((char *));
+void output_defines __P((void));
+void output_stored_text __P((void));
+void output_debug __P((void));
+void output_stype __P((void));
+void output_trailing_text __P((void));
+void output_semantic_actions __P((void));
+void free_itemsets __P((void));
+void free_shifts __P((void));
+void free_reductions __P((void));
 
+
+void
 output()
 {
     free_itemsets();
@@ -85,7 +114,7 @@ output()
     write_section(trailer);
 }
 
-
+void
 output_prefix()
 {
     if (symbol_prefix == NULL)
@@ -149,11 +178,11 @@ output_prefix()
     fprintf(code_file, "#define YYPREFIX \"%s\"\n", symbol_prefix);
 }
 
-
+void
 output_rule_data()
 {
-    register int i;
-    register int j;
+    int i;
+    int j;
 
   
     fprintf(output_file, "short %slhs[] = {%42d,", symbol_prefix,
@@ -196,10 +225,10 @@ output_rule_data()
     fprintf(output_file, "\n};\n");
 }
 
-
+void
 output_yydefred()
 {
-    register int i, j;
+    int i, j;
 
     fprintf(output_file, "short %sdefred[] = {%39d,", symbol_prefix,
 	    (defred[0] ? defred[0] - 2 : 0));
@@ -223,7 +252,7 @@ output_yydefred()
     fprintf(output_file, "\n};\n");
 }
 
-
+void
 output_actions()
 {
     nvectors = 2*nstates + nvars;
@@ -251,14 +280,14 @@ output_actions()
     output_check();
 }
 
-
+void
 token_actions()
 {
-    register int i, j;
-    register int shiftcount, reducecount;
-    register int max, min;
-    register short *actionrow, *r, *s;
-    register action *p;
+    int i, j;
+    int shiftcount, reducecount;
+    int max, min;
+    short *actionrow, *r, *s;
+    action *p;
 
     actionrow = NEW2(2*ntokens, short);
     for (i = 0; i < nstates; ++i)
@@ -336,9 +365,10 @@ token_actions()
     FREE(actionrow);
 }
 
+void
 goto_actions()
 {
-    register int i, j, k;
+    int i, j, k;
 
     state_count = NEW2(nstates, short);
 
@@ -372,11 +402,11 @@ int
 default_goto(symbol)
 int symbol;
 {
-    register int i;
-    register int m;
-    register int n;
-    register int default_state;
-    register int max;
+    int i;
+    int m;
+    int n;
+    int default_state;
+    int max;
 
     m = goto_map[symbol];
     n = goto_map[symbol + 1];
@@ -404,19 +434,19 @@ int symbol;
 }
 
 
-
+void
 save_column(symbol, default_state)
 int symbol;
 int default_state;
 {
-    register int i;
-    register int m;
-    register int n;
-    register short *sp;
-    register short *sp1;
-    register short *sp2;
-    register int count;
-    register int symno;
+    int i;
+    int m;
+    int n;
+    short *sp;
+    short *sp1;
+    short *sp2;
+    int count;
+    int symno;
 
     m = goto_map[symbol];
     n = goto_map[symbol + 1];
@@ -447,13 +477,14 @@ int default_state;
     width[symno] = sp1[-1] - sp[0] + 1;
 }
 
+void
 sort_actions()
 {
-  register int i;
-  register int j;
-  register int k;
-  register int t;
-  register int w;
+  int i;
+  int j;
+  int k;
+  int t;
+  int w;
 
   order = NEW2(nvectors, short);
   nentries = 0;
@@ -482,11 +513,12 @@ sort_actions()
 }
 
 
+void
 pack_table()
 {
-    register int i;
-    register int place;
-    register int state;
+    int i;
+    int place;
+    int state;
 
     base = NEW2(nvectors, short);
     pos = NEW2(nentries, short);
@@ -548,13 +580,13 @@ int
 matching_vector(vector)
 int vector;
 {
-    register int i;
-    register int j;
-    register int k;
-    register int t;
-    register int w;
-    register int match;
-    register int prev;
+    int i;
+    int j;
+    int k;
+    int t;
+    int w;
+    int match;
+    int prev;
 
     i = order[vector];
     if (i >= 2*nstates)
@@ -589,12 +621,12 @@ int
 pack_vector(vector)
 int vector;
 {
-    register int i, j, k, l;
-    register int t;
-    register int loc;
-    register int ok;
-    register short *from;
-    register short *to;
+    int i, j, k, l;
+    int t;
+    int loc;
+    int ok;
+    short *from;
+    short *to;
     int newmax;
 
     i = order[vector];
@@ -662,10 +694,10 @@ int vector;
 }
 
 
-
+void
 output_base()
 {
-    register int i, j;
+    int i, j;
 
     fprintf(output_file, "short %ssindex[] = {%39d,", symbol_prefix, base[0]);
 
@@ -728,11 +760,11 @@ output_base()
 }
 
 
-
+void
 output_table()
 {
-    register int i;
-    register int j;
+    int i;
+    int j;
 
     ++outline;
     fprintf(code_file, "#define YYTABLESIZE %d\n", high);
@@ -760,11 +792,11 @@ output_table()
 }
 
 
-
+void
 output_check()
 {
-    register int i;
-    register int j;
+    int i;
+    int j;
 
     fprintf(output_file, "short %scheck[] = {%40d,", symbol_prefix,
 	    check[0]);
@@ -794,8 +826,8 @@ int
 is_C_identifier(name)
 char *name;
 {
-    register char *s;
-    register int c;
+    char *s;
+    int c;
 
     s = name;
     c = *s;
@@ -814,7 +846,7 @@ char *name;
 
     if (!isalpha(c) && c != '_' && c != '$')
 	return (0);
-    while (c = *++s)
+    while ((c = *++s) != '\0')
     {
 	if (!isalnum(c) && c != '_' && c != '$')
 	    return (0);
@@ -823,10 +855,11 @@ char *name;
 }
 
 
+void
 output_defines()
 {
-    register int c, i;
-    register char *s;
+    int c, i;
+    char *s;
 
     for (i = 2; i < ntokens; ++i)
     {
@@ -851,7 +884,7 @@ output_defines()
 		    putc(c, code_file);
 		    if (dflag) putc(c, defines_file);
 		}
-		while (c = *++s);
+		while ((c = *++s) != '\0');
 	    }
 	    ++outline;
 	    fprintf(code_file, " %d\n", symbol_value[i]);
@@ -875,10 +908,11 @@ output_defines()
 }
 
 
+void
 output_stored_text()
 {
-    register int c;
-    register FILE *in, *out;
+    int c;
+    FILE *in, *out;
 
     fclose(text_file);
     text_file = fopen(text_file_name, "r");
@@ -902,9 +936,10 @@ output_stored_text()
 }
 
 
+void
 output_debug()
 {
-    register int i, j, k, max;
+    int i, j, k, max;
     char **symnam, *s;
 
     ++outline;
@@ -939,7 +974,7 @@ output_debug()
     j = 80;
     for (i = 0; i <= max; ++i)
     {
-	if (s = symnam[i])
+	if ((s = symnam[i]) != NULL)
 	{
 	    if (s[0] == '"')
 	    {
@@ -1116,6 +1151,7 @@ output_debug()
 }
 
 
+void
 output_stype()
 {
     if (!unionized && ntags == 0)
@@ -1126,10 +1162,11 @@ output_stype()
 }
 
 
+void
 output_trailing_text()
 {
-    register int c, last;
-    register FILE *in, *out;
+    int c, last;
+    FILE *in, *out;
 
     if (line == 0)
 	return;
@@ -1183,10 +1220,11 @@ output_trailing_text()
 }
 
 
+void
 output_semantic_actions()
 {
-    register int c, last;
-    register FILE *out;
+    int c, last;
+    FILE *out;
 
     fclose(action_file);
     action_file = fopen(action_file_name, "r");
@@ -1220,9 +1258,10 @@ output_semantic_actions()
 }
 
 
+void
 free_itemsets()
 {
-    register core *cp, *next;
+    core *cp, *next;
 
     FREE(state_table);
     for (cp = first_state; cp; cp = next)
@@ -1233,9 +1272,10 @@ free_itemsets()
 }
 
 
+void
 free_shifts()
 {
-    register shifts *sp, *next;
+    shifts *sp, *next;
 
     FREE(shift_table);
     for (sp = first_shift; sp; sp = next)
@@ -1246,10 +1286,10 @@ free_shifts()
 }
 
 
-
+void
 free_reductions()
 {
-    register reductions *rp, *next;
+    reductions *rp, *next;
 
     FREE(reduction_table);
     for (rp = first_reduction; rp; rp = next)
