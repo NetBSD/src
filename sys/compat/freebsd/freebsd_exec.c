@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.2 1996/05/18 16:02:08 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.2.16.1 1998/01/29 12:00:44 mellon Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -57,7 +57,7 @@ struct emul emul_freebsd = {
 	freebsd_syscallnames,
 	0,
 	copyargs,
-	setregs,
+	freebsd_setregs,
 	freebsd_sigcode,
 	freebsd_esigcode,
 };
