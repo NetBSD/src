@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.17 2002/03/10 19:56:39 lukem Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.18 2002/03/23 02:22:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -315,8 +315,7 @@ cpu_startup()
 void
 zero_page_readonly()
 {
-	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
+	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
@@ -331,8 +330,7 @@ zero_page_readonly()
 void
 zero_page_readwrite()
 {
-	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
+	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
