@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.92 2001/05/21 00:01:10 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.93 2001/05/21 00:57:06 jhawk Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -168,6 +168,8 @@ Cyclades Cyclom-Y serial cards [*] [+]
 .It
 Addonics FlexPort 8S 8-port serial cards [*]
 .It
+Byte Runner Technologies TC-400 and TC-800 serial cards [*]
+.It
 PCI universal communication cards
 .bullet)
 .It
@@ -212,10 +214,13 @@ AT\*&T StarLAN 10, EN100, and StarLAN Fiber
 .It
 3COM 3c509, 3c579, 3c589, and 3c59X
 .It
-3COM 3c90X (including 3c905B)
+3COM 3c90X (including 3c905B), 3c450, 3c55X, 3c575, 3c980, 3cSOHO100
 .It
+.ne 4
 Digital DC21x4x-based PCI Ethernet adapters
 .(bullet -compact
+Accton EN2242
+.It
 ASUS PCI-DEC100TX+
 .It
 Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
@@ -358,19 +363,25 @@ Auto 16/4 Token-Ring ISA Adapter [+]
 .It
 Wireless network adapters
 .(bullet -compact
+3Com AirConnect Wireless LAN
+.It
 AT\*&T/Lucent/Agere WaveLAN/ORiNOCO IEEE (802.11) PCMCIA cards
+.It
+Aironet 4500/4800 and Cisco 340 series PCMCIA cards
 .It
 BayStack 650 802.11FH PCMCIA cards [*] [+]
 .It
-NetWave AirSurfer PCMCIA cards [*] [+]
-.It
-Melco AIR CONNECT WLI-PCM-L11 cards [*] [+]
+Corega Wireless LAN PCC-11 cards [*] [+]
 .It 
 DEC/Cabletron RoamAbout 802.11 DS High Rate cards [*] [+]
 .It
-Corega Wireless LAN PCC-11 cards [*] [+]
-.It
 ELSA AirLancer MC-11 card [*] [+]
+.It
+Intersil Prism II
+.It
+Melco AIR CONNECT WLI-PCM-L11 cards [*] [+]
+.It
+NetWave AirSurfer PCMCIA cards [*] [+]
 .bullet)
 .It
 High Speed Serial
@@ -432,12 +443,14 @@ Cirrus Logic CS461x, CS4280 and CS4281 audio [*] [+]
 .It
 Ensoniq AudioPCI [*] [+]
 .It
-ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 2/2E and
-Solo-1 ES1938/1946
+ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 1/2/2E and
+Solo-1 ES1938/1946 [*] [+]
 .It
 Gravis Ultrasound Plug and Play [*] [+]
 .It
 Gravis Ultrasound and Ultrasound Max [*] [+]
+.It
+NeoMagic MagicMedia 256AV / 256ZX AC'97 audio [*] [+]
 .It
 Personal Sound System [*] [+]
 .It
@@ -451,8 +464,9 @@ VIA VT82C686A southbridge integrated AC97 audio [*] [+]
 .It
 Windows Sound System [*] [+]
 .It
-Yamaha OPL3-SA3 [*] [+]
-audio [*] [+]
+Yamaha YMF724/740/744/754 audio (DS-1 series) [*] [+]
+.It
+Yamaha OPL3-SA3 audio [*] [+]
 .bullet)
 .It
 Game Ports (Joysticks) [*] [+]
