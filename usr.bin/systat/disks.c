@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.7 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: disks.c,v 1.8 1998/12/19 22:26:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.7 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: disks.c,v 1.8 1998/12/19 22:26:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,10 +90,10 @@ dkselect(args, truefalse, selections)
 	if (cp)
 		*cp = '\0';
 	for (;;) {
-		for (cp = args; *cp && isspace(*cp); cp++)
+		for (cp = args; *cp && isspace((unsigned char)*cp); cp++)
 			;
 		args = cp;
-		for (; *cp && !isspace(*cp); cp++)
+		for (; *cp && !isspace((unsigned char)*cp); cp++)
 			;
 		if (*cp)
 			*cp++ = '\0';
