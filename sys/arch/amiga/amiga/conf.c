@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.11 1994/03/08 08:12:49 chopps Exp $
+ *	$Id: conf.c,v 1.12 1994/05/28 07:49:20 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -77,6 +77,11 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
 	dev_init(c,n,dump), dev_size_init(c,n), 0 }
 
+#define	bdev_floppy_init(c) { \
+	dev_init(c,Fd,open), dev_init(c,fd,close), \
+	dev_init(c,fd,strategy), dev_init(c,fd,ioctl), \
+	(dev_type_dump((*))) enxio, dev_size_init(c,fd), 0 }
+
 #define	bdev_tape_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
@@ -93,6 +98,7 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "st.h"
 #include "vn.h"
+#include "fd.h"
 
 #ifdef LKM
 int lkmenodev();
@@ -108,12 +114,14 @@ int lkmenodev();
 bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(vn);
+bdev_decl(fd);
+dev_decl(Fd,open);
 
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),		/* 0 */
 	bdev_notdef(),		/* 1 */
-	bdev_notdef(),		/* 2 */
+	bdev_floppy_init(NFD),	/* 2: floppy */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
 	bdev_notdef(),		/* 5 */
@@ -152,6 +160,17 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
 	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
+
+/* open, read, write, ioctl, strategy */
+#define	cdev_floppy_init(c) { \
+	dev_init(c,Fd,open), dev_init(c,fd,close), \
+	(dev_type_read((*)))rawread, \
+	(dev_type_write((*))) rawwrite, dev_init(c,fd,ioctl), \
+	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, \
+	0, seltrue, (dev_type_map((*))) enodev, dev_init(c,fd,strategy) }
+
+cdev_decl(fd);
+dev_type_open(Fdopen);
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_tape_init(c,n) { \
@@ -298,8 +317,8 @@ cdev_decl(vn);
 
 dev_type_open(fdopen);
 /* open */
-#define	cdev_fd_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) enodev, \
+#define	cdev_fd_init(c) { \
+	dev_init(c,fd,open), (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) enodev, 0, (dev_type_select((*))) enodev, \
@@ -356,16 +375,12 @@ struct cdevsw	cdevsw[] =
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_kbd_init(1, kbd),		/* 14: /dev/kbd */
 	cdev_mouse_init(NMOUSE, ms),	/* 15: /dev/mouse0 /dev/mouse1 */
-#if 0
-	cdev_notdef(),			/* 16: */
-#else
 	cdev_view_init (NVIEW, view),	/* 16: /dev/view00 /dev/view01 ... */
-#endif
 	cdev_notdef(),			/* 17: */
-	cdev_notdef(),			/* 18: */
+	cdev_floppy_init(NFD),		/* 18: floppy */
 	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
-	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
+	cdev_fd_init(1),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_notdef(),			/* 23: */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable kernel modules pdev */
