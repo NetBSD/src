@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.24 2003/10/14 17:44:09 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.25 2003/10/24 17:04:35 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.27 2003/10/24 17:04:16 mycroft Exp 
  */
 
 /*
@@ -59,6 +59,7 @@
 #define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link Systems */
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ALLIEDTELESYN	0x1259		/* Allied Telesyn International */
+#define	CARDBUS_VENDOR_NETGEAR	0x1317		/* NetGear, Inc. */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
 #define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex Communications Inc */
 #define	CARDBUS_VENDOR_ATHEROS	0x168c		/* Atheros Communications, Inc. */
@@ -117,6 +118,9 @@
 /* Corega products */
 #define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 Ethernet */
+
+/* NetGear products */
+#define	CARDBUS_PRODUCT_NETGEAR_FA511	0x1985		/* FA511 10/100 Ethernet */
 
 /* AboCom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.23 2003/10/14 17:44:09 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.24 2003/10/24 17:04:35 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.27 2003/10/24 17:04:16 mycroft Exp 
  */
 
 /*
@@ -176,6 +176,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "FEther II CB-TXD 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_NETGEAR, CARDBUS_PRODUCT_NETGEAR_FA511,
+	    0,
+	    "NetGear, Inc.",
+	    "FA511 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
 	    0,
 	    "AboCom Systems",
@@ -311,6 +317,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ALLIEDTELESYN, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Allied Telesyn International",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_NETGEAR, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "NetGear, Inc.",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.38 2002/11/11 12:51:38 onoe Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.39 2003/10/24 17:04:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38 2002/11/11 12:51:38 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.39 2003/10/24 17:04:35 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -158,6 +158,9 @@ const struct tulip_cardbus_product {
 	  TULIP_CHIP_AN985 },
 
 	{ CARDBUS_VENDOR_HAWKING,	CARDBUS_PRODUCT_HAWKING_PN672TX,
+	  TULIP_CHIP_AN985 },
+
+	{ CARDBUS_VENDOR_NETGEAR,	CARDBUS_PRODUCT_NETGEAR_FA511,
 	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,

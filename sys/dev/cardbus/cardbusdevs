@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp $
+$NetBSD: cardbusdevs,v 1.27 2003/10/24 17:04:16 mycroft Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -52,6 +52,7 @@ vendor XIRCOM		0x115d	Xircom
 vendor DLINK		0x1186	D-Link Systems
 vendor COREGA		0x1259	Corega
 vendor ALLIEDTELESYN	0x1259	Allied Telesyn International
+vendor NETGEAR		0x1317	NetGear, Inc.
 vendor ABOCOM		0x13d1	AboCom Systems
 vendor PLANEX		0x14ea	Planex Communications Inc
 vendor ATHEROS		0x168c	Atheros Communications, Inc.
@@ -110,6 +111,9 @@ product DLINK	DFE_690TXD	0x1340	DFE-690TXD 10/100 Ethernet
 /* Corega products */
 product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
 product	COREGA 2CB_TXD	0xa11e	FEther II CB-TXD 10/100 Ethernet
+
+/* NetGear products */
+product NETGEAR FA511	0x1985	FA511 10/100 Ethernet
 
 /* AboCom products */
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
