@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.24 2004/05/17 01:56:19 simonb Exp $	*/
+/*	$NetBSD: du.c,v 1.25 2004/06/13 11:30:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.24 2004/05/17 01:56:19 simonb Exp $");
+__RCSID("$NetBSD: du.c,v 1.25 2004/06/13 11:30:10 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,9 @@ __RCSID("$NetBSD: du.c,v 1.24 2004/05/17 01:56:19 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
-int	linkchk __P((FTSENT *));
+int	linkchk __P((dev_t, ino_t));
 int	main __P((int, char **));
 void	prstat __P((const char *, int64_t));
 void	usage __P((void));
@@ -217,7 +218,8 @@ main(argc, argv)
 			rval = 1;
 			break;
 		default:
-			if (p->fts_statp->st_nlink > 1 && linkchk(p))
+			if (p->fts_statp->st_nlink > 1 &&
+			    linkchk(p->fts_statp->st_dev, p->fts_statp->st_ino))
 				break;
 			/*
 			 * If listing each file, or a non-directory file was
@@ -254,36 +256,79 @@ prstat(const char *fname, int64_t blocks)
 		    fname);
 }
 
-
-typedef struct _ID {
-	dev_t	dev;
-	ino_t	inode;
-} ID;
-
 int
-linkchk(p)
-	FTSENT *p;
+linkchk(dev_t dev, ino_t ino)
 {
-	static ID *files;
-	static int maxfiles, nfiles;
-	ID *fp, *start;
-	ino_t ino;
-	dev_t dev;
+	static struct entry {
+		dev_t	dev;
+		ino_t	ino;
+	} *htable;
+	static int htshift;  /* log(allocated size) */
+	static int htmask;   /* allocated size - 1 */
+	static int htused;   /* 2*number of insertions */
+	static int sawzero;  /* Whether zero is in table or not */
+	int h, h2;
+	uint64_t tmp;
+	/* this constant is (1<<64)/((1+sqrt(5))/2)
+	 * aka (word size)/(golden ratio)
+	 */
+	const uint64_t HTCONST = 11400714819323198485ULL;
+	const int HTBITS = CHAR_BIT * sizeof(tmp);
 
-	ino = p->fts_statp->st_ino;
-	dev = p->fts_statp->st_dev;
-	if ((start = files) != NULL)
-		for (fp = start + nfiles - 1; fp >= start; --fp)
-			if (ino == fp->inode && dev == fp->dev)
-				return (1);
+	/* Never store zero in hashtable */
+	if (dev == 0 && ino == 0) {
+		h = sawzero;
+		sawzero = 1;
+		return h;
+	}
 
-	if (nfiles == maxfiles && (files = realloc((char *)files,
-	    (u_int)(sizeof(ID) * (maxfiles += 128)))) == NULL)
-		err(1, "realloc");
-	files[nfiles].inode = ino;
-	files[nfiles].dev = dev;
-	++nfiles;
-	return (0);
+	/* Extend hash table if necessary, keep load under 0.5 */
+	if (htused<<1 >= htmask) {
+		struct entry *ohtable;
+
+		if (!htable)
+			htshift = 10;   /* starting hashtable size */
+		else
+			htshift++;   /* exponential hashtable growth */
+
+		htmask  = (1 << htshift) - 1;
+		htused = 0;
+
+		ohtable = htable;
+		htable = calloc(htmask+1, sizeof(*htable));
+		if (!htable)
+			err(1, "calloc");
+
+		/* populate newly allocated hashtable */
+		if (ohtable) {
+			int i;
+			for (i = 0; i <= htmask>>1; i++)
+				if (ohtable[i].ino || ohtable[i].dev)
+					linkchk(ohtable[i].dev, ohtable[i].ino);
+			free(ohtable);
+		}
+	}
+
+	/* multiplicative hashing */
+	tmp = dev;
+	tmp <<= HTBITS>>1;
+	tmp |=  ino;
+	tmp *= HTCONST;
+	h  = tmp >> (HTBITS - htshift);
+	h2 = 1 | ( tmp >> (HTBITS - (htshift<<1) - 1)); /* must be odd */
+
+	/* open address hashtable search with double hash probing */
+	while (htable[h].ino || htable[h].dev) {
+		if ((htable[h].ino == ino) && (htable[h].dev == dev))
+			return 1;
+		h = (h + h2) & htmask;
+	}
+
+	/* Insert the current entry into hashtable */
+	htable[h].dev = dev;
+	htable[h].ino = ino;
+	htused++;
+	return 0;
 }
 
 void
