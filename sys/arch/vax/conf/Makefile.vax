@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.46 1999/01/08 19:26:15 augustss Exp $
+#	$NetBSD: Makefile.vax,v 1.47 1999/01/17 19:09:00 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -52,6 +52,9 @@ CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
+.if (${HAVE_GCC28} != "")
+CFLAGS+=	-mno-pic
+.endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
 STRIPFLAGS=	-d
