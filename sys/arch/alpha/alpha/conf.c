@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.50 2000/10/19 14:35:41 ad Exp $ */
+/* $NetBSD: conf.c,v 1.51 2000/11/26 17:44:06 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.50 2000/10/19 14:35:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.51 2000/11/26 17:44:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ bdev_decl(raid);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
-#include "lsu.h"
-bdev_decl(lsu);
+#include "ld.h"
+bdev_decl(ld);
 
 struct bdevsw	bdevsw[] =
 {
@@ -92,7 +92,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
 	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
-	bdev_disk_init(NLSU,lsu),	/* 17: logical storage unit */
+	bdev_disk_init(NLD,ld),		/* 17: logical disk driver */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -334,7 +334,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
-	cdev_disk_init(NLSU,lsu),	/* 59: logical storage unit */
+	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
 	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
 	cdev_usbdev_init(NURIO,urio),	/* 62: Diamond Rio 500 */

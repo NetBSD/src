@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.403 2000/11/15 21:14:14 thorpej Exp $
+#	$NetBSD: files,v 1.404 2000/11/26 17:44:02 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -194,9 +194,9 @@ file	ipkdb/ipkdb_if.c		ipkdb
 define	mii_bitbang
 file	dev/mii/mii_bitbang.c		mii_bitbang
 
-# Logical storage unit
-device	lsu: disk
-file	dev/lsu.c			lsu	needs-flag
+# Logical disk
+device	ld: disk
+file	dev/ld.c			ld	needs-flag
 
 # Central clearing house for system monitoring.
 define	sysmon_envsys
@@ -234,8 +234,8 @@ file	dev/ic/dpt.c			dpt
 device	cac {unit = -1}
 file	dev/ic/cac.c			cac
 
-attach	lsu at cac with lsu_cac
-file	dev/ic/lsu_cac.c		lsu_cac
+attach	ld at cac with ld_cac
+file	dev/ic/ld_cac.c			ld_cac
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.24 2000/11/23 16:26:50 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.25 2000/11/26 17:44:11 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,11 +101,12 @@ EXTERN distinfo special_kernel_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On  i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "lsu" arrays.
+ * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
+ * disks.
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", "lsu", NULL}
+= {"wd", "sd", "ld", NULL}
 #endif
 ;
 
@@ -115,9 +116,9 @@ EXTERN	char *disk_names[]
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  *
- * On  i386, that means matching 'w' for st-506/ide, 's' for sd and 'c' for ca.
+ * On  i386, that means matching 'w' for st-506/ide, 's' for sd and 'l' for ld.
  */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'c')
+#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'l')
 
 /*
  * Machine-specific command to write a new label to a disk.

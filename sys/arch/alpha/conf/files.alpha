@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.126 2000/11/08 19:48:51 ad Exp $
+# $NetBSD: files.alpha,v 1.127 2000/11/26 17:44:08 ad Exp $
 #
 # alpha-specific configuration info
 
@@ -93,8 +93,8 @@ major { md = 6 }
 # RAIDframe 
 major { raid = 16 }
 
-# Logical storage unit 
-major { lsu = 17 }
+# Logical disks 
+major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"

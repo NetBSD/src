@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.8 2000/11/21 00:16:33 soren Exp $
+#	$NetBSD: files.cobalt,v 1.9 2000/11/26 17:44:08 ad Exp $
 
 maxpartitions 16
 
@@ -64,4 +64,4 @@ include "dev/ata/files.ata"
 major {wd = 6}
 
 major {raid = 5}
-major {lsu = 10}
+major {ld = 10}
