@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.1 1999/03/16 16:30:17 minoura Exp $
+#	$NetBSD: TOKOCHAN,v 1.2 1999/03/16 17:04:35 minoura Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -86,7 +86,7 @@ options 	PANICBUTTON		# interrupt switch invokes DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-pipe"		# path -pipe option to CC
+makeoptions 	DEBUG="-pipe"		# pass -pipe option to CC
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
