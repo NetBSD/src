@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.65 1998/09/22 13:41:03 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.66 1998/10/08 22:23:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -681,7 +681,22 @@ timerattach_obio(parent, self, aux)
 
 		/* Map each CPU's counter */
 		for (i = 0; i < sa->sa_nreg - 1; i++) {
-			if (cpus[i] == NULL)
+			struct cpu_info *cpi;
+			int n;
+
+			/*
+			 * Check whether the CPU corresponding to this
+			 * timer register is installed.
+			 */
+			for (n = 0; n < ncpu; n++) {
+				if ((cpi = cpus[n]) == NULL)
+					continue;
+				if (cpi->mid == i + 8)
+					/* We got a corresponding MID */
+					break;
+				cpi = NULL;
+			}
+			if (cpi == NULL)
 				continue;
 			if (sbus_bus_map(sa->sa_bustag,
 					 sa->sa_reg[i].sbr_slot,
@@ -693,7 +708,7 @@ timerattach_obio(parent, self, aux)
 					self->dv_xname);
 				return;
 			}
-			cpus[i]->counterreg_4m = (struct counter_4m *)bh;
+			cpi->counterreg_4m = (struct counter_4m *)bh;
 		}
 
 		/* Put processor counter in "timer" mode */
