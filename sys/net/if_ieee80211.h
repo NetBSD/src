@@ -1,0 +1,48 @@
+/*	$NetBSD: if_ieee80211.h,v 1.1 2000/01/23 23:50:14 chopps Exp $	*/
+
+/*
+ * generic definitions for IEEE 802.11 frames
+ */
+struct ieee80211_frame {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[ETHER_ADDR_LEN];
+	u_int8_t	i_addr2[ETHER_ADDR_LEN];
+	u_int8_t	i_addr3[ETHER_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	/* possibly followed by addr4[ETHER_ADDR_LEN]; */
+};
+
+#define	IEEE80211_FC0_VERSION_MASK		0x03
+#define	IEEE80211_FC0_VERSION_0			0x00
+#define	IEEE80211_FC0_TYPE_MASK			0x0c
+#define	IEEE80211_FC0_TYPE_MGT			0x00
+#define	IEEE80211_FC0_TYPE_CTL			0x04
+#define	IEEE80211_FC0_TYPE_DATA			0x08
+#define	IEEE80211_FC0_SUBTYPE_MASK		0xf0
+#define	IEEE80211_FC0_SUBTYPE_ASSOC_REQ		0x00
+#define	IEEE80211_FC0_SUBTYPE_ASSOC_RESP	0x10
+#define	IEEE80211_FC0_SUBTYPE_REASSOC_REQ	0x20
+#define	IEEE80211_FC0_SUBTYPE_REASSOC_RESP	0x30
+#define	IEEE80211_FC0_SUBTYPE_PROBE_REQ		0x40
+#define	IEEE80211_FC0_SUBTYPE_PROBE_RESP	0x50
+#define	IEEE80211_FC0_SUBTYPE_BEACON		0x80
+#define	IEEE80211_FC0_SUBTYPE_DISASSOC		0xa0
+#define	IEEE80211_FC0_SUBTYPE_AUTH_REQ		0xb0
+#define	IEEE80211_FC0_SUBTYPE_AUTH_RESP		/* XXX */
+#define	IEEE80211_FC0_SUBTYPE_ATIM		/* XXX */
+#define	IEEE80211_FC0_SUBTYPE_PS_POLL		/* XXX */
+#define	IEEE80211_FC0_SUBTYPE_RTS		/* XXX */
+#define	IEEE80211_FC0_SUBTYPE_CTS		/* XXX */
+#define	IEEE80211_FC0_SUBTYPE_ACK		/* XXX */
+
+#define	IEEE80211_FC1_RCVFROM_MASK		0x03
+#define	IEEE80211_FC1_RCVFROM_TERMINAL		0x00
+#define	IEEE80211_FC1_RCVFROM_AP		0x01
+#define	IEEE80211_FC1_RCVFROM_AP2AP		0x02
+
+#define	IEEE80211_NWID_LEN	32
+
+/* nwid is u_int8_t array of IEEE80211_NWID_LEN pointed at by ifr.ifr_data */
+#define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
+#define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
