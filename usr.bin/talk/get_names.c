@@ -33,13 +33,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)get_names.c	5.9 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: get_names.c,v 1.2 1993/08/01 18:07:51 mycroft Exp $";
+static char rcsid[] = "$Id: get_names.c,v 1.3 1994/04/17 12:31:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
 #include <pwd.h>
+#include <string.h>
 #include "talk.h"
 
 char	*getlogin();
@@ -59,6 +60,7 @@ get_names(argc, argv)
 	char *my_machine_name, *his_machine_name;
 	char *my_tty, *his_tty;
 	register char *cp;
+	char *names;
 
 	if (argc < 2 ) {
 		printf("Usage: talk user [ttyname]\n");
@@ -80,21 +82,22 @@ get_names(argc, argv)
 	gethostname(hostname, sizeof (hostname));
 	my_machine_name = hostname;
 	/* check for, and strip out, the machine name of the target */
-	for (cp = argv[1]; *cp && !index("@:!.", *cp); cp++)
+	names = strdup(argv[1]);
+	for (cp = names; *cp && !index("@:!.", *cp); cp++)
 		;
 	if (*cp == '\0') {
 		/* this is a local to local talk */
-		his_name = argv[1];
+		his_name = names;
 		his_machine_name = my_machine_name;
 	} else {
 		if (*cp++ == '@') {
 			/* user@host */
-			his_name = argv[1];
+			his_name = names;
 			his_machine_name = cp;
 		} else {
 			/* host.user or host!user or host:user */
 			his_name = cp;
-			his_machine_name = argv[1];
+			his_machine_name = names;
 		}
 		*--cp = '\0';
 	}
