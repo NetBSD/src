@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.13 1996/07/10 18:41:38 cgd Exp $	*/
+/*	$NetBSD: rpc.c,v 1.14 1996/09/26 23:22:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -241,7 +241,7 @@ recvrpc(d, pkt, len, tleft)
 {
 	register struct rpc_reply *reply;
 	ssize_t	n;
-	long	x;
+	int	x;
 
 	errno = 0;
 #ifdef RPC_DEBUG
@@ -320,8 +320,8 @@ rpc_fromaddr(pkt, addr, port)
 int rpc_pmap_num;
 struct pmap_list {
 	struct in_addr	addr;	/* server, net order */
-	u_long	prog;		/* host order */
-	u_long	vers;		/* host order */
+	u_int	prog;		/* host order */
+	u_int	vers;		/* host order */
 	int 	port;		/* host order */
 } rpc_pmap_list[PMAP_NUM];
 
@@ -329,8 +329,8 @@ struct pmap_list {
 int
 rpc_pmap_getcache(addr, prog, vers)
 	struct in_addr	addr;	/* server, net order */
-	u_long		prog;	/* host order */
-	u_long		vers;	/* host order */
+	u_int		prog;	/* host order */
+	u_int		vers;	/* host order */
 {
 	struct pmap_list *pl;
 
@@ -347,8 +347,8 @@ rpc_pmap_getcache(addr, prog, vers)
 void
 rpc_pmap_putcache(addr, prog, vers, port)
 	struct in_addr	addr;	/* server, net order */
-	u_long		prog;	/* host order */
-	u_long		vers;	/* host order */
+	u_int		prog;	/* host order */
+	u_int		vers;	/* host order */
 	int 		port;	/* host order */
 {
 	struct pmap_list *pl;
