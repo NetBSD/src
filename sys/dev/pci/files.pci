@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.95 2000/05/30 00:53:14 matt Exp $
+#	$NetBSD: files.pci,v 1.96 2000/06/06 03:07:39 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -17,6 +17,17 @@ file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+
+# Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
+# with USB.  This is a combo chip:
+#
+#	PCI-ISA bridge
+#	PCI IDE controller
+#	OHCI USB controller
+#
+# There are some common subroutines that each function needs.
+define	cy82c693
+file	dev/pci/cy82c693.c		cy82c693
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
 # device declaration in sys/conf/files
@@ -105,7 +116,7 @@ attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c	siop_pci
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: wdc_base, ata, atapi
+device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
