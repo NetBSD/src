@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.34 1995/12/09 04:09:32 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.35 1995/12/24 11:23:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -332,6 +332,14 @@ loop:
 			FREE(p->p_ru, M_ZOMBIE);
 
 			/*
+			 * Finally finished with old proc entry.
+			 * Unlink it from its process group and free it.
+			 */
+			leavepgrp(p);
+			LIST_REMOVE(p, p_list);	/* off zombproc */
+			LIST_REMOVE(p, p_sibling);
+
+			/*
 			 * Decrement the count of procs running with this uid.
 			 */
 			(void)chgproccnt(p->p_cred->p_ruid, -1);
@@ -349,14 +357,6 @@ loop:
 			 */
 			if (p->p_textvp)
 				vrele(p->p_textvp);
-
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(p);
-			LIST_REMOVE(p, p_list);	/* off zombproc */
-			LIST_REMOVE(p, p_sibling);
 
 			/*
 			 * Give machine-dependent layer a chance
